@@ -2,7 +2,7 @@
 
 > **No Cookies · No Tracking · No Ads · Open Source · Privacy First · Minimal Design**
 
-A privacy-respecting tool suite for creators by **Glarolykoi**. Each application works fully offline and can be installed as a standalone Progressive Web App.
+A privacy-respecting tool suite for creators by **Christos Koulaxizis**. Each application works fully offline and can be installed as a standalone Progressive Web App.
 
 ---
 
@@ -116,7 +116,7 @@ Please respect the core philosophy: no tracking, no external dependencies, no fr
 
 ## License
 
-MIT © 2026 Glarolykoi
+MIT © 2026 Christos Koulaxizis
 
 ---
 
