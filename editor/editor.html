@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Markdown text editor — offline, private, fast.">
+  <title>Writer — orOS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <script>
+    (function(){
+      var t = localStorage.getItem('oros-theme');
+      if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-content">
+      <a href="./" class="logo" data-i18n="site_title">orOS</a>
+      <div class="header-controls">
+        <select id="language-select" class="lang-select"></select>
+        <button id="theme-toggle" class="btn-control btn-icon"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="fullscreen-container">
+    <div class="container">
+      <div class="toolbar">
+        <button id="btn-new" class="btn-control" data-i18n="button_new">New</button>
+        <button id="btn-save" class="btn-control" data-i18n="button_save">Save</button>
+        <button id="btn-load" class="btn-control" data-i18n="button_load">Load</button>
+        <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
+        <button id="btn-export-md" class="btn-control" data-i18n="button_export_md">Export MD</button>
+        <button id="btn-copy-html" class="btn-control" data-i18n="button_copy_html">Copy HTML</button>
+        <span id="save-status" style="color:var(--accent);font-size:0.85rem;margin-left:auto;"></span>
+      </div>
+      
+      <div class="editor-wrapper">
+        <textarea 
+          id="editor" 
+          class="editor-input" 
+          data-i18n-placeholder="placeholder_editor"
+          placeholder="Start writing here... Supports Markdown syntax."
+        ></textarea>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text" data-i18n="footer_text">Open Source • No Tracking • No Ads • Privacy First</div>
+      <div class="footer-credits" data-i18n="footer_credits">© 2026 Glarolykoi. Built with ♥ for artists.</div>
+    </div>
+  </footer>
+
+  <button id="back-to-top" class="back-to-top" data-i18n="back_to_top">↑ Top</button>
+  
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/editor.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+</body>
+</html>

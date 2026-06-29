@@ -1,0 +1,55 @@
+{
+  "en": {
+    "site_title": "orOS",
+    "site_tagline": "The artist's operating system",
+    "nav_home": "Home",
+    "nav_tools": "Tools",
+    "theme_light": "☀️ Light",
+    "theme_dark": "🌙 Dark",
+    "lang_select": "Language",
+    "back_to_top": "↑ Top",
+    "footer_text": "Open Source • No Tracking • No Ads • Privacy First",
+    "footer_credits": "© 2026 Glarolykoi. Built with ♥ for artists.",
+    
+    "tools_intro": "Select a tool below. All applications work offline and respect your personal data.",
+    
+    "editor_name": "Writer",
+    "editor_desc": "Simple markdown text editor with autosave",
+    
+    "button_new": "New",
+    "button_save": "Save",
+    "button_load": "Load",
+    "button_clear": "Clear",
+    "button_export_md": "Export MD",
+    "button_copy_html": "Copy HTML",
+    "status_saved": "✓ Saved",
+    "placeholder_editor": "Start writing here... Supports Markdown syntax."
+  },
+  
+  "el": {
+    "site_title": "orOS",
+    "site_tagline": "Το λειτουργικό σύστημα του καλλιτέχνη",
+    "nav_home": "Αρχική",
+    "nav_tools": "Εργαλεία",
+    "theme_light": "☀️ Ανοιχτό",
+    "theme_dark": "🌙 Σκούρο",
+    "lang_select": "Γλώσσα",
+    "back_to_top": "↑ Κορυφή",
+    "footer_text": "Ανοικτός Κώδικας • Χωρίς Παρακολούθηση • Χωρίς Διαφημίσεις • Προστασία Ιδιωτικότητας",
+    "footer_credits": "© 2026 Γλαρόλυκοι. Κατασκευασμένο με ♥ για καλλιτέχνες.",
+    
+    "tools_intro": "Επιλέξτε ένα εργαλείο παρακάτω. Όλες οι εφαρμογές λειτουργούν χωρίς σύνδεση και με σεβασμό στα προσωπικά σας δεδομένα.",
+    
+    "editor_name": "Συντάκτης",
+    "editor_desc": "Απλός επεξεργαστής κειμένου markdown με αυτόματη αποθήκευση",
+    
+    "button_new": "Νέο",
+    "button_save": "Αποθ.",
+    "button_load": "Φορτ.",
+    "button_clear": "Καθαρ.",
+    "button_export_md": "MD Αρχείο",
+    "button_copy_html": "HTML Αντιγ.",
+    "status_saved": "✓ Αποθηκεύτηκε",
+    "placeholder_editor": "Ξεκινήστε να γράφετε εδώ... Υποστηρίζει Markdown."
+  }
+}
