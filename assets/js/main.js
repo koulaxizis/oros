@@ -2,6 +2,7 @@
 // orOS — Core Functionality
 // Theme | Language | Back-to-top | Zen Mode | Settings
 // Settings: Shortcuts Tab + Appearance Tab (toggles)
+// Includes: Focus Mode toggle
 // ============================================
 
 (function() {
@@ -10,7 +11,8 @@
     LANGUAGE: 'oros-language',
     HIDE_STATS: 'oros_hide_stats',
     HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
-    TYPEWRITER: 'oros_typewriter_mode'
+    TYPEWRITER: 'oros_typewriter_mode',
+    FOCUS_MODE: 'oros_focus_mode'
   };
 
   var scriptEl = document.querySelector('script[src$="main.js"]');
@@ -48,7 +50,6 @@
     updateFooterCredits();
   });
 
-  // ---------- Helpers ----------
   function getLang() {
     return localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
   }
@@ -274,7 +275,6 @@
     var lang = getLang();
     var isEditor = !!document.getElementById('editor-container') || !!document.getElementById('rich-editor');
 
-    // --- Shortcuts data ---
     var globalShortcuts, editorShortcuts;
 
     if (lang === 'el') {
@@ -315,7 +315,6 @@
 
     var allShortcuts = isEditor ? globalShortcuts.concat(editorShortcuts) : globalShortcuts;
 
-    // --- Labels ---
     var title = getTrans('settings');
     var tabShortcutsLabel = getTrans('tab_shortcuts');
     var tabAppearanceLabel = getTrans('tab_appearance');
@@ -323,37 +322,34 @@
     var colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
     var installLabel = getTrans('install_app');
 
-    // --- Shortcuts HTML ---
     var shortcutsHtml = '';
     allShortcuts.forEach(function(pair) {
       shortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
     });
 
-    // --- Toggle states ---
     var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
     var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
     var typewriterOn = localStorage.getItem(STORAGE_KEY.TYPEWRITER) === 'true';
+    var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
 
-    var toggleQuickLabel = getTrans('toggle_quick_toolbar');
-    var toggleStatsLabel = getTrans('toggle_stats');
-    var toggleTypewriterLabel = getTrans('toggle_typewriter');
-
-    // --- Appearance toggles HTML ---
     var appearanceHtml =
       '<div class="toggle-row">' +
-        '<span class="toggle-label">' + toggleQuickLabel + '</span>' +
+        '<span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
         '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label>' +
       '</div>' +
       '<div class="toggle-row">' +
-        '<span class="toggle-label">' + toggleStatsLabel + '</span>' +
+        '<span class="toggle-label">' + getTrans('toggle_stats') + '</span>' +
         '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label>' +
       '</div>' +
       '<div class="toggle-row">' +
-        '<span class="toggle-label">' + toggleTypewriterLabel + '</span>' +
+        '<span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + getTrans('toggle_typewriter') + '</span>' +
         '<label class="switch"><input type="checkbox" id="toggle-typewriter"' + (typewriterOn ? ' checked' : '') + '><span class="slider"></span></label>' +
       '</div>';
 
-    // --- Build modal ---
     var modal = document.createElement('div');
     modal.className = 'settings-modal';
     modal.innerHTML =
@@ -383,12 +379,10 @@
 
     document.body.appendChild(modal);
 
-    // --- Close handlers ---
     var closeFn = function() { modal.remove(); };
     modal.querySelector('.close-btn').onclick = closeFn;
     modal.querySelector('.modal-backdrop').onclick = closeFn;
 
-    // --- Tab switching ---
     var tabBtns = modal.querySelectorAll('.tab-btn');
     tabBtns.forEach(function(btn) {
       btn.onclick = function() {
@@ -400,7 +394,6 @@
       };
     });
 
-    // --- Toggle handlers ---
     var tbarToggle = modal.querySelector('#toggle-quick-tbar');
     if (tbarToggle) {
       tbarToggle.onchange = function() {
@@ -421,15 +414,23 @@
       };
     }
 
+    var focusToggle = modal.querySelector('#toggle-focus-mode');
+    if (focusToggle) {
+      focusToggle.onchange = function() {
+        var enabled = this.checked;
+        localStorage.setItem(STORAGE_KEY.FOCUS_MODE, enabled ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-focus-mode-changed', { detail: { enabled: enabled } }));
+      };
+    }
+
     var twToggle = modal.querySelector('#toggle-typewriter');
     if (twToggle) {
       twToggle.onchange = function() {
         var on = this.checked;
         localStorage.setItem(STORAGE_KEY.TYPEWRITER, on ? 'true' : 'false');
-            };
+      };
     }
 
-    // --- PWA Install handler ---
     var installBtn = modal.querySelector('#btn-install-pwa');
     if (installBtn) {
       installBtn.onclick = async function() {
@@ -446,7 +447,6 @@
       };
     }
 
-    // Check if already installed
     if (!deferredPrompt) {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         installBtn.disabled = true;

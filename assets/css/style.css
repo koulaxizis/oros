@@ -492,6 +492,38 @@ body {
   opacity: 0.5;
 }
 
+/* ========== FOCUS MODE ========== */
+.rich-editor {
+  transition: opacity 0.2s ease;
+}
+
+.focus-mode-active {
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
+}
+
+.focus-mode-active ::selection {
+  background: var(--accent);
+  color: white;
+}
+
+.focus-dimmed {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+  filter: grayscale(30%) contrast(85%);
+}
+
+/* Keep selection visible even when dimmed */
+.focus-dimmed ::selection {
+  opacity: 1;
+}
+
+/* Exception for selected elements */
+.focus-mode-active > *:not(:has(::selection)) {
+  opacity: 0.35;
+}
+
 /* ---------- Footer ---------- */
 .footer {
   background-color: var(--bg-secondary);

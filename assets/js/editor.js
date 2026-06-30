@@ -1,8 +1,8 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
-// Fixed: Typewriter Mode + Toast Language Bug + Context Menu + Quick Toolbar
-// Smart Lists (bullets + numbers), Import RTF/DOC
-// Stats, Find/Replace, Drag&Drop, Typewriter
+// Focus Mode + Typewriter Fix + Toast Lang Fix
+// Smart Lists, Import RTF/DOC, Stats, Find/Replace
+// Drag&Drop, Typewriter, Quick Format Toolbar
 // ============================================
 
 (function() {
@@ -12,6 +12,7 @@
   var STORAGE_TYPEWRITER = 'oros_typewriter_mode';
   var STORAGE_HIDE_STATS = 'oros_hide_stats';
   var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
+  var STORAGE_FOCUS_MODE = 'oros_focus_mode';
 
   // Elements
   var editorContainer = document.getElementById('editor-container');
@@ -34,9 +35,9 @@
   var typewriterEnabled = localStorage.getItem(STORAGE_TYPEWRITER) === 'true';
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
+  var focusModeEnabled = localStorage.getItem(STORAGE_FOCUS_MODE) !== 'false';
   var currentMatchIndex = -1;
   var matchRanges = [];
-  var highlightSpans = [];
 
   // ========== STATS CALCULATION ==========
   function updateStats() {
@@ -62,44 +63,113 @@
     return richEditor.innerHTML || '';
   }
 
-  // ========== TYPEWRITER MODE — FIXED ==========
+  // ========== TYPEWRITER MODE ==========
   function enableTypewriter() {
-    if (!typewriterEnabled) {
-      // If disabled, reset scroll to natural position
-      return;
-    }
-    
+    if (!typewriterEnabled) return;
+
     setTimeout(function() {
       try {
         var selection = window.getSelection();
         if (selection.rangeCount === 0) return;
-        
+
         var range = selection.getRangeAt(0);
         var rects = range.getClientRects();
         if (!rects || rects.length === 0) return;
-        
+
         var caretRect = rects[0];
         var editorRect = richEditor.getBoundingClientRect();
         var viewportHeight = window.innerHeight;
-        
-        // Target: cursor at 45% of viewport (comfort zone)
+
         var targetPosition = viewportHeight * 0.45;
         var relativeCursorPos = caretRect.top - editorRect.top + richEditor.scrollTop;
         var desiredScrollTop = relativeCursorPos - targetPosition;
-        
-        // Clamp to valid range
+
         var maxScroll = richEditor.scrollHeight - editorRect.height;
         if (desiredScrollTop < 0) desiredScrollTop = 0;
         if (desiredScrollTop > maxScroll) desiredScrollTop = maxScroll;
-        
+
         richEditor.scrollTo({ top: desiredScrollTop, behavior: 'smooth' });
-      } catch(e) {
-        console.warn('Typewriter error:', e);
-      }
-    }, 50); // Small delay ensures layout is ready
+      } catch(e) {}
+    }, 50);
   }
 
-  // Initialize visibility based on settings
+  // ========== FOCUS MODE ==========
+  var focusDebounceTimer = null;
+
+  function initFocusMode() {
+    if (!focusModeEnabled || !richEditor) return;
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && richEditor.classList.contains('focus-mode-active')) {
+        clearFocusMode();
+      }
+    });
+
+    window.addEventListener('oros-focus-mode-changed', function(e) {
+      focusModeEnabled = e.detail.enabled;
+      if (!focusModeEnabled) {
+        clearFocusMode();
+      }
+    });
+  }
+
+  function handleSelectionChange() {
+    if (!focusModeEnabled) return;
+
+    clearTimeout(focusDebounceTimer);
+    focusDebounceTimer = setTimeout(function() {
+      var selection = window.getSelection();
+
+      if (!selection.rangeCount || selection.isCollapsed) {
+        clearFocusMode();
+        return;
+      }
+
+      var range = selection.getRangeAt(0);
+
+      if (!richEditor.contains(range.commonAncestorContainer)) {
+        clearFocusMode();
+        return;
+      }
+
+      activateFocusMode(range);
+    }, 100);
+  }
+
+  function activateFocusMode(range) {
+    var selectedBlock = range.commonAncestorContainer;
+    while (selectedBlock && selectedBlock.parentNode && selectedBlock.parentNode !== richEditor) {
+      selectedBlock = selectedBlock.parentNode;
+    }
+
+    if (!selectedBlock || selectedBlock === richEditor) {
+      // Selection spans multiple blocks — dim none
+      return;
+    }
+
+    var children = richEditor.children;
+    for (var i = 0; i < children.length; i++) {
+      if (children[i] === selectedBlock || children[i].contains(selectedBlock)) {
+        children[i].classList.remove('focus-dimmed');
+      } else {
+        children[i].classList.add('focus-dimmed');
+      }
+    }
+
+    richEditor.classList.add('focus-mode-active');
+  }
+
+  function clearFocusMode() {
+    richEditor.classList.remove('focus-mode-active');
+    var dimmed = richEditor.querySelectorAll('.focus-dimmed');
+    for (var i = 0; i < dimmed.length; i++) {
+      dimmed[i].classList.remove('focus-dimmed');
+    }
+  }
+
+  // ========== VISIBILITY INIT ==========
   if (hideStats && statsOverlay) {
     statsOverlay.style.display = 'none';
   }
@@ -137,7 +207,7 @@
 
     reader.onload = function(ev) {
       var content = ev.target.result;
-      
+
       if (ext === '.txt' || ext === '.md') {
         richEditor.innerHTML = markdownToHtml(content);
       } else if (ext === '.rtf') {
@@ -161,7 +231,7 @@
       reader.readAsArrayBuffer(file);
     }
   }
-    // ========== SMART LISTS (bullets + numbers) ==========
+    // ========== SMART LISTS ==========
   function checkSmartList(e) {
     if (e.key !== 'Enter') return;
 
@@ -187,13 +257,13 @@
   function getLineBeforeCursor() {
     var selection = window.getSelection();
     if (selection.rangeCount === 0) return '';
-    
+
     var range = selection.getRangeAt(0);
     var preCaretRange = range.cloneRange();
     preCaretRange.selectNodeContents(richEditor);
     preCaretRange.setEnd(range.startContainer, range.startOffset);
     var content = preCaretRange.toString();
-    
+
     var lines = content.split('\n');
     return lines[lines.length - 1] || '';
   }
@@ -239,12 +309,12 @@
     var range = document.createRange();
     var sel = window.getSelection();
     var node = richEditor.firstChild;
-    
+
     while (node && pos > getNodeLength(node)) {
       pos -= getNodeLength(node);
       node = node.nextSibling;
     }
-    
+
     if (node) {
       range.setStart(node, Math.min(pos, getNodeLength(node)));
     } else {
@@ -267,7 +337,7 @@
     return 0;
   }
 
-  // ========== OPEN FILE BUTTON ==========
+  // ========== OPEN FILE ==========
   btnOpen.onclick = function() {
     var input = document.createElement('input');
     input.type = 'file';
@@ -280,29 +350,27 @@
     input.click();
   };
 
-  // ========== CLEAR — FIXED TOAST LANGUAGE ==========
+  // ========== CLEAR — FIXED TOAST ==========
   btnClear.onclick = function() {
     var hasContent = richEditor.innerText.trim();
     if (!hasContent) return;
-    
+
     var lang = getCurrentLang();
     var confirmText = lang === 'el'
       ? 'Εκκαθάριση περιεχομένου;'
       : 'Clear content? Cannot undo.';
-    
+
     if (!confirm(confirmText)) return;
-    
+
     richEditor.innerHTML = '';
     localStorage.removeItem(STORAGE_KEY);
     saveContent(false);
     updateStats();
-    
-    // FIXED: Use proper language detection
-    var clearMsg = lang === 'el' ? '✓ Καθαρίστηκε' : '✓ Cleared';
-    showToast(clearMsg);
+
+    showToast(lang === 'el' ? '✓ Καθαρίστηκε' : '✓ Cleared');
   };
-  
-    // ========== EXPORT ==========
+
+  // ========== EXPORT ==========
   btnExport.onclick = function(e) {
     e.stopPropagation();
     exportDropdown.classList.toggle('visible');
@@ -405,22 +473,22 @@
       .replace(/<o:[^>]+>/gi, '')
       .replace(/<\/o:[^>]+>/gi, '');
   }
-
-  // ========== RTF EXPORT ==========
+  
+    // ========== RTF EXPORT ==========
   function exportRtf(content, filename) {
     var rtf = '{\\rtf1\\ansi\\deff0\n';
     rtf += '{\\fonttbl{\\f0 Nunito;}{\\f1 Courier New;}}\n';
     rtf += '{\\colortbl;\\red117\\green111\\blue104;}\n';
     rtf += '\\f0\\fs24\n';
-    
+
     var lines = splitIntoLines(content);
-    
+
     for (var i = 0; i < lines.length; i++) {
       var line = escapeRtf(lines[i]);
       line = applyInlineRtf(line);
       rtf += line + '\\line\n';
     }
-    
+
     rtf += '}';
     downloadFile(rtf, filename, 'application/rtf;charset=utf-8');
   }
@@ -467,7 +535,7 @@
   // ========== PDF EXPORT ==========
   function exportPdf(content) {
     var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>orOS Export</title>\n<style>\nbody {\n  font-family: Calibri, Arial, sans-serif;\n  font-size: 12pt;\n  line-height: 1.7;\n  max-width: 700px;\n  margin: 2rem auto;\n  padding: 1cm;\n  color: #2b2723;\n}\nh1 { font-size: 1.8rem; }\nh2 { font-size: 1.4rem; }\nh3 { font-size: 1.15rem; }\nblockquote {\n  border-left: 3px solid #c8a96e;\n  padding-left: 1rem;\n  font-style: italic;\n  color: #756f68;\n}\ncode {\n  font-family: monospace;\n  background: #f6f5f1;\n  padding: 2px 5px;\n  border-radius: 3px;\n}\n@media print {\n  body { margin: 0; padding: 1cm; }\n}\n</style>\n</head>\n<body>\n<div class="content">' + content + '</div>\n<script>\nwindow.addEventListener("load", function() {\n  window.print();\n  setTimeout(function() { window.close(); }, 250);\n});\n<\/script>\n</body>\n</html>';
-  
+
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var win = window.open(url, '_blank');
@@ -510,22 +578,22 @@
     clearHighlights();
     matchRanges = [];
     currentMatchIndex = -1;
-    
+
     if (!query) {
       frResults.textContent = '0 matches';
       return;
     }
-    
+
     var content = getTextContent();
     var regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     var match;
-    
+
     while ((match = regex.exec(content)) !== null) {
       matchRanges.push([match.index, match.index + match[0].length]);
     }
-    
+
     frResults.textContent = matchRanges.length + ' matches';
-    
+
     if (matchRanges.length > 0) {
       navigateToMatch(0);
     }
@@ -535,11 +603,11 @@
     if (matchRanges.length === 0) return;
     currentMatchIndex = index % matchRanges.length;
     if (currentMatchIndex < 0) currentMatchIndex += matchRanges.length;
-    
+
     var range = matchRanges[currentMatchIndex];
     var start = range[0];
     var end = range[1];
-    
+
     richEditor.focus();
     var textNodes = getTextNodes(richEditor);
     var pos = 0;
@@ -571,23 +639,15 @@
   }
 
   function clearHighlights() {
-    for (var i = 0; i < highlightSpans.length; i++) {
-      var span = highlightSpans[i];
-      if (span.parentNode) {
-        var parent = span.parentNode;
-        while (span.firstChild) parent.insertBefore(span.firstChild, span);
-        parent.removeChild(span);
-      }
-    }
-    highlightSpans = [];
+    // Reserved for future highlight implementation
   }
 
-  // ========== REPLACE FUNCTIONS ==========
+  // ========== REPLACE BUTTONS ==========
   document.getElementById('btn-replace').onclick = function() {
     if (matchRanges.length === 0) return;
     var range = matchRanges[currentMatchIndex];
     var replaceText = replaceInput.value;
-    
+
     richEditor.focus();
     var textNodes = getTextNodes(richEditor);
     var pos = 0;
@@ -605,7 +665,7 @@
       }
       pos += nodeLen;
     }
-    
+
     saveContent(false);
     updateStats();
     setTimeout(findAndHighlight, 50);
@@ -614,12 +674,12 @@
   document.getElementById('btn-replace-all').onclick = function() {
     if (matchRanges.length === 0) return;
     var replaceText = replaceInput.value;
-    
+
     var content = getTextContent();
     var query = findInput.value;
     var regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     var newContent = content.replace(regex, replaceText);
-    
+
     richEditor.innerText = newContent;
     saveContent(false);
     updateStats();
@@ -632,7 +692,7 @@
     var fmtButtons = quickFormatToolbar.querySelectorAll('.fmt-btn');
     for (var i = 0; i < fmtButtons.length; i++) {
       fmtButtons[i].addEventListener('mousedown', function(e) {
-        e.preventDefault(); // Prevent losing selection in editor
+        e.preventDefault();
       });
       fmtButtons[i].addEventListener('click', function() {
         var cmd = this.dataset.cmd;
@@ -647,8 +707,7 @@
   // ========== KEYBOARD SHORTCUTS ==========
   document.addEventListener('keydown', function(e) {
     var ctrl = e.ctrlKey || e.metaKey;
-    
-    // Find & Replace
+
     if (ctrl && e.key.toLowerCase() === 'f') {
       e.preventDefault();
       showFindReplace();
@@ -663,8 +722,7 @@
       hideFindReplace();
       return;
     }
-    
-    // Typewriter toggle
+
     if (ctrl && e.key === 'Enter') {
       e.preventDefault();
       typewriterEnabled = !typewriterEnabled;
@@ -677,8 +735,7 @@
       if (typewriterEnabled) enableTypewriter();
       return;
     }
-    
-    // Underline shortcut (NEW)
+
     if (ctrl && e.key.toLowerCase() === 'u') {
       if (document.activeElement === richEditor) {
         e.preventDefault();
@@ -688,10 +745,10 @@
       }
       return;
     }
-    
+
     if (!ctrl) return;
     var activeInEditor = document.activeElement === richEditor;
-    
+
     switch(e.key.toLowerCase()) {
       case 's':
         e.preventDefault();
@@ -736,7 +793,7 @@
     updateStats();
     enableTypewriter();
   };
-  
+
   richEditor.addEventListener('input', inputHandler);
   richEditor.addEventListener('paste', function() { setTimeout(updateStats, 0); });
   richEditor.addEventListener('keydown', checkSmartList);
@@ -749,7 +806,7 @@
 
   setInterval(function() { saveContent(false); }, 30000);
 
-  // ========== SAVE FUNCTION ==========
+  // ========== SAVE ==========
   function saveContent(showMsg) {
     var content = getHTMLContent();
     localStorage.setItem(STORAGE_KEY, content);
@@ -923,9 +980,11 @@
   }
 
   updateStats();
-  
+
   if (typewriterEnabled) {
     enableTypewriter();
   }
+
+  initFocusMode();
 
 })();

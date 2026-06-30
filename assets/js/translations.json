@@ -50,7 +50,9 @@
     "underline_title": "Underline (Ctrl+U)",
     "strike_title": "Strikethrough",
     "ulist_title": "Bullet List",
-    "olist_title": "Numbered List"
+    "olist_title": "Numbered List",
+	"toggle_focus_mode": "Enable Focus Mode",
+    "focus_mode_tooltip": "Dim surrounding text when selecting content"
   },
   "el": {
     "site_title": "orOS",
@@ -103,6 +105,8 @@
     "underline_title": "Υπογράμμιση (Ctrl+U)",
     "strike_title": "Διακριτή Διαγραφή",
     "ulist_title": "Λίστα Κουκκίδων",
-    "olist_title": "Αριθμημένη Λίστα"
+    "olist_title": "Αριθμημένη Λίστα",
+	"toggle_focus_mode": "Ενεργοποίηση Focus Mode",
+    "focus_mode_tooltip": "Σκούρυνε το υπόλοιπο κείμενο κατά την επιλογή"
   }
 }
