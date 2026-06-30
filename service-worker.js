@@ -1,21 +1,21 @@
-const CACHE_NAME = 'oros-v3';
+const CACHE_NAME = 'oros-v4';
 const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './editor.html',
-  './assets/css/style.css',
-  './assets/js/main.js',
-  './assets/js/editor.js',
-  './assets/js/translations.json',
-  './assets/js/components/header.js',
-  './assets/js/components/footer.js',
-  './assets/fonts/nunito-regular.woff2',
-  './assets/fonts/nunito-medium.woff2',
-  './assets/fonts/nunito-semibold.woff2',
-  './assets/fonts/nunito-bold.woff2',
-  './assets/fonts/nunito-extrabold.woff2',
-  './favicon.svg',
-  './manifest.json'
+  '/',
+  '/index.html',
+  '/editor.html',
+  '/assets/css/style.css',
+  '/assets/js/main.js',
+  '/assets/js/editor.js',
+  '/assets/js/translations.json',
+  '/assets/js/components/header.js',
+  '/assets/js/components/footer.js',
+  '/assets/fonts/nunito-regular.woff2',
+  '/assets/fonts/nunito-medium.woff2',
+  '/assets/fonts/nunito-semibold.woff2',
+  '/assets/fonts/nunito-bold.woff2',
+  '/assets/fonts/nunito-extrabold.woff2',
+  '/favicon.svg',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (e) => {

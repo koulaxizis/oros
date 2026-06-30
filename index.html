@@ -6,12 +6,12 @@
   <meta name="description" content="Privacy-first creative toolkit for writers, musicians, photographers. No tracking, no ads, fully offline.">
   <meta name="author" content="Christos Koulaxizis">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://useoros.com/">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <title>orOS — Artist's Operating System</title>
   <link rel="stylesheet" href="assets/css/style.css">
 
-  <!-- Prevent theme FOUC -->
   <script>
     (function(){
       var t = localStorage.getItem('oros-theme');
@@ -20,14 +20,14 @@
     })();
   </script>
 </head>
-<body>
+<body class="landing-page">
 
-  <!-- Global Header (managed by components/header.js) -->
   <div id="oros-header"></div>
   <script src="assets/js/components/header.js"></script>
 
   <main class="hero">
     <div class="container">
+      <img src="favicon.svg" alt="orOS" class="hero-logo">
       <h1><b>or</b><i>OS</i></h1>
       <p data-i18n="site_tagline">The artist's operating system</p>
     </div>
@@ -37,21 +37,19 @@
     <p style="text-align:center;color:var(--text-secondary);" data-i18n="tools_intro">
       Select a tool below. All applications work offline and respect your personal data.
     </p>
-    
+
     <div class="tools-grid">
       <a href="editor.html" class="tool-card">
         <div class="tool-icon">✏️</div>
         <div class="tool-name" data-i18n="editor_name">Writer</div>
-        <div class="tool-desc" data-i18n="editor_desc">Simple markdown text editor with autosave</div>
+        <div class="tool-desc" data-i18n="editor_desc">Simple text editor with autosave</div>
       </a>
     </div>
   </section>
 
-  <!-- Global Footer + Back-to-top (managed by components/footer.js) -->
   <div id="oros-footer"></div>
   <script src="assets/js/components/footer.js"></script>
 
-  <!-- Core -->
   <script src="assets/js/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

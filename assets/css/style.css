@@ -284,12 +284,17 @@ body {
   overflow-y: auto;
 }
 
+/* Rich editor placeholder font fix */
 .rich-editor:empty::before {
   content: attr(data-placeholder);
   color: var(--text-secondary);
   opacity: 0.6;
   pointer-events: none;
+  font-family: var(--font-main);
+  font-size: 1.05rem;
+  font-style: normal;
 }
+
 
 .rich-editor h1 { font-size: 1.8rem; font-weight: 800; margin: 1rem 0; }
 .rich-editor h2 { font-size: 1.4rem; font-weight: 700; margin: 0.8rem 0; }
@@ -657,7 +662,16 @@ kbd {
 
 .landing-page { overflow-y: auto !important; }
 
+/* Hero Logo */
+.hero-logo {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1rem;
+  opacity: 0.85;
+}
+
 @media (max-width: 768px) {
+  .hero-logo { width: 56px; height: 56px; }
   .hero h1 { font-size: 2.5rem; }
   .header-content { flex-direction: column; gap: 0.75rem; }
   .tools-grid { grid-template-columns: 1fr; }
