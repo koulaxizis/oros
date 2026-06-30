@@ -1,26 +1,29 @@
-// orOS Core: Theme, Language, BTT, Zen Mode, Settings
+// ============================================
+// orOS — Core Functionality
+// Theme | Language | Back-to-top | Zen Mode | Settings
+// ============================================
 
 (function() {
-  const STORAGE_KEY = {
+  var STORAGE_KEY = {
     THEME: 'oros-theme',
     LANGUAGE: 'oros-language'
   };
 
-  const scriptEl = document.querySelector('script[src$="main.js"]');
-  const baseUrl = scriptEl ? scriptEl.src.replace(/main\.js$/, '') : 'assets/js/';
+  var scriptEl = document.querySelector('script[src$="main.js"]');
+  var baseUrl = scriptEl ? scriptEl.src.replace(/main\.js$/, '') : 'assets/js/';
 
-  let translations = {};
+  var translations = {};
   window.OROS_TRANSLATIONS = translations;
 
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
     deferredPrompt = e;
   });
 
   async function loadTranslations() {
     try {
-      const resp = await fetch(baseUrl + 'translations.json');
+      var resp = await fetch(baseUrl + 'translations.json');
       translations = await resp.json();
       window.OROS_TRANSLATIONS = translations;
     } catch(e) {
@@ -30,7 +33,7 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('DOMContentLoaded', async function() {
     await loadTranslations();
     initTheme();
     initLanguage();
@@ -43,15 +46,15 @@
 
   // ---------- Theme ----------
   function initTheme() {
-    const savedTheme = localStorage.getItem(STORAGE_KEY.THEME);
+    var savedTheme = localStorage.getItem(STORAGE_KEY.THEME);
     if (savedTheme) {
       applyTheme(savedTheme);
       renderThemeButton(savedTheme);
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       applyTheme(prefersDark ? 'dark' : 'light');
       renderThemeButton(prefersDark ? 'dark' : 'light');
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
         if (!localStorage.getItem(STORAGE_KEY.THEME)) {
           applyTheme(e.matches ? 'dark' : 'light');
           renderThemeButton(e.matches ? 'dark' : 'light');
@@ -66,32 +69,35 @@
   }
 
   function renderThemeButton(currentTheme) {
-    const btn = document.getElementById('theme-toggle');
+    var btn = document.getElementById('theme-toggle');
     if (!btn) return;
-    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    btn.innerHTML = nextTheme === 'dark' ? '🌙' : '☀️';
-    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    const t = (translations[lang] || translations.en) || {};
+    var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    btn.innerHTML = nextTheme === 'dark' ? '\uD83C\uDF19' : '\u2600\uFE0F';
+    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    var t = (translations[lang] || translations.en) || {};
     btn.title = nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
-    btn.onclick = () => { applyTheme(nextTheme); renderThemeButton(nextTheme); };
+    btn.onclick = function() {
+      applyTheme(nextTheme);
+      renderThemeButton(nextTheme);
+    };
   }
 
   // ---------- Language ----------
   function initLanguage() {
-    const savedLang = localStorage.getItem(STORAGE_KEY.LANGUAGE);
-    let currentLang;
-    if (savedLang && ['el','en'].includes(savedLang)) {
+    var savedLang = localStorage.getItem(STORAGE_KEY.LANGUAGE);
+    var currentLang;
+    if (savedLang && ['el', 'en'].indexOf(savedLang) !== -1) {
       currentLang = savedLang;
     } else {
-      const bl = navigator.language.split('-')[0].toLowerCase();
-      currentLang = ['el','en'].includes(bl) ? bl : 'en';
+      var bl = navigator.language.split('-')[0].toLowerCase();
+      currentLang = ['el', 'en'].indexOf(bl) !== -1 ? bl : 'en';
     }
     applyLanguage(currentLang);
     renderLangSelector(currentLang);
   }
 
   function applyLanguage(lang) {
-    const trans = translations[lang] || translations.en;
+    var trans = translations[lang] || translations.en;
     translatePage(trans, lang);
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
     updateFooterCredits();
@@ -99,94 +105,102 @@
   }
 
   function translatePage(trans, lang) {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
       if (trans[key]) el.textContent = trans[key];
     });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-placeholder');
       if (trans[key]) {
         el.placeholder = trans[key];
         el.setAttribute('data-placeholder', trans[key]);
       }
     });
-    document.querySelectorAll('[data-i18n-alt]').forEach(el => {
-      const key = el.getAttribute('data-i18n-alt');
+    document.querySelectorAll('[data-i18n-alt]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-alt');
       if (trans[key]) el.alt = trans[key];
     });
-    document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
-      const key = el.getAttribute('data-i18n-tooltip');
+    document.querySelectorAll('[data-i18n-tooltip]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-tooltip');
       if (trans[key]) el.title = trans[key];
     });
   }
 
   function applyTranslationsOnInit() {
-    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    const trans = translations[lang] || translations.en;
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
+    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    var trans = translations[lang] || translations.en;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
       if (trans[key]) el.textContent = trans[key];
     });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-placeholder');
       if (trans[key]) {
         el.placeholder = trans[key];
         el.setAttribute('data-placeholder', trans[key]);
       }
     });
-    document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
-      const key = el.getAttribute('data-i18n-tooltip');
+    document.querySelectorAll('[data-i18n-tooltip]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-tooltip');
       if (trans[key]) el.title = trans[key];
     });
   }
 
   function renderLangSelector(currentLang) {
-    const select = document.getElementById('language-select');
+    var select = document.getElementById('language-select');
     if (!select) return;
     select.innerHTML = '';
-    [{value:'el',label:'EL'},{value:'en',label:'EN'}].forEach(opt => {
-      const o = document.createElement('option');
+    var opts = [
+      { value: 'el', label: 'EL' },
+      { value: 'en', label: 'EN' }
+    ];
+    opts.forEach(function(opt) {
+      var o = document.createElement('option');
       o.value = opt.value;
       o.textContent = opt.label;
       if (opt.value === currentLang) o.selected = true;
       select.appendChild(o);
     });
-    select.onchange = (e) => applyLanguage(e.target.value);
+    select.onchange = function(e) {
+      applyLanguage(e.target.value);
+    };
   }
 
   // ---------- Footer Credits ----------
   function updateFooterCredits() {
-    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    const trans = translations[lang] || translations.en;
-    const creditEl = document.querySelector('.footer-credits');
+    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    var trans = translations[lang] || translations.en;
+    var creditEl = document.querySelector('.footer-credits');
     if (!creditEl) return;
-    const linkText = trans.footer_credits_link || 'Christos Koulaxizis';
-    const suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
-    creditEl.innerHTML = '© 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
+    var linkText = trans.footer_credits_link || 'Christos Koulaxizis';
+    var suffix = trans.footer_credits_suffix || '. Built with \u2665 for artists.';
+    creditEl.innerHTML = '\u00A9 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
   }
 
   // ---------- Back to Top ----------
   function initBackToTop() {
-    const btn = document.getElementById('back-to-top');
+    var btn = document.getElementById('back-to-top');
     if (!btn) return;
-    window.addEventListener('scroll', () => {
+    window.addEventListener('scroll', function() {
       btn.classList.toggle('visible', window.scrollY > 300);
     }, { passive: true });
-    btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    btn.onclick = function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
   }
 
   // ---------- Zen Mode ----------
-  let zenActive = false;
+  var zenActive = false;
 
   function initZenMode() {
-    const btn = document.getElementById('btn-zen');
+    var btn = document.getElementById('btn-zen');
     if (!btn) return;
     zenActive = localStorage.getItem('oros-zen') === 'true';
     if (zenActive) {
       document.documentElement.setAttribute('data-zen', 'true');
     }
     btn.onclick = toggleZenMode;
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
       if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
         toggleZenMode();
@@ -214,86 +228,97 @@
 
   function showZenToast() {
     removeZenToast();
-    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    const msg = lang === 'el'
-      ? '🧘 Zen Mode — Πάτα ESC ή F9 για έξοδο'
-      : '🧘 Zen Mode — Press ESC or F9 to exit';
-    const toast = document.createElement('div');
+    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    var msg = lang === 'el'
+      ? '\uD83E\uDDD8 Zen Mode \u2014 \u03A0\u03AC\u03C4\u03B1 ESC \u03AE F9 \u03B3\u03B9\u03B1 \u03AD\u03BE\u03BF\u03B4\u03BF'
+      : '\uD83E\uDDD8 Zen Mode \u2014 Press ESC or F9 to exit';
+    var toast = document.createElement('div');
     toast.className = 'zentool-toast visible';
     toast.id = 'zen-toast';
     toast.textContent = msg;
     document.body.appendChild(toast);
-    setTimeout(() => {
-      const t = document.getElementById('zen-toast');
+    setTimeout(function() {
+      var t = document.getElementById('zen-toast');
       if (t) t.classList.remove('visible');
     }, 3500);
   }
 
   function removeZenToast() {
-    const t = document.getElementById('zen-toast');
+    var t = document.getElementById('zen-toast');
     if (t) t.remove();
   }
 
   // ---------- Settings Modal ----------
   function initSettings() {
-    const btn = document.getElementById('btn-settings');
+    var btn = document.getElementById('btn-settings');
     if (!btn) return;
     btn.onclick = openSettingsModal;
   }
 
   function openSettingsModal() {
-    const existing = document.querySelector('.settings-modal');
+    var existing = document.querySelector('.settings-modal');
     if (existing) existing.remove();
 
-    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    const isEditor = !!document.getElementById('editor') || !!document.getElementById('rich-editor');
+    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    var isEditor = !!document.getElementById('editor') || !!document.getElementById('rich-editor');
 
-    const globalShortcuts = lang === 'el' ? [
-      ['Zen Mode', 'F9'],
-      ['Έξοδος Zen', 'ESC']
-    ] : [
-      ['Zen Mode', 'F9'],
-      ['Exit Zen', 'ESC']
-    ];
+    var globalShortcuts, editorShortcuts;
 
-    const editorShortcuts = lang === 'el' ? [
-      ['Αποθήκευση', 'Ctrl+S'],
-      ['Έντονα', 'Ctrl+B'],
-      ['Πλάγια', 'Ctrl+I'],
-      ['Αναίρεση', 'Ctrl+Z'],
-      ['Επαναφορά', 'Ctrl+Y'],
-      ['Μορφοποίηση', 'Alt + Δεξί click']
-    ] : [
-      ['Save', 'Ctrl+S'],
-      ['Bold', 'Ctrl+B'],
-      ['Italic', 'Ctrl+I'],
-      ['Undo', 'Ctrl+Z'],
-      ['Redo', 'Ctrl+Y'],
-      ['Format', 'Alt + Right-click']
-    ];
+    if (lang === 'el') {
+      globalShortcuts = [
+        ['Zen Mode', 'F9'],
+        ['\u0388\u03BE\u03BF\u03B4\u03BF\u03C2 Zen', 'ESC'],
+        ['\u03A4\u03C5\u03C0\u03BF\u03B3\u03C1\u03B1\u03C6\u03B9\u03BA\u03CC \u03C1\u03C5\u03B8\u03BC\u03CC', 'Ctrl+Enter']
+      ];
+      editorShortcuts = [
+        ['\u0391\u03C0\u03BF\u03B8\u03AE\u03BA\u03B5\u03C5\u03C3\u03B7', 'Ctrl+S'],
+        ['\u0388\u03BD\u03C4\u03BF\u03BD\u03B1', 'Ctrl+B'],
+        ['\u03A0\u03BB\u03AC\u03B3\u03B9\u03B1', 'Ctrl+I'],
+        ['\u0391\u03BD\u03B1\u03AF\u03C1\u03B5\u03C3\u03B7', 'Ctrl+Z'],
+        ['\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC', 'Ctrl+Y'],
+        ['\u0391\u03BD\u03B1\u03B6\u03AE\u03C4\u03B7\u03C3\u03B7', 'Ctrl+F'],
+        ['\u0391\u03BD\u03C4\u03B9\u03BA\u03B1\u03C4\u03AC\u03C3\u03C4\u03B1\u03C3\u03B7', 'Ctrl+H'],
+        ['\u039C\u03BF\u03C1\u03C6\u03BF\u03C0\u03BF\u03AF\u03B7\u03C3\u03B7', 'Alt + \u0394\u03B5\u03BE\u03AF click']
+      ];
+    } else {
+      globalShortcuts = [
+        ['Zen Mode', 'F9'],
+        ['Exit Zen', 'ESC'],
+        ['Typewriter mode', 'Ctrl+Enter']
+      ];
+      editorShortcuts = [
+        ['Save', 'Ctrl+S'],
+        ['Bold', 'Ctrl+B'],
+        ['Italic', 'Ctrl+I'],
+        ['Undo', 'Ctrl+Z'],
+        ['Redo', 'Ctrl+Y'],
+        ['Find', 'Ctrl+F'],
+        ['Replace', 'Ctrl+H'],
+        ['Format', 'Alt + Right-click']
+      ];
+    }
 
-    const allShortcuts = isEditor ? [...globalShortcuts, ...editorShortcuts] : globalShortcuts;
+    var allShortcuts = isEditor ? globalShortcuts.concat(editorShortcuts) : globalShortcuts;
 
-    const title = lang === 'el' ? 'Ρυθμίσεις' : 'Settings';
-    const tabLabel = lang === 'el' ? 'Συντομεύσεις' : 'Shortcuts';
-    const colAction = lang === 'el' ? 'Ενέργεια' : 'Action';
-    const colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
-    const installLabel = lang === 'el' ? 'Εγκατάσταση' : 'Install App';
+    var title = lang === 'el' ? '\u03A1\u03C5\u03B8\u03BC\u03AF\u03C3\u03B5\u03B9\u03C2' : 'Settings';
+    var tabLabel = lang === 'el' ? '\u03A3\u03C5\u03BD\u03C4\u03BF\u03BC\u03B5\u03CD\u03C3\u03B5\u03B9\u03C2' : 'Shortcuts';
+    var colAction = lang === 'el' ? '\u0395\u03BD\u03AD\u03C1\u03B3\u03B5\u03B9\u03B1' : 'Action';
+    var colKey = lang === 'el' ? '\u03A3\u03C5\u03BD\u03C4\u03CC\u03BC\u03B5\u03C5\u03C3\u03B7' : 'Shortcut';
+    var installLabel = lang === 'el' ? '\u0395\u03B3\u03BA\u03B1\u03C4\u03AC\u03C3\u03C4\u03B1\u03C3\u03B7' : 'Install App';
 
-    const modal = document.createElement('div');
-    modal.className = 'settings-modal';
-
-    let shortcutsHtml = '';
+    var shortcutsHtml = '';
     allShortcuts.forEach(function(pair) {
       shortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
     });
 
+    var modal = document.createElement('div');
+    modal.className = 'settings-modal';
     modal.innerHTML =
       '<div class="modal-backdrop"></div>' +
       '<div class="modal-content">' +
         '<header class="modal-header">' +
           '<h2>' + title + '</h2>' +
-          '<button class="close-btn">&times;</button>' +
+          '<button class="close-btn">\u00D7</button>' +
         '</header>' +
         '<nav class="modal-nav">' +
           '<button class="tab-btn active">' + tabLabel + '</button>' +
@@ -304,7 +329,7 @@
             '<tbody>' + shortcutsHtml + '</tbody>' +
           '</table>' +
           '<div class="install-section">' +
-            '<button class="btn-install" id="btn-install-pwa">⬇ ' + installLabel + '</button>' +
+            '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installLabel + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -320,17 +345,17 @@
         var choice = await deferredPrompt.userChoice;
         deferredPrompt = null;
         installBtn.disabled = true;
-        installBtn.textContent = lang === 'el' ? '✓ Εγκαταστάθηκε' : '✓ Installed';
+        installBtn.textContent = lang === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B1\u03C3\u03C4\u03AC\u03B8\u03B7\u03BA\u03B5' : '\u2713 Installed';
       } else {
         installBtn.disabled = true;
-        installBtn.textContent = lang === 'el' ? '⚠ Δεν υποστηρίζεται' : '⚠ Not supported';
+        installBtn.textContent = lang === 'el' ? '\u26A0 \u0394\u03B5\u03BD \u03C5\u03C0\u03BF\u03C3\u03C4\u03B7\u03C1\u03AF\u03B6\u03B5\u03C4\u03B1\u03B9' : '\u26A0 Not supported';
       }
     };
 
     if (!deferredPrompt) {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         installBtn.disabled = true;
-        installBtn.textContent = lang === 'el' ? '✓ Εγκατεστημένο' : '✓ Already installed';
+        installBtn.textContent = lang === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B5\u03C3\u03C4\u03B7\u03BC\u03AD\u03BD\u03BF' : '\u2713 Already installed';
       }
     }
 

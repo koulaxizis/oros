@@ -30,6 +30,16 @@
     "placeholder_rich": "Start writing here...",
     "install_app": "Install App",
     "install_not_supported": "Installation not supported on this browser"
+	"words_label": "words",
+    "chars_label": "chars",
+    "read_label": "read",
+    "fr_find_placeholder": "Find...",
+    "fr_replace_placeholder": "Replace with...",
+    "fr_prev_btn": "Prev",
+    "fr_next_btn": "Next",
+    "fr_replace_btn": "Replace",
+    "fr_replace_all_btn": "All",
+    "fr_matches": "matches"
   },
   "el": {
     "site_title": "orOS",
@@ -62,5 +72,15 @@
     "placeholder_rich": "Ξεκινήστε να γράφετε εδώ...",
     "install_app": "Εγκατάσταση",
     "install_not_supported": "Η εγκατάσταση δεν υποστηρίζεται σε αυτόν τον browser"
+	"words_label": "λέξεις",
+    "chars_label": "χαρακτήρες",
+    "read_label": "ανάγ.",
+    "fr_find_placeholder": "Εύρεση...",
+    "fr_replace_placeholder": "Αντικατάσταση με...",
+    "fr_prev_btn": "Πίσω",
+    "fr_next_btn": "Εμπρός",
+    "fr_replace_btn": "Αντικατάσταση",
+    "fr_replace_all_btn": "Όλα",
+    "fr_matches": "αντιγραφές"
   }
 }

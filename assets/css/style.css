@@ -248,6 +248,100 @@ body {
   flex-shrink: 0;
 }
 
+/* ---------- Stats Bar ---------- */
+.stats-bar {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.stat-value {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------- Find & Replace Bar ---------- */
+.find-replace-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.find-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.fr-buttons {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.fr-btn {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fr-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.find-highlight {
+  background-color: rgba(200,169,110,0.3);
+  border-bottom: 2px solid var(--accent);
+}
+
+.fr-results {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.close-fr-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  line-height: 1;
+  padding: 0;
+}
+
+.close-fr-btn:hover { color: var(--accent); }
+
 .editor-wrapper {
   background-color: var(--bg-secondary);
   flex: 1;
