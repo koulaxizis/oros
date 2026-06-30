@@ -1,8 +1,8 @@
 // ============================================
 // orOS Writer — Editor Logic
 // Dual-mode (Markdown / Rich Text)
-// Open, Clear, Export (TXT/MD/DOCX/PDF)
-// Context Menu, Auto-save, Keyboard Shortcuts
+// Open, Clear, Export (MD/TXT/RTF/PDF/DOC)
+// Context Menu (Alt+Right-click), Auto-save
 // ============================================
 
 (function() {
@@ -99,7 +99,7 @@
           richEditor.innerHTML = markdownToHtml(content);
         }
         saveContent(false);
-        showToast(getCurrentLang() === 'el' ? '✓ Φορτώθηκε' : '✓ Opened');
+        showToast(getCurrentLang() === 'el' ? '\u2713 \u03a6\u03bf\u03c1\u03c4\u03ce\u03b8\u03b7\u03ba\u03b5' : '\u2713 Opened');
       };
       reader.readAsText(file);
     };
@@ -113,13 +113,13 @@
       : richEditor.innerText.trim();
     if (!hasContent) return;
     var confirmText = getCurrentLang() === 'el'
-      ? 'Εκκαθάριση περιεχομένου; Δεν αναιρείται.'
+      ? '\u0395\u03ba\u03ba\u03b1\u03b8\u03ac\u03c1\u03b9\u03c3\u03b7 \u03c0\u03b5\u03c1\u03b9\u03b5\u03c7\u03bf\u03bc\u03ad\u03bd\u03bf\u03c5; \u0394\u03b5\u03bd \u03b1\u03bd\u03b1\u03b9\u03c1\u03b5\u03af\u03c4\u03b1\u03b9.'
       : 'Clear content? Cannot undo.';
     if (!confirm(confirmText)) return;
     editor.value = '';
     richEditor.innerHTML = '';
     localStorage.removeItem(STORAGE_KEY);
-    showToast(getCurrentLang() === 'el' ? 'Καθαρίστηκε' : 'Cleared');
+    showToast(getCurrentLang() === 'el' ? '\u039a\u03b1\u03b8\u03b1\u03c1\u03af\u03c3\u03c4\u03b7\u03ba\u03b5' : 'Cleared');
   };
 
   // ========== EXPORT DROPDOWN ==========
@@ -152,23 +152,82 @@
     var ts = new Date().toISOString().slice(0, 10);
 
     switch(format) {
-      case 'txt':
-        downloadFile(content.replace(/[#*>`]/g, ''), 'oros-' + ts + '.txt', 'text/plain;charset=utf-8');
-        break;
       case 'md':
         downloadFile(content, 'oros-' + ts + '.md', 'text/markdown;charset=utf-8');
         break;
-      case 'docx':
-        exportDocx(content, 'oros-' + ts + '.docx');
+      case 'txt':
+        downloadFile(content.replace(/[#*>`]/g, ''), 'oros-' + ts + '.txt', 'text/plain;charset=utf-8');
+        break;
+      case 'rtf':
+        exportRtf(content, 'oros-' + ts + '.rtf');
         break;
       case 'pdf':
         exportPdf(content);
         break;
+      case 'doc':
+        exportDoc(content, 'oros-' + ts + '.doc');
+        break;
     }
-    showToast(getCurrentLang() === 'el' ? '↓ Έγινε λήψη' : '↓ Downloaded');
+    showToast(getCurrentLang() === 'el' ? '\u2193 \u0388\u03b3\u03b9\u03bd\u03b5 \u03bb\u03ae\u03c8\u03b7' : '\u2193 Downloaded');
   }
 
-  function exportDocx(mdContent, filename) {
+  // ========== RTF EXPORT ==========
+  function escapeRtf(text) {
+    var result = '';
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      var code = text.charCodeAt(i);
+      if (ch === '\\' || ch === '{' || ch === '}') {
+        result += '\\' + ch;
+      } else if (code > 127) {
+        result += '\\u' + code + '?';
+      } else {
+        result += ch;
+      }
+    }
+    return result;
+  }
+
+  function applyInlineRtf(text) {
+    var c = text;
+    c = c.replace(/\*\*(.+?)\*\*/g, '{\\b $1\\b0}');
+    c = c.replace(/\*(.+?)\*/g, '{\\i $1\\i0}');
+    c = c.replace(/`(.+?)`/g, '{\\f1 $1\\f0}');
+    return c;
+  }
+
+  function exportRtf(mdContent, filename) {
+    var rtf = '{\\rtf1\\ansi\\deff0\n';
+    rtf += '{\\fonttbl{\\f0 Nunito;}{\\f1 Courier New;}}\n';
+    rtf += '{\\colortbl;\\red117\\green111\\blue104;}\n';
+    rtf += '\\f0\\fs24\n';
+
+    var lines = mdContent.split('\n');
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = escapeRtf(lines[i]);
+
+      if (line.startsWith('### ')) {
+        rtf += '{\\pard\\fs32\\b ' + applyInlineRtf(line.slice(4)) + '\\par}\n';
+      } else if (line.startsWith('## ')) {
+        rtf += '{\\pard\\fs28\\b ' + applyInlineRtf(line.slice(3)) + '\\par}\n';
+      } else if (line.startsWith('# ')) {
+        rtf += '{\\pard\\fs40\\b ' + applyInlineRtf(line.slice(2)) + '\\par}\n';
+      } else if (line.startsWith('> ')) {
+        rtf += '{\\pard\\li720\\ri720\\i\\cf1 ' + applyInlineRtf(line.slice(2)) + '\\par}\n';
+      } else if (line.trim() === '') {
+        rtf += '{\\par}\n';
+      } else {
+        rtf += applyInlineRtf(line) + '\\line\n';
+      }
+    }
+
+    rtf += '}';
+    downloadFile(rtf, filename, 'application/rtf;charset=utf-8');
+  }
+
+  // ========== DOC EXPORT ==========
+  function exportDoc(mdContent, filename) {
     var html = markdownToHtml(mdContent);
     var fullHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Export</title></head><body style="font-family: Calibri, sans-serif; font-size: 12pt;">' + html + '</body></html>';
     var blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
@@ -180,11 +239,12 @@
     URL.revokeObjectURL(url);
   }
 
+  // ========== PDF EXPORT ==========
   function exportPdf(mdContent) {
     var html = markdownToHtml(mdContent);
     var win = window.open('', '_blank');
     if (!win) {
-      showToast(getCurrentLang() === 'el' ? '⚠ Άφησε pop-ups' : '⚠ Allow pop-ups');
+      showToast(getCurrentLang() === 'el' ? '\u26a0 \u0386\u03c6\u03b7\u03c3\u03b5 pop-ups' : '\u26a0 Allow pop-ups');
       return;
     }
     win.document.write(
@@ -201,7 +261,7 @@
     setTimeout(function() { win.print(); }, 500);
   }
 
-  // ========== CONTEXT MENU ==========
+  // ========== CONTEXT MENU (Alt + Right-click) ==========
   function createContextMenu(x, y) {
     closeMenu();
     var menu = document.createElement('div');
@@ -211,9 +271,9 @@
 
     var lang = getCurrentLang();
     var labels = lang === 'el' ? {
-      bold: 'Έντονα', italic: 'Πλάγια',
-      h1: 'Τίτλος 1', h2: 'Τίτλος 2', quote: 'Παράθεση',
-      undo: 'Αναίρεση', redo: 'Επαναφορά'
+      bold: '\u0388\u03bd\u03c4\u03bf\u03bd\u03b1', italic: '\u03a0\u03bb\u03ac\u03b3\u03b9\u03b1',
+      h1: '\u03a4\u03af\u03c4\u03bb\u03bf\u03c2 1', h2: '\u03a4\u03af\u03c4\u03bb\u03bf\u03c2 2', quote: '\u03a0\u03b1\u03c1\u03ac\u03b8\u03b5\u03c3\u03b7',
+      undo: '\u0391\u03bd\u03b1\u03af\u03c1\u03b5\u03c3\u03b7', redo: '\u0395\u03c0\u03b1\u03bd\u03b1\u03c6\u03bf\u03c1\u03ac'
     } : {
       bold: 'Bold', italic: 'Italic',
       h1: 'Heading 1', h2: 'Heading 2', quote: 'Quote',
@@ -228,8 +288,8 @@
       { action: 'h2', icon: '##', label: labels.h2 },
       { action: 'quote', icon: '>', label: labels.quote },
       { divider: true },
-      { action: 'undo', icon: '↶', label: labels.undo },
-      { action: 'redo', icon: '↷', label: labels.redo }
+      { action: 'undo', icon: '\u21b6', label: labels.undo },
+      { action: 'redo', icon: '\u21b7', label: labels.redo }
     ];
 
     items.forEach(function(item) {
@@ -298,13 +358,17 @@
   }
 
   editor.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    createContextMenu(e.pageX, e.pageY);
+    if (e.altKey) {
+      e.preventDefault();
+      createContextMenu(e.pageX, e.pageY);
+    }
   });
 
   richEditor.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    createContextMenu(e.pageX, e.pageY);
+    if (e.altKey) {
+      e.preventDefault();
+      createContextMenu(e.pageX, e.pageY);
+    }
   });
 
   document.addEventListener('click', function(e) {
@@ -372,7 +436,7 @@
     var content = getContent();
     localStorage.setItem(STORAGE_KEY, content);
     if (showMsg) {
-      showToast(getCurrentLang() === 'el' ? '✓ Αποθηκεύτηκε' : '✓ Saved');
+      showToast(getCurrentLang() === 'el' ? '\u2713 \u0391\u03c0\u03bf\u03b8\u03b7\u03ba\u03b5\u03c5\u03c4\u03ae\u03ba\u03b5' : '\u2713 Saved');
     }
   }
 

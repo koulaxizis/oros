@@ -262,14 +262,14 @@
       ['Πλάγια', 'Ctrl+I'],
       ['Αναίρεση', 'Ctrl+Z'],
       ['Επαναφορά', 'Ctrl+Y'],
-      ['Μορφοποίηση', 'Δεξί click']
+      ['Μορφοποίηση', 'Alt + Δεξί click']
     ] : [
       ['Save', 'Ctrl+S'],
       ['Bold', 'Ctrl+B'],
       ['Italic', 'Ctrl+I'],
       ['Undo', 'Ctrl+Z'],
       ['Redo', 'Ctrl+Y'],
-      ['Format', 'Right-click']
+      ['Format', 'Alt + Right-click']
     ];
 
     const allShortcuts = isEditor ? [...globalShortcuts, ...editorShortcuts] : globalShortcuts;

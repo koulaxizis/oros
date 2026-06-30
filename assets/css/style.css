@@ -372,16 +372,6 @@ body {
   color: white;
 }
 
-.open-wrap { display: inline-flex; align-items: center; }
-
-.open-hint {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  opacity: 0.7;
-  margin-left: 0.5rem;
-  white-space: nowrap;
-}
-
 .footer {
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border);
@@ -675,5 +665,4 @@ kbd {
   .editor-input, .rich-editor { padding: 1rem; }
   .container, .header-content, .footer-inner { padding: 0 1rem; }
   .settings-modal .modal-content { width: 95%; max-height: 90vh; }
-  .open-hint { display: none; }
 }

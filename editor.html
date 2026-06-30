@@ -25,20 +25,17 @@
   <main class="app-main">
     <div class="toolbar">
       <div class="export-wrap">
-        <button id="btn-export" class="btn-control" data-i18n="button_export">Export ▾</button>
+        <button id="btn-export" class="btn-control" data-i18n="button_export">Export &#9662;</button>
         <div class="export-dropdown" id="export-dropdown">
-          <button data-format="txt" data-i18n="export_txt">TXT</button>
           <button data-format="md" data-i18n="export_md">Markdown</button>
-          <button data-format="docx" data-i18n="export_docx">DOCX</button>
+          <button data-format="txt" data-i18n="export_txt">TXT</button>
+          <button data-format="rtf" data-i18n="export_rtf">RTF</button>
           <button data-format="pdf" data-i18n="export_pdf">PDF</button>
+          <button data-format="doc" data-i18n="export_doc">DOC</button>
         </div>
       </div>
 
-      <div class="open-wrap">
-        <button id="btn-open" class="btn-control" data-i18n="button_open">Open</button>
-        <span class="open-hint" data-i18n="open_hint">Supports: .txt, .md, .markdown, .text</span>
-      </div>
-
+      <button id="btn-open" class="btn-control" data-i18n="button_open" data-i18n-tooltip="open_hint">Open</button>
       <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
 
       <div class="mode-toggle">
