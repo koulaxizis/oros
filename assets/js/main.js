@@ -140,6 +140,14 @@
     };
   }
 
+document.addEventListener('keydown', (e) => {
+  // F9 = Zen mode toggle
+  if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    e.preventDefault();
+    window.toggleZenMode && window.toggleZenMode();
+  }
+});
+
   // ---------- Back to Top ----------
   function initBackToTop() {
     const btn = document.getElementById('back-to-top');

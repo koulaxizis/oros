@@ -43,12 +43,12 @@
     "editor_name": "Συντάκτης",
     "editor_desc": "Απλός επεξεργαστής κειμένου markdown με αυτόματη αποθήκευση",
 
-    "button_new": "Νέο",
-    "button_save": "Αποθ.",
-    "button_load": "Φορτ.",
-    "button_clear": "Καθαρ.",
-    "button_export_md": "MD Αρχείο",
-    "button_copy_html": "HTML Αντιγ.",
+    "button_new": "Νέο έγγραφο",
+    "button_save": "Αποθήκευση",
+    "button_load": "Φόρτωση",
+    "button_clear": "Εκκαθάριση",
+    "button_export_md": "Εξαγωγή MD",
+    "button_copy_html": "Αντιγραφή HTML",
     "status_saved": "✓ Αποθηκεύτηκε",
     "placeholder_editor": "Ξεκινήστε να γράφετε εδώ... Υποστηρίζει Markdown."
   }
