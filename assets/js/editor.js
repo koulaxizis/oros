@@ -2,7 +2,7 @@
 // orOS Writer — Editor Logic
 // Dual-mode (Markdown / Rich Text)
 // Open, Clear, Export (TXT/MD/DOCX/PDF)
-// Context Menu, Auto-save
+// Context Menu, Auto-save, Keyboard Shortcuts
 // ============================================
 
 (function() {
@@ -36,7 +36,6 @@
       richWrapper.style.display = 'none';
       modeMd.classList.add('active');
       modeRich.classList.remove('active');
-      // Sync content rich → md
       if (richEditor.innerText.trim()) {
         editor.value = htmlToMarkdown(richEditor.innerHTML);
       }
@@ -45,7 +44,6 @@
       richWrapper.style.display = '';
       modeMd.classList.remove('active');
       modeRich.classList.add('active');
-      // Sync content md → rich
       if (editor.value.trim()) {
         richEditor.innerHTML = markdownToHtml(editor.value);
       }
@@ -125,7 +123,7 @@
     showToast(getCurrentLang() === 'el' ? 'Καθαρίστηκε' : 'Cleared');
   };
 
-  // ========== EXPORT DROPDOWN ==========
+  // ========== EXPORT DROPDOWN (opens DOWNWARD) ==========
   btnExport.onclick = (e) => {
     e.stopPropagation();
     exportDropdown.classList.toggle('visible');
@@ -171,7 +169,6 @@
   }
 
   function exportDocx(mdContent, filename) {
-    // Minimal DOCX (actually HTML with Word-compatible headers)
     const html = markdownToHtml(mdContent);
     const fullHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>Export</title></head><body style="font-family: 'Nunito', Calibri, sans-serif; font-size: 12pt;">${html}</body></html>`;
     const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
@@ -264,7 +261,6 @@
 
   function doFormat(action) {
     if (currentMode === 'rich') {
-      // Rich text mode — use execCommand
       switch(action) {
         case 'bold': document.execCommand('bold'); break;
         case 'italic': document.execCommand('italic'); break;
@@ -276,7 +272,6 @@
       }
       richEditor.focus();
     } else {
-      // Markdown mode — wrap selection
       const start = editor.selectionStart;
       const end = editor.selectionEnd;
       const text = editor.value;
@@ -301,7 +296,6 @@
     saveContent(false);
   }
 
-  // Bind context menu to both editors
   editor.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     createContextMenu(e.pageX, e.pageY);
@@ -318,6 +312,46 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeMenu();
+  });
+
+  // ========== KEYBOARD SHORTCUTS ==========
+  document.addEventListener('keydown', (e) => {
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+
+    // Get the active element
+    const activeInEditor = document.activeElement === editor || document.activeElement === richEditor;
+
+    switch(e.key.toLowerCase()) {
+      case 's':
+        e.preventDefault();
+        saveContent(true);
+        break;
+      case 'b':
+        if (activeInEditor) {
+          e.preventDefault();
+          doFormat('bold');
+        }
+        break;
+      case 'i':
+        if (activeInEditor) {
+          e.preventDefault();
+          doFormat('italic');
+        }
+        break;
+      case 'z':
+        if (activeInEditor) {
+          e.preventDefault();
+          doFormat('undo');
+        }
+        break;
+      case 'y':
+        if (activeInEditor) {
+          e.preventDefault();
+          doFormat('redo');
+        }
+        break;
+    }
   });
 
   // ========== AUTO-SAVE ==========
@@ -341,14 +375,6 @@
       showToast(getCurrentLang() === 'el' ? '✓ Αποθηκεύτηκε' : '✓ Saved');
     }
   }
-
-  // ========== KEYBOARD SHORTCUTS ==========
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
-      saveContent(true);
-    }
-  });
 
   // ========== HELPERS ==========
   function getCurrentLang() {
@@ -379,14 +405,12 @@
   }
 
   // ========== INIT ==========
-  // Restore saved content
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     editor.value = saved;
     richEditor.innerHTML = markdownToHtml(saved);
   }
 
-  // Apply saved mode
   setMode(currentMode);
 
 })();

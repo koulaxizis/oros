@@ -15,6 +15,13 @@
   let translations = {};
   window.OROS_TRANSLATIONS = translations;
 
+  // PWA install prompt
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
   async function loadTranslations() {
     try {
       const resp = await fetch(baseUrl + 'translations.json');
@@ -35,6 +42,7 @@
     initZenMode();
     initSettings();
     applyTranslationsOnInit();
+    updateFooterCredits();
   });
 
   // ---------- Theme ----------
@@ -90,6 +98,7 @@
     const trans = translations[lang] || translations.en;
     translatePage(trans, lang);
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
+    updateFooterCredits();
     updateSettingsModalLanguage(lang);
   }
 
@@ -141,6 +150,17 @@
       select.appendChild(o);
     });
     select.onchange = (e) => applyLanguage(e.target.value);
+  }
+
+  // ---------- Footer Credits (with clickable link) ----------
+  function updateFooterCredits() {
+    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    const trans = translations[lang] || translations.en;
+    const creditEl = document.querySelector('.footer-credits');
+    if (!creditEl) return;
+    const linkText = trans.footer_credits_link || 'Christos Koulaxizis';
+    const suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
+    creditEl.innerHTML = `© 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">${linkText}</a>${suffix}`;
   }
 
   // ---------- Back to Top ----------
@@ -236,9 +256,17 @@
 
     const editorShortcuts = lang === 'el' ? [
       ['Αποθήκευση', 'Ctrl+S'],
+      ['Έντονα', 'Ctrl+B'],
+      ['Πλάγια', 'Ctrl+I'],
+      ['Αναίρεση', 'Ctrl+Z'],
+      ['Επαναφορά', 'Ctrl+Y'],
       ['Μορφοποίηση', 'Δεξί click']
     ] : [
       ['Save', 'Ctrl+S'],
+      ['Bold', 'Ctrl+B'],
+      ['Italic', 'Ctrl+I'],
+      ['Undo', 'Ctrl+Z'],
+      ['Redo', 'Ctrl+Y'],
       ['Format', 'Right-click']
     ];
 
@@ -248,6 +276,7 @@
     const tabLabel = lang === 'el' ? 'Συντομεύσεις' : 'Shortcuts';
     const colAction = lang === 'el' ? 'Ενέργεια' : 'Action';
     const colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
+    const installLabel = lang === 'el' ? 'Εγκατάσταση' : 'Install App';
 
     const modal = document.createElement('div');
     modal.className = 'settings-modal';
@@ -268,17 +297,46 @@
               ${allShortcuts.map(([a,k]) => `<tr><td>${a}</td><td><kbd>${k}</kbd></td></tr>`).join('')}
             </tbody>
           </table>
+          <div class="install-section">
+            <button class="btn-install" id="btn-install-pwa">⬇ ${installLabel}</button>
+          </div>
         </div>
       </div>`;
 
     const close = () => modal.remove();
     modal.querySelector('.close-btn').onclick = close;
     modal.querySelector('.modal-backdrop').onclick = close;
+
+    // Install button
+    const installBtn = modal.querySelector('#btn-install-pwa');
+    installBtn.onclick = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBtn.disabled = true;
+        installBtn.textContent = lang === 'el' ? '✓ Εγκαταστάθηκε' : '✓ Installed';
+      } else {
+        installBtn.disabled = true;
+        const langT = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+        installBtn.textContent = langT === 'el'
+          ? '⚠ Δεν υποστηρίζεται'
+          : '⚠ Not supported';
+      }
+    };
+
+    // Disable if already installed or no prompt
+    if (!deferredPrompt) {
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        installBtn.disabled = true;
+        installBtn.textContent = lang === 'el' ? '✓ Εγκατεστημένο' : '✓ Already installed';
+      }
+    }
+
     document.body.appendChild(modal);
   }
 
   function updateSettingsModalLanguage(lang) {
-    // If modal is open, rebuild it
     const existing = document.querySelector('.settings-modal');
     if (existing) {
       existing.remove();

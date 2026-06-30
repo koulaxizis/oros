@@ -19,16 +19,13 @@
 </head>
 <body>
 
-  <!-- Global Header (includes Zen, Settings, Theme, Language) -->
+  <!-- Global Header -->
   <div id="oros-header"></div>
   <script src="assets/js/components/header.js"></script>
 
   <!-- App Content -->
   <main class="app-main">
     <div class="toolbar">
-      <button id="btn-open" class="btn-control" data-i18n="button_open">Open</button>
-      <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
-
       <div class="export-wrap">
         <button id="btn-export" class="btn-control" data-i18n="button_export">Export ▾</button>
         <div class="export-dropdown" id="export-dropdown">
@@ -38,6 +35,9 @@
           <button data-format="pdf" data-i18n="export_pdf">PDF</button>
         </div>
       </div>
+
+      <button id="btn-open" class="btn-control" data-i18n="button_open">Open</button>
+      <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
 
       <div class="mode-toggle">
         <button id="mode-md" class="active">MD</button>
@@ -69,11 +69,11 @@
     </div>
   </main>
 
-  <!-- Global Footer + Back-to-top -->
+  <!-- Global Footer -->
   <div id="oros-footer"></div>
   <script src="assets/js/components/footer.js"></script>
 
-  <!-- Core (handles theme, language, zen, settings, BTT) -->
+  <!-- Core -->
   <script src="assets/js/main.js"></script>
   <!-- Editor logic -->
   <script src="assets/js/editor.js"></script>
