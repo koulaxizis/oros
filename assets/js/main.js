@@ -1,7 +1,6 @@
 // ============================================
 // orOS — Core Functionality
-// Theme Toggle | Language Switcher | Back-to-top
-// System Preferences Respect
+// Theme | Language | Back-to-top | Zen Mode | Settings
 // ============================================
 
 (function() {
@@ -10,13 +9,10 @@
     LANGUAGE: 'oros-language'
   };
 
-  // Compute base path from this script's location
   const scriptEl = document.querySelector('script[src$="main.js"]');
   const baseUrl = scriptEl ? scriptEl.src.replace(/main\.js$/, '') : 'assets/js/';
 
   let translations = {};
-
-  // Store translations globally for other scripts
   window.OROS_TRANSLATIONS = translations;
 
   async function loadTranslations() {
@@ -36,28 +32,25 @@
     initTheme();
     initLanguage();
     initBackToTop();
+    initZenMode();
+    initSettings();
     applyTranslationsOnInit();
   });
 
   // ---------- Theme ----------
   function initTheme() {
     const savedTheme = localStorage.getItem(STORAGE_KEY.THEME);
-
     if (savedTheme) {
       applyTheme(savedTheme);
       renderThemeButton(savedTheme);
     } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const systemTheme = prefersDark ? 'dark' : 'light';
-      applyTheme(systemTheme);
-      renderThemeButton(systemTheme);
-
-      // Listen for system theme changes only if no manual preference
+      applyTheme(prefersDark ? 'dark' : 'light');
+      renderThemeButton(prefersDark ? 'dark' : 'light');
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        const newTheme = e.matches ? 'dark' : 'light';
         if (!localStorage.getItem(STORAGE_KEY.THEME)) {
-          applyTheme(newTheme);
-          renderThemeButton(newTheme);
+          applyTheme(e.matches ? 'dark' : 'light');
+          renderThemeButton(e.matches ? 'dark' : 'light');
         }
       });
     }
@@ -71,37 +64,24 @@
   function renderThemeButton(currentTheme) {
     const btn = document.getElementById('theme-toggle');
     if (!btn) return;
-
     const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    btn.innerHTML = nextTheme === 'dark'
-      ? '<span class="icon">🌙</span>'
-      : '<span class="icon">☀️</span>';
-
+    btn.innerHTML = nextTheme === 'dark' ? '🌙' : '☀️';
     const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    const t = translations[lang] || translations.en;
-    btn.title = nextTheme === 'dark'
-      ? (t.theme_light || 'Light mode')
-      : (t.theme_dark || 'Dark mode');
-
-    btn.onclick = () => {
-      applyTheme(nextTheme);
-      renderThemeButton(nextTheme);
-    };
+    const t = (translations[lang] || translations.en) || {};
+    btn.title = nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
+    btn.onclick = () => { applyTheme(nextTheme); renderThemeButton(nextTheme); };
   }
 
   // ---------- Language ----------
   function initLanguage() {
     const savedLang = localStorage.getItem(STORAGE_KEY.LANGUAGE);
-
     let currentLang;
-    if (savedLang && ['el', 'en'].includes(savedLang)) {
+    if (savedLang && ['el','en'].includes(savedLang)) {
       currentLang = savedLang;
     } else {
-      const browserLang = navigator.language.split('-')[0].toLowerCase();
-      const supportedLanguages = ['el', 'en'];
-      currentLang = supportedLanguages.includes(browserLang) ? browserLang : 'en';
+      const bl = navigator.language.split('-')[0].toLowerCase();
+      currentLang = ['el','en'].includes(bl) ? bl : 'en';
     }
-
     applyLanguage(currentLang);
     renderLangSelector(currentLang);
   }
@@ -110,11 +90,7 @@
     const trans = translations[lang] || translations.en;
     translatePage(trans, lang);
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
-
-    // Refresh any buttons/text that depend on language
-    if (typeof window.updateAllLabels === 'function') {
-      window.updateAllLabels(lang, trans);
-    }
+    updateSettingsModalLanguage(lang);
   }
 
   function translatePage(trans, lang) {
@@ -122,17 +98,14 @@
       const key = el.getAttribute('data-i18n');
       if (trans[key]) el.textContent = trans[key];
     });
-
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
       if (trans[key]) el.placeholder = trans[key];
     });
-
     document.querySelectorAll('[data-i18n-alt]').forEach(el => {
       const key = el.getAttribute('data-i18n-alt');
       if (trans[key]) el.alt = trans[key];
     });
-
     document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
       const key = el.getAttribute('data-i18n-tooltip');
       if (trans[key]) el.title = trans[key];
@@ -142,90 +115,175 @@
   function applyTranslationsOnInit() {
     const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
     const trans = translations[lang] || translations.en;
-
-    // Apply to all elements that need translation
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (trans[key]) el.textContent = trans[key];
     });
-
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
       if (trans[key]) el.placeholder = trans[key];
     });
-
-    // Update tooltip/title attributes
     document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
       const key = el.getAttribute('data-i18n-tooltip');
       if (trans[key]) el.title = trans[key];
     });
-
-    // Set theme button title
-    const themeBtn = document.getElementById('theme-toggle');
-    if (themeBtn) {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      themeBtn.title = nextTheme === 'dark'
-        ? (trans.theme_light || 'Light mode')
-        : (trans.theme_dark || 'Dark mode');
-    }
   }
 
   function renderLangSelector(currentLang) {
     const select = document.getElementById('language-select');
     if (!select) return;
-
     select.innerHTML = '';
-
-    [
-      { value: 'el', label: 'EL' },
-      { value: 'en', label: 'EN' }
-    ].forEach(opt => {
-      const option = document.createElement('option');
-      option.value = opt.value;
-      option.textContent = opt.label;
-      if (opt.value === currentLang) option.selected = true;
-      select.appendChild(option);
+    [{value:'el',label:'EL'},{value:'en',label:'EN'}].forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      if (opt.value === currentLang) o.selected = true;
+      select.appendChild(o);
     });
-
-    select.onchange = (e) => {
-      applyLanguage(e.target.value);
-    };
+    select.onchange = (e) => applyLanguage(e.target.value);
   }
 
   // ---------- Back to Top ----------
   function initBackToTop() {
     const btn = document.getElementById('back-to-top');
     if (!btn) return;
-
     window.addEventListener('scroll', () => {
-      if (window.scrollY > 300) {
-        btn.classList.add('visible');
-      } else {
-        btn.classList.remove('visible');
-      }
+      btn.classList.toggle('visible', window.scrollY > 300);
     }, { passive: true });
-
-    btn.onclick = () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ========== GLOBAL SHORTCUTS ==========
-  document.addEventListener('keydown', (e) => {
-    // F9 = Zen mode toggle (works across all pages/applications)
-    if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-      e.preventDefault();
-      if (typeof window.toggleZenMode === 'function') {
-        window.toggleZenMode();
-      }
+  // ---------- Zen Mode (GLOBAL) ----------
+  let zenActive = false;
+
+  function initZenMode() {
+    const btn = document.getElementById('btn-zen');
+    if (!btn) return;
+
+    zenActive = localStorage.getItem('oros-zen') === 'true';
+    if (zenActive) {
+      document.documentElement.setAttribute('data-zen', 'true');
     }
 
-    // Ctrl/Cmd+S anywhere (for quick save in editor context)
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      // Let the page handle its own save logic
-      // This is just a placeholder - actual save happens in editor-tools.js
+    btn.onclick = toggleZenMode;
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        toggleZenMode();
+      }
+      if (e.key === 'Escape' && zenActive) {
+        toggleZenMode();
+      }
+    });
+  }
+
+  function toggleZenMode() {
+    zenActive = !zenActive;
+    if (zenActive) {
+      document.documentElement.setAttribute('data-zen', 'true');
+      localStorage.setItem('oros-zen', 'true');
+      showZenToast();
+    } else {
+      document.documentElement.removeAttribute('data-zen');
+      localStorage.removeItem('oros-zen');
+      removeZenToast();
     }
-  });
+  }
+
+  window.toggleZenMode = toggleZenMode;
+
+  function showZenToast() {
+    removeZenToast();
+    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    const msg = lang === 'el'
+      ? '🧘 Zen Mode — Πάτα ESC ή F9 για έξοδο'
+      : '🧘 Zen Mode — Press ESC or F9 to exit';
+    const toast = document.createElement('div');
+    toast.className = 'zentool-toast visible';
+    toast.id = 'zen-toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { const t = document.getElementById('zen-toast'); if (t) t.classList.remove('visible'); }, 3500);
+  }
+
+  function removeZenToast() {
+    const t = document.getElementById('zen-toast');
+    if (t) t.remove();
+  }
+
+  // ---------- Settings Modal (GLOBAL) ----------
+  function initSettings() {
+    const btn = document.getElementById('btn-settings');
+    if (!btn) return;
+    btn.onclick = openSettingsModal;
+  }
+
+  function openSettingsModal() {
+    const existing = document.querySelector('.settings-modal');
+    if (existing) existing.remove();
+
+    const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    const isEditor = !!document.getElementById('editor') || !!document.getElementById('rich-editor');
+
+    const globalShortcuts = lang === 'el' ? [
+      ['Zen Mode', 'F9'],
+      ['Έξοδος Zen', 'ESC']
+    ] : [
+      ['Zen Mode', 'F9'],
+      ['Exit Zen', 'ESC']
+    ];
+
+    const editorShortcuts = lang === 'el' ? [
+      ['Αποθήκευση', 'Ctrl+S'],
+      ['Μορφοποίηση', 'Δεξί click']
+    ] : [
+      ['Save', 'Ctrl+S'],
+      ['Format', 'Right-click']
+    ];
+
+    const allShortcuts = isEditor ? [...globalShortcuts, ...editorShortcuts] : globalShortcuts;
+
+    const title = lang === 'el' ? 'Ρυθμίσεις' : 'Settings';
+    const tabLabel = lang === 'el' ? 'Συντομεύσεις' : 'Shortcuts';
+    const colAction = lang === 'el' ? 'Ενέργεια' : 'Action';
+    const colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
+
+    const modal = document.createElement('div');
+    modal.className = 'settings-modal';
+    modal.innerHTML = `
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <header class="modal-header">
+          <h2>${title}</h2>
+          <button class="close-btn">×</button>
+        </header>
+        <nav class="modal-nav">
+          <button class="tab-btn active">${tabLabel}</button>
+        </nav>
+        <div class="tab-panel">
+          <table class="shortcut-table">
+            <thead><tr><th>${colAction}</th><th>${colKey}</th></tr></thead>
+            <tbody>
+              ${allShortcuts.map(([a,k]) => `<tr><td>${a}</td><td><kbd>${k}</kbd></td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+
+    const close = () => modal.remove();
+    modal.querySelector('.close-btn').onclick = close;
+    modal.querySelector('.modal-backdrop').onclick = close;
+    document.body.appendChild(modal);
+  }
+
+  function updateSettingsModalLanguage(lang) {
+    // If modal is open, rebuild it
+    const existing = document.querySelector('.settings-modal');
+    if (existing) {
+      existing.remove();
+      openSettingsModal();
+    }
+  }
 
 })();

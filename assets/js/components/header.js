@@ -1,5 +1,6 @@
 // ============================================
 // orOS — Global Header Component
+// Includes: Logo, Language, Zen Mode, Settings, Theme
 // Edit this file → all apps update instantly
 // ============================================
 
@@ -16,6 +17,8 @@
         </a>
         <div class="header-controls">
           <select id="language-select" class="lang-select" aria-label="Language selector"></select>
+          <button id="btn-zen" class="btn-control btn-icon" aria-label="Zen Mode" title="Zen Mode (F9)">🧘</button>
+          <button id="btn-settings" class="btn-control btn-icon" aria-label="Settings" title="Settings">⚙️</button>
           <button id="theme-toggle" class="btn-control btn-icon" aria-label="Toggle theme"></button>
         </div>
       </div>
