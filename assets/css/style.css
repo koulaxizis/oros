@@ -4,7 +4,6 @@
 /* No Frameworks • Pure CSS • Privacy   */
 /* ==================================== */
 
-/* ---------- Font Faces ---------- */
 @font-face {
   font-family: 'Nunito';
   src: url('../fonts/nunito-regular.woff2') format('woff2');
@@ -41,7 +40,6 @@
   font-display: swap;
 }
 
-/* ---------- Design Tokens ---------- */
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f6f5f1;
@@ -54,8 +52,9 @@
   --radius: 12px;
   --radius-sm: 6px;
   --header-h: 60px;
-  --font-main: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-main: 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --app-max-w: 1200px;
 }
 
 [data-theme="dark"] {
@@ -69,15 +68,8 @@
   --shadow: rgba(0,0,0,0.3);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-main);
@@ -91,8 +83,6 @@ body {
 }
 
 /* ---------- Layout Containers ---------- */
-
-/* Standard narrow container (landing page, text content) */
 .container {
   max-width: 900px;
   margin: 0 auto;
@@ -100,11 +90,10 @@ body {
   width: 100%;
 }
 
-/* Wide container for apps (full-width, centered) */
 .app-container {
-  max-width: 1200px;
+  max-width: var(--app-max-w);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0;
   width: 100%;
 }
 
@@ -117,11 +106,10 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: var(--app-max-w);
   margin: 0 auto;
   padding: 0 1.5rem;
   display: flex;
@@ -136,13 +124,11 @@ body {
   text-decoration: none;
   font-family: var(--font-mono);
   font-size: 1.25rem;
-  letter-spacing: -0.02em;
 }
 
 .logo-icon {
   width: 26px;
   height: 26px;
-  flex-shrink: 0;
 }
 
 .logo-text b {
@@ -190,7 +176,19 @@ body {
   font-size: 1.05rem;
 }
 
-/* ---------- Hero (Landing Page) ---------- */
+.lang-select {
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-main);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- Hero ---------- */
 .hero {
   text-align: center;
   padding: 4rem 0;
@@ -232,7 +230,7 @@ body {
   padding: 1.5rem;
   text-decoration: none;
   color: var(--text-primary);
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -251,34 +249,56 @@ body {
 .tool-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; }
 .tool-desc { font-size: 0.85rem; color: var(--text-secondary); }
 
-/* ---------- App (Editor) Layout ---------- */
+/* ---------- App Main Layout (EDITOR SPECIFIC) ---------- */
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 0 0 0;
-  margin: 0;
+  width: 100%;
+  padding-bottom: 0;
 }
 
 .toolbar {
+  display: flex;
+  gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  flex-wrap: wrap;
+  align-items: center;
   width: 100%;
+  max-width: var(--app-max-w);
+  margin: 0 auto;
 }
 
 .editor-wrapper {
-  max-width: 1200px;
-  margin: 0 auto;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  overflow: hidden;
+  flex: 1;
+  min-height: calc(100vh - 60px - 130px);
   width: 100%;
+  max-width: var(--app-max-w);
+  margin: 0 auto;
 }
 
 .editor-input {
   width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 60px - 130px);
+  border: none;
+  resize: none;
   padding: 1.5rem 2rem;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1.8;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
 }
-
-.editor-input:focus { outline: none; }
 
 /* ---------- Footer ---------- */
 .footer {
@@ -291,7 +311,7 @@ body {
 }
 
 .footer-inner {
-  max-width: 1200px;
+  max-width: var(--app-max-w);
   margin: 0 auto;
   padding: 0 1.5rem;
   display: flex;
@@ -306,7 +326,7 @@ body {
   bottom: 2rem;
   right: 2rem;
   background-color: var(--accent);
-  color: var(--bg-primary);
+  color: white;
   border: none;
   border-radius: 50%;
   width: 3rem;
@@ -331,36 +351,38 @@ body {
 .back-to-top:hover {
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(200,169,110,0.4);
-  background-color: var(--accent-hover);
 }
-
-/* ---------- Language Selector ---------- */
-.lang-select {
-  padding: 0.4rem 0.6rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-family: var(--font-main);
-  font-weight: 600;
-  cursor: pointer;
-}
-
 
 /* ---------- Zen Mode ---------- */
 [data-zen="true"] .header,
 [data-zen="true"] .footer,
-[data-zen="true"] #back-to-top {
+[data-zen="true"] .back-to-top {
   display: none !important;
 }
 
 [data-zen="true"] .editor-wrapper {
-  min-height: calc(100vh - var(--header-h)) !important;
-  border-radius: var(--radius) !important;
+  min-height: calc(100vh - 60px) !important;
+  border-radius: 0 !important;
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+  left: 0;
+  position: relative;
 }
 
-[zentool-toast] {
+[data-zen="true"] .toolbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 0;
+  z-index: 50;
+}
+
+[zentoast-toast] {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -390,16 +412,16 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
   min-width: 180px;
   z-index: 9999;
   overflow: hidden;
-  animation: cm-slide-down 0.15s ease;
+  animation: cm-fade_in 0.15s ease;
 }
 
-@keyframes cm-slide_down {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes cm-fade_in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .cm-item {
@@ -410,6 +432,7 @@ body {
   gap: 0.6rem;
   font-size: 0.85rem;
   color: var(--text-primary);
+  user-select: none;
 }
 
 .cm-item:hover {
@@ -446,7 +469,7 @@ body {
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
@@ -473,6 +496,7 @@ body {
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--text-secondary);
+  line-height: 1;
 }
 
 .close-btn:hover {
@@ -500,7 +524,7 @@ body {
 .tab-btn.active {
   background: var(--bg-primary);
   color: var(--text-primary);
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .tab-panel {
@@ -537,20 +561,16 @@ kbd {
 }
 
 @media (max-width: 768px) {
-  .settings-modal .modal-content {
-    width: 95%;
-    max-height: 90vh;
-  }
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 768px) {
   .hero h1 { font-size: 2.5rem; }
   .header-content { flex-direction: column; gap: 0.75rem; }
   .tools-grid { grid-template-columns: 1fr; }
   .toolbar { justify-content: center; padding: 0.75rem 1rem; }
   .editor-input { padding: 1rem; }
-  .app-container, .container, .header-content, .footer-inner {
+  .container, .header-content, .footer-inner {
     padding: 0 1rem;
+  }
+  .settings-modal .modal-content {
+    width: 95%;
+    max-height: 90vh;
   }
 }

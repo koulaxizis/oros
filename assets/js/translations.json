@@ -4,11 +4,11 @@
     "site_tagline": "The artist's operating system",
     "nav_home": "Home",
     "nav_tools": "Tools",
-    "theme_light": "☀️ Light",
-    "theme_dark": "🌙 Dark",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
     "lang_select": "Language",
     "back_to_top": "↑ Top",
-    "footer_text": "Open Source • No Tracking • No Ads • Privacy First",
+    "footer_text": "Open Source · No Tracking · No Ads · Privacy First",
     "footer_credits": "© 2026 Christos Koulaxizis. Built with ♥ for artists.",
 
     "tools_intro": "Select a tool below. All applications work offline and respect your personal data.",
@@ -16,12 +16,16 @@
     "editor_name": "Writer",
     "editor_desc": "Simple markdown text editor with autosave",
 
-    "button_new": "New",
+    "button_new": "New Document",
     "button_save": "Save",
-    "button_load": "Load",
+    "button_load": "Load Saved",
     "button_clear": "Clear",
     "button_export_md": "Export MD",
     "button_copy_html": "Copy HTML",
+
+    "zen_mode": "Zen Mode",
+    "settings": "Settings",
+
     "status_saved": "✓ Saved",
     "placeholder_editor": "Start writing here... Supports Markdown syntax."
   },
@@ -31,11 +35,11 @@
     "site_tagline": "Το λειτουργικό σύστημα του καλλιτέχνη",
     "nav_home": "Αρχική",
     "nav_tools": "Εργαλεία",
-    "theme_light": "☀️ Ανοιχτό",
-    "theme_dark": "🌙 Σκούρο",
+    "theme_light": "Ανοιχτό",
+    "theme_dark": "Σκούρο",
     "lang_select": "Γλώσσα",
     "back_to_top": "↑ Κορυφή",
-    "footer_text": "Ανοικτός Κώδικας • Χωρίς Παρακολούθηση • Χωρίς Διαφημίσεις • Προστασία Ιδιωτικότητας",
+    "footer_text": "Ανοικτός Κώδικας · Χωρίς Παρακολούθηση · Χωρίς Διαφημίσεις · Προστασία Ιδιωτικότητας",
     "footer_credits": "© 2026 Christos Koulaxizis. Κατασκευασμένο με ♥ για καλλιτέχνες.",
 
     "tools_intro": "Επιλέξτε ένα εργαλείο παρακάτω. Όλες οι εφαρμογές λειτουργούν χωρίς σύνδεση και με σεβασμό στα προσωπικά σας δεδομένα.",
@@ -49,6 +53,10 @@
     "button_clear": "Εκκαθάριση",
     "button_export_md": "Εξαγωγή MD",
     "button_copy_html": "Αντιγραφή HTML",
+
+    "zen_mode": "Zen Mode",
+    "settings": "Ρυθμίσεις",
+
     "status_saved": "✓ Αποθηκεύτηκε",
     "placeholder_editor": "Ξεκινήστε να γράφετε εδώ... Υποστηρίζει Markdown."
   }

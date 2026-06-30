@@ -23,27 +23,32 @@
   <div id="oros-header"></div>
   <script src="assets/js/components/header.js"></script>
 
-  <!-- App: full-width, centered -->
+  <!-- App Content (Full-width) -->
   <main class="app-main">
-    <div class="app-container">
-      <div class="toolbar">
-        <button id="btn-new" class="btn-control" data-i18n="button_new">New</button>
-        <button id="btn-save" class="btn-control" data-i18n="button_save">Save</button>
-        <button id="btn-load" class="btn-control" data-i18n="button_load">Load</button>
-        <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
-        <button id="btn-export-md" class="btn-control" data-i18n="button_export_md">Export MD</button>
-        <button id="btn-copy-html" class="btn-control" data-i18n="button_copy_html">Copy HTML</button>
-        <span id="save-status" style="color:var(--accent);font-size:0.85rem;margin-left:auto;font-weight:600;"></span>
-      </div>
+    <div class="toolbar">
+      <button id="btn-new" class="btn-control" data-i18n="button_new">New</button>
+      <button id="btn-save" class="btn-control" data-i18n="button_save">Save</button>
+      <button id="btn-load" class="btn-control" data-i18n="button_load">Load</button>
+      <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
+      <button id="btn-export-md" class="btn-control" data-i18n="button_export_md">Export MD</button>
+      <button id="btn-copy-html" class="btn-control" data-i18n="button_copy_html">Copy HTML</button>
       
-      <div class="editor-wrapper">
-        <textarea 
-          id="editor" 
-          class="editor-input" 
-          data-i18n-placeholder="placeholder_editor"
-          placeholder="Start writing here... Supports Markdown syntax."
-        ></textarea>
-      </div>
+      <!-- NEW: Zen Mode Button -->
+      <button id="btn-zen" class="btn-control" title="Zen Mode (F9)" data-i18n-tooltip="zen_mode">🧘</button>
+      
+      <!-- NEW: Settings Button -->
+      <button id="btn-settings" class="btn-control" title="Settings" data-i18n-tooltip="settings">⚙️</button>
+      
+      <span id="save-status" style="color:var(--accent);font-size:0.85rem;margin-left:auto;font-weight:600;"></span>
+    </div>
+    
+    <div class="editor-wrapper">
+      <textarea 
+        id="editor" 
+        class="editor-input" 
+        data-i18n-placeholder="placeholder_editor"
+        placeholder="Start writing here... Supports Markdown syntax."
+      ></textarea>
     </div>
   </main>
 
@@ -51,9 +56,13 @@
   <div id="oros-footer"></div>
   <script src="assets/js/components/footer.js"></script>
 
-  <!-- Core + Editor -->
+  <!-- Core Scripts -->
   <script src="assets/js/main.js"></script>
-  <script src="assets/js/editor.js"></script>
+  
+  <!-- Editor Logic (includes zen, settings, context menu) -->
+  <script src="assets/js/editor-tools.js"></script>
+  
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js');
