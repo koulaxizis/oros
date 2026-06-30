@@ -1,9 +1,47 @@
 /* ==================================== */
-/* orOS — Designer Theme                */
+/* orOS — Designer Theme               */
+/* Font: Nunito (self-hosted, OFL)     */
 /* No Frameworks • Pure CSS • Privacy   */
-/* Branding: Gold/Warm tones            */
 /* ==================================== */
 
+/* ---------- Font Faces ---------- */
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-extrabold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Design Tokens ---------- */
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f6f5f1;
@@ -13,6 +51,11 @@
   --accent-hover: #a08254;
   --border: #e2ded7;
   --shadow: rgba(40,30,15,0.07);
+  --radius: 12px;
+  --radius-sm: 6px;
+  --header-h: 60px;
+  --font-main: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
 [data-theme="dark"] {
@@ -37,28 +80,40 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-main);
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.65;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* ---------- Layout Containers ---------- */
+
+/* Standard narrow container (landing page, text content) */
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   width: 100%;
 }
 
+/* Wide container for apps (full-width, centered) */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  width: 100%;
+}
+
+/* ---------- Header ---------- */
 .header {
   background-color: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 0.75rem 0;
+  padding: 0.6rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -66,25 +121,37 @@ body {
 }
 
 .header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .logo {
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
   letter-spacing: -0.02em;
 }
 
-.logo b {
-  font-weight: 700;
+.logo-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
 }
 
-.logo span {
+.logo-text b {
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.logo-text i {
+  font-style: normal;
   color: var(--accent);
   font-weight: 800;
 }
@@ -99,15 +166,16 @@ body {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  padding: 0.4rem 0.7rem;
-  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.85rem;
+  font-family: var(--font-main);
+  font-weight: 600;
   transition: all 0.2s;
 }
 
 .btn-control:hover {
-  background-color: var(--surface-alt);
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -119,8 +187,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.05rem;
 }
 
+/* ---------- Hero (Landing Page) ---------- */
 .hero {
   text-align: center;
   padding: 4rem 0;
@@ -128,36 +198,25 @@ body {
 }
 
 .hero h1 {
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 3.5rem;
   margin-bottom: 0.5rem;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
-.hero .hero-logo {
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  margin: 0;
-}
-
-.hero-logo b {
-  font-weight: 800;
-}
-
-.hero-logo span {
-  color: var(--accent);
-  font-weight: 800;
-}
+.hero h1 b { font-weight: 800; }
+.hero h1 i { font-style: normal; color: var(--accent); font-weight: 800; }
 
 .hero p {
   color: var(--text-secondary);
   font-size: 1.125rem;
   max-width: 600px;
   margin: 0 auto;
+  font-weight: 500;
 }
 
+/* ---------- Tools Grid ---------- */
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -169,7 +228,7 @@ body {
 .tool-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 1.5rem;
   text-decoration: none;
   color: var(--text-primary);
@@ -188,64 +247,58 @@ body {
   border-color: var(--accent);
 }
 
-.tool-icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
+.tool-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.tool-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; }
+.tool-desc { font-size: 0.85rem; color: var(--text-secondary); }
 
-.tool-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-}
-
-.tool-desc {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.fullscreen-container {
+/* ---------- App (Editor) Layout ---------- */
+.app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: 0;
-  margin-bottom: 0;
+  padding: 1rem 0 0;
 }
 
 .toolbar {
   display: flex;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.5rem;
   background-color: var(--bg-primary);
   border: 1px solid var(--border);
   border-bottom: none;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .editor-wrapper {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 var(--radius) var(--radius);
   overflow: hidden;
   flex: 1;
-  min-height: calc(100vh - 240px);
+  min-height: calc(100vh - var(--header-h) - 160px);
 }
 
 .editor-input {
   width: 100%;
   height: 100%;
+  min-height: calc(100vh - var(--header-h) - 160px);
   border: none;
   resize: none;
-  padding: 1.5rem;
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  padding: 1.5rem 2rem;
+  font-family: var(--font-mono);
   font-size: 1rem;
-  line-height: 1.7;
+  line-height: 1.8;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   outline: none;
+  transition: font-size 0.2s;
 }
 
+.editor-input:focus { outline: none; }
+
+/* ---------- Footer ---------- */
 .footer {
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border);
@@ -253,15 +306,25 @@ body {
   text-align: center;
   color: var(--text-secondary);
   font-size: 0.85rem;
-  margin-top: 0;
 }
 
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+/* ---------- Back to Top ---------- */
 .back-to-top {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
   background-color: var(--accent);
-  color: white;
+  color: var(--bg-primary);
   border: none;
   border-radius: 50%;
   width: 3rem;
@@ -272,6 +335,7 @@ body {
   transition: all 0.3s;
   z-index: 99;
   font-size: 1.2rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -284,24 +348,31 @@ body {
 
 .back-to-top:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(200,169,110,0.3);
+  box-shadow: 0 5px 15px rgba(200,169,110,0.4);
   background-color: var(--accent-hover);
 }
 
+/* ---------- Language Selector ---------- */
 .lang-select {
-  padding: 0.4rem;
-  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-size: 0.85rem;
+  font-family: var(--font-main);
+  font-weight: 600;
+  cursor: pointer;
 }
 
+/* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .hero h1 { font-size: 2.5rem; }
   .header-content { flex-direction: column; gap: 0.75rem; }
   .tools-grid { grid-template-columns: 1fr; }
-  .fullscreen-container { flex: 1; }
-  .editor-wrapper { min-height: calc(100vh - 200px); }
-  .toolbar { justify-content: center; }
+  .toolbar { justify-content: center; padding: 0.75rem 1rem; }
+  .editor-input { padding: 1rem; }
+  .app-container, .container, .header-content, .footer-inner {
+    padding: 0 1rem;
+  }
 }

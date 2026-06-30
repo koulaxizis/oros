@@ -1,4 +1,4 @@
-const CACHE_NAME = 'oros-v1';
+const CACHE_NAME = 'oros-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,13 @@ const STATIC_ASSETS = [
   './assets/js/main.js',
   './assets/js/editor.js',
   './assets/js/translations.json',
+  './assets/js/components/header.js',
+  './assets/js/components/footer.js',
+  './assets/fonts/nunito-regular.woff2',
+  './assets/fonts/nunito-medium.woff2',
+  './assets/fonts/nunito-semibold.woff2',
+  './assets/fonts/nunito-bold.woff2',
+  './assets/fonts/nunito-extrabold.woff2',
   './favicon.svg',
   './manifest.json'
 ];
@@ -18,10 +25,15 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(self.clients.claim());
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
   e.respondWith(
     caches.match(e.request).then(response => {
       if (response) return response;

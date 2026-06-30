@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="assets/css/style.css">
-  
+
   <script>
     (function(){
       var t = localStorage.getItem('oros-theme');
@@ -18,18 +18,14 @@
   </script>
 </head>
 <body>
-  <header class="header">
-    <div class="container header-content">
-      <a href="./" class="logo" data-i18n="site_title">orOS</a>
-      <div class="header-controls">
-        <select id="language-select" class="lang-select"></select>
-        <button id="theme-toggle" class="btn-control btn-icon"></button>
-      </div>
-    </div>
-  </header>
 
-  <main class="fullscreen-container">
-    <div class="container">
+  <!-- Global Header -->
+  <div id="oros-header"></div>
+  <script src="assets/js/components/header.js"></script>
+
+  <!-- App: full-width, centered -->
+  <main class="app-main">
+    <div class="app-container">
       <div class="toolbar">
         <button id="btn-new" class="btn-control" data-i18n="button_new">New</button>
         <button id="btn-save" class="btn-control" data-i18n="button_save">Save</button>
@@ -37,7 +33,7 @@
         <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
         <button id="btn-export-md" class="btn-control" data-i18n="button_export_md">Export MD</button>
         <button id="btn-copy-html" class="btn-control" data-i18n="button_copy_html">Copy HTML</button>
-        <span id="save-status" style="color:var(--accent);font-size:0.85rem;margin-left:auto;"></span>
+        <span id="save-status" style="color:var(--accent);font-size:0.85rem;margin-left:auto;font-weight:600;"></span>
       </div>
       
       <div class="editor-wrapper">
@@ -51,15 +47,11 @@
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-text" data-i18n="footer_text">Open Source • No Tracking • No Ads • Privacy First</div>
-      <div class="footer-credits" data-i18n="footer_credits">© 2026 Christos Koulaxizis. Built with ♥ for artists.</div>
-    </div>
-  </footer>
+  <!-- Global Footer + Back-to-top -->
+  <div id="oros-footer"></div>
+  <script src="assets/js/components/footer.js"></script>
 
-  <button id="back-to-top" class="back-to-top" data-i18n="back_to_top">↑ Top</button>
-  
+  <!-- Core + Editor -->
   <script src="assets/js/main.js"></script>
   <script src="assets/js/editor.js"></script>
   <script>

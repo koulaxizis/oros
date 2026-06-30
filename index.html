@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <title>orOS — Artist's Operating System</title>
   <link rel="stylesheet" href="assets/css/style.css">
-  
+
   <!-- Prevent theme FOUC -->
   <script>
     (function(){
@@ -21,19 +21,14 @@
   </script>
 </head>
 <body>
-  <header class="header">
-    <div class="container header-content">
-      <a href="./" class="logo" data-i18n="site_title">orOS</a>
-      <div class="header-controls">
-        <select id="language-select" class="lang-select" aria-label="Language selector"></select>
-        <button id="theme-toggle" class="btn-control btn-icon" aria-label="Toggle theme"></button>
-      </div>
-    </div>
-  </header>
+
+  <!-- Global Header (managed by components/header.js) -->
+  <div id="oros-header"></div>
+  <script src="assets/js/components/header.js"></script>
 
   <main class="hero">
     <div class="container">
-      <h1 class="hero-logo"><b>or</b><span>OS</span></h1>
+      <h1><b>or</b><i>OS</i></h1>
       <p data-i18n="site_tagline">The artist's operating system</p>
     </div>
   </main>
@@ -52,15 +47,11 @@
     </div>
   </section>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-text" data-i18n="footer_text">Open Source • No Tracking • No Ads • Privacy First</div>
-      <div class="footer-credits" data-i18n="footer_credits">© 2026 Christos Koulaxizis. Built with ♥ for artists.</div>
-    </div>
-  </footer>
+  <!-- Global Footer + Back-to-top (managed by components/footer.js) -->
+  <div id="oros-footer"></div>
+  <script src="assets/js/components/footer.js"></script>
 
-  <button id="back-to-top" class="back-to-top" data-i18n="back_to_top">↑ Top</button>
-  
+  <!-- Core -->
   <script src="assets/js/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
