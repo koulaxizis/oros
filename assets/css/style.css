@@ -1,8 +1,4 @@
-/* ==================================== */
-/* orOS — Designer Theme               */
-/* Font: Nunito (self-hosted, OFL)     */
-/* No Frameworks • Pure CSS • Privacy   */
-/* ==================================== */
+/* orOS Designer Theme - Nunito OFL - Pure CSS */
 
 @font-face {
   font-family: 'Nunito';
@@ -42,9 +38,7 @@
   --shadow-lg: 0 8px 30px rgba(40,30,15,0.12);
   --radius: 12px;
   --radius-sm: 6px;
-  --header-h: 60px;
-  --footer-h: 72px;
-  --toolbar-h: 52px;
+  --header-h: 55px;
   --font-main: 'Nunito', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 }
@@ -73,10 +67,8 @@ body {
   display: flex;
   flex-direction: column;
   transition: background-color 0.3s, color 0.3s;
-  overflow: hidden;
 }
 
-/* ---------- Layout ---------- */
 .container {
   max-width: 900px;
   margin: 0 auto;
@@ -84,7 +76,6 @@ body {
   width: 100%;
 }
 
-/* ---------- Header ---------- */
 .header {
   background-color: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
   backdrop-filter: blur(12px);
@@ -114,9 +105,22 @@ body {
   font-size: 1.25rem;
 }
 
-.logo-icon { width: 26px; height: 26px; }
+.logo-icon { width: 26px; height: 26px; flex-shrink: 0; }
 .logo-text b { font-weight: 800; color: var(--text-primary); }
 .logo-text i { font-style: normal; color: var(--accent); font-weight: 800; }
+
+.version-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+}
 
 .header-controls {
   display: flex;
@@ -164,12 +168,10 @@ body {
   cursor: pointer;
 }
 
-/* ---------- Hero ---------- */
 .hero {
   text-align: center;
   padding: 4rem 0;
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
-  overflow-y: auto;
 }
 
 .hero h1 {
@@ -191,7 +193,6 @@ body {
   font-weight: 500;
 }
 
-/* ---------- Tools Grid ---------- */
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -226,7 +227,6 @@ body {
 .tool-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; }
 .tool-desc { font-size: 0.85rem; color: var(--text-secondary); }
 
-/* ---------- App Main (FULL-WIDTH, FIT VIEWPORT) ---------- */
 .app-main {
   flex: 1;
   display: flex;
@@ -270,7 +270,6 @@ body {
   outline: none;
 }
 
-/* Rich text editor */
 .rich-editor {
   width: 100%;
   height: 100%;
@@ -310,7 +309,6 @@ body {
   font-size: 0.9em;
 }
 
-/* Editor mode toggle */
 .mode-toggle {
   display: inline-flex;
   border: 1px solid var(--border);
@@ -336,10 +334,7 @@ body {
   color: white;
 }
 
-/* Export dropdown — opens DOWNWARD */
-.export-wrap {
-  position: relative;
-}
+.export-wrap { position: relative; }
 
 .export-dropdown {
   position: absolute;
@@ -356,9 +351,7 @@ body {
   display: none;
 }
 
-.export-dropdown.visible {
-  display: block;
-}
+.export-dropdown.visible { display: block; }
 
 .export-dropdown button {
   display: block;
@@ -379,7 +372,16 @@ body {
   color: white;
 }
 
-/* ---------- Footer ---------- */
+.open-wrap { display: inline-flex; align-items: center; }
+
+.open-hint {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
 .footer {
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border);
@@ -407,11 +409,8 @@ body {
   transition: color 0.2s;
 }
 
-.footer-link:hover {
-  color: var(--accent);
-}
+.footer-link:hover { color: var(--accent); }
 
-/* ---------- Back to Top ---------- */
 .back-to-top {
   position: fixed;
   bottom: 2rem;
@@ -441,16 +440,11 @@ body {
   box-shadow: 0 5px 15px rgba(200,169,110,0.4);
 }
 
-/* ---------- Zen Mode ---------- */
 [data-zen="true"] .header,
 [data-zen="true"] .footer,
 [data-zen="true"] .back-to-top,
 [data-zen="true"] .toolbar {
   display: none !important;
-}
-
-[data-zen="true"] body {
-  overflow: hidden;
 }
 
 [data-zen="true"] .editor-wrapper {
@@ -467,7 +461,6 @@ body {
   height: 100vh !important;
 }
 
-/* ---------- Toast ---------- */
 .zentool-toast {
   position: fixed;
   top: 50%;
@@ -491,7 +484,6 @@ body {
   transform: translate(-50%, -50%) scale(1);
 }
 
-/* ---------- Context Menu ---------- */
 .context-menu {
   position: fixed;
   background: var(--bg-primary);
@@ -535,7 +527,6 @@ body {
   margin: 0.25rem 0;
 }
 
-/* ---------- Settings Modal ---------- */
 .settings-modal .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -628,6 +619,10 @@ body {
   font-size: 0.85rem;
 }
 
+.shortcut-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 kbd {
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -639,7 +634,6 @@ kbd {
 
 .install-section {
   padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
   margin-top: 1rem;
   text-align: center;
 }
@@ -671,12 +665,8 @@ kbd {
   transform: none;
 }
 
-/* ---------- Landing page scroll override ---------- */
-.landing-page {
-  overflow-y: auto !important;
-}
+.landing-page { overflow-y: auto !important; }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .hero h1 { font-size: 2.5rem; }
   .header-content { flex-direction: column; gap: 0.75rem; }
@@ -685,4 +675,5 @@ kbd {
   .editor-input, .rich-editor { padding: 1rem; }
   .container, .header-content, .footer-inner { padding: 0 1rem; }
   .settings-modal .modal-content { width: 95%; max-height: 90vh; }
+  .open-hint { display: none; }
 }

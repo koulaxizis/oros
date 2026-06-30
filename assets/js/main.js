@@ -1,7 +1,4 @@
-// ============================================
-// orOS — Core Functionality
-// Theme | Language | Back-to-top | Zen Mode | Settings
-// ============================================
+// orOS Core: Theme, Language, BTT, Zen Mode, Settings
 
 (function() {
   const STORAGE_KEY = {
@@ -15,7 +12,6 @@
   let translations = {};
   window.OROS_TRANSLATIONS = translations;
 
-  // PWA install prompt
   let deferredPrompt = null;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -109,7 +105,10 @@
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      if (trans[key]) el.placeholder = trans[key];
+      if (trans[key]) {
+        el.placeholder = trans[key];
+        el.setAttribute('data-placeholder', trans[key]);
+      }
     });
     document.querySelectorAll('[data-i18n-alt]').forEach(el => {
       const key = el.getAttribute('data-i18n-alt');
@@ -130,7 +129,10 @@
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      if (trans[key]) el.placeholder = trans[key];
+      if (trans[key]) {
+        el.placeholder = trans[key];
+        el.setAttribute('data-placeholder', trans[key]);
+      }
     });
     document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
       const key = el.getAttribute('data-i18n-tooltip');
@@ -152,7 +154,7 @@
     select.onchange = (e) => applyLanguage(e.target.value);
   }
 
-  // ---------- Footer Credits (with clickable link) ----------
+  // ---------- Footer Credits ----------
   function updateFooterCredits() {
     const lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
     const trans = translations[lang] || translations.en;
@@ -160,7 +162,7 @@
     if (!creditEl) return;
     const linkText = trans.footer_credits_link || 'Christos Koulaxizis';
     const suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
-    creditEl.innerHTML = `© 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">${linkText}</a>${suffix}`;
+    creditEl.innerHTML = '© 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
   }
 
   // ---------- Back to Top ----------
@@ -173,20 +175,17 @@
     btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ---------- Zen Mode (GLOBAL) ----------
+  // ---------- Zen Mode ----------
   let zenActive = false;
 
   function initZenMode() {
     const btn = document.getElementById('btn-zen');
     if (!btn) return;
-
     zenActive = localStorage.getItem('oros-zen') === 'true';
     if (zenActive) {
       document.documentElement.setAttribute('data-zen', 'true');
     }
-
     btn.onclick = toggleZenMode;
-
     document.addEventListener('keydown', (e) => {
       if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
@@ -224,7 +223,10 @@
     toast.id = 'zen-toast';
     toast.textContent = msg;
     document.body.appendChild(toast);
-    setTimeout(() => { const t = document.getElementById('zen-toast'); if (t) t.classList.remove('visible'); }, 3500);
+    setTimeout(() => {
+      const t = document.getElementById('zen-toast');
+      if (t) t.classList.remove('visible');
+    }, 3500);
   }
 
   function removeZenToast() {
@@ -232,7 +234,7 @@
     if (t) t.remove();
   }
 
-  // ---------- Settings Modal (GLOBAL) ----------
+  // ---------- Settings Modal ----------
   function initSettings() {
     const btn = document.getElementById('btn-settings');
     if (!btn) return;
@@ -280,52 +282,51 @@
 
     const modal = document.createElement('div');
     modal.className = 'settings-modal';
-    modal.innerHTML = `
-      <div class="modal-backdrop"></div>
-      <div class="modal-content">
-        <header class="modal-header">
-          <h2>${title}</h2>
-          <button class="close-btn">×</button>
-        </header>
-        <nav class="modal-nav">
-          <button class="tab-btn active">${tabLabel}</button>
-        </nav>
-        <div class="tab-panel">
-          <table class="shortcut-table">
-            <thead><tr><th>${colAction}</th><th>${colKey}</th></tr></thead>
-            <tbody>
-              ${allShortcuts.map(([a,k]) => `<tr><td>${a}</td><td><kbd>${k}</kbd></td></tr>`).join('')}
-            </tbody>
-          </table>
-          <div class="install-section">
-            <button class="btn-install" id="btn-install-pwa">⬇ ${installLabel}</button>
-          </div>
-        </div>
-      </div>`;
 
-    const close = () => modal.remove();
-    modal.querySelector('.close-btn').onclick = close;
-    modal.querySelector('.modal-backdrop').onclick = close;
+    let shortcutsHtml = '';
+    allShortcuts.forEach(function(pair) {
+      shortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
+    });
 
-    // Install button
-    const installBtn = modal.querySelector('#btn-install-pwa');
-    installBtn.onclick = async () => {
+    modal.innerHTML =
+      '<div class="modal-backdrop"></div>' +
+      '<div class="modal-content">' +
+        '<header class="modal-header">' +
+          '<h2>' + title + '</h2>' +
+          '<button class="close-btn">&times;</button>' +
+        '</header>' +
+        '<nav class="modal-nav">' +
+          '<button class="tab-btn active">' + tabLabel + '</button>' +
+        '</nav>' +
+        '<div class="tab-panel">' +
+          '<table class="shortcut-table">' +
+            '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
+            '<tbody>' + shortcutsHtml + '</tbody>' +
+          '</table>' +
+          '<div class="install-section">' +
+            '<button class="btn-install" id="btn-install-pwa">⬇ ' + installLabel + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var closeFn = function() { modal.remove(); };
+    modal.querySelector('.close-btn').onclick = closeFn;
+    modal.querySelector('.modal-backdrop').onclick = closeFn;
+
+    var installBtn = modal.querySelector('#btn-install-pwa');
+    installBtn.onclick = async function() {
       if (deferredPrompt) {
         deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        var choice = await deferredPrompt.userChoice;
         deferredPrompt = null;
         installBtn.disabled = true;
         installBtn.textContent = lang === 'el' ? '✓ Εγκαταστάθηκε' : '✓ Installed';
       } else {
         installBtn.disabled = true;
-        const langT = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-        installBtn.textContent = langT === 'el'
-          ? '⚠ Δεν υποστηρίζεται'
-          : '⚠ Not supported';
+        installBtn.textContent = lang === 'el' ? '⚠ Δεν υποστηρίζεται' : '⚠ Not supported';
       }
     };
 
-    // Disable if already installed or no prompt
     if (!deferredPrompt) {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         installBtn.disabled = true;
@@ -337,7 +338,7 @@
   }
 
   function updateSettingsModalLanguage(lang) {
-    const existing = document.querySelector('.settings-modal');
+    var existing = document.querySelector('.settings-modal');
     if (existing) {
       existing.remove();
       openSettingsModal();

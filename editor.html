@@ -19,11 +19,9 @@
 </head>
 <body>
 
-  <!-- Global Header -->
   <div id="oros-header"></div>
   <script src="assets/js/components/header.js"></script>
 
-  <!-- App Content -->
   <main class="app-main">
     <div class="toolbar">
       <div class="export-wrap">
@@ -36,7 +34,11 @@
         </div>
       </div>
 
-      <button id="btn-open" class="btn-control" data-i18n="button_open">Open</button>
+      <div class="open-wrap">
+        <button id="btn-open" class="btn-control" data-i18n="button_open">Open</button>
+        <span class="open-hint" data-i18n="open_hint">Supports: .txt, .md, .markdown, .text</span>
+      </div>
+
       <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
 
       <div class="mode-toggle">
@@ -47,7 +49,6 @@
       <span id="save-status" style="color:var(--accent);font-size:0.85rem;font-weight:600;"></span>
     </div>
 
-    <!-- Markdown mode -->
     <div class="editor-wrapper" id="md-wrapper">
       <textarea
         id="editor"
@@ -57,25 +58,21 @@
       ></textarea>
     </div>
 
-    <!-- Rich text mode -->
     <div class="editor-wrapper" id="rich-wrapper" style="display:none;">
       <div
         id="rich-editor"
         class="rich-editor"
         contenteditable="true"
         data-i18n-placeholder="placeholder_editor"
-        data-placeholder="Start writing here..."
+        data-placeholder="Start writing here... Supports Markdown syntax."
       ></div>
     </div>
   </main>
 
-  <!-- Global Footer -->
   <div id="oros-footer"></div>
   <script src="assets/js/components/footer.js"></script>
 
-  <!-- Core -->
   <script src="assets/js/main.js"></script>
-  <!-- Editor logic -->
   <script src="assets/js/editor.js"></script>
 
   <script>

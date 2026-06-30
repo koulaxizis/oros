@@ -1,6 +1,6 @@
 // ============================================
 // orOS — Global Header Component
-// Includes: Logo, Language, Zen Mode, Settings, Theme
+// Includes: Logo, Version, Language, Zen Mode, Settings, Theme
 // Edit this file → all apps update instantly
 // ============================================
 
@@ -14,6 +14,7 @@
         <a href="./index.html" class="logo">
           <img src="favicon.svg" alt="" class="logo-icon" width="24" height="24">
           <span class="logo-text"><b>or</b><i>OS</i></span>
+          <span class="version-badge">v0.1</span>
         </a>
         <div class="header-controls">
           <select id="language-select" class="lang-select" aria-label="Language selector"></select>

@@ -15,7 +15,7 @@
     "tools_intro": "Select a tool below. All applications work offline and respect your personal data.",
 
     "editor_name": "Writer",
-    "editor_desc": "Simple markdown text editor with autosave",
+    "editor_desc": "Simple text editor with autosave",
 
     "button_open": "Open",
     "button_clear": "Clear",
@@ -24,6 +24,8 @@
     "export_md": "Markdown",
     "export_docx": "DOCX",
     "export_pdf": "PDF",
+
+    "open_hint": "Supports: .txt, .md, .markdown, .text",
 
     "zen_mode": "Zen Mode",
     "settings": "Settings",
@@ -51,7 +53,7 @@
     "tools_intro": "Επιλέξτε ένα εργαλείο παρακάτω. Όλες οι εφαρμογές λειτουργούν χωρίς σύνδεση και με σεβασμό στα προσωπικά σας δεδομένα.",
 
     "editor_name": "Συντάκτης",
-    "editor_desc": "Απλός επεξεργαστής κειμένου markdown με αυτόματη αποθήκευση",
+    "editor_desc": "Απλός επεξεργαστής κειμένου με αυτόματη αποθήκευση",
 
     "button_open": "Άνοιγμα",
     "button_clear": "Εκκαθάριση",
@@ -60,6 +62,8 @@
     "export_md": "Markdown",
     "export_docx": "DOCX",
     "export_pdf": "PDF",
+
+    "open_hint": "Υποστηρίζει: .txt, .md, .markdown, .text",
 
     "zen_mode": "Zen Mode",
     "settings": "Ρυθμίσεις",
