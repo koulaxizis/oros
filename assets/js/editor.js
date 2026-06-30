@@ -8,23 +8,22 @@
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'oros_writer_content';
-  const STORAGE_MODE = 'oros_writer_mode';
+  var STORAGE_KEY = 'oros_writer_content';
+  var STORAGE_MODE = 'oros_writer_mode';
 
-  // Elements
-  const editor = document.getElementById('editor');
-  const richEditor = document.getElementById('rich-editor');
-  const mdWrapper = document.getElementById('md-wrapper');
-  const richWrapper = document.getElementById('rich-wrapper');
-  const saveStatus = document.getElementById('save-status');
-  const btnOpen = document.getElementById('btn-open');
-  const btnClear = document.getElementById('btn-clear');
-  const btnExport = document.getElementById('btn-export');
-  const exportDropdown = document.getElementById('export-dropdown');
-  const modeMd = document.getElementById('mode-md');
-  const modeRich = document.getElementById('mode-rich');
+  var editor = document.getElementById('editor');
+  var richEditor = document.getElementById('rich-editor');
+  var mdWrapper = document.getElementById('md-wrapper');
+  var richWrapper = document.getElementById('rich-wrapper');
+  var saveStatus = document.getElementById('save-status');
+  var btnOpen = document.getElementById('btn-open');
+  var btnClear = document.getElementById('btn-clear');
+  var btnExport = document.getElementById('btn-export');
+  var exportDropdown = document.getElementById('export-dropdown');
+  var modeMd = document.getElementById('mode-md');
+  var modeRich = document.getElementById('mode-rich');
 
-  let currentMode = localStorage.getItem(STORAGE_MODE) || 'md';
+  var currentMode = localStorage.getItem(STORAGE_MODE) || 'md';
 
   // ========== MODE TOGGLE ==========
   function setMode(mode) {
@@ -51,10 +50,10 @@
     saveContent(false);
   }
 
-  modeMd.onclick = () => setMode('md');
-  modeRich.onclick = () => setMode('rich');
+  modeMd.onclick = function() { setMode('md'); };
+  modeRich.onclick = function() { setMode('rich'); };
 
-  // ========== MARKDOWN ↔ HTML CONVERTERS ==========
+  // ========== MARKDOWN TO HTML ==========
   function markdownToHtml(md) {
     return md
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
@@ -68,7 +67,7 @@
   }
 
   function htmlToMarkdown(html) {
-    let md = html
+    var md = html
       .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n')
       .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n')
       .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n')
@@ -84,16 +83,16 @@
   }
 
   // ========== OPEN FILE ==========
-  btnOpen.onclick = () => {
-    const input = document.createElement('input');
+  btnOpen.onclick = function() {
+    var input = document.createElement('input');
     input.type = 'file';
     input.accept = '.txt,.md,.markdown,.text';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
+    input.onchange = function(e) {
+      var file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const content = ev.target.result;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var content = ev.target.result;
         if (currentMode === 'md') {
           editor.value = content;
         } else {
@@ -108,12 +107,12 @@
   };
 
   // ========== CLEAR ==========
-  btnClear.onclick = () => {
-    const hasContent = currentMode === 'md'
+  btnClear.onclick = function() {
+    var hasContent = currentMode === 'md'
       ? editor.value.trim()
       : richEditor.innerText.trim();
     if (!hasContent) return;
-    const confirmText = getCurrentLang() === 'el'
+    var confirmText = getCurrentLang() === 'el'
       ? 'Εκκαθάριση περιεχομένου; Δεν αναιρείται.'
       : 'Clear content? Cannot undo.';
     if (!confirm(confirmText)) return;
@@ -123,43 +122,44 @@
     showToast(getCurrentLang() === 'el' ? 'Καθαρίστηκε' : 'Cleared');
   };
 
-  // ========== EXPORT DROPDOWN (opens DOWNWARD) ==========
-  btnExport.onclick = (e) => {
+  // ========== EXPORT DROPDOWN ==========
+  btnExport.onclick = function(e) {
     e.stopPropagation();
     exportDropdown.classList.toggle('visible');
   };
 
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', function(e) {
     if (!e.target.closest('.export-wrap')) {
       exportDropdown.classList.remove('visible');
     }
   });
 
-  exportDropdown.querySelectorAll('button').forEach(btn => {
-    btn.onclick = () => {
-      const format = btn.dataset.format;
+  var dropdownButtons = exportDropdown.querySelectorAll('button');
+  for (var i = 0; i < dropdownButtons.length; i++) {
+    dropdownButtons[i].onclick = function() {
+      var format = this.dataset.format;
       exportContent(format);
       exportDropdown.classList.remove('visible');
     };
-  });
+  }
 
   function getContent() {
     return currentMode === 'md' ? editor.value : htmlToMarkdown(richEditor.innerHTML);
   }
 
   function exportContent(format) {
-    const content = getContent();
-    const ts = new Date().toISOString().slice(0, 10);
+    var content = getContent();
+    var ts = new Date().toISOString().slice(0, 10);
 
     switch(format) {
       case 'txt':
-        downloadFile(content.replace(/[#*>`]/g, ''), `oros-${ts}.txt`, 'text/plain;charset=utf-8');
+        downloadFile(content.replace(/[#*>`]/g, ''), 'oros-' + ts + '.txt', 'text/plain;charset=utf-8');
         break;
       case 'md':
-        downloadFile(content, `oros-${ts}.md`, 'text/markdown;charset=utf-8');
+        downloadFile(content, 'oros-' + ts + '.md', 'text/markdown;charset=utf-8');
         break;
       case 'docx':
-        exportDocx(content, `oros-${ts}.docx`);
+        exportDocx(content, 'oros-' + ts + '.docx');
         break;
       case 'pdf':
         exportPdf(content);
@@ -169,11 +169,11 @@
   }
 
   function exportDocx(mdContent, filename) {
-    const html = markdownToHtml(mdContent);
-    const fullHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>Export</title></head><body style="font-family: 'Nunito', Calibri, sans-serif; font-size: 12pt;">${html}</body></html>`;
-    const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var html = markdownToHtml(mdContent);
+    var fullHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Export</title></head><body style="font-family: Calibri, sans-serif; font-size: 12pt;">' + html + '</body></html>';
+    var blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
     a.download = filename;
     a.click();
@@ -181,35 +181,36 @@
   }
 
   function exportPdf(mdContent) {
-    const html = markdownToHtml(mdContent);
-    const win = window.open('', '_blank');
+    var html = markdownToHtml(mdContent);
+    var win = window.open('', '_blank');
     if (!win) {
       showToast(getCurrentLang() === 'el' ? '⚠ Άφησε pop-ups' : '⚠ Allow pop-ups');
       return;
     }
-    win.document.write(`
-      <html><head><title>orOS Export</title>
-      <style>
-        body { font-family: 'Nunito', Calibri, sans-serif; font-size: 12pt; line-height: 1.7; max-width: 700px; margin: 2rem auto; padding: 0 1rem; color: #2b2723; }
-        h1 { font-size: 1.8rem; } h2 { font-size: 1.4rem; } h3 { font-size: 1.15rem; }
-        blockquote { border-left: 3px solid #c8a96e; padding-left: 1rem; font-style: italic; color: #756f68; }
-        code { font-family: monospace; background: #f6f5f1; padding: 2px 5px; border-radius: 3px; }
-        @media print { body { margin: 0; padding: 1cm; } }
-      </style></head><body>${html}</body></html>`);
+    win.document.write(
+      '<html><head><title>orOS Export</title>' +
+      '<style>' +
+        'body { font-family: Calibri, sans-serif; font-size: 12pt; line-height: 1.7; max-width: 700px; margin: 2rem auto; padding: 0 1rem; color: #2b2723; }' +
+        'h1 { font-size: 1.8rem; } h2 { font-size: 1.4rem; } h3 { font-size: 1.15rem; }' +
+        'blockquote { border-left: 3px solid #c8a96e; padding-left: 1rem; font-style: italic; color: #756f68; }' +
+        'code { font-family: monospace; background: #f6f5f1; padding: 2px 5px; border-radius: 3px; }' +
+        '@media print { body { margin: 0; padding: 1cm; } }' +
+      '</style></head><body>' + html + '</body></html>'
+    );
     win.document.close();
-    setTimeout(() => { win.print(); }, 500);
+    setTimeout(function() { win.print(); }, 500);
   }
 
   // ========== CONTEXT MENU ==========
   function createContextMenu(x, y) {
     closeMenu();
-    const menu = document.createElement('div');
+    var menu = document.createElement('div');
     menu.className = 'context-menu';
     menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
     menu.style.top = Math.min(y, window.innerHeight - 300) + 'px';
 
-    const lang = getCurrentLang();
-    const labels = lang === 'el' ? {
+    var lang = getCurrentLang();
+    var labels = lang === 'el' ? {
       bold: 'Έντονα', italic: 'Πλάγια',
       h1: 'Τίτλος 1', h2: 'Τίτλος 2', quote: 'Παράθεση',
       undo: 'Αναίρεση', redo: 'Επαναφορά'
@@ -219,7 +220,7 @@
       undo: 'Undo', redo: 'Redo'
     };
 
-    const items = [
+    var items = [
       { action: 'bold', icon: 'B', label: labels.bold },
       { action: 'italic', icon: 'I', label: labels.italic },
       { divider: true },
@@ -228,25 +229,25 @@
       { action: 'quote', icon: '>', label: labels.quote },
       { divider: true },
       { action: 'undo', icon: '↶', label: labels.undo },
-      { action: 'redo', icon: '↷', label: labels.redo },
+      { action: 'redo', icon: '↷', label: labels.redo }
     ];
 
-    items.forEach(item => {
+    items.forEach(function(item) {
       if (item.divider) {
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.className = 'cm-divider';
         menu.appendChild(div);
       } else {
-        const el = document.createElement('div');
+        var el = document.createElement('div');
         el.className = 'cm-item';
         el.dataset.action = item.action;
-        el.innerHTML = `<span class="cm-icon">${item.icon}</span> ${item.label}`;
+        el.innerHTML = '<span class="cm-icon">' + item.icon + '</span> ' + item.label;
         menu.appendChild(el);
       }
     });
 
-    menu.addEventListener('click', (e) => {
-      const item = e.target.closest('.cm-item');
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.cm-item');
       if (!item) return;
       doFormat(item.dataset.action);
     });
@@ -255,7 +256,7 @@
   }
 
   function closeMenu() {
-    const existing = document.querySelector('.context-menu');
+    var existing = document.querySelector('.context-menu');
     if (existing) existing.remove();
   }
 
@@ -272,11 +273,11 @@
       }
       richEditor.focus();
     } else {
-      const start = editor.selectionStart;
-      const end = editor.selectionEnd;
-      const text = editor.value;
-      const selected = text.substring(start, end);
-      let formatted = '';
+      var start = editor.selectionStart;
+      var end = editor.selectionEnd;
+      var text = editor.value;
+      var selected = text.substring(start, end);
+      var formatted = '';
 
       switch(action) {
         case 'bold': formatted = '**' + (selected || 'bold') + '**'; break;
@@ -296,31 +297,30 @@
     saveContent(false);
   }
 
-  editor.addEventListener('contextmenu', (e) => {
+  editor.addEventListener('contextmenu', function(e) {
     e.preventDefault();
     createContextMenu(e.pageX, e.pageY);
   });
 
-  richEditor.addEventListener('contextmenu', (e) => {
+  richEditor.addEventListener('contextmenu', function(e) {
     e.preventDefault();
     createContextMenu(e.pageX, e.pageY);
   });
 
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', function(e) {
     if (!e.target.closest('.context-menu')) closeMenu();
   });
 
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeMenu();
   });
 
   // ========== KEYBOARD SHORTCUTS ==========
-  document.addEventListener('keydown', (e) => {
-    const ctrl = e.ctrlKey || e.metaKey;
+  document.addEventListener('keydown', function(e) {
+    var ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) return;
 
-    // Get the active element
-    const activeInEditor = document.activeElement === editor || document.activeElement === richEditor;
+    var activeInEditor = document.activeElement === editor || document.activeElement === richEditor;
 
     switch(e.key.toLowerCase()) {
       case 's':
@@ -355,21 +355,21 @@
   });
 
   // ========== AUTO-SAVE ==========
-  let debounceTimer;
-  editor.addEventListener('input', () => {
+  var debounceTimer;
+  editor.addEventListener('input', function() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => saveContent(false), 2000);
+    debounceTimer = setTimeout(function() { saveContent(false); }, 2000);
   });
 
-  richEditor.addEventListener('input', () => {
+  richEditor.addEventListener('input', function() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => saveContent(false), 2000);
+    debounceTimer = setTimeout(function() { saveContent(false); }, 2000);
   });
 
-  setInterval(() => saveContent(false), 30000);
+  setInterval(function() { saveContent(false); }, 30000);
 
   function saveContent(showMsg) {
-    const content = getContent();
+    var content = getContent();
     localStorage.setItem(STORAGE_KEY, content);
     if (showMsg) {
       showToast(getCurrentLang() === 'el' ? '✓ Αποθηκεύτηκε' : '✓ Saved');
@@ -383,7 +383,7 @@
 
   function showToast(msg) {
     clearTimeout(window.toastTimeout);
-    let toast = document.querySelector('.zentool-toast:not(#zen-toast)');
+    var toast = document.querySelector('.zentool-toast:not(#zen-toast)');
     if (!toast) {
       toast = document.createElement('div');
       toast.className = 'zentool-toast';
@@ -391,13 +391,15 @@
     }
     toast.textContent = msg;
     toast.classList.add('visible');
-    window.toastTimeout = setTimeout(() => toast.classList.remove('visible'), 3000);
+    window.toastTimeout = setTimeout(function() {
+      toast.classList.remove('visible');
+    }, 3000);
   }
 
   function downloadFile(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var blob = new Blob([content], { type: mimeType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
     a.download = filename;
     a.click();
@@ -405,7 +407,7 @@
   }
 
   // ========== INIT ==========
-  const saved = localStorage.getItem(STORAGE_KEY);
+  var saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     editor.value = saved;
     richEditor.innerHTML = markdownToHtml(saved);

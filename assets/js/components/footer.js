@@ -4,17 +4,15 @@
 // ============================================
 
 (function() {
-  const mount = document.getElementById('oros-footer');
+  var mount = document.getElementById('oros-footer');
   if (!mount) return;
 
-  mount.innerHTML = `
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-text" data-i18n="footer_text">Open Source · No Tracking · No Ads · Privacy First</div>
-        <div class="footer-credits">
-          © 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">Christos Koulaxizis</a>. Built with ♥ for artists.
-        </div>
-      </div>
-    </footer>
-    <button id="back-to-top" class="back-to-top" data-i18n="back_to_top" aria-label="Back to top">↑</button>`;
+  mount.innerHTML =
+    '<footer class="footer">' +
+      '<div class="footer-inner">' +
+        '<div class="footer-text" data-i18n="footer_text">Open Source · No Tracking · No Ads · Privacy First</div>' +
+        '<div class="footer-credits"></div>' +
+      '</div>' +
+    '</footer>' +
+    '<button id="back-to-top" class="back-to-top" data-i18n="back_to_top" aria-label="Back to top">↑</button>';
 })();

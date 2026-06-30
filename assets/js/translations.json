@@ -11,12 +11,9 @@
     "footer_text": "Open Source · No Tracking · No Ads · Privacy First",
     "footer_credits_link": "Christos Koulaxizis",
     "footer_credits_suffix": ". Built with ♥ for artists.",
-
     "tools_intro": "Select a tool below. All applications work offline and respect your personal data.",
-
     "editor_name": "Writer",
     "editor_desc": "Simple text editor with autosave",
-
     "button_open": "Open",
     "button_clear": "Clear",
     "button_export": "Export ▾",
@@ -24,19 +21,14 @@
     "export_md": "Markdown",
     "export_docx": "DOCX",
     "export_pdf": "PDF",
-
     "open_hint": "Supports: .txt, .md, .markdown, .text",
-
     "zen_mode": "Zen Mode",
     "settings": "Settings",
-
     "status_saved": "✓ Saved",
     "placeholder_editor": "Start writing here... Supports Markdown syntax.",
-
     "install_app": "Install App",
     "install_not_supported": "Installation not supported on this browser"
   },
-
   "el": {
     "site_title": "orOS",
     "site_tagline": "Το λειτουργικό σύστημα του καλλιτέχνη",
@@ -49,12 +41,9 @@
     "footer_text": "Ανοικτός Κώδικας · Χωρίς Παρακολούθηση · Χωρίς Διαφημίσεις · Προστασία Ιδιωτικότητας",
     "footer_credits_link": "Χρήστος Κουλαξίζης",
     "footer_credits_suffix": ". Κατασκευασμένο με ♥ για καλλιτέχνες.",
-
     "tools_intro": "Επιλέξτε ένα εργαλείο παρακάτω. Όλες οι εφαρμογές λειτουργούν χωρίς σύνδεση και με σεβασμό στα προσωπικά σας δεδομένα.",
-
     "editor_name": "Συντάκτης",
     "editor_desc": "Απλός επεξεργαστής κειμένου με αυτόματη αποθήκευση",
-
     "button_open": "Άνοιγμα",
     "button_clear": "Εκκαθάριση",
     "button_export": "Εξαγωγή ▾",
@@ -62,15 +51,11 @@
     "export_md": "Markdown",
     "export_docx": "DOCX",
     "export_pdf": "PDF",
-
     "open_hint": "Υποστηρίζει: .txt, .md, .markdown, .text",
-
     "zen_mode": "Zen Mode",
     "settings": "Ρυθμίσεις",
-
     "status_saved": "✓ Αποθηκεύτηκε",
     "placeholder_editor": "Ξεκινήστε να γράφετε εδώ... Υποστηρίζει Markdown.",
-
     "install_app": "Εγκατάσταση",
     "install_not_supported": "Η εγκατάσταση δεν υποστηρίζεται σε αυτόν τον browser"
   }
