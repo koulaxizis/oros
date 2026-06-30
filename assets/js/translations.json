@@ -39,7 +39,18 @@
     "fr_replace_all_btn": "All",
     "fr_matches": "matches",
     "install_app": "Install App",
-    "install_not_supported": "Installation not supported on this browser"
+    "install_not_supported": "Installation not supported on this browser",
+    "tab_shortcuts": "Shortcuts",
+    "tab_appearance": "Appearance",
+    "toggle_quick_toolbar": "Show Format Toolbar",
+    "toggle_stats": "Show Word Count",
+    "toggle_typewriter": "Typewriter Mode",
+    "bold_title": "Bold (Ctrl+B)",
+    "italic_title": "Italic (Ctrl+I)",
+    "underline_title": "Underline (Ctrl+U)",
+    "strike_title": "Strikethrough",
+    "ulist_title": "Bullet List",
+    "olist_title": "Numbered List"
   },
   "el": {
     "site_title": "orOS",
@@ -81,6 +92,17 @@
     "fr_replace_all_btn": "Όλα",
     "fr_matches": "αντιστοιχίες",
     "install_app": "Εγκατάσταση",
-    "install_not_supported": "Η εγκατάσταση δεν υποστηρίζεται σε αυτόν τον browser"
+    "install_not_supported": "Η εγκατάσταση δεν υποστηρίζεται σε αυτόν τον browser",
+    "tab_shortcuts": "Συντομεύσεις",
+    "tab_appearance": "Εμφάνιση",
+    "toggle_quick_toolbar": "Εμφάνιση Γραμμής Μορφοποίησης",
+    "toggle_stats": "Εμφάνιση Καταμέτρησης Λέξεων",
+    "toggle_typewriter": "Typewriter Mode",
+    "bold_title": "Έντονα (Ctrl+B)",
+    "italic_title": "Πλάγια (Ctrl+I)",
+    "underline_title": "Υπογράμμιση (Ctrl+U)",
+    "strike_title": "Διακριτή Διαγραφή",
+    "ulist_title": "Λίστα Κουκκίδων",
+    "olist_title": "Αριθμημένη Λίστα"
   }
 }

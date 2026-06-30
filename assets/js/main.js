@@ -1,12 +1,16 @@
 // ============================================
 // orOS — Core Functionality
 // Theme | Language | Back-to-top | Zen Mode | Settings
+// Settings: Shortcuts Tab + Appearance Tab (toggles)
 // ============================================
 
 (function() {
   var STORAGE_KEY = {
     THEME: 'oros-theme',
-    LANGUAGE: 'oros-language'
+    LANGUAGE: 'oros-language',
+    HIDE_STATS: 'oros_hide_stats',
+    HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
+    TYPEWRITER: 'oros_typewriter_mode'
   };
 
   var scriptEl = document.querySelector('script[src$="main.js"]');
@@ -44,6 +48,17 @@
     updateFooterCredits();
   });
 
+  // ---------- Helpers ----------
+  function getLang() {
+    return localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+  }
+
+  function getTrans(key) {
+    var lang = getLang();
+    var t = (translations[lang] || translations.en) || {};
+    return t[key] || key;
+  }
+
   // ---------- Theme ----------
   function initTheme() {
     var savedTheme = localStorage.getItem(STORAGE_KEY.THEME);
@@ -73,8 +88,7 @@
     if (!btn) return;
     var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
     btn.innerHTML = nextTheme === 'dark' ? '\uD83C\uDF19' : '\u2600\uFE0F';
-    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    var t = (translations[lang] || translations.en) || {};
+    var t = (translations[getLang()] || translations.en) || {};
     btn.title = nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
     btn.onclick = function() {
       applyTheme(nextTheme);
@@ -127,7 +141,7 @@
   }
 
   function applyTranslationsOnInit() {
-    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
+    var lang = getLang();
     var trans = translations[lang] || translations.en;
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
       var key = el.getAttribute('data-i18n');
@@ -168,8 +182,7 @@
 
   // ---------- Footer Credits ----------
   function updateFooterCredits() {
-    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    var trans = translations[lang] || translations.en;
+    var trans = translations[getLang()] || translations.en;
     var creditEl = document.querySelector('.footer-credits');
     if (!creditEl) return;
     var linkText = trans.footer_credits_link || 'Christos Koulaxizis';
@@ -228,10 +241,9 @@
 
   function showZenToast() {
     removeZenToast();
-    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    var msg = lang === 'el'
-      ? '\uD83E\uDDD8 Zen Mode \u2014 \u03A0\u03AC\u03C4\u03B1 ESC \u03AE F9 \u03B3\u03B9\u03B1 \u03AD\u03BE\u03BF\u03B4\u03BF'
-      : '\uD83E\uDDD8 Zen Mode \u2014 Press ESC or F9 to exit';
+    var msg = getLang() === 'el'
+      ? '\uD83E\uDDD8 Zen Mode — Πάτα ESC ή F9 για έξοδο'
+      : '\uD83E\uDDD8 Zen Mode — Press ESC or F9 to exit';
     var toast = document.createElement('div');
     toast.className = 'zentool-toast visible';
     toast.id = 'zen-toast';
@@ -259,26 +271,28 @@
     var existing = document.querySelector('.settings-modal');
     if (existing) existing.remove();
 
-    var lang = localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-    var isEditor = !!document.getElementById('editor') || !!document.getElementById('rich-editor');
+    var lang = getLang();
+    var isEditor = !!document.getElementById('editor-container') || !!document.getElementById('rich-editor');
 
+    // --- Shortcuts data ---
     var globalShortcuts, editorShortcuts;
 
     if (lang === 'el') {
       globalShortcuts = [
         ['Zen Mode', 'F9'],
-        ['\u0388\u03BE\u03BF\u03B4\u03BF\u03C2 Zen', 'ESC'],
-        ['\u03A4\u03C5\u03C0\u03BF\u03B3\u03C1\u03B1\u03C6\u03B9\u03BA\u03CC \u03C1\u03C5\u03B8\u03BC\u03CC', 'Ctrl+Enter']
+        ['Έξοδος Zen', 'ESC'],
+        ['Τυπογραφικό Ρυθμό', 'Ctrl+Enter']
       ];
       editorShortcuts = [
-        ['\u0391\u03C0\u03BF\u03B8\u03AE\u03BA\u03B5\u03C5\u03C3\u03B7', 'Ctrl+S'],
-        ['\u0388\u03BD\u03C4\u03BF\u03BD\u03B1', 'Ctrl+B'],
-        ['\u03A0\u03BB\u03AC\u03B3\u03B9\u03B1', 'Ctrl+I'],
-        ['\u0391\u03BD\u03B1\u03AF\u03C1\u03B5\u03C3\u03B7', 'Ctrl+Z'],
-        ['\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC', 'Ctrl+Y'],
-        ['\u0391\u03BD\u03B1\u03B6\u03AE\u03C4\u03B7\u03C3\u03B7', 'Ctrl+F'],
-        ['\u0391\u03BD\u03C4\u03B9\u03BA\u03B1\u03C4\u03AC\u03C3\u03C4\u03B1\u03C3\u03B7', 'Ctrl+H'],
-        ['\u039C\u03BF\u03C1\u03C6\u03BF\u03C0\u03BF\u03AF\u03B7\u03C3\u03B7', 'Alt + \u0394\u03B5\u03BE\u03AF click']
+        ['Αποθήκευση', 'Ctrl+S'],
+        ['Έντονα', 'Ctrl+B'],
+        ['Πλάγια', 'Ctrl+I'],
+        ['Υπογράμμιση', 'Ctrl+U'],
+        ['Αναίρεση', 'Ctrl+Z'],
+        ['Επαναφορά', 'Ctrl+Y'],
+        ['Αναζήτηση', 'Ctrl+F'],
+        ['Αντικατάσταση', 'Ctrl+H'],
+        ['Μορφοποίηση', 'Alt + Δεξί click']
       ];
     } else {
       globalShortcuts = [
@@ -290,6 +304,7 @@
         ['Save', 'Ctrl+S'],
         ['Bold', 'Ctrl+B'],
         ['Italic', 'Ctrl+I'],
+        ['Underline', 'Ctrl+U'],
         ['Undo', 'Ctrl+Z'],
         ['Redo', 'Ctrl+Y'],
         ['Find', 'Ctrl+F'],
@@ -300,17 +315,45 @@
 
     var allShortcuts = isEditor ? globalShortcuts.concat(editorShortcuts) : globalShortcuts;
 
-    var title = lang === 'el' ? '\u03A1\u03C5\u03B8\u03BC\u03AF\u03C3\u03B5\u03B9\u03C2' : 'Settings';
-    var tabLabel = lang === 'el' ? '\u03A3\u03C5\u03BD\u03C4\u03BF\u03BC\u03B5\u03CD\u03C3\u03B5\u03B9\u03C2' : 'Shortcuts';
-    var colAction = lang === 'el' ? '\u0395\u03BD\u03AD\u03C1\u03B3\u03B5\u03B9\u03B1' : 'Action';
-    var colKey = lang === 'el' ? '\u03A3\u03C5\u03BD\u03C4\u03CC\u03BC\u03B5\u03C5\u03C3\u03B7' : 'Shortcut';
-    var installLabel = lang === 'el' ? '\u0395\u03B3\u03BA\u03B1\u03C4\u03AC\u03C3\u03C4\u03B1\u03C3\u03B7' : 'Install App';
+    // --- Labels ---
+    var title = getTrans('settings');
+    var tabShortcutsLabel = getTrans('tab_shortcuts');
+    var tabAppearanceLabel = getTrans('tab_appearance');
+    var colAction = lang === 'el' ? 'Ενέργεια' : 'Action';
+    var colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
+    var installLabel = getTrans('install_app');
 
+    // --- Shortcuts HTML ---
     var shortcutsHtml = '';
     allShortcuts.forEach(function(pair) {
       shortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
     });
 
+    // --- Toggle states ---
+    var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
+    var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
+    var typewriterOn = localStorage.getItem(STORAGE_KEY.TYPEWRITER) === 'true';
+
+    var toggleQuickLabel = getTrans('toggle_quick_toolbar');
+    var toggleStatsLabel = getTrans('toggle_stats');
+    var toggleTypewriterLabel = getTrans('toggle_typewriter');
+
+    // --- Appearance toggles HTML ---
+    var appearanceHtml =
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + toggleQuickLabel + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + toggleStatsLabel + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + toggleTypewriterLabel + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-typewriter"' + (typewriterOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>';
+
+    // --- Build modal ---
     var modal = document.createElement('div');
     modal.className = 'settings-modal';
     modal.innerHTML =
@@ -321,45 +364,95 @@
           '<button class="close-btn">\u00D7</button>' +
         '</header>' +
         '<nav class="modal-nav">' +
-          '<button class="tab-btn active">' + tabLabel + '</button>' +
+          '<button class="tab-btn active" data-tab="shortcuts">' + tabShortcutsLabel + '</button>' +
+          '<button class="tab-btn" data-tab="appearance">' + tabAppearanceLabel + '</button>' +
         '</nav>' +
-        '<div class="tab-panel">' +
+        '<div class="tab-panel" id="panel-shortcuts">' +
           '<table class="shortcut-table">' +
             '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
             '<tbody>' + shortcutsHtml + '</tbody>' +
           '</table>' +
-          '<div class="install-section">' +
-            '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installLabel + '</button>' +
-          '</div>' +
+        '</div>' +
+        '<div class="tab-panel" id="panel-appearance" style="display:none;">' +
+          '<div class="toggles-container">' + appearanceHtml + '</div>' +
+        '</div>' +
+        '<div class="install-section">' +
+          '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installLabel + '</button>' +
         '</div>' +
       '</div>';
 
+    document.body.appendChild(modal);
+
+    // --- Close handlers ---
     var closeFn = function() { modal.remove(); };
     modal.querySelector('.close-btn').onclick = closeFn;
     modal.querySelector('.modal-backdrop').onclick = closeFn;
 
-    var installBtn = modal.querySelector('#btn-install-pwa');
-    installBtn.onclick = async function() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        var choice = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        installBtn.disabled = true;
-        installBtn.textContent = lang === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B1\u03C3\u03C4\u03AC\u03B8\u03B7\u03BA\u03B5' : '\u2713 Installed';
-      } else {
-        installBtn.disabled = true;
-        installBtn.textContent = lang === 'el' ? '\u26A0 \u0394\u03B5\u03BD \u03C5\u03C0\u03BF\u03C3\u03C4\u03B7\u03C1\u03AF\u03B6\u03B5\u03C4\u03B1\u03B9' : '\u26A0 Not supported';
-      }
-    };
+    // --- Tab switching ---
+    var tabBtns = modal.querySelectorAll('.tab-btn');
+    tabBtns.forEach(function(btn) {
+      btn.onclick = function() {
+        tabBtns.forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        var tabName = this.dataset.tab;
+        modal.querySelector('#panel-shortcuts').style.display = tabName === 'shortcuts' ? '' : 'none';
+        modal.querySelector('#panel-appearance').style.display = tabName === 'appearance' ? '' : 'none';
+      };
+    });
 
+    // --- Toggle handlers ---
+    var tbarToggle = modal.querySelector('#toggle-quick-tbar');
+    if (tbarToggle) {
+      tbarToggle.onchange = function() {
+        var hide = !this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_QUICK_TBAR, hide ? 'true' : 'false');
+        var qft = document.getElementById('quick-format-toolbar');
+        if (qft) qft.style.display = hide ? 'none' : '';
+      };
+    }
+
+    var statsToggle = modal.querySelector('#toggle-stats');
+    if (statsToggle) {
+      statsToggle.onchange = function() {
+        var hide = !this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_STATS, hide ? 'true' : 'false');
+        var so = document.getElementById('stats-overlay');
+        if (so) so.style.display = hide ? 'none' : '';
+      };
+    }
+
+    var twToggle = modal.querySelector('#toggle-typewriter');
+    if (twToggle) {
+      twToggle.onchange = function() {
+        var on = this.checked;
+        localStorage.setItem(STORAGE_KEY.TYPEWRITER, on ? 'true' : 'false');
+            };
+    }
+
+    // --- PWA Install handler ---
+    var installBtn = modal.querySelector('#btn-install-pwa');
+    if (installBtn) {
+      installBtn.onclick = async function() {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          var choice = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          installBtn.disabled = true;
+          installBtn.textContent = getLang() === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B1\u03C3\u03C4\u03AC\u03B8\u03B7\u03BA\u03B5' : '\u2713 Installed';
+        } else {
+          installBtn.disabled = true;
+          installBtn.textContent = getLang() === 'el' ? '\u26A0 \u0394\u03B5\u03BD \u03C5\u03C0\u03BF\u03C3\u03C4\u03B7\u03C1\u03AF\u03B6\u03B5\u03C4\u03B1\u03B9' : '\u26A0 Not supported';
+        }
+      };
+    }
+
+    // Check if already installed
     if (!deferredPrompt) {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         installBtn.disabled = true;
-        installBtn.textContent = lang === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B5\u03C3\u03C4\u03B7\u03BC\u03AD\u03BD\u03BF' : '\u2713 Already installed';
+        installBtn.textContent = getLang() === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B5\u03C3\u03C4\u03B7\u03BC\u03AD\u03BD\u03BF' : '\u2713 Already installed';
       }
     }
-
-    document.body.appendChild(modal);
   }
 
   function updateSettingsModalLanguage(lang) {

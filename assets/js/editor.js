@@ -1,5 +1,6 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
+// Fixed: Typewriter Mode + Toast Language Bug + Context Menu + Quick Toolbar
 // Smart Lists (bullets + numbers), Import RTF/DOC
 // Stats, Find/Replace, Drag&Drop, Typewriter
 // ============================================
@@ -9,12 +10,12 @@
 
   var STORAGE_KEY = 'oros_writer_content';
   var STORAGE_TYPEWRITER = 'oros_typewriter_mode';
+  var STORAGE_HIDE_STATS = 'oros_hide_stats';
+  var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
 
   // Elements
   var editorContainer = document.getElementById('editor-container');
   var richEditor = document.getElementById('rich-editor');
-  var mdWrapper = document.getElementById('md-wrapper');
-  var richWrapper = document.getElementById('rich-wrapper');
   var wordCountEl = document.getElementById('word_count');
   var charCountEl = document.getElementById('char_count');
   var readTimeEl = document.getElementById('read_time');
@@ -27,12 +28,15 @@
   var btnClear = document.getElementById('btn-clear');
   var btnExport = document.getElementById('btn-export');
   var exportDropdown = document.getElementById('export-dropdown');
-  var modeMd = document.getElementById('mode-md');
-  var modeRich = document.getElementById('mode-rich');
+  var statsOverlay = document.getElementById('stats-overlay');
+  var quickFormatToolbar = document.getElementById('quick-format-toolbar');
 
   var typewriterEnabled = localStorage.getItem(STORAGE_TYPEWRITER) === 'true';
+  var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
+  var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
   var currentMatchIndex = -1;
   var matchRanges = [];
+  var highlightSpans = [];
 
   // ========== STATS CALCULATION ==========
   function updateStats() {
@@ -58,29 +62,49 @@
     return richEditor.innerHTML || '';
   }
 
-  // ========== TYPewriter MODE ==========
+  // ========== TYPEWRITER MODE — FIXED ==========
   function enableTypewriter() {
-    if (!typewriterEnabled) return;
+    if (!typewriterEnabled) {
+      // If disabled, reset scroll to natural position
+      return;
+    }
     
     setTimeout(function() {
       try {
         var selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-          var range = selection.getRangeAt(0);
-          var rects = range.getClientRects();
-          if (rects && rects[0]) {
-            var caretRect = rects[0];
-            var visibleArea = window.innerHeight - 250;
-            var editorRect = richEditor.getBoundingClientRect();
-            var caretY = caretRect.top - editorRect.top;
-            var targetScroll = richEditor.scrollTop + caretY - (visibleArea / 2);
-            
-            if (targetScroll < 0) targetScroll = 0;
-            richEditor.scrollTo({ top: targetScroll, behavior: 'smooth' });
-          }
-        }
-      } catch(e) {}
-    }, 0);
+        if (selection.rangeCount === 0) return;
+        
+        var range = selection.getRangeAt(0);
+        var rects = range.getClientRects();
+        if (!rects || rects.length === 0) return;
+        
+        var caretRect = rects[0];
+        var editorRect = richEditor.getBoundingClientRect();
+        var viewportHeight = window.innerHeight;
+        
+        // Target: cursor at 45% of viewport (comfort zone)
+        var targetPosition = viewportHeight * 0.45;
+        var relativeCursorPos = caretRect.top - editorRect.top + richEditor.scrollTop;
+        var desiredScrollTop = relativeCursorPos - targetPosition;
+        
+        // Clamp to valid range
+        var maxScroll = richEditor.scrollHeight - editorRect.height;
+        if (desiredScrollTop < 0) desiredScrollTop = 0;
+        if (desiredScrollTop > maxScroll) desiredScrollTop = maxScroll;
+        
+        richEditor.scrollTo({ top: desiredScrollTop, behavior: 'smooth' });
+      } catch(e) {
+        console.warn('Typewriter error:', e);
+      }
+    }, 50); // Small delay ensures layout is ready
+  }
+
+  // Initialize visibility based on settings
+  if (hideStats && statsOverlay) {
+    statsOverlay.style.display = 'none';
+  }
+  if (hideQuickTbar && quickFormatToolbar) {
+    quickFormatToolbar.style.display = 'none';
   }
 
   // ========== DRAG & DROP ==========
@@ -104,7 +128,6 @@
   editorContainer.addEventListener('drop', function(e) {
     var file = e.dataTransfer.files[0];
     if (!file) return;
-    
     importFile(file);
   });
 
@@ -123,16 +146,13 @@
       } else if (ext === '.doc') {
         var html = stripDocTags(content);
         richEditor.innerHTML = html;
-      } else if (ext === '.xlsx' || file.type.includes('spreadsheet')) {
-        showToast('\u26A0 \u0391\u03BD\u03B1\u03C0\u03CC\u03C6\u03B8\u03BF \u03B5\u03AF\u03B4\u03BF\u03C2');
-        return;
       } else {
         richEditor.innerText = content;
       }
 
       saveContent(false);
       updateStats();
-      showToast('\u2713 Opened');
+      showToast(getCurrentLang() === 'el' ? '✓ Άνοιγμα' : '✓ Opened');
     };
 
     if (['.txt','.md','.rtf','.doc'].includes(ext)) {
@@ -141,86 +161,110 @@
       reader.readAsArrayBuffer(file);
     }
   }
-
-  // ========== SMART LISTS (bullets + numbers) ==========
+    // ========== SMART LISTS (bullets + numbers) ==========
   function checkSmartList(e) {
     if (e.key !== 'Enter') return;
 
-    var range = window.getSelection().getRangeAt(0);
-    var startNode = range.startContainer;
-    
-    while (startNode.nodeType !== 1 && startNode.parentNode) {
-      startNode = startNode.parentNode;
-    }
-    
-    var line = '';
-    var node = startNode;
-    while (node && node !== richEditor) {
-      if (node.nodeType === 3) {
-        line = node.nodeValue + line;
-      }
-      if (node.tagName === 'DIV' || node.tagName === 'P') break;
-      node = node.parentNode;
-    }
-    
-    line = line.split('\n')[0] || '';
+    var line = getLineBeforeCursor();
 
-    var prefix = '';
     var bulletMatch = line.match(/^(\s*)[-*]\s/);
     var numberMatch = line.match(/^(\s*)(\d+)\.\s/);
 
     if (bulletMatch) {
-      prefix = '- ';
+      var indent = bulletMatch[1] || '';
+      e.preventDefault();
+      insertBlock(indent + '- ');
+      autoBreakEmptyBullet(line);
     } else if (numberMatch) {
       var indent = numberMatch[1] || '';
       var nextNum = parseInt(numberMatch[2]) + 1;
-      prefix = indent + nextNum + '. ';
-    }
-
-    if (prefix) {
       e.preventDefault();
-      document.execCommand('insertHTML', false, '<div><br/></div>');
-      moveCursorTo(prefix.length);
-      
-      // Auto-delete when empty enter pressed twice
-      if (line.trim() === '-' || /^(\s*\d+\.)$/.test(line.trim())) {
-        setTimeout(function() {
-          deleteLastBlock();
-        }, 50);
-      }
+      insertBlock(indent + nextNum + '. ');
+      autoBreakEmptyNumber(line);
     }
   }
 
-  function deleteLastBlock() {
-    var text = richEditor.innerText.trim();
-    var lines = text.split('\n');
-    if (lines.length > 0 && !lines[lines.length-1].trim()) {
-      var range = document.createRange();
-      var sel = window.getSelection();
-      range.selectNodeContents(richEditor);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      document.execCommand('delete');
+  function getLineBeforeCursor() {
+    var selection = window.getSelection();
+    if (selection.rangeCount === 0) return '';
+    
+    var range = selection.getRangeAt(0);
+    var preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(richEditor);
+    preCaretRange.setEnd(range.startContainer, range.startOffset);
+    var content = preCaretRange.toString();
+    
+    var lines = content.split('\n');
+    return lines[lines.length - 1] || '';
+  }
+
+  function insertBlock(prefix) {
+    document.execCommand('insertHTML', false, '<div><br/></div>');
+    moveCursorToFront(prefix.length);
+  }
+
+  function autoBreakEmptyBullet(originalLine) {
+    if (originalLine.trim() === '-' || originalLine.trim() === '*') {
+      setTimeout(function() {
+        var currentLine = getLineBeforeCursor().trim();
+        if (currentLine === '-') {
+          deleteCurrentBlock();
+        }
+      }, 30);
     }
   }
 
-  function moveCursorTo(pos) {
+  function autoBreakEmptyNumber(originalLine) {
+    if (/^\s*\d+\.$/.test(originalLine.trim())) {
+      setTimeout(function() {
+        var currentLine = getLineBeforeCursor().trim();
+        if (/^\d+\.$/.test(currentLine)) {
+          deleteCurrentBlock();
+        }
+      }, 30);
+    }
+  }
+
+  function deleteCurrentBlock() {
+    var range = document.createRange();
+    var sel = window.getSelection();
+    range.selectNodeContents(richEditor);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('delete');
+  }
+
+  function moveCursorToFront(pos) {
     var range = document.createRange();
     var sel = window.getSelection();
     var node = richEditor.firstChild;
-    while (node && pos > (node.nodeValue ? node.nodeValue.length : 0)) {
-      if (node.nextSibling) {
-        pos -= node.nodeValue ? node.nodeValue.length : 0;
-        node = node.nextSibling;
-      } else {
-        break;
-      }
+    
+    while (node && pos > getNodeLength(node)) {
+      pos -= getNodeLength(node);
+      node = node.nextSibling;
     }
-    range.setStart(node || richEditor, pos);
+    
+    if (node) {
+      range.setStart(node, Math.min(pos, getNodeLength(node)));
+    } else {
+      range.setStart(richEditor, 0);
+    }
     range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
+  }
+
+  function getNodeLength(node) {
+    if (node.nodeType === 3) return node.nodeValue.length;
+    if (node.nodeType === 1) {
+      var len = 0;
+      for (var i = 0; i < node.childNodes.length; i++) {
+        len += getNodeLength(node.childNodes[i]);
+      }
+      return len;
+    }
+    return 0;
   }
 
   // ========== OPEN FILE BUTTON ==========
@@ -236,22 +280,29 @@
     input.click();
   };
 
-  // ========== CLEAR ==========
+  // ========== CLEAR — FIXED TOAST LANGUAGE ==========
   btnClear.onclick = function() {
     var hasContent = richEditor.innerText.trim();
     if (!hasContent) return;
-    var confirmText = getCurrentLang() === 'el'
-      ? '\u0395\u03BA\u03BA\u03B1\u03B8\u03B1\u03C1\u03AF\u03C3\u03B9\u03BC\u03BF \u03C0\u03B5\u03C1\u03B9\u03B5\u03C7\u03BF\u03BC\u03AD\u03BD\u03BF\u03C5;'
+    
+    var lang = getCurrentLang();
+    var confirmText = lang === 'el'
+      ? 'Εκκαθάριση περιεχομένου;'
       : 'Clear content? Cannot undo.';
+    
     if (!confirm(confirmText)) return;
+    
     richEditor.innerHTML = '';
     localStorage.removeItem(STORAGE_KEY);
     saveContent(false);
     updateStats();
-    showToast('\u039A\u03B1\u03B8\u03B1\u03C1\u03AF\u03C3\u03C4\u03B7\u03BA\u03B5');
+    
+    // FIXED: Use proper language detection
+    var clearMsg = lang === 'el' ? '✓ Καθαρίστηκε' : '✓ Cleared';
+    showToast(clearMsg);
   };
-
-  // ========== EXPORT ----------
+  
+    // ========== EXPORT ==========
   btnExport.onclick = function(e) {
     e.stopPropagation();
     exportDropdown.classList.toggle('visible');
@@ -294,7 +345,7 @@
         exportDoc(raw, 'oros-' + ts + '.doc');
         break;
     }
-    showToast('\u2193 Downloaded');
+    showToast(getCurrentLang() === 'el' ? '↓ Κατέβηκε' : '↓ Downloaded');
   }
 
   // ========== HTML TO MARKDOWN ==========
@@ -307,6 +358,8 @@
       .replace(/<b>(.*?)<\/b>/gi, '**$1**')
       .replace(/<em>(.*?)<\/em>/gi, '*$1*')
       .replace(/<i>(.*?)<\/i>/gi, '*$1*')
+      .replace(/<u>(.*?)<\/u>/gi, '$1')
+      .replace(/<s>(.*?)<\/s>/gi, '~~$1~~')
       .replace(/<code>(.*?)<\/code>/gi, '`$1`')
       .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n')
       .replace(/<br\s*\/?>/gi, '\n')
@@ -419,7 +472,7 @@
     var url = URL.createObjectURL(blob);
     var win = window.open(url, '_blank');
     if (!win) {
-      showToast('\u26A0 Allow pop-ups');
+      showToast(getCurrentLang() === 'el' ? '⚠ Επιτρέψτε τα pop-ups' : '⚠ Allow pop-ups');
       URL.revokeObjectURL(url);
       return;
     }
@@ -518,7 +571,77 @@
   }
 
   function clearHighlights() {
-    // Simplified - would need proper span wrapping for highlights
+    for (var i = 0; i < highlightSpans.length; i++) {
+      var span = highlightSpans[i];
+      if (span.parentNode) {
+        var parent = span.parentNode;
+        while (span.firstChild) parent.insertBefore(span.firstChild, span);
+        parent.removeChild(span);
+      }
+    }
+    highlightSpans = [];
+  }
+
+  // ========== REPLACE FUNCTIONS ==========
+  document.getElementById('btn-replace').onclick = function() {
+    if (matchRanges.length === 0) return;
+    var range = matchRanges[currentMatchIndex];
+    var replaceText = replaceInput.value;
+    
+    richEditor.focus();
+    var textNodes = getTextNodes(richEditor);
+    var pos = 0;
+    for (var i = 0; i < textNodes.length; i++) {
+      var nodeLen = textNodes[i].nodeValue.length;
+      if (pos <= range[0] && pos + nodeLen >= range[1]) {
+        var selRange = document.createRange();
+        selRange.setStart(textNodes[i], range[0] - pos);
+        selRange.setEnd(textNodes[i], range[1] - pos);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(selRange);
+        document.execCommand('insertText', false, replaceText);
+        break;
+      }
+      pos += nodeLen;
+    }
+    
+    saveContent(false);
+    updateStats();
+    setTimeout(findAndHighlight, 50);
+  };
+
+  document.getElementById('btn-replace-all').onclick = function() {
+    if (matchRanges.length === 0) return;
+    var replaceText = replaceInput.value;
+    
+    var content = getTextContent();
+    var query = findInput.value;
+    var regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    var newContent = content.replace(regex, replaceText);
+    
+    richEditor.innerText = newContent;
+    saveContent(false);
+    updateStats();
+    setTimeout(findAndHighlight, 50);
+    showToast(getCurrentLang() === 'el' ? '✓ Αντικαταστάθηκαν όλες' : '✓ All replaced');
+  };
+
+  // ========== QUICK FORMAT TOOLBAR ==========
+  if (quickFormatToolbar) {
+    var fmtButtons = quickFormatToolbar.querySelectorAll('.fmt-btn');
+    for (var i = 0; i < fmtButtons.length; i++) {
+      fmtButtons[i].addEventListener('mousedown', function(e) {
+        e.preventDefault(); // Prevent losing selection in editor
+      });
+      fmtButtons[i].addEventListener('click', function() {
+        var cmd = this.dataset.cmd;
+        document.execCommand(cmd, false, null);
+        richEditor.focus();
+        saveContent(false);
+        updateStats();
+      });
+    }
   }
 
   // ========== KEYBOARD SHORTCUTS ==========
@@ -546,7 +669,23 @@
       e.preventDefault();
       typewriterEnabled = !typewriterEnabled;
       localStorage.setItem(STORAGE_TYPEWRITER, typewriterEnabled ? 'true' : 'false');
-      showToast(typewriterEnabled ? '🔡 Typewriter ON' : '⚫ Typewriter OFF');
+      showToast(
+        typewriterEnabled
+          ? (getCurrentLang() === 'el' ? '🔡 Typewriter ΕΝΕΡΓΟ' : '🔡 Typewriter ON')
+          : (getCurrentLang() === 'el' ? '⚫ Typewriter ΑΠΕΝΕΡΓΟ' : '⚫ Typewriter OFF')
+      );
+      if (typewriterEnabled) enableTypewriter();
+      return;
+    }
+    
+    // Underline shortcut (NEW)
+    if (ctrl && e.key.toLowerCase() === 'u') {
+      if (document.activeElement === richEditor) {
+        e.preventDefault();
+        document.execCommand('underline');
+        saveContent(false);
+        updateStats();
+      }
       return;
     }
     
@@ -650,31 +789,38 @@
     URL.revokeObjectURL(url);
   }
 
-  // ========== CONTEXT MENU ==========
+  // ========== CONTEXT MENU — EXPANDED ==========
   function createContextMenu(x, y) {
     closeMenu();
     var menu = document.createElement('div');
     menu.className = 'context-menu';
-    menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
-    menu.style.top = Math.min(y, window.innerHeight - 300) + 'px';
+    menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+    menu.style.top = Math.min(y, window.innerHeight - 340) + 'px';
 
     var labels = getCurrentLang() === 'el' ? {
-      bold: 'Έντονα', italic: 'Πλάγια',
-      h1: 'Τίτλος 1', h2: 'Τίτλος 2', quote: 'Παράθεση',
+      bold: 'Έντονα', italic: 'Πλάγια', underline: 'Υπογράμμιση',
+      strike: 'Διαγραφή', h1: 'Τίτλος 1', h2: 'Τίτλος 2', quote: 'Παράθεση',
+      ulist: 'Λίστα κουκκίδων', olist: 'Αριθμημένη λίστα',
       undo: 'Αναίρεση', redo: 'Επαναφορά'
     } : {
-      bold: 'Bold', italic: 'Italic',
-      h1: 'Heading 1', h2: 'Heading 2', quote: 'Quote',
+      bold: 'Bold', italic: 'Italic', underline: 'Underline',
+      strike: 'Strikethrough', h1: 'Heading 1', h2: 'Heading 2', quote: 'Quote',
+      ulist: 'Bullet List', olist: 'Numbered List',
       undo: 'Undo', redo: 'Redo'
     };
 
     var items = [
       { action: 'bold', icon: 'B', label: labels.bold },
       { action: 'italic', icon: 'I', label: labels.italic },
+      { action: 'underline', icon: 'U', label: labels.underline },
+      { action: 'strikeThrough', icon: 'S', label: labels.strike },
       { divider: true },
       { action: 'h1', icon: '#', label: labels.h1 },
       { action: 'h2', icon: '##', label: labels.h2 },
       { action: 'quote', icon: '>', label: labels.quote },
+      { divider: true },
+      { action: 'insertUnorderedList', icon: '•', label: labels.ulist },
+      { action: 'insertOrderedList', icon: '1.', label: labels.olist },
       { divider: true },
       { action: 'undo', icon: '↶', label: labels.undo },
       { action: 'redo', icon: '↷', label: labels.redo }
@@ -712,9 +858,13 @@
     switch(action) {
       case 'bold': document.execCommand('bold'); break;
       case 'italic': document.execCommand('italic'); break;
+      case 'underline': document.execCommand('underline'); break;
+      case 'strikeThrough': document.execCommand('strikeThrough'); break;
       case 'h1': document.execCommand('formatBlock', false, 'H1'); break;
       case 'h2': document.execCommand('formatBlock', false, 'H2'); break;
       case 'quote': document.execCommand('formatBlock', false, 'BLOCKQUOTE'); break;
+      case 'insertUnorderedList': document.execCommand('insertUnorderedList'); break;
+      case 'insertOrderedList': document.execCommand('insertOrderedList'); break;
       case 'undo': document.execCommand('undo'); break;
       case 'redo': document.execCommand('redo'); break;
     }
@@ -768,7 +918,7 @@
   if (saved) {
     richEditor.innerHTML = saved;
   } else {
-    var ph = translations[getCurrentLang()]?.placeholder_rich || 'Start writing here...';
+    var ph = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[getCurrentLang()] && window.OROS_TRANSLATIONS[getCurrentLang()].placeholder_rich) || 'Start writing here...';
     richEditor.setAttribute('data-placeholder', ph);
   }
 

@@ -53,6 +53,16 @@
       <button id="btn-open" class="btn-control" data-i18n="button_open" data-i18n-tooltip="open_hint" title="">Open</button>
       <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
 
+      <!-- Quick Format Toolbar (centered) -->
+      <div class="quick-format-toolbar" id="quick-format-toolbar">
+        <button type="button" class="fmt-btn" data-cmd="bold" data-title-b="bold_title" data-i18n-tooltip="bold_title" title="Bold (Ctrl+B)">B</button>
+        <button type="button" class="fmt-btn" data-cmd="italic" data-title-b="italic_title" data-i18n-tooltip="italic_title" title="Italic (Ctrl+I)">I</button>
+        <button type="button" class="fmt-btn" data-cmd="underline" data-title-b="underline_title" data-i18n-tooltip="underline_title" title="Underline (Ctrl+U)">U</button>
+        <button type="button" class="fmt-btn" data-cmd="strikeThrough" data-title-b="strike_title" data-i18n-tooltip="strike_title" title="Strikethrough">S</button>
+        <button type="button" class="fmt-btn" data-cmd="insertUnorderedList" data-title-b="ulist_title" data-i18n-tooltip="ulist_title" title="Bullet List">•</button>
+        <button type="button" class="fmt-btn" data-cmd="insertOrderedList" data-title-b="olist_title" data-i18n-tooltip="olist_title" title="Numbered List">1.</button>
+      </div>
+
       <span id="save-status" style="color:var(--accent);font-size:0.85rem;font-weight:600;margin-left:auto;"></span>
     </div>
 
@@ -66,7 +76,7 @@
         spellcheck="true"
       ></div>
 
-      <!-- Stats overlay -->
+      <!-- Stats overlay (optional toggle) -->
       <div class="stats-overlay" id="stats-overlay">
         <span id="word_count">0</span> <span data-i18n="words_label">words</span>
         <span class="stat-sep">&middot;</span>
