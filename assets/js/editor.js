@@ -11,6 +11,7 @@
   var STORAGE_TYPEWRITER = 'oros_typewriter_mode';
 
   // Elements
+  var editorContainer = document.getElementById('editor-container');
   var richEditor = document.getElementById('rich-editor');
   var mdWrapper = document.getElementById('md-wrapper');
   var richWrapper = document.getElementById('rich-wrapper');
