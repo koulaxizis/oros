@@ -17,20 +17,18 @@
     "button_open": "Open",
     "button_clear": "Clear",
     "button_export": "Export ▾",
-    "export_md": "Markdown",
+    "export_md": "MD",
     "export_txt": "TXT",
     "export_rtf": "RTF",
     "export_pdf": "PDF",
     "export_doc": "DOC",
-    "open_hint": "Supports: .txt, .md, .markdown, .text",
+    "open_hint": "Supports: .txt, .md, .markdown, .text, .rtf, .doc",
     "zen_mode": "Zen Mode",
     "settings": "Settings",
     "status_saved": "✓ Saved",
     "placeholder_editor": "Start writing here... Supports Markdown syntax.",
     "placeholder_rich": "Start writing here...",
-    "install_app": "Install App",
-    "install_not_supported": "Installation not supported on this browser"
-	"words_label": "words",
+    "words_label": "words",
     "chars_label": "chars",
     "read_label": "read",
     "fr_find_placeholder": "Find...",
@@ -39,7 +37,9 @@
     "fr_next_btn": "Next",
     "fr_replace_btn": "Replace",
     "fr_replace_all_btn": "All",
-    "fr_matches": "matches"
+    "fr_matches": "matches",
+    "install_app": "Install App",
+    "install_not_supported": "Installation not supported on this browser"
   },
   "el": {
     "site_title": "orOS",
@@ -59,20 +59,18 @@
     "button_open": "Άνοιγμα",
     "button_clear": "Εκκαθάριση",
     "button_export": "Εξαγωγή ▾",
-    "export_md": "Markdown",
+    "export_md": "MD",
     "export_txt": "TXT",
     "export_rtf": "RTF",
     "export_pdf": "PDF",
     "export_doc": "DOC",
-    "open_hint": "Υποστηρίζει: .txt, .md, .markdown, .text",
+    "open_hint": "Υποστηρίζει: .txt, .md, .markdown, .text, .rtf, .doc",
     "zen_mode": "Zen Mode",
     "settings": "Ρυθμίσεις",
     "status_saved": "✓ Αποθηκεύτηκε",
     "placeholder_editor": "Ξεκινήστε να γράφετε εδώ... Υποστηρίζει Markdown.",
     "placeholder_rich": "Ξεκινήστε να γράφετε εδώ...",
-    "install_app": "Εγκατάσταση",
-    "install_not_supported": "Η εγκατάσταση δεν υποστηρίζεται σε αυτόν τον browser"
-	"words_label": "λέξεις",
+    "words_label": "λέξεις",
     "chars_label": "χαρακτήρες",
     "read_label": "ανάγ.",
     "fr_find_placeholder": "Εύρεση...",
@@ -81,6 +79,8 @@
     "fr_next_btn": "Εμπρός",
     "fr_replace_btn": "Αντικατάσταση",
     "fr_replace_all_btn": "Όλα",
-    "fr_matches": "αντιγραφές"
+    "fr_matches": "αντιστοιχίες",
+    "install_app": "Εγκατάσταση",
+    "install_not_supported": "Η εγκατάσταση δεν υποστηρίζεται σε αυτόν τον browser"
   }
 }

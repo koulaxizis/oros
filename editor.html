@@ -23,36 +23,36 @@
   <script src="assets/js/components/header.js"></script>
 
   <main class="app-main" id="editor-container">
-    
+
     <!-- Stats Bar -->
     <div class="stats-bar">
       <div class="stat-group">
-        <span class="stat-item"><span class="stat-value" id="word-count">0</span> words</span>
-        <span class="stat-item"><span class="stat-value" id="char_count">0</span> chars</span>
-        <span class="stat-item"><span class="stat-value" id="read_time">0m</span> read</span>
+        <span class="stat-item"><span class="stat-value" id="word_count">0</span> <span data-i18n="words_label">words</span></span>
+        <span class="stat-item"><span class="stat-value" id="char_count">0</span> <span data-i18n="chars_label">chars</span></span>
+        <span class="stat-item"><span class="stat-value" id="read_time">0m</span> <span data-i18n="read_label">read</span></span>
       </div>
       <span id="save-status" style="color:var(--accent);font-size:0.85rem;font-weight:600;"></span>
     </div>
 
     <!-- Find & Replace Bar (hidden by default) -->
     <div class="find-replace-bar" id="find-replace-bar" style="display:none;">
-      <input type="text" class="find-input" id="find-find" placeholder="Find...">
-      <input type="text" class="find-input" id="find-replace" placeholder="Replace with...">
+      <input type="text" class="find-input" id="find-find" data-i18n-placeholder="fr_find_placeholder" placeholder="Find...">
+      <input type="text" class="find-input" id="find-replace" data-i18n-placeholder="fr_replace_placeholder" placeholder="Replace with...">
       <div class="fr-buttons">
-        <button class="fr-btn" id="btn-find-prev">Prev</button>
-        <button class="fr-btn" id="btn-find-next">Next</button>
-        <button class="fr-btn" id="btn-replace">Replace</button>
-        <button class="fr-btn" id="btn-replace-all">All</button>
-        <button class="close-fr-btn" id="btn-close-fr">×</button>
+        <button class="fr-btn" id="btn-find-prev" data-i18n="fr_prev_btn">Prev</button>
+        <button class="fr-btn" id="btn-find-next" data-i18n="fr_next_btn">Next</button>
+        <button class="fr-btn" id="btn-replace" data-i18n="fr_replace_btn">Replace</button>
+        <button class="fr-btn" id="btn-replace-all" data-i18n="fr_replace_all_btn">All</button>
+        <button class="close-fr-btn" id="btn-close-fr">&times;</button>
       </div>
-      <span class="fr-results" id="fr-results">0 matches</span>
+      <span class="fr-results" id="fr_results">0 matches</span>
     </div>
 
     <div class="toolbar">
       <div class="export-wrap">
         <button id="btn-export" class="btn-control" data-i18n="button_export">Export &#9662;</button>
         <div class="export-dropdown" id="export-dropdown">
-          <button data-format="md" data-i18n="export_md">Markdown</button>
+          <button data-format="md" data-i18n="export_md">MD</button>
           <button data-format="txt" data-i18n="export_txt">TXT</button>
           <button data-format="rtf" data-i18n="export_rtf">RTF</button>
           <button data-format="pdf" data-i18n="export_pdf">PDF</button>
@@ -60,32 +60,18 @@
         </div>
       </div>
 
-      <button id="btn-open" class="btn-control" data-i18n="button_open" data-i18n-tooltip="open_hint">Open</button>
+      <button id="btn-open" class="btn-control" data-i18n="button_open" data-i18n-tooltip="open_hint" title="">Open</button>
       <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
-
-      <div class="mode-toggle">
-        <button id="mode-md" class="active">MD</button>
-        <button id="mode-rich">Rich</button>
-      </div>
     </div>
 
-    <div class="editor-wrapper" id="md-wrapper">
-      <textarea
-        id="editor"
-        class="editor-input"
-        data-i18n-placeholder="placeholder_editor"
-        placeholder="Start writing here... Supports Markdown syntax."
-        spellcheck="true"
-      ></textarea>
-    </div>
-
-    <div class="editor-wrapper" id="rich-wrapper" style="display:none;">
+    <div class="editor-wrapper" id="rich-wrapper">
       <div
         id="rich-editor"
         class="rich-editor"
         contenteditable="true"
         data-i18n-placeholder="placeholder_rich"
         data-placeholder="Start writing here..."
+        spellcheck="true"
       ></div>
     </div>
   </main>
