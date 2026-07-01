@@ -1,6 +1,6 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
-// Focus Mode + Typewriter Fix + Toast Lang Fix
+// Focus Mode (fixed) + Typewriter Fix + Toast Lang Fix
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Typewriter, Quick Format Toolbar
 // ============================================
@@ -97,13 +97,15 @@
   var focusDebounceTimer = null;
 
   function initFocusMode() {
-    if (!focusModeEnabled || !richEditor) return;
+    if (!richEditor) return;
 
     document.addEventListener('selectionchange', handleSelectionChange);
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && richEditor.classList.contains('focus-mode-active')) {
         clearFocusMode();
+        var sel = window.getSelection();
+        if (sel.rangeCount) sel.collapseToEnd();
       }
     });
 
@@ -134,31 +136,24 @@
         return;
       }
 
-      activateFocusMode(range);
-    }, 100);
-  }
-
-  function activateFocusMode(range) {
-    var selectedBlock = range.commonAncestorContainer;
-    while (selectedBlock && selectedBlock.parentNode && selectedBlock.parentNode !== richEditor) {
-      selectedBlock = selectedBlock.parentNode;
-    }
-
-    if (!selectedBlock || selectedBlock === richEditor) {
-      // Selection spans multiple blocks — dim none
-      return;
-    }
-
-    var children = richEditor.children;
-    for (var i = 0; i < children.length; i++) {
-      if (children[i] === selectedBlock || children[i].contains(selectedBlock)) {
-        children[i].classList.remove('focus-dimmed');
-      } else {
-        children[i].classList.add('focus-dimmed');
+      var children = richEditor.children;
+      if (children.length === 0) {
+        clearFocusMode();
+        return;
       }
-    }
 
-    richEditor.classList.add('focus-mode-active');
+      clearFocusMode();
+
+      for (var i = 0; i < children.length; i++) {
+        if (range.intersectsNode(children[i])) {
+          children[i].classList.add('focus-target');
+        } else {
+          children[i].classList.add('focus-dimmed');
+        }
+      }
+
+      richEditor.classList.add('focus-mode-active');
+    }, 150);
   }
 
   function clearFocusMode() {
@@ -166,6 +161,10 @@
     var dimmed = richEditor.querySelectorAll('.focus-dimmed');
     for (var i = 0; i < dimmed.length; i++) {
       dimmed[i].classList.remove('focus-dimmed');
+    }
+    var targets = richEditor.querySelectorAll('.focus-target');
+    for (var i = 0; i < targets.length; i++) {
+      targets[i].classList.remove('focus-target');
     }
   }
 
@@ -231,6 +230,7 @@
       reader.readAsArrayBuffer(file);
     }
   }
+  
     // ========== SMART LISTS ==========
   function checkSmartList(e) {
     if (e.key !== 'Enter') return;

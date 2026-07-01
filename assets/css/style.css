@@ -331,7 +331,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Export Dropdown Styles (previous code) */
+/* Export Dropdown */
 .export-wrap { position: relative; }
 
 .export-dropdown {
@@ -370,11 +370,11 @@ body {
   color: white;
 }
 
-/* NEW: Quick Format Toolbar */
+/* Quick Format Toolbar */
 .quick-format-toolbar {
   display: flex;
   gap: 0.25rem;
-  margin: 0 auto; /* Center in toolbar */
+  margin: 0 auto;
   align-self: center;
 }
 
@@ -467,6 +467,21 @@ body {
   text-decoration: line-through;
 }
 
+/* ========== FOCUS MODE ========== */
+.rich-editor.focus-mode-active > * {
+  transition: opacity 0.2s ease;
+}
+
+.focus-dimmed {
+  opacity: 0.2 !important;
+  transition: opacity 0.2s ease;
+}
+
+.focus-target {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
 /* ---------- Stats Overlay ---------- */
 .stats-overlay {
   position: absolute;
@@ -490,38 +505,6 @@ body {
 .stat-sep {
   margin: 0 0.4rem;
   opacity: 0.5;
-}
-
-/* ========== FOCUS MODE ========== */
-.rich-editor {
-  transition: opacity 0.2s ease;
-}
-
-.focus-mode-active {
-  pointer-events: none;
-  position: relative;
-  z-index: 1;
-}
-
-.focus-mode-active ::selection {
-  background: var(--accent);
-  color: white;
-}
-
-.focus-dimmed {
-  opacity: 0.35 !important;
-  pointer-events: none !important;
-  filter: grayscale(30%) contrast(85%);
-}
-
-/* Keep selection visible even when dimmed */
-.focus-dimmed ::selection {
-  opacity: 1;
-}
-
-/* Exception for selected elements */
-.focus-mode-active > *:not(:has(::selection)) {
-  opacity: 0.35;
 }
 
 /* ---------- Footer ---------- */
@@ -788,7 +771,7 @@ kbd {
   padding: 0.2rem 0.4rem;
 }
 
-/* ========== TOGGLE SWITCH STYLES ========== */
+/* ========== TOGGLE SWITCHES ========== */
 .toggles-container {
   display: flex;
   flex-direction: column;
@@ -813,7 +796,6 @@ kbd {
   color: var(--text-primary);
 }
 
-/* iOS-style switch */
 .switch {
   position: relative;
   display: inline-block;
@@ -865,7 +847,6 @@ input:checked + .slider:before {
   transform: translateX(22px);
 }
 
-/* Disable state */
 input:disabled + .slider {
   opacity: 0.5;
   cursor: not-allowed;
