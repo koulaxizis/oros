@@ -278,7 +278,8 @@
     var globalShortcuts, editorShortcuts;
 
     if (lang === 'el') {
-      globalShortcuts = [
+            globalShortcuts = [
+        ['Focus Mode', 'F8'],
         ['Zen Mode', 'F9'],
         ['Έξοδος Zen', 'ESC'],
         ['Τυπογραφικό Ρυθμό', 'Ctrl+Enter']
@@ -296,6 +297,7 @@
       ];
     } else {
       globalShortcuts = [
+        ['Focus Mode', 'F8'],
         ['Zen Mode', 'F9'],
         ['Exit Zen', 'ESC'],
         ['Typewriter mode', 'Ctrl+Enter']

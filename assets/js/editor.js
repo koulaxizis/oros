@@ -1,6 +1,6 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
-// Focus Mode (spotlight) + Typewriter + Toast Fix
+// Focus Mode (spotlight) + Typewriter Fix + F8
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar
 // ============================================
@@ -55,25 +55,50 @@
   function getTextContent() { return richEditor.innerText || ''; }
   function getHTMLContent() { return richEditor.innerHTML || ''; }
 
-  // ========== TYPEWRITER ==========
+  // ========== TYPEWRITER MODE (FIXED) ==========
   function enableTypewriter() {
     if (!typewriterEnabled) return;
     setTimeout(function() {
       try {
-        var selection = window.getSelection();
-        if (selection.rangeCount === 0) return;
-        var range = selection.getRangeAt(0);
-        var rects = range.getClientRects();
-        if (!rects || rects.length === 0) return;
-        var caretRect = rects[0];
+        var sel = window.getSelection();
+        if (sel.rangeCount === 0) return;
+        var range = sel.getRangeAt(0);
+        var savedRange = range.cloneRange();
+
+        var caretRect = null;
+
+        if (range.collapsed) {
+          // Collapsed selection (just caret) — getClientRects returns empty
+          // Insert temporary span to measure caret position
+          var tempSpan = document.createElement('span');
+          tempSpan.textContent = '\u200b'; // zero-width space
+          tempSpan.style.lineHeight = 'inherit';
+          range.insertNode(tempSpan);
+          caretRect = tempSpan.getBoundingClientRect();
+          tempSpan.parentNode.removeChild(tempSpan);
+
+          // Restore selection
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+        } else {
+          var rects = range.getClientRects();
+          if (rects && rects.length > 0) caretRect = rects[0];
+          else caretRect = range.getBoundingClientRect();
+        }
+
+        if (!caretRect || (caretRect.top === 0 && caretRect.height === 0)) return;
+
         var editorRect = richEditor.getBoundingClientRect();
-        var viewportHeight = window.innerHeight;
+        var viewportHeight = richEditor.clientHeight;
         var targetPosition = viewportHeight * 0.45;
         var relativeCursorPos = caretRect.top - editorRect.top + richEditor.scrollTop;
         var desiredScrollTop = relativeCursorPos - targetPosition;
-        var maxScroll = richEditor.scrollHeight - editorRect.height;
+
+        var maxScroll = richEditor.scrollHeight - richEditor.clientHeight;
+        if (maxScroll <= 0) return; // Nothing to scroll
         if (desiredScrollTop < 0) desiredScrollTop = 0;
         if (desiredScrollTop > maxScroll) desiredScrollTop = maxScroll;
+
         richEditor.scrollTo({ top: desiredScrollTop, behavior: 'smooth' });
       } catch(e) {}
     }, 50);
@@ -88,9 +113,7 @@
     document.addEventListener('selectionchange', handleSelectionChange);
 
     richEditor.addEventListener('scroll', function() {
-      if (document.getElementById('focus-spotlight')) {
-        clearFocusMode();
-      }
+      if (document.getElementById('focus-spotlight')) clearFocusMode();
     });
 
     document.addEventListener('keydown', function(e) {
@@ -110,21 +133,12 @@
     clearTimeout(focusDebounceTimer);
     focusDebounceTimer = setTimeout(function() {
       var selection = window.getSelection();
-      if (!selection.rangeCount || selection.isCollapsed) {
-        clearFocusMode();
-        return;
-      }
+      if (!selection.rangeCount || selection.isCollapsed) { clearFocusMode(); return; }
       var range = selection.getRangeAt(0);
-      if (!richEditor.contains(range.commonAncestorContainer)) {
-        clearFocusMode();
-        return;
-      }
+      if (!richEditor.contains(range.commonAncestorContainer)) { clearFocusMode(); return; }
 
       var selRect = range.getBoundingClientRect();
-      if (selRect.width === 0 || selRect.height === 0) {
-        clearFocusMode();
-        return;
-      }
+      if (selRect.width === 0 || selRect.height === 0) { clearFocusMode(); return; }
 
       clearFocusMode();
 
@@ -162,8 +176,7 @@
   });
   editorContainer.addEventListener('drop', function(e) {
     var file = e.dataTransfer.files[0];
-    if (!file) return;
-    importFile(file);
+    if (file) importFile(file);
   });
 
   function importFile(file) {
@@ -171,15 +184,10 @@
     var reader = new FileReader();
     reader.onload = function(ev) {
       var content = ev.target.result;
-      if (ext === '.txt' || ext === '.md') {
-        richEditor.innerHTML = markdownToHtml(content);
-      } else if (ext === '.rtf') {
-        richEditor.innerHTML = parseRtf(content);
-      } else if (ext === '.doc') {
-        richEditor.innerHTML = stripDocTags(content);
-      } else {
-        richEditor.innerText = content;
-      }
+      if (ext === '.txt' || ext === '.md') richEditor.innerHTML = markdownToHtml(content);
+      else if (ext === '.rtf') richEditor.innerHTML = parseRtf(content);
+      else if (ext === '.doc') richEditor.innerHTML = stripDocTags(content);
+      else richEditor.innerText = content;
       saveContent(false);
       updateStats();
       showToast(getCurrentLang() === 'el' ? '✓ Άνοιγμα' : '✓ Opened');
@@ -220,16 +228,12 @@
   }
   function autoBreakEmptyBullet(originalLine) {
     if (originalLine.trim() === '-' || originalLine.trim() === '*') {
-      setTimeout(function() {
-        if (getLineBeforeCursor().trim() === '-') deleteCurrentBlock();
-      }, 30);
+      setTimeout(function() { if (getLineBeforeCursor().trim() === '-') deleteCurrentBlock(); }, 30);
     }
   }
   function autoBreakEmptyNumber(originalLine) {
     if (/^\s*\d+\.$/.test(originalLine.trim())) {
-      setTimeout(function() {
-        if (/^\d+\.$/.test(getLineBeforeCursor().trim())) deleteCurrentBlock();
-      }, 30);
+      setTimeout(function() { if (/^\d+\.$/.test(getLineBeforeCursor().trim())) deleteCurrentBlock(); }, 30);
     }
   }
   function deleteCurrentBlock() {
@@ -237,23 +241,18 @@
     var sel = window.getSelection();
     range.selectNodeContents(richEditor);
     range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    sel.removeAllRanges(); sel.addRange(range);
     document.execCommand('delete');
   }
   function moveCursorToFront(pos) {
     var range = document.createRange();
     var sel = window.getSelection();
     var node = richEditor.firstChild;
-    while (node && pos > getNodeLength(node)) {
-      pos -= getNodeLength(node);
-      node = node.nextSibling;
-    }
+    while (node && pos > getNodeLength(node)) { pos -= getNodeLength(node); node = node.nextSibling; }
     if (node) range.setStart(node, Math.min(pos, getNodeLength(node)));
     else range.setStart(richEditor, 0);
     range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    sel.removeAllRanges(); sel.addRange(range);
   }
   function getNodeLength(node) {
     if (node.nodeType === 3) return node.nodeValue.length;
@@ -265,24 +264,19 @@
     return 0;
   }
 
-  // ========== OPEN FILE ==========
+  // ========== OPEN / CLEAR ==========
   btnOpen.onclick = function() {
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = '.txt,.md,.markdown,.text,.rtf,.doc,.docx';
-    input.onchange = function(e) {
-      var file = e.target.files[0];
-      if (file) importFile(file);
-    };
+    input.onchange = function(e) { var f = e.target.files[0]; if (f) importFile(f); };
     input.click();
   };
 
-  // ========== CLEAR ==========
   btnClear.onclick = function() {
     if (!richEditor.innerText.trim()) return;
     var lang = getCurrentLang();
-    var confirmText = lang === 'el' ? 'Εκκαθάριση περιεχομένου;' : 'Clear content? Cannot undo.';
-    if (!confirm(confirmText)) return;
+    if (!confirm(lang === 'el' ? 'Εκκαθάριση περιεχομένου;' : 'Clear content? Cannot undo.')) return;
     richEditor.innerHTML = '';
     localStorage.removeItem(STORAGE_KEY);
     saveContent(false);
@@ -318,46 +312,35 @@
   // ========== HTML ↔ MARKDOWN ==========
   function htmlToMarkdown(html) {
     return html
-      .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n')
-      .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n')
-      .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n')
-      .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-      .replace(/<b>(.*?)<\/b>/gi, '**$1**')
-      .replace(/<em>(.*?)<\/em>/gi, '*$1*')
-      .replace(/<i>(.*?)<\/i>/gi, '*$1*')
-      .replace(/<u>(.*?)<\/u>/gi, '$1')
-      .replace(/<s>(.*?)<\/s>/gi, '~~$1~~')
-      .replace(/<code>(.*?)<\/code>/gi, '`$1`')
-      .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<div>(.*?)<\/div>/gi, '$1\n')
-      .replace(/<[^>]+>/g, '');
+      .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n').replace(/<h2>(.*?)<\/h2>/gi, '## $1\n')
+      .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n').replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+      .replace(/<b>(.*?)<\/b>/gi, '**$1**').replace(/<em>(.*?)<\/em>/gi, '*$1*')
+      .replace(/<i>(.*?)<\/i>/gi, '*$1*').replace(/<u>(.*?)<\/u>/gi, '$1')
+      .replace(/<s>(.*?)<\/s>/gi, '~~$1~~').replace(/<code>(.*?)<\/code>/gi, '`$1`')
+      .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n').replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<div>(.*?)<\/div>/gi, '$1\n').replace(/<[^>]+>/g, '');
   }
   function markdownToHtml(md) {
     return md
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/\*\*(.+?)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/gim, '<em>$1</em>')
-      .replace(/`(.+?)`/gim, '<code>$1</code>')
-      .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-      .replace(/\n/gim, '<br/>');
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>').replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>').replace(/\*\*(.+?)\*\*/gim, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/gim, '<em>$1</em>').replace(/`(.+?)`/gim, '<code>$1</code>')
+      .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>').replace(/\n/gim, '<br/>');
   }
 
   // ========== RTF / DOC IMPORT ==========
   function parseRtf(rtf) {
     rtf = rtf.replace(/\\\r?\n/g, '').replace(/{/g, '\\{').replace(/}/g, '\\}');
     var text = rtf.replace(/\\[^\s]* /g, '').replace(/\\par/g, '</p><p>')
-      .replace(/\\b/i, '<b>').replace(/\\i/i, '<i>')
-      .replace(/\\u\d+\?/g, '?').replace(/\\/g, '').replace(/{|}/g, '');
+      .replace(/\\b/i, '<b>').replace(/\\i/i, '<i>').replace(/\\u\d+\?/g, '?')
+      .replace(/\\/g, '').replace(/{|}/g, '');
     return '<div>' + text + '</div>';
   }
   function stripDocTags(content) {
     return content.replace(/<html[^>]*>|<\/html>|<head[^>]*>|<\/head>|<w:[^>]+>|<\/w:[^>]+>|<o:[^>]+>|<\/o:[^>]+>/gi, '');
   }
   
-    // ========== RTF EXPORT ==========
+    // ========== RTF / PDF / DOC EXPORT ==========
   function exportRtf(content, filename) {
     var rtf = '{\\rtf1\\ansi\\deff0\n{\\fonttbl{\\f0 Nunito;}{\\f1 Courier New;}}\n{\\colortbl;\\red117\\green111\\blue104;}\n\\f0\\fs24\n';
     var lines = splitIntoLines(content);
@@ -378,22 +361,20 @@
     return result;
   }
   function escapeRtf(text) {
-    var result = '';
+    var r = '';
     for (var i = 0; i < text.length; i++) {
       var ch = text[i], code = text.charCodeAt(i);
-      if (ch === '\\' || ch === '{' || ch === '}') result += '\\' + ch;
-      else if (code > 127) result += '\\u' + code + '?';
-      else result += ch;
+      if (ch === '\\' || ch === '{' || ch === '}') r += '\\' + ch;
+      else if (code > 127) r += '\\u' + code + '?';
+      else r += ch;
     }
-    return result;
+    return r;
   }
   function applyInlineRtf(text) {
     return text.replace(/\*\*(.+?)\*\*/g, '{\\b $1\\b0}').replace(/\*(.+?)\*/g, '{\\i $1\\i0}').replace(/`(.+?)`/g, '{\\f1 $1\\f0}');
   }
-
-  // ========== PDF EXPORT ==========
   function exportPdf(content) {
-    var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>orOS Export</title>\n<style>\nbody {\n  font-family: Calibri, Arial, sans-serif;\n  font-size: 12pt;\n  line-height: 1.7;\n  max-width: 700px;\n  margin: 2rem auto;\n  padding: 1cm;\n  color: #2b2723;\n}\nh1 { font-size: 1.8rem; }\nh2 { font-size: 1.4rem; }\nh3 { font-size: 1.15rem; }\nblockquote {\n  border-left: 3px solid #c8a96e;\n  padding-left: 1rem;\n  font-style: italic;\n  color: #756f68;\n}\ncode {\n  font-family: monospace;\n  background: #f6f5f1;\n  padding: 2px 5px;\n  border-radius: 3px;\n}\n@media print {\n  body { margin: 0; padding: 1cm; }\n}\n</style>\n</head>\n<body>\n<div class="content">' + content + '</div>\n<script>\nwindow.addEventListener("load", function() {\n  window.print();\n  setTimeout(function() { window.close(); }, 250);\n});\n<\/script>\n</body>\n</html>';
+    var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>orOS Export</title>\n<style>\nbody{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.7;max-width:700px;margin:2rem auto;padding:1cm;color:#2b2723;}\nh1{font-size:1.8rem;}h2{font-size:1.4rem;}h3{font-size:1.15rem;}\nblockquote{border-left:3px solid #c8a96e;padding-left:1rem;font-style:italic;color:#756f68;}\ncode{font-family:monospace;background:#f6f5f1;padding:2px 5px;border-radius:3px;}\n@media print{body{margin:0;padding:1cm;}}\n</style>\n</head>\n<body>\n<div class="content">' + content + '</div>\n<script>\nwindow.addEventListener("load",function(){window.print();setTimeout(function(){window.close();},250);});\n<\/script>\n</body>\n</html>';
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     if (!window.open(url, '_blank')) {
@@ -401,8 +382,6 @@
       URL.revokeObjectURL(url);
     }
   }
-
-  // ========== DOC EXPORT ==========
   function exportDoc(content, filename) {
     var header = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Export</title></head><body style="font-family:Calibri,sans-serif;font-size:12pt;">';
     var blob = new Blob(['\ufeff' + header + content + '</body></html>'], { type: 'application/msword' });
@@ -455,11 +434,9 @@
   }
   function clearHighlights() {}
 
-  // ========== REPLACE BUTTONS ==========
   document.getElementById('btn-replace').onclick = function() {
     if (matchRanges.length === 0) return;
     var range = matchRanges[currentMatchIndex];
-    var replaceText = replaceInput.value;
     richEditor.focus();
     var textNodes = getTextNodes(richEditor);
     var pos = 0;
@@ -471,7 +448,7 @@
         selRange.setEnd(textNodes[i], range[1] - pos);
         var sel = window.getSelection();
         sel.removeAllRanges(); sel.addRange(selRange);
-        document.execCommand('insertText', false, replaceText);
+        document.execCommand('insertText', false, replaceInput.value);
         break;
       }
       pos += nodeLen;
@@ -480,9 +457,8 @@
   };
   document.getElementById('btn-replace-all').onclick = function() {
     if (matchRanges.length === 0) return;
-    var content = getTextContent();
     var regex = new RegExp(findInput.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    richEditor.innerText = content.replace(regex, replaceInput.value);
+    richEditor.innerText = getTextContent().replace(regex, replaceInput.value);
     saveContent(false); updateStats(); setTimeout(findAndHighlight, 50);
     showToast(getCurrentLang() === 'el' ? '✓ Αντικαταστάθηκαν όλες' : '✓ All replaced');
   };
@@ -502,9 +478,25 @@
   // ========== KEYBOARD SHORTCUTS ==========
   document.addEventListener('keydown', function(e) {
     var ctrl = e.ctrlKey || e.metaKey;
+
+    // Focus Mode toggle (F8)
+    if (e.key === 'F8' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      focusModeEnabled = !focusModeEnabled;
+      localStorage.setItem(STORAGE_FOCUS_MODE, focusModeEnabled ? 'true' : 'false');
+      showToast(
+        focusModeEnabled
+          ? (getCurrentLang() === 'el' ? '🔦 Focus Mode ΕΝΕΡΓΟ' : '🔦 Focus Mode ON')
+          : (getCurrentLang() === 'el' ? '⚫ Focus Mode ΑΠΕΝΕΡΓΟ' : '⚫ Focus Mode OFF')
+      );
+      if (!focusModeEnabled) clearFocusMode();
+      return;
+    }
+
     if (ctrl && e.key.toLowerCase() === 'f') { e.preventDefault(); showFindReplace(); return; }
     if (ctrl && e.key.toLowerCase() === 'h') { e.preventDefault(); findInput.focus(); return; }
     if (e.key === 'Escape' && findBar.style.display === 'flex') { hideFindReplace(); return; }
+
     if (ctrl && e.key === 'Enter') {
       e.preventDefault();
       typewriterEnabled = !typewriterEnabled;
@@ -513,10 +505,12 @@
       if (typewriterEnabled) enableTypewriter();
       return;
     }
+
     if (ctrl && e.key.toLowerCase() === 'u') {
       if (document.activeElement === richEditor) { e.preventDefault(); document.execCommand('underline'); saveContent(false); updateStats(); }
       return;
     }
+
     if (!ctrl) return;
     var activeInEditor = document.activeElement === richEditor;
     switch(e.key.toLowerCase()) {
@@ -552,8 +546,7 @@
     clearTimeout(window.toastTimeout);
     var toast = document.querySelector('.zentool-toast:not(#zen-toast)');
     if (!toast) { toast = document.createElement('div'); toast.className = 'zentool-toast'; document.body.appendChild(toast); }
-    toast.textContent = msg;
-    toast.classList.add('visible');
+    toast.textContent = msg; toast.classList.add('visible');
     window.toastTimeout = setTimeout(function() { toast.classList.remove('visible'); }, 3000);
   }
   function downloadFile(content, filename, mimeType) {
