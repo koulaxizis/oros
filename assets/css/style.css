@@ -467,19 +467,16 @@ body {
   text-decoration: line-through;
 }
 
-/* ========== FOCUS MODE ========== */
-.rich-editor.focus-mode-active > * {
-  transition: opacity 0.2s ease;
-}
-
-.focus-dimmed {
-  opacity: 0.2 !important;
-  transition: opacity 0.2s ease;
-}
-
-.focus-target {
-  opacity: 1;
-  transition: opacity 0.2s ease;
+/* ========== FOCUS MODE (SPOTLIGHT) ========== */
+.focus-spotlight {
+  position: absolute;
+  background: transparent;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  z-index: 999;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  transition: top 0.1s ease, left 0.1s ease, width 0.1s ease, height 0.1s ease;
 }
 
 /* ---------- Stats Overlay ---------- */
