@@ -1,6 +1,6 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
-// Focus Mode (spotlight) + Typewriter Fix + F8
+// Focus Mode (spotlight) + Typewriter (fixed v2)
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar
 // ============================================
@@ -55,52 +55,62 @@
   function getTextContent() { return richEditor.innerText || ''; }
   function getHTMLContent() { return richEditor.innerHTML || ''; }
 
-  // ========== TYPEWRITER MODE (FIXED) ==========
+  // ========== TYPEWRITER MODE (FIXED v2) ==========
   function enableTypewriter() {
     if (!typewriterEnabled) return;
     setTimeout(function() {
       try {
         var sel = window.getSelection();
-        if (sel.rangeCount === 0) return;
+        if (!sel.rangeCount) return;
+
         var range = sel.getRangeAt(0);
         var savedRange = range.cloneRange();
 
-        var caretRect = null;
+        var rect = null;
 
         if (range.collapsed) {
-          // Collapsed selection (just caret) — getClientRects returns empty
-          // Insert temporary span to measure caret position
-          var tempSpan = document.createElement('span');
-          tempSpan.textContent = '\u200b'; // zero-width space
-          tempSpan.style.lineHeight = 'inherit';
-          range.insertNode(tempSpan);
-          caretRect = tempSpan.getBoundingClientRect();
-          tempSpan.parentNode.removeChild(tempSpan);
+          // Insert <br> to measure caret position
+          // <br> has definite height = line height
+          var marker = document.createElement('br');
+          range.insertNode(marker);
+          rect = marker.getBoundingClientRect();
+          marker.parentNode.removeChild(marker);
 
-          // Restore selection
+          // Restore selection after DOM mutation
           sel.removeAllRanges();
           sel.addRange(savedRange);
         } else {
-          var rects = range.getClientRects();
-          if (rects && rects.length > 0) caretRect = rects[0];
-          else caretRect = range.getBoundingClientRect();
+          rect = range.getBoundingClientRect();
         }
 
-        if (!caretRect || (caretRect.top === 0 && caretRect.height === 0)) return;
+        if (!rect || rect.top === 0) return;
 
         var editorRect = richEditor.getBoundingClientRect();
-        var viewportHeight = richEditor.clientHeight;
-        var targetPosition = viewportHeight * 0.45;
-        var relativeCursorPos = caretRect.top - editorRect.top + richEditor.scrollTop;
-        var desiredScrollTop = relativeCursorPos - targetPosition;
+        var visibleHeight = richEditor.clientHeight;
+        var maxScroll = richEditor.scrollHeight - visibleHeight;
 
-        var maxScroll = richEditor.scrollHeight - richEditor.clientHeight;
-        if (maxScroll <= 0) return; // Nothing to scroll
-        if (desiredScrollTop < 0) desiredScrollTop = 0;
-        if (desiredScrollTop > maxScroll) desiredScrollTop = maxScroll;
+        if (maxScroll <= 0) return; // Content fits — no scroll needed
 
-        richEditor.scrollTo({ top: desiredScrollTop, behavior: 'smooth' });
-      } catch(e) {}
+        // Caret position relative to editor's visible area
+        var caretInViewport = rect.top - editorRect.top;
+
+        // Target: 45% of visible height
+        var target = visibleHeight * 0.45;
+
+        // How far off target
+        var delta = caretInViewport - target;
+
+        // Threshold: only scroll if off by more than 30px
+        if (Math.abs(delta) < 30) return;
+
+        var newScroll = richEditor.scrollTop + delta;
+        newScroll = Math.max(0, Math.min(newScroll, maxScroll));
+
+        // INSTANT scroll (not smooth) — smooth gets cancelled by next keystroke
+        richEditor.scrollTop = newScroll;
+      } catch(e) {
+        console.warn('Typewriter error:', e);
+      }
     }, 50);
   }
 
