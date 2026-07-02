@@ -14,9 +14,9 @@
   var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
   var STORAGE_FOCUS_MODE = 'oros_focus_mode';
 
-  var editorContainer = richWrapper;
   var richEditor = document.getElementById('rich-editor');
   var richWrapper = document.getElementById('rich-wrapper');
+  var editorContainer = richWrapper;
   var wordCountEl = document.getElementById('word_count');
   var charCountEl = document.getElementById('char_count');
   var readTimeEl = document.getElementById('read_time');
