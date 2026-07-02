@@ -4,6 +4,7 @@
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar
 // Typewriter Mode REMOVED
+// i18n: matches, toast messages
 // ============================================
 
 (function() {
@@ -341,18 +342,20 @@
     URL.revokeObjectURL(url);
   }
 
-  // ========== FIND & REPLACE ==========
+  // ========== FIND & REPLACE (i18n) ==========
   function showFindReplace() { findBar.style.display = 'flex'; findInput.focus(); findAndHighlight(); }
   function hideFindReplace() { findBar.style.display = 'none'; clearHighlights(); currentMatchIndex = -1; matchRanges = []; }
   function findAndHighlight() {
     var query = findInput.value;
+    var lang = getCurrentLang();
+    var mw = lang === 'el' ? 'αντιστοιχίες' : 'matches';
     clearHighlights(); matchRanges = []; currentMatchIndex = -1;
-    if (!query) { frResults.textContent = '0 matches'; return; }
+    if (!query) { frResults.textContent = '0 ' + mw; return; }
     var content = getTextContent();
     var regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     var match;
     while ((match = regex.exec(content)) !== null) matchRanges.push([match.index, match.index + match[0].length]);
-    frResults.textContent = matchRanges.length + ' matches';
+    frResults.textContent = matchRanges.length + ' ' + mw;
     if (matchRanges.length > 0) navigateToMatch(0);
   }
   function navigateToMatch(index) {
@@ -530,7 +533,7 @@
       case 'underline': document.execCommand('underline'); break;
       case 'strikeThrough': document.execCommand('strikeThrough'); break;
       case 'h1': document.execCommand('formatBlock', false, 'H1'); break;
-      case 'h2': document.execCommand('formatBlock', false, 'H2'); break;
+            case 'h2': document.execCommand('formatBlock', false, 'H2'); break;
       case 'quote': document.execCommand('formatBlock', false, 'BLOCKQUOTE'); break;
       case 'insertUnorderedList': document.execCommand('insertUnorderedList'); break;
       case 'insertOrderedList': document.execCommand('insertOrderedList'); break;

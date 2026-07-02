@@ -1,7 +1,7 @@
 // ============================================
 // orOS — Core Functionality
-// Theme | Language | Back-to-top | Zen Mode | Settings
-// Settings: Shortcuts Tab + Appearance Tab (toggles)
+// Theme | Language | Zen Mode | Settings
+// Settings: Shortcuts Tab + Appearance Tab
 // Typewriter Mode REMOVED
 // ============================================
 
@@ -90,6 +90,7 @@
     btn.innerHTML = nextTheme === 'dark' ? '\uD83C\uDF19' : '\u2600\uFE0F';
     var t = (translations[getLang()] || translations.en) || {};
     btn.title = nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
+    btn.setAttribute('aria-label', nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light'));
     btn.onclick = function() {
       applyTheme(nextTheme);
       renderThemeButton(nextTheme);
@@ -135,6 +136,10 @@
       var key = el.getAttribute('data-i18n-tooltip');
       if (trans[key]) el.title = trans[key];
     });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-aria');
+      if (trans[key]) el.setAttribute('aria-label', trans[key]);
+    });
   }
 
   function applyTranslationsOnInit() {
@@ -148,9 +153,17 @@
       var key = el.getAttribute('data-i18n-placeholder');
       if (trans[key]) { el.placeholder = trans[key]; el.setAttribute('data-placeholder', trans[key]); }
     });
+    document.querySelectorAll('[data-i18n-alt]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-alt');
+      if (trans[key]) el.alt = trans[key];
+    });
     document.querySelectorAll('[data-i18n-tooltip]').forEach(function(el) {
       var key = el.getAttribute('data-i18n-tooltip');
       if (trans[key]) el.title = trans[key];
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-aria');
+      if (trans[key]) el.setAttribute('aria-label', trans[key]);
     });
   }
 
@@ -245,7 +258,7 @@
     if (existing) existing.remove();
 
     var lang = getLang();
-    var isEditor = !!document.getElementById('editor-container') || !!document.getElementById('rich-editor');
+    var isEditor = !!document.getElementById('rich-editor');
 
     var globalShortcuts, editorShortcuts;
 
@@ -303,7 +316,6 @@
     var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
     var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
 
-    // Typewriter toggle REMOVED from appearance
     var appearanceHtml =
       '<div class="toggle-row">' +
         '<span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
@@ -391,8 +403,6 @@
       };
     }
 
-    // Typewriter toggle handler REMOVED
-
     var installBtn = modal.querySelector('#btn-install-pwa');
     if (installBtn) {
       installBtn.onclick = async function() {
@@ -409,7 +419,7 @@
       };
     }
 
-    if (!deferredPrompt) {
+    if (!deferredPrompt && installBtn) {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         installBtn.disabled = true;
         installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκατεστημένο' : '\u2713 Already installed';

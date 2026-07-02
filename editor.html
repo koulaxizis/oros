@@ -20,13 +20,13 @@
   <main class="app-main">
     <!-- FIND & REPLACE BAR -->
     <div class="find-replace-bar" id="find-replace-bar" style="display:none;">
-      <input type="text" class="find-input" id="find-find" placeholder="Find...">
-      <input type="text" class="find-input" id="find-replace" placeholder="Replace...">
+      <input type="text" class="find-input" id="find-find" data-i18n-placeholder="placeholder_find" placeholder="Find...">
+      <input type="text" class="find-input" id="find-replace" data-i18n-placeholder="placeholder_replace" placeholder="Replace with...">
       <div class="fr-buttons">
         <button class="fr-btn" id="btn-find-prev">↑</button>
         <button class="fr-btn" id="btn-find-next">↓</button>
-        <button class="fr-btn" id="btn-replace">Replace</button>
-        <button class="fr-btn" id="btn-replace-all">All</button>
+        <button class="fr-btn" id="btn-replace" data-i18n="btn_replace">Replace</button>
+        <button class="fr-btn" id="btn-replace-all" data-i18n="btn_replace_all">All</button>
       </div>
       <span class="fr-results" id="fr_results">0 matches</span>
       <button class="close-fr-btn" id="btn-close-fr">×</button>
@@ -37,12 +37,12 @@
       <button class="btn-control" id="btn-open">📂 <span data-i18n="open">Open</span></button>
       <button class="btn-control" id="btn-clear">🗑 <span data-i18n="clear">Clear</span></button>
       <div class="quick-format-toolbar" id="quick-format-toolbar">
-        <button class="fmt-btn" data-cmd="bold" title="Bold (Ctrl+B)">B</button>
-        <button class="fmt-btn" data-cmd="italic" title="Italic (Ctrl+I)">I</button>
+        <button class="fmt-btn" data-cmd="bold" data-i18n-tooltip="bold_title" title="Bold (Ctrl+B)">B</button>
+        <button class="fmt-btn" data-cmd="italic" data-i18n-tooltip="italic_title" title="Italic (Ctrl+I)">I</button>
         <button class="fmt-btn" data-cmd="underline" data-i18n-tooltip="underline_title" title="Underline">U</button>
-        <button class="fmt-btn" data-cmd="strikeThrough" title="Strikethrough">S</button>
-        <button class="fmt-btn" data-cmd="insertUnorderedList" title="Bullet List">•</button>
-        <button class="fmt-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
+        <button class="fmt-btn" data-cmd="strikeThrough" data-i18n-tooltip="strike_title" title="Strikethrough">S</button>
+        <button class="fmt-btn" data-cmd="insertUnorderedList" data-i18n-tooltip="title_bullet_list" title="Bullet List">•</button>
+        <button class="fmt-btn" data-cmd="insertOrderedList" data-i18n-tooltip="title_numbered_list" title="Numbered List">1.</button>
       </div>
       <span class="save-status" id="save_status" style="font-size:0.75rem;color:var(--text-secondary);margin-left:auto;"></span>
       <div class="export-wrap">
@@ -61,9 +61,9 @@
     <div class="editor-wrapper" id="rich-wrapper">
       <div class="rich-editor" id="rich-editor" contenteditable="true" spellcheck="true"></div>
       <div class="stats-overlay" id="stats-overlay">
-        <span id="word_count">0</span> words
+        <span id="word_count">0</span> <span data-i18n="text_words">words</span>
         <span class="stat-sep">|</span>
-        <span id="char_count">0</span> chars
+        <span id="char_count">0</span> <span data-i18n="text_chars">chars</span>
         <span class="stat-sep">|</span>
         <span id="read_time">1m</span>
       </div>

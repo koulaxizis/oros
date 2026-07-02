@@ -16,10 +16,10 @@
           '<span class="version-badge">v0.2</span>' +
         '</a>' +
         '<div class="header-controls">' +
-          '<select id="language-select" class="lang-select" aria-label="Language"></select>' +
-          '<button id="btn-zen" class="btn-control btn-icon" aria-label="Zen Mode" title="Zen Mode (F9)">🧘</button>' +
-          '<button id="btn-settings" class="btn-control btn-icon" aria-label="Settings" title="Settings">⚙️</button>' +
-          '<button id="theme-toggle" class="btn-control btn-icon" aria-label="Toggle theme"></button>' +
+          '<select id="language-select" class="lang-select" data-i18n-aria="aria_language" aria-label="Language"></select>' +
+          '<button id="btn-zen" class="btn-control btn-icon" data-i18n-aria="aria_zen" data-i18n-tooltip="tooltip_zen" aria-label="Zen Mode" title="Zen Mode (F9)">🧘</button>' +
+          '<button id="btn-settings" class="btn-control btn-icon" data-i18n-aria="aria_settings" data-i18n-tooltip="tooltip_settings" aria-label="Settings" title="Settings">⚙️</button>' +
+          '<button id="theme-toggle" class="btn-control btn-icon" data-i18n-aria="aria_theme_toggle" aria-label="Toggle theme"></button>' +
         '</div>' +
       '</div>' +
     '</header>';

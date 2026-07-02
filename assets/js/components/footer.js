@@ -14,5 +14,5 @@
         '<div class="footer-credits"></div>' +
       '</div>' +
     '</footer>' +
-    '<button id="back-to-top" class="back-to-top" data-i18n="back_to_top" aria-label="Back to top">↑</button>';
+    '<button id="back-to-top" class="back-to-top" data-i18n-aria="back_to_top" aria-label="Back to top">↑</button>';
 })();
