@@ -13,25 +13,8 @@
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="header" id="site-header">
-    <div class="header-content">
-      <a href="index.html" class="logo">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 20l5-7 4 5 3-4 6 6"/>
-          <circle cx="17" cy="7" r="1.5"/>
-        </svg>
-        <span class="logo-text"><b>or</b><i>OS</i></span>
-        <span class="version-badge">v0.2</span>
-      </a>
-      <div class="header-controls">
-        <button class="btn-control btn-icon" id="btn-zen" title="Zen Mode (F9)">🧘</button>
-        <button class="btn-control btn-icon" id="btn-settings" title="Settings">⚙</button>
-        <select class="lang-select" id="language-select" title="Language"></select>
-        <button class="btn-control btn-icon" id="theme-toggle" title="Theme">☀️</button>
-      </div>
-    </div>
-  </header>
+  <!-- HEADER injected by header.js -->
+  <header class="header" id="site-header"></header>
 
   <!-- MAIN -->
   <main class="app-main">
@@ -87,13 +70,8 @@
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="footer" id="site-footer">
-    <div class="footer-inner">
-      <div class="footer-credits"></div>
-      <div>V0.20 | 02/07/2026 | 🔒 Privacy First · 🚫 No Tracking · ⚡ Offline</div>
-    </div>
-  </footer>
+  <!-- FOOTER injected by footer.js -->
+  <footer class="footer" id="site-footer"></footer>
 
   <!-- Back to Top -->
   <button class="back-to-top" id="back-to-top" aria-label="Back to top">↑</button>
