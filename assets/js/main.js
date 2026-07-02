@@ -2,7 +2,7 @@
 // orOS — Core Functionality
 // Theme | Language | Back-to-top | Zen Mode | Settings
 // Settings: Shortcuts Tab + Appearance Tab (toggles)
-// Includes: Focus Mode toggle
+// Typewriter Mode REMOVED
 // ============================================
 
 (function() {
@@ -11,7 +11,6 @@
     LANGUAGE: 'oros-language',
     HIDE_STATS: 'oros_hide_stats',
     HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
-    TYPEWRITER: 'oros_typewriter_mode',
     FOCUS_MODE: 'oros_focus_mode'
   };
 
@@ -126,10 +125,7 @@
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
       var key = el.getAttribute('data-i18n-placeholder');
-      if (trans[key]) {
-        el.placeholder = trans[key];
-        el.setAttribute('data-placeholder', trans[key]);
-      }
+      if (trans[key]) { el.placeholder = trans[key]; el.setAttribute('data-placeholder', trans[key]); }
     });
     document.querySelectorAll('[data-i18n-alt]').forEach(function(el) {
       var key = el.getAttribute('data-i18n-alt');
@@ -150,10 +146,7 @@
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
       var key = el.getAttribute('data-i18n-placeholder');
-      if (trans[key]) {
-        el.placeholder = trans[key];
-        el.setAttribute('data-placeholder', trans[key]);
-      }
+      if (trans[key]) { el.placeholder = trans[key]; el.setAttribute('data-placeholder', trans[key]); }
     });
     document.querySelectorAll('[data-i18n-tooltip]').forEach(function(el) {
       var key = el.getAttribute('data-i18n-tooltip');
@@ -165,20 +158,13 @@
     var select = document.getElementById('language-select');
     if (!select) return;
     select.innerHTML = '';
-    var opts = [
-      { value: 'el', label: 'EL' },
-      { value: 'en', label: 'EN' }
-    ];
-    opts.forEach(function(opt) {
+    [{value:'el',label:'EL'},{value:'en',label:'EN'}].forEach(function(opt) {
       var o = document.createElement('option');
-      o.value = opt.value;
-      o.textContent = opt.label;
+      o.value = opt.value; o.textContent = opt.label;
       if (opt.value === currentLang) o.selected = true;
       select.appendChild(o);
     });
-    select.onchange = function(e) {
-      applyLanguage(e.target.value);
-    };
+    select.onchange = function(e) { applyLanguage(e.target.value); };
   }
 
   // ---------- Footer Credits ----------
@@ -198,9 +184,7 @@
     window.addEventListener('scroll', function() {
       btn.classList.toggle('visible', window.scrollY > 300);
     }, { passive: true });
-    btn.onclick = function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    btn.onclick = function() { window.scrollTo({ top: 0, behavior: 'smooth' }); };
   }
 
   // ---------- Zen Mode ----------
@@ -210,18 +194,11 @@
     var btn = document.getElementById('btn-zen');
     if (!btn) return;
     zenActive = localStorage.getItem('oros-zen') === 'true';
-    if (zenActive) {
-      document.documentElement.setAttribute('data-zen', 'true');
-    }
+    if (zenActive) document.documentElement.setAttribute('data-zen', 'true');
     btn.onclick = toggleZenMode;
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        e.preventDefault();
-        toggleZenMode();
-      }
-      if (e.key === 'Escape' && zenActive) {
-        toggleZenMode();
-      }
+      if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); toggleZenMode(); }
+      if (e.key === 'Escape' && zenActive) { toggleZenMode(); }
     });
   }
 
@@ -242,26 +219,21 @@
 
   function showZenToast() {
     removeZenToast();
-    var msg = getLang() === 'el'
-      ? '\uD83E\uDDD8 Zen Mode — Πάτα ESC ή F9 για έξοδο'
-      : '\uD83E\uDDD8 Zen Mode — Press ESC or F9 to exit';
+    var msg = getLang() === 'el' ? '\uD83E\uDDD8 Zen Mode — Πάτα ESC ή F9 για έξοδο' : '\uD83E\uDDD8 Zen Mode — Press ESC or F9 to exit';
     var toast = document.createElement('div');
     toast.className = 'zentool-toast visible';
     toast.id = 'zen-toast';
     toast.textContent = msg;
     document.body.appendChild(toast);
-    setTimeout(function() {
-      var t = document.getElementById('zen-toast');
-      if (t) t.classList.remove('visible');
-    }, 3500);
+    setTimeout(function() { var t = document.getElementById('zen-toast'); if (t) t.classList.remove('visible'); }, 3500);
   }
 
   function removeZenToast() {
     var t = document.getElementById('zen-toast');
     if (t) t.remove();
   }
-
-  // ---------- Settings Modal ----------
+  
+    // ---------- Settings Modal ----------
   function initSettings() {
     var btn = document.getElementById('btn-settings');
     if (!btn) return;
@@ -278,11 +250,10 @@
     var globalShortcuts, editorShortcuts;
 
     if (lang === 'el') {
-            globalShortcuts = [
+      globalShortcuts = [
         ['Focus Mode', 'F8'],
         ['Zen Mode', 'F9'],
-        ['Έξοδος Zen', 'ESC'],
-        ['Τυπογραφικό Ρυθμό', 'Ctrl+Enter']
+        ['Έξοδος Zen', 'ESC']
       ];
       editorShortcuts = [
         ['Αποθήκευση', 'Ctrl+S'],
@@ -299,8 +270,7 @@
       globalShortcuts = [
         ['Focus Mode', 'F8'],
         ['Zen Mode', 'F9'],
-        ['Exit Zen', 'ESC'],
-        ['Typewriter mode', 'Ctrl+Enter']
+        ['Exit Zen', 'ESC']
       ];
       editorShortcuts = [
         ['Save', 'Ctrl+S'],
@@ -331,9 +301,9 @@
 
     var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
     var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
-    var typewriterOn = localStorage.getItem(STORAGE_KEY.TYPEWRITER) === 'true';
     var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
 
+    // Typewriter toggle REMOVED from appearance
     var appearanceHtml =
       '<div class="toggle-row">' +
         '<span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
@@ -346,10 +316,6 @@
       '<div class="toggle-row">' +
         '<span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
         '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
-      '</div>' +
-      '<div class="toggle-row">' +
-        '<span class="toggle-label">' + getTrans('toggle_typewriter') + '</span>' +
-        '<label class="switch"><input type="checkbox" id="toggle-typewriter"' + (typewriterOn ? ' checked' : '') + '><span class="slider"></span></label>' +
       '</div>';
 
     var modal = document.createElement('div');
@@ -425,13 +391,7 @@
       };
     }
 
-    var twToggle = modal.querySelector('#toggle-typewriter');
-    if (twToggle) {
-      twToggle.onchange = function() {
-        var on = this.checked;
-        localStorage.setItem(STORAGE_KEY.TYPEWRITER, on ? 'true' : 'false');
-      };
-    }
+    // Typewriter toggle handler REMOVED
 
     var installBtn = modal.querySelector('#btn-install-pwa');
     if (installBtn) {
@@ -441,10 +401,10 @@
           var choice = await deferredPrompt.userChoice;
           deferredPrompt = null;
           installBtn.disabled = true;
-          installBtn.textContent = getLang() === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B1\u03C3\u03C4\u03AC\u03B8\u03B7\u03BA\u03B5' : '\u2713 Installed';
+          installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκαταστάθηκε' : '\u2713 Installed';
         } else {
           installBtn.disabled = true;
-          installBtn.textContent = getLang() === 'el' ? '\u26A0 \u0394\u03B5\u03BD \u03C5\u03C0\u03BF\u03C3\u03C4\u03B7\u03C1\u03AF\u03B6\u03B5\u03C4\u03B1\u03B9' : '\u26A0 Not supported';
+          installBtn.textContent = getLang() === 'el' ? '\u26A0 Δεν υποστηρίζεται' : '\u26A0 Not supported';
         }
       };
     }
@@ -452,17 +412,14 @@
     if (!deferredPrompt) {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         installBtn.disabled = true;
-        installBtn.textContent = getLang() === 'el' ? '\u2713 \u0395\u03B3\u03BA\u03B1\u03C4\u03B5\u03C3\u03C4\u03B7\u03BC\u03AD\u03BD\u03BF' : '\u2713 Already installed';
+        installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκατεστημένο' : '\u2713 Already installed';
       }
     }
   }
 
   function updateSettingsModalLanguage(lang) {
     var existing = document.querySelector('.settings-modal');
-    if (existing) {
-      existing.remove();
-      openSettingsModal();
-    }
+    if (existing) { existing.remove(); openSettingsModal(); }
   }
 
 })();

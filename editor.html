@@ -3,45 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Text editor — offline, private, fast.">
-  <title>Writer — orOS</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="assets/css/style.css">
-
-  <script>
-    (function(){
-      var t = localStorage.getItem('oros-theme');
-      if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
-    })();
-  </script>
+  <title>orOS Writer</title>
+  <meta name="description" content="Privacy-first, offline writer for the modern creator.">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/oros-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/img/oros-icon.png">
+  <meta name="theme-color" content="#1b1a18" data-dark="#1b1a18" data-light="#f6f5f1">
 </head>
 <body>
 
-  <div id="oros-header"></div>
-  <script src="assets/js/components/header.js"></script>
+  <!-- HEADER -->
+  <header class="header" id="site-header">
+    <div class="header-content">
+      <a href="../index.html" class="logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 20l5-7 4 5 3-4 6 6"/>
+          <circle cx="17" cy="7" r="1.5"/>
+        </svg>
+        <span class="logo-text"><b>or</b><i>OS</i></span>
+        <span class="version-badge">v0.2</span>
+      </a>
+      <div class="header-controls">
+        <button class="btn-control btn-icon" id="btn-zen" title="Zen Mode (F9)">🧘</button>
+        <button class="btn-control btn-icon" id="btn-settings" title="Settings">⚙</button>
+        <select class="lang-select" id="language-select" title="Language"></select>
+        <button class="btn-control btn-icon" id="theme-toggle" title="Theme">☀️</button>
+      </div>
+    </div>
+  </header>
 
-  <main class="app-main" id="editor-container">
-
-    <!-- Find & Replace Bar (hidden by default) -->
+  <!-- MAIN -->
+  <main class="app-main">
+    <!-- FIND & REPLACE BAR -->
     <div class="find-replace-bar" id="find-replace-bar" style="display:none;">
-      <input type="text" class="find-input" id="find-find" data-i18n-placeholder="fr_find_placeholder" placeholder="Find...">
-      <input type="text" class="find-input" id="find-replace" data-i18n-placeholder="fr_replace_placeholder" placeholder="Replace with...">
+      <input type="text" class="find-input" id="find-find" placeholder="Find...">
+      <input type="text" class="find-input" id="find-replace" placeholder="Replace...">
       <div class="fr-buttons">
-        <button class="fr-btn" id="btn-find-prev" data-i18n="fr_prev_btn">Prev</button>
-        <button class="fr-btn" id="btn-find-next" data-i18n="fr_next_btn">Next</button>
-        <button class="fr-btn" id="btn-replace" data-i18n="fr_replace_btn">Replace</button>
-        <button class="fr-btn" id="btn-replace-all" data-i18n="fr_replace_all_btn">All</button>
-        <button class="close-fr-btn" id="btn-close-fr">&times;</button>
+        <button class="fr-btn" id="btn-find-prev">↑</button>
+        <button class="fr-btn" id="btn-find-next">↓</button>
+        <button class="fr-btn" id="btn-replace">Replace</button>
+        <button class="fr-btn" id="btn-replace-all">All</button>
       </div>
       <span class="fr-results" id="fr_results">0 matches</span>
+      <button class="close-fr-btn" id="btn-close-fr">×</button>
     </div>
 
+    <!-- TOOLBAR -->
     <div class="toolbar">
+      <button class="btn-control" id="btn-open">📂 <span data-i18n="open">Open</span></button>
+      <button class="btn-control" id="btn-clear">🗑 <span data-i18n="clear">Clear</span></button>
+      <div class="quick-format-toolbar" id="quick-format-toolbar">
+        <button class="fmt-btn" data-cmd="bold" title="Bold (Ctrl+B)">B</button>
+        <button class="fmt-btn" data-cmd="italic" title="Italic (Ctrl+I)">I</button>
+        <button class="fmt-btn" data-cmd="underline" data-i18n-tooltip="underline_title" title="Underline">U</button>
+        <button class="fmt-btn" data-cmd="strikeThrough" title="Strikethrough">S</button>
+        <button class="fmt-btn" data-cmd="insertUnorderedList" title="Bullet List">•</button>
+        <button class="fmt-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
+      </div>
+      <span class="save-status" id="save_status" style="font-size:0.75rem;color:var(--text-secondary);margin-left:auto;"></span>
       <div class="export-wrap">
-        <button id="btn-export" class="btn-control" data-i18n="button_export">Export &#9662;</button>
-         <div class="export-dropdown" id="export-dropdown">
+        <button class="btn-control" id="btn-export">⬇ <span data-i18n="export">Export</span></button>
+        <div class="export-dropdown" id="export-dropdown">
           <button data-format="md" data-i18n="export_md">MD</button>
           <button data-format="txt" data-i18n="export_txt">TXT</button>
           <button data-format="rtf" data-i18n="export_rtf">RTF</button>
@@ -49,54 +72,35 @@
           <button data-format="pdf" data-i18n="export_pdf">PDF</button>
         </div>
       </div>
-
-      <button id="btn-open" class="btn-control" data-i18n="button_open" data-i18n-tooltip="open_hint" title="">Open</button>
-      <button id="btn-clear" class="btn-control" data-i18n="button_clear">Clear</button>
-
-      <!-- Quick Format Toolbar (centered) -->
-      <div class="quick-format-toolbar" id="quick-format-toolbar">
-        <button type="button" class="fmt-btn" data-cmd="bold" data-title-b="bold_title" data-i18n-tooltip="bold_title" title="Bold (Ctrl+B)">B</button>
-        <button type="button" class="fmt-btn" data-cmd="italic" data-title-b="italic_title" data-i18n-tooltip="italic_title" title="Italic (Ctrl+I)">I</button>
-        <button type="button" class="fmt-btn" data-cmd="underline" data-title-b="underline_title" data-i18n-tooltip="underline_title" title="Underline (Ctrl+U)">U</button>
-        <button type="button" class="fmt-btn" data-cmd="strikeThrough" data-title-b="strike_title" data-i18n-tooltip="strike_title" title="Strikethrough">S</button>
-        <button type="button" class="fmt-btn" data-cmd="insertUnorderedList" data-title-b="ulist_title" data-i18n-tooltip="ulist_title" title="Bullet List">•</button>
-        <button type="button" class="fmt-btn" data-cmd="insertOrderedList" data-title-b="olist_title" data-i18n-tooltip="olist_title" title="Numbered List">1.</button>
-      </div>
-
-      <span id="save-status" style="color:var(--accent);font-size:0.85rem;font-weight:600;margin-left:auto;"></span>
     </div>
 
+    <!-- EDITOR WRAPPER — contains scrollable editor + stats overlay -->
     <div class="editor-wrapper" id="rich-wrapper">
-      <div
-        id="rich-editor"
-        class="rich-editor"
-        contenteditable="true"
-        data-i18n-placeholder="placeholder_rich"
-        data-placeholder="Start writing here..."
-        spellcheck="true"
-      ></div>
-
-      <!-- Stats overlay (optional toggle) -->
+      <div class="rich-editor" id="rich-editor" contenteditable="true" spellcheck="true"></div>
       <div class="stats-overlay" id="stats-overlay">
-        <span id="word_count">0</span> <span data-i18n="words_label">words</span>
-        <span class="stat-sep">&middot;</span>
-        <span id="char_count">0</span> <span data-i18n="chars_label">chars</span>
-        <span class="stat-sep">&middot;</span>
-        <span id="read_time">0m</span> <span data-i18n="read_label">read</span>
+        <span id="word_count">0</span> words
+        <span class="stat-sep">|</span>
+        <span id="char_count">0</span> chars
+        <span class="stat-sep">|</span>
+        <span id="read_time">1m</span>
       </div>
     </div>
   </main>
 
-  <div id="oros-footer"></div>
-  <script src="assets/js/components/footer.js"></script>
+  <!-- FOOTER -->
+  <footer class="footer" id="site-footer">
+    <div class="footer-inner">
+      <div class="footer-credits"></div>
+      <div>V0.20 | 02/07/2026 | 🔒 Privacy First · 🚫 No Tracking · ⚡ Offline</div>
+    </div>
+  </footer>
 
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/editor.js"></script>
+  <!-- Back to Top -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">↑</button>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-  </script>
+  <script src="../assets/js/header.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/editor.js"></script>
+  <script src="../assets/js/footer.js"></script>
 </body>
 </html>

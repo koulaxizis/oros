@@ -1,15 +1,15 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
-// Focus Mode (spotlight) + Typewriter (fixed v2)
+// Focus Mode (spotlight) + Fixed Layout
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar
+// Typewriter Mode REMOVED
 // ============================================
 
 (function() {
   'use strict';
 
   var STORAGE_KEY = 'oros_writer_content';
-  var STORAGE_TYPEWRITER = 'oros_typewriter_mode';
   var STORAGE_HIDE_STATS = 'oros_hide_stats';
   var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
   var STORAGE_FOCUS_MODE = 'oros_focus_mode';
@@ -32,7 +32,6 @@
   var statsOverlay = document.getElementById('stats-overlay');
   var quickFormatToolbar = document.getElementById('quick-format-toolbar');
 
-  var typewriterEnabled = localStorage.getItem(STORAGE_TYPEWRITER) === 'true';
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
   var focusModeEnabled = localStorage.getItem(STORAGE_FOCUS_MODE) !== 'false';
@@ -54,65 +53,6 @@
   }
   function getTextContent() { return richEditor.innerText || ''; }
   function getHTMLContent() { return richEditor.innerHTML || ''; }
-
-  // ========== TYPEWRITER MODE (FIXED v2) ==========
-  function enableTypewriter() {
-    if (!typewriterEnabled) return;
-    setTimeout(function() {
-      try {
-        var sel = window.getSelection();
-        if (!sel.rangeCount) return;
-
-        var range = sel.getRangeAt(0);
-        var savedRange = range.cloneRange();
-
-        var rect = null;
-
-        if (range.collapsed) {
-          // Insert <br> to measure caret position
-          // <br> has definite height = line height
-          var marker = document.createElement('br');
-          range.insertNode(marker);
-          rect = marker.getBoundingClientRect();
-          marker.parentNode.removeChild(marker);
-
-          // Restore selection after DOM mutation
-          sel.removeAllRanges();
-          sel.addRange(savedRange);
-        } else {
-          rect = range.getBoundingClientRect();
-        }
-
-        if (!rect || rect.top === 0) return;
-
-        var editorRect = richEditor.getBoundingClientRect();
-        var visibleHeight = richEditor.clientHeight;
-        var maxScroll = richEditor.scrollHeight - visibleHeight;
-
-        if (maxScroll <= 0) return; // Content fits — no scroll needed
-
-        // Caret position relative to editor's visible area
-        var caretInViewport = rect.top - editorRect.top;
-
-        // Target: 45% of visible height
-        var target = visibleHeight * 0.45;
-
-        // How far off target
-        var delta = caretInViewport - target;
-
-        // Threshold: only scroll if off by more than 30px
-        if (Math.abs(delta) < 30) return;
-
-        var newScroll = richEditor.scrollTop + delta;
-        newScroll = Math.max(0, Math.min(newScroll, maxScroll));
-
-        // INSTANT scroll (not smooth) — smooth gets cancelled by next keystroke
-        richEditor.scrollTop = newScroll;
-      } catch(e) {
-        console.warn('Typewriter error:', e);
-      }
-    }, 50);
-  }
 
   // ========== FOCUS MODE (SPOTLIGHT) ==========
   var focusDebounceTimer = null;
@@ -507,15 +447,6 @@
     if (ctrl && e.key.toLowerCase() === 'h') { e.preventDefault(); findInput.focus(); return; }
     if (e.key === 'Escape' && findBar.style.display === 'flex') { hideFindReplace(); return; }
 
-    if (ctrl && e.key === 'Enter') {
-      e.preventDefault();
-      typewriterEnabled = !typewriterEnabled;
-      localStorage.setItem(STORAGE_TYPEWRITER, typewriterEnabled ? 'true' : 'false');
-      showToast(typewriterEnabled ? (getCurrentLang() === 'el' ? '🔡 Typewriter ΕΝΕΡΓΟ' : '🔡 Typewriter ON') : (getCurrentLang() === 'el' ? '⚫ Typewriter ΑΠΕΝΕΡΓΟ' : '⚫ Typewriter OFF'));
-      if (typewriterEnabled) enableTypewriter();
-      return;
-    }
-
     if (ctrl && e.key.toLowerCase() === 'u') {
       if (document.activeElement === richEditor) { e.preventDefault(); document.execCommand('underline'); saveContent(false); updateStats(); }
       return;
@@ -537,12 +468,10 @@
   richEditor.addEventListener('input', function() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function() { saveContent(false); }, 2000);
-    updateStats(); enableTypewriter();
+    updateStats();
   });
   richEditor.addEventListener('paste', function() { setTimeout(updateStats, 0); });
   richEditor.addEventListener('keydown', checkSmartList);
-  richEditor.addEventListener('keyup', function() { enableTypewriter(); });
-  richEditor.addEventListener('mouseup', function() { enableTypewriter(); });
   setInterval(function() { saveContent(false); }, 30000);
 
   function saveContent(showMsg) {
@@ -633,7 +562,6 @@
     richEditor.setAttribute('data-placeholder', ph);
   }
   updateStats();
-  if (typewriterEnabled) enableTypewriter();
   initFocusMode();
 
 })();
