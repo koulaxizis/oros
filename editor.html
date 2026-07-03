@@ -13,10 +13,8 @@
 </head>
 <body>
 
-  <!-- HEADER mounted by header.js -->
   <div id="oros-header"></div>
 
-  <!-- MAIN -->
   <main class="app-main">
     <!-- FIND & REPLACE BAR -->
     <div class="find-replace-bar" id="find-replace-bar" style="display:none;">
@@ -41,6 +39,11 @@
         <button class="fmt-btn" data-cmd="italic" data-i18n-tooltip="italic_title" title="Italic (Ctrl+I)">I</button>
         <button class="fmt-btn" data-cmd="underline" data-i18n-tooltip="underline_title" title="Underline">U</button>
         <button class="fmt-btn" data-cmd="strikeThrough" data-i18n-tooltip="strike_title" title="Strikethrough">S</button>
+        <span class="fmt-divider"></span>
+        <button class="fmt-btn" data-block="H1" data-i18n-tooltip="h1_title" title="Heading 1">H1</button>
+        <button class="fmt-btn" data-block="H2" data-i18n-tooltip="h2_title" title="Heading 2">H2</button>
+        <button class="fmt-btn" data-block="H3" data-i18n-tooltip="h3_title" title="Heading 3">H3</button>
+        <span class="fmt-divider"></span>
         <button class="fmt-btn" data-cmd="insertUnorderedList" data-i18n-tooltip="title_bullet_list" title="Bullet List">•</button>
         <button class="fmt-btn" data-cmd="insertOrderedList" data-i18n-tooltip="title_numbered_list" title="Numbered List">1.</button>
       </div>
@@ -55,9 +58,10 @@
           <button data-format="pdf" data-i18n="export_pdf">PDF</button>
         </div>
       </div>
+      <button class="btn-control btn-icon" id="btn-outline" data-i18n-tooltip="outline_title" title="Document Outline">📋</button>
     </div>
 
-    <!-- EDITOR WRAPPER — contains scrollable editor + stats overlay -->
+    <!-- EDITOR WRAPPER -->
     <div class="editor-wrapper" id="rich-wrapper">
       <div class="rich-editor" id="rich-editor" contenteditable="true" spellcheck="true"></div>
       <div class="stats-overlay" id="stats-overlay">
@@ -67,10 +71,17 @@
         <span class="stat-sep">|</span>
         <span id="read_time">1m</span>
       </div>
+      <!-- DOCUMENT OUTLINE PANEL -->
+      <div class="outline-panel" id="outline-panel" style="display:none;">
+        <div class="outline-header">
+          <span data-i18n="outline_title">Document Outline</span>
+          <button class="close-outline-btn" id="btn-close-outline">×</button>
+        </div>
+        <div class="outline-list" id="outline-list"></div>
+      </div>
     </div>
   </main>
 
-  <!-- FOOTER mounted by footer.js (includes back-to-top) -->
   <div id="oros-footer"></div>
 
   <script src="assets/js/components/header.js"></script>

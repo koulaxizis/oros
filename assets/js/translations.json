@@ -44,8 +44,12 @@
     "italic_title": "Italic (Ctrl+I)",
     "underline_title": "Underline (Ctrl+U)",
     "strike_title": "Strikethrough",
+    "h1_title": "Heading 1",
+    "h2_title": "Heading 2",
+    "h3_title": "Heading 3",
     "title_bullet_list": "Bullet List",
-    "title_numbered_list": "Numbered List"
+    "title_numbered_list": "Numbered List",
+    "outline_title": "Document Outline"
   },
   "el": {
     "site_tagline": "Το λειτουργικό σύστημα του καλλιτέχνη",
@@ -92,7 +96,11 @@
     "italic_title": "Πλάγια (Ctrl+I)",
     "underline_title": "Υπογράμμιση (Ctrl+U)",
     "strike_title": "Διαγραφή",
+    "h1_title": "Τίτλος 1",
+    "h2_title": "Τίτλος 2",
+    "h3_title": "Τίτλος 3",
     "title_bullet_list": "Λίστα κουκκίδων",
-    "title_numbered_list": "Αριθμημένη λίστα"
+    "title_numbered_list": "Αριθμημένη λίστα",
+    "outline_title": "Περιεχόμενα"
   }
 }

@@ -1,10 +1,9 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
-// Focus Mode (spotlight) + Fixed Layout
+// Focus Mode + Fixed Layout + Document Outline
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
-// Drag&Drop, Quick Format Toolbar
+// Drag&Drop, Quick Format Toolbar (incl. H1/H2/H3)
 // Typewriter Mode REMOVED
-// i18n: matches, toast messages
 // ============================================
 
 (function() {
@@ -32,6 +31,10 @@
   var exportDropdown = document.getElementById('export-dropdown');
   var statsOverlay = document.getElementById('stats-overlay');
   var quickFormatToolbar = document.getElementById('quick-format-toolbar');
+  var outlinePanel = document.getElementById('outline-panel');
+  var outlineList = document.getElementById('outline-list');
+  var btnOutline = document.getElementById('btn-outline');
+  var btnCloseOutline = document.getElementById('btn-close-outline');
 
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
@@ -54,6 +57,49 @@
   }
   function getTextContent() { return richEditor.innerText || ''; }
   function getHTMLContent() { return richEditor.innerHTML || ''; }
+
+  // ========== DOCUMENT OUTLINE ==========
+  var outlineDebounceTimer = null;
+
+  function toggleOutline() {
+    if (outlinePanel.style.display === 'none' || !outlinePanel.style.display) {
+      outlinePanel.style.display = 'flex';
+      outlinePanel.style.flexDirection = 'column';
+      updateOutline();
+    } else {
+      outlinePanel.style.display = 'none';
+    }
+  }
+
+  function updateOutline() {
+    if (!outlineList) return;
+    if (outlinePanel.style.display === 'none' || !outlinePanel.style.display) return;
+
+    var headings = richEditor.querySelectorAll('h1, h2, h3');
+    var lang = getCurrentLang();
+    var emptyMsg = lang === 'el' ? 'Δεν βρέθηκαν τίτλοι' : 'No headings found';
+
+    if (headings.length === 0) {
+      outlineList.innerHTML = '<div class="outline-empty">' + emptyMsg + '</div>';
+      return;
+    }
+
+    outlineList.innerHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      (function(h) {
+        var item = document.createElement('div');
+        item.className = 'outline-item outline-item-' + h.tagName.toLowerCase();
+        item.textContent = h.textContent || '(empty)';
+        item.onclick = function() {
+          h.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          h.classList.add('outline-flash');
+          setTimeout(function() { h.classList.remove('outline-flash'); }, 1200);
+          richEditor.focus();
+        };
+        outlineList.appendChild(item);
+      })(headings[i]);
+    }
+  }
 
   // ========== FOCUS MODE (SPOTLIGHT) ==========
   var focusDebounceTimer = null;
@@ -416,23 +462,30 @@
     showToast(getCurrentLang() === 'el' ? '✓ Αντικαταστάθηκαν όλες' : '✓ All replaced');
   };
 
-  // ========== QUICK FORMAT TOOLBAR ==========
+  // ========== QUICK FORMAT TOOLBAR (incl. H1/H2/H3) ==========
   if (quickFormatToolbar) {
     var fmtButtons = quickFormatToolbar.querySelectorAll('.fmt-btn');
     for (var i = 0; i < fmtButtons.length; i++) {
       fmtButtons[i].addEventListener('mousedown', function(e) { e.preventDefault(); });
       fmtButtons[i].addEventListener('click', function() {
-        document.execCommand(this.dataset.cmd, false, null);
+        if (this.dataset.block) {
+          document.execCommand('formatBlock', false, this.dataset.block);
+        } else {
+          document.execCommand(this.dataset.cmd, false, null);
+        }
         richEditor.focus(); saveContent(false); updateStats();
       });
     }
   }
 
+  // ========== OUTLINE EVENT LISTENERS ==========
+  if (btnOutline) btnOutline.onclick = toggleOutline;
+  if (btnCloseOutline) btnCloseOutline.onclick = function() { outlinePanel.style.display = 'none'; };
+
   // ========== KEYBOARD SHORTCUTS ==========
   document.addEventListener('keydown', function(e) {
     var ctrl = e.ctrlKey || e.metaKey;
 
-    // Focus Mode toggle (F8)
     if (e.key === 'F8' && !e.ctrlKey && !e.altKey && !e.metaKey) {
       e.preventDefault();
       focusModeEnabled = !focusModeEnabled;
@@ -446,9 +499,14 @@
       return;
     }
 
+    if (e.key === 'Escape') {
+      if (outlinePanel && outlinePanel.style.display !== 'none') { outlinePanel.style.display = 'none'; return; }
+      if (findBar.style.display === 'flex') { hideFindReplace(); return; }
+      if (document.querySelector('.context-menu')) { closeMenu(); return; }
+    }
+
     if (ctrl && e.key.toLowerCase() === 'f') { e.preventDefault(); showFindReplace(); return; }
     if (ctrl && e.key.toLowerCase() === 'h') { e.preventDefault(); findInput.focus(); return; }
-    if (e.key === 'Escape' && findBar.style.display === 'flex') { hideFindReplace(); return; }
 
     if (ctrl && e.key.toLowerCase() === 'u') {
       if (document.activeElement === richEditor) { e.preventDefault(); document.execCommand('underline'); saveContent(false); updateStats(); }
@@ -466,12 +524,14 @@
     }
   });
 
-  // ========== AUTO-SAVE ==========
+  // ========== AUTO-SAVE + OUTLINE UPDATE ==========
   var debounceTimer;
   richEditor.addEventListener('input', function() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function() { saveContent(false); }, 2000);
     updateStats();
+    clearTimeout(outlineDebounceTimer);
+    outlineDebounceTimer = setTimeout(updateOutline, 500);
   });
   richEditor.addEventListener('paste', function() { setTimeout(updateStats, 0); });
   richEditor.addEventListener('keydown', checkSmartList);
@@ -533,7 +593,7 @@
       case 'underline': document.execCommand('underline'); break;
       case 'strikeThrough': document.execCommand('strikeThrough'); break;
       case 'h1': document.execCommand('formatBlock', false, 'H1'); break;
-            case 'h2': document.execCommand('formatBlock', false, 'H2'); break;
+      case 'h2': document.execCommand('formatBlock', false, 'H2'); break;
       case 'quote': document.execCommand('formatBlock', false, 'BLOCKQUOTE'); break;
       case 'insertUnorderedList': document.execCommand('insertUnorderedList'); break;
       case 'insertOrderedList': document.execCommand('insertOrderedList'); break;
@@ -546,7 +606,6 @@
     if (e.altKey) { e.preventDefault(); createContextMenu(e.pageX, e.pageY); }
   });
   document.addEventListener('click', function(e) { if (!e.target.closest('.context-menu')) closeMenu(); });
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMenu(); });
 
   // ========== FR BAR ==========
   document.getElementById('btn-find-next').onclick = function() { if (matchRanges.length > 0) navigateToMatch(currentMatchIndex + 1); };
