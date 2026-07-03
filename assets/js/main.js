@@ -2,7 +2,6 @@
 // orOS — Core Functionality
 // Theme | Language | Zen Mode | Settings
 // Settings: Shortcuts Tab + Appearance Tab
-// Typewriter Mode REMOVED
 // ============================================
 
 (function() {
@@ -11,7 +10,8 @@
     LANGUAGE: 'oros-language',
     HIDE_STATS: 'oros_hide_stats',
     HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
-    FOCUS_MODE: 'oros_focus_mode'
+    FOCUS_MODE: 'oros_focus_mode',
+    READING_PROGRESS: 'oros_reading_progress'
   };
 
   var scriptEl = document.querySelector('script[src$="main.js"]');
@@ -315,6 +315,7 @@
     var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
     var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
     var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
+    var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
 
     var appearanceHtml =
       '<div class="toggle-row">' +
@@ -328,6 +329,10 @@
       '<div class="toggle-row">' +
         '<span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
         '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + getTrans('toggle_reading_progress') + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label>' +
       '</div>';
 
     var modal = document.createElement('div');
@@ -400,6 +405,15 @@
         var enabled = this.checked;
         localStorage.setItem(STORAGE_KEY.FOCUS_MODE, enabled ? 'true' : 'false');
         window.dispatchEvent(new CustomEvent('oros-focus-mode-changed', { detail: { enabled: enabled } }));
+      };
+    }
+
+    var progressToggle = modal.querySelector('#toggle-reading-progress');
+    if (progressToggle) {
+      progressToggle.onchange = function() {
+        var enabled = this.checked;
+        localStorage.setItem(STORAGE_KEY.READING_PROGRESS, enabled ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-reading-progress-changed', { detail: { enabled: enabled } }));
       };
     }
 

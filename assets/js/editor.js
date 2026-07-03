@@ -1,9 +1,9 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
 // Focus Mode + Fixed Layout + Document Outline
+// Reading Progress Bar
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar (incl. H1/H2/H3)
-// Typewriter Mode REMOVED
 // ============================================
 
 (function() {
@@ -13,6 +13,7 @@
   var STORAGE_HIDE_STATS = 'oros_hide_stats';
   var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
   var STORAGE_FOCUS_MODE = 'oros_focus_mode';
+  var STORAGE_READING_PROGRESS = 'oros_reading_progress';
 
   var richEditor = document.getElementById('rich-editor');
   var richWrapper = document.getElementById('rich-wrapper');
@@ -35,10 +36,12 @@
   var outlineList = document.getElementById('outline-list');
   var btnOutline = document.getElementById('btn-outline');
   var btnCloseOutline = document.getElementById('btn-close-outline');
+  var progressBar = document.getElementById('reading-progress-bar');
 
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
   var focusModeEnabled = localStorage.getItem(STORAGE_FOCUS_MODE) !== 'false';
+  var readingProgressEnabled = localStorage.getItem(STORAGE_READING_PROGRESS) !== 'false';
   var currentMatchIndex = -1;
   var matchRanges = [];
 
@@ -101,6 +104,26 @@
     }
   }
 
+  // ========== READING PROGRESS BAR ==========
+  function updateReadingProgress() {
+    if (!progressBar || !readingProgressEnabled) return;
+    var max = richEditor.scrollHeight - richEditor.clientHeight;
+    if (max <= 0) { progressBar.style.width = '0%'; return; }
+    var pct = (richEditor.scrollTop / max) * 100;
+    progressBar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+  }
+
+  richEditor.addEventListener('scroll', updateReadingProgress, { passive: true });
+
+  window.addEventListener('oros-reading-progress-changed', function(e) {
+    readingProgressEnabled = e.detail.enabled;
+    if (progressBar) {
+      progressBar.style.display = readingProgressEnabled ? '' : 'none';
+      if (!readingProgressEnabled) progressBar.style.width = '0%';
+    }
+    if (readingProgressEnabled) updateReadingProgress();
+  });
+
   // ========== FOCUS MODE (SPOTLIGHT) ==========
   var focusDebounceTimer = null;
 
@@ -159,6 +182,7 @@
   // ========== VISIBILITY INIT ==========
   if (hideStats && statsOverlay) statsOverlay.style.display = 'none';
   if (hideQuickTbar && quickFormatToolbar) quickFormatToolbar.style.display = 'none';
+  if (!readingProgressEnabled && progressBar) progressBar.style.display = 'none';
 
   // ========== DRAG & DROP ==========
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
@@ -625,5 +649,6 @@
   }
   updateStats();
   initFocusMode();
+  updateReadingProgress();
 
 })();
