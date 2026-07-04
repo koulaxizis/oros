@@ -53,7 +53,8 @@
     var readMinutes = Math.max(1, Math.ceil(words / 200));
     wordCountEl.textContent = formatNumber(words);
     charCountEl.textContent = formatNumber(chars);
-    readTimeEl.textContent = readMinutes + 'm';
+    var minLabel = getCurrentLang() === 'el' ? ' λεπτά' : ' min';
+    readTimeEl.textContent = readMinutes + minLabel;
   }
   function formatNumber(num) {
     return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
@@ -80,7 +81,7 @@
 
     var headings = richEditor.querySelectorAll('h1, h2, h3');
     var lang = getCurrentLang();
-    var emptyMsg = lang === 'el' ? 'Δεν βρέθηκαν τίτλοι' : 'No headings found';
+        var emptyMsg = lang === 'el' ? 'Δεν βρέθηκαν τίτλοι' : 'No headings found';
 
     if (headings.length === 0) {
       outlineList.innerHTML = '<div class="outline-empty">' + emptyMsg + '</div>';
@@ -122,6 +123,12 @@
       if (!readingProgressEnabled) progressBar.style.width = '0%';
     }
     if (readingProgressEnabled) updateReadingProgress();
+  });
+
+  // ========== LANGUAGE CHANGE LISTENER ==========
+  // Fix #3: Update read time label when language changes
+  window.addEventListener('oros-language-changed', function(e) {
+    updateStats();
   });
 
   // ========== FOCUS MODE (SPOTLIGHT) ==========

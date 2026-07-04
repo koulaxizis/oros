@@ -1,7 +1,7 @@
 // ============================================
 // orOS — Core Functionality
 // Theme | Language | Zen Mode | Settings
-// Settings: Shortcuts Tab + Appearance Tab
+// Settings: Global Tab + Writer Tab
 // ============================================
 
 (function() {
@@ -117,6 +117,11 @@
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
     updateFooterCredits();
     updateSettingsModalLanguage(lang);
+    // Fix #4: Refresh theme button tooltip in new language immediately
+    var currentTheme = localStorage.getItem(STORAGE_KEY.THEME) || 'light';
+    renderThemeButton(currentTheme);
+    // Notify editor to update language-dependent content (read time, etc.)
+    window.dispatchEvent(new CustomEvent('oros-language-changed', { detail: { lang: lang } }));
   }
 
   function translatePage(trans, lang) {
@@ -298,42 +303,87 @@
       ];
     }
 
-    var allShortcuts = isEditor ? globalShortcuts.concat(editorShortcuts) : globalShortcuts;
-
     var title = getTrans('settings');
-    var tabShortcutsLabel = getTrans('tab_shortcuts');
-    var tabAppearanceLabel = getTrans('tab_appearance');
+    var tabGlobalLabel = getTrans('tab_global');
+    var tabWriterLabel = getTrans('tab_writer');
     var colAction = lang === 'el' ? 'Ενέργεια' : 'Action';
     var colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
     var installLabel = getTrans('install_app');
 
-    var shortcutsHtml = '';
-    allShortcuts.forEach(function(pair) {
-      shortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
+    // Build global shortcuts HTML
+    var globalShortcutsHtml = '';
+    globalShortcuts.forEach(function(pair) {
+      globalShortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
     });
 
-    var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
-    var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
-    var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
-    var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
+    // Zen Mode state
+    var zenActive = localStorage.getItem('oros-zen') === 'true';
 
-    var appearanceHtml =
-      '<div class="toggle-row">' +
-        '<span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
-        '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label>' +
+    // Global tab content
+    var globalContent =
+      '<div class="toggles-container">' +
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_zen') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-zen"' + (zenActive ? ' checked' : '') + '><span class="slider"></span></label>' +
+        '</div>' +
       '</div>' +
-      '<div class="toggle-row">' +
-        '<span class="toggle-label">' + getTrans('toggle_stats') + '</span>' +
-        '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label>' +
-      '</div>' +
-      '<div class="toggle-row">' +
-        '<span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
-        '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
-      '</div>' +
-      '<div class="toggle-row">' +
-        '<span class="toggle-label">' + getTrans('toggle_reading_progress') + '</span>' +
-        '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '<div class="settings-divider"></div>' +
+      '<table class="shortcut-table">' +
+        '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
+        '<tbody>' + globalShortcutsHtml + '</tbody>' +
+      '</table>' +
+      '<div class="install-section">' +
+        '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installLabel + '</button>' +
       '</div>';
+
+    // Nav
+    var navHtml = '<button class="tab-btn active" data-tab="global">' + tabGlobalLabel + '</button>';
+    if (isEditor) {
+      navHtml += '<button class="tab-btn" data-tab="writer">' + tabWriterLabel + '</button>';
+    }
+
+    // Panels
+    var panelsHtml = '<div class="tab-panel" id="panel-global">' + globalContent + '</div>';
+
+    if (isEditor) {
+      var editorShortcutsHtml = '';
+      editorShortcuts.forEach(function(pair) {
+        editorShortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
+      });
+
+      var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
+      var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
+      var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
+      var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
+
+      var appearanceHtml =
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label>' +
+        '</div>' +
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_stats') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label>' +
+        '</div>' +
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+        '</div>' +
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_reading_progress') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+        '</div>';
+
+      panelsHtml +=
+        '<div class="tab-panel" id="panel-writer" style="display:none;">' +
+          '<div class="toggles-container">' + appearanceHtml + '</div>' +
+          '<div class="settings-divider"></div>' +
+          '<table class="shortcut-table">' +
+            '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
+            '<tbody>' + editorShortcutsHtml + '</tbody>' +
+          '</table>' +
+        '</div>';
+    }
 
     var modal = document.createElement('div');
     modal.className = 'settings-modal';
@@ -344,22 +394,8 @@
           '<h2>' + title + '</h2>' +
           '<button class="close-btn">\u00D7</button>' +
         '</header>' +
-        '<nav class="modal-nav">' +
-          '<button class="tab-btn active" data-tab="shortcuts">' + tabShortcutsLabel + '</button>' +
-          '<button class="tab-btn" data-tab="appearance">' + tabAppearanceLabel + '</button>' +
-        '</nav>' +
-        '<div class="tab-panel" id="panel-shortcuts">' +
-          '<table class="shortcut-table">' +
-            '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
-            '<tbody>' + shortcutsHtml + '</tbody>' +
-          '</table>' +
-        '</div>' +
-        '<div class="tab-panel" id="panel-appearance" style="display:none;">' +
-          '<div class="toggles-container">' + appearanceHtml + '</div>' +
-        '</div>' +
-        '<div class="install-section">' +
-          '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installLabel + '</button>' +
-        '</div>' +
+        '<nav class="modal-nav">' + navHtml + '</nav>' +
+        panelsHtml +
       '</div>';
 
     document.body.appendChild(modal);
@@ -368,17 +404,33 @@
     modal.querySelector('.close-btn').onclick = closeFn;
     modal.querySelector('.modal-backdrop').onclick = closeFn;
 
+    // Tab switching
     var tabBtns = modal.querySelectorAll('.tab-btn');
     tabBtns.forEach(function(btn) {
       btn.onclick = function() {
         tabBtns.forEach(function(b) { b.classList.remove('active'); });
         this.classList.add('active');
         var tabName = this.dataset.tab;
-        modal.querySelector('#panel-shortcuts').style.display = tabName === 'shortcuts' ? '' : 'none';
-        modal.querySelector('#panel-appearance').style.display = tabName === 'appearance' ? '' : 'none';
+        var globalPanel = modal.querySelector('#panel-global');
+        var writerPanel = modal.querySelector('#panel-writer');
+        if (globalPanel) globalPanel.style.display = tabName === 'global' ? '' : 'none';
+        if (writerPanel) writerPanel.style.display = tabName === 'writer' ? '' : 'none';
       };
     });
 
+    // Zen Mode toggle
+    var zenToggle = modal.querySelector('#toggle-zen');
+    if (zenToggle) {
+      zenToggle.onchange = function() {
+        var shouldBeZen = this.checked;
+        var isCurrentlyZen = localStorage.getItem('oros-zen') === 'true';
+        if (shouldBeZen !== isCurrentlyZen) {
+          toggleZenMode();
+        }
+      };
+    }
+
+    // Quick toolbar toggle
     var tbarToggle = modal.querySelector('#toggle-quick-tbar');
     if (tbarToggle) {
       tbarToggle.onchange = function() {
@@ -389,6 +441,7 @@
       };
     }
 
+    // Stats toggle
     var statsToggle = modal.querySelector('#toggle-stats');
     if (statsToggle) {
       statsToggle.onchange = function() {
@@ -399,6 +452,7 @@
       };
     }
 
+    // Focus mode toggle
     var focusToggle = modal.querySelector('#toggle-focus-mode');
     if (focusToggle) {
       focusToggle.onchange = function() {
@@ -408,6 +462,7 @@
       };
     }
 
+    // Reading progress toggle
     var progressToggle = modal.querySelector('#toggle-reading-progress');
     if (progressToggle) {
       progressToggle.onchange = function() {
@@ -417,6 +472,7 @@
       };
     }
 
+    // Install button
     var installBtn = modal.querySelector('#btn-install-pwa');
     if (installBtn) {
       installBtn.onclick = async function() {

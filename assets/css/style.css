@@ -383,7 +383,9 @@ kbd { display: inline-block; padding: 0.15rem 0.5rem; background: var(--bg-secon
   transition: width 0.08s ease-out;
   pointer-events: none;
 }
-}
+
+/* ---------- Settings Divider ---------- */
+.settings-divider { height: 1px; background: var(--border); margin: 1rem 0; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {
