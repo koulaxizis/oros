@@ -1,7 +1,7 @@
 // ============================================
 // orOS Writer — Unified Rich Text Editor
 // Focus Mode + Fixed Layout + Document Outline
-// Reading Progress Bar
+// Reading Progress Bar + Smart Typography
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar (incl. H1/H2/H3)
 // ============================================
@@ -14,6 +14,7 @@
   var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
   var STORAGE_FOCUS_MODE = 'oros_focus_mode';
   var STORAGE_READING_PROGRESS = 'oros_reading_progress';
+  var STORAGE_SMART_TYPOGRAPHY = 'oros_smart_typography';
 
   var richEditor = document.getElementById('rich-editor');
   var richWrapper = document.getElementById('rich-wrapper');
@@ -42,6 +43,7 @@
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
   var focusModeEnabled = localStorage.getItem(STORAGE_FOCUS_MODE) !== 'false';
   var readingProgressEnabled = localStorage.getItem(STORAGE_READING_PROGRESS) !== 'false';
+  var smartTypographyEnabled = localStorage.getItem(STORAGE_SMART_TYPOGRAPHY) !== 'false';
   var currentMatchIndex = -1;
   var matchRanges = [];
 
@@ -81,7 +83,7 @@
 
     var headings = richEditor.querySelectorAll('h1, h2, h3');
     var lang = getCurrentLang();
-        var emptyMsg = lang === 'el' ? 'Δεν βρέθηκαν τίτλοι' : 'No headings found';
+    var emptyMsg = lang === 'el' ? 'Δεν βρέθηκαν τίτλοι' : 'No headings found';
 
     if (headings.length === 0) {
       outlineList.innerHTML = '<div class="outline-empty">' + emptyMsg + '</div>';
@@ -125,8 +127,65 @@
     if (readingProgressEnabled) updateReadingProgress();
   });
 
+  // ========== SMART TYPOGRAPHY ==========
+  var isReplacing = false;
+
+  function handleSmartTypography() {
+    if (!smartTypographyEnabled || isReplacing) return;
+
+    var sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    if (!range.collapsed) return;
+    if (!richEditor.contains(range.endContainer)) return;
+
+    // Get text before cursor
+    var preRange = range.cloneRange();
+    preRange.selectNodeContents(richEditor);
+    preRange.setEnd(range.endContainer, range.endOffset);
+    var before = preRange.toString();
+
+    if (!before) return;
+
+    var deleteLen = 0;
+    var insert = '';
+
+    // Check multi-char patterns (longest first)
+    var last4 = before.slice(-4);
+    var last3 = before.slice(-3);
+    var last2 = before.slice(-2);
+    var last1 = before.slice(-1);
+
+    if (last4 === '(tm)') { deleteLen = 4; insert = '\u2122'; }
+    else if (last3 === '(c)') { deleteLen = 3; insert = '\u00A9'; }
+    else if (last3 === '(r)') { deleteLen = 3; insert = '\u00AE'; }
+    else if (last3 === '...') { deleteLen = 3; insert = '\u2026'; }
+    else if (last2 === '--') { deleteLen = 2; insert = '\u2014'; }
+    else if (last1 === '"') {
+      var prevChar = before.length > 1 ? before[before.length - 2] : ' ';
+      insert = /\w/.test(prevChar) ? '\u201D' : '\u201C';
+      deleteLen = 1;
+    }
+    else if (last1 === "'") {
+      var prevChar = before.length > 1 ? before[before.length - 2] : ' ';
+      insert = /\w/.test(prevChar) ? '\u2019' : '\u2018';
+      deleteLen = 1;
+    }
+    else return;
+
+    isReplacing = true;
+    for (var i = 0; i < deleteLen; i++) {
+      document.execCommand('delete', false);
+    }
+    document.execCommand('insertText', false, insert);
+    isReplacing = false;
+  }
+
+  window.addEventListener('oros-smart-typography-changed', function(e) {
+    smartTypographyEnabled = e.detail.enabled;
+  });
+
   // ========== LANGUAGE CHANGE LISTENER ==========
-  // Fix #3: Update read time label when language changes
   window.addEventListener('oros-language-changed', function(e) {
     updateStats();
   });
@@ -478,7 +537,7 @@
         selRange.setEnd(textNodes[i], range[1] - pos);
         var sel = window.getSelection();
         sel.removeAllRanges(); sel.addRange(selRange);
-        document.execCommand('insertText', false, replaceInput.value);
+                document.execCommand('insertText', false, replaceInput.value);
         break;
       }
       pos += nodeLen;
@@ -555,7 +614,7 @@
     }
   });
 
-  // ========== AUTO-SAVE + OUTLINE UPDATE ==========
+  // ========== AUTO-SAVE + OUTLINE UPDATE + SMART TYPOGRAPHY ==========
   var debounceTimer;
   richEditor.addEventListener('input', function() {
     clearTimeout(debounceTimer);
@@ -563,6 +622,7 @@
     updateStats();
     clearTimeout(outlineDebounceTimer);
     outlineDebounceTimer = setTimeout(updateOutline, 500);
+    handleSmartTypography();
   });
   richEditor.addEventListener('paste', function() { setTimeout(updateStats, 0); });
   richEditor.addEventListener('keydown', checkSmartList);

@@ -2,6 +2,7 @@
 // orOS — Core Functionality
 // Theme | Language | Zen Mode | Settings
 // Settings: Global Tab + Writer Tab
+// Smart Typography toggle
 // ============================================
 
 (function() {
@@ -11,7 +12,8 @@
     HIDE_STATS: 'oros_hide_stats',
     HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
     FOCUS_MODE: 'oros_focus_mode',
-    READING_PROGRESS: 'oros_reading_progress'
+    READING_PROGRESS: 'oros_reading_progress',
+    SMART_TYPOGRAPHY: 'oros_smart_typography'
   };
 
   var scriptEl = document.querySelector('script[src$="main.js"]');
@@ -117,10 +119,10 @@
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
     updateFooterCredits();
     updateSettingsModalLanguage(lang);
-    // Fix #4: Refresh theme button tooltip in new language immediately
+    // Fix: Refresh theme button tooltip in new language immediately
     var currentTheme = localStorage.getItem(STORAGE_KEY.THEME) || 'light';
     renderThemeButton(currentTheme);
-    // Notify editor to update language-dependent content (read time, etc.)
+    // Notify editor to update language-dependent content
     window.dispatchEvent(new CustomEvent('oros-language-changed', { detail: { lang: lang } }));
   }
 
@@ -355,6 +357,7 @@
       var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
       var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
       var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
+      var smartTypographyOn = localStorage.getItem(STORAGE_KEY.SMART_TYPOGRAPHY) !== 'false';
 
       var appearanceHtml =
         '<div class="toggle-row">' +
@@ -372,6 +375,10 @@
         '<div class="toggle-row">' +
           '<span class="toggle-label">' + getTrans('toggle_reading_progress') + '</span>' +
           '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+        '</div>' +
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_smart_typography') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-smart-typography"' + (smartTypographyOn ? ' checked' : '') + '><span class="slider"></span></label>' +
         '</div>';
 
       panelsHtml +=
@@ -469,6 +476,16 @@
         var enabled = this.checked;
         localStorage.setItem(STORAGE_KEY.READING_PROGRESS, enabled ? 'true' : 'false');
         window.dispatchEvent(new CustomEvent('oros-reading-progress-changed', { detail: { enabled: enabled } }));
+      };
+    }
+
+    // Smart typography toggle
+    var smartTypeToggle = modal.querySelector('#toggle-smart-typography');
+    if (smartTypeToggle) {
+      smartTypeToggle.onchange = function() {
+        var enabled = this.checked;
+        localStorage.setItem(STORAGE_KEY.SMART_TYPOGRAPHY, enabled ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-smart-typography-changed', { detail: { enabled: enabled } }));
       };
     }
 
