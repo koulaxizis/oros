@@ -128,8 +128,11 @@
       }
       showToast(msg);
     } else if (count < goalTarget) {
+      if (goalLockTriggered) {
+        goalLockTriggered = false;
+        richEditor.contentEditable = 'true';
+      }
       goalReachedShown = false;
-      goalLockTriggered = false;
     }
   }
 
@@ -153,6 +156,7 @@
     goalLockEnabled = goalLockCheckbox.checked;
     goalReachedShown = false;
     goalLockTriggered = false;
+    richEditor.contentEditable = 'true';
     localStorage.setItem(STORAGE_GOAL_TARGET, goalTarget.toString());
     localStorage.setItem(STORAGE_GOAL_UNIT, goalUnit);
     localStorage.setItem(STORAGE_GOAL_LOCK, goalLockEnabled ? 'true' : 'false');
@@ -169,6 +173,7 @@
     goalLockEnabled = false;
     goalReachedShown = false;
     goalLockTriggered = false;
+    richEditor.contentEditable = 'true';
     localStorage.removeItem(STORAGE_GOAL_TARGET);
     localStorage.removeItem(STORAGE_GOAL_UNIT);
     localStorage.removeItem(STORAGE_GOAL_LOCK);
@@ -180,20 +185,10 @@
     showToast(getTrans('text_goal_cleared'));
   }
 
-  function unlockWriting() {
-    goalLockTriggered = false;
-    richEditor.contentEditable = 'true';
-    showToast('✏️ Έκλεισμα γραφής ακυρώθηκε');
-  }
-
   function triggerGoalLock() {
     if (!goalLockEnabled || goalLockTriggered) return;
     goalLockTriggered = true;
     richEditor.contentEditable = 'false';
-    setTimeout(function() {
-      var confirmUnlock = confirm(getTrans('text_goal_locked').replace('🔒', '').trim());
-      if (confirmUnlock) unlockWriting();
-    }, 500);
   }
 
   // ========== AUTO-SAVE TIMESTAMP INDICATOR ==========
