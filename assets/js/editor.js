@@ -2,6 +2,7 @@
 // orOS Writer — Unified Rich Text Editor
 // Focus Mode + Fixed Layout + Document Outline
 // Reading Progress Bar + Smart Typography
+// Auto-Save Timestamp Indicator
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Drag&Drop, Quick Format Toolbar (incl. H1/H2/H3)
 // ============================================
@@ -15,6 +16,7 @@
   var STORAGE_FOCUS_MODE = 'oros_focus_mode';
   var STORAGE_READING_PROGRESS = 'oros_reading_progress';
   var STORAGE_SMART_TYPOGRAPHY = 'oros_smart_typography';
+  var STORAGE_LAST_SAVED = 'oros_writer_last_saved';
 
   var richEditor = document.getElementById('rich-editor');
   var richWrapper = document.getElementById('rich-wrapper');
@@ -44,6 +46,7 @@
   var focusModeEnabled = localStorage.getItem(STORAGE_FOCUS_MODE) !== 'false';
   var readingProgressEnabled = localStorage.getItem(STORAGE_READING_PROGRESS) !== 'false';
   var smartTypographyEnabled = localStorage.getItem(STORAGE_SMART_TYPOGRAPHY) !== 'false';
+  var lastSavedTime = parseInt(localStorage.getItem(STORAGE_LAST_SAVED)) || null;
   var currentMatchIndex = -1;
   var matchRanges = [];
 
@@ -63,6 +66,31 @@
   }
   function getTextContent() { return richEditor.innerText || ''; }
   function getHTMLContent() { return richEditor.innerHTML || ''; }
+
+  // ========== AUTO-SAVE TIMESTAMP INDICATOR ==========
+  function getRelativeSaveTime() {
+    var lang = getCurrentLang();
+    var trans = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[lang]) || {};
+    if (!lastSavedTime) {
+      return trans.text_not_saved || 'Not saved';
+    }
+    var diff = Math.floor((Date.now() - lastSavedTime) / 1000);
+    if (diff < 60) {
+      return trans.text_saved_just_now || 'Saved just now';
+    } else if (diff < 3600) {
+      var mins = Math.floor(diff / 60);
+      return (trans.text_saved_mins_ago || '{n}m ago').replace('{n}', mins);
+    } else {
+      var hours = Math.floor(diff / 3600);
+      return (trans.text_saved_hours_ago || '{n}h ago').replace('{n}', hours);
+    }
+  }
+
+  function updateSaveStatus() {
+    if (saveStatus) saveStatus.textContent = getRelativeSaveTime();
+  }
+
+  setInterval(updateSaveStatus, 30000);
 
   // ========== DOCUMENT OUTLINE ==========
   var outlineDebounceTimer = null;
@@ -139,7 +167,6 @@
     if (!range.collapsed) return;
     if (!richEditor.contains(range.endContainer)) return;
 
-    // Get text before cursor
     var preRange = range.cloneRange();
     preRange.selectNodeContents(richEditor);
     preRange.setEnd(range.endContainer, range.endOffset);
@@ -150,7 +177,6 @@
     var deleteLen = 0;
     var insert = '';
 
-    // Check multi-char patterns (longest first)
     var last4 = before.slice(-4);
     var last3 = before.slice(-3);
     var last2 = before.slice(-2);
@@ -188,6 +214,7 @@
   // ========== LANGUAGE CHANGE LISTENER ==========
   window.addEventListener('oros-language-changed', function(e) {
     updateStats();
+    updateSaveStatus();
   });
 
   // ========== FOCUS MODE (SPOTLIGHT) ==========
@@ -366,6 +393,8 @@
     if (!confirm(lang === 'el' ? 'Εκκαθάριση περιεχομένου;' : 'Clear content? Cannot undo.')) return;
     richEditor.innerHTML = '';
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_LAST_SAVED);
+    lastSavedTime = null;
     saveContent(false);
     updateStats();
     showToast(lang === 'el' ? '✓ Καθαρίστηκε' : '✓ Cleared');
@@ -537,7 +566,7 @@
         selRange.setEnd(textNodes[i], range[1] - pos);
         var sel = window.getSelection();
         sel.removeAllRanges(); sel.addRange(selRange);
-                document.execCommand('insertText', false, replaceInput.value);
+        document.execCommand('insertText', false, replaceInput.value);
         break;
       }
       pos += nodeLen;
@@ -630,7 +659,12 @@
 
   function saveContent(showMsg) {
     localStorage.setItem(STORAGE_KEY, getHTMLContent());
-    if (showMsg) { saveStatus.textContent = '✓ Saved'; setTimeout(function() { saveStatus.textContent = ''; }, 3000); }
+    lastSavedTime = Date.now();
+    localStorage.setItem(STORAGE_LAST_SAVED, lastSavedTime.toString());
+    updateSaveStatus();
+    if (showMsg) {
+      showToast(getCurrentLang() === 'el' ? '✓ Αποθηκεύτηκε' : '✓ Saved');
+    }
   }
 
   // ========== HELPERS ==========
@@ -717,5 +751,6 @@
   updateStats();
   initFocusMode();
   updateReadingProgress();
+  updateSaveStatus();
 
 })();
