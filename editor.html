@@ -30,6 +30,24 @@
       <button class="close-fr-btn" id="btn-close-fr">×</button>
     </div>
 
+    <!-- GOAL BAR -->
+    <div class="goal-bar" id="goal-bar" style="display:none;">
+      <select class="goal-unit" id="goal-unit" data-i18n-aria="aria_goal_unit" aria-label="Goal unit">
+        <option value="words" data-i18n="text_goal_unit_words">Words</option>
+        <option value="chars" data-i18n="text_goal_unit_chars">Characters</option>
+        <option value="paras" data-i18n="text_goal_unit_paras">Paragraphs</option>
+      </select>
+      <input type="number" class="goal-input" id="goal-target-input" data-i18n-placeholder="placeholder_goal_target" placeholder="Target..." min="1">
+      <label class="goal-lock-label">
+        <input type="checkbox" id="goal-lock"> <span data-i18n="text_goal_lock">Lock at limit</span>
+      </label>
+      <div class="fr-buttons">
+        <button class="fr-btn" id="btn-set-goal" data-i18n="btn_goal_set">Set</button>
+        <button class="fr-btn" id="btn-clear-goal" data-i18n="btn_goal_clear">Clear</button>
+      </div>
+      <button class="close-fr-btn" id="btn-close-goal">×</button>
+    </div>
+
     <!-- TOOLBAR -->
     <div class="toolbar">
       <button class="btn-control" id="btn-open">📂 <span data-i18n="open">Open</span></button>
@@ -59,6 +77,7 @@
         </div>
       </div>
       <button class="btn-control btn-icon" id="btn-outline" data-i18n-tooltip="outline_title" title="Document Outline">📋</button>
+      <button class="btn-control btn-icon" id="btn-goal" data-i18n-tooltip="tooltip_goal" title="Writing Goal (Ctrl+G)">🎯</button>
     </div>
 
     <!-- EDITOR WRAPPER -->
@@ -66,11 +85,14 @@
       <div class="reading-progress-bar" id="reading-progress-bar"></div>
       <div class="rich-editor" id="rich-editor" contenteditable="true" spellcheck="true"></div>
       <div class="stats-overlay" id="stats-overlay">
-        <span id="word_count">0</span> <span data-i18n="text_words">words</span>
-        <span class="stat-sep">|</span>
-        <span id="char_count">0</span> <span data-i18n="text_chars">chars</span>
-        <span class="stat-sep">|</span>
-        <span id="read_time">1m</span>
+        <span id="stats-default">
+          <span id="word_count">0</span> <span data-i18n="text_words">words</span>
+          <span class="stat-sep">|</span>
+          <span id="char_count">0</span> <span data-i18n="text_chars">chars</span>
+          <span class="stat-sep">|</span>
+          <span id="read_time">1m</span>
+        </span>
+        <span id="stats-goal" style="display:none;"></span>
       </div>
       <div class="outline-panel" id="outline-panel" style="display:none;">
         <div class="outline-header">
