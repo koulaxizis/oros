@@ -1,5 +1,6 @@
 // ============================================
 // orOS — Global Footer Component
+// Unified across all pages (index + editor)
 // Edit this file → all apps update instantly
 // ============================================
 

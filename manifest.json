@@ -1,7 +1,7 @@
 {
-  "name": "orOS — Artist's Operating System",
-  "short_name": "orOS",
-  "description": "Privacy-first creative toolkit. No tracking, no ads, fully offline.",
+  "name": "orOS Writer — Document Metadata Edition",
+  "short_name": "orOS Writer",
+  "description": "Privacy-first creative toolkit. No tracking, no ads, fully offline. Now with Document Metadata & Frontmatter support.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

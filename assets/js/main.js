@@ -2,7 +2,8 @@
 // orOS — Core Functionality
 // Theme | Language | Zen Mode | Settings
 // Settings: Global Tab + Writer Tab
-// Smart Typography toggle
+// Smart Typography toggle + UI Visibility Toggles
+// Multi-language support (EN, EL, ES, IT, FR, DE)
 // ============================================
 
 (function() {
@@ -13,7 +14,11 @@
     HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
     FOCUS_MODE: 'oros_focus_mode',
     READING_PROGRESS: 'oros_reading_progress',
-    SMART_TYPOGRAPHY: 'oros_smart_typography'
+    SMART_TYPOGRAPHY: 'oros_smart_typography',
+    HIDE_GOAL_BTN: 'oros_hide_goal_btn',
+    HIDE_OUTLINE_BTN: 'oros_hide_outline_btn',
+    HIDE_METADATA_BTN: 'oros_hide_metadata_btn',
+    HIDE_FIND_BTN: 'oros_hide_find_btn'
   };
 
   var scriptEl = document.querySelector('script[src$="main.js"]');
@@ -35,7 +40,7 @@
       window.OROS_TRANSLATIONS = translations;
     } catch(e) {
       console.warn('Could not load translations:', e);
-      translations = { en: {}, el: {} };
+      translations = { en: {}, el: {}, es: {}, it: {}, fr: {}, de: {} };
       window.OROS_TRANSLATIONS = translations;
     }
   }
@@ -103,11 +108,11 @@
   function initLanguage() {
     var savedLang = localStorage.getItem(STORAGE_KEY.LANGUAGE);
     var currentLang;
-    if (savedLang && ['el', 'en'].indexOf(savedLang) !== -1) {
+    if (savedLang && ['el', 'en', 'es', 'it', 'fr', 'de'].indexOf(savedLang) !== -1) {
       currentLang = savedLang;
     } else {
       var bl = navigator.language.split('-')[0].toLowerCase();
-      currentLang = ['el', 'en'].indexOf(bl) !== -1 ? bl : 'en';
+      currentLang = ['el', 'en', 'es', 'it', 'fr', 'de'].indexOf(bl) !== -1 ? bl : 'en';
     }
     applyLanguage(currentLang);
     renderLangSelector(currentLang);
@@ -119,7 +124,7 @@
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
     updateFooterCredits();
     updateSettingsModalLanguage(lang);
-    // Fix: Refresh theme button tooltip in new language immediately
+    // Refresh theme button tooltip in new language immediately
     var currentTheme = localStorage.getItem(STORAGE_KEY.THEME) || 'light';
     renderThemeButton(currentTheme);
     // Notify editor to update language-dependent content
@@ -175,12 +180,14 @@
   }
 
   function renderLangSelector(currentLang) {
-    var select = document.getElementById('language-select');
+    var select = document.getElementById('lang-select');
     if (!select) return;
     select.innerHTML = '';
-    [{value:'el',label:'EL'},{value:'en',label:'EN'}].forEach(function(opt) {
+    [{value:'en',label:'EN'},{value:'el',label:'EL'},{value:'es',label:'ES'},
+     {value:'it',label:'IT'},{value:'fr',label:'FR'},{value:'de',label:'DE'}].forEach(function(opt) {
       var o = document.createElement('option');
-      o.value = opt.value; o.textContent = opt.label;
+      o.value = opt.value; 
+      o.textContent = opt.label;
       if (opt.value === currentLang) o.selected = true;
       select.appendChild(o);
     });
@@ -193,7 +200,7 @@
     var creditEl = document.querySelector('.footer-credits');
     if (!creditEl) return;
     var linkText = trans.footer_credits_link || 'Christos Koulaxizis';
-    var suffix = trans.footer_credits_suffix || '. Built with \u2665 for artists.';
+    var suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
     creditEl.innerHTML = '\u00A9 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
   }
 
@@ -212,6 +219,10 @@
 
   function initZenMode() {
     var btn = document.getElementById('btn-zen');
+    if (!btn) {
+      // Alternative handler for btn-zencenter
+      btn = document.getElementById('btn-zencenter');
+    }
     if (!btn) return;
     zenActive = localStorage.getItem('oros-zen') === 'true';
     if (zenActive) document.documentElement.setAttribute('data-zen', 'true');
@@ -252,8 +263,8 @@
     var t = document.getElementById('zen-toast');
     if (t) t.remove();
   }
-  
-    // ---------- Settings Modal ----------
+
+  // ---------- Settings Modal ----------
   function initSettings() {
     var btn = document.getElementById('btn-settings');
     if (!btn) return;
@@ -282,11 +293,75 @@
         ['Υπογράμμιση', 'Ctrl+U'],
         ['Αναίρεση', 'Ctrl+Z'],
         ['Επαναφορά', 'Ctrl+Y'],
-        ['Αναζήτηση', 'Ctrl+F'],
-        ['Αντικατάσταση', 'Ctrl+H'],
+        ['Εύρεση', 'Ctrl+F'],
         ['Μορφοποίηση', 'Alt + Δεξί click']
       ];
+    } else if (lang === 'es') {
+      globalShortcuts = [
+        ['Modo Enfoque', 'F8'],
+        ['Modo Zen', 'F9'],
+        ['Salir Zen', 'ESC']
+      ];
+      editorShortcuts = [
+        ['Guardar', 'Ctrl+S'],
+        ['Negrita', 'Ctrl+B'],
+        ['Cursiva', 'Ctrl+I'],
+        ['Subrayado', 'Ctrl+U'],
+        ['Deshacer', 'Ctrl+Z'],
+        ['Rehacer', 'Ctrl+Y'],
+        ['Buscar', 'Ctrl+F'],
+        ['Formato', 'Alt + Click derecho']
+      ];
+    } else if (lang === 'it') {
+      globalShortcuts = [
+        ['Modalità Focus', 'F8'],
+        ['Modalità Zen', 'F9'],
+        ['Esci Zen', 'ESC']
+      ];
+      editorShortcuts = [
+        ['Salva', 'Ctrl+S'],
+        ['Grassetto', 'Ctrl+B'],
+        ['Corsivo', 'Ctrl+I'],
+        ['Sottolinea', 'Ctrl+U'],
+        ['Annulla', 'Ctrl+Z'],
+        ['Ripeti', 'Ctrl+Y'],
+        ['Trova', 'Ctrl+F'],
+        ['Formattazione', 'Alt + Click destro']
+      ];
+    } else if (lang === 'fr') {
+      globalShortcuts = [
+        ['Mode Focus', 'F8'],
+        ['Mode Zen', 'F9'],
+        ['Quitter Zen', 'ESC']
+      ];
+      editorShortcuts = [
+        ['Enregistrer', 'Ctrl+S'],
+        ['Gras', 'Ctrl+B'],
+        ['Italique', 'Ctrl+I'],
+        ['Souligner', 'Ctrl+U'],
+        ['Annuler', 'Ctrl+Z'],
+        ['Rétablir', 'Ctrl+Y'],
+        ['Rechercher', 'Ctrl+F'],
+        ['Format', 'Alt + Clic droit']
+      ];
+    } else if (lang === 'de') {
+      globalShortcuts = [
+        ['Fokusmodus', 'F8'],
+        ['Zen-Modus', 'F9'],
+        ['Zen beenden', 'ESC']
+      ];
+      editorShortcuts = [
+        ['Speichern', 'Strg+S'],
+        ['Fett', 'Strg+B'],
+        ['Kursiv', 'Strg+I'],
+        ['Unterstreichen', 'Strg+U'],
+        ['Rückgängig', 'Strg+Z'],
+        ['Wiederholen', 'Strg+Y'],
+        ['Suchen', 'Strg+F'],
+        ['Format', 'Alt + Rechtsklick']
+      ];
     } else {
+      // Default English
       globalShortcuts = [
         ['Focus Mode', 'F8'],
         ['Zen Mode', 'F9'],
@@ -300,7 +375,6 @@
         ['Undo', 'Ctrl+Z'],
         ['Redo', 'Ctrl+Y'],
         ['Find', 'Ctrl+F'],
-        ['Replace', 'Ctrl+H'],
         ['Format', 'Alt + Right-click']
       ];
     }
@@ -308,8 +382,8 @@
     var title = getTrans('settings');
     var tabGlobalLabel = getTrans('tab_global');
     var tabWriterLabel = getTrans('tab_writer');
-    var colAction = lang === 'el' ? 'Ενέργεια' : 'Action';
-    var colKey = lang === 'el' ? 'Συντόμευση' : 'Shortcut';
+    var colAction = lang === 'el' ? 'Ενέργεια' : lang === 'es' ? 'Acción' : lang === 'it' ? 'Azione' : lang === 'fr' ? 'Action' : lang === 'de' ? 'Aktion' : 'Action';
+    var colKey = lang === 'el' ? 'Συντόμευση' : lang === 'es' ? 'Atajo' : lang === 'it' ? 'Scorciatoia' : lang === 'fr' ? 'Raccourci' : lang === 'de' ? 'Tastenkürzel' : 'Shortcut';
     var installLabel = getTrans('install_app');
 
     // Build global shortcuts HTML
@@ -318,26 +392,6 @@
       globalShortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
     });
 
-    // Zen Mode state
-    var zenActive = localStorage.getItem('oros-zen') === 'true';
-
-    // Global tab content
-    var globalContent =
-      '<div class="toggles-container">' +
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_zen') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-zen"' + (zenActive ? ' checked' : '') + '><span class="slider"></span></label>' +
-        '</div>' +
-      '</div>' +
-      '<div class="settings-divider"></div>' +
-      '<table class="shortcut-table">' +
-        '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
-        '<tbody>' + globalShortcutsHtml + '</tbody>' +
-      '</table>' +
-      '<div class="install-section">' +
-        '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installLabel + '</button>' +
-      '</div>';
-
     // Nav
     var navHtml = '<button class="tab-btn active" data-tab="global">' + tabGlobalLabel + '</button>';
     if (isEditor) {
@@ -345,6 +399,7 @@
     }
 
     // Panels
+    var globalContent = buildGlobalTab(lang, installLabel);
     var panelsHtml = '<div class="tab-panel" id="panel-global">' + globalContent + '</div>';
 
     if (isEditor) {
@@ -353,33 +408,7 @@
         editorShortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
       });
 
-      var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
-      var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
-      var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
-      var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
-      var smartTypographyOn = localStorage.getItem(STORAGE_KEY.SMART_TYPOGRAPHY) !== 'false';
-
-      var appearanceHtml =
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label>' +
-        '</div>' +
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_stats') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label>' +
-        '</div>' +
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
-        '</div>' +
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_reading_progress') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label>' +
-        '</div>' +
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_smart_typography') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-smart-typography"' + (smartTypographyOn ? ' checked' : '') + '><span class="slider"></span></label>' +
-        '</div>';
+      var appearanceHtml = buildWriterTabToggles(lang);
 
       panelsHtml +=
         '<div class="tab-panel" id="panel-writer" style="display:none;">' +
@@ -389,6 +418,7 @@
             '<thead><tr><th>' + colAction + '</th><th>' + colKey + '</th></tr></thead>' +
             '<tbody>' + editorShortcutsHtml + '</tbody>' +
           '</table>' +
+          '<p style="font-size:0.72rem;color:var(--text-secondary);margin-top:0.5rem;font-style:italic;" id="shortcuts-note">' + getTrans('shortcuts_info_note') + '</p>' +
         '</div>';
     }
 
@@ -425,6 +455,123 @@
       };
     });
 
+    // Attach event handlers for all toggles
+    attachToggleHandlers(modal, lang);
+
+    // Install button
+    var installBtn = modal.querySelector('#btn-install-pwa');
+    if (installBtn) {
+      installBtn.onclick = async function() {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          var choice = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          installBtn.disabled = true;
+          installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκατεστημένο' : getLang() === 'es' ? '\u2713 Instalado' : getLang() === 'it' ? '\u2713 Installato' : getLang() === 'fr' ? '\u2713 Installé' : getLang() === 'de' ? '\u2713 Installiert' : '\u2713 Installed';
+        } else {
+          installBtn.disabled = true;
+          installBtn.textContent = getLang() === 'el' ? '\u26A0 Δεν υποστηρίζεται' : getLang() === 'es' ? '\u26A0 No compatible' : getLang() === 'it' ? '\u26A0 Non supportato' : getLang() === 'fr' ? '\u26A0 Non pris en charge' : getLang() === 'de' ? '\u26A0 Nicht unterstützt' : '\u26A0 Not supported';
+        }
+      };
+    }
+
+    if (!deferredPrompt && installBtn) {
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        installBtn.disabled = true;
+        installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκατεστημένο' : getLang() === 'es' ? '\u2713 Ya instalado' : getLang() === 'it' ? '\u2713 Già installato' : getLang() === 'fr' ? '\u2713 Déjà installé' : getLang() === 'de' ? '\u2713 Bereits installiert' : '\u2713 Already installed';
+      }
+    }
+  }
+
+  function buildGlobalTab(lang, installLabel) {
+    var zenActive = localStorage.getItem('oros-zen') === 'true';
+    var installBtnText = installLabel;
+    if (lang === 'el') installBtnText = installLabel;
+    else if (lang === 'es') installBtnText = 'Instalar aplicación';
+    else if (lang === 'it') installBtnText = 'Installa applicazione';
+    else if (lang === 'fr') installBtnText = 'Installer l\'application';
+    else if (lang === 'de') installBtnText = 'App installieren';
+    
+    return
+      '<div class="toggles-container">' +
+        '<div class="toggle-row">' +
+          '<span class="toggle-label">' + getTrans('toggle_zen') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-zen"' + (zenActive ? ' checked' : '') + '><span class="slider"></span></label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="settings-divider"></div>' +
+      '<table class="shortcut-table">' +
+        '<thead><tr><th>Action</th><th>Shortcut</th></tr></thead>' +
+        '<tbody id="shortcuts-global"></tbody>' +
+      '</table>' +
+      '<div class="install-section">' +
+        '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + installBtnText + '</button>' +
+      '</div>';
+  }
+
+  function buildWriterTabToggles(lang) {
+    var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
+    var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
+    var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
+    var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
+    var smartTypographyOn = localStorage.getItem(STORAGE_KEY.SMART_TYPOGRAPHY) !== 'false';
+    var hideGoalBtn = localStorage.getItem(STORAGE_KEY.HIDE_GOAL_BTN) === 'true';
+    var hideOutlineBtn = localStorage.getItem(STORAGE_KEY.HIDE_OUTLINE_BTN) === 'true';
+    var hideMetadataBtn = localStorage.getItem(STORAGE_KEY.HIDE_METADATA_BTN) === 'true';
+    var hideFindBtn = localStorage.getItem(STORAGE_KEY.HIDE_FIND_BTN) === 'true';
+
+    // Get localized labels
+    var lblStats = getTrans('toggle_stats');
+    var lblQuickTbar = getTrans('toggle_quick_toolbar');
+    var lblFocusMode = getTrans('toggle_focus_mode');
+    var lblReadingProgress = getTrans('toggle_reading_progress');
+    var lblSmartTypography = getTrans('toggle_smart_typography');
+    var lblHideGoalBtn = getTrans('toggle_hide_goal_btn');
+    var lblHideOutlineBtn = getTrans('toggle_hide_outline_btn');
+    var lblHideMetadataBtn = getTrans('toggle_hide_metadata_btn');
+    var lblHideFindBtn = getTrans('toggle_hide_find_btn');
+
+    return
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblStats + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblQuickTbar + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblFocusMode + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblReadingProgress + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblSmartTypography + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-smart-typography"' + (smartTypographyOn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="settings-divider"></div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblHideGoalBtn + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-hide-goal-btn"' + (hideGoalBtn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblHideOutlineBtn + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-hide-outline-btn"' + (hideOutlineBtn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblHideMetadataBtn + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-hide-metadata-btn"' + (hideMetadataBtn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<span class="toggle-label">' + lblHideFindBtn + '</span>' +
+        '<label class="switch"><input type="checkbox" id="toggle-hide-find-btn"' + (hideFindBtn ? ' checked' : '') + '><span class="slider"></span></label>' +
+      '</div>';
+  }
+
+  function attachToggleHandlers(modal, lang) {
     // Zen Mode toggle
     var zenToggle = modal.querySelector('#toggle-zen');
     if (zenToggle) {
@@ -489,28 +636,44 @@
       };
     }
 
-    // Install button
-    var installBtn = modal.querySelector('#btn-install-pwa');
-    if (installBtn) {
-      installBtn.onclick = async function() {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          var choice = await deferredPrompt.userChoice;
-          deferredPrompt = null;
-          installBtn.disabled = true;
-          installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκαταστάθηκε' : '\u2713 Installed';
-        } else {
-          installBtn.disabled = true;
-          installBtn.textContent = getLang() === 'el' ? '\u26A0 Δεν υποστηρίζεται' : '\u26A0 Not supported';
-        }
+    // Hide Goal button toggle
+    var hideGoalBtnToggle = modal.querySelector('#toggle-hide-goal-btn');
+    if (hideGoalBtnToggle) {
+      hideGoalBtnToggle.onchange = function() {
+        var hidden = this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_GOAL_BTN, hidden ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-hide-goal-btn-changed', { detail: { hidden: hidden } }));
       };
     }
 
-    if (!deferredPrompt && installBtn) {
-      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-        installBtn.disabled = true;
-        installBtn.textContent = getLang() === 'el' ? '\u2713 Εγκατεστημένο' : '\u2713 Already installed';
-      }
+    // Hide Outline button toggle
+    var hideOutlineBtnToggle = modal.querySelector('#toggle-hide-outline-btn');
+    if (hideOutlineBtnToggle) {
+      hideOutlineBtnToggle.onchange = function() {
+        var hidden = this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_OUTLINE_BTN, hidden ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-hide-outline-btn-changed', { detail: { hidden: hidden } }));
+      };
+    }
+
+    // Hide Metadata button toggle
+    var hideMetadataBtnToggle = modal.querySelector('#toggle-hide-metadata-btn');
+    if (hideMetadataBtnToggle) {
+      hideMetadataBtnToggle.onchange = function() {
+        var hidden = this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_METADATA_BTN, hidden ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-hide-metadata-btn-changed', { detail: { hidden: hidden } }));
+      };
+    }
+
+    // Hide Find button toggle
+    var hideFindBtnToggle = modal.querySelector('#toggle-hide-find-btn');
+    if (hideFindBtnToggle) {
+      hideFindBtnToggle.onchange = function() {
+        var hidden = this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_FIND_BTN, hidden ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-hide-find-btn-changed', { detail: { hidden: hidden } }));
+      };
     }
   }
 

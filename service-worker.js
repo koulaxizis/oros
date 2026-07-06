@@ -1,4 +1,4 @@
-const CACHE_NAME = 'oros-v4';
+const CACHE_NAME = 'oros-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

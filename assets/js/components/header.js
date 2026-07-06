@@ -13,7 +13,7 @@
         '<a href="./index.html" class="logo">' +
           '<img src="favicon.svg" alt="" class="logo-icon" width="24" height="24">' +
           '<span class="logo-text"><b>or</b><i>OS</i></span>' +
-          '<span class="version-badge">v0.2</span>' +
+          '<span class="version-badge">v0.4</span>' +
         '</a>' +
         '<div class="header-controls">' +
           '<select id="language-select" class="lang-select" data-i18n-aria="aria_language" aria-label="Language"></select>' +
