@@ -753,4 +753,4 @@
   updateReadingProgress();
   updateSaveStatus();
 
-})();
+})(); 
