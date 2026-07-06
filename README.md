@@ -199,6 +199,8 @@ MIT © 2026 Christos Koulaxizis
 - **Author:** [koulaxizis.gr](https://koulaxizis.gr)
 - **Source:** [github.com/koulaxizis/oros](https://github.com/koulaxizis/oros)
 - **Issues:** [github.com/koulaxizis/oros/issues](https://github.com/koulaxizis/oros/issues)
+- **Beta repo:** [github.com/koulaxizis/oros-beta](https://github.com/koulaxizis/oros-beta)
+- **Beta live:** [koulaxizis.github.io/oros-beta/](https://koulaxizis.github.io/oros-beta/)
 
 ---
 
