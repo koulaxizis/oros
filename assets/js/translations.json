@@ -162,7 +162,7 @@
     "shortcut_action_redo": "Επαναφορά",
     "shortcut_action_find": "Εύρεση",
     "shortcut_action_replace": "Αντικατάσταση",
-    "shortcut_action_format": "Μένю μορφοποίησης",
+    "shortcut_action_format": "Μένου μορφοποίησης",
     "shortcut_action_goal": "Στόχος",
     "shortcut_action_exit_zen": "Έξοδος Zen",
     "shortcuts_info_note": "Σημείωση: Ctrl+Z/Y, Smart Lists, Alt+Click λειτουργούν μόνο μέσα στον editor",
@@ -214,10 +214,7 @@
     "footer_credits_link": "Χρήστος Κουλαξίζης",
     "footer_credits_suffix": ". Φτιαγμένο με ♥ για καλλιτέχνες.",
     "back_to_top": "Επιστροφή στην κορυφή"
-  }
-}
-
-{
+  },
   "es": {
     "app_title": "orOS Writer",
     "app_subtitle": "Editor de texto offline, primero privacidad",
@@ -433,10 +430,7 @@
     "footer_credits_link": "Christos Koulaxizis",
     "footer_credits_suffix": ". Creato con ♥ per artisti.",
     "back_to_top": "Torna in alto"
-  }
-}
-
-{
+  },
   "fr": {
     "app_title": "orOS Writer",
     "app_subtitle": "Éditeur hors ligne, confidentialité d'abord",

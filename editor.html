@@ -6,13 +6,17 @@
   <meta name="description" content="orOS Writer — Privacy-first, offline text editor for writers, bloggers, and journalists.">
   <title>orOS Writer</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <script src="translations.json"></script>
-  <script src="assets/js/header.js"></script>
-  <script src="assets/js/editor.js"></script>
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/footer.js"></script>
+
+  <script>
+    (function(){
+      var t = localStorage.getItem('oros-theme');
+      if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
   <!-- Header -->
@@ -23,7 +27,7 @@
           <path d="M10 80 L35 30 L50 55 L65 20 L90 80 Z" fill="#c8a96e" opacity="0.85"/>
           <circle cx="72" cy="22" r="8" fill="#c8a96e" opacity="0.6"/>
         </svg>
-        <span class="logo-text"><b>or</b><i>OS</i><span class="version-badge">v0.3</span></span>
+        <span class="logo-text"><b>or</b><i>OS</i><span class="version-badge">v0.4</span></span>
       </a>
       <div class="header-controls">
         <select class="lang-select" id="lang-select">
@@ -148,12 +152,14 @@
 
   <!-- Global Footer (from footer.js component) -->
   <div id="oros-footer"></div>
-  <script src="assets/js/components/footer.js"></script>
 
   <!-- Toast -->
   <div class="zentool-toast" id="zen-toast" style="display:none;"></div>
 
-  <!-- Settings Modal (built dynamically by main.js) -->
+  <!-- Scripts at end of body for DOM readiness -->
+  <script src="assets/js/editor.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/components/footer.js"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
