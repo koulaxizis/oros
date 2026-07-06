@@ -1,6 +1,7 @@
 // ============================================
 // orOS — Global Header Component
 // Logo | Version | Language | Zen | Settings | Theme
+// Used on ALL pages (index + editor)
 // ============================================
 
 (function() {

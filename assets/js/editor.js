@@ -4,9 +4,9 @@
 // Smart Typography + Auto-Save Timestamp
 // Writing Goal Tracker (words/chars/paras + lock)
 // Document Metadata Panel (title/author/tags/category)
+// Typewriter Mode + Context Menu + Content Persistence
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
-// Drag&Drop, Quick Format Toolbar (incl. H1/H2/H3)
-// Flexible UI toggles (hide goal/outline/metadata/find btns)
+// Quick Format Toolbar + Flexible UI Toggles
 // ============================================
 
 (function() {
@@ -30,11 +30,6 @@
 
   var richEditor = document.getElementById('rich-editor');
   var richWrapper = document.getElementById('rich-wrapper');
-  var editorContainer = richWrapper;
-  var wordCountEl = document.getElementById('word_count');
-  var charCountEl = document.getElementById('char_count');
-  var readTimeEl = document.getElementById('read_time');
-  var saveStatus = document.getElementById('save_status');
   var findBar = document.getElementById('find-replace-bar');
   var findInput = document.getElementById('find-find');
   var replaceInput = document.getElementById('find-replace');
@@ -43,6 +38,7 @@
   var btnClear = document.getElementById('btn-clear');
   var btnExport = document.getElementById('btn-export');
   var exportDropdown = document.getElementById('export-dropdown');
+  var fileInput = document.getElementById('file-input');
   var statsOverlay = document.getElementById('stats-overlay');
   var statsDefaultEl = document.getElementById('stats-default');
   var statsGoalEl = document.getElementById('stats-goal');
@@ -61,6 +57,7 @@
   var btnClearGoal = document.getElementById('btn-clear-goal');
   var btnCloseGoal = document.getElementById('btn-close-goal');
   var btnFind = document.getElementById('btn-find');
+  var btnCloseFR = document.getElementById('btn-close-fr');
   var metadataPanel = document.getElementById('metadata-panel');
   var btnMetadata = document.getElementById('btn-metadata');
   var btnCloseMetadata = document.getElementById('btn-close-metadata');
@@ -88,6 +85,62 @@
   var goalLockTriggered = false;
   var currentMatchIndex = -1;
   var matchRanges = [];
+  var typewriterMode = false;
+
+  // ========== HELPERS ==========
+  function getCurrentLang() { return localStorage.getItem('oros-language') || 'en'; }
+  function getTrans(key) {
+    var lang = getCurrentLang();
+    var t = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[lang]) || {};
+    return t[key] || key;
+  }
+  function formatNumber(num) {
+    return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
+  }
+  function getTextContent() { return richEditor.innerText || ''; }
+
+  // ========== TOAST ==========
+  function showToast(message) {
+    var toast = document.getElementById('zen-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'zen-toast';
+      toast.className = 'zentool-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.display = '';
+    toast.classList.add('visible');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(function() {
+      toast.classList.remove('visible');
+    }, 2500);
+  }
+
+  // ========== CONTENT PERSISTENCE ==========
+  function saveContent() {
+    localStorage.setItem(STORAGE_KEY, richEditor.innerHTML);
+    lastSavedTime = Date.now();
+    localStorage.setItem(STORAGE_LAST_SAVED, lastSavedTime.toString());
+  }
+
+  function loadContent() {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      richEditor.innerHTML = saved;
+    }
+  }
+
+  if (richEditor) {
+    richEditor.addEventListener('input', function() {
+      saveContent();
+      updateStats();
+      if (outlinePanel && outlinePanel.style.display !== 'none') {
+        clearTimeout(outlineDebounceTimer);
+        outlineDebounceTimer = setTimeout(updateOutline, 300);
+      }
+    });
+  }
 
   // ========== METADATA ==========
   var metadata = loadMetadata();
@@ -97,127 +150,68 @@
     catch(e) { return {}; }
   }
 
-  function saveMetadata(triggerUpdate) {
-    metadata.title = metaTitle.value || '';
-    metadata.author = metaAuthor.value || '';
-    metadata.tags = metaTags.value || '';
-    metadata.category = metaCategory.value || '';
+  function saveMetadata(triggerSaveIndicator) {
+    metadata.title = metaTitle ? metaTitle.value || '' : '';
+    metadata.author = metaAuthor ? metaAuthor.value || '' : '';
+    metadata.tags = metaTags ? metaTags.value || '' : '';
+    metadata.category = metaCategory ? metaCategory.value || '' : '';
     if (!metadata.created) {
       metadata.created = new Date().toISOString();
     }
     metadata.modified = new Date().toISOString();
     localStorage.setItem(STORAGE_METADATA, JSON.stringify(metadata));
     renderMetaDates();
-    if (triggerUpdate) {
-      // Trigger save indicator update
+    if (triggerSaveIndicator) {
       lastSavedTime = Date.now();
       localStorage.setItem(STORAGE_LAST_SAVED, lastSavedTime.toString());
-      updateSaveStatus();
     }
   }
 
-  function parseMetadataFromFrontmatter(content) {
+  function parseFrontmatter(content) {
     var fmRegex = /^---\n([\s\S]*?)\n---\n/;
     var match = content.match(fmRegex);
     if (!match) return null;
-    
     var fmLines = match[1].split('\n');
     var parsed = {};
-    
     for (var i = 0; i < fmLines.length; i++) {
       var line = fmLines[i].trim();
       if (!line) continue;
-      
       var colonIdx = line.indexOf(':');
       if (colonIdx === -1) continue;
-      
       var key = line.substring(0, colonIdx).trim();
       var value = line.substring(colonIdx + 1).trim();
-      
-      // Remove surrounding quotes
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
         value = value.substring(1, value.length - 1);
       }
-      
-      // Parse tags array
       if (key === 'tags' && value.startsWith('[') && value.endsWith(']')) {
         var tagStr = value.substring(1, value.length - 1);
-        var tags = tagStr.split(',').map(function(t) { 
-          return t.trim().replace(/["']/g, ''); 
+        var tags = tagStr.split(',').map(function(t) {
+          return t.trim().replace(/["']/g, '');
         }).filter(Boolean);
         value = tags.join(', ');
       }
-      
       parsed[key] = value;
     }
-    
     return parsed;
   }
 
   function importFrontmatter(content) {
-    var parsed = parseMetadataFromFrontmatter(content);
-    if (!parsed) return false;
-    
-    // Populate metadata fields
-    if (parsed.title) metaTitle.value = parsed.title;
-    if (parsed.author) metaAuthor.value = parsed.author;
-    if (parsed.tags) metaTags.value = parsed.tags;
-    if (parsed.category) metaCategory.value = parsed.category;
+    var parsed = parseFrontmatter(content);
+    if (!parsed) return content;
+    if (parsed.title && metaTitle) metaTitle.value = parsed.title;
+    if (parsed.author && metaAuthor) metaAuthor.value = parsed.author;
+    if (parsed.tags && metaTags) metaTags.value = parsed.tags;
+    if (parsed.category && metaCategory) metaCategory.value = parsed.category;
     if (parsed.created) metadata.created = parsed.created;
     if (parsed.modified) metadata.modified = parsed.modified;
-    
-    // Save to localStorage
+    metadata.title = parsed.title || '';
+    metadata.author = parsed.author || '';
+    metadata.tags = parsed.tags || '';
+    metadata.category = parsed.category || '';
     localStorage.setItem(STORAGE_METADATA, JSON.stringify(metadata));
-    
-    // Strip frontmatter from content
-    var fmRegex = /^---\n[\s\S]*?\n---\n/;
-    var strippedContent = content.replace(fmRegex, '');
-    richEditor.innerHTML = strippedContent;
-    
     renderMetaDates();
-    return true;
-  }
-
-  function renderMetaDates() {
-    var lang = getCurrentLang();
-    var createdLabel = getTrans('meta_label_created');
-    var modifiedLabel = getTrans('meta_label_modified');
-    if (metadata.created) {
-      var cd = new Date(metadata.created);
-      metaCreated.textContent = createdLabel + ' ' + formatDate(cd, lang);
-    } else {
-      metaCreated.textContent = createdLabel + ' —';
-    }
-    if (metadata.modified) {
-      var md = new Date(metadata.modified);
-      metaModified.textContent = modifiedLabel + ' ' + formatDate(md, lang);
-    } else {
-      metaModified.textContent = modifiedLabel + ' —';
-    }
-  }
-
-  function formatDate(d, lang) {
-    var day = String(d.getDate()).padStart(2, '0');
-    var month = String(d.getMonth() + 1).padStart(2, '0');
-    var year = d.getFullYear();
-    var time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    return day + '/' + month + '/' + year + ' ' + time;
-  }
-
-  function toggleMetadataPanel() {
-    if (metadataPanel.style.display === 'none' || !metadataPanel.style.display) {
-      metadataPanel.style.display = 'flex';
-      metadataPanel.style.flexDirection = 'column';
-      metaTitle.value = metadata.title || '';
-      metaAuthor.value = metadata.author || '';
-      metaTags.value = metadata.tags || '';
-      metaCategory.value = metadata.category || '';
-      renderMetaDates();
-    } else {
-      saveMetadata(false);
-      metadataPanel.style.display = 'none';
-    }
+    var fmRegex = /^---\n[\s\S]*?\n---\n/;
+    return content.replace(fmRegex, '');
   }
 
   function buildFrontmatter() {
@@ -235,38 +229,66 @@
     return fm;
   }
 
-  // ========== HELPERS ==========
-  function getCurrentLang() { return localStorage.getItem('oros-language') || 'en'; }
-  function getTrans(key) {
+  function renderMetaDates() {
     var lang = getCurrentLang();
-    var t = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[lang]) || {};
-    return t[key] || key;
+    var createdLabel = getTrans('meta_label_created');
+    var modifiedLabel = getTrans('meta_label_modified');
+    if (metaCreated) {
+      if (metadata.created) {
+        var cd = new Date(metadata.created);
+        metaCreated.textContent = createdLabel + ' ' + formatDate(cd);
+      } else {
+        metaCreated.textContent = createdLabel + ' —';
+      }
+    }
+    if (metaModified) {
+      if (metadata.modified) {
+        var md = new Date(metadata.modified);
+        metaModified.textContent = modifiedLabel + ' ' + formatDate(md);
+      } else {
+        metaModified.textContent = modifiedLabel + ' —';
+      }
+    }
   }
-  function formatNumber(num) {
-    return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
+
+  function formatDate(d) {
+    var day = String(d.getDate()).padStart(2, '0');
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var year = d.getFullYear();
+    var time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    return day + '/' + month + '/' + year + ' ' + time;
   }
-  function getTextContent() { return richEditor.innerText || ''; }
-  function getHTMLContent() { return richEditor.innerHTML || ''; }
+
+  function toggleMetadataPanel() {
+    if (!metadataPanel) return;
+    if (metadataPanel.style.display === 'none' || !metadataPanel.style.display) {
+      metadataPanel.style.display = 'flex';
+      metadataPanel.style.flexDirection = 'column';
+      if (metaTitle) metaTitle.value = metadata.title || '';
+      if (metaAuthor) metaAuthor.value = metadata.author || '';
+      if (metaTags) metaTags.value = metadata.tags || '';
+      if (metaCategory) metaCategory.value = metadata.category || '';
+      renderMetaDates();
+    } else {
+      saveMetadata(false);
+      metadataPanel.style.display = 'none';
+    }
+  }
 
   // ========== STATS ==========
   function updateStats() {
+    if (!richEditor) return;
     var text = getTextContent();
     var chars = text.length;
     var words = text.trim().split(/\s+/).filter(Boolean).length;
-    var readMinutes = Math.max(1, Math.ceil(words / 200));
-    if (wordCountEl) wordCountEl.textContent = formatNumber(words);
-    if (charCountEl) charCountEl.textContent = formatNumber(chars);
-    var minLabel = getCurrentLang() === 'el' ? ' λεπτά' : ' min';
-    if (readTimeEl) readTimeEl.textContent = readMinutes + minLabel;
     if (statsDefaultEl) {
       var statsText = formatNumber(words) + ' ' + getTrans('text_words') + ' · ' + formatNumber(chars) + ' ' + getTrans('text_chars');
-      var readText = readMinutes + minLabel;
-      statsDefaultEl.textContent = statsText + ' · ' + readText;
+      statsDefaultEl.textContent = statsText;
     }
     if (goalTarget) updateGoalProgress();
   }
 
-  // ========== WRITING GOAL TRACKER ==========
+  // ========== GOAL TRACKER ==========
   function getParagraphCount() {
     var text = richEditor.innerText.trim();
     if (!text) return 0;
@@ -309,6 +331,7 @@
   }
 
   function toggleGoalBar() {
+    if (!goalBar) return;
     if (goalBar.style.display === 'flex') {
       goalBar.style.display = 'none';
     } else {
@@ -363,31 +386,36 @@
     richEditor.contentEditable = 'false';
   }
 
-  // ========== AUTO-SAVE TIMESTAMP INDICATOR ==========
+  // ========== AUTO-SAVE TIMESTAMP ==========
   function getRelativeSaveTime() {
-    var lang = getCurrentLang();
-    var trans = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[lang]) || {};
+    var trans = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[getCurrentLang()]) || {};
     if (!lastSavedTime) return trans.text_not_saved || 'Not saved';
     var diff = Math.floor((Date.now() - lastSavedTime) / 1000);
     if (diff < 60) return trans.text_saved || 'Saved just now';
     if (diff < 3600) return (trans.text_saved_minutes_ago || '{n}m ago').replace('{n}', Math.floor(diff / 60));
     return (trans.text_saved_hours_ago || '{n}h ago').replace('{n}', Math.floor(diff / 3600));
   }
-  function updateSaveStatus() { if (saveStatus) saveStatus.textContent = getRelativeSaveTime(); }
-  setInterval(updateSaveStatus, 30000);
 
   // ========== DOCUMENT OUTLINE ==========
   var outlineDebounceTimer = null;
   function toggleOutline() {
+    if (!outlinePanel) return;
     if (outlinePanel.style.display === 'none' || !outlinePanel.style.display) {
-      outlinePanel.style.display = 'flex'; outlinePanel.style.flexDirection = 'column'; updateOutline();
-    } else { outlinePanel.style.display = 'none'; }
+      outlinePanel.style.display = 'flex';
+      outlinePanel.style.flexDirection = 'column';
+      updateOutline();
+    } else {
+      outlinePanel.style.display = 'none';
+    }
   }
+
   function updateOutline() {
-    if (!outlineList || outlinePanel.style.display === 'none' || !outlinePanel.style.display) return;
+    if (!outlineList || !outlinePanel || outlinePanel.style.display === 'none') return;
     var headings = richEditor.querySelectorAll('h1, h2, h3');
-    var emptyMsg = getTrans('outline_empty');
-    if (headings.length === 0) { outlineList.innerHTML = '<div class="outline-empty">' + emptyMsg + '</div>'; return; }
+    if (headings.length === 0) {
+      outlineList.innerHTML = '<div class="outline-empty">' + getTrans('outline_empty') + '</div>';
+      return;
+    }
     outlineList.innerHTML = '';
     for (var i = 0; i < headings.length; i++) {
       (function(h) {
@@ -413,7 +441,9 @@
     var pct = (richEditor.scrollTop / max) * 100;
     progressBar.style.width = Math.min(100, Math.max(0, pct)) + '%';
   }
-  richEditor.addEventListener('scroll', updateReadingProgress, { passive: true });
+  if (richEditor) {
+    richEditor.addEventListener('scroll', updateReadingProgress, { passive: true });
+  }
   window.addEventListener('oros-reading-progress-changed', function(e) {
     readingProgressEnabled = e.detail.enabled;
     if (progressBar) {
@@ -422,8 +452,8 @@
     }
     if (readingProgressEnabled) updateReadingProgress();
   });
-  
-    // ========== SMART TYPOGRAPHY ==========
+
+  // ========== SMART TYPOGRAPHY ==========
   var isReplacing = false;
   function handleSmartTypography() {
     if (!smartTypographyEnabled || isReplacing || goalLockTriggered) return;
@@ -449,13 +479,13 @@
     else if (last3 === '...') { deleteLen = 3; insert = '\u2026'; }
     else if (last2 === '--') { deleteLen = 2; insert = '\u2014'; }
     else if (last1 === '"') {
-      var prevChar = before.length > 1 ? before[before.length - 2] : ' ';
-      insert = /\w/.test(prevChar) ? '\u201D' : '\u201C';
+      var pc = before.length > 1 ? before[before.length - 2] : ' ';
+      insert = /\w/.test(pc) ? '\u201D' : '\u201C';
       deleteLen = 1;
     }
     else if (last1 === "'") {
-      var prevChar = before.length > 1 ? before[before.length - 2] : ' ';
-      insert = /\w/.test(prevChar) ? '\u2019' : '\u2018';
+      var pc2 = before.length > 1 ? before[before.length - 2] : ' ';
+      insert = /\w/.test(pc2) ? '\u2019' : '\u2018';
       deleteLen = 1;
     }
     else return;
@@ -465,50 +495,34 @@
     isReplacing = false;
   }
   window.addEventListener('oros-smart-typography-changed', function(e) { smartTypographyEnabled = e.detail.enabled; });
-
-  // ========== METADATA INPUT HANDLERS ==========
+  
+    // ========== METADATA INPUT HANDLERS ==========
   function setupMetadataHandlers() {
     var inputs = [metaTitle, metaAuthor, metaTags, metaCategory];
     for (var i = 0; i < inputs.length; i++) {
       (function(input) {
+        if (!input) return;
         input.addEventListener('blur', function() {
           saveMetadata(true);
         });
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            saveMetadata(true);
+            // Move focus cyclically
+            if (input === metaTitle && metaAuthor) metaAuthor.focus();
+            else if (input === metaAuthor && metaCategory) metaCategory.focus();
+            else if (input === metaCategory && metaTags) metaTags.focus();
+            else if (input === metaTags && metaTitle) metaTitle.focus();
+          }
+        });
       })(inputs[i]);
     }
-    // Also save on Enter key
-    metaTitle.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        metaAuthor.focus();
-        saveMetadata(true);
-      }
-    });
-    metaAuthor.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        metaCategory.focus();
-        saveMetadata(true);
-      }
-    });
-    metaCategory.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        metaTags.focus();
-        saveMetadata(true);
-      }
-    });
-    metaTags.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        metaTitle.focus();
-        saveMetadata(true);
-      }
-    });
   }
 
   // ========== FIND & REPLACE ==========
   function toggleFindBar() {
+    if (!findBar || !findInput) return;
     if (findBar.style.display === 'flex') {
       findBar.style.display = 'none';
       findInput.value = '';
@@ -523,53 +537,66 @@
   }
 
   function highlightMatches() {
-    // This would need more complex implementation for contentEditable
-    // For now, we'll keep the bar functional for search
-    var searchTerm = findInput.value;
+    if (!findInput || !richEditor) return;
+    var searchTerm = findInput.value.toLowerCase();
     if (!searchTerm) {
-      frResults.textContent = getTrans('fr_no_matches');
+      if (frResults) frResults.textContent = getTrans('fr_no_matches');
       return;
     }
-    var content = richEditor.innerText;
+    var content = richEditor.innerText.toLowerCase();
     var matches = 0;
-    var idx = content.toLowerCase().indexOf(searchTerm.toLowerCase());
+    var idx = content.indexOf(searchTerm);
     while (idx !== -1) {
       matches++;
-      idx = content.toLowerCase().indexOf(searchTerm.toLowerCase(), idx + 1);
+      idx = content.indexOf(searchTerm, idx + 1);
     }
-    if (matches > 0) {
-      frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
-    } else {
-      frResults.textContent = getTrans('fr_no_matches');
+    if (frResults) {
+      if (matches > 0) {
+        frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
+      } else {
+        frResults.textContent = getTrans('fr_no_matches');
+      }
     }
   }
-
-  // ========== LANGUAGE CHANGE LISTENER ==========
-  window.addEventListener('oros-language-changed', function(e) { 
-    updateStats(); 
-    updateSaveStatus(); 
-    renderMetaDates(); 
-  });
 
   // ========== FOCUS MODE ==========
   var focusDebounceTimer = null;
   function initFocusMode() {
     if (!richEditor || !richWrapper) return;
     document.addEventListener('selectionchange', handleSelectionChange);
-    richEditor.addEventListener('scroll', function() { if (document.getElementById('focus-spotlight')) clearFocusMode(); });
-    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.getElementById('focus-spotlight')) clearFocusMode(); });
-    window.addEventListener('oros-focus-mode-changed', function(e) { focusModeEnabled = e.detail.enabled; if (!focusModeEnabled) clearFocusMode(); });
+    richEditor.addEventListener('scroll', function() {
+      if (document.getElementById('focus-spotlight')) clearFocusMode();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('focus-spotlight')) {
+        clearFocusMode();
+      }
+    });
+    window.addEventListener('oros-focus-mode-changed', function(e) {
+      focusModeEnabled = e.detail.enabled;
+      if (!focusModeEnabled) clearFocusMode();
+    });
   }
+
   function handleSelectionChange() {
     if (!focusModeEnabled) return;
     clearTimeout(focusDebounceTimer);
     focusDebounceTimer = setTimeout(function() {
       var selection = window.getSelection();
-      if (!selection.rangeCount || selection.isCollapsed) { clearFocusMode(); return; }
+      if (!selection.rangeCount || selection.isCollapsed) {
+        clearFocusMode();
+        return;
+      }
       var range = selection.getRangeAt(0);
-      if (!richEditor.contains(range.commonAncestorContainer)) { clearFocusMode(); return; }
+      if (!richEditor.contains(range.commonAncestorContainer)) {
+        clearFocusMode();
+        return;
+      }
       var selRect = range.getBoundingClientRect();
-      if (selRect.width === 0 || selRect.height === 0) { clearFocusMode(); return; }
+      if (selRect.width === 0 || selRect.height === 0) {
+        clearFocusMode();
+        return;
+      }
       clearFocusMode();
       var wrapperRect = richWrapper.getBoundingClientRect();
       var spotlight = document.createElement('div');
@@ -582,183 +609,194 @@
       richWrapper.appendChild(spotlight);
     }, 150);
   }
-  function clearFocusMode() { var spotlight = document.getElementById('focus-spotlight'); if (spotlight) spotlight.remove(); }
 
-  // ========== VISIBILITY INIT ==========
-  if (hideStats && statsOverlay) statsOverlay.style.display = 'none';
-  if (hideQuickTbar && quickFormatToolbar) quickFormatToolbar.style.display = 'none';
-  if (!readingProgressEnabled && progressBar) progressBar.style.display = 'none';
-  if (hideGoalBtn && btnGoal) btnGoal.style.display = 'none';
-  if (hideOutlineBtn && btnOutline) btnOutline.style.display = 'none';
-  if (hideMetadataBtn && btnMetadata) btnMetadata.style.display = 'none';
-  if (hideFindBtn && btnFind) btnFind.style.display = 'none';
-  if (statsGoalEl && statsDefaultEl) {
-    if (goalTarget) { statsDefaultEl.style.display = 'none'; statsGoalEl.style.display = ''; }
-    else { statsDefaultEl.style.display = ''; statsGoalEl.style.display = 'none'; }
+  function clearFocusMode() {
+    var spotlight = document.getElementById('focus-spotlight');
+    if (spotlight) spotlight.remove();
   }
 
-  // ========== CUSTOM EVENTS FOR SETTINGS ==========
-  window.addEventListener('oros-hide-goal-btn-changed', function(e) {
-    hideGoalBtn = e.detail.hidden;
-    if (btnGoal) btnGoal.style.display = hideGoalBtn ? 'none' : '';
-  });
-  window.addEventListener('oros-hide-outline-btn-changed', function(e) {
-    hideOutlineBtn = e.detail.hidden;
-    if (btnOutline) btnOutline.style.display = hideOutlineBtn ? 'none' : '';
-  });
-  window.addEventListener('oros-hide-metadata-btn-changed', function(e) {
-    hideMetadataBtn = e.detail.hidden;
-    if (btnMetadata) btnMetadata.style.display = hideMetadataBtn ? 'none' : '';
-  });
-  window.addEventListener('oros-hide-find-btn-changed', function(e) {
-    hideFindBtn = e.detail.hidden;
-    if (btnFind) btnFind.style.display = hideFindBtn ? 'none' : '';
-  });
-  
-    // ========== TOOLBAR BUTTON EVENT HANDLERS ==========
-  
-  // Metadata panel
-  if (btnMetadata) {
-    btnMetadata.addEventListener('click', toggleMetadataPanel);
-  }
-  if (btnCloseMetadata) {
-    btnCloseMetadata.addEventListener('click', function() {
-      saveMetadata(false);
-      metadataPanel.style.display = 'none';
-    });
-  }
-  
-  // Outline panel
-  if (btnOutline) {
-    btnOutline.addEventListener('click', toggleOutline);
-  }
-  if (btnCloseOutline) {
-    btnCloseOutline.addEventListener('click', function() {
-      outlinePanel.style.display = 'none';
-    });
-  }
-  
-  // Goal bar
-  if (btnGoal) {
-    btnGoal.addEventListener('click', toggleGoalBar);
-  }
-  if (btnSetGoal) {
-    btnSetGoal.addEventListener('click', setGoal);
-  }
-  if (btnClearGoal) {
-    btnClearGoal.addEventListener('click', clearGoal);
-  }
-  if (btnCloseGoal) {
-    btnCloseGoal.addEventListener('click', function() {
-      goalBar.style.display = 'none';
-    });
-  }
-  
-  // Find bar
-  if (btnFind) {
-    btnFind.addEventListener('click', toggleFindBar);
-  }
-  if (findBar) {
-    findInput.addEventListener('input', highlightMatches);
-    replaceInput.addEventListener('input', function() {/* Future enhancement */});
-  }
-  // Close Find bar
-  var btnCloseFR = document.getElementById('btn-close-fr');
-  if (btnCloseFR) {
-    btnCloseFR.addEventListener('click', function() {
-      findBar.style.display = 'none';
-      findInput.value = '';
-      replaceInput.value = '';
-    });
-  }
-
-  // Clear button
-  if (btnClear) {
-    btnClear.addEventListener('click', function() {
-      if (confirm('Are you sure? All unsaved content will be lost.')) {
-        richEditor.innerHTML = '';
-        localStorage.setItem(STORAGE_KEY, '');
-        updateStats();
-        showToast(getTrans('toast_cleared'));
+  // ========== CONTEXT MENU ==========
+  var contextMenu = null;
+  function showContextMenu(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Remove existing menu
+    if (contextMenu) {
+      contextMenu.remove();
+      contextMenu = null;
+    }
+    
+    var menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.innerHTML = '' +
+      '<div class="cm-item" data-cmd="bold"><span class="cm-icon">B</span>Bold</div>' +
+      '<div class="cm-item" data-cmd="italic"><span class="cm-icon">I</span>Italic</div>' +
+      '<div class="cm-item" data-cmd="underline"><span class="cm-icon">U</span>Underline</div>' +
+      '<div class="cm-divider"></div>' +
+      '<div class="cm-item" data-cmd="strikeThrough"><span class="cm-icon">S</span>Strike</div>' +
+      '<div class="cm-item" data-cmd="formatBlock;H1"><span class="cm-icon">#</span>H1</div>' +
+      '<div class="cm-item" data-cmd="formatBlock;H2"><span class="cm-icon">##</span>H2</div>' +
+      '<div class="cm-item" data-cmd="formatBlock;H3"><span class="cm-icon">###</span>H3</div>' +
+      '<div class="cm-divider"></div>' +
+      '<div class="cm-item" data-cmd="insertUnorderedList"><span class="cm-icon">•</span>Bullets</div>' +
+      '<div class="cm-item" data-cmd="insertOrderedList"><span class="cm-icon">1.</span>Numbers</div>' +
+      '<div class="cm-divider"></div>' +
+      '<div class="cm-item" data-cmd="undo"><span class="cm-icon">↶</span>Undo</div>' +
+      '<div class="cm-item" data-cmd="redo"><span class="cm-icon">↷</span>Redo</div>';
+    
+    menu.style.position = 'fixed';
+    menu.style.left = e.pageX + 'px';
+    menu.style.top = e.pageY + 'px';
+    
+    var items = menu.querySelectorAll('.cm-item');
+    for (var i = 0; i < items.length; i++) {
+      (function(item) {
+        item.onclick = function() {
+          var cmdData = item.getAttribute('data-cmd');
+          var parts = cmdData.split(';');
+          var cmd = parts[0];
+          var val = parts[1] || null;
+          document.execCommand(cmd, false, val);
+          contextMenu.remove();
+          contextMenu = null;
+          richEditor.focus();
+        };
+      })(items[i]);
+    }
+    
+    document.body.appendChild(menu);
+    contextMenu = menu;
+    
+    // Close on ESC
+    var closeHandler = function(ev) {
+      if (ev.key === 'Escape' && contextMenu) {
+        contextMenu.remove();
+        contextMenu = null;
+        document.removeEventListener('keydown', closeHandler);
       }
-    });
+    };
+    document.addEventListener('keydown', closeHandler);
   }
 
-  // Export functionality
-  if (btnExport) {
-    btnExport.addEventListener('click', function(e) {
-      e.stopPropagation();
-      exportDropdown.classList.toggle('visible');
-    });
-  }
-  document.addEventListener('click', function() {
-    if (exportDropdown) exportDropdown.classList.remove('visible');
-  });
-  
-  if (exportDropdown) {
-    var exportButtons = exportDropdown.querySelectorAll('button');
-    for (var i = 0; i < exportButtons.length; i++) {
+  // ========== QUICK FORMAT TOOLBAR ==========
+  function setupQuickFormatToolbar() {
+    if (!quickFormatToolbar) return;
+    var fmtBtns = quickFormatToolbar.querySelectorAll('.fmt-btn');
+    for (var i = 0; i < fmtBtns.length; i++) {
       (function(btn) {
-        btn.addEventListener('click', function() {
-          var format = btn.getAttribute('data-format');
-          downloadFile(format);
-        });
-      })(exportButtons[i]);
+        btn.onclick = function() {
+          var cmd = btn.getAttribute('data-cmd');
+          var block = btn.getAttribute('data-block');
+          
+          // Check if already active
+          if (cmd && document.queryCommandState(cmd)) {
+            // Toggle off - this requires custom handling
+            // For simplicity, we'll just re-run the command
+            document.execCommand(cmd, false);
+          } else if (block) {
+            document.execCommand('formatBlock', false, block);
+          } else if (cmd) {
+            document.execCommand(cmd, false);
+          }
+        };
+      })(fmtBtns[i]);
     }
   }
 
+  // ========== TYPWRITER MODE ==========
+  function toggleTypewriterMode() {
+    typewriterMode = !typewriterMode;
+    if (!richWrapper || !richEditor) return;
+    
+    if (typewriterMode) {
+      scrollToCenter();
+    }
+    // You can add a visual indicator here if desired
+  }
+
+  function scrollToCenter() {
+    if (!richEditor || !richWrapper) return;
+    var selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    var range = selection.getRangeAt(0);
+    if (range.collapsed) return;
+    
+    var rect = range.getBoundingClientRect();
+    var wrapperRect = richWrapper.getBoundingClientRect();
+    var editorHeight = richEditor.offsetHeight;
+    
+    // Calculate scroll position to place cursor at ~45% of viewport
+    var targetScroll = wrapperRect.top - wrapperRect.y + (rect.top - wrapperRect.top) - (editorHeight * 0.45);
+    richWrapper.scrollTop = Math.max(0, targetScroll);
+  }
+
+  // ========== FILE OPEN ==========
+  function openFile(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var content = e.target.result;
+      
+      // Try to import frontmatter if .md
+      if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
+        content = importFrontmatter(content);
+      }
+      
+      // Set content
+      richEditor.innerHTML = content;
+      saveContent();
+      updateStats();
+      showToast(getTrans('toast_opened'));
+    };
+    reader.onerror = function() {
+      showToast('Error reading file');
+    };
+    reader.readAsText(file);
+  }
+
+  // ========== EXPORT ==========
   function downloadFile(format) {
     var content = richEditor.innerHTML;
     var textContent = richEditor.innerText;
     var timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     var filenamePrefix = timestamp;
+    var ext = '';
+    var mime = 'text/plain;charset=utf-8';
+    var data = '';
     
     switch (format) {
       case 'md':
-        var mdContent = '';
-        // Check if we should add frontmatter
         var hasMetadata = metadata.title || metadata.author || metadata.tags || metadata.category;
-        if (hasMetadata) {
-          mdContent = buildFrontmatter();
-        }
-        // Convert HTML to basic markdown (simplified)
-        mdContent += convertHTMLtoMarkdown(content);
-        var blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
-        triggerDownload(blob, filenamePrefix + '.md');
+        data = hasMetadata ? buildFrontmatter() : '';
+        data += convertHTMLtoMarkdown(content);
+        ext = '.md';
+        mime = 'text/markdown;charset=utf-8';
         break;
-        
       case 'txt':
-        var blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-        triggerDownload(blob, filenamePrefix + '.txt');
+        data = textContent;
+        ext = '.txt';
         break;
-        
       case 'rtf':
-        var rtfContent = convertToRTF(textContent);
-        var blob = new Blob([rtfContent], { type: 'application/rtf;charset=utf-8' });
-        triggerDownload(blob, filenamePrefix + '.rtf');
+        data = convertToRTF(textContent);
+        ext = '.rtf';
+        mime = 'application/rtf;charset=utf-8';
         break;
-        
       case 'pdf':
         window.print();
-        break;
-        
+        return;
       case 'doc':
-        var docContent = '<html xmlns:o=\'urn:schemas-microsoft-com:office:office\' '+
-                         'xmlns:w=\'urn:schemas-microsoft-com:office:word\' '+
-                         'xmlns=\'http://www.w3.org/TR/REC-html40\'>'+
-                         '<head><meta charset=\'utf-8\'></head><body>' +
-                         content + '</body></html>';
-        var blob = new Blob([docContent], { type: 'application/msword;charset=utf-8' });
-        triggerDownload(blob, filenamePrefix + '.doc');
+        data = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body>' + content + '</body></html>';
+        ext = '.doc';
+        mime = 'application/msword;charset=utf-8';
         break;
     }
     
-    exportDropdown.classList.remove('visible');
+    var blob = new Blob([data], { type: mime });
+    triggerDownload(blob, filenamePrefix + ext);
     showToast(getTrans('toast_downloaded'));
   }
 
   function convertHTMLtoMarkdown(html) {
-    // Simplified conversion
     var md = html;
     md = md.replace(/<[^>]+>/g, '');
     md = md.replace(/&nbsp;/g, ' ');
@@ -771,10 +809,8 @@
   }
 
   function convertToRTF(text) {
-    // Simplified RTF wrapper
     var escaped = text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/{/g, '\\{').replace(/}/g, '\\}');
-    return "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 " + 
-           "Nunito;}}\\f0\\fs24 " + escaped + "}";
+    return "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Nunito;}}\\f0\\fs24 " + escaped + "}";
   }
 
   function triggerDownload(blob, filename) {
@@ -782,24 +818,10 @@
     var a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }
-
-  // ========== TOAST NOTIFICATIONS ==========
-  function showToast(message) {
-    var toast = document.getElementById('zen-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'zen-toast';
-      toast.className = 'zentool-toast';
-      document.body.appendChild(toast);
-    }
-    toast.textContent = message;
-    toast.classList.add('visible');
-    setTimeout(function() {
-      toast.classList.remove('visible');
-    }, 3000);
   }
 
   // ========== KEYBOARD SHORTCUTS ==========
@@ -807,7 +829,7 @@
     // Ctrl+S - Save
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
-      richEditor.dispatchEvent(new Event('input'));
+      saveContent();
       showToast(getTrans('text_saved'));
     }
     // Ctrl+G - Goal
@@ -818,7 +840,17 @@
     // Ctrl+F - Find
     else if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
-      if (findBar) toggleFindBar();
+      toggleFindBar();
+    }
+    // Ctrl+Enter - Typewriter
+    else if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      toggleTypewriterMode();
+    }
+    // F8 - Focus Mode
+    else if (e.key === 'F8' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      // Handled in main.js via settings
     }
     // Escape - Close panels
     else if (e.key === 'Escape') {
@@ -835,16 +867,139 @@
       if (goalBar && goalBar.style.display === 'flex') {
         goalBar.style.display = 'none';
       }
-    }
-    // F8 - Focus Mode
-    else if (e.key === 'F8' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-      e.preventDefault();
-      // Will be handled by main.js
+      if (contextMenu) {
+        contextMenu.remove();
+        contextMenu = null;
+      }
     }
   });
 
-  // Initialize metadata panel handlers
+  // ========== VISIBILITY INIT ==========
+  if (hideStats && statsOverlay) statsOverlay.style.display = 'none';
+  if (hideQuickTbar && quickFormatToolbar) quickFormatToolbar.style.display = 'none';
+  if (!readingProgressEnabled && progressBar) progressBar.style.display = 'none';
+  if (hideGoalBtn && btnGoal) btnGoal.style.display = 'none';
+  if (hideOutlineBtn && btnOutline) btnOutline.style.display = 'none';
+  if (hideMetadataBtn && btnMetadata) btnMetadata.style.display = 'none';
+  if (hideFindBtn && btnFind) btnFind.style.display = 'none';
+
+  // ========== CUSTOM EVENTS ==========
+  window.addEventListener('oros-hide-goal-btn-changed', function(e) {
+    hideGoalBtn = e.detail.hidden;
+    if (btnGoal) btnGoal.style.display = hideGoalBtn ? 'none' : '';
+  });
+  window.addEventListener('oros-hide-outline-btn-changed', function(e) {
+    hideOutlineBtn = e.detail.hidden;
+    if (btnOutline) btnOutline.style.display = hideOutlineBtn ? 'none' : '';
+  });
+  window.addEventListener('oros-hide-metadata-btn-changed', function(e) {
+    hideMetadataBtn = e.detail.hidden;
+    if (btnMetadata) btnMetadata.style.display = hideMetadataBtn ? 'none' : '';
+  });
+  window.addEventListener('oros-hide-find-btn-changed', function(e) {
+    hideFindBtn = e.detail.hidden;
+    if (btnFind) btnFind.style.display = hideFindBtn ? 'none' : '';
+  });
+  window.addEventListener('oros-language-changed', function(e) {
+    updateStats();
+    renderMetaDates();
+  });
+
+  // ========== EVENT LISTENERS ==========
+  if (btnMetadata) btnMetadata.addEventListener('click', toggleMetadataPanel);
+  if (btnCloseMetadata) btnCloseMetadata.addEventListener('click', function() {
+    saveMetadata(false);
+    metadataPanel.style.display = 'none';
+  });
+
+  if (btnOutline) btnOutline.addEventListener('click', toggleOutline);
+  if (btnCloseOutline) btnCloseOutline.addEventListener('click', function() {
+    outlinePanel.style.display = 'none';
+  });
+
+  if (btnGoal) btnGoal.addEventListener('click', toggleGoalBar);
+  if (btnSetGoal) btnSetGoal.addEventListener('click', setGoal);
+  if (btnClearGoal) btnClearGoal.addEventListener('click', clearGoal);
+  if (btnCloseGoal) btnCloseGoal.addEventListener('click', function() {
+    goalBar.style.display = 'none';
+  });
+
+  if (btnFind) btnFind.addEventListener('click', toggleFindBar);
+  if (findBar) {
+    findInput.addEventListener('input', highlightMatches);
+    if (btnCloseFR) btnCloseFR.addEventListener('click', function() {
+      findBar.style.display = 'none';
+      findInput.value = '';
+    });
+  }
+
+  if (btnOpen) btnOpen.addEventListener('click', function() {
+    if (fileInput) fileInput.click();
+  });
+  if (fileInput) fileInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      openFile(this.files[0]);
+      this.value = '';
+    }
+  });
+
+  if (btnClear) btnClear.addEventListener('click', function() {
+    if (confirm('Are you sure? All unsaved content will be lost.')) {
+      richEditor.innerHTML = '';
+      saveContent();
+      updateStats();
+      showToast(getTrans('toast_cleared'));
+    }
+  });
+
+  if (btnExport) {
+    btnExport.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (exportDropdown) exportDropdown.classList.toggle('visible');
+    });
+  }
+  document.addEventListener('click', function() {
+    if (exportDropdown) exportDropdown.classList.remove('visible');
+  });
+  if (exportDropdown) {
+    var expBtns = exportDropdown.querySelectorAll('button');
+    for (var j = 0; j < expBtns.length; j++) {
+      (function(btn) {
+        btn.addEventListener('click', function() {
+          var fmt = btn.getAttribute('data-format');
+          downloadFile(fmt);
+        });
+      })(expBtns[j]);
+    }
+  }
+
+  // Click on richEditor to dismiss context menu
+  if (richEditor) {
+    richEditor.addEventListener('click', function(e) {
+      if (contextMenu) {
+        contextMenu.remove();
+        contextMenu = null;
+      }
+    });
+    
+    // Alt+Right-click for context menu
+    richEditor.addEventListener('contextmenu', function(e) {
+      if (e.altKey) {
+        showContextMenu(e);
+      }
+    });
+    
+    // Smart typography
+    richEditor.addEventListener('keyup', handleSmartTypography);
+  }
+
+  // ========== INITIALIZE ==========
+  loadContent();
+  loadMetadata();
+  renderMetaDates();
   setupMetadataHandlers();
+  setupQuickFormatToolbar();
+  initFocusMode();
+  updateStats();
   
 })();
-

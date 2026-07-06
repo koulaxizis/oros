@@ -8,7 +8,6 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
 
   <script>
     (function(){
@@ -19,38 +18,16 @@
   </script>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="header-content">
-      <a href="index.html" class="logo">
-        <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 80 L35 30 L50 55 L65 20 L90 80 Z" fill="#c8a96e" opacity="0.85"/>
-          <circle cx="72" cy="22" r="8" fill="#c8a96e" opacity="0.6"/>
-        </svg>
-        <span class="logo-text"><b>or</b><i>OS</i><span class="version-badge">v0.4</span></span>
-      </a>
-      <div class="header-controls">
-        <select class="lang-select" id="lang-select">
-          <option value="en">EN</option>
-          <option value="el">EL</option>
-          <option value="es">ES</option>
-          <option value="it">IT</option>
-          <option value="fr">FR</option>
-          <option value="de">DE</option>
-        </select>
-        <button class="btn-control btn-icon" id="theme-toggle" title="Theme">🌓</button>
-        <button class="btn-control btn-icon" id="btn-settings" title="Settings">⚙️</button>
-        <button class="btn-control btn-icon" id="btn-zencenter" title="Zen Mode">🏔</button>
-      </div>
-    </div>
-  </header>
+  <!-- Global Header (from header.js component) -->
+  <div id="oros-header"></div>
+  <script src="assets/js/components/header.js"></script>
 
   <!-- Main App -->
   <main class="app-main">
     <!-- Find & Replace Bar -->
     <div class="find-replace-bar" id="find-replace-bar" style="display:none;">
-      <input class="find-input" id="find-find" type="text" placeholder="Find" />
-      <input class="find-input" id="find-replace" type="text" placeholder="Replace" />
+      <input class="find-input" id="find-find" type="text" data-i18n-placeholder="fr_placeholder_find" placeholder="Find" />
+      <input class="find-input" id="find-replace" type="text" data-i18n-placeholder="fr_placeholder_replace" placeholder="Replace" />
       <div class="fr-buttons">
         <button class="fr-btn" id="btn-find-prev">↑</button>
         <button class="fr-btn" id="btn-find-next">↓</button>
@@ -68,9 +45,9 @@
         <option value="chars">Chars</option>
         <option value="paras">Paras</option>
       </select>
-      <input class="goal-input" id="goal-target-input" type="number" min="1" placeholder="0" />
+      <input class="goal-input" id="goal-target-input" type="number" min="1" data-i18n-placeholder="goal_input_placeholder" placeholder="0" />
       <label class="goal-lock-label">
-        <input type="checkbox" id="goal-lock" /> Lock
+        <input type="checkbox" id="goal-lock" /> <span data-i18n="goal_label_lock">Lock</span>
       </label>
       <div class="fr-buttons">
         <button class="fr-btn" id="btn-set-goal">✓</button>
@@ -79,12 +56,15 @@
       <button class="close-fr-btn" id="btn-close-goal">×</button>
     </div>
 
+    <!-- Hidden file input for Open -->
+    <input type="file" id="file-input" accept=".txt,.md,.markdown,.text" style="display:none;" />
+
     <!-- Toolbar -->
     <div class="toolbar">
-      <button class="btn-control" id="btn-open">📁</button>
-      <button class="btn-control" id="btn-clear">🗑</button>
+      <button class="btn-control" id="btn-open" data-i18n-tooltip="btn_open" title="Open">📁</button>
+      <button class="btn-control" id="btn-clear" data-i18n-tooltip="btn_clear" title="Clear">🗑</button>
       <div class="export-wrap">
-        <button class="btn-control" id="btn-export">💾 ↓</button>
+        <button class="btn-control" id="btn-export" data-i18n-tooltip="btn_export" title="Export">💾 ↓</button>
         <div class="export-dropdown" id="export-dropdown">
           <button data-format="md">Markdown (.md)</button>
           <button data-format="txt">Plain Text (.txt)</button>
@@ -106,10 +86,10 @@
         <button class="fmt-btn" data-cmd="insertUnorderedList" title="Bullet List">•</button>
         <button class="fmt-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
       </div>
-      <button class="btn-control btn-icon" id="btn-outline" title="Contents (📋)">📋</button>
-      <button class="btn-control btn-icon" id="btn-metadata" title="Document Info (📘)">📘</button>
-      <button class="btn-control btn-icon" id="btn-goal" title="Goal (Ctrl+G)">🎯</button>
-      <button class="btn-control btn-icon" id="btn-find" title="Find (Ctrl+F)">🔍</button>
+      <button class="btn-control btn-icon" id="btn-outline" data-i18n-tooltip="btn_outline" title="Contents">📋</button>
+      <button class="btn-control btn-icon" id="btn-metadata" data-i18n-tooltip="btn_metadata" title="Document Info">📘</button>
+      <button class="btn-control btn-icon" id="btn-goal" data-i18n-tooltip="btn_goal" title="Goal">🎯</button>
+      <button class="btn-control btn-icon" id="btn-find" data-i18n-tooltip="btn_find" title="Find">🔍</button>
     </div>
 
     <!-- Editor Wrapper -->
@@ -117,32 +97,32 @@
       <div class="reading-progress-bar" id="reading-progress-bar"></div>
       <div class="outline-panel" id="outline-panel" style="display:none;">
         <div class="outline-header">
-          <span id="outline-title-text">Contents</span>
+          <span id="outline-title-text" data-i18n="btn_outline">Contents</span>
           <button class="close-outline-btn" id="btn-close-outline">×</button>
         </div>
         <div class="outline-list" id="outline-list"></div>
       </div>
       <div class="metadata-panel" id="metadata-panel" style="display:none;">
         <div class="metadata-header">
-          <span id="metadata-title-text">Document Info</span>
+          <span id="metadata-title-text" data-i18n="meta_panel_title">Document Info</span>
           <button class="close-metadata-btn" id="btn-close-metadata">×</button>
         </div>
         <div class="metadata-body">
-          <label class="meta-field-label" for="meta-title">Title</label>
-          <input class="meta-field-input" id="meta-title" type="text" placeholder="Document title" />
-          <label class="meta-field-label" for="meta-author">Author</label>
-          <input class="meta-field-input" id="meta-author" type="text" placeholder="Author name" />
-          <label class="meta-field-label" for="meta-tags">Tags (comma separated)</label>
-          <input class="meta-field-input" id="meta-tags" type="text" placeholder="tag1, tag2, tag3" />
-          <label class="meta-field-label" for="meta-category">Category / Topic</label>
-          <input class="meta-field-input" id="meta-category" type="text" placeholder="Article, Essay, Report..." />
+          <label class="meta-field-label" for="meta-title" data-i18n="meta_field_title">Title</label>
+          <input class="meta-field-input" id="meta-title" type="text" data-i18n-placeholder="meta_field_placeholder_title" placeholder="Document title" />
+          <label class="meta-field-label" for="meta-author" data-i18n="meta_field_author">Author</label>
+          <input class="meta-field-input" id="meta-author" type="text" data-i18n-placeholder="meta_field_placeholder_author" placeholder="Author name" />
+          <label class="meta-field-label" for="meta-tags" data-i18n="meta_field_tags">Tags (comma separated)</label>
+          <input class="meta-field-input" id="meta-tags" type="text" data-i18n-placeholder="meta_field_placeholder_tags" placeholder="tag1, tag2, tag3" />
+          <label class="meta-field-label" for="meta-category" data-i18n="meta_field_category">Category / Topic</label>
+          <input class="meta-field-input" id="meta-category" type="text" data-i18n-placeholder="meta_field_placeholder_category" placeholder="Article, Essay, Report..." />
           <div class="meta-dates">
             <span id="meta-created">Created: —</span>
             <span id="meta-modified">Modified: —</span>
           </div>
         </div>
       </div>
-      <div class="rich-editor" id="rich-editor" contenteditable="true" spellcheck="false" data-placeholder="Start writing here..."></div>
+      <div class="rich-editor" id="rich-editor" contenteditable="true" spellcheck="false" data-i18n-placeholder="placeholder_rich" data-placeholder="Start writing here..."></div>
       <div class="stats-overlay" id="stats-overlay">
         <span id="stats-default">0 words · 0 chars</span>
         <span id="stats-goal" style="display:none;"></span>
@@ -152,14 +132,14 @@
 
   <!-- Global Footer (from footer.js component) -->
   <div id="oros-footer"></div>
+  <script src="assets/js/components/footer.js"></script>
 
   <!-- Toast -->
   <div class="zentool-toast" id="zen-toast" style="display:none;"></div>
 
-  <!-- Scripts at end of body for DOM readiness -->
+  <!-- Scripts at end of body -->
   <script src="assets/js/editor.js"></script>
   <script src="assets/js/main.js"></script>
-  <script src="assets/js/components/footer.js"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
