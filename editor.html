@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>orOS Writer</title>
 <link rel="stylesheet" href="assets/css/style.css" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0f172a"/>
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -16,25 +13,65 @@
 
 <div id="oros-header"></div>
 
-<!-- Quick Format Toolbar (above editor) -->
-<div id="quick-format-toolbar" class="quick-format-toolbar">
-<button class="fmt-btn fmt-bold" data-cmd="bold" data-i18n-tooltip="toolbar_bold" title="Bold">B</button>
-<button class="fmt-btn fmt-italic" data-cmd="italic" data-i18n-tooltip="toolbar_italic" title="Italic">I</button>
-<button class="fmt-btn fmt-underline" data-cmd="underline" data-i18n-tooltip="toolbar_underline" title="Underline">U</button>
-<div class="fmt-divider"></div>
-<button class="fmt-btn fmt-h1" data-block="H1" data-i18n-tooltip="toolbar_h1" title="Heading 1">#</button>
-<button class="fmt-btn fmt-h2" data-block="H2" data-i18n-tooltip="toolbar_h2" title="Heading 2">##</button>
-<button class="fmt-btn fmt-h3" data-block="H3" data-i18n-tooltip="toolbar_h3" title="Heading 3">###</button>
-<div class="fmt-divider"></div>
-<button class="fmt-btn fmt-list-ul" data-cmd="insertUnorderedList" data-i18n-tooltip="toolbar_bullet_list" title="Bullet List">•</button>
-<button class="fmt-btn fmt-list-ol" data-cmd="insertOrderedList" data-i18n-tooltip="toolbar_number_list" title="Numbered List">1.</button>
+<!-- Unified Toolbar (single bar, top) -->
+<div class="main-toolbar">
+  <!-- Format group (toggleable via Settings) -->
+  <div class="toolbar-group" id="quick-format-toolbar">
+    <button class="fmt-btn" data-cmd="bold" data-i18n-tooltip="toolbar_bold" title="Bold">B</button>
+    <button class="fmt-btn" data-cmd="italic" data-i18n-tooltip="toolbar_italic" title="Italic">I</button>
+    <button class="fmt-btn" data-cmd="underline" data-i18n-tooltip="toolbar_underline" title="Underline">U</button>
+    <div class="toolbar-divider"></div>
+    <button class="fmt-btn" data-block="H1" data-i18n-tooltip="toolbar_h1" title="Heading 1">#</button>
+    <button class="fmt-btn" data-block="H2" data-i18n-tooltip="toolbar_h2" title="Heading 2">##</button>
+    <button class="fmt-btn" data-block="H3" data-i18n-tooltip="toolbar_h3" title="Heading 3">###</button>
+    <div class="toolbar-divider"></div>
+    <button class="fmt-btn" data-cmd="insertUnorderedList" data-i18n-tooltip="toolbar_bullet_list" title="Bullet List">•</button>
+    <button class="fmt-btn" data-cmd="insertOrderedList" data-i18n-tooltip="toolbar_number_list" title="Numbered List">1.</button>
+    <div class="toolbar-divider"></div>
+  </div>
+  <!-- File actions -->
+  <div class="toolbar-group">
+    <button id="btn-save" class="action-btn primary-btn" data-i18n-tooltip="tooltip_save">
+      <span class="icon">💾</span>
+    </button>
+    <button id="btn-open" class="action-btn" data-i18n-tooltip="tooltip_open">
+      <span class="icon">📂</span>
+    </button>
+    <input type="file" id="file-input" accept=".txt,.md,.markdown" style="display:none;" aria-hidden="true"/>
+    <button id="btn-clear" class="action-btn warning-btn" data-i18n-tooltip="tooltip_clear">
+      <span class="icon">🗑</span>
+    </button>
+    <div class="dropdown-container">
+      <button id="btn-export" class="action-btn dropdown-trigger" data-i18n-tooltip="tooltip_export">
+        <span class="icon">📥</span>
+      </button>
+      <div class="dropdown-menu" id="export-dropdown">
+        <button data-format="md" data-i18n="export_md">Markdown (.md)</button>
+        <button data-format="txt" data-i18n="export_txt">Plain Text (.txt)</button>
+        <button data-format="rtf" data-i18n="export_rtf">Rich Text (.rtf)</button>
+        <button data-format="doc" data-i18n="export_doc">Microsoft Word (.doc)</button>
+        <button data-format="pdf" data-i18n="export_pdf">PDF (.pdf)</button>
+      </div>
+    </div>
+    <div class="toolbar-divider"></div>
+  </div>
+  <!-- Tools -->
+  <div class="toolbar-group">
+    <button id="btn-goal" class="tool-btn" data-i18n-tooltip="tooltip_goal" title="Writing goal tracker">🎯</button>
+    <button id="btn-outline" class="tool-btn" data-i18n-tooltip="tooltip_outline" title="Document outline">📑</button>
+    <button id="btn-metadata" class="tool-btn" data-i18n-tooltip="tooltip_metadata" title="Document metadata">ℹ️</button>
+    <button id="btn-find" class="tool-btn" data-i18n-tooltip="tooltip_find" title="Find and replace">🔍</button>
+    <button id="btn-wordfreq" class="tool-btn" data-i18n-tooltip="word_freq_title" title="Word Frequency">📊</button>
+  </div>
+  <!-- Save indicator (right side) -->
+  <span id="save-indicator" class="save-indicator">—</span>
 </div>
 
 <!-- Main Content Area -->
 <main class="editor-wrapper">
 
 <div id="rich-wrapper">
-<div id="rich-editor" contenteditable="true" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Rich text editor" tabindex="0" data-placeholder="Start writing..."></div>
+<div id="rich-editor" contenteditable="true" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Rich text editor" tabindex="0" data-placeholder="Start writing..." data-i18n-placeholder="editor_placeholder"></div>
 
 <!-- Reading Progress Bar -->
 <div id="reading-progress-bar" class="reading-progress"></div>
@@ -66,7 +103,7 @@
 </div>
 </div>
 
-<!-- Metadata Panel (Left Sidebar) -->
+<!-- Metadata Panel -->
 <div id="metadata-panel" class="side-panel left-panel" style="display:none;" role="complementary" aria-labelledby="meta-title-label">
 <div class="panel-header">
 <span data-i18n="meta_panel_title">Metadata</span>
@@ -96,7 +133,7 @@
 </div>
 </div>
 
-<!-- Document Outline Panel (Right Sidebar) -->
+<!-- Document Outline Panel -->
 <div id="outline-panel" class="side-panel right-panel" style="display:none;" role="complementary" aria-label="Document outline">
 <div class="panel-header">
 <span data-i18n="outline_title">Outline</span>
@@ -105,7 +142,7 @@
 <div id="outline-list" class="outline-list"></div>
 </div>
 
-<!-- Word Frequency Panel (Right Sidebar) -->
+<!-- Word Frequency Panel -->
 <div id="wordfreq-panel" class="side-panel right-panel" style="display:none;" role="complementary" aria-label="Word frequency analysis">
 <div class="panel-header">
 <span data-i18n="word_freq_title">Word Frequency</span>
@@ -135,43 +172,6 @@
 </div>
 
 </main>
-
-<!-- Combined Bottom Toolbar -->
-<div class="bottom-toolbar">
-<div class="actions-container">
-<div class="buttons-group">
-<button id="btn-save" class="action-btn primary-btn" data-i18n-tooltip="tooltip_save">
-<span class="icon">💾</span> <span data-i18n="action_save">Save</span>
-</button>
-<button id="btn-open" class="action-btn" data-i18n-tooltip="tooltip_open">
-<span class="icon">📂</span> <span data-i18n="action_open">Open</span>
-</button>
-<input type="file" id="file-input" accept=".txt,.md,.markdown" style="display:none;" aria-hidden="true"/>
-<button id="btn-clear" class="action-btn warning-btn" data-i18n-tooltip="tooltip_clear">
-<span class="icon">🗑</span> <span data-i18n="action_clear">Clear</span>
-</button>
-<div class="dropdown-container">
-<button id="btn-export" class="action-btn dropdown-trigger" data-i18n-tooltip="tooltip_export">
-<span class="icon">📥</span> <span data-i18n="action_export">Export</span>
-</button>
-<div class="dropdown-menu" id="export-dropdown">
-<button data-format="md" data-i18n="export_md">Markdown (.md)</button>
-<button data-format="txt" data-i18n="export_txt">Plain Text (.txt)</button>
-<button data-format="rtf" data-i18n="export_rtf">Rich Text (.rtf)</button>
-<button data-format="doc" data-i18n="export_doc">Microsoft Word (.doc)</button>
-<button data-format="pdf" data-i18n="export_pdf">PDF (.pdf)</button>
-</div>
-</div>
-</div>
-</div>
-<div class="secondary-tools-group">
-<button id="btn-goal" class="tool-btn" data-i18n-tooltip="tooltip_goal" title="Writing goal tracker">🎯</button>
-<button id="btn-outline" class="tool-btn" data-i18n-tooltip="tooltip_outline" title="Document outline">📑</button>
-<button id="btn-metadata" class="tool-btn" data-i18n-tooltip="tooltip_metadata" title="Document metadata">ℹ️</button>
-<button id="btn-find" class="tool-btn" data-i18n-tooltip="tooltip_find" title="Find and replace">🔍</button>
-<button id="btn-wordfreq" class="tool-btn" data-i18n-tooltip="word_freq_title" title="Word Frequency">📊</button>
-</div>
-</div>
 
 <!-- Footer Component Mount Point -->
 <footer id="oros-footer"></footer>

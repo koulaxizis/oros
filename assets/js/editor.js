@@ -76,6 +76,7 @@
   var wordFreqPanel = document.getElementById('wordfreq-panel');
   var wordFreqSummary = document.getElementById('wordfreq-summary');
   var wordFreqList = document.getElementById('wordfreq-list');
+  var saveIndicator = document.getElementById('save-indicator');
 
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
@@ -97,6 +98,7 @@
   var matchRanges = [];
   var statsExpanded = false;
   var wordFreqDebounce = null;
+  var outlineDebounceTimer = null;
 
   // ========== HELPERS ==========
   function getCurrentLang() { return localStorage.getItem('oros-language') || 'en'; }
@@ -109,6 +111,26 @@
     return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
   }
   function getTextContent() { return richEditor.innerText || ''; }
+
+  // ========== SAVE INDICATOR UPDATE ==========
+  function updateSaveIndicator() {
+    if (!saveIndicator) return;
+    var trans = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[getCurrentLang()]) || {};
+    if (!lastSavedTime) {
+      saveIndicator.textContent = trans.text_not_saved || '—';
+      return;
+    }
+    var diff = Math.floor((Date.now() - lastSavedTime) / 1000);
+    if (diff < 60) {
+      saveIndicator.textContent = trans.text_saved_just_now || 'Saved just now';
+    } else if (diff < 3600) {
+      var mins = Math.floor(diff / 60);
+      saveIndicator.textContent = (trans.text_saved_minutes_ago || '{n}m ago').replace('{n}', mins);
+    } else {
+      var hours = Math.floor(diff / 3600);
+      saveIndicator.textContent = (trans.text_saved_hours_ago || '{n}h ago').replace('{n}', hours);
+    }
+  }
 
   // ========== TOAST ==========
   function showToast(message) {
@@ -133,6 +155,7 @@
     localStorage.setItem(STORAGE_KEY, richEditor.innerHTML);
     lastSavedTime = Date.now();
     localStorage.setItem(STORAGE_LAST_SAVED, lastSavedTime.toString());
+    updateSaveIndicator();
   }
 
   function loadContent() {
@@ -140,6 +163,7 @@
     if (saved) {
       richEditor.innerHTML = saved;
     }
+    updateSaveIndicator();
   }
 
   if (richEditor) {
@@ -179,6 +203,7 @@
     if (triggerSaveIndicator) {
       lastSavedTime = Date.now();
       localStorage.setItem(STORAGE_LAST_SAVED, lastSavedTime.toString());
+      updateSaveIndicator();
     }
   }
 
@@ -461,18 +486,7 @@
     }
   }
 
-  // ========== AUTO-SAVE TIMESTAMP ==========
-  function getRelativeSaveTime() {
-    var trans = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[getCurrentLang()]) || {};
-    if (!lastSavedTime) return trans.text_not_saved || 'Not saved';
-    var diff = Math.floor((Date.now() - lastSavedTime) / 1000);
-    if (diff < 60) return trans.text_saved || 'Saved just now';
-    if (diff < 3600) return (trans.text_saved_minutes_ago || '{n}m ago').replace('{n}', Math.floor(diff / 60));
-    return (trans.text_saved_hours_ago || '{n}h ago').replace('{n}', Math.floor(diff / 3600));
-  }
-
   // ========== DOCUMENT OUTLINE ==========
-  var outlineDebounceTimer = null;
   function toggleOutline() {
     if (!outlinePanel) return;
     if (outlinePanel.style.display === 'none' || !outlinePanel.style.display) {
@@ -1070,6 +1084,7 @@
     updateStats();
     renderMetaDates();
     updateGoalUnitLabels();
+    updateSaveIndicator();
   });
 
   // ========== EVENT LISTENERS ==========
@@ -1129,7 +1144,7 @@
   });
 
   if (btnClear) btnClear.addEventListener('click', function() {
-    var msg = getCurrentLang() === 'el' ? '\u03A3\u03AF\u03B3\u03BF\u03C5\u03C1\u03B1; \u038C\u03BB\u03BF \u03C4\u03BF \u03C0\u03B5\u03C1\u03B9\u03B5\u03C7\u03CC\u03BC\u03B5\u03BD\u03BF \u03B8\u03B1 \u03C7\u03B1\u03B8\u03B5\u03AF.' : 'Are you sure? All content will be lost.';
+    var msg = getCurrentLang() === 'el' ? 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.' : 'Are you sure? All content will be lost.';
     if (confirm(msg)) {
       richEditor.innerHTML = '';
       saveContent();
