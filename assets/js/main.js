@@ -1,5 +1,5 @@
 // ============================================
-// orOS — Core Functionality v0.4
+// orOS — Core Functionality v0.5-beta
 // Theme | Language | Zen Mode | Settings
 // Multi-language support (EN, EL, ES, IT, FR, DE)
 // ============================================
@@ -16,7 +16,8 @@
     HIDE_GOAL_BTN: 'oros_hide_goal_btn',
     HIDE_OUTLINE_BTN: 'oros_hide_outline_btn',
     HIDE_METADATA_BTN: 'oros_hide_metadata_btn',
-    HIDE_FIND_BTN: 'oros_hide_find_btn'
+    HIDE_FIND_BTN: 'oros_hide_find_btn',
+    HIDE_WORDFREQ_BTN: 'oros_hide_wordfreq_btn'
   };
 
   var scriptEl = document.querySelector('script[src$="main.js"]');
@@ -180,7 +181,7 @@
     var creditEl = document.querySelector('.footer-credits');
     if (!creditEl) return;
     var linkText = trans.footer_credits_link || 'Christos Koulaxizis';
-    var suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
+    var suffix = trans.footer_credits_suffix || '. Built with \u2665 for artists.';
     creditEl.innerHTML = '\u00A9 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
   }
 
@@ -232,8 +233,8 @@
   function showZenToast() {
     removeZenToast();
     var msg = getLang() === 'el'
-      ? '\uD83E\uDDD8 Zen Mode — Πάτα ESC ή F9 για έξοδο'
-      : '\uD83E\uDDD8 Zen Mode — Press ESC or F9 to exit';
+      ? '\uD83E\uDDD8 Zen Mode \u2014 \u03A0\u03AC\u03C4\u03B1 ESC \u03AE F9 \u03B3\u03B9\u03B1 \u03AD\u03BE\u03BF\u03B4\u03BF'
+      : '\uD83E\uDDD8 Zen Mode \u2014 Press ESC or F9 to exit';
     var toast = document.createElement('div');
     toast.className = 'zentool-toast visible';
     toast.id = 'zen-toast';
@@ -267,27 +268,27 @@
     var globalShortcuts, editorShortcuts;
 
     if (lang === 'el') {
-      globalShortcuts = [['Focus Mode','F8'],['Zen Mode','F9'],['Έξοδος Zen','ESC']];
-      editorShortcuts = [['Αποθήκευση','Ctrl+S'],['Έντονα','Ctrl+B'],['Πλάγια','Ctrl+I'],['Υπογράμμιση','Ctrl+U'],['Αναίρεση','Ctrl+Z'],['Επαναφορά','Ctrl+Y'],['Εύρεση','Ctrl+F'],['Μορφοποίηση','Alt + Δεξί click']];
+      globalShortcuts = [['Focus Mode','F8'],['Zen Mode','F9'],['\u0388\u03BE\u03BF\u03B4\u03BF\u03C2 Zen','ESC']];
+      editorShortcuts = [['\u0391\u03C0\u03BF\u03B8\u03AE\u03BA\u03B5\u03C5\u03C3\u03B7','Ctrl+S'],['\u0388\u03BD\u03C4\u03BF\u03BD\u03B1','Ctrl+B'],['\u03A0\u03BB\u03AC\u03B3\u03B9\u03B1','Ctrl+I'],['\u03A5\u03C0\u03BF\u03B3\u03C1\u03AC\u03BC\u03BC\u03B9\u03C3\u03B7','Ctrl+U'],['\u0391\u03BD\u03B1\u03AF\u03C1\u03B5\u03C3\u03B7','Ctrl+Z'],['\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC','Ctrl+Y'],['\u0395\u03CD\u03C1\u03B5\u03C3\u03B7','Ctrl+F'],['\u039C\u03BF\u03C1\u03C6\u03BF\u03C0\u03BF\u03AF\u03B7\u03C3\u03B7','Alt + \u0394\u03B5\u03BE\u03AF click']];
     } else if (lang === 'es') {
       globalShortcuts = [['Modo Enfoque','F8'],['Modo Zen','F9'],['Salir Zen','ESC']];
       editorShortcuts = [['Guardar','Ctrl+S'],['Negrita','Ctrl+B'],['Cursiva','Ctrl+I'],['Subrayado','Ctrl+U'],['Deshacer','Ctrl+Z'],['Rehacer','Ctrl+Y'],['Buscar','Ctrl+F'],['Formato','Alt + Click derecho']];
     } else if (lang === 'it') {
-      globalShortcuts = [['Modalità Focus','F8'],['Modalità Zen','F9'],['Esci Zen','ESC']];
+      globalShortcuts = [['Modalit\u00E0 Focus','F8'],['Modalit\u00E0 Zen','F9'],['Esci Zen','ESC']];
       editorShortcuts = [['Salva','Ctrl+S'],['Grassetto','Ctrl+B'],['Corsivo','Ctrl+I'],['Sottolinea','Ctrl+U'],['Annulla','Ctrl+Z'],['Ripeti','Ctrl+Y'],['Trova','Ctrl+F'],['Formattazione','Alt + Click destro']];
     } else if (lang === 'fr') {
       globalShortcuts = [['Mode Focus','F8'],['Mode Zen','F9'],['Quitter Zen','ESC']];
-      editorShortcuts = [['Enregistrer','Ctrl+S'],['Gras','Ctrl+B'],['Italique','Ctrl+I'],['Souligner','Ctrl+U'],['Annuler','Ctrl+Z'],['Rétablir','Ctrl+Y'],['Rechercher','Ctrl+F'],['Format','Alt + Clic droit']];
+      editorShortcuts = [['Enregistrer','Ctrl+S'],['Gras','Ctrl+B'],['Italique','Ctrl+I'],['Souligner','Ctrl+U'],['Annuler','Ctrl+Z'],['R\u00E9tablir','Ctrl+Y'],['Rechercher','Ctrl+F'],['Format','Alt + Clic droit']];
     } else if (lang === 'de') {
       globalShortcuts = [['Fokusmodus','F8'],['Zen-Modus','F9'],['Zen beenden','ESC']];
-      editorShortcuts = [['Speichern','Strg+S'],['Fett','Strg+B'],['Kursiv','Strg+I'],['Unterstreichen','Strg+U'],['Rückgängig','Strg+Z'],['Wiederholen','Strg+Y'],['Suchen','Strg+F'],['Format','Alt + Rechtsklick']];
+      editorShortcuts = [['Speichern','Strg+S'],['Fett','Strg+B'],['Kursiv','Strg+I'],['Unterstreichen','Strg+U'],['R\u00FCckg\u00E4ngig','Strg+Z'],['Wiederholen','Strg+Y'],['Suchen','Strg+F'],['Format','Alt + Rechtsklick']];
     } else {
       globalShortcuts = [['Focus Mode','F8'],['Zen Mode','F9'],['Exit Zen','ESC']];
       editorShortcuts = [['Save','Ctrl+S'],['Bold','Ctrl+B'],['Italic','Ctrl+I'],['Underline','Ctrl+U'],['Undo','Ctrl+Z'],['Redo','Ctrl+Y'],['Find','Ctrl+F'],['Format','Alt + Right-click']];
     }
 
-    var colActionLabel = lang === 'el' ? 'Ενέργεια' : lang === 'es' ? 'Acción' : lang === 'it' ? 'Azione' : lang === 'fr' ? 'Action' : lang === 'de' ? 'Aktion' : 'Action';
-    var colKey = lang === 'el' ? 'Συντόμευση' : lang === 'es' ? 'Atajo' : lang === 'it' ? 'Scorciatoia' : lang === 'fr' ? 'Raccourci' : lang === 'de' ? 'Tastenkürzel' : 'Shortcut';
+    var colActionLabel = lang === 'el' ? '\u0395\u03BD\u03AD\u03C1\u03B3\u03B5\u03B9\u03B1' : lang === 'es' ? 'Acci\u00F3n' : lang === 'it' ? 'Azione' : lang === 'fr' ? 'Action' : lang === 'de' ? 'Aktion' : 'Action';
+    var colKey = lang === 'el' ? '\u03A3\u03C5\u03BD\u03C4\u03CC\u03BC\u03B5\u03C5\u03C3\u03B7' : lang === 'es' ? 'Atajo' : lang === 'it' ? 'Scorciatoia' : lang === 'fr' ? 'Raccourci' : lang === 'de' ? 'Tastenk\u00FCrzel' : 'Shortcut';
 
     var globalShortcutsHtml = '';
     globalShortcuts.forEach(function(pair) {
@@ -333,6 +334,7 @@
       var hideOutlineBtn = localStorage.getItem(STORAGE_KEY.HIDE_OUTLINE_BTN) === 'true';
       var hideMetadataBtn = localStorage.getItem(STORAGE_KEY.HIDE_METADATA_BTN) === 'true';
       var hideFindBtn = localStorage.getItem(STORAGE_KEY.HIDE_FIND_BTN) === 'true';
+      var hideWordFreqBtn = localStorage.getItem(STORAGE_KEY.HIDE_WORDFREQ_BTN) === 'true';
 
       var writerHtml = '' +
         '<div class="toggles-container">' +
@@ -355,6 +357,8 @@
           '<label class="switch"><input type="checkbox" id="toggle-hide-metadata-btn"' + (hideMetadataBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
           '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_find_btn') + '</span>' +
           '<label class="switch"><input type="checkbox" id="toggle-hide-find-btn"' + (hideFindBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
+          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_wordfreq_btn') + '</span>' +
+          '<label class="switch"><input type="checkbox" id="toggle-hide-wordfreq-btn"' + (hideWordFreqBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
         '</div>' +
         '<div class="settings-divider"></div>' +
         '<table class="shortcut-table">' +
@@ -492,6 +496,15 @@
         var hidden = this.checked;
         localStorage.setItem(STORAGE_KEY.HIDE_FIND_BTN, hidden ? 'true' : 'false');
         window.dispatchEvent(new CustomEvent('oros-hide-find-btn-changed', { detail: { hidden: hidden } }));
+      };
+    }
+
+    var hideWordFreqToggle = modal.querySelector('#toggle-hide-wordfreq-btn');
+    if (hideWordFreqToggle) {
+      hideWordFreqToggle.onchange = function() {
+        var hidden = this.checked;
+        localStorage.setItem(STORAGE_KEY.HIDE_WORDFREQ_BTN, hidden ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('oros-hide-wordfreq-btn-changed', { detail: { hidden: hidden } }));
       };
     }
   }

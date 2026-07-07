@@ -7,7 +7,7 @@
 // Typewriter Mode + Context Menu + Content Persistence
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Quick Format Toolbar + Flexible UI Toggles
-// NEW: Smart Paste, Detailed Stats, Word Frequency, Print Styles
+// Smart Paste, Detailed Stats, Word Frequency, Print Styles
 // ============================================
 
 (function() {
@@ -36,6 +36,7 @@
   var findInput = document.getElementById('find-find');
   var replaceInput = document.getElementById('find-replace');
   var frResults = document.getElementById('fr_results');
+  var btnSave = document.getElementById('btn-save');
   var btnOpen = document.getElementById('btn-open');
   var btnClear = document.getElementById('btn-clear');
   var btnExport = document.getElementById('btn-export');
@@ -253,7 +254,7 @@
         var cd = new Date(metadata.created);
         metaCreated.textContent = createdLabel + ' ' + formatDate(cd);
       } else {
-        metaCreated.textContent = createdLabel + ' —';
+        metaCreated.textContent = createdLabel + ' \u2014';
       }
     }
     if (metaModified) {
@@ -261,7 +262,7 @@
         var md = new Date(metadata.modified);
         metaModified.textContent = modifiedLabel + ' ' + formatDate(md);
       } else {
-        metaModified.textContent = modifiedLabel + ' —';
+        metaModified.textContent = modifiedLabel + ' \u2014';
       }
     }
   }
@@ -290,6 +291,29 @@
     }
   }
 
+  // ========== METADATA INPUT HANDLERS ==========
+  function setupMetadataHandlers() {
+    var inputs = [metaTitle, metaAuthor, metaTags, metaCategory];
+    for (var i = 0; i < inputs.length; i++) {
+      (function(input) {
+        if (!input) return;
+        input.addEventListener('blur', function() {
+          saveMetadata(true);
+        });
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            saveMetadata(true);
+            if (input === metaTitle && metaAuthor) metaAuthor.focus();
+            else if (input === metaAuthor && metaCategory) metaCategory.focus();
+            else if (input === metaCategory && metaTags) metaTags.focus();
+            else if (input === metaTags && metaTitle) metaTitle.focus();
+          }
+        });
+      })(inputs[i]);
+    }
+  }
+
   // ========== STATS + FEATURE #7 DETAILED COUNT ==========
   function updateStats() {
     if (!richEditor) return;
@@ -304,8 +328,8 @@
     var speakMin = Math.max(1, Math.ceil(words / 140));
 
     if (statsDefaultEl) {
-      var arrow = statsExpanded ? ' ▴' : ' ▾';
-      statsDefaultEl.textContent = formatNumber(words) + ' ' + getTrans('text_words') + ' · ' + formatNumber(chars) + ' ' + getTrans('text_chars') + arrow;
+      var arrow = statsExpanded ? ' \u25B4' : ' \u25BE';
+      statsDefaultEl.textContent = formatNumber(words) + ' ' + getTrans('text_words') + ' \u00B7 ' + formatNumber(chars) + ' ' + getTrans('text_chars') + arrow;
     }
 
     if (statsDetailed) {
@@ -316,6 +340,7 @@
         '<div class="stat-row"><span>' + t('stats_sentences') + '</span><span>' + sentences + '</span></div>' +
         '<div class="stat-row"><span>' + t('stats_reading_time') + '</span><span>' + readMin + ' ' + t('stats_min') + '</span></div>' +
         '<div class="stat-row"><span>' + t('stats_speaking_time') + '</span><span>' + speakMin + ' ' + t('stats_min') + '</span></div>';
+      statsDetailed.style.display = statsExpanded ? 'flex' : 'none';
     }
 
     if (statsDefaultEl) {
@@ -353,7 +378,7 @@
     if (!goalTarget || !statsGoalEl || !statsDefaultEl) return;
     var count = getGoalCount();
     var pct = Math.min(100, Math.round((count / goalTarget) * 100));
-    statsGoalEl.textContent = formatNumber(count) + ' / ' + formatNumber(goalTarget) + ' ' + getGoalUnitLabel() + ' · ' + pct + '%';
+    statsGoalEl.textContent = formatNumber(count) + ' / ' + formatNumber(goalTarget) + ' ' + getGoalUnitLabel() + ' \u00B7 ' + pct + '%';
     if (count >= goalTarget && !goalReachedShown) {
       goalReachedShown = true;
       var msg = getTrans('text_goal_reached');
@@ -595,7 +620,7 @@
 
   function updateWordFrequency() {
     if (!wordFreqList || !wordFreqPanel || wordFreqPanel.style.display === 'none' || !richEditor) return;
-    var text = getTextContent().toLowerCase().replace(/[^\w\s]/g, '').trim();
+    var text = getTextContent().toLowerCase().replace(/[^\w\s\u0370-\u03FF]/g, '').trim();
     if (!text) {
       if (wordFreqList) wordFreqList.innerHTML = '<div class="wordfreq-empty">' + getTrans('word_freq_empty') + '</div>';
       if (wordFreqSummary) wordFreqSummary.innerHTML = '';
@@ -717,15 +742,15 @@
       '<div class="cm-item" data-cmd="formatBlock;H2"><span class="cm-icon">##</span>H2</div>' +
       '<div class="cm-item" data-cmd="formatBlock;H3"><span class="cm-icon">###</span>H3</div>' +
       '<div class="cm-divider"></div>' +
-      '<div class="cm-item" data-cmd="insertUnorderedList"><span class="cm-icon">•</span>Bullets</div>' +
+      '<div class="cm-item" data-cmd="insertUnorderedList"><span class="cm-icon">\u2022</span>Bullets</div>' +
       '<div class="cm-item" data-cmd="insertOrderedList"><span class="cm-icon">1.</span>Numbers</div>' +
       '<div class="cm-divider"></div>' +
-      '<div class="cm-item" data-cmd="undo"><span class="cm-icon">↶</span>Undo</div>' +
-      '<div class="cm-item" data-cmd="redo"><span class="cm-icon">↷</span>Redo</div>';
+      '<div class="cm-item" data-cmd="undo"><span class="cm-icon">\u21B6</span>Undo</div>' +
+      '<div class="cm-item" data-cmd="redo"><span class="cm-icon">\u21B7</span>Redo</div>';
     
     menu.style.position = 'fixed';
-    menu.style.left = e.pageX + 'px';
-    menu.style.top = e.pageY + 'px';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
     
     var items = menu.querySelectorAll('.cm-item');
     for (var i = 0; i < items.length; i++) {
@@ -739,6 +764,8 @@
           contextMenu.remove();
           contextMenu = null;
           richEditor.focus();
+          saveContent();
+          updateStats();
         };
       })(items[i]);
     }
@@ -747,13 +774,15 @@
     contextMenu = menu;
     
     var closeHandler = function(ev) {
-      if (ev.key === 'Escape' && contextMenu) {
+      if (contextMenu) {
         contextMenu.remove();
         contextMenu = null;
         document.removeEventListener('keydown', closeHandler);
+        document.removeEventListener('click', closeHandler);
       }
     };
     document.addEventListener('keydown', closeHandler);
+    document.addEventListener('click', closeHandler);
   }
 
   // ========== QUICK FORMAT TOOLBAR ==========
@@ -771,19 +800,18 @@
           } else if (cmd) {
             document.execCommand(cmd, false);
           }
+          saveContent();
+          updateStats();
         };
       })(fmtBtns[i]);
     }
   }
 
-  // ========== TYPWRITER MODE ==========
+  // ========== TYPEWRITER MODE ==========
   function toggleTypewriterMode() {
     typewriterMode = !typewriterMode;
     if (!richWrapper || !richEditor) return;
-    
-    if (typewriterMode) {
-      scrollToCenter();
-    }
+    if (typewriterMode) scrollToCenter();
   }
 
   function scrollToCenter() {
@@ -792,11 +820,9 @@
     if (!selection.rangeCount) return;
     var range = selection.getRangeAt(0);
     if (range.collapsed) return;
-    
     var rect = range.getBoundingClientRect();
     var wrapperRect = richWrapper.getBoundingClientRect();
     var editorHeight = richEditor.offsetHeight;
-    
     var targetScroll = wrapperRect.top - wrapperRect.y + (rect.top - wrapperRect.top) - (editorHeight * 0.45);
     richWrapper.scrollTop = Math.max(0, targetScroll);
   }
@@ -806,11 +832,9 @@
     var reader = new FileReader();
     reader.onload = function(e) {
       var content = e.target.result;
-      
       if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
         content = importFrontmatter(content);
       }
-      
       richEditor.innerHTML = content;
       saveContent();
       updateStats();
@@ -864,7 +888,7 @@
     showToast(getTrans('toast_downloaded'));
   }
 
-    function convertHTMLtoMarkdown(html) {
+  function convertHTMLtoMarkdown(html) {
     var temp = document.createElement('div');
     temp.innerHTML = html;
     return htmlToMd(temp);
@@ -896,7 +920,7 @@
           case 'blockquote': md += '\n> ' + htmlToMd(child).replace(/\n/g, '\n> ') + '\n\n'; break;
           case 'ul':
             var ulItems = child.querySelectorAll(':scope > li');
-            for (var j = 0; j < ulItems.length; j++) { md += '- ' + htmlToMd(ulItems[j]).trim() + '\n'; }
+                        for (var j = 0; j < ulItems.length; j++) { md += '- ' + htmlToMd(ulItems[j]).trim() + '\n'; }
             md += '\n';
             break;
           case 'ol':
@@ -931,11 +955,69 @@
     URL.revokeObjectURL(url);
   }
 
+  // ========== FIND & REPLACE ==========
+  function toggleFindBar() {
+    if (!findBar || !findInput) return;
+    if (findBar.style.display === 'flex') {
+      findBar.style.display = 'none';
+      if (findInput) findInput.value = '';
+      if (replaceInput) replaceInput.value = '';
+      currentMatchIndex = -1;
+      matchRanges = [];
+    } else {
+      findBar.style.display = 'flex';
+      if (findInput) findInput.focus();
+      highlightMatches();
+    }
+  }
+
+  function highlightMatches() {
+    if (!findInput || !richEditor) return;
+    var searchTerm = findInput.value.toLowerCase();
+    if (!searchTerm) {
+      if (frResults) frResults.textContent = getTrans('fr_no_matches');
+      return;
+    }
+    var content = richEditor.innerText.toLowerCase();
+    var matches = 0;
+    var idx = content.indexOf(searchTerm);
+    while (idx !== -1) {
+      matches++;
+      idx = content.indexOf(searchTerm, idx + 1);
+    }
+    if (frResults) {
+      if (matches > 0) {
+        frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
+      } else {
+        frResults.textContent = getTrans('fr_no_matches');
+      }
+    }
+  }
+
+  function doReplace(isAll) {
+    if (!findInput || !replaceInput || !richEditor) return;
+    var searchTerm = findInput.value;
+    var replaceTerm = replaceInput.value;
+    if (!searchTerm) return;
+    var content = richEditor.innerHTML;
+    var escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var regex = new RegExp(escaped, 'gi');
+    if (isAll) {
+      richEditor.innerHTML = content.replace(regex, replaceTerm);
+    } else {
+      richEditor.innerHTML = content.replace(regex, replaceTerm);
+    }
+    saveContent();
+    updateStats();
+    showToast(getTrans('text_saved'));
+  }
+
   // ========== KEYBOARD SHORTCUTS ==========
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
       saveContent();
+      saveMetadata(true);
       showToast(getTrans('text_saved'));
     }
     else if (e.ctrlKey && e.key === 'g') {
@@ -1005,6 +1087,10 @@
     hideFindBtn = e.detail.hidden;
     if (btnFind) btnFind.style.display = hideFindBtn ? 'none' : '';
   });
+  window.addEventListener('oros-hide-wordfreq-btn-changed', function(e) {
+    hideWordFreqBtn = e.detail.hidden;
+    if (btnWordFreq) btnWordFreq.style.display = hideWordFreqBtn ? 'none' : '';
+  });
   window.addEventListener('oros-language-changed', function(e) {
     updateStats();
     renderMetaDates();
@@ -1012,6 +1098,12 @@
   });
 
   // ========== EVENT LISTENERS ==========
+  if (btnSave) btnSave.addEventListener('click', function() {
+    saveContent();
+    saveMetadata(true);
+    showToast(getTrans('text_saved'));
+  });
+
   if (btnMetadata) btnMetadata.addEventListener('click', toggleMetadataPanel);
   if (btnCloseMetadata) btnCloseMetadata.addEventListener('click', function() {
     saveMetadata(false);
@@ -1038,6 +1130,10 @@
   if (btnFind) btnFind.addEventListener('click', toggleFindBar);
   if (findBar) {
     if (findInput) findInput.addEventListener('input', highlightMatches);
+    var btnFrReplace = document.getElementById('btn-fr-replace');
+    var btnFrReplaceAll = document.getElementById('btn-fr-replace-all');
+    if (btnFrReplace) btnFrReplace.addEventListener('click', function() { doReplace(false); });
+    if (btnFrReplaceAll) btnFrReplaceAll.addEventListener('click', function() { doReplace(true); });
     if (btnCloseFR) btnCloseFR.addEventListener('click', function() {
       findBar.style.display = 'none';
       if (findInput) findInput.value = '';
@@ -1058,7 +1154,7 @@
   });
 
   if (btnClear) btnClear.addEventListener('click', function() {
-    var msg = getCurrentLang() === 'el' ? 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.' : 'Are you sure? All content will be lost.';
+    var msg = getCurrentLang() === 'el' ? '\u03A3\u03AF\u03B3\u03BF\u03C5\u03C1\u03B1; \u038C\u03BB\u03BF \u03C4\u03BF \u03C0\u03B5\u03C1\u03B9\u03B5\u03C7\u03CC\u03BC\u03B5\u03BD\u03BF \u03B8\u03B1 \u03C7\u03B1\u03B8\u03B5\u03AF.' : 'Are you sure? All content will be lost.';
     if (confirm(msg)) {
       richEditor.innerHTML = '';
       saveContent();
@@ -1102,68 +1198,6 @@
     });
     richEditor.addEventListener('keyup', handleSmartTypography);
     richEditor.addEventListener('paste', handleSmartPaste);
-  }
-
-  // ========== FIND & REPLACE ==========
-  function toggleFindBar() {
-    if (!findBar || !findInput) return;
-    if (findBar.style.display === 'flex') {
-      findBar.style.display = 'none';
-      if (findInput) findInput.value = '';
-      if (replaceInput) replaceInput.value = '';
-      currentMatchIndex = -1;
-      matchRanges = [];
-    } else {
-      findBar.style.display = 'flex';
-      if (findInput) findInput.focus();
-      highlightMatches();
-    }
-  }
-
-  function highlightMatches() {
-    if (!findInput || !richEditor) return;
-    var searchTerm = findInput.value.toLowerCase();
-    if (!searchTerm) {
-      if (frResults) frResults.textContent = getTrans('fr_no_matches');
-      return;
-    }
-    var content = richEditor.innerText.toLowerCase();
-    var matches = 0;
-    var idx = content.indexOf(searchTerm);
-    while (idx !== -1) {
-      matches++;
-      idx = content.indexOf(searchTerm, idx + 1);
-    }
-    if (frResults) {
-      if (matches > 0) {
-        frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
-      } else {
-        frResults.textContent = getTrans('fr_no_matches');
-      }
-    }
-  }
-  
-    // ========== METADATA INPUT HANDLERS ==========
-  function setupMetadataHandlers() {
-    var inputs = [metaTitle, metaAuthor, metaTags, metaCategory];
-    for (var i = 0; i < inputs.length; i++) {
-      (function(input) {
-        if (!input) return;
-        input.addEventListener('blur', function() {
-          saveMetadata(true);
-        });
-        input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            saveMetadata(true);
-            if (input === metaTitle && metaAuthor) metaAuthor.focus();
-            else if (input === metaAuthor && metaCategory) metaCategory.focus();
-            else if (input === metaCategory && metaTags) metaTags.focus();
-            else if (input === metaTags && metaTitle) metaTitle.focus();
-          }
-        });
-      })(inputs[i]);
-    }
   }
 
   // ========== INITIALIZE ==========
