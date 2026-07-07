@@ -1142,6 +1142,29 @@
       }
     }
   }
+  
+    // ========== METADATA INPUT HANDLERS ==========
+  function setupMetadataHandlers() {
+    var inputs = [metaTitle, metaAuthor, metaTags, metaCategory];
+    for (var i = 0; i < inputs.length; i++) {
+      (function(input) {
+        if (!input) return;
+        input.addEventListener('blur', function() {
+          saveMetadata(true);
+        });
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            saveMetadata(true);
+            if (input === metaTitle && metaAuthor) metaAuthor.focus();
+            else if (input === metaAuthor && metaCategory) metaCategory.focus();
+            else if (input === metaCategory && metaTags) metaTags.focus();
+            else if (input === metaTags && metaTitle) metaTitle.focus();
+          }
+        });
+      })(inputs[i]);
+    }
+  }
 
   // ========== INITIALIZE ==========
   loadContent();
