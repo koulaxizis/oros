@@ -10,11 +10,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0f172a"/>
-<link rel="icon" href="data:," />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 </head>
-<body data-theme="dark">
+<body>
 
 <div id="oros-header"></div>
+
+<!-- Quick Format Toolbar (above editor) -->
+<div id="quick-format-toolbar" class="quick-format-toolbar">
+<button class="fmt-btn fmt-bold" data-cmd="bold" data-i18n-tooltip="toolbar_bold" title="Bold">B</button>
+<button class="fmt-btn fmt-italic" data-cmd="italic" data-i18n-tooltip="toolbar_italic" title="Italic">I</button>
+<button class="fmt-btn fmt-underline" data-cmd="underline" data-i18n-tooltip="toolbar_underline" title="Underline">U</button>
+<div class="fmt-divider"></div>
+<button class="fmt-btn fmt-h1" data-block="H1" data-i18n-tooltip="toolbar_h1" title="Heading 1">#</button>
+<button class="fmt-btn fmt-h2" data-block="H2" data-i18n-tooltip="toolbar_h2" title="Heading 2">##</button>
+<button class="fmt-btn fmt-h3" data-block="H3" data-i18n-tooltip="toolbar_h3" title="Heading 3">###</button>
+<div class="fmt-divider"></div>
+<button class="fmt-btn fmt-list-ul" data-cmd="insertUnorderedList" data-i18n-tooltip="toolbar_bullet_list" title="Bullet List">•</button>
+<button class="fmt-btn fmt-list-ol" data-cmd="insertOrderedList" data-i18n-tooltip="toolbar_number_list" title="Numbered List">1.</button>
+</div>
 
 <!-- Main Content Area -->
 <main class="editor-wrapper">
@@ -39,7 +53,7 @@
 <button id="btn-close-goal" class="goal-action-btn" data-i18n-tooltip="btn_close_tt" title="Close">×</button>
 </div>
 
-<!-- Stats Overlay with Expandable Detail -->
+<!-- Stats Overlay -->
 <div id="stats-overlay" class="stats-overlay">
 <span id="stats-default" class="stats-toggle">0 words · 0 chars ▾</span>
 <span id="stats-goal" style="display:none;"></span>
@@ -122,21 +136,8 @@
 
 </main>
 
-<!-- Quick Format Toolbar -->
-<div id="quick-format-toolbar" class="quick-format-toolbar">
-<button class="fmt-btn fmt-bold" data-cmd="bold" data-i18n-tooltip="toolbar_bold" title="Bold">B</button>
-<button class="fmt-btn fmt-italic" data-cmd="italic" data-i18n-tooltip="toolbar_italic" title="Italic">I</button>
-<button class="fmt-btn fmt-underline" data-cmd="underline" data-i18n-tooltip="toolbar_underline" title="Underline">U</button>
-<div class="fmt-divider"></div>
-<button class="fmt-btn fmt-h1" data-block="H1" data-i18n-tooltip="toolbar_h1" title="Heading 1">#</button>
-<button class="fmt-btn fmt-h2" data-block="H2" data-i18n-tooltip="toolbar_h2" title="Heading 2">##</button>
-<button class="fmt-btn fmt-h3" data-block="H3" data-i18n-tooltip="toolbar_h3" title="Heading 3">###</button>
-<div class="fmt-divider"></div>
-<button class="fmt-btn fmt-list-ul" data-cmd="insertUnorderedList" data-i18n-tooltip="toolbar_bullet_list" title="Bullet List">•</button>
-<button class="fmt-btn fmt-list-ol" data-cmd="insertOrderedList" data-i18n-tooltip="toolbar_number_list" title="Numbered List">1.</button>
-</div>
-
-<!-- Action Buttons Container -->
+<!-- Combined Bottom Toolbar -->
+<div class="bottom-toolbar">
 <div class="actions-container">
 <div class="buttons-group">
 <button id="btn-save" class="action-btn primary-btn" data-i18n-tooltip="tooltip_save">
@@ -163,14 +164,13 @@
 </div>
 </div>
 </div>
-
-<!-- Secondary Tools Group -->
 <div class="secondary-tools-group">
 <button id="btn-goal" class="tool-btn" data-i18n-tooltip="tooltip_goal" title="Writing goal tracker">🎯</button>
 <button id="btn-outline" class="tool-btn" data-i18n-tooltip="tooltip_outline" title="Document outline">📑</button>
 <button id="btn-metadata" class="tool-btn" data-i18n-tooltip="tooltip_metadata" title="Document metadata">ℹ️</button>
 <button id="btn-find" class="tool-btn" data-i18n-tooltip="tooltip_find" title="Find and replace">🔍</button>
 <button id="btn-wordfreq" class="tool-btn" data-i18n-tooltip="word_freq_title" title="Word Frequency">📊</button>
+</div>
 </div>
 
 <!-- Footer Component Mount Point -->

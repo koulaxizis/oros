@@ -1,10 +1,10 @@
 // ============================================
-// orOS Writer — Unified Rich Text Editor v0.5-beta
+// orOS Writer — Unified Rich Text Editor v0.5
 // Focus Mode + Document Outline + Reading Progress
 // Smart Typography + Auto-Save Timestamp
 // Writing Goal Tracker (words/chars/paras + lock)
 // Document Metadata Panel (title/author/tags/category)
-// Typewriter Mode + Context Menu + Content Persistence
+// Context Menu + Content Persistence
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Quick Format Toolbar + Flexible UI Toggles
 // Smart Paste, Detailed Stats, Word Frequency, Print Styles
@@ -95,7 +95,6 @@
   var goalLockTriggered = false;
   var currentMatchIndex = -1;
   var matchRanges = [];
-  var typewriterMode = false;
   var statsExpanded = false;
   var wordFreqDebounce = null;
 
@@ -314,7 +313,7 @@
     }
   }
 
-  // ========== STATS + FEATURE #7 DETAILED COUNT ==========
+  // ========== STATS + DETAILED COUNT ==========
   function updateStats() {
     if (!richEditor) return;
     var text = getTextContent();
@@ -572,7 +571,7 @@
   }
   window.addEventListener('oros-smart-typography-changed', function(e) { smartTypographyEnabled = e.detail.enabled; });
 
-  // ========== FEATURE #6: SMART PASTE ==========
+  // ========== SMART PASTE ==========
   function handleSmartPaste(e) {
     e.preventDefault();
     var clipboardData = e.clipboardData || window.clipboardData;
@@ -606,7 +605,7 @@
     updateStats();
   }
 
-  // ========== FEATURE #4: WORD FREQUENCY ==========
+  // ========== WORD FREQUENCY ==========
   function toggleWordFreqPanel() {
     if (!wordFreqPanel) return;
     if (wordFreqPanel.style.display === 'none' || !wordFreqPanel.style.display) {
@@ -724,12 +723,12 @@
   function showContextMenu(e) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (contextMenu) {
       contextMenu.remove();
       contextMenu = null;
     }
-    
+
     var menu = document.createElement('div');
     menu.className = 'context-menu';
     menu.innerHTML = '' +
@@ -747,11 +746,11 @@
       '<div class="cm-divider"></div>' +
       '<div class="cm-item" data-cmd="undo"><span class="cm-icon">\u21B6</span>Undo</div>' +
       '<div class="cm-item" data-cmd="redo"><span class="cm-icon">\u21B7</span>Redo</div>';
-    
+
     menu.style.position = 'fixed';
     menu.style.left = e.clientX + 'px';
     menu.style.top = e.clientY + 'px';
-    
+
     var items = menu.querySelectorAll('.cm-item');
     for (var i = 0; i < items.length; i++) {
       (function(item) {
@@ -769,10 +768,10 @@
         };
       })(items[i]);
     }
-    
+
     document.body.appendChild(menu);
     contextMenu = menu;
-    
+
     var closeHandler = function(ev) {
       if (contextMenu) {
         contextMenu.remove();
@@ -794,7 +793,7 @@
         btn.onclick = function() {
           var cmd = btn.getAttribute('data-cmd');
           var block = btn.getAttribute('data-block');
-          
+
           if (block) {
             document.execCommand('formatBlock', false, block);
           } else if (cmd) {
@@ -805,26 +804,6 @@
         };
       })(fmtBtns[i]);
     }
-  }
-
-  // ========== TYPEWRITER MODE ==========
-  function toggleTypewriterMode() {
-    typewriterMode = !typewriterMode;
-    if (!richWrapper || !richEditor) return;
-    if (typewriterMode) scrollToCenter();
-  }
-
-  function scrollToCenter() {
-    if (!richEditor || !richWrapper) return;
-    var selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    var range = selection.getRangeAt(0);
-    if (range.collapsed) return;
-    var rect = range.getBoundingClientRect();
-    var wrapperRect = richWrapper.getBoundingClientRect();
-    var editorHeight = richEditor.offsetHeight;
-    var targetScroll = wrapperRect.top - wrapperRect.y + (rect.top - wrapperRect.top) - (editorHeight * 0.45);
-    richWrapper.scrollTop = Math.max(0, targetScroll);
   }
 
   // ========== FILE OPEN ==========
@@ -855,7 +834,7 @@
     var ext = '';
     var mime = 'text/plain;charset=utf-8';
     var data = '';
-    
+
     switch (format) {
       case 'md':
         var hasMetadata = metadata.title || metadata.author || metadata.tags || metadata.category;
@@ -882,7 +861,7 @@
         mime = 'application/msword;charset=utf-8';
         break;
     }
-    
+
     var blob = new Blob([data], { type: mime });
     triggerDownload(blob, filenamePrefix + ext);
     showToast(getTrans('toast_downloaded'));
@@ -920,7 +899,7 @@
           case 'blockquote': md += '\n> ' + htmlToMd(child).replace(/\n/g, '\n> ') + '\n\n'; break;
           case 'ul':
             var ulItems = child.querySelectorAll(':scope > li');
-                        for (var j = 0; j < ulItems.length; j++) { md += '- ' + htmlToMd(ulItems[j]).trim() + '\n'; }
+            for (var j = 0; j < ulItems.length; j++) { md += '- ' + htmlToMd(ulItems[j]).trim() + '\n'; }
             md += '\n';
             break;
           case 'ol':
@@ -1027,10 +1006,6 @@
     else if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
       toggleFindBar();
-    }
-    else if (e.ctrlKey && e.key === 'Enter') {
-      e.preventDefault();
-      toggleTypewriterMode();
     }
     else if (e.key === 'Escape') {
       if (metadataPanel && metadataPanel.style.display !== 'none') {

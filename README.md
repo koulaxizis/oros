@@ -1,207 +1,183 @@
-# orOS — Artist's Operating System
+# orOS Writer
+A privacy-first, offline-capable rich text editor for writers, bloggers, and journalists. No accounts, no tracking, no server — your words never leave your device.
+## Table of Contents
+- [Features](#features)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Internationalization](#internationalization)
+- [Appearance](#appearance)
+- [Privacy](#privacy)
+- [Installation](#installation)
+- [File Structure](#file-structure)
+- [Browser Compatibility](#browser-compatibility)
+- [Beta Channel](#beta-channel)
+- [License](#license)
 
-> **No Cookies · No Tracking · No Ads · Open Source · Privacy First · Minimal Design**
+## Features
 
-A privacy-respecting tool suite for creators by **Christos Koulaxizis**. Each application works fully offline and can be installed as a standalone Progressive Web App.
+### Editor
 
-Live at **[useoros.com](https://useoros.com)**
+- Rich text editing with smart paste (strips disallowed HTML, preserves safe formatting)
+- Quick format toolbar: Bold, Italic, Underline, Headings (H1–H3), Bullet & Numbered lists
+- Context menu (Alt + Right-click) with extended formatting: Strikethrough, Undo/Redo
+- Smart typography: smart quotes ('' ""), em dashes (—), ellipsis (…), ©, ®, ™
+- Automatic content saving via localStorage (survives refresh or crash)
+- Reading progress bar (scroll-position based)
+- Spell check disabled by design (custom implementation planned for future version)
 
----
+### Document Management
 
-## Philosophy
+- **Import:** TXT, MD, Markdown — with automatic YAML frontmatter parsing that populates metadata fields
+- **Export:** Markdown (with frontmatter), Plain Text (.txt), RTF, Microsoft Word (.doc), PDF (via print dialog)
+- **Document Metadata:** Title, Author, Tags, Category with auto-created/modified timestamps
+- **Frontmatter Support:** Automatic YAML frontmatter generation on MD export, automatic parsing on MD import
 
-- Everything stays local unless you choose otherwise
-- No analytics, no telemetry, no profiling
-- Open source from day one (MIT)
-- Minimum viable design — no visual noise
-- Offline-first architecture via Service Worker
-- Zero dependencies outside web standards
+### Analysis Tools
 
----
+- **Statistics:** Words, characters (with/without spaces), sentences, reading time, speaking time — expandable detail view via click
+- **Word Frequency:** Top 20 words with bar visualization, vocabulary diversity score (%), overused word highlighting
+- **Document Outline:** Auto-generated navigation from H1–H3 headings, click to jump with flash animation
+- **Writing Goal Tracker:** Set targets by words, characters, or paragraphs — optional write-lock when target reached, live progress percentage
 
-## Available Tools
+### Workspace
 
-| Tool | Description | Status |
-|------|-------------|--------|
-| ✏️ Writer | Dual-mode text editor (Markdown + Rich Text) with autosave | ✅ Available |
+- **Focus Mode:** Spotlight effect dimming everything except selected text (toggle via Settings)
+- **Zen Mode:** Distraction-free fullscreen writing (press F9 or click 🧘)
+- **Find & Replace:** In-document search with match counting, single and bulk replace
+- **Customizable Interface:** Show/hide toolbar, stats, and individual tool buttons (Goal, Outline, Metadata, Find, Word Frequency) — all via Settings
 
-_More tools coming soon._
+### Settings — Writer Tab
 
----
+All toggles persist across sessions via localStorage:
 
-## Writer — Features
+- Quick Format Toolbar visibility
+- Statistics overlay visibility
+- Focus Mode on/off
+- Reading Progress bar on/off
+- Smart Typography on/off
+- Hide/show Goal button
+- Hide/show Outline button
+- Hide/show Metadata button
+- Hide/show Find button
+- Hide/show Word Frequency button
 
-### Dual-Mode Editing
+### Settings — Global Tab
 
-Switch between Markdown and Rich Text modes with a single toggle.
+- Zen Mode toggle
+- PWA install button (when supported by browser)
+- Beta Channel section with links to beta repository and live site
+- Global keyboard shortcut reference
 
-- **Markdown mode** — Plain text with live syntax
-- **Rich Text mode** — WYSIWYG editing with inline formatting
-
-### Export Formats
-
-| Format | Extension | Notes |
-|--------|-----------|-------|
-| Markdown | .md | Raw markdown source |
-| TXT | .txt | Stripped plain text |
-| RTF | .rtf | Unicode-aware (Greek supported) |
-| PDF | .pdf | Print dialog (browser native) |
-| DOC | .doc | MS Word compatible HTML |
-
-### Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Action | Shortcut |
-|--------|----------|
+|---|---|
+| Zen Mode | F9 |
+| Exit Zen / Close panels | ESC |
 | Save | Ctrl+S |
+| Find & Replace | Ctrl+F |
+| Writing Goal | Ctrl+G |
+| Context Menu | Alt + Right-click |
 | Bold | Ctrl+B |
 | Italic | Ctrl+I |
+| Underline | Ctrl+U |
 | Undo | Ctrl+Z |
 | Redo | Ctrl+Y |
-| Format menu | Alt + Right-click |
-| Zen Mode | F9 |
-| Exit Zen | ESC |
-
-### File Import
-
-Supports opening `.txt`, `.md`, `.markdown`, and `.text` files directly in the editor.
-
----
 
 ## Internationalization
 
-All strings live in `assets/js/translations.json`. Currently supported:
+Six fully-supported languages with automatic system language detection:
 
-- 🇬🇷 Greek (el)
-- 🇺🇸 English (en)
+- English (EN)
+- Greek (EL)
+- Spanish (ES)
+- Italian (IT)
+- French (FR)
+- German (DE)
 
-To add a language, add a new locale object with translated keys and register it in the language selector.
+Manual override via the language selector in the header. All UI strings, tooltips, placeholders, and toast messages are localized.
 
----
+## Appearance
 
-## Tech Stack
+- Light and Dark themes with automatic system preference detection
+- Nunito typeface (regular, medium, semibold, bold, extrabold) — bundled locally for offline use
+- Accent color: champagne gold (#c8a96e light / #daba83 dark)
 
-- Vanilla HTML / CSS / JS — zero frameworks
-- Service Worker for offline caching (cache-first strategy)
-- Web App Manifest for PWA installation
-- JSON-based internationalization (i18n)
-- CSS custom properties for theming (light/dark)
-- Local Storage for autosave and user preferences
-- Self-hosted Nunito font (OFL, woff2)
+## Privacy
 
----
+- **Zero-knowledge:** All processing happens client-side. No data is transmitted to any server.
+- **No tracking:** No analytics, no cookies, no telemetry.
+- **No accounts:** No sign-up or login required.
+- **Offline-first:** Fully functional without internet connection. Content persists in browser localStorage.
+- **Open source:** MIT licensed. Audit the code yourself.
 
-## Project Structure
+## Installation
+
+orOS Writer is an installable PWA (Progressive Web App):
+
+1. Open the app in a supported browser (Chrome, Edge, or other Chromium-based browser)
+2. Open Settings (⚙️ in the header)
+3. Click the "Install App" button in the Global tab
+4. Confirm the browser install prompt
+
+Once installed, the app runs in its own window and works fully offline.
+
+## File Structure
 
     oros/
-    ├── index.html                  Landing page with tool grid
-    ├── editor.html                 Writer app
-    ├── manifest.json               PWA manifest
-    ├── service-worker.js           Offline caching (oros-v4)
-    ├── favicon.svg                 App icon (mountain motif)
-    ├── LICENSE                     MIT license
-    ├── README.md
-    └── assets/
-        ├── css/
-        │   └── style.css           Shared stylesheet (all apps)
-        ├── fonts/
-        │   ├── nunito-regular.woff2
-        │   ├── nunito-medium.woff2
-        │   ├── nunito-semibold.woff2
-        │   ├── nunito-bold.woff2
-        │   └── nunito-extrabold.woff2
-        └── js/
-            ├── main.js             Core: theme, language, zen, settings
-            ├── editor.js           Writer logic
-            ├── translations.json   i18n strings (EN/EL)
-            └── components/
-                ├── header.js       Global header (shared)
-                └── footer.js       Global footer (shared)
+    ├── index.html                  # Landing page
+    ├── editor.html                 # Rich text editor page
+    ├── favicon.svg                 # Global SVG favicon
+    ├── manifest.json               # PWA manifest
+    ├── service-worker.js           # Service worker (offline caching)
+    ├── README.md                   # This file
+    ├── assets/
+    │   ├── css/
+    │   │   └── style.css            # All styles (themes, editor, panels, responsive, print)
+    │   ├── fonts/
+    │   │   ├── nunito-regular.woff2
+    │   │   ├── nunito-medium.woff2
+    │   │   ├── nunito-semibold.woff2
+    │   │   ├── nunito-bold.woff2
+    │   │   └── nunito-extrabold.woff2
+    │   └── js/
+    │       ├── main.js              # Core: theme, language, zen, settings modal
+    │       ├── editor.js            # Editor: editing, stats, goals, panels, export
+    │       ├── translations.json     # i18n strings (EN, EL, ES, IT, FR, DE)
+    │       └── components/
+    │           ├── header.js        # Global header (logo, version, controls)
+    │           └── footer.js        # Global footer (credits, back-to-top)
 
----
+## Browser Compatibility
 
-## Usage
+Tested on modern browsers supporting:
 
-Visit [useoros.com](https://useoros.com), pick a tool, and start creating.
-
-To install as a PWA:
-
-- **Desktop (Chrome/Edge):** Click the install icon in the address bar, or use the Install button in Settings
-- **Android:** "Add to Home Screen" from browser menu
-- **iOS:** Share → "Add to Home Screen"
-
-Everything works offline after the first visit.
-
----
-
-## Self-Hosting
-
-    git clone https://github.com/koulaxizis/oros.git
-    cd oros
-    python3 -m http.server 8000
-
-Then open `http://localhost:8000` in your browser.
-
-Any static file server works (Caddy, nginx, `npx serve`, etc.).
-
----
-
-## Adding New Tools
-
-1. Create a new HTML file in the root (e.g. `palette.html`)
-2. Link shared styles and scripts:
-
-       <link rel="stylesheet" href="assets/css/style.css">
-       <script src="assets/js/components/header.js"></script>
-       <script src="assets/js/components/footer.js"></script>
-       <script src="assets/js/main.js"></script>
-
-3. Use `<div id="oros-header"></div>` and `<div id="oros-footer"></div>` mount points
-4. Add an entry card in `index.html`
-5. Add new cache entries in `service-worker.js`
-6. Add translation keys in `assets/js/translations.json`
-
----
-
-## Browser Support
-
-Works on all modern browsers with:
-
-- Service Workers
-- CSS Custom Properties
+- contentEditable API
 - localStorage API
-- `color-mix()` CSS function (for header backdrop)
+- Service Workers & PWA installation
+- CSS custom properties (variables)
+- color-mix() CSS function
 
-Tested on: Chrome, Firefox, Safari, Edge (recent versions).
+Recommended: Chrome 90+, Firefox 89+, Safari 14+, Edge 90+
 
----
+## Beta Channel
 
-## Contributing
+A separate beta repository is maintained for testing new features before they reach production:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-tool`)
-3. Commit changes (`git commit -m 'Add my-tool'`)
-4. Push to the branch (`git push origin feat/my-tool`)
-5. Open a Pull Request
+- **Repository:** https://github.com/koulaxizis/oros-beta
+- **Live site:** https://koulaxizis.github.io/oros-beta/
 
-Please respect the core philosophy: no tracking, no external dependencies, no frameworks.
+The beta channel uses a separate service worker cache to avoid conflicts with the production app. Access the beta links from Settings → Global tab → Beta Channel section.
 
----
+> ⚠️ The beta channel is for testing purposes. Features may be incomplete or unstable.
 
 ## License
 
-MIT © 2026 Christos Koulaxizis
+MIT License — see LICENSE file for details.
 
----
+Copyright © 2026 Christos Koulaxizis
 
-## Links
+## Credits
 
-- **Live:** [useoros.com](https://useoros.com)
-- **Author:** [koulaxizis.gr](https://koulaxizis.gr)
-- **Source:** [github.com/koulaxizis/oros](https://github.com/koulaxizis/oros)
-- **Issues:** [github.com/koulaxizis/oros/issues](https://github.com/koulaxizis/oros/issues)
-- **Beta repo:** [github.com/koulaxizis/oros-beta](https://github.com/koulaxizis/oros-beta)
-- **Beta live:** [koulaxizis.github.io/oros-beta/](https://koulaxizis.github.io/oros-beta/)
+Designed and developed by [Christos Koulaxizis](https://koulaxizis.gr)
 
----
-
-*Tools should serve artists — not collect them.*
+Built with ♥ for artists and writers.

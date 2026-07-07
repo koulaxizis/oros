@@ -1,5 +1,5 @@
 // ============================================
-// orOS — Core Functionality v0.5-beta
+// orOS — Core Functionality v0.5
 // Theme | Language | Zen Mode | Settings
 // Multi-language support (EN, EL, ES, IT, FR, DE)
 // ============================================
@@ -46,13 +46,15 @@
 
   document.addEventListener('DOMContentLoaded', async function() {
     await loadTranslations();
-    initTheme();
     initLanguage();
     initBackToTop();
     initZenMode();
     initSettings();
     applyTranslationsOnInit();
     updateFooterCredits();
+    
+    // Theme is already applied by header.js, just initialize the button
+    initThemeButtonOnly();
   });
 
   function getLang() {
@@ -65,41 +67,25 @@
     return t[key] || key;
   }
 
-  // ---------- Theme ----------
-  function initTheme() {
-    var savedTheme = localStorage.getItem(STORAGE_KEY.THEME);
-    if (savedTheme) {
-      applyTheme(savedTheme);
-      renderThemeButton(savedTheme);
-    } else {
-      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(prefersDark ? 'dark' : 'light');
-      renderThemeButton(prefersDark ? 'dark' : 'light');
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-        if (!localStorage.getItem(STORAGE_KEY.THEME)) {
-          applyTheme(e.matches ? 'dark' : 'light');
-          renderThemeButton(e.matches ? 'dark' : 'light');
-        }
-      });
-    }
-  }
-
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(STORAGE_KEY.THEME, theme);
-  }
-
-  function renderThemeButton(currentTheme) {
+  // ---------- Theme Button Only (theme already applied by header.js) ----------
+  function initThemeButtonOnly() {
     var btn = document.getElementById('theme-toggle');
     if (!btn) return;
-    var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    btn.innerHTML = nextTheme === 'dark' ? '\uD83C\uDF19' : '\u2600\uFE0F';
-    var t = (translations[getLang()] || translations.en) || {};
-    btn.title = nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
-    btn.setAttribute('aria-label', nextTheme === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light'));
+    
+    var currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('oros-theme') || 'light';
+    btn.innerHTML = currentTheme === 'dark' ? '🌙' : '☀️';
+    
     btn.onclick = function() {
-      applyTheme(nextTheme);
-      renderThemeButton(nextTheme);
+      var current = document.documentElement.getAttribute('data-theme') || localStorage.getItem('oros-theme') || 'light';
+      var next = current === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('oros-theme', next);
+      btn.innerHTML = next === 'dark' ? '🌙' : '☀️';
+      
+      var t = (translations[getLang()] || translations.en) || {};
+      btn.title = next === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
+      btn.setAttribute('aria-label', next === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light'));
     };
   }
 
@@ -123,8 +109,10 @@
     localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
     updateFooterCredits();
     updateSettingsModalLanguage(lang);
-    var currentTheme = localStorage.getItem(STORAGE_KEY.THEME) || 'light';
-    renderThemeButton(currentTheme);
+    
+    // Re-render theme button with new language labels
+    initThemeButtonOnly();
+    
     window.dispatchEvent(new CustomEvent('oros-language-changed', { detail: { lang: lang } }));
   }
 
@@ -181,8 +169,8 @@
     var creditEl = document.querySelector('.footer-credits');
     if (!creditEl) return;
     var linkText = trans.footer_credits_link || 'Christos Koulaxizis';
-    var suffix = trans.footer_credits_suffix || '. Built with \u2665 for artists.';
-    creditEl.innerHTML = '\u00A9 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
+    var suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
+    creditEl.innerHTML = '© 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
   }
 
   // ---------- Back to Top ----------
@@ -233,8 +221,8 @@
   function showZenToast() {
     removeZenToast();
     var msg = getLang() === 'el'
-      ? '\uD83E\uDDD8 Zen Mode \u2014 \u03A0\u03AC\u03C4\u03B1 ESC \u03AE F9 \u03B3\u03B9\u03B1 \u03AD\u03BE\u03BF\u03B4\u03BF'
-      : '\uD83E\uDDD8 Zen Mode \u2014 Press ESC or F9 to exit';
+      ? '🧘 Zen Mode — Πάτα ESC ή F9 για έξοδο'
+      : '🧘 Zen Mode — Press ESC or F9 to exit';
     var toast = document.createElement('div');
     toast.className = 'zentool-toast visible';
     toast.id = 'zen-toast';
@@ -268,27 +256,27 @@
     var globalShortcuts, editorShortcuts;
 
     if (lang === 'el') {
-      globalShortcuts = [['Focus Mode','F8'],['Zen Mode','F9'],['\u0388\u03BE\u03BF\u03B4\u03BF\u03C2 Zen','ESC']];
-      editorShortcuts = [['\u0391\u03C0\u03BF\u03B8\u03AE\u03BA\u03B5\u03C5\u03C3\u03B7','Ctrl+S'],['\u0388\u03BD\u03C4\u03BF\u03BD\u03B1','Ctrl+B'],['\u03A0\u03BB\u03AC\u03B3\u03B9\u03B1','Ctrl+I'],['\u03A5\u03C0\u03BF\u03B3\u03C1\u03AC\u03BC\u03BC\u03B9\u03C3\u03B7','Ctrl+U'],['\u0391\u03BD\u03B1\u03AF\u03C1\u03B5\u03C3\u03B7','Ctrl+Z'],['\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC','Ctrl+Y'],['\u0395\u03CD\u03C1\u03B5\u03C3\u03B7','Ctrl+F'],['\u039C\u03BF\u03C1\u03C6\u03BF\u03C0\u03BF\u03AF\u03B7\u03C3\u03B7','Alt + \u0394\u03B5\u03BE\u03AF click']];
+      globalShortcuts = [['Zen Mode','F9'],['Έξοδος Zen','ESC']];
+      editorShortcuts = [['Αποθήκευση','Ctrl+S'],['Έντονα','Ctrl+B'],['Πλάγια','Ctrl+I'],['Υπογράμμιση','Ctrl+U'],['Αναίρεση','Ctrl+Z'],['Επαναφορά','Ctrl+Y'],['Εύρεση','Ctrl+F'],['Μορφοποίηση','Alt + Δεξί click']];
     } else if (lang === 'es') {
-      globalShortcuts = [['Modo Enfoque','F8'],['Modo Zen','F9'],['Salir Zen','ESC']];
+      globalShortcuts = [['Modo Zen','F9'],['Salir Zen','ESC']];
       editorShortcuts = [['Guardar','Ctrl+S'],['Negrita','Ctrl+B'],['Cursiva','Ctrl+I'],['Subrayado','Ctrl+U'],['Deshacer','Ctrl+Z'],['Rehacer','Ctrl+Y'],['Buscar','Ctrl+F'],['Formato','Alt + Click derecho']];
     } else if (lang === 'it') {
-      globalShortcuts = [['Modalit\u00E0 Focus','F8'],['Modalit\u00E0 Zen','F9'],['Esci Zen','ESC']];
+      globalShortcuts = [['Modalità Zen','F9'],['Esci Zen','ESC']];
       editorShortcuts = [['Salva','Ctrl+S'],['Grassetto','Ctrl+B'],['Corsivo','Ctrl+I'],['Sottolinea','Ctrl+U'],['Annulla','Ctrl+Z'],['Ripeti','Ctrl+Y'],['Trova','Ctrl+F'],['Formattazione','Alt + Click destro']];
     } else if (lang === 'fr') {
-      globalShortcuts = [['Mode Focus','F8'],['Mode Zen','F9'],['Quitter Zen','ESC']];
-      editorShortcuts = [['Enregistrer','Ctrl+S'],['Gras','Ctrl+B'],['Italique','Ctrl+I'],['Souligner','Ctrl+U'],['Annuler','Ctrl+Z'],['R\u00E9tablir','Ctrl+Y'],['Rechercher','Ctrl+F'],['Format','Alt + Clic droit']];
+      globalShortcuts = [['Mode Zen','F9'],['Quitter Zen','ESC']];
+      editorShortcuts = [['Enregistrer','Ctrl+S'],['Gras','Ctrl+B'],['Italique','Ctrl+I'],['Souligner','Ctrl+U'],['Annuler','Ctrl+Z'],['Rétablir','Ctrl+Y'],['Rechercher','Ctrl+F'],['Format','Alt + Clic droit']];
     } else if (lang === 'de') {
-      globalShortcuts = [['Fokusmodus','F8'],['Zen-Modus','F9'],['Zen beenden','ESC']];
-      editorShortcuts = [['Speichern','Strg+S'],['Fett','Strg+B'],['Kursiv','Strg+I'],['Unterstreichen','Strg+U'],['R\u00FCckg\u00E4ngig','Strg+Z'],['Wiederholen','Strg+Y'],['Suchen','Strg+F'],['Format','Alt + Rechtsklick']];
+      globalShortcuts = [['Zen-Modus','F9'],['Zen beenden','ESC']];
+      editorShortcuts = [['Speichern','Strg+S'],['Fett','Strg+B'],['Kursiv','Strg+I'],['Unterstreichen','Strg+U'],['Rückgängig','Strg+Z'],['Wiederholen','Strg+Y'],['Suchen','Strg+F'],['Format','Alt + Rechtsklick']];
     } else {
-      globalShortcuts = [['Focus Mode','F8'],['Zen Mode','F9'],['Exit Zen','ESC']];
+      globalShortcuts = [['Zen Mode','F9'],['Exit Zen','ESC']];
       editorShortcuts = [['Save','Ctrl+S'],['Bold','Ctrl+B'],['Italic','Ctrl+I'],['Underline','Ctrl+U'],['Undo','Ctrl+Z'],['Redo','Ctrl+Y'],['Find','Ctrl+F'],['Format','Alt + Right-click']];
     }
 
-    var colActionLabel = lang === 'el' ? '\u0395\u03BD\u03AD\u03C1\u03B3\u03B5\u03B9\u03B1' : lang === 'es' ? 'Acci\u00F3n' : lang === 'it' ? 'Azione' : lang === 'fr' ? 'Action' : lang === 'de' ? 'Aktion' : 'Action';
-    var colKey = lang === 'el' ? '\u03A3\u03C5\u03BD\u03C4\u03CC\u03BC\u03B5\u03C5\u03C3\u03B7' : lang === 'es' ? 'Atajo' : lang === 'it' ? 'Scorciatoia' : lang === 'fr' ? 'Raccourci' : lang === 'de' ? 'Tastenk\u00FCrzel' : 'Shortcut';
+    var colActionLabel = lang === 'el' ? 'Ενέργεια' : lang === 'es' ? 'Acción' : lang === 'it' ? 'Azione' : lang === 'fr' ? 'Action' : lang === 'de' ? 'Aktion' : 'Action';
+    var colKey = lang === 'el' ? 'Συντόμευση' : lang === 'es' ? 'Atajo' : lang === 'it' ? 'Scorciatoia' : lang === 'fr' ? 'Raccourci' : lang === 'de' ? 'Tastenkürzel' : 'Shortcut';
 
     var globalShortcutsHtml = '';
     globalShortcuts.forEach(function(pair) {
@@ -319,7 +307,7 @@
         '<tbody>' + globalShortcutsHtml + '</tbody>' +
       '</table>' +
       '<div class="install-section">' +
-        '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + getTrans('install_app') + '</button>' +
+        '<button class="btn-install" id="btn-install-pwa">⬇ ' + getTrans('install_app') + '</button>' +
       '</div>' +
       '<div class="beta-section">' +
         '<div class="beta-header">' + getTrans('beta_title') + '</div>' +
@@ -385,7 +373,7 @@
       '<div class="modal-content">' +
         '<header class="modal-header">' +
           '<h2>' + getTrans('settings') + '</h2>' +
-          '<button class="close-btn">\u00D7</button>' +
+          '<button class="close-btn">×</button>' +
         '</header>' +
         '<nav class="modal-nav">' + navHtml + '</nav>' +
         panelsHtml +

@@ -8,11 +8,10 @@
   var mount = document.getElementById('oros-header');
   if (!mount) return;
 
-  // Detect if we're in beta repo or production
-  var isBeta = window.location.hostname.indexOf('koulaxizis.github.io') !== -1 && 
+  var isBeta = window.location.hostname.indexOf('koulaxizis.github.io') !== -1 &&
                window.location.pathname.indexOf('oros-beta') !== -1;
 
-  var logoHref = isBeta ? './index.html' : './index.html';
+  var logoHref = './index.html';
 
   mount.innerHTML =
     '<header class="header">' +
@@ -30,4 +29,13 @@
         '</div>' +
       '</div>' +
     '</header>';
+
+  // Apply saved theme immediately to <html> (main.js handles full system after DOMContentLoaded)
+  var savedTheme = localStorage.getItem('oros-theme');
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  } else {
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  }
 })();
