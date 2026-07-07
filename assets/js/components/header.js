@@ -8,13 +8,19 @@
   var mount = document.getElementById('oros-header');
   if (!mount) return;
 
+  // Detect if we're in beta repo or production
+  var isBeta = window.location.hostname.indexOf('koulaxizis.github.io') !== -1 && 
+               window.location.pathname.indexOf('oros-beta') !== -1;
+
+  var logoHref = isBeta ? './index.html' : './index.html';
+
   mount.innerHTML =
     '<header class="header">' +
       '<div class="header-content">' +
-        '<a href="./index.html" class="logo">' +
+        '<a href="' + logoHref + '" class="logo">' +
           '<img src="favicon.svg" alt="" class="logo-icon" width="24" height="24">' +
           '<span class="logo-text"><b>or</b><i>OS</i></span>' +
-          '<span class="version-badge">v0.4</span>' +
+          '<span class="version-badge">' + (isBeta ? 'v0.5-BETA' : 'v0.5') + '</span>' +
         '</a>' +
         '<div class="header-controls">' +
           '<select id="language-select" class="lang-select" data-i18n-aria="aria_language" aria-label="Language"></select>' +
