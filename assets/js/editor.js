@@ -1,5 +1,5 @@
 // ============================================
-// orOS Writer — Unified Rich Text Editor v0.4
+// orOS Writer — Unified Rich Text Editor v0.5-beta
 // Focus Mode + Document Outline + Reading Progress
 // Smart Typography + Auto-Save Timestamp
 // Writing Goal Tracker (words/chars/paras + lock)
@@ -7,6 +7,7 @@
 // Typewriter Mode + Context Menu + Content Persistence
 // Smart Lists, Import RTF/DOC, Stats, Find/Replace
 // Quick Format Toolbar + Flexible UI Toggles
+// NEW: Smart Paste, Detailed Stats, Word Frequency, Print Styles
 // ============================================
 
 (function() {
@@ -26,6 +27,7 @@
   var STORAGE_HIDE_OUTLINE_BTN = 'oros_hide_outline_btn';
   var STORAGE_HIDE_METADATA_BTN = 'oros_hide_metadata_btn';
   var STORAGE_HIDE_FIND_BTN = 'oros_hide_find_btn';
+  var STORAGE_HIDE_WORDFREQ_BTN = 'oros_hide_wordfreq_btn';
   var STORAGE_METADATA = 'oros_writer_metadata';
 
   var richEditor = document.getElementById('rich-editor');
@@ -42,6 +44,7 @@
   var statsOverlay = document.getElementById('stats-overlay');
   var statsDefaultEl = document.getElementById('stats-default');
   var statsGoalEl = document.getElementById('stats-goal');
+  var statsDetailed = document.getElementById('stats-detailed');
   var quickFormatToolbar = document.getElementById('quick-format-toolbar');
   var outlinePanel = document.getElementById('outline-panel');
   var outlineList = document.getElementById('outline-list');
@@ -67,6 +70,11 @@
   var metaCategory = document.getElementById('meta-category');
   var metaCreated = document.getElementById('meta-created');
   var metaModified = document.getElementById('meta-modified');
+  var btnWordFreq = document.getElementById('btn-wordfreq');
+  var btnCloseWordFreq = document.getElementById('btn-close-wordfreq');
+  var wordFreqPanel = document.getElementById('wordfreq-panel');
+  var wordFreqSummary = document.getElementById('wordfreq-summary');
+  var wordFreqList = document.getElementById('wordfreq-list');
 
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
   var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
@@ -81,11 +89,14 @@
   var hideOutlineBtn = localStorage.getItem(STORAGE_HIDE_OUTLINE_BTN) === 'true';
   var hideMetadataBtn = localStorage.getItem(STORAGE_HIDE_METADATA_BTN) === 'true';
   var hideFindBtn = localStorage.getItem(STORAGE_HIDE_FIND_BTN) === 'true';
+  var hideWordFreqBtn = localStorage.getItem(STORAGE_HIDE_WORDFREQ_BTN) === 'true';
   var goalReachedShown = false;
   var goalLockTriggered = false;
   var currentMatchIndex = -1;
   var matchRanges = [];
   var typewriterMode = false;
+  var statsExpanded = false;
+  var wordFreqDebounce = null;
 
   // ========== HELPERS ==========
   function getCurrentLang() { return localStorage.getItem('oros-language') || 'en'; }
@@ -138,6 +149,10 @@
       if (outlinePanel && outlinePanel.style.display !== 'none') {
         clearTimeout(outlineDebounceTimer);
         outlineDebounceTimer = setTimeout(updateOutline, 300);
+      }
+      if (wordFreqPanel && wordFreqPanel.style.display !== 'none') {
+        clearTimeout(wordFreqDebounce);
+        wordFreqDebounce = setTimeout(updateWordFrequency, 800);
       }
     });
   }
@@ -275,16 +290,42 @@
     }
   }
 
-  // ========== STATS ==========
+  // ========== STATS + FEATURE #7 DETAILED COUNT ==========
   function updateStats() {
     if (!richEditor) return;
     var text = getTextContent();
     var chars = text.length;
+    var charsNoSpaces = text.replace(/\s/g, '').length;
     var words = text.trim().split(/\s+/).filter(Boolean).length;
+    var sentences = text.split(/[.!?…]+(?:\s|$)/).filter(function(s) {
+      return s.trim().length > 0;
+    }).length;
+    var readMin = Math.max(1, Math.ceil(words / 225));
+    var speakMin = Math.max(1, Math.ceil(words / 140));
+
     if (statsDefaultEl) {
-      var statsText = formatNumber(words) + ' ' + getTrans('text_words') + ' · ' + formatNumber(chars) + ' ' + getTrans('text_chars');
-      statsDefaultEl.textContent = statsText;
+      var arrow = statsExpanded ? ' ▴' : ' ▾';
+      statsDefaultEl.textContent = formatNumber(words) + ' ' + getTrans('text_words') + ' · ' + formatNumber(chars) + ' ' + getTrans('text_chars') + arrow;
     }
+
+    if (statsDetailed) {
+      var t = function(k) { return getTrans(k); };
+      statsDetailed.innerHTML =
+        '<div class="stat-row"><span>' + t('stats_chars_with_spaces') + '</span><span>' + chars.toLocaleString() + '</span></div>' +
+        '<div class="stat-row"><span>' + t('stats_chars_no_spaces') + '</span><span>' + charsNoSpaces.toLocaleString() + '</span></div>' +
+        '<div class="stat-row"><span>' + t('stats_sentences') + '</span><span>' + sentences + '</span></div>' +
+        '<div class="stat-row"><span>' + t('stats_reading_time') + '</span><span>' + readMin + ' ' + t('stats_min') + '</span></div>' +
+        '<div class="stat-row"><span>' + t('stats_speaking_time') + '</span><span>' + speakMin + ' ' + t('stats_min') + '</span></div>';
+    }
+
+    if (statsDefaultEl) {
+      statsDefaultEl.onclick = function(e) {
+        e.stopPropagation();
+        statsExpanded = !statsExpanded;
+        updateStats();
+      };
+    }
+
     if (goalTarget) updateGoalProgress();
   }
 
@@ -384,6 +425,16 @@
     if (!goalLockEnabled || goalLockTriggered) return;
     goalLockTriggered = true;
     richEditor.contentEditable = 'false';
+  }
+
+  function updateGoalUnitLabels() {
+    if (!goalUnitSelect) return;
+    var opts = goalUnitSelect.querySelectorAll('option');
+    if (opts.length >= 3) {
+      opts[0].textContent = getTrans('goal_unit_words');
+      opts[1].textContent = getTrans('goal_unit_chars');
+      opts[2].textContent = getTrans('goal_unit_paras');
+    }
   }
 
   // ========== AUTO-SAVE TIMESTAMP ==========
@@ -495,68 +546,96 @@
     isReplacing = false;
   }
   window.addEventListener('oros-smart-typography-changed', function(e) { smartTypographyEnabled = e.detail.enabled; });
-  
-    // ========== METADATA INPUT HANDLERS ==========
-  function setupMetadataHandlers() {
-    var inputs = [metaTitle, metaAuthor, metaTags, metaCategory];
-    for (var i = 0; i < inputs.length; i++) {
-      (function(input) {
-        if (!input) return;
-        input.addEventListener('blur', function() {
-          saveMetadata(true);
-        });
-        input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            saveMetadata(true);
-            // Move focus cyclically
-            if (input === metaTitle && metaAuthor) metaAuthor.focus();
-            else if (input === metaAuthor && metaCategory) metaCategory.focus();
-            else if (input === metaCategory && metaTags) metaTags.focus();
-            else if (input === metaTags && metaTitle) metaTitle.focus();
+
+  // ========== FEATURE #6: SMART PASTE ==========
+  function handleSmartPaste(e) {
+    e.preventDefault();
+    var clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+    var html = clipboardData.getData('text/html');
+    var text = clipboardData.getData('text/plain');
+    if (html) {
+      var temp = document.createElement('div');
+      temp.innerHTML = html;
+      var allowed = ['P','H1','H2','H3','H4','H5','H6','UL','OL','LI','STRONG','EM','B','I','U','A','CODE','PRE','BLOCKQUOTE','BR','SPAN'];
+      var all = temp.querySelectorAll('*');
+      for (var i = all.length - 1; i >= 0; i--) {
+        var el = all[i];
+        if (allowed.indexOf(el.tagName) === -1) {
+          var txt = document.createTextNode(el.textContent + ' ');
+          el.parentNode.replaceChild(txt, el);
+        } else {
+          while (el.attributes.length > 0) {
+            var attr = el.attributes[0];
+            if (!(el.tagName === 'A' && attr.name === 'href')) {
+              el.removeAttribute(attr.name);
+            }
           }
-        });
-      })(inputs[i]);
+        }
+      }
+      document.execCommand('insertHTML', false, temp.innerHTML);
+    } else if (text) {
+      document.execCommand('insertText', false, text);
     }
+    saveContent();
+    updateStats();
   }
 
-  // ========== FIND & REPLACE ==========
-  function toggleFindBar() {
-    if (!findBar || !findInput) return;
-    if (findBar.style.display === 'flex') {
-      findBar.style.display = 'none';
-      findInput.value = '';
-      replaceInput.value = '';
-      currentMatchIndex = -1;
-      matchRanges = [];
+  // ========== FEATURE #4: WORD FREQUENCY ==========
+  function toggleWordFreqPanel() {
+    if (!wordFreqPanel) return;
+    if (wordFreqPanel.style.display === 'none' || !wordFreqPanel.style.display) {
+      wordFreqPanel.style.display = 'flex';
+      wordFreqPanel.style.flexDirection = 'column';
+      updateWordFrequency();
     } else {
-      findBar.style.display = 'flex';
-      findInput.focus();
-      highlightMatches();
+      wordFreqPanel.style.display = 'none';
     }
   }
 
-  function highlightMatches() {
-    if (!findInput || !richEditor) return;
-    var searchTerm = findInput.value.toLowerCase();
-    if (!searchTerm) {
-      if (frResults) frResults.textContent = getTrans('fr_no_matches');
+  function updateWordFrequency() {
+    if (!wordFreqList || !wordFreqPanel || wordFreqPanel.style.display === 'none' || !richEditor) return;
+    var text = getTextContent().toLowerCase().replace(/[^\w\s]/g, '').trim();
+    if (!text) {
+      if (wordFreqList) wordFreqList.innerHTML = '<div class="wordfreq-empty">' + getTrans('word_freq_empty') + '</div>';
+      if (wordFreqSummary) wordFreqSummary.innerHTML = '';
       return;
     }
-    var content = richEditor.innerText.toLowerCase();
-    var matches = 0;
-    var idx = content.indexOf(searchTerm);
-    while (idx !== -1) {
-      matches++;
-      idx = content.indexOf(searchTerm, idx + 1);
+    var words = text.split(/\s+/).filter(Boolean);
+    var total = words.length;
+    var freqMap = {};
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      freqMap[w] = (freqMap[w] || 0) + 1;
     }
-    if (frResults) {
-      if (matches > 0) {
-        frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
-      } else {
-        frResults.textContent = getTrans('fr_no_matches');
-      }
+    var unique = Object.keys(freqMap).length;
+    var diversity = total > 0 ? (unique / total * 100).toFixed(1) : 0;
+
+    var sorted = Object.keys(freqMap).sort(function(a,b) {
+      return freqMap[b] - freqMap[a];
+    }).slice(0, 20);
+
+    var maxFreq = sorted.length > 0 ? freqMap[sorted[0]] : 1;
+
+    var summaryHtml = '' +
+      '<div class="stat-row"><span>' + getTrans('word_freq_unique') + '</span><span>' + unique + '</span></div>' +
+      '<div class="stat-row"><span>' + getTrans('word_freq_total') + '</span><span>' + total + '</span></div>' +
+      '<div class="stat-row"><span>' + getTrans('word_freq_diversity') + '</span><span>' + diversity + '%</span></div>';
+    if (wordFreqSummary) wordFreqSummary.innerHTML = summaryHtml;
+
+    var listHtml = '';
+    for (var j = 0; j < sorted.length; j++) {
+      var word = sorted[j];
+      var count = freqMap[word];
+      var pct = (count / maxFreq * 100).toFixed(0);
+      var isOverused = count >= 5 && (count / total * 100) > 2;
+      listHtml += '<div class="wordfreq-item' + (isOverused ? ' overused' : '') + '">' +
+        '<span class="wf-word">' + word + '</span>' +
+        '<div class="wordfreq-bar"><div class="wordfreq-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<span class="wordfreq-count">' + count + '</span>' +
+      '</div>';
     }
+    if (wordFreqList) wordFreqList.innerHTML = listHtml;
   }
 
   // ========== FOCUS MODE ==========
@@ -621,7 +700,6 @@
     e.preventDefault();
     e.stopPropagation();
     
-    // Remove existing menu
     if (contextMenu) {
       contextMenu.remove();
       contextMenu = null;
@@ -668,7 +746,6 @@
     document.body.appendChild(menu);
     contextMenu = menu;
     
-    // Close on ESC
     var closeHandler = function(ev) {
       if (ev.key === 'Escape' && contextMenu) {
         contextMenu.remove();
@@ -689,12 +766,7 @@
           var cmd = btn.getAttribute('data-cmd');
           var block = btn.getAttribute('data-block');
           
-          // Check if already active
-          if (cmd && document.queryCommandState(cmd)) {
-            // Toggle off - this requires custom handling
-            // For simplicity, we'll just re-run the command
-            document.execCommand(cmd, false);
-          } else if (block) {
+          if (block) {
             document.execCommand('formatBlock', false, block);
           } else if (cmd) {
             document.execCommand(cmd, false);
@@ -712,7 +784,6 @@
     if (typewriterMode) {
       scrollToCenter();
     }
-    // You can add a visual indicator here if desired
   }
 
   function scrollToCenter() {
@@ -726,7 +797,6 @@
     var wrapperRect = richWrapper.getBoundingClientRect();
     var editorHeight = richEditor.offsetHeight;
     
-    // Calculate scroll position to place cursor at ~45% of viewport
     var targetScroll = wrapperRect.top - wrapperRect.y + (rect.top - wrapperRect.top) - (editorHeight * 0.45);
     richWrapper.scrollTop = Math.max(0, targetScroll);
   }
@@ -737,12 +807,10 @@
     reader.onload = function(e) {
       var content = e.target.result;
       
-      // Try to import frontmatter if .md
       if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
         content = importFrontmatter(content);
       }
       
-      // Set content
       richEditor.innerHTML = content;
       saveContent();
       updateStats();
@@ -796,15 +864,54 @@
     showToast(getTrans('toast_downloaded'));
   }
 
-  function convertHTMLtoMarkdown(html) {
-    var md = html;
-    md = md.replace(/<[^>]+>/g, '');
-    md = md.replace(/&nbsp;/g, ' ');
-    md = md.replace(/&amp;/g, '&');
-    md = md.replace(/&lt;/g, '<');
-    md = md.replace(/&gt;/g, '>');
-    md = md.replace(/&quot;/g, '"');
-    md = md.replace(/&#39;/g, "'");
+    function convertHTMLtoMarkdown(html) {
+    var temp = document.createElement('div');
+    temp.innerHTML = html;
+    return htmlToMd(temp);
+  }
+
+  function htmlToMd(node) {
+    var md = '';
+    var children = node.childNodes;
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      if (child.nodeType === 3) {
+        md += child.textContent;
+      } else if (child.nodeType === 1) {
+        var tag = child.tagName.toLowerCase();
+        switch (tag) {
+          case 'h1': md += '\n# ' + child.textContent + '\n\n'; break;
+          case 'h2': md += '\n## ' + child.textContent + '\n\n'; break;
+          case 'h3': md += '\n### ' + child.textContent + '\n\n'; break;
+          case 'h4': md += '\n#### ' + child.textContent + '\n\n'; break;
+          case 'h5': md += '\n##### ' + child.textContent + '\n\n'; break;
+          case 'h6': md += '\n###### ' + child.textContent + '\n\n'; break;
+          case 'p': md += '\n' + htmlToMd(child) + '\n\n'; break;
+          case 'br': md += '\n'; break;
+          case 'strong': case 'b': md += '**' + htmlToMd(child) + '**'; break;
+          case 'em': case 'i': md += '*' + htmlToMd(child) + '*'; break;
+          case 'u': md += '__' + htmlToMd(child) + '__'; break;
+          case 'code': md += '`' + child.textContent + '`'; break;
+          case 'pre': md += '\n```\n' + child.textContent + '\n```\n\n'; break;
+          case 'blockquote': md += '\n> ' + htmlToMd(child).replace(/\n/g, '\n> ') + '\n\n'; break;
+          case 'ul':
+            var ulItems = child.querySelectorAll(':scope > li');
+            for (var j = 0; j < ulItems.length; j++) { md += '- ' + htmlToMd(ulItems[j]).trim() + '\n'; }
+            md += '\n';
+            break;
+          case 'ol':
+            var olItems = child.querySelectorAll(':scope > li');
+            for (var k = 0; k < olItems.length; k++) { md += (k + 1) + '. ' + htmlToMd(olItems[k]).trim() + '\n'; }
+            md += '\n';
+            break;
+          case 'li': md += htmlToMd(child); break;
+          case 'a': md += '[' + child.textContent + '](' + child.getAttribute('href') + ')'; break;
+          case 'span': md += child.textContent; break;
+          case 'div': md += htmlToMd(child) + '\n'; break;
+          default: md += child.textContent || ''; break;
+        }
+      }
+    }
     return md;
   }
 
@@ -826,33 +933,23 @@
 
   // ========== KEYBOARD SHORTCUTS ==========
   document.addEventListener('keydown', function(e) {
-    // Ctrl+S - Save
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
       saveContent();
       showToast(getTrans('text_saved'));
     }
-    // Ctrl+G - Goal
     else if (e.ctrlKey && e.key === 'g') {
       e.preventDefault();
       toggleGoalBar();
     }
-    // Ctrl+F - Find
     else if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
       toggleFindBar();
     }
-    // Ctrl+Enter - Typewriter
     else if (e.ctrlKey && e.key === 'Enter') {
       e.preventDefault();
       toggleTypewriterMode();
     }
-    // F8 - Focus Mode
-    else if (e.key === 'F8' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-      e.preventDefault();
-      // Handled in main.js via settings
-    }
-    // Escape - Close panels
     else if (e.key === 'Escape') {
       if (metadataPanel && metadataPanel.style.display !== 'none') {
         saveMetadata(false);
@@ -861,11 +958,18 @@
       if (outlinePanel && outlinePanel.style.display !== 'none') {
         outlinePanel.style.display = 'none';
       }
+      if (wordFreqPanel && wordFreqPanel.style.display !== 'none') {
+        wordFreqPanel.style.display = 'none';
+      }
       if (findBar && findBar.style.display === 'flex') {
         findBar.style.display = 'none';
       }
       if (goalBar && goalBar.style.display === 'flex') {
         goalBar.style.display = 'none';
+      }
+      if (statsExpanded) {
+        statsExpanded = false;
+        updateStats();
       }
       if (contextMenu) {
         contextMenu.remove();
@@ -882,6 +986,7 @@
   if (hideOutlineBtn && btnOutline) btnOutline.style.display = 'none';
   if (hideMetadataBtn && btnMetadata) btnMetadata.style.display = 'none';
   if (hideFindBtn && btnFind) btnFind.style.display = 'none';
+  if (hideWordFreqBtn && btnWordFreq) btnWordFreq.style.display = 'none';
 
   // ========== CUSTOM EVENTS ==========
   window.addEventListener('oros-hide-goal-btn-changed', function(e) {
@@ -903,6 +1008,7 @@
   window.addEventListener('oros-language-changed', function(e) {
     updateStats();
     renderMetaDates();
+    updateGoalUnitLabels();
   });
 
   // ========== EVENT LISTENERS ==========
@@ -917,6 +1023,11 @@
     outlinePanel.style.display = 'none';
   });
 
+  if (btnWordFreq) btnWordFreq.addEventListener('click', toggleWordFreqPanel);
+  if (btnCloseWordFreq) btnCloseWordFreq.addEventListener('click', function() {
+    wordFreqPanel.style.display = 'none';
+  });
+
   if (btnGoal) btnGoal.addEventListener('click', toggleGoalBar);
   if (btnSetGoal) btnSetGoal.addEventListener('click', setGoal);
   if (btnClearGoal) btnClearGoal.addEventListener('click', clearGoal);
@@ -926,10 +1037,13 @@
 
   if (btnFind) btnFind.addEventListener('click', toggleFindBar);
   if (findBar) {
-    findInput.addEventListener('input', highlightMatches);
+    if (findInput) findInput.addEventListener('input', highlightMatches);
     if (btnCloseFR) btnCloseFR.addEventListener('click', function() {
       findBar.style.display = 'none';
-      findInput.value = '';
+      if (findInput) findInput.value = '';
+      if (replaceInput) replaceInput.value = '';
+      currentMatchIndex = -1;
+      matchRanges = [];
     });
   }
 
@@ -944,7 +1058,8 @@
   });
 
   if (btnClear) btnClear.addEventListener('click', function() {
-    if (confirm('Are you sure? All unsaved content will be lost.')) {
+    var msg = getCurrentLang() === 'el' ? 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.' : 'Are you sure? All content will be lost.';
+    if (confirm(msg)) {
       richEditor.innerHTML = '';
       saveContent();
       updateStats();
@@ -973,7 +1088,6 @@
     }
   }
 
-  // Click on richEditor to dismiss context menu
   if (richEditor) {
     richEditor.addEventListener('click', function(e) {
       if (contextMenu) {
@@ -981,16 +1095,52 @@
         contextMenu = null;
       }
     });
-    
-    // Alt+Right-click for context menu
     richEditor.addEventListener('contextmenu', function(e) {
       if (e.altKey) {
         showContextMenu(e);
       }
     });
-    
-    // Smart typography
     richEditor.addEventListener('keyup', handleSmartTypography);
+    richEditor.addEventListener('paste', handleSmartPaste);
+  }
+
+  // ========== FIND & REPLACE ==========
+  function toggleFindBar() {
+    if (!findBar || !findInput) return;
+    if (findBar.style.display === 'flex') {
+      findBar.style.display = 'none';
+      if (findInput) findInput.value = '';
+      if (replaceInput) replaceInput.value = '';
+      currentMatchIndex = -1;
+      matchRanges = [];
+    } else {
+      findBar.style.display = 'flex';
+      if (findInput) findInput.focus();
+      highlightMatches();
+    }
+  }
+
+  function highlightMatches() {
+    if (!findInput || !richEditor) return;
+    var searchTerm = findInput.value.toLowerCase();
+    if (!searchTerm) {
+      if (frResults) frResults.textContent = getTrans('fr_no_matches');
+      return;
+    }
+    var content = richEditor.innerText.toLowerCase();
+    var matches = 0;
+    var idx = content.indexOf(searchTerm);
+    while (idx !== -1) {
+      matches++;
+      idx = content.indexOf(searchTerm, idx + 1);
+    }
+    if (frResults) {
+      if (matches > 0) {
+        frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
+      } else {
+        frResults.textContent = getTrans('fr_no_matches');
+      }
+    }
   }
 
   // ========== INITIALIZE ==========
@@ -1001,5 +1151,6 @@
   setupQuickFormatToolbar();
   initFocusMode();
   updateStats();
-  
+  updateGoalUnitLabels();
+
 })();

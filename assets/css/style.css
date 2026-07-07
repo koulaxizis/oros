@@ -505,6 +505,159 @@ kbd { display: inline-block; padding: 0.15rem 0.5rem; background: var(--bg-secon
 .modal-content::-webkit-scrollbar-track { background: transparent; }
 .modal-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+/* ========== FEATURE #7: EXPANDED STATS ========== */
+.stats-toggle {
+cursor: pointer;
+user-select: none;
+transition: opacity 0.2s ease;
+}
+.stats-toggle:hover {
+opacity: 0.85;
+}
+.stats-detailed {
+position: absolute;
+bottom: calc(100% + 4px);
+left: 0;
+right: 0;
+background: var(--bg-secondary, #1e1d1b);
+border: 1px solid var(--border-color, #333);
+border-radius: 8px;
+padding: 0.65rem 0.85rem;
+font-size: 0.72rem;
+color: var(--text-secondary, #999);
+z-index: 200;
+box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+display: flex;
+flex-direction: column;
+gap: 0.25rem;
+pointer-events: auto;
+}
+.stats-detailed .stat-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.stats-detailed .stat-row span:last-child {
+color: var(--text-primary, #eee);
+font-weight: 600;
+}
+.stats-detailed .stat-divider {
+height: 1px;
+background: var(--border-color, #333);
+margin: 0.2rem 0;
+}
+
+/* ========== FEATURE #4: WORD FREQUENCY PANEL ========== */
+.wordfreq-summary {
+padding: 0.65rem 1rem;
+border-bottom: 1px solid var(--border-color, #333);
+font-size: 0.76rem;
+color: var(--text-secondary, #999);
+}
+.wordfreq-summary .stat-row {
+display: flex;
+justify-content: space-between;
+margin-bottom: 0.2rem;
+}
+.wordfreq-summary .stat-row span:last-child {
+color: var(--accent-gold, #c8a96e);
+font-weight: 600;
+}
+.wordfreq-list {
+overflow-y: auto;
+flex: 1;
+padding: 0.4rem 1rem;
+}
+.wordfreq-item {
+display: flex;
+align-items: center;
+gap: 0.55rem;
+padding: 0.3rem 0;
+border-bottom: 1px solid rgba(255,255,255,0.04);
+font-size: 0.8rem;
+}
+.wordfreq-item .wf-word {
+min-width: 5rem;
+max-width: 8rem;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+color: var(--text-primary, #eee);
+}
+.wordfreq-item.overused .wf-word {
+color: var(--accent-gold, #c8a96e);
+}
+.wordfreq-bar {
+flex: 1;
+height: 5px;
+background: rgba(255,255,255,0.08);
+border-radius: 3px;
+overflow: hidden;
+}
+.wordfreq-bar-fill {
+height: 100%;
+background: var(--accent-gold, #c8a96e);
+border-radius: 3px;
+transition: width 0.3s ease;
+}
+.wordfreq-item.overused .wordfreq-bar-fill {
+background: linear-gradient(90deg, var(--accent-gold, #c8a96e), #e8b87a);
+}
+.wordfreq-count {
+font-weight: 700;
+color: var(--text-primary, #eee);
+min-width: 1.8rem;
+text-align: right;
+font-size: 0.75rem;
+}
+
+/* ========== FEATURE #8: PRINT-FRIENDLY STYLING ========== */
+@media print {
+body * {
+visibility: hidden !important;
+}
+#rich-editor, #rich-editor * {
+visibility: visible !important;
+}
+#rich-editor {
+position: absolute !important;
+left: 0 !important;
+top: 0 !important;
+width: 100% !important;
+height: auto !important;
+max-height: none !important;
+padding: 0 !important;
+margin: 0 !important;
+background: white !important;
+color: black !important;
+box-shadow: none !important;
+border: none !important;
+border-radius: 0 !important;
+overflow: visible !important;
+font-size: 12pt !important;
+line-height: 1.6 !important;
+}
+#rich-editor h1 { font-size: 22pt !important; page-break-after: avoid; }
+#rich-editor h2 { font-size: 16pt !important; page-break-after: avoid; }
+#rich-editor h3 { font-size: 14pt !important; page-break-after: avoid; }
+#rich-editor p, #rich-editor li {
+orphans: 3;
+widows: 3;
+}
+#rich-editor blockquote {
+border-left: 3px solid #999 !important;
+color: #444 !important;
+}
+#rich-editor a {
+color: black !important;
+text-decoration: underline !important;
+}
+@page {
+margin: 2cm;
+size: A4;
+}
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .header-content { padding: 0 1rem; }
