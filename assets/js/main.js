@@ -320,6 +320,14 @@
       '</table>' +
       '<div class="install-section">' +
         '<button class="btn-install" id="btn-install-pwa">\u2B07 ' + getTrans('install_app') + '</button>' +
+      '</div>' +
+      '<div class="beta-section">' +
+        '<div class="beta-header">' + getTrans('beta_title') + '</div>' +
+        '<p class="beta-warning">' + getTrans('beta_warning') + '</p>' +
+        '<div class="beta-links">' +
+          '<a href="https://github.com/koulaxizis/oros-beta" target="_blank" rel="noopener" class="beta-btn">' + getTrans('beta_repo_link') + '</a>' +
+          '<a href="https://koulaxizis.github.io/oros-beta/" target="_blank" rel="noopener" class="beta-btn">' + getTrans('beta_live_link') + '</a>' +
+        '</div>' +
       '</div>';
 
     var panelsHtml = '<div class="tab-panel" id="panel-global">' + globalHtml + '</div>';

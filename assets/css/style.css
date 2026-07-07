@@ -656,6 +656,45 @@ text-decoration: underline !important;
 margin: 2cm;
 size: A4;
 }
+
+/* ========== BETA SECTION IN SETTINGS ========== */
+.beta-section {
+  margin-top: 0.6rem;
+  padding: 0.7rem;
+  border: 1px dashed var(--accent-gold, #c8a96e);
+  border-radius: 10px;
+  background: rgba(200, 169, 110, 0.06);
+}
+.beta-header {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--accent-gold, #c8a96e);
+  margin-bottom: 0.35rem;
+}
+.beta-warning {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #999);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+.beta-links {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.beta-btn {
+  font-size: 0.72rem !important;
+  padding: 0.35rem 0.6rem !important;
+  border: 1px solid var(--accent-gold, #c8a96e) !important;
+  color: var(--accent-gold, #c8a96e) !important;
+  background: transparent !important;
+  text-decoration: none !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease;
+}
+.beta-btn:hover {
+  background: rgba(200, 169, 110, 0.12) !important;
 }
 
 /* ---------- Responsive ---------- */

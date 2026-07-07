@@ -30,7 +30,11 @@
     "stats_min": "min",
     "toggle_hide_wordfreq_btn": "Hide Word Frequency",
     "footer_credits_link": "Christos Koulaxizis",
-    "footer_credits_suffix": ". Built with love for artists."
+    "footer_credits_suffix": ". Built with love for artists.",
+	"beta_title": "Beta Channel",
+"beta_warning": "Experimental build for testing new features. May break at any time — not for production use.",
+"beta_repo_link": "Beta Repository",
+"beta_live_link": "Live Beta Site"
   },
   "el": {
     "app_name": "orOS Writer",
@@ -63,7 +67,11 @@
     "stats_min": "λεπτά",
     "toggle_hide_wordfreq_btn": "Απόκρυψη Συχνότητας Λέξεων",
     "footer_credits_link": "Χρήστος Κουλαξίζης",
-    "footer_credits_suffix": ". Δημιουργήθηκε με αγάπη για καλλιτέχνες."
+    "footer_credits_suffix": ". Δημιουργήθηκε με αγάπη για καλλιτέχνες.",
+	"beta_title": "Κανάλι Beta",
+"beta_warning": "Πειραματική έκδοση για δοκιμή νέων λειτουργιών. Μπορεί να «σπάσει» ανά πάσα στιγμή — όχι για χρήση σε παραγωγή.",
+"beta_repo_link": "Αποθετήριο Beta",
+"beta_live_link": "Ζωντανό Beta"
   },
   "es": {
     "app_name": "orOS Writer",
@@ -96,7 +104,11 @@
     "stats_min": "minutos",
     "toggle_hide_wordfreq_btn": "Ocultar Frecuencia de Palabras",
     "footer_credits_link": "Christos Koulaxizis",
-    "footer_credits_suffix": ". Creado con amor para artistas."
+    "footer_credits_suffix": ". Creado con amor para artistas.",
+	"beta_title": "Canal Beta",
+"beta_warning": "Versión experimental para probar nuevas funciones. Puede fallar en cualquier momento — no para uso en producción.",
+"beta_repo_link": "Repositorio Beta",
+"beta_live_link": "Sitio Beta en vivo"
   },
   "it": {
     "app_name": "orOS Writer",
@@ -129,7 +141,11 @@
     "stats_min": "min",
     "toggle_hide_wordfreq_btn": "Nascondi Frequenza Parole",
     "footer_credits_link": "Christos Koulaxizis",
-    "footer_credits_suffix": ". Creato con amore per gli artisti."
+    "footer_credits_suffix": ". Creato con amore per gli artisti.",
+	"beta_title": "Canale Beta",
+"beta_warning": "Versione sperimentale per testare nuove funzionalità. Può rompersi in qualsiasi momento — non per uso in produzione.",
+"beta_repo_link": "Repository Beta",
+"beta_live_link": "Sito Beta attivo"
   },
   "fr": {
     "app_name": "orOS Writer",
@@ -162,7 +178,11 @@
     "stats_min": "min",
     "toggle_hide_wordfreq_btn": "Masquer Fréquence des Mots",
     "footer_credits_link": "Christos Koulaxizis",
-    "footer_credits_suffix": ". Créé avec amour pour les artistes."
+    "footer_credits_suffix": ". Créé avec amour pour les artistes.",
+	"beta_title": "Canal Bêta",
+"beta_warning": "Version expérimentale pour tester de nouvelles fonctionnalités. Peut casser à tout moment — pas pour usage en production.",
+"beta_repo_link": "Dépôt Bêta",
+"beta_live_link": "Site Bêta en ligne"
   },
   "de": {
     "app_name": "orOS Writer",
@@ -195,6 +215,10 @@
     "stats_min": "Min",
     "toggle_hide_wordfreq_btn": "Wortfrequenz ausblenden",
     "footer_credits_link": "Christos Koulaxizis",
-    "footer_credits_suffix": ". Mit Liebe für Künstler erstellt."
+    "footer_credits_suffix": ". Mit Liebe für Künstler erstellt.",
+	"beta_title": "Beta-Kanal",
+"beta_warning": "Experimentelle Version zum Testen neuer Funktionen. Kann jederzeit fehlerhaft werden — nicht für den produktiven Einsatz.",
+"beta_repo_link": "Beta-Repository",
+"beta_live_link": "Live-Beta-Seite"
   }
 }
