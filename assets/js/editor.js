@@ -1,13 +1,7 @@
 // ============================================
-// orOS Writer — Unified Rich Text Editor v0.5
-// Focus Mode + Document Outline + Reading Progress
-// Smart Typography + Auto-Save Timestamp
-// Writing Goal Tracker (words/chars/paras + lock)
-// Document Metadata Panel (title/author/tags/category)
-// Context Menu + Content Persistence
-// Smart Lists, Import RTF/DOC, Stats, Find/Replace
-// Quick Format Toolbar + Flexible UI Toggles
-// Smart Paste, Detailed Stats, Word Frequency, Print Styles
+// orOS Writer — Unified Rich Text Editor
+// Fixes: Alignment, Typewriter Sound, Focus Mode, Hide Stats, Main Toolbar Buttons
+// Quick Format Toolbar toggle controls .toolbar-center
 // ============================================
 
 (function() {
@@ -15,7 +9,6 @@
 
   var STORAGE_KEY = 'oros_writer_content';
   var STORAGE_HIDE_STATS = 'oros_hide_stats';
-  var STORAGE_HIDE_QUICK_TBAR = 'oros_hide_quick_tbar';
   var STORAGE_FOCUS_MODE = 'oros_focus_mode';
   var STORAGE_READING_PROGRESS = 'oros_reading_progress';
   var STORAGE_SMART_TYPOGRAPHY = 'oros_smart_typography';
@@ -28,6 +21,9 @@
   var STORAGE_HIDE_METADATA_BTN = 'oros_hide_metadata_btn';
   var STORAGE_HIDE_FIND_BTN = 'oros_hide_find_btn';
   var STORAGE_HIDE_WORDFREQ_BTN = 'oros_hide_wordfreq_btn';
+  var STORAGE_HIDE_SAVE_INDICATOR = 'oros_hide_save_indicator';
+  var STORAGE_HIDE_LOREM_BTN = 'oros_hide_lorem_btn';
+  var STORAGE_TYPEWRITER_SOUND = 'oros_typewriter_sound';
   var STORAGE_METADATA = 'oros_writer_metadata';
 
   var richEditor = document.getElementById('rich-editor');
@@ -40,13 +36,14 @@
   var btnOpen = document.getElementById('btn-open');
   var btnClear = document.getElementById('btn-clear');
   var btnExport = document.getElementById('btn-export');
+  var btnLorem = document.getElementById('btn-lorem');
   var exportDropdown = document.getElementById('export-dropdown');
   var fileInput = document.getElementById('file-input');
   var statsOverlay = document.getElementById('stats-overlay');
   var statsDefaultEl = document.getElementById('stats-default');
   var statsGoalEl = document.getElementById('stats-goal');
   var statsDetailed = document.getElementById('stats-detailed');
-  var quickFormatToolbar = document.getElementById('quick-format-toolbar');
+  var toolbarCenter = document.querySelector('.toolbar-center');
   var outlinePanel = document.getElementById('outline-panel');
   var outlineList = document.getElementById('outline-list');
   var btnOutline = document.getElementById('btn-outline');
@@ -79,7 +76,7 @@
   var saveIndicator = document.getElementById('save-indicator');
 
   var hideStats = localStorage.getItem(STORAGE_HIDE_STATS) === 'true';
-  var hideQuickTbar = localStorage.getItem(STORAGE_HIDE_QUICK_TBAR) === 'true';
+  var quickTbarShow = localStorage.getItem('oros_quick_tbar_show') !== 'false';
   var focusModeEnabled = localStorage.getItem(STORAGE_FOCUS_MODE) !== 'false';
   var readingProgressEnabled = localStorage.getItem(STORAGE_READING_PROGRESS) !== 'false';
   var smartTypographyEnabled = localStorage.getItem(STORAGE_SMART_TYPOGRAPHY) !== 'false';
@@ -92,6 +89,9 @@
   var hideMetadataBtn = localStorage.getItem(STORAGE_HIDE_METADATA_BTN) === 'true';
   var hideFindBtn = localStorage.getItem(STORAGE_HIDE_FIND_BTN) === 'true';
   var hideWordFreqBtn = localStorage.getItem(STORAGE_HIDE_WORDFREQ_BTN) === 'true';
+  var hideSaveIndicator = localStorage.getItem(STORAGE_HIDE_SAVE_INDICATOR) === 'true';
+  var hideLoremBtn = localStorage.getItem(STORAGE_HIDE_LOREM_BTN) === 'true';
+  var typewriterSoundEnabled = localStorage.getItem(STORAGE_TYPEWRITER_SOUND) === 'true';
   var goalReachedShown = false;
   var goalLockTriggered = false;
   var currentMatchIndex = -1;
@@ -99,6 +99,51 @@
   var statsExpanded = false;
   var wordFreqDebounce = null;
   var outlineDebounceTimer = null;
+
+  // ========== TYPEWRITER SOUND (Web Audio API) ==========
+  var typewriterAudioCtx = null;
+  var typewriterAudioBuffer = null;
+
+  function initTypewriterSound() {
+    try {
+      typewriterAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var sampleRate = typewriterAudioCtx.sampleRate;
+      var duration = 0.04;
+      var numSamples = Math.floor(sampleRate * duration);
+      var buffer = typewriterAudioCtx.createBuffer(1, numSamples, sampleRate);
+      var data = buffer.getChannelData(0);
+      for (var i = 0; i < numSamples; i++) {
+        var t = i / sampleRate;
+        var envelope = Math.exp(-t * 80);
+        var noise = (Math.random() * 2 - 1) * 0.3;
+        var click = Math.sin(2 * Math.PI * 2000 * t) * 0.15;
+        data[i] = (noise + click) * envelope * 0.5;
+      }
+      typewriterAudioBuffer = buffer;
+    } catch(e) {
+      typewriterAudioCtx = null;
+    }
+  }
+
+  function playTypewriterSound() {
+    if (!typewriterSoundEnabled || !typewriterAudioCtx || !typewriterAudioBuffer) return;
+    try {
+      var source = typewriterAudioCtx.createBufferSource();
+      source.buffer = typewriterAudioBuffer;
+      var gainNode = typewriterAudioCtx.createGain();
+      gainNode.gain.value = 0.08;
+      source.connect(gainNode);
+      gainNode.connect(typewriterAudioCtx.destination);
+      source.start(0);
+    } catch(e) {}
+  }
+
+  window.addEventListener('oros-typewriter-sound-changed', function(e) {
+    typewriterSoundEnabled = e.detail.enabled;
+    if (typewriterSoundEnabled && !typewriterAudioCtx) {
+      initTypewriterSound();
+    }
+  });
 
   // ========== HELPERS ==========
   function getCurrentLang() { return localStorage.getItem('oros-language') || 'en'; }
@@ -110,11 +155,105 @@
   function formatNumber(num) {
     return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
   }
-  function getTextContent() { return richEditor.innerText || ''; }
+  function getTextContent() {
+    var text = richEditor.innerText || '';
+    return text.replace(/\n$/, '');
+  }
+
+  // ========== LOREM IPSUM GENERATOR ==========
+  function generateLoremIpsum() {
+    var lang = getCurrentLang();
+    var templates = {
+      en: '<h1>Document Title</h1>' +
+          '<p>This is the <strong>first paragraph</strong> with various formatting options. ' +
+          'You can see <em>italic text</em>, <u>underlined text</u>, and <strong>bold text</strong> ' +
+          'all working together seamlessly. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>' +
+          '<ul><li>First bullet point item</li><li>Second bullet point item</li><li>Third bullet point item</li></ul>' +
+          '<h2>Section Subheading</h2>' +
+          '<blockquote>Art is a lie that makes us realize the truth. — Pablo Picasso</blockquote>' +
+          '<p>The <em>final paragraph</em> wraps up the sample content. ' +
+          'Use this text to test your editor\'s formatting, exports, and statistics. ' +
+          'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae.</p>' +
+          '<ol><li>First numbered step</li><li>Second numbered step</li><li>Third numbered step</li></ol>',
+      el: '<h1>Τίτλος Εγγράφου</h1>' +
+          '<p>Αυτή είναι η <strong>πρώτη παράγραφος</strong> ' +
+          'με διάφορες επιλογές μορφοποίησης. ' +
+          'Μπορείς να δεις <em>πλάγιο κείμενο</em>, ' +
+          '<u>υπογεγραμμένο κείμενο</u>, ' +
+          'και <strong>έντονο κείμενο</strong> ' +
+          'όλα να λειτουργούν μαζί.</p>' +
+          '<ul><li>Πρώτο στοιχείο λίστας</li>' +
+          '<li>Δεύτερο στοιχείο λίστας</li>' +
+          '<li>Τρίτο στοιχείο λίστας</li></ul>' +
+          '<h2>Υπότιτλος Τμήματος</h2>' +
+          '<blockquote>Η τέχνη είναι ένα ψέμα που μας κάνει να συνειδητοποιούμε την αλήθεια.</blockquote>' +
+          '<p>Η <em>τελευταία παράγραφος</em> ' +
+          'κλείνει το δοκιμαστικό κείμενο. ' +
+          'Χρησιμοποίησε αυτό το κείμενο ' +
+          'για να δοκιμάσεις την μορφοποίηση, ' +
+          'τις εξάγωγες και τα στατιστικά.</p>' +
+          '<ol><li>Πρώτο βήμα</li><li>Δεύτερο βήμα</li><li>Τρίτο βήμα</li></ol>',
+      es: '<h1>Título del Documento</h1>' +
+          '<p>Este es el <strong>primer párrafo</strong> con varias opciones de formato. ' +
+          'Puedes ver <em>texto en cursiva</em>, <u>texto subrayado</u>, y <strong>texto en negrita</strong> ' +
+          'todos funcionando juntos. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>' +
+          '<ul><li>Primer elemento de la lista</li><li>Segundo elemento de la lista</li><li>Tercer elemento de la lista</li></ul>' +
+          '<h2>Subtítulo de Sección</h2>' +
+          '<blockquote>El arte es una mentira que nos hace darnos cuenta de la verdad. — Pablo Picasso</blockquote>' +
+          '<p>El <em>párrafo final</em> concluye el contenido de ejemplo. ' +
+          'Usa este texto para probar el formato, las exportaciones y las estadísticas de tu editor.</p>' +
+          '<ol><li>Primer paso numerado</li><li>Segundo paso numerado</li><li>Tercer paso numerado</li></ol>',
+      it: '<h1>Titolo del Documento</h1>' +
+          '<p>Questo è il <strong>primo paragrafo</strong> con varie opzioni di formattazione. ' +
+          'Puoi vedere <em>testo in corsivo</em>, <u>testo sottolineato</u>, e <strong>testo in grassetto</strong> ' +
+          'tutti funzionanti insieme. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>' +
+          '<ul><li>Primo elemento della lista</li><li>Secondo elemento della lista</li><li>Terzo elemento della lista</li></ul>' +
+          '<h2>Sottotitolo della Sezione</h2>' +
+          '<blockquote>L\'arte è una menzogna che ci fa capire la verità. — Pablo Picasso</blockquote>' +
+          '<p>Il <em>paragrafo finale</em> conclude il contenuto di esempio. ' +
+          'Usa questo testo per provare la formattazione, le esportazioni e le statistiche del tuo editor.</p>' +
+          '<ol><li>Primo passo numerato</li><li>Secondo passo numerato</li><li>Terzo passo numerato</li></ol>',
+      fr: '<h1>Titre du Document</h1>' +
+          '<p>Ceci est le <strong>premier paragraphe</strong> avec diverses options de mise en forme. ' +
+          'Vous pouvez voir du <em>texte en italique</em>, du <u>texte souligné</u>, et du <strong>texte en gras</strong> ' +
+          'qui fonctionnent tous ensemble. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>' +
+          '<ul><li>Premier élément de la liste</li><li>Deuxième élément de la liste</li><li>Troisième élément de la liste</li></ul>' +
+          '<h2>Sous-titre de Section</h2>' +
+          '<blockquote>L\'art est un mensonge qui nous fait réaliser la vérité. — Pablo Picasso</blockquote>' +
+          '<p>Le <em>paragraphe final</em> conclut le contenu d\'exemple. ' +
+          'Utilisez ce texte pour tester la mise en forme, les exportations et les statistiques de votre éditeur.</p>' +
+          '<ol><li>Première étape</li><li>Deuxième étape</li><li>Troisième étape</li></ol>',
+      de: '<h1>Dokumenttitel</h1>' +
+          '<p>Dies ist der <strong>erste Absatz</strong> mit verschiedenen Formatierungsoptionen. ' +
+          'Sie können <em>Kursivtext</em>, <u>unterstrichenen Text</u> und <strong>Fetttext</strong> ' +
+          'sehen, die alle zusammen funktionieren. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>' +
+          '<ul><li>Erstes Listenelement</li><li>Zweites Listenelement</li><li>Drittes Listenelement</li></ul>' +
+          '<h2>Abschnittsüberschrift</h2>' +
+          '<blockquote>Kunst ist eine Lüge, die uns die Wahrheit erkennen lässt. — Pablo Picasso</blockquote>' +
+          '<p>Der <em>letzte Absatz</em> schließt den Beispielinhalt ab. ' +
+          'Verwenden Sie diesen Text, um die Formatierung, Exporte und Statistiken Ihres Editors zu testen.</p>' +
+          '<ol><li>Erster Schritt</li><li>Zweiter Schritt</li><li>Dritter Schritt</li></ol>'
+    };
+    return templates[lang] || templates.en;
+  }
+
+  function insertLoremIpsum() {
+    if (!richEditor) return;
+    var html = generateLoremIpsum();
+    richEditor.innerHTML = html;
+    saveContent();
+    updateStats();
+    showToast(getTrans('toast_lorem_inserted') || 'Sample text inserted');
+  }
 
   // ========== SAVE INDICATOR UPDATE ==========
   function updateSaveIndicator() {
     if (!saveIndicator) return;
+    if (hideSaveIndicator) {
+      saveIndicator.style.visibility = 'hidden';
+      return;
+    }
+    saveIndicator.style.visibility = 'visible';
     var trans = (window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[getCurrentLang()]) || {};
     if (!lastSavedTime) {
       saveIndicator.textContent = trans.text_not_saved || '—';
@@ -147,7 +286,7 @@
     clearTimeout(toast._timer);
     toast._timer = setTimeout(function() {
       toast.classList.remove('visible');
-    }, 2500);
+    }, 3000);
   }
 
   // ========== CONTENT PERSISTENCE ==========
@@ -270,23 +409,20 @@
   }
 
   function renderMetaDates() {
-    var lang = getCurrentLang();
     var createdLabel = getTrans('meta_label_created');
     var modifiedLabel = getTrans('meta_label_modified');
     if (metaCreated) {
       if (metadata.created) {
-        var cd = new Date(metadata.created);
-        metaCreated.textContent = createdLabel + ' ' + formatDate(cd);
+        metaCreated.textContent = createdLabel + ' ' + formatDate(new Date(metadata.created));
       } else {
-        metaCreated.textContent = createdLabel + ' \u2014';
+        metaCreated.textContent = createdLabel + ' —';
       }
     }
     if (metaModified) {
       if (metadata.modified) {
-        var md = new Date(metadata.modified);
-        metaModified.textContent = modifiedLabel + ' ' + formatDate(md);
+        metaModified.textContent = modifiedLabel + ' ' + formatDate(new Date(metadata.modified));
       } else {
-        metaModified.textContent = modifiedLabel + ' \u2014';
+        metaModified.textContent = modifiedLabel + ' —';
       }
     }
   }
@@ -315,15 +451,12 @@
     }
   }
 
-  // ========== METADATA INPUT HANDLERS ==========
   function setupMetadataHandlers() {
     var inputs = [metaTitle, metaAuthor, metaTags, metaCategory];
     for (var i = 0; i < inputs.length; i++) {
       (function(input) {
         if (!input) return;
-        input.addEventListener('blur', function() {
-          saveMetadata(true);
-        });
+        input.addEventListener('blur', function() { saveMetadata(true); });
         input.addEventListener('keydown', function(e) {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -338,7 +471,7 @@
     }
   }
 
-  // ========== STATS + DETAILED COUNT ==========
+  // ========== STATS ==========
   function updateStats() {
     if (!richEditor) return;
     var text = getTextContent();
@@ -348,12 +481,13 @@
     var sentences = text.split(/[.!?…]+(?:\s|$)/).filter(function(s) {
       return s.trim().length > 0;
     }).length;
-    var readMin = Math.max(1, Math.ceil(words / 225));
-    var speakMin = Math.max(1, Math.ceil(words / 140));
+    var readMin = Math.ceil(words / 225) || 0;
+    var speakMin = Math.ceil(words / 140) || 0;
 
     if (statsDefaultEl) {
-      var arrow = statsExpanded ? ' \u25B4' : ' \u25BE';
-      statsDefaultEl.textContent = formatNumber(words) + ' ' + getTrans('text_words') + ' \u00B7 ' + formatNumber(chars) + ' ' + getTrans('text_chars') + arrow;
+      var arrow = statsExpanded ? ' ▲' : ' ▼';
+      statsDefaultEl.textContent = formatNumber(words) + ' ' + getTrans('text_words') +
+        ' · ' + formatNumber(chars) + ' ' + getTrans('text_chars') + arrow;
     }
 
     if (statsDetailed) {
@@ -402,7 +536,8 @@
     if (!goalTarget || !statsGoalEl || !statsDefaultEl) return;
     var count = getGoalCount();
     var pct = Math.min(100, Math.round((count / goalTarget) * 100));
-    statsGoalEl.textContent = formatNumber(count) + ' / ' + formatNumber(goalTarget) + ' ' + getGoalUnitLabel() + ' \u00B7 ' + pct + '%';
+    statsGoalEl.textContent = formatNumber(count) + ' / ' + formatNumber(goalTarget) +
+      ' ' + getGoalUnitLabel() + ' · ' + pct + '%';
     if (count >= goalTarget && !goalReachedShown) {
       goalReachedShown = true;
       var msg = getTrans('text_goal_reached');
@@ -442,7 +577,7 @@
     goalReachedShown = false;
     goalLockTriggered = false;
     richEditor.contentEditable = 'true';
-    localStorage.setItem(STORAGE_GOAL_TARGET, goalTarget.toString());
+    localStorage.setItem(STORAGE_GOAL_TARGET, target.toString());
     localStorage.setItem(STORAGE_GOAL_UNIT, goalUnit);
     localStorage.setItem(STORAGE_GOAL_LOCK, goalLockEnabled ? 'true' : 'false');
     if (statsDefaultEl) statsDefaultEl.style.display = 'none';
@@ -522,24 +657,25 @@
     }
   }
 
-  // ========== READING PROGRESS BAR ==========
+  // ========== READING PROGRESS ==========
   function updateReadingProgress() {
-    if (!progressBar || !readingProgressEnabled) return;
-    var max = richEditor.scrollHeight - richEditor.clientHeight;
-    if (max <= 0) { progressBar.style.width = '0%'; return; }
-    var pct = (richEditor.scrollTop / max) * 100;
-    progressBar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+    if (!progressBar) return;
+    if (readingProgressEnabled) {
+      progressBar.style.display = '';
+      var max = richEditor.scrollHeight - richEditor.clientHeight;
+      if (max <= 0) { progressBar.style.width = '0%'; return; }
+      var pct = (richEditor.scrollTop / max) * 100;
+      progressBar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+    } else {
+      progressBar.style.display = 'none';
+    }
   }
   if (richEditor) {
     richEditor.addEventListener('scroll', updateReadingProgress, { passive: true });
   }
   window.addEventListener('oros-reading-progress-changed', function(e) {
     readingProgressEnabled = e.detail.enabled;
-    if (progressBar) {
-      progressBar.style.display = readingProgressEnabled ? '' : 'none';
-      if (!readingProgressEnabled) progressBar.style.width = '0%';
-    }
-    if (readingProgressEnabled) updateReadingProgress();
+    updateReadingProgress();
   });
 
   // ========== SMART TYPOGRAPHY ==========
@@ -635,36 +771,35 @@
     if (!wordFreqList || !wordFreqPanel || wordFreqPanel.style.display === 'none' || !richEditor) return;
     var text = getTextContent().toLowerCase().replace(/[^\w\s\u0370-\u03FF]/g, '').trim();
     if (!text) {
-      if (wordFreqList) wordFreqList.innerHTML = '<div class="wordfreq-empty">' + getTrans('word_freq_empty') + '</div>';
+      wordFreqList.innerHTML = '<div class="wordfreq-empty">' + getTrans('word_freq_empty') + '</div>';
       if (wordFreqSummary) wordFreqSummary.innerHTML = '';
       return;
     }
     var words = text.split(/\s+/).filter(Boolean);
     var total = words.length;
-    var freqMap = {};
+    var freq_map = {};
     for (var i = 0; i < words.length; i++) {
       var w = words[i];
-      freqMap[w] = (freqMap[w] || 0) + 1;
+      freq_map[w] = (freq_map[w] || 0) + 1;
     }
-    var unique = Object.keys(freqMap).length;
+    var unique = Object.keys(freq_map).length;
     var diversity = total > 0 ? (unique / total * 100).toFixed(1) : 0;
-
-    var sorted = Object.keys(freqMap).sort(function(a,b) {
-      return freqMap[b] - freqMap[a];
+    var sorted = Object.keys(freq_map).sort(function(a,b) {
+      return freq_map[b] - freq_map[a];
     }).slice(0, 20);
+    var maxFreq = sorted.length > 0 ? freq_map[sorted[0]] : 1;
 
-    var maxFreq = sorted.length > 0 ? freqMap[sorted[0]] : 1;
-
-    var summaryHtml = '' +
-      '<div class="stat-row"><span>' + getTrans('word_freq_unique') + '</span><span>' + unique + '</span></div>' +
-      '<div class="stat-row"><span>' + getTrans('word_freq_total') + '</span><span>' + total + '</span></div>' +
-      '<div class="stat-row"><span>' + getTrans('word_freq_diversity') + '</span><span>' + diversity + '%</span></div>';
-    if (wordFreqSummary) wordFreqSummary.innerHTML = summaryHtml;
+    if (wordFreqSummary) {
+      wordFreqSummary.innerHTML =
+        '<div class="stat-row"><span>' + getTrans('word_freq_unique') + '</span><span>' + unique + '</span></div>' +
+        '<div class="stat-row"><span>' + getTrans('word_freq_total') + '</span><span>' + total + '</span></div>' +
+        '<div class="stat-row"><span>' + getTrans('word_freq_diversity') + '</span><span>' + diversity + '%</span></div>';
+    }
 
     var listHtml = '';
     for (var j = 0; j < sorted.length; j++) {
       var word = sorted[j];
-      var count = freqMap[word];
+      var count = freq_map[word];
       var pct = (count / maxFreq * 100).toFixed(0);
       var isOverused = count >= 5 && (count / total * 100) > 2;
       listHtml += '<div class="wordfreq-item' + (isOverused ? ' overused' : '') + '">' +
@@ -673,21 +808,17 @@
         '<span class="wordfreq-count">' + count + '</span>' +
       '</div>';
     }
-    if (wordFreqList) wordFreqList.innerHTML = listHtml;
+    wordFreqList.innerHTML = listHtml;
   }
 
-  // ========== FOCUS MODE ==========
+  // ========== FOCUS MODE (highlights current paragraph) ==========
   var focusDebounceTimer = null;
+
   function initFocusMode() {
-    if (!richEditor || !richWrapper) return;
+    if (!richEditor) return;
     document.addEventListener('selectionchange', handleSelectionChange);
     richEditor.addEventListener('scroll', function() {
       if (document.getElementById('focus-spotlight')) clearFocusMode();
-    });
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && document.getElementById('focus-spotlight')) {
-        clearFocusMode();
-      }
     });
     window.addEventListener('oros-focus-mode-changed', function(e) {
       focusModeEnabled = e.detail.enabled;
@@ -700,31 +831,29 @@
     clearTimeout(focusDebounceTimer);
     focusDebounceTimer = setTimeout(function() {
       var selection = window.getSelection();
-      if (!selection.rangeCount || selection.isCollapsed) {
-        clearFocusMode();
-        return;
-      }
+      if (!selection.rangeCount) { clearFocusMode(); return; }
       var range = selection.getRangeAt(0);
-      if (!richEditor.contains(range.commonAncestorContainer)) {
-        clearFocusMode();
-        return;
+      if (!richEditor.contains(range.commonAncestorContainer)) { clearFocusMode(); return; }
+
+      var node = range.startContainer;
+      while (node && node !== richEditor && node.parentNode !== richEditor) {
+        node = node.parentNode;
       }
-      var selRect = range.getBoundingClientRect();
-      if (selRect.width === 0 || selRect.height === 0) {
-        clearFocusMode();
-        return;
-      }
+      if (!node || node === richEditor) { clearFocusMode(); return; }
+
       clearFocusMode();
+      var rect = node.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       var wrapperRect = richWrapper.getBoundingClientRect();
       var spotlight = document.createElement('div');
       spotlight.id = 'focus-spotlight';
       spotlight.className = 'focus-spotlight';
-      spotlight.style.top = (selRect.top - wrapperRect.top) + 'px';
-      spotlight.style.left = (selRect.left - wrapperRect.left) + 'px';
-      spotlight.style.width = selRect.width + 'px';
-      spotlight.style.height = selRect.height + 'px';
+      spotlight.style.top = (rect.top - wrapperRect.top) + 'px';
+      spotlight.style.left = (rect.left - wrapperRect.left) + 'px';
+      spotlight.style.width = rect.width + 'px';
+      spotlight.style.height = rect.height + 'px';
       richWrapper.appendChild(spotlight);
-    }, 150);
+    }, 100);
   }
 
   function clearFocusMode() {
@@ -734,9 +863,11 @@
 
   // ========== CONTEXT MENU ==========
   var contextMenu = null;
+
   function showContextMenu(e) {
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
 
     if (contextMenu) {
       contextMenu.remove();
@@ -746,36 +877,46 @@
     var menu = document.createElement('div');
     menu.className = 'context-menu';
     menu.innerHTML = '' +
-      '<div class="cm-item" data-cmd="bold"><span class="cm-icon">B</span>Bold</div>' +
-      '<div class="cm-item" data-cmd="italic"><span class="cm-icon">I</span>Italic</div>' +
-      '<div class="cm-item" data-cmd="underline"><span class="cm-icon">U</span>Underline</div>' +
+      '<div class="cm-item" data-cmd="bold"><i class="fa fa-bold cm-icon"></i>Bold</div>' +
+      '<div class="cm-item" data-cmd="italic"><i class="fa fa-italic cm-icon"></i>Italic</div>' +
+      '<div class="cm-item" data-cmd="underline"><i class="fa fa-underline cm-icon"></i>Underline</div>' +
       '<div class="cm-divider"></div>' +
-      '<div class="cm-item" data-cmd="strikeThrough"><span class="cm-icon">S</span>Strike</div>' +
-      '<div class="cm-item" data-cmd="formatBlock;H1"><span class="cm-icon">#</span>H1</div>' +
-      '<div class="cm-item" data-cmd="formatBlock;H2"><span class="cm-icon">##</span>H2</div>' +
-      '<div class="cm-item" data-cmd="formatBlock;H3"><span class="cm-icon">###</span>H3</div>' +
+      '<div class="cm-item" data-cmd="strikeThrough"><i class="fa fa-strikethrough cm-icon"></i>Strike</div>' +
+      '<div class="cm-item" data-cmd="formatBlock;H1"><i class="fa fa-header cm-icon"></i>H1</div>' +
+      '<div class="cm-item" data-cmd="formatBlock;H2"><i class="fa fa-header cm-icon"></i>H2</div>' +
+      '<div class="cm-item" data-cmd="formatBlock;H3"><i class="fa fa-header cm-icon"></i>H3</div>' +
       '<div class="cm-divider"></div>' +
-      '<div class="cm-item" data-cmd="insertUnorderedList"><span class="cm-icon">\u2022</span>Bullets</div>' +
-      '<div class="cm-item" data-cmd="insertOrderedList"><span class="cm-icon">1.</span>Numbers</div>' +
+      '<div class="cm-item" data-cmd="justifyLeft"><i class="fa fa-align-left cm-icon"></i>Align Left</div>' +
+      '<div class="cm-item" data-cmd="justifyCenter"><i class="fa fa-align-center cm-icon"></i>Align Center</div>' +
+      '<div class="cm-item" data-cmd="justifyRight"><i class="fa fa-align-right cm-icon"></i>Align Right</div>' +
+      '<div class="cm-item" data-cmd="justifyFull"><i class="fa fa-align-justify cm-icon"></i>Justify</div>' +
       '<div class="cm-divider"></div>' +
-      '<div class="cm-item" data-cmd="undo"><span class="cm-icon">\u21B6</span>Undo</div>' +
-      '<div class="cm-item" data-cmd="redo"><span class="cm-icon">\u21B7</span>Redo</div>';
+      '<div class="cm-item" data-cmd="insertUnorderedList"><i class="fa fa-list-ul cm-icon"></i>Bullets</div>' +
+      '<div class="cm-item" data-cmd="insertOrderedList"><i class="fa fa-list-ol cm-icon"></i>Numbers</div>' +
+      '<div class="cm-divider"></div>' +
+      '<div class="cm-item" data-cmd="undo"><i class="fa fa-undo cm-icon"></i>Undo</div>' +
+      '<div class="cm-item" data-cmd="redo"><i class="fa fa-repeat cm-icon"></i>Redo</div>';
 
     menu.style.position = 'fixed';
     menu.style.left = e.clientX + 'px';
     menu.style.top = e.clientY + 'px';
 
+    menu.addEventListener('click', function(ev) { ev.stopPropagation(); });
+    menu.addEventListener('contextmenu', function(ev) { ev.preventDefault(); ev.stopPropagation(); });
+    menu.addEventListener('mousedown', function(ev) { ev.stopPropagation(); });
+
     var items = menu.querySelectorAll('.cm-item');
     for (var i = 0; i < items.length; i++) {
       (function(item) {
-        item.onclick = function() {
+        item.onclick = function(ev) {
+          ev.stopPropagation();
           var cmdData = item.getAttribute('data-cmd');
           var parts = cmdData.split(';');
           var cmd = parts[0];
           var val = parts[1] || null;
           document.execCommand(cmd, false, val);
-          contextMenu.remove();
-          contextMenu = null;
+          if (contextMenu) { contextMenu.remove(); contextMenu = null; }
+          removeCloseListeners();
           richEditor.focus();
           saveContent();
           updateStats();
@@ -786,36 +927,53 @@
     document.body.appendChild(menu);
     contextMenu = menu;
 
-    var closeHandler = function(ev) {
-      if (contextMenu) {
-        contextMenu.remove();
-        contextMenu = null;
-        document.removeEventListener('keydown', closeHandler);
-        document.removeEventListener('click', closeHandler);
-      }
-    };
-    document.addEventListener('keydown', closeHandler);
-    document.addEventListener('click', closeHandler);
+    setTimeout(function() {
+      document.addEventListener('mousedown', closeOnOutsideClick);
+      document.addEventListener('keydown', closeOnKeydown);
+    }, 0);
   }
 
-  // ========== QUICK FORMAT TOOLBAR ==========
-  function setupQuickFormatToolbar() {
-    if (!quickFormatToolbar) return;
-    var fmtBtns = quickFormatToolbar.querySelectorAll('.fmt-btn');
+  function closeOnOutsideClick(ev) {
+    if (contextMenu && !contextMenu.contains(ev.target)) {
+      contextMenu.remove();
+      contextMenu = null;
+      removeCloseListeners();
+    }
+  }
+
+  function closeOnKeydown(ev) {
+    if (contextMenu) {
+      contextMenu.remove();
+      contextMenu = null;
+      removeCloseListeners();
+    }
+  }
+
+  function removeCloseListeners() {
+    document.removeEventListener('mousedown', closeOnOutsideClick);
+    document.removeEventListener('keydown', closeOnKeydown);
+  }
+
+  // ========== MAIN TOOLBAR FORMATTING BUTTONS ==========
+  function setupMainToolbarButtons() {
+    if (!richEditor) return;
+    var fmtBtns = document.querySelectorAll('.main-toolbar .fmt-text-btn, .main-toolbar .action-btn[data-cmd]');
     for (var i = 0; i < fmtBtns.length; i++) {
       (function(btn) {
-        btn.onclick = function() {
+        if (!btn.getAttribute('data-cmd')) return;
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
           var cmd = btn.getAttribute('data-cmd');
           var block = btn.getAttribute('data-block');
-
           if (block) {
             document.execCommand('formatBlock', false, block);
-          } else if (cmd) {
+          } else {
             document.execCommand(cmd, false);
           }
           saveContent();
           updateStats();
-        };
+          richEditor.focus();
+        });
       })(fmtBtns[i]);
     }
   }
@@ -833,9 +991,7 @@
       updateStats();
       showToast(getTrans('toast_opened'));
     };
-    reader.onerror = function() {
-      showToast('Error reading file');
-    };
+    reader.onerror = function() { showToast('Error reading file'); };
     reader.readAsText(file);
   }
 
@@ -979,11 +1135,9 @@
       idx = content.indexOf(searchTerm, idx + 1);
     }
     if (frResults) {
-      if (matches > 0) {
-        frResults.textContent = matches + ' ' + getTrans('fr_results_matches');
-      } else {
-        frResults.textContent = getTrans('fr_no_matches');
-      }
+      frResults.textContent = matches > 0
+        ? matches + ' ' + getTrans('fr_results_matches')
+        : getTrans('fr_no_matches');
     }
   }
 
@@ -995,11 +1149,7 @@
     var content = richEditor.innerHTML;
     var escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     var regex = new RegExp(escaped, 'gi');
-    if (isAll) {
-      richEditor.innerHTML = content.replace(regex, replaceTerm);
-    } else {
-      richEditor.innerHTML = content.replace(regex, replaceTerm);
-    }
+    richEditor.innerHTML = content.replace(regex, replaceTerm);
     saveContent();
     updateStats();
     showToast(getTrans('text_saved'));
@@ -1045,21 +1195,28 @@
       if (contextMenu) {
         contextMenu.remove();
         contextMenu = null;
+        removeCloseListeners();
       }
     }
   });
 
   // ========== VISIBILITY INIT ==========
   if (hideStats && statsOverlay) statsOverlay.style.display = 'none';
-  if (hideQuickTbar && quickFormatToolbar) quickFormatToolbar.style.display = 'none';
+  if (toolbarCenter) toolbarCenter.style.display = quickTbarShow ? 'flex' : 'none';
   if (!readingProgressEnabled && progressBar) progressBar.style.display = 'none';
   if (hideGoalBtn && btnGoal) btnGoal.style.display = 'none';
   if (hideOutlineBtn && btnOutline) btnOutline.style.display = 'none';
   if (hideMetadataBtn && btnMetadata) btnMetadata.style.display = 'none';
   if (hideFindBtn && btnFind) btnFind.style.display = 'none';
   if (hideWordFreqBtn && btnWordFreq) btnWordFreq.style.display = 'none';
+  if (hideSaveIndicator && saveIndicator) saveIndicator.style.visibility = 'hidden';
+  if (hideLoremBtn && btnLorem) btnLorem.style.display = 'none';
 
   // ========== CUSTOM EVENTS ==========
+  window.addEventListener('oros-hide-stats-changed', function(e) {
+    hideStats = e.detail.hidden;
+    if (statsOverlay) statsOverlay.style.display = hideStats ? 'none' : '';
+  });
   window.addEventListener('oros-hide-goal-btn-changed', function(e) {
     hideGoalBtn = e.detail.hidden;
     if (btnGoal) btnGoal.style.display = hideGoalBtn ? 'none' : '';
@@ -1079,6 +1236,18 @@
   window.addEventListener('oros-hide-wordfreq-btn-changed', function(e) {
     hideWordFreqBtn = e.detail.hidden;
     if (btnWordFreq) btnWordFreq.style.display = hideWordFreqBtn ? 'none' : '';
+  });
+  window.addEventListener('oros-hide-save-indicator-changed', function(e) {
+    hideSaveIndicator = e.detail.hidden;
+    updateSaveIndicator();
+  });
+  window.addEventListener('oros-quick-tbar-changed', function(e) {
+    quickTbarShow = e.detail.show;
+    if (toolbarCenter) toolbarCenter.style.display = quickTbarShow ? 'flex' : 'none';
+  });
+  window.addEventListener('oros-hide-lorem-btn-changed', function(e) {
+    hideLoremBtn = e.detail.hidden;
+    if (btnLorem) btnLorem.style.display = hideLoremBtn ? 'none' : '';
   });
   window.addEventListener('oros-language-changed', function(e) {
     updateStats();
@@ -1144,7 +1313,9 @@
   });
 
   if (btnClear) btnClear.addEventListener('click', function() {
-    var msg = getCurrentLang() === 'el' ? 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.' : 'Are you sure? All content will be lost.';
+    var msg = getCurrentLang() === 'el'
+      ? 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.'
+      : 'Are you sure? All content will be lost.';
     if (confirm(msg)) {
       richEditor.innerHTML = '';
       saveContent();
@@ -1152,6 +1323,8 @@
       showToast(getTrans('toast_cleared'));
     }
   });
+
+  if (btnLorem) btnLorem.addEventListener('click', insertLoremIpsum);
 
   if (btnExport) {
     btnExport.addEventListener('click', function(e) {
@@ -1179,6 +1352,7 @@
       if (contextMenu) {
         contextMenu.remove();
         contextMenu = null;
+        removeCloseListeners();
       }
     });
     richEditor.addEventListener('contextmenu', function(e) {
@@ -1186,18 +1360,26 @@
         showContextMenu(e);
       }
     });
-    richEditor.addEventListener('keyup', handleSmartTypography);
+    richEditor.addEventListener('keyup', function() {
+      handleSmartTypography();
+      playTypewriterSound();
+    });
     richEditor.addEventListener('paste', handleSmartPaste);
   }
 
+  // ========== SAVE INDICATOR LIVE TICK ==========
+  setInterval(updateSaveIndicator, 30000);
+
   // ========== INITIALIZE ==========
+  initTypewriterSound();
+  setupMainToolbarButtons();
   loadContent();
   loadMetadata();
   renderMetaDates();
   setupMetadataHandlers();
-  setupQuickFormatToolbar();
   initFocusMode();
   updateStats();
   updateGoalUnitLabels();
+  updateReadingProgress();
 
 })();

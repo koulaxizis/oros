@@ -1,0 +1,72 @@
+/* ============================================
+   orOS Fork Awesome Icons — Self-hosted
+   ============================================ */
+
+@font-face {
+  font-family: 'ForkAwesome';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/forkawesome-webfont.woff2') format('woff2'),
+       url('../fonts/forkawesome-webfont.woff') format('woff'),
+       url('../fonts/forkawesome-webfont.ttf') format('truetype');
+}
+
+.fa {
+  font-family: 'ForkAwesome';
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== HEADER ICONS ===== */
+.fa-eye-slash:before   { content: '\f070'; }
+.fa-cog:before          { content: '\f013'; }
+.fa-sun-o:before        { content: '\f185'; }
+.fa-moon-o:before       { content: '\f186'; }
+
+/* ===== TOOLBAR — FILE ACTIONS ===== */
+.fa-save:before          { content: '\f0c7'; }
+.fa-folder-open:before   { content: '\f07c'; }
+.fa-trash-o:before       { content: '\f014'; }
+.fa-download:before      { content: '\f019'; }
+.fa-pencil:before        { content: '\f040'; }
+
+/* ===== TOOLBAR — FORMATTING ===== */
+.fa-bold:before          { content: '\f032'; }
+.fa-italic:before        { content: '\f033'; }
+.fa-underline:before     { content: '\f0cd'; }
+.fa-strikethrough:before { content: '\f0cc'; }
+.fa-header:before        { content: '\f1dc'; }
+.fa-list-ul:before       { content: '\f03a'; }
+.fa-list-ol:before       { content: '\f0cb'; }
+
+/* ===== TOOLBAR — TOOLS ===== */
+.fa-bullseye:before      { content: '\f140'; }
+.fa-info-circle:before   { content: '\f05a'; }
+.fa-search:before        { content: '\f002'; }
+.fa-bar-chart:before     { content: '\f080'; }
+
+/* ===== GOAL BAR ===== */
+.fa-check:before         { content: '\f00c'; }
+.fa-times:before         { content: '\f00d'; }
+
+/* ===== FIND & REPLACE ===== */
+.fa-exchange:before      { content: '\f0ec'; }
+.fa-refresh:before       { content: '\f021'; }
+
+/* ===== DROPDOWN ===== */
+.fa-caret-down:before    { content: '\f0d7'; }
+
+/* ===== CONTEXT MENU ===== */
+.fa-undo:before          { content: '\f0e2'; }
+.fa-repeat:before        { content: '\f01e'; }
+
+.fa-align-left:before { content: "\f036"; }
+.fa-align-center:before { content: "\f037"; }
+.fa-align-right:before { content: "\f038"; }
+.fa-align-justify:before { content: "\f03a"; }

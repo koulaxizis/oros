@@ -1,10 +1,11 @@
 {
-  "name": "orOS Writer — Document Metadata Edition",
-  "short_name": "orOS Writer",
-  "description": "Privacy-first creative toolkit. No tracking, no ads, fully offline. Now with Document Metadata & Frontmatter support.",
-  "start_url": "/",
-  "scope": "/",
+  "name": "orOS Writer",
+  "short_name": "orOS",
+  "description": "Privacy-first rich text editor. Works offline. No tracking.",
+  "start_url": "editor.html",
+  "scope": ".",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#1b1a18",
   "theme_color": "#c8a96e",
   "icons": [
@@ -16,6 +17,6 @@
     }
   ],
   "categories": ["productivity", "utilities"],
-  "orientation": "any",
-  "lang": "en"
+  "lang": "en",
+  "dir": "ltr"
 }

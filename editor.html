@@ -1,185 +1,322 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>orOS Writer</title>
-<link rel="stylesheet" href="assets/css/style.css" />
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#0f172a"/>
-<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="orOS Writer — Privacy-first rich text editor. Works offline. No tracking.">
+  <title>orOS Writer</title>
+  <script src="config.js"></script>
+  <script>
+    document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
+    var cLink = document.createElement('link');
+    cLink.rel = 'canonical';
+    cLink.href = OROS_CONFIG.domain + window.location.pathname;
+    document.head.appendChild(cLink);
+  </script>
+  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preload" href="assets/fonts/nunito-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-extrabold.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/icons.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <script src="assets/js/components/header.js" defer></script>
+  <script src="assets/js/components/footer.js" defer></script>
+  <script src="assets/js/editor.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
 </head>
 <body>
 
-<div id="oros-header"></div>
+  <div id="oros-header"></div>
 
-<!-- Unified Toolbar (single bar, top) -->
-<div class="main-toolbar">
-  <!-- Format group (toggleable via Settings) -->
-  <div class="toolbar-group" id="quick-format-toolbar">
-    <button class="fmt-btn" data-cmd="bold" data-i18n-tooltip="toolbar_bold" title="Bold">B</button>
-    <button class="fmt-btn" data-cmd="italic" data-i18n-tooltip="toolbar_italic" title="Italic">I</button>
-    <button class="fmt-btn" data-cmd="underline" data-i18n-tooltip="toolbar_underline" title="Underline">U</button>
-    <div class="toolbar-divider"></div>
-    <button class="fmt-btn" data-block="H1" data-i18n-tooltip="toolbar_h1" title="Heading 1">#</button>
-    <button class="fmt-btn" data-block="H2" data-i18n-tooltip="toolbar_h2" title="Heading 2">##</button>
-    <button class="fmt-btn" data-block="H3" data-i18n-tooltip="toolbar_h3" title="Heading 3">###</button>
-    <div class="toolbar-divider"></div>
-    <button class="fmt-btn" data-cmd="insertUnorderedList" data-i18n-tooltip="toolbar_bullet_list" title="Bullet List">•</button>
-    <button class="fmt-btn" data-cmd="insertOrderedList" data-i18n-tooltip="toolbar_number_list" title="Numbered List">1.</button>
-    <div class="toolbar-divider"></div>
-  </div>
-  <!-- File actions -->
-  <div class="toolbar-group">
-    <button id="btn-save" class="action-btn primary-btn" data-i18n-tooltip="tooltip_save">
-      <span class="icon">💾</span>
-    </button>
-    <button id="btn-open" class="action-btn" data-i18n-tooltip="tooltip_open">
-      <span class="icon">📂</span>
-    </button>
-    <input type="file" id="file-input" accept=".txt,.md,.markdown" style="display:none;" aria-hidden="true"/>
-    <button id="btn-clear" class="action-btn warning-btn" data-i18n-tooltip="tooltip_clear">
-      <span class="icon">🗑</span>
-    </button>
-    <div class="dropdown-container">
-      <button id="btn-export" class="action-btn dropdown-trigger" data-i18n-tooltip="tooltip_export">
-        <span class="icon">📥</span>
-      </button>
-      <div class="dropdown-menu" id="export-dropdown">
-        <button data-format="md" data-i18n="export_md">Markdown (.md)</button>
-        <button data-format="txt" data-i18n="export_txt">Plain Text (.txt)</button>
-        <button data-format="rtf" data-i18n="export_rtf">Rich Text (.rtf)</button>
-        <button data-format="doc" data-i18n="export_doc">Microsoft Word (.doc)</button>
-        <button data-format="pdf" data-i18n="export_pdf">PDF (.pdf)</button>
+  <div id="editor-wrapper">
+
+    <div class="reading-progress-container">
+      <div class="reading-progress-bar" id="reading-progress-bar"></div>
+    </div>
+
+    <div class="main-toolbar" id="main-toolbar">
+      <div class="toolbar-group toolbar-left">
+        <button class="action-btn" id="btn-save" data-i18n-tooltip="tooltip_save" title="Save (Ctrl+S)">
+          <i class="fa fa-save"></i>
+        </button>
+        <button class="action-btn" id="btn-open" data-i18n-tooltip="tooltip_open" title="Open file">
+          <i class="fa fa-folder-open"></i>
+        </button>
+        <input type="file" id="file-input" accept=".txt,.md,.markdown,.rtf" style="display:none;">
+        <button class="action-btn" id="btn-clear" data-i18n-tooltip="tooltip_clear" title="Clear all content">
+          <i class="fa fa-trash-o"></i>
+        </button>
+      </div>
+
+      <div class="toolbar-group toolbar-center">
+        <button class="fmt-text-btn" data-cmd="bold" data-i18n-tooltip="toolbar_bold" title="Bold">
+          <i class="fa fa-bold"></i>
+        </button>
+        <button class="fmt-text-btn" data-cmd="italic" data-i18n-tooltip="toolbar_italic" title="Italic">
+          <i class="fa fa-italic"></i>
+        </button>
+        <button class="fmt-text-btn" data-cmd="underline" data-i18n-tooltip="toolbar_underline" title="Underline">
+          <i class="fa fa-underline"></i>
+        </button>
+        <span class="tb-separator"></span>
+        <button class="fmt-text-btn" data-h="H1" data-block="h1" data-i18n-tooltip="toolbar_h1" title="Heading 1">H1</button>
+        <button class="fmt-text-btn" data-h="H2" data-block="h2" data-i18n-tooltip="toolbar_h2" title="Heading 2">H2</button>
+        <button class="fmt-text-btn" data-h="H3" data-block="h3" data-i18n-tooltip="toolbar_h3" title="Heading 3">H3</button>
+        <span class="tb-separator"></span>
+        <button class="action-btn" id="btn-bullet" data-cmd="insertUnorderedList" data-i18n-tooltip="toolbar_bullet_list" title="Bullet list">
+          <i class="fa fa-list-ul"></i>
+        </button>
+        <button class="action-btn" id="btn-number" data-cmd="insertOrderedList" data-i18n-tooltip="toolbar_number_list" title="Numbered list">
+          <i class="fa fa-list-ol"></i>
+        </button>
+        <span class="tb-separator"></span>
+        <button class="action-btn" data-cmd="justifyLeft" data-i18n-tooltip="toolbar_align_left" title="Align left">
+          <i class="fa fa-align-left"></i>
+        </button>
+        <button class="action-btn" data-cmd="justifyCenter" data-i18n-tooltip="toolbar_align_center" title="Align center">
+          <i class="fa fa-align-center"></i>
+        </button>
+        <button class="action-btn" data-cmd="justifyRight" data-i18n-tooltip="toolbar_align_right" title="Align right">
+          <i class="fa fa-align-right"></i>
+        </button>
+        <button class="action-btn" data-cmd="justifyFull" data-i18n-tooltip="toolbar_align_justify" title="Justify">
+          <i class="fa fa-align-justify"></i>
+        </button>
+      </div>
+
+      <div class="toolbar-group toolbar-right">
+        <button class="action-btn" id="btn-goal" data-i18n-tooltip="tooltip_goal" title="Writing goal tracker (Ctrl+G)">
+          <i class="fa fa-bullseye"></i>
+        </button>
+        <button class="action-btn" id="btn-outline" data-i18n-tooltip="tooltip_outline" title="Document outline">
+          <i class="fa fa-list-ul"></i>
+        </button>
+        <button class="action-btn" id="btn-metadata" data-i18n-tooltip="tooltip_metadata" title="Document metadata">
+          <i class="fa fa-info-circle"></i>
+        </button>
+        <button class="action-btn" id="btn-find" data-i18n-tooltip="tooltip_find" title="Find and replace (Ctrl+F)">
+          <i class="fa fa-search"></i>
+        </button>
+        <button class="action-btn" id="btn-wordfreq" data-i18n-tooltip="tooltip_word_freq" title="Word frequency">
+          <i class="fa fa-bar-chart"></i>
+        </button>
+        <button class="action-btn" id="btn-lorem" data-i18n-tooltip="tooltip_lorem_ipsum" title="Insert sample text">
+          <i class="fa fa-pencil"></i>
+        </button>
+        <span class="tb-separator"></span>
+        <div class="dropdown" id="export-dropdown-container">
+          <button class="action-btn dropdown-toggle" id="btn-export" data-i18n-tooltip="tooltip_export" title="Export document">
+            <i class="fa fa-download"></i>
+            <i class="fa fa-caret-down dropdown-arrow-icon"></i>
+          </button>
+          <div class="dropdown-content" id="export-dropdown">
+            <button data-format="md" data-i18n="export_md">Markdown (.md)</button>
+            <button data-format="txt" data-i18n="export_txt">Plain Text (.txt)</button>
+            <button data-format="rtf" data-i18n="export_rtf">Rich Text (.rtf)</button>
+            <button data-format="doc" data-i18n="export_doc">Microsoft Word (.doc)</button>
+            <button data-format="pdf" data-i18n="export_pdf">PDF (.pdf)</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="toolbar-divider"></div>
+
+    <div class="goal-bar" id="goal-bar">
+      <select id="goal-unit">
+        <option value="words" data-i18n="goal_unit_words">Words</option>
+        <option value="chars" data-i18n="goal_unit_chars">Characters</option>
+        <option value="paras" data-i18n="goal_unit_paras">Paragraphs</option>
+      </select>
+      <input type="number" id="goal-target-input" min="1" placeholder="Target" />
+      <label class="goal-lock-label"><input type="checkbox" id="goal-lock"> Lock</label>
+      <button class="mini-btn" id="btn-set-goal"><i class="fa fa-check"></i></button>
+      <button class="mini-btn" id="btn-clear-goal"><i class="fa fa-trash-o"></i></button>
+      <button class="mini-btn" id="btn-close-goal"><i class="fa fa-times"></i></button>
+    </div>
+
+    <div class="find-replace-bar" id="find-replace-bar">
+      <input type="text" id="find-find" placeholder="Find..." />
+      <input type="text" id="find-replace" placeholder="Replace..." />
+      <button class="mini-btn" id="btn-fr-replace" data-i18n-tooltip="btn_replace" title="Replace"><i class="fa fa-exchange"></i></button>
+      <button class="mini-btn" id="btn-fr-replace-all" data-i18n-tooltip="btn_replace_all" title="Replace all"><i class="fa fa-refresh"></i></button>
+      <span id="fr_results"></span>
+      <button class="mini-btn" id="btn-close-fr"><i class="fa fa-times"></i></button>
+    </div>
+
+    <div class="rich-wrapper">
+      <div class="save-indicator-overlay" id="save-indicator"></div>
+      <div class="stats-overlay" id="stats-overlay">
+        <div class="stats-default" id="stats-default"></div>
+        <div class="stats-goal" id="stats-goal" style="display:none;"></div>
+        <div class="stats-detailed" id="stats-detailed"></div>
+      </div>
+      <div class="rich-editor" id="rich-editor" contenteditable="true" data-placeholder="Start writing..." data-i18n-placeholder="editor_placeholder"></div>
+    </div>
+
   </div>
-  <!-- Tools -->
-  <div class="toolbar-group">
-    <button id="btn-goal" class="tool-btn" data-i18n-tooltip="tooltip_goal" title="Writing goal tracker">🎯</button>
-    <button id="btn-outline" class="tool-btn" data-i18n-tooltip="tooltip_outline" title="Document outline">📑</button>
-    <button id="btn-metadata" class="tool-btn" data-i18n-tooltip="tooltip_metadata" title="Document metadata">ℹ️</button>
-    <button id="btn-find" class="tool-btn" data-i18n-tooltip="tooltip_find" title="Find and replace">🔍</button>
-    <button id="btn-wordfreq" class="tool-btn" data-i18n-tooltip="word_freq_title" title="Word Frequency">📊</button>
+
+  <div class="side-panel" id="metadata-panel" style="display:none;">
+    <div class="panel-header">
+      <span class="panel-title" data-i18n="meta_panel_title">Document Info</span>
+      <button class="panel-close mini-btn" id="btn-close-metadata"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="panel-body">
+      <div class="meta-field">
+        <label data-i18n="meta_label_title">Title</label>
+        <input type="text" id="meta-title" placeholder="Document title" />
+      </div>
+      <div class="meta-field">
+        <label data-i18n="meta_label_author">Author</label>
+        <input type="text" id="meta-author" placeholder="Your name" />
+      </div>
+      <div class="meta-field">
+        <label data-i18n="meta_label_tags">Tags</label>
+        <input type="text" id="meta-tags" placeholder="comma,separated,tags" />
+      </div>
+      <div class="meta-field">
+        <label data-i18n="meta_label_category">Category</label>
+        <input type="text" id="meta-category" placeholder="Category" />
+      </div>
+      <div class="meta-dates">
+        <div class="meta-date-row" id="meta-created"></div>
+        <div class="meta-date-row" id="meta-modified"></div>
+      </div>
+    </div>
   </div>
-  <!-- Save indicator (right side) -->
-  <span id="save-indicator" class="save-indicator">—</span>
-</div>
 
-<!-- Main Content Area -->
-<main class="editor-wrapper">
+  <div class="side-panel" id="outline-panel" style="display:none;">
+    <div class="panel-header">
+      <span class="panel-title" data-i18n="outline_title">Document Outline</span>
+      <button class="panel-close mini-btn" id="btn-close-outline"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="panel-body">
+      <div id="outline-list"></div>
+    </div>
+  </div>
 
-<div id="rich-wrapper">
-<div id="rich-editor" contenteditable="true" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Rich text editor" tabindex="0" data-placeholder="Start writing..." data-i18n-placeholder="editor_placeholder"></div>
+  <div class="side-panel" id="wordfreq-panel" style="display:none;">
+    <div class="panel-header">
+      <span class="panel-title" data-i18n="word_freq_title">Word Frequency</span>
+      <button class="panel-close mini-btn" id="btn-close-wordfreq"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="panel-body">
+      <div class="wordfreq-summary" id="wordfreq-summary"></div>
+      <div class="wordfreq-list" id="wordfreq-list"></div>
+    </div>
+  </div>
 
-<!-- Reading Progress Bar -->
-<div id="reading-progress-bar" class="reading-progress"></div>
+  <div class="settings-modal">
+    <div class="settings-modal-overlay"></div>
+    <div class="settings-modal-content">
+      <div class="settings-header">
+        <h2 data-i18n="settings">Settings</h2>
+        <button class="settings-close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="settings-nav">
+        <button class="tab-btn active" data-tab="global-settings" data-i18n="tab_global">Global</button>
+        <button class="tab-btn" data-tab="writer-settings" data-i18n="tab_writer">Writer</button>
+      </div>
+      <div class="settings-body">
+        <div class="tab-panel" id="global-settings" style="display:flex;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_zen">Zen Mode</span>
+              <label class="switch"><input type="checkbox" id="toggle-zen-mode"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="install_app">Install as App</span>
+              <button class="btn-install" id="btn-install" disabled data-i18n="install_app">Install</button>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="beta-section">
+              <div class="beta-header" data-i18n="beta_title">Beta Channel</div>
+              <p class="beta-warning" data-i18n="beta_warning">This is a beta version. Features may change.</p>
+              <div class="beta-links">
+                <a href="https://github.com/koulaxizis/oros-beta" target="_blank" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
+                <a href="https://koulaxizis.github.io/oros-beta/editor.html" target="_blank" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" id="writer-settings" style="display:none;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_reading_progress">Reading Progress Bar</span>
+              <label class="switch"><input type="checkbox" id="toggle-reading-progress"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_smart_typography">Smart Typography</span>
+              <label class="switch"><input type="checkbox" id="toggle-smart-typography"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_focus_mode">Focus Mode</span>
+              <label class="switch"><input type="checkbox" id="toggle-focus-mode"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_quick_toolbar">Quick Format Toolbar</span>
+              <label class="switch"><input type="checkbox" id="toggle-quick-tbar"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="setting_typewriter_sound">Typewriter Sound</span>
+              <label class="switch"><input type="checkbox" id="toggle-typewriter-sound"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_stats">Hide Stats Overlay</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-stats"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_save_indicator">Hide Save Indicator</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-save-indicator"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_goal_btn">Hide Goal Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-goal-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_outline_btn">Hide Outline Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-outline-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_metadata_btn">Hide Metadata Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-metadata-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_find_btn">Hide Find Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-find-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_wordfreq_btn">Hide Word Frequency Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-wordfreq-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="setting_hide_lorem_btn">Hide Lorem Ipsum Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-lorem-btn"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <table class="shortcut-table">
+              <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
+              <tbody>
+                <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td></tr>
+                <tr><td>Goal</td><td><kbd>Ctrl+G</kbd></td></tr>
+                <tr><td>Find</td><td><kbd>Ctrl+F</kbd></td></tr>
+                <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
+                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<!-- Goal Progress Bar -->
-<div id="goal-bar" class="goal-bar" style="display:none;">
-<select id="goal-unit">
-<option value="words" data-i18n="goal_unit_words">Words</option>
-<option value="chars" data-i18n="goal_unit_chars">Characters</option>
-<option value="paras" data-i18n="goal_unit_paras">Paragraphs</option>
-</select>
-<input type="number" id="goal-target-input" min="1" placeholder="0" data-i18n-placeholder="goal_target_placeholder" aria-label="Target number"/>
-<label class="goal-lock-label"><input type="checkbox" id="goal-lock"/><span data-i18n="goal_lock_label">Lock</span></label>
-<button id="btn-set-goal" class="goal-action-btn" data-i18n-tooltip="btn_set_goal_tt" title="Set">✓</button>
-<button id="btn-clear-goal" class="goal-action-btn" data-i18n-tooltip="btn_clear_goal_tt" title="Clear goal">🗑</button>
-<button id="btn-close-goal" class="goal-action-btn" data-i18n-tooltip="btn_close_tt" title="Close">×</button>
-</div>
-
-<!-- Stats Overlay -->
-<div id="stats-overlay" class="stats-overlay">
-<span id="stats-default" class="stats-toggle">0 words · 0 chars ▾</span>
-<span id="stats-goal" style="display:none;"></span>
-<div id="stats-detailed" class="stats-detailed" style="display:none;">
-<div class="stat-row"><span data-i18n="stats_chars_with_spaces">Chars w/spaces</span><span id="stat-chars-with-spaces">-</span></div>
-<div class="stat-row"><span data-i18n="stats_chars_no_spaces">Chars no spaces</span><span id="stat-chars-no-spaces">-</span></div>
-<div class="stat-row"><span data-i18n="stats_sentences">Sentences</span><span id="stat-sentences">-</span></div>
-<div class="stat-row"><span data-i18n="stats_reading_time">Reading time</span><span id="stat-reading-time">-</span></div>
-<div class="stat-row"><span data-i18n="stats_speaking_time">Speaking time</span><span id="stat-speaking-time">-</span></div>
-</div>
-</div>
-
-<!-- Metadata Panel -->
-<div id="metadata-panel" class="side-panel left-panel" style="display:none;" role="complementary" aria-labelledby="meta-title-label">
-<div class="panel-header">
-<span data-i18n="meta_panel_title">Metadata</span>
-<button id="btn-close-metadata" class="panel-close-btn" data-i18n-tooltip="btn_close_tt">×</button>
-</div>
-<div class="metadata-fields">
-<div class="form-group">
-<label id="meta-title-label" class="form-label" for="meta-title"><span data-i18n="meta_label_title">Title</span></label>
-<input type="text" id="meta-title" class="form-control form-small" placeholder="Enter document title..." data-i18n-placeholder="meta_placeholder_title" aria-describedby="meta-title-label"/>
-</div>
-<div class="form-group">
-<label class="form-label" for="meta-author"><span data-i18n="meta_label_author">Author</span></label>
-<input type="text" id="meta-author" class="form-control form-small" placeholder="Your name..." data-i18n-placeholder="meta_placeholder_author" aria-label="Author"/>
-</div>
-<div class="form-group">
-<label class="form-label" for="meta-tags"><span data-i18n="meta_label_tags">Tags</span></label>
-<input type="text" id="meta-tags" class="form-control form-small" placeholder="tag1, tag2, tag3..." data-i18n-placeholder="meta_placeholder_tags" aria-label="Tags"/>
-</div>
-<div class="form-group">
-<label class="form-label" for="meta-category"><span data-i18n="meta_label_category">Category</span></label>
-<input type="text" id="meta-category" class="form-control form-small" placeholder="Blog post, Article, Story..." data-i18n-placeholder="meta_placeholder_category" aria-label="Category"/>
-</div>
-<div class="meta-info">
-<p id="meta-created"></p>
-<p id="meta-modified"></p>
-</div>
-</div>
-</div>
-
-<!-- Document Outline Panel -->
-<div id="outline-panel" class="side-panel right-panel" style="display:none;" role="complementary" aria-label="Document outline">
-<div class="panel-header">
-<span data-i18n="outline_title">Outline</span>
-<button id="btn-close-outline" class="panel-close-btn" data-i18n-tooltip="btn_close_tt">×</button>
-</div>
-<div id="outline-list" class="outline-list"></div>
-</div>
-
-<!-- Word Frequency Panel -->
-<div id="wordfreq-panel" class="side-panel right-panel" style="display:none;" role="complementary" aria-label="Word frequency analysis">
-<div class="panel-header">
-<span data-i18n="word_freq_title">Word Frequency</span>
-<button id="btn-close-wordfreq" class="panel-close-btn" data-i18n-tooltip="btn_close_tt">×</button>
-</div>
-<div id="wordfreq-summary" class="wordfreq-summary"></div>
-<div id="wordfreq-list" class="wordfreq-list"></div>
-</div>
-
-</div><!-- /rich-wrapper -->
-
-<!-- Find & Replace Bar -->
-<div id="find-replace-bar" class="find-replace-bar" style="display:none;">
-<div class="fr-column">
-<input type="text" id="find-find" placeholder="Find..." data-i18n-placeholder="fr_find_placeholder" class="fr-input" aria-label="Find"/>
-<div id="fr_results" class="fr-results"></div>
-</div>
-<div class="fr-separator">→</div>
-<div class="fr-column">
-<input type="text" id="find-replace" placeholder="Replace..." data-i18n-placeholder="fr_replace_placeholder" class="fr-input" aria-label="Replace"/>
-<div class="fr-buttons">
-<button id="btn-fr-replace" class="fr-button" data-i18n="fr_button_replace">Replace</button>
-<button id="btn-fr-replace-all" class="fr-button fr-button-secondary" data-i18n="fr_button_replace_all">Replace All</button>
-</div>
-</div>
-<button id="btn-close-fr" class="close-button" aria-label="Close find bar">✕</button>
-</div>
-
-</main>
-
-<!-- Footer Component Mount Point -->
-<footer id="oros-footer"></footer>
-
-<script src="assets/js/components/header.js"></script>
-<script src="assets/js/components/footer.js"></script>
-<script src="assets/js/main.js"></script>
-<script src="assets/js/editor.js"></script>
+  <div id="oros-footer"></div>
 
 </body>
 </html>

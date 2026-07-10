@@ -3,58 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Privacy-first creative toolkit for writers, musicians, photographers. No tracking, no ads, fully offline.">
-  <meta name="author" content="Christos Koulaxizis">
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="canonical" href="https://useoros.com/">
-  <link rel="manifest" href="manifest.json">
+  <meta name="description" content="orOS — The artist's operating system. Privacy-first creative toolkit. Works offline. No tracking.">
+  <title>orOS — The Artist's Operating System</title>
+  <script src="config.js"></script>
+  <script>
+    document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
+    var cLink = document.createElement('link');
+    cLink.rel = 'canonical';
+    cLink.href = OROS_CONFIG.domain + window.location.pathname;
+    document.head.appendChild(cLink);
+  </script>
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <title>orOS — Artist's Operating System</title>
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preload" href="assets/fonts/nunito-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-extrabold.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/icons.css">
   <link rel="stylesheet" href="assets/css/style.css">
 
-  <script>
-    (function(){
-      var t = localStorage.getItem('oros-theme');
-      if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
-    })();
-  </script>
+  <script src="assets/js/components/header.js" defer></script>
+  <script src="assets/js/components/footer.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
 </head>
-<body class="landing-page">
+<body>
 
   <div id="oros-header"></div>
-  <script src="assets/js/components/header.js"></script>
 
-  <main class="hero">
+  <section class="hero">
     <div class="container">
-      <img src="favicon.svg" alt="orOS" class="hero-logo">
-      <h1><b>or</b><i>OS</i></h1>
-      <p data-i18n="site_tagline">The artist's operating system</p>
-    </div>
-  </main>
+      <div class="hero-content">
+        <img src="favicon.svg" alt="orOS" class="hero-logo">
+        <h1>orOS</h1>
+        <p data-i18n="site_tagline">The artist's operating system</p>
+        <p data-i18n="tools_intro">Select a tool below. All applications work offline and respect your personal data.</p>
+      </div>
 
-  <section class="container">
-    <p style="text-align:center;color:var(--text-secondary);" data-i18n="tools_intro">
-      Select a tool below. All applications work offline and respect your personal data.
-    </p>
-
-    <div class="tools-grid">
-      <a href="editor.html" class="tool-card">
-        <div class="tool-icon">✏️</div>
-        <div class="tool-name" data-i18n="editor_name">Writer</div>
-        <div class="tool-desc" data-i18n="editor_desc">Simple text editor with autosave</div>
-      </a>
+      <div class="tools-grid">
+        <a href="editor.html" class="tool-card">
+          <div class="tool-icon"><i class="fa fa-pencil"></i></div>
+          <h2 class="tool-name" data-i18n="editor_name">Writer</h2>
+          <p class="tool-desc" data-i18n="editor_desc">Simple text editor with autosave</p>
+        </a>
+      </div>
     </div>
   </section>
 
-  <div id="oros-footer"></div>
-  <script src="assets/js/components/footer.js"></script>
+  <div class="settings-modal">
+    <div class="settings-modal-overlay"></div>
+    <div class="settings-modal-content">
+      <div class="settings-header">
+        <h2 data-i18n="settings">Settings</h2>
+        <button class="settings-close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="settings-nav">
+        <button class="tab-btn active" data-tab="global-settings" data-i18n="tab_global">Global</button>
+        <button class="tab-btn" data-tab="writer-settings" data-i18n="tab_writer">Writer</button>
+      </div>
+      <div class="settings-body">
+        <div class="tab-panel" id="global-settings" style="display:flex;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_zen">Zen Mode</span>
+              <label class="switch"><input type="checkbox" id="toggle-zen-mode"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="install_app">Install as App</span>
+              <button class="btn-install" id="btn-install" disabled data-i18n="install_app">Install</button>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="beta-section">
+              <div class="beta-header" data-i18n="beta_title">Beta Channel</div>
+              <p class="beta-warning" data-i18n="beta_warning">This is a beta version. Features may change.</p>
+              <div class="beta-links">
+                <a href="https://github.com/koulaxizis/oros-beta" target="_blank" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
+                <a href="https://koulaxizis.github.io/oros-beta/editor.html" target="_blank" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" id="writer-settings" style="display:none;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_reading_progress">Reading Progress Bar</span>
+              <label class="switch"><input type="checkbox" id="toggle-reading-progress"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_smart_typography">Smart Typography</span>
+              <label class="switch"><input type="checkbox" id="toggle-smart-typography"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_focus_mode">Focus Mode</span>
+              <label class="switch"><input type="checkbox" id="toggle-focus-mode"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_quick_toolbar">Quick Format Toolbar</span>
+              <label class="switch"><input type="checkbox" id="toggle-quick-tbar"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="setting_typewriter_sound">Typewriter Sound</span>
+              <label class="switch"><input type="checkbox" id="toggle-typewriter-sound"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_stats">Hide Stats Overlay</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-stats"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_save_indicator">Hide Save Indicator</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-save-indicator"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_goal_btn">Hide Goal Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-goal-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_outline_btn">Hide Outline Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-outline-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_metadata_btn">Hide Metadata Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-metadata-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_find_btn">Hide Find Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-find-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_wordfreq_btn">Hide Word Frequency Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-wordfreq-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="setting_hide_lorem_btn">Hide Lorem Ipsum Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-lorem-btn"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <table class="shortcut-table">
+              <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
+              <tbody>
+                <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td></tr>
+                <tr><td>Goal</td><td><kbd>Ctrl+G</kbd></td></tr>
+                <tr><td>Find</td><td><kbd>Ctrl+F</kbd></td></tr>
+                <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
+                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <script src="assets/js/main.js"></script>
+  <div id="oros-footer"></div>
+
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js').catch(function(err) {
+          console.warn('SW registration failed:', err);
+        });
+      });
     }
   </script>
+
 </body>
 </html>

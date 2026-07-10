@@ -1,535 +1,377 @@
-// ============================================
-// orOS — Core Functionality v0.5
-// Theme | Language | Zen Mode | Settings
-// Multi-language support (EN, EL, ES, IT, FR, DE)
-// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  'use strict';
 
-(function() {
-  var STORAGE_KEY = {
-    THEME: 'oros-theme',
-    LANGUAGE: 'oros-language',
-    HIDE_STATS: 'oros_hide_stats',
-    HIDE_QUICK_TBAR: 'oros_hide_quick_tbar',
-    FOCUS_MODE: 'oros_focus_mode',
-    READING_PROGRESS: 'oros_reading_progress',
-    SMART_TYPOGRAPHY: 'oros_smart_typography',
-    HIDE_GOAL_BTN: 'oros_hide_goal_btn',
-    HIDE_OUTLINE_BTN: 'oros_hide_outline_btn',
-    HIDE_METADATA_BTN: 'oros_hide_metadata_btn',
-    HIDE_FIND_BTN: 'oros_hide_find_btn',
-    HIDE_WORDFREQ_BTN: 'oros_hide_wordfreq_btn'
-  };
+  // ========== TOAST ==========
+  function showToast(message) {
+    var toast = document.getElementById('zen-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'zen-toast';
+      toast.className = 'zentool-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.display = '';
+    toast.classList.add('visible');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(function() {
+      toast.classList.remove('visible');
+    }, 3000);
+  }
+  window.orosShowToast = showToast;
 
-  var scriptEl = document.querySelector('script[src$="main.js"]');
-  var baseUrl = scriptEl ? scriptEl.src.replace(/main\.js$/, '') : 'assets/js/';
+  // ========== SYSTEM LANGUAGE DETECTION ==========
+  function detectLanguage() {
+    var stored = localStorage.getItem('oros-language');
+    if (stored) return stored;
+    var navLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
+    var supported = ['el', 'en', 'es', 'it', 'fr', 'de'];
+    return supported.indexOf(navLang) !== -1 ? navLang : 'en';
+  }
 
-  var translations = {};
-  window.OROS_TRANSLATIONS = translations;
+  var currentLang = detectLanguage();
+  localStorage.setItem('oros-language', currentLang);
 
+  // ========== THEME TOGGLE ==========
+  var themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function() {
+      var current = document.documentElement.getAttribute('data-theme') || localStorage.getItem('oros-theme') || 'dark';
+      var newTheme = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('oros-theme', newTheme);
+
+      var icon = themeToggle.querySelector('i');
+      if (icon) {
+        icon.className = newTheme === 'light' ? 'fa fa-moon-o' : 'fa fa-sun-o';
+      }
+    });
+  }
+
+  // ========== LANGUAGE SELECTOR ==========
+  var langSelect = document.getElementById('language-select');
+
+  if (langSelect) {
+    ['el', 'en', 'es', 'it', 'fr', 'de'].forEach(function(code) {
+      var opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = code.toUpperCase();
+      if (code === currentLang) opt.selected = true;
+      langSelect.appendChild(opt);
+    });
+
+    langSelect.addEventListener('change', function() {
+      var lang = this.value;
+      localStorage.setItem('oros-language', lang);
+
+      window.dispatchEvent(new CustomEvent('oros-language-changed', { detail: { lang: lang } }));
+
+      translatePage();
+    });
+  }
+
+  function translatePage() {
+    var lang = localStorage.getItem('oros-language') || 'en';
+    var translations = window.OROS_TRANSLATIONS && window.OROS_TRANSLATIONS[lang];
+
+    if (!translations) return;
+
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (translations[key]) el.textContent = translations[key];
+    });
+
+    document.querySelectorAll('[data-i18n-tooltip]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-tooltip');
+      if (translations[key]) el.title = translations[key];
+    });
+
+    document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-aria');
+      if (translations[key]) el.setAttribute('aria-label', translations[key]);
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-placeholder');
+      if (translations[key]) el.setAttribute('data-placeholder', translations[key]);
+    });
+  }
+
+  // ========== LOAD TRANSLATIONS ==========
+  fetch('assets/js/translations.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      window.OROS_TRANSLATIONS = data;
+      translatePage();
+      window.dispatchEvent(new CustomEvent('oros-language-changed', {
+        detail: { lang: localStorage.getItem('oros-language') || 'en' }
+      }));
+    })
+    .catch(function(e) { console.error('Failed to load translations:', e); });
+
+  // ========== ZEN MODE ==========
+  var zenBtn = document.getElementById('btn-zen');
+  if (zenBtn) {
+    zenBtn.addEventListener('click', function() {
+      var body = document.body;
+      var isZen = body.hasAttribute('data-zen');
+
+      if (isZen) {
+        body.removeAttribute('data-zen');
+      } else {
+        body.setAttribute('data-zen', 'true');
+      }
+
+      localStorage.setItem('oros-zen-mode', isZen ? 'false' : 'true');
+
+      window.dispatchEvent(new CustomEvent('oros-zen-mode-changed', {
+        detail: { enabled: !isZen }
+      }));
+    });
+  }
+
+  // ========== ZEN MODE TOAST (all pages) ==========
+  window.addEventListener('oros-zen-mode-changed', function(e) {
+    if (e.detail.enabled) {
+      var lang = localStorage.getItem('oros-language') || 'en';
+      var msg = lang === 'el'
+        ? 'Zen Mode · Esc για έξοδο · F9 εναλλαγή'
+        : 'Zen Mode · Esc to exit · F9 toggle';
+      showToast(msg);
+    }
+  });
+
+  // ========== KEYBOARD SHORTCUTS ==========
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F9') {
+      e.preventDefault();
+      if (zenBtn) zenBtn.click();
+    }
+    if (e.key === 'Escape') {
+      if (document.body.hasAttribute('data-zen')) {
+        if (zenBtn) zenBtn.click();
+      }
+    }
+  });
+
+  // ========== SETTINGS MODAL ==========
+  var settingsBtn = document.getElementById('btn-settings');
+  var settingsModal = document.querySelector('.settings-modal');
+
+  if (settingsBtn && settingsModal) {
+    settingsBtn.addEventListener('click', function() {
+      settingsModal.classList.add('visible');
+    });
+
+    var closeBtn = settingsModal.querySelector('.settings-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        settingsModal.classList.remove('visible');
+      });
+    }
+
+    var backdrop = settingsModal.querySelector('.settings-modal-overlay');
+    if (backdrop) {
+      backdrop.addEventListener('click', function() {
+        settingsModal.classList.remove('visible');
+      });
+    }
+
+    var tabBtns = settingsModal.querySelectorAll('.tab-btn');
+    var tabPanels = settingsModal.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        tabBtns.forEach(function(b) { b.classList.remove('active'); });
+        tabPanels.forEach(function(p) { p.style.display = 'none'; });
+
+        this.classList.add('active');
+        var panelId = this.getAttribute('data-tab');
+        var panel = settingsModal.querySelector('#' + panelId);
+        if (panel) panel.style.display = 'flex';
+      });
+    });
+  }
+
+  // ========== SETTINGS TOGGLES ==========
+
+  var readingProgressToggle = document.getElementById('toggle-reading-progress');
+  if (readingProgressToggle) {
+    readingProgressToggle.checked = localStorage.getItem('oros_reading_progress') !== 'false';
+    readingProgressToggle.addEventListener('change', function() {
+      var enabled = this.checked;
+      localStorage.setItem('oros_reading_progress', enabled ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-reading-progress-changed', {
+        detail: { enabled: enabled }
+      }));
+    });
+  }
+
+  var smartTypoToggle = document.getElementById('toggle-smart-typography');
+  if (smartTypoToggle) {
+    smartTypoToggle.checked = localStorage.getItem('oros_smart_typography') !== 'false';
+    smartTypoToggle.addEventListener('change', function() {
+      var enabled = this.checked;
+      localStorage.setItem('oros_smart_typography', enabled ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-smart-typography-changed', {
+        detail: { enabled: enabled }
+      }));
+    });
+  }
+
+  var focusModeToggle = document.getElementById('toggle-focus-mode');
+  if (focusModeToggle) {
+    focusModeToggle.checked = localStorage.getItem('oros_focus_mode') !== 'false';
+    focusModeToggle.addEventListener('change', function() {
+      var enabled = this.checked;
+      localStorage.setItem('oros_focus_mode', enabled ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-focus-mode-changed', {
+        detail: { enabled: enabled }
+      }));
+    });
+  }
+
+  var hideStatsToggle = document.getElementById('toggle-hide-stats');
+  if (hideStatsToggle) {
+    hideStatsToggle.checked = localStorage.getItem('oros_hide_stats') === 'true';
+    hideStatsToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_stats', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-stats-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideSaveIndicatorToggle = document.getElementById('toggle-hide-save-indicator');
+  if (hideSaveIndicatorToggle) {
+    hideSaveIndicatorToggle.checked = localStorage.getItem('oros_hide_save_indicator') === 'true';
+    hideSaveIndicatorToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_save_indicator', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-save-indicator-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideGoalBtnToggle = document.getElementById('toggle-hide-goal-btn');
+  if (hideGoalBtnToggle) {
+    hideGoalBtnToggle.checked = localStorage.getItem('oros_hide_goal_btn') === 'true';
+    hideGoalBtnToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_goal_btn', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-goal-btn-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideOutlineBtnToggle = document.getElementById('toggle-hide-outline-btn');
+  if (hideOutlineBtnToggle) {
+    hideOutlineBtnToggle.checked = localStorage.getItem('oros_hide_outline_btn') === 'true';
+    hideOutlineBtnToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_outline_btn', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-outline-btn-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideMetadataBtnToggle = document.getElementById('toggle-hide-metadata-btn');
+  if (hideMetadataBtnToggle) {
+    hideMetadataBtnToggle.checked = localStorage.getItem('oros_hide_metadata_btn') === 'true';
+    hideMetadataBtnToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_metadata_btn', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-metadata-btn-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideFindBtnToggle = document.getElementById('toggle-hide-find-btn');
+  if (hideFindBtnToggle) {
+    hideFindBtnToggle.checked = localStorage.getItem('oros_hide_find_btn') === 'true';
+    hideFindBtnToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_find_btn', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-find-btn-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideWordFreqBtnToggle = document.getElementById('toggle-hide-wordfreq-btn');
+  if (hideWordFreqBtnToggle) {
+    hideWordFreqBtnToggle.checked = localStorage.getItem('oros_hide_wordfreq_btn') === 'true';
+    hideWordFreqBtnToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_wordfreq_btn', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-wordfreq-btn-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var hideLoremBtnToggle = document.getElementById('toggle-hide-lorem-btn');
+  if (hideLoremBtnToggle) {
+    hideLoremBtnToggle.checked = localStorage.getItem('oros_hide_lorem_btn') === 'true';
+    hideLoremBtnToggle.addEventListener('change', function() {
+      var hidden = this.checked;
+      localStorage.setItem('oros_hide_lorem_btn', hidden ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-hide-lorem-btn-changed', {
+        detail: { hidden: hidden }
+      }));
+    });
+  }
+
+  var typewriterSoundToggle = document.getElementById('toggle-typewriter-sound');
+  if (typewriterSoundToggle) {
+    typewriterSoundToggle.checked = localStorage.getItem('oros_typewriter_sound') === 'true';
+    typewriterSoundToggle.addEventListener('change', function() {
+      var enabled = this.checked;
+      localStorage.setItem('oros_typewriter_sound', enabled ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-typewriter-sound-changed', {
+        detail: { enabled: enabled }
+      }));
+    });
+  }
+
+  // Quick Format Toolbar — checked = SHOW, default checked (visible)
+  var quickTbarToggle = document.getElementById('toggle-quick-tbar');
+  if (quickTbarToggle) {
+    quickTbarToggle.checked = localStorage.getItem('oros_quick_tbar_show') !== 'false';
+    quickTbarToggle.addEventListener('change', function() {
+      var show = this.checked;
+      localStorage.setItem('oros_quick_tbar_show', show ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('oros-quick-tbar-changed', {
+        detail: { show: show }
+      }));
+    });
+  }
+
+  // ========== PWA INSTALL PROMPT ==========
+  var installBtn = document.getElementById('btn-install');
   var deferredPrompt = null;
+
   window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
     deferredPrompt = e;
+    if (installBtn) installBtn.disabled = false;
   });
 
-  async function loadTranslations() {
-    try {
-      var resp = await fetch(baseUrl + 'translations.json');
-      translations = await resp.json();
-      window.OROS_TRANSLATIONS = translations;
-    } catch(e) {
-      console.warn('Could not load translations:', e);
-      translations = { en: {}, el: {}, es: {}, it: {}, fr: {}, de: {} };
-      window.OROS_TRANSLATIONS = translations;
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', async function() {
-    await loadTranslations();
-    initLanguage();
-    initBackToTop();
-    initZenMode();
-    initSettings();
-    applyTranslationsOnInit();
-    updateFooterCredits();
-    
-    // Theme is already applied by header.js, just initialize the button
-    initThemeButtonOnly();
-  });
-
-  function getLang() {
-    return localStorage.getItem(STORAGE_KEY.LANGUAGE) || 'en';
-  }
-
-  function getTrans(key) {
-    var lang = getLang();
-    var t = (translations[lang] || translations.en) || {};
-    return t[key] || key;
-  }
-
-  // ---------- Theme Button Only (theme already applied by header.js) ----------
-  function initThemeButtonOnly() {
-    var btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    
-    var currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('oros-theme') || 'light';
-    btn.innerHTML = currentTheme === 'dark' ? '🌙' : '☀️';
-    
-    btn.onclick = function() {
-      var current = document.documentElement.getAttribute('data-theme') || localStorage.getItem('oros-theme') || 'light';
-      var next = current === 'dark' ? 'light' : 'dark';
-      
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('oros-theme', next);
-      btn.innerHTML = next === 'dark' ? '🌙' : '☀️';
-      
-      var t = (translations[getLang()] || translations.en) || {};
-      btn.title = next === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light');
-      btn.setAttribute('aria-label', next === 'dark' ? (t.theme_dark || 'Dark') : (t.theme_light || 'Light'));
-    };
-  }
-
-  // ---------- Language ----------
-  function initLanguage() {
-    var savedLang = localStorage.getItem(STORAGE_KEY.LANGUAGE);
-    var currentLang;
-    if (savedLang && ['el', 'en', 'es', 'it', 'fr', 'de'].indexOf(savedLang) !== -1) {
-      currentLang = savedLang;
-    } else {
-      var bl = navigator.language.split('-')[0].toLowerCase();
-      currentLang = ['el', 'en', 'es', 'it', 'fr', 'de'].indexOf(bl) !== -1 ? bl : 'en';
-    }
-    applyLanguage(currentLang);
-    renderLangSelector(currentLang);
-  }
-
-  function applyLanguage(lang) {
-    var trans = translations[lang] || translations.en;
-    translatePage(trans, lang);
-    localStorage.setItem(STORAGE_KEY.LANGUAGE, lang);
-    updateFooterCredits();
-    updateSettingsModalLanguage(lang);
-    
-    // Re-render theme button with new language labels
-    initThemeButtonOnly();
-    
-    window.dispatchEvent(new CustomEvent('oros-language-changed', { detail: { lang: lang } }));
-  }
-
-  function translatePage(trans, lang) {
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n');
-      if (trans[key]) el.textContent = trans[key];
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-placeholder');
-      if (trans[key]) { el.placeholder = trans[key]; el.setAttribute('data-placeholder', trans[key]); }
-    });
-    document.querySelectorAll('[data-i18n-tooltip]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-tooltip');
-      if (trans[key]) el.title = trans[key];
-    });
-    document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-aria');
-      if (trans[key]) el.setAttribute('aria-label', trans[key]);
-    });
-  }
-
-  function applyTranslationsOnInit() {
-    var lang = getLang();
-    var trans = translations[lang] || translations.en;
-    translatePage(trans, lang);
-  }
-
-  function renderLangSelector(currentLang) {
-    var select = document.getElementById('language-select');
-    if (!select) return;
-    select.innerHTML = '';
-    var opts = [
-      {value:'en',label:'EN'},
-      {value:'el',label:'EL'},
-      {value:'es',label:'ES'},
-      {value:'it',label:'IT'},
-      {value:'fr',label:'FR'},
-      {value:'de',label:'DE'}
-    ];
-    opts.forEach(function(opt) {
-      var o = document.createElement('option');
-      o.value = opt.value;
-      o.textContent = opt.label;
-      if (opt.value === currentLang) o.selected = true;
-      select.appendChild(o);
-    });
-    select.onchange = function(e) { applyLanguage(e.target.value); };
-  }
-
-  // ---------- Footer Credits ----------
-  function updateFooterCredits() {
-    var trans = translations[getLang()] || translations.en;
-    var creditEl = document.querySelector('.footer-credits');
-    if (!creditEl) return;
-    var linkText = trans.footer_credits_link || 'Christos Koulaxizis';
-    var suffix = trans.footer_credits_suffix || '. Built with ♥ for artists.';
-    creditEl.innerHTML = '© 2026 <a href="https://koulaxizis.gr" target="_blank" rel="noopener" class="footer-link">' + linkText + '</a>' + suffix;
-  }
-
-  // ---------- Back to Top ----------
-  function initBackToTop() {
-    var btn = document.getElementById('back-to-top');
-    if (!btn) return;
-    window.addEventListener('scroll', function() {
-      btn.classList.toggle('visible', window.scrollY > 300);
-    }, { passive: true });
-    btn.onclick = function() { window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  }
-
-  // ---------- Zen Mode ----------
-  var zenActive = false;
-
-  function initZenMode() {
-    var btn = document.getElementById('btn-zen');
-    if (!btn) return;
-    zenActive = localStorage.getItem('oros-zen') === 'true';
-    if (zenActive) document.documentElement.setAttribute('data-zen', 'true');
-    btn.onclick = toggleZenMode;
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'F9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        e.preventDefault();
-        toggleZenMode();
-      }
-      if (e.key === 'Escape' && zenActive) {
-        toggleZenMode();
-      }
-    });
-  }
-
-  function toggleZenMode() {
-    zenActive = !zenActive;
-    if (zenActive) {
-      document.documentElement.setAttribute('data-zen', 'true');
-      localStorage.setItem('oros-zen', 'true');
-      showZenToast();
-    } else {
-      document.documentElement.removeAttribute('data-zen');
-      localStorage.removeItem('oros-zen');
-      removeZenToast();
-    }
-  }
-
-  window.toggleZenMode = toggleZenMode;
-
-  function showZenToast() {
-    removeZenToast();
-    var msg = getLang() === 'el'
-      ? '🧘 Zen Mode — Πάτα ESC ή F9 για έξοδο'
-      : '🧘 Zen Mode — Press ESC or F9 to exit';
-    var toast = document.createElement('div');
-    toast.className = 'zentool-toast visible';
-    toast.id = 'zen-toast';
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(function() {
-      var t = document.getElementById('zen-toast');
-      if (t) t.classList.remove('visible');
-    }, 3500);
-  }
-
-  function removeZenToast() {
-    var t = document.getElementById('zen-toast');
-    if (t) t.remove();
-  }
-
-  // ---------- Settings Modal ----------
-  function initSettings() {
-    var btn = document.getElementById('btn-settings');
-    if (!btn) return;
-    btn.onclick = openSettingsModal;
-  }
-
-  function openSettingsModal() {
-    var existing = document.querySelector('.settings-modal');
-    if (existing) existing.remove();
-
-    var lang = getLang();
-    var isEditor = !!document.getElementById('rich-editor');
-
-    var globalShortcuts, editorShortcuts;
-
-    if (lang === 'el') {
-      globalShortcuts = [['Zen Mode','F9'],['Έξοδος Zen','ESC']];
-      editorShortcuts = [['Αποθήκευση','Ctrl+S'],['Έντονα','Ctrl+B'],['Πλάγια','Ctrl+I'],['Υπογράμμιση','Ctrl+U'],['Αναίρεση','Ctrl+Z'],['Επαναφορά','Ctrl+Y'],['Εύρεση','Ctrl+F'],['Μορφοποίηση','Alt + Δεξί click']];
-    } else if (lang === 'es') {
-      globalShortcuts = [['Modo Zen','F9'],['Salir Zen','ESC']];
-      editorShortcuts = [['Guardar','Ctrl+S'],['Negrita','Ctrl+B'],['Cursiva','Ctrl+I'],['Subrayado','Ctrl+U'],['Deshacer','Ctrl+Z'],['Rehacer','Ctrl+Y'],['Buscar','Ctrl+F'],['Formato','Alt + Click derecho']];
-    } else if (lang === 'it') {
-      globalShortcuts = [['Modalità Zen','F9'],['Esci Zen','ESC']];
-      editorShortcuts = [['Salva','Ctrl+S'],['Grassetto','Ctrl+B'],['Corsivo','Ctrl+I'],['Sottolinea','Ctrl+U'],['Annulla','Ctrl+Z'],['Ripeti','Ctrl+Y'],['Trova','Ctrl+F'],['Formattazione','Alt + Click destro']];
-    } else if (lang === 'fr') {
-      globalShortcuts = [['Mode Zen','F9'],['Quitter Zen','ESC']];
-      editorShortcuts = [['Enregistrer','Ctrl+S'],['Gras','Ctrl+B'],['Italique','Ctrl+I'],['Souligner','Ctrl+U'],['Annuler','Ctrl+Z'],['Rétablir','Ctrl+Y'],['Rechercher','Ctrl+F'],['Format','Alt + Clic droit']];
-    } else if (lang === 'de') {
-      globalShortcuts = [['Zen-Modus','F9'],['Zen beenden','ESC']];
-      editorShortcuts = [['Speichern','Strg+S'],['Fett','Strg+B'],['Kursiv','Strg+I'],['Unterstreichen','Strg+U'],['Rückgängig','Strg+Z'],['Wiederholen','Strg+Y'],['Suchen','Strg+F'],['Format','Alt + Rechtsklick']];
-    } else {
-      globalShortcuts = [['Zen Mode','F9'],['Exit Zen','ESC']];
-      editorShortcuts = [['Save','Ctrl+S'],['Bold','Ctrl+B'],['Italic','Ctrl+I'],['Underline','Ctrl+U'],['Undo','Ctrl+Z'],['Redo','Ctrl+Y'],['Find','Ctrl+F'],['Format','Alt + Right-click']];
-    }
-
-    var colActionLabel = lang === 'el' ? 'Ενέργεια' : lang === 'es' ? 'Acción' : lang === 'it' ? 'Azione' : lang === 'fr' ? 'Action' : lang === 'de' ? 'Aktion' : 'Action';
-    var colKey = lang === 'el' ? 'Συντόμευση' : lang === 'es' ? 'Atajo' : lang === 'it' ? 'Scorciatoia' : lang === 'fr' ? 'Raccourci' : lang === 'de' ? 'Tastenkürzel' : 'Shortcut';
-
-    var globalShortcutsHtml = '';
-    globalShortcuts.forEach(function(pair) {
-      globalShortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
-    });
-
-    var editorShortcutsHtml = '';
-    editorShortcuts.forEach(function(pair) {
-      editorShortcutsHtml += '<tr><td>' + pair[0] + '</td><td><kbd>' + pair[1] + '</kbd></td></tr>';
-    });
-
-    var zenActive = localStorage.getItem('oros-zen') === 'true';
-    var navHtml = '<button class="tab-btn active" data-tab="global">' + getTrans('tab_global') + '</button>';
-    if (isEditor) {
-      navHtml += '<button class="tab-btn" data-tab="writer">' + getTrans('tab_writer') + '</button>';
-    }
-
-    var globalHtml = '' +
-      '<div class="toggles-container">' +
-        '<div class="toggle-row">' +
-          '<span class="toggle-label">' + getTrans('toggle_zen') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-zen"' + (zenActive ? ' checked' : '') + '><span class="slider"></span></label>' +
-        '</div>' +
-      '</div>' +
-      '<div class="settings-divider"></div>' +
-      '<table class="shortcut-table">' +
-        '<thead><tr><th>' + colActionLabel + '</th><th>' + colKey + '</th></tr></thead>' +
-        '<tbody>' + globalShortcutsHtml + '</tbody>' +
-      '</table>' +
-      '<div class="install-section">' +
-        '<button class="btn-install" id="btn-install-pwa">⬇ ' + getTrans('install_app') + '</button>' +
-      '</div>' +
-      '<div class="beta-section">' +
-        '<div class="beta-header">' + getTrans('beta_title') + '</div>' +
-        '<p class="beta-warning">' + getTrans('beta_warning') + '</p>' +
-        '<div class="beta-links">' +
-          '<a href="https://github.com/koulaxizis/oros-beta" target="_blank" rel="noopener" class="beta-btn">' + getTrans('beta_repo_link') + '</a>' +
-          '<a href="https://koulaxizis.github.io/oros-beta/" target="_blank" rel="noopener" class="beta-btn">' + getTrans('beta_live_link') + '</a>' +
-        '</div>' +
-      '</div>';
-
-    var panelsHtml = '<div class="tab-panel" id="panel-global">' + globalHtml + '</div>';
-
-    if (isEditor) {
-      var hideQuickTbar = localStorage.getItem(STORAGE_KEY.HIDE_QUICK_TBAR) === 'true';
-      var hideStats = localStorage.getItem(STORAGE_KEY.HIDE_STATS) === 'true';
-      var focusModeOn = localStorage.getItem(STORAGE_KEY.FOCUS_MODE) !== 'false';
-      var readingProgressOn = localStorage.getItem(STORAGE_KEY.READING_PROGRESS) !== 'false';
-      var smartTypographyOn = localStorage.getItem(STORAGE_KEY.SMART_TYPOGRAPHY) !== 'false';
-      var hideGoalBtn = localStorage.getItem(STORAGE_KEY.HIDE_GOAL_BTN) === 'true';
-      var hideOutlineBtn = localStorage.getItem(STORAGE_KEY.HIDE_OUTLINE_BTN) === 'true';
-      var hideMetadataBtn = localStorage.getItem(STORAGE_KEY.HIDE_METADATA_BTN) === 'true';
-      var hideFindBtn = localStorage.getItem(STORAGE_KEY.HIDE_FIND_BTN) === 'true';
-      var hideWordFreqBtn = localStorage.getItem(STORAGE_KEY.HIDE_WORDFREQ_BTN) === 'true';
-
-      var writerHtml = '' +
-        '<div class="toggles-container">' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_quick_toolbar') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-quick-tbar"' + (hideQuickTbar ? '' : ' checked') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_stats') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-stats"' + (hideStats ? '' : ' checked') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_focus_mode') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-focus-mode"' + (focusModeOn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_reading_progress') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-reading-progress"' + (readingProgressOn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_smart_typography') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-smart-typography"' + (smartTypographyOn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="settings-divider"></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_goal_btn') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-hide-goal-btn"' + (hideGoalBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_outline_btn') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-hide-outline-btn"' + (hideOutlineBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_metadata_btn') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-hide-metadata-btn"' + (hideMetadataBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_find_btn') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-hide-find-btn"' + (hideFindBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-          '<div class="toggle-row"><span class="toggle-label">' + getTrans('toggle_hide_wordfreq_btn') + '</span>' +
-          '<label class="switch"><input type="checkbox" id="toggle-hide-wordfreq-btn"' + (hideWordFreqBtn ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-        '</div>' +
-        '<div class="settings-divider"></div>' +
-        '<table class="shortcut-table">' +
-          '<thead><tr><th>' + colActionLabel + '</th><th>' + colKey + '</th></tr></thead>' +
-          '<tbody>' + editorShortcutsHtml + '</tbody>' +
-        '</table>' +
-        '<p style="font-size:0.72rem;color:var(--text-secondary);margin-top:0.5rem;font-style:italic;">' + getTrans('shortcuts_info_note') + '</p>';
-
-      panelsHtml += '<div class="tab-panel" id="panel-writer" style="display:none;">' + writerHtml + '</div>';
-    }
-
-    var modal = document.createElement('div');
-    modal.className = 'settings-modal';
-    modal.innerHTML =
-      '<div class="modal-backdrop"></div>' +
-      '<div class="modal-content">' +
-        '<header class="modal-header">' +
-          '<h2>' + getTrans('settings') + '</h2>' +
-          '<button class="close-btn">×</button>' +
-        '</header>' +
-        '<nav class="modal-nav">' + navHtml + '</nav>' +
-        panelsHtml +
-      '</div>';
-
-    document.body.appendChild(modal);
-
-    var closeFn = function() { modal.remove(); };
-    modal.querySelector('.close-btn').onclick = closeFn;
-    modal.querySelector('.modal-backdrop').onclick = closeFn;
-
-    var tabBtns = modal.querySelectorAll('.tab-btn');
-    tabBtns.forEach(function(btn) {
-      btn.onclick = function() {
-        tabBtns.forEach(function(b) { b.classList.remove('active'); });
-        this.classList.add('active');
-        var tabName = this.dataset.tab;
-        var globalPanel = modal.querySelector('#panel-global');
-        var writerPanel = modal.querySelector('#panel-writer');
-        if (globalPanel) globalPanel.style.display = tabName === 'global' ? '' : 'none';
-        if (writerPanel) writerPanel.style.display = tabName === 'writer' ? '' : 'none';
-      };
-    });
-
-    attachToggleHandlers(modal);
-    setupInstallButton(modal);
-  }
-
-  function attachToggleHandlers(modal) {
-    var zenToggle = modal.querySelector('#toggle-zen');
-    if (zenToggle) {
-      zenToggle.onchange = function() {
-        var shouldBeZen = this.checked;
-        var isCurrentlyZen = localStorage.getItem('oros-zen') === 'true';
-        if (shouldBeZen !== isCurrentlyZen) { toggleZenMode(); }
-      };
-    }
-
-    var tbarToggle = modal.querySelector('#toggle-quick-tbar');
-    if (tbarToggle) {
-      tbarToggle.onchange = function() {
-        var hide = !this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_QUICK_TBAR, hide ? 'true' : 'false');
-        var qft = document.getElementById('quick-format-toolbar');
-        if (qft) qft.style.display = hide ? 'none' : '';
-      };
-    }
-
-    var statsToggle = modal.querySelector('#toggle-stats');
-    if (statsToggle) {
-      statsToggle.onchange = function() {
-        var hide = !this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_STATS, hide ? 'true' : 'false');
-        var so = document.getElementById('stats-overlay');
-        if (so) so.style.display = hide ? 'none' : '';
-      };
-    }
-
-    var focusToggle = modal.querySelector('#toggle-focus-mode');
-    if (focusToggle) {
-      focusToggle.onchange = function() {
-        var enabled = this.checked;
-        localStorage.setItem(STORAGE_KEY.FOCUS_MODE, enabled ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-focus-mode-changed', { detail: { enabled: enabled } }));
-      };
-    }
-
-    var progressToggle = modal.querySelector('#toggle-reading-progress');
-    if (progressToggle) {
-      progressToggle.onchange = function() {
-        var enabled = this.checked;
-        localStorage.setItem(STORAGE_KEY.READING_PROGRESS, enabled ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-reading-progress-changed', { detail: { enabled: enabled } }));
-      };
-    }
-
-    var smartTypeToggle = modal.querySelector('#toggle-smart-typography');
-    if (smartTypeToggle) {
-      smartTypeToggle.onchange = function() {
-        var enabled = this.checked;
-        localStorage.setItem(STORAGE_KEY.SMART_TYPOGRAPHY, enabled ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-smart-typography-changed', { detail: { enabled: enabled } }));
-      };
-    }
-
-    var hideGoalBtnToggle = modal.querySelector('#toggle-hide-goal-btn');
-    if (hideGoalBtnToggle) {
-      hideGoalBtnToggle.onchange = function() {
-        var hidden = this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_GOAL_BTN, hidden ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-hide-goal-btn-changed', { detail: { hidden: hidden } }));
-      };
-    }
-
-    var hideOutlineBtnToggle = modal.querySelector('#toggle-hide-outline-btn');
-    if (hideOutlineBtnToggle) {
-      hideOutlineBtnToggle.onchange = function() {
-        var hidden = this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_OUTLINE_BTN, hidden ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-hide-outline-btn-changed', { detail: { hidden: hidden } }));
-      };
-    }
-
-    var hideMetadataBtnToggle = modal.querySelector('#toggle-hide-metadata-btn');
-    if (hideMetadataBtnToggle) {
-      hideMetadataBtnToggle.onchange = function() {
-        var hidden = this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_METADATA_BTN, hidden ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-hide-metadata-btn-changed', { detail: { hidden: hidden } }));
-      };
-    }
-
-    var hideFindBtnToggle = modal.querySelector('#toggle-hide-find-btn');
-    if (hideFindBtnToggle) {
-      hideFindBtnToggle.onchange = function() {
-        var hidden = this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_FIND_BTN, hidden ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-hide-find-btn-changed', { detail: { hidden: hidden } }));
-      };
-    }
-
-    var hideWordFreqToggle = modal.querySelector('#toggle-hide-wordfreq-btn');
-    if (hideWordFreqToggle) {
-      hideWordFreqToggle.onchange = function() {
-        var hidden = this.checked;
-        localStorage.setItem(STORAGE_KEY.HIDE_WORDFREQ_BTN, hidden ? 'true' : 'false');
-        window.dispatchEvent(new CustomEvent('oros-hide-wordfreq-btn-changed', { detail: { hidden: hidden } }));
-      };
-    }
-  }
-
-  function setupInstallButton(modal) {
-    var installBtn = modal.querySelector('#btn-install-pwa');
-    if (!installBtn) return;
-    if (deferredPrompt) {
-      installBtn.onclick = async function() {
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
+  if (installBtn) {
+    installBtn.addEventListener('click', function() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result) {
         deferredPrompt = null;
-        installBtn.disabled = true;
-        installBtn.textContent = getTrans('install_installed');
-      };
-    } else {
-      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-        installBtn.disabled = true;
-        installBtn.textContent = getTrans('install_already');
-      } else {
-        installBtn.disabled = true;
-        installBtn.textContent = getTrans('install_not_supported');
-      }
-    }
+      });
+    });
   }
 
-  function updateSettingsModalLanguage(lang) {
-    var existing = document.querySelector('.settings-modal');
-    if (existing) { existing.remove(); openSettingsModal(); }
-  }
-
-})();
+  // ========== INITIALIZE ==========
+  translatePage();
+});
