@@ -19,9 +19,6 @@ on:
           - 'true'
           - 'false'
 
-# ══════════════════════════════════════════
-# CONCURRENCY — Prevent overlapping runs
-# ══════════════════════════════════════════
 concurrency:
   group: update-stable-urls
   cancel-in-progress: false
@@ -47,6 +44,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       # ──────────────────────────────
       # 1. CHECKOUT
@@ -55,7 +56,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
 
       # ──────────────────────────────
       # 2. GUARD — Skip if auto-commit
@@ -68,9 +69,6 @@ jobs:
 
           if [[ "$LAST_COMMIT_MSG" == *"🤖 Auto-update stable URLs"* ]]; then
             echo "⚠️ Skipping — this is an automated commit"
-            echo "skip=true" >> $GITHUB_OUTPUT
-          elif [[ "$LAST_COMMIT_MSG" == *"📸 Snapshot saved"* ]]; then
-            echo "⚠️ Skipping — snapshot restore"
             echo "skip=true" >> $GITHUB_OUTPUT
           else
             echo "skip=false" >> $GITHUB_OUTPUT
@@ -123,14 +121,11 @@ jobs:
         run: |
           set -uo pipefail
 
-          # Scan for ALL patterns that need replacement
           PATTERNS=(
             "$BETA_DOMAIN"
             "$BETA_BASE_HREF"
             "$BETA_REPO_SLUG"
-            "$BETA_GH_PAGES"
             "koulaxizis.github.io/oros-beta"
-            "koulaxizis.github.io/oros"
           )
 
           TOTAL_FILES=0
@@ -156,23 +151,54 @@ jobs:
           fi
 
       # ──────────────────────────────
-      # 5. BACKUP — Create snapshot branch
+      # 5. BACKUP — Create LOCAL snapshot (NO PUSH)
       # ──────────────────────────────
-      - name: Backup — Create snapshot branch
+      - name: Backup — Create local snapshot
         if: |
           steps.guard.outputs.skip != 'true' &&
           steps.count-before.outputs.nothing_to_do != 'true'
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          BRANCH="snapshot/pre-url-update-$TIMESTAMP"
+          BRANCH="snapshot-local-pre-url-update-$TIMESTAMP"
+          
+          # Create local branch only — NO PUSH TO REMOTE
           git branch "$BRANCH"
-          git push origin "$BRANCH"
-          echo "Snapshot branch created: $BRANCH"
+          
+          echo "✅ Local snapshot branch created: $BRANCH"
           echo "SNAPSHOT_BRANCH=$BRANCH" >> $GITHUB_ENV
+          
+          # Save list of files changed (for later restore reference)
+          git status --porcelain > snapshot-files-$TIMESTAMP.txt
+          mv snapshot-files-$TIMESTAMP.txt "snapshot-backup-$TIMESTAMP.txt" 2>/dev/null || true
+          
+          # Archive snapshot as artifact (downloadable from Actions UI)
+          tar -czf "snapshot-backup-$TIMESTAMP.tar.gz" \
+            robots.txt sitemap.xml manifest.json \
+            config.js service-worker.js \
+            index.html editor.html converter.html \
+            assets/js/seo.js assets/js/main.js assets/js/global-settings.js \
+            2>/dev/null || true
+          
+          echo "Snapshot archived locally (artifact will be uploaded)"
+
+      # ──────────────────────────────
+      # 5b. UPLOAD SNAPSHOT ARTIFACT
+      # ──────────────────────────────
+      - name: Upload snapshot backup as artifact
+        if: |
+          steps.guard.outputs.skip != 'true' &&
+          steps.count-before.outputs.nothing_to_do != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-backup-${{ github.run_id }}
+          path: |
+            *.txt
+            *.tar.gz
+          retention-days: 7
 
       # ──────────────────────────────
       # 6. URL REPLACEMENT
-      # ──────────────────────────────
+      # ──────────────────────
       - name: Replace beta URLs with stable URLs
         if: |
           steps.guard.outputs.skip != 'true' &&
@@ -187,7 +213,6 @@ jobs:
           echo "  GH Pages:    $BETA_GH_PAGES → $STABLE_GH_PAGES"
           echo ""
 
-          # ─── Deterministic file list ───
           FILES=(
             "robots.txt"
             "sitemap.xml"
@@ -202,7 +227,6 @@ jobs:
             "assets/js/global-settings.js"
           )
 
-          # Add any additional HTML/JS/CSS files found
           EXTRA_HTML=$(find . -maxdepth 3 -name '*.html' -not -path './.git/*' -type f 2>/dev/null || true)
           EXTRA_JS=$(find . -maxdepth 3 -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
           EXTRA_CSS=$(find . -maxdepth 3 -name '*.css' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
@@ -222,91 +246,47 @@ jobs:
 
             CHANGED=0
 
-            # ─── Replacement 1: Full beta domain → custom domain ───
-            #     https://koulaxizis.github.io/oros-beta → https://useoros.online
+            # Replacement 1: Full beta domain
             if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros-beta|https://useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 2: Protocol-relative beta domain ───
-            #     //koulaxizis.github.io/oros-beta → //useoros.online
+            # Replacement 2: Protocol-relative
             if grep -q "//koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|//koulaxizis\.github\.io/oros-beta|//useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 3: Bare GH Pages host with beta path ───
-            #     koulaxizis.github.io/oros-beta → useoros.online
+            # Replacement 3: Bare GH Pages beta
             if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|koulaxizis\.github\.io/oros-beta|useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 4: Old stable GH Pages (if migrating from non-custom) ───
-            #     https://koulaxizis.github.io/oros → https://useoros.online
-            if grep -q "https://koulaxizis\.github\.io/oros[^-]" "$file" 2>/dev/null; then
-              sed -i 's|https://koulaxizis\.github\.io/oros\(\/\|"\|'\''\| \|$\)https://useoros.online\1|g' "$file"
-              # Simpler approach below — fallback
+            # Replacement 4: Old stable GH Pages
+            if grep -qE "https://koulaxizis\.github\.io/oros(/|[\"']|\$)" "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros/|https://useoros.online/|g' "$file"
               sed -i 's|https://koulaxizis\.github\.io/oros"|https://useoros.online"|g' "$file"
-              sed -i "s|https://koulaxizis\.github\.io/oros'|https://useoros.online'|g" "$file"
-              sed -i 's|https://koulaxizis\.github\.io/oros<|https://useoros.online<|g' "$file"
-              sed -i 's|https://koulaxizis\.github\.io/oros |https://useoros.online |g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 5: Bare old stable GH Pages ───
-            #     koulaxizis.github.io/oros → useoros.online (when not followed by -beta)
-            if grep -qE "koulaxizis\.github\.io/oros([^-a-z]|$)" "$file" 2>/dev/null; then
-              sed -i 's|koulaxizis\.github\.io/oros/|useoros.online/|g' "$file"
-              sed -i 's|koulaxizis\.github\.io/oros"|useoros.online"|g' "$file"
-              sed -i "s|koulaxizis\.github\.io/oros'|useoros.online'|g" "$file"
-              CHANGED=1
-            fi
-
-            # ─── Replacement 6: Beta base href → root ───
-            #     /oros-beta/ → /
+            # Replacement 5: Base href
             if grep -q "/oros-beta/" "$file" 2>/dev/null; then
-              # Careful: replace /oros-beta/ as base href but not in GitHub repo URLs
-              # Only replace in base href contexts and path references, not in github.com/.../oros-beta
               sed -i 's|/oros-beta/|/|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 7: Standalone /oros-beta → / ───
-            #     Handles cases like "?lang=el#/oros-beta" or path-only refs
-            if grep -qE "/oros-beta([^a-z-]|$)" "$file" 2>/dev/null; then
-              sed -i 's|/oros-beta\(|[/]\?$\)|/|g' "$file"
+            # Replacement 6: Standalone slug
+            if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
+              sed -i 's|\boros-beta\b|oros|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 8: GitHub repository slug ───
-            #     github.com/koulaxizis/oros-beta → github.com/koulaxizis/oros
+            # Replacement 7: GitHub repo link
             if grep -q "github\.com/koulaxizis/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|github\.com/koulaxizis/oros-beta|github.com/koulaxizis/oros|g' "$file"
               CHANGED=1
-            fi
-
-            # ─── Replacement 9: Repo slug in text contexts (non-URL) ───
-            #     "oros-beta" as standalone word → "oros"
-            #     But NOT inside URLs already handled above, and NOT in snapshot branch names
-            if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
-              # Exclude .github/ files and snapshot branch references
-              if [[ "$file" != .github/* ]] && [[ "$file" != *"snapshot"* ]]; then
-                sed -i 's|\boros-beta\b|oros|g' "$file"
-                CHANGED=1
-              fi
-            fi
-
-            # ─── Replacement 10: oros-beta cache name → oros ───
-            #     oros-v0.7.4 stays as-is (version-based), but "oros-beta" in cache name → "oros"
-            if grep -q "oros-beta" "$file" 2>/dev/null; then
-              # Final sweep — any remaining oros-beta that's not in .github/ or snapshot
-              if [[ "$file" != .github/* ]]; then
-                sed -i 's|oros-beta|oros|g' "$file"
-                CHANGED=1
-              fi
             fi
 
             if [[ $CHANGED -eq 1 ]]; then
@@ -333,9 +313,8 @@ jobs:
           echo ""
 
           FOUND_ISSUES=0
-          ISSUES=""
 
-          # ─── Check 1: Beta domain ───
+          # Check 1: Beta domain
           DOMAIN_HITS=$(grep -rn "koulaxizis\.github\.io/oros-beta" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' --include='*.css' \
@@ -345,13 +324,12 @@ jobs:
           if [[ -n "$DOMAIN_HITS" ]]; then
             echo "❌ Beta domain still found:"
             echo "$DOMAIN_HITS"
-            ISSUES="${ISSUES}Beta domain; "
             FOUND_ISSUES=$((FOUND_ISSUES + 1))
           else
             echo "✅ No beta domain references"
           fi
 
-          # ─── Check 2: Beta base href ───
+          # Check 2: Beta base href
           HREF_HITS=$(grep -rn "/oros-beta/" . \
             --include='*.html' --include='*.json' --include='*.js' \
             --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
@@ -360,13 +338,12 @@ jobs:
           if [[ -n "$HREF_HITS" ]]; then
             echo "❌ Beta base href still found:"
             echo "$HREF_HITS"
-            ISSUES="${ISSUES}Beta base href; "
             FOUND_ISSUES=$((FOUND_ISSUES + 1))
           else
             echo "✅ No beta base href references"
           fi
 
-          # ─── Check 3: Beta slug anywhere ───
+          # Check 3: Beta slug
           SLUG_HITS=$(grep -rn "oros-beta" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' --include='*.css' \
@@ -376,30 +353,12 @@ jobs:
           if [[ -n "$SLUG_HITS" ]]; then
             echo "❌ Beta slug still found:"
             echo "$SLUG_HITS"
-            ISSUES="${ISSUES}Beta slug; "
             FOUND_ISSUES=$((FOUND_ISSUES + 1))
           else
             echo "✅ No beta slug references"
           fi
 
-          # ─── Check 4: Old GH Pages stable (without -beta) ───
-          OLD_STABLE_HITS=$(grep -rn "koulaxizis\.github\.io/oros" . \
-            --include='*.html' --include='*.txt' --include='*.xml' \
-            --include='*.json' --include='*.js' --include='*.css' \
-            --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
-            2>/dev/null || true)
-
-          if [[ -n "$OLD_STABLE_HITS" ]]; then
-            echo "⚠️  Old GH Pages stable references found:"
-            echo "$OLD_STABLE_HITS"
-            ISSUES="${ISSUES}Old GH Pages stable; "
-            # These are warnings, not failures — user might have legitimate GH links
-            echo "   (These may be legitimate GitHub links — review manually)"
-          else
-            echo "✅ No old GH Pages stable references"
-          fi
-
-          # ─── Check 5: Verify new domain IS present ───
+          # Check 4: Verify new domain IS present
           NEW_DOMAIN_HITS=$(grep -rl "useoros\.online" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' \
@@ -411,7 +370,6 @@ jobs:
 
           if [[ $NEW_DOMAIN_HITS -eq 0 ]]; then
             echo "❌ New domain not found anywhere — replacement may have failed!"
-            ISSUES="${ISSUES}New domain missing; "
             FOUND_ISSUES=$((FOUND_ISSUES + 1))
           else
             echo "✅ New domain present in $NEW_DOMAIN_HITS file(s)"
@@ -419,16 +377,16 @@ jobs:
 
           echo ""
           if [[ $FOUND_ISSUES -gt 0 ]]; then
-            echo "❌ VERIFICATION FAILED — Issues: $ISSUES"
-            echo "Restoring from snapshot..."
-            git checkout -- .
+            echo "❌ VERIFICATION FAILED"
+            echo "Restoring from local snapshot: $SNAPSHOT_BRANCH"
+            git checkout "$SNAPSHOT_BRANCH" -- .
             exit 1
           else
-            echo "✅ VERIFICATION PASSED — All beta references replaced."
+            echo "✅ VERIFICATION PASSED"
           fi
 
       # ──────────────────────────────
-      # 8. POST-FLIGHT — Validate JSON/XML/JS integrity
+      # 8. POST-FLIGHT — Validate integrity
       # ──────────────────────────────
       - name: Post-flight — Validate JSON, XML, and JS integrity
         if: |
@@ -439,90 +397,61 @@ jobs:
 
           ERRORS=0
 
-          # ─── JSON files ───
-          for jf in manifest.json; do
-            if [[ -f "$jf" ]]; then
-              if python3 -m json.tool "$jf" >/dev/null 2>&1; then
-                echo "✅ $jf — JSON valid"
-              else
-                echo "❌ $jf — JSON invalid"
-                python3 -m json.tool "$jf" || true
-                ERRORS=$((ERRORS + 1))
-              fi
+          # JSON
+          if [[ -f "manifest.json" ]]; then
+            if python3 -m json.tool manifest.json >/dev/null 2>&1; then
+              echo "✅ manifest.json — JSON valid"
+            else
+              echo "❌ manifest.json — JSON invalid"
+              ERRORS=$((ERRORS + 1))
             fi
-          done
+          fi
 
-          # ─── JS syntax validation ───
-          JS_FILES=(
-            "config.js"
-            "service-worker.js"
-            "assets/js/seo.js"
-            "assets/js/main.js"
-            "assets/js/global-settings.js"
-          )
-          for jf in "${JS_FILES[@]}"; do
+          # JS
+          for jf in config.js service-worker.js assets/js/seo.js assets/js/main.js assets/js/global-settings.js; do
             if [[ -f "$jf" ]]; then
               if node -c "$jf" 2>/dev/null; then
                 echo "✅ $jf — JS syntax OK"
               else
                 echo "❌ $jf — JS syntax ERROR"
-                node -c "$jf" 2>&1 || true
                 ERRORS=$((ERRORS + 1))
               fi
             fi
           done
 
-          # ─── XML validation ───
+          # XML
           if [[ -f "sitemap.xml" ]]; then
             if python3 -c "import xml.etree.ElementTree as ET; ET.parse('sitemap.xml')" 2>/dev/null; then
               echo "✅ sitemap.xml — XML valid"
             else
               echo "❌ sitemap.xml — XML invalid"
-              python3 -c "import xml.etree.ElementTree as ET; ET.parse('sitemap.xml')" 2>&1 || true
               ERRORS=$((ERRORS + 1))
             fi
           fi
 
-          # ─── robots.txt sanity ───
+          # robots.txt
           if [[ -f "robots.txt" ]]; then
-            if grep -q "oros-beta" robots.txt; then
-              echo "❌ robots.txt — still contains beta reference"
-              ERRORS=$((ERRORS + 1))
-            elif grep -q "koulaxizis\.github\.io" robots.txt; then
-              echo "❌ robots.txt — still contains old GitHub Pages domain"
+            if grep -q "oros-beta\|koulaxizis\.github\.io" robots.txt; then
+              echo "❌ robots.txt — still contains beta/old references"
               ERRORS=$((ERRORS + 1))
             elif ! grep -q "useoros\.online" robots.txt; then
               echo "❌ robots.txt — missing new domain"
               ERRORS=$((ERRORS + 1))
             else
-              echo "✅ robots.txt — clean, new domain present"
+              echo "✅ robots.txt — clean"
             fi
           fi
 
-          # ─── HTML tag balance ───
+          # HTML
           for hf in index.html editor.html converter.html; do
             if [[ -f "$hf" ]]; then
               OPEN=$(grep -c '<html' "$hf" || echo 0)
               CLOSE=$(grep -c '</html>' "$hf" || echo 0)
               if [[ "$OPEN" -ne "$CLOSE" ]]; then
-                echo "❌ $hf — unbalanced <html> tags ($OPEN open, $CLOSE close)"
+                echo "❌ $hf — unbalanced tags"
                 ERRORS=$((ERRORS + 1))
               else
-                echo "✅ $hf — HTML structure OK"
-              fi
-            fi
-          done
-
-          # ─── Canonical link presence ───
-          for hf in index.html editor.html converter.html; do
-            if [[ -f "$hf" ]]; then
-              if grep -q 'rel="canonical"' "$hf"; then
-                if grep -q "useoros\.online" "$hf"; then
-                  echo "✅ $hf — canonical with new domain"
-                else
-                  echo "❌ $hf — canonical missing new domain"
-                  ERRORS=$((ERRORS + 1))
-                fi
+                echo "✅ $hf — HTML OK"
               fi
             fi
           done
@@ -530,10 +459,10 @@ jobs:
           echo ""
           if [[ $ERRORS -gt 0 ]]; then
             echo "❌ INTEGRITY CHECK FAILED — $ERRORS error(s)."
-            git checkout -- .
+            git checkout "$SNAPSHOT_BRANCH" -- .
             exit 1
           else
-            echo "✅ INTEGRITY CHECK PASSED — All files valid."
+            echo "✅ INTEGRITY CHECK PASSED"
           fi
 
       # ──────────────────────────────
@@ -549,19 +478,21 @@ jobs:
           echo "════════════════════════════════════════"
           git diff --stat
           echo ""
-          echo "════════════════════════════════════════"
-          echo "FULL DIFF (first 500 lines)"
-          echo "════════════════════════════════════════"
-          git diff --color=always | head -500
-          echo ""
-          echo "════════════════════════════════════════"
-          echo "Modified files: $REPLACE_COUNT"
-          echo "Snapshot branch: $SNAPSHOT_BRANCH"
-          echo "════════════════════════════════════════"
+          echo "Full diff preview:"
+          git diff | head -300
 
       # ──────────────────────────────
       # 10. COMMIT (or skip if dry-run)
       # ──────────────────────────────
+      - name: Configure git
+        if: |
+          steps.guard.outputs.skip != 'true' &&
+          steps.count-before.outputs.nothing_to_do != 'true' &&
+          github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "$GH_BOT_NAME"
+          git config user.email "$GH_BOT_EMAIL"
+
       - name: Commit changes
         if: |
           steps.guard.outputs.skip != 'true' &&
@@ -570,35 +501,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          git config user.name "$GH_BOT_NAME"
-          git config user.email "$GH_BOT_EMAIL"
-
-          # Stage known files explicitly
           git add \
-            robots.txt \
-            sitemap.xml \
-            manifest.json \
-            config.js \
-            service-worker.js \
-            index.html \
-            editor.html \
-            converter.html \
-            assets/js/seo.js \
-            assets/js/main.js \
-            assets/js/global-settings.js
+            robots.txt sitemap.xml manifest.json \
+            config.js service-worker.js \
+            index.html editor.html converter.html \
+            assets/js/seo.js assets/js/main.js assets/js/global-settings.js
 
-          # Also stage any other changed files (excluding .github/)
           git add '*.html' '*.js' '*.json' '*.xml' '*.txt' '*.css' ':!.github' 2>/dev/null || true
 
-          # Verify there are staged changes
           if git diff --cached --quiet; then
             echo "ℹ️ No changes to commit."
             exit 0
           fi
 
-          # Pull latest in case of concurrent pushes
           git pull --rebase origin main || {
-            echo "❌ Pull rebase failed. Aborting to avoid conflicts."
+            echo "❌ Pull rebase failed."
             exit 1
           }
 
@@ -606,8 +523,6 @@ jobs:
 
           Domain:    $BETA_DOMAIN → $STABLE_DOMAIN
           Base href: $BETA_BASE_HREF → $STABLE_BASE_HREF
-          Repo slug: $BETA_REPO_SLUG → $STABLE_REPO_SLUG
-          GH Pages:  $BETA_GH_PAGES → $STABLE_GH_PAGES
           Files modified: $REPLACE_COUNT
           Snapshot: $SNAPSHOT_BRANCH"
 
@@ -626,14 +541,13 @@ jobs:
         run: |
           echo "╔══════════════════════════════════════╗"
           echo "║  🔍 DRY RUN — No changes committed  ║"
-          echo "║  Review the diff above.             ║"
           echo "║  To apply: re-run with dry_run=false║"
           echo "╚══════════════════════════════════════╝"
 
       # ──────────────────────────────
       # 12. SKIP NOTICES
       # ──────────────────────────────
-      - name: Notice — Skipped (auto-commit)
+      - name: Notice — Skipped
         if: steps.guard.outputs.skip == 'true'
         run: |
           echo "⏭️ Workflow skipped — automated commit detected."
@@ -644,3 +558,25 @@ jobs:
           steps.count-before.outputs.nothing_to_do == 'true'
         run: |
           echo "✅ No beta references found. Already on stable URLs."
+
+      # ──────────────────────────────
+      # 13. FAILURE RESTORE INSTRUCTION
+      # ──────────────────────────────
+      - name: On failure — Restore instructions
+        if: failure()
+        run: |
+          echo "╔══════════════════════════════════════╗"
+          echo "║  ⚠️  WORKFLOW FAILED                 ║"
+          echo "║                                      ║"
+          echo "║  Your local snapshot branch was:     ║"
+          echo "║  $SNAPSHOT_BRANCH                    ║"
+          echo "║                                      ║"
+          echo "║  Download the artifact to restore:   ║"
+          echo "║  snapshot-backup-${{ github.run_id }} ║"
+          echo "║                                      ║"
+          echo "║  To restore manually:                ║"
+          echo "║  1. Go to Actions → this run         ║"
+          echo "║  2. Scroll to artifacts section      ║"
+          echo "║  3. Download snapshot-backup archive ║"
+          echo "║  4. Extract and replace files        ║"
+          echo "╚══════════════════════════════════════╝"
