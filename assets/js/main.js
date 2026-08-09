@@ -1,3 +1,4 @@
+// Fixed: zen-mode key consistency (oros_zen_mode throughout)
 document.addEventListener('DOMContentLoaded', function() {
   'use strict';
 
@@ -122,7 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
         body.setAttribute('data-zen', 'true');
       }
 
-      localStorage.setItem('oros-zen-mode', isZen ? 'false' : 'true');
+      // FIXED: Using oros_zen_mode consistently
+      localStorage.setItem('oros_zen_mode', isZen ? 'false' : 'true');
 
       window.dispatchEvent(new CustomEvent('oros-zen-mode-changed', {
         detail: { enabled: !isZen }
@@ -193,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // ========== SETTINGS TOGGLES ==========
+  // ========== SETTINGS TOGGLES — WRITER ==========
 
   var readingProgressToggle = document.getElementById('toggle-reading-progress');
   if (readingProgressToggle) {
@@ -339,7 +341,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Quick Format Toolbar — checked = SHOW, default checked (visible)
   var quickTbarToggle = document.getElementById('toggle-quick-tbar');
   if (quickTbarToggle) {
     quickTbarToggle.checked = localStorage.getItem('oros_quick_tbar_show') !== 'false';
@@ -348,6 +349,59 @@ document.addEventListener('DOMContentLoaded', function() {
       localStorage.setItem('oros_quick_tbar_show', show ? 'true' : 'false');
       window.dispatchEvent(new CustomEvent('oros-quick-tbar-changed', {
         detail: { show: show }
+      }));
+    });
+  }
+
+  // ========== SETTINGS TOGGLES — CONVERTER ==========
+
+  var converterToggles = [
+    { id: 'toggle-hide-copy-btn', key: 'oros_hide_converter_copy_btn', element: 'btn-copy' },
+    { id: 'toggle-hide-save-btn', key: 'oros_hide_converter_save_btn', element: 'btn-save' },
+    { id: 'toggle-hide-open-btn', key: 'oros_hide_converter_open_btn', element: 'btn-open' },
+    { id: 'toggle-hide-clear-btn', key: 'oros_hide_converter_clear_btn', element: 'btn-clear' },
+    { id: 'toggle-hide-undo-btn', key: 'oros_hide_converter_undo_btn', element: 'btn-undo' },
+    { id: 'toggle-hide-redo-btn', key: 'oros_hide_converter_redo_btn', element: 'btn-redo' },
+    { id: 'toggle-hide-reset-btn', key: 'oros_hide_converter_reset_btn', element: 'btn-reset' },
+    { id: 'toggle-hide-options', key: 'oros_hide_converter_options', element: 'btn-options' },
+    { id: 'toggle-hide-stats-btn', key: 'oros_hide_converter_stats_btn', element: 'btn-stats' }
+  ];
+
+  converterToggles.forEach(function(toggle) {
+    var el = document.getElementById(toggle.id);
+    if (el) {
+      el.checked = localStorage.getItem(toggle.key) === 'true';
+      el.addEventListener('change', function() {
+        var hidden = this.checked;
+        localStorage.setItem(toggle.key, hidden ? 'true' : 'false');
+        var target = document.getElementById(toggle.element);
+        if (target) {
+          target.style.display = hidden ? 'none' : '';
+        }
+        // Dispatch for cross-page sync
+        window.dispatchEvent(new CustomEvent('oros-converter-toggle-changed', {
+          detail: { key: toggle.key, hidden: hidden, element: toggle.element }
+        }));
+      });
+    }
+  });
+
+  // ========== ZEN MODE TOGGLE FROM SETTINGS ==========
+  var zenModeToggle = document.getElementById('toggle-zen-mode');
+  if (zenModeToggle) {
+    // FIXED: Using oros_zen_mode consistently
+    zenModeToggle.checked = localStorage.getItem('oros_zen_mode') === 'true';
+    zenModeToggle.addEventListener('change', function() {
+      var enabled = this.checked;
+      // FIXED: Using oros_zen_mode consistently
+      localStorage.setItem('oros_zen_mode', enabled ? 'true' : 'false');
+      if (enabled) {
+        document.body.setAttribute('data-zen', 'true');
+      } else {
+        document.body.removeAttribute('data-zen');
+      }
+      window.dispatchEvent(new CustomEvent('oros-zen-mode-changed', {
+        detail: { enabled: enabled }
       }));
     });
   }
@@ -370,6 +424,12 @@ document.addEventListener('DOMContentLoaded', function() {
         deferredPrompt = null;
       });
     });
+  }
+
+  // ========== APPLY ZEN MODE ON LOAD ==========
+  // FIXED: Using oros_zen_mode consistently
+  if (localStorage.getItem('oros_zen_mode') === 'true') {
+    document.body.setAttribute('data-zen', 'true');
   }
 
   // ========== INITIALIZE ==========

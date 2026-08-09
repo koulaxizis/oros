@@ -1,7 +1,7 @@
 {
-  "name": "orOS Writer",
+  "name": "orOS — The Artist's Operating System",
   "short_name": "orOS",
-  "description": "Privacy-first rich text editor. Works offline. No tracking.",
+  "description": "Privacy-first rich text editor and case converter. Works offline. No tracking.",
   "start_url": "editor.html",
   "scope": ".",
   "display": "standalone",
@@ -16,7 +16,41 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "screenshot-editor.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Writer - Rich text editor with autosave"
+    },
+    {
+      "src": "screenshot-converter.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Case Converter - Text transformation tool"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Writer",
+      "short_name": "Writer",
+      "description": "Open the rich text editor",
+      "url": "editor.html",
+      "icons": [{"src": "favicon.svg", "sizes": "any"}]
+    },
+    {
+      "name": "Case Converter",
+      "short_name": "Converter",
+      "description": "Transform text case",
+      "url": "converter.html",
+      "icons": [{"src": "favicon.svg", "sizes": "any"}]
+    }
+  ],
+  "categories": ["productivity", "utilities", "education"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "iarc_rating_id": "eUgAA"
 }

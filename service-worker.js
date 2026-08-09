@@ -11,8 +11,17 @@ var BASE = self.registration.scope || '/';
 // Assets to cache precache (fonts, icons, static CSS/JS)
 var ASSETS_TO_CACHE = [
   'favicon.svg',
+  'og-image.png',
+  'og-image.svg',
+  'twitter-card.png',
+  'twitter-card.svg',
+  'sitemap.xml',
+  'index.html',
+  'editor.html',
+  'converter.html',
   'assets/css/icons.css',
   'assets/css/style.css',
+  'assets/css/converter.css',
   'assets/fonts/nunito-regular.woff2',
   'assets/fonts/nunito-medium.woff2',
   'assets/fonts/nunito-semibold.woff2',
@@ -23,10 +32,13 @@ var ASSETS_TO_CACHE = [
   'assets/fonts/forkawesome-webfont.ttf'
 ];
 
-// Dynamic assets to cache (JS files loaded by editor)
+// Dynamic assets to cache (JS files loaded by pages)
 var SCRIPTS_TO_CACHE = [
   'assets/js/main.js',
   'assets/js/editor.js',
+  'assets/js/converter.js',
+  'assets/js/global-settings.js',
+  'assets/js/seo.js',
   'assets/js/components/header.js',
   'assets/js/components/footer.js',
   'assets/js/translations.json'
@@ -82,20 +94,26 @@ self.addEventListener('activate', function(event) {
 });
 
 // ============================================
-// FETCH — Cache-first strategy for assets
+// FETCH — Hybrid caching strategy
 // ============================================
 self.addEventListener('fetch', function(event) {
   var requestUrl = new URL(event.request.url);
   var origin = self.location.origin;
   
-  // Skip non-origin requests (don't proxy external resources)
+  // Skip non-origin requests
   if (requestUrl.origin !== origin) {
     return;
   }
 
-  // Cache-first for assets
+  // Cache-first for assets (images, fonts, CSS, JS)
   if (isAssetRequest(requestUrl.pathname)) {
     event.respondWith(cacheFirst(event.request));
+    return;
+  }
+
+  // Stale-while-revalidate for JSON (translations, config)
+  if (requestUrl.pathname.endsWith('.json')) {
+    event.respondWith(staleWhileRevalidate(event.request));
     return;
   }
 
@@ -112,14 +130,14 @@ self.addEventListener('fetch', function(event) {
 // ========== HELPER FUNCTIONS ==========
 
 function isAssetRequest(path) {
-  var assetExtensions = ['.css', '.js', '.json', '.svg', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.jpeg'];
+  var assetExtensions = ['.css', '.js', '.json', '.svg', '.png', '.jpg', '.jpeg', '.woff2', '.woff', '.ttf'];
   return assetExtensions.some(function(ext) {
     return path.endsWith(ext);
   });
 }
 
 function isHTMLRequest(path) {
-  return path.endsWith('.html') || path === '/' || path === '/editor.html' || path === BASE || path === BASE + '/';
+  return path.endsWith('.html') || path === '/' || path === '/editor.html' || path === '/converter.html' || path === BASE || path === BASE + '/';
 }
 
 function cacheFirst(request) {
@@ -138,6 +156,24 @@ function cacheFirst(request) {
           }
           return response;
         });
+      });
+    });
+}
+
+function staleWhileRevalidate(request) {
+  return caches.open(CACHE_NAME)
+    .then(function(cache) {
+      return cache.match(request).then(function(matched) {
+        var fetchPromise = fetch(request).then(function(response) {
+          if (response.ok) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        }).catch(function() {
+          return matched;
+        });
+        
+        return matched || fetchPromise;
       });
     });
 }

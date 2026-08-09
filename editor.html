@@ -3,7 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="orOS Writer — Privacy-first rich text editor. Works offline. No tracking.">
+  <meta name="description" content="orOS Writer — Privacy-first rich text editor with autosave, goals, and outlines. Works offline. No tracking.">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="author" content="Christos Koulaxizis">
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow">
+  <meta name="theme-color" content="#c8a96e">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/editor.html">
+  <meta property="og:title" content="orOS Writer — Privacy-First Rich Text Editor">
+  <meta property="og:description" content="Write distraction-free with autosave, goals, outlines, and word frequency analysis. Works offline. No tracking.">
+  <meta property="og:image" content="https://koulaxizis.github.io/oros-beta/og-image.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="orOS">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://koulaxizis.github.io/oros-beta/editor.html">
+  <meta name="twitter:title" content="orOS Writer — Privacy-First Rich Text Editor">
+  <meta name="twitter:description" content="Write distraction-free with autosave, goals, outlines, and word frequency analysis. Works offline. No tracking.">
+  <meta name="twitter:image" content="https://koulaxizis.github.io/oros-beta/twitter-card.png">
+  <meta name="twitter:creator" content="@koulaxizis">
+  
+  <!-- Additional SEO -->
+  <meta name="keywords" content="rich text editor, writing tool, autosave, goals, distraction-free, offline editor, privacy, open source">
+  
+  <!-- Resource Hints -->
+  <link rel="preconnect" href="https://koulaxizis.github.io">
+  <link rel="dns-prefetch" href="https://koulaxizis.github.io">
+  
+  <!-- hreflang -->
+  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/editor.html">
+  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/editor.html?lang=el">
+  <link rel="alternate" hreflang="es" href="https://koulaxizis.github.io/oros-beta/editor.html?lang=es">
+  <link rel="alternate" hreflang="it" href="https://koulaxizis.github.io/oros-beta/editor.html?lang=it">
+  <link rel="alternate" hreflang="fr" href="https://koulaxizis.github.io/oros-beta/editor.html?lang=fr">
+  <link rel="alternate" hreflang="de" href="https://koulaxizis.github.io/oros-beta/editor.html?lang=de">
+  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/editor.html">
+  
   <title>orOS Writer</title>
   <script src="config.js"></script>
   <script>
@@ -13,7 +53,7 @@
     cLink.href = OROS_CONFIG.domain + window.location.pathname;
     document.head.appendChild(cLink);
   </script>
-  
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="manifest" href="manifest.json">
 
@@ -26,12 +66,19 @@
   <link rel="stylesheet" href="assets/css/icons.css">
   <link rel="stylesheet" href="assets/css/style.css">
 
+  <script src="assets/js/global-settings.js" defer></script>
+  <script src="assets/js/seo.js" defer></script>
   <script src="assets/js/components/header.js" defer></script>
   <script src="assets/js/components/footer.js" defer></script>
   <script src="assets/js/editor.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </head>
-<body>
+<body class="noscript">
+  <script>document.body.classList.remove('noscript'); document.body.classList.add('js-enabled');</script>
+
+  <noscript>
+    <div class="noscript-message">JavaScript is required for orOS Writer to function. Please enable JavaScript.</div>
+  </noscript>
 
   <div id="oros-header"></div>
 
@@ -143,8 +190,8 @@
     <div class="find-replace-bar" id="find-replace-bar">
       <input type="text" id="find-find" placeholder="Find..." />
       <input type="text" id="find-replace" placeholder="Replace..." />
-      <button class="mini-btn" id="btn-fr-replace" data-i18n-tooltip="btn_replace" title="Replace"><i class="fa fa-exchange"></i></button>
-      <button class="mini-btn" id="btn-fr-replace-all" data-i18n-tooltip="btn_replace_all" title="Replace all"><i class="fa fa-refresh"></i></button>
+      <button class="mini-btn" id="btn-fr-replace" title="Replace"><i class="fa fa-exchange"></i></button>
+      <button class="mini-btn" id="btn-fr-replace-all" title="Replace all"><i class="fa fa-refresh"></i></button>
       <span id="fr_results"></span>
       <button class="mini-btn" id="btn-close-fr"><i class="fa fa-times"></i></button>
     </div>
@@ -216,11 +263,12 @@
     <div class="settings-modal-content">
       <div class="settings-header">
         <h2 data-i18n="settings">Settings</h2>
-        <button class="settings-close"><i class="fa fa-times"></i></button>
+        <button class="settings-close" aria-label="Close settings"><i class="fa fa-times"></i></button>
       </div>
       <div class="settings-nav">
         <button class="tab-btn active" data-tab="global-settings" data-i18n="tab_global">Global</button>
         <button class="tab-btn" data-tab="writer-settings" data-i18n="tab_writer">Writer</button>
+        <button class="tab-btn" data-tab="converter-settings" data-i18n="tab_converter">Converter</button>
       </div>
       <div class="settings-body">
         <div class="tab-panel" id="global-settings" style="display:flex;">
@@ -238,8 +286,8 @@
               <div class="beta-header" data-i18n="beta_title">Beta Channel</div>
               <p class="beta-warning" data-i18n="beta_warning">This is a beta version. Features may change.</p>
               <div class="beta-links">
-                <a href="https://github.com/koulaxizis/oros-beta" target="_blank" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
-                <a href="https://koulaxizis.github.io/oros-beta/editor.html" target="_blank" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
+                <a href="https://github.com/koulaxizis/oros-beta" target="_blank" rel="noopener" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
+                <a href="https://koulaxizis.github.io/oros-beta/editor.html" target="_blank" rel="noopener" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
               </div>
             </div>
           </div>
@@ -307,6 +355,61 @@
                 <tr><td>Goal</td><td><kbd>Ctrl+G</kbd></td></tr>
                 <tr><td>Find</td><td><kbd>Ctrl+F</kbd></td></tr>
                 <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
+                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-panel" id="converter-settings" style="display:none;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_copy_btn">Hide Copy Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-copy-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_save_btn">Hide Save Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-save-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_open_btn">Hide Open Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-open-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_clear_btn">Hide Clear Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-clear-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_undo_btn">Hide Undo Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-undo-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_redo_btn">Hide Redo Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-redo-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_reset_btn">Hide Reset Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-reset-btn"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_options">Hide Options Dropdown</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-options"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_stats_btn">Hide Stats Panel</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-stats-btn"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <table class="shortcut-table">
+              <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
+              <tbody>
+                <tr><td>Copy</td><td><kbd>Ctrl+C</kbd></td></tr>
+                <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td></tr>
+                <tr><td>Undo</td><td><kbd>Ctrl+Z</kbd></td></tr>
+                <tr><td>Redo</td><td><kbd>Ctrl+Y</kbd></td></tr>
+                <tr><td>UPPERCASE</td><td><kbd>Ctrl+Shift+U</kbd></td></tr>
+                <tr><td>lowercase</td><td><kbd>Ctrl+Shift+L</kbd></td></tr>
+                <tr><td>Title Case</td><td><kbd>Ctrl+Shift+T</kbd></td></tr>
                 <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
               </tbody>
             </table>

@@ -35,6 +35,7 @@
 .fa-trash-o:before       { content: '\f014'; }
 .fa-download:before      { content: '\f019'; }
 .fa-pencil:before        { content: '\f040'; }
+.fa-copy:before          { content: '\f0c5'; }
 
 /* ===== TOOLBAR — FORMATTING ===== */
 .fa-bold:before          { content: '\f032'; }
@@ -50,6 +51,7 @@
 .fa-info-circle:before   { content: '\f05a'; }
 .fa-search:before        { content: '\f002'; }
 .fa-bar-chart:before     { content: '\f080'; }
+.fa-sliders:before       { content: '\f1de'; }
 
 /* ===== GOAL BAR ===== */
 .fa-check:before         { content: '\f00c'; }
@@ -66,7 +68,12 @@
 .fa-undo:before          { content: '\f0e2'; }
 .fa-repeat:before        { content: '\f01e'; }
 
-.fa-align-left:before { content: "\f036"; }
-.fa-align-center:before { content: "\f037"; }
-.fa-align-right:before { content: "\f038"; }
-.fa-align-justify:before { content: "\f03a"; }
+/* ===== ALIGNMENT ===== */
+.fa-align-left:before    { content: '\f036'; }
+.fa-align-center:before  { content: '\f037'; }
+.fa-align-right:before   { content: '\f038'; }
+.fa-align-justify:before { content: '\f03a'; }
+
+/* ===== CONVERTER ===== */
+.fa-text-width:before    { content: '\f035'; }
+.fa-arrow-down:before    { content: '\f063'; }

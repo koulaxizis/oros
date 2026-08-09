@@ -1149,3 +1149,37 @@ body.landing-page {
 .tool-icon .fa {
   font-size: 2rem;
 }
+
+/* ============================================
+   orOS — Accessibility & Utility Classes
+   Added for SEO, Screen Readers, Noscript
+   ============================================ */
+
+/* Visually hidden but accessible to screen readers */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Noscript fallback message */
+.noscript-message {
+  display: block !important;
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-panel);
+  color: var(--danger);
+  font-size: 1.1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Ensure JavaScript-disabled users see content warning */
+body:not(.js-enabled) .noscript-message {
+  display: block;
+}

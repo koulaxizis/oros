@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1b1a18"/>
+      <stop offset="100%" style="stop-color:#252320"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="600" y="280" font-family="Nunito, -apple-system, BlinkMacSystemFont, sans-serif" font-size="80" font-weight="800" fill="#c8a96e" text-anchor="middle">orOS</text>
+  <text x="600" y="350" font-family="Nunito, -apple-system, BlinkMacSystemFont, sans-serif" font-size="32" fill="#a8a4a0" text-anchor="middle" letter-spacing="1">The Artist's Operating System</text>
+  <text x="600" y="430" font-family="Nunito, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" fill="#6b6864" text-anchor="middle">Writer · Case Converter · Privacy-First</text>
+  <circle cx="600" cy="530" r="35" fill="#c8a96e" opacity="0.15"/>
+  <path d="M600 530 L585 555 L615 555 Z" fill="#c8a96e"/>
+</svg>

@@ -3,78 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="orOS — The artist's operating system. Privacy-first creative toolkit. Works offline. No tracking.">
+  <meta name="description" content="orOS Case Converter — Privacy-first text transformation tool with 10 case modes and Greek accent stripping. Works offline. No tracking.">
   
   <!-- SEO Meta Tags -->
   <meta name="author" content="Christos Koulaxizis">
   <meta name="robots" content="index, follow">
   <meta name="googlebot" content="index, follow">
   <meta name="theme-color" content="#c8a96e">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/">
-  <meta property="og:title" content="orOS — The Artist's Operating System">
-  <meta property="og:description" content="Privacy-first creative toolkit. Writer, Case Converter, and more. Works offline. No tracking. No ads.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/converter.html">
+  <meta property="og:title" content="orOS Case Converter — Privacy-First Text Transformation">
+  <meta property="og:description" content="Convert text to 10 different cases. Greek accent stripping. Markdown formatting removal. Works offline. No tracking.">
   <meta property="og:image" content="https://koulaxizis.github.io/oros-beta/og-image.png">
   <meta property="og:locale" content="en_US">
   <meta property="og:site_name" content="orOS">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://koulaxizis.github.io/oros-beta/">
-  <meta name="twitter:title" content="orOS — The Artist's Operating System">
-  <meta name="twitter:description" content="Privacy-first creative toolkit. Writer, Case Converter, and more. Works offline. No tracking. No ads.">
+  <meta name="twitter:url" content="https://koulaxizis.github.io/oros-beta/converter.html">
+  <meta name="twitter:title" content="orOS Case Converter — Privacy-First Text Transformation">
+  <meta name="twitter:description" content="Convert text to 10 different cases. Greek accent stripping. Markdown formatting removal. Works offline. No tracking.">
   <meta name="twitter:image" content="https://koulaxizis.github.io/oros-beta/twitter-card.png">
   <meta name="twitter:creator" content="@koulaxizis">
   
   <!-- Additional SEO -->
-  <meta name="keywords" content="text editor, case converter, privacy, offline, writer, open source, Greek, orOS">
-  <meta name="distribution" content="global">
-  <meta name="rating" content="general">
+  <meta name="keywords" content="case converter, text transformation, uppercase, lowercase, title case, camelCase, snake_case, kebab-case, Greek accents, Markdown, privacy, offline">
   
   <!-- Resource Hints -->
   <link rel="preconnect" href="https://koulaxizis.github.io">
   <link rel="dns-prefetch" href="https://koulaxizis.github.io">
-  <link rel="prefetch" href="assets/js/editor.js" as="script">
-  <link rel="prefetch" href="assets/js/converter.js" as="script">
   
-  <!-- hreflang for multi-language -->
-  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/index.html">
-  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/index.html?lang=el">
-  <link rel="alternate" hreflang="es" href="https://koulaxizis.github.io/oros-beta/index.html?lang=es">
-  <link rel="alternate" hreflang="it" href="https://koulaxizis.github.io/oros-beta/index.html?lang=it">
-  <link rel="alternate" hreflang="fr" href="https://koulaxizis.github.io/oros-beta/index.html?lang=fr">
-  <link rel="alternate" hreflang="de" href="https://koulaxizis.github.io/oros-beta/index.html?lang=de">
-  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/index.html">
+  <!-- hreflang -->
+  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/converter.html">
+  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/converter.html?lang=el">
+  <link rel="alternate" hreflang="es" href="https://koulaxizis.github.io/oros-beta/converter.html?lang=es">
+  <link rel="alternate" hreflang="it" href="https://koulaxizis.github.io/oros-beta/converter.html?lang=it">
+  <link rel="alternate" hreflang="fr" href="https://koulaxizis.github.io/oros-beta/converter.html?lang=fr">
+  <link rel="alternate" hreflang="de" href="https://koulaxizis.github.io/oros-beta/converter.html?lang=de">
+  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/converter.html">
   
-  <!-- Canonical -->
-  <link rel="canonical" href="https://koulaxizis.github.io/oros-beta/index.html">
-  
-  <!-- Structured Data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "orOS",
-    "url": "https://koulaxizis.github.io/oros-beta/",
-    "author": {
-      "@type": "Person",
-      "name": "Christos Koulaxizis",
-      "url": "https://koulaxizis.gr"
-    },
-    "description": "Privacy-first creative toolkit. Writer, Case Converter, and more.",
-    "inLanguage": ["en", "el", "es", "it", "fr", "de"],
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://koulaxizis.github.io/oros-beta/?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
-  }
-  </script>
-
-  <title>orOS — The Artist's Operating System</title>
+  <title>orOS Case Converter</title>
   <script src="config.js"></script>
   <script>
     document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
@@ -95,46 +65,174 @@
 
   <link rel="stylesheet" href="assets/css/icons.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/converter.css">
 
+  <!-- Global settings manager (SHARED with Editor) -->
   <script src="assets/js/global-settings.js" defer></script>
   <script src="assets/js/seo.js" defer></script>
+  
   <script src="assets/js/components/header.js" defer></script>
   <script src="assets/js/components/footer.js" defer></script>
+  <script src="assets/js/converter.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </head>
-<body class="landing-page noscript">
+<body class="noscript">
   <script>document.body.classList.remove('noscript'); document.body.classList.add('js-enabled');</script>
 
   <noscript>
-    <div class="noscript-message">JavaScript is required for orOS to function. Please enable JavaScript to use this application.</div>
+    <div class="noscript-message">JavaScript is required for orOS Case Converter to function. Please enable JavaScript.</div>
   </noscript>
 
   <div id="oros-header"></div>
 
-  <section class="hero">
-    <div class="container">
-      <div class="hero-content">
-        <img src="favicon.svg" alt="orOS Logo" class="hero-logo" loading="eager">
-        <h1>orOS</h1>
-        <p data-i18n="site_tagline">The artist's operating system</p>
-        <p data-i18n="tools_intro">Select a tool below. All applications work offline and respect your personal data.</p>
+  <div id="converter-wrapper">
+
+    <div class="converter-toolbar" id="converter-toolbar">
+      <div class="toolbar-section toolbar-left">
+        <button class="action-btn" id="btn-copy" data-i18n-tooltip="tooltip_copy" title="Copy to clipboard">
+          <i class="fa fa-copy"></i>
+        </button>
+        <button class="action-btn" id="btn-save" data-i18n-tooltip="tooltip_save_file" title="Save file (Ctrl+S)">
+          <i class="fa fa-save"></i>
+        </button>
+        <button class="action-btn" id="btn-open" data-i18n-tooltip="tooltip_open" title="Open file">
+          <i class="fa fa-folder-open"></i>
+        </button>
+        <input type="file" id="file-input" accept=".txt,.md,.markdown" style="display:none;">
+        <button class="action-btn" id="btn-clear" data-i18n-tooltip="tooltip_clear" title="Clear all">
+          <i class="fa fa-trash-o"></i>
+        </button>
+        <button class="action-btn" id="btn-undo" data-i18n-tooltip="tooltip_undo" title="Undo (Ctrl+Z)">
+          <i class="fa fa-undo"></i>
+        </button>
+        <button class="action-btn" id="btn-redo" data-i18n-tooltip="tooltip_redo" title="Redo (Ctrl+Y)">
+          <i class="fa fa-repeat"></i>
+        </button>
+        <span class="tb-separator"></span>
+        <button class="action-btn" id="btn-reset" data-i18n-tooltip="tooltip_reset" title="Restore original">
+          <i class="fa fa-refresh"></i>
+        </button>
       </div>
 
-      <div class="tools-grid">
-        <a href="editor.html" class="tool-card" aria-label="Open Writer — rich text editor with autosave">
-          <div class="tool-icon"><i class="fa fa-pencil"></i></div>
-          <h2 class="tool-name" data-i18n="editor_name">Writer</h2>
-          <p class="tool-desc" data-i18n="editor_desc">Simple text editor with autosave</p>
-        </a>
-        <a href="converter.html" class="tool-card" aria-label="Open Case Converter — text transformation tool">
-          <div class="tool-icon"><i class="fa fa-text-width"></i></div>
-          <h2 class="tool-name" data-i18n="converter_name">Case Converter</h2>
-          <p class="tool-desc" data-i18n="converter_desc">Transform text case with advanced options</p>
-        </a>
+      <div class="toolbar-section toolbar-center">
+        <button class="mode-btn active" data-mode="uppercase" data-i18n="mode_uppercase" title="UPPERCASE">UPPERCASE</button>
+        <button class="mode-btn" data-mode="lowercase" data-i18n="mode_lowercase" title="lowercase">lowercase</button>
+        <button class="mode-btn" data-mode="title" data-i18n="mode_title" title="Title Case">Title Case</button>
+        <button class="mode-btn" data-mode="sentence" data-i18n="mode_sentence" title="Sentence case">Sentence case</button>
+        <button class="mode-btn" data-mode="toggle" data-i18n="mode_toggle" title="tOGGLE cASE">tOGGLE</button>
+        <span class="tb-separator"></span>
+        <button class="mode-btn" data-mode="camel" data-i18n="mode_camel" title="camelCase">camelCase</button>
+        <button class="mode-btn" data-mode="pascal" data-i18n="mode_pascal" title="PascalCase">PascalCase</button>
+        <button class="mode-btn" data-mode="snake" data-i18n="mode_snake" title="snake_case">snake_case</button>
+        <button class="mode-btn" data-mode="kebab" data-i18n="mode_kebab" title="kebab-case">kebab-case</button>
+        <button class="mode-btn" data-mode="constant" data-i18n="mode_constant" title="CONSTANT_CASE">CONSTANT</button>
+      </div>
+
+      <div class="toolbar-section toolbar-right">
+        <div class="options-dropdown" id="options-dropdown-container">
+          <button class="action-btn dropdown-toggle" id="btn-options" data-i18n-tooltip="tooltip_options" title="Conversion options">
+            <i class="fa fa-sliders"></i>
+            <i class="fa fa-caret-down dropdown-arrow-icon"></i>
+          </button>
+          <div class="dropdown-content" id="options-dropdown">
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-sentence-preserve">
+                <span data-i18n="opt_sentence_preserve">Preserve sentence starts</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-word-preserve">
+                <span data-i18n="opt_word_preserve">Preserve word starts</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-acronyms">
+                <span data-i18n="opt_acronyms">Preserve acronyms</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-roman">
+                <span data-i18n="opt_roman">Preserve Roman numerals</span>
+              </label>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-trim">
+                <span data-i18n="opt_trim">Trim lines</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-collapse">
+                <span data-i18n="opt_collapse">Collapse spaces</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-removelinebreaks">
+                <span data-i18n="opt_removelinebreaks">Remove line breaks</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-removechars">
+                <span data-i18n="opt_removechars">Remove special chars</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-stripaccents">
+                <span data-i18n="opt_stripaccents">Strip accents</span>
+              </label>
+            </div>
+            <div class="dropdown-option">
+              <label class="option-label">
+                <input type="checkbox" id="opt-stripformatting">
+                <span data-i18n="opt_stripformatting">Strip formatting</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <button class="action-btn" id="btn-stats" data-i18n-tooltip="tooltip_stats" title="Statistics">
+          <i class="fa fa-bar-chart"></i>
+        </button>
       </div>
     </div>
-  </section>
 
+    <div class="converter-content">
+      <textarea id="input-area" data-i18n-placeholder="input_placeholder" spellcheck="false"></textarea>
+      <div class="arrow-indicator"><i class="fa fa-arrow-down"></i></div>
+      <div class="output-container">
+        <textarea id="output-area" readonly data-i18n-placeholder="output_placeholder" spellcheck="false"></textarea>
+        <div class="stats-panel" id="stats-panel" style="display:none;">
+          <div class="stat-item">
+            <span class="stat-label" data-i18n="conv_stats_chars">Characters</span>
+            <span class="stat-value" id="stat-chars">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label" data-i18n="conv_stats_words">Words</span>
+            <span class="stat-value" id="stat-words">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label" data-i18n="conv_stats_lines">Lines</span>
+            <span class="stat-value" id="stat-lines">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label" data-i18n="conv_stats_sentences">Sentences</span>
+            <span class="stat-value" id="stat-sentences">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SHARED SETTINGS MODAL -->
   <div class="settings-modal">
     <div class="settings-modal-overlay"></div>
     <div class="settings-modal-content">
@@ -142,7 +240,7 @@
         <h2 data-i18n="settings">Settings</h2>
         <button class="settings-close" aria-label="Close settings"><i class="fa fa-times"></i></button>
       </div>
-            <div class="settings-nav">
+      <div class="settings-nav">
         <button class="tab-btn active" data-tab="global-settings" data-i18n="tab_global">Global</button>
         <button class="tab-btn" data-tab="writer-settings" data-i18n="tab_writer">Writer</button>
         <button class="tab-btn" data-tab="converter-settings" data-i18n="tab_converter">Converter</button>
@@ -228,9 +326,6 @@
             <table class="shortcut-table">
               <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
               <tbody>
-                <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td></tr>
-                <tr><td>Goal</td><td><kbd>Ctrl+G</kbd></td></tr>
-                <tr><td>Find</td><td><kbd>Ctrl+F</kbd></td></tr>
                 <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
                 <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
               </tbody>
@@ -280,13 +375,13 @@
             <table class="shortcut-table">
               <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
               <tbody>
+                <tr><td>Copy</td><td><kbd>Ctrl+C</kbd></td></tr>
                 <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td></tr>
                 <tr><td>Undo</td><td><kbd>Ctrl+Z</kbd></td></tr>
                 <tr><td>Redo</td><td><kbd>Ctrl+Y</kbd></td></tr>
                 <tr><td>UPPERCASE</td><td><kbd>Ctrl+Shift+U</kbd></td></tr>
                 <tr><td>lowercase</td><td><kbd>Ctrl+Shift+L</kbd></td></tr>
                 <tr><td>Title Case</td><td><kbd>Ctrl+Shift+T</kbd></td></tr>
-                <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
                 <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
               </tbody>
             </table>
