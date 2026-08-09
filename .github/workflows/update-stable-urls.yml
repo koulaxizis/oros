@@ -19,6 +19,9 @@ on:
           - 'true'
           - 'false'
 
+# ══════════════════════════════════════════
+# CONCURRENCY — Prevent overlapping runs
+# ══════════════════════════════════════════
 concurrency:
   group: update-stable-urls
   cancel-in-progress: false
@@ -91,6 +94,7 @@ jobs:
             "index.html"
             "editor.html"
             "converter.html"
+            "ai-meta.txt"
           )
 
           MISSING=0
@@ -175,7 +179,7 @@ jobs:
           tar -czf "snapshot-backup-$TIMESTAMP.tar.gz" \
             robots.txt sitemap.xml manifest.json \
             config.js service-worker.js \
-            index.html editor.html converter.html \
+            index.html editor.html converter.html ai-meta.txt \
             assets/js/seo.js assets/js/main.js assets/js/global-settings.js \
             2>/dev/null || true
           
@@ -198,7 +202,7 @@ jobs:
 
       # ──────────────────────────────
       # 6. URL REPLACEMENT
-      # ──────────────────────
+      # ──────────────────────────────
       - name: Replace beta URLs with stable URLs
         if: |
           steps.guard.outputs.skip != 'true' &&
@@ -213,6 +217,7 @@ jobs:
           echo "  GH Pages:    $BETA_GH_PAGES → $STABLE_GH_PAGES"
           echo ""
 
+          # ─── Explicit file list (INCLUDES ai-meta.txt) ───
           FILES=(
             "robots.txt"
             "sitemap.xml"
@@ -222,17 +227,20 @@ jobs:
             "index.html"
             "editor.html"
             "converter.html"
+            "ai-meta.txt"
             "assets/js/seo.js"
             "assets/js/main.js"
             "assets/js/global-settings.js"
           )
 
+          # Find additional files
           EXTRA_HTML=$(find . -maxdepth 3 -name '*.html' -not -path './.git/*' -type f 2>/dev/null || true)
           EXTRA_JS=$(find . -maxdepth 3 -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
           EXTRA_CSS=$(find . -maxdepth 3 -name '*.css' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_TXT=$(find . -maxdepth 3 -name '*.txt' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
 
           ALL_FILES=("${FILES[@]}")
-          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS; do
+          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS $EXTRA_TXT; do
             if [[ ! " ${ALL_FILES[*]} " =~ " ${f} " ]]; then
               ALL_FILES+=("$f")
             fi
@@ -246,46 +254,61 @@ jobs:
 
             CHANGED=0
 
-            # Replacement 1: Full beta domain
+            # ─── Replacement 1: Full beta domain → custom domain ───
             if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros-beta|https://useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # Replacement 2: Protocol-relative
+            # ─── Replacement 2: Protocol-relative beta domain ───
             if grep -q "//koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|//koulaxizis\.github\.io/oros-beta|//useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # Replacement 3: Bare GH Pages beta
+            # ─── Replacement 3: Bare GH Pages host with beta path ───
             if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|koulaxizis\.github\.io/oros-beta|useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # Replacement 4: Old stable GH Pages
+            # ─── Replacement 4: Old stable GH Pages (if migrating) ───
             if grep -qE "https://koulaxizis\.github\.io/oros(/|[\"']|\$)" "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros/|https://useoros.online/|g' "$file"
               sed -i 's|https://koulaxizis\.github\.io/oros"|https://useoros.online"|g' "$file"
+              sed -i "s|https://koulaxizis\.github\.io/oros'|https://useoros.online'|g" "$file"
               CHANGED=1
             fi
 
-            # Replacement 5: Base href
+            # ─── Replacement 5: Bare old stable GH Pages ───
+            if grep -qE "koulaxizis\.github\.io/oros([^-a-z]|$)" "$file" 2>/dev/null; then
+              sed -i 's|koulaxizis\.github\.io/oros/|useoros.online/|g' "$file"
+              sed -i 's|koulaxizis\.github\.io/oros"|useoros.online"|g' "$file"
+              sed -i "s|koulaxizis\.github\.io/oros'|useoros.online'|g" "$file"
+              CHANGED=1
+            fi
+
+            # ─── Replacement 6: Beta base href → root ───
             if grep -q "/oros-beta/" "$file" 2>/dev/null; then
               sed -i 's|/oros-beta/|/|g' "$file"
               CHANGED=1
             fi
 
-            # Replacement 6: Standalone slug
-            if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
-              sed -i 's|\boros-beta\b|oros|g' "$file"
+            # ─── Replacement 7: Standalone /oros-beta → / ───
+            if grep -qE "/oros-beta([^a-z-]|$)" "$file" 2>/dev/null; then
+              sed -i 's|/oros-beta\(|[/]\?$\)|/|g' "$file"
               CHANGED=1
             fi
 
-            # Replacement 7: GitHub repo link
+            # ─── Replacement 8: GitHub repository slug ───
             if grep -q "github\.com/koulaxizis/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|github\.com/koulaxizis/oros-beta|github.com/koulaxizis/oros|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── Replacement 9: Repo slug in text contexts ───
+            if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
+              sed -i 's|\boros-beta\b|oros|g' "$file"
               CHANGED=1
             fi
 
@@ -314,7 +337,7 @@ jobs:
 
           FOUND_ISSUES=0
 
-          # Check 1: Beta domain
+          # ─── Check 1: Beta domain ───
           DOMAIN_HITS=$(grep -rn "koulaxizis\.github\.io/oros-beta" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' --include='*.css' \
@@ -329,7 +352,7 @@ jobs:
             echo "✅ No beta domain references"
           fi
 
-          # Check 2: Beta base href
+          # ─── Check 2: Beta base href ───
           HREF_HITS=$(grep -rn "/oros-beta/" . \
             --include='*.html' --include='*.json' --include='*.js' \
             --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
@@ -343,7 +366,7 @@ jobs:
             echo "✅ No beta base href references"
           fi
 
-          # Check 3: Beta slug
+          # ─── Check 3: Beta slug ANYWHERE (NO EXCLUSIONS) ───
           SLUG_HITS=$(grep -rn "oros-beta" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' --include='*.css' \
@@ -353,12 +376,14 @@ jobs:
           if [[ -n "$SLUG_HITS" ]]; then
             echo "❌ Beta slug still found:"
             echo "$SLUG_HITS"
+            echo "   Note: ai-meta.txt is INCLUDED in this check."
+            echo "   If it references the beta repo intentionally, update it manually."
             FOUND_ISSUES=$((FOUND_ISSUES + 1))
           else
             echo "✅ No beta slug references"
           fi
 
-          # Check 4: Verify new domain IS present
+          # ─── Check 4: Verify new domain IS present ───
           NEW_DOMAIN_HITS=$(grep -rl "useoros\.online" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' \
@@ -382,11 +407,11 @@ jobs:
             git checkout "$SNAPSHOT_BRANCH" -- .
             exit 1
           else
-            echo "✅ VERIFICATION PASSED"
+            echo "✅ VERIFICATION PASSED — All beta references replaced."
           fi
 
       # ──────────────────────────────
-      # 8. POST-FLIGHT — Validate integrity
+      # 8. POST-FLIGHT — Validate JSON/XML/JS integrity
       # ──────────────────────────────
       - name: Post-flight — Validate JSON, XML, and JS integrity
         if: |
@@ -397,7 +422,7 @@ jobs:
 
           ERRORS=0
 
-          # JSON
+          # ─── JSON files ───
           if [[ -f "manifest.json" ]]; then
             if python3 -m json.tool manifest.json >/dev/null 2>&1; then
               echo "✅ manifest.json — JSON valid"
@@ -407,8 +432,15 @@ jobs:
             fi
           fi
 
-          # JS
-          for jf in config.js service-worker.js assets/js/seo.js assets/js/main.js assets/js/global-settings.js; do
+          # ─── JS syntax validation ───
+          JS_FILES=(
+            "config.js"
+            "service-worker.js"
+            "assets/js/seo.js"
+            "assets/js/main.js"
+            "assets/js/global-settings.js"
+          )
+          for jf in "${JS_FILES[@]}"; do
             if [[ -f "$jf" ]]; then
               if node -c "$jf" 2>/dev/null; then
                 echo "✅ $jf — JS syntax OK"
@@ -419,7 +451,7 @@ jobs:
             fi
           done
 
-          # XML
+          # ─── XML validation ───
           if [[ -f "sitemap.xml" ]]; then
             if python3 -c "import xml.etree.ElementTree as ET; ET.parse('sitemap.xml')" 2>/dev/null; then
               echo "✅ sitemap.xml — XML valid"
@@ -429,7 +461,7 @@ jobs:
             fi
           fi
 
-          # robots.txt
+          # ─── robots.txt sanity ───
           if [[ -f "robots.txt" ]]; then
             if grep -q "oros-beta\|koulaxizis\.github\.io" robots.txt; then
               echo "❌ robots.txt — still contains beta/old references"
@@ -438,20 +470,34 @@ jobs:
               echo "❌ robots.txt — missing new domain"
               ERRORS=$((ERRORS + 1))
             else
-              echo "✅ robots.txt — clean"
+              echo "✅ robots.txt — clean, new domain present"
             fi
           fi
 
-          # HTML
+          # ─── HTML tag balance ───
           for hf in index.html editor.html converter.html; do
             if [[ -f "$hf" ]]; then
               OPEN=$(grep -c '<html' "$hf" || echo 0)
               CLOSE=$(grep -c '</html>' "$hf" || echo 0)
               if [[ "$OPEN" -ne "$CLOSE" ]]; then
-                echo "❌ $hf — unbalanced tags"
+                echo "❌ $hf — unbalanced <html> tags"
                 ERRORS=$((ERRORS + 1))
               else
-                echo "✅ $hf — HTML OK"
+                echo "✅ $hf — HTML structure OK"
+              fi
+            fi
+          done
+
+          # ─── Canonical link presence ───
+          for hf in index.html editor.html converter.html; do
+            if [[ -f "$hf" ]]; then
+              if grep -q 'rel="canonical"' "$hf"; then
+                if grep -q "useoros\.online" "$hf"; then
+                  echo "✅ $hf — canonical with new domain"
+                else
+                  echo "❌ $hf — canonical missing new domain"
+                  ERRORS=$((ERRORS + 1))
+                fi
               fi
             fi
           done
@@ -462,7 +508,7 @@ jobs:
             git checkout "$SNAPSHOT_BRANCH" -- .
             exit 1
           else
-            echo "✅ INTEGRITY CHECK PASSED"
+            echo "✅ INTEGRITY CHECK PASSED — All files valid."
           fi
 
       # ──────────────────────────────
@@ -478,11 +524,16 @@ jobs:
           echo "════════════════════════════════════════"
           git diff --stat
           echo ""
-          echo "Full diff preview:"
+          echo "Full diff preview (first 300 lines):"
           git diff | head -300
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "Modified files: $REPLACE_COUNT"
+          echo "Snapshot branch: $SNAPSHOT_BRANCH"
+          echo "════════════════════════════════════════"
 
       # ──────────────────────────────
-      # 10. COMMIT (or skip if dry-run)
+      # 10. CONFIGURE GIT
       # ──────────────────────────────
       - name: Configure git
         if: |
@@ -493,6 +544,9 @@ jobs:
           git config user.name "$GH_BOT_NAME"
           git config user.email "$GH_BOT_EMAIL"
 
+      # ──────────────────────────────
+      # 11. COMMIT (or skip if dry-run)
+      # ──────────────────────────────
       - name: Commit changes
         if: |
           steps.guard.outputs.skip != 'true' &&
@@ -501,21 +555,25 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Stage known files explicitly (includes ai-meta.txt)
           git add \
             robots.txt sitemap.xml manifest.json \
             config.js service-worker.js \
-            index.html editor.html converter.html \
+            index.html editor.html converter.html ai-meta.txt \
             assets/js/seo.js assets/js/main.js assets/js/global-settings.js
 
+          # Also stage any other changed files (excluding .github/)
           git add '*.html' '*.js' '*.json' '*.xml' '*.txt' '*.css' ':!.github' 2>/dev/null || true
 
+          # Verify there are staged changes
           if git diff --cached --quiet; then
             echo "ℹ️ No changes to commit."
             exit 0
           fi
 
+          # Pull latest in case of concurrent pushes
           git pull --rebase origin main || {
-            echo "❌ Pull rebase failed."
+            echo "❌ Pull rebase failed. Aborting to avoid conflicts."
             exit 1
           }
 
@@ -523,6 +581,8 @@ jobs:
 
           Domain:    $BETA_DOMAIN → $STABLE_DOMAIN
           Base href: $BETA_BASE_HREF → $STABLE_BASE_HREF
+          Repo slug: $BETA_REPO_SLUG → $STABLE_REPO_SLUG
+          GH Pages:  $BETA_GH_PAGES → $STABLE_GH_PAGES
           Files modified: $REPLACE_COUNT
           Snapshot: $SNAPSHOT_BRANCH"
 
@@ -531,7 +591,7 @@ jobs:
           echo "✅ Changes committed and pushed."
 
       # ──────────────────────────────
-      # 11. DRY-RUN NOTICE
+      # 12. DRY-RUN NOTICE
       # ──────────────────────────────
       - name: Notice — Dry run mode
         if: |
@@ -541,13 +601,14 @@ jobs:
         run: |
           echo "╔══════════════════════════════════════╗"
           echo "║  🔍 DRY RUN — No changes committed  ║"
+          echo "║  Review the diff above.             ║"
           echo "║  To apply: re-run with dry_run=false║"
           echo "╚══════════════════════════════════════╝"
 
       # ──────────────────────────────
-      # 12. SKIP NOTICES
+      # 13. SKIP NOTICES
       # ──────────────────────────────
-      - name: Notice — Skipped
+      - name: Notice — Skipped (auto-commit)
         if: steps.guard.outputs.skip == 'true'
         run: |
           echo "⏭️ Workflow skipped — automated commit detected."
@@ -560,7 +621,7 @@ jobs:
           echo "✅ No beta references found. Already on stable URLs."
 
       # ──────────────────────────────
-      # 13. FAILURE RESTORE INSTRUCTION
+      # 14. FAILURE RESTORE INSTRUCTION
       # ──────────────────────────────
       - name: On failure — Restore instructions
         if: failure()
