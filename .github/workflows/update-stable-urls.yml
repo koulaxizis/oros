@@ -201,7 +201,7 @@ jobs:
           retention-days: 7
 
       # ──────────────────────────────
-      # 6. URL REPLACEMENT
+      # 6. URL REPLACEMENT (SIMPLIFIED PATTERNS)
       # ──────────────────────────────
       - name: Replace beta URLs with stable URLs
         if: |
@@ -254,8 +254,8 @@ jobs:
 
             CHANGED=0
 
-            # ─── Replacement 1: Full beta domain → custom domain ───
-            if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
+            # ─── Replacement 1: Full HTTPS beta domain → custom domain ───
+            if grep -q "https://koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros-beta|https://useoros.online|g' "$file"
               CHANGED=1
             fi
@@ -266,49 +266,43 @@ jobs:
               CHANGED=1
             fi
 
-            # ─── Replacement 3: Bare GH Pages host with beta path ───
+            # ─── Replacement 3: Bare GH Pages beta (no protocol) ───
             if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|koulaxizis\.github\.io/oros-beta|useoros.online|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 4: Old stable GH Pages (if migrating) ───
-            if grep -qE "https://koulaxizis\.github\.io/oros(/|[\"']|\$)" "$file" 2>/dev/null; then
+            # ─── Replacement 4: Old stable GH Pages HTTPS (migration safety) ───
+            if grep -q "https://koulaxizis\.github\.io/oros/" "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros/|https://useoros.online/|g' "$file"
+              CHANGED=1
+            fi
+            if grep -q 'https://koulaxizis\.github\.io/oros"' "$file" 2>/dev/null; then
               sed -i 's|https://koulaxizis\.github\.io/oros"|https://useoros.online"|g' "$file"
-              sed -i "s|https://koulaxizis\.github\.io/oros'|https://useoros.online'|g" "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 5: Bare old stable GH Pages ───
-            if grep -qE "koulaxizis\.github\.io/oros([^-a-z]|$)" "$file" 2>/dev/null; then
+            # ─── Replacement 5: Old stable bare GH Pages ───
+            if grep -q "koulaxizis\.github\.io/oros/" "$file" 2>/dev/null; then
               sed -i 's|koulaxizis\.github\.io/oros/|useoros.online/|g' "$file"
-              sed -i 's|koulaxizis\.github\.io/oros"|useoros.online"|g' "$file"
-              sed -i "s|koulaxizis\.github\.io/oros'|useoros.online'|g" "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 6: Beta base href → root ───
+            # ─── Replacement 6: Base href path /oros-beta/ → / ───
             if grep -q "/oros-beta/" "$file" 2>/dev/null; then
               sed -i 's|/oros-beta/|/|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 7: Standalone /oros-beta → / ───
-            if grep -qE "/oros-beta([^a-z-]|$)" "$file" 2>/dev/null; then
-              sed -i 's|/oros-beta\(|[/]\?$\)|/|g' "$file"
-              CHANGED=1
-            fi
-
-            # ─── Replacement 8: GitHub repository slug ───
+            # ─── Replacement 7: GitHub repository slug ───
             if grep -q "github\.com/koulaxizis/oros-beta" "$file" 2>/dev/null; then
               sed -i 's|github\.com/koulaxizis/oros-beta|github.com/koulaxizis/oros|g' "$file"
               CHANGED=1
             fi
 
-            # ─── Replacement 9: Repo slug in text contexts ───
+            # ─── Replacement 8: Standalone oros-beta → oros (final sweep) ───
             if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
-              sed -i 's|\boros-beta\b|oros|g' "$file"
+              sed -i 's|oros-beta|oros|g' "$file"
               CHANGED=1
             fi
 
@@ -376,8 +370,6 @@ jobs:
           if [[ -n "$SLUG_HITS" ]]; then
             echo "❌ Beta slug still found:"
             echo "$SLUG_HITS"
-            echo "   Note: ai-meta.txt is INCLUDED in this check."
-            echo "   If it references the beta repo intentionally, update it manually."
             FOUND_ISSUES=$((FOUND_ISSUES + 1))
           else
             echo "✅ No beta slug references"
