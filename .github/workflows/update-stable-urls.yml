@@ -537,7 +537,120 @@ jobs:
           git config user.email "$GH_BOT_EMAIL"
 
       # ──────────────────────────────
-      # 11. COMMIT (or skip if dry-run)
+      # 10b. CLEAN INDEX (fix leftover from dry-runs)
+      # ──────────────────────────────
+      - name: Clean git index before commit
+        if: |
+          steps.guard.outputs.skip != 'true' &&
+          steps.count-before.outputs.nothing_to_do != 'true' &&
+          github.event.inputs.dry_run != 'true'
+        run: |
+          # Reset any uncommitted changes from previous runs
+          echo "Current git status:"
+          git status --short
+          
+          if git diff-index --quiet HEAD --; then
+            echo "ℹ️ Index is clean — no changes to clear."
+          else
+            echo "⚠️ Found uncommitted changes. Clearing index..."
+            # Discard ALL changes in working directory (safe since we just made them)
+            git checkout -- .
+            echo "✅ Index cleared."
+          fi
+
+      # ──────────────────────────────
+      # 11. REDO URL REPLACEMENT (after index cleanup)
+      # ──────────────────────────────
+      - name: Redo URL replacement (after cleanup)
+        if: |
+          steps.guard.outputs.skip != 'true' &&
+          steps.count-before.outputs.nothing_to_do != 'true' &&
+          github.event.inputs.dry_run != 'true'
+        run: |
+          set -euo pipefail
+
+          echo "Re-running URL replacements after index cleanup..."
+
+          FILES=(
+            "robots.txt"
+            "sitemap.xml"
+            "manifest.json"
+            "config.js"
+            "service-worker.js"
+            "index.html"
+            "editor.html"
+            "converter.html"
+            "ai-meta.txt"
+            "assets/js/seo.js"
+            "assets/js/main.js"
+            "assets/js/global-settings.js"
+          )
+
+          EXTRA_HTML=$(find . -maxdepth 3 -name '*.html' -not -path './.git/*' -type f 2>/dev/null || true)
+          EXTRA_JS=$(find . -maxdepth 3 -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_CSS=$(find . -maxdepth 3 -name '*.css' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_TXT=$(find . -maxdepth 3 -name '*.txt' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+
+          ALL_FILES=("${FILES[@]}")
+          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS $EXTRA_TXT; do
+            if [[ ! " ${ALL_FILES[*]} " =~ " ${f} " ]]; then
+              ALL_FILES+=("$f")
+            fi
+          done
+
+          for file in "${ALL_FILES[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              continue
+            fi
+
+            # 1: Full HTTPS beta domain
+            if grep -q "https://koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
+              sed -i 's|https://koulaxizis\.github\.io/oros-beta|https://useoros.online|g' "$file"
+            fi
+
+            # 2: Protocol-relative
+            if grep -q "//koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
+              sed -i 's|//koulaxizis\.github\.io/oros-beta|//useoros.online|g' "$file"
+            fi
+
+            # 3: Bare GH Pages beta
+            if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
+              sed -i 's|koulaxizis\.github\.io/oros-beta|useoros.online|g' "$file"
+            fi
+
+            # 4: Old stable HTTPS
+            if grep -q "https://koulaxizis\.github\.io/oros/" "$file" 2>/dev/null; then
+              sed -i 's|https://koulaxizis\.github\.io/oros/|https://useoros.online/|g' "$file"
+            fi
+            if grep -q 'https://koulaxizis\.github\.io/oros"' "$file" 2>/dev/null; then
+              sed -i 's|https://koulaxizis\.github\.io/oros"|https://useoros.online"|g' "$file"
+            fi
+
+            # 5: Old stable bare
+            if grep -q "koulaxizis\.github\.io/oros/" "$file" 2>/dev/null; then
+              sed -i 's|koulaxizis\.github\.io/oros/|useoros.online/|g' "$file"
+            fi
+
+            # 6: Base href
+            if grep -q "/oros-beta/" "$file" 2>/dev/null; then
+              sed -i 's|/oros-beta/|/|g' "$file"
+            fi
+
+            # 7: GitHub repo link
+            if grep -q "github\.com/koulaxizis/oros-beta" "$file" 2>/dev/null; then
+              sed -i 's|github\.com/koulaxizis/oros-beta|github.com/koulaxizis/oros|g' "$file"
+            fi
+
+            # 8: Final sweep
+            if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
+              sed -i 's|oros-beta|oros|g' "$file"
+            fi
+          done
+
+          echo "✅ URL replacements re-applied."
+
+      # ──────────────────────────────
+      # 12. COMMIT (or skip if dry-run)
       # ──────────────────────────────
       - name: Commit changes
         if: |
@@ -563,12 +676,18 @@ jobs:
             exit 0
           fi
 
-          # Pull latest in case of concurrent pushes
-          git pull --rebase origin main || {
-            echo "❌ Pull rebase failed. Aborting to avoid conflicts."
-            exit 1
+          # Pull latest WITHOUT rebase (simpler, less likely to conflict)
+          echo "Pulling latest changes from remote..."
+          git pull --no-edit origin main || {
+            echo "⚠️ Pull had conflicts, trying fetch+merge..."
+            git fetch origin main
+            git merge origin/main --no-edit || {
+              echo "❌ Merge failed. Aborting to avoid conflicts."
+              exit 1
+            }
           }
 
+          # Now commit
           git commit -m "🤖 Auto-update stable URLs
 
           Domain:    $BETA_DOMAIN → $STABLE_DOMAIN
@@ -583,7 +702,7 @@ jobs:
           echo "✅ Changes committed and pushed."
 
       # ──────────────────────────────
-      # 12. DRY-RUN NOTICE
+      # 13. DRY-RUN NOTICE
       # ──────────────────────────────
       - name: Notice — Dry run mode
         if: |
@@ -598,7 +717,7 @@ jobs:
           echo "╚══════════════════════════════════════╝"
 
       # ──────────────────────────────
-      # 13. SKIP NOTICES
+      # 14. SKIP NOTICES
       # ──────────────────────────────
       - name: Notice — Skipped (auto-commit)
         if: steps.guard.outputs.skip == 'true'
@@ -613,7 +732,7 @@ jobs:
           echo "✅ No beta references found. Already on stable URLs."
 
       # ──────────────────────────────
-      # 14. FAILURE RESTORE INSTRUCTION
+      # 15. FAILURE RESTORE INSTRUCTION
       # ──────────────────────────────
       - name: On failure — Restore instructions
         if: failure()
