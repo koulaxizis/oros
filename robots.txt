@@ -59,5 +59,5 @@ Allow: /
 # Block nothing — privacy-first, open indexing
 # No sensitive directories to hide
 
-Sitemap: https://koulaxizis.github.io/oros-beta/sitemap.xml
-Host: https://koulaxizis.github.io/oros-beta/
+Sitemap: https://useoros.online/sitemap.xml
+Host: https://useoros.online/

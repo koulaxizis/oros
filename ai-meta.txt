@@ -30,7 +30,7 @@ English, Greek, Spanish, Italian, French, German
 ## Contact & Attribution
 Author: Christos Koulaxizis
 Website: https://koulaxizis.gr
-GitHub: https://github.com/koulaxizis/oros-beta
+GitHub: https://github.com/koulaxizis/oros
 
 ## Licensing
 All code: MIT License
