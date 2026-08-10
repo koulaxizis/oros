@@ -95,6 +95,9 @@ jobs:
             "editor.html"
             "converter.html"
             "ai-meta.txt"
+            "assets/js/seo.js"
+            "assets/js/main.js"
+            "assets/js/global-settings.js"
           )
 
           MISSING=0
@@ -130,6 +133,10 @@ jobs:
             "$BETA_BASE_HREF"
             "$BETA_REPO_SLUG"
             "koulaxizis.github.io/oros-beta"
+            "koulaxizis.github.io"
+            "github.com/koulaxizis/blob"
+            "Beta Channel"
+            "Live Beta"
           )
 
           TOTAL_FILES=0
@@ -201,7 +208,7 @@ jobs:
           retention-days: 7
 
       # ──────────────────────────────
-      # 6. URL REPLACEMENT (SIMPLIFIED PATTERNS)
+      # 6. URL REPLACEMENT (COMPREHENSIVE)
       # ──────────────────────────────
       - name: Replace beta URLs with stable URLs
         if: |
@@ -238,9 +245,11 @@ jobs:
           EXTRA_JS=$(find . -maxdepth 3 -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
           EXTRA_CSS=$(find . -maxdepth 3 -name '*.css' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
           EXTRA_TXT=$(find . -maxdepth 3 -name '*.txt' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_JSON=$(find . -maxdepth 3 -name '*.json' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_XML=$(find . -maxdepth 3 -name '*.xml' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
 
           ALL_FILES=("${FILES[@]}")
-          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS $EXTRA_TXT; do
+          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS $EXTRA_TXT $EXTRA_JSON $EXTRA_XML; do
             if [[ ! " ${ALL_FILES[*]} " =~ " ${f} " ]]; then
               ALL_FILES+=("$f")
             fi
@@ -300,9 +309,51 @@ jobs:
               CHANGED=1
             fi
 
-            # ─── Replacement 8: Standalone oros-beta → oros (final sweep) ───
+            # ─── Replacement 8: Standalone oros-beta → oros (final slug sweep) ───
             if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
               sed -i 's|oros-beta|oros|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── ★ NEW: Replacement 9: Bare koulaxizis.github.io (preconnect/dns-prefetch) ───
+            # Catches ANY remaining instance of the old GitHub Pages host
+            # (after patterns 1-8, only bare instances survive)
+            if grep -q "koulaxizis\.github\.io" "$file" 2>/dev/null; then
+              sed -i 's|koulaxizis\.github\.io|useoros.online|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── ★ NEW: Replacement 10: License URL missing repo slug ───
+            # Fixes: github.com/koulaxizis/blob → github.com/koulaxizis/oros/blob
+            if grep -q 'github\.com/koulaxizis/blob' "$file" 2>/dev/null; then
+              sed -i 's|github\.com/koulaxizis/blob|github.com/koulaxizis/oros/blob|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── ★ NEW: Replacement 11: UI text — Beta Channel → Stable Channel ───
+            if grep -q "Beta Channel" "$file" 2>/dev/null; then
+              sed -i 's|Beta Channel|Stable Channel|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── ★ NEW: Replacement 12: UI text — beta warning → stable message ───
+            if grep -q "This is a beta version. Features may change." "$file" 2>/dev/null; then
+              sed -i 's|This is a beta version. Features may change.|Stable release. Features are production-ready.|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── ★ NEW: Replacement 13: UI text — "Live Beta" → "Live Editor" ───
+            if grep -q "Live Beta" "$file" 2>/dev/null; then
+              sed -i 's|Live Beta|Live Editor|g' "$file"
+              CHANGED=1
+            fi
+
+            # ─── ★ NEW: Replacement 14: UI text — "link_live_beta" i18n key stays,
+            # but any translation string values with "Live Beta" are caught above.
+            # Also catch "beta version" in any remaining text.
+            if grep -qi "beta version" "$file" 2>/dev/null; then
+              sed -i 's|beta version|stable version|gI' "$file" 2>/dev/null || \
+              sed -i 's|beta version|stable version|g' "$file"
               CHANGED=1
             fi
 
@@ -317,7 +368,7 @@ jobs:
           echo "REPLACE_COUNT=$REPLACE_COUNT" >> $GITHUB_ENV
 
       # ──────────────────────────────
-      # 7. POST-FLIGHT — Verify zero beta references
+      # 7. POST-FLIGHT — Verify zero beta references (COMPREHENSIVE)
       # ──────────────────────────────
       - name: Post-flight — Verify zero beta references
         if: |
@@ -331,7 +382,7 @@ jobs:
 
           FOUND_ISSUES=0
 
-          # ─── Check 1: Beta domain ───
+          # ─── Check 1: Beta domain (with path) ───
           DOMAIN_HITS=$(grep -rn "koulaxizis\.github\.io/oros-beta" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' --include='*.css' \
@@ -346,7 +397,22 @@ jobs:
             echo "✅ No beta domain references"
           fi
 
-          # ─── Check 2: Beta base href ───
+          # ─── ★ NEW: Check 2: Bare koulaxizis.github.io (ANY remaining) ───
+          BARE_GH_HITS=$(grep -rn "koulaxizis\.github\.io" . \
+            --include='*.html' --include='*.txt' --include='*.xml' \
+            --include='*.json' --include='*.js' --include='*.css' \
+            --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
+            2>/dev/null || true)
+
+          if [[ -n "$BARE_GH_HITS" ]]; then
+            echo "❌ Bare koulaxizis.github.io still found:"
+            echo "$BARE_GH_HITS"
+            FOUND_ISSUES=$((FOUND_ISSUES + 1))
+          else
+            echo "✅ No bare koulaxizis.github.io references"
+          fi
+
+          # ─── Check 3: Beta base href ───
           HREF_HITS=$(grep -rn "/oros-beta/" . \
             --include='*.html' --include='*.json' --include='*.js' \
             --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
@@ -360,7 +426,7 @@ jobs:
             echo "✅ No beta base href references"
           fi
 
-          # ─── Check 3: Beta slug ANYWHERE (NO EXCLUSIONS) ───
+          # ─── Check 4: Beta slug ANYWHERE ───
           SLUG_HITS=$(grep -rn "oros-beta" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' --include='*.css' \
@@ -375,7 +441,36 @@ jobs:
             echo "✅ No beta slug references"
           fi
 
-          # ─── Check 4: Verify new domain IS present ───
+          # ─── ★ NEW: Check 5: License URL missing repo slug ───
+          LICENSE_HITS=$(grep -rn 'github\.com/koulaxizis/blob' . \
+            --include='*.html' --include='*.txt' --include='*.xml' \
+            --include='*.json' --include='*.js' --include='*.css' \
+            --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
+            2>/dev/null || true)
+
+          if [[ -n "$LICENSE_HITS" ]]; then
+            echo "❌ License URL still missing repo slug:"
+            echo "$LICENSE_HITS"
+            FOUND_ISSUES=$((FOUND_ISSUES + 1))
+          else
+            echo "✅ License URL has repo slug"
+          fi
+
+          # ─── ★ NEW: Check 6: "Beta Channel" UI text ───
+          BETA_UI_HITS=$(grep -rn "Beta Channel" . \
+            --include='*.html' --include='*.js' \
+            --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.github' \
+            2>/dev/null || true)
+
+          if [[ -n "$BETA_UI_HITS" ]]; then
+            echo "❌ 'Beta Channel' UI text still found:"
+            echo "$BETA_UI_HITS"
+            FOUND_ISSUES=$((FOUND_ISSUES + 1))
+          else
+            echo "✅ No 'Beta Channel' UI text"
+          fi
+
+          # ─── Check 7: Verify new domain IS present ───
           NEW_DOMAIN_HITS=$(grep -rl "useoros\.online" . \
             --include='*.html' --include='*.txt' --include='*.xml' \
             --include='*.json' --include='*.js' \
@@ -394,12 +489,12 @@ jobs:
 
           echo ""
           if [[ $FOUND_ISSUES -gt 0 ]]; then
-            echo "❌ VERIFICATION FAILED"
+            echo "❌ VERIFICATION FAILED — $FOUND_ISSUES issue(s) found."
             echo "Restoring from local snapshot: $SNAPSHOT_BRANCH"
             git checkout "$SNAPSHOT_BRANCH" -- .
             exit 1
           else
-            echo "✅ VERIFICATION PASSED — All beta references replaced."
+            echo "✅ VERIFICATION PASSED — All references replaced."
           fi
 
       # ──────────────────────────────
@@ -494,6 +589,31 @@ jobs:
             fi
           done
 
+          # ─── ★ NEW: License URL check in seo.js ───
+          if [[ -f "assets/js/seo.js" ]]; then
+            if grep -q 'github\.com/koulaxizis/oros/blob' "assets/js/seo.js"; then
+              echo "✅ seo.js — license URL has repo slug"
+            elif grep -q 'github\.com/koulaxizis/blob' "assets/js/seo.js"; then
+              echo "❌ seo.js — license URL missing repo slug"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "ℹ️ seo.js — no license URL found (may have been removed)"
+            fi
+          fi
+
+          # ─── ★ NEW: Resource Hints check in HTML ───
+          for hf in index.html editor.html converter.html; do
+            if [[ -f "$hf" ]]; then
+              PRECONNECT_HITS=$(grep -c 'koulaxizis\.github\.io' "$hf" 2>/dev/null || echo 0)
+              if [[ "$PRECONNECT_HITS" -gt 0 ]]; then
+                echo "❌ $hf — still has koulaxizis.github.io in resource hints"
+                ERRORS=$((ERRORS + 1))
+              else
+                echo "✅ $hf — resource hints clean"
+              fi
+            fi
+          done
+
           echo ""
           if [[ $ERRORS -gt 0 ]]; then
             echo "❌ INTEGRITY CHECK FAILED — $ERRORS error(s)."
@@ -516,8 +636,8 @@ jobs:
           echo "════════════════════════════════════════"
           git diff --stat
           echo ""
-          echo "Full diff preview (first 300 lines):"
-          git diff | head -300
+          echo "Full diff preview (first 500 lines):"
+          git diff | head -500
           echo ""
           echo "════════════════════════════════════════"
           echo "Modified files: $REPLACE_COUNT"
@@ -559,7 +679,7 @@ jobs:
           fi
 
       # ──────────────────────────────
-      # 11. REDO URL REPLACEMENT (after index cleanup)
+      # 11. REDO URL REPLACEMENT (after index cleanup — COMPREHENSIVE)
       # ──────────────────────────────
       - name: Redo URL replacement (after cleanup)
         if: |
@@ -590,9 +710,11 @@ jobs:
           EXTRA_JS=$(find . -maxdepth 3 -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
           EXTRA_CSS=$(find . -maxdepth 3 -name '*.css' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
           EXTRA_TXT=$(find . -maxdepth 3 -name '*.txt' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_JSON=$(find . -maxdepth 3 -name '*.json' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
+          EXTRA_XML=$(find . -maxdepth 3 -name '*.xml' -not -path './.git/*' -not -path './node_modules/*' -type f 2>/dev/null || true)
 
           ALL_FILES=("${FILES[@]}")
-          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS $EXTRA_TXT; do
+          for f in $EXTRA_HTML $EXTRA_JS $EXTRA_CSS $EXTRA_TXT $EXTRA_JSON $EXTRA_XML; do
             if [[ ! " ${ALL_FILES[*]} " =~ " ${f} " ]]; then
               ALL_FILES+=("$f")
             fi
@@ -604,50 +726,50 @@ jobs:
             fi
 
             # 1: Full HTTPS beta domain
-            if grep -q "https://koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
-              sed -i 's|https://koulaxizis\.github\.io/oros-beta|https://useoros.online|g' "$file"
-            fi
+            sed -i 's|https://koulaxizis\.github\.io/oros-beta|https://useoros.online|g' "$file" 2>/dev/null || true
 
             # 2: Protocol-relative
-            if grep -q "//koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
-              sed -i 's|//koulaxizis\.github\.io/oros-beta|//useoros.online|g' "$file"
-            fi
+            sed -i 's|//koulaxizis\.github\.io/oros-beta|//useoros.online|g' "$file" 2>/dev/null || true
 
             # 3: Bare GH Pages beta
-            if grep -q "koulaxizis\.github\.io/oros-beta" "$file" 2>/dev/null; then
-              sed -i 's|koulaxizis\.github\.io/oros-beta|useoros.online|g' "$file"
-            fi
+            sed -i 's|koulaxizis\.github\.io/oros-beta|useoros.online|g' "$file" 2>/dev/null || true
 
             # 4: Old stable HTTPS
-            if grep -q "https://koulaxizis\.github\.io/oros/" "$file" 2>/dev/null; then
-              sed -i 's|https://koulaxizis\.github\.io/oros/|https://useoros.online/|g' "$file"
-            fi
-            if grep -q 'https://koulaxizis\.github\.io/oros"' "$file" 2>/dev/null; then
-              sed -i 's|https://koulaxizis\.github\.io/oros"|https://useoros.online"|g' "$file"
-            fi
+            sed -i 's|https://koulaxizis\.github\.io/oros/|https://useoros.online/|g' "$file" 2>/dev/null || true
+            sed -i 's|https://koulaxizis\.github\.io/oros"|https://useoros.online"|g' "$file" 2>/dev/null || true
 
             # 5: Old stable bare
-            if grep -q "koulaxizis\.github\.io/oros/" "$file" 2>/dev/null; then
-              sed -i 's|koulaxizis\.github\.io/oros/|useoros.online/|g' "$file"
-            fi
+            sed -i 's|koulaxizis\.github\.io/oros/|useoros.online/|g' "$file" 2>/dev/null || true
 
             # 6: Base href
-            if grep -q "/oros-beta/" "$file" 2>/dev/null; then
-              sed -i 's|/oros-beta/|/|g' "$file"
-            fi
+            sed -i 's|/oros-beta/|/|g' "$file" 2>/dev/null || true
 
             # 7: GitHub repo link
-            if grep -q "github\.com/koulaxizis/oros-beta" "$file" 2>/dev/null; then
-              sed -i 's|github\.com/koulaxizis/oros-beta|github.com/koulaxizis/oros|g' "$file"
-            fi
+            sed -i 's|github\.com/koulaxizis/oros-beta|github.com/koulaxizis/oros|g' "$file" 2>/dev/null || true
 
-            # 8: Final sweep
-            if grep -qE '\boros-beta\b' "$file" 2>/dev/null; then
-              sed -i 's|oros-beta|oros|g' "$file"
-            fi
+            # 8: Final slug sweep
+            sed -i 's|oros-beta|oros|g' "$file" 2>/dev/null || true
+
+            # ─── ★ NEW 9: Bare koulaxizis.github.io (catch-all) ───
+            sed -i 's|koulaxizis\.github\.io|useoros.online|g' "$file" 2>/dev/null || true
+
+            # ─── ★ NEW 10: License URL missing repo slug ───
+            sed -i 's|github\.com/koulaxizis/blob|github.com/koulaxizis/oros/blob|g' "$file" 2>/dev/null || true
+
+            # ─── ★ NEW 11: UI text — Beta Channel → Stable Channel ───
+            sed -i 's|Beta Channel|Stable Channel|g' "$file" 2>/dev/null || true
+
+            # ─── ★ NEW 12: UI text — beta warning → stable message ───
+            sed -i 's|This is a beta version. Features may change.|Stable release. Features are production-ready.|g' "$file" 2>/dev/null || true
+
+            # ─── ★ NEW 13: UI text — "Live Beta" → "Live Editor" ───
+            sed -i 's|Live Beta|Live Editor|g' "$file" 2>/dev/null || true
+
+            # ─── ★ NEW 14: UI text — "beta version" → "stable version" ───
+            sed -i 's|beta version|stable version|g' "$file" 2>/dev/null || true
           done
 
-          echo "✅ URL replacements re-applied."
+          echo "✅ URL replacements + UI text re-applied."
 
       # ──────────────────────────────
       # 12. COMMIT (or skip if dry-run)
@@ -690,12 +812,14 @@ jobs:
           # Now commit
           git commit -m "🤖 Auto-update stable URLs
 
-          Domain:    $BETA_DOMAIN → $STABLE_DOMAIN
-          Base href: $BETA_BASE_HREF → $STABLE_BASE_HREF
-          Repo slug: $BETA_REPO_SLUG → $STABLE_REPO_SLUG
-          GH Pages:  $BETA_GH_PAGES → $STABLE_GH_PAGES
+          Domain:      $BETA_DOMAIN → $STABLE_DOMAIN
+          Base href:   $BETA_BASE_HREF → $STABLE_BASE_HREF
+          Repo slug:   $BETA_REPO_SLUG → $STABLE_REPO_SLUG
+          GH Pages:    $BETA_GH_PAGES → $STABLE_GH_PAGES
           Files modified: $REPLACE_COUNT
-          Snapshot: $SNAPSHOT_BRANCH"
+          Snapshot: $SNAPSHOT_BRANCH
+
+          Includes: bare GH Pages host, license URL, UI text (Beta→Stable)"
 
           git push origin main
 
