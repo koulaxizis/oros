@@ -445,7 +445,8 @@ jobs:
               if node -c "$jf" 2>/dev/null; then
                 echo "OK: $jf - JS syntax OK"
               else
-                echo "FAIL: $jf - JS syntax ERROR"
+                echo "FAIL: $jf - JS syntax ERROR. Details:"
+                node -c "$jf" 2>&1 | head -10 || true
                 ERRORS=$((ERRORS + 1))
               fi
             fi
@@ -471,8 +472,10 @@ jobs:
           fi
           for hf in index.html editor.html converter.html; do
             if [[ -f "$hf" ]]; then
-              OPEN=$(grep -c '<html' "$hf" || echo 0)
-              CLOSE=$(grep -c '</html>' "$hf" || echo 0)
+              OPEN=$(grep -c '<html' "$hf" || true)
+              CLOSE=$(grep -c '</html>' "$hf" || true)
+              OPEN=${OPEN:-0}
+              CLOSE=${CLOSE:-0}
               if [[ "$OPEN" -ne "$CLOSE" ]]; then
                 echo "FAIL: $hf - unbalanced <html> tags"
                 ERRORS=$((ERRORS + 1))
@@ -505,7 +508,8 @@ jobs:
           fi
           for hf in index.html editor.html converter.html; do
             if [[ -f "$hf" ]]; then
-              PRECONNECT_HITS=$(grep -c 'koulaxizis\.github\.io' "$hf" 2>/dev/null || echo 0)
+              PRECONNECT_HITS=$(grep -c 'koulaxizis\.github\.io' "$hf" 2>/dev/null || true)
+              PRECONNECT_HITS=${PRECONNECT_HITS:-0}
               if [[ "$PRECONNECT_HITS" -gt 0 ]]; then
                 echo "FAIL: $hf - still has koulaxizis.github.io in resource hints"
                 ERRORS=$((ERRORS + 1))

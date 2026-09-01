@@ -69,7 +69,7 @@ var CACHE_URLS = [
   './assets/fonts/forkawesome-webfont.woff2',
   './assets/fonts/forkawesome-webfont.woff',
   './assets/fonts/forkawesome-webfont.ttf',
-  
+
 ];
 
 // ========== INSTALL ==========
@@ -129,17 +129,13 @@ self.addEventListener('fetch', function(event) {
         });
         return response;
       }).catch(function() {
-        // FIX: Offline fallback for document requests
-              }).catch(function() {
         if (event.request.destination === 'document') {
           return caches.match('./index.html');
         }
-        return new Response('', { status: 503, statusText: 'Offline' });
-      });
-        // FIX: Offline fallback for translation JSON
-        if (event.request.destination === '' && event.request.url.indexOf('translations.json') !== -1) {
+        if ((event.request.url || '').indexOf('translations.json') !== -1) {
           return caches.match('./assets/js/translations.json');
         }
+        return new Response('', { status: 503, statusText: 'Offline' });
       });
     })
   );
