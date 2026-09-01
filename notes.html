@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="orOS Notes — Privacy-first, offline markdown note editor with backlinks, tags, and knowledge graph. No tracking.">
+
+  <meta name="author" content="Christos Koulaxizis">
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow">
+  <meta name="theme-color" content="#c8a96e">
+
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/notes.html">
+  <meta property="og:title" content="orOS Notes — Privacy-First Wiki Notes">
+  <meta property="og:description" content="Markdown notes with backlinks, tags, knowledge graph, and command palette. Works offline. No tracking.">
+  <meta property="og:image" content="https://koulaxizis.github.io/oros-beta/og-image.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="orOS">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://koulaxizis.github.io/oros-beta/notes.html">
+  <meta name="twitter:title" content="orOS Notes — Privacy-First Wiki Notes">
+  <meta name="twitter:description" content="Markdown notes with backlinks, tags, knowledge graph, and command palette. Works offline. No tracking.">
+  <meta name="twitter:image" content="https://koulaxizis.github.io/oros-beta/twitter-card.png">
+  <meta name="twitter:creator" content="@koulaxizis">
+
+  <meta name="keywords" content="notes, wiki notes, markdown editor, backlinks, wikilinks, knowledge graph, note taking, offline, privacy, open source">
+
+  <link rel="preconnect" href="https://koulaxizis.github.io">
+  <link rel="dns-prefetch" href="https://koulaxizis.github.io">
+
+  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/notes.html">
+  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/notes.html?lang=el">
+  <link rel="alternate" hreflang="es" href="https://koulaxizis.github.io/oros-beta/notes.html?lang=es">
+  <link rel="alternate" hreflang="it" href="https://koulaxizis.github.io/oros-beta/notes.html?lang=it">
+  <link rel="alternate" hreflang="fr" href="https://koulaxizis.github.io/oros-beta/notes.html?lang=fr">
+  <link rel="alternate" hreflang="de" href="https://koulaxizis.github.io/oros-beta/notes.html?lang=de">
+  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/notes.html">
+
+  <title>orOS Notes</title>
+
+  <script src="config.js"></script>
+  <script>
+    document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
+    var cLink = document.createElement('link');
+    cLink.rel = 'canonical';
+    cLink.href = OROS_CONFIG.domain + window.location.pathname;
+    document.head.appendChild(cLink);
+  </script>
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preload" href="assets/fonts/nunito-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-extrabold.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/icons.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/notes.css">
+
+  <script src="assets/js/global-settings.js" defer></script>
+  <script src="assets/js/seo.js" defer></script>
+  <script src="assets/js/components/header.js" defer></script>
+  <script src="assets/js/components/footer.js" defer></script>
+  <script src="assets/js/notes.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body class="noscript">
+  <script>document.body.classList.remove('noscript'); document.body.classList.add('js-enabled');</script>
+
+  <noscript>
+    <div class="noscript-message">JavaScript is required for orOS Notes to function. Please enable JavaScript.</div>
+  </noscript>
+
+  <div id="oros-header"></div>
+
+  <!-- ===== TOOLBAR ===== -->
+  <div class="notes-toolbar" id="notes-toolbar">
+    <div class="notes-toolbar-left">
+      <button class="notes-toggle-btn" id="btn-toggle-sidebar" data-i18n-tooltip="notes_toggle_sidebar_tt" title="Toggle Sidebar">
+        <i class="fa fa-bars"></i>
+      </button>
+      <button class="notes-action-btn" id="btn-new-note" data-i18n-tooltip="notes_new_note_tt" title="New Note (Ctrl+N)">
+        <i class="fa fa-plus"></i>
+        <span data-i18n="notes_new_note">Note</span>
+      </button>
+      <button class="notes-action-btn" id="btn-new-folder" data-i18n-tooltip="notes_new_folder_tt" title="New Folder">
+        <i class="fa fa-folder-o"></i>
+        <span data-i18n="notes_new_folder">Folder</span>
+      </button>
+      <button class="notes-action-btn" id="btn-daily-note" data-i18n-tooltip="notes_daily_tt" title="Daily Note (Ctrl+D)">
+        <i class="fa fa-calendar"></i>
+        <span data-i18n="notes_daily_note">Daily</span>
+      </button>
+    </div>
+
+    <div class="notes-toolbar-center">
+      <div class="notes-search-box">
+        <i class="fa fa-search search-icon"></i>
+        <input type="text" class="notes-search-input" id="notes-search" data-i18n-placeholder="notes_search_placeholder" placeholder="Search notes...">
+        <button class="notes-search-clear" id="notes-search-clear" style="display:none;">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="notes-toolbar-right">
+      <button class="notes-action-btn" id="btn-graph" data-i18n-tooltip="notes_graph_tt" title="Graph View">
+        <i class="fa fa-share-alt"></i>
+      </button>
+      <button class="notes-action-btn" id="btn-command-palette" data-i18n-tooltip="notes_command_palette_tt" title="Command Palette (Ctrl+P)">
+        <i class="fa fa-terminal"></i>
+      </button>
+
+      <div class="export-dropdown-wrapper">
+        <button class="notes-action-btn" id="btn-export" data-i18n-tooltip="notes_export_tt" title="Export / Import">
+          <i class="fa fa-download"></i>
+          <span data-i18n="action_export">Export</span>
+          <i class="fa fa-caret-down" style="font-size:10px;"></i>
+        </button>
+
+        <div class="export-dropdown" id="export-dropdown">
+          <div class="export-group-label" data-i18n="notes_current_note">Current Note</div>
+          <div class="export-item" data-scope="note" data-format="md" data-i18n="notes_markdown_md">
+            <i class="fa fa-file-text-o"></i> Markdown (.md)
+          </div>
+          <div class="export-item" data-scope="note" data-format="txt" data-i18n="notes_plain_txt">
+            <i class="fa fa-file-o"></i> Plain Text (.txt)
+          </div>
+          <div class="export-item" data-scope="note" data-format="doc" data-i18n="notes_word_doc">
+            <i class="fa fa-file-word-o"></i> Word (.doc)
+          </div>
+          <div class="export-item" data-scope="note" data-format="pdf" data-i18n="notes_pdf_print">
+            <i class="fa fa-file-pdf-o"></i> PDF (print)
+          </div>
+          <div class="export-divider"></div>
+          <div class="export-group-label" data-i18n="notes_all_notes">All Notes</div>
+          <div class="export-item" data-scope="all" data-format="md" data-i18n="notes_markdown_md">
+            <i class="fa fa-file-text-o"></i> Markdown (.md)
+          </div>
+          <div class="export-item" data-scope="all" data-format="txt" data-i18n="notes_plain_txt">
+            <i class="fa fa-file-o"></i> Plain Text (.txt)
+          </div>
+          <div class="export-item" data-scope="all" data-format="doc" data-i18n="notes_word_doc">
+            <i class="fa fa-file-word-o"></i> Word (.doc)
+          </div>
+          <div class="export-item" data-scope="all" data-format="pdf" data-i18n="notes_pdf_print">
+            <i class="fa fa-file-pdf-o"></i> PDF (print)
+          </div>
+          <div class="export-divider"></div>
+          <div class="export-group-label" data-i18n="notes_data_section">Data</div>
+          <div class="export-item" data-scope="all" data-format="json" data-i18n="notes_backup_json">
+            <i class="fa fa-database"></i> Backup Database (.json)
+          </div>
+        </div>
+      </div>
+
+      <button class="notes-action-btn" id="btn-import" data-i18n-tooltip="notes_import_tt" title="Import">
+        <i class="fa fa-upload"></i>
+      </button>
+    </div>
+  </div>
+
+  <input type="file" id="import-file-input" accept=".json,.md,.txt" style="display:none;">
+  <iframe id="print-frame" style="display:none;position:absolute;width:0;height:0;border:0;" aria-hidden="true"></iframe>
+
+  <!-- ===== MAIN CONTAINER ===== -->
+  <div class="notes-container" id="notes-container">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="notes-sidebar" id="notes-sidebar">
+      <div class="sidebar-content">
+        <div class="sidebar-tree" id="sidebar-tree"></div>
+        <div class="sidebar-root-dropzone" id="sidebar-root-dropzone" data-i18n="notes_drop_root">
+          <i class="fa fa-arrow-down"></i> Drop here to move to root
+        </div>
+        <div class="sidebar-outline-panel" id="sidebar-outline-panel">
+          <div class="tags-panel-header">
+            <i class="fa fa-list-ul"></i> <span data-i18n="notes_outline_label">Outline</span>
+          </div>
+          <div class="outline-list" id="outline-list">
+            <span class="outline-empty" data-i18n="notes_no_headers">No headers</span>
+          </div>
+        </div>
+        <div class="sidebar-tags-panel" id="sidebar-tags-panel">
+          <div class="tags-panel-header">
+            <i class="fa fa-tags"></i> <span data-i18n="notes_tags_label">Tags</span>
+          </div>
+          <div class="tags-panel-list" id="tags-panel-list">
+            <span class="tags-panel-empty" data-i18n="notes_no_tags_yet">No tags yet</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN EDITOR AREA ===== -->
+    <main class="notes-main" id="notes-main">
+
+      <div class="notes-empty-state" id="notes-empty-state" style="display:flex;">
+        <i class="fa fa-book empty-icon"></i>
+        <h2 data-i18n="notes_welcome_title">Welcome to orOS Notes</h2>
+        <p data-i18n="notes_welcome_desc">A privacy-first, offline note editor with backlinks, tags, and knowledge graph.</p>
+        <button class="btn-create-first-note" id="btn-create-first-note" data-i18n="notes_create_first">
+          <i class="fa fa-plus"></i> Create your first note
+        </button>
+      </div>
+
+      <div class="notes-editor-panel" id="notes-editor-panel" style="display:none;">
+        <div class="editor-header">
+          <input type="text" class="note-title-input" id="note-title-input" data-i18n-placeholder="notes_title_placeholder" placeholder="Untitled Note">
+          <div class="editor-actions">
+            <button class="editor-action-btn" id="btn-export-note" data-i18n-tooltip="notes_quick_export_tt" title="Quick Export (MD)">
+              <i class="fa fa-share-square-o"></i>
+            </button>
+            <button class="editor-action-btn delete" id="btn-delete-note" data-i18n-tooltip="notes_delete_tt" title="Delete Note">
+              <i class="fa fa-trash-o"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="editor-tabs">
+          <button class="tab-btn active" id="tab-write" data-i18n="tab_write">Write</button>
+          <button class="tab-btn" id="tab-preview" data-i18n="tab_preview">Preview</button>
+          <div style="flex:1;"></div>
+        </div>
+
+        <div class="editor-body">
+          <div class="editor-pane editor-pane-left">
+            <textarea class="note-editor" id="note-editor" data-i18n-placeholder="notes_editor_placeholder" placeholder="Start writing... (Markdown supported)"></textarea>
+            <div class="autocomplete-dropdown" id="autocomplete-dropdown">
+              <div class="autocomplete-list" id="autocomplete-list"></div>
+            </div>
+          </div>
+          <div class="editor-divider"></div>
+          <div class="editor-pane editor-pane-right">
+            <div class="note-preview" id="note-preview"></div>
+          </div>
+        </div>
+
+        <div class="backlinks-panel" id="backlinks-panel">
+          <div class="backlinks-header" id="backlinks-header">
+            <i class="fa fa-link"></i>
+            <span class="backlinks-title" data-i18n="notes_linked_references">Linked References</span>
+            <span class="backlinks-count" id="backlinks-count">0</span>
+            <i class="fa fa-chevron-up backlinks-chevron"></i>
+          </div>
+          <div class="backlinks-body" id="backlinks-body">
+            <div class="backlinks-section">
+              <div class="backlinks-section-label" data-i18n="notes_backlinks_label">Backlinks</div>
+              <div class="backlinks-list" id="backlinks-list">
+                <div class="backlinks-empty" data-i18n="notes_no_backlinks">No backlinks</div>
+              </div>
+            </div>
+            <div class="backlinks-section">
+              <div class="backlinks-section-label" data-i18n="notes_related_label">Related (by tags)</div>
+              <div class="related-list" id="related-list">
+                <div class="backlinks-empty" data-i18n="notes_no_related">No related notes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-footer">
+          <div class="note-meta">
+            <span class="meta-item">
+              <i class="fa fa-clock-o"></i>
+              <span id="note-modified" data-i18n="notes_modified_label">—</span>
+            </span>
+            <span class="meta-item">
+              <i class="fa fa-file-text-o"></i>
+              <span id="note-words" data-i18n="notes_words_count">0 words</span>
+            </span>
+            <span class="meta-item">
+              <i class="fa fa-link"></i>
+              <span id="note-links" data-i18n="notes_links_count">0 links</span>
+            </span>
+          </div>
+          <div class="note-tags-section">
+            <div class="note-tags-display" id="note-tags-display"></div>
+            <input type="text" class="note-tags-input" id="note-tags-input" data-i18n-placeholder="notes_tags_input_ph" placeholder="+ tag">
+            <div class="view-toggle-small">
+              <button class="view-btn-small active" id="btn-view-split" data-i18n-tooltip="notes_split_tt" data-i18n="view_split" title="Split View">
+                <i class="fa fa-columns"></i>
+              </button>
+              <button class="view-btn-small" id="btn-view-editor" data-i18n-tooltip="notes_editor_tt" data-i18n="view_editor_only" title="Editor Only">
+                <i class="fa fa-pencil"></i>
+              </button>
+              <button class="view-btn-small" id="btn-view-preview" data-i18n-tooltip="notes_preview_tt" data-i18n="view_preview_only" title="Preview Only">
+                <i class="fa fa-eye"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== CONTEXT MENU (Tree) ===== -->
+  <div class="context-menu" id="context-menu">
+    <div class="context-item" data-action="rename" data-i18n="ctx_rename">
+      <i class="fa fa-pencil"></i> Rename
+    </div>
+    <div class="context-item" data-action="pin" data-i18n="ctx_pin">
+      <i class="fa fa-thumb-tack"></i> <span id="ctx-pin-label">Pin</span>
+    </div>
+    <div class="context-divider"></div>
+    <div class="context-item" data-action="cut" data-i18n="ctx_cut">
+      <i class="fa fa-scissors"></i> Cut
+    </div>
+    <div class="context-item disabled" data-action="paste" data-i18n="ctx_paste">
+      <i class="fa fa-clipboard"></i> Paste
+    </div>
+    <div class="context-divider"></div>
+    <div class="context-item" data-action="delete" data-i18n="ctx_delete">
+      <i class="fa fa-trash-o"></i> Delete
+    </div>
+  </div>
+
+  <!-- ===== EDITOR CONTEXT MENU ===== -->
+  <div class="context-menu editor-context-menu" id="editor-context-menu">
+    <div class="context-item" data-format="bold" data-i18n="notes_context_bold">
+      <i class="fa fa-bold"></i> Bold
+    </div>
+    <div class="context-item" data-format="italic" data-i18n="notes_context_italic">
+      <i class="fa fa-italic"></i> Italic
+    </div>
+    <div class="context-item" data-format="strike" data-i18n="notes_context_strikethrough">
+      <i class="fa fa-strikethrough"></i> Strikethrough
+    </div>
+    <div class="context-item" data-format="code" data-i18n="notes_context_code">
+      <i class="fa fa-code"></i> Code
+    </div>
+    <div class="context-divider"></div>
+    <div class="context-item" data-format="wikilink" data-i18n="notes_context_wikilink">
+      <i class="fa fa-link"></i> Wikilink
+    </div>
+    <div class="context-item" data-format="checkbox" data-i18n="notes_context_checkbox">
+      <i class="fa fa-check-square-o"></i> Checkbox
+    </div>
+    <div class="context-divider"></div>
+    <div class="context-item" data-format="h1" data-i18n="notes_context_h1">
+      <i class="fa fa-header"></i> Heading 1
+    </div>
+    <div class="context-item" data-format="h2" data-i18n="notes_context_h2">
+      <i class="fa fa-header"></i> Heading 2
+    </div>
+    <div class="context-item" data-format="h3" data-i18n="notes_context_h3">
+      <i class="fa fa-header"></i> Heading 3
+    </div>
+  </div>
+
+  <!-- ===== RENAME MODAL ===== -->
+  <div class="modal" id="rename-modal">
+    <div class="modal-overlay" id="rename-modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modal_rename">Rename</h3>
+        <button class="modal-close" id="rename-modal-close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <label class="modal-label" data-i18n="modal_new_name">New name:</label>
+        <input type="text" class="modal-input" id="rename-input">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="rename-cancel" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn-confirm" id="rename-confirm" data-i18n="btn_confirm">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LINK PICKER MODAL ===== -->
+  <div class="modal" id="link-picker-modal">
+    <div class="modal-overlay" id="link-picker-modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="notes_open_or_create">Open or Create Note</h3>
+        <button class="modal-close" id="link-picker-modal-close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <label class="modal-label" data-i18n="notes_note_title_ph">Note title:</label>
+        <input type="text" class="modal-input" id="link-picker-target">
+        <div class="note-list-results" id="note-list-results"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="link-picker-cancel" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn-confirm" id="link-picker-create" data-i18n="notes_open_btn">Open / Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COMMAND PALETTE MODAL ===== -->
+  <div class="command-palette-modal" id="command-palette-modal">
+    <div class="command-palette-overlay" id="command-palette-overlay"></div>
+    <div class="command-palette-content">
+      <div class="command-palette-input-wrapper">
+        <i class="fa fa-search"></i>
+        <input type="text" class="command-palette-input" id="command-palette-input"
+               data-i18n-placeholder="notes_command_ph" placeholder="Type to search notes or > for commands...">
+      </div>
+      <div class="command-palette-results" id="command-palette-results"></div>
+      <div class="command-palette-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="notes_cmd_nav">Navigate</span></span>
+        <span><kbd>Enter</kbd> <span data-i18n="notes_cmd_enter">Select</span></span>
+        <span><kbd>Esc</kbd> <span data-i18n="notes_cmd_esc">Close</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GRAPH MODAL ===== -->
+  <div class="modal graph-modal" id="graph-modal">
+    <div class="modal-overlay" id="graph-modal-overlay"></div>
+    <div class="modal-content" style="max-width:720px;width:90%;">
+      <div class="modal-header">
+        <h3 data-i18n="notes_knowledge_graph">Knowledge Graph</h3>
+        <button class="modal-close" id="graph-modal-close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body" style="padding:0;position:relative;overflow:hidden;">
+        <canvas id="graph-canvas" style="width:100%;height:500px;display:block;"></canvas>
+        <div class="graph-legend">
+          <div class="graph-legend-item">
+            <span class="graph-dot active-dot"></span> Active Note
+          </div>
+          <div class="graph-legend-item">
+            <span class="graph-dot linked-dot"></span> Linked Note
+          </div>
+          <div class="graph-legend-item">
+            <span class="graph-line"></span> Wikilink
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SHARED SETTINGS MODAL ===== -->
+  <div class="settings-modal">
+    <div class="settings-modal-overlay"></div>
+    <div class="settings-modal-content">
+      <div class="settings-header">
+        <h2 data-i18n="settings">Settings</h2>
+        <button class="settings-close" aria-label="Close settings"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="settings-nav">
+        <button class="tab-btn active" data-tab="global-settings" data-i18n="tab_global">Global</button>
+        <button class="tab-btn" data-tab="notes-settings" data-i18n="tab_notes">Notes</button>
+      </div>
+      <div class="settings-body">
+        <div class="tab-panel" id="global-settings" style="display:flex;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_zen">Zen Mode</span>
+              <label class="switch"><input type="checkbox" id="toggle-zen-mode"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="install_app">Install as App</span>
+              <button class="btn-install" id="btn-install" disabled data-i18n="install_app">Install</button>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="beta-section">
+              <div class="beta-header" data-i18n="beta_title">Beta Channel</div>
+              <p class="beta-warning" data-i18n="beta_warning">This is a beta version. Features may change.</p>
+              <div class="beta-links">
+                <a href="https://github.com/koulaxizis/oros-beta" target="_blank" rel="noopener" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
+                <a href="https://koulaxizis.github.io/oros-beta/notes.html" target="_blank" rel="noopener" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" id="notes-settings" style="display:none;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="default_view_mode">Default view mode</span>
+              <select class="setting-select" id="setting-default-view">
+                <option value="split" data-i18n="view_mode_split">Split (Editor + Preview)</option>
+                <option value="editor" data-i18n="view_mode_editor">Editor Only</option>
+                <option value="preview" data-i18n="view_mode_preview">Preview Only</option>
+              </select>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="backlinks_default_state">Linked References default state</span>
+              <select class="setting-select" id="setting-backlinks-default">
+                <option value="open" data-i18n="backlinks_open">Open on load</option>
+                <option value="closed" data-i18n="backlinks_closed">Closed on load</option>
+              </select>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="sidebar_sort_order">Sidebar sort order</span>
+              <select class="setting-select" id="setting-sidebar-sort">
+                <option value="recent-modified" data-i18n="sort_recent_modified">Recent Modified</option>
+                <option value="recent-created" data-i18n="sort_recent_created">Recent Created</option>
+                <option value="alpha-asc" data-i18n="sort_alpha_asc">Alphabetical A-Z</option>
+                <option value="alpha-desc" data-i18n="sort_alpha_desc">Alphabetical Z-A</option>
+                <option value="folders-first" data-i18n="sort_folders_first">Folders First, then Notes</option>
+                <option value="notes-first" data-i18n="sort_notes_first">Notes First, then Folders</option>
+              </select>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_new_note_btn">Hide New Note Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-new-note-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_new_folder_btn">Hide New Folder Button</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-new-folder-btn"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_hide_sidebar_toggle">Hide Sidebar Toggle</span>
+              <label class="switch"><input type="checkbox" id="toggle-hide-sidebar-toggle"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <table class="shortcut-table">
+              <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
+              <tbody>
+                <tr><td data-i18n="notes_new_note">New Note</td><td><kbd>Ctrl+N</kbd></td></tr>
+                <tr><td data-i18n="notes_command_palette_tt">Command Palette</td><td><kbd>Ctrl+P</kbd></td></tr>
+                <tr><td data-i18n="notes_daily_note">Daily Note</td><td><kbd>Ctrl+D</kbd></td></tr>
+                <tr><td data-i18n="notes_quick_export_tt">Export (MD)</td><td><kbd>Ctrl+E</kbd></td></tr>
+                <tr><td data-i18n="notes_backup_json">Backup (JSON)</td><td><kbd>Ctrl+S</kbd></td></tr>
+                <tr><td data-i18n="notes_search_placeholder">Search</td><td><kbd>Ctrl+Shift+F</kbd></td></tr>
+                <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
+                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="oros-footer"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register(
+          OROS_CONFIG.baseHref + 'service-worker.js',
+          { scope: OROS_CONFIG.baseHref }
+        ).catch(function(err) {
+          console.warn('SW registration failed:', err);
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -13,20 +13,12 @@
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="article">
-  <meta property="og:url" content="https://useoros.online/converter.html">
+  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/converter.html">
   <meta property="og:title" content="orOS Case Converter — Privacy-First Text Transformation">
   <meta property="og:description" content="Convert text to 10 different cases. Greek accent stripping. Markdown formatting removal. Works offline. No tracking.">
-  <meta property="og:image" content="https://useoros.online/og-image.png">
+  <meta property="og:image" content="https://koulaxizis.github.io/oros-beta/og-image.png">
   <meta property="og:locale" content="en_US">
   <meta property="og:site_name" content="orOS">
-  
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://useoros.online/converter.html">
-  <meta name="twitter:title" content="orOS Case Converter — Privacy-First Text Transformation">
-  <meta name="twitter:description" content="Convert text to 10 different cases. Greek accent stripping. Markdown formatting removal. Works offline. No tracking.">
-  <meta name="twitter:image" content="https://useoros.online/twitter-card.png">
-  <meta name="twitter:creator" content="@koulaxizis">
   
   <!-- Additional SEO -->
   <meta name="keywords" content="case converter, text transformation, uppercase, lowercase, title case, camelCase, snake_case, kebab-case, Greek accents, Markdown, privacy, offline">
@@ -36,22 +28,23 @@
   <link rel="dns-prefetch" href="https://koulaxizis.github.io">
   
   <!-- hreflang -->
-  <link rel="alternate" hreflang="en" href="https://useoros.online/converter.html">
-  <link rel="alternate" hreflang="el" href="https://useoros.online/converter.html?lang=el">
-  <link rel="alternate" hreflang="es" href="https://useoros.online/converter.html?lang=es">
-  <link rel="alternate" hreflang="it" href="https://useoros.online/converter.html?lang=it">
-  <link rel="alternate" hreflang="fr" href="https://useoros.online/converter.html?lang=fr">
-  <link rel="alternate" hreflang="de" href="https://useoros.online/converter.html?lang=de">
-  <link rel="alternate" hreflang="x-default" href="https://useoros.online/converter.html">
+  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/converter.html">
+  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/converter.html?lang=el">
+  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/converter.html">
   
   <title>orOS Case Converter</title>
   <script src="config.js"></script>
   <script>
-    document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
-    var cLink = document.createElement('link');
-    cLink.rel = 'canonical';
-    cLink.href = OROS_CONFIG.domain + window.location.pathname;
-    document.head.appendChild(cLink);
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register(
+          OROS_CONFIG.baseHref + 'service-worker.js',
+          { scope: OROS_CONFIG.baseHref }
+        ).catch(function(err) {
+          console.warn('SW registration failed:', err);
+        });
+      });
+    }
   </script>
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -67,7 +60,7 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/converter.css">
 
-  <!-- Global settings manager (SHARED with Editor) -->
+  <!-- Global settings manager (SHARED with Writer) -->
   <script src="assets/js/global-settings.js" defer></script>
   <script src="assets/js/seo.js" defer></script>
   
@@ -76,7 +69,7 @@
   <script src="assets/js/converter.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </head>
-<body class="noscript">
+<body class="noscript converter-page">
   <script>document.body.classList.remove('noscript'); document.body.classList.add('js-enabled');</script>
 
   <noscript>
@@ -89,27 +82,27 @@
 
     <div class="converter-toolbar" id="converter-toolbar">
       <div class="toolbar-section toolbar-left">
-        <button class="action-btn" id="btn-copy" data-i18n-tooltip="tooltip_copy" title="Copy to clipboard">
+        <button class="action-btn" id="btn-conv-copy" data-i18n-tooltip="tooltip_copy" title="Copy to clipboard">
           <i class="fa fa-copy"></i>
         </button>
-        <button class="action-btn" id="btn-save" data-i18n-tooltip="tooltip_save_file" title="Save file (Ctrl+S)">
+        <button class="action-btn" id="btn-conv-save" data-i18n-tooltip="tooltip_save_file" title="Save file (Ctrl+S)">
           <i class="fa fa-save"></i>
         </button>
-        <button class="action-btn" id="btn-open" data-i18n-tooltip="tooltip_open" title="Open file">
+        <button class="action-btn" id="btn-conv-open" data-i18n-tooltip="tooltip_open" title="Open file">
           <i class="fa fa-folder-open"></i>
         </button>
         <input type="file" id="file-input" accept=".txt,.md,.markdown" style="display:none;">
-        <button class="action-btn" id="btn-clear" data-i18n-tooltip="tooltip_clear" title="Clear all">
+        <button class="action-btn" id="btn-conv-clear" data-i18n-tooltip="tooltip_clear" title="Clear all">
           <i class="fa fa-trash-o"></i>
         </button>
-        <button class="action-btn" id="btn-undo" data-i18n-tooltip="tooltip_undo" title="Undo (Ctrl+Z)">
+        <button class="action-btn" id="btn-conv-undo" data-i18n-tooltip="tooltip_undo" title="Undo (Ctrl+Z)">
           <i class="fa fa-undo"></i>
         </button>
-        <button class="action-btn" id="btn-redo" data-i18n-tooltip="tooltip_redo" title="Redo (Ctrl+Y)">
+        <button class="action-btn" id="btn-conv-redo" data-i18n-tooltip="tooltip_redo" title="Redo (Ctrl+Y)">
           <i class="fa fa-repeat"></i>
         </button>
         <span class="tb-separator"></span>
-        <button class="action-btn" id="btn-reset" data-i18n-tooltip="tooltip_reset" title="Restore original">
+        <button class="action-btn" id="btn-conv-reset" data-i18n-tooltip="tooltip_reset" title="Restore original">
           <i class="fa fa-refresh"></i>
         </button>
       </div>
@@ -130,7 +123,7 @@
 
       <div class="toolbar-section toolbar-right">
         <div class="options-dropdown" id="options-dropdown-container">
-          <button class="action-btn dropdown-toggle" id="btn-options" data-i18n-tooltip="tooltip_options" title="Conversion options">
+          <button class="action-btn dropdown-toggle" id="btn-conv-options" data-i18n-tooltip="tooltip_options" title="Conversion options">
             <i class="fa fa-sliders"></i>
             <i class="fa fa-caret-down dropdown-arrow-icon"></i>
           </button>
@@ -198,7 +191,7 @@
             </div>
           </div>
         </div>
-        <button class="action-btn" id="btn-stats" data-i18n-tooltip="tooltip_stats" title="Statistics">
+        <button class="action-btn" id="btn-conv-stats" data-i18n-tooltip="tooltip_stats" title="Statistics">
           <i class="fa fa-bar-chart"></i>
         </button>
       </div>
@@ -261,8 +254,8 @@
               <div class="beta-header" data-i18n="beta_title">Beta Channel</div>
               <p class="beta-warning" data-i18n="beta_warning">This is a beta version. Features may change.</p>
               <div class="beta-links">
-                <a href="https://github.com/koulaxizis/oros" target="_blank" rel="noopener" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
-                <a href="https://useoros.online/editor.html" target="_blank" rel="noopener" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
+                <a href="https://github.com/koulaxizis/oros-beta" target="_blank" rel="noopener" class="beta-btn" data-i18n="beta_repo_link">GitHub Repository</a>
+                <a href="https://koulaxizis.github.io/oros-beta/writer.html" target="_blank" rel="noopener" class="beta-btn" data-i18n="link_live_beta">Live Beta</a>
               </div>
             </div>
           </div>
@@ -326,8 +319,8 @@
             <table class="shortcut-table">
               <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
               <tbody>
-                <tr><td>Zen Mode</td><td><kbd>F9</kbd></td></tr>
-                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+                <tr><td data-i18n="help_feature_zen">Zen Mode</td><td><kbd>F9</kbd></td></tr>
+                <tr><td data-i18n="help_shortcut_esc">Close panels/dialogs</td><td><kbd>Esc</kbd></td></tr>
               </tbody>
             </table>
           </div>
@@ -375,14 +368,14 @@
             <table class="shortcut-table">
               <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
               <tbody>
-                <tr><td>Copy</td><td><kbd>Ctrl+C</kbd></td></tr>
-                <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td></tr>
-                <tr><td>Undo</td><td><kbd>Ctrl+Z</kbd></td></tr>
-                <tr><td>Redo</td><td><kbd>Ctrl+Y</kbd></td></tr>
-                <tr><td>UPPERCASE</td><td><kbd>Ctrl+Shift+U</kbd></td></tr>
-                <tr><td>lowercase</td><td><kbd>Ctrl+Shift+L</kbd></td></tr>
-                <tr><td>Title Case</td><td><kbd>Ctrl+Shift+T</kbd></td></tr>
-                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+                <tr><td data-i18n="tooltip_copy">Copy</td><td><kbd>Ctrl+C</kbd></td></tr>
+                <tr><td data-i18n="tooltip_save">Save</td><td><kbd>Ctrl+S</kbd></td></tr>
+                <tr><td data-i18n="tooltip_undo">Undo</td><td><kbd>Ctrl+Z</kbd></td></tr>
+                <tr><td data-i18n="tooltip_redo">Redo</td><td><kbd>Ctrl+Y</kbd></td></tr>
+                <tr><td data-i18n="mode_uppercase">UPPERCASE</td><td><kbd>Ctrl+Shift+U</kbd></td></tr>
+                <tr><td data-i18n="mode_lowercase">lowercase</td><td><kbd>Ctrl+Shift+L</kbd></td></tr>
+                <tr><td data-i18n="mode_title">Title Case</td><td><kbd>Ctrl+Shift+T</kbd></td></tr>
+                <tr><td data-i18n="help_shortcut_esc">Close panels</td><td><kbd>Esc</kbd></td></tr>
               </tbody>
             </table>
           </div>
@@ -392,16 +385,6 @@
   </div>
 
   <div id="oros-footer"></div>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('service-worker.js').catch(function(err) {
-          console.warn('SW registration failed:', err);
-        });
-      });
-    }
-  </script>
 
 </body>
 </html>

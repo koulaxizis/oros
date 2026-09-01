@@ -46,12 +46,17 @@
   
   <title>orOS Writer</title>
   <script src="config.js"></script>
-  <script>
-    document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
-    var cLink = document.createElement('link');
-    cLink.rel = 'canonical';
-    cLink.href = OROS_CONFIG.domain + window.location.pathname;
-    document.head.appendChild(cLink);
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register(
+          OROS_CONFIG.baseHref + 'service-worker.js',
+          { scope: OROS_CONFIG.baseHref }
+        ).catch(function(err) {
+          console.warn('SW registration failed:', err);
+        });
+      });
+    }
   </script>
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">

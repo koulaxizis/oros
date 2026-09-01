@@ -1,200 +1,153 @@
 // ============================================
-// orOS Service Worker — Cache-First Strategy
-// Uses OROS_CONFIG for cache name and base path
+// orOS Service Worker
+// Cache-first strategy with network fallback
+// Version: 1.0.0
 // ============================================
 
-importScripts('config.js');
-
-var CACHE_NAME = (typeof OROS_CONFIG !== 'undefined' && OROS_CONFIG.cacheName) || 'oros-cache';
-var BASE = self.registration.scope || '/';
-
-// Assets to cache precache (fonts, icons, static CSS/JS)
-var ASSETS_TO_CACHE = [
-  'favicon.svg',
-  'og-image.png',
-  'og-image.svg',
-  'twitter-card.png',
-  'twitter-card.svg',
-  'sitemap.xml',
-  'index.html',
-  'editor.html',
-  'converter.html',
-  'assets/css/icons.css',
-  'assets/css/style.css',
-  'assets/css/converter.css',
-  'assets/fonts/nunito-regular.woff2',
-  'assets/fonts/nunito-medium.woff2',
-  'assets/fonts/nunito-semibold.woff2',
-  'assets/fonts/nunito-bold.woff2',
-  'assets/fonts/nunito-extrabold.woff2',
-  'assets/fonts/forkawesome-webfont.woff2',
-  'assets/fonts/forkawesome-webfont.woff',
-  'assets/fonts/forkawesome-webfont.ttf'
+var CACHE_NAME = 'oros-v1.0.0';
+var CACHE_URLS = [
+  './',
+  './index.html',
+  './writer.html',
+  './converter.html',
+  './kanban.html',
+  './notes.html',
+  './prompter.html',
+  './habits.html',
+  './config.js',
+  './manifest.json',
+  './favicon.svg',
+  './sitemap.xml',
+  './ai-meta.txt',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
+  './screenshots/writer.png',
+  './screenshots/converter.png',
+  './screenshots/kanban.png',
+  './screenshots/notes.png',
+  // Translations
+  './assets/js/translations.json',
+  // CSS
+  './assets/css/style.css',
+  './assets/css/icons.css',
+  './assets/css/converter.css',
+  './assets/css/kanban.css',
+  './assets/css/notes.css',
+  './assets/css/writer.css',
+  './assets/css/prompter.css',
+  './assets/css/habits.css',
+  './assets/css/characters.css',
+  // JS — Core
+  './assets/js/global-settings.js',
+  './assets/js/seo.js',
+  './assets/js/main.js',
+  // JS — Components
+  './assets/js/components/header.js',
+  './assets/js/components/footer.js',
+  // JS — Libraries
+  './assets/js/lib/jszip.min.js',
+  './assets/js/lib/html2pdf.bundle.min.js',
+  './assets/js/lib/mammoth.browser.min.js',
+  './assets/js/lib/rtf-parser.js',
+  // JS — App Logic
+  './assets/js/writer.js',
+  './assets/js/converter.js',
+  './assets/js/kanban.js',
+  './assets/js/notes.js',
+  './assets/js/prompter.js',
+  './assets/js/prompts.json',
+  './assets/js/habits.js',
+  './assets/js/characters.js',
+  // Fonts
+  './assets/fonts/nunito-regular.woff2',
+  './assets/fonts/nunito-medium.woff2',
+  './assets/fonts/nunito-semibold.woff2',
+  './assets/fonts/nunito-bold.woff2',
+  './assets/fonts/nunito-extrabold.woff2',
+  './assets/fonts/forkawesome-webfont.woff2',
+  './assets/fonts/forkawesome-webfont.woff',
+  './assets/fonts/forkawesome-webfont.ttf',
+  
 ];
 
-// Dynamic assets to cache (JS files loaded by pages)
-var SCRIPTS_TO_CACHE = [
-  'assets/js/main.js',
-  'assets/js/editor.js',
-  'assets/js/converter.js',
-  'assets/js/global-settings.js',
-  'assets/js/seo.js',
-  'assets/js/components/header.js',
-  'assets/js/components/footer.js',
-  'assets/js/translations.json'
-];
-
-// ============================================
-// INSTALL — Precache static assets
-// ============================================
+// ========== INSTALL ==========
 self.addEventListener('install', function(event) {
-  console.log('[SW] Installing cache:', CACHE_NAME);
-  
-  var assetsToPreCache = ASSETS_TO_CACHE.concat(SCRIPTS_TO_CACHE);
-  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(function(cache) {
-        console.log('[SW] Precaching', assetsToPreCache.length, 'files');
-        return cache.addAll(assetsToPreCache.map(function(path) {
-          return BASE + path;
-        }));
-      })
-      .then(function() {
-        return self.skipWaiting();
-      })
-      .catch(function(err) {
-        console.warn('[SW] Precache error:', err);
-      })
-  );
-});
-
-// ============================================
-// ACTIVATE — Clean old caches
-// ============================================
-self.addEventListener('activate', function(event) {
-  console.log('[SW] Activating:', CACHE_NAME);
-  
-  event.waitUntil(
-    caches.keys()
-      .then(function(keys) {
-        return Promise.all(
-          keys.filter(function(key) {
-            return key !== CACHE_NAME;
-          }).map(function(key) {
-            console.log('[SW] Deleting old cache:', key);
-            return caches.delete(key);
-          })
-        );
-      })
-      .then(function() {
-        return self.clients.claim();
-      })
-  );
-});
-
-// ============================================
-// FETCH — Hybrid caching strategy
-// ============================================
-self.addEventListener('fetch', function(event) {
-  var requestUrl = new URL(event.request.url);
-  var origin = self.location.origin;
-  
-  // Skip non-origin requests
-  if (requestUrl.origin !== origin) {
-    return;
-  }
-
-  // Cache-first for assets (images, fonts, CSS, JS)
-  if (isAssetRequest(requestUrl.pathname)) {
-    event.respondWith(cacheFirst(event.request));
-    return;
-  }
-
-  // Stale-while-revalidate for JSON (translations, config)
-  if (requestUrl.pathname.endsWith('.json')) {
-    event.respondWith(staleWhileRevalidate(event.request));
-    return;
-  }
-
-  // Network-first for HTML pages (fallback to cache)
-  if (isHTMLRequest(requestUrl.pathname)) {
-    event.respondWith(networkFirst(event.request));
-    return;
-  }
-
-  // Default: cache-first for everything else
-  event.respondWith(cacheFirst(event.request));
-});
-
-// ========== HELPER FUNCTIONS ==========
-
-function isAssetRequest(path) {
-  var assetExtensions = ['.css', '.js', '.json', '.svg', '.png', '.jpg', '.jpeg', '.woff2', '.woff', '.ttf'];
-  return assetExtensions.some(function(ext) {
-    return path.endsWith(ext);
-  });
-}
-
-function isHTMLRequest(path) {
-  return path.endsWith('.html') || path === '/' || path === '/editor.html' || path === '/converter.html' || path === BASE || path === BASE + '/';
-}
-
-function cacheFirst(request) {
-  return caches.open(CACHE_NAME)
-    .then(function(cache) {
-      return cache.match(request).then(function(matched) {
-        if (matched) {
-          console.log('[SW] Cache hit:', request.url);
-          return matched;
-        }
-        console.log('[SW] Cache miss, fetching:', request.url);
-        return fetch(request).then(function(response) {
-          if (response.ok) {
-            var responseClone = response.clone();
-            cache.put(request, responseClone);
-          }
-          return response;
-        });
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.addAll(CACHE_URLS).catch(function(err) {
+        console.warn('SW: Some assets failed to cache:', err);
       });
-    });
-}
-
-function staleWhileRevalidate(request) {
-  return caches.open(CACHE_NAME)
-    .then(function(cache) {
-      return cache.match(request).then(function(matched) {
-        var fetchPromise = fetch(request).then(function(response) {
-          if (response.ok) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        }).catch(function() {
-          return matched;
-        });
-        
-        return matched || fetchPromise;
-      });
-    });
-}
-
-function networkFirst(request) {
-  return fetch(request)
-    .then(function(response) {
-      if (response.ok) {
-        var responseClone = response.clone();
-        caches.open(CACHE_NAME)
-          .then(function(cache) {
-            cache.put(request, responseClone);
-          });
-      }
-      return response;
     })
-    .catch(function() {
-      console.log('[SW] Network failed, trying cache:', request.url);
-      return caches.open(CACHE_NAME)
-        .then(function(cache) {
-          return cache.match(request);
+  );
+  self.skipWaiting();
+});
+
+// ========== ACTIVATE ==========
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// ========== FETCH ==========
+self.addEventListener('fetch', function(event) {
+  if (event.request.method !== 'GET') return;
+  if (new URL(event.request.url).origin !== self.location.origin) return;
+
+  event.respondWith(
+    caches.match(event.request).then(function(cachedResponse) {
+      if (cachedResponse) {
+        // Stale-while-revalidate: return cache, update in background
+        fetch(event.request).then(function(response) {
+          if (response && response.status === 200) {
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, response.clone());
+            });
+          }
+        }).catch(function() {});
+        return cachedResponse;
+      }
+
+      return fetch(event.request).then(function(response) {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+        var responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(event.request, responseToCache);
         });
-    });
-}
+        return response;
+      }).catch(function() {
+        // FIX: Offline fallback for document requests
+              }).catch(function() {
+        if (event.request.destination === 'document') {
+          return caches.match('./index.html');
+        }
+        return new Response('', { status: 503, statusText: 'Offline' });
+      });
+        // FIX: Offline fallback for translation JSON
+        if (event.request.destination === '' && event.request.url.indexOf('translations.json') !== -1) {
+          return caches.match('./assets/js/translations.json');
+        }
+      });
+    })
+  );
+});
+
+// ========== MESSAGE ==========
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});

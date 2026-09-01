@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="orOS Habit Tracker — Privacy-first habit building tool with streaks, stats, and reminders. Works offline. No tracking.">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="author" content="Christos Koulaxizis">
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow">
+  <meta name="theme-color" content="#c8a96e">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/habits.html">
+  <meta property="og:title" content="orOS Habit Tracker — Build Better Habits">
+  <meta property="og:description" content="Track habits with streaks, statistics, and reminders. Works offline. No tracking.">
+  <meta property="og:image" content="https://koulaxizis.github.io/oros-beta/og-image.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="orOS">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://koulaxizis.github.io/oros-beta/habits.html">
+  <meta name="twitter:title" content="orOS Habit Tracker — Build Better Habits">
+  <meta name="twitter:description" content="Track habits with streaks, statistics, and reminders. Works offline. No tracking.">
+  <meta name="twitter:image" content="https://koulaxizis.github.io/oros-beta/twitter-card.png">
+  <meta name="twitter:creator" content="@koulaxizis">
+  
+  <!-- Additional SEO -->
+  <meta name="keywords" content="habit tracker, habit building, streaks, productivity, offline, privacy, open source">
+  
+  <!-- Resource Hints -->
+  <link rel="preconnect" href="https://koulaxizis.github.io">
+  <link rel="dns-prefetch" href="https://koulaxizis.github.io">
+  
+  <!-- hreflang — ONLY en + el -->
+  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/habits.html">
+  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/habits.html?lang=el">
+  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/habits.html">
+  
+  <title>orOS Habit Tracker</title>
+  <script src="config.js"></script>
+  <script>
+    document.write('<base href="' + (OROS_CONFIG.baseHref || '/') + '">');
+    var cLink = document.createElement('link');
+    cLink.rel = 'canonical';
+    cLink.href = window.location.origin + window.location.pathname;
+    document.head.appendChild(cLink);
+  </script>
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preload" href="assets/fonts/nunito-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-extrabold.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/icons.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/habits.css">
+
+  <script src="assets/js/global-settings.js" defer></script>
+  <script src="assets/js/seo.js" defer></script>
+  <script src="assets/js/components/header.js" defer></script>
+  <script src="assets/js/components/footer.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+  <script src="assets/js/habits.js" defer></script>
+</head>
+<body class="noscript habits-page">
+  <script>document.body.classList.remove('noscript'); document.body.classList.add('js-enabled');</script>
+
+  <noscript>
+    <div class="noscript-message">JavaScript is required for orOS Habit Tracker to function. Please enable JavaScript.</div>
+  </noscript>
+
+  <div id="oros-header"></div>
+
+  <div id="habits-wrapper">
+
+    <div class="habits-toolbar" id="habits-toolbar">
+      <div class="toolbar-section toolbar-left">
+        <button class="action-btn" id="btn-add-habit" data-i18n-tooltip="tooltip_add_habit" title="Add new habit">
+          <i class="fa fa-plus"></i>
+        </button>
+        <span class="tb-separator"></span>
+        <button class="action-btn" id="btn-import" data-i18n-tooltip="tooltip_import" title="Import habits">
+          <i class="fa fa-upload"></i>
+        </button>
+        <button class="action-btn" id="btn-export" data-i18n-tooltip="tooltip_export" title="Export habits">
+          <i class="fa fa-download"></i>
+        </button>
+        <input type="file" id="file-input" accept=".json" style="display:none;">
+        <span class="tb-separator"></span>
+        <button class="action-btn" id="btn-clear-data" data-i18n-tooltip="tooltip_clear_data" title="Clear all data">
+          <i class="fa fa-trash-o"></i>
+        </button>
+      </div>
+
+      <div class="toolbar-section toolbar-center">
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-btn active" data-view="list" data-i18n="view_list" title="List view">
+            <i class="fa fa-list"></i>
+          </button>
+          <button class="view-btn" data-view="calendar" data-i18n="view_calendar" title="Calendar view">
+            <i class="fa fa-calendar"></i>
+          </button>
+          <button class="view-btn" data-view="stats" data-i18n="view_stats" title="Statistics">
+            <i class="fa fa-bar-chart"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar-section toolbar-right">
+        <div class="period-selector" id="period-selector">
+          <button class="period-btn" id="btn-prev-period" title="Previous period">
+            <i class="fa fa-chevron-left"></i>
+          </button>
+          <span class="period-label" id="period-label">This Week</span>
+          <button class="period-btn" id="btn-next-period" title="Next period">
+            <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div class="habits-view" id="list-view">
+      <div class="habits-list" id="habits-list">
+        <div class="empty-state" id="empty-state">
+          <i class="fa fa-check-circle"></i>
+          <h2 data-i18n="habits_empty_title">No habits yet</h2>
+          <p data-i18n="habits_empty_desc">Create your first habit to get started.</p>
+          <button class="primary-btn" id="btn-create-first" data-i18n="create_first_habit">Create Habit</button>
+        </div>
+        <!-- Habits will be injected here -->
+      </div>
+    </div>
+
+    <!-- CALENDAR VIEW -->
+    <div class="habits-view" id="calendar-view" style="display:none;">
+      <div class="calendar-container" id="calendar-container">
+        <!-- Calendar grid will be injected here -->
+      </div>
+    </div>
+
+    <!-- STATS VIEW -->
+    <div class="habits-view" id="stats-view" style="display:none;">
+      <div class="stats-container" id="stats-container">
+        <div class="stats-overall" id="stats-overall">
+          <!-- Overall statistics -->
+        </div>
+        <div class="stats-per-habit" id="stats-per-habit">
+          <!-- Per-habit statistics -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADD/EDIT HABIT DIALOG -->
+  <div class="dialog-overlay" id="habit-dialog-overlay" style="display:none;">
+    <div class="dialog">
+      <div class="dialog-header">
+        <h3 data-i18n="dialog_habit_title">Add New Habit</h3>
+        <button class="dialog-close" id="btn-close-habit-dialog"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="dialog-body">
+        <div class="dialog-field">
+          <label data-i18n="habit_name_label">Habit Name</label>
+          <input type="text" id="habit-name" placeholder="Morning meditation..." />
+        </div>
+        <div class="dialog-field">
+          <label data-i18n="habit_icon_label">Icon</label>
+          <div class="icon-picker" id="icon-picker">
+            <!-- Icons will be injected here -->
+          </div>
+        </div>
+        <div class="dialog-field">
+          <label data-i18n="habit_color_label">Color</label>
+          <div class="color-picker" id="color-picker">
+            <!-- Colors will be injected here -->
+          </div>
+        </div>
+        <div class="dialog-field">
+          <label data-i18n="habit_frequency_label">Frequency</label>
+          <select id="habit-frequency">
+            <option value="daily" data-i18n="freq_daily">Daily</option>
+            <option value="weekly" data-i18n="freq_weekly">Weekly</option>
+            <option value="custom" data-i18n="freq_custom">Custom Days</option>
+          </select>
+        </div>
+        <div class="dialog-field" id="custom-days-field" style="display:none;">
+          <label data-i18n="habit_days_label">Select Days</label>
+          <div class="days-selector" id="days-selector">
+            <label><input type="checkbox" value="0" /> <span data-i18n="day_sun">Sun</span></label>
+            <label><input type="checkbox" value="1" /> <span data-i18n="day_mon">Mon</span></label>
+            <label><input type="checkbox" value="2" /> <span data-i18n="day_tue">Tue</span></label>
+            <label><input type="checkbox" value="3" /> <span data-i18n="day_wed">Wed</span></label>
+            <label><input type="checkbox" value="4" /> <span data-i18n="day_thu">Thu</span></label>
+            <label><input type="checkbox" value="5" /> <span data-i18n="day_fri">Fri</span></label>
+            <label><input type="checkbox" value="6" /> <span data-i18n="day_sat">Sat</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-cancel" id="btn-cancel-habit" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn-primary" id="btn-save-habit" data-i18n="btn_save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HABIT SETTINGS DIALOG -->
+  <div class="dialog-overlay" id="habit-settings-overlay" style="display:none;">
+    <div class="dialog">
+      <div class="dialog-header">
+        <h3 data-i18n="habit_settings_title">Habit Settings</h3>
+        <button class="dialog-close" id="btn-close-habit-settings"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="dialog-body">
+        <div class="meta-field">
+          <label data-i18n="habit_name_label">Habit Name</label>
+          <input type="text" id="settings-habit-name" />
+        </div>
+        <div class="meta-field">
+          <label data-i18n="habit_color_label">Color</label>
+          <div class="color-picker" id="settings-color-picker"></div>
+        </div>
+        <div class="meta-field">
+          <label data-i18n="habit_frequency_label">Frequency</label>
+          <select id="settings-habit-frequency">
+            <option value="daily" data-i18n="freq_daily">Daily</option>
+            <option value="weekly" data-i18n="freq_weekly">Weekly</option>
+            <option value="custom" data-i18n="freq_custom">Custom Days</option>
+          </select>
+        </div>
+        <div class="meta-field" id="settings-custom-days" style="display:none;">
+          <label data-i18n="habit_days_label">Select Days</label>
+          <div class="days-selector" id="settings-days-selector">
+            <label><input type="checkbox" value="0" /> <span data-i18n="day_sun">Sun</span></label>
+            <label><input type="checkbox" value="1" /> <span data-i18n="day_mon">Mon</span></label>
+            <label><input type="checkbox" value="2" /> <span data-i18n="day_tue">Tue</span></label>
+            <label><input type="checkbox" value="3" /> <span data-i18n="day_wed">Wed</span></label>
+            <label><input type="checkbox" value="4" /> <span data-i18n="day_thu">Thu</span></label>
+            <label><input type="checkbox" value="5" /> <span data-i18n="day_fri">Fri</span></label>
+            <label><input type="checkbox" value="6" /> <span data-i18n="day_sat">Sat</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary danger" id="btn-delete-habit" data-i18n="btn_delete">Delete Habit</button>
+        <button class="btn-cancel" id="btn-cancel-settings" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn-primary" id="btn-update-habit" data-i18n="btn_save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help / Tutorial Modal -->
+  <div class="dialog-overlay" id="help-dialog-overlay" style="display:none;">
+    <div class="dialog dialog-large">
+      <div class="dialog-header">
+        <h3 data-i18n="help_title">Habit Tracker Help</h3>
+        <button class="dialog-close" id="btn-close-help"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="dialog-body">
+        <div class="help-section">
+          <h4 data-i18n="help_features_title">Features</h4>
+          <ul class="help-list">
+            <li data-i18n="help_feature_tracking">Track daily habits with one click</li>
+            <li data-i18n="help_feature_streaks">Build and maintain streaks</li>
+            <li data-i18n="help_feature_stats">View comprehensive statistics</li>
+            <li data-i18n="help_feature_calendar">Calendar view for progress tracking</li>
+            <li data-i18n="help_feature_import_export">Import/Export your data</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h4 data-i18n="help_shortcuts_title">Keyboard Shortcuts</h4>
+          <table class="shortcut-table">
+            <tbody>
+              <tr><td><kbd>N</kbd></td><td data-i18n="help_shortcut_new">New Habit</td></tr>
+              <tr><td><kbd>?</kbd></td><td data-i18n="help_shortcut_help">Show Help</td></tr>
+              <tr><td><kbd>Esc</kbd></td><td data-i18n="help_shortcut_esc">Close dialogs</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="btn-close-help-ok" data-i18n="btn_ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal">
+    <div class="settings-modal-overlay"></div>
+    <div class="settings-modal-content">
+      <div class="settings-header">
+        <h2 data-i18n="settings">Settings</h2>
+        <button class="settings-close" aria-label="Close settings"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="settings-nav">
+        <button class="tab-btn active" data-tab="global-settings" data-i18n="tab_global">Global</button>
+        <button class="tab-btn" data-tab="habits-settings" data-i18n="tab_habits">Habits</button>
+      </div>
+      <div class="settings-body">
+        <div class="tab-panel" id="global-settings" style="display:flex;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="toggle_zen">Zen Mode</span>
+              <label class="switch"><input type="checkbox" id="toggle-zen-mode"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="install_app">Install as App</span>
+              <button class="btn-install" id="btn-install" disabled data-i18n="install_app">Install</button>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" id="habits-settings" style="display:none;">
+          <div class="toggles-container">
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="habits_toggle_start_today">Start week on Monday</span>
+              <label class="switch"><input type="checkbox" id="toggle-week-start-mon"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label" data-i18n="habits_toggle_confirm_delete">Confirm habit deletion</span>
+              <label class="switch"><input type="checkbox" id="toggle-confirm-delete"><span class="slider"></span></label>
+            </div>
+            <div class="settings-divider"></div>
+            <table class="shortcut-table">
+              <thead><tr><th data-i18n="shortcut_action">Action</th><th data-i18n="shortcut_key">Shortcut</th></tr></thead>
+              <tbody>
+                <tr><td>New Habit</td><td><kbd>N</kbd></td></tr>
+                <tr><td>Help</td><td><kbd>?</kbd></td></tr>
+                <tr><td>Close Panels</td><td><kbd>Esc</kbd></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="oros-footer"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register(
+          OROS_CONFIG.baseHref + 'service-worker.js',
+          { scope: OROS_CONFIG.baseHref }
+        ).catch(function(err) {
+          console.warn('SW registration failed:', err);
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>

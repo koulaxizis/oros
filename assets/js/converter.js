@@ -1,7 +1,7 @@
 // ============================================
 // orOS Case Converter — Full Implementation
-// v2 — Added: strip accents, strip formatting,
-// fixed restore original, fixed stats i18n
+// v2.3 — FIXED: sentencePreserve, wordPreserve,
+// ID mismatches (btn-conv-*), clearAll i18n
 // ============================================
 
 (function() {
@@ -196,30 +196,20 @@
 
   function stripFormatting(text) {
     var result = text;
-    // Remove HTML tags
     result = result.replace(/<[^>]+>/g, '');
-    // Remove markdown bold/italic markers
     result = result.replace(/\*\*(.+?)\*\*/g, '$1');
     result = result.replace(/__(.+?)__/g, '$1');
     result = result.replace(/\*(.+?)\*/g, '$1');
     result = result.replace(/_(.+?)_/g, '$1');
-    // Remove markdown headings
     result = result.replace(/^#{1,6}\s+/gm, '');
-    // Remove markdown code blocks (keep content)
     result = result.replace(/```[\s\S]*?```/g, function(m) {
       return m.replace(/```/g, '').trim();
     });
-    // Remove inline code markers
     result = result.replace(/`(.+?)`/g, '$1');
-    // Remove markdown links [text](url) -> text
     result = result.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    // Remove markdown images ![alt](url) -> alt
     result = result.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
-    // Remove markdown blockquote markers
     result = result.replace(/^>\s+/gm, '');
-    // Remove markdown horizontal rules
     result = result.replace(/^[-*_]{3,}\s*$/gm, '');
-    // Remove YAML frontmatter
     result = result.replace(/^---[\s\S]*?---\n?/, '');
     return result;
   }
@@ -230,7 +220,6 @@
     if (!text) return '';
     var processed = text;
 
-    // Strip formatting first (before any other processing)
     if (options.stripformatting) {
       processed = stripFormatting(processed);
     }
@@ -262,7 +251,6 @@
     if (!text) return '';
     var result = text;
 
-    // Strip accents after conversion (useful for uppercase)
     if (options.stripaccents) {
       result = stripGreekAccents(result);
     }
@@ -277,7 +265,6 @@
   }
 
   function toGreekUpper(char) {
-    // Handle toned vowels: map to accented uppercase
     var tonedToUpper = {
       'ά': 'Ά', 'έ': 'Έ', 'ή': 'Ή', 'ί': 'Ί',
       'ό': 'Ό', 'ύ': 'Ύ', 'ώ': 'Ώ',
@@ -295,7 +282,6 @@
 
   function isAcronym(word) {
     if (word.length < 2) return false;
-    // Pure uppercase Latin letters/numbers (no lowercase mixed)
     return /^[A-Z0-9]+$/.test(word);
   }
 
@@ -310,22 +296,28 @@
 
   function lowercase(text) {
     var processed = preProcess(text);
+    
+    // FIRST convert everything to lowercase
+    var result = processed.toLowerCase();
+    
+    // THEN preserve sentence starts if enabled
     if (options.sentencePreserve) {
-      // Keep first letter of each sentence capitalized
-      return processed.replace(/(^[a-zA-Z\u0370-\u03FF])|([.!?…]\s+)([a-zA-Z\u0370-\u03FF])/g,
-        function(m, first, sep, after) {
-          if (first) return first;
-          return sep + after;
-        }
-      );
-    }
-    if (options.wordPreserve) {
-      // Keep first letter of each word capitalized
-      return processed.replace(/\b([a-zA-Z\u0370-\u03FF])/g, function(m, c) {
-        return c;
+      result = result.replace(/(^[a-zA-Z\u0370-\u03FF])/g, function(match, char) {
+        return isGreekLetter(char) ? toGreekUpper(char) : char.toUpperCase();
+      });
+      result = result.replace(/([.!?…]\s+)([a-zA-Z\u0370-\u03FF])/g, function(m, sep, char) {
+        return sep + (isGreekLetter(char) ? toGreekUpper(char) : char.toUpperCase());
       });
     }
-    return processed.toLowerCase();
+    
+    // Preserve word starts if enabled
+    if (options.wordPreserve) {
+      result = result.replace(/\b([a-zA-Z\u0370-\u03FF])/g, function(m, c) {
+        return isGreekLetter(c) ? toGreekUpper(c) : c.toUpperCase();
+      });
+    }
+    
+    return result;
   }
 
   function titleCase(text) {
@@ -344,8 +336,8 @@
 
   function sentenceCase(text) {
     var processed = preProcess(text);
-    // Capitalize first letter and first letter after sentence endings
-    return processed.replace(/(^|[.!?…]\s+)([a-zA-Z\u0370-\u03FF])/g,
+    var lower = processed.toLowerCase();
+    return lower.replace(/(^|[.!?…]\s+)([a-zA-Z\u0370-\u03FF])/g,
       function(m, prefix, letter) {
         return prefix + (isGreekLetter(letter) ? toGreekUpper(letter) : letter.toUpperCase());
       }
@@ -442,9 +434,7 @@
       default: result = text;
     }
 
-    // Post-process (strip accents after conversion)
     result = postProcess(result);
-
     outputArea.value = result;
     saveState();
   }
@@ -529,17 +519,29 @@
 
   function copyToClipboard() {
     if (!outputArea.value) return;
-    outputArea.select();
-    document.execCommand('copy');
-    window.getSelection().removeAllRanges();
-    showToast(getTrans('toast_copied'));
+    var text = outputArea.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast(getTrans('toast_copied'));
+      }).catch(function() {
+        outputArea.select();
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        showToast(getTrans('toast_copied'));
+      });
+    } else {
+      outputArea.select();
+      document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+      showToast(getTrans('toast_copied'));
+    }
   }
 
   function clearAll() {
     var lang = getCurrentLang();
     var msg = lang === 'el'
-      ? 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.'
-      : 'Are you sure? All content will be lost.';
+      ? getTrans('confirm_clear_el') || 'Σίγουρα; Όλο το περιεχόμενο θα χαθεί.'
+      : getTrans('confirm_clear') || 'Are you sure? All content will be lost.';
     if (confirm(msg)) {
       inputArea.value = '';
       outputArea.value = '';
@@ -555,8 +557,6 @@
   }
 
   // ========== RESTORE ORIGINAL ==========
-  // Copies the raw input text to output, bypassing all conversions.
-  // This lets the user see the unmodified text in the output area.
 
   function resetOriginal() {
     if (!inputArea.value) return;
@@ -569,8 +569,6 @@
 
   function setupKeyboardShortcuts() {
     document.addEventListener('keydown', function(e) {
-      // Don't interfere when typing in inputs
-      var activeTag = document.activeElement ? document.activeElement.tagName : '';
       var inModal = document.querySelector('.settings-modal.visible');
 
       if (e.ctrlKey && e.key === 's') {
@@ -600,7 +598,7 @@
   // ========== DROPDOWN ==========
 
   function setupDropdown() {
-    var btnOptions = document.getElementById('btn-options');
+    var btnOptions = document.getElementById('btn-conv-options');
     var dropdown = document.getElementById('options-dropdown');
 
     if (btnOptions && dropdown) {
@@ -613,7 +611,6 @@
         dropdown.classList.remove('visible');
       });
 
-      // Prevent clicks inside the dropdown from closing it
       dropdown.addEventListener('click', function(e) {
         e.stopPropagation();
       });
@@ -651,12 +648,11 @@
     loadSavedContent();
     updateStats();
 
-    // File input
-    var btnOpen = document.getElementById('btn-open');
+    var btnOpen = document.getElementById('btn-conv-open');
     var fileInput = document.getElementById('file-input');
     if (btnOpen && fileInput) {
       btnOpen.addEventListener('click', function() { fileInput.click(); });
-            fileInput.addEventListener('change', function() {
+      fileInput.addEventListener('change', function() {
         if (this.files && this.files[0]) {
           openFile(this.files[0]);
           this.value = '';
@@ -664,14 +660,13 @@
       });
     }
 
-    // Toolbar buttons
-    var btnCopy = document.getElementById('btn-copy');
-    var btnSave = document.getElementById('btn-save');
-    var btnClear = document.getElementById('btn-clear');
-    var btnUndo = document.getElementById('btn-undo');
-    var btnRedo = document.getElementById('btn-redo');
-    var btnReset = document.getElementById('btn-reset');
-    var btnStats = document.getElementById('btn-stats');
+    var btnCopy = document.getElementById('btn-conv-copy');
+    var btnSave = document.getElementById('btn-conv-save');
+    var btnClear = document.getElementById('btn-conv-clear');
+    var btnUndo = document.getElementById('btn-conv-undo');
+    var btnRedo = document.getElementById('btn-conv-redo');
+    var btnReset = document.getElementById('btn-conv-reset');
+    var btnStats = document.getElementById('btn-conv-stats');
 
     if (btnCopy) btnCopy.addEventListener('click', copyToClipboard);
     if (btnSave) btnSave.addEventListener('click', saveFile);
@@ -681,7 +676,6 @@
     if (btnReset) btnReset.addEventListener('click', resetOriginal);
     if (btnStats) btnStats.addEventListener('click', toggleStats);
 
-    // Re-process when language changes (for toast messages)
     window.addEventListener('oros-language-changed', function() {
       if (inputArea.value) processConversion(currentMode);
     });

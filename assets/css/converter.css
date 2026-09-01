@@ -1,6 +1,7 @@
 /* ============================================
-   orOS Case Converter — Style Overrides
-   v2.2 — Fixed stats panel layout completely
+   orOS Case Converter — Complete Stylesheet
+   v2.3 — Fixed: dropdown visibility,
+   ID mismatches (btn-conv-*), all styles
    ============================================ */
 
 #converter-wrapper {
@@ -138,7 +139,7 @@
   position: relative;
 }
 
-/* ===== STATS PANEL — COMPLETE REWRITE ===== */
+/* ===== STATS PANEL ===== */
 .stats-panel {
   position: absolute;
   bottom: 12px;
@@ -183,37 +184,40 @@
   margin-left: auto;
 }
 
-/* Alternative: Horizontal stats strip (more compact) */
-.stats-panel-horizontal {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 24px;
-  padding: 8px 16px;
-  background: var(--bg-panel);
+/* ===== ACTION BUTTONS ===== */
+.action-btn {
+  background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  color: var(--text-secondary);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: var(--transition);
+  font-family: inherit;
+  flex-shrink: 0;
 }
 
-.stats-panel-horizontal .stat-item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
+.action-btn:hover {
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-dim);
 }
 
-.stats-panel-horizontal .stat-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: 500;
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.stats-panel-horizontal .stat-value {
-  font-size: 14px;
-  color: var(--text-primary);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+.tb-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  margin: 0 4px;
 }
 
 /* ===== DROPDOWN ===== */
@@ -223,8 +227,31 @@
   align-items: center;
 }
 
+.dropdown-toggle {
+  position: relative;
+}
+
+.dropdown-arrow-icon {
+  margin-left: 2px;
+  font-size: 12px;
+}
+
 .dropdown-content {
+  position: absolute;
+  top: 100%;
+  right: 0;
   min-width: 240px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: none;
+  margin-top: 4px;
+}
+
+.dropdown-content.visible {
+  display: block;
 }
 
 .dropdown-option {
@@ -317,14 +344,12 @@
     right: 4px;
     min-width: unset;
     padding: 10px 12px;
-    min-width: 240px;
   }
 
   .stats-panel .stat-label {
     min-width: 80px;
   }
 
-  /* Switch to horizontal on very small screens */
   .stats-panel {
     flex-direction: row;
     flex-wrap: wrap;

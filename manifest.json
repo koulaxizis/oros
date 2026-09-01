@@ -1,56 +1,124 @@
 {
   "name": "orOS — The Artist's Operating System",
   "short_name": "orOS",
-  "description": "Privacy-first rich text editor and case converter. Works offline. No tracking.",
-  "start_url": "editor.html",
-  "scope": ".",
+  "description": "Privacy-first creative toolkit. Writer, Case Converter, Kanban, Notes. Works offline. No tracking.",
+  "version": "1.0.0",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#1b1a18",
+  "orientation": "any",
   "theme_color": "#c8a96e",
+  "background_color": "#1a1814",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
-      "src": "screenshot-editor.png",
+      "src": "screenshots/writer.png",
       "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "Writer - Rich text editor with autosave"
+      "label": "orOS Writer"
     },
     {
-      "src": "screenshot-converter.png",
+      "src": "screenshots/converter.png",
       "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "Case Converter - Text transformation tool"
+      "label": "orOS Case Converter"
+    },
+    {
+      "src": "screenshots/kanban.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "orOS Kanban"
+    },
+    {
+      "src": "screenshots/notes.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "orOS Notes"
     }
   ],
   "shortcuts": [
     {
       "name": "Writer",
       "short_name": "Writer",
-      "description": "Open the rich text editor",
-      "url": "editor.html",
-      "icons": [{"src": "favicon.svg", "sizes": "any"}]
+      "description": "Rich text editor with autosave",
+      "url": "./writer.html",
+      "icons": [{"src": "icons/shortcut-writer.png", "sizes": "96x96", "type": "image/png"}]
     },
     {
       "name": "Case Converter",
       "short_name": "Converter",
       "description": "Transform text case",
-      "url": "converter.html",
-      "icons": [{"src": "favicon.svg", "sizes": "any"}]
+      "url": "./converter.html",
+      "icons": [{"src": "icons/shortcut-converter.png", "sizes": "96x96", "type": "image/png"}]
+    },
+    {
+      "name": "Kanban",
+      "short_name": "Kanban",
+      "description": "Drag & drop kanban board",
+      "url": "./kanban.html",
+      "icons": [{"src": "icons/shortcut-kanban.png", "sizes": "96x96", "type": "image/png"}]
+    },
+    {
+      "name": "Notes",
+      "short_name": "Notes",
+      "description": "Wiki-style notes with wikilinks",
+      "url": "./notes.html",
+      "icons": [{"src": "icons/shortcut-notes.png", "sizes": "96x96", "type": "image/png"}]
+    },
+    {
+      "name": "Prompter",
+      "short_name": "Prompter",
+      "description": "Writing prompts & inspiration",
+      "url": "./prompter.html",
+      "icons": [{"src": "icons/shortcut-prompter.png", "sizes": "96x96", "type": "image/png"}]
     }
   ],
-  "categories": ["productivity", "utilities", "education"],
-  "lang": "en",
-  "dir": "ltr",
-  "prefer_related_applications": false,
-  "iarc_rating_id": "eUgAA"
+  "file_handlers": [
+    {
+      "action": "./writer.html",
+      "launch_type": "single-client",
+            "accept": {
+        "text/plain": [".txt", ".md", ".markdown"],
+        "text/html": [".html", ".htm"],
+        "application/rtf": [".rtf"],
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+        "application/zip": [".orosdoc"]
+      }
+    }
+  ],
+  "prefer_related_applications": false
 }
