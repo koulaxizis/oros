@@ -14,19 +14,19 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://koulaxizis.github.io/oros-beta/">
+  <meta property="og:url" content="https://useoros.online/">
   <meta property="og:title" content="orOS — The Artist's Operating System">
   <meta property="og:description" content="Privacy-first creative toolkit. Writer, Case Converter, Kanban, Notes, and more. Works offline. No tracking. No ads.">
-  <meta property="og:image" content="https://koulaxizis.github.io/oros-beta/og-image.png">
+  <meta property="og:image" content="https://useoros.online/og-image.png">
   <meta property="og:locale" content="en_US">
   <meta property="og:site_name" content="orOS">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://koulaxizis.github.io/oros-beta/">
+  <meta name="twitter:url" content="https://useoros.online/">
   <meta name="twitter:title" content="orOS — The Artist's Operating System">
   <meta name="twitter:description" content="Privacy-first creative toolkit. Writer, Case Converter, Kanban, Notes, and more. Works offline. No tracking. No ads.">
-  <meta name="twitter:image" content="https://koulaxizis.github.io/oros-beta/twitter-card.png">
+  <meta name="twitter:image" content="https://useoros.online/twitter-card.png">
   <meta name="twitter:creator" content="@koulaxizis">
 
   <!-- Additional SEO -->
@@ -41,9 +41,9 @@
   <link rel="prefetch" href="assets/js/notes.js" as="script">
 
   <!-- hreflang for multi-language -->
-  <link rel="alternate" hreflang="en" href="https://koulaxizis.github.io/oros-beta/index.html">
-  <link rel="alternate" hreflang="el" href="https://koulaxizis.github.io/oros-beta/index.html?lang=el">
-  <link rel="alternate" hreflang="x-default" href="https://koulaxizis.github.io/oros-beta/index.html">
+  <link rel="alternate" hreflang="en" href="https://useoros.online/index.html">
+  <link rel="alternate" hreflang="el" href="https://useoros.online/index.html?lang=el">
+  <link rel="alternate" hreflang="x-default" href="https://useoros.online/index.html">
 
   <!-- Structured Data -->
   <script type="application/ld+json">
@@ -51,7 +51,7 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "orOS",
-    "url": "https://koulaxizis.github.io/oros-beta/",
+    "url": "https://useoros.online/",
     "author": {
       "@type": "Person",
       "name": "Christos Koulaxizis",
@@ -61,7 +61,7 @@
     "inLanguage": ["en", "el"],
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://koulaxizis.github.io/oros-beta/?q={search_term_string}",
+      "target": "https://useoros.online/?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   }
@@ -571,9 +571,9 @@
       <div class="beta-popup-icon">
         <i class="fa fa-exclamation-triangle"></i>
       </div>
-      <h2 class="beta-popup-title" data-i18n="beta_popup_title">Beta Channel Warning</h2>
+      <h2 class="beta-popup-title" data-i18n="beta_popup_title">Stable Channel Warning</h2>
       <div class="beta-popup-body">
-        <p id="beta-popup-p1">You are using a <strong>beta version</strong> of orOS. All applications are in a testing phase and may contain bugs or unstable features.</p>
+        <p id="beta-popup-p1">You are using a <strong>stable version</strong> of orOS. All applications are in a testing phase and may contain bugs or unstable features.</p>
         <p id="beta-popup-p2">Data loss may occur. You use this software at your own risk.</p>
         <p id="beta-popup-p3" class="beta-popup-emphasis">We strongly encourage you to save your work frequently to a local file.</p>
 
@@ -622,8 +622,8 @@
         <span class="channel-switch-text">
           Try the <strong>beta channel</strong> to test new features before they're released. May contain bugs!
         </span>
-        <a href="https://koulaxizis.github.io/oros-beta/index.html" id="stable-to-beta-link" class="channel-switch-link" target="_blank">
-          <i class="fa fa-flask channel-switch-icon"></i> Go to Beta Channel
+        <a href="https://useoros.online/index.html" id="stable-to-beta-link" class="channel-switch-link" target="_blank">
+          <i class="fa fa-flask channel-switch-icon"></i> Go to Stable Channel
         </a>
       </div>
 
@@ -669,7 +669,7 @@
         }
         // Auto-detect based on URL
         var url = window.location.href;
-        if (url.indexOf('/oros-beta/') !== -1) return '/oros-beta/';
+        if (url.indexOf('/') !== -1) return '/';
         return '/oros/';
       }
 
@@ -707,7 +707,7 @@
         });
 
         var paras = [
-          { id: 'beta-popup-p1', key: 'beta_popup_p1', fallback: 'You are using a <strong>beta version</strong> of orOS. All applications are in a testing phase and may contain bugs or unstable features.' },
+          { id: 'beta-popup-p1', key: 'beta_popup_p1', fallback: 'You are using a <strong>stable version</strong> of orOS. All applications are in a testing phase and may contain bugs or unstable features.' },
           { id: 'beta-popup-p2', key: 'beta_popup_p2', fallback: 'Data loss may occur. You use this software at your own risk.' },
           { id: 'beta-popup-p3', key: 'beta_popup_p3', fallback: 'We strongly encourage you to save your work frequently to a local file.' }
         ];
@@ -723,7 +723,7 @@
         var title = document.querySelector('.beta-popup-title');
         if (title && !title.dataset.localized) {
           var tVal = getTrans('beta_popup_title');
-          title.textContent = (tVal && tVal !== 'beta_popup_title') ? tVal : 'Beta Channel Warning';
+          title.textContent = (tVal && tVal !== 'beta_popup_title') ? tVal : 'Stable Channel Warning';
           title.dataset.localized = 'true';
         }
 
@@ -732,7 +732,7 @@
         if (stableLink) {
           // The href is already set correctly in the HTML
           // (https://useoros.online for beta → stable,
-          //  https://koulaxizis.github.io/oros-beta/ for stable → beta)
+          //  https://useoros.online/ for stable → beta)
           // No JS override needed — let the HTML href stand.
         }
       }
@@ -769,7 +769,7 @@
         });
 
         var paras = [
-          { id: 'beta-popup-p1', key: 'beta_popup_p1', fallback: 'You are using a <strong>beta version</strong> of orOS. All applications are in a testing phase and may contain bugs or unstable features.' },
+          { id: 'beta-popup-p1', key: 'beta_popup_p1', fallback: 'You are using a <strong>stable version</strong> of orOS. All applications are in a testing phase and may contain bugs or unstable features.' },
           { id: 'beta-popup-p2', key: 'beta_popup_p2', fallback: 'Data loss may occur. You use this software at your own risk.' },
           { id: 'beta-popup-p3', key: 'beta_popup_p3', fallback: 'We strongly encourage you to save your work frequently to a local file.' }
         ];
@@ -785,7 +785,7 @@
         var title = document.querySelector('.beta-popup-title');
         if (title) {
           var tVal = getTrans('beta_popup_title');
-          title.textContent = (tVal && tVal !== 'beta_popup_title') ? tVal : 'Beta Channel Warning';
+          title.textContent = (tVal && tVal !== 'beta_popup_title') ? tVal : 'Stable Channel Warning';
           title.dataset.localized = 'true';
         }
       }

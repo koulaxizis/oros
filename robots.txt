@@ -6,7 +6,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://koulaxizis.github.io/oros-beta/sitemap.xml
+Sitemap: https://useoros.online/sitemap.xml
 
 # Block access to source maps and dev files
 Disallow: /*.map

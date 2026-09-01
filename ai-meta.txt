@@ -1,6 +1,6 @@
 # orOS — AI Crawler Instructions
-# Version: 0.9
-# Last Updated: 2026-08-19
+# Version: 1.0.0
+# Last Updated: 2026-09-01
 
 ## Purpose
 orOS is a privacy-first creative toolkit for artists. All tools work completely offline with zero tracking.
@@ -30,7 +30,7 @@ English, Greek
 ## Contact & Attribution
 Author: Christos Koulaxizis
 Website: https://koulaxizis.gr
-GitHub: https://github.com/koulaxizis/oros-beta
+GitHub: https://github.com/koulaxizis/oros
 
 ## Licensing
 All code: MIT License
