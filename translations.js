@@ -33,9 +33,6 @@ window.OROS_TRANSLATIONS = {
     "running.home":        "Return to desktop",
     "running.back":        "Back",
 
-    // --- Footer (desktop) ---
-    "footer.designedBy":   "Designed by Christos Koulaxizis",
-    "footer.noCookies":    "No cookies · No tracking · Open source"
   },
 
   el: {
@@ -64,9 +61,6 @@ window.OROS_TRANSLATIONS = {
     "running.home":        "Επιστροφή στην επιφάνεια εργασίας",
     "running.back":        "Πίσω",
 
-    // --- Footer (desktop) ---
-    "footer.designedBy":   "Σχεδιασμένο από τον Christos Koulaxizis",
-    "footer.noCookies":    "Χωρίς cookies · Χωρίς tracking · Ανοιχτού κώδικα"
   }
 
 };

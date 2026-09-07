@@ -1,40 +1,78 @@
 /* ============================================================
    orOS Core v0 — Shell stylesheet
-   Dark default, light via [data-theme="light"]
+   Architecture:
+     data-skin  = palette (adwaita, oros, ...)
+     data-theme = light/dark (orthogonal to skin)
    Sections:
-     1. Theme variables
+     1. Skin palettes (variables)
      2. Reset & base
      3. Top bar
-     4. Desktop & footer
+     4. Desktop
      5. Applications menu
      6. Running app (fullscreen takeover)
    ============================================================ */
 
-/* ---------- 1. Theme variables ---------- */
-:root, [data-theme="dark"] {
-  --bg:          #0f1115;
-  --bg-desktop:  #131820;
-  --bar-bg:      rgba(15, 17, 21, 0.92);
-  --text:        #e8eaf0;
-  --text-dim:    #9aa0ae;
-  --accent:      #6d4aff;
-  --accent-hover:#8b6bff;
-  --panel-bg:    #171c24;
-  --border:      #262c38;
-  --footer-text: #5c6270;
+/* ---------- 1. Skin palettes ---------- */
+
+/* Adwaita — GNOME-look, default skin */
+[data-skin="adwaita"][data-theme="dark"] {
+  --bg:           #1b1b1b;
+  --bg-desktop:   #232225;
+  --bar-bg:       rgba(48, 48, 51, 0.95);
+  --text:         #ffffff;
+  --text-dim:     #a8a8ac;
+  --accent:        #3584e4;
+  --accent-hover: #62a0ea;
+  --accent-soft:  rgba(53, 132, 228, 0.22);
+  --panel-bg:     #2a2a2e;
+  --border:       #3a3a3f;
+  --shadow:       rgba(0, 0, 0, 0.55);
 }
-[data-theme="light"] {
-  --bg:          #f5f6f8;
-  --bg-desktop:  #eceef2;
-  --bar-bg:      rgba(245, 246, 248, 0.92);
-  --text:        #1a1d24;
-  --text-dim:    #555c6b;
-  --accent:      #6d4aff;
-  --accent-hover:#5736e0;
-  --panel-bg:    #ffffff;
-  --border:      #d8dbe2;
-  --footer-text: #8a8f9c;
+[data-skin="adwaita"][data-theme="light"] {
+  --bg:           #fafafa;
+  --bg-desktop:   #f0f0f2;
+  --bar-bg:       rgba(235, 236, 238, 0.95);
+  --text:         #1c1b22;
+  --text-dim:     #5e5c64;
+  --accent:        #1c71d8;
+  --accent-hover: #15539e;
+  --accent-soft:  rgba(28, 113, 216, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #dcdcde;
+  --shadow:       rgba(0, 0, 0, 0.18);
 }
+
+/* orOS — house purple, brand skin */
+[data-skin="oros"][data-theme="dark"] {
+  --bg:           #0f1115;
+  --bg-desktop:   #131820;
+  --bar-bg:       rgba(15, 17, 21, 0.92);
+  --text:         #e8eaf0;
+  --text-dim:     #9aa0ae;
+  --accent:        #6d4aff;
+  --accent-hover: #8b6bff;
+  --accent-soft:  rgba(109, 74, 255, 0.18);
+  --panel-bg:     #171c24;
+  --border:       #262c38;
+  --shadow:       rgba(0, 0, 0, 0.45);
+}
+[data-skin="oros"][data-theme="light"] {
+  --bg:           #f5f6f8;
+  --bg-desktop:   #eceef2;
+  --bar-bg:       rgba(245, 246, 248, 0.92);
+  --text:         #1a1d24;
+  --text-dim:     #555c6b;
+  --accent:        #6d4aff;
+  --accent-hover: #5736e0;
+  --accent-soft:  rgba(109, 74, 255, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d8dbe2;
+  --shadow:       rgba(0, 0, 0, 0.18);
+}
+
+/* Safe fallback if skin attribute missing */
+[data-theme="dark"]  { color-scheme: dark; }
+[data-theme="light"] { color-scheme: light; }
 
 /* ---------- 2. Reset & base ---------- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -74,7 +112,7 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
-#btn-menu:hover, #btn-lang:hover, #btn-theme:hover { background: rgba(109, 74, 255, 0.18); }
+#btn-menu:hover, #btn-lang:hover, #btn-theme:hover { background: var(--accent-soft); }
 
 #btn-menu { font-weight: 600; }
 #btn-menu.running { color: var(--accent-hover); }
@@ -85,28 +123,13 @@ body {
   letter-spacing: 0.3px;
 }
 
-/* ---------- 4. Desktop & footer ---------- */
+/* ---------- 4. Desktop ---------- */
 #oros-desktop {
   position: fixed;
   top: 40px; left: 0; right: 0; bottom: 0;
   background: var(--bg-desktop);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   overflow-y: auto;
 }
-#oros-footer {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 14px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--footer-text);
-  line-height: 1.7;
-}
-#oros-footer a { color: var(--footer-text); text-decoration: none; }
-#oros-footer a:hover { color: var(--accent-hover); }
 
 /* ---------- 5. Applications menu ---------- */
 #app-menu {
@@ -118,7 +141,7 @@ body {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  box-shadow: 0 8px 32px var(--shadow);
   z-index: 999;
   padding: 8px;
   display: none;
@@ -165,7 +188,7 @@ body {
   cursor: pointer;
   transition: background 0.12s;
 }
-.menu-item:hover { background: rgba(109, 74, 255, 0.16); }
+.menu-item:hover { background: var(--accent-soft); }
 
 /* ---------- 6. Running app (fullscreen takeover) ---------- */
 #oros-running {
