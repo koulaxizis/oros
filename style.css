@@ -1,0 +1,179 @@
+/* ============================================================
+   orOS Core v0 — Shell stylesheet
+   Dark default, light via [data-theme="light"]
+   Sections:
+     1. Theme variables
+     2. Reset & base
+     3. Top bar
+     4. Desktop & footer
+     5. Applications menu
+     6. Running app (fullscreen takeover)
+   ============================================================ */
+
+/* ---------- 1. Theme variables ---------- */
+:root, [data-theme="dark"] {
+  --bg:          #0f1115;
+  --bg-desktop:  #131820;
+  --bar-bg:      rgba(15, 17, 21, 0.92);
+  --text:        #e8eaf0;
+  --text-dim:    #9aa0ae;
+  --accent:      #6d4aff;
+  --accent-hover:#8b6bff;
+  --panel-bg:    #171c24;
+  --border:      #262c38;
+  --footer-text: #5c6270;
+}
+[data-theme="light"] {
+  --bg:          #f5f6f8;
+  --bg-desktop:  #eceef2;
+  --bar-bg:      rgba(245, 246, 248, 0.92);
+  --text:        #1a1d24;
+  --text-dim:    #555c6b;
+  --accent:      #6d4aff;
+  --accent-hover:#5736e0;
+  --panel-bg:    #ffffff;
+  --border:      #d8dbe2;
+  --footer-text: #8a8f9c;
+}
+
+/* ---------- 2. Reset & base ---------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------- 3. Top bar (always visible) ---------- */
+#oros-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: var(--bar-bg);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+  user-select: none;
+}
+.bar-left, .bar-right { display: flex; align-items: center; gap: 8px; }
+
+#btn-menu, #btn-lang, #btn-theme {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#btn-menu:hover, #btn-lang:hover, #btn-theme:hover { background: rgba(109, 74, 255, 0.18); }
+
+#btn-menu { font-weight: 600; }
+#btn-menu.running { color: var(--accent-hover); }
+
+#bar-clock {
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+/* ---------- 4. Desktop & footer ---------- */
+#oros-desktop {
+  position: fixed;
+  top: 40px; left: 0; right: 0; bottom: 0;
+  background: var(--bg-desktop);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+#oros-footer {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--footer-text);
+  line-height: 1.7;
+}
+#oros-footer a { color: var(--footer-text); text-decoration: none; }
+#oros-footer a:hover { color: var(--accent-hover); }
+
+/* ---------- 5. Applications menu ---------- */
+#app-menu {
+  position: fixed;
+  top: 48px; left: 12px;
+  width: 300px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  z-index: 999;
+  padding: 8px;
+  display: none;
+}
+#app-menu.open { display: block; }
+
+.menu-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  padding: 8px 10px 4px;
+}
+
+.menu-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+.menu-empty .glyph { font-size: 30px; display: block; margin-bottom: 10px; opacity: 0.6; }
+.menu-empty .hint { font-size: 12px; margin-top: 6px; opacity: 0.75; }
+
+.menu-category { padding: 4px 0; }
+.menu-category h4 {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  padding: 6px 10px 4px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.menu-item:hover { background: rgba(109, 74, 255, 0.16); }
+
+/* ---------- 6. Running app (fullscreen takeover) ---------- */
+#oros-running {
+  position: fixed;
+  top: 40px; left: 0; right: 0; bottom: 0;
+  background: var(--bg);
+  z-index: 900;
+  display: none;
+}
+#oros-running.active { display: block; }
+#oros-running iframe { width: 100%; height: 100%; border: none; display: block; }
