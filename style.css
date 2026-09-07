@@ -1,7 +1,7 @@
 /* ============================================================
    orOS Core v0 — Shell stylesheet
    Architecture:
-     data-skin  = palette (adwaita, oros, ...)
+     data-skin  = palette (adwaita, lumo, oros)
      data-theme = light/dark (orthogonal to skin)
    Sections:
      1. Skin palettes (variables)
@@ -42,8 +42,8 @@
   --shadow:       rgba(0, 0, 0, 0.18);
 }
 
-/* orOS — house purple, brand skin */
-[data-skin="oros"][data-theme="dark"] {
+/* lumo — the house purple, prototype palette */
+[data-skin="lumo"][data-theme="dark"] {
   --bg:           #0f1115;
   --bg-desktop:   #131820;
   --bar-bg:       rgba(15, 17, 21, 0.92);
@@ -56,7 +56,7 @@
   --border:       #262c38;
   --shadow:       rgba(0, 0, 0, 0.45);
 }
-[data-skin="oros"][data-theme="light"] {
+[data-skin="lumo"][data-theme="light"] {
   --bg:           #f5f6f8;
   --bg-desktop:   #eceef2;
   --bar-bg:       rgba(245, 246, 248, 0.92);
@@ -68,6 +68,34 @@
   --panel-bg:     #ffffff;
   --border:       #d8dbe2;
   --shadow:       rgba(0, 0, 0, 0.18);
+}
+
+/* oros — the brand gold skin */
+[data-skin="oros"][data-theme="dark"] {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:        #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="oros"][data-theme="light"] {
+  --bg:           #faf7ef;
+  --bg-desktop:   #f2eddd;
+  --bar-bg:       rgba(250, 247, 239, 0.95);
+  --text:         #241f14;
+  --text-dim:     #6b6250;
+  --accent:        #b8860b;
+  --accent-hover: #8f6a08;
+  --accent-soft:  rgba(184, 134, 11, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #ddd5c0;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
 
 /* Safe fallback if skin attribute missing */
