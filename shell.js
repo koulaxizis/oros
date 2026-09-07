@@ -74,18 +74,18 @@
 
     document.getElementById("btn-menu-label").textContent =
       state.running ? window.t("running.back") : window.t("bar.menu");
-    document.getElementById("btn-lang").textContent = window.t("lang.switch");
+    var langBtn = document.getElementById("btn-lang");
+    langBtn.textContent = state.lang === "en" ? "EL" : "EN";
+    langBtn.setAttribute("title", window.t("lang.tooltip"));
     renderClock();
     renderMenu();
   }
 
   // ---------- 4. Theme ----------
-  function applyTheme() {
+    function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
-    var btn = document.getElementById("btn-theme");
-    var key = state.theme === "dark" ? "theme.toLight" : "theme.toDark";
-    btn.setAttribute("title", window.t(key));
-    btn.setAttribute("data-i18n-title", key);
+    // Theme button lives in the app menu (Appearance section),
+    // re-created on each renderMenu() — nothing to update here.
   }
 
   // ---------- 5. Skin ----------
@@ -95,14 +95,14 @@
   }
 
   // ---------- 6. Clock (24h) ----------
-  function renderClock() {
+    function renderClock() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
     var mm = String(now.getMinutes()).padStart(2, "0");
+    var dateStr = now.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB",
+                          { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
     document.getElementById("bar-clock").textContent =
-      hh + ":" + mm + "  ·  " +
-      now.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB",
-                             { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+      hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
   }
 
   // ---------- 7. Apps loading & menu ----------
@@ -131,8 +131,8 @@
     if (state.apps.length === 0) {
       var empty = document.createElement("div");
       empty.className = "menu-empty";
-      empty.innerHTML =
-        '<span class="glyph">□</span>' +
+        empty.innerHTML =
+        '<span class="glyph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>' +
         '<span>' + window.t("menu.empty") + '</span>' +
         '<div class="hint">' + window.t("menu.empty.hint") + '</div>';
       menu.appendChild(empty);
@@ -167,7 +167,7 @@
     renderSkinSwatches(menu);
   }
 
-  function renderSkinSwatches(host) {
+    function renderSkinSwatches(host) {
     var section = document.createElement("div");
     section.className = "skin-section";
 
@@ -175,6 +175,9 @@
     heading.className = "menu-heading";
     heading.textContent = window.t("skin.title");
     section.appendChild(heading);
+
+    var controls = document.createElement("div");
+    controls.className = "skin-controls";
 
     var swatches = document.createElement("div");
     swatches.className = "skin-swatches";
@@ -195,7 +198,27 @@
       swatches.appendChild(sw);
     });
 
-    section.appendChild(swatches);
+    controls.appendChild(swatches);
+
+    var divider = document.createElement("div");
+    divider.className = "skin-divider";
+    controls.appendChild(divider);
+
+    var themeBtn = document.createElement("button");
+    themeBtn.className = "theme-toggle";
+    themeBtn.textContent = state.theme === "dark" ? "☾" : "☀";
+    themeBtn.setAttribute("title",
+      window.t(state.theme === "dark" ? "theme.toLight" : "theme.toDark"));
+    themeBtn.setAttribute("aria-label", themeBtn.getAttribute("title"));
+    themeBtn.addEventListener("click", function () {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("oros-theme", state.theme);
+      applyTheme();
+      renderMenu(); // refresh moon/sun icon + tooltip
+    });
+    controls.appendChild(themeBtn);
+
+    section.appendChild(controls);
     host.appendChild(section);
   }
 
@@ -260,12 +283,6 @@
     state.lang = state.lang === "en" ? "el" : "en";
     localStorage.setItem("oros-lang", state.lang);
     applyLang();
-  });
-
-  document.getElementById("btn-theme").addEventListener("click", function () {
-    state.theme = state.theme === "dark" ? "light" : "dark";
-    localStorage.setItem("oros-theme", state.theme);
-    applyTheme();
   });
 
   // Boot
