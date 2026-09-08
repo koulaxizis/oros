@@ -1,12 +1,35 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-skin="adwaita">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="orOS — A static operating system in your browser. Bilingual, dark-first, open source.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="orOS — A static operating system in your browser. Works offline, no cookies, no tracking.">
   <title>orOS</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%236d4aff'/%3E%3C/svg%3E">
+
+  <!-- ============ PWA ============ -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1b1a18">
+
+  <!-- Icons -->
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- iOS standalone behaviour -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="orOS">
+
+  <!-- ============ Shell ============ -->
   <link rel="stylesheet" href="style.css">
+
+  <noscript>
+    <div style="font-family: system-ui, sans-serif; background:#1b1a18; color:#e8eaf0;
+                min-height:100vh; display:flex; align-items:center; justify-content:center;
+                text-align:center; padding:24px;">
+      <p>orOS needs JavaScript to run.<br>Ενεργοποίησε τη JavaScript και ξαναδοκίμασε.</p>
+    </div>
+  </noscript>
 </head>
 <body>
 
@@ -15,7 +38,7 @@
     <div class="bar-left">
       <button id="btn-menu" data-i18n-title="bar.menu" title="Applications">⊞ <span id="btn-menu-label">Applications</span></button>
     </div>
-        <div class="bar-right">
+    <div class="bar-right">
       <button id="btn-lang" title="Language"></button>
       <span id="bar-clock" data-i18n-title="bar.clock.tooltip" title="Time (24h)">--:--</span>
     </div>

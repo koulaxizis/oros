@@ -64,3 +64,9 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   (26px circles + padding:0 + flex-shrink:0).
 - Skin swatch circles reduced from 26px to 18px to visually match
   the theme toggle icon size.
+- PWA icon = existing brand logo (gold mountain, #c8a96e on #1b1a18). Kept as-is.
+- Browser-based offline icon generator provided (4 PNGs: any/maskable × 192/512,
+  maskable with 78% safe zone). manifest theme_color aligned to #1b1a18.
+- index.html: PWA meta (manifest link, theme-color, apple-touch-icon,
+  iOS standalone tags, black-translucent status bar, viewport-fit=cover,
+  noscript fallback). data-skin="adwaita" default on <html> pre-JS.
