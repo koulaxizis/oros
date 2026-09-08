@@ -62,3 +62,5 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Swatch CSS rules (.skin-swatch) were accidentally dropped during the
   Appearance-section restructure — swatches rendered as dots. Restored
   (26px circles + padding:0 + flex-shrink:0).
+- Skin swatch circles reduced from 26px to 18px to visually match
+  the theme toggle icon size.
