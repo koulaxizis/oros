@@ -251,3 +251,12 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   silent (remember only). Device-local (oros-last-version), never
   synced. Positioned apart from the update toast (no overlap).
 - translations.js: update.done (EN/EL). style.css: #version-toast.
+
+### v0.3.6 (hotfix) — Stale asset cache
+- ROOT CAUSE of sync features not reaching mobile: several deploys
+  shipped asset changes without bumping sw.js CACHE_VERSION; the SW
+  kept serving the old precached shell.js/sync.js (cache-first).
+  Desktop appeared fine only because of hard refreshes (SW bypass).
+- sw.js: CACHE_VERSION bumped to oros-v0.3.6; new deploy ritual:
+  every asset-changing deploy bumps CACHE_VERSION (and APP_VERSION
+  for the welcome toast). CI auto-bump proposed as follow-up.
