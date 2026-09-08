@@ -196,3 +196,27 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Menu: "Update orOS" replaces "Install orOS" in its section whenever a
   new service worker version is waiting; update toast kept as passive
   notifier; both trigger SKIP_WAITING → auto reload.
+  
+  ### v0.3.2 — Local backup (export/import)
+- sync.js: exportData() — full plaintext payload (shell + app slices,
+  meta.exportedAt) as pretty JSON; importData(json) — validates,
+  applies via applyPayload, marks dirty (auto-uploads to cloud on
+  next sync). Both work offline, no passphrase, no Dropbox.
+- shell.js: Export/Import row in Sync section (all connection states)
+  + unencrypted-storage hint. Download: orOS-backup-YYYY-MM-DD.json.
+- translations.js: sync.export/import/ok.export/ok.import/backup.hint
+  (EN/EL). style.css: .sync-hint.
+  
+  ### v0.3.3 — Update detection at boot
+- shell.js: registerServiceWorker hardened — watchWorker() covers
+  workers already installing at page load (race condition: update
+  download starts before the updatefound listener attaches), plus
+  direct state re-check, explicit registration.update() at boot, and
+  hourly re-check for long sessions. Update now surfaces on first
+  visit after a deploy, not the second.
+  
+  ### v0.3.4 — Update toast polish
+- Update toast and menu "Update orOS" now appear after a 500ms grace
+  period (lands on a settled shell, not over boot), with a 0.35s
+  fade/slide-in transition. toastQueued guard prevents duplicate
+  toasts when boot-check and watcher fire near-simultaneously.

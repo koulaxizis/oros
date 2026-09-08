@@ -641,6 +641,27 @@
     // Data
     pull:               pull,
     push:               push,
+	
+	    // Local rescue backup (plaintext, unencrypted)
+    exportData: function () {
+      var payload = collectPayload();
+      payload.meta = {
+        ver: BLOB_VERSION,
+        exportedAt: new Date().toISOString()
+      };
+      return JSON.stringify(payload, null, 2);
+    },
+
+    importData: function (jsonText) {
+      var payload = JSON.parse(jsonText);   // throws on invalid JSON
+      if (!payload || typeof payload !== "object" ||
+          (!payload.shell && !payload.apps)) {
+        throw new Error("bad backup file");
+      }
+      var applied = applyPayload(payload);
+      markDirty();   // imported data wins over cloud → next push uploads it
+      return applied;
+    },
 
     // Passphrase / vault
     setPassphrase:      setPassphrase,    // (pw, remember?) — remember = seal to device

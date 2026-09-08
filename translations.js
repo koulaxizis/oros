@@ -60,7 +60,12 @@ window.OROS_TRANSLATIONS = {
 	"sync.interval.label":   "Auto-sync every",
     "sync.interval.off":     "Off",
     "sync.interval.minutes": "min",
-    "update.action":         "Update orOS"
+    "update.action":         "Update orOS",
+	"sync.export":        "Export data",
+    "sync.import":        "Import data",
+    "sync.ok.export":     "Data exported to file",
+    "sync.ok.import":     "Data imported",
+    "sync.backup.hint":   "Local backup is not encrypted — store it somewhere safe."
   },
 
   el: {
@@ -116,7 +121,12 @@ window.OROS_TRANSLATIONS = {
 	"sync.interval.label":   "Αυτόματος συγχρονισμός κάθε",
     "sync.interval.off":     "Ανενεργό",
     "sync.interval.minutes": "λεπτά",
-    "update.action":         "Ενημέρωση του orOS"
+    "update.action":         "Ενημέρωση του orOS",
+	"sync.export":        "Εξαγωγή δεδομένων",
+    "sync.import":        "Εισαγωγή δεδομένων",
+    "sync.ok.export":     "Τα δεδομένα εξήχθησαν σε αρχείο",
+    "sync.ok.import":     "Τα δεδομένα εισήχθησαν",
+    "sync.backup.hint":   "Το τοπικό αντίγραφο δεν είναι κρυπτογραφημένο — φύλαξέ το σε ασφαλές μέρος."
   }
 
 };

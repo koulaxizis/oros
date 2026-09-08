@@ -140,42 +140,82 @@
       renderMenu();
     }
 
-    function showUpdateToast() {
-      var existing = document.getElementById("update-toast");
-      if (existing) existing.remove();
+    var toastQueued = false;
 
-      var toast = document.createElement("div");
-      toast.id = "update-toast";
-      toast.innerHTML =
-        "<span>" + window.t("update.available") + "</span>" +
-        "<strong>" + window.t("update.reload") + "</strong>";
-      toast.addEventListener("click", function () {
-        if (swReg && swReg.waiting) {
-          swReg.waiting.postMessage("SKIP_WAITING");
+    function showUpdateToast() {
+      if (toastQueued) return;          // one graceful appearance is enough
+      toastQueued = true;
+
+      // Let the shell settle first — the toast lands on a calm,
+      // fully-rendered surface instead of popping over the boot.
+      setTimeout(function () {
+        var existing = document.getElementById("update-toast");
+        if (existing) existing.remove();
+
+        var toast = document.createElement("div");
+        toast.id = "update-toast";
+        toast.innerHTML =
+          "<span>" + window.t("update.available") + "</span>" +
+          "<strong>" + window.t("update.reload") + "</strong>";
+        toast.addEventListener("click", function () {
+          if (swReg && swReg.waiting) {
+            swReg.waiting.postMessage("SKIP_WAITING");
+          }
+        });
+        document.body.appendChild(toast);
+        toast.classList.add("show");     // triggers the fade-in transition
+        announceUpdate();                // "Update orOS" appears in the menu
+      }, 500);
+    }
+
+    // Watch a worker through its install lifecycle — one helper used
+    // both for "already installing at boot" (race fix) and for
+    // updatefound events caught after page load.
+    function watchWorker(worker) {
+      if (!worker) return;
+      worker.addEventListener("statechange", function () {
+        if (worker.state === "installed" &&
+            navigator.serviceWorker.controller) {
+          showUpdateToast();
         }
       });
-      document.body.appendChild(toast);
-      announceUpdate();
+      // Worker may already BE installed when we finally get our hands
+      // on it (statechange already fired) — check directly too.
+      if (worker.state === "installed" &&
+          navigator.serviceWorker.controller) {
+        showUpdateToast();
+      }
     }
 
     navigator.serviceWorker.register("sw.js")
       .then(function (registration) {
         swReg = registration;
 
+        // Case 1: a new version was already waiting (checked in on a
+        // previous visit and ignored) — show immediately.
         if (registration.waiting && navigator.serviceWorker.controller) {
           showUpdateToast();
         }
 
+        // Case 2 (THE RACE FIX): a new worker is ALREADY installing —
+        // its download started before we attached the updatefound
+        // listener. Attach the watcher directly to it.
+        watchWorker(registration.installing);
+
+        // Case 3: update discovered while this session is open.
         registration.addEventListener("updatefound", function () {
-          var newWorker = registration.installing;
-          if (!newWorker) return;
-          newWorker.addEventListener("statechange", function () {
-            if (newWorker.state === "installed" &&
-                navigator.serviceWorker.controller) {
-              showUpdateToast();
-            }
-          });
+          watchWorker(registration.installing);
         });
+
+        // Belt & suspenders: explicitly ask for an update check at
+        // boot (some browsers don't byte-check sw.js on every visit
+        // if the page was served from cache).
+        registration.update().catch(function () {});
+
+        // And a gentle hourly re-check for long-lived sessions.
+        setInterval(function () {
+          if (swReg) swReg.update().catch(function () {});
+        }, 60 * 60 * 1000);
       })
       .catch(function (err) {
         console.warn("orOS: SW registration failed:", err);
@@ -611,6 +651,69 @@
 
       section.appendChild(utils);
     }
+
+    // ==================== ΝΕΟΣ ΚΩΔΙΚΑΣ: ΕΔΩ ====================
+    // Local backup: unencrypted export/import — works offline,
+    // independent of the Dropbox connection state
+    var backupRow = document.createElement("div");
+    backupRow.className = "sync-actions";
+
+    var exportBtn = document.createElement("button");
+    exportBtn.className = "menu-item";
+    exportBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.export") + "</span>";
+    exportBtn.addEventListener("click", function () {
+      try {
+        var json = window.orosSync.exportData();
+        var blob = new Blob([json], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        setSyncMsg("ok", "sync.ok.export");
+      } catch (e) {
+        handleSyncError(e);
+      }
+    });
+    backupRow.appendChild(exportBtn);
+
+    var importBtn = document.createElement("button");
+    importBtn.className = "menu-item";
+    importBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.import") + "</span>";
+
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "application/json,.json";
+    fileInput.style.display = "none";
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var n = window.orosSync.importData(String(reader.result));
+          setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+            n + " " + window.t("sync.slices.applied"));
+        } catch (e) {
+          handleSyncError(e);
+        }
+        fileInput.value = "";
+      };
+      reader.readAsText(file);
+    });
+    section.appendChild(fileInput);
+
+    importBtn.addEventListener("click", function () { fileInput.click(); });
+    backupRow.appendChild(importBtn);
+    section.appendChild(backupRow);
+
+    var backupHint = document.createElement("div");
+    backupHint.className = "sync-hint";
+    backupHint.textContent = window.t("sync.backup.hint");
+    section.appendChild(backupHint);
+    // ==================== ΤΕΛΟΣ ΝΕΟΥ ΚΩΔΙΚΑ ====================
 
     if (state.syncMsg) {
       var msg = document.createElement("div");
