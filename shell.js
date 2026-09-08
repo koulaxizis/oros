@@ -1,27 +1,29 @@
 // ============================================================
-// orOS Core v0 — Shell logic (final)
+// orOS Core v0 — Shell logic (final, PWA edition)
 // Sections:
-//   1. State & skin registry
+//   1. State, skin registry, icon constants
 //   2. Preferences (skin, language, theme)
 //   3. Language apply
 //   4. Theme apply
 //   5. Skin apply
 //   6. Clock (24h)
-//   7. Apps loading & menu rendering (+ skin picker)
-//   8. App opening / return (fullscreen takeover)
-//   9. Menu open/close
-//   10. Wiring & boot
+//   7. PWA: service worker registration + install flow
+//   8. Apps loading & menu rendering (+ appearance + install button)
+//   9. App opening / return (fullscreen takeover)
+//   10. Menu open/close
+//   11. Wiring & boot
 // ============================================================
 (function () {
   "use strict";
 
-  // ---------- 1. State & skin registry ----------
+  // ---------- 1. State & registries ----------
   var state = {
-    lang:    null,   // "en" | "el"
-    theme:   null,   // "dark" | "light"
-    skin:    null,   // "adwaita" | "lumo" | "oros"
-    apps:    [],
-    running: null
+    lang:            null,   // "en" | "el"
+    theme:           null,   // "dark" | "light"
+    skin:            null,   // "adwaita" | "lumo" | "oros"
+    apps:            [],
+    running:         null,
+    deferredPrompt:  null    // PWA install event (null = not available yet)
   };
 
   // Skin registry — adding a new skin = one entry here + one palette in style.css.
@@ -31,16 +33,19 @@
     { id: "oros",    color: "#d4af37" }
   ];
 
+  // Theme toggle icons — inline SVG (Unicode ☾/☀ render as tofu on some platforms)
+  var MOON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  var SUN_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
+
+  // Empty-state glyph — inline SVG app grid
+  var GRID_SVG = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+
   function isValidSkin(id) {
     for (var i = 0; i < SKINS.length; i++) {
       if (SKINS[i].id === id) return true;
     }
     return false;
   }
-  
-    // Theme toggle icons — inline SVG (Unicode ☾/☀ render as tofu on some platforms)
-  var MOON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-  var SUN_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
 
   // ---------- 2. Preferences ----------
   function initPrefs() {
@@ -78,15 +83,17 @@
 
     document.getElementById("btn-menu-label").textContent =
       state.running ? window.t("running.back") : window.t("bar.menu");
+
     var langBtn = document.getElementById("btn-lang");
     langBtn.textContent = state.lang === "en" ? "EL" : "EN";
     langBtn.setAttribute("title", window.t("lang.tooltip"));
+
     renderClock();
     renderMenu();
   }
 
   // ---------- 4. Theme ----------
-    function applyTheme() {
+  function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
     // Theme button lives in the app menu (Appearance section),
     // re-created on each renderMenu() — nothing to update here.
@@ -99,7 +106,7 @@
   }
 
   // ---------- 6. Clock (24h) ----------
-    function renderClock() {
+  function renderClock() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
     var mm = String(now.getMinutes()).padStart(2, "0");
@@ -109,7 +116,56 @@
       hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
   }
 
-  // ---------- 7. Apps loading & menu ----------
+  // ---------- 7. PWA: service worker + install flow ----------
+  function registerServiceWorker() {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function (err) {
+        console.warn("orOS: SW registration failed:", err);
+        // Non-fatal: shell still works online, just without offline coverage.
+      });
+    }
+  }
+
+  function setupInstallFlow() {
+    // Chrome/Edge/Android fire this when the app is installable.
+    // We prevent the automatic mini-infobar and show OUR OWN install
+    // button in the menu instead — with an explicit prompt() call.
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();                    // no silent default banner
+      state.deferredPrompt = e;              // keep the event for later
+      renderMenu();                          // menu now shows the Install button
+    });
+
+    window.addEventListener("appinstalled", function () {
+      state.deferredPrompt = null;            // already installed — hide button
+      renderMenu();
+    });
+  }
+
+  function renderInstallRow(host) {
+    // Only rendered when an install prompt is actually available
+    // (Chrome/Edge/Android; iOS has no API — user adds via Share menu manually)
+    if (!state.deferredPrompt) return;
+
+    var row = document.createElement("button");
+    row.className = "menu-item install-row";
+    row.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>' +
+                   "<span>" + window.t("install.trigger") + "</span>";
+    row.addEventListener("click", function () {
+      if (!state.deferredPrompt) return;
+      state.deferredPrompt.prompt();         // EXPLICIT prompt() — never silent
+      state.deferredPrompt.userChoice.then(function (choice) {
+        if (choice.outcome === "accepted") {
+          state.deferredPrompt = null;
+          renderMenu();
+        }
+        // "dismissed" — keep the button for another day
+      });
+    });
+    host.appendChild(row);
+  }
+
+  // ---------- 8. Apps loading & menu ----------
   function loadApps() {
     fetch("apps.json")
       .then(function (r) { return r.json(); })
@@ -135,8 +191,8 @@
     if (state.apps.length === 0) {
       var empty = document.createElement("div");
       empty.className = "menu-empty";
-        empty.innerHTML =
-        '<span class="glyph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>' +
+      empty.innerHTML =
+        '<span class="glyph">' + GRID_SVG + '</span>' +
         '<span>' + window.t("menu.empty") + '</span>' +
         '<div class="hint">' + window.t("menu.empty.hint") + '</div>';
       menu.appendChild(empty);
@@ -167,11 +223,11 @@
       });
     }
 
-    // Skin picker always at the bottom of the menu
-    renderSkinSwatches(menu);
+    renderSkinSwatches(menu);   // Appearance section: skins + theme toggle
+    renderInstallRow(menu);     // Install button (only if installable)
   }
 
-    function renderSkinSwatches(host) {
+  function renderSkinSwatches(host) {
     var section = document.createElement("div");
     section.className = "skin-section";
 
@@ -208,7 +264,7 @@
     divider.className = "skin-divider";
     controls.appendChild(divider);
 
-        var themeBtn = document.createElement("button");
+    var themeBtn = document.createElement("button");
     themeBtn.className = "theme-toggle";
     themeBtn.innerHTML = state.theme === "dark" ? MOON_SVG : SUN_SVG;
     themeBtn.setAttribute("title",
@@ -230,7 +286,7 @@
     return id.charAt(0).toUpperCase() + id.slice(1);
   }
 
-  // ---------- 8. App opening (fullscreen takeover) ----------
+  // ---------- 9. App opening (fullscreen takeover) ----------
   function openApp(app) {
     closeMenu();
     if (app.type === "external") {
@@ -258,7 +314,7 @@
     mb.setAttribute("data-i18n-title", "bar.menu");
   }
 
-  // ---------- 9. Menu open/close ----------
+  // ---------- 10. Menu open/close ----------
   function toggleMenu() {
     if (state.running) { returnToDesktop(); return; }
     document.getElementById("app-menu").classList.toggle("open");
@@ -267,7 +323,7 @@
     document.getElementById("app-menu").classList.remove("open");
   }
 
-  // ---------- 10. Wiring & boot ----------
+  // ---------- 11. Wiring & boot ----------
   document.getElementById("btn-menu").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleMenu();
@@ -295,6 +351,8 @@
   applyTheme();
   applyLang();
   loadApps();
+  registerServiceWorker();
+  setupInstallFlow();
   setInterval(renderClock, 1000);
   renderClock();
 })();

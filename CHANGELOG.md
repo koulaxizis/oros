@@ -70,3 +70,29 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - index.html: PWA meta (manifest link, theme-color, apple-touch-icon,
   iOS standalone tags, black-translucent status bar, viewport-fit=cover,
   noscript fallback). data-skin="adwaita" default on <html> pre-JS.
+- style.css: mobile-first + PWA safe-area pass. 100dvh shell height,
+  env(safe-area-inset-*) on top bar / running view / menu max-height,
+  -webkit-backdrop-filter for iOS, tap-highlight removed, touch-action
+  optimizations, 44px min touch targets on menu items, full-width menu
+  sheet ≤480px, landscape-notch handling. All skin palettes intact.
+  
+  ## v0.1 — Offline-first + mobile + install (current)
+
+- sw.js: precache shell, network-first navigations (updates reach users),
+  cache-first assets, runtime cache for future internal apps (survives
+  shell updates). Update release = bump CACHE_VERSION.
+- manifest.webmanifest: standalone, theme/background #1b1a18/#131820,
+  icons any+maskable 192/512 (brand mountain logo kept as-is).
+- index.html: PWA meta, viewport-fit=cover, apple-touch-icon,
+  iOS standalone tags, noscript fallback, data-skin default on <html>.
+- style.css: mobile-first — 100dvh, safe-area insets everywhere,
+  44px touch targets, full-width menu sheet ≤480px, landscape notch
+  handling, -webkit-backdrop-filter, tap-highlight/touch-action fixes.
+- shell.js: SW registration (fail-safe), beforeinstallprompt captured
+  with preventDefault + EXPLICIT prompt() on our own Install button in
+  the menu (never silent banners), appinstalled cleanup, install row
+  with SVG download icon. Clock comma fix, EN/EL lang button, SVG icons
+  throughout (moon/sun/grid). Install row highlighted via --accent.
+- New i18n key: install.trigger (EN/EL).
+- Repo now: index.html, style.css, shell.js, translations.js, apps.json,
+  sw.js, manifest.webmanifest, icon.svg, icons/ (4 PNGs).

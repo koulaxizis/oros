@@ -25,7 +25,9 @@ window.OROS_TRANSLATIONS = {
     "running.home":        "Return to desktop",
     "running.back":        "Back",
 
-    "skin.title":          "Appearance"
+    "skin.title":          "Appearance",
+	
+	"install.trigger":     "Install orOS"
   },
 
   el: {
@@ -46,7 +48,9 @@ window.OROS_TRANSLATIONS = {
     "running.home":        "Επιστροφή στην επιφάνεια εργασίας",
     "running.back":        "Πίσω",
 
-    "skin.title":          "Εμφάνιση"
+    "skin.title":          "Εμφάνιση",
+	
+	"install.trigger":     "Εγκατάσταση του orOS"
   }
 
 };

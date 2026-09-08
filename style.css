@@ -1,15 +1,17 @@
 /* ============================================================
-   orOS Core v0 — Shell stylesheet
+   orOS Core v0 — Shell stylesheet (PWA / mobile-first edition)
    Architecture:
      data-skin  = palette (adwaita, lumo, oros)
      data-theme = light/dark (orthogonal to skin)
    Sections:
      1. Skin palettes (variables)
      2. Reset & base
-     3. Top bar
+     3. Top bar (persistent, safe-area aware)
      4. Desktop
      5. Applications menu
      6. Running app (fullscreen takeover)
+     7. Appearance controls (swatches + theme toggle)
+     8. Mobile-first adaptations
    ============================================================ */
 
 /* ---------- 1. Skin palettes ---------- */
@@ -21,7 +23,7 @@
   --bar-bg:       rgba(48, 48, 51, 0.95);
   --text:         #ffffff;
   --text-dim:     #a8a8ac;
-  --accent:        #3584e4;
+  --accent:       #3584e4;
   --accent-hover: #62a0ea;
   --accent-soft:  rgba(53, 132, 228, 0.22);
   --panel-bg:     #2a2a2e;
@@ -34,7 +36,7 @@
   --bar-bg:       rgba(235, 236, 238, 0.95);
   --text:         #1c1b22;
   --text-dim:     #5e5c64;
-  --accent:        #1c71d8;
+  --accent:       #1c71d8;
   --accent-hover: #15539e;
   --accent-soft:  rgba(28, 113, 216, 0.14);
   --panel-bg:     #ffffff;
@@ -49,7 +51,7 @@
   --bar-bg:       rgba(15, 17, 21, 0.92);
   --text:         #e8eaf0;
   --text-dim:     #9aa0ae;
-  --accent:        #6d4aff;
+  --accent:       #6d4aff;
   --accent-hover: #8b6bff;
   --accent-soft:  rgba(109, 74, 255, 0.18);
   --panel-bg:     #171c24;
@@ -62,7 +64,7 @@
   --bar-bg:       rgba(245, 246, 248, 0.92);
   --text:         #1a1d24;
   --text-dim:     #555c6b;
-  --accent:        #6d4aff;
+  --accent:       #6d4aff;
   --accent-hover: #5736e0;
   --accent-soft:  rgba(109, 74, 255, 0.14);
   --panel-bg:     #ffffff;
@@ -77,7 +79,7 @@
   --bar-bg:       rgba(20, 18, 13, 0.93);
   --text:         #f0ead9;
   --text-dim:     #a89f8a;
-  --accent:        #d4af37;
+  --accent:       #d4af37;
   --accent-hover: #ecc75f;
   --accent-soft:  rgba(212, 175, 55, 0.20);
   --panel-bg:     #1d1a13;
@@ -90,7 +92,7 @@
   --bar-bg:       rgba(250, 247, 239, 0.95);
   --text:         #241f14;
   --text-dim:     #6b6250;
-  --accent:        #b8860b;
+  --accent:       #b8860b;
   --accent-hover: #8f6a08;
   --accent-soft:  rgba(184, 134, 11, 0.14);
   --panel-bg:     #ffffff;
@@ -98,7 +100,7 @@
   --shadow:       rgba(0, 0, 0, 0.16);
 }
 
-/* Safe fallback if skin attribute missing */
+/* Safe fallback + platform scrollbars */
 [data-theme="dark"]  { color-scheme: dark; }
 [data-theme="light"] { color-scheme: light; }
 
@@ -110,29 +112,33 @@ body {
   background: var(--bg);
   color: var(--text);
   height: 100vh;
+  height: 100dvh;              /* mobile: excludes URL bar height */
   overflow: hidden;
+  overscroll-behavior: none;   /* no pull-to-refresh on the OS */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;  /* kills 300ms tap delay, no double-tap zoom on controls */
 }
 
-/* ---------- 3. Top bar (always visible) ---------- */
+/* ---------- 3. Top bar (always visible, safe-area aware) ---------- */
 #oros-bar {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 40px;
+  height: calc(40px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 12px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
   background: var(--bar-bg);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 2px 8px var(--shadow);
   z-index: 1000;
   user-select: none;
-
 }
 .bar-left, .bar-right { display: flex; align-items: center; gap: 8px; }
 
-#btn-menu, #btn-lang, #btn-theme {
+#btn-menu, #btn-lang {
   background: transparent;
   border: none;
   color: var(--text);
@@ -142,7 +148,7 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
-#btn-menu:hover, #btn-lang:hover, #btn-theme:hover { background: var(--accent-soft); }
+#btn-menu:hover, #btn-lang:hover { background: var(--accent-soft); }
 
 #btn-menu { font-weight: 600; }
 #btn-menu.running { color: var(--accent-hover); }
@@ -156,7 +162,7 @@ body {
 /* ---------- 4. Desktop ---------- */
 #oros-desktop {
   position: fixed;
-  top: 40px; left: 0; right: 0; bottom: 0;
+  top: calc(40px + env(safe-area-inset-top, 0px)); left: 0; right: 0; bottom: 0;
   background: var(--bg-desktop);
   overflow-y: auto;
 }
@@ -164,9 +170,9 @@ body {
 /* ---------- 5. Applications menu ---------- */
 #app-menu {
   position: fixed;
-  top: 48px; left: 12px;
+  top: calc(48px + env(safe-area-inset-top, 0px)); left: 12px;
   width: 300px;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px - env(safe-area-inset-top, 0px));
   overflow-y: auto;
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -192,7 +198,8 @@ body {
   color: var(--text-dim);
   font-size: 13.5px;
 }
-.menu-empty .glyph { font-size: 30px; display: block; margin-bottom: 10px; opacity: 0.6; }
+.menu-empty .glyph { display: block; margin-bottom: 10px; opacity: 0.6; }
+.menu-empty .glyph svg { display: block; margin: 0 auto; }
 .menu-empty .hint { font-size: 12px; margin-top: 6px; opacity: 0.75; }
 
 .menu-category { padding: 4px 0; }
@@ -208,6 +215,7 @@ body {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-height: 44px;             /* touch target ≥ 44px */
   padding: 9px 10px;
   background: transparent;
   border: none;
@@ -220,10 +228,11 @@ body {
 }
 .menu-item:hover { background: var(--accent-soft); }
 
-/* ---------- 6. Running app (fullscreen takeover) ---------- */
+/* ---------- 5bis. Running app (fullscreen takeover) ---------- */
 #oros-running {
   position: fixed;
-  top: 40px; left: 0; right: 0; bottom: 0;
+  top: calc(40px + env(safe-area-inset-top, 0px));
+  left: 0; right: 0; bottom: 0;
   background: var(--bg);
   z-index: 900;
   display: none;
@@ -231,7 +240,12 @@ body {
 #oros-running.active { display: block; }
 #oros-running iframe { width: 100%; height: 100%; border: none; display: block; }
 
-/* ---------- 5bis. Skin picker (inside app menu) ---------- */
+/* ---------- 7. Appearance controls (in menu) ---------- */
+.skin-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 6px;
+}
 .skin-controls {
   display: flex;
   align-items: center;
@@ -240,7 +254,22 @@ body {
 }
 .skin-swatches {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+}
+.skin-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: transform 0.12s, border-color 0.12s;
+}
+.skin-swatch:hover { transform: scale(1.12); }
+.skin-swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 3.5px var(--accent);
 }
 .skin-divider {
   width: 1px;
@@ -257,22 +286,46 @@ body {
   line-height: 1;
   border-radius: 6px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: background 0.15s;
 }
 .theme-toggle:hover { background: var(--accent-soft); }
 
-.skin-swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-  transition: transform 0.12s, border-color 0.12s;
+.install-row { color: var(--accent); font-weight: 600; }
+
+/* ---------- 8. Mobile-first ---------- */
+
+/* Phones & tablets: menu becomes a near-full-width sheet anchored left,
+   everything comfortably tappable */
+@media (max-width: 480px) {
+  #app-menu {
+    left: 6px;
+    right: 6px;
+    width: auto;
+    max-height: calc(100dvh - 130px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Top bar: keep everything on one row on narrow screens */
+  #btn-menu { font-size: 13.5px; padding: 6px 8px; }
+  #bar-clock { font-size: 12.5px; }
+
+  /* Respect the home-indicator / gesture area at the bottom */
+  #oros-running { bottom: env(safe-area-inset-bottom, 0px); }
 }
-.skin-swatch:hover { transform: scale(1.12); }
-.skin-swatch.active {
-  border-color: var(--text);
-  box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 3.5px var(--accent);
+
+/* Very narrow phones (≤ 360px): drop the weekday from the visual rhythm
+   — the date string shortens naturally, no truncation issues */
+@media (max-width: 360px) {
+  #btn-menu { font-weight: 500; }
+}
+
+/* Landscape phones with notch: bottom inset flips to the side;
+   env() handles it, we only widen the running-view breathing room */
+@media (orientation: landscape) and (max-height: 500px) {
+  #oros-running {
+    left: env(safe-area-inset-left, 0px);
+    right: env(safe-area-inset-right, 0px);
+  }
 }
