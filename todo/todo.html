@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="oros" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>To-Do · orOS</title>
+  <link rel="stylesheet" href="todo.css">
+</head>
+<body>
+
+  <!-- Tabs (one per list) + new list button -->
+  <header id="tabbar-wrap">
+    <nav id="tabs" role="tablist" aria-label="Lists"></nav>
+    <button id="tab-add" aria-label="Add list" title="Add list">+</button>
+  </header>
+
+  <!-- Quick-add bar (always ready, natural date parsing) -->
+  <div id="addbar">
+    <input id="quick-add" type="text" autocomplete="off" spellcheck="false"
+           data-i18n-ph="quick.add">
+  </div>
+
+  <!-- List controls -->
+  <div id="controls">
+    <label class="ctrl" id="hide-done-wrap">
+      <input type="checkbox" id="hide-completed">
+      <span data-i18n="hide.completed">Hide completed</span>
+    </label>
+    <span class="spacer"></span>
+    <button class="ctrl-btn" id="clear-completed" data-i18n="clear.completed">Clear completed</button>
+    <button class="ctrl-btn icon" id="list-settings" aria-label="List settings"
+            title="List settings">&#8943;</button>
+  </div>
+
+  <!-- Items -->
+  <main id="list-scroll">
+    <ul id="items"></ul>
+    <div id="empty" hidden>
+      <span data-i18n="empty.title">Nothing here yet</span>
+      <small data-i18n="empty.hint">Add your first task above.</small>
+    </div>
+  </main>
+
+  <!-- Item detail dialog (tap item label to open) -->
+  <dialog id="dlg-item">
+    <form method="dialog" id="item-form" autocomplete="off">
+      <h3 data-i18n="item.title">Task</h3>
+
+      <label data-i18n="item.text">Text</label>
+      <input id="f-text" type="text" required>
+
+      <label data-i18n="item.due">Due date</label>
+      <input id="f-due" type="date">
+
+      <label data-i18n="item.notes">Notes</label>
+      <textarea id="f-notes" rows="4"></textarea>
+
+      <fieldset>
+        <legend data-i18n="recur.title">Repeat</legend>
+        <label class="radio"><input type="radio" name="f-rec" value="none" checked>
+          <span data-i18n="recur.none">Never</span></label>
+        <label class="radio"><input type="radio" name="f-rec" value="on">
+          <span data-i18n="recur.every">Every</span></label>
+        <div id="rec-editor">
+          <input id="f-every" type="number" min="1" step="1" value="1" aria-label="Interval">
+          <select id="f-unit">
+            <option value="day"   data-i18n="unit.day">days</option>
+            <option value="week"  data-i18n="unit.week">weeks</option>
+            <option value="month" data-i18n="unit.month">months</option>
+          </select>
+          <select id="f-weekday"></select>
+        </div>
+      </fieldset>
+
+      <menu>
+        <button type="button" id="f-delete" class="danger" data-i18n="item.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- List settings dialog (rename, list-level recurrence, delete) -->
+  <dialog id="dlg-list">
+    <form method="dialog" id="list-form" autocomplete="off">
+      <h3 data-i18n="list.settings">List settings</h3>
+
+      <label data-i18n="list.name">Name</label>
+      <input id="l-name" type="text" required>
+
+      <fieldset>
+        <legend data-i18n="recur.list.title">List cycle</legend>
+        <p class="hint" data-i18n="recur.list.hint">When a cycle ends, all checks are cleared automatically.</p>
+        <label class="radio"><input type="radio" name="l-rec" value="none" checked>
+          <span data-i18n="recur.none">Never</span></label>
+        <label class="radio"><input type="radio" name="l-rec" value="on">
+          <span data-i18n="recur.every">Every</span></label>
+        <div id="rec-editor-list">
+          <input id="l-every" type="number" min="1" step="1" value="1" aria-label="Interval">
+          <select id="l-unit">
+            <option value="day"   data-i18n="unit.day">days</option>
+            <option value="week"  data-i18n="unit.week">weeks</option>
+            <option value="month" data-i18n="unit.month">months</option>
+          </select>
+          <select id="l-weekday"></select>
+        </div>
+        <p class="hint" id="l-next-reset"></p>
+      </fieldset>
+
+      <menu>
+        <button type="button" id="l-delete" class="danger" data-i18n="list.delete">Delete list</button>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Undo / feedback toast -->
+  <div id="toast" role="status"></div>
+
+  <script src="todo.js"></script>
+</body>
+</html>

@@ -1,12 +1,12 @@
 # orOS Changelog
 
-Static OS shell living in the browser. Hosted at https://useoros.com
+Static OS shell living in the browser. Hosted at https://useoros.online
 Repo: github.com/koulaxizis/oros — single "dev" channel, kept always stable.
 Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 
-## v0 — Core shell (current)
+  ## v0 — Core shell (current)
 
-### Architecture decisions (locked)
+  ### Architecture decisions (locked)
 - GNOME-style persistent top bar (menu button left, lang/theme toggles + clock right).
   Bar stays visible in ALL views, including running apps (~40px).
 - Apps open via fullscreen takeover (iframe) below the bar — no windows in v0.
@@ -18,14 +18,14 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Storage: localStorage only (`oros-lang`, `oros-theme`, `oros-skin`). Sync/PWA = future.
 - Single channel workflow: one permanent "dev" branch kept stable. No beta repo yet.
 
-### Files
+  ### Files
 - `index.html` — markup only. data-theme="dark" + data-skin="adwaita" on <html>.
 - `style.css` — all styling. Sections 1–6 + 5bis (skin picker).
 - `shell.js` — all shell logic. SKINS registry: add skin = 1 JS entry + 1 CSS palette.
 - `translations.js` — OROS_TRANSLATIONS (EN/EL) + t() with fallback chain (active → en → key).
 - `apps.json` — empty apps array. Shows "No applications installed" empty state.
 
-### Skins system (added in v0)
+  ### Skins system (added in v0)
 - Two orthogonal axes: data-skin (palette) × data-theme (dark/light).
 - Palettes: `adwaita` (GNOME blue, DEFAULT), `lumo` (house purple #6d4aff),
   `oros` (brand gold #d4af37 dark / #b8860b light, warm cream light bg).
@@ -34,11 +34,11 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - New accent var: `--accent-soft` for hovers (was hardcoded purple rgba).
 - Taskbar shadow added: `box-shadow: 0 2px 8px var(--shadow)` — separates bar from body.
 
-### Removed
+  ### Removed
 - Desktop footer with credits (designedBy / noCookies keys removed from both languages).
   Credits will move to a future "About" surface.
 
-### Known TODO (next steps)
+  ### Known TODO (next steps)
 - `sw.js` + web manifest for offline PWA installability.
 - ForkAwesome local vendoring for app icons.
 - First real app installed in apps.json.
@@ -77,7 +77,6 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   sheet ≤480px, landscape-notch handling. All skin palettes intact.
   
   ## v0.1 — Offline-first + mobile + install (current)
-
 - sw.js: precache shell, network-first navigations (updates reach users),
   cache-first assets, runtime cache for future internal apps (survives
   shell updates). Update release = bump CACHE_VERSION.
@@ -107,7 +106,6 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   on circular launchers). Now fully safe on all mask shapes.
   
   ## v0.2 — Dropbox sync (core module, part 1 of 4)
-
 - sync.js: window.orosSync — shared sync framework.
   - PKCE OAuth (S256, no client secret), token_access_type=offline,
     refresh flow with 5-min early renewal, tokens in localStorage.
@@ -150,7 +148,7 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   tap → SKIP_WAITING → controllerchange → auto reload.
 - translations.js: 2 new keys (update.available, update.reload).
 
-### UX fixes (v0.2.2)
+  ### UX fixes (v0.2.2)
 - Menu no longer closes on internal clicks: delegated stopPropagation
   on #app-menu (root cause: re-render detaches the click target before
   the outside-close containment check).
@@ -160,7 +158,6 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   section (was visually merging into the Appearance section).
   
   ## v0.3 — Trusted device vault + auto-sync (part 1 of 2)
-
 - sync.js: IndexedDB vault — non-extractable AES-GCM device key;
   passphrase sealed to localStorage, auto-unlock on boot (opt-in via
   remember checkbox in UI, part 2).
@@ -236,14 +233,14 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   button; update button delegates to window.orosActivateUpdate().
 - sw.js: CACHE_VERSION bumped to oros-v0.3.5 (was stale at v0.2).
 
-### v0.3.6 — Synced auto-sync interval
+  ### v0.3.6 — Synced auto-sync interval
 - Auto-sync interval is now part of the shell slice (syncInterval field):
   user changes on one device propagate to all others on next sync.
   Applied via setIntervalMinutes (pull-fed, never marks dirty →
   no sync loop). Backward-compatible with older shells (field ignored).
 - Local interval change now marks dirty (travels with shell data).
 
-### v0.3.6 — Silent-update welcome toast
+  ### v0.3.6 — Silent-update welcome toast
 - APP_VERSION constant in shell.js (bump per deploy).
 - checkVersionToast() on boot: if last seen version differs (and
   exists), shows bottom-center "orOS was updated to vX" toast,
@@ -252,7 +249,7 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   synced. Positioned apart from the update toast (no overlap).
 - translations.js: update.done (EN/EL). style.css: #version-toast.
 
-### v0.3.6 (hotfix) — Stale asset cache
+  ### v0.3.6 (hotfix) — Stale asset cache
 - ROOT CAUSE of sync features not reaching mobile: several deploys
   shipped asset changes without bumping sw.js CACHE_VERSION; the SW
   kept serving the old precached shell.js/sync.js (cache-first).
@@ -284,7 +281,7 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   a deliberate choice, never triggers on pulls.
 - localStorage key: oros-wallpaper. APP_VERSION → 0.4.0.
 
-### v0.4.1 — Wallpaper application fix + appearance polish
+  ### v0.4.1 — Wallpaper application fix + appearance polish
 - ROOT CAUSE (wallpapers selected but never applied): #oros-desktop
   ID selector outranked the .wp-* classes. Gradients now live in the
   shell registry as inline styles (single source of truth, thumbs and
@@ -294,7 +291,7 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Skin swatches: CSS grid, 2×5 rows — no horizontal menu scrollbar.
 - Taskbar menu label: "Applications" → "orOS".
 
-### v0.4.2 — Full palettes for Linux skins
+  ### v0.4.2 — Full palettes for Linux skins
 - The 7 new skins (Ubuntu/Fedora/Mint/Arch/Debian/elementary/Tux)
   shipped accent-only variables, so backgrounds/panels/text fell
   back to inherited defaults — skins tinted frames but not surfaces.
@@ -305,9 +302,23 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   registry as inline styles since v0.4.1).
 - Light-mode accents darkened for contrast on white surfaces.
 
-### v0.4.3 — Brand defaults
+  ### v0.4.3 — Brand defaults
 - Default skin: adwaita → oros (brand gold); default wallpaper:
   dusk → Desert Sand. First-visit experience now shows the
   brand identity; existing saved preferences are untouched.
 - index.html data-skin markup updated to "oros" (pre-JS flash).
 - Language default remains English (confirmed, unchanged).
+
+  ## v0.5.0 — First app: To-Do
+- New internal app (todo/): tabbed lists (add/rename/delete via
+  double-click or ⋮ menu), checklist items with due dates (natural
+  quick-add parsing: "tomorrow", "friday", "αύριο", "παρασκευή"),
+  notes per item, item-level + list-level recurrence (daily/weekly
+  with weekday anchor/monthly; checking a recurring item re-opens
+  it with the next due date; list cycles auto-clear all checks),
+  overdue badges in tabs, hide-completed toggle, clear-completed,
+  pointer-based drag reorder, undo toast (5s) for all destructive
+  actions. Auto-save localStorage + Dropbox sync via slice "todo"
+  (included in manual export/import). Live palette inheritance
+  from the shell (skin/theme changes repaint the open app).
+- apps.json: first entry (To-Do, Productivity).

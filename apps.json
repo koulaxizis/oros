@@ -1,4 +1,13 @@
 {
   "version": 1,
-  "apps": []
+  "apps": [
+    {
+      "id": "todo",
+      "name": "To-Do",
+      "category": "Productivity",
+      "icon": "check",
+      "url": "todo/",
+      "type": "internal"
+    }
+  ]
 }
