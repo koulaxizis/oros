@@ -56,7 +56,11 @@ window.OROS_TRANSLATIONS = {
 	"sync.pass.show":      "Show passphrase",
 	"sync.pass.remember":  "Remember on this device",
     "sync.pass.device":     "Forget on this device",
-    "sync.ok.unlocked":     "Unlocked — ready to sync"
+    "sync.ok.unlocked":     "Unlocked — ready to sync",
+	"sync.interval.label":   "Auto-sync every",
+    "sync.interval.off":     "Off",
+    "sync.interval.minutes": "min",
+    "update.action":         "Update orOS"
   },
 
   el: {
@@ -108,7 +112,11 @@ window.OROS_TRANSLATIONS = {
 	"sync.pass.show":      "Εμφάνιση κωδικού",
 	"sync.pass.remember":  "Απομνημόνευση σε αυτή τη συσκευή",
     "sync.pass.device":     "Διαγραφή από αυτή τη συσκευή",
-    "sync.ok.unlocked":     "Ξεκλείδωμα — έτοιμο για συγχρονισμό"
+    "sync.ok.unlocked":     "Ξεκλείδωμα — έτοιμο για συγχρονισμό",
+	"sync.interval.label":   "Αυτόματος συγχρονισμός κάθε",
+    "sync.interval.off":     "Ανενεργό",
+    "sync.interval.minutes": "λεπτά",
+    "update.action":         "Ενημέρωση του orOS"
   }
 
 };

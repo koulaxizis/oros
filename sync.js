@@ -22,7 +22,7 @@
   var MAX_BACKUPS     = 5;
   var BLOB_VERSION    = 1;
   var PBKDF2_ROUNDS   = 100000;
-  var AUTO_INTERVAL_MS = 3 * 60 * 1000;   // 3 minutes
+  var INTERVAL_KEY = "oros-sync-interval";   // minutes; 0 = off
   var DIRTY_KEY       = "oros-sync-dirty";
   var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
 
@@ -532,8 +532,27 @@
       .catch(function () { emitAutoEvent("fail", "boot"); });
   }
 
+  function getIntervalMinutes() {
+    var v = parseInt(localStorage.getItem(INTERVAL_KEY) || "3", 10);
+    return isNaN(v) ? 3 : v;
+  }
+
+  function setIntervalMinutes(minutes) {
+    localStorage.setItem(INTERVAL_KEY, String(minutes));
+    scheduleAutoInterval();          // applies immediately, no reboot
+  }
+
+  var autoTimerId = null;
+  function scheduleAutoInterval() {
+    if (autoTimerId) { clearInterval(autoTimerId); autoTimerId = null; }
+    var mins = getIntervalMinutes();
+    if (mins <= 0) return;            // Off: no periodic attempts
+    autoTimerId = setInterval(function () { autoSyncAttempt("interval"); },
+                              mins * 60 * 1000);
+  }
+
   function startAutoEngine() {
-    setInterval(function () { autoSyncAttempt("interval"); }, AUTO_INTERVAL_MS);
+    scheduleAutoInterval();
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
@@ -633,6 +652,8 @@
     // App integration
     registerSlice:      registerSlice,
     markDirty:          markDirty,        // apps call this on data change
+	getIntervalMinutes: getIntervalMinutes,
+    setIntervalMinutes: setIntervalMinutes,
     isDirty:            isDirty,
 
     // Auto-sync feedback (optional, for UI status pulse)

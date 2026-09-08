@@ -185,3 +185,14 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   "Forget on this device" when vault exists; session-only otherwise.
 - translations.js: sync.pass.remember, sync.pass.device,
   sync.ok.unlocked (EN/EL). style.css: remember-row + dot pulse.
+  
+  ### v0.3.1 — Sync refinements
+- Auto-sync interval is user-configurable per device (Off/1/3/5/15 min,
+  select in Sync section, persisted oros-sync-interval). Push-on-hide
+  remains always active. Applied immediately via setIntervalMinutes().
+- Unlock flow now auto-pulls visibly ("Syncing… → pulled → pushed if
+  dirty") instead of silent kickAutoEngine — fixes invisible first sync
+  and stale-module TypeError (getIntervalMinutes guarded in shell).
+- Menu: "Update orOS" replaces "Install orOS" in its section whenever a
+  new service worker version is waiting; update toast kept as passive
+  notifier; both trigger SKIP_WAITING → auto reload.

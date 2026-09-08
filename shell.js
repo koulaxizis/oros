@@ -36,6 +36,8 @@
     { id: "lumo",    color: "#6d4aff" },
     { id: "oros",    color: "#d4af37" }
   ];
+  
+  var swReg = null;   // service worker registration (update control)
 
   var MOON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   var SUN_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
@@ -130,10 +132,13 @@
   }
 
   // ---------- 7. PWA ----------
-  function registerServiceWorker() {
+    function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
 
-    var reg = null;
+    function announceUpdate() {
+      state.swUpdateReady = true;
+      renderMenu();
+    }
 
     function showUpdateToast() {
       var existing = document.getElementById("update-toast");
@@ -145,16 +150,17 @@
         "<span>" + window.t("update.available") + "</span>" +
         "<strong>" + window.t("update.reload") + "</strong>";
       toast.addEventListener("click", function () {
-        if (reg && reg.waiting) {
-          reg.waiting.postMessage("SKIP_WAITING");
+        if (swReg && swReg.waiting) {
+          swReg.waiting.postMessage("SKIP_WAITING");
         }
       });
       document.body.appendChild(toast);
+      announceUpdate();
     }
 
     navigator.serviceWorker.register("sw.js")
       .then(function (registration) {
-        reg = registration;
+        swReg = registration;
 
         if (registration.waiting && navigator.serviceWorker.controller) {
           showUpdateToast();
@@ -196,7 +202,27 @@
     });
   }
 
-  function renderInstallRow(host) {
+    function renderInstallRow(host) {
+    // Update takes priority over install: when a new version waits,
+    // this becomes the most important button in the menu.
+    if (state.swUpdateReady) {
+      var usection = document.createElement("div");
+      usection.className = "install-section";
+
+      var ubtn = document.createElement("button");
+      ubtn.className = "menu-item install-row update";
+      ubtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("update.action") + "</span>";
+      ubtn.addEventListener("click", function () {
+        if (swReg && swReg.waiting) {
+          swReg.waiting.postMessage("SKIP_WAITING");
+          // Activation → controllerchange → auto reload
+        }
+      });
+      usection.appendChild(ubtn);
+      host.appendChild(usection);
+      return;
+    }
+
     if (!state.deferredPrompt) return;
 
     var section = document.createElement("div");
@@ -514,6 +540,28 @@
       actions.appendChild(pushBtn);
 
       section.appendChild(actions);
+	  
+	        // Auto-sync interval selector (device-local setting)
+      var intervalRow = document.createElement("div");
+      intervalRow.className = "sync-interval";
+      var iLabel = document.createElement("label");
+      iLabel.textContent = window.t("sync.interval.label");
+      intervalRow.appendChild(iLabel);
+      var sel = document.createElement("select");
+      [0, 1, 3, 5, 15].forEach(function (m) {
+        var opt = document.createElement("option");
+        opt.value = String(m);
+        opt.textContent = m === 0
+          ? window.t("sync.interval.off")
+          : m + " " + window.t("sync.interval.minutes");
+        if (m === getSafeInterval()) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener("change", function () {
+        window.orosSync.setIntervalMinutes(parseInt(sel.value, 10));
+      });
+      intervalRow.appendChild(sel);
+      section.appendChild(intervalRow);
 
       // Utilities row: forget (device-aware) + disconnect
       var utils = document.createElement("div");
@@ -556,6 +604,8 @@
       msg.textContent = state.syncMsg.text;
       section.appendChild(msg);
     }
+	
+	swUpdateReady: false    // a new service worker version is waiting
 
     host.appendChild(section);
   }
@@ -569,6 +619,13 @@
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
+  }
+  
+    function getSafeInterval() {
+    if (window.orosSync && typeof window.orosSync.getIntervalMinutes === "function") {
+      return window.orosSync.getIntervalMinutes();
+    }
+    return 3;
   }
 
   function initSyncIntegration() {
