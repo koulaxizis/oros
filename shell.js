@@ -40,6 +40,7 @@
   ];
   
   var swReg = null;   // service worker registration (update control)
+  var APP_VERSION = "0.3.6";   // bump on every deploy (shows welcome toast)
 
   var MOON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   var SUN_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
@@ -150,6 +151,46 @@
       state.swUpdateReady = true;
       renderMenu();
     }
+  }
+  
+    // Silent-update visual confirmation: if the running version differs
+  // from the last one the user SAW (SW activated while the app was
+  // closed — no chance for the update toast), greet them briefly.
+  function checkVersionToast() {
+    var KEY = "oros-last-version";
+    var last = localStorage.getItem(KEY);
+
+    if (last === null) {
+      // First visit on this device — remember silently.
+      localStorage.setItem(KEY, APP_VERSION);
+      return;
+    }
+    if (last === APP_VERSION) return;   // nothing changed
+
+    // New version arrived silently — announce briefly.
+    localStorage.setItem(KEY, APP_VERSION);
+
+    var t = document.createElement("div");
+    t.id = "version-toast";
+    t.setAttribute("role", "status");
+    t.innerHTML =
+      "<span>" + window.t("update.done") + "</span>" +
+      "<strong>v" + APP_VERSION + "</strong>";
+    document.body.appendChild(t);
+
+    // Fade in…
+    requestAnimationFrame(function () { t.classList.add("show"); });
+
+    // …and fade out by itself. Click = dismiss early.
+    var gone = false;
+    function dismiss() {
+      if (gone) return;
+      gone = true;
+      t.classList.remove("show");
+      setTimeout(function () { t.remove(); }, 450);
+    }
+    t.addEventListener("click", dismiss);
+    setTimeout(dismiss, 4000);
   }
 
   function setupInstallFlow() {
@@ -806,4 +847,5 @@
   initSyncIntegration();
   setInterval(renderClock, 1000);
   renderClock();
+  checkVersionToast();
 })();

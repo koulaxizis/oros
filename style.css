@@ -538,6 +538,34 @@ body {
 }
 #update-toast strong { color: var(--accent); }
 
+#version-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 8px 14px;
+  font-size: 12.5px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+#version-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+#version-toast strong { color: var(--accent); }
+
 .install-section .install-row.update {
   background: var(--accent-soft);
 }

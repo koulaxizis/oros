@@ -242,3 +242,12 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   Applied via setIntervalMinutes (pull-fed, never marks dirty →
   no sync loop). Backward-compatible with older shells (field ignored).
 - Local interval change now marks dirty (travels with shell data).
+
+### v0.3.6 — Silent-update welcome toast
+- APP_VERSION constant in shell.js (bump per deploy).
+- checkVersionToast() on boot: if last seen version differs (and
+  exists), shows bottom-center "orOS was updated to vX" toast,
+  auto-dismisses after 4s (click = early dismiss). First visit is
+  silent (remember only). Device-local (oros-last-version), never
+  synced. Positioned apart from the update toast (no overlap).
+- translations.js: update.done (EN/EL). style.css: #version-toast.
