@@ -1,0 +1,73 @@
+name: Bump orOS version
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shell.js"
+      - "sync.js"
+      - "translations.js"
+      - "style.css"
+      - "index.html"
+      - "apps.json"
+      - "sw.js"
+      - "manifest.webmanifest"
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read APP_VERSION from shell.js
+        id: ver
+        run: |
+          VERSION=$(grep -oP 'APP_VERSION\s*=\s*"\K[^"]+' shell.js | head -1)
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: APP_VERSION not found in shell.js" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Found APP_VERSION: $VERSION"
+
+      - name: Stamp sw.js CACHE_VERSION
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          if grep -q 'var CACHE_VERSION' sw.js; then
+            sed -i "s|var CACHE_VERSION = \"[^\"]*\";|var CACHE_VERSION = \"oros-v$VERSION\";|" sw.js
+            echo "sw.js CACHE_VERSION -> oros-v$VERSION"
+          else
+            echo "ERROR: CACHE_VERSION line not found in sw.js" >&2
+            exit 1
+          fi
+
+      - name: Stamp manifest.webmanifest version
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          if grep -q '"version"' manifest.webmanifest; then
+            sed -i 's|"version"[[:space:]]*:[[:space:]]*"[^"]*"|"version": "'"$VERSION"'"|' manifest.webmanifest
+            echo "manifest version -> $VERSION"
+          fi
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit version stamps
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          git config user.name  "orOS version bot"
+          git config user.email "actions@github.com"
+          git add sw.js manifest.webmanifest
+          git commit -m "chore: stamp version v$VERSION (auto)"
+          git push

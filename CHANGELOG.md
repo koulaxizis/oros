@@ -260,3 +260,11 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - sw.js: CACHE_VERSION bumped to oros-v0.3.6; new deploy ritual:
   every asset-changing deploy bumps CACHE_VERSION (and APP_VERSION
   for the welcome toast). CI auto-bump proposed as follow-up.
+  
+  ### v0.3.6 (tooling) — Single-source version stamping
+- APP_VERSION in shell.js is now the single release key. GitHub
+  Action (.github/workflows/bump-version.yml) on push-to-main with
+  asset changes: stamps CACHE_VERSION="oros-v<APP_VERSION>" in sw.js
+  and manifest "version", commits automatically. Fails loudly if
+  APP_VERSION or CACHE_VERSION line is missing. Idempotent (no-op
+  if already stamped). Welcome toast shows the same number.
