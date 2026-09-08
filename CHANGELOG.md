@@ -268,3 +268,18 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   and manifest "version", commits automatically. Fails loudly if
   APP_VERSION or CACHE_VERSION line is missing. Idempotent (no-op
   if already stamped). Welcome toast shows the same number.
+  
+  ## v0.4.0 — Skins & Wallpapers
+- 7 new classic Linux palette skins: Ubuntu (#e95420), Fedora
+  (#51a2da), Mint (#87cf3e), Arch (#1793d1), Debian (#d70a53),
+  elementary (#8c5ec7), Tux (monochrome #c9c9c9). Total: 10 skins.
+- Wallpaper system: 10 pure-CSS gradient wallpapers (zero images,
+  zero bandwidth, fully offline). Grid picker in new "Wallpaper"
+  menu section (WYSIWYG thumbnails using the same CSS classes).
+- Wallpaper choice is synced via shell slice (validated against
+  WALLPAPERS registry before applying).
+- Pair suggestion: picking a skin while on the default wallpaper
+  follows its classic pair (ubuntu→Aubergine, arch→Midnight,
+  mint→Forest, tux→Mono, etc.) — only from default, never overrides
+  a deliberate choice, never triggers on pulls.
+- localStorage key: oros-wallpaper. APP_VERSION → 0.4.0.

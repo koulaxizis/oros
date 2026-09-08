@@ -100,6 +100,87 @@
   --shadow:       rgba(0, 0, 0, 0.16);
 }
 
+/* ---------- Linux family skins (v0.4) ---------- */
+[data-skin="ubuntu"] {
+  --accent: #e95420;
+  --accent-hover: #f0663a;
+  --accent-soft: rgba(233, 84, 32, 0.15);
+}
+[data-skin="fedora"] {
+  --accent: #51a2da;
+  --accent-hover: #66b2e3;
+  --accent-soft: rgba(81, 162, 218, 0.15);
+}
+[data-skin="mint"] {
+  --accent: #87cf3e;
+  --accent-hover: #99da53;
+  --accent-soft: rgba(135, 207, 62, 0.14);
+}
+[data-skin="arch"] {
+  --accent: #1793d1;
+  --accent-hover: #33a6de;
+  --accent-soft: rgba(23, 147, 209, 0.15);
+}
+[data-skin="debian"] {
+  --accent: #d70a53;
+  --accent-hover: #e5286b;
+  --accent-soft: rgba(215, 10, 83, 0.14);
+}
+[data-skin="elementary"] {
+  --accent: #8c5ec7;
+  --accent-hover: #9d73d2;
+  --accent-soft: rgba(140, 94, 199, 0.15);
+}
+[data-skin="tux"] {
+  --accent: #c9c9c9;
+  --accent-hover: #dedede;
+  --accent-soft: rgba(201, 201, 201, 0.12);
+}
+
+/* ---------- Wallpapers (v0.4) ----------
+   Applied as class "wp-<id>" on #oros-desktop.
+   All are offline, image-free CSS gradients. */
+
+.wp-dusk {
+  background: linear-gradient(160deg,
+    #1b2735 0%, #10151f 45%, #0b0f17 100%);
+}
+.wp-midnight {
+  background: linear-gradient(165deg,
+    #0d1117 0%, #06080c 60%, #000000 100%);
+}
+.wp-plum {
+  background: radial-gradient(ellipse at 30% 20%,
+    #4a2545 0%, #2c1626 55%, #190d17 100%);
+}
+.wp-forest {
+  background: linear-gradient(150deg,
+    #16281c 0%, #0e1a12 55%, #070f09 100%);
+}
+.wp-ember {
+  background: linear-gradient(160deg,
+    #2b1810 0%, #1d0f0a 50%, #120806 100%);
+}
+.wp-nordic {
+  background: linear-gradient(170deg,
+    #2c3e50 0%, #1d2a38 55%, #131b24 100%);
+}
+.wp-aurora {
+  background: linear-gradient(155deg,
+    #10302b 0%, #0b2320 45%, #071512 100%);
+}
+.wp-sand {
+  background: linear-gradient(160deg,
+    #33291d 0%, #241c13 55%, #161009 100%);
+}
+.wp-mono {
+  background: linear-gradient(170deg,
+    #262626 0%, #1a1a1a 55%, #0e0e0e 100%);
+}
+.wp-clear {
+  background: var(--bg);
+}
+
 /* Safe fallback + platform scrollbars */
 [data-theme="dark"]  { color-scheme: dark; }
 [data-theme="light"] { color-scheme: light; }
@@ -165,6 +246,7 @@ body {
   top: calc(40px + env(safe-area-inset-top, 0px)); left: 0; right: 0; bottom: 0;
   background: var(--bg-desktop);
   overflow-y: auto;
+  transition: background 0.4s ease;
 }
 
 /* ---------- 5. Applications menu ---------- */
@@ -306,6 +388,36 @@ body {
   font-weight: 600;
 }
 .install-section .install-row:hover { background: var(--accent-soft); }
+
+/* ---------- Wallpaper picker ---------- */
+.wallpaper-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 6px;
+}
+.wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 0 10px 8px;
+}
+.wp-thumb {
+  aspect-ratio: 16 / 10;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  outline: none;
+}
+.wp-thumb:hover { transform: scale(1.05); }
+.wp-thumb.active {
+  border-color: var(--accent);
+}
+.wp-thumb:focus-visible {
+  border-color: var(--accent);
+}
 
 /* ---------- 8. Mobile-first ---------- */
 

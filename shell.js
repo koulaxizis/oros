@@ -1,46 +1,82 @@
 // ============================================================
-// orOS Core v0.3 — Shell logic (final, vault + autosync edition)
+// orOS Core v0.4 — Shell logic (skins + wallpapers edition)
 // Sections:
-//   1. State, skin registry, icon constants
-//   2. Preferences (skin, language, theme)
+//   1. State, skin registry, wallpaper registry, icon constants
+//   2. Preferences (skin, language, theme, wallpaper)
 //   3. Language apply
 //   4. Theme apply
 //   5. Skin apply
+//   5b. Wallpaper apply
 //   6. Clock (24h)
-//   7. PWA: service worker registration + update toast + install flow
-//   8. Apps loading & menu rendering (+ appearance + install + SYNC)
+//   7. PWA: broker-aware registration + install flow + version toast
+//   8. Apps loading & menu rendering (+ appearance + install/SYNC)
 //   9. Sync UI & shell slice registration
 //   10. App opening / return (fullscreen takeover)
 //   11. Menu open/close
 //   12. Wiring & boot
+// Update lifecycle is owned by the inline broker in index.html —
+// the shell only mirrors "update ready" into its menu button.
 // ============================================================
 (function () {
   "use strict";
+
+  var APP_VERSION = "0.4.0";   // bump on every deploy (shows welcome toast)
+  var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
   var state = {
     lang:            null,   // "en" | "el"
     theme:           null,   // "dark" | "light"
-    skin:            null,   // "adwaita" | "lumo" | "oros"
+    skin:            null,   // palette id (see SKINS)
+    wallpaper:       null,   // wallpaper id (see WALLPAPERS)
     apps:            [],
     running:         null,
     deferredPrompt:  null,   // PWA install event
 
     // sync UI state
     syncUserEmail:   null,
-    syncMsg:         null,    // { kind: "ok"|"err"|"dim", text: "…" }
-	
-	swUpdateReady: false    // a new service worker version is waiting
+    syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+
+    swUpdateReady:   false   // a new service worker version is waiting
   };
 
   var SKINS = [
-    { id: "adwaita", color: "#3584e4" },
-    { id: "lumo",    color: "#6d4aff" },
-    { id: "oros",    color: "#d4af37" }
+    { id: "adwaita",    color: "#3584e4" },
+    { id: "lumo",       color: "#6d4aff" },
+    { id: "oros",       color: "#d4af37" },
+    { id: "ubuntu",     color: "#e95420" },
+    { id: "fedora",     color: "#51a2da" },
+    { id: "mint",       color: "#87cf3e" },
+    { id: "arch",       color: "#1793d1" },
+    { id: "debian",     color: "#d70a53" },
+    { id: "elementary", color: "#8c5ec7" },
+    { id: "tux",        color: "#c9c9c9" }
   ];
-  
-  var swReg = null;   // service worker registration (update control)
-  var APP_VERSION = "0.3.6";   // bump on every deploy (shows welcome toast)
+
+  // Wallpaper registry — ids map to .wp-<id> CSS classes on
+  // #oros-desktop. `pair` = classic companion skin (suggest, not
+  // impose: only follows when wallpaper is still on DEFAULT).
+  var DEFAULT_WALLPAPER = "dusk";
+
+  var WALLPAPERS = [
+    { id: "dusk",     pair: null },
+    { id: "midnight", pair: "arch" },
+    { id: "plum",     pair: "ubuntu" },
+    { id: "forest",   pair: "mint" },
+    { id: "ember",    pair: "debian" },
+    { id: "nordic",   pair: "fedora" },
+    { id: "aurora",   pair: "elementary" },
+    { id: "sand",     pair: "oros" },
+    { id: "mono",     pair: "tux" },
+    { id: "clear",    pair: null }
+  ];
+
+  function findWallpaper(id) {
+    for (var i = 0; i < WALLPAPERS.length; i++) {
+      if (WALLPAPERS[i].id === id) return WALLPAPERS[i];
+    }
+    return null;
+  }
 
   var MOON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   var SUN_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
@@ -50,6 +86,9 @@
   var CLOUD_ICON_SVG    = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
   var EYE_SVG     = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   var EYE_OFF_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
+  var PHOTO_ICON_SVG   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
+  var swReg = null;   // service worker registration (fallback control)
 
   function isValidSkin(id) {
     for (var i = 0; i < SKINS.length; i++) {
@@ -83,6 +122,10 @@
                    : isValidSkin(storedSkin) ? storedSkin
                    : "adwaita";
     localStorage.setItem("oros-skin", state.skin);
+
+    var storedWp = localStorage.getItem("oros-wallpaper");
+    state.wallpaper = findWallpaper(storedWp) ? storedWp : DEFAULT_WALLPAPER;
+    localStorage.setItem("oros-wallpaper", state.wallpaper);
 
     state.theme = localStorage.getItem("oros-theme") === "light" ? "light" : "dark";
   }
@@ -123,6 +166,37 @@
     document.documentElement.setAttribute("data-skin", state.skin);
   }
 
+  // ---------- 5b. Wallpaper ----------
+  function applyWallpaper() {
+    if (!findWallpaper(state.wallpaper)) state.wallpaper = DEFAULT_WALLPAPER;
+    var desktop = document.getElementById("oros-desktop");
+
+    // Remove any previous wp-* class, then set the current one.
+    var classes = desktop.className.split(/\s+/);
+    for (var i = 0; i < classes.length; i++) {
+      if (classes[i].indexOf("wp-") === 0 && classes[i] !== "wp-" + state.wallpaper) {
+        desktop.classList.remove(classes[i]);
+      }
+    }
+    desktop.classList.add("wp-" + state.wallpaper);
+  }
+
+  // Suggest, don't impose: when the user picks a skin with a classic
+  // wallpaper pair AND is still on the default wallpaper, the
+  // wallpaper follows the skin. Never overrides a deliberate choice.
+  function maybeFollowSkin(newSkinId) {
+    if (state.wallpaper !== DEFAULT_WALLPAPER) return false;
+    for (var i = 0; i < WALLPAPERS.length; i++) {
+      if (WALLPAPERS[i].pair === newSkinId) {
+        state.wallpaper = WALLPAPERS[i].id;
+        localStorage.setItem("oros-wallpaper", state.wallpaper);
+        applyWallpaper();
+        return true;
+      }
+    }
+    return false;
+  }
+
   // ---------- 6. Clock (24h) ----------
   function renderClock() {
     var now = new Date();
@@ -135,7 +209,7 @@
   }
 
   // ---------- 7. PWA ----------
-    function registerServiceWorker() {
+  function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
 
     // The update lifecycle is owned by the inline broker in index.html
@@ -152,46 +226,6 @@
       renderMenu();
     }
   }
-  
-    // Silent-update visual confirmation: if the running version differs
-  // from the last one the user SAW (SW activated while the app was
-  // closed — no chance for the update toast), greet them briefly.
-  function checkVersionToast() {
-    var KEY = "oros-last-version";
-    var last = localStorage.getItem(KEY);
-
-    if (last === null) {
-      // First visit on this device — remember silently.
-      localStorage.setItem(KEY, APP_VERSION);
-      return;
-    }
-    if (last === APP_VERSION) return;   // nothing changed
-
-    // New version arrived silently — announce briefly.
-    localStorage.setItem(KEY, APP_VERSION);
-
-    var t = document.createElement("div");
-    t.id = "version-toast";
-    t.setAttribute("role", "status");
-    t.innerHTML =
-      "<span>" + window.t("update.done") + "</span>" +
-      "<strong>v" + APP_VERSION + "</strong>";
-    document.body.appendChild(t);
-
-    // Fade in…
-    requestAnimationFrame(function () { t.classList.add("show"); });
-
-    // …and fade out by itself. Click = dismiss early.
-    var gone = false;
-    function dismiss() {
-      if (gone) return;
-      gone = true;
-      t.classList.remove("show");
-      setTimeout(function () { t.remove(); }, 450);
-    }
-    t.addEventListener("click", dismiss);
-    setTimeout(dismiss, 4000);
-  }
 
   function setupInstallFlow() {
     window.addEventListener("beforeinstallprompt", function (e) {
@@ -206,7 +240,42 @@
     });
   }
 
-    function renderInstallRow(host) {
+  // Silent-update visual confirmation: if the running version differs
+  // from the last one the user SAW (SW activated while the app was
+  // closed — no chance for the update toast), greet them briefly.
+  function checkVersionToast() {
+    var last = localStorage.getItem(VERSION_KEY);
+
+    if (last === null) {
+      localStorage.setItem(VERSION_KEY, APP_VERSION);
+      return;
+    }
+    if (last === APP_VERSION) return;
+
+    localStorage.setItem(VERSION_KEY, APP_VERSION);
+
+    var t = document.createElement("div");
+    t.id = "version-toast";
+    t.setAttribute("role", "status");
+    t.innerHTML =
+      "<span>" + window.t("update.done") + "</span>" +
+      "<strong>v" + APP_VERSION + "</strong>";
+    document.body.appendChild(t);
+
+    requestAnimationFrame(function () { t.classList.add("show"); });
+
+    var gone = false;
+    function dismiss() {
+      if (gone) return;
+      gone = true;
+      t.classList.remove("show");
+      setTimeout(function () { t.remove(); }, 450);
+    }
+    t.addEventListener("click", dismiss);
+    setTimeout(dismiss, 4000);
+  }
+
+  function renderInstallRow(host) {
     // Update takes priority over install: when a new version waits,
     // this becomes the most important button in the menu.
     if (state.swUpdateReady) {
@@ -308,6 +377,7 @@
     }
 
     renderSkinSwatches(menu);
+    renderWallpaperSection(menu);
     renderInstallRow(menu);
     renderSyncSection(menu);
   }
@@ -338,6 +408,7 @@
         state.skin = s.id;
         localStorage.setItem("oros-skin", state.skin);
         applySkin();
+        maybeFollowSkin(s.id);     // suggests paired wallpaper (from default only)
         noteLocalChange();          // user action → sync engine
         renderMenu();
       });
@@ -369,21 +440,81 @@
     host.appendChild(section);
   }
 
+  // Wallpaper picker: grid of gradient thumbnails. Each thumb carries
+  // its actual CSS class, so what you see is literally what you get.
+  function renderWallpaperSection(host) {
+    var section = document.createElement("div");
+    section.className = "wallpaper-section";
+
+    var heading = document.createElement("div");
+    heading.className = "menu-heading";
+    heading.textContent = window.t("wallpaper.title");
+    section.appendChild(heading);
+
+    var grid = document.createElement("div");
+    grid.className = "wallpaper-grid";
+
+    WALLPAPERS.forEach(function (w) {
+      var thumb = document.createElement("button");
+      thumb.className = "wp-thumb wp-" + w.id +
+                        (state.wallpaper === w.id ? " active" : "");
+      thumb.setAttribute("title", wallpaperTitle(w.id));
+      thumb.setAttribute("aria-label", wallpaperTitle(w.id));
+      thumb.addEventListener("click", function () {
+        if (state.wallpaper === w.id) return;
+        state.wallpaper = w.id;
+        localStorage.setItem("oros-wallpaper", state.wallpaper);
+        applyWallpaper();
+        noteLocalChange();          // user action → sync engine
+        renderMenu();
+      });
+      grid.appendChild(thumb);
+    });
+
+    section.appendChild(grid);
+    host.appendChild(section);
+  }
+
   function skinTitle(id) {
     return id.charAt(0).toUpperCase() + id.slice(1);
   }
 
-  // ---------- 9. Sync UI & shell slice ----------
+  function wallpaperTitle(id) {
+    var names = {
+      dusk:     { en: "Adwaita Dusk",  el: "Λυκόφως Adwaita" },
+      midnight: { en: "Midnight",      el: "Μεσάνυχτα" },
+      plum:     { en: "Aubergine",     el: "Μελανότσιρο" },
+      forest:   { en: "Forest Night",  el: "Νύχτα Δάσους" },
+      ember:    { en: "Ember",         el: "Στάχτη" },
+      nordic:   { en: "Nordic Frost",  el: "Σκανδιναβικός Πάγος" },
+      aurora:   { en: "Aurora",        el: "Αυγόρα" },
+      sand:     { en: "Desert Sand",   el: "Άμμος Ερήμου" },
+      mono:     { en: "Monochrome",    el: "Μονόχρωμο" },
+      clear:    { en: "None",          el: "Καμία" }
+    };
+    var n = names[id];
+    if (!n) return id;
+    return state.lang === "el" ? n.el : n.en;
+  }
 
-  // The shell's own syncable data — theme/language/skin travel to the cloud.
-  // Getter reads CURRENT state; setter is fed by pulls (no markDirty inside!).
+    // ---------- 9. Sync UI & shell slice ----------
+
+  // The shell's own syncable data — theme/language/skin/wallpaper
+  // and the auto-sync interval all travel to the cloud.
+  // Getter reads CURRENT state; setter is fed by pulls (no markDirty
+  // inside user-settable paths!).
   function shellSliceGet() {
     var syncInterval = 3;
     if (window.orosSync && typeof window.orosSync.getIntervalMinutes === "function") {
       syncInterval = window.orosSync.getIntervalMinutes();
     }
-    return { lang: state.lang, theme: state.theme, skin: state.skin,
-             syncInterval: syncInterval };
+    return {
+      lang:         state.lang,
+      theme:        state.theme,
+      skin:         state.skin,
+      wallpaper:    state.wallpaper,
+      syncInterval: syncInterval
+    };
   }
 
   function shellSliceSet(data) {
@@ -391,7 +522,10 @@
     if (data.lang  === "en" || data.lang  === "el") state.lang  = data.lang;
     if (data.theme === "dark" || data.theme === "light") state.theme = data.theme;
     if (isValidSkin(data.skin)) state.skin = data.skin;
-
+    if (findWallpaper(data.wallpaper)) {
+      state.wallpaper = data.wallpaper;
+      localStorage.setItem("oros-wallpaper", state.wallpaper);
+    }
     if (typeof data.syncInterval === "number" &&
         data.syncInterval >= 0 && data.syncInterval <= 60 &&
         window.orosSync && typeof window.orosSync.setIntervalMinutes === "function") {
@@ -405,6 +539,7 @@
     localStorage.setItem("oros-skin",  state.skin);
 
     applySkin();
+    applyWallpaper();
     applyTheme();
     applyLang();     // re-renders menu too
     // Deliberately NO noteLocalChange() here — pulled data must not
@@ -572,8 +707,9 @@
       actions.appendChild(pushBtn);
 
       section.appendChild(actions);
-	  
-	        // Auto-sync interval selector (device-local setting)
+
+      // Auto-sync interval selector (device-local setting, but the
+      // chosen value is carried in the shell slice)
       var intervalRow = document.createElement("div");
       intervalRow.className = "sync-interval";
       var iLabel = document.createElement("label");
@@ -631,7 +767,6 @@
       section.appendChild(utils);
     }
 
-    // ==================== ΝΕΟΣ ΚΩΔΙΚΑΣ: ΕΔΩ ====================
     // Local backup: unencrypted export/import — works offline,
     // independent of the Dropbox connection state
     var backupRow = document.createElement("div");
@@ -692,7 +827,6 @@
     backupHint.className = "sync-hint";
     backupHint.textContent = window.t("sync.backup.hint");
     section.appendChild(backupHint);
-    // ==================== ΤΕΛΟΣ ΝΕΟΥ ΚΩΔΙΚΑ ====================
 
     if (state.syncMsg) {
       var msg = document.createElement("div");
@@ -714,8 +848,8 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  
-    function getSafeInterval() {
+
+  function getSafeInterval() {
     if (window.orosSync && typeof window.orosSync.getIntervalMinutes === "function") {
       return window.orosSync.getIntervalMinutes();
     }
@@ -839,6 +973,7 @@
   // Boot
   initPrefs();
   applySkin();
+  applyWallpaper();
   applyTheme();
   applyLang();
   loadApps();
