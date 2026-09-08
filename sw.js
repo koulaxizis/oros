@@ -1,20 +1,18 @@
 // ============================================================
 // orOS Core v0.2 — Service Worker
-// Offline-first strategy:
-//   - Precache the entire shell on install
-//   - Cache-first for same-origin GET requests
-//   - Network-first for navigations (so new versions arrive),
-//     falling back to cache when offline
-//   - Runtime caching for internal apps (apps/*) as they are opened
-// NOTE: Dropbox API calls (api.dropboxapi.com / content.dropboxapi.com /
-// www.dropbox.com) are cross-origin and never touched by this SW.
+// Offline-first:
+//   - Precache shell on install
+//   - Cache-first assets, network-first navigations
+//   - Update protocol: new SW installs and WAITS. Shell detects the
+//     waiting worker, shows "new version" toast; on user tap the shell
+//     posts SKIP_WAITING → activate + pages reload.
+// Dropbox calls are cross-origin — never touched by this SW.
 // ============================================================
 
 var CACHE_VERSION = "oros-v0.2";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
-// Everything the shell needs to boot with zero network
 var PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -26,46 +24,45 @@ var PRECACHE_URLS = [
   "./manifest.webmanifest"
 ];
 
-// ---------- Install: precache shell, activate immediately ----------
+// ---------- Install: precache, stay waiting (user-controlled update) ----------
 self.addEventListener("install", function (event) {
   event.waitUntil(
-    caches.open(SHELL_CACHE)
-      .then(function (cache) {
-        return cache.addAll(PRECACHE_URLS);
-      })
-      .then(function () {
-        return self.skipWaiting();
-      })
+    caches.open(SHELL_CACHE).then(function (cache) {
+      return cache.addAll(PRECACHE_URLS);
+    })
+    // Deliberately NO skipWaiting here: the shell shows the update toast
+    // and only activates the new worker when the user confirms.
   );
 });
 
-// ---------- Activate: purge old cache versions, take control ----------
+// ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
   var keep = [SHELL_CACHE, RUNTIME_CACHE];
   event.waitUntil(
-    caches.keys()
-      .then(function (names) {
-        return Promise.all(names.map(function (name) {
-          if (keep.indexOf(name) === -1) return caches.delete(name);
-        }));
-      })
-      .then(function () {
-        return self.clients.claim();
-      })
+    caches.keys().then(function (names) {
+      return Promise.all(names.map(function (name) {
+        if (keep.indexOf(name) === -1) return caches.delete(name);
+      }));
+    }).then(function () {
+      return self.clients.claim();
+    })
   );
+});
+
+// ---------- Shell asks us to activate the waiting worker ----------
+self.addEventListener("message", function (event) {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
 
 // ---------- Fetch strategy ----------
 self.addEventListener("fetch", function (event) {
   var request = event.request;
 
-  // Only handle same-origin GET requests
   if (request.method !== "GET") return;
 
   var url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;  // Dropbox & externals: untouched
+  if (url.origin !== self.location.origin) return;   // Dropbox & externals: untouched
 
-  // Navigations: network first (updates reach users), cache fallback offline
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -86,7 +83,6 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
-  // Assets: cache first, then network; network results cached
   event.respondWith(
     caches.match(request).then(function (cached) {
       if (cached) return cached;

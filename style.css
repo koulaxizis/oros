@@ -293,7 +293,19 @@ body {
 }
 .theme-toggle:hover { background: var(--accent-soft); }
 
-.install-row { color: var(--accent); font-weight: 600; }
+.install-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 6px;
+}
+.install-section .install-row {
+  min-height: 40px;
+  font-size: 13px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.install-section .install-row:hover { background: var(--accent-soft); }
 
 /* ---------- 8. Mobile-first ---------- */
 
@@ -415,6 +427,26 @@ body {
   margin-top: 8px;
 }
 
+.sync-pass .input-row {
+  display: flex;
+  gap: 8px;
+}
+.sync-pass .input-row input { flex: 1; }
+.pass-eye {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  width: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.pass-eye:hover { background: var(--accent-soft); color: var(--text); }
+
 /* Status messages (success / error) under the section */
 .sync-msg {
   font-size: 12px;
@@ -423,3 +455,24 @@ body {
 }
 .sync-msg.ok   { color: var(--accent-hover); }
 .sync-msg.err  { color: #e06c75; }
+
+/* ---------- 10. Update toast ---------- */
+#update-toast {
+  position: fixed;
+  top: calc(48px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: 1100;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+#update-toast.show { display: flex; }
+#update-toast strong { color: var(--accent); }

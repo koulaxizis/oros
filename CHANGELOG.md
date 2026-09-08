@@ -141,3 +141,20 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   - Status messages (ok/err/dim) survive menu re-renders.
   - OAuth redirect return triggers menu refresh once tokens land.
   - Account email escaped via escapeHtml; async-loaded, non-blocking.
+  
+  ## v0.2.1 — User-controlled updates
+- sw.js: install no longer skipWaiting — new worker waits. Message
+  channel "SKIP_WAITING" for shell-triggered activation.
+- shell.js: registerServiceWorker rewritten — updatefound/statechange
+  detection, floating toast (update.available / update.reload, EN/EL),
+  tap → SKIP_WAITING → controllerchange → auto reload.
+- translations.js: 2 new keys (update.available, update.reload).
+
+### UX fixes (v0.2.2)
+- Menu no longer closes on internal clicks: delegated stopPropagation
+  on #app-menu (root cause: re-render detaches the click target before
+  the outside-close containment check).
+- Passphrase input gains show/hide toggle (eye icon, EN/EL tooltip);
+  toggle mutates the input directly — no re-render, no text loss.
+- Install row moved to its own visually separated, accent-bordered
+  section (was visually merging into the Appearance section).

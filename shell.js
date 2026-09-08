@@ -43,6 +43,8 @@
   var DOWNLOAD_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';
   var UPLOAD_ICON_SVG   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>';
   var CLOUD_ICON_SVG    = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
+  var EYE_SVG     = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
 
   function isValidSkin(id) {
     for (var i = 0; i < SKINS.length; i++) {
@@ -120,12 +122,61 @@
   }
 
   // ---------- 7. PWA ----------
-  function registerServiceWorker() {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").catch(function (err) {
+    function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+
+    var reg = null;
+
+    function showUpdateToast() {
+      var existing = document.getElementById("update-toast");
+      if (existing) existing.remove();
+
+      var toast = document.createElement("div");
+      toast.id = "update-toast";
+      toast.innerHTML =
+        "<span>" + window.t("update.available") + "</span>" +
+        "<strong>" + window.t("update.reload") + "</strong>";
+      toast.addEventListener("click", function () {
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage("SKIP_WAITING");   // activate new worker
+        }
+      });
+      document.body.appendChild(toast);
+    }
+
+    navigator.serviceWorker.register("sw.js")
+      .then(function (registration) {
+        reg = registration;
+
+        // A version is already waiting (e.g. updated while tab closed)
+        if (registration.waiting &&
+            navigator.serviceWorker.controller) {
+          showUpdateToast();
+        }
+
+        registration.addEventListener("updatefound", function () {
+          var newWorker = registration.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener("statechange", function () {
+            // "installed" + existing controller = an update is waiting
+            if (newWorker.state === "installed" &&
+                navigator.serviceWorker.controller) {
+              showUpdateToast();
+            }
+          });
+        });
+      })
+      .catch(function (err) {
         console.warn("orOS: SW registration failed:", err);
       });
-    }
+
+    // New worker took control → reload to serve the new shell
+    var reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
   }
 
   function setupInstallFlow() {
@@ -141,8 +192,11 @@
     });
   }
 
-  function renderInstallRow(host) {
+    function renderInstallRow(host) {
     if (!state.deferredPrompt) return;
+
+    var section = document.createElement("div");
+    section.className = "install-section";
 
     var row = document.createElement("button");
     row.className = "menu-item install-row";
@@ -157,7 +211,8 @@
         }
       });
     });
-    host.appendChild(row);
+    section.appendChild(row);
+    host.appendChild(section);
   }
 
   // ---------- 8. Apps loading & menu ----------
@@ -363,11 +418,30 @@
         label.textContent = window.t("sync.pass.label");
         passWrap.appendChild(label);
 
+                var inputRow = document.createElement("div");
+        inputRow.className = "input-row";
+
         var input = document.createElement("input");
         input.type = "password";
         input.setAttribute("placeholder", window.t("sync.pass.placeholder"));
         input.autocomplete = "off";
-        passWrap.appendChild(input);
+        inputRow.appendChild(input);
+
+        var eyeBtn = document.createElement("button");
+        eyeBtn.type = "button";
+        eyeBtn.className = "pass-eye";
+        eyeBtn.innerHTML = EYE_SVG;
+        eyeBtn.setAttribute("title", window.t("sync.pass.show"));
+        eyeBtn.setAttribute("aria-label", window.t("sync.pass.show"));
+        eyeBtn.addEventListener("click", function () {
+          var show = input.type === "password";
+          input.type = show ? "text" : "password";
+          eyeBtn.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
+          input.focus();
+        });
+        inputRow.appendChild(eyeBtn);
+
+        passWrap.appendChild(inputRow);
 
         var hint = document.createElement("div");
         hint.className = "hint";
@@ -536,6 +610,12 @@
   document.getElementById("btn-menu").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleMenu();
+  });
+    // Clicks inside the menu never reach the outside-close handler.
+  // (Re-renders detach the clicked node mid-event, which made
+  // menu.contains(target) false — the "clicked outside" bug.)
+  document.getElementById("app-menu").addEventListener("click", function (e) {
+    e.stopPropagation();
   });
   document.addEventListener("click", function (e) {
     var menu = document.getElementById("app-menu");

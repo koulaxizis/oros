@@ -50,7 +50,10 @@ window.OROS_TRANSLATIONS = {
     "sync.err.nopass":      "Enter your passphrase first",
     "sync.err.version":     "Cloud data uses an unsupported version",
     "sync.err.auth":        "Dropbox authorization failed — reconnect",
-    "sync.err.generic":     "Sync failed — check your connection"
+    "sync.err.generic":     "Sync failed — check your connection",
+	"update.available":    "A new version of orOS is ready.",
+    "update.reload":       "Update",
+	"sync.pass.show":      "Show passphrase"
   },
 
   el: {
@@ -96,7 +99,10 @@ window.OROS_TRANSLATIONS = {
     "sync.err.nopass":      "Δώσε πρώτα τον κωδικό σου",
     "sync.err.version":     "Τα δεδομένα του cloud χρησιμοποιούν μη υποστηριζόμενη έκδοση",
     "sync.err.auth":        "Η εξουσιοδότηση Dropbox απέτυχε — επανασύνδεση",
-    "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου"
+    "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου",
+	"update.available":    "Μια νέα έκδοση του orOS είναι έτοιμη.",
+    "update.reload":       "Ανανέωση",
+	"sync.pass.show":      "Εμφάνιση κωδικού"
   }
 
 };
