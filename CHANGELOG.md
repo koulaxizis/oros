@@ -102,3 +102,6 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Maskable icons regenerated at 70% inner scale (was 78%) —
   adaptive-icon safe zone is a 61% circle; mountain corners were
   grazing the mask boundary. Any-purpose icons unchanged.
+- Maskable inner scale tightened 70% → 62% (Android safe zone is a
+  66/108 circle; base corners sat at ~99% radius, diagonally clipped
+  on circular launchers). Now fully safe on all mask shapes.
