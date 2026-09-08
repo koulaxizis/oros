@@ -502,9 +502,23 @@
         var pw = input.value;
         if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
         window.orosSync.setPassphrase(pw, rememberCb.checked);
-        setSyncMsg("ok", "sync.ok.unlocked");
-        // Kick the engine: silent pull + push-if-dirty right away
-        window.orosSync.kickAutoEngine();
+        setSyncMsgRaw("dim", window.t("sync.working"));
+        // Visible auto-pull on unlock: apply cloud state immediately,
+        // then push if this device had unsynced changes.
+        window.orosSync.pull()
+          .then(function (result) {
+            if (result.empty) {
+              setSyncMsg("ok", "sync.ok.empty");
+            } else {
+              setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
+                result.applied + " " + window.t("sync.slices.applied"));
+            }
+            if (window.orosSync.isDirty()) {
+              return window.orosSync.push()
+                .then(function () { setSyncMsg("ok", "sync.ok.push"); });
+            }
+          })
+          .catch(handleSyncError);
       });
       row.appendChild(unlockBtn);
       passWrap.appendChild(row);
