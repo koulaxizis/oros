@@ -1,324 +1,237 @@
 # orOS Changelog
 
 Static OS shell living in the browser. Hosted at https://useoros.online
-Repo: github.com/koulaxizis/oros — single "dev" channel, kept always stable.
-Dark theme default, light toggle. EN default, EL secondary. 24h clock.
+(GitHub Pages via custom domain; repo: github.com/koulaxizis/oros).
+Single permanent "dev" channel, always stable. Dark theme default with
+light toggle in Appearance. EN default, EL secondary. 24h clock.
+Privacy-first: no cookies, no tracking, no ads. MIT.
 
-  ## v0 — Core shell (current)
+---
 
-  ### Architecture decisions (locked)
-- GNOME-style persistent top bar (menu button left, lang/theme toggles + clock right).
-  Bar stays visible in ALL views, including running apps (~40px).
-- Apps open via fullscreen takeover (iframe) below the bar — no windows in v0.
-  Esc or menu button returns to desktop. Windowed mode = possible future opt-in only.
-- External apps (type: "external") open in a new browser tab, not takeover.
-- Installed apps declared in `apps.json` (fetch at runtime). Install = one JSON entry.
-  Schema: id, name, category, icon, url, type ("internal"|"external").
-  Graceful fallback: failed fetch → empty state, never a crash.
-- Storage: localStorage only (`oros-lang`, `oros-theme`, `oros-skin`). Sync/PWA = future.
-- Single channel workflow: one permanent "dev" branch kept stable. No beta repo yet.
+## RELEASE RITUAL (locked)
 
-  ### Files
-- `index.html` — markup only. data-theme="dark" + data-skin="adwaita" on <html>.
-- `style.css` — all styling. Sections 1–6 + 5bis (skin picker).
-- `shell.js` — all shell logic. SKINS registry: add skin = 1 JS entry + 1 CSS palette.
-- `translations.js` — OROS_TRANSLATIONS (EN/EL) + t() with fallback chain (active → en → key).
-- `apps.json` — empty apps array. Shows "No applications installed" empty state.
+1. Change whatever (shell.js, sync.js, translations.js, style.css, apps/…).
+2. Bump `APP_VERSION = "X.Y.Z"` in shell.js — the SINGLE release key.
+3. GitHub Action (.github/workflows/bump-version.yml) auto-stamps
+   sw.js CACHE_VERSION="oros-v<X.Y.Z>" and manifest "version" on push
+   to main (fails loudly if lines missing; idempotent otherwise).
+   If Action not yet active: bump CACHE_VERSION manually, same number.
+4. CHANGELOG entry per change (English, "why" included).
 
-  ### Skins system (added in v0)
-- Two orthogonal axes: data-skin (palette) × data-theme (dark/light).
-- Palettes: `adwaita` (GNOME blue, DEFAULT), `lumo` (house purple #6d4aff),
-  `oros` (brand gold #d4af37 dark / #b8860b light, warm cream light bg).
-- Skin picker: round swatches at bottom of app menu. localStorage `oros-skin`,
-  URL param `?skin=` (same pattern as `?lang=`). Invalid values → adwaita fallback.
-- New accent var: `--accent-soft` for hovers (was hardcoded purple rgba).
-- Taskbar shadow added: `box-shadow: 0 2px 8px var(--shadow)` — separates bar from body.
+LESSON (never repeat): deploys that change assets without a version
+bump silently strand mobile on stale cache-first assets. Desktop looks
+fine only because hard refreshes bypass the SW.
 
-  ### Removed
-- Desktop footer with credits (designedBy / noCookies keys removed from both languages).
-  Credits will move to a future "About" surface.
+---
 
-  ### Known TODO (next steps)
-- `sw.js` + web manifest for offline PWA installability.
-- ForkAwesome local vendoring for app icons.
-- First real app installed in apps.json.
-- Icon glyphs currently unicode (⊞, ◐) — will become ForkAwesome icons.
-- App iframe has no sandbox attribute (intentional: internal apps need full
-  localStorage). Revisit when external/untrusted apps are iframed.
+## REFERENCE REGISTRIES (kept current — read this first in a new chat)
+
+### File tree (repo root)
+- index.html — markup + INLINE update broker script (must stay inline!)
+- style.css — shell styling (sections 1-10: skins, reset, bar, desktop,
+  menu, running, appearance, wallpaper picker, sync, toasts)
+- shell.js — shell logic, sections 1-12, APP_VERSION constant on top
+- translations.js — OROS_TRANSLATIONS (EN/EL) + window.t() fallback
+  chain (active → en → key)
+- sync.js — window.orosSync (loaded BEFORE shell.js)
+- apps.json — installed apps registry
+- sw.js — CACHE_VERSION bump per deploy
+- manifest.webmanifest
+- icon.svg + icons/ (4 PNGs: any+maskable 192/512, maskable scale 62%)
+- todo/ — first internal app (todo.html, todo.css, todo.js)
+- .github/workflows/bump-version.yml
+
+### localStorage keys (registry)
+- oros-lang ("en"|"el")         — synced (shell slice)
+- oros-theme ("dark"|"light")   — synced (shell slice)
+- oros-skin                     — synced (shell slice)
+- oros-wallpaper                — synced (shell slice)
+- oros-sync-interval            — user-configurable, carried via slice
+- oros-sync-dirty               — dirty flag (persisted)
+- oros-vault-data               — sealed passphrase (trusted device)
+- oros-last-version             — DEVICE-LOCAL, never synced (welcome toast)
+- oros-todo-data                — To-Do app data (synced via "todo" slice)
+
+### Locked API surfaces
+- window.t(key) — i18n, fallback chain active → en → key.
+- window.orosSync: connect/disconnect/isConnected/getUserInfo/pull/push/
+  setPassphrase(pw, remember)/hasPassphrase/forgetPassphrase/clearDevice/
+  hasDeviceVault/registerSlice/markDirty/isDirty/getIntervalMinutes/
+  setIntervalMinutes/onAutoSync/kickAutoEngine/vaultUnlocked/
+  redirectHandled/errorKey/exportData/importData.
+- window.orosActivateUpdate() — SKIP_WAITING via inline broker.
+- window.__orosUpdateReady + CustomEvent "oros-update-ready".
+- orosSync.registerSlice(name, get, set) — payload:
+  { shell: {...}, apps: { <name>: ... }, meta }. Manual Export/Import
+  includes ALL registered slices automatically.
+- App convention: same-origin iframe; app reads oros-lang from shared
+  localStorage; inherits shell palette via computed vars + MutationObserver
+  on parent data-skin/data-theme; sync via parent.orosSync.registerSlice.
+- Sync-loop rule: pull-fed setters NEVER markDirty. User-action
+  handlers DO (noteLocalChange() / __orosSyncApi.dirty()).
+
+### Registries (shell.js)
+- SKINS (10): adwaita #3584e4 (GNOME default look), lumo #6d4aff,
+  oros #d4af37/#b8860b (BRAND DEFAULT), ubuntu #e95420, fedora #51a2da,
+  mint #87cf3e, arch #1793d1, debian #d70a53, elementary #8c5ec7,
+  tux #c9c9c9. All ship full 12-var palettes × dark/light in style.css.
+- WALLPAPERS (10, JS registry — gradients as inline styles, thumbs and
+  desktop from the same string): dusk, midnight(pair:arch), plum(ubuntu),
+  forest(mint), ember(debian), nordic(fedora), aurora(elementary),
+  sand(pair:oros), mono(pair:tux), clear(none). DEFAULT_WALLPAPER="sand".
+- Defaults (v0.4.3): skin oros, wallpaper sand, theme dark, lang en.
+- Pair suggestion fires ONLY when user is on the default wallpaper and
+  ONLY on user skin clicks — never on pulls.
+
+---
+
+## v0 — Core shell
+- GNOME-style persistent top bar (40px): menu left; lang + clock right
+  (theme toggle lives in Appearance section). Bar visible in all views.
+- Fullscreen app takeover (iframe) below the bar; Esc or menu button
+  returns to desktop. External apps (type: "external") open a new tab.
+- apps.json fetch with graceful fallback to empty state; schema:
+  id, name, category, icon, url, type ("internal"|"external").
+- Dark default + light toggle (Appearance). 24h clock, comma stripped.
+- translations.js: OROS_TRANSLATIONS (EN/EL) + t() fallback chain.
+- Footer credits removed (future "About" surface).
+- Post-v0 polish: clock comma strip, SVG glyph for empty state, skin.title
+  key, EN/EL short lang codes, theme toggle moved into menu Appearance
+  section (moon/sun inline SVGs; taskbar right = lang + clock only),
+  tofu-prone unicode icons replaced with inline SVGs (grid, moon, sun),
+  desktop footer removed.
+
+## v0.1 — Offline-first + mobile + install
+- sw.js: precache shell, network-first navigations, cache-first assets,
+  runtime cache for future apps. manifest.webmanifest: standalone,
+  brand mountain icons any+maskable 192/512.
+- PWA metas in index.html (viewport-fit=cover, iOS standalone, noscript).
+- style.css: mobile-first pass — 100dvh, safe-area insets, 44px touch
+  targets, full-width menu sheet ≤480px, -webkit-backdrop-filter.
+- Install flow: beforeinstallprompt captured with preventDefault +
+  EXPLICIT prompt() on our own Install button (never silent banners).
+- Manifest icon purposes un-swapped (any/maskable were inverted);
+  maskable inner scale 78% → 70% → 62% (Android safe zone circle).
+
+## v0.2 — Dropbox sync
+- sync.js: window.orosSync — PKCE OAuth (S256), refresh with 5-min
+  early renewal, app-folder blob /orOS-data.json, AES-GCM + PBKDF2
+  (100k) encryption, versioned blob (ver: 1), slice architecture
+  (registerSlice; payload { shell, apps: {...}, meta }), push with
+  automatic remote backup (max 5), pull/apply, ?code= redirect handled,
+  errorKey() → sync.err.* i18n keys. Redirect URI must match exactly
+  incl. trailing "/" (learned the hard way).
+- Boot dependency order: translations → sync → shell.
+- style.css section 9 (sync UI). shell.js renderSyncSection: three
+  states (connect / unlock / unlocked actions), status dot + email,
+  messages survive re-renders.
+
+## v0.2.1 — User-controlled updates
+- sw.js: no skipWaiting on install; "SKIP_WAITING" message channel.
+- shell.js: update detection + floating toast; tap → SKIP_WAITING.
+- translations.js: update.available, update.reload.
+
+### v0.2.2 — UX fixes
+- Menu stays open on internal clicks (stopPropagation on #app-menu;
+  root cause: re-render detaches click target → containment check
+  misfires).
+- Passphrase show/hide eye (direct input mutation, no re-render).
+- Install row in its own accent-bordered section.
+
+## v0.3 — Trusted device vault + auto-sync
+- sync.js: IndexedDB vault with NON-EXTRACTABLE AES-GCM device key;
+  passphrase sealed to localStorage, opt-in auto-unlock on boot.
+- Persistent dirty flag; auto engine: boot reconcile (pull → push-if-
+  dirty), interval pushes, push-on-visibilitychange-hidden. Online gate,
+  pushInFlight guard. onAutoSync() subscription.
+- shell.js: remember checkbox (pre-checked if vault exists), kickAutoEngine
+  after unlock; visible unlock flow: pull → (push if dirty). Dot pulse
+  feedback. clearDevice vs forgetPassphrase split (device-aware labels).
+
+### v0.3.1 — Sync refinements
+- Interval select Off/1/3/5/15 (applied immediately, never silent-kick).
+- Menu: "Update orOS" replaces "Install orOS" while a version waits.
+
+### v0.3.2 — Local backup (export/import)
+- sync.js exportData/importData: full plaintext payload, offline, no
+  passphrase; import marks dirty. Download: orOS-backup-YYYY-MM-DD.json.
+
+### v0.3.3/0.3.4 — Update detection + toast polish
+- watchWorker() covers already-installing workers (boot race); update()
+  at boot + hourly; 500ms grace, 0.35s fade, toastQueued dedupe.
+
+### v0.3.5 — Update broker (ROOT-CAUSE fix for cached shells)
+- Update machinery moved INLINE into index.html (network-first HTML =
+  always fresh) — a cached shell could never deliver its own update
+  (chicken-and-egg). Broker owns full lifecycle; shell.js mirrors via
+  oros-update-ready event / __orosUpdateReady flag.
+
+### v0.3.6 — Final cluster (4 entries merged)
+- **Synced auto-sync interval:** part of shell slice (syncInterval
+  field); pull-fed via setIntervalMinutes (no dirty mark); local changes
+  mark dirty. Backward-compatible.
+- **Silent-update welcome toast:** APP_VERSION + checkVersionToast();
+  bottom-center "updated to vX" auto-dismiss 4s; first visit silent;
+  device-local (oros-last-version).
+- **Stale asset hotfix:** see ritual above (root cause of mobile
+  strandedness).
+- **Tooling:** GitHub Action single-source stamping (APP_VERSION →
+  sw.js CACHE_VERSION + manifest version). Idempotent, fails loudly.
+
+## v0.4 — Skins & Wallpapers
+- v0.4.0: +7 Linux skins (Ubuntu/Fedora/Mint/Arch/Debian/elementary/Tux,
+  total 10). Wallpaper system: 10 pure-CSS gradients, zero images;
+  WYSIWYG picker in new Wallpaper menu section; choice synced via shell
+  slice; pair suggestion only from default wallpaper.
+- v0.4.1: ROOT CAUSE (wallpapers never applied): #oros-desktop ID
+  selector outranked .wp-* classes → gradients moved to shell registry
+  as INLINE STYLES (thumbs + desktop from same string). Swatches 2×5
+  grid. Taskbar label "Applications" → "orOS".
+- v0.4.2: full 12-var palettes (dark+light) for the 7 new skins —
+  they previously shipped accent-only vars and fell back to defaults.
+  Dead .wp-* CSS removed. Light accents darkened for contrast.
+- v0.4.3: defaults = oros skin + Desert Sand wallpaper; index.html
+  pre-JS data-skin updated; EN confirmed default.
+
+## v0.5.0 — First app: To-Do (current)
+- apps.json first entry (To-Do, Productivity, url "todo/", internal).
+- todo/ app: tabbed lists (rename via dblclick or ⋮; add/delete lists),
+  items with due date + notes; quick-add with natural date parsing
+  ("tomorrow"/"friday", Greek words with accent-stripping: "αύριο",
+  "παρασκευή"); item-level recurrence (checking re-opens with NEXT
+  occurrence anchored to now; weekly honors weekday anchor) + list-level
+  cycles (auto-clear all checks on cycle end; fast-forwards missed
+  cycles at boot); overdue badge chips in tabs; hide-completed toggle;
+  clear-completed; pointer-based drag reorder (touch-action: none on
+  handle only); undo toast (5s snapshot) for deletes/clears/list del;
+  confirm dialogs before deletes.
+- Sync: registerSlice("todo") → travels in Dropbox blob AND manual
+  Export/Import; sliceSet suppresses dirty-marking (_suppress bridge
+  on window.__orosSyncApi) → pull never re-pushes (loop-proof).
+- Live palette + language inheritance from shell (shared oros-lang +
+  MutationObserver on data-skin/data-theme of parent <html>).
+- NOTE: two STRINGS keys must exist in app STRINGS (both langs):
+  "recur.list.next" ("Next reset:" / "Επόμενο reset:") and
+  "drag.reorder" ("Reorder"/"Αναδιάταξη").
+- Architecture: app i18n is INLINE per app (self-containment over DRY;
+  ~10 shared words duplicated; revisit fallback window.parent.t only
+  if maintenance pain grows).
   
-  ### Fixes & polish (post-v0)
-- Removed comma artifact in English clock/date (locale-safe strip).
-- Replaced tofu-prone "□" empty-state glyph with inline SVG app-grid icon.
-- Added missing `skin.title` translation (Appearance / Εμφάνιση);
-  removed footer i18n keys (footer was deleted).
-- Language button now shows "EN"/"EL" short code instead of full words.
-- Moved dark/light theme toggle from top bar into the app menu:
-  Appearance section now holds swatches + vertical divider + theme toggle.
-  Top bar right side = language + clock only.
-- applyTheme() simplified; theme button is rebuilt on each renderMenu().
-  Old #btn-theme wiring REMOVED (would throw on boot if left in).
-- Theme toggle icons (☾/☀) rendered as dots/tofu on some platforms;
-  replaced with inline SVG moon/sun using currentColor.
-- Swatch CSS rules (.skin-swatch) were accidentally dropped during the
-  Appearance-section restructure — swatches rendered as dots. Restored
-  (26px circles + padding:0 + flex-shrink:0).
-- Skin swatch circles reduced from 26px to 18px to visually match
-  the theme toggle icon size.
-- PWA icon = existing brand logo (gold mountain, #c8a96e on #1b1a18). Kept as-is.
-- Browser-based offline icon generator provided (4 PNGs: any/maskable × 192/512,
-  maskable with 78% safe zone). manifest theme_color aligned to #1b1a18.
-- index.html: PWA meta (manifest link, theme-color, apple-touch-icon,
-  iOS standalone tags, black-translucent status bar, viewport-fit=cover,
-  noscript fallback). data-skin="adwaita" default on <html> pre-JS.
-- style.css: mobile-first + PWA safe-area pass. 100dvh shell height,
-  env(safe-area-inset-*) on top bar / running view / menu max-height,
-  -webkit-backdrop-filter for iOS, tap-highlight removed, touch-action
-  optimizations, 44px min touch targets on menu items, full-width menu
-  sheet ≤480px, landscape-notch handling. All skin palettes intact.
-  
-  ## v0.1 — Offline-first + mobile + install (current)
-- sw.js: precache shell, network-first navigations (updates reach users),
-  cache-first assets, runtime cache for future internal apps (survives
-  shell updates). Update release = bump CACHE_VERSION.
-- manifest.webmanifest: standalone, theme/background #1b1a18/#131820,
-  icons any+maskable 192/512 (brand mountain logo kept as-is).
-- index.html: PWA meta, viewport-fit=cover, apple-touch-icon,
-  iOS standalone tags, noscript fallback, data-skin default on <html>.
-- style.css: mobile-first — 100dvh, safe-area insets everywhere,
-  44px touch targets, full-width menu sheet ≤480px, landscape notch
-  handling, -webkit-backdrop-filter, tap-highlight/touch-action fixes.
-- shell.js: SW registration (fail-safe), beforeinstallprompt captured
-  with preventDefault + EXPLICIT prompt() on our own Install button in
-  the menu (never silent banners), appinstalled cleanup, install row
-  with SVG download icon. Clock comma fix, EN/EL lang button, SVG icons
-  throughout (moon/sun/grid). Install row highlighted via --accent.
-- New i18n key: install.trigger (EN/EL).
-- Repo now: index.html, style.css, shell.js, translations.js, apps.json,
-  sw.js, manifest.webmanifest, icon.svg, icons/ (4 PNGs).
-- Fixed swapped icon purposes in manifest: icon-192/512.png now "any",
-  icon-maskable-192/512.png now "maskable" (was inverted — Android picked
-  the full-bleed icon for circular masking, cropping the logo).
-- Maskable icons regenerated at 70% inner scale (was 78%) —
-  adaptive-icon safe zone is a 61% circle; mountain corners were
-  grazing the mask boundary. Any-purpose icons unchanged.
-- Maskable inner scale tightened 70% → 62% (Android safe zone is a
-  66/108 circle; base corners sat at ~99% radius, diagonally clipped
-  on circular launchers). Now fully safe on all mask shapes.
-  
-  ## v0.2 — Dropbox sync (core module, part 1 of 4)
-- sync.js: window.orosSync — shared sync framework.
-  - PKCE OAuth (S256, no client secret), token_access_type=offline,
-    refresh flow with 5-min early renewal, tokens in localStorage.
-  - App-folder scoped: blob at /orOS-data.json inside /Apps/orOS/.
-  - AES-GCM + PBKDF2 (100k rounds) client-side encryption;
-    passphrase memory-only, never persisted. Blob versioned (ver: 1).
-  - Slice architecture: registerSlice(name, get, set) — shell registers
-    "shell", future apps register their own. Payload:
-    { shell, apps: { <name>: ... }, meta }.
-  - push(): backup remote (copy_v2) -> upload; keeps last 5 backups.
-  - pull(): download -> decrypt -> apply to registered slices.
-  - redirect return (?code=) handled at boot, URL cleaned afterwards.
-  - errorKey() maps failures to i18n keys (sync.err.*).
-- index.html: sync.js loaded before shell.js (correct boot dependency
-  order: translations → sync → shell).
-  - translations.js: sync UI strings (EN/EL) — connect/disconnect, pull/push,
-  passphrase unlock/forget, status, success/error messages (incl. sync.err.*
-  mapped by orosSync.errorKey()).
-- style.css: new section 9 — Sync (status dot + email, actions row,
-  passphrase input with hint, message colors). Compact 38px action buttons.
-- sw.js: sync.js added to PRECACHE_URLS; CACHE_VERSION bumped to oros-v0.2.
-  Dropbox origins never hit the SW (cross-origin skip).
-- shell.js: full sync integration (final part of v0.2).
-  - renderSyncSection in app menu: status dot + account email,
-    three states (disconnected → connect; connected w/o passphrase →
-    unlock input + first-time hint; unlocked → pull/push + forget
-    passphrase + disconnect).
-  - Shell slice registered via orosSync.registerSlice("shell", get, set):
-    lang/theme/skin sync across devices; setter validates all values
-    before applying (no dirty payloads from bad syncs).
-  - Status messages (ok/err/dim) survive menu re-renders.
-  - OAuth redirect return triggers menu refresh once tokens land.
-  - Account email escaped via escapeHtml; async-loaded, non-blocking.
-  
-  ## v0.2.1 — User-controlled updates
-- sw.js: install no longer skipWaiting — new worker waits. Message
-  channel "SKIP_WAITING" for shell-triggered activation.
-- shell.js: registerServiceWorker rewritten — updatefound/statechange
-  detection, floating toast (update.available / update.reload, EN/EL),
-  tap → SKIP_WAITING → controllerchange → auto reload.
-- translations.js: 2 new keys (update.available, update.reload).
+### v0.5.1 — To-Do 404 fix
+- ROOT CAUSE: app entry points to "todo/" but the folder had
+  todo/todo.html — directory URLs serve index.html, hence 404.
+  Renamed todo/todo.html → todo/index.html (todo.css/js unchanged).
+- Locked convention for all future apps: <app>/index.html as entry,
+  referenced in apps.json as "<app>/".
 
-  ### UX fixes (v0.2.2)
-- Menu no longer closes on internal clicks: delegated stopPropagation
-  on #app-menu (root cause: re-render detaches the click target before
-  the outside-close containment check).
-- Passphrase input gains show/hide toggle (eye icon, EN/EL tooltip);
-  toggle mutates the input directly — no re-render, no text loss.
-- Install row moved to its own visually separated, accent-bordered
-  section (was visually merging into the Appearance section).
-  
-  ## v0.3 — Trusted device vault + auto-sync (part 1 of 2)
-- sync.js: IndexedDB vault — non-extractable AES-GCM device key;
-  passphrase sealed to localStorage, auto-unlock on boot (opt-in via
-  remember checkbox in UI, part 2).
-- Dirty flag persisted (oros-sync-dirty): markDirty() API for shell
-  and future apps; cleared only on successful push.
-- Auto engine: boot reconcile (pull → push-if-dirty), 3-min interval
-  push when dirty, visibilitychange(hidden) push. navigator.onLine
-  gate, pushInFlight race guard, .finally cleanup.
-- onAutoSync(event) subscription for subtle UI feedback.
-- setPassphrase(pw, remember) extended; forgetPassphrase (session-only)
-  vs clearDevice (wipes vault) split.
-  
-  ### v0.3 — Trusted device vault + auto-sync (part 2 of 2)
-- shell.js: unlock UI extended — "Remember on this device" checkbox
-  (pre-checked if device vault exists), passed to setPassphrase(pw,
-  remember); kickAutoEngine() after manual unlock for immediate
-  silent reconcile.
-- noteLocalChange() wired to lang/theme/skin user handlers only —
-  shellSliceSet (pull-fed) deliberately clean to prevent sync loops.
-- Auto-sync feedback: status dot pulses during engine push/done.
-- Forget split: clearDevice() (wipes vault + IndexedDB key) shown as
-  "Forget on this device" when vault exists; session-only otherwise.
-- translations.js: sync.pass.remember, sync.pass.device,
-  sync.ok.unlocked (EN/EL). style.css: remember-row + dot pulse.
-  
-  ### v0.3.1 — Sync refinements
-- Auto-sync interval is user-configurable per device (Off/1/3/5/15 min,
-  select in Sync section, persisted oros-sync-interval). Push-on-hide
-  remains always active. Applied immediately via setIntervalMinutes().
-- Unlock flow now auto-pulls visibly ("Syncing… → pulled → pushed if
-  dirty") instead of silent kickAutoEngine — fixes invisible first sync
-  and stale-module TypeError (getIntervalMinutes guarded in shell).
-- Menu: "Update orOS" replaces "Install orOS" in its section whenever a
-  new service worker version is waiting; update toast kept as passive
-  notifier; both trigger SKIP_WAITING → auto reload.
-  
-  ### v0.3.2 — Local backup (export/import)
-- sync.js: exportData() — full plaintext payload (shell + app slices,
-  meta.exportedAt) as pretty JSON; importData(json) — validates,
-  applies via applyPayload, marks dirty (auto-uploads to cloud on
-  next sync). Both work offline, no passphrase, no Dropbox.
-- shell.js: Export/Import row in Sync section (all connection states)
-  + unencrypted-storage hint. Download: orOS-backup-YYYY-MM-DD.json.
-- translations.js: sync.export/import/ok.export/ok.import/backup.hint
-  (EN/EL). style.css: .sync-hint.
-  
-  ### v0.3.3 — Update detection at boot
-- shell.js: registerServiceWorker hardened — watchWorker() covers
-  workers already installing at page load (race condition: update
-  download starts before the updatefound listener attaches), plus
-  direct state re-check, explicit registration.update() at boot, and
-  hourly re-check for long sessions. Update now surfaces on first
-  visit after a deploy, not the second.
-  
-  ### v0.3.4 — Update toast polish
-- Update toast and menu "Update orOS" now appear after a 500ms grace
-  period (lands on a settled shell, not over boot), with a 0.35s
-  fade/slide-in transition. toastQueued guard prevents duplicate
-  toasts when boot-check and watcher fire near-simultaneously.
-  
-  ### v0.3.5 — Update broker (fixes updates never reaching cached shells)
-- ROOT CAUSE: update machinery lived in shell.js, which the old SW
-  serves cache-first — a stuck old shell could never deliver its own
-  update (chicken-and-egg). Hard refresh worked because Shift+Reload
-  bypasses the SW entirely.
-- index.html: inline update broker (network-first HTML = always
-  fresh). Owns the full lifecycle: waiting/installing detection
-  (boot race covered), force r.update() on every load + hourly,
-  self-styled toast (no cached CSS/JS dependency), SKIP_WAITING on
-  tap, controllerchange → reload. Dedupes against legacy shells.
-- shell.js: registerServiceWorker slimmed to mirror broker state
-  (oros-update-ready event / __orosUpdateReady flag) into the menu
-  button; update button delegates to window.orosActivateUpdate().
-- sw.js: CACHE_VERSION bumped to oros-v0.3.5 (was stale at v0.2).
+---
 
-  ### v0.3.6 — Synced auto-sync interval
-- Auto-sync interval is now part of the shell slice (syncInterval field):
-  user changes on one device propagate to all others on next sync.
-  Applied via setIntervalMinutes (pull-fed, never marks dirty →
-  no sync loop). Backward-compatible with older shells (field ignored).
-- Local interval change now marks dirty (travels with shell data).
-
-  ### v0.3.6 — Silent-update welcome toast
-- APP_VERSION constant in shell.js (bump per deploy).
-- checkVersionToast() on boot: if last seen version differs (and
-  exists), shows bottom-center "orOS was updated to vX" toast,
-  auto-dismisses after 4s (click = early dismiss). First visit is
-  silent (remember only). Device-local (oros-last-version), never
-  synced. Positioned apart from the update toast (no overlap).
-- translations.js: update.done (EN/EL). style.css: #version-toast.
-
-  ### v0.3.6 (hotfix) — Stale asset cache
-- ROOT CAUSE of sync features not reaching mobile: several deploys
-  shipped asset changes without bumping sw.js CACHE_VERSION; the SW
-  kept serving the old precached shell.js/sync.js (cache-first).
-  Desktop appeared fine only because of hard refreshes (SW bypass).
-- sw.js: CACHE_VERSION bumped to oros-v0.3.6; new deploy ritual:
-  every asset-changing deploy bumps CACHE_VERSION (and APP_VERSION
-  for the welcome toast). CI auto-bump proposed as follow-up.
-  
-  ### v0.3.6 (tooling) — Single-source version stamping
-- APP_VERSION in shell.js is now the single release key. GitHub
-  Action (.github/workflows/bump-version.yml) on push-to-main with
-  asset changes: stamps CACHE_VERSION="oros-v<APP_VERSION>" in sw.js
-  and manifest "version", commits automatically. Fails loudly if
-  APP_VERSION or CACHE_VERSION line is missing. Idempotent (no-op
-  if already stamped). Welcome toast shows the same number.
-  
-  ## v0.4.0 — Skins & Wallpapers
-- 7 new classic Linux palette skins: Ubuntu (#e95420), Fedora
-  (#51a2da), Mint (#87cf3e), Arch (#1793d1), Debian (#d70a53),
-  elementary (#8c5ec7), Tux (monochrome #c9c9c9). Total: 10 skins.
-- Wallpaper system: 10 pure-CSS gradient wallpapers (zero images,
-  zero bandwidth, fully offline). Grid picker in new "Wallpaper"
-  menu section (WYSIWYG thumbnails using the same CSS classes).
-- Wallpaper choice is synced via shell slice (validated against
-  WALLPAPERS registry before applying).
-- Pair suggestion: picking a skin while on the default wallpaper
-  follows its classic pair (ubuntu→Aubergine, arch→Midnight,
-  mint→Forest, tux→Mono, etc.) — only from default, never overrides
-  a deliberate choice, never triggers on pulls.
-- localStorage key: oros-wallpaper. APP_VERSION → 0.4.0.
-
-  ### v0.4.1 — Wallpaper application fix + appearance polish
-- ROOT CAUSE (wallpapers selected but never applied): #oros-desktop
-  ID selector outranked the .wp-* classes. Gradients now live in the
-  shell registry as inline styles (single source of truth, thumbs and
-  desktop from the same string) — specificity-immune.
-- Skin→wallpaper pairs now visually apply (they were state-only due
-  to the same bug).
-- Skin swatches: CSS grid, 2×5 rows — no horizontal menu scrollbar.
-- Taskbar menu label: "Applications" → "orOS".
-
-  ### v0.4.2 — Full palettes for Linux skins
-- The 7 new skins (Ubuntu/Fedora/Mint/Arch/Debian/elementary/Tux)
-  shipped accent-only variables, so backgrounds/panels/text fell
-  back to inherited defaults — skins tinted frames but not surfaces.
-  Now each ships the full 12-variable set in dark + light, with
-  distro-authentic backgrounds (Ubuntu aubergine, Arch near-black,
-  Mint olive, Debian dark red, etc.).
-- Removed dead .wp-* wallpaper CSS (gradients live in the shell
-  registry as inline styles since v0.4.1).
-- Light-mode accents darkened for contrast on white surfaces.
-
-  ### v0.4.3 — Brand defaults
-- Default skin: adwaita → oros (brand gold); default wallpaper:
-  dusk → Desert Sand. First-visit experience now shows the
-  brand identity; existing saved preferences are untouched.
-- index.html data-skin markup updated to "oros" (pre-JS flash).
-- Language default remains English (confirmed, unchanged).
-
-  ## v0.5.0 — First app: To-Do
-- New internal app (todo/): tabbed lists (add/rename/delete via
-  double-click or ⋮ menu), checklist items with due dates (natural
-  quick-add parsing: "tomorrow", "friday", "αύριο", "παρασκευή"),
-  notes per item, item-level + list-level recurrence (daily/weekly
-  with weekday anchor/monthly; checking a recurring item re-opens
-  it with the next due date; list cycles auto-clear all checks),
-  overdue badges in tabs, hide-completed toggle, clear-completed,
-  pointer-based drag reorder, undo toast (5s) for all destructive
-  actions. Auto-save localStorage + Dropbox sync via slice "todo"
-  (included in manual export/import). Live palette inheritance
-  from the shell (skin/theme changes repaint the open app).
-- apps.json: first entry (To-Do, Productivity).
+## Known TODO / backlog
+- Sandbox attribute for external/untrusted app iframes (revisit).
+- ForkAwesome vendoring for app icons.
+- Windowed mode = future opt-in only.
+- Menu badge for open todo count (proposal F — needs postMessage bridge).
+- Extra skins (Nord/Dracula test), About surface (credits + privacy),
+  sandbox attributes, external/untrusted app isolation.
+- GitHub Action: verify first runs green in Actions tab, then forget it.
+</arg_value>`

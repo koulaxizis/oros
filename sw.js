@@ -22,6 +22,10 @@ var PRECACHE_URLS = [
   "./translations.js",
   "./apps.json",
   "./manifest.webmanifest"
+  "todo/",
+  "todo/index.html",
+  "todo/todo.css",
+  "todo/todo.js",
 ];
 
 // ---------- Install: precache, stay waiting (user-controlled update) ----------
