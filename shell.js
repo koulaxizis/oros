@@ -28,7 +28,9 @@
 
     // sync UI state
     syncUserEmail:   null,
-    syncMsg:         null    // { kind: "ok"|"err"|"dim", text: "…" }
+    syncMsg:         null,    // { kind: "ok"|"err"|"dim", text: "…" }
+	
+	swUpdateReady: false    // a new service worker version is waiting
   };
 
   var SKINS = [
@@ -148,67 +150,6 @@
       state.swUpdateReady = true;
       renderMenu();
     }
-  }
-
-    // Watch a worker through its install lifecycle — one helper used
-    // both for "already installing at boot" (race fix) and for
-    // updatefound events caught after page load.
-    function watchWorker(worker) {
-      if (!worker) return;
-      worker.addEventListener("statechange", function () {
-        if (worker.state === "installed" &&
-            navigator.serviceWorker.controller) {
-          showUpdateToast();
-        }
-      });
-      // Worker may already BE installed when we finally get our hands
-      // on it (statechange already fired) — check directly too.
-      if (worker.state === "installed" &&
-          navigator.serviceWorker.controller) {
-        showUpdateToast();
-      }
-    }
-
-    navigator.serviceWorker.register("sw.js")
-      .then(function (registration) {
-        swReg = registration;
-
-        // Case 1: a new version was already waiting (checked in on a
-        // previous visit and ignored) — show immediately.
-        if (registration.waiting && navigator.serviceWorker.controller) {
-          showUpdateToast();
-        }
-
-        // Case 2 (THE RACE FIX): a new worker is ALREADY installing —
-        // its download started before we attached the updatefound
-        // listener. Attach the watcher directly to it.
-        watchWorker(registration.installing);
-
-        // Case 3: update discovered while this session is open.
-        registration.addEventListener("updatefound", function () {
-          watchWorker(registration.installing);
-        });
-
-        // Belt & suspenders: explicitly ask for an update check at
-        // boot (some browsers don't byte-check sw.js on every visit
-        // if the page was served from cache).
-        registration.update().catch(function () {});
-
-        // And a gentle hourly re-check for long-lived sessions.
-        setInterval(function () {
-          if (swReg) swReg.update().catch(function () {});
-        }, 60 * 60 * 1000);
-      })
-      .catch(function (err) {
-        console.warn("orOS: SW registration failed:", err);
-      });
-
-    var reloading = false;
-    navigator.serviceWorker.addEventListener("controllerchange", function () {
-      if (reloading) return;
-      reloading = true;
-      window.location.reload();
-    });
   }
 
   function setupInstallFlow() {
@@ -704,8 +645,6 @@
       msg.textContent = state.syncMsg.text;
       section.appendChild(msg);
     }
-	
-	swUpdateReady: false    // a new service worker version is waiting
 
     host.appendChild(section);
   }
