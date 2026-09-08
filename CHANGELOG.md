@@ -96,3 +96,6 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - New i18n key: install.trigger (EN/EL).
 - Repo now: index.html, style.css, shell.js, translations.js, apps.json,
   sw.js, manifest.webmanifest, icon.svg, icons/ (4 PNGs).
+- Fixed swapped icon purposes in manifest: icon-192/512.png now "any",
+  icon-maskable-192/512.png now "maskable" (was inverted — Android picked
+  the full-bleed icon for circular masking, cropping the logo).
