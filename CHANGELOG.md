@@ -105,3 +105,39 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Maskable inner scale tightened 70% → 62% (Android safe zone is a
   66/108 circle; base corners sat at ~99% radius, diagonally clipped
   on circular launchers). Now fully safe on all mask shapes.
+  
+  ## v0.2 — Dropbox sync (core module, part 1 of 4)
+
+- sync.js: window.orosSync — shared sync framework.
+  - PKCE OAuth (S256, no client secret), token_access_type=offline,
+    refresh flow with 5-min early renewal, tokens in localStorage.
+  - App-folder scoped: blob at /orOS-data.json inside /Apps/orOS/.
+  - AES-GCM + PBKDF2 (100k rounds) client-side encryption;
+    passphrase memory-only, never persisted. Blob versioned (ver: 1).
+  - Slice architecture: registerSlice(name, get, set) — shell registers
+    "shell", future apps register their own. Payload:
+    { shell, apps: { <name>: ... }, meta }.
+  - push(): backup remote (copy_v2) -> upload; keeps last 5 backups.
+  - pull(): download -> decrypt -> apply to registered slices.
+  - redirect return (?code=) handled at boot, URL cleaned afterwards.
+  - errorKey() maps failures to i18n keys (sync.err.*).
+- index.html: sync.js loaded before shell.js (correct boot dependency
+  order: translations → sync → shell).
+  - translations.js: sync UI strings (EN/EL) — connect/disconnect, pull/push,
+  passphrase unlock/forget, status, success/error messages (incl. sync.err.*
+  mapped by orosSync.errorKey()).
+- style.css: new section 9 — Sync (status dot + email, actions row,
+  passphrase input with hint, message colors). Compact 38px action buttons.
+- sw.js: sync.js added to PRECACHE_URLS; CACHE_VERSION bumped to oros-v0.2.
+  Dropbox origins never hit the SW (cross-origin skip).
+- shell.js: full sync integration (final part of v0.2).
+  - renderSyncSection in app menu: status dot + account email,
+    three states (disconnected → connect; connected w/o passphrase →
+    unlock input + first-time hint; unlocked → pull/push + forget
+    passphrase + disconnect).
+  - Shell slice registered via orosSync.registerSlice("shell", get, set):
+    lang/theme/skin sync across devices; setter validates all values
+    before applying (no dirty payloads from bad syncs).
+  - Status messages (ok/err/dim) survive menu re-renders.
+  - OAuth redirect return triggers menu refresh once tokens land.
+  - Account email escaped via escapeHtml; async-loaded, non-blocking.

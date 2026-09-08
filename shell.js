@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0 — Shell logic (final, PWA edition)
+// orOS Core v0 — Shell logic (final, sync edition)
 // Sections:
 //   1. State, skin registry, icon constants
 //   2. Preferences (skin, language, theme)
@@ -8,10 +8,11 @@
 //   5. Skin apply
 //   6. Clock (24h)
 //   7. PWA: service worker registration + install flow
-//   8. Apps loading & menu rendering (+ appearance + install button)
-//   9. App opening / return (fullscreen takeover)
-//   10. Menu open/close
-//   11. Wiring & boot
+//   8. Apps loading & menu rendering (+ appearance + install + SYNC)
+//   9. Sync UI & shell slice registration
+//   10. App opening / return (fullscreen takeover)
+//   11. Menu open/close
+//   12. Wiring & boot
 // ============================================================
 (function () {
   "use strict";
@@ -23,22 +24,25 @@
     skin:            null,   // "adwaita" | "lumo" | "oros"
     apps:            [],
     running:         null,
-    deferredPrompt:  null    // PWA install event (null = not available yet)
+    deferredPrompt:  null,   // PWA install event
+
+    // sync UI state
+    syncUserEmail:   null,   // Dropbox account email (async loaded)
+    syncMsg:         null    // { kind: "ok"|"err"|"dim", text: "i18n-or-plain" }
   };
 
-  // Skin registry — adding a new skin = one entry here + one palette in style.css.
   var SKINS = [
     { id: "adwaita", color: "#3584e4" },
     { id: "lumo",    color: "#6d4aff" },
     { id: "oros",    color: "#d4af37" }
   ];
 
-  // Theme toggle icons — inline SVG (Unicode ☾/☀ render as tofu on some platforms)
   var MOON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   var SUN_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
-
-  // Empty-state glyph — inline SVG app grid
   var GRID_SVG = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+  var DOWNLOAD_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';
+  var UPLOAD_ICON_SVG   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>';
+  var CLOUD_ICON_SVG    = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
 
   function isValidSkin(id) {
     for (var i = 0; i < SKINS.length; i++) {
@@ -95,8 +99,7 @@
   // ---------- 4. Theme ----------
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
-    // Theme button lives in the app menu (Appearance section),
-    // re-created on each renderMenu() — nothing to update here.
+    // Theme button lives in the app menu — re-created on each renderMenu()
   }
 
   // ---------- 5. Skin ----------
@@ -116,50 +119,42 @@
       hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
   }
 
-  // ---------- 7. PWA: service worker + install flow ----------
+  // ---------- 7. PWA ----------
   function registerServiceWorker() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function (err) {
         console.warn("orOS: SW registration failed:", err);
-        // Non-fatal: shell still works online, just without offline coverage.
       });
     }
   }
 
   function setupInstallFlow() {
-    // Chrome/Edge/Android fire this when the app is installable.
-    // We prevent the automatic mini-infobar and show OUR OWN install
-    // button in the menu instead — with an explicit prompt() call.
     window.addEventListener("beforeinstallprompt", function (e) {
-      e.preventDefault();                    // no silent default banner
-      state.deferredPrompt = e;              // keep the event for later
-      renderMenu();                          // menu now shows the Install button
+      e.preventDefault();
+      state.deferredPrompt = e;
+      renderMenu();
     });
 
     window.addEventListener("appinstalled", function () {
-      state.deferredPrompt = null;            // already installed — hide button
+      state.deferredPrompt = null;
       renderMenu();
     });
   }
 
   function renderInstallRow(host) {
-    // Only rendered when an install prompt is actually available
-    // (Chrome/Edge/Android; iOS has no API — user adds via Share menu manually)
     if (!state.deferredPrompt) return;
 
     var row = document.createElement("button");
     row.className = "menu-item install-row";
-    row.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>' +
-                   "<span>" + window.t("install.trigger") + "</span>";
+    row.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("install.trigger") + "</span>";
     row.addEventListener("click", function () {
       if (!state.deferredPrompt) return;
-      state.deferredPrompt.prompt();         // EXPLICIT prompt() — never silent
+      state.deferredPrompt.prompt();
       state.deferredPrompt.userChoice.then(function (choice) {
         if (choice.outcome === "accepted") {
           state.deferredPrompt = null;
           renderMenu();
         }
-        // "dismissed" — keep the button for another day
       });
     });
     host.appendChild(row);
@@ -174,7 +169,7 @@
         renderMenu();
       })
       .catch(function () {
-        state.apps = [];   // graceful: show empty state, never crash
+        state.apps = [];
         renderMenu();
       });
   }
@@ -197,7 +192,6 @@
         '<div class="hint">' + window.t("menu.empty.hint") + '</div>';
       menu.appendChild(empty);
     } else {
-      // Group by category (Linux-style)
       var cats = {};
       state.apps.forEach(function (app) {
         var c = app.category || "other";
@@ -223,8 +217,9 @@
       });
     }
 
-    renderSkinSwatches(menu);   // Appearance section: skins + theme toggle
-    renderInstallRow(menu);     // Install button (only if installable)
+    renderSkinSwatches(menu);
+    renderInstallRow(menu);
+    renderSyncSection(menu);        // NEW: Sync section (cloud)
   }
 
   function renderSkinSwatches(host) {
@@ -253,7 +248,7 @@
         state.skin = s.id;
         localStorage.setItem("oros-skin", state.skin);
         applySkin();
-        renderMenu(); // re-render to move the active ring
+        renderMenu();
       });
       swatches.appendChild(sw);
     });
@@ -274,7 +269,7 @@
       state.theme = state.theme === "dark" ? "light" : "dark";
       localStorage.setItem("oros-theme", state.theme);
       applyTheme();
-      renderMenu(); // refresh moon/sun icon + tooltip
+      renderMenu();
     });
     controls.appendChild(themeBtn);
 
@@ -286,11 +281,225 @@
     return id.charAt(0).toUpperCase() + id.slice(1);
   }
 
-  // ---------- 9. App opening (fullscreen takeover) ----------
+  // ---------- 9. Sync UI & shell slice ----------
+
+  // The shell's own syncable data — theme/language/skin travel to the cloud
+  function shellSliceGet() {
+    return { lang: state.lang, theme: state.theme, skin: state.skin };
+  }
+
+  function shellSliceSet(data) {
+    if (!data) return;
+    if (data.lang  === "en" || data.lang  === "el") state.lang  = data.lang;
+    if (data.theme === "dark" || data.theme === "light") state.theme = data.theme;
+    if (isValidSkin(data.skin)) state.skin = data.skin;
+
+    localStorage.setItem("oros-lang",  state.lang);
+    localStorage.setItem("oros-theme", state.theme);
+    localStorage.setItem("oros-skin",  state.skin);
+
+    applySkin();
+    applyTheme();
+    applyLang();     // re-renders menu too
+  }
+
+  function registerShellSlice() {
+    if (window.orosSync) {
+      window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet);
+    }
+  }
+
+  function setSyncMsg(kind, textKey) {
+    state.syncMsg = { kind: kind, text: window.t(textKey) };
+    renderMenu();
+  }
+  function setSyncMsgRaw(kind, raw) {
+    state.syncMsg = { kind: kind, text: raw };
+    renderMenu();
+  }
+
+  function renderSyncSection(host) {
+    var section = document.createElement("div");
+    section.className = "sync-section";
+
+    var heading = document.createElement("div");
+    heading.className = "menu-heading";
+    heading.textContent = window.t("sync.title");
+    section.appendChild(heading);
+
+    // --- Status row (dot + email / not connected) ---
+    var connected = window.orosSync && window.orosSync.isConnected();
+    var status = document.createElement("div");
+    status.className = "sync-status";
+    status.innerHTML =
+      '<span class="sync-status-dot' + (connected ? " on" : "") + '"></span>' +
+      '<span>' +
+      (connected
+        ? window.t("sync.connected") +
+          (state.syncUserEmail ? ' · <span class="email">' + escapeHtml(state.syncUserEmail) + '</span>' : "")
+        : window.t("sync.disconnected")) +
+      '</span>';
+    section.appendChild(status);
+
+    if (!connected) {
+      // --- Connect button ---
+      var connectRow = document.createElement("div");
+      connectRow.className = "sync-actions";
+      var connectBtn = document.createElement("button");
+      connectBtn.className = "menu-item";
+      connectBtn.innerHTML = CLOUD_ICON_SVG + "<span>" + window.t("sync.connect") + "</span>";
+      connectBtn.addEventListener("click", function () {
+        window.orosSync.connect();   // navigates to Dropbox
+      });
+      connectRow.appendChild(connectBtn);
+      section.appendChild(connectRow);
+    } else {
+      // --- Passphrase (if not yet unlocked in this session) ---
+      if (!window.orosSync.hasPassphrase()) {
+        var passWrap = document.createElement("div");
+        passWrap.className = "sync-pass";
+
+        var label = document.createElement("label");
+        label.textContent = window.t("sync.pass.label");
+        passWrap.appendChild(label);
+
+        var input = document.createElement("input");
+        input.type = "password";
+        input.setAttribute("placeholder", window.t("sync.pass.placeholder"));
+        input.autocomplete = "off";
+        passWrap.appendChild(input);
+
+        var hint = document.createElement("div");
+        hint.className = "hint";
+        hint.textContent = window.t("sync.pass.first.hint");
+        passWrap.appendChild(hint);
+
+        var row = document.createElement("div");
+        row.className = "row";
+        var unlockBtn = document.createElement("button");
+        unlockBtn.className = "menu-item";
+        unlockBtn.textContent = window.t("sync.pass.apply");
+        unlockBtn.addEventListener("click", function () {
+          var pw = input.value;
+          if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
+          window.orosSync.setPassphrase(pw);
+          setSyncMsg("ok", "sync.ok.empty");  // informational: unlocked, ready
+        });
+        row.appendChild(unlockBtn);
+        passWrap.appendChild(row);
+        section.appendChild(passWrap);
+      }
+
+      // --- Actions: pull / push / forget / disconnect ---
+      var actions = document.createElement("div");
+      actions.className = "sync-actions";
+
+      var pullBtn = document.createElement("button");
+      pullBtn.className = "menu-item";
+      pullBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.pull") + "</span>";
+      pullBtn.addEventListener("click", function () {
+        window.orosSync.pull()
+          .then(function (result) {
+            if (result.empty) setSyncMsg("ok", "sync.ok.empty");
+            else setSyncMsgRaw("ok",
+              window.t("sync.ok.pull") + " — " + result.applied + " " + window.t("sync.slices.applied"));
+          })
+          .catch(handleSyncError);
+      });
+      actions.appendChild(pullBtn);
+
+      var pushBtn = document.createElement("button");
+      pushBtn.className = "menu-item";
+      pushBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.push") + "</span>";
+      pushBtn.addEventListener("click", function () {
+        setSyncMsgRaw("dim", window.t("sync.working"));
+        window.orosSync.push()
+          .then(function () { setSyncMsg("ok", "sync.ok.push"); })
+          .catch(handleSyncError);
+      });
+      actions.appendChild(pushBtn);
+
+      section.appendChild(actions);
+
+      // Small utilities row: forget passphrase / disconnect
+      var utils = document.createElement("div");
+      utils.className = "sync-actions";
+
+      if (window.orosSync.hasPassphrase()) {
+        var forgetBtn = document.createElement("button");
+        forgetBtn.className = "menu-item";
+        forgetBtn.textContent = window.t("sync.pass.forget");
+        forgetBtn.addEventListener("click", function () {
+          window.orosSync.forgetPassphrase();
+          renderMenu();
+        });
+        utils.appendChild(forgetBtn);
+      }
+
+      var discBtn = document.createElement("button");
+      discBtn.className = "menu-item";
+      discBtn.textContent = window.t("sync.disconnect");
+      discBtn.addEventListener("click", function () {
+        window.orosSync.disconnect();
+        state.syncUserEmail = null;
+        renderMenu();
+      });
+      utils.appendChild(discBtn);
+
+      section.appendChild(utils);
+    }
+
+    // --- Status message (success / error / dim) ---
+    if (state.syncMsg) {
+      var msg = document.createElement("div");
+      msg.className = "sync-msg " + state.syncMsg.kind;
+      msg.textContent = state.syncMsg.text;
+      section.appendChild(msg);
+    }
+
+    host.appendChild(section);
+  }
+
+  function handleSyncError(err) {
+    var key = window.orosSync.errorKey(err);
+    setSyncMsg("err", key);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function initSyncIntegration() {
+    registerShellSlice();
+
+    // If we just returned from Dropbox (?code=), refresh the menu once
+    // tokens are in place — the connect UI flips to the connected UI.
+    if (window.orosSync && window.orosSync.redirectHandled) {
+      window.orosSync.redirectHandled.then(function (handled) {
+        if (handled) renderMenu();
+      });
+    }
+
+    // Load account email for the status row (once, cached by sync.js)
+    if (window.orosSync && window.orosSync.isConnected()) {
+      window.orosSync.getUserInfo()
+        .then(function (acc) {
+          if (acc && acc.email) {
+            state.syncUserEmail = acc.email;
+            renderMenu();
+          }
+        })
+        .catch(function () { /* offline on boot — status stays generic */ });
+    }
+  }
+
+  // ---------- 10. App opening (fullscreen takeover) ----------
   function openApp(app) {
     closeMenu();
     if (app.type === "external") {
-      window.open(app.url, "_blank", "noopener");  // externals open in new tab
+      window.open(app.url, "_blank", "noopener");
       return;
     }
     state.running = app;
@@ -314,7 +523,7 @@
     mb.setAttribute("data-i18n-title", "bar.menu");
   }
 
-  // ---------- 10. Menu open/close ----------
+  // ---------- 11. Menu open/close ----------
   function toggleMenu() {
     if (state.running) { returnToDesktop(); return; }
     document.getElementById("app-menu").classList.toggle("open");
@@ -323,7 +532,7 @@
     document.getElementById("app-menu").classList.remove("open");
   }
 
-  // ---------- 11. Wiring & boot ----------
+  // ---------- 12. Wiring & boot ----------
   document.getElementById("btn-menu").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleMenu();
@@ -353,6 +562,7 @@
   loadApps();
   registerServiceWorker();
   setupInstallFlow();
+  initSyncIntegration();
   setInterval(renderClock, 1000);
   renderClock();
 })();

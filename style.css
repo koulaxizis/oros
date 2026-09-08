@@ -329,3 +329,97 @@ body {
     right: env(safe-area-inset-right, 0px);
   }
 }
+
+/* ---------- 9. Sync section (in menu) ---------- */
+.sync-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 6px;
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.sync-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+}
+.sync-status-dot.on {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.sync-status .email {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sync-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 10px 8px;
+}
+.sync-actions .menu-item {
+  flex: 1;
+  justify-content: center;
+  min-height: 38px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+}
+.sync-actions .menu-item:hover { background: var(--accent-soft); }
+
+.sync-pass {
+  padding: 0 10px 10px;
+}
+.sync-pass label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+}
+.sync-pass input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  min-height: 38px;
+}
+.sync-pass input:focus {
+  border-color: var(--accent);
+}
+.sync-pass .hint {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.sync-pass .row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Status messages (success / error) under the section */
+.sync-msg {
+  font-size: 12px;
+  padding: 6px 10px 8px;
+  color: var(--text-dim);
+}
+.sync-msg.ok   { color: var(--accent-hover); }
+.sync-msg.err  { color: #e06c75; }

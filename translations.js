@@ -26,8 +26,31 @@ window.OROS_TRANSLATIONS = {
     "running.back":        "Back",
 
     "skin.title":          "Appearance",
-	
-	"install.trigger":     "Install orOS"
+
+    "install.trigger":     "Install orOS",
+
+    "sync.title":          "Sync",
+    "sync.connected":      "Connected",
+    "sync.disconnected":   "Not connected",
+    "sync.connect":         "Connect Dropbox",
+    "sync.disconnect":      "Disconnect",
+    "sync.pull":            "Pull from cloud",
+    "sync.push":            "Push to cloud",
+    "sync.pass.label":      "Encryption passphrase",
+    "sync.pass.placeholder":"Type your passphrase…",
+    "sync.pass.first.hint": "First time? This passphrase encrypts your data — it never leaves this device, and Dropbox can't read your data without it. Remember it: it cannot be recovered.",
+    "sync.pass.apply":      "Unlock",
+    "sync.pass.forget":     "Forget passphrase",
+    "sync.working":         "Syncing…",
+    "sync.ok.pull":         "Data pulled from cloud",
+    "sync.ok.push":         "Data pushed to cloud",
+    "sync.ok.empty":        "Nothing in the cloud yet",
+    "sync.slices.applied":  "sections updated",
+    "sync.err.notconnected":"Not connected to Dropbox",
+    "sync.err.nopass":      "Enter your passphrase first",
+    "sync.err.version":     "Cloud data uses an unsupported version",
+    "sync.err.auth":        "Dropbox authorization failed — reconnect",
+    "sync.err.generic":     "Sync failed — check your connection"
   },
 
   el: {
@@ -49,8 +72,31 @@ window.OROS_TRANSLATIONS = {
     "running.back":        "Πίσω",
 
     "skin.title":          "Εμφάνιση",
-	
-	"install.trigger":     "Εγκατάσταση του orOS"
+
+    "install.trigger":     "Εγκατάσταση του orOS",
+
+    "sync.title":          "Συγχρονισμός",
+    "sync.connected":      "Συνδεδεμένο",
+    "sync.disconnected":   "Μη συνδεδεμένο",
+    "sync.connect":         "Σύνδεση με Dropbox",
+    "sync.disconnect":      "Αποσύνδεση",
+    "sync.pull":            "Λήψη από το cloud",
+    "sync.push":            "Αποστολή στο cloud",
+    "sync.pass.label":      "Κωδικός κρυπτογράφησης",
+    "sync.pass.placeholder":"Πληκτρολόγησε τον κωδικό σου…",
+    "sync.pass.first.hint": "Πρώτη φορά; Αυτός ο κωδικός κρυπτογραφεί τα δεδομένα σου — δεν φεύγει ποτέ από τη συσκευή σου και η Dropbox δεν μπορεί να διαβάσει τα δεδομένα χωρίς αυτόν. Φρόντισε να τον θυμάσαι: δεν μπορεί να ανακτηθεί.",
+    "sync.pass.apply":      "Ξεκλείδωμα",
+    "sync.pass.forget":     "Διαγραφή κωδικού",
+    "sync.working":         "Συγχρονισμός…",
+    "sync.ok.pull":         "Τα δεδομένα ελήφθησαν από το cloud",
+    "sync.ok.push":         "Τα δεδομένα στάλθηκαν στο cloud",
+    "sync.ok.empty":        "Δεν υπάρχει τίποτα στο cloud ακόμα",
+    "sync.slices.applied":  "ενότητες ενημερώθηκαν",
+    "sync.err.notconnected":"Δεν υπάρχει σύνδεση με Dropbox",
+    "sync.err.nopass":      "Δώσε πρώτα τον κωδικό σου",
+    "sync.err.version":     "Τα δεδομένα του cloud χρησιμοποιούν μη υποστηριζόμενη έκδοση",
+    "sync.err.auth":        "Η εξουσιοδότηση Dropbox απέτυχε — επανασύνδεση",
+    "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου"
   }
 
 };
