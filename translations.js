@@ -11,7 +11,7 @@ window.OROS_TRANSLATIONS = {
     "app.name":           "orOS",
     "app.tagline":         "A static operating system in your browser",
 
-    "bar.menu":            "Applications",
+    "bar.menu":            "orOS",
     "bar.clock.tooltip":   "Time (24h)",
 
     "lang.tooltip":        "Switch language",
@@ -75,7 +75,7 @@ window.OROS_TRANSLATIONS = {
     "app.name":           "orOS",
     "app.tagline":         "Ένα στατικό λειτουργικό σύστημα στον browser",
 
-    "bar.menu":            "Εφαρμογές",
+    "bar.menu":            "orOS",
     "bar.clock.tooltip":   "Ώρα (24ωρη)",
 
     "lang.tooltip":        "Αλλαγή γλώσσας",

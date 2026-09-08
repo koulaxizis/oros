@@ -20,7 +20,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.4.0";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.4.1";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -53,22 +53,22 @@
     { id: "tux",        color: "#c9c9c9" }
   ];
 
-  // Wallpaper registry — ids map to .wp-<id> CSS classes on
-  // #oros-desktop. `pair` = classic companion skin (suggest, not
-  // impose: only follows when wallpaper is still on DEFAULT).
   var DEFAULT_WALLPAPER = "dusk";
 
+  // Wallpapers live in JS (single source of truth): the SAME gradient
+  // string feeds the desktop background AND the picker thumbnails —
+  // WYSIWYG guaranteed, no CSS-specificity battles.
   var WALLPAPERS = [
-    { id: "dusk",     pair: null },
-    { id: "midnight", pair: "arch" },
-    { id: "plum",     pair: "ubuntu" },
-    { id: "forest",   pair: "mint" },
-    { id: "ember",    pair: "debian" },
-    { id: "nordic",   pair: "fedora" },
-    { id: "aurora",   pair: "elementary" },
-    { id: "sand",     pair: "oros" },
-    { id: "mono",     pair: "tux" },
-    { id: "clear",    pair: null }
+    { id: "dusk",     pair: null,          css: "linear-gradient(160deg, #1b2735 0%, #10151f 45%, #0b0f17 100%)" },
+    { id: "midnight", pair: "arch",        css: "linear-gradient(165deg, #0d1117 0%, #06080c 60%, #000000 100%)" },
+    { id: "plum",     pair: "ubuntu",      css: "radial-gradient(ellipse at 30% 20%, #4a2545 0%, #2c1626 55%, #190d17 100%)" },
+    { id: "forest",   pair: "mint",        css: "linear-gradient(150deg, #16281c 0%, #0e1a12 55%, #070f09 100%)" },
+    { id: "ember",    pair: "debian",      css: "linear-gradient(160deg, #2b1810 0%, #1d0f0a 50%, #120806 100%)" },
+    { id: "nordic",   pair: "fedora",      css: "linear-gradient(170deg, #2c3e50 0%, #1d2a38 55%, #131b24 100%)" },
+    { id: "aurora",   pair: "elementary",  css: "linear-gradient(155deg, #10302b 0%, #0b2320 45%, #071512 100%)" },
+    { id: "sand",     pair: "oros",        css: "linear-gradient(160deg, #33291d 0%, #241c13 55%, #161009 100%)" },
+    { id: "mono",     pair: "tux",         css: "linear-gradient(170deg, #262626 0%, #1a1a1a 55%, #0e0e0e 100%)" },
+    { id: "clear",    pair: null,          css: "" }   // "None": theme background
   ];
 
   function findWallpaper(id) {
@@ -167,16 +167,20 @@
   }
 
   // ---------- 5b. Wallpaper ----------
-  function applyWallpaper() {
-    if (!findWallpaper(state.wallpaper)) state.wallpaper = DEFAULT_WALLPAPER;
+    function applyWallpaper() {
+    var w = findWallpaper(state.wallpaper);
+    if (!w) { state.wallpaper = DEFAULT_WALLPAPER; w = findWallpaper(DEFAULT_WALLPAPER); }
     var desktop = document.getElementById("oros-desktop");
 
-    // Remove any previous wp-* class, then set the current one.
+    // Inline style: wins over any #oros-desktop background rule
+    // (specificity-proof — the v0.4.0 class-based approach lost to
+    // the existing ID rule).
+    desktop.style.background = w.css;
+
+    // Keep the class for potential future hooks, cleaned of stale ids
     var classes = desktop.className.split(/\s+/);
     for (var i = 0; i < classes.length; i++) {
-      if (classes[i].indexOf("wp-") === 0 && classes[i] !== "wp-" + state.wallpaper) {
-        desktop.classList.remove(classes[i]);
-      }
+      if (classes[i].indexOf("wp-") === 0) desktop.classList.remove(classes[i]);
     }
     desktop.classList.add("wp-" + state.wallpaper);
   }
@@ -460,6 +464,7 @@
                         (state.wallpaper === w.id ? " active" : "");
       thumb.setAttribute("title", wallpaperTitle(w.id));
       thumb.setAttribute("aria-label", wallpaperTitle(w.id));
+	  thumb.style.background = w.css;   // WYSIWYG — same source as desktop
       thumb.addEventListener("click", function () {
         if (state.wallpaper === w.id) return;
         state.wallpaper = w.id;

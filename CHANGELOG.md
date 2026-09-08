@@ -283,3 +283,13 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   mint→Forest, tux→Mono, etc.) — only from default, never overrides
   a deliberate choice, never triggers on pulls.
 - localStorage key: oros-wallpaper. APP_VERSION → 0.4.0.
+
+### v0.4.1 — Wallpaper application fix + appearance polish
+- ROOT CAUSE (wallpapers selected but never applied): #oros-desktop
+  ID selector outranked the .wp-* classes. Gradients now live in the
+  shell registry as inline styles (single source of truth, thumbs and
+  desktop from the same string) — specificity-immune.
+- Skin→wallpaper pairs now visually apply (they were state-only due
+  to the same bug).
+- Skin swatches: CSS grid, 2×5 rows — no horizontal menu scrollbar.
+- Taskbar menu label: "Applications" → "orOS".
