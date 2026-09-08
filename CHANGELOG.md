@@ -57,5 +57,8 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   Top bar right side = language + clock only.
 - applyTheme() simplified; theme button is rebuilt on each renderMenu().
   Old #btn-theme wiring REMOVED (would throw on boot if left in).
- - Theme toggle icons (☾/☀) rendered as dots/tofu on some platforms;
+- Theme toggle icons (☾/☀) rendered as dots/tofu on some platforms;
   replaced with inline SVG moon/sun using currentColor.
+- Swatch CSS rules (.skin-swatch) were accidentally dropped during the
+  Appearance-section restructure — swatches rendered as dots. Restored
+  (26px circles + padding:0 + flex-shrink:0).
