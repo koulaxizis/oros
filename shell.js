@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0 — Shell logic (final, sync edition)
+// orOS Core v0.3 — Shell logic (final, vault + autosync edition)
 // Sections:
 //   1. State, skin registry, icon constants
 //   2. Preferences (skin, language, theme)
@@ -7,7 +7,7 @@
 //   4. Theme apply
 //   5. Skin apply
 //   6. Clock (24h)
-//   7. PWA: service worker registration + install flow
+//   7. PWA: service worker registration + update toast + install flow
 //   8. Apps loading & menu rendering (+ appearance + install + SYNC)
 //   9. Sync UI & shell slice registration
 //   10. App opening / return (fullscreen takeover)
@@ -27,8 +27,8 @@
     deferredPrompt:  null,   // PWA install event
 
     // sync UI state
-    syncUserEmail:   null,   // Dropbox account email (async loaded)
-    syncMsg:         null    // { kind: "ok"|"err"|"dim", text: "i18n-or-plain" }
+    syncUserEmail:   null,
+    syncMsg:         null    // { kind: "ok"|"err"|"dim", text: "…" }
   };
 
   var SKINS = [
@@ -51,6 +51,15 @@
       if (SKINS[i].id === id) return true;
     }
     return false;
+  }
+
+  // Any user-initiated settings change → the sync engine wants to know.
+  // (Called ONLY from user action handlers — never from shellSliceSet,
+  // which is fed by pulls. That would loop: pull → set → dirty → push.)
+  function noteLocalChange() {
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") {
+      window.orosSync.markDirty();
+    }
   }
 
   // ---------- 2. Preferences ----------
@@ -101,7 +110,6 @@
   // ---------- 4. Theme ----------
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
-    // Theme button lives in the app menu — re-created on each renderMenu()
   }
 
   // ---------- 5. Skin ----------
@@ -122,7 +130,7 @@
   }
 
   // ---------- 7. PWA ----------
-    function registerServiceWorker() {
+  function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
 
     var reg = null;
@@ -138,7 +146,7 @@
         "<strong>" + window.t("update.reload") + "</strong>";
       toast.addEventListener("click", function () {
         if (reg && reg.waiting) {
-          reg.waiting.postMessage("SKIP_WAITING");   // activate new worker
+          reg.waiting.postMessage("SKIP_WAITING");
         }
       });
       document.body.appendChild(toast);
@@ -148,9 +156,7 @@
       .then(function (registration) {
         reg = registration;
 
-        // A version is already waiting (e.g. updated while tab closed)
-        if (registration.waiting &&
-            navigator.serviceWorker.controller) {
+        if (registration.waiting && navigator.serviceWorker.controller) {
           showUpdateToast();
         }
 
@@ -158,7 +164,6 @@
           var newWorker = registration.installing;
           if (!newWorker) return;
           newWorker.addEventListener("statechange", function () {
-            // "installed" + existing controller = an update is waiting
             if (newWorker.state === "installed" &&
                 navigator.serviceWorker.controller) {
               showUpdateToast();
@@ -170,7 +175,6 @@
         console.warn("orOS: SW registration failed:", err);
       });
 
-    // New worker took control → reload to serve the new shell
     var reloading = false;
     navigator.serviceWorker.addEventListener("controllerchange", function () {
       if (reloading) return;
@@ -192,7 +196,7 @@
     });
   }
 
-    function renderInstallRow(host) {
+  function renderInstallRow(host) {
     if (!state.deferredPrompt) return;
 
     var section = document.createElement("div");
@@ -274,7 +278,7 @@
 
     renderSkinSwatches(menu);
     renderInstallRow(menu);
-    renderSyncSection(menu);        // NEW: Sync section (cloud)
+    renderSyncSection(menu);
   }
 
   function renderSkinSwatches(host) {
@@ -303,6 +307,7 @@
         state.skin = s.id;
         localStorage.setItem("oros-skin", state.skin);
         applySkin();
+        noteLocalChange();          // user action → sync engine
         renderMenu();
       });
       swatches.appendChild(sw);
@@ -324,6 +329,7 @@
       state.theme = state.theme === "dark" ? "light" : "dark";
       localStorage.setItem("oros-theme", state.theme);
       applyTheme();
+      noteLocalChange();            // user action → sync engine
       renderMenu();
     });
     controls.appendChild(themeBtn);
@@ -338,7 +344,8 @@
 
   // ---------- 9. Sync UI & shell slice ----------
 
-  // The shell's own syncable data — theme/language/skin travel to the cloud
+  // The shell's own syncable data — theme/language/skin travel to the cloud.
+  // Getter reads CURRENT state; setter is fed by pulls (no markDirty inside!).
   function shellSliceGet() {
     return { lang: state.lang, theme: state.theme, skin: state.skin };
   }
@@ -356,6 +363,8 @@
     applySkin();
     applyTheme();
     applyLang();     // re-renders menu too
+    // Deliberately NO noteLocalChange() here — pulled data must not
+    // re-mark dirty, or pull → set → push → pull → … infinite loop.
   }
 
   function registerShellSlice() {
@@ -382,7 +391,6 @@
     heading.textContent = window.t("sync.title");
     section.appendChild(heading);
 
-    // --- Status row (dot + email / not connected) ---
     var connected = window.orosSync && window.orosSync.isConnected();
     var status = document.createElement("div");
     status.className = "sync-status";
@@ -397,74 +405,86 @@
     section.appendChild(status);
 
     if (!connected) {
-      // --- Connect button ---
       var connectRow = document.createElement("div");
       connectRow.className = "sync-actions";
       var connectBtn = document.createElement("button");
       connectBtn.className = "menu-item";
       connectBtn.innerHTML = CLOUD_ICON_SVG + "<span>" + window.t("sync.connect") + "</span>";
       connectBtn.addEventListener("click", function () {
-        window.orosSync.connect();   // navigates to Dropbox
+        window.orosSync.connect();
       });
       connectRow.appendChild(connectBtn);
       section.appendChild(connectRow);
+    } else if (!window.orosSync.hasPassphrase()) {
+      // --- Connected, locked: passphrase input + eye + remember checkbox ---
+      var passWrap = document.createElement("div");
+      passWrap.className = "sync-pass";
+
+      var label = document.createElement("label");
+      label.textContent = window.t("sync.pass.label");
+      passWrap.appendChild(label);
+
+      var inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+
+      var input = document.createElement("input");
+      input.type = "password";
+      input.setAttribute("placeholder", window.t("sync.pass.placeholder"));
+      input.autocomplete = "off";
+      inputRow.appendChild(input);
+
+      var eyeBtn = document.createElement("button");
+      eyeBtn.type = "button";
+      eyeBtn.className = "pass-eye";
+      eyeBtn.innerHTML = EYE_SVG;
+      eyeBtn.setAttribute("title", window.t("sync.pass.show"));
+      eyeBtn.setAttribute("aria-label", window.t("sync.pass.show"));
+      eyeBtn.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        eyeBtn.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
+        input.focus();
+      });
+      inputRow.appendChild(eyeBtn);
+
+      passWrap.appendChild(inputRow);
+
+      var hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = window.t("sync.pass.first.hint");
+      passWrap.appendChild(hint);
+
+      var rememberRow = document.createElement("label");
+      rememberRow.className = "remember-row";
+      var rememberCb = document.createElement("input");
+      rememberCb.type = "checkbox";
+      rememberCb.id = "sync-remember";
+      // Pre-check if this device already trusts the vault (re-unlock case)
+      rememberCb.checked = window.orosSync.hasDeviceVault();
+      rememberRow.appendChild(rememberCb);
+      var rememberTxt = document.createElement("span");
+      rememberTxt.textContent = window.t("sync.pass.remember");
+      rememberRow.appendChild(rememberTxt);
+      passWrap.appendChild(rememberRow);
+
+      var row = document.createElement("div");
+      row.className = "row";
+      var unlockBtn = document.createElement("button");
+      unlockBtn.className = "menu-item";
+      unlockBtn.textContent = window.t("sync.pass.apply");
+      unlockBtn.addEventListener("click", function () {
+        var pw = input.value;
+        if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
+        window.orosSync.setPassphrase(pw, rememberCb.checked);
+        setSyncMsg("ok", "sync.ok.unlocked");
+        // Kick the engine: silent pull + push-if-dirty right away
+        window.orosSync.kickAutoEngine();
+      });
+      row.appendChild(unlockBtn);
+      passWrap.appendChild(row);
+      section.appendChild(passWrap);
     } else {
-      // --- Passphrase (if not yet unlocked in this session) ---
-      if (!window.orosSync.hasPassphrase()) {
-        var passWrap = document.createElement("div");
-        passWrap.className = "sync-pass";
-
-        var label = document.createElement("label");
-        label.textContent = window.t("sync.pass.label");
-        passWrap.appendChild(label);
-
-                var inputRow = document.createElement("div");
-        inputRow.className = "input-row";
-
-        var input = document.createElement("input");
-        input.type = "password";
-        input.setAttribute("placeholder", window.t("sync.pass.placeholder"));
-        input.autocomplete = "off";
-        inputRow.appendChild(input);
-
-        var eyeBtn = document.createElement("button");
-        eyeBtn.type = "button";
-        eyeBtn.className = "pass-eye";
-        eyeBtn.innerHTML = EYE_SVG;
-        eyeBtn.setAttribute("title", window.t("sync.pass.show"));
-        eyeBtn.setAttribute("aria-label", window.t("sync.pass.show"));
-        eyeBtn.addEventListener("click", function () {
-          var show = input.type === "password";
-          input.type = show ? "text" : "password";
-          eyeBtn.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
-          input.focus();
-        });
-        inputRow.appendChild(eyeBtn);
-
-        passWrap.appendChild(inputRow);
-
-        var hint = document.createElement("div");
-        hint.className = "hint";
-        hint.textContent = window.t("sync.pass.first.hint");
-        passWrap.appendChild(hint);
-
-        var row = document.createElement("div");
-        row.className = "row";
-        var unlockBtn = document.createElement("button");
-        unlockBtn.className = "menu-item";
-        unlockBtn.textContent = window.t("sync.pass.apply");
-        unlockBtn.addEventListener("click", function () {
-          var pw = input.value;
-          if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
-          window.orosSync.setPassphrase(pw);
-          setSyncMsg("ok", "sync.ok.empty");  // informational: unlocked, ready
-        });
-        row.appendChild(unlockBtn);
-        passWrap.appendChild(row);
-        section.appendChild(passWrap);
-      }
-
-      // --- Actions: pull / push / forget / disconnect ---
+      // --- Connected + unlocked: actions ---
       var actions = document.createElement("div");
       actions.className = "sync-actions";
 
@@ -495,20 +515,27 @@
 
       section.appendChild(actions);
 
-      // Small utilities row: forget passphrase / disconnect
+      // Utilities row: forget (device-aware) + disconnect
       var utils = document.createElement("div");
       utils.className = "sync-actions";
 
-      if (window.orosSync.hasPassphrase()) {
-        var forgetBtn = document.createElement("button");
-        forgetBtn.className = "menu-item";
-        forgetBtn.textContent = window.t("sync.pass.forget");
-        forgetBtn.addEventListener("click", function () {
+      var hasVault = window.orosSync.hasDeviceVault();
+      var forgetBtn = document.createElement("button");
+      forgetBtn.className = "menu-item";
+      forgetBtn.textContent = hasVault
+        ? window.t("sync.pass.device")
+        : window.t("sync.pass.forget");
+      forgetBtn.addEventListener("click", function () {
+        if (hasVault) {
+          window.orosSync.clearDevice().then(function () {
+            renderMenu();
+          });
+        } else {
           window.orosSync.forgetPassphrase();
           renderMenu();
-        });
-        utils.appendChild(forgetBtn);
-      }
+        }
+      });
+      utils.appendChild(forgetBtn);
 
       var discBtn = document.createElement("button");
       discBtn.className = "menu-item";
@@ -523,7 +550,6 @@
       section.appendChild(utils);
     }
 
-    // --- Status message (success / error / dim) ---
     if (state.syncMsg) {
       var msg = document.createElement("div");
       msg.className = "sync-msg " + state.syncMsg.kind;
@@ -548,15 +574,36 @@
   function initSyncIntegration() {
     registerShellSlice();
 
-    // If we just returned from Dropbox (?code=), refresh the menu once
-    // tokens are in place — the connect UI flips to the connected UI.
+    // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
       window.orosSync.redirectHandled.then(function (handled) {
         if (handled) renderMenu();
       });
     }
 
-    // Load account email for the status row (once, cached by sync.js)
+    // Vault auto-unlock settled → re-render (dot turns "on" without user
+    // ever typing the passphrase; silent pull already handled by engine)
+    if (window.orosSync && window.orosSync.vaultUnlocked) {
+      window.orosSync.vaultUnlocked.then(function () {
+        renderMenu();
+      });
+    }
+
+    // Subtle auto-sync feedback: the status dot pulses while the engine
+    // pushes in the background. No messages, no interruptions.
+    if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+      window.orosSync.onAutoSync(function (kind) {
+        var dot = document.querySelector(".sync-status-dot");
+        if (!dot) return;
+        if (kind === "start") {
+          dot.classList.add("pulse");
+        } else {
+          setTimeout(function () { dot.classList.remove("pulse"); }, 600);
+        }
+      });
+    }
+
+    // Account email for the status row (async, cached by sync.js)
     if (window.orosSync && window.orosSync.isConnected()) {
       window.orosSync.getUserInfo()
         .then(function (acc) {
@@ -611,16 +658,19 @@
     e.stopPropagation();
     toggleMenu();
   });
-    // Clicks inside the menu never reach the outside-close handler.
+
+  // Clicks inside the menu never reach the outside-close handler.
   // (Re-renders detach the clicked node mid-event, which made
   // menu.contains(target) false — the "clicked outside" bug.)
   document.getElementById("app-menu").addEventListener("click", function (e) {
     e.stopPropagation();
   });
+
   document.addEventListener("click", function (e) {
     var menu = document.getElementById("app-menu");
     if (menu.classList.contains("open") && !menu.contains(e.target)) closeMenu();
   });
+
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       if (document.getElementById("app-menu").classList.contains("open")) closeMenu();
@@ -631,6 +681,7 @@
   document.getElementById("btn-lang").addEventListener("click", function () {
     state.lang = state.lang === "en" ? "el" : "en";
     localStorage.setItem("oros-lang", state.lang);
+    noteLocalChange();            // user action → sync engine
     applyLang();
   });
 

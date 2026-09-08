@@ -1,14 +1,16 @@
 // ============================================================
-// orOS Core v0 — Dropbox Sync module (final)
+// orOS Core v0.3 — Dropbox Sync module (final)
 //
 // - window.orosSync — shared sync framework for the shell + all apps
-// - Dropbox provider: PKCE OAuth (no client secret), App-folder scoped
-// - Client-side AES-GCM encryption: Dropbox sees ciphertext only
-// - Blob (orOS-data.json) = { salt, iv, ver, data } — encrypted JSON:
-//     { shell: {...}, apps: { <sliceName>: {...} }, meta: {...} }
-// - Overwrite safety: remote blob backed up as orOS-backup-<ts>.json
-//   before every push (keeps last 5 backups)
-// - Passphrase: memory only, never persisted
+// - Dropbox PKCE OAuth (app-folder scoped, no client secret)
+// - AES-GCM + PBKDF2 client-side encryption (zero-knowledge)
+// - Trusted device vault: passphrase sealed with a NON-EXTRACTABLE
+//   AES key living in IndexedDB (opt-in per device). The key never
+//   leaves the crypto subsystem — JS can use it, never read it.
+// - Dirty flag: any slice change marks sync pending (persisted).
+// - Auto engine: boot reconcile (pull, then push if dirty),
+//   periodic push (default 3 min) when dirty, push on tab hide.
+//   Silent failures — never blocks the UI.
 // ============================================================
 (function () {
   "use strict";
@@ -20,23 +22,33 @@
   var MAX_BACKUPS     = 5;
   var BLOB_VERSION    = 1;
   var PBKDF2_ROUNDS   = 100000;
+  var AUTO_INTERVAL_MS = 3 * 60 * 1000;   // 3 minutes
+  var DIRTY_KEY       = "oros-sync-dirty";
+  var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
 
-  var TOKEN_API  = "https://api.dropboxapi.com/oauth2/token";
-  var AUTH_URL   = "https://www.dropbox.com/oauth2/authorize";
-  var RPC_API    = "https://api.dropboxapi.com/2/";
+  var TOKEN_API   = "https://api.dropboxapi.com/oauth2/token";
+  var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
+  var RPC_API     = "https://api.dropboxapi.com/2/";
   var CONTENT_API = "https://content.dropboxapi.com/2/";
 
   // ---------- Internal state ----------
-  var accessToken   = null;   // string | null
+  var accessToken   = null;
   var refreshToken  = null;
-  var tokenExpiry  = 0;       // ms epoch
-  var cachedAccount = null;   // { email, name }
-  var passphrase    = null;   // memory only
+  var tokenExpiry  = 0;
+  var cachedAccount = null;
+  var passphrase    = null;      // memory
+  var vaultReady    = false;
 
-  // Registered data slices (shell + apps)
-  var slices = {};            // name -> { get: fn, set: fn }
+  var slices = {};
 
-  // ---------- Base64 / Base64URL helpers ----------
+  // Subscribers for subtle auto-sync feedback (shell status dot pulse)
+  var autoListeners = [];
+
+  // Engine guards: never two pushes/pulls racing each other
+  var pushInFlight = false;
+  var lastPushFailed = false;
+
+  // ---------- Base64 helpers ----------
   function b64encode(buf) {
     var bytes = new Uint8Array(buf);
     var str = "";
@@ -62,29 +74,25 @@
     crypto.getRandomValues(verifierBytes);
     var verifier = b64urlEncode(verifierBytes.buffer);
 
-    // Survives the redirect round-trip, dies with the tab
     sessionStorage.setItem("oros-pkce-verifier", verifier);
 
     var challengeInput = new TextEncoder().encode(verifier);
     return crypto.subtle.digest("SHA-256", challengeInput).then(function (digest) {
       var challenge = b64urlEncode(digest);
-      var url = AUTH_URL +
+      window.location.href = AUTH_URL +
         "?response_type=code" +
         "&client_id=" + encodeURIComponent(DROPBOX_APP_KEY) +
         "&redirect_uri=" + encodeURIComponent(redirectUri()) +
         "&token_access_type=offline" +
         "&code_challenge=" + encodeURIComponent(challenge) +
         "&code_challenge_method=S256";
-      window.location.href = url;   // leaves orOS — comes back with ?code=
     });
   }
 
   function redirectUri() {
-    // Preserve nothing else: clean root, matches the Dropbox app settings
     return window.location.origin + "/";
   }
 
-  // Called on boot when URL contains ?code= (returning from Dropbox)
   function handleOAuthRedirect() {
     var params = new URLSearchParams(window.location.search);
     var code = params.get("code");
@@ -113,7 +121,6 @@
       .then(function (tokens) {
         sessionStorage.removeItem("oros-pkce-verifier");
         storeTokens(tokens);
-        // Clean the ?code= out of the URL (keep nothing else)
         window.history.replaceState({}, "", "/");
         return true;
       })
@@ -127,7 +134,6 @@
   function storeTokens(tokens) {
     accessToken  = tokens.access_token || null;
     refreshToken = tokens.refresh_token || refreshToken || null;
-    // Dropbox access tokens live ~4h; refresh 5 minutes early
     tokenExpiry  = Date.now() + ((tokens.expires_in || 14400) - 300) * 1000;
 
     localStorage.setItem("oros-db-access",  accessToken  || "");
@@ -136,9 +142,9 @@
   }
 
   function restoreTokens() {
-    accessToken  = localStorage.getItem("oros-db-access")  || null;
-    refreshToken = localStorage.getItem("oros-db-refresh") || null;
-    tokenExpiry  = parseInt(localStorage.getItem("oros-db-expiry") || "0", 10) || 0;
+    accessToken   = localStorage.getItem("oros-db-access")  || null;
+    refreshToken  = localStorage.getItem("oros-db-refresh") || null;
+    tokenExpiry   = parseInt(localStorage.getItem("oros-db-expiry") || "0", 10) || 0;
     cachedAccount = null;
     try {
       var acc = localStorage.getItem("oros-db-account");
@@ -147,7 +153,7 @@
   }
 
   function refreshAccessToken() {
-    if (!refreshToken) return Promise.reject(new Error("no refresh token"));
+    if (!refreshToken) return Promise.reject(new Error("not-connected"));
 
     var body = new URLSearchParams({
       grant_type:    "refresh_token",
@@ -161,7 +167,7 @@
       body: body.toString()
     })
       .then(function (res) {
-        if (!res.ok) throw new Error("refresh failed: " + res.status);
+        if (!res.ok) throw new Error("auth refresh failed: " + res.status);
         return res.json();
       })
       .then(function (tokens) {
@@ -234,7 +240,7 @@
       });
   }
 
-  // ---------- Crypto (AES-GCM + PBKDF2) ----------
+  // ---------- Crypto (blob): AES-GCM + PBKDF2 ----------
   function deriveKey(salt) {
     var material = new TextEncoder().encode(passphrase);
     return crypto.subtle.importKey("raw", material, "PBKDF2", false, ["deriveKey"])
@@ -284,7 +290,92 @@
       });
   }
 
-  // ---------- Slice collection / application ----------
+  // ---------- Trusted device vault (IndexedDB, non-extractable key) ----------
+  // The device key is generated ONCE per device and stored in IndexedDB as a
+  // CryptoKey object with extractable=false — the raw bytes can never be
+  // read by JS. It can only be USED to seal/unseal the passphrase.
+  // The sealed passphrase (iv + ciphertext, base64) lives in localStorage.
+
+  function openVaultDb() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open("oros-vault", 1);
+      req.onupgradeneeded = function () {
+        req.result.createObjectStore("keys");
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror   = function () { reject(req.error); };
+    });
+  }
+
+  function idbRequest(request) {
+    return new Promise(function (resolve, reject) {
+      request.onsuccess = function () { resolve(request.result); };
+      request.onerror   = function () { reject(request.error); };
+    });
+  }
+
+  function getDeviceKey(db) {
+    return idbRequest(db.transaction("keys").objectStore("keys").get("device"))
+      .then(function (existing) {
+        if (existing) return existing;
+        // First run on this device: generate + persist the non-extractable key
+        return crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"])
+          .then(function (key) {
+            return idbRequest(db.transaction("keys", "readwrite")
+              .objectStore("keys").put(key, "device"))
+              .then(function () { return key; });
+          });
+      });
+  }
+
+  function sealPassphrase(pass) {
+    return openVaultDb()
+      .then(getDeviceKey)
+      .then(function (key) {
+        var iv = new Uint8Array(12); crypto.getRandomValues(iv);
+        var plain = new TextEncoder().encode(pass);
+        return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, plain)
+          .then(function (sealed) {
+            localStorage.setItem(VAULT_KEY, JSON.stringify({
+              iv: b64encode(iv.buffer),
+              data: b64encode(sealed)
+            }));
+          });
+      });
+  }
+
+  function unsealPassphrase() {
+    var raw = localStorage.getItem(VAULT_KEY);
+    if (!raw) return Promise.resolve(null);
+    var record;
+    try { record = JSON.parse(raw); } catch (e) { return Promise.resolve(null); }
+
+    return openVaultDb()
+      .then(getDeviceKey)
+      .then(function (key) {
+        return crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: b64decode(record.iv) },
+          key,
+          b64decode(record.data)
+        );
+      })
+      .then(function (plain) {
+        return new TextDecoder().decode(plain);
+      })
+      .catch(function () {
+        return null;   // wrong vault (e.g. cleared IDB) — treat as absent
+      });
+  }
+
+  function clearVault() {
+    localStorage.removeItem(VAULT_KEY);
+    return openVaultDb().then(function (db) {
+      return idbRequest(db.transaction("keys", "readwrite")
+        .objectStore("keys").delete("device"));
+    }).catch(function () { /* vault already gone — fine */ });
+  }
+
+  // ---------- Slices ----------
   function registerSlice(name, getter, setter) {
     slices[name] = { get: getter, set: setter };
   }
@@ -317,17 +408,14 @@
     return applied;
   }
 
-  // ---------- Backup handling ----------
+  // ---------- Backups ----------
   function backupExistingRemote() {
     return rpc("files/copy_v2", {
       from_path: BLOB_PATH,
       to_path:   BACKUP_PREFIX + new Date().toISOString().replace(/[:.]/g, "-") + ".json"
     })
       .then(function () { return true; })
-      .catch(function (err) {
-        // Expected when nothing was pushed yet — not an error for us
-        return false;
-      });
+      .catch(function () { return false; });   // nothing pushed yet — fine
   }
 
   function pruneBackups() {
@@ -339,14 +427,25 @@
       .then(function (listing) {
         var backups = (listing.entries || [])
           .filter(function (e) { return e.name && e.name.indexOf("orOS-backup-") === 0; })
-          .sort(function (a, b) { return a.name < b.name ? 1 : -1; }); // newest first
+          .sort(function (a, b) { return a.name < b.name ? 1 : -1; });
 
-        var doomed = backups.slice(MAX_BACKUPS);   // everything past the last 5
+        var doomed = backups.slice(MAX_BACKUPS);
         return Promise.all(doomed.map(function (f) {
           return rpc("files/delete_v2", { path: f.path_lower }).catch(function () {});
         }));
       })
-      .catch(function () { /* listing failed — pruning is best-effort */ });
+      .catch(function () { /* best-effort */ });
+  }
+
+  // ---------- Dirty flag ----------
+  function markDirty() {
+    localStorage.setItem(DIRTY_KEY, "1");
+  }
+  function clearDirty() {
+    localStorage.removeItem(DIRTY_KEY);
+  }
+  function isDirty() {
+    return localStorage.getItem(DIRTY_KEY) === "1";
   }
 
   // ---------- Pull / Push ----------
@@ -356,7 +455,7 @@
 
     return contentDownload(BLOB_PATH)
       .then(function (res) {
-        if (res.status === 409) return null;      // not found on remote yet
+        if (res.status === 409) return null;
         if (!res.ok) throw new Error("download failed: " + res.status);
         return res.text();
       })
@@ -373,14 +472,16 @@
   function push() {
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
     if (!passphrase)    return Promise.reject(new Error("no-passphrase"));
+    if (pushInFlight)   return Promise.reject(new Error("push already in flight"));
 
+    pushInFlight = true;
     var payload = collectPayload();
     var encryptedText = null;
 
     return encryptBlob(payload)
       .then(function (text) {
         encryptedText = text;
-        return backupExistingRemote();            // safety net BEFORE overwrite
+        return backupExistingRemote();
       })
       .then(function () {
         return contentUpload(BLOB_PATH, encryptedText);
@@ -390,8 +491,56 @@
         return pruneBackups();
       })
       .then(function () {
+        clearDirty();
         return { ok: true };
+      })
+      .finally(function () {
+        pushInFlight = false;
       });
+  }
+
+  // ---------- Auto engine ----------
+  function emitAutoEvent(kind, detail) {
+    autoListeners.forEach(function (fn) {
+      try { fn(kind, detail); } catch (e) {}
+    });
+  }
+
+  function autoSyncAttempt(reason) {
+    if (!isConnected() || !passphrase || !isDirty()) return;
+    if (pushInFlight) return;
+    if (!navigator.onLine) return;              // no wasted attempts offline
+
+    emitAutoEvent("start", reason);
+    push()
+      .then(function () { emitAutoEvent("done", reason); })
+      .catch(function (err)  { emitAutoEvent("fail", reason); });
+  }
+
+  // Boot: pull latest silently, then push if this device is dirty.
+  function reconcileOnBoot() {
+    if (!isConnected() || !passphrase) return;
+
+    if (!navigator.onLine) return;
+
+    emitAutoEvent("start", "boot");
+    pull()
+      .then(function () {
+        if (isDirty()) return push().then(function () { emitAutoEvent("done", "boot"); });
+        emitAutoEvent("done", "boot");
+      })
+      .catch(function () { emitAutoEvent("fail", "boot"); });
+  }
+
+  function startAutoEngine() {
+    setInterval(function () { autoSyncAttempt("interval"); }, AUTO_INTERVAL_MS);
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        // Last reliable moment before tab death — fire silently
+        autoSyncAttempt("hide");
+      }
+    });
   }
 
   // ---------- Connection lifecycle ----------
@@ -400,7 +549,7 @@
   }
 
   function connect() {
-    return startOAuth();   // navigates away; returns after redirect back
+    return startOAuth();
   }
 
   function disconnect() {
@@ -415,13 +564,50 @@
     localStorage.removeItem("oros-db-account");
   }
 
-  function setPassphrase(pw) {
+  // Extended unlock: setPassphrase(pw, remember)
+  // remember=true seals pw into the device vault (opt-in per device).
+  function setPassphrase(pw, remember) {
     passphrase = pw;
+    if (remember) {
+      sealPassphrase(pw).catch(function (err) {
+        console.warn("orOS sync: vault seal failed:", err);
+      });
+    }
   }
 
-  // ---------- Boot ----------
+  // Boot-time: unseal from vault if present (call before startAutoEngine)
+  function unlockFromVault() {
+    if (passphrase) return Promise.resolve(true);
+    return unsealPassphrase()
+      .then(function (pw) {
+        if (pw) { passphrase = pw; return true; }
+        return false;
+      });
+  }
+
+  function hasDeviceVault() {
+    return !!localStorage.getItem(VAULT_KEY);
+  }
+
+  function clearDevice() {
+    passphrase = null;
+    return clearVault();
+  }
+
+  // ---------- Boot sequence ----------
   restoreTokens();
   var redirectHandled = handleOAuthRedirect();
+
+  // Vault unlock chain: after redirect handling settles, unseal + auto-engine
+  var vaultUnlocked = redirectHandled.then(function () {
+    return unlockFromVault().then(function (ok) {
+      vaultReady = ok;
+      // Start auto engine only when we can actually sync
+      startAutoEngine();
+      if (isConnected() && passphrase) reconcileOnBoot();
+      return ok;
+    });
+  });
 
   // ---------- Public API ----------
   window.orosSync = {
@@ -430,21 +616,36 @@
     disconnect:         disconnect,
     isConnected:        isConnected,
     getUserInfo:        getUserInfo,
-    redirectHandled:    redirectHandled,   // promise<bool> — true if we just returned from Dropbox
+    redirectHandled:    redirectHandled,
+    vaultUnlocked:      vaultUnlocked,    // promise<bool>: true if auto-unlocked
 
     // Data
     pull:               pull,
     push:               push,
 
-    // Passphrase (memory only)
-    setPassphrase:      setPassphrase,
+    // Passphrase / vault
+    setPassphrase:      setPassphrase,    // (pw, remember?) — remember = seal to device
     hasPassphrase:      function () { return passphrase !== null; },
-    forgetPassphrase:   function () { passphrase = null; },
+    forgetPassphrase:   function () { passphrase = null; },   // session only
+    clearDevice:        clearDevice,      // forget + wipe device vault
+    hasDeviceVault:     hasDeviceVault,
 
-    // App integration — future apps register their own slice
+    // App integration
     registerSlice:      registerSlice,
+    markDirty:          markDirty,        // apps call this on data change
+    isDirty:            isDirty,
 
-    // Error code -> i18n key mapping (used by the shell UI)
+    // Auto-sync feedback (optional, for UI status pulse)
+    onAutoSync:         function (fn) { if (typeof fn === "function") autoListeners.push(fn); },
+
+    // Engine kick (manual triggers from shell, e.g. after manual unlock)
+    kickAutoEngine:     function () {
+      if (isConnected() && passphrase) {
+        reconcileOnBoot();
+      }
+    },
+
+    // Error mapping
     errorKey: function (err) {
       var msg = (err && err.message) || "";
       if (msg === "not-connected")  return "sync.err.notconnected";

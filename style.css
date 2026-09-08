@@ -375,6 +375,14 @@ body {
   white-space: nowrap;
 }
 
+.sync-status-dot.pulse {
+  animation: sync-pulse 1s ease infinite;
+}
+@keyframes sync-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
 .sync-actions {
   display: flex;
   gap: 8px;
@@ -445,6 +453,26 @@ body {
   cursor: pointer;
   flex-shrink: 0;
 }
+
+.sync-pass .remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+.sync-pass .remember-row input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sync-pass .remember-row:hover { color: var(--text); }
+
 .pass-eye:hover { background: var(--accent-soft); color: var(--text); }
 
 /* Status messages (success / error) under the section */

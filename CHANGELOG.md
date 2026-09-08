@@ -158,3 +158,30 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   toggle mutates the input directly — no re-render, no text loss.
 - Install row moved to its own visually separated, accent-bordered
   section (was visually merging into the Appearance section).
+  
+  ## v0.3 — Trusted device vault + auto-sync (part 1 of 2)
+
+- sync.js: IndexedDB vault — non-extractable AES-GCM device key;
+  passphrase sealed to localStorage, auto-unlock on boot (opt-in via
+  remember checkbox in UI, part 2).
+- Dirty flag persisted (oros-sync-dirty): markDirty() API for shell
+  and future apps; cleared only on successful push.
+- Auto engine: boot reconcile (pull → push-if-dirty), 3-min interval
+  push when dirty, visibilitychange(hidden) push. navigator.onLine
+  gate, pushInFlight race guard, .finally cleanup.
+- onAutoSync(event) subscription for subtle UI feedback.
+- setPassphrase(pw, remember) extended; forgetPassphrase (session-only)
+  vs clearDevice (wipes vault) split.
+  
+  ### v0.3 — Trusted device vault + auto-sync (part 2 of 2)
+- shell.js: unlock UI extended — "Remember on this device" checkbox
+  (pre-checked if device vault exists), passed to setPassphrase(pw,
+  remember); kickAutoEngine() after manual unlock for immediate
+  silent reconcile.
+- noteLocalChange() wired to lang/theme/skin user handlers only —
+  shellSliceSet (pull-fed) deliberately clean to prevent sync loops.
+- Auto-sync feedback: status dot pulses during engine push/done.
+- Forget split: clearDevice() (wipes vault + IndexedDB key) shown as
+  "Forget on this device" when vault exists; session-only otherwise.
+- translations.js: sync.pass.remember, sync.pass.device,
+  sync.ok.unlocked (EN/EL). style.css: remember-row + dot pulse.

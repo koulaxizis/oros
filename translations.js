@@ -53,7 +53,10 @@ window.OROS_TRANSLATIONS = {
     "sync.err.generic":     "Sync failed — check your connection",
 	"update.available":    "A new version of orOS is ready.",
     "update.reload":       "Update",
-	"sync.pass.show":      "Show passphrase"
+	"sync.pass.show":      "Show passphrase",
+	"sync.pass.remember":  "Remember on this device",
+    "sync.pass.device":     "Forget on this device",
+    "sync.ok.unlocked":     "Unlocked — ready to sync"
   },
 
   el: {
@@ -102,7 +105,10 @@ window.OROS_TRANSLATIONS = {
     "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου",
 	"update.available":    "Μια νέα έκδοση του orOS είναι έτοιμη.",
     "update.reload":       "Ανανέωση",
-	"sync.pass.show":      "Εμφάνιση κωδικού"
+	"sync.pass.show":      "Εμφάνιση κωδικού",
+	"sync.pass.remember":  "Απομνημόνευση σε αυτή τη συσκευή",
+    "sync.pass.device":     "Διαγραφή από αυτή τη συσκευή",
+    "sync.ok.unlocked":     "Ξεκλείδωμα — έτοιμο για συγχρονισμό"
   }
 
 };
