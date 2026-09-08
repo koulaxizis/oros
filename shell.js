@@ -53,7 +53,7 @@
     { id: "tux",        color: "#c9c9c9" }
   ];
 
-  var DEFAULT_WALLPAPER = "dusk";
+  var DEFAULT_WALLPAPER = "sand";
 
   // Wallpapers live in JS (single source of truth): the SAME gradient
   // string feeds the desktop background AND the picker thumbnails —
@@ -116,11 +116,11 @@
                    : (storedLang === "el" || storedLang === "en") ? storedLang
                    : "en";
 
-    var urlSkin    = params.get("skin");
+        var urlSkin    = params.get("skin");
     var storedSkin = localStorage.getItem("oros-skin");
     state.skin     = isValidSkin(urlSkin) ? urlSkin
                    : isValidSkin(storedSkin) ? storedSkin
-                   : "adwaita";
+                   : "oros";                      // was "adwaita"
     localStorage.setItem("oros-skin", state.skin);
 
     var storedWp = localStorage.getItem("oros-wallpaper");
@@ -161,8 +161,8 @@
   }
 
   // ---------- 5. Skin ----------
-  function applySkin() {
-    if (!isValidSkin(state.skin)) state.skin = "adwaita";
+    function applySkin() {
+    if (!isValidSkin(state.skin)) state.skin = "oros";   // was "adwaita"
     document.documentElement.setAttribute("data-skin", state.skin);
   }
 

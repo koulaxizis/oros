@@ -293,3 +293,21 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   to the same bug).
 - Skin swatches: CSS grid, 2×5 rows — no horizontal menu scrollbar.
 - Taskbar menu label: "Applications" → "orOS".
+
+### v0.4.2 — Full palettes for Linux skins
+- The 7 new skins (Ubuntu/Fedora/Mint/Arch/Debian/elementary/Tux)
+  shipped accent-only variables, so backgrounds/panels/text fell
+  back to inherited defaults — skins tinted frames but not surfaces.
+  Now each ships the full 12-variable set in dark + light, with
+  distro-authentic backgrounds (Ubuntu aubergine, Arch near-black,
+  Mint olive, Debian dark red, etc.).
+- Removed dead .wp-* wallpaper CSS (gradients live in the shell
+  registry as inline styles since v0.4.1).
+- Light-mode accents darkened for contrast on white surfaces.
+
+### v0.4.3 — Brand defaults
+- Default skin: adwaita → oros (brand gold); default wallpaper:
+  dusk → Desert Sand. First-visit experience now shows the
+  brand identity; existing saved preferences are untouched.
+- index.html data-skin markup updated to "oros" (pre-JS flash).
+- Language default remains English (confirmed, unchanged).

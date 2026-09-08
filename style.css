@@ -100,85 +100,202 @@
   --shadow:       rgba(0, 0, 0, 0.16);
 }
 
-/* ---------- Linux family skins (v0.4) ---------- */
-[data-skin="ubuntu"] {
-  --accent: #e95420;
+/* ---------- Linux family skins (v0.4) — full palettes ---------- */
+
+/* Ubuntu — aubergine warmth */
+[data-skin="ubuntu"][data-theme="dark"] {
+  --bg:           #1d0f16;
+  --bg-desktop:   #251019;
+  --bar-bg:       rgba(37, 16, 25, 0.95);
+  --text:         #f5eee8;
+  --text-dim:     #b3a09a;
+  --accent:       #e95420;
   --accent-hover: #f0663a;
-  --accent-soft: rgba(233, 84, 32, 0.15);
+  --accent-soft:  rgba(233, 84, 32, 0.20);
+  --panel-bg:     #2b1522;
+  --border:       #41243a;
+  --shadow:       rgba(0, 0, 0, 0.55);
 }
-[data-skin="fedora"] {
-  --accent: #51a2da;
-  --accent-hover: #66b2e3;
-  --accent-soft: rgba(81, 162, 218, 0.15);
-}
-[data-skin="mint"] {
-  --accent: #87cf3e;
-  --accent-hover: #99da53;
-  --accent-soft: rgba(135, 207, 62, 0.14);
-}
-[data-skin="arch"] {
-  --accent: #1793d1;
-  --accent-hover: #33a6de;
-  --accent-soft: rgba(23, 147, 209, 0.15);
-}
-[data-skin="debian"] {
-  --accent: #d70a53;
-  --accent-hover: #e5286b;
-  --accent-soft: rgba(215, 10, 83, 0.14);
-}
-[data-skin="elementary"] {
-  --accent: #8c5ec7;
-  --accent-hover: #9d73d2;
-  --accent-soft: rgba(140, 94, 199, 0.15);
-}
-[data-skin="tux"] {
-  --accent: #c9c9c9;
-  --accent-hover: #dedede;
-  --accent-soft: rgba(201, 201, 201, 0.12);
+[data-skin="ubuntu"][data-theme="light"] {
+  --bg:           #faf6f4;
+  --bg-desktop:   #f3ebe6;
+  --bar-bg:       rgba(250, 246, 244, 0.95);
+  --text:         #291612;
+  --text-dim:     #705b56;
+  --accent:       #c7431a;
+  --accent-hover: #a53613;
+  --accent-soft:  rgba(199, 67, 26, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #e3d3cb;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
 
-/* ---------- Wallpapers (v0.4) ----------
-   Applied as class "wp-<id>" on #oros-desktop.
-   All are offline, image-free CSS gradients. */
+/* Fedora — cool navy slate */
+[data-skin="fedora"][data-theme="dark"] {
+  --bg:           #10141a;
+  --bg-desktop:   #151b23;
+  --bar-bg:       rgba(17, 22, 30, 0.94);
+  --text:         #e9edf4;
+  --text-dim:     #96a0b0;
+  --accent:       #51a2da;
+  --accent-hover: #74b8e6;
+  --accent-soft:  rgba(81, 162, 218, 0.18);
+  --panel-bg:     #18202a;
+  --border:       #273242;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="fedora"][data-theme="light"] {
+  --bg:           #f7f9fb;
+  --bg-desktop:   #eef2f7;
+  --bar-bg:       rgba(247, 249, 251, 0.94);
+  --text:         #16202c;
+  --text-dim:     #57647a;
+  --accent:       #2f7dc0;
+  --accent-hover: #24639b;
+  --accent-soft:  rgba(47, 125, 192, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d3dde7;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
 
-.wp-dusk {
-  background: linear-gradient(160deg,
-    #1b2735 0%, #10151f 45%, #0b0f17 100%);
+/* Mint — deep olive green */
+[data-skin="mint"][data-theme="dark"] {
+  --bg:           #12160f;
+  --bg-desktop:   #171d12;
+  --bar-bg:       rgba(19, 25, 15, 0.94);
+  --text:         #eaf0e4;
+  --text-dim:     #9fae94;
+  --accent:       #87cf3e;
+  --accent-hover: #a2e05c;
+  --accent-soft:  rgba(135, 207, 62, 0.18);
+  --panel-bg:     #1b2115;
+  --border:       #2c3521;
+  --shadow:       rgba(0, 0, 0, 0.50);
 }
-.wp-midnight {
-  background: linear-gradient(165deg,
-    #0d1117 0%, #06080c 60%, #000000 100%);
+[data-skin="mint"][data-theme="light"] {
+  --bg:           #f8faf3;
+  --bg-desktop:   #eff3e4;
+  --bar-bg:       rgba(248, 250, 243, 0.94);
+  --text:         #1d2415;
+  --text-dim:     #5d6a4e;
+  --accent:       #5e9f2f;
+  --accent-hover: #4a7f24;
+  --accent-soft:  rgba(94, 159, 47, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d7dec8;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
-.wp-plum {
-  background: radial-gradient(ellipse at 30% 20%,
-    #4a2545 0%, #2c1626 55%, #190d17 100%);
+
+/* Arch — near-black steel */
+[data-skin="arch"][data-theme="dark"] {
+  --bg:           #0c0e11;
+  --bg-desktop:   #101318;
+  --bar-bg:       rgba(12, 14, 17, 0.94);
+  --text:         #e4e8ee;
+  --text-dim:     #8b98a6;
+  --accent:       #1793d1;
+  --accent-hover: #45addb;
+  --accent-soft:  rgba(23, 147, 209, 0.18);
+  --panel-bg:     #13161b;
+  --border:       #222731;
+  --shadow:       rgba(0, 0, 0, 0.50);
 }
-.wp-forest {
-  background: linear-gradient(150deg,
-    #16281c 0%, #0e1a12 55%, #070f09 100%);
+[data-skin="arch"][data-theme="light"] {
+  --bg:           #f6f8fa;
+  --bg-desktop:   #eaeff4;
+  --bar-bg:       rgba(246, 248, 250, 0.94);
+  --text:         #14202b;
+  --text-dim:     #4f6373;
+  --accent:       #1073a6;
+  --accent-hover: #0b5c86;
+  --accent-soft:  rgba(16, 115, 166, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d2dae2;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
-.wp-ember {
-  background: linear-gradient(160deg,
-    #2b1810 0%, #1d0f0a 50%, #120806 100%);
+
+/* Debian — warm dark red undertone */
+[data-skin="debian"][data-theme="dark"] {
+  --bg:           #170c11;
+  --bg-desktop:   #1e0f16;
+  --bar-bg:       rgba(23, 12, 17, 0.94);
+  --text:         #f2e8ec;
+  --text-dim:     #a893a0;
+  --accent:       #d70a53;
+  --accent-hover: #e93a77;
+  --accent-soft:  rgba(215, 10, 83, 0.18);
+  --panel-bg:     #241220;
+  --border:       #3b2130;
+  --shadow:       rgba(0, 0, 0, 0.55);
 }
-.wp-nordic {
-  background: linear-gradient(170deg,
-    #2c3e50 0%, #1d2a38 55%, #131b24 100%);
+[data-skin="debian"][data-theme="light"] {
+  --bg:           #faf5f7;
+  --bg-desktop:   #f4eaee;
+  --bar-bg:       rgba(250, 245, 247, 0.94);
+  --text:         #260f1a;
+  --text-dim:     #6f5a63;
+  --accent:       #b20844;
+  --accent-hover: #8c0634;
+  --accent-soft:  rgba(178, 8, 68, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #e6d3da;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
-.wp-aurora {
-  background: linear-gradient(155deg,
-    #10302b 0%, #0b2320 45%, #071512 100%);
+
+/* elementary — cool gray with purple undertone */
+[data-skin="elementary"][data-theme="dark"] {
+  --bg:           #131318;
+  --bg-desktop:   #18181f;
+  --bar-bg:       rgba(19, 19, 24, 0.94);
+  --text:         #eae8f0;
+  --text-dim:     #9a97ab;
+  --accent:       #8c5ec7;
+  --accent-hover: #a67adb;
+  --accent-soft:  rgba(140, 94, 199, 0.18);
+  --panel-bg:     #1c1c25;
+  --border:       #2c2b38;
+  --shadow:       rgba(0, 0, 0, 0.50);
 }
-.wp-sand {
-  background: linear-gradient(160deg,
-    #33291d 0%, #241c13 55%, #161009 100%);
+[data-skin="elementary"][data-theme="light"] {
+  --bg:           #f8f7fa;
+  --bg-desktop:   #f0eef5;
+  --bar-bg:       rgba(248, 247, 250, 0.94);
+  --text:         #1b1824;
+  --text-dim:     #5c5870;
+  --accent:       #6e46a8;
+  --accent-hover: #573287;
+  --accent-soft:  rgba(110, 70, 168, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #dddbe4;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
-.wp-mono {
-  background: linear-gradient(170deg,
-    #262626 0%, #1a1a1a 55%, #0e0e0e 100%);
+
+/* Tux — pure monochrome */
+[data-skin="tux"][data-theme="dark"] {
+  --bg:           #131313;
+  --bg-desktop:   #191919;
+  --bar-bg:       rgba(19, 19, 19, 0.95);
+  --text:         #f0f0f0;
+  --text-dim:     #9c9c9c;
+  --accent:       #e0e0e0;
+  --accent-hover: #ffffff;
+  --accent-soft:  rgba(224, 224, 224, 0.14);
+  --panel-bg:     #1e1e1e;
+  --border:       #333333;
+  --shadow:       rgba(0, 0, 0, 0.55);
 }
-.wp-clear {
-  background: var(--bg);
+[data-skin="tux"][data-theme="light"] {
+  --bg:           #fafafa;
+  --bg-desktop:   #efefef;
+  --bar-bg:       rgba(250, 250, 250, 0.95);
+  --text:         #1a1a1a;
+  --text-dim:     #5c5c5c;
+  --accent:       #4d4d4d;
+  --accent-hover: #2b2b2b;
+  --accent-soft:  rgba(0, 0, 0, 0.10);
+  --panel-bg:     #ffffff;
+  --border:       #d6d6d6;
+  --shadow:       rgba(0, 0, 0, 0.16);
 }
 
 /* Safe fallback + platform scrollbars */
