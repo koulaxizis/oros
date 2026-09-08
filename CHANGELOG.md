@@ -99,3 +99,6 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
 - Fixed swapped icon purposes in manifest: icon-192/512.png now "any",
   icon-maskable-192/512.png now "maskable" (was inverted — Android picked
   the full-bleed icon for circular masking, cropping the logo).
+- Maskable icons regenerated at 70% inner scale (was 78%) —
+  adaptive-icon safe zone is a 61% circle; mountain corners were
+  grazing the mask boundary. Any-purpose icons unchanged.
