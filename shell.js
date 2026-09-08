@@ -20,7 +20,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.5.2";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.5.3";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -370,7 +370,12 @@
         wrap.className = "menu-category";
 
         var h = document.createElement("h4");
-        h.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+        var label = window.t("category." + cat.toLowerCase());
+        // Unknown category → t() returns the key itself → fall back
+        // to the prettified raw name (future-proof for new apps).
+        h.textContent = (label === "category." + cat.toLowerCase())
+          ? cat.charAt(0).toUpperCase() + cat.slice(1)
+          : label;
         wrap.appendChild(h);
 
         cats[cat].forEach(function (app) {

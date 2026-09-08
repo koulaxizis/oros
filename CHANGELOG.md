@@ -238,6 +238,12 @@ fine only because hard refreshes bypass the SW.
   fallback on Greek text otherwise).
 - Taskbar menu label "orOS" set to Nunito ExtraBold (800) with
   letter-spacing — brand-forward button.
+  
+### v0.5.3 — Category translation
+- App categories (from apps.json data) are now translated via
+  dynamic keys (category.<name-lowercase>, EN/EL), with graceful
+  fallback to capitalized raw value for unknown future categories.
+- translations.js: category.productivity (EN/EL).
 
 ---
 
