@@ -55,6 +55,102 @@
     <iframe id="app-frame" title="orOS application"></iframe>
   </section>
 
+<script>
+/* orOS update broker — inline in index.html so it is ALWAYS fresh
+   (index.html is served network-first by the service worker; the
+   cached shell.js can never be trusted to manage its own update).
+   Lifecycle: detect waiting worker -> toast -> SKIP_WAITING ->
+   controllerchange -> reload. Sole owner of the toast. The shell only
+   mirrors "update ready" into its menu button via the event. */
+(function () {
+  "use strict";
+  if (!("serviceWorker" in navigator)) return;
+
+  function txt(en, el) {
+    return localStorage.getItem("oros-lang") === "el" ? el : en;
+  }
+
+  var reg = null;
+  var toastShown = false;
+
+  window.orosActivateUpdate = function () {
+    if (reg && reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+  };
+
+  function showUpdate() {
+    if (toastShown) return;
+    toastShown = true;
+    window.__orosUpdateReady = true;
+
+    // Tell the (possibly cached) shell so the menu button flips
+    try { window.dispatchEvent(new CustomEvent("oros-update-ready")); } catch (e) {}
+
+    setTimeout(function () {
+      // An older shell may already have spawned its own toast — yield.
+      if (document.getElementById("update-toast")) return;
+
+      var t = document.createElement("div");
+      t.id = "update-toast";
+      t.setAttribute("role", "button");
+      t.appendChild(document.createTextNode(
+        txt("A new version of orOS is ready.", "Μια νέα έκδοση του orOS είναι έτοιμη.") + " "
+      ));
+      var b = document.createElement("strong");
+      b.textContent = txt("Update", "Ανανέωση");
+      b.style.color = "var(--accent, #d4af37)";
+      t.appendChild(b);
+
+      // Fully self-contained styling: never depends on cached CSS
+      t.style.cssText =
+        "position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:12px;" +
+        "z-index:2100;display:flex;align-items:center;gap:10px;cursor:pointer;" +
+        "background:var(--panel-bg,#222);color:var(--text,#eee);" +
+        "border:1px solid var(--border,#444);border-radius:8px;" +
+        "box-shadow:0 4px 16px rgba(0,0,0,.4);padding:10px 14px;font-size:13px;" +
+        "font-family:inherit;opacity:0;transition:opacity .35s ease;";
+
+      t.addEventListener("click", function () {
+        window.orosActivateUpdate();
+      });
+      document.body.appendChild(t);
+      requestAnimationFrame(function () { t.style.opacity = "1"; });
+    }, 500);
+  }
+
+  function watchWorker(w) {
+    if (!w) return;
+    w.addEventListener("statechange", function () {
+      if (w.state === "installed" && navigator.serviceWorker.controller) showUpdate();
+    });
+    if (w.state === "installed" && navigator.serviceWorker.controller) showUpdate();
+  }
+
+  navigator.serviceWorker.register("sw.js").then(function (r) {
+    reg = r;
+
+    // Already waiting from a previous ignored update
+    if (r.waiting && navigator.serviceWorker.controller) showUpdate();
+    // Already installing when we attached (the boot race, covered)
+    watchWorker(r.installing);
+    // Discovered during this session
+    r.addEventListener("updatefound", function () {
+      watchWorker(r.installing);
+    });
+
+    // Force a byte-check on EVERY load — never rely on browser mood.
+    r.update().catch(function () {});
+    // Gentle hourly re-check for long-lived sessions
+    setInterval(function () { r.update().catch(function () {}); }, 60 * 60 * 1000);
+  }).catch(function () {});
+
+  var reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
+})();
+</script>
   <script src="translations.js"></script>
   <script src="sync.js"></script>
   <script src="shell.js"></script>

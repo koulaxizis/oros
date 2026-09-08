@@ -220,3 +220,18 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   period (lands on a settled shell, not over boot), with a 0.35s
   fade/slide-in transition. toastQueued guard prevents duplicate
   toasts when boot-check and watcher fire near-simultaneously.
+  
+  ### v0.3.5 — Update broker (fixes updates never reaching cached shells)
+- ROOT CAUSE: update machinery lived in shell.js, which the old SW
+  serves cache-first — a stuck old shell could never deliver its own
+  update (chicken-and-egg). Hard refresh worked because Shift+Reload
+  bypasses the SW entirely.
+- index.html: inline update broker (network-first HTML = always
+  fresh). Owns the full lifecycle: waiting/installing detection
+  (boot race covered), force r.update() on every load + hourly,
+  self-styled toast (no cached CSS/JS dependency), SKIP_WAITING on
+  tap, controllerchange → reload. Dedupes against legacy shells.
+- shell.js: registerServiceWorker slimmed to mirror broker state
+  (oros-update-ready event / __orosUpdateReady flag) into the menu
+  button; update button delegates to window.orosActivateUpdate().
+- sw.js: CACHE_VERSION bumped to oros-v0.3.5 (was stale at v0.2).

@@ -135,38 +135,20 @@
     function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
 
-    function announceUpdate() {
+    // The update lifecycle is owned by the inline broker in index.html
+    // (always network-fresh). The shell only mirrors its state into
+    // the menu button.
+    window.addEventListener("oros-update-ready", function () {
+      state.swUpdateReady = true;
+      renderMenu();
+    });
+
+    // Broker fired before shell.js finished loading?
+    if (window.__orosUpdateReady) {
       state.swUpdateReady = true;
       renderMenu();
     }
-
-    var toastQueued = false;
-
-    function showUpdateToast() {
-      if (toastQueued) return;          // one graceful appearance is enough
-      toastQueued = true;
-
-      // Let the shell settle first — the toast lands on a calm,
-      // fully-rendered surface instead of popping over the boot.
-      setTimeout(function () {
-        var existing = document.getElementById("update-toast");
-        if (existing) existing.remove();
-
-        var toast = document.createElement("div");
-        toast.id = "update-toast";
-        toast.innerHTML =
-          "<span>" + window.t("update.available") + "</span>" +
-          "<strong>" + window.t("update.reload") + "</strong>";
-        toast.addEventListener("click", function () {
-          if (swReg && swReg.waiting) {
-            swReg.waiting.postMessage("SKIP_WAITING");
-          }
-        });
-        document.body.appendChild(toast);
-        toast.classList.add("show");     // triggers the fade-in transition
-        announceUpdate();                // "Update orOS" appears in the menu
-      }, 500);
-    }
+  }
 
     // Watch a worker through its install lifecycle — one helper used
     // both for "already installing at boot" (race fix) and for
@@ -253,9 +235,10 @@
       ubtn.className = "menu-item install-row update";
       ubtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("update.action") + "</span>";
       ubtn.addEventListener("click", function () {
-        if (swReg && swReg.waiting) {
+        if (window.orosActivateUpdate) {
+          window.orosActivateUpdate();   // inline broker (index.html)
+        } else if (swReg && swReg.waiting) {
           swReg.waiting.postMessage("SKIP_WAITING");
-          // Activation → controllerchange → auto reload
         }
       });
       usection.appendChild(ubtn);
