@@ -235,3 +235,10 @@ Dark theme default, light toggle. EN default, EL secondary. 24h clock.
   (oros-update-ready event / __orosUpdateReady flag) into the menu
   button; update button delegates to window.orosActivateUpdate().
 - sw.js: CACHE_VERSION bumped to oros-v0.3.5 (was stale at v0.2).
+
+### v0.3.6 — Synced auto-sync interval
+- Auto-sync interval is now part of the shell slice (syncInterval field):
+  user changes on one device propagate to all others on next sync.
+  Applied via setIntervalMinutes (pull-fed, never marks dirty →
+  no sync loop). Backward-compatible with older shells (field ignored).
+- Local interval change now marks dirty (travels with shell data).

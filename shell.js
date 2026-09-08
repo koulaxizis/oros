@@ -337,7 +337,12 @@
   // The shell's own syncable data — theme/language/skin travel to the cloud.
   // Getter reads CURRENT state; setter is fed by pulls (no markDirty inside!).
   function shellSliceGet() {
-    return { lang: state.lang, theme: state.theme, skin: state.skin };
+    var syncInterval = 3;
+    if (window.orosSync && typeof window.orosSync.getIntervalMinutes === "function") {
+      syncInterval = window.orosSync.getIntervalMinutes();
+    }
+    return { lang: state.lang, theme: state.theme, skin: state.skin,
+             syncInterval: syncInterval };
   }
 
   function shellSliceSet(data) {
@@ -345,6 +350,14 @@
     if (data.lang  === "en" || data.lang  === "el") state.lang  = data.lang;
     if (data.theme === "dark" || data.theme === "light") state.theme = data.theme;
     if (isValidSkin(data.skin)) state.skin = data.skin;
+
+    if (typeof data.syncInterval === "number" &&
+        data.syncInterval >= 0 && data.syncInterval <= 60 &&
+        window.orosSync && typeof window.orosSync.setIntervalMinutes === "function") {
+      // Pull-fed value: applies + reschedules only. setIntervalMinutes
+      // never marks dirty → no sync loop possible.
+      window.orosSync.setIntervalMinutes(data.syncInterval);
+    }
 
     localStorage.setItem("oros-lang",  state.lang);
     localStorage.setItem("oros-theme", state.theme);
@@ -537,6 +550,7 @@
       });
       sel.addEventListener("change", function () {
         window.orosSync.setIntervalMinutes(parseInt(sel.value, 10));
+        noteLocalChange();   // interval is part of the shell slice now
       });
       intervalRow.appendChild(sel);
       section.appendChild(intervalRow);
