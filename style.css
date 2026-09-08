@@ -13,6 +13,43 @@
      7. Appearance controls (swatches + theme toggle)
      8. Mobile-first adaptations
    ============================================================ */
+   
+   /* ---------- 0. Local fonts (Nunito, vendored) ---------- */
+@font-face {
+  font-family: "Nunito";
+  src: url("fonts/nunito-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("fonts/nunito-medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("fonts/nunito-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("fonts/nunito-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("fonts/nunito-extrabold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ---------- 1. Skin palettes ---------- */
 
@@ -306,7 +343,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100vh;
@@ -348,7 +385,10 @@ body {
 }
 #btn-menu:hover, #btn-lang:hover { background: var(--accent-soft); }
 
-#btn-menu { font-weight: 600; }
+#btn-menu {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
 #btn-menu.running { color: var(--accent-hover); }
 
 #bar-clock {
@@ -425,7 +465,16 @@ body {
   cursor: pointer;
   transition: background 0.12s;
 }
+
+.menu-item .app-ico {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 .menu-item:hover { background: var(--accent-soft); }
+
 
 /* ---------- 5bis. Running app (fullscreen takeover) ---------- */
 #oros-running {

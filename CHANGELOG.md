@@ -223,6 +223,21 @@ fine only because hard refreshes bypass the SW.
   Renamed todo/todo.html → todo/index.html (todo.css/js unchanged).
 - Locked convention for all future apps: <app>/index.html as entry,
   referenced in apps.json as "<app>/".
+  
+### v0.5.2 — Typography + app icons
+- Typography: local Nunito (5 weights: regular/medium/semibold/bold/
+  extrabold) vendored at fonts/, @font-face in style.css, Nunito-first
+  stack everywhere (shell + To-Do). Zero external requests — fully
+  offline. Existing font-weight usages map to real weights now.
+- ForkAwesome PERMANENTLY rejected from roadmap — SVG-only icon
+  strategy. ICONS registry in shell.js; app entries render icon
+  (accent-colored) + name; apps.json "icon" key is now live.
+- To-Do menu entry: check SVG icon. sw.js precaches todo/ + fonts.
+- bump-version.yml paths now cover todo/** and fonts/**.
+- REMINDER: woff2 files must include the Greek subset (mixed-font
+  fallback on Greek text otherwise).
+- Taskbar menu label "orOS" set to Nunito ExtraBold (800) with
+  letter-spacing — brand-forward button.
 
 ---
 

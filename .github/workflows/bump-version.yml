@@ -12,6 +12,8 @@ on:
       - "apps.json"
       - "sw.js"
       - "manifest.webmanifest"
+      - "todo/**"
+      - "fonts/**"
 
 permissions:
   contents: write

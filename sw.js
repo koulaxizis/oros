@@ -26,6 +26,11 @@ var PRECACHE_URLS = [
   "todo/index.html",
   "todo/todo.css",
   "todo/todo.js",
+  "fonts/nunito-regular.woff2",
+  "fonts/nunito-medium.woff2",
+  "fonts/nunito-semibold.woff2",
+  "fonts/nunito-bold.woff2",
+  "fonts/nunito-extrabold.woff2",
 ];
 
 // ---------- Install: precache, stay waiting (user-controlled update) ----------

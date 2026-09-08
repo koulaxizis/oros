@@ -38,7 +38,7 @@ html { color-scheme: dark; }
 html[data-theme="light"] { color-scheme: light; }
 
 body {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100vh;
