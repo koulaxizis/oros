@@ -21,7 +21,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.6.2";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.6.3";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -147,6 +147,12 @@
 
     document.getElementById("btn-menu-label").textContent =
       state.running ? window.t("running.back") : window.t("bar.menu");
+
+    // Version badge — visual confirmation of what's actually running
+    // (reads APP_VERSION, the single release key the Action stamps
+    // sw.js and the manifest from). Survives every re-render because
+    // applyLang() always rewrites it.
+    document.getElementById("btn-menu-version").textContent = "v" + APP_VERSION;
 
     var langBtn = document.getElementById("btn-lang");
     langBtn.textContent = state.lang === "en" ? "EL" : "EN";

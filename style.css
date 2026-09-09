@@ -399,6 +399,19 @@ body {
 
 #btn-menu.running { color: var(--accent-hover); }
 
+/* Version badge — quiet pill next to the brand button */
+#btn-menu-version {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0;            /* the button's 0.5px doesn't suit digits */
+  color: var(--text-dim);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 #bar-clock {
   font-size: 13.5px;
   font-variant-numeric: tabular-nums;
@@ -418,7 +431,7 @@ body {
 #app-menu {
   position: fixed;
   top: calc(48px + env(safe-area-inset-top, 0px)); left: 12px;
-  width: 300px;
+  width: 320px;
   max-height: calc(100vh - 120px - env(safe-area-inset-top, 0px));
   overflow-y: auto;
   background: var(--panel-bg);
@@ -430,6 +443,32 @@ body {
   display: none;
 }
 #app-menu.open { display: block; }
+
+/* Themed slim scrollbars (menu + desktop) — the browser default
+   was eating ~15px of menu width and clashing with every skin. */
+#app-menu,
+#oros-desktop {
+  scrollbar-width: thin;                          /* Firefox */
+  scrollbar-color: var(--border) transparent;
+}
+#app-menu::-webkit-scrollbar,
+#oros-desktop::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#app-menu::-webkit-scrollbar-track,
+#oros-desktop::-webkit-scrollbar-track {
+  background: transparent;
+}
+#app-menu::-webkit-scrollbar-thumb,
+#oros-desktop::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+#app-menu::-webkit-scrollbar-thumb:hover,
+#oros-desktop::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
 
 .menu-heading {
   font-size: 11px;
@@ -482,6 +521,16 @@ body {
 }
 
 .menu-item:hover { background: var(--accent-soft); }
+
+/* Button labels never wrap — they ellipsize instead (the sync
+   buttons' Greek labels sit right at the width limit). */
+.menu-item > span:not(.app-ico) {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 
 /* ---------- 5bis. Running app (fullscreen takeover) ---------- */

@@ -786,11 +786,11 @@
 
   function registerSync() {
     var api = (window.parent && window.parent.orosSync) || window.orosSync;
-    if (!api || typeof api.registerSlice !== "function") return;
 
-    // Bridge consumed by save() (section 2). The suppression flag is
-    // what makes pulls safe: applying remote data never re-marks
-    // dirty → no pull→push→pull loop.
+    // Bridge consumed by save() (section 2) — created UNCONDITIONALLY
+    // so save() and the list-dialog recycler never crash in standalone
+    // opens. The suppression flag is what makes pulls safe: applying
+    // remote data never re-marks dirty → no pull→push→pull loop.
     window.__orosSyncApi = {
       _suppress: false,
       dirty: function () {
@@ -799,6 +799,7 @@
       }
     };
 
+    if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("todo", sliceGet, sliceSet, "oros-todo-data");
   }
 

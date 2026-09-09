@@ -59,9 +59,8 @@ fine only because hard refreshes bypass the SW.
   hasDeviceVault/registerSlice/markDirty/isDirty/getIntervalMinutes/
   setIntervalMinutes/onAutoSync/kickAutoEngine/vaultUnlocked/
   redirectHandled/errorKey/exportData/importData.
-- window.orosActivateUpdate() — SKIP_WAITING via inline broker.
-- window.__orosUpdateReady + CustomEvent "oros-update-ready".
-- orosSync.registerSlice(name, get, set) — payload:
+- (deprecated in v0.6.2) orosActivateUpdate / __orosUpdateReady / oros-update-ready — removed).
+- orosSync.registerSlice(name, get, set, storageKey?) — payload:
   { shell: {...}, apps: { <name>: ... }, meta }. Manual Export/Import
   includes ALL registered slices automatically.
 - App convention: same-origin iframe; app reads oros-lang from shared
@@ -249,7 +248,6 @@ fine only because hard refreshes bypass the SW.
 
 ## Known TODO / backlog
 - Sandbox attribute for external/untrusted app iframes (revisit).
-- ForkAwesome vendoring for app icons.
 - Windowed mode = future opt-in only.
 - Menu badge for open todo count (proposal F — needs postMessage bridge).
 - Extra skins (Nord/Dracula test), About surface (credits + privacy),
