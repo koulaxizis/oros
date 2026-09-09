@@ -22,7 +22,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.12.0";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.12.1";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -35,9 +35,9 @@
     running:         null,
     deferredPrompt:  null,   // PWA install event
 
-    // sync UI state
+        // sync UI state
     syncUserEmail:   null,
-    syncMsg:         null   // { kind: "ok"|"err"|"dim", text: "…" },
+    syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
     autoexport:      "off"
