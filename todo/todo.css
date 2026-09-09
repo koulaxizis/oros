@@ -1,17 +1,26 @@
 /* ============================================================
-   orOS To-Do — App stylesheet (v0.2)
+   orOS To-Do — App stylesheet (v0.3)
    Inherits the shell palette: variables are injected at runtime
    from the parent shell (same origin) — the :root values below
    are only an offline/fallback match of the oros skin.
+   NEW in v0.3 (Kanban-pattern port):
+     - #search-wrap / #search / #search-clear   — global search
+     - #filter-btn / #filter-count / #filter-pop — label filter
+     - .item .chips/.chip                        — label chips
+     - .item .info-preview                       — extra info line
+     - .chip-src                                 — source list chip
+       (shown on flattened search results)
+     - .tab .t-rename                            — rename pencil
+     - .tab.drag-src / .drag-over-left/.right    — tab reorder states
    Sections:
      1. Palette fallback + reset
      2. Layout shell
-     3. Tab bar
+     3. Tab bar (+ rename pencil + reorder states)
      4. Quick-add bar
-     5. List controls
-     6. Items (checklist rows)
-     7. Drag & drop states
-     8. Dialogs (item + list settings)
+     5. List controls (+ search / filter)
+     6. Items (checklist rows: chips / info / source)
+     7. Drag & drop states (items)
+     8. Dialogs (item + list settings) + label/info editors
      9. Toast
     10. Mobile-first adaptations
    Icon buttons use inline SVG — no unicode glyphs (tofu-proof).
@@ -91,6 +100,9 @@ input, textarea, select {
 
 .tab {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
   border: none;
   padding: 12px 14px;
@@ -100,6 +112,8 @@ input, textarea, select {
   border-bottom: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s;
   flex-shrink: 0;
+  touch-action: pan-y;      /* vertical scroll passes through;
+                              horizontal pointer moves = ours (reorder) */
 }
 .tab:hover { color: var(--text); }
 .tab.active {
@@ -108,12 +122,39 @@ input, textarea, select {
   font-weight: 600;
 }
 
+/* Rename pencil inside a tab: hover-reveal on desktop,
+   always visible on touch (no hover to hint affordance). */
+.tab .t-rename {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  min-height: 22px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-dim);
+  opacity: 0;                          /* hidden on desktop until hover */
+  transition: opacity 0.15s, color 0.15s, background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+.tab:hover .t-rename { opacity: 0.7; }
+.tab .t-rename:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.tab .t-rename:active { transform: scale(0.90); }
+@media (hover: none) {
+  .tab .t-rename { opacity: 0.7; }    /* touch: always visible */
+}
+
 /* Overdue counter chip inside a tab */
 .tab .chip {
   display: inline-block;
   min-width: 17px;
   padding: 1px 5px;
-  margin-left: 6px;
+  margin-left: 2px;
   border-radius: 9px;
   font-size: 10.5px;
   font-weight: 700;
@@ -126,6 +167,12 @@ input, textarea, select {
   background: rgba(224, 108, 117, 0.18);
   color: var(--danger);
 }
+
+/* Tab reorder drag states (#5): source faded + insertion edges */
+.tab.drag-src        { opacity: 0.35; }
+.tab.drag-over-left  { box-shadow: inset  2px 0 0 var(--accent); }
+.tab.drag-over-right { box-shadow: inset -2px 0 0 var(--accent); }
+body.is-dragging-tab { cursor: grabbing; user-select: none; }
 
 /* New-list button (inline SVG plus icon) */
 #tab-add {
@@ -187,10 +234,11 @@ input, textarea, select {
   background: var(--accent-soft);
 }
 
-/* ---------- 5. List controls ---------- */
+/* ---------- 5. List controls (+ search / filter) ---------- */
 #controls {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 2px 14px 8px;
   font-size: 12.5px;
@@ -227,6 +275,151 @@ input, textarea, select {
   align-items: center;
   justify-content: center;
   padding: 5px 10px;
+}
+
+/* Global search box (Kanban-parity styling) */
+#search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+}
+#search {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 28px 4px 10px;
+  font-size: 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#search:focus { border-color: var(--accent); }
+#search::placeholder { color: var(--text-dim); }
+#search::-webkit-search-cancel-button { display: none; } /* we own the clear button */
+
+#search-clear {
+  position: absolute;
+  right: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  transition: color 0.15s, background 0.15s;
+}
+#search-clear:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+
+/* Filter button + popover (Kanban-parity styling) */
+#filter-slot { position: relative; flex-shrink: 0; }
+#filter-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+#filter-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+#filter-btn:active { transform: scale(0.94); }
+#filter-btn.has-filters {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+#filter-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+#filter-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 900;
+  min-width: 210px;
+  max-width: 260px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
+  padding: 6px;
+  user-select: none;
+}
+.fl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 7px;
+  padding: 8px;
+  transition: background 0.12s;
+}
+.fl-item:hover { background: var(--accent-soft); }
+.fl-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fl-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.fl-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fl-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.fl-del:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+.fl-empty {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 /* ---------- 6. Items ---------- */
@@ -278,10 +471,44 @@ input, textarea, select {
   white-space: nowrap;
 }
 
-/* Meta row: due chip + repeat indicator */
+/* Label chips under the task text (Kanban-parity) */
+.item .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.item .chips .chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 110px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--bg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Extra info preview: single dim line, truncated (Kanban-parity) */
+.item .info-preview {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Meta row: due chip + repeat indicator + source list chip (search) */
 .item .meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 3px;
   font-size: 11.5px;
@@ -304,6 +531,17 @@ input, textarea, select {
   gap: 3px;
   color: var(--text-dim);
 }
+.chip-src {
+  padding: 1px 7px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-weight: 600;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Grab handle (drag reorder) */
 .drag-handle {
@@ -321,16 +559,16 @@ input, textarea, select {
 .drag-handle:hover { opacity: 1; }
 .drag-handle svg { pointer-events: none; }
 
-/* Empty state */
-#empty {
+/* Empty states */
+#empty, #no-match {
   text-align: center;
   padding: 52px 20px;
   color: var(--text-dim);
 }
-#empty span  { display: block; font-size: 15px; margin-bottom: 6px; }
-#empty small { font-size: 12.5px; opacity: 0.7; }
+#empty span, #no-match span  { display: block; font-size: 15px; margin-bottom: 6px; }
+#empty small, #no-match small { font-size: 12.5px; opacity: 0.7; }
 
-/* ---------- 7. Drag & drop states ---------- */
+/* ---------- 7. Drag & drop states (items) ---------- */
 .item.dragging {
   opacity: 0.35;
   background: var(--accent-soft);
@@ -438,6 +676,147 @@ dialog .hint {
   margin-top: 4px;
 }
 
+/* --- Label editor inside the item dialog (Kanban-parity) --- */
+#f-lbl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 0;
+}
+.lbl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--bg);
+  cursor: pointer;               /* click = detach from task */
+  user-select: none;
+  max-width: 140px;
+}
+.lbl-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#f-lbl-picker {
+  margin-top: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+}
+#f-lbl-list { display: flex; flex-direction: column; gap: 2px; }
+
+.lbl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: left;
+  transition: background 0.12s;
+}
+.lbl-item:hover { background: var(--accent-soft); }
+.lbl-item.attached { outline: 1px solid var(--accent); }
+
+.lbl-new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.lbl-new input[type="text"] {
+  flex: 1;
+  min-width: 110px;
+  min-height: 36px;
+}
+#f-lbl-swatches { display: flex; gap: 5px; flex-wrap: wrap; }
+.lbl-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+.lbl-swatch:hover { transform: scale(1.15); }
+.lbl-swatch.sel { border-color: var(--text); }
+#f-lbl-new-add {
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+#f-lbl-new-add:hover { filter: brightness(1.1); }
+.lbl-none {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* --- Extra info rows inside the dialog: label | value | remove --- */
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.info-row input[type="text"] { min-width: 0; }
+.row-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.row-x:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+
+/* Dashed "+ add" ghost button inside dialogs */
+dialog button.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  transition: border-color 0.15s, color 0.15s;
+}
+dialog button.ghost:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 dialog menu {
   display: flex;
   align-items: center;
@@ -506,14 +885,18 @@ dialog menu button.danger:hover {
 @media (max-width: 480px) {
   #list-scroll { padding: 0 8px 90px; }
   #addbar      { padding: 8px 8px 6px; }
+  #controls    { padding: 2px 8px 8px; }
   #quick-add   { font-size: 16px; }   /* ≥16px: iOS won't zoom on focus */
+  #search      { font-size: 16px; }   /* same rule for the search box */
   .tab         { padding: 12px 12px; font-size: 13px; }
+  #search-wrap { max-width: none; order: 5; flex-basis: 100%; }  /* own row when wrapped */
 
   dialog { width: calc(100vw - 20px); padding: 14px; }
+  #filter-pop { right: -8px; }
 }
 
-/* Touch devices: always-visible drag handles
-   (hover-only handles don't exist on touch) */
+/* Touch devices: always-visible drag handles and tab pencils
+   (hover-only affordances don't exist on touch) */
 @media (hover: none) {
   .drag-handle { opacity: 0.7; }
 }

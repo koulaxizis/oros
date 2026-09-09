@@ -414,3 +414,87 @@ print styles (#34).
 **Deferred by design (conflicts with orOS philosophy):**
 UI-visibility toggles, Fork Awesome, `prompt()`-based CRUD, in-app theme
 toggle, local File System Access sync — permanently out.
+
+## v0.8.0 — Kanban Wave 3 (column reorder + rename) & automated cache-busting — 2026-09-09
+
+**Why:** Boards are personal — column order is workflow order. Wave 3 closes
+the last two structural gaps (21, 22) from the legacy-feature audit, and the
+repo now stamps asset URLs automatically so stale-cache deployments are
+structurally impossible going forward.
+
+- **Column drag reorder** (#21): pointer-based, threshold-gated drag on the
+  column head (grab cursor). Insertion indicators show LEFT/RIGHT of the
+  hovered target (half-column precision). Horizontal-bias detection keeps
+  vertical gestures (scroll) native; single taps never start a drag, so
+  dblclick-rename and the pencil keep working. Pencil button excluded from
+  the drag handle (`closest('.col-rename')` guard). Same elementFromPoint +
+  pointer-events-off trick as card drag — proven pattern, zero HTML5 DnD.
+  WHY pointer-based: HTML5 dragstart is dead on touch; we already solved
+  that for cards in v0.2 and reused the contract verbatim.
+- **Column rename button** (#22): always-visible pencil in the column head
+  (same dialog as dblclick — dblclick kept as power-user shortcut). WHY:
+  dblclick alone was undiscoverable on mobile, where there is no hover hint.
+- **Automated `?v=` cache-busting**: new GitHub Action step reads
+  APP_VERSION from shell.js (single source of truth) and stamps/refreshes
+  `?v=` on every relative .css/.js reference in the root index.html and all
+  app folder index.html files. Replaces existing ?v= (no double suffixes);
+  absolute URLs and sw.js registration untouched. WHY: v0.7.2 shipped
+  stale assets (old CSS/JS served cache-first while index.html was fresh),
+  which surfaced as raw i18n keys and dead buttons — this class of bug is
+  now structurally impossible.
+
+**Under consideration (backlog, no conflicts with orOS):**
+multi-board (#1–5), priority levels (#6), due dates (#7), card colors (#8),
+markdown preview (#12), created/modified timestamps (#14), archive (#17),
+statistics (#18), CSV export (#19), add-column dashed placeholder (#23),
+print styles (#34).
+
+**Deferred by design (conflicts with orOS philosophy):**
+UI-visibility toggles, Fork Awesome, `prompt()`-based CRUD, in-app theme
+toggle, local File System Access sync — permanently out.
+
+## v0.9.0 — To-Do: Kanban-pattern port
+
+### Why
+To-Do and Kanban are sibling apps in the orOS core — they must share
+the same interaction DNA (GNOME-style app family). This wave ports the
+six Kanban features the user approved, adapting them to To-Do's
+list-centric model instead of blind copy-paste.
+
+### Ported (Kanban feature # → To-Do equivalent)
+1. **Labels** — board-wide `state.labels[]` store + `item.labels[]` ids,
+   8-color swatch palette, managed from the item dialog (chips to
+   detach, picker to attach, inline create with color pick).
+   NOTE: labels are stored per app (not shared with Kanban) by design.
+2. **Filter by label** — funnel-button popover in #controls with
+   checkboxes, color dots, count badge. OR within selected labels,
+   AND with the search box.
+3. **Global search** — searches across ALL lists, flattened results
+   with a source-list chip per row. Covers text, notes, extra info
+   fields, and label names (agreed rule: custom fields participate
+   in search everywhere).
+4. **Extra info** — free key-value rows per task, no predefined keys
+   (matching Kanban), `label: value · …` dim preview line, searched +
+   draggable-included data synced via the existing slice.
+5. **Tab drag reorder** — pointer-based, threshold-gated with
+   horizontal bias (vertical gesture stays native scroll), left/right
+   insertion indicators, pencil excluded from the gesture.
+6. **Tab rename pencil** — per-tab pencil opening the same dialog as
+   dblclick; hover-reveal on desktop, always visible on touch.
+
+### Data
+- DATA_VER 1 → 2, additive migration (`state.labels`, `item.labels`,
+  `item.info`) applied in BOTH `load()` and `sliceSet` — older v1
+  data upgrades in place with zero loss; search/filter state stays
+  session-only (sync pulls must not resurrect a stale view).
+- Sync slice name (`todo`) and STORAGE_KEY unchanged → existing
+  Dropbox blobs migrate transparently.
+
+### Deliberately NOT ported
+- Card recurrences existed here already (kept To-Do's richer engine).
+- Subtasks — logged as "under consideration" for a future wave.
+
+### Why not
+- No changes to shell contracts: filenames, slice name, storage key,
+  sync bridge all identical; the `?v=` cache-bust Action covers the
+  stamped assets automatically on the next version bump.
