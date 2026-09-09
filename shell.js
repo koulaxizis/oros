@@ -98,6 +98,8 @@
     weekly:  7 * DAY_MS,
     monthly: 30 * DAY_MS
   };
+    // v0.12.1 — Folder backups (File System Access API, Chromium desktop)
+  var FS_FOLDER_NAME_KEY = "oros-fs-folder-name"; // display name only
 
   function findWallpaper(id) {
     for (var i = 0; i < WALLPAPERS.length; i++) {
@@ -307,6 +309,11 @@
     while (snaps.length > SNAPSHOT_MAX) snaps.shift();
     writeSnapshots(snaps);
 
+    // Folder mirror (Chromium desktop, if a folder was chosen):
+    // best-effort, fire-and-forget — the localStorage net above is
+    // already durable, the file is the bonus copy.
+    writeSnapshotFile(false);
+
     setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
   }
 
@@ -327,6 +334,126 @@
     } catch (e) {
       handleSyncError(e);
     }
+  }
+  
+    // ---------- 5d. Backup folder (File System Access API) ----------
+  // Progressive enhancement: on Chromium desktop each NEW auto
+  // snapshot ALSO lands as a real JSON file in a user-chosen folder.
+  // Where the API is absent (Firefox/Safari/all mobile browsers)
+  // nothing changes: localStorage-only, and the folder UI row is
+  // never rendered. The localStorage net is never dependent on this.
+  function fsSupported() {
+    return typeof window.showDirectoryPicker === "function";
+  }
+
+  function openFsDb() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open("oros-fs", 1);
+      req.onupgradeneeded = function () {
+        req.result.createObjectStore("handles");
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror   = function () { reject(req.error); };
+    });
+  }
+
+  function saveFolderHandle(handle) {
+    return openFsDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction("handles", "readwrite");
+        tx.objectStore("handles").put(handle, "backup-folder");
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  function loadFolderHandle() {
+    return openFsDb().then(function (db) {
+      return idbFsGet(db, "backup-folder");
+    }).catch(function () { return null; });
+  }
+
+  function idbFsGet(db, key) {
+    return new Promise(function (resolve, reject) {
+      var req = db.transaction("handles").objectStore("handles").get(key);
+      req.onsuccess = function () { resolve(req.result || null); };
+      req.onerror   = function () { reject(req.error); };
+    });
+  }
+
+  function clearFolderHandle() {
+    return openFsDb().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction("handles", "readwrite");
+        tx.objectStore("handles").delete("backup-folder");
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { resolve(); };
+      });
+    }).catch(function () {});
+  }
+
+  // Writes the NEWEST snapshot as a real file. Auto path (force=false):
+  // runs after a fresh snapshot was stored; silently skips when the
+  // permission lapsed (browser can revoke — never nag on a timer).
+  // Manual path (force=true, from the Choose button): overwrites with
+  // current content so the user instantly sees proof it works.
+  function writeSnapshotFile(manual) {
+    if (!fsSupported()) return;
+    loadFolderHandle().then(function (handle) {
+      if (!handle) return;
+      return handle.queryPermission({ mode: "readwrite" }).then(function (perm) {
+        if (perm !== "granted") return;      // auto path: silent skip
+        var snaps = readSnapshots();
+        if (!snaps.length) return;
+        var snap = snaps[snaps.length - 1];
+
+        // Real file → meta belongs in it (unlike the localStorage body)
+        var filePayload = {
+          shell: snap.data.shell,
+          apps:  snap.data.apps,
+          meta:  { ver: 1, exportedAt: snap.at, source: "auto-snapshot" }
+        };
+        var name = "orOS-snapshot-" + snap.at.slice(0, 10) + ".json";
+        return handle.getFileHandle(name, { create: true })
+          .then(function (fh) { return fh.createWritable(); })
+          .then(function (stream) {
+            stream.write(JSON.stringify(filePayload, null, 2));
+            return stream.close();
+          })
+          .then(function () {
+            if (manual) setSyncMsg("ok", "sync.ok.fsfolder.saved");
+          });
+      });
+    }).catch(function () { /* best-effort — net stays local */ });
+  }
+
+    function chooseBackupFolder() {
+    // MUST run inside the click handler (user activation required)
+    window.showDirectoryPicker({ id: "oros-backups", mode: "readwrite" })
+      .then(function (handle) {
+        localStorage.setItem(FS_FOLDER_NAME_KEY, handle.name);
+        return saveFolderHandle(handle);
+      })
+      .then(function () {
+        // Folder writes follow snapshots — without a mode there is
+        // nothing to mirror. Tell the user instead of failing silently.
+        if (state.autoexport === "off") {
+          setSyncMsgRaw("dim", window.t("sync.fsfolder.enablefirst"));
+          renderMenu();
+          return;
+        }
+        // No snapshot yet (just switched mode on)? Take one now so
+        // the very first folder write is real, visible proof.
+        if (!readSnapshots().length) {
+          writeSnapshots([{
+            at: new Date().toISOString(),
+            data: getSnapshotBody()
+          }]);
+        }
+        return writeSnapshotFile(true);
+      })
+      .catch(function () { /* user cancelled the picker — no drama */ });
   }
   
     // ---------- 6. Clock (24h) ----------
@@ -952,6 +1079,52 @@
     });
     utils2.appendChild(restoreBtn);
     section.appendChild(utils2);
+
+    // Local snapshots status line (option 3 — make the net visible)
+    var snapInfo = document.createElement("div");
+    snapInfo.className = "sync-hint";
+    var snapList = readSnapshots();
+    if (snapList.length) {
+      var lastAt = snapList[snapList.length - 1].at;
+      var lastLabel = new Date(lastAt).toLocaleDateString(
+        state.lang === "el" ? "el-GR" : "en-GB",
+        { day: "2-digit", month: "short" });
+      snapInfo.textContent = window.t("sync.snapshots.info")
+        .replace("{n}", String(snapList.length))
+        .replace("{date}", lastLabel);
+    } else {
+      snapInfo.textContent = window.t("sync.snapshots.none");
+    }
+    section.appendChild(snapInfo);
+
+    // Backup folder (option 2 — File System Access API, Chromium
+    // desktop only; the row is never rendered where unsupported)
+    if (fsSupported()) {
+      var folderRow = document.createElement("div");
+      folderRow.className = "sync-interval";
+      var folderLabel = document.createElement("label");
+      var folderName = localStorage.getItem(FS_FOLDER_NAME_KEY);
+      folderLabel.textContent = folderName
+        ? window.t("sync.fsfolder.label") + ": " + folderName
+        : window.t("sync.fsfolder.label");
+      folderRow.appendChild(folderLabel);
+
+      var folderBtn = document.createElement("button");
+      folderBtn.className = "menu-item";
+      if (folderName) {
+        folderBtn.textContent = window.t("sync.fsfolder.stop");
+        folderBtn.addEventListener("click", function () {
+          stopFolderBackups();
+        });
+      } else {
+        folderBtn.textContent = window.t("sync.fsfolder.choose");
+        folderBtn.addEventListener("click", function () {
+          chooseBackupFolder();
+        });
+      }
+      folderRow.appendChild(folderBtn);
+      section.appendChild(folderRow);
+    }
 
     // Local backup: unencrypted export/import — works offline,
     // independent of the Dropbox connection state

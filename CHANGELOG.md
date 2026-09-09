@@ -500,3 +500,16 @@ over localStorage and the follow-up push uploaded the wipe.
   localStorage is the practical ceiling).
 - sync.js v0.8.1 cleanup re-audit + zombie-slice-registry note
   (deferred to a dedicated non-feature wave, per ritual).
+  
+  ## v0.12.1 — Snapshot status line + folder backups
+
+- Sync section now shows snapshot status: "{n}/5 · last: {date}".
+- Optional real-file backups via File System Access API (Chromium
+  desktop): "Backup folder" row with Choose/Stop. New snapshots are
+  mirrored as orOS-snapshot-YYYY-MM-DD.json in the chosen folder
+  (overwrite per day). Folder handle lives in IndexedDB ("oros-fs"),
+  per-device. Permission lapse on the auto path = silent skip; the
+  localStorage net is never dependent on the folder. Row is hidden
+  on browsers without the API (all mobile, Firefox, Safari).
+- Choosing a folder while Auto backup is Off prompts the user to
+  enable it first (folder writes mirror snapshots).

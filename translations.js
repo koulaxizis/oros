@@ -70,7 +70,14 @@ window.OROS_TRANSLATIONS = {
     "sync.err.nopass":      "Enter your passphrase first",
     "sync.err.version":     "Cloud data uses an unsupported version",
     "sync.err.auth":        "Dropbox authorization failed — reconnect",
-    "sync.err.generic":     "Sync failed — check your connection"
+    "sync.err.generic":     "Sync failed — check your connection",
+	"sync.snapshots.info":     "{n}/5 snapshots · last: {date}",
+    "sync.snapshots.none":     "No snapshots yet — turn on Auto backup.",
+    "sync.fsfolder.label":     "Backup folder",
+    "sync.fsfolder.choose":    "Choose…",
+    "sync.fsfolder.stop":      "Stop",
+    "sync.fsfolder.enablefirst": "Turn on Auto backup first — folder writes mirror snapshots.",
+    "sync.ok.fsfolder.saved":  "Snapshot written to folder"
   },
 
   el: {
@@ -136,7 +143,14 @@ window.OROS_TRANSLATIONS = {
     "sync.err.nopass":      "Δώσε πρώτα τον κωδικό σου",
     "sync.err.version":     "Τα δεδομένα του cloud χρησιμοποιούν μη υποστηριζόμενη έκδοση",
     "sync.err.auth":        "Η εξουσιοδότηση Dropbox απέτυχε — επανασύνδεση",
-    "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου"
+    "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου",
+	"sync.snapshots.info":     "{n}/5 snapshots · last: {date}",
+    "sync.snapshots.none":     "No snapshots yet — turn on Auto backup.",
+    "sync.fsfolder.label":     "Backup folder",
+    "sync.fsfolder.choose":    "Choose…",
+    "sync.fsfolder.stop":      "Stop",
+    "sync.fsfolder.enablefirst": "Turn on Auto backup first — folder writes mirror snapshots.",
+    "sync.ok.fsfolder.saved":  "Snapshot written to folder"
   }
 
 };
