@@ -22,7 +22,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.12.1";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.12.2";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1159,7 +1159,6 @@
     if (fsSupported()) {
       var folderRow = document.createElement("div");
       folderRow.className = "sync-interval";
-	  var lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
       var folderLabel = document.createElement("label");
       var folderName = localStorage.getItem(FS_FOLDER_NAME_KEY);
       var lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
