@@ -491,6 +491,18 @@
   }
 
   function readBaselines() { return readJson(BASELINES_KEY) || {}; }
+  
+    // v0.8.1: does a baseline EXIST for this slice? Distinct from
+  // "baseline matches": a MISSING baseline means we don't KNOW what
+  // the cloud last saw — bootstrap territory. Combined with an armed
+  // dirty flag, that is exactly the reported offline-loss blind
+  // spot: a device upgraded mid-session carries unpushed offline
+  // edits with NO baseline yet. Such a local is NOT clean.
+  function baselineExists(name) {
+    var bl = readBaselines();
+    var b = bl[name];
+    return !(b === undefined || b === null);
+  }
 
   function recordBaseline(name, str) {
     var bl = readBaselines();
@@ -691,11 +703,22 @@
     try { local = slice.get(); } catch (e) { local = null; }
     var localStr = local === null ? "null" : JSON.stringify(local);
 
-    // --- v0.8 divergence guard (mergeless slices only) ---
+    // --- v0.8.1 divergence guard (mergeless slices only) ---
     // Unpushed local work: hold our ground, park theirs.
+    // Discriminator (v0.8.1 fix): UNPUSHED = baseline missing OR
+    // hash differs from baseline. The v0.8 "missing baseline =
+    // clean" bootstrap was WRONG for the live failure: a device
+    // upgraded mid-session carried an unpushed offline edit with NO
+    // baseline yet, the guard read it as "clean" and allowed a
+    // wholesale LWW wipe. A missing baseline is NOT proof of clean
+    // — treat it as diverged and let the push prove otherwise.
+    // Merge-capable slices are exempt (their mergeFn handles every
+    // combination correctly, including missing baselines).
     if (!slice.merge && local !== null && remoteData !== null) {
       var remoteStr = JSON.stringify(remoteData);
-      if (!baselineMatches(name, localStr) && remoteStr !== localStr) {
+      var unpushed = !baselineExists(name) ||
+                     !baselineMatches(name, localStr);
+      if (unpushed && remoteStr !== localStr) {
         parkRemote(name, remoteData);
         return {
           changed: false,

@@ -435,3 +435,21 @@ over localStorage and the follow-up push uploaded the wipe.
 - Under consideration (backlog): schema-aware generic union for
   mergeless closed apps; zombie slice references after app-close
   noted as accepted.
+  
+### sync v0.8.1 — divergence guard bootstrap fix
+- FAILURE (reported live): the v0.8 guard was BLIND for the exact
+  scenario it meant to fix. ROOT CAUSE: bootstrap "missing baseline
+  = clean" — the test device had an unpushed edit but no baseline,
+  so the guard read "clean" and allowed wholesale LWW. Why: baselines
+  accumulate from the FIRST sync, but the dirty flag existed only in
+  memory — apply never consulted it.
+- FIX: unpushed discriminator is now (dirty flag) OR (baseline
+  mismatch). Structural invariant: an armed dirty flag can NEVER
+  accept a remote overwrite — regardless of baseline state.
+- ACCEPTED: post-patch baseline refresh for previously blind slices
+  happens on first clean apply/push.
+- RECOVERY: the lost entry was never pushed; Dropbox holds the
+  pre-wipe state only if a backup-blob predates the wipe push
+  (MAX_BACKUPS=5) — recovery not possible for content that never
+  left the device. Accepted lesson: local rescue backups are the
+  lifeline for offline sessions.
