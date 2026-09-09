@@ -100,6 +100,7 @@
   };
     // v0.12.1 — Folder backups (File System Access API, Chromium desktop)
   var FS_FOLDER_NAME_KEY = "oros-fs-folder-name"; // display name only
+  var FS_LAPSED_KEY = "oros-fs-lapsed";            // permission lapsed flag
 
   function findWallpaper(id) {
     for (var i = 0; i < WALLPAPERS.length; i++) {
@@ -342,6 +343,14 @@
   // Where the API is absent (Firefox/Safari/all mobile browsers)
   // nothing changes: localStorage-only, and the folder UI row is
   // never rendered. The localStorage net is never dependent on this.
+  //
+  // Permission lifecycle (v0.12.2): the browser can revoke the
+  // folder permission. Detection happens naturally — every write
+  // queries the permission first. On a revoked-but-chosen folder we
+  // arm the FS_LAPSED_KEY flag: the sync section shows ⚠ + a
+  // "Reconnect" button. Re-granting REQUIRES a click (user
+  // activation) — reconnectFolder is the only legal place to ask.
+
   function fsSupported() {
     return typeof window.showDirectoryPicker === "function";
   }
@@ -357,23 +366,6 @@
     });
   }
 
-  function saveFolderHandle(handle) {
-    return openFsDb().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction("handles", "readwrite");
-        tx.objectStore("handles").put(handle, "backup-folder");
-        tx.oncomplete = function () { resolve(); };
-        tx.onerror = function () { reject(tx.error); };
-      });
-    });
-  }
-
-  function loadFolderHandle() {
-    return openFsDb().then(function (db) {
-      return idbFsGet(db, "backup-folder");
-    }).catch(function () { return null; });
-  }
-
   function idbFsGet(db, key) {
     return new Promise(function (resolve, reject) {
       var req = db.transaction("handles").objectStore("handles").get(key);
@@ -382,28 +374,56 @@
     });
   }
 
+  function saveFolderHandle(handle) {
+    return openFsDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction("handles", "readwrite");
+        tx.objectStore("handles").put(handle, "backup-folder");
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror    = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  function loadFolderHandle() {
+    return openFsDb()
+      .then(function (db) { return idbFsGet(db, "backup-folder"); })
+      .catch(function () { return null; });
+  }
+
   function clearFolderHandle() {
     return openFsDb().then(function (db) {
       return new Promise(function (resolve) {
         var tx = db.transaction("handles", "readwrite");
         tx.objectStore("handles").delete("backup-folder");
         tx.oncomplete = function () { resolve(); };
-        tx.onerror = function () { resolve(); };
+        tx.onerror    = function () { resolve(); };
       });
     }).catch(function () {});
   }
 
-  // Writes the NEWEST snapshot as a real file. Auto path (force=false):
-  // runs after a fresh snapshot was stored; silently skips when the
-  // permission lapsed (browser can revoke — never nag on a timer).
-  // Manual path (force=true, from the Choose button): overwrites with
-  // current content so the user instantly sees proof it works.
+  // Writes the NEWEST snapshot as a real file. Auto path (manual=false):
+  // runs after a fresh snapshot was stored. Manual path (manual=true,
+  // from Choose/Reconnect buttons): overwrites with current content so
+  // the user instantly sees proof it works.
   function writeSnapshotFile(manual) {
     if (!fsSupported()) return;
     loadFolderHandle().then(function (handle) {
       if (!handle) return;
       return handle.queryPermission({ mode: "readwrite" }).then(function (perm) {
-        if (perm !== "granted") return;      // auto path: silent skip
+        if (perm !== "granted") {
+          // Folder chosen, permission REVOKED by the browser. Not
+          // silent anymore: arm the flag → sync section shows ⚠ +
+          // Reconnect. requestPermission needs a click — we never
+          // nag from a timer; detection + visibility is all we do.
+          localStorage.setItem(FS_LAPSED_KEY, "1");
+          return;
+        }
+        // Healthy path: permission granted — make sure no stale
+        // ⚠ lingers (e.g. browser re-granted on its own, or this is
+        // the first write after a successful Reconnect).
+        localStorage.removeItem(FS_LAPSED_KEY);
+
         var snaps = readSnapshots();
         if (!snaps.length) return;
         var snap = snaps[snaps.length - 1];
@@ -425,10 +445,10 @@
             if (manual) setSyncMsg("ok", "sync.ok.fsfolder.saved");
           });
       });
-    }).catch(function () { /* best-effort — net stays local */ });
+    }).catch(function () { /* best-effort — the localStorage net stays durable */ });
   }
 
-    function chooseBackupFolder() {
+  function chooseBackupFolder() {
     // MUST run inside the click handler (user activation required)
     window.showDirectoryPicker({ id: "oros-backups", mode: "readwrite" })
       .then(function (handle) {
@@ -436,7 +456,11 @@
         return saveFolderHandle(handle);
       })
       .then(function () {
-        // Folder writes follow snapshots — without a mode there is
+        // Fresh grant — never inherit a stale ⚠ from a previous
+        // permission lifetime.
+        localStorage.removeItem(FS_LAPSED_KEY);
+
+        // Folder writes mirror snapshots — without a mode there is
         // nothing to mirror. Tell the user instead of failing silently.
         if (state.autoexport === "off") {
           setSyncMsgRaw("dim", window.t("sync.fsfolder.enablefirst"));
@@ -454,6 +478,39 @@
         return writeSnapshotFile(true);
       })
       .catch(function () { /* user cancelled the picker — no drama */ });
+  }
+
+  function stopFolderBackups() {
+    localStorage.removeItem(FS_FOLDER_NAME_KEY);
+    localStorage.removeItem(FS_LAPSED_KEY);   // ⚠ only ever refers to a chosen folder
+    clearFolderHandle().then(function () { renderMenu(); });
+  }
+
+  // Permission lapsed (browser revoked it). One click re-grants:
+  // requestPermission is legal exactly here — inside a click handler,
+  // i.e. user activation. On success: flag down + instant manual
+  // write as proof of recovery. On decline: flag stays up (the ⚠
+  // keeps reminding on the next visit), nothing breaks, nothing
+  // is lost — the localStorage net was never affected.
+  function reconnectFolder() {
+    loadFolderHandle().then(function (handle) {
+      if (!handle) {
+        // Handle vanished (shouldn't happen, but be safe): reset UI
+        // to the Choose state and drop the orphaned flag.
+        localStorage.removeItem(FS_FOLDER_NAME_KEY);
+        localStorage.removeItem(FS_LAPSED_KEY);
+        renderMenu();
+        return;
+      }
+      return handle.requestPermission({ mode: "readwrite" })
+        .then(function (perm) {
+          if (perm === "granted") {
+            localStorage.removeItem(FS_LAPSED_KEY);
+            return writeSnapshotFile(true);   // instant proof of recovery
+          }
+          // Declined: keep the flag — ⚠ stays. No nagging beyond this.
+        });
+    }).catch(function () { /* request failed — flag stays, retry next click */ });
   }
   
     // ---------- 6. Clock (24h) ----------
@@ -1097,21 +1154,34 @@
     }
     section.appendChild(snapInfo);
 
-    // Backup folder (option 2 — File System Access API, Chromium
+        // Backup folder (option 2 — File System Access API, Chromium
     // desktop only; the row is never rendered where unsupported)
     if (fsSupported()) {
       var folderRow = document.createElement("div");
       folderRow.className = "sync-interval";
+	  var lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
       var folderLabel = document.createElement("label");
       var folderName = localStorage.getItem(FS_FOLDER_NAME_KEY);
-      folderLabel.textContent = folderName
-        ? window.t("sync.fsfolder.label") + ": " + folderName
-        : window.t("sync.fsfolder.label");
+      var lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
+      if (folderName) {
+        folderLabel.textContent = window.t("sync.fsfolder.label") + ": " + folderName +
+          (lapsed ? " ⚠ " + window.t("sync.fsfolder.lapsed") : "");
+      } else {
+        folderLabel.textContent = window.t("sync.fsfolder.label");
+      }
       folderRow.appendChild(folderLabel);
 
       var folderBtn = document.createElement("button");
       folderBtn.className = "menu-item";
-      if (folderName) {
+      if (folderName && lapsedFlag()) {
+        // Permission lapsed: one click re-grants, then an instant
+        // manual write proves recovery. (requestPermission REQUIRES
+        // user activation — this click handler is the only valid place.)
+        folderBtn.textContent = window.t("sync.fsfolder.reconnect");
+        folderBtn.addEventListener("click", function () {
+          reconnectFolder();
+        });
+      } else if (folderName) {
         folderBtn.textContent = window.t("sync.fsfolder.stop");
         folderBtn.addEventListener("click", function () {
           stopFolderBackups();

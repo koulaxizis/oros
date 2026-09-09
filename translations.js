@@ -145,12 +145,12 @@ window.OROS_TRANSLATIONS = {
     "sync.err.auth":        "Η εξουσιοδότηση Dropbox απέτυχε — επανασύνδεση",
     "sync.err.generic":     "Ο συγχρονισμός απέτυχε — έλεγξε τη σύνδεσή σου",
 	"sync.snapshots.info":     "{n}/5 snapshots · last: {date}",
-    "sync.snapshots.none":     "No snapshots yet — turn on Auto backup.",
-    "sync.fsfolder.label":     "Backup folder",
-    "sync.fsfolder.choose":    "Choose…",
-    "sync.fsfolder.stop":      "Stop",
-    "sync.fsfolder.enablefirst": "Turn on Auto backup first — folder writes mirror snapshots.",
-    "sync.ok.fsfolder.saved":  "Snapshot written to folder"
+    "sync.snapshots.none":     "Κανένα αντίγραφο ακόμα — ενεργοποίησε το αυτόματο αντίγραφο.",
+    "sync.fsfolder.label":     "Φάκελος αντιγράφων",
+    "sync.fsfolder.choose":    "Επιλογή…",
+    "sync.fsfolder.stop":      "Διακοπή",
+    "sync.fsfolder.enablefirst": "Ενεργοποίησε πρώτα το αυτόματο αντίγραφο — ο φάκελος καθρεφτίζει αντίγραφα.",
+    "sync.ok.fsfolder.saved":  "Το αντίγραφο γράφτηκε στον φάκελο"
   }
 
 };
