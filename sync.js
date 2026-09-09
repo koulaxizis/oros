@@ -493,6 +493,15 @@
         slices[name].set(data);
       } catch (e) {}
     }
+
+    // v0.7.1b: an app just OPENED — pull immediately so the freshly
+    // registered (merge-capable) slice catches up what happened
+    // elsewhere while it was closed. Without this, device B only
+    // learned remote changes at the next interval tick; opening an
+    // app was silently a no-sync event.
+    if (isConnected() && passphrase) {
+      setTimeout(function () { reconcile("register"); }, 100);
+    }
   }
 
   function collectPayload() {
