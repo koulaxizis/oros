@@ -15,6 +15,7 @@ on:
       - "todo/**"
       - "fonts/**"
       - "kanban/**"
+      - ".github/workflows/bump-version.yml"
 
 permissions:
   contents: write
@@ -56,6 +57,54 @@ jobs:
             echo "manifest version -> $VERSION"
           fi
 
+      - name: Cache-bust all app assets (?v=)
+        env:
+          OROS_VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          node - <<'EOF'
+          const fs = require('fs');
+
+          const ver = process.env.OROS_VERSION;
+          if (!ver) { console.error('ERROR: OROS_VERSION env missing'); process.exit(1); }
+
+          // Every index.html: root + each app folder (todo/, kanban/, …).
+          // Skipped: hidden dirs, non-app asset folders.
+          const SKIP_DIRS = new Set(['.', '..', 'icons', 'fonts']);
+          const files = ['index.html'];
+          for (const d of fs.readdirSync('.', { withFileTypes: true })) {
+            if (!d.isDirectory()) continue;
+            if (SKIP_DIRS.has(d.name) || d.name.startsWith('.')) continue;
+            const f = `${d.name}/index.html`;
+            if (fs.existsSync(f)) files.push(f);
+          }
+
+          // Stamp or REPLACE ?v= on relative .css/.js references only.
+          // Absolute/protocol-relative/rooted URLs are left untouched.
+          const safe = (p) => p.startsWith('http') || p.startsWith('//') || p.startsWith('/');
+
+          let touched = 0;
+          for (const f of files) {
+            let html;
+            try { html = fs.readFileSync(f, 'utf8'); }
+            catch (e) { console.warn(`skip (unreadable): ${f}`); continue; }
+
+            const next = html
+              .replace(/(href=")([^"#?]+\.css)(\?v=[^"]*)?"/g,
+                (mm, a, p) => safe(p) ? mm : `${a}${p}?v=${ver}"`)
+              .replace(/(src=")([^"#?]+\.js)(\?v=[^"]*)?"/g,
+                (mm, a, p) => safe(p) ? mm : `${a}${p}?v=${ver}"`);
+
+            if (next !== html) {
+              fs.writeFileSync(f, next);
+              touched++;
+              console.log(`stamped: ${f} -> ?v=${ver}`);
+            } else {
+              console.log(`already current: ${f}`);
+            }
+          }
+          console.log(`Cache-bust done: ${touched}/${files.length} file(s) updated with ?v=${ver}`);
+          EOF
+
       - name: Check for changes
         id: diff
         run: |
@@ -71,6 +120,6 @@ jobs:
           VERSION="${{ steps.ver.outputs.version }}"
           git config user.name  "orOS version bot"
           git config user.email "actions@github.com"
-          git add sw.js manifest.webmanifest
+          git add sw.js manifest.webmanifest index.html todo/index.html kanban/index.html
           git commit -m "chore: stamp version v$VERSION (auto)"
           git push
