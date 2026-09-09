@@ -12,7 +12,7 @@
 // Dropbox calls are cross-origin — never touched by this SW.
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.6.3";
+var CACHE_VERSION = "oros-v0.7.0";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
