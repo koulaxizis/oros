@@ -504,6 +504,10 @@ list-centric model instead of blind copy-paste.
 Cross-device merging for orOS. Two devices with the same app open
 simultaneously now converge instead of last-write-wins wiping one side.
 
+  - Sync-on-change: edits trigger a debounced full reconcile (~5s
+  after the last edit) in addition to interval/visible/hide triggers.
+  Bursts coalesce into one round-trip; no-ops when already clean.
+
 ### Core (sync.js v0.7)
 
 - **Slice merge API**: `registerSlice(name, get, set, storageKey, mergeFn)`
@@ -569,6 +573,3 @@ simultaneously now converge instead of last-write-wins wiping one side.
 - Merge-capable closed apps would require merge functions stored as
   data — deferred deliberately.
   
-  - Sync-on-change: edits trigger a debounced full reconcile (~5s
-  after the last edit) in addition to interval/visible/hide triggers.
-  Bursts coalesce into one round-trip; no-ops when already clean.
