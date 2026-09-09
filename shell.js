@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.4 — Shell logic (skins + wallpapers edition)
+// orOS Core v0.6.2 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   2. Preferences (skin, language, theme, wallpaper)
@@ -8,12 +8,12 @@
 //   5. Skin apply
 //   5b. Wallpaper apply
 //   6. Clock (24h)
-//   7. PWA: broker-aware registration + install flow + version toast
+//   7. PWA: install flow + version toast
 //   8. Apps loading & menu rendering (+ appearance + install/SYNC)
 //   9. Sync UI & shell slice registration
-//   10. App opening / return (fullscreen takeover)
-//   11. Menu open/close
-//   12. Wiring & boot
+//  10. App opening / return (fullscreen takeover)
+//  11. Menu open/close
+//  12. Wiring & boot
 // Update lifecycle is owned by the inline broker in index.html —
 // auto-update (skipWaiting + controllerchange reload); the shell
 // shows the version toast as sole confirmation.
@@ -85,8 +85,8 @@
   var CLOUD_ICON_SVG    = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
   var EYE_SVG     = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   var EYE_OFF_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
-  var PHOTO_ICON_SVG   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-    // App icons (SVG — ForkAwesome rejected, handcrafted forever)
+
+  // App icons (SVG — ForkAwesome rejected, handcrafted forever)
   var ICONS = {
     check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
   };
@@ -117,7 +117,7 @@
                    : (storedLang === "el" || storedLang === "en") ? storedLang
                    : "en";
 
-        var urlSkin    = params.get("skin");
+    var urlSkin    = params.get("skin");
     var storedSkin = localStorage.getItem("oros-skin");
     state.skin     = isValidSkin(urlSkin) ? urlSkin
                    : isValidSkin(storedSkin) ? storedSkin
@@ -162,13 +162,13 @@
   }
 
   // ---------- 5. Skin ----------
-    function applySkin() {
+  function applySkin() {
     if (!isValidSkin(state.skin)) state.skin = "oros";   // was "adwaita"
     document.documentElement.setAttribute("data-skin", state.skin);
   }
 
   // ---------- 5b. Wallpaper ----------
-    function applyWallpaper() {
+  function applyWallpaper() {
     var w = findWallpaper(state.wallpaper);
     if (!w) { state.wallpaper = DEFAULT_WALLPAPER; w = findWallpaper(DEFAULT_WALLPAPER); }
     var desktop = document.getElementById("oros-desktop");
@@ -262,25 +262,10 @@
     setTimeout(dismiss, 4000);
   }
 
-    if (state.swUpdateReady) {
-      var usection = document.createElement("div");
-      usection.className = "install-section";
-
-      var ubtn = document.createElement("button");
-      ubtn.className = "menu-item install-row update";
-      ubtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("update.action") + "</span>";
-      ubtn.addEventListener("click", function () {
-        if (window.orosActivateUpdate) {
-          window.orosActivateUpdate();   // inline broker (index.html)
-        } else if (swReg && swReg.waiting) {
-          swReg.waiting.postMessage("SKIP_WAITING");
-        }
-      });
-      usection.appendChild(ubtn);
-      host.appendChild(usection);
-      return;
-    }
-
+  // Install row (menu). Update flow: NONE — the inline broker in
+  // index.html owns the whole SW lifecycle (skipWaiting +
+  // controllerchange auto-reload). This row is install-only.
+  function renderInstallRow(host) {
     if (!state.deferredPrompt) return;
 
     var section = document.createElement("div");
@@ -455,7 +440,7 @@
                         (state.wallpaper === w.id ? " active" : "");
       thumb.setAttribute("title", wallpaperTitle(w.id));
       thumb.setAttribute("aria-label", wallpaperTitle(w.id));
-	  thumb.style.background = w.css;   // WYSIWYG — same source as desktop
+      thumb.style.background = w.css;   // WYSIWYG — same source as desktop
       thumb.addEventListener("click", function () {
         if (state.wallpaper === w.id) return;
         state.wallpaper = w.id;
@@ -468,6 +453,7 @@
     });
 
     section.appendChild(grid);
+    section.appendChild(host.ownerDocument === document ? section : section);
     host.appendChild(section);
   }
 
@@ -493,7 +479,7 @@
     return state.lang === "el" ? n.el : n.en;
   }
 
-    // ---------- 9. Sync UI & shell slice ----------
+  // ---------- 9. Sync UI & shell slice ----------
 
   // The shell's own syncable data — theme/language/skin/wallpaper
   // and the auto-sync interval all travel to the cloud.
@@ -965,8 +951,8 @@
     noteLocalChange();            // user action → sync engine
     applyLang();
   });
-  
-    // Unsynced-changes guard: warn on close when dirty AND online
+
+  // Unsynced-changes guard: warn on close when dirty AND online
   // (offline data is safe in localStorage — nothing to warn about).
   window.addEventListener("beforeunload", function (e) {
     if (window.orosSync && window.orosSync.isDirty() && navigator.onLine) {

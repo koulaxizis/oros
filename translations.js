@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.4 — Translations
+// orOS Core v0.6.2 — Translations
 // Inline i18n module (no fetch, no external files)
 // Default language: English | Secondary: Greek
 // Persisted via localStorage ('oros-lang'), overridable by ?lang=
@@ -21,7 +21,7 @@ window.OROS_TRANSLATIONS = {
     "menu.title":          "Applications",
     "menu.empty":          "No applications installed",
     "menu.empty.hint":     "Apps will appear here as they are installed.",
-	"category.productivity": "Productivity",
+    "category.productivity": "Productivity",
 
     "running.home":        "Return to desktop",
     "running.back":        "Back",
@@ -31,9 +31,6 @@ window.OROS_TRANSLATIONS = {
     "wallpaper.current":   "Current wallpaper",
 
     "install.trigger":     "Install orOS",
-    "update.available":    "A new version of orOS is ready.",
-    "update.reload":       "Update",
-    "update.action":       "Update orOS",
     "update.done":         "orOS was updated to",
 
     "sync.title":          "Sync",
@@ -86,7 +83,7 @@ window.OROS_TRANSLATIONS = {
     "menu.title":          "Εφαρμογές",
     "menu.empty":          "Δεν υπάρχουν εγκατεστημένες εφαρμογές",
     "menu.empty.hint":     "Οι εφαρμογές θα εμφανιστούν εδώ μόλις εγκατασταθούν.",
-	"category.productivity": "Παραγωγικότητα",
+    "category.productivity": "Παραγωγικότητα",
 
     "running.home":        "Επιστροφή στην επιφάνεια εργασίας",
     "running.back":        "Πίσω",
@@ -96,9 +93,6 @@ window.OROS_TRANSLATIONS = {
     "wallpaper.current":   "Τρέχουσα ταπετσαρία",
 
     "install.trigger":     "Εγκατάσταση του orOS",
-    "update.available":    "Μια νέα έκδοση του orOS είναι έτοιμη.",
-    "update.reload":       "Ανανέωση",
-    "update.action":       "Ενημέρωση του orOS",
     "update.done":         "Το orOS ενημερώθηκε στην",
 
     "sync.title":          "Συγχρονισμός",

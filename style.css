@@ -1,20 +1,24 @@
 /* ============================================================
-   orOS Core v0 — Shell stylesheet (PWA / mobile-first edition)
+   orOS Core v0.6.2 — Shell stylesheet (PWA / mobile-first)
    Architecture:
-     data-skin  = palette (adwaita, lumo, oros)
+     data-skin  = palette (10 skins)
      data-theme = light/dark (orthogonal to skin)
    Sections:
+     0. Local fonts (Nunito, vendored)
      1. Skin palettes (variables)
      2. Reset & base
      3. Top bar (persistent, safe-area aware)
      4. Desktop
      5. Applications menu
-     6. Running app (fullscreen takeover)
+     5bis. Running app (fullscreen takeover)
      7. Appearance controls (swatches + theme toggle)
+     Wallpaper picker
      8. Mobile-first adaptations
+     9. Sync section (in menu)
+    10. Version toast
    ============================================================ */
-   
-   /* ---------- 0. Local fonts (Nunito, vendored) ---------- */
+
+/* ---------- 0. Local fonts (Nunito, vendored) ---------- */
 @font-face {
   font-family: "Nunito";
   src: url("fonts/nunito-regular.woff2") format("woff2");
@@ -53,7 +57,7 @@
 
 /* ---------- 1. Skin palettes ---------- */
 
-/* Adwaita — GNOME-look, default skin */
+/* Adwaita — GNOME-look */
 [data-skin="adwaita"][data-theme="dark"] {
   --bg:           #1b1b1b;
   --bg-desktop:   #232225;
@@ -81,7 +85,7 @@
   --shadow:       rgba(0, 0, 0, 0.18);
 }
 
-/* lumo — the house purple, prototype palette */
+/* lumo — the house purple */
 [data-skin="lumo"][data-theme="dark"] {
   --bg:           #0f1115;
   --bg-desktop:   #131820;
@@ -109,7 +113,7 @@
   --shadow:       rgba(0, 0, 0, 0.18);
 }
 
-/* oros — the brand gold skin */
+/* oros — the brand gold skin (DEFAULT) */
 [data-skin="oros"][data-theme="dark"] {
   --bg:           #14120d;
   --bg-desktop:   #1a1712;
@@ -389,6 +393,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  font-weight: 800;           /* Nunito ExtraBold — brand-forward button */
+  letter-spacing: 0.5px;
 }
 
 #btn-menu.running { color: var(--accent-hover); }
@@ -609,8 +615,8 @@ body {
   #oros-running { bottom: env(safe-area-inset-bottom, 0px); }
 }
 
-/* Very narrow phones (≤ 360px): drop the weekday from the visual rhythm
-   — the date string shortens naturally, no truncation issues */
+/* Very narrow phones (≤ 360px): relax the brand weight to Medium so
+   the ExtraBold button doesn't crowd the bar */
 @media (max-width: 360px) {
   #btn-menu { font-weight: 500; }
 }
@@ -791,35 +797,9 @@ body {
   padding: 0 10px 8px;
 }
 
-/* ---------- 10. Update toast ---------- */
-#update-toast {
-  position: fixed;
-  top: calc(48px + env(safe-area-inset-top, 0px));
-  right: 12px;
-  z-index: 1100;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--panel-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px var(--shadow);
-  padding: 10px 14px;
-  font-size: 13px;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  pointer-events: none;
-}
-#update-toast.show {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-#update-toast strong { color: var(--accent); }
-
+/* ---------- 10. Version toast ---------- */
+/* Sole update confirmation — the shell appends #version-toast after
+   an auto-update (broker reloads the page; last-seen version differs). */
 #version-toast {
   position: fixed;
   bottom: 20px;
@@ -847,7 +827,3 @@ body {
   pointer-events: auto;
 }
 #version-toast strong { color: var(--accent); }
-
-.install-section .install-row.update {
-  background: var(--accent-soft);
-}

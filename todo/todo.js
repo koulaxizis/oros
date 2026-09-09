@@ -1,5 +1,5 @@
 // ============================================================
-// orOS To-Do — App logic (v0.1)
+// orOS To-Do — App logic (v0.2)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Data model, storage, IDs
@@ -59,7 +59,7 @@
       "confirm.listdel": "Delete this list and all its tasks?",
       "confirm.itemdel": "Delete this task?",
       "new.list":      "New list",
-	  "recur.list.next": "Next reset:",
+      "recur.list.next": "Next reset:",
       "drag.reorder":   "Reorder"
     },
     el: {
@@ -96,7 +96,7 @@
       "confirm.listdel": "Διαγραφή λίστας και όλων των εργασιών της;",
       "confirm.itemdel": "Διαγραφή αυτής της εργασίας;",
       "new.list":      "Νέα λίστα",
-	  "recur.list.next": "Επόμενο reset:",
+      "recur.list.next": "Επόμενο reset:",
       "drag.reorder":   "Αναδιάταξη"
     }
   };
@@ -177,8 +177,8 @@
   var renderQueued = false;
 
   function defaultState() {
-    var first = newListObj(LANG === "el" ? "Γénéral" : "General");
-    var work   = newListObj(LANG === "el" ? "Για ψώνια" : "Groceries");
+    var first = newListObj(LANG === "el" ? "Γενικά" : "General");
+    var work   = newListObj(LANG === "el" ? "Ψώνια" : "Groceries");
     return {
       ver: DATA_VER,
       activeList: first.id,
@@ -485,7 +485,7 @@
     renderItems();
   }
 
-    // ---------- 7. Item detail dialog ----------
+  // ---------- 7. Item detail dialog ----------
   var editingListId = null;
   var editingItemId = null;
 
@@ -840,8 +840,8 @@
     $("quick-add").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); quickAdd(); }
     });
-	
-	 // ---- ΠΡΟΣΘΗΚΗ: mouse-friendly add button ----
+
+    // ---- mouse-friendly add button ----
     $("quick-add-btn").addEventListener("click", function () {
       quickAdd();
       $("quick-add").focus();
@@ -900,7 +900,6 @@
       }
       $("dlg-item").close();
     });
-    document.getElementsByName("f-rec").forEach = [].forEach;
     [].forEach.call(document.getElementsByName("f-rec"), function (r) {
       r.addEventListener("change", function () {
         $("rec-editor").style.display =

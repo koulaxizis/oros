@@ -1,15 +1,18 @@
 // ============================================================
-// orOS Core v0.2 — Service Worker
+// orOS Core v0.6.2 — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
-//   - Update protocol: new SW installs and WAITS. Shell detects the
-//     waiting worker, shows "new version" toast; on user tap the shell
-//     posts SKIP_WAITING → activate + pages reload.
+//   - AUTO-UPDATE: skipWaiting() fires on install — a new worker
+//     activates immediately; the inline broker in index.html
+//     reloads the page on controllerchange. Zero user gates.
+// Update ritual: the GitHub Action stamps CACHE_VERSION from
+// APP_VERSION (shell.js) on every push to main. This value below
+// is a manual safety stamp in case the Action ever fails.
 // Dropbox calls are cross-origin — never touched by this SW.
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.6.0";
+var CACHE_VERSION = "oros-v0.6.2";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
@@ -33,9 +36,9 @@ var PRECACHE_URLS = [
   "fonts/nunito-extrabold.woff2",
 ];
 
-// ---------- Install: precache, stay waiting (user-controlled update) ----------
+// ---------- Install: precache + activate immediately ----------
 self.addEventListener("install", function (event) {
-  self.skipWaiting();          // ← ΠΡΟΣΘΗΚΗ: μηδέν αναμονή κλικ
+  self.skipWaiting();          // zero-gate update: install → activate
   event.waitUntil(
     caches.open(SHELL_CACHE).then(function (cache) {
       return cache.addAll(PRECACHE_URLS);
@@ -55,11 +58,6 @@ self.addEventListener("activate", function (event) {
       return self.clients.claim();
     })
   );
-});
-
-// ---------- Shell asks us to activate the waiting worker ----------
-self.addEventListener("message", function (event) {
-  if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
 
 // ---------- Fetch strategy ----------

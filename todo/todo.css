@@ -148,7 +148,23 @@ input, textarea, select {
   display: flex;
   gap: 8px;
 }
-#quick-add { flex: 1; }
+
+#quick-add {
+  flex: 1;
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#quick-add:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+#quick-add::placeholder { color: var(--text-dim); }
 
 /* Add button (inline SVG plus icon) */
 #quick-add-btn {
@@ -170,12 +186,6 @@ input, textarea, select {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-
-#quick-add:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-#quick-add::placeholder { color: var(--text-dim); }
 
 /* ---------- 5. List controls ---------- */
 #controls {
