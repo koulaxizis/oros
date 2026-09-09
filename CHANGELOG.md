@@ -300,3 +300,45 @@ fine only because hard refreshes bypass the SW.
 - style.css: #btn-menu ExtraBold (800) restored.
 - Desktop beforeunload dirty-guard (sync-pending warning).
 - sw.js: icon.svg + 4 PNGs added to precache (fully offline PWA).
+
+## v0.6.3 — Polish wave: scrollbars, menu width, version badge
+- Themed slim scrollbars for menu + desktop (scrollbar-width/thin,
+  webkit 8px, thumb = --border): the browser default ate ~15px of
+  menu width and clashed with every non-default skin.
+- Menu width 300px → 320px and menu-item labels now
+  nowrap+ellipsis: Greek sync-button labels ("Λήψη από το cloud")
+  were wrapping to a second line with the narrowed menu.
+- Version badge next to the orOS button ("v0.6.3" pill, reads
+  APP_VERSION — the single release key): permanent visual
+  confirmation of the running version on every device, one glance
+  instead of hunting for the toast. Why: mobile PWA update
+  verification was our recurring blind spot.
+- To-Do standalone-open guard: __orosSyncApi bridge is now created
+  unconditionally in registerSync() — opening todo/index.html
+  directly (no shell/sync.js) no longer TypeErrors in the list
+  dialog's recycler. Inside the shell behaviour is identical.
+- CHANGELOG registries scrubbed: removed the dead
+  orosActivateUpdate/__orosUpdateReady API entries (retired in
+  v0.6.2), storageKey added to the registerSlice signature,
+  ForkAwesome backlog line deleted (permanently rejected in v0.5.2).
+  Why: the reference registries are read-first in a new chat —
+  stale entries there seed wrong assumptions.
+  
+## v0.7.0 — Second app: Kanban
+- New app: kanban/ (core v0.1) — one board, columns with
+  add/rename(dblclick)/delete(confirm)+undo, cards with quick-add
+  per column (Enter + mouse-friendly + button), edit dialog
+  (text + notes), card counters, pointer-based drag & drop within
+  and ACROSS columns. EN/EL inline, oros-skin fallback palette,
+  live palette/lang inheritance from the shell.
+- Drag UX: threshold-gated (plain taps stay clicks → dialogs work),
+  cards use touch-action: pan-y — vertical touch scroll passes
+  through, horizontal touch moves become card drags.
+- Sync from line one: registerSlice("kanban", …, "oros-kanban-data")
+  + unconditional __orosSyncApi bridge (standalone-open safe);
+  travels in Dropbox blob (open or closed app) and Export/Import.
+- apps.json +2nd entry (Productivity); shell ICONS +"columns" SVG.
+- sw.js precaches kanban/ (fully offline PWA).
+- Why this shape: minimal-core rule — everything not essential
+  (multi-board, labels, due dates, WIP limits, filters) parked
+  until real usage demands it.

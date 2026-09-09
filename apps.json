@@ -8,6 +8,14 @@
       "icon": "check",
       "url": "todo/",
       "type": "internal"
+    },
+    {
+      "id": "kanban",
+      "name": "Kanban",
+      "category": "Productivity",
+      "icon": "columns",
+      "url": "kanban/",
+      "type": "internal"
     }
   ]
 }

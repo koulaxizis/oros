@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="oros" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kanban · orOS</title>
+  <link rel="stylesheet" href="kanban.css">
+</head>
+<body>
+
+  <!-- Board bar: board title + new column button -->
+  <header id="boardbar">
+    <h1 id="board-title" data-i18n="board.title">Board</h1>
+    <button id="col-add" aria-label="Add column" title="Add column"
+            data-i18n-title="col.add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </header>
+
+  <!-- Columns (horizontal scroll, one quick-add at the end of each) -->
+  <main id="board-scroll">
+    <div id="columns"></div>
+    <div id="empty" hidden>
+      <span data-i18n="empty.title">No columns yet</span>
+      <small data-i18n="empty.hint">Add your first column with the button above.</small>
+    </div>
+  </main>
+
+  <!-- Card dialog (tap a card to open) -->
+  <dialog id="dlg-card">
+    <form method="dialog" id="card-form" autocomplete="off">
+      <h3 data-i18n="card.title">Card</h3>
+
+      <label data-i18n="card.text">Text</label>
+      <input id="c-text" type="text" required>
+
+      <label data-i18n="card.notes">Notes</label>
+      <textarea id="c-notes" rows="4"></textarea>
+
+      <menu>
+        <button type="button" id="c-delete" class="danger" data-i18n="card.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Column dialog (rename via dblclick, delete) -->
+  <dialog id="dlg-col">
+    <form method="dialog" id="col-form" autocomplete="off">
+      <h3 data-i18n="col.settings">Column settings</h3>
+
+      <label data-i18n="col.name">Name</label>
+      <input id="col-name" type="text" required>
+
+      <menu>
+        <button type="button" id="col-delete" class="danger" data-i18n="col.delete">Delete column</button>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Undo / feedback toast -->
+  <div id="toast" role="status"></div>
+
+  <script src="kanban.js"></script>
+</body>
+</html>

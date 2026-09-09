@@ -1,0 +1,400 @@
+/* ============================================================
+   orOS Kanban — App stylesheet (v0.1)
+   Same pattern as To-Do: the :root values below are only an
+   offline/fallback match of the oros skin — runtime values are
+   injected from the shell (same origin).
+   Canonical classes (must match kanban.js):
+     #boardbar, #board-title, #col-add
+     #board-scroll, #columns, #empty
+     .k-col > .col-head (.col-title, .col-count)
+           > .col-body (.card)
+           > .col-foot  (.col-quick, .col-add-btn)
+   Sections:
+     1. Palette fallback + reset
+     2. Board bar
+     3. Board shell (horizontal column strip)
+     4. Columns
+     5. Cards
+     6. Drag & drop states
+     7. Dialogs (card + column)
+     8. Toast
+     9. Mobile-first adaptations
+   Icon buttons use inline SVG — no unicode glyphs (tofu-proof).
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+input, textarea, select {
+  font-family: inherit;
+  color: var(--text);
+}
+
+.spacer { flex: 1; }
+
+/* Themed slim scrollbars: the column strip scrolls horizontally,
+   each column's card list scrolls vertically. */
+#columns, .col-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#columns::-webkit-scrollbar, .col-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#columns::-webkit-scrollbar-track, .col-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+#columns::-webkit-scrollbar-thumb, .col-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+#columns::-webkit-scrollbar-thumb:hover, .col-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* ---------- 2. Board bar ---------- */
+#boardbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  user-select: none;
+  flex-shrink: 0;
+}
+#board-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+#col-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+#col-add:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#col-add:active { transform: scale(0.94); }
+
+/* ---------- 3. Board shell ---------- */
+#board-scroll {
+  flex: 1;
+  overflow: hidden;             /* scrolling happens inside #columns */
+  min-height: 0;
+}
+#columns {
+  display: flex;
+  height: 100%;
+  gap: 12px;
+  padding: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+/* Empty state */
+#empty {
+  text-align: center;
+  padding: 52px 20px;
+  color: var(--text-dim);
+}
+#empty span  { display: block; font-size: 15px; margin-bottom: 6px; }
+#empty small { font-size: 12.5px; opacity: 0.7; }
+
+/* ---------- 4. Columns ---------- */
+.k-col {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 260px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 0;                /* children clip inside */
+}
+
+.col-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 6px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.col-title {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;               /* dblclick opens rename dialog */
+}
+.col-count {
+  display: inline-block;
+  min-width: 17px;
+  padding: 1px 5px;
+  border-radius: 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.col-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 8px;
+  min-height: 60px;
+}
+
+.col-foot {
+  display: flex;
+  gap: 8px;
+  padding: 8px 8px 10px;
+  flex-shrink: 0;
+}
+
+.col-quick {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.col-quick:focus { border-color: var(--accent); }
+.col-quick::placeholder { color: var(--text-dim); }
+
+.col-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 38px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+.col-add-btn:active { transform: scale(0.94); }
+.col-add-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ---------- 5. Cards ---------- */
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  margin-bottom: 8px;
+  transition: border-color 0.12s, box-shadow 0.12s, opacity 0.15s;
+  box-shadow: 0 1px 2px var(--shadow);
+  touch-action: pan-y;           /* vertical scroll passes through;
+                                    horizontal pointer moves = ours (drag) */
+}
+.card:hover { border-color: var(--accent); }
+
+.card .text {
+  font-size: 13.5px;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.card .notes-preview {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 6. Drag & drop states ---------- */
+.card.dragging { opacity: 0.35; }
+.card.drag-over-above { box-shadow: inset 0  2px 0 var(--accent); }
+.card.drag-over-below { box-shadow: inset 0 -2px 0 var(--accent); }
+.k-col.drag-over      { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent-soft); }
+body.is-dragging { cursor: grabbing; user-select: none; }
+body.is-dragging * { cursor: grabbing !important; }
+
+/* ---------- 7. Dialogs ---------- */
+dialog {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 18px;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+
+dialog h3 {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+dialog label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin: 12px 0 5px;
+}
+dialog input[type="text"],
+dialog textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+}
+dialog input:focus,
+dialog textarea:focus { border-color: var(--accent); }
+dialog textarea { resize: vertical; min-height: 70px; }
+
+dialog menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+dialog menu button {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  min-height: 38px;
+  transition: background 0.15s;
+}
+dialog menu button:hover { background: var(--accent-soft); }
+dialog menu button.danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--danger);
+  font-weight: 500;
+}
+dialog menu button.danger:hover {
+  background: rgba(224, 108, 117, 0.12);
+  border-color: var(--danger);
+}
+
+/* ---------- 8. Toast ---------- */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#toast button {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 2px 4px;
+  pointer-events: auto;
+}
+
+/* ---------- 9. Mobile-first ---------- */
+@media (max-width: 480px) {
+  #columns { padding: 8px; gap: 8px; }
+  .k-col   { width: 78vw; }        /* comfortable card width on phone */
+  .col-quick { font-size: 16px; }   /* ≥16px: iOS won't zoom on focus */
+  dialog { width: calc(100vw - 20px); padding: 14px; }
+}
