@@ -8,9 +8,28 @@
 </head>
 <body>
 
-  <!-- Board bar: board title + new column button -->
+  <!-- Board bar: board title + search + label filter + new column -->
   <header id="boardbar">
     <h1 id="board-title" data-i18n="board.title">Board</h1>
+
+    <div id="search-wrap">
+      <input id="search" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Search…" data-i18n-ph="search.ph">
+      <button type="button" id="search-clear" hidden aria-label="Clear search"
+              data-i18n-title="search.clear" title="Clear">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div id="filter-slot">
+      <button type="button" id="filter-btn" aria-label="Filter by label"
+              data-i18n-title="filter.title" title="Filter by label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+        <span id="filter-count" hidden>0</span>
+      </button>
+      <div id="filter-pop" hidden></div>
+    </div>
+
     <button id="col-add" aria-label="Add column" title="Add column"
             data-i18n-title="col.add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   </header>
@@ -35,6 +54,23 @@
       <label data-i18n="card.notes">Notes</label>
       <textarea id="c-notes" rows="4"></textarea>
 
+      <!-- Labels (feature 9): chips + picker, all inside the dialog -->
+      <label data-i18n="card.labels">Labels</label>
+      <div id="c-lbl-chips"></div>
+      <button type="button" id="c-lbl-toggle" class="ghost">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-i18n="card.labels.manage">Add / manage labels</span>
+      </button>
+      <div id="c-lbl-picker" hidden>
+        <div id="c-lbl-list"></div>
+        <div class="lbl-new">
+          <input id="c-lbl-name" type="text" placeholder="New label…"
+                 data-i18n-ph="labels.newph" maxlength="24">
+          <div id="c-lbl-swatches"></div>
+          <button type="button" id="c-lbl-new-add" data-i18n="labels.add">Add</button>
+        </div>
+      </div>
+
       <!-- Subtasks (feature 10) -->
       <label data-i18n="card.subtasks">Subtasks</label>
       <div id="c-sub-list"></div>
@@ -44,7 +80,7 @@
                 title="Add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       </div>
 
-      <!-- Extra info (feature 11, adapted): free key–value fields -->
+      <!-- Extra info (feature 11, adapted): free key-value fields -->
       <label data-i18n="card.info">Extra info</label>
       <div id="c-info-list"></div>
       <button type="button" id="c-info-add" class="ghost">

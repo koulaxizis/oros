@@ -1,29 +1,30 @@
 // ============================================================
-// orOS Kanban — App logic (v0.2, Wave 1)
-// New in v0.2:
-//   - Subtasks (checkbox checklist + progress chip on card)
-//   - Extra info (free key-value fields per card)
-//   - Duplicate card
-//   - DATA_VER 1 → 2 migration (additive, zero data loss)
-//   - Card dialog is live-editing (mutations save instantly;
-//     text/notes are flushed on dialog close — no keystroke spam)
-// Δομή ενοτήτων (Sections):
+// orOS Kanban — App logic (v0.3, Wave 2)
+// New in v0.3:
+//   - Labels (board-wide store + attach/detach per card)
+//   - Board search (text, notes, extra info labels+values, label names)
+//   - Filter popover by label (OR within filter, AND with search)
+//   - DATA_VER 2 → 3 migration (additive: state.labels + card.labels)
+// Kept from v0.2: subtasks, extra info, duplicate card, live-editing
+// card dialog, pointer-based drag & drop, undo, sync slice.
+// Sections:
 //   1. Constants, i18n, helpers
 //   2. Data model, storage, migration
-//   3. Render: columns + cards (subtask chip / info preview)
+//   3. Render: columns + cards (chips / subtask chip / info preview)
 //   4. Quick-add (per column)
-//   5. Card dialog (live editing: subtasks, info, duplicate)
+//   5. Card dialog (live editing: labels, subtasks, info, duplicate)
 //   6. Column dialog
-//   7. Drag & drop (within + across columns, pointer-based)
-//   8. Undo / toast
-//   9. Sync slice (Dropbox) + palette inheritance
-//  10. Wiring & boot
+//   7. Search & filter (board bar)
+//   8. Drag & drop (pointer-based, threshold-gated)
+//   9. Undo / toast
+//  10. Sync slice (Dropbox) + palette inheritance
+//  11. Wiring & boot
 // ============================================================
 (function () {
   "use strict";
 
   var STORAGE_KEY = "oros-kanban-data";
-  var DATA_VER = 2;
+  var DATA_VER = 3;
 
   // ---------- 1. Constants, i18n, helpers ----------
   // Language comes from the shell (same-origin, shared localStorage).
@@ -31,70 +32,98 @@
 
   var STRINGS = {
     en: {
-      "board.title":     "Kanban",
-      "col.add":         "Add column",
-      "col.add.title":   "Add column",
-      "empty.title":     "No columns yet",
-      "empty.hint":      "Add your first column with the button above.",
-      "quick.add":       "Add a card…",
-      "card.title":      "Card",
-      "card.text":       "Text",
-      "card.notes":      "Notes",
-      "card.subtasks":   "Subtasks",
-      "card.subph":      "New subtask…",
-      "card.subadd":     "Add subtask",
-      "card.info":       "Extra info",
-      "card.info.add":   "Add field",
-      "card.info.label": "Field",
-      "card.info.value": "Value",
-      "card.delete":     "Delete",
-      "card.duplicate":  "Duplicate",
-      "dup.suffix":      " (copy)",
-      "toast.duplicated":"Duplicated",
-      "save":            "Save",
-      "col.settings":    "Column settings",
-      "col.name":        "Name",
-      "col.delete":      "Delete column",
-      "toast.deleted":   "Deleted",
-      "toast.undone":    "Restored",
-      "toast.coldel":    "Column deleted",
-      "undo":            "Undo",
-      "confirm.carddel": "Delete this card?",
-      "confirm.coldel":  "Delete this column and all its cards?",
-      "new.col":         "New column"
+      "board.title":      "Kanban",
+      "col.add":          "Add column",
+      "col.add.title":    "Add column",
+      "empty.title":      "No columns yet",
+      "empty.hint":       "Add your first column with the button above.",
+      "quick.add":        "Add a card…",
+      "search.ph":        "Search…",
+      "search.clear":     "Clear search",
+      "filter.title":    "Filter by label",
+      "filter.empty":     "No labels yet — add one from a card.",
+      "filter.del":       "Delete label",
+      "card.title":       "Card",
+      "card.text":        "Text",
+      "card.notes":       "Notes",
+      "card.labels":      "Labels",
+      "card.labels.manage": "Add / manage labels",
+      "labels.chipRemove": "Click to remove",
+      "labels.newph":     "New label…",
+      "labels.add":       "Add",
+      "labels.none":      "No labels yet — create one below.",
+      "card.subtasks":    "Subtasks",
+      "card.subph":       "New subtask…",
+      "card.add":         "Add",
+      "card.info":        "Extra info",
+      "card.info.add":    "Add field",
+      "card.info.label":  "Field",
+      "card.info.value":  "Value",
+      "card.delete":      "Delete",
+      "card.duplicate":   "Duplicate",
+      "dup.suffix":       " (copy)",
+      "toast.duplicated": "Duplicated",
+      "toast.labeladd":   "Label created",
+      "toast.labeldel":   "Label deleted",
+      "save":             "Save",
+      "col.settings":     "Column settings",
+      "col.name":         "Name",
+      "col.delete":       "Delete column",
+      "toast.deleted":    "Deleted",
+      "toast.undone":     "Restored",
+      "toast.coldel":     "Column deleted",
+      "undo":             "Undo",
+      "confirm.carddel":  "Delete this card?",
+      "confirm.coldel":   "Delete this column and all its cards?",
+      "confirm.lbldel":   "Delete this label? It will be removed from all cards.",
+      "new.col":          "New column"
     },
     el: {
-      "board.title":     "Kanban",
-      "col.add":         "Προσθήκη στήλης",
-      "col.add.title":   "Προσθήκη στήλης",
-      "empty.title":     "Δεν υπάρχουν στήλες ακόμα",
-      "empty.hint":      "Πρόσθεσε την πρώτη σου στήλη με το κουμπί παραπάνω.",
-      "quick.add":       "Προσθήκη κάρτας…",
-      "card.title":      "Κάρτα",
-      "card.text":       "Κείμενο",
-      "card.notes":      "Σημειώσεις",
-      "card.subtasks":   "Υπο-εργασίες",
-      "card.subph":      "Νέα υπο-εργασία…",
-      "card.subadd":     "Προσθήκη υπο-εργασίας",
-      "card.info":       "Επιπλέον στοιχεία",
-      "card.info.add":   "Προσθήκη πεδίου",
-      "card.info.label": "Πεδίο",
-      "card.info.value": "Τιμή",
-      "card.delete":     "Διαγραφή",
-      "card.duplicate":  "Αντίγραφο",
-      "dup.suffix":      " (αντίγραφο)",
-      "toast.duplicated":"Αντιγράφηκε",
-      "save":            "Αποθήκευση",
-      "col.settings":    "Ρυθμίσεις στήλης",
-      "col.name":        "Όνομα",
-      "col.delete":      "Διαγραφή στήλης",
-      "toast.deleted":   "Διαγράφηκε",
-      "toast.undone":    "Επαναφέρθηκε",
-      "toast.coldel":    "Η στήλη διαγράφηκε",
-      "undo":            "Αναίρεση",
-      "confirm.carddel": "Διαγραφή αυτής της κάρτας;",
-      "confirm.coldel":  "Διαγραφή στήλης και όλων των καρτών της;",
-      "new.col":         "Νέα στήλη"
+      "board.title":      "Kanban",
+      "col.add":          "Προσθήκη στήλης",
+      "col.add.title":    "Προσθήκη στήλης",
+      "empty.title":      "Δεν υπάρχουν στήλες ακόμα",
+      "empty.hint":       "Πρόσθεσε την πρώτη σου στήλη με το κουμπί παραπάνω.",
+      "quick.add":        "Προσθήκη κάρτας…",
+      "search.ph":        "Αναζήτηση…",
+      "search.clear":     "Καθαρισμός αναζήτησης",
+      "filter.title":     "Φιλτράρισμα ανά ετικέτα",
+      "filter.empty":     "Δεν υπάρχουν ετικέτες — πρόσθεσε από κάποια κάρτα.",
+      "filter.del":       "Διαγραφή ετικέτας",
+      "card.title":       "Κάρτα",
+      "card.text":        "Κείμενο",
+      "card.notes":       "Σημειώσεις",
+      "card.labels":      "Ετικέτες",
+      "card.labels.manage": "Προσθήκη / διαχείριση ετικετών",
+      "labels.chipRemove": "Κλικ για αφαίρεση",
+      "labels.newph":     "Νέα ετικέτα…",
+      "labels.add":       "Προσθήκη",
+      "labels.none":      "Δεν υπάρχουν ετικέτες — δημιούργησε από κάτω.",
+      "card.subtasks":    "Υπο-εργασίες",
+      "card.subph":       "Νέα υπο-εργασία…",
+      "card.add":         "Προσθήκη",
+      "card.info":        "Επιπλέον στοιχεία",
+      "card.info.add":    "Προσθήκη πεδίου",
+      "card.info.label":  "Πεδίο",
+      "card.info.value":  "Τιμή",
+      "card.delete":      "Διαγραφή",
+      "card.duplicate":   "Αντίγραφο",
+      "dup.suffix":       " (αντίγραφο)",
+      "toast.duplicated": "Αντιγράφηκε",
+      "toast.labeladd":   "Η ετικέτα δημιουργήθηκε",
+      "toast.labeldel":   "Η ετικέτα διαγράφηκε",
+      "save":             "Αποθήκευση",
+      "col.settings":     "Ρυθμίσεις στήλης",
+      "col.name":         "Όνομα",
+      "col.delete":       "Διαγραφή στήλης",
+      "toast.deleted":    "Διαγράφηκε",
+      "toast.undone":     "Επαναφέρθηκε",
+      "toast.coldel":     "Η στήλη διαγράφηκε",
+      "undo":             "Αναίρεση",
+      "confirm.carddel":  "Διαγραφή αυτής της κάρτας;",
+      "confirm.coldel":    "Διαγραφή στήλης και όλων των καρτών της;",
+      "confirm.lbldel":    "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις κάρτες.",
+      "new.col":          "Νέα στήλη"
     }
   };
 
@@ -110,11 +139,13 @@
 
   // ---------- 2. Data model, storage, migration ----------
   // state = {
-  //   ver: 2,
+  //   ver: 3,
+  //   labels: [{ id, name, color }],
   //   columns: [{
   //     id, name,
   //     cards: [{
   //       id, text, notes,
+  //       labels:   [<label id>],
   //       subtasks: [{ id, text, completed }],
   //       info:     [{ id, label, value }]
   //     }]
@@ -123,14 +154,19 @@
   var state = null;
   var renderQueued = false;
 
+  var SWATCH_COLORS = ["#d4af37", "#4caf50", "#f44336", "#2196f3",
+                       "#ff9800", "#9c27b0", "#e91e63", "#03a9f4"];
+  var FALLBACK_COLOR = "#d4af37";
+
   // Additive migration: bring ANY older/missing shape up to DATA_VER.
-  // Missing subtasks/info arrays are filled with empty ones — never
-  // destructive, so old backups, v1 slices and v2 data all load alike.
+  // Never destructive — old backups, v1/v2 slices and v3 data load alike.
   function migrate(data) {
     if (!data || !Array.isArray(data.columns)) return null;
+    if (!Array.isArray(data.labels)) data.labels = [];
     data.columns.forEach(function (col) {
       if (!Array.isArray(col.cards)) col.cards = [];
       col.cards.forEach(function (card) {
+        if (!Array.isArray(card.labels)) card.labels = [];
         if (!Array.isArray(card.subtasks)) card.subtasks = [];
         if (!Array.isArray(card.info)) card.info = [];
       });
@@ -145,6 +181,7 @@
       : ["To Do", "Doing", "Done"];
     return {
       ver: DATA_VER,
+      labels: [],
       columns: names.map(function (n) { return newColumnObj(n); })
     };
   }
@@ -200,7 +237,16 @@
     return null;
   }
 
+  function labelById(id) {
+    for (var i = 0; i < state.labels.length; i++) {
+      if (state.labels[i].id === id) return state.labels[i];
+    }
+    return null;
+  }
+
   // ---------- 3. Render: columns + cards ----------
+  // renderAll paints the board honoring search + filters.
+  // The column counter shows VISIBLE cards (search/filter aware).
   function renderAll() {
     var host = $("columns");
     host.innerHTML = "";
@@ -216,7 +262,7 @@
     el.className = "k-col";
     el.dataset.colId = col.id;
 
-    // Head: title (dblclick → rename) + card count
+    // Head: title (dblclick → rename) + visible card count
     var head = document.createElement("div");
     head.className = "col-head";
 
@@ -227,17 +273,21 @@
     title.addEventListener("dblclick", function () { openColDialog(col.id); });
     head.appendChild(title);
 
+    var visible = 0;
+    col.cards.forEach(function (c) { if (cardMatchesView(c)) visible++; });
+
     var count = document.createElement("span");
     count.className = "col-count";
-    count.textContent = String(col.cards.length);
+    count.textContent = String(visible);
     head.appendChild(count);
 
     el.appendChild(head);
 
-    // Body: the cards
+    // Body: the visible cards
     var body = document.createElement("div");
     body.className = "col-body";
     col.cards.forEach(function (card) {
+      if (!cardMatchesView(card)) return;
       body.appendChild(makeCardEl(col, card));
     });
     el.appendChild(body);
@@ -292,6 +342,23 @@
       el.appendChild(prev);
     }
 
+    // Label chips on the card face
+    if (card.labels && card.labels.length > 0) {
+      var chipHost = document.createElement("div");
+      chipHost.className = "chips";
+      card.labels.forEach(function (lid) {
+        var label = labelById(lid);
+        if (!label) return;
+        var chip = document.createElement("span");
+        chip.className = "chip";
+        chip.style.background = label.color || FALLBACK_COLOR;
+        chip.textContent = label.name;
+        chip.title = label.name;
+        chipHost.appendChild(chip);
+      });
+      if (chipHost.childNodes.length > 0) el.appendChild(chipHost);
+    }
+
     // Subtask progress chip: "x/y" + slim bar (only when subtasks exist)
     if (card.subtasks && card.subtasks.length > 0) {
       var done = 0;
@@ -337,7 +404,7 @@
     if (!raw) return;
     col.cards.unshift({
       id: uid(), text: raw, notes: "",
-      subtasks: [], info: []
+      labels: [], subtasks: [], info: []
     });
     input.value = "";
     save(); scheduleRender();
@@ -359,6 +426,7 @@
   // ---------- 5. Card dialog (live editing) ----------
   var editingColId = null;
   var editingCardId = null;
+  var pickedSwatch = FALLBACK_COLOR;     // new-label color pick (accent default)
 
   // Small helper: the card currently open in the dialog (or null).
   function editingCard() {
@@ -377,18 +445,129 @@
     $("c-text").value = card.text;
     $("c-notes").value = card.notes || "";
 
+    renderCardLabels(card);
     renderSubtasks(card);
     renderInfo(card);
+    $("c-lbl-picker").hidden = true;
 
     $("dlg-card").showModal();
     setTimeout(function () { $("c-text").focus(); }, 50);
   }
 
   // Live-editing model:
-  //   - structural changes (check / add / remove row) → save() + render NOW
+  //   - structural changes (check / add / remove / label attach) → save() NOW
   //   - typing in text fields → in-memory only, flushed on dialog close
   //     (dialog 'close' fires for submit AND for Esc — nothing is ever lost)
 
+  // --- Labels inside the card dialog ---
+  function renderCardLabels(card) {
+    var host = $("c-lbl-chips");
+    host.innerHTML = "";
+    (card.labels || []).forEach(function (lid) {
+      var label = labelById(lid);
+      if (!label) return;
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "lbl-chip";
+      chip.style.background = label.color || FALLBACK_COLOR;
+      chip.title = t("labels.chipRemove");
+      var name = document.createElement("span");
+      name.textContent = label.name;
+      chip.appendChild(name);
+      chip.addEventListener("click", function () {
+        card.labels = card.labels.filter(function (id) { return id !== lid; });
+        save(); scheduleRender();
+        renderCardLabels(card);
+      });
+      host.appendChild(chip);
+    });
+  }
+
+  // Picker: all board labels — click toggles attach/detach on this card.
+  function renderLblPicker() {
+    var list = $("c-lbl-list");
+    list.innerHTML = "";
+
+    if (state.labels.length === 0) {
+      var none = document.createElement("div");
+      none.className = "lbl-none";
+      none.textContent = t("labels.none");
+      list.appendChild(none);
+      return;
+    }
+
+    var card = editingCard();
+    state.labels.forEach(function (label) {
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "lbl-item";
+      if (card && card.labels.indexOf(label.id) !== -1) {
+        item.classList.add("attached");
+      }
+
+      var dot = document.createElement("span");
+      dot.className = "fl-dot";
+      dot.style.background = label.color || FALLBACK_COLOR;
+      item.appendChild(dot);
+
+      var name = document.createElement("span");
+      name.className = "fl-name";
+      name.textContent = label.name;
+      item.appendChild(name);
+
+      item.addEventListener("click", function () {
+        var c = editingCard();
+        if (!c) return;
+        var pos = c.labels.indexOf(label.id);
+        if (pos === -1) c.labels.push(label.id);
+        else            c.labels.splice(pos, 1);
+        save(); scheduleRender();
+        renderCardLabels(c);
+        renderLblPicker();
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  function renderLblSwatches() {
+    var host = $("c-lbl-swatches");
+    host.innerHTML = "";
+    SWATCH_COLORS.forEach(function (c) {
+      var sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "lbl-swatch" + (pickedSwatch === c ? " sel" : "");
+      sw.style.background = c;
+      sw.addEventListener("click", function () {
+        pickedSwatch = c;
+        renderLblSwatches();
+      });
+      host.appendChild(sw);
+    });
+  }
+
+  function createNewLabel() {
+    var input = $("c-lbl-name");
+    var name = input.value.trim();
+    if (!name) return;
+
+    var label = { id: uid(), name: name, color: pickedSwatch };
+    state.labels.push(label);
+
+    var card = editingCard();
+    if (card) card.labels.push(label.id);
+
+    pickedSwatch = FALLBACK_COLOR;
+    input.value = "";
+
+    save(); scheduleRender();
+    if (card) renderCardLabels(card);
+    renderLblPicker();
+    input.focus();                      // keep focus → quick label batches
+    showToast(t("toast.labeladd"), false);
+  }
+
+  // --- Subtasks inside the card dialog ---
   function renderSubtasks(card) {
     var host = $("c-sub-list");
     host.innerHTML = "";
@@ -453,6 +632,7 @@
     input.focus();
   }
 
+  // --- Extra info inside the card dialog ---
   function renderInfo(card) {
     var host = $("c-info-list");
     host.innerHTML = "";
@@ -506,8 +686,10 @@
     }
   }
 
-  // Duplicate: deep clone (fresh ids everywhere), "(copy)" suffix,
-  // placed right after the original in the same column.
+  // --- Duplicate card ---
+  // Deep clone (fresh ids everywhere), "(copy)" suffix, placed right
+  // after the original in the same column. Labels are copied by id
+  // (they reference the shared board-wide store).
   function duplicateCard() {
     var col = colById(editingColId);
     var card = editingCard();
@@ -516,6 +698,7 @@
     var copy = JSON.parse(JSON.stringify(card));
     copy.id = uid();
     copy.text = card.text + t("dup.suffix");
+    copy.labels = card.labels.slice();
     copy.subtasks.forEach(function (s) { s.id = uid(); });
     copy.info.forEach(function (f) { f.id = uid(); });
 
@@ -527,13 +710,17 @@
   }
 
   // Flush typed-but-unsaved text when the dialog closes by ANY path
-  // (Save button, Esc, backdrop policy) — guarantees no data loss.
+  // (Save button, Esc) — guarantees no data loss. Also prunes empty
+  // info fields (no label AND no value) that would be pure clutter.
   $("dlg-card").addEventListener("close", function () {
     if (editingColId === null) return;
     var card = editingCard();
     editingColId = null;
     editingCardId = null;
     if (!card) return;
+    card.info = (card.info || []).filter(function (f) {
+      return (f.label || "").trim() || (f.value || "").trim();
+    });
     save(); scheduleRender();
   });
 
@@ -558,7 +745,132 @@
     openColDialog(col.id);     // straight into settings to name it
   }
 
-  // ---------- 7. Drag & drop ----------
+  // ---------- 7. Search & filter ----------
+  var searchQuery = "";
+  var activeFilters = [];
+
+  // Combined view gate: search (substring) AND filter (≥1 active label).
+  function cardMatchesView(card) {
+    if (searchQuery && !matchesSearch(card)) return false;
+    if (activeFilters.length > 0 && !matchesFilters(card)) return false;
+    return true;
+  }
+
+  // Search covers: title, notes, info labels AND values, attached label names.
+  function matchesSearch(card) {
+    if ((card.text || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
+    if ((card.notes || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
+    for (var i = 0; i < (card.info || []).length; i++) {
+      var f = card.info[i];
+      if ((f.label || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
+      if ((f.value || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
+    }
+    for (var j = 0; j < (card.labels || []).length; j++) {
+      var label = labelById(card.labels[j]);
+      if (label && label.name.toLowerCase().indexOf(searchQuery) !== -1) return true;
+    }
+    return false;
+  }
+
+  // OR over selected labels — a card shows if it carries ANY active label.
+  function matchesFilters(card) {
+    if (!card.labels || card.labels.length === 0) return false;
+    for (var i = 0; i < activeFilters.length; i++) {
+      if (card.labels.indexOf(activeFilters[i]) !== -1) return true;
+    }
+    return false;
+  }
+
+  function updateFilterBtn() {
+    var btn = $("filter-btn");
+    var badge = $("filter-count");
+    if (!btn || !badge) return;
+    if (activeFilters.length > 0) {
+      btn.classList.add("has-filters");
+      badge.textContent = String(activeFilters.length);
+      badge.hidden = false;
+    } else {
+      btn.classList.remove("has-filters");
+      badge.hidden = true;
+    }
+  }
+
+  function renderFilterPop() {
+    var pop = $("filter-pop");
+    pop.innerHTML = "";
+
+    if (state.labels.length === 0) {
+      var e = document.createElement("div");
+      e.className = "fl-empty";
+      e.textContent = t("filter.empty");
+      pop.appendChild(e);
+      return;
+    }
+
+    state.labels.forEach(function (label) {
+      var item = document.createElement("div");
+      item.className = "fl-item";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = activeFilters.indexOf(label.id) !== -1;
+      cb.addEventListener("change", function () {
+        var at = activeFilters.indexOf(label.id);
+        if (cb.checked && at === -1) activeFilters.push(label.id);
+        if (!cb.checked && at !== -1) activeFilters.splice(at, 1);
+        updateFilterBtn();
+        scheduleRender();
+      });
+      item.appendChild(cb);
+
+      var dot = document.createElement("span");
+      dot.className = "fl-dot";
+      dot.style.background = label.color || FALLBACK_COLOR;
+      item.appendChild(dot);
+
+      var name = document.createElement("span");
+      name.className = "fl-name";
+      name.textContent = label.name;
+      item.appendChild(name);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "fl-del";
+      del.setAttribute("aria-label", t("filter.del"));
+      del.title = t("filter.del");
+      del.innerHTML =
+        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      del.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (!confirm(t("confirm.lbldel"))) return;
+        deleteLabel(label.id);
+      });
+      item.appendChild(del);
+
+      pop.appendChild(item);
+    });
+  }
+
+  // Deleting a label detaches it everywhere and clears it from active
+  // filters → no orphan ids on cards, no ghost filter entries.
+  function deleteLabel(labelId) {
+    state.labels = state.labels.filter(function (l) { return l.id !== labelId; });
+    state.columns.forEach(function (col) {
+      col.cards.forEach(function (card) {
+        card.labels = (card.labels || []).filter(function (id) { return id !== labelId; });
+      });
+    });
+    activeFilters = activeFilters.filter(function (id) { return id !== labelId; });
+
+    updateFilterBtn();
+    save(); scheduleRender();
+    if (!$("filter-pop").hidden) renderFilterPop();
+    var card = editingCard();
+    if (card) renderCardLabels(card);
+    showToast(t("toast.labeldel"), false);
+  }
+
+  // ---------- 8. Drag & drop ----------
   // Pointer-based, threshold-gated: a plain tap never starts a drag
   // (the click → dialog keeps working). Vertical touch movement
   // scrolls the column list (touch-action: pan-y); horizontal
@@ -568,7 +880,7 @@
   function attachCardDrag(el, col, card) {
     el.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;   // primary only
-      // never start a drag from inside the open dialog's inputs
+      // never start a drag while the card dialog is open
       if ($("dlg-card").open) return;
 
       var started = false;
@@ -683,7 +995,7 @@
     dest.cards.splice(at, 0, card);
   }
 
-  // ---------- 8. Undo / toast ----------
+  // ---------- 9. Undo / toast ----------
   var undoSnapshot = null;
   var toastTimer = null;
 
@@ -724,7 +1036,7 @@
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 5000);
   }
 
-  // ---------- 9. Sync slice + palette inheritance ----------
+  // ---------- 10. Sync slice + palette inheritance ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
                   "--panel-bg", "--border", "--shadow"];
@@ -774,7 +1086,7 @@
 
   function sliceSet(data) {
     data = migrate(JSON.parse(JSON.stringify(data || null)));
-    if (!data || !Array.isArray(data.columns) || data.columns.length === 0) return;
+    if (!data || Array.isArray(data.columns) === false || data.columns.length === 0) return;
 
     window.__orosSyncApi._suppress = true;
     try {
@@ -786,7 +1098,7 @@
     scheduleRender();
   }
 
-  // ---------- 10. Wiring & boot ----------
+  // ---------- 11. Wiring & boot ----------
   function applyI18n() {
     var n = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < n.length; i++) {
@@ -797,7 +1109,7 @@
       ti[j].setAttribute("title", t(ti[j].getAttribute("data-i18n-title")));
       ti[j].setAttribute("aria-label", ti[j].getAttribute("title"));
     }
-    // Placeholders (data-i18n-ph) — set AFTER inputs exist in the DOM
+    // Placeholders (data-i18n-ph) — inputs exist in the DOM by now
     var ph = document.querySelectorAll("[data-i18n-ph]");
     for (var k = 0; k < ph.length; k++) {
       ph[k].setAttribute("placeholder", t(ph[k].getAttribute("data-i18n-ph")));
@@ -808,9 +1120,35 @@
     // New column
     $("col-add").addEventListener("click", createColumn);
 
+    // --- Search ---
+    $("search").addEventListener("input", function () {
+      searchQuery = this.value.trim().toLowerCase();
+      $("search-clear").hidden = !searchQuery;
+      scheduleRender();
+    });
+    $("search-clear").addEventListener("click", function () {
+      $("search").value = "";
+      searchQuery = "";
+      $("search-clear").hidden = true;
+      scheduleRender();
+      $("search").focus();
+    });
+
+    // --- Filter popover: toggle + outside-click close ---
+    $("filter-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      var pop = $("filter-pop");
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) renderFilterPop();
+    });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest("#filter-slot")) {
+        $("filter-pop").hidden = true;
+      }
+    });
+
     // --- Card dialog ---
-    // Text/notes: typed values live in the card object via input
-    // listeners in openCardDialog wiring below; flushed on close.
+    // Text/notes flush on dialog close — no keystroke save spam.
     $("c-text").addEventListener("input", function () {
       var card = editingCard();
       if (card) card.text = $("c-text").value;
@@ -840,6 +1178,22 @@
         save(); scheduleRender();
       }
       $("dlg-card").close();
+    });
+
+    // Labels (inside dialog)
+    $("c-lbl-toggle").addEventListener("click", function () {
+      var picker = $("c-lbl-picker");
+      if (picker.hidden) {
+        renderLblPicker();
+        renderLblSwatches();
+        picker.hidden = false;
+      } else {
+        picker.hidden = true;
+      }
+    });
+    $("c-lbl-new-add").addEventListener("click", createNewLabel);
+    $("c-lbl-name").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); createNewLabel(); }
     });
 
     // Subtasks

@@ -1,27 +1,28 @@
 /* ============================================================
-   orOS Kanban — App stylesheet (v0.2 / Wave 1)
+   orOS Kanban — App stylesheet (v0.3 / Wave 2)
    Same pattern as To-Do: the :root values below are only an
    offline/fallback match of the oros skin — runtime values are
    injected from the shell (same origin).
    Canonical classes (must match kanban.js):
-     #boardbar, #board-title, #col-add
+     #boardbar, #board-title, #search-wrap, #search, #search-clear,
+     #filter-slot, #filter-btn, #filter-count, #filter-pop,
      #board-scroll, #columns, #empty
      .k-col > .col-head (.col-title, .col-count)
-           > .col-body (.card [+ .sub-ind, .info-prev])
+           > .col-body (.card [+ .chips, .sub-ind, .info-preview])
            > .col-foot  (.col-quick, .col-add-btn)
-   NEW in v0.2 (Wave 1):
-     .card .sub-ind      — subtask progress chip (x/y + bar)
-     .card .info-preview — extra info fields one-line preview
-     dialog .sub-row     — editable subtask row (checkbox+text+x)
-     dialog .info-row    — editable info row (label+value+x)
+   NEW in v0.3 (Wave 2):
+     #search-wrap …      — board-bar search box
+     #filter-btn/pop …   — label filter popover
+     .card .chips/.chip  — label chips on the card face
+     dialog label editor — #c-lbl-chips, .lbl-chip, #c-lbl-picker…
    Sections:
      1. Palette fallback + reset
-     2. Board bar
+     2. Board bar (+ search / filter tools)
      3. Board shell (horizontal column strip)
      4. Columns
-     5. Cards (+ subtask/info indicators)
+     5. Cards (+ label chips / subtask / info indicators)
      6. Drag & drop states
-     7. Dialogs (card + column) + subtask/info editors
+     7. Dialogs (card + column) + subtask/info/label editors
      8. Toast
      9. Mobile-first adaptations
    Icon buttons use inline SVG — no unicode glyphs (tofu-proof).
@@ -107,12 +108,60 @@ input, textarea, select {
   flex-shrink: 0;
 }
 #board-title {
-  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
+  flex-shrink: 1;
 }
-#col-add {
+
+/* Search box */
+#search-wrap {
+  position: relative;
+  flex: 2;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+#search {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 30px 6px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#search:focus { border-color: var(--accent); }
+#search::placeholder { color: var(--text-dim); }
+#search::-webkit-search-cancel-button { display: none; } /* we own the clear button */
+
+#search-clear {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  transition: color 0.15s, background 0.15s;
+}
+#search-clear:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+
+/* Filter button + popover */
+#filter-slot { position: relative; flex-shrink: 0; }
+#filter-btn, #col-add {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -125,11 +174,101 @@ input, textarea, select {
   flex-shrink: 0;
   transition: border-color 0.15s, background 0.15s;
 }
-#col-add:hover {
+#filter-btn:hover, #col-add:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-#col-add:active { transform: scale(0.94); }
+#filter-btn.active, #col-add:active { transform: scale(0.94); }
+#filter-btn.has-filters {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+#filter-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+#filter-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 900;
+  min-width: 210px;
+  max-width: 260px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
+  padding: 6px;
+  user-select: none;
+}
+
+.fl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 8px;
+  text-align: left;
+  transition: background 0.12s;
+}
+.fl-item:hover { background: var(--accent-soft); }
+.fl-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fl-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.fl-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fl-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.fl-del:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+
+.fl-empty {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}
 
 /* ---------- 3. Board shell ---------- */
 #board-scroll {
@@ -283,6 +422,29 @@ input, textarea, select {
   white-space: nowrap;
 }
 
+/* Label chips on the card face */
+.card .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.card .chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 110px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--bg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+}
+
 /* Subtask progress chip: "x/y" + slim bar, appears under the text */
 .card .sub-ind {
   display: flex;
@@ -367,6 +529,103 @@ dialog textarea {
 dialog input:focus,
 dialog textarea:focus { border-color: var(--accent); }
 dialog textarea { resize: vertical; min-height: 70px; }
+
+/* --- Label editor inside the card dialog --- */
+#c-lbl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 0;
+}
+.lbl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--bg);
+  cursor: pointer;               /* click = detach from card */
+  user-select: none;
+  max-width: 140px;
+}
+.lbl-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#c-lbl-picker {
+  margin-top: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+}
+#c-lbl-list { display: flex; flex-direction: column; gap: 2px; }
+
+.lbl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: left;
+  transition: background 0.12s;
+}
+.lbl-item:hover { background: var(--accent-soft); }
+.lbl-item.attached { outline: 1px solid var(--accent); }
+
+.lbl-new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.lbl-new input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+  min-height: 36px;
+}
+#c-lbl-swatches { display: flex; gap: 5px; flex-wrap: wrap; }
+.lbl-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+.lbl-swatch:hover { transform: scale(1.15); }
+.lbl-swatch.sel { border-color: var(--text); }
+#c-lbl-new-add {
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+#c-lbl-new-add:hover { filter: brightness(1.1); }
+
+.lbl-none {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+}
 
 /* Subtask / info rows inside the card dialog */
 .sub-row {
@@ -544,9 +803,11 @@ dialog menu button.danger:hover {
 
 /* ---------- 9. Mobile-first ---------- */
 @media (max-width: 480px) {
+  #board-title { display: none; }  /* app is already named Kanban; search needs the room */
   #columns { padding: 8px; gap: 8px; }
   .k-col   { width: 78vw; }        /* comfortable card width on phone */
-  .col-quick { font-size: 16px; }   /* ≥16px: iOS won't zoom on focus */
-  .col-quick, #c-sub { font-size: 16px; }
+  #search { font-size: 16px; }     /* ≥16px: iOS won't zoom on focus */
+  .col-quick { font-size: 16px; }
   dialog { width: calc(100vw - 20px); padding: 14px; }
+  #filter-pop { right: -8px; }
 }

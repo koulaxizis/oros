@@ -377,3 +377,40 @@ print styles (#34).
 **Deferred by design (conflicts with orOS philosophy):**
 UI-visibility toggles, Fork Awesome, `prompt()`-based CRUD, in-app theme toggle,
 local File System Access sync — permanently out.
+
+## v0.7.2 — Kanban Wave 2 (labels, search, filter) — 2026-09-09
+
+**Why:** Boards grow past what one screen can hold — labels give cards a
+second organizational axis, and search/filter let a growing board stay
+usable. Both respect the offline-first, single-slice, zero-dependency rules.
+
+- **Labels** (#9 from legacy-feature audit, minimal form): board-wide label
+  store (`state.labels`, 8-color swatch palette, accent default). Managed
+  entirely from the card dialog — attach/detach chips (click chip = detach),
+  toggle picker, inline creation with color pick. No separate management
+  modal, no `prompt()` dialogs. WHY: labels + filters were useless apart;
+  together they unlock organized boards with one shared store.
+- **Board search** (#15): live search in the board bar over card text,
+  notes, extra-info labels AND values, and attached label names (per the
+  feature-11 contract). Debounce-free: render is already requestAnimationFrame-
+  batched, so typing is smooth even on large boards.
+- **Filter by label** (#16): popover with checkboxes + color dots, count
+  badge on the button, delete-label inline (with confirm + global cleanup
+  from all cards and active filters — no orphan ids). OR within selected
+  labels, AND with search. Column counters show VISIBLE cards.
+- Schema: `DATA_VER` 2 → **3** (additive: `state.labels[]` + `card.labels[]`),
+  same one-shot migration in `load()` AND `sliceSet` — old slices and
+  backups migrate in place with zero data loss.
+- Duplicate card now copies labels too (by reference id, shared store).
+- Mobile (<480px): board title hidden to make room for search + filter;
+  search input at 16px (no iOS focus-zoom).
+
+**Under consideration (backlog, no conflicts with orOS):**
+multi-board (#1–5), priority levels (#6), due dates (#7), card colors (#8),
+markdown preview (#12), created/modified timestamps (#14), archive (#17),
+statistics (#18), CSV export (#19), add-column dashed placeholder (#23),
+print styles (#34).
+
+**Deferred by design (conflicts with orOS philosophy):**
+UI-visibility toggles, Fork Awesome, `prompt()`-based CRUD, in-app theme
+toggle, local File System Access sync — permanently out.
