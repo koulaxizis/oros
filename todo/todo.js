@@ -796,7 +796,7 @@
       }
     };
 
-    api.registerSlice("todo", sliceGet, sliceSet);
+    api.registerSlice("todo", sliceGet, sliceSet, "oros-todo-data");
   }
 
   function sliceGet() {

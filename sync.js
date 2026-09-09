@@ -1,16 +1,23 @@
 // ============================================================
-// orOS Core v0.3 — Dropbox Sync module (final)
+// orOS Core v0.6 — Dropbox Sync module
 //
 // - window.orosSync — shared sync framework for the shell + all apps
 // - Dropbox PKCE OAuth (app-folder scoped, no client secret)
 // - AES-GCM + PBKDF2 client-side encryption (zero-knowledge)
 // - Trusted device vault: passphrase sealed with a NON-EXTRACTABLE
-//   AES key living in IndexedDB (opt-in per device). The key never
-//   leaves the crypto subsystem — JS can use it, never read it.
+//   AES key living in IndexedDB (opt-in per device).
 // - Dirty flag: any slice change marks sync pending (persisted).
 // - Auto engine: boot reconcile (pull, then push if dirty),
 //   periodic push (default 3 min) when dirty, push on tab hide.
-//   Silent failures — never blocks the UI.
+//
+// v0.6 — PERSISTED SLICE REGISTRY + CARRY-FORWARD:
+//   - registerSlice(name, get, set, storageKey?) persists the
+//     storageKey → future boots hydrate lightweight proxies
+//     (get/set read/write the app's localStorage directly), so
+//     pushes/pulls carry app slices EVEN WHEN THE APP IS CLOSED.
+//   - Unknown remote slices (app never registered anywhere on this
+//     device) are held in a carry mailbox and pushed forward —
+//     a device can never silently wipe app data it doesn't know.
 // ============================================================
 (function () {
   "use strict";
@@ -25,6 +32,8 @@
   var INTERVAL_KEY = "oros-sync-interval";   // minutes; 0 = off
   var DIRTY_KEY       = "oros-sync-dirty";
   var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
+  var SLICES_KEY      = "oros-slices";       // persisted registry: name -> storageKey
+  var CARRY_KEY       = "oros-remote-carry"; // mailbox: name -> data (unknown slices)
 
   var TOKEN_API   = "https://api.dropboxapi.com/oauth2/token";
   var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
@@ -144,7 +153,7 @@
   function restoreTokens() {
     accessToken   = localStorage.getItem("oros-db-access")  || null;
     refreshToken  = localStorage.getItem("oros-db-refresh") || null;
-    tokenExpiry   = parseInt(localStorage.getItem("oros-db-expiry") || "0", 10) || 0;
+    tokenExpiry  = parseInt(localStorage.getItem("oros-db-expiry") || "0", 10) || 0;
     cachedAccount = null;
     try {
       var acc = localStorage.getItem("oros-db-account");
@@ -375,9 +384,62 @@
     }).catch(function () { /* vault already gone — fine */ });
   }
 
-  // ---------- Slices ----------
-  function registerSlice(name, getter, setter) {
-    slices[name] = { get: getter, set: setter };
+  // ---------- Slices (v0.6: persisted registry + proxies + carry) ----------
+
+  function readJson(key) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function writeJson(key, obj) {
+    try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
+  }
+
+  function readCarry() { return readJson(CARRY_KEY); }
+  function writeCarry(obj) {
+    if (obj && Object.keys(obj).length > 0) writeJson(CARRY_KEY, obj);
+    else localStorage.removeItem(CARRY_KEY);
+  }
+
+  function persistSliceEntry(name, storageKey) {
+    var reg = readJson(SLICES_KEY) || {};
+    reg[name] = storageKey;
+    writeJson(SLICES_KEY, reg);
+  }
+
+  // Boot-time: for every persisted registration without a live slice,
+  // install a lightweight proxy that reads/writes the app's localStorage
+  // directly. Result: app slices travel in pushes/pulls EVEN WHEN THE
+  // APP IS CLOSED (root cause of the v0.5 sync loss).
+  function hydratePersistedSlices() {
+    var reg = readJson(SLICES_KEY) || {};
+    Object.keys(reg).forEach(function (name) {
+      if (slices[name]) return;          // live registration always wins
+      var storageKey = reg[name];
+      slices[name] = {
+        live: false,
+        get: function () { return readJson(storageKey); },
+        set: function (data) { writeJson(storageKey, data); }
+      };
+    });
+  }
+
+  function registerSlice(name, getter, setter, storageKey) {
+    slices[name] = { get: getter, set: setter, live: true };
+
+    if (storageKey) persistSliceEntry(name, storageKey);
+
+    // Mailbox flush: if remote data for this slice was carried while it
+    // was unknown on this device, deliver it through the (now live)
+    // setter — the app picks it up from its own storage.
+    var carry = readCarry();
+    if (carry && carry[name] !== undefined) {
+      var data = carry[name];
+      delete carry[name];
+      writeCarry(carry);
+      try { slices[name].set(data); } catch (e) {}
+    }
   }
 
   function collectPayload() {
@@ -388,6 +450,22 @@
       if (name === "shell") payload.shell = data;
       else payload.apps[name] = data;
     });
+
+    // Carry-forward: remote slices UNKNOWN on this device travel
+    // forward untouched — a device must never wipe app data it
+    // doesn't know about. Entries whose slice has since become
+    // known (live or proxied) are dropped: local state is
+    // authoritative there.
+    var carry = readCarry();
+    if (carry) {
+      var changed = false;
+      Object.keys(carry).forEach(function (name) {
+        if (slices[name]) { delete carry[name]; changed = true; }
+        else payload.apps[name] = carry[name];
+      });
+      if (changed) writeCarry(carry);
+    }
+
     payload.meta = { lastPush: new Date().toISOString(), device: navigator.userAgent.slice(0, 80) };
     return payload;
   }
@@ -399,11 +477,21 @@
       try { slices.shell.set(payload.shell); applied++; } catch (e) {}
     }
     if (payload.apps) {
+      var carry = readCarry() || {};
+      var carryChanged = false;
       Object.keys(payload.apps).forEach(function (name) {
-        if (slices[name] && payload.apps[name] !== null) {
-          try { slices[name].set(payload.apps[name]); applied++; } catch (e) {}
+        var data = payload.apps[name];
+        if (data === null || data === undefined) return;
+        if (slices[name]) {
+          try { slices[name].set(data); applied++; } catch (e) {}
+        } else {
+          // Unknown slice: park it in the carry mailbox. Never dropped,
+          // never overwritten — the next push relays it forward.
+          carry[name] = data;
+          carryChanged = true;
         }
       });
+      if (carryChanged) writeCarry(carry);
     }
     return applied;
   }
@@ -615,6 +703,11 @@
 
   // ---------- Boot sequence ----------
   restoreTokens();
+
+  // Hydrate persisted slice proxies BEFORE any pull/push can fire —
+  // this is what makes app slices travel while apps are closed.
+  hydratePersistedSlices();
+
   var redirectHandled = handleOAuthRedirect();
 
   // Vault unlock chain: after redirect handling settles, unseal + auto-engine
@@ -633,16 +726,16 @@
     // Lifecycle
     connect:            connect,
     disconnect:         disconnect,
-    isConnected:        isConnected,
-    getUserInfo:        getUserInfo,
-    redirectHandled:    redirectHandled,
-    vaultUnlocked:      vaultUnlocked,    // promise<bool>: true if auto-unlocked
+    isConnected:         isConnected,
+    getUserInfo:         getUserInfo,
+    redirectHandled:     redirectHandled,
+    vaultUnlocked:       vaultUnlocked,    // promise<bool>: true if auto-unlocked
 
     // Data
     pull:               pull,
     push:               push,
-	
-	    // Local rescue backup (plaintext, unencrypted)
+
+    // Local rescue backup (plaintext, unencrypted)
     exportData: function () {
       var payload = collectPayload();
       payload.meta = {
@@ -671,9 +764,9 @@
     hasDeviceVault:     hasDeviceVault,
 
     // App integration
-    registerSlice:      registerSlice,
+    registerSlice:      registerSlice,    // (name, get, set, storageKey?)
     markDirty:          markDirty,        // apps call this on data change
-	getIntervalMinutes: getIntervalMinutes,
+    getIntervalMinutes: getIntervalMinutes,
     setIntervalMinutes: setIntervalMinutes,
     isDirty:            isDirty,
 

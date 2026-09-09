@@ -256,3 +256,20 @@ fine only because hard refreshes bypass the SW.
   sandbox attributes, external/untrusted app isolation.
 - GitHub Action: verify first runs green in Actions tab, then forget it.
 </arg_value>`
+
+## v0.6.0 — Sync engine: persisted slices + carry-forward
+- ROOT CAUSE (To-Do data not syncing via Dropbox while export
+  worked): slice registry was in-memory only — app slices existed
+  solely while the app was open; pushes from closed-app sessions
+  omitted them AND silently overwrote the cloud blob (data loss).
+- registerSlice gains optional 4th arg storageKey; registrations
+  persist to localStorage (oros-slices). Boot hydrates lightweight
+  proxies for closed apps (direct localStorage get/set) — app
+  slices now sync in every push/pull, open or closed.
+- Carry-forward mailbox (oros-remote-carry): remote slices unknown
+  on a device are relayed forward untouched on next push — a
+  device can never wipe app data it doesn't know. Flush into the
+  app's storage on first live registration.
+- Recovery note: remote orOS-backup-*.json files in the Dropbox
+  app folder may hold the latest todo-inclusive payload.
+- todo.js: registerSlice call now passes "oros-todo-data".
