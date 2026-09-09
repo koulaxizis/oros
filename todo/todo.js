@@ -492,6 +492,16 @@
     entities.forEach(function (e, i) { e.pos = i; });
     return entities;
   }
+  
+    // Symmetric ordering-reference pick: larger om wins; TIES broken
+  // by lexicographic id sequence (identical decision on both devices
+  // — never "local wins", that flip-flops forever).
+  function pickRef(aArr, bArr, aOm, bOm) {
+    if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
+    var ka = JSON.stringify((aArr || []).map(function (e) { return e.id; }));
+    var kb = JSON.stringify((bArr || []).map(function (e) { return e.id; }));
+    return ka >= kb ? aArr : bArr;
+  }
 
   // Lists merge STRUCTURALLY: headers LWW by mtime, but each list's
   // items merge independently — a header edit on one device must
@@ -505,7 +515,7 @@
     var head = newerEntity(strip(la), strip(lb));
     head.om = Math.max(la.om || 0, lb.om || 0);
     head.items = unionEntities(la.items || [], lb.items || [], tomb);
-    head.items = orderEntities(head.items, (la.om || 0) >= (lb.om || 0) ? la.items : lb.items);
+    head.items = orderEntities(head.items, pickRef(la.items, lb.items, la.om, lb.om));
     return head;
   }
 
@@ -520,8 +530,15 @@
       if (tomb[id] < cutoff) delete tomb[id];
     });
 
-    // scalars: LWW by root settings mtime
-    var settings = (a.sm || 0) >= (b.sm || 0) ? a : b;
+    // scalars: LWW by root settings mtime. TIES must NOT favor the
+    // local side — merge(A,B) and merge(B,A) must pick the SAME side
+    // or equal-sm devices ping-pong forever. Symmetric tie-break:
+    // lexicographic compare of the scalars themselves.
+    var sa = JSON.stringify([a.activeList || null, !!a.hideCompleted]);
+    var sb = JSON.stringify([b.activeList || null, !!b.hideCompleted]);
+    var settings = (a.sm || 0) !== (b.sm || 0)
+      ? ((a.sm || 0) > (b.sm || 0) ? a : b)
+      : (sa >= sb ? a : b);
 
     var out = {
       ver: DATA_VER,
@@ -536,7 +553,7 @@
 
     // labels: content LWW, order by larger om side
     var labels = unionEntities(a.labels || [], b.labels || [], tomb);
-    out.labels = orderEntities(labels, (a.om || 0) >= (b.om || 0) ? (a.labels || []) : (b.labels || []));
+    out.labels = orderEntities(labels, pickRef(a.labels, b.labels, a.om, b.om));
 
     // lists: pair by id, structural merge (headers + independent items)
     var listMap = {};
@@ -556,7 +573,7 @@
       else merged = pair[0];                       // one-sided (new or removed elsewhere)
       if (entAlive(merged, tomb)) mergedLists.push(merged);
     });
-    out.lists = orderEntities(mergedLists, (a.om || 0) >= (b.om || 0) ? (a.lists || []) : (b.lists || []));
+    out.lists = orderEntities(mergedLists, pickRef(a.lists, b.lists, a.om, b.om));
 
     // post-conditions: never ship an empty state (fresh-install
     // fallback), never point activeList at a ghost
