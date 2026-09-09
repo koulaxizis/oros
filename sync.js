@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.7 — Dropbox Sync module
+// orOS Core v0.8 — Dropbox Sync module
 //
 // - window.orosSync — shared sync framework for the shell + all apps
 // - Dropbox PKCE OAuth (app-folder scoped, no client secret)
@@ -8,7 +8,8 @@
 //   AES key living in IndexedDB (opt-in per device).
 // - Dirty flag: any slice change marks sync pending (persisted).
 // - Auto engine: boot reconcile (pull, then push if dirty),
-//   periodic push (default 3 min) when dirty, push on tab hide.
+//   periodic push (default 3 min) when dirty, push on tab hide,
+//   reconcile on tab-visible AND on "online" (v0.8).
 //
 // v0.6 — PERSISTED SLICE REGISTRY + CARRY-FORWARD:
 //   - registerSlice(name, get, set, storageKey?) persists the
@@ -26,7 +27,7 @@
 //     last-write-wins wiping one side.
 //   - mergeFn(local, remote) → merged state. Must be deterministic:
 //     both devices, given the same two inputs, must produce the
-//     same output (tie-breaks: bigger mtime wins, then bigger uid).
+//     same output (tie-breaks: bigger mtime wins, then lexicographic).
 //   - Engine flow per slice on pull:
 //       merged = merge(local, remote)
 //       if merged ≠ local → set(merged) + re-render (count++)
@@ -37,14 +38,42 @@
 //     info.merged === true means the value came from a merge, not
 //     a wholesale remote overwrite (apps use it for a toast).
 //     Legacy setters ignore the second argument — safe.
-//   - IMPORTANT LIMIT: hydrated proxies (app closed) have NO
-//     mergeFn — app code cannot run — so closed apps sync LWW.
-//     Merge lives exactly where the user scenario lives: two
-//     devices with the app OPEN simultaneously.
-//   - Interval + boot = full reconcile (pull → merge → push if
-//     dirty). Tab-hide stays push-only (no pull latency when the
-//     tab may be dying). Tab-VISIBLE triggers a reconcile: coming
-//     back to a device catches up remote changes immediately.
+//
+// v0.8 — DIVERGENCE GUARD (offline / closed-app data loss):
+//   - ROOT CAUSE FIXED (reported live): an offline edit made while
+//     an app was CLOSED was destroyed by the first online pull —
+//     the hydrated proxy (mergeless) applied the remote blob
+//     WHOLESALE over localStorage, and the follow-up push uploaded
+//     the wipe. Unpushed local work was destroyable.
+//   - Per-slice baselines ("oros-sync-baselines"): content hash of
+//     each slice as last KNOWN-SYNCED (recorded on every successful
+//     push and on every clean apply).
+//   - applySlice guard: a MERGELESS slice (closed-app proxy, or an
+//     app without mergeFn) whose local content DIVERGES from its
+//     baseline carries unpushed local work → remote is NEVER
+//     applied over it. Instead the remote parks in the carry
+//     mailbox, local is flagged dirty (cloudStale) and the next
+//     push uploads the local work as the new truth.
+//   - Parked remotes survive until the app opens LIVE and
+//     registers WITH a merge function — registerSlice's flush
+//     merges them into local, so both sides' work converges
+//     (a carried snapshot can never clobber newer local work).
+//     Mergeless live slices apply parked data only when local
+//     storage is empty (restore case); otherwise the parked
+//     snapshot is by construction older than this device's last
+//     successful push and is dropped.
+//   - collectPayload no longer DROPS carry entries for known
+//     slices — they are divergence lifelines, not relics.
+//   - "online" event: the engine reconciles the moment
+//     connectivity returns (was: interval / tab-visible only).
+//   - BOOTSTRAP: a missing baseline (first run after upgrade)
+//     counts as CLEAN — pre-v0.8 devices were LWW-synced already,
+//     so their first guarded pull behaves exactly like before.
+//   - ACCEPTED LIMIT: two devices offline-editing the same CLOSED
+//     app converge only when one of them opens it live somewhere
+//     (merge needs app code). Nothing unpushed is ever destroyed;
+//     the losing side's work re-emerges through the parked
+//     snapshot on the next live merge.
 // ============================================================
 (function () {
   "use strict";
@@ -60,11 +89,12 @@
   var DIRTY_KEY       = "oros-sync-dirty";
   var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
   var SLICES_KEY      = "oros-slices";       // persisted registry: name -> storageKey
-  var CARRY_KEY       = "oros-remote-carry"; // mailbox: name -> data (unknown slices)
+  var CARRY_KEY       = "oros-remote-carry"; // mailbox: name -> data (unknown + parked-remote slices)
+  var BASELINES_KEY   = "oros-sync-baselines"; // v0.8: name -> hash(last synced content)
   var DEBOUNCE_MS     = 5000;                // v0.7.1: quiet period after last edit
 
   var TOKEN_API   = "https://api.dropboxapi.com/oauth2/token";
-  var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
+    var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
   var RPC_API     = "https://api.dropboxapi.com/2/";
   var CONTENT_API = "https://content.dropboxapi.com/2/";
 
@@ -415,8 +445,9 @@
         .objectStore("keys").delete("device"));
     }).catch(function () { /* vault already gone — fine */ });
   }
-
-  // ---------- Slices (v0.6: persisted registry + proxies + carry) ----------
+  
+  
+  // ---------- Slices (v0.6 registry + proxies + v0.8 divergence guard) ----------
 
   function readJson(key) {
     try {
@@ -440,12 +471,73 @@
     writeJson(SLICES_KEY, reg);
   }
 
+  // ---------- v0.8: per-slice baselines ----------
+  // Baseline = content hash of a slice AS LAST SUCCESSFULLY SYNCED
+  // (recorded on clean apply AND on push). A mergeless slice whose
+  // local hash differs from its baseline carries UNSYNCED local
+  // work → the divergence guard refuses to let a remote blob
+  // overwrite it.
+  // Bootstrap: a MISSING baseline counts as clean. Pre-v0.8 devices
+  // were pure LWW — their state at upgrade time is by definition
+  // "what the cloud last gave them" — so the first guarded pull
+  // behaves exactly like the old engine, then baselines start
+  // accumulating from the first push/apply.
+  function hashString(str) {
+    var h = 5381;
+    for (var i = 0; i < str.length; i++) {
+      h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;   // djb2 — fast, deterministic
+    }
+    return h.toString(36);
+  }
+
+  function readBaselines() { return readJson(BASELINES_KEY) || {}; }
+
+  function recordBaseline(name, str) {
+    var bl = readBaselines();
+    bl[name] = hashString(str);
+    writeJson(BASELINES_KEY, bl);
+  }
+
+  function baselineMatches(name, localStr) {
+    var bl = readBaselines();
+    var b = bl[name];
+    if (b === undefined || b === null) return true;    // missing = clean (bootstrap)
+    return b === hashString(localStr);
+  }
+
+  // Local storage for slice `name` is considered CLEAN iff its
+  // current hash equals the baseline (or no baseline exists yet).
+  function sliceIsClean(name) {
+    var slice = slices[name];
+    if (!slice) return true;
+    var local = null;
+    try { local = slice.get(); } catch (e) { local = null; }
+    return baselineMatches(name, local === null ? "null" : JSON.stringify(local));
+  }
+
+  // Park a remote snapshot for a KNOWN slice we refused to apply.
+  // It is NOT forwarded in the payload (the payload entry for a
+  // known slice comes from slice.get() — local state is what we're
+  // pushing as the new truth). The parked copy survives in the
+  // mailbox until the app opens LIVE and its mergeFn unions both
+  // sides' work at registerSlice-flush. CollectPayload never drops
+  // parked entries for known slices — divergence lifelines.
+  function parkRemote(name, remoteData) {
+    var carry = readCarry() || {};
+    // Never overwrite an older parked snapshot with an even older
+    // one — keep whichever arrived later (closer to current truth).
+    carry[name] = remoteData;
+    writeCarry(carry);
+  }
+
   // Boot-time: for every persisted registration without a live slice,
   // install a lightweight proxy that reads/writes the app's localStorage
   // directly. Result: app slices travel in pushes/pulls EVEN WHEN THE
   // APP IS CLOSED (root cause of the v0.5 sync loss).
-  // NOTE: proxies have NO mergeFn (app code cannot run) → LWW while
-  // the app is closed. Merge resumes on the next live registration.
+  // NOTE: proxies have NO mergeFn (app code cannot run) → guarded LWW
+  // while the app is closed (v0.8): remote applies only onto CLEAN
+  // locals; a diverged proxy holds its ground, parks the remote and
+  // pushes itself. Merge resumes on the next live registration.
   function hydratePersistedSlices() {
     var reg = readJson(SLICES_KEY) || {};
     Object.keys(reg).forEach(function (name) {
@@ -472,10 +564,20 @@
 
     if (storageKey) persistSliceEntry(name, storageKey);
 
-    // Mailbox flush: if remote data for this slice was carried while it
-    // was unknown on this device, deliver it through the (now live)
-    // setter — merging with current local state when a mergeFn exists,
-    // so an OLD carried snapshot can never clobber newer local work.
+    // Mailbox flush: if remote data for this slice was carried here —
+    // parked by the divergence guard while the app was closed, or
+    // carried while the slice was unknown on this device — deliver it
+    // now, through the (live, possibly merge-capable) slice:
+    //   · mergeFn exists → merge(carried, local): BOTH sides' work
+    //     survives. Marked dirty if the result differs from local —
+    //     the converged state reaches the cloud on the next push.
+    //   · no mergeFn → apply ONLY when local is empty (fresh-install
+    //     restore case). Otherwise the parked snapshot is by
+    //     construction older than this device's last successful push
+    //     (the guard only parks for KNOWN slices when local diverged
+    //     — and a diverged local always gets pushed) → dropped.
+    // Either way the mailbox entry is CONSUMED (parked data never
+    // replays twice).
     var carry = readCarry();
     if (carry && carry[name] !== undefined) {
       var data = carry[name];
@@ -484,13 +586,37 @@
       try {
         var local = null;
         try { local = slices[name].get(); } catch (e) { local = null; }
-        if (slices[name].merge && local) {
-          data = slices[name].merge(local, data);
-          // Carried state merged into local → cloud doesn't have the
-          // result yet → flag for the next push.
-          if (JSON.stringify(data) !== JSON.stringify(local)) markDirty();
+
+        if (slices[name].merge && local !== null && data !== null) {
+          try {
+            var merged = slices[name].merge(
+              JSON.parse(JSON.stringify(local)), JSON.parse(JSON.stringify(data)));
+            if (merged !== null && typeof merged !== "undefined") data = merged;
+          } catch (e) {
+            // Bad merge on replay: keep local, drop the parked copy —
+            // local is authoritative and already marked dirty below
+            // if it still diverges.
+          }
+          var localStr = JSON.stringify(local);
+          var dataStr  = JSON.stringify(data);
+          if (dataStr !== localStr) markDirty();
+          slices[name].set(data, { merged: true });
+          recordBaseline(name, dataStr);       // flushed through set — synced-ish, push will confirm
+        } else if (slices[name].merge && (local === null || data === null)) {
+          // Degenerate pair (one side empty): whichever exists wins.
+          if (data !== null) {
+            slices[name].set(data);
+            markDirty();
+          }
+        } else {
+          // Mergeless live slice: apply only the empty-local restore.
+          var cur = null;
+          try { cur = slices[name].get(); } catch (e) { cur = null; }
+          if (cur === null || cur === undefined) {
+            slices[name].set(data);
+            markDirty();
+          }
         }
-        slices[name].set(data);
       } catch (e) {}
     }
 
@@ -515,16 +641,20 @@
 
     // Carry-forward: remote slices UNKNOWN on this device travel
     // forward untouched — a device must never wipe app data it
-    // doesn't know about. Entries whose slice has since become
-    // known (live or proxied) are dropped: local state is
-    // authoritative there.
+    // doesn't know about. Entries for KNOWN slices are NOT relayed
+    // (the payload already carries that slice's local state) and
+    // NOT dropped either (v0.8): they are parked divergence
+    // lifelines waiting for the app's live registration + merge.
+    // Their disposal is owned by the registerSlice flush.
     var carry = readCarry();
     if (carry) {
       var changed = false;
       Object.keys(carry).forEach(function (name) {
-        if (slices[name]) { delete carry[name]; changed = true; }
-        else payload.apps[name] = carry[name];
+        if (!slices[name]) {
+          payload.apps[name] = carry[name];   // unknown → relay forward
+        }
       });
+      // (No known-slice deletion here anymore — see comment above.)
       if (changed) writeCarry(carry);
     }
 
@@ -532,21 +662,49 @@
     return payload;
   }
 
-  // Apply ONE remote slice onto local state. Merge-aware:
-  //   - slice has a mergeFn AND local exists → merged = merge(local, remote);
-  //     a thrown error degrades to plain remote-apply (LWW) so one bad
-  //     merge never blocks syncing.
-  //   - otherwise → classic LWW: remote replaces local.
-  // Returns { changed, cloudStale, data }:
-  //   changed    — final differs from local  → caller should set() it
-  //   cloudStale — final differs from remote → the converged result
-  //                must reach the cloud via the next push
+  // Apply ONE remote slice onto local state. Merge-aware, and —
+  // v0.8 — divergence-aware:
+  //
+  //   1. Slice has a mergeFn AND both sides exist:
+  //        merged = merge(local, remote)
+  //      a thrown error degrades to plain remote-apply (LWW) so one
+  //      bad merge never blocks syncing.
+  //   2. Mergeless slice, local exists, local DIVERGES from its
+  //      baseline (unpushed local work — the offline/closed-app
+  //      case): remote is NEVER applied. It parks in the mailbox,
+  //      the slice reports cloudStale → dirty → the next push
+  //      uploads the local work as the new truth.
+  //   3. Mergeless slice, local clean (or empty): classic LWW —
+  //      remote replaces local. Safe: nothing local is unpushed.
+  //
+  // Returns { changed, cloudStale, data, baselineCandidate }:
+  //   changed    — final differs from local → caller should set() it
+  //   cloudStale — final differs from remote → converged result must
+  //                reach the cloud via the next push
+  //   baselineCandidate — string to record as the new baseline after
+  //                a successful set() (null = do NOT touch baseline:
+  //                the guarded skip kept local diverged on purpose)
   function applySlice(name, remoteData) {
     var slice = slices[name];
 
     var local = null;
     try { local = slice.get(); } catch (e) { local = null; }
     var localStr = local === null ? "null" : JSON.stringify(local);
+
+    // --- v0.8 divergence guard (mergeless slices only) ---
+    // Unpushed local work: hold our ground, park theirs.
+    if (!slice.merge && local !== null && remoteData !== null) {
+      var remoteStr = JSON.stringify(remoteData);
+      if (!baselineMatches(name, localStr) && remoteStr !== localStr) {
+        parkRemote(name, remoteData);
+        return {
+          changed: false,
+          cloudStale: true,          // local must reach the cloud instead
+          data: local,
+          baselineCandidate: null    // local stays "diverged" until ITS push
+        };
+      }
+    }
 
     var final = remoteData;
     if (slice.merge && local !== null && remoteData !== null) {
@@ -564,7 +722,8 @@
     return {
       changed: finalStr !== localStr,
       cloudStale: finalStr !== (remoteData === null ? "null" : JSON.stringify(remoteData)),
-      data: final
+      data: final,
+      baselineCandidate: finalStr       // applied (or already equal) → synced
     };
   }
 
@@ -576,7 +735,17 @@
     if (payload.shell && slices.shell) {
       var rs = applySlice("shell", payload.shell);
       if (rs.changed) {
-        try { slices.shell.set(rs.data, { merged: false }); applied++; } catch (e) {}
+        try {
+          slices.shell.set(rs.data, { merged: false });
+          if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
+          applied++;
+        } catch (e) {}
+      } else if (rs.baselineCandidate !== null &&
+                 baselineMatches("shell", rs.baselineCandidate) === false &&
+                 rs.data !== null && JSON.stringify(rs.data) === rs.baselineCandidate) {
+        // No-op apply of identical content — refresh the baseline so a
+        // stale hash from a pre-push world doesn't linger.
+        recordBaseline("shell", rs.baselineCandidate);
       }
       if (rs.cloudStale) cloudStaleAny = true;
     }
@@ -590,7 +759,16 @@
         if (slices[name]) {
           var ra = applySlice(name, data);
           if (ra.changed) {
-            try { slices[name].set(ra.data, { merged: !!slices[name].merge }); applied++; } catch (e) {}
+            try {
+              slices[name].set(ra.data, { merged: !!slices[name].merge });
+              if (ra.baselineCandidate !== null) recordBaseline(name, ra.baselineCandidate);
+              applied++;
+            } catch (e) {}
+          } else if (ra.baselineCandidate !== null) {
+            // Clean no-op (local == remote == synced content): keep the
+            // baseline honest. This is also the convergence reset for
+            // the device that just got back the very content it pushed.
+            recordBaseline(name, ra.baselineCandidate);
           }
           if (ra.cloudStale) cloudStaleAny = true;
         } else {
@@ -603,17 +781,18 @@
       if (carryChanged) writeCarry(carry);
     }
 
-    // Merge convergence produced something the cloud lacks → mark
-    // dirty → the very next push uploads the converged state. THIS is
-    // what stops the classic two-open-devices ping-pong from erasing
-    // one side: both devices compute the SAME merged result (merge
-    // functions are deterministic), push identical payloads, and the
-    // second pull finds cloud == local == remote → dirty stays clean.
+    // Merge convergence OR guarded divergence produced something the
+    // cloud lacks → mark dirty → the very next push uploads the
+    // converged/diverged state. THIS is what stops both the classic
+    // two-open-devices ping-pong AND the offline-proxy wipe: the
+    // winning content is always what reaches the cloud, never
+    // an artifact of apply-order.
     if (cloudStaleAny) markDirty();
 
     return applied;
   }
-
+  
+  
   // ---------- Backups ----------
   function backupExistingRemote() {
     return rpc("files/copy_v2", {
@@ -723,6 +902,17 @@
         return pruneBackups();
       })
       .then(function () {
+        // v0.8: the push that just succeeded IS the moment "what the
+        // cloud holds" and "what the local slices hold" became one.
+        // Record the baselines for every slice we just uploaded —
+        // this is what makes the NEXT pull able to tell "local has
+        // unpushed work" (hash ≠ baseline) from "local is exactly
+        // what we shipped" (hash == baseline → clean LWW apply OK).
+        Object.keys(slices).forEach(function (name) {
+          var data;
+          try { data = slices[name].get(); } catch (e) { data = null; }
+          recordBaseline(name, data === null ? "null" : JSON.stringify(data));
+        });
         clearDirty();
         return { ok: true };
       })
@@ -733,11 +923,12 @@
 
   // ---------- Auto engine ----------
 
-  // Full reconcile: pull → merge → push-if-needed. Used by boot, the
-  // periodic interval and tab-visible. The pull itself may set the
-  // dirty flag (merge convergence) — intentional, that's how merged
-  // results propagate. Guarded: never two reconciles or a reconcile
-  // racing a manual push.
+  // Full reconcile: pull → merge/guard → push-if-needed. Used by
+  // boot, the periodic interval, tab-visible, "online" and app
+  // register. The pull itself may set the dirty flag (merge
+  // convergence OR guarded divergence) — intentional, that's how
+  // merged/local-won results propagate. Guarded: never two
+  // reconciles or a reconcile racing a manual push.
   function reconcile(reason) {
     if (!isConnected() || !passphrase) return;
     if (!navigator.onLine) return;
@@ -749,7 +940,7 @@
     pull()
       .then(function () {
         if (isDirty()) {
-          return push();          // user changes OR merge convergence
+          return push();          // user changes OR merge convergence OR held-ground divergence
         }
         return { ok: true };
       })
@@ -815,8 +1006,22 @@
         reconcile("visible");
       }
     });
-  }
 
+    // v0.8: connectivity returned — reconcile IMMEDIATELY. Before
+    // this, an offline→online transition could only be caught by the
+    // interval (up to 3 idle minutes) or a tab toggle — meanwhile
+    // edits made offline sat unsafe (boot/visible apply paths ran
+    // with them still unpushed). Now the moment the browser fires
+    // "online", pull→guard→push runs: offline edits are either
+    // uploaded as the new truth (clean guard path) or parked with
+    // the local held diverged (guard path) — never wiped. In-flight
+    // guards make this safe against any overlap with other triggers.
+    window.addEventListener("online", function () {
+      reconcile("online");
+    });
+  }
+  
+  
   // ---------- Connection lifecycle ----------
   function isConnected() {
     return !!(accessToken || refreshToken);
@@ -872,7 +1077,10 @@
   restoreTokens();
 
   // Hydrate persisted slice proxies BEFORE any pull/push can fire —
-  // this is what makes app slices travel while apps are closed.
+  // this is what makes app slices travel while apps are closed. And
+  // since v0.8 their applies run through the divergence guard: a
+  // proxy whose local content diverged (unpushed offline work) never
+  // loses it to a remote blob.
   hydratePersistedSlices();
 
   var redirectHandled = handleOAuthRedirect();
@@ -901,7 +1109,7 @@
     // Data
     pull:               pull,
     push:               push,
-    reconcile:          reconcile,        // v0.7: pull→merge→push (UI may call)
+    reconcile:          reconcile,        // pull→guard→push (UI may call)
 
     // Local rescue backup (plaintext, unencrypted)
     exportData: function () {
@@ -913,10 +1121,11 @@
       return JSON.stringify(payload, null, 2);
     },
 
-    // NOTE: imports also pass through slice merges where available —
-    // an old backup can no longer clobber newer work on a merge-capable
-    // app; the newest mtimes win. Old behavior (wholesale overwrite)
-    // remains for slices without a mergeFn.
+    // Imports pass through the SAME guarded/merge-aware paths as a
+    // cloud pull (applyPayload → applySlice): a merge-capable app
+    // converges with the backup's content; a mergeless app applies
+    // it only when local is clean/empty — a stale rescue file can no
+    // longer clobber newer local work.
     importData: function (jsonText) {
       var payload = JSON.parse(jsonText);   // throws on invalid JSON
       if (!payload || typeof payload !== "object" ||
