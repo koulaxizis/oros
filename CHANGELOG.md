@@ -342,3 +342,38 @@ fine only because hard refreshes bypass the SW.
 - Why this shape: minimal-core rule — everything not essential
   (multi-board, labels, due dates, WIP limits, filters) parked
   until real usage demands it.
+  
+## v0.7.1 — Kanban Wave 1 (card content) — 2026-09-09
+
+**Why:** Enrich cards so a board can carry real work, not just one line of text —
+keeping the single-file, single-slice, offline-first architecture intact.
+
+- **Subtasks** (#10 from legacy-feature audit): checkbox checklist inside the
+  card dialog (add via input + button, editable text, per-item delete). Cards
+  show a slim progress indicator (x/y + bar). WHY: subtasks turn a board into
+  real project tracking without introducing labels/priorities yet.
+- **Extra info fields** (#11, adapted): free custom key-value fields per card
+  ("Deadline: 21/09", "Budget: 300€"). Shown dimly on the card face and indexed
+  in future search/filter waves. Renamed from legacy "Assignments" because the
+  key-value form is more general and fits the orOS minimalism better.
+- **Duplicate card** (#13): clones a card (deep-clones subtasks/info, "(copy)"
+  suffix) right after the original in the same column. WHY: one-tap template
+  creation for repetitive work.
+- Schema: `DATA_VER` 1 → **2**. Cards gain `subtasks: [{id, text, completed}]`
+  and `info: [{id, label, value}]`. One-shot migration on load (missing fields
+  initialized empty); legacy v1 data migrates in place with zero data loss.
+  WHY: additive-only migration keeps Dropbox slices, old backups, and manual
+  exports all forward-compatible.
+- Card dialog is now **live-editing**: all changes persist instantly
+  (autosave-on-change, matching the rest of orOS) — Save simply closes.
+- i18n: all new strings inline EN/EL incl. `data-i18n-placeholder` support.
+
+**Under consideration (backlog, no conflicts with orOS):**
+multi-board (#1–5), priority levels (#6), due dates (#7), card colors (#8),
+markdown preview (#12), created/modified timestamps (#14), archive (#17),
+statistics (#18), CSV export (#19), add-column dashed placeholder (#23),
+print styles (#34).
+
+**Deferred by design (conflicts with orOS philosophy):**
+UI-visibility toggles, Fork Awesome, `prompt()`-based CRUD, in-app theme toggle,
+local File System Access sync — permanently out.

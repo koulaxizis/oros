@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Kanban — App stylesheet (v0.1)
+   orOS Kanban — App stylesheet (v0.2 / Wave 1)
    Same pattern as To-Do: the :root values below are only an
    offline/fallback match of the oros skin — runtime values are
    injected from the shell (same origin).
@@ -7,16 +7,21 @@
      #boardbar, #board-title, #col-add
      #board-scroll, #columns, #empty
      .k-col > .col-head (.col-title, .col-count)
-           > .col-body (.card)
+           > .col-body (.card [+ .sub-ind, .info-prev])
            > .col-foot  (.col-quick, .col-add-btn)
+   NEW in v0.2 (Wave 1):
+     .card .sub-ind      — subtask progress chip (x/y + bar)
+     .card .info-preview — extra info fields one-line preview
+     dialog .sub-row     — editable subtask row (checkbox+text+x)
+     dialog .info-row    — editable info row (label+value+x)
    Sections:
      1. Palette fallback + reset
      2. Board bar
      3. Board shell (horizontal column strip)
      4. Columns
-     5. Cards
+     5. Cards (+ subtask/info indicators)
      6. Drag & drop states
-     7. Dialogs (card + column)
+     7. Dialogs (card + column) + subtask/info editors
      8. Toast
      9. Mobile-first adaptations
    Icon buttons use inline SVG — no unicode glyphs (tofu-proof).
@@ -278,6 +283,42 @@ input, textarea, select {
   white-space: nowrap;
 }
 
+/* Subtask progress chip: "x/y" + slim bar, appears under the text */
+.card .sub-ind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  user-select: none;
+}
+.card .sub-ind .bar {
+  width: 60px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card .sub-ind .fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+/* Extra info preview: single dim line, truncated */
+.card .info-preview {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------- 6. Drag & drop states ---------- */
 .card.dragging { opacity: 0.35; }
 .card.drag-over-above { box-shadow: inset 0  2px 0 var(--accent); }
@@ -326,6 +367,116 @@ dialog textarea {
 dialog input:focus,
 dialog textarea:focus { border-color: var(--accent); }
 dialog textarea { resize: vertical; min-height: 70px; }
+
+/* Subtask / info rows inside the card dialog */
+.sub-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.sub-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sub-row .s-text {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  font-size: 13px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+}
+.sub-row .s-text.completed {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.sub-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.sub-x:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+
+/* Quick add row (subtask input + button) inside dialogs */
+.quick-row {
+  display: flex;
+  gap: 8px;
+}
+.quick-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+.quick-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 38px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+.quick-row button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.quick-row button:active { transform: scale(0.94); }
+
+/* Extra info rows inside the dialog: label | value | remove */
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.info-row input[type="text"] { min-width: 0; }
+.info-x {
+  min-width: 26px;
+  min-height: 26px;
+}
+
+/* Dashed "+ add" ghost button inside dialogs */
+dialog button.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  transition: border-color 0.15s, color 0.15s;
+}
+dialog button.ghost:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
 
 dialog menu {
   display: flex;
@@ -396,5 +547,6 @@ dialog menu button.danger:hover {
   #columns { padding: 8px; gap: 8px; }
   .k-col   { width: 78vw; }        /* comfortable card width on phone */
   .col-quick { font-size: 16px; }   /* ≥16px: iOS won't zoom on focus */
+  .col-quick, #c-sub { font-size: 16px; }
   dialog { width: calc(100vw - 20px); padding: 14px; }
 }

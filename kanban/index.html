@@ -24,7 +24,7 @@
     </div>
   </main>
 
-  <!-- Card dialog (tap a card to open) -->
+  <!-- Card dialog (tap a card to open) — live editing: everything saves as you type -->
   <dialog id="dlg-card">
     <form method="dialog" id="card-form" autocomplete="off">
       <h3 data-i18n="card.title">Card</h3>
@@ -35,9 +35,27 @@
       <label data-i18n="card.notes">Notes</label>
       <textarea id="c-notes" rows="4"></textarea>
 
+      <!-- Subtasks (feature 10) -->
+      <label data-i18n="card.subtasks">Subtasks</label>
+      <div id="c-sub-list"></div>
+      <div class="quick-row">
+        <input id="c-sub-new" type="text" placeholder="New subtask…" data-i18n-ph="card.subph">
+        <button type="button" id="c-sub-add" aria-label="Add subtask" data-i18n-title="card.add"
+                title="Add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+
+      <!-- Extra info (feature 11, adapted): free key–value fields -->
+      <label data-i18n="card.info">Extra info</label>
+      <div id="c-info-list"></div>
+      <button type="button" id="c-info-add" class="ghost">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-i18n="card.info.add">Add field</span>
+      </button>
+
       <menu>
         <button type="button" id="c-delete" class="danger" data-i18n="card.delete">Delete</button>
         <span class="spacer"></span>
+        <button type="button" id="c-duplicate" data-i18n="card.duplicate">Duplicate</button>
         <button type="submit" data-i18n="save">Save</button>
       </menu>
     </form>
