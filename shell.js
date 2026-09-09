@@ -20,7 +20,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.5.3";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.6.0";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
