@@ -8,9 +8,6 @@
 window.OROS_TRANSLATIONS = {
 
   en: {
-    "app.name":           "orOS",
-    "app.tagline":         "A static operating system in your browser",
-
     "bar.menu":            "orOS",
     "bar.clock.tooltip":   "Time (24h)",
 
@@ -28,7 +25,6 @@ window.OROS_TRANSLATIONS = {
 
     "skin.title":          "Appearance",
     "wallpaper.title":     "Wallpaper",
-    "wallpaper.current":   "Current wallpaper",
 
     "install.trigger":     "Install orOS",
     "update.done":         "orOS was updated to",
@@ -52,7 +48,6 @@ window.OROS_TRANSLATIONS = {
     "sync.ok.pull":         "Data pulled from cloud",
     "sync.ok.push":         "Data pushed to cloud",
     "sync.ok.empty":        "Nothing in the cloud yet",
-    "sync.ok.unlocked":     "Unlocked — ready to sync",
     "sync.ok.export":       "Data exported to file",
     "sync.ok.import":       "Data imported",
     "sync.slices.applied":  "sections updated",
@@ -70,9 +65,6 @@ window.OROS_TRANSLATIONS = {
   },
 
   el: {
-    "app.name":           "orOS",
-    "app.tagline":         "Ένα στατικό λειτουργικό σύστημα στον browser",
-
     "bar.menu":            "orOS",
     "bar.clock.tooltip":   "Ώρα (24ωρη)",
 
@@ -90,7 +82,6 @@ window.OROS_TRANSLATIONS = {
 
     "skin.title":          "Εμφάνιση",
     "wallpaper.title":     "Ταπετσαρία",
-    "wallpaper.current":   "Τρέχουσα ταπετσαρία",
 
     "install.trigger":     "Εγκατάσταση του orOS",
     "update.done":         "Το orOS ενημερώθηκε στην",
@@ -114,7 +105,6 @@ window.OROS_TRANSLATIONS = {
     "sync.ok.pull":         "Τα δεδομένα ελήφθησαν από το cloud",
     "sync.ok.push":         "Τα δεδομένα στάλθηκαν στο cloud",
     "sync.ok.empty":        "Δεν υπάρχει τίποτα στο cloud ακόμα",
-    "sync.ok.unlocked":     "Ξεκλείδωμα — έτοιμο για συγχρονισμό",
     "sync.ok.export":       "Τα δεδομένα εξήχθησαν σε αρχείο",
     "sync.ok.import":      "Τα δεδομένα εισήχθησαν",
     "sync.slices.applied":  "ενότητες ενημερώθηκαν",

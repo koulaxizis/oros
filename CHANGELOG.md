@@ -255,7 +255,6 @@ fine only because hard refreshes bypass the SW.
 - Extra skins (Nord/Dracula test), About surface (credits + privacy),
   sandbox attributes, external/untrusted app isolation.
 - GitHub Action: verify first runs green in Actions tab, then forget it.
-</arg_value>`
 
 ## v0.6.0 — Sync engine: persisted slices + carry-forward
 - ROOT CAUSE (To-Do data not syncing via Dropbox while export
@@ -274,36 +273,32 @@ fine only because hard refreshes bypass the SW.
   app folder may hold the latest todo-inclusive payload.
 - todo.js: registerSlice call now passes "oros-todo-data".
 
-## v0.6.2 — Mouse-friendly add + auto-update
-- Quick-add "+" button (42px touch target, refocuses input).
-- Service worker now skipWaiting() on install + broker auto-reload
-  on controllerchange: zero-gate updates, no more manual "Update
-  orOS" clicks or hard refresh needed (manual button retained as
-  dead-code fallback until verified over 2-3 deploys).
-- Desktop beforeunload dirty-guard (sync-pending warning). Mobile:
-  covered by existing auto-save + persisted dirty flag + boot
-  reconcile — no data loss window exists.
-- DIAGNOSIS confirmed: v0.6.0 worker installed-waiting while v0.5.0
-  caches served — update gate was the culprit, resolved here.
-  
-## v0.6.2 — Auto-update (zero-gate) + quick-add button
-- sw.js: skipWaiting() on install — new workers activate
-  immediately instead of waiting in limbo.
-- Broker (index.html): removed the entire user-gate path
-  (orosActivateUpdate, showUpdate toast, watchWorker, updatefound
-  listener, oros-update-ready event). Kept: forced byte-check
-  every load, hourly re-check, controllerchange auto-reload
-  (already present — the reload half of the equation was there
-  all along). Version toast in shell.js is now the sole update
-  confirmation.
-- todo/: quick-add "+" button (42px target, mouse-friendly).
-- KNOWN FOLLOW-UP: shell.js still carries the dead mirror code
-  for the old "Update orOS" menu button — scheduled for removal
-  next wave (needs shell.js audit).
-- Unicode glyph purge: remaining text glyphs replaced with inline
-  SVG (shell menu button grid icon; To-Do tab-add plus, list
-  settings kebab, quick-add plus). All UI icons now SVG —
-  tofu-proof on every platform.
-- shell.js: removed registerServiceWorker() mirror code entirely
-  (oros-update-ready listener, __orosUpdateReady check) — auto-
-  update makes the broker the sole owner of the SW lifecycle.
+## v0.6.2 — Cleanup wave: zero-gate updates + syntax repairs
+
+- FIX (critical): renderInstallRow was orphaned — its header was
+  deleted but the body remained at top level, referencing deleted
+  globals (swUpdateReady, orosActivateUpdate) → SyntaxError killed
+  the ENTIRE shell.js. Fully rebuilt (install-only; the update flow
+  is now owned by the inline broker in index.html).
+- FIX (critical): renderWallpaperSection self-appended the section
+  node via a dead ternary → HierarchyRequestError on every
+  renderMenu() (menu empty, clock frozen, sync UI dead).
+- Zero-gate updates: sw.js calls skipWaiting() on install; the broker
+  forces a byte-check on every load + hourly, and auto-reloads on
+  controllerchange. Version toast in shell.js is the sole update
+  confirmation. Why: v0.6.0 worker sat installed-waiting while v0.5.0
+  caches served — the user gate was the culprit, now retired.
+- Dead code purge across the stack: SKIP_WAITING message listener
+  + stale header comment (sw.js), #update-toast +
+  .install-row.update (style.css), PHOTO_ICON_SVG (shell.js),
+  NodeList forEach hack (todo.js), update.available/reload/action +
+  app.name/tagline, wallpaper.current, sync.ok.unlocked
+  (translations.js).
+- Manifest: "version" key added (Action stamped it silently before —
+  now greps succeed loudly).
+- To-Do fixes: "Γénéral"→"Γενικά", "Για ψώνια"→"Ψώνια", dead ternary
+  in recycleItem cleaned, "⟳" glyph → inline SVG repeat icon.
+- todo.css: #quick-add base styling (42px, panel bg, border).
+- style.css: #btn-menu ExtraBold (800) restored.
+- Desktop beforeunload dirty-guard (sync-pending warning).
+- sw.js: icon.svg + 4 PNGs added to precache (fully offline PWA).

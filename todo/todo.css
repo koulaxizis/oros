@@ -298,7 +298,6 @@ input, textarea, select {
   background: rgba(224, 108, 117, 0.16);
   color: var(--danger);
 }
-.chip-recur { color: var(--text-dim); }
 .chip-recur-ico {
   display: inline-flex;
   align-items: center;

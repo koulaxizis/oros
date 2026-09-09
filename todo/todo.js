@@ -390,8 +390,9 @@
         }
         if (item.recurrence) {
           var rec = document.createElement("span");
-          rec.className = "chip-recur";
-          rec.textContent = "⟳ " + recurShort(item.recurrence);
+          rec.className = "chip-recur-ico";
+          rec.innerHTML = RECUR_SVG;
+          rec.appendChild(document.createTextNode(recurShort(item.recurrence)));
           meta.appendChild(rec);
         }
         body.appendChild(meta);
@@ -607,6 +608,9 @@
     '<circle cx="3" cy="3" r="1.3"/><circle cx="7" cy="3" r="1.3"/>' +
     '<circle cx="3" cy="8" r="1.3"/><circle cx="7" cy="8" r="1.3"/>' +
     '<circle cx="3" cy="13" r="1.3"/><circle cx="7" cy="13" r="1.3"/></svg>';
+
+  var RECUR_SVG =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
 
   function makeDragHandle(list, index) {
     var h = document.createElement("span");
