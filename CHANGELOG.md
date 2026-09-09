@@ -498,3 +498,77 @@ list-centric model instead of blind copy-paste.
 - No changes to shell contracts: filenames, slice name, storage key,
   sync bridge all identical; the `?v=` cache-bust Action covers the
   stamped assets automatically on the next version bump.
+  
+  ## [0.10.0] — Sync Merge Wave
+
+Cross-device merging for orOS. Two devices with the same app open
+simultaneously now converge instead of last-write-wins wiping one side.
+
+### Core (sync.js v0.7)
+
+- **Slice merge API**: `registerSlice(name, get, set, storageKey, mergeFn)`
+  — opt-in 5th argument. Apps with multi-entity data (To-Do, Kanban)
+  supply a merge function so concurrent edits converge deterministically.
+  Legacy 4-arg registrations behave exactly as before (LWW).
+- **Full reconcile** (`pull → merge → push if dirty`) on: boot, periodic
+  interval, and tab becoming VISIBLE (returning to a device catches up
+  immediately). Tab-hide remains push-only (zero-loss guarantee at close,
+  no pull round-trips while the tab may be dying).
+- Merge convergence marks dirty → the converged state reaches the cloud
+  on the very next push. Both devices compute the identical result
+  (deterministic merge), stopping the classic two-devices ping-pong.
+- A thrown error inside a mergeFn degrades that slice to LWW — a bad
+  merge can never block syncing.
+- Database import now passes through slice merges where available: an
+  old local backup can no longer clobber newer cloud-side work on
+  merge-capable apps.
+- Known limit: hydrated proxies (app closed) have no mergeFn (app code
+  cannot run) — closed apps sync LWW, merge resumes when the app opens.
+  Documented trade-off; merge lives exactly where the two-open-devices
+  scenario lives.
+
+### To-Do (v0.4)
+
+- **DATA_VER 3** — additive migration, older local data upgrades in
+  place (missing stamps default to 0 = oldest, so real remote data wins).
+- Every entity (list / task / label) carries `mtime` (content version);
+  orderings carry `om`/`pos`. Every mutation stamps.
+- **Tombstones**: deletions are soft (`state.deleted = {id: ts}`),
+  pruned after 30 days. Deletion beats older edits; an edit newer than
+  its tombstone resurrects the entity (edit-after-delete works).
+- `mergeTodoStates`: deterministic + symmetric —
+  scalars by root `sm`; entity content by larger mtime (tie →
+  lexicographic JSON, decided identically on both sides); ordering by
+  the side with the larger `om`; unknown entities append at the end.
+- Lists merge structurally: headers LWW by mtime, but each list's items
+  merge independently — renaming a list on one device never clobbers
+  task edits made on the other.
+- Undo asserts the whole restored snapshot as newest (stamp-all) —
+  undo wins the next merge and propagates.
+- List-cycle rollovers stamp fresh mtimes — both devices agree the
+  cycle happened instead of re-fighting it.
+- Search/filter remain session-only view state (never persisted, never
+  resurrected by a pull from another device).
+- Merge toast: "Synced changes from another device" appears when a
+  pull actually changed something (silent otherwise).
+
+### Fixes
+
+- To-Do: stray `l-cancel` listener removed (missing element broke
+  entire wiring on load).
+- To-Do: item delete now removes the item locally as well as the
+  tombstone (was visible until the next pull).
+- To-Do: default lists get distinct ids/objects (shared-object bug).
+
+### Under consideration
+
+- Port the merge pattern to Kanban (same slice contract, tombstones
+  for cards/columns/labels).
+- Per-field merge granularity for task text (currently whole-task LWW
+  by mtime) — likely unnecessary, revisit only if real conflicts bite.
+- Merge-capable closed apps would require merge functions stored as
+  data — deferred deliberately.
+  
+  - Sync-on-change: edits trigger a debounced full reconcile (~5s
+  after the last edit) in addition to interval/visible/hide triggers.
+  Bursts coalesce into one round-trip; no-ops when already clean.

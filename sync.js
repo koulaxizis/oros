@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.6 — Dropbox Sync module
+// orOS Core v0.7 — Dropbox Sync module
 //
 // - window.orosSync — shared sync framework for the shell + all apps
 // - Dropbox PKCE OAuth (app-folder scoped, no client secret)
@@ -18,6 +18,33 @@
 //   - Unknown remote slices (app never registered anywhere on this
 //     device) are held in a carry mailbox and pushed forward —
 //     a device can never silently wipe app data it doesn't know.
+//
+// v0.7 — SLICE MERGE API + FULL RECONCILE:
+//   - registerSlice(..., mergeFn?) — opt-in 5th argument. Apps
+//     with multi-entity data (To-Do, Kanban) supply mergeFn so
+//     concurrent edits on two open devices CONVERGE instead of
+//     last-write-wins wiping one side.
+//   - mergeFn(local, remote) → merged state. Must be deterministic:
+//     both devices, given the same two inputs, must produce the
+//     same output (tie-breaks: bigger mtime wins, then bigger uid).
+//   - Engine flow per slice on pull:
+//       merged = merge(local, remote)
+//       if merged ≠ local → set(merged) + re-render (count++)
+//       if merged ≠ remote → cloud is stale → markDirty → next
+//       push uploads the converged state.
+//     Equality via JSON.stringify — payloads are plain JSON.
+//   - CONTRACT: setter may receive (data, info) where
+//     info.merged === true means the value came from a merge, not
+//     a wholesale remote overwrite (apps use it for a toast).
+//     Legacy setters ignore the second argument — safe.
+//   - IMPORTANT LIMIT: hydrated proxies (app closed) have NO
+//     mergeFn — app code cannot run — so closed apps sync LWW.
+//     Merge lives exactly where the user scenario lives: two
+//     devices with the app OPEN simultaneously.
+//   - Interval + boot = full reconcile (pull → merge → push if
+//     dirty). Tab-hide stays push-only (no pull latency when the
+//     tab may be dying). Tab-VISIBLE triggers a reconcile: coming
+//     back to a device catches up remote changes immediately.
 // ============================================================
 (function () {
   "use strict";
@@ -34,6 +61,7 @@
   var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
   var SLICES_KEY      = "oros-slices";       // persisted registry: name -> storageKey
   var CARRY_KEY       = "oros-remote-carry"; // mailbox: name -> data (unknown slices)
+  var DEBOUNCE_MS     = 5000;                // v0.7.1: quiet period after last edit
 
   var TOKEN_API   = "https://api.dropboxapi.com/oauth2/token";
   var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
@@ -55,7 +83,11 @@
 
   // Engine guards: never two pushes/pulls racing each other
   var pushInFlight = false;
+  var reconcileInFlight = false;
   var lastPushFailed = false;
+
+  // v0.7.1: debounced reconcile timer (one shot at a time)
+  var debounceTimer = null;
 
   // ---------- Base64 helpers ----------
   function b64encode(buf) {
@@ -412,6 +444,8 @@
   // install a lightweight proxy that reads/writes the app's localStorage
   // directly. Result: app slices travel in pushes/pulls EVEN WHEN THE
   // APP IS CLOSED (root cause of the v0.5 sync loss).
+  // NOTE: proxies have NO mergeFn (app code cannot run) → LWW while
+  // the app is closed. Merge resumes on the next live registration.
   function hydratePersistedSlices() {
     var reg = readJson(SLICES_KEY) || {};
     Object.keys(reg).forEach(function (name) {
@@ -420,25 +454,44 @@
       slices[name] = {
         live: false,
         get: function () { return readJson(storageKey); },
-        set: function (data) { writeJson(storageKey, data); }
+        set: function (data) { writeJson(storageKey, data); },
+        merge: null
       };
     });
   }
 
-  function registerSlice(name, getter, setter, storageKey) {
-    slices[name] = { get: getter, set: setter, live: true };
+  // v0.7: 5th argument = optional mergeFn(local, remote) → merged.
+  // Backward compatible: existing 4-arg registrations behave as before.
+  function registerSlice(name, getter, setter, storageKey, mergeFn) {
+    slices[name] = {
+      get: getter,
+      set: setter,
+      live: true,
+      merge: (typeof mergeFn === "function") ? mergeFn : null
+    };
 
     if (storageKey) persistSliceEntry(name, storageKey);
 
     // Mailbox flush: if remote data for this slice was carried while it
     // was unknown on this device, deliver it through the (now live)
-    // setter — the app picks it up from its own storage.
+    // setter — merging with current local state when a mergeFn exists,
+    // so an OLD carried snapshot can never clobber newer local work.
     var carry = readCarry();
     if (carry && carry[name] !== undefined) {
       var data = carry[name];
       delete carry[name];
       writeCarry(carry);
-      try { slices[name].set(data); } catch (e) {}
+      try {
+        var local = null;
+        try { local = slices[name].get(); } catch (e) { local = null; }
+        if (slices[name].merge && local) {
+          data = slices[name].merge(local, data);
+          // Carried state merged into local → cloud doesn't have the
+          // result yet → flag for the next push.
+          if (JSON.stringify(data) !== JSON.stringify(local)) markDirty();
+        }
+        slices[name].set(data);
+      } catch (e) {}
     }
   }
 
@@ -470,12 +523,55 @@
     return payload;
   }
 
+  // Apply ONE remote slice onto local state. Merge-aware:
+  //   - slice has a mergeFn AND local exists → merged = merge(local, remote);
+  //     a thrown error degrades to plain remote-apply (LWW) so one bad
+  //     merge never blocks syncing.
+  //   - otherwise → classic LWW: remote replaces local.
+  // Returns { changed, cloudStale, data }:
+  //   changed    — final differs from local  → caller should set() it
+  //   cloudStale — final differs from remote → the converged result
+  //                must reach the cloud via the next push
+  function applySlice(name, remoteData) {
+    var slice = slices[name];
+
+    var local = null;
+    try { local = slice.get(); } catch (e) { local = null; }
+    var localStr = local === null ? "null" : JSON.stringify(local);
+
+    var final = remoteData;
+    if (slice.merge && local !== null && remoteData !== null) {
+      try {
+        // Clone BOTH inputs: merge functions stay pure, caller-owned
+        // state is never mutated by a merge that misbehaves.
+        final = slice.merge(JSON.parse(localStr), JSON.parse(JSON.stringify(remoteData)));
+        if (final === null || typeof final === "undefined") final = remoteData;
+      } catch (e) {
+        final = remoteData;               // degrade to LWW, keep syncing
+      }
+    }
+
+    var finalStr = final === null ? "null" : JSON.stringify(final);
+    return {
+      changed: finalStr !== localStr,
+      cloudStale: finalStr !== (remoteData === null ? "null" : JSON.stringify(remoteData)),
+      data: final
+    };
+  }
+
   function applyPayload(payload) {
     if (!payload) return 0;
     var applied = 0;
+    var cloudStaleAny = false;
+
     if (payload.shell && slices.shell) {
-      try { slices.shell.set(payload.shell); applied++; } catch (e) {}
+      var rs = applySlice("shell", payload.shell);
+      if (rs.changed) {
+        try { slices.shell.set(rs.data, { merged: false }); applied++; } catch (e) {}
+      }
+      if (rs.cloudStale) cloudStaleAny = true;
     }
+
     if (payload.apps) {
       var carry = readCarry() || {};
       var carryChanged = false;
@@ -483,7 +579,11 @@
         var data = payload.apps[name];
         if (data === null || data === undefined) return;
         if (slices[name]) {
-          try { slices[name].set(data); applied++; } catch (e) {}
+          var ra = applySlice(name, data);
+          if (ra.changed) {
+            try { slices[name].set(ra.data, { merged: !!slices[name].merge }); applied++; } catch (e) {}
+          }
+          if (ra.cloudStale) cloudStaleAny = true;
         } else {
           // Unknown slice: park it in the carry mailbox. Never dropped,
           // never overwritten — the next push relays it forward.
@@ -493,6 +593,15 @@
       });
       if (carryChanged) writeCarry(carry);
     }
+
+    // Merge convergence produced something the cloud lacks → mark
+    // dirty → the very next push uploads the converged state. THIS is
+    // what stops the classic two-open-devices ping-pong from erasing
+    // one side: both devices compute the SAME merged result (merge
+    // functions are deterministic), push identical payloads, and the
+    // second pull finds cloud == local == remote → dirty stays clean.
+    if (cloudStaleAny) markDirty();
+
     return applied;
   }
 
@@ -528,6 +637,32 @@
   // ---------- Dirty flag ----------
   function markDirty() {
     localStorage.setItem(DIRTY_KEY, "1");
+    resetDebounce();
+  }
+
+  // v0.7.1 — sync-on-change, debounced.
+  // Five seconds of quiet after the LAST edit → full reconcile
+  // (pull → merge → push). Burst edits coalesce into ONE round-trip.
+  //
+  // Safety properties (all inherited, nothing new to prove):
+  //   · Fires only if STILL dirty — a successful push in between
+  //     (hide/interval/debounce) cleared the flag and we no-op.
+  //   · reconcile()'s in-flight guards absorb overlap with a running
+  //     interval/visible reconcile — worst case it's a no-op.
+  //   · Merge convergence marks dirty inside applyPayload → the
+  //     converged state reaches the cloud ~5s later without waiting
+  //     for the interval. Determinism prevents loops: once cloud ==
+  //     local == merged, cloudStale goes false and the flag stays clean.
+  //   · Zero cost offline / locked: timer arms only when a push could
+  //     actually succeed (connected + passphrase).
+  function resetDebounce() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (!isConnected() || !passphrase) return;   // nothing to send anyway
+    debounceTimer = setTimeout(function () {
+      debounceTimer = null;
+      if (!isDirty()) return;                    // already pushed elsewhere
+      reconcile("debounce");
+    }, DEBOUNCE_MS);
   }
   function clearDirty() {
     localStorage.removeItem(DIRTY_KEY);
@@ -588,15 +723,43 @@
   }
 
   // ---------- Auto engine ----------
-  function emitAutoEvent(kind, detail) {
-    autoListeners.forEach(function (fn) {
-      try { fn(kind, detail); } catch (e) {}
-    });
+
+  // Full reconcile: pull → merge → push-if-needed. Used by boot, the
+  // periodic interval and tab-visible. The pull itself may set the
+  // dirty flag (merge convergence) — intentional, that's how merged
+  // results propagate. Guarded: never two reconciles or a reconcile
+  // racing a manual push.
+  function reconcile(reason) {
+    if (!isConnected() || !passphrase) return;
+    if (!navigator.onLine) return;
+    if (reconcileInFlight || pushInFlight) return;
+
+    reconcileInFlight = true;
+    emitAutoEvent("start", reason);
+
+    pull()
+      .then(function () {
+        if (isDirty()) {
+          return push();          // user changes OR merge convergence
+        }
+        return { ok: true };
+      })
+      .then(function () {
+        reconcileInFlight = false;
+        emitAutoEvent("done", reason);
+      })
+      .catch(function (err) {
+        reconcileInFlight = false;
+        emitAutoEvent("fail", reason);
+      });
   }
 
+  // Push-only attempt (tab hide): pulling costs round-trips we may
+  // not have before the tab dies — a dirty push is the only thing
+  // that guarantees zero local loss at close time.
   function autoSyncAttempt(reason) {
     if (!isConnected() || !passphrase || !isDirty()) return;
-    if (pushInFlight) return;
+    if (pushInFlight || reconcileInFlight) return;
     if (!navigator.onLine) return;              // no wasted attempts offline
 
     emitAutoEvent("start", reason);
@@ -605,19 +768,10 @@
       .catch(function (err)  { emitAutoEvent("fail", reason); });
   }
 
-  // Boot: pull latest silently, then push if this device is dirty.
-  function reconcileOnBoot() {
-    if (!isConnected() || !passphrase) return;
-
-    if (!navigator.onLine) return;
-
-    emitAutoEvent("start", "boot");
-    pull()
-      .then(function () {
-        if (isDirty()) return push().then(function () { emitAutoEvent("done", "boot"); });
-        emitAutoEvent("done", "boot");
-      })
-      .catch(function () { emitAutoEvent("fail", "boot"); });
+  function emitAutoEvent(kind, detail) {
+    autoListeners.forEach(function (fn) {
+      try { fn(kind, detail); } catch (e) {}
+    });
   }
 
   function getIntervalMinutes() {
@@ -635,7 +789,7 @@
     if (autoTimerId) { clearInterval(autoTimerId); autoTimerId = null; }
     var mins = getIntervalMinutes();
     if (mins <= 0) return;            // Off: no periodic attempts
-    autoTimerId = setInterval(function () { autoSyncAttempt("interval"); },
+    autoTimerId = setInterval(function () { reconcile("interval"); },
                               mins * 60 * 1000);
   }
 
@@ -644,8 +798,12 @@
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
-        // Last reliable moment before tab death — fire silently
+        // Last reliable moment before tab death — push-only, silently
         autoSyncAttempt("hide");
+      } else {
+        // Coming BACK to this device: catch up what changed elsewhere
+        // while we were away. (Multi-device liveness — v0.7.)
+        reconcile("visible");
       }
     });
   }
@@ -716,7 +874,7 @@
       vaultReady = ok;
       // Start auto engine only when we can actually sync
       startAutoEngine();
-      if (isConnected() && passphrase) reconcileOnBoot();
+      if (isConnected() && passphrase) reconcile("boot");
       return ok;
     });
   });
@@ -727,13 +885,14 @@
     connect:            connect,
     disconnect:         disconnect,
     isConnected:         isConnected,
-    getUserInfo:         getUserInfo,
-    redirectHandled:     redirectHandled,
-    vaultUnlocked:       vaultUnlocked,    // promise<bool>: true if auto-unlocked
+    getUserInfo:        getUserInfo,
+    redirectHandled:    redirectHandled,
+    vaultUnlocked:      vaultUnlocked,    // promise<bool>: true if auto-unlocked
 
     // Data
     pull:               pull,
     push:               push,
+    reconcile:          reconcile,        // v0.7: pull→merge→push (UI may call)
 
     // Local rescue backup (plaintext, unencrypted)
     exportData: function () {
@@ -745,6 +904,10 @@
       return JSON.stringify(payload, null, 2);
     },
 
+    // NOTE: imports also pass through slice merges where available —
+    // an old backup can no longer clobber newer work on a merge-capable
+    // app; the newest mtimes win. Old behavior (wholesale overwrite)
+    // remains for slices without a mergeFn.
     importData: function (jsonText) {
       var payload = JSON.parse(jsonText);   // throws on invalid JSON
       if (!payload || typeof payload !== "object" ||
@@ -752,23 +915,23 @@
         throw new Error("bad backup file");
       }
       var applied = applyPayload(payload);
-      markDirty();   // imported data wins over cloud → next push uploads it
+      markDirty();   // imported result must reach the cloud
       return applied;
     },
 
     // Passphrase / vault
     setPassphrase:      setPassphrase,    // (pw, remember?) — remember = seal to device
-    hasPassphrase:      function () { return passphrase !== null; },
-    forgetPassphrase:   function () { passphrase = null; },   // session only
-    clearDevice:        clearDevice,      // forget + wipe device vault
-    hasDeviceVault:     hasDeviceVault,
+    hasPassphrase:     function () { return passphrase !== null; },
+    forgetPassphrase:  function () { passphrase = null; },   // session only
+    clearDevice:       clearDevice,      // forget + wipe device vault
+    hasDeviceVault:    hasDeviceVault,
 
     // App integration
-    registerSlice:      registerSlice,    // (name, get, set, storageKey?)
-    markDirty:          markDirty,        // apps call this on data change
+    registerSlice:     registerSlice,    // (name, get, set, storageKey?, merge?)
+    markDirty:         markDirty,        // apps call this on data change
     getIntervalMinutes: getIntervalMinutes,
     setIntervalMinutes: setIntervalMinutes,
-    isDirty:            isDirty,
+    isDirty:           isDirty,
 
     // Auto-sync feedback (optional, for UI status pulse)
     onAutoSync:         function (fn) { if (typeof fn === "function") autoListeners.push(fn); },
@@ -776,7 +939,7 @@
     // Engine kick (manual triggers from shell, e.g. after manual unlock)
     kickAutoEngine:     function () {
       if (isConnected() && passphrase) {
-        reconcileOnBoot();
+        reconcile("kick");
       }
     },
 
