@@ -21,7 +21,7 @@ var PRECACHE_URLS = [
   "./sync.js",
   "./translations.js",
   "./apps.json",
-  "./manifest.webmanifest"
+  "./manifest.webmanifest",
   "todo/",
   "todo/index.html",
   "todo/todo.css",
@@ -35,12 +35,11 @@ var PRECACHE_URLS = [
 
 // ---------- Install: precache, stay waiting (user-controlled update) ----------
 self.addEventListener("install", function (event) {
+  self.skipWaiting();          // ← ΠΡΟΣΘΗΚΗ: μηδέν αναμονή κλικ
   event.waitUntil(
     caches.open(SHELL_CACHE).then(function (cache) {
       return cache.addAll(PRECACHE_URLS);
     })
-    // Deliberately NO skipWaiting here: the shell shows the update toast
-    // and only activates the new worker when the user confirms.
   );
 });
 

@@ -840,6 +840,12 @@
     $("quick-add").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); quickAdd(); }
     });
+	
+	 // ---- ΠΡΟΣΘΗΚΗ: mouse-friendly add button ----
+    $("quick-add-btn").addEventListener("click", function () {
+      quickAdd();
+      $("quick-add").focus();
+    });
 
     // Controls
     $("hide-completed").addEventListener("change", function () {

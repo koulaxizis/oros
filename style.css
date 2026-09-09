@@ -386,9 +386,11 @@ body {
 #btn-menu:hover, #btn-lang:hover { background: var(--accent-soft); }
 
 #btn-menu {
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
+
 #btn-menu.running { color: var(--accent-hover); }
 
 #bar-clock {

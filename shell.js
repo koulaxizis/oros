@@ -15,7 +15,8 @@
 //   11. Menu open/close
 //   12. Wiring & boot
 // Update lifecycle is owned by the inline broker in index.html —
-// the shell only mirrors "update ready" into its menu button.
+// auto-update (skipWaiting + controllerchange reload); the shell
+// shows the version toast as sole confirmation.
 // ============================================================
 (function () {
   "use strict";
@@ -35,9 +36,7 @@
 
     // sync UI state
     syncUserEmail:   null,
-    syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
-
-    swUpdateReady:   false   // a new service worker version is waiting
+    syncMsg:         null   // { kind: "ok"|"err"|"dim", text: "…" }
   };
 
   var SKINS = [
@@ -91,8 +90,6 @@
   var ICONS = {
     check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
   };
-
-  var swReg = null;   // service worker registration (fallback control)
 
   function isValidSkin(id) {
     for (var i = 0; i < SKINS.length; i++) {
@@ -217,24 +214,6 @@
   }
 
   // ---------- 7. PWA ----------
-  function registerServiceWorker() {
-    if (!("serviceWorker" in navigator)) return;
-
-    // The update lifecycle is owned by the inline broker in index.html
-    // (always network-fresh). The shell only mirrors its state into
-    // the menu button.
-    window.addEventListener("oros-update-ready", function () {
-      state.swUpdateReady = true;
-      renderMenu();
-    });
-
-    // Broker fired before shell.js finished loading?
-    if (window.__orosUpdateReady) {
-      state.swUpdateReady = true;
-      renderMenu();
-    }
-  }
-
   function setupInstallFlow() {
     window.addEventListener("beforeinstallprompt", function (e) {
       e.preventDefault();
@@ -283,9 +262,6 @@
     setTimeout(dismiss, 4000);
   }
 
-  function renderInstallRow(host) {
-    // Update takes priority over install: when a new version waits,
-    // this becomes the most important button in the menu.
     if (state.swUpdateReady) {
       var usection = document.createElement("div");
       usection.className = "install-section";
@@ -989,6 +965,15 @@
     noteLocalChange();            // user action → sync engine
     applyLang();
   });
+  
+    // Unsynced-changes guard: warn on close when dirty AND online
+  // (offline data is safe in localStorage — nothing to warn about).
+  window.addEventListener("beforeunload", function (e) {
+    if (window.orosSync && window.orosSync.isDirty() && navigator.onLine) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 
   // Boot
   initPrefs();
@@ -997,7 +982,6 @@
   applyTheme();
   applyLang();
   loadApps();
-  registerServiceWorker();
   setupInstallFlow();
   initSyncIntegration();
   setInterval(renderClock, 1000);
