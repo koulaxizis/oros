@@ -1173,7 +1173,7 @@
 
       var folderBtn = document.createElement("button");
       folderBtn.className = "menu-item";
-      if (folderName && lapsedFlag()) {
+      if (folderName && lapsed) {
         // Permission lapsed: one click re-grants, then an instant
         // manual write proves recovery. (requestPermission REQUIRES
         // user activation — this click handler is the only valid place.)
