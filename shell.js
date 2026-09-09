@@ -453,7 +453,6 @@
     });
 
     section.appendChild(grid);
-    section.appendChild(host.ownerDocument === document ? section : section);
     host.appendChild(section);
   }
 

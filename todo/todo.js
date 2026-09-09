@@ -270,14 +270,13 @@
   // Checked a recurring item → it re-opens with the next due date
   // instead of staying done. Returns true if the item recycled.
   function recycleItem(item) {
-    if (!item.recurrence) return false;
-    var base = item.due ? isoToDate(item.due) : isoToDate(todayISO());
-    var anchor = base > new Date() ? new Date() : new Date();   // now
-    var next = nextOccurrence(anchor, item.recurrence);
-    item.due = dateToISO(next);
-    item.done = false;
-    return true;
-  }
+  if (!item.recurrence) return false;
+  var anchor = new Date();                                // now
+  var next = nextOccurrence(anchor, item.recurrence);
+  item.due = dateToISO(next);
+  item.done = false;
+  return true;
+}
 
   // List-level cycle: when the deadline passes, every item resets.
   function applyListCycles() {
