@@ -1,12 +1,12 @@
 // ============================================================
-// orOS Kanban — App logic (v0.3, Wave 2)
-// New in v0.3:
-//   - Labels (board-wide store + attach/detach per card)
-//   - Board search (text, notes, extra info labels+values, label names)
-//   - Filter popover by label (OR within filter, AND with search)
-//   - DATA_VER 2 → 3 migration (additive: state.labels + card.labels)
-// Kept from v0.2: subtasks, extra info, duplicate card, live-editing
-// card dialog, pointer-based drag & drop, undo, sync slice.
+// orOS Kanban — App logic (v0.4, Wave 3)
+// New in v0.4:
+//   - Column drag reorder (#21): pointer-based, threshold-gated,
+//     head = drag handle, half-column insertion indicators
+//   - Column rename button (#22): pencil in the head, same dialog
+//     as dblclick — always-visible affordance
+// From v0.3 (Wave 2): labels, board search, filter by label,
+//   DATA_VER 3 migration, chips, subtasks, extra info, duplicate.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Data model, storage, migration
@@ -15,7 +15,8 @@
 //   5. Card dialog (live editing: labels, subtasks, info, duplicate)
 //   6. Column dialog
 //   7. Search & filter (board bar)
-//   8. Drag & drop (pointer-based, threshold-gated)
+//   8. Card drag & drop (pointer-based, threshold-gated)
+//   8b. Column drag reorder (pointer-based, threshold-gated)
 //   9. Undo / toast
 //  10. Sync slice (Dropbox) + palette inheritance
 //  11. Wiring & boot
@@ -35,12 +36,13 @@
       "board.title":      "Kanban",
       "col.add":          "Add column",
       "col.add.title":    "Add column",
+      "col.rename":       "Rename column",
       "empty.title":      "No columns yet",
       "empty.hint":       "Add your first column with the button above.",
       "quick.add":        "Add a card…",
       "search.ph":        "Search…",
       "search.clear":     "Clear search",
-      "filter.title":    "Filter by label",
+      "filter.title":     "Filter by label",
       "filter.empty":     "No labels yet — add one from a card.",
       "filter.del":       "Delete label",
       "card.title":       "Card",
@@ -82,6 +84,7 @@
       "board.title":      "Kanban",
       "col.add":          "Προσθήκη στήλης",
       "col.add.title":    "Προσθήκη στήλης",
+      "col.rename":       "Μετονομασία στήλης",
       "empty.title":      "Δεν υπάρχουν στήλες ακόμα",
       "empty.hint":       "Πρόσθεσε την πρώτη σου στήλη με το κουμπί παραπάνω.",
       "quick.add":        "Προσθήκη κάρτας…",
@@ -121,8 +124,8 @@
       "toast.coldel":     "Η στήλη διαγράφηκε",
       "undo":             "Αναίρεση",
       "confirm.carddel":  "Διαγραφή αυτής της κάρτας;",
-      "confirm.coldel":    "Διαγραφή στήλης και όλων των καρτών της;",
-      "confirm.lbldel":    "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις κάρτες.",
+      "confirm.coldel":   "Διαγραφή στήλης και όλων των καρτών της;",
+      "confirm.lbldel":   "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις κάρτες.",
       "new.col":          "Νέα στήλη"
     }
   };
@@ -262,7 +265,8 @@
     el.className = "k-col";
     el.dataset.colId = col.id;
 
-    // Head: title (dblclick → rename) + visible card count
+    // Head: title (dblclick → rename) + rename pencil + visible card count.
+    // The whole head is the column-reorder drag handle.
     var head = document.createElement("div");
     head.className = "col-head";
 
@@ -272,6 +276,20 @@
     title.title = col.name;               // full name on hover if truncated
     title.addEventListener("dblclick", function () { openColDialog(col.id); });
     head.appendChild(title);
+
+    // Rename pencil (#22) — same dialog as dblclick, always visible
+    var rename = document.createElement("button");
+    rename.type = "button";
+    rename.className = "col-rename";
+    rename.setAttribute("aria-label", t("col.rename"));
+    rename.title = t("col.rename");
+    rename.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
+    rename.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openColDialog(col.id);
+    });
+    head.appendChild(rename);
 
     var visible = 0;
     col.cards.forEach(function (c) { if (cardMatchesView(c)) visible++; });
@@ -321,6 +339,10 @@
     foot.appendChild(addBtn);
 
     el.appendChild(foot);
+
+    // Column reorder drag — the head is the handle (after head exists)
+    attachColDrag(head, el, col);
+
     return el;
   }
 
@@ -870,7 +892,7 @@
     showToast(t("toast.labeldel"), false);
   }
 
-  // ---------- 8. Drag & drop ----------
+  // ---------- 8. Card drag & drop ----------
   // Pointer-based, threshold-gated: a plain tap never starts a drag
   // (the click → dialog keeps working). Vertical touch movement
   // scrolls the column list (touch-action: pan-y); horizontal
@@ -895,9 +917,11 @@
 
       function clearMarks() {
         var marked = document.querySelectorAll(
-          ".drag-over-above, .drag-over-below, .k-col.drag-over");
+          ".drag-over-above, .drag-over-below, .k-col.drag-over, " +
+          ".k-col.drag-over-left, .k-col.drag-over-right");
         for (var i = 0; i < marked.length; i++) {
-          marked[i].classList.remove("drag-over-above", "drag-over-below", "drag-over");
+          marked[i].classList.remove("drag-over-above", "drag-over-below",
+                                     "drag-over", "drag-over-left", "drag-over-right");
         }
       }
 
@@ -993,6 +1017,126 @@
       if (bi !== -1) at = before ? bi : bi + 1;
     }
     dest.cards.splice(at, 0, card);
+  }
+
+  // ---------- 8b. Column drag reorder (#21) ----------
+  // Same contract as card drag: pointer-based, threshold-gated, no
+  // HTML5 dragstart. The head is the handle (grab cursor); the pencil
+  // button and dblclick-rename are excluded. The indicator shows LEFT
+  // or RIGHT of the hovered target based on the pointer half.
+  function attachColDrag(headEl, colEl, col) {
+    headEl.addEventListener("pointerdown", function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      // pencils/dlg opens are handled by their own listeners — never drag
+      if (e.target.closest(".col-rename")) return;
+      if ($("dlg-card").open || $("dlg-col").open) return;
+      if (state.columns.length < 2) return;   // nothing to reorder
+
+      var started = false;
+      var sx = e.clientX, sy = e.clientY;
+
+      function beginDrag() {
+        started = true;
+        colEl.classList.add("drag-src");
+        colEl.style.pointerEvents = "none";  // elementFromPoint sees THROUGH us
+        document.body.classList.add("is-dragging");
+      }
+
+      function clearMarks() {
+        var marked = document.querySelectorAll(
+          ".drag-over-above, .drag-over-below, .k-col.drag-over, " +
+          ".k-col.drag-over-left, .k-col.drag-over-right");
+        for (var i = 0; i < marked.length; i++) {
+          marked[i].classList.remove("drag-over-above", "drag-over-below",
+                                     "drag-over", "drag-over-left", "drag-over-right");
+        }
+      }
+
+      function mark(x, y) {
+        clearMarks();
+        var hit = document.elementFromPoint(x, y);
+        if (!hit || !hit.closest) return;
+        var target = hit.closest(".k-col");
+        if (!target || target === colEl) return;
+        var r = target.getBoundingClientRect();
+        if (x < r.left + r.width / 2) target.classList.add("drag-over-left");
+        else                          target.classList.add("drag-over-right");
+      }
+
+      function onMove(ev) {
+        if (!started) {
+          var dx = ev.clientX - sx, dy = ev.clientY - sy;
+          // Horizontal bias: column reorder is a horizontal gesture.
+          // Mostly-vertical intent (or tiny jiggles) never starts it.
+          if (Math.abs(dx) < DRAG_THRESHOLD || Math.abs(dx) <= Math.abs(dy)) return;
+          beginDrag();
+        }
+        ev.preventDefault();
+        mark(ev.clientX, ev.clientY);
+      }
+
+      function finish(ev) {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+
+        if (!started) return;              // was a tap/dblclick start — no-op
+
+        // Compute destination FIRST (pointer-events hack still active)
+        var hit = document.elementFromPoint(ev.clientX, ev.clientY);
+
+        colEl.classList.remove("drag-src");
+        colEl.style.pointerEvents = "";
+        document.body.classList.remove("is-dragging");
+        clearMarks();
+
+        if (!hit || !hit.closest) { save(); scheduleRender(); return; }
+        var target = hit.closest(".k-col");
+        if (target && target !== colEl) {
+          var r = target.getBoundingClientRect();
+          var before = ev.clientX < r.left + r.width / 2;
+          moveColumn(col, target.dataset.colId, before);
+        }
+        // else: dropped outside — order unchanged
+
+        save(); scheduleRender();
+      }
+
+      function onUp(ev) { finish(ev); }
+      function onCancel() {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+        if (started) {
+          colEl.classList.remove("drag-src");
+          colEl.style.pointerEvents = "";
+          document.body.classList.remove("is-dragging");
+          clearMarks();
+        }
+      }
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onCancel);
+    });
+  }
+
+  // Remove the source column, then re-locate the target (indices shift
+  // after the splice!) and insert before/after it.
+  function moveColumn(srcCol, destColId, before) {
+    var from = state.columns.indexOf(srcCol);
+    if (from === -1) return;
+
+    state.columns.splice(from, 1);
+
+    var to = -1;
+    for (var i = 0; i < state.columns.length; i++) {
+      if (state.columns[i].id === destColId) { to = i; break; }
+    }
+    if (to === -1) { save(); scheduleRender(); return; }  // restore below
+
+    var at = before ? to : to + 1;
+    state.columns.splice(at, 0, srcCol);
   }
 
   // ---------- 9. Undo / toast ----------

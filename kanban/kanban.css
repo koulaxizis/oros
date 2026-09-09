@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Kanban — App stylesheet (v0.3 / Wave 2)
+   orOS Kanban — App stylesheet (v0.4 / Wave 3)
    Same pattern as To-Do: the :root values below are only an
    offline/fallback match of the oros skin — runtime values are
    injected from the shell (same origin).
@@ -7,21 +7,20 @@
      #boardbar, #board-title, #search-wrap, #search, #search-clear,
      #filter-slot, #filter-btn, #filter-count, #filter-pop,
      #board-scroll, #columns, #empty
-     .k-col > .col-head (.col-title, .col-count)
+     .k-col > .col-head (.col-title, .col-rename, .col-count)
            > .col-body (.card [+ .chips, .sub-ind, .info-preview])
            > .col-foot  (.col-quick, .col-add-btn)
-   NEW in v0.3 (Wave 2):
-     #search-wrap …      — board-bar search box
-     #filter-btn/pop …   — label filter popover
-     .card .chips/.chip  — label chips on the card face
-     dialog label editor — #c-lbl-chips, .lbl-chip, #c-lbl-picker…
+   NEW in v0.4 (Wave 3):
+     .col-rename               — pencil button in the column head
+     .k-col.drag-src           — column being reordered (faded)
+     .k-col.drag-over-left/.right — insertion edge indicators
    Sections:
      1. Palette fallback + reset
      2. Board bar (+ search / filter tools)
      3. Board shell (horizontal column strip)
-     4. Columns
+     4. Columns (+ head tools + reorder states)
      5. Cards (+ label chips / subtask / info indicators)
-     6. Drag & drop states
+     6. Drag & drop states (cards + columns)
      7. Dialogs (card + column) + subtask/info/label editors
      8. Toast
      9. Mobile-first adaptations
@@ -315,6 +314,9 @@ input, textarea, select {
   padding: 10px 12px 6px;
   user-select: none;
   flex-shrink: 0;
+  cursor: grab;                  /* head = column drag handle (reorder) */
+  touch-action: pan-y;           /* vertical gestures pass through;
+                                    horizontal pointer moves = ours (reorder) */
 }
 .col-title {
   flex: 1;
@@ -339,6 +341,28 @@ input, textarea, select {
   color: var(--accent);
   flex-shrink: 0;
 }
+
+/* Rename button (pencil) — always visible affordance, same action
+   as the dblclick. Smaller than the counter so it never crowds. */
+.col-rename {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  touch-action: manipulation;    /* never hijacked by the head drag */
+  transition: color 0.15s, background 0.15s, transform 0.1s;
+}
+.col-rename:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.col-rename:active { transform: scale(0.90); }
 
 .col-body {
   flex: 1;
@@ -482,10 +506,16 @@ input, textarea, select {
 }
 
 /* ---------- 6. Drag & drop states ---------- */
+/* Cards */
 .card.dragging { opacity: 0.35; }
 .card.drag-over-above { box-shadow: inset 0  2px 0 var(--accent); }
 .card.drag-over-below { box-shadow: inset 0 -2px 0 var(--accent); }
+/* Column receiving a dropped card */
 .k-col.drag-over      { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent-soft); }
+/* Column reorder (Wave 3): source faded, insertion edge indicators */
+.k-col.drag-src       { opacity: 0.35; }
+.k-col.drag-over-left  { box-shadow: inset 2px 0 0 var(--accent); border-color: var(--accent); }
+.k-col.drag-over-right { box-shadow: inset -2px 0 0 var(--accent); border-color: var(--accent); }
 body.is-dragging { cursor: grabbing; user-select: none; }
 body.is-dragging * { cursor: grabbing !important; }
 
