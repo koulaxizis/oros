@@ -339,6 +339,176 @@
   --shadow:       rgba(0, 0, 0, 0.16);
 }
 
+/* ---------- Second Linux family (v0.12.0) — 6 new skins ---------- */
+
+/* Manjaro — alpine green */
+[data-skin="manjaro"][data-theme="dark"] {
+  --bg:           #0d1410;
+  --bg-desktop:   #121a14;
+  --bar-bg:       rgba(13, 20, 16, 0.94);
+  --text:         #e7f0e9;
+  --text-dim:     #93a89a;
+  --accent:       #35bf5c;
+  --accent-hover: #54d478;
+  --accent-soft:  rgba(53, 191, 92, 0.18);
+  --panel-bg:     #16201a;
+  --border:       #233129;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="manjaro"][data-theme="light"] {
+  --bg:           #f7faf7;
+  --bg-desktop:   #edf3ee;
+  --bar-bg:       rgba(247, 250, 247, 0.94);
+  --text:         #152016;
+  --text-dim:     #556a5a;
+  --accent:       #27994a;
+  --accent-hover: #1e7a39;
+  --accent-soft:  rgba(39, 153, 74, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d5dfd7;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
+/* openSUSE — chameleon lime */
+[data-skin="opensuse"][data-theme="dark"] {
+  --bg:           #10140c;
+  --bg-desktop:   #151a10;
+  --bar-bg:       rgba(16, 20, 12, 0.94);
+  --text:         #eaf0e2;
+  --text-dim:     #9aab8a;
+  --accent:       #73ba25;
+  --accent-hover: #8fd142;
+  --accent-soft:  rgba(115, 186, 37, 0.18);
+  --panel-bg:     #1a2013;
+  --border:       #28311c;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="opensuse"][data-theme="light"] {
+  --bg:           #f9faf5;
+  --bg-desktop:   #f0f3e6;
+  --bar-bg:       rgba(249, 250, 245, 0.94);
+  --text:         #1a2010;
+  --text-dim:     #5d6a4a;
+  --accent:       #5c941d;
+  --accent-hover: #477516;
+  --accent-soft:  rgba(92, 148, 29, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #dde3cc;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
+/* NixOS — snowflake blue */
+[data-skin="nixos"][data-theme="dark"] {
+  --bg:           #0d1118;
+  --bg-desktop:   #111623;
+  --bar-bg:       rgba(13, 17, 24, 0.94);
+  --text:         #e6eaf4;
+  --text-dim:     #929cb5;
+  --accent:       #5277c3;
+  --accent-hover: #7492d6;
+  --accent-soft:  rgba(82, 119, 195, 0.18);
+  --panel-bg:     #151b29;
+  --border:       #232b41;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="nixos"][data-theme="light"] {
+  --bg:           #f7f9fc;
+  --bg-desktop:   #edf1f8;
+  --bar-bg:       rgba(247, 249, 252, 0.94);
+  --text:         #131a28;
+  --text-dim:     #52607a;
+  --accent:       #3d5ea8;
+  --accent-hover: #2f4986;
+  --accent-soft:  rgba(61, 94, 168, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d4dce9;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
+/* Gentoo — royal purple */
+[data-skin="gentoo"][data-theme="dark"] {
+  --bg:           #120f16;
+  --bg-desktop:   #17131c;
+  --bar-bg:       rgba(18, 15, 22, 0.94);
+  --text:         #ede8f2;
+  --text-dim:     #a294ae;
+  --accent:       #7d5ba6;
+  --accent-hover: #9a79c2;
+  --accent-soft:  rgba(125, 91, 166, 0.18);
+  --panel-bg:     #1c1722;
+  --border:       #2c2435;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="gentoo"][data-theme="light"] {
+  --bg:           #f9f8fb;
+  --bg-desktop:   #f0edf5;
+  --bar-bg:       rgba(249, 248, 251, 0.94);
+  --text:         #1b1524;
+  --text-dim:     #635972;
+  --accent:       #64498a;
+  --accent-hover: #4f3a6e;
+  --accent-soft:  rgba(100, 73, 138, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #ded8e8;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
+/* Pop!_OS — cosmic orange */
+[data-skin="popos"][data-theme="dark"] {
+  --bg:           #161009;
+  --bg-desktop:   #1d160d;
+  --bar-bg:       rgba(22, 16, 9, 0.94);
+  --text:         #f4ece2;
+  --text-dim:     #ab978a;
+  --accent:       #ff7043;
+  --accent-hover: #ff8b66;
+  --accent-soft:  rgba(255, 112, 67, 0.18);
+  --panel-bg:     #221a10;
+  --border:       #38291a;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="popos"][data-theme="light"] {
+  --bg:           #fbf8f4;
+  --bg-desktop:   #f5efe7;
+  --bar-bg:       rgba(251, 248, 244, 0.94);
+  --text:         #241a10;
+  --text-dim:     #72614f;
+  --accent:       #e05a2b;
+  --accent-hover: #b8461f;
+  --accent-soft:  rgba(224, 90, 43, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #ead9ca;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
+/* Zorin — modern teal */
+[data-skin="zorin"][data-theme="dark"] {
+  --bg:           #0a1414;
+  --bg-desktop:   #0e1a1a;
+  --bar-bg:       rgba(10, 20, 20, 0.94);
+  --text:         #e3f0f0;
+  --text-dim:     #8ca4a4;
+  --accent:       #15a6a0;
+  --accent-hover: #3cc4be;
+  --accent-soft:  rgba(21, 166, 160, 0.18);
+  --panel-bg:     #122020;
+  --border:       #1e3030;
+  --shadow:       rgba(0, 0, 0, 0.50);
+}
+[data-skin="zorin"][data-theme="light"] {
+  --bg:           #f6fafa;
+  --bg-desktop:   #eaf3f3;
+  --bar-bg:       rgba(246, 250, 250, 0.94);
+  --text:         #0f1c1c;
+  --text-dim:     #4f6a6a;
+  --accent:       #108580;
+  --accent-hover: #0c6965;
+  --accent-soft:  rgba(16, 133, 128, 0.14);
+  --panel-bg:     #ffffff;
+  --border:       #d2e2e2;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
 /* Safe fallback + platform scrollbars */
 [data-theme="dark"]  { color-scheme: dark; }
 [data-theme="light"] { color-scheme: light; }

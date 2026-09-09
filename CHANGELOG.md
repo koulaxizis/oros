@@ -453,3 +453,50 @@ over localStorage and the follow-up push uploaded the wipe.
   (MAX_BACKUPS=5) — recovery not possible for content that never
   left the device. Accepted lesson: local rescue backups are the
   lifeline for offline sessions.
+  
+  ## v0.12.0 — Appearance expansion + Auto-backup (2026-09-09)
+
+### Appearance
+- 6 new Linux skins (16 total, swatch grid re-flowed to 2×8):
+  Manjaro #35bf5c, openSUSE #73ba25, NixOS #5277c3, Gentoo #7d5ba6,
+  Pop!_OS #ff7043, Zorin #15a6a0 — full dark+light palettes each.
+- 5 new composite CSS wallpapers (15 total, grid now exactly 3 rows
+  of 5), each paired to a skin (suggestive, from-default only):
+  · Nebula → lumo (deep violet nebula)
+  · Nordic Aurora (id: borealis) → manjaro (green aurora glow)
+  · Hex Grid → arch (pseudo-crystal repeating-linear lattice)
+  · Obsidian Veil → tux (near-black with hidden purple veil)
+  · Retro Terrazzo → zorin (multi-color speckles on dark base)
+- New skin display names render correctly (Pop!_OS, openSUSE, NixOS).
+
+### Auto-backup (new — sync section, works offline & disconnected)
+- Setting: Off (default) / Daily / Weekly / Monthly. Travels in the
+  shell slice (autoexport field) like syncInterval — syncs across
+  devices, but snapshot storage itself is device-local.
+- Check happens at boot (+2s delay) and on every tab-visible event.
+  NO background timers.
+- On-change-only: full unencrypted DB compared (meta.exportedAt
+  stripped) against newest snapshot; unchanged content never
+  duplicates an entry.
+- Rolling window: last 5 snapshots in localStorage
+  ("oros-auto-snapshots"), FIFO, quota-safe (oldest dropped first).
+- "Restore last snapshot" button in sync section: replays newest
+  snapshot through orosSync.importData (guarded/merge-aware path),
+  confirm dialog first, result marked dirty → reaches cloud on next
+  push. Disabled (greyed) until a snapshot exists.
+- Off = zero footprint going forward; existing snapshots kept.
+
+### Internal
+- state.autoexport + AUTOEXPORT_PREF/AUTOEXPORT_LAST/SNAPSHOTS_KEY
+  ("oros-autoexport", "oros-autoexport-last", "oros-auto-snapshots").
+- initSyncIntegration hooks visibilitychange (visible) → maybeAutoExport.
+- i18n: +9 keys per language (sync.autoexport.*, sync.restore,
+  sync.restore.confirm, sync.ok.snapshot.saved/restored).
+
+### Under consideration (backlog, not implemented)
+- Dedicated history/rewind SVG icon for the Restore button
+  (currently EYE_OFF_SVG placeholder).
+- Snapshot compression (bodies can be large; 5× full DB in
+  localStorage is the practical ceiling).
+- sync.js v0.8.1 cleanup re-audit + zombie-slice-registry note
+  (deferred to a dedicated non-feature wave, per ritual).

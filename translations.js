@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.6.2 — Translations
+// orOS Core v0.12.0 — Translations
 // Inline i18n module (no fetch, no external files)
 // Default language: English | Secondary: Greek
 // Persisted via localStorage ('oros-lang'), overridable by ?lang=
@@ -57,6 +57,15 @@ window.OROS_TRANSLATIONS = {
     "sync.interval.label":   "Auto-sync every",
     "sync.interval.off":     "Off",
     "sync.interval.minutes": "min",
+    "sync.autoexport.label":     "Auto backup",
+    "sync.autoexport.off":       "Off",
+    "sync.autoexport.daily":     "Daily",
+    "sync.autoexport.weekly":    "Weekly",
+    "sync.autoexport.monthly":   "Monthly",
+    "sync.restore":              "Restore last snapshot",
+    "sync.restore.confirm":      "Restore the last automatic snapshot? Current data will be merged with it and marked for sync.",
+    "sync.ok.snapshot.saved":    "Automatic snapshot saved",
+    "sync.ok.snapshot.restored": "Snapshot restored",
     "sync.err.notconnected":"Not connected to Dropbox",
     "sync.err.nopass":      "Enter your passphrase first",
     "sync.err.version":     "Cloud data uses an unsupported version",
@@ -114,6 +123,15 @@ window.OROS_TRANSLATIONS = {
     "sync.interval.label":   "Αυτόματος συγχρονισμός κάθε",
     "sync.interval.off":     "Ανενεργό",
     "sync.interval.minutes": "λεπτά",
+    "sync.autoexport.label":     "Αυτόματο αντίγραφο",
+    "sync.autoexport.off":       "Ανενεργό",
+    "sync.autoexport.daily":     "Ημερήσιο",
+    "sync.autoexport.weekly":    "Εβδομαδιαίο",
+    "sync.autoexport.monthly":   "Μηνιαίο",
+    "sync.restore":              "Επαναφορά τελευταίου αντιγράφου",
+    "sync.restore.confirm":      "Επαναφορά του τελευταίου αυτόματου αντιγράφου; Τα τρέχοντα δεδομένα θα συγχωνευτούν με αυτό και θα σημανθούν για συγχρονισμό.",
+    "sync.ok.snapshot.saved":    "Το αυτόματο αντίγραφο αποθηκεύτηκε",
+    "sync.ok.snapshot.restored": "Το αντίγραφο επαναφέρθηκε",
     "sync.err.notconnected":"Δεν υπάρχει σύνδεση με Dropbox",
     "sync.err.nopass":      "Δώσε πρώτα τον κωδικό σου",
     "sync.err.version":     "Τα δεδομένα του cloud χρησιμοποιούν μη υποστηριζόμενη έκδοση",

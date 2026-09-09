@@ -1,12 +1,13 @@
 // ============================================================
-// orOS Core v0.6.2 — Shell logic
+// orOS Core v0.12.0 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
-//   2. Preferences (skin, language, theme, wallpaper)
+//   2. Preferences (skin, language, theme, wallpaper, auto-backup)
 //   3. Language apply
 //   4. Theme apply
 //   5. Skin apply
 //   5b. Wallpaper apply
+//   5c. Auto-backup (rolling local snapshots)
 //   6. Clock (24h)
 //   7. PWA: install flow + version toast
 //   8. Apps loading & menu rendering (+ appearance + install/SYNC)
@@ -21,7 +22,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.11.1";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.12.0";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -36,7 +37,10 @@
 
     // sync UI state
     syncUserEmail:   null,
-    syncMsg:         null   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncMsg:         null   // { kind: "ok"|"err"|"dim", text: "…" },
+
+    // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
+    autoexport:      "off"
   };
 
   var SKINS = [
@@ -49,7 +53,14 @@
     { id: "arch",       color: "#1793d1" },
     { id: "debian",     color: "#d70a53" },
     { id: "elementary", color: "#8c5ec7" },
-    { id: "tux",        color: "#c9c9c9" }
+    { id: "tux",        color: "#c9c9c9" },
+    // v0.12.0 — second Linux family (6 new: 16 total, grid 2×8)
+    { id: "manjaro",    color: "#35bf5c" },
+    { id: "opensuse",   color: "#73ba25" },
+    { id: "nixos",      color: "#5277c3" },
+    { id: "gentoo",     color: "#7d5ba6" },
+    { id: "popos",      color: "#ff7043" },
+    { id: "zorin",      color: "#15a6a0" }
   ];
 
   var DEFAULT_WALLPAPER = "sand";
@@ -67,8 +78,26 @@
     { id: "aurora",   pair: "elementary",  css: "linear-gradient(155deg, #10302b 0%, #0b2320 45%, #071512 100%)" },
     { id: "sand",     pair: "oros",        css: "linear-gradient(160deg, #33291d 0%, #241c13 55%, #161009 100%)" },
     { id: "mono",     pair: "tux",         css: "linear-gradient(170deg, #262626 0%, #1a1a1a 55%, #0e0e0e 100%)" },
+    // v0.12.0 — five composite wallpapers (layered gradients)
+    { id: "nebula",   pair: "lumo",        css: "radial-gradient(ellipse at 25% 15%, #3d2b63 0%, #241b3d 40%, #14102a 70%, #0a0817 100%)" },
+    { id: "borealis", pair: "manjaro",     css: "radial-gradient(ellipse at 70% 0%, rgba(63,175,127,0.30) 0%, rgba(63,175,127,0) 45%), radial-gradient(ellipse at 40% 8%, rgba(94,231,160,0.14) 0%, rgba(94,231,160,0) 35%), linear-gradient(170deg, #0e1a17 0%, #0a1210 55%, #050908 100%)" },
+    { id: "hex",      pair: "arch",        css: "repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 22px), repeating-linear-gradient(60deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 26px), linear-gradient(165deg, #17181d 0%, #101116 60%, #0a0b0f 100%)" },
+    { id: "obsidian", pair: "tux",         css: "linear-gradient(200deg, #1a1025 0%, #0e0a14 55%, #070609 100%)" },
+    { id: "terrazzo", pair: "zorin",       css: "radial-gradient(circle at 15% 22%, #d4af37 0 2.5px, transparent 3px), radial-gradient(circle at 62% 30%, #6d4aff 0 2px, transparent 2.5px), radial-gradient(circle at 38% 68%, #e06c75 0 2.5px, transparent 3px), radial-gradient(circle at 78% 76%, #15a6a0 0 2px, transparent 2.5px), radial-gradient(circle at 28% 48%, #87cf3e 0 1.5px, transparent 2px), radial-gradient(circle at 85% 18%, #51a2da 0 1.5px, transparent 2px), radial-gradient(circle at 8% 82%, #ff7043 0 2px, transparent 2.5px), linear-gradient(160deg, #211f1b 0%, #161411 60%, #0e0d0b 100%)" },
     { id: "clear",    pair: null,          css: "" }   // "None": theme background
   ];
+
+  // ---------- Auto-backup configuration ----------
+  var AUTOEXPORT_PREF  = "oros-autoexport";        // mode: off/daily/weekly/monthly (travels in shell slice)
+  var AUTOEXPORT_LAST  = "oros-autoexport-last";  // epoch ms of last check/snapshot (device-local)
+  var SNAPSHOTS_KEY    = "oros-auto-snapshots";   // rolling window, device-local
+  var SNAPSHOT_MAX     = 5;
+  var DAY_MS           = 24 * 60 * 60 * 1000;
+  var AUTOEXPORT_PERIODS = {
+    daily:   DAY_MS,
+    weekly:  7 * DAY_MS,
+    monthly: 30 * DAY_MS
+  };
 
   function findWallpaper(id) {
     for (var i = 0; i < WALLPAPERS.length; i++) {
@@ -122,7 +151,7 @@
     var storedSkin = localStorage.getItem("oros-skin");
     state.skin     = isValidSkin(urlSkin) ? urlSkin
                    : isValidSkin(storedSkin) ? storedSkin
-                   : "oros";                      // was "adwaita"
+                   : "oros";
     localStorage.setItem("oros-skin", state.skin);
 
     var storedWp = localStorage.getItem("oros-wallpaper");
@@ -130,6 +159,9 @@
     localStorage.setItem("oros-wallpaper", state.wallpaper);
 
     state.theme = localStorage.getItem("oros-theme") === "light" ? "light" : "dark";
+
+    var ae = localStorage.getItem(AUTOEXPORT_PREF);
+    state.autoexport = (ae === "daily" || ae === "weekly" || ae === "monthly") ? ae : "off";
   }
 
   // ---------- 3. Language ----------
@@ -170,7 +202,7 @@
 
   // ---------- 5. Skin ----------
   function applySkin() {
-    if (!isValidSkin(state.skin)) state.skin = "oros";   // was "adwaita"
+    if (!isValidSkin(state.skin)) state.skin = "oros";
     document.documentElement.setAttribute("data-skin", state.skin);
   }
 
@@ -209,7 +241,95 @@
     return false;
   }
 
-  // ---------- 6. Clock (24h) ----------
+  // ---------- 5c. Auto-backup (rolling local snapshots) ----------
+  // Unencrypted full-database snapshots kept in localStorage — a
+  // rescue net INDEPENDENT of Dropbox, passphrase and connectivity.
+  // Schedule check happens at boot and whenever the tab becomes
+  // visible (NO background timers). "Off" = zero footprint: no
+  // snapshots, no key writes, nothing.
+
+  // Full-database body WITHOUT meta — exportData() stamps
+  // meta.exportedAt (timestamp), which would defeat the
+  // on-change-only comparison. Stripped here, re-added at restore.
+  function getSnapshotBody() {
+    var payload = JSON.parse(window.orosSync.exportData());
+    return { shell: payload.shell || null, apps: payload.apps || {} };
+  }
+
+  function readSnapshots() {
+    try {
+      var raw = localStorage.getItem(SNAPSHOTS_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function writeSnapshots(snaps) {
+    try {
+      localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snaps));
+    } catch (e) {
+      // Quota exceeded: drop the OLDEST entry and retry once —
+      // newest snapshots are the valuable ones.
+      if (snaps.length > 1) {
+        try {
+          snaps.shift();
+          localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snaps));
+        } catch (e2) { /* give up silently — next cycle retries */ }
+      }
+    }
+  }
+
+  // Period check + snapshot. "force" = run regardless of the last
+  // check (used when the user switches the mode on, so enabling
+  // Daily instantly produces the first snapshot).
+  function maybeAutoExport(force) {
+    if (state.autoexport === "off") return;
+    if (!window.orosSync || typeof window.orosSync.exportData !== "function") return;
+
+    var period = AUTOEXPORT_PERIODS[state.autoexport];
+    if (!period) return;
+
+    var last = parseInt(localStorage.getItem(AUTOEXPORT_LAST) || "0", 10) || 0;
+    if (!force && (Date.now() - last) < period) return;
+
+    // Check happened now — record it even if no snapshot follows
+    // (unchanged content must not re-check on every tab-visible).
+    localStorage.setItem(AUTOEXPORT_LAST, String(Date.now()));
+
+    var body = getSnapshotBody();
+    var bodyStr = JSON.stringify(body);
+
+    var snaps = readSnapshots();
+    // On-change-only: identical content never duplicates an entry.
+    if (snaps.length && JSON.stringify(snaps[snaps.length - 1].data) === bodyStr) return;
+
+    snaps.push({ at: new Date().toISOString(), data: body });
+    while (snaps.length > SNAPSHOT_MAX) snaps.shift();
+    writeSnapshots(snaps);
+
+    setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
+  }
+
+  // Restore: replays the NEWEST snapshot through orosSync.importData
+  // — the same guarded/merge-aware apply path a cloud pull uses.
+  // Restored data is marked dirty → reaches the cloud on next push.
+  function restoreLastSnapshot() {
+    var snaps = readSnapshots();
+    if (!snaps.length) return;
+    var snap = snaps[snaps.length - 1];
+
+    if (!window.confirm(window.t("sync.restore.confirm"))) return;
+
+    try {
+      var payload = { shell: snap.data.shell, apps: snap.data.apps };
+      window.orosSync.importData(JSON.stringify(payload));
+      setSyncMsg("ok", "sync.ok.snapshot.restored");
+    } catch (e) {
+      handleSyncError(e);
+    }
+  }
+  
+    // ---------- 6. Clock (24h) ----------
   function renderClock() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
@@ -464,6 +584,17 @@
   }
 
   function skinTitle(id) {
+    // Fixed display names where the id isn't the prettiest label
+    var display = {
+      popos:    { en: "Pop!_OS",       el: "Pop!_OS" },
+      opensuse: { en: "openSUSE",      el: "openSUSE" },
+      nixos:    { en: "NixOS",         el: "NixOS" },
+      manjaro:  { en: "Manjaro",       el: "Manjaro" },
+      gentoo:   { en: "Gentoo",        el: "Gentoo" },
+      zorin:    { en: "Zorin",         el: "Zorin" }
+    };
+    var d = display[id];
+    if (d) return state.lang === "el" ? d.el : d.en;
     return id.charAt(0).toUpperCase() + id.slice(1);
   }
 
@@ -478,17 +609,22 @@
       aurora:   { en: "Aurora",        el: "Αυγόρα" },
       sand:     { en: "Desert Sand",   el: "Άμμος Ερήμου" },
       mono:     { en: "Monochrome",    el: "Μονόχρωμο" },
+      nebula:   { en: "Nebula",        el: "Νεφέλωμα" },
+      borealis: { en: "Nordic Aurora", el: "Βόρειο Σέλας" },
+      hex:      { en: "Hex Grid",      el: "Εξαγωνικό Πλέγμα" },
+      obsidian: { en: "Obsidian Veil", el: "Πέπλο Οψιδιανού" },
+      terrazzo: { en: "Retro Terrazzo", el: "Ρετρό Terrazzo" },
       clear:    { en: "None",          el: "Καμία" }
     };
     var n = names[id];
     if (!n) return id;
     return state.lang === "el" ? n.el : n.en;
   }
+  
+    // ---------- 9. Sync UI & shell slice ----------
 
-  // ---------- 9. Sync UI & shell slice ----------
-
-  // The shell's own syncable data — theme/language/skin/wallpaper
-  // and the auto-sync interval all travel to the cloud.
+  // The shell's own syncable data — theme/language/skin/wallpaper,
+  // the auto-sync interval AND the auto-backup mode all travel.
   // Getter reads CURRENT state; setter is fed by pulls (no markDirty
   // inside user-settable paths!).
   function shellSliceGet() {
@@ -501,7 +637,8 @@
       theme:        state.theme,
       skin:         state.skin,
       wallpaper:    state.wallpaper,
-      syncInterval: syncInterval
+      syncInterval: syncInterval,
+      autoexport:   state.autoexport
     };
   }
 
@@ -520,6 +657,13 @@
       // Pull-fed value: applies + reschedules only. setIntervalMinutes
       // never marks dirty → no sync loop possible.
       window.orosSync.setIntervalMinutes(data.syncInterval);
+    }
+    if (data.autoexport === "off" || data.autoexport === "daily" ||
+        data.autoexport === "weekly" || data.autoexport === "monthly") {
+      // Pulled value: record + apply. NEVER marks dirty (same contract
+      // as syncInterval — pull → set → push would loop).
+      state.autoexport = data.autoexport;
+      localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
     }
 
     localStorage.setItem("oros-lang",  state.lang);
@@ -755,6 +899,60 @@
       section.appendChild(utils);
     }
 
+        // Auto-backup selector + restore — visible even when disconnected:
+    // snapshots are a LOCAL rescue net, independent of Dropbox.
+    var autoRow = document.createElement("div");
+    autoRow.className = "sync-interval";
+    var autoLabel = document.createElement("label");
+    autoLabel.textContent = window.t("sync.autoexport.label");
+    autoRow.appendChild(autoLabel);
+    var autoSel = document.createElement("select");
+    [["off", "sync.autoexport.off"],
+     ["daily", "sync.autoexport.daily"],
+     ["weekly", "sync.autoexport.weekly"],
+     ["monthly", "sync.autoexport.monthly"]].forEach(function (pair) {
+      var opt = document.createElement("option");
+      opt.value = pair[0];
+      opt.textContent = window.t(pair[1]);
+      if (state.autoexport === pair[0]) opt.selected = true;
+      autoSel.appendChild(opt);
+    });
+    autoSel.addEventListener("change", function () {
+      state.autoexport = autoSel.value;
+      localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
+      noteLocalChange();          // travels in the shell slice
+      if (state.autoexport === "off") {
+        // Off = zero footprint going forward. Existing snapshots are
+        // KEPT (they were earned) but nothing new is ever written.
+        renderMenu();
+        return;
+      }
+      // Switched on (or changed cadence): snapshot NOW so the user
+      // sees instant feedback that the net is active.
+      maybeAutoExport(true);
+      renderMenu();
+    });
+    autoRow.appendChild(autoSel);
+    section.appendChild(autoRow);
+
+    // Restore last auto snapshot (disabled until one exists)
+    var utils2 = document.createElement("div");
+    utils2.className = "sync-actions";
+    var hasSnapshots = readSnapshots().length > 0;
+    var restoreBtn = document.createElement("button");
+    restoreBtn.className = "menu-item";
+    restoreBtn.innerHTML = EYE_OFF_SVG + "<span>" + window.t("sync.restore") + "</span>";
+    if (!hasSnapshots) {
+      restoreBtn.disabled = true;
+      restoreBtn.style.opacity = "0.5";
+      restoreBtn.style.cursor = "not-allowed";
+    }
+    restoreBtn.addEventListener("click", function () {
+      restoreLastSnapshot();
+    });
+    utils2.appendChild(restoreBtn);
+    section.appendChild(utils2);
+
     // Local backup: unencrypted export/import — works offline,
     // independent of the Dropbox connection state
     var backupRow = document.createElement("div");
@@ -825,8 +1023,8 @@
 
     host.appendChild(section);
   }
-
-  function handleSyncError(err) {
+  
+    function handleSyncError(err) {
     var key = window.orosSync.errorKey(err);
     setSyncMsg("err", key);
   }
@@ -887,9 +1085,19 @@
         })
         .catch(function () { /* offline on boot — status stays generic */ });
     }
+
+    // Auto-backup: check on tab-visible (no background timers — the
+    // shell's stance on idle battery cost). Boot check happens at the
+    // bottom of this file, after everything is initialized.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") {
+        maybeAutoExport(false);
+      }
+    });
   }
 
   // ---------- 10. App opening (fullscreen takeover) ----------
+
   function openApp(app) {
     closeMenu();
     if (app.type === "external") {
@@ -979,4 +1187,8 @@
   setInterval(renderClock, 1000);
   renderClock();
   checkVersionToast();
+
+  // Auto-backup boot check — LAST, so snapshots capture the fully
+  // initialized state (apps loaded, sync slices hydrated).
+  setTimeout(function () { maybeAutoExport(false); }, 2000);
 })();
