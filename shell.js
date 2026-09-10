@@ -900,13 +900,47 @@
     }
   }
 
+  // v0.18.1 — taskbar toast: sync/shortcut messages must be VISIBLE,
+  // not buried in the menu. Inline styles only (palette vars —
+  // follows every skin, zero new CSS). One toast at a time: a new
+  // message replaces the old (pull+push bursts don't stack).
+  function scToast(kind, text) {
+    var old = document.getElementById("sc-toast");
+    if (old) old.remove();
+    var t = document.createElement("div");
+    t.id = "sc-toast";
+    t.setAttribute("role", "status");
+    t.textContent = text;
+    var borderColor = kind === "err" ? "#e06c75"
+                    : kind === "ok" ? "var(--accent)"
+                    : "var(--border)";
+    t.style.cssText =
+      "position:fixed;top:44px;left:50%;transform:translateX(-50%) translateY(-8px);" +
+      "background:var(--panel-bg);color:var(--text);border:1px solid " + borderColor + ";" +
+      "border-radius:10px;padding:8px 16px;font-size:12.5px;font-weight:600;" +
+      "box-shadow:0 8px 24px var(--shadow);opacity:0;transition:opacity .25s,transform .25s;" +
+      "z-index:1400;pointer-events:none;max-width:80vw;text-align:center;";
+    document.body.appendChild(t);
+    requestAnimationFrame(function () {
+      t.style.opacity = "1";
+      t.style.transform = "translateX(-50%) translateY(0)";
+    });
+    setTimeout(function () {
+      t.style.opacity = "0";
+      t.style.transform = "translateX(-50%) translateY(-8px)";
+      setTimeout(function () { t.remove(); }, 300);
+    }, kind === "err" ? 4500 : 2600);
+  }
+
   function setSyncMsg(kind, textKey) {
     state.syncMsg = { kind: kind, text: window.t(textKey) };
+    scToast(kind, state.syncMsg.text);
     renderMenu();
   }
   function setSyncMsgRaw(kind, raw) {
     state.syncMsg = { kind: kind, text: raw };
     if (kind === "err") setSyncDot("err", 6000);   // v0.18.0: red transient
+    scToast(kind, raw);
     renderMenu();
   }
 
@@ -1887,7 +1921,37 @@
     }
   });
   
-    // v0.18.0 — taskbar sync dot injection (R9: HTML ships empty)
+    // v0.18.1 — sync dot click = sync NOW (pull, then push if dirty).
+  // Not connected → error toast. Connected but locked → opens the
+  // menu at the passphrase section (no new i18n keys needed).
+  function syncNowFromDot() {
+    if (!window.orosSync) return;
+    if (!window.orosSync.isConnected()) {
+      setSyncMsgRaw("err", window.t("sc.err.notconnected"));
+      return;
+    }
+    if (!window.orosSync.hasPassphrase()) {
+      // Locked: the passphrase UI lives only in the menu — open it.
+      if (state.running) returnToDesktop();
+      document.getElementById("app-menu").classList.add("open");
+      return;
+    }
+    setSyncDot("syncing");
+    window.orosSync.pull()
+      .then(function (result) {
+        if (result.empty) setSyncMsg("ok", "sync.ok.empty");
+        else setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
+          result.applied + " " + window.t("sync.slices.applied"));
+        if (window.orosSync.isDirty()) {
+          return window.orosSync.push()
+            .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); });
+        }
+        setSyncDot("synced", 4000);
+      })
+      .catch(handleSyncError);
+  }
+
+  // v0.18.0 — taskbar sync dot injection (R9: HTML ships empty)
   (function () {
     var bar = document.querySelector(".bar-right");
     if (!bar) return;
@@ -1898,8 +1962,7 @@
     btn.setAttribute("aria-label", "Sync status");
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
-      if (state.running) { returnToDesktop(); return; }
-      document.getElementById("app-menu").classList.add("open");
+      syncNowFromDot();
     });
     bar.insertBefore(btn, document.getElementById("btn-lang"));
   })();
