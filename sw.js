@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.6.2 — Service Worker
+// orOS Core v0.13.1 — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
@@ -10,9 +10,10 @@
 // APP_VERSION (shell.js) on every push to main. This value below
 // is a manual safety stamp in case the Action ever fails.
 // Dropbox calls are cross-origin — never touched by this SW.
+// v0.13.1: notes/* added to precache, CACHE_VERSION bumped.
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.13.0";
+var CACHE_VERSION = "oros-v0.13.1";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
@@ -38,6 +39,10 @@ var PRECACHE_URLS = [
   "kanban/index.html",
   "kanban/kanban.css",
   "kanban/kanban.js",
+  "notes/",
+  "notes/index.html",
+  "notes/notes.css",
+  "notes/notes.js",
   "fonts/nunito-regular.woff2",
   "fonts/nunito-medium.woff2",
   "fonts/nunito-semibold.woff2",
