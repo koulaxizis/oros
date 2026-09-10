@@ -577,6 +577,7 @@ body {
   font-size: 13.5px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
+  white-space: nowrap;   /* v0.18.2: the chip may squeeze, the clock never wraps */
 }
 
 /* ---------- 4. Desktop ---------- */
@@ -820,6 +821,7 @@ body {
   /* Top bar: keep everything on one row on narrow screens */
   #btn-menu { font-size: 13.5px; padding: 6px 8px; }
   #bar-clock { font-size: 12.5px; }
+  .bar-left, .bar-right { gap: 5px; }
   #version-toast { font-size: 11.5px; padding: 7px 12px; }
 
   /* Respect the home-indicator / gesture area at the bottom */
@@ -1013,9 +1015,9 @@ body {
    an auto-update (broker reloads the page; last-seen version differs). */
 #version-toast {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px);
+  top: calc(48px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateX(12px);
   z-index: 1200;
   display: flex;
   align-items: center;
@@ -1037,7 +1039,7 @@ body {
 }
 #version-toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(0);
   pointer-events: auto;
 }
 #version-toast strong { color: var(--accent); }
@@ -1170,7 +1172,10 @@ body {
 #wx-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
 #wx-chip .wx-temp { pointer-events: none; }
 
-/* Very narrow phones: keep the icon, drop the number */
-@media (max-width: 360px) {
+/* v0.18.2 — narrow phones (≤420px): temp goes, icon-only chip
+   (move the breakpoint up from 360 — the clock+chip combo
+   needed the room one step earlier) */
+@media (max-width: 420px) {
   #wx-chip .wx-temp { display: none; }
+  #wx-chip { padding: 5px 4px; }
 }

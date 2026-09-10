@@ -32,7 +32,8 @@ R2  RELEASE RITUAL IS MANDATORY (see RELEASE PIPELINE). Stale
     bundles impersonate broken code — strikes so far: v0.13.1
     (sync), v0.14.1 (labels), v0.14.2 (palette, twice: orphan
     brace at notes.js:311 + stale ?v=0.13.1 served by SW).
-R3  VERIFY THE RUNNING VERSION FIRST. Version surface (v0.18.1):
+R3  VERIFY THE RUNNING VERSION FIRST. Version surface (v0.18.2,
+    pending push — see SHIP STATUS):
     Info modal (Ctrl+Alt+Shift+I) always shows v<APP_VERSION>;
     the version toast fires on change. The taskbar badge is GONE.
     Confirm on BOTH devices before interpreting symptoms as code
@@ -90,26 +91,37 @@ R12 SHORTCUT DESIGN — THREE STRIKES, ONE LESSON EACH:
     The Info modal table derives from SC_DEFS — a change is one
     SC_DEFS entry; validate against native combos BEFORE shipping
     (test ALL bindings on desktop AND mobile, both layouts).
+R13 LOCAL VS DEPLOYED VERSION DESYNC (born in the cleanup wave):
+    the local working copy can LAG behind the bot-committed
+    remote (action stamps CACHE_VERSION/manifest/?v= and commits
+    them; local files only diverge). Before diagnosing "version
+    drift" as a code bug, run `git fetch && git log --oneline -5
+    origin/main` and look for "chore: stamp version vX (auto)"
+    commits; `git pull --ff-only` BEFORE applying version patches.
+    v0.18.2 instance: local sw.js showed CACHE_VERSION 0.18.0
+    while remote manifest was 0.18.1 — same-workflow stamps can
+    never disagree; local staleness was the cause (pending user
+    verification at pause time).
 
 ────────────────────────────────────────────────────────────────
-CURRENT STATE (v0.18.1) — WAVE 3 (SHELL) COMPLETE
+CURRENT STATE (v0.18.2 — STAGED, see SHIP STATUS) — WAVE 4
+(CLEANUP/AUDIT) COMPLETE
 ────────────────────────────────────────────────────────────────
-Core shell  : APP_VERSION 0.18.1 in shell.js (single source of
+Core shell  : APP_VERSION 0.18.2 in shell.js (single source of
               truth). sw.js CACHE_VERSION, manifest version and
               ALL ?v= stamps are written AUTOMATICALLY by the CI
               action (see RELEASE PIPELINE).
 Apps        : To-Do (merge v0.4, DATA_VER 3), Kanban (v0.5,
               DATA_VER 4), Notes (v0.17.0, DATA_VER 2 — save-
               indicator REMOVED in v0.18.0, see below).
-Sync engine : sync.js v0.8.1 (per-slice baselines + divergence
-              guard).
+Sync engine : sync.js v0.8.2 (per-slice baselines + divergence
+              guard; v0.8.2 = cleanup wave dead-code removal).
 Skins       : 16 · Wallpapers: 15 (sand default).
 Shell uses  : useoros.online only (no alt domains).
 Version surf: Info modal (Ctrl+Alt+Shift+I) + update toast. The
               taskbar version badge was REMOVED in v0.18.1
-              (index.html span + applyLang line; a dead
-              #btn-menu-version CSS rule in style.css is queued
-              for the cleanup wave).
+              (index.html span + applyLang line; dead CSS rule
+              removed in v0.18.2).
 
 WAVE 3 (v0.18.0) FEATURE SET — all six shipped:
   1. Global shortcuts, Contract Β (shell-owned handler +
@@ -128,8 +140,8 @@ v0.18.1 POST-SHIP WAVE (all fixes user-tested on desktop):
   a. Shortcut modifier swap — see R12. Dispatcher matches e.code,
      not e.key. Applied to: shell dispatcher (§9c), shell-level
      listener (§12), Info modal prefix (⌃⌥⇧ / Ctrl+Alt+Shift+),
-     app forwarding listeners (todo, kanban, writer — capture
-     template; notes — inline wireUI() listener, R11).
+     app forwarding listeners (ALL apps now use the canonical
+     capture template — notes migrated in v0.18.2).
   b. Toast subsystem (scToast, §9): setSyncMsg/setSyncMsgRaw now
      ALSO fire a taskbar toast (single-slot, new replaces old;
      err holds 4.5s, others 2.6s; palette-var inline styles —
@@ -155,7 +167,7 @@ v0.18.1 POST-SHIP WAVE (all fixes user-tested on desktop):
      changing.
 
 NOTES APP FEATURE SET (v0.17.0, cumulative — app untouched in
-0.18.x except the save-indicator removal + forwarding patch):
+0.18.x except save-indicator removal + forwarding migration):
   - Zim-style page tree (folders/sub-pages, LWW merge, tombs)
   - Page labels/registry: colored tree dots, editor chips,
     stylized picker (create/attach/detach/delete in one popover)
@@ -185,24 +197,24 @@ REFERENCE REGISTRIES
 FILE TREE (repo root)
   index.html            shell markup + SW lifecycle broker
                         (inline: skipWaiting + controllerchange
-                        reload). v0.18.1: #btn-menu-version span
-                        removed from #btn-menu.
+                        reload). #btn-menu-version removed 0.18.1.
   shell.js              shell logic, menus, skins, wallpapers,
                         auto-backup, shell slice registration,
                         shortcuts (§9c), weather (§9d), taskbar
                         sync dot (§9b), scToast (§9)
   style.css             shell stylesheet (skin palettes = the
-                        canonical palette vocabulary source);
-                        dead #btn-menu-version rule pending cleanup
-  sync.js               orOS sync engine v0.8.1
+                        canonical palette vocabulary source)
+  sync.js               orOS sync engine v0.8.2
   translations.js      EN/EL shell strings (window.t)
   apps.json             app registry (name, url, icon, category)
-  sw.js                 service worker (cache-first; only
-                        CACHE_VERSION bump busts it; PRECACHE_URLS
-                        must cover apps — CI guard G2 enforces)
+  sw.js                 service worker (cache-first with
+                        ignoreSearch:true on cache-first branch;
+                        only CACHE_VERSION bump busts it;
+                        PRECACHE_URLS must cover apps — G2 enforces)
   manifest.webmanifest  PWA (start_url "/?source=pwa",
                         theme_color #1b1a18, background #131820,
-                        display standalone, maskable icons)
+                        display standalone, maskable icons;
+                        audited clean in v0.18.2)
   fonts/                vendored Nunito woff2 (5 weights)
   todo/  kanban/  notes/  app folders (index.html + css + js)
   .github/workflows/bump-version.yml   release pipeline (v3)
@@ -215,7 +227,17 @@ LOCALSTORAGE / STORAGE KEYS
   oros-sync-baselines         per-slice pushed hashes (djb2)
   oros-sync-dirty             unpushed-changes flag
   oros-remote-carry           parked remote payloads (divergence)
-  oros-db-account            Dropbox account cache
+  oros-sync-interval          user autosync interval (minutes)
+  oros-db-account             Dropbox account cache
+  oros-vault-data             encrypted device vault (passphrase-
+                              sealed sync secrets, IndexedDB key
+                              fetched from store "keys")
+  oros-db-access / oros-db-refresh / oros-db-expiry
+                              Dropbox token triplet (access /
+                              refresh token + expiry epoch)
+  oros-pkce-verifier          PKCE verifier — SESSION-ONLY
+                              (sessionStorage, dies with the tab)
+  IndexedDB "oros-vault"      store "keys" → vault decryption key
   oros-autoexport             auto-backup mode (off/daily/weekly/monthly)
   oros-autoexport-last        last auto-backup check epoch
   oros-auto-snapshots         rolling 5 full-DB snapshots (FIFO)
@@ -236,7 +258,9 @@ LOCALSTORAGE / STORAGE KEYS
                               (device-local throttle)
   v0.15.0–0.17.0 added ZERO new keys; v0.18.0 added the three
   weather keys above (wx settings are prefs, cache/throttle are
-  device-local by contract). v0.18.1 added ZERO.
+  device-local by contract). v0.18.1 added ZERO. v0.18.2 added
+  ZERO — the sync-engine keys above ALREADY EXISTED in code and
+  are now documented (registry-vs-reality sweep, WAVE 4).
 
 NOTES DATA MODEL (DATA_VER 2)
   state = { ver, pages:[{id, parent, title, text, mtime, pos,
@@ -249,12 +273,10 @@ NOTES DATA MODEL (DATA_VER 2)
   normalizeState() idempotent (runs on load AND merge results).
   Autosave debounce 500ms; flushSave on switch/hide/unload.
   DEBUG: window.__notesDebug = {version, state, merge, sliceGet}.
-  KNOWN NOISE (cleanup wave targets): the STRINGS blocks carry a
-  legacy pre-0.14 "notes.*" i18n duplicate block (notes.app,
-  notes.new.page, notes.title.ph, notes.text.ph) — suspected
-  dead keys overlapping page.* equivalents.
+  (v0.18.2: the pre-0.14 "notes.*" i18n duplicate block was
+  audited — dead keys removed, LIVE keys documented. See WAVE 4.)
 
-SYNC ENGINE v0.8.1 (sync.js)
+SYNC ENGINE v0.8.2 (sync.js)
   api.registerSlice(name, get, set, storageKey?, mergeFn?)
     — 5th arg enables merge; mergeFn throw → degrade to LWW.
   Baselines (djb2) per slice; divergence guard for mergeless
@@ -264,6 +286,12 @@ SYNC ENGINE v0.8.1 (sync.js)
     register / debounce (DEBOUNCE_MS = 5000).
   ACCEPTED LIMIT: two devices offline with the app closed
     converge only via a live open (merge needs app code present).
+  v0.8.2 cleanup: dead `changed` var + dead vaultReady removed;
+    DEAD-AND-DANGEROUS sliceIsClean() DELETED (re-encoded wrong
+    v0.8 "missing baseline = clean" semantics — would resurrect
+    the divergence bug if reused); parkRemote comment/code
+    mismatch fixed; shell applyPayload branch simplified
+    (verified equivalent).
 
 SHELL SLICE (synced): { lang, theme, skin, wallpaper,
   syncInterval, autoexport, weather } — getter reads live state;
@@ -271,12 +299,12 @@ SHELL SLICE (synced): { lang, theme, skin, wallpaper,
   weather is normalized on set (invalid lat/lon → null, label
   coerced to string) so a corrupt remote can never poison prefs.
 
-GLOBAL SHORTCUTS SUBSYSTEM (v0.18.1) — shell.js §9c
+GLOBAL SHORTCUTS SUBSYSTEM — shell.js §9c
   Architecture — CONTRACT Β (shell owns, apps forward):
     - ALL handlers live in the shell (section 9c).
     - window.orosShortcuts = { handle(e) } is the public contract.
     - Apps forward via ONE keydown listener; canonical capture-
-      phase template (todo/kanban/writer):
+      phase template (todo/kanban/writer AND notes — v0.18.2):
         document.addEventListener("keydown", function (e) {
           if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
           var p = window.parent;
@@ -284,16 +312,15 @@ GLOBAL SHORTCUTS SUBSYSTEM (v0.18.1) — shell.js §9c
                 typeof p.orosShortcuts.handle === "function")) return;
           if (p.orosShortcuts.handle(e)) e.stopPropagation();
         }, true);
-      notes.js EXCEPTION (v0.18.1b, see R11): forwards INLINE,
-      inside its own wireUI() keydown bubble listener:
-        if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey &&
-            window.parent && window.parent.orosShortcuts &&
-            window.parent.orosShortcuts.handle(e)) return;
-      Backlog: migrate notes.js to the canonical capture template.
+      (v0.18.2: notes.js migrated OFF its inline wireUI() bubble
+      forwarding — the R11 exception is CLOSED, all apps share
+      the same block. Historical note: v0.18.1 shipped notes with
+      inline forwarding because the capture template was assumed,
+      not verified — that is what made R11.)
   MODIFIERS: Ctrl+Alt+Shift (macOS: ⌃⌥⇧, metaKey accepted).
   KEY MATCHING: e.code ("KeyP") — PHYSICAL key, immune to the
     Greek layout (e.key returns "π"). Letters only (code must
-    start with "Key").
+    start with "Key"). Ctrl+K in notes matches e.code too.
   Bindings:
     P  force push        O  force pull
     S  snapshot now       X  export DB
@@ -334,6 +361,8 @@ TASKBAR SYNC DOT (v0.18.0/v0.18.1) — shell.js §9b + §12
     recomputes off/locked/idle/dirty when no transient holds
     (syncDotHold timestamp). Manual pull/push/unlock + auto-sync
     pulses set transient states. setSyncMsgRaw wires err→red.
+  ARIA (v0.18.2): dot aria-label localized via key sync.dot.aria
+    (EN+EL), refreshed on every state write + language toggle.
   CLICK (v0.18.1) = syncNowFromDot(): if not connected → red
     error toast; if locked → open menu (passphrase lives there);
     else pull then push-if-dirty, syncing→synced transients,
@@ -369,8 +398,8 @@ WEATHER WIDGET (v0.18.0) — shell.js §9d
     (a device that slept overnight must show offline/refreshed
     reality, not another device's cached degrees).
   WMO mapping: 0 sun/moon · 1-2 partly · 3 cloud · 45/48 fog ·
-    51-67 rain · 71-77 snow · 80-82 showers · 85/86 snow · 95+
-    storm. Unknown → cloud.
+  51-67 rain · 71-77 snow · 80-82 showers · 85/86 snow · 95+
+  storm. Unknown → cloud.
 
 INFO MODAL (v0.18.0/v0.18.1) — shell.js §9c showInfoModal
   Trigger: Ctrl+Alt+Shift+I or the menu Info row (renders last,
@@ -390,7 +419,10 @@ MERGE CONTRACTS PER APP
   Kanban (v0.5, DATA_VER 4): root om = column order, column om =
     card order, card mtime INCLUDES placement, cascade tombs,
     deleteLabel touches every card wearing it, subtasks/info =
-    whole-card LWW (backlog).
+    whole-card LWW (backlog). v0.18.2 ordering hardening:
+    quickAdd stamps col.om (top-insert = ordering decision);
+    duplicateCard uses the ONE full stampColOrder() (a hoisted
+    one-liner duplicate was silently shadowing it — removed).
   Notes: see NOTES DATA MODEL above.
 
 PALETTE CONTRACT (iframe apps) — CI-ENFORCED (G3)
@@ -409,6 +441,9 @@ PALETTE CONTRACT (iframe apps) — CI-ENFORCED (G3)
   forever. Symptom: "the app seems to have its own theme".
   G3 scans JS files referenced via src="" in the app index.html
     — an app using inline <script> needs the guard extended.
+  KEPT-BY-DECISION (v0.18.2): --bg-desktop/--accent-hover travel
+  in PAL_VARS although some apps consume only 9 — shell pass-
+  through symmetry, intentional.
 
 EXPORT SUBSYSTEM (Notes, v0.15.0) — zero dependencies
   writeZip(entries[{path,data}]) → Blob: store-method ZIP,
@@ -429,7 +464,7 @@ WIKI-LINK SUBSYSTEM (Notes, v0.17.0) — zero storage, derived
   editor is a <textarea>, links are NEVER injected into the
   text, only rendered as chips in a strip BELOW the editor).
   wikiTitles(text): regex /\[\[([^\[\]]+)\]\]/g, dedupe case-
-    insensitive, preserves original casing.
+  insensitive, preserves original casing.
   pageByTitle(title): exact case-insensitive trim match.
   Resolution model (openOrCreateFromLink):
     - resolved  → chip SOLID → selectPage(target)
@@ -439,7 +474,7 @@ WIKI-LINK SUBSYSTEM (Notes, v0.17.0) — zero storage, derived
     the literal needle "[[<current title>]]".
   Render triggers: renderEditor AND live on text input.
   Merge-wise: links live in page.text ⇒ plain LWW. CASE
-    EDGE: renaming a page leaves stale needles; acceptable.
+  EDGE: renaming a page leaves stale needles; acceptable.
 
 VIEW-DERIVATION PRINCIPLE (established v0.15.0–0.17.0)
   Anything computable from state is DERIVED AT RENDER TIME, not
@@ -452,7 +487,7 @@ SEARCH + TAG PANEL (Notes, v0.16.0)
   openSearch(): Ctrl+K or 🔍. Titles + content, lowercase
   contains, title hits first then mtime desc, 50-result cap,
   snippet ±30 chars, Enter = first result, Esc/backdrop closes.
-  tag panel: 🏷 → labels with counts → click → its pages.
+  Tag panel: 🏷 → labels with counts → click → its pages.
 
 AUTO-BACKUP (v0.12.0+)
   Mode off/daily/weekly/monthly in shell slice; checks at boot +
@@ -482,28 +517,34 @@ Triggers on EVERY push to main (no paths filter). Steps:
        new apps need ZERO config; absolute URLs untouched).
      – G2 offline guard: app folders must appear in sw.js
        PRECACHE_URLS, else FAIL (v0.13.0 lesson).
+       LIMITATION (recorded v0.18.2): G2 checks the app FOLDER
+       name appears in PRECACHE_URLS, not every FILE of it —
+       a new app asset missing from precache passes G2 silently.
      – G3 palette guard: app JS must contain inheritPalette AND
        watchPalette, else FAIL (v0.14.2 lesson).
   5. Commit via `git add -u`.
 Self-trigger note: the bot's own commit re-runs the workflow
 once; stamps are then already current → no diff → no commit →
 terminates. Safe.
+  COVERED BY ACTION: CACHE_VERSION, manifest version, ALL ?v=.
+  MANUAL BY DESIGN: banner comments + per-app APP_VERSION
+  (regex over comments = R1-class risk; banned).
 
 ────────────────────────────────────────────────────────────────
 FILE UPDATE CHECKLISTS (standing rules)
 ────────────────────────────────────────────────────────────
 A. VERSION BUMP (every release) — ONE manual step
-   1. shell.js: APP_VERSION (+ the per-app APP_VERSION & header
-      comment when the app itself tracks one — notes.js does).
+   1. shell.js: APP_VERSION (+ banner; style.css/translations.js/
+      sync.js/sw.js banners updated manually same commit).
    2. Push to main. The Action stamps everything else.
    3. Verify on BOTH devices: Info modal (Ctrl+Alt+Shift+I)
       shows the new version BEFORE interpreting behavior as
-      broken code (R3).
+      broken code (R3/R13).
 
 B. NEW APP ADDED (<app>/ folder)
    1. apps.json — entry (name, url, icon, category).
    2. sw.js — add the app's files to PRECACHE_URLS (G2 fails
-      the push otherwise).
+      the push otherwise; see G2 folder-level limitation).
    3. shell.js — icon SVG in the ICONS map.
    4. Translations — category label + shell-facing strings.
    5. Register a sync slice (R8; merge contracts). Pull-fed
@@ -511,10 +552,9 @@ B. NEW APP ADDED (<app>/ folder)
       suppresses echoes.
    6. Palette inheritance: inheritPalette + watchPalette (G3
       enforces; reference todo.js §12).
-   7. Shortcut forwarding listener (the Contract Β capture-
-      template block) — REQUIRED for shell shortcuts to work
-      while the app is focused. NOTE: must match the CURRENT
-      modifier contract (Ctrl+Alt+Shift, see GLOBAL SHORTCUTS).
+   7. Shortcut forwarding listener (canonical Contract Β
+      capture template) — REQUIRED. Must match the CURRENT
+      modifier contract (Ctrl+Alt+Shift, R12).
    8. Nothing in bump-version.yml (directory scan). ?v= is
       stamped automatically.
    9. Follow checklist A for the release bump.
@@ -538,7 +578,32 @@ E. RELEASE PRE-FLIGHT (recommended before any stable push)
    - Deploy + version check on BOTH devices before feature
      testing (Lesson 4).
 
-────────────────────────────────────────────────────────────────
+F. RELEASE SHIP STATUS (v0.18.2 pause point) — DO THESE NEXT:
+   1. Apply the manual bump: shell.js APP_VERSION → "0.18.2"
+      + banner; style.css / translations.js / sync.js (engine
+      v0.8.2) / sw.js banner comments. Nothing else is manual.
+   2. translations.js: grep "update.checking" — if missing, ADD
+      beside sync.dot.aria in EN and EL:
+        "update.checking": "Checking for updates…",
+        "update.checking": "Έλεγχος για ενημερώσεις…",
+      (scCheckUpdates() calls t("update.checking"); a missing
+      key surfaces as a raw key in the version toast.)
+   3. R13 CHECK FIRST: git fetch + Actions tab — confirm the
+      v0.18.1 bot commit exists and pull --ff-only before
+      applying anything, or local patches will conflict.
+   4. node --check: shell.js, sync.js, translations.js, sw.js,
+      todo.js, kanban.js, notes.js.
+   5. Push to main → Action stamps CACHE_VERSION/manifest/?v=.
+   6. Verify BOTH devices: Info modal shows 0.18.2 BEFORE
+      interpreting any symptom as a bug (R3). Smoke: kanban
+      same-column drag (the v0.18.2 ReferenceError fix), Esc on
+      todo list dialog after typing, language toggle with an
+      app open (reload expected), sync dot aria in EL.
+   7. OPTIONAL Action hardening (proposed, not applied): a
+      "Verify stamps landed" step (grep sw.js CACHE_VERSION +
+      manifest version) between the node step and the diff check.
+
+────────────────────────────────────────────────────────────
 WAVE 2 (Notes) — CLOSED ✓
 ──────────────────────────────────────────────────────────────
   v0.14.1  Page labels: registry + attach/detach + tomb merge +
@@ -567,8 +632,7 @@ WAVE 3 (Shell) — CLOSED ✓ (v0.18.0 + v0.18.1 fixes)
      auto-generated from SC_DEFS, tagline "A static operating
      system in your browser.", repo + credits. v0.18.1 fixes:
      capabilities key sc.info.cap (was menu.empty.hint —
-     "Apps will appear here…"); credits linked to
-     koulaxizis.gr.
+     "Apps will appear here…"); credits linked to koulaxizis.gr.
   #2 Weather widget: Open-Meteo, taskbar chip, GPS/manual city,
      offline slashed-cloud contract (never a fake temperature),
      settings in the shell slice, cache device-local, 30-min
@@ -579,33 +643,85 @@ v0.18.1 POST-SHIP FIXES (full detail under CURRENT STATE):
   = full sync · version badge removal · sc.info.cap fix ·
   credits link. All user-tested and working.
 
-NEXT WAVE — CLEANUP/AUDIT (user-approved, not started)
+WAVE 4 (CLEANUP/AUDIT) — CODE COMPLETE, SHIP PENDING (v0.18.2)
 ──────────────────────────────────────────────────────────────
-  Cold audit of every file in the repo. Confirmed targets:
-  - notes.js: dead pre-0.14 "notes.*" i18n keys (notes.app,
-    notes.new.page, notes.title.ph, notes.text.ph — overlap the
-    page.* equivalents).
-  - notes.js: migrate the inline wireUI() shortcut forwarding to
-    the canonical capture template (parity with todo/kanban/writer).
-  - style.css: dead #btn-menu-version rules (badge removed
-    v0.18.1); other dead selectors after 0.12–0.18 churn.
-  - sync.js: dead `changed` var in collectPayload; zombie slice
-    references; general re-audit.
-  - translations.js: unused shell keys across EN/EL.
-  - Full sweep for anything else: orphaned functions, unreachable
-    branches, stale comments claiming removed features exist.
-  PROCESS for this wave: audit FIRST (numbered findings list,
-  no code changes), user approves each, THEN collective fixes.
-  User provides full current files on request; NEVER regenerate
-  files wholesale (R1) — this wave is REMOVAL-heavy, so patches
-  must be exact deletion-ready blocks with locations.
+  Process: cold audit per file (numbered findings; EN/EL key
+  parity; HTML ids vs getElementById; CSS selectors vs JS-
+  generated DOM; storage registry vs reality; stale comments vs
+  code) → per-file user approval ("Πάμε όλα") → collective
+  surgical patches. 81 numbered findings → 70 patches. Zero
+  wholesale regenerations (R1 held). SHIP STATUS (SHIP STATUS
+  section above = the outstanding items).
 
+  CORE
+  - notes/: dead i18n keys removed (notes.app, tree.title,
+    tree.empty.hint, page.placeholder, page.count, labels.empty.new
+    — page.new kept LIVE); "Ένο_static" corrupted EL tagline →
+    "Ένα στατικό λειτουργικό στον browser σου."; notes.js
+    APP_VERSION → 0.17.0; Ctrl+K matched via e.code (R12);
+    inline wireUI() forwarding → canonical capture template
+    (backlog item closed, R11 exception retired); corrupted
+    comments cleaned.
+  - style.css: dead #btn-menu-version rules removed; header
+    refreshed.
+  - sync.js: dead `changed` var + dead vaultReady removed;
+    DEAD-AND-DANGEROUS sliceIsClean() DELETED (re-encoded the
+    WRONG v0.8 "missing baseline = clean" semantics — would have
+    resurrected the divergence bug if reused); shell branch of
+    applyPayload simplified (review-verified equivalent);
+    parkRemote comment/code mismatch fixed.
+  - translations.js: EL syncdot.dirty phrasing fixed; dead
+    sc.info.about removed; sync.dot.aria ADDED (EN+EL); dupes
+    removed (syncdot.err dup, tab in sync.snapshots.info).
+  - shell.js/index.html: sync-dot aria localization;
+    LANGUAGE TOGGLE NOW RELOADS THE OPEN APP (refreshRunningApp —
+    iframes read oros-lang at boot only; data lives in storage/
+    slices, zero loss); stale comments (Ctrl+Shift+I, Contract
+    Β wording) fixed; cache-busters aligned to 0.18.1 dev state.
+  - sw.js: caches.match(request, {ignoreSearch:true}) on the
+    cache-first branch ONLY (precache now serves ?v= requests —
+    fewer cold round-trips); navigate branch deliberately
+    untouched (network-first for navigations stays).
+  - apps.json: normalized (todo/kanban/notes entries: id/
+    category/icon/url/type consistent).
+
+  APPS
+  - todo/ (14 findings): #dlg-list commits on ANY close path
+    (saveListDialog() — Esc was silently losing typed renames);
+    third empty state (#filtered) explains hidden-by-filter
+    tasks; tab-drag post-click suppression (tabDragEndTs);
+    compare-before-touch on dlg-item close (openSnapshot
+    fingerprint — zero-edit close stamps nothing); defaultState
+    stamps root om; new keys tab.add/add.task/interval.aria/
+    filtered.title/filtered.hint; dead due.overdue removed;
+    hardcoded aria → paintStaticAria().
+  - kanban/ (15 findings): SAME-COLUMN CARD DRAG WAS BROKEN —
+    ReferenceError (undefined `col` in moveCard's sameCol
+    branch): mutation ran, save/render never did. FIXED
+    (col → srcCol). Duplicate stampColOrder removed (hoisted
+    one-liner silently shadowed the full version); dlg-col now
+    commits on ANY close path; zero-edit card-dialog close no
+    longer stamps mtime (cardFingerprint compare); quickAdd
+    stamps col.om (merge-ordering); no-op drop no longer saves;
+    dead col.add.title removed; corrupted multilingual comments
+    cleaned (nicht/перемещ/ενoriaκα/κοίνια); KC banner v0.5.
+
+  REGISTRY — 7 sync-engine storage keys documented (were in
+  code since v0.8.x, never in this file). Zero new keys.
+  DECISIONS LOGGED: PAL_VARS keeps --bg-desktop/--accent-hover
+  (pass-through symmetry); hardcoded EN aria in shell index.html
+  = intentional FOUC guards, overwritten by applyLang.
+
+NEXT WAVE CANDIDATES (in user-approved order of interest)
 ──────────────────────────────────────────────────────────────
+  – Full weather APP (forecast view) — likely the NEXT new app
+    after this wave ships; its own slice if it stores more than
+    {on,auto,lat,lon,label}.
+  – Dot-click toast composition ("Pulled (N) · Pushed") —
+    PENDING USER DECISION (v0.18.1 f).
+
 BACKLOG (recorded, not scheduled)
 ──────────────────────────────────────────────────────────────
-  – Dot-click toast composition: one combined toast
-    ("Pulled (N) · Pushed") vs current two-step — PENDING USER
-    DECISION (see v0.18.1 f above).
   – Notes read-mode (rendered [[links]] clickable inside text).
   – Notes import (.txt → new page, ZIP → non-destructive
     restore) — deferred by user decision.
@@ -613,17 +729,13 @@ BACKLOG (recorded, not scheduled)
   – Kanban/To-Do per-field merges (subtasks/info).
   – Schema-aware generic union for mergeless closed-app proxies.
   – Snapshot compression.
-  – Zombie slice references cleanup; sync.js dead `changed` var
-    in collectPayload (also targeted by the cleanup wave).
-  – Extend CI G3 if an app ever uses inline <script>.
-  – Full weather APP (forecast view) — the widget is the
-    shell-surface slice of it; a dedicated app would need its own
-    slice if it ever stores more than {on,auto,lat,lon,label}.
-    Likely the NEXT new app after the cleanup wave.
+  – Extend CI G3 if an app ever uses inline <script>; extend G2
+    to per-file precache verification (folder-level today).
+  – Action hardening: post-stamp verification step (see E.7).
+  – Full weather APP (see candidates).
   – Idea (loose, never confirmed): Pad app, pagination app,
     Public Domain Calculator — separate orOS waves.
 
-──────────────────────────────────────────────────────────────
 RELEASE HISTORY (condensed)
 ──────────────────────────────────────────────────────────────
 0.1–0.9    Shell born: bar, menu, skins, wallpapers, PWA, clock;
@@ -641,7 +753,7 @@ RELEASE HISTORY (condensed)
            ?v= in the ritual; changelog rebuilt as architecture
            reference.
 0.14.2/3   Palette fix (wrong root in inheritPalette) + data-theme
-           mirror; orphan-brace/ SyntaxError + stale-?v= SW
+           mirror; orphan-brace SyntaxError + stale-?v= SW
            double strike (R2/R3 hardened, R11 born).
 0.15.0     Notes exports: page .txt + notebook ZIP. Import
            deferred. CI action v3 (G2/G3 guards, git add -u).
@@ -664,5 +776,20 @@ RELEASE HISTORY (condensed)
            (messages visible outside the menu); sync dot click =
            full sync trigger; taskbar version badge removed
            (version surface = Info modal + update toast); Info
-           modal sc.info.cap fix; credits linked to
-           koulaxizis.gr.
+           modal sc.info.cap fix; credits linked to koulaxizis.gr.
+0.18.2     WAVE 4 — full-repo cleanup/audit: 81 findings → 70
+           surgical patches, STAGED at pause (ship steps in the
+           SHIP STATUS block). Notable: kanban same-column drag
+           ReferenceError FIXED (undefined `col` in moveCard);
+           dialog contracts unified across todo+kanban+notes
+           (commit-on-any-close + zero-edit no-stamp); corrupted
+           EL tagline fixed; language toggle reaches open apps;
+           sync.dot.aria added; sw.js precache serves ?v=
+           requests (ignoreSearch); notes.js migrated to the
+           canonical capture forwarding (backlog closed); dead
+           code swept (sliceIsClean — dead-and-dangerous,
+           vaultReady, `changed`, dead keys/rules); storage
+           registry completed (7 sync keys documented); manifest
+           audited clean. App banners unchanged by design
+           (todo v0.4 / kanban v0.5 / notes 0.17.0 = feature-
+           state markers). App version surface: 0.18.2.

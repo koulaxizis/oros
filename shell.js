@@ -175,15 +175,6 @@
     window.orosLang = state.lang;
     document.documentElement.setAttribute("lang", state.lang);
 	
-	  // Language toggle reaches OPEN apps: iframes read orosLang once at
-  // boot, so the honest way to localize an already-running app is a
-  // clean re-open. Data lives in storage/slices — zero loss risk.
-  function refreshRunningApp() {
-    if (state.running) {
-      document.getElementById("app-frame").src = state.running.url;
-    }
-  }
-
     var nodes = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < nodes.length; i++) {
       nodes[i].textContent = window.t(nodes[i].getAttribute("data-i18n"));
@@ -216,11 +207,6 @@
     if (state.running) {
       document.getElementById("app-frame").src = state.running.url;
     }
-  }
-
-  // ---------- 4. Theme ----------
-  function applyTheme() {
-    document.documentElement.setAttribute("data-theme", state.theme);
   }
 
   // ---------- 4. Theme ----------
@@ -543,8 +529,12 @@
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
     var mm = String(now.getMinutes()).padStart(2, "0");
-    var dateStr = now.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB",
-                          { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+    // v0.18.2 — ultra-narrow screens (≤400px) drop the year: with the
+    // weather chip on, the full date doesn't fit the bar row. Checked
+    // live each tick (renderClock runs 1/s), so rotate/resize follows.
+    var opts = { weekday: "short", day: "2-digit", month: "short" };
+    if (!window.matchMedia("(max-width: 400px)").matches) opts.year = "numeric";
+    var dateStr = now.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB", opts);
     document.getElementById("bar-clock").textContent =
       hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
     autoSyncDot();          // v0.18.0: piggybacks the clock tick
@@ -938,20 +928,25 @@
     var borderColor = kind === "err" ? "#e06c75"
                     : kind === "ok" ? "var(--accent)"
                     : "var(--border)";
+    // v0.18.2 — Linux convention: OS toasts dock TOP-RIGHT, just below
+    // the clock (bar = 40px + safe-area, so +8px breathing room). If the
+    // version toast happens to be alive (boot burst), stack below it.
+    var extraTop = document.getElementById("version-toast") ? 44 : 0;
     t.style.cssText =
-      "position:fixed;top:44px;left:50%;transform:translateX(-50%) translateY(-8px);" +
+      "position:fixed;top:calc(48px + env(safe-area-inset-top,0px) + " + extraTop + "px);right:12px;" +
+      "transform:translateX(12px);" +
       "background:var(--panel-bg);color:var(--text);border:1px solid " + borderColor + ";" +
       "border-radius:10px;padding:8px 16px;font-size:12.5px;font-weight:600;" +
       "box-shadow:0 8px 24px var(--shadow);opacity:0;transition:opacity .25s,transform .25s;" +
-      "z-index:1400;pointer-events:none;max-width:80vw;text-align:center;";
+      "z-index:1400;pointer-events:none;max-width:calc(100vw - 24px);text-align:left;";
     document.body.appendChild(t);
     requestAnimationFrame(function () {
       t.style.opacity = "1";
-      t.style.transform = "translateX(-50%) translateY(0)";
+      t.style.transform = "translateX(0)";
     });
     setTimeout(function () {
       t.style.opacity = "0";
-      t.style.transform = "translateX(-50%) translateY(-8px)";
+      t.style.transform = "translateX(12px)";
       setTimeout(function () { t.remove(); }, 300);
     }, kind === "err" ? 4500 : 2600);
   }
