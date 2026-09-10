@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.18.1 — Translations
+// orOS Core v0.18.2 — Translations
 // Inline i18n module (no fetch, no external files)
 // Default language: English | Secondary: Greek
 // Persisted via localStorage ('oros-lang'), overridable by ?lang=
@@ -29,6 +29,7 @@ window.OROS_TRANSLATIONS = {
 
     "install.trigger":     "Install orOS",
     "update.done":         "orOS was updated to",
+    "update.checking":     "Checking for updates…",
 
     "sync.title":          "Sync",
     "sync.connected":      "Connected",
@@ -132,6 +133,7 @@ window.OROS_TRANSLATIONS = {
 
     "install.trigger":     "Εγκατάσταση του orOS",
     "update.done":         "Το orOS ενημερώθηκε στην",
+    "update.checking":     "Έλεγχος για ενημερώσεις…",
 
     "sync.title":          "Συγχρονισμός",
     "sync.connected":      "Συνδεδεμένο",

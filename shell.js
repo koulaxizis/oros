@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.18.2";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.18.3";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1881,6 +1881,7 @@
     mb.classList.add("running");
     document.getElementById("btn-menu-label").textContent = window.t("running.back");
     mb.setAttribute("data-i18n-title", "running.home");
+    document.title = app.name + " · orOS";   // v0.18.2: tab title follows the running app
   }
 
   function returnToDesktop() {
@@ -1892,6 +1893,7 @@
     mb.classList.remove("running");
     document.getElementById("btn-menu-label").textContent = window.t("bar.menu");
     mb.setAttribute("data-i18n-title", "bar.menu");
+    document.title = "orOS";                 // v0.18.2: back to the bare OS title
   }
 
   // ---------- 11. Menu open/close ----------
