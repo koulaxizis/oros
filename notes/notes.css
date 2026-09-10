@@ -576,3 +576,44 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   font: inherit; font-size: 13px; color: var(--text);
 }
 .tp-page:hover { background: var(--accent-soft); }
+
+/* ===== v0.17.0: wiki-links + backlinks strip ===== */
+
+#links-strip {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+.lk-section {
+  font-size: 10px; font-weight: 800; letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+.lk-chip {
+  font: inherit; font-size: 12px; font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  max-width: 180px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lk-chip.ok {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.lk-chip.new {
+  background: none;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+}
+.lk-chip.new:hover { color: var(--accent); border-color: var(--accent); }
+.lk-chip.back {
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.lk-chip.back:hover { background: var(--accent-soft); }

@@ -228,7 +228,10 @@
 "search.count": "{n} results",
 "tags.all": "All labels",
 "tags.pages": "{n} pages",
-"tags.back": "Back"
+"tags.back": "Back",
+"links.out": "Links",
+"links.back": "Backlinks",
+"links.none": "None"
     },
     el: {
       "app.title":          "Σημειώσεις",
@@ -268,7 +271,10 @@
 "search.count": "{n} αποτελέσματα",
 "tags.all": "Όλες οι ετικέτες",
 "tags.pages": "{n} σελίδες",
-"tags.back": "Πίσω"
+"tags.back": "Πίσω",
+"links.out": "Σύνδεσμοι",
+"links.back": "Αναφορές",
+"links.none": "Κανένα"
     }
   };
 
@@ -549,6 +555,9 @@
     var text  = document.getElementById("page-text");
     var page  = pageById(prefs.current);
     if (!title || !text) return;
+	
+	    var oldStrip = document.getElementById("links-strip");
+    if (oldStrip && !page) oldStrip.remove();
 
     title.disabled = !page;
     text.disabled  = !page;
@@ -556,6 +565,7 @@
     text.value  = page ? page.text : "";
     setSaveIndicator("saved");
 	    renderChips(page);
+    renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
   }
   
     // v0.14.1: visible label chips in the editor header — tags were
@@ -1112,6 +1122,111 @@
     panel.appendChild(list);
     document.body.appendChild(panel);
   }
+  
+    // ---------- 6e. Wiki-links + backlinks (live, zero storage) ----------
+  // Outgoing links: [[Title]] parsed from the page text on the fly.
+  // Backlinks: other pages whose text contains [[current title]].
+  // Resolved chip → open; unresolved chip → CREATE (creation-on-click,
+  // new page becomes a CHILD of the current page — wiki-tree semantics).
+
+  function wikiTitles(text) {
+    var out = [], seen = {};
+    var re = /\[\[([^\[\]]+)\]\]/g, m;
+    while ((m = re.exec(text || "")) !== null) {
+      var title = m[1].trim();
+      if (title && !seen[title.toLowerCase()]) {
+        seen[title.toLowerCase()] = true;
+        out.push(title);
+      }
+    }
+    return out;
+  }
+
+  function pageByTitle(title) {
+    var low = (title || "").toLowerCase();
+    for (var i = 0; i < state.pages.length; i++) {
+      var p = state.pages[i];
+      if ((p.title || "").trim().toLowerCase() === low) return p;
+    }
+    return null;
+  }
+
+  function openOrCreateFromLink(title) {
+    var target = pageByTitle(title);
+    if (target) { selectPage(target.id); return; }
+    // Creation-on-click: new page as CHILD of current, at end.
+    newPage(prefs.current || null);
+    var fresh = pageById(prefs.current);
+    if (fresh) {
+      fresh.title = title;
+      fresh.mtime = Date.now();
+      saveNow();
+      markSyncDirty();
+      renderAll();
+    }
+  }
+
+  function backlinkPages(current) {
+    var title = ((current && current.title) || "").trim();
+    if (!title) return [];
+    var needle = "[[" + title + "]]";
+    return state.pages.filter(function (p) {
+      return p.id !== current.id && ((p.text || "").indexOf(needle) !== -1);
+    });
+  }
+
+  function chip(label, cls, onclick) {
+    var c = document.createElement("button");
+    c.type = "button";
+    c.className = "lk-chip " + (cls || "");
+    c.textContent = label;
+    c.addEventListener("click", function (e) { e.stopPropagation(); onclick(); });
+    return c;
+  }
+
+  function renderLinksStrip(page) {
+    var old = document.getElementById("links-strip");
+    if (old) old.remove();
+
+    var pane = document.getElementById("editor-pane");
+    if (!pane || !page) return;
+
+    var outTitles = wikiTitles(page.text);
+    var backs = backlinkPages(page);
+    if (!outTitles.length && !backs.length) return;
+
+    var strip = document.createElement("div");
+    strip.id = "links-strip";
+
+    if (outTitles.length) {
+      var so = document.createElement("div");
+      so.className = "lk-section";
+      so.textContent = t("links.out");
+      strip.appendChild(so);
+      outTitles.forEach(function (title) {
+        var resolved = !!pageByTitle(title);
+        strip.appendChild(chip(title, resolved ? "ok" : "new", function () {
+          openOrCreateFromLink(title);
+        }));
+      });
+    }
+
+    if (backs.length) {
+      var sb = document.createElement("div");
+      sb.className = "lk-section";
+      sb.textContent = t("links.back");
+      strip.appendChild(sb);
+      backs.forEach(function (src) {
+        strip.appendChild(chip(
+          src.title !== "" ? src.title : t("page.untitled"),
+          "back",
+          function () { selectPage(src.id); }
+        ));
+      });
+    }
+
+    pane.appendChild(strip);
+  }
 
   function openNodeMenu(page, x, y) {
     closeMenus();
@@ -1559,6 +1674,7 @@
         p.text  = text.value;
         p.mtime = Date.now();
         queueSave(p.id);
+        renderLinksStrip(p);   // live chips while typing
       });
     }
 
