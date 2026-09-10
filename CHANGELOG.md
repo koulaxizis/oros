@@ -570,3 +570,19 @@ Wave 2 item 4 (label aggregation panel) needs ZERO future migration.
   look exactly like broken code.
 NEXT (Wave 2): 2) exports (.txt page + notebook zip) · 3) wiki-links [[Page]] ·
 4) tags side-panel aggregation on top of this labels layer · 5) search
+
+v0.14.1 — Notes: label visibility + regression fixes
+WHY: v0.14.0 shipped a REWRITE instead of a patch and regressed three things;
+this release restores the v0.13.1 contracts surgically.
+- FIX: button icons (+ new page, hamburger show-tree) re-injected by JS —
+  the HTML ships the buttons empty (v0.14.0 rewrite dropped the injection)
+- FIX: i18n keys realigned with the HTML vocabulary (notes.app, notes.new.page,
+  notes.title.ph, notes.text.ph) — v0.14.0 renamed keys, raw keys leaked to UI
+- FIX: label styles were never reaching devices (stale SW cache, ?v unchanged)
+  → notes/index.html now bumps ?v with every app release, not just core
+- NEW: label chips in the editor header (visible tags, click → picker) +
+  toggleAttach now re-renders editor, not just the tree
+- LESSON (recorded, standing): never regenerate whole files when patching —
+  append surgical deltas to the file the user confirms works
+NEXT (Wave 2): 2) exports (.txt page + notebook zip) · 3) wiki-links [[Page]] ·
+4) tags aggregation panel (on this labels layer) · 5) search

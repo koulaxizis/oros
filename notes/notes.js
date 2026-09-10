@@ -215,7 +215,11 @@
       "labels.detach":      "Remove",        // v0.14.0
       "labels.confirm":     "Delete this label?",      // v0.14.0
       "labels.detached":    "Label removed", // v0.14.0
-      "labels.empty.new":   "Label name"      // v0.14.0
+      "labels.empty.new":   "Label name",     // v0.14.0
+	        "notes.app":         "Notes",
+      "notes.new.page":    "New page",
+      "notes.title.ph":    "Title",
+      "notes.text.ph":     "Start typing…"
     },
     el: {
       "app.title":          "Σημειώσεις",
@@ -242,7 +246,11 @@
       "labels.detach":      "Αφαίρεση",        // v0.14.0
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
       "labels.detached":    "Η ετικέτα αφαιρέθηκε", // v0.14.0
-      "labels.empty.new":   "Όνομα ετικέτας"   // v0.14.0
+      "labels.empty.new":   "Όνομα ετικέτας",   // v0.14.0
+	        "notes.app":         "Σημειώσεις",
+      "notes.new.page":    "Νέα σελίδα",
+      "notes.title.ph":    "Τίτλος",
+      "notes.text.ph":     "Ξεκίνα να γράφεις…"
     }
   };
 
@@ -308,6 +316,17 @@
   var CARET_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
   var PAGE_SVG  = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
   var X_SVG     = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  var PLUS_SVG  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+  var BURGER_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+
+  // v0.14.1: HTML ships the buttons EMPTY (icons are injected here —
+  // restoring the v0.13.1 contract my v0.14.0 rewrite dropped).
+  function paintStaticIcons() {
+    var nb = document.getElementById("btn-new-page");
+    if (nb && !nb.innerHTML.trim()) nb.innerHTML = PLUS_SVG;
+    var st = document.getElementById("btn-show-tree");
+    if (st && !st.innerHTML.trim()) st.innerHTML = BURGER_SVG;
+  }
 
   function uid(prefix) {
     return (prefix || "p") + Date.now().toString(36) +
@@ -512,6 +531,44 @@
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
     setSaveIndicator("saved");
+	    renderChips(page);
+  }
+  
+    // v0.14.1: visible label chips in the editor header — tags were
+  // previously dots-in-the-tree only. Click → picker for this page.
+  function renderChips(page) {
+    var old = document.getElementById("page-chips");
+    if (old) old.remove();
+    var header = document.getElementById("editor-header");
+    if (!header || !page) return;
+    var ids = page.labels || [];
+    if (!ids.length) return;
+
+    var wrap = document.createElement("span");
+    wrap.id = "page-chips";
+    ids.forEach(function (lid) {
+      var lb = labelById(lid);
+      if (!lb) return;
+      var chip = document.createElement("button");
+      chip.className = "page-chip";
+      chip.type = "button";
+      var dot = document.createElement("span");
+      dot.className = "page-chip-dot";
+      dot.style.background = lb.color;
+      chip.appendChild(dot);
+      var nm = document.createElement("span");
+      nm.textContent = lb.name;
+      chip.appendChild(nm);
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var r = chip.getBoundingClientRect();
+        openLabelPicker(page, r.left, r.bottom + 4);
+      });
+      wrap.appendChild(chip);
+    });
+    var si = document.getElementById("save-indicator");
+    if (si) header.insertBefore(wrap, si);
+    else header.appendChild(wrap);
   }
 
   function newPage(parentId) {
@@ -807,7 +864,7 @@
     page.mtime = Date.now();
     saveNow();
     markSyncDirty();
-    renderTree();
+        renderAll();     // v0.14.1: chips must refresh too, not just tree dots
   }
 
   // ---------- 7. Merge engine (pages + labels, deterministic) ----------
@@ -981,6 +1038,7 @@
   }
 
   function wireUI() {
+	      paintStaticIcons();
     var showTree = document.getElementById("btn-show-tree");
     if (showTree) {
       showTree.addEventListener("click", function () {

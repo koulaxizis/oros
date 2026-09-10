@@ -1,12 +1,10 @@
 /* ============================================================
-   orOS Notes v0.14.0 — App stylesheet
+   orOS Notes v0.13.1 — App stylesheet
    Inherits the shell palette: variables are injected at runtime
    from the parent shell (same origin) by notes.js
    inheritPalette() — the :root values below are only the
    offline/standalone fallback matching the oros skin.
    Same contract as todo.css (ARCHITECTURE REFERENCE, v0.13.1).
-   v0.14.0 (Wave 2.1): label dots in tree rows + label picker
-   popover (context menu entry) — Todo/Kanban label parity.
    Mobile-first single pane; ≥720px splits tree|editor.
    Plain text, no toolbars, no chrome beyond the essentials.
    ============================================================ */
@@ -50,7 +48,7 @@ body {
   height: 100dvh;
 }
 
-/* ---------- 2. Tree pane ---------- */
+/* ---------- Tree pane ---------- */
 
 #tree-pane {
   display: none;          /* mobile: hidden behind toggle */
@@ -109,7 +107,7 @@ body {
 .node-row.active { background: var(--accent); color: #fff; }
 .node-row.active .node-caret,
 .node-row.active .node-count,
-.node-row.active .node-dots { opacity: 0.8; }
+.node-row.active .node-ico { color: rgba(255, 255, 255, 0.75); }
 
 .node-caret {
   flex: 0 0 24px;
@@ -123,7 +121,8 @@ body {
 .node-caret svg { display: block; margin: auto; }
 .node-caret.hidden { visibility: hidden; }
 
-/* Caret rotates when the PARENT node is open */
+/* Caret rotates when the PARENT node is open (selector fixed in
+   v0.13.1 — the old rule targeted a non-existent child position) */
 .node.open > .node-row > .node-caret { transform: rotate(90deg); }
 
 .node-ico {
@@ -140,21 +139,6 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Label dots — one per attached label, colored, tooltip=name */
-.node-dots {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: 6px;
-  flex: 0 0 auto;
-}
-.node-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: 0 0 auto;
 }
 
 .node-count {
@@ -181,7 +165,8 @@ body {
   border-top: 1px solid var(--border);
 }
 
-/* ---------- Node context menu (long-press / right-click) ---------- */
+/* ---------- Node context menu (long-press / right-click) ----------
+   Styles were MISSING in v0.13.0 (the menu worked unstyled). */
 
 #node-menu {
   position: fixed;
@@ -212,8 +197,141 @@ body {
 }
 .node-menu-item:hover { background: var(--accent-soft); }
 
-/* ---------- Label picker popover (Wave 2.1 — Todo parity) ---------- */
+/* ---------- Splitter (desktop) ---------- */
 
+#pane-splitter {
+  display: none;
+  flex: 0 0 5px;
+  cursor: col-resize;
+  background: var(--border);
+}
+#pane-splitter:hover, #pane-splitter.dragging { background: var(--accent); }
+
+/* ---------- Editor pane ---------- */
+
+#editor-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#editor-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+#page-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 8px;
+}
+#page-title:focus {
+  outline: none;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+}
+
+#save-indicator {
+  flex: 0 0 auto;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  opacity: 0.35;
+  transition: opacity 0.2s, background 0.2s;
+}
+#save-indicator[data-state="dirty"] { background: var(--danger); opacity: 1; }
+#save-indicator[data-state="saved"] { background: var(--accent); opacity: 1; }
+
+#page-text {
+  flex: 1 1 auto;
+  width: 100%;
+  border: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.65;
+  padding: 20px clamp(16px, 4vw, 64px);
+  resize: none;
+  outline: none;
+}
+#page-text::placeholder { color: var(--text-dim); }
+#page-text:disabled { opacity: 0.5; }
+#page-title:disabled { opacity: 0.5; }
+
+/* ---------- Icon buttons ---------- */
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap); height: var(--tap);
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius);
+  flex: 0 0 auto;
+}
+.icon-btn:hover { background: var(--accent-soft); color: var(--text); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn svg { pointer-events: none; }
+
+/* Desktop: show tree beside editor, hide the mobile toggle */
+@media (min-width: 720px) {
+  #tree-pane {
+    display: flex;
+    width: 270px;
+    flex: 0 0 auto;
+  }
+  #btn-show-tree { display: none; }
+  #pane-splitter { display: block; }
+}
+
+/* While dragging the splitter, kill text selection */
+body.resizing { user-select: none; cursor: col-resize; }
+body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
+
+/* ---------- Scrollbars (WebKit, subtle) ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================
+   v0.14.1 — Wave 2.1 label styles (APPENDED BLOCK)
+   Everything above this point is v0.13.1 verbatim — untouched.
+   ============================================================ */
+
+/* Label dots on tree rows */
+.node-row.active .node-dots { opacity: 0.8; }
+.node-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  flex: 0 0 auto;
+}
+.node-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+/* Label picker popover (context menu → "Labels") */
 #label-picker {
   position: fixed;
   z-index: 960;
@@ -337,115 +455,36 @@ body {
 }
 .lp-add:hover { filter: brightness(1.1); }
 
-/* ---------- Splitter (desktop) ---------- */
-
-#pane-splitter {
-  display: none;
-  flex: 0 0 5px;
-  cursor: col-resize;
-  background: var(--border);
-}
-#pane-splitter:hover, #pane-splitter.dragging { background: var(--accent); }
-
-/* ---------- Editor pane ---------- */
-
-#editor-pane {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-#editor-header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--border);
-}
-
-#page-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: 0;
-  background: none;
-  color: var(--text);
-  font: inherit;
-  font-size: 17px;
-  font-weight: 600;
-  padding: 8px;
-}
-#page-title:focus {
-  outline: none;
-  background: var(--accent-soft);
-  border-radius: var(--radius);
-}
-
-#save-indicator {
-  flex: 0 0 auto;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--text-dim);
-  opacity: 0.35;
-  transition: opacity 0.2s, background 0.2s;
-}
-#save-indicator[data-state="dirty"] { background: var(--danger); opacity: 1; }
-#save-indicator[data-state="saved"] { background: var(--accent); opacity: 1; }
-
-#page-text {
-  flex: 1 1 auto;
-  width: 100%;
-  border: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 16px;
-  line-height: 1.65;
-  padding: 20px clamp(16px, 4vw, 64px);
-  resize: none;
-  outline: none;
-}
-#page-text::placeholder { color: var(--text-dim); }
-#page-text:disabled { opacity: 0.5; }
-#page-title:disabled { opacity: 0.5; }
-
-/* ---------- Icon buttons ---------- */
-
-.icon-btn {
+/* Label chips in the editor header (visible tags, click → picker) */
+#page-chips {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: var(--tap); height: var(--tap);
-  border: 0;
-  background: none;
-  color: var(--text-dim);
+  gap: 5px;
+  flex: 0 0 auto;
+  max-width: 42%;
+  overflow: hidden;
+}
+.page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
   font: inherit;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  border-radius: var(--radius);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.page-chip:hover { border-color: var(--accent); }
+.page-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex: 0 0 auto;
 }
-.icon-btn:hover { background: var(--accent-soft); color: var(--text); }
-.icon-btn:active { transform: scale(0.92); }
-.icon-btn svg { pointer-events: none; }
-
-/* Desktop: show tree beside editor, hide the mobile toggle */
-@media (min-width: 720px) {
-  #tree-pane {
-    display: flex;
-    width: 270px;
-    flex: 0 0 auto;
-  }
-  #btn-show-tree { display: none; }
-  #pane-splitter { display: block; }
-}
-
-/* While dragging the splitter, kill text selection */
-body.resizing { user-select: none; cursor: col-resize; }
-body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
-
-/* ---------- Scrollbars (WebKit, subtle) ---------- */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
