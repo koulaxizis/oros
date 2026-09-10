@@ -1,22 +1,15 @@
 name: Bump orOS version
 
+# Runs on EVERY push to main (no paths filter — new app folders are
+# picked up automatically; the job is a no-op when nothing to stamp).
+# Guards (fail the push loudly instead of silent breakage):
+#   G1 — sw.js CACHE_VERSION line exists            (version stamp)
+#   G2 — every app folder referenced in PRECACHE_URLS (v0.13.0 lesson)
+#   G3 — every app's JS has inheritPalette+watchPalette (v0.14.2 lesson)
+
 on:
   push:
     branches: [main]
-    paths:
-      - "shell.js"
-      - "sync.js"
-      - "translations.js"
-      - "style.css"
-      - "index.html"
-      - "apps.json"
-      - "sw.js"
-      - "manifest.webmanifest"
-      - "todo/**"
-      - "kanban/**"
-      - "notes/**"
-      - "fonts/**"
-      - ".github/workflows/bump-version.yml"
 
 permissions:
   contents: write
@@ -56,9 +49,12 @@ jobs:
           if grep -q '"version"' manifest.webmanifest; then
             sed -i 's|"version"[[:space:]]*:[[:space:]]*"[^"]*"|"version": "'"$VERSION"'"|' manifest.webmanifest
             echo "manifest version -> $VERSION"
+          else
+            echo "ERROR: no \"version\" key in manifest.webmanifest" >&2
+            exit 1
           fi
 
-      - name: Cache-bust all app assets (?v=)
+      - name: Cache-bust app assets + offline & palette guards
         env:
           OROS_VERSION: ${{ steps.ver.outputs.version }}
         run: |
@@ -68,19 +64,19 @@ jobs:
           const ver = process.env.OROS_VERSION;
           if (!ver) { console.error('ERROR: OROS_VERSION env missing'); process.exit(1); }
 
-          // Every index.html: root + each app folder (todo/, kanban/, notes/, …).
-          // Skipped: hidden dirs, non-app asset folders.
+          // Every index.html: root + each app folder (directory scan).
           const SKIP_DIRS = new Set(['.', '..', 'icons', 'fonts']);
           const files = ['index.html'];
+          const appDirs = [];
           for (const d of fs.readdirSync('.', { withFileTypes: true })) {
             if (!d.isDirectory()) continue;
             if (SKIP_DIRS.has(d.name) || d.name.startsWith('.')) continue;
             const f = `${d.name}/index.html`;
-            if (fs.existsSync(f)) files.push(f);
+            if (fs.existsSync(f)) { files.push(f); appDirs.push(d.name); }
           }
+          console.log('App folders found:', appDirs.join(', ') || '(none)');
 
           // Stamp or REPLACE ?v= on relative .css/.js references only.
-          // Absolute/protocol-relative/rooted URLs are left untouched.
           const safe = (p) => p.startsWith('http') || p.startsWith('//') || p.startsWith('/');
 
           let touched = 0;
@@ -104,6 +100,46 @@ jobs:
             }
           }
           console.log(`Cache-bust done: ${touched}/${files.length} file(s) updated with ?v=${ver}`);
+
+          // ---- G2: OFFLINE COVERAGE GUARD (v0.13.0 lesson) ----
+          const sw = fs.readFileSync('sw.js', 'utf8');
+          const pc = sw.match(/PRECACHE_URLS\s*=\s*\[([\s\S]*?)\]/);
+          if (!pc) {
+            console.error('ERROR: PRECACHE_URLS array not found in sw.js');
+            process.exit(1);
+          }
+          const missing = appDirs.filter(d => pc[1].indexOf(d) === -1);
+          if (missing.length) {
+            console.error('ERROR: app folder(s) MISSING from sw.js PRECACHE_URLS:');
+            missing.forEach(d => console.error(`  - ${d}/  → add its files to PRECACHE_URLS in sw.js`));
+            process.exit(1);
+          }
+          console.log('Offline coverage: all app folders present in PRECACHE_URLS.');
+
+          // ---- G3: PALETTE CONTRACT GUARD (v0.14.2 lesson) ----
+          // Every iframe app must inherit the shell palette: across the
+          // relative JS files its index.html loads, BOTH inheritPalette
+          // AND watchPalette must appear at least once.
+          for (const dir of appDirs) {
+            const html = fs.readFileSync(`${dir}/index.html`, 'utf8');
+            const jsSrcs = [...html.matchAll(/src="([^"#?]+\.js)(?:\?[^"]*)?"/g)]
+              .map(m => m[1]).filter(p => !safe(p));
+            let hasInherit = false, hasWatch = false;
+            for (const j of jsSrcs) {
+              try {
+                const code = fs.readFileSync(`${dir}/${j}`, 'utf8');
+                if (code.indexOf('inheritPalette') !== -1) hasInherit = true;
+                if (code.indexOf('watchPalette')   !== -1) hasWatch   = true;
+              } catch (e) { console.warn(`skip (unreadable): ${dir}/${j}`); }
+            }
+            if (!(hasInherit && hasWatch)) {
+              console.error(`ERROR: ${dir}/ does not inherit the shell palette.`);
+              console.error(`  Expected inheritPalette + watchPalette in its JS (${jsSrcs.join(', ') || 'no scripts'}).`);
+              console.error(`  Reference: todo.js §12 (window.parent.document.documentElement, NOT the app's own).`);
+              process.exit(1);
+            }
+          }
+          console.log('Palette contract: all apps inherit shell palette.');
           EOF
 
       - name: Check for changes
@@ -122,8 +158,8 @@ jobs:
           git config user.name  "orOS version bot"
           git config user.email "actions@github.com"
           # -u: stage every TRACKED file this workflow modified
-          # (sw.js, manifest, root + every app index.html — notes/
-          # included). No hardcoded list to fall out of date again.
+          # (sw.js, manifest, root + every app index.html — no
+          # hardcoded list to fall out of date again).
           git add -u
           git commit -m "chore: stamp version v$VERSION (auto)"
           git push

@@ -219,7 +219,16 @@
 	        "notes.app":         "Notes",
       "notes.new.page":    "New page",
       "notes.title.ph":    "Title",
-      "notes.text.ph":     "Start typing…"
+      "notes.text.ph":     "Start typing…",
+	  "menu.exportPage": "Export page (.txt)",
+"menu.exportNotebook": "Export notebook (.zip)",
+"search.placeholder": "Search pages…",
+"search.hint": "Type at least 2 characters",
+"search.none": "No results",
+"search.count": "{n} results",
+"tags.all": "All labels",
+"tags.pages": "{n} pages",
+"tags.back": "Back"
     },
     el: {
       "app.title":          "Σημειώσεις",
@@ -250,7 +259,16 @@
 	        "notes.app":         "Σημειώσεις",
       "notes.new.page":    "Νέα σελίδα",
       "notes.title.ph":    "Τίτλος",
-      "notes.text.ph":     "Ξεκίνα να γράφεις…"
+      "notes.text.ph":     "Ξεκίνα να γράφεις…",
+	  "menu.exportPage": "Εξαγωγή σελίδας (.txt)",
+"menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.zip)",
+"search.placeholder": "Αναζήτηση σε σελίδες…",
+"search.hint": "Πληκτρολόγησε τουλάχιστον 2 χαρακτήρες",
+"search.none": "Κανένα αποτέλεσμα",
+"search.count": "{n} αποτελέσματα",
+"tags.all": "Όλες οι ετικέτες",
+"tags.pages": "{n} σελίδες",
+"tags.back": "Πίσω"
     }
   };
 
@@ -672,18 +690,442 @@
     el.style.left = Math.max(6, Math.min(x, innerWidth  - r.width  - 6)) + "px";
     el.style.top  = Math.max(6, Math.min(y, innerHeight - r.height - 6)) + "px";
   }
+  
+    // ---------- 6b. Export plumbing: download + ZIP writer ----------
+  // Store-method ZIP, vanilla JS, ZERO dependencies (mantra).
+  // writeZip(entries) → Blob; entries = [{ path, data }] with
+  // UNIX "/" paths. Names/data are UTF-8 (flag bit 11 set).
+
+  var utf8 = (typeof TextEncoder === "function")
+    ? function (s) { return new TextEncoder().encode(s); }
+    : function (s) {                      // legacy fallback
+        var out = [];
+        for (var i = 0; i < s.length; i++) {
+          var cp = s.codePointAt(i);
+          if (cp > 0xFFFF) i++;           // consume the pair
+          if (cp < 0x80) out.push(cp);
+          else if (cp < 0x800) out.push(0xC0 | (cp >> 6), 0x80 | (cp & 63));
+          else if (cp < 0x10000) out.push(0xE0 | (cp >> 12),
+                                         0x80 | ((cp >> 6) & 63),
+                                         0x80 | (cp & 63));
+          else out.push(0xF0 | (cp >> 18), 0x80 | ((cp >> 12) & 63),
+                        0x80 | ((cp >> 6) & 63), 0x80 | (cp & 63));
+        }
+        return new Uint8Array(out);
+      };
+
+  var CRC_TABLE = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    }
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  // ZIP timestamps are DOS date/time (2s granularity, 1980-2107)
+  function dosDateTime(d) {
+    return {
+      time: ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF,
+      date: (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF
+    };
+  }
+
+  function writeZip(entries) {
+    var chunks = [];
+    var central = [];
+    var offset = 0;
+
+    entries.forEach(function (e) {
+      var nameB = utf8(e.path);
+      var dataB = utf8(e.data);
+      var crc = crc32(dataB);
+      var dt = dosDateTime(new Date());
+
+      // Local file header (30 bytes fixed)
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true);   // signature
+      lh.setUint16(4, 20, true);           // version needed
+      lh.setUint16(6, 0x0800, true);       // flags: UTF-8 names
+      lh.setUint16(8, 0, true);            // method: STORE
+      lh.setUint16(10, dt.time, true);
+      lh.setUint16(12, dt.date, true);
+      lh.setUint32(14, crc, true);
+      lh.setUint32(18, dataB.length, true); // compressed size
+      lh.setUint32(22, dataB.length, true); // uncompressed size
+      lh.setUint16(26, nameB.length, true);
+      lh.setUint16(28, 0, true);            // extra field len
+      chunks.push(new Uint8Array(lh.buffer), nameB, dataB);
+
+      central.push({ nameB: nameB, crc: crc, size: dataB.length, dt: dt, offset: offset });
+      offset += 30 + nameB.length + dataB.length;
+    });
+
+    var cdStart = offset;
+    central.forEach(function (c) {
+      // Central directory header (46 bytes fixed)
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true);   // signature
+      ch.setUint16(4, 20, true);            // version made by
+      ch.setUint16(6, 20, true);            // version needed
+      ch.setUint16(8, 0x0800, true);        // flags: UTF-8
+      ch.setUint16(10, 0, true);            // method: STORE
+      ch.setUint16(12, c.dt.time, true);
+      ch.setUint16(14, c.dt.date, true);
+      ch.setUint32(16, c.crc, true);
+      ch.setUint32(20, c.size, true);
+      ch.setUint32(24, c.size, true);
+      ch.setUint16(28, c.nameB.length, true);
+      // 30/32 extra+comment len, 34/36 attrs — all zero
+      ch.setUint32(42, c.offset, true);     // local header offset
+      chunks.push(new Uint8Array(ch.buffer), c.nameB);
+      offset += 46 + c.nameB.length;
+    });
+
+    // End of central directory (22 bytes fixed)
+    var eocd = new DataView(new ArrayBuffer(22));
+    eocd.setUint32(0, 0x06054b50, true);
+    eocd.setUint16(8, central.length, true);
+    eocd.setUint16(10, central.length, true);
+    eocd.setUint32(12, offset - cdStart, true);
+    eocd.setUint32(16, cdStart, true);
+    chunks.push(new Uint8Array(eocd.buffer));
+
+    return new Blob(chunks, { type: "application/zip" });
+  }
+
+  // Filename sanitizer — strips filesystem-hostile chars
+  function sanitizeFilename(name) {
+    var s = (name || "").trim()
+      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/\s+/g, " ")
+      .slice(0, 80);
+       return s || "Untitled";
+  }
+
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  }
+  
+    // ---------- 6c. Export functions (page .txt / notebook .zip) ----------
+
+  function childrenSorted(parentId) {
+    return state.pages
+      .filter(function (p) { return parentId ? (p.parent === parentId) : (!p.parent); })
+      .sort(function (a, b) { return (a.pos || 0) - (b.pos || 0); });
+  }
+
+  function sanitizeFolder(name) {
+    var s = sanitizeFilename(name).replace(/[. ]+$/, ""); // no trailing dots/spaces
+    return s || "_";
+  }
+
+  function pageText(page) {
+    return page.title + "\n\n" + (page.text || "");
+  }
+
+  function exportPageTxt(page) {
+    downloadBlob(
+      new Blob([pageText(page)], { type: "text/plain;charset=utf-8" }),
+      sanitizeFilename(page.title) + ".txt"
+    );
+  }
+
+  function exportNotebookZip() {
+    if (!state.pages.length) { return; }
+    var entries = [];
+    var used = {};   // "dir|name" (lowercase) -> duplicate count
+    var visited = {}; // cycle guard for malformed merged trees
+
+    function unique(dir, name) {
+      var key = dir + "|" + name.toLowerCase();
+      var n = used[key] || 0;
+      used[key] = n + 1;
+      return n ? (name + " (" + (n + 1) + ")") : name;
+    }
+
+    function addPage(page, dir, depth) {
+      if (depth > 50 || visited[page.id]) { return; } // cycle guard
+      visited[page.id] = true;
+
+      var kids = childrenSorted(page.id);
+      if (kids.length) {
+        // Folder-carrying page: its own .txt lives INSIDE its folder
+        var sub = dir + sanitizeFolder(page.title) + "/";
+        entries.push({
+          path: sub + unique(sub, sanitizeFilename(page.title)) + ".txt",
+          data: pageText(page)
+        });
+        for (var i = 0; i < kids.length; i++) { addPage(kids[i], sub, depth + 1); }
+      } else {
+        entries.push({
+          path: dir + unique(dir, sanitizeFilename(page.title)) + ".txt",
+          data: pageText(page)
+        });
+      }
+    }
+
+    childrenSorted(null).forEach(function (r) { addPage(r, "", 0); });
+
+    var d = new Date();
+    var stamp = d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+    downloadBlob(writeZip(entries), "notes-" + stamp + ".zip");
+  }
+  
+    // ---------- 6d. Search (Ctrl+K) + Tags aggregation panel ----------
+  // SESSION-ONLY by construction: neither view persists ANY state —
+  // no prefs write, no localStorage key. Sync pulls / renderAll can
+  // never resurrect them.
+
+  function closeFloating() {
+    var so = document.getElementById("search-overlay");
+    if (so) so.remove();
+    var tp = document.getElementById("tag-panel");
+    if (tp) tp.remove();
+  }
+
+  function snippetAround(text, needle) {
+    if (!text) return "";
+    var lower = text.toLowerCase();
+    var i = needle ? lower.indexOf(needle) : -1;
+    if (i === -1) i = 0;
+    var start = Math.max(0, i - 30);
+    var end = Math.min(text.length, start + 90);
+    var s = text.slice(start, end).replace(/\s+/g, " ");
+    if (start > 0) s = "…" + s;
+    if (end < text.length) s += "…";
+    return s;
+  }
+
+  function runSearch(q) {
+    var out = document.getElementById("search-results");
+    if (!out) return;
+    out.innerHTML = "";
+    var needle = q.trim().toLowerCase();
+
+    if (needle.length < 2) {
+      var h = document.createElement("div");
+      h.className = "sr-msg";
+      h.textContent = t("search.hint");
+      out.appendChild(h);
+      return;
+    }
+
+    var hits = [];
+    state.pages.forEach(function (p) {
+      var inTitle = ((p.title || "")).toLowerCase().indexOf(needle) !== -1;
+      var inText  = ((p.text  || "")).toLowerCase().indexOf(needle) !== -1;
+      if (inTitle || inText) hits.push({ p: p, w: inTitle ? 0 : 1 });
+    });
+    // Title hits first, then freshest
+    hits.sort(function (a, b) { return a.w - b.w || (b.p.mtime || 0) - (a.p.mtime || 0); });
+
+    if (!hits.length) {
+      var n = document.createElement("div");
+      n.className = "sr-msg";
+      n.textContent = t("search.none");
+      out.appendChild(n);
+      return;
+    }
+
+    var cap = Math.min(hits.length, 50);
+    var cnt = document.createElement("div");
+    cnt.className = "sr-msg";
+    cnt.textContent = t("search.count").replace("{n}", String(hits.length));
+    out.appendChild(cnt);
+
+    for (var i = 0; i < cap; i++) {
+      (function (hit) {
+        var row = document.createElement("button");
+        row.className = "sr-item";
+        row.type = "button";
+        var ti = document.createElement("span");
+        ti.className = "sr-title";
+        ti.textContent = hit.p.title !== "" ? hit.p.title : t("page.untitled");
+        row.appendChild(ti);
+        var sn = document.createElement("span");
+        sn.className = "sr-snippet";
+        sn.textContent = snippetAround(hit.p.text, needle);
+        row.appendChild(sn);
+        row.addEventListener("click", function () {
+          closeFloating();
+          selectPage(hit.p.id);
+        });
+        out.appendChild(row);
+      })(hits[i]);
+    }
+  }
+
+  function openSearch() {
+    closeMenus();
+    closeFloating();
+    var ov = document.createElement("div");
+    ov.id = "search-overlay";
+    var box = document.createElement("div");
+    box.id = "search-box";
+    var inp = document.createElement("input");
+    inp.id = "search-input";
+    inp.type = "text";
+    inp.spellcheck = false;
+    inp.placeholder = t("search.placeholder");
+    var res = document.createElement("div");
+    res.id = "search-results";
+    box.appendChild(inp);
+    box.appendChild(res);
+    ov.appendChild(box);
+    ov.addEventListener("mousedown", function (e) { if (e.target === ov) ov.remove(); });
+    inp.addEventListener("input", function () { runSearch(inp.value); });
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { ov.remove(); return; }
+      if (e.key === "Enter") {
+        var first = res.querySelector(".sr-item");
+        if (first) first.click();
+      }
+      e.stopPropagation();
+    });
+    document.body.appendChild(ov);
+    inp.focus();
+    runSearch("");
+  }
+
+  function toggleTagPanel() {
+    var p = document.getElementById("tag-panel");
+    if (p) { p.remove(); return; }
+    closeMenus();
+    renderTagPanel(null);
+  }
+
+  function renderTagPanel(filterId) {
+    var old = document.getElementById("tag-panel");
+    if (old) old.remove();
+
+    var panel = document.createElement("div");
+    panel.id = "tag-panel";
+
+    var head = document.createElement("div");
+    head.className = "tp-head";
+    if (filterId) {
+      var back = document.createElement("button");
+      back.className = "tp-back";
+      back.type = "button";
+      back.textContent = t("tags.back");
+      back.addEventListener("click", function () { renderTagPanel(null); });
+      head.appendChild(back);
+    }
+    var ht = document.createElement("span");
+    ht.className = "tp-title";
+    if (filterId) {
+      var lb = labelById(filterId);
+      ht.textContent = lb ? lb.name : "";
+    } else {
+      ht.textContent = t("tags.all");
+    }
+    head.appendChild(ht);
+    var x = document.createElement("button");
+    x.className = "tp-close";
+    x.type = "button";
+    x.innerHTML = X_SVG;
+    x.setAttribute("aria-label", "Close");
+    x.addEventListener("click", function () { panel.remove(); });
+    head.appendChild(x);
+    panel.appendChild(head);
+
+    var list = document.createElement("div");
+    list.className = "tp-list";
+
+    if (!filterId) {
+      if (!state.labels.length) {
+        var none = document.createElement("div");
+        none.className = "tp-none";
+        none.textContent = t("labels.none");
+        list.appendChild(none);
+      } else {
+        state.labels
+          .slice()
+          .sort(function (a, b) { return (a.pos - b.pos) || a.name.localeCompare(b.name); })
+          .forEach(function (lb) {
+            var cnt = state.pages.filter(function (p) {
+              return (p.labels || []).indexOf(lb.id) !== -1;
+            }).length;
+            var row = document.createElement("button");
+            row.className = "tp-item";
+            row.type = "button";
+            var dot = document.createElement("span");
+            dot.className = "tp-dot";
+            dot.style.background = lb.color;
+            row.appendChild(dot);
+            var nm = document.createElement("span");
+            nm.className = "tp-name";
+            nm.textContent = lb.name;
+            row.appendChild(nm);
+            var c = document.createElement("span");
+            c.className = "tp-count";
+            c.textContent = String(cnt);
+            row.appendChild(c);
+            row.addEventListener("click", function () { renderTagPanel(lb.id); });
+            list.appendChild(row);
+          });
+      }
+    } else {
+      var pages = state.pages
+        .filter(function (p) { return (p.labels || []).indexOf(filterId) !== -1; })
+        .sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
+      if (!pages.length) {
+        var pn = document.createElement("div");
+        pn.className = "tp-none";
+        pn.textContent = t("search.none");
+        list.appendChild(pn);
+      } else {
+        pages.forEach(function (p) {
+          var pr = document.createElement("button");
+          pr.className = "tp-page";
+          pr.type = "button";
+          pr.textContent = p.title !== "" ? p.title : t("page.untitled");
+          pr.addEventListener("click", function () {
+            panel.remove();
+            selectPage(p.id);
+          });
+          list.appendChild(pr);
+        });
+      }
+    }
+
+    panel.appendChild(list);
+    document.body.appendChild(panel);
+  }
 
   function openNodeMenu(page, x, y) {
     closeMenus();
     var menu = document.createElement("div");
     menu.id = "node-menu";
 
-    var actions = [
+        var actions = [
       [t("page.newchild"), function () { newPage(page.id); }],
       [t("page.rename"),   function () { renamePage(page.id); }],
       [t("page.move.up"),  function () { movePage(page.id, -1); }],
       [t("page.move.down"),function () { movePage(page.id, +1); }],
-      [t("labels.title"),  function () { openLabelPicker(page, x, y); }],   // ← Wave 2.1
+      [t("labels.title"),  function () { openLabelPicker(page, x, y); }],
+      [t("menu.exportPage"),       function () { exportPageTxt(page); }],
+      [t("menu.exportNotebook"),   function () { exportNotebookZip(); }],
       [t("page.delete"),   function () { deletePage(page.id); }]
     ];
     actions.forEach(function (pair) {
@@ -1055,6 +1497,48 @@
     var newBtn = document.getElementById("btn-new-page");
     if (newBtn) newBtn.addEventListener("click", function () { newPage(null); });
 
+    // ---- Runtime-injected tree-footer buttons ----
+    // v0.15.0: export notebook (ZIP)
+    // v0.16.0: search + tags panel
+    if (newBtn && newBtn.parentNode) {
+      var SEARCH_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+      var DL_SVG     = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+      var TAG_SVG    = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
+
+      // Search ← before +
+      var seBtn = document.createElement("button");
+      seBtn.id = "btn-search";
+      seBtn.type = "button";
+      seBtn.className = "icon-btn";
+      seBtn.title = t("search.placeholder");
+      seBtn.setAttribute("aria-label", t("search.placeholder"));
+      seBtn.innerHTML = SEARCH_SVG;
+      seBtn.addEventListener("click", openSearch);
+      newBtn.parentNode.insertBefore(seBtn, newBtn);
+
+      // Export zip → right after +
+      var exBtn = document.createElement("button");
+      exBtn.id = "btn-export-notebook";
+      exBtn.type = "button";
+      exBtn.className = "icon-btn";
+      exBtn.title = t("menu.exportNotebook");
+      exBtn.setAttribute("aria-label", t("menu.exportNotebook"));
+      exBtn.innerHTML = DL_SVG;
+      exBtn.addEventListener("click", function () { exportNotebookZip(); });
+      newBtn.parentNode.insertBefore(exBtn, newBtn.nextSibling);
+
+      // Tags → last
+      var tgBtn = document.createElement("button");
+      tgBtn.id = "btn-tag-panel";
+      tgBtn.type = "button";
+      tgBtn.className = "icon-btn";
+      tgBtn.title = t("tags.all");
+      tgBtn.setAttribute("aria-label", t("tags.all"));
+      tgBtn.innerHTML = TAG_SVG;
+      tgBtn.addEventListener("click", toggleTagPanel);
+      newBtn.parentNode.appendChild(tgBtn);
+    }
+
     var title = document.getElementById("page-title");
     if (title) {
       title.addEventListener("input", function () {
@@ -1083,9 +1567,22 @@
       if (!e.target.closest || (!e.target.closest("#node-menu") && !e.target.closest("#label-picker"))) {
         closeMenus();
       }
+      // v0.16.0: floating views close on outside click / backdrop
+      var tp = document.getElementById("tag-panel");
+      if (tp && (!e.target.closest || !e.target.closest("#tag-panel"))) {
+        var pb = document.getElementById("btn-tag-panel");
+        if (!(pb && pb.contains(e.target))) tp.remove();
+      }
+      var so = document.getElementById("search-overlay");
+      if (so && e.target === so) so.remove();
     });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeMenus();
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        openSearch();
+        return;
+      }
+      if (e.key === "Escape") { closeMenus(); closeFloating(); }
     });
 
     // Last-chance flush before tab death
