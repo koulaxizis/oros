@@ -289,8 +289,20 @@
 
   function inheritPalette() {
     try {
-      var parentStyle = window.parent.getComputedStyle(document.documentElement);
+      var pRoot = window.parent.document.documentElement;
+      // Mirror the theme attribute first (light/dark color-scheme
+      // rules in notes.css depend on it — todo.js parity).
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var parentStyle = window.parent.getComputedStyle(pRoot);
       PAL_VARS.forEach(function (v) {
+        var val = parentStyle.getPropertyValue(v);
+        if (val && val.trim() !== "") {
+          document.documentElement.style.setProperty(v, val.trim());
+        }
+      });
+    } catch (e) { /* standalone (non-embedded) — fallback :root stands */ }
+  }
         var val = parentStyle.getPropertyValue(v);
         if (val && val.trim() !== "") {
           document.documentElement.style.setProperty(v, val.trim());
