@@ -513,3 +513,22 @@ over localStorage and the follow-up push uploaded the wipe.
   on browsers without the API (all mobile, Firefox, Safari).
 - Choosing a folder while Auto backup is Off prompts the user to
   enable it first (folder writes mirror snapshots).
+  
+  ## v0.13.0 — New app: Notes (Wave 1)
+
+MANTRA (design contract for every orOS app):
+  Offline first · Mobile first · No external dependencies
+  Full project manual export · Full project automatic export
+  Full project snapshots · Full project auto-merge sync
+
+- Notes: plain-text hierarchical notebook (Zim-style tree).
+  Flat pages array + derived tree; per-page LWW merge with
+  tombstones (30-day pruning, delete beats tie), orphan cascade,
+  cycle guard. Debounced autosave (500ms) with idle/red/purple
+  indicator; flush on page-switch/tab-hide/unload. Device-local
+  prefs (expanded nodes, current page, pane width). Mobile:
+  tree overlay, long-press context menu (subpage/delete/move),
+  44px targets. Desktop: resizable split panes.
+- Under consideration (Wave 2): wiki-links [[Page]], backlinks,
+  search, drag-and-drop reorder, tags, txt/md export, context
+  menu with i18n labels.

@@ -16,6 +16,7 @@
       "icon": "columns",
       "url": "kanban/",
       "type": "internal"
-    }
+    },
+	{ "name": "Notes", "url": "notes/", "category": "Productivity", "icon": "notes" }
   ]
 }

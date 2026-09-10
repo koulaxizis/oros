@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Notes — orOS</title>
+  <link rel="stylesheet" href="notes.css?v=0.13.0">
+</head>
+<body>
+  <div id="notes-app">
+
+    <!-- Tree pane (Zim-style hierarchical notebook) -->
+    <aside id="tree-pane">
+      <div id="tree-header">
+        <span id="tree-title" data-i18n="notes.app">Notes</span>
+      </div>
+      <div id="tree-scroller">
+        <ul id="tree-root" role="tree"></ul>
+      </div>
+      <div id="tree-footer">
+        <button id="btn-new-page" class="icon-btn" data-i18n-title="notes.new.page" aria-label="New page"></button>
+      </div>
+    </aside>
+
+    <!-- Drag handle (desktop resize, hidden on mobile) -->
+    <div id="pane-splitter" aria-hidden="true"></div>
+
+    <!-- Editor pane (plain text only) -->
+    <main id="editor-pane">
+      <header id="editor-header">
+        <button id="btn-show-tree" class="icon-btn" aria-label="Show tree"></button>
+        <input id="page-title" type="text" spellcheck="false" data-i18n-ph="notes.title.ph" placeholder="Title">
+        <div id="save-indicator" data-state="idle"></div>
+      </header>
+      <textarea id="page-text" spellcheck="true" data-i18n-ph="notes.text.ph" placeholder="Start typing…"></textarea>
+    </main>
+
+  </div>
+  <script src="notes.js?v=0.13.0"></script>
+</body>
+</html>
