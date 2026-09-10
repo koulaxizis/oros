@@ -296,13 +296,7 @@
         pRoot.getAttribute("data-theme") || "dark");
       var parentStyle = window.parent.getComputedStyle(pRoot);
       PAL_VARS.forEach(function (v) {
-        var val = parentStyle.getPropertyValue(v);
-        if (val && val.trim() !== "") {
-          document.documentElement.style.setProperty(v, val.trim());
-        }
-      });
-    } catch (e) { /* standalone (non-embedded) — fallback :root stands */ }
-  }
+
         var val = parentStyle.getPropertyValue(v);
         if (val && val.trim() !== "") {
           document.documentElement.style.setProperty(v, val.trim());

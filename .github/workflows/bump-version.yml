@@ -13,8 +13,9 @@ on:
       - "sw.js"
       - "manifest.webmanifest"
       - "todo/**"
-      - "fonts/**"
       - "kanban/**"
+      - "notes/**"
+      - "fonts/**"
       - ".github/workflows/bump-version.yml"
 
 permissions:
@@ -67,7 +68,7 @@ jobs:
           const ver = process.env.OROS_VERSION;
           if (!ver) { console.error('ERROR: OROS_VERSION env missing'); process.exit(1); }
 
-          // Every index.html: root + each app folder (todo/, kanban/, …).
+          // Every index.html: root + each app folder (todo/, kanban/, notes/, …).
           // Skipped: hidden dirs, non-app asset folders.
           const SKIP_DIRS = new Set(['.', '..', 'icons', 'fonts']);
           const files = ['index.html'];
@@ -120,6 +121,9 @@ jobs:
           VERSION="${{ steps.ver.outputs.version }}"
           git config user.name  "orOS version bot"
           git config user.email "actions@github.com"
-          git add sw.js manifest.webmanifest index.html todo/index.html kanban/index.html
+          # -u: stage every TRACKED file this workflow modified
+          # (sw.js, manifest, root + every app index.html — notes/
+          # included). No hardcoded list to fall out of date again.
+          git add -u
           git commit -m "chore: stamp version v$VERSION (auto)"
           git push
