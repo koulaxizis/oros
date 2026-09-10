@@ -1,25 +1,33 @@
 // ============================================================
-// orOS Notes v0.13.0 — Plain-text wiki notebook (Zim-style)
+// orOS Notes v0.13.1 — Plain-text wiki notebook (Zim-style)
 //
 // MANTRA (design contract, every orOS app):
 //   Offline first · Mobile first · No external dependencies
 //   Full project manual export · Full project automatic export
 //   Full project snapshots · Full project auto-merge sync
 //
+// ARCHITECTURE CONTRACTS (v0.13.1, canonical: todo.js):
+//   - Palette inheritance: shell CSS variables injected from the
+//     parent <html> computed styles (same-origin iframe) at boot,
+//     re-injected via MutationObserver on data-skin/data-theme.
+//   - orosSync lives on window.parent when embedded — always
+//     resolved through syncApi(), never window.orosSync directly.
+//
 // Sections:
 //   1. Constants & state
-//   2. Storage (load / normalize / save)
+//   2. Storage (load / normalize / save) + syncApi resolver
 //   3. i18n (EN/EL, self-contained)
+//   3b. Palette inheritance (shell contract)
 //   4. Tree render
-//   5. Tree interactions (create / rename / delete / move)
+//   5. Tree interactions (create / rename / delete / move / menu)
 //   6. Editor + autosave (debounce)
 //   7. Sync slice registration + merge engine
-//   8. Wiring & boot
+//   8. Splitter, wiring & boot
 // ============================================================
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.13.0";
+  var APP_VERSION = "0.13.1";
 
   // ---------- 1. Constants & state ----------
   var STORAGE_KEY   = "oros-notes-data";
@@ -42,7 +50,8 @@
     pages: [],          // syncable truth
     tombs: {},          // { id: ts } deleted pages (pruned after 30d)
     openIds: {},        // device-local expanded tree nodes
-    currentId: null,   // device-local selected page
+    currentId: null,    // device-local selected page
+    width: 270,         // device-local tree pane width
     dirty: false        // unflushed keystrokes (autosave buffer)
   };
 
@@ -72,8 +81,8 @@
       mtime: Date.now(),
       pos: 0
     };
-    welcome.title = window.t ? t("notes.welcome.title") : "Welcome";
-    welcome.text  = window.t ? t("notes.welcome.text")  : "";
+    welcome.title = t("notes.welcome.title");
+    welcome.text  = t("notes.welcome.text");
     state.pages.push(welcome);
     state.currentId = welcome.id;
   }
@@ -91,8 +100,12 @@
     var i;
     for (i = state.pages.length - 1; i >= 0; i--) {
       var p = state.pages[i];
-      if (!p || typeof p.id !== "string" || !p.id) { state.pages.splice(i, 1); continue; }
-      if (seen[p.id]) { state.pages.splice(i, 1); continue; }   // dup → newest kept later by id? No: LAST wins → splice earlier
+      // Missing/duplicate ids: the LAST occurrence in array order
+      // survives (append-newest convention, same as Todo).
+      if (!p || typeof p.id !== "string" || !p.id || seen[p.id]) {
+        state.pages.splice(i, 1);
+        continue;
+      }
       seen[p.id] = true;
       p.parent = (typeof p.parent === "string" && p.parent) ? p.parent : ROOT_ID;
       p.title = String(p.title == null ? "" : p.title);
@@ -101,8 +114,8 @@
       p.pos   = Number(p.pos) || 0;
     }
     // Orphans: parent dead (deleted or never existed) → top level.
-    // (Delete cascades on purpose: tombstoned parents take children
-    // with them — see section 5. But corrupt/foreign parent ids land here.)
+    // (Deliberate deletes cascade their OWN tombstones in section 5;
+    // corrupt/foreign parent ids land HERE instead.)
     for (i = 0; i < state.pages.length; i++) {
       var q = state.pages[i];
       if (q.parent !== ROOT_ID && !seen[q.parent]) q.parent = ROOT_ID;
@@ -126,8 +139,8 @@
       }));
       return true;
     } catch (e) {
-      return false;   // quota — autosave indicator goes red, data
-                      // stays in memory; next save attempt retries
+      return false;   // quota — data stays in memory; the next save
+                      // attempt retries, indicator stays red meanwhile
     }
   }
 
@@ -154,6 +167,15 @@
     return "p_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
   }
 
+  // orosSync lives on the PARENT window when we're embedded in the
+  // shell iframe — same-origin, so it's reachable. Standalone open
+  // (dev / direct URL) falls back to a same-window instance if any.
+  // Asking window.orosSync directly SILENTLY disables slice
+  // registration inside the shell — v0.13.1 fix, never again.
+  function syncApi() {
+    return (window.parent && window.parent.orosSync) || window.orosSync || null;
+  }
+
   // ---------- 3. i18n (EN/EL, self-contained — no loader, no 404s) ----------
   var I18N = {
     en: {
@@ -166,13 +188,16 @@
       "notes.delete.confirm":  "Delete this page and all its subpages?",
       "notes.saved":           "Saved",
       "notes.unsaved":         "Unsaved changes",
-      "notes.save.failed":    "Save failed — storage full?",
-      "notes.empty.title":    "Untitled",
-      "notes.welcome.title":  "Welcome",
-      "notes.welcome.text":   "This is your notebook. Plain text, nothing else.\n\nOrganize pages in the tree — every page can hold subpages.",
-      "notes.count":          "{n} pages",
-      "notes.no.selection":   "Select a page to start writing.",
-      "sync.merged":          "Merged changes from sync"
+      "notes.save.failed":     "Save failed — storage full?",
+      "notes.empty.title":     "Untitled",
+      "notes.welcome.title":   "Welcome",
+      "notes.welcome.text":    "This is your notebook. Plain text, nothing else.\n\nOrganize pages in the tree — every page can hold subpages.",
+      "notes.count":            "{n} pages",
+      "notes.no.selection":    "Select a page to start writing.",
+      "notes.move.up":         "Move up",
+      "notes.move.down":       "Move down",
+      "notes.menu.rename":     "Rename",
+      "sync.merged":           "Merged changes from sync"
     },
     el: {
       "notes.app":            "Σημειώσεις",
@@ -190,12 +215,15 @@
       "notes.welcome.text":   "Αυτό είναι το σημειωματάριό σου. Απλό κείμενο, τίποτα άλλο.\n\nΟργάνωσε τις σελίδες στο δέντρο — κάθε σελίδα μπορεί να έχει υποσελίδες.",
       "notes.count":          "{n} σελίδες",
       "notes.no.selection":   "Διάλεξε σελίδα για να γράψεις.",
+      "notes.move.up":        "Πάνω",
+      "notes.move.down":      "Κάτω",
+      "notes.menu.rename":    "Μετονομασία",
       "sync.merged":          "Συγχωνεύτηκαν αλλαγές από το sync"
     }
   };
 
-  // Window-global t(): inherits parent shell language when embedded,
-  // falls back to own dictionary. URL override ?lang= for standalone use.
+  // Language: URL override (?lang=) > parent shell (same-origin
+  // iframe) > shared localStorage > English default.
   function detectLang() {
     var p = new URLSearchParams(window.location.search).get("lang");
     if (p === "en" || p === "el") return p;
@@ -232,7 +260,37 @@
     }
   }
 
-    // ---------- 4. Tree render ----------
+  // ---------- 3b. Palette inheritance (shell contract) ----------
+  // Same-origin iframe: read the parent <html> computed styles and
+  // inject them as our own — the app follows the active skin and
+  // dark/light theme. Standalone open (catch path) keeps the
+  // oros-skin fallback values from notes.css.
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft",
+                  "--panel-bg", "--border", "--shadow"];
+
+  function inheritPalette() {
+    try {
+      var pRoot = window.parent.document.documentElement;
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var cs = window.parent.getComputedStyle(pRoot);
+      PAL_VARS.forEach(function (v) {
+        document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
+      });
+    } catch (e) { /* standalone (direct) open — fallback palette stands */ }
+  }
+
+  function watchPalette() {
+    try {
+      new MutationObserver(inheritPalette).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  // ---------- 4. Tree render ----------
   // The tree is a PROJECTION of the flat pages array (Kanban
   // pattern): flat truth, derived view. Every render rebuilds from
   // state — cheap at notebook scale (hundreds of pages), immune to
@@ -303,7 +361,7 @@
     buildIndexes();
 
     // Sanitize selection: current page may have been deleted by a
-    // sync merge. Fall back to first top-level page, then null.
+    // sync merge. Fall back to first top-level page, then none.
     if (state.currentId && !idxPages[state.currentId]) {
       var tops = kidsOf(ROOT_ID);
       state.currentId = tops.length ? tops[0] : null;
@@ -318,7 +376,7 @@
       empty.className = "tree-empty";
       empty.textContent = t("notes.no.selection");
       root.appendChild(empty);
-      // No pages at all → currentId must be null (verified above)
+      state.currentId = null;   // verified empty above — selection cleared
       savePrefs();
     } else {
       if (state.currentId) ensureVisible(state.currentId);
@@ -329,12 +387,13 @@
 
     renderCount();
     renderEditor();   // keep title/text in sync with (possibly new)
-                       // current page after every tree render
+                      // current page after every tree render
   }
 
   // Recursive node builder. Depth guard is a belt-and-braces measure
   // against cycles corrupting localStorage (normalize() kills orphan
-  // parents, not cycles — a cycle would loop forever here otherwise).
+  // parents, the merge kills loops — a cycle would hang the render
+  // otherwise; defense in depth on all three layers).
   function buildNode(id, depth) {
     depth = depth || 0;
     var li = document.createElement("li");
@@ -422,607 +481,577 @@
     el.textContent = t("notes.app") + " · " + state.pages.length;
   }
 
-    // ---------- 5. Tree interactions ----------
-  // All mutations follow the same discipline:
-  //   mutate → touch mtime → save → markDirty (sync) → re-render.
-  // One helper guarantees nothing forgets a step (the Kanban lesson:
-  // stampAll exists BECAUSE someone once forgot an om stamp).
+    // ===== 5. TREE INTERACTIONS =====
 
-  function touch(p) {
-    p.mtime = Date.now();
-  }
+  var $ = function (id) { return document.getElementById(id); };
 
-  function commit() {
-    if (!saveData()) {
-      // Quota refused the write — scream once, never silently.
-      // (Indicator dot goes red via editor state — see section 6.)
-      setEditorState("dirty");
-    }
-    if (window.orosSync && typeof window.orosSync.markDirty === "function") {
-      window.orosSync.markDirty();
-    }
-    renderTree();
-  }
-
-  // --- Create ---
-
-  function createPage(parentId) {
-    parentId = parentId || ROOT_ID;
-    // Expanding the parent makes the newborn visible immediately —
-    // creating a subpage inside a collapsed node would look like
-    // "nothing happened".
-    if (parentId !== ROOT_ID) state.openIds[parentId] = 1;
-
-    var p = {
-      id: newId(),
-      parent: parentId,
-      title: "",
-      text: "",
-      mtime: Date.now(),
-      // pos: below ALL existing siblings (max + 1) — append, never
-      // guess, never collide.
-      pos: nextPos(parentId)
-    };
-    state.pages.push(p);
-    state.currentId = p.id;
-    savePrefs();
-    commit();
-    // Focus goes straight into the title: naming IS the first act.
-    var title = document.getElementById("page-title");
-    if (title) title.focus();
-  }
-
-  function nextPos(parentId) {
-    var kids = kidsOf(parentId);   // sorted by buildIndexes — last is max pos
-    if (!kids.length) return 0;
-    var maxP = idxPages[kids[kids.length - 1]].pos;
-    return (Number(maxP) || 0) + 1;
-  }
-
-  // --- Rename (inline, via the editor header input — section 6) ---
-  // Title edits are just page edits: same mtime/touch/commit path.
-
-  // --- Delete: tombstone + cascade ---
-  // Same doctrine as Kanban: deleting a container kills the branch.
-  // Children get their OWN tombstones (not just orphaning) — orphans
-  // resurrecting on another device after a merge is the bug this
-  // prevents. All stamps share one timestamp: the merge engine sees
-  // one atomic deletion, not a trickle.
-
-  function collectDescendants(id, out) {
-    var kids = kidsOf(id);
-    for (var i = 0; i < kids.length; i++) {
-      out.push(kids[i]);
-      collectDescendants(kids[i], out);
-    }
-  }
-
-  function deletePage(id) {
-    if (!idxPages[id]) return;
-    var doomed = [id];
-    collectDescendants(id, doomed);
-
-    var msg = doomed.length > 1
-      ? t("notes.delete.confirm")
-      : t("notes.delete.confirm");   // single-string confirm: minimal core
-    if (!window.confirm(msg)) return;
-
-    var ts = Date.now();
-    for (var i = 0; i < doomed.length; i++) {
-      var pid = doomed[i];
-      state.tombs[pid] = ts;
-      for (var j = state.pages.length - 1; j >= 0; j--) {
-        if (state.pages[j].id === pid) { state.pages.splice(j, 1); break; }
-      }
-      delete state.openIds[pid];
-    }
-
-    // Selection falls to the deleted node's parent — the natural
-    // "where was I" answer (falls to first top-level in renderTree
-    // when nothing remains).
-    state.currentId = (id !== ROOT_ID && idxPages[id]) ? id : null;
-    if (state.currentId === id || !idxPages[id]) {
-      state.currentId = null;   // deleted → renderTree picks a sane fallback
-    }
-    savePrefs();
-    commit();
-  }
-
-  // --- Reorder (move up/down within siblings) ---
-  // Minimal-core move UI: no drag-and-drop yet (Wave 2 candidate #9).
-  // Up/down swaps pos with the adjacent sibling and rewrites both
-  // mtimes — the merge engine arbitrates honestly if two devices
-  // reordered concurrently.
-
-  function movePage(id, dir) {
-    var p = idxPages[id];
-    if (!p) return;
-    var kids = kidsOf(p.parent);            // sorted array of ids
-    var i = kids.indexOf(id);
-    var j = i + dir;                         // dir: -1 up, +1 down
-    if (j < 0 || j >= kids.length) return;   // already at the edge
-
-    var other = idxPages[kids[j]];
-    // Swap pos values. Ties (both equal) → nudge by half-step so the
-    // swap is real even in degenerate data (title tiebreak keeps
-    // devices deterministic meanwhile).
-    var tmp = p.pos;
-    p.pos = other.pos;
-    other.pos = tmp;
-    if (p.pos === other.pos) {
-      p.pos = other.pos + (dir === -1 ? -0.5 : 0.5);
-    }
-    touch(p);
-    touch(other);
-    commit();
-  }
-
-  // Long-press context actions (mobile) / right-click (desktop):
-  // one compact menu per node. Minimal: rename via select, so only
-  // subpage-create / delete / move live here.
-  function openNodeMenu(id, x, y) {
-    closeNodeMenu();
-    var menu = document.createElement("div");
-    menu.id = "node-menu";
-
-    var items = [
-      { key: "notes.new.child", fn: function () { createPage(id); } },
-      { key: "notes.delete",    fn: function () { deletePage(id); } }
-    ];
-
-    var kids = kidsOf(id);
-    var siblings = (idxPages[id] ? kidsOf(idxPages[id].parent) : []);
-    var si = siblings.indexOf(id);
-    if (si > 0) {
-      items.push({ key: "▲", fn: function () { movePage(id, -1); } });
-    }
-    if (si < siblings.length - 1) {
-      items.push({ key: "▼", fn: function () { movePage(id, 1); } });
-    }
-
-    items.forEach(function (it) {
-      var b = document.createElement("button");
-      b.className = "node-menu-item";
-      b.textContent = (it.key === "▲" || it.key === "▼") ? it.key : t(it.key);
-      b.addEventListener("click", function (e) {
-        e.stopPropagation();
-        closeNodeMenu();
-        it.fn();
-      });
-      menu.appendChild(b);
-    });
-
-    document.body.appendChild(menu);
-
-    // Clamp inside the viewport (mobile edge-case: menus spawning
-    // half-off-screen at the right edge).
-    var r = menu.getBoundingClientRect();
-    menu.style.left = Math.max(4, Math.min(x, window.innerWidth  - r.width  - 4)) + "px";
-    menu.top = 0;
-    menu.style.top = Math.max(4, Math.min(y, window.innerHeight - r.height - 4)) + "px";
-  }
-
-  function closeNodeMenu() {
-    var m = document.querySelector("#node-menu");
-    if (m) m.remove();
-    var m2 = document.getElementById("node-menu");
-    if (m2) m2.remove();
-  }
-
-  // ---------- 6. Editor + autosave ----------
-
-  var SAVE_DEBOUNCE = SAVE_DEBOUNCE_MS;
-  var saveTimer = null;
+  // i18n addendum (menu/toast keys used only by this section)
+  I18N.en["notes.toast.deleted"] = "Deleted";
+  I18N.el["notes.toast.deleted"] = "Διαγράφηκε";
 
   function currentPage() {
     return state.currentId ? idxPages[state.currentId] : null;
   }
 
-  // Indicator states: idle (grey) → dirty (red) → saved (purple).
-  function setEditorState(s) {
-    var ind = document.getElementById("save-indicator");
-    if (ind) ind.setAttribute("data-state", s);
+  // THE single mutation exit point (Kanban/Todo parity):
+  // save → mark dirty (sync) → re-render. Everything funnels here.
+  function commit() {
+    saveData();
+    markSyncDirty();
+    renderTree();
   }
 
-  function renderEditor() {
-    var p = currentPage();
-    var title = document.getElementById("page-title");
-    var text  = document.getElementById("page-text");
+  // ---- Page creation ----
+  function createPage(parentId) {
+    flushSave();                                  // never strand pending edits
+    parentId = (parentId && idxPages[parentId]) ? parentId : ROOT_ID;
+    var page = {
+      id: newId(),
+      parent: parentId,
+      title: "",
+      text: "",
+      mtime: Date.now(),
+      pos: kidsOf(parentId).length                // append at end of siblings
+    };
+    state.pages.push(page);
+    state.currentId = page.id;
+    state.openIds[parentId] = 1;                   // parent expands to reveal it
+    savePrefs();
+    commit();
+    var tEl = $("page-title");
+    tEl.focus();
+    tEl.select();                                  // straight into naming
+  }
 
-    if (!p) {
-      title.value = "";
-      text.value = "";
-      title.disabled = true;
-      text.disabled = true;
-      text.placeholder = t("notes.no.selection");
-      setEditorState("idle");
+  // ---- Delete (cascade tombstones — merge-safe, Todo parity) ----
+  function deletePage(id) {
+    var page = idxPages[id];
+    if (!page) return;
+
+    // Collect the whole subtree (idxKids is current post-render).
+    var doomed = [id];
+    for (var i = 0; i < doomed.length; i++) {
+      kidsOf(doomed[i]).forEach(function (kid) { doomed.push(kid); });
+    }
+
+    // Disarm a pending debounce pointing at a doomed page — the
+    // page is about to vanish; flushing into it would resurrect a
+    // dead id ("flushSaveCancelled" contract, v0.13.0).
+    if (pendingId && doomed.indexOf(pendingId) !== -1) {
+      clearTimeout(pendingTimer);
+      pendingTimer = null;
+      pendingId = null;
+      state.dirty = false;
+      setIndicator("idle");
+    }
+
+    var parentId = page.parent;
+    var parentAlive = (parentId !== ROOT_ID) &&
+      doomed.indexOf(parentId) === -1 && state.pages.indexOf(idxPages[parentId]) !== -1;
+
+    var ts = Date.now();
+    doomed.forEach(function (did) { state.tombs[did] = ts; });
+    state.pages = state.pages.filter(function (p) {
+      return doomed.indexOf(p.id) === -1;
+    });
+
+    // Selection fallback: prefer the surviving parent, then the
+    // first top-level page, then nothing (empty notebook is legal
+    // — the next New page rebuilds; sync never ships an empty
+    // payload over this, sliceSet ignores empties).
+    if (doomed.indexOf(state.currentId) !== -1) {
+      if (parentAlive) state.currentId = parentId;
+      else {
+        var tops = kidsOf(ROOT_ID);
+        state.currentId = tops.length ? tops[0] : null;
+      }
+      savePrefs();
+    }
+
+    commit();
+    toast(t("notes.toast.deleted"));
+  }
+
+  // ---- Move up / down (within siblings) ----
+  function movePage(id, dir) {
+    var page = idxPages[id];
+    if (!page) return;
+    var sibs = kidsOf(page.parent);
+    var at = sibs.indexOf(id);
+    var to = at + dir;
+    if (at === -1 || to < 0 || to >= sibs.length) return;
+
+    var other = idxPages[sibs[to]];
+    var tmp = page.pos;
+    page.pos = other.pos;
+    other.pos = tmp;
+    // Parent+pos are page CONTENT — both movers must win the next
+    // merge, so both get fresh mtimes.
+    page.mtime = Date.now();
+    other.mtime = Date.now();
+
+    commit();
+  }
+
+  // ---- Context menu (long-press / right-click) ----
+  var toastTimer = null;
+  var suppressNextClick = false;
+
+  function closeNodeMenu() {
+    var m = document.getElementById("node-menu");
+    if (m) m.remove();
+  }
+
+  function openNodeMenu(id, x, y) {
+    closeNodeMenu();
+    var page = idxPages[id];
+    if (!page) return;
+
+    var sibs = kidsOf(page.parent);
+    var at = sibs.indexOf(id);
+
+    var menu = document.createElement("div");
+    menu.id = "node-menu";
+
+    function addItem(label, fn, danger) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "node-menu-item";
+      b.textContent = label;
+      if (danger) b.style.color = "var(--danger)";
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        closeNodeMenu();
+        fn();
+      });
+      menu.appendChild(b);
+    }
+
+    addItem(t("notes.new.child"), function () { createPage(id); });
+    addItem(t("notes.menu.rename"), function () {
+      selectPage(id);
+      setTimeout(function () {
+        var el = $("page-title");
+        el.focus();
+        el.select();
+      }, 60);
+    });
+    if (at > 0)                  addItem(t("notes.move.up"),   function () { movePage(id, -1); });
+    if (at < sibs.length - 1)    addItem(t("notes.move.down"), function () { movePage(id, 1); });
+    addItem(t("notes.delete"), function () {
+      if (window.confirm(t("notes.delete.confirm"))) deletePage(id);
+    }, true);
+
+    document.body.appendChild(menu);
+
+    // Clamp inside the viewport (fixed in v0.13.1 — the old code
+    // could push the menu off-screen on the bottom-right corner).
+    var mw = menu.offsetWidth, mh = menu.offsetHeight;
+    menu.style.left = Math.max(8, Math.min(x, window.innerWidth  - mw - 8)) + "px";
+    menu.style.top  = Math.max(8, Math.min(y, window.innerHeight - mh - 8)) + "px";
+  }
+
+  // ===== 6. EDITOR + AUTOSAVE =====
+
+  function setIndicator(st) {
+    var el = $("save-indicator");
+    if (el) el.dataset.state = st;
+  }
+
+  // Guarded setters: assigning .value resets the caret even when
+  // the string is identical in some engines — skip no-op writes so
+  // mid-typing re-renders never disturb the cursor.
+  function renderEditor() {
+    var page = currentPage();
+    var tEl = $("page-title"), xEl = $("page-text");
+
+    if (!page) {
+      tEl.disabled = true;
+      xEl.disabled = true;
+      if (tEl.value !== "") tEl.value = "";
+      if (xEl.value !== "") xEl.value = "";
+      setIndicator("idle");
       return;
     }
-    title.disabled = false;
-    text.disabled = false;
-    text.placeholder = t("notes.text.ph");
-    // Fill only when the DOM differs — writing the same value into a
-    // focused input would move the caret to the end mid-typing (the
-    // classic re-render-eats-my-cursor bug).
-    if (title.value !== p.title) title.value = p.title;
-    if (text.value  !== p.text)  text.value  = p.text;
-    setEditorState("idle");
+
+    tEl.disabled = false;
+    xEl.disabled = false;
+    if (tEl.value !== page.title) tEl.value = page.title;
+    if (xEl.value !== page.text)  xEl.value = page.text;
+    setIndicator(state.dirty ? "dirty" : "saved");
+  }
+
+  var pendingTimer = null;
+  var pendingId = null;
+
+  // Keystroke → dirty → debounced flush. Every input on EITHER
+  // field restarts the timer and re-targets the CURRENT page.
+  function markPending() {
+    var page = currentPage();
+    if (!page) return;
+    state.dirty = true;
+    pendingId = page.id;
+    setIndicator("dirty");
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   }
 
   function flushSave() {
-    if (!state.dirty) return;
-    clearTimeout(saveTimer);
-    saveTimer = null;
-    saveNow();
-  }
+    clearTimeout(pendingTimer);
+    pendingTimer = null;
+    if (!pendingId) return;
 
-  function scheduleSave() {
-    state.dirty = true;
-    setEditorState("dirty");
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveNow, SAVE_DEBOUNCE);
-  }
+    var pid = pendingId;
+    pendingId = null;
 
-  function saveNow() {
-    state.dirty = false;
-    var p = currentPage();
-    if (!p) { setEditorState("idle"); return; }
-
-    var title = document.getElementById("page-title").value;
-    var text  = document.getElementById("page-text").value;
-
-    // Skip no-op writes: identical content → no mtime touch →
-    // no phantom "changes" reaching the merge engine.
-    if (p.title === title && p.text === text) {
-      setEditorState("saved");
+    // Dead-page disarm: the debounce's target vanished (deleted by
+    // the user or replaced by a sync pull mid-typing). Drop it.
+    var page = idxPages[pid];
+    if (!page) {
+      state.dirty = false;
+      setIndicator("idle");
       return;
     }
 
-    p.title = title;
-    p.text  = text;
-    touch(p);
+    page.title = $("page-title").value;
+    page.text  = $("page-text").value;
+    page.mtime = Date.now();
+    state.dirty = false;
+
     if (saveData()) {
-      setEditorState("saved");
+      setIndicator("saved");
+      markSyncDirty();
+      updateActiveLabel(page);
     } else {
-      setEditorState("dirty");   // quota — retried on next keystroke
+      // Quota — keep the buffer armed so the next keystroke retries.
+      pendingId = pid;
+      state.dirty = true;
+      setIndicator("dirty");
     }
-    if (window.orosSync && typeof window.orosSync.markDirty === "function") {
-      window.orosSync.markDirty();
+  }
+
+  // In-place label update after a debounced commit: a FULL re-render
+  // while typing would steal focus / reset the caret. Only the
+  // active row's label text changes on title edits — patch just it.
+  function updateActiveLabel(page) {
+    var row = document.querySelector('.node-row[data-id="' + page.id + '"]');
+    if (!row) { renderTree(); return; }      // row not on screen — full render
+    var label = row.querySelector(".node-label");
+    if (label) label.textContent = page.title || t("notes.empty.title");
+  }
+
+  // Tiny toast (JS-injected, CSS-variable-styled — no extra markup
+  // in index.html, no separate stylesheet section).
+  function toast(msg) {
+    var el = document.getElementById("notes-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "notes-toast";
+      el.style.cssText =
+        "position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(8px);" +
+        "z-index:1200;background:var(--panel-bg);color:var(--text);" +
+        "border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px var(--shadow);" +
+        "padding:9px 14px;font-size:13px;opacity:0;" +
+        "transition:opacity .3s,transform .3s;pointer-events:none;max-width:calc(100vw - 32px);";
+      document.body.appendChild(el);
     }
-    // Title changed → the tree label must follow (targeted, not a
-    // full renderTree: full rebuild here would fight the focused
-    // input on every save).
-    var label = document.querySelector('.node-row[data-id="' + p.id + '"] .node-label');
-    if (label) label.textContent = title || t("notes.empty.title");
+    el.textContent = msg;
+    void el.offsetWidth;                        // restart the transition
+    el.style.opacity = "1";
+    el.style.transform = "translateX(-50%) translateY(0)";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.style.opacity = "0";
+      el.style.transform = "translateX(-50%) translateY(8px)";
+    }, 3000);
   }
 
-    // ---------- 7. Sync slice + merge engine ----------
-  // Architecture clone of the Kanban/Todo engines, adapted to a flat
-  // page list (much simpler than Kanban: no per-entity substructures,
-  // just LWW-per-page + placement arbitration).
-  //
-  // Merge rules (mirroring the Kanban doctrine):
-  //   1. Per-page LWW: higher mtime wins, ties → pickRef tie-break
-  //      (lexicographic JSON of the page — deterministic on all
-  //      devices regardless of pull order).
-  //   2. Tombstones: union of both sides, pruned after 30 days.
-  //      A tomb wins over a live page whose mtime is older than
-  //      (or tied with) the tomb's ts. A page EDITED after the
-  //      deletion (mtime > ts) resurrects — legitimate "undo by
-  //      retyping", same semantics as Todo/Kanban.
-  //   3. Placement (parent/pos): dictated by the WINNING side of the
-  //      page's content. No cross-side mixing.
-  //   4. Orphan rule: winner page whose parent is dead (tombstoned
-  //      or absent) dies with it — cascading tombstone, same ts as
-  //      the merge resolution (atomic, one stamp).
-  //   5. Cycle guard: a page whose ancestor chain contains itself
-  //      is re-parented to ROOT (corrupt data can never freeze the
-  //      renderer — defense in depth with buildNode's depth cap).
+  // ===== 7. SYNC SLICE + MERGE ENGINE =====
+  // Contract (consumed by sync.js via registerSlice's 5th arg):
+  //   mergeNotesStates(local, remote) → merged or null (empty guard).
+  //   · tombstones: union, max ts — prune expired inside (symmetric)
+  //   · pages: union by id, PER-PAGE LWW by mtime;
+  //     tie → lexicographic JSON pick (deterministic both ways)
+  //   · alive iff mtime > tomb (delete wins ties, edit-after-delete
+  //     resurrects — same semantics as Todo/Kanban)
+  //   · orphan cascade: iterate-until-stable — a page whose parent
+  //     is not alive is re-parented to ROOT (data preservation)
+  //   · cycle guard: any ancestor loop → ROOT
+  // Session-local view state (openIds/currentId/width) NEVER syncs.
 
-  function pageRef(p) {
-    // Canonical serialization for tie-breaks: key order fixed by
-    // explicit construction, never by insertion luck.
-    return JSON.stringify([p.id, p.parent, p.title, p.text, p.pos]);
+  function pickPage(x, y) {
+    if ((x.mtime || 0) !== (y.mtime || 0)) {
+      return (x.mtime || 0) > (y.mtime || 0) ? x : y;
+    }
+    return JSON.stringify(x) >= JSON.stringify(y) ? x : y;
   }
 
-  function pickPage(a, b) {
-    if (!a) return b;
-    if (!b) return a;
-    if (a.mtime !== b.mtime) return a.mtime > b.mtime ? a : b;
-    var ra = pageRef(a), rb = pageRef(b);
-    if (ra === rb) return a;
-    return ra < rb ? a : b;   // lexicographic — deterministic
-  }
+  function mergeNotesStates(A, B) {
+    var a = A || {}, b = B || {};
 
-  function mergeNotesStates(localStr, remoteStr) {
-    var local  = JSON.parse(localStr  || '{"ver":1,"pages":[],"tombs":{}}');
-    var remote = JSON.parse(remoteStr || '{"ver":1,"pages":[],"tombs":{}}');
-
-    var lp = Array.isArray(local.pages)  ? local.pages  : [];
-    var rp = Array.isArray(remote.pages) ? remote.pages : [];
-
-    var lt = (local.tombs  && typeof local.tombs  === "object") ? local.tombs  : {};
-    var rt = (remote.tombs && typeof remote.tombs === "object") ? remote.tombs : {};
-
-    var localChanged  = false;
-    var remoteApplied = false;
-
-    // --- 1. Tombstone union ---
+    // 1. Tombstones: union with max ts, prune expired.
     var tombs = {};
-    Object.keys(lt).forEach(function (id) { tombs[id] = lt[id]; });
-    Object.keys(rt).forEach(function (id) {
-      if (!tombs[id] || rt[id] > tombs[id]) {
-        tombs[id] = rt[id];
-        if (lt[id] !== undefined) localChanged = true;  // our tomb lost to a newer one (impossible, but honest)
-      } else {
-        remoteApplied = true;                             // their tomb lost to ours
-      }
+    Object.keys(a.tombs || {}).forEach(function (id) { tombs[id] = a.tombs[id]; });
+    Object.keys(b.tombs || {}).forEach(function (id) {
+      tombs[id] = Math.max(tombs[id] || 0, b.tombs[id]);
     });
-    if (Object.keys(rt).some(function (id) { return lt[id] === undefined; })) {
-      remoteApplied = true;                               // pure-remote tomb arrived
-    }
-
-    // --- 2. Page union with tomb arbitration ---
-    var byId = {};
-    lp.forEach(function (p) { byId[p.id] = p; });
-    rp.forEach(function (p) {
-      var mine = byId[p.id];
-      var tombTs = tombs[p.id];
-      var theirs = p;
-      if (tombTs != null) {
-        // Tomb newer than (or tied with) their edit → their page is dead.
-        // Strictly newer only: a tie means same-instant delete+edit —
-        // deletion wins (matches the Todo engine's stance).
-        if (theirs.mtime <= tombTs) {
-          remoteApplied = (mine === undefined);   // remote never landed locally before
-          return;
-        }
-      }
-      if (mine === undefined) {
-        byId[p.id] = theirs;
-        remoteApplied = true;
-      } else {
-        var winner = pickPage(mine, theirs);
-        if (winner !== mine) {
-          byId[p.id] = winner;
-          remoteApplied = true;
-        } else if (pageRef(mine) !== pageRef(theirs)) {
-          localChanged = true;
-        }
-      }
-    });
-    // Local pages vs our own tombs (delete-then-sync round trip):
-    Object.keys(byId).forEach(function (id) {
-      var ts = tombs[id];
-      if (ts != null && byId[id] && byId[id].mtime <= ts) delete byId[id];
+    var cutoff = Date.now() - TOMB_LIFETIME_MS;
+    Object.keys(tombs).forEach(function (id) {
+      if (tombs[id] < cutoff) delete tombs[id];
     });
 
-    // --- 3. Orphan rule: dead parent → child dies (cascade) ---
-    // Iterate until stable: a dying parent can doom grandchildren.
-    var ids = Object.keys(byId);
-    var doomed = {};
-    var stable = false;
-    while (!stable) {
-      stable = true;
-      ids.forEach(function (id) {
-        if (doomed[id]) return;
-        var p = byId[id];
-        if (!p || p.parent === ROOT_ID) return;
-        var parentAlive = byId[p.parent] && !doomed[p.parent];
-        if (!parentAlive) {
-          doomed[id] = true;
-          stable = false;                              // cascade another round
-        }
+    // 2. Pages: union by id, per-page LWW.
+    var map = {};
+    function absorb(arr) {
+      (arr || []).forEach(function (p) {
+        if (!p || typeof p.id !== "string") return;
+        map[p.id] = map[p.id] ? pickPage(map[p.id], p) : p;
       });
     }
-    var cascadeTs = Date.now();   // one atomic stamp for the whole cascade
-    Object.keys(doomed).forEach(function (id) { tombs[id] = cascadeTs; });
+    absorb(a.pages); absorb(b.pages);
 
-    // --- 4. Cycle guard: ancestor loop → re-parent to ROOT ---
-    Object.keys(byId).forEach(function (id) {
-      var p = byId[id];
-      if (p.parent === ROOT_ID) return;
-      var seen = {}; seen[id] = 1;
-      var walk = p.parent;
+    // 3. Aliveness: tomb kills unless content is strictly newer.
+    var alive = {};
+    Object.keys(map).forEach(function (id) {
+      var ts = tombs[id];
+      if (ts === undefined || (map[id].mtime || 0) > ts) alive[id] = map[id];
+    });
+
+    var pages = Object.keys(alive).map(function (id) { return alive[id]; });
+
+    // 4. Orphan cascade — iterate until stable. Mutations inside the
+    //    loop can invalidate earlier resolutions (pruning a parent
+    //    orphans ITS children one level down), so we loop to the
+    //    fixpoint instead of a single pass.
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (var i = 0; i < pages.length; i++) {
+        var p = pages[i];
+        if (p.parent !== ROOT_ID && !alive[p.parent]) {
+          p.parent = ROOT_ID;
+          changed = true;
+        }
+      }
+    }
+
+    // 5. Cycle guard: an ancestor chain that revisits itself → ROOT.
+    pages.forEach(function (q) {
+      var seen = {};
+      var walk = q.parent;
       var guard = 0;
-      while (walk && walk !== ROOT_ID && byId[walk] && guard++ < 500) {
-        if (seen[walk]) { p.parent = ROOT_ID; return; }   // loop → top level
+      while (walk && walk !== ROOT_ID && alive[walk] && guard++ < 1000) {
+        if (seen[walk]) { q.parent = ROOT_ID; return; }
         seen[walk] = 1;
-        walk = byId[walk].parent;
+        walk = alive[walk].parent;
       }
     });
 
-    var pages = Object.keys(byId).map(function (id) { return byId[id]; });
+    // Post-condition: never ship an empty state over local data.
+    if (pages.length === 0) return null;
+    return { ver: DATA_VER, pages: pages, tombs: tombs };
+  }
 
+  function sliceGet() {
     return {
       ver: DATA_VER,
-      pages: pages,
-      tombs: tombs,
-      changed: localChanged || remoteApplied   // caller decides whether to save/render
+      pages: JSON.parse(JSON.stringify(state.pages)),
+      tombs: JSON.parse(JSON.stringify(state.tombs))
     };
   }
 
-  // Slice getters/setters — the sync engine's whole interface to us.
-  function sliceGet() {
-    return JSON.stringify({
-      ver: DATA_VER,
-      pages: state.pages,
-      tombs: state.tombs
-    });
-  }
+  // data — merged result (or plain remote on legacy LWW paths)
+  // info — { merged: true } when the value came through the merge
+  function sliceSet(data, info) {
+    data = JSON.parse(JSON.stringify(data || null));
+    if (!data || typeof data !== "object") return;
+    if (!Array.isArray(data.pages) || data.pages.length === 0) return;
 
-  function sliceSet(mergedStr) {
-    // Fed ONLY by pulls (post-merge) and imports — NEVER by user
-    // actions. No markDirty here (pull → set → push loop is the
-    // cardinal sin; the shell taught us this in blood).
+    // Land any unflushed keystrokes first — the fields still hold
+    // them; the merged payload was snapshotted earlier.
+    flushSave();
+
+    window.__notesSyncApi._suppress = true;
     try {
-      var raw = JSON.parse(mergedStr);
-      state.pages = Array.isArray(raw.pages) ? raw.pages : [];
-      state.tombs = (raw.tombs && typeof raw.tombs === "object") ? raw.tombs : {};
+      state.pages = data.pages;
+      state.tombs = (data.tombs && typeof data.tombs === "object") ? data.tombs : {};
       normalize();
       saveData();
-      flushSaveCancelled();          // pending keystrokes of a DEAD page must not overwrite the merge
-      renderTree();
-    } catch (e) {
-      // Corrupt payload must never take the notebook down with it.
-      console.warn("[notes] sliceSet: corrupt payload ignored", e);
+    } finally {
+      window.__notesSyncApi._suppress = false;
     }
-  }
 
-  function flushSaveCancelled() {
-    // If a debounced save was armed against a page that no longer
-    // exists post-merge, disarm it — resurfacing it would resurrect
-    // deleted content (the resurrect-the-deleted bug, preempted).
-    var pend = state.currentId;
-    if (saveTimer && pend && !state.pages.some(function (p) { return p.id === pend; })) {
-      clearTimeout(saveTimer);
-      saveTimer = null;
-      state.dirty = false;
-    }
+    renderTree();     // sanitizes a dead currentId, re-derives the tree
+
+    if (info && info.merged) toast(t("sync.merged"));
   }
 
   function registerNotesSlice() {
-    if (window.orosSync && typeof window.orosSync.registerSlice === "function") {
-      window.orosSync.registerSlice(
-        "notes",
-        sliceGet,
-        sliceSet,
-        function (localStr, remoteStr) {     // mergeFn
-          var m = mergeNotesStates(localStr, remoteStr);
-          return JSON.stringify({
-            ver: m.ver, pages: m.pages, tombs: m.tombs
-          });
-        }
-      );
-    }
+    var api = syncApi();
+
+    window.__notesSyncApi = {
+      _suppress: false,
+      dirty: function () {
+        if (this._suppress) return;
+        if (api && typeof api.markDirty === "function") api.markDirty();
+      }
+    };
+
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("notes", sliceGet, sliceSet, STORAGE_KEY, mergeNotesStates);
   }
 
-  // ---------- 8. Splitter, wiring & boot ----------
+  function markSyncDirty() {
+    var me = window.__notesSyncApi;
+    if (me && me._suppress) return;
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+  }
 
-  // Desktop pane resize — width persisted in prefs (device-local).
+  // ===== 8. SPLITTER, WIRING & BOOT =====
+
   function initSplitter() {
-    var sp = document.getElementById("pane-splitter");
-    var app = document.getElementById("notes-app");
-    var tree = document.getElementById("tree-pane");
-    var startX = 0, startW = 0, dragging = false;
+    var sp = $("pane-splitter");
+    var pane = $("tree-pane");
+    if (!sp || !pane) return;
 
-    function onMove(e) {
-      if (!dragging) return;
-      var x = (e.touches && e.touches.length) ? e.touches[0].clientX : e.clientX;
-      var w = startW + (x - startX);
-      w = Math.max(180, Math.min(Math.min(480, window.innerWidth * 0.6), w));
-      tree.style.flex = "0 0 " + w + "px";
-      tree.style.width = w + "px";
-      state.width = w;
-    }
-    function onUp() {
-      if (!dragging) return;
-      dragging = false;
-      document.body.classList.remove("resizing");
-      savePrefs();
-    }
-    sp.addEventListener("mousedown", function (e) { start(e.clientX); });
-    sp.addEventListener("touchstart", function (e) {
-      if (e.touches.length) start(e.touches[0].clientX);
-    }, { passive: true });
-    function start(x) {
-      dragging = true;
-      startX = x;
-      startW = tree.getBoundingClientRect().width || state.width;
+    // Restore the persisted width (device-local, never synced).
+    pane.style.width = state.width + "px";
+
+    sp.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      var baseLeft = pane.getBoundingClientRect().left;
       document.body.classList.add("resizing");
-    }
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("touchmove", onMove, { passive: true });
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchend", onUp);
 
-    if (state.width && state.width >= 180) {
-      tree.style.flex = "0 0 " + state.width + "px";
-      tree.style.width = state.width + "px";
-    }
+      function onMove(ev) {
+        var w = Math.max(180, Math.min(480, ev.clientX - baseLeft));
+        pane.style.width = w + "px";
+        state.width = w;
+      }
+      function onUp() {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+        document.body.classList.remove("resizing");
+        savePrefs();
+      }
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
+    });
   }
 
   function wireUI() {
-    // Mobile: tree overlay toggle
-    document.getElementById("btn-show-tree").innerHTML = DOC_SVG;
-    document.getElementById("btn-show-tree").addEventListener("click", function () {
-      document.getElementById("notes-app").classList.toggle("tree-open");
+    var app = $("notes-app");
+    var treeRoot = $("tree-root");
+
+    // --- New page (footer) ---
+    $("btn-new-page").addEventListener("click", function () {
+      createPage(currentPage() ? currentPage().parent : ROOT_ID);
     });
 
-    // New top-level page (footer button)
-    var nb = document.getElementById("btn-new-page");
-    nb.innerHTML = PLUS_SVG;
-    nb.addEventListener("click", function () {
-      createPage(ROOT_ID);
-      document.getElementById("notes-app").classList.add("tree-open");
-      // Mobile: after creating, tree closes on select — but the new
-      // page IS selected with an empty title, so jump straight to
-      // the editor instead. (tree-open above is for desktop-wide view.)
-      document.getElementById("notes-app").classList.remove("tree-open");
+    // --- Mobile tree overlay toggle ---
+    var showTree = $("btn-show-tree");
+    if (showTree) {
+      showTree.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/>' +
+        '<line x1="4" y1="17" x2="17" y2="17"/></svg>';
+      showTree.addEventListener("click", function () {
+        app.classList.toggle("tree-open");
+      });
+    }
+
+    // --- Editor fields: debounced autosave ---
+    $("page-title").addEventListener("input", markPending);
+    $("page-text").addEventListener("input", markPending);
+    $("page-title").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {                 // title done → body
+        e.preventDefault();
+        $("page-text").focus();
+      }
     });
 
-    // New-page button inside node menu → createPage handles focusing.
-    // Editor bindings — the ONLY writers of page content.
-    document.getElementById("page-title").addEventListener("input", scheduleSave);
-    document.getElementById("page-text").addEventListener("input", scheduleSave);
+    // --- Tree: long-press + right-click → node menu ---
+    var lpTimer = null, lpId = null, lpX = 0, lpY = 0;
 
-    // Node context menu: right-click desktop / long-press mobile.
-    var longPressTimer = null;
-    var root = document.getElementById("tree-root");
-    root.addEventListener("contextmenu", function (e) {
+    treeRoot.addEventListener("pointerdown", function (e) {
+      var row = e.target.closest ? e.target.closest(".node-row") : null;
+      if (!row) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+
+      lpId = row.dataset.id;
+      lpX = e.clientX;
+      lpY = e.clientY;
+      lpTimer = setTimeout(function () {
+        if (!lpId) return;
+        if (navigator.vibrate) navigator.vibrate(10);
+        suppressNextClick = true;    // the release click must not select
+        openNodeMenu(lpId, lpX, lpY);
+        lpId = null;
+      }, 550);
+    });
+    treeRoot.addEventListener("pointermove", function (e) {
+      if (!lpTimer) return;
+      if (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10) {
+        clearTimeout(lpTimer);
+        lpTimer = null;
+        lpId = null;
+      }
+    });
+    ["pointerup", "pointercancel"].forEach(function (evName) {
+      treeRoot.addEventListener(evName, function () {
+        clearTimeout(lpTimer);
+        lpTimer = null;
+        lpId = null;
+      });
+    });
+    treeRoot.addEventListener("contextmenu", function (e) {
       var row = e.target.closest ? e.target.closest(".node-row") : null;
       if (!row) return;
       e.preventDefault();
       openNodeMenu(row.dataset.id, e.clientX, e.clientY);
     });
-    root.addEventListener("touchstart", function (e) {
-      var row = e.target.closest ? e.target.closest(".node-row") : null;
-      if (!row) return;
-      var tx = e.touches[0].clientX, ty = e.touches[0].clientY;
-      longPressTimer = setTimeout(function () {
-        longPressTimer = null;
-        openNodeMenu(row.dataset.id, tx, ty);
-      }, 550);
-    }, { passive: true });
-    root.addEventListener("touchend", function () {
-      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    }, { passive: true });
-    root.addEventListener("touchmove", function () {
-      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    }, { passive: true });
-    root.addEventListener("scroll", function () { closeNodeMenu(); }, true);
 
-    // Any tap outside the menu closes it.
-    document.addEventListener("click", function (e) {
-      if (e.target.closest && e.target.closest("#node-menu")) return;
-      closeNodeMenu();
+    // The synthetic click right after a long-press menu opens must
+    // not also SELECT the row beneath it — swallow it in capture.
+    treeRoot.addEventListener("click", function (e) {
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }, true);
+
+    // Any outside tap dismisses the menu.
+    document.addEventListener("click", function () { closeNodeMenu(); });
+    document.addEventListener("scroll", function () { closeNodeMenu(); }, true);
+
+    // --- Keyboard: Ctrl/Cmd+S = flush now ---
+    document.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        flushSave();
+      }
     });
 
-    // Leaving the app with pending keystrokes: flush NOW, not "later".
-    window.addEventListener("beforeunload", function () { flushSave(); });
+    // --- Flush on tab hide/close (nothing is ever stranded) ---
+    window.addEventListener("pagehide", flushSave);
+    window.addEventListener("beforeunload", flushSave);
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") flushSave();
-    });
-
-    // Esc = mobile tree close / menu close (desktop Esc is owned by
-    // the shell when embedded — keydown bubbles only inside iframe).
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") {
-        closeNodeMenu();
-        document.getElementById("notes-app").classList.remove("tree-open");
-      }
     });
   }
 
   // ---------- Boot ----------
-  loadPrefs();
-  loadData();
+  loadPrefs();          // device-local view first…
+  loadData();           // …then the truth (may set first-run welcome)
   applyI18n();
+  inheritPalette();     // colors in place BEFORE the first paint settles
   renderTree();
   registerNotesSlice();
   wireUI();
   initSplitter();
-
+  watchPalette();       // live skin/theme switches from here on
 })();
-  
-  

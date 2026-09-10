@@ -1,31 +1,33 @@
 /* ============================================================
-   orOS Notes v0.13.0 — styling
+   orOS Notes v0.13.1 — App stylesheet
+   Inherits the shell palette: variables are injected at runtime
+   from the parent shell (same origin) by notes.js
+   inheritPalette() — the :root values below are only the
+   offline/standalone fallback matching the oros skin.
+   Same contract as todo.css (ARCHITECTURE REFERENCE, v0.13.1).
    Mobile-first single pane; ≥720px splits tree|editor.
    Plain text, no toolbars, no chrome beyond the essentials.
    ============================================================ */
 
+/* ---------- 1. Palette fallback + reset ---------- */
 :root {
-  --bg:      #131820;
-  --bg-alt:  #1b212c;
-  --bg-hover:#222a38;
-  --fg:      #e8e8e3;
-  --fg-dim:  #9aa0ac;
-  --accent:  #6d4aff;
-  --border:  #2a3140;
-  --danger:  #e05a56;
-  --radius:  10px;
-  --tap:     44px;
+  --bg:           #14120d;
+  --panel-bg:     #1d1a13;
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  /* Local-only (not part of the shell contract) */
+  --danger:       #e06c75;
+  --radius:       10px;
+  --tap:          44px;
 }
 
-[data-theme="light"] {
-  --bg:      #f7f6f3;
-  --bg-alt:  #efece7;
-  --bg-hover:#e4e0d8;
-  --fg:      #23262b;
-  --fg-dim:  #6b7078;
-  --accent:  #5a3cd8;
-  --border:  #d8d4cb;
-}
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,8 +36,10 @@ html, body { height: 100%; }
 body {
   font-family: "Nunito", system-ui, sans-serif;
   background: var(--bg);
-  color: var(--fg);
+  color: var(--text);
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 #notes-app {
@@ -50,7 +54,7 @@ body {
   display: none;          /* mobile: hidden behind toggle */
   flex-direction: column;
   width: 100%;
-  background: var(--bg-alt);
+  background: var(--panel-bg);
 }
 
 #notes-app.tree-open #tree-pane { display: flex; }
@@ -60,7 +64,7 @@ body {
   padding: 12px 16px;
   font-size: 15px;
   font-weight: 700;
-  color: var(--fg-dim);
+  color: var(--text-dim);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
@@ -75,6 +79,13 @@ body {
 
 #tree-root { list-style: none; }
 
+.tree-empty {
+  padding: 16px 14px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 .node { position: relative; }
 
 .node-row {
@@ -85,30 +96,43 @@ body {
   padding: 0 8px;
   border: 0;
   background: none;
-  color: var(--fg);
+  color: var(--text);
   font: inherit;
   font-size: 15px;
   text-align: left;
   cursor: pointer;
 }
 
-.node-row:hover { background: var(--bg-hover); }
+.node-row:hover { background: var(--accent-soft); }
 .node-row.active { background: var(--accent); color: #fff; }
-.node-row.active .node-caret, .node-row.active .node-count { opacity: 0.75; }
+.node-row.active .node-caret,
+.node-row.active .node-count,
+.node-row.active .node-ico { color: rgba(255, 255, 255, 0.75); }
 
 .node-caret {
   flex: 0 0 24px;
   width: 24px; height: 24px;
   border: 0;
   background: none;
-  color: var(--fg-dim);
+  color: var(--text-dim);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
 .node-caret svg { display: block; margin: auto; }
-.node.open > .node-kids > .node-caret { transform: rotate(90deg); }
-.node-caret.flipped { transform: rotate(90deg); }
 .node-caret.hidden { visibility: hidden; }
+
+/* Caret rotates when the PARENT node is open (selector fixed in
+   v0.13.1 — the old rule targeted a non-existent child position) */
+.node.open > .node-row > .node-caret { transform: rotate(90deg); }
+
+.node-ico {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  color: var(--text-dim);
+  flex: 0 0 auto;
+}
+.node-ico svg { display: block; }
 
 .node-label {
   flex: 1 1 auto;
@@ -120,7 +144,7 @@ body {
 .node-count {
   flex: 0 0 auto;
   font-size: 11px;
-  color: var(--fg-dim);
+  color: var(--text-dim);
   margin-left: 6px;
 }
 
@@ -140,6 +164,38 @@ body {
   padding: 8px;
   border-top: 1px solid var(--border);
 }
+
+/* ---------- Node context menu (long-press / right-click) ----------
+   Styles were MISSING in v0.13.0 (the menu worked unstyled). */
+
+#node-menu {
+  position: fixed;
+  z-index: 950;
+  min-width: 170px;
+  max-width: 240px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
+  padding: 4px;
+  user-select: none;
+}
+.node-menu-item {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.node-menu-item:hover { background: var(--accent-soft); }
 
 /* ---------- Splitter (desktop) ---------- */
 
@@ -166,7 +222,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--bg-alt);
+  background: var(--panel-bg);
   border-bottom: 1px solid var(--border);
 }
 
@@ -175,19 +231,23 @@ body {
   min-width: 0;
   border: 0;
   background: none;
-  color: var(--fg);
+  color: var(--text);
   font: inherit;
   font-size: 17px;
   font-weight: 600;
   padding: 8px;
 }
-#page-title:focus { outline: none; background: var(--bg-hover); border-radius: var(--radius); }
+#page-title:focus {
+  outline: none;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+}
 
 #save-indicator {
   flex: 0 0 auto;
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: var(--fg-dim);
+  background: var(--text-dim);
   opacity: 0.35;
   transition: opacity 0.2s, background 0.2s;
 }
@@ -199,7 +259,7 @@ body {
   width: 100%;
   border: 0;
   background: var(--bg);
-  color: var(--fg);
+  color: var(--text);
   font: inherit;
   font-size: 16px;
   line-height: 1.65;
@@ -207,7 +267,9 @@ body {
   resize: none;
   outline: none;
 }
-#page-text::placeholder { color: var(--fg-dim); }
+#page-text::placeholder { color: var(--text-dim); }
+#page-text:disabled { opacity: 0.5; }
+#page-title:disabled { opacity: 0.5; }
 
 /* ---------- Icon buttons ---------- */
 
@@ -218,13 +280,13 @@ body {
   width: var(--tap); height: var(--tap);
   border: 0;
   background: none;
-  color: var(--fg-dim);
+  color: var(--text-dim);
   font: inherit;
   cursor: pointer;
   border-radius: var(--radius);
   flex: 0 0 auto;
 }
-.icon-btn:hover { background: var(--bg-hover); color: var(--fg); }
+.icon-btn:hover { background: var(--accent-soft); color: var(--text); }
 .icon-btn:active { transform: scale(0.92); }
 .icon-btn svg { pointer-events: none; }
 

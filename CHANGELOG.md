@@ -532,3 +532,23 @@ MANTRA (design contract for every orOS app):
 - Under consideration (Wave 2): wiki-links [[Page]], backlinks,
   search, drag-and-drop reorder, tags, txt/md export, context
   menu with i18n labels.
+  
+  ## v0.13.1 — Notes: shell palette inheritance + sync bonding fix
+
+ARCHITECTURE REFERENCE (applies to EVERY orOS iframe-app):
+  - Theming contract: app CSS uses the SHELL variable vocabulary
+    (--bg/--panel-bg/--text/--text-dim/--accent/--accent-hover/
+    --accent-soft/--border/--shadow). At boot, inheritPalette()
+    reads the parent <html> computed styles (same-origin iframe)
+    and injects them inline; a MutationObserver on the parent's
+    data-skin/data-theme re-injects on every skin/theme switch.
+    App :root values are ONLY the oros-skin standalone fallback.
+    (Canonical implementation: todo.js section 12.)
+  - Sync bonding contract: orosSync lives on window.parent when
+    embedded — apps MUST resolve it as
+    (window.parent && window.parent.orosSync) || window.orosSync.
+    Asking window.orosSync directly silently disables slice
+    registration inside the shell (fixed in Notes this release).
+
+- Notes now follows the active skin + dark/light like Todo/Kanban.
+- Fixed: Notes slice never registered when opened inside orOS.
