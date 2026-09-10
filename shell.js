@@ -22,7 +22,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.18.0";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.18.1";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -185,11 +185,10 @@
     document.getElementById("btn-menu-label").textContent =
       state.running ? window.t("running.back") : window.t("bar.menu");
 
-    // Version badge — visual confirmation of what's actually running
-    // (reads APP_VERSION, the single release key the Action stamps
-    // sw.js and the manifest from). Survives every re-render because
-    // applyLang() always rewrites it.
-    document.getElementById("btn-menu-version").textContent = "v" + APP_VERSION;
+    // v0.18.1 — version badge REMOVED from the taskbar: the version
+    // lives in the Info modal (Ctrl+Alt+Shift+I / menu row) and the
+    // update toast. One less element on the bar; APP_VERSION stays
+    // the single release key.
 
     var langBtn = document.getElementById("btn-lang");
     langBtn.textContent = state.lang === "en" ? "EL" : "EN";
@@ -1499,7 +1498,8 @@
         rows +
         '<div class="sc-foot"><a href="https://github.com/koulaxizis/oros" ' +
           'target="_blank" rel="noopener">' + escapeHtml(window.t("sc.info.repo")) + ': koulaxizis/oros</a>' +
-          '<span class="sc-cred"> · Designed by Christos Koulaxizis</span></div>' +
+          '<span class="sc-cred"> · Designed by <a href="https://koulaxizis.gr" ' +
+          'target="_blank" rel="noopener">Christos Koulaxizis</a></span></div>' +
       '</div>';
 
     // Backdrop / Escape close
@@ -1939,12 +1939,20 @@
     setSyncDot("syncing");
     window.orosSync.pull()
       .then(function (result) {
-        if (result.empty) setSyncMsg("ok", "sync.ok.empty");
-        else setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
-          result.applied + " " + window.t("sync.slices.applied"));
+        var pulled = result && !result.empty ? result.applied : 0;
         if (window.orosSync.isDirty()) {
           return window.orosSync.push()
-            .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); });
+            .then(function () {
+              setSyncMsgRaw("ok", window.t("sync.ok.pull") + " (" + pulled + ") · " +
+                window.t("sync.ok.push"));
+              setSyncDot("synced", 4000);
+            });
+        }
+        // Nothing to push up: report only what came down (if anything)
+        if (pulled) {
+          setSyncMsgRaw("ok", window.t("sync.ok.pull") + " (" + pulled + ")");
+        } else {
+          setSyncMsg("ok", "sync.ok.empty");
         }
         setSyncDot("synced", 4000);
       })

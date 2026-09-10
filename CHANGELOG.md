@@ -32,7 +32,9 @@ R2  RELEASE RITUAL IS MANDATORY (see RELEASE PIPELINE). Stale
     bundles impersonate broken code — strikes so far: v0.13.1
     (sync), v0.14.1 (labels), v0.14.2 (palette, twice: orphan
     brace at notes.js:311 + stale ?v=0.13.1 served by SW).
-R3  VERIFY THE RUNNING VERSION FIRST. Menu badge = v<APP_VERSION>.
+R3  VERIFY THE RUNNING VERSION FIRST. Version surface (v0.18.1):
+    Info modal (Ctrl+Alt+Shift+I) always shows v<APP_VERSION>;
+    the version toast fires on change. The taskbar badge is GONE.
     Confirm on BOTH devices before interpreting symptoms as code
     bugs. Staleness diagnostic (proven, reuse verbatim):
       var s = document.querySelector('script[src*="notes.js"]');
@@ -68,19 +70,31 @@ R10 FLOATING/TRANSIENT VIEWS ARE SESSION-ONLY: search, tag panel
 R11 WHEN SHIPPING UI, USER LOOKS FOR PATCH LOCATIONS IN HIS
     CURRENT FILE — patches may arrive out of order or reference
     unapplied predecessors (see R4). When in doubt, SHIP THE
-    COMBINED BLOCK (e.g. the unified v0.15.0+v0.16.0 tree-footer
-    button injection) rather than chained anchors.
-R12 SHORTCUT CHOICES: validate against NATIVE browser combos
-    BEFORE shipping (v0.18.0: Ctrl+Shift+E was native in FF/
-    Chrome → swapped to Ctrl+Shift+X pre-release; the near-miss
-    cost one revision round). The Info modal table derives from
-    SC_DEFS — a shortcut change is ONE line (key letter), the
-    table follows automatically.
+    COMBINED BLOCK rather than chained anchors. DELIVER PATCHES
+    AGAINST THE USER'S CURRENT FILES, NOT against remembered
+    intermediate states: the shortcut v0.18.1b patch assumed a
+    standalone capture-template listener existed in notes.js —
+    it never did (notes forwards INLINE, inside its wireUI()
+    keydown handler). Ask for the file when unsure.
+R12 SHORTCUT DESIGN — THREE STRIKES, ONE LESSON EACH:
+    (a) Ctrl+Shift+E was native (FF/Chrome) → swapped to X.
+    (b) Ctrl+Shift+* wholesale: P opened PRINT DIALOG, S
+        screenshot — the browser steals the combo BEFORE the
+        page ever sees it (capture phase can't help).
+    (c) Alt+Shift+letter was tried as replacement: killed by the
+        WINDOWS KEYBOARD LAYOUT TOGGLE (EN↔EL) AND by e.key lying
+        under the Greek layout (physical P arrives as "π").
+    FINAL CONTRACT: Ctrl+Alt+Shift+letter (zero native conflicts
+    in Chrome/FF/Edge/Safari incl. macOS ⌃⌥⇧), matched via
+    e.code ("KeyP" — PHYSICAL key, layout-agnostic), never e.key.
+    The Info modal table derives from SC_DEFS — a change is one
+    SC_DEFS entry; validate against native combos BEFORE shipping
+    (test ALL bindings on desktop AND mobile, both layouts).
 
 ────────────────────────────────────────────────────────────────
-CURRENT STATE (v0.18.0) — WAVE 3 (SHELL) COMPLETE
+CURRENT STATE (v0.18.1) — WAVE 3 (SHELL) COMPLETE
 ────────────────────────────────────────────────────────────────
-Core shell  : APP_VERSION 0.18.0 in shell.js (single source of
+Core shell  : APP_VERSION 0.18.1 in shell.js (single source of
               truth). sw.js CACHE_VERSION, manifest version and
               ALL ?v= stamps are written AUTOMATICALLY by the CI
               action (see RELEASE PIPELINE).
@@ -91,21 +105,57 @@ Sync engine : sync.js v0.8.1 (per-slice baselines + divergence
               guard).
 Skins       : 16 · Wallpapers: 15 (sand default).
 Shell uses  : useoros.online only (no alt domains).
+Version surf: Info modal (Ctrl+Alt+Shift+I) + update toast. The
+              taskbar version badge was REMOVED in v0.18.1
+              (index.html span + applyLang line; a dead
+              #btn-menu-version CSS rule in style.css is queued
+              for the cleanup wave).
 
 WAVE 3 (v0.18.0) FEATURE SET — all six shipped:
   1. Global shortcuts, Contract Β (shell-owned handler +
-     per-app forwarding) — Ctrl+Shift+P/O/S/X + I/U/L/R.
+     per-app forwarding) — see GLOBAL SHORTCUTS for the v0.18.1
+     modifier rewrite.
   2. Weather widget (Open-Meteo, taskbar chip, offline-aware).
   3. Taskbar sync dot (single OS-wide sync indicator, chromatic
      states) — per-app indicators removed (Notes save-indicator
      was the only one).
   4. Backup-folder Stop/Reconnect button styling fix.
   5. Version toast: single line, tighter gap, mobile compact.
-  6. Info modal (Ctrl+Shift+I + menu row) — about + auto-
+  6. Info modal (Ctrl+Alt+Shift+I + menu row) — about + auto-
      generated shortcuts table.
 
+v0.18.1 POST-SHIP WAVE (all fixes user-tested on desktop):
+  a. Shortcut modifier swap — see R12. Dispatcher matches e.code,
+     not e.key. Applied to: shell dispatcher (§9c), shell-level
+     listener (§12), Info modal prefix (⌃⌥⇧ / Ctrl+Alt+Shift+),
+     app forwarding listeners (todo, kanban, writer — capture
+     template; notes — inline wireUI() listener, R11).
+  b. Toast subsystem (scToast, §9): setSyncMsg/setSyncMsgRaw now
+     ALSO fire a taskbar toast (single-slot, new replaces old;
+     err holds 4.5s, others 2.6s; palette-var inline styles —
+     follows skins, zero CSS). Side effect (intended): auto-backup
+     snapshots and auto-sync errors are now VISIBLE outside the
+     menu.
+  c. Sync dot CLICK = trigger full sync (syncNowFromDot): pull,
+     then push if dirty, one/then-two toasts, green flash. Not
+     connected → red error toast. Locked → opens menu (the
+     passphrase UI lives only there). The dot never opens the
+     menu otherwise — menu access: menu button / weather chip.
+  d. Taskbar version badge removed (2 patches: index.html
+     element + applyLang write). Version = Info modal + toast.
+  e. Info modal: capabilities line key sc.info.cap (was wrongly
+     menu.empty.hint — "Apps will appear here…", user caught it);
+     credits "Designed by Christos Koulaxizis" now LINKS to
+     https://koulaxizis.gr (target _blank, rel noopener).
+  f. PENDING USER DECISION: dot-click message composition. Current
+     behavior: on dirty sync the toasts are "Pulled — N slices"
+     then "Pushed" (second replaces first). An offered refinement
+     composes ONE toast: "Pulled (N) · Pushed" (or just the leg
+     that ran). User has NOT yet picked a variant — ask before
+     changing.
+
 NOTES APP FEATURE SET (v0.17.0, cumulative — app untouched in
-0.18.0 except the save-indicator removal):
+0.18.x except the save-indicator removal + forwarding patch):
   - Zim-style page tree (folders/sub-pages, LWW merge, tombs)
   - Page labels/registry: colored tree dots, editor chips,
     stylized picker (create/attach/detach/delete in one popover)
@@ -134,13 +184,16 @@ REFERENCE REGISTRIES
 
 FILE TREE (repo root)
   index.html            shell markup + SW lifecycle broker
-                        (inline: skipWaiting + controllerchange reload)
+                        (inline: skipWaiting + controllerchange
+                        reload). v0.18.1: #btn-menu-version span
+                        removed from #btn-menu.
   shell.js              shell logic, menus, skins, wallpapers,
                         auto-backup, shell slice registration,
                         shortcuts (§9c), weather (§9d), taskbar
-                        sync dot (§9b)
+                        sync dot (§9b), scToast (§9)
   style.css             shell stylesheet (skin palettes = the
-                        canonical palette vocabulary source)
+                        canonical palette vocabulary source);
+                        dead #btn-menu-version rule pending cleanup
   sync.js               orOS sync engine v0.8.1
   translations.js      EN/EL shell strings (window.t)
   apps.json             app registry (name, url, icon, category)
@@ -183,7 +236,7 @@ LOCALSTORAGE / STORAGE KEYS
                               (device-local throttle)
   v0.15.0–0.17.0 added ZERO new keys; v0.18.0 added the three
   weather keys above (wx settings are prefs, cache/throttle are
-  device-local by contract).
+  device-local by contract). v0.18.1 added ZERO.
 
 NOTES DATA MODEL (DATA_VER 2)
   state = { ver, pages:[{id, parent, title, text, mtime, pos,
@@ -196,6 +249,10 @@ NOTES DATA MODEL (DATA_VER 2)
   normalizeState() idempotent (runs on load AND merge results).
   Autosave debounce 500ms; flushSave on switch/hide/unload.
   DEBUG: window.__notesDebug = {version, state, merge, sliceGet}.
+  KNOWN NOISE (cleanup wave targets): the STRINGS blocks carry a
+  legacy pre-0.14 "notes.*" i18n duplicate block (notes.app,
+  notes.new.page, notes.title.ph, notes.text.ph) — suspected
+  dead keys overlapping page.* equivalents.
 
 SYNC ENGINE v0.8.1 (sync.js)
   api.registerSlice(name, get, set, storageKey?, mergeFn?)
@@ -214,37 +271,57 @@ SHELL SLICE (synced): { lang, theme, skin, wallpaper,
   weather is normalized on set (invalid lat/lon → null, label
   coerced to string) so a corrupt remote can never poison prefs.
 
-GLOBAL SHORTCUTS SUBSYSTEM (v0.18.0) — shell.js §9c
+GLOBAL SHORTCUTS SUBSYSTEM (v0.18.1) — shell.js §9c
   Architecture — CONTRACT Β (shell owns, apps forward):
     - ALL handlers live in the shell (section 9c).
     - window.orosShortcuts = { handle(e) } is the public contract.
-    - Apps forward via ONE standalone capture-phase listener
-      (template shipped to todo/kanban/writer/notes):
+    - Apps forward via ONE keydown listener; canonical capture-
+      phase template (todo/kanban/writer):
         document.addEventListener("keydown", function (e) {
-          if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return;
+          if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
           var p = window.parent;
           if (!(p && p.orosShortcuts &&
                 typeof p.orosShortcuts.handle === "function")) return;
           if (p.orosShortcuts.handle(e)) e.stopPropagation();
-        }, true);   // capture: beats the app's own bubble listeners
-  Combos (Ctrl+Shift+*, metaKey accepted for macOS):
-    P  force push        O  force pull (was F — O chosen: F is
-                          browser-native in several browsers)
-    S  snapshot now      X  export DB (was E — native conflict,
-                          see R12)
-    I  info modal        U  check updates (SW update() ping)
-    L  toggle language  R  reconnect (Dropbox connect OR
-                          backup-folder permission re-grant —
-                          both need user activation, satisfied)
+        }, true);
+      notes.js EXCEPTION (v0.18.1b, see R11): forwards INLINE,
+      inside its own wireUI() keydown bubble listener:
+        if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey &&
+            window.parent && window.parent.orosShortcuts &&
+            window.parent.orosShortcuts.handle(e)) return;
+      Backlog: migrate notes.js to the canonical capture template.
+  MODIFIERS: Ctrl+Alt+Shift (macOS: ⌃⌥⇧, metaKey accepted).
+  KEY MATCHING: e.code ("KeyP") — PHYSICAL key, immune to the
+    Greek layout (e.key returns "π"). Letters only (code must
+    start with "Key").
+  Bindings:
+    P  force push        O  force pull
+    S  snapshot now       X  export DB
+    I  info modal         U  check updates (SW update() ping)
+    L  toggle language   R  reconnect (Dropbox connect OR
+                           backup-folder permission re-grant —
+                           both need user activation, satisfied)
   SC_DEFS array = single source of truth: the dispatch handler
     AND the Info modal table both derive from it. Adding a
     shortcut = one SC_DEFS entry + one i18n key. Nothing else.
-  Shell-level listener (§12) passes every Ctrl+Shift combo to
-    orosShortcuts.handle; unmatched combos fall through untouched.
-  Guard conditions: ctrl||meta AND shift, no alt, single-char key.
+  Shell-level listener (§12): passes every Ctrl+Alt+Shift combo
+    to orosShortcuts.handle; unmatched combos fall through.
 
-TASKBAR SYNC DOT (v0.18.0) — shell.js §9b
-  #sync-dot inside .bar-right (button, injected at runtime).
+TOAST SUBSYSTEM (v0.18.1) — shell.js §9 scToast()
+  scToast(kind, text): taskbar toast, top:44px, z-index 1400
+  (above Info modal 1300, version toast 1200). Single-slot (a new
+  toast replaces the old), inline palette-var styles (follows
+  every skin, zero CSS rules), err border #e06c75 / ok var(--accent)
+  / dim var(--border). Wired INTO setSyncMsg + setSyncMsgRaw —
+  every sync/shortcut/weather/menu message is now visible
+  ANYWHERE in the OS, not just inside the open menu. Menu keeps
+  rendering state.syncMsg as persistent history. Consequence
+  (intended): auto-backup snapshot confirmations and auto-sync
+  errors now surface unprompted.
+
+TASKBAR SYNC DOT (v0.18.0/v0.18.1) — shell.js §9b + §12
+  #sync-dot inside .bar-right (button #sync-dot-btn, injected at
+  runtime, before #btn-lang).
   STATES (data-state attr, colors via CSS):
     off      grey            not connected
     locked   hollow ring     connected, no passphrase
@@ -257,10 +334,11 @@ TASKBAR SYNC DOT (v0.18.0) — shell.js §9b
     recomputes off/locked/idle/dirty when no transient holds
     (syncDotHold timestamp). Manual pull/push/unlock + auto-sync
     pulses set transient states. setSyncMsgRaw wires err→red.
-  Click = open app menu (same behavior as the weather chip).
-  THE MENU COPY IS GONE: renderSyncSection renders no dot; the
-    taskbar dot represents ALL apps (per-app removal: Notes
-    save-indicator deleted in v0.18.0 — the only one).
+  CLICK (v0.18.1) = syncNowFromDot(): if not connected → red
+    error toast; if locked → open menu (passphrase lives there);
+    else pull then push-if-dirty, syncing→synced transients,
+    toasts for each leg. The dot NO LONGER opens the menu.
+  Menu access points left: menu button, weather chip.
 
 WEATHER WIDGET (v0.18.0) — shell.js §9d
   Provider: Open-Meteo forecast + geocoding APIs. NO API key,
@@ -294,18 +372,17 @@ WEATHER WIDGET (v0.18.0) — shell.js §9d
     51-67 rain · 71-77 snow · 80-82 showers · 85/86 snow · 95+
     storm. Unknown → cloud.
 
-INFO MODAL (v0.18.0) — shell.js §9c showInfoModal
-  Trigger: Ctrl+Shift+I or the menu Info row (renders last,
-    AFTER the sync section). Content: orOS + version pill,
-    tagline "A static operating system in your browser.",
-    capabilities line (sc.info.cap — v0.18.0 post-fix: it
-    originally reused menu.empty.hint, which read "Apps will
-    appear here as they are installed." — wrong context, user
-    caught it), the FULL shortcuts table (generated from
-    SC_DEFS, ⌘⇧ prefix auto-detected on Apple platforms),
-    source link github.com/koulaxizis/oros, credits line.
-  Overlay: backdrop click or Escape closes. z-index 1300 (above
-    the version toast's 1200).
+INFO MODAL (v0.18.0/v0.18.1) — shell.js §9c showInfoModal
+  Trigger: Ctrl+Alt+Shift+I or the menu Info row (renders last,
+    AFTER the sync section). Content: orOS + version pill (the
+    version surface since the badge removal), tagline "A static
+    operating system in your browser.", capabilities line
+    (sc.info.cap), the FULL shortcuts table (generated from
+    SC_DEFS, ⌃⌥⇧ prefix auto-detected on Apple platforms),
+    repo link github.com/koulaxizis/oros, credits line with
+    "Designed by Christos Koulaxizis" LINKED to
+    https://koulaxizis.gr (v0.18.1).
+  Overlay: backdrop click or Escape closes. z-index 1300.
 
 MERGE CONTRACTS PER APP
   To-Do (v0.4): per-entity mtime + om/pos ordering, root scalars
@@ -384,14 +461,12 @@ AUTO-BACKUP (v0.12.0+)
   FS-folder mirror (Chromium desktop): IndexedDB-held handle,
   permission check per write, ⚠ + Reconnect UI on revoke.
   v0.18.0 style fix: the Stop/Reconnect/Choose button inside
-    .sync-interval rows was unstyled (menu-item expected a
-    .sync-actions wrapper) — compact bordered style added; the
-    label ellipsizes (flex:1 + min-width:0).
+    .sync-interval rows was unstyled — compact bordered style
+    added; the label ellipsizes (flex:1 + min-width:0).
 
 VERSION TOAST (v0.8.0 style, tightened v0.18.0)
-  Sole update confirmation after auto-update reload. v0.18.0:
-  gap 8px→5px, white-space:nowrap, max-width 100vw-32px,
-  overflow hidden — guaranteed SINGLE line; mobile ≤480px gets
+  Sole update confirmation after auto-update reload. Single
+  line, gap 5px, nowrap, max-width 100vw-32px; mobile ≤480px
   font-size 11.5px + padding 7px 12px.
 
 ────────────────────────────────────────────────────────────────
@@ -421,8 +496,9 @@ A. VERSION BUMP (every release) — ONE manual step
    1. shell.js: APP_VERSION (+ the per-app APP_VERSION & header
       comment when the app itself tracks one — notes.js does).
    2. Push to main. The Action stamps everything else.
-   3. Verify on BOTH devices: menu badge = new version BEFORE
-      interpreting behavior as broken code (R3).
+   3. Verify on BOTH devices: Info modal (Ctrl+Alt+Shift+I)
+      shows the new version BEFORE interpreting behavior as
+      broken code (R3).
 
 B. NEW APP ADDED (<app>/ folder)
    1. apps.json — entry (name, url, icon, category).
@@ -437,7 +513,8 @@ B. NEW APP ADDED (<app>/ folder)
       enforces; reference todo.js §12).
    7. Shortcut forwarding listener (the Contract Β capture-
       template block) — REQUIRED for shell shortcuts to work
-      while the app is focused.
+      while the app is focused. NOTE: must match the CURRENT
+      modifier contract (Ctrl+Alt+Shift, see GLOBAL SHORTCUTS).
    8. Nothing in bump-version.yml (directory scan). ?v= is
       stamped automatically.
    9. Follow checklist A for the release bump.
@@ -455,10 +532,10 @@ D. SYNC ENGINE CHANGES (sync.js)
 E. RELEASE PRE-FLIGHT (recommended before any stable push)
    - JS/JSON syntax sanity (node --check or paste-validate).
    - Console in app iframe: no SyntaxError, __notesDebug alive,
-     version matches badge.
-   - Shortcuts smoke test in EACH app: Ctrl+Shift+P while an
+      version matches Info modal.
+   - Shortcuts smoke test in EACH app: Ctrl+Alt+Shift+P while an
      app is focused proves the forwarding listener is live.
-   - Deploy + badge check on BOTH devices before feature
+   - Deploy + version check on BOTH devices before feature
      testing (Lesson 4).
 
 ────────────────────────────────────────────────────────────────
@@ -471,7 +548,7 @@ WAVE 2 (Notes) — CLOSED ✓
   v0.16.0  Search (Ctrl+K) + Tags aggregation panel.
   v0.17.0  Wiki-links [[Title]] + backlinks strip.
 
-WAVE 3 (Shell) — CLOSED ✓ (v0.18.0)
+WAVE 3 (Shell) — CLOSED ✓ (v0.18.0 + v0.18.1 fixes)
 ──────────────────────────────────────────────────────────────
   #4 Folder Stop-button styling fix (.sync-interval label
      ellipsis + compact bordered menu-item).
@@ -481,35 +558,54 @@ WAVE 3 (Shell) — CLOSED ✓ (v0.18.0)
      Notes save-indicator REMOVED (only per-app dot in the
      suite). One indicator OS-wide.
   #1 Global shortcuts Contract Β: SC_DEFS dispatch + shell
-     listener + app forwarding template (capture phase).
-     Ctrl+Shift+P/O/S/X + I/U/L/R. R12 born (E→X native-
-     conflict pre-release swap; O replaces the earlier F).
-  #6 Info modal (Ctrl+Shift+I + menu row), shortcuts table
+     listener + app forwarding. R12 born (three modifier
+     strikes: E→X native conflict; Ctrl+Shift+* browser-stolen
+     wholesale; Alt+Shift killed by Windows layout toggle +
+     Greek-layout e.key lying → final: Ctrl+Alt+Shift matched
+     via e.code).
+  #6 Info modal (menu row + shortcut trigger), shortcuts table
      auto-generated from SC_DEFS, tagline "A static operating
-     system in your browser.", repo + credits. Post-ship fix:
-     capabilities line initially reused menu.empty.hint
-     ("Apps will appear here as they are installed.") — replaced
-     by dedicated sc.info.cap key.
+     system in your browser.", repo + credits. v0.18.1 fixes:
+     capabilities key sc.info.cap (was menu.empty.hint —
+     "Apps will appear here…"); credits linked to
+     koulaxizis.gr.
   #2 Weather widget: Open-Meteo, taskbar chip, GPS/manual city,
      offline slashed-cloud contract (never a fake temperature),
      settings in the shell slice, cache device-local, 30-min
      throttle, fetches on gesture/online/visible only.
 
-POST-WAVE-3 RECOMMENDED NEXT STEPS (assistant's suggestion):
-  1. Shortcuts parity audit: confirm the forwarding listener is
-     live in EVERY app (todo, kanban, notes, writer-equivalents)
-     — one missing = shortcut dead only when that app focused.
-  2. Weather regression matrix: online GPS, online manual city,
-     offline chip, stale-cache chip, mobile PWA.
-  3. Cold audit of the Notes app (pre-existing recommendation,
-     still pending) — orphaned code, unused i18n keys
-     ("notes.*" pre-0.14 block in STRINGS), CSS dead rules.
-  4. Feature-parity sweep To-Do ↔ Kanban ↔ Notes.
-  5. Any backlog item below, on request.
+v0.18.1 POST-SHIP FIXES (full detail under CURRENT STATE):
+  shortcut modifier rewrite · scToast subsystem · sync-dot click
+  = full sync · version badge removal · sc.info.cap fix ·
+  credits link. All user-tested and working.
+
+NEXT WAVE — CLEANUP/AUDIT (user-approved, not started)
+──────────────────────────────────────────────────────────────
+  Cold audit of every file in the repo. Confirmed targets:
+  - notes.js: dead pre-0.14 "notes.*" i18n keys (notes.app,
+    notes.new.page, notes.title.ph, notes.text.ph — overlap the
+    page.* equivalents).
+  - notes.js: migrate the inline wireUI() shortcut forwarding to
+    the canonical capture template (parity with todo/kanban/writer).
+  - style.css: dead #btn-menu-version rules (badge removed
+    v0.18.1); other dead selectors after 0.12–0.18 churn.
+  - sync.js: dead `changed` var in collectPayload; zombie slice
+    references; general re-audit.
+  - translations.js: unused shell keys across EN/EL.
+  - Full sweep for anything else: orphaned functions, unreachable
+    branches, stale comments claiming removed features exist.
+  PROCESS for this wave: audit FIRST (numbered findings list,
+  no code changes), user approves each, THEN collective fixes.
+  User provides full current files on request; NEVER regenerate
+  files wholesale (R1) — this wave is REMOVAL-heavy, so patches
+  must be exact deletion-ready blocks with locations.
 
 ──────────────────────────────────────────────────────────────
 BACKLOG (recorded, not scheduled)
 ──────────────────────────────────────────────────────────────
+  – Dot-click toast composition: one combined toast
+    ("Pulled (N) · Pushed") vs current two-step — PENDING USER
+    DECISION (see v0.18.1 f above).
   – Notes read-mode (rendered [[links]] clickable inside text).
   – Notes import (.txt → new page, ZIP → non-destructive
     restore) — deferred by user decision.
@@ -518,11 +614,12 @@ BACKLOG (recorded, not scheduled)
   – Schema-aware generic union for mergeless closed-app proxies.
   – Snapshot compression.
   – Zombie slice references cleanup; sync.js dead `changed` var
-    in collectPayload.
+    in collectPayload (also targeted by the cleanup wave).
   – Extend CI G3 if an app ever uses inline <script>.
-  – Full weather APP (forecast view) — the v0.18.0 widget is the
+  – Full weather APP (forecast view) — the widget is the
     shell-surface slice of it; a dedicated app would need its own
     slice if it ever stores more than {on,auto,lat,lon,label}.
+    Likely the NEXT new app after the cleanup wave.
   – Idea (loose, never confirmed): Pad app, pagination app,
     Public Domain Calculator — separate orOS waves.
 
@@ -553,10 +650,19 @@ RELEASE HISTORY (condensed)
            VIEW-DERIVATION PRINCIPLE formalized.
 0.18.0     WAVE 3 (shell): global shortcuts Contract Β
            (SC_DEFS single-source, app forwarding, R12), taskbar
-           sync dot (states off/locked/idle/syncing/synced/dirty/
-           err), weather widget (Open-Meteo, offline slashed-
-           cloud contract, slice-traveling settings), Info modal
-           (auto-generated shortcuts table), version-toast one-
-           line fix, folder-button styling fix, Notes save-
-           indicator removal. First shell wave since 0.13 — all
-           six items user-approved upfront, shipped as one bump.
+           sync dot (7 states), weather widget (Open-Meteo,
+           offline slashed-cloud contract, slice-traveling
+           settings), Info modal (auto-generated shortcuts
+           table), version-toast one-line fix, folder-button
+           styling fix, Notes save-indicator removal. First
+           shell wave since 0.13 — all six items user-approved
+           upfront, shipped as one bump.
+0.18.1     Post-ship fixes: shortcut modifiers rewritten to
+           Ctrl+Alt+Shift matched via e.code (browser-stolen
+           Ctrl+Shift + Greek-layout e.key lying — R12 complete);
+           scToast subsystem wired into setSyncMsg/setSyncMsgRaw
+           (messages visible outside the menu); sync dot click =
+           full sync trigger; taskbar version badge removed
+           (version surface = Info modal + update toast); Info
+           modal sc.info.cap fix; credits linked to
+           koulaxizis.gr.
