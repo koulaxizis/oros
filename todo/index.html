@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>To-Do · orOS</title>
-  <link rel="stylesheet" href="todo.css?v=0.18.0">
+  <link rel="stylesheet" href="todo.css?v=0.18.1">
 </head>
 <body>
 
@@ -13,14 +13,14 @@
        horizontal drag = reorder. -->
   <header id="tabbar-wrap">
     <nav id="tabs" role="tablist" aria-label="Lists"></nav>
-    <button id="tab-add" aria-label="Add list" title="Add list"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button id="tab-add"></button>
   </header>
 
   <!-- Quick-add bar (always ready, natural date parsing) -->
   <div id="addbar">
     <input id="quick-add" type="text" autocomplete="off" spellcheck="false"
            data-i18n-ph="quick.add">
-    <button id="quick-add-btn" aria-label="Add task"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+       <button id="quick-add-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   </div>
 
   <!-- List controls: hide-completed | search | label filter | clear | settings -->
@@ -50,8 +50,8 @@
     </div>
 
     <button class="ctrl-btn" id="clear-completed" data-i18n="clear.completed">Clear completed</button>
-    <button class="ctrl-btn icon" id="list-settings" aria-label="List settings"
-            title="List settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+    <button class="ctrl-btn icon" id="list-settings"
+            data-i18n-title="list.settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
   </div>
 
   <!-- Items (also renders flattened cross-list search results) -->
@@ -64,6 +64,10 @@
     <div id="no-match" hidden>
       <span data-i18n="search.none">No matches</span>
       <small data-i18n="search.none.hint">Try another term or clear the label filter.</small>
+    </div>
+    <div id="filtered" hidden>
+      <span data-i18n="filtered.title">All tasks are completed</span>
+      <small data-i18n="filtered.hint">Turn off “Hide completed” to see them.</small>
     </div>
   </main>
 
@@ -113,7 +117,7 @@
         <label class="radio"><input type="radio" name="f-rec" value="on">
           <span data-i18n="recur.every">Every</span></label>
         <div id="rec-editor">
-          <input id="f-every" type="number" min="1" step="1" value="1" aria-label="Interval">
+          <input id="f-every" type="number" min="1" step="1" value="1">
           <select id="f-unit">
             <option value="day"   data-i18n="unit.day">days</option>
             <option value="week"  data-i18n="unit.week">weeks</option>
@@ -147,7 +151,7 @@
         <label class="radio"><input type="radio" name="l-rec" value="on">
           <span data-i18n="recur.every">Every</span></label>
         <div id="rec-editor-list">
-          <input id="l-every" type="number" min="1" step="1" value="1" aria-label="Interval">
+          <input id="l-every" type="number" min="1" step="1" value="1" aria-label="Interval" data-i18n-title="interval.aria">
           <select id="l-unit">
             <option value="day"   data-i18n="unit.day">days</option>
             <option value="week"  data-i18n="unit.week">weeks</option>
@@ -169,6 +173,6 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="todo.js?v=0.18.0"></script>
+  <script src="todo.js?v=0.18.1"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Notes v0.14.0 — Plain-text wiki notebook
+// orOS Notes v0.17.0 — Plain-text wiki notebook
 //
 // Architecture (unchanged core, v0.13.1 contract):
 //   - Flat pages[] {id, parent, title, text, mtime, pos}
@@ -20,7 +20,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION   = "0.14.0";
+  var APP_VERSION   = "0.17.0";
   var STORAGE_KEY   = "oros-notes-data";
   var PREFS_KEY     = "oros-notes-prefs";
   var DATA_VER      = 2;
@@ -141,7 +141,6 @@
     while (changedO && guard++ < 100) {
       changedO = false;
       state.pages.forEach(function (p) {
-        if (p.parent !== null && !alive[p.parent]) { p.parent = null; changedO = true; }
         // Cycle break: walk up; if we reach ourselves, re-parent to ROOT
         var anc = p.parent, hops = 0;
         while (anc !== null && hops++ < 200) {
@@ -189,10 +188,7 @@
 
   var STRINGS = {
     en: {
-      "app.title":          "Notes",
-      "tree.title":         "Pages",
       "tree.empty":         "No pages yet",
-      "tree.empty.hint":    "Tap + to create your first page",
       "page.untitled":      "Untitled",
       "page.new":           "New page",
       "page.newchild":      "New sub-page",
@@ -200,8 +196,6 @@
       "page.rename":        "Rename",
       "page.move.up":       "Move up",
       "page.move.down":     "Move down",
-      "page.placeholder":   "Start writing…",
-      "page.count":         "{n}",
       "toast.created":      "Page created",
       "toast.deleted":      "Page deleted",
       "toast.moved":        "Page moved",
@@ -212,15 +206,13 @@
       "labels.add":         "Add",           // v0.14.0
       "labels.detach":      "Remove",        // v0.14.0
       "labels.confirm":     "Delete this label?",      // v0.14.0
-      "labels.detached":    "Label removed", // v0.14.0
-      "labels.empty.new":   "Label name",     // v0.14.0
-	        "notes.app":         "Notes",
-      "notes.new.page":    "New page",
-      "notes.title.ph":    "Title",
-      "notes.text.ph":     "Start typing…",
-	  "menu.exportPage": "Export page (.txt)",
-"menu.exportNotebook": "Export notebook (.zip)",
-"search.placeholder": "Search pages…",
+      "labels.detached":     "Label removed", // v0.14.0
+      "notes.app":           "Notes",
+      "notes.title.ph":      "Title",
+      "notes.text.ph":       "Start typing…",
+      "menu.exportPage":     "Export page (.txt)",
+      "menu.exportNotebook": "Export notebook (.zip)",
+      "search.placeholder":  "Search pages…",
 "search.hint": "Type at least 2 characters",
 "search.none": "No results",
 "search.count": "{n} results",
@@ -232,10 +224,7 @@
 "links.none": "None"
     },
     el: {
-      "app.title":          "Σημειώσεις",
-      "tree.title":         "Σελίδες",
       "tree.empty":         "Καμία σελίδα ακόμη",
-      "tree.empty.hint":    "Πάτησε + για τη πρώτη σελίδα",
       "page.untitled":      "Χωρίς τίτλο",
       "page.new":           "Νέα σελίδα",
       "page.newchild":      "Νέα υποσελίδα",
@@ -243,8 +232,6 @@
       "page.rename":        "Μετονομασία",
       "page.move.up":       "Μετακίνηση πάνω",
       "page.move.down":     "Μετακίνηση κάτω",
-      "page.placeholder":   "Ξεκίνα να γράφεις…",
-      "page.count":         "{n}",
       "toast.created":      "Η σελίδα δημιουργήθηκε",
       "toast.deleted":      "Η σελίδα διαγράφηκε",
       "toast.moved":        "Η σελίδα μετακινήθηκε",
@@ -255,15 +242,13 @@
       "labels.add":         "Προσθήκη",        // v0.14.0
       "labels.detach":      "Αφαίρεση",        // v0.14.0
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
-      "labels.detached":    "Η ετικέτα αφαιρέθηκε", // v0.14.0
-      "labels.empty.new":   "Όνομα ετικέτας",   // v0.14.0
-	        "notes.app":         "Σημειώσεις",
-      "notes.new.page":    "Νέα σελίδα",
-      "notes.title.ph":    "Τίτλος",
-      "notes.text.ph":     "Ξεκίνα να γράφεις…",
-	  "menu.exportPage": "Εξαγωγή σελίδας (.txt)",
-"menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.zip)",
-"search.placeholder": "Αναζήτηση σε σελίδες…",
+      "labels.detached":     "Η ετικέτα αφαιρέθηκε", // v0.14.0
+      "notes.app":           "Σημειώσεις",
+      "notes.title.ph":      "Τίτλος",
+      "notes.text.ph":       "Ξεκίνα να γράφεις…",
+      "menu.exportPage":     "Εξαγωγή σελίδας (.txt)",
+      "menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.zip)",
+      "search.placeholder":  "Αναζήτηση σε σελίδες…",
 "search.hint": "Πληκτρολόγησε τουλάχιστον 2 χαρακτήρες",
 "search.none": "Κανένα αποτέλεσμα",
 "search.count": "{n} αποτελέσματα",
@@ -352,6 +337,7 @@
   function paintStaticIcons() {
     var nb = document.getElementById("btn-new-page");
     if (nb && !nb.innerHTML.trim()) nb.innerHTML = PLUS_SVG;
+    if (nb) { nb.title = t("page.new"); nb.setAttribute("aria-label", t("page.new")); }
     var st = document.getElementById("btn-show-tree");
     if (st && !st.innerHTML.trim()) st.innerHTML = BURGER_SVG;
   }
@@ -548,9 +534,6 @@
     var text  = document.getElementById("page-text");
     var page  = pageById(prefs.current);
     if (!title || !text) return;
-	
-	    var oldStrip = document.getElementById("links-strip");
-    if (oldStrip && !page) oldStrip.remove();
 
     title.disabled = !page;
     text.disabled  = !page;
@@ -592,9 +575,7 @@
       });
       wrap.appendChild(chip);
     });
-    var si = document.getElementById("save-indicator");
-    if (si) header.insertBefore(wrap, si);
-    else header.appendChild(wrap);
+    header.appendChild(wrap);
   }
 
   function newPage(parentId) {
@@ -813,7 +794,7 @@
       .replace(/[\\/:*?"<>|]/g, "")
       .replace(/\s+/g, " ")
       .slice(0, 80);
-       return s || "Untitled";
+    return s || "Untitled";
   }
 
   function downloadBlob(blob, filename) {
@@ -1685,18 +1666,23 @@
       if (so && e.target === so) so.remove();
     });
     document.addEventListener("keydown", function (e) {
-      // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) get forwarded
-      // FIRST — apps keep only what the shell doesn't want.
-      if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey &&
-          window.parent && window.parent.orosShortcuts &&
-          window.parent.orosShortcuts.handle(e)) return;
-      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+      if ((e.ctrlKey || e.metaKey) && e.code === "KeyK") {
         e.preventDefault();
         openSearch();
         return;
       }
       if (e.key === "Escape") { closeMenus(); closeFloating(); }
     });
+	
+	// Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) — canonical
+    // capture-phase forwarding (parity with todo/kanban/writer).
+    document.addEventListener("keydown", function (e) {
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+      var p = window.parent;
+      if (!(p && p.orosShortcuts &&
+            typeof p.orosShortcuts.handle === "function")) return;
+      if (p.orosShortcuts.handle(e)) e.stopPropagation();
+    }, true);
 
     // Last-chance flush before tab death
     window.addEventListener("beforeunload", flushSave);

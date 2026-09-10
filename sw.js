@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.13.1 — Service Worker
+// orOS Core v0.18.1 — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
@@ -10,10 +10,10 @@
 // APP_VERSION (shell.js) on every push to main. This value below
 // is a manual safety stamp in case the Action ever fails.
 // Dropbox calls are cross-origin — never touched by this SW.
-// v0.13.1: notes/* added to precache, CACHE_VERSION bumped.
+// (strata: v0.13.1 notes/* precache — full banner history in CHANGELOG)
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.18.0";
+var CACHE_VERSION = "oros-v0.18.1";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
@@ -47,10 +47,8 @@ var PRECACHE_URLS = [
   "fonts/nunito-medium.woff2",
   "fonts/nunito-semibold.woff2",
   "fonts/nunito-bold.woff2",
-  "fonts/nunito-extrabold.woff2",
+  "fonts/nunito-extrabold.woff2"
 ];
-
-// ---------- Install: precache + activate immediately ----------
 self.addEventListener("install", function (event) {
   self.skipWaiting();          // zero-gate update: install → activate
   event.waitUntil(
@@ -104,7 +102,7 @@ self.addEventListener("fetch", function (event) {
   }
 
   event.respondWith(
-    caches.match(request).then(function (cached) {
+    caches.match(request, { ignoreSearch: true }).then(function (cached) {
       if (cached) return cached;
       return fetch(request).then(function (response) {
         if (!response || response.status !== 200) return response;

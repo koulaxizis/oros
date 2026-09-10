@@ -1,5 +1,8 @@
 // ============================================================
-// orOS Core v0.8 — Dropbox Sync module
+// orOS Core v0.8.1 — Dropbox Sync module
+// v0.8.1 — divergence-guard hardening: a MISSING baseline counts
+//   as DIVERGED (not clean) for mergeless slices (baselineExists
+//   discriminator in applySlice).
 //
 // - window.orosSync — shared sync framework for the shell + all apps
 // - Dropbox PKCE OAuth (app-folder scoped, no client secret)
@@ -94,7 +97,7 @@
   var DEBOUNCE_MS     = 5000;                // v0.7.1: quiet period after last edit
 
   var TOKEN_API   = "https://api.dropboxapi.com/oauth2/token";
-    var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
+  var AUTH_URL    = "https://www.dropbox.com/oauth2/authorize";
   var RPC_API     = "https://api.dropboxapi.com/2/";
   var CONTENT_API = "https://content.dropboxapi.com/2/";
 
@@ -104,7 +107,6 @@
   var tokenExpiry  = 0;
   var cachedAccount = null;
   var passphrase    = null;      // memory
-  var vaultReady    = false;
 
   var slices = {};
 
@@ -517,16 +519,6 @@
     return b === hashString(localStr);
   }
 
-  // Local storage for slice `name` is considered CLEAN iff its
-  // current hash equals the baseline (or no baseline exists yet).
-  function sliceIsClean(name) {
-    var slice = slices[name];
-    if (!slice) return true;
-    var local = null;
-    try { local = slice.get(); } catch (e) { local = null; }
-    return baselineMatches(name, local === null ? "null" : JSON.stringify(local));
-  }
-
   // Park a remote snapshot for a KNOWN slice we refused to apply.
   // It is NOT forwarded in the payload (the payload entry for a
   // known slice comes from slice.get() — local state is what we're
@@ -536,8 +528,8 @@
   // parked entries for known slices — divergence lifelines.
   function parkRemote(name, remoteData) {
     var carry = readCarry() || {};
-    // Never overwrite an older parked snapshot with an even older
-    // one — keep whichever arrived later (closer to current truth).
+    // A freshly downloaded remote is by construction the newest
+    // cloud truth this device has seen — unconditional overwrite.
     carry[name] = remoteData;
     writeCarry(carry);
   }
@@ -660,14 +652,12 @@
     // Their disposal is owned by the registerSlice flush.
     var carry = readCarry();
     if (carry) {
-      var changed = false;
       Object.keys(carry).forEach(function (name) {
         if (!slices[name]) {
           payload.apps[name] = carry[name];   // unknown → relay forward
         }
       });
       // (No known-slice deletion here anymore — see comment above.)
-      if (changed) writeCarry(carry);
     }
 
     payload.meta = { lastPush: new Date().toISOString(), device: navigator.userAgent.slice(0, 80) };
@@ -763,11 +753,9 @@
           if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
           applied++;
         } catch (e) {}
-      } else if (rs.baselineCandidate !== null &&
-                 baselineMatches("shell", rs.baselineCandidate) === false &&
-                 rs.data !== null && JSON.stringify(rs.data) === rs.baselineCandidate) {
-        // No-op apply of identical content — refresh the baseline so a
-        // stale hash from a pre-push world doesn't linger.
+      } else if (rs.baselineCandidate !== null) {
+        // Clean no-op apply: refresh/keep the baseline honest —
+        // same convergence-reset contract as the apps branch below.
         recordBaseline("shell", rs.baselineCandidate);
       }
       if (rs.cloudStale) cloudStaleAny = true;
@@ -1111,7 +1099,6 @@
   // Vault unlock chain: after redirect handling settles, unseal + auto-engine
   var vaultUnlocked = redirectHandled.then(function () {
     return unlockFromVault().then(function (ok) {
-      vaultReady = ok;
       // Start auto engine only when we can actually sync
       startAutoEngine();
       if (isConnected() && passphrase) reconcile("boot");

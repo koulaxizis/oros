@@ -1,21 +1,25 @@
 /* ============================================================
-   orOS Core v0.6.2 — Shell stylesheet (PWA / mobile-first)
+   orOS Core v0.18.1 — Shell stylesheet (PWA / mobile-first)
+   (version mirrors shell.js APP_VERSION — bumped at every release)
    Architecture:
-     data-skin  = palette (10 skins)
+     data-skin  = palette (16 skins)
      data-theme = light/dark (orthogonal to skin)
    Sections:
      0. Local fonts (Nunito, vendored)
-     1. Skin palettes (variables)
+     1. Skin palettes (16 skins)
      2. Reset & base
      3. Top bar (persistent, safe-area aware)
      4. Desktop
      5. Applications menu
      5bis. Running app (fullscreen takeover)
      7. Appearance controls (swatches + theme toggle)
-     Wallpaper picker
+        Wallpaper picker
      8. Mobile-first adaptations
      9. Sync section (in menu)
     10. Version toast
+   Appended blocks (bottom of file):
+     v0.18.0 — folder-row fix · taskbar sync dot · Info modal ·
+               weather chip
    ============================================================ */
 
 /* ---------- 0. Local fonts (Nunito, vendored) ---------- */
@@ -569,19 +573,6 @@ body {
 
 #btn-menu.running { color: var(--accent-hover); }
 
-/* Version badge — quiet pill next to the brand button */
-#btn-menu-version {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0;            /* the button's 0.5px doesn't suit digits */
-  color: var(--text-dim);
-  background: var(--accent-soft);
-  border-radius: 6px;
-  padding: 1px 5px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 #bar-clock {
   font-size: 13.5px;
   font-variant-numeric: tabular-nums;
@@ -1102,7 +1093,7 @@ body {
 #sync-dot[data-state="dirty"]   { background: #f28c5a; opacity: 1; }
 #sync-dot[data-state="err"]     { background: #e06c75; opacity: 1; }
 
-/* ===== v0.18.0: Info modal (Ctrl+Shift+I) ===== */
+/* ===== v0.18.0: Info modal (Ctrl+Alt+Shift+I) ===== */
 #sc-info-overlay {
   position: fixed; inset: 0;
   background: rgba(0, 0, 0, 0.5);

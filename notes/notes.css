@@ -1,5 +1,6 @@
 /* ============================================================
-   orOS Notes v0.13.1 — App stylesheet
+   orOS Notes v0.17.0 — App stylesheet
+   Strata: base v0.13.1 + appended blocks v0.14.1–v0.17.0.
    Inherits the shell palette: variables are injected at runtime
    from the parent shell (same origin) by notes.js
    inheritPalette() — the :root values below are only the

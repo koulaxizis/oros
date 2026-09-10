@@ -83,7 +83,6 @@
       "recur.list.hint":  "When a cycle ends, all checks are cleared automatically.",
       "due.today":     "Today",
       "due.tomorrow":  "Tomorrow",
-      "due.overdue":   "Overdue",
       "search.ph":     "Search…",
       "search.clear":  "Clear search",
       "search.none":   "No matches",
@@ -105,7 +104,12 @@
       "confirm.lbldel":  "Delete this label? It will be removed from all tasks.",
       "new.list":      "New list",
       "recur.list.next": "Next reset:",
-      "drag.reorder":   "Reorder"
+      "drag.reorder":   "Reorder",
+      "tab.add":        "Add list",
+      "add.task":       "Add task",
+      "interval.aria":  "Interval",
+      "filtered.title": "All tasks are completed",
+      "filtered.hint":  "Turn off “Hide completed” to see them."
     },
     el: {
       "quick.add":     "Προσθήκη εργασίας… (δοκίμασε «αύριο», «παρασκευή»)",
@@ -142,7 +146,6 @@
       "recur.list.hint":  "Όταν λήξει ο κύκλος, όλα τα τσεκαρίσματα μηδενίζονται αυτόματα.",
       "due.today":     "Σήμερα",
       "due.tomorrow":  "Αύριο",
-      "due.overdue":   "Σε καθυστέρηση",
       "search.ph":     "Αναζήτηση…",
       "search.clear":  "Καθαρισμός αναζήτησης",
       "search.none":   "Καμία αντιστοιχία",
@@ -164,7 +167,12 @@
       "confirm.lbldel":  "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις εργασίες.",
       "new.list":      "Νέα λίστα",
       "recur.list.next": "Επόμενο reset:",
-      "drag.reorder":   "Αναδιάταξη"
+      "drag.reorder":   "Αναδιάταξη",
+      "tab.add":        "Προσθήκη λίστας",
+      "add.task":       "Προσθήκη εργασίας",
+      "interval.aria":  "Διάστημα",
+      "filtered.title": "Όλες οι εργασίες έχουν ολοκληρωθεί",
+      "filtered.hint":  "Απενεργοποίησε την «Απόκρυψη ολοκληρωμένων» για να τις δεις."
     }
   };
 
@@ -286,6 +294,7 @@
     return {
       ver: DATA_VER,
       sm: Date.now(),
+      om: Date.now(),
       activeList: first.id,
       hideCompleted: false,
       deleted: {},
@@ -705,6 +714,7 @@
 
       b.addEventListener("dblclick", function () { openListDialog(list.id); });
       b.addEventListener("click", function () {
+        if (Date.now() - tabDragEndTs < 300) return;   // post-drag click
         if (state.activeList === list.id) return;
         state.activeList = list.id;
         state.sm = Date.now();      // settings LWW follows the freshest tap
@@ -776,15 +786,26 @@
       });
 
       var anyItems = state.lists.some(function (l) { return l.items.length > 0; });
-      $("empty").hidden = true;
+      $("empty").hidden = !(results.length === 0 && !anyItems);
       $("no-match").hidden = !(results.length === 0 && anyItems);
+      $("filtered").hidden = true;
       return;
     }
 
     // Browsing mode — the active list, drag handles on
     var list = activeList();
     $("no-match").hidden = true;
-    $("empty").hidden = !(list.items.length === 0);
+    $("filtered").hidden = true;
+    var visible = list.items.filter(function (item) {
+      return !(state.hideCompleted && item.done);
+    });
+    if (visible.length === 0 && list.items.length > 0) {
+      // Everything completed + Hide completed on → say so, never blank
+      $("empty").hidden = true;
+      $("filtered").hidden = false;
+    } else {
+      $("empty").hidden = !(list.items.length === 0);
+    }
 
     list.items.forEach(function (item) {
       if (state.hideCompleted && item.done) return;
@@ -955,6 +976,9 @@
     var item = newItemObj(parsed.text, parsed.due);
     list.items.unshift(item);
     list.items.forEach(function (it, i) { it.pos = i; });   // keep pos honest
+    list.om = Date.now();          // top-insert is an ORDERING decision:
+                                   // stamp it so this layout is the merge
+                                   // reference (v0.4 — same contract as drag)
 
     input.value = "";
     save(); scheduleRender();
@@ -969,6 +993,7 @@
   var editingListId = null;
   var editingItemId = null;
   var pickedSwatch = FALLBACK_COLOR;
+  var openSnapshot = null;   // v0.4b: zero-edit close must not stamp mtime
 
   function editingItem() {
     return itemById(listById(editingListId), editingItemId);
@@ -1007,6 +1032,14 @@
     setRadio("f-rec", hasRec ? "on" : "none");
     $("rec-editor").style.display = hasRec ? "flex" : "none";
     if (hasRec) fillRecFields("f-", item.recurrence);
+
+    openSnapshot = JSON.stringify([
+      item.text, item.due || "", item.notes || "",
+      JSON.stringify(item.recurrence || null),
+      (item.info || []).map(function (f) {
+        return [(f.label || ""), (f.value || "")];
+      })
+    ]);
 
     $("dlg-item").showModal();
     setTimeout(function () { $("f-text").focus(); }, 50);
@@ -1236,8 +1269,32 @@
     item.due   = $("f-due").value || null;
     item.notes = $("f-notes").value;
     item.recurrence = readRecFromFields("f-");
+
+    // Zero-edit flush (Esc on a pristine dialog): identical content →
+    // no mtime stamp, no dirty, no pointless sync push. Any real edit
+    // (incl. info rows) changes the fingerprint → stamps as before.
+    var nowSnapshot = JSON.stringify([
+      item.text, item.due || "", item.notes || "",
+      JSON.stringify(item.recurrence || null),
+      (item.info || []).map(function (f) {
+        return [(f.label || ""), (f.value || "")];
+      })
+    ]);
+    if (nowSnapshot === openSnapshot) return;
+    openSnapshot = null;
+
     touch(item);
     save(); scheduleRender();
+  });
+
+// v0.4b — the list dialog commits on ANY close path (Save, Esc,
+  // backdrop), same contract as the item dialog. Nothing typed is
+  // ever silently dropped. The submit handler nulls editingListId
+  // first, so this handler is a no-op on the Save path (no double
+  // commit), and the delete path nulls it before close() as well.
+  $("dlg-list").addEventListener("close", function () {
+    if (editingListId === null) return;
+    saveListDialog();
   });
 
   // ---------- 8. List settings dialog ----------
@@ -1397,6 +1454,7 @@
 
   // ---------- 9b. Tab drag reorder ----------
   var TAB_DRAG_THRESHOLD = 8;
+  var tabDragEndTs = 0;   // suppresses the trailing click after a drop
 
   function attachTabDrag(tabEl, list) {
     tabEl.addEventListener("pointerdown", function (e) {
@@ -1468,7 +1526,10 @@
           var before = ev.clientX < r.left + r.width / 2;
           moveListById(list, target.dataset.listId, before);
         }
-        if (started) { save(); scheduleRender(); }
+        if (started) {
+          tabDragEndTs = Date.now();   // swallow the synthetic click
+          save(); scheduleRender();
+        }
       }
 
       function onUp(ev) { finish(ev); }
@@ -1726,7 +1787,7 @@
     }
   }
   
-    // Contract Β: shell-owned combos (Ctrl+Shift+*) forward FIRST.
+    // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) forward FIRST.
   // Standalone listener — does not touch existing keydown handling.
   document.addEventListener("keydown", function (e) {
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
@@ -1750,6 +1811,23 @@
     for (var k = 0; k < p.length; k++) {
       p[k].setAttribute("placeholder", t(p[k].getAttribute("data-i18n-ph")));
     }
+  }
+
+  // R9 parity with the shell: static buttons ship EMPTY in the HTML,
+  // JS paints localized aria-labels/titles at boot.
+  function paintStaticAria() {
+    var pairs = [
+      ["tab-add",       "tab.add"],
+      ["quick-add-btn", "add.task"],
+      ["f-every",       "interval.aria"],
+      ["l-every",       "interval.aria"]
+    ];
+    pairs.forEach(function (pair) {
+      var el = $(pair[0]);
+      if (!el) return;
+      el.setAttribute("aria-label", t(pair[1]));
+      el.setAttribute("title", t(pair[1]));
+    });
   }
 
   function wire() {
@@ -1934,6 +2012,7 @@
   // ---------- Boot ----------
   load();
   applyI18n();
+  paintStaticAria();
   populateWeekdaySelects();
   wire();
   registerSync();

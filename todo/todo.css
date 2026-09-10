@@ -1,5 +1,6 @@
 /* ============================================================
-   orOS To-Do — App stylesheet (v0.3)
+   orOS To-Do — App stylesheet (v0.4)
+   Strata: base v0.3 (Kanban-pattern port) + v0.4 merge-era polish.
    Inherits the shell palette: variables are injected at runtime
    from the parent shell (same origin) — the :root values below
    are only an offline/fallback match of the oros skin.
@@ -560,13 +561,13 @@ body.is-dragging-tab { cursor: grabbing; user-select: none; }
 .drag-handle svg { pointer-events: none; }
 
 /* Empty states */
-#empty, #no-match {
+#empty, #no-match, #filtered {
   text-align: center;
   padding: 52px 20px;
   color: var(--text-dim);
 }
-#empty span, #no-match span  { display: block; font-size: 15px; margin-bottom: 6px; }
-#empty small, #no-match small { font-size: 12.5px; opacity: 0.7; }
+#empty span, #no-match span, #filtered span  { display: block; font-size: 15px; margin-bottom: 6px; }
+#empty small, #no-match small, #filtered small { font-size: 12.5px; opacity: 0.7; }
 
 /* ---------- 7. Drag & drop states (items) ---------- */
 .item.dragging {

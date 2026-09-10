@@ -1,7 +1,9 @@
 // ============================================================
-// orOS Core v0.12.0 — Shell logic
+// orOS Core v0.18.1 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
+//   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
+//    Info modal, weather chip, taskbar toast — see bottom sections)
 //   2. Preferences (skin, language, theme, wallpaper, auto-backup)
 //   3. Language apply
 //   4. Theme apply
@@ -172,6 +174,15 @@
   function applyLang() {
     window.orosLang = state.lang;
     document.documentElement.setAttribute("lang", state.lang);
+	
+	  // Language toggle reaches OPEN apps: iframes read orosLang once at
+  // boot, so the honest way to localize an already-running app is a
+  // clean re-open. Data lives in storage/slices — zero loss risk.
+  function refreshRunningApp() {
+    if (state.running) {
+      document.getElementById("app-frame").src = state.running.url;
+    }
+  }
 
     var nodes = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < nodes.length; i++) {
@@ -196,6 +207,20 @@
 
     renderClock();
     renderMenu();
+  }
+
+  // Language toggle reaches OPEN apps: iframes read orosLang once at
+  // boot, so the honest way to localize an already-running app is a
+  // clean re-open. Data lives in storage/slices — zero loss risk.
+  function refreshRunningApp() {
+    if (state.running) {
+      document.getElementById("app-frame").src = state.running.url;
+    }
+  }
+
+  // ---------- 4. Theme ----------
+  function applyTheme() {
+    document.documentElement.setAttribute("data-theme", state.theme);
   }
 
   // ---------- 4. Theme ----------
@@ -675,7 +700,7 @@
     renderWxSection(menu);
     renderSyncSection(menu);
 
-    // v0.18.0 — Info row (mirrors Ctrl+Shift+I)
+    // v0.18.0 — Info row (mirrors Ctrl+Alt+Shift+I)
     var infoRow = document.createElement("div");
     infoRow.className = "install-section";
     var infoBtn = document.createElement("button");
@@ -1367,6 +1392,7 @@
     var key = "syncdot." + status;
     var title = window.t(key);
     dot.parentNode.setAttribute("title", title !== key ? title : status);
+    dot.parentNode.setAttribute("aria-label", window.t("sync.dot.aria"));
   }
 
   function autoSyncDot() {
@@ -1390,7 +1416,8 @@
   
     // ---------- 9c. Global shortcuts + Info modal (v0.18.0) ----------
   // Contract Β: ALL handlers live in the shell. iframe apps forward
-  // with ONE line (see notes.js patch below). SC_DEFS is the single
+  // via the canonical capture-phase template (parity with
+  // todo/kanban/writer/notes). SC_DEFS is the single
   // source of truth — the Info modal table is generated from it, so
   // a shortcut can never go missing from the docs.
 
@@ -1454,6 +1481,7 @@
     localStorage.setItem("oros-lang", state.lang);
     noteLocalChange();
     applyLang();
+    refreshRunningApp();          // opened apps follow the language too
   }
 
   function scReconnect() {
@@ -1910,6 +1938,7 @@
     localStorage.setItem("oros-lang", state.lang);
     noteLocalChange();            // user action → sync engine
     applyLang();
+    refreshRunningApp();          // v0.18.1b: open apps follow the toggle
   });
 
   // Unsynced-changes guard: warn on close when dirty AND online
@@ -1967,7 +1996,7 @@
     btn.id = "sync-dot-btn";
     btn.type = "button";
     btn.innerHTML = '<span id="sync-dot" data-state="off"></span>';
-    btn.setAttribute("aria-label", "Sync status");
+    btn.setAttribute("aria-label", window.t("sync.dot.aria"));
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
       syncNowFromDot();
