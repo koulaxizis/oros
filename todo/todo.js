@@ -1725,6 +1725,15 @@
       showToast(t("toast.merged"), false);   // visible convergence
     }
   }
+  
+    // Contract Β: shell-owned combos (Ctrl+Shift+*) forward FIRST.
+  // Standalone listener — does not touch existing keydown handling.
+  document.addEventListener("keydown", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return;
+    var p = window.parent;
+    if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
+    if (window.parent.orosShortcuts.handle(e)) e.stopPropagation();
+  }, true);   // capture phase: runs BEFORE the app's own bubble listeners
 
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {

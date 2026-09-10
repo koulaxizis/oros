@@ -829,6 +829,7 @@ body {
   /* Top bar: keep everything on one row on narrow screens */
   #btn-menu { font-size: 13.5px; padding: 6px 8px; }
   #bar-clock { font-size: 12.5px; }
+  #version-toast { font-size: 11.5px; padding: 7px 12px; }
 
   /* Respect the home-indicator / gesture area at the bottom */
   #oros-running { bottom: env(safe-area-inset-bottom, 0px); }
@@ -1027,7 +1028,10 @@ body {
   z-index: 1200;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
   background: var(--panel-bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -1046,3 +1050,136 @@ body {
   pointer-events: auto;
 }
 #version-toast strong { color: var(--accent); }
+
+/* ===== v0.18.0: folder row fix (Stop/Reconnect button) ===== */
+.sync-interval label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sync-interval .menu-item {
+  width: auto;
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.sync-interval .menu-item:hover { background: var(--accent-soft); }
+
+/* ===== v0.18.0: taskbar sync dot (single OS-wide indicator) ===== */
+#sync-dot-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 34px; height: 34px;
+  min-width: 34px;              /* flex won't squeeze the hit area */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0;
+  color: var(--text);
+}
+#sync-dot-btn:hover { background: var(--accent-soft); }
+#sync-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  opacity: 0.5;
+  transition: background 0.2s, opacity 0.2s, box-shadow 0.2s;
+}
+#sync-dot[data-state="off"]     { background: var(--text-dim); opacity: 0.5; }
+#sync-dot[data-state="locked"]  { background: transparent; border: 2px solid var(--text-dim); opacity: 0.8; }
+#sync-dot[data-state="idle"]    { background: var(--text-dim); opacity: 0.7; }
+#sync-dot[data-state="syncing"] { background: var(--accent); opacity: 1; animation: sync-pulse 1s ease infinite; }
+#sync-dot[data-state="synced"]  { background: #3fbf6f; opacity: 1; box-shadow: 0 0 0 3px var(--accent-soft); }
+#sync-dot[data-state="dirty"]   { background: #f28c5a; opacity: 1; }
+#sync-dot[data-state="err"]     { background: #e06c75; opacity: 1; }
+
+/* ===== v0.18.0: Info modal (Ctrl+Shift+I) ===== */
+#sc-info-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1300;                 /* above version toast (1200) */
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.sc-box {
+  width: min(420px, 94vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px var(--shadow);
+  padding: 18px 20px;
+}
+.sc-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.sc-title { font-size: 19px; font-weight: 800; color: var(--text); }
+.sc-ver {
+  font-size: 11.5px; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); border-radius: 6px; padding: 1px 7px;
+  font-variant-numeric: tabular-nums;
+}
+.sc-tagline { font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
+.sc-cap {
+  font-size: 12px; color: var(--text-dim); line-height: 1.6;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.sc-sec {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-dim); padding: 10px 0 4px;
+}
+.sc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 5px 0; font-size: 13px; color: var(--text);
+}
+.sc-key {
+  font-size: 11.5px; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); border-radius: 6px; padding: 2px 8px;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.sc-foot {
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-dim);
+}
+.sc-foot a { color: var(--accent); text-decoration: none; }
+.sc-foot a:hover { text-decoration: underline; }
+.sc-cred { color: var(--text-dim); }
+
+/* ===== v0.18.0: weather chip (taskbar) ===== */
+#wx-chip {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+#wx-chip:hover { background: var(--accent-soft); }
+#wx-chip[data-state="off"] { color: var(--text-dim); opacity: 0.7; }
+#wx-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
+#wx-chip .wx-temp { pointer-events: none; }
+
+/* Very narrow phones: keep the icon, drop the number */
+@media (max-width: 360px) {
+  #wx-chip .wx-temp { display: none; }
+}

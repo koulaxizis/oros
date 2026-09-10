@@ -177,14 +177,12 @@
       markSyncDirty();
     }
     pendingId = null;
-    setSaveIndicator("saved");
   }
 
   function queueSave(pageId) {
     pendingId = pageId;
     if (pendingTimer) clearTimeout(pendingTimer);
     pendingTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
-    setSaveIndicator("dirty");
   }
 
   // ---------- 3. i18n ----------
@@ -374,11 +372,6 @@
     if (api && typeof api.markDirty === "function") api.markDirty();
   }
 
-  function setSaveIndicator(kind) {
-    var el = document.getElementById("save-indicator");
-    if (el) el.setAttribute("data-state", kind === "dirty" ? "dirty" : "saved");
-  }
-
   function toast(text) {
     var d = document.createElement("div");
     d.setAttribute("role", "status");
@@ -563,7 +556,6 @@
     text.disabled  = !page;
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
-    setSaveIndicator("saved");
 	    renderChips(page);
     renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
   }
@@ -1693,6 +1685,11 @@
       if (so && e.target === so) so.remove();
     });
     document.addEventListener("keydown", function (e) {
+      // Contract Β: shell-owned combos (Ctrl+Shift+*) get forwarded
+      // FIRST — apps keep only what the shell doesn't want.
+      if (e.ctrlKey && e.shiftKey &&
+          window.parent && window.parent.orosShortcuts &&
+          window.parent.orosShortcuts.handle(e)) return;
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
         openSearch();

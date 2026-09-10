@@ -22,7 +22,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.17.0";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.18.0";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -523,6 +523,8 @@
                           { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
     document.getElementById("bar-clock").textContent =
       hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
+    autoSyncDot();          // v0.18.0: piggybacks the clock tick
+    wxRenderChip();         // v0.18.0: weather chip, cheap paint only
   }
 
   // ---------- 7. PWA ----------
@@ -671,7 +673,21 @@
     renderSkinSwatches(menu);
     renderWallpaperSection(menu);
     renderInstallRow(menu);
+    renderWxSection(menu);
     renderSyncSection(menu);
+
+    // v0.18.0 — Info row (mirrors Ctrl+Shift+I)
+    var infoRow = document.createElement("div");
+    infoRow.className = "install-section";
+    var infoBtn = document.createElement("button");
+    infoBtn.className = "menu-item install-row";
+    infoBtn.textContent = window.t("sc.desc.info");
+    infoBtn.addEventListener("click", function () {
+      closeMenu();
+      showInfoModal();
+    });
+    infoRow.appendChild(infoBtn);
+    menu.appendChild(infoRow);
   }
 
   function renderSkinSwatches(host) {
@@ -851,6 +867,21 @@
       localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
     }
 
+    // Pull-fed weather settings: apply + paint, NEVER markDirty
+    // (same contract as syncInterval — pull → set → push loops).
+    if (data.weather && typeof data.weather === "object") {
+      var ww = data.weather;
+      wxSave({
+        on:    !!ww.on,
+        auto:  !!ww.auto,
+        lat:   (typeof ww.lat === "number" && isFinite(ww.lat)) ? ww.lat : null,
+        lon:   (typeof ww.lon === "number" && isFinite(ww.lon)) ? ww.lon : null,
+        label: (typeof ww.label === "string") ? ww.label : ""
+      });
+      wxFetch(false);        // silent: throttled, location is new
+      wxRenderChip();
+    }
+
     localStorage.setItem("oros-lang",  state.lang);
     localStorage.setItem("oros-theme", state.theme);
     localStorage.setItem("oros-skin",  state.skin);
@@ -875,6 +906,7 @@
   }
   function setSyncMsgRaw(kind, raw) {
     state.syncMsg = { kind: kind, text: raw };
+    if (kind === "err") setSyncDot("err", 6000);   // v0.18.0: red transient
     renderMenu();
   }
 
@@ -891,7 +923,6 @@
     var status = document.createElement("div");
     status.className = "sync-status";
     status.innerHTML =
-      '<span class="sync-status-dot' + (connected ? " on" : "") + '"></span>' +
       '<span>' +
       (connected
         ? window.t("sync.connected") +
@@ -973,6 +1004,7 @@
         if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
         window.orosSync.setPassphrase(pw, rememberCb.checked);
         setSyncMsgRaw("dim", window.t("sync.working"));
+        setSyncDot("syncing");
         // Visible auto-pull on unlock: apply cloud state immediately,
         // then push if this device had unsynced changes.
         window.orosSync.pull()
@@ -1002,11 +1034,13 @@
       pullBtn.className = "menu-item";
       pullBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.pull") + "</span>";
       pullBtn.addEventListener("click", function () {
+        setSyncDot("syncing");
         window.orosSync.pull()
           .then(function (result) {
             if (result.empty) setSyncMsg("ok", "sync.ok.empty");
             else setSyncMsgRaw("ok",
               window.t("sync.ok.pull") + " — " + result.applied + " " + window.t("sync.slices.applied"));
+            setSyncDot("synced", 4000);
           })
           .catch(handleSyncError);
       });
@@ -1017,8 +1051,9 @@
       pushBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.push") + "</span>";
       pushBtn.addEventListener("click", function () {
         setSyncMsgRaw("dim", window.t("sync.working"));
+        setSyncDot("syncing");
         window.orosSync.push()
-          .then(function () { setSyncMsg("ok", "sync.ok.push"); })
+          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
           .catch(handleSyncError);
       });
       actions.appendChild(pushBtn);
@@ -1284,6 +1319,441 @@
     }
     return 3;
   }
+  
+    // ---------- 9b. Taskbar sync dot (v0.18.0) ----------
+  // SINGLE OS-wide sync indicator. The menu copy was removed; the
+  // dot auto-derives its state every clock tick (cheap) and holds
+  // transient states (synced/err) briefly after manual operations.
+  var syncDotHold = 0;
+
+  function setSyncDot(status, holdMs) {
+    var dot = document.getElementById("sync-dot");
+    if (!dot) return;
+    syncDotHold = holdMs ? (Date.now() + holdMs) : 0;
+    dot.setAttribute("data-state", status);
+    var key = "syncdot." + status;
+    var title = window.t(key);
+    dot.parentNode.setAttribute("title", title !== key ? title : status);
+  }
+
+  function autoSyncDot() {
+    var dot = document.getElementById("sync-dot");
+    if (!dot) return;
+    if (syncDotHold && Date.now() < syncDotHold) return;
+    syncDotHold = 0;
+    var s = "off";
+    if (window.orosSync && window.orosSync.isConnected()) {
+      s = window.orosSync.hasPassphrase()
+        ? (window.orosSync.isDirty() ? "dirty" : "idle")
+        : "locked";
+    }
+    if (dot.getAttribute("data-state") !== s) {
+      dot.setAttribute("data-state", s);
+      var key = "syncdot." + s;
+      var title = window.t(key);
+      dot.parentNode.setAttribute("title", title !== key ? title : s);
+    }
+  }
+  
+    // ---------- 9c. Global shortcuts + Info modal (v0.18.0) ----------
+  // Contract Β: ALL handlers live in the shell. iframe apps forward
+  // with ONE line (see notes.js patch below). SC_DEFS is the single
+  // source of truth — the Info modal table is generated from it, so
+  // a shortcut can never go missing from the docs.
+
+  function scRequireConnected() {
+    if (window.orosSync && window.orosSync.isConnected()) return true;
+    setSyncMsg("err", "sc.err.notconnected");
+    return false;
+  }
+
+  function scForcePush() {
+    if (!scRequireConnected()) return;
+    setSyncDot("syncing");
+    window.orosSync.push()
+      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
+      .catch(handleSyncError);
+  }
+
+  function scForcePull() {
+    if (!scRequireConnected()) return;
+    setSyncDot("syncing");
+    window.orosSync.pull()
+      .then(function (result) {
+        if (result.empty) setSyncMsg("ok", "sync.ok.empty");
+        else setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
+          result.applied + " " + window.t("sync.slices.applied"));
+        setSyncDot("synced", 4000);
+      })
+      .catch(handleSyncError);
+  }
+
+  function scSnapshot() {
+    maybeAutoExport(true);   // force = snapshot now regardless of schedule
+    setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
+  }
+
+  function scExportDb() {
+    try {
+      var json = window.orosSync.exportData();
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      setSyncMsg("ok", "sync.ok.export");
+    } catch (e) { handleSyncError(e); }
+  }
+
+  function scCheckUpdates() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.getRegistration()
+      .then(function (r) { return r ? r.update() : null; })
+      .catch(function () {});
+    setSyncMsgRaw("dim", window.t("update.checking"));
+  }
+
+  function scToggleLang() {
+    state.lang = state.lang === "en" ? "el" : "en";
+    localStorage.setItem("oros-lang", state.lang);
+    noteLocalChange();
+    applyLang();
+  }
+
+  function scReconnect() {
+    if (!window.orosSync) return;
+    if (!window.orosSync.isConnected()) {
+      window.orosSync.connect();
+    } else {
+      // Connected but folder permission may have lapsed — same one-click
+      // re-grant path the menu uses (requestPermission is click-legal
+      // only inside a user gesture — a shortcut counts).
+      reconnectFolder();
+    }
+  }
+
+  // Info modal — the FULL table is generated from SC_DEFS, never
+  // handwritten twice. Flat, minimal, no chrome: title, version,
+  // tagline, the capabilities row, shortcut rows, repo link, credits.
+  function showInfoModal() {
+    var existing = document.getElementById("sc-info-overlay");
+    if (existing) { existing.remove(); return; }
+
+    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
+    var comboPrefix = mac ? "⌘⇧" : "Ctrl+Shift+";
+
+    var rows = "";
+    SC_DEFS.forEach(function (def) {
+      rows += '<div class="sc-row"><span class="sc-key">' + comboPrefix +
+              def.key.toUpperCase() + '</span><span>' +
+              escapeHtml(window.t(def.label)) + '</span></div>';
+    });
+
+    var ov = document.createElement("div");
+    ov.id = "sc-info-overlay";
+    ov.setAttribute("role", "dialog");
+    ov.innerHTML =
+      '<div class="sc-box">' +
+        '<div class="sc-head"><span class="sc-title">orOS</span>' +
+          '<span class="sc-ver">v' + APP_VERSION + '</span></div>' +
+        '<div class="sc-tagline">' + escapeHtml(window.t("sc.info.tagline")) + '</div>' +
+        '<div class="sc-cap">' + escapeHtml(window.t("menu.empty.hint")) + '</div>' +
+        '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
+        rows +
+        '<div class="sc-foot"><a href="https://github.com/koulaxizis/oros" ' +
+          'target="_blank" rel="noopener">' + escapeHtml(window.t("sc.info.repo")) + ': koulaxizis/oros</a>' +
+          '<span class="sc-cred"> · Designed by Christos Koulaxizis</span></div>' +
+      '</div>';
+
+    // Backdrop / Escape close
+    ov.addEventListener("click", function (e) {
+      if (e.target === ov) ov.remove();
+    });
+    document.addEventListener("keydown", function scInfoEsc(e) {
+      if (e.key === "Escape") { ov.remove(); document.removeEventListener("keydown", scInfoEsc); }
+    });
+
+    document.body.appendChild(ov);
+  }
+
+  // THE table. Order = documentation order. Adding a shortcut =
+  // adding one entry here (handler + i18n key) — nothing else.
+  var SC_DEFS = [
+    { key: "p", label: "sc.desc.push",      fn: scForcePush },
+    { key: "o", label: "sc.desc.pull",      fn: scForcePull },
+    { key: "s", label: "sc.desc.snapshot",  fn: scSnapshot },
+    { key: "x", label: "sc.desc.export",    fn: scExportDb },
+    { key: "i", label: "sc.desc.info",      fn: showInfoModal },
+    { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
+    { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
+    { key: "r", label: "sc.desc.reconnect", fn: scReconnect }
+  ];
+
+  // Public contract consumed by iframe apps (same-origin, so this
+  // is reachable — Contract Β). Returns true when the combo matched,
+  // so apps know whether to keep the event for themselves.
+  function handleShortcutEvent(e) {
+    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return false;
+    var k = (e.key || "").toLowerCase();
+    if (!k || k.length !== 1) return false;
+    for (var i = 0; i < SC_DEFS.length; i++) {
+      if (SC_DEFS[i].key === k) {
+        if (e.preventDefault) e.preventDefault();
+        SC_DEFS[i].fn();
+        return true;
+      }
+    }
+    return false;
+  }
+  window.orosShortcuts = { handle: handleShortcutEvent };
+  
+    // ---------- 9d. Weather widget (v0.18.0) ----------
+  // Provider: Open-Meteo (no API key, no cookies). Settings travel
+  // in the shell slice; fetches are throttled (30 min) and fire from
+  // user gestures / online / visibility — never idle timers.
+  // OFFLINE: slashed-cloud icon, NO temperature — never a fake value.
+
+  var WX_PREF_KEY  = "oros-weather";     // {on, auto, lat, lon, label} (slice)
+  var WX_CACHE_KEY = "oros-wx-cache";    // {at, temp, code}  (device-local)
+  var WX_LAST_KEY  = "oros-wx-last";     // epoch ms of last fetch attempt
+  var WX_MIN_MS    = 30 * 60 * 1000;     // min gap between auto fetches
+  var WX_STALE_MS  = 3 * 60 * 60 * 1000; // cache older than 3h → dim state
+
+  var WX_SUN   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+  var WX_MOON  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  var WX_PART  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M11 7h1"/><path d="M12 19a4 4 0 0 1 0-8 5 5 0 0 1 9.6 1.5A3.5 3.5 0 0 1 20 19z"/></svg>';
+  var WX_CLOUD = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
+  var WX_FOG   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 13h16M6 16.5h12M8 19h8"/></svg>';
+  var WX_RAIN  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.55"/><path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2"/></svg>';
+  var WX_SNOW  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.45"/><path d="M8 20h.01M12 20h.01M16 20h.01"/></svg>';
+  var WX_STORM = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9h-1.26A8 8 0 1 0 9 19h9a5 5 0 0 0 0-10z" opacity="0.55"/><polyline points="13 11 9 15 13 15 11 19 17 12 13.5 12 15 9"/></svg>';
+  var WX_OFF   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 0 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
+
+  function wxRead() {
+    var w = { on: false, auto: false, lat: null, lon: null, label: "" };
+    try {
+      var raw = JSON.parse(localStorage.getItem(WX_PREF_KEY));
+      if (raw && typeof raw === "object") {
+        w.on    = !!raw.on;
+        w.auto  = !!raw.auto;
+        w.lat   = (typeof raw.lat === "number" && isFinite(raw.lat)) ? raw.lat : null;
+        w.lon   = (typeof raw.lon === "number" && isFinite(raw.lon)) ? raw.lon : null;
+        w.label = (typeof raw.label === "string") ? raw.label : "";
+      }
+    } catch (e) {}
+    return w;
+  }
+
+  function wxSave(w) {
+    localStorage.setItem(WX_PREF_KEY, JSON.stringify(w));
+  }
+
+  function wxCached() {
+    try {
+      var c = JSON.parse(localStorage.getItem(WX_CACHE_KEY));
+      if (c && typeof c === "object") return c;
+    } catch (e) {}
+    return null;
+  }
+
+  function wxNightNow() {
+    var h = new Date().getHours();
+    return h < 6 || h >= 21;
+  }
+
+  // WMO codes: 0 clear · 1-2 partly · 3 overcast · 45/48 fog ·
+  // 51-67 rain · 71-77 snow · 80-82 showers · 85/86 snow showers · 95+ storm
+  function wxIconFor(code) {
+    var c = Number(code) || 0;
+    if (c === 0) return wxNightNow() ? WX_MOON : WX_SUN;
+    if (c === 1 || c === 2) return wxNightNow() ? WX_MOON : WX_PART;
+    if (c === 3) return WX_CLOUD;
+    if (c === 45 || c === 48) return WX_FOG;
+    if (c >= 51 && c <= 67) return WX_RAIN;
+    if (c >= 71 && c <= 77) return WX_SNOW;
+    if (c >= 80 && c <= 82) return WX_RAIN;
+    if (c === 85 || c === 86) return WX_SNOW;
+    if (c >= 95) return WX_STORM;
+    return WX_CLOUD;
+  }
+
+  // Cheap render — runs on every clock tick (1/s). Fetches are NOT
+  // here; this only paints the chip from cache/state.
+  function wxRenderChip() {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var w = wxRead();
+    var chip = document.getElementById("wx-chip");
+
+    if (!w.on) { if (chip) chip.remove(); return; }
+
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "wx-chip";
+      chip.type = "button";
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (state.running) { returnToDesktop(); return; }
+        document.getElementById("app-menu").classList.add("open");
+      });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+    }
+
+    var titleBase = w.label || window.t("wx.title");
+
+    // OFFLINE first: slashed cloud, NO temperature — always
+    if (!navigator.onLine) {
+      chip.setAttribute("data-state", "off");
+      chip.innerHTML = WX_OFF;
+      chip.title = titleBase + " · " + window.t("wx.offline");
+      return;
+    }
+
+    var c = wxCached();
+    var stale = !c || !c.at || (Date.now() - c.at) > WX_STALE_MS;
+
+    if (stale || w.lat === null) {
+      chip.setAttribute("data-state", "off");
+      chip.innerHTML = WX_OFF;
+      chip.title = titleBase + " · " + window.t("wx.waiting");
+      return;
+    }
+
+    chip.setAttribute("data-state", "on");
+    chip.innerHTML = wxIconFor(c.code) +
+      '<span class="wx-temp">' + Math.round(c.temp) + "°</span>";
+    chip.title = titleBase + " · " + new Date(c.at).toLocaleTimeString(
+      state.lang === "el" ? "el-GR" : "en-GB",
+      { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function wxFetch(force) {
+    var w = wxRead();
+    if (!w.on || w.lat === null || w.lon === null || !navigator.onLine) return;
+    if (!force) {
+      var last = parseInt(localStorage.getItem(WX_LAST_KEY) || "0", 10) || 0;
+      if (Date.now() - last < WX_MIN_MS) return;
+    }
+    localStorage.setItem(WX_LAST_KEY, String(Date.now()));
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=" + w.lat +
+          "&longitude=" + w.lon + "&current_weather=true")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.current_weather &&
+            typeof d.current_weather.temperature === "number") {
+          localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
+            at:   Date.now(),
+            temp: d.current_weather.temperature,
+            code: d.current_weather.weathercode
+          }));
+          wxRenderChip();
+        }
+      })
+      .catch(function () { /* offline/blocked — chip keeps last state */ });
+  }
+
+  function wxGeocodeCity(name) {
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" +
+                 (state.lang === "el" ? "el" : "en") +
+                 "&name=" + encodeURIComponent(name))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var g = d && d.results && d.results[0];
+        if (!g) throw new Error("notfound");
+        return { lat: g.latitude, lon: g.longitude, label: g.name };
+      });
+  }
+
+  // GPS fix — runs ONLY from the menu click (user activation)
+  function wxLocate() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var w = wxRead();
+      w.on = true; w.auto = true;
+      w.lat = pos.coords.latitude;
+      w.lon = pos.coords.longitude;
+      w.label = "";
+      wxSave(w);
+      noteLocalChange();          // travels in the shell slice
+      wxFetch(true);
+      renderMenu();
+    }, function () { /* declined — nothing changes */ },
+    { timeout: 10000, maximumAge: 30 * 60 * 1000 });
+  }
+
+  function wxSetCity() {
+    var name = window.prompt(window.t("wx.prompt"));
+    if (!name || !name.trim()) return;
+    wxGeocodeCity(name.trim())
+      .then(function (g) {
+        var w = wxRead();
+        w.on = true; w.auto = false;
+        w.lat = g.lat; w.lon = g.lon; w.label = g.label;
+        wxSave(w);
+        noteLocalChange();
+        wxFetch(true);
+        renderMenu();
+      })
+      .catch(function () { setSyncMsg("err", "wx.notfound"); });
+  }
+
+  // Menu section — toggle + GPS + city (all user-gesture legal)
+  function renderWxSection(host) {
+    var section = document.createElement("div");
+    section.className = "sync-section";
+
+    var heading = document.createElement("div");
+    heading.className = "menu-heading";
+    heading.textContent = window.t("wx.title");
+    section.appendChild(heading);
+
+    var w = wxRead();
+
+    var row = document.createElement("div");
+    row.className = "sync-actions";
+
+    var toggle = document.createElement("button");
+    toggle.className = "menu-item";
+    toggle.textContent = window.t(w.on ? "wx.on" : "wx.off");
+    toggle.addEventListener("click", function () {
+      var ww = wxRead();
+      ww.on = !ww.on;
+      wxSave(ww);
+      noteLocalChange();
+      if (ww.on) wxFetch(true); else wxRenderChip();
+      renderMenu();
+    });
+    row.appendChild(toggle);
+
+    var gpsBtn = document.createElement("button");
+    gpsBtn.className = "menu-item";
+    gpsBtn.textContent = window.t("wx.gps");
+    gpsBtn.addEventListener("click", wxLocate);
+    row.appendChild(gpsBtn);
+
+    var cityBtn = document.createElement("button");
+    cityBtn.className = "menu-item";
+    cityBtn.textContent = window.t("wx.city");
+    cityBtn.addEventListener("click", wxSetCity);
+    row.appendChild(cityBtn);
+
+    section.appendChild(row);
+
+    var hint = document.createElement("div");
+    hint.className = "sync-hint";
+    if (w.lat !== null) {
+      hint.textContent = (w.auto ? "GPS" : w.label) +
+        " · " + w.lat.toFixed(2) + ", " + w.lon.toFixed(2);
+    } else {
+      hint.textContent = window.t("wx.waiting");
+    }
+    section.appendChild(hint);
+
+    host.appendChild(section);
+  }
 
   function initSyncIntegration() {
     registerShellSlice();
@@ -1307,13 +1777,8 @@
     // pushes in the background. No messages, no interruptions.
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
       window.orosSync.onAutoSync(function (kind) {
-        var dot = document.querySelector(".sync-status-dot");
-        if (!dot) return;
-        if (kind === "start") {
-          dot.classList.add("pulse");
-        } else {
-          setTimeout(function () { dot.classList.remove("pulse"); }, 600);
-        }
+        if (kind === "start") setSyncDot("syncing");
+        else setSyncDot("synced", 4000);   // transient green, then auto
       });
     }
 
@@ -1417,6 +1882,28 @@
       e.returnValue = "";
     }
   });
+  
+    // v0.18.0 — taskbar sync dot injection (R9: HTML ships empty)
+  (function () {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var btn = document.createElement("button");
+    btn.id = "sync-dot-btn";
+    btn.type = "button";
+    btn.innerHTML = '<span id="sync-dot" data-state="off"></span>';
+    btn.setAttribute("aria-label", "Sync status");
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (state.running) { returnToDesktop(); return; }
+      document.getElementById("app-menu").classList.add("open");
+    });
+    bar.insertBefore(btn, document.getElementById("btn-lang"));
+  })();
+  
+    // v0.18.0 — global shortcuts at the shell level
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.shiftKey) window.orosShortcuts.handle(e);
+  });
 
   // Boot
   initPrefs();
@@ -1434,4 +1921,12 @@
   // Auto-backup boot check — LAST, so snapshots capture the fully
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
+  
+    // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
+  wxRenderChip();
+  wxFetch(false);
+  window.addEventListener("online", function () { wxFetch(true); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") wxFetch(false);
+  });
 })();
