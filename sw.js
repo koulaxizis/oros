@@ -13,7 +13,7 @@
 // v0.13.1: notes/* added to precache, CACHE_VERSION bumped.
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.18.0";
+var CACHE_VERSION = "oros-v0.18.1";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
