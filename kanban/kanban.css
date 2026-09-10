@@ -1,5 +1,7 @@
 /* ============================================================
-   orOS Kanban — App stylesheet (v0.4 / Wave 3)
+   orOS Kanban — App stylesheet (v0.5)
+   Strata: base v0.3 + v0.4/Wave 3 (column reorder, rename pencil)
+   + v0.5 (merge engine — no new CSS).
    Same pattern as To-Do: the :root values below are only an
    offline/fallback match of the oros skin — runtime values are
    injected from the shell (same origin).
@@ -741,10 +743,6 @@ dialog textarea { resize: vertical; min-height: 70px; }
   margin-bottom: 6px;
 }
 .info-row input[type="text"] { min-width: 0; }
-.info-x {
-  min-width: 26px;
-  min-height: 26px;
-}
 
 /* Dashed "+ add" ghost button inside dialogs */
 dialog button.ghost {

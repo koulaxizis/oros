@@ -27,7 +27,7 @@
 //       · tombstones — ένωση με μέγιστο χρονική σήμανση (ts)· η
 //         διαγραφή υπερισχύει των παλαιότερων επεξεργασιών, ενώ
 //         υποχωρεί έναντι των νεότερων
-//   - Η αναιρέση (Undo) καθιστά ΟΛΟ το snapshot ως το πιο πρόσφατο
+//   - Η αναίρεση (Undo) καθιστά ΟΛΟ το snapshot ως το πιο πρόσφατο
 //     (κατάσταση stampAll) — η αναίρεση υπερισχύει του remote,
 //     και αυτό εφαρμόζεται παντού.
 //   - DATA_VER 3 → 4 additive migration (om/mtime/pos/deleted).
@@ -68,7 +68,6 @@
     en: {
       "board.title":      "Kanban",
       "col.add":          "Add column",
-      "col.add.title":    "Add column",
       "col.rename":       "Rename column",
       "empty.title":      "No columns yet",
       "empty.hint":       "Add your first column with the button above.",
@@ -112,12 +111,12 @@
       "confirm.carddel":  "Delete this card?",
       "confirm.coldel":   "Delete this column and all its cards?",
       "confirm.lbldel":   "Delete this label? It will be removed from all cards.",
-      "new.col":          "New column"
+      "new.col":          "New column",
+	  "update.checking": "Checking for updates…"
     },
     el: {
       "board.title":      "Kanban",
       "col.add":          "Προσθήκη στήλης",
-      "col.add.title":    "Προσθήκη στήλης",
       "col.rename":       "Μετονομασία στήλης",
       "empty.title":      "Δεν υπάρχουν στήλες ακόμα",
       "empty.hint":       "Πρόσθεσε την πρώτη σου στήλη με το κουμπί παραπάνω.",
@@ -161,7 +160,8 @@
       "confirm.carddel":  "Διαγραφή αυτής της κάρτας;",
       "confirm.coldel":   "Διαγραφή στήλης και όλων των καρτών της;",
       "confirm.lbldel":   "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις κάρτες.",
-      "new.col":          "Νέα στήλη"
+      "new.col":          "Νέα στήλη",
+	  "update.checking": "Έλεγχος για ενημερώσεις…",
     }
   };
 
@@ -270,7 +270,7 @@
   }
 
   // Προσθετική (additive) migration: μεταφέρει ΟΠΟΙΟΔΗΠΟТЕ παλιό
-  // σχήμα (shape) στην τρέχουσα DATA_VER. Ποτέ nicht καταστροφική — οι
+  // σχήμα (shape) στην τρέχουσα DATA_VER. Ποτέ καταστροφική — οι
   // παλιές δημιουργίες αντιγράφων ασφαλείας (backups), τα v1/v2 slices
   // και τα δεδομένα v3 φορτώνονται εξίσου.
   // v3 → v4: merge stamps (root om, mtime/om/pos ανά στήλη,
@@ -381,7 +381,7 @@
   //     διαγραφή νικά.
   //   · περιεχόμενο (headers στηλών, κάρτες, ετικέτες) — μεγαλύτερο
   //     mtime νικά· σε ισοβαθμία → λεξικογραφικά μεγαλύτερο JSON
-  //     (πανομοιότυπη απόφαση και στις δύο πλευρές, χωρίς κοίνια)
+  //     (πανομοιότυπη απόφαση και στις δύο πλευρές, καμία τυχαιότητα)
   //   · τοποθέτηση κάρτας σε στήλη — την αποφασίζει η ΚΕΡΔΙΖΟΥΣΑ
   //     πλευρά του card (νεότερο mtime). Ένα cross-column drag
   //     κάνει touch(card), άρα η μετακίνηση είναι αληθινή αλλαγή
@@ -520,7 +520,7 @@
     var a = A || {}, b = B || {};
 
     var tomb = mergeEntityMaps(a.deleted, b.deleted);
-    // Prune ληξιαγμένων tombstones ΜΕΣΑ στο merge — και οι δύο
+    // Prune ληγμένων tombstones ΜΕΣΑ στο merge — και οι δύο
     // πλευρές συρρικνώνονται πανομοιότυπα, άρα το pruning είναι
     // από μόνο του convergence-safe.
     var cutoff = Date.now() - TOMB_LIFETIME_MS;
@@ -823,6 +823,8 @@
     var card = newCardObj(raw);          // φρέσκο mtime — νέα οντότητα
     col.cards.unshift(card);
     col.cards.forEach(function (c, i) { c.pos = i; });
+    col.om = Date.now();   // top-insert = ORDERING decision: αυτή η πλευρά
+                           // κερδίζει τη σειρά στο επόμενο merge (v0.5b)
     input.value = "";
     save(); scheduleRender();
     // Επαν-εστίαση στο φρέσκο input (το render αντικατέστησε τον παλιό κόμβο)
@@ -844,6 +846,17 @@
   var editingColId = null;
   var editingCardId = null;
   var pickedSwatch = FALLBACK_COLOR;     // νέο-ετικέτας χρώμα (accent default)
+  var openCardSnapshot = null;   // v0.5b: zero-edit close δεν stampάρει mtime
+
+  // Fingerprint του περιεχομένου μιας κάρτας (ό,τι επεξεργάζεται το
+  // dialog): text, notes, subtasks, info, ταξινομημένα label ids.
+  function cardFingerprint(card) {
+    return JSON.stringify([
+      card.text, card.notes || "",
+      card.subtasks || [], card.info || [],
+      (card.labels || []).slice().sort()
+    ]);
+  }
 
   // Μικρό helper: η κάρτα που είναι αυτή τη στιγμή ανοιχτή στο
   // διάλογο (ή null). Κοιτάζει by-id στο ΤΡΕΧΟΝ state — μετά από
@@ -868,6 +881,8 @@
     renderSubtasks(card);
     renderInfo(card);
     $("c-lbl-picker").hidden = true;
+
+    openCardSnapshot = cardFingerprint(card);
 
     $("dlg-card").showModal();
     setTimeout(function () { $("c-text").focus(); }, 50);
@@ -1144,8 +1159,9 @@
   }
 
   // Stampάρει τη σειρά μιας στήλης: φρέσκο om + καθαρό διαδοχικό
-  // pos. Οι ενoriaκα mtime των καρτών ΜΕΝΟΥΝ ανέγγιχτα (η σειρά είναι
-  // θέμα ordering, όχι περιεχομένου).
+  // pos. Οι mtime των καρτών ΜΕΝΟΥΝ ανέγγιχτα (η σειρά είναι
+  // θέμα ordering, όχι περιεχομένου). Μοναδικός ορισμός — το v0.5b
+  // αφαίρεσε έναν δεύτερο (one-liner) που νικούσε σιωπηλά μέσω hoisting.
   function stampColOrder(col) {
     col.om = Date.now();
     col.cards.forEach(function (c, i) { c.pos = i; });
@@ -1167,7 +1183,37 @@
     });
     card.text  = $("c-text").value.trim() || card.text;
     card.notes = $("c-notes").value;
+
+    // Zero-edit flush (Esc σε άθικτο dialog): ίδιο fingerprint →
+    // κανένα mtime stamp, κανένα dirty, καμία άσκοπη sync push.
+    // Οποιαδήποτε πραγματική αλλαγή (text/notes/subtask/info/label)
+    // αλλάζει το fingerprint → stampάρει όπως πριν.
+    if (openCardSnapshot !== null &&
+        cardFingerprint(card) === openCardSnapshot) {
+      openCardSnapshot = null;
+      return;
+    }
+    openCardSnapshot = null;
+
     touch(card);
+    save(); scheduleRender();
+  });
+  
+    // v0.5b — ο column dialog κάνει commit σε ΟΠΟΙΟΔΗΠΟΤΕ δρόμο
+  // κλεισίματος (Save, Esc, backdrop), ίδιο συμβόλαιο με το card
+  // dialog — τίποτα πληκτρολογημένο δεν χάνεται ποτέ σιωπηλά.
+  // Οι submit/delete handlers μηδενίζουν το editingColId ΠΡΙΝ το
+  // close(), άρα εδώ είναι no-op σε εκείνους τους δρόμους.
+  $("dlg-col").addEventListener("close", function () {
+    if (editingColId === null) return;
+    var col = colById(editingColId);
+    editingColId = null;
+    if (!col) return;
+    var name = $("col-name").value.trim();
+    if (name && name !== col.name) {
+      col.name = name;
+      touch(col);   // header edit = δομικό LWW — δεν πατάει ποτέ cards
+    }
     save(); scheduleRender();
   });
 
@@ -1339,10 +1385,6 @@
   // ανήκει σε εμάς → drag μεταξύ στηλών.
   var DRAG_THRESHOLD = 8;
 
-  // Έκδοση σειράς μιας στήλης: rename/hdr edit ΔΕΝ αγγίζει το om —
-  // μόνο το πληθυσμιακό/σειρακά γεγονός των καρτών την ανεβάζει.
-  function stampColOrder(col) { col.om = Date.now(); }
-
   function attachCardDrag(el, col, card) {
     el.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;   // μόνο primary
@@ -1413,18 +1455,21 @@
         var destCard = hit.closest(".card");
         var destColEl = hit.closest(".k-col");
 
+        var moved = false;
         if (destCard && destCard !== el) {
           var r = destCard.getBoundingClientRect();
           var before = ev.clientY < r.top + r.height / 2;
           moveCard(col, card,
                    destCard.closest(".k-col").dataset.colId,
                    destCard.dataset.cardId, before);
+          moved = true;
         } else if (destColEl) {
           moveCard(col, card, destColEl.dataset.colId, null, false);
+          moved = true;
         }
-        // else: ρίχτηκε εκτός πίνακα — θέση αμετάβλητη
+        // else: ρίχτηκε εκτός πίνακα — θέση αμετάβλητη, κανένα save
 
-        save(); scheduleRender();
+        if (moved) { save(); scheduleRender(); }
       }
 
       function onUp(ev) { finish(ev); }
@@ -1446,7 +1491,7 @@
     });
   }
 
-  // moveCard: η ΟΝΤΟΤΗΤΑ-ΚΑΡΤΑ перемещείται· με βάση αυτό καταγράφει
+  // moveCard: η οντότητα-ΚΑΡΤΑ μετακινείται· με βάση αυτό καταγράφει
   // την σειρά. Ίδια περίπτωση στήλης → ΜΟΝΟ om/source+dest + rewrite
   // pos (τα card mtimes ΑΝΕΠΑΦΗ — μηδενικό ordering noise).
   // Cross-column → touch(card) ΕΠΙΣΗΣ: η μετακίνηση είναι αληθινή
@@ -1472,8 +1517,8 @@
 
     if (sameCol) {
       // αναδιάταξη εντός στήλης: owner εδώ = om της στήλης
-      col.om = nowMs;
-      col.cards.forEach(function (c, i) { c.pos = i; });
+      srcCol.om = nowMs;
+      srcCol.cards.forEach(function (c, i) { c.pos = i; });
     } else {
       // cross-column: η αλλαγή του πληθυσμού είναι πραγματική
       // αλλαγή → touch(card) + om KAI στις δύο στήλες
@@ -1727,8 +1772,8 @@
       showToast(t("toast.merged"), false);   // ορατή σύγκλιση
     }
   }
-  
-    // Contract Β: shell-owned combos (Ctrl+Shift+*) forward FIRST.
+  // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) — canonical
+  // capture-phase forwarding (parity with todo/kanban-writer/notes).
   // Standalone listener — does not touch existing keydown handling.
   document.addEventListener("keydown", function (e) {
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
