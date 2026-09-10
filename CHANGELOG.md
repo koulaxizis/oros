@@ -8,581 +8,266 @@ Privacy-first: no cookies, no tracking, no ads. MIT.
 
 ---
 
-## CURRENT STATE (read after registries — updated every wave)
+## MANTRA (design contract for EVERY orOS app — never violate)
 
-- **VERIFIED 2026-09-09: cross-device merge works end-to-end** (To-Do).
-  Both devices converge to identical state; merges render live
-  (no refresh needed); same-task LWW and edit-vs-delete-resurrection
-  behave as designed. Merge era LIVE.
-- **LIVE: sync.js v0.7.1 + todo.js v0.4 + 6 point patches** (5 tie-break
-  symmetry fixes + hide-completed checkbox sync in renderAll()).
-- **NEXT: Kanban merge port** — same slice contract ported to
-  kanban/ (cards/columns/labels as entities, tombstones, om/pos for
-  column order AND card order per column, DATA_VER 3→4). Need
-  kanban.js + kanban/index.html supplied in chat before starting.
-- **Merge-era lessons (apply to EVERY future port — none negotiable):**
-  1. Tie-breaks MUST be symmetric. `(a) >= (b) ? a : b` favors the
-     LOCAL side (merge is always called merge(local, remote)) — two
-     devices with equal stamps then diverge and ping-pong. On ties:
-     lexicographic compare (of scalars, or of id-sequences for
-     ordering refs) decides IDENTICALLY on both sides. Helper shape:
-     pickRef(aArr, bArr, aOm, bOm).
-  2. Every DOM control bound to state (checkboxes etc.) must be
-     re-synced inside renderAll() — a merged state change otherwise
-     leaves stale DOM visuals.
-  3. Opening an app must reconcile on register (sync.js
-     registerSlice tail, reason "register") — otherwise device B only
-     learns remote changes at the next interval tick.
-  4. BEFORE any multi-device test: verify BOTH devices actually run
-     the new code (version badge, console markers, data ver). The
-     2026-09-09 debug session burned on symptoms caused by one device
-     serving stale cache-first assets — infrastructure was fine.
-- **Deferred/under consideration:** realtime-sync settings toggle
-  (debounce on/off, default on); per-field task text merge (whole-task
-  LWW suffices so far); merge-capable closed apps (mergeFn as data —
-  deliberately out).
+Offline first · Mobile first · No external dependencies ·
+Full project manual export · Full project automatic export ·
+Full project snapshots · Full project auto-merge sync ·
+**No guessing:** if unsure about ANYTHING, ASK. If a file is
+missing, REQUEST it. Never guess, never assume, never infer
+file contents or directory structure. Always work from the
+files the user provides in-chat, verbatim.
+
+Standing process rules (derived from live incidents):
+- Never REGENERATE a working file wholesale when patching —
+  append surgical deltas to the file the user confirms works.
+- Version ritual is not optional: APP_VERSION (shell.js) +
+  sw.js CACHE_VERSION + core index.html ?v= + app index.html ?v=
+  + manifest — ALL of them, EVERY release. Undeployed/stale
+  bundles look exactly like broken code (cost us TWO debug
+  sessions: v0.13.1 sync, v0.14.1 labels).
+- After delivering code, next deploy step is exact patch
+  instructions ("paste location for every patch") — the user
+  applies with zero ambiguity.
+- Multi-device test rule (Lesson 4): verify BOTH devices run
+  the new code (version badge + data ver + console markers)
+  BEFORE interpreting test results.
+
+---
+
+## CURRENT STATE
+
+- **VERIFIED WORKING:** merge sync end-to-end (To-Do, Kanban);
+  Notes app shipped v0.14.1 with labels (data layer verified —
+  state.labels populated, attach/detach, "lbl:" tombstones).
+- **LIVE:** sync.js v0.8.1 (baselines + divergence guard),
+  shell v0.13.1-era logic, Notes v0.14.1, Kanban v0.5
+  (DATA_VER 4), To-Do v0.4 (DATA_VER 3).
+- **NEXT (Wave 2, Notes — in order):**
+  2) exports (.txt per page + notebook zip — must satisfy
+     Full project manual export, mantra item)
+  3) wiki-links [[Page]] with creation-on-click
+  4) tags aggregation side-panel (built on labels layer —
+     ZERO migration needed, by design)
+  5) search (titles + content, ctrl+k, session-only)
+- **Backlog:** Kanban/To-Do per-field merges; schema-aware
+  generic union for mergeless closed apps; snapshot
+  compression; Restore button dedicated icon.
+
+---
+
+## REFERENCE REGISTRIES (read first in a new chat)
+
+### File tree (repo root)
+- index.html — markup + INLINE update broker script (must stay inline!)
+- style.css — shell styling (16-skin × 12-var palettes, dark/light)
+- shell.js — shell logic; APP_VERSION constant on top (single release key)
+- translations.js — OROS_TRANSLATIONS (EN/EL) + window.t() fallback
+  chain (active → en → key)
+- sync.js — window.orosSync v0.8.1 (loads BEFORE shell.js)
+- apps.json — installed apps registry:
+  {"name","url","category","icon"} internal; type "external" → new tab
+- sw.js — CACHE_VERSION per deploy; PRECACHE includes notes/*, todo/*,
+  kanban/*, fonts/*
+- manifest.webmanifest — versioned; theme_color #1b1a18
+- icon.svg + icons/ (4 PNGs: any+maskable 192/512, maskable 62%)
+- todo/ — To-Do (DATA_VER 3, merge-capable)
+- kanban/ — Kanban (DATA_VER 4, merge-capable)
+- notes/ — Notes (index.html, notes.css, notes.js — DATA_VER 2)
+- fonts/ — local Nunito woff2 (5 weights, Greek subset required)
+- .github/workflows/bump-version.yml — stamps sw.js CACHE_VERSION +
+  manifest version + ?v= on every relative .css/.js ref (root AND app
+  index.html files) from shell.js APP_VERSION on push to main
+
+### localStorage keys (registry)
+- oros-lang / oros-theme / oros-skin / oros-wallpaper — synced (shell slice)
+- oros-sync-interval — user-configurable, travels in shell slice
+- oros-autoexport — mode off/daily/weekly/monthly, travels in shell slice
+- oros-sync-dirty — dirty flag (persisted; discriminator part of v0.8.1)
+- oros-sync-baselines — per-slice hash of last-synced content (v0.8.1)
+- oros-vault-data — sealed passphrase (trusted device vault)
+- oros-last-version — DEVICE-LOCAL (welcome/update toast)
+- oros-slices — persisted registry name→storageKey (closed-app proxies)
+- oros-remote-carry — mailbox: unknown remote slices + parked diverged remotes
+- oros-auto-snapshots — rolling window, max 5, device-local, unencrypted
+- oros-autoexport-last — epoch ms of last check, device-local
+- oros-fs-folder-name / oros-fs-lapsed — FS Access folder backups (Chromium)
+- oros-db-access/refresh/expiry/account — Dropbox tokens + cached account
+- oros-todo-data — To-Do (slice "todo")
+- oros-kanban-data — Kanban (slice "kanban")
+- oros-notes-data — Notes (slice "notes", DATA_VER 2)
+- oros-notes-prefs — Notes DEVICE-LOCAL prefs ({open, current, width})
+
+### Sync architecture (sync.js v0.8.1 — merge era)
+- Payload: { shell, apps: { <name>: ... }, meta }. One encrypted blob
+  /orOS-data.json (Dropbox app folder), AES-GCM + PBKDF2 100k rounds,
+  PKCE OAuth (redirect_uri MUST include trailing "/"), token refresh
+  5-min early, automatic remote backups max 5 (pruned).
+- **Slice contract:** registerSlice(name, get, set, storageKey?, mergeFn?).
+  storageKey → persisted to oros-slices → closed-app boots hydrate
+  mergeless proxies (app data travels even when the app is closed).
+  mergeFn(local, remote) → merged. Must be DETERMINISTIC + SYMMETRIC:
+  merge(A,B) === merge(B,A) INCLUDING ties. Tie-breaks: mtime first,
+  then lexicographic JSON (NEVER `(a) >= (b) ? a : b` — favors local,
+  causes ping-pong; burned us once, see v0.10.1). mergeFn throw
+  degrades slice to LWW (sync never blocks).
+- **Setter contract:** set(data, info) — info.merged===true = value
+  came from a merge (apps show toast). Pull-fed setters NEVER
+  markDirty (loop rule: pull → set → dirty → push → …). User-action
+  handlers DO markDirty.
+- **Baselines + divergence guard (v0.8.1):** oros-sync-baselines holds
+  djb2 hash of last-synced content per slice (recorded on every push
+  + clean apply). UNPUSHED = dirty flag OR baseline missing OR hash
+  mismatch. A mergeless slice with unpushed local work NEVER accepts
+  remote overwrite — remote parks in carry mailbox, local pushes as
+  new truth. Parked remotes flush at live registration THROUGH
+  mergeFn. ACCEPTED LIMIT: two devices offline-editing the same
+  CLOSED app converge when one opens it live.
+- **Engine triggers:** boot / interval (user-set, default 3min) /
+  tab-VISIBLE / "online" event / app-register (~100ms) / debounce
+  (5s after last edit) → full RECONCILE (pull → merge → push if
+  dirty). Tab-HIDE → push-only. Guards: reconcileInFlight /
+  pushInFlight; navigator.onLine gates all. DEBOUNCE_MS = 5000.
+- **Convergence rule:** merge result ≠ remote ⇒ cloudStale ⇒ markDirty
+  ⇒ next push uploads it. Deterministic merges make both devices
+  push IDENTICAL payloads — ping-pong self-extinguishes.
+- **importData** (manual backup restore) passes through the same
+  merge-aware apply path — an old rescue file can't clobber newer
+  local work.
+- **Sync UI (shell):** connect/pull/push/interval select/forget/
+  disconnect + passphrase flow (eye toggle, remember checkbox,
+  device vault). Status dot pulses during auto-sync (onAutoSync).
+
+### Shell slice
+{ lang, theme, skin, wallpaper, syncInterval, autoexport } — all synced.
+Defaults: skin "oros", wallpaper "sand", theme dark, lang en.
+SKINS: 16 total (adwaita, lumo, oros, ubuntu, fedora, mint, arch,
+debian, elementary, tux, manjaro, opensuse, nixos, gentoo, popos,
+zorin) — each ships full 12-var palettes × dark/light in style.css.
+WALLPAPERS: 15 pure-CSS gradients in a JS registry (inline styles —
+WYSIWYG thumbs, specificity-proof). Wallpaper-skin pairing suggests
+ONLY from default wallpaper, ONLY on user clicks, never on pulls.
+
+### Palette vocabulary (shell contract for EVERY iframe app)
+CSS vars: --bg, --bg-desktop, --bar-bg, --text, --text-dim, --accent,
+--accent-hover, --accent-soft, --panel-bg, --border, --shadow.
+Apps inherit them at boot via inheritPalette() (parent <html> computed
+styles, same-origin iframe) + MutationObserver on data-skin/data-theme.
+App :root values = oros-skin standalone fallback ONLY.
+
+### orOS iframe-app contracts (v0.13.1 ARCHITECTURE REFERENCE)
+- orosSync lives on window.parent when embedded — apps MUST resolve:
+  syncApi() = (window.parent && window.parent.orosSync) || window.orosSync
+  Asking window.orosSync directly silently kills slice registration
+  inside the shell (the v0.13.1 Notes bug).
+- i18n: apps carry their OWN STRINGS dicts; lang detected from parent
+  orosLang. Keys must match the HTML data-i18n / data-i18n-ph
+  attributes EXACTLY (v0.14.1 lesson: renaming keys leaks raw keys).
+- HTML ships icon buttons EMPTY; JS injects inline SVGs at wire time
+  (paintStaticIcons pattern). Handcrafted SVG only — ForkAwesome
+  permanently rejected.
+- Sw fetch strategy: cache-first assets (no revalidation) — the ONLY
+  stale-asset escape hatch is CACHE_VERSION bump. Hence the ?v= ritual.
+
+### Notes data model (notes.js v0.14.1, DATA_VER 2)
+state = { ver: 2, pages: [...], labels: [...], tombs: {...} }
+- page: { id, parent, title, text, mtime, pos, labels: [labelId,...] }
+- label: { id, name, color, mtime, pos } — 8-color palette
+  (e06c75, ecc75f, 87cf3e, 4fc4cf, 6d4aff, e09ecf, f28c5a, 9aa4b0)
+- tombs: pageId → ts, AND "lbl:"+labelId → ts (shared map, additive
+  so DATA_VER 1→2 needed no rewrite). Delete wins ties (>=); 30d prune.
+- mergeNotesStates: pages per-id LWW (mtime, tie → lex JSON); labels
+  per-id LWW + "lbl:" tomb filter; tombs union max-ts; dead label
+  refs pruned from pages; normalizeState (idempotent: orphan → ROOT,
+  cycle guard, label-ref pruning, dedupe) runs after EVERY apply.
+- Autosave: debounced 500ms (queueSave/flushSave), flush on
+  page-switch / tab-hide / beforeunload. saveNow() normalizes first.
+- Labels UI: context menu → picker popover (toggle rows, inline
+  create with swatches, delete with confirm) · chips in editor
+  header (click chip → picker) · dots on tree rows.
+- Prefs device-local: { open, current, width } in oros-notes-prefs.
+- i18n key vocab (must match HTML): notes.app, notes.new.page,
+  notes.title.ph, notes.text.ph — plus app-internal keys
+  (page.*, labels.*, toast.*, tree.*).
+- Debug handle: window.__notesDebug = { version, state, merge,
+  sliceGet }.
+
+### To-Do data model (todo.js v0.4, DATA_VER 3 — canonical merge template)
+state = { ver: 3, sm, om, activeList, hideCompleted, deleted: {id: ts},
+labels: [{id,name,color,mtime,pos}], lists: [{ id, name, mtime, om, pos,
+recurrence, lastReset, nextReset, items: [{ id, text, done, due, notes,
+labels, info, recurrence, mtime, om, pos }] }] }
+- Entities carry mtime (content version); collections carry om
+  (ordering version) + per-item pos; root scalars by sm. Missing
+  stamps = 0 = oldest (real remote data always wins after migration).
+- renderAll() re-syncs ALL DOM-bound controls (checkboxes etc.) —
+  a merge state change must never leave stale visuals.
+- Search/filter SESSION-ONLY (a pull must not resurrect stale views).
+
+### Kanban data model (kanban.js v0.5, DATA_VER 4)
+- Card mtime = content INCLUDING column placement (cross-column
+  drags touch the card → moves win merges). Column om = card order;
+  root om = column order. Orphan rule: card whose column died stays
+  dead (cascade tombstones). Delete-label touches every card that
+  wore it. Undo = stampAll() including ordering stamps.
 
 ---
 
 ## RELEASE RITUAL (locked)
 
 1. Change whatever (shell.js, sync.js, translations.js, style.css, apps/…).
-2. Bump `APP_VERSION = "X.Y.Z"` in shell.js — the SINGLE release key.
-3. GitHub Action (.github/workflows/bump-version.yml) auto-stamps
-   sw.js CACHE_VERSION="oros-v<X.Y.Z>", manifest "version" AND `?v=`
-   on every relative .css/.js ref (root + app index.html) on push to
-   main (fails loudly if lines missing; idempotent otherwise).
+2. Bump APP_VERSION = "X.Y.Z" in shell.js — the single release key.
+3. GitHub Action auto-stamps sw.js CACHE_VERSION, manifest version,
+   AND ?v= on every relative .css/.js ref (root + app index.html) on
+   push to main. Fails loudly if lines are missing. If the Action
+   ever fails, stamp manually — never ship an unbumped deploy.
 4. CHANGELOG entry per change (English, "why" included).
-5. Multi-device features: verify BOTH devices run the new code
-   BEFORE interpreting test results (lesson 4 above).
+5. Multi-device features: verify BOTH devices run the new code before
+   interpreting results (Lesson 4).
 
-LESSON (never repeat): deploys that change assets without a version
-bump silently strand mobile on stale cache-first assets. Desktop looks
-fine only because hard refreshes bypass the SW.
-
----
-
-## REFERENCE REGISTRIES (kept current — read this first in a new chat)
-
-### File tree (repo root)
-- index.html — markup + INLINE update broker script (must stay inline!)
-- style.css — shell styling
-- shell.js — shell logic, APP_VERSION constant on top
-- translations.js — OROS_TRANSLATIONS (EN/EL) + window.t() fallback
-  chain (active → en → key)
-- sync.js — window.orosSync v0.7.1 (loaded BEFORE shell.js)
-- apps.json — installed apps registry
-- sw.js — CACHE_VERSION bump per deploy
-- manifest.webmanifest
-- icon.svg + icons/ (4 PNGs: any+maskable 192/512, maskable scale 62%)
-- todo/ — To-Do app (index.html, todo.css, todo.js v0.4 — MERGED)
-- kanban/ — Kanban app (index.html, kanban.css, kanban.js — merge PENDING)
-- fonts/ — local Nunito woff2 (5 weights, Greek subset required)
-- .github/workflows/bump-version.yml
-
-### localStorage keys (registry)
-- oros-lang ("en"|"el")         — synced (shell slice)
-- oros-theme ("dark"|"light")   — synced (shell slice)
-- oros-skin                     — synced (shell slice)
-- oros-wallpaper                — synced (shell slice)
-- oros-sync-interval            — user-configurable, carried via slice
-- oros-sync-dirty               — dirty flag (persisted)
-- oros-vault-data               — sealed passphrase (trusted device)
-- oros-last-version             — DEVICE-LOCAL, never synced (welcome toast)
-- oros-slices                   — persisted slice registry (name→storageKey)
-- oros-remote-carry             — carry mailbox for unknown remote slices
-- oros-todo-data                — To-Do data (slice "todo", DATA_VER 3)
-- oros-kanban-data               — Kanban data (slice "kanban", DATA_VER 3)
-
-### Sync architecture (merge era, sync.js v0.7.1)
-- Payload: `{ shell: {...}, apps: { <name>: ... }, meta }`. Blob
-  `/orOS-data.json` AES-GCM + PBKDF2 100k, backups max 5 (pruned).
-- **Slice contract:** `registerSlice(name, get, set, storageKey?,
-  mergeFn?)` — mergeFn(local, remote) → merged state or null (null
-  falls back to plain apply). Must be DETERMINISTIC + SYMMETRIC:
-  merge(A,B) === merge(B,A) INCLUDING ties (see lesson 1 in CURRENT
-  STATE). mergeFn throwing degrades that slice to LWW (sync never
-  blocks).
-- **Setter contract:** `set(data, info)` where `info.merged===true`
-  means "came through merge" (apps use for a toast); legacy setters
-  ignore the 2nd arg. Pull-fed setters NEVER markDirty (loop rule).
-- **App merge schema (To-Do v0.4 shape — canonical template for
-  every port):** entities carry `mtime` (content version);
-  collections carry `om` (ordering version) + per-item `pos`;
-  root scalar prefs LWW by `sm`. Deletions = tombstones in
-  `state.deleted = {id: ts}`, pruned after 30 days. Delete beats older
-  edits; edit newer than tombstone resurrects. Parent-child containers
-  merge STRUCTURALLY (header LWW by mtime; children merge
-  independently; ordering of children governed by container's om).
-- **Engine triggers:** boot / interval / tab-VISIBLE / debounce(5s
-  after last edit, armed inside markDirty) / app-register → full
-  RECONCILE (pull → merge → push if dirty). Tab-HIDE → push-only
-  (zero-loss at close). Guards: reconcileInFlight/pushInFlight;
-  navigator.onLine gates all; DEBOUNCE_MS = 5000.
-- **Convergence rule:** merge result ≠ remote ⇒ cloudStale ⇒ markDirty
-  ⇒ next push uploads it. Deterministic merges make both devices push
-  IDENTICAL payloads — ping-pong self-extinguishes.
-- **Closed apps:** hydrated proxies (no mergeFn — app code can't run)
-  sync LWW. Merge exists only while the app is open. Known trade-off.
-- **Carry-forward:** remote slices unknown on a device park in
-  oros-remote-carry and relay forward — a device can never wipe app
-  data it doesn't know about.
-
-### To-Do data model (todo.js v0.4, DATA_VER 3) — troubleshooting refstate = { ver: 3, sm: <settings mtime>, om: <list-order version>, activeList: <id>, hideCompleted: bool, deleted: { <entityId>: <tombstone ts> }, labels: [{ id, name, color, mtime, pos }], lists: [{ id, name, mtime, om, pos, recurrence: null | {every, unit, weekday}, lastReset: iso, nextReset: iso, items: [{ id, text, done, due, notes, labels: [<label id>], info: [{ id, label, value }], recurrence: null | {every, unit, weekday}, mtime, om, pos }] }] }
-- Migrations in BOTH `load()` and `sliceSet` (via migrate()). Missing
-  stamps default to 0 = "oldest" (real remote data always wins).
-- Mutations: content edits `touch(entity)` (mtime); reorders stamp
-  collection `om` + rewrite `pos` (content mtimes untouched);
-  deleteList cascades tombstones to items; undo does stampAll().
-- renderAll() re-syncs the hide-completed checkbox (lesson 2).
-- Search/filter are SESSION-ONLY (never persisted — a pull must not
-  resurrect a stale view).
-- Toast keys: "toast.merged" = "Synced changes from another device" /
-  «Συγχρονίστηκαν αλλαγές από άλλη συσκευή».
-
-### Kanban data model (kanban.js, DATA_VER 3 — PRE-merge, ref for port)
-- Single board. Columns: add/rename(dblclick+pencil)/delete+undo,
-  drag reorder. Cards: quick-add per column, edit dialog (text,
-  notes, subtasks [{id,text,completed}], info [{id,label,value}],
-  labels []), duplicate, drag within + across columns, counters,
-  board-wide label store, live search + filter by label.
-- Slice "kanban", STORAGE_KEY "oros-kanban-data", unconditional
-  __orosSyncApi bridge (standalone-open safe). NO mtime/tombstones
-  yet — that is exactly what the port adds.
-
-### Locked API surfaces
-- window.t(key) — i18n, fallback chain active → en → key.
-- window.orosSync: connect/disconnect/isConnected/getUserInfo/pull/
-  push/reconcile/setPassphrase(pw, remember)/hasPassphrase/
-  forgetPassphrase/clearDevice/hasDeviceVault/registerSlice/markDirty/
-  isDirty/getIntervalMinutes/setIntervalMinutes/onAutoSync/
-  kickAutoEngine/vaultUnlocked/redirectHandled/errorKey/exportData/
-  importData.
-- registerSlice(name, get, set, storageKey?, mergeFn?) — see Sync
-  architecture above. Manual Export/Import includes ALL registered
-  slices; import passes through mergeFn when present.
-- App convention: same-origin iframe; app reads oros-lang from shared
-  localStorage; inherits shell palette via computed vars +
-  MutationObserver on parent data-skin/data-theme; sync via
-  parent.orosSync.registerSlice.
-- Sync-loop rule: pull-fed setters NEVER markDirty. User-action
-  handlers DO (__orosSyncApi.dirty() — bridge created
-  unconditionally, standalone-open safe).
-
-### Registries (shell.js)
-- SKINS (10): adwaita #3584e4, lumo #6d4aff,
-  oros #d4af37/#b8860b (BRAND DEFAULT), ubuntu #e95420, fedora #51a2da,
-  mint #87cf3e, arch #1793d1, debian #d70a53, elementary #8c5ec7,
-  tux #c9c9c9. All ship full 12-var palettes × dark/light in style.css.
-- WALLPAPERS (10, JS registry — gradients as inline styles): dusk,
-  midnight(arch), plum(ubuntu), forest(mint), ember(debian),
-  nordic(fedora), aurora(elementary), sand(oros), mono(tux), clear(none).
-  DEFAULT_WALLPAPER="sand".
-- Defaults (v0.4.3): skin oros, wallpaper sand, theme dark, lang en.
-- Pair suggestion fires ONLY when user is on the default wallpaper and
-  ONLY on user skin clicks — never on pulls.
+INCIDENT LESSON (twice now): deploys that change assets without a
+version bump strand mobile on stale cache-first SW assets — the
+symptom set is indistinguishable from broken code. The ?v= stamp
+must include APP-LEVEL index.html refs (notes/index.html etc.), not
+just root files.
 
 ---
 
-## v0 — Core shell
-- GNOME-style persistent top bar (40px): menu left; lang + clock right.
-- Fullscreen app takeover (iframe) below the bar; Esc or menu button
-  returns to desktop. External apps (type: "external") open a new tab.
-- apps.json fetch with graceful fallback to empty state; schema:
-  id, name, category, icon, url, type ("internal"|"external").
-- Dark default + light toggle (Appearance). 24h clock, comma stripped.
-- translations.js + t() fallback chain. Inline SVGs everywhere (no
-  ForkAwesome — permanently rejected). Desktop footer removed.
+## RELEASE HISTORY (condensed — details above in registries)
 
-## v0.1 — Offline-first + mobile + install
-- sw.js: precache shell, network-first navigations, cache-first
-  assets. manifest.webmanifest: standalone, icons.
-- Mobile-first CSS: 100dvh, safe-area insets, 44px touch targets.
-- Install flow: beforeinstallprompt captured + EXPLICIT prompt() on
-  our own Install button. Maskable inner scale → 62%.
-
-## v0.2 — Dropbox sync
-- sync.js: PKCE OAuth (S256), refresh with 5-min early renewal,
-  app-folder blob /orOS-data.json, AES-GCM + PBKDF2 (100k), versioned
-  blob, slice architecture, push with automatic remote backup (max 5),
-  pull/apply, ?code= redirect handled, errorKey() → sync.err.* i18n
-  keys. Redirect URI must match exactly incl. trailing "/"
-  (learned the hard way).
-- Boot dependency order: translations → sync → shell.
-
-### v0.2.1–v0.2.2 — Updates + UX fixes
-- SKIP_WAITING channel (later retired in v0.6.2). Menu stays open on
-  internal clicks (stopPropagation — re-render detaches click target).
-  Passphrase show/hide eye. Install row in own section.
-
-## v0.3 — Trusted device vault + auto-sync
-- IndexedDB vault with NON-EXTRACTABLE AES-GCM device key; passphrase
-  sealed to localStorage, opt-in auto-unlock on boot.
-- Persistent dirty flag; auto engine: boot reconcile, interval
-  pushes, push-on-visibilitychange-hidden. clearDevice vs
-  forgetPassphrase split.
-- v0.3.1 interval select Off/1/3/5/15. v0.3.2 local plaintext
-  export/import. v0.3.3/4 update-detection polish. v0.3.5 update
-  broker INLINE in index.html (root-cause fix — a cached shell could
-  never deliver its own update). v0.3.6 final cluster (synced
-  interval, silent-update welcome toast, single-source version
-  stamping).
-
-## v0.4 — Skins & Wallpapers
-- 10 Linux skins total; wallpaper system: 10 pure-CSS gradients as
-  INLINE STYLES (root-cause fix of #oros-desktop outranking .wp-*),
-  full 12-var palettes × dark/light. Defaults (v0.4.3): oros skin +
-  sand wallpaper, dark, EN.
-
-## v0.5.0 — First app: To-Do
-- Tabbed lists, items with due + notes, quick-add natural date
-  parsing (EN/EL with accent-stripping), item-level recurrence +
-  list-level cycles, overdue badges, hide/clear-completed, pointer
-  drag reorder, undo toast, confirm dialogs.
-- registerSlice("todo"); _suppress bridge (pull never re-pushes).
-- v0.5.1: 404 fix — <app>/index.html convention locked. v0.5.2: local
-  Nunito (5 weights, Greek subset required), ICONS registry, SVG-only
-  strategy. v0.5.3: category translation via dynamic keys.
-
-## v0.6.0 — Sync engine: persisted slices + carry-forward
-- ROOT CAUSE (To-Do data loss): slice registry in-memory only —
-  closed-app pushes omitted app slices AND overwrote the cloud blob.
-  registerSlice gains storageKey; boot hydrates proxies for closed
-  apps; carry-forward mailbox (a device can never wipe unknown data).
-- v0.6.2 cleanup wave: orphaned renderInstallRow SyntaxError +
-  renderWallpaperSection self-append HierarchyRequestError (both
-  killed the shell entirely). Zero-gate updates (skipWaiting on
-  install, broker byte-checks + auto-reload). Dead code purge.
-  beforeunload dirty-guard. Icons precache.
-- v0.6.3 polish: themed slim scrollbars, menu 320px nowrap, version
-  badge next to orOS button, standalone-open guard for __orosSyncApi.
-
-## v0.7.0 — Second app: Kanban (core v0.1)
-- One board, columns add/rename/delete+undo, cards quick-add, edit
-  dialog, counters, pointer drag within + across columns.
-  Threshold-gated drags; touch-action: pan-y. Sync from line one
-  (slice "kanban"). Minimal-core rule: everything else parked.
-- v0.7.1 Kanban Wave 1 (2026-09-09): subtasks + progress, extra info
-  key-value, duplicate card, live-editing dialog. DATA_VER 1→2.
-- v0.7.2 Kanban Wave 2 (2026-09-09): board-wide labels (8 swatches),
-  live search (text/notes/info/label names), filter popover (OR
-  within labels, AND with search), delete-label global cleanup.
-  DATA_VER 2→3. Mobile: title hidden <480px, 16px search (no iOS zoom).
-- v0.8.0 Kanban Wave 3 + automated cache-busting (2026-09-09):
-  column drag reorder (horizontal bias), always-visible rename pencil;
-  `?v=` cache-busting Action (stale-asset class of bug now impossible).
-
-## v0.9.0 — To-Do: Kanban-pattern port (2026-09-09)
-- Sibling apps share interaction DNA. Ported: labels, filter by label,
-  global search (all lists, flattened, source chip), extra info
-  key-value, tab drag reorder, tab rename pencil. DATA_VER 1→2
-  additive (in load() AND sliceSet). Session-only search/filter.
-  Deliberately NOT ported: subtasks (backlog).
-
-## v0.10.0 — Sync Merge Wave (2026-09-09) — SHIPPED & VERIFIED
-
-**Status: verified 2026-09-09** — both devices converge to identical
-state; test ritual passed (convergence equality, same-task LWW,
-edit-vs-delete resurrection).
-
-**Why:** two devices with the same app open must converge instead of
-last-write-wins wiping one side. Aggressive sync schedules (debounce)
-are only SAFE on top of merge — this wave built that foundation, then
-enabled sync-on-change.
-
-### Core (sync.js v0.7)
-- Slice merge API: `registerSlice(..., mergeFn)` — opt-in 5th
-  argument; legacy registrations LWW as before.
-- Full reconcile (pull → merge → push if dirty) on boot, interval,
-  tab-VISIBLE, debounce. Tab-hide stays push-only (zero-loss at
-  close). Merge convergence marks dirty → converged state reaches the
-  cloud on the next push.
-- mergeFn throw degrades slice to LWW — sync never blocks.
-- importData passes through merges — an old local backup can no
-  longer clobber newer work on merge-capable apps.
-- Known limit: closed apps (proxies) have no mergeFn → LWW while
-  closed. Documented trade-off.
-
-### Sync-on-change (sync.js v0.7.1)
-- markDirty arms a 5s debounce → reconcile("debounce") (FULL
-  reconcile, not bare push — pushing stale state wastes round-trips).
-  Bursts coalesce into one; no-ops when already clean.
-  Why merge-first matters here: with the old overwrite model, faster
-  pushes would have meant MORE chances to clobber, not fewer.
-
-### To-Do (v0.4)
-- DATA_VER 3 — mtime/om/pos/deleted/sm stamps, additive migration in
-  load() AND sliceSet (missing stamps = 0 = oldest → remote wins).
-- Tombstones: soft deletes pruned after 30 days; delete beats older
-  edits, newer edit resurrects.
-- mergeTodoStates: deterministic + symmetric (scalars by sm, content
-  by mtime, ties by lexicographic JSON — see v0.10.1 fixes, ordering
-  by larger om, unknown entities append). Lists merge structurally —
-  header edits never clobber item edits from the other side.
-- Undo stampAll() (restored snapshot wins the next merge and
-  propagates). List-cycle rollovers stamp. Merge toast only when a
-  pull actually changed something.
-- Fixes: stray l-cancel listener (broke entire wiring), item delete
-  removes locally too, default lists distinct ids.
-
-## v0.10.1 — Merge stabilization + on-open reconcile (2026-09-09)
-
-Found during first live two-device testing (test flow caught them —
-this is why the ritual exists).
-
-- **Symmetric tie-breaks (todo.js, 5 patches):** original tie-breaks
-  (`(a.x||0) >= (b.x||0) ? a : b`) favored the LOCAL side on equal
-  stamps — migrated data has sm/om = 0 on both sides, so both devices
-  kept their own state and ping-ponged (felt like "one edit is lost").
-  Fixed: scalars tie → lexicographic compare of the scalar pair;
-  ordering refs tie → lexicographic compare of id-sequences via
-  new pickRef() helper. Now merge(A,B) === merge(B,A) including ties.
-  (Lesson 1 — mandatory for the Kanban port.)
-- **hide-completed checkbox sync (todo.js):** renderAll() now
-  re-syncs the DOM checkbox from state — merges changed the state but
-  left the visual stale. (Lesson 2.)
-- **Reconcile-on-register (sync.js, registerSlice tail):** opening an
-  app now fires reconcile("register") after ~100ms — previously
-  opening an app was a silent no-sync event; device B learned remote
-  changes only at the next interval tick, which felt like "needs
-  refresh". (Lesson 3.)
-- **Process lesson (Lesson 4, ritual step 5):** part of the reported
-  symptoms during testing were one device serving stale cache-first
-  assets — infrastructure was healthy. Always verify BOTH devices run
-  the new code (version badge + data ver) before diagnosing merge.
-
----
-
-## Known TODO / backlog
-- **Kanban merge port** (in progress — see CURRENT STATE).
-- To-Do subtasks (Kanban port).
-- Sandbox attribute for external/untrusted app iframes.
-- Windowed mode = future opt-in only.
-- Menu badge for open todo count (needs postMessage bridge).
-- Extra skins (Nord/Dracula test), About surface (credits + privacy).
-- Realtime-sync settings toggle (debounce on/off — default on).
-
-## v0.11.0 — Kanban merge port (2026-09-09)
-
-**Why:** Kanban was the last merge-incapable app — two devices editing
-the same board converged by last-write-wins, silently discarding one
-side. Ports the verified To-Do v0.4 merge contract so both boards now
-converge deterministically instead of racing.
-
-### Kanban (v0.5)
-- DATA_VER 3 → 4 additive migration (load() AND sliceSet; missing
-  stamps = 0 = oldest → real remote data always wins).
-- Stamps: root om = column order; column om = card order within the
-  column; card mtime = content INCLUDING column placement —
-  cross-column drags touch the card, so moves win merges.
-- mergeKanbanStates: cards flattened globally by id, winner side
-  dictates placement (ties → lexicographic JSON, symmetric — lesson 1);
-  columns merge structurally (header edits never clobber card edits);
-  ordering by om with pickRef ties; unknown entities append.
-- Orphan rule: a card whose placement column died stays dead —
-  cascade tombstones on column delete, no hidden reattachment.
-- Delete-label touches every card that wore it (removal is real
-  content). Undo = stampAll() including ordering stamps. Duplicate =
-  fresh ids + now mtimes. Merge toast; filter popover + badge
-  re-synced in renderAll (lesson 2). Subtasks/info stay whole-card
-  LWW (per-field merge = backlog, same trade-off as To-Do).
-  
-  ## v0.11.0 — Kanban merge port + offline sync-loss fix (2026-09-09)
-
-**Why:** Two bugs, one root: (a) Kanban was the last merge-incapable
-app — concurrent edits converged LWW, silently discarding one side;
-(b) an entry made OFFLINE in a closed app was destroyed by the first
-online pull — the mergeless proxy applied the cloud blob wholesale
-over localStorage and the follow-up push uploaded the wipe.
-
-### Kanban (v0.5) — merge port
-- DATA_VER 3 → 4 additive migration (load() AND sliceSet; missing
-  stamps = 0 = oldest → real remote data always wins).
-- Stamps: root om = column order; column om = card order; card mtime
-  = content INCLUDING placement — cross-column drags touch the card,
-  so moves win merges. Symmetric tie-breaks everywhere (lesson 1).
-- Orphan rule: cascade tombstones on column delete; a card whose
-  placement column died stays dead — no hidden reattachment.
-- Delete-label touches every card that wore it. Undo = stampAll()
-  including ordering stamps. Merge toast; filter popover re-synced
-  in renderAll (lesson 2). Subtasks/info = whole-card LWW (backlog:
-  per-field merge).
-
-### sync (v0.8) — divergence guard (offline proxy wipe fix)
-- ROOT CAUSE (reported live): an offline edit in a CLOSED app was
-  destroyed by the first online pull — mergeless proxy applied the
-  remote blob over localStorage, then the follow-up push uploaded
-  the wipe. Why it went unnoticed: the global dirty flag existed,
-  but the apply path never consulted it.
-- Per-slice baselines (oros-sync-baselines): hash of last-synced
-  content per slice, recorded on every successful push and clean
-  apply. Missing baseline = clean (bootstrap; pre-v0.8 was LWW).
-- Guard: a mergeless slice with DIVERGED local (unpushed work)
-  never accepts a remote overwrite — remote parks in the carry
-  mailbox, local is flagged dirty and pushed as the new truth.
-  Unpushed local work is now structurally indestructible.
-- Parked remotes flush at live registration: mergeFn unions both
-  sides' work; mergeless slices apply parked data only onto an
-  empty local (restore case), otherwise drop (by construction
-  older than this device's last push).
-- collectPayload no longer drops carry entries for known slices.
-- "online" event listener: reconcile fires the moment connectivity
-  returns (was: interval/tab-visible only).
-- ACCEPTED LIMIT: two devices offline-editing the same CLOSED app
-  converge when one of them opens it live (merge needs app code);
-  nothing unpushed is ever destroyed — the losing side's work
-  re-emerges through the parked snapshot at the next live merge.
-- Under consideration (backlog): schema-aware generic union for
-  mergeless closed apps; zombie slice references after app-close
-  noted as accepted.
-  
-### sync v0.8.1 — divergence guard bootstrap fix
-- FAILURE (reported live): the v0.8 guard was BLIND for the exact
-  scenario it meant to fix. ROOT CAUSE: bootstrap "missing baseline
-  = clean" — the test device had an unpushed edit but no baseline,
-  so the guard read "clean" and allowed wholesale LWW. Why: baselines
-  accumulate from the FIRST sync, but the dirty flag existed only in
-  memory — apply never consulted it.
-- FIX: unpushed discriminator is now (dirty flag) OR (baseline
-  mismatch). Structural invariant: an armed dirty flag can NEVER
-  accept a remote overwrite — regardless of baseline state.
-- ACCEPTED: post-patch baseline refresh for previously blind slices
-  happens on first clean apply/push.
-- RECOVERY: the lost entry was never pushed; Dropbox holds the
-  pre-wipe state only if a backup-blob predates the wipe push
-  (MAX_BACKUPS=5) — recovery not possible for content that never
-  left the device. Accepted lesson: local rescue backups are the
-  lifeline for offline sessions.
-  
-  ## v0.12.0 — Appearance expansion + Auto-backup (2026-09-09)
-
-### Appearance
-- 6 new Linux skins (16 total, swatch grid re-flowed to 2×8):
-  Manjaro #35bf5c, openSUSE #73ba25, NixOS #5277c3, Gentoo #7d5ba6,
-  Pop!_OS #ff7043, Zorin #15a6a0 — full dark+light palettes each.
-- 5 new composite CSS wallpapers (15 total, grid now exactly 3 rows
-  of 5), each paired to a skin (suggestive, from-default only):
-  · Nebula → lumo (deep violet nebula)
-  · Nordic Aurora (id: borealis) → manjaro (green aurora glow)
-  · Hex Grid → arch (pseudo-crystal repeating-linear lattice)
-  · Obsidian Veil → tux (near-black with hidden purple veil)
-  · Retro Terrazzo → zorin (multi-color speckles on dark base)
-- New skin display names render correctly (Pop!_OS, openSUSE, NixOS).
-
-### Auto-backup (new — sync section, works offline & disconnected)
-- Setting: Off (default) / Daily / Weekly / Monthly. Travels in the
-  shell slice (autoexport field) like syncInterval — syncs across
-  devices, but snapshot storage itself is device-local.
-- Check happens at boot (+2s delay) and on every tab-visible event.
-  NO background timers.
-- On-change-only: full unencrypted DB compared (meta.exportedAt
-  stripped) against newest snapshot; unchanged content never
-  duplicates an entry.
-- Rolling window: last 5 snapshots in localStorage
-  ("oros-auto-snapshots"), FIFO, quota-safe (oldest dropped first).
-- "Restore last snapshot" button in sync section: replays newest
-  snapshot through orosSync.importData (guarded/merge-aware path),
-  confirm dialog first, result marked dirty → reaches cloud on next
-  push. Disabled (greyed) until a snapshot exists.
-- Off = zero footprint going forward; existing snapshots kept.
-
-### Internal
-- state.autoexport + AUTOEXPORT_PREF/AUTOEXPORT_LAST/SNAPSHOTS_KEY
-  ("oros-autoexport", "oros-autoexport-last", "oros-auto-snapshots").
-- initSyncIntegration hooks visibilitychange (visible) → maybeAutoExport.
-- i18n: +9 keys per language (sync.autoexport.*, sync.restore,
-  sync.restore.confirm, sync.ok.snapshot.saved/restored).
-
-### Under consideration (backlog, not implemented)
-- Dedicated history/rewind SVG icon for the Restore button
-  (currently EYE_OFF_SVG placeholder).
-- Snapshot compression (bodies can be large; 5× full DB in
-  localStorage is the practical ceiling).
-- sync.js v0.8.1 cleanup re-audit + zombie-slice-registry note
-  (deferred to a dedicated non-feature wave, per ritual).
-  
-  ## v0.12.1 — Snapshot status line + folder backups
-
-- Sync section now shows snapshot status: "{n}/5 · last: {date}".
-- Optional real-file backups via File System Access API (Chromium
-  desktop): "Backup folder" row with Choose/Stop. New snapshots are
-  mirrored as orOS-snapshot-YYYY-MM-DD.json in the chosen folder
-  (overwrite per day). Folder handle lives in IndexedDB ("oros-fs"),
-  per-device. Permission lapse on the auto path = silent skip; the
-  localStorage net is never dependent on the folder. Row is hidden
-  on browsers without the API (all mobile, Firefox, Safari).
-- Choosing a folder while Auto backup is Off prompts the user to
-  enable it first (folder writes mirror snapshots).
-  
-  ## v0.13.0 — New app: Notes (Wave 1)
-
-MANTRA (design contract for every orOS app):
-  Offline first · Mobile first · No external dependencies
-  Full project manual export · Full project automatic export
-  Full project snapshots · Full project auto-merge sync
-
-- Notes: plain-text hierarchical notebook (Zim-style tree).
-  Flat pages array + derived tree; per-page LWW merge with
-  tombstones (30-day pruning, delete beats tie), orphan cascade,
-  cycle guard. Debounced autosave (500ms) with idle/red/purple
-  indicator; flush on page-switch/tab-hide/unload. Device-local
-  prefs (expanded nodes, current page, pane width). Mobile:
-  tree overlay, long-press context menu (subpage/delete/move),
-  44px targets. Desktop: resizable split panes.
-- Under consideration (Wave 2): wiki-links [[Page]], backlinks,
-  search, drag-and-drop reorder, tags, txt/md export, context
-  menu with i18n labels.
-  
-  ## v0.13.1 — Notes: shell palette inheritance + sync bonding fix
-
-ARCHITECTURE REFERENCE (applies to EVERY orOS iframe-app):
-  - Theming contract: app CSS uses the SHELL variable vocabulary
-    (--bg/--panel-bg/--text/--text-dim/--accent/--accent-hover/
-    --accent-soft/--border/--shadow). At boot, inheritPalette()
-    reads the parent <html> computed styles (same-origin iframe)
-    and injects them inline; a MutationObserver on the parent's
-    data-skin/data-theme re-injects on every skin/theme switch.
-    App :root values are ONLY the oros-skin standalone fallback.
-    (Canonical implementation: todo.js section 12.)
-  - Sync bonding contract: orosSync lives on window.parent when
-    embedded — apps MUST resolve it as
-    (window.parent && window.parent.orosSync) || window.orosSync.
-    Asking window.orosSync directly silently disables slice
-    registration inside the shell (fixed in Notes this release).
-
-- Notes now follows the active skin + dark/light like Todo/Kanban.
-- Fixed: Notes slice never registered when opened inside orOS.
-
-v0.14.0 — Notes: Page labels (Wave 2, item 1)
-WHY: Feature parity with Todo/Kanban labels; the data layer is designed so
-Wave 2 item 4 (label aggregation panel) needs ZERO future migration.
-- state.labels = [{id,name,color,mtime,pos}] synced registry (8-color palette,
-  same swatches as Todo/Kanban)
-- page.labels = [labelId,...] — attach/detach via context menu → "Labels" picker
-  (toggle rows, inline create with swatches, delete with confirm)
-- Colored dots on tree rows with label-name tooltips
-- Merge: per-label LWW (mtime, tie → lexicographic JSON) + "lbl:"-prefixed
-  tombstones riding the SAME state.tombs map (delete wins ties, 30d prune);
-  dead-label refs pruned from pages deterministically on both devices
-- DATA_VER 1 → 2 (additive migration: empty labels registry)
-- RELEASE LESSON (from v0.13.1 debug): a feature is NOT shipped until the
-  version ritual (shell/sw/index/manifest) is complete — undeployed bundles
-  look exactly like broken code.
-NEXT (Wave 2): 2) exports (.txt page + notebook zip) · 3) wiki-links [[Page]] ·
-4) tags side-panel aggregation on top of this labels layer · 5) search
-
-v0.14.1 — Notes: label visibility + regression fixes
-WHY: v0.14.0 shipped a REWRITE instead of a patch and regressed three things;
-this release restores the v0.13.1 contracts surgically.
-- FIX: button icons (+ new page, hamburger show-tree) re-injected by JS —
-  the HTML ships the buttons empty (v0.14.0 rewrite dropped the injection)
-- FIX: i18n keys realigned with the HTML vocabulary (notes.app, notes.new.page,
-  notes.title.ph, notes.text.ph) — v0.14.0 renamed keys, raw keys leaked to UI
-- FIX: label styles were never reaching devices (stale SW cache, ?v unchanged)
-  → notes/index.html now bumps ?v with every app release, not just core
-- NEW: label chips in the editor header (visible tags, click → picker) +
-  toggleAttach now re-renders editor, not just the tree
-- LESSON (recorded, standing): never regenerate whole files when patching —
-  append surgical deltas to the file the user confirms works
-NEXT (Wave 2): 2) exports (.txt page + notebook zip) · 3) wiki-links [[Page]] ·
-4) tags aggregation panel (on this labels layer) · 5) search
+- v0.x — Core shell: GNOME top bar, fullscreen iframe apps, i18n,
+  skins/wallpapers (16/15), PWA install, 24h clock.
+- v0.1 — Offline-first SW + mobile-first CSS.
+- v0.2 — Dropbox sync: PKCE OAuth, AES-GCM blob, slices.
+  v0.2.1–2: menu/eye UX. v0.3: device vault + auto-sync engine.
+  v0.3.5: update broker INLINE in index.html (root fix).
+  v0.4: skins/wallpapers systems. v0.5: To-Do app + ?v= Action.
+  v0.6: persisted slices + carry-forward (closed-app data loss fix).
+  v0.7: Kanban app (waves 1–3: subtasks, labels, filters, reorder).
+  v0.9: To-Do Kanban-pattern port (labels, search, info).
+- v0.10.0 — MERGE ERA (verified live): mergeFn slice API,
+  sync-on-change debounce, To-Do v0.4 full merge.
+- v0.10.1 — Symmetric tie-breaks (5 patches), renderAll DOM re-sync,
+  reconcile-on-register, Lesson 4 (verify both devices first).
+- v0.11.0 — Kanban merge port (DATA_VER 4) + sync v0.8 divergence
+  guard (offline closed-app wipe fix) + v0.8.1 bootstrap fix
+  (unpushed = dirty OR baseline mismatch — armed dirty can NEVER
+  accept remote overwrite).
+- v0.12.0 — 6 new skins, 5 composite wallpapers, auto-backup
+  snapshots (rolling 5, localStorage, on-change-only, device-local).
+- v0.12.1 — Snapshot status line + FS Access folder backups
+  (Chromium desktop, permission-lapse aware).
+- v0.13.0 — NOTES app Wave 1: Zim-style tree, plain text, LWW merge,
+  tombs, debounce autosave, device-local prefs, mobile overlay.
+- v0.13.1 — Notes theming fix (palette vocabulary + inheritPalette)
+  + sync bonding fix (parent-window orosSync resolution).
+  ROOT CAUSE FOUND IN DEPLOY DEBUG: bundle was never deployed
+  (sw.js never bumped, notes/* absent from precache) — the release
+  ritual gap, not the code.
+- v0.14.0 — Notes labels (Wave 2 item 1): registry, attach/detach,
+  chips, dots, merge extension, DATA_VER 2. Regressed UI contracts
+  (see 0.14.1 WHY).
+- v0.14.1 — Regression fixes: button icon injection restored, i18n
+  keys realigned to HTML vocabulary, label styles reach devices
+  (?v= bumped), label chips in editor header. STANDING LESSON:
+  never regenerate whole files when patching.
