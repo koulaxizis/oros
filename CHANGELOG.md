@@ -552,3 +552,21 @@ ARCHITECTURE REFERENCE (applies to EVERY orOS iframe-app):
 
 - Notes now follows the active skin + dark/light like Todo/Kanban.
 - Fixed: Notes slice never registered when opened inside orOS.
+
+v0.14.0 — Notes: Page labels (Wave 2, item 1)
+WHY: Feature parity with Todo/Kanban labels; the data layer is designed so
+Wave 2 item 4 (label aggregation panel) needs ZERO future migration.
+- state.labels = [{id,name,color,mtime,pos}] synced registry (8-color palette,
+  same swatches as Todo/Kanban)
+- page.labels = [labelId,...] — attach/detach via context menu → "Labels" picker
+  (toggle rows, inline create with swatches, delete with confirm)
+- Colored dots on tree rows with label-name tooltips
+- Merge: per-label LWW (mtime, tie → lexicographic JSON) + "lbl:"-prefixed
+  tombstones riding the SAME state.tombs map (delete wins ties, 30d prune);
+  dead-label refs pruned from pages deterministically on both devices
+- DATA_VER 1 → 2 (additive migration: empty labels registry)
+- RELEASE LESSON (from v0.13.1 debug): a feature is NOT shipped until the
+  version ritual (shell/sw/index/manifest) is complete — undeployed bundles
+  look exactly like broken code.
+NEXT (Wave 2): 2) exports (.txt page + notebook zip) · 3) wiki-links [[Page]] ·
+4) tags side-panel aggregation on top of this labels layer · 5) search
