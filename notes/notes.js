@@ -1685,9 +1685,9 @@
       if (so && e.target === so) so.remove();
     });
     document.addEventListener("keydown", function (e) {
-      // Contract Β: shell-owned combos (Ctrl+Shift+*) get forwarded
+      // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) get forwarded
       // FIRST — apps keep only what the shell doesn't want.
-      if (e.ctrlKey && e.shiftKey &&
+      if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey &&
           window.parent && window.parent.orosShortcuts &&
           window.parent.orosShortcuts.handle(e)) return;
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {

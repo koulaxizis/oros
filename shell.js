@@ -1443,7 +1443,7 @@
     if (existing) { existing.remove(); return; }
 
     var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
-    var comboPrefix = mac ? "⌥⇧" : "Alt+Shift+";
+    var comboPrefix = mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+";
 
     var rows = "";
     SC_DEFS.forEach(function (def) {
@@ -1496,13 +1496,15 @@
   // is reachable — Contract Β). Returns true when the combo matched,
   // so apps know whether to keep the event for themselves.
   function handleShortcutEvent(e) {
-    // v0.18.1 — Alt+Shift combos: Ctrl+Shift+* is browser-native
-    // (print/private/devtools steal it before the page ever sees it).
-    if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return false;
-    var k = (e.key || "").toLowerCase();
-    if (!k || k.length !== 1) return false;
+    // v0.18.1b — Ctrl+Alt+Shift: no native conflicts anywhere.
+    // Match on e.code (PHYSICAL key) — e.key lies under the Greek
+    // layout (physical P arrives as "π"), e.code is "KeyP" always.
+    if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return false;
+    var code = e.code || "";
+    if (code.indexOf("Key") !== 0) return false;   // letters only
+    var letter = code.charAt(code.length - 1).toUpperCase();
     for (var i = 0; i < SC_DEFS.length; i++) {
-      if (SC_DEFS[i].key === k) {
+      if (SC_DEFS[i].key.toUpperCase() === letter) {
         if (e.preventDefault) e.preventDefault();
         SC_DEFS[i].fn();
         return true;
@@ -1904,7 +1906,7 @@
   
     // v0.18.0 — global shortcuts at the shell level
   document.addEventListener("keydown", function (e) {
-    if (e.altKey && e.shiftKey) window.orosShortcuts.handle(e);
+    if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) window.orosShortcuts.handle(e);
   });
 
   // Boot
