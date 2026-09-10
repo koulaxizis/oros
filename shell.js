@@ -1443,7 +1443,7 @@
     if (existing) { existing.remove(); return; }
 
     var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
-    var comboPrefix = mac ? "⌘⇧" : "Ctrl+Shift+";
+    var comboPrefix = mac ? "⌥⇧" : "Alt+Shift+";
 
     var rows = "";
     SC_DEFS.forEach(function (def) {
@@ -1460,7 +1460,7 @@
         '<div class="sc-head"><span class="sc-title">orOS</span>' +
           '<span class="sc-ver">v' + APP_VERSION + '</span></div>' +
         '<div class="sc-tagline">' + escapeHtml(window.t("sc.info.tagline")) + '</div>' +
-        '<div class="sc-cap">' + escapeHtml(window.t("menu.empty.hint")) + '</div>' +
+        '<div class="sc-cap">' + escapeHtml(window.t("sc.info.cap")) + '</div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-foot"><a href="https://github.com/koulaxizis/oros" ' +
@@ -1496,7 +1496,9 @@
   // is reachable — Contract Β). Returns true when the combo matched,
   // so apps know whether to keep the event for themselves.
   function handleShortcutEvent(e) {
-    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return false;
+    // v0.18.1 — Alt+Shift combos: Ctrl+Shift+* is browser-native
+    // (print/private/devtools steal it before the page ever sees it).
+    if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return false;
     var k = (e.key || "").toLowerCase();
     if (!k || k.length !== 1) return false;
     for (var i = 0; i < SC_DEFS.length; i++) {
@@ -1902,7 +1904,7 @@
   
     // v0.18.0 — global shortcuts at the shell level
   document.addEventListener("keydown", function (e) {
-    if (e.ctrlKey && e.shiftKey) window.orosShortcuts.handle(e);
+    if (e.altKey && e.shiftKey) window.orosShortcuts.handle(e);
   });
 
   // Boot

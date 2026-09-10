@@ -1729,7 +1729,7 @@
     // Contract Β: shell-owned combos (Ctrl+Shift+*) forward FIRST.
   // Standalone listener — does not touch existing keydown handling.
   document.addEventListener("keydown", function (e) {
-    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return;
+    if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return;
     var p = window.parent;
     if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
     if (window.parent.orosShortcuts.handle(e)) e.stopPropagation();

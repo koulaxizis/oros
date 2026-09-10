@@ -106,7 +106,8 @@ window.OROS_TRANSLATIONS = {
 "wx.prompt":   "City name:",
 "wx.notfound": "City not found",
 "wx.offline":  "Offline",
-"wx.waiting":  "waiting…"
+"wx.waiting":  "waiting…",
+"sc.info.cap": "Offline-first · Auto-merge sync · Snapshots · Local export · No cookies, no tracking."
   },
 
   el: {
@@ -208,7 +209,8 @@ window.OROS_TRANSLATIONS = {
 "wx.prompt":   "Όνομα πόλης:",
 "wx.notfound": "Δεν βρέθηκε η πόλη",
 "wx.offline":  "Εκτός σύνδεσης",
-"wx.waiting":  "σε αναμονή…"
+"wx.waiting":  "σε αναμονή…",
+"sc.info.cap": "Offline-first · Συγχρονισμός με αυτόματη συγχώνευση · Snapshots · Τοπική εξαγωγή · Χωρίς cookies, χωρίς tracking."
   }
 
 };
