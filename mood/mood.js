@@ -1,6 +1,5 @@
 // ============================================================
-// orOS Mood — App logic (v0.2.0) — Wave 1 + Wave 2 → 
-// orOS Mood — App logic (v0.3.0) — Waves 1–3 Boot: console.log("mood.js v0.2.0 boot"); → console.log("mood.js v0.3.0 boot");
+// orOS Mood — App logic (v0.3.0) — Waves 1–3 Boot: console.log("mood.js v0.3.0 boot"); → console.log("mood.js v0.3.0 boot");
 // Capturing how you feel must take seconds, not minutes.
 // Entries are additive-primary; edits are LWW by mtime; deletes
 // leave tombstones (merge-safe). Mood data is PERSONAL: it lives
@@ -943,6 +942,13 @@ function mergeMoodStates(A, B) {
       clearTimeout(lpTimer);
       if (lpFired) e.preventDefault();   // swallow the synthetic click
     });
+  }
+  
+    function buildCaptureKeepScroll() {
+    var mm = $("moodmain");
+    var st = mm ? mm.scrollTop : 0;
+    buildCapture();
+    if (mm) mm.scrollTop = st;
   }
 
   function openChipMenu(col, v, rect) {
