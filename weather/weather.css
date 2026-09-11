@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Weather — App stylesheet (v0.1.1)
+   orOS Weather — App stylesheet (v0.1.2)
    OS-pure: palette inherited at runtime from the parent shell
    (todo-pattern: PAL_VARS injection + MutationObserver). The
    :root block below is only the offline/standalone fallback
@@ -16,6 +16,9 @@
      X. [hidden] authority guard
    Icons: inline SVG only — no unicode glyphs (tofu-proof).
    Changelog:
+     v0.1.2 — AQI extended bands (moderate/poor/vpoor/epoor on the
+              European AQI zones), UV/AQI cells slightly smaller
+              (value + band word must fit one line), #no-data state.
      v0.1.1 — dialog: scrollbar-gutter stable + overflow-x hidden
               (horizontal scrollbar in My cities, forensic-diagnosed
               on #city-add-row); badge clip fix lives in #hourly
@@ -180,6 +183,21 @@ input, textarea, select {
   font-weight: 600;
 }
 
+/* No-data: a city EXISTS but no cached payload (first offline
+   open). Materialized by JS — calm, dim, no drama. */
+#no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0 0;
+  padding: 26px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+  text-align: center;
+}
+
 #empty {
   text-align: center;
   padding: 72px 20px;
@@ -261,16 +279,27 @@ input, textarea, select {
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 /* AQI semantic coloring — text color only, no icons/badges.
-   Thresholds set in JS (≤20 good, ≤40 fair) as data-level. */
-.meta-v[data-level="good"] { color: var(--ok); }
-.meta-v[data-level="fair"] { color: var(--warn); }
-.meta-v[data-level="bad"]  { color: var(--danger); }
+   European AQI zones (JS sets data-level from the value):
+   ≤20 good · ≤40 fair · ≤60 moderate · ≤80 poor · ≤100 vpoor ·
+   >100 epoor. Palette has TWO alarm hues (warn/danger) reused
+   across the six zones — no new colors enter the system. */
+.meta-v[data-level="good"]     { color: var(--ok); }
+.meta-v[data-level="fair"]     { color: var(--warn); }
+.meta-v[data-level="moderate"] { color: var(--warn); opacity: 0.9; }
+.meta-v[data-level="poor"]     { color: var(--danger); opacity: 0.85; }
+.meta-v[data-level="vpoor"]    { color: var(--danger); }
+.meta-v[data-level="epoor"]    { color: var(--danger); font-weight: 800; }
+.meta-v[data-level="bad"]      { color: var(--danger); }   /* legacy pre-0.3.0 caches */
 
-/* Sun cell: two timestamps — slightly smaller so both fit one line */
-#cur-sun { font-size: 13.5px; }
+/* Sun / UV / AQI cells: compound values ("12:03 → 18:45",
+   "6.2 · High", "34 · Fair") — smaller so one line always holds. */
+#cur-sun  { font-size: 13.5px; }
+#cur-uv,
+#cur-aqi  { font-size: 13px; }
 
 #cur-updated {
   text-align: center;
@@ -612,6 +641,8 @@ button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
   #cur-meta { gap: 6px; }          /* 6-cell grid breathes tighter on phones */
   .meta-cell { padding: 8px 4px; }
   #cur-sun { font-size: 12.5px; }
+  #cur-uv,
+  #cur-aqi { font-size: 12px; }
 }
 
 /* ---------- X. [hidden] must ALWAYS win ----------

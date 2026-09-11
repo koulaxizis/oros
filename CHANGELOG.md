@@ -867,3 +867,34 @@ When adding a new orOS app `foo/` (foo/index.html + foo.css + foo.js):
   keyboard navigable (↑/↓/Enter/Esc), offline = no suggestions.
   Shell menu: native prompt() replaced by a custom dialog (prompts
   can't host suggestions).
+  
+  ## v0.21.0 — Weather app v0.3.0 (audit fixes)
+
+Weather app: weather.js v0.3.0, weather.css v0.1.2.
+
+### Fixed
+- **Timezone-correct "now"**: the hourly slice start, feels/hum/UV
+  lookup, AQI hour index and the "Today" daily label are now derived
+  from the forecast response's `utc_offset_seconds` (city-local
+  wall clock) instead of the device clock. Distant cities (Tokyo vs
+  Serres) previously mis-sliced the strip by hours. `payload.tz`
+  stored in cache for render passes; legacy cache rows (no tz) fall
+  back to the device offset.
+- **Undo-delete toast**: native `confirm()` retired from city
+  deletion. Immediate delete + 5s undo toast. Undo resurrects with
+  the same id + fresh mtime (> tombstone — merge-safe resurrection).
+- NaN guards in fmtTemp/fmtSpeed (null hourly slots showed "NaN°").
+- pointercancel listener releases the swipe-tracking flag.
+
+### Added
+- UV cell shows WHO band word ("6.2 · High"); hover legend with the
+  full WHO scale (EN/EL).
+- AQI cell shows European AQI band word ("34 · Fair"); hover legend
+  explains the 0–100+ zones (NOT a percentage). Extended data-level
+  classes: good/fair/moderate/poor/vpoor/epoor (+ legacy "bad").
+- "No saved data" state when a city exists but the device cache has
+  no payload (first offline open).
+
+### Known traps observed
+- Multi-part delivery cut mid-function AGAIN (fmtSpeed). Searched
+  and joined before shipping.

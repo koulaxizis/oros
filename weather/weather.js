@@ -1,11 +1,16 @@
 // ============================================================
-// orOS Weather — App logic (v0.2.0)
+// orOS Weather — App logic (v0.3.0)
 // Provider: Open-Meteo (no key, no cookies). One forecast
 // request per refresh: current + hourly 48h + daily 7d,
 // timezone=auto. Feels-like/humidity/UV derive from the hourly
 // array at the current hour (current_weather carries neither).
 // Wave 2: units toggle (render-only), UV, sun times, AQI
 // (serial second request, optional), smart hints, city pager.
+// v0.3.0 — audit fixes: timezone-correct "now" (utc_offset_seconds
+// from the RESPONSE, not the device clock — Tokyo ≠ Serres),
+// undo-toast deletion (native confirm() retired), no-data state,
+// NaN guards, pointercancel cleanup, UV/AQI band words + legend
+// tooltips with extended data-levels (WHO UV / European AQI).
 // Sections:
 //   1. Constants, i18n, helpers, icons
 //   2. Data model + storage (cities, tombstones, cache)
@@ -56,11 +61,14 @@
       "dlg.input":     "City name…",
       "dlg.add":       "Add",
       "dlg.del":       "Delete city",
+      "dlg.del.done":  "Deleted",
+      "dlg.del.undo":  "Undo",
       "updated.at":    "Updated",
       "err.fetch":     "Could not fetch weather — check connection",
       "err.notfound":  "City not found",
       "err.exists":    "Already in the list",
       "err.gps":       "Location unavailable",
+      "err.nodata":    "No saved data for this city yet",
       "gps.use":       "Use my location",
       "now":           "Now",
       "hint.storm":    "Storms around — take cover",
@@ -70,7 +78,20 @@
       "hint.hot":      "Hot one — stay hydrated",
       "hint.cold":     "Freezing temperatures",
       "hint.swing":    "Layer up — big day-night swing",
-      "hint.mild":     "A pleasant day"
+      "hint.mild":     "A pleasant day",
+      "uv.low":        "Low",
+      "uv.mod":        "Moderate",
+      "uv.high":       "High",
+      "uv.vhigh":      "Very high",
+      "uv.ext":        "Extreme",
+      "uv.legend":     "WHO scale: 0–2 Low · 3–5 Moderate · 6–7 High · 8–10 Very high · 11+ Extreme",
+      "aqi.good":      "Good",
+      "aqi.fair":      "Fair",
+      "aqi.moderate":  "Moderate",
+      "aqi.poor":      "Poor",
+      "aqi.vpoor":     "Very poor",
+      "aqi.epoor":     "Extremely poor",
+      "aqi.legend":    "European AQI: ≤20 Good · ≤40 Fair · ≤60 Moderate · ≤80 Poor · ≤100 Very poor · >100 Extremely poor"
     },
     el: {
       "city.add.tip":  "Προσθήκη πόλης",
@@ -91,11 +112,14 @@
       "dlg.input":     "Όνομα πόλης…",
       "dlg.add":       "Προσθήκη",
       "dlg.del":       "Διαγραφή πόλης",
+      "dlg.del.done":  "Διαγράφηκε",
+      "dlg.del.undo":  "Αναίρεση",
       "updated.at":    "Ενημερώθηκε",
       "err.fetch":     "Δεν έγινε λήψη — έλεγξε τη σύνδεση",
       "err.notfound":  "Δεν βρέθηκε η πόλη",
       "err.exists":    "Υπάρχει ήδη στη λίστα",
       "err.gps":       "Η τοποθεσία δεν είναι διαθέσιμη",
+      "err.nodata":    "Δεν υπάρχουν αποθηκευμένα δεδομένα ακόμα",
       "gps.use":       "Χρήση τοποθεσίας",
       "now":           "Τώρα",
       "hint.storm":    "Καταιγίδες — απόφυγε την έκθεση",
@@ -105,7 +129,20 @@
       "hint.hot":      "Ζέστη — πίνε νερό",
       "hint.cold":     "Παγωμένες θερμοκρασίες",
       "hint.swing":    "Πάρε ζακέτα — μεγάλη διακύμανση",
-      "hint.mild":     "Ωραία μέρα"
+      "hint.mild":     "Ωραία μέρα",
+      "uv.low":        "Χαμηλό",
+      "uv.mod":        "Μέτριο",
+      "uv.high":       "Υψηλό",
+      "uv.vhigh":      "Πολύ υψηλό",
+      "uv.ext":        "Ακραίο",
+      "uv.legend":     "Κλίμακα WHO: 0–2 Χαμηλό · 3–5 Μέτριο · 6–7 Υψηλό · 8–10 Πολύ υψηλό · 11+ Ακραίο",
+      "aqi.good":      "Καλή",
+      "aqi.fair":      "Αρκετή",
+      "aqi.moderate":  "Μέτρια",
+      "aqi.poor":      "Κακή",
+      "aqi.vpoor":     "Πολύ κακή",
+      "aqi.epoor":     "Εξαιρετικά κακή",
+      "aqi.legend":    "Ευρωπαϊκός AQI: ≤20 Καλή · ≤40 Αρκετή · ≤60 Μέτρια · ≤80 Κακή · ≤100 Πολύ κακή · >100 Εξαιρετικά κακή"
     }
   };
 
@@ -124,8 +161,8 @@
     else if (c === 3)            { en = "Overcast";      el = "Συννεφιά"; }
     else if (c === 45 || c === 48) { en = "Fog";         el = "Ομίχλη"; }
     else if (c >= 51 && c <= 57) { en = "Drizzle";       el = "Ψιλή βροχή"; }
-    else if (c >= 58 && c <= 67) { en = "Rain";          el = "Βροχή"; }
-    else if (c >= 71 && c <= 77) { en = "Snow";          el = "Χιόνι"; }
+    else if (c >= 58 && c <= 67) { en = "Rain";         el = "Βροχή"; }
+    else if (c >= 71 && c <= 77) { en = "Snow";         el = "Χιόνι"; }
     else if (c >= 80 && c <= 82) { en = "Showers";       el = "Μπόρες"; }
     else if (c === 85 || c === 86) { en = "Snow showers"; el = "Χιονοπτώσεις"; }
     else if (c >= 95)            { en = "Thunderstorm"; el = "Καταιγίδα"; }
@@ -154,6 +191,31 @@
     if (dmax !== null && dmin !== null && (dmax - dmin) > 12) return t("hint.swing");
     return t("hint.mild");
   }
+
+  // WHO UV bands: 0–2 low · 3–5 moderate · 6–7 high · 8–10 very
+  // high · 11+ extreme. Measured in erythemal (skin-reddening)
+  // solar radiation — the number tells you HOW fast unprotected
+  // skin burns; the band word tells the user what to DO.
+  function uvBand(v) {
+    if (v <= 2)  return t("uv.low");
+    if (v <= 5)  return t("uv.mod");
+    if (v <= 7)  return t("uv.high");
+    if (v <= 10) return t("uv.vhigh");
+    return t("uv.ext");
+  }
+
+  // European AQI levels: 0–100+ (NOT a percentage — it CAN exceed
+  // 100 in extreme pollution). Composite index: the WORST of the
+  // pollutants (PM2.5, PM10, ozone, NO2, SO2) picks the zone.
+  function aqiLevel(v) {
+    if (v <= 20)  return "good";
+    if (v <= 40)  return "fair";
+    if (v <= 60)  return "moderate";
+    if (v <= 80)  return "poor";
+    if (v <= 100) return "vpoor";
+    return "epoor";
+  }
+  function aqiBand(v) { return t("aqi." + aqiLevel(v)); }
 
   // Same WMO SVG set as the shell chip — one visual language.
   var SA = 'width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"';
@@ -191,13 +253,27 @@
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function idOf(c) { return c.id; }
 
+  // "YYYY-MM-DDTHH:00" for NOW, expressed in the timezone given by
+  // offSec (seconds east of UTC). Open-Meteo (timezone=auto)
+  // returns hourly/daily/AQI times in the CITY's local wall clock —
+  // the DEVICE's own hour is wrong by hours for distant cities
+  // (Serres vs Tokyo sliced the old way at ±6 rows). Shift the
+  // epoch by the offset, read UTC fields: local-city "now".
+  function nowKeyAt(offSec) {
+    var d = new Date(Date.now() + offSec * 1000);
+    return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" +
+           pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + ":00";
+  }
+
   // Unit conversions — display ONLY. Cache + slice always stay
   // metric (portable); these decorate at render time.
   function fmtTemp(c) {
+    if (c === null || c === undefined || isNaN(Number(c))) return "—";
     return Math.round(state.units === "imperial"
       ? (c * 9 / 5 + 32) : c) + "°";
   }
-  function fmtSpeed(kmh) {
+    function fmtSpeed(kmh) {
+    if (kmh === null || kmh === undefined || isNaN(Number(kmh))) return "—";
     var v = state.units === "imperial" ? kmh * 0.621371 : kmh;
     return Math.round(v) + (state.units === "imperial" ? " mph" : " km/h");
   }
@@ -301,6 +377,8 @@
   //     unknown cities append at the end (older mtime first)
   //   · tombstones — union with max ts; deletion beats older
   //     edits, an edit newer than its tombstone resurrects.
+  //     (The undo-delete toast RELIES on this: the resurrected
+  //     city re-enters with same id + fresh mtime > tombstone.)
 
   function newerCity(a, b) {
     if ((a.mtime || 0) !== (b.mtime || 0)) {
@@ -458,16 +536,14 @@
     addCity({ lat: g.latitude, lon: g.longitude, label: g.name });
   }
 
-  // "YYYY-MM-DDTHH:00" key for slicing the hourly array at now
-  function hourKey(date) {
-    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" +
-           pad(date.getDate()) + "T" + pad(date.getHours()) + ":00";
-  }
-
   // European AQI (0..100+) — SEPARATE Open-Meteo endpoint, fired
   // SERIALLY after the forecast lands. Failure = null → the cell
   // shows a dim "—" — never blocks, never badges, never fakes.
-  function fetchAqi(lat, lon) {
+  // v0.3.0: nowKey comes IN (computed by the caller from the
+  // forecast response's utc_offset_seconds) — this endpoint also
+  // returns timezone=auto times, so the SAME city-local key aligns
+  // both arrays. The device clock is never consulted.
+  function fetchAqi(lat, lon, nowKey) {
     if (!navigator.onLine) return Promise.resolve(null);
     var url = "https://air-quality-api.open-meteo.com/v1/air-quality" +
       "?latitude=" + lat + "&longitude=" + lon +
@@ -479,7 +555,6 @@
       })
       .then(function (d) {
         if (!d || !d.hourly || !d.hourly.time) return null;
-        var nowKey = hourKey(new Date());
         var idx = 0;
         while (idx < d.hourly.time.length && d.hourly.time[idx] < nowKey) idx++;
         var v = d.hourly.european_aqi && d.hourly.european_aqi[idx];
@@ -491,6 +566,11 @@
   // One request: current + hourly + daily. Feels-like/humidity/UV are
   // taken from the hourly array AT the current hour (the
   // current_weather block carries neither). Writes the cache.
+  // v0.3.0 TIMEZONE FIX: Open-Meteo (timezone=auto) stamps every
+  // hourly/daily/AQI time in the CITY's local wall clock. "Now" is
+  // therefore computed from the RESPONSE's utc_offset_seconds
+  // (carried into payload.tz for render passes) — the device's own
+  // hour skews distant cities by hours and mis-sliced the strip.
   function fetchForecast(city) {
     if (!city || !navigator.onLine) return Promise.resolve(null);
     var url = "https://api.open-meteo.com/v1/forecast" +
@@ -510,18 +590,25 @@
       .then(function (d) {
         if (!d || !d.current_weather || !d.hourly || !d.daily) return null;
 
+        // city-local "now" key — from the response, never the device
+        var offSec = (typeof d.utc_offset_seconds === "number")
+          ? d.utc_offset_seconds
+          : -new Date().getTimezoneOffset() * 60;   // legacy fallback
+        var nowKey = nowKeyAt(offSec);
+
         var payload = {
           at: Date.now(),
+          tz: offSec,                             // render passes reuse it
           current: {
             temp:  d.current_weather.temperature,
             code:  d.current_weather.weathercode,
             wind:  d.current_weather.windspeed,   // km/h (API default)
             feels: null,
             hum:   null,
-            uv:    null                          // from hourly at the current hour
+            uv:    null                           // from hourly at the current hour
           },
-          sun: null,                              // {rise, set} ISO strings — today
-          aqi: null,                              // {at, val} — filled by fetchAqi
+          sun: null,                               // {rise, set} ISO strings — today
+          aqi: null,                               // {at, val} — filled by fetchAqi
           hourly: [],
           daily: []
         };
@@ -534,9 +621,8 @@
           };
         }
 
-        // hourly: slice from the current hour, 48 slots forward
+        // hourly: slice from the current hour (city-local), 48 slots
         var times = d.hourly.time || [];
-        var nowKey = hourKey(new Date());
         var start = 0;
         while (start < times.length && times[start] < nowKey) start++;
         for (var j = start; j < times.length && payload.hourly.length < 48; j++) {
@@ -578,9 +664,9 @@
           });
         });
 
-        // AQI rides AFTER the forecast — the shell keeps owning the
-        // weather truth; a dead AQI endpoint costs nothing visually.
-        return fetchAqi(city.lat, city.lon).then(function (aqiVal) {
+        // AQI rides AFTER the forecast, keyed on the SAME city-local
+        // now — a dead AQI endpoint costs nothing visually.
+        return fetchAqi(city.lat, city.lon, nowKey).then(function (aqiVal) {
           if (aqiVal !== null) payload.aqi = { at: Date.now(), val: aqiVal };
           writeCityCache(city.id, payload);
 
@@ -626,7 +712,7 @@
     return fetchForecast(city);
   }
   
-    // ---------- 4. Render ----------
+      // ---------- 4. Render ----------
   // Micro-scoped additions (kept out of STRINGS in 3a for size —
   // same table shape, safe to extend):
   STRINGS.en["today"] = "Today";
@@ -634,15 +720,21 @@
 
   function fmtHour(tIso) { return tIso.substring(11, 16); }
   function todayLabel() { return t("today"); }
-  function isToday(dateStr) {
-    var d = new Date();
-    return dateStr === (d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()));
+
+  // "Today" must be judged on the CITY's calendar, not ours: a
+  // Tokyo Tuesday is still Monday evening in Serres. The daily
+  // dates arrive in city-local terms (timezone=auto), so the
+  // comparison key is derived from the payload's stored offset.
+  function cityTodayStr(offSec) {
+    var d = new Date(Date.now() + offSec * 1000);
+    return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate());
   }
 
   // Lazy toast (index.html ships no toast node — the Weather app
   // rarely speaks; JS materializes one when needed, styled inline).
-  var toastEl = null, toastTimer = null;
-  function showToast(text) {
+  // v0.3.0: optional ACTION button (used by the undo-delete flow).
+  var toastEl = null, toastTimer = null, toastAction = null;
+  function showToast(text, actionLabel, actionFn) {
     if (!toastEl) {
       toastEl = document.createElement("div");
       toastEl.style.cssText =
@@ -650,18 +742,57 @@
         "z-index:1200;background:var(--panel-bg);border:1px solid var(--border);" +
         "border-radius:8px;box-shadow:0 4px 16px var(--shadow);padding:9px 14px;" +
         "font-size:13px;color:var(--text);opacity:0;transition:opacity .3s,transform .3s;" +
-        "pointer-events:none;max-width:calc(100vw - 32px);";
+        "max-width:calc(100vw - 32px);";
       document.body.appendChild(toastEl);
     }
-    toastEl.textContent = text;
+    if (toastAction) { toastAction.remove(); toastAction = null; }
+
+    if (actionLabel && typeof actionFn === "function") {
+      toastAction = document.createElement("button");
+      toastAction.type = "button";
+      toastAction.textContent = actionLabel;
+      toastAction.style.cssText =
+        "margin-left:10px;background:transparent;color:var(--accent);" +
+        "border:none;border-left:1px solid var(--border);padding:0 0 0 10px;" +
+        "font-size:13px;font-weight:700;cursor:pointer;";
+      toastAction.addEventListener("click", function () {
+        actionFn();
+        hideToast();
+      });
+      toastEl.appendChild(toastAction);
+    }
+
+    toastEl.appendChild(document.createTextNode(text));
     void toastEl.offsetWidth;
     toastEl.style.opacity = "1";
     toastEl.style.transform = "translateX(-50%) translateY(0)";
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () {
-      toastEl.style.opacity = "0";
-      toastEl.style.transform = "translateX(-50%) translateY(8px)";
-    }, 4000);
+    toastTimer = setTimeout(hideToast, 5000);
+  }
+  function hideToast() {
+    if (!toastEl) return;
+    toastEl.style.opacity = "0";
+    toastEl.style.transform = "translateX(-50%) translateY(8px)";
+    if (toastAction) { toastAction.remove(); toastAction = null; }
+    toastEl.textContent = "";
+  }
+
+  // No-data state (finding 4): city EXISTS but no cached payload
+  // (first-ever offline open, evicted cache). Materialized lazily,
+  // inserted right after the offline badge — index.html untouched.
+  function ensureNoData() {
+    var el = $("no-data");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "no-data";
+      el.hidden = true;
+      var s = document.createElement("span");
+      s.textContent = t("err.nodata");
+      el.appendChild(s);
+      var main = $("wxmain");
+      main.insertBefore(el, $("empty"));   // sits between badge & empty
+    }
+    return el;
   }
 
   var renderQueued = false;
@@ -692,6 +823,12 @@
     $("current").hidden = empty || !payload;
     var secs = document.querySelectorAll(".sec-title");
     for (var i = 0; i < secs.length; i++) secs[i].hidden = empty || !payload;
+
+    // no-data: city without a payload — distinct from "no city"
+    var nd = ensureNoData();
+    nd.hidden = empty || !!payload;
+    if (!empty) nd.firstChild.textContent = t("err.nodata");
+
     $("offline-badge").hidden = true;    // decided below, once
     return { city: city, payload: payload };
   }
@@ -747,22 +884,35 @@
     $("cur-wind").textContent  = fmtSpeed(p.current.wind);
 
     // --- second meta row: UV / Sun / AQI ---
-    $("cur-uv").textContent = (p.current.uv !== null)
-      ? p.current.uv.toFixed(1) : "—";
+    // UV: value + WHO band word; hover reveals the full legend —
+    // the number alone tells users nothing actionable.
+    var uvCell = $("cur-uv");
+    if (p.current.uv !== null && !isNaN(Number(p.current.uv))) {
+      uvCell.textContent = p.current.uv.toFixed(1) + " · " + uvBand(p.current.uv);
+      uvCell.title = t("uv.legend");
+    } else {
+      uvCell.textContent = "—";
+      uvCell.removeAttribute("title");
+    }
 
     if (p.sun && p.sun.rise && p.sun.set) {
       $("cur-sun").textContent =
         p.sun.rise.substring(11, 16) + " → " + p.sun.set.substring(11, 16);
     } else { $("cur-sun").textContent = "—"; }
 
+    // AQI: value + band word + level color + legend on hover.
+    // European AQI is 0–100+ (NOT a percentage) — the band word
+    // carries the meaning, the legend explains the scale.
     var aqiCell = $("cur-aqi");
-    if (p.aqi && typeof p.aqi.val === "number") {
-      aqiCell.textContent = String(Math.round(p.aqi.val));
-      aqiCell.setAttribute("data-level",
-        p.aqi.val <= 20 ? "good" : p.aqi.val <= 40 ? "fair" : "bad");
+    if (p.aqi && typeof p.aqi.val === "number" && !isNaN(p.aqi.val)) {
+      var lvl = aqiLevel(p.aqi.val);
+      aqiCell.textContent = String(Math.round(p.aqi.val)) + " · " + t("aqi." + lvl);
+      aqiCell.setAttribute("data-level", lvl);
+      aqiCell.title = t("aqi.legend");
     } else {
       aqiCell.textContent = "—";
       aqiCell.removeAttribute("data-level");
+      aqiCell.removeAttribute("title");
     }
     var up = new Date(p.at);
     $("cur-updated").textContent = t("updated.at") + " " +
@@ -812,6 +962,9 @@
     });
 
     // --- daily list ---
+    // "Today" judged on the CITY's calendar (payload tz).
+    var todayStr = cityTodayStr(typeof p.tz === "number" ? p.tz
+      : -new Date().getTimezoneOffset() * 60);   // legacy cache rows (no tz)
     var dl = $("daily");
     dl.innerHTML = "";
     var tMin = null, tMax = null;
@@ -825,7 +978,7 @@
 
       var day = document.createElement("span");
       day.className = "d-day";
-      if (isToday(d.date)) {
+      if (d.date === todayStr) {
         day.textContent = todayLabel();
       } else {
         var dd = new Date(d.date + "T12:00:00");
@@ -993,8 +1146,15 @@
       });
   }
 
+  // Delete — NO native confirm() (it breaks the visual language and
+  // is hostile in some mobile WebViews). The delete is immediate;
+  // an undo toast keeps the door open for 5 seconds. Undo
+  // resurrects the city with the SAME id and a FRESH mtime —
+  // merge-wise the resurrection legitimately beats the tombstone
+  // (an edit newer than its tombstone resurrects: by design).
   function deleteCity(id) {
-    if (!confirm(t("dlg.del") + "?")) return;
+    var city = cityById(id);
+    if (!city) return;
     state.cities = state.cities.filter(function (c) { return c.id !== id; });
     if (!state.deleted) state.deleted = {};
     state.deleted[id] = Date.now();              // tombstone — merge-safe
@@ -1009,9 +1169,25 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(m)); } catch (e) {}
     save();
     scheduleRender();
+    showToast(t("dlg.del.done") + " — " + city.label, t("dlg.del.undo"),
+      function () {
+        var back = cityById(id);
+        if (!back) {
+          back = city;                    // same object, same id
+          back.mtime = Date.now();        // fresh mtime > tombstone
+          back.pos = state.cities.length;
+          state.cities.push(back);
+          state.active = id;
+          state.om = Date.now();
+          state.sm = Date.now();
+          save();
+          scheduleRender();
+          refresh(true);                  // cache was purged — force
+        }
+      });
   }
-
-  // ---------- 5. Sync slice + palette ----------
+  
+    // ---------- 5. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
                   "--panel-bg", "--border", "--shadow"];
@@ -1228,6 +1404,8 @@
 
     // City swipe (pager): horizontal drag ≥45px on the main area
     // switches city — EXCEPT inside #hourly (its own scroll turf).
+    // v0.3.0: pointercancel releases the tracking flag (drag killed
+    // by a notification/scroll-interrupt left it dangling before).
     var sx = 0, sy = 0, tracking = false;
     $("wxmain").addEventListener("pointerdown", function (e) {
       if (e.target.closest("#hourly")) { tracking = false; return; }
@@ -1249,6 +1427,9 @@
       state.sm = Date.now();
       save();
       refresh(false);
+    });
+    $("wxmain").addEventListener("pointercancel", function () {
+      tracking = false;    // interrupted gesture — clean slate, no false swipes
     });
   }
 
@@ -1320,7 +1501,7 @@
   }
 
   // ---------- Boot ----------
-  console.log("weather.js v0.2.0 boot");
+  console.log("weather.js v0.3.0 boot");
   load();
   syncShellLocation();
   applyI18n();
