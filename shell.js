@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.21.1 — Shell logic
+// orOS Core v0.21.2 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.21.1";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.21.2";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -963,6 +963,27 @@
     scToast(kind, raw);
     renderMenu();
   }
+  
+    // setSyncMsgRaw τέλος ↑ — ο helper μπαίνει ΕΔΩ:
+
+  // v0.21.2 — three-way pull outcome: empty cloud → honest
+  // "nothing to pull yet"; identical states → calm "nothing new";
+  // real changes → the usual count. ONE truth for the menu pull
+  // button, the unlock flow and the shortcut.
+  function reportPullResult(result) {
+    if (result && result.empty) {
+      setSyncMsg("ok", "sync.ok.cloud.empty");
+      return 0;
+    }
+    var n = (result && typeof result.applied === "number") ? result.applied : 0;
+    if (n === 0) {
+      setSyncMsg("ok", "sync.ok.none");
+      return 0;
+    }
+    setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " + n + " " +
+      window.t("sync.slices.applied"));
+    return n;
+  }
 
   function renderSyncSection(host) {
     var section = document.createElement("div");
@@ -1063,12 +1084,7 @@
         // then push if this device had unsynced changes.
         window.orosSync.pull()
           .then(function (result) {
-            if (result.empty) {
-              setSyncMsg("ok", "sync.ok.empty");
-            } else {
-              setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
-                result.applied + " " + window.t("sync.slices.applied"));
-            }
+            reportPullResult(result);
             if (window.orosSync.isDirty()) {
               return window.orosSync.push()
                 .then(function () { setSyncMsg("ok", "sync.ok.push"); });
@@ -1091,9 +1107,7 @@
         setSyncDot("syncing");
         window.orosSync.pull()
           .then(function (result) {
-            if (result.empty) setSyncMsg("ok", "sync.ok.empty");
-            else setSyncMsgRaw("ok",
-              window.t("sync.ok.pull") + " — " + result.applied + " " + window.t("sync.slices.applied"));
+            reportPullResult(result);
             setSyncDot("synced", 4000);
           })
           .catch(handleSyncError);
@@ -1436,9 +1450,7 @@
     setSyncDot("syncing");
     window.orosSync.pull()
       .then(function (result) {
-        if (result.empty) setSyncMsg("ok", "sync.ok.empty");
-        else setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
-          result.applied + " " + window.t("sync.slices.applied"));
+        reportPullResult(result);
         setSyncDot("synced", 4000);
       })
       .catch(handleSyncError);
@@ -2184,8 +2196,9 @@
         if (window.orosSync.isDirty()) {
           return window.orosSync.push()
             .then(function () {
-              setSyncMsgRaw("ok", window.t("sync.ok.pull") + " (" + pulled + ") · " +
-                window.t("sync.ok.push"));
+              setSyncMsgRaw("ok", (pulled
+                  ? window.t("sync.ok.pull") + " (" + pulled + ") · "
+                  : "") + window.t("sync.ok.push"));
               setSyncDot("synced", 4000);
             });
         }
@@ -2193,7 +2206,7 @@
         if (pulled) {
           setSyncMsgRaw("ok", window.t("sync.ok.pull") + " (" + pulled + ")");
         } else {
-          setSyncMsg("ok", "sync.ok.empty");
+          setSyncMsg("ok", result && result.empty ? "sync.ok.cloud.empty" : "sync.ok.none");
         }
         setSyncDot("synced", 4000);
       })

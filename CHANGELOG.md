@@ -946,3 +946,18 @@ NEO:
 - Dead code removed: aqiBand() (unused — renderAll builds the band
   inline), STALE_MS (never referenced), "city.add.tip" i18n key
   (no consumer), fmtSpeed indentation.
+  
+  ## v0.21.2 — Sync messaging: honest pull outcomes
+
+### Fixed
+- "Nothing in the cloud yet" retired — it sounded alarming
+  ("did my data vanish?") and lied in two cases. Pull results now
+  report three ways, centralized in reportPullResult(): empty cloud
+  → "Cloud is empty — nothing to pull yet"; cloud identical to
+  local (applied=0) → "Nothing new to sync" (was previously shown
+  as a pull success or the scary empty message, depending on the
+  entry point); real changes → the usual "pulled — N slices".
+- Applied to all four pull entry points: unlock flow, menu pull
+  button, Ctrl+Alt+Shift+O shortcut, taskbar sync-dot click.
+- Translations: sync.ok.empty removed; sync.ok.cloud.empty and
+  sync.ok.none added (EN/EL).
