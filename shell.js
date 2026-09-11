@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.19.0 — Shell logic
+// orOS Core v0.19.1 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.19.0";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.19.1";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1659,7 +1659,14 @@
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
         if (state.running) { returnToDesktop(); return; }
-        document.getElementById("app-menu").classList.add("open");
+        // The chip IS the weather — open the app directly.
+        // Fallback to the menu only if the app isn't installed.
+        var wxApp = null;
+        for (var i = 0; i < state.apps.length; i++) {
+          if (state.apps[i].id === "weather") { wxApp = state.apps[i]; break; }
+        }
+        if (wxApp) openApp(wxApp);
+        else document.getElementById("app-menu").classList.add("open");
       });
       bar.insertBefore(chip, document.getElementById("btn-lang"));
     }
@@ -1715,6 +1722,20 @@
         }
       })
       .catch(function () { /* offline/blocked — chip keeps last state */ });
+  }
+  
+  // Menu/pull weather changes → straight into the RUNNING app.
+  // The app owns its data + merge stamps; we only knock.
+  function wxPushToApp() {
+    var w = wxRead();
+    if (!w.on || w.lat === null) return;
+    var f = document.getElementById("app-frame");
+    try {
+      if (f && f.contentWindow &&
+          typeof f.contentWindow.__orosWeatherUpdate === "function") {
+        f.contentWindow.__orosWeatherUpdate(w);
+      }
+    } catch (e) { /* app not running/loaded — tray keeps it */ }
   }
 
   function wxGeocodeCity(name) {

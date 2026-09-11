@@ -169,6 +169,8 @@
     return data;
   }
 
+  var freshInstall = false;   // set only on the first-ever run
+
   function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -177,6 +179,7 @@
         if (data) { state = data; return; }
       }
     } catch (e) { /* corrupted → fresh */ }
+    freshInstall = true;
     state = defaultState();
     save();
   }
@@ -331,7 +334,13 @@
       "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
       "&timezone=auto&forecast_days=7";
     return fetch(url)
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) {   // silent 4xx was undiagnosable — speak up
+          console.warn("weather fetch HTTP " + r.status + " " + url);
+          throw new Error("http " + r.status);
+        }
+        return r.json();
+      })
       .then(function (d) {
         if (!d || !d.current_weather || !d.hourly || !d.daily) return null;
 
@@ -479,12 +488,10 @@
     var ctx = renderTop(payload);
     var city = ctx.city, p = ctx.payload;
 
-    // offline / stale badge — never fake-fresh numbers
-    $("offline-badge").hidden = true;
-    if (city && p && p.at) {
-      var stale = (Date.now() - p.at) > STALE_MS;
-      if (!navigator.onLine || stale) $("offline-badge").hidden = false;
-    }
+    // Offline badge: NETWORK state ONLY. Staleness is already
+    // communicated honestly by the "Updated HH:MM" line — an old
+    // cache while ONLINE is not "offline".
+    $("offline-badge").hidden = navigator.onLine;
     if (!city || !p) return;
 
     // --- current ---
@@ -841,9 +848,15 @@
 
   function refresh(force) {
     var btn = $("refresh-btn");
+    var hadCity = !!activeCity();
     btn.classList.add("loading");
     maybeFetch(force)
-      .then(function () { scheduleRender(); })
+      .then(function (res) {
+        // Silent failures were invisible — a dead fetch looked
+        // like "offline". Now it SPEAKS (online + no result).
+        if (!res && hadCity && navigator.onLine) showToast(t("err.fetch"));
+        scheduleRender();
+      })
       .catch(function () { /* fetchForecast never throws */ })
       .finally(function () { btn.classList.remove("loading"); });
   }
@@ -865,9 +878,57 @@
       if (!document.hidden) refresh(false);
     });
   }
+  
+    // Shell→app bridge: the menu's weather settings push location
+  // changes straight into the RUNNING app. Upsert by coords, set
+  // active, stamp (stamps stay owned by this app), refresh.
+  window.__orosWeatherUpdate = function (w) {
+    if (!w || w.lat === null || w.lon === null) return;
+    var dup = null;
+    state.cities.forEach(function (c) {
+      if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) dup = c;
+    });
+    if (dup) {
+      if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
+      if (state.active !== dup.id) { state.active = dup.id; state.sm = Date.now(); }
+    } else {
+      var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
+                         w.lat, w.lon);
+      c.pos = state.cities.length;
+      state.cities.push(c);
+      state.active = c.id;
+      state.om = Date.now();
+      state.sm = Date.now();
+    }
+    save();
+    scheduleRender();
+    refresh(true);        // a location change deserves fresh data
+  };
+
+  // First-run adoption (app-was-never-open case): if the shell menu
+  // already has a location and this app never stored cities, adopt
+  // it as the first city. Guarded by freshInstall so a user who
+  // deliberately deleted every city isn't fought on reopen.
+  function adoptShellLocation() {
+    if (!freshInstall || state.cities.length > 0) return;
+    try {
+      var w = JSON.parse(localStorage.getItem("oros-weather"));
+      if (w && w.on && typeof w.lat === "number" && typeof w.lon === "number") {
+        var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
+                           w.lat, w.lon);
+        c.pos = 0;
+        state.cities.push(c);
+        state.active = c.id;
+        state.om = Date.now();
+        state.sm = Date.now();
+        save();
+      }
+    } catch (e) {}
+  }
 
   // ---------- Boot ----------
   load();
+  adoptShellLocation();
   applyI18n();
   paintStaticAria();
   wire();
