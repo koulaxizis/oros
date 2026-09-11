@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Weather — App stylesheet (v0.1.0)
+   orOS Weather — App stylesheet (v0.1.1)
    OS-pure: palette inherited at runtime from the parent shell
    (todo-pattern: PAL_VARS injection + MutationObserver). The
    :root block below is only the offline/standalone fallback
@@ -13,7 +13,13 @@
      6. Daily list
      7. City dialog
      8. Mobile-first
+     X. [hidden] authority guard
    Icons: inline SVG only — no unicode glyphs (tofu-proof).
+   Changelog:
+     v0.1.1 — dialog: scrollbar-gutter stable + overflow-x hidden
+              (horizontal scrollbar in My cities, forensic-diagnosed
+              on #city-add-row); badge clip fix lives in #hourly
+              padding (14px top for the .h-now badge).
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -237,7 +243,9 @@ input, textarea, select {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
   gap: 6px;
-  padding: 2px 2px 10px;
+  padding: 14px 2px 10px;   /* 14px top: the .h-now badge (-9px above
+                               the cell) must live INSIDE the scroll
+                               container or it gets clipped */
   -webkit-overflow-scrolling: touch;
 }
 #hourly::-webkit-scrollbar { height: 6px; }
@@ -388,6 +396,11 @@ dialog {
   width: min(380px, calc(100vw - 32px));
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
+  overflow-x: hidden;          /* nothing legitimately scrolls sideways
+                                  in this dialog — safety net */
+  scrollbar-gutter: stable;    /* reserve the vertical scrollbar lane —
+                                  growing city lists never squeeze the
+                                  width back into overflow */
 }
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.5);
@@ -444,14 +457,17 @@ dialog::backdrop {
 
 #city-add-row {
   display: flex;
-  flex-wrap: wrap;       /* narrow dialog: input row wraps, never overflows */
+  flex-wrap: wrap;       /* ALWAYS wraps when tight — the forensic fix
+                            for the horizontal scrollbar (measured:
+                            row 380px vs container 342px, culprit was
+                            the input's intrinsic flex minimum) */
   gap: 8px;
   margin-top: 12px;
 }
 #city-input {
   flex: 1;
-  min-width: 0;         /* kill the intrinsic ~170px minimum — the #1
-                           cause of the dialog's horizontal scrollbar */
+  min-width: 0;          /* kill the intrinsic ~170px minimum — the #1
+                            cause of the dialog's horizontal scrollbar */
   min-height: 38px;
   padding: 8px 10px;
   font-size: 13.5px;
