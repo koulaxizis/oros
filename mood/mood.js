@@ -162,6 +162,7 @@
   var PERSON_SEED = [
     { en: "Alone",     el: "Μόνος" },
     { en: "Partner",   el: "Σύντροφος" },
+    { en: "Kids",      el: "Παιδιά" },
     { en: "Family",    el: "Οικογένεια" },
     { en: "Friends",   el: "Φίλοι" },
     { en: "Colleagues", el: "Συνάδελφοι" }
@@ -520,6 +521,8 @@
 
   function buildCapture() {
     var host = $("capture");
+    var prevNote = $("fld-note") ? $("fld-note").value : "";   // read BEFORE clear
+    var prevTrig = $("fld-trigger") ? $("fld-trigger").value : "";
     host.innerHTML = "";
 
     // ---- L1: emotion grid ----
@@ -600,6 +603,8 @@
     h2.textContent = t("l2.title");
     host.appendChild(h2);
 
+    var l2cols = document.createElement("div");
+    l2cols.className = "l2cols";
     ["loc", "person"].forEach(function (col) {
       var wrap = document.createElement("div");
       wrap.className = "colwrap";
@@ -655,8 +660,9 @@
       });
       addRow.appendChild(addIn); addRow.appendChild(addBtn);
       wrap.appendChild(addRow);
-      host.appendChild(wrap);
+      l2cols.appendChild(wrap);
     });
+    host.appendChild(l2cols);
 
     // ---- L3: yes/no toggles ----
     [["water", "l3.water", function (v) { flagWater = v; }, flagWater],
@@ -685,14 +691,14 @@
     note.id = "fld-note";
     note.rows = 2;
     note.maxLength = 2000;
-    note.value = $("fld-note") ? $("fld-note").value : "";   // survive rebuilds
+    note.value = prevNote;
     host.appendChild(note);
     var trig = document.createElement("input");
     trig.type = "text";
     trig.id = "fld-trigger";
     trig.maxLength = 200;
     trig.placeholder = t("l4.trigger");
-    trig.value = $("fld-trigger") ? $("fld-trigger").value : "";
+    trig.value = prevTrig;
     host.appendChild(trig);
 
     // ---- actions ----
@@ -762,7 +768,13 @@
     };
     g.appendChild(mk(t("recent.edit"), "prim", function () {
       editing = last.id;
-      loadEntryIntoCapture(last);      // prefill from the recent entry
+      loadEntryIntoCapture(last);
+      // BUG FIX: fields weren't prefilled — "Edit" overwrote the old
+      // reflection with the empty DOM. Merge BOTH reflections.
+      var vn = [last.note || "", $("fld-note").value.trim()].filter(Boolean);
+      var vt = [last.trigger || "", $("fld-trigger").value.trim()].filter(Boolean);
+      $("fld-note").value = vn.join("\n");
+      $("fld-trigger").value = vt.join(" · ");
       commitEntry(emos);
     }));
     g.appendChild(mk(t("recent.new"), "ghost", function () {
@@ -816,7 +828,8 @@
     buildCapture();
     $("fld-note").value = e.note || "";
     $("fld-trigger").value = e.trigger || "";
-    window.scrollTo(0, 0);
+    var mm = $("moodmain");
+    if (mm) mm.scrollTop = 0; else window.scrollTo(0, 0);
   }
 
   // Delete — immediate + undo toast (same id, fresh mtime beats

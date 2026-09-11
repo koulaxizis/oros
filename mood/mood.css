@@ -500,5 +500,25 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
   #moodmain { max-width: 560px; margin: 0 auto; width: 100%; }
 }
 
+/* ---------- Scrollbars (skin-following, PWA-style) ---------- */
+#moodmain::-webkit-scrollbar { width: 10px; height: 10px; }
+#moodmain::-webkit-scrollbar-track { background: transparent; }
+#moodmain::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+#moodmain::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+#moodmain { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* Privacy dialog: explicit centering (UA auto-margin δεν είναι εγγυημένο παντού) */
+#privacy-dlg { margin: auto; }
+
+/* L2 columns: spread on wide screens, stack on narrow (PWA-style) */
+@media (min-width: 700px) {
+  .l2cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  #moodmain { max-width: 760px; }
+}
+
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
