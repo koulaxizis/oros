@@ -350,6 +350,52 @@ button.ghost {
 }
 button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 
+/* ---------- Factory reset ---------- */
+.rst-link {
+  display: block;
+  margin: 28px auto 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+}
+.rst-link:hover {
+  color: #e06c75;
+  border-color: #e06c75;
+}
+.rst-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 18px;
+  width: min(340px, calc(100vw - 32px));
+  margin: auto;
+}
+.rst-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+.rst-dlg h3 {
+  font-size: 15px;
+  color: #e06c75;
+  margin-bottom: 10px;
+}
+.rst-dlg p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+}
+.rst-dlg button { margin: 0 4px; }
+button.prim.danger {
+  background: rgba(224, 108, 117, 0.12);
+  color: #e06c75;
+  border-color: #e06c75;
+}
+button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
+
 /* ---------- 6. Recent + empty + guard ---------- */
 #recent ul {
   list-style: none;
@@ -533,11 +579,37 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 }
 
 /* ---------- 9. Insights ---------- */
+.ins-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
 .ins-ranges {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 6px;
+  flex: 1;
 }
+
+/* Wave 3: filter panel + comparison deltas */
+.fpanel {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.fpanel .col-lab { margin-top: 10px; }
+.fpanel .col-lab:first-child { margin-top: 0; }
+.fpanel .chips { margin-bottom: 4px; }
+.fline { margin: 0 2px 12px; }
+.dist-delta {
+  font-weight: 700;
+  margin-left: 4px;
+}
+.dist-delta.up   { color: #87cf3e; }
+.dist-delta.down { color: #e06c75; }
 
 .dist-row {
   display: flex;
