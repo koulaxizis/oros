@@ -473,6 +473,31 @@ button.primary {
 }
 button.primary:hover { filter: brightness(1.1); }
 
+/* Secondary button (GPS) — same geometry as .primary, ghosted */
+button.btn-secondary {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 14px;
+  min-height: 38px;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+button.btn-secondary:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Narrow screens: the GPS label shrinks to an icon-sized button */
+@media (max-width: 480px) {
+  #city-add-row { flex-wrap: wrap; }
+  #city-input { flex-basis: 100%; }   /* input takes the full row first */
+}
+
 .hint {
   font-size: 11.5px;
   color: var(--text-dim);

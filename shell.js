@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.19.4";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.19.5";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1700,10 +1700,46 @@
       state.lang === "el" ? "el-GR" : "en-GB",
       { hour: "2-digit", minute: "2-digit" });
   }
+  
+    // One truth, two consumers: if the Weather app holds NEWER data
+  // for this location than we do, adopt it — the tray and the app
+  // must never show different numbers for the same place.
+  function wxAdoptAppCache(w) {
+    try {
+      var data  = JSON.parse(localStorage.getItem("oros-weatherapp-data"));
+      var cache = JSON.parse(localStorage.getItem("oros-weatherapp-cache"));
+      if (!data || !Array.isArray(data.cities) || !cache) return false;
+      var city = null;
+      for (var i = 0; i < data.cities.length; i++) {
+        var c = data.cities[i];
+        if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) { city = c; break; }
+      }
+      if (!city) return false;
+      var p = cache[city.id];
+      if (!p || !p.at || !p.current) return false;
+      var cur = wxCached();
+      if (cur && cur.at >= p.at) return false;   // we already have newer/equal
+      localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
+        at:   p.at,
+        temp: p.current.temp,
+        code: p.current.code
+      }));
+      return true;
+    } catch (e) { return false; }
+  }
 
   function wxFetch(force) {
     var w = wxRead();
     if (!w.on || w.lat === null || w.lon === null || !navigator.onLine) return;
+
+    // Adopt the app's fresher data first — then decide if OUR OWN
+    // network fetch is still needed (app data older than 30 min).
+    if (wxAdoptAppCache(w)) {
+      wxRenderChip();
+      var adopted = wxCached();
+      if (adopted && (Date.now() - adopted.at) < WX_MIN_MS) return;
+    }
+
     if (!force) {
       var last = parseInt(localStorage.getItem(WX_LAST_KEY) || "0", 10) || 0;
       if (Date.now() - last < WX_MIN_MS) return;

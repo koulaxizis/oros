@@ -405,6 +405,22 @@
         });
 
         writeCityCache(city.id, payload);
+
+        // Mirror into the shell tray cache when this city IS the
+        // shell's location — one fetch, two consumers, same numbers.
+        try {
+          var sh = JSON.parse(localStorage.getItem("oros-weather"));
+          if (sh && typeof sh.lat === "number" &&
+              Math.abs(sh.lat - city.lat) < 0.02 &&
+              Math.abs(sh.lon - city.lon) < 0.02) {
+            localStorage.setItem("oros-wx-cache", JSON.stringify({
+              at:   payload.at,
+              temp: payload.current.temp,
+              code: payload.current.code
+            }));
+          }
+        } catch (e) {}
+
         return payload;
       })
       .then(function (payload) {
