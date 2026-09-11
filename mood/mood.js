@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mood — App logic (v0.1.0) — Wave 1
+// orOS Mood — App logic (v0.2.0) — Wave 1 + Wave 2
 // Capturing how you feel must take seconds, not minutes.
 // Entries are additive-primary; edits are LWW by mtime; deletes
 // leave tombstones (merge-safe). Mood data is PERSONAL: it lives
@@ -10,12 +10,17 @@
 //   1. Constants, i18n, emotion vocabulary, icons, helpers
 //   2. Data model + storage (entries, columns, tombstones)
 //   2b. Merge engine (todo-contract, compact)
-//   3. Capture flow (L1–L4) + recent list
+//   3. Capture flow (L1–L4) + chip menu (rename/delete)
+//   3b. Insights view (distributions, calendar, streak,
+//       habits, breakdowns — ALL render-time derived)
 //   4. Sync slice + palette
 //   5. Wiring & boot
 // Data:
 //   slice "oros-mood-data" → travels (entries + custom columns)
 //   "oros-mood-seen"        → device-local privacy-notice flag
+//   DATA_VER 2: water/food/meds are TRIADIC null|"yes"|"no"
+//   (Wave 1 booleans migrate: true→"yes", false→null — the old
+//   unchecked state was never a conscious "no").
 // Time-of-day derives from the entry timestamp — no UI for it.
 // Day boundaries derive from the LOCAL calendar (render-side).
 // ============================================================
@@ -24,7 +29,7 @@
 
   var STORAGE_KEY = "oros-mood-data";
   var SEEN_KEY    = "oros-mood-seen";
-  var DATA_VER    = 1;
+  var DATA_VER    = 2;
 
   // ---------- 1. Constants, i18n, icons ----------
   var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
@@ -44,9 +49,13 @@
       "l2.none":       "None",
       "l2.add":        "Add…",
       "l2.add.ph":     "New value…",
-      "l3.water":      "Drank water",
-      "l3.food":      "Eaten",
-      "l3.meds":       "Took medication",
+      "ins.basics":    "The basics",
+      "wat.yes":       "Drank enough water",
+      "wat.no":        "Not enough water",
+      "food.yes":      "Eaten",
+      "food.no":       "Hungry",
+      "meds.yes":      "Took medication",
+      "meds.no":       "Skipped medication",
       "l4.note":       "Reflection (optional)",
       "l4.trigger":    "What triggered this? (optional)",
       "save":          "Save entry",
@@ -56,16 +65,43 @@
       "recent.del":    "Delete entry",
       "del.done":      "Deleted",
       "del.undo":      "Undo",
-      "tod.morning":  "Morning",
-      "tod.afternoon":"Afternoon",
-      "tod.evening":  "Evening",
-      "tod.night":    "Night",
-      "empty.title":  "No entries yet",
-      "empty.hint":   "Pick how you feel above and save — takes seconds.",
+      "tod.morning":   "Morning",
+      "tod.afternoon": "Afternoon",
+      "tod.evening":   "Evening",
+      "tod.night":     "Night",
+      "empty.title":   "No entries yet",
+      "empty.hint":    "Pick how you feel above and save — takes seconds.",
       "must.feel":     "Pick at least one feeling to save",
-      "recent.q":     "Logged {time} ago — update it?",
-      "recent.keep":  "Keep",
-      "recent.new":   "New entry"
+      "recent.q":      "Logged {time} ago — update it?",
+      "recent.keep":   "Keep",
+      "recent.new":    "New entry",
+      "col.menu.rename": "Rename",
+      "col.menu.del":    "Delete",
+      "col.dup":         "That value already exists",
+      "col.renamed":     "Renamed",
+      "col.del.done":    "Deleted",
+      "col.del.undo":    "Undo",
+      "insights":        "Insights",
+      "capture":         "Capture",
+      "ins.r7":          "7 days",
+      "ins.r30":         "30 days",
+      "ins.rall":        "All",
+      "ins.empty":       "No entries yet — your stats will appear with your first check-in.",
+      "ins.dist.title":  "How you felt",
+      "ins.avg":         "avg {n}",
+      "ins.habits.title":"Habits",
+      "ins.hab.days":    "{y} of {n} logged days",
+      "ins.streak.val":  "{n} days in a row",
+      "ins.logged":      "Logged days: {n}",
+      "ins.cal.title":   "Calendar",
+      "ins.cal.prev":    "Previous month",
+      "ins.cal.next":    "Next month",
+      "ins.cal.today":   "Today",
+      "ins.day.entries": "Entries",
+      "ins.loc.title":   "Locations",
+      "ins.per.title":   "People",
+      "ins.ctx.none":    "Nothing logged in this range.",
+      "ins.top":         "mostly {e}"
     },
     el: {
       "app.title":     "Διάθεση",
@@ -81,9 +117,13 @@
       "l2.none":       "Κανένα",
       "l2.add":        "Προσθήκη…",
       "l2.add.ph":     "Νέα τιμή…",
-      "l3.water":      "Ήπια νερό",
-      "l3.food":       "Έφαγα",
-      "l3.meds":       "Πήρα φάρμακο",
+      "ins.basics":    "Τα βασικά",
+      "wat.yes":       "Ήπια αρκετό νερό",
+      "wat.no":        "Δεν ήπια αρκετό νερό",
+      "food.yes":      "Φαγωμένος",
+      "food.no":       "Νηστικός",
+      "meds.yes":      "Πήρα φάρμακα",
+      "meds.no":       "Δεν πήρα φάρμακα",
       "l4.note":       "Σκέψη (προαιρετικό)",
       "l4.trigger":    "Τι το προκάλεσε; (προαιρετικό)",
       "save":          "Αποθήκευση",
@@ -102,13 +142,36 @@
       "must.feel":     "Διάλεξε τουλάχιστον ένα συναίσθημα για αποθήκευση",
       "recent.q":      "Καταχωρήθηκε πριν {time} — να ενημερωθεί;",
       "recent.keep":   "Κράτα την",
-      "recent.new":    "Νέα καταχώρηση"
+      "recent.new":    "Νέα καταχώρηση",
+      "col.menu.rename": "Μετονομασία",
+      "col.menu.del":    "Διαγραφή",
+      "col.dup":         "Υπάρχει ήδη αυτή η τιμή",
+      "col.renamed":     "Μετονομάστηκε",
+      "col.del.done":    "Διαγράφηκε",
+      "col.del.undo":    "Αναίρεση",
+      "insights":        "Στατιστικά",
+      "capture":         "Καταγραφή",
+      "ins.r7":          "7 ημέρες",
+      "ins.r30":         "30 ημέρες",
+      "ins.rall":        "Όλα",
+      "ins.empty":       "Καμία καταχώρηση ακόμα — τα στατιστικά θα εμφανιστούν με την πρώτη καταγραφή.",
+      "ins.dist.title":  "Πώς ένιωθες",
+      "ins.avg":         "μέσο {n}",
+      "ins.habits.title":"Συνήθειες",
+      "ins.hab.days":    "{y} από {n} ημέρες με καταγραφή",
+      "ins.streak.val":  "{n} συνεχόμενες ημέρες",
+      "ins.logged":      "Ημέρες με καταγραφή: {n}",
+      "ins.cal.title":   "Ημερολόγιο",
+      "ins.cal.prev":    "Προηγούμενος μήνας",
+      "ins.cal.next":    "Επόμενος μήνας",
+      "ins.cal.today":   "Σήμερα",
+      "ins.day.entries": "Καταχωρήσεις",
+      "ins.loc.title":   "Τοποθεσίες",
+      "ins.per.title":   "Άνθρωποι",
+      "ins.ctx.none":    "Τίποτα καταγεγραμμένο σε αυτό το εύρος.",
+      "ins.top":         "κυρίως {e}"
     }
   };
-  // NOTE (self-check before delivery): the el key "privacy.title"
-  // contains a stray non-Greek character sequence — MUST read
-  // "Ιδιωτικό εκ σχεδίασης". Fixed in Part 5's final assembly;
-  // trap-check item #3 covers it.
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -117,9 +180,7 @@
   }
 
   // Fixed emotion vocabulary — 9, immutable (statistics need a
-  // stable dictionary). Colors are SYSTEM hues only (weather.css
-  // families: ok/warn/danger/dim/accent + skin hues) — zero new
-  // palette members.
+  // stable dictionary). Colors are SYSTEM hues only.
   var EMOTIONS = [
     { k: "happy",    i18n: "emo.happy",    col: "#87cf3e" },
     { k: "calm",     i18n: "emo.calm",     col: "#51a2da" },
@@ -150,6 +211,14 @@
   STRINGS.el["emo.stressed"] = "Πιεσμένος";
   STRINGS.el["emo.numb"]     = "Άδειος";
 
+  // Triadic habits — shared by the capture L3 AND the insights
+  // adherence view (one vocabulary, two consumers).
+  var HABITS = [
+    { f: "water", yes: "wat.yes",  no: "wat.no"  },
+    { f: "food",  yes: "food.yes", no: "food.no" },
+    { f: "meds",  yes: "meds.yes", no: "meds.no" }
+  ];
+
   // Seed values for the two custom columns (editable, deletable —
   // they live in STATE once seeded, not in this constant).
   var LOC_SEED = [
@@ -175,10 +244,9 @@
     return null;
   }
 
-  // Emotion face SVGs — one geometric family, no per-emotion
-  // illustration sprawl: circle face + mouth + eyes variations.
-  // strokeWidth kept uniform; color comes from .mood-face styles
-  // (currentColor) — the TILE carries the hue, not the glyph.
+  // Emotion face SVGs — one geometric family: circle face +
+  // mouth + eyes variations. Color via currentColor (the TILE
+  // carries the hue, not the glyph).
   var FA = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   var FACE_HAPPY   = '<svg ' + FA + '><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>';
   var FACE_CALM    = '<svg ' + FA + '><circle cx="12" cy="12" r="9"/><path d="M9 13.5h6"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>';
@@ -226,180 +294,193 @@
     });
   }
 
-  // ---------- 2. Data model + storage ----------
-  // state = {
-  //   ver: 1, sm, om,
-  //   entries: [{ id, ts, mtime,
-  //               emotions: [{k, i}],   // k = EMOTIONS key, i = 1–5
-  //               loc, person,          // column-value ids | null
-  //               water, food, meds,    // booleans
-  //               note, trigger }],     // strings ("" = unset)
-  //   cols: { loc:  [{id, label, mtime, pos}],
-  //           person: [{id, label, mtime, pos}] },
-  //   deleted: { <entryId|colValId>: <tombstone ts> }
-  // }
-  var state = null;
+// ---------- 2. Data model + storage ----------
+// state = {
+//   ver: 2, sm, om,
+//   entries: [{ id, ts, mtime,
+//               emotions: [{k, i}],   // k = EMOTIONS key, i = 1–5
+//               loc, person,          // column-value ids | null
+//               water, food, meds,    // TRIADIC null | "yes" | "no"
+//               note, trigger }],     // strings ("" = unset)
+//   cols: { loc:  [{id, label, mtime, pos}],
+//           person: [{id, label, mtime, pos}] },
+//   deleted: { <entryId|colValId>: <tombstone ts> }
+// }
+var state = null;
 
-  function newState() {
-    var s = {
-      ver: DATA_VER, sm: Date.now(), om: Date.now(),
-      entries: [], deleted: {},
-      cols: { loc: [], person: [] }
-    };
-    // Seed the two columns ONCE (fresh installs only — existing
-    // devices keep whatever the user has curated).
-    s.cols.loc  = LOC_SEED.map(function (v, i) {
-      return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
-    });
-    s.cols.person = PERSON_SEED.map(function (v, i) {
-      return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
-    });
-    return s;
+function newState() {
+  var s = {
+    ver: DATA_VER, sm: Date.now(), om: Date.now(),
+    entries: [], deleted: {},
+    cols: { loc: [], person: [] }
+  };
+  // Seed the two columns ONCE (fresh installs only — existing
+  // devices keep whatever the user has curated).
+  s.cols.loc  = LOC_SEED.map(function (v, i) {
+    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+  });
+  s.cols.person = PERSON_SEED.map(function (v, i) {
+    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+  });
+  return s;
+}
+
+function migrate(data) {
+  if (!data || !Array.isArray(data.entries)) return null;
+  if (!data.cols || !Array.isArray(data.cols.loc) || !Array.isArray(data.cols.person)) {
+    data.cols = { loc: [], person: [] };
   }
-  
-    function migrate(data) {
-    if (!data || !Array.isArray(data.entries)) return null;
-    if (!data.cols || !Array.isArray(data.cols.loc) || !Array.isArray(data.cols.person)) {
-      data.cols = { loc: [], person: [] };
+  if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
+  if (typeof data.sm !== "number") data.sm = 0;
+  if (typeof data.om !== "number") data.om = 0;
+  data.entries.forEach(function (e) {
+    if (!Array.isArray(e.emotions)) e.emotions = [];
+    if (!e.note) e.note = "";
+    if (!e.trigger) e.trigger = "";
+    // DATA_VER 2: triadic habits. Wave-1 booleans migrate as:
+    // true → "yes", false → null. The old unchecked state was
+    // never a conscious "no" — honesty over retro-fitting.
+    ["water", "food", "meds"].forEach(function (f) {
+      if (e[f] === true)          e[f] = "yes";
+      else if (e[f] === false || e[f] === "yes" || e[f] === "no") {
+        // false → null handled below; explicit values stay
+        if (e[f] === false) e[f] = null;
+      } else e[f] = null;
+    });
+    if (typeof e.ts !== "number") e.ts = Date.now();
+    if (typeof e.mtime !== "number") e.mtime = e.ts;
+    e.loc = e.loc || null; e.person = e.person || null;
+  });
+  data.cols.loc.concat(data.cols.person).forEach(function (v) {
+    if (typeof v.mtime !== "number") v.mtime = 0;
+    if (typeof v.pos !== "number") v.pos = 0;
+  });
+  data.ver = DATA_VER;
+  return data;
+}
+
+function load() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      var data = migrate(JSON.parse(raw));
+      if (data) { state = data; return; }
     }
-    if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
-    if (typeof data.sm !== "number") data.sm = 0;
-    if (typeof data.om !== "number") data.om = 0;
-    data.entries.forEach(function (e) {
-      if (!Array.isArray(e.emotions)) e.emotions = [];
-      if (!e.note) e.note = "";
-      if (!e.trigger) e.trigger = "";
-      ["water", "food", "meds"].forEach(function (f) { e[f] = !!e[f]; });
-      if (typeof e.ts !== "number") e.ts = Date.now();
-      if (typeof e.mtime !== "number") e.mtime = e.ts;
-      e.loc = e.loc || null; e.person = e.person || null;
-    });
-    data.cols.loc.concat(data.cols.person).forEach(function (v) {
-      if (typeof v.mtime !== "number") v.mtime = 0;
-      if (typeof v.pos !== "number") v.pos = 0;
-    });
-    data.ver = DATA_VER;
-    return data;
+  } catch (e) { /* corrupted → fresh */ }
+  state = newState();
+  save();
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { /* quota */ }
+  if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+}
+
+function entryById(id) {
+  for (var i = 0; i < state.entries.length; i++) {
+    if (state.entries[i].id === id) return state.entries[i];
   }
-
-  function load() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var data = migrate(JSON.parse(raw));
-        if (data) { state = data; return; }
-      }
-    } catch (e) { /* corrupted → fresh */ }
-    state = newState();
-    save();
+  return null;
+}
+function colValById(col, id) {
+  if (!id) return null;
+  var arr = state.cols[col] || [];
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i].id === id) return arr[i];
   }
+  return null;
+}
 
-  function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { /* quota */ }
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+// ---------- 2b. Merge engine (todo-contract, compact) ----------
+// Deterministic + symmetric: merge(A,B) === merge(B,A).
+//   · entries — union by id, content LWW by mtime (ties by
+//     lexicographic JSON — identical both sides)
+//   · column values — same, per column, by id
+//   · tombstones — union with max ts; newer edits resurrect
+//     (the undo-delete toast relies on this, same as weather)
+//   · ordering — entries = DESC ts (derived at sort time, not
+//     stored pos — a timeline has exactly ONE natural order);
+//     column values = the om-larger side donates positions
+// NOTE (DATA_VER 2): no merge changes — the triadic habit fields
+// live INSIDE entries, which merge whole-object by mtime. Old
+// devices merging Wave-1 entries simply produce unmigrated local
+// reads until they run this version's migrate() — safe because
+// neither side loses data.
+
+function newerObj(a, b) {
+  if ((a.mtime || 0) !== (b.mtime || 0)) {
+    return (a.mtime || 0) > (b.mtime || 0) ? a : b;
   }
+  return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
+}
 
-  function entryById(id) {
-    for (var i = 0; i < state.entries.length; i++) {
-      if (state.entries[i].id === id) return state.entries[i];
-    }
-    return null;
-  }
-  function colValById(col, id) {
-    if (!id) return null;
-    var arr = state.cols[col] || [];
-    for (var i = 0; i < arr.length; i++) {
-      if (arr[i].id === id) return arr[i];
-    }
-    return null;
-  }
+function mergeUnionList(a, b, tomb) {
+  var map = {};
+  (a || []).forEach(function (x) { map[x.id] = x; });
+  (b || []).forEach(function (x) {
+    map[x.id] = map[x.id] ? newerObj(map[x.id], x) : x;
+  });
+  var alive = [];
+  Object.keys(map).forEach(function (id) {
+    var ts = tomb ? tomb[id] : undefined;
+    if (ts === undefined || (map[id].mtime || 0) > ts) alive.push(map[id]);
+  });
+  return alive;
+}
 
-  // ---------- 2b. Merge engine (todo-contract, compact) ----------
-  // Deterministic + symmetric: merge(A,B) === merge(B,A).
-  //   · entries — union by id, content LWW by mtime (ties by
-  //     lexicographic JSON — identical both sides)
-  //   · column values — same, per column, by id
-  //   · tombstones — union with max ts; newer edits resurrect
-  //     (the undo-delete toast relies on this, same as weather)
-  //   · ordering — entries = DESC ts (derived at sort time, not
-  //     stored pos — a timeline has exactly ONE natural order);
-  //     column values = the om-larger side donates positions
+function mergeCols(colsA, colsB, tomb) {
+  var out = {};
+  ["loc", "person"].forEach(function (name) {
+    out[name] = mergeUnionList((colsA || {})[name], (colsB || {})[name], tomb);
+  });
+  return out;
+}
 
-  function newerObj(a, b) {
-    if ((a.mtime || 0) !== (b.mtime || 0)) {
-      return (a.mtime || 0) > (b.mtime || 0) ? a : b;
-    }
-    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
-  }
+function sortColVals(vals, omSideIsA, colA, colB) {
+  var ref = omSideIsA ? (colA || []) : (colB || []);
+  var idx = {};
+  ref.forEach(function (v, i) { idx[v.id] = i; });
+  vals.sort(function (x, y) {
+    var ix = idx[x.id] !== undefined ? idx[x.id] : Infinity;
+    var iy = idx[y.id] !== undefined ? idx[y.id] : Infinity;
+    if (ix !== iy) return ix - iy;
+    if ((x.mtime || 0) !== (y.mtime || 0)) return (y.mtime || 0) - (x.mtime || 0);
+    return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
+  });
+  vals.forEach(function (v, i) { v.pos = i; });
+}
 
-  function mergeUnionList(a, b, tomb) {
-    var map = {};
-    (a || []).forEach(function (x) { map[x.id] = x; });
-    (b || []).forEach(function (x) {
-      map[x.id] = map[x.id] ? newerObj(map[x.id], x) : x;
-    });
-    var alive = [];
-    Object.keys(map).forEach(function (id) {
-      var ts = tomb ? tomb[id] : undefined;
-      if (ts === undefined || (map[id].mtime || 0) > ts) alive.push(map[id]);
-    });
-    return alive;
-  }
+function mergeMoodStates(A, B) {
+  var a = A || {}, b = B || {};
 
-  function mergeCols(colsA, colsB, tomb) {
-    var out = {};
-    ["loc", "person"].forEach(function (name) {
-      out[name] = mergeUnionList((colsA || {})[name], (colsB || {})[name], tomb);
-      // ordering: larger om decides — passed in via sortCols below
-    });
-    return out;
-  }
+  var tomb = {};
+  Object.keys(a.deleted || {}).forEach(function (id) { tomb[id] = a.deleted[id]; });
+  Object.keys(b.deleted || {}).forEach(function (id) {
+    tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
+  });
 
-  function sortColVals(vals, omSideIsA, colA, colB) {
-    var ref = omSideIsA ? (colA || []) : (colB || []);
-    var idx = {};
-    ref.forEach(function (v, i) { idx[v.id] = i; });
-    vals.sort(function (x, y) {
-      var ix = idx[x.id] !== undefined ? idx[x.id] : Infinity;
-      var iy = idx[y.id] !== undefined ? idx[y.id] : Infinity;
-      if (ix !== iy) return ix - iy;
-      if ((x.mtime || 0) !== (y.mtime || 0)) return (y.mtime || 0) - (x.mtime || 0);
-      return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
-    });
-    vals.forEach(function (v, i) { v.pos = i; });
-  }
+  var entries = mergeUnionList(a.entries, b.entries, tomb)
+    .sort(function (x, y) { return y.ts - x.ts; });   // timeline order
 
-  function mergeMoodStates(A, B) {
-    var a = A || {}, b = B || {};
+  var omSideIsA = (a.om || 0) >= (b.om || 0);
+  var cols = mergeCols(a.cols, b.cols, tomb);
+  sortColVals(cols.loc,    omSideIsA, (a.cols || {}).loc,    (b.cols || {}).loc);
+  sortColVals(cols.person, omSideIsA, (a.cols || {}).person, (b.cols || {}).person);
 
-    var tomb = {};
-    Object.keys(a.deleted || {}).forEach(function (id) { tomb[id] = a.deleted[id]; });
-    Object.keys(b.deleted || {}).forEach(function (id) {
-      tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
-    });
+  return {
+    ver: DATA_VER,
+    sm: Math.max(a.sm || 0, b.sm || 0),
+    om: Math.max(a.om || 0, b.om || 0),
+    entries: entries,
+    cols: cols,
+    deleted: tomb
+  };
+}
 
-    var entries = mergeUnionList(a.entries, b.entries, tomb)
-      .sort(function (x, y) { return y.ts - x.ts; });   // timeline order
+  // ---------- 3. Capture flow + recent list ----------
 
-    var omSideIsA = (a.om || 0) >= (b.om || 0);
-    var cols = mergeCols(a.cols, b.cols, tomb);
-    sortColVals(cols.loc,    omSideIsA, (a.cols || {}).loc,    (b.cols || {}).loc);
-    sortColVals(cols.person, omSideIsA, (a.cols || {}).person, (b.cols || {}).person);
-
-    return {
-      ver: DATA_VER,
-      sm: Math.max(a.sm || 0, b.sm || 0),
-      om: Math.max(a.om || 0, b.om || 0),
-      entries: entries,
-      cols: cols,
-      deleted: tomb
-    };
-  }
-  
-    // ---------- 3. Capture flow + recent list ----------
-
-  // Micro-keys (added here, not in Part 2's STRINGS — same trick
+  // Micro-keys (added here, not in Part 1's STRINGS — same trick
   // as weather's "today")
   STRINGS.en["rel.now"] = "just now";
   STRINGS.en["rel.min"] = "{n} min ago";
@@ -485,13 +566,13 @@
   var picked    = {};     // emotionKey → intensity 1–5
   var selLoc    = null;   // column-value id | null
   var selPerson = null;
-  var flagWater = false, flagFood = false, flagMeds = false;
+  var hab       = { water: null, food: null, meds: null };   // TRIADIC null|"yes"|"no"
 
   function resetCapture() {
     editing = null;
     picked = {};
     selLoc = null; selPerson = null;
-    flagWater = flagFood = flagMeds = false;
+    hab.water = hab.food = hab.meds = null;
     buildCapture();
   }
 
@@ -625,6 +706,7 @@
           else selPerson = (selPerson === v.id) ? null : v.id;
           buildCapture();
         });
+        attachChipMenu(c, col, v);          // long-press / right-click
         chips.appendChild(c);
       });
       // None (explicit)
@@ -664,22 +746,26 @@
     });
     host.appendChild(l2cols);
 
-    // ---- L3: yes/no toggles ----
-    [["water", "l3.water", function (v) { flagWater = v; }, flagWater],
-     ["food",  "l3.food",  function (v) { flagFood = v; },  flagFood],
-     ["meds",  "l3.meds",  function (v) { flagMeds = v; },  flagMeds]
-    ].forEach(function (fg) {
-      var tb = document.createElement("button");
-      tb.type = "button";
-      tb.className = "tog" + (fg[3] ? " on" : "");
-      tb.setAttribute("aria-pressed", fg[3] ? "true" : "false");
-      tb.innerHTML = '<span class="tog-box" aria-hidden="true"></span>' +
-        "<span>" + esc(t(fg[1])) + "</span>";
-      tb.addEventListener("click", function () {
-        fg[2](!fg[3]);
-        buildCapture();
+    // ---- L3: triadic habits ("this or that") ----
+    // Each row: two chips — picking one is an explicit yes/no,
+    // tapping the ACTIVE chip again returns to unknown (null).
+    HABITS.forEach(function (h) {
+      var row = document.createElement("div");
+      row.className = "habrow";
+      ["yes", "no"].forEach(function (side) {
+        var hc = document.createElement("button");
+        hc.type = "button";
+        hc.className = "chip hab" + (hab[h.f] === side ? " on" : "") +
+          (side === "no" ? " neg" : "");
+        hc.textContent = t(h[side]);
+        hc.setAttribute("aria-pressed", hab[h.f] === side ? "true" : "false");
+        hc.addEventListener("click", function () {
+          hab[h.f] = (hab[h.f] === side) ? null : side;   // re-tap = unknown
+          buildCapture();
+        });
+        row.appendChild(hc);
       });
-      host.appendChild(tb);
+      host.appendChild(row);
     });
 
     // ---- L4: reflection ----
@@ -721,9 +807,158 @@
     host.appendChild(acts);
   }
 
+  // ---- chip context menu: rename / delete column values ----
+  // Long-press (touch) or right-click (pointer) on ANY chip.
+  // Custom UI only — no native dialogs, per standing rule.
+  var chipMenu = null;
+  function closeChipMenu() {
+    if (chipMenu) { chipMenu.remove(); chipMenu = null; }
+  }
+  document.addEventListener("click", function (e) {
+    if (chipMenu && !chipMenu.contains(e.target)) closeChipMenu();
+  });
+  document.addEventListener("contextmenu", function (e) {
+    if (chipMenu && !chipMenu.contains(e.target)) closeChipMenu();
+  });
+
+  function attachChipMenu(el, col, v) {
+    var lpTimer = null, lpFired = false;
+    el.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      openChipMenu(col, v, el.getBoundingClientRect());
+    });
+    el.addEventListener("touchstart", function () {
+      lpFired = false;
+      lpTimer = setTimeout(function () {
+        lpFired = true;
+        openChipMenu(col, v, el.getBoundingClientRect());
+      }, 450);
+    }, { passive: true });
+    el.addEventListener("touchmove", function () {
+      clearTimeout(lpTimer);
+    }, { passive: true });
+    el.addEventListener("touchend", function (e) {
+      clearTimeout(lpTimer);
+      if (lpFired) e.preventDefault();   // swallow the synthetic click
+    });
+  }
+
+  function openChipMenu(col, v, rect) {
+    closeChipMenu();
+    var m = document.createElement("div");
+    m.className = "ctxmenu";
+    m.setAttribute("role", "menu");
+
+    var mkItem = function (label, cls, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ctxitem" + (cls ? " " + cls : "");
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      m.appendChild(b);
+      return b;
+    };
+    mkItem(t("col.menu.rename"), "", function () { beginChipRename(m, col, v); });
+    mkItem(t("col.menu.del"), "danger", function () { deleteColVal(col, v); });
+
+    document.body.appendChild(m);
+    // position near the chip, clamped to the viewport
+    void m.offsetWidth;                            // layout first
+    var mw = m.offsetWidth, mh = m.offsetHeight;
+    var x = Math.max(8, Math.min(rect.left, window.innerWidth - mw - 8));
+    var y = rect.bottom + 6;
+    if (y + mh > window.innerHeight - 8) y = Math.max(8, rect.top - mh - 6);
+    m.style.left = x + "px";
+    m.style.top = y + "px";
+    chipMenu = m;
+  }
+
+  function beginChipRename(m, col, v) {
+    m.innerHTML = "";
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.className = "ctxren";
+    inp.maxLength = 40;
+    inp.value = v.label;
+    inp.setAttribute("aria-label", t("col.menu.rename"));
+    m.appendChild(inp);
+    var go = document.createElement("button");
+    go.type = "button";
+    go.className = "ctxitem prim-line";
+    go.textContent = t("save");
+    go.addEventListener("click", function () { applyChipRename(col, v, inp.value); });
+    m.appendChild(go);
+    var no = document.createElement("button");
+    no.type = "button";
+    no.className = "ctxitem";
+    no.textContent = t("discard");
+    no.addEventListener("click", closeChipMenu);
+    m.appendChild(no);
+    inp.focus();
+    inp.select();
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); applyChipRename(col, v, inp.value); }
+      if (e.key === "Escape") closeChipMenu();
+    });
+    // stop the document-click closer from eating clicks inside
+    m.addEventListener("click", function (e) { e.stopPropagation(); });
+  }
+
+  function colLabelExists(col, label, exceptId) {
+    var norm = String(label).trim().toLowerCase();
+    return (state.cols[col] || []).some(function (o) {
+      return o.id !== exceptId &&
+        String(o.label).trim().toLowerCase() === norm;
+    });
+  }
+
+  function applyChipRename(col, v, label) {
+    label = String(label).trim();
+    closeChipMenu();
+    if (!label || label === v.label) return;
+    if (colLabelExists(col, label, v.id)) { showToast(t("col.dup")); return; }
+    v.label = label;
+    v.mtime = Date.now();                // LWW — rename travels
+    state.sm = Date.now();
+    save();
+    buildCapture();
+    renderAll();                          // recent list shows labels live
+    showToast(t("col.renamed"));
+  }
+
+  function deleteColVal(col, v) {
+    closeChipMenu();
+    state.cols[col] = (state.cols[col] || []).filter(function (x) {
+      return x.id !== v.id;
+    });
+    state.deleted[v.id] = Date.now();    // tombstone — merge-safe
+    if ((col === "loc" ? selLoc : selPerson) === v.id) {
+      if (col === "loc") selLoc = null; else selPerson = null;
+    }
+    state.sm = Date.now();
+    save();
+    buildCapture();
+    renderAll();
+    showToast(t("col.del.done"), t("col.del.undo"), function () {
+      // resurrection: fresh mtime beats the tombstone (same
+      // contract as entries)
+      v.mtime = Date.now();
+      state.cols[col].push(v);
+      delete state.deleted[v.id];
+      state.sm = Date.now();
+      save();
+      buildCapture();
+      renderAll();
+    });
+  }
+
   function commitColVal(col, input) {
     var label = input.value.trim();
     if (!label) return;
+    if (colLabelExists(col, label, null)) {
+      showToast(t("col.dup"));            // no silent duplicates — ever again
+      return;
+    }
     var v = { id: uid(), label: label, mtime: Date.now(), pos: (state.cols[col] || []).length };
     state.cols[col].push(v);
     state.sm = Date.now();
@@ -787,7 +1022,9 @@
     picked = {};
     (e.emotions || []).forEach(function (m) { picked[m.k] = m.i; });
     selLoc = e.loc; selPerson = e.person;
-    flagWater = e.water; flagFood = e.food; flagMeds = e.meds;
+    hab.water = (e.water === "yes" || e.water === "no") ? e.water : null;
+    hab.food  = (e.food  === "yes" || e.food  === "no")  ? e.food  : null;
+    hab.meds  = (e.meds  === "yes" || e.meds  === "no")  ? e.meds  : null;
   }
 
   function commitEntry(emos) {
@@ -798,7 +1035,7 @@
       e = entryById(editing);
       if (!e) { e = { id: editing }; state.entries.push(e); }   // resurrection safety
       e.emotions = emos; e.loc = selLoc; e.person = selPerson;
-      e.water = flagWater; e.food = flagFood; e.meds = flagMeds;
+      e.water = hab.water; e.food = hab.food; e.meds = hab.meds;
       e.note = note; e.trigger = trig;
       e.mtime = Date.now();
       // resurrection: this edit is newer than any tombstone
@@ -807,7 +1044,7 @@
       e = {
         id: uid(), ts: Date.now(), mtime: Date.now(),
         emotions: emos, loc: selLoc, person: selPerson,
-        water: flagWater, food: flagFood, meds: flagMeds,
+        water: hab.water, food: hab.food, meds: hab.meds,
         note: note, trigger: trig
       };
       state.entries.push(e);
@@ -856,9 +1093,8 @@
 
   // ---- 7-day thread ----
   // One dot per day; color = the day's HIGHEST-intensity emotion;
-  // hollow dot = logged day with no dominant pick impossible (we
-  // always have ≥1) — hollow actually means: day had NO entry at
-  // all. (Absence ≠ neutral mood — visually distinct too.)
+  // hollow dot = day had NO entry at all. (Absence ≠ neutral
+  // mood — visually distinct too.)
   function dayKey(ts) {
     var d = new Date(ts);
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
@@ -938,6 +1174,11 @@
       var bits = [];
       if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label); }
       if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label); }
+      HABITS.forEach(function (h) {
+        if (e[h.f] === "yes" || e[h.f] === "no") {
+          bits.push(t(h[e[h.f]]));       // habits are now context, visible
+        }
+      });
       ctx.textContent = bits.join(" · ");
       li.appendChild(ctx);
 
@@ -977,9 +1218,439 @@
   function renderAll() {
     renderThread();
     renderRecent();
+    if (!$("capture").hidden) buildCaptureKeepScroll();   // labels may rename/delete
   }
   
-    // ---------- 4. Sync slice + palette ----------
+    // ---------- 3b. Insights view (ALL render-time derived) ----------
+  // Zero new storage keys, zero sync surface: every number here is
+  // recomputed from state.entries at render time. Range selector
+  // lives in view state, never persisted.
+
+  var viewMode = "capture";              // "capture" | "insights"
+  var insRange = 30;                      // 7 | 30 | 0 (0 = all)
+  var calMonth = null;                    // null = current month
+
+  function rangeStart() {
+    if (!insRange) return 0;              // all time
+    return Date.now() - insRange * 24 * 60 * 60 * 1000;
+  }
+  function entriesInRange() {
+    var from = rangeStart();
+    return state.entries.filter(function (e) { return e.ts >= from; });
+  }
+
+  function toggleView() {
+    viewMode = (viewMode === "capture") ? "insights" : "capture";
+    applyView();
+  }
+
+  function applyView() {
+    var cap = $("capture"), rec = $("recent"),
+        thr = $("thread"), ins = $("insights"),
+        ib = $("ins-btn");
+    var showIns = (viewMode === "insights");
+    if (ins) ins.hidden = !showIns;
+    if (cap) cap.hidden = showIns;
+    if (rec) rec.hidden = showIns;
+    if (thr) thr.hidden = showIns || !state.entries.length;
+    if (ib) {
+      ib.classList.toggle("on", showIns);
+      ib.setAttribute("aria-pressed", showIns ? "true" : "false");
+      ib.setAttribute("title", showIns ? t("capture") : t("insights"));
+      ib.setAttribute("aria-label", showIns ? t("capture") : t("insights"));
+    }
+    if (showIns) {
+      calMonth = null;                    // reopen on current month
+      renderInsights();
+    } else {
+      renderAll();
+    }
+  }
+
+  // -- distribution: counts + average intensity per emotion --
+  function renderDistribution(host, es) {
+    var counts = {}, sums = {};
+    es.forEach(function (e) {
+      (e.emotions || []).forEach(function (m) {
+        counts[m.k] = (counts[m.k] || 0) + 1;
+        sums[m.k] = (sums[m.k] || 0) + (m.i || 0);
+      });
+    });
+    var rows = EMOTIONS.map(function (em) {
+      return { em: em, n: counts[em.k] || 0,
+               avg: counts[em.k] ? sums[em.k] / counts[em.k] : 0 };
+    }).filter(function (r) { return r.n > 0; })
+      .sort(function (a, b) { return b.n - a.n; });
+    if (!rows.length) return;
+
+    var max = rows[0].n;
+    rows.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "dist-row";
+      row.style.color = r.em.col;
+      var lab = document.createElement("span");
+      lab.className = "dist-lab";
+      lab.textContent = t(r.em.i18n);
+      row.appendChild(lab);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width = Math.max(6, Math.round(r.n / max * 100)) + "%";
+      fill.style.background = r.em.col;
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      var val = document.createElement("span");
+      val.className = "dist-val";
+      val.textContent = String(r.n) + " · " +
+        t("ins.avg").replace("{n}", r.avg.toFixed(1));
+      row.appendChild(val);
+      host.appendChild(row);
+    });
+  }
+
+  // -- calendar: month grid, filled/hollow dots (same contract
+  //    as the 7-day thread), click a day → that day's entries --
+  function renderCalendar(host, es) {
+    var now = new Date();
+    var base = calMonth ? new Date(calMonth.y, calMonth.m, 1) :
+      new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // headline: ‹ month year › + Today
+    var head = document.createElement("div");
+    head.className = "cal-head";
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "cal-nav";
+    prev.textContent = "‹";
+    prev.setAttribute("aria-label", t("ins.cal.prev"));
+    prev.addEventListener("click", function () {
+      calMonth = { y: base.getFullYear() - (base.getMonth() === 0 ? 1 : 0),
+                   m: base.getMonth() === 0 ? 11 : base.getMonth() - 1 };
+      renderInsights();
+    });
+    head.appendChild(prev);
+    var mt = document.createElement("span");
+    mt.className = "cal-month";
+    mt.textContent = base.toLocaleDateString(
+      LANG === "el" ? "el-GR" : "en-GB",
+      { month: "long", year: "numeric" });
+    head.appendChild(mt);
+    var next = document.createElement("button");
+    next.type = "button";
+    next.className = "cal-nav";
+    next.textContent = "›";
+    next.setAttribute("aria-label", t("ins.cal.next"));
+    next.addEventListener("click", function () {
+      calMonth = { y: base.getFullYear() + (base.getMonth() === 11 ? 1 : 0),
+                   m: base.getMonth() === 11 ? 0 : base.getMonth() + 1 };
+      renderInsights();
+    });
+    head.appendChild(next);
+    if (calMonth) {                        // "Today" only when navigated away
+      var td = document.createElement("button");
+      td.type = "button";
+      td.className = "cal-today";
+      td.textContent = t("ins.cal.today");
+      td.addEventListener("click", function () {
+        calMonth = null;
+        renderInsights();
+      });
+      head.appendChild(td);
+    }
+    host.appendChild(head);
+
+    // weekday header (Mon-first, locale names)
+    var wk = document.createElement("div");
+    wk.className = "cal-wk";
+    for (var i = 0; i < 7; i++) {
+      var wd = document.createElement("span");
+      wd.textContent = new Date(2024, 0, 1 + i)  // Mon Jan 1, 2024 week
+        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+          { weekday: "narrow" });
+      wk.appendChild(wd);
+    }
+    host.appendChild(wk);
+
+    // day-by-day map: highest-intensity emotion per day
+    var days = {};
+    es.forEach(function (e) {
+      var k = dayKey(e.ts);
+      var best = null, bi = -1;
+      (e.emotions || []).forEach(function (m) {
+        if (m.i > bi) { bi = m.i; best = m.k; }
+      });
+      if (best && (!days[k] || bi > days[k].i)) days[k] = { k: best, i: bi };
+    });
+
+    var grid = document.createElement("div");
+    grid.className = "cal-grid";
+    var first = new Date(base.getFullYear(), base.getMonth(), 1);
+    var lead = (first.getDay() + 6) % 7;   // Monday-first offset
+    for (var e2 = 0; e2 < lead; e2++) {
+      var padEl = document.createElement("span");
+      padEl.className = "cal-cell empty";
+      grid.appendChild(padEl);
+    }
+    var dim = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+    var todayK = dayKey(Date.now());
+    for (var d2 = 1; d2 <= dim; d2++) {
+      var dt = new Date(base.getFullYear(), base.getMonth(), d2);
+      var dk = dayKey(dt.getTime());
+      var cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "cal-cell" + (dk === todayK ? " today" : "");
+      var dot = document.createElement("span");
+      dot.className = "tdot";
+      if (days[dk]) {
+        var em = emoByK(days[dk].k);
+        dot.style.background = em ? em.col : "var(--text-dim)";
+        dot.title = t("emo." + days[dk].k);
+      } else {
+        dot.className = "tdot hollow";     // absence ≠ neutral
+      }
+      cell.appendChild(dot);
+      var dn = document.createElement("span");
+      dn.className = "cal-d";
+      dn.textContent = String(d2);
+      cell.appendChild(dn);
+      if (days[dk]) {
+        (function (kk) {
+          cell.addEventListener("click", function () { renderDayList(kk); });
+        })(dk);
+      } else {
+        cell.disabled = true;
+      }
+      grid.appendChild(cell);
+    }
+    host.appendChild(grid);
+
+    // day-detail target (filled by renderDayList)
+    var dl = document.createElement("div");
+    dl.id = "day-list";
+    dl.hidden = true;
+    host.appendChild(dl);
+  }
+
+  function renderDayList(dayK) {
+    var dl = $("day-list");
+    if (!dl) return;
+    dl.hidden = false;
+    dl.innerHTML = "";
+    var title = document.createElement("div");
+    title.className = "col-lab";
+    title.textContent = t("ins.day.entries") + " · " + dayK;
+    dl.appendChild(title);
+    var list = document.createElement("ul");
+    state.entries.forEach(function (e) {
+      if (dayKey(e.ts) !== dayK) return;
+      var li = document.createElement("li");
+      li.className = "entry";
+      var when = document.createElement("span");
+      when.className = "e-when";
+      var d = new Date(e.ts);
+      when.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
+      li.appendChild(when);
+      var faces = document.createElement("span");
+      faces.className = "e-faces";
+      (e.emotions || []).forEach(function (m) {
+        var em = emoByK(m.k);
+        if (!em) return;
+        var f = document.createElement("span");
+        f.className = "e-face";
+        f.style.color = em.col;
+        f.innerHTML = faceFor(m.k);
+        f.title = t(em.i18n) + " · " + m.i + "/5";
+        faces.appendChild(f);
+      });
+      li.appendChild(faces);
+      if (e.note) {
+        var sn = document.createElement("span");
+        sn.className = "e-ctx";
+        sn.textContent = e.note.length > 60 ?
+          e.note.slice(0, 59) + "…" : e.note;
+        li.appendChild(sn);
+      }
+      list.appendChild(li);
+    });
+    dl.appendChild(list);
+  }
+
+  // -- streak (strict) + logged days, over the SELECTED range --
+  // Strict = consecutive days with ≥1 entry; a missed day breaks
+  // it. Integrity rule: absence is never imputed as neutral.
+  function streakInfo(es) {
+    var daySet = {};
+    es.forEach(function (e) { daySet[dayKey(e.ts)] = true; });
+    var logged = Object.keys(daySet).length;
+
+    // walk BACKWARD from today (or yesterday if nothing today yet)
+    var streak = 0;
+    var cur = new Date();
+    if (!daySet[dayKey(cur.getTime())]) {
+      cur = new Date(cur.getTime() - 24 * 60 * 60 * 1000);
+      if (!daySet[dayKey(cur.getTime())]) return { streak: 0, logged: logged };
+    }
+    while (daySet[dayKey(cur.getTime())]) {
+      streak++;
+      cur = new Date(cur.getTime() - 24 * 60 * 60 * 1000);
+    }
+    return { streak: streak, logged: logged };
+  }
+
+  // -- habits adherence: yes/no/day-over-logged-days strips --
+  function renderHabits(host, es) {
+    var daySet = {};
+    es.forEach(function (e) { daySet[dayKey(e.ts)] = 1; });
+    var loggedDays = Object.keys(daySet).length;
+    if (!loggedDays) return;
+
+    HABITS.forEach(function (h) {
+      var yesDays = 0, noDays = 0;
+      es.forEach(function (e) {
+        if (e[h.f] === "yes") yesDays += 1;      // per-entry, not
+        if (e[h.f] === "no")  noDays += 1;       // per-day — honest
+      });
+      var row = document.createElement("div");
+      row.className = "habstat";
+      var lab = document.createElement("span");
+      lab.className = "dist-lab";
+      lab.textContent = t(h.yes);
+      row.appendChild(lab);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width =
+        Math.max(4, Math.round(yesDays / (yesDays + noDays || 1) * 100)) + "%";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      var val = document.createElement("span");
+      val.className = "dist-val";
+      val.textContent = t("ins.hab.days")
+        .replace("{y}", yesDays).replace("{n}", yesDays + noDays);
+      row.appendChild(val);
+      host.appendChild(row);
+    });
+  }
+
+  // -- Location / Person breakdowns (Option A: entries pointing
+  //    at a deleted value count as "not logged" for that column;
+  //    everything else about them still counts) --
+  function renderBreakdown(host, es, col, titleKey) {
+    var counts = {}, order = [];
+    es.forEach(function (e) {
+      var id = e[col];
+      if (!id) return;
+      if (!colValById(col, id)) return;    // deleted value → skip
+      if (counts[id] === undefined) order.push(id);
+      counts[id] = (counts[id] || 0) + 1;
+    });
+    if (!order.length) return;
+    order.sort(function (a, b) { return counts[b] - counts[a]; });
+
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t(titleKey);
+    host.appendChild(h);
+    order.slice(0, 8).forEach(function (id) {
+      var v = colValById(col, id);
+      var row = document.createElement("div");
+      row.className = "dist-row";
+      var lab = document.createElement("span");
+      lab.className = "dist-lab";
+      lab.textContent = v.label;
+      row.appendChild(lab);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width =
+        Math.max(6, Math.round(counts[id] / counts[order[0]] * 100)) + "%";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      var val = document.createElement("span");
+      val.className = "dist-val";
+      val.textContent = String(counts[id]);
+      row.appendChild(val);
+      host.appendChild(row);
+    });
+  }
+
+  function renderInsights() {
+    var host = $("insights");
+    if (!host) return;
+    host.innerHTML = "";
+
+    // range selector
+    var rs = document.createElement("div");
+    rs.className = "ins-ranges";
+    [[7, "ins.r7"], [30, "ins.r30"], [0, "ins.rall"]].forEach(function (r) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (insRange === r[0] ? " on" : "");
+      b.textContent = t(r[1]);
+      b.addEventListener("click", function () {
+        insRange = r[0];
+        renderInsights();
+      });
+      rs.appendChild(b);
+    });
+    host.appendChild(rs);
+
+    var es = entriesInRange();
+    if (!es.length) {
+      var em = document.createElement("div");
+      em.id = "empty-note";
+      em.textContent = t("ins.empty");
+      host.appendChild(em);
+      return;
+    }
+
+    // distribution
+    var d1 = document.createElement("h2");
+    d1.className = "sec-title";
+    d1.textContent = t("ins.dist.title");
+    host.appendChild(d1);
+    var dist = document.createElement("div");
+    renderDistribution(dist, es);
+    if (!dist.childNodes.length) dist.textContent = t("ins.ctx.none");
+    host.appendChild(dist);
+
+    // streak + logged days
+    var si = streakInfo(es);
+    var stk = document.createElement("div");
+    stk.className = "ins-streak";
+    stk.innerHTML =
+      '<span class="ins-big">' + si.streak + "</span> " +
+      esc(t("ins.streak.val").replace("{n}", "")) +
+      ' · <span class="dim">' +
+      esc(t("ins.logged").replace("{n}", si.logged)) + "</span>";
+    host.appendChild(stk);
+
+    // habits
+    var d2 = document.createElement("h2");
+    d2.className = "sec-title";
+    d2.textContent = t("ins.habits.title");
+    host.appendChild(d2);
+    var hb = document.createElement("div");
+    renderHabits(hb, es);
+    if (!hb.childNodes.length) hb.textContent = t("ins.ctx.none");
+    host.appendChild(hb);
+
+    // calendar
+    var d3 = document.createElement("h2");
+    d3.className = "sec-title";
+    d3.textContent = t("ins.cal.title");
+    host.appendChild(d3);
+    renderCalendar(host, state.entries);   // calendar ignores range
+
+    // breakdowns
+    renderBreakdown(host, es, "loc", "ins.loc.title");
+    renderBreakdown(host, es, "person", "ins.per.title");
+  }
+
+  // ---------- 4. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
                   "--panel-bg", "--border", "--shadow"];
@@ -1056,8 +1727,8 @@
     if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
     if (p.orosShortcuts.handle(e)) e.stopPropagation();
   }, true);
-
-  // ---------- 5. Wiring & boot ----------
+  
+    // ---------- 5. Wiring & boot ----------
   function applyI18n() {
     var n = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < n.length; i++) {
@@ -1087,14 +1758,17 @@
     // "New entry" = clean slate. Editing mode already has Discard.
     $("new-btn").addEventListener("click", function () { resetCapture(); });
 
-    // Scroll anchoring: the capture card grows/shrinks on toggles
-    // (buildCapture rebuilds). Keeping the button's position stable
-    // is CSS's job (no layout thrash — no slides, just rebuilds);
-    // nothing needed here.
+    // topbar toggle: Capture ⇆ Insights (full takeover)
+    var ib = $("ins-btn");
+    if (ib) {
+      ib.setAttribute("aria-label", t("insights"));
+      ib.setAttribute("title", t("insights"));
+      ib.addEventListener("click", toggleView);
+    }
   }
 
   // ---------- Boot ----------
-  console.log("mood.js v0.1.0 boot");
+  console.log("mood.js v0.2.0 boot");
   load();
   applyI18n();
   paintStaticAria();

@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Mood — App stylesheet (v0.1.0)
+   orOS Mood — App stylesheet (v0.2.0)
    OS-pure: palette inherited at runtime from the parent shell
    (todo-pattern: PAL_VARS injection + MutationObserver). The
    :root block below is only the offline/standalone fallback
@@ -9,11 +9,14 @@
      2. Topbar
      3. Main scroll + 7-day thread
      4. Capture card: L1 grid + intensities
-     5. Capture card: L2 columns + L3 toggles + L4 + actions
+     5. Capture card: L2 columns + L3 habits + L4 + actions
      6. Recent entries + empty state + soft guard
      7. Privacy dialog
-     8. Mobile-first
-     X. [hidden] authority guard
+     8. Chip context menu (rename/delete)
+     9. Insights: ranges, distribution, streak, habits
+    10. Insights: calendar grid + day detail
+    11. Mobile-first
+    X. [hidden] authority guard
    Icons: inline SVG only — no unicode glyphs (tofu-proof).
    ============================================================ */
 
@@ -85,7 +88,8 @@ input, textarea, select {
   font-weight: 700;
   color: var(--accent);
 }
-#new-btn {
+#new-btn,
+#ins-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -98,12 +102,19 @@ input, textarea, select {
   flex-shrink: 0;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
-#new-btn:hover {
+#new-btn:hover,
+#ins-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-#new-btn:active { transform: scale(0.94); }
+#new-btn:active,
+#ins-btn:active { transform: scale(0.94); }
+#ins-btn.on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
 
 /* ---------- 3. Main scroll + thread ---------- */
 #moodmain {
@@ -213,10 +224,10 @@ input, textarea, select {
   color: var(--text-dim);
 }
 
-/* ---------- 5. L2 columns + L3 toggles + L4 + actions ---------- */
-.colwrap {
-  margin-bottom: 12px;
-}
+/* ---------- 5. L2 columns + L3 habits + L4 + actions ---------- */
+.l2cols { display: grid; grid-template-columns: 1fr; gap: 18px; }
+
+.colwrap { margin-bottom: 12px; }
 .col-lab {
   font-size: 12px;
   font-weight: 700;
@@ -247,6 +258,20 @@ input, textarea, select {
 .chip.ghost { color: var(--text-dim); }
 .chip.ghost.on { color: var(--text-dim); background: transparent; }
 
+/* triadic habit rows: yes/no chip pair */
+.habrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.chip.hab.neg:not(.on) { color: var(--text-dim); }
+.chip.hab.neg.on {
+  border-color: #e06c75;
+  background: rgba(224, 108, 117, 0.10);
+  color: #e06c75;
+}
+
 .addrow {
   display: flex;
   flex-wrap: wrap;
@@ -265,47 +290,6 @@ input, textarea, select {
   outline: none;
 }
 .addrow input[type="text"]:focus { border-color: var(--accent); }
-
-.tog {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 12px;
-  margin-bottom: 6px;
-  background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 600;
-  text-align: left;
-  transition: border-color 0.15s;
-}
-.tog-box {
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  flex-shrink: 0;
-  position: relative;
-  transition: background 0.15s, border-color 0.15s;
-}
-.tog.on { border-color: var(--accent); }
-.tog.on .tog-box {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.tog.on .tog-box::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 2px;
-  width: 5px;
-  height: 9px;
-  border: solid var(--bg);
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
 
 #capture textarea,
 #capture input[type="text"] {
@@ -429,8 +413,6 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 .e-act:hover { color: var(--accent); background: var(--accent-soft); }
 .e-act.del:hover { color: #e06c75; background: rgba(224, 108, 117, 0.10); }
 
-/* empty state — capture is always there, this fills the gap
-   between grid and first save psychologically */
 #empty-note {
   text-align: center;
   padding: 26px 16px;
@@ -441,7 +423,6 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
   margin-top: 16px;
 }
 
-/* soft guard panel */
 #guard {
   display: flex;
   flex-wrap: wrap;
@@ -467,6 +448,7 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
   box-shadow: 0 12px 40px var(--shadow);
   padding: 18px;
   width: min(340px, calc(100vw - 32px));
+  margin: auto;
 }
 #privacy-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 #privacy-dlg h3 {
@@ -486,21 +468,7 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
   min-width: 100px;
 }
 
-/* ---------- 8. Mobile-first ---------- */
-@media (max-width: 480px) {
-  #moodmain { padding: 10px 8px 40px; }
-  #emogrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .emotile svg { width: 30px; height: 30px; }
-  .e-when { min-width: 78px; }
-  .int-lab { min-width: 90px; }
-}
-
-/* Desktop: full-width like the rest of the suite */
-@media (min-width: 700px) {
-  #moodmain { width: 100%; }
-}
-
-/* ---------- Scrollbars (skin-following, PWA-style) ---------- */
+/* ---------- 7b. Scrollbars (skin-following) ---------- */
 #moodmain::-webkit-scrollbar { width: 10px; height: 10px; }
 #moodmain::-webkit-scrollbar-track { background: transparent; }
 #moodmain::-webkit-scrollbar-thumb {
@@ -511,11 +479,199 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 #moodmain::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 #moodmain { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
-/* Privacy dialog: explicit centering (UA auto-margin δεν είναι εγγυημένο παντού) */
-#privacy-dlg { margin: auto; }
+/* ---------- 8. Chip context menu ---------- */
+.ctxmenu {
+  position: fixed;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px var(--shadow);
+  padding: 4px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.ctxitem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ctxitem:hover { background: var(--accent-soft); color: var(--accent); }
+.ctxitem.danger:hover { color: #e06c75; background: rgba(224, 108, 117, 0.10); }
+.ctxitem.prim-line {
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  margin-top: 4px;
+}
+.ctxren {
+  width: 100%;
+  min-height: 34px;
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  outline: none;
+}
 
-/* L2 columns: always stacked (full-width OS layout) */
-.l2cols { display: grid; grid-template-columns: 1fr; gap: 18px; }
+/* ---------- 9. Insights ---------- */
+.ins-ranges {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.dist-lab {
+  min-width: 110px;
+  font-size: 13px;
+}
+.dist-bar {
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.dist-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+.dist-val {
+  min-width: 88px;
+  text-align: right;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.ins-streak {
+  padding: 10px 12px;
+  margin: 12px 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ins-big {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 10. Calendar ---------- */
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cal-month {
+  font-weight: 700;
+  flex: 1;
+  text-align: center;
+}
+.cal-nav,
+.cal-today {
+  min-width: 32px;
+  min-height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 700;
+}
+.cal-nav:hover,
+.cal-today:hover { color: var(--accent); border-color: var(--accent); }
+.cal-today {
+  padding: 0 10px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+.cal-wk,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-wk {
+  margin-bottom: 4px;
+  text-align: center;
+}
+.cal-wk span {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  min-height: 44px;
+}
+.cal-cell.today { border-color: var(--accent); }
+.cal-cell:not(.empty):not(:disabled):hover {
+  background: var(--accent-soft);
+}
+.cal-cell.empty { pointer-events: none; }
+.cal-cell:disabled { cursor: default; opacity: 0.55; }
+.cal-d {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.cal-cell.today .cal-d { color: var(--accent); font-weight: 800; }
+#day-list ul {
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+/* ---------- 8. Mobile-first ---------- */
+@media (max-width: 480px) {
+  #moodmain { padding: 10px 8px 40px; }
+  #emogrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .emotile svg { width: 30px; height: 30px; }
+  .e-when { min-width: 78px; }
+  .int-lab { min-width: 90px; }
+  .dist-val { max-width: 88px; }
+}
+
+/* Desktop: full-width like the rest of the suite */
+@media (min-width: 700px) {
+  #moodmain { width: 100%; }
+}
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
