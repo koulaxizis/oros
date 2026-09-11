@@ -489,3 +489,9 @@ button.primary:hover { filter: brightness(1.1); }
   #cur-icon svg { width: 68px; height: 68px; }
   #wxmain .hcell { min-width: 52px; }
 }
+
+/* ---------- X. [hidden] must ALWAYS win ----------
+   Element-level display rules (e.g. #offline-badge{display:flex})
+   beat the UA [hidden] rule by specificity — this guard makes the
+   attribute authoritative again for EVERY element in this app. */
+[hidden] { display: none !important; }

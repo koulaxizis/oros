@@ -892,10 +892,20 @@
       $("city-hint").hidden = true;   // hint dies with the dialog
     });
 
+    // Native dialogs ignore backdrop clicks by default — click ON
+    // the dialog element itself (i.e. outside the content box,
+    // target === the dialog) closes it. Esc already works natively.
+    var cityDlg = $("dlg-city");
+    cityDlg.addEventListener("click", function (e) {
+      if (e.target === cityDlg) cityDlg.close();
+    });
+
     // GPS: geolocation is legal exactly HERE — inside the user's
-    // click. Reuses the shell→app bridge (__orosWeatherUpdate) for
-    // the upsert + refresh, so all stamping logic stays in one place.
-    $("dlg-gps").addEventListener("click", function () {
+    // click. Null-guarded: if the served index.html is a stale bundle
+    // (no #dlg-gps), the app must NOT die at boot — the button
+    // simply won't work until the cache refreshes.
+    var gpsBtn = $("dlg-gps");
+    if (gpsBtn) gpsBtn.addEventListener("click", function () {
       if (!navigator.geolocation) { dlgHint("err.gps", true); return; }
       var btn = this;
       btn.disabled = true;
@@ -959,7 +969,12 @@
     if (!w || !w.on || typeof w.lat !== "number" || typeof w.lon !== "number") return;
 
     var fp = [w.lat.toFixed(3), w.lon.toFixed(3), w.label || ""].join("|");
-    if (fp === state.shellWx) return;          // nothing new from the shell
+    // Skip only when nothing changed AND the list isn't empty.
+    // An EMPTY list re-adopts the shell location on boot — deleting
+    // everything resets to the tray's truth instead of stranding
+    // the user with no city at all. Deleting it while OTHER cities
+    // exist stays respected (no fighting the user).
+    if (fp === state.shellWx && state.cities.length > 0) return;
     state.shellWx = fp;
 
     var dup = null;
