@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.19.1 — Shell logic
+// orOS Core v0.19.2 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.19.1";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.19.2";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1658,9 +1658,11 @@
       chip.type = "button";
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
-        if (state.running) { returnToDesktop(); return; }
-        // The chip IS the weather — open the app directly.
-        // Fallback to the menu only if the app isn't installed.
+        // Inside Weather → back to desktop. Inside ANY OTHER app →
+        // jump straight to Weather (no desktop hop). Desktop → open.
+        if (state.running && state.running.id === "weather") {
+          returnToDesktop(); return;
+        }
         var wxApp = null;
         for (var i = 0; i < state.apps.length; i++) {
           if (state.apps[i].id === "weather") { wxApp = state.apps[i]; break; }

@@ -26,6 +26,9 @@
   var FETCH_GAP_MS = 30 * 60 * 1000;   // min gap between forecast fetches
   var STALE_MS     = 3 * 60 * 60 * 1000;
   var CACHE_MAX    = 6;                // cities kept in device cache
+  
+  var netDown = false;   // last fetch attempt FAILED while online
+                         // (truth from the network, not navigator.onLine)
 
   // ---------- 1. Constants, i18n, helpers, icons ----------
   var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
@@ -401,7 +404,17 @@
         writeCityCache(city.id, payload);
         return payload;
       })
-      .catch(function () { return null; });   // offline/blocked — cache keeps last state
+      .then(function (payload) {
+        if (payload) netDown = false;         // good fetch — badge can rest
+        return payload;
+      })
+      .catch(function (e) {
+        if (navigator.onLine) {
+          netDown = true;                     // online but the call died
+          console.warn("weather fetch failed:", e);
+        }
+        return null;
+      });
   }
 
   // Throttled entry point: fresh within 30 min → cache, else fetch.
@@ -488,10 +501,9 @@
     var ctx = renderTop(payload);
     var city = ctx.city, p = ctx.payload;
 
-    // Offline badge: NETWORK state ONLY. Staleness is already
-    // communicated honestly by the "Updated HH:MM" line — an old
-    // cache while ONLINE is not "offline".
-    $("offline-badge").hidden = navigator.onLine;
+    // Offline badge: true offline OR last fetch failed while online
+    // (the big URL may die while the tray's simple one lives).
+    $("offline-badge").hidden = navigator.onLine && !netDown;
     if (!city || !p) return;
 
     // --- current ---
@@ -927,6 +939,7 @@
   }
 
   // ---------- Boot ----------
+  console.log("weather.js v0.19.2 boot");
   load();
   adoptShellLocation();
   applyI18n();
