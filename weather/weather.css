@@ -444,11 +444,14 @@ dialog::backdrop {
 
 #city-add-row {
   display: flex;
+  flex-wrap: wrap;       /* narrow dialog: input row wraps, never overflows */
   gap: 8px;
   margin-top: 12px;
 }
 #city-input {
   flex: 1;
+  min-width: 0;         /* kill the intrinsic ~170px minimum — the #1
+                           cause of the dialog's horizontal scrollbar */
   min-height: 38px;
   padding: 8px 10px;
   font-size: 13.5px;
@@ -492,10 +495,9 @@ button.btn-secondary:hover:not(:disabled) {
 }
 button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Narrow screens: the GPS label shrinks to an icon-sized button */
+/* Narrow screens: input takes the full row first, buttons follow */
 @media (max-width: 480px) {
-  #city-add-row { flex-wrap: wrap; }
-  #city-input { flex-basis: 100%; }   /* input takes the full row first */
+  #city-input { flex-basis: 100%; }
 }
 
 .hint {
