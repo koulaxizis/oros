@@ -20,6 +20,7 @@ window.OROS_TRANSLATIONS = {
     "menu.empty":          "No applications installed",
     "menu.empty.hint":     "Apps will appear here as they are installed.",
     "category.productivity": "Productivity",
+	"category.utilities": "Utilities",
 
     "running.home":        "Return to desktop",
     "running.back":        "Back",
@@ -124,6 +125,7 @@ window.OROS_TRANSLATIONS = {
     "menu.empty":          "Δεν υπάρχουν εγκατεστημένες εφαρμογές",
     "menu.empty.hint":     "Οι εφαρμογές θα εμφανιστούν εδώ μόλις εγκατασταθούν.",
     "category.productivity": "Παραγωγικότητα",
+	"category.utilities": "Βοηθήματα",
 
     "running.home":        "Επιστροφή στην επιφάνεια εργασίας",
     "running.back":        "Πίσω",

@@ -793,3 +793,42 @@ RELEASE HISTORY (condensed)
            audited clean. App banners unchanged by design
            (todo v0.4 / kanban v0.5 / notes 0.17.0 = feature-
            state markers). App version surface: 0.18.2.
+		   
+## [0.19.0] — NEW APP: Weather
+
+### Added
+- **Weather app** (`weather/`): standalone orOS app (v0.1.0)
+  - Current conditions + 48h hourly + 7-day daily forecast
+  - Multi-city favorites with per-city device-local cache
+    (`oros-weatherapp-cache`, NEVER synced — merge-safe by design)
+  - Precipitation probability bars (hourly strip + daily rows)
+  - Offline: renders last-known data + dim "offline" badge —
+    never fake numbers, never blank screen
+  - 30-min fetch throttle; fetch on open / tab-visible / manual
+    refresh only (network-first logic, no background polling)
+  - Open-Meteo provider (no key, no cookies), geocoding on add,
+    timezone=auto
+  - Sync slice `oros-weatherapp-data` (cities list travels via
+    Dropbox; compact todo-contract merge: LWW + tombstones + om
+    ordering; merge-engine-lite ~50 lines)
+  - OS-pure theme (PAL_VARS palette inheritance from shell,
+    same contract as todo/kanban/notes) — G3 enforced
+  - Inline i18n EN/EL reading `oros-lang` at boot (same pattern)
+  - Contract Β shortcut forwarding (capture-phase, canonical)
+  - °C / km/h only (Europe-first; units toggle deferred to backlog)
+
+### Changed
+- Version bump: 0.18.2 → 0.19.0 (new app = minor bump)
+
+### Wired files checklist (guide for future app additions)
+When adding a new orOS app `foo/` (foo/index.html + foo.css + foo.js):
+1. Create `foo/` folder with 3 files (follow todo/weather template)
+2. `apps.json` — add entry (id, name, category, icon, url, type)
+3. `shell.js` — ICONS: add `foo` icon SVG + APP_VERSION minor bump
+4. `sw.js` — add 4 PRECACHE_URLS entries (`foo/` + 3 files) in SAME
+   push (cache.addAll fails on 404 — never ship sw.js alone)
+5. `translations.js` — new category key if new category introduced
+6. CI (`bump-version.yml`) — verify weather/foo files auto-covered
+   for `?v=` stamping; add explicit entries if the yml lists files
+7. Push all in ONE commit; verify on BOTH devices (R3) via Info
+   modal + open the new app offline to verify precache

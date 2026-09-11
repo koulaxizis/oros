@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="oros" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Weather · orOS</title>
+  <link rel="stylesheet" href="weather.css?v=0.18.2">
+</head>
+<body>
+
+  <!-- Top bar: city switcher (opens dialog) + manual refresh -->
+  <header id="topbar">
+    <button id="city-btn" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span id="city-name">—</span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <span class="spacer"></span>
+    <button id="refresh-btn" type="button" aria-label="Refresh">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
+  </header>
+
+  <!-- Main scroll: offline badge → current → hourly → daily -->
+  <main id="wxmain">
+
+    <div id="offline-badge" hidden>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 0 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+      <span data-i18n="offline">Offline — showing last known</span>
+    </div>
+
+    <div id="empty" hidden>
+      <span data-i18n="empty.title">No city yet</span>
+      <small data-i18n="empty.hint">Tap the city button above to add one.</small>
+    </div>
+
+    <section id="current" hidden>
+      <div id="cur-main">
+        <span id="cur-icon"></span>
+        <div id="cur-temp-block">
+          <span id="cur-temp">—</span>
+          <span id="cur-cond">—</span>
+        </div>
+      </div>
+      <div id="cur-meta">
+        <div class="meta-cell">
+          <span class="meta-k" data-i18n="meta.feels">Feels like</span>
+          <span class="meta-v" id="cur-feels">—</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-k" data-i18n="meta.humidity">Humidity</span>
+          <span class="meta-v" id="cur-hum">—</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-k" data-i18n="meta.wind">Wind</span>
+          <span class="meta-v" id="cur-wind">—</span>
+        </div>
+      </div>
+      <div id="cur-updated" class="dim"></div>
+    </section>
+
+    <h3 class="sec-title" data-i18n="hourly.title">Next 48 hours</h3>
+    <div id="hourly"></div>
+
+    <h3 class="sec-title" data-i18n="daily.title">7-day forecast</h3>
+    <ul id="daily"></ul>
+
+  </main>
+
+  <!-- City management dialog: saved list (switch/delete) + geocoded add -->
+  <dialog id="dlg-city">
+    <h3 data-i18n="dlg.title">Cities</h3>
+    <div id="city-list"></div>
+    <div id="city-add-row">
+      <input id="city-input" type="text" autocomplete="off" spellcheck="false"
+             data-i18n-ph="dlg.input" placeholder="City name…">
+      <button id="city-add-btn" type="button" class="primary" data-i18n="dlg.add">Add</button>
+    </div>
+    <p class="hint" id="city-hint" hidden></p>
+  </dialog>
+
+  <script src="weather.js?v=0.18.2"></script>
+</body>
+</html>

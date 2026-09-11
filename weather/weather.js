@@ -1,0 +1,879 @@
+// ============================================================
+// orOS Weather — App logic (v0.1.0)
+// Provider: Open-Meteo (no key, no cookies). One forecast
+// request per refresh: current + hourly 48h + daily 7d,
+// timezone=auto. Feels-like/humidity derive from the hourly
+// array at the current hour (current_weather carries neither).
+// Sections:
+//   1. Constants, i18n, helpers, icons
+//   2. Data model + storage (cities, tombstones, cache)
+//   2b. Merge engine lite (todo-contract, compact)
+//   3. API: geocoding + forecast + throttle
+//   4. Render (Part 3b)
+//   5. Sync slice + palette (Part 3b)
+//   6. Wiring & boot (Part 3b)
+// Data:
+//   slice "oros-weatherapp-data"  → travels (cities only)
+//   cache "oros-weatherapp-cache" → device-local, NEVER in slice
+// Offline: render from cache + badge — never fake numbers.
+// ============================================================
+(function () {
+  "use strict";
+
+  var STORAGE_KEY  = "oros-weatherapp-data";
+  var CACHE_KEY    = "oros-weatherapp-cache";
+  var DATA_VER     = 1;
+  var FETCH_GAP_MS = 30 * 60 * 1000;   // min gap between forecast fetches
+  var STALE_MS     = 3 * 60 * 60 * 1000;
+  var CACHE_MAX    = 6;                // cities kept in device cache
+
+  // ---------- 1. Constants, i18n, helpers, icons ----------
+  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+
+  var STRINGS = {
+    en: {
+      "city.add.tip":  "Add city",
+      "refresh":       "Refresh",
+      "offline":       "Offline — showing last known",
+      "empty.title":   "No city yet",
+      "empty.hint":    "Tap the city button above to add one.",
+      "meta.feels":    "Feels like",
+      "meta.humidity": "Humidity",
+      "meta.wind":     "Wind",
+      "hourly.title":  "Next 48 hours",
+      "daily.title":   "7-day forecast",
+      "dlg.title":     "Cities",
+      "dlg.input":     "City name…",
+      "dlg.add":       "Add",
+      "dlg.del":       "Delete city",
+      "updated.at":    "Updated",
+      "err.fetch":     "Could not fetch weather — check connection",
+      "err.notfound":  "City not found",
+      "err.exists":    "Already in the list",
+      "now":           "Now"
+    },
+    el: {
+      "city.add.tip":  "Προσθήκη πόλης",
+      "refresh":       "Ανανέωση",
+      "offline":       "Εκτός σύνδεσης — εμφανίζονται τα τελευταία δεδομένα",
+      "empty.title":   "Καμία πόλη ακόμα",
+      "empty.hint":    "Πάτησε το κουμπί πόλης παραπάνω για προσθήκη.",
+      "meta.feels":    "Αίσθηση",
+      "meta.humidity": "Υγρασία",
+      "meta.wind":     "Άνεμος",
+      "hourly.title":  "Επόμενες 48 ώρες",
+      "daily.title":   "Πρόγνωση 7 ημερών",
+      "dlg.title":     "Πόλεις",
+      "dlg.input":     "Όνομα πόλης…",
+      "dlg.add":       "Προσθήκη",
+      "dlg.del":       "Διαγραφή πόλης",
+      "updated.at":    "Ενημερώθηκε",
+      "err.fetch":     "Δεν έγινε λήψη — έλεγξε τη σύνδεση",
+      "err.notfound":  "Δεν βρέθηκε η πόλη",
+      "err.exists":    "Υπάρχει ήδη στη λίστα",
+      "now":           "Τώρα"
+    }
+  };
+
+  function t(key) {
+    var p = STRINGS[LANG] || STRINGS.en;
+    return p[key] !== undefined ? p[key]
+         : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+  }
+
+  // WMO codes → condition text (same grouping as the shell chip)
+  function condText(code) {
+    var c = Number(code) || 0;
+    var en, el;
+    if (c === 0)                 { en = "Clear sky";     el = "Καθαρός ουρανός"; }
+    else if (c === 1 || c === 2) { en = "Partly cloudy"; el = "Λίγες νεφώσεις"; }
+    else if (c === 3)            { en = "Overcast";      el = "Συννεφιά"; }
+    else if (c === 45 || c === 48) { en = "Fog";         el = "Ομίχλη"; }
+    else if (c >= 51 && c <= 57) { en = "Drizzle";       el = "Ψιλή βροχή"; }
+    else if (c >= 58 && c <= 67) { en = "Rain";          el = "Βροχή"; }
+    else if (c >= 71 && c <= 77) { en = "Snow";          el = "Χιόνι"; }
+    else if (c >= 80 && c <= 82) { en = "Showers";       el = "Μπόρες"; }
+    else if (c === 85 || c === 86) { en = "Snow showers"; el = "Χιονοπτώσεις"; }
+    else if (c >= 95)            { en = "Thunderstorm"; el = "Καταιγίδα"; }
+    else                         { en = "Cloudy";        el = "Νεφελώδης"; }
+    return LANG === "el" ? el : en;
+  }
+
+  // Same WMO SVG set as the shell chip — one visual language.
+  var SA = 'width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"';
+  var WX_SUN   = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+  var WX_MOON  = '<svg ' + SA + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  var WX_PART  = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M11 7h1"/><path d="M12 19a4 4 0 0 1 0-8 5 5 0 0 1 9.6 1.5A3.5 3.5 0 0 1 20 19z"/></svg>';
+  var WX_CLOUD = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
+  var WX_FOG   = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round"><path d="M4 13h16M6 16.5h12M8 19h8"/></svg>';
+  var WX_RAIN  = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.55"/><path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2"/></svg>';
+  var WX_SNOW  = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.45"/><path d="M8 20h.01M12 20h.01M16 20h.01"/></svg>';
+  var WX_STORM = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9h-1.26A8 8 0 1 0 9 19h9a5 5 0 0 0 0-10z" opacity="0.55"/><polyline points="13 11 9 15 13 15 11 19 17 12 13.5 12 15 9"/></svg>';
+
+  function wxNightNow() {
+    var h = new Date().getHours();
+    return h < 6 || h >= 21;
+  }
+  function iconFor(code) {
+    var c = Number(code) || 0;
+    if (c === 0)                    return wxNightNow() ? WX_MOON : WX_SUN;
+    if (c === 1 || c === 2)          return wxNightNow() ? WX_MOON : WX_PART;
+    if (c === 3)                    return WX_CLOUD;
+    if (c === 45 || c === 48)       return WX_FOG;
+    if (c >= 51 && c <= 67)         return WX_RAIN;
+    if (c >= 71 && c <= 77)         return WX_SNOW;
+    if (c >= 80 && c <= 82)         return WX_RAIN;
+    if (c === 85 || c === 86)       return WX_SNOW;
+    if (c >= 95)                    return WX_STORM;
+    return WX_CLOUD;
+  }
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  function $(id) { return document.getElementById(id); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function idOf(c) { return c.id; }
+
+  // ---------- 2. Data model + storage ----------
+  // state = {
+  //   ver: 1, sm, om,
+  //   active: <cityId> | null,
+  //   deleted: { <cityId>: <tombstone ts> },
+  //   cities: [{ id, label, lat, lon, mtime, pos }]
+  // }
+  var state = null;
+
+  function newCityObj(label, lat, lon) {
+    return { id: uid(), label: label, lat: lat, lon: lon,
+             mtime: Date.now(), pos: 0 };
+  }
+
+  function defaultState() {
+    return {
+      ver: DATA_VER, sm: Date.now(), om: Date.now(),
+      active: null, deleted: {}, cities: []
+    };
+  }
+
+  function migrate(data) {
+    if (!data || !Array.isArray(data.cities)) return null;
+    if (typeof data.sm !== "number") data.sm = 0;
+    if (typeof data.om !== "number") data.om = 0;
+    if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
+    data.cities.forEach(function (c) {
+      if (typeof c.mtime !== "number") c.mtime = 0;
+      if (typeof c.pos !== "number") c.pos = 0;
+    });
+    data.ver = DATA_VER;
+    return data;
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var data = migrate(JSON.parse(raw));
+        if (data) { state = data; return; }
+      }
+    } catch (e) { /* corrupted → fresh */ }
+    state = defaultState();
+    save();
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { /* quota */ }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+
+  function cityById(id) {
+    for (var i = 0; i < state.cities.length; i++) {
+      if (state.cities[i].id === id) return state.cities[i];
+    }
+    return null;
+  }
+  function activeCity() {
+    return cityById(state.active) || state.cities[0] || null;
+  }
+
+  // --- Device-local forecast cache (map cityId → payload) ---
+  function readCacheMap() {
+    try {
+      var m = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (m && typeof m === "object") return m;
+    } catch (e) {}
+    return {};
+  }
+  function readCityCache(cityId) {
+    return readCacheMap()[cityId] || null;
+  }
+  function writeCityCache(cityId, payload) {
+    var m = readCacheMap();
+    m[cityId] = payload;
+    var keys = Object.keys(m);
+    if (keys.length > CACHE_MAX) {
+      keys.sort(function (x, y) { return (m[x].at || 0) - (m[y].at || 0); });
+      while (keys.length > CACHE_MAX) delete m[keys.shift()];
+    }
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+
+  // ---------- 2b. Merge engine lite (todo-contract, compact) ----------
+  // Deterministic + symmetric: merge(A,B) === merge(B,A).
+  //   · active — LWW by root sm; ties by lexicographic JSON
+  //   · cities — union by id, content LWW by mtime
+  //     (ties by lexicographic JSON — identical both sides)
+  //   · ordering — the side with larger om donates positions;
+  //     unknown cities append at the end (older mtime first)
+  //   · tombstones — union with max ts; deletion beats older
+  //     edits, an edit newer than its tombstone resurrects.
+
+  function newerCity(a, b) {
+    if ((a.mtime || 0) !== (b.mtime || 0)) {
+      return (a.mtime || 0) > (b.mtime || 0) ? a : b;
+    }
+    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
+  }
+
+  function mergeWeatherStates(A, B) {
+    var a = A || {}, b = B || {};
+
+    // tombstones: union, max ts
+    var tomb = {};
+    Object.keys(a.deleted || {}).forEach(function (id) { tomb[id] = a.deleted[id]; });
+    Object.keys(b.deleted || {}).forEach(function (id) {
+      tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
+    });
+
+    // scalars (active): LWW by sm — symmetric tie-break, never
+    // "local wins" (that flip-flops forever).
+    var sa = JSON.stringify([a.active || null]);
+    var sb = JSON.stringify([b.active || null]);
+    var scalars = (a.sm || 0) !== (b.sm || 0)
+      ? ((a.sm || 0) > (b.sm || 0) ? a : b)
+      : (sa >= sb ? a : b);
+
+    // cities: union by id, LWW content, tombstone-aware
+    var map = {};
+    (a.cities || []).forEach(function (c) { map[c.id] = c; });
+    (b.cities || []).forEach(function (c) {
+      map[c.id] = map[c.id] ? newerCity(map[c.id], c) : c;
+    });
+    var alive = [];
+    Object.keys(map).forEach(function (id) {
+      var ts = tomb[id];
+      if (ts === undefined || (map[id].mtime || 0) > ts) alive.push(map[id]);
+    });
+
+    // ordering reference: larger om wins; ties by id-sequence JSON
+    var ref;
+    if ((a.om || 0) !== (b.om || 0)) {
+      ref = (a.om || 0) > (b.om || 0) ? (a.cities || []) : (b.cities || []);
+    } else {
+      var ka = JSON.stringify((a.cities || []).map(idOf));
+      var kb = JSON.stringify((b.cities || []).map(idOf));
+      ref = ka >= kb ? (a.cities || []) : (b.cities || []);
+    }
+    var idx = {};
+    ref.forEach(function (c, i) { idx[c.id] = i; });
+    alive.sort(function (x, y) {
+      var ix = idx[x.id] !== undefined ? idx[x.id] : Infinity;
+      var iy = idx[y.id] !== undefined ? idx[y.id] : Infinity;
+      if (ix !== iy) return ix - iy;
+      if ((x.mtime || 0) !== (y.mtime || 0)) return (x.mtime || 0) - (y.mtime || 0);
+      return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
+    });
+    alive.forEach(function (c, i) { c.pos = i; });
+
+    var out = {
+      ver: DATA_VER,
+      sm: Math.max(a.sm || 0, b.sm || 0),
+      om: Math.max(a.om || 0, b.om || 0),
+      active: scalars.active,
+      deleted: tomb,
+      cities: alive
+    };
+    // post-condition: active must point at a living city
+    var ok = out.cities.some(function (c) { return c.id === out.active; });
+    if (!ok) out.active = out.cities.length ? out.cities[0].id : null;
+    return out;
+  }
+
+  // ---------- 3. API: geocoding + forecast + throttle ----------
+  function geocodeCity(name) {
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" +
+                 (LANG === "el" ? "el" : "en") +
+                 "&name=" + encodeURIComponent(name))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var g = d && d.results && d.results[0];
+        if (!g) throw new Error("notfound");
+        return { lat: g.latitude, lon: g.longitude, label: g.name };
+      });
+  }
+
+  // "YYYY-MM-DDTHH:00" key for slicing the hourly array at now
+  function hourKey(date) {
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" +
+           pad(date.getDate()) + "T" + pad(date.getHours()) + ":00";
+  }
+
+  // One request: current + hourly + daily. Feels-like/humidity are
+  // taken from the hourly array AT the current hour (the
+  // current_weather block carries neither). Writes the cache.
+  function fetchForecast(city) {
+    if (!city || !navigator.onLine) return Promise.resolve(null);
+    var url = "https://api.open-meteo.com/v1/forecast" +
+      "?latitude=" + city.lat + "&longitude=" + city.lon +
+      "&current_weather=true" +
+      "&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weathercode" +
+      "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+      "&timezone=auto&forecast_days=7";
+    return fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.current_weather || !d.hourly || !d.daily) return null;
+
+        var payload = {
+          at: Date.now(),
+          current: {
+            temp:  d.current_weather.temperature,
+            code:  d.current_weather.weathercode,
+            wind:  d.current_weather.windspeed,   // km/h (API default)
+            feels: null,
+            hum:   null
+          },
+          hourly: [],
+          daily: []
+        };
+
+        // hourly: slice from the current hour, 48 slots forward
+        var times = d.hourly.time || [];
+        var nowKey = hourKey(new Date());
+        var start = 0;
+        while (start < times.length && times[start] < nowKey) start++;
+        for (var j = start; j < times.length && payload.hourly.length < 48; j++) {
+          if (j === start) {
+            payload.current.feels = (d.hourly.apparent_temperature &&
+                typeof d.hourly.apparent_temperature[j] === "number")
+              ? d.hourly.apparent_temperature[j] : payload.current.temp;
+            payload.current.hum = (d.hourly.relative_humidity_2m &&
+                typeof d.hourly.relative_humidity_2m[j] === "number")
+              ? d.hourly.relative_humidity_2m[j] : null;
+          }
+          payload.hourly.push({
+            time: times[j],
+            temp: d.hourly.temperature_2m[j],
+            pop:  (d.hourly.precipitation_probability &&
+                   typeof d.hourly.precipitation_probability[j] === "number")
+                  ? d.hourly.precipitation_probability[j] : null,
+            code: (d.hourly.weathercode && d.hourly.weathercode[j] !== undefined)
+                  ? d.hourly.weathercode[j] : 0
+          });
+        }
+
+        // daily: 7 rows
+        (d.daily.time || []).forEach(function (day, k) {
+          payload.daily.push({
+            date: day,
+            code: (d.daily.weathercode && d.daily.weathercode[k] !== undefined)
+                  ? d.daily.weathercode[k] : 0,
+            min:  (d.daily.temperature_2m_min && d.daily.temperature_2m_min[k] !== undefined)
+                  ? d.daily.temperature_2m_min[k] : null,
+            max:  (d.daily.temperature_2m_max && d.daily.temperature_2m_max[k] !== undefined)
+                  ? d.daily.temperature_2m_max[k] : null,
+            pop:  (d.daily.precipitation_probability_max &&
+                   d.daily.precipitation_probability_max[k] !== undefined)
+                  ? d.daily.precipitation_probability_max[k] : null
+          });
+        });
+
+        writeCityCache(city.id, payload);
+        return payload;
+      })
+      .catch(function () { return null; });   // offline/blocked — cache keeps last state
+  }
+
+  // Throttled entry point: fresh within 30 min → cache, else fetch.
+  function maybeFetch(force) {
+    var city = activeCity();
+    if (!city) return Promise.resolve(null);
+    var c = readCityCache(city.id);
+    if (!force && c && c.at && (Date.now() - c.at) < FETCH_GAP_MS) {
+      return Promise.resolve(c);
+    }
+    return fetchForecast(city);
+  }
+  
+    // ---------- 4. Render ----------
+  // Micro-scoped additions (kept out of STRINGS in 3a for size —
+  // same table shape, safe to extend):
+  STRINGS.en["today"] = "Today";
+  STRINGS.el["today"] = "Σήμερα";
+
+  function fmtHour(tIso) { return tIso.substring(11, 16); }
+  function todayLabel() { return t("today"); }
+  function isToday(dateStr) {
+    var d = new Date();
+    return dateStr === (d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()));
+  }
+
+  // Lazy toast (index.html ships no toast node — the Weather app
+  // rarely speaks; JS materializes one when needed, styled inline).
+  var toastEl = null, toastTimer = null;
+  function showToast(text) {
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.style.cssText =
+        "position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(8px);" +
+        "z-index:1200;background:var(--panel-bg);border:1px solid var(--border);" +
+        "border-radius:8px;box-shadow:0 4px 16px var(--shadow);padding:9px 14px;" +
+        "font-size:13px;color:var(--text);opacity:0;transition:opacity .3s,transform .3s;" +
+        "pointer-events:none;max-width:calc(100vw - 32px);";
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = text;
+    void toastEl.offsetWidth;
+    toastEl.style.opacity = "1";
+    toastEl.style.transform = "translateX(-50%) translateY(0)";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.style.opacity = "0";
+      toastEl.style.transform = "translateX(-50%) translateY(8px)";
+    }, 4000);
+  }
+
+  var renderQueued = false;
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(function () {
+      renderQueued = false;
+      renderAll(readPayload());
+    });
+  }
+
+  // Best available payload for the ACTIVE city: memory → cache → null.
+  // Fetching happens only in boot/refresh/visibility paths — the
+  // renderer itself is pure and never hits the network.
+  function readPayload() {
+    var city = activeCity();
+    if (!city) return null;
+    return readCityCache(city.id);
+  }
+
+  function renderTop(payload) {
+    var city = activeCity();
+    $("city-name").textContent = city ? city.label : t("dlg.title");
+    var empty = !city;
+    $("empty").hidden = !empty;
+    $("current").hidden = empty || !payload;
+    var secs = document.querySelectorAll(".sec-title");
+    for (var i = 0; i < secs.length; i++) secs[i].hidden = empty || !payload;
+    $("offline-badge").hidden = true;    // decided below, once
+    return { city: city, payload: payload };
+  }
+
+  function renderAll(payload) {
+    var ctx = renderTop(payload);
+    var city = ctx.city, p = ctx.payload;
+
+    // offline / stale badge — never fake-fresh numbers
+    $("offline-badge").hidden = true;
+    if (city && p && p.at) {
+      var stale = (Date.now() - p.at) > STALE_MS;
+      if (!navigator.onLine || stale) $("offline-badge").hidden = false;
+    }
+    if (!city || !p) return;
+
+    // --- current ---
+    $("cur-icon").innerHTML = iconFor(p.current.code);
+    $("cur-temp").textContent  = Math.round(p.current.temp) + "°";
+    $("cur-cond").textContent  = condText(p.current.code);
+    $("cur-feels").textContent = (p.current.feels !== null)
+      ? Math.round(p.current.feels) + "°" : "—";
+    $("cur-hum").textContent   = (p.current.hum !== null)
+      ? p.current.hum + "%" : "—";
+    $("cur-wind").textContent  = Math.round(p.current.wind) + " km/h";
+    var up = new Date(p.at);
+    $("cur-updated").textContent = t("updated.at") + " " +
+      up.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB",
+                            { hour: "2-digit", minute: "2-digit" });
+
+    // --- hourly strip ---
+    var host = $("hourly");
+    host.innerHTML = "";
+    var maxPop = 0;
+    p.hourly.forEach(function (h) { if (h.pop > maxPop) maxPop = h.pop; });
+    p.hourly.forEach(function (h, i) {
+      var cell = document.createElement("div");
+      cell.className = "hcell" + (i === 0 ? " now" : "");
+
+      var hour = document.createElement("span");
+      hour.className = "h-hour";
+      hour.textContent = fmtHour(h.time);
+      cell.appendChild(hour);
+
+      if (i === 0) {
+        var nowBadge = document.createElement("span");
+        nowBadge.className = "h-now";
+        nowBadge.textContent = t("now");
+        cell.appendChild(nowBadge);
+      }
+
+      var ico = document.createElement("span");
+      ico.className = "h-ico";
+      ico.innerHTML = iconFor(h.code);
+      cell.appendChild(ico);
+
+      var tmp = document.createElement("span");
+      tmp.className = "h-temp";
+      tmp.textContent = Math.round(h.temp) + "°";
+      cell.appendChild(tmp);
+
+      var bar = document.createElement("span");
+      bar.className = "h-bar";
+      var fill = document.createElement("span");
+      fill.className = "h-fill" + (h.pop ? "" : " h-zero");
+      fill.style.width = maxPop ? Math.round(100 * h.pop / maxPop) + "%" : "0%";
+      bar.appendChild(fill);
+      cell.appendChild(bar);
+
+      host.appendChild(cell);
+    });
+
+    // --- daily list ---
+    var dl = $("daily");
+    dl.innerHTML = "";
+    var tMin = null, tMax = null;
+    p.daily.forEach(function (d) {
+      if (d.min !== null && (tMin === null || d.min < tMin)) tMin = d.min;
+      if (d.max !== null && (tMax === null || d.max > tMax)) tMax = d.max;
+    });
+    p.daily.forEach(function (d) {
+      var row = document.createElement("li");
+      row.className = "drow";
+
+      var day = document.createElement("span");
+      day.className = "d-day";
+      if (isToday(d.date)) {
+        day.textContent = todayLabel();
+      } else {
+        var dd = new Date(d.date + "T12:00:00");
+        day.textContent = dd.toLocaleDateString(
+          LANG === "el" ? "el-GR" : "en-GB", { weekday: "long" });
+      }
+      var sub = document.createElement("span");
+      sub.className = "dd-sub";
+      var dd2 = new Date(d.date + "T12:00:00");
+      sub.textContent = dd2.toLocaleDateString(
+        LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short" });
+      day.appendChild(sub);
+      row.appendChild(day);
+
+      var ico = document.createElement("span");
+      ico.className = "d-ico";
+      ico.innerHTML = iconFor(d.code);
+      ico.title = condText(d.code);
+      row.appendChild(ico);
+
+      var pop = document.createElement("span");
+      pop.className = "d-pop" + (d.pop ? "" : " zero");
+      pop.textContent = (d.pop !== null ? Math.round(d.pop) : 0) + "%";
+      row.appendChild(pop);
+
+      var range = document.createElement("span");
+      range.className = "d-range";
+      var mn = document.createElement("span");
+      mn.className = "d-min";
+      mn.textContent = (d.min !== null ? Math.round(d.min) : "—") + "°";
+      var track = document.createElement("span");
+      track.className = "d-track";
+      var fillD = document.createElement("span");
+      fillD.className = "d-fill";
+      // position the fill within the WEEK's overall min..max span
+      if (tMin !== null && tMax !== null && tMax > tMin &&
+          d.min !== null && d.max !== null) {
+        var lo = 100 * (d.min - tMin) / (tMax - tMin);
+        var wi = 100 * (d.max - d.min) / (tMax - tMin);
+        fillD.style.left  = Math.round(lo) + "%";
+        fillD.style.width = Math.max(4, Math.round(wi)) + "%";
+      } else {
+        fillD.style.left = "0%"; fillD.style.width = "100%";
+      }
+      track.appendChild(fillD);
+      var mx = document.createElement("span");
+      mx.className = "d-max";
+      mx.textContent = (d.max !== null ? Math.round(d.max) : "—") + "°";
+      range.appendChild(mn); range.appendChild(track); range.appendChild(mx);
+      row.appendChild(range);
+
+      dl.appendChild(row);
+    });
+  }
+
+  // --- City dialog ---
+  var cityDlgBusy = false;   // geocode in flight → ignore double submits
+
+  function openCityDialog() {
+    renderCityList();
+    $("city-hint").hidden = true;
+    $("city-hint").className = "hint";
+    $("dlg-city").showModal();
+    setTimeout(function () { $("city-input").focus(); }, 50);
+  }
+
+  function renderCityList() {
+    var host = $("city-list");
+    host.innerHTML = "";
+
+    if (state.cities.length === 0) {
+      var none = document.createElement("p");
+      none.className = "hint";
+      none.textContent = t("empty.hint");
+      host.appendChild(none);
+      return;
+    }
+
+    state.cities.forEach(function (c) {
+      var row = document.createElement("div");
+      row.className = "city-row" + (c.id === state.active ? " active" : "");
+
+      var name = document.createElement("span");
+      name.className = "d-name";
+      name.textContent = c.label;
+      row.appendChild(name);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "city-del";
+      del.setAttribute("aria-label", t("dlg.del"));
+      del.title = t("dlg.del");
+      del.innerHTML =
+        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      del.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        deleteCity(c.id);
+        renderCityList();
+      });
+      row.appendChild(del);
+
+      row.addEventListener("click", function () {
+        if (state.active !== c.id) {
+          state.active = c.id;
+          state.sm = Date.now();
+          save();
+        }
+        $("dlg-city").close();
+        refresh(false);
+      });
+      host.appendChild(row);
+    });
+  }
+
+  function dlgHint(key, isErr) {
+    var h = $("city-hint");
+    h.textContent = t(key);
+    h.className = "hint" + (isErr ? " err" : "");
+    h.hidden = false;
+  }
+
+  function addCity() {
+    if (cityDlgBusy) return;
+    var input = $("city-input");
+    var name = input.value.trim();
+    if (!name) return;
+
+    cityDlgBusy = true;
+    input.disabled = true;
+    $("city-add-btn").disabled = true;
+
+    geocodeCity(name)
+      .then(function (g) {
+        // duplicate guard: same rounded coordinates = same city
+        var dup = state.cities.some(function (c) {
+          return Math.abs(c.lat - g.lat) < 0.02 && Math.abs(c.lon - g.lon) < 0.02;
+        });
+        if (dup) { dlgHint("err.exists", true); return; }
+        var city = newCityObj(g.label, g.lat, g.lon);
+        city.pos = state.cities.length;
+        state.cities.push(city);
+        state.active = city.id;
+        state.om = Date.now();     // ordering decision — merge reference
+        state.sm = Date.now();
+        save();
+        input.value = "";
+        renderCityList();
+        $("dlg-city").close();
+        refresh(true);            // brand new city → force fetch
+      })
+      .catch(function (e) {
+        dlgHint(e && e.message === "notfound" ? "err.notfound" : "err.fetch", true);
+      })
+      .finally(function () {
+        cityDlgBusy = false;
+        input.disabled = false;
+        $("city-add-btn").disabled = false;
+        input.focus();
+      });
+  }
+
+  function deleteCity(id) {
+    if (!confirm(t("dlg.del") + "?")) return;
+    state.cities = state.cities.filter(function (c) { return c.id !== id; });
+    if (!state.deleted) state.deleted = {};
+    state.deleted[id] = Date.now();              // tombstone — merge-safe
+    if (!state.cities.some(function (c) { return c.id === state.active; })) {
+      state.active = state.cities.length ? state.cities[0].id : null;
+    }
+    state.om = Date.now();
+    state.sm = Date.now();
+    // purge this city's device-local cache entry too
+    var m = readCacheMap();
+    delete m[id];
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(m)); } catch (e) {}
+    save();
+    scheduleRender();
+  }
+
+  // ---------- 5. Sync slice + palette ----------
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft",
+                  "--panel-bg", "--border", "--shadow"];
+
+  function inheritPalette() {
+    try {
+      var pRoot = window.parent.document.documentElement;
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var cs = window.parent.getComputedStyle(pRoot);
+      PAL_VARS.forEach(function (v) {
+        document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
+      });
+    } catch (e) { /* standalone — fallback palette stands */ }
+  }
+
+  function watchPalette() {
+    try {
+      new MutationObserver(inheritPalette).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  function registerSync() {
+    var api = (window.parent && window.parent.orosSync) || window.orosSync;
+
+    window.__orosSyncApi = {
+      _suppress: false,
+      dirty: function () {
+        if (this._suppress) return;
+        if (api && typeof api.markDirty === "function") api.markDirty();
+      }
+    };
+
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("weatherapp", sliceGet, sliceSet,
+                      STORAGE_KEY, mergeWeatherStates);
+  }
+
+  function sliceGet() {
+    return JSON.parse(JSON.stringify(state));
+  }
+
+  // data — merged result (or plain remote on legacy LWW paths)
+  // info — { merged: true } via mergeWeatherStates; else wholesale
+  function sliceSet(data, info) {
+    data = migrate(JSON.parse(JSON.stringify(data || null)));
+    if (!data || !Array.isArray(data.cities)) return;
+
+    window.__orosSyncApi._suppress = true;
+    try {
+      state = data;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+
+    var ok = state.cities.some(function (c) { return c.id === state.active; });
+    if (!ok) state.active = state.cities.length ? state.cities[0].id : null;
+
+    scheduleRender();
+    if (info && info.merged) showToast(t("updated.at"));   // light ack — no noise
+  }
+
+  // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) forward FIRST.
+  document.addEventListener("keydown", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+    var p = window.parent;
+    if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
+    if (p.orosShortcuts.handle(e)) e.stopPropagation();
+  }, true);   // capture phase
+
+  // ---------- 6. Wiring & boot ----------
+  function applyI18n() {
+    var n = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < n.length; i++) {
+      n[i].textContent = t(n[i].getAttribute("data-i18n"));
+    }
+    var p = document.querySelectorAll("[data-i18n-ph]");
+    for (var k = 0; k < p.length; k++) {
+      p[k].setAttribute("placeholder", t(p[k].getAttribute("data-i18n-ph")));
+    }
+  }
+
+  // R9 parity: static buttons ship EMPTY in the HTML, JS paints
+  // localized aria-labels/titles at boot.
+  function paintStaticAria() {
+    var pairs = [
+      ["refresh-btn", "refresh"],
+      ["city-btn",    "dlg.title"]
+    ];
+    pairs.forEach(function (pair) {
+      var el = $(pair[0]);
+      if (!el) return;
+      el.setAttribute("aria-label", t(pair[1]));
+      el.setAttribute("title", t(pair[1]));
+    });
+  }
+
+  function refresh(force) {
+    var btn = $("refresh-btn");
+    btn.classList.add("loading");
+    maybeFetch(force)
+      .then(function () { scheduleRender(); })
+      .catch(function () { /* fetchForecast never throws */ })
+      .finally(function () { btn.classList.remove("loading"); });
+  }
+
+  function wire() {
+    $("city-btn").addEventListener("click", openCityDialog);
+    $("refresh-btn").addEventListener("click", function () { refresh(true); });
+
+    $("city-add-btn").addEventListener("click", addCity);
+    $("city-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); addCity(); }
+    });
+    $("dlg-city").addEventListener("close", function () {
+      $("city-hint").hidden = true;   // hint dies with the dialog
+    });
+
+    // Fresh data when returning to a visible tab (throttled inside)
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) refresh(false);
+    });
+  }
+
+  // ---------- Boot ----------
+  load();
+  applyI18n();
+  paintStaticAria();
+  wire();
+  registerSync();
+  inheritPalette();
+  watchPalette();
+  renderAll(readPayload());   // instant paint from cache (if any)…
+  refresh(false);             // …then fetch if the cache is >30min old
+})();
