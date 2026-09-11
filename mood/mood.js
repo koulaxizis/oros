@@ -747,8 +747,14 @@ function mergeMoodStates(A, B) {
     host.appendChild(l2cols);
 
     // ---- L3: triadic habits ("this or that") ----
-    // Each row: two chips — picking one is an explicit yes/no,
-    // tapping the ACTIVE chip again returns to unknown (null).
+    // One titled panel, three clean rows — same visual rhythm as
+    // #intensities. Re-tapping the ACTIVE chip returns to unknown.
+    var h3 = document.createElement("h2");
+    h3.className = "sec-title";
+    h3.textContent = t("ins.basics");
+    host.appendChild(h3);
+    var habPanel = document.createElement("div");
+    habPanel.id = "habits";
     HABITS.forEach(function (h) {
       var row = document.createElement("div");
       row.className = "habrow";
@@ -765,8 +771,9 @@ function mergeMoodStates(A, B) {
         });
         row.appendChild(hc);
       });
-      host.appendChild(row);
+      habPanel.appendChild(row);
     });
+    host.appendChild(habPanel);
 
     // ---- L4: reflection ----
     var h4 = document.createElement("h2");
@@ -1751,6 +1758,12 @@ function mergeMoodStates(A, B) {
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>' +
         '<path d="M14 5l5 5"/></svg>';
+    }
+    var ib = $("ins-btn");
+    if (ib) {
+      ib.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';   // bar-chart family
     }
   }
 

@@ -258,12 +258,21 @@ input, textarea, select {
 .chip.ghost { color: var(--text-dim); }
 .chip.ghost.on { color: var(--text-dim); background: transparent; }
 
-/* triadic habit rows: yes/no chip pair */
+/* triadic habits: one titled panel, one row per habit */
+#habits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
 .habrow {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 6px;
 }
 .chip.hab.neg:not(.on) { color: var(--text-dim); }
 .chip.hab.neg.on {
@@ -310,8 +319,6 @@ input, textarea, select {
   display: flex;
   gap: 8px;
   margin-top: 14px;
-  position: sticky;
-  bottom: 8px;                       /* always reachable — mobile thumb zone */
 }
 button.prim {
   background: var(--accent-soft);
@@ -328,8 +335,6 @@ button.prim.big {
   flex: 1;
   font-size: 14.5px;
   min-height: 44px;
-  backdrop-filter: blur(6px);        /* sticky acts over scrolled content */
-  background: var(--panel-bg);
 }
 button.prim:hover { filter: brightness(1.1); }
 button.ghost {
