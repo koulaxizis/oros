@@ -102,6 +102,14 @@ R13 LOCAL VS DEPLOYED VERSION DESYNC (born in the cleanup wave):
     while remote manifest was 0.18.1 — same-workflow stamps can
     never disagree; local staleness was the cause (pending user
     verification at pause time).
+	
+	### Standing delivery rule
+- Patch format scales with change size: SMALL changes ship as
+  PALIO/NEO replacement blocks with exact anchors and precise
+  placement instructions (before/after); LARGE changes (many
+  edits across one file) ship as FULL corrected files. Never the
+  inverse: no full-file regeneration for a two-line fix, no
+  fragile twelve-step patch chain when a rewrite would be cleaner.
 
 ────────────────────────────────────────────────────────────────
 CURRENT STATE (v0.18.2 — STAGED, see SHIP STATUS) — WAVE 4
