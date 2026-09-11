@@ -906,3 +906,43 @@ Weather app: weather.js v0.3.0, weather.css v0.1.2.
 ### Known traps observed
 - Multi-part delivery cut mid-function AGAIN (fmtSpeed). Searched
   and joined before shipping.
+  
+## v0.3.1 — Weather app hotfix (badge regression, toast order, night icons)
+
+Weather app: weather.js v0.3.1. (Ship after v0.3.0 — patches the
+three bugs found in the v0.3.0 delivery review, before push.)
+
+### Fixed
+- **Offline badge never showed** (regression from v0.3.0 delivery):
+  `ob.hidden = obShow` had the boolean flipped — hidden=true when
+  we WANTED to show it (offline/failed fetch), and a redundant
+  `display:"none"` hid the healthy case too. Badge was invisible
+  in ALL states. Now: `ob.hidden = !obShow`.
+- **Undo toast word order**: text node was appended AFTER the
+  action button → rendered as "[Undo] Deleted — Serres". Text now
+  appends first.
+- **Night icons used the DEVICE clock** (inconsistent with the
+  v0.3.0 timezone fix): `wxNightNow()` consulted local hours, so
+  Tokyo at 22:00 viewed from Greece showed a sun, and the whole
+  daily list went nocturnal in the evening. `iconFor(code, hour)`
+  now takes a city-local hour: current conditions via
+  `cityHour(tz)` (new helper, sits next to cityTodayStr), hourly
+  cells parse their own ISO time, daily rows pass 12 (day symbols
+  by convention). Legacy callers without an hour fall back to the
+  device clock. Side fix: the tz fallback expression was deduped
+  into a single `tz` var reused by both todayStr and icon calls.
+
+### Pending
+- Dead code candidates awaiting go/no-go: aqiBand(), STALE_MS,
+  "city.add.tip" string, fmtSpeed double indent.
+  
+  PALIO:
+### Pending
+- Dead code candidates awaiting go/no-go: aqiBand(), STALE_MS,
+  "city.add.tip" string, fmtSpeed double indent.
+
+NEO:
+### Cleaned
+- Dead code removed: aqiBand() (unused — renderAll builds the band
+  inline), STALE_MS (never referenced), "city.add.tip" i18n key
+  (no consumer), fmtSpeed indentation.

@@ -32,7 +32,6 @@
   var CACHE_KEY    = "oros-weatherapp-cache";
   var DATA_VER     = 1;
   var FETCH_GAP_MS = 30 * 60 * 1000;   // min gap between forecast fetches
-  var STALE_MS     = 3 * 60 * 60 * 1000;
   var CACHE_MAX    = 6;                // cities kept in device cache
 
   var netDown = false;   // last fetch attempt FAILED while online
@@ -43,7 +42,6 @@
 
   var STRINGS = {
     en: {
-      "city.add.tip":  "Add city",
       "refresh":       "Refresh",
       "offline":       "Offline — showing last known",
       "empty.title":   "No city yet",
@@ -94,7 +92,6 @@
       "aqi.legend":    "European AQI: ≤20 Good · ≤40 Fair · ≤60 Moderate · ≤80 Poor · ≤100 Very poor · >100 Extremely poor"
     },
     el: {
-      "city.add.tip":  "Προσθήκη πόλης",
       "refresh":       "Ανανέωση",
       "offline":       "Εκτός σύνδεσης — εμφανίζονται τα τελευταία δεδομένα",
       "empty.title":   "Καμία πόλη ακόμα",
@@ -215,7 +212,6 @@
     if (v <= 100) return "vpoor";
     return "epoor";
   }
-  function aqiBand(v) { return t("aqi." + aqiLevel(v)); }
 
   // Same WMO SVG set as the shell chip — one visual language.
   var SA = 'width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"';
@@ -228,14 +224,19 @@
   var WX_SNOW  = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.45"/><path d="M8 20h.01M12 20h.01M16 20h.01"/></svg>';
   var WX_STORM = '<svg ' + SA + ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9h-1.26A8 8 0 1 0 9 19h9a5 5 0 0 0 0-10z" opacity="0.55"/><polyline points="13 11 9 15 13 15 11 19 17 12 13.5 12 15 9"/></svg>';
 
-  function wxNightNow() {
-    var h = new Date().getHours();
+  // Night judgment: KNOWN city-local hour (caller passes it) or
+  // device clock as legacy fallback. Hour param is local wall
+  // time (0–23) — hourly/daily rows carry it in their ISO time.
+  function isNightHour(h) {
     return h < 6 || h >= 21;
   }
-  function iconFor(code) {
+  function iconFor(code, hour) {
     var c = Number(code) || 0;
-    if (c === 0)                    return wxNightNow() ? WX_MOON : WX_SUN;
-    if (c === 1 || c === 2)          return wxNightNow() ? WX_MOON : WX_PART;
+    var night = (typeof hour === "number")
+      ? isNightHour(hour)
+      : (new Date().getHours() < 6 || new Date().getHours() >= 21);
+    if (c === 0)                    return night ? WX_MOON : WX_SUN;
+    if (c === 1 || c === 2)          return night ? WX_MOON : WX_PART;
     if (c === 3)                    return WX_CLOUD;
     if (c === 45 || c === 48)       return WX_FOG;
     if (c >= 51 && c <= 67)         return WX_RAIN;
@@ -729,6 +730,13 @@
     var d = new Date(Date.now() + offSec * 1000);
     return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate());
   }
+  
+  // City-local hour of "right now" (0–23), derived from the stored
+  // UTC offset — same source of truth as the slice/labels. Used to
+  // pick sun vs moon icons without consulting the device clock.
+  function cityHour(offSec) {
+    return new Date(Date.now() + offSec * 1000).getUTCHours();
+  }
 
   // Lazy toast (index.html ships no toast node — the Weather app
   // rarely speaks; JS materializes one when needed, styled inline).
@@ -747,6 +755,8 @@
     }
     if (toastAction) { toastAction.remove(); toastAction = null; }
 
+    toastEl.appendChild(document.createTextNode(text));   // text FIRST
+
     if (actionLabel && typeof actionFn === "function") {
       toastAction = document.createElement("button");
       toastAction.type = "button";
@@ -759,10 +769,8 @@
         actionFn();
         hideToast();
       });
-      toastEl.appendChild(toastAction);
+      toastEl.appendChild(toastAction);                  // action SECOND
     }
-
-    toastEl.appendChild(document.createTextNode(text));
     void toastEl.offsetWidth;
     toastEl.style.opacity = "1";
     toastEl.style.transform = "translateX(-50%) translateY(0)";
@@ -867,12 +875,14 @@
     // the [hidden] attribute — inline style beats them ALL.
     var ob = $("offline-badge");
     var obShow = !(navigator.onLine && !netDown);
-    ob.hidden = obShow;
+    ob.hidden = !obShow;                     // was flipped — badge never showed
     ob.style.display = obShow ? "" : "none";
     if (!city || !p) return;
 
     // --- current ---
-    $("cur-icon").innerHTML = iconFor(p.current.code);
+    var tz = (typeof p.tz === "number") ? p.tz
+      : -new Date().getTimezoneOffset() * 60;   // legacy cache rows (no tz)
+    $("cur-icon").innerHTML = iconFor(p.current.code, cityHour(tz));
     $("cur-icon").title = condText(p.current.code);   // hint replaced the label — condition lives on the icon
     $("cur-temp").textContent  = fmtTemp(p.current.temp);
     $("cur-temp").title        = t("units.tip");
@@ -942,7 +952,7 @@
 
       var ico = document.createElement("span");
       ico.className = "h-ico";
-      ico.innerHTML = iconFor(h.code);
+      ico.innerHTML = iconFor(h.code, Number(h.time.substring(11, 13)));
       cell.appendChild(ico);
 
       var tmp = document.createElement("span");
@@ -963,8 +973,7 @@
 
     // --- daily list ---
     // "Today" judged on the CITY's calendar (payload tz).
-    var todayStr = cityTodayStr(typeof p.tz === "number" ? p.tz
-      : -new Date().getTimezoneOffset() * 60);   // legacy cache rows (no tz)
+    var todayStr = cityTodayStr(tz);
     var dl = $("daily");
     dl.innerHTML = "";
     var tMin = null, tMax = null;
@@ -995,7 +1004,7 @@
 
       var ico = document.createElement("span");
       ico.className = "d-ico";
-      ico.innerHTML = iconFor(d.code);
+      ico.innerHTML = iconFor(d.code, 12);   // daily = day symbols by convention
       ico.title = condText(d.code);
       row.appendChild(ico);
 
