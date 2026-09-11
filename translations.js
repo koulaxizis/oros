@@ -21,6 +21,7 @@ window.OROS_TRANSLATIONS = {
     "menu.empty.hint":     "Apps will appear here as they are installed.",
     "category.productivity": "Productivity",
 	"category.utilities": "Utilities",
+	"category.lifestyle": "Lifestyle",
 
     "running.home":        "Return to desktop",
     "running.back":        "Back",
@@ -114,7 +115,7 @@ window.OROS_TRANSLATIONS = {
     "sc.info.shortcuts": "Shortcuts",
     "sc.info.repo": "Source code",
     "sc.info.cap": "Offline-first · Auto-merge sync · Snapshots · Local export · No cookies, no tracking.",
-	"gps.use": "Use my location"
+	"gps.use": "Use my location",
   },
 
   el: {
@@ -130,6 +131,7 @@ window.OROS_TRANSLATIONS = {
     "menu.empty.hint":     "Οι εφαρμογές θα εμφανιστούν εδώ μόλις εγκατασταθούν.",
     "category.productivity": "Παραγωγικότητα",
 	"category.utilities": "Βοηθήματα",
+	"category.lifestyle": "Τρόπος ζωής",
 
     "running.home":        "Επιστροφή στην επιφάνεια εργασίας",
     "running.back":        "Πίσω",

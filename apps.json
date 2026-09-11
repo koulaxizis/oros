@@ -32,6 +32,14 @@
       "icon": "weather",
       "url": "weather/",
       "type": "internal"
+    },
+    {
+      "id": "mood",
+      "name": "Mood",
+      "category": "Lifestyle",
+      "url": "mood/",
+      "type": "internal",
+      "icon": "mood"
     }
   ]
 }

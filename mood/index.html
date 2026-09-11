@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mood · orOS</title>
+<link rel="stylesheet" href="mood.css?v=0.1.0">
+</head>
+<body>
+<header id="topbar">
+  <span id="app-title" data-i18n="app.title">Mood</span>
+  <span class="spacer"></span>
+  <button id="new-btn" type="button" data-i18n-title="btn.new" aria-label="New entry"></button>
+</header>
+
+<main id="moodmain">
+  <!-- 7-day thread (colored dots, JS-built; hidden until entries exist) -->
+  <div id="thread" hidden></div>
+
+  <!-- capture card: the whole L1–L4 flow, JS builds internals -->
+  <section id="capture"></section>
+
+  <!-- recent entries (JS-built rows, newest first) -->
+  <section id="recent" hidden>
+    <h2 class="sec-title" data-i18n="recent.title">Recent</h2>
+    <ul id="entry-list"></ul>
+  </section>
+</main>
+
+<script src="mood.js?v=0.1.0"></script>
+</body>
+</html>

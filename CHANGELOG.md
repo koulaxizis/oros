@@ -961,3 +961,46 @@ NEO:
   button, Ctrl+Alt+Shift+O shortcut, taskbar sync-dot click.
 - Translations: sync.ok.empty removed; sync.ok.cloud.empty and
   sync.ok.none added (EN/EL).
+  
+  ## v0.22.0 — Mood app v0.1.0 (Wave 1)
+
+New orOS application: Mood (mood tracker). Files: mood.html,
+mood.js, mood.css. Design principle: capturing how you feel must
+take seconds, not minutes.
+
+### Wave 1 scope
+- Entry flow: L1 emotion grid (9 fixed emotions, multi-select,
+  per-emotion intensity 1–5, default 3) · L2 Location/Person
+  columns (5 seed values each, editable/deletable, inline "+Add",
+  smart time-of-day preselection by frequency) · L3 toggles
+  (water/food/meds) · L4 free reflection + optional trigger.
+  Time-of-day DERIVED from the entry timestamp (morning/
+  afternoon/evening/night) — never asked.
+- Soft guard: saving within 1h of the last entry asks
+  "update or new" via inline panel (no native confirm).
+- Recent list (30 newest): faces, context, note preview, edit +
+  delete-with-undo (tombstone/resurrection merge-safe).
+- 7-day thread: colored dots per day (highest-intensity emotion),
+  hollow = no entry that day (absence ≠ neutral mood — enforced
+  visually AND statistically going forward).
+- Privacy notice: one-time dialog on first open per device
+  (device-local flag oros-mood-seen).
+- Sync: oros-mood-data slice (todo-contract merge: entries LWW by
+  mtime, tombstones, column values with om-based ordering).
+  Included in manual export + snapshots via the standard engine.
+
+### Mantra checkpoints
+- Offline first ✓ (zero network beyond sync engine)
+- Mobile first ✓ (thumb-zone sticky save, mobile-first CSS)
+- No external dependencies ✓
+- Full project manual export ✓ (engine)
+- Full project snapshots ✓ (engine)
+- Full project auto merge sync ✓ (engine)
+
+### Under consideration (backlog)
+- Wave 2: distributions, calendar dots view, streak indicator,
+  medication adherence history.
+- Wave 3: correlations, insights panel.
+- Wave 4: gentle morning/evening reminders — when orOS is open
+  (first-open-after-hour → toast, clickable → opens Mood; no
+  background timers, no architecture change).
