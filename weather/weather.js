@@ -53,6 +53,8 @@
       "err.fetch":     "Could not fetch weather — check connection",
       "err.notfound":  "City not found",
       "err.exists":    "Already in the list",
+      "err.gps":       "Location unavailable",
+      "gps.use":       "Use my location",
       "now":           "Now"
     },
     el: {
@@ -74,6 +76,8 @@
       "err.fetch":     "Δεν έγινε λήψη — έλεγξε τη σύνδεση",
       "err.notfound":  "Δεν βρέθηκε η πόλη",
       "err.exists":    "Υπάρχει ήδη στη λίστα",
+      "err.gps":       "Η τοποθεσία δεν είναι διαθέσιμη",
+      "gps.use":       "Χρήση τοποθεσίας",
       "now":           "Τώρα"
     }
   };
@@ -155,7 +159,8 @@
   function defaultState() {
     return {
       ver: DATA_VER, sm: Date.now(), om: Date.now(),
-      active: null, deleted: {}, cities: []
+      active: null, deleted: {}, cities: [],
+      shellWx: null   // last shell-menu location we applied (fingerprint)
     };
   }
 
@@ -168,11 +173,10 @@
       if (typeof c.mtime !== "number") c.mtime = 0;
       if (typeof c.pos !== "number") c.pos = 0;
     });
+    if (data.shellWx === undefined) data.shellWx = null;   // pre-0.19.3 data
     data.ver = DATA_VER;
     return data;
   }
-
-  var freshInstall = false;   // set only on the first-ever run
 
   function load() {
     try {
@@ -182,7 +186,6 @@
         if (data) { state = data; return; }
       }
     } catch (e) { /* corrupted → fresh */ }
-    freshInstall = true;
     state = defaultState();
     save();
   }
@@ -501,9 +504,13 @@
     var ctx = renderTop(payload);
     var city = ctx.city, p = ctx.payload;
 
-    // Offline badge: true offline OR last fetch failed while online
-    // (the big URL may die while the tray's simple one lives).
-    $("offline-badge").hidden = navigator.onLine && !netDown;
+    // Offline badge: true offline OR last fetch failed while online.
+    // Inline style: any CSS display rule on #offline-badge would beat
+    // the [hidden] attribute — inline style beats them ALL.
+    var ob = $("offline-badge");
+    var obShow = !(navigator.onLine && !netDown);
+    ob.hidden = obShow;
+    ob.style.display = obShow ? "" : "none";
     if (!city || !p) return;
 
     // --- current ---
@@ -885,6 +892,27 @@
       $("city-hint").hidden = true;   // hint dies with the dialog
     });
 
+    // GPS: geolocation is legal exactly HERE — inside the user's
+    // click. Reuses the shell→app bridge (__orosWeatherUpdate) for
+    // the upsert + refresh, so all stamping logic stays in one place.
+    $("dlg-gps").addEventListener("click", function () {
+      if (!navigator.geolocation) { dlgHint("err.gps", true); return; }
+      var btn = this;
+      btn.disabled = true;
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        btn.disabled = false;
+        $("dlg-city").close();
+        window.__orosWeatherUpdate({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          label: LANG === "el" ? "Η τοποθεσία μου" : "My location"
+        });
+      }, function () {
+        btn.disabled = false;
+        dlgHint("err.gps", true);   // declined or unavailable — hint, no toast spam
+      }, { timeout: 10000, maximumAge: 30 * 60 * 1000 });
+    });
+
     // Fresh data when returning to a visible tab (throttled inside)
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) refresh(false);
@@ -917,31 +945,46 @@
     refresh(true);        // a location change deserves fresh data
   };
 
-  // First-run adoption (app-was-never-open case): if the shell menu
-  // already has a location and this app never stored cities, adopt
-  // it as the first city. Guarded by freshInstall so a user who
-  // deliberately deleted every city isn't fought on reopen.
-  function adoptShellLocation() {
-    if (!freshInstall || state.cities.length > 0) return;
-    try {
-      var w = JSON.parse(localStorage.getItem("oros-weather"));
-      if (w && w.on && typeof w.lat === "number" && typeof w.lon === "number") {
-        var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
-                           w.lat, w.lon);
-        c.pos = 0;
-        state.cities.push(c);
-        state.active = c.id;
-        state.om = Date.now();
-        state.sm = Date.now();
-        save();
-      }
-    } catch (e) {}
+  // Boot-time reconciliation with the shell's weather preference.
+  // The menu is desktop-only → settings change while this app is NOT
+  // running, so the live bridge (wxPushToApp → __orosWeatherUpdate)
+  // can't fire. Compare the shell pref against the LAST one we
+  // applied (fingerprint): changed → upsert city + activate.
+  // Unchanged → hands off: a user who deliberately deleted the city
+  // in-app is never fought on the next open. w.on === false → the
+  // chip is off and the shell isn't asking for anything.
+  function syncShellLocation() {
+    var w = null;
+    try { w = JSON.parse(localStorage.getItem("oros-weather")); } catch (e) {}
+    if (!w || !w.on || typeof w.lat !== "number" || typeof w.lon !== "number") return;
+
+    var fp = [w.lat.toFixed(3), w.lon.toFixed(3), w.label || ""].join("|");
+    if (fp === state.shellWx) return;          // nothing new from the shell
+    state.shellWx = fp;
+
+    var dup = null;
+    state.cities.forEach(function (c) {
+      if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) dup = c;
+    });
+    if (dup) {
+      if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
+      if (state.active !== dup.id) { state.active = dup.id; state.sm = Date.now(); }
+    } else {
+      var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
+                         w.lat, w.lon);
+      c.pos = state.cities.length;
+      state.cities.push(c);
+      state.active = c.id;
+      state.om = Date.now();
+      state.sm = Date.now();
+    }
+    save();
   }
 
   // ---------- Boot ----------
   console.log("weather.js v0.19.2 boot");
   load();
-  adoptShellLocation();
+  syncShellLocation();
   applyI18n();
   paintStaticAria();
   wire();

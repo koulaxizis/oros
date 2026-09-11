@@ -110,7 +110,8 @@ window.OROS_TRANSLATIONS = {
     "sc.info.tagline": "A static operating system in your browser.",
     "sc.info.shortcuts": "Shortcuts",
     "sc.info.repo": "Source code",
-    "sc.info.cap": "Offline-first · Auto-merge sync · Snapshots · Local export · No cookies, no tracking."
+    "sc.info.cap": "Offline-first · Auto-merge sync · Snapshots · Local export · No cookies, no tracking.",
+	"gps.use": "Use my location"
   },
 
   el: {
@@ -215,7 +216,8 @@ window.OROS_TRANSLATIONS = {
     "sc.info.tagline": "Ένα στατικό λειτουργικό στον browser σου.",
     "sc.info.shortcuts": "Συντομεύσεις",
     "sc.info.repo": "Πηγαίος κώδικας",
-    "sc.info.cap": "Offline-first · Συγχρονισμός με αυτόματη συγχώνευση · Snapshots · Τοπική εξαγωγή · Χωρίς cookies, χωρίς tracking."
+    "sc.info.cap": "Offline-first · Συγχρονισμός με αυτόματη συγχώνευση · Snapshots · Τοπική εξαγωγή · Χωρίς cookies, χωρίς tracking.",
+	"gps.use": "Χρήση τοποθεσίας"
   }
 
 };
