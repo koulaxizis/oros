@@ -102,8 +102,8 @@ R13 LOCAL VS DEPLOYED VERSION DESYNC (born in the cleanup wave):
     while remote manifest was 0.18.1 — same-workflow stamps can
     never disagree; local staleness was the cause (pending user
     verification at pause time).
-	
-	### Standing delivery rule
+
+### Standing delivery rule
 - Patch format scales with change size: SMALL changes ship as
   PALIO/NEO replacement blocks with exact anchors and precise
   placement instructions (before/after); LARGE changes (many
@@ -112,16 +112,22 @@ R13 LOCAL VS DEPLOYED VERSION DESYNC (born in the cleanup wave):
   fragile twelve-step patch chain when a rewrite would be cleaner.
 
 ────────────────────────────────────────────────────────────────
-CURRENT STATE (v0.18.2 — STAGED, see SHIP STATUS) — WAVE 4
-(CLEANUP/AUDIT) COMPLETE
+CURRENT STATE — see RELEASE HISTORY for the newest version
 ────────────────────────────────────────────────────────────────
-Core shell  : APP_VERSION 0.18.2 in shell.js (single source of
-              truth). sw.js CACHE_VERSION, manifest version and
-              ALL ?v= stamps are written AUTOMATICALLY by the CI
+  (Historical note: the detailed CURRENT STATE block froze at
+  v0.18.2 / Wave 4. Live state = the newest RELEASE HISTORY
+  entries — currently v0.22.0, Mood Wave 1 staged, ship checklist
+  in the SESSION HANDOFF at the end of this file. Older registries
+  below remain accurate unless a newer section supersedes them.)
+
+Core shell  : APP_VERSION in shell.js (single source of truth).
+              sw.js CACHE_VERSION, manifest version and ALL ?v=
+              stamps are written AUTOMATICATICALLY by the CI
               action (see RELEASE PIPELINE).
 Apps        : To-Do (merge v0.4, DATA_VER 3), Kanban (v0.5,
               DATA_VER 4), Notes (v0.17.0, DATA_VER 2 — save-
-              indicator REMOVED in v0.18.0, see below).
+              indicator REMOVED in v0.18.0, see below),
+              Weather (app v0.3.1), Mood (v0.1.0, Wave 1 staged).
 Sync engine : sync.js v0.8.2 (per-slice baselines + divergence
               guard; v0.8.2 = cleanup wave dead-code removal).
 Skins       : 16 · Wallpapers: 15 (sand default).
@@ -167,12 +173,9 @@ v0.18.1 POST-SHIP WAVE (all fixes user-tested on desktop):
      menu.empty.hint — "Apps will appear here…", user caught it);
      credits "Designed by Christos Koulaxizis" now LINKS to
      https://koulaxizis.gr (target _blank, rel noopener).
-  f. PENDING USER DECISION: dot-click message composition. Current
-     behavior: on dirty sync the toasts are "Pulled — N slices"
-     then "Pushed" (second replaces first). An offered refinement
-     composes ONE toast: "Pulled (N) · Pushed" (or just the leg
-     that ran). User has NOT yet picked a variant — ask before
-     changing.
+  f. RESOLVED in v0.21.2 (user-approved): combined dot-push toast
+     omits the pull part when nothing came down; all four pull
+     entry points centralize in reportPullResult().
 
 NOTES APP FEATURE SET (v0.17.0, cumulative — app untouched in
 0.18.x except save-indicator removal + forwarding migration):
@@ -224,7 +227,8 @@ FILE TREE (repo root)
                         display standalone, maskable icons;
                         audited clean in v0.18.2)
   fonts/                vendored Nunito woff2 (5 weights)
-  todo/  kanban/  notes/  app folders (index.html + css + js)
+  todo/  kanban/  notes/  weather/  mood/  app folders
+                        (index.html + css + js)
   .github/workflows/bump-version.yml   release pipeline (v3)
   CHANGELOG.md          THIS FILE
 
@@ -256,6 +260,11 @@ LOCALSTORAGE / STORAGE KEYS
   oros-notes-prefs            Notes device-local prefs {open,
                               current, width} — NOT synced
   oros-kanban-data            Kanban slice storage (syncs)
+  oros-weatherapp-data        Weather app slice storage (cities +
+                              units; todo-contract merge, v0.19.0)
+  oros-weatherapp-cache       Weather app device-local forecast
+                              map (cityId → payload, MAX 6 —
+                              NEVER synced, v0.19.0)
   oros-weather                weather settings {on, auto, lat,
                               lon, label} — TRAVELS IN SHELL SLICE
   oros-wx-cache               last successful weather read {at,
@@ -264,11 +273,12 @@ LOCALSTORAGE / STORAGE KEYS
                               inherit another device's stale temp)
   oros-wx-last                epoch ms of last fetch attempt
                               (device-local throttle)
-  v0.15.0–0.17.0 added ZERO new keys; v0.18.0 added the three
-  weather keys above (wx settings are prefs, cache/throttle are
-  device-local by contract). v0.18.1 added ZERO. v0.18.2 added
-  ZERO — the sync-engine keys above ALREADY EXISTED in code and
-  are now documented (registry-vs-reality sweep, WAVE 4).
+  oros-mood-data              Mood slice storage (syncs; todo-
+                              contract merge, v0.22.0)
+  oros-mood-seen              Mood device-local privacy-notice
+                              flag (one-time dialog per device,
+                              NOT synced by decision, v0.22.0)
+  IndexedDB "oros-vault"      store "keys" → vault decryption key
 
 NOTES DATA MODEL (DATA_VER 2)
   state = { ver, pages:[{id, parent, title, text, mtime, pos,
@@ -375,7 +385,7 @@ TASKBAR SYNC DOT (v0.18.0/v0.18.1) — shell.js §9b + §12
     error toast; if locked → open menu (passphrase lives there);
     else pull then push-if-dirty, syncing→synced transients,
     toasts for each leg. The dot NO LONGER opens the menu.
-  Menu access points left: menu button, weather chip.
+    Menu access points left: menu button, weather chip.
 
 WEATHER WIDGET (v0.18.0) — shell.js §9d
   Provider: Open-Meteo forecast + geocoding APIs. NO API key,
@@ -432,6 +442,15 @@ MERGE CONTRACTS PER APP
     duplicateCard uses the ONE full stampColOrder() (a hoisted
     one-liner duplicate was silently shadowing it — removed).
   Notes: see NOTES DATA MODEL above.
+  Weather app (v0.19.0+, DATA_VER 1): compact todo-contract.
+    Cities union by id + content LWW by mtime; tombstones union
+    max-ts (an edit newer than its tombstone resurrects — the
+    undo-delete toast relies on it); ordering = the om-larger
+    side donates positions; scalars (active, units, shellWx)
+    ride the sm-winning side (losing them on merge once wiped
+    the units toggle — fixed in Wave 2). Cache NEVER travels.
+  Mood (v0.22.0, DATA_VER 1): see MOOD DATA MODEL in the
+    SESSION HANDOFF at the end of this file.
 
 PALETTE CONTRACT (iframe apps) — CI-ENFORCED (G3)
   inheritPalette() MUST read
@@ -489,7 +508,9 @@ VIEW-DERIVATION PRINCIPLE (established v0.15.0–0.17.0)
   stored. Zero storage keys, zero sync surface, impossible to
   desync. v0.18.0 extension: the weather CHIP is likewise
   derived-per-tick from cache+prefs+online state — the chip
-  itself stores nothing, only paints.
+  itself stores nothing, only paints. v0.22.0 extension: Mood's
+  time-of-day, day keys, thread dots and smart preselection are
+  all render-time derivations of entry timestamps.
 
 SEARCH + TAG PANEL (Notes, v0.16.0)
   openSearch(): Ctrl+K or 🔍. Titles + content, lowercase
@@ -586,32 +607,11 @@ E. RELEASE PRE-FLIGHT (recommended before any stable push)
    - Deploy + version check on BOTH devices before feature
      testing (Lesson 4).
 
-F. RELEASE SHIP STATUS (v0.18.2 pause point) — DO THESE NEXT:
-   1. Apply the manual bump: shell.js APP_VERSION → "0.18.2"
-      + banner; style.css / translations.js / sync.js (engine
-      v0.8.2) / sw.js banner comments. Nothing else is manual.
-   2. translations.js: grep "update.checking" — if missing, ADD
-      beside sync.dot.aria in EN and EL:
-        "update.checking": "Checking for updates…",
-        "update.checking": "Έλεγχος για ενημερώσεις…",
-      (scCheckUpdates() calls t("update.checking"); a missing
-      key surfaces as a raw key in the version toast.)
-   3. R13 CHECK FIRST: git fetch + Actions tab — confirm the
-      v0.18.1 bot commit exists and pull --ff-only before
-      applying anything, or local patches will conflict.
-   4. node --check: shell.js, sync.js, translations.js, sw.js,
-      todo.js, kanban.js, notes.js.
-   5. Push to main → Action stamps CACHE_VERSION/manifest/?v=.
-   6. Verify BOTH devices: Info modal shows 0.18.2 BEFORE
-      interpreting any symptom as a bug (R3). Smoke: kanban
-      same-column drag (the v0.18.2 ReferenceError fix), Esc on
-      todo list dialog after typing, language toggle with an
-      app open (reload expected), sync dot aria in EL.
-   7. OPTIONAL Action hardening (proposed, not applied): a
-      "Verify stamps landed" step (grep sw.js CACHE_VERSION +
-      manifest version) between the node step and the diff check.
+F. RELEASE SHIP STATUS (v0.18.2 era — superseded; kept for
+   history). The CURRENT outstanding items live in the SESSION
+   HANDOFF block at the end of this file.
 
-────────────────────────────────────────────────────────────
+──────────────────────────────────────────────────────────────
 WAVE 2 (Notes) — CLOSED ✓
 ──────────────────────────────────────────────────────────────
   v0.14.1  Page labels: registry + attach/detach + tomb merge +
@@ -651,15 +651,14 @@ v0.18.1 POST-SHIP FIXES (full detail under CURRENT STATE):
   = full sync · version badge removal · sc.info.cap fix ·
   credits link. All user-tested and working.
 
-WAVE 4 (CLEANUP/AUDIT) — CODE COMPLETE, SHIP PENDING (v0.18.2)
+WAVE 4 (CLEANUP/AUDIT) — CLOSED ✓ (v0.18.2)
 ──────────────────────────────────────────────────────────────
   Process: cold audit per file (numbered findings; EN/EL key
   parity; HTML ids vs getElementById; CSS selectors vs JS-
   generated DOM; storage registry vs reality; stale comments vs
   code) → per-file user approval ("Πάμε όλα") → collective
   surgical patches. 81 numbered findings → 70 patches. Zero
-  wholesale regenerations (R1 held). SHIP STATUS (SHIP STATUS
-  section above = the outstanding items).
+  wholesale regenerations (R1 held).
 
   CORE
   - notes/: dead i18n keys removed (notes.app, tree.title,
@@ -720,14 +719,6 @@ WAVE 4 (CLEANUP/AUDIT) — CODE COMPLETE, SHIP PENDING (v0.18.2)
   (pass-through symmetry); hardcoded EN aria in shell index.html
   = intentional FOUC guards, overwritten by applyLang.
 
-NEXT WAVE CANDIDATES (in user-approved order of interest)
-──────────────────────────────────────────────────────────────
-  – Full weather APP (forecast view) — likely the NEXT new app
-    after this wave ships; its own slice if it stores more than
-    {on,auto,lat,lon,label}.
-  – Dot-click toast composition ("Pulled (N) · Pushed") —
-    PENDING USER DECISION (v0.18.1 f).
-
 BACKLOG (recorded, not scheduled)
 ──────────────────────────────────────────────────────────────
   – Notes read-mode (rendered [[links]] clickable inside text).
@@ -740,7 +731,8 @@ BACKLOG (recorded, not scheduled)
   – Extend CI G3 if an app ever uses inline <script>; extend G2
     to per-file precache verification (folder-level today).
   – Action hardening: post-stamp verification step (see E.7).
-  – Full weather APP (see candidates).
+  – Weather: per-hour graph view, radar (loose ideas).
+  – Mood Wave 2/3/4 roadmap — see SESSION HANDOFF (below).
   – Idea (loose, never confirmed): Pad app, pagination app,
     Public Domain Calculator — separate orOS waves.
 
@@ -786,8 +778,7 @@ RELEASE HISTORY (condensed)
            (version surface = Info modal + update toast); Info
            modal sc.info.cap fix; credits linked to koulaxizis.gr.
 0.18.2     WAVE 4 — full-repo cleanup/audit: 81 findings → 70
-           surgical patches, STAGED at pause (ship steps in the
-           SHIP STATUS block). Notable: kanban same-column drag
+           surgical patches. Notable: kanban same-column drag
            ReferenceError FIXED (undefined `col` in moveCard);
            dialog contracts unified across todo+kanban+notes
            (commit-on-any-close + zero-edit no-stamp); corrupted
@@ -797,11 +788,41 @@ RELEASE HISTORY (condensed)
            canonical capture forwarding (backlog closed); dead
            code swept (sliceIsClean — dead-and-dangerous,
            vaultReady, `changed`, dead keys/rules); storage
-           registry completed (7 sync keys documented); manifest
-           audited clean. App banners unchanged by design
-           (todo v0.4 / kanban v0.5 / notes 0.17.0 = feature-
-           state markers). App version surface: 0.18.2.
-		   
+           registry completed; manifest audited clean. App
+           version surface: 0.18.2.
+0.19.0     NEW APP: Weather (v0.1.0) — current + 48h hourly +
+           7-day, multi-city, device-local cache (never synced),
+           offline badge contract, Open-Meteo, merge-lite sync
+           slice oros-weatherapp-data.
+0.19.x–0.20.0  Weather Wave 2 (app v0.2.0): °C⇄°F render-only
+           toggle (traveling preference), UV + sunrise/sunset
+           cells (same request), European AQI (separate optional
+           endpoint), smart context hints, city pager (swipe +
+           dots), interactive city-search autocomplete in app
+           dialog AND shell menu (3rd char, tokened, keyboard
+           navigable; shell native prompt() retired for a custom
+           dialog).
+0.21.0     Weather v0.3.0 audit fixes: timezone-correct "now"
+           (utc_offset_seconds from the RESPONSE — device clock
+           retired; payload.tz), undo-delete toast (native
+           confirm() retired), NaN guards, pointercancel, UV/AQI
+           band words + legend tooltips, no-data state.
+0.21.1/2   Weather v0.3.1 hotfix (delivery-review bugs: badge
+           hidden-flag inversion, toast word order, city-local
+           night icons) + sync messaging honesty: reportPullResult()
+           three-way pull outcomes ("Nothing in the cloud yet"
+           retired → cloud-empty / nothing-new / pulled-N),
+           applied to all four pull entry points.
+0.22.0     NEW APP: Mood (v0.1.0, Wave 1) — 9-emotion grid with
+           intensities, Location/Person columns (seeds + inline
+           add + smart time-of-day preselection), water/food/meds
+           toggles, reflection + trigger, 1h soft guard (custom
+           panel, no native confirm), recent list with edit +
+           undo-delete, 7-day thread (hollow = no entry — absence
+           ≠ neutral mood), one-time privacy dialog (device-local),
+           todo-contract merge slice oros-mood-data. SHIP
+           PENDING — see SESSION HANDOFF.
+
 ## [0.19.0] — NEW APP: Weather
 
 ### Added
@@ -840,7 +861,7 @@ When adding a new orOS app `foo/` (foo/index.html + foo.css + foo.js):
    for `?v=` stamping; add explicit entries if the yml lists files
 7. Push all in ONE commit; verify on BOTH devices (R3) via Info
    modal + open the new app offline to verify precache
-   
+
 ## 0.20.0 / weather 0.2.0 — Weather Wave 2
 
 ### Added
@@ -857,6 +878,13 @@ When adding a new orOS app `foo/` (foo/index.html + foo.css + foo.js):
 - **City pager**: swipe left/right on the main area (excludes the hourly
   strip's own scroll) cycles saved cities; pager dots next to the city
   name jump directly; hidden with a single city.
+- **Interactive city search**: autocomplete suggestions from the 3rd
+  typed character (e.g. "Ath" → "Athens, Greece" / "Athens, Georgia")
+  in BOTH the Weather app dialog and the shell menu city picker.
+  Geocoding count=1→5, debounced 250ms, tokened stale-response guard,
+  keyboard navigable (↑/↓/Enter/Esc), offline = no suggestions.
+  Shell menu: native prompt() replaced by a custom dialog (prompts
+  can't host suggestions).
 
 ### Fixed
 - Greek hint string typo ("hint.hot").
@@ -868,15 +896,7 @@ When adding a new orOS app `foo/` (foo/index.html + foo.css + foo.js):
   weather truth/badge stays owned by the forecast fetch only.
 - Boot marker discipline: `weather.js v0.2.0 boot` must match the served ?v=.
 
-- **Interactive city search**: autocomplete suggestions from the 3rd
-  typed character (e.g. "Ath" → "Athens, Greece" / "Athens, Georgia")
-  in BOTH the Weather app dialog and the shell menu city picker.
-  Geocoding count=1→5, debounced 250ms, tokened stale-response guard,
-  keyboard navigable (↑/↓/Enter/Esc), offline = no suggestions.
-  Shell menu: native prompt() replaced by a custom dialog (prompts
-  can't host suggestions).
-  
-  ## v0.21.0 — Weather app v0.3.0 (audit fixes)
+## v0.21.0 — Weather app v0.3.0 (audit fixes)
 
 Weather app: weather.js v0.3.0, weather.css v0.1.2.
 
@@ -906,10 +926,10 @@ Weather app: weather.js v0.3.0, weather.css v0.1.2.
 ### Known traps observed
 - Multi-part delivery cut mid-function AGAIN (fmtSpeed). Searched
   and joined before shipping.
-  
+
 ## v0.3.1 — Weather app hotfix (badge regression, toast order, night icons)
 
-Weather app: weather.js v0.3.1. (Ship after v0.3.0 — patches the
+Weather app: weather.js v0.3.1. (Ships after v0.3.0 — patches the
 three bugs found in the v0.3.0 delivery review, before push.)
 
 ### Fixed
@@ -932,22 +952,12 @@ three bugs found in the v0.3.0 delivery review, before push.)
   device clock. Side fix: the tz fallback expression was deduped
   into a single `tz` var reused by both todayStr and icon calls.
 
-### Pending
-- Dead code candidates awaiting go/no-go: aqiBand(), STALE_MS,
-  "city.add.tip" string, fmtSpeed double indent.
-  
-  PALIO:
-### Pending
-- Dead code candidates awaiting go/no-go: aqiBand(), STALE_MS,
-  "city.add.tip" string, fmtSpeed double indent.
-
-NEO:
 ### Cleaned
 - Dead code removed: aqiBand() (unused — renderAll builds the band
   inline), STALE_MS (never referenced), "city.add.tip" i18n key
   (no consumer), fmtSpeed indentation.
-  
-  ## v0.21.2 — Sync messaging: honest pull outcomes
+
+## v0.21.2 — Sync messaging: honest pull outcomes
 
 ### Fixed
 - "Nothing in the cloud yet" retired — it sounded alarming
@@ -959,10 +969,13 @@ NEO:
   entry point); real changes → the usual "pulled — N slices".
 - Applied to all four pull entry points: unlock flow, menu pull
   button, Ctrl+Alt+Shift+O shortcut, taskbar sync-dot click.
+- Combined dot-push toast omits the pull part when nothing came
+  down (closes the old open decision from v0.18.1 f — the user
+  approved the combined variant).
 - Translations: sync.ok.empty removed; sync.ok.cloud.empty and
   sync.ok.none added (EN/EL).
-  
-  ## v0.22.0 — Mood app v0.1.0 (Wave 1)
+
+## v0.22.0 — Mood app v0.1.0 (Wave 1)
 
 New orOS application: Mood (mood tracker). Files: mood.html,
 mood.js, mood.css. Design principle: capturing how you feel must
@@ -1004,3 +1017,111 @@ take seconds, not minutes.
 - Wave 4: gentle morning/evening reminders — when orOS is open
   (first-open-after-hour → toast, clickable → opens Mood; no
   background timers, no architecture change).
+
+────────────────────────────────────────────────────────────────
+SESSION HANDOFF — Mood Wave 1 (v0.22.0) — ship pending
+────────────────────────────────────────────────────────────────
+
+MOOD DATA MODEL (DATA_VER 1, mood.js v0.1.0)
+  state = { ver, sm, om,
+    entries: [{ id, ts, mtime,
+                emotions: [{k, i}],      // k = fixed key, i = 1–5
+                loc, person,             // column-value id | null
+                water, food, meds,       // booleans
+                note, trigger }],        // strings ("" = unset)
+    cols: { loc:   [{id, label, mtime, pos}],
+            person: [{id, label, mtime, pos}] },
+    deleted: { <entryId|colValId>: <tombstone ts> } }
+  EMOTIONS (FIXED 9 — statistics need a stable dictionary; custom
+  emotion fields NEVER; freedom lives in note/trigger):
+    happy #87cf3e · calm #51a2da · excited #8c5ec7 · sad #5277c3 ·
+    angry #e06c75 · anxious #e0a44c · tired #9aa0ae ·
+    stressed #ff7043 · numb #6d4aff — SYSTEM hues only, zero new
+    palette members.
+  Seeds (editable/deletable, live in state once seeded):
+    loc: At home / At work / Outdoors / Commute / Café & bars
+    person: Alone / Partner / Family / Friends / Colleagues
+  DERIVED, never stored: time-of-day from ts (5–11 morning ·
+  11–17 afternoon · 17–22 evening · else night) · day keys for
+  the 7-day thread computed render-side on the LOCAL calendar
+  (entries are epoch stamps — the weather wall-clock bug does
+  NOT apply here; do not "fix" it into existence).
+  Merge (todo-contract): entries + column values = union by id +
+  LWW by mtime (tie → lexicographic JSON); tombs = union max-ts,
+  an edit newer than its tombstone resurrects (undo-delete
+  depends on it — e.mtime = Date.now() BEFORE push, always);
+  entry order = DESC ts derived at sort time (NO stored pos);
+  column order = the om-larger side donates positions.
+  sliceSet: never marks dirty (R6) · re-sorts + re-positions ·
+  resets a capture that was editing an entry another device
+  deleted · light ack toast on merged pulls.
+
+STORAGE KEYS (added this wave — registry):
+  oros-mood-data     slice storage (syncs; todo-contract merge)
+  oros-mood-seen     DEVICE-LOCAL privacy-notice flag — one-time
+                     dialog per device, never re-shown; NOT
+                     synced by decision (each device acknowledges
+                     once). Flip to synced only if user asks.
+
+SMART-PRESELECTION CONTRACT (L2 columns): suggestion = most-used
+value within the CURRENT time-of-day bucket → fallback most
+recent valid → fallback first seed (pos 0). Never blocks, never
+persists a preference — pure render-time derivation.
+
+SOFT GUARD (1h rule): saving <1h after the newest entry opens an
+inline "update or new" panel (no native confirm anywhere in the
+suite — retired in weather v0.3.0, never born here). The
+"update" path loads the old entry into the capture THEN commits
+the new emotions into it (edit-with-prefill, LWW-clean).
+
+FILE TREE addition: mood/  (index.html + mood.css + mood.js)
+
+CRITICAL — DELIVERY STATE OF THE WORKING COPY (R4/R11):
+mood.js shipped in 5 parts + 3 in-thread fixes. Before push,
+CONFIRM all applied (chained patch discipline):
+  Fix 2a  mergeUnionList: tombstone-undefined semantics
+          (seeds have mtime 0 — `ts = tomb ? tomb[id] : undefined`)
+  Fix 2b  sortColVals call sites: .loc ref must be (a.cols).loc
+          (a bad copy passed .person — silently reorders wrong)
+  Fix P2  EL "privacy.title" → "Ιδιωτικό εκ σχεδίασης"
+          (corrupted multibyte sequence in Part 2's paste)
+Plus the standing traps: boot marker `mood.js v0.1.0 boot` ·
+`registerSlice("mood", ...)` · zero `confirm(` · new-btn empty
+in HTML, SVG injected by paintStaticAria (R9).
+
+SHIP CHECKLIST (Mood v0.22.0 — DO THESE NEXT):
+  1. translations.js — "category.lifestyle" EN/EL beside
+     category.utilities (UNVERIFIED — file not supplied this
+     chat; no-guessing rule held. If format differs, request it).
+  2. sw.js — PRECACHE_URLS += mood/, mood/index.html,
+     mood/mood.css, mood/mood.js — SAME push as the app files
+     (cache.addAll 404s otherwise; G2 checks folder-level only —
+     new-asset misses pass silently, G2 limitation stands).
+  3. shell.js — ICONS.mood (smiley, shipped in this wave's
+     Part 5) + APP_VERSION 0.21.2 → 0.22.0 (new app = minor bump).
+  4. node --check mood.js · boot marker · smoke tests: menu card
+     (Lifestyle/Τρόπος ζωής), privacy dialog once-only, full
+     entry → Saved toast → dot in thread, second save <1h →
+     soft guard, delete→undo→restored, cross-device pull.
+  5. Verify the weather v0.3.0/0.3.1/0.21.2 patches are live on
+     BOTH devices (R3/R13) if not already confirmed.
+
+WAVE ROADMAP (user-approved trajectory):
+  Wave 2 — distributions, calendar dots view, streak, med-
+           adherence history (adherence wants an early start of
+           collection — cheap since L3 toggles already log).
+  Wave 3 — correlations + insights panel (needs ≥2–3 weeks of
+           entries to mean anything; do not ship earlier).
+  Wave 4 — reminders, orOS-open-only contract: first open after
+           the "morning" threshold → toast, CLICKABLE → opens
+           Mood (toast action patch in shell scToast — approved
+           in design, small PALIO/NEO then). No background
+           timers, no SW notifications, no architecture change.
+  Statistical integrity rule (USER-DECREED, standing): absence of
+  data ≠ neutral mood. Hollow dot = no entry; statistics and
+  future correlations must never impute a neutral value for
+  unlogged time.
+
+NEXT-CHAT STARTER: user opens with Mood Wave 2 (stats) or a new
+file dump for re-audit. Read: MOOD DATA MODEL + DELIVERY STATE
+blocks above + R4/R11/R13 before touching anything.

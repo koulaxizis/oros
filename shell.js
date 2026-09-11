@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.22.0 — Shell logic
+// orOS Core v0.22.1 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.22.0";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.22.1";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
