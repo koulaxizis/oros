@@ -1179,3 +1179,87 @@ body {
   #wx-chip .wx-temp { display: none; }
   #wx-chip { padding: 5px 4px; }
 }
+
+/* ---------- Weather city dialog (autocomplete picker) ---------- */
+dialog#wxcity {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  padding: 16px;
+  width: min(340px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
+#wxcity h3 { font-size: 14px; margin-bottom: 10px; color: var(--accent); }
+#wxc-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  color: var(--text);
+}
+#wxc-input:focus { border-color: var(--accent); }
+#wxc-input::placeholder { color: var(--text-dim); }
+#wxc-ac {
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.wxc-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+}
+.wxc-item:hover, .wxc-item.sel { background: var(--accent-soft); }
+.wxc-name { font-size: 13px; font-weight: 600; }
+.wxc-sub {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wxc-none { padding: 8px 10px; font-size: 12.5px; color: var(--text-dim); }
+.wxc-row { display: flex; gap: 8px; margin-top: 12px; }
+.wxc-btn {
+  flex: 1;
+  min-height: 36px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+.wxc-btn.prim {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.wxc-btn.prim:hover { filter: brightness(1.1); }
+.wxc-btn.ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.wxc-btn.ghost:hover { color: var(--accent); border-color: var(--accent); }

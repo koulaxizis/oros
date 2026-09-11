@@ -832,3 +832,38 @@ When adding a new orOS app `foo/` (foo/index.html + foo.css + foo.js):
    for `?v=` stamping; add explicit entries if the yml lists files
 7. Push all in ONE commit; verify on BOTH devices (R3) via Info
    modal + open the new app offline to verify precache
+   
+## 0.20.0 / weather 0.2.0 — Weather Wave 2
+
+### Added
+- **Units toggle**: tap the big temperature → °C⇄°F + km/h⇄mph everywhere.
+  Render-only conversion (cache/slice always stay metric = portable);
+  preference syncs via the slice. Condition label moved to icon tooltip.
+- **UV index** (current, from hourly at current hour — same request, no extra calls).
+- **Sunrise/Sunset** cell (same request, `daily=sunrise,sunset`).
+- **Air quality (European AQI)**: separate Open-Meteo endpoint, fetched
+  serially AFTER the forecast (optional data, fire-and-forget). Failure →
+  dim "—" cell; semantic coloring: ≤20 good (green), ≤40 fair (amber), above = red.
+- **Smart hints**: the condition line under the temperature is now a
+  context phrase (EN/EL, priority storm > fog > rain > UV > hot > cold > swing > mild).
+- **City pager**: swipe left/right on the main area (excludes the hourly
+  strip's own scroll) cycles saved cities; pager dots next to the city
+  name jump directly; hidden with a single city.
+
+### Fixed
+- Greek hint string typo ("hint.hot").
+- Horizontal scrollbar in My cities (wrap + min-width:0 + scrollbar-gutter,
+  forensic-diagnosed on #city-add-row) — shipped early in 0.19.7.
+
+### Notes
+- AQI uses its own Open-Meteo endpoint (second request by design);
+  weather truth/badge stays owned by the forecast fetch only.
+- Boot marker discipline: `weather.js v0.2.0 boot` must match the served ?v=.
+
+- **Interactive city search**: autocomplete suggestions from the 3rd
+  typed character (e.g. "Ath" → "Athens, Greece" / "Athens, Georgia")
+  in BOTH the Weather app dialog and the shell menu city picker.
+  Geocoding count=1→5, debounced 250ms, tokened stale-response guard,
+  keyboard navigable (↑/↓/Enter/Esc), offline = no suggestions.
+  Shell menu: native prompt() replaced by a custom dialog (prompts
+  can't host suggestions).

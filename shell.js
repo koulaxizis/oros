@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.19.7";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.20.0";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1788,6 +1788,24 @@
       });
   }
 
+  // Autocomplete — geocoding suggestions from the 3rd character
+  // (mirror of the app's pattern: debounced, tokened, offline-aware).
+  var WXS_AC_MIN = 3, WXS_AC_DELAY = 250;
+  var wxsAcTimer = null, wxsAcToken = 0;
+
+  function wxGeocodeSuggest(q) {
+    var tok = ++wxsAcToken;
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=5&language=" +
+                 (state.lang === "el" ? "el" : "en") +
+                 "&name=" + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (tok !== wxsAcToken) return [];   // stale response — discard
+        return (d && d.results) || [];
+      })
+      .catch(function () { return []; });    // silent — optional data
+  }
+
   // GPS fix — runs ONLY from the menu click (user activation)
   function wxLocate() {
     if (!navigator.geolocation) return;
@@ -1805,20 +1823,157 @@
     { timeout: 10000, maximumAge: 30 * 60 * 1000 });
   }
 
-  function wxSetCity() {
-    var name = window.prompt(window.t("wx.prompt"));
-    if (!name || !name.trim()) return;
-    wxGeocodeCity(name.trim())
-      .then(function (g) {
-        var w = wxRead();
-        w.on = true; w.auto = false;
-        w.lat = g.lat; w.lon = g.lon; w.label = g.label;
-        wxSave(w);
-        noteLocalChange();
-        wxFetch(true);
-        renderMenu();
-      })
+  // City picker — custom dialog (native prompt() cannot host
+  // autocomplete). Lazy singleton; suggestions from the 3rd
+  // character via wxGeocodeSuggest (debounced, tokened).
+  var wxCDlg = null, wxCInput = null, wxCAc = null;
+  var wxCTimer = null;
+
+  function wxEnsureCityDlg() {
+    if (wxCDlg) return;
+    wxCDlg = document.createElement("dialog");
+    wxCDlg.id = "wxcity";
+    wxCDlg.innerHTML =
+      "<h3>" + window.t("wx.city") + "</h3>" +
+      '<input id="wxc-input" type="text" autocomplete="off" spellcheck="false"' +
+      ' placeholder="' + window.t("wx.prompt") + '">' +
+      '<div id="wxc-ac" hidden></div>' +
+      '<div class="wxc-row">' +
+      '<button type="button" class="wxc-btn prim" id="wxc-add">' +
+        window.t("wx.add") + "</button>" +
+      '<button type="button" class="wxc-btn ghost" id="wxc-cancel">' +
+        window.t("wx.cancel") + "</button>" +
+      "</div>";
+    document.body.appendChild(wxCDlg);
+
+    wxCInput = wxCDlg.querySelector("#wxc-input");
+    wxCAc = wxCDlg.querySelector("#wxc-ac");
+
+    // backdrop click closes (target ON the dialog = outside content)
+    wxCDlg.addEventListener("click", function (e) {
+      if (e.target === wxCDlg) wxCDlg.close();
+    });
+    wxCDlg.addEventListener("close", function () {
+      wxCAc.hidden = true;
+      clearTimeout(wxCATimer);
+    });
+
+    wxCDlg.querySelector("#wxc-add").addEventListener("click", function () {
+      wxCommitTyped();
+    });
+    wxCDlg.querySelector("#wxc-cancel").addEventListener("click", function () {
+      wxCDlg.close();
+    });
+
+    wxCInput.addEventListener("input", function () {
+      clearTimeout(wxCATimer);
+      var q = wxCInput.value.trim();
+      if (q.length < 3 || !navigator.onLine) { wxHideAc(); return; }
+      wxCATimer = setTimeout(function () {
+        wxGeocodeSuggest(q).then(wxRenderAc);
+      }, 250);
+    });
+    wxCInput.addEventListener("keydown", function (e) {
+      var n = wxCAc.hidden ? 0 : wxCAc.querySelectorAll(".wxc-item").length;
+      if (e.key === "ArrowDown" && n) {
+        e.preventDefault();
+        wxCAcSel = (wxCAcSel + 1) % n;
+        wxPaintAcSel();
+      } else if (e.key === "ArrowUp" && n) {
+        e.preventDefault();
+        wxCAcSel = (wxCAcSel - 1 + n) % n;
+        wxPaintAcSel();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (!wxCAc.hidden && wxCAcSel >= 0 && wxCAcList[wxCAcSel]) {
+          wxPickAc(wxCAcList[wxCAcSel]);
+        } else {
+          wxCommitTyped();
+        }
+      } else if (e.key === "Escape" && !wxCAc.hidden) {
+        e.preventDefault();
+        wxHideAc();
+      }
+    });
+    wxCInput.addEventListener("blur", function () {
+      setTimeout(wxHideAc, 150);   // mousedown fires first — safe
+    });
+  }
+
+  var wxCATimer = null, wxCAcToken = 0;
+  var wxCAcSel = -1, wxCAcList = [];
+
+  function wxHideAc() {
+    wxCAcSel = -1; wxCAcList = [];
+    if (wxCAc) { wxCAc.hidden = true; wxCAc.innerHTML = ""; }
+  }
+
+  function wxRenderAc(list) {
+    wxCAcList = list; wxCAcSel = -1;
+    wxCAc.innerHTML = "";
+    if (list.length === 0) {
+      var none = document.createElement("div");
+      none.className = "wxc-none";
+      none.textContent = window.t("wx.notfound");
+      wxCAc.appendChild(none);
+    } else {
+      list.forEach(function (g, i) {
+        var it = document.createElement("button");
+        it.type = "button";
+        it.className = "wxc-item";
+        var nm = document.createElement("span");
+        nm.className = "wxc-name";
+        nm.textContent = g.name;
+        var rg = document.createElement("span");
+        rg.className = "wxc-sub";
+        rg.textContent = [g.admin1, g.country].filter(Boolean).join(", ");
+        it.appendChild(nm); it.appendChild(rg);
+        it.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();       // mousedown beats blur-hide
+          wxPickAc(wxCAcList[i]);
+        });
+        wxCAc.appendChild(it);
+      });
+    }
+    wxCAc.hidden = false;
+  }
+
+  function wxPaintAcSel() {
+    var items = wxCAc.querySelectorAll(".wxc-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("sel", i === wxCAcSel);
+    }
+  }
+
+  function wxPickAc(g) {
+    wxCDlg.close();
+    wxApplyCity({ lat: g.latitude, lon: g.longitude, label: g.name });
+  }
+
+  function wxCommitTyped() {
+    var name = wxCInput.value.trim();
+    if (!name) return;
+    wxGeocodeCity(name)
+      .then(function (g) { wxCDlg.close(); wxApplyCity(g); })
       .catch(function () { setSyncMsg("err", "wx.notfound"); });
+  }
+
+  function wxApplyCity(g) {
+    var w = wxRead();
+    w.on = true; w.auto = false;
+    w.lat = g.lat; w.lon = g.lon; w.label = g.label;
+    wxSave(w);
+    noteLocalChange();
+    wxFetch(true);
+    renderMenu();
+  }
+
+  function wxSetCity() {
+    wxEnsureCityDlg();
+    wxCInput.value = "";
+    wxHideAc();
+    wxCDlg.showModal();
+    setTimeout(function () { wxCInput.focus(); }, 50);
   }
 
   // Menu section — toggle + GPS + city (all user-gesture legal)

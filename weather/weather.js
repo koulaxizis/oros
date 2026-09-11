@@ -1,21 +1,24 @@
 // ============================================================
-// orOS Weather — App logic (v0.1.0)
+// orOS Weather — App logic (v0.2.0)
 // Provider: Open-Meteo (no key, no cookies). One forecast
 // request per refresh: current + hourly 48h + daily 7d,
-// timezone=auto. Feels-like/humidity derive from the hourly
+// timezone=auto. Feels-like/humidity/UV derive from the hourly
 // array at the current hour (current_weather carries neither).
+// Wave 2: units toggle (render-only), UV, sun times, AQI
+// (serial second request, optional), smart hints, city pager.
 // Sections:
 //   1. Constants, i18n, helpers, icons
 //   2. Data model + storage (cities, tombstones, cache)
 //   2b. Merge engine lite (todo-contract, compact)
-//   3. API: geocoding + forecast + throttle
-//   4. Render (Part 3b)
-//   5. Sync slice + palette (Part 3b)
-//   6. Wiring & boot (Part 3b)
+//   3. API: geocoding + forecast + AQI + throttle
+//   4. Render
+//   5. Sync slice + palette
+//   6. Wiring & boot
 // Data:
-//   slice "oros-weatherapp-data"  → travels (cities only)
+//   slice "oros-weatherapp-data"  → travels (cities + units)
 //   cache "oros-weatherapp-cache" → device-local, NEVER in slice
 // Offline: render from cache + badge — never fake numbers.
+// Cache/slice ALWAYS metric — units decorate at render time.
 // ============================================================
 (function () {
   "use strict";
@@ -26,7 +29,7 @@
   var FETCH_GAP_MS = 30 * 60 * 1000;   // min gap between forecast fetches
   var STALE_MS     = 3 * 60 * 60 * 1000;
   var CACHE_MAX    = 6;                // cities kept in device cache
-  
+
   var netDown = false;   // last fetch attempt FAILED while online
                          // (truth from the network, not navigator.onLine)
 
@@ -43,6 +46,10 @@
       "meta.feels":    "Feels like",
       "meta.humidity": "Humidity",
       "meta.wind":     "Wind",
+      "meta.uv":       "UV index",
+      "meta.sun":      "Sun",
+      "meta.aqi":      "Air quality",
+      "units.tip":     "Switch °C / °F",
       "hourly.title":  "Next 48 hours",
       "daily.title":   "7-day forecast",
       "dlg.title":     "Cities",
@@ -55,7 +62,15 @@
       "err.exists":    "Already in the list",
       "err.gps":       "Location unavailable",
       "gps.use":       "Use my location",
-      "now":           "Now"
+      "now":           "Now",
+      "hint.storm":    "Storms around — take cover",
+      "hint.rain":     "Umbrella day",
+      "hint.fog":      "Fog patches — slow down",
+      "hint.uv":       "High UV — wear sunscreen",
+      "hint.hot":      "Hot one — stay hydrated",
+      "hint.cold":     "Freezing temperatures",
+      "hint.swing":    "Layer up — big day-night swing",
+      "hint.mild":     "A pleasant day"
     },
     el: {
       "city.add.tip":  "Προσθήκη πόλης",
@@ -66,6 +81,10 @@
       "meta.feels":    "Αίσθηση",
       "meta.humidity": "Υγρασία",
       "meta.wind":     "Άνεμος",
+      "meta.uv":       "Δείκτης UV",
+      "meta.sun":      "Ήλιος",
+      "meta.aqi":      "Ποιότητα αέρα",
+      "units.tip":     "Αλλαγή °C / °F",
       "hourly.title":  "Επόμενες 48 ώρες",
       "daily.title":   "Πρόγνωση 7 ημερών",
       "dlg.title":     "Πόλεις",
@@ -78,7 +97,15 @@
       "err.exists":    "Υπάρχει ήδη στη λίστα",
       "err.gps":       "Η τοποθεσία δεν είναι διαθέσιμη",
       "gps.use":       "Χρήση τοποθεσίας",
-      "now":           "Τώρα"
+      "now":           "Τώρα",
+      "hint.storm":    "Καταιγίδες — απόφυγε την έκθεση",
+      "hint.rain":     "Μέρα για ομπρέλα",
+      "hint.fog":      "Ομίχλη — προσοχή στην οδήγηση",
+      "hint.uv":       "Υψηλή UV — αντηλιακό",
+      "hint.hot":      "Ζέστη — πίνε νερό",
+      "hint.cold":     "Παγωμένες θερμοκρασίες",
+      "hint.swing":    "Πάρε ζακέτα — μεγάλη διακύμανση",
+      "hint.mild":     "Ωραία μέρα"
     }
   };
 
@@ -104,6 +131,28 @@
     else if (c >= 95)            { en = "Thunderstorm"; el = "Καταιγίδα"; }
     else                         { en = "Cloudy";        el = "Νεφελώδης"; }
     return LANG === "el" ? el : en;
+  }
+
+  // One-line smart hint for the day — replaces the plain condition
+  // text under the temperature (cur-cond). Priority: storm > fog >
+  // rain > UV > heat > cold > swing > mild default.
+  function pickHint(p) {
+    if (!p || !p.current) return null;
+    var code = Number(p.current.code) || 0;
+    var maxPop = 0, dmax = null, dmin = null;
+    (p.daily || []).forEach(function (d) {
+      if (d.pop > maxPop) maxPop = d.pop;
+      if (d.max !== null && (dmax === null || d.max > dmax)) dmax = d.max;
+      if (d.min !== null && (dmin === null || d.min < dmin)) dmin = d.min;
+    });
+    if (code >= 95) return t("hint.storm");
+    if (code === 45 || code === 48) return t("hint.fog");
+    if (maxPop >= 60 || (code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return t("hint.rain");
+    if (p.current.uv !== null && p.current.uv >= 6) return t("hint.uv");
+    if (dmax !== null && dmax >= 33) return t("hint.hot");
+    if (dmin !== null && dmin <= 0) return t("hint.cold");
+    if (dmax !== null && dmin !== null && (dmax - dmin) > 12) return t("hint.swing");
+    return t("hint.mild");
   }
 
   // Same WMO SVG set as the shell chip — one visual language.
@@ -142,12 +191,24 @@
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function idOf(c) { return c.id; }
 
+  // Unit conversions — display ONLY. Cache + slice always stay
+  // metric (portable); these decorate at render time.
+  function fmtTemp(c) {
+    return Math.round(state.units === "imperial"
+      ? (c * 9 / 5 + 32) : c) + "°";
+  }
+  function fmtSpeed(kmh) {
+    var v = state.units === "imperial" ? kmh * 0.621371 : kmh;
+    return Math.round(v) + (state.units === "imperial" ? " mph" : " km/h");
+  }
+
   // ---------- 2. Data model + storage ----------
   // state = {
   //   ver: 1, sm, om,
   //   active: <cityId> | null,
   //   deleted: { <cityId>: <tombstone ts> },
-  //   cities: [{ id, label, lat, lon, mtime, pos }]
+  //   cities: [{ id, label, lat, lon, mtime, pos }],
+  //   shellWx: <fingerprint|null>,  units: "metric"|"imperial"
   // }
   var state = null;
 
@@ -160,7 +221,8 @@
     return {
       ver: DATA_VER, sm: Date.now(), om: Date.now(),
       active: null, deleted: {}, cities: [],
-      shellWx: null   // last shell-menu location we applied (fingerprint)
+      shellWx: null,      // last shell-menu location we applied (fingerprint)
+      units: "metric"     // "metric" | "imperial" — RENDER ONLY, cache stays °C/km/h
     };
   }
 
@@ -174,6 +236,7 @@
       if (typeof c.pos !== "number") c.pos = 0;
     });
     if (data.shellWx === undefined) data.shellWx = null;   // pre-0.19.3 data
+    if (data.units !== "metric" && data.units !== "imperial") data.units = "metric";
     data.ver = DATA_VER;
     return data;
   }
@@ -231,6 +294,7 @@
   // ---------- 2b. Merge engine lite (todo-contract, compact) ----------
   // Deterministic + symmetric: merge(A,B) === merge(B,A).
   //   · active — LWW by root sm; ties by lexicographic JSON
+  //   · units + shellWx — same scalars side as active (LWW by sm)
   //   · cities — union by id, content LWW by mtime
   //     (ties by lexicographic JSON — identical both sides)
   //   · ordering — the side with larger om donates positions;
@@ -255,8 +319,9 @@
       tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
     });
 
-    // scalars (active): LWW by sm — symmetric tie-break, never
-    // "local wins" (that flip-flops forever).
+    // scalars: the winning side donates active AND units AND
+    // shellWx — losing them on merge wiped the units toggle and
+    // resurrected deleted shell cities (fingerprint reset).
     var sa = JSON.stringify([a.active || null]);
     var sb = JSON.stringify([b.active || null]);
     var scalars = (a.sm || 0) !== (b.sm || 0)
@@ -300,6 +365,8 @@
       sm: Math.max(a.sm || 0, b.sm || 0),
       om: Math.max(a.om || 0, b.om || 0),
       active: scalars.active,
+      units: (scalars.units === "imperial") ? "imperial" : "metric",
+      shellWx: scalars.shellWx || null,
       deleted: tomb,
       cities: alive
     };
@@ -309,7 +376,7 @@
     return out;
   }
 
-  // ---------- 3. API: geocoding + forecast + throttle ----------
+  // ---------- 3. API: geocoding + forecast + AQI + throttle ----------
   function geocodeCity(name) {
     return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" +
                  (LANG === "el" ? "el" : "en") +
@@ -322,13 +389,106 @@
       });
   }
 
+  // Autocomplete — geocoding suggestions from the 3rd character.
+  // Debounced (network-friendly), tokened (stale responses die),
+  // offline-aware (never suggests while offline).
+  var AC_MIN = 3, AC_DELAY = 250;
+  var acTimer = null, acToken = 0, acSel = -1, acList = [];
+
+  function geocodeSuggest(q) {
+    var tok = ++acToken;
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=5&language=" +
+                 (LANG === "el" ? "el" : "en") +
+                 "&name=" + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (tok !== acToken) return [];   // stale response — discard
+        return (d && d.results) || [];
+      })
+      .catch(function () { return []; });
+  }
+
+  function hideAc() {
+    acSel = -1; acList = [];
+    var h = $("ac-host");
+    if (h) h.hidden = true;
+  }
+
+  function renderAc(list) {
+    acList = list; acSel = -1;
+    var h = $("ac-host");
+    if (!h) return;
+    h.innerHTML = "";
+    if (list.length === 0) {
+      var none = document.createElement("div");
+      none.className = "ac-none";
+      none.textContent = t("err.notfound");
+      h.appendChild(none);
+    } else {
+      list.forEach(function (g, i) {
+        var it = document.createElement("button");
+        it.type = "button";
+        it.className = "ac-item";
+        var nm = document.createElement("span");
+        nm.className = "ac-name";
+        nm.textContent = g.name;
+        var rg = document.createElement("span");
+        rg.className = "ac-sub";
+        rg.textContent = [g.admin1, g.country].filter(Boolean).join(", ");
+        it.appendChild(nm); it.appendChild(rg);
+        it.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();            // mousedown beats blur-hide
+          pickAc(acList[i]);
+        });
+        h.appendChild(it);
+      });
+    }
+    h.hidden = false;
+  }
+
+  function paintAcSel() {
+    var items = document.querySelectorAll(".ac-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("sel", i === acSel);
+    }
+  }
+
+  function pickAc(g) {
+    hideAc();
+    addCity({ lat: g.latitude, lon: g.longitude, label: g.name });
+  }
+
   // "YYYY-MM-DDTHH:00" key for slicing the hourly array at now
   function hourKey(date) {
     return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" +
            pad(date.getDate()) + "T" + pad(date.getHours()) + ":00";
   }
 
-  // One request: current + hourly + daily. Feels-like/humidity are
+  // European AQI (0..100+) — SEPARATE Open-Meteo endpoint, fired
+  // SERIALLY after the forecast lands. Failure = null → the cell
+  // shows a dim "—" — never blocks, never badges, never fakes.
+  function fetchAqi(lat, lon) {
+    if (!navigator.onLine) return Promise.resolve(null);
+    var url = "https://air-quality-api.open-meteo.com/v1/air-quality" +
+      "?latitude=" + lat + "&longitude=" + lon +
+      "&hourly=european_aqi&timezone=auto&forecast_days=1";
+    return fetch(url)
+      .then(function (r) {
+        if (!r.ok) { console.warn("aqi fetch HTTP " + r.status); return null; }
+        return r.json();
+      })
+      .then(function (d) {
+        if (!d || !d.hourly || !d.hourly.time) return null;
+        var nowKey = hourKey(new Date());
+        var idx = 0;
+        while (idx < d.hourly.time.length && d.hourly.time[idx] < nowKey) idx++;
+        var v = d.hourly.european_aqi && d.hourly.european_aqi[idx];
+        return (typeof v === "number") ? v : null;
+      })
+      .catch(function () { return null; });   // silent — optional data
+  }
+
+  // One request: current + hourly + daily. Feels-like/humidity/UV are
   // taken from the hourly array AT the current hour (the
   // current_weather block carries neither). Writes the cache.
   function fetchForecast(city) {
@@ -336,8 +496,8 @@
     var url = "https://api.open-meteo.com/v1/forecast" +
       "?latitude=" + city.lat + "&longitude=" + city.lon +
       "&current_weather=true" +
-      "&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weathercode" +
-      "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+      "&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weathercode,uv_index" +
+      "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
       "&timezone=auto&forecast_days=7";
     return fetch(url)
       .then(function (r) {
@@ -357,11 +517,22 @@
             code:  d.current_weather.weathercode,
             wind:  d.current_weather.windspeed,   // km/h (API default)
             feels: null,
-            hum:   null
+            hum:   null,
+            uv:    null                          // from hourly at the current hour
           },
+          sun: null,                              // {rise, set} ISO strings — today
+          aqi: null,                              // {at, val} — filled by fetchAqi
           hourly: [],
           daily: []
         };
+
+        // today's sunrise/sunset (daily row 0 = today by API contract)
+        if (d.daily && d.daily.time && d.daily.time.length) {
+          payload.sun = {
+            rise: (d.daily.sunrise && d.daily.sunrise[0]) || null,
+            set:  (d.daily.sunset  && d.daily.sunset[0])  || null
+          };
+        }
 
         // hourly: slice from the current hour, 48 slots forward
         var times = d.hourly.time || [];
@@ -376,6 +547,9 @@
             payload.current.hum = (d.hourly.relative_humidity_2m &&
                 typeof d.hourly.relative_humidity_2m[j] === "number")
               ? d.hourly.relative_humidity_2m[j] : null;
+            payload.current.uv = (d.hourly.uv_index &&
+                typeof d.hourly.uv_index[j] === "number")
+              ? d.hourly.uv_index[j] : null;
           }
           payload.hourly.push({
             time: times[j],
@@ -404,24 +578,29 @@
           });
         });
 
-        writeCityCache(city.id, payload);
+        // AQI rides AFTER the forecast — the shell keeps owning the
+        // weather truth; a dead AQI endpoint costs nothing visually.
+        return fetchAqi(city.lat, city.lon).then(function (aqiVal) {
+          if (aqiVal !== null) payload.aqi = { at: Date.now(), val: aqiVal };
+          writeCityCache(city.id, payload);
 
-        // Mirror into the shell tray cache when this city IS the
-        // shell's location — one fetch, two consumers, same numbers.
-        try {
-          var sh = JSON.parse(localStorage.getItem("oros-weather"));
-          if (sh && typeof sh.lat === "number" &&
-              Math.abs(sh.lat - city.lat) < 0.02 &&
-              Math.abs(sh.lon - city.lon) < 0.02) {
-            localStorage.setItem("oros-wx-cache", JSON.stringify({
-              at:   payload.at,
-              temp: payload.current.temp,
-              code: payload.current.code
-            }));
-          }
-        } catch (e) {}
+          // Mirror into the shell tray cache when this city IS the
+          // shell's location — one fetch, two consumers, same numbers.
+          try {
+            var sh = JSON.parse(localStorage.getItem("oros-weather"));
+            if (sh && typeof sh.lat === "number" &&
+                Math.abs(sh.lat - city.lat) < 0.02 &&
+                Math.abs(sh.lon - city.lon) < 0.02) {
+              localStorage.setItem("oros-wx-cache", JSON.stringify({
+                at:   payload.at,
+                temp: payload.current.temp,
+                code: payload.current.code
+              }));
+            }
+          } catch (e) {}
 
-        return payload;
+          return payload;
+        });
       })
       .then(function (payload) {
         if (payload) netDown = false;         // good fetch — badge can rest
@@ -507,6 +686,7 @@
   function renderTop(payload) {
     var city = activeCity();
     $("city-name").textContent = city ? city.label : t("dlg.title");
+    renderDots();
     var empty = !city;
     $("empty").hidden = !empty;
     $("current").hidden = empty || !payload;
@@ -514,6 +694,31 @@
     for (var i = 0; i < secs.length; i++) secs[i].hidden = empty || !payload;
     $("offline-badge").hidden = true;    // decided below, once
     return { city: city, payload: payload };
+  }
+
+  // Pager dots: one per city (sorted by pos), active = accent,
+  // click jumps. Invisible with ≤1 city — zero clutter single-city.
+  function renderDots() {
+    var host = $("wx-dots");
+    if (!host) return;
+    host.innerHTML = "";
+    if (state.cities.length < 2) { host.hidden = true; return; }
+    host.hidden = false;
+    var sorted = state.cities.slice().sort(function (a, b) { return a.pos - b.pos; });
+    sorted.forEach(function (c) {
+      var d = document.createElement("button");
+      d.type = "button";
+      d.className = "wx-dot" + (c.id === state.active ? " active" : "");
+      d.setAttribute("aria-label", c.label);
+      d.addEventListener("click", function () {
+        if (state.active === c.id) return;
+        state.active = c.id;
+        state.sm = Date.now();
+        save();
+        refresh(false);
+      });
+      host.appendChild(d);
+    });
   }
 
   function renderAll(payload) {
@@ -531,13 +736,34 @@
 
     // --- current ---
     $("cur-icon").innerHTML = iconFor(p.current.code);
-    $("cur-temp").textContent  = Math.round(p.current.temp) + "°";
-    $("cur-cond").textContent  = condText(p.current.code);
+    $("cur-icon").title = condText(p.current.code);   // hint replaced the label — condition lives on the icon
+    $("cur-temp").textContent  = fmtTemp(p.current.temp);
+    $("cur-temp").title        = t("units.tip");
+    $("cur-cond").textContent  = pickHint(p) || condText(p.current.code);
     $("cur-feels").textContent = (p.current.feels !== null)
-      ? Math.round(p.current.feels) + "°" : "—";
+      ? fmtTemp(p.current.feels) : "—";
     $("cur-hum").textContent   = (p.current.hum !== null)
       ? p.current.hum + "%" : "—";
-    $("cur-wind").textContent  = Math.round(p.current.wind) + " km/h";
+    $("cur-wind").textContent  = fmtSpeed(p.current.wind);
+
+    // --- second meta row: UV / Sun / AQI ---
+    $("cur-uv").textContent = (p.current.uv !== null)
+      ? p.current.uv.toFixed(1) : "—";
+
+    if (p.sun && p.sun.rise && p.sun.set) {
+      $("cur-sun").textContent =
+        p.sun.rise.substring(11, 16) + " → " + p.sun.set.substring(11, 16);
+    } else { $("cur-sun").textContent = "—"; }
+
+    var aqiCell = $("cur-aqi");
+    if (p.aqi && typeof p.aqi.val === "number") {
+      aqiCell.textContent = String(Math.round(p.aqi.val));
+      aqiCell.setAttribute("data-level",
+        p.aqi.val <= 20 ? "good" : p.aqi.val <= 40 ? "fair" : "bad");
+    } else {
+      aqiCell.textContent = "—";
+      aqiCell.removeAttribute("data-level");
+    }
     var up = new Date(p.at);
     $("cur-updated").textContent = t("updated.at") + " " +
       up.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB",
@@ -571,7 +797,7 @@
 
       var tmp = document.createElement("span");
       tmp.className = "h-temp";
-      tmp.textContent = Math.round(h.temp) + "°";
+      tmp.textContent = fmtTemp(h.temp);
       cell.appendChild(tmp);
 
       var bar = document.createElement("span");
@@ -629,7 +855,7 @@
       range.className = "d-range";
       var mn = document.createElement("span");
       mn.className = "d-min";
-      mn.textContent = (d.min !== null ? Math.round(d.min) : "—") + "°";
+      mn.textContent = (d.min !== null ? fmtTemp(d.min) : "—");
       var track = document.createElement("span");
       track.className = "d-track";
       var fillD = document.createElement("span");
@@ -647,7 +873,7 @@
       track.appendChild(fillD);
       var mx = document.createElement("span");
       mx.className = "d-max";
-      mx.textContent = (d.max !== null ? Math.round(d.max) : "—") + "°";
+      mx.textContent = (d.max !== null ? fmtTemp(d.max) : "—");
       range.appendChild(mn); range.appendChild(track); range.appendChild(mx);
       row.appendChild(range);
 
@@ -721,8 +947,31 @@
     h.hidden = false;
   }
 
-  function addCity() {
+  function commitCity(g) {
+    // duplicate guard: same rounded coordinates = same city
+    var dup = state.cities.some(function (c) {
+      return Math.abs(c.lat - g.lat) < 0.02 && Math.abs(c.lon - g.lon) < 0.02;
+    });
+    if (dup) { dlgHint("err.exists", true); return; }
+    var city = newCityObj(g.label, g.lat, g.lon);
+    city.pos = state.cities.length;
+    state.cities.push(city);
+    state.active = city.id;
+    state.om = Date.now();     // ordering decision — merge reference
+    state.sm = Date.now();
+    save();
+    $("city-input").value = "";
+    renderCityList();
+    $("dlg-city").close();
+    refresh(true);            // brand new city → force fetch
+  }
+
+  function addCity(geo) {
     if (cityDlgBusy) return;
+    if (geo) {                       // picked from suggestions — coords in hand
+      commitCity(geo);
+      return;
+    }
     var input = $("city-input");
     var name = input.value.trim();
     if (!name) return;
@@ -732,24 +981,7 @@
     $("city-add-btn").disabled = true;
 
     geocodeCity(name)
-      .then(function (g) {
-        // duplicate guard: same rounded coordinates = same city
-        var dup = state.cities.some(function (c) {
-          return Math.abs(c.lat - g.lat) < 0.02 && Math.abs(c.lon - g.lon) < 0.02;
-        });
-        if (dup) { dlgHint("err.exists", true); return; }
-        var city = newCityObj(g.label, g.lat, g.lon);
-        city.pos = state.cities.length;
-        state.cities.push(city);
-        state.active = city.id;
-        state.om = Date.now();     // ordering decision — merge reference
-        state.sm = Date.now();
-        save();
-        input.value = "";
-        renderCityList();
-        $("dlg-city").close();
-        refresh(true);            // brand new city → force fetch
-      })
+      .then(function (g) { commitCity(g); })
       .catch(function (e) {
         dlgHint(e && e.message === "notfound" ? "err.notfound" : "err.fetch", true);
       })
@@ -842,7 +1074,7 @@
     var ok = state.cities.some(function (c) { return c.id === state.active; });
     if (!ok) state.active = state.cities.length ? state.cities[0].id : null;
 
-    scheduleRender();
+    scheduleRender();    // remote change landed (units/cities) — repaint live
     if (info && info.merged) showToast(t("updated.at"));   // light ack — no noise
   }
 
@@ -900,12 +1132,49 @@
     $("city-btn").addEventListener("click", openCityDialog);
     $("refresh-btn").addEventListener("click", function () { refresh(true); });
 
-    $("city-add-btn").addEventListener("click", addCity);
-    $("city-input").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); addCity(); }
+    $("city-add-btn").addEventListener("click", function () { addCity(); });
+
+    // Autocomplete: live suggestions from the 3rd character.
+    var cInput = $("city-input");
+    cInput.addEventListener("input", function () {
+      clearTimeout(acTimer);
+      var q = cInput.value.trim();
+      if (q.length < AC_MIN || !navigator.onLine) { hideAc(); return; }
+      acTimer = setTimeout(function () {
+        geocodeSuggest(q).then(renderAc);
+      }, AC_DELAY);
     });
+    cInput.addEventListener("keydown", function (e) {
+      var h = $("ac-host");
+      var open = h && !h.hidden;
+      var nItems = open ? document.querySelectorAll(".ac-item").length : 0;
+      if (e.key === "ArrowDown" && nItems) {
+        e.preventDefault();
+        acSel = (acSel + 1) % nItems;
+        paintAcSel();
+      } else if (e.key === "ArrowUp" && nItems) {
+        e.preventDefault();
+        acSel = (acSel - 1 + nItems) % nItems;
+        paintAcSel();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (open && acSel >= 0 && acList[acSel]) {
+          pickAc(acList[acSel]);       // highlighted suggestion wins
+        } else {
+          addCity();                   // plain typed text — legacy path
+        }
+      } else if (e.key === "Escape" && open) {
+        e.preventDefault();
+        hideAc();
+      }
+    });
+    cInput.addEventListener("blur", function () {
+      setTimeout(hideAc, 150);         // mousedown fires first — safe
+    });
+
     $("dlg-city").addEventListener("close", function () {
       $("city-hint").hidden = true;   // hint dies with the dialog
+      hideAc();                       // so do the suggestions
     });
 
     // Native dialogs ignore backdrop clicks by default — click ON
@@ -943,9 +1212,47 @@
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) refresh(false);
     });
+
+    // Units toggle: tap the BIG temperature — metric ⇄ imperial.
+    // Render-only conversion (cache stays metric), travels in the
+    // slice so every device agrees.
+    $("cur-temp").addEventListener("click", function () {
+      state.units = state.units === "metric" ? "imperial" : "metric";
+      state.sm = Date.now();
+      save();
+      var el = $("cur-temp");
+      el.classList.add("flick");
+      setTimeout(function () { el.classList.remove("flick"); }, 200);
+      renderAll(readPayload());
+    });
+
+    // City swipe (pager): horizontal drag ≥45px on the main area
+    // switches city — EXCEPT inside #hourly (its own scroll turf).
+    var sx = 0, sy = 0, tracking = false;
+    $("wxmain").addEventListener("pointerdown", function (e) {
+      if (e.target.closest("#hourly")) { tracking = false; return; }
+      tracking = true; sx = e.clientX; sy = e.clientY;
+    });
+    $("wxmain").addEventListener("pointerup", function (e) {
+      if (!tracking) return;
+      tracking = false;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+      var sorted = state.cities.slice().sort(function (a, b) { return a.pos - b.pos; });
+      if (sorted.length < 2) return;
+      var i = 0;
+      for (var k = 0; k < sorted.length; k++) {
+        if (sorted[k].id === state.active) { i = k; break; }
+      }
+      var nxt = (dx < 0 ? i + 1 : i - 1 + sorted.length) % sorted.length;
+      state.active = sorted[nxt].id;
+      state.sm = Date.now();
+      save();
+      refresh(false);
+    });
   }
-  
-    // Shell→app bridge: the menu's weather settings push location
+
+  // Shell→app bridge: the menu's weather settings push location
   // changes straight into the RUNNING app. Upsert by coords, set
   // active, stamp (stamps stay owned by this app), refresh.
   window.__orosWeatherUpdate = function (w) {
@@ -1013,7 +1320,7 @@
   }
 
   // ---------- Boot ----------
-  console.log("weather.js v0.19.2 boot");
+  console.log("weather.js v0.2.0 boot");
   load();
   syncShellLocation();
   applyI18n();

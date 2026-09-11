@@ -36,6 +36,8 @@
   --border:       #262c38;
   --shadow:       rgba(0, 0, 0, 0.45);
   --danger:       #e06c75;
+  --ok:           #87cf3e;
+  --warn:         #e0a44c;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -105,6 +107,30 @@ input, textarea, select {
   font-weight: 700;
 }
 #city-btn svg:last-child { flex-shrink: 0; opacity: 0.7; }
+
+/* City pager dots — one per saved city, click jumps, hidden with a
+   single city (JS toggles [hidden]). Zero chrome, pager semantics. */
+#wx-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.wx-dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--text-dim);
+  opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s;
+}
+.wx-dot:hover { opacity: 0.8; }
+.wx-dot.active {
+  background: var(--accent);
+  opacity: 1;
+}
 
 #refresh-btn {
   display: inline-flex;
@@ -194,6 +220,13 @@ input, textarea, select {
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
   letter-spacing: -1px;
+  cursor: pointer;              /* tap = °C ⇄ °F (units.tip explains) */
+  user-select: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+#cur-temp.flick {               /* unit-switch feedback pulse */
+  opacity: 0.4;
+  transform: scale(0.97);
 }
 #cur-cond {
   font-size: 14.5px;
@@ -229,6 +262,15 @@ input, textarea, select {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* AQI semantic coloring — text color only, no icons/badges.
+   Thresholds set in JS (≤20 good, ≤40 fair) as data-level. */
+.meta-v[data-level="good"] { color: var(--ok); }
+.meta-v[data-level="fair"] { color: var(--warn); }
+.meta-v[data-level="bad"]  { color: var(--danger); }
+
+/* Sun cell: two timestamps — slightly smaller so both fit one line */
+#cur-sun { font-size: 13.5px; }
 
 #cur-updated {
   text-align: center;
@@ -511,6 +553,42 @@ button.btn-secondary:hover:not(:disabled) {
 }
 button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Autocomplete suggestions — live below the add row, IN-FLOW
+   (no overlay, no z-index fights; the dialog owns stacking) */
+#ac-host {
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.ac-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.ac-item:hover, .ac-item.sel { background: var(--accent-soft); }
+.ac-name { font-size: 13.5px; font-weight: 600; }
+.ac-sub {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ac-none {
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
 /* Narrow screens: input takes the full row first, buttons follow */
 @media (max-width: 480px) {
   #city-input { flex-basis: 100%; }
@@ -531,6 +609,9 @@ button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
   #cur-temp { font-size: 48px; }
   #cur-icon svg { width: 68px; height: 68px; }
   #wxmain .hcell { min-width: 52px; }
+  #cur-meta { gap: 6px; }          /* 6-cell grid breathes tighter on phones */
+  .meta-cell { padding: 8px 4px; }
+  #cur-sun { font-size: 12.5px; }
 }
 
 /* ---------- X. [hidden] must ALWAYS win ----------

@@ -15,6 +15,7 @@
       <span id="city-name">—</span>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
+    <span id="wx-dots" hidden></span>
     <span class="spacer"></span>
     <button id="refresh-btn" type="button" aria-label="Refresh">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -55,6 +56,18 @@
           <span class="meta-k" data-i18n="meta.wind">Wind</span>
           <span class="meta-v" id="cur-wind">—</span>
         </div>
+        <div class="meta-cell">
+          <span class="meta-k" data-i18n="meta.uv">UV</span>
+          <span class="meta-v" id="cur-uv">—</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-k" data-i18n="meta.sun">Sun</span>
+          <span class="meta-v" id="cur-sun">—</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-k" data-i18n="meta.aqi">Air</span>
+          <span class="meta-v" id="cur-aqi">—</span>
+        </div>
       </div>
       <div id="cur-updated" class="dim"></div>
     </section>
@@ -77,6 +90,7 @@
       <button id="city-add-btn" type="button" class="primary" data-i18n="dlg.add">Add</button>
 	  <button id="dlg-gps" class="btn-secondary" type="button" data-i18n="gps.use"></button>
     </div>
+	    <div id="ac-host" hidden></div>
     <p class="hint" id="city-hint" hidden></p>
   </dialog>
 
