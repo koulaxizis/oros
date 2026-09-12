@@ -112,6 +112,7 @@
       "ins.filters":     "Filters",
       "ins.showing":     "Showing {x} of {y} entries",
       "ins.clear":       "Clear filters",
+      "tab.ent":         "Entries",
       "ins.trends.title":"Patterns",
       "tr.loc":          "When you're at “{x}”, you often feel {e} ({d}pt more than usual).",
       "tr.person":       "When you're with “{x}”, you often feel {e} ({d}pt more than usual).",
@@ -201,6 +202,7 @@
       "ins.filters":     "Φίλτρα",
       "ins.showing":     "Εμφανίζονται {x} από {y} καταχωρήσεις",
       "ins.clear":       "Καθαρισμός φίλτρων",
+	  "tab.ent":         "Καταχωρήσεις",
       "ins.trends.title":"Τάσεις",
       "tr.loc":          "Όταν είσαι «{x}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
       "tr.person":       "Με «{x}» νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
@@ -1415,29 +1417,32 @@ function mergeMoodStates(A, B) {
     });
   }
 
-  function toggleView() {
-    viewMode = (viewMode === "capture") ? "insights" : "capture";
+  function showTab(tab) {
+    viewMode = tab;
     applyView();
   }
 
   function applyView() {
     var cap = $("capture"), rec = $("recent"),
-        thr = $("thread"), ins = $("insights"),
-        ib = $("ins-btn");
-    var showIns = (viewMode === "insights");
-    if (ins) ins.hidden = !showIns;
-    if (cap) cap.hidden = showIns;
-    if (rec) rec.hidden = showIns;
-    if (thr) thr.hidden = showIns || !state.entries.length;
-    if (ib) {
-      ib.classList.toggle("on", showIns);
-      ib.setAttribute("aria-pressed", showIns ? "true" : "false");
-      ib.setAttribute("title", showIns ? t("capture") : t("insights"));
-      ib.setAttribute("aria-label", showIns ? t("capture") : t("insights"));
-    }
-    if (showIns) {
+        thr = $("thread"), ins = $("insights");
+    var b1 = $("cap-btn"), b2 = $("ent-btn"), b3 = $("ins-btn");
+    if (cap) cap.hidden = (viewMode !== "capture");
+    if (rec) rec.hidden = (viewMode !== "entries");
+    if (ins) ins.hidden = (viewMode !== "insights");
+    if (thr) thr.hidden = (viewMode !== "capture") || !state.entries.length;
+    [[b1, viewMode === "capture"],
+     [b2, viewMode === "entries"],
+     [b3, viewMode === "insights"]].forEach(function (p) {
+      if (!p[0]) return;
+      p[0].classList.toggle("on", p[1]);
+      p[0].setAttribute("aria-pressed", p[1] ? "true" : "false");
+      p[0].setAttribute("title", p[0] === b2 ? t("tab.ent") : t("insights"));
+    });
+    if (viewMode === "insights") {
       calMonth = null;                    // reopen on current month
       renderInsights();
+    } else if (viewMode === "entries") {
+      renderRecent();
     } else {
       renderAll();
     }
@@ -2251,41 +2256,40 @@ function mergeMoodStates(A, B) {
   }
 
   // R9 parity: static buttons ship EMPTY in HTML, JS paints
-  // aria-labels/titles at boot. Icon: pencil-plus (new entry).
+  // aria-labels/titles/icons at boot. pencil · list · bar-chart.
   function paintStaticAria() {
-    var btn = $("new-btn");
-    if (btn) {
-      btn.setAttribute("aria-label", t("btn.new"));
-      btn.setAttribute("title", t("btn.new"));
-      btn.innerHTML =
+    var cap = $("cap-btn");
+    if (cap) {
+      cap.setAttribute("aria-label", t("capture"));
+      cap.setAttribute("title", t("capture"));
+      cap.innerHTML =
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>' +
         '<path d="M14 5l5 5"/></svg>';
     }
-    var ib = $("ins-btn");
-    if (ib) {
-      ib.innerHTML =
+    var ent = $("ent-btn");
+    if (ent) {
+      ent.setAttribute("aria-label", t("tab.ent"));
+      ent.setAttribute("title", t("tab.ent"));
+      ent.innerHTML =
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';   // bar-chart family
+        '<path d="M4 6h16M4 12h16M4 18h10"/></svg>';
     }
-  }
-
-  function wire() {
-    // "New entry" = clean slate. Editing mode already has Discard.
-        $("new-btn").addEventListener("click", function () {
-      if (viewMode === "insights") toggleView();
-      resetCapture();
-      var mm = $("moodmain");
-      if (mm) mm.scrollTop = 0;
-    });
-
-    // topbar toggle: Capture ⇆ Insights (full takeover)
     var ib = $("ins-btn");
     if (ib) {
       ib.setAttribute("aria-label", t("insights"));
       ib.setAttribute("title", t("insights"));
-      ib.addEventListener("click", toggleView);
+      ib.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';
     }
+  }
+
+  function wire() {
+    // Three tabs — full takeover, one active at a time
+    $("cap-btn").addEventListener("click", function () { showTab("capture"); });
+    $("ent-btn").addEventListener("click", function () { showTab("entries"); });
+    $("ins-btn").addEventListener("click", function () { showTab("insights"); });
   }
 
   // ---------- Boot ----------

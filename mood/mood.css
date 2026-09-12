@@ -88,13 +88,14 @@ input, textarea, select {
   font-weight: 700;
   color: var(--accent);
 }
-#new-btn,
+#cap-btn,
+#ent-btn,
 #ins-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
+  min-width: 34px;
+  min-height: 34px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 8px;
