@@ -1161,3 +1161,21 @@ blocks above + R4/R11/R13 before touching anything.
 KNOWN DEFERRED (backlog): co-occurrence pairs, weekly recap card,
 Wave 4 reminders (orOS-open-only, clickable toast), ghost-label
 Option B for deleted column values.
+
+## 0.25.0 — Mood Wave 3.5 complete + tabs
+
+- TABS: three-view topbar (Capture · Entries · Insights). Entries
+  list moved out of the capture page. FIX: renderRecent forced
+  sec.hidden=false regardless of active view — now defers to
+  applyView.
+- CO-OCCURRENCE: "when X, also Y" pairs into Patterns. Guards:
+  ≥40% co-occurrence, ≥20pt above general prevalence, min counts.
+- TRIGGER INTELLIGENCE: top-6 triggers become trend conditions
+  ("when X triggers it…"); capture trigger field gains a datalist
+  autocomplete from past values (free text stays, no model change).
+- INTENSITY TREND: new section — avg intensity per emotion, recent
+  half vs earlier half of the range (min 3/side, |Δ|≥0.4 noise floor).
+- Full Wave 3.5 as previously shipped: filters, trends engine,
+  weekday, momentum, reset-link fix, tabs.
+KNOWN DEFERRED: reminders (Wave 4), weekly recap card, ghost-label
+Option B, export.

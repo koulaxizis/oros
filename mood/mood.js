@@ -118,6 +118,10 @@
       "tr.person":       "When you're with “{x}”, you often feel {e} ({d}pt more than usual).",
       "tr.hab":          "When you mark “{h}”, you often feel {e} ({d}pt more than usual).",
       "tr.freq":         "You mark “{h}” on {p}% of your logged days.",
+      "tr.pair":         "When you feel {a}, you also mark {b} ({p}% of the time).",
+      "tr.trig":         "When “{x}” triggers it, you often feel {e} ({d}pt more than usual).",
+      "ins.int.title":   "Intensity shifts",
+      "ins.int.hint":    "Average intensity now vs earlier in this range",
       "ins.dow.title":   "By weekday",
       "ins.mom.title":   "This week vs last",
       "mom.pos":         "Share of entries with positive feelings (happy · calm · excited)",
@@ -208,6 +212,10 @@
       "tr.person":       "Με «{x}» νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
       "tr.hab":          "Όταν σημειώνεις «{h}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
       "tr.freq":         "Σημειώνεις «{h}» στο {p}% των ημερών με καταγραφή.",
+      "tr.pair":         "Όταν νιώθεις {a}, σημειώνεις και {b} ({p}% των φορών).",
+      "tr.trig":         "Όταν σε «πυροδοτεί» «{x}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
+      "ins.int.title":   "Αλλαγές έντασης",
+      "ins.int.hint":    "Μέση ένταση τώρα vs νωρίτερα στο εύρος",
       "ins.dow.title":   "Ανά ημέρα της εβδομάδας",
       "ins.mom.title":   "Αυτή η εβδομάδα vs προηγούμενη",
       "mom.pos":         "Ποσοστό καταχωρήσεων με θετικά συναισθήματα (χαρούμενος · ήρεμος · ενθουσιασμένος)",
@@ -910,6 +918,19 @@ function mergeMoodStates(A, B) {
     trig.maxLength = 200;
     trig.placeholder = t("l4.trigger");
     trig.value = prevTrig;
+    trig.setAttribute("list", "trig-list");   // autocomplete: past triggers
+    var dl = document.createElement("datalist");
+    dl.id = "trig-list";
+    var seenTr = {};
+    state.entries.forEach(function (e) {
+      var s = (e.trigger || "").trim();
+      if (!s || seenTr[s.toLowerCase()]) return;
+      seenTr[s.toLowerCase()] = 1;
+      var o = document.createElement("option");
+      o.value = s;
+      dl.appendChild(o);
+    });
+    host.appendChild(dl);
     host.appendChild(trig);
 
     // ---- actions ----
@@ -1297,7 +1318,12 @@ function mergeMoodStates(A, B) {
   // ---- recent list ----
   function renderRecent() {
     var sec = $("recent"), list = $("entry-list");
-    if (!state.entries.length) { sec.hidden = true; return; }
+    // hide when empty OR when the entries tab isn't the active view —
+    // applyView owns visibility; this must never force-show.
+    if (!state.entries.length || viewMode !== "entries") {
+      sec.hidden = true;
+      return;
+    }
     sec.hidden = false;
     list.innerHTML = "";
     state.entries.slice(0, 30).forEach(function (e) {
@@ -1921,6 +1947,53 @@ function mergeMoodStates(A, B) {
         }
       });
     });
+    // -- co-occurrence pairs: "when you feel X, you also mark Y" --
+    // Guarded: ≥40% co-occurrence AND ≥20pt above that emotion's
+    // general prevalence (else every pair with itself-heavy sets leaks).
+    var bSt = emoStats(sub);
+    EMOTIONS.forEach(function (ea) {
+      var withA = sub.filter(function (e) {
+        return (e.emotions || []).some(function (m) { return m.k === ea.k; });
+      });
+      if (withA.length < TR_MIN_N) return;
+      EMOTIONS.forEach(function (eb) {
+        if (eb.k === ea.k) return;
+        var coN = withA.filter(function (e) {
+          return (e.emotions || []).some(function (m) { return m.k === eb.k; });
+        }).length;
+        if (coN < 2) return;
+        var coPct = Math.round(coN / withA.length * 100);
+        var basePct = Math.round((bSt.n[eb.k] || 0) / sub.length * 100);
+        if (coPct - basePct >= 20 && coPct >= 40) {
+          out.push({ d: coPct - basePct, fn: t("tr.pair")
+            .replace("{a}", t("emo." + ea.k))
+            .replace("{b}", t("emo." + eb.k))
+            .replace("{p}", coPct) });
+        }
+      });
+    });
+
+    // -- trigger-based conditions (top 6 triggers by usage) --
+    var trigCount = {}, trigOrig = {};
+    sub.forEach(function (e) {
+      var s = (e.trigger || "").trim();
+      if (!s) return;
+      var key = s.toLowerCase();
+      trigCount[key] = (trigCount[key] || 0) + 1;
+      trigOrig[key] = s;                       // keep first-seen casing
+    });
+    Object.keys(trigCount).sort(function (a, b) {
+      return trigCount[b] - trigCount[a];
+    }).slice(0, 6).forEach(function (tk) {
+      var cond = sub.filter(function (e) {
+        return (e.trigger || "").trim().toLowerCase() === tk;
+      });
+      consider(cond, function (b) { return t("tr.trig")
+        .replace("{x}", trigOrig[tk])
+        .replace("{e}", t("emo." + b.k))
+        .replace("{d}", b.d); });
+    });
+
     out.sort(function (a, b) { return b.d - a.d; });
     return out.slice(0, TR_MAX).map(function (o) { return o.fn; });
   }
@@ -2032,6 +2105,69 @@ function mergeMoodStates(A, B) {
     hint.textContent = t("mom.pos");
     host.appendChild(hint);
   }
+  
+    // -- intensity trend: avg intensity per emotion, recent half
+  //    vs earlier half of the (filtered) range. Frequency says
+  //    HOW OFTEN; this says HOW STRONGLY. Min 3 samples per side.
+  function renderIntensity(host, es) {
+    if (es.length < 8) return;
+    var half = Math.floor(es.length / 2);
+    var rec = es.slice(0, half), oldr = es.slice(half);   // ts-desc order
+    var avgs = function (set) {
+      var st = emoStats(set), out = {};
+      Object.keys(st.n).forEach(function (k) {
+        if (st.n[k] >= 3) out[k] = st.sums[k] / st.n[k];
+      });
+      return out;
+    };
+    var rm = avgs(rec), om = avgs(oldr);
+    var rows = [];
+    Object.keys(rm).forEach(function (k) {
+      if (om[k] === undefined) return;
+      var d = +(rm[k] - om[k]).toFixed(1);
+      if (Math.abs(d) < 0.4) return;             // noise floor
+      rows.push({ k: k, r: rm[k], d: d });
+    });
+    if (!rows.length) return;
+    rows.sort(function (a, b) { return Math.abs(b.d) - Math.abs(a.d); });
+    rows = rows.slice(0, 5);
+
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t("ins.int.title");
+    host.appendChild(h);
+    rows.forEach(function (r) {
+      var em = emoByK(r.k);
+      var row = document.createElement("div");
+      row.className = "dist-row";
+      row.style.color = em ? em.col : "";
+      var lab = document.createElement("span");
+      lab.className = "dist-lab";
+      lab.textContent = em ? t(em.i18n) : r.k;
+      row.appendChild(lab);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width = Math.round(r.r / 5 * 100) + "%";   // of max 5
+      fill.style.background = em ? em.col : "var(--accent)";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      var val = document.createElement("span");
+      val.className = "dist-val";
+      val.textContent = r.r.toFixed(1) + "/5";
+      var dv = document.createElement("span");
+      dv.className = "dist-delta " + (r.d > 0 ? "up" : "down");
+      dv.textContent = (r.d > 0 ? "+" : "−") + Math.abs(r.d).toFixed(1);
+      val.appendChild(dv);
+      row.appendChild(val);
+      host.appendChild(row);
+    });
+    var hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = t("ins.int.hint");
+    host.appendChild(hint);
+  }
 
       function renderInsights() {
     var host = $("insights");
@@ -2135,6 +2271,9 @@ function mergeMoodStates(A, B) {
 
     // ---- weekly momentum (time-based, ignores filters) ----
     renderMomentum(host, es);
+
+    // ---- intensity trend (filtered) ----
+    renderIntensity(host, fes);
 
     // ---- habits (filtered) ----
     var d2 = document.createElement("h2");
