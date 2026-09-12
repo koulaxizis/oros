@@ -820,14 +820,21 @@ function mergeMoodStates(A, B) {
   var picked    = {};     // emotionKey → intensity 1–5
   var selLoc    = null;   // column-value id | null
   var selPerson = null;
+  var selTrig   = null;   // trigger preset id | null
   var hab       = {};                     // TRIADIC null|"yes"|"no", keys = HABITS
   HABITS.forEach(function (h) { hab[h.f] = null; });
 
-  function resetCapture() {
+    function resetCapture() {
     editing = null;
     picked = {};
-    selLoc = null; selPerson = null; selTrig = null;
-    HABITS.forEach(function (h) { hab[h.f] = null; });
+    // Smart preselection (changelog contract): most-used value in
+    // the CURRENT time-of-day bucket → most recent → pos 0.
+    // FACTS ONLY (loc/person) — feelings and triggers are never
+    // preselected: they must be conscious picks, default effect
+    // would pollute the statistics.
+    selLoc    = suggestFor("loc");
+    selPerson = suggestFor("person");
+    selTrig   = null;
     buildCapture();
   }
 
@@ -1017,44 +1024,41 @@ function mergeMoodStates(A, B) {
     host.appendChild(l2cols);
 
     // ---- L3: triadic habits ("this or that") ----
-    // ONE array, TWO visual groups: the basics on top (section
-    // title), the rituals under a dim subsection label. Same
-    // visual rhythm as #intensities. Re-tapping the ACTIVE chip
-    // returns to unknown.
-    var h3 = document.createElement("h2");
-    h3.className = "sec-title";
-    h3.textContent = t("ins.basics");
-    host.appendChild(h3);
-    var habPanel = document.createElement("div");
-    habPanel.id = "habits";
-    [["hab", null], ["rit", "grp.rit"]].forEach(function (g) {
-      if (g[1]) {                          // subsection label — dim
-        var gl = document.createElement("div");
-        gl.className = "col-lab";
-        gl.textContent = t(g[1]);
-        habPanel.appendChild(gl);
-      }
-      HABITS.forEach(function (h) {
-        if (h.grp !== g[0]) return;
+    // TWO visually separate blocks over the ONE HABITS array:
+    // the basics on top, rituals as their own titled section.
+    // Same visual rhythm as #intensities. Re-tapping the ACTIVE
+    // chip returns to unknown.
+    var mkHabBlock = function (grp, titleKey, panelId) {
+      var h = document.createElement("h2");
+      h.className = "sec-title";
+      h.textContent = t(titleKey);
+      host.appendChild(h);
+      var panel = document.createElement("div");
+      panel.className = "habpanel";
+      panel.id = panelId;
+      HABITS.forEach(function (hh) {
+        if (hh.grp !== grp) return;
         var row = document.createElement("div");
         row.className = "habrow";
         ["yes", "no"].forEach(function (side) {
           var hc = document.createElement("button");
           hc.type = "button";
-          hc.className = "chip hab" + (hab[h.f] === side ? " on" : "") +
+          hc.className = "chip hab" + (hab[hh.f] === side ? " on" : "") +
             (side === "no" ? " neg" : "");
-          hc.textContent = t(h[side]);
-          hc.setAttribute("aria-pressed", hab[h.f] === side ? "true" : "false");
+          hc.textContent = t(hh[side]);
+          hc.setAttribute("aria-pressed", hab[hh.f] === side ? "true" : "false");
           hc.addEventListener("click", function () {
-            hab[h.f] = (hab[h.f] === side) ? null : side;   // re-tap = unknown
+            hab[hh.f] = (hab[hh.f] === side) ? null : side;   // re-tap = unknown
             buildCapture();
           });
           row.appendChild(hc);
         });
-        habPanel.appendChild(row);
+        panel.appendChild(row);
       });
-    });
-    host.appendChild(habPanel);
+      host.appendChild(panel);
+    };
+    mkHabBlock("hab", "ins.basics", "habits");
+    mkHabBlock("rit", "grp.rit", "rituals");
 
         // ---- L3b: trigger presets (closed list, like Location) ----
     // Chips + None + Manage + inline Add — same vocabulary model
@@ -2064,16 +2068,11 @@ function mergeMoodStates(A, B) {
   // -- habits adherence: yes/no/day-over-logged-days strips.
   //    TWO subsections over the ONE HABITS array — grp decides
   //    the bucket, labelKey the dim subsection heading. --
-  function renderHabits(host, es, grp, labelKey) {
+  function renderHabits(host, es, grp) {
     var daySet = {};
     es.forEach(function (e) { daySet[dayKey(e.ts)] = 1; });
     var loggedDays = Object.keys(daySet).length;
     if (!loggedDays) return;
-
-    var gl = document.createElement("div");
-    gl.className = "col-lab";
-    gl.textContent = t(labelKey);
-    host.appendChild(gl);
 
     HABITS.forEach(function (h) {
       if (h.grp !== grp) return;
@@ -2855,18 +2854,25 @@ function mergeMoodStates(A, B) {
     // ---- intensity trend (filtered) ----
     renderIntensity(host, fes);
 
-    // ---- habits + rituals (filtered, two subsections) ----
+    // ---- habits (filtered) ----
     var d2 = document.createElement("h2");
     d2.className = "sec-title";
     d2.textContent = t("ins.habits.title");
     host.appendChild(d2);
     var hb = document.createElement("div");
-    if (fes.length) {
-      renderHabits(hb, fes, "hab", "ins.basics");
-      renderHabits(hb, fes, "rit", "grp.rit");
-    }
+    if (fes.length) renderHabits(hb, fes, "hab");
     if (!hb.childNodes.length) hb.textContent = t("ins.ctx.none");
     host.appendChild(hb);
+
+    // ---- rituals (filtered) ----
+    var d4 = document.createElement("h2");
+    d4.className = "sec-title";
+    d4.textContent = t("grp.rit");
+    host.appendChild(d4);
+    var rb = document.createElement("div");
+    if (fes.length) renderHabits(rb, fes, "rit");
+    if (!rb.childNodes.length) rb.textContent = t("ins.ctx.none");
+    host.appendChild(rb);
 
     // ---- calendar (ignores range AND filters) ----
     var d3 = document.createElement("h2");

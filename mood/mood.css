@@ -270,8 +270,9 @@ input, textarea, select {
 .recap-lab { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 .recap-val .dist-delta { font-size: 12px; margin-left: 6px; }
 
-/* triadic habits: one titled panel, one row per habit */
-#habits {
+/* triadic habits: one panel per GROUP (basics + rituals),
+   same styling — the JS mkHabBlock paints both */
+.habpanel {
   display: flex;
   flex-direction: column;
   gap: 8px;
