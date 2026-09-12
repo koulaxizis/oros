@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mood — App logic (v0.3.0) — Waves 1–3 Boot: console.log("mood.js v0.3.0 boot"); → console.log("mood.js v0.3.0 boot");
+// orOS Mood — App logic (v0.3.0) — Waves 1–3
 // Capturing how you feel must take seconds, not minutes.
 // Entries are additive-primary; edits are LWW by mtime; deletes
 // leave tombstones (merge-safe). Mood data is PERSONAL: it lives
@@ -1732,7 +1732,7 @@ function mergeMoodStates(A, B) {
         if (e[h.f] === "no")  noDays += 1;       // per-day — honest
       });
       var row = document.createElement("div");
-      row.className = "habstat";
+      row.className = "dist-row";
       var lab = document.createElement("span");
       lab.className = "dist-lab";
       lab.textContent = t(h.yes);
@@ -1797,12 +1797,14 @@ function mergeMoodStates(A, B) {
     });
   }
 
-  function renderInsights() {
+    function renderInsights() {
     var host = $("insights");
     if (!host) return;
     host.innerHTML = "";
 
-    // range selector
+    // ---- top row: range selector + Filters toggle ----
+    var top = document.createElement("div");
+    top.className = "ins-top";
     var rs = document.createElement("div");
     rs.className = "ins-ranges";
     [[7, "ins.r7"], [30, "ins.r30"], [0, "ins.rall"]].forEach(function (r) {
@@ -1816,7 +1818,18 @@ function mergeMoodStates(A, B) {
       });
       rs.appendChild(b);
     });
-    host.appendChild(rs);
+    top.appendChild(rs);
+    var fb = document.createElement("button");
+    fb.type = "button";
+    fb.className = "chip" + (insFiltersOpen ? " on" : "");
+    fb.textContent = t("ins.filters");
+    fb.setAttribute("aria-pressed", insFiltersOpen ? "true" : "false");
+    fb.addEventListener("click", function () {
+      insFiltersOpen = !insFiltersOpen;
+      renderInsights();
+    });
+    top.appendChild(fb);
+    host.appendChild(top);
 
     var es = entriesInRange();
     if (!es.length) {
@@ -1827,17 +1840,32 @@ function mergeMoodStates(A, B) {
       return;
     }
 
-    // distribution
+    // ---- filter panel (open state only; view state, never persisted) ----
+    if (insFiltersOpen) buildFilterPanel(host);
+
+    var active = filtersActive();
+    var fes = active ? applyFilters(es) : es;
+
+    // status line: only when a filter cuts the set
+    if (active) {
+      var fl = document.createElement("div");
+      fl.className = "fline dim";
+      fl.textContent = t("ins.showing")
+        .replace("{x}", fes.length).replace("{y}", es.length);
+      host.appendChild(fl);
+    }
+
+    // ---- distribution (+ vs-overall deltas when filtered) ----
     var d1 = document.createElement("h2");
     d1.className = "sec-title";
     d1.textContent = t("ins.dist.title");
     host.appendChild(d1);
     var dist = document.createElement("div");
-    renderDistribution(dist, es);
+    renderDistribution(dist, fes, active ? es : null);
     if (!dist.childNodes.length) dist.textContent = t("ins.ctx.none");
     host.appendChild(dist);
 
-    // streak + logged days
+    // ---- streak + logged days (UNFILTERED — filters don't touch it) ----
     var si = streakInfo(es);
     var stk = document.createElement("div");
     stk.className = "ins-streak";
@@ -1848,26 +1876,26 @@ function mergeMoodStates(A, B) {
       esc(t("ins.logged").replace("{n}", si.logged)) + "</span>";
     host.appendChild(stk);
 
-    // habits
+    // ---- habits (filtered) ----
     var d2 = document.createElement("h2");
     d2.className = "sec-title";
     d2.textContent = t("ins.habits.title");
     host.appendChild(d2);
     var hb = document.createElement("div");
-    renderHabits(hb, es);
+    if (fes.length) renderHabits(hb, fes);
     if (!hb.childNodes.length) hb.textContent = t("ins.ctx.none");
     host.appendChild(hb);
 
-    // calendar
+    // ---- calendar (ignores range AND filters) ----
     var d3 = document.createElement("h2");
     d3.className = "sec-title";
     d3.textContent = t("ins.cal.title");
     host.appendChild(d3);
-    renderCalendar(host, state.entries);   // calendar ignores range
+    renderCalendar(host, state.entries);
 
-    // breakdowns
-    renderBreakdown(host, es, "loc", "ins.loc.title");
-    renderBreakdown(host, es, "person", "ins.per.title");
+    // ---- breakdowns (filtered) ----
+    renderBreakdown(host, fes, "loc", "ins.loc.title");
+    renderBreakdown(host, fes, "person", "ins.per.title");
 
     // factory reset — far corner, away from accidental thumbs
     var rst = document.createElement("button");
@@ -1945,6 +1973,7 @@ function mergeMoodStates(A, B) {
     if (editing !== null && !entryById(editing)) resetCapture();
 
     renderAll();                          // repaint live
+    if (viewMode === "insights") renderInsights();   // live views too
     if (info && info.merged) showToast(t("saved.toast"));   // light ack
   }
 
@@ -2002,7 +2031,7 @@ function mergeMoodStates(A, B) {
   }
 
   // ---------- Boot ----------
-  console.log("mood.js v0.2.0 boot");
+  console.log("mood.js v0.3.0 boot");
   load();
   applyI18n();
   paintStaticAria();
