@@ -1,15 +1,29 @@
 name: Bump orOS version
 
-# Runs on EVERY push to main (no paths filter — new app folders are
-# picked up automatically; the job is a no-op when nothing to stamp).
-# Guards (fail the push loudly instead of silent breakage):
-#   G1 — sw.js CACHE_VERSION line exists            (version stamp)
-#   G2 — every app folder referenced in PRECACHE_URLS (v0.13.0 lesson)
-#   G3 — every app's JS has inheritPalette+watchPalette (v0.14.2 lesson)
+# FULLY AUTOMATED versioning — APP_VERSION is never hand-edited:
+#   • push to main  → next patch (0.25.2 → 0.25.3)
+#   • manual run    → choose patch / minor / major
+#   • bot commits carry [skip ci] → no feedback loops
+#   • docs-only pushes (*.md) never burn a version
+# Stamps in ONE pass: shell.js APP_VERSION (bumped here FIRST,
+# now the single source of truth) → sw.js CACHE_VERSION →
+# manifest version → ?v= on every app asset.
+# Guards (unchanged): G1 CACHE_VERSION exists · G2 offline
+# coverage in PRECACHE_URLS · G3 palette contract per app.
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options: [patch, minor, major]
 
 permissions:
   contents: write
@@ -18,21 +32,54 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
+      # Loop guard (belt+braces on top of GitHub's native [skip ci]):
+      # our own stamp commits must never re-trigger this workflow.
+      - name: Loop guard
+        id: guard
+        run: |
+          MSG="${{ github.event.head_commit && github.event.head_commit.message || '' }}"
+          if [[ "$MSG" == *"[skip ci]"* ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Bot stamp commit — nothing to bump."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/checkout@v4
 
-      - name: Read APP_VERSION from shell.js
+      - name: Compute next version + bump shell.js
+        if: steps.guard.outputs.skip != 'true'
         id: ver
         run: |
-          VERSION=$(grep -oP 'APP_VERSION\s*=\s*"\K[^"]+' shell.js | head -1)
-          if [ -z "$VERSION" ]; then
+          CURRENT=$(grep -oP 'APP_VERSION\s*=\s*"\K[^"]+' shell.js | head -1)
+          if [ -z "$CURRENT" ]; then
             echo "ERROR: APP_VERSION not found in shell.js" >&2
             exit 1
           fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Found APP_VERSION: $VERSION"
+          IFS='.' read -r MAJ MIN PAT <<< "$CURRENT"
+          TYPE="patch"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.bump }}" ]; then
+            TYPE="${{ inputs.bump }}"
+          fi
+          case "$TYPE" in
+            major) MAJ=$((MAJ+1)); MIN=0; PAT=0 ;;
+            minor) MIN=$((MIN+1)); PAT=0 ;;
+            patch) PAT=$((PAT+1)) ;;
+            *)     echo "ERROR: unknown bump type '$TYPE'" >&2; exit 1 ;;
+          esac
+          NEXT="$MAJ.$MIN.$PAT"
+          sed -i "s|var APP_VERSION = \"[^\"]*\";|var APP_VERSION = \"$NEXT\";|" shell.js
+          if ! grep -q "APP_VERSION = \"$NEXT\"" shell.js; then
+            echo "ERROR: shell.js stamp failed" >&2
+            exit 1
+          fi
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Bumped $CURRENT -> $NEXT ($TYPE)"
 
       - name: Stamp sw.js CACHE_VERSION
+        if: steps.guard.outputs.skip != 'true'
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
           if grep -q 'var CACHE_VERSION' sw.js; then
@@ -44,6 +91,7 @@ jobs:
           fi
 
       - name: Stamp manifest.webmanifest version
+        if: steps.guard.outputs.skip != 'true'
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
           if grep -q '"version"' manifest.webmanifest; then
@@ -55,6 +103,7 @@ jobs:
           fi
 
       - name: Cache-bust app assets + offline & palette guards
+        if: steps.guard.outputs.skip != 'true'
         env:
           OROS_VERSION: ${{ steps.ver.outputs.version }}
         run: |
@@ -65,7 +114,7 @@ jobs:
           if (!ver) { console.error('ERROR: OROS_VERSION env missing'); process.exit(1); }
 
           // Every index.html: root + each app folder (directory scan).
-          const SKIP_DIRS = new Set(['.', '..', 'icons', 'fonts']);
+          const SKIP_DIRS = new Set(['.', '..', 'icons', 'fonts', 'vendor']);
           const files = ['index.html'];
           const appDirs = [];
           for (const d of fs.readdirSync('.', { withFileTypes: true })) {
@@ -76,7 +125,6 @@ jobs:
           }
           console.log('App folders found:', appDirs.join(', ') || '(none)');
 
-          // Stamp or REPLACE ?v= on relative .css/.js references only.
           const safe = (p) => p.startsWith('http') || p.startsWith('//') || p.startsWith('/');
 
           let touched = 0;
@@ -101,7 +149,7 @@ jobs:
           }
           console.log(`Cache-bust done: ${touched}/${files.length} file(s) updated with ?v=${ver}`);
 
-          // ---- G2: OFFLINE COVERAGE GUARD (v0.13.0 lesson) ----
+          // ---- G2: OFFLINE COVERAGE GUARD ----
           const sw = fs.readFileSync('sw.js', 'utf8');
           const pc = sw.match(/PRECACHE_URLS\s*=\s*\[([\s\S]*?)\]/);
           if (!pc) {
@@ -116,10 +164,7 @@ jobs:
           }
           console.log('Offline coverage: all app folders present in PRECACHE_URLS.');
 
-          // ---- G3: PALETTE CONTRACT GUARD (v0.14.2 lesson) ----
-          // Every iframe app must inherit the shell palette: across the
-          // relative JS files its index.html loads, BOTH inheritPalette
-          // AND watchPalette must appear at least once.
+          // ---- G3: PALETTE CONTRACT GUARD ----
           for (const dir of appDirs) {
             const html = fs.readFileSync(`${dir}/index.html`, 'utf8');
             const jsSrcs = [...html.matchAll(/src="([^"#?]+\.js)(?:\?[^"]*)?"/g)]
@@ -135,7 +180,6 @@ jobs:
             if (!(hasInherit && hasWatch)) {
               console.error(`ERROR: ${dir}/ does not inherit the shell palette.`);
               console.error(`  Expected inheritPalette + watchPalette in its JS (${jsSrcs.join(', ') || 'no scripts'}).`);
-              console.error(`  Reference: todo.js §12 (window.parent.document.documentElement, NOT the app's own).`);
               process.exit(1);
             }
           }
@@ -143,6 +187,7 @@ jobs:
           EOF
 
       - name: Check for changes
+        if: steps.guard.outputs.skip != 'true'
         id: diff
         run: |
           if git diff --quiet; then
@@ -152,14 +197,11 @@ jobs:
           fi
 
       - name: Commit version stamps
-        if: steps.diff.outputs.changed == 'true'
+        if: steps.guard.outputs.skip != 'true' && steps.diff.outputs.changed == 'true'
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
           git config user.name  "orOS version bot"
           git config user.email "actions@github.com"
-          # -u: stage every TRACKED file this workflow modified
-          # (sw.js, manifest, root + every app index.html — no
-          # hardcoded list to fall out of date again).
           git add -u
-          git commit -m "chore: stamp version v$VERSION (auto)"
+          git commit -m "chore: bump orOS to v$VERSION (auto) [skip ci]"
           git push

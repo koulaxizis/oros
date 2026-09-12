@@ -812,3 +812,24 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+
+/* Habits/val rows: value NEVER wraps — bar shrinks instead */
+.dist-row   { flex-wrap: nowrap; }
+.dist-bar   { flex: 1 1 auto; min-width: 0; }
+.dist-val   { white-space: nowrap; flex-shrink: 0; font-size: 12px; }
+
+/* Entries search row */
+#ent-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+#ent-search:focus { border-color: var(--accent); }

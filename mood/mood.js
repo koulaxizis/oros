@@ -37,7 +37,6 @@
   var STRINGS = {
     en: {
       "app.title":     "Mood",
-      "btn.new":       "New entry",
       "recent.title":  "Recent entries",
       "privacy.title": "Private by design",
       "privacy.body":  "Your mood data never leaves your device — it syncs only through your own encrypted orOS cloud, and the local export is yours alone.",
@@ -82,11 +81,8 @@
       "tod.afternoon": "Afternoon",
       "tod.evening":   "Evening",
       "tod.night":     "Night",
-      "empty.title":   "No entries yet",
-      "empty.hint":    "Pick how you feel above and save — takes seconds.",
       "must.feel":     "Pick at least one feeling to save",
       "recent.q":      "Logged {time} ago — update it?",
-      "recent.keep":   "Keep",
       "recent.new":    "New entry",
       "rst.btn":       "Factory reset",
       "rst.body1":     "This permanently erases ALL mood entries and ALL custom values (locations, people) on every synced device. There is no undo.",
@@ -121,7 +117,6 @@
       "ins.loc.title":   "Locations",
       "ins.per.title":   "People",
       "ins.ctx.none":    "Nothing logged in this range.",
-      "ins.top":         "mostly {e}",
       "ins.filters":     "Filters",
       "ins.showing":     "Showing {x} of {y} entries",
       "ins.clear":       "Clear filters",
@@ -142,7 +137,6 @@
       "mom.this":        "This week",
       "mom.prev":        "Last week",
       "rep.last":        "Repeat last",
-      "rem.body":        "No entry today — takes ten seconds.",
 	  "rec.title":       "Weekly recap",
       "rec.top":         "Top feeling",
       "rec.pos":         "Positive share",
@@ -156,7 +150,6 @@
     },
     el: {
       "app.title":     "Διάθεση",
-      "btn.new":       "Νέα καταχώρηση",
       "recent.title":  "Πρόσφατες καταχωρήσεις",
       "privacy.title": "Ιδιωτικό εκ σχεδίασης",
       "privacy.body":  "Τα δεδομένα διάθεσης δεν φεύγουν ποτέ από τη συσκευή σου — συγχρονίζονται μόνο μέσα από το δικό σου κρυπτογραφημένο orOS cloud, και η τοπική εξαγωγή είναι μόνο δική σου.",
@@ -201,11 +194,8 @@
       "tod.afternoon": "Απόγευμα",
       "tod.evening":   "Βράδυ",
       "tod.night":     "Νύχτα",
-      "empty.title":   "Καμία καταχώρηση ακόμα",
-      "empty.hint":    "Διάλεξε πώς νιώθεις παραπάνω και αποθήκευσε — θέλει δευτερόλεπτα.",
       "must.feel":     "Διάλεξε τουλάχιστον ένα συναίσθημα για αποθήκευση",
       "recent.q":      "Καταχωρήθηκε πριν {time} — να ενημερωθεί;",
-      "recent.keep":   "Κράτα την",
       "recent.new":    "Νέα καταχώρηση",
       "rst.btn":       "Επαναφορά εργοστασιακών",
       "rst.body1":     "Θα διαγραφούν ΟΛΕΣ οι καταχωρήσεις διάθεσης και ΟΛΕΣ οι custom τιμές (τοποθεσίες, άνθρωποι) από κάθε συγχρονισμένη συσκευή. Χωρίς αναίρεση.",
@@ -240,7 +230,6 @@
       "ins.loc.title":   "Τοποθεσίες",
       "ins.per.title":   "Άνθρωποι",
       "ins.ctx.none":    "Τίποτα καταγεγραμμένο σε αυτό το εύρος.",
-      "ins.top":         "κυρίως {e}",
       "ins.filters":     "Φίλτρα",
       "ins.showing":     "Εμφανίζονται {x} από {y} καταχωρήσεις",
       "ins.clear":       "Καθαρισμός φίλτρων",
@@ -261,7 +250,6 @@
       "mom.this":        "Αυτή η εβδομάδα",
       "mom.prev":        "Προηγούμενη εβδομάδα",
       "rep.last":        "Επανάληψη τελευταίας",
-      "rem.body":        "Καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα.",
 	  "rec.title":       "Εβδομαδιαία ανασκόπηση",
       "rec.top":         "Κορυφαίο συναίσθημα",
       "rec.pos":         "Θετικό μερίδιο",
@@ -886,8 +874,9 @@ function mergeMoodStates(A, B) {
         c.className = "chip" + (managing ? " mgmt" : "") +
           (((col === "loc") ? selLoc : selPerson) === v.id ? " on" : "");
         c.textContent = v.label;
-        c.addEventListener("click", function () {
+        c.addEventListener("click", function (ev) {
           if (managing) {                       // manage mode: tap = menu
+            ev.stopPropagation();              // don't let the document closer kill it
             openChipMenu(col, v, c.getBoundingClientRect());
             return;
           }
@@ -2518,8 +2507,6 @@ function mergeMoodStates(A, B) {
           return e.ts >= wkNow - 14 * 86400000 && e.ts < wkNow - 7 * 86400000;
         }));
         if (pb !== null) kv(t("mom.prev"), pb + "%");
-        var hint = document.createElement("div");  // noop keeps linters quiet
-        void hint;
         y += 4;
       }
 
@@ -2854,7 +2841,11 @@ function mergeMoodStates(A, B) {
   }
 
   // ---------- Boot ----------
- console.log("mood.js v0.25.0 boot");
+   (function () {
+    var m = (document.currentScript && document.currentScript.src || "")
+      .match(/[?&]v=([^&#]+)/);
+    console.log("mood.js v" + (m ? m[1] : "?") + " boot");
+  })();
   load();
   applyI18n();
   paintStaticAria();
@@ -2865,15 +2856,5 @@ function mergeMoodStates(A, B) {
   resetCapture();     // smart preselection fires here (suggestFor)
   renderAll();
   maybePrivacyNotice();   // device-local, one time, then never again
-    // Gentle reminder: a few seconds after boot, only when the user
-  // has already made their first entry and has nothing logged
-  // TODAY. App-open only — no background notifications, ever.
-  setTimeout(function () {
-    if (!state.entries.length) return;
-    var today = dayKey(Date.now());
-    var hasToday = state.entries.some(function (e) {
-      return dayKey(e.ts) === today;
-    });
-    if (!hasToday) showToast(t("rem.body"));
-  }, 3500);
+  
 })();

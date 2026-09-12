@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.25.2";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.25.3";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -920,7 +920,7 @@
   // not buried in the menu. Inline styles only (palette vars —
   // follows every skin, zero new CSS). One toast at a time: a new
   // message replaces the old (pull+push bursts don't stack).
-  function scToast(kind, text) {
+  function scToast(kind, text, onClick) {
     var old = document.getElementById("sc-toast");
     if (old) old.remove();
     var t = document.createElement("div");
@@ -942,6 +942,11 @@
       "box-shadow:0 8px 24px var(--shadow);opacity:0;transition:opacity .25s,transform .25s;" +
       "z-index:1400;pointer-events:none;max-width:calc(100vw - 24px);text-align:left;";
     document.body.appendChild(t);
+    if (onClick) {
+      t.style.pointerEvents = "auto";
+      t.style.cursor = "pointer";
+      t.addEventListener("click", onClick);
+    }
     requestAnimationFrame(function () {
       t.style.opacity = "1";
       t.style.transform = "translateX(0)";
@@ -2251,6 +2256,38 @@
   // Auto-backup boot check — LAST, so snapshots capture the fully
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
+  
+    // v0.25.3 — Mood daily reminder (OS level): ~6s after boot, a
+  // top-right toast INDEPENDENT of which app is running. Fires only
+  // if the user has logged mood data before (first entry exists)
+  // but nothing today. Click opens Mood. Open-only by design — no
+  // background timers, no system notifications, ever.
+  setTimeout(function () {
+    try {
+      var raw = localStorage.getItem("oros-mood-data");
+      if (!raw) return;
+      var st = JSON.parse(raw);
+      if (!st || !Array.isArray(st.entries) || !st.entries.length) return;
+      var dke = function (ts) {
+        var x = new Date(ts);
+        return x.getFullYear() + "-" + (x.getMonth() + 1) + "-" + x.getDate();
+      };
+      var today = dke(Date.now());
+      var hasToday = false;
+      for (var i = 0; i < st.entries.length; i++) {
+        if (dke(st.entries[i].ts) === today) { hasToday = true; break; }
+      }
+      if (hasToday) return;
+      scToast("dim", state.lang === "el"
+        ? "Διάθεση: καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα."
+        : "Mood: no entry today — takes ten seconds.",
+        function () {
+          for (var j = 0; j < state.apps.length; j++) {
+            if (state.apps[j].id === "mood") { openApp(state.apps[j]); return; }
+          }
+        });
+    } catch (e) { /* unreadable mood data → stay silent */ }
+  }, 6000);
   
     // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
   wxRenderChip();
