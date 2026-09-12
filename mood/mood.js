@@ -2554,12 +2554,15 @@ function mergeMoodStates(A, B) {
     if (window.jspdf && window.jspdf.jsPDF) { done(); return; }
     if (pdfLibLoading) return;
     pdfLibLoading = true;
-    var cands = ["../vendor/jspdf.umd.min.js", "vendor/jspdf.umd.min.js"];
+    // own ?v= (boot-marker trick): HTTP cache revalidates per release
+    var MV = ((document.currentScript && document.currentScript.src || "")
+      .match(/[?&]v=([^&#]+)/) || [])[1] || "";
+    var cands = ["../vendor/jspdf.umd.min.js"];   // mood/ has no vendor/ — verified in repo
     var i = 0;
     (function next() {
       if (i >= cands.length) { pdfLibLoading = false; showToast(t("exp.err")); return; }
       var s = document.createElement("script");
-      s.src = cands[i++];
+      s.src = cands[i++] + (MV ? "?v=" + MV : "");
       s.onload = function () { pdfLibLoading = false; done(); };
       s.onerror = function () { s.remove(); next(); };
       document.head.appendChild(s);
@@ -3066,6 +3069,8 @@ function mergeMoodStates(A, B) {
   watchPalette();
   resetCapture();     // smart preselection fires here (suggestFor)
   renderAll();
-  maybePrivacyNotice();   // device-local, one time, then never again
+  // maybePrivacyNotice();   // TEMP DISABLED (0.26.0) — first-open
+  // privacy dialog. Revive: uncomment. SEEN_KEY ("oros-mood-seen")
+  // stays honored — devices that acknowledged never see it again.
   
 })();

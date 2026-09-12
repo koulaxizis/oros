@@ -1189,3 +1189,115 @@ Option B, export.
 - Manage… affordance: rename/delete column values without hidden gestures
 - Delayed reminder (3.5s, first-entry users, today-empty, app-open only)
 - Dead i18n keys removed; boot marker v0.25.0
+
+## 0.26.0 — Mood Wave 5: trigger presets · habits/rituals split · versioning overhaul
+
+Feature wave + full audit closure. Supersedes the old bump-writing pipeline.
+
+### Added
+- **Trigger presets (Option A takeover)**: "What triggered this?" is a
+  closed chip list (like Location/Person) + inline Add… + Manage
+  rename/delete. DATA_VER 2 → 3: per-entry `trig` id, labels live in
+  cols.trig {id,label,mtime,pos}; legacy free-text strings migrate
+  deterministically (find-or-create, case-insensitive trim, stored entry
+  order — both devices converge identically). Labels resolve at RENDER
+  time everywhere (Entries preview, search haystack, Trends top-6) —
+  zero denormalized strings, renames propagate instantly, trends are
+  rename-proof. Merge plumbing: cols.trig in mergeCols / sortColVals /
+  factoryReset / sliceSet pos-guard.
+- **Factory trigger seeds** (TRIG_SEED EN/EL): Work deadline, Argument,
+  Good news, Exercise, Sick day, Late screens — seeded ONCE on an empty
+  cols.trig (covers existing installs: a new column never had a birth
+  moment — old seed rule left it empty forever). Fully user-manageable.
+- **Smart preselection ACTIVATED** (defined but never called since Wave 1
+  — dead contract revived): new-entry mode preselects the most-used
+  Location/Person for the current time-of-day bucket. FACTS-ONLY RULE
+  (standing): loc/person may preselect; feelings, triggers and habits
+  NEVER — default effect would pollute statistics.
+- **Habits/Rituals visual split**: two titled sections in Capture
+  (mkHabBlock → #habits / #rituals, CSS class .habpanel — was id-only
+  #habits) and two full sections in Insights; filter panel splits into
+  Basics + Rituals groups. ONE HABITS array (21 fields, grp hab/rit) —
+  zero data-model change. PDF export already split — untouched.
+
+### Fixed
+- Chip context menu (Manage → rename/delete) was INVISIBLE: built and
+  positioned but opacity never set from 0 (transition start state) —
+  blocked clicks invisibly. Fix: m.style.opacity = "1" in openChipMenu.
+- hab (triadic picks) leaked from entry to entry — resetCapture now
+  clears all 21 fields + the managing flag (conscious-picks-only rule).
+- askRecentGuard "Edit" discarded the fresh loc/person/habits picks
+  (loadEntryIntoCapture overwrote them) — edit path now folds fresh
+  picks INTO the recent entry; notes merge unchanged.
+- Trigger-only entries showed no preview line in Entries (retired
+  e.trigger string check → e.trig + render-time label).
+- Scroll jumped to top on every chip tap — scroll preservation moved
+  INSIDE buildCapture (read #moodmain.scrollTop before clear, restore
+  after paint); buildCaptureKeepScroll deleted (dead); resetCapture
+  scrolls to top explicitly for fresh entries.
+- Topbar tab buttons had no hover/active state (dead #new-btn CSS
+  selectors) → #cap-btn/#ent-btn/#ins-btn covered.
+- .addrow inputs hijacked by the generic #capture input CSS (Add button
+  wrapped onto its own line) → specific override added.
+- applyView wrote a wrong title attribute on tab change; rename popup
+  save button read "Save entry" → new key col.menu.save (EN/EL).
+
+### Changed — VERSIONING OVERHAUL (CI semantics change)
+- shell.js APP_VERSION is the SINGLE SOURCE OF TRUTH and is NEVER
+  written by CI. Manual bump only (dev commit). The Action READS it and
+  stamps sw.js CACHE_VERSION, manifest version and all ?v= — nothing
+  else. The old bump-computing + shell-writing steps are gone.
+- workflow_dispatch bump-type input removed — patch/minor/major is
+  decided by hand-editing shell.js per the versioning policy:
+    bugfix → patch · completed feature wave → minor ·
+    1.0.0 = "public-ready" declaration, never routine.
+- Bot commit message: "chore: sync orOS assets to vX (auto) [skip ci]".
+- Action hardening: post-stamp verification on sw.js + manifest (fail
+  LOUD on a silent sed no-op); node step refuses to run when 0 app
+  folders are found (was a silent near-noop).
+- Checklist A simplifies to: edit shell.js APP_VERSION → push → verify
+  on both devices (Info modal).
+
+### Fixed — offline / PWA
+- sw.js PRECACHE_URLS += vendor/jspdf.umd.min.js — PDF export was
+  BROKEN OFFLINE (lazy fetch 404s; online worked, hence unnoticed).
+- loadPdfLib dead candidate removed (mood/vendor/… never existed —
+  every first export fired a spurious 404); jspdf lazy-load now carries
+  the app's own ?v= (boot-marker trick) as cache-buster.
+- manifest.webmanifest: "id": "/" added (PWA identity stability).
+- sw.js header banner refreshed (was "orOS Core v0.18.1").
+
+### Cleanup
+- Dead i18n keys removed: l4.trigger, tod.morning/afternoon/evening/
+  night (both languages). col.menu.save added.
+- Triple .dist-val CSS (Wave 3.5 + stray nowrap override) consolidated
+  into one block.
+- DATA_VER bookkeeping corrected (comment said 3, value said 2).
+- buildTrends trigger counting migrated to cols.trig labels.
+
+### Temporarily disabled (standing TEMP markers — do NOT delete)
+- Daily reminder toast (delayed, today-empty check) — commented out at
+  the boot call site; revisit in Wave 4.
+- First-open privacy dialog (oros-mood-seen, device-local flag) —
+  commented out at the boot call site; flag semantics stay honored for
+  devices that already acknowledged.
+
+### 0.25.1–0.25.10 (interim, retroactive note)
+Auto patch bumps through the OLD bump-writing pipeline while this wave
+was in flight. The consolidated record of what shipped in that window
+is the audit lists above; no per-patch entries were kept.
+
+### Ship ritual for this release (supersedes previous checklists)
+1. git pull --ff-only FIRST (R13: local ?v= stamps lag behind the
+   bot-committed remote).
+2. Apply the two TEMP-disable patches; node --check mood.js.
+3. shell.js: APP_VERSION → "0.26.0" (MANUAL — the only version edit).
+4. Append this changelog section; single commit; push.
+5. Action expectations: "Using APP_VERSION from shell.js: 0.26.0";
+   sw.js + manifest + every index.html stamped; bot commit [skip ci];
+   a no-diff rerun terminates cleanly.
+6. Both devices: Info modal shows 0.26.0; mood boot marker derives
+   from ?v= automatically. Smoke: no reminder toast, no privacy dialog,
+   trigger chips + legacy-string migration (edit an old entry → preset
+   lit), Manage popup visible, two Habits/Rituals sections, no scroll
+   jump on chip taps, OFFLINE PDF export works.

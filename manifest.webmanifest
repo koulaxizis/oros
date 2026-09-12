@@ -3,6 +3,7 @@
   "short_name": "orOS",
   "description": "A static operating system in your browser. Works offline, no cookies, no tracking.",
   "start_url": "/?source=pwa",
+  "id": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

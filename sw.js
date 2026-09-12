@@ -51,6 +51,7 @@ var PRECACHE_URLS = [
   "mood/index.html",
   "mood/mood.css",
   "mood/mood.js",
+  "vendor/jspdf.umd.min.js",
   "fonts/nunito-regular.woff2",
   "fonts/nunito-medium.woff2",
   "fonts/nunito-semibold.woff2",

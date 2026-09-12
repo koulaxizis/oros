@@ -25,7 +25,7 @@
   "use strict";
 
 
-  var APP_VERSION = "0.25.10";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.26.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2258,37 +2258,35 @@
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
   
-    // v0.25.3 — Mood daily reminder (OS level): ~6s after boot, a
-  // top-right toast INDEPENDENT of which app is running. Fires only
-  // if the user has logged mood data before (first entry exists)
-  // but nothing today. Click opens Mood. Open-only by design — no
-  // background timers, no system notifications, ever.
-  setTimeout(function () {
-    try {
-      var raw = localStorage.getItem("oros-mood-data");
-      if (!raw) return;
-      var st = JSON.parse(raw);
-      if (!st || !Array.isArray(st.entries) || !st.entries.length) return;
-      var dke = function (ts) {
-        var x = new Date(ts);
-        return x.getFullYear() + "-" + (x.getMonth() + 1) + "-" + x.getDate();
-      };
-      var today = dke(Date.now());
-      var hasToday = false;
-      for (var i = 0; i < st.entries.length; i++) {
-        if (dke(st.entries[i].ts) === today) { hasToday = true; break; }
-      }
-      if (hasToday) return;
-      scToast("dim", state.lang === "el"
-        ? "Διάθεση: καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα."
-        : "Mood: no entry today — takes ten seconds.",
-        function () {
-          for (var j = 0; j < state.apps.length; j++) {
-            if (state.apps[j].id === "mood") { openApp(state.apps[j]); return; }
-          }
-        });
-    } catch (e) { /* unreadable mood data → stay silent */ }
-  }, 6000);
+  // TEMP DISABLED (0.26.0) — Mood daily reminder toast (OS level).
+  // Revive: strip the leading "// " from every line below — the
+  // block itself is unchanged since v0.25.3.
+  // setTimeout(function () {
+  //   try {
+  //     var raw = localStorage.getItem("oros-mood-data");
+  //     if (!raw) return;
+  //     var st = JSON.parse(raw);
+  //     if (!st || !Array.isArray(st.entries) || !st.entries.length) return;
+  //     var dke = function (ts) {
+  //       var x = new Date(ts);
+  //       return x.getFullYear() + "-" + (x.getMonth() + 1) + "-" + x.getDate();
+  //     };
+  //     var today = dke(Date.now());
+  //     var hasToday = false;
+  //     for (var i = 0; i < st.entries.length; i++) {
+  //       if (dke(st.entries[i].ts) === today) { hasToday = true; break; }
+  //     }
+  //     if (hasToday) return;
+  //     scToast("dim", state.lang === "el"
+  //       ? "Διάθεση: καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα."
+  //       : "Mood: no entry today — takes ten seconds.",
+  //       function () {
+  //         for (var j = 0; j < state.apps.length; j++) {
+  //           if (state.apps[j].id === "mood") { openApp(state.apps[j]); return; }
+  //         }
+  //       });
+  //   } catch (e) { /* unreadable mood data → stay silent */ }
+  // }, 6000);
   
     // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
   wxRenderChip();

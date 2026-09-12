@@ -18,12 +18,10 @@ on:
       - '**.md'
   workflow_dispatch:
     inputs:
-      bump:
-        description: 'Version bump type'
-        required: true
-        default: 'patch'
-        type: choice
-        options: [patch, minor, major]
+      message:
+        description: 'Optional note for your own records (not used in commit)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -49,34 +47,18 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         uses: actions/checkout@v4
 
-      - name: Compute next version + bump shell.js
+      - name: Read APP_VERSION from shell.js (single source of truth)
         if: steps.guard.outputs.skip != 'true'
         id: ver
         run: |
-          CURRENT=$(grep -oP 'APP_VERSION\s*=\s*"\K[^"]+' shell.js | head -1)
-          if [ -z "$CURRENT" ]; then
+          VERSION=$(grep -oP 'APP_VERSION\s*=\s*"\K[^"]+' shell.js | head -1)
+          if [ -z "$VERSION" ]; then
             echo "ERROR: APP_VERSION not found in shell.js" >&2
             exit 1
           fi
-          IFS='.' read -r MAJ MIN PAT <<< "$CURRENT"
-          TYPE="patch"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.bump }}" ]; then
-            TYPE="${{ inputs.bump }}"
-          fi
-          case "$TYPE" in
-            major) MAJ=$((MAJ+1)); MIN=0; PAT=0 ;;
-            minor) MIN=$((MIN+1)); PAT=0 ;;
-            patch) PAT=$((PAT+1)) ;;
-            *)     echo "ERROR: unknown bump type '$TYPE'" >&2; exit 1 ;;
-          esac
-          NEXT="$MAJ.$MIN.$PAT"
-          sed -i "s|var APP_VERSION = \"[^\"]*\";|var APP_VERSION = \"$NEXT\";|" shell.js
-          if ! grep -q "APP_VERSION = \"$NEXT\"" shell.js; then
-            echo "ERROR: shell.js stamp failed" >&2
-            exit 1
-          fi
-          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
-          echo "Bumped $CURRENT -> $NEXT ($TYPE)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using APP_VERSION from shell.js: $VERSION"
+          echo "NOTE: shell.js is NEVER modified by this workflow. Manual bump only."
 
       - name: Stamp sw.js CACHE_VERSION
         if: steps.guard.outputs.skip != 'true'
@@ -203,5 +185,5 @@ jobs:
           git config user.name  "orOS version bot"
           git config user.email "actions@github.com"
           git add -u
-          git commit -m "chore: bump orOS to v$VERSION (auto) [skip ci]"
+          git commit -m "chore: sync orOS assets to v$VERSION (auto) [skip ci]"
           git push
