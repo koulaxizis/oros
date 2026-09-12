@@ -13,7 +13,7 @@
 // (strata: v0.13.1 notes/* precache — full banner history in CHANGELOG)
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.25.6";
+var CACHE_VERSION = "oros-v0.25.7";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
