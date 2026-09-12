@@ -68,6 +68,31 @@
       "alc.no":        "No alcohol",
       "scr.yes":       "Lots of screens",
       "scr.no":        "Mostly offline",
+      "rit.med.yes":   "Meditated",
+      "rit.med.no":    "Didn't meditate",
+      "rit.read.yes":  "Read a book",
+      "rit.read.no":   "Didn't read",
+      "rit.tv.yes":    "Watched TV",
+      "rit.tv.no":     "Didn't watch TV",
+      "rit.mus.yes":   "Listened to music",
+      "rit.mus.no":    "Didn't listen to music",
+      "rit.gam.yes":   "Played videogames",
+      "rit.gam.no":    "Didn't play videogames",
+      "rit.cook.yes":  "Cooked my food",
+      "rit.out.no":    "Ordered takeout",
+      "rit.walk.yes":  "Went for a walk",
+      "rit.walk.no":   "Stayed in",
+      "rit.nap.yes":   "Took a nap",
+      "rit.nap.no":    "No nap",
+      "rit.jrn.yes":   "Journaled",
+      "rit.jrn.no":    "Didn't journal",
+      "rit.cho.yes":   "Did chores",
+      "rit.cho.no":    "Skipped chores",
+      "rit.bed.yes":   "Went to bed on time",
+      "rit.bed.no":    "Stayed up late",
+      "rit.outd.yes":  "Spent time outdoors",
+      "rit.outd.no":   "Mostly indoors",
+	  "grp.rit":       "Rituals",
       "l4.note":       "Reflection (optional)",
       "l4.trigger":    "What triggered this? (optional)",
       "save":          "Save entry",
@@ -181,6 +206,31 @@
       "alc.no":        "Καθόλου αλκοόλ",
       "scr.yes":       "Πολλές ώρες σε οθόνες",
       "scr.no":        "Σχεδόν εκτός οθονών",
+      "rit.med.yes":   "Διαλογίστηκα",
+      "rit.med.no":    "Δεν διαλογίστηκα",
+      "rit.read.yes":  "Διάβασα βιβλίο",
+      "rit.read.no":   "Δεν διάβασα",
+      "rit.tv.yes":    "Έβλεπα τηλεόραση",
+      "rit.tv.no":     "Δεν έβλεπα τηλεόραση",
+      "rit.mus.yes":   "Άκουσα μουσική",
+      "rit.mus.no":    "Δεν άκουσα μουσική",
+      "rit.gam.yes":   "Έπαιξα βιντεοπαιχνίδια",
+      "rit.gam.no":    "Δεν έπαιξα βιντεοπαιχνίδια",
+      "rit.cook.yes":  "Μαγείρεψα",
+      "rit.out.no":    "Παρήγγειλα απ' έξω",
+      "rit.walk.yes":  "Πήγα βόλτα",
+      "rit.walk.no":   "Έμεινα σπίτι",
+      "rit.nap.yes":   "Έκανα σιέστα",
+      "rit.nap.no":    "Χωρίς σιέστα",
+      "rit.jrn.yes":   "Έγραψα στο ημερολόγιο",
+      "rit.jrn.no":    "Δεν έγραψα στο ημερολόγιο",
+      "rit.cho.yes":   "Έκανα δουλειές σπιτιού",
+      "rit.cho.no":    "Παρέλειψα τις δουλειές",
+      "rit.bed.yes":   "Κοιμήθηκα νωρίς",
+      "rit.bed.no":    "Έμεινα ξύπνιος αργά",
+      "rit.outd.yes":  "Βγήκα έξω",
+      "rit.outd.no":   "Έμεινα κυρίως μέσα",
+	  "grp.rit":       "Ιεροτελεστίες",
       "l4.note":       "Σκέψη (προαιρετικό)",
       "l4.trigger":    "Τι το προκάλεσε; (προαιρετικό)",
       "save":          "Αποθήκευση",
@@ -303,16 +353,30 @@
 
   // Triadic habits — shared by the capture L3 AND the insights
   // adherence view (one vocabulary, two consumers).
-  var HABITS = [
-    { f: "water", yes: "wat.yes",  no: "wat.no"  },
-    { f: "food",  yes: "food.yes", no: "food.no" },
-    { f: "sleep", yes: "slp.yes",  no: "slp.no"  },
-    { f: "move",  yes: "mv.yes",   no: "mv.no"   },
-    { f: "som",   yes: "som.yes",  no: "som.no"  },
-    { f: "caf",   yes: "caf.yes",  no: "caf.no"  },
-    { f: "alc",   yes: "alc.yes",  no: "alc.no"  },
-    { f: "scr",   yes: "scr.yes",  no: "scr.no"  },
-    { f: "meds",  yes: "meds.yes", no: "meds.no" }
+    var HABITS = [
+    // grp "hab" — the basics: health & physiology
+    { f: "water",    grp: "hab", yes: "wat.yes",      no: "wat.no"      },
+    { f: "food",     grp: "hab", yes: "food.yes",     no: "food.no"     },
+    { f: "sleep",    grp: "hab", yes: "slp.yes",      no: "slp.no"      },
+    { f: "move",     grp: "hab", yes: "mv.yes",       no: "mv.no"       },
+    { f: "som",      grp: "hab", yes: "som.yes",      no: "som.no"      },
+    { f: "caf",      grp: "hab", yes: "caf.yes",      no: "caf.no"      },
+    { f: "alc",      grp: "hab", yes: "alc.yes",      no: "alc.no"      },
+    { f: "scr",      grp: "hab", yes: "scr.yes",      no: "scr.no"      },
+    { f: "meds",     grp: "hab", yes: "meds.yes",     no: "meds.no"     },
+    // grp "rit" — daily rituals: leisure, mindfulness, home
+    { f: "meditate", grp: "rit", yes: "rit.med.yes",  no: "rit.med.no"  },
+    { f: "read",     grp: "rit", yes: "rit.read.yes", no: "rit.read.no" },
+    { f: "tv",       grp: "rit", yes: "rit.tv.yes",   no: "rit.tv.no"   },
+    { f: "music",    grp: "rit", yes: "rit.mus.yes",  no: "rit.mus.no"  },
+    { f: "games",    grp: "rit", yes: "rit.gam.yes",  no: "rit.gam.no"  },
+    { f: "cook",     grp: "rit", yes: "rit.cook.yes", no: "rit.out.no"  },
+    { f: "walk",     grp: "rit", yes: "rit.walk.yes", no: "rit.walk.no" },
+    { f: "nap",      grp: "rit", yes: "rit.nap.yes",  no: "rit.nap.no"  },
+    { f: "journal",  grp: "rit", yes: "rit.jrn.yes",  no: "rit.jrn.no"  },
+    { f: "chores",   grp: "rit", yes: "rit.cho.yes",  no: "rit.cho.no"  },
+    { f: "bedtime",  grp: "rit", yes: "rit.bed.yes",  no: "rit.bed.no"  },
+    { f: "outdoor",  grp: "rit", yes: "rit.outd.yes", no: "rit.outd.no" }
   ];
 
   // Seed values for the two custom columns (editable, deletable —
@@ -436,7 +500,7 @@ function migrate(data) {
     // DATA_VER 2: triadic habits. Wave-1 booleans migrate as:
     // true → "yes", false → null. The old unchecked state was
     // never a conscious "no" — honesty over retro-fitting.
-        ["water", "food", "meds", "sleep", "move", "som", "caf", "alc", "scr"].forEach(function (f) {
+        HABITS.forEach(function (h) { var f = h.f;
       if (e[f] === true)          e[f] = "yes";
       else if (e[f] === false || e[f] === "yes" || e[f] === "no") {
         // false → null handled below; explicit values stay
@@ -935,31 +999,42 @@ function mergeMoodStates(A, B) {
     host.appendChild(l2cols);
 
     // ---- L3: triadic habits ("this or that") ----
-    // One titled panel, three clean rows — same visual rhythm as
-    // #intensities. Re-tapping the ACTIVE chip returns to unknown.
+    // ONE array, TWO visual groups: the basics on top (section
+    // title), the rituals under a dim subsection label. Same
+    // visual rhythm as #intensities. Re-tapping the ACTIVE chip
+    // returns to unknown.
     var h3 = document.createElement("h2");
     h3.className = "sec-title";
     h3.textContent = t("ins.basics");
     host.appendChild(h3);
     var habPanel = document.createElement("div");
     habPanel.id = "habits";
-    HABITS.forEach(function (h) {
-      var row = document.createElement("div");
-      row.className = "habrow";
-      ["yes", "no"].forEach(function (side) {
-        var hc = document.createElement("button");
-        hc.type = "button";
-        hc.className = "chip hab" + (hab[h.f] === side ? " on" : "") +
-          (side === "no" ? " neg" : "");
-        hc.textContent = t(h[side]);
-        hc.setAttribute("aria-pressed", hab[h.f] === side ? "true" : "false");
-        hc.addEventListener("click", function () {
-          hab[h.f] = (hab[h.f] === side) ? null : side;   // re-tap = unknown
-          buildCapture();
+    [["hab", null], ["rit", "grp.rit"]].forEach(function (g) {
+      if (g[1]) {                          // subsection label — dim
+        var gl = document.createElement("div");
+        gl.className = "col-lab";
+        gl.textContent = t(g[1]);
+        habPanel.appendChild(gl);
+      }
+      HABITS.forEach(function (h) {
+        if (h.grp !== g[0]) return;
+        var row = document.createElement("div");
+        row.className = "habrow";
+        ["yes", "no"].forEach(function (side) {
+          var hc = document.createElement("button");
+          hc.type = "button";
+          hc.className = "chip hab" + (hab[h.f] === side ? " on" : "") +
+            (side === "no" ? " neg" : "");
+          hc.textContent = t(h[side]);
+          hc.setAttribute("aria-pressed", hab[h.f] === side ? "true" : "false");
+          hc.addEventListener("click", function () {
+            hab[h.f] = (hab[h.f] === side) ? null : side;   // re-tap = unknown
+            buildCapture();
+          });
+          row.appendChild(hc);
         });
-        row.appendChild(hc);
+        habPanel.appendChild(row);
       });
-      habPanel.appendChild(row);
     });
     host.appendChild(habPanel);
 
@@ -1694,6 +1769,7 @@ function mergeMoodStates(A, B) {
 
     var hc = mkGroup("ins.habits.title");
     HABITS.forEach(function (h) {
+      if (h.grp === "rit") return;          // basics group only
       ["yes", "no"].forEach(function (side) {
         hc.appendChild(mkFChip(t(h[side]),
           insFilter.hab === h.f + ":" + side, function () {
@@ -1703,6 +1779,19 @@ function mergeMoodStates(A, B) {
       });
     });
     panel.appendChild(hc);
+
+    var rc = mkGroup("grp.rit");            // rituals group
+    HABITS.forEach(function (h) {
+      if (h.grp !== "rit") return;
+      ["yes", "no"].forEach(function (side) {
+        rc.appendChild(mkFChip(t(h[side]),
+          insFilter.hab === h.f + ":" + side, function () {
+            insFilter.hab = insFilter.hab === h.f + ":" + side ?
+              null : h.f + ":" + side;
+          }));
+      });
+    });
+    panel.appendChild(rc);
 
     if (filtersActive()) {
       var cb = document.createElement("button");
@@ -1907,14 +1996,22 @@ function mergeMoodStates(A, B) {
     return { streak: streak, logged: logged };
   }
 
-  // -- habits adherence: yes/no/day-over-logged-days strips --
-  function renderHabits(host, es) {
+  // -- habits adherence: yes/no/day-over-logged-days strips.
+  //    TWO subsections over the ONE HABITS array — grp decides
+  //    the bucket, labelKey the dim subsection heading. --
+  function renderHabits(host, es, grp, labelKey) {
     var daySet = {};
     es.forEach(function (e) { daySet[dayKey(e.ts)] = 1; });
     var loggedDays = Object.keys(daySet).length;
     if (!loggedDays) return;
 
+    var gl = document.createElement("div");
+    gl.className = "col-lab";
+    gl.textContent = t(labelKey);
+    host.appendChild(gl);
+
     HABITS.forEach(function (h) {
+      if (h.grp !== grp) return;
       var yesDays = 0, noDays = 0;
       es.forEach(function (e) {
         if (e[h.f] === "yes") yesDays += 1;      // per-entry, not
@@ -2470,23 +2567,27 @@ function mergeMoodStates(A, B) {
         y += 4;
       } else line(t("ins.ctx.none"));
 
-      // 4. habits adherence
-      section(t("ins.habits.title"));
-      var anyHab = false;
-      HABITS.forEach(function (h) {
-        var yy = 0, nn = 0;
-        fes.forEach(function (e) {
-          if (e[h.f] === "yes") yy += 1;
-          if (e[h.f] === "no") nn += 1;
+      // 4. habits + rituals adherence (two grouped sections)
+      var habGrpTitle = { hab: t("ins.habits.title"), rit: t("grp.rit") };
+      ["hab", "rit"].forEach(function (grp) {
+        var anyIn = false;
+        HABITS.forEach(function (h) {
+          if (h.grp !== grp) return;
+          var yy = 0, nn = 0;
+          fes.forEach(function (e) {
+            if (e[h.f] === "yes") yy += 1;
+            if (e[h.f] === "no") nn += 1;
+          });
+          if (!yy && !nn) return;
+          if (!anyIn) { section(habGrpTitle[grp]); anyIn = true; }
+          var tot = yy + nn;
+          kv(t(h.yes), t("ins.hab.days")
+            .replace("{y}", yy).replace("{n}", tot) +
+            "  ·  " + Math.round(yy / tot * 100) + "%");
         });
-        if (!yy && !nn) return;
-        anyHab = true;
-        var tot = yy + nn;
-        kv(t(h.yes), t("ins.hab.days")
-          .replace("{y}", yy).replace("{n}", tot) +
-          "  ·  " + Math.round(yy / tot * 100) + "%");
+        if (grp === "hab" && !anyIn) line(t("ins.ctx.none"));
       });
-      if (!anyHab) line(t("ins.ctx.none"));
+      y += 4;
       y += 4;
 
       // 5. weekly momentum
@@ -2684,13 +2785,16 @@ function mergeMoodStates(A, B) {
     // ---- intensity trend (filtered) ----
     renderIntensity(host, fes);
 
-    // ---- habits (filtered) ----
+    // ---- habits + rituals (filtered, two subsections) ----
     var d2 = document.createElement("h2");
     d2.className = "sec-title";
     d2.textContent = t("ins.habits.title");
     host.appendChild(d2);
     var hb = document.createElement("div");
-    if (fes.length) renderHabits(hb, fes);
+    if (fes.length) {
+      renderHabits(hb, fes, "hab", "ins.basics");
+      renderHabits(hb, fes, "rit", "grp.rit");
+    }
     if (!hb.childNodes.length) hb.textContent = t("ins.ctx.none");
     host.appendChild(hb);
 
