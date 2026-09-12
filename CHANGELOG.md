@@ -1179,3 +1179,13 @@ Option B for deleted column values.
   weekday, momentum, reset-link fix, tabs.
 KNOWN DEFERRED: reminders (Wave 4), weekly recap card, ghost-label
 Option B, export.
+
+## 0.25.0 — Mood project close
+- Entries tab: search row (scans dates, feelings, contexts, habits, notes, triggers)
+- Insights: weekly recap card (count / top feeling / positive share vs last week)
+- Export PDF: full analytical report (overview, patterns, distribution with shares+avg,
+  habits %, momentum, weekday, locations/people) — vendored jsPDF, no CDN
+- 9-triad habit fields fully plumbed (move/som/caf/alc/scr i18n)
+- Manage… affordance: rename/delete column values without hidden gestures
+- Delayed reminder (3.5s, first-entry users, today-empty, app-open only)
+- Dead i18n keys removed; boot marker v0.25.0

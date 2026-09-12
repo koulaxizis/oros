@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mood — App logic (v0.3.0) — Waves 1–3
+// orOS Mood — App logic (v0.25.0) — Waves 1–4
 // Capturing how you feel must take seconds, not minutes.
 // Entries are additive-primary; edits are LWW by mtime; deletes
 // leave tombstones (merge-safe). Mood data is PERSONAL: it lives
@@ -126,6 +126,7 @@
       "ins.showing":     "Showing {x} of {y} entries",
       "ins.clear":       "Clear filters",
       "tab.ent":         "Entries",
+	  "ent.search":      "Search entries…",
       "ins.trends.title":"Patterns",
       "tr.loc":          "When you're at “{x}”, you often feel {e} ({d}pt more than usual).",
       "tr.person":       "When you're with “{x}”, you often feel {e} ({d}pt more than usual).",
@@ -141,7 +142,17 @@
       "mom.this":        "This week",
       "mom.prev":        "Last week",
       "rep.last":        "Repeat last",
-      "rem.body":        "No entry today — takes ten seconds."
+      "rem.body":        "No entry today — takes ten seconds.",
+	  "rec.title":       "Weekly recap",
+      "rec.top":         "Top feeling",
+      "rec.pos":         "Positive share",
+      "rec.entries":     "Entries this week",
+	  "exp.btn":         "Export PDF",
+      "exp.done":        "PDF exported",
+      "exp.err":         "PDF library not found (vendor/jspdf missing).",
+      "exp.summary":     "Overview",
+      "exp.row.entries": "Entries in range",
+      "exp.row.days":    "Days logged"
     },
     el: {
       "app.title":     "Διάθεση",
@@ -234,6 +245,7 @@
       "ins.showing":     "Εμφανίζονται {x} από {y} καταχωρήσεις",
       "ins.clear":       "Καθαρισμός φίλτρων",
 	  "tab.ent":         "Καταχωρήσεις",
+	  "ent.search":      "Αναζήτηση καταχωρήσεων…",
       "ins.trends.title":"Τάσεις",
       "tr.loc":          "Όταν είσαι «{x}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
       "tr.person":       "Με «{x}» νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
@@ -249,7 +261,17 @@
       "mom.this":        "Αυτή η εβδομάδα",
       "mom.prev":        "Προηγούμενη εβδομάδα",
       "rep.last":        "Επανάληψη τελευταίας",
-      "rem.body":        "Καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα."
+      "rem.body":        "Καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα.",
+	  "rec.title":       "Εβδομαδιαία ανασκόπηση",
+      "rec.top":         "Κορυφαίο συναίσθημα",
+      "rec.pos":         "Θετικό μερίδιο",
+      "rec.entries":     "Καταχωρήσεις εβδομάδας",
+	  "exp.btn":         "Εξαγωγή PDF",
+      "exp.done":        "Το PDF εξήχθη",
+      "exp.err":         "Δεν βρέθηκε η βιβλιοθήκη PDF (λείπει το vendor/jspdf).",
+      "exp.summary":     "Επισκόπηση",
+      "exp.row.entries": "Καταχωρήσεις στο εύρος",
+      "exp.row.days":    "Ημέρες με καταγραφή"
     }
   };
 
@@ -1366,19 +1388,38 @@ function mergeMoodStates(A, B) {
       host.appendChild(wrap);
     });
   }
+  
+  var searchQ = "";   // view state: entries search text (never persisted)
 
-  // ---- recent list ----
-  function renderRecent() {
-    var sec = $("recent"), list = $("entry-list");
-    // hide when empty OR when the entries tab isn't the active view —
-    // applyView owns visibility; this must never force-show.
-    if (!state.entries.length || viewMode !== "entries") {
-      sec.hidden = true;
-      return;
-    }
-    sec.hidden = false;
+    function searchHaystack(e) {
+    var bits = [];
+    var d = new Date(e.ts);
+    bits.push(d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      { weekday: "short", day: "numeric", month: "short" }));
+    (e.emotions || []).forEach(function (m) {
+      var em = emoByK(m.k);
+      if (em) bits.push(t(em.i18n));
+    });
+    if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label); }
+    if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label); }
+    HABITS.forEach(function (h) {
+      if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
+    });
+    bits.push(e.note || "", e.trigger || "");
+    return bits.join(" ").toLowerCase();
+  }
+
+  function fillEntryList() {
+    var list = $("entry-list");
+    if (!list) return;
     list.innerHTML = "";
-    state.entries.slice(0, 30).forEach(function (e) {
+    var q = searchQ.trim().toLowerCase();
+    var shown = 0;
+    state.entries.forEach(function (e) {
+      if (q && searchHaystack(e).indexOf(q) < 0) return;   // search scans ALL
+      if (shown >= 30) return;                             // display cap stays
+      shown++;
+
       var li = document.createElement("li");
       li.className = "entry";
 
@@ -1411,9 +1452,7 @@ function mergeMoodStates(A, B) {
       if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label); }
       if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label); }
       HABITS.forEach(function (h) {
-        if (e[h.f] === "yes" || e[h.f] === "no") {
-          bits.push(t(h[e[h.f]]));       // habits are now context, visible
-        }
+        if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
       });
       ctx.textContent = bits.join(" · ");
       li.appendChild(ctx);
@@ -1449,6 +1488,36 @@ function mergeMoodStates(A, B) {
 
       list.appendChild(li);
     });
+  }
+
+  function renderRecent() {
+    var sec = $("recent"), list = $("entry-list");
+    // hide when empty OR when the entries tab isn't the active view —
+    // applyView owns visibility; this must never force-show.
+    if (!state.entries.length || viewMode !== "entries") {
+      sec.hidden = true;
+      return;
+    }
+    sec.hidden = false;
+
+    // search row: created ONCE, survives re-renders — typing
+    // re-fills ONLY the list, so focus never drops.
+    var sr = document.getElementById("ent-search");
+    if (!sr) {
+      sr = document.createElement("input");
+      sr.type = "search";
+      sr.id = "ent-search";
+      sr.placeholder = t("ent.search");
+      sr.value = searchQ;
+      sr.setAttribute("aria-label", t("ent.search"));
+      sr.addEventListener("input", function () {
+        searchQ = sr.value;
+        fillEntryList();
+      });
+      sec.insertBefore(sr, list);
+    }
+
+    fillEntryList();
   }
 
   function renderAll() {
@@ -2158,6 +2227,76 @@ function mergeMoodStates(A, B) {
     host.appendChild(hint);
   }
   
+    // -- weekly recap: KPI card at the top of insights (numbers,
+  //    top feeling, positive share vs last week) --
+  function renderRecap(host, es) {
+    var now = Date.now();
+    var wk = es.filter(function (e) { return e.ts >= now - 7 * 86400000; });
+    if (!wk.length) return;
+
+    var card = document.createElement("div");
+    card.className = "recap-card";
+    var h = document.createElement("div");
+    h.className = "col-lab";
+    h.textContent = t("rec.title");
+    card.appendChild(h);
+    var row = document.createElement("div");
+    row.className = "recap-row";
+    card.appendChild(row);
+
+    var mkKpi = function (lab, val, delta, dir) {
+      var k = document.createElement("div");
+      k.className = "recap-kpi";
+      var v = document.createElement("div");
+      v.className = "recap-val";
+      v.textContent = val;
+      if (delta) {
+        var dv = document.createElement("span");
+        dv.className = "dist-delta " + (dir === "up" ? "up" : "down");
+        dv.textContent = delta;
+        v.appendChild(dv);
+      }
+      var l = document.createElement("div");
+      l.className = "recap-lab";
+      l.textContent = lab;
+      k.appendChild(v); k.appendChild(l);
+      row.appendChild(k);
+    };
+
+    mkKpi(t("rec.entries"), String(wk.length));
+
+    var st = emoStats(wk);
+    var top = null, topN = 0;
+    EMOTIONS.forEach(function (em) {
+      var c = st.n[em.k] || 0;
+      if (c > topN) { topN = c; top = em; }
+    });
+    if (top) mkKpi(t("rec.top"), t(top.i18n), topN + "×");
+
+    var posShare = function (set) {
+      var n = set.filter(function (e) {
+        return (e.emotions || []).some(function (m) {
+          return POS_EMOS.indexOf(m.k) >= 0;
+        });
+      }).length;
+      return set.length ? Math.round(n / set.length * 100) : null;
+    };
+    var pw = es.filter(function (e) {
+      return e.ts >= now - 14 * 86400000 && e.ts < now - 7 * 86400000;
+    });
+    var d = posShare(wk);
+    var deltaTxt = "", dirCls = "";
+    if (pw.length >= 3) {
+      var dd = d - posShare(pw);
+      if (dd !== 0) {
+        dirCls = dd > 0 ? "up" : "down";
+        deltaTxt = (dd > 0 ? "+" : "−") + Math.abs(dd) + "pt";
+      }
+    }
+    mkKpi(t("rec.pos"), d + "%", deltaTxt, dirCls);
+    host.appendChild(card);
+  }
+  
     // -- intensity trend: avg intensity per emotion, recent half
   //    vs earlier half of the (filtered) range. Frequency says
   //    HOW OFTEN; this says HOW STRONGLY. Min 3 samples per side.
@@ -2220,6 +2359,229 @@ function mergeMoodStates(A, B) {
     hint.textContent = t("ins.int.hint");
     host.appendChild(hint);
   }
+  
+    // ---------- PDF export ----------
+  // jsPDF is VENDORED LOCALLY (vendor/jspdf.umd.min.js) — never a
+  // CDN. Optional: if the file is absent, export degrades to a
+  // toast error; nothing else breaks.
+  var pdfLibLoading = false;
+  function loadPdfLib(done) {
+    if (window.jspdf && window.jspdf.jsPDF) { done(); return; }
+    if (pdfLibLoading) return;
+    pdfLibLoading = true;
+    var cands = ["../vendor/jspdf.umd.min.js", "vendor/jspdf.umd.min.js"];
+    var i = 0;
+    (function next() {
+      if (i >= cands.length) { pdfLibLoading = false; showToast(t("exp.err")); return; }
+      var s = document.createElement("script");
+      s.src = cands[i++];
+      s.onload = function () { pdfLibLoading = false; done(); };
+      s.onerror = function () { s.remove(); next(); };
+      document.head.appendChild(s);
+    })();
+  }
+
+  function exportPdf() {
+    loadPdfLib(function () {
+      var JS = window.jspdf.jsPDF;
+      var doc = new JS({ unit: "pt", format: "a4" });
+      var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+      var M = 48, y = M, page = 1;
+
+      var footer = function () {
+        doc.setFontSize(8); doc.setTextColor(150);
+        doc.text("orOS Mood — " + t("app.title"), M, H - 28);
+        doc.text(String(page), W - M, H - 28, { align: "right" });
+      };
+      var newPage = function () { footer(); doc.addPage(); page++; y = M; };
+      var need = function (h) { if (y + h > H - 44) newPage(); };
+      var section = function (txt) {
+        need(36);
+        doc.setFontSize(12); doc.setTextColor(109, 74, 255);
+        doc.text(txt, M, y); y += 8;
+        doc.setDrawColor(109, 74, 255); doc.setLineWidth(0.8);
+        doc.line(M, y, W - M, y); y += 16;
+      };
+      var kv = function (lab, val) {   // two-column stat row
+        need(17);
+        doc.setFontSize(10); doc.setTextColor(25);
+        doc.text(lab, M + 8, y);
+        doc.setTextColor(115);
+        doc.text(val, W - M - 8, y, { align: "right" });
+        y += 15;
+      };
+      var line = function (txt, indent) {
+        doc.setFontSize(10); doc.setTextColor(25);
+        var w = doc.splitTextToSize(txt, W - M * 2 - (indent || 0));
+        need(w.length * 13 + 4);
+        doc.text(w, M + (indent || 0), y);
+        y += w.length * 13 + 4;
+      };
+
+      var es = entriesInRange();
+      var active = filtersActive();
+      var fes = active ? applyFilters(es) : es;
+      var rangeLbl = insRange === 7 ? t("ins.r7") :
+        insRange === 30 ? t("ins.r30") : t("ins.rall");
+
+      // header block
+      doc.setFontSize(20); doc.setTextColor(20);
+      doc.text(t("app.title") + " — " + t("insights"), M, M + 6);
+      doc.setFontSize(9); doc.setTextColor(130);
+      y = M + 28;
+      doc.text(rangeLbl + " · " +
+        new Date().toLocaleString(LANG === "el" ? "el-GR" : "en-GB"), M, y);
+      y += 14;
+      if (active) {
+        doc.text(t("ins.showing")
+          .replace("{x}", fes.length).replace("{y}", es.length), M, y);
+        y += 14;
+      }
+      y += 8;
+
+      // 1. overview
+      section(t("exp.summary"));
+      var si = streakInfo(es);
+      kv(t("exp.row.entries"), String(fes.length));
+      kv(t("exp.row.days"), String(si.logged));
+      kv(t("ins.streak.val").replace("{n}", si.streak),
+        t("ins.logged").replace("{n}", si.logged));
+      y += 4;
+
+      // 2. patterns (auto observations)
+      var tr = buildTrends(fes, es);
+      if (tr.length) {
+        section(t("ins.trends.title"));
+        tr.forEach(function (s) { line("• " + s, 8); });
+        y += 4;
+      }
+
+      // 3. distribution — n · share% · avg intensity
+      section(t("ins.dist.title"));
+      var dst = emoStats(fes);
+      var rowsE = EMOTIONS.map(function (em) {
+        var c = dst.n[em.k] || 0;
+        return { em: em, c: c, avg: c ? dst.sums[em.k] / c : 0 };
+      }).filter(function (r) { return r.c > 0; })
+        .sort(function (a, b) { return b.c - a.c; });
+      if (rowsE.length) {
+        rowsE.forEach(function (r) {
+          var pct = Math.round(r.c / fes.length * 100);
+          doc.setFontSize(10); doc.setTextColor(20);
+          doc.setFont(undefined, "bold");
+          need(15);
+          doc.text(t(r.em.i18n), M + 8, y);
+          doc.setFont(undefined, "normal");
+          doc.setTextColor(115);
+          doc.text(r.c + "  ·  " + pct + "%  ·  " +
+            t("ins.avg").replace("{n}", r.avg.toFixed(1)),
+            W - M - 8, y, { align: "right" });
+          y += 15;
+        });
+        y += 4;
+      } else line(t("ins.ctx.none"));
+
+      // 4. habits adherence
+      section(t("ins.habits.title"));
+      var anyHab = false;
+      HABITS.forEach(function (h) {
+        var yy = 0, nn = 0;
+        fes.forEach(function (e) {
+          if (e[h.f] === "yes") yy += 1;
+          if (e[h.f] === "no") nn += 1;
+        });
+        if (!yy && !nn) return;
+        anyHab = true;
+        var tot = yy + nn;
+        kv(t(h.yes), t("ins.hab.days")
+          .replace("{y}", yy).replace("{n}", tot) +
+          "  ·  " + Math.round(yy / tot * 100) + "%");
+      });
+      if (!anyHab) line(t("ins.ctx.none"));
+      y += 4;
+
+      // 5. weekly momentum
+      var wkNow = Date.now();
+      var psOf = function (set) {
+        var n = set.filter(function (e) {
+          return (e.emotions || []).some(function (m) {
+            return POS_EMOS.indexOf(m.k) >= 0;
+          });
+        }).length;
+        return set.length ? Math.round(n / set.length * 100) : null;
+      };
+      var pa = psOf(es.filter(function (e) { return e.ts >= wkNow - 7 * 86400000; }));
+      if (pa !== null) {
+        section(t("ins.mom.title"));
+        kv(t("mom.this"), pa + "%");
+        var pb = psOf(es.filter(function (e) {
+          return e.ts >= wkNow - 14 * 86400000 && e.ts < wkNow - 7 * 86400000;
+        }));
+        if (pb !== null) kv(t("mom.prev"), pb + "%");
+        var hint = document.createElement("div");  // noop keeps linters quiet
+        void hint;
+        y += 4;
+      }
+
+      // 6. by weekday
+      if (fes.length >= 7) {
+        var baseSt = emoStats(fes);
+        var bks = [[], [], [], [], [], [], []];
+        fes.forEach(function (e) { bks[new Date(e.ts).getDay()].push(e); });
+        var wrows = [];
+        bks.forEach(function (bk, wd) {
+          if (bk.length < 3) return;
+          var bst = emoStats(bk);
+          var best = null, bd = 0;
+          EMOTIONS.forEach(function (em) {
+            var cn = bst.n[em.k] || 0;
+            if (cn < 2) return;
+            var dd = Math.round((cn / bk.length -
+              (baseSt.n[em.k] || 0) / fes.length) * 100);
+            if (dd > bd && dd >= 10) { bd = dd; best = { k: em.k, d: dd }; }
+          });
+          if (best) wrows.push({ wd: wd, k: best.k, d: best.d });
+        });
+        if (wrows.length) {
+          section(t("ins.dow.title"));
+          wrows.sort(function (a, b) {
+            return ((a.wd + 6) % 7) - ((b.wd + 6) % 7);
+          });
+          wrows.forEach(function (r) {
+            var wdName = new Date(2024, 0, 1 + ((r.wd + 6) % 7))
+              .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+                { weekday: "long" });
+            kv(wdName, t("emo." + r.k) + "  ·  +" + r.d + "pt");
+          });
+          y += 4;
+        }
+      }
+
+      // 7. breakdowns
+      [["loc", "ins.loc.title"], ["person", "ins.per.title"]].forEach(function (p) {
+        var cnts = {}, ord = [];
+        fes.forEach(function (e) {
+          var id = e[p[0]];
+          if (!id || !colValById(p[0], id)) return;
+          if (cnts[id] === undefined) ord.push(id);
+          cnts[id] = (cnts[id] || 0) + 1;
+        });
+        if (!ord.length) return;
+        section(t(p[1]));
+        ord.sort(function (a, b) { return cnts[b] - cnts[a]; });
+        ord.slice(0, 8).forEach(function (id) {
+          var v = colValById(p[0], id);
+          var pct = Math.round(cnts[id] / fes.length * 100);
+          kv(v.label, cnts[id] + "  ·  " + pct + "%");
+        });
+        y += 4;
+      });
+
+      footer();
+      doc.save("oros-mood-" + dayKey(Date.now()) + ".pdf");
+      showToast(t("exp.done"));
+    });
+  }
 
       function renderInsights() {
     var host = $("insights");
@@ -2253,6 +2615,12 @@ function mergeMoodStates(A, B) {
       renderInsights();
     });
     top.appendChild(fb);
+    var pdf = document.createElement("button");
+    pdf.type = "button";
+    pdf.className = "chip ghost";
+    pdf.textContent = t("exp.btn");
+    pdf.addEventListener("click", exportPdf);
+    top.appendChild(pdf);
     host.appendChild(top);
 
     var es = entriesInRange();
@@ -2279,6 +2647,8 @@ function mergeMoodStates(A, B) {
         .replace("{x}", fes.length).replace("{y}", es.length);
       host.appendChild(fl);
     }
+
+    renderRecap(host, es);
 
     // ---- TRENDS: auto-generated observations ----
     // Computed on the filtered set against the range baseline —
@@ -2484,7 +2854,7 @@ function mergeMoodStates(A, B) {
   }
 
   // ---------- Boot ----------
-  console.log("mood.js v0.3.0 boot");
+ console.log("mood.js v0.25.0 boot");
   load();
   applyI18n();
   paintStaticAria();

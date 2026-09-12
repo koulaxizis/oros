@@ -261,6 +261,15 @@ input, textarea, select {
 /* Manage mode: dashed ring on every manageable chip */
 .chip.mgmt { border-style: dashed; }
 
+/* Weekly recap card */
+.recap-card { border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin: 10px 0; background: var(--panel-bg); }
+.recap-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px; }
+.recap-kpi { min-width: 90px; }
+.recap-val { font-size: 20px; font-weight: 800; }
+.recap-lab { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.recap-val .dist-delta { font-size: 12px; margin-left: 6px; }
+
 /* triadic habits: one titled panel, one row per habit */
 #habits {
   display: flex;
