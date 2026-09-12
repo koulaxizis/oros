@@ -895,6 +895,8 @@ function mergeMoodStates(A, B) {
   function buildCapture() {
     var host = $("capture");
     var prevNote = $("fld-note") ? $("fld-note").value : "";   // read BEFORE clear
+    var mm = $("moodmain");
+    var keepScroll = mm ? mm.scrollTop : 0;   // taps mid-form never jump to top
     host.innerHTML = "";
 
     // ---- L1: emotion grid ----
@@ -1203,6 +1205,7 @@ function mergeMoodStates(A, B) {
       acts.appendChild(disc);
     }
     host.appendChild(acts);
+    if (mm) mm.scrollTop = keepScroll;
   }
 
   // ---- chip context menu: rename / delete column values ----
@@ -1240,13 +1243,6 @@ function mergeMoodStates(A, B) {
       clearTimeout(lpTimer);
       if (lpFired) e.preventDefault();   // swallow the synthetic click
     });
-  }
-  
-    function buildCaptureKeepScroll() {
-    var mm = $("moodmain");
-    var st = mm ? mm.scrollTop : 0;
-    buildCapture();
-    if (mm) mm.scrollTop = st;
   }
 
   function openChipMenu(col, v, rect) {
@@ -1375,6 +1371,7 @@ function mergeMoodStates(A, B) {
     else if (col === "person") selPerson = v.id;
     else selTrig = v.id;
     buildCapture();
+    $("moodmain").scrollTop = 0;            // fresh entry starts at the top
   }
 
   // ---- save flow ----
@@ -1412,12 +1409,12 @@ function mergeMoodStates(A, B) {
     };
     g.appendChild(mk(t("recent.edit"), "prim", function () {
       editing = last.id;
-      loadEntryIntoCapture(last);
-      // BUG FIX: fields weren't prefilled — "Edit" overwrote the old
-      // reflection with the empty DOM. Merge BOTH reflections.
+      // EDIT = fold the fresh picks INTO the recent entry. No
+      // loadEntryIntoCapture here: it would overwrite the fresh
+      // loc/person/habits/trig with the old entry's values.
       var vn = [last.note || "", $("fld-note").value.trim()].filter(Boolean);
       $("fld-note").value = vn.join("\n");
-      selTrig = selTrig || last.trig || null;   // new pick wins, legacy fallback
+      selTrig = selTrig || last.trig || null;   // fresh pick wins, legacy fallback
       commitEntry(emos);
     }));
     g.appendChild(mk(t("recent.new"), "ghost", function () {
@@ -1687,7 +1684,7 @@ function mergeMoodStates(A, B) {
   function renderAll() {
     renderThread();
     renderRecent();
-    if (!$("capture").hidden) buildCaptureKeepScroll();   // labels may rename/delete
+    if (!$("capture").hidden) buildCapture();   // labels may rename/delete
   }
   
     // ---------- 3b. Insights view (ALL render-time derived) ----------
@@ -1747,7 +1744,9 @@ function mergeMoodStates(A, B) {
       if (!p[0]) return;
       p[0].classList.toggle("on", p[1]);
       p[0].setAttribute("aria-pressed", p[1] ? "true" : "false");
-      p[0].setAttribute("title", p[0] === b2 ? t("tab.ent") : t("insights"));
+      p[0].setAttribute("title",
+        p[0] === b1 ? t("capture") :
+        p[0] === b2 ? t("tab.ent")  : t("insights"));
     });
     if (viewMode === "insights") {
       calMonth = null;                    // reopen on current month
@@ -2983,6 +2982,7 @@ function mergeMoodStates(A, B) {
     // guard drifted state (post-condition of the merge)
     state.entries.sort(function (x, y) { return y.ts - x.ts; });
     state.cols.loc.forEach(function (v, i) { v.pos = i; });
+    state.cols.trig.forEach(function (v, i) { v.pos = i; });
     state.cols.person.forEach(function (v, i) { v.pos = i; });
 
     // drop edits that leave the UI halfway (editing a now-deleted

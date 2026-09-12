@@ -103,14 +103,18 @@ input, textarea, select {
   flex-shrink: 0;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
-#new-btn:hover,
+#cap-btn:hover,
+#ent-btn:hover,
 #ins-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-#new-btn:active,
+#cap-btn:active,
+#ent-btn:active,
 #ins-btn:active { transform: scale(0.94); }
+#cap-btn.on,
+#ent-btn.on,
 #ins-btn.on {
   color: var(--accent);
   border-color: var(--accent);
@@ -330,6 +334,12 @@ input, textarea, select {
 }
 #capture textarea:focus,
 #capture input[type="text"]:focus { border-color: var(--accent); }
+
+/* addrow inputs escape the generic #capture field styling */
+#capture .addrow input[type="text"] {
+  width: auto;
+  margin-bottom: 0;
+}
 
 .acts {
   display: flex;
@@ -663,6 +673,8 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 }
 
 /* delta wraps under the value instead of squeezing it */
+/* consolidated (was accidentally duplicated in two places plus
+   a stray line in the nowrap overrides) */
 .dist-val {
   min-width: 88px;
   max-width: 110px;
@@ -670,6 +682,11 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
 }
 
 .dist-row {
@@ -695,13 +712,6 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 .dist-fill {
   height: 100%;
   border-radius: 999px;
-}
-.dist-val {
-  min-width: 88px;
-  text-align: right;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
 }
 
 .ins-streak {
@@ -817,7 +827,6 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 /* Habits/val rows: value NEVER wraps — bar shrinks instead */
 .dist-row   { flex-wrap: nowrap; }
 .dist-bar   { flex: 1 1 auto; min-width: 0; }
-.dist-val   { white-space: nowrap; flex-shrink: 0; font-size: 12px; }
 
 /* Entries search row */
 #ent-search {
