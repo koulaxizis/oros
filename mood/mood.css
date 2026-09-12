@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Mood — App stylesheet (v0.3.0)
+   orOS Mood — App stylesheet (v0.3.5)
    OS-pure: palette inherited at runtime from the parent shell
    (todo-pattern: PAL_VARS injection + MutationObserver). The
    :root block below is only the offline/standalone fallback
@@ -613,6 +613,51 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 }
 .dist-delta.up   { color: #87cf3e; }
 .dist-delta.down { color: #e06c75; }
+
+/* Wave 3.5: trends + weekday lists, thread weekday labels,
+   delta drops to its own line (no more squeezed values) */
+.trlist {
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.tr-line {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.tr-line + .tr-line {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+/* 7-day thread: dot + narrow weekday label, stacked */
+#thread { gap: 6px; }
+.tdotwrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.twd {
+  font-size: 9.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* delta wraps under the value instead of squeezing it */
+.dist-val {
+  min-width: 88px;
+  max-width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
 
 .dist-row {
   display: flex;

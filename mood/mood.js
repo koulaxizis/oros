@@ -111,7 +111,18 @@
       "ins.top":         "mostly {e}",
       "ins.filters":     "Filters",
       "ins.showing":     "Showing {x} of {y} entries",
-      "ins.clear":       "Clear filters"
+      "ins.clear":       "Clear filters",
+      "ins.trends.title":"Patterns",
+      "tr.loc":          "When you're at “{x}”, you often feel {e} ({d}pt more than usual).",
+      "tr.person":       "When you're with “{x}”, you often feel {e} ({d}pt more than usual).",
+      "tr.hab":          "When you mark “{h}”, you often feel {e} ({d}pt more than usual).",
+      "tr.freq":         "You mark “{h}” on {p}% of your logged days.",
+      "ins.dow.title":   "By weekday",
+      "ins.mom.title":   "This week vs last",
+      "mom.pos":         "Share of entries with positive feelings (happy · calm · excited)",
+      "mom.this":        "This week",
+      "mom.prev":        "Last week",
+      "rep.last":        "Repeat last"
     },
     el: {
       "app.title":     "Διάθεση",
@@ -189,7 +200,18 @@
       "ins.top":         "κυρίως {e}",
       "ins.filters":     "Φίλτρα",
       "ins.showing":     "Εμφανίζονται {x} από {y} καταχωρήσεις",
-      "ins.clear":       "Καθαρισμός φίλτρων"
+      "ins.clear":       "Καθαρισμός φίλτρων",
+      "ins.trends.title":"Τάσεις",
+      "tr.loc":          "Όταν είσαι «{x}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
+      "tr.person":       "Με «{x}» νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
+      "tr.hab":          "Όταν σημειώνεις «{h}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
+      "tr.freq":         "Σημειώνεις «{h}» στο {p}% των ημερών με καταγραφή.",
+      "ins.dow.title":   "Ανά ημέρα της εβδομάδας",
+      "ins.mom.title":   "Αυτή η εβδομάδα vs προηγούμενη",
+      "mom.pos":         "Ποσοστό καταχωρήσεων με θετικά συναισθήματα (χαρούμενος · ήρεμος · ενθουσιασμένος)",
+      "mom.this":        "Αυτή η εβδομάδα",
+      "mom.prev":        "Προηγούμενη εβδομάδα",
+      "rep.last":        "Επανάληψη τελευταίας"
     }
   };
 
@@ -897,6 +919,23 @@ function mergeMoodStates(A, B) {
     saveBtn.textContent = t("save");
     saveBtn.addEventListener("click", saveEntry);
     acts.appendChild(saveBtn);
+    if (!editing && state.entries.length) {
+      var rep = document.createElement("button");
+      rep.type = "button";
+      rep.className = "ghost";
+      rep.textContent = t("rep.last");
+      rep.addEventListener("click", function () {
+        var last = state.entries[0];
+        if (!last) return;
+        loadEntryIntoCapture(last);
+        buildCapture();
+        $("fld-note").value = last.note || "";
+        $("fld-trigger").value = last.trigger || "";
+        var mm = $("moodmain");
+        if (mm) mm.scrollTop = 0;
+      });
+      acts.appendChild(rep);
+    }
     if (editing) {
       var disc = document.createElement("button");
       disc.type = "button";
@@ -1230,7 +1269,9 @@ function mergeMoodStates(A, B) {
       var ts = Date.now() - d * 24 * 60 * 60 * 1000;
       out.push({ key: dayKey(ts), entry: days[dayKey(ts)] || null });
     }
-    out.forEach(function (day) {
+    out.forEach(function (day, idx) {
+      var wrap = document.createElement("span");
+      wrap.className = "tdotwrap";
       var dot = document.createElement("span");
       dot.className = "tdot";
       if (day.entry) {
@@ -1240,7 +1281,14 @@ function mergeMoodStates(A, B) {
       } else {
         dot.className = "tdot hollow";    // no entry that day
       }
-      host.appendChild(dot);
+      wrap.appendChild(dot);
+      var lb = document.createElement("span");
+      lb.className = "twd";
+      lb.textContent = new Date(Date.now() - (6 - idx) * 86400000)
+        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+          { weekday: "narrow" });
+      wrap.appendChild(lb);
+      host.appendChild(wrap);
     });
   }
 
@@ -1808,7 +1856,179 @@ function mergeMoodStates(A, B) {
     host.appendChild(rst);
   }
 
-    function renderInsights() {
+  // ---------- Trends engine (Wave 3.5) ----------
+  // Transparent stats: for each context (loc / person / habit
+  // yes-no side), find the emotion MOST over-represented vs the
+  // range baseline. Guards against lying: min sample per
+  // condition, min delta, capped sentence count.
+  var TR_MIN_N  = 5;    // min entries per condition
+  var TR_DELTA  = 12;   // min percentage points
+  var TR_MAX    = 6;    // max sentences shown
+  var POS_EMOS  = ["happy", "calm", "excited"];   // momentum uses this
+
+  function condDelta(cond, base) {
+    if (!cond.length || !base.length) return null;
+    var st = emoStats(cond), bs = emoStats(base);
+    var best = null, bd = 0;
+    EMOTIONS.forEach(function (em) {
+      var cn = st.n[em.k] || 0;
+      if (cn < 2) return;
+      var d = Math.round((cn / cond.length -
+        (bs.n[em.k] || 0) / base.length) * 100);
+      if (d > bd && d >= TR_DELTA) { bd = d; best = { k: em.k, d: d }; }
+    });
+    return best;
+  }
+
+  function buildTrends(sub, base) {
+    var out = [];
+    var consider = function (cond, render) {
+      if (cond.length < TR_MIN_N) return;
+      var b = condDelta(cond, base);
+      if (b) out.push({ d: b.d, fn: render(b) });
+    };
+    (state.cols.loc || []).forEach(function (v) {
+      consider(sub.filter(function (e) { return e.loc === v.id; }),
+        function (b) { return t("tr.loc")
+          .replace("{x}", v.label)
+          .replace("{e}", t("emo." + b.k))
+          .replace("{d}", b.d); });
+    });
+    (state.cols.person || []).forEach(function (v) {
+      consider(sub.filter(function (e) { return e.person === v.id; }),
+        function (b) { return t("tr.person")
+          .replace("{x}", v.label)
+          .replace("{e}", t("emo." + b.k))
+          .replace("{d}", b.d); });
+    });
+    HABITS.forEach(function (h) {
+      ["yes", "no"].forEach(function (side) {
+        var cond = sub.filter(function (e) { return e[h.f] === side; });
+        consider(cond, function (b) { return t("tr.hab")
+          .replace("{h}", t(h[side]))
+          .replace("{e}", t("emo." + b.k))
+          .replace("{d}", b.d); });
+        // tendency: a "no" habit marked ≥35% of logged days
+        if (side === "no" && cond.length >= TR_MIN_N) {
+          var p = Math.round(cond.length / sub.length * 100);
+          if (p >= 35) out.push({ d: p, fn: t("tr.freq")
+            .replace("{h}", t(h.no)).replace("{p}", p) });
+        }
+      });
+    });
+    out.sort(function (a, b) { return b.d - a.d; });
+    return out.slice(0, TR_MAX).map(function (o) { return o.fn; });
+  }
+
+  // -- weekday patterns: emotion most over-represented per day
+  //    of week vs the range overall --
+  function renderWeekday(host, es) {
+    if (es.length < 7) return;
+    var base = emoStats(es);
+    var buckets = [[], [], [], [], [], [], []];   // 0=Sun..6=Sat
+    es.forEach(function (e) { buckets[new Date(e.ts).getDay()].push(e); });
+    var rows = [];
+    buckets.forEach(function (bk, wd) {
+      if (bk.length < 3) return;
+      var st = emoStats(bk);
+      var best = null, bd = 0;
+      EMOTIONS.forEach(function (em) {
+        var cn = st.n[em.k] || 0;
+        if (cn < 2) return;
+        var d = Math.round((cn / bk.length -
+          (base.n[em.k] || 0) / es.length) * 100);
+        if (d > bd && d >= 10) { bd = d; best = { k: em.k, d: d }; }
+      });
+      if (best) rows.push({ wd: wd, k: best.k, d: best.d });
+    });
+    if (!rows.length) return;
+    rows.sort(function (a, b) { return ((a.wd + 6) % 7) - ((b.wd + 6) % 7); });
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t("ins.dow.title");
+    host.appendChild(h);
+    var box = document.createElement("div");
+    box.className = "trlist";
+    rows.forEach(function (r) {
+      var li = document.createElement("div");
+      li.className = "tr-line";
+      var wdName = new Date(2024, 0, 1 + ((r.wd + 6) % 7))   // Mon Jan 1 2024
+        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+          { weekday: "long" });
+      li.appendChild(document.createTextNode(wdName + ": "));
+      var em = emoByK(r.k);
+      var sp = document.createElement("span");
+      sp.style.color = em ? em.col : "";
+      sp.textContent = t("emo." + r.k);
+      li.appendChild(sp);
+      var dv = document.createElement("span");
+      dv.className = "dist-delta up";
+      dv.textContent = " +" + r.d + "pt";
+      li.appendChild(dv);
+      box.appendChild(li);
+    });
+    host.appendChild(box);
+  }
+
+  // -- weekly momentum: positive-feelings share, this week vs
+  //    the previous one. Time-based → ignores filters (streak
+  //    family), respects only the selected range --
+  function renderMomentum(host, es) {
+    var now = Date.now();
+    var wk = es.filter(function (e) { return e.ts >= now - 7 * 86400000; });
+    var pw = es.filter(function (e) {
+      return e.ts >= now - 14 * 86400000 && e.ts < now - 7 * 86400000;
+    });
+    if (wk.length < 3 || pw.length < 3) return;
+    var posShare = function (set) {
+      var n = set.filter(function (e) {
+        return (e.emotions || []).some(function (m) {
+          return POS_EMOS.indexOf(m.k) >= 0;
+        });
+      }).length;
+      return Math.round(n / set.length * 100);
+    };
+    var a = posShare(wk), b = posShare(pw), d = a - b;
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t("ins.mom.title");
+    host.appendChild(h);
+    var box = document.createElement("div");
+    [[t("mom.prev"), b], [t("mom.this"), a]].forEach(function (r, idx) {
+      var row = document.createElement("div");
+      row.className = "dist-row";
+      var lab = document.createElement("span");
+      lab.className = "dist-lab";
+      lab.textContent = r[0];
+      row.appendChild(lab);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width = Math.max(4, r[1]) + "%";
+      fill.style.background = "var(--accent)";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      var val = document.createElement("span");
+      val.className = "dist-val";
+      val.textContent = r[1] + "%";
+      if (idx === 1 && d !== 0) {
+        var dv = document.createElement("span");
+        dv.className = "dist-delta " + (d > 0 ? "up" : "down");
+        dv.textContent = (d > 0 ? "+" : "−") + Math.abs(d) + "pt";
+        val.appendChild(dv);
+      }
+      row.appendChild(val);
+      box.appendChild(row);
+    });
+    host.appendChild(box);
+    var hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = t("mom.pos");
+    host.appendChild(hint);
+  }
+
+      function renderInsights() {
     var host = $("insights");
     if (!host) return;
     host.innerHTML = "";
@@ -1867,6 +2087,26 @@ function mergeMoodStates(A, B) {
       host.appendChild(fl);
     }
 
+    // ---- TRENDS: auto-generated observations ----
+    // Computed on the filtered set against the range baseline —
+    // filters and trends cooperate naturally.
+    var tr = buildTrends(fes, es);
+    if (tr.length) {
+      var tt = document.createElement("h2");
+      tt.className = "sec-title";
+      tt.textContent = t("ins.trends.title");
+      host.appendChild(tt);
+      var tl = document.createElement("div");
+      tl.className = "trlist";
+      tr.forEach(function (s) {
+        var li = document.createElement("div");
+        li.className = "tr-line";
+        li.textContent = s;
+        tl.appendChild(li);
+      });
+      host.appendChild(tl);
+    }
+
     // ---- distribution (+ vs-overall deltas when filtered) ----
     var d1 = document.createElement("h2");
     d1.className = "sec-title";
@@ -1888,6 +2128,9 @@ function mergeMoodStates(A, B) {
       esc(t("ins.logged").replace("{n}", si.logged)) + "</span>";
     host.appendChild(stk);
 
+    // ---- weekly momentum (time-based, ignores filters) ----
+    renderMomentum(host, es);
+
     // ---- habits (filtered) ----
     var d2 = document.createElement("h2");
     d2.className = "sec-title";
@@ -1908,6 +2151,9 @@ function mergeMoodStates(A, B) {
     // ---- breakdowns (filtered) ----
     renderBreakdown(host, fes, "loc", "ins.loc.title");
     renderBreakdown(host, fes, "person", "ins.per.title");
+
+    // ---- weekday patterns (filtered — respects both) ----
+    renderWeekday(host, fes);
 
     // factory reset — far corner, away from accidental thumbs
     appendResetLink(host);
@@ -2026,9 +2272,11 @@ function mergeMoodStates(A, B) {
 
   function wire() {
     // "New entry" = clean slate. Editing mode already has Discard.
-    $("new-btn").addEventListener("click", function () {
-      if (viewMode === "insights") toggleView();   // full takeover back to capture
+        $("new-btn").addEventListener("click", function () {
+      if (viewMode === "insights") toggleView();
       resetCapture();
+      var mm = $("moodmain");
+      if (mm) mm.scrollTop = 0;
     });
 
     // topbar toggle: Capture ⇆ Insights (full takeover)

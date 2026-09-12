@@ -1125,3 +1125,39 @@ WAVE ROADMAP (user-approved trajectory):
 NEXT-CHAT STARTER: user opens with Mood Wave 2 (stats) or a new
 file dump for re-audit. Read: MOOD DATA MODEL + DELIVERY STATE
 blocks above + R4/R11/R13 before touching anything.
+
+## 0.24.0 — Mood Wave 3 + 3.5 (filters, trends, polish)
+
+- FILTERS: loc/person/habit single-select groups in Insights ("field:side"
+  encoding); view-state only (never persisted); "Showing X of Y" line;
+  emotion distribution gains vs-overall +/-pt deltas (baseline passed only
+  when a filter is active). Streak + calendar ignore filters; breakdowns,
+  weekday and habits respect them.
+- TRENDS (auto-observations): transparent stats, no magic. Per-context
+  (location / person / habit yes-no) most over-represented emotion vs the
+  range baseline. Guards: min 5 entries per condition, min 12pt delta,
+  top 6 sentences, sorted by strength. Habit-forgetting tendency at >=35%
+  of logged days.
+- WEEKDAY PATTERNS: emotion most over-represented per day-of-week
+  (min 3 samples, min 10pt). Filtered.
+- WEEKLY MOMENTUM: positive share (happy/calm/excited) this week vs
+  last week (min 3 entries each). Time-based, ignores filters.
+- FIX: habits/breakdown bars had no background → invisible fills
+  (.dist-fill now explicit var(--accent)).
+- FIX: renderInsights early-return hid the factory reset link on empty
+  state (appendResetLink helper, dedup of the bottom link too).
+- FIX: sliceSet now re-renders Insights when open (live pull updates).
+- FIX: corrupted line-1 header comment; boot marker v0.3.0;
+  CSS header stamps.
+- UI: calendar cells get bordered "boxes" (today = accent ring);
+  The Basics habits = 3 full-width rows (yes/no side by side);
+  new-btn from Insights returns to capture (clean form, scroll top);
+  7-day thread gains weekday labels; .dist-val stacks delta below.
+- CAPTURE: "Repeat last" ghost button (prefills form from latest entry).
+- NOTES: buildCaptureKeepScroll present (past crash's root cause —
+  partial assembly lost it mid-Wave-2). R14 standing rule added:
+  node --check before every push.
+
+KNOWN DEFERRED (backlog): co-occurrence pairs, weekly recap card,
+Wave 4 reminders (orOS-open-only, clickable toast), ghost-label
+Option B for deleted column values.
