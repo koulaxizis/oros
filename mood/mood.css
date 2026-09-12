@@ -258,6 +258,8 @@ input, textarea, select {
 }
 .chip.ghost { color: var(--text-dim); }
 .chip.ghost.on { color: var(--text-dim); background: transparent; }
+/* Manage mode: dashed ring on every manageable chip */
+.chip.mgmt { border-style: dashed; }
 
 /* triadic habits: one titled panel, one row per habit */
 #habits {

@@ -49,6 +49,7 @@
       "l2.none":       "None",
       "l2.add":        "Add…",
       "l2.add.ph":     "New value…",
+      "l2.manage":     "Manage…",
       "ins.basics":    "The basics",
       "wat.yes":       "Drank enough water",
       "wat.no":        "Not enough water",
@@ -56,6 +57,18 @@
       "food.no":       "Hungry",
       "meds.yes":      "Took medication",
       "meds.no":       "Skipped medication",
+      "slp.yes":       "Slept well",
+      "slp.no":        "Didn't sleep enough",
+      "mv.yes":        "Moved / exercised",
+      "mv.no":         "Sedentary day",
+      "som.yes":       "Feeling well physically",
+      "som.no":        "Not well physically",
+      "caf.yes":       "Had coffee",
+      "caf.no":        "No coffee",
+      "alc.yes":       "Had alcohol",
+      "alc.no":        "No alcohol",
+      "scr.yes":       "Lots of screens",
+      "scr.no":        "Mostly offline",
       "l4.note":       "Reflection (optional)",
       "l4.trigger":    "What triggered this? (optional)",
       "save":          "Save entry",
@@ -127,7 +140,8 @@
       "mom.pos":         "Share of entries with positive feelings (happy · calm · excited)",
       "mom.this":        "This week",
       "mom.prev":        "Last week",
-      "rep.last":        "Repeat last"
+      "rep.last":        "Repeat last",
+      "rem.body":        "No entry today — takes ten seconds."
     },
     el: {
       "app.title":     "Διάθεση",
@@ -143,6 +157,7 @@
       "l2.none":       "Κανένα",
       "l2.add":        "Προσθήκη…",
       "l2.add.ph":     "Νέα τιμή…",
+      "l2.manage":     "Διαχείριση…",
       "ins.basics":    "Τα βασικά",
       "wat.yes":       "Ήπια αρκετό νερό",
       "wat.no":        "Δεν ήπια αρκετό νερό",
@@ -150,6 +165,18 @@
       "food.no":       "Νηστικός",
       "meds.yes":      "Πήρα φάρμακα",
       "meds.no":       "Δεν πήρα φάρμακα",
+      "slp.yes":       "Κοιμήθηκα καλά",
+      "slp.no":        "Δεν κοιμήθηκα αρκετά",
+      "mv.yes":        "Κινήθηκα",
+      "mv.no":         "Καθιστική μέρα",
+      "som.yes":       "Σωματικά καλά",
+      "som.no":        "Σωματικά άρρωστος",
+      "caf.yes":       "Ήπια καφέ",
+      "caf.no":        "Καθόλου καφές",
+      "alc.yes":       "Ήπια αλκοόλ",
+      "alc.no":        "Καθόλου αλκοόλ",
+      "scr.yes":       "Πολλές ώρες σε οθόνες",
+      "scr.no":        "Σχεδόν εκτός οθονών",
       "l4.note":       "Σκέψη (προαιρετικό)",
       "l4.trigger":    "Τι το προκάλεσε; (προαιρετικό)",
       "save":          "Αποθήκευση",
@@ -221,7 +248,8 @@
       "mom.pos":         "Ποσοστό καταχωρήσεων με θετικά συναισθήματα (χαρούμενος · ήρεμος · ενθουσιασμένος)",
       "mom.this":        "Αυτή η εβδομάδα",
       "mom.prev":        "Προηγούμενη εβδομάδα",
-      "rep.last":        "Επανάληψη τελευταίας"
+      "rep.last":        "Επανάληψη τελευταίας",
+      "rem.body":        "Καμία καταχώρηση σήμερα — θέλει δέκα δευτερόλεπτα."
     }
   };
 
@@ -268,6 +296,12 @@
   var HABITS = [
     { f: "water", yes: "wat.yes",  no: "wat.no"  },
     { f: "food",  yes: "food.yes", no: "food.no" },
+    { f: "sleep", yes: "slp.yes",  no: "slp.no"  },
+    { f: "move",  yes: "mv.yes",   no: "mv.no"   },
+    { f: "som",   yes: "som.yes",  no: "som.no"  },
+    { f: "caf",   yes: "caf.yes",  no: "caf.no"  },
+    { f: "alc",   yes: "alc.yes",  no: "alc.no"  },
+    { f: "scr",   yes: "scr.yes",  no: "scr.no"  },
     { f: "meds",  yes: "meds.yes", no: "meds.no" }
   ];
 
@@ -392,7 +426,7 @@ function migrate(data) {
     // DATA_VER 2: triadic habits. Wave-1 booleans migrate as:
     // true → "yes", false → null. The old unchecked state was
     // never a conscious "no" — honesty over retro-fitting.
-    ["water", "food", "meds"].forEach(function (f) {
+        ["water", "food", "meds", "sleep", "move", "som", "caf", "alc", "scr"].forEach(function (f) {
       if (e[f] === true)          e[f] = "yes";
       else if (e[f] === false || e[f] === "yes" || e[f] === "no") {
         // false → null handled below; explicit values stay
@@ -689,16 +723,18 @@ function mergeMoodStates(A, B) {
 
   // --- capture state ---
   var editing   = null;   // entry id | null (new-entry mode)
+  var managing = false;   // view state: chip management mode (rename/delete)
   var picked    = {};     // emotionKey → intensity 1–5
   var selLoc    = null;   // column-value id | null
   var selPerson = null;
-  var hab       = { water: null, food: null, meds: null };   // TRIADIC null|"yes"|"no"
+  var hab       = {};                     // TRIADIC null|"yes"|"no", keys = HABITS
+  HABITS.forEach(function (h) { hab[h.f] = null; });
 
   function resetCapture() {
     editing = null;
     picked = {};
     selLoc = null; selPerson = null;
-    hab.water = hab.food = hab.meds = null;
+    HABITS.forEach(function (h) { hab[h.f] = null; });
     buildCapture();
   }
 
@@ -825,9 +861,14 @@ function mergeMoodStates(A, B) {
       (state.cols[col] || []).forEach(function (v) {
         var c = document.createElement("button");
         c.type = "button";
-        c.className = "chip" + (((col === "loc") ? selLoc : selPerson) === v.id ? " on" : "");
+        c.className = "chip" + (managing ? " mgmt" : "") +
+          (((col === "loc") ? selLoc : selPerson) === v.id ? " on" : "");
         c.textContent = v.label;
         c.addEventListener("click", function () {
+          if (managing) {                       // manage mode: tap = menu
+            openChipMenu(col, v, c.getBoundingClientRect());
+            return;
+          }
           if (col === "loc") selLoc = (selLoc === v.id) ? null : v.id;
           else selPerson = (selPerson === v.id) ? null : v.id;
           buildCapture();
@@ -846,6 +887,16 @@ function mergeMoodStates(A, B) {
         buildCapture();
       });
       chips.appendChild(none);
+	        // visible affordance: rename/delete without hidden gestures
+      var mgmt = document.createElement("button");
+      mgmt.type = "button";
+      mgmt.className = "chip ghost" + (managing ? " on" : "");
+      mgmt.textContent = t("l2.manage");
+      mgmt.addEventListener("click", function () {
+        managing = !managing;
+        buildCapture();
+      });
+      chips.appendChild(mgmt);
       wrap.appendChild(chips);
 
       // inline Add
@@ -988,6 +1039,7 @@ function mergeMoodStates(A, B) {
     var lpTimer = null, lpFired = false;
     el.addEventListener("contextmenu", function (e) {
       e.preventDefault();
+      e.stopPropagation();               // don't let the document closer eat it
       openChipMenu(col, v, el.getBoundingClientRect());
     });
     el.addEventListener("touchstart", function () {
@@ -1192,9 +1244,9 @@ function mergeMoodStates(A, B) {
     picked = {};
     (e.emotions || []).forEach(function (m) { picked[m.k] = m.i; });
     selLoc = e.loc; selPerson = e.person;
-    hab.water = (e.water === "yes" || e.water === "no") ? e.water : null;
-    hab.food  = (e.food  === "yes" || e.food  === "no")  ? e.food  : null;
-    hab.meds  = (e.meds  === "yes" || e.meds  === "no")  ? e.meds  : null;
+    HABITS.forEach(function (h) {
+      hab[h.f] = (e[h.f] === "yes" || e[h.f] === "no") ? e[h.f] : null;
+    });
   }
 
   function commitEntry(emos) {
@@ -1205,7 +1257,7 @@ function mergeMoodStates(A, B) {
       e = entryById(editing);
       if (!e) { e = { id: editing }; state.entries.push(e); }   // resurrection safety
       e.emotions = emos; e.loc = selLoc; e.person = selPerson;
-      e.water = hab.water; e.food = hab.food; e.meds = hab.meds;
+      HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
       e.note = note; e.trigger = trig;
       e.mtime = Date.now();
       // resurrection: this edit is newer than any tombstone
@@ -1214,9 +1266,9 @@ function mergeMoodStates(A, B) {
       e = {
         id: uid(), ts: Date.now(), mtime: Date.now(),
         emotions: emos, loc: selLoc, person: selPerson,
-        water: hab.water, food: hab.food, meds: hab.meds,
         note: note, trigger: trig
       };
+      HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
       state.entries.push(e);
     }
     state.entries.sort(function (x, y) { return y.ts - x.ts; });
@@ -2443,4 +2495,15 @@ function mergeMoodStates(A, B) {
   resetCapture();     // smart preselection fires here (suggestFor)
   renderAll();
   maybePrivacyNotice();   // device-local, one time, then never again
+    // Gentle reminder: a few seconds after boot, only when the user
+  // has already made their first entry and has nothing logged
+  // TODAY. App-open only — no background notifications, ever.
+  setTimeout(function () {
+    if (!state.entries.length) return;
+    var today = dayKey(Date.now());
+    var hasToday = state.entries.some(function (e) {
+      return dayKey(e.ts) === today;
+    });
+    if (!hasToday) showToast(t("rem.body"));
+  }, 3500);
 })();
