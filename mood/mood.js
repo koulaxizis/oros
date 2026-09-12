@@ -95,6 +95,7 @@
 	  "grp.rit":       "Rituals",
       "l4.note":       "Reflection (optional)",
       "l4.trigger":    "What triggered this? (optional)",
+	  "l4.trig.title": "What triggered this?",
       "save":          "Save entry",
       "discard":       "Discard",
       "saved.toast":   "Saved",
@@ -233,6 +234,7 @@
 	  "grp.rit":       "Ιεροτελεστίες",
       "l4.note":       "Σκέψη (προαιρετικό)",
       "l4.trigger":    "Τι το προκάλεσε; (προαιρετικό)",
+	  "l4.trig.title": "Τι το προκάλεσε;",
       "save":          "Αποθήκευση",
       "discard":       "Απόρριψη",
       "saved.toast":   "Αποθηκεύτηκε",
@@ -472,7 +474,7 @@ function newState() {
   var s = {
     ver: DATA_VER, sm: Date.now(), om: Date.now(),
     entries: [], deleted: {},
-    cols: { loc: [], person: [] }
+    cols: { loc: [], trig: [], person: [] }
   };
   // Seed the two columns ONCE (fresh installs only — existing
   // devices keep whatever the user has curated).
@@ -487,16 +489,32 @@ function newState() {
 
 function migrate(data) {
   if (!data || !Array.isArray(data.entries)) return null;
-  if (!data.cols || !Array.isArray(data.cols.loc) || !Array.isArray(data.cols.person)) {
-    data.cols = { loc: [], person: [] };
-  }
+  if (!data.cols || !Array.isArray(data.cols.loc)) data.cols = { loc: [], trig: [], person: [] };
+  if (!Array.isArray(data.cols.trig)) data.cols.trig = [];
+  if (!Array.isArray(data.cols.person)) data.cols.person = [];
   if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
   if (typeof data.sm !== "number") data.sm = 0;
   if (typeof data.om !== "number") data.om = 0;
   data.entries.forEach(function (e) {
     if (!Array.isArray(e.emotions)) e.emotions = [];
     if (!e.note) e.note = "";
-    if (!e.trigger) e.trigger = "";
+    // DATA_VER 3: triggers live in cols.trig (ids). Legacy
+    // free-text strings migrate into matching presets
+    // (case-insensitive trim); deterministic creation order =
+    // stored entry order — both devices converge identically.
+    var trg = (e.trigger || "").trim();
+    if (!e.trig && trg) {
+      var tnorm = trg.toLowerCase(), thit = null;
+      data.cols.trig.forEach(function (v) {
+        if (!thit && String(v.label).trim().toLowerCase() === tnorm) thit = v;
+      });
+      if (!thit) {
+        thit = { id: uid(), label: trg, mtime: 0, pos: data.cols.trig.length };
+        data.cols.trig.push(thit);
+      }
+      e.trig = thit.id;
+    } else if (!e.trig) e.trig = null;
+    e.trigger = "";                       // legacy string retired
     // DATA_VER 2: triadic habits. Wave-1 booleans migrate as:
     // true → "yes", false → null. The old unchecked state was
     // never a conscious "no" — honesty over retro-fitting.
@@ -511,7 +529,7 @@ function migrate(data) {
     if (typeof e.mtime !== "number") e.mtime = e.ts;
     e.loc = e.loc || null; e.person = e.person || null;
   });
-  data.cols.loc.concat(data.cols.person).forEach(function (v) {
+  data.cols.loc.concat(data.cols.trig, data.cols.person).forEach(function (v) {
     if (typeof v.mtime !== "number") v.mtime = 0;
     if (typeof v.pos !== "number") v.pos = 0;
   });
@@ -591,7 +609,7 @@ function mergeUnionList(a, b, tomb) {
 
 function mergeCols(colsA, colsB, tomb) {
   var out = {};
-  ["loc", "person"].forEach(function (name) {
+  ["loc", "trig", "person"].forEach(function (name) {
     out[name] = mergeUnionList((colsA || {})[name], (colsB || {})[name], tomb);
   });
   return out;
@@ -626,6 +644,7 @@ function mergeMoodStates(A, B) {
   var omSideIsA = (a.om || 0) >= (b.om || 0);
   var cols = mergeCols(a.cols, b.cols, tomb);
   sortColVals(cols.loc,    omSideIsA, (a.cols || {}).loc,    (b.cols || {}).loc);
+  sortColVals(cols.trig,   omSideIsA, (a.cols || {}).trig,   (b.cols || {}).trig);
   sortColVals(cols.person, omSideIsA, (a.cols || {}).person, (b.cols || {}).person);
 
   return {
@@ -781,7 +800,7 @@ function mergeMoodStates(A, B) {
       tomb[id] = state.deleted[id];
     });
     state.entries.forEach(function (e) { tomb[e.id] = now; });
-    ["loc", "person"].forEach(function (c) {
+    ["loc", "trig", "person"].forEach(function (c) {
       (state.cols[c] || []).forEach(function (v) { tomb[v.id] = now; });
     });
     var fresh = newState();           // fresh uids — no collisions
@@ -807,7 +826,7 @@ function mergeMoodStates(A, B) {
   function resetCapture() {
     editing = null;
     picked = {};
-    selLoc = null; selPerson = null;
+    selLoc = null; selPerson = null; selTrig = null;
     HABITS.forEach(function (h) { hab[h.f] = null; });
     buildCapture();
   }
@@ -839,7 +858,6 @@ function mergeMoodStates(A, B) {
   function buildCapture() {
     var host = $("capture");
     var prevNote = $("fld-note") ? $("fld-note").value : "";   // read BEFORE clear
-    var prevTrig = $("fld-trigger") ? $("fld-trigger").value : "";
     host.innerHTML = "";
 
     // ---- L1: emotion grid ----
@@ -1038,6 +1056,72 @@ function mergeMoodStates(A, B) {
     });
     host.appendChild(habPanel);
 
+        // ---- L3b: trigger presets (closed list, like Location) ----
+    // Chips + None + Manage + inline Add — same vocabulary model
+    // as the columns; trends stay normalized (top-6 engine).
+    var h3b = document.createElement("h2");
+    h3b.className = "sec-title";
+    h3b.textContent = t("l4.trig.title");
+    host.appendChild(h3b);
+
+    var trigChips = document.createElement("div");
+    trigChips.className = "chips";
+    (state.cols.trig || []).forEach(function (v) {
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "chip" + (managing ? " mgmt" : "") +
+        (selTrig === v.id ? " on" : "");
+      c.textContent = v.label;
+      c.addEventListener("click", function (ev) {
+        if (managing) {
+          ev.stopPropagation();
+          openChipMenu("trig", v, c.getBoundingClientRect());
+          return;
+        }
+        selTrig = (selTrig === v.id) ? null : v.id;
+        buildCapture();
+      });
+      attachChipMenu(c, "trig", v);       // long-press / right-click
+      trigChips.appendChild(c);
+    });
+    var tnone = document.createElement("button");
+    tnone.type = "button";
+    tnone.className = "chip ghost" + (selTrig === null ? " on" : "");
+    tnone.textContent = t("l2.none");
+    tnone.addEventListener("click", function () {
+      selTrig = null; buildCapture();
+    });
+    trigChips.appendChild(tnone);
+    var tmgmt = document.createElement("button");
+    tmgmt.type = "button";
+    tmgmt.className = "chip ghost" + (managing ? " on" : "");
+    tmgmt.textContent = t("l2.manage");
+    tmgmt.addEventListener("click", function () {
+      managing = !managing; buildCapture();
+    });
+    trigChips.appendChild(tmgmt);
+    host.appendChild(trigChips);
+
+    var tAddRow = document.createElement("div");
+    tAddRow.className = "addrow";
+    var tAddIn = document.createElement("input");
+    tAddIn.type = "text";
+    tAddIn.placeholder = t("l2.add.ph");
+    tAddIn.maxLength = 40;
+    tAddIn.setAttribute("aria-label", t("l2.add"));
+    var tAddBtn = document.createElement("button");
+    tAddBtn.type = "button";
+    tAddBtn.className = "prim";
+    tAddBtn.textContent = t("l2.add");
+    tAddBtn.addEventListener("click", function () {
+      commitColVal("trig", tAddIn);
+    });
+    tAddIn.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); commitColVal("trig", tAddIn); }
+    });
+    tAddRow.appendChild(tAddIn); tAddRow.appendChild(tAddBtn);
+    host.appendChild(tAddRow);
+
     // ---- L4: reflection ----
     var h4 = document.createElement("h2");
     h4.className = "sec-title";
@@ -1049,26 +1133,6 @@ function mergeMoodStates(A, B) {
     note.maxLength = 2000;
     note.value = prevNote;
     host.appendChild(note);
-    var trig = document.createElement("input");
-    trig.type = "text";
-    trig.id = "fld-trigger";
-    trig.maxLength = 200;
-    trig.placeholder = t("l4.trigger");
-    trig.value = prevTrig;
-    trig.setAttribute("list", "trig-list");   // autocomplete: past triggers
-    var dl = document.createElement("datalist");
-    dl.id = "trig-list";
-    var seenTr = {};
-    state.entries.forEach(function (e) {
-      var s = (e.trigger || "").trim();
-      if (!s || seenTr[s.toLowerCase()]) return;
-      seenTr[s.toLowerCase()] = 1;
-      var o = document.createElement("option");
-      o.value = s;
-      dl.appendChild(o);
-    });
-    host.appendChild(dl);
-    host.appendChild(trig);
 
     // ---- actions ----
     var acts = document.createElement("div");
@@ -1090,7 +1154,7 @@ function mergeMoodStates(A, B) {
         loadEntryIntoCapture(last);
         buildCapture();
         $("fld-note").value = last.note || "";
-        $("fld-trigger").value = last.trigger || "";
+        // selTrig comes from loadEntryIntoCapture(last) above
         var mm = $("moodmain");
         if (mm) mm.scrollTop = 0;
       });
@@ -1240,9 +1304,9 @@ function mergeMoodStates(A, B) {
       return x.id !== v.id;
     });
     state.deleted[v.id] = Date.now();    // tombstone — merge-safe
-    if ((col === "loc" ? selLoc : selPerson) === v.id) {
-      if (col === "loc") selLoc = null; else selPerson = null;
-    }
+    if (col === "loc" && selLoc === v.id) selLoc = null;
+    else if (col === "person" && selPerson === v.id) selPerson = null;
+    else if (col === "trig" && selTrig === v.id) selTrig = null;
     state.sm = Date.now();
     save();
     buildCapture();
@@ -1272,7 +1336,9 @@ function mergeMoodStates(A, B) {
     state.sm = Date.now();
     state.om = Date.now();
     save();
-    if (col === "loc") selLoc = v.id; else selPerson = v.id;
+       if (col === "loc") selLoc = v.id;
+    else if (col === "person") selPerson = v.id;
+    else selTrig = v.id;
     buildCapture();
   }
 
@@ -1315,9 +1381,8 @@ function mergeMoodStates(A, B) {
       // BUG FIX: fields weren't prefilled — "Edit" overwrote the old
       // reflection with the empty DOM. Merge BOTH reflections.
       var vn = [last.note || "", $("fld-note").value.trim()].filter(Boolean);
-      var vt = [last.trigger || "", $("fld-trigger").value.trim()].filter(Boolean);
       $("fld-note").value = vn.join("\n");
-      $("fld-trigger").value = vt.join(" · ");
+      selTrig = selTrig || last.trig || null;   // new pick wins, legacy fallback
       commitEntry(emos);
     }));
     g.appendChild(mk(t("recent.new"), "ghost", function () {
@@ -1329,7 +1394,7 @@ function mergeMoodStates(A, B) {
   function loadEntryIntoCapture(e) {
     picked = {};
     (e.emotions || []).forEach(function (m) { picked[m.k] = m.i; });
-    selLoc = e.loc; selPerson = e.person;
+    selLoc = e.loc; selPerson = e.person; selTrig = e.trig || null;
     HABITS.forEach(function (h) {
       hab[h.f] = (e[h.f] === "yes" || e[h.f] === "no") ? e[h.f] : null;
     });
@@ -1337,14 +1402,13 @@ function mergeMoodStates(A, B) {
 
   function commitEntry(emos) {
     var note = $("fld-note") ? $("fld-note").value.trim() : "";
-    var trig = $("fld-trigger") ? $("fld-trigger").value.trim() : "";
     var e;
     if (editing) {
       e = entryById(editing);
       if (!e) { e = { id: editing }; state.entries.push(e); }   // resurrection safety
       e.emotions = emos; e.loc = selLoc; e.person = selPerson;
       HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
-      e.note = note; e.trigger = trig;
+      e.note = note; e.trig = selTrig; e.trigger = "";
       e.mtime = Date.now();
       // resurrection: this edit is newer than any tombstone
       if (state.deleted[e.id] !== undefined) delete state.deleted[e.id];
@@ -1352,7 +1416,7 @@ function mergeMoodStates(A, B) {
       e = {
         id: uid(), ts: Date.now(), mtime: Date.now(),
         emotions: emos, loc: selLoc, person: selPerson,
-        note: note, trigger: trig
+        note: note, trig: selTrig, trigger: ""
       };
       HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
       state.entries.push(e);
@@ -1372,7 +1436,6 @@ function mergeMoodStates(A, B) {
     loadEntryIntoCapture(e);
     buildCapture();
     $("fld-note").value = e.note || "";
-    $("fld-trigger").value = e.trigger || "";
     var mm = $("moodmain");
     if (mm) mm.scrollTop = 0; else window.scrollTo(0, 0);
   }
@@ -1469,7 +1532,8 @@ function mergeMoodStates(A, B) {
     HABITS.forEach(function (h) {
       if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
     });
-    bits.push(e.note || "", e.trigger || "");
+    if (e.trig) { var TV = colValById("trig", e.trig); if (TV) bits.push(TV.label); }
+    bits.push(e.note || "");
     return bits.join(" ").toLowerCase();
   }
 
@@ -1524,7 +1588,8 @@ function mergeMoodStates(A, B) {
       if (e.note || e.trigger) {
         var sn = document.createElement("span");
         sn.className = "e-note";
-        var txt = (e.trigger ? "[" + e.trigger + "] " : "") + e.note;
+        var tv = e.trig ? colValById("trig", e.trig) : null;
+        var txt = (tv ? "[" + tv.label + "] " : "") + e.note;
         sn.textContent = txt.length > 90 ? txt.slice(0, 89) + "…" : txt;
         sn.title = txt;
         li.appendChild(sn);
@@ -2183,17 +2248,22 @@ function mergeMoodStates(A, B) {
     // -- trigger-based conditions (top 6 triggers by usage) --
     var trigCount = {}, trigOrig = {};
     sub.forEach(function (e) {
-      var s = (e.trigger || "").trim();
+      if (!e.trig) return;
+      var v = colValById("trig", e.trig);
+      if (!v) return;
+      var s = String(v.label).trim();
       if (!s) return;
       var key = s.toLowerCase();
       trigCount[key] = (trigCount[key] || 0) + 1;
-      trigOrig[key] = s;                       // keep first-seen casing
+      trigOrig[key] = s;                       // registry casing (single truth)
     });
     Object.keys(trigCount).sort(function (a, b) {
       return trigCount[b] - trigCount[a];
     }).slice(0, 6).forEach(function (tk) {
       var cond = sub.filter(function (e) {
-        return (e.trigger || "").trim().toLowerCase() === tk;
+        if (!e.trig) return false;
+        var v = colValById("trig", e.trig);
+        return !!v && String(v.label).trim().toLowerCase() === tk;
       });
       consider(cond, function (b) { return t("tr.trig")
         .replace("{x}", trigOrig[tk])
