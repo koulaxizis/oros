@@ -398,6 +398,18 @@
     { en: "Friends",   el: "Φίλοι" },
     { en: "Colleagues", el: "Συνάδελφοι" }
   ];
+  
+    // Factory triggers — σπέρνονται ΜΙΑ φορά σε άδεια λίστα
+  // (νέα στήλη = δεν είχε ποτέ στιγμή γέννησης). Η ελευθερία
+  // (note/προσθήκη custom) μένει στον χρήστη.
+  var TRIG_SEED = [
+    { en: "Work deadline",  el: "Προθεσμία" },
+    { en: "Argument",       el: "Έριδα" },
+    { en: "Good news",      el: "Καλά νέα" },
+    { en: "Exercise",       el: "Άσκηση" },
+    { en: "Sick day",       el: "Μέρα αρρώστιας" },
+    { en: "Late screens",   el: "Οθόνες αργά" }
+  ];
 
   function emoByK(k) {
     for (var i = 0; i < EMOTIONS.length; i++) {
@@ -484,7 +496,21 @@ function newState() {
   s.cols.person = PERSON_SEED.map(function (v, i) {
     return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
   });
+  s.cols.trig = TRIG_SEED.map(function (v, i) {
+    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+  });
   return s;
+}
+
+// One-time factory triggers — καλύπτει και existing installs
+// (νέα στήλη). Ισχύει πλήρως η κουρτίνα του χρήστη μετά: renames/
+// deletes μέσω Manage, πρόσθετες τιμές μέσω Add….
+function seedTriggers() {
+  state.cols.trig = TRIG_SEED.map(function (v, i) {
+    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+  });
+  state.sm = Date.now();
+  save();
 }
 
 function migrate(data) {
@@ -542,7 +568,11 @@ function load() {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       var data = migrate(JSON.parse(raw));
-      if (data) { state = data; return; }
+      if (data) {
+        state = data;
+        if (!state.cols.trig.length) seedTriggers();
+        return;
+      }
     }
   } catch (e) { /* corrupted → fresh */ }
   state = newState();
@@ -1246,6 +1276,7 @@ function mergeMoodStates(A, B) {
     if (y + mh > window.innerHeight - 8) y = Math.max(8, rect.top - mh - 6);
     m.style.left = x + "px";
     m.style.top = y + "px";
+    m.style.opacity = "1";                // turn it on — it was born at 0
     chipMenu = m;
   }
 
