@@ -1743,6 +1743,7 @@ function mergeMoodStates(A, B) {
       fill.className = "dist-fill";
       fill.style.width =
         Math.max(4, Math.round(yesDays / (yesDays + noDays || 1) * 100)) + "%";
+      fill.style.background = "var(--accent)";   // neutral metric → OS hue
       bar.appendChild(fill);
       row.appendChild(bar);
       var val = document.createElement("span");
@@ -1787,6 +1788,7 @@ function mergeMoodStates(A, B) {
       fill.className = "dist-fill";
       fill.style.width =
         Math.max(6, Math.round(counts[id] / counts[order[0]] * 100)) + "%";
+      fill.style.background = "var(--accent)";   // neutral metric → OS hue
       bar.appendChild(fill);
       row.appendChild(bar);
       var val = document.createElement("span");
@@ -2024,7 +2026,10 @@ function mergeMoodStates(A, B) {
 
   function wire() {
     // "New entry" = clean slate. Editing mode already has Discard.
-    $("new-btn").addEventListener("click", function () { resetCapture(); });
+    $("new-btn").addEventListener("click", function () {
+      if (viewMode === "insights") toggleView();   // full takeover back to capture
+      resetCapture();
+    });
 
     // topbar toggle: Capture ⇆ Insights (full takeover)
     var ib = $("ins-btn");

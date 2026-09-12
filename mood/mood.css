@@ -271,8 +271,11 @@ input, textarea, select {
 }
 .habrow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
+}
+.habrow .chip {
+  flex: 1;
+  text-align: center;
 }
 .chip.hab.neg:not(.on) { color: var(--text-dim); }
 .chip.hab.neg.on {
@@ -710,8 +713,8 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
   align-items: center;
   gap: 3px;
   padding: 6px 2px 5px;
-  background: transparent;
-  border: 1px solid transparent;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   min-height: 44px;
 }
