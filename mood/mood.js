@@ -1796,6 +1796,15 @@ function mergeMoodStates(A, B) {
       host.appendChild(row);
     });
   }
+  
+    function appendResetLink(host) {
+    var rst = document.createElement("button");
+    rst.type = "button";
+    rst.className = "rst-link";
+    rst.textContent = t("rst.btn");
+    rst.addEventListener("click", askReset);
+    host.appendChild(rst);
+  }
 
     function renderInsights() {
     var host = $("insights");
@@ -1837,6 +1846,7 @@ function mergeMoodStates(A, B) {
       em.id = "empty-note";
       em.textContent = t("ins.empty");
       host.appendChild(em);
+      appendResetLink(host);
       return;
     }
 
@@ -1898,12 +1908,7 @@ function mergeMoodStates(A, B) {
     renderBreakdown(host, fes, "person", "ins.per.title");
 
     // factory reset — far corner, away from accidental thumbs
-    var rst = document.createElement("button");
-    rst.type = "button";
-    rst.className = "rst-link";
-    rst.textContent = t("rst.btn");
-    rst.addEventListener("click", askReset);
-    host.appendChild(rst);
+    appendResetLink(host);
   }
 
   // ---------- 4. Sync slice + palette ----------
