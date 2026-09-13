@@ -1301,3 +1301,29 @@ is the audit lists above; no per-patch entries were kept.
    trigger chips + legacy-string migration (edit an old entry → preset
    lit), Manage popup visible, two Habits/Rituals sections, no scroll
    jump on chip taps, OFFLINE PDF export works.
+   
+   ### Temporarily disabled (standing TEMP markers — do NOT delete)
+- Daily reminder toast (delayed 6s, today-empty check, OS-level) —
+  lives in SHELL.JS boot section (reads oros-mood-data directly,
+  fires via scToast). Commented out at the boot call site with a
+  line-by-line // prefix (block contains a nested /* */ comment —
+  block comments impossible). Revive: strip the leading "// ".
+- First-open privacy dialog — lives in MOOD.JS boot tail
+  (maybePrivacyNotice() call commented; function definition kept
+  intact). SEEN_KEY ("oros-mood-seen") stays honored: devices that
+  already acknowledged never see it again.
+  
+  - DATA_VER finally set to 3 (code was shipping the trig migration
+  with the constant still at 2 — harmless, migrate() runs
+  unconditionally, but the ledger lied).
+- Zero-loss test script: fixed an undefined-variable crash in the
+  summary line (FAIL → BAD constant).
+- askRecentGuard ("Logged Xm ago — update it?") moved from the top
+  of the Capture view to just above the Save Entry button —
+  visible without scrolling up; scrollIntoView(nearest) on show.
+- .dist-val max-width (110px desktop / 88px mobile) removed: long
+  Greek values ("x από x ημέρες με καταγραφή") overflowed LEFT
+  over the bar (right-aligned nowrap text in a capped box). Box
+  now sizes to content; the bar (min-width: 0) yields space
+  instead — "value never wraps" rule preserved. dist-row gap
+  10→12px.

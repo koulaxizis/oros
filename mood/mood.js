@@ -29,7 +29,7 @@
 
   var STORAGE_KEY = "oros-mood-data";
   var SEEN_KEY    = "oros-mood-seen";
-  var DATA_VER    = 2;
+  var DATA_VER    = 3;
 
   // ---------- 1. Constants, i18n, icons ----------
   var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
@@ -1420,7 +1420,15 @@ function mergeMoodStates(A, B) {
     g.appendChild(mk(t("recent.new"), "ghost", function () {
       commitEntry(emos);
     }));
-    $("capture").insertBefore(g, $("capture").firstChild);
+    // Above the Save button (the .acts row) — visible where the
+    // user's thumb already is, no scroll-up hunting.
+    var acts = $("capture").querySelector(".acts");
+    if (acts) {
+      $("capture").insertBefore(g, acts);
+      if (g.scrollIntoView) g.scrollIntoView({ block: "nearest" });
+    } else {
+      $("capture").insertBefore(g, $("capture").firstChild);
+    }
   }
 
   function loadEntryIntoCapture(e) {
