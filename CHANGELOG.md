@@ -1387,3 +1387,118 @@ is the audit lists above; no per-patch entries were kept.
 - Demo purge procedure documented: tombstone-based removal of
   demo-* prefixed entries + fixed demo col ids — merge-proof
   cleanup that survives any pull/push cycle.
+  
+  ## [0.27.00] — Mood app deep-review cleanup release
+
+Full functional audit of the Mood app (capture, entries, insights,
+factory reset, sync slice, boot, PDF export) plus the surrounding
+core files (shell.js, sw.js, bump-version.yml, mood.css).
+All findings below were reviewed item-by-item and approved.
+
+### Mood app — fixes (mood.js)
+
+- EDIT FROM ENTRIES LIST: `editEntry()` now switches to the
+  Capture tab (`showTab("capture")`) before rebuilding the form.
+  Previously the edit button looked dead — the form populated
+  but stayed hidden behind the view-mode gate.
+- BROKEN SVG: repaired the malformed pencil-icon path in
+  `paintStaticAria()` (invalid arc data "2.8.2 8" → "2.8 2.8").
+  The Capture tab icon rendered broken.
+- SYNC CONVERGENCE (HIGH): all `uid()` seeds replaced with
+  DETERMINISTIC ids — `seed-loc-*`, `seed-per-*`, `seed-trig-*`
+  (newState + seedTriggers) and `mig-trig-<normalized-label>`
+  (legacy free-text trigger migration). Two fresh installs that
+  sync now converge to one chip set instead of doubling every
+  preset. Belt-and-suspenders: `dedupeCols()` (label-normalized,
+  symmetric, mtime-winner) runs inside `mergeMoodStates()`
+  before sorting; losers are remapped into entries so nothing
+  orphans into "not logged". Covers pre-fix installs too.
+- GREEK PDF EXPORT (HIGH): jsPDF's built-in fonts are
+  WinAnsi-only. Added `vendor/NotoSans-Regular.ttf` (Apache/OFL,
+  Latin+Greek+Cyrillic), lazy-loaded only when LANG=el via
+  `loadPdfFont()` → `addFileToVFS`/`addFont` (registered as
+  both "normal" and "bold"). Missing file = warning toast +
+  Latin fallback, never a crash. File is PRECACHED (see sw.js).
+- CACHE-BUST FIX: `SCRIPT_V` is now captured once at boot via
+  the IIFE (where `document.currentScript` is still valid) and
+  reused by `loadPdfLib()`/`loadPdfFont()`. The old trick read
+  `document.currentScript` inside a click handler — always
+  null, so `?v=` was never appended.
+- ADD… DRAFT SURVIVAL: `buildCapture()` now preserves the three
+  Add-row input values across rebuilds (same contract as the
+  note field and scroll position). `commitColVal()` clears its
+  input when a value is consumed so it can't resurrect.
+- TOAST STACKING: `showToast()` wipes `textContent` before
+  appending — rapid successive toasts no longer concatenate
+  ("DeletedRenamed").
+- TOAST POSITION: moved to TOP-RIGHT, below the app's own
+  topbar (Linux convention, standing E3 decision). In-iframe
+  position is intentional so the shell's taskbar toast (also
+  top-right, screen level) never overlaps it.
+- ENTRIES EMPTY STATE: blank panel replaced with a localized
+  "No entries yet" message (`ent.empty`). Stale search box is
+  removed when the list empties (factory reset, deletes).
+- FACTORY RESET: also clears view state (insFilter,
+  insFiltersOpen, searchQ, calMonth) — no ghost filters
+  pointing at deleted values.
+- BOOT: single-pass render (`renderThread()` + `renderRecent()`
+  instead of full `renderAll()` — no more double capture rebuild).
+  Also sets `document.documentElement.lang` from the locale.
+- SYNC ACK: merged-pull toast now says "Updated from sync"
+  (`sync.pull`) instead of the misleading "Saved".
+
+### Decisions (review round)
+
+- First-launch "Private by design" banner: REMOVED
+  INTENTIONALLY (standing policy established, privacy is
+  stated in app docs — no per-launch disclaimer).
+- Demo data generator: console-testing tool only, not shipped.
+- In-app toast position: TOP-RIGHT inside the app frame.
+
+### Core — fixes (shell.js, sw.js, bump-version.yml, mood.css)
+
+- shell.js — INFO MODAL LISTENER LEAK: single `close()` path
+  (registered as module-level `scInfoClose`) now removes BOTH
+  the overlay and its document-level Escape listener on every
+  exit route (backdrop click, Escape, toggle re-open).
+- shell.js — ESCAPE SCOPE: the global keydown handler bails out
+  when the Info modal is open (`sc-info-overlay` check) —
+  pressing Escape with the modal open no longer ALSO returns
+  to desktop / closes the running app.
+- shell.js — removed dead `wxsAcTimer` variable (never used;
+  the city dialog debounces via `wxCTimer`).
+- sw.js — `vendor/NotoSans-Regular.ttf` added to
+  PRECACHE_URLS (offline Greek PDF export; see dependency note
+  in commit 1). Header comment refreshed (stale "v0.18.1").
+- bump-version.yml — header comment rewritten to match the
+  ACTUAL behavior (reads APP_VERSION from shell.js, stamps
+  sw.js/manifest/?v=; shell.js is never modified by the bot).
+- mood.css — header/section numbering cleanup only.
+
+### Under consideration (backlog)
+
+- Unified shell-level toast API (`orosToast`): all apps route
+  toasts through the shell so every notification renders in
+  one screen-level spot. Deferred — cross-app architectural
+  change, deserves its own wave.
+- One-time legacy duplicate sweep: existing two-device installs
+  that ALREADY doubled their presets (pre-deterministic-id)
+  are converged by `dedupeCols()` at the next merge, but a
+  manual Manage→delete may still be wanted for cosmetics.
+
+### Verification checklist (run before pushing to stable)
+
+  (a) Edit an entry from the Entries list → form visibly opens
+      in the Capture tab, pre-filled.
+  (b) Type text in any Add… field, tap a habit chip → typed text
+      survives the rebuild.
+  (c) Export PDF in Greek locale → Greek renders (verify the
+      ttf is served; also test offline).
+  (d) Fresh install on a second device, sync → single chip
+      set, no duplicated presets; edit/rename propagates.
+
+### Files changed
+
+  mood/mood.js, mood/mood.css, shell.js, sw.js,
+  .github/workflows/bump-version.yml, CHANGELOG.md
+  NEW: vendor/NotoSans-Regular.ttf (~430 KB, vendored)
