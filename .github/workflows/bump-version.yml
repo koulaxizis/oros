@@ -1,13 +1,15 @@
 name: Bump orOS version
 
 # FULLY AUTOMATED versioning — APP_VERSION is never hand-edited:
-#   • push to main  → next patch (0.25.2 → 0.25.3)
-#   • manual run    → choose patch / minor / major
+#   • push to main  → stamp assets to the CURRENT APP_VERSION
+#     (APP_VERSION itself is bumped MANUALLY in shell.js —
+#     that file is the single source of truth and is NEVER
+#     touched by this workflow)
+#   • manual run    → re-stamp on demand (same rules)
 #   • bot commits carry [skip ci] → no feedback loops
 #   • docs-only pushes (*.md) never burn a version
-# Stamps in ONE pass: shell.js APP_VERSION (bumped here FIRST,
-# now the single source of truth) → sw.js CACHE_VERSION →
-# manifest version → ?v= on every app asset.
+# Stamps in ONE pass: read shell.js APP_VERSION → sw.js
+# CACHE_VERSION → manifest version → ?v= on every app asset.
 # Guards (unchanged): G1 CACHE_VERSION exists · G2 offline
 # coverage in PRECACHE_URLS · G3 palette contract per app.
 

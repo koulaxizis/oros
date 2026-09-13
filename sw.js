@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.18.1 — Service Worker
+orOS Core v0.27.0 — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
@@ -52,6 +52,7 @@ var PRECACHE_URLS = [
   "mood/mood.css",
   "mood/mood.js",
   "vendor/jspdf.umd.min.js",
+  "vendor/NotoSans-Regular.ttf",
   "fonts/nunito-regular.woff2",
   "fonts/nunito-medium.woff2",
   "fonts/nunito-semibold.woff2",

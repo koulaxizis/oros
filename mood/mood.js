@@ -752,7 +752,7 @@ function mergeMoodStates(A, B) {
     if (!toastEl) {
       toastEl = document.createElement("div");
       toastEl.style.cssText =
-        "position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(8px);" +
+        "position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;transform:translateY(-8px);" +
         "z-index:1200;background:var(--panel-bg);border:1px solid var(--border);" +
         "border-radius:8px;box-shadow:0 4px 16px var(--shadow);padding:9px 14px;" +
         "font-size:13px;color:var(--text);opacity:0;transition:opacity .3s,transform .3s;" +
@@ -1705,6 +1705,8 @@ function mergeMoodStates(A, B) {
     var staleEmp = document.getElementById("empty-note");
     if (staleEmp) staleEmp.remove();
     if (!state.entries.length) {           // #15: message, not a blank panel
+      var staleSr = document.getElementById("ent-search");   // #N4
+      if (staleSr) staleSr.remove();
       var emp = document.createElement("div");
       emp.id = "empty-note";
       emp.textContent = t("ent.empty");
@@ -2652,6 +2654,7 @@ function mergeMoodStates(A, B) {
       if (window.__moodPdfFont) {
         doc.addFileToVFS(window.__moodPdfFont.file, window.__moodPdfFont.b64);
         doc.addFont(window.__moodPdfFont.file, "NotoSans", "normal");
+        doc.addFont(window.__moodPdfFont.file, "NotoSans", "bold");
       }
       doc.setFont(FONT, "normal");
       var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
@@ -3076,7 +3079,7 @@ function mergeMoodStates(A, B) {
 
     renderAll();                          // repaint live
     if (viewMode === "insights") renderInsights();   // live views too
-    if (info && info.merged) showToast(t("saved.toast"));   // light ack
+    if (info && info.merged) showToast(t("sync.pull"));   // #19: receipt, not save
   }
 
   // Contract Β: shell-owned combos forward FIRST (capture phase).
