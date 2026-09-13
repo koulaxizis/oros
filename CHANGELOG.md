@@ -1327,3 +1327,63 @@ is the audit lists above; no per-patch entries were kept.
   now sizes to content; the bar (min-width: 0) yields space
   instead — "value never wraps" rule preserved. dist-row gap
   10→12px.
+  
+  - el: ins.hab.days "ημέρες με καταγραφή" → "ημέρες καταγραφής"
+  (shorter — pairs with the .dist-val fix; also grammatical tidy).
+- Integration test script v2: snapshot-vs-state comparison now
+  honors snapshot freshness (SKIP when snapshot predates state.sm
+  — stale ≠ loss); older snapshots pre-dating the Mood app no
+  longer FAIL the coverage check; last-run ReferenceError fixed.
+  
+  - Zero-loss verification PASSED end-to-end (integration test v2):
+  structure, DATA_VER, triadic fields, sync payload bit-exact,
+  baselines, roundtrip import zero-loss. Remaining FAIL was the
+  test correctly flagging demo data still installed locally.
+- Demo purge procedure: tombstone-based (demo- prefixed entry ids
+  + fixed demo column-value ids) — merge-proof by construction,
+  survives any pull/push cycle. NEVER wipe demo state with
+  removeItem alone (merge union would resurrect it).
+- Integration test v2.1: snapshot timestamp field detection
+  widened (at | ts | t | time | created) — SKIP logic no longer
+  bypassed by a differently-named schema field.
+  
+  - INCIDENT (resolved via snapshot restore): demo dataset injected on
+  a SYNC-CONNECTED device overwrote real local state, and subsequent
+  roundtrip/save marked the slice dirty → mixture pushed to cloud.
+  Real data recovered from auto-snapshot (zero-loss restore path
+  verified under fire). LESSONS: (1) demo datasets on sync-connected
+  devices must be tombstone-purged BEFORE any push; (2) consider a
+  demo-mode flag that suppresses __orosSyncApi.dirty() entirely —
+  candidate for Wave 6; (3) take a manual snapshot BEFORE injecting
+  test data.
+  
+  - Zero-loss certification achieved (v0.26.0): Full coverage matrix
+  verified across Sync (Dropbox), Auto-Snapshots (local rolling),
+  Manual Export (JSON download), and Folder Mirror (Chromium FS).
+  Every localStorage key covered: shell slice (theme/lang/skin/wp)
+  + app slices (todos, kanban, notes, mood, weather settings) +
+  sync settings (interval, autoexport). Tombstones, custom columns,
+  and triadic fields travel intact via the slice mechanism.
+
+- Divergence Guard hardening (sync.js v0.8.1): Missing baseline
+  treated as DIVERGED for mergeless slices — fixes the rare case
+  where an offline edit on a closed app post-upgrade would be
+  wiped by a pull. Remote parked in carry mailbox; local marked
+  dirty and pushed as truth.
+
+- Merge convergence verified: Simultaneous edits from multiple
+  devices converge deterministically via mergeFn; tie-breaks
+  (mtime, lexicographic) ensure no ping-pong.
+
+- Snapshot restore path validated: Uses identical guarded/merge
+  apply logic as cloud pull — stale rescue files cannot clobber
+  newer local work.
+
+- File System Access mirror (v0.12.2): Each auto-snapshot on
+  Chromium desktop also writes a real JSON file in user-chosen
+  folder; permission revocation detected and flagged (⚠) without
+  breaking the localStorage net.
+
+- Demo purge procedure documented: tombstone-based removal of
+  demo-* prefixed entries + fixed demo col ids — merge-proof
+  cleanup that survives any pull/push cycle.

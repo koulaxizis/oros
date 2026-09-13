@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mood — App logic (v0.25.0) — Waves 1–4
+// orOS Mood — App logic (v0.27.00) — Clean release
 // Capturing how you feel must take seconds, not minutes.
 // Entries are additive-primary; edits are LWW by mtime; deletes
 // leave tombstones (merge-safe). Mood data is PERSONAL: it lives
@@ -17,10 +17,8 @@
 //   5. Wiring & boot
 // Data:
 //   slice "oros-mood-data" → travels (entries + custom columns)
-//   "oros-mood-seen"        → device-local privacy-notice flag
-//   DATA_VER 2: water/food/meds are TRIADIC null|"yes"|"no"
-//   (Wave 1 booleans migrate: true→"yes", false→null — the old
-//   unchecked state was never a conscious "no").
+//   DATA_VER 3: triggers live in cols.trig (ids), triadic
+//   habits (water/food/meds = null|"yes"|"no").
 // Time-of-day derives from the entry timestamp — no UI for it.
 // Day boundaries derive from the LOCAL calendar (render-side).
 // ============================================================
@@ -28,7 +26,6 @@
   "use strict";
 
   var STORAGE_KEY = "oros-mood-data";
-  var SEEN_KEY    = "oros-mood-seen";
   var DATA_VER    = 3;
 
   // ---------- 1. Constants, i18n, icons ----------
@@ -38,8 +35,6 @@
     en: {
       "app.title":     "Mood",
       "recent.title":  "Recent entries",
-      "privacy.title": "Private by design",
-      "privacy.body":  "Your mood data never leaves your device — it syncs only through your own encrypted orOS cloud, and the local export is yours alone.",
       "l1.title":      "How do you feel?",
       "l1.multi":      "You can pick more than one",
       "l2.title":      "Where & with whom",
@@ -92,10 +87,10 @@
       "rit.bed.no":    "Stayed up late",
       "rit.outd.yes":  "Spent time outdoors",
       "rit.outd.no":   "Mostly indoors",
-	  "grp.rit":       "Rituals",
+      "grp.rit":       "Rituals",
       "l4.note":       "Reflection (optional)",
       "l4.trigger":    "What triggered this? (optional)",
-	  "l4.trig.title": "What triggered this?",
+      "l4.trig.title": "What triggered this?",
       "save":          "Save entry",
       "discard":       "Discard",
       "saved.toast":   "Saved",
@@ -147,14 +142,14 @@
       "ins.showing":     "Showing {x} of {y} entries",
       "ins.clear":       "Clear filters",
       "tab.ent":         "Entries",
-	  "ent.search":      "Search entries…",
+      "ent.search":      "Search entries…",
       "ins.trends.title":"Patterns",
-      "tr.loc":          "When you're at “{x}”, you often feel {e} ({d}pt more than usual).",
-      "tr.person":       "When you're with “{x}”, you often feel {e} ({d}pt more than usual).",
-      "tr.hab":          "When you mark “{h}”, you often feel {e} ({d}pt more than usual).",
-      "tr.freq":         "You mark “{h}” on {p}% of your logged days.",
+      "tr.loc":          "When you're at \u201C{x}\u201D, you often feel {e} ({d}pt more than usual).",
+      "tr.person":       "When you're with \u201C{x}\u201D, you often feel {e} ({d}pt more than usual).",
+      "tr.hab":          "When you mark \u201C{h}\u201D, you often feel {e} ({d}pt more than usual).",
+      "tr.freq":         "You mark \u201C{h}\u201D on {p}% of your logged days.",
       "tr.pair":         "When you feel {a}, you also mark {b} ({p}% of the time).",
-      "tr.trig":         "When “{x}” triggers it, you often feel {e} ({d}pt more than usual).",
+      "tr.trig":         "When \u201C{x}\u201D triggers it, you often feel {e} ({d}pt more than usual).",
       "ins.int.title":   "Intensity shifts",
       "ins.int.hint":    "Average intensity now vs earlier in this range",
       "ins.dow.title":   "By weekday",
@@ -163,11 +158,11 @@
       "mom.this":        "This week",
       "mom.prev":        "Last week",
       "rep.last":        "Repeat last",
-	  "rec.title":       "Weekly recap",
+      "rec.title":       "Weekly recap",
       "rec.top":         "Top feeling",
       "rec.pos":         "Positive share",
       "rec.entries":     "Entries this week",
-	  "exp.btn":         "Export PDF",
+      "exp.btn":         "Export PDF",
       "exp.done":        "PDF exported",
       "exp.err":         "PDF library not found (vendor/jspdf missing).",
       "exp.summary":     "Overview",
@@ -177,8 +172,6 @@
     el: {
       "app.title":     "Διάθεση",
       "recent.title":  "Πρόσφατες καταχωρήσεις",
-      "privacy.title": "Ιδιωτικό εκ σχεδίασης",
-      "privacy.body":  "Τα δεδομένα διάθεσης δεν φεύγουν ποτέ από τη συσκευή σου — συγχρονίζονται μόνο μέσα από το δικό σου κρυπτογραφημένο orOS cloud, και η τοπική εξαγωγή είναι μόνο δική σου.",
       "l1.title":      "Πώς νιώθεις;",
       "l1.multi":      "Μπορείς να διαλέξεις περισσότερα από ένα",
       "l2.title":      "Πού & με ποιον",
@@ -231,10 +224,10 @@
       "rit.bed.no":    "Έμεινα ξύπνιος αργά",
       "rit.outd.yes":  "Βγήκα έξω",
       "rit.outd.no":   "Έμεινα κυρίως μέσα",
-	  "grp.rit":       "Ιεροτελεστίες",
+      "grp.rit":       "Ιεροτελεστίες",
       "l4.note":       "Σκέψη (προαιρετικό)",
       "l4.trigger":    "Τι το προκάλεσε; (προαιρετικό)",
-	  "l4.trig.title": "Τι το προκάλεσε;",
+      "l4.trig.title": "Τι το προκάλεσε;",
       "save":          "Αποθήκευση",
       "discard":       "Απόρριψη",
       "saved.toast":   "Αποθηκεύτηκε",
@@ -271,7 +264,7 @@
       "ins.dist.title":  "Πώς ένιωθες",
       "ins.avg":         "μέσο {n}",
       "ins.habits.title":"Συνήθειες",
-      "ins.hab.days":    "{y} από {n} ημέρες με καταγραφή",
+      "ins.hab.days":    "{y} από {n} ημέρες καταγραφής",
       "ins.streak.val":  "{n} συνεχόμενες ημέρες",
       "ins.logged":      "Ημέρες με καταγραφή: {n}",
       "ins.cal.title":   "Ημερολόγιο",
@@ -285,8 +278,8 @@
       "ins.filters":     "Φίλτρα",
       "ins.showing":     "Εμφανίζονται {x} από {y} καταχωρήσεις",
       "ins.clear":       "Καθαρισμός φίλτρων",
-	  "tab.ent":         "Καταχωρήσεις",
-	  "ent.search":      "Αναζήτηση καταχωρήσεων…",
+      "tab.ent":         "Καταχωρήσεις",
+      "ent.search":      "Αναζήτηση καταχωρήσεων…",
       "ins.trends.title":"Τάσεις",
       "tr.loc":          "Όταν είσαι «{x}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
       "tr.person":       "Με «{x}» νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
@@ -302,11 +295,11 @@
       "mom.this":        "Αυτή η εβδομάδα",
       "mom.prev":        "Προηγούμενη εβδομάδα",
       "rep.last":        "Επανάληψη τελευταίας",
-	  "rec.title":       "Εβδομαδιαία ανασκόπηση",
+      "rec.title":       "Εβδομαδιαία ανασκόπηση",
       "rec.top":         "Κορυφαίο συναίσθημα",
       "rec.pos":         "Θετικό μερίδιο",
       "rec.entries":     "Καταχωρήσεις εβδομάδας",
-	  "exp.btn":         "Εξαγωγή PDF",
+      "exp.btn":         "Εξαγωγή PDF",
       "exp.done":        "Το PDF εξήχθη",
       "exp.err":         "Δεν βρέθηκε η βιβλιοθήκη PDF (λείπει το vendor/jspdf).",
       "exp.summary":     "Επισκόπηση",
@@ -355,7 +348,7 @@
 
   // Triadic habits — shared by the capture L3 AND the insights
   // adherence view (one vocabulary, two consumers).
-    var HABITS = [
+  var HABITS = [
     // grp "hab" — the basics: health & physiology
     { f: "water",    grp: "hab", yes: "wat.yes",      no: "wat.no"      },
     { f: "food",     grp: "hab", yes: "food.yes",     no: "food.no"     },
@@ -399,7 +392,7 @@
     { en: "Colleagues", el: "Συνάδελφοι" }
   ];
   
-    // Factory triggers — σπέρνονται ΜΙΑ φορά σε άδεια λίστα
+  // Factory triggers — σπέρνονται ΜΙΑ φορά σε άδεια λίστα
   // (νέα στήλη = δεν είχε ποτέ στιγμή γέννησης). Η ελευθερία
   // (note/προσθήκη custom) μένει στον χρήστη.
   var TRIG_SEED = [
@@ -470,14 +463,15 @@
 
 // ---------- 2. Data model + storage ----------
 // state = {
-//   ver: 2, sm, om,
+//   ver: 3, sm, om,
 //   entries: [{ id, ts, mtime,
 //               emotions: [{k, i}],   // k = EMOTIONS key, i = 1–5
 //               loc, person,          // column-value ids | null
 //               water, food, meds,    // TRIADIC null | "yes" | "no"
 //               note, trigger }],     // strings ("" = unset)
 //   cols: { loc:  [{id, label, mtime, pos}],
-//           person: [{id, label, mtime, pos}] },
+//           person: [{id, label, mtime, pos}],
+//           trig: [{id, label, mtime, pos}] },
 //   deleted: { <entryId|colValId>: <tombstone ts> }
 // }
 var state = null;
@@ -488,7 +482,7 @@ function newState() {
     entries: [], deleted: {},
     cols: { loc: [], trig: [], person: [] }
   };
-  // Seed the two columns ONCE (fresh installs only — existing
+  // Seed the three columns ONCE (fresh installs only — existing
   // devices keep whatever the user has curated).
   s.cols.loc  = LOC_SEED.map(function (v, i) {
     return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
@@ -544,7 +538,7 @@ function migrate(data) {
     // DATA_VER 2: triadic habits. Wave-1 booleans migrate as:
     // true → "yes", false → null. The old unchecked state was
     // never a conscious "no" — honesty over retro-fitting.
-        HABITS.forEach(function (h) { var f = h.f;
+    HABITS.forEach(function (h) { var f = h.f;
       if (e[f] === true)          e[f] = "yes";
       else if (e[f] === false || e[f] === "yes" || e[f] === "no") {
         // false → null handled below; explicit values stay
@@ -610,7 +604,7 @@ function colValById(col, id) {
 //   · ordering — entries = DESC ts (derived at sort time, not
 //     stored pos — a timeline has exactly ONE natural order);
 //     column values = the om-larger side donates positions
-// NOTE (DATA_VER 2): no merge changes — the triadic habit fields
+// NOTE (DATA_VER 3): no merge changes — the triadic habit fields
 // live INSIDE entries, which merge whole-object by mtime. Old
 // devices merging Wave-1 entries simply produce unmigrated local
 // reads until they run this version's migrate() — safe because
@@ -749,28 +743,7 @@ function mergeMoodStates(A, B) {
     toastEl.textContent = "";
   }
 
-  // Privacy notice — first open on THIS device, then never again.
-  function maybePrivacyNotice() {
-    if (localStorage.getItem(SEEN_KEY)) return;
-    var ov = document.createElement("dialog");
-    ov.id = "privacy-dlg";
-    ov.innerHTML =
-      "<h3>" + esc(t("privacy.title")) + "</h3>" +
-      "<p>" + esc(t("privacy.body")) + "</p>";
-    var ok = document.createElement("button");
-    ok.type = "button";
-    ok.className = "prim";
-    ok.textContent = "OK";
-    ok.addEventListener("click", function () {
-      localStorage.setItem(SEEN_KEY, "1");
-      ov.close();
-    });
-    ov.appendChild(ok);
-    document.body.appendChild(ov);
-    ov.showModal();
-  }
-  
-    // Factory reset — double custom confirmation (destructive
+  // Factory reset — double custom confirmation (destructive
   // actions get TWO doors; tombstones make it merge-proof).
   function askReset() {
     var dlg1 = document.createElement("dialog");
@@ -854,7 +827,7 @@ function mergeMoodStates(A, B) {
   var hab       = {};                     // TRIADIC null|"yes"|"no", keys = HABITS
   HABITS.forEach(function (h) { hab[h.f] = null; });
 
-    function resetCapture() {
+  function resetCapture() {
     editing = null;
     picked = {};
     // Smart preselection (changelog contract): most-used value in
@@ -1019,7 +992,7 @@ function mergeMoodStates(A, B) {
         buildCapture();
       });
       chips.appendChild(none);
-	        // visible affordance: rename/delete without hidden gestures
+      // visible affordance: rename/delete without hidden gestures
       var mgmt = document.createElement("button");
       mgmt.type = "button";
       mgmt.className = "chip ghost" + (managing ? " on" : "");
@@ -1092,7 +1065,7 @@ function mergeMoodStates(A, B) {
     mkHabBlock("hab", "ins.basics", "habits");
     mkHabBlock("rit", "grp.rit", "rituals");
 
-        // ---- L3b: trigger presets (closed list, like Location) ----
+    // ---- L3b: trigger presets (closed list, like Location) ----
     // Chips + None + Manage + inline Add — same vocabulary model
     // as the columns; trends stay normalized (top-6 engine).
     var h3b = document.createElement("h2");
@@ -1191,8 +1164,8 @@ function mergeMoodStates(A, B) {
         buildCapture();
         $("fld-note").value = last.note || "";
         // selTrig comes from loadEntryIntoCapture(last) above
-        var mm = $("moodmain");
-        if (mm) mm.scrollTop = 0;
+        var mm2 = $("moodmain");
+        if (mm2) mm2.scrollTop = 0;
       });
       acts.appendChild(rep);
     }
@@ -1367,7 +1340,7 @@ function mergeMoodStates(A, B) {
     state.sm = Date.now();
     state.om = Date.now();
     save();
-       if (col === "loc") selLoc = v.id;
+    if (col === "loc") selLoc = v.id;
     else if (col === "person") selPerson = v.id;
     else selTrig = v.id;
     buildCapture();
@@ -1555,10 +1528,10 @@ function mergeMoodStates(A, B) {
       host.appendChild(wrap);
     });
   }
-  
+
   var searchQ = "";   // view state: entries search text (never persisted)
 
-    function searchHaystack(e) {
+  function searchHaystack(e) {
     var bits = [];
     var d = new Date(e.ts);
     bits.push(d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
@@ -1625,7 +1598,7 @@ function mergeMoodStates(A, B) {
       ctx.textContent = bits.join(" · ");
       li.appendChild(ctx);
 
-      if (e.note || e.trigger) {
+      if (e.note || e.trig) {
         var sn = document.createElement("span");
         sn.className = "e-note";
         var tv = e.trig ? colValById("trig", e.trig) : null;
@@ -1694,13 +1667,13 @@ function mergeMoodStates(A, B) {
     renderRecent();
     if (!$("capture").hidden) buildCapture();   // labels may rename/delete
   }
-  
-    // ---------- 3b. Insights view (ALL render-time derived) ----------
+
+  // ---------- 3b. Insights view (ALL render-time derived) ----------
   // Zero new storage keys, zero sync surface: every number here is
   // recomputed from state.entries at render time. Range selector
   // lives in view state, never persisted.
 
-  var viewMode = "capture";              // "capture" | "insights"
+  var viewMode = "capture";              // "capture" | "entries" | "insights"
   var insRange = 30;                      // 7 | 30 | 0 (0 = all)
   var calMonth = null;                    // null = current month
 
@@ -1712,8 +1685,8 @@ function mergeMoodStates(A, B) {
     var from = rangeStart();
     return state.entries.filter(function (e) { return e.ts >= from; });
   }
-  
-    // Wave 3 filters — view state only, never persisted. hab is
+
+  // Wave 3 filters — view state only, never persisted. hab is
   // encoded "field:side" e.g. "water:no".
   var insFilter = { loc: null, person: null, hab: null };
   var insFiltersOpen = false;
@@ -1829,8 +1802,8 @@ function mergeMoodStates(A, B) {
       host.appendChild(row);
     });
   }
-  
-    // -- filter panel: three single-select groups (Location,
+
+  // -- filter panel: three single-select groups (Location,
   //    Person, Habits). Tap active chip again to clear it. --
   function mkFChip(label, isActive, toggle) {
     var c = document.createElement("button");
@@ -2119,7 +2092,7 @@ function mergeMoodStates(A, B) {
         if (e[h.f] === "yes") yesDays += 1;      // per-entry, not
         if (e[h.f] === "no")  noDays += 1;       // per-day — honest
       });
-      var row = document.createElement("div");
+            var row = document.createElement("div");
       row.className = "dist-row";
       var lab = document.createElement("span");
       lab.className = "dist-lab";
@@ -2186,8 +2159,8 @@ function mergeMoodStates(A, B) {
       host.appendChild(row);
     });
   }
-  
-    function appendResetLink(host) {
+
+  function appendResetLink(host) {
     var rst = document.createElement("button");
     rst.type = "button";
     rst.className = "rst-link";
@@ -2419,8 +2392,8 @@ function mergeMoodStates(A, B) {
     hint.textContent = t("mom.pos");
     host.appendChild(hint);
   }
-  
-    // -- weekly recap: KPI card at the top of insights (numbers,
+
+  // -- weekly recap: KPI card at the top of insights (numbers,
   //    top feeling, positive share vs last week) --
   function renderRecap(host, es) {
     var now = Date.now();
@@ -2489,8 +2462,8 @@ function mergeMoodStates(A, B) {
     mkKpi(t("rec.pos"), d + "%", deltaTxt, dirCls);
     host.appendChild(card);
   }
-  
-    // -- intensity trend: avg intensity per emotion, recent half
+
+  // -- intensity trend: avg intensity per emotion, recent half
   //    vs earlier half of the (filtered) range. Frequency says
   //    HOW OFTEN; this says HOW STRONGLY. Min 3 samples per side.
   function renderIntensity(host, es) {
@@ -2552,8 +2525,8 @@ function mergeMoodStates(A, B) {
     hint.textContent = t("ins.int.hint");
     host.appendChild(hint);
   }
-  
-    // ---------- PDF export ----------
+
+  // ---------- PDF export ----------
   // jsPDF is VENDORED LOCALLY (vendor/jspdf.umd.min.js) — never a
   // CDN. Optional: if the file is absent, export degrades to a
   // toast error; nothing else breaks.
@@ -2781,7 +2754,7 @@ function mergeMoodStates(A, B) {
     });
   }
 
-      function renderInsights() {
+  function renderInsights() {
     var host = $("insights");
     if (!host) return;
     host.innerHTML = "";
@@ -3012,8 +2985,8 @@ function mergeMoodStates(A, B) {
     if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
     if (p.orosShortcuts.handle(e)) e.stopPropagation();
   }, true);
-  
-    // ---------- 5. Wiring & boot ----------
+
+  // ---------- 5. Wiring & boot ----------
   function applyI18n() {
     var n = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < n.length; i++) {
@@ -3034,7 +3007,7 @@ function mergeMoodStates(A, B) {
       cap.setAttribute("title", t("capture"));
       cap.innerHTML =
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>' +
+        '<path d="M17 3a2.8.2 8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>' +
         '<path d="M14 5l5 5"/></svg>';
     }
     var ent = $("ent-btn");
@@ -3063,7 +3036,7 @@ function mergeMoodStates(A, B) {
   }
 
   // ---------- Boot ----------
-   (function () {
+  (function () {
     var m = (document.currentScript && document.currentScript.src || "")
       .match(/[?&]v=([^&#]+)/);
     console.log("mood.js v" + (m ? m[1] : "?") + " boot");
@@ -3077,8 +3050,5 @@ function mergeMoodStates(A, B) {
   watchPalette();
   resetCapture();     // smart preselection fires here (suggestFor)
   renderAll();
-  // maybePrivacyNotice();   // TEMP DISABLED (0.26.0) — first-open
-  // privacy dialog. Revive: uncomment. SEEN_KEY ("oros-mood-seen")
-  // stays honored — devices that acknowledged never see it again.
-  
+
 })();

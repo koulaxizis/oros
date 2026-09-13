@@ -1,9 +1,6 @@
 /* ============================================================
-   orOS Mood — App stylesheet (v0.3.5)
+   orOS Mood — App stylesheet (v0.27.00)
    OS-pure: palette inherited at runtime from the parent shell
-   (todo-pattern: PAL_VARS injection + MutationObserver). The
-   :root block below is only the offline/standalone fallback
-   match of the lumo skin.
    Sections:
      1. Palette fallback + reset
      2. Topbar
@@ -11,12 +8,11 @@
      4. Capture card: L1 grid + intensities
      5. Capture card: L2 columns + L3 habits + L4 + actions
      6. Recent entries + empty state + soft guard
-     7. Privacy dialog
-     8. Chip context menu (rename/delete)
-     9. Insights: ranges, distribution, streak, habits
-    10. Insights: calendar grid + day detail
-    11. Mobile-first
-    X. [hidden] authority guard
+     7. Chip context menu (rename/delete)
+     8. Insights: ranges, distribution, streak, habits
+     9. Insights: calendar grid + day detail
+     10. Mobile-first
+     X. [hidden] authority guard
    Icons: inline SVG only — no unicode glyphs (tofu-proof).
    ============================================================ */
 
@@ -376,7 +372,7 @@ button.ghost {
 }
 button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 
-/* ---------- Factory reset ---------- */
+/* Factory reset */
 .rst-link {
   display: block;
   margin: 28px auto 8px;
@@ -516,35 +512,6 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 #guard span { flex: 1; min-width: 140px; }
 #guard button { min-height: 34px; }
 
-/* ---------- 7. Privacy dialog ---------- */
-#privacy-dlg {
-  background: var(--panel-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 12px 40px var(--shadow);
-  padding: 18px;
-  width: min(340px, calc(100vw - 32px));
-  margin: auto;
-}
-#privacy-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
-#privacy-dlg h3 {
-  font-size: 15px;
-  color: var(--accent);
-  margin-bottom: 10px;
-}
-#privacy-dlg p {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-dim);
-  margin-bottom: 14px;
-}
-#privacy-dlg button.prim {
-  display: block;
-  margin: 0 auto;
-  min-width: 100px;
-}
-
 /* ---------- 7b. Scrollbars (skin-following) ---------- */
 #moodmain::-webkit-scrollbar { width: 10px; height: 10px; }
 #moodmain::-webkit-scrollbar-track { background: transparent; }
@@ -673,8 +640,6 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 }
 
 /* delta wraps under the value instead of squeezing it */
-/* consolidated (was accidentally duplicated in two places plus
-   a stray line in the nowrap overrides) */
 .dist-val {
   min-width: 88px;
   display: flex;
@@ -805,16 +770,14 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
   margin-top: 6px;
 }
 
-/* ---------- 8. Mobile-first ---------- */
+/* ---------- 10. Mobile-first ---------- */
 @media (max-width: 480px) {
   #moodmain { padding: 10px 8px 40px; }
   #emogrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .emotile svg { width: 30px; height: 30px; }
   .e-when { min-width: 78px; }
   .int-lab { min-width: 90px; }
-  /* .dist-val max-width REMOVED — long EL strings (habits days)
-     overflowed left onto the bar. Box now sizes to content;
-     the bar (min-width: 0) yields the space instead. */
+  .dist-val { max-width: none; }
 }
 
 /* Desktop: full-width like the rest of the suite */
