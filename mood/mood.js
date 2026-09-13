@@ -167,7 +167,10 @@
       "exp.err":         "PDF library not found (vendor/jspdf missing).",
       "exp.summary":     "Overview",
       "exp.row.entries": "Entries in range",
-      "exp.row.days":    "Days logged"
+      "exp.row.days":    "Days logged",
+	  "sync.pull":      "Updated from sync",
+      "exp.font.err":   "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
+      "ent.empty":      "No entries yet — they'll appear here after your first check-in."
     },
     el: {
       "app.title":     "Διάθεση",
@@ -304,7 +307,10 @@
       "exp.err":         "Δεν βρέθηκε η βιβλιοθήκη PDF (λείπει το vendor/jspdf).",
       "exp.summary":     "Επισκόπηση",
       "exp.row.entries": "Καταχωρήσεις στο εύρος",
-      "exp.row.days":    "Ημέρες με καταγραφή"
+      "exp.row.days":    "Ημέρες με καταγραφή",
+	  "sync.pull":      "Ενημερώθηκε από συγχρονισμό",
+      "exp.font.err":   "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
+      "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή."
     }
   };
 
@@ -484,14 +490,16 @@ function newState() {
   };
   // Seed the three columns ONCE (fresh installs only — existing
   // devices keep whatever the user has curated).
+  // #10: DETERMINISTIC seed ids — two fresh installs that sync
+  // must NOT union into duplicate chips. Positional, stable.
   s.cols.loc  = LOC_SEED.map(function (v, i) {
-    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-loc-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
   });
   s.cols.person = PERSON_SEED.map(function (v, i) {
-    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-per-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
   });
   s.cols.trig = TRIG_SEED.map(function (v, i) {
-    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
   });
   return s;
 }
@@ -501,7 +509,7 @@ function newState() {
 // deletes μέσω Manage, πρόσθετες τιμές μέσω Add….
 function seedTriggers() {
   state.cols.trig = TRIG_SEED.map(function (v, i) {
-    return { id: uid(), label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
   });
   state.sm = Date.now();
   save();
@@ -529,7 +537,7 @@ function migrate(data) {
         if (!thit && String(v.label).trim().toLowerCase() === tnorm) thit = v;
       });
       if (!thit) {
-        thit = { id: uid(), label: trg, mtime: 0, pos: data.cols.trig.length };
+        thit = { id: "mig-trig-" + tnorm, label: trg, mtime: 0, pos: data.cols.trig.length };
         data.cols.trig.push(thit);
       }
       e.trig = thit.id;
@@ -653,6 +661,44 @@ function sortColVals(vals, omSideIsA, colA, colB) {
   vals.forEach(function (v, i) { v.pos = i; });
 }
 
+// #10: label-normalized dedupe. Devices that seeded the same
+// value with DIFFERENT ids (pre-deterministic-id installs) still
+// converge to one chip. Winner: newest mtime, tie → smaller id
+// (deterministic & symmetric — merge(A,B) === merge(B,A)).
+// Losers are remapped onto the winner in entries too, so no
+// entry orphans into "not logged".
+function normLabel(s) {
+  return String(s == null ? "" : s).trim().toLowerCase().replace(/\s+/g, " ");
+}
+function dedupeCols(cols, entries) {
+  var remap = {};
+  ["loc", "trig", "person"].forEach(function (name) {
+    var arr = cols[name] || [];
+    var byLabel = {};
+    arr.forEach(function (v) {
+      var nl = normLabel(v.label);
+      (byLabel[nl] = byLabel[nl] || []).push(v);
+    });
+    Object.keys(byLabel).forEach(function (nl) {
+      var dup = byLabel[nl];
+      if (dup.length < 2) return;
+      dup.sort(function (a, b) {
+        if ((b.mtime || 0) !== (a.mtime || 0)) return (b.mtime || 0) - (a.mtime || 0);
+        return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+      });
+      for (var i = 1; i < dup.length; i++) remap[dup[i].id] = dup[0].id;
+    });
+    cols[name] = arr.filter(function (v) { return !remap[v.id]; });
+  });
+  if (Object.keys(remap).length) {
+    entries.forEach(function (e) {
+      if (e.loc && remap[e.loc]) e.loc = remap[e.loc];
+      if (e.person && remap[e.person]) e.person = remap[e.person];
+      if (e.trig && remap[e.trig]) e.trig = remap[e.trig];
+    });
+  }
+}
+
 function mergeMoodStates(A, B) {
   var a = A || {}, b = B || {};
 
@@ -667,6 +713,7 @@ function mergeMoodStates(A, B) {
 
   var omSideIsA = (a.om || 0) >= (b.om || 0);
   var cols = mergeCols(a.cols, b.cols, tomb);
+  dedupeCols(cols, entries);
   sortColVals(cols.loc,    omSideIsA, (a.cols || {}).loc,    (b.cols || {}).loc);
   sortColVals(cols.trig,   omSideIsA, (a.cols || {}).trig,   (b.cols || {}).trig);
   sortColVals(cols.person, omSideIsA, (a.cols || {}).person, (b.cols || {}).person);
@@ -713,6 +760,7 @@ function mergeMoodStates(A, B) {
       document.body.appendChild(toastEl);
     }
     if (toastAction) { toastAction.remove(); toastAction = null; }
+    toastEl.textContent = "";                              // stale text dies here
     toastEl.appendChild(document.createTextNode(text));   // text FIRST
 
     if (actionLabel && typeof actionFn === "function") {
@@ -731,14 +779,14 @@ function mergeMoodStates(A, B) {
     }
     void toastEl.offsetWidth;
     toastEl.style.opacity = "1";
-    toastEl.style.transform = "translateX(-50%) translateY(0)";
+    toastEl.style.transform = "translateY(0)";
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, 5000);
   }
   function hideToast() {
     if (!toastEl) return;
     toastEl.style.opacity = "0";
-    toastEl.style.transform = "translateX(-50%) translateY(8px)";
+    toastEl.style.transform = "translateY(-8px)";
     if (toastAction) { toastAction.remove(); toastAction = null; }
     toastEl.textContent = "";
   }
@@ -811,6 +859,11 @@ function mergeMoodStates(A, B) {
     fresh.sm = now; fresh.om = now;
     state = fresh;
     save();
+    // #16: view ghosts die with the data they pointed at
+    insFilter = { loc: null, person: null, hab: null };
+    insFiltersOpen = false;
+    searchQ = "";
+    calMonth = null;
     resetCapture();
     renderAll();
     if (viewMode === "insights") renderInsights();
@@ -868,6 +921,11 @@ function mergeMoodStates(A, B) {
   function buildCapture() {
     var host = $("capture");
     var prevNote = $("fld-note") ? $("fld-note").value : "";   // read BEFORE clear
+    var prevAdd = { loc: "", person: "", trig: "" };           // #12: same for Add…
+    ["loc", "person", "trig"].forEach(function (c) {
+      var ip = document.getElementById("add-in-" + c);
+      if (ip) prevAdd[c] = ip.value;
+    });
     var mm = $("moodmain");
     var keepScroll = mm ? mm.scrollTop : 0;   // taps mid-form never jump to top
     host.innerHTML = "";
@@ -1009,6 +1067,8 @@ function mergeMoodStates(A, B) {
       addRow.className = "addrow";
       var addIn = document.createElement("input");
       addIn.type = "text";
+	  addIn.id = "add-in-" + col;
+      addIn.value = prevAdd[col];
       addIn.placeholder = t("l2.add.ph");
       addIn.maxLength = 40;
       addIn.setAttribute("aria-label", t("l2.add"));
@@ -1115,6 +1175,8 @@ function mergeMoodStates(A, B) {
     tAddRow.className = "addrow";
     var tAddIn = document.createElement("input");
     tAddIn.type = "text";
+	tAddIn.id = "add-in-trig";
+    tAddIn.value = prevAdd.trig;
     tAddIn.placeholder = t("l2.add.ph");
     tAddIn.maxLength = 40;
     tAddIn.setAttribute("aria-label", t("l2.add"));
@@ -1335,6 +1397,7 @@ function mergeMoodStates(A, B) {
       showToast(t("col.dup"));            // no silent duplicates — ever again
       return;
     }
+    input.value = "";                     // consumed — don't resurrect via prevAdd
     var v = { id: uid(), label: label, mtime: Date.now(), pos: (state.cols[col] || []).length };
     state.cols[col].push(v);
     state.sm = Date.now();
@@ -1447,6 +1510,7 @@ function mergeMoodStates(A, B) {
     if (!e) return;
     editing = id;
     loadEntryIntoCapture(e);
+    showTab("capture");                 // #8: the form must actually SHOW
     buildCapture();
     $("fld-note").value = e.note || "";
     var mm = $("moodmain");
@@ -1636,11 +1700,18 @@ function mergeMoodStates(A, B) {
     var sec = $("recent"), list = $("entry-list");
     // hide when empty OR when the entries tab isn't the active view —
     // applyView owns visibility; this must never force-show.
-    if (!state.entries.length || viewMode !== "entries") {
-      sec.hidden = true;
+    if (viewMode !== "entries") { sec.hidden = true; return; }
+    sec.hidden = false;
+    var staleEmp = document.getElementById("empty-note");
+    if (staleEmp) staleEmp.remove();
+    if (!state.entries.length) {           // #15: message, not a blank panel
+      var emp = document.createElement("div");
+      emp.id = "empty-note";
+      emp.textContent = t("ent.empty");
+      sec.insertBefore(emp, list);
+      list.innerHTML = "";
       return;
     }
-    sec.hidden = false;
 
     // search row: created ONCE, survives re-renders — typing
     // re-fills ONLY the list, so focus never drops.
@@ -2535,9 +2606,9 @@ function mergeMoodStates(A, B) {
     if (window.jspdf && window.jspdf.jsPDF) { done(); return; }
     if (pdfLibLoading) return;
     pdfLibLoading = true;
-    // own ?v= (boot-marker trick): HTTP cache revalidates per release
-    var MV = ((document.currentScript && document.currentScript.src || "")
-      .match(/[?&]v=([^&#]+)/) || [])[1] || "";
+    // #13: currentScript is null inside a click handler — MV is
+    // captured ONCE at boot now (was always "" before)
+    var MV = SCRIPT_V;
     var cands = ["../vendor/jspdf.umd.min.js"];   // mood/ has no vendor/ — verified in repo
     var i = 0;
     (function next() {
@@ -2550,10 +2621,39 @@ function mergeMoodStates(A, B) {
     })();
   }
 
+  // #11: jsPDF's built-in fonts are WinAnsi-only — Greek needs a
+  // vendored Unicode TTF (same vendor/ rule, no CDN). Lazy-loaded
+  // ONLY for el; missing file = toast + Latin fallback.
+  var FONT_FILE = "../vendor/NotoSans-Regular.ttf";
+  function loadPdfFont(done) {
+    if (LANG !== "el" || window.__moodPdfFont) { done(); return; }
+    fetch(FONT_FILE + (SCRIPT_V ? "?v=" + SCRIPT_V : ""))
+      .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
+      .then(function (b) {
+        return new Promise(function (res) {
+          var fr = new FileReader();
+          fr.onload = function () { res(fr.result.split(",")[1]); };
+          fr.readAsDataURL(b);
+        });
+      })
+      .then(function (b64) {
+        window.__moodPdfFont = { file: "NotoSans-Regular.ttf", b64: b64 };
+        done();
+      })
+      .catch(function () { showToast(t("exp.font.err")); done(); });
+  }
+
   function exportPdf() {
     loadPdfLib(function () {
+      loadPdfFont(function () {
       var JS = window.jspdf.jsPDF;
       var doc = new JS({ unit: "pt", format: "a4" });
+      var FONT = window.__moodPdfFont ? "NotoSans" : "helvetica";
+      if (window.__moodPdfFont) {
+        doc.addFileToVFS(window.__moodPdfFont.file, window.__moodPdfFont.b64);
+        doc.addFont(window.__moodPdfFont.file, "NotoSans", "normal");
+      }
+      doc.setFont(FONT, "normal");
       var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
       var M = 48, y = M, page = 1;
 
@@ -2637,10 +2737,10 @@ function mergeMoodStates(A, B) {
         rowsE.forEach(function (r) {
           var pct = Math.round(r.c / fes.length * 100);
           doc.setFontSize(10); doc.setTextColor(20);
-          doc.setFont(undefined, "bold");
+          doc.setFont(FONT, "bold");
           need(15);
           doc.text(t(r.em.i18n), M + 8, y);
-          doc.setFont(undefined, "normal");
+          doc.setFont(FONT, "normal");
           doc.setTextColor(115);
           doc.text(r.c + "  ·  " + pct + "%  ·  " +
             t("ins.avg").replace("{n}", r.avg.toFixed(1)),
@@ -2751,6 +2851,7 @@ function mergeMoodStates(A, B) {
       footer();
       doc.save("oros-mood-" + dayKey(Date.now()) + ".pdf");
       showToast(t("exp.done"));
+      });
     });
   }
 
@@ -3007,7 +3108,7 @@ function mergeMoodStates(A, B) {
       cap.setAttribute("title", t("capture"));
       cap.innerHTML =
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M17 3a2.8.2 8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>' +
+        '<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>' +
         '<path d="M14 5l5 5"/></svg>';
     }
     var ent = $("ent-btn");
@@ -3036,10 +3137,13 @@ function mergeMoodStates(A, B) {
   }
 
   // ---------- Boot ----------
+  var SCRIPT_V = "";
   (function () {
     var m = (document.currentScript && document.currentScript.src || "")
       .match(/[?&]v=([^&#]+)/);
-    console.log("mood.js v" + (m ? m[1] : "?") + " boot");
+    SCRIPT_V = m ? m[1] : "";
+    document.documentElement.lang = LANG;   // #18: lang attr follows locale
+    console.log("mood.js v" + (SCRIPT_V || "?") + " boot");
   })();
   load();
   applyI18n();
@@ -3049,6 +3153,7 @@ function mergeMoodStates(A, B) {
   inheritPalette();
   watchPalette();
   resetCapture();     // smart preselection fires here (suggestFor)
-  renderAll();
+  renderThread();     // #17: renderAll would rebuild capture a 2nd time
+  renderRecent();
 
 })();

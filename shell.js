@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.27.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.27.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1513,9 +1513,10 @@
   // Info modal — the FULL table is generated from SC_DEFS, never
   // handwritten twice. Flat, minimal, no chrome: title, version,
   // tagline, the capabilities row, shortcut rows, repo link, credits.
+  var scInfoClose = null;   // #4: live modal's close fn (null = closed)
+
   function showInfoModal() {
-    var existing = document.getElementById("sc-info-overlay");
-    if (existing) { existing.remove(); return; }
+    if (scInfoClose) { scInfoClose(); return; }   // open → close (clean toggle)
 
     var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
     var comboPrefix = mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+";
@@ -1544,13 +1545,24 @@
           'target="_blank" rel="noopener">Christos Koulaxizis</a></span></div>' +
       '</div>';
 
-    // Backdrop / Escape close
+    function closeModal() { ov.remove(); }
+
+    // #4: single close path — backdrop, Escape AND the toggle case
+    // all funnel through close(), which removes BOTH the modal and
+    // its document-level listener. No leaked Escape handlers anymore.
+    function close() {
+      ov.remove();
+      document.removeEventListener("keydown", onKey);
+      scInfoClose = null;
+    }
+    function onKey(e) {
+      if (e.key === "Escape") close();
+    }
     ov.addEventListener("click", function (e) {
-      if (e.target === ov) ov.remove();
+      if (e.target === ov) close();
     });
-    document.addEventListener("keydown", function scInfoEsc(e) {
-      if (e.key === "Escape") { ov.remove(); document.removeEventListener("keydown", scInfoEsc); }
-    });
+    document.addEventListener("keydown", onKey);
+    scInfoClose = close;    // registered so the toggle path can call it too
 
     document.body.appendChild(ov);
   }
@@ -1809,7 +1821,6 @@
   // Autocomplete — geocoding suggestions from the 3rd character
   // (mirror of the app's pattern: debounced, tokened, offline-aware).
   var WXS_AC_MIN = 3, WXS_AC_DELAY = 250;
-  var wxsAcTimer = null, wxsAcToken = 0;
 
   function wxGeocodeSuggest(q) {
     var tok = ++wxsAcToken;
@@ -2158,6 +2169,7 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
+      if (document.getElementById("sc-info-overlay")) return;     // #5: modal owns Escape
       if (document.getElementById("app-menu").classList.contains("open")) closeMenu();
       else if (state.running) returnToDesktop();
     }

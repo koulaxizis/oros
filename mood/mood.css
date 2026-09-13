@@ -6,11 +6,11 @@
      2. Topbar
      3. Main scroll + 7-day thread
      4. Capture card: L1 grid + intensities
-     5. Capture card: L2 columns + L3 habits + L4 + actions
-     6. Recent entries + empty state + soft guard
+     5. Capture card: L2 columns + L3 habits + L4 + actions + factory reset
+     6. Recent entries + empty state + soft guard + scrollbars
      7. Chip context menu (rename/delete)
-     8. Insights: ranges, distribution, streak, habits
-     9. Insights: calendar grid + day detail
+     8. Insights: filters, ranges, trends, distribution
+     9. Insights: habits, calendar, breakdowns
      10. Mobile-first
      X. [hidden] authority guard
    Icons: inline SVG only — no unicode glyphs (tofu-proof).
@@ -512,7 +512,7 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 #guard span { flex: 1; min-width: 140px; }
 #guard button { min-height: 34px; }
 
-/* ---------- 7b. Scrollbars (skin-following) ---------- */
+/* ---------- 6b. Scrollbars (skin-following) ---------- */
 #moodmain::-webkit-scrollbar { width: 10px; height: 10px; }
 #moodmain::-webkit-scrollbar-track { background: transparent; }
 #moodmain::-webkit-scrollbar-thumb {
