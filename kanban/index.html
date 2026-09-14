@@ -10,7 +10,10 @@
 
   <!-- Board bar: board title + search + label filter + new column -->
   <header id="boardbar">
-    <h1 id="board-title" data-i18n="board.title">Board</h1>
+    <!-- Multi-board (v0.6): rendered dynamically by kanban.js
+         renderBoardHeader() — dropdown (board name + switcher)
+         + new/manage buttons. -->
+    <div id="board-header"></div>
 
     <div id="search-wrap">
       <input id="search" type="search" autocomplete="off" spellcheck="false"

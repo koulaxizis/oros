@@ -1,72 +1,53 @@
 // ============================================================
-// orOS Kanban — App logic (v0.5)
-// Νέο στο v0.5 (cross-device MERGE — προσαρμογή προτύπου todo.js v0.4):
-//   - Κάθε οντότητα (στήλη / κάρτα / ετικέτα) φέρει mtime (έκδοση
-//     περιεχομένου) + pos; κάθε στήλη φέρει om (έκδοση σειράς των
-//     καρτών της) και η ρίζα φέρει om (έκδοση σειράς στηλών).
-//     Κάθε μεταβολή δημιουργεί stamp.
-//   - Soft deletes: state.deleted = { [id]: ts } tombstones,
-//     καθαρίζονται (pruned) μετά από 30 ημέρες. Η διαγραφή μιας
-//     στήλης προκαλεί τη δημιουργία tombstones σε όλες τις κάρτες
-//     της (κλιμακούμενη — cascade); μια κάρτα της οποίας η
-//     τοποθέτηση στη στήλη έχει αφαιρεθεί, παραμένει νεκρή
-//     (κανόνας orphan — χωρίς κρυφή επαναφορά).
-//   - mergeKanbanStates(local, remote): deterministic, symmetric —
-//     και οι δύο συσκευές υπολογίζουν το ΙΔΙΟ συγκλίνων αποτέλεσμα.
-//       · περιεχόμενο κάρτας — μεγαλύτερο mtime κερδίζει (σε
-//         ισοβαθμία → λεξικογραφικό JSON); η ΚΕΡΔΙΖΟΥΣΑ πλευρά
-//         καθορίζει τη στήλη τοποθέτησης της κάρτας (σε ισοβαθμία →
-//         μικρότερο id στήλης — συμμετρικό)
-//       · επικεφαλίδες στηλών — LWW βάσει mtime, δομικά: οι
-//         αλλαγές στην επικεφαλίδα δεν αντικαθιστούν (clobber) τις
-//         αλλαγές των καρτών από την άλλη πλευρά
-//       · σειρά τοποθέτησης — το ριζικό om καθορίζει τη σειρά των
-//         στηλών, το om της στήλης καθορίζει τη σειρά των καρτών
-//         (σε ισοβαθμία → λεξικογραφική ακολουθία id μέσω pickRef);
-//         οι άγνωστες οντότητες προστίθενται στο τέλος
-//       · tombstones — ένωση με μέγιστο χρονική σήμανση (ts)· η
-//         διαγραφή υπερισχύει των παλαιότερων επεξεργασιών, ενώ
-//         υποχωρεί έναντι των νεότερων
-//   - Η αναίρεση (Undo) καθιστά ΟΛΟ το snapshot ως το πιο πρόσφατο
-//     (κατάσταση stampAll) — η αναίρεση υπερισχύει του remote,
-//     και αυτό εφαρμόζεται παντού.
-//   - DATA_VER 3 → 4 additive migration (om/mtime/pos/deleted).
-// Μεταφέρθηκε από το v0.4 (Wave 3): drag των στηλών για
-//   αναδιάταξη, μολύβι μετονομασίας; Wave 2: ετικέτες, αναζήτηση,
-//   φιλτράρισμα; Wave 1: υποεργασίες, επιπλέον στοιχεία,
-//   αντιγραφή (duplicate).
+// orOS Kanban — App logic (v0.6.0 - Multi-board)
+// -------------------------------------------------------------
+// Νέο στο v0.6.0 (MULTI-BOARD SUPPORT):
+//   - state = { ver: 5, boards: [{ ...oldStateFields, id, mtime }], 
+//               om: <έκδοση σειράς boards>, activeBoardId: ... }
+//   - Κάθε board είναι πλήρης μονάδα δεδομένων (columns, labels, deleted)
+//   - Migration v4→v5: wrapper του υπάρχοντος state σε board "Main"
+//   - Merge logic επεκτάθηκε για union boards + nested merge ανά board_id
+// -------------------------------------------------------------
+// Παλαιές εκδόσεις (v0.5 merge): cross-device merge με LWW + tombstones
+// -------------------------------------------------------------
 // Ενότητες:
 //   1. Σταθερές, i18n, βοηθητικές συναρτήσεις (helpers)
-//   2. Μοντέλο δεδομένων, αποθήκευση, migration
-//   2b. Μηχανή συγχρονισμού μεταξύ συσκευών (v0.5)
-//   3. Εμφάνιση (Render): στήλες + κάρτες (chips / subtask chip /
-//      προεπισκόπηση επιπλέον στοιχείων)
-//   4. Γρήγορη προσθήκη (ανά στήλη)
-//   5. Διάλογος καρτών (ζωντανή επεξεργασία: ετικέτες,
-//      υποεργασίες, επιπλέον στοιχεία, αντιγραφή)
-//   6. Διάλογος στηλών
-//   7. Αναζήτηση & φιλτράρισμα (γραμμή πίνακα)
-//   8. Drag & drop καρτών (με δείκτη(pointer), με όριο.threshold)
-//   8b. Drag αναδιάταξης στηλών (με δείκτη, με όριο)
-//   9. Undo / toast
-//  10. Sync slice (Dropbox, με καταχώρηση merge) + παλέτα
-//  11. Σύνδεση (Wiring) & εκκίνηση (boot)
+//   2. Μοντέλο δεδομένων, αποθήκευση, migration (v5: multi-board)
+//   2b. Μηχανή συγχρονισμού μεταξύ συσκευών (multi-board extended)
+//   3. Εμφάνιση (Render): boards list + columns + cards
+//   4. Board management UI (dialog, dropdown)
+//   5. Γρήγορη προσθήκη (ανά στήλη)
+//   6. Διάλογος καρτών (ζωντανή επεξεργασία)
+//   7. Διάλογος στηλών
+//   8. Αναζήτηση & φιλτράρισμα (session-only)
+//   9. Drag & drop καρτών
+//  10. Drag αναδιάταξης στηλών
+//  11. Undo / toast
+//  12. Sync slice (merge-registered) + palette
+//  13. Σύνδεση (Wiring) & εκκίνηση (boot)
 // ============================================================
 (function () {
   "use strict";
 
   var STORAGE_KEY = "oros-kanban-data";
-  var DATA_VER = 4;
+  var DATA_VER = 5;                          // v0.6.0: multi-board schema
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 ημέρες
 
   // ---------- 1. Σταθερές, i18n, βοηθητικές συναρτήσεις ----------
-  // Η γλώσσα προέρχεται από το shell (ίδια προέλευση, κοινό
-  // localStorage).
   var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
 
   var STRINGS = {
     en: {
       "board.title":      "Kanban",
+      "board.create":     "New board",
+      "board.manage":     "Manage boards...",
+      "board.close":      "Close",
+      "board.rename":     "Rename board",
+      "board.delete":     "Delete board",
+      "board.duplicate":  "Duplicate board",
+      "board.default":    "Main",
+      "board.empty":      "This board is empty",
+      "board.empty.hint": "Create your first column to get started.",
       "col.add":          "Add column",
       "col.rename":       "Rename column",
       "empty.title":      "No columns yet",
@@ -107,15 +88,28 @@
       "toast.deleted":    "Deleted",
       "toast.undone":     "Restored",
       "toast.coldel":     "Column deleted",
+      "toast.boarddel":   "Board deleted",
+      "toast.boardadded": "Board created",
       "undo":             "Undo",
       "confirm.carddel":  "Delete this card?",
       "confirm.coldel":   "Delete this column and all its cards?",
       "confirm.lbldel":   "Delete this label? It will be removed from all cards.",
+      "confirm.boarddel": "Delete this board and ALL its data?",
       "new.col":          "New column",
-	  "update.checking": "Checking for updates…"
+      "new.board":        "New board",
+      "update.checking": "Checking for update…"
     },
     el: {
       "board.title":      "Kanban",
+      "board.create":     "Νέο board",
+      "board.manage":     "Διαχείριση boards...",
+      "board.close":      "Κλείσιμο",
+      "board.rename":     "Μετονομασία board",
+      "board.delete":     "Διαγραφή board",
+      "board.duplicate":  "Αντιγραφή board",
+      "board.default":    "Κύριο",
+      "board.empty":      "Αυτό το board είναι άδειο",
+      "board.empty.hint": "Δημιούργησε την πρώτη σου στήλη για να ξεκινήσεις.",
       "col.add":          "Προσθήκη στήλης",
       "col.rename":       "Μετονομασία στήλης",
       "empty.title":      "Δεν υπάρχουν στήλες ακόμα",
@@ -156,12 +150,16 @@
       "toast.deleted":    "Διαγράφηκε",
       "toast.undone":     "Επαναφέρθηκε",
       "toast.coldel":     "Η στήλη διαγράφηκε",
+      "toast.boarddel":   "Το board διαγράφηκε",
+      "toast.boardadded": "Το board δημιουργήθηκε",
       "undo":             "Αναίρεση",
       "confirm.carddel":  "Διαγραφή αυτής της κάρτας;",
       "confirm.coldel":   "Διαγραφή στήλης και όλων των καρτών της;",
       "confirm.lbldel":   "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις κάρτες.",
+      "confirm.boarddel": "Διαγραφή αυτού του board και ΟΛΩΝ των δεδομένων του;",
       "new.col":          "Νέα στήλη",
-	  "update.checking": "Έλεγχος για ενημερώσεις…",
+      "new.board":        "Νέο board",
+      "update.checking": "Έλεγχος για ενημερώσεις…",
     }
   };
 
@@ -176,31 +174,24 @@
   function $(id) { return document.getElementById(id); }
 
   // ---------- 2. Μοντέλο δεδομένων, αποθήκευση, migration ----------
-  // state = {
-  //   ver: 4,
-  //   om: <έκδοση σειράς στηλών>,
-  //   deleted: { <id οντότητας>: <χρονική σήμανση tombstone> }, // καθαρίζονται μετά από 30 ημέρες
-  //   labels: [{ id, name, color, mtime, pos }],
-  //   columns: [{
-  //     id, name, mtime, om, pos,        // om = η σειρά των ΚΑΡΤΩΝ αυτής της στήλης
-  //     cards: [{
-  //       id, text, notes,
-  //       labels:   [<label id>],
-  //       subtasks: [{ id, text, completed }],
-  //       info:     [{ id, label, value }],
-  //       mtime, pos
-  //     }]
-  //   }]
-  // }
-  //   mtime — έκδοση περιεχομένου: το μεγαλύτερο υπερισχύει στις
-  //           συγκρούσεις συγχρονισμού (merge)
-  //   om/pos — έκδοση σειράς τοποθέτησης: οι αναδιατάξεις ανεβάζουν την
-  //           τιμή του om + επαναγράφουν το pos· οι αλλαγές στο
-  //           περιεχόμενο δεν επηρεάζουν ποτέ τη σειρά
-  //   Η τοποθέτηση μιας κάρτας σε μια στήλη αποφασίζεται από την
-  //   ΚΕΡΔΙΖΟΥΣΑ πλευρά της (αυτή που έχει το νεότερο mtime της κάρτας)
-  //   — οι μετακινήσεις μεταξύ στηλών καλούν touch(card), ώστε να
-  //   υπολογίζονται ως πραγματικές αλλαγές στο περιεχόμενο.
+  // v5 STRUCTURE:
+  //   state = {
+  //     ver: 5,
+  //     om: <έκδοση σειράς boards>,
+  //     activeBoardId: <string>,
+  //     boards: [
+  //       {
+  //         id: <string>,
+  //         name: <string>,
+  //         mtime: <epoch>,
+  //         om: <έκδοση σειράς στηλών>,
+  //         deleted: { <entityId>: ts },
+  //         labels: [{ id, name, color, mtime, pos }],
+  //         columns: [{ id, name, mtime, om, pos, cards: [...] }]
+  //       }
+  //     ]
+  //   }
+  
   var state = null;
   var renderQueued = false;
 
@@ -208,32 +199,51 @@
                        "#ff9800", "#9c27b0", "#e91e63", "#03a9f4"];
   var FALLBACK_COLOR = "#d4af37";
 
-  // --- χρονικές σημάνσεις εκδόσεων ---
-  function touch(ent)     { ent.mtime = Date.now(); }
-  function tombstone(id) {
-    if (!state.deleted) state.deleted = {};
-    state.deleted[id] = Date.now();
+  // --- Board-level helpers ---
+  function currentBoard() {
+    if (!state || !state.activeBoardId) return null;
+    for (var i = 0; i < state.boards.length; i++) {
+      if (state.boards[i].id === state.activeBoardId) return state.boards[i];
+    }
+    return null;
   }
-  // Πολιτική Undo: το snapshot που επαναφέρεται καθιερώνεται ως η πιο
-  // πρόσφατη κατάσταση παντού → υπερισχύει του επόμενου merge και
-  // διαδίδεται σε όλες τις συσκευές.
-  function stampAll() {
+
+  function boardById(id) {
+    if (!state || !id) return null;
+    for (var i = 0; i < state.boards.length; i++) {
+      if (state.boards[i].id === id) return state.boards[i];
+    }
+    return null;
+  }
+
+  // --- Entity touch/tombstone (board-scoped) ---
+  function touch(ent)     { if (ent) ent.mtime = Date.now(); }
+  function tombstone(board, id) {
+    if (!board) return;
+    if (!board.deleted) board.deleted = {};
+    board.deleted[id] = Date.now();
+  }
+
+  function stampAll(board) {
+    if (!board) return;
     var nowMs = Date.now();
-    state.om = nowMs;
-    (state.labels || []).forEach(function (lb) { lb.mtime = nowMs; });
-    (state.columns || []).forEach(function (col) {
+    board.om = nowMs;
+    (board.labels || []).forEach(function (lb) { lb.mtime = nowMs; });
+    (board.columns || []).forEach(function (col) {
       col.mtime = nowMs;
       col.om = nowMs;
       (col.cards || []).forEach(function (c) { c.mtime = nowMs; });
     });
   }
 
-  function defaultState() {
+  function newBoardObj(name) {
     var names = LANG === "el"
       ? ["Εκκρεμεί", "Σε εξέλιξη", "Ολοκληρωμένα"]
       : ["To Do", "Doing", "Done"];
     return {
-      ver: DATA_VER,
+      id: uid(),
+      name: name,
+      mtime: Date.now(),
       om: Date.now(),
       deleted: {},
       labels: [],
@@ -250,8 +260,8 @@
       id: uid(),
       name: name,
       mtime: Date.now(),
-      om: 0,                          // έκδοση σειράς (η σειρά των καρτών αυτής της στήλης)
-      pos: 0,                         // θέση εντός του state.columns
+      om: 0,
+      pos: 0,
       cards: []
     };
   }
@@ -269,70 +279,156 @@
     };
   }
 
-  // Προσθετική (additive) migration: μεταφέρει ΟΠΟΙΟΔΗΠΟТЕ παλιό
-  // σχήμα (shape) στην τρέχουσα DATA_VER. Ποτέ καταστροφική — οι
-  // παλιές δημιουργίες αντιγράφων ασφαλείας (backups), τα v1/v2 slices
-  // και τα δεδομένα v3 φορτώνονται εξίσου.
-  // v3 → v4: merge stamps (root om, mtime/om/pos ανά στήλη,
-  // mtime/pos ανά κάρτα + ετικέτα, tombstone map). Οι αγνώστες
-  // χρονικές σημάνσεις (stamps) ορίζονται σε 0 = "παλαιότερο
-  // δυνατό": τα πραγματικά δεδομένα από το remote (αν υπάρχουν)
-  // υπερισχύουν των μετατραμένων δεδομένων — ποτέ το αντίστροφο.
+  // ========== ΜΕΤΑΓΡΑΦΗ v4 → v5 ==========
+  // Additive migration:包裹 παλαιό single-board state μέσα σε νέο multi-board structure
+  // v4 → v5: το υπάρχον state τυλίγεται σε board.id="migrated-" + timestamp
   function migrate(data) {
-    if (!data || !Array.isArray(data.columns)) return null;
+    // Legacy v1-v4 SINGLE-BODY FORMAT detection:
+    if (data && typeof data.ver === "number" && data.ver < 5) {
+      // Check if it's old format (has columns but no boards array)
+      if (Array.isArray(data.columns) && !Array.isArray(data.boards)) {
+        // v4 → v5 migration: wrap into default board
+        var boardName = (data.ver === 4 && data.columns && data.columns.length > 0 && data.columns[0].name)
+          ? "Main" 
+          : (LANG === "el" ? "Κύριο" : "Main");
+        
+        // Create new v5 state
+        var v5state = {
+          ver: 5,
+          om: Date.now(),
+          activeBoardId: null,
+          boards: []
+        };
+
+        // Migrate existing data into a single board
+        var board = {
+          id: uid(),
+          name: boardName,
+          mtime: Date.now(),
+          om: data.om || Date.now(),
+          deleted: data.deleted || {},
+          labels: Array.isArray(data.labels) ? data.labels : [],
+          columns: Array.isArray(data.columns) ? data.columns : []
+        };
+
+        // Ensure all entities have stamps for merge compatibility
+        board.labels.forEach(function (lb) {
+          if (typeof lb.mtime !== "number") lb.mtime = 0;
+          if (typeof lb.pos !== "number") lb.pos = 0;
+        });
+        board.columns.forEach(function (col) {
+          if (typeof col.mtime !== "number") col.mtime = 0;
+          if (typeof col.om !== "number") col.om = 0;
+          if (typeof col.pos !== "number") col.pos = 0;
+          if (!Array.isArray(col.cards)) col.cards = [];
+          col.cards.forEach(function (card) {
+            if (!Array.isArray(card.labels)) card.labels = [];
+            if (!Array.isArray(card.subtasks)) card.subtasks = [];
+            if (!Array.isArray(card.info)) card.info = [];
+            if (typeof card.mtime !== "number") card.mtime = 0;
+            if (typeof card.pos !== "number") card.pos = 0;
+          });
+        });
+
+        v5state.boards.push(board);
+        v5state.activeBoardId = board.id;
+
+        return v5state;
+      }
+    }
+
+    // v5 STATE FORMAT: validate and enrich
+    if (!data || !Array.isArray(data.boards)) return null;
     if (typeof data.om !== "number") data.om = 0;
-    if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
-    if (!Array.isArray(data.labels)) data.labels = [];
-    data.labels.forEach(function (lb) {
-      if (typeof lb.mtime !== "number") lb.mtime = 0;
-      if (typeof lb.pos !== "number") lb.pos = 0;
-    });
-    data.columns.forEach(function (col) {
-      if (typeof col.mtime !== "number") col.mtime = 0;
-      if (typeof col.om !== "number") col.om = 0;
-      if (typeof col.pos !== "number") col.pos = 0;
-      if (!Array.isArray(col.cards)) col.cards = [];
-      col.cards.forEach(function (card) {
-        if (!Array.isArray(card.labels)) card.labels = [];
-        if (!Array.isArray(card.subtasks)) card.subtasks = [];
-        if (!Array.isArray(card.info)) card.info = [];
-        if (typeof card.mtime !== "number") card.mtime = 0;
-        if (typeof card.pos !== "number") card.pos = 0;
+    if (!data.activeBoardId && data.boards.length > 0) {
+      data.activeBoardId = data.boards[0].id;
+    }
+
+    data.boards.forEach(function (board) {
+      if (!board.id) board.id = uid();
+      if (typeof board.mtime !== "number") board.mtime = 0;
+      if (typeof board.om !== "number") board.om = 0;
+      if (!board.deleted) board.deleted = {};
+      if (!Array.isArray(board.labels)) board.labels = [];
+      board.labels.forEach(function (lb) {
+        if (typeof lb.mtime !== "number") lb.mtime = 0;
+        if (typeof lb.pos !== "number") lb.pos = 0;
+      });
+      if (!Array.isArray(board.columns)) board.columns = [];
+      board.columns.forEach(function (col) {
+        if (!col.id) col.id = uid();
+        if (typeof col.mtime !== "number") col.mtime = 0;
+        if (typeof col.om !== "number") col.om = 0;
+        if (typeof col.pos !== "number") col.pos = 0;
+        if (!Array.isArray(col.cards)) col.cards = [];
+        col.cards.forEach(function (card) {
+          if (!card.id) card.id = uid();
+          if (!Array.isArray(card.labels)) card.labels = [];
+          if (!Array.isArray(card.subtasks)) card.subtasks = [];
+          if (!Array.isArray(card.info)) card.info = [];
+          if (typeof card.mtime !== "number") card.mtime = 0;
+          if (typeof card.pos !== "number") card.pos = 0;
+        });
       });
     });
+
     data.ver = DATA_VER;
     return data;
   }
 
-  function pruneTombstones(st) {
+  function pruneTombstones(board) {
+    if (!board || !board.deleted) return;
     var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(st.deleted || {}).forEach(function (id) {
-      if (st.deleted[id] < cutoff) delete st.deleted[id];
+    Object.keys(board.deleted).forEach(function (id) {
+      if (board.deleted[id] < cutoff) delete board.deleted[id];
     });
   }
 
+  // ========== LOAD / SAVE ==========
   function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var data = migrate(JSON.parse(raw));
-        if (data && Array.isArray(data.columns) && data.columns.length > 0) {
+        if (data && Array.isArray(data.boards) && data.boards.length > 0) {
           state = data;
-          pruneTombstones(state);
-          save();                       // διατήρηση του μετατραμμένου σχήματος
+          if (!state.activeBoardId) state.activeBoardId = state.boards[0].id;
+          
+          // Prune tombstones in ALL boards
+          state.boards.forEach(function (board) { pruneTombstones(board); });
+
+          // Prune root-level board tombstones (v0.6.0) — 30ήμερος κανόνας
+          if (state.boardDeleted) {
+            var rootCut = Date.now() - TOMB_LIFETIME_MS;
+            Object.keys(state.boardDeleted).forEach(function (id) {
+              if (state.boardDeleted[id] < rootCut) delete state.boardDeleted[id];
+            });
+          }
+
+          save();
           return;
         }
       }
-    } catch (e) { /* κατεστραμμένα → νέα εκκίνηση */ }
-    state = defaultState();
+    } catch (e) { /* corrupted → fresh start */ }
+
+    // Fresh install: create one default board
+    state = {
+      ver: DATA_VER,
+      om: Date.now(),
+      activeBoardId: null,
+      boards: []
+    };
+    
+    var defaultBoard = newBoardObj(LANG === "el" ? "Κύριο" : "Main");
+    state.boards.push(defaultBoard);
+    state.activeBoardId = defaultBoard.id;
+    
     save();
   }
 
-  // Αυτόματη αποθήκευση: κάθε μεταβολή τελειώνει με save() +
-  // scheduleRender().
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { /* όριο αποθήκευσης (quota) — τίποτα λογικό να γίνει offline */ }
+    catch (e) { /* quota exceeded — localStorage net stays durable */ }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
@@ -345,9 +441,12 @@
     });
   }
 
+  // --- Board-scoped entity lookup ---
   function colById(id) {
-    for (var i = 0; i < state.columns.length; i++) {
-      if (state.columns[i].id === id) return state.columns[i];
+    var board = currentBoard();
+    if (!board) return null;
+    for (var i = 0; i < board.columns.length; i++) {
+      if (board.columns[i].id === id) return board.columns[i];
     }
     return null;
   }
@@ -361,48 +460,86 @@
   }
 
   function labelById(id) {
-    for (var i = 0; i < state.labels.length; i++) {
-      if (state.labels[i].id === id) return state.labels[i];
+    var board = currentBoard();
+    if (!board) return null;
+    for (var i = 0; i < board.labels.length; i++) {
+      if (board.labels[i].id === id) return board.labels[i];
     }
     return null;
   }
-  
-  
-  // ---------- 2b. Cross-device merge engine (v0.5) ----------
+
+  // ---------- 2b. Cross-device merge engine (v0.6.0 multi-board) ----------
   // Συμβόλαιο (καταναλώνεται από το sync.js μέσω του 5ου ορίσματος
   // της registerSlice):
-  //   mergeKanbanStates(local, remote) → merged state.
-  // Deterministic + symmetric: merge(A,B) === merge(B,A). Η σύγκλιση
-  // και στις δύο συσκευές σταματά το ping-pong push/pull.
+  //   mergeKanbanStates(local, remote) → merged state | null.
   //
-  //   · tombstones — ένωση με max ts. Μια οντότητα επιβιώνει μόνο αν
-  //     το mtime του περιεχομένου της είναι ΝΕΟΤΕΡΟ από το
-  //     tombstone της (edit-after-delete ανασταίνει)· αλλιώς η
-  //     διαγραφή νικά.
-  //   · περιεχόμενο (headers στηλών, κάρτες, ετικέτες) — μεγαλύτερο
-  //     mtime νικά· σε ισοβαθμία → λεξικογραφικά μεγαλύτερο JSON
-  //     (πανομοιότυπη απόφαση και στις δύο πλευρές, καμία τυχαιότητα)
-  //   · τοποθέτηση κάρτας σε στήλη — την αποφασίζει η ΚΕΡΔΙΖΟΥΣΑ
-  //     πλευρά του card (νεότερο mtime). Ένα cross-column drag
-  //     κάνει touch(card), άρα η μετακίνηση είναι αληθινή αλλαγή
-  //     περιεχομένου και κερδίζει το merge. Ισοβαθμία mtime →
-  //     lexicographic compare του συνδυασμού (JSON, colId) —
-  //     συμμετρικό, κανένα flip-flop.
-  //   · ordering — η πλευρά με το μεγαλύτερο om προσφέρει τις θέσεις:
-  //     ριζικό om για τη σειρά στηλών και των ετικετών, om στήλης
-  //     για τη σειρά καρτών ΜΕΣΑ της· οι άγνωστες οντότητες (π.χ.
-  //     κάρτα που μετακινήθηκε εδώ από άλλη στήλη) μπαίνουν στο
-  //     τέλος, παλαιότερο mtime πρώτα.
-  //   · orphan rule — κάρτα που νικά το merge αλλά η στήλη
-  //     τοποθέτησής της δεν επιβιώνει ΠΕΘΑΙΝΕΙ μαζί της (η διαγραφή
-  //     στήλης κάνει cascade tombstones και στα cards της — και αν
-  //     κάποιο card αναστηθεί από νεότερο edit χωρίς ζωντανή στήλη,
-  //     ΔΕΝ δένεται κρυφά σε άλλη στήλη).
+  // MULTI-BOARD ARCHITECTURE:
+  //   · Board level — union κατά board.id. Το board NAME κάνει LWW
+  //     στο board.mtime (νεότερο κερδίζει· ισοβαθμία → λεξικογραφικό
+  //     JSON — συμμετρικό). Board tombstone: αν κάποια πλευρά έχει
+  //     διαγράψει το board (deleted[boardId] με ts νεότερο από το
+  //     board.mtime), το board ΠΕΘΑΙΝΕΙ μαζί με ΟΛΑ τα περιεχόμενά
+  //     του (columns, cards, labels) — cascade, κανένα zombie.
+  //   · Ordering boards — η πλευρά με το μεγαλύτερο ΡΙΖΙΚΟ om
+  //     προσφέρει τη σειρά των boards (ίσος κανόνας με στηλές).
+  //     Η ενεργή επιλογή board (activeBoardId) είναι DEVICE-LOCAL —
+  //     ΔΕΝ ταξιδεύει στο merge: καθε συσκευή κρατά το board που
+  //     έβλεπε (αν υπάρχει ακόμα· αλλιώς fallback στο πρώτο).
+  //   · Per-board — ΚΑΘΕ board mergeάρεται ανεξάρτητα με ΟΛΟΥΣ τους
+  //     κανόνες του v0.5 (tombstones, LWW περιεχομένου, placement,
+  //     ordering με om/pos, orphan rule). Κανένα leak μεταξύ boards:
+  //     card ids που ζουν σε διαφορετικά boards δεν συγκρούονται ποτέ
+  //     (και εξ ορισμού είναι διαφορετικά ids).
   //
-  // Τα timestamps προέρχονται από διαφορετικά ρολόγια συσκευών — το
-  // clock skew απλώς προκαθορίζει νικητές, η determinism εγγυάται
-  // καμία ταλάντευση.
+  // Deterministic + symmetric: merge(A,B) === merge(B,A) — και στις
+  // δύο συσκευές το αποτέλεσμα ταυτίζεται, καμία ταλάντευση.
 
+  // --- Board-level LWW: name/mtime νικητής ---
+  function newerBoardHeader(a, b) {
+    if ((a.mtime || 0) !== (b.mtime || 0)) {
+      return (a.mtime || 0) > (b.mtime || 0) ? a : b;
+    }
+    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
+  }
+
+  // --- Τοπικά tombstones ΟΛΩΝ των boards (root-level map ---
+  // board διαγραφές ζουν στο ΔΙΚΟ τους state.deleted με το board.id
+  // ως key — ψάχνουμε global κάθε φορά που χρειάζεται)
+  function boardTombstoneOf(st, boardId) {
+    if (!st || !st.boards) return 0;
+    for (var i = 0; i < st.boards.length; i++) {
+      var d = st.boards[i].deleted || {};
+      if (d[boardId] !== undefined) return d[boardId];
+    }
+    return 0;
+  }
+
+  // ΠΡΟΣΟΧΗ: το board-level tombstone ΕΧΕΙ смысλ только ως marker
+  // στο ίδιο το board object. Η τυπική ροή: deleteBoard() γράφει
+  // tombstone στο ΕΝΕΡΓΟ board αν είναι το ίδιο, αλλιώς στο δικό
+  // του deleted map ΔΕΝ υπάρχει — το board απομακρύνεται απλώς
+  // από το boards[]. Στο merge, ένα board που λείπει από μία πλευρά
+  // ΔΕΝ σημαίνει διαγραφή (μπορεί να είναι απλώς ακόμα-μη-φτάσιμο
+  // νέο board). Γι' αυτό κρατάμε εξωτερικό root map: βλ.
+  // ROOT_TOMB ниже.
+
+  // Root-level board tombstones: state.boardDeleted = { id: ts }.
+  // ΑΝΩΤΑΤΟ επίπεδο — ένα board θεωρείται νεκρό αν υπάρχει εδώ
+  // entry με ts > board.mtime (edit-after-delete ανασταίνει board,
+  // ΟΜΩΙ ΚΑΝΟΝΙΚΑ δεν μπορεί: όλα τα boards διαγράφονται ως
+  // σύνολο. Απλούστευση: το ts πάντα νικά — κανένα resurrection
+  // επιπέδου board, τα δεδομένα του έχουν φύγει cascade).
+  function boardAlive(board, rootTomb) {
+    var ts = rootTomb[board.id];
+    return ts === undefined || (board.mtime || 0) > ts;
+  }
+  // Σημείωση: επιτρέπουμε formalsymμετρική συνθήκη mtime > ts για
+  // συνέπεια με το entAlive — τοπικά ποτέ δεν την προκαλούμε (η
+  // διαγραφή board είναι μονόδρομη), αλλά δεν βλάπτει.
+
+  // --- Пер-BOARD merge: ΟΛΟΙ οι κανόνες v0.5, με κάποιο board ως
+  // εύρος (scope). Πρώην mergeKanbanStates τοπικό σώμα — τώρα
+  // mergeBoardBody(boardA, boardB) → merged board | null. ---
   function mergeEntityMaps(aDel, bDel) {
     var out = {};
     var a = aDel || {}, b = bDel || {};
@@ -418,9 +555,6 @@
     return ts === undefined || (ent.mtime || 0) > ts;
   }
 
-  // Whole-entity LWW για φύλλα (cards, labels, headers στηλών):
-  // μεγαλύτερο mtime νικά; ισοβαθμία → μεγαλύτερο serialized JSON
-  // (deterministic — ίδια απόφαση σε κάθε σειρά ορισμάτων).
   function newerEntity(a, b) {
     if ((a.mtime || 0) !== (b.mtime || 0)) {
       return (a.mtime || 0) > (b.mtime || 0) ? a : b;
@@ -428,10 +562,6 @@
     return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
   }
 
-  // Ένωση δύο πινάκων οντοτήτων κατά id (LWW περιεχομένου). Οι
-  // tombstoned οντότητες απορρίπτονται ΕΔΩ — ένα merge δεν ανασταίνει
-  // ποτέ μια διαγραφή εκτός αν το επιβιώσαν περιεχόμενο είναι
-  // πραγματικά νεότερο.
   function unionEntities(aArr, bArr, tomb) {
     var map = {};
     (aArr || []).forEach(function (e) { map[e.id] = e; });
@@ -445,10 +575,6 @@
     return out;
   }
 
-  // Ταξινομεί τις merged οντότητες κατά τη σειρά της πλευράς-
-  // αναφοράς (η πλευρά με το μεγαλύτερο om). Οι οντότητες άγνωστες
-  // στην αναφορά πάνε στο τέλος, παλαιότερες πρώτα. Αναθέτει φρέσκο
-  // διαδοχικό pos.
   function orderEntities(entities, refArr) {
     var idx = {};
     (refArr || []).forEach(function (e, i) { idx[e.id] = i; });
@@ -463,10 +589,6 @@
     return entities;
   }
 
-  // Συμμετρική επιλογή ordering-reference: μεγαλύτερο om νικά·
-  // ΙΣΟΒΑΘΜΙΕΣ σπάονται με λεξικογραφική ακολουθία ids (πανομοιότυπη
-  // απόφαση σε κάθε συσκευή — ποτέ «τοπικά κερδίζει», αυτό
-  // flip-flopάρει στο άπειρο).
   function pickRef(aArr, bArr, aOm, bOm) {
     if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
     var ka = JSON.stringify((aArr || []).map(function (e) { return e.id; }));
@@ -474,14 +596,9 @@
     return ka >= kb ? aArr : bArr;
   }
 
-  // Flatten μιας πλευράς: κάθε κάρτα του board με το colId που τη
-  // φιλοξενεί. Απαραίτητο επειδή το ΊΔΙΟ card id μπορεί να ζει σε
-  // ΔΙΑΦΟΡΕΤΙΚΕΣ στήλες ανά πλευρά (cross-column drag) — το merge
-  // τοποθέτησης πρέπει να βλέπει το board επίπεδα, όχι ανά ζεύγος
-  // στηλών.
-  function flattenSide(st) {
+  function flattenSide(board) {
     var out = {};
-    ((st && st.columns) || []).forEach(function (col) {
+    ((board && board.columns) || []).forEach(function (col) {
       (col.cards || []).forEach(function (card) {
         out[card.id] = { card: card, colId: col.id };
       });
@@ -489,9 +606,6 @@
     return out;
   }
 
-  // Νικητής τοποθέτησης κάρτας: μεγαλύτερο mtime νικά (παίρνει το
-  // card ΚΑΙ τη στήλη του)· ισοβαθμία → lexicographic compare του
-  // συνδυασμού (JSON card, colId). Συμμετρικό — ποτέ «τοπικά νικά».
   function newerPlacement(pa, pb) {
     if ((pa.card.mtime || 0) !== (pb.card.mtime || 0)) {
       return (pa.card.mtime || 0) > (pb.card.mtime || 0) ? pa : pb;
@@ -501,10 +615,6 @@
     return ka >= kb ? pa : pb;
   }
 
-  // Headers στηλών κάνουν merge ΔΟΜΙΚΑ: LWW στο περιεχόμενο του
-  // header, om = max των δύο πλευρών. Οι κάρτες mergeάρουν
-  // ανεξάρτητα (flatten) — ένα rename στήλης σε μία συσκευή δεν
-  // πατάει ποτέ αλλαγές καρτών στην άλλη.
   function mergeColHeaders(la, lb) {
     var strip = function (c) {
       var h = JSON.parse(JSON.stringify(c));
@@ -516,22 +626,20 @@
     return head;
   }
 
-  function mergeKanbanStates(A, B) {
-    var a = A || {}, b = B || {};
-
-    var tomb = mergeEntityMaps(a.deleted, b.deleted);
-    // Prune ληγμένων tombstones ΜΕΣΑ στο merge — και οι δύο
-    // πλευρές συρρικνώνονται πανομοιότυπα, άρα το pruning είναι
-    // από μόνο του convergence-safe.
+  // PER-BOARD BODY MERGE — τα πάντα scoped στο board αυτό.
+  // Επιστρέφει merged board object (name/id/mtime/om/deleted/
+  // labels/columns) ή null αν δεν μείνει τίποτα ζωντανό.
+  function mergeBoardBody(ba, bb) {
+    var tomb = mergeEntityMaps(ba.deleted, bb.deleted);
     var cutoff = Date.now() - TOMB_LIFETIME_MS;
     Object.keys(tomb).forEach(function (id) {
       if (tomb[id] < cutoff) delete tomb[id];
     });
 
-    // --- 1. Ετικέτες: LWW περιεχομένου, σειρά από το ριζικό om ---
-    var labels = unionEntities(a.labels || [], b.labels || [], tomb);
+    // 1. Ετικέτες: LWW περιεχομένου, σειρά από το board om
+    var labels = unionEntities(ba.labels || [], bb.labels || [], tomb);
 
-    // --- 2. Headers στηλών: ζεύγη κατά id ---
+    // 2. Headers στηλών: ζεύγη κατά id
     var colPairs = {};
     var pairColumns = function (arr) {
       (arr || []).forEach(function (col) {
@@ -539,21 +647,20 @@
         else                  colPairs[col.id] = [col];
       });
     };
-    pairColumns(a.columns); pairColumns(b.columns);
+    pairColumns(ba.columns); pairColumns(bb.columns);
 
-    // mergedCols[id] = { head, cards[], refA, refB } — τα refA/refB
-    // είναι οι ΠΡΩΤΕΣ στήλες κάθε πλευράς για αυτό το id (χρειάζονται
-    // για το ordering reference των καρτών: om στήλης).
     var mergedCols = {};
     Object.keys(colPairs).forEach(function (id) {
       var pair = colPairs[id];
       var head;
       if (pair.length === 2) head = mergeColHeaders(pair[0], pair[1]);
-      else                   head = (function (c) {
-                                 var h = JSON.parse(JSON.stringify(c));
-                                 delete h.cards;
-                                 return h;
-                               })(pair[0]);
+      else {
+        head = (function (c) {
+          var h = JSON.parse(JSON.stringify(c));
+          delete h.cards;
+          return h;
+        })(pair[0]);
+      }
       if (!entAlive(head, tomb)) return;     // διαγεγραμμένη στήλη
       mergedCols[id] = {
         head: head,
@@ -563,12 +670,9 @@
       };
     });
 
-    // --- 3. Κάρτες: flatten και των δύο πλευρών, νικητής ανά id ---
-    // Ο νικητής φέρνει ΚΑΙ το περιεχόμενο ΚΑΙ τη στήλη τοποθέτησής
-    // του. Orphan rule: αν η στήλη τοποθέτησης δεν επιβιώνει στο
-    // merge, η κάρτα πεθαίνει μαζί της (δεν ξαναδένεται πουθενά).
-    var fa = flattenSide(a);
-    var fb = flattenSide(b);
+    // 3. Κάρτες: flatten και των δύο πλευρών, νικητής ανά id
+    var fa = flattenSide(ba);
+    var fb = flattenSide(bb);
     var cardIds = {};
     Object.keys(fa).forEach(function (id) { cardIds[id] = true; });
     Object.keys(fb).forEach(function (id) { cardIds[id] = true; });
@@ -579,21 +683,13 @@
       if (pa && pb) win = newerPlacement(pa, pb);
       else          win = pa || pb;
       if (!win) return;
-
-      // tombstone ελέγχεται στο ΕΠΙΒΙΩΣΑΝ περιεχόμενο (η νικηφόρα
-      // εκδοχή ανασταίνεται μόνο αν είναι νεότερη από τον τάφο της)
       if (!entAlive(win.card, tomb)) return;
-
-      // orphan rule — νεκρή/άγνωστη στήλη τοποθέτησης ⇒ drop
       var mc = mergedCols[win.colId];
-      if (!mc) return;
-
+      if (!mc) return;                 // orphan rule
       mc.cards.push(win.card);
     });
 
-    // --- 4. Σειρά καρτών ανά στήλη: ref = η πλευρά με το μεγαλύτερο
-    // om ΤΗΣ ΣΤΗΛΗΣ. Κάρτες άγνωστες στην αναφορά (μετακομισμένες
-    // από αλλού) appending στο τέλος, παλαιότερο mtime πρώτα. ---
+    // 4. Σειρά καρτών ανά στήλη
     Object.keys(mergedCols).forEach(function (id) {
       var mc = mergedCols[id];
       var refArr =
@@ -604,18 +700,11 @@
       orderEntities(mc.cards, refArr);
     });
 
-    // --- 5. Συγκρότηση εξόδου ---
-    var out = {
-      ver: DATA_VER,
-      om: Math.max(a.om || 0, b.om || 0),
-      deleted: tomb,
-      labels: [],
-      columns: []
-    };
-
-    out.labels =
-      orderEntities(labels, pickRef(a.labels || [], b.labels || [],
-                                     a.om || 0, b.om || 0));
+    // 5. Σύνθεση merged board
+    var head = newerBoardHeader(
+      { id: ba.id, name: ba.name, mtime: ba.mtime },
+      { id: bb.id, name: bb.name, mtime: bb.mtime }
+    );
 
     var cols = [];
     Object.keys(mergedCols).forEach(function (id) {
@@ -623,39 +712,618 @@
       mc.head.cards = mc.cards;
       cols.push(mc.head);
     });
-    out.columns =
-      orderEntities(cols, pickRef(a.columns || [], b.columns || [],
-                                  a.om || 0, b.om || 0));
 
-    // Μετα-συνθήκη: ποτέ μην στέλνεις κενό state (fallback σε
-    // plain apply από το sync.js — fresh-install προστασία)
-    if (out.columns.length === 0) return null;
+    // Board με μηδεν στήλες μετά το merge: ΔΕΝ πεθαίνει — ένα
+    // board μπορεί νόμιμα να είναι άδειο (ο χρήστης διέγραψε τις
+    // στήλες του). Μόνο ο ROOT board tombstone σκοτώνει board.
 
-    return out;
+    return {
+      id: ba.id,
+      name: head.name,
+      mtime: Math.max(ba.mtime || 0, bb.mtime || 0),
+      om: Math.max(ba.om || 0, bb.om || 0),
+      deleted: tomb,
+      labels: orderEntities(labels, pickRef(ba.labels || [], bb.labels || [],
+                                             ba.om || 0, bb.om || 0)),
+      columns: orderEntities(cols, pickRef(ba.columns || [], bb.columns || [],
+                                           ba.om || 0, bb.om || 0))
+    };
   }
-  
-  
-  // ---------- 3. Render: columns + cards ----------
-  // Το renderAll ζωγραφίζει το board με σεβασμό στο search + filters.
-  // Ο counter της στήλης δείχνει ΟΡΑΤΕΣ κάρτες (search/filter aware).
-  // Lesson 2: κάθε DOM control που δένεται με state ξανασυγχρονίζεται
-  // εδώ — στο Kanban αυτό είναι το filter popover (αν είναι ανοιχτό
-  // τη στιγμή ενός merge, πρέπει να ξαναχτίσει τη λίστα labels του).
-  function renderAll() {
-    var host = $("columns");
-    host.innerHTML = "";
-    $("empty").hidden = !(state.columns.length === 0);
 
-    state.columns.forEach(function (col) {
+  // ===== ROOT MERGE: multi-board entry point =====
+  function mergeKanbanStates(A, B) {
+    var a = A || {}, b = B || {};
+
+    // Board tombstones: root maps ένωση με max ts. Τα boards
+    // κρατούν το δικό τους board.deleted για τις οντότητες τους·
+    // το state.boardDeleted αφορά ΜΟΝΟ τα boards самих.
+    var boardTomb = mergeEntityMaps(a.boardDeleted, b.boardDeleted);
+    var cutoff = Date.now() - TOMB_LIFETIME_MS;
+    Object.keys(boardTomb).forEach(function (id) {
+      if (boardTomb[id] < cutoff) delete boardTomb[id];
+    });
+
+    // Ζευγάρωση boards κατά id (και των δύο πλευρών)
+    var boardPairs = {};
+    var pairBoards = function (arr) {
+      (arr || []).forEach(function (bd) {
+        if (boardPairs[bd.id]) boardPairs[bd.id].push(bd);
+        else                  boardPairs[bd.id] = [bd];
+      });
+    };
+    pairBoards(a.boards); pairBoards(b.boards);
+
+    var mergedBoards = [];
+    Object.keys(boardPairs).forEach(function (id) {
+      var pair = boardPairs[id];
+      var bd;
+      if (pair.length === 2) bd = mergeBoardBody(pair[0], pair[1]);
+      else {
+        // Μονόπλευρο board: κλώνος (name/mtime/om/labels/columns)
+        bd = (function (src) {
+          return {
+            id: src.id,
+            name: src.name,
+            mtime: src.mtime,
+            om: src.om,
+            deleted: JSON.parse(JSON.stringify(src.deleted || {})),
+            labels: JSON.parse(JSON.stringify(src.labels || [])),
+            columns: JSON.parse(JSON.stringify(src.columns || []))
+          };
+        })(pair[0]);
+      }
+
+      // Root tombstone ελέγχεται στο header του board
+      if (!boardAlive(bd, boardTomb)) return;   // νεκρό board — drop
+
+      mergedBoards.push(bd);
+    });
+
+    // Μετα-συνθήκη: εντελώς άδειο αποτέλεσμα (π.χ. διαγράφηκαν όλα)
+    // → null → fallback σε plain apply από το sync.js
+    if (mergedBoards.length === 0) return null;
+
+    // Σειρά boards: ref = πλευρά με μεγαλύτερο РИΖΙΚΟ om
+    orderEntities(mergedBoards,
+      pickRef(a.boards || [], b.boards || [], a.om || 0, b.om || 0));
+
+    return {
+      ver: DATA_VER,
+      om: Math.max(a.om || 0, b.om || 0),
+      boardDeleted: boardTomb,
+      // activeBoardId ΔΕΝ θέτουμε εδώ — device-local, το κρατά
+      // το sliceSet (υφιστάμενο αν το board ζει, αλλιώς πρώτο)
+      boards: mergedBoards
+    };
+  }
+
+
+  // ---------- 10. Sync slice (merge-registered) + palette ----------
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft",
+                  "--panel-bg", "--border", "--shadow"];
+
+  function inheritPalette() {
+    try {
+      var pRoot = window.parent.document.documentElement;
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var cs = window.parent.getComputedStyle(pRoot);
+      PAL_VARS.forEach(function (v) {
+        document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
+      });
+    } catch (e) { /* standalone (απευθείας) open — fallback palette */ }
+  }
+
+  function watchPalette() {
+    try {
+      new MutationObserver(inheritPalette).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  function registerSync() {
+    var api = (window.parent && window.parent.orosSync) || window.orosSync;
+
+    window.__orosSyncApi = {
+      _suppress: false,
+      dirty: function () {
+        if (this._suppress) return;
+        if (api && typeof api.markDirty === "function") api.markDirty();
+      }
+    };
+
+    if (!api || typeof api.registerSlice !== "function") return;
+    // v0.6.0: 5ο όρισμα — η multi-board merge συνάρτηση.
+    api.registerSlice("kanban", sliceGet, sliceSet,
+                      "oros-kanban-data", mergeKanbanStates);
+  }
+
+  function sliceGet() {
+    return JSON.parse(JSON.stringify(state));
+  }
+
+  // data — merged αποτέλεσμα (ή plain remote σε legacy LWW paths)
+  // info — { merged: true } όταν η τιμή ήρθε μέσω mergeKanbanStates
+  function sliceSet(data, info) {
+    data = migrate(JSON.parse(JSON.stringify(data || null)));
+    if (!data || Array.isArray(data.boards) === false || data.boards.length === 0) return;
+
+    window.__orosSyncApi._suppress = true;
+    try {
+      // Device-local επιλογή board: κρατάμε το τρέχον activeBoardId
+      // αν το board επιβίωσε στο merge· αλλιώς fallback στο πρώτο.
+      if (!data.activeBoardId ||
+          !boardByIdIn(data.boards, data.activeBoardId)) {
+        data.activeBoardId = data.boards[0].id;
+      }
+      state = data;
+      state.boards.forEach(function (board) { pruneTombstones(board); });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+
+    scheduleRender();
+
+    if (info && info.merged) {
+      showToast(t("toast.merged"), false);   // ορατή σύγκλιση
+    }
+  }
+
+  function boardByIdIn(boards, id) {
+    for (var i = 0; i < (boards || []).length; i++) {
+      if (boards[i].id === id) return boards[i];
+    }
+    return null;
+  }
+
+  
+  // ---------- 3. Render: board header + columns + cards ----------
+  // Το renderAll ζωγραφίζει:
+  //   - Board dropdown (dropdown + buttons: new/manage)
+  //   - Board name/title (dblclick → rename dialog)
+  //   - Search/filter row
+  //   - Columns + cards (όπως πριν, αλλά scoped στο currentBoard)
+  
+  function renderAll() {
+    // Header/board section
+    var headerHost = $("board-header");
+    if (headerHost) renderBoardHeader();
+
+    // Empty state
+    var empty = $("empty");
+    if (empty) {
+      empty.hidden = !(state && state.boards && state.boards.length === 0);
+    }
+
+    // Columns body
+    var host = $("columns");
+    if (!host) return;
+    host.innerHTML = "";
+
+    var board = currentBoard();
+    if (!board || board.columns.length === 0) {
+      if (empty) {
+        empty.querySelector("span").textContent = t("board.empty");
+        empty.querySelector("small").textContent = t("board.empty.hint");
+        empty.hidden = false;
+      }
+      return;
+    }
+
+    if (empty) empty.hidden = true;
+
+    board.columns.forEach(function (col) {
       host.appendChild(makeColumnEl(col));
     });
 
-    // lesson 2 — το popover δένεται με state.labels: μετά από merge
-    // μπορεί να έχουν μπει/ληξι Deadline ετικέτες από άλλη συσκευή
+    // Filter popover update
     if (!$("filter-pop").hidden) renderFilterPop();
     updateFilterBtn();
   }
 
+  // Board dropdown + management buttons
+  function renderBoardHeader() {
+    var headerHost = $("board-header");
+    if (!headerHost) return;
+
+    // Το innerHTML wipe σκοτώνει τυχόν ανοιχτό popover — καθαρό
+    // κλείσιμο πρώτα (αλλιώς κρεμούν flag + document listener).
+    if (boardDropdownOpen) closeBoardDropdown();
+    headerHost.innerHTML = "";
+
+    if (!state || !state.boards || state.boards.length === 0) {
+      // Should never happen — but be defensive
+      return;
+    }
+
+    // Left: Board dropdown
+    var dropdownHost = document.createElement("div");
+    dropdownHost.className = "board-dropdown";
+
+    // Dropdown button (board name + arrow)
+    var boardBtn = document.createElement("button");
+    boardBtn.type = "button";
+    boardBtn.className = "board-select";
+    var board = currentBoard();
+    var bName = board ? board.name : t("board.default");
+
+    boardBtn.innerHTML =
+      '<span class="board-name">' + escapeHtml(bName) + '</span>' +
+      '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+
+    boardBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggleBoardDropdown();
+    });
+
+    dropdownHost.appendChild(boardBtn);
+
+    // Right: Management buttons
+    var actions = document.createElement("div");
+    actions.className = "board-actions";
+
+    var newBtn = document.createElement("button");
+    newBtn.type = "button";
+    newBtn.className = "board-new";
+    newBtn.setAttribute("title", t("board.create"));
+    newBtn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+    newBtn.addEventListener("click", function () { createBoard(); });
+
+    var manageBtn = document.createElement("button");
+    manageBtn.type = "button";
+    manageBtn.className = "board-manage";
+    manageBtn.setAttribute("title", t("board.manage"));
+    manageBtn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+    manageBtn.addEventListener("click", function () { openBoardManageDlg(); });
+
+    actions.appendChild(newBtn);
+    actions.appendChild(manageBtn);
+    dropdownHost.appendChild(actions);
+
+    headerHost.appendChild(dropdownHost);
+  }
+
+  // Dropdown popover for board switching
+  var boardDropdownOpen = false;
+
+  function toggleBoardDropdown() {
+    if (boardDropdownOpen) { closeBoardDropdown(); return; }
+    openBoardDropdown();
+  }
+
+  function openBoardDropdown() {
+    var host = $("board-header");
+    if (!host) return;
+
+    var anchor = host.querySelector(".board-dropdown");
+    if (!anchor) return;
+
+    var pop = document.createElement("div");
+    pop.id = "board-dropdown-pop";
+    pop.className = "dropdown-pop";
+
+    state.boards.forEach(function (bd, i) {
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "dropdown-item" + (bd.id === state.activeBoardId ? " active" : "");
+      
+      var name = document.createElement("span");
+      name.className = "dropdown-name";
+      name.textContent = bd.name;
+      item.appendChild(name);
+
+      var meta = document.createElement("span");
+      meta.className = "dropdown-meta";
+      var colCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
+      meta.textContent = String(bd.columns.length) + " " + (LANG === "el" ? "στήλες" : "columns") +
+                         " · " + String(colCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
+      item.appendChild(meta);
+
+      item.addEventListener("click", function () {
+        switchBoard(bd.id);
+      });
+
+      pop.appendChild(item);
+    });
+
+    // Divider
+    var sep = document.createElement("hr");
+    sep.className = "dropdown-sep";
+    pop.appendChild(sep);
+
+    // New board action
+    var newItem = document.createElement("button");
+    newItem.type = "button";
+    newItem.className = "dropdown-item";
+    newItem.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> ' +
+      t("board.create");
+    newItem.addEventListener("click", function () {
+      closeBoardDropdown();
+      createBoard();
+    });
+    pop.appendChild(newItem);
+
+    anchor.appendChild(pop);
+
+    // Close on outside click
+    setTimeout(function () {
+      boardDropdownOpen = true;
+      document.addEventListener("click", closeOutsideHandler);
+    }, 0);
+  }
+
+  function closeBoardDropdown() {
+    var pop = $("board-dropdown-pop");
+    if (pop) pop.remove();
+    boardDropdownOpen = false;
+    document.removeEventListener("click", closeOutsideHandler);
+  }
+
+  function closeOutsideHandler(e) {
+    var pop = $("board-dropdown-pop");
+    if (pop && !pop.contains(e.target)) closeBoardDropdown();
+  }
+
+  // Switch to a different board (device-local only — doesn't sync)
+  function switchBoard(boardId) {
+    if (!boardByIdIn(state.boards, boardId)) return;
+    state.activeBoardId = boardId;
+    // Reset session-only search/filter when switching boards
+    searchQuery = "";
+    activeFilters = [];
+    var sb = $("search");
+    if (sb) sb.value = "";
+    var fb = $("filter-btn");
+    if (fb) fb.classList.remove("has-filters");
+    var fp = $("filter-pop");
+    if (fp) fp.hidden = true;
+    
+    save();
+    renderAll();
+    closeBoardDropdown();
+  }
+
+  // Board creation: creates new board, switches to it
+  function createBoard() {
+    var name = LANG === "el" ? "Νέο board" : "New Board";
+    var board = newBoardObj(name);
+    board.pos = state.boards.length;
+
+    state.om = Date.now();
+    state.boards.push(board);
+    state.activeBoardId = board.id;
+
+    save();
+    renderAll();
+    showToast(t("toast.boardadded"), true);
+  }
+
+  // ========== BOARD MANAGE DIALOG ==========
+  function openBoardManageDlg() {
+    if ($("manage-dialog") && $("manage-dialog").open) return;
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "manage-dialog";
+    dlg.innerHTML =
+      "<h3>" + t("board.manage") + "</h3>" +
+      '<div id="manage-list"></div>' +
+      '<div class="dlg-foot">' +
+      '<button type="button" id="manage-create">' + t("board.create") + '</button>' +
+      '<button type="button" id="manage-close">' + t("board.close") + '</button>' +
+      "</div>";
+    document.body.appendChild(dlg);
+
+    renderManageList();
+
+    dlg.addEventListener("close", function () {
+      dlg.remove();
+    });
+
+    $("manage-create").addEventListener("click", function () {
+      createBoard();
+      dlg.close();
+    });
+
+    $("manage-close").addEventListener("click", function () {
+      dlg.close();
+    });
+
+    // Outside/backdrop click closes
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+
+    dlg.showModal();
+  }
+
+  function renderManageList() {
+    var host = $("manage-list");
+    if (!host) return;
+    host.innerHTML = "";
+
+    state.boards.forEach(function (bd) {
+      var row = document.createElement("div");
+      row.className = "manage-row";
+
+      var active = bd.id === state.activeBoardId;
+      if (active) row.classList.add("active");
+
+      var check = document.createElement("span");
+      check.className = "manage-check";
+      check.innerHTML = ICNS.check;
+      if (!active) check.style.opacity = "0.3";
+      row.appendChild(check);
+
+      var info = document.createElement("div");
+      info.className = "manage-info";
+
+      var name = document.createElement("div");
+      name.className = "manage-name";
+      name.textContent = bd.name;
+      info.appendChild(name);
+
+      var meta = document.createElement("div");
+      meta.className = "manage-meta";
+      var colCount = bd.columns.length;
+      var cardCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
+      meta.textContent = String(colCount) + " " + (LANG === "el" ? "στήλες, " : "columns, ") +
+                         String(cardCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
+      info.appendChild(meta);
+
+      row.appendChild(info);
+
+      var actions = document.createElement("div");
+      actions.className = "manage-actions";
+
+      var renameBtn = document.createElement("button");
+      renameBtn.type = "button";
+      renameBtn.className = "manage-rename";
+      renameBtn.setAttribute("title", t("board.rename"));
+      renameBtn.innerHTML = ICNS.pencil;
+      renameBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        renameCurrentBoard(bd.id);
+      });
+      actions.appendChild(renameBtn);
+
+      var dupBtn = document.createElement("button");
+      dupBtn.type = "button";
+      dupBtn.className = "manage-duplicate";
+      dupBtn.setAttribute("title", t("board.duplicate"));
+      dupBtn.innerHTML = ICNS.copy;
+      dupBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        duplicateBoard(bd.id);
+      });
+      actions.appendChild(dupBtn);
+
+      if (state.boards.length > 1) {
+        var delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "manage-delete";
+        delBtn.setAttribute("title", t("board.delete"));
+        delBtn.innerHTML = ICNS.trash;
+        delBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          deleteBoard(bd.id);
+        });
+        actions.appendChild(delBtn);
+      }
+
+      row.appendChild(actions);
+      host.appendChild(row);
+    });
+  }
+
+  // Icon constants (inline SVG for management UI)
+  var ICNS = {
+    check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    pencil: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
+    copy: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+  };
+
+  function renameCurrentBoard(boardId) {
+    var bd = boardByIdIn(state.boards, boardId);
+    if (!bd) return;
+
+    var name = prompt(t("board.rename"), bd.name);
+    if (!name || !name.trim()) return;
+
+    bd.name = name.trim();
+    bd.mtime = Date.now();
+    save();
+    renderAll();
+    renderManageList();
+  }
+
+  function duplicateBoard(boardId) {
+    var bd = boardByIdIn(state.boards, boardId);
+    if (!bd) return;
+
+    pushUndo("toast.undone");
+
+    var copy = {
+      id: uid(),
+      name: bd.name + t("dup.suffix"),
+      mtime: Date.now(),
+      om: Date.now(),
+      deleted: JSON.parse(JSON.stringify(bd.deleted || {})),
+      labels: JSON.parse(JSON.stringify(bd.labels || [])),
+      columns: bd.columns.map(function (col) {
+        var nc = newColumnObj(col.name);
+        nc.mtime = Date.now();
+        nc.om = Date.now();
+        nc.cards = col.cards.map(function (c) {
+          var ncard = newCardObj(c.text);
+          ncard.notes = c.notes || "";
+          ncard.labels = c.labels.slice();
+          ncard.subtasks = JSON.parse(JSON.stringify(c.subtasks || []));
+          ncard.info = JSON.parse(JSON.stringify(c.info || []));
+          ncard.subtasks.forEach(function (s) { s.id = uid(); });
+          ncard.info.forEach(function (f) { f.id = uid(); });
+          touch(ncard);
+          ncard.pos = 0;
+          return ncard;
+        });
+        nc.cards.forEach(function (c, i) { c.pos = i; });
+        nc.pos = 0;
+        return nc;
+      })
+    };
+
+    state.om = Date.now();
+    state.boards.push(copy);
+    state.activeBoardId = copy.id;
+
+    save();
+    renderAll();
+    showToast(t("toast.boardadded"), false);
+  }
+
+  function deleteBoard(boardId) {
+    var bd = boardByIdIn(state.boards, boardId);
+    if (!bd) return;
+    if (!confirm(t("confirm.boarddel"))) return;
+
+    pushUndo("toast.undone");
+
+    // Root-level board tombstone (state.boardDeleted) — το ΜΟΝΟ σημείο που
+    // κοιτάζει το mergeKanbanStates/boardAlive. Tombstones μέσα στο bd
+    // χάνονται μαζί του (το board φεύγει από state.boards) — ΔΕΝ γράφουμε
+    // εκεί. Το root tombstone πεθαίνει το board συνολικά (καμία ανάσταση,
+    // τα περιεχόμενα πεθαίνουν cascade με την boardAlive ερώτηση).
+    if (!state.boardDeleted) state.boardDeleted = {};
+    state.boardDeleted[boardId] = Date.now();
+
+    // Remove from boards[]
+    state.boards = state.boards.filter(function (b) { return b.id !== boardId; });
+    state.om = Date.now();
+
+    // If we deleted the active board, switch to another
+    if (state.activeBoardId === boardId) {
+      state.activeBoardId = state.boards.length > 0 ? state.boards[0].id : null;
+    }
+
+    save();
+    renderAll();
+    showToast(t("toast.boarddel"), false);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---------- 3b. Render: columns + cards (board-scoped) ----------
   function makeColumnEl(col) {
     var el = document.createElement("div");
     el.className = "k-col";
@@ -680,7 +1348,7 @@
     rename.setAttribute("aria-label", t("col.rename"));
     rename.title = t("col.rename");
     rename.innerHTML =
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
     rename.addEventListener("click", function (e) {
       e.stopPropagation();
       openColDialog(col.id);
@@ -765,7 +1433,7 @@
       var chipHost = document.createElement("div");
       chipHost.className = "chips";
       card.labels.forEach(function (lid) {
-        var label = labelById(lid);
+        var label = labelById(lid);          // board-scoped (βλ. Part 1)
         if (!label) return;
         var chip = document.createElement("span");
         chip.className = "chip";
@@ -816,8 +1484,10 @@
     return el;
   }
 
-  // ---------- 4. Quick-add ----------
+  // ---------- 4. Quick-add (board-scoped: touch στο board header επίσης) ----------
   function quickAdd(col, input) {
+    var board = currentBoard();
+    if (!board) return;
     var raw = input.value.trim();
     if (!raw) return;
     var card = newCardObj(raw);          // φρέσκο mtime — νέα οντότητα
@@ -842,14 +1512,12 @@
     return null;
   }
 
-  // ---------- 5. Card dialog (live editing) ----------
+  // ---------- 5. Card dialog (live editing — board-scoped lookups) ----------
   var editingColId = null;
   var editingCardId = null;
   var pickedSwatch = FALLBACK_COLOR;     // νέο-ετικέτας χρώμα (accent default)
   var openCardSnapshot = null;   // v0.5b: zero-edit close δεν stampάρει mtime
 
-  // Fingerprint του περιεχομένου μιας κάρτας (ό,τι επεξεργάζεται το
-  // dialog): text, notes, subtasks, info, ταξινομημένα label ids.
   function cardFingerprint(card) {
     return JSON.stringify([
       card.text, card.notes || "",
@@ -858,9 +1526,9 @@
     ]);
   }
 
-  // Μικρό helper: η κάρτα που είναι αυτή τη στιγμή ανοιχτή στο
-  // διάλογο (ή null). Κοιτάζει by-id στο ΤΡΕΧΟΝ state — μετά από
-  // merge δείχνει στη merged εκδοχή.
+  // Η κάρτα που είναι αυτή τη στιγμή ανοιχτή στο διάλογο (ή null).
+  // Κοιτάζει by-id στο board TOY state — μετά από merge δείχνει
+  // στη merged εκδοχή.
   function editingCard() {
     return cardById(colById(editingColId), editingCardId);
   }
@@ -888,14 +1556,7 @@
     setTimeout(function () { $("c-text").focus(); }, 50);
   }
 
-  // Live-editing μοντέλο:
-  //   - δομικές αλλαγές (check / add / remove / label attach) →
-  //     touch() + save() ΤΩΡΑ
-  //   - πληκτρολόγηση σε text fields → μόνο στη μνήμη, γράφεται
-  //     στο κλείσιμο του dialog (το 'close' καλείται για submit
-  //     ΚΑΙ Esc — τίποτα δεν χάνεται ποτέ)
-
-  // --- Labels μέσα στο card dialog ---
+  // --- Labels μέσα στο card dialog (board-scoped: labelById) ---
   function renderCardLabels(card) {
     var host = $("c-lbl-chips");
     host.innerHTML = "";
@@ -920,13 +1581,14 @@
     });
   }
 
-  // Picker: όλες οι ετικέτες του board — κλικ κάνει toggle
-  // attach/detach σε αυτή την κάρτα.
   function renderLblPicker() {
     var list = $("c-lbl-list");
     list.innerHTML = "";
 
-    if (state.labels.length === 0) {
+    var board = currentBoard();
+    if (!board) return;
+
+    if (board.labels.length === 0) {
       var none = document.createElement("div");
       none.className = "lbl-none";
       none.textContent = t("labels.none");
@@ -935,7 +1597,7 @@
     }
 
     var card = editingCard();
-    state.labels.forEach(function (label) {
+    board.labels.forEach(function (label) {
       var item = document.createElement("button");
       item.type = "button";
       item.className = "lbl-item";
@@ -986,15 +1648,17 @@
   }
 
   function createNewLabel() {
+    var board = currentBoard();
+    if (!board) return;
     var input = $("c-lbl-name");
     var name = input.value.trim();
     if (!name) return;
 
     var label = {
       id: uid(), name: name, color: pickedSwatch,
-      mtime: Date.now(), pos: state.labels.length
+      mtime: Date.now(), pos: board.labels.length
     };
-    state.labels.push(label);
+    board.labels.push(label);
 
     var card = editingCard();
     if (card) { card.labels.push(label.id); touch(card); }
@@ -1010,9 +1674,6 @@
   }
 
   // --- Subtasks μέσα στο card dialog ---
-  // Όλη η επεξεργασία subtasks συμβαίνει μέσα στο dialog: κάνουμε
-  // τροποποιήσεις στη δομή ΤΩΡΑ, το flush στο close κάνει touch().
-  // Το touch γίνεται πάντα στο close-handler — πουθενά αλλού.
   function renderSubtasks(card) {
     var host = $("c-sub-list");
     host.innerHTML = "";
@@ -1031,8 +1692,6 @@
     cb.addEventListener("change", function () {
       sub.completed = cb.checked;
       txt.classList.toggle("completed", cb.checked);
-      // Ζωντανή προβολή ενημερώνεται με το επόμενο render· το
-      // περιεχόμενο καταγράφεται στο κλείσιμο του dialog (flush touch).
       scheduleRender();
     });
     row.appendChild(cb);
@@ -1123,7 +1782,6 @@
     if (!card) return;
     card.info.push({ id: uid(), label: "", value: "" });
     renderInfo(card);
-    // εστίαση στο φρέσκο label για άμεση πληκτρολόγηση
     var rows = $("c-info-list").querySelectorAll(".info-row");
     if (rows.length > 0) {
       var l = rows[rows.length - 1].querySelector(".i-label");
@@ -1132,10 +1790,6 @@
   }
 
   // --- Duplicate card ---
-  // Deep clone (φρέσκα ids παντού), πρόσφυμα "(copy)", τοποθέτηση
-  // ακριβώς μετά το πρωτότυπο στην ίδια στήλη. Φρέσκο mtime = now
-  // (νέα οντότητα). Labels αντιγράφονται κατά id (παραπέμπουν στο
-  // κοινό board-wide store).
   function duplicateCard() {
     var col = colById(editingColId);
     var card = editingCard();
@@ -1158,20 +1812,14 @@
     showToast(t("toast.duplicated"), false);
   }
 
-  // Stampάρει τη σειρά μιας στήλης: φρέσκο om + καθαρό διαδοχικό
-  // pos. Οι mtime των καρτών ΜΕΝΟΥΝ ανέγγιχτα (η σειρά είναι
-  // θέμα ordering, όχι περιεχομένου). Μοναδικός ορισμός — το v0.5b
-  // αφαίρεσε έναν δεύτερο (one-liner) που νικούσε σιωπηλά μέσω hoisting.
   function stampColOrder(col) {
     col.om = Date.now();
     col.cards.forEach(function (c, i) { c.pos = i; });
   }
 
   // Flush typed-but-unsaved text όταν το dialog κλείνει από ΟΠΟΙΟΔΗΠΟΤΕ
-  // path (Save, Esc) — καμία απώλεια δεδομένων. Κάθε flush κάνει
-  // touch(): οι επεξεργασίες του dialog είναι ΠΡΑΓΜΑΤΙΚΕΣ μεταβολές.
-  // Καθαρίζει επίσης κενά info πεδία (ούτε label ούτε value) που θα
-  // ήταν σκέτος θόρυβος.
+  // path (Save, Esc) — καμία απώλεια δεδομένων. Zero-edit close δεν
+  // stampάρει mtime (identical fingerprint).
   $("dlg-card").addEventListener("close", function () {
     if (editingColId === null) return;
     var card = editingCard();
@@ -1184,10 +1832,6 @@
     card.text  = $("c-text").value.trim() || card.text;
     card.notes = $("c-notes").value;
 
-    // Zero-edit flush (Esc σε άθικτο dialog): ίδιο fingerprint →
-    // κανένα mtime stamp, κανένα dirty, καμία άσκοπη sync push.
-    // Οποιαδήποτε πραγματική αλλαγή (text/notes/subtask/info/label)
-    // αλλάζει το fingerprint → stampάρει όπως πριν.
     if (openCardSnapshot !== null &&
         cardFingerprint(card) === openCardSnapshot) {
       openCardSnapshot = null;
@@ -1196,24 +1840,6 @@
     openCardSnapshot = null;
 
     touch(card);
-    save(); scheduleRender();
-  });
-  
-    // v0.5b — ο column dialog κάνει commit σε ΟΠΟΙΟΔΗΠΟΤΕ δρόμο
-  // κλεισίματος (Save, Esc, backdrop), ίδιο συμβόλαιο με το card
-  // dialog — τίποτα πληκτρολογημένο δεν χάνεται ποτέ σιωπηλά.
-  // Οι submit/delete handlers μηδενίζουν το editingColId ΠΡΙΝ το
-  // close(), άρα εδώ είναι no-op σε εκείνους τους δρόμους.
-  $("dlg-col").addEventListener("close", function () {
-    if (editingColId === null) return;
-    var col = colById(editingColId);
-    editingColId = null;
-    if (!col) return;
-    var name = $("col-name").value.trim();
-    if (name && name !== col.name) {
-      col.name = name;
-      touch(col);   // header edit = δομικό LWW — δεν πατάει ποτέ cards
-    }
     save(); scheduleRender();
   });
 
@@ -1231,32 +1857,30 @@
     setTimeout(function () { $("col-name").focus(); }, 50);
   }
 
+  // Ξεχωριστό id-tracking για το column dialog (δεν συγκρούεται με το
+  // card dialog editingColId — καθαρίζεται στα αντίστοιχα handlers)
   function createColumn() {
+    var board = currentBoard();
+    if (!board) return;
     var col = newColumnObj(t("new.col"));
-    col.pos = state.columns.length;
-    state.om = Date.now();          // νέα έκδοση σειράς στηλών
-    state.columns.push(col);
-    state.columns.forEach(function (c, i) { c.pos = i; });
+    col.pos = board.columns.length;
+    board.om = Date.now();           // v0.6: η σειρά στηλών ζει στο board
+    board.columns.push(col);
+    board.columns.forEach(function (c, i) { c.pos = i; });
     save(); scheduleRender();
     openColDialog(col.id);     // κατευθείαν στις ρυθμίσεις για ονομασία
   }
 
-  // ---------- 7. Search & filter ----------
-  // Session-only (ΔΕΝ αποθηκεύονται ποτέ): ένα pull από άλλη συσκευή
-  // δεν πρέπει να αναστήσει μια "παλιά" οθόνη αναζήτησης/φίλτρου.
+  // ---------- 7. Search & filter (session-only, board-scoped) ----------
   var searchQuery = "";
   var activeFilters = [];
 
-  // Συνδυασμένη πύλη εμφάνισης: search (substring) AND filter (≥1
-  // ενεργή ετικέτα).
   function cardMatchesView(card) {
     if (searchQuery && !matchesSearch(card)) return false;
     if (activeFilters.length > 0 && !matchesFilters(card)) return false;
     return true;
   }
 
-  // Search καλύπτει: τίτλο, notes, info labels ΚΑΙ values, ονόματα
-  // attached labels.
   function matchesSearch(card) {
     if ((card.text || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     if ((card.notes || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
@@ -1266,13 +1890,12 @@
       if ((f.value || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     }
     for (var j = 0; j < (card.labels || []).length; j++) {
-      var label = labelById(card.labels[j]);
+      var label = labelById(card.labels[j]);      // board-scoped
       if (label && label.name.toLowerCase().indexOf(searchQuery) !== -1) return true;
     }
     return false;
   }
 
-  // OR στις επιλεγμένες ετικέτες — μια κάρτα φαίνεται αν έχει ΟΠΟΙΑΔΗΠΟΤΕ ενεργή ετικέτα.
   function matchesFilters(card) {
     if (!card.labels || card.labels.length === 0) return false;
     for (var i = 0; i < activeFilters.length; i++) {
@@ -1299,7 +1922,10 @@
     var pop = $("filter-pop");
     pop.innerHTML = "";
 
-    if (state.labels.length === 0) {
+    var board = currentBoard();
+    if (!board) return;
+
+    if (board.labels.length === 0) {
       var e = document.createElement("div");
       e.className = "fl-empty";
       e.textContent = t("filter.empty");
@@ -1307,7 +1933,7 @@
       return;
     }
 
-    state.labels.forEach(function (label) {
+    board.labels.forEach(function (label) {
       var item = document.createElement("div");
       item.className = "fl-item";
 
@@ -1351,23 +1977,19 @@
     });
   }
 
-  // Η διαγραφή ετικέτας αποσπά την από ΠΑΝΤΟΥ και τη βγάζει από τα
-  // ενεργά φίλτρα → κανένα orphan id σε κάρτες, κανένα ghost στο
-  // filter. Soft-delete μέσω tombstone + touch() στις κάρτες που τη
-  // φορούσαν: η άλλη συσκευή κάνει merge τη διαγραφή αντί να
-  // αναστήσει την ετικέτα από stale τοπικό αντίγραφο — και οι κάρτες
-  // της ΝΙΚΗΦΟΡΑΣ πλευράς (παλαιότερο mtime) δεν ξανακουβαλούν
-  // νεκρό label id.
+  // Διαγραφή ετικέτας — board-scoped tombstones (merge-safe)
   function deleteLabel(labelId) {
-    state.labels = state.labels.filter(function (l) { return l.id !== labelId; });
-    state.columns.forEach(function (col) {
+    var board = currentBoard();
+    if (!board) return;
+    board.labels = board.labels.filter(function (l) { return l.id !== labelId; });
+    board.columns.forEach(function (col) {
       col.cards.forEach(function (card) {
         var had = (card.labels || []).indexOf(labelId) !== -1;
         card.labels = (card.labels || []).filter(function (id) { return id !== labelId; });
         if (had) touch(card);       // αφαίρεση ετικέτας = αλλαγή περιεχομένου
       });
     });
-    tombstone(labelId);             // merge-safe διαγραφή
+    tombstone(board, labelId);       // merge-safe διαγραφή (board-scoped)
     activeFilters = activeFilters.filter(function (id) { return id !== labelId; });
 
     updateFilterBtn();
@@ -1378,17 +2000,12 @@
     showToast(t("toast.labeldel"), false);
   }
 
-  // ---------- 8. Card drag & drop ----------
-  // Pointer-based, threshold-gated: απλό tap δεν ξεκινά ποτέ drag
-  // (το click → dialog δουλεύει). Κάθετη κίνηση αφής κάνει scroll
-  // τη λίστα στηλών (touch-action: pan-y); οριζόντια κίνηση
-  // ανήκει σε εμάς → drag μεταξύ στηλών.
+  // ---------- 8. Card drag & drop (board-scoped) ----------
   var DRAG_THRESHOLD = 8;
 
   function attachCardDrag(el, col, card) {
     el.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;   // μόνο primary
-      // ποτέ drag όσο είναι ανοιχτό το card dialog
       if ($("dlg-card").open) return;
 
       var started = false;
@@ -1443,7 +2060,6 @@
 
         if (!started) return;              // ήταν tap — τίποτα προς αναίρεση
 
-        // Υπολογισμός προορισμού ΠΡΩΤΑ (το pointerEvents hack ακόμα ενεργό)
         var hit = document.elementFromPoint(ev.clientX, ev.clientY);
 
         el.classList.remove("dragging");
@@ -1467,7 +2083,6 @@
           moveCard(col, card, destColEl.dataset.colId, null, false);
           moved = true;
         }
-        // else: ρίχτηκε εκτός πίνακα — θέση αμετάβλητη, κανένα save
 
         if (moved) { save(); scheduleRender(); }
       }
@@ -1491,15 +2106,11 @@
     });
   }
 
-  // moveCard: η οντότητα-ΚΑΡΤΑ μετακινείται· με βάση αυτό καταγράφει
-  // την σειρά. Ίδια περίπτωση στήλης → ΜΟΝΟ om/source+dest + rewrite
-  // pos (τα card mtimes ΑΝΕΠΑΦΗ — μηδενικό ordering noise).
-  // Cross-column → touch(card) ΕΠΙΣΗΣ: η μετακίνηση είναι αληθινή
-  // αλλαγή τοποθέτησης που πρέπει να κερδίζει το merge placement.
+  // moveCard — board-scoped (colById κοιτάζει στο currentBoard)
   function moveCard(srcCol, card, destColId, beforeCardId, before) {
     var srcIdx = srcCol.cards.indexOf(card);
     if (srcIdx === -1) return;
-    var dest = colById(destColId);
+    var dest = colById(destColId);        // board-scoped lookup
     if (!dest) return;
 
     srcCol.cards.splice(srcIdx, 1);
@@ -1516,12 +2127,9 @@
     var nowMs = Date.now();
 
     if (sameCol) {
-      // αναδιάταξη εντός στήλης: owner εδώ = om της στήλης
       srcCol.om = nowMs;
       srcCol.cards.forEach(function (c, i) { c.pos = i; });
     } else {
-      // cross-column: η αλλαγή του πληθυσμού είναι πραγματική
-      // αλλαγή → touch(card) + om KAI στις δύο στήλες
       touch(card);
       srcCol.om = nowMs;
       dest.om = nowMs;
@@ -1530,18 +2138,15 @@
     }
   }
 
-  // ---------- 8b. Column drag reorder ----------
-  // Ίδιο συμβόλαιο με το card drag: pointer-based, threshold-gated,
-  // όχι HTML5 dragstart. Το head είναι η λαβή (grab cursor); το
-  // κουμπί μολυβιού και το dblclick-rename εξαιρούνται. Ο δείκτης
-  // δείχνει ΑΡΙΣΤΕΡΑ ή ΔΕΞΙΑ του hovered στόχου με βάση το μισό pointer.
+  // ---------- 8b. Column drag reorder (board-scoped) ----------
   function attachColDrag(headEl, colEl, col) {
     headEl.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;
-      // τα pencils/dlg opens χειρίζονται από τους δικούς τους listeners — ποτέ drag
       if (e.target.closest(".col-rename")) return;
       if ($("dlg-card").open || $("dlg-col").open) return;
-      if (state.columns.length < 2) return;   // τίποτα προς αναδιάταξη
+
+      var board = currentBoard();
+      if (!board || board.columns.length < 2) return;   // τίποτα προς αναδιάταξη
 
       var started = false;
       var sx = e.clientX, sy = e.clientY;
@@ -1549,7 +2154,7 @@
       function beginDrag() {
         started = true;
         colEl.classList.add("drag-src");
-        colEl.style.pointerEvents = "none";  // elementFromPoint βλέπει ΜΕΣΑ από εμάς
+        colEl.style.pointerEvents = "none";
         document.body.classList.add("is-dragging");
       }
 
@@ -1577,8 +2182,6 @@
       function onMove(ev) {
         if (!started) {
           var dx = ev.clientX - sx, dy = ev.clientY - sy;
-          // Horizontal bias: η αναδιάταξη στηλών είναι οριζόντια χειρονομία.
-          // Κυρίως-κάθετη πρόθεση (ή μικρές τρεμουλιαστές) δεν την ξεκινά ποτέ.
           if (Math.abs(dx) < DRAG_THRESHOLD || Math.abs(dx) <= Math.abs(dy)) return;
           beginDrag();
         }
@@ -1593,7 +2196,6 @@
 
         if (!started) return;              // tap/dblclick start — noop
 
-        // Υπολογισμός προορισμού ΠΡΩΤΑ (το pointerEvents hack ακόμα ενεργό)
         var hit = document.elementFromPoint(ev.clientX, ev.clientY);
 
         colEl.classList.remove("drag-src");
@@ -1608,7 +2210,6 @@
           var before = ev.clientX < r.left + r.width / 2;
           moveColumn(col, target.dataset.colId, before);
         }
-        // else: ρίχτηκε έξω — η σειρά δεν άλλαξε
 
         save(); scheduleRender();
       }
@@ -1632,53 +2233,62 @@
     });
   }
 
-  // Αφαίρεση της στήλης-πηγής, επανατοποθέτηση στόχου (οι δείκτες
-  // μετατοπίζονται μετά το splice!), εισαγωγή πριν/μετά. Stamps το
-  // ριζικό om: αυτή η πλευρά OWNηρε τη σειρά των στηλών τώρα.
+  // moveColumn — board-scoped: stamps το board.om (όχι το root state.om)
   function moveColumn(srcCol, destColId, before) {
-    var from = state.columns.indexOf(srcCol);
+    var board = currentBoard();
+    if (!board) return;
+
+    var from = board.columns.indexOf(srcCol);
     if (from === -1) return;
 
-    state.columns.splice(from, 1);
+    board.columns.splice(from, 1);
 
     var to = -1;
-    for (var i = 0; i < state.columns.length; i++) {
-      if (state.columns[i].id === destColId) { to = i; break; }
+    for (var i = 0; i < board.columns.length; i++) {
+      if (board.columns[i].id === destColId) { to = i; break; }
     }
     if (to === -1) {                     // paranoia — restore source
-      state.columns.splice(from, 0, srcCol);
+      board.columns.splice(from, 0, srcCol);
       return;
     }
 
-    state.columns.splice(before ? to : to + 1, 0, srcCol);
-    state.om = Date.now();               // αυτό το τμήμα έχει πλέον τη σειρά στηλών
-    state.columns.forEach(function (c, i) { c.pos = i; });
+    board.columns.splice(before ? to : to + 1, 0, srcCol);
+    board.om = Date.now();               // v0.6: η σειρά στηλών ανήκει στο board
+    board.columns.forEach(function (c, i) { c.pos = i; });
   }
-  
-  
+
   // ---------- 9. Undo / toast ----------
   var undoSnapshot = null;
   var toastTimer = null;
 
   function pushUndo(key) {
-    undoSnapshot = JSON.stringify(state);
+    undoSnapshot = JSON.stringify(state);     // ΟΛΟ το multi-board state
     showToast(t(key), true);
+  }
+
+  // Undo επαναφέρει ΟΛΟ το state (όλα τα boards) και το καθιερώνει
+  // ως την πιο πρόσφατη αλήθεια σε ΟΛΑ τα επίπεδα (root om + board
+  // om + mtimes) — κερδίζει το επόμενο merge και διαδίδεται.
+  function stampAllState() {
+    var nowMs = Date.now();
+    state.om = nowMs;
+    (state.boards || []).forEach(function (board) {
+      stampAll(board);                       // board-scoped stampAll (βλ. Part 1)
+    });
   }
 
   function doUndo() {
     if (!undoSnapshot) return;
     state = JSON.parse(undoSnapshot);
     undoSnapshot = null;
-    stampAll();              // το restored snapshot είναι η πιο ΝΕΑ αλήθεια —
-                             // ΚΑΙ στις σειρές (om ρίζας + στηλών), όχι μόνο
-                             // στο περιεχόμενο. Κερδίζει το επόμενο merge
-                             // και διαδίδεται.
+    stampAllState();          // το restored snapshot είναι η πιο ΝΕΑ αλήθεια
     save(); renderAll();
     showToast(t("toast.undone"), false);
   }
 
   function showToast(text, withUndo) {
     var el = $("toast");
+    if (!el) return;
     el.innerHTML = "";
     el.classList.remove("show");
 
@@ -1701,87 +2311,25 @@
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 5000);
   }
 
-  // ---------- 10. Sync slice (merge-registered) + palette ----------
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft",
-                  "--panel-bg", "--border", "--shadow"];
-
-  function inheritPalette() {
-    try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme",
-        pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
-      });
-    } catch (e) { /* standalone (απευθείας) open — fallback palette */ }
-  }
-
-  function watchPalette() {
-    try {
-      new MutationObserver(inheritPalette).observe(
-        window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-      );
-    } catch (e) { /* standalone */ }
-  }
-
-  function registerSync() {
-    var api = (window.parent && window.parent.orosSync) || window.orosSync;
-
-    window.__orosSyncApi = {
-      _suppress: false,
-      dirty: function () {
-        if (this._suppress) return;
-        if (api && typeof api.markDirty === "function") api.markDirty();
-      }
-    };
-
-    if (!api || typeof api.registerSlice !== "function") return;
-    // v0.5: 5ο όρισμα — η merge συνάρτηση. Με αυτήν, ένα pull ποτέ
-    // δεν κάνει wholesale-overwrite το τοπικό state — local και
-    // remote συγκλίνουν.
-    api.registerSlice("kanban", sliceGet, sliceSet,
-                      "oros-kanban-data", mergeKanbanStates);
-  }
-
-  function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
-  }
-
-  // data — merged αποτέλεσμα (ή plain remote σε legacy LWW paths)
-  // info — { merged: true } όταν η τιμή ήρθε μέσω mergeKanbanStates
-  //        (συμβόλαιο του sync.js)· οτιδήποτε άλλο = wholesale apply.
-  function sliceSet(data, info) {
-    data = migrate(JSON.parse(JSON.stringify(data || null)));
-    if (!data || Array.isArray(data.columns) === false || data.columns.length === 0) return;
-
-    window.__orosSyncApi._suppress = true;
-    try {
-      state = data;
-      pruneTombstones(state);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } finally {
-      window.__orosSyncApi._suppress = false;
+  
+  // ---------- 10. Undo / toast (closing handlers) ----------
+  // Το close handler του card dialog ολοκληρώνεται εδώ —
+  // έχει ήδη οριστεί στο Part 4 (μέσα στην IIFE).
+  
+  // Column dialog: v0.6b — commit σε ΟΠΟΙΟΔΗΠΟΤΕ δρόμο κλεισίματος
+  $("dlg-col").addEventListener("close", function () {
+    if (editingColId === null) return;
+    var col = colById(editingColId);
+    editingColId = null;
+    if (!col) return;
+    var name = $("col-name").value.trim();
+    if (name && name !== col.name) {
+      col.name = name;
+      touch(col);   // header edit = δομικό LWW
     }
-
-    scheduleRender();
-
-    if (info && info.merged) {
-      showToast(t("toast.merged"), false);   // ορατή σύγκλιση
-    }
-  }
-  // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) — canonical
-  // capture-phase forwarding (parity with todo/kanban-writer/notes).
-  // Standalone listener — does not touch existing keydown handling.
-  document.addEventListener("keydown", function (e) {
-    if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-    var p = window.parent;
-    if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
-    if (window.parent.orosShortcuts.handle(e)) e.stopPropagation();
-  }, true);   // capture phase: runs BEFORE the app's own bubble listeners
-
+    save(); scheduleRender();
+  });
+  
   // ---------- 11. Wiring & boot ----------
   function applyI18n() {
     var n = document.querySelectorAll("[data-i18n]");
@@ -1800,147 +2348,192 @@
   }
 
   function wire() {
-    // Νέα στήλη
-    $("col-add").addEventListener("click", createColumn);
+    // --- New column (board-scoped) ---
+    var colAddBtn = $("col-add");
+    if (colAddBtn) {
+      colAddBtn.addEventListener("click", createColumn);
+    }
 
     // --- Search ---
-    $("search").addEventListener("input", function () {
-      searchQuery = this.value.trim().toLowerCase();
-      $("search-clear").hidden = !searchQuery;
-      scheduleRender();
-    });
-    $("search-clear").addEventListener("click", function () {
-      $("search").value = "";
-      searchQuery = "";
-      $("search-clear").hidden = true;
-      scheduleRender();
-      $("search").focus();
-    });
+    var searchInput = $("search");
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        searchQuery = this.value.trim().toLowerCase();
+        var sc = $("search-clear");
+        if (sc) sc.hidden = !searchQuery;
+        scheduleRender();
+      });
+    }
+    
+    var searchClear = $("search-clear");
+    if (searchClear) {
+      searchClear.addEventListener("click", function () {
+        var si = $("search");
+        if (si) si.value = "";
+        searchQuery = "";
+        if (searchClear) searchClear.hidden = true;
+        scheduleRender();
+        if (searchInput) searchInput.focus();
+      });
+    }
 
     // --- Filter popover: toggle + κλείσιμο με εξωτερικό κλικ ---
-    $("filter-btn").addEventListener("click", function (e) {
-      e.stopPropagation();
-      var pop = $("filter-pop");
-      pop.hidden = !pop.hidden;
-      if (!pop.hidden) renderFilterPop();
-    });
+    var filterBtn = $("filter-btn");
+    if (filterBtn) {
+      filterBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var pop = $("filter-pop");
+        if (pop) {
+          pop.hidden = !pop.hidden;
+          if (!pop.hidden) renderFilterPop();
+        }
+      });
+    }
+    
     document.addEventListener("click", function (e) {
-      if (!e.target.closest("#filter-slot")) {
-        $("filter-pop").hidden = true;
+      var pop = $("filter-pop");
+      if (pop && !e.target.closest("#filter-slot")) {
+        pop.hidden = true;
       }
     });
 
     // --- Card dialog ---
-    // Text/notes flush στο κλείσιμο του dialog — κανένα save-spam
-    // ανά πληκτρολόγημα. Όλες οι αλλαγές του dialog γίνονται commit
-    // με touch() από τον close handler (todo v0.4 pattern).
-    $("c-text").addEventListener("input", function () {
-      var card = editingCard();
-      if (card) card.text = $("c-text").value;
-    });
-    $("c-notes").addEventListener("input", function () {
-      var card = editingCard();
-      if (card) card.notes = $("c-notes").value;
-    });
+    // Text/notes flush στο κλείσιμο του dialog — handled above
+    
+    var cardForm = $("card-form");
+    if (cardForm) {
+      cardForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var dlg = $("dlg-card");
+        if (dlg) dlg.close();
+      });
+    }
 
-    // Submit = "Save & close". Η validation ζει στη φόρμα (required).
-    // Η διατήρηση γίνεται στο close handler — διπλό-commit ποτέ.
-    $("card-form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      $("dlg-card").close();
-    });
+    // Delete card
+    var cDelete = $("c-delete");
+    if (cDelete) {
+      cDelete.addEventListener("click", function () {
+        if (!confirm(t("confirm.carddel"))) return;
+        var col = colById(editingColId);
+        if (col) {
+          pushUndo("toast.deleted");
+          var board = currentBoard();
+          tombstone(board, editingCardId);       // board-scoped tombstone
+          col.cards = col.cards.filter(function (c) { return c.id !== editingCardId; });
+        }
+        editingColId = null;
+        editingCardId = null;
+        var dlg = $("dlg-card");
+        if (dlg) dlg.close();
+        save(); scheduleRender();
+      });
+    }
 
-    // Delete: tombstone (merge-safe) + τοπική αφαίρεση. Τα editing
-    // ids γίνονται null ΠΡΙΝ το close() ώστε ο close-commit να
-    // προσπεράσει — η κάρτα είναι ήδη διαγραμμένη, δεν υπάρχει τίποτα
-    // προς flush.
-    $("c-delete").addEventListener("click", function () {
-      if (!confirm(t("confirm.carddel"))) return;
-      var col = colById(editingColId);
-      if (col) {
-        pushUndo("toast.deleted");
-        tombstone(editingCardId);          // merge-safe διαγραφή
-        col.cards = col.cards.filter(function (c) { return c.id !== editingCardId; });
-      }
-      editingColId = null;
-      editingCardId = null;
-      $("dlg-card").close();
-      save(); scheduleRender();
-    });
-
-    // Labels (μέσα στο dialog)
-    $("c-lbl-toggle").addEventListener("click", function () {
-      var picker = $("c-lbl-picker");
-      if (picker.hidden) {
-        renderLblPicker();
-        renderLblSwatches();
-        picker.hidden = false;
-      } else {
-        picker.hidden = true;
-      }
-    });
-    $("c-lbl-new-add").addEventListener("click", createNewLabel);
-    $("c-lbl-name").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); createNewLabel(); }
-    });
+    // Labels (within dialog)
+    var lblToggle = $("c-lbl-toggle");
+    var lblPicker = $("c-lbl-picker");
+    var lblNewAdd = $("c-lbl-new-add");
+    var lblName = $("c-lbl-name");
+    
+    if (lblToggle && lblPicker) {
+      lblToggle.addEventListener("click", function () {
+        if (lblPicker.hidden) {
+          renderLblPicker();
+          renderLblSwatches();
+          lblPicker.hidden = false;
+        } else {
+          lblPicker.hidden = true;
+        }
+      });
+    }
+    
+    if (lblNewAdd && lblName) {
+      lblNewAdd.addEventListener("click", createNewLabel);
+      lblName.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); createNewLabel(); }
+      });
+    }
 
     // Subtasks
-    $("c-sub-add").addEventListener("click", addSubtask);
-    $("c-sub-new").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); addSubtask(); }
-    });
+    var subAdd = $("c-sub-add");
+    var subNew = $("c-sub-new");
+    if (subAdd && subNew) {
+      subAdd.addEventListener("click", addSubtask);
+      subNew.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); addSubtask(); }
+      });
+    }
 
     // Extra info
-    $("c-info-add").addEventListener("click", addInfo);
+    var infoAdd = $("c-info-add");
+    if (infoAdd) {
+      infoAdd.addEventListener("click", addInfo);
+    }
 
-    // Duplicate
-    $("c-duplicate").addEventListener("click", duplicateCard);
+    // Duplicate card
+    var dupBtn = $("c-duplicate");
+    if (dupBtn) {
+      dupBtn.addEventListener("click", duplicateCard);
+    }
 
     // --- Column dialog ---
-    $("col-form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var col = colById(editingColId);
-      if (!col) { $("dlg-col").close(); return; }
+    var colForm = $("col-form");
+    if (colForm) {
+      colForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var col = colById(editingColId);
+        if (!col) {
+          var dlg = $("dlg-col");
+          if (dlg) dlg.close();
+          return;
+        }
 
-      var name = $("col-name").value.trim();
-      if (!name) return;
+        var name = $("col-name").value.trim();
+        if (!name) return;
 
-      // Επικεφαλίδα: LWW στο mtime της στήλης — ΔΟΜΙΚΟ, δεν πατάει
-      // ποτέ αλλαγές καρτών της από την άλλη συσκευή.
-      if (name !== col.name) {
-        col.name = name;
-        touch(col);
-      }
-      editingColId = null;
-      save(); scheduleRender();
-      $("dlg-col").close();
-    });
+        if (name !== col.name) {
+          col.name = name;
+          touch(col);
+        }
+        editingColId = null;
+        save(); scheduleRender();
+        var dlg = $("dlg-col");
+        if (dlg) dlg.close();
+      });
+    }
 
-    $("col-delete").addEventListener("click", function () {
-      var col = colById(editingColId);
-      if (!col) return;
-      if (!confirm(t("confirm.coldel"))) return;
+    var colDelete = $("col-delete");
+    if (colDelete) {
+      colDelete.addEventListener("click", function () {
+        var col = colById(editingColId);
+        if (!col) return;
+        if (!confirm(t("confirm.coldel"))) return;
 
-      pushUndo("toast.coldel");
-      // Cascade tombstones: η στήλη ΠΑΙΡΝΕΙ τις κάρτες της — αν
-      // κάποια κάρτα αναστηθεί από νεότερο edit, το orphan rule τη
-      // κρατά νεκρή μέχρι η στήλη τοποθέτησής της να ζήσει ξανά.
-      tombstone(col.id);
-      col.cards.forEach(function (c) { tombstone(c.id); });
-      state.columns = state.columns.filter(function (c) { return c.id !== col.id; });
+        pushUndo("toast.coldel");
+        
+        var board = currentBoard();
+        if (!board) return;
+        
+        // Cascade tombstones: διαγραφή στήλης = διαγραφή ΟΛΩΝ των καρτών της
+        tombstone(board, col.id);
+        col.cards.forEach(function (c) { tombstone(board, c.id); });
+        
+        board.columns = board.columns.filter(function (c) { return c.id !== col.id; });
 
-      if (state.columns.length === 0) {
-        var fresh = newColumnObj(t("new.col"));
-        fresh.pos = 0;
-        state.columns.push(fresh);
-      }
-      state.om = Date.now();          // ο πληθυσμός στηλών άλλαξε
-      state.columns.forEach(function (c, i) { c.pos = i; });
+        if (board.columns.length === 0) {
+          var fresh = newColumnObj(t("new.col"));
+          fresh.pos = 0;
+          board.columns.push(fresh);
+        }
+        board.om = Date.now();
+        board.columns.forEach(function (c, i) { c.pos = i; });
 
-      editingColId = null;
-      $("dlg-col").close();
-      save(); renderAll();
-    });
+        editingColId = null;
+        var dlg = $("dlg-col");
+        if (dlg) dlg.close();
+        save(); renderAll();
+      });
+    }
   }
 
   function boot() {
