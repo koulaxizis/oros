@@ -23,7 +23,7 @@
   var APP_VERSION   = "0.17.0";
   var STORAGE_KEY   = "oros-notes-data";
   var PREFS_KEY     = "oros-notes-prefs";
-  var DATA_VER      = 2;
+  var DATA_VER      = 3;  // v0.17.1: notebooks added
   var SAVE_DEBOUNCE_MS = 500;
   var TOMB_PRUNE_DAYS  = 30;
   var DAY_MS           = 24 * 60 * 60 * 1000;
@@ -35,13 +35,14 @@
 
   // ---------- 1. State ----------
   var state = {
-    ver:    DATA_VER,
-    pages:  [],   // {id, parent, title, text, mtime, pos, labels:[]}
-    labels: [],   // {id, name, color, mtime, pos}
-    tombs:  {}    // pageId -> ts
+    ver:       DATA_VER,
+    notebooks: [],  // {id, name, mtime, pos}
+    pages:     [],  // {id, nb, parent, title, text, mtime, pos, labels:[]}
+    labels:    [],  // {id, name, color, mtime, pos}
+    tombs:     {}   // pageId -> ts, "lbl:id" -> ts, "nb:id" -> ts
   };
 
-  var prefs = { open: {}, current: null, width: 270 };
+  var prefs = { open: {}, current: null, currentNb: null, width: 270 };
   var pendingId      = null;    // page awaiting debounced save
   var pendingTimer   = null;
 
@@ -50,8 +51,9 @@
   function defaultData() {
     return {
       ver: DATA_VER,
+      notebooks: [{ id: uid("nb"), name: t("book.default"), mtime: Date.now(), pos: 0 }],
       pages: [{
-        id: uid(), parent: null, title: t("page.untitled"),
+        id: uid(), nb: null, parent: null, title: t("page.untitled"),
         text: "", mtime: Date.now(), pos: 0, labels: []
       }],
       labels: [],
@@ -68,16 +70,32 @@
       return;
     }
 
-    // v1 → v2: additive — labels registry arrives empty, pages get
-    // an empty labels array. Nothing renamed, nothing dropped.
+    // v1 → v2: labels
     if (typeof raw.ver === "number" && raw.ver < 2) {
       raw.labels = [];
     }
 
-    state.ver    = DATA_VER;
-    state.pages  = Array.isArray(raw.pages)  ? raw.pages  : [];
-    state.labels = Array.isArray(raw.labels) ? raw.labels : [];
-    state.tombs  = (raw.tombs && typeof raw.tombs === "object") ? raw.tombs : {};
+    // v2 → v3: notebooks — ADDITIVE only. Old data becomes "Book #1".
+    if (typeof raw.ver === "number" && raw.ver < 3) {
+      // Create default notebook
+      var firstNb = { id: uid("nb"), name: t("book.default"), mtime: Date.now(), pos: 0 };
+      raw.notebooks = [firstNb];
+
+      // Assign all old pages/labels to the new notebook
+      (raw.pages || []).forEach(function (p) {
+        p.nb = firstNb.id;
+      });
+      // Labels: assign nb too (for consistent per-book isolation)
+      (raw.labels || []).forEach(function (l) {
+        l.nb = firstNb.id;
+      });
+    }
+
+    state.ver       = DATA_VER;
+    state.notebooks = Array.isArray(raw.notebooks) ? raw.notebooks : [];
+    state.pages     = Array.isArray(raw.pages)     ? raw.pages     : [];
+    state.labels    = Array.isArray(raw.labels)    ? raw.labels    : [];
+    state.tombs     = (raw.tombs && typeof raw.tombs === "object") ? raw.tombs : {};
 
     normalizeState();
     if (JSON.stringify(raw) !== JSON.stringify(state)) saveNow();
@@ -97,6 +115,29 @@
       }
     });
     state.labels = state.labels.filter(function (l) { return !!l && labelIds[l.id]; });
+	
+	    // Normalize notebooks
+    var notebookIds = {};
+    state.notebooks.forEach(function (n) {
+      if (n && typeof n.id === "string" &&
+          typeof n.name === "string" && n.name.trim() !== "") {
+        n.mtime = n.mtime || Date.now();
+        n.pos   = (typeof n.pos === "number" && isFinite(n.pos)) ? n.pos : 0;
+        notebookIds[n.id] = true;
+      }
+    });
+    state.notebooks = state.notebooks.filter(function (n) { return !!n && notebookIds[n.id]; });
+
+    // Orphaned pages/labels (dead notebook ref) → first notebook
+    var firstNb = state.notebooks[0];
+    if (firstNb) {
+      state.pages.forEach(function (p) {
+        if (!p.nb || !notebookIds[p.nb]) { p.nb = firstNb.id; }
+      });
+      state.labels.forEach(function (l) {
+        if (!l.nb || !notebookIds[l.nb]) { l.nb = firstNb.id; }
+      });
+    }
 
     // De-dupe labels by id (merge can theoretically produce twins
     // on pathological clocks): keep the LWW one.
@@ -152,11 +193,12 @@
       });
     }
 
-    // Tomb pruning (30d) + never keep a tomb for a resurrected page
+    // Tomb pruning (30d) — also covers "nb:" prefix for notebooks
     var now = Date.now();
-    Object.keys(state.tombs).forEach(function (id) {
-      if (alive[id] || (now - state.tombs[id]) > TOMB_PRUNE_DAYS * DAY_MS) {
-        delete state.tombs[id];
+    Object.keys(state.tombs).forEach(function (k) {
+      var isPage = k.indexOf("lbl:") !== 0;   // skip label tombs
+      if (isPage && alive[k] || (now - state.tombs[k]) > TOMB_PRUNE_DAYS * DAY_MS) {
+        delete state.tombs[k];
       }
     });
   }
@@ -207,21 +249,35 @@
       "labels.detach":      "Remove",        // v0.14.0
       "labels.confirm":     "Delete this label?",      // v0.14.0
       "labels.detached":     "Label removed", // v0.14.0
+      "page.pin":           "Pin to top",
+      "page.unpin":         "Unpin",
+      "toast.pinned":       "Pinned to top",
+      "toast.unpinned":     "Unpinned",
       "notes.app":           "Notes",
       "notes.title.ph":      "Title",
       "notes.text.ph":       "Start typing…",
       "menu.exportPage":     "Export page (.txt)",
       "menu.exportNotebook": "Export notebook (.zip)",
       "search.placeholder":  "Search pages…",
-"search.hint": "Type at least 2 characters",
-"search.none": "No results",
-"search.count": "{n} results",
-"tags.all": "All labels",
-"tags.pages": "{n} pages",
-"tags.back": "Back",
-"links.out": "Links",
-"links.back": "Backlinks",
-"links.none": "None"
+	  "search.hint": "Type at least 2 characters",
+	  "search.none": "No results",
+	  "search.count": "{n} results",
+	  "tags.all": "All labels",
+	  "tags.pages": "{n} pages",
+	  "tags.back": "Back",
+	  "links.out": "Links",
+	  "links.back": "Backlinks",
+      "links.none": "None",
+      "book.default": "Notes",
+      "book.new": "New notebook",
+      "book.rename": "Rename notebook",
+      "book.delete": "Delete notebook",
+      "book.confirm": "Delete this notebook? All its pages and labels will be removed.",
+      "book.empty": "No notebooks yet",
+      "book.switch": "Switch notebook",
+      "toast.nbCreated": "Notebook created",
+      "toast.nbRenamed": "Notebook renamed",
+      "toast.nbDeleted": "Notebook deleted"
     },
     el: {
       "tree.empty":         "Καμία σελίδα ακόμη",
@@ -243,21 +299,35 @@
       "labels.detach":      "Αφαίρεση",        // v0.14.0
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
       "labels.detached":     "Η ετικέτα αφαιρέθηκε", // v0.14.0
+      "page.pin":           "Καρφίτσωμα στην κορυφή",
+      "page.unpin":         "Αφαίρεση καρφιτσίματος",
+      "toast.pinned":       "Καρφιτσώθηκε στην κορυφή",
+      "toast.unpinned":     "Αφαιρέθηκε το καρφίτσωμα",
       "notes.app":           "Σημειώσεις",
       "notes.title.ph":      "Τίτλος",
       "notes.text.ph":       "Ξεκίνα να γράφεις…",
       "menu.exportPage":     "Εξαγωγή σελίδας (.txt)",
       "menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.zip)",
       "search.placeholder":  "Αναζήτηση σε σελίδες…",
-"search.hint": "Πληκτρολόγησε τουλάχιστον 2 χαρακτήρες",
-"search.none": "Κανένα αποτέλεσμα",
-"search.count": "{n} αποτελέσματα",
-"tags.all": "Όλες οι ετικέτες",
-"tags.pages": "{n} σελίδες",
-"tags.back": "Πίσω",
-"links.out": "Σύνδεσμοι",
-"links.back": "Αναφορές",
-"links.none": "Κανένα"
+	  "search.hint": "Πληκτρολόγησε τουλάχιστον 2 χαρακτήρες",
+	  "search.none": "Κανένα αποτέλεσμα",
+	  "search.count": "{n} αποτελέσματα",
+	  "tags.all": "Όλες οι ετικέτες",
+	  "tags.pages": "{n} σελίδες",
+	  "tags.back": "Πίσω",
+	  "links.out": "Σύνδεσμοι",
+	  "links.back": "Αναφορές",
+	  "links.none": "Κανένα",
+      "book.default": "Σημειώσεις",
+      "book.new": "Νέο σημειωματάριο",
+      "book.rename": "Μετονομασία σημειωματαρίου",
+      "book.delete": "Διαγραφή σημειωματαρίου",
+      "book.confirm": "Διαγραφή αυτού του σημειωματαρίου; Θα διαγραφούν όλες οι σελίδες και οι ετικέτες του.",
+      "book.empty": "Κανένα σημειωματάριο",
+      "book.switch": "Αλλαγή σημειωματαρίου",
+      "toast.nbCreated": "Δημιουργήθηκε το σημειωματάριο",
+      "toast.nbRenamed": "Μετονομαστηκε το σημειωματάριο",
+      "toast.nbDeleted": "Διαγράφηκε το σημειωματάριο"
     }
   };
 
@@ -272,6 +342,21 @@
   function t(key) {
     var d = STRINGS[LANG] || STRINGS.en;
     return (d[key] !== undefined) ? d[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+  }
+  
+    function renderNbSelector() {
+    var sel = document.getElementById("nb-selector");
+    if (!sel) return;
+    sel.innerHTML = "";
+    state.notebooks.forEach(function (nb) {
+      var opt = document.createElement("option");
+      opt.value = nb.id;
+      opt.textContent = nb.name;
+      if (nb.id === currentNotebook().id) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.title = t("book.switch");
+    sel.setAttribute("aria-label", t("book.switch"));
   }
 
   function applyI18n() {
@@ -394,19 +479,22 @@
     return null;
   }
 
+  function currentNbId() {
+    var nb = currentNotebook();
+    return nb ? nb.id : null;
+  }
+
   function kidsOf(parentId) {
+    var nbId = currentNbId();
     return state.pages
-      .filter(function (p) { return p.parent === parentId; })
+      .filter(function (p) { return p.parent === parentId && p.nb === nbId; })
       .sort(function (a, b) {
+        var ap = a.pinned ? 1 : 0;
+        var bp = b.pinned ? 1 : 0;
+        if (ap !== bp) return bp - ap;   // pinned first
         return (a.pos - b.pos) ||
                (a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
       });
-  }
-
-  function siblingList(page) {
-    return state.pages
-      .filter(function (p) { return p.id !== page.id && p.parent === page.parent; })
-      .sort(function (a, b) { return a.pos - b.pos; });
   }
 
   function renderTree() {
@@ -414,7 +502,7 @@
     if (!root) return;
     root.innerHTML = "";
 
-    if (state.pages.length === 0) {
+    if (!state.pages.some(function (p) { return p.nb === currentNbId(); })) {
       var empty = document.createElement("li");
       empty.className = "tree-empty";
       empty.textContent = t("tree.empty");
@@ -477,6 +565,16 @@
       });
       if (dots.childNodes.length) row.appendChild(dots);
 
+      // ---- Pin icon (Task #1) ----
+      if (p.pinned) {
+        var pin = document.createElement("span");
+        pin.className = "node-ico";
+        pin.style.marginLeft = "6px";
+        pin.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 12h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2z"/></svg>';
+        pin.title = t("page.unpin");
+        row.appendChild(pin);
+      }
+
       if (grandKids.length) {
         var cnt = document.createElement("span");
         cnt.className = "node-count";
@@ -516,6 +614,7 @@
   }
 
   function renderAll() {
+    renderNbSelector();
     renderTree();
     renderEditor();
   }
@@ -527,6 +626,9 @@
     prefs.current = id;
     savePrefs();
     renderAll();
+    // Mobile: close the tree so the note fills the screen. Desktop
+    // shows the tree via @media — the class is a no-op there.
+    document.getElementById("notes-app").classList.remove("tree-open");
   }
 
   function renderEditor() {
@@ -584,9 +686,9 @@
       if (p.pos > maxPos) maxPos = p.pos;
     });
     var p = {
-      id: uid(), parent: parentId || null,
+      id: uid(), nb: currentNbId(), parent: parentId || null,
       title: t("page.untitled"), text: "",
-      mtime: Date.now(), pos: maxPos + 1, labels: []
+      mtime: Date.now(), pos: maxPos + 1, labels: [], pinned: false
     };
     state.pages.push(p);
     if (parentId) prefs.open[parentId] = true;
@@ -601,8 +703,9 @@
   }
 
   function siblingListByParent(parentId) {
+    var nbId = currentNbId();
     return state.pages
-      .filter(function (p) { return p.parent === (parentId || null); })
+      .filter(function (p) { return p.parent === (parentId || null) && p.nb === nbId; })
       .sort(function (a, b) { return a.pos - b.pos; });
   }
 
@@ -639,6 +742,17 @@
       if (titleEl) titleEl.value = name;
     }
   }
+  
+    function togglePin(id) {
+    var page = pageById(id);
+    if (!page) return;
+    page.pinned = !page.pinned;
+    page.mtime = Date.now();
+    saveNow();
+    markSyncDirty();
+    renderTree();
+    toast(t(page.pinned ? "toast.pinned" : "toast.unpinned"));
+  }
 
   function movePage(id, dir) {
     var page = pageById(id);
@@ -657,6 +771,85 @@
     markSyncDirty();
     renderAll();
     toast(t("toast.moved"));
+  }
+  
+    function currentNotebook() {
+    if (!prefs.currentNb) {
+      prefs.currentNb = state.notebooks[0] && state.notebooks[0].id;
+    }
+    var nb = state.notebooks.find(function (n) { return n.id === prefs.currentNb; });
+    return nb || (state.notebooks[0] || null);
+  }
+
+  function setPageNb(pageId, nbId) {
+    var page = pageById(pageId);
+    if (!page) return;
+    page.nb = nbId;
+    page.mtime = Date.now();
+    saveNow();
+    markSyncDirty();
+  }
+
+  function createNotebook(name) {
+    var maxPos = 0;
+    state.notebooks.forEach(function (n) { if (n.pos > maxPos) maxPos = n.pos; });
+    var nb = { id: uid("nb"), name: name, mtime: Date.now(), pos: maxPos + 1 };
+    state.notebooks.push(nb);
+    prefs.currentNb = nb.id;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    toast(t("toast.nbCreated"));
+    return nb;
+  }
+
+  function renameNotebook(id, newName) {
+    var nb = state.notebooks.find(function (n) { return n.id === id; });
+    if (!nb) return;
+    nb.name = newName;
+    nb.mtime = Date.now();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    toast(t("toast.nbRenamed"));
+  }
+
+  function deleteNotebook(id) {
+    var nb = state.notebooks.find(function (n) { return n.id === id; });
+    if (!nb) return;
+    if (!window.confirm('"' + nb.name + '" — ' + t("book.confirm"))) return;
+
+    // Tombstones for notebook + all its pages/labels (delete wins on merge)
+    state.tombs["nb:" + id] = Date.now();
+    state.pages.forEach(function (p) {
+      if (p.nb === id) state.tombs[p.id] = Date.now();
+    });
+    state.labels.forEach(function (l) {
+      if (l.nb === id) state.tombs["lbl:" + l.id] = Date.now();
+    });
+    state.pages     = state.pages.filter(function (p) { return p.nb !== id; });
+    state.labels    = state.labels.filter(function (l) { return l.nb !== id; });
+    state.notebooks = state.notebooks.filter(function (n) { return n.id !== id; });
+
+    // Never zero notebooks — invariant: at least one always exists
+    if (!state.notebooks.length) {
+      state.notebooks.push({ id: uid("nb"), name: t("book.default"), mtime: Date.now(), pos: 0 });
+    }
+
+    if (prefs.currentNb === id || !pageById(prefs.current)) {
+      prefs.currentNb = state.notebooks[0].id;
+      prefs.current = null;
+    }
+    if (!prefs.current) {
+      var first = state.pages.filter(function (p) { return p.nb === prefs.currentNb; })[0];
+      prefs.current = (first && first.id) || null;
+    }
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    toast(t("toast.nbDeleted"));
   }
 
   // ---------- 6. Context menu + label picker (Wave 2.1) ----------
@@ -831,11 +1024,18 @@
     );
   }
 
-  function exportNotebookZip() {
-    if (!state.pages.length) { return; }
+  function exportNotebookZip(currentOnly) {
+    // Scope: current notebook only, or everything
+    var rootPages = state.pages.filter(function (p) { return !p.parent; });
+    if (currentOnly) {
+      var nbId = currentNbId();
+      rootPages = rootPages.filter(function (p) { return p.nb === nbId; });
+    }
+    if (!rootPages.length) return;
+
     var entries = [];
-    var used = {};   // "dir|name" (lowercase) -> duplicate count
-    var visited = {}; // cycle guard for malformed merged trees
+    var used = {};     // "dir|name" (lowercase) -> duplicate count
+    var visited = {};  // cycle guard for malformed merged trees
 
     function unique(dir, name) {
       var key = dir + "|" + name.toLowerCase();
@@ -865,7 +1065,7 @@
       }
     }
 
-    childrenSorted(null).forEach(function (r) { addPage(r, "", 0); });
+    rootPages.forEach(function (r) { addPage(r, "", 0); });
 
     var d = new Date();
     var stamp = d.getFullYear() + "-" +
@@ -914,7 +1114,9 @@
     }
 
     var hits = [];
+    var currentNbId = currentNotebook().id;
     state.pages.forEach(function (p) {
+      if (p.nb !== currentNbId) return;
       var inTitle = ((p.title || "")).toLowerCase().indexOf(needle) !== -1;
       var inText  = ((p.text  || "")).toLowerCase().indexOf(needle) !== -1;
       if (inTitle || inText) hits.push({ p: p, w: inTitle ? 0 : 1 });
@@ -1042,12 +1244,14 @@
         none.textContent = t("labels.none");
         list.appendChild(none);
       } else {
+        var currentNbId = currentNotebook().id;
         state.labels
+          .filter(function (l) { return l.nb === currentNbId; })
           .slice()
           .sort(function (a, b) { return (a.pos - b.pos) || a.name.localeCompare(b.name); })
           .forEach(function (lb) {
             var cnt = state.pages.filter(function (p) {
-              return (p.labels || []).indexOf(lb.id) !== -1;
+              return p.nb === currentNbId && (p.labels || []).indexOf(lb.id) !== -1;
             }).length;
             var row = document.createElement("button");
             row.className = "tp-item";
@@ -1069,8 +1273,11 @@
           });
       }
     } else {
+      var currentNbId = currentNotebook().id;
       var pages = state.pages
-        .filter(function (p) { return (p.labels || []).indexOf(filterId) !== -1; })
+        .filter(function (p) {
+          return p.nb === currentNbId && (p.labels || []).indexOf(filterId) !== -1;
+        })
         .sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
       if (!pages.length) {
         var pn = document.createElement("div");
@@ -1117,8 +1324,10 @@
 
   function pageByTitle(title) {
     var low = (title || "").toLowerCase();
+    var nbId = currentNbId();
     for (var i = 0; i < state.pages.length; i++) {
       var p = state.pages[i];
+      if (p.nb !== nbId) continue;
       if ((p.title || "").trim().toLowerCase() === low) return p;
     }
     return null;
@@ -1143,8 +1352,10 @@
     var title = ((current && current.title) || "").trim();
     if (!title) return [];
     var needle = "[[" + title + "]]";
+    var nbId = current.nb || currentNbId();
     return state.pages.filter(function (p) {
-      return p.id !== current.id && ((p.text || "").indexOf(needle) !== -1);
+      return p.id !== current.id && p.nb === nbId &&
+             ((p.text || "").indexOf(needle) !== -1);
     });
   }
 
@@ -1211,6 +1422,7 @@
       [t("page.rename"),   function () { renamePage(page.id); }],
       [t("page.move.up"),  function () { movePage(page.id, -1); }],
       [t("page.move.down"),function () { movePage(page.id, +1); }],
+      [page.pinned ? t("page.unpin") : t("page.pin"), function () { togglePin(page.id); }],
       [t("labels.title"),  function () { openLabelPicker(page, x, y); }],
       [t("menu.exportPage"),       function () { exportPageTxt(page); }],
       [t("menu.exportNotebook"),   function () { exportNotebookZip(); }],
@@ -1245,13 +1457,14 @@
       (page.title !== "" ? page.title : t("page.untitled"));
     box.appendChild(title);
 
-    if (!state.labels.length) {
+    var nbLabels = state.labels.filter(function (l) { return l.nb === currentNbId(); });
+    if (!nbLabels.length) {
       var none = document.createElement("div");
       none.className = "lp-none";
       none.textContent = t("labels.none");
       box.appendChild(none);
     } else {
-      state.labels
+      nbLabels
         .slice()
         .sort(function (a, b) { return a.pos - b.pos || a.name.localeCompare(b.name); })
         .forEach(function (lb) {
@@ -1310,7 +1523,7 @@
     box.appendChild(newArea);
     document.body.appendChild(box);
     clampToViewport(box, x, y);
-    if (!state.labels.length) input.focus();
+    if (!nbLabels.length) input.focus();
   }
 
   // Rebuilds the picker in place after create/attach/detach/delete —
@@ -1366,7 +1579,7 @@
   function createLabel(name, color) {
     var maxPos = 0;
     state.labels.forEach(function (l) { if (l.pos > maxPos) maxPos = l.pos; });
-    var lb = { id: uid("l"), name: name, color: color, mtime: Date.now(), pos: maxPos + 1 };
+    var lb = { id: uid("l"), nb: currentNbId(), name: name, color: color, mtime: Date.now(), pos: maxPos + 1 };
     state.labels.push(lb);
     saveNow();
     markSyncDirty();
@@ -1415,10 +1628,10 @@
   function mergeNotesStates(a, b) {
     if (!a && !b) return null;
 
-    a = a || { ver: 2, pages: [], labels: [], tombs: {} };
-    b = b || { ver: 2, pages: [], labels: [], tombs: {} };
+    a = a || { ver: DATA_VER, notebooks: [], pages: [], labels: [], tombs: {} };
+    b = b || { ver: DATA_VER, notebooks: [], pages: [], labels: [], tombs: {} };
 
-    // -- Tombs: union, max ts (page tombs AND "lbl:" label tombs) --
+    // -- Tombs: union, max ts (pages, "lbl:", "nb:") --
     var tombs = {};
     var keys = {};
     Object.keys(a.tombs || {}).forEach(function (k) { keys[k] = true; });
@@ -1429,7 +1642,22 @@
       tombs[k] = Math.max(ta, tb);
     });
 
-    // -- Labels: per-id LWW, then tomb-drop --
+    // -- Notebooks: per-id LWW, then tomb-drop --
+    var nbMap = {};
+    [].concat(a.notebooks || [], b.notebooks || []).forEach(function (n) {
+      if (!n || typeof n.id !== "string") return;
+      nbMap[n.id] = nbMap[n.id]
+        ? pickByLWW(nbMap[n.id], n, function (x) { return x.mtime || 0; })
+        : n;
+    });
+    var notebooks = Object.keys(nbMap).map(function (k) { return nbMap[k]; })
+      .filter(function (n) {
+        var tomb = tombs["nb:" + n.id] || 0;
+        return !(tomb >= (n.mtime || 0));
+      })
+      .sort(function (x, y) { return x.pos - y.pos || x.name.localeCompare(y.name); });
+
+    // -- Labels: per-id LWW, then tomb-drop, filtered by nb --
     var labelMap = {};
     [].concat(a.labels || [], b.labels || []).forEach(function (l) {
       if (!l || typeof l.id !== "string") return;
@@ -1437,17 +1665,20 @@
         ? pickByLWW(labelMap[l.id], l, function (x) { return x.mtime || 0; })
         : l;
     });
+    var notebookIdsInMerge = {};
+    notebooks.forEach(function (n) { notebookIdsInMerge[n.id] = true; });
+
     var labels = Object.keys(labelMap).map(function (k) { return labelMap[k]; })
       .filter(function (l) {
-        var tomb = tombs["lbl:" + l.id] || 0;   // delete wins ties (>=)
-        return !(tomb >= (l.mtime || 0));
+        var tomb = tombs["lbl:" + l.id] || 0;
+        return !(tomb >= (l.mtime || 0)) && notebookIdsInMerge[l.nb];
       })
       .sort(function (x, y) { return x.pos - y.pos || x.name.localeCompare(y.name); });
 
-    var labelAlive = {};
-    labels.forEach(function (l) { labelAlive[l.id] = true; });
+    var labelIdsInMerge = {};
+    labels.forEach(function (l) { labelIdsInMerge[l.id] = true; });
 
-    // -- Pages: per-id LWW, tomb-filtered (delete wins ties: >=) --
+    // -- Pages: per-id LWW, tomb-filtered, filtered by nb --
     var pageMap = {};
     [].concat(a.pages || [], b.pages || []).forEach(function (p) {
       if (!p || typeof p.id !== "string") return;
@@ -1458,17 +1689,20 @@
     var pages = Object.keys(pageMap).map(function (k) { return pageMap[k]; })
       .filter(function (p) {
         var tomb = tombs[p.id] || 0;
-        return !(tomb >= (p.mtime || 0));
+        var nbAlive = notebookIdsInMerge[p.nb];
+        return !(tomb >= (p.mtime || 0)) && nbAlive;
       })
       .map(function (p) {
-        // Dead label refs never survive the merge output
-        p.labels = (p.labels || []).filter(function (lid) { return labelAlive[lid]; });
+        // Dead label refs and wrong-nb refs never survive
+        p.labels = (p.labels || []).filter(function (lid) {
+          return labelIdsInMerge[lid];
+        });
         p.labels.sort();
         return p;
       })
       .sort(function (x, y) { return (x.mtime || 0) - (y.mtime || 0); });
 
-    return { ver: DATA_VER, pages: pages, labels: labels, tombs: tombs };
+    return { ver: DATA_VER, notebooks: notebooks, pages: pages, labels: labels, tombs: tombs };
   }
 
   // ---------- 8. Sync slice registration ----------
@@ -1477,31 +1711,39 @@
     // Deep-copy: the engine JSON-stringifies for comparison — a
     // live reference would race the debounce timer mid-edit.
     return JSON.parse(JSON.stringify({
-      ver: state.ver, pages: state.pages, labels: state.labels, tombs: state.tombs
+      ver: state.ver, notebooks: state.notebooks,
+      pages: state.pages, labels: state.labels, tombs: state.tombs
     }));
   }
 
   function sliceSet(data, info) {
     if (!data || typeof data !== "object") return;
     var incoming = JSON.stringify({
-      ver: data.ver, pages: data.pages || [], labels: data.labels || [], tombs: data.tombs || {}
+      ver: data.ver, notebooks: data.notebooks || [], pages: data.pages || [],
+      labels: data.labels || [], tombs: data.tombs || {}
     });
     var mine = JSON.stringify({
-      ver: state.ver, pages: state.pages, labels: state.labels, tombs: state.tombs
+      ver: state.ver, notebooks: state.notebooks, pages: state.pages,
+      labels: state.labels, tombs: state.tombs
     });
     if (incoming === mine) return;          // echo suppression — no re-render/toast
 
-    state.ver    = DATA_VER;
-    state.pages  = Array.isArray(data.pages)  ? data.pages  : [];
+    state.ver       = DATA_VER;
+    state.notebooks = Array.isArray(data.notebooks) ? data.notebooks : [];
+    state.pages     = Array.isArray(data.pages)     ? data.pages     : [];
     state.labels = Array.isArray(data.labels) ? data.labels : [];
     state.tombs  = (data.tombs && typeof data.tombs === "object") ? data.tombs : {};
 
     normalizeState();
     saveNow();
 
-    // Deleted current page? Re-anchor selection.
-    if (!pageById(prefs.current)) {
-      prefs.current = (state.pages[0] && state.pages[0].id) || null;
+    // Deleted current page (or its notebook)? Re-anchor selection
+    // within the CURRENT notebook — editor and tree never disagree.
+    var cur = pageById(prefs.current);
+    var nbId = currentNbId();
+    if (!cur || cur.nb !== nbId) {
+      var first = state.pages.filter(function (p) { return p.nb === nbId; })[0];
+      prefs.current = (first && first.id) || null;
     }
     savePrefs();
     renderAll();
@@ -1527,10 +1769,11 @@
     try {
       var raw = JSON.parse(localStorage.getItem(PREFS_KEY));
       if (raw && typeof raw === "object") {
-        prefs.open    = (raw.open && typeof raw.open === "object") ? raw.open : {};
-        prefs.current = (typeof raw.current === "string") ? raw.current : null;
-        prefs.width   = (typeof raw.width === "number" && raw.width >= 200 && raw.width <= 480)
-                        ? raw.width : 270;
+        prefs.open       = (raw.open && typeof raw.open === "object") ? raw.open : {};
+        prefs.current    = (typeof raw.current === "string") ? raw.current : null;
+        prefs.currentNb  = (typeof raw.currentNb === "string") ? raw.currentNb : null;
+        prefs.width      = (typeof raw.width === "number" && raw.width >= 200 && raw.width <= 480)
+                           ? raw.width : 270;
       }
     } catch (e) {}
     if (prefs.current && !pageByIdQuick(prefs.current)) prefs.current = null;
@@ -1541,6 +1784,90 @@
       return !!(d && d.pages && d.pages.some(function (p) { return p.id === id; }));
     } catch (e) { return false; }
   }
+  
+      // Notebook selector
+    var nbSel = document.getElementById("nb-selector");
+    if (nbSel) {
+      nbSel.addEventListener("change", function () {
+        var newNbId = nbSel.value;
+        if (newNbId !== prefs.currentNb) {
+          prefs.currentNb = newNbId;
+          var cur = pageById(prefs.current);
+          if (!cur || cur.nb !== newNbId) {
+            var first = state.pages.filter(function (p) { return p.nb === newNbId; })[0];
+            prefs.current = (first && first.id) || null;
+          }
+          savePrefs();
+          renderAll();
+        }
+      });
+      // Context menu for notebook actions
+      nbSel.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        var nb = currentNotebook();
+        if (!nb) return;
+        var menu = document.createElement("div");
+        menu.id = "nb-menu";
+        menu.style.cssText =
+          "position:fixed;z-index:999;background:var(--panel-bg);" +
+          "border:1px solid var(--border);border-radius:10px;" +
+          "padding:4px;box-shadow:0 12px 32px var(--shadow);";
+        var actions = [
+          [t("book.rename"), function () {
+            var name = window.prompt(t("book.rename"), nb.name);
+            if (name && name.trim()) {
+              renameNotebook(nb.id, name.trim());
+            }
+          }],
+          [t("book.delete"), function () {
+            deleteNotebook(nb.id);
+          }]
+        ];
+        actions.forEach(function (pair) {
+          var b = document.createElement("button");
+          b.className = "node-menu-item";
+          b.style.cssText =
+            "display:block;width:100%;min-height:38px;padding:6px 10px;" +
+            "background:transparent;border:none;border-radius:7px;" +
+            "color:var(--text);font:inherit;font-size:13.5px;" +
+            "text-align:left;cursor:pointer;";
+          b.textContent = pair[0];
+          b.addEventListener("click", function () {
+            menu.remove();
+            pair[1]();
+          });
+          menu.appendChild(b);
+        });
+        document.body.appendChild(menu);
+        menu.style.left = e.clientX + "px";
+        menu.style.top = e.clientY + "px";
+        // Close on outside click
+        setTimeout(function () {
+          document.addEventListener("click", function closeMenu(ev) {
+            if (!menu.contains(ev.target)) {
+              menu.remove();
+              document.removeEventListener("click", closeMenu);
+            }
+          }, { once: true });
+        }, 0);
+      });
+      // Also add "New notebook" button nearby (tree-header area)
+      var newNbBtn = document.createElement("button");
+      newNbBtn.className = "icon-btn";
+      newNbBtn.id = "btn-new-notebook";
+      newNbBtn.innerHTML = PLUS_SVG;
+      newNbBtn.title = t("book.new");
+      newNbBtn.setAttribute("aria-label", t("book.new"));
+      newNbBtn.style.cssText = "margin-left:6px;flex:0 0 auto;";
+      newNbBtn.addEventListener("click", function () {
+        var name = window.prompt(t("book.new"), t("book.default"));
+        if (name && name.trim()) {
+          createNotebook(name.trim());
+        }
+      });
+      var hdr = document.getElementById("tree-header");
+      if (hdr) hdr.appendChild(newNbBtn);
+    }
 
   function initSplitter() {
     var sp = document.getElementById("pane-splitter");
@@ -1604,7 +1931,7 @@
       seBtn.addEventListener("click", openSearch);
       newBtn.parentNode.insertBefore(seBtn, newBtn);
 
-      // Export zip → right after +
+      // Export dropdown → current notebook OR all notebooks
       var exBtn = document.createElement("button");
       exBtn.id = "btn-export-notebook";
       exBtn.type = "button";
@@ -1612,7 +1939,10 @@
       exBtn.title = t("menu.exportNotebook");
       exBtn.setAttribute("aria-label", t("menu.exportNotebook"));
       exBtn.innerHTML = DL_SVG;
-      exBtn.addEventListener("click", function () { exportNotebookZip(); });
+      exBtn.addEventListener("click", function () {
+        var sel = window.confirm("OK = Current notebook only\nCancel = All notebooks");
+        exportNotebookZip(sel);
+      });
       newBtn.parentNode.insertBefore(exBtn, newBtn.nextSibling);
 
       // Tags → last

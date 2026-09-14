@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.27.07";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.28.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1544,8 +1544,8 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
-        '<div class="sc-foot"><a href="https://github.com/koulaxizis/oros" ' +
-          'target="_blank" rel="noopener">' + escapeHtml(window.t("sc.info.repo")) + ': koulaxizis/oros</a>' +
+        '<div class="sc-foot"><span>' + escapeHtml(window.t("sc.info.repo")) + ': <a href="https://github.com/koulaxizis/oros" ' +
+          'target="_blank" rel="noopener">koulaxizis/oros</a></span>' +
           '<span class="sc-cred"> · Designed by <a href="https://koulaxizis.gr" ' +
           'target="_blank" rel="noopener">Christos Koulaxizis</a></span></div>' +
       '</div>';
