@@ -1,5 +1,5 @@
 // ============================================================
-orOS Core v0.27.0 — Service Worker
+// orOS Core v0.27.0 — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
