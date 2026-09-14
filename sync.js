@@ -274,16 +274,25 @@
   }
 
   function contentDownload(path) {
-    return ensureFreshToken().then(function (token) {
-      return fetch(CONTENT_API + "files/download", {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + token,
-          "Dropbox-API-Arg": JSON.stringify({ path: path })
-        }
-      });
+  return ensureFreshToken().then(function (token) {
+    return fetch(CONTENT_API + "files/download", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Dropbox-API-Arg": JSON.stringify({ path: path })
+      }
+    }).then(function (res) {
+      if (!res.ok) {
+        console.warn("orOS sync: Dropbox download failed:", res.status);
+        throw new Error("download failed: " + res.status);
+      }
+      return res;
+    }).catch(function (err) {
+      console.error("orOS sync: contentDownload network error:", err);
+      throw new Error("network error: " + (err.message || "unknown"));
     });
-  }
+  });
+}
 
   function contentUpload(path, text) {
     return ensureFreshToken().then(function (token) {
@@ -887,15 +896,19 @@
         if (!res.ok) throw new Error("download failed: " + res.status);
         return res.text();
       })
-      .then(function (blobText) {
+            .then(function (blobText) {
         if (!blobText) return { ok: true, empty: true, applied: 0 };
         return decryptBlob(blobText)
           .then(function (payload) {
             var applied = applyPayload(payload);
             return { ok: true, empty: false, applied: applied };
           });
+      })
+      .catch(function (err) {
+        console.error("orOS sync: pull() failed:", err);
+        throw err;
       });
-  }
+}
 
   function push() {
     if (suspended)      return Promise.reject(new Error("engine-suspended"));
