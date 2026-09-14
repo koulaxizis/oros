@@ -9,7 +9,7 @@
   "orientation": "any",
   "background_color": "#131820",
   "theme_color": "#1b1a18",
-  "version": "0.27.05",
+  "version": "0.27.06",
   "icons": [
     {
       "src": "/icon.svg",
