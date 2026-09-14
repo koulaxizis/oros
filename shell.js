@@ -24,7 +24,11 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.28.05";   // bump on every deploy (shows welcome toast)
+  // Factory reset stage 2 — hoisted factoryResetPending() runs before
+  // anything can open IndexedDB. True = boot halted, clean reload follows.
+  if (factoryResetPending()) return;
+
+  var APP_VERSION = "0.29.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1544,6 +1548,7 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
+        '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
         '<div class="sc-foot"><span>' + escapeHtml(window.t("sc.info.repo")) + ': <a href="https://github.com/koulaxizis/oros" ' +
           'target="_blank" rel="noopener">koulaxizis/oros</a></span>' +
           '<span class="sc-cred"> · Designed by <a href="https://koulaxizis.gr" ' +
@@ -1567,7 +1572,152 @@
     document.addEventListener("keydown", onKey);
     scInfoClose = close;    // registered so the toggle path can call it too
 
+    wireResetButton(ov);    // α: factory reset row
+
     document.body.appendChild(ov);
+  }
+
+  // ---------- Factory reset (goal α) — BRAND NEW OS ----------
+  // Radical wipe, in order: engine suspended → in-flight waits out →
+  // CLOUD (blob + backups deleted, Dropbox authorization REVOKED) →
+  // folder-mirror snapshot files → local prefix sweep → IDB stage-2
+  // (see factoryResetPending) → reload as first run. Double confirm
+  // inline, inline styles, zero CSS additions.
+
+  var osResetting = false;
+
+  function wireResetButton(ov) {
+    var wrap = ov.querySelector("#sc-reset-wrap");
+    if (!wrap) return;
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.style.cssText =
+      "display:block;width:100%;margin-top:12px;padding:7px 12px;" +
+      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;";
+    btn.textContent = window.t("sc.reset");
+    var armed = false, hint = null, disarmTimer = null;
+
+    btn.addEventListener("click", function () {
+      if (btn.disabled) return;
+      if (!armed) {
+        armed = true;
+        btn.textContent = window.t("sc.reset.confirm");
+        btn.style.borderColor = "#e06c75";
+        btn.style.color = "#e06c75";
+        hint = document.createElement("div");
+        hint.style.cssText =
+          "font-size:11px;line-height:1.5;color:var(--text-dim);" +
+          "margin-top:6px;text-align:center;";
+        hint.textContent = window.t("sc.reset.hint");
+        wrap.appendChild(hint);
+        disarmTimer = setTimeout(function () {
+          armed = false;
+          btn.textContent = window.t("sc.reset");
+          btn.style.borderColor = "var(--border)";
+          btn.style.color = "var(--text-dim)";
+          if (hint && hint.parentNode) hint.remove();
+        }, 10000);
+        return;
+      }
+      clearTimeout(disarmTimer);
+      scFactoryReset(btn);
+    });
+
+    wrap.appendChild(btn);
+  }
+
+  // Folder-mirror wipe: every orOS-snapshot-*.json in the chosen
+  // backup folder. BEST-EFFORT — a lapsed permission simply skips
+  // it (transient activation expires once the async legs start).
+  function wipeFolderMirror() {
+    if (!fsSupported()) return Promise.resolve(false);
+    return loadFolderHandle().then(function (handle) {
+      if (!handle || typeof handle.values !== "function") return false;
+      return handle.queryPermission({ mode: "readwrite" }).then(function (perm) {
+        if (perm !== "granted") return false;
+        var it = handle.values();
+        function drain(found) {
+          return it.next().then(function (r) {
+            if (r.done) return found;
+            var e = r.value;
+            if (e && e.name && e.name.indexOf("orOS-snapshot-") === 0) {
+              found.push(e.name);
+            }
+            return drain(found);
+          });
+        }
+        return drain([]).then(function (names) {
+          return names.reduce(function (chain, n) {
+            return chain.then(function () { return handle.removeEntry(n); });
+          }, Promise.resolve()).then(function () { return names.length; });
+        });
+      });
+    }).catch(function () { return false; });
+  }
+
+  function scFactoryReset(btn) {
+    btn.disabled = true;
+    btn.textContent = window.t("sc.reset.working");
+
+    // Cloud wipe (15s cap — a hanging network can never freeze the
+    // reset; wipeEverything suspends the engine synchronously at call).
+    var cloud = (window.orosSync && typeof window.orosSync.wipeEverything === "function")
+      ? Promise.race([
+          window.orosSync.wipeEverything(),
+          new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
+        ]).catch(function () { return null; })
+      : Promise.resolve(null);
+
+    // Folder wipe FIRST — it needs the oros-fs handle, which the
+    // upcoming local sweep would orphan.
+    Promise.all([wipeFolderMirror(), cloud]).then(function () {
+      function sweep(storage) {
+        var doomed = [];
+        for (var i = 0; i < storage.length; i++) {
+          var k = storage.key(i);
+          if (k && k.indexOf("oros-") === 0) doomed.push(k);
+        }
+        for (var j = 0; j < doomed.length; j++) storage.removeItem(doomed[j]);
+      }
+      try { sweep(sessionStorage); } catch (e) {}   // PKCE verifier
+      sweep(localStorage);
+
+      osResetting = true;   // the beforeunload guard stays silent
+
+      // Stage-2 marker — set AFTER the sweep on purpose (survives it).
+      // Consumed by factoryResetPending() on the next boot, where no
+      // IDB connection is open yet, so deleteDatabase() lands cleanly.
+      localStorage.setItem("oros-reset-db", "1");
+      location.reload();
+    });
+  }
+
+  // STAGE 2 — called from the very top of this IIFE (function
+  // declarations hoist, so the early call is legal). By this point
+  // in a post-reset boot: VAULT_KEY is gone (swept) → sync.js's vault
+  // chain short-circuits WITHOUT opening IndexedDB → both databases
+  // delete without blocking. Removes the marker first (no loop), then
+  // reloads clean. Returns true = this boot is halted on purpose.
+  function factoryResetPending() {
+    if (localStorage.getItem("oros-reset-db") !== "1") return false;
+    localStorage.removeItem("oros-reset-db");
+    var reloaded = false;
+    function bail() {
+      if (reloaded) return;
+      reloaded = true;
+      location.reload();
+    }
+    ["oros-vault", "oros-fs"].forEach(function (name) {
+      try {
+        var req = indexedDB.deleteDatabase(name);
+        req.onsuccess = function () { setTimeout(bail, 50); };
+        req.onerror   = function () { setTimeout(bail, 50); };
+        req.onblocked = function () { setTimeout(bail, 50); };
+      } catch (e) { setTimeout(bail, 50); }
+    });
+    setTimeout(bail, 1200);   // hard cap — blocked DBs can't hang the reset
+    return true;
   }
 
   // THE table. Order = documentation order. Adding a shortcut =
@@ -2204,6 +2354,7 @@
   // Unsynced-changes guard: warn on close when dirty AND online
   // (offline data is safe in localStorage — nothing to warn about).
   window.addEventListener("beforeunload", function (e) {
+    if (osResetting) return;   // factory reset owns this unload
     if (window.orosSync && window.orosSync.isDirty() && navigator.onLine) {
       e.preventDefault();
       e.returnValue = "";

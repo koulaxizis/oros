@@ -42,6 +42,13 @@
       "board.create":     "New board",
       "board.manage":     "Manage boards...",
       "board.close":      "Close",
+      "board.archive":    "Archive board",
+      "board.unarchive":  "Unarchive board",
+      "board.archived":   "Archived",
+      "board.color":      "Color",
+      "toast.boardarchived":   "Board archived",
+      "toast.boardunarchived": "Board unarchived",
+      "toast.boardarchlast":   "At least one board must stay active",
       "board.rename":     "Rename board",
       "board.delete":     "Delete board",
       "board.duplicate":  "Duplicate board",
@@ -80,7 +87,6 @@
       "toast.duplicated": "Duplicated",
       "toast.labeladd":   "Label created",
       "toast.labeldel":   "Label deleted",
-      "toast.merged":     "Synced changes from another device",
       "save":             "Save",
       "col.settings":     "Column settings",
       "col.name":         "Name",
@@ -104,6 +110,13 @@
       "board.create":     "Νέο board",
       "board.manage":     "Διαχείριση boards...",
       "board.close":      "Κλείσιμο",
+      "board.archive":    "Αρχειοθέτηση board",
+      "board.unarchive":  "Επαναφορά board",
+      "board.archived":   "Αρχειοθετημένα",
+      "board.color":      "Χρώμα",
+      "toast.boardarchived":   "Το board αρχειοθετήθηκε",
+      "toast.boardunarchived": "Το board επαναφέρθηκε",
+      "toast.boardarchlast":   "Τουλάχιστον ένα board πρέπει να παραμείνει ενεργό",
       "board.rename":     "Μετονομασία board",
       "board.delete":     "Διαγραφή board",
       "board.duplicate":  "Αντιγραφή board",
@@ -142,7 +155,6 @@
       "toast.duplicated": "Αντιγράφηκε",
       "toast.labeladd":   "Η ετικέτα δημιουργήθηκε",
       "toast.labeldel":   "Η ετικέτα διαγράφηκε",
-      "toast.merged":     "Συγχρονίστηκαν αλλαγές από άλλη συσκευή",
       "save":             "Αποθήκευση",
       "col.settings":     "Ρυθμίσεις στήλης",
       "col.name":         "Όνομα",
@@ -867,10 +879,9 @@
     }
 
     scheduleRender();
-
-    if (info && info.merged) {
-      showToast(t("toast.merged"), false);   // ορατή σύγκλιση
-    }
+    // toast.merged removed: εμφανιζόταν σε ΚΑΘΕ sync pull (το info.merged
+    // σημαίνει «χρησιμοποιήθηκε merge engine», ΟΧΙ «άλλαξαν δεδομένα»).
+    // Feedback sync = το taskbar sync dot.
   }
 
   function boardByIdIn(boards, id) {
@@ -952,6 +963,7 @@
     var bName = board ? board.name : t("board.default");
 
     boardBtn.innerHTML =
+      '<span class="board-dot" style="background:' + (board ? (board.color || FALLBACK_COLOR) : FALLBACK_COLOR) + '"></span>' +
       '<span class="board-name">' + escapeHtml(bName) + '</span>' +
       '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
 
@@ -1017,28 +1029,26 @@
     pop.id = "board-dropdown-pop";
     pop.className = "dropdown-pop";
 
-    state.boards.forEach(function (bd, i) {
-      var item = document.createElement("button");
-      item.type = "button";
-      item.className = "dropdown-item" + (bd.id === state.activeBoardId ? " active" : "");
-      
-      var name = document.createElement("span");
-      name.className = "dropdown-name";
-      name.textContent = bd.name;
-      item.appendChild(name);
+    renderBoardDropdownItems(pop);
+    anchor.appendChild(pop);
 
-      var meta = document.createElement("span");
-      meta.className = "dropdown-meta";
-      var colCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
-      meta.textContent = String(bd.columns.length) + " " + (LANG === "el" ? "στήλες" : "columns") +
-                         " · " + String(colCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
-      item.appendChild(meta);
+    // Close on outside click
+    setTimeout(function () {
+      boardDropdownOpen = true;
+      document.addEventListener("click", closeOutsideHandler);
+    }, 0);
+  }
 
-      item.addEventListener("click", function () {
-        switchBoard(bd.id);
-      });
+  // (Re)γεμίζει το dropdown popover — καλείται ξανά μετά από reorder
+  // ώστε η νέα σειρά να φαίνεται ΧΩΡΙΣ να κλείνει το popover (δεν
+  // περνάμε από renderAll/renderBoardHeader — θα σκότωναν το pop).
+  function renderBoardDropdownItems(pop) {
+    pop.innerHTML = "";
 
-      pop.appendChild(item);
+    // Ζωντανά boards μόνο — τα αρχειοθετημένα ζουν στο Manage dialog
+    var live = state.boards.filter(function (b) { return !b.archived; });
+    live.forEach(function (bd) {
+      pop.appendChild(makeBoardDropItem(bd, pop));
     });
 
     // Divider
@@ -1058,14 +1068,149 @@
       createBoard();
     });
     pop.appendChild(newItem);
+  }
 
-    anchor.appendChild(pop);
+  function makeBoardDropItem(bd, pop) {
+    var item = document.createElement("button");
+    item.type = "button";
+    item.className = "dropdown-item" + (bd.id === state.activeBoardId ? " active" : "");
+    item.dataset.boardId = bd.id;
 
-    // Close on outside click
-    setTimeout(function () {
-      boardDropdownOpen = true;
-      document.addEventListener("click", closeOutsideHandler);
-    }, 0);
+    var dot = document.createElement("span");
+    dot.className = "board-dot";
+    dot.style.background = bd.color || FALLBACK_COLOR;
+    item.appendChild(dot);
+
+    var name = document.createElement("span");
+    name.className = "dropdown-name";
+    name.textContent = bd.name;
+    item.appendChild(name);
+
+    var meta = document.createElement("span");
+    meta.className = "dropdown-meta";
+    var colCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
+    meta.textContent = String(bd.columns.length) + " " + (LANG === "el" ? "στήλες" : "columns") +
+                       " · " + String(colCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
+    item.appendChild(meta);
+
+    item.addEventListener("click", function () {
+      switchBoard(bd.id);
+    });
+
+    attachBoardDrag(item, bd, pop);
+
+    return item;
+  }
+
+  // Drag-reorder boards μέσα στο dropdown (ίδιο pointer pattern με
+  // τις στήλες: threshold + mark above/below). Το reorder stampάρει
+  // state.om — αυτή η πλευρά προσφέρει τη σειρά boards στο merge.
+  function attachBoardDrag(item, bd, pop) {
+    item.addEventListener("pointerdown", function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+
+      var started = false;
+      var sx = e.clientX, sy = e.clientY;
+
+      function beginDrag() {
+        started = true;
+        item.classList.add("dragging");
+        item.style.pointerEvents = "none";
+        document.body.classList.add("is-dragging");
+      }
+
+      function clearMarks() {
+        var marked = pop.querySelectorAll(".drag-over-above, .drag-over-below");
+        for (var i = 0; i < marked.length; i++) {
+          marked[i].classList.remove("drag-over-above", "drag-over-below");
+        }
+      }
+
+      function onMove(ev) {
+        if (!started) {
+          var dx = ev.clientX - sx, dy = ev.clientY - sy;
+          if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+          beginDrag();
+        }
+        ev.preventDefault();
+        clearMarks();
+        var hit = document.elementFromPoint(ev.clientX, ev.clientY);
+        if (!hit || !hit.closest) return;
+        var target = hit.closest(".dropdown-item");
+        if (!target || target === item || !target.dataset.boardId) return;
+        var r = target.getBoundingClientRect();
+        if (ev.clientY < r.top + r.height / 2) target.classList.add("drag-over-above");
+        else                                        target.classList.add("drag-over-below");
+      }
+
+      function finish(ev) {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+
+        if (!started) return;              // ήταν tap → αφήνουμε το click να δράσει
+
+        var hit = document.elementFromPoint(ev.clientX, ev.clientY);
+        item.classList.remove("dragging");
+        item.style.pointerEvents = "";
+        document.body.classList.remove("is-dragging");
+        clearMarks();
+
+        if (!hit || !hit.closest) return;
+        var target = hit.closest(".dropdown-item");
+        if (target && target !== item && target.dataset.boardId) {
+          var r = target.getBoundingClientRect();
+          var before = ev.clientY < r.top + r.height / 2;
+          if (moveBoard(bd.id, target.dataset.boardId, before)) {
+            renderBoardDropdownItems(pop);   // νέα σειρά, popover ανοιχτό
+          }
+        }
+      }
+
+      function onUp(ev) { finish(ev); }
+      function onCancel() {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+        if (started) {
+          item.classList.remove("dragging");
+          item.style.pointerEvents = "";
+          document.body.classList.remove("is-dragging");
+          clearMarks();
+        }
+      }
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onCancel);
+    });
+  }
+
+  // moveBoard — reorder μέσα στο state.boards + stamp state.om.
+  // Επιστρέφει true αν έγινε μετακίνηση.
+  function moveBoard(srcId, destId, before) {
+    var from = -1;
+    for (var i = 0; i < state.boards.length; i++) {
+      if (state.boards[i].id === srcId) { from = i; break; }
+    }
+    if (from === -1) return false;
+
+    var bd = state.boards.splice(from, 1)[0];
+
+    var to = -1;
+    for (var j = 0; j < state.boards.length; j++) {
+      if (state.boards[j].id === destId) { to = j; break; }
+    }
+    if (to === -1) {                     // paranoia — restore source
+      state.boards.splice(from, 0, bd);
+      return false;
+    }
+
+    state.boards.splice(before ? to : to + 1, 0, bd);
+    state.om = Date.now();               // αυτή η πλευρά προσφέρει τη σειρά
+    state.boards.forEach(function (b, i) { b.pos = i; });
+    save();
+    return true;
   }
 
   function closeBoardDropdown() {
@@ -1157,78 +1302,165 @@
     if (!host) return;
     host.innerHTML = "";
 
-    state.boards.forEach(function (bd) {
-      var row = document.createElement("div");
-      row.className = "manage-row";
+    // Ζωντανά πρώτα, μετά τα αρχειοθετημένα με τηνου their σειρά
+    var live    = state.boards.filter(function (b) { return !b.archived; });
+    var archived = state.boards.filter(function (b) { return  !!b.archived; });
 
-      var active = bd.id === state.activeBoardId;
-      if (active) row.classList.add("active");
+    if (live.length > 0) host.appendChild(makeManageSection(live, false));
+    if (archived.length > 0) host.appendChild(makeManageSection(archived, true));
+  }
 
-      var check = document.createElement("span");
-      check.className = "manage-check";
-      check.innerHTML = ICNS.check;
-      if (!active) check.style.opacity = "0.3";
-      row.appendChild(check);
+  function makeManageSection(boards, isArchived) {
+    var frag = document.createDocumentFragment();
 
-      var info = document.createElement("div");
-      info.className = "manage-info";
+    if (isArchived) {
+      var hdr = document.createElement("div");
+      hdr.className = "manage-section-hdr";
+      hdr.textContent = t("board.archived");
+      frag.appendChild(hdr);
+    }
 
-      var name = document.createElement("div");
-      name.className = "manage-name";
-      name.textContent = bd.name;
-      info.appendChild(name);
+    boards.forEach(function (bd) { frag.appendChild(makeManageRow(bd, isArchived)); });
+    return frag;
+  }
 
-      var meta = document.createElement("div");
-      meta.className = "manage-meta";
-      var colCount = bd.columns.length;
-      var cardCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
-      meta.textContent = String(colCount) + " " + (LANG === "el" ? "στήλες, " : "columns, ") +
-                         String(cardCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
-      info.appendChild(meta);
+  function makeManageRow(bd, isArchived) {
+    var row = document.createElement("div");
+    row.className = "manage-row" + (isArchived ? " is-archived" : "");
 
-      row.appendChild(info);
+    var active = bd.id === state.activeBoardId;
+    if (active) row.classList.add("active");
 
-      var actions = document.createElement("div");
-      actions.className = "manage-actions";
+    var check = document.createElement("span");
+    check.className = "manage-check";
+    check.innerHTML = ICNS.check;
+    if (!active) check.style.opacity = "0.3";
+    row.appendChild(check);
 
-      var renameBtn = document.createElement("button");
-      renameBtn.type = "button";
-      renameBtn.className = "manage-rename";
-      renameBtn.setAttribute("title", t("board.rename"));
-      renameBtn.innerHTML = ICNS.pencil;
-      renameBtn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        renameCurrentBoard(bd.id);
-      });
-      actions.appendChild(renameBtn);
-
-      var dupBtn = document.createElement("button");
-      dupBtn.type = "button";
-      dupBtn.className = "manage-duplicate";
-      dupBtn.setAttribute("title", t("board.duplicate"));
-      dupBtn.innerHTML = ICNS.copy;
-      dupBtn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        duplicateBoard(bd.id);
-      });
-      actions.appendChild(dupBtn);
-
-      if (state.boards.length > 1) {
-        var delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "manage-delete";
-        delBtn.setAttribute("title", t("board.delete"));
-        delBtn.innerHTML = ICNS.trash;
-        delBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          deleteBoard(bd.id);
-        });
-        actions.appendChild(delBtn);
-      }
-
-      row.appendChild(actions);
-      host.appendChild(row);
+    // Board color dot (②) — κλικ ανοίγει swatches inline
+    var dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "manage-dot";
+    dot.style.background = bd.color || FALLBACK_COLOR;
+    dot.setAttribute("title", t("board.color"));
+    dot.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggleManageSwatches(bd, row);
     });
+    row.appendChild(dot);
+
+    var info = document.createElement("div");
+    info.className = "manage-info";
+
+    var name = document.createElement("div");
+    name.className = "manage-name";
+    name.textContent = bd.name;
+    info.appendChild(name);
+
+    var meta = document.createElement("div");
+    meta.className = "manage-meta";
+    var colCount = bd.columns.length;
+    var cardCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
+    meta.textContent = String(colCount) + " " + (LANG === "el" ? "στήλες, " : "columns, ") +
+                       String(cardCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
+    info.appendChild(meta);
+
+    row.appendChild(info);
+
+    var actions = document.createElement("div");
+    actions.className = "manage-actions";
+
+    var renameBtn = document.createElement("button");
+    renameBtn.type = "button";
+    renameBtn.className = "manage-rename";
+    renameBtn.setAttribute("title", t("board.rename"));
+    renameBtn.innerHTML = ICNS.pencil;
+    renameBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      renameCurrentBoard(bd.id);
+    });
+    actions.appendChild(renameBtn);
+
+    var dupBtn = document.createElement("button");
+    dupBtn.type = "button";
+    dupBtn.className = "manage-duplicate";
+    dupBtn.setAttribute("title", t("board.duplicate"));
+    dupBtn.innerHTML = ICNS.copy;
+    dupBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      duplicateBoard(bd.id);
+    });
+    actions.appendChild(dupBtn);
+
+    // Archive / Unarchive (④) — πάντα διαθέσιμο
+    var archBtn = document.createElement("button");
+    archBtn.type = "button";
+    archBtn.className = "manage-archive";
+    archBtn.setAttribute("title", isArchived ? t("board.unarchive") : t("board.archive"));
+    archBtn.innerHTML = isArchived ? ICNS.unarchive : ICNS.archive;
+    archBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      archiveBoard(bd.id, !isArchived);
+      renderManageList();
+    });
+    actions.appendChild(archBtn);
+
+    if (state.boards.length > 1) {
+      var delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "manage-delete";
+      delBtn.setAttribute("title", t("board.delete"));
+      delBtn.innerHTML = ICNS.trash;
+      delBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        deleteBoard(bd.id);
+        renderManageList();
+      });
+      actions.appendChild(delBtn);
+    }
+
+    row.appendChild(actions);
+    return row;
+  }
+
+  // Inline swatches (②) — εμφανίζονται κάτω από τη row που τα ζήτησε
+  var manageSwatchRow = null;
+
+  function toggleManageSwatches(bd, row) {
+    // Ήδη ανοιχτά για αυτή τη row → κλείσιμο (toggle)
+    if (manageSwatchRow && manageSwatchRow.dataset.forBoardId === bd.id) {
+      manageSwatchRow.remove();
+      manageSwatchRow = null;
+      return;
+    }
+    if (manageSwatchRow) { manageSwatchRow.remove(); manageSwatchRow = null; }
+
+    var host = $("manage-list");
+    if (!host) return;
+
+    var sw = document.createElement("div");
+    sw.className = "manage-swatches";
+    sw.dataset.forBoardId = bd.id;
+
+    // «Καθαρό» = fallback χρώμα (accent) — πρώτη επιλογή
+    var swatches = SWATCH_COLORS.slice();
+    swatches.unshift(null);
+    swatches.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "lbl-swatch" + ((bd.color || FALLBACK_COLOR) === (c || FALLBACK_COLOR) ? " sel" : "");
+      b.style.background = c || FALLBACK_COLOR;
+      b.addEventListener("click", function () {
+        bd.color = c || undefined;
+        bd.mtime = Date.now();           // LWW στο merge
+        save();
+        renderManageList();
+        renderAll();                     // φρεσκάρει το dropdown dot
+      });
+      sw.appendChild(b);
+    });
+    host.insertBefore(sw, row.nextSibling);
+    manageSwatchRow = sw;
   }
 
   // Icon constants (inline SVG for management UI)
@@ -1236,7 +1468,9 @@
     check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
     pencil: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
     copy: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
-    trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+    trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    archive: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>',
+    unarchive: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="12" y1="12" x2="12" y2="18"/><polyline points="9 15 12 18 15 15"/></svg>'
   };
 
   var editingBoardId = null;
@@ -1338,9 +1572,39 @@
       state.activeBoardId = state.boards.length > 0 ? state.boards[0].id : null;
     }
 
-    save();
-    renderAll();
+        save(); renderAll();
     showToast(t("toast.boarddel"), false);
+  }
+
+  // Archive = soft-hide (browser-bar αποκρύβεται από dropdown), ΟΧΙ διαγραφή.
+  // Το board παραμένει στο state.boards και συγχρονίζεται κανονικά —
+  // ΔΕΝ γράφεται root tombstone, άρα καμία απώλεια δεδομένων.
+  // Τα δεδομένα του συνεχίζουν να ζουν στο merge (union by id)·
+  // sync-safe: το `archived` flag είναι LWW μέσω board.mtime.
+  function archiveBoard(boardId, archived) {
+    var bd = boardByIdIn(state.boards, boardId);
+    if (!bd) return;
+
+    if (archived) {
+      // Δεν αρχειοθετούμε το τελευταίο ενεργό board
+      var live = state.boards.filter(function (b) { return !b.archived; });
+      if (live.length <= 1 && !bd.archived) {
+        showToast(t("toast.boardarchlast"), false);
+        return;
+      }
+    }
+
+    bd.archived = !!archived;
+    bd.mtime = Date.now();               // LWW στο merge
+
+    // Αν αρχειοθετήσαμε το ενεργό board, πήδα στο πρώτο ζωντανό
+    if (archived && state.activeBoardId === boardId) {
+      var next = state.boards.filter(function (b) { return !b.archived; })[0];
+      if (next) switchBoard(next.id);
+    }
+
+    save(); renderAll();
+    showToast(archived ? t("toast.boardarchived") : t("toast.boardunarchived"), false);
   }
 
   function escapeHtml(s) {
@@ -2560,6 +2824,18 @@
         save(); renderAll();
       });
     }
+
+    // Alt+B → γρήγορη δημιουργία νέου board (δεν συγκρούεται με
+    // browser shortcuts — δεν υπάρχει browser reserve στο Alt+B)
+    document.addEventListener("keydown", function (e) {
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+          (e.key === "b" || e.key === "B")) {
+        e.preventDefault();
+        closeBoardDropdown();
+        if ($("manage-dialog") && $("manage-dialog").open) $("manage-dialog").close();
+        createBoard();
+      }
+    });
   }
 
   function boot() {

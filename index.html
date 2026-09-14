@@ -33,8 +33,6 @@
 </head>
 <body>
 
-<body>
-
   <!-- ================= BOOT SPLASH =================
        Static in HTML: visible BEFORE any JS parses, so the user
        can never reach an app before the SW update check settles.
@@ -50,6 +48,16 @@
     var s = document.getElementById("oro-splash");
     var txt = document.getElementById("oro-splash-text");
     if (!s) return;
+    // (β) update-triggered reload: NO second splash — the user was
+    // already looking at this same screen. The broker sets the flag
+    // right before reloading (controllerchange); consume it here.
+    try {
+      if (sessionStorage.getItem("oros-skip-splash") === "1") {
+        sessionStorage.removeItem("oros-skip-splash");
+        if (s.parentNode) s.parentNode.removeChild(s);
+        return;
+      }
+    } catch (e) {}
     // Greek from the very first frame if it's the stored language
     // (translations.js loads too late to matter for the splash)
     try {

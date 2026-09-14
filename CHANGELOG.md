@@ -1570,3 +1570,112 @@ All findings below were reviewed item-by-item and approved.
 ### Polish (post-audit)
 - Board rename: replaced browser `prompt()` with native `#dlg-board` dialog (same pattern as column rename; Esc/backdrop-safe, zero-edit close doesn't stamp mtime)
 - Quick rename: dblclick on board selector opens rename dialog (desktop); Manage dialog remains the canonical path on mobile
+
+────────────────────────────────────────────────────────────────
+KANBAN MULTI-BOARD WAVE (app v0.6.x) — DELIVERED, TEST PENDING
+────────────────────────────────────────────────────────────────
+
+STATE: all code delivered as OLD/NEW patches in the previous chat.
+NOTHING is user-tested yet. This block is the delivery ledger:
+before debugging anything Kanban, confirm the patch chain (R4).
+
+## v0.6.0 — Multi-board architecture (DATA_VER 4 → 5)
+
+Schema/migration:
+- state wraps into state.boards[] — each board: id, name, columns,
+  labels, mtime, color?, archived?, (per-board deleted tombs)
+- Migration (non-destructive): existing single-board data wrapped
+  into board "Main"/"Κύριο"; activeBoardId initialized. DATA_VER 5.
+- activeBoardId is DEVICE-LOCAL — stripped before push, never
+  synced (each device remembers its own open board).
+
+Merge engine (extend):
+- Board-level UNION by id; name/color/archived = LWW by board
+  mtime (tie → lexicographic JSON, R5 symmetric).
+- Nested per-board merge: columns/cards/labels follow the v0.5
+  contract unchanged.
+- BOARD DELETION = ROOT-level tombstone map state.boardDeleted
+  {boardId: ts} — CRITICAL: never tombstone inside bd (board is
+  removed from boards[], inner tombs would be lost → resurrection
+  on the other device; this exact bug was found in delivery
+  review). boardAlive() consults ONLY state.boardDeleted.
+- Root tombstones prune after TOMB_LIFETIME_MS (30d) — pruned in
+  load() AND merge; delete-any-board with mtime newer than its
+  tombstone resurrects (deliberate, matches app patterns).
+
+UI:
+- #board-header (kanban.html) — dynamic, rendered by
+  renderBoardHeader(): .board-dropdown (selector btn + popover,
+  popover anchored to .board-dropdown, position:relative, z 950)
+  + .board-actions (new / manage).
+- Static <h1 id="board-title"> REMOVED from header.
+- Manage dialog (dynamic): list rows, rename pencil, duplicate,
+  delete (confirm), archive toggle, color dot + inline swatches.
+- #dlg-board (kanban.html): native rename dialog replacing
+  prompt() — commit on ANY close path, zero-edit close does NOT
+  stamp mtime (fingerprint rule, R11-era pattern).
+- Alt+B = quick-create board (closes popover + manage first).
+- dblclick on board selector = quick rename (desktop; mobile path
+  stays via Manage dialog).
+
+v0.6.0 AUDIT PATCHES (found in cross-check vs kanban.html/css —
+ALL delivered, NONE confirmed applied):
+  P1  kanban.html: #board-header added (h1 removed)
+  P2  renderAll empty-state: querySelector("h3"/"p") → "span"/
+      "small" (was a guaranteed TypeError on empty board)
+  P3  deleteBoard: root tombstone only (the resurrection bug)
+  P4  popover anchored to .board-dropdown (was #board-header —
+      misaligned, no positioning context)
+  P5  renderBoardHeader: closeBoardDropdown() BEFORE innerHTML
+      wipe (dangling open-flag + document listener)
+  P6  i18n key board.close (en/el) — manage close was t("save")
+  P7  load(): prune state.boardDeleted > 30d
+  P8  kanban.css: full section 2b (board header, popover, manage
+      dialog, drag states) + mobile @media rules
+
+v0.6.1 — POLISH WAVE (delivered after, chained on P1-P8):
+  PA  kanban.html: #dlg-board rename dialog
+  PB  renameCurrentBoard rewritten: dialog-based, editingBoardId
+      module var, close handler stamps mtime ONLY on real change
+  PC  dblclick on board selector → rename
+  P1' openBoardDropdown SPLIT: openBoardDropdown() +
+      renderBoardDropdownItems(pop) + makeBoardDropItem() +
+      attachBoardDrag() + moveBoard() — live-board filter, popover
+      STAYS OPEN on reorder (no renderAll through header)
+  P2' i18n keys: board.archive/unarchive/archived/color +
+      toast.boardarchived/boardunarchived/boardarchlast (en+el)
+  P3' archiveBoard(boardId, archived): soft-hide, NO tombstone,
+      archived flag LWW via mtime; last-live-board guard (toast);
+      auto-switch away if active board archived
+  P4' renderManageList rewritten: live section + "Archived"
+      section (makeManageSection/makeManageRow), color dot
+      button (toggleManageSwatches — inline swatch row, "clear"
+      = null = fallback accent), archive/unarchive btn, list
+      refreshes immediately after rename/archive/delete
+  P5' board dot in selector (.board-dot)
+  P6' Alt+B listener in wire()
+  P7' CSS: .board-dot, archived section styles, .manage-dot,
+      .manage-swatches, .manage-archive, drag-over marks;
+      mobile hides .manage-archive (archive only via Manage)
+  ICNS: archive + unarchive SVGs added to ICNS map
+  NOTE: drag-reorder stamps state.om + board.pos renumber — the
+  om-larger side donates order at next merge (root om contract).
+
+OTHER FIXES THIS CHAT (Kanban):
+- toast.merged REMOVED from sliceSet(): fired on EVERY pull
+  because info.merged means "merge engine ran", NOT "data
+  changed". Feedback = taskbar sync dot only. i18n keys
+  toast.merged (en/el) delivered as dead — delete carefully
+  (comma trap on the preceding line) or leave harmlessly.
+
+STILL UNTESTED — REQUIRED TESTS BEFORE STABLE:
+  Fresh install (no oros-kanban-data) · migration from v4 data ·
+  board switch/create/rename/duplicate/delete · archive last-
+  board guard · root-tombstone cross-device NON-resurrection ·
+  drag-reorder order propagation via sync · color sync · Alt+B ·
+  dblclick rename · popover layering vs board body (old bug
+  class) · mobile.
+
+BACKLOG (this wave, not built):
+- Board color in column headers; search scope (active vs all
+  boards); mobile long-press board drag; board colors in taskbar?

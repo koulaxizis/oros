@@ -121,6 +121,11 @@
   // v0.7.1: debounced reconcile timer (one shot at a time)
   var debounceTimer = null;
 
+  // Factory reset: suspension flag — freezes the ENTIRE engine
+  // (pull/push/reconcile/auto-attempt entry gates) so nothing can
+  // race the wipe.
+  var suspended = false;
+
   // ---------- Base64 helpers ----------
   function b64encode(buf) {
     var bytes = new Uint8Array(buf);
@@ -872,6 +877,7 @@
 
   // ---------- Pull / Push ----------
   function pull() {
+    if (suspended)      return Promise.reject(new Error("engine-suspended"));
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
     if (!passphrase)    return Promise.reject(new Error("no-passphrase"));
 
@@ -892,6 +898,7 @@
   }
 
   function push() {
+    if (suspended)      return Promise.reject(new Error("engine-suspended"));
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
     if (!passphrase)    return Promise.reject(new Error("no-passphrase"));
     if (pushInFlight)   return Promise.reject(new Error("push already in flight"));
@@ -941,6 +948,7 @@
   // merged/local-won results propagate. Guarded: never two
   // reconciles or a reconcile racing a manual push.
   function reconcile(reason) {
+    if (suspended) return;                      // factory reset owns the engine
     if (!isConnected() || !passphrase) return;
     if (!navigator.onLine) return;
     if (reconcileInFlight || pushInFlight) return;
@@ -969,6 +977,7 @@
   // not have before the tab dies — a dirty push is the only thing
   // that guarantees zero local loss at close time.
   function autoSyncAttempt(reason) {
+    if (suspended) return;                      // factory reset owns the engine
     if (!isConnected() || !passphrase || !isDirty()) return;
     if (pushInFlight || reconcileInFlight) return;
     if (!navigator.onLine) return;              // no wasted attempts offline
@@ -1032,7 +1041,72 @@
     });
   }
   
-  
+    // ---------- Factory reset (cloud wipe + revoke) ----------
+  // suspendEngine(): freezes timers + entry gates. Idempotent.
+  function suspendEngine() {
+    suspended = true;
+    if (autoTimerId) { clearInterval(autoTimerId); autoTimerId = null; }
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+  }
+
+  // wipeEverything(): CLOUD-FIRST nuclear reset. Order is critical:
+  //   1. suspend (nothing new can fire)
+  //   2. wait out any in-flight push/reconcile (bounded 3s)
+  //   3. DELETE every orOS file in the app folder (blob + backups)
+  //   4. REVOKE this device's authorization at Dropbox (server-side)
+  //   5. disconnect() locally (tokens, account cache, passphrase)
+  // Works WITHOUT a passphrase — deletion and revoke never decrypt.
+  // Resolves { wiped: n, revoked: bool } even when not connected
+  // ({ wiped: 0 }) — the caller proceeds with the local wipe either way.
+  function wipeEverything() {
+    suspendEngine();
+
+    // Bounded wait: an in-flight push MUST land before we delete,
+    // or it would recreate the file after us. If it somehow exceeds
+    // 3s, we proceed anyway — the revoke below kills its token after.
+    function waitFlight(msLeft) {
+      if (!pushInFlight && !reconcileInFlight) return Promise.resolve();
+      if (msLeft <= 0) return Promise.resolve();
+      return new Promise(function (r) {
+        setTimeout(function () { r(waitFlight(msLeft - 150)); }, 150);
+      });
+    }
+
+    return waitFlight(3000).then(function () {
+      if (!isConnected()) return { wiped: 0, revoked: false };
+
+      function delAll(paths) {
+        return paths.reduce(function (chain, p) {
+          return chain.then(function () {
+            return rpc("files/delete_v2", { path: p }).catch(function () {});
+          });
+        }, Promise.resolve());
+      }
+
+      return rpc("files/list_folder", { path: "", recursive: false })
+        .then(function (res) { return res.ok ? res.json() : { entries: [] }; })
+        .catch(function () { return { entries: [] }; })
+        .then(function (listing) {
+          var paths = [BLOB_PATH];   // direct delete even if listing failed
+          (listing.entries || []).forEach(function (e) {
+            if (e.path_lower && e.name && e.name.indexOf("orOS-") === 0 &&
+                paths.indexOf(e.path_lower) === -1) paths.push(e.path_lower);
+          });
+          var revoked = false;
+          return delAll(paths)
+            .then(function () {
+              return rpc("auth/token/revoke", {})
+                .then(function (res) { revoked = !!res.ok; })
+                .catch(function () { revoked = false; });
+            })
+            .then(function () {
+              disconnect();
+              return { wiped: paths.length, revoked: revoked };
+            });
+        });
+    });
+  }
+
   // ---------- Connection lifecycle ----------
   function isConnected() {
     return !!(accessToken || refreshToken);
@@ -1120,6 +1194,8 @@
     pull:               pull,
     push:               push,
     reconcile:          reconcile,        // pull→guard→push (UI may call)
+    wipeEverything:     wipeEverything,   // factory reset: cloud wipe + revoke
+    suspendEngine:      suspendEngine,
 
     // Local rescue backup (plaintext, unencrypted)
     exportData: function () {
