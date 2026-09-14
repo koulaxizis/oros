@@ -960,6 +960,15 @@
       toggleBoardDropdown();
     });
 
+    // Quick rename (ίδιο gesture με τους τίτλους στηλών). Ροή dblclick:
+    // click #1 → άνοιγμα dropdown, click #2 → κλείσιμο, dblclick → rename
+    // dialog. Κλείνουμε αμυντικά το dropdown πριν ανοίξουμε.
+    boardBtn.addEventListener("dblclick", function (e) {
+      e.preventDefault();
+      closeBoardDropdown();
+      renameCurrentBoard(state.activeBoardId);
+    });
+
     dropdownHost.appendChild(boardBtn);
 
     // Right: Management buttons
@@ -1230,19 +1239,36 @@
     trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
   };
 
+  var editingBoardId = null;
+
   function renameCurrentBoard(boardId) {
     var bd = boardByIdIn(state.boards, boardId);
     if (!bd) return;
 
-    var name = prompt(t("board.rename"), bd.name);
-    if (!name || !name.trim()) return;
+    editingBoardId = boardId;
 
-    bd.name = name.trim();
-    bd.mtime = Date.now();
-    save();
-    renderAll();
-    renderManageList();
+    $("b-name").value = bd.name;
+    $("dlg-board").showModal();
+    setTimeout(function () { $("b-name").focus(); $("b-name").select(); }, 50);
   }
+
+  // Commit σε οποιονδήποτε δρόμο κλεισίματος (Save, Esc, backdrop) —
+  // ίδιο pattern με το column dialog. Zero-edit close ΔΕΝ stampάρει
+  // mtime (το όνομα δεν άλλαξε → κανένα κλείδωμα LWW στο merge).
+  $("dlg-board").addEventListener("close", function () {
+    if (editingBoardId === null) return;
+    var bd = boardByIdIn(state.boards, editingBoardId);
+    editingBoardId = null;
+    if (!bd) return;                    // π.χ. διαγράφηκε στο μεταξύ
+
+    var name = $("b-name").value.trim();
+    if (name && name !== bd.name) {
+      bd.name = name;
+      bd.mtime = Date.now();           // board header edit = δομικό LWW
+    }
+    save(); scheduleRender();
+    renderManageList();                 // noop αν το manage dialog είναι κλειστό
+  });
 
   function duplicateBoard(boardId) {
     var bd = boardByIdIn(state.boards, boardId);

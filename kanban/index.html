@@ -115,6 +115,21 @@
       </menu>
     </form>
   </dialog>
+  
+    <!-- Board rename dialog (dblclick on selector or Manage dialog pencil) -->
+  <dialog id="dlg-board">
+    <form method="dialog" id="board-form" autocomplete="off">
+      <h3 data-i18n="board.rename">Rename board</h3>
+
+      <label data-i18n="col.name">Name</label>
+      <input id="b-name" type="text" required>
+
+      <menu>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
 
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>

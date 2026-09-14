@@ -1530,3 +1530,43 @@ All findings below were reviewed item-by-item and approved.
 - `index.html` — boot splash div + inline script
 - `style.css` — `.sc-row` mobile stacking, `.sync-actions .menu-item` text wrap, `#oro-splash`
 - `translations.js` — new keys for external services, splash, and app names (EN/EL)
+
+## [0.6.0] — Multi-board Architecture
+### Breaking Changes
+- Schema migration from v4 → v5: single-board `state` transformed to `state.boards[]` array
+- Each board now owns its `columns`, `labels`, `deleted` (tombstones)
+- `activeBoardId` is device-local (does not sync across devices)
+
+### New Features
+- **Board selector dropdown** in header (switch between boards, see stats)
+- **Create new board** via header button or dropdown menu
+- **Manage boards dialog**: rename, duplicate, delete boards
+- **Board-level stats**: columns count, cards count displayed in dropdown
+- **Cascade delete**: deleting a board tombstones all contained entities (columns, cards, labels) for safe sync
+
+### Bug Fixes
+- Fixed critical sync resurrection bug: board deletes now use root-level `state.boardDeleted` tombstones (not per-board)
+- Fixed empty board rendering: updated DOM queries to match actual HTML structure
+- Fixed popover layering: board dropdown now properly anchored under selector
+- Fixed memory leak: popover close handler cleans up document listener on header redraw
+
+### Merge Engine Updates
+- Board-level union by ID with LWW name resolution (mtime wins)
+- Per-board nested merge (existing v0.5 rules apply to columns/cards/labels)
+- Root-level board tombstones prevent resurrection during sync
+
+### UI Changes
+- Board title (`h1`) replaced with dynamic board header component
+- Dropdown shows board metadata (columns/cards counts)
+- Manage dialog supports multi-board operations (create/rename/duplicate/delete)
+- Mobile optimizations: dropdown meta hidden on small screens, search gets priority space
+
+### Files Modified
+- `kanban.js` — complete rewrite (Parts 1-5 of multi-board implementation)
+- `kanban.css` — new board header styles, dropdown, manage dialog, mobile rules
+- `kanban.html` — board header container added (removed static h1)
+- `translations.js` — new keys: board.manage, board.close, board.delete, confirm.boarddel, toast.boarddel, toast.boardadded
+
+### Polish (post-audit)
+- Board rename: replaced browser `prompt()` with native `#dlg-board` dialog (same pattern as column rename; Esc/backdrop-safe, zero-edit close doesn't stamp mtime)
+- Quick rename: dblclick on board selector opens rename dialog (desktop); Manage dialog remains the canonical path on mobile
