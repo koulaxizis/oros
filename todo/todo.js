@@ -341,6 +341,8 @@
     if (!data || !Array.isArray(data.lists)) return null;
     if (typeof data.sm !== "number") data.sm = 0;
     if (typeof data.om !== "number") data.om = 0;
+    if (typeof data.hideCompleted !== "boolean") data.hideCompleted = false;
+    if (typeof data.activeList !== "string") data.activeList = (data.lists[0] || {}).id || null;
     if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
     if (!Array.isArray(data.labels)) data.labels = [];
     data.labels.forEach(function (lb) {
@@ -987,6 +989,11 @@
   function renderAll() {
     renderTabs();
     renderItems();
+    // Settings → UI: the checkbox must mirror state on EVERY render
+    // (sync pull, undo), not only on user clicks. Fixes the "toggle
+    // desync" where the checkbox showed stale state after a merge.
+    var hc = $("hide-completed");
+    if (hc && hc.checked !== !!state.hideCompleted) hc.checked = !!state.hideCompleted;
   }
 
   // ---------- 7. Item detail dialog ----------

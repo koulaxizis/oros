@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.28.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.28.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1797,9 +1797,16 @@
   
   // Menu/pull weather changes → straight into the RUNNING app.
   // The app owns its data + merge stamps; we only knock.
+  //
+  // v0.18.3 — Guard: typeof not null (see __orosWeatherUpdate fix).
+  // Prevents undefined coordinates from slipping into the app and
+  // creating duplicate "My location" cities on every menu pull/
+  // language toggle that triggers a wxPush.
   function wxPushToApp() {
     var w = wxRead();
-    if (!w.on || w.lat === null) return;
+    if (!w.on ||
+        typeof w.lat !== "number" || typeof w.lon !== "number" ||
+        isNaN(w.lat) || isNaN(w.lon)) return;
     var f = document.getElementById("app-frame");
     try {
       if (f && f.contentWindow &&
@@ -1991,6 +1998,13 @@
   }
 
   function wxApplyCity(g) {
+    // Guard: invalid coordinates should never become persistent
+    // preference (would poison wxRead for all future wxPush calls).
+    if (!g || typeof g.lat !== "number" || typeof g.lon !== "number" ||
+        isNaN(g.lat) || isNaN(g.lon)) {
+      setSyncMsg("err", "wx.notfound");
+      return;
+    }
     var w = wxRead();
     w.on = true; w.auto = false;
     w.lat = g.lat; w.lon = g.lon; w.label = g.label;

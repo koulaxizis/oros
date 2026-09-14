@@ -1446,7 +1446,11 @@
   // changes straight into the RUNNING app. Upsert by coords, set
   // active, stamp (stamps stay owned by this app), refresh.
   window.__orosWeatherUpdate = function (w) {
-    if (!w || w.lat === null || w.lon === null) return;
+    // typeof-guard: undefined slips through a `=== null` check —
+    // a partial/label-only push created a NEW "My location" city
+    // (NaN coord-compare never matched a dup) on every push.
+    if (!w || typeof w.lat !== "number" ||
+        typeof w.lon !== "number" || isNaN(w.lat) || isNaN(w.lon)) return;
     var dup = null;
     state.cities.forEach(function (c) {
       if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) dup = c;
