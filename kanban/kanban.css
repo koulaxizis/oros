@@ -108,16 +108,6 @@ input, textarea, select {
   user-select: none;
   flex-shrink: 0;
 }
-#board-title {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  flex-shrink: 1;
-}
 
 /* Search box */
 #search-wrap {
@@ -1100,5 +1090,4 @@ dialog menu button.danger:hover {
   .col-quick { font-size: 16px; }
   dialog { width: calc(100vw - 20px); padding: 14px; }
   #filter-pop { right: -8px; }
-  .manage-actions .manage-archive { display: none; }  /* χώρος στο κινητό — archive ΜΟΝΟ από manage dialog */
 }

@@ -493,13 +493,16 @@ function newState() {
   // #10: DETERMINISTIC seed ids — two fresh installs that sync
   // must NOT union into duplicate chips. Positional, stable.
   s.cols.loc  = LOC_SEED.map(function (v, i) {
-    return { id: "seed-loc-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-loc-" + i, label: LANG === "el" ? v.el : v.en,
+             bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   s.cols.person = PERSON_SEED.map(function (v, i) {
-    return { id: "seed-per-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-per-" + i, label: LANG === "el" ? v.el : v.en,
+             bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   s.cols.trig = TRIG_SEED.map(function (v, i) {
-    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en,
+             bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   return s;
 }
@@ -509,7 +512,8 @@ function newState() {
 // deletes μέσω Manage, πρόσθετες τιμές μέσω Add….
 function seedTriggers() {
   state.cols.trig = TRIG_SEED.map(function (v, i) {
-    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en, mtime: 0, pos: i };
+    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en,
+             bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   state.sm = Date.now();
   save();
@@ -561,6 +565,29 @@ function migrate(data) {
     if (typeof v.mtime !== "number") v.mtime = 0;
     if (typeof v.pos !== "number") v.pos = 0;
   });
+  // B2: backfill bilingual ids on EXISTING installs. Match by
+  // normalized label against the factory seeds — a RENAMED seed
+  // stops matching and stays a custom value (correct). Runs on
+  // every migrate; touches nothing once bi exists.
+  var SEEDSETS = {
+    loc: LOC_SEED.map(function (v) { return v; }),
+    person: PERSON_SEED.map(function (v) { return v; }),
+    trig: TRIG_SEED.map(function (v) { return v; })
+  };
+  ["loc", "person", "trig"].forEach(function (cname) {
+    (data.cols[cname] || []).forEach(function (v) {
+      if (v.bi) return;                                  // already bilingual
+      var nl = normLabel(v.label);
+      (SEEDSETS[cname] || []).some(function (sv) {
+        if (normLabel(sv.en) === nl || normLabel(sv.el) === nl ||
+            normLabel(sv.en) === nl.toLowerCase() || normLabel(sv.el) === nl.toLowerCase()) {
+          v.bi = { en: sv.en, el: sv.el };
+          return true;
+        }
+        return false;
+      });
+    });
+  });
   data.ver = DATA_VER;
   return data;
 }
@@ -600,6 +627,17 @@ function colValById(col, id) {
     if (arr[i].id === id) return arr[i];
   }
   return null;
+}
+
+// B2: DISPLAY label for a column value. Bilingual seeds carry
+// bi {en, el} and render in the ACTIVE language — the stored
+// label is just the birth-time snapshot. Custom / renamed
+// values have no bi: the user's typed text is their only truth
+// (renaming a seed REMOVES bi in applyChipRename).
+function colLabel(v) {
+  if (!v) return "";
+  if (v.bi && v.bi[LANG]) return v.bi[LANG];
+  return v.label;
 }
 
 // ---------- 2b. Merge engine (todo-contract, compact) ----------
@@ -1025,7 +1063,7 @@ function mergeMoodStates(A, B) {
         c.type = "button";
         c.className = "chip" + (managing ? " mgmt" : "") +
           (((col === "loc") ? selLoc : selPerson) === v.id ? " on" : "");
-        c.textContent = v.label;
+        c.textContent = colLabel(v);
         c.addEventListener("click", function (ev) {
           if (managing) {                       // manage mode: tap = menu
             ev.stopPropagation();              // don't let the document closer kill it
@@ -1140,7 +1178,7 @@ function mergeMoodStates(A, B) {
       c.type = "button";
       c.className = "chip" + (managing ? " mgmt" : "") +
         (selTrig === v.id ? " on" : "");
-      c.textContent = v.label;
+      c.textContent = colLabel(v);
       c.addEventListener("click", function (ev) {
         if (managing) {
           ev.stopPropagation();
@@ -1317,7 +1355,7 @@ function mergeMoodStates(A, B) {
     inp.type = "text";
     inp.className = "ctxren";
     inp.maxLength = 40;
-    inp.value = v.label;
+    inp.value = colLabel(v);   // B2: edit WHAT YOU SEE
     inp.setAttribute("aria-label", t("col.menu.rename"));
     m.appendChild(inp);
     var go = document.createElement("button");
@@ -1351,11 +1389,12 @@ function mergeMoodStates(A, B) {
   }
 
   function applyChipRename(col, v, label) {
-    label = String(label).trim();
+    label = String(label).trim().normalize("NFC");
     closeChipMenu();
     if (!label || label === v.label) return;
     if (colLabelExists(col, label, v.id)) { showToast(t("col.dup")); return; }
     v.label = label;
+    delete v.bi;   // B2: a hand-renamed value is a CUSTOM value now
     v.mtime = Date.now();                // LWW — rename travels
     state.sm = Date.now();
     save();
@@ -1391,7 +1430,7 @@ function mergeMoodStates(A, B) {
   }
 
   function commitColVal(col, input) {
-    var label = input.value.trim();
+    var label = input.value.trim().normalize("NFC");
     if (!label) return;
     if (colLabelExists(col, label, null)) {
       showToast(t("col.dup"));            // no silent duplicates — ever again
@@ -2645,11 +2684,26 @@ function mergeMoodStates(A, B) {
       .catch(function () { showToast(t("exp.font.err")); done(); });
   }
 
+  // B1: NFC funnel for the PDF. Mobile keyboards often emit
+  // DECOMPOSED Greek (NFD: base letter + separate combining
+  // accent); jsPDF draws the combining mark as its own glyph →
+  // the "garbled symbols" on SOME elements (mostly user-TYPED
+  // labels — UI strings from source are already NFC).
+  function pdfClean(s) {
+    if (Array.isArray(s)) return s.map(pdfClean);
+    return String(s).normalize("NFC");
+  }
+
   function exportPdf() {
     loadPdfLib(function () {
       loadPdfFont(function () {
       var JS = window.jspdf.jsPDF;
       var doc = new JS({ unit: "pt", format: "a4" });
+      // B1: every doc.text call funnels through pdfClean
+      var docText = doc.text.bind(doc);
+      doc.text = function (s, x, y, opts) {
+        return docText(pdfClean(s), x, y, opts);
+      };
       var FONT = window.__moodPdfFont ? "NotoSans" : "helvetica";
       if (window.__moodPdfFont) {
         doc.addFileToVFS(window.__moodPdfFont.file, window.__moodPdfFont.b64);

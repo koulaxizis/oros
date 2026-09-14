@@ -1961,7 +1961,7 @@
       seBtn.addEventListener("click", openSearch);
       newBtn.parentNode.insertBefore(seBtn, newBtn);
 
-      // Export dropdown → current notebook OR all notebooks
+      // Export → if single notebook, straight to current export (no menu)
       var exBtn = document.createElement("button");
       exBtn.id = "btn-export-notebook";
       exBtn.type = "button";
@@ -1972,8 +1972,13 @@
       exBtn.addEventListener("click", function (e) {
         e.stopPropagation();
         closeMenus();
+        if (state.notebooks.length <= 1) {
+          // Single notebook: direct export, no menu
+          exportNotebookZip(true);
+          return;
+        }
         var menu = document.createElement("div");
-        menu.id = "node-menu";   // reuse menu styling + auto close
+        menu.id = "node-menu";
         [["menu.exportCurrent", true], ["menu.exportAll", false]]
         .forEach(function (pair) {
           var b = document.createElement("button");
