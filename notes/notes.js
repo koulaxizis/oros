@@ -258,6 +258,9 @@
       "notes.text.ph":       "Start typing…",
       "menu.exportPage":     "Export page (.txt)",
       "menu.exportNotebook": "Export notebook (.zip)",
+      "menu.exportCurrent":  "Current notebook (.zip)",
+      "menu.exportAll":      "All notebooks (.zip)",
+      "book.plusTitle":      "New notebook",
       "search.placeholder":  "Search pages…",
 	  "search.hint": "Type at least 2 characters",
 	  "search.none": "No results",
@@ -272,6 +275,7 @@
       "book.new": "New notebook",
       "book.rename": "Rename notebook",
       "book.delete": "Delete notebook",
+      "book.menu.title": "Notebook",
       "book.confirm": "Delete this notebook? All its pages and labels will be removed.",
       "book.empty": "No notebooks yet",
       "book.switch": "Switch notebook",
@@ -308,6 +312,9 @@
       "notes.text.ph":       "Ξεκίνα να γράφεις…",
       "menu.exportPage":     "Εξαγωγή σελίδας (.txt)",
       "menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.zip)",
+      "menu.exportCurrent":  "Τρέχον σημειωματάριο (.zip)",
+      "menu.exportAll":      "Όλα τα σημειωματάρια (.zip)",
+      "book.plusTitle":      "Νέο σημειωματάριο",
       "search.placeholder":  "Αναζήτηση σε σελίδες…",
 	  "search.hint": "Πληκτρολόγησε τουλάχιστον 2 χαρακτήρες",
 	  "search.none": "Κανένα αποτέλεσμα",
@@ -322,6 +329,7 @@
       "book.new": "Νέο σημειωματάριο",
       "book.rename": "Μετονομασία σημειωματαρίου",
       "book.delete": "Διαγραφή σημειωματαρίου",
+      "book.menu.title": "Σημειωματάριο",
       "book.confirm": "Διαγραφή αυτού του σημειωματαρίου; Θα διαγραφούν όλες οι σελίδες και οι ετικέτες του.",
       "book.empty": "Κανένα σημειωματάριο",
       "book.switch": "Αλλαγή σημειωματαρίου",
@@ -1417,7 +1425,45 @@
     var menu = document.createElement("div");
     menu.id = "node-menu";
 
-        var actions = [
+    // ---- Notebook actions (top of menu) ----
+    var nb = currentNotebook();
+    var nbActions = [
+      [t("book.menu.title"), null],
+      [t("book.rename"), function () {
+        var name = window.prompt(t("book.rename"), nb.name);
+        if (name && name.trim()) renameNotebook(nb.id, name.trim());
+      }],
+      [t("book.delete"), function () {
+        deleteNotebook(nb.id);
+      }]
+    ];
+
+    nbActions.forEach(function (pair) {
+      if (pair[1] === null) {
+        // Separator/title row — styled by .node-menu-separator (notes.css)
+        var sep = document.createElement("div");
+        sep.className = "node-menu-separator";
+        sep.textContent = pair[0];
+        menu.appendChild(sep);
+      } else {
+        var b = document.createElement("button");
+        b.className = "node-menu-item";
+        b.textContent = pair[0];
+        b.addEventListener("click", function (e) {
+          e.stopPropagation();
+          closeMenus();
+          pair[1]();
+        });
+        menu.appendChild(b);
+      }
+    });
+
+    // Divider between notebook and page actions
+    var hr = document.createElement("hr");
+    hr.className = "node-menu-divider";
+    menu.appendChild(hr);
+
+    var actions = [
       [t("page.newchild"), function () { newPage(page.id); }],
       [t("page.rename"),   function () { renamePage(page.id); }],
       [t("page.move.up"),  function () { movePage(page.id, -1); }],
@@ -1851,22 +1897,6 @@
           }, { once: true });
         }, 0);
       });
-      // Also add "New notebook" button nearby (tree-header area)
-      var newNbBtn = document.createElement("button");
-      newNbBtn.className = "icon-btn";
-      newNbBtn.id = "btn-new-notebook";
-      newNbBtn.innerHTML = PLUS_SVG;
-      newNbBtn.title = t("book.new");
-      newNbBtn.setAttribute("aria-label", t("book.new"));
-      newNbBtn.style.cssText = "margin-left:6px;flex:0 0 auto;";
-      newNbBtn.addEventListener("click", function () {
-        var name = window.prompt(t("book.new"), t("book.default"));
-        if (name && name.trim()) {
-          createNotebook(name.trim());
-        }
-      });
-      var hdr = document.getElementById("tree-header");
-      if (hdr) hdr.appendChild(newNbBtn);
     }
 
   function initSplitter() {
@@ -1939,13 +1969,30 @@
       exBtn.title = t("menu.exportNotebook");
       exBtn.setAttribute("aria-label", t("menu.exportNotebook"));
       exBtn.innerHTML = DL_SVG;
-      exBtn.addEventListener("click", function () {
-        var sel = window.confirm("OK = Current notebook only\nCancel = All notebooks");
-        exportNotebookZip(sel);
+      exBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        closeMenus();
+        var menu = document.createElement("div");
+        menu.id = "node-menu";   // reuse menu styling + auto close
+        [["menu.exportCurrent", true], ["menu.exportAll", false]]
+        .forEach(function (pair) {
+          var b = document.createElement("button");
+          b.className = "node-menu-item";
+          b.textContent = t(pair[0]);
+          b.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            closeMenus();
+            exportNotebookZip(pair[1]);
+          });
+          menu.appendChild(b);
+        });
+        document.body.appendChild(menu);
+        var r = exBtn.getBoundingClientRect();
+        clampToViewport(menu, r.left, r.bottom + 6);
       });
       newBtn.parentNode.insertBefore(exBtn, newBtn.nextSibling);
 
-      // Tags → last
+      // Tags
       var tgBtn = document.createElement("button");
       tgBtn.id = "btn-tag-panel";
       tgBtn.type = "button";
@@ -1955,6 +2002,23 @@
       tgBtn.innerHTML = TAG_SVG;
       tgBtn.addEventListener("click", toggleTagPanel);
       newBtn.parentNode.appendChild(tgBtn);
+
+      // New notebook → last, distinct book+plus icon (task #2)
+      var BOOKPLUS_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="9" y1="10" x2="15" y2="10"/></svg>';
+      var nbBtn = document.createElement("button");
+      nbBtn.id = "btn-new-notebook";
+      nbBtn.type = "button";
+      nbBtn.className = "icon-btn";
+      nbBtn.title = t("book.plusTitle");
+      nbBtn.setAttribute("aria-label", t("book.plusTitle"));
+      nbBtn.innerHTML = BOOKPLUS_SVG;
+      nbBtn.addEventListener("click", function () {
+        var name = window.prompt(t("book.new"), t("book.default"));
+        if (name && name.trim()) {
+          createNotebook(name.trim());
+        }
+      });
+      newBtn.parentNode.appendChild(nbBtn);
     }
 
     var title = document.getElementById("page-title");

@@ -198,6 +198,22 @@ body {
 }
 .node-menu-item:hover { background: var(--accent-soft); }
 
+/* v0.17.1: notebook section header inside node menu */
+.node-menu-separator {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 8px 10px 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
 /* ---------- Splitter (desktop) ---------- */
 
 #pane-splitter {
@@ -629,3 +645,12 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   background-position: right 10px center;
 }
 #nb-selector:focus { border-color: var(--accent); }
+
+/* v0.17.1: menu divider (notebook actions | page actions) */
+.node-menu-divider {
+  display: block;
+  margin: 4px 6px;
+  border: none;
+  border-top: 1px solid var(--border);
+  opacity: 0.5;
+}
