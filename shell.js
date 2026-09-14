@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.27.06";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.27.07";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1539,11 +1539,9 @@
         '<div class="sc-head"><span class="sc-title">orOS</span>' +
           '<span class="sc-ver">v' + APP_VERSION + '</span></div>' +
         '<div class="sc-tagline">' + escapeHtml(window.t("sc.info.tagline")) + '</div>' +
-		'<div class="sc-cap">' + escapeHtml(window.t("sc.info.cap")) + '</div>' +
-		'<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
+        '<div class="sc-cap">' + escapeHtml(window.t("sc.info.cap")) + '</div>' +
+        '<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
-		'<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
-		'<div class="sc-row sc-ext-svc"><span class="sc-key"></span><span>' + escapeHtml(window.t("sc.info.extsvc.weather")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-foot"><a href="https://github.com/koulaxizis/oros" ' +
@@ -1551,8 +1549,6 @@
           '<span class="sc-cred"> · Designed by <a href="https://koulaxizis.gr" ' +
           'target="_blank" rel="noopener">Christos Koulaxizis</a></span></div>' +
       '</div>';
-
-    function closeModal() { ov.remove(); }
 
     // #4: single close path — backdrop, Escape AND the toggle case
     // all funnel through close(), which removes BOTH the modal and

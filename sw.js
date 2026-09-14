@@ -111,18 +111,28 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
+  // Sub-resources: cache-first with EXACT URL match. The ?v= stamp
+  // in index.html changes the cache key on every release, so a new
+  // version can never resolve to an old cached body. Unversioned
+  // precache entries survive ONLY as an offline best-effort
+  // fallback (ignoreSearch moves to the network-failure branch —
+  // it must never decide what an ONLINE user sees).
   event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then(function (cached) {
+    caches.match(request).then(function (cached) {
       if (cached) return cached;
       return fetch(request).then(function (response) {
-        if (!response || response.status !== 200) return response;
-        var copy = response.clone();
-        caches.open(RUNTIME_CACHE).then(function (cache) {
-          cache.put(request, copy);
-        });
+        if (response && response.status === 200) {
+          var copy = response.clone();
+          caches.open(RUNTIME_CACHE).then(function (cache) {
+            cache.put(request, copy);   // stored under the EXACT ?v= key
+          });
+        }
         return response;
       }).catch(function () {
-        return Response.error();
+        // OFFLINE only: exact key missed & network dead → legacy
+        // best-effort match (unversioned precache entries)
+        return caches.match(request, { ignoreSearch: true })
+          .then(function (c2) { return c2 || Response.error(); });
       });
     })
   );

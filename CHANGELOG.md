@@ -1502,3 +1502,31 @@ All findings below were reviewed item-by-item and approved.
   mood/mood.js, mood/mood.css, shell.js, sw.js,
   .github/workflows/bump-version.yml, CHANGELOG.md
   NEW: vendor/NotoSans-Regular.ttf (~430 KB, vendored)
+  
+  # orOS 0.27.04 — Release Notes
+
+## Fixes & Improvements
+
+### Service Worker Cache Strategy (#A, #B)
+- **Critical fix:** Removed `ignoreSearch: true` from the fetch handler's cache-first branch. Query-string cache-busting (`?v=`) now works correctly — a new release never resolves to an old cached file.
+- **Root cause:** An offline-only `ignoreSearch` fallback now runs ONLY when the exact key misses AND the network fails. Online, every versioned asset is fetched via exact-match, guaranteeing the latest release is always served.
+- **Effect:** Hard refresh no longer required. Each natural session load pulls the current shell, translations, and scripts.
+
+### UI Enhancements (#1, #3, #5)
+- **Info modal:** New "External services" section disclosing Weather data source (Open-Meteo) before Shortcuts.
+- **Info modal alignment (mobile):** Shortcut rows stack vertically on ≤480px screens. Long Greek descriptions no longer misalign against the key chip.
+- **Sync button text wrap:** Greek sync labels ("Αποστολή στο cloud", "Εισαγωγή δεδομένων") wrap instead of widening, eliminating horizontal scrollbar in the menu.
+- **Boot splash screen:** Static HTML overlay shows before any JS parses. Displays "Welcome to orOS — checking for updates…" (EN/EL from localStorage). Fade-out at ~1s, fail-safe at 10s. Survives even if shell.js fails to load.
+
+### Translation Fallback (#4)
+- **App names:** Menu and browser tab title now use i18n keys (`app.todo`, `app.kanban`, etc.) with automatic fallback to the `apps.json` name. Enabling future translations without breaking existing deployments.
+
+## Known Behavior
+- Mobile splash appears after a brief delay on some devices (slower SW activation on iOS/Brave) — this is expected and does not affect functionality.
+
+## Files Changed
+- `sw.js` — cache strategy (fetch handler)
+- `shell.js` — showInfoModal(), renderMenu(), openApp()
+- `index.html` — boot splash div + inline script
+- `style.css` — `.sc-row` mobile stacking, `.sync-actions .menu-item` text wrap, `#oro-splash`
+- `translations.js` — new keys for external services, splash, and app names (EN/EL)
