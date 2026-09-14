@@ -1383,8 +1383,11 @@ function mergeMoodStates(A, B) {
   function colLabelExists(col, label, exceptId) {
     var norm = String(label).trim().toLowerCase();
     return (state.cols[col] || []).some(function (o) {
-      return o.id !== exceptId &&
-        String(o.label).trim().toLowerCase() === norm;
+      if (o.id === exceptId) return false;
+      // D7: BOTH spellings count — typing the Greek seed while the
+      // chip shows Greek must not bypass dup detection via bi
+      return String(o.label).trim().toLowerCase() === norm ||
+             String(colLabel(o)).trim().toLowerCase() === norm;
     });
   }
 
@@ -1643,12 +1646,12 @@ function mergeMoodStates(A, B) {
       var em = emoByK(m.k);
       if (em) bits.push(t(em.i18n));
     });
-    if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label); }
-    if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label); }
+    if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label, colLabel(L)); }
+    if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label, colLabel(P)); }
     HABITS.forEach(function (h) {
       if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
     });
-    if (e.trig) { var TV = colValById("trig", e.trig); if (TV) bits.push(TV.label); }
+    if (e.trig) { var TV = colValById("trig", e.trig); if (TV) bits.push(TV.label, colLabel(TV)); }
     bits.push(e.note || "");
     return bits.join(" ").toLowerCase();
   }
@@ -1693,8 +1696,8 @@ function mergeMoodStates(A, B) {
       var ctx = document.createElement("span");
       ctx.className = "e-ctx";
       var bits = [];
-      if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label); }
-      if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label); }
+      if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(colLabel(L)); }
+      if (e.person) { var P = colValById("person", e.person); if (P) bits.push(colLabel(P)); }
       HABITS.forEach(function (h) {
         if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
       });
@@ -1705,7 +1708,7 @@ function mergeMoodStates(A, B) {
         var sn = document.createElement("span");
         sn.className = "e-note";
         var tv = e.trig ? colValById("trig", e.trig) : null;
-        var txt = (tv ? "[" + tv.label + "] " : "") + e.note;
+        var txt = (tv ? "[" + colLabel(tv) + "] " : "") + e.note;
         sn.textContent = txt.length > 90 ? txt.slice(0, 89) + "…" : txt;
         sn.title = txt;
         li.appendChild(sn);
@@ -2253,7 +2256,7 @@ function mergeMoodStates(A, B) {
       row.className = "dist-row";
       var lab = document.createElement("span");
       lab.className = "dist-lab";
-      lab.textContent = v.label;
+      lab.textContent = colLabel(v);
       row.appendChild(lab);
       var bar = document.createElement("div");
       bar.className = "dist-bar";
@@ -2315,14 +2318,14 @@ function mergeMoodStates(A, B) {
     (state.cols.loc || []).forEach(function (v) {
       consider(sub.filter(function (e) { return e.loc === v.id; }),
         function (b) { return t("tr.loc")
-          .replace("{x}", v.label)
+          .replace("{x}", colLabel(v))
           .replace("{e}", t("emo." + b.k))
           .replace("{d}", b.d); });
     });
     (state.cols.person || []).forEach(function (v) {
       consider(sub.filter(function (e) { return e.person === v.id; }),
         function (b) { return t("tr.person")
-          .replace("{x}", v.label)
+          .replace("{x}", colLabel(v))
           .replace("{e}", t("emo." + b.k))
           .replace("{d}", b.d); });
     });
@@ -2377,7 +2380,8 @@ function mergeMoodStates(A, B) {
       if (!s) return;
       var key = s.toLowerCase();
       trigCount[key] = (trigCount[key] || 0) + 1;
-      trigOrig[key] = s;                       // registry casing (single truth)
+      trigOrig[key] = colLabel(v);   // DISPLAY in active language;
+                                     // matching below stays on stored label
     });
     Object.keys(trigCount).sort(function (a, b) {
       return trigCount[b] - trigCount[a];
@@ -2900,7 +2904,7 @@ function mergeMoodStates(A, B) {
         ord.slice(0, 8).forEach(function (id) {
           var v = colValById(p[0], id);
           var pct = Math.round(cnts[id] / fes.length * 100);
-          kv(v.label, cnts[id] + "  ·  " + pct + "%");
+          kv(colLabel(v), cnts[id] + "  ·  " + pct + "%");
         });
         y += 4;
       });
