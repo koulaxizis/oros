@@ -116,6 +116,9 @@ window.OROS_TRANSLATIONS = {
     "sc.info.repo": "Source code",
     "sc.info.cap": "Offline-first · Auto-merge sync · Snapshots · Local export · No cookies, no tracking.",
 	"gps.use": "Use my location",
+	"sc.info.services": "External services",
+    "sc.info.extsvc": "Weather: Open-Meteo (open-meteo.com) — no API key, no tracking.",
+    "splash.welcome": "Welcome to orOS. Searching for updates, please wait…",
   },
 
   el: {
@@ -225,7 +228,15 @@ window.OROS_TRANSLATIONS = {
     "sc.info.shortcuts": "Συντομεύσεις",
     "sc.info.repo": "Πηγαίος κώδικας",
     "sc.info.cap": "Offline-first · Συγχρονισμός με αυτόματη συγχώνευση · Snapshots · Τοπική εξαγωγή · Χωρίς cookies, χωρίς tracking.",
-	"gps.use": "Χρήση τοποθεσίας"
+	"gps.use": "Χρήση τοποθεσίας",
+	"sc.info.services": "Εξωτερικές υπηρεσίες",
+    "sc.info.extsvc": "Καιρός: Open-Meteo (open-meteo.com) — χωρίς API key, χωρίς tracking.",
+    "splash.welcome": "Καλώς ήρθατε στο orOS. Γίνεται αναζήτηση ενημερώσεων, παρακαλώ περιμένετε…",
+    "app.todo": "Εργασίες",
+    "app.kanban": "Πίνακες Kanban",
+    "app.notes": "Σημειώσεις",
+    "app.weather": "Καιρός",
+    "app.mood": "Διάθεση",
   }
 
 };

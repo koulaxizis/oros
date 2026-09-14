@@ -1136,6 +1136,16 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; padding: 5px 0; font-size: 13px; color: var(--text);
 }
+.sc-row > span:not(.sc-key) {
+  flex: 1; min-width: 0; line-height: 1.5;
+}
+.sc-row.sc-service { font-size: 12px; color: var(--text-dim); }
+/* v0.27.04 — #3: mobile (≤480px) shortcut rows stack — key on its
+   own line, description below it full-width. Wrapped Greek
+   descriptions no longer misalign against the key chip. */
+@media (max-width: 480px) {
+  .sc-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
 .sc-key {
   font-size: 11.5px; font-weight: 700; color: var(--accent);
   background: var(--accent-soft); border-radius: 6px; padding: 2px 8px;
@@ -1263,3 +1273,39 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
   border: 1px solid var(--border);
 }
 .wxc-btn.ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ===== v0.27.04 — #5: Greek sync labels wrap instead of widening ===== */
+/* The nowrap+ellipsis rule (.menu-item > span:not(.app-ico)) is right
+   for app names, but the sync actions ("Αποστολή στο cloud",
+   "Εισαγωγή δεδομένων") sat at the width limit in Greek and pushed
+   the menu into horizontal overflow. These buttons wrap instead. */
+.sync-actions .menu-item > span:not(.app-ico) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  text-align: center;
+  line-height: 1.35;
+}
+
+/* ===== v0.27.04 — #2: boot splash ===== */
+#oro-splash {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 2000;               /* above everything: bar (1000), sc-overlay (1300) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  transition: opacity 0.35s ease;
+}
+#oro-splash.hide { opacity: 0; pointer-events: none; }
+#oro-splash-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+  max-width: 340px;
+}

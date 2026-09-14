@@ -24,7 +24,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "0.27.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.27.05";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -672,12 +672,15 @@
         cats[cat].forEach(function (app) {
           var btn = document.createElement("button");
           btn.className = "menu-item";
+          var nameKey = "app." + app.id;
+          var tName = window.t(nameKey);
+          var label = (tName === nameKey) ? app.name : tName;   // #4: translated name, fallback to apps.json
           if (ICONS[app.icon]) {
             btn.innerHTML =
               '<span class="app-ico">' + ICONS[app.icon] + '</span>' +
-              '<span>' + escapeHtml(app.name) + '</span>';
+              '<span>' + escapeHtml(label) + '</span>';
           } else {
-            btn.textContent = app.name;
+            btn.textContent = label;
           }
           btn.addEventListener("click", function () { openApp(app); });
           wrap.appendChild(btn);
@@ -1536,7 +1539,11 @@
         '<div class="sc-head"><span class="sc-title">orOS</span>' +
           '<span class="sc-ver">v' + APP_VERSION + '</span></div>' +
         '<div class="sc-tagline">' + escapeHtml(window.t("sc.info.tagline")) + '</div>' +
-        '<div class="sc-cap">' + escapeHtml(window.t("sc.info.cap")) + '</div>' +
+		'<div class="sc-cap">' + escapeHtml(window.t("sc.info.cap")) + '</div>' +
+		'<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
+		'<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
+		'<div class="sc-row sc-ext-svc"><span class="sc-key"></span><span>' + escapeHtml(window.t("sc.info.extsvc.weather")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-foot"><a href="https://github.com/koulaxizis/oros" ' +
@@ -2125,7 +2132,8 @@
     mb.classList.add("running");
     document.getElementById("btn-menu-label").textContent = window.t("running.back");
     mb.setAttribute("data-i18n-title", "running.home");
-    document.title = app.name + " · orOS";   // v0.18.2: tab title follows the running app
+    var nk = "app." + app.id, tv = window.t(nk);
+    document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
   }
 
   function returnToDesktop() {

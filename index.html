@@ -33,6 +33,45 @@
 </head>
 <body>
 
+<body>
+
+  <!-- ================= BOOT SPLASH =================
+       Static in HTML: visible BEFORE any JS parses, so the user
+       can never reach an app before the SW update check settles.
+       Hidden by the self-contained script below (load + 700ms),
+       fail-safe at 10s. Survives even if shell.js fails to load. -->
+  <div id="oro-splash" role="status">
+    <span id="oro-splash-text">Welcome to orOS. Searching for updates, please wait…</span>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    var s = document.getElementById("oro-splash");
+    var txt = document.getElementById("oro-splash-text");
+    if (!s) return;
+    // Greek from the very first frame if it's the stored language
+    // (translations.js loads too late to matter for the splash)
+    try {
+      if (localStorage.getItem("oros-lang") === "el" && txt) {
+        txt.textContent = "Καλώς ήρθατε στο orOS. Γίνεται αναζήτηση ενημερώσεων, παρακαλώ περιμένετε…";
+      }
+    } catch (e) {}
+
+    var done = false;
+    function hide() {
+      if (done) return;
+      done = true;
+      s.classList.add("hide");
+      setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 400);
+    }
+    if (document.readyState === "complete") setTimeout(hide, 700);
+    else window.addEventListener("load", function () { setTimeout(hide, 700); });
+    setTimeout(hide, 10000);   // fail-safe: never a stuck splash
+  })();
+  </script>
+
+
   <!-- ================= TOP BAR (persistent) ================= -->
   <header id="oros-bar">
     <div class="bar-left">
