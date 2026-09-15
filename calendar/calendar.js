@@ -335,17 +335,27 @@
   }
 
   /* ---------- 6. Navigation ---------- */
+  // Selection follows the viewed month: the day panel always shows
+  // a date that is actually on screen (Add targets the visible day).
+  function followView() {
+    if (!selDate) return;
+    var p = selDate.split("-");
+    if (+p[0] === viewYear && (+p[1] - 1) === viewMonth) return;
+    selectDay(ymd(viewYear, viewMonth, 1));
+  }
   $("cal-prev").addEventListener("click", function () {
     viewMonth--;
     if (viewMonth < 0) { viewMonth = 11; viewYear--; }
     renderTitle();
     renderGrid();
+    followView();
   });
   $("cal-next").addEventListener("click", function () {
     viewMonth++;
     if (viewMonth > 11) { viewMonth = 0; viewYear++; }
     renderTitle();
     renderGrid();
+    followView();
   });
   $("cal-today").addEventListener("click", function () {
     var n = new Date();
@@ -415,6 +425,10 @@
   });
 
   $("ev-cancel").addEventListener("click", function () { $("ev-dlg").close(); });
+  // Outside-click close: a click whose target IS the dialog hit the backdrop.
+  $("ev-dlg").addEventListener("click", function (ev) {
+    if (ev.target === this) this.close();
+  });
 
   $("ev-delete").addEventListener("click", function () {
     if (!editingId) return;
@@ -437,6 +451,20 @@
   renderTitle();
   renderGrid();
   selectDay(todayYMD());
+
+  // Midnight rollover: grid "today", day title and ev-add must
+  // follow the real calendar day without a re-open.
+  var shownDay = todayYMD();
+  setInterval(function () {
+    var td = todayYMD();
+    if (td === shownDay) return;
+    shownDay = td;
+    var n = new Date();
+    viewYear = n.getFullYear();
+    viewMonth = n.getMonth();
+    renderTitle();
+    selectDay(td);
+  }, 30000);
 
   /* ---------- 9. Sync slice registration ---------- */
   // Same self-registration contract as todo/kanban/notes: the app

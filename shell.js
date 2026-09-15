@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.31.02 — Shell logic
+// orOS Core v0.31.03 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.31.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.31.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1813,6 +1813,11 @@
   }
 
   function scSnapshot() {
+    // Honest toast: a snapshot only exists when auto-backup is ON.
+    if (state.autoexport === "off") {
+      setSyncMsgRaw("err", window.t("sync.autoexport.off"));
+      return;
+    }
     maybeAutoExport(true);   // force = snapshot now regardless of schedule
     setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
   }

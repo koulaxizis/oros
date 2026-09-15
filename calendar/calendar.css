@@ -15,6 +15,7 @@
   --panel-bg: #1d1a13;
   --border: #322d20;
   --shadow: rgba(0, 0, 0, 0.5);
+  --danger: #e06c75;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -305,7 +306,7 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   font-weight: 800;
 }
 .btn.prim:hover { filter: brightness(1.1); }
-.btn.danger { color: #e06c75; border-color: #e06c75; }
+.btn.danger { color: var(--danger, #e06c75); border-color: var(--danger, #e06c75); }
 .btn.danger:hover { background: rgba(224, 108, 117, 0.12); }
 #ev-del-row { display: none; }
 #ev-del-row.show { display: flex; }

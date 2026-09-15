@@ -90,7 +90,8 @@
   function pad(n) { return (n < 10 ? "0" : "") + n; }
 
   /* ---------- 2. State (prefs persist; sync slice deferred to Part 5) ---------- */
-  var DATA_KEY = "oros-time-data";
+    var DATA_KEY = "oros-time-data";
+  var lastMinuteKey = -1;
   // zones = entities { tz, mtime }; zonesDeleted = tombstones { tz, mtime }
   // (same merge contract as Calendar). smtime stamps SCALAR-pref edits
   // only — a zone add/delete never clobbers the other device's
@@ -99,7 +100,8 @@
     ver: 1, style: 0,
     zones: [], zonesDeleted: [],
     pmWork: 25, pmBreak: 5, pmDone: 0,
-    smtime: 0
+    smtime: 0,
+    astro: null   // written by astro.js — MUST round-trip or it gets wiped
   };
 
   function sanitizeZone(z) {
@@ -129,6 +131,10 @@
         if (typeof d.pmBreak === "number") state.pmBreak = Math.min(60, Math.max(1, d.pmBreak));
         if (typeof d.pmDone === "number") state.pmDone = d.pmDone;
         if (typeof d.smtime === "number" && isFinite(d.smtime)) state.smtime = d.smtime;
+        if (d.astro && typeof d.astro.lat === "number" && typeof d.astro.lon === "number") {
+          state.astro = { lat: d.astro.lat, lon: d.astro.lon,
+            mtime: (typeof d.astro.mtime === "number" && isFinite(d.astro.mtime)) ? d.astro.mtime : 0 };
+        }
       }
     } catch (e) {}
   }
@@ -308,7 +314,7 @@
     return zoneFmt[tz];
   }
   function zoneName(tz) {
-    return tz.split("/").pop().replace(/_/g, " ") + (tz.indexOf("/") === -1 ? "" : "");
+    return tz.split("/").pop().replace(/_/g, " ");
   }
 
   function renderZones() {
@@ -382,6 +388,10 @@
     }
   });
   $("zone-cancel").addEventListener("click", function () { $("zone-dlg").close(); });
+  // Outside-click close: a click whose target IS the dialog hit the backdrop.
+  $("zone-dlg").addEventListener("click", function (ev) {
+    if (ev.target === this) this.close();
+  });
 
   /* ---------- 6. Tabs ---------- */
   var tabBtns = document.querySelectorAll(".tab");
@@ -532,14 +542,16 @@
     if (pmAlarmId) { alarmsApi.remove(pmAlarmId); pmAlarmId = null; }
     pmPaint();
   }
-  $("pm-start").addEventListener("click", function () {
+    $("pm-start").addEventListener("click", function () {
     if (pmRunning) { pmStop(); return; }
-    pmRunning = true;
     pmEnd = Date.now() + pmLen();
-    pmAlarmId = alarmsApi.add({
+    var id = alarmsApi.add({
       at: pmEnd,
       label: t(pmPhase === "work" ? "pm.phase.break" : "pm.phase.work")
     });
+    if (!id) { pmRunning = false; pmPaint(); return; }   // engine rejected — stay idle
+    pmRunning = true;
+    pmAlarmId = id;
     pmPaint();
   });
   $("pm-reset").addEventListener("click", function () {
@@ -601,13 +613,14 @@
     timerPaint();
     swPaint();
     if (pmRunning) {
-      var left = pmEnd - Date.now();
-      if (left > 0) $("pm-display").textContent =
-        pad(Math.floor(left / 60000)) + ":" + pad(Math.floor(left / 1000) % 60);
+      var left = Math.max(0, pmEnd - Date.now());
+      var sec = Math.ceil(left / 1000);
+      $("pm-display").textContent = pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
     }
     pmWatchdog();
-    // Minute-boundary refresh of the alarm list ordering
-    if (now.getSeconds() === 0) renderAlarms();
+    // Minute-boundary refresh of the alarm list ordering (once per minute)
+    var minuteKey = now.getHours() * 60 + now.getMinutes();
+    if (minuteKey !== lastMinuteKey) { lastMinuteKey = minuteKey; renderAlarms(); }
   }
 
   // Boot
@@ -673,6 +686,10 @@
     else pickLocal = JSON.stringify([la.style || 0, la.pmWork || 25, la.pmBreak || 5]) <=
                      JSON.stringify([rb.style || 0, rb.pmWork || 25, rb.pmBreak || 5]);
 
+    var mA = (la.astro && typeof la.astro.lat === "number" && typeof la.astro.lon === "number") ? la.astro : null;
+    var mB = (rb.astro && typeof rb.astro.lat === "number" && typeof rb.astro.lon === "number") ? rb.astro : null;
+    var astro = (mA && mB) ? (((mB.mtime || 0) > (mA.mtime || 0)) ? mB : mA) : (mA || mB || null);
+
     return {
       ver: 1,
       style:  pickLocal ? (la.style || 0) : (rb.style || 0),
@@ -681,7 +698,8 @@
       pmDone: Math.max(la.pmDone || 0, rb.pmDone || 0),
       smtime: Math.max(las, rbs),
       zones: zones,
-      zonesDeleted: zonesDeleted
+      zonesDeleted: zonesDeleted,
+      astro: astro
     };
   }
 
@@ -694,6 +712,8 @@
     state.pmBreak = Math.min(60,  Math.max(1, (typeof data.pmBreak === "number") ? data.pmBreak : state.pmBreak));
     state.pmDone  = (typeof data.pmDone === "number") ? data.pmDone : state.pmDone;
     state.smtime  = (typeof data.smtime === "number" && isFinite(data.smtime)) ? data.smtime : state.smtime;
+    state.astro = (data.astro && typeof data.astro.lat === "number" && typeof data.astro.lon === "number")
+      ? { lat: data.astro.lat, lon: data.astro.lon, mtime: data.astro.mtime || 0 } : state.astro;
     state.zones        = (Array.isArray(data.zones) ? data.zones : []).map(sanitizeZone).filter(Boolean);
     state.zonesDeleted = (Array.isArray(data.zonesDeleted) ? data.zonesDeleted : []).map(sanitizeZoneTomb).filter(Boolean);
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}

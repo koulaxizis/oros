@@ -88,6 +88,14 @@
     catch (e) { return {}; }
   }
   function writeData(d) { try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch (e) {} }
+  // oros-time-data is a SYNCED slice — user edits must reach the engine.
+  function markDirty() {
+    try {
+      if (window.parent && window.parent.orosSync && window.parent.orosSync.markDirty) {
+        window.parent.orosSync.markDirty();
+      }
+    } catch (e) {}
+  }
 
   function getCoords() {
     var d = readData();
@@ -287,19 +295,31 @@
     if (isFinite(lat) && isFinite(lon) &&
         Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
       var d = readData();
-      d.astro = { lat: lat, lon: lon };
+      d.astro = { lat: lat, lon: lon, mtime: Date.now() };
       writeData(d);
+      markDirty();
       render();
     }
   });
   $("as-cancel").addEventListener("click", function () { $("astro-dlg").close(); });
+  // Outside-click close: a click whose target IS the dialog hit the backdrop.
+  $("astro-dlg").addEventListener("click", function (ev) {
+    if (ev.target === this) this.close();
+  });
   $("as-clear").addEventListener("click", function () {
     var d = readData();
     delete d.astro;
     writeData(d);
+    markDirty();
     $("astro-dlg").close();
     render();
   });
+
+  // App-scoped i18n: the dialog labels live OUTSIDE render() redraws.
+  (function applyI18nA() {
+    var els = document.querySelectorAll("[data-i18n-a]");
+    for (var i = 0; i < els.length; i++) els[i].textContent = t(els[i].getAttribute("data-i18n-a"));
+  })();
 
   // Boot + periodic refresh (positions drift, moon barely moves)
   render();

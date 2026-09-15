@@ -16,6 +16,7 @@
   --panel-bg: #1d1a13;
   --border: #322d20;
   --shadow: rgba(0, 0, 0, 0.5);
+  --danger: #e06c75;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -211,7 +212,7 @@ body {
   font-size: 15px;
   flex-shrink: 0;
 }
-.z-del:hover, .a-del:hover { color: #e06c75; background: var(--accent-soft); }
+.z-del:hover, .a-del:hover { color: var(--danger, #e06c75); background: var(--accent-soft); }
 
 /* ---------- Tabs & panes ---------- */
 #tabs { display: flex; gap: 6px; padding: 2px 0 10px; flex-wrap: wrap; }
