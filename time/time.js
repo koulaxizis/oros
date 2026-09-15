@@ -48,13 +48,14 @@
     else if (localStorage.getItem("oros-lang")) LANG = localStorage.getItem("oros-lang");
   } catch (e) {}
 
-    el: {
-      "sty.digital": "Ψηφιακό", "sty.analog": "Αναλογικό", "sty.binary": "Δυαδικό",
-      "sty.flip": "Αναδιπλούμενο", "sty.neon": "Νεόν",
-      "zones.title": "Παγκόσμια ώρα", "zones.add": "Προσθήκη", "zones.dlg": "Προσθήκη ζώνης ώρας",
-      "zones.ok": "Προσθήκη", "zones.cancel": "Άκυρο", "zones.none": "Δεν έχουν προστεθεί ζώνες",
-      "zones.edit": "Αλλαγή ζώνης",
-      "qc.athens": "Αθήνα", "qc.london": "Λονδίνο", "qc.nyork": "Νέα Υόρκη", "qc.tokyo": "Τόκυο",
+  var STR = {
+    en: {
+      "sty.digital": "Digital", "sty.analog": "Analog", "sty.binary": "Binary",
+      "sty.flip": "Flip", "sty.neon": "Neon",
+      "zones.title": "World clock", "zones.add": "Add", "zones.dlg": "Add time zone",
+      "zones.ok": "Add", "zones.cancel": "Cancel", "zones.none": "No zones yet",
+      "zones.edit": "Change zone",
+      "qc.athens": "Athens", "qc.london": "London", "qc.nyork": "New York", "qc.tokyo": "Tokyo",
       "tab.alarm": "Alarm", "tab.timer": "Timer", "tab.stopwatch": "Stopwatch", "tab.pomodoro": "Pomodoro",
       "al.ph.label": "Label…", "al.daily": "Daily", "al.sound": "Sound",
       "al.add": "Add alarm", "al.none": "No alarms",
@@ -453,14 +454,17 @@
     }
     return zoneFmt[tz];
   }
-  function zoneKey(tz) {
+  function zoneName(tz) {
+    var key;
     switch (tz) {
-      case "Europe/Athens": return "qc.athens";
-      case "Europe/London": return "qc.london";
-      case "America/New_York": return "qc.nyork";
-      case "Asia/Tokyo": return "qc.tokyo";
-      default: return tz.split("/").pop().replace(/_/g, " ");
+      case "Europe/Athens":     key = "qc.athens"; break;
+      case "Europe/London":     key = "qc.london"; break;
+      case "America/New_York":  key = "qc.nyork"; break;
+      case "Asia/Tokyo":        key = "qc.tokyo"; break;
+      default: key = null;
     }
+    if (key) return t(key);
+    return tz.split("/").pop().replace(/_/g, " ");
   }
 
   function addZone(tz) {
@@ -492,7 +496,7 @@
       li.className = "z-row editable";
       var nm = document.createElement("span");
       nm.className = "z-name";
-      nm.textContent = zoneKey(tz);
+      nm.textContent = zoneName(tz);
       nm.title = t("zones.edit");
       // Double-click → swap this zone's tz (edit-in-place)
       nm.addEventListener("dblclick", function () { openZoneDlg(tz); });

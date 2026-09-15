@@ -1045,6 +1045,30 @@ ONLY as functional reference — zero code carried over.
   quick-zone chips, centered clock faces, astronomy divider fix.
 - System-wide: standardized scrollbars + [hidden] authority guard
   applied to Calendar, Kanban, Notes, Quote, To-Do, Weather.
+  
+  ## orOS v0.32.15 — 2026-09-15
+- ADDED (shell.js): Snooze button (+9 min) in the shell alarm
+  notification (alarmNotify). One-shot snooze re-added through
+  window.orosAlarms.add — same sanitization gate as the Time app.
+  Daily alarms unaffected: the recurrence already advanced before
+  notify, the snooze shot is purely additive. Secondary/ghost
+  styling, Dismiss remains primary. No changes to alarmTick(),
+  the daily catch-up logic, or the 30s hard cap.
+- (v0.32.14 rolled in the same session: ICONS.quote for the
+  Quote/Offer app.)
+  
+  ## Time app v0.1.1e — 2026-09-15
+- FIXED (time.js): restored the STR i18n declaration lost in the
+  v0.1.1d patch — "var STR = {" opener + full "en" pack were eaten,
+  leaving an orphan "el:" block (SyntaxError line 52). The stray
+  duplicate el block (English tab/alarm strings misplaced inside
+  the first block) removed.
+- FIXED (time.js): v0.1.1d's zoneName→zoneKey rename was half-done
+  (renderChips/openZoneDlg/convRender still called zoneName → would
+  ReferenceError after syntax repair) AND returned raw i18n keys
+  ("qc.athens") without t(). Replaced with a proper zoneName()
+  that translates the 4 presets and falls back to the derived
+  city name for all other zones.
 
 ────────────────────────────────────────────────────────────────
 SESSION HANDOFF — v0.30.03 Ready for Deployment

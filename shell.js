@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.32.14 — Shell logic
+// orOS Core v0.32.15 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.32.14";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.32.15";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2773,6 +2773,29 @@
     body.appendChild(title);
     body.appendChild(label);
     body.appendChild(timeStr);
+    // Snooze (one-shot +9 min). Re-adds via the public contract —
+    // alarmSanitize is the same gate the Time app passes through.
+    // Daily alarms: the repeat copy has ALREADY advanced to tomorrow
+    // (alarmTick mutates before notifying), so this snooze shot is
+    // additive and never disturbs the recurrence.
+    var SNOOZE_MIN = 9;
+    var snoozeBtn = document.createElement("button");
+    snoozeBtn.type = "button";
+    snoozeBtn.textContent = window.orosLang === "el"
+      ? "Αναβολή " + SNOOZE_MIN + "′"
+      : "Snooze " + SNOOZE_MIN + "m";
+    snoozeBtn.style.cssText =
+      "flex-shrink:0;border:1px solid var(--border);background:transparent;" +
+      "color:var(--text-dim);font:inherit;font-weight:700;font-size:12.5px;" +
+      "border-radius:7px;padding:7px 12px;cursor:pointer;";
+    snoozeBtn.addEventListener("click", function () {
+      window.orosAlarms.add({
+        at:    Date.now() + SNOOZE_MIN * 60000,
+        label: a.label || titleText,
+        repeat: "once"
+      });
+      alarmStopRing();
+    });
     var btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = window.orosLang === "el" ? "Σταμάτα" : "Dismiss";
@@ -2782,6 +2805,7 @@
       "border-radius:7px;padding:7px 12px;cursor:pointer;";
     btn.addEventListener("click", alarmStopRing);
     el.appendChild(body);
+    el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
     alarmPip();
