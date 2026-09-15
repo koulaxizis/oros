@@ -924,6 +924,103 @@ transparent tracks, and guaranteed hidden attribute precedence.
 scrollbar aesthetics and hidden-element authority guards per the
 Mood app reference standard.
 
+## orOS 0.x.xx — Quote v0.1.00 (new app)
+
+First stable build of the Quote app: clean-room rewrite of the
+legacy beta "Offer" application, ported to the orOS architecture
+(sync-first, offline-first, mobile-first). The beta files were used
+ONLY as functional reference — zero code carried over.
+
+### What was added
+
+- **Application: Quote (quote/, v0.1.00)**
+  - Two tabs: Create (full offer editor) + Quotes (list).
+  - Data model: quotes, clients, templates, payMethods — four synced
+    entity collections with a shared tombstone map.
+  - Sync: full orosSync integration via registerSlice("quote", …,
+    mergeFn). Merge = unionEntities + LWW per entity + tombstones.
+    Deterministic and symmetric (merge(A,B) === merge(B,A)).
+  - Computed totals (subtotal, discount, VAT, total) are PURE
+    functions — never stored, so no merge can create arithmetic
+    conflicts. Only inputs are synced.
+  - Line items: code, description, qty, unit price, item discount,
+    per-item VAT. Global discount applied pro-rata per line.
+  - Instalments: manual dates/amounts + even split generator with
+    rounding-safe allocation (remainder to first instalment).
+  - Numbering: OFF-YYYY-NNN, recovery-based max scan per year —
+    no synced counters, no merge conflicts on numbers.
+  - Clients: dropdown selector + native <dialog> editor. Deleting a
+    client keeps historical clientId references (no cascade — offer
+    history never loses attribution).
+  - Templates: save current offer as reusable template; applying a
+    template ALWAYS creates a new draft (never overwrites).
+  - Payment presets (payMethods): per-user synced text presets for
+    Bank / PayPal / IRIS / Cash. Seeded deterministically (ids
+    pm-bank etc.) so first sync between devices never duplicates.
+    Editing a preset stamps mtime only when text changed
+    (zero-edit close → no LWW locks).
+  - Status: draft / sent / accepted / rejected / expired, with
+    discrete 3px status accent bar on list rows derived from the
+    theme palette (no saturated badges).
+  - List: search (number, notes, payment terms, client, line-item
+    descriptions & codes) + multi-select status filter popover.
+  - Export: PDF via vendored jspdf.umd.min.js + NotoSans-Regular
+    (Greek support). Falls back to print when font unavailable and
+    UI language is Greek (garbled Greek worse than 2-step export).
+  - Send: mailto: composition with client email, due date, total.
+  - Palette: inheritPalette() + watchPalette() per orOS contract
+    (G3 passes). Standalone fallback tokens in :root.
+  - Keyboard: Alt+N = new quote (browser-safe combo).
+  - Bilingual EN/EL, inline STRINGS (no external translation file).
+
+### Post-audit fixes (13 patches applied before first release)
+
+1. SyntaxError: missing comma in mergeQuoteStates return before
+   payMethods (blocked entire app boot). 
+2. New-client creation was impossible: dialog close handler bailed
+   when editingClientId === null; no push() existed anywhere in
+   that flow. Fixed: commit now lives on form submit (Save button),
+   Esc/close = discard. Zero-edit submit is a no-op (fingerprint).
+3. Removed dead createNewClientFromEditor() (superseded by 2).
+4. saveCurrentAsTemplate crashed on dead client reference — added
+   null guard (deleted client + historical quote = TypeError).
+5. sliceGet() now strips activeQuoteId (device-local, never travels
+   to cloud; also silences spurious markDirty on register-flush
+   boot comparison in sync.js).
+6. sliceSet(): if the currently open saved quote was deleted on
+   another device, editor falls back to a fresh draft with toast
+   instead of writing into an orphaned reference (silent data loss).
+7. Fixed Greek typo "Εληξε" → "Έληξε" (status.expired).
+8. PDF: total column right-aligned against page margin (W-M) to
+   prevent overflow past the physical page edge.
+9. Search now also matches line-item descriptions and codes.
+10. Removed redundant data-i18n on #client-name-display (managed
+    exclusively by renderClientDisplay()).
+11. Removed dead CSS block #dlg-client .meta-fields (no matching
+    markup).
+12. Cleaned stray non-Greek characters in boot() comment.
+13. Removed empty no-op block in mergeQuoteStates.
+
+### Integration checklist (DONE / PENDING)
+
+- [x] quote/index.html, quote.css, quote.js deployed to /quote/
+- [x] STRINGS include all keys used by data-i18n attributes
+- [x] registerSlice signature matches sync.js v0.7+ (5 args)
+- [x] Palette contract (G3) satisfied
+- [ ] apps.json — add quote entry (Productivity, icon, url quote/)
+- [ ] sw.js PRECACHE_URLS — add quote/ entries + vendor fonts
+      (jspdf.umd.min.js, NotoSans-Regular.ttf) for offline PDF
+- [ ] bump-version.yml guards G2 (offline coverage) will fail
+      until sw.js entry is added — do this BEFORE pushing to main
+
+### Under consideration (future waves)
+
+- Quote-level custom fields
+- CSV export of the quotes list
+- Direct browser print styling of the create tab (currently
+  PDF-first, print only as fallback)
+- Ability to edit payment preset names/order
+
 ────────────────────────────────────────────────────────────────
 SESSION HANDOFF — v0.30.03 Ready for Deployment
 ────────────────────────────────────────────────────────────────

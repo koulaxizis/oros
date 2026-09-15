@@ -896,13 +896,7 @@ dialog menu button.danger {
   border-color: var(--danger);
   color: var(--danger);
 }
-dialog menu button.danger:hover { background: var(--danger-soft); }
-
-/* --- Client dialog row for date+tax --- */
-
-#dlg-client .meta-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
-#dlg-client .meta-fields label:nth-child(odd) { grid-column: 1 / -1; }
-@media (max-width: 480px) { #dlg-client .meta-fields { grid-template-columns: 1fr; } }
+dialog menu button.danger:hover { background: var(--danger-soft); } 
 
 /* --- Templates dialog --- */
 

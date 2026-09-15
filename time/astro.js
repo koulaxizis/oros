@@ -353,7 +353,7 @@
       esc(t("ph." + mi.phaseIdx)) + '</div>' +
       '<div class="ast-mmeta">' + esc(t("astro.moonage")) + ": " +
       mi.age.toFixed(1) + " " + esc(t("u.days")) + " · " +
-      esc(t("astro.illum")) + ": " + Math.round(mi.k * 100) + "%</div></div></div>';
+      esc(t("astro.illum")) + ": " + Math.round(mi.k * 100) + "%</div></div></div>";
 
     body.innerHTML = html;
     var setBtn = $("ast-set");
