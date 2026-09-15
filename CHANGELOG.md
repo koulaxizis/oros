@@ -1069,6 +1069,42 @@ ONLY as functional reference — zero code carried over.
   ("qc.athens") without t(). Replaced with a proper zoneName()
   that translates the 4 presets and falls back to the derived
   city name for all other zones.
+  
+  ## [0.32.00] — 2026-09-15
+
+### Critical Fixes
+- **Alarms**: Added `alarms: alarmsRead()` to `shellSliceGet`, implemented pull-fed sanitization in `shellSliceSet`, added `markDirty()` triggers on alarm add/remove. Alarms now fully synced across devices.
+- **Kanban**: Fixed `archived` and `color` fields being stripped during merge (`newerBoardHeader`, `mergeBoardBody`, one-sided clones, `duplicateBoard`). Board metadata now persists correctly.
+
+### Application Audits (Sync Verification)
+- **Mood**: Custom presets (locations/people/triggers) travel in sync slice. Identified 3 minor issues (i18n filter labels, trig seeding flag, factory reset mtime).
+- **Time**: Storage key `oros-time-data` aligned. Scalar prefs LWW via `smtime`, zones entity-union + tombstones. Runtime states (timer/stopwatch/pomodoro) deliberately excluded.
+- **Calendar**: Events merge with tombstones. Added resurrection safety for edits on deleted events.
+- **Notes**, **Todo**, **WeatherApp**, **Kanban**: Already verified clean.
+
+### Architecture
+- Unified sync funnel confirmed: `collectPayload()` → `applyPayload()` for cloud sync, manual export, auto-snapshots, folder mirroring.
+- Device-local whitelist validated (`oros-wx-cache`, `oros-auto-snapshots`, `oros-fs-*` intentionally excluded).
+- All 8/8 apps have correct `storageKey` alignment in registry.
+
+### Known Issues (Backlog)
+- **Mood**: Filter panel uses raw label instead of `colLabel()` (i18n inconsistency).
+- **Calendar**: Native `alert()/confirm()` dialogs (to be replaced with custom UI in next wave).
+- **astro.js**: Coordination pending (writes to same key or separate slice?).
+
+### Breaking Changes
+- None. All migrations additive-only.
+
+### Contributors
+- Christos Koulaxizis (core sync patches)
+
+### Quote APP
+
+Added: Edit client button (pencil) wired to existing client dialog; column headers for line items (1:1 grid with item rows, hidden on mobile/print); i18n keys for payment/notes placeholders, bulk VAT label, edit client, template delete confirmation; Greek-content detection for PDF fallback.
+Changed: Mobile item rows use explicit grid areas (code+delete / description / numeric fields); meta labels fixed width for vertical alignment; number inputs hide native spinners; selects use custom chevron (dim/accent); PDF Total column right-aligned with values; item descriptions truncate with «…»; delete template uses its own confirmation message.
+Removed: Dead note field from item model (existing stored data unaffected — simply ignored); unreachable :has(~ svg) CSS selector replaced by JS-managed .has-client class; dead second argument in all showToast calls; dead bufferHadFocus variable.
+Known considerations: Toast sits below <dialog> top-layer (no impact today, documented for future); Payment Presets close = commit (zero-edit close remains a no-op).
+Deployment: No storage keys, slice format, or merge logic touched — mergeQuoteStates byte-compatible. Version bump handled by the GitHub Action as usual. Files affected by propagation checklist: quote.html/index.html, quote.css, quote.js (self-contained app dir + vendor references unchanged).
 
 ────────────────────────────────────────────────────────────────
 SESSION HANDOFF — v0.30.03 Ready for Deployment

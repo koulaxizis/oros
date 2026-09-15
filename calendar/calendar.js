@@ -389,7 +389,7 @@
     openDlg(null);
   });
 
-  $("ev-save").addEventListener("click", function () {
+    $("ev-save").addEventListener("click", function () {
     var title = $("ev-title").value.trim();
     if (!title) { alert(t("ev.err.title")); return; }
     if (!selDate) { $("ev-dlg").close(); return; }
@@ -398,6 +398,7 @@
     if (time && !/^\d{2}:\d{2}$/.test(time)) time = null;
 
     if (editingId) {
+      var found = false;
       for (var i = 0; i < state.events.length; i++) {
         if (state.events[i].id === editingId) {
           state.events[i].title = title;
@@ -405,9 +406,26 @@
           state.events[i].time = time;
           state.events[i].date = selDate;
           state.events[i].mtime = Date.now();
+          found = true;
           break;
         }
       }
+      // Edited while another device deleted it → resurrect with fresh input
+      // (fresh mtime beats the tombstone, same contract as mood/time).
+      if (!found) {
+        state.events.push({
+          id: editingId,
+          date: selDate,
+          time: time,
+          title: title,
+          note: $("ev-note").value.trim(),
+          mtime: Date.now()
+        });
+      }
+      // Any edit outranks a stale tombstone (no phantom deletes survive).
+      state.deleted = state.deleted.filter(function (d) {
+        return d.id !== editingId;
+      });
     } else {
       state.events.push({
         id: uid(),
@@ -436,6 +454,7 @@
     state.events = state.events.filter(function (e) { return e.id !== editingId; });
     state.deleted.push({ id: editingId, mtime: Date.now() });
     saveState();
+    editingId = null;   // clear dangling state
     $("ev-dlg").close();
     renderGrid();
     renderDay();

@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Quote — v0.1.00
+   orOS Quote — quote.css
    Sync-first native app. Palette: κληρονομείται από το shell
    (PAL_VARS μέσω inheritPalette()). Τα :root tokens παρακάτω
    είναι FALLBACK για standalone εκτέλεση. Status colors:
@@ -66,7 +66,20 @@ button { cursor: pointer; }
   outline-offset: -2px;
 }
 
-/* Scrollbars — orOS-wide Mood standard (§6b): 10px,
+/* Native widget ήπιος polish (orOS pattern): κρύβουμε τους
+   default spinners των number inputs — οι τιμές διορθώνονται
+   με πληκτρολόγηση / step arrows του.keyboard πλέον. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Scrollbars — orOS-wide standard (§6b): 10px,
    transparent track, pill thumb 999px w/ 2px border. */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
@@ -263,7 +276,10 @@ button { cursor: pointer; }
   flex-wrap: wrap;
 }
 
+/* Κάθετη στοίχιση labels: σταθερό πλάτος ώστε τα inputs όλων
+   των rows να ξεκινούν από το ίδιο x. */
 .meta-row label {
+  min-width: 76px;
   color: var(--text-dim);
   font-size: 12px;
   font-weight: 600;
@@ -282,6 +298,32 @@ button { cursor: pointer; }
 .meta-row input:focus, .meta-row select:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* Custom chevron στα selects — Chrome/Firefox native βέλος
+   σε συνδυασμό με panel-bg δείχνει broken στο dark theme.
+   Χρώμα: hardcoded fallback του --text-dim (data-URI δεν
+   δέχεται CSS vars — το palette inheritance το καλύπτει ως
+   chromium detail, όχι brand accent). */
+.meta-row select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a968e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+  cursor: pointer;
+}
+.meta-row select:hover { background-color: var(--panel-bg); }
+.meta-row select:focus-visible {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c8a96e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Στενές οθόνες: τα ζεύγη Date/Due σπάνε σε δύο γραμμές
+   αντί να στριμώχνονται. */
+@media (max-width: 480px) {
+  .meta-row input[type="date"] { flex: 1 1 120px; }
 }
 
 #q-number {
@@ -309,6 +351,7 @@ button { cursor: pointer; }
 .offer-client { position: relative; display: flex; align-items: center; gap: 8px; }
 
 .offer-client > label {
+  min-width: 76px;
   color: var(--text-dim);
   font-size: 12px;
   font-weight: 600;
@@ -336,10 +379,15 @@ button { cursor: pointer; }
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
+  color: var(--text-dim);
 }
-#client-name-display:not(:empty):not(:has(~ svg)) { color: var(--text); }
+/* Επιλεγμένος πελάτης: JS θέλει την κλάση .has-client — όχι
+   :has() selectors που σπάνε ανά browser. */
+#client-selector.has-client #client-name-display { color: var(--text); }
 
-#client-select-new {
+/* Edit / New κουμπιά δίπλα στον selector — ίδιο μέγεθος/στυλ
+   (πριν το client-edit δεν υπήρχε καθόλου styling rule). */
+#client-edit, #client-select-new {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -351,7 +399,10 @@ button { cursor: pointer; }
   color: var(--text-dim);
   background: transparent;
 }
-#client-select-new:hover { color: var(--accent); border-color: var(--accent); }
+#client-edit:hover, #client-select-new:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
 
 .dropdown-pop {
   position: absolute;
@@ -384,6 +435,11 @@ button { cursor: pointer; }
 .dropdown-item:hover { background: var(--accent-soft); }
 .dropdown-item.active { background: var(--accent-soft); }
 .dropdown-item.active .dropdown-name { color: var(--accent); }
+.dropdown-item.row-item {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
 
 .dropdown-name { font-weight: 600; }
 .dropdown-meta {
@@ -430,6 +486,35 @@ button { cursor: pointer; }
   letter-spacing: 0.05em;
 }
 
+/* --- Column headers για τα line items ---
+   Ίδιο grid template με το .item-row — 1:1 αντιστοίχιση στηλών.
+   JS κρύβει το #items-head όταν δεν υπάρχουν γραμμές. */
+.items-head {
+  display: grid;
+  grid-template-columns:
+    70px                /* code  */
+    minmax(120px, 1fr)  /* desc  */
+    64px                /* qty   */
+    90px                /* price */
+    60px                /* disc  */
+    60px                /* vat   */
+    28px;               /* del   */
+  gap: 6px;
+  align-items: center;
+  padding: 0 0 2px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.items-head span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* --- Line items rows --- */
 
 #items-container { display: flex; flex-direction: column; gap: 6px; }
@@ -437,13 +522,13 @@ button { cursor: pointer; }
 .item-row {
   display: grid;
   grid-template-columns:
-    70px            /* code  */
+    70px                /* code  */
     minmax(120px, 1fr)  /* desc  */
-    64px            /* qty   */
-    90px            /* price */
-    60px            /* disc  */
-    60px            /* vat   */
-    28px;           /* del   */
+    64px                /* qty   */
+    90px                /* price */
+    60px                /* disc  */
+    60px                /* vat   */
+    28px;               /* del   */
   gap: 6px;
   align-items: center;
 }
@@ -487,16 +572,31 @@ button { cursor: pointer; }
   border-radius: 10px;
 }
 
+/* Mobile item-row: ξεκάθαρο card layout. Στήλες:
+     "code code code del"
+     "desc desc desc desc"
+     "qty  price disc vat"
+   Τα 4 numeric πεδία σε 1 γραμμή, desc full-width, code + del
+   στην κορυφή. (Το παλιό media query κήδευε 6 στήλες για 7
+   παιδιά — το del έκανε orphan wrap.) */
 @media (max-width: 720px) {
+  .items-head { display: none; }
+
   .item-row {
-    grid-template-columns:
-      1fr 1fr          /* code | (skip) */
-      60px 84px        /* qty | price   */
-      52px 52px;       /* disc | vat    */
+    grid-template-columns: 1fr 1fr 1fr 28px;
+    grid-template-areas:
+      "code code code del"
+      "desc desc desc desc"
+      "qty  price disc vat";
+    gap: 6px;
   }
-  .item-row { grid-template-areas: none; }
-  /* Πιο απλό stacking: 2 στήλες σε ό,τι χωράει, del στο τέλος */
-  .item-row .i-desc { grid-column: 1 / -1; }
+  .item-row .i-code  { grid-area: code; }
+  .item-row .i-desc  { grid-area: desc; }
+  .item-row .i-qty   { grid-area: qty; }
+  .item-row .i-price { grid-area: price; }
+  .item-row .i-disc  { grid-area: disc; }
+  .item-row .i-vat   { grid-area: vat; }
+  .item-row .i-del   { grid-area: del; justify-self: end; }
 }
 
 /* --- Totals --- */
@@ -749,11 +849,11 @@ button { cursor: pointer; }
   opacity: 0.85;
 }
 
-.q-row.st-draft    { --st-color: var(--st-draft); }
-.q-row.st-sent     { --st-color: var(--st-sent); }
-.q-row.st-accepted  { --st-color: var(--st-accepted); }
-.q-row.st-rejected  { --st-color: var(--st-rejected); }
-.q-row.st-expired   { --st-color: var(--st-expired); }
+.q-row.st-draft     { --st-color: var(--st-draft); }
+.q-row.st-sent      { --st-color: var(--st-sent); }
+.q-row.st-accepted   { --st-color: var(--st-accepted); }
+.q-row.st-rejected   { --st-color: var(--st-rejected); }
+.q-row.st-expired    { --st-color: var(--st-expired); }
 
 .q-num {
   font-family: ui-monospace, Menlo, Consolas, monospace;
@@ -896,7 +996,7 @@ dialog menu button.danger {
   border-color: var(--danger);
   color: var(--danger);
 }
-dialog menu button.danger:hover { background: var(--danger-soft); } 
+dialog menu button.danger:hover { background: var(--danger-soft); }
 
 /* --- Templates dialog --- */
 
@@ -995,12 +1095,12 @@ dialog menu button.danger:hover { background: var(--danger-soft); }
 }
 
 /* ============================================================
-   PRINT — καθαρή εξαγωγή (fallback print της PDF διαδρομής)
+   PRINT — καθαρή εξαγωγή (fallback print της PDF διαδροχής)
    ============================================================ */
 
 @media print {
   #quotebar, .offer-actions, .offer-actions button,
-  .presets, .presets-edit, .presets-hint { display: none !important; }
+  .presets, .presets-edit, .presets-hint, .items-head { display: none !important; }
 
   body { background: #fff; color: #111; }
   html, body { height: auto; overflow: visible; }

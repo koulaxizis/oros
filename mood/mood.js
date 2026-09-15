@@ -485,6 +485,7 @@ var state = null;
 function newState() {
   var s = {
     ver: DATA_VER, sm: Date.now(), om: Date.now(),
+    trigSeeded: true,
     entries: [], deleted: {},
     cols: { loc: [], trig: [], person: [] }
   };
@@ -515,6 +516,7 @@ function seedTriggers() {
     return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en,
              bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
+  state.trigSeeded = true;
   state.sm = Date.now();
   save();
 }
@@ -599,7 +601,7 @@ function load() {
       var data = migrate(JSON.parse(raw));
       if (data) {
         state = data;
-        if (!state.cols.trig.length) seedTriggers();
+        if (!state.cols.trig.length && !state.trigSeeded) seedTriggers();
         return;
       }
     }
@@ -758,6 +760,11 @@ function mergeMoodStates(A, B) {
 
   return {
     ver: DATA_VER,
+    // #1: travels with the slice — if EITHER side has ever
+    // seeded (i.e. the user chose to empty the column), the
+    // merged state must know it. Dropping it respawns deleted
+    // triggers after the next pull → boot cycle.
+    trigSeeded: !!(a.trigSeeded || b.trigSeeded),
     sm: Math.max(a.sm || 0, b.sm || 0),
     om: Math.max(a.om || 0, b.om || 0),
     entries: entries,
@@ -893,6 +900,13 @@ function mergeMoodStates(A, B) {
       (state.cols[c] || []).forEach(function (v) { tomb[v.id] = now; });
     });
     var fresh = newState();           // fresh uids — no collisions
+    // Newborn seeds share ids with their own predecessors' tombstones
+    // (deterministic ids) — a fresh mtime beats the tombstone, same
+    // resurrection contract as undo-delete. Renamed seeds on other
+    // devices also lose to the newer mtime → true pristine state.
+    ["loc", "person", "trig"].forEach(function (c) {
+      (fresh.cols[c] || []).forEach(function (v) { v.mtime = now; });
+    });
     fresh.deleted = tomb;             // tombstones travel, merge-proof
     fresh.sm = now; fresh.om = now;
     state = fresh;
@@ -1948,7 +1962,7 @@ function mergeMoodStates(A, B) {
 
     var lc = mkGroup("l2.loc");
     (state.cols.loc || []).forEach(function (v) {
-      lc.appendChild(mkFChip(v.label, insFilter.loc === v.id, function () {
+      lc.appendChild(mkFChip(colLabel(v), insFilter.loc === v.id, function () {
         insFilter.loc = insFilter.loc === v.id ? null : v.id;
       }));
     });
@@ -1956,7 +1970,7 @@ function mergeMoodStates(A, B) {
 
     var pc = mkGroup("l2.person");
     (state.cols.person || []).forEach(function (v) {
-      pc.appendChild(mkFChip(v.label, insFilter.person === v.id, function () {
+      pc.appendChild(mkFChip(colLabel(v), insFilter.person === v.id, function () {
         insFilter.person = insFilter.person === v.id ? null : v.id;
       }));
     });

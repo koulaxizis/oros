@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.32.15 — Shell logic
+// orOS Core v0.32.20 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.32.15";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.32.20";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2850,6 +2850,11 @@
       var list = alarmsRead();
       list.push(a);
       alarmsWrite(list);
+      // E1 Patch 3: alarms travel in the shell slice — a new alarm
+      // must reach the cloud without waiting for an unrelated edit.
+      if (window.orosSync && typeof window.orosSync.markDirty === "function") {
+        window.orosSync.markDirty();
+      }
       return a.id;
     },
     remove: function (id) {
@@ -2858,6 +2863,11 @@
         if (list[i].id !== id) out.push(list[i]);
       }
       alarmsWrite(out);
+      // E1 Patch 3: alarm deletion is data loss if it never travels —
+      // same dirty contract as add.
+      if (window.orosSync && typeof window.orosSync.markDirty === "function") {
+        window.orosSync.markDirty();
+      }
     },
     list: function () { return alarmsRead(); }
   };

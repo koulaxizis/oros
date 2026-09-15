@@ -1,7 +1,7 @@
 // ============================================================
 // orOS Quote — App logic (v0.1.0)
 // -------------------------------------------------------------
-// Πρώτη έκδοση: sync-first native ήπιος μεταφοράς της beta
+// Πρώτη έκδοση: sync-first native ήπια μεταφοράς της beta
 // "Offer" εφαρμογής (clean-room rewrite — τα beta αρχεία
 // χρησιμοποιήθηκαν μόνο ως λειτουργική αναφορά).
 //
@@ -27,13 +27,7 @@
 //   4. Υπολογισμοί (pure functions)
 //   5. Editor (create tab)
 //   6. Line items + δόσεις UI
-//   7. Clients (dropdown + dialog)
-//   8. Templates
-//   9. Λίστα προσφορών (list tab) + φίλτρα
-//  10. Export (PDF via jsPDF + NotoSans, print fallback) + send
-//  11. Toast
-//  12. Sync slice + palette
-//  13. Wiring & boot
+//   7. Clients (dropdown + dialog με edit mode)
 // ============================================================
 (function () {
   "use strict";
@@ -65,6 +59,7 @@
       "status.rejected":      "Rejected",
       "status.expired":       "Expired",
       "client.new":            "New client",
+      "client.edit_btn":       "Edit client",
       "client.select":         "Select client",
       "client.none":          "No client",
       "client.edit":          "Client Details",
@@ -90,12 +85,12 @@
       "items.unit_price":     "Unit Price",
       "items.disc":           "Disc %",
       "items.vat":            "VAT %",
-      "items.notes":          "Notes",
       "items.del":            "Remove",
       "items.empty":          "No items — add your first line item.",
       "totals.subtotal":      "Subtotal",
       "totals.discount":      "Discount (%)",
       "totals.vat":           "VAT",
+      "totals.vat_bulk":      "VAT (%)",
       "totals.total":         "Total",
       "inst.title":           "Instalments",
       "inst.count":           "Count",
@@ -110,9 +105,10 @@
       "payment.paypal":       "PayPal",
       "payment.iris":         "IRIS",
       "payment.cash":         "Cash",
+      "payment.ph":           "e.g., 50% upfront, 50% on delivery…",
       "actions.save":         "Save",
       "actions.save_template":"Save as Template",
-      "actions.duplicate":   "Duplicate",
+      "actions.duplicate":    "Duplicate",
       "actions.delete":       "Delete",
       "actions.export_pdf":   "Export PDF",
       "actions.send":         "Send via email",
@@ -137,15 +133,17 @@
       "toast.exported":       "Export ready",
       "confirm.delete":       "Delete this quote?",
       "confirm.client_del":   "Delete this client?",
+      "confirm.template_del": "Delete this template?",
       "template.name_ph":     "Template name",
       "pdf.header_client":    "Quote for",
       "pdf.page":             "Page 1",
-	  "app.title_short":      "Quote",
+      "app.title_short":      "Quote",
       "paypresets.edit":      "Edit payment presets",
       "paypresets.hint":      "Click a preset to insert its text into the offer. Click the pencil to customize.",
       "paypresets.title":     "Payment Presets",
       "toast.paypresets_saved": "Payment presets saved",
-      "toast.sync_replaced":   "This quote was deleted on another device"
+      "toast.sync_replaced":   "This quote was deleted on another device",
+      "notes.ph":             "Additional terms, conditions…"
     },
     el: {
       "tab.create":            "Δημιουργία",
@@ -160,6 +158,7 @@
       "status.rejected":      "Απορρίφθηκε",
       "status.expired":       "Έληξε",
       "client.new":            "Νέος πελάτης",
+      "client.edit_btn":       "Επεξεργασία πελάτη",
       "client.select":         "Επιλογή πελάτη",
       "client.none":          "Χωρίς πελάτη",
       "client.edit":          "Στοιχεία πελάτη",
@@ -185,12 +184,12 @@
       "items.unit_price":     "Τιμή Μονάδας",
       "items.disc":           "Έκδ %",
       "items.vat":            "ΦΠΑ %",
-      "items.notes":          "Σημείωση",
       "items.del":            "Αφαίρεση",
       "items.empty":          "Δεν υπάρχουν στοιχεία — πρόσθεσε την πρώτη γραμμή.",
       "totals.subtotal":      "Υποσύνολο",
       "totals.discount":      "Έκπτωση (%)",
       "totals.vat":           "ΦΠΑ",
+      "totals.vat_bulk":      "ΦΠΑ (%)",
       "totals.total":         "Σύνολο",
       "inst.title":           "Δόσεις",
       "inst.count":           "Πλήθος",
@@ -205,6 +204,7 @@
       "payment.paypal":       "PayPal",
       "payment.iris":         "IRIS",
       "payment.cash":         "Μετρητά",
+      "payment.ph":           "π.χ., 50% προκαταβολή, 50% κατά την παράδοση…",
       "actions.save":         "Αποθήκευση",
       "actions.save_template":"Αποθήκευση ως Πρότυπο",
       "actions.duplicate":    "Αντιγραφή",
@@ -232,15 +232,17 @@
       "toast.exported":       "Έτοιμο για εξαγωγή",
       "confirm.delete":       "Διαγραφή αυτής της προσφοράς;",
       "confirm.client_del":   "Διαγραφή αυτού του πελάτη;",
+      "confirm.template_del": "Διαγραφή αυτού του προτύπου;",
       "template.name_ph":     "Όνομα προτύπου",
       "pdf.header_client":    "Προσφορά για",
       "pdf.page":             "Σελίδα 1",
-	  "app.title_short":      "Προσφορά",
+      "app.title_short":      "Προσφορά",
       "paypresets.edit":      "Επεξεργασία presets πληρωμής",
       "paypresets.hint":      "Πάτησε ένα preset για να εισαχθεί το κείμενό του στην προσφορά. Με το μολύβι το προσαρμόζεις.",
       "paypresets.title":     "Presets Πληρωμής",
       "toast.paypresets_saved": "Τα presets πληρωμής αποθηκεύτηκαν",
-      "toast.sync_replaced":   "Αυτή η προσφορά διαγράφηκε σε άλλη συσκευή"
+      "toast.sync_replaced":   "Αυτή η προσφορά διαγράφηκε σε άλλη συσκευή",
+      "notes.ph":             "Επιπλέον όροι, προϋποθέσεις…"
     }
   };
 
@@ -305,7 +307,7 @@
 
   function newItemObj() {
     return { id: uid(), code: "", desc: "", qty: 1, price: 0,
-             disc: 0, vat: 24, note: "" };
+             disc: 0, vat: 24 };
   }
 
   function newQuoteObj() {
@@ -330,9 +332,6 @@
   }
 
   // Recovery-based αρίθμηση: scan στο max του OFF-YYYY-NNN τρέχοντος έτους.
-  // Κανένας synced counter — δύο συσκευές offline παράγουν το ίδιο Ν,
-  // το debate το κερδίζει όποιο save-αρεται πρώτο (αποδεκτό, όπως ο
-  // manual αριθμός σε χειρόγραφη προσφορά).
   function nextNumber() {
     var year = new Date().getFullYear();
     var re = /^OFF-(\d{4})-(\d+)$/;
@@ -351,8 +350,8 @@
     return { id: uid(), name: name || "", email: "", phone: "",
              address: "", taxId: "", mtime: 0, pos: state ? state.clients.length : 0 };
   }
-  
-    // --- Synced payment presets (per-user, LWW, deterministic ids) ---
+
+  // --- Synced payment presets (per-user, LWW, deterministic ids) ---
   var PAY_METHODS = ["bank", "paypal", "iris", "cash"];
   var PM_DEFAULTS = {
     en: {
@@ -370,8 +369,6 @@
   };
 
   function seedPayMethods() {
-    // Deterministic ids: δύο συσκευές που κάνουν ταυτόχρονα seed
-    // παράγουν τις ΙΔΙΕΣ οντότητες → το union merge δεν διπλασιάζει.
     var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
     state.payMethods = PAY_METHODS.map(function (m, i) {
       return { id: "pm-" + m, method: m, text: texts[m] || "",
@@ -391,8 +388,8 @@
         !Array.isArray(data.templates)) return null;
     if (typeof data.om !== "number") data.om = 0;
     if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
-	
-	    if (!Array.isArray(data.payMethods) || data.payMethods.length === 0) {
+
+    if (!Array.isArray(data.payMethods) || data.payMethods.length === 0) {
       var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
       data.payMethods = PAY_METHODS.map(function (m, i) {
         return { id: "pm-" + m, method: m, text: texts[m] || "",
@@ -423,7 +420,7 @@
         if (typeof it.price !== "number") it.price = parseNum(it.price);
         if (typeof it.disc !== "number") it.disc = parseNum(it.disc);
         if (typeof it.vat !== "number") it.vat = parseNum(it.vat);
-        if (typeof it.note !== "string") it.note = "";
+        // #3: αφαιρούμε το πεδίο note — δεν το διατηρούμε
       });
       if (typeof q.gDisc !== "number") q.gDisc = parseNum(q.gDisc);
       if (typeof q.payment !== "string") q.payment = "";
@@ -448,7 +445,7 @@
     var fixTemplate = function (tp) {
       if (!tp.id) tp.id = uid();
       if (typeof tp.name !== "string") tp.name = "";
-      fixOffer.call(null, tp);        // items/gDisc/payment/notes/currency: ίδια morφή
+      fixOffer.call(null, tp);
       tp.mtime = typeof tp.mtime === "number" ? tp.mtime : 0;
     };
 
@@ -479,9 +476,9 @@
         }
       }
     } catch (e) { /* corrupted → fresh start */ }
-        state = { ver: DATA_VER, om: Date.now(), deleted: {},
-              activeQuoteId: null, quotes: [], clients: [], templates: [],
-              payMethods: [] };
+    state = { ver: DATA_VER, om: Date.now(), deleted: {},
+          activeQuoteId: null, quotes: [], clients: [], templates: [],
+          payMethods: [] };
     seedPayMethods();
     save();
   }
@@ -513,11 +510,6 @@
   }
 
   // ---------- 3. Merge engine (cross-device) ----------
-  // Συμβόλιο: mergeQuoteStates(local, remote) → merged state | null.
-  // Ίδιοι κανόνες με kanban v0.6.0, αλλά FLAT: τρεις λίστες
-  // (quotes/clients/templates), ένα κοινό tombstone map.
-  // Deterministic + symmetric: merge(A,B) === merge(B,A).
-
   function mergeEntityMaps(aDel, bDel) {
     var out = {};
     var a = aDel || {}, b = bDel || {};
@@ -586,13 +578,12 @@
     var quotes   = unionEntities(a.quotes, b.quotes, tomb);
     var clients  = unionEntities(a.clients, b.clients, tomb);
     var templates = unionEntities(a.templates, b.templates, tomb);
-	var payMethods = unionEntities(a.payMethods, b.payMethods, tomb);
+    var payMethods = unionEntities(a.payMethods, b.payMethods, tomb);
 
     return {
       ver: DATA_VER,
       om: Math.max(a.om || 0, b.om || 0),
       deleted: tomb,
-      // activeQuoteId ΔΕΝ θέτουμε — device-local
       quotes: orderEntities(quotes, pickRef(a.quotes, b.quotes, a.om, b.om)),
       clients: orderEntities(clients, pickRef(a.clients, b.clients, a.om, b.om)),
       templates: orderEntities(templates, pickRef(a.templates, b.templates, a.om, b.om)),
@@ -600,10 +591,7 @@
     };
   }
 
-  // ---------- 4. Υπολογισμοί (pure — ΠΟΤΕ δεν αποθηκεύονται) ----------
-  // itemNet = qty × price × (1 − itemDisc%) × (1 − globalDisc%)
-  // Η global έκπτωση εφαρμόζεται pro-rata σε ΚΑΘΕ γραμμή, ώστε το
-  // per-item VAT να υπολογίζεται πάνω στο σωστό (εκπτωτικό) ποσό.
+  // ---------- 4. Υπολογισμοί (pure functions) ----------
   function itemNet(it, gDisc) {
     var gross = (it.qty || 0) * (it.price || 0);
     var d = 1 - (it.disc || 0) / 100;
@@ -632,7 +620,6 @@
     };
   }
 
-  // Rounding-safe ισότιμη κατανομή: η πρώτη δόση σηκώνει το remainder.
   function splitEvenly(total, n) {
     var out = [];
     var base = round2(Math.floor(total * 100 / n) / 100);
@@ -657,7 +644,15 @@
     if (!q) return;
     cur = q;
     curIsDraft = false;
-    state.activeQuoteId = id;          // device-local
+    state.activeQuoteId = id;
+    // Quiet persist: device-local τιμή — δεν ταξιδεύει στο cloud,
+    // άρα ΚΑΝΟΥΜΕ dirty/push, μόνο τοπική επιβίωση σε reload.
+    window.__orosSyncApi._suppress = true;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
     loadOfferIntoEditor();
     switchTab("create");
   }
@@ -680,9 +675,6 @@
     recalcTotals();
   }
 
-  // Field-level commit: τα edits σε ΥΠΑΡΧΟΥΣΑ προσφορά live-αποθηκεύονται
-  // (kanban pattern). Στο draft μόνο ενημερώνουν τη μνήμη — το Save
-  // τη μετατρέπει σε οντότητα.
   function editCommitted() {
     if (!curIsDraft) { touch(cur); save(); }
     scheduleRender();
@@ -690,10 +682,19 @@
 
   function renderClientDisplay() {
     var c = cur && cur.clientId ? clientById(cur.clientId) : null;
-    $("client-name-display").textContent = c ? c.name : t("client.none");
+    var disp = $("client-name-display");
+    disp.textContent = c ? c.name : t("client.none");
+    // #10: toggle .has-client για σωστή χρωματική ένδειξη
+    var sel = $("client-selector");
+    if (sel) {
+      sel.classList.toggle("has-client", !!c);
+    }
+    // #1: δείχνουμε το κουμπί edit μόνο όταν υπάρχει επιλεγμένος πελάτης
+    var editBtn = $("client-edit");
+    if (editBtn) editBtn.hidden = !c;
   }
-  
-    // --- Payment presets: render + εισαγωγή + επεξεργασία ---
+
+  // --- Payment presets: render + εισαγωγή ---
   function renderPaymentPresets() {
     var host = $("payment-presets");
     if (!host) return;
@@ -715,14 +716,12 @@
     });
   }
 
-  // Επεξεργασία: inputs γράφουν σε temp buffer· στο close εφαρμόζονται
-  // ΜΟΝΟ οι αλλαγμένες τιμές (zero-edit close → κανένα mtime stamp).
   var payEditBuffer = null;
 
   function openPayPresetsDialog(focusMethod) {
     var host = $("paypresets-list");
     host.innerHTML = "";
-    payEditBuffer = {};                     // { method: newText }
+    payEditBuffer = {};
 
     (state.payMethods || []).forEach(function (pm) {
       var lb = document.createElement("label");
@@ -753,20 +752,16 @@
       var pm = payMethodBy(method);
       if (!pm || pm.text === payEditBuffer[method]) return;
       pm.text = payEditBuffer[method];
-      touch(pm);                            // LWW — μόνο το αλλαγμένο preset
+      touch(pm);
       changed = true;
     });
-    var bufferHadFocus = Object.keys(payEditBuffer).length > 0;
     payEditBuffer = null;
 
     if (changed) {
       state.om = Date.now();
       save(); renderPaymentPresets();
-      showToast(t("toast.paypresets_saved"), false);
+      showToast(t("toast.paypresets_saved"));
     }
-    // Διόρθωση: αν δεν άλλαξε τίποτα, δεν γράφουμε καθόλου —
-    // κανένα needless mtime stamp (κανένα κλείδωμα LWW).
-    void bufferHadFocus;
   });
 
   function recalcTotals() {
@@ -779,12 +774,13 @@
   }
 
   // ---------- 6. Line items + δόσεις UI ----------
-  // Οι γραμμές ΔΕΝ ξανα-χτίζονται σε κάθε input (θα χανόταν το focus):
-  // δημιουργούνται on-demand και mutούν το state άμεσα (kanban pattern).
-
   function renderItems() {
     var host = $("items-container");
+    var head = $("items-head");
     host.innerHTML = "";
+    // #6: κρύβουμε το header όταν δεν υπάρχουν items (print.css το κρύβει anyway)
+    if (head) head.hidden = !cur.items.length;
+
     if (!cur.items.length) {
       var e = document.createElement("div");
       e.className = "items-empty";
@@ -815,7 +811,6 @@
       return inp;
     };
 
-    // code | desc | qty | price | disc% | vat% | ✕
     mk("i-code", t("items.code"), it.code,
        function (i) { it.code = i.value; editCommitted(); });
     mk("i-desc", t("items.desc"), it.desc,
@@ -862,7 +857,7 @@
     editCommitted();
   }
 
-  // --- Δόσεις: δυναμικό section (δεν ήταν στο static HTML) ---
+  // --- Δόσεις ---
   function buildInstalmentSection() {
     var host = document.createElement("div");
     host.className = "instalments-section";
@@ -952,10 +947,10 @@
     el.className = "inst-sum" + (cur.instalments.length && !ok ? " mismatch" : "");
   }
 
-  // ---------- 7. Clients (dropdown + dialog) ----------
+  // ---------- 7. Clients (dropdown + dialog με edit mode) ----------
   var clientDropdownOpen = false;
   var editingClientId = null;
-  var clientSnapshot = null;      // zero-edit close fingerprint
+  var clientSnapshot = null;
 
   function clientFingerprint(c) {
     return JSON.stringify([c.name, c.email, c.phone, c.address, c.taxId]);
@@ -1004,7 +999,7 @@
 
     var addNew = document.createElement("button");
     addNew.type = "button";
-    addNew.className = "dropdown-item";
+    addNew.className = "dropdown-item row-item";
     addNew.innerHTML =
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> ' +
       esc(t("client.new"));
@@ -1047,12 +1042,15 @@
     setTimeout(function () { $("c-name").focus(); }, 50);
   }
 
-  // Commit ΜΟΝΟ μέσω submit (κουμπί Save). Esc / κλείσιμο χωρίς
-  // submit = Απόρριψη. Zero-edit submit ΔΕΝ stampάρει mtime
-  // (identical fingerprint — κανένα κλείδωμα LWW).
+  // #1: edit button κλικ → ανοίγει το dialog με τρέχοντα πελάτη
+  $("client-edit").addEventListener("click", function () {
+    closeClientDropdown();
+    openClientDialog(cur ? cur.clientId : null);
+  });
+
   $("client-form").addEventListener("submit", function () {
     var name = $("c-name").value.trim();
-    if (!name) return;                    // belt+braces (το required το καλύπτει)
+    if (!name) return;
 
     if (editingClientId) {
       var c = clientById(editingClientId);
@@ -1063,10 +1061,9 @@
       c.address = $("c-address").value;
       c.taxId = $("c-taxid").value.trim();
       if (clientSnapshot !== null &&
-          clientFingerprint(c) === clientSnapshot) return;   // zero-edit: no-op
+          clientFingerprint(c) === clientSnapshot) return;
       touch(c);
     } else {
-      // ΝΕΟΣ πελάτης — το κενό που έλειπε: push στο state + ανάθεση
       var nc = newClientObj(name);
       nc.email = $("c-email").value.trim();
       nc.phone = $("c-phone").value.trim();
@@ -1074,17 +1071,16 @@
       nc.taxId = $("c-taxid").value.trim();
       touch(nc);
       state.clients.push(nc);
-      if (cur) cur.clientId = nc.id;       // άμεση σύνδεση με τον editor
+      if (cur) cur.clientId = nc.id;
     }
     state.om = Date.now();
     save(); scheduleRender();
     renderClientDisplay();
-    showToast(t("toast.client_saved"), false);
-    // το method="dialog" κλείνει το παράθυρο μόνο του — κανένα .close() εδώ
+    showToast(t("toast.client_saved"));
   });
 
   $("dlg-client").addEventListener("close", function () {
-    editingClientId = null;                // reset — το close ΔΕΝ κάνει commit
+    editingClientId = null;
     clientSnapshot = null;
   });
 
@@ -1095,17 +1091,15 @@
     state.deleted[id] = Date.now();
     state.clients = state.clients.filter(function (c) { return c.id !== id; });
     state.om = Date.now();
-    // Οι προσφορές κρατούν το clientId — εμφανίζουν "—" (όχι cascade:
-    // το ιστορικό προσφορών ΔΕΝ χάνει ποτέ τον προσwormισμό του)
     if (cur && cur.clientId === id) renderClientDisplay();
     save(); scheduleRender();
-    showToast(t("toast.client_deleted"), false);
+    showToast(t("toast.client_deleted"));
     $("dlg-client").close();
   }
-
-  // ---------- 8. Templates ----------
+  
+    // ---------- 8. Templates ----------
   function saveCurrentAsTemplate() {
-    var cl = cur.clientId ? clientById(cur.clientId) : null;  // guard: νεκρό ref
+    var cl = cur.clientId ? clientById(cur.clientId) : null;
     var name = prompt(t("template.name_ph"), (cl ? cl.name + " — " : ""));
     if (!name || !name.trim()) return;
     var tp = {
@@ -1126,7 +1120,7 @@
     state.templates.push(tp);
     state.om = Date.now();
     save();
-    showToast(t("toast.template_saved"), false);
+    showToast(t("toast.template_saved"));
   }
 
   function openTemplateLibrary() {
@@ -1179,7 +1173,8 @@
       del.innerHTML =
         '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
       del.addEventListener("click", function () {
-        if (!confirm(t("confirm.delete"))) return;
+        // #2: δικό του μήνυμα — όχι το "delete this quote?"
+        if (!confirm(t("confirm.template_del"))) return;
         state.deleted[tp.id] = Date.now();
         state.templates = state.templates.filter(function (x) { return x !== tp; });
         state.om = Date.now();
@@ -1192,7 +1187,6 @@
   }
 
   function applyTemplate(tp) {
-    // Template → ΝΕΟ draft (ποτέ overwrite υπάρχουσας)
     cur = newQuoteObj();
     cur.currency = tp.currency || "EUR";
     cur.items = JSON.parse(JSON.stringify(tp.items || []));
@@ -1205,7 +1199,7 @@
     curIsDraft = true;
     loadOfferIntoEditor();
     switchTab("create");
-    showToast(t("toast.template_used"), false);
+    showToast(t("toast.template_used"));
   }
 
   // ---------- 9. Λίστα προσφορών (list tab) ----------
@@ -1248,8 +1242,6 @@
       return;
     }
 
-    // Νεότερες πρώτα (mtime DESC) — η pos-follows-om σειρά είναι για
-    // το merge· η λίστα λειτουργεί καλύτερα chronological
     list.sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
 
     list.forEach(function (q) {
@@ -1294,7 +1286,7 @@
     return row;
   }
 
-  // --- Status filter popover (kanban filter pattern) ---
+  // --- Status filter popover ---
   function renderStatusPop() {
     var pop = $("status-pop");
     pop.innerHTML = "";
@@ -1359,6 +1351,27 @@
     });
   }
 
+  // #4: ανίχνευση ελληνικών χαρακτήρων σε ΟΛΟ το περιεχόμενο —
+  // όχι μόνο στο LANG. Έτσι EN interface + Έλληνας πελάτης
+  // δεν παράγει garbled PDF, πέφτει στο print fallback.
+  function hasGreekText() {
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var blob = [
+      cur.notes, cur.payment, cur.num,
+      c ? c.name : "", c ? c.address : "", c ? c.taxId : ""
+    ].join(" ") || "";
+    (cur.items || []).forEach(function (it) {
+      blob += " " + (it.desc || "") + " " + (it.code || "");
+    });
+    return /[\u0370-\u03FF\u1F00-\u1FFF]/.test(blob);
+  }
+
+  // #5: περικοπή περιγραφής με ένδειξη «…»
+  function pdfTruncate(s, max) {
+    s = String(s || "");
+    return s.length > max ? s.slice(0, max - 1) + "…" : s;
+  }
+
   function exportPdf() {
     if (!cur) return;
     var JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
@@ -1373,13 +1386,16 @@
       try {
         doc.addFileToVFS("NotoSans-Regular.ttf", b64);
         doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+        doc.addFont("NotoSans-Regular.ttf", "NotoSans", "bold");
         doc.setFont("NotoSans");
         greekOK = true;
       } catch (e) { greekOK = false; }
     }
-    // Χωρίς ελληνική γραμματοσειρά: print fallback (τα ελληνικά
-    // θα ήταν garbled — προτιμούμε σωστό αποτέλεσμα σε 2 βήματα)
-    if (!greekOK && LANG === "el") { printFallback(); return; }
+    // #4: print fallback όταν υπάρχουν ελληνικά ΟΠΟΥΔΗΠΟΤΕ — στο
+    // περιεχόμενο (οποιαδήποτε γλώσσα interface) Η στις ετικέτες
+    // του interface (LANG === "el"): χωρίς ελληνική γραμματοσειρά
+    // garμπαλιάρουν τα headers του πίνακα κι αν τα data είναι λατινικά.
+    if (!greekOK && (LANG === "el" || hasGreekText())) { printFallback(); return; }
 
     var c = cur.clientId ? clientById(cur.clientId) : null;
     var tt = calcTotals(cur);
@@ -1401,15 +1417,17 @@
       "   " + t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—"), M, y);
     y += 8;
 
-    // Items table — απλές στήλες, monospace-friendly
-    var cols = [M, M + 30, M + 95, M + 125, M + 150, M + 165];
+    // Items table
+    var cols = [M, M + 30, M + 95, M + 125, M + 150];
     doc.setFont(undefined, "bold");
     doc.text(t("items.code"), cols[0], y);
     doc.text(t("items.desc"), cols[1], y);
     doc.text(t("items.qty"), cols[2], y);
     doc.text(t("items.unit_price"), cols[3], y);
     doc.text(t("items.disc"), cols[4], y);
-    doc.text(t("totals.total"), cols[5], y);
+    // #5: header Total right-aligned στο W-M — 1:1 με τις τιμές,
+    // μηδενική επικάλυψη με μεγάλα ποσά
+    doc.text(t("totals.total"), W - M, y, { align: "right" });
     doc.setFont(undefined, "normal");
     y += 2;
     doc.setDrawColor(160);
@@ -1419,7 +1437,8 @@
     cur.items.forEach(function (it) {
       if (y > 270) { doc.addPage(); y = M; }
       doc.text(String(it.code || ""), cols[0], y);
-      doc.text(String(it.desc || "").slice(0, 42), cols[1], y);
+      // #5: περικοπή desc με «…» αντί για κρύο κόψιμο
+      doc.text(pdfTruncate(it.desc, 42), cols[1], y);
       doc.text(String(it.qty || 0), cols[2], y);
       doc.text(String(it.price || 0), cols[3], y);
       doc.text(String(it.disc || 0) + "%", cols[4], y);
@@ -1467,14 +1486,13 @@
       doc.text(doc.splitTextToSize(cur.notes, W - 2 * M), M, y);
     }
 
-    // orOS branding footer — πάντα στην τελευταία σελίδα
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text("Made with orOS | useoros.online", W / 2, 287, { align: "center" });
     doc.setTextColor(0);
 
     doc.save((cur.num || "quote") + ".pdf");
-    showToast(t("toast.exported"), false);
+    showToast(t("toast.exported"));
   }
 
   function printFallback() {
@@ -1608,7 +1626,6 @@
 
     window.__orosSyncApi._suppress = true;
     try {
-      // Device-local: κρατάμε το activeQuoteId αν η προσφορά έζησε
       if (!data.activeQuoteId) data.activeQuoteId = state.activeQuoteId;
       if (data.activeQuoteId &&
           !quoteByIdIn(data.quotes, data.activeQuoteId)) {
@@ -1621,18 +1638,14 @@
       window.__orosSyncApi._suppress = false;
     }
 
-    // Αν ο χρήστης είχε ανοιχτή μια αποθηκευμένη προσφορά, φρεσκάρουμε
-    // τον editor με τη merged εκδοχή της (χωρίς tab switch).
     if (!curIsDraft && cur) {
       var live = quoteById(cur.id);
       if (live) {
         cur = live;
         loadOfferIntoEditor();
       } else {
-        // Η ανοιχτή προσφορά διαγράφηκε σε άλλη συσκευή — ο editor
-        // δεν κρατά stale reference (θα έγραφε σε οντότητα εκτός state)
         newDraft();
-        showToast(t("toast.sync_replaced"), false);
+        showToast(t("toast.sync_replaced"));
       }
     }
     scheduleRender();
@@ -1667,7 +1680,6 @@
     $("tab-create").classList.toggle("active", tab === "create");
     $("tab-list").classList.toggle("active", tab === "list");
 
-    // Header tools ανά tab
     var isList = tab === "list";
     $("search-wrap").hidden = !isList;
     $("filters").hidden = !isList;
@@ -1679,12 +1691,11 @@
   }
 
   function renderAll() {
-    renderPaymentPresets();   // φρεσκάρει τα κουμπιά μετά από sync merge
+    renderPaymentPresets();
     if (activeTab === "list") { renderQuoteList(); updateFilterBtn(); }
   }
 
   function commitSave() {
-    // Draft → οντότητα. Μετά: live editing (kanban pattern).
     if (curIsDraft) {
       cur.pos = state.quotes.length;
       state.quotes.push(cur);
@@ -1695,7 +1706,7 @@
     touch(cur);
     state.om = Date.now();
     save();
-    showToast(t("toast.saved"), false);
+    showToast(t("toast.saved"));
   }
 
   function duplicateCurrent() {
@@ -1716,11 +1727,11 @@
     save();
     loadOfferIntoEditor();
     renderQuoteList();
-    showToast(t("toast.duplicated"), false);
+    showToast(t("toast.duplicated"));
   }
 
   function deleteCurrent() {
-    if (curIsDraft) { newDraft(); return; }   // draft: απλός καθαρισμός
+    if (curIsDraft) { newDraft(); return; }
     if (!confirm(t("confirm.delete"))) return;
     state.deleted[cur.id] = Date.now();
     state.quotes = state.quotes.filter(function (q) { return q !== cur; });
@@ -1729,11 +1740,10 @@
     save();
     newDraft();
     renderQuoteList();
-    showToast(t("toast.deleted"), false);
+    showToast(t("toast.deleted"));
   }
 
   function wire() {
-    // --- Tabs ---
     document.querySelectorAll("#quote-tabs .tab").forEach(function (b) {
       b.addEventListener("click", function () { switchTab(b.dataset.tab); });
     });
@@ -1788,7 +1798,6 @@
       recalcTotals(); editCommitted();
     });
     $("global-vat").addEventListener("input", function () {
-      // Bulk: εφαρμόζεται σε όλες τις γραμμές
       var v = parseNum(this.value);
       cur.items.forEach(function (it) { it.vat = v; });
       renderItems(); recalcTotals(); editCommitted();
@@ -1800,7 +1809,7 @@
       cur.notes = this.value; editCommitted();
     });
 
-    // Payment presets (synced, δodynamic render — βλ. renderPaymentPresets)
+    // Payment presets
     $("paypresets-edit").addEventListener("click", function () {
       openPayPresetsDialog(null);
     });
@@ -1825,7 +1834,7 @@
     // --- Editor actions ---
     $("save-quote").addEventListener("click", commitSave);
     $("save-template").addEventListener("click", saveCurrentAsTemplate);
-	$("open-templates").addEventListener("click", openTemplateLibrary);
+    $("open-templates").addEventListener("click", openTemplateLibrary);
     $("duplicate-quote").addEventListener("click", duplicateCurrent);
     $("delete-quote").addEventListener("click", deleteCurrent);
     $("export-btn").addEventListener("click", exportPdf);
@@ -1836,7 +1845,7 @@
       $("dlg-templates").close();
     });
 
-    // --- Keyboard: Alt+N = νέα προσφορά (browser-safe combo) ---
+    // --- Keyboard: Alt+N = νέα προσφορά ---
     document.addEventListener("keydown", function (e) {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
           (e.key === "n" || e.key === "N")) {
@@ -1851,14 +1860,13 @@
     document.documentElement.setAttribute("lang", LANG);
     applyI18n();
     load();
-    buildInstalmentSection();   // ΠΡΙΝ από οποιοδήποτε loadOfferIntoEditor
+    buildInstalmentSection();
     wire();
-    renderPaymentPresets();   // πρώτο render των preset κουμπιών
+    renderPaymentPresets();
     registerSync();
     inheritPalette();
     watchPalette();
 
-    // Επαναφορά: τελευταία ανοιχτή προσφορά ή φρέσκο draft
     if (state.activeQuoteId && quoteById(state.activeQuoteId)) {
       openQuote(state.activeQuoteId);
     } else {

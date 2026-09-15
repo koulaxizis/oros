@@ -507,6 +507,9 @@
   // δύο συσκευές το αποτέλεσμα ταυτίζεται, καμία ταλάντευση.
 
   // --- Board-level LWW: name/mtime νικητής ---
+  // Board header = ΟΛΑ τα LWW πεδία του board (name, archived, color).
+  // v0.6.1 fix: archived/color πετάγονταν στο merge → αρχειοθετημένα
+  // boards "αναживαν" και τα χρώματα γίνονταν fallback μετά από sync.
   function newerBoardHeader(a, b) {
     if ((a.mtime || 0) !== (b.mtime || 0)) {
       return (a.mtime || 0) > (b.mtime || 0) ? a : b;
@@ -714,8 +717,10 @@
 
     // 5. Σύνθεση merged board
     var head = newerBoardHeader(
-      { id: ba.id, name: ba.name, mtime: ba.mtime },
-      { id: bb.id, name: bb.name, mtime: bb.mtime }
+      { id: ba.id, name: ba.name, archived: !!ba.archived,
+        color: ba.color || null, mtime: ba.mtime },
+      { id: bb.id, name: bb.name, archived: !!bb.archived,
+        color: bb.color || null, mtime: bb.mtime }
     );
 
     var cols = [];
@@ -732,6 +737,8 @@
     return {
       id: ba.id,
       name: head.name,
+      archived: head.archived,       // v0.6.1: survives the merge now
+      color: head.color || undefined, // v0.6.1: survives the merge now
       mtime: Math.max(ba.mtime || 0, bb.mtime || 0),
       om: Math.max(ba.om || 0, bb.om || 0),
       deleted: tomb,
@@ -776,6 +783,8 @@
           return {
             id: src.id,
             name: src.name,
+            archived: src.archived,       // v0.6.1: keep flags/colors
+            color: src.color || undefined,
             mtime: src.mtime,
             om: src.om,
             deleted: JSON.parse(JSON.stringify(src.deleted || {})),
@@ -865,12 +874,16 @@
 
     window.__orosSyncApi._suppress = true;
     try {
-      // Device-local επιλογή board: κρατάμε το τρέχον activeBoardId
-      // αν το board επιβίωσε στο merge· αλλιώς fallback στο πρώτο.
-      if (!data.activeBoardId ||
-          !boardByIdIn(data.boards, data.activeBoardId)) {
-        data.activeBoardId = data.boards[0].id;
-      }
+      // Device-local επιλογή board: το LOCAL activeBoardId είναι εδώ
+      // η αλήθεια — ΟΧΙ το incoming (το merge ΔΕΝ το μεταφέρει,
+      // οπότε το data.activeBoardId είναι undefined ή remote).
+      // Το κρατάμε αν το board επιβίωσε στο merge· αλλιώς fallback
+      // στο πρώτο. Έτσι το sync pull δεν αλλάζει board στον χρήστη.
+      var keepActive = state ? state.activeBoardId : null;
+      data.activeBoardId =
+        (keepActive && boardByIdIn(data.boards, keepActive))
+          ? keepActive
+          : data.boards[0].id;
       state = data;
       state.boards.forEach(function (board) { pruneTombstones(board); });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1513,6 +1526,8 @@
     var copy = {
       id: uid(),
       name: bd.name + t("dup.suffix"),
+      archived: bd.archived,            // v0.6.1: duplicate keeps color/archive state
+      color: bd.color || undefined,
       mtime: Date.now(),
       om: Date.now(),
       deleted: JSON.parse(JSON.stringify(bd.deleted || {})),

@@ -96,8 +96,9 @@
     for (var i = 0; i < els.length; i++) els[i].textContent = t(els[i].getAttribute("data-i18n"));
     var phs = document.querySelectorAll("[data-i18n-ph]");
     for (var j = 0; j < phs.length; j++) phs[j].placeholder = t(phs[j].getAttribute("data-i18n-ph"));
-    // Re-render quick-zone chips (they are dynamic, no data-i18n attribute)
+    // Re-render quick-zone chips AND zone list (both are dynamic, no data-i18n attribute)
     renderChips();
+    renderZones();
   }
 
   function $(id) { return document.getElementById(id); }

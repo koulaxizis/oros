@@ -99,9 +99,13 @@
           <span id="client-name-display">No client</span>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </div>
+        <button id="client-edit" type="button" title="Edit client" hidden
+                data-i18n-title="client.edit_btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
         <button id="client-select-new" type="button" title="New client"
                 data-i18n-title="client.new">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
         <div id="client-dropdown" class="dropdown-pop" hidden></div>
       </div>
@@ -116,6 +120,16 @@
           </button>
         </div>
 
+        <div class="items-head" id="items-head">
+          <span data-i18n="items.code">Code/SKU</span>
+          <span data-i18n="items.desc">Description</span>
+          <span data-i18n="items.qty">Qty</span>
+          <span data-i18n="items.unit_price">Unit Price</span>
+          <span data-i18n="items.disc">Disc %</span>
+          <span data-i18n="items.vat">VAT %</span>
+          <span></span>
+        </div>
+
         <div id="items-container"></div>
 
         <div class="totals-section">
@@ -128,10 +142,10 @@
             <input id="global-discount" type="number" min="0" max="100" step="0.1" value="0">
           </div>
           <div class="total-row vat-row">
-            <label>VAT (%)</label>
+            <label data-i18n="totals.vat_bulk">VAT (%)</label>
             <input id="global-vat" type="number" min="0" max="100" step="0.1" value="24">
           </div>
-		            <div class="total-row">
+          <div class="total-row">
             <span data-i18n="totals.vat">VAT</span>
             <span id="vat-val">0.00</span>
           </div>
@@ -153,13 +167,15 @@
           </button>
         </div>
         <small class="presets-hint" data-i18n="paypresets.hint"></small>
-        <textarea id="q-payment" rows="3" placeholder="e.g., 50% upfront, 50% on delivery…"></textarea>
+        <textarea id="q-payment" rows="3" placeholder="e.g., 50% upfront, 50% on delivery…"
+                  data-i18n-ph="payment.ph"></textarea>
       </div>
 
       <!-- Notes -->
       <div class="notes-section">
         <label data-i18n="offer.notes">Notes</label>
-        <textarea id="q-notes" rows="4" placeholder="Additional terms, conditions…"></textarea>
+        <textarea id="q-notes" rows="4" placeholder="Additional terms, conditions…"
+                  data-i18n-ph="notes.ph"></textarea>
       </div>
 
       <!-- Actions -->
@@ -170,7 +186,7 @@
                 data-i18n="actions.save_template">Save as Template</button>
         <button id="duplicate-quote" type="button" class="ghost"
                 data-i18n="actions.duplicate">Duplicate</button>
-		<button id="open-templates" type="button" class="ghost"
+        <button id="open-templates" type="button" class="ghost"
                 data-i18n="templates.manage">Templates</button>
         <button id="delete-quote" type="button" class="danger"
                 data-i18n="actions.delete">Delete</button>
@@ -225,8 +241,8 @@
       <button type="button" id="templates-close" data-i18n="close">Close</button>
     </menu>
   </dialog>
-  
-    <!-- PAYMENT PRESETS DIALOG (synced, per-user editable) -->
+
+  <!-- PAYMENT PRESETS DIALOG (synced, per-user editable) -->
   <dialog id="dlg-paypresets">
     <h3 data-i18n="paypresets.title">Payment Presets</h3>
     <div id="paypresets-list"></div>
