@@ -137,9 +137,8 @@ window.OROS_TRANSLATIONS = {
 	"sync.pwfix.hint": "Sync failed because the cloud blob cannot be decrypted. If another device changed the passphrase, enter the new one here to recover.",
 	"sync.pwfix.hint.vault": "Sync failed and this device has a sealed vault. The passphrase likely changed elsewhere. Enter the new passphrase to re-unlock and re-seal.",
 	"sync.pwfix.err": "Incorrect passphrase — try again",
-	"app.time": "Time",
-	"app.calendar": "Calendar"
-}
+    "app.time": "Time",
+    "app.calendar": "Calendar"
   },
 
   el: {
@@ -275,12 +274,10 @@ window.OROS_TRANSLATIONS = {
 	"sync.pwfix.title": "Η passphrase άλλαξε σε άλλη συσκευή;",
 	"sync.pwfix.hint": "Το sync απέτυχε επειδή το cloud blob δεν μπορεί να αποκρυπτογραφηθεί. Αν άλλη συσκευή άλλαξε τη passphrase, εισάγετέ την εδώ για ανάκτηση.",
 	"sync.pwfix.hint.vault": "Το sync απέτυχε και αυτή η συσκευή έχει sealed vault. Η passphrase πιθανότατα άλλαξε αλλού. Εισάγετε τη νέα passphrase για ξανα-ξεκλείδωμα και ξανασφράγισμα.",
-	"sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
-	"app.time": "Ώρα",
-	"app.calendar": "Ημερολόγιο"
-  }
-
-};
+	    "sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
+    "app.time": "Ώρα",
+    "app.calendar": "Ημερολόγιο"
+  };
 
 // ============================================================
 // i18n helper — t(key)

@@ -1246,7 +1246,7 @@ function detectPwEpochMismatch() {
       return decryptBlob(blobText)
         .then(function (payload) {
           var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
-          var localEpoch = getPWEpoch();
+          var localEpoch = getWVEpoch();  // CORRECTED: was getPWEpoch (undefined)
           if (localEpoch === 0 || cloudEpoch === 0) return null; // No epochs yet
           if (cloudEpoch > localEpoch) return cloudEpoch; // Epoch increased elsewhere
           return null;
