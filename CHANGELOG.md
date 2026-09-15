@@ -1021,6 +1021,31 @@ ONLY as functional reference — zero code carried over.
   PDF-first, print only as fallback)
 - Ability to edit payment preset names/order
 
+## Time app v0.1.1c — 2026-09-15
+- FIXED (astro.js): duplicate divider between "Sun now" and the
+  solar status line — removed dead `row("", "")` placeholder row
+  (empty .ast-row contributed an extra border-bottom + padding).
+- INTERNAL: line 356 mixed-quote SyntaxError resolved earlier
+  this session (history note, shipped in v0.1.1a).
+  
+  ## Time app v0.1.1d — 2026-09-15
+- FIXED (time.js): quick-add zone chips (Athens, London, NY, Tokyo)
+  now translate properly on language switch. Added qc.* keys to both
+  en/el translation packs, renamed zoneName() → zoneKey() with a
+  switch mapping for the four presets, and refreshed renderChips()
+  call inside applyI18n() so the UI updates instantly when the
+  language changes.
+  
+  ## orOS v0.32.14 — 2026-09-15
+- ADDED (shell.js): new inline SVG icon "quote" for the Quote/Offer
+  app — a folded document with two quotation-mark strokes, distinct
+  from the "notes" document (plain text lines). Registered in the
+  ICONS registry; consumed via apps.json "icon": "quote".
+- Time app: closed out v0.1.1d (see Time changelog) — translated
+  quick-zone chips, centered clock faces, astronomy divider fix.
+- System-wide: standardized scrollbars + [hidden] authority guard
+  applied to Calendar, Kanban, Notes, Quote, To-Do, Weather.
+
 ────────────────────────────────────────────────────────────────
 SESSION HANDOFF — v0.30.03 Ready for Deployment
 ────────────────────────────────────────────────────────────────

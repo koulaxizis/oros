@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.32.11 — Shell logic
+// orOS Core v0.32.14 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.32.11";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.32.14";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -132,7 +132,8 @@
     weather: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M12 7h1M3.5 3.5l.7.7M10.8 10.8l.7.7M3.5 10.5l.7-.7M10.8 4.2l.7-.7"/><path d="M12.5 21a4.5 4.5 0 0 1 0-9 5.5 5.5 0 0 1 10.6 1.6 3.5 3.5 0 0 1-.6 6.9z"/></svg>',
     mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
-    calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+    calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -884,7 +885,16 @@
       skin:         state.skin,
       wallpaper:    state.wallpaper,
       syncInterval: syncInterval,
-      autoexport:   state.autoexport
+      autoexport:   state.autoexport,
+      alarms:       alarmsRead(),   // E1 gap fix: alarms are user data —
+                                   // they must travel + appear in every
+                                   // backup funnel like everything else.
+      weather:      wxRead()    // v0.32.x FIX: tray prefs were marked
+                                // dirty on every change but never left
+                                // this device — the getter was the
+                                // missing half of the slice contract.
+                                // wxRead is hoisted (function decl),
+                                // section order is irrelevant.
     };
   }
 
@@ -925,6 +935,20 @@
       });
       wxFetch(false);        // silent: throttled, location is new
       wxRenderChip();
+    }
+
+    // Pull-fed alarms: sanitize each (past/duplicate "once" items are
+    // junk), wholesale replace — a fired alarm is by construction
+    // already gone/advanced on the source device, so remote is
+    // always the freshest legitimate list. Anti-loop contract:
+    // pull-fed path, NO markDirty — same as weather/syncInterval.
+    if (Array.isArray(data.alarms)) {
+      var pulledAlarms = [];
+      for (var ai = 0; ai < data.alarms.length; ai++) {
+        var sa = alarmSanitize(data.alarms[ai]);
+        if (sa) pulledAlarms.push(sa);
+      }
+      alarmsWrite(pulledAlarms);
     }
 
     localStorage.setItem("oros-lang",  state.lang);

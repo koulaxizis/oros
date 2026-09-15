@@ -2721,6 +2721,7 @@ function mergeMoodStates(A, B) {
       var footer = function () {
         doc.setFontSize(8); doc.setTextColor(150);
         doc.text("orOS Mood — " + t("app.title"), M, H - 28);
+        doc.text("Made with orOS | useoros.online", W / 2, H - 28, { align: "center" });
         doc.text(String(page), W - M, H - 28, { align: "right" });
       };
       var newPage = function () { footer(); doc.addPage(); page++; y = M; };

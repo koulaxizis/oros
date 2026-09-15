@@ -1021,8 +1021,12 @@
     return s || "_";
   }
 
+  // orOS global export rule: every exported file ends with the
+  // branding footer. Covers page .txt AND every entry in the
+  // notebook .zip — single funnel, zero drift.
   function pageText(page) {
-    return page.title + "\n\n" + (page.text || "");
+    return page.title + "\n\n" + (page.text || "") +
+      "\n\n---\nMade with orOS | useoros.online";
   }
 
   function exportPageTxt(page) {

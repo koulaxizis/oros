@@ -1467,6 +1467,12 @@
       doc.text(doc.splitTextToSize(cur.notes, W - 2 * M), M, y);
     }
 
+    // orOS branding footer — πάντα στην τελευταία σελίδα
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Made with orOS | useoros.online", W / 2, 287, { align: "center" });
+    doc.setTextColor(0);
+
     doc.save((cur.num || "quote") + ".pdf");
     showToast(t("toast.exported"), false);
   }
@@ -1507,6 +1513,7 @@
       "<p><strong>" + esc(t("totals.total")) + ": " + esc(money(tt.total, cur.currency)) + "</strong></p></div>" +
       (cur.payment ? "<p><strong>" + esc(t("payment.title")) + ":</strong><br>" + esc(cur.payment) + "</p>" : "") +
       (cur.notes ? "<p><strong>" + esc(t("offer.notes")) + ":</strong><br>" + esc(cur.notes) + "</p>" : "") +
+      '<div style="margin-top:24px;padding-top:8px;border-top:1px solid #ccc;font-size:11px;color:#777;text-align:center;">Made with orOS | useoros.online</div>' +
       "</body></html>");
     fr.contentDocument.close();
     setTimeout(function () {

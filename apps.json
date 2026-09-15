@@ -61,7 +61,7 @@
       "id": "quote",
       "name": "Quote",
       "category": "Productivity",
-      "icon": "columns",
+      "icon": "quote",
       "url": "quote/",
       "type": "internal"
     }

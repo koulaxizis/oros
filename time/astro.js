@@ -336,11 +336,8 @@
     html += row(t("astro.sunpos"),
       sp.alt.toFixed(0) + "° / " + sp.az.toFixed(0) + "°");
 
-    // Solar status line (new, proposal #2)
+    // Solar status line (proposal #2)
     var stat = solarStatus(st, sp);
-    if (!st.polar || st.polar === "day") {
-      html += row("", ""); // placeholder guard, unused
-    }
     html += '<div class="ast-row">' + statusDot(stat.cls) +
       '<span class="ast-lbl">' + esc(t("astro.status." +
         (st.polar === "night" ? "night" : st.polar === "day" ? "day" : stat.key.replace("astro.status.", "")))) +

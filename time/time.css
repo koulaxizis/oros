@@ -54,6 +54,7 @@ body {
 #face-digital:not([hidden]) {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 5px;
 }
 #big-hm {
@@ -78,23 +79,32 @@ body {
 }
 
 /* Analog face (SVG injected by JS) */
-#face-analog svg { display: block; width: min(200px, 55vw); height: auto; }
+#face-analog svg {
+  display: block;
+  width: min(200px, 55vw);
+  height: auto;
+  margin-inline: auto;
+}
 
-/* Binary face: 6 bit-columns */
+/* Binary face: 6 bit-columns. width:fit-content σκοτώνει το
+   grid justify-content:normal/stretch που τέντωνε τις auto
+   στήλες σε full-width — το bug "αγνώριστο binary". */
 #face-binary:not([hidden]) {
   display: grid;
   grid-auto-flow: column;
-  gap: 8px;
+  gap: 10px;
   padding: 4px 0;
+  width: fit-content;
+  margin-inline: auto;
 }
 .b-col {
   display: grid;
-  grid-template-rows: repeat(4, 18px);
-  gap: 5px;
+  grid-template-rows: repeat(4, 24px);
+  gap: 6px;
 }
 .b-bit {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -110,6 +120,7 @@ body {
   display: flex;
   gap: 6px;
   align-items: center;
+  justify-content: center;
   padding: 4px 0;
 }
 .fl-pair {
@@ -163,6 +174,7 @@ body {
 #face-neon:not([hidden]) {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 5px;
   padding: 4px 0 14px;
 }
