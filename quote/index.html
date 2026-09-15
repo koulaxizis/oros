@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="oros" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quote · orOS</title>
+  <link rel="stylesheet" href="quote.css?v=0.1.00">
+</head>
+<body>
+
+  <!-- Quote bar: tabs + search + new client + export -->
+  <header id="quotebar">
+    <nav id="quote-tabs">
+      <button type="button" class="tab active" data-tab="create"
+              data-i18n="tab.create">Create</button>
+      <button type="button" class="tab" data-tab="list"
+              data-i18n="tab.list">Quotes</button>
+    </nav>
+
+    <div id="search-wrap" hidden>
+      <input id="search" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Search…" data-i18n-ph="search.ph">
+      <button type="button" id="search-clear" hidden aria-label="Clear search"
+              data-i18n-title="search.clear" title="Clear">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div id="filters" hidden>
+      <button type="button" id="status-filter" aria-label="Filter by status"
+              data-i18n-title="filter.status" title="Filter by status">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span id="filter-count" hidden>0</span>
+      </button>
+      <div id="status-pop" hidden></div>
+    </div>
+
+    <button id="client-new" type="button" aria-label="New client"
+            data-i18n-title="client.new" title="New client" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+    </button>
+
+    <button id="export-btn" type="button" aria-label="Export PDF"
+            data-i18n-title="export.pdf" title="Export PDF" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </button>
+
+    <button id="send-btn" type="button" aria-label="Send quote"
+            data-i18n-title="send.mail" title="Send via email" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </button>
+  </header>
+
+  <!-- CREATE TAB: Full offer editor -->
+  <section id="tab-create" class="tab-pane active">
+    <div id="offer-editor">
+      <!-- Offer header -->
+      <div class="offer-meta">
+        <div class="meta-row">
+          <label data-i18n="offer.number">Quote #</label>
+          <input id="q-number" type="text" readonly>
+          <button id="regenerate-num" type="button" title="Regenerate number"
+                  data-i18n-title="offer.regenerate">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+        </div>
+
+        <div class="meta-row">
+          <label data-i18n="offer.date">Date</label>
+          <input id="q-date" type="date">
+          <label data-i18n="offer.due_date">Due</label>
+          <input id="q-due" type="date">
+        </div>
+
+        <div class="meta-row status-row">
+          <label data-i18n="offer.status">Status</label>
+          <select id="q-status">
+            <option value="draft" data-i18n="status.draft">Draft</option>
+            <option value="sent" data-i18n="status.sent">Sent</option>
+            <option value="accepted" data-i18n="status.accepted">Accepted</option>
+            <option value="rejected" data-i18n="status.rejected">Rejected</option>
+            <option value="expired" data-i18n="status.expired">Expired</option>
+          </select>
+        </div>
+
+        <div class="meta-row currency-row">
+          <label data-i18n="offer.currency">Currency</label>
+          <select id="q-currency">
+            <option value="EUR">EUR €</option>
+            <option value="USD">USD $</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Client selection -->
+      <div class="offer-client">
+        <label data-i18n="client.select">Select client</label>
+        <div id="client-selector" class="dropdown-trigger">
+          <span id="client-name-display" data-i18n="client.none">No client</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <button id="client-select-new" type="button" title="New client"
+                data-i18n-title="client.new">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <div id="client-dropdown" class="dropdown-pop" hidden></div>
+      </div>
+
+      <!-- Line items -->
+      <div class="items-section">
+        <div class="section-header">
+          <h3 data-i18n="items.title">Line Items</h3>
+          <button id="item-add" type="button" title="Add item"
+                  data-i18n-title="items.add">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+
+        <div id="items-container"></div>
+
+        <div class="totals-section">
+          <div class="total-row">
+            <span data-i18n="totals.subtotal">Subtotal</span>
+            <span id="subtotal-val">0.00</span>
+          </div>
+          <div class="total-row discount-row">
+            <label data-i18n="totals.discount">Discount (%)</label>
+            <input id="global-discount" type="number" min="0" max="100" step="0.1" value="0">
+          </div>
+          <div class="total-row vat-row">
+            <label>VAT (%)</label>
+            <input id="global-vat" type="number" min="0" max="100" step="0.1" value="24">
+          </div>
+          <div class="total-row grand">
+            <span data-i18n="totals.total">Total</span>
+            <span id="grand-total-val">0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment terms -->
+      <div class="payment-section">
+        <label data-i18n="payment.title">Payment Terms</label>
+        <div class="presets">
+          <button type="button" class="preset-btn" data-payment="bank"
+                  data-i18n="payment.bank">Bank Transfer</button>
+          <button type="button" class="preset-btn" data-payment="paypal"
+                  data-i18n="payment.paypal">PayPal</button>
+          <button type="button" class="preset-btn" data-payment="iris"
+                  data-i18n="payment.iris">IRIS</button>
+          <button type="button" class="preset-btn" data-payment="cash"
+                  data-i18n="payment.cash">Cash</button>
+        </div>
+        <textarea id="q-payment" rows="3" placeholder="e.g., 50% upfront, 50% on delivery…"></textarea>
+      </div>
+
+      <!-- Notes -->
+      <div class="notes-section">
+        <label data-i18n="offer.notes">Notes</label>
+        <textarea id="q-notes" rows="4" placeholder="Additional terms, conditions…"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="offer-actions">
+        <button id="save-quote" type="button" class="primary"
+                data-i18n="actions.save">Save</button>
+        <button id="save-template" type="button" class="ghost"
+                data-i18n="actions.save_template">Save as Template</button>
+        <button id="duplicate-quote" type="button" class="ghost"
+                data-i18n="actions.duplicate">Duplicate</button>
+        <button id="delete-quote" type="button" class="danger"
+                data-i18n="actions.delete">Delete</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIST TAB: Quotes table/list with filters -->
+  <section id="tab-list" class="tab-pane">
+    <div id="quote-list-container"></div>
+    <div id="list-empty" hidden>
+      <span data-i18n="list.empty_title">No quotes yet</span>
+      <small data-i18n="list.empty_hint">Create your first quote in the Create tab.</small>
+    </div>
+  </section>
+
+  <!-- CLIENT DIALOG -->
+  <dialog id="dlg-client">
+    <form method="dialog" id="client-form" autocomplete="off">
+      <h3 data-i18n="client.edit">Client Details</h3>
+
+      <label data-i18n="client.name">Name</label>
+      <input id="c-name" type="text" required>
+
+      <label data-i18n="client.email">Email</label>
+      <input id="c-email" type="email">
+
+      <label data-i18n="client.phone">Phone</label>
+      <input id="c-phone" type="tel">
+
+      <label data-i18n="client.address">Address</label>
+      <textarea id="c-address" rows="3"></textarea>
+
+      <label data-i18n="client.tax_id">Tax ID / VAT</label>
+      <input id="c-taxid" type="text">
+
+      <menu>
+        <button id="client-delete" type="button" class="danger"
+                data-i18n="client.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- TEMPLATE LIBRARY DIALOG -->
+  <dialog id="dlg-templates">
+    <h3 data-i18n="templates.manage">Template Library</h3>
+    <div id="template-grid"></div>
+    <menu>
+      <span class="spacer"></span>
+      <button type="button" id="templates-close" data-i18n="close">Close</button>
+    </menu>
+  </dialog>
+
+  <!-- TOAST -->
+  <div id="toast" role="status"></div>
+
+  <!-- JSPDF LIBRARY (vendored from Mood) -->
+  <script src="../vendor/jspdf.umd.min.js"></script>
+  <script src="quote.js?v=0.1.00"></script>
+</body>
+</html>

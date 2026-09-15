@@ -172,7 +172,7 @@
   function markDirty() {
     try {
       if (window.parent && window.parent.orosSync && window.parent.orosSync.markDirty) {
-        window.parent.orosSync.markDirty("calendar");
+        window.parent.orosSync.markDirty();
       }
     } catch (e) {}
   }

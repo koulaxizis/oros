@@ -1,7 +1,8 @@
 // ============================================================
-// orOS Time v0.1.0
-// Clock (digital/analog/binary) · world clock · alarms ·
-// timer · stopwatch · pomodoro.
+// orOS Time v0.1.1
+// Clock (digital/analog/binary/flip/neon) · world clock ·
+// alarms (24h + snooze + sound) · timer (+ fullscreen
+// countdown overlay) · stopwatch · pomodoro · converter.
 // Alarms/timer/pomodoro FIRINGS run in the SHELL engine
 // (parent window, same pattern as __orosWeatherUpdate) so they
 // survive closing the app. This page only renders + registers.
@@ -28,8 +29,6 @@
   }
   // Live follow: theme/skin changes in the shell reach an OPEN app
   // without a re-open — the observer re-inherits on attribute change.
-  // (Bonus fix: previously the app saw shell theme changes only at
-  // its own boot; a theme toggle in the menu left it stale.)
   function watchPalette() {
     try {
       var pRoot = window.parent.document.documentElement;
@@ -52,27 +51,39 @@
   var STR = {
     en: {
       "sty.digital": "Digital", "sty.analog": "Analog", "sty.binary": "Binary",
+      "sty.flip": "Flip", "sty.neon": "Neon",
       "zones.title": "World clock", "zones.add": "Add", "zones.dlg": "Add time zone",
       "zones.ok": "Add", "zones.cancel": "Cancel", "zones.none": "No zones yet",
+      "zones.edit": "Change zone",
       "tab.alarm": "Alarm", "tab.timer": "Timer", "tab.stopwatch": "Stopwatch", "tab.pomodoro": "Pomodoro",
-      "al.ph.label": "Label…", "al.daily": "Daily", "al.add": "Add alarm", "al.none": "No alarms",
+      "al.ph.label": "Label…", "al.daily": "Daily", "al.sound": "Sound",
+      "al.add": "Add alarm", "al.none": "No alarms",
       "tm.start": "Start", "tm.reset": "Reset", "tm.done": "Timer finished",
       "st.start": "Start", "st.stop": "Stop", "st.reset": "Reset",
       "pm.start": "Start", "pm.reset": "Reset", "pm.work": "Work", "pm.break": "Break",
       "pm.phase.work": "Focus", "pm.phase.break": "Break",
-      "pm.done": "{n} session(s) completed"
+      "pm.done": "{n} session(s) completed",
+      "sn.title": "Snooze", "sn.5": "5 min", "sn.10": "10 min", "sn.15": "15 min",
+      "conv.title": "Time zone converter",
+      "conv.toggle.show": "Show", "conv.toggle.hide": "Hide", "conv.local": "You"
     },
     el: {
       "sty.digital": "Ψηφιακό", "sty.analog": "Αναλογικό", "sty.binary": "Δυαδικό",
+      "sty.flip": "Αναδιπλούμενο", "sty.neon": "Νεόν",
       "zones.title": "Παγκόσμια ώρα", "zones.add": "Προσθήκη", "zones.dlg": "Προσθήκη ζώνης ώρας",
       "zones.ok": "Προσθήκη", "zones.cancel": "Άκυρο", "zones.none": "Δεν έχουν προστεθεί ζώνες",
+      "zones.edit": "Αλλαγή ζώνης",
       "tab.alarm": "Ξυπνητήρι", "tab.timer": "Αντίστροφη μέτρηση", "tab.stopwatch": "Χρονόμετρο", "tab.pomodoro": "Pomodoro",
-      "al.ph.label": "Ετικέτα…", "al.daily": "Καθημερινά", "al.add": "Προσθήκη ξυπνητηριού", "al.none": "Κανένα ξυπνητήρι",
+      "al.ph.label": "Ετικέτα…", "al.daily": "Καθημερινά", "al.sound": "Ήχος",
+      "al.add": "Προσθήκη ξυπνητηριού", "al.none": "Κανένα ξυπνητήρι",
       "tm.start": "Έναρξη", "tm.reset": "Επαναφορά", "tm.done": "Η αντίστροφη μέτρηση ολοκληρώθηκε",
       "st.start": "Έναρξη", "st.stop": "Διακοπή", "st.reset": "Επαναφορά",
       "pm.start": "Έναρξη", "pm.reset": "Επαναφορά", "pm.work": "Εργασία", "pm.break": "Διάλειμμα",
       "pm.phase.work": "Εστίαση", "pm.phase.break": "Διάλειμμα",
-      "pm.done": "{n} ολοκληρωμένες περίοδοι"
+      "pm.done": "{n} ολοκληρωμένες περίοδοι",
+      "sn.title": "Αναβολή", "sn.5": "5 λεπτά", "sn.10": "10 λεπτά", "sn.15": "15 λεπτά",
+      "conv.title": "Μετατροπέας ζωνών ώρας",
+      "conv.toggle.show": "Εμφάνιση", "conv.toggle.hide": "Απόκρυψη", "conv.local": "Εσύ"
     }
   };
   function t(k) {
@@ -89,15 +100,16 @@
   function $(id) { return document.getElementById(id); }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
 
-  /* ---------- 2. State (prefs persist; sync slice deferred to Part 5) ---------- */
-    var DATA_KEY = "oros-time-data";
+  /* ---------- 2. State ---------- */
+  var DATA_KEY = "oros-time-data";
   var lastMinuteKey = -1;
   // zones = entities { tz, mtime }; zonesDeleted = tombstones { tz, mtime }
   // (same merge contract as Calendar). smtime stamps SCALAR-pref edits
   // only — a zone add/delete never clobbers the other device's
-  // style/pomodoro-duration settings through the scalar LWW.
+  // style/pomodoro/sound settings through the scalar LWW.
+  // style: 0 digital · 1 analog · 2 binary · 3 flip · 4 neon
   var state = {
-    ver: 1, style: 0,
+    ver: 1, style: 0, sound: true,
     zones: [], zonesDeleted: [],
     pmWork: 25, pmBreak: 5, pmDone: 0,
     smtime: 0,
@@ -124,7 +136,8 @@
     try {
       var d = JSON.parse(localStorage.getItem(DATA_KEY));
       if (d && typeof d === "object") {
-        if (typeof d.style === "number") state.style = d.style;
+        if (typeof d.style === "number") state.style = Math.min(4, Math.max(0, d.style));
+        if (typeof d.sound === "boolean") state.sound = d.sound;
         if (Array.isArray(d.zones)) state.zones = d.zones.map(sanitizeZone).filter(Boolean);
         if (Array.isArray(d.zonesDeleted)) state.zonesDeleted = d.zonesDeleted.map(sanitizeZoneTomb).filter(Boolean);
         if (typeof d.pmWork === "number") state.pmWork = Math.min(120, Math.max(1, d.pmWork));
@@ -187,18 +200,72 @@
       } else {
         wr(l.filter(function (a) { return a.id !== hit.id; }));
       }
-      var toast = document.createElement("div");
-      toast.setAttribute("role", "alert");
-      toast.style.cssText =
-        "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:99;" +
-        "background:var(--panel-bg);color:var(--text);border:1px solid var(--accent);" +
-        "border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:700;" +
-        "box-shadow:0 8px 24px var(--shadow);";
-      toast.textContent = hit.label || t("tab.alarm");
-      document.body.appendChild(toast);
-      setTimeout(function () { if (toast.parentNode) toast.remove(); }, 15000);
-      toast.addEventListener("click", function () { toast.remove(); });
+      // Top-right toast, identical anchoring to the shell's toasts.
+      showToast(hit.label || t("tab.alarm"), { snooze: hit.repeat !== "daily" });
     }, 1000);
+  }
+
+  /* ---------- 3b. Shared toast + Web Audio beep (no deps) ---------- */
+  // Top-right, below the clock — Linux-desktop convention, matching
+  // every other orOS notification. Optional snooze buttons re-register
+  // through alarmsApi, so snoozes work in BOTH engines when fired
+  // in-page (standalone engine; the shell engine fires its own toast).
+  function showToast(label, opts) {
+    var toast = document.createElement("div");
+    toast.setAttribute("role", "alert");
+    toast.className = "oro-toast";
+    var txt = document.createElement("span");
+    txt.textContent = label;
+    toast.appendChild(txt);
+    if (opts && opts.snooze) {
+      [5, 10, 15].forEach(function (m) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "sn-btn";
+        b.textContent = t("sn." + m);
+        b.addEventListener("click", function () {
+          alarmsApi.add({ at: Date.now() + m * 60000, label: label, repeat: "once" });
+          toast.remove();
+        });
+        toast.appendChild(b);
+      });
+    }
+    document.body.appendChild(toast);
+    setTimeout(function () { if (toast.parentNode) toast.remove(); }, (opts && opts.ttl) || 15000);
+    toast.addEventListener("click", function (ev) {
+      if (ev.target === toast) toast.remove();
+    });
+    beep(opts && opts.beeps);
+  }
+
+  var AC = null;
+  // Called from click handlers (user gesture unlocks autoplay).
+  function ensureAudio() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!AC) AC = new Ctx();
+      if (AC.state === "suspended") AC.resume();
+      return AC;
+    } catch (e) { return null; }
+  }
+  function beep(times) {
+    if (!state.sound) return;
+    var ac = ensureAudio();
+    if (!ac) return;
+    try {
+      var t0 = ac.currentTime;
+      for (var i = 0; i < (times || 2); i++) {
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.0001, t0 + i * 0.35);
+        g.gain.exponentialRampToValueAtTime(0.18, t0 + i * 0.35 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.35 + 0.30);
+        o.connect(g); g.connect(ac.destination);
+        o.start(t0 + i * 0.35); o.stop(t0 + i * 0.35 + 0.32);
+      }
+    } catch (e) {}
   }
 
   /* ---------- 4. Faces ---------- */
@@ -281,6 +348,70 @@
     }
   }
 
+  // Flip clock: 6 single cards with a mid hinge; the .fl-flip
+  // animation replays ONLY when a digit actually changes.
+  var flCards = [], flLast = ["", "", "", "", "", ""];
+  function buildFlip() {
+    var wrap = $("face-flip");
+    wrap.innerHTML = "";
+    flCards = [];
+    flLast = ["", "", "", "", "", ""];
+    for (var c = 0; c < 6; c++) {
+      var pair = document.createElement("div");
+      pair.className = "fl-pair";
+      var card = document.createElement("div");
+      card.className = "fl-card";
+      card.textContent = "0";
+      var hinge = document.createElement("div");
+      hinge.className = "fl-hinge";
+      pair.appendChild(card);
+      pair.appendChild(hinge);
+      wrap.appendChild(pair);
+      flCards.push(card);
+      if (c === 1 || c === 3) {
+        var sep = document.createElement("span");
+        sep.className = "fl-sep";
+        sep.textContent = ":";
+        wrap.appendChild(sep);
+      }
+    }
+  }
+  function renderFlip(now) {
+    var digits = [
+      Math.floor(now.getHours() / 10), now.getHours() % 10,
+      Math.floor(now.getMinutes() / 10), now.getMinutes() % 10,
+      Math.floor(now.getSeconds() / 10), now.getSeconds() % 10
+    ];
+    for (var c = 0; c < 6; c++) {
+      var d = String(digits[c]);
+      if (d !== flLast[c]) {
+        flLast[c] = d;
+        var card = flCards[c];
+        card.textContent = d;
+        card.classList.remove("fl-flip");
+        void card.offsetWidth;          // force reflow → restart animation
+        card.classList.add("fl-flip");
+      }
+    }
+  }
+
+  function buildNeon() {
+    var wrap = $("face-neon");
+    wrap.innerHTML = "";
+    var hm = document.createElement("span");
+    hm.id = "neon-hm";
+    hm.textContent = "--:--";
+    var ss = document.createElement("span");
+    ss.id = "neon-ss";
+    ss.textContent = "";
+    wrap.appendChild(hm);
+    wrap.appendChild(ss);
+  }
+  function renderNeon(now) {
+    $("neon-hm").textContent = pad(now.getHours()) + ":" + pad(now.getMinutes());
+    $("neon-ss").textContent = pad(now.getSeconds());
+  }
+
   function renderSub(now) {
     var loc = LANG === "el" ? "el-GR" : "en-GB";
     var d = now.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -289,12 +420,18 @@
     $("face-sub").textContent = d + "  ·  UTC" + sign + pad(Math.floor(Math.abs(off) / 60)) + ":" + pad(Math.abs(off) % 60);
   }
 
+  // NOTE: the faces are hidden via the [hidden] attribute; their
+  // display:flex/grid lives behind :not([hidden]) in time.css
+  // (patches CSS-A..D) or display would override `hidden` — that
+  // was the original "binary always visible" bug.
   function applyStyle() {
     var s = state.style;
     $("face-digital").hidden = s !== 0;
     $("face-analog").hidden = s !== 1;
     $("face-binary").hidden = s !== 2;
-    for (var i = 0; i < 3; i++) $("sty-" + i).className = "sty" + (i === s ? " active" : "");
+    $("face-flip").hidden   = s !== 3;
+    $("face-neon").hidden   = s !== 4;
+    for (var i = 0; i < 5; i++) $("sty-" + i).className = "sty" + (i === s ? " active" : "");
   }
 
   /* ---------- 5. World clock ---------- */
@@ -305,6 +442,7 @@
     "America/Sao_Paulo", "Asia/Dubai", "Asia/Kolkata", "Asia/Shanghai",
     "Asia/Seoul", "Asia/Tokyo", "Australia/Sydney", "Pacific/Auckland"
   ];
+  var QUICK_ZONES = ["Europe/Athens", "Europe/London", "America/New_York", "Asia/Tokyo"];
   var zoneFmt = {};
   function zFmt(tz) {
     if (!zoneFmt[tz]) {
@@ -317,6 +455,17 @@
     return tz.split("/").pop().replace(/_/g, " ");
   }
 
+  function addZone(tz) {
+    var exists = state.zones.some(function (z) { return z.tz === tz; });
+    if (tz && !exists) {
+      state.zones.push({ tz: tz, mtime: Date.now() });
+      // Re-add cancels an older deletion marker (resurrection)
+      state.zonesDeleted = state.zonesDeleted.filter(function (d) { return d.tz !== tz; });
+      saveState();
+      renderZones();
+    }
+  }
+
   function renderZones() {
     var ul = $("zones");
     ul.innerHTML = "";
@@ -325,15 +474,20 @@
       li0.className = "empty";
       li0.textContent = t("zones.none");
       ul.appendChild(li0);
+      renderChips();
+      zoneTick();
       return;
     }
     state.zones.forEach(function (zc) {
       var tz = zc.tz;
       var li = document.createElement("li");
-      li.className = "z-row";
+      li.className = "z-row editable";
       var nm = document.createElement("span");
       nm.className = "z-name";
       nm.textContent = zoneName(tz);
+      nm.title = t("zones.edit");
+      // Double-click → swap this zone's tz (edit-in-place)
+      nm.addEventListener("dblclick", function () { openZoneDlg(tz); });
       var tm = document.createElement("span");
       tm.className = "z-time";
       tm.setAttribute("data-tz", tz);
@@ -351,8 +505,28 @@
       li.appendChild(nm); li.appendChild(tm); li.appendChild(del);
       ul.appendChild(li);
     });
+    renderChips();
     zoneTick();
   }
+
+  // Quick chips: common zones, hidden once added (de-duplicated).
+  function renderChips() {
+    var host = $("quick-zones");
+    if (!host) return;
+    host.innerHTML = "";
+    var taken = {};
+    state.zones.forEach(function (z) { taken[z.tz] = true; });
+    QUICK_ZONES.forEach(function (tz) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "qchip";
+      b.textContent = "+ " + zoneName(tz);
+      if (taken[tz]) b.disabled = true;
+      else b.addEventListener("click", function () { addZone(tz); });
+      host.appendChild(b);
+    });
+  }
+
   function zoneTick() {
     var cells = document.querySelectorAll("#zones .z-time");
     for (var i = 0; i < cells.length; i++) {
@@ -361,7 +535,9 @@
     }
   }
 
-  $("zone-add").addEventListener("click", function () {
+  // Dialog works in TWO modes: add (editTz === null) or swap (editTz set).
+  var dlgEditTz = null;
+  function openZoneDlg(editTz) {
     var sel = $("zone-sel");
     sel.innerHTML = "";
     var taken = {};
@@ -370,27 +546,33 @@
       var op = document.createElement("option");
       op.value = tz;
       op.textContent = zoneName(tz);
-      if (taken[tz]) op.disabled = true;
+      if (taken[tz] && tz !== editTz) op.disabled = true;
       sel.appendChild(op);
     });
+    dlgEditTz = editTz || null;
+    if (dlgEditTz) sel.value = dlgEditTz;
     $("zone-dlg").showModal();
-  });
+  }
+  $("zone-add").addEventListener("click", function () { openZoneDlg(null); });
   $("zone-ok").addEventListener("click", function () {
     var tz = $("zone-sel").value;
     $("zone-dlg").close();
-    var exists = state.zones.some(function (z) { return z.tz === tz; });
-    if (tz && !exists) {
-      state.zones.push({ tz: tz, mtime: Date.now() });
-      // Re-add cancels an older deletion marker (resurrection)
-      state.zonesDeleted = state.zonesDeleted.filter(function (d) { return d.tz !== tz; });
-      saveState();
-      renderZones();
+    if (!tz) return;
+    if (dlgEditTz) {
+      if (tz === dlgEditTz) { dlgEditTz = null; return; }   // no-op edit
+      // Swap = tombstone the old tz + add the new one
+      state.zones = state.zones.filter(function (z) { return z.tz !== dlgEditTz; });
+      state.zonesDeleted.push({ tz: dlgEditTz, mtime: Date.now() });
+      dlgEditTz = null;
+      addZone(tz);
+    } else {
+      addZone(tz);
     }
   });
-  $("zone-cancel").addEventListener("click", function () { $("zone-dlg").close(); });
+  $("zone-cancel").addEventListener("click", function () { dlgEditTz = null; $("zone-dlg").close(); });
   // Outside-click close: a click whose target IS the dialog hit the backdrop.
   $("zone-dlg").addEventListener("click", function (ev) {
-    if (ev.target === this) this.close();
+    if (ev.target === this) { dlgEditTz = null; this.close(); }
   });
 
   /* ---------- 6. Tabs ---------- */
@@ -405,8 +587,12 @@
       }
     });
   }
-
+  
+  
   /* ---------- 7. Alarms ---------- */
+  // #5 (24-hour): input[type=time] VALUE is always "HH:MM" 24h per
+  // HTML spec; rendering below uses pad(getHours()) — never AM/PM.
+  // Validation below additionally rejects anything non-24h-shaped.
   function fmtAt(at) {
     var d = new Date(at);
     return pad(d.getHours()) + ":" + pad(d.getMinutes());
@@ -455,7 +641,8 @@
   }
   $("al-add").addEventListener("click", function () {
     var v = $("al-time").value;
-    if (!/^\d{2}:\d{2}$/.test(v)) return;
+    // Strict 24h "HH:MM" — reject AM/PM shapes outright (#5)
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) return;
     var parts = v.split(":");
     var d = new Date();
     d.setHours(+parts[0], +parts[1], 0, 0);
@@ -469,20 +656,37 @@
     $("al-label").value = "";
     renderAlarms();
   });
+  // Sound toggle is a synced scalar pref (part of the smtime family)
+  $("al-sound").addEventListener("change", function () {
+    state.sound = !!$("al-sound").checked;
+    state.smtime = Date.now();
+    saveState();
+  });
 
   /* ---------- 8. Timer ---------- */
-  var timerId = null, timerEnd = 0;
+  var timerId = null, timerEnd = 0, ovDismissed = false;
   function timerPaint() {
     var left = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
     $("tm-display").textContent = pad(Math.floor(left / 60)) + ":" + pad(left % 60);
+    // #4 countdown overlay: last 60s go fullscreen (unless dismissed)
+    var ov = $("tm-overlay");
+    if (timerId && left > 0 && left <= 60 && !ovDismissed) {
+      ov.hidden = false;
+      ov.textContent = pad(Math.floor(left / 60)) + ":" + pad(left % 60);
+    } else {
+      ov.hidden = true;
+    }
     if (left <= 0 && timerId) {
       // Shell engine already fired the alarm — just go idle.
       timerId = null;
+      ov.hidden = true;
       $("tm-start").textContent = t("tm.start");
     }
   }
   function timerStop() {
     if (timerId) { alarmsApi.remove(timerId); timerId = null; }
+    ovDismissed = false;
+    $("tm-overlay").hidden = true;
     $("tm-start").textContent = t("tm.start");
   }
   $("tm-start").addEventListener("click", function () {
@@ -491,6 +695,7 @@
     var s = Math.max(0, Math.min(59, parseInt($("tm-sec").value, 10) || 0));
     if (m * 60 + s <= 0) return;
     timerEnd = Date.now() + (m * 60 + s) * 1000;
+    ovDismissed = false;
     timerId = alarmsApi.add({ at: timerEnd, label: t("tm.done") });
     $("tm-start").textContent = t("st.stop");
     timerPaint();
@@ -499,8 +704,13 @@
     timerStop();
     $("tm-display").textContent = "00:00";
   });
+  // Clicking the overlay dismisses it for THIS run (timer keeps going)
+  $("tm-overlay").addEventListener("click", function () {
+    ovDismissed = true;
+    $("tm-overlay").hidden = true;
+  });
 
-    /* ---------- 9. Stopwatch ---------- */
+  /* ---------- 9. Stopwatch ---------- */
   var swRun = false, swStart = 0, swBase = 0;
   function swPaint() {
     var ms = swBase + (swRun ? Date.now() - swStart : 0);
@@ -542,7 +752,7 @@
     if (pmAlarmId) { alarmsApi.remove(pmAlarmId); pmAlarmId = null; }
     pmPaint();
   }
-    $("pm-start").addEventListener("click", function () {
+  $("pm-start").addEventListener("click", function () {
     if (pmRunning) { pmStop(); return; }
     pmEnd = Date.now() + pmLen();
     var id = alarmsApi.add({
@@ -585,7 +795,7 @@
   }
 
   /* ---------- 11. Faces wiring ---------- */
-  for (var si = 0; si < 3; si++) {
+  for (var si = 0; si < 5; si++) {
     (function (idx) {
       $("sty-" + idx).addEventListener("click", function () {
         state.style = idx;
@@ -596,7 +806,47 @@
     })(si);
   }
 
-  /* ---------- 12. Master tick + boot ---------- */
+  /* ---------- 12. Converter ---------- */
+  // Shows each zone + local device time side by side. Off by
+  // default (section stays hidden until toggled on).
+  var convOn = false;
+  function convRender() {
+    if (!convOn) return;
+    var host = $("conv-display");
+    host.innerHTML = "";
+    var cells = [];
+    var mine = document.createElement("span");
+    mine.className = "conv-cell";
+    var mc = document.createElement("span"); mc.className = "conv-city"; mc.textContent = t("conv.local");
+    var mt = document.createElement("span"); mt.className = "conv-t"; mt.textContent = pad(new Date().getHours()) + ":" + pad(new Date().getMinutes());
+    mine.appendChild(mc); mine.appendChild(mt);
+    cells.push(mine);
+    state.zones.forEach(function (zc, i) {
+      var ar = document.createElement("span");
+      ar.className = "conv-arrow";
+      ar.textContent = "↔";
+      cells.push(ar);
+      var cell = document.createElement("span");
+      cell.className = "conv-cell";
+      var c = document.createElement("span"); c.className = "conv-city"; c.textContent = zoneName(zc.tz);
+      var v = document.createElement("span"); v.className = "conv-t";
+      try { v.textContent = zFmt(zc.tz).format(new Date()); } catch (e) { v.textContent = "--:--"; }
+      cell.appendChild(c); cell.appendChild(v);
+      cells.push(cell);
+    });
+    cells.forEach(function (el) { host.appendChild(el); });
+  }
+  function convSync() {
+    $("converter-section").hidden = !convOn;
+    $("conv-toggle").textContent = t(convOn ? "conv.toggle.hide" : "conv.toggle.show");
+    if (convOn) convRender();
+  }
+  $("conv-toggle").addEventListener("click", function () {
+    convOn = !convOn;
+    convSync();
+  });
+
+  /* ---------- 13. Master tick + boot ---------- */
   function tick() {
     var now = new Date();
     var s = state.style;
@@ -605,11 +855,16 @@
       $("big-ss").textContent = pad(now.getSeconds());
     } else if (s === 1) {
       renderAnalog(now);
-    } else {
+    } else if (s === 2) {
       renderBinary(now);
+    } else if (s === 3) {
+      renderFlip(now);
+    } else {
+      renderNeon(now);
     }
     renderSub(now);
     zoneTick();
+    if (convOn) convRender();
     timerPaint();
     swPaint();
     if (pmRunning) {
@@ -628,9 +883,13 @@
   applyI18n();
   buildBinary();
   buildAnalog();
+  buildFlip();
+  buildNeon();
   applyStyle();
+  $("al-sound").checked = state.sound;
   renderZones();
   renderAlarms();
+  convSync();
   $("pm-work").value = state.pmWork;
   $("pm-break").value = state.pmBreak;
   pmPaint();
@@ -639,9 +898,10 @@
   tick();
   setInterval(tick, 250);   // smooth hands + fast bit-flips, trivial cost
 
-  /* ---------- 13. Sync slice registration ---------- */
+  /* ---------- 14. Sync slice registration ---------- */
   // Entity union for zones (tombstoned deletes, idempotent), LWW for
-  // scalar prefs via smtime, max() for the pmDone counter. Everything
+  // scalar prefs (style incl. flip/neon, sound, pomodoro durations)
+  // via smtime, max() for the pmDone counter. Everything
   // deterministic (sorted output, lexical tie-breaks) — the engine
   // contract. Timer/stopwatch/pomodoro RUNTIME and alarms are
   // deliberately OUT of the slice: runtime state, device-local truth.
@@ -683,8 +943,8 @@
     var rbs = (typeof rb.smtime === "number" && isFinite(rb.smtime)) ? rb.smtime : 0;
     var pickLocal;
     if (las !== rbs) pickLocal = las > rbs;
-    else pickLocal = JSON.stringify([la.style || 0, la.pmWork || 25, la.pmBreak || 5]) <=
-                     JSON.stringify([rb.style || 0, rb.pmWork || 25, rb.pmBreak || 5]);
+    else pickLocal = JSON.stringify([la.style || 0, la.pmWork || 25, la.pmBreak || 5, la.sound !== false]) <=
+                     JSON.stringify([rb.style || 0, rb.pmWork || 25, rb.pmBreak || 5, rb.sound !== false]);
 
     var mA = (la.astro && typeof la.astro.lat === "number" && typeof la.astro.lon === "number") ? la.astro : null;
     var mB = (rb.astro && typeof rb.astro.lat === "number" && typeof rb.astro.lon === "number") ? rb.astro : null;
@@ -692,7 +952,8 @@
 
     return {
       ver: 1,
-      style:  pickLocal ? (la.style || 0) : (rb.style || 0),
+      style:  pickLocal ? Math.min(4, la.style || 0) : Math.min(4, rb.style || 0),
+      sound:  pickLocal ? (la.sound !== false) : (rb.sound !== false),
       pmWork: pickLocal ? (la.pmWork || 25) : (rb.pmWork || 25),
       pmBreak: pickLocal ? (la.pmBreak || 5) : (rb.pmBreak || 5),
       pmDone: Math.max(la.pmDone || 0, rb.pmDone || 0),
@@ -707,7 +968,8 @@
   // (pull → set → push would loop; the engine owns dirtiness here).
   function setFromSync(data) {
     if (!data || typeof data !== "object") return;
-    state.style   = (typeof data.style === "number" && data.style >= 0 && data.style <= 2) ? data.style : state.style;
+    state.style   = (typeof data.style === "number" && data.style >= 0 && data.style <= 4) ? data.style : state.style;
+    state.sound   = (typeof data.sound === "boolean") ? data.sound : state.sound;
     state.pmWork  = Math.min(120, Math.max(1, (typeof data.pmWork === "number") ? data.pmWork : state.pmWork));
     state.pmBreak = Math.min(60,  Math.max(1, (typeof data.pmBreak === "number") ? data.pmBreak : state.pmBreak));
     state.pmDone  = (typeof data.pmDone === "number") ? data.pmDone : state.pmDone;
@@ -718,6 +980,7 @@
     state.zonesDeleted = (Array.isArray(data.zonesDeleted) ? data.zonesDeleted : []).map(sanitizeZoneTomb).filter(Boolean);
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
     applyStyle();
+    $("al-sound").checked = state.sound;
     $("pm-work").value = state.pmWork;
     $("pm-break").value = state.pmBreak;
     pmPaint();

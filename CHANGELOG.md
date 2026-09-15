@@ -823,6 +823,44 @@ project snapshots · Full project auto merge sync · No guessing.
       <html> data-theme/data-skin) — or the GitHub Action FAILS
       the push. Never inline-only palette inheritance.
   6. self-registration in the app (registerSlice + markDirty)
+  
+  ## Time app v0.1.1 — 2026-09-15
+- FIX: binary clock always visible (CSS display overrode [hidden];
+  all faces now use :not([hidden]) guards)
+- FIX: scrollbar styled (WebKit + Firefox, theme vars)
+- FIX: toast position top-right (shared .oro-toast, shell parity)
+- FIX: astro times forced 24h (hour12:false); alarm time validated 24h
+- ADD: Flip + Neon clock styles (style 3, 4; synced scalar, sanitized 0..4)
+- ADD: alarm snooze 5/10/15 min (standalone engine; shell engine needs
+  shell.js change — snooze buttons on its alarm toast)
+- ADD: alarm sound (Web Audio beep, synced "sound" pref, al-sound checkbox)
+- ADD: timer fullscreen countdown overlay for last 60s (click to dismiss)
+- ADD: world clock zone editing (dblclick → swap via tombstone+add)
+- ADD: quick-add chips for common zones (Athens/London/NY/Tokyo)
+- ADD: timezone converter section (local ↔ zones, toggleable)
+- ADD: geolocation fallback in astro (session-only, dialog-reviewed)
+- ADD: solar status dots (day/twilight/night + GPS marker)
+- ADD: ARIA labels + focus-visible rings throughout
+
+## Time app v0.1.1 — 2026-09-15
+
+### Bug Fixes
+- FIX: binary clock always visible (CSS display overrode [hidden]; all faces now use :not([hidden]) guards)
+- FIX: scrollbar styled (WebKit + Firefox, theme vars)
+- FIX: toast position top-right (shared .oro-toast, shell parity)
+- FIX: astro times forced 24h (hour12:false); alarm time validated 24h
+
+### Features
+- ADD: Flip + Neon clock styles (style 3, 4; synced scalar, sanitized 0..4)
+- ADD: alarm snooze 5/10/15 min (standalone engine; shell engine needs shell.js change)
+- ADD: alarm sound (Web Audio beep, synced "sound" pref, al-sound checkbox)
+- ADD: timer fullscreen countdown overlay for last 60s (click to dismiss)
+- ADD: world clock zone editing (dblclick → swap via tombstone+add)
+- ADD: quick-add chips for common zones (Athens/London/NY/Tokyo)
+- ADD: timezone converter section (local ↔ zones, toggleable)
+- ADD: geolocation fallback in astro (session-only, dialog-reviewed)
+- ADD: solar status dots (day/twilight/night + GPS marker)
+- ADD: ARIA labels + focus-visible rings throughout
 
 ────────────────────────────────────────────────────────────────
 SESSION HANDOFF — v0.30.03 Ready for Deployment

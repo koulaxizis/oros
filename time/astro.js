@@ -1,8 +1,10 @@
 // ============================================================
-// orOS Time v0.1.0 — Astronomy module (Sun & Moon)
+// orOS Time v0.1.1 — Astronomy module (Sun & Moon)
 // Pure math, fully offline: NOAA solar equations + synodic
 // moon phase. Coordinates (priority): manual override in
-// oros-time-data → shell weather pref ("oros-weather").
+// oros-time-data → shell weather pref ("oros-weather") →
+// device geolocation (session-only fallback, never persisted
+// to localStorage — privacy by design, no permission loops).
 // Self-bootstrapping — does not touch time.js.
 // ============================================================
 (function () {
@@ -22,6 +24,10 @@
       "astro.manual": "Set location",
       "astro.uses": "Using weather location",
       "astro.using": "Manual location",
+      "astro.geo": "Device location",
+      "astro.geo.detect": "Use device location",
+      "astro.geo.wait": "Detecting…",
+      "astro.geo.fail": "Location unavailable",
       "astro.dlg": "Location",
       "astro.lat": "Latitude",
       "astro.lon": "Longitude",
@@ -37,6 +43,9 @@
       "astro.sunpos": "Sun now",
       "astro.moonage": "Moon age",
       "astro.illum": "Illumination",
+      "astro.status.day": "Daylight",
+      "astro.status.night": "Night",
+      "astro.status.twilight": "Twilight",
       "ph.0": "New moon", "ph.1": "Waxing crescent", "ph.2": "First quarter",
       "ph.3": "Waxing gibbous", "ph.4": "Full moon", "ph.5": "Waning gibbous",
       "ph.6": "Last quarter", "ph.7": "Waning crescent",
@@ -49,6 +58,10 @@
       "astro.manual": "Ορισμός τοποθεσίας",
       "astro.uses": "Από την τοποθεσία του Καιρού",
       "astro.using": "Χειροκίνητη τοποθεσία",
+      "astro.geo": "Τοποθεσία συσκευής",
+      "astro.geo.detect": "Χρήση τοποθεσίας συσκευής",
+      "astro.geo.wait": "Εντοπισμός…",
+      "astro.geo.fail": "Η τοποθεσία δεν είναι διαθέσιμη",
       "astro.dlg": "Τοποθεσία",
       "astro.lat": "Γεωγραφικό πλάτος",
       "astro.lon": "Γεωγραφικό μήκος",
@@ -64,6 +77,9 @@
       "astro.sunpos": "Ήλιος τώρα",
       "astro.moonage": "Ηλικία σελήνης",
       "astro.illum": "Φωτεινότητα",
+      "astro.status.day": "Ημέρα",
+      "astro.status.night": "Νύχτα",
+      "astro.status.twilight": "Λυκόφως",
       "ph.0": "Νέα σελήνη", "ph.1": "Αύξουσα ημισέληνος", "ph.2": "Πρώτο τέταρτο",
       "ph.3": "Αύξουσα αμφίκυρτη", "ph.4": "Πανσέληνος", "ph.5": "Φθίνουσα αμφίκυρτη",
       "ph.6": "Τελευταίο τέταρτο", "ph.7": "Φθίνουσα ημισέληνος",
@@ -97,6 +113,12 @@
     } catch (e) {}
   }
 
+  // Session-only geolocation fallback. Stored in memory ONLY —
+  // never written to localStorage (privacy: a GPS fix is far more
+  // sensitive than a typed coordinate; also avoids re-triggering
+  // permission prompts on every boot).
+  var geoFix = null;
+
   function getCoords() {
     var d = readData();
     if (d.astro && typeof d.astro.lat === "number" && typeof d.astro.lon === "number") {
@@ -108,7 +130,41 @@
         return { lat: w.lat, lon: w.lon, manual: false };
       }
     } catch (e) {}
+    if (geoFix) return { lat: geoFix.lat, lon: geoFix.lon, manual: false, geo: true };
     return null;
+  }
+
+  // On-the-spot GPS: fills the dialog fields (user reviews before
+  // saving — no silent writes). If we have NO coordinates at all,
+  // the fix is adopted live for the current session only.
+  function detectGeo() {
+    if (!navigator.geolocation) { toastAstro(t("astro.geo.fail")); return; }
+    toastAstro(t("astro.geo.wait"));
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        geoFix = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        $("as-lat").value = geoFix.lat.toFixed(4);
+        $("as-lon").value = geoFix.lon.toFixed(4);
+        render();
+      },
+      function () { toastAstro(t("astro.geo.fail")); },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+    );
+  }
+
+  // Small inline notice inside the app (does not touch the shell
+  // toast system; this is a passive hint, not an alarm event).
+  function toastAstro(msg) {
+    var host = $("ast-body");
+    if (!host) return;
+    var old = document.querySelector(".ast-note");
+    if (old) old.remove();
+    var note = document.createElement("div");
+    note.className = "empty ast-note";
+    note.style.padding = "4px 2px";
+    note.textContent = msg;
+    host.appendChild(note);
+    setTimeout(function () { if (note.parentNode) note.remove(); }, 4000);
   }
 
   /* ---------- NOAA solar equations ---------- */
@@ -162,13 +218,16 @@
     return { alt: deg(alt), az: az };
   }
 
-  // UTC minutes → local device time "HH:MM".
+  // UTC minutes → local device time "HH:MM" — ALWAYS 24-hour
+  // (hour12: false is explicit; el-GR and en-GB are both 24h
+  // locales anyway, so this is belt-and-braces for any device
+  // overriding the locale preference).
   function utcMinToLocal(min) {
     var d = new Date();
     d.setUTCHours(0, 0, 0, 0);
     d.setUTCMinutes(Math.round(min));
     return d.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB",
-      { hour: "2-digit", minute: "2-digit" });
+      { hour: "2-digit", minute: "2-digit", hour12: false });
   }
 
   /* ---------- Moon (synodic) ---------- */
@@ -214,6 +273,19 @@
   }
 
   /* ---------- Rendering ---------- */
+  // Solar status dot (proposal #2): gold = daylight, dim = night,
+  // gradient = twilight (sun within ±6° of horizon, refraction
+  // included via the 90.833° formula above), outlined = GPS.
+  function statusDot(statusClass) {
+    return '<span class="ast-dot ' + statusClass + '" aria-hidden="true"></span>';
+  }
+  function solarStatus(st, sp) {
+    if (sp.alt > 0.5) return { cls: "day", key: "astro.status.day" };
+    // Twilight band: roughly −6°..0.5° altitude
+    if (sp.alt > -6) return { cls: "twilight", key: "astro.status.twilight" };
+    return { cls: "night", key: "astro.status.night" };
+  }
+
   function row(label, value, svg) {
     return '<div class="ast-row">' + (svg || "") +
       '<span class="ast-lbl">' + esc(label) + '</span>' +
@@ -230,17 +302,22 @@
       body.innerHTML =
         '<div class="empty">' + esc(t("astro.none")) +
         '<div class="ast-hint">' + esc(t("astro.none.hint")) + '</div></div>' +
-        '<button id="ast-set" type="button" class="btn">' + esc(t("astro.manual")) + '</button>';
+        '<button id="ast-set" type="button" class="btn">' + esc(t("astro.manual")) + '</button>' +
+        '<button id="ast-geo-live" type="button" class="mini">' + esc(t("astro.geo.detect")) + '</button>';
       wireSetBtn();
+      var gl = $("ast-geo-live");
+      if (gl) gl.addEventListener("click", detectGeo);
       return;
     }
 
     var now = Date.now();
     var html = "";
 
-    // Source caption
-    var src = coords.manual ? t("astro.using") : t("astro.uses");
-    html += '<div class="ast-src"><span>' + esc(src) + '</span>' +
+    // Source caption — includes the GPS marker when in use
+    var src = coords.manual ? t("astro.using")
+            : (coords.geo ? t("astro.geo") : t("astro.uses"));
+    html += '<div class="ast-src"><span>' + statusDot(coords.geo ? "geo" : "day") +
+      esc(src) + '</span>' +
       '<button id="ast-set" type="button" class="mini">' + esc(t("astro.manual")) + '</button></div>';
 
     // Sun
@@ -259,6 +336,16 @@
     html += row(t("astro.sunpos"),
       sp.alt.toFixed(0) + "° / " + sp.az.toFixed(0) + "°");
 
+    // Solar status line (new, proposal #2)
+    var stat = solarStatus(st, sp);
+    if (!st.polar || st.polar === "day") {
+      html += row("", ""); // placeholder guard, unused
+    }
+    html += '<div class="ast-row">' + statusDot(stat.cls) +
+      '<span class="ast-lbl">' + esc(t("astro.status." +
+        (st.polar === "night" ? "night" : st.polar === "day" ? "day" : stat.key.replace("astro.status.", "")))) +
+      '</span></div>';
+
     // Moon
     var mi = moonInfo();
     html += '<div class="ast-row ast-moon">' + moonSvg(mi.k, mi.p) +
@@ -266,7 +353,7 @@
       esc(t("ph." + mi.phaseIdx)) + '</div>' +
       '<div class="ast-mmeta">' + esc(t("astro.moonage")) + ": " +
       mi.age.toFixed(1) + " " + esc(t("u.days")) + " · " +
-      esc(t("astro.illum")) + ": " + Math.round(mi.k * 100) + "%</div></div></div>";
+      esc(t("astro.illum")) + ": " + Math.round(mi.k * 100) + "%</div></div></div>';
 
     body.innerHTML = html;
     var setBtn = $("ast-set");
@@ -288,6 +375,7 @@
     $("astro-dlg").showModal();
   }
 
+  $("as-geo").addEventListener("click", detectGeo);
   $("as-save").addEventListener("click", function () {
     var lat = parseFloat($("as-lat").value);
     var lon = parseFloat($("as-lon").value);
@@ -319,6 +407,8 @@
   (function applyI18nA() {
     var els = document.querySelectorAll("[data-i18n-a]");
     for (var i = 0; i < els.length; i++) els[i].textContent = t(els[i].getAttribute("data-i18n-a"));
+    var gs = $("as-geo");
+    if (gs) gs.textContent = t("astro.geo.detect");
   })();
 
   // Boot + periodic refresh (positions drift, moon barely moves)
