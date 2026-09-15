@@ -40,6 +40,22 @@
       "url": "mood/",
       "type": "internal",
       "icon": "mood"
+    },
+    {
+      "id": "time",
+      "name": "Time",
+      "icon": "clock",
+      "category": "Utilities",
+      "url": "time/",
+      "type": "internal"
+    },
+    {
+      "id": "calendar",
+      "name": "Calendar",
+      "icon": "calendar",
+      "category": "Utilities",
+      "url": "calendar/",
+      "type": "internal"
     }
   ]
 }

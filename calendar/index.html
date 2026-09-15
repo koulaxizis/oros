@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Calendar · orOS</title>
+  <link rel="stylesheet" href="calendar.css">
+</head>
+<body>
+  <main id="cmain">
+
+    <!-- ===== Month navigation ===== -->
+    <header id="cal-top">
+      <div id="cal-nav">
+        <button id="cal-prev" type="button" aria-label="‹">‹</button>
+        <button id="cal-today" type="button" class="nav-mini" data-i18n="cal.today"></button>
+        <button id="cal-next" type="button" aria-label="›">›</button>
+      </div>
+      <h2 id="cal-title"></h2>
+    </header>
+
+    <!-- ===== Month grid ===== -->
+    <div id="cal-wd"></div>
+    <div id="cal-grid"></div>
+
+    <!-- ===== Selected day ===== -->
+    <section class="sec">
+      <div class="sec-head">
+        <span id="day-title"></span>
+        <button id="ev-add" type="button" class="mini" data-i18n="ev.add"></button>
+      </div>
+      <ul id="ev-list"></ul>
+    </section>
+  </main>
+
+  <!-- Event dialog (add & edit share it) -->
+  <dialog id="ev-dlg">
+    <h3 id="ev-dlg-title" data-i18n="ev.dlg.new"></h3>
+    <div class="ev-form">
+      <label for="ev-title" data-i18n="ev.field.title"></label>
+      <input id="ev-title" type="text" maxlength="80" data-i18n-ph="ev.ph.title">
+      <label for="ev-time" data-i18n="ev.field.time"></label>
+      <input id="ev-time" type="time">
+      <label class="chk">
+        <input id="ev-allday" type="checkbox">
+        <span data-i18n="ev.allday"></span>
+      </label>
+      <label for="ev-note" data-i18n="ev.field.note"></label>
+      <textarea id="ev-note" rows="3" maxlength="500" data-i18n-ph="ev.ph.note"></textarea>
+    </div>
+    <div class="dlg-row">
+      <button id="ev-save" type="button" class="btn prim" data-i18n="ev.save"></button>
+      <button id="ev-cancel" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+    <div class="dlg-row" id="ev-del-row">
+      <button id="ev-delete" type="button" class="btn danger" data-i18n="ev.delete"></button>
+    </div>
+  </dialog>
+
+  <script src="calendar.js"></script>
+</body>
+</html>

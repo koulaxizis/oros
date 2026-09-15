@@ -1319,3 +1319,32 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
   line-height: 1.6;
   max-width: 340px;
 }
+
+/* ===== E1/E2: split clock — time & date buttons ===== */
+/* They replace the old plain-text #bar-clock. Visual weight matches
+   the dead span it replaces (same size/tabular-nums) so the bar
+   doesn't LOOK busier — but hover + cursor now signal that they're
+   buttons. Palette vars only: follows every skin automatically. */
+#bar-time,
+#bar-date {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#bar-time:hover,
+#bar-date:hover { background: var(--accent-soft); }
+
+/* Narrow phones: same shrink the old #bar-clock got. A later rule
+   at equal specificity wins — no need to touch the 480px block. */
+@media (max-width: 480px) {
+  #bar-time, #bar-date { font-size: 12.5px; padding: 6px 5px; }
+}

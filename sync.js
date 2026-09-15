@@ -118,6 +118,12 @@
   var reconcileInFlight = false;
   var lastPushFailed = false;
 
+  // v0.9 Part 4: timestamp of the last pull that PROVED the current
+  // passphrase decrypts the cloud blob (or the cloud is empty).
+  // Feeds ensureCloudReadable() — the push-side stale-passphrase
+  // guard below.
+  var lastSuccessfulPullAt = 0;
+
   // v0.7.1: debounced reconcile timer (one shot at a time)
   var debounceTimer = null;
 
@@ -370,11 +376,18 @@
     var data = b64decode(blob.data);
 
     return deriveKey(salt).then(function (key) {
-      return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
-    })
-      .then(function (plain) {
-        return JSON.parse(new TextDecoder().decode(plain));
-      });
+        return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+  })
+    .then(function (plain) {
+      var payload = JSON.parse(new TextDecoder().decode(plain));
+      // Check pwEpoch against local known epoch
+      var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
+      var localEpoch = getPWEpoch();
+      if (localEpoch > 0 && cloudEpoch > localEpoch) {
+        console.warn("orOS sync: pwEpoch mismatch detected — passphrase changed elsewhere?");
+      }
+      return payload;
+    });
   }
 
   // ---------- Trusted device vault (IndexedDB, non-extractable key) ----------
@@ -885,6 +898,38 @@
   }
 
   // ---------- Pull / Push ----------
+  
+    // v0.9 Part 4 — PUSH GUARD (Trap 3: stale-passphrase overwrite).
+  // Never overwrite a cloud blob this device's passphrase cannot
+  // decrypt. A device whose passphrase changed ELSEWHERE (this
+  // whole saga's origin) that force-pushes or pushes on tab-hide
+  // would re-encrypt the cloud with the OLD passphrase and lock out
+  // every correctly-updated device. Verification = download + try
+  // decrypt; skipped while a recent pull already proved it
+  // (reconcile's pull→push pair costs nothing extra). Empty cloud =
+  // nothing to protect. Unreachable/transient network errors do NOT
+  // block the push — a genuine failure surfaces at upload time.
+  var PULL_TRUST_MS = 30000;
+
+  function ensureCloudReadable() {
+    if (Date.now() - lastSuccessfulPullAt < PULL_TRUST_MS) {
+      return Promise.resolve();
+    }
+    return contentDownload(BLOB_PATH)
+      .then(function (res) {
+        if (res.status === 409 || !res.ok) return null;
+        return res.text();
+      })
+      .then(function (blobText) {
+        if (!blobText) return;
+        return decryptBlob(blobText).then(function () {
+          lastSuccessfulPullAt = Date.now();   // proven — window re-arms
+        });
+        // OperationError rejects the chain → push refuses to run.
+      });
+  }
+
+
   function pull() {
     if (suspended)      return Promise.reject(new Error("engine-suspended"));
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
@@ -897,10 +942,14 @@
         return res.text();
       })
             .then(function (blobText) {
-        if (!blobText) return { ok: true, empty: true, applied: 0 };
+        if (!blobText) {
+          lastSuccessfulPullAt = Date.now();   // empty cloud — any passphrase OK
+          return { ok: true, empty: true, applied: 0 };
+        }
         return decryptBlob(blobText)
           .then(function (payload) {
             var applied = applyPayload(payload);
+            lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
             return { ok: true, empty: false, applied: applied };
           });
       })
@@ -920,7 +969,8 @@
     var payload = collectPayload();
     var encryptedText = null;
 
-    return encryptBlob(payload)
+    return ensureCloudReadable()
+      .then(function () { return encryptBlob(payload); })
       .then(function (text) {
         encryptedText = text;
         return backupExistingRemote();
@@ -1170,6 +1220,45 @@
     passphrase = null;
     return clearVault();
   }
+  
+  function getWVEpoch() {
+  var v = parseInt(localStorage.getItem("oros-sync-pw-epoch") || "0", 10);
+  return isNaN(v) ? 0 : v;
+}
+
+function setPWEpoch(epoch) {
+  localStorage.setItem("oros-sync-pw-epoch", String(epoch));
+}
+
+function detectPwEpochMismatch() {
+  // Compare local known epoch with what's in cloud
+  if (!isConnected() || !passphrase) return Promise.resolve(null);
+  
+  return contentDownload(BLOB_PATH)
+    .then(function (res) {
+      if (res.status === 409 || !res.ok) return null;
+      return res.text();
+    })
+    .then(function (blobText) {
+      if (!blobText) return null;
+      var blob = JSON.parse(blobText);
+      if (!blob || blob.ver !== BLOB_VERSION) return null;
+      return decryptBlob(blobText)
+        .then(function (payload) {
+          var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
+          var localEpoch = getPWEpoch();
+          if (localEpoch === 0 || cloudEpoch === 0) return null; // No epochs yet
+          if (cloudEpoch > localEpoch) return cloudEpoch; // Epoch increased elsewhere
+          return null;
+        })
+        .catch(function () {
+          // Decryption failed — could be wrong passphrase or epoch change
+          return "decryption-failed";
+        });
+    });
+}
+
+// Boot sequence:
 
   // ---------- Boot sequence ----------
   restoreTokens();
@@ -1260,14 +1349,107 @@
       }
     },
 
-    // Error mapping
+        // Error mapping
     errorKey: function (err) {
       var msg = (err && err.message) || "";
+      var name = (err && err.name) || "";
       if (msg === "not-connected")  return "sync.err.notconnected";
       if (msg === "no-passphrase")  return "sync.err.nopass";
+      if (msg === "wrong-passphrase") return "sync.err.passphrase";
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
+      if (name === "OperationError" || /OperationError/.test(msg)) return "sync.err.passphrase";
       return "sync.err.generic";
+    },
+
+    // v0.9 — CHANGE PASSPHRASE
+    changePassphrase: function (oldPw, newPw, remember) {
+      if (!oldPw || !newPw) {
+        return Promise.reject(new Error("both passwords required"));
+      }
+      if (!isConnected()) {
+        return Promise.reject(new Error("not-connected"));
+      }
+      if (suspended) {
+        return Promise.reject(new Error("engine-suspended"));
+      }
+
+      return contentDownload(BLOB_PATH)
+        .then(function (res) {
+          if (res.status === 409) {
+            // Nothing in cloud yet — accept new passphrase
+            setPassphrase(newPw, remember);
+            markDirty();
+            return { ok: true, changed: true };
+          }
+          if (!res.ok) throw new Error("download failed: " + res.status);
+          return res.text();
+        })
+        .then(function (blobText) {
+          if (!blobText) {
+            setPassphrase(newPw, remember);
+            markDirty();
+            return { ok: true, changed: true };
+          }
+          var salt = b64decode(JSON.parse(blobText).salt);
+          var iv   = b64decode(JSON.parse(blobText).iv);
+          var data = b64decode(JSON.parse(blobText).data);
+
+          // Verify with the TYPED old passphrase — NEVER the
+          // in-memory one. A vault-unlocked device must still prove
+          // knowledge of the old passphrase before it may re-lock
+          // the cloud with a new one.
+          var prevPass = passphrase;
+          passphrase = oldPw;
+          return deriveKey(salt).then(function (key) {
+            return crypto.subtle.decrypt(
+              { name: "AES-GCM", iv: iv },
+              key,
+              data
+            ).then(function (plain) {
+              // Success — old passphrase correct
+              var payload = JSON.parse(new TextDecoder().decode(plain));
+              
+              // Increment pwEpoch
+              if (!payload.meta) payload.meta = {};
+              payload.meta.pwEpoch = (payload.meta.pwEpoch || 0) + 1;
+
+              // Now re-encrypt with new passphrase
+              passphrase = newPw;
+              return encryptBlob(payload).then(function (encrypted) {
+                return contentUpload(BLOB_PATH, encrypted)
+                  .then(function (uploadRes) {
+                    if (!uploadRes.ok) throw new Error("upload failed: " + uploadRes.status);
+                    setPassphrase(newPw, remember);
+                    // Deliberately NO clearDirty(): the re-encrypted
+                    // blob is the OLD remote content, not this
+                    // device's local state. If local had unsynced
+                    // edits, the dirty flag must survive so the
+                    // next reconcile pushes them (encrypted with the
+                    // new passphrase — setPassphrase ran above).
+                    // Update local vault epoch
+                    localStorage.setItem("oros-sync-pw-epoch", String(payload.meta.pwEpoch));
+                    return { ok: true, changed: true };
+                  });
+              });
+            }).catch(function (err) {
+              // Either the old passphrase was wrong (OperationError)
+              // or the upload failed — either way the cloud blob is
+              // UNCHANGED, so the in-memory passphrase must be
+              // restored to the one that actually decrypts the cloud.
+              passphrase = prevPass;
+              var isDecryptFail = err && err.name === "OperationError";
+              throw new Error(isDecryptFail ? "wrong-passphrase"
+                                             : (err && err.message) || "change failed");
+            });
+          });
+        })
+        .catch(function (err) {
+          if (err.message === "wrong-passphrase") {
+            console.error("orOS sync: wrong old passphrase");
+          }
+          throw err;
+        });
     }
   };
 })();

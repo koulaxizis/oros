@@ -671,14 +671,16 @@
           if (aqiVal !== null) payload.aqi = { at: Date.now(), val: aqiVal };
           writeCityCache(city.id, payload);
 
-          // Mirror into the shell tray cache when this city IS the
+                    // Mirror into the shell tray cache when this city IS the
           // shell's location — one fetch, two consumers, same numbers.
+          // C1: increased tolerance to 0.15° (~15km) to match nearest-city
+          // adoption in shell.js — GPS vs geocoded center routinely diverge.
           try {
             var sh = JSON.parse(localStorage.getItem("oros-weather"));
             if (sh && typeof sh.lat === "number" &&
-                Math.abs(sh.lat - city.lat) < 0.02 &&
-                Math.abs(sh.lon - city.lon) < 0.02) {
-              localStorage.setItem("oros-wx-cache", JSON.stringify({
+                Math.abs(sh.lat - city.lat) < 0.15 &&
+                Math.abs(sh.lon - city.lon) < 0.15) {
+              localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
                 at:   payload.at,
                 temp: payload.current.temp,
                 code: payload.current.code

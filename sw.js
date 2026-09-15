@@ -51,6 +51,15 @@ var PRECACHE_URLS = [
   "mood/index.html",
   "mood/mood.css",
   "mood/mood.js",
+  "time/",
+  "time/index.html",
+  "time/time.css",
+  "time/time.js",
+  "time/astro.js",
+  "calendar/",
+  "calendar/index.html",
+  "calendar/calendar.css",
+  "calendar/calendar.js",
   "vendor/jspdf.umd.min.js",
   "vendor/NotoSans-Regular.ttf",
   "fonts/nunito-regular.woff2",
@@ -63,7 +72,16 @@ self.addEventListener("install", function (event) {
   self.skipWaiting();          // zero-gate update: install → activate
   event.waitUntil(
     caches.open(SHELL_CACHE).then(function (cache) {
-      return cache.addAll(PRECACHE_URLS);
+      // D1: addAll is ALL-OR-NOTHING — one 404/timeout on any of the
+      // ~47 URLs aborts the ENTIRE install → SW never activates →
+      // ZERO offline, silently, forever. Per-URL add instead: a single
+      // missing asset degrades (that one page offline-less) instead of
+      // nuking the whole precache. Failures SPEAK in the SW console.
+      return Promise.all(PRECACHE_URLS.map(function (u) {
+        return cache.add(u).catch(function (e) {
+          console.warn("[SW] precache MISS:", u, e && e.message);
+        });
+      }));
     })
   );
 });

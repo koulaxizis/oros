@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.27.06 — Shell logic
+// orOS Core v0.31.00 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.30.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.31.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -130,7 +130,9 @@
     columns: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="16" y="3" width="5" height="13" rx="1"/></svg>',
     notes: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>',
     weather: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M12 7h1M3.5 3.5l.7.7M10.8 10.8l.7.7M3.5 10.5l.7-.7M10.8 4.2l.7-.7"/><path d="M12.5 21a4.5 4.5 0 0 1 0-9 5.5 5.5 0 0 1 10.6 1.6 3.5 3.5 0 0 1-.6 6.9z"/></svg>',
-    mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>'
+    mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
+    clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
+    calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -201,6 +203,14 @@
     var langBtn = document.getElementById("btn-lang");
     langBtn.textContent = state.lang === "en" ? "EL" : "EN";
     langBtn.setAttribute("title", window.t("lang.tooltip"));
+
+    // E1/E2 — localized titles for the split clock buttons. Painted
+    // here (not data-i18n) so stale HTML bundles can't linger with
+    // dead attributes.
+    var tBtn = document.getElementById("bar-time");
+    var dBtn = document.getElementById("bar-date");
+    if (tBtn) tBtn.title = window.t("app.time");
+    if (dBtn) dBtn.title = window.t("app.calendar");
 
     renderClock();
     renderMenu();
@@ -541,10 +551,22 @@
     var opts = { weekday: "short", day: "2-digit", month: "short" };
     if (!window.matchMedia("(max-width: 400px)").matches) opts.year = "numeric";
     var dateStr = now.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB", opts);
-    document.getElementById("bar-clock").textContent =
-      hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
+    // E1/E2 — split bar: time button (→ Time app) + date button
+    // (→ Calendar app). Stale-bundle safety: if #bar-time/#bar-date
+    // are absent (cached index.html), paint the legacy #bar-clock.
+    var tBtn = document.getElementById("bar-time");
+    var dBtn = document.getElementById("bar-date");
+    if (tBtn && dBtn) {
+      tBtn.textContent = hh + ":" + mm;
+      dBtn.textContent = dateStr.replace(/,/g, "");
+    } else {
+      var legacy = document.getElementById("bar-clock");
+      if (legacy) legacy.textContent =
+        hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
+    }
     autoSyncDot();          // v0.18.0: piggybacks the clock tick
     wxRenderChip();         // v0.18.0: weather chip, cheap paint only
+    alarmTick();            // E1: shell-owned alarm engine tick
   }
 
   // ---------- 7. PWA ----------
@@ -998,6 +1020,164 @@
     return n;
   }
 
+  // v0.9 Cloud Lock part 3/5 — Change passphrase dialog.
+  // <dialog> element → Esc + native modal semantics for free.
+  // Inline styles only (palette vars) — follows every skin, zero
+  // new CSS, same doctrine as scToast / wxcity.
+  function showChangePassDialog() {
+    var stale = document.getElementById("chpw-dialog");
+    if (stale) stale.remove();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "chpw-dialog";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:20px;" +
+      "width:min(360px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.noValidate = true;
+
+    // Field factory: label + password input + eye toggle
+    function mkField(labelKey) {
+      var wrap = document.createElement("div");
+      wrap.style.marginBottom = "12px";
+      var head = document.createElement("div");
+      head.style.cssText =
+        "font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:4px;";
+      head.textContent = window.t(labelKey);
+      wrap.appendChild(head);
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:6px;";
+      var input = document.createElement("input");
+      input.type = "password";
+      input.autocomplete = "off";
+      input.style.cssText =
+        "flex:1;min-width:0;padding:7px 10px;border:1px solid var(--border);" +
+        "border-radius:8px;background:var(--panel-bg);color:var(--text);" +
+        "font-size:13px;outline:none;";
+      var eye = document.createElement("button");
+      eye.type = "button";
+      eye.style.cssText =
+        "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+        "color:var(--text-dim);cursor:pointer;width:34px;display:flex;" +
+        "align-items:center;justify-content:center;";
+      eye.innerHTML = EYE_SVG;
+      eye.setAttribute("aria-label", window.t("sync.pass.show"));
+      eye.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        eye.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
+        input.focus();
+      });
+      row.appendChild(input);
+      row.appendChild(eye);
+      wrap.appendChild(row);
+      return { wrap: wrap, input: input };
+    }
+
+    var title = document.createElement("h3");
+    title.style.cssText = "margin:0 0 6px;font-size:14px;";
+    title.textContent = window.t("sync.changepw");
+    form.appendChild(title);
+
+    var hint = document.createElement("div");
+    hint.style.cssText =
+      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin-bottom:14px;";
+    hint.textContent = window.t("sync.changepw.hint");
+    form.appendChild(hint);
+
+    var oldF = mkField("sync.changepw.old");
+    var newF = mkField("sync.changepw.new");
+    var cfF  = mkField("sync.changepw.confirm");
+    form.appendChild(oldF.wrap);
+    form.appendChild(newF.wrap);
+    form.appendChild(cfF.wrap);
+
+    var rememberRow = document.createElement("label");
+    rememberRow.style.cssText =
+      "display:flex;align-items:center;gap:8px;font-size:12px;" +
+      "color:var(--text-dim);margin-bottom:10px;cursor:pointer;";
+    var rememberCb = document.createElement("input");
+    rememberCb.type = "checkbox";
+    rememberCb.checked = window.orosSync.hasDeviceVault();
+    rememberRow.appendChild(rememberCb);
+    var rememberTxt = document.createElement("span");
+    rememberTxt.textContent = window.t("sync.pass.remember");
+    rememberRow.appendChild(rememberTxt);
+    form.appendChild(rememberRow);
+
+    var errBox = document.createElement("div");
+    errBox.style.cssText =
+      "font-size:12px;color:#e06c75;min-height:18px;margin:2px 0 8px;";
+    form.appendChild(errBox);
+
+    var btnRow = document.createElement("div");
+    btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.style.cssText =
+      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    cancelBtn.textContent = window.t("wx.cancel");
+    cancelBtn.addEventListener("click", function () { dlg.close(); });
+    btnRow.appendChild(cancelBtn);
+
+    var okBtn = document.createElement("button");
+    okBtn.type = "submit";
+    okBtn.style.cssText =
+      "border:1px solid var(--accent);border-radius:8px;background:var(--accent);" +
+      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+    okBtn.textContent = window.t("sync.changepw.ok");
+    btnRow.appendChild(okBtn);
+
+    form.appendChild(btnRow);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      errBox.textContent = "";
+      var oldPw = oldF.input.value;
+      var newPw = newF.input.value;
+      var cf    = cfF.input.value;
+      if (!oldPw || !newPw || !cf) { errBox.textContent = window.t("sync.err.nopass"); return; }
+      if (newPw !== cf) { errBox.textContent = window.t("sync.changepw.mismatch"); return; }
+      if (newPw === oldPw) { errBox.textContent = window.t("sync.changepw.same"); return; }
+      okBtn.disabled = true;
+      okBtn.textContent = window.t("sync.working");
+      window.orosSync.changePassphrase(oldPw, newPw, rememberCb.checked)
+        .then(function () {
+          dlg.close();
+          setSyncMsg("ok", "sync.ok.changepw");
+          // Converge immediately: pull with the new passphrase, then
+          // push if this device had unsynced edits (see Patch A3).
+          if (typeof window.orosSync.kickAutoEngine === "function") {
+            window.orosSync.kickAutoEngine();
+          }
+          renderMenu();
+        })
+        .catch(function (err) {
+          okBtn.disabled = false;
+          okBtn.textContent = window.t("sync.changepw.ok");
+          if (err && err.message === "wrong-passphrase") {
+            errBox.textContent = window.t("sync.err.wrongold");
+          } else {
+            dlg.close();
+            handleSyncError(err);
+          }
+        });
+    });
+
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { oldF.input.focus(); }, 50);
+  }
+
   function renderSyncSection(host) {
     var section = document.createElement("div");
     section.className = "sync-section";
@@ -1186,6 +1366,15 @@
         }
       });
       utils.appendChild(forgetBtn);
+
+      var chpwBtn = document.createElement("button");
+      chpwBtn.className = "menu-item";
+      chpwBtn.textContent = window.t("sync.changepw");
+      chpwBtn.addEventListener("click", function () {
+        closeMenu();
+        showChangePassDialog();
+      });
+      utils.appendChild(chpwBtn);
 
       var discBtn = document.createElement("button");
       discBtn.className = "menu-item";
@@ -1383,7 +1572,161 @@
     host.appendChild(section);
   }
   
-    function handleSyncError(err) {
+    // v0.9 Part 4 — "passphrase changed on another device" dialog.
+  // Entered from ANY passphrase-class sync failure (auto reconcile,
+  // manual pull/push, unlock flow). Retry-friendly: a second wrong
+  // entry stays IN the dialog; success closes it and converges.
+  function showPassChangedDialog() {
+    var stale = document.getElementById("pwfix-dialog");
+    if (stale) return;                          // already open
+    closeMenu();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "pwfix-dialog";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:20px;" +
+      "width:min(360px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.noValidate = true;
+
+    var title = document.createElement("h3");
+    title.style.cssText = "margin:0 0 6px;font-size:14px;";
+    title.textContent = window.t("sync.pwfix.title");
+    form.appendChild(title);
+
+    var hint = document.createElement("div");
+    hint.style.cssText =
+      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin-bottom:14px;";
+    hint.textContent = window.orosSync.hasDeviceVault()
+      ? window.t("sync.pwfix.hint.vault")
+      : window.t("sync.pwfix.hint");
+    form.appendChild(hint);
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:6px;margin-bottom:10px;";
+    var input = document.createElement("input");
+    input.type = "password";
+    input.autocomplete = "off";
+    input.style.cssText =
+      "flex:1;min-width:0;padding:7px 10px;border:1px solid var(--border);" +
+      "border-radius:8px;background:var(--panel-bg);color:var(--text);" +
+      "font-size:13px;outline:none;";
+    var eye = document.createElement("button");
+    eye.type = "button";
+    eye.style.cssText =
+      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim);cursor:pointer;width:34px;display:flex;" +
+      "align-items:center;justify-content:center;";
+    eye.innerHTML = EYE_SVG;
+    eye.setAttribute("aria-label", window.t("sync.pass.show"));
+    eye.addEventListener("click", function () {
+      var show = input.type === "password";
+      input.type = show ? "text" : "password";
+      eye.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
+      input.focus();
+    });
+    row.appendChild(input);
+    row.appendChild(eye);
+    form.appendChild(row);
+
+    var rememberRow = document.createElement("label");
+    rememberRow.style.cssText =
+      "display:flex;align-items:center;gap:8px;font-size:12px;" +
+      "color:var(--text-dim);margin-bottom:10px;cursor:pointer;";
+    var rememberCb = document.createElement("input");
+    rememberCb.type = "checkbox";
+    rememberCb.checked = window.orosSync.hasDeviceVault();  // re-seal by default if trusted before
+    rememberRow.appendChild(rememberCb);
+    var rt = document.createElement("span");
+    rt.textContent = window.t("sync.pass.remember");
+    rememberRow.appendChild(rt);
+    form.appendChild(rememberRow);
+
+    var errBox = document.createElement("div");
+    errBox.style.cssText = "font-size:12px;color:#e06c75;min-height:18px;margin:2px 0 8px;";
+    form.appendChild(errBox);
+
+    var btnRow = document.createElement("div");
+    btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.style.cssText =
+      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+    cancelBtn.textContent = window.t("wx.cancel");
+    cancelBtn.addEventListener("click", function () { dlg.close(); });
+    btnRow.appendChild(cancelBtn);
+
+    var okBtn = document.createElement("button");
+    okBtn.type = "submit";
+    okBtn.style.cssText =
+      "border:1px solid var(--accent);border-radius:8px;background:var(--accent);" +
+      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+    okBtn.textContent = window.t("sync.pass.apply");
+    btnRow.appendChild(okBtn);
+    form.appendChild(btnRow);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      errBox.textContent = "";
+      var pw = input.value;
+      if (!pw) { errBox.textContent = window.t("sync.err.nopass"); return; }
+      okBtn.disabled = true;
+      okBtn.textContent = window.t("sync.working");
+      window.orosSync.setPassphrase(pw, rememberCb.checked);
+      window.orosSync.pull()
+        .then(function (result) {
+          dlg.close();
+          reportPullResult(result);
+          setSyncDot("synced", 4000);
+          // If the accepted passphrase surfaced local unsynced work,
+          // push it now — guarded by the same Trap-3 protection.
+          if (window.orosSync.isDirty()) {
+            window.orosSync.push()
+              .then(function () { setSyncMsg("ok", "sync.ok.push"); })
+              .catch(handleSyncError);
+          }
+          renderMenu();
+        })
+        .catch(function (err) {
+          okBtn.disabled = false;
+          okBtn.textContent = window.t("sync.pass.apply");
+          if (isPassphraseError(err)) {
+            errBox.textContent = window.t("sync.pwfix.err");
+          } else {
+            dlg.close();
+            handleSyncError(err);
+          }
+        });
+    });
+
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { input.focus(); }, 50);
+  }
+  
+    // v0.9 Part 4 — passphrase-class errors (OperationError from a
+  // failed decrypt, wrong-passphrase from the push guard) open the
+  // dedicated "changed on another device?" dialog instead of the
+  // misleading generic toast. This is exactly the UX that would
+  // have saved us the entire factory-reset debugging saga.
+  function isPassphraseError(err) {
+    return (err && err.name === "OperationError") ||
+           (err && err.message === "wrong-passphrase");
+  }
+
+  function handleSyncError(err) {
+    if (isPassphraseError(err) &&
+        window.orosSync && window.orosSync.isConnected()) {
+      showPassChangedDialog();
+      return;
+    }
     var key = window.orosSync.errorKey(err);
     setSyncMsg("err", key);
   }
@@ -1892,16 +2235,23 @@
       var data  = JSON.parse(localStorage.getItem("oros-weatherapp-data"));
       var cache = JSON.parse(localStorage.getItem("oros-weatherapp-cache"));
       if (!data || !Array.isArray(data.cities) || !cache) return false;
-      var city = null;
+      // C1: "same place" for WEATHER means same CITY, not same survey
+      // point. GPS vs geocoded city-center routinely sit >2.2km apart
+      // (old 0.02° tolerance silently failed → tray fetched its own
+      // diverging numbers). Nearest city within ~15km wins, unconditionally:
+      // the app is the single source of truth when a match exists —
+      // never "newer fetch wins", that oscillates between two sources.
+      var WX_NEAR_DEG = 0.15;
+      var best = null, bestDist = Infinity;
       for (var i = 0; i < data.cities.length; i++) {
         var c = data.cities[i];
-        if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) { city = c; break; }
+        if (typeof c.lat !== "number" || typeof c.lon !== "number") continue;
+        var d = Math.abs(c.lat - w.lat) + Math.abs(c.lon - w.lon);
+        if (d < bestDist) { bestDist = d; best = c; }
       }
-      if (!city) return false;
-      var p = cache[city.id];
+      if (!best || bestDist >= WX_NEAR_DEG) return false;
+      var p = cache[best.id];
       if (!p || !p.at || !p.current) return false;
-      var cur = wxCached();
-      if (cur && cur.at >= p.at) return false;   // we already have newer/equal
       localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
         at:   p.at,
         temp: p.current.temp,
@@ -1928,8 +2278,17 @@
       if (Date.now() - last < WX_MIN_MS) return;
     }
     localStorage.setItem(WX_LAST_KEY, String(Date.now()));
-    fetch("https://api.open-meteo.com/v1/forecast?latitude=" + w.lat +
-          "&longitude=" + w.lon + "&current_weather=true")
+    // C1: same endpoint as the Weather app (timezone=auto + hourly/daily
+    // fields we don't use here but ensure the SAME calculation path).
+    // The tray only cares about current temp/code, but matching the
+    // app's URL guarantees the SAME model interpolation → identical numbers.
+    var url = "https://api.open-meteo.com/v1/forecast?latitude=" + w.lat +
+              "&longitude=" + w.lon +
+              "&current_weather=true" +
+              "&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weathercode,uv_index" +
+              "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
+              "&timezone=auto&forecast_days=7";
+    fetch(url)
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (d && d.current_weather &&
@@ -2250,6 +2609,7 @@
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
       window.orosSync.onAutoSync(function (kind) {
         if (kind === "start") setSyncDot("syncing");
+        else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
         else setSyncDot("synced", 4000);   // transient green, then auto
       });
     }
@@ -2275,6 +2635,179 @@
       }
     });
   }
+
+  // ---------- 9e. Alarm engine (E1 — Time app) ----------
+  // Alarms are SHELL-owned: the Time app registers them, but the
+  // tick lives here — surviving the app's iframe close (about:
+  // blank) as long as orOS is open. Persisted in localStorage, so
+  // reloads don't kill pending alarms either. Standing honest
+  // limit: browser/tab fully closed = nothing rings (orOS is a
+  // browser OS, not a daemon). Timer/Pomodoro endings from the
+  // app ride the SAME engine — one firing path, one sound.
+
+  var ALARMS_KEY = "oros-alarms";
+  var alarmRing = { ctx: null, timer: null };
+
+  function alarmsRead() {
+    try {
+      var a = JSON.parse(localStorage.getItem(ALARMS_KEY));
+      return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+  }
+
+  function alarmsWrite(list) {
+    try { localStorage.setItem(ALARMS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  // Specs arrive from an iframe (untrusted shape) — sanitize hard.
+  // Past timestamps are junk (a "later" caller never gets a pass).
+  function alarmSanitize(spec) {
+    if (!spec || typeof spec !== "object") return null;
+    var at = (typeof spec.at === "number" && isFinite(spec.at)) ? Math.round(spec.at) : null;
+    if (at === null || at <= Date.now()) return null;
+    return {
+      id:     (typeof spec.id === "string" && spec.id) ? spec.id : (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
+      at:     at,
+      label:  (typeof spec.label === "string" && spec.label) ? spec.label.slice(0, 60) : "",
+      repeat: spec.repeat === "daily" ? "daily" : "once",
+      state:  "pending"
+    };
+  }
+
+  // Three short pips — WebAudio, zero assets. Gesture-lock aware:
+  // a suspended context can't resume without a click — the visual
+  // overlay is the primary channel anyway.
+  function alarmPip() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!alarmRing.ctx) alarmRing.ctx = new AC();
+      var ctx = alarmRing.ctx;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(function () {});
+        if (ctx.state === "suspended") return;
+      }
+      var t0 = ctx.currentTime;
+      for (var i = 0; i < 3; i++) {
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        var ts = t0 + i * 0.24;
+        g.gain.setValueAtTime(0.0001, ts);
+        g.gain.exponentialRampToValueAtTime(0.16, ts + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ts + 0.18);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start(ts);
+        o.stop(ts + 0.2);
+      }
+    } catch (e) { /* no audio — visual toast stands alone */ }
+  }
+
+  function alarmStopRing() {
+    if (alarmRing.timer) { clearInterval(alarmRing.timer); alarmRing.timer = null; }
+    var ov = document.getElementById("alarm-toast");
+    if (ov) ov.remove();
+  }
+
+  // A REAL alarm must not auto-vanish in 2.6s like scToast: own
+  // overlay, Dismiss button, 30s hard cap (ringing forever with
+  // nobody home helps nobody). Inline styles, palette vars only.
+  function alarmNotify(a) {
+    alarmStopRing();
+    var el = document.createElement("div");
+    el.id = "alarm-toast";
+    el.setAttribute("role", "alert");
+    el.style.cssText =
+      "position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:12px;" +
+      "z-index:1450;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);" +
+      "background:var(--panel-bg);color:var(--text);border:1px solid var(--accent);" +
+      "border-radius:10px;box-shadow:0 8px 24px var(--shadow);padding:10px 14px;";
+    var body = document.createElement("div");
+    body.style.cssText = "flex:1;min-width:0;";
+    var title = document.createElement("div");
+    title.style.cssText = "font-size:11px;font-weight:800;text-transform:uppercase;" +
+      "letter-spacing:1px;color:var(--accent);";
+    var titleText = window.orosLang === "el" ? "Ειδοποίηση" : "Alarm";
+    title.textContent = titleText;
+    var label = document.createElement("div");
+    label.style.cssText = "font-size:13.5px;font-weight:700;margin-top:2px;" +
+      "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+    label.textContent = a.label || titleText;
+    var timeStr = document.createElement("div");
+    timeStr.style.cssText = "font-size:12px;color:var(--text-dim);margin-top:1px;" +
+      "font-variant-numeric:tabular-nums;";
+    timeStr.textContent = new Date().toLocaleTimeString(
+      window.orosLang === "el" ? "el-GR" : "en-GB",
+      { hour: "2-digit", minute: "2-digit" });
+    body.appendChild(title);
+    body.appendChild(label);
+    body.appendChild(timeStr);
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = window.orosLang === "el" ? "Σταμάτα" : "Dismiss";
+    btn.style.cssText =
+      "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft);" +
+      "color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;" +
+      "border-radius:7px;padding:7px 12px;cursor:pointer;";
+    btn.addEventListener("click", alarmStopRing);
+    el.appendChild(body);
+    el.appendChild(btn);
+    document.body.appendChild(el);
+    alarmPip();
+    alarmRing.timer = setInterval(alarmPip, 1500);
+    setTimeout(function () {
+      if (document.getElementById("alarm-toast")) alarmStopRing();
+    }, 30000);
+  }
+
+  function alarmTick() {
+    var list = alarmsRead();
+    var dueIdx = -1, due = null;
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (a && a.state === "pending" && typeof a.at === "number" && a.at <= Date.now()) {
+        due = a; dueIdx = i; break;   // first due wins — no flood
+      }
+    }
+    if (!due) return;
+    // Advance/retire BEFORE notifying: mutating first makes a
+    // second tick double-fire impossible.
+    if (due.repeat === "daily") {
+      // Catch-up: advance by WHOLE days — a device asleep for days
+      // jumps straight to the next future firing, not a notification
+      // storm for every missed day.
+      var d = new Date(due.at);
+      do { d.setDate(d.getDate() + 1); } while (d.getTime() <= Date.now());
+      list[dueIdx].at = d.getTime();
+    } else {
+      list.splice(dueIdx, 1);
+    }
+    alarmsWrite(list);
+    alarmNotify(due);
+  }
+
+  // Public contract consumed by the Time app (same-origin iframe,
+  // same pattern as __orosWeatherUpdate / orosSync).
+  window.orosAlarms = {
+    add: function (spec) {
+      var a = alarmSanitize(spec);
+      if (!a) return null;
+      var list = alarmsRead();
+      list.push(a);
+      alarmsWrite(list);
+      return a.id;
+    },
+    remove: function (id) {
+      var list = alarmsRead(), out = [];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id !== id) out.push(list[i]);
+      }
+      alarmsWrite(out);
+    },
+    list: function () { return alarmsRead(); }
+  };
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 
@@ -2416,6 +2949,30 @@
     bar.insertBefore(btn, document.getElementById("btn-lang"));
   })();
   
+    // E1/E2 — taskbar time/date buttons → Time / Calendar apps.
+  // Direct single-click open; when the entry is missing from a
+  // stale apps.json, fall back to the menu instead of dying silently.
+  function openAppById(id) {
+    if (state.running && state.running.id === id) return;   // already there
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id) { openApp(state.apps[i]); return; }
+    }
+    document.getElementById("app-menu").classList.add("open");
+  }
+
+  (function () {
+    var tBtn = document.getElementById("bar-time");
+    var dBtn = document.getElementById("bar-date");
+    if (tBtn) tBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openAppById("time");
+    });
+    if (dBtn) dBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openAppById("calendar");
+    });
+  })();
+  
     // v0.18.0 — global shortcuts at the shell level
   document.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) window.orosShortcuts.handle(e);
@@ -2434,6 +2991,14 @@
   renderClock();
   checkVersionToast();
 
+  // D1: Android evicts non-persistent Cache Storage under disk
+  // pressure — desktop doesn't. This is why offline "broke by itself"
+  // there. Asking for persistence makes the PWA's offline net
+  // durable. Silent best-effort; a denial changes nothing.
+  if (navigator.storage && typeof navigator.storage.persist === "function") {
+    navigator.storage.persist().catch(function () {});
+  }
+
   // Auto-backup boot check — LAST, so snapshots capture the fully
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
@@ -2444,5 +3009,22 @@
   window.addEventListener("online", function () { wxFetch(true); });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") wxFetch(false);
+  });
+
+  // D1: self-healing SW — after connectivity returns or the app
+  // surfaces, quietly ask for an update check. Catches the Android
+  // case of a worker that failed/redundated during install: the
+  // next online moment re-attempts activation instead of waiting
+  // for the user to hard-refresh. Zero cost when already current.
+  function swSelfHeal() {
+    if (!("serviceWorker" in navigator)) return;
+    if (!navigator.onLine) return;
+    navigator.serviceWorker.getRegistration()
+      .then(function (r) { return r ? r.update() : null; })
+      .catch(function () {});
+  }
+  window.addEventListener("online", function () { setTimeout(swSelfHeal, 3000); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") setTimeout(swSelfHeal, 2000);
   });
 })();

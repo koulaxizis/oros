@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Time · orOS</title>
+  <link rel="stylesheet" href="time.css">
+</head>
+<body>
+  <main id="tmain">
+
+    <!-- ===== Big clock ===== -->
+    <section class="face-wrap">
+      <div id="face-digital">
+        <span id="big-hm">--:--</span><span id="big-ss"></span>
+      </div>
+      <div id="face-analog" hidden></div>
+      <div id="face-binary" hidden></div>
+      <div id="face-sub"></div>
+      <div id="style-row">
+        <button id="sty-0" class="sty" type="button" data-i18n="sty.digital"></button>
+        <button id="sty-1" class="sty" type="button" data-i18n="sty.analog"></button>
+        <button id="sty-2" class="sty" type="button" data-i18n="sty.binary"></button>
+      </div>
+    </section>
+
+    <!-- ===== World clock ===== -->
+    <section class="sec">
+      <div class="sec-head">
+        <span data-i18n="zones.title"></span>
+        <button id="zone-add" type="button" class="mini" data-i18n="zones.add"></button>
+      </div>
+      <ul id="zones"></ul>
+    </section>
+
+    <!-- ===== Sun & Moon ===== -->
+    <section class="sec">
+      <div class="sec-head"><span data-i18n-a="astro.title"></span></div>
+      <div id="ast-body"></div>
+    </section>
+
+    <!-- ===== Tools ===== -->
+    <section class="sec">
+      <div id="tabs">
+        <button class="tab active" data-pane="pane-alarm" type="button" data-i18n="tab.alarm"></button>
+        <button class="tab" data-pane="pane-timer" type="button" data-i18n="tab.timer"></button>
+        <button class="tab" data-pane="pane-stop" type="button" data-i18n="tab.stopwatch"></button>
+        <button class="tab" data-pane="pane-pomo" type="button" data-i18n="tab.pomodoro"></button>
+      </div>
+
+      <!-- Alarm -->
+      <div class="pane" id="pane-alarm">
+        <ul id="alarm-list"></ul>
+        <div class="frm">
+          <input id="al-time" type="time" value="07:00">
+          <input id="al-label" type="text" data-i18n-ph="al.ph.label">
+          <label class="chk">
+            <input id="al-daily" type="checkbox">
+            <span data-i18n="al.daily"></span>
+          </label>
+        </div>
+        <button id="al-add" type="button" class="btn prim" data-i18n="al.add"></button>
+      </div>
+
+      <!-- Timer -->
+      <div class="pane" id="pane-timer" hidden>
+        <div id="tm-display">00:00</div>
+        <div class="frm">
+          <input id="tm-min" type="number" min="0" max="999" inputmode="numeric" value="5">
+          <input id="tm-sec" type="number" min="0" max="59" inputmode="numeric" value="0">
+          <button id="tm-start" type="button" class="btn prim" data-i18n="tm.start"></button>
+          <button id="tm-reset" type="button" class="btn" data-i18n="tm.reset"></button>
+        </div>
+      </div>
+
+      <!-- Stopwatch -->
+      <div class="pane" id="pane-stop" hidden>
+        <div id="st-display">00:00.0</div>
+        <div class="frm">
+          <button id="st-go" type="button" class="btn prim" data-i18n="st.start"></button>
+          <button id="st-reset" type="button" class="btn" data-i18n="st.reset"></button>
+        </div>
+      </div>
+
+      <!-- Pomodoro -->
+      <div class="pane" id="pane-pomo" hidden>
+        <div id="pm-phase"></div>
+        <div id="pm-display">25:00</div>
+        <div class="frm">
+          <button id="pm-start" type="button" class="btn prim" data-i18n="pm.start"></button>
+          <button id="pm-reset" type="button" class="btn" data-i18n="pm.reset"></button>
+        </div>
+        <div class="frm cfg">
+          <label for="pm-work" data-i18n="pm.work"></label>
+          <input id="pm-work" type="number" min="1" max="120" inputmode="numeric" value="25">
+          <label for="pm-break" data-i18n="pm.break"></label>
+          <input id="pm-break" type="number" min="1" max="60" inputmode="numeric" value="5">
+        </div>
+        <div id="pm-count"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Astro location dialog -->
+  <dialog id="astro-dlg">
+    <h3 data-i18n-a="astro.dlg"></h3>
+    <div class="ast-form">
+      <label for="as-lat" data-i18n-a="astro.lat"></label>
+      <input id="as-lat" type="number" step="any" min="-90" max="90" inputmode="decimal">
+      <label for="as-lon" data-i18n-a="astro.lon"></label>
+      <input id="as-lon" type="number" step="any" min="-180" max="180" inputmode="decimal">
+    </div>
+    <div class="dlg-row">
+      <button id="as-save" type="button" class="btn prim" data-i18n-a="astro.save"></button>
+      <button id="as-cancel" type="button" class="btn" data-i18n-a="astro.cancel"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="as-clear" type="button" class="btn" data-i18n-a="astro.clear"></button>
+    </div>
+  </dialog>
+
+  <!-- Zone picker dialog -->
+  <dialog id="zone-dlg">
+    <h3 data-i18n="zones.dlg"></h3>
+    <select id="zone-sel"></select>
+    <div class="dlg-row">
+      <button id="zone-ok" type="button" class="btn prim" data-i18n="zones.ok"></button>
+      <button id="zone-cancel" type="button" class="btn" data-i18n="zones.cancel"></button>
+    </div>
+  </dialog>
+
+  <script src="time.js"></script>
+  <script src="astro.js"></script>
+</body>
+</html>

@@ -87,7 +87,8 @@
     </div>
     <div class="bar-right">
       <button id="btn-lang" title="Language"></button>
-      <span id="bar-clock" data-i18n-title="bar.clock.tooltip" title="Time (24h)">--:--</span>
+      <button id="bar-time" type="button" title="Time">--:--</button>
+      <button id="bar-date" type="button" title="Date"></button>
     </div>
   </header>
 
@@ -115,17 +116,45 @@
   "use strict";
   if (!("serviceWorker" in navigator)) return;
 
-  navigator.serviceWorker.register("sw.js").then(function (r) {
+  // D1-4: resilient registration. A single silent register() rejection
+  // (bad worker state, Android WebView quirks) leaves the PWA with no
+  // controller → no offline, forever, invisibly. Retry with backoff;
+  // after final failure, SAY so in the console.
+  var SW_RETRY_MAX  = 3;
+  var SW_RETRY_WAIT = 4000;
+  var swAttempts = 0;
+
+  function watchRegistration(r) {
     // Force a byte-check on EVERY load — never rely on browser mood.
     r.update().catch(function () {});
     // Gentle hourly re-check for long-lived sessions
     setInterval(function () { r.update().catch(function () {}); }, 60 * 60 * 1000);
-  }).catch(function () {});
+  }
+
+  function tryRegister() {
+    navigator.serviceWorker.register("sw.js").then(function (r) {
+      watchRegistration(r);
+    }).catch(function (err) {
+      swAttempts++;
+      if (swAttempts < SW_RETRY_MAX) {
+        setTimeout(tryRegister, SW_RETRY_WAIT);
+      } else {
+        console.warn("[SW] registration failed after retries:", err);
+      }
+    });
+  }
+
+  tryRegister();
 
   var reloading = false;
   navigator.serviceWorker.addEventListener("controllerchange", function () {
     if (reloading) return;
     reloading = true;
+    // BUG (found during D1-4 review): the splash script CONSUMES
+    // "oros-skip-splash" but NOTHING ever wrote it — every silent-
+    // update reload re-showed the 10s splash screen. This is the
+    // missing writer, exactly where the consumer expects it.
+    try { sessionStorage.setItem("oros-skip-splash", "1"); } catch (e) {}
     window.location.reload();
   });
 })();

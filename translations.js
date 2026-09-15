@@ -121,7 +121,25 @@ window.OROS_TRANSLATIONS = {
     "sc.info.cap": "Offline-first · Auto-merge sync · Snapshots · Local export · No cookies, no tracking.",
 	"gps.use": "Use my location",
 	"sc.info.services": "External services",
-    "sc.info.extsvc": "Weather: Open-Meteo (open-meteo.com) — no API key, no tracking."
+    "sc.info.extsvc": "Weather: Open-Meteo (open-meteo.com) — no API key, no tracking.",
+	"sync.err.passphrase": "Wrong passphrase — your data cannot be decrypted with this passphrase.",
+	"sync.changepw": "Change passphrase",
+	"sync.changepw.hint": "Re-encrypt your cloud data with a new passphrase. All devices will need to use the new passphrase after this.",
+	"sync.changepw.old": "Current passphrase",
+	"sync.changepw.new": "New passphrase",
+	"sync.changepw.confirm": "Confirm new passphrase",
+	"sync.changepw.ok": "Change",
+	"sync.changepw.mismatch": "New passphrase and confirmation do not match",
+	"sync.changepw.same": "New passphrase must be different from the old one",
+	"sync.err.wrongold": "The current passphrase you entered is incorrect",
+	"sync.ok.changepw": "Passphrase changed successfully",
+	"sync.pwfix.title": "Passphrase changed on another device?",
+	"sync.pwfix.hint": "Sync failed because the cloud blob cannot be decrypted. If another device changed the passphrase, enter the new one here to recover.",
+	"sync.pwfix.hint.vault": "Sync failed and this device has a sealed vault. The passphrase likely changed elsewhere. Enter the new passphrase to re-unlock and re-seal.",
+	"sync.pwfix.err": "Incorrect passphrase — try again",
+	"app.time": "Time",
+	"app.calendar": "Calendar"
+}
   },
 
   el: {
@@ -243,6 +261,23 @@ window.OROS_TRANSLATIONS = {
     "app.notes": "Σημειώσεις",
     "app.weather": "Καιρός",
     "app.mood": "Διάθεση",
+	"sync.err.passphrase": "Λάθος passphrase — τα δεδομένα σας δεν μπορούν να αποκρυπτογραφηθούν με αυτή τη φράση.",
+	"sync.changepw": "Αλλαγή passphrase",
+	"sync.changepw.hint": "Επανακρυπτογράφησε τα δεδομένα σου στο cloud με νέα passphrase. Όλες οι συσκευές θα χρειαστεί να χρησιμοποιήσουν τη νέα passphrase μετά από αυτό.",
+	"sync.changepw.old": "Τρέχουσα passphrase",
+	"sync.changepw.new": "Νέα passphrase",
+	"sync.changepw.confirm": "Επιβεβαίωσε τη νέα passphrase",
+	"sync.changepw.ok": "Αλλαγή",
+	"sync.changepw.mismatch": "Η νέα passphrase και η επιβεβαίωση δεν ταιριάζουν",
+	"sync.changepw.same": "Η νέα passphrase πρέπει να διαφέρει από την παλιά",
+	"sync.err.wrongold": "Η τρέχουσα passphrase που έδωσες είναι λανθασμένη",
+	"sync.ok.changepw": "Η passphrase άλλαξε επιτυχώς",
+	"sync.pwfix.title": "Η passphrase άλλαξε σε άλλη συσκευή;",
+	"sync.pwfix.hint": "Το sync απέτυχε επειδή το cloud blob δεν μπορεί να αποκρυπτογραφηθεί. Αν άλλη συσκευή άλλαξε τη passphrase, εισάγετέ την εδώ για ανάκτηση.",
+	"sync.pwfix.hint.vault": "Το sync απέτυχε και αυτή η συσκευή έχει sealed vault. Η passphrase πιθανότατα άλλαξε αλλού. Εισάγετε τη νέα passphrase για ξανα-ξεκλείδωμα και ξανασφράγισμα.",
+	"sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
+	"app.time": "Ώρα",
+	"app.calendar": "Ημερολόγιο"
   }
 
 };
