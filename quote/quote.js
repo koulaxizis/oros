@@ -1076,4 +1076,639 @@
     if (activeFilters.length && activeFilters.indexOf(q.status) === -1) return false;
     if (searchQuery) {
       var hay = [
-        q.num, q.notes, q.payment,
+                q.num, q.notes, q.payment
+      ];
+      var c = clientById(q.clientId);
+      if (c) hay.push(c.name, c.email);
+      var s = hay.join(" ").toLowerCase();
+      return s.indexOf(searchQuery) !== -1;
+    }
+    return true;
+  }
+
+  function renderQuoteList() {
+    var host = $("quote-list-container");
+    if (!host) return;
+    host.innerHTML = "";
+
+    var list = state.quotes.filter(quoteMatchesView);
+
+    if (state.quotes.length === 0) {
+      $("list-empty").hidden = false;
+      return;
+    }
+    $("list-empty").hidden = true;
+
+    if (list.length === 0) {
+      var nm = document.createElement("div");
+      nm.className = "list-no-match";
+      nm.textContent = t("list.no_match");
+      host.appendChild(nm);
+      return;
+    }
+
+    // Νεότερες πρώτα (mtime DESC) — η pos-follows-om σειρά είναι για
+    // το merge· η λίστα λειτουργεί καλύτερα chronological
+    list.sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
+
+    list.forEach(function (q) {
+      host.appendChild(makeQuoteRow(q));
+    });
+  }
+
+  function makeQuoteRow(q) {
+    var c = q.clientId ? clientById(q.clientId) : null;
+    var tt = calcTotals(q);
+
+    var row = document.createElement("button");
+    row.type = "button";
+    row.className = "q-row st-" + q.status;
+
+    var num = document.createElement("span");
+    num.className = "q-num";
+    num.textContent = q.num || "—";
+    row.appendChild(num);
+
+    var who = document.createElement("span");
+    who.className = "q-client";
+    who.textContent = c ? c.name : t("client.none");
+    row.appendChild(who);
+
+    var date = document.createElement("span");
+    date.className = "q-date";
+    date.textContent = fmtDate(q.date);
+    row.appendChild(date);
+
+    var tot = document.createElement("span");
+    tot.className = "q-total";
+    tot.textContent = money(tt.total, q.currency);
+    row.appendChild(tot);
+
+    var st = document.createElement("span");
+    st.className = "q-status";
+    st.textContent = t("status." + q.status);
+    row.appendChild(st);
+
+    row.addEventListener("click", function () { openQuote(q.id); });
+    return row;
+  }
+
+  // --- Status filter popover (kanban filter pattern) ---
+  function renderStatusPop() {
+    var pop = $("status-pop");
+    pop.innerHTML = "";
+    STATUSES.forEach(function (st) {
+      var item = document.createElement("div");
+      item.className = "fl-item";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = activeFilters.indexOf(st) !== -1;
+      cb.addEventListener("change", function () {
+        var at = activeFilters.indexOf(st);
+        if (cb.checked && at === -1) activeFilters.push(st);
+        if (!cb.checked && at !== -1) activeFilters.splice(at, 1);
+        updateFilterBtn();
+        scheduleRender();
+      });
+      item.appendChild(cb);
+
+      var name = document.createElement("span");
+      name.className = "fl-name";
+      name.textContent = t("status." + st);
+      item.appendChild(name);
+
+      pop.appendChild(item);
+    });
+  }
+
+  function updateFilterBtn() {
+    var btn = $("status-filter");
+    var badge = $("filter-count");
+    if (!btn || !badge) return;
+    if (activeFilters.length > 0) {
+      btn.classList.add("has-filters");
+      badge.textContent = String(activeFilters.length);
+      badge.hidden = false;
+    } else {
+      btn.classList.remove("has-filters");
+      badge.hidden = true;
+    }
+  }
+
+  // ---------- 10. Export (PDF / print) + send ----------
+  var fontLoadAttempted = false;
+  var notoFontBase64 = null;
+
+  function fetchFontBase64(cb) {
+    if (notoFontBase64 !== null || fontLoadAttempted) { cb(notoFontBase64); return; }
+    fontLoadAttempted = true;
+    fetch(VENDOR_FONT_PATH).then(function (r) {
+      if (!r.ok) throw 0;
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      var bin = "";
+      for (var i = 0; i < bytes.length; i += 8192)
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+      notoFontBase64 = btoa(bin);
+      cb(notoFontBase64);
+    }).catch(function () {
+      cb(null);
+    });
+  }
+
+  function exportPdf() {
+    if (!cur) return;
+    var JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!JsPDF) { printFallback(); return; }
+    fetchFontBase64(function (b64) { buildPdf(JsPDF, b64); });
+  }
+
+  function buildPdf(JsPDF, b64) {
+    var doc = new JsPDF({ unit: "mm", format: "a4" });
+    var greekOK = false;
+    if (b64) {
+      try {
+        doc.addFileToVFS("NotoSans-Regular.ttf", b64);
+        doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+        doc.setFont("NotoSans");
+        greekOK = true;
+      } catch (e) { greekOK = false; }
+    }
+    // Χωρίς ελληνική γραμματοσειρά: print fallback (τα ελληνικά
+    // θα ήταν garbled — προτιμούμε σωστό αποτέλεσμα σε 2 βήματα)
+    if (!greekOK && LANG === "el") { printFallback(); return; }
+
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var tt = calcTotals(cur);
+    var M = 16, W = 210, y = M;
+
+    // Header
+    doc.setFontSize(18);
+    doc.text(t("app.title_short") || "Quote", M, y); y += 7;
+    doc.setFontSize(10);
+    doc.text("# " + (cur.num || ""), M, y); y += 5;
+    if (c) {
+      doc.text(t("pdf.header_client") + ":", M, y); y += 5;
+      doc.text(c.name, M, y); y += 4;
+      if (c.address) { doc.text(c.address.split("\n")[0], M, y); y += 4; }
+      if (c.taxId) { doc.text(c.taxId, M, y); y += 4; }
+    }
+    y += 2;
+    doc.text(t("offer.date") + ": " + fmtDate(cur.date) +
+      "   " + t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—"), M, y);
+    y += 8;
+
+    // Items table — απλές στήλες, monospace-friendly
+    var cols = [M, M + 30, M + 95, M + 125, M + 150, M + 165];
+    doc.setFont(undefined, "bold");
+    doc.text(t("items.code"), cols[0], y);
+    doc.text(t("items.desc"), cols[1], y);
+    doc.text(t("items.qty"), cols[2], y);
+    doc.text(t("items.unit_price"), cols[3], y);
+    doc.text(t("items.disc"), cols[4], y);
+    doc.text(t("totals.total"), cols[5], y);
+    doc.setFont(undefined, "normal");
+    y += 2;
+    doc.setDrawColor(160);
+    doc.line(M, y, W - M, y);
+    y += 5;
+
+    cur.items.forEach(function (it) {
+      if (y > 270) { doc.addPage(); y = M; }
+      doc.text(String(it.code || ""), cols[0], y);
+      doc.text(String(it.desc || "").slice(0, 42), cols[1], y);
+      doc.text(String(it.qty || 0), cols[2], y);
+      doc.text(String(it.price || 0), cols[3], y);
+      doc.text(String(it.disc || 0) + "%", cols[4], y);
+      doc.text(money(itemNet(it, cur.gDisc) * (1 + (it.vat || 0) / 100), cur.currency), cols[5], y);
+      y += 5.5;
+    });
+
+    y += 3;
+    doc.line(M, y, W - M, y);
+    y += 6;
+
+    doc.text(t("totals.subtotal") + ": " + money(tt.subtotal, cur.currency), W - M - 60, y); y += 5;
+    if (tt.discAmount) {
+      doc.text(t("totals.discount") + ": -" + money(tt.discAmount, cur.currency), W - M - 60, y); y += 5;
+    }
+    doc.text(t("totals.vat") + ": " + money(tt.vat, cur.currency), W - M - 60, y); y += 5;
+    doc.setFont(undefined, "bold");
+    doc.text(t("totals.total") + ": " + money(tt.total, cur.currency), W - M - 60, y);
+    doc.setFont(undefined, "normal");
+    y += 10;
+
+    // Instalments
+    if (cur.instalments && cur.instalments.length) {
+      doc.setFont(undefined, "bold");
+      doc.text(t("inst.title"), M, y); y += 5;
+      doc.setFont(undefined, "normal");
+      cur.instalments.forEach(function (ins) {
+        doc.text(fmtDate(ins.date) + "  —  " + money(ins.amount, cur.currency), M, y);
+        y += 5;
+      });
+      y += 4;
+    }
+
+    // Payment + notes
+    if (cur.payment) {
+      doc.setFont(undefined, "bold");
+      doc.text(t("payment.title"), M, y); y += 5;
+      doc.setFont(undefined, "normal");
+      doc.text(doc.splitTextToSize(cur.payment, W - 2 * M), M, y); y += 8;
+    }
+    if (cur.notes) {
+      doc.setFont(undefined, "bold");
+      doc.text(t("offer.notes"), M, y); y += 5;
+      doc.setFont(undefined, "normal");
+      doc.text(doc.splitTextToSize(cur.notes, W - 2 * M), M, y);
+    }
+
+    doc.save((cur.num || "quote") + ".pdf");
+    showToast(t("toast.exported"), false);
+  }
+
+  function printFallback() {
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var tt = calcTotals(cur);
+    var rows = cur.items.map(function (it) {
+      return "<tr><td>" + esc(it.code || "") + "</td><td>" + esc(it.desc || "") +
+        "</td><td>" + esc(it.qty || 0) + "</td><td>" + esc(it.price || 0) +
+        "</td><td>" + esc(it.disc || 0) + "%</td><td>" +
+        esc(money(itemNet(it, cur.gDisc) * (1 + (it.vat || 0) / 100), cur.currency)) +
+        "</td></tr>";
+    }).join("");
+
+    var fr = document.createElement("iframe");
+    fr.style.cssText = "position:fixed;width:0;height:0;border:0;";
+    document.body.appendChild(fr);
+    fr.contentDocument.write(
+      '<html><head><meta charset="utf-8"><style>' +
+      "body{font-family:sans-serif;margin:24px;color:#111}" +
+      "table{width:100%;border-collapse:collapse;font-size:12px}" +
+      "td,th{border-bottom:1px solid #999;padding:4px 6px;text-align:left}" +
+      "h1{font-size:20px} .tot{text-align:right;margin-top:12px}" +
+      "</style></head><body>" +
+      "<h1>" + esc(t("app.title_short") || "Quote") + " #" + esc(cur.num || "") + "</h1>" +
+      (c ? "<p>" + esc(c.name) +
+        (c.taxId ? " · " + esc(c.taxId) : "") +
+        (c.address ? "<br>" + esc(c.address.replace(/\n/g, ", ")) : "") + "</p>" : "") +
+      "<p>" + esc(t("offer.date")) + ": " + esc(fmtDate(cur.date)) +
+      " · " + esc(t("offer.due_date")) + ": " + esc(fmtDate(cur.dueDate) || "—") + "</p>" +
+      "<table><thead><tr><th>" + esc(t("items.code")) + "</th><th>" + esc(t("items.desc")) +
+      "</th><th>" + esc(t("items.qty")) + "</th><th>" + esc(t("items.unit_price")) +
+      "</th><th>" + esc(t("items.disc")) + "</th><th>" + esc(t("totals.total")) +
+      "</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+      '<div class="tot"><p>' + esc(t("totals.subtotal")) + ": " + esc(money(tt.subtotal, cur.currency)) + "</p>" +
+      "<p>" + esc(t("totals.vat")) + ": " + esc(money(tt.vat, cur.currency)) + "</p>" +
+      "<p><strong>" + esc(t("totals.total")) + ": " + esc(money(tt.total, cur.currency)) + "</strong></p></div>" +
+      (cur.payment ? "<p><strong>" + esc(t("payment.title")) + ":</strong><br>" + esc(cur.payment) + "</p>" : "") +
+      (cur.notes ? "<p><strong>" + esc(t("offer.notes")) + ":</strong><br>" + esc(cur.notes) + "</p>" : "") +
+      "</body></html>");
+    fr.contentDocument.close();
+    setTimeout(function () {
+      fr.contentWindow.focus();
+      fr.contentWindow.print();
+      setTimeout(function () { fr.remove(); }, 1000);
+    }, 150);
+  }
+
+  function sendEmail() {
+    if (!cur) return;
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var tt = calcTotals(cur);
+    var subject = t("send.subject") + " " + (cur.num || "");
+    var body =
+      (c ? c.name + ",\n\n" : "") +
+      t("send.subject") + " " + (cur.num || "") + " — " +
+      t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—") + "\n" +
+      t("totals.total") + ": " + money(tt.total, cur.currency) + "\n\n" +
+      (cur.payment || "");
+    var href = "mailto:" + (c && c.email ? c.email : "") +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+    window.open(href, "_self");
+  }
+
+  // ---------- 11. Toast ----------
+  var toastTimer = null;
+
+  function showToast(text) {
+    var el = $("toast");
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("show");
+    void el.offsetWidth;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3500);
+  }
+
+  // ---------- 12. Sync slice + palette ----------
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft",
+                  "--panel-bg", "--border", "--shadow"];
+
+  function inheritPalette() {
+    try {
+      var pRoot = window.parent.document.documentElement;
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var cs = window.parent.getComputedStyle(pRoot);
+      PAL_VARS.forEach(function (v) {
+        document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
+      });
+    } catch (e) { /* standalone — fallback palette */ }
+  }
+
+  function watchPalette() {
+    try {
+      new MutationObserver(inheritPalette).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  function registerSync() {
+    var api = (window.parent && window.parent.orosSync) || window.orosSync;
+
+    window.__orosSyncApi = {
+      _suppress: false,
+      dirty: function () {
+        if (this._suppress) return;
+        if (api && typeof api.markDirty === "function") api.markDirty();
+      }
+    };
+
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("quote", sliceGet, sliceSet,
+                      "oros-quote-data", mergeQuoteStates);
+  }
+
+  function sliceGet() {
+    return JSON.parse(JSON.stringify(state));
+  }
+
+  function sliceSet(data, info) {
+    data = migrate(JSON.parse(JSON.stringify(data || null)));
+    if (!data) return;
+
+    window.__orosSyncApi._suppress = true;
+    try {
+      // Device-local: κρατάμε το activeQuoteId αν η προσφορά έζησε
+      if (!data.activeQuoteId) data.activeQuoteId = state.activeQuoteId;
+      if (data.activeQuoteId &&
+          !quoteByIdIn(data.quotes, data.activeQuoteId)) {
+        data.activeQuoteId = data.quotes.length > 0 ? data.quotes[0].id : null;
+      }
+      state = data;
+      pruneTombstones();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+
+    // Αν ο χρήστης είχε ανοιχτή μια αποθηκευμένη προσφορά, φρεσκάρουμε
+    // τον editor με τη merged εκδοχή της (χωρίς tab switch).
+    if (!curIsDraft && cur && quoteById(cur.id)) {
+      cur = quoteById(cur.id);
+      loadOfferIntoEditor();
+    }
+    scheduleRender();
+  }
+
+  function quoteByIdIn(arr, id) {
+    for (var i = 0; i < (arr || []).length; i++)
+      if (arr[i].id === id) return arr[i];
+    return null;
+  }
+
+  // ---------- 13. Wiring & boot ----------
+  function applyI18n() {
+    var n = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < n.length; i++)
+      n[i].textContent = t(n[i].getAttribute("data-i18n"));
+    var ti = document.querySelectorAll("[data-i18n-title]");
+    for (var j = 0; j < ti.length; j++) {
+      ti[j].setAttribute("title", t(ti[j].getAttribute("data-i18n-title")));
+      ti[j].setAttribute("aria-label", ti[j].getAttribute("title"));
+    }
+    var ph = document.querySelectorAll("[data-i18n-ph]");
+    for (var k = 0; k < ph.length; k++)
+      ph[k].setAttribute("placeholder", t(ph[k].getAttribute("data-i18n-ph")));
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    var tabs = document.querySelectorAll("#quote-tabs .tab");
+    for (var i = 0; i < tabs.length; i++)
+      tabs[i].classList.toggle("active", tabs[i].dataset.tab === tab);
+    $("tab-create").classList.toggle("active", tab === "create");
+    $("tab-list").classList.toggle("active", tab === "list");
+
+    // Header tools ανά tab
+    var isList = tab === "list";
+    $("search-wrap").hidden = !isList;
+    $("filters").hidden = !isList;
+    $("client-new").hidden = isList;
+    $("export-btn").hidden = isList;
+    $("send-btn").hidden = isList;
+
+    if (isList) { renderQuoteList(); updateFilterBtn(); }
+  }
+
+  function renderAll() {
+    if (activeTab === "list") { renderQuoteList(); updateFilterBtn(); }
+  }
+
+  function commitSave() {
+    // Draft → οντότητα. Μετά: live editing (kanban pattern).
+    if (curIsDraft) {
+      cur.pos = state.quotes.length;
+      state.quotes.push(cur);
+      state.om = Date.now();
+      curIsDraft = false;
+      state.activeQuoteId = cur.id;
+    }
+    touch(cur);
+    state.om = Date.now();
+    save();
+    showToast(t("toast.saved"), false);
+  }
+
+  function duplicateCurrent() {
+    var copy = JSON.parse(JSON.stringify(cur));
+    copy.id = uid();
+    copy.num = nextNumber();
+    copy.status = "draft";
+    copy.mtime = 0;
+    copy.pos = state.quotes.length;
+    copy.items.forEach(function (it) { it.id = uid(); });
+    copy.instalments.forEach(function (ins) { ins.id = uid(); });
+    state.quotes.push(copy);
+    state.om = Date.now();
+    touch(copy);
+    state.activeQuoteId = copy.id;
+    cur = copy;
+    curIsDraft = false;
+    save();
+    loadOfferIntoEditor();
+    renderQuoteList();
+    showToast(t("toast.duplicated"), false);
+  }
+
+  function deleteCurrent() {
+    if (curIsDraft) { newDraft(); return; }   // draft: απλός καθαρισμός
+    if (!confirm(t("confirm.delete"))) return;
+    state.deleted[cur.id] = Date.now();
+    state.quotes = state.quotes.filter(function (q) { return q !== cur; });
+    state.om = Date.now();
+    state.activeQuoteId = null;
+    save();
+    newDraft();
+    renderQuoteList();
+    showToast(t("toast.deleted"), false);
+  }
+
+  function wire() {
+    // --- Tabs ---
+    document.querySelectorAll("#quote-tabs .tab").forEach(function (b) {
+      b.addEventListener("click", function () { switchTab(b.dataset.tab); });
+    });
+
+    // --- Search (list tab) ---
+    $("search").addEventListener("input", function () {
+      searchQuery = this.value.trim().toLowerCase();
+      $("search-clear").hidden = !searchQuery;
+      scheduleRender();
+    });
+    $("search-clear").addEventListener("click", function () {
+      $("search").value = "";
+      searchQuery = "";
+      $("search-clear").hidden = true;
+      scheduleRender();
+      $("search").focus();
+    });
+
+    // --- Status filter popover ---
+    $("status-filter").addEventListener("click", function (e) {
+      e.stopPropagation();
+      var pop = $("status-pop");
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) renderStatusPop();
+    });
+    document.addEventListener("click", function (e) {
+      var pop = $("status-pop");
+      if (pop && !pop.hidden && !e.target.closest("#filters")) pop.hidden = true;
+    });
+
+    // --- Editor: meta fields ---
+    $("q-date").addEventListener("input", function () {
+      cur.date = this.value; editCommitted();
+    });
+    $("q-due").addEventListener("input", function () {
+      cur.dueDate = this.value; editCommitted();
+    });
+    $("q-status").addEventListener("change", function () {
+      cur.status = this.value; editCommitted();
+    });
+    $("q-currency").addEventListener("change", function () {
+      cur.currency = this.value;
+      recalcTotals(); editCommitted();
+    });
+    $("regenerate-num").addEventListener("click", function () {
+      cur.num = nextNumber();
+      $("q-number").value = cur.num;
+      editCommitted();
+    });
+    $("global-discount").addEventListener("input", function () {
+      cur.gDisc = parseNum(this.value);
+      recalcTotals(); editCommitted();
+    });
+    $("global-vat").addEventListener("input", function () {
+      // Bulk: εφαρμόζεται σε όλες τις γραμμές
+      var v = parseNum(this.value);
+      cur.items.forEach(function (it) { it.vat = v; });
+      renderItems(); recalcTotals(); editCommitted();
+    });
+    $("q-payment").addEventListener("input", function () {
+      cur.payment = this.value; editCommitted();
+    });
+    $("q-notes").addEventListener("input", function () {
+      cur.notes = this.value; editCommitted();
+    });
+
+    // Payment presets → πεδίο (append με newline, μη αντικατάσταση)
+    document.querySelectorAll(".preset-btn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var txt = t("payment." + b.dataset.payment + ".details");
+        var field = $("q-payment");
+        field.value = field.value ? field.value + "\n" + txt : txt;
+        cur.payment = field.value;
+        editCommitted();
+      });
+    });
+
+    // --- Items ---
+    $("item-add").addEventListener("click", addItem);
+
+    // --- Client selector ---
+    $("client-selector").addEventListener("click", toggleClientDropdown);
+    $("client-select-new").addEventListener("click", function () {
+      closeClientDropdown();
+      openClientDialog(null);
+    });
+    $("client-new").addEventListener("click", function () {
+      openClientDialog(null);
+    });
+    $("client-delete").addEventListener("click", deleteClientFromDialog);
+
+    // --- Editor actions ---
+    $("save-quote").addEventListener("click", commitSave);
+    $("save-template").addEventListener("click", saveCurrentAsTemplate);
+    $("duplicate-quote").addEventListener("click", duplicateCurrent);
+    $("delete-quote").addEventListener("click", deleteCurrent);
+    $("export-btn").addEventListener("click", exportPdf);
+    $("send-btn").addEventListener("click", sendEmail);
+
+    // --- Templates dialog ---
+    $("templates-close").addEventListener("click", function () {
+      $("dlg-templates").close();
+    });
+
+    // --- Keyboard: Alt+N = νέα προσφορά (browser-safe combo) ---
+    document.addEventListener("keydown", function (e) {
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+          (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        newDraft();
+        switchTab("create");
+      }
+    });
+  }
+
+  function boot() {
+    document.documentElement.setAttribute("lang", LANG);
+    applyI18n();
+    load();
+    buildInstalmentSection();   // ΠΡΙΝ από任何 loadOfferIntoEditor
+    wire();
+    registerSync();
+    inheritPalette();
+    watchPalette();
+
+    // Επαναφορά: τελευταία ανοιχτή προσφορά ή φρέσκο draft
+    if (state.activeQuoteId && quoteById(state.activeQuoteId)) {
+      openQuote(state.activeQuoteId);
+    } else {
+      newDraft();
+    }
+    switchTab("create");
+    scheduleRender();
+  }
+
+  boot();
+})();
