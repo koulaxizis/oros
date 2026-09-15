@@ -382,7 +382,7 @@
       var payload = JSON.parse(new TextDecoder().decode(plain));
       // Check pwEpoch against local known epoch
       var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
-      var localEpoch = getPWEpoch();
+      var localEpoch = getWVEpoch();
       if (localEpoch > 0 && cloudEpoch > localEpoch) {
         console.warn("orOS sync: pwEpoch mismatch detected — passphrase changed elsewhere?");
       }
@@ -1246,7 +1246,7 @@ function detectPwEpochMismatch() {
       return decryptBlob(blobText)
         .then(function (payload) {
           var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
-          var localEpoch = getWVEpoch();  // CORRECTED: was getPWEpoch (undefined)
+          var localEpoch = getWVEpoch();
           if (localEpoch === 0 || cloudEpoch === 0) return null; // No epochs yet
           if (cloudEpoch > localEpoch) return cloudEpoch; // Epoch increased elsewhere
           return null;

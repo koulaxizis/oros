@@ -277,6 +277,7 @@ window.OROS_TRANSLATIONS = {
 	    "sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
     "app.time": "Ώρα",
     "app.calendar": "Ημερολόγιο"
+	 }
   };
 
 // ============================================================
