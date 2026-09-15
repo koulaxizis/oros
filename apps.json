@@ -56,6 +56,14 @@
       "category": "Utilities",
       "url": "calendar/",
       "type": "internal"
+    },
+    {
+      "id": "quote",
+      "name": "Quote",
+      "category": "Productivity",
+      "icon": "columns",
+      "url": "quote/",
+      "type": "internal"
     }
   ]
 }

@@ -897,6 +897,7 @@
   timerPaint();
   tick();
   setInterval(tick, 250);   // smooth hands + fast bit-flips, trivial cost
+  console.log("[orOS] time.js v0.1.1 booted — styles 0–4, sound " + state.sound);
 
   /* ---------- 14. Sync slice registration ---------- */
   // Entity union for zones (tombstoned deletes, idempotent), LWW for

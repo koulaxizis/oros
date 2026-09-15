@@ -319,12 +319,15 @@ input, textarea, select {
                                container or it gets clipped */
   -webkit-overflow-scrolling: touch;
 }
-#hourly::-webkit-scrollbar { height: 6px; }
+/* Scrollbars — orOS-wide Mood standard (§6b) */
+#hourly::-webkit-scrollbar { width: 10px; height: 10px; }
 #hourly::-webkit-scrollbar-track { background: transparent; }
 #hourly::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 999px;
+  border: 2px solid var(--bg);
 }
+#hourly::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 .hcell {
   position: relative;          /* anchors the .h-now badge */

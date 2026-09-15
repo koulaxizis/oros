@@ -414,6 +414,7 @@
   // Boot + periodic refresh (positions drift, moon barely moves)
   render();
   setInterval(render, 30000);
+  console.log("[orOS] astro.js v0.1.1 booted — lang " + LANG);
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") render();
   });

@@ -139,7 +139,12 @@
       "confirm.client_del":   "Delete this client?",
       "template.name_ph":     "Template name",
       "pdf.header_client":    "Quote for",
-      "pdf.page":             "Page 1"
+      "pdf.page":             "Page 1",
+	  "app.title_short":      "Quote",
+      "paypresets.edit":      "Edit payment presets",
+      "paypresets.hint":      "Click a preset to insert its text into the offer. Click the pencil to customize.",
+      "paypresets.title":     "Payment Presets",
+      "toast.paypresets_saved": "Payment presets saved"
     },
     el: {
       "tab.create":            "Δημιουργία",
@@ -228,7 +233,12 @@
       "confirm.client_del":   "Διαγραφή αυτού του πελάτη;",
       "template.name_ph":     "Όνομα προτύπου",
       "pdf.header_client":    "Προσφορά για",
-      "pdf.page":             "Σελίδα 1"
+      "pdf.page":             "Σελίδα 1",
+	  "app.title_short":      "Προσφορά",
+      "paypresets.edit":      "Επεξεργασία presets πληρωμής",
+      "paypresets.hint":      "Πάτησε ένα preset για να εισαχθεί το κείμενό του στην προσφορά. Με το μολύβι το προσαρμόζεις.",
+      "paypresets.title":     "Presets Πληρωμής",
+      "toast.paypresets_saved": "Τα presets πληρωμής αποθηκεύτηκαν"
     }
   };
 
@@ -339,6 +349,39 @@
     return { id: uid(), name: name || "", email: "", phone: "",
              address: "", taxId: "", mtime: 0, pos: state ? state.clients.length : 0 };
   }
+  
+    // --- Synced payment presets (per-user, LWW, deterministic ids) ---
+  var PAY_METHODS = ["bank", "paypal", "iris", "cash"];
+  var PM_DEFAULTS = {
+    en: {
+      bank:  "Bank transfer\nIBAN: \nBeneficiary: ",
+      paypal: "PayPal: ",
+      iris:  "IRIS payments: ",
+      cash:  "Cash on delivery"
+    },
+    el: {
+      bank:  "Τραπεζική μεταφορά\nIBAN: \nΔικαιούχος: ",
+      paypal: "PayPal: ",
+      iris:  "Πληρωμές μέσω IRIS: ",
+      cash:  "Μετρητά κατά την παράδοση"
+    }
+  };
+
+  function seedPayMethods() {
+    // Deterministic ids: δύο συσκευές που κάνουν ταυτόχρονα seed
+    // παράγουν τις ΙΔΙΕΣ οντότητες → το union merge δεν διπλασιάζει.
+    var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
+    state.payMethods = PAY_METHODS.map(function (m, i) {
+      return { id: "pm-" + m, method: m, text: texts[m] || "",
+               mtime: 0, pos: i };
+    });
+  }
+
+  function payMethodBy(method) {
+    for (var i = 0; i < (state.payMethods || []).length; i++)
+      if (state.payMethods[i].method === method) return state.payMethods[i];
+    return null;
+  }
 
   function migrate(data) {
     if (!data || typeof data !== "object") return null;
@@ -346,6 +389,21 @@
         !Array.isArray(data.templates)) return null;
     if (typeof data.om !== "number") data.om = 0;
     if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
+	
+	    if (!Array.isArray(data.payMethods) || data.payMethods.length === 0) {
+      var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
+      data.payMethods = PAY_METHODS.map(function (m, i) {
+        return { id: "pm-" + m, method: m, text: texts[m] || "",
+                 mtime: 0, pos: i };
+      });
+    }
+    data.payMethods.forEach(function (pm) {
+      if (!pm.id) pm.id = "pm-" + (pm.method || "x");
+      if (PAY_METHODS.indexOf(pm.method) === -1) pm.method = "bank";
+      if (typeof pm.text !== "string") pm.text = "";
+      if (typeof pm.mtime !== "number") pm.mtime = 0;
+      if (typeof pm.pos !== "number") pm.pos = 0;
+    });
 
     var fixOffer = function (q) {
       if (!q.id) q.id = uid();
@@ -419,8 +477,11 @@
         }
       }
     } catch (e) { /* corrupted → fresh start */ }
-    state = { ver: DATA_VER, om: Date.now(), deleted: {},
-              activeQuoteId: null, quotes: [], clients: [], templates: [] };
+        state = { ver: DATA_VER, om: Date.now(), deleted: {},
+              activeQuoteId: null, quotes: [], clients: [], templates: [],
+              payMethods: [] };
+    seedPayMethods();
+    save();
   }
 
   function save() {
@@ -523,6 +584,7 @@
     var quotes   = unionEntities(a.quotes, b.quotes, tomb);
     var clients  = unionEntities(a.clients, b.clients, tomb);
     var templates = unionEntities(a.templates, b.templates, tomb);
+	var payMethods = unionEntities(a.payMethods, b.payMethods, tomb);
 
     if (quotes.length === 0 && clients.length === 0 && templates.length === 0 &&
         !a.activeQuoteId && !b.activeQuoteId) {
@@ -537,6 +599,7 @@
       quotes: orderEntities(quotes, pickRef(a.quotes, b.quotes, a.om, b.om)),
       clients: orderEntities(clients, pickRef(a.clients, b.clients, a.om, b.om)),
       templates: orderEntities(templates, pickRef(a.templates, b.templates, a.om, b.om))
+	  payMethods: orderEntities(payMethods, pickRef(a.payMethods, b.payMethods, a.om, b.om))
     };
   }
 
@@ -632,6 +695,82 @@
     var c = cur && cur.clientId ? clientById(cur.clientId) : null;
     $("client-name-display").textContent = c ? c.name : t("client.none");
   }
+  
+    // --- Payment presets: render + εισαγωγή + επεξεργασία ---
+  function renderPaymentPresets() {
+    var host = $("payment-presets");
+    if (!host) return;
+    host.innerHTML = "";
+    (state.payMethods || []).forEach(function (pm) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "preset-btn" + (pm.text.trim() ? "" : " empty");
+      b.textContent = t("payment." + pm.method);
+      b.title = pm.text.trim() ? t("payment." + pm.method) : t("paypresets.edit");
+      b.addEventListener("click", function () {
+        if (!pm.text.trim()) { openPayPresetsDialog(pm.method); return; }
+        var field = $("q-payment");
+        field.value = field.value ? field.value + "\n" + pm.text : pm.text;
+        cur.payment = field.value;
+        editCommitted();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  // Επεξεργασία: inputs γράφουν σε temp buffer· στο close εφαρμόζονται
+  // ΜΟΝΟ οι αλλαγμένες τιμές (zero-edit close → κανένα mtime stamp).
+  var payEditBuffer = null;
+
+  function openPayPresetsDialog(focusMethod) {
+    var host = $("paypresets-list");
+    host.innerHTML = "";
+    payEditBuffer = {};                     // { method: newText }
+
+    (state.payMethods || []).forEach(function (pm) {
+      var lb = document.createElement("label");
+      lb.textContent = t("payment." + pm.method);
+      host.appendChild(lb);
+
+      var ta = document.createElement("textarea");
+      ta.rows = 2;
+      ta.value = pm.text;
+      ta.autocomplete = "off";
+      ta.addEventListener("input", function () {
+        payEditBuffer[pm.method] = ta.value;
+      });
+      host.appendChild(ta);
+
+      if (focusMethod && pm.method === focusMethod) {
+        setTimeout(function () { ta.focus(); }, 50);
+      }
+    });
+
+    $("dlg-paypresets").showModal();
+  }
+
+  $("dlg-paypresets").addEventListener("close", function () {
+    if (!payEditBuffer) return;
+    var changed = false;
+    Object.keys(payEditBuffer).forEach(function (method) {
+      var pm = payMethodBy(method);
+      if (!pm || pm.text === payEditBuffer[method]) return;
+      pm.text = payEditBuffer[method];
+      touch(pm);                            // LWW — μόνο το αλλαγμένο preset
+      changed = true;
+    });
+    var bufferHadFocus = Object.keys(payEditBuffer).length > 0;
+    payEditBuffer = null;
+
+    if (changed) {
+      state.om = Date.now();
+      save(); renderPaymentPresets();
+      showToast(t("toast.paypresets_saved"), false);
+    }
+    // Διόρθωση: αν δεν άλλαξε τίποτα, δεν γράφουμε καθόλου —
+    // κανένα needless mtime stamp (κανένα κλείδωμα LWW).
+    void bufferHadFocus;
+  });
 
   function recalcTotals() {
     var tt = calcTotals(cur || { items: [], gDisc: 0 });
@@ -1521,6 +1660,7 @@
   }
 
   function renderAll() {
+    renderPaymentPresets();   // φρεσκάρει τα κουμπιά μετά από sync merge
     if (activeTab === "list") { renderQuoteList(); updateFilterBtn(); }
   }
 
@@ -1641,15 +1781,12 @@
       cur.notes = this.value; editCommitted();
     });
 
-    // Payment presets → πεδίο (append με newline, μη αντικατάσταση)
-    document.querySelectorAll(".preset-btn").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var txt = t("payment." + b.dataset.payment + ".details");
-        var field = $("q-payment");
-        field.value = field.value ? field.value + "\n" + txt : txt;
-        cur.payment = field.value;
-        editCommitted();
-      });
+    // Payment presets (synced, δodynamic render — βλ. renderPaymentPresets)
+    $("paypresets-edit").addEventListener("click", function () {
+      openPayPresetsDialog(null);
+    });
+    $("paypresets-close").addEventListener("click", function () {
+      $("dlg-paypresets").close();
     });
 
     // --- Items ---
@@ -1669,6 +1806,7 @@
     // --- Editor actions ---
     $("save-quote").addEventListener("click", commitSave);
     $("save-template").addEventListener("click", saveCurrentAsTemplate);
+	$("open-templates").addEventListener("click", openTemplateLibrary);
     $("duplicate-quote").addEventListener("click", duplicateCurrent);
     $("delete-quote").addEventListener("click", deleteCurrent);
     $("export-btn").addEventListener("click", exportPdf);
@@ -1696,6 +1834,7 @@
     load();
     buildInstalmentSection();   // ΠΡΙΝ από任何 loadOfferIntoEditor
     wire();
+    renderPaymentPresets();   // πρώτο render των preset κουμπιών
     registerSync();
     inheritPalette();
     watchPalette();

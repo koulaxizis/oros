@@ -1,9 +1,8 @@
 /* ============================================================
-   orOS Time v0.1.1 — stylesheet
-   Palette: inherited at runtime from the shell (JS copies the
-   CSS vars); the values below are fallbacks for standalone
-   loads (oros skin, dark).
-   Mobile-first, no external deps.
+   orOS Time v0.1.1 — stylesheet (CONSOLIDATED)
+   All face containers are guarded with :not([hidden]) — author
+   display rules must NEVER beat the [hidden] attribute (the
+   original "always visible" bug class, including #face-digital).
    ============================================================ */
 
 :root {
@@ -35,28 +34,28 @@ body {
 #tmain {
   height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) var(--bg);
 }
-/* WebKit scrollbar — styled to the theme */
-#tmain::-webkit-scrollbar { width: 8px; height: 8px; }
-#tmain::-webkit-scrollbar-track { background: var(--bg); }
+/* Scrollbars — orOS-wide Mood standard (mood.css §6b):
+   IDENTICAL rules, scoped to this app's scroll container. */
+#tmain::-webkit-scrollbar { width: 10px; height: 10px; }
+#tmain::-webkit-scrollbar-track { background: transparent; }
 #tmain::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
+  border: 2px solid var(--bg);
 }
 #tmain::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+#tmain { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
-/* ---------- Big clock ---------- */
-.face-wrap {
+/* ---------- Big clock faces ----------
+   EVERY display rule is :not([hidden])-guarded. */
+#face-digital:not([hidden]) {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0 18px;
+  align-items: baseline;
+  gap: 5px;
 }
-#face-digital { display: flex; align-items: baseline; gap: 5px; }
 #big-hm {
   font-size: clamp(46px, 15vw, 64px);
   font-weight: 800;
@@ -81,7 +80,7 @@ body {
 /* Analog face (SVG injected by JS) */
 #face-analog svg { display: block; width: min(200px, 55vw); height: auto; }
 
-/* Binary face: 6 bit-columns (H tens/ones, M tens/ones, S tens/ones) */
+/* Binary face: 6 bit-columns */
 #face-binary:not([hidden]) {
   display: grid;
   grid-auto-flow: column;
@@ -106,7 +105,7 @@ body {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* ---------- Flip clock (new) ---------- */
+/* ---------- Flip clock ---------- */
 #face-flip:not([hidden]) {
   display: flex;
   gap: 6px;
@@ -142,8 +141,6 @@ body {
   align-self: center;
   padding: 0 2px;
 }
-.fl-top { border-radius: 6px 6px 2px 2px; }
-.fl-bot { border-radius: 2px 2px 6px 6px; border-top: none; }
 .fl-hinge {
   position: absolute;
   top: 14px;
@@ -162,7 +159,7 @@ body {
   100% { transform: rotateX(0deg); opacity: 1; }
 }
 
-/* ---------- Neon clock (new) ---------- */
+/* ---------- Neon clock ---------- */
 #face-neon:not([hidden]) {
   display: flex;
   align-items: baseline;
@@ -237,7 +234,7 @@ body {
 .mini:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mini:hover { background: var(--accent-soft); color: var(--accent); }
 
-/* ---------- Quick zone chips (new) ---------- */
+/* ---------- Quick zone chips ---------- */
 .quick-chips {
   display: flex;
   gap: 6px;
@@ -258,7 +255,7 @@ body {
 .qchip:hover { border-style: solid; color: var(--accent); border-color: var(--accent); }
 .qchip[disabled] { opacity: 0.35; cursor: default; border-style: solid; }
 
-/* ---------- Rows (zones + alarms share the row pattern) ---------- */
+/* ---------- Rows ---------- */
 #zones, #alarm-list { list-style: none; }
 .z-row {
   display: flex;
@@ -373,7 +370,7 @@ body {
 }
 #pm-count { text-align: center; font-size: 12px; color: var(--text-dim); padding-top: 8px; }
 
-/* ---------- Countdown overlay (new) ---------- */
+/* ---------- Countdown overlay ---------- */
 .countdown-overlay[hidden] { display: none; }
 .countdown-overlay {
   position: fixed;
@@ -395,7 +392,7 @@ body {
   50%      { opacity: 0.75; }
 }
 
-/* ---------- Solar status dots (new, astro.js) ---------- */
+/* ---------- Solar status dots ---------- */
 .ast-dot {
   display: inline-block;
   width: 8px;
@@ -464,7 +461,7 @@ body {
 }
 .btn.prim:hover { filter: brightness(1.1); }
 
-/* ---------- Zone picker + snooze dialogs ---------- */
+/* ---------- Dialogs ---------- */
 dialog#zone-dlg, dialog#snooze-dlg {
   background: var(--panel-bg);
   color: var(--text);
@@ -500,8 +497,7 @@ dialog#zone-dlg h3, dialog#snooze-dlg h3 {
 .sn-buttons { display: flex; gap: 8px; }
 .sn-buttons .btn { flex: 1; }
 
-/* ---------- Shared toast (new) ---------- */
-/* Fixed top-right, same anchoring as the shell's toasts. */
+/* ---------- Shared toast ---------- */
 .oro-toast {
   position: fixed;
   top: 12px;
@@ -534,7 +530,7 @@ dialog#zone-dlg h3, dialog#snooze-dlg h3 {
 }
 .oro-toast .sn-btn:hover { filter: brightness(1.15); }
 
-/* ---------- Converter (new) ---------- */
+/* ---------- Converter ---------- */
 .conv-row {
   display: flex;
   flex-wrap: wrap;
@@ -558,7 +554,7 @@ dialog#zone-dlg h3, dialog#snooze-dlg h3 {
 .conv-t { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 800; }
 .conv-arrow { color: var(--text-dim); font-size: 15px; }
 
-/* ---------- Astronomy (astro.js) ---------- */
+/* ---------- Astronomy ---------- */
 .ast-src {
   display: flex;
   align-items: center;
@@ -645,3 +641,9 @@ dialog#astro-dlg h3 {
 }
 .ast-form input:focus { border-color: var(--accent); }
 .ast-form .mini { margin-top: 6px; }
+
+/* ---------- X. [hidden] must ALWAYS win ----------
+   orOS-wide authority guard (mood.css §X). Combined with the
+   :not([hidden]) guards above = immune to the "face always
+   visible" bug class at BOTH levels. */
+[hidden] { display: none !important; }

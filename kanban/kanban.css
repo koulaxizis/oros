@@ -75,25 +75,26 @@ input, textarea, select {
 
 .spacer { flex: 1; }
 
-/* Themed slim scrollbars: the column strip scrolls horizontally,
-   each column's card list scrolls vertically. */
+/* Scrollbars — orOS-wide Mood standard (§6b): 10px,
+   transparent track, pill thumb 999px w/ 2px border. */
 #columns, .col-body {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
 #columns::-webkit-scrollbar, .col-body::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 #columns::-webkit-scrollbar-track, .col-body::-webkit-scrollbar-track {
   background: transparent;
 }
 #columns::-webkit-scrollbar-thumb, .col-body::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
+  border: 2px solid var(--bg);
 }
 #columns::-webkit-scrollbar-thumb:hover, .col-body::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+  background: var(--accent);
 }
 
 /* ---------- 2. Board bar ---------- */
@@ -1091,3 +1092,6 @@ dialog menu button.danger:hover {
   dialog { width: calc(100vw - 20px); padding: 14px; }
   #filter-pop { right: -8px; }
 }
+
+/* ---------- X. [hidden] must ALWAYS win ---------- */
+[hidden] { display: none !important; }

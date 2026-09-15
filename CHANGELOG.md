@@ -862,6 +862,68 @@ project snapshots · Full project auto merge sync · No guessing.
 - ADD: solar status dots (day/twilight/night + GPS marker)
 - ADD: ARIA labels + focus-visible rings throughout
 
+## Time app v0.1.1a — 2026-09-15
+- DIAGNOSED: bugs #1–#4 όλα είχαν ΕΝΑ root cause — index.html v0.1.1
+  τρελούσε με time.js/astro.js v0.1.0 (stale) + time.css χωρίς guards.
+  Symptom proof: sty-3/4 dead buttons (old wiring loop i<3), raw keys
+  "sty.flip"/"astro.geo"/"al.sound" (keys εκτός old i18n packs),
+  face-flip/face-neon κενά containers.
+- FIX (genuine CSS bug): #face-digital display:flex πλέον :not([hidden])
+  — τελευταίο face χωρίς guard (ίδια κλάση bug με το original #1)
+- time.css παραδίδεται πλέον ΜΟΝΟ consolidated (κανένα follow-up
+  patches — full-file delivery policy)
+- FIX: as-geo → data-i18n-a="astro.geo.detect" (astro keys ζουν ΜΟΝΟ
+  στο astro.js pack, ποτέ στο time.js)
+- ADD: boot markers "[orOS] time.js/astro.js v0.1.1 booted" — instant
+  stale-file detection στο console
+- STANDING RULE (νέο, καταγεγραμμένο): ΟΛΑ τα orOS apps υιοθετούν το
+  scrollbar styling του Mood app ως καθολικό πρότυπο. Περ awaiting:
+  mood.css scrollbar block. Ισχύει για κάθε νέο app ΚΑΙ retrofit
+  υπάρχοντων (todo/kanban/notes/writer/weather/time).
+  
+  ## Time app v0.1.1b — 2026-09-15
+- ADOPTED: scrollbars τυποποιημένα στο orOS-wide Mood standard
+  (mood.css §6b): 10px, transparent track, pill thumb 999px με
+  2px border var(--bg), hover var(--accent), Firefox
+  scrollbar-width:thin + scrollbar-color. Ενσωματώθηκε στο time.css
+  (patch 1). Το PENDING marker αφαιρέθηκε.
+- ADOPTED: authority guard [hidden]{display:none!important}
+  (mood.css §X) στο time.css (patch 2) — defense-in-depth πάνω
+  από τα per-face :not([hidden]) guards.
+- ADD: overscroll-behavior:contain στο #tmain (Mood parity).
+
+## STANDING RULES (orOS-wide, μόνιμα σε ισχύ)
+- SCROLLBAR STANDARD: πρότυπο = mood.css §6b. ΚΑΘΕ orOS app
+  (νέο ή retrofit) υιοθετεί τo ίδιο block, scoped στο δικό του
+  main scroll container: #todo main, #kanban board, #notes pane,
+  #writer doc, #weather main, #time #tmain. Retrofit backlog:
+  todo, kanban, notes, writer, weather (ελέγχουμε αν κάποιο έχει
+  ήδη κοντινό styling και το ευθυγραμμίζουμε).
+- HIDDEN AUTHORITY GUARD: κάθε app CSS τελειώνει με
+  [hidden]{display:none!important} (mood.css §X). Ίδιο backlog
+  με τα scrollbars.
+  
+  ## orOS Apps — Scrollbar + Hidden Guard Retrofits
+### 2026-09-15 — Mood Standard Adoption
+
+**APPLIED:** Mood scrollbar standard (§6b) + [hidden] authority guard (§X)
+to ALL orOS app stylesheets. Uniform 10px pill thumbs with 2px border,
+transparent tracks, and guaranteed hidden attribute precedence.
+
+| App      | Scrollbar Target(s)          | Status  |
+|----------|------------------------------|---------|
+| Time     | #tmain                       | DONE    |
+| Calendar | #cmain                       | PATCHED |
+| Kanban   | #columns, .col-body          | PATCHED |
+| Notes    | ::selection + specific panes | PATCHED |
+| Quote    | Global + tab panes           | PATCHED |
+| Todo     | #list-scroll                 | PATCHED |
+| Weather  | #hourly                      | UPGRADED|
+
+**BACKLOG COMPLETE:** All six core orOS apps now share identical
+scrollbar aesthetics and hidden-element authority guards per the
+Mood app reference standard.
+
 ────────────────────────────────────────────────────────────────
 SESSION HANDOFF — v0.30.03 Ready for Deployment
 ────────────────────────────────────────────────────────────────

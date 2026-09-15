@@ -311,10 +311,19 @@ body {
 body.resizing { user-select: none; cursor: col-resize; }
 body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
 
-/* ---------- Scrollbars (WebKit, subtle) ---------- */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* ---------- Scrollbars — orOS-wide Mood standard (§6b) ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 ::-webkit-scrollbar-track { background: transparent; }
+#tree-scroller, #page-text, .tp-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
 
 /* ============================================================
    v0.14.1 — Wave 2.1 label styles (APPENDED BLOCK)
@@ -654,3 +663,6 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   border-top: 1px solid var(--border);
   opacity: 0.5;
 }
+
+/* ---------- X. [hidden] must ALWAYS win ---------- */
+[hidden] { display: none !important; }

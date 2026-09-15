@@ -34,8 +34,20 @@ body {
 #cmain {
   height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px 12px calc(24px + env(safe-area-inset-bottom, 0px));
 }
+/* Scrollbars — orOS-wide Mood standard (§6b): 10px,
+   transparent track, pill thumb 999px w/ 2px border. */
+#cmain::-webkit-scrollbar { width: 10px; height: 10px; }
+#cmain::-webkit-scrollbar-track { background: transparent; }
+#cmain::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+#cmain::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+#cmain { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
 /* ---------- Month navigation ---------- */
 #cal-top {
@@ -310,3 +322,6 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .btn.danger:hover { background: rgba(224, 108, 117, 0.12); }
 #ev-del-row { display: none; }
 #ev-del-row.show { display: flex; }
+
+/* ---------- X. [hidden] must ALWAYS win ---------- */
+[hidden] { display: none !important; }

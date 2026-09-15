@@ -131,6 +131,10 @@
             <label>VAT (%)</label>
             <input id="global-vat" type="number" min="0" max="100" step="0.1" value="24">
           </div>
+		            <div class="total-row">
+            <span data-i18n="totals.vat">VAT</span>
+            <span id="vat-val">0.00</span>
+          </div>
           <div class="total-row grand">
             <span data-i18n="totals.total">Total</span>
             <span id="grand-total-val">0.00</span>
@@ -142,15 +146,13 @@
       <div class="payment-section">
         <label data-i18n="payment.title">Payment Terms</label>
         <div class="presets">
-          <button type="button" class="preset-btn" data-payment="bank"
-                  data-i18n="payment.bank">Bank Transfer</button>
-          <button type="button" class="preset-btn" data-payment="paypal"
-                  data-i18n="payment.paypal">PayPal</button>
-          <button type="button" class="preset-btn" data-payment="iris"
-                  data-i18n="payment.iris">IRIS</button>
-          <button type="button" class="preset-btn" data-payment="cash"
-                  data-i18n="payment.cash">Cash</button>
+          <div id="payment-presets" class="preset-btns"></div>
+          <button id="paypresets-edit" type="button" class="presets-edit"
+                  title="Edit payment presets" data-i18n-title="paypresets.edit">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>
         </div>
+        <small class="presets-hint" data-i18n="paypresets.hint"></small>
         <textarea id="q-payment" rows="3" placeholder="e.g., 50% upfront, 50% on delivery…"></textarea>
       </div>
 
@@ -168,6 +170,8 @@
                 data-i18n="actions.save_template">Save as Template</button>
         <button id="duplicate-quote" type="button" class="ghost"
                 data-i18n="actions.duplicate">Duplicate</button>
+		<button id="open-templates" type="button" class="ghost"
+                data-i18n="templates.manage">Templates</button>
         <button id="delete-quote" type="button" class="danger"
                 data-i18n="actions.delete">Delete</button>
       </div>
@@ -219,6 +223,16 @@
     <menu>
       <span class="spacer"></span>
       <button type="button" id="templates-close" data-i18n="close">Close</button>
+    </menu>
+  </dialog>
+  
+    <!-- PAYMENT PRESETS DIALOG (synced, per-user editable) -->
+  <dialog id="dlg-paypresets">
+    <h3 data-i18n="paypresets.title">Payment Presets</h3>
+    <div id="paypresets-list"></div>
+    <menu>
+      <span class="spacer"></span>
+      <button type="button" id="paypresets-close" data-i18n="close">Close</button>
     </menu>
   </dialog>
 
