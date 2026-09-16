@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Habits v0.1.0 — Habit tracker (Wave 1 core: List view)
+// orOS Habits v0.2.0 — Habit tracker (Wave 1: List · Wave 2: Calendar)
 // Clean-room rewrite of the beta habits app (functional
 // reference only — zero code carried over).
 //
@@ -75,7 +75,15 @@
       "day.0": "Mon", "day.1": "Tue", "day.2": "Wed", "day.3": "Thu",
       "day.4": "Fri", "day.5": "Sat", "day.6": "Sun",
       "dkey.0": "M", "dkey.1": "T", "dkey.2": "W", "dkey.3": "T",
-      "dkey.4": "F", "dkey.5": "S", "dkey.6": "S"
+      "dkey.4": "F", "dkey.5": "S", "dkey.6": "S",
+      "view.list": "List",
+      "view.cal": "Calendar",
+      "month.prev": "Previous month",
+      "month.next": "Next month",
+      "week.prev": "Previous week",
+      "week.next": "Next week",
+      "empty.cal.title": "Your month at a glance",
+      "empty.cal.desc": "Habits and streaks, day by day."
     },
     el: {
       "app.name":        "Συνήθειες",
@@ -113,7 +121,15 @@
       "day.0": "Δευ", "day.1": "Τρί", "day.2": "Τετ", "day.3": "Πέμ",
       "day.4": "Παρ", "day.5": "Σάβ", "day.6": "Κυρ",
       "dkey.0": "Δ", "dkey.1": "Τ", "dkey.2": "Τ", "dkey.3": "Π",
-      "dkey.4": "Π", "dkey.5": "Σ", "dkey.6": "Κ"
+      "dkey.4": "Π", "dkey.5": "Σ", "dkey.6": "Κ",
+      "view.list": "Λίστα",
+      "view.cal": "Ημερολόγιο",
+      "month.prev": "Προηγούμενος μήνας",
+      "month.next": "Επόμενος μήνας",
+      "week.prev": "Προηγούμενη εβδομάδα",
+      "week.next": "Επόμενη εβδομάδα",
+      "empty.cal.title": "Ο μήνας σου μονομιάς",
+      "empty.cal.desc": "Συνήθειες και σερί, μέρα με τη μέρα."
     }
   };
 
@@ -176,6 +192,7 @@
   var ICO_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>';
   var ICO_CHEVL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
   var ICO_CHEVR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+  var ICO_TODAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="8.5" opacity="0.35"/></svg>';
 
   // ===== DATE HELPERS (Monday-first, LOCAL calendar day keys) =====
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -557,14 +574,27 @@
 
   var els = {};
   var period = todayStart();          // week navigation anchor
+  var calView = false;                // Wave 2: false = list, true = calendar
+  var VIEW_KEY = "oros-habits-view";  // device-local UI pref — NEVER in the slice
+  try {
+    calView = localStorage.getItem(VIEW_KEY) === "cal";
+  } catch (e) { calView = false; }
+  function setCalView(on) {
+    calView = !!on;
+    try { localStorage.setItem(VIEW_KEY, calView ? "cal" : "list"); } catch (e) {}
+    render();
+  }
 
-  function dom() {
+    function dom() {
     els.btnAdd = document.getElementById("btn-add");
     els.btnPrev = document.getElementById("btn-prev");
     els.btnNext = document.getElementById("btn-next");
     els.plabel  = document.getElementById("period-label");
     els.view    = document.getElementById("view");
     els.toast   = document.getElementById("toast");
+    els.btnVList = document.getElementById("btn-vlist");
+    els.btnVCal  = document.getElementById("btn-vcal");
+    els.btnNow   = document.getElementById("btn-now");
   }
 
   function shortMonth(d) {
@@ -573,31 +603,53 @@
   }
   function shortDate(d) { return dayNum(d) + " " + shortMonth(d); }
 
+  // Wave 2: one anchor, two scales — list walks weeks (±7 days),
+  // calendar walks months (1st-of-month ±1 month).
+  function monthAdd(d, n) {
+    var x = new Date(d);
+    x.setDate(1);
+    x.setMonth(x.getMonth() + n);
+    return x;
+  }
   function renderPeriod() {
-    var ws = weekStart(period);
-    var we = addDays(ws, 6);
-    var thisWk = dateKey(ws) === dateKey(weekStart(todayStart()));
-    els.plabel.classList.toggle("this-week", thisWk);
-    if (thisWk) {
-      els.plabel.textContent = t("this.week");
+    if (!calView) {
+      var ws = weekStart(period);
+      var we = addDays(ws, 6);
+      var thisWk = dateKey(ws) === dateKey(weekStart(todayStart()));
+      els.plabel.classList.toggle("this-week", thisWk);
+      if (thisWk) {
+        els.plabel.textContent = t("this.week");
+      } else {
+        var range = shortDate(ws) + " – " + shortDate(we);
+        els.plabel.textContent = t("week.of").replace("{s}", range);
+      }
     } else {
-      var range = shortDate(ws) + " – " + shortDate(we);
-      els.plabel.textContent = t("week.of").replace("{s}", range);
+      els.plabel.classList.remove("this-week");
+      els.plabel.textContent = monthYearLabel(period);
     }
   }
 
-  function renderStatics() {
+    function renderStatics() {
     els.btnAdd.innerHTML = ICO_PLUS + "<span>" + esc(t("add")) + "</span>";
     els.btnAdd.title = t("add");
+    els.btnVList.textContent = t("view.list");
+    els.btnVCal.textContent = t("view.cal");
+    els.btnVList.classList.toggle("active", !calView);
+    els.btnVCal.classList.toggle("active", calView);
+    els.btnNow.innerHTML = ICO_TODAY;
+    els.btnNow.title = t("today");
     els.btnPrev.innerHTML = ICO_CHEVL;
     els.btnNext.innerHTML = ICO_CHEVR;
+    els.btnPrev.title = t(calView ? "month.prev" : "week.prev");
+    els.btnNext.title = t(calView ? "month.next" : "week.next");
     document.title = t("app.name") + " · orOS";
   }
 
   // ---- main render (list view, Wave 1) ----
-  function render() {
+    function render() {
     renderStatics();
     renderPeriod();
+    if (calView) { renderCalendar(); return; }
 
     var hs = livingHabits();
     var html = "";
@@ -661,6 +713,87 @@
   }
 
   function isSameDayLocal(a, b) { return dateKey(a) === dateKey(b); }
+
+  // ===== CALENDAR VIEW (Wave 2) =====
+  // Rows = living habits (sticky gutter: name + streak), columns =
+  // days of the month, Monday-first nowhere implied here (a month
+  // grid has no week rows). Cells reuse the EXACT state vocabulary
+  // and toggle rules of the list view (.wdot twins): ONE data path,
+  // two presentations. Future days locked; unscheduled+hollow cells
+  // non-interactive unless already completed (undo allowed).
+  function monthDays(anchor) {
+    var x = new Date(anchor);
+    x.setDate(1);
+    var out = [];
+    var y = x.getFullYear(), m = x.getMonth();
+    for (var i = 1; i <= 31; i++) {
+      var d = new Date(y, m, i);
+      if (d.getMonth() !== m) break;
+      out.push(d);
+    }
+    return out;
+  }
+
+  function renderCalendar() {
+    var hs = livingHabits();
+    var days = monthDays(period);
+    var today = todayStart();
+    var html = "";
+
+    if (!hs.length) {
+      html =
+        '<div class="empty">' + ICONS.check +
+        '<h2>' + esc(t("empty.title")) + "</h2>" +
+        "<p>" + esc(t("empty.desc")) + "</p>" +
+        '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
+        "</div>";
+    } else {
+      html += '<div class="cal-wrap"><table class="cal-table">';
+
+      // header: day numbers of the month (today accented)
+      html += '<thead><tr><th class="cal-gutter"></th>';
+      for (var hd = 0; hd < days.length; hd++) {
+        html += '<th class="cal-day-head' +
+          (isSameDayLocal(days[hd], today) ? " today" : "") + '">' +
+          dayNum(days[hd]) + "</th>";
+      }
+      html += "</tr></thead><tbody>";
+
+      for (var r = 0; r < hs.length; r++) {
+        var h = hs[r];
+        var st = currentStreak(h);
+        var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
+
+        html +=
+          "<tr>" +
+            '<td class="cal-gutter"><div class="cal-gcell" data-act="gedit" data-h="' + h.id +
+              '" title="' + esc(t("rename")) + '">' +
+              '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
+                '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
+              '<span class="cal-gname">' + esc(h.name) + "</span>" +
+              '<span class="cal-gstreak" title="' + esc(streakTip) + '">' +
+                '<span class="ico">' + ICONS.fire + "</span>" +
+                '<span class="cal-gstreak-value' + (st ? "" : " zero") + '">' + st + "</span></span>" +
+            "</div></td>";
+
+        for (var c = 0; c < days.length; c++) {
+          var d = days[c];
+          var done = isDone(h.id, dateKey(d));
+          var sched = isScheduledOn(h, d);
+          var cls = "cdot";
+          if (done) cls += " completed";
+          if (isSameDayLocal(d, today)) cls += " today";
+          if (d > today) cls += " future";
+          if (!sched && !done) cls += " not-scheduled";
+          html += '<td><button type="button" class="' + cls + '" data-act="cdot" data-h="' + h.id +
+                  '" data-c="' + c + '">' + dayNum(d) + "</button></td>";
+        }
+        html += "</tr>";
+      }
+      html += "</tbody></table></div>";
+    }
+    els.view.innerHTML = html;
+  }
 
   // ===== TOAST (lazy, top-right pinned) =====
   var toastTimer = null;
@@ -873,8 +1006,20 @@
   // ===== EVENT WIRING =====
   function wire() {
     els.btnAdd.addEventListener("click", function () { openHabitDialog(null); });
-    els.btnPrev.addEventListener("click", function () { period = addDays(period, -7); render(); });
-    els.btnNext.addEventListener("click", function () { period = addDays(period, 7); render(); });
+    els.btnPrev.addEventListener("click", function () {
+      period = calView ? monthAdd(period, -1) : addDays(period, -7);
+      render();
+    });
+    els.btnNext.addEventListener("click", function () {
+      period = calView ? monthAdd(period, 1) : addDays(period, 7);
+      render();
+    });
+    els.btnNow.addEventListener("click", function () {
+      period = todayStart();
+      render();
+    });
+    els.btnVList.addEventListener("click", function () { setCalView(false); });
+    els.btnVCal.addEventListener("click", function () { setCalView(true); });
 
     // delegated clicks inside the list view
     els.view.addEventListener("click", function (e) {
@@ -891,6 +1036,8 @@
         confirmDelete(h);
       } else if (act === "new") {
         openHabitDialog(null);
+      } else if (act === "gedit") {
+        openHabitDialog(h);
       } else if (act === "dot") {
         var idx = parseInt(actEl.getAttribute("data-i"), 10);
         var d = weekDays(period)[idx];
@@ -900,6 +1047,15 @@
         // allowed: past/today AND (scheduled OR already completed → undo)
         if (future || (!sched && !done)) return;
         toggleComp(h, d);
+        render();
+      } else if (act === "cdot") {
+        var ci = parseInt(actEl.getAttribute("data-c"), 10);
+        var cd = monthDays(period)[ci];
+        var cDone = isDone(h.id, dateKey(cd));
+        var cSched = isScheduledOn(h, cd);
+        var cFuture = cd > todayStart();
+        if (cFuture || (!cSched && !cDone)) return;
+        toggleComp(h, cd);
         render();
       }
     });
@@ -987,6 +1143,7 @@
   window.orosHabits = {
     version: SCRIPT_V || "?",
     dataVersion: DATA_VER,
+    view: function () { return calView ? "cal" : "list"; },
     week: function () { return dateKey(weekStart(period)); },
     stats: function () {
       return {

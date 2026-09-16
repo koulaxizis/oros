@@ -1339,6 +1339,21 @@
     } catch(e){}
   }
 
+  // watchPalette — keeps the iframe palette glued to the parent shell:
+  // theme flips (data-theme) react instantly via MutationObserver; skin
+  // or accent swaps that only change CSS variables fall back to a
+  // lightweight poll. Zero dependencies on shell internals.
+  function watchPalette(){
+    try {
+      var pRoot=window.parent.document.documentElement;
+      if(window.MutationObserver){
+        new MutationObserver(function(){ inheritPalette(); })
+          .observe(pRoot, { attributes:true, attributeFilter:["data-theme","class","style"] });
+      }
+    } catch(e){}
+    setInterval(inheritPalette, 3000);
+  }
+
   var SCRIPT_V="";
   (function(){
     var m=(document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&#]+)/);
@@ -1357,6 +1372,7 @@
   wire();
   registerSync();
   inheritPalette();
+  watchPalette();
   dailyFresh=isNewDaily();
   renderBrowse();
 

@@ -895,6 +895,77 @@ New apps (planned, not started)
   system-ui fallback unless a font <link> matching other orOS apps is added
 - HTML title is EN-only (fine for iframe context; shell owns tab title)
 
+### v0.33.0 — Habits Wave 1 (List view) · orOS v0.33.0
+
+**New app: Habits / Συνήθειες (v0.1.0)** — clean-room port of the beta
+habit tracker (beta served as functional reference only; zero code carried).
+
+- **Data model** (DATA_VER 1, key `oros-habits-data`): `{ ver, habits:[], comps:[] }`
+  - habit: `{ id, name≤200, icon(16 SVG set), color(shared LABEL_COLORS 8),
+    days:[0..6] MONDAY-first, mtime, del }`
+  - comp (completion): `{ id:"<habitId>|<YYYY-MM-DD>", habitId, date, mtime, del }`
+    — toggle-off = tombstone, re-toggle = resurrect (R17), LWW merge by id
+  - days semantics: 7 = Daily · empty = Flexible (any day) · subset = N/wk
+    REPLACES beta's broken tri-modal daily/weekly/custom (beta "weekly"
+    was scheduled-every-day — audit #1)
+- **Sync**: registerSlice("habits") · strict mergeRows (no volatile defaults) ·
+  tombstone prune >30d in shipped payload only · local rescue backup to
+  `oros-habits-data-broken` on corrupt data
+- **Fixed vs beta**: schedule-aware longest streak (symmetric with current
+  streak, audit #2) · localized months via Intl el-GR/en-GB (audit #4) ·
+  graceful today-pending streak · no native confirm() (R14)
+- **Stack**: `<dialog>` modals (lazy, language-refilled on open) · inline SVG
+  only (R11) · delegated events · Monday-first hardcoded (platform convention,
+  no weekStart setting) · palette inherit + watch (postMessage + MutationObserver)
+  · global-shortcut forwarding (§10) · boot marker + orosHabits debug handle
+- 16 icons: check, star, heart, fire, book, music, bulb, target, sun, moon,
+  trophy, leaf, coffee, dumbbell, bed, run
+
+**Under consideration (backlog):**
+- Wave 2: Calendar view (month × habits grid)
+- Wave 3: Stats view (schedule-aware rates, fixed totals math — audit #3
+  deferred to that wave)
+- Per-habit weekly targets (e.g. 5×/wk explicit goal vs flexible)
+- Mood-app triadic habits ↔ Habits bridge
+- Streak freeze / recovery mechanism
+- Seeded bilingual starter habits for net-new installs
+
+**Wave 1 acceptance checklist (R18):** ☐ push-pull sync both directions
+☐ tombstone resurrect after multi-device delete  ☐ offline toggles survive
+reconnect  ☐ full DB export includes oros-habits-data  ☐ ?v= cache-bust
+verified on mobile PWA  ☐ palette follows shell skin swap live  ☐
+language switch live re-render (list + dialogs + period label)
+
+### v0.34.00 — Habits Wave 2 (Calendar view) · habits v0.2.0
+- View switcher (List/Calendar segmented control) — pref in device-local
+  `oros-habits-view`, deliberately OUTSIDE the sync slice (UI pref ≠ data)
+- Month × habits grid: sticky gutter (name + streak), day-number header,
+  today accented; month navigation ±1, "today" snap button (icon)
+- Cells share the exact .wdot state vocabulary + toggle rules with the
+  list view — ONE data path (toggleComp), two presentations
+- Future days locked; unscheduled cells hollow/non-interactive (undo of a
+  completed unscheduled day still allowed — symmetric with list)
+- Gutter click = edit habit. Responsive: horizontal scroll + sticky
+  gutter + compact cells ≤640px
+- 6 new STRINGS (view/month/week nav tooltips) EN+EL; "Σήμερα" reuses
+  existing `today` key
+**Under consideration:** week-row variant (weekday-week sub-view),
+heatmap intensity, per-habit zoom
+
+### v0.34.00 — Habits Wave 2 (Calendar view) · habits v0.2.0
+- View switcher (List/Calendar segmented control) — pref in device-local
+  `oros-habits-view`, OUTSIDE the sync slice (UI pref ≠ data)
+- Month × habits grid: sticky gutter (name + streak), day-number header,
+  today accented; month navigation ±1, "today" snap button (icon)
+- Cells share .wdot state vocabulary + toggle rules with list view
+  — ONE data path, two presentations
+- Future days locked; unscheduled cells hollow/non-interactive
+- Gutter click = edit habit. Responsive: horizontal scroll + sticky gutter
+- New strings (view/month/week nav) EN+EL; dead `empty.cal.*` keys remain
+  but unused (cosmetic only)
+- FIX: remove duplicate calView/setCalView block (dead code cleanup)
+**Under consideration:** week-row sub-view, heat intensity overlay
+
 ────────────────────────────────────────────────────────────
 SESSION HANDOFF — template
 ────────────────────────────────────────────────────────────

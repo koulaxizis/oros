@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Characters</title>
+  <link rel="stylesheet" href="characters.css?v=1.0.0">
+</head>
+<body>
+  <!-- Topbar: [New] | tabs | [Export][Help] -->
+  <header id="topbar">
+    <div id="tb-left">
+      <button id="tb-new" class="tb-btn accent" type="button" aria-label=""></button>
+    </div>
+    <nav id="tb-tabs" aria-label="">
+      <button type="button" class="tb-tab active" data-tab="chars"></button>
+      <button type="button" class="tb-tab" data-tab="rels"></button>
+    </nav>
+    <div id="tb-right">
+      <button id="tb-export" class="tb-btn" type="button" aria-label=""></button>
+      <button id="tb-help" class="tb-btn" type="button" aria-label=""></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="view-chars" class="view"></section>
+    <section id="view-rels" class="view" hidden></section>
+  </main>
+
+  <!-- Character editor (all controls JS-painted for i18n) -->
+  <dialog id="dlg-editor"></dialog>
+  <!-- Generic confirm dialog -->
+  <dialog id="dlg-confirm"></dialog>
+  <!-- Help / shortcuts -->
+  <dialog id="dlg-help"></dialog>
+  <!-- Relationship editor (matrix cell) -->
+  <dialog id="dlg-rel"></dialog>
+  <!-- Export menu (popover) -->
+  <div id="export-pop" hidden></div>
+
+  <div id="toast-host"></div>
+
+  <script src="characters.js?v=1.0.0"></script>
+</body>
+</html>

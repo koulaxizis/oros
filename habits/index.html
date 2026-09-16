@@ -5,20 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark light">
   <title>Habits · orOS</title>
-  <link rel="stylesheet" href="habits.css?v=0.1.0">
+  <link rel="stylesheet" href="habits.css?v=0.3.0">
 </head>
 <body>
   <header class="top">
     <button class="btn prim" id="btn-add" type="button"></button>
+    <div class="seg" role="group">
+      <button class="seg-btn" id="btn-vlist" type="button"></button>
+      <button class="seg-btn" id="btn-vcal" type="button"></button>
+      <button class="seg-btn" id="btn-vstats" type="button"></button>
+    </div>
     <div class="spacer"></div>
     <div class="period">
-      <button class="btn ghost pbtn" id="btn-prev" type="button" aria-label="Previous week"></button>
+      <button class="btn ghost pbtn" id="btn-prev" type="button"></button>
+      <button class="btn ghost pbtn" id="btn-now" type="button"></button>
       <span class="plabel" id="period-label"></span>
-      <button class="btn ghost pbtn" id="btn-next" type="button" aria-label="Next week"></button>
+      <button class="btn ghost pbtn" id="btn-next" type="button"></button>
     </div>
   </header>
   <main class="view" id="view"></main>
   <div class="toast" id="toast" role="status" hidden></div>
-  <script src="habits.js?v=0.1.0"></script>
+  <script src="habits.js?v=0.3.0"></script>
 </body>
 </html>

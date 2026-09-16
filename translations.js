@@ -123,6 +123,11 @@ window.OROS_TRANSLATIONS = {
 	"sc.info.services": "External services",
     "sc.info.extsvc": "Weather: Open-Meteo (open-meteo.com) — no API key, no tracking.",
 	"sync.err.passphrase": "Wrong passphrase — your data cannot be decrypted with this passphrase.",
+    "app.todo": "To-Do",
+    "app.kanban": "Kanban",
+    "app.notes": "Notes",
+    "app.weather": "Weather",
+    "app.mood": "Mood",
 	"sync.changepw": "Change passphrase",
 	"sync.changepw.hint": "Re-encrypt your cloud data with a new passphrase. All devices will need to use the new passphrase after this.",
 	"sync.changepw.old": "Current passphrase",
@@ -141,7 +146,8 @@ window.OROS_TRANSLATIONS = {
     "app.calendar": "Calendar",
 	"app.prompter": "Prompter",
     "app.characters": "Characters",
-    "app.storage": "Storage"
+    "app.storage": "Storage",
+    "app.habits": "Habits"
   },
 
   el: {
@@ -277,12 +283,13 @@ window.OROS_TRANSLATIONS = {
 	"sync.pwfix.title": "Η passphrase άλλαξε σε άλλη συσκευή;",
 	"sync.pwfix.hint": "Το sync απέτυχε επειδή το cloud blob δεν μπορεί να αποκρυπτογραφηθεί. Αν άλλη συσκευή άλλαξε τη passphrase, εισάγετέ την εδώ για ανάκτηση.",
 	"sync.pwfix.hint.vault": "Το sync απέτυχε και αυτή η συσκευή έχει sealed vault. Η passphrase πιθανότατα άλλαξε αλλού. Εισάγετε τη νέα passphrase για ξανα-ξεκλείδωμα και ξανασφράγισμα.",
-	    "sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
+	"sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
     "app.time": "Ώρα",
     "app.calendar": "Ημερολόγιο",
 	"app.prompter": "Γεννήτρια θεμάτων",
     "app.characters": "Χαρακτήρες",
-    "app.storage": "Αποθήκη"
+    "app.storage": "Αποθήκη",
+    "app.habits": "Συνήθειες"
 	 }
   };
 

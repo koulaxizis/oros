@@ -88,6 +88,14 @@
       "icon": "storage",
       "url": "storage/",
       "type": "internal"
+    },
+    {
+      "id": "habits",
+      "name": "Habits",
+      "category": "Lifestyle",
+      "icon": "habits",
+      "url": "habits/",
+      "type": "internal"
     }
   ]
 }
