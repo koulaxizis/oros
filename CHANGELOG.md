@@ -966,6 +966,36 @@ heatmap intensity, per-habit zoom
 - FIX: remove duplicate calView/setCalView block (dead code cleanup)
 **Under consideration:** week-row sub-view, heat intensity overlay
 
+### v0.35.00 — Habits Wave 3 (Stats view) · habits v0.3.0
+- Third view "Stats" (segmented: List / Calendar / Stats) — viewMode is
+  now a tri-state string; v0.2.0 saved "cal" pref honored on migration
+- Stats: overview cards (check-offs, active habits, avg/week, perfect
+  days), per-habit rows (rate bar in habit color, current/longest
+  streaks), natural-language insights (top habit, perfect days, 30-day
+  trend via 15-day halves)
+- Range selector 30d / 90d / All-time — device-local `oros-habits-range`,
+  NEVER in the sync slice; all-time derives earliest completion from data
+- Completed cells now take the HABIT'S color inline (list + calendar):
+  identity color in BOTH views — one visual language
+- Stats read-only: same data path (isDone/isScheduledOn), zero writes,
+  zero data-model changes. Nav cluster disabled in stats view
+- New strings EN+EL (~20 keys); range chips reuse .day-chip styling
+- Resolves audit #3 (fixed range vs all-time rates)
+**Under consideration:** week-row calendar variant, per-habit targets
+(Wave 4 — touches data model → migration plan required), PDF export
+
+### v0.35.00 — Habits Wave 3 complete · habits v0.3.0
+- FIXED: List week dots now use habit.color inline (B5 — anchor was
+  dkey letters, not dayNum; corrected against verbatim file)
+- REMOVED: dead Wave 2 calView/setCalView block (duplicate state)
+- Wave 3 final state: List / Calendar / Stats tri-view, identity
+  colors in both completion views, 30/90/all stats ranges,
+  natural-language insights, device-local prefs excluded from slice
+- NEXT: R18 acceptance (sync merge, tombstone resurrection, offline,
+  export zero-loss, mobile) before stable; Wave 4 = per-habit weekly
+  targets (touches data model → separate migration wave)
+**Under consideration:** week-row calendar variant, PDF stats export
+
 ────────────────────────────────────────────────────────────
 SESSION HANDOFF — template
 ────────────────────────────────────────────────────────────

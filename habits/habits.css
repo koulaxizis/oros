@@ -98,6 +98,7 @@ body { overflow: hidden; display: flex; flex-direction: column; }
   gap: 4px;
 }
 .pbtn { min-width: 32px; padding: 6px 8px; }
+.pbtn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
 .plabel {
   font-size: 12px;
   font-weight: 700;

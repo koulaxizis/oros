@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Habits v0.2.0 — Habit tracker (Wave 1: List · Wave 2: Calendar)
+// orOS Habits v0.3.0 — Habit tracker (List · Calendar · Stats)
 // Clean-room rewrite of the beta habits app (functional
 // reference only — zero code carried over).
 //
@@ -82,8 +82,26 @@
       "month.next": "Next month",
       "week.prev": "Previous week",
       "week.next": "Next week",
-      "empty.cal.title": "Your month at a glance",
-      "empty.cal.desc": "Habits and streaks, day by day."
+      "view.stats": "Stats",
+      "range.30": "30d",
+      "range.90": "90d",
+      "range.all": "All",
+      "stats.overview": "Overview",
+      "stats.per.habit": "By habit",
+      "stats.insights": "Insights",
+      "stats.total.comps": "Check-offs",
+      "stats.active.habits": "Active habits",
+      "stats.avg.week": "Avg / week",
+      "stats.perfect.days": "Perfect days",
+      "stats.current": "current",
+      "stats.longest": "longest",
+      "stats.rate": "{n}% completed",
+      "stats.empty": "No check-offs in this range yet.",
+      "ins.none": "Not enough data for insights yet — keep checking in.",
+      "ins.top": "{n} is your most consistent habit ({p}% completion).",
+      "ins.perfect": "You completed every scheduled habit on {n} day(s).",
+      "ins.up": "Trending up: {a}% → {b}% completion over the last month.",
+      "ins.down": "Slipping a bit: {a}% → {b}% completion over the last month."
     },
     el: {
       "app.name":        "Συνήθειες",
@@ -128,8 +146,26 @@
       "month.next": "Επόμενος μήνας",
       "week.prev": "Προηγούμενη εβδομάδα",
       "week.next": "Επόμενη εβδομάδα",
-      "empty.cal.title": "Ο μήνας σου μονομιάς",
-      "empty.cal.desc": "Συνήθειες και σερί, μέρα με τη μέρα."
+      "view.stats": "Στατιστικά",
+      "range.30": "30μ",
+      "range.90": "90μ",
+      "range.all": "Όλα",
+      "stats.overview": "Συνολικά",
+      "stats.per.habit": "Ανά συνήθεια",
+      "stats.insights": "Ευρήματα",
+      "stats.total.comps": "Καταγραφές",
+      "stats.active.habits": "Ενεργές συνήθειες",
+      "stats.avg.week": "Μ.Ο. / εβδ.",
+      "stats.perfect.days": "Τέλειες μέρες",
+      "stats.current": "τρέχον",
+      "stats.longest": "μεγαλύτερο",
+      "stats.rate": "{n}% ολοκλήρωση",
+      "stats.empty": "Καμία καταγραφή σε αυτό το εύρος ακόμα.",
+      "ins.none": "Ακόμα δεν υπάρχουν αρκετά δεδομένα για ευρήματα — συνέχισε!",
+      "ins.top": "Το «{n}» είναι η πιο σταθερή σου συνήθεια ({p}% ολοκλήρωση).",
+      "ins.perfect": "Τες έκανες όλες στις προγραμματισμένες συνήθειες σε {n} μέρες.",
+      "ins.up": "Ανοδική τάση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα.",
+      "ins.down": "Μικρή πτώση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα."
     }
   };
 
@@ -574,17 +610,31 @@
 
   var els = {};
   var period = todayStart();          // week navigation anchor
-  var calView = false;                // Wave 2: false = list, true = calendar
-  var VIEW_KEY = "oros-habits-view";  // device-local UI pref — NEVER in the slice
+    // Wave 3: tri-state view + stats range. Device-local UI prefs —
+  // NEVER in the sync slice. Migration: saved "cal" (v0.2.0) honored.
+  var viewMode = "list";              // "list" | "cal" | "stats"
+  var statRange = 30;                 // 30 | 90 | 0 (all-time)
+  var VIEW_KEY = "oros-habits-view";
+  var RANGE_KEY = "oros-habits-range";
   try {
-    calView = localStorage.getItem(VIEW_KEY) === "cal";
-  } catch (e) { calView = false; }
-  function setCalView(on) {
-    calView = !!on;
-    try { localStorage.setItem(VIEW_KEY, calView ? "cal" : "list"); } catch (e) {}
+    var savedView = localStorage.getItem(VIEW_KEY);
+    viewMode = (savedView === "cal" || savedView === "stats") ? savedView : "list";
+  } catch (e) { viewMode = "list"; }
+  try {
+    var savedRange = parseInt(localStorage.getItem(RANGE_KEY), 10);
+    statRange = (savedRange === 30 || savedRange === 90 || savedRange === 0) ? savedRange : 30;
+  } catch (e) { statRange = 30; }
+  function setView(mode) {
+    viewMode = mode;
+    try { localStorage.setItem(VIEW_KEY, viewMode); } catch (e) {}
     render();
   }
-
+  function setStatRange(r) {
+    statRange = r;
+    try { localStorage.setItem(RANGE_KEY, String(statRange)); } catch (e) {}
+    render();
+  }
+ 
     function dom() {
     els.btnAdd = document.getElementById("btn-add");
     els.btnPrev = document.getElementById("btn-prev");
@@ -594,6 +644,7 @@
     els.toast   = document.getElementById("toast");
     els.btnVList = document.getElementById("btn-vlist");
     els.btnVCal  = document.getElementById("btn-vcal");
+    els.btnVStats = document.getElementById("btn-vstats");
     els.btnNow   = document.getElementById("btn-now");
   }
 
@@ -612,7 +663,12 @@
     return x;
   }
   function renderPeriod() {
-    if (!calView) {
+    if (viewMode === "stats") {
+      els.plabel.classList.remove("this-week");
+      els.plabel.textContent = "";
+      return;
+    }
+    if (viewMode !== "cal") {
       var ws = weekStart(period);
       var we = addDays(ws, 6);
       var thisWk = dateKey(ws) === dateKey(weekStart(todayStart()));
@@ -634,14 +690,20 @@
     els.btnAdd.title = t("add");
     els.btnVList.textContent = t("view.list");
     els.btnVCal.textContent = t("view.cal");
-    els.btnVList.classList.toggle("active", !calView);
-    els.btnVCal.classList.toggle("active", calView);
+    els.btnVStats.textContent = t("view.stats");
+    els.btnVList.classList.toggle("active", viewMode === "list");
+    els.btnVCal.classList.toggle("active", viewMode === "cal");
+    els.btnVStats.classList.toggle("active", viewMode === "stats");
     els.btnNow.innerHTML = ICO_TODAY;
     els.btnNow.title = t("today");
     els.btnPrev.innerHTML = ICO_CHEVL;
     els.btnNext.innerHTML = ICO_CHEVR;
-    els.btnPrev.title = t(calView ? "month.prev" : "week.prev");
-    els.btnNext.title = t(calView ? "month.next" : "week.next");
+    // stats view has no period navigation → disable the cluster
+    els.btnPrev.disabled = viewMode === "stats";
+    els.btnNow.disabled = viewMode === "stats";
+    els.btnNext.disabled = viewMode === "stats";
+    els.btnPrev.title = t(viewMode === "cal" ? "month.prev" : "week.prev");
+    els.btnNext.title = t(viewMode === "cal" ? "month.next" : "week.next");
     document.title = t("app.name") + " · orOS";
   }
 
@@ -649,7 +711,8 @@
     function render() {
     renderStatics();
     renderPeriod();
-    if (calView) { renderCalendar(); return; }
+    if (viewMode === "stats") { renderStats(); return; }
+    if (viewMode === "cal") { renderCalendar(); return; }
 
     var hs = livingHabits();
     var html = "";
@@ -681,7 +744,8 @@
           if (isSameDayLocal(d, today)) cls += " today";
           if (d > today) cls += " future";
           if (!sched && !done) cls += " not-scheduled";
-          dots += '<button type="button" class="' + cls + '" data-act="dot" data-h="' + h.id + '" data-i="' + w + '">' +
+          var wStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
+          dots += '<button type="button" class="' + cls + '"' + wStyle + ' data-act="dot" data-h="' + h.id + '" data-i="' + w + '">' +
                   esc(t("dkey." + w)) + "</button>";
         }
 
@@ -785,13 +849,182 @@
           if (isSameDayLocal(d, today)) cls += " today";
           if (d > today) cls += " future";
           if (!sched && !done) cls += " not-scheduled";
-          html += '<td><button type="button" class="' + cls + '" data-act="cdot" data-h="' + h.id +
+          var cStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
+          html += '<td><button type="button" class="' + cls + '"' + cStyle + ' data-act="cdot" data-h="' + h.id +
                   '" data-c="' + c + '">' + dayNum(d) + "</button></td>";
         }
         html += "</tr>";
       }
       html += "</tbody></table></div>";
     }
+    els.view.innerHTML = html;
+  }
+
+  // ===== STATS VIEW (Wave 3) =====
+  // Read-only analytics over the SAME data path (isDone/isScheduledOn):
+  // no second source of truth, no writes, nothing enters the sync slice.
+  // Range pref (30/90/all) is device-local, like the view pref.
+  function parseDateKey(s) {
+    var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    return p ? new Date(+p[1], +p[2] - 1, +p[3]) : null;
+  }
+  function rawComps() {
+    try {
+      var db = JSON.parse(localStorage.getItem("oros-habits-data") || "{}");
+      return Array.isArray(db.comps) ? db.comps : [];
+    } catch (e) { return []; }
+  }
+  function rangeStart() {
+    if (!statRange) {                    // all-time → earliest completion
+      var out = todayStart();
+      var comps = rawComps();
+      for (var i = 0; i < comps.length; i++) {
+        if (comps[i].del) continue;
+        var cd = parseDateKey(comps[i].date);
+        if (cd && cd < out) out = cd;
+      }
+      return out;
+    }
+    return addDays(todayStart(), -(statRange - 1));
+  }
+  function computeStats(hs) {
+    var start = rangeStart();
+    var today = todayStart();
+    var per = [], i, j;
+    for (i = 0; i < hs.length; i++) per.push({ h: hs[i], sched: 0, done: 0 });
+
+    var totalComps = 0;
+    var comps = rawComps();
+    for (i = 0; i < comps.length; i++) {
+      if (comps[i].del) continue;
+      var cd = parseDateKey(comps[i].date);
+      if (cd && cd >= start && cd <= today) totalComps++;
+    }
+
+    var perfect = 0, dayCount = 0;
+    for (var d = new Date(start); d <= today; d = addDays(d, 1)) {
+      dayCount++;
+      var any = false, allDone = true;
+      for (j = 0; j < hs.length; j++) {
+        if (isScheduledOn(hs[j], d)) {
+          any = true;
+          per[j].sched++;
+          if (isDone(hs[j].id, dateKey(d))) per[j].done++;
+          else allDone = false;
+        }
+      }
+      if (any && allDone) perfect++;
+    }
+    return {
+      per: per,
+      totalComps: totalComps,
+      perfect: perfect,
+      dayCount: dayCount,
+      avgWeek: dayCount > 0 ? (totalComps / (dayCount / 7)).toFixed(1) : "0"
+    };
+  }
+  function halfRate(hs, from, to) {
+    var sched = 0, done = 0;
+    for (var d = new Date(from); d <= to; d = addDays(d, 1)) {
+      for (var j = 0; j < hs.length; j++) {
+        if (isScheduledOn(hs[j], d)) {
+          sched++;
+          if (isDone(hs[j].id, dateKey(d))) done++;
+        }
+      }
+    }
+    return sched ? Math.round((done / sched) * 100) : -1;
+  }
+  function tpl(key, vars) {
+    var s = t(key);
+    for (var k in vars) s = s.split("{" + k + "}").join(String(vars[k]));
+    return s;
+  }
+  function genInsights(hs, sd) {
+    var ins = [], i;
+    // 1) most consistent habit (needs ≥7 scheduled days, ≥50% rate)
+    var best = null;
+    for (i = 0; i < sd.per.length; i++) {
+      var p = sd.per[i];
+      if (p.sched >= 7 && (!best || p.done / p.sched > best.done / best.sched)) best = p;
+    }
+    if (best && best.done / best.sched >= 0.5) {
+      ins.push(tpl("ins.top", { n: esc(best.h.name), p: Math.round((best.done / best.sched) * 100) }));
+    }
+    // 2) perfect days (non-trivial threshold)
+    if (sd.perfect >= 3) ins.push(tpl("ins.perfect", { n: sd.perfect }));
+    // 3) 30-day trend: older 15d half vs recent 15d half
+    var today = todayStart();
+    var older = halfRate(hs, addDays(today, -29), addDays(today, -15));
+    var recent = halfRate(hs, addDays(today, -14), today);
+    if (older >= 0 && recent >= 0 && recent - older >= 8) ins.push(tpl("ins.up", { a: older, b: recent }));
+    else if (older >= 0 && recent >= 0 && older - recent >= 8) ins.push(tpl("ins.down", { a: older, b: recent }));
+    if (!ins.length) ins.push(t("ins.none"));
+    return ins;
+  }
+  function statCard(num, lbl) {
+    return '<div class="stat-card"><div class="stat-num">' + num + '</div>' +
+      '<div class="stat-lbl">' + esc(lbl) + "</div></div>";
+  }
+  function renderStats() {
+    var hs = livingHabits();
+    if (!hs.length) {
+      els.view.innerHTML =
+        '<div class="empty">' + ICONS.check +
+        '<h2>' + esc(t("empty.title")) + "</h2>" +
+        "<p>" + esc(t("empty.desc")) + "</p>" +
+        '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
+        "</div>";
+      return;
+    }
+    var sd = computeStats(hs);
+    var html = '<div class="stat-wrap">';
+
+    // range chips (reuse .day-chip styling — no new CSS, by design)
+    var ranges = [[30, "range.30"], [90, "range.90"], [0, "range.all"]];
+    for (var r = 0; r < ranges.length; r++) {
+      html += '<button type="button" class="day-chip' +
+        (statRange === ranges[r][0] ? " on" : "") +
+        '" data-rng="' + ranges[r][0] + '">' + esc(t(ranges[r][1])) + "</button>";
+    }
+
+    html += '<div class="stat-cards">' +
+      statCard(sd.totalComps, t("stats.total.comps")) +
+      statCard(hs.length, t("stats.active.habits")) +
+      statCard(sd.avgWeek, t("stats.avg.week")) +
+      statCard(sd.perfect, t("stats.perfect.days")) +
+      "</div>";
+
+    html += '<div class="stat-h">' + esc(t("stats.per.habit")) + "</div>";
+    var ordered = sd.per.slice().sort(function (a, b) {
+      return (b.done / (b.sched || 1)) - (a.done / (a.sched || 1));
+    });
+    for (var i = 0; i < ordered.length; i++) {
+      var p = ordered[i], h = p.h;
+      var pct = p.sched ? Math.round((p.done / p.sched) * 100) : 0;
+      html += '<div class="srow">' +
+        '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
+          '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
+        '<div class="srow-body">' +
+          '<div class="srow-top">' +
+            '<span class="srow-name">' + esc(h.name) + "</span>" +
+            '<span class="srow-nums" title="' + esc(tpl("stats.rate", { n: pct })) + '">' +
+              t("stats.current") + " " + currentStreak(h) + " · " +
+              t("stats.longest") + " " + longestStreak(h) + " · " + pct + "%" +
+            "</span>" +
+          "</div>" +
+          '<div class="sbar"><div class="sbar-fill" style="width:' + pct + "%;background:" + h.color + '"></div></div>' +
+        "</div></div>";
+    }
+
+    html += '<div class="stat-h">' + esc(t("stats.insights")) + "</div>";
+    var ins = genInsights(hs, sd);
+    html += '<div class="insights">';
+    for (var k = 0; k < ins.length; k++) {
+      html += '<div class="insight"><span class="ico">' + ICONS.check + "</span>" +
+        "<span>" + ins[k] + "</span></div>";
+    }
+    html += "</div></div>";
     els.view.innerHTML = html;
   }
 
@@ -1007,19 +1240,23 @@
   function wire() {
     els.btnAdd.addEventListener("click", function () { openHabitDialog(null); });
     els.btnPrev.addEventListener("click", function () {
-      period = calView ? monthAdd(period, -1) : addDays(period, -7);
+      if (viewMode === "stats") return;
+      period = viewMode === "cal" ? monthAdd(period, -1) : addDays(period, -7);
       render();
     });
     els.btnNext.addEventListener("click", function () {
-      period = calView ? monthAdd(period, 1) : addDays(period, 7);
+      if (viewMode === "stats") return;
+      period = viewMode === "cal" ? monthAdd(period, 1) : addDays(period, 7);
       render();
     });
     els.btnNow.addEventListener("click", function () {
+      if (viewMode === "stats") return;
       period = todayStart();
       render();
     });
-    els.btnVList.addEventListener("click", function () { setCalView(false); });
-    els.btnVCal.addEventListener("click", function () { setCalView(true); });
+    els.btnVList.addEventListener("click", function () { setView("list"); });
+    els.btnVCal.addEventListener("click", function () { setView("cal"); });
+    els.btnVStats.addEventListener("click", function () { setView("stats"); });
 
     // delegated clicks inside the list view
     els.view.addEventListener("click", function (e) {
@@ -1057,6 +1294,8 @@
         if (cFuture || (!cSched && !cDone)) return;
         toggleComp(h, cd);
         render();
+      } else if (act === "rng") {
+        setStatRange(parseInt(actEl.getAttribute("data-rng"), 10));
       }
     });
   }
@@ -1143,7 +1382,7 @@
   window.orosHabits = {
     version: SCRIPT_V || "?",
     dataVersion: DATA_VER,
-    view: function () { return calView ? "cal" : "list"; },
+    view: function () { return viewMode; },
     week: function () { return dateKey(weekStart(period)); },
     stats: function () {
       return {

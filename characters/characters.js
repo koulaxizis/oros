@@ -1,84 +1,4 @@
 // ============================================================
-// orOS · Characters v1.0.0
-// Part 1/5 — Constants, i18n, data model, sync & migration
-// ============================================================
-(function () {
-  "use strict";
-
-  const APP_VER = "1.0.0";
-  const STORAGE_KEY = "oros-characters-data";
-  const SLICE_NAME = "characters";
-  const LANG_KEYS = ["en", "el"];
-
-  // Palette inheritance from parent (orOS desktop) — runtime only,
-  // standalone fallback uses CSS :root vars declared in characters.css
-  function inheritPalette() {
-    try {
-      const p = window.parent.document.documentElement;
-      const styles = getComputedStyle(p);
-      const vars = ["--accent", "--bg", "--panel-bg", "--border", "--text", "--text-dim"];
-      for (const v of vars) {
-        const val = styles.getPropertyValue(v.trim());
-        if (val) document.documentElement.style.setProperty(v, val);
-      }
-    } catch (e) {} // same-origin guard
-  }
-  watchPalette();
-  function watchPalette() {
-    if (!window.parent || !("MutationObserver" in window)) return;
-    let last = "";
-    const obs = new MutationObserver(() => {
-      const cur = getComputedStyle(window.parent.document.documentElement).getPropertyValue("--accent");
-      if (cur !== last) { last = cur; inheritPalette(); }
-    });
-    try { obs.observe(document.documentElement, { attributes: true }); } catch (e) {}
-  }
-
-  // ---------- i18n ----------
-  const STRINGS = {
-    en: {
-      app: "Characters",
-      tabChars: "Characters",
-      tabRels: "Relationships",
-      btnNew: "+ New",
-      btnExport: "Export",
-      btnHelp: "?",
-      searchPh: "Filter by name / role / trait…",
-      emptyChars: "No characters yet",
-      emptyCharsHint: "Click + New to create your first character.",
-      emptyRels: "No relationships yet",
-      emptyRelsHint: "Create characters first, then link them in the matrix.",
-      ccRel: "{n} relationships",
-      edTitle: "Character",
-      edName: "Name",
-      edRole: "Role / Archetype",
-      edBio: "Backstory",
-      edTraits: "Traits",
-      edTraitName: "Trait name",
-      edStrength: "Strength",
-      edGoals: "Goals",
-      edGoalText: "Goal description",
-      edDelete: "Delete character",
-      edDelWarn: "Delete \"{name}\"? This cannot be undone.",
-      btnAddTrait: "Add trait",
-      btnAddGoal: "Add goal",
-      btnSave: "Save",
-      btnCancel: "Cancel",
-      btnOk: "OK",
-      btnEdit: "Edit",
-      btnDelete: "Delete",
-      btnClose: "Close",
-      matSelf: "—",
-      matCellHint: "Tap to define",
-      relEdTitle: "Relationship",
-      relEdDesc: "Description",
-      relEdType: "Type",
-      relTypePos: "Positive",
-      relTypeNeg: "Negative",
-      relTypeNeu: "Neutral",
-      relDelWarn: "Delete relationship \"{a}"
-	  
-	  // ============================================================
 // orOS · Characters v1.0.0 — characters.js
 // Ground-up port of the beta app into the orOS architecture.
 //
@@ -834,7 +754,7 @@
       tabs[i].textContent = t(key);
       tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === ui.tab);
     }
-    $("tb-tabs").setAttribute("aria-label", t("app.title") || "Characters");
+    $("tb-tabs").setAttribute("aria-label", t("tab.chars"));
     $("view-chars").hidden = ui.tab !== "chars";
     $("view-rels").hidden  = ui.tab !== "rels";
   }
@@ -2244,7 +2164,7 @@
 
     // 7. Version badge (cache-busted fetch already handles in HTML)
     var host = document.querySelector("title");
-    if (host) host.textContent = t("app") + " · orOS";
+    if (host) host.textContent = t("tab.chars") + " · orOS";
   }
 
   // Kick-start when DOM is ready
