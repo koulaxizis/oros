@@ -553,4 +553,456 @@
     if (info && info.merged) toast(t("toast.merged"));
   }
 
-  // ===== VIEW & RENDER =====
+    // ===== VIEW & RENDER =====
+
+  var els = {};
+  var period = todayStart();          // week navigation anchor
+
+  function dom() {
+    els.btnAdd = document.getElementById("btn-add");
+    els.btnPrev = document.getElementById("btn-prev");
+    els.btnNext = document.getElementById("btn-next");
+    els.plabel  = document.getElementById("period-label");
+    els.view    = document.getElementById("view");
+    els.toast   = document.getElementById("toast");
+  }
+
+  function shortMonth(d) {
+    return new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+      { month: "short" }).format(d).replace(".", "");
+  }
+  function shortDate(d) { return dayNum(d) + " " + shortMonth(d); }
+
+  function renderPeriod() {
+    var ws = weekStart(period);
+    var we = addDays(ws, 6);
+    var thisWk = dateKey(ws) === dateKey(weekStart(todayStart()));
+    els.plabel.classList.toggle("this-week", thisWk);
+    if (thisWk) {
+      els.plabel.textContent = t("this.week");
+    } else {
+      var range = shortDate(ws) + " – " + shortDate(we);
+      els.plabel.textContent = t("week.of").replace("{s}", range);
+    }
+  }
+
+  function renderStatics() {
+    els.btnAdd.innerHTML = ICO_PLUS + "<span>" + esc(t("add")) + "</span>";
+    els.btnAdd.title = t("add");
+    els.btnPrev.innerHTML = ICO_CHEVL;
+    els.btnNext.innerHTML = ICO_CHEVR;
+    document.title = t("app.name") + " · orOS";
+  }
+
+  // ---- main render (list view, Wave 1) ----
+  function render() {
+    renderStatics();
+    renderPeriod();
+
+    var hs = livingHabits();
+    var html = "";
+
+    if (!hs.length) {
+      html =
+        '<div class="empty">' + ICONS.check +
+        '<h2>' + esc(t("empty.title")) + "</h2>" +
+        "<p>" + esc(t("empty.desc")) + "</p>" +
+        '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
+        "</div>";
+    } else {
+      var week = weekDays(period);
+      var today = todayStart();
+      html += '<div class="habit-list">';
+
+      for (var i = 0; i < hs.length; i++) {
+        var h = hs[i];
+        var st = currentStreak(h);
+
+        // week dots — Monday-first
+        var dots = "";
+        for (var w = 0; w < 7; w++) {
+          var d = week[w];
+          var done = isDone(h.id, dateKey(d));
+          var sched = isScheduledOn(h, d);
+          var cls = "wdot";
+          if (done) cls += " completed";
+          if (isSameDayLocal(d, today)) cls += " today";
+          if (d > today) cls += " future";
+          if (!sched && !done) cls += " not-scheduled";
+          dots += '<button type="button" class="' + cls + '" data-act="dot" data-h="' + h.id + '" data-i="' + w + '">' +
+                  esc(t("dkey." + w)) + "</button>";
+        }
+
+        var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
+
+        html +=
+          '<div class="habit-row" data-h="' + h.id + '">' +
+            '<div class="habit-icon-box" style="background:' + h.color + '33;color:' + h.color + '">' +
+              '<span class="ico">' + ICONS[h.icon] + "</span></div>" +
+            '<div class="habit-info">' +
+              '<div class="habit-name">' + esc(h.name) + "</div>" +
+              '<div class="habit-meta">' +
+                '<span class="habit-streak" title="' + esc(streakTip) + '">' +
+                  '<span class="ico">' + ICONS.fire + "</span>" +
+                  '<span class="habit-streak-value' + (st ? "" : " zero") + '">' + st + "</span></span>" +
+                '<span class="habit-freq-badge">' + esc(freqBadge(h)) + "</span>" +
+              "</div></div>" +
+            '<div class="week-dots">' + dots + "</div>" +
+            '<div class="habit-actions">' +
+              '<button type="button" class="btn ghost" data-act="edit" data-h="' + h.id + '" title="' + esc(t("rename")) + '">' + ICO_PEN + "</button>" +
+              '<button type="button" class="btn ghost" data-act="del"  data-h="' + h.id + '" title="' + esc(t("del")) + '">' + ICO_TRASH + "</button>" +
+            "</div>" +
+          "</div>";
+      }
+      html += "</div>";
+    }
+
+    els.view.innerHTML = html;
+  }
+
+  function isSameDayLocal(a, b) { return dateKey(a) === dateKey(b); }
+
+  // ===== TOAST (lazy, top-right pinned) =====
+  var toastTimer = null;
+  function toast(msg) {
+    if (!els.toast) return;
+    els.toast.textContent = msg;
+    els.toast.hidden = false;
+    requestAnimationFrame(function () { els.toast.classList.add("show"); });
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      els.toast.classList.remove("show");
+      setTimeout(function () { els.toast.hidden = true; }, 250);
+    }, 2600);
+  }
+
+  // ===== HABIT DIALOG (add / edit — one lazy modal) =====
+  var dlgHabit = null;
+  var editing = null;                 // habit object or null (add mode)
+  var pickIcon = "check";
+  var pickColor = COLORS[0];
+  var pickDays = [false,false,false,false,false,false,false];
+
+  function ensureHabitDialog() {
+    if (dlgHabit) return;
+    dlgHabit = document.createElement("dialog");
+    dlgHabit.innerHTML =
+      '<h3 id="hf-title"></h3>' +
+      '<div class="dialog-form">' +
+        '<div class="field"><label id="hf-namel"></label>' +
+          '<input type="text" id="hf-name" maxlength="200" autocomplete="off">' +
+          '<div class="dialog-err" id="hf-err"></div></div>' +
+        '<div class="field"><label id="hf-iconl"></label>' +
+          '<div class="icon-picker" id="hf-icons"></div></div>' +
+        '<div class="field"><label id="hf-colorl"></label>' +
+          '<div class="color-picker" id="hf-colors"></div></div>' +
+        '<div class="field"><label id="hf-daysl"></label>' +
+          '<div class="days-selector" id="hf-days"></div></div>' +
+      "</div>" +
+      '<div class="dialog-actions">' +
+        '<button type="button" class="btn danger" id="hf-del" hidden></button>' +
+        '<span style="flex:1"></span>' +
+        '<button type="button" class="btn ghost" id="hf-cancel"></button>' +
+        '<button type="button" class="btn prim" id="hf-save"></button>' +
+      "</div>";
+    document.body.appendChild(dlgHabit);
+
+    document.getElementById("hf-cancel").addEventListener("click", function () { dlgHabit.close(); });
+    document.getElementById("hf-save").addEventListener("click", saveHabitDialog);
+    document.getElementById("hf-del").addEventListener("click", function () {
+      if (!editing) return;
+      dlgHabit.close();
+      confirmDelete(editing);
+    });
+    // Enter in the name field submits
+    document.getElementById("hf-name").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); saveHabitDialog(); }
+    });
+  }
+
+  function openHabitDialog(h) {
+    ensureHabitDialog();
+    editing = h || null;
+
+    // labels refreshed on EVERY open — language-safe without rebuild
+    document.getElementById("hf-title").textContent = t(h ? "edit" : "add");
+    document.getElementById("hf-namel").textContent = t("name.label");
+    document.getElementById("hf-iconl").textContent = t("icon.label");
+    document.getElementById("hf-colorl").textContent = t("color.label");
+    document.getElementById("hf-daysl").textContent = t("days.label");
+    document.getElementById("hf-cancel").textContent = t("cancel");
+    document.getElementById("hf-save").textContent = t("save");
+    var delBtn = document.getElementById("hf-del");
+    delBtn.textContent = t("del");
+    delBtn.hidden = !editing;
+
+    document.getElementById("hf-err").textContent = "";
+    var nameEl = document.getElementById("hf-name");
+    nameEl.value = h ? h.name : "";
+    pickIcon = h ? (ICONS[h.icon] ? h.icon : "check") : "check";
+    pickColor = h ? (COLORS.indexOf(h.color) !== -1 ? h.color : COLORS[0]) : COLORS[0];
+    var i;
+    for (i = 0; i < 7; i++) pickDays[i] = h ? (h.days.indexOf(i) !== -1) : false;
+
+    // icon grid
+    var iconGrid = document.getElementById("hf-icons");
+    iconGrid.innerHTML = "";
+    for (i = 0; i < ICON_KEYS.length; i++) {
+      (function (key) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "icon-option" + (key === pickIcon ? " selected" : "");
+        b.title = key;
+        b.innerHTML = '<span class="ico">' + ICONS[key] + "</span>";
+        b.addEventListener("click", function () {
+          pickIcon = key;
+          iconGrid.querySelectorAll(".icon-option").forEach(function (x) { x.classList.remove("selected"); });
+          b.classList.add("selected");
+        });
+        iconGrid.appendChild(b);
+      })(ICON_KEYS[i]);
+    }
+
+    // color grid
+    var colorGrid = document.getElementById("hf-colors");
+    colorGrid.innerHTML = "";
+    for (i = 0; i < COLORS.length; i++) {
+      (function (col) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "color-option" + (col === pickColor ? " selected" : "");
+        b.style.background = col;
+        b.style.color = col;
+        b.addEventListener("click", function () {
+          pickColor = col;
+          colorGrid.querySelectorAll(".color-option").forEach(function (x) { x.classList.remove("selected"); });
+          b.classList.add("selected");
+        });
+        colorGrid.appendChild(b);
+      })(COLORS[i]);
+    }
+
+    // day chips — Monday-first, live badge underneath the picker
+    var daysWrap = document.getElementById("hf-days");
+    daysWrap.innerHTML = "";
+    for (i = 0; i < 7; i++) {
+      (function (idx) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "day-chip" + (pickDays[idx] ? " on" : "");
+        b.textContent = t("day." + idx);
+        b.addEventListener("click", function () {
+          pickDays[idx] = !pickDays[idx];
+          b.classList.toggle("on");
+          updateDaysHint();
+        });
+        daysWrap.appendChild(b);
+      })(i);
+    }
+    updateDaysHint();
+    daysWrap.dataset.built = "1";
+
+    dlgHabit.showModal();
+    nameEl.focus();
+  }
+
+  // plain-language summary of the current schedule selection
+  function updateDaysHint() {
+    var daysWrap = document.getElementById("hf-days");
+    var n = 0;
+    for (var i = 0; i < 7; i++) if (pickDays[i]) n++;
+    var hint;
+    if (n === 0) hint = t("days.any");
+    else if (n === 7) hint = t("days.daily");
+    else hint = fmt("days.n", n);
+    var el = document.getElementById("hf-daysl");
+    el.textContent = t("days.label") + " — " + hint;
+  }
+
+  function saveHabitDialog() {
+    var name = document.getElementById("hf-name").value.trim();
+    if (!name) {
+      document.getElementById("hf-err").textContent = t("toast.name.req");
+      document.getElementById("hf-name").focus();
+      return;
+    }
+    var days = [];
+    for (var i = 0; i < 7; i++) if (pickDays[i]) days.push(i);
+    // days array is already ascending (loop order) — matches normalize
+
+    if (editing) {
+      updateHabit(editing, name, pickIcon, pickColor, days);
+      toast(t("toast.updated"));
+    } else {
+      addHabit(name, pickIcon, pickColor, days);
+      toast(t("toast.created"));
+    }
+    dlgHabit.close();
+    render();
+  }
+
+  // ===== CONFIRM DELETE DIALOG =====
+  var dlgConfirm = null;
+  function confirmDelete(h) {
+    if (!dlgConfirm) {
+      dlgConfirm = document.createElement("dialog");
+      dlgConfirm.innerHTML =
+        '<h3 id="cf-title"></h3>' +
+        '<p class="confirm-body" id="cf-msg"></p>' +
+        '<div class="dialog-actions">' +
+          '<span style="flex:1"></span>' +
+          '<button type="button" class="btn ghost" id="cf-no"></button>' +
+          '<button type="button" class="btn danger" id="cf-yes"></button>' +
+        "</div>";
+      document.body.appendChild(dlgConfirm);
+    }
+    document.getElementById("cf-title").textContent = t("del");
+    document.getElementById("cf-msg").textContent = t("confirm.del");
+    document.getElementById("cf-no").textContent = t("cancel");
+    document.getElementById("cf-yes").textContent = t("del");
+    document.getElementById("cf-no").onclick = function () { dlgConfirm.close(); };
+    document.getElementById("cf-yes").onclick = function () {
+      dlgConfirm.close();
+      deleteHabit(h);
+      render();
+      toast(t("toast.deleted"));
+    };
+    dlgConfirm.showModal();
+  }
+
+  // ===== EVENT WIRING =====
+  function wire() {
+    els.btnAdd.addEventListener("click", function () { openHabitDialog(null); });
+    els.btnPrev.addEventListener("click", function () { period = addDays(period, -7); render(); });
+    els.btnNext.addEventListener("click", function () { period = addDays(period, 7); render(); });
+
+    // delegated clicks inside the list view
+    els.view.addEventListener("click", function (e) {
+      var actEl = e.target.closest("[data-act]");
+      if (!actEl) return;
+      var act = actEl.getAttribute("data-act");
+      var hid = actEl.getAttribute("data-h");
+      var h = hid ? habitById(hid) : null;
+      if (!h) { if (act === "new") openHabitDialog(null); return; }
+
+      if (act === "edit") {
+        openHabitDialog(h);
+      } else if (act === "del") {
+        confirmDelete(h);
+      } else if (act === "new") {
+        openHabitDialog(null);
+      } else if (act === "dot") {
+        var idx = parseInt(actEl.getAttribute("data-i"), 10);
+        var d = weekDays(period)[idx];
+        var done = isDone(h.id, dateKey(d));
+        var sched = isScheduledOn(h, d);
+        var future = d > todayStart();
+        // allowed: past/today AND (scheduled OR already completed → undo)
+        if (future || (!sched && !done)) return;
+        toggleComp(h, d);
+        render();
+      }
+    });
+  }
+
+  // ===== KEYBOARD (app shortcut + shell forwarding) =====
+  document.addEventListener("keydown", function (e) {
+    var inField = /^(INPUT|TEXTAREA|SELECT)$/.test(
+      document.activeElement ? document.activeElement.tagName : "");
+    var dialogOpen = document.querySelector("dialog[open]");
+
+    if (dialogOpen) return;               // modal handles its own keys (Esc native)
+
+    if (!inField && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        (e.key === "n" || e.key === "N")) {
+      e.preventDefault();
+      openHabitDialog(null);
+      return;
+    }
+    // forward everything else to the shell so GLOBAL shortcuts
+    // (force push/pull, snapshot…) keep working while the app
+    // iframe has focus (§10 shortcut-forwarding contract)
+    if (!inField) forwardKey(e);
+  });
+
+  function forwardKey(e) {
+    var p = window.parent;
+    if (!p || p === window) return;
+    try {
+      p.document.dispatchEvent(new KeyboardEvent("keydown", {
+        key: e.key, code: e.code,
+        ctrlKey: e.ctrlKey, shiftKey: e.shiftKey,
+        altKey: e.altKey, metaKey: e.metaKey,
+        bubbles: true
+      }));
+    } catch (err) { /* old engines — shell shortcuts still usable by focusing shell */ }
+  }
+
+  // ===== PALETTE INHERITANCE (§9 — parent shell vars win) =====
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft", "--panel-bg",
+                  "--border", "--shadow", "--danger", "--font-stack"];
+
+  function inheritPalette() {
+    var p = (window.parent && window.parent !== window) ? window.parent : null;
+    var src = null;
+    if (p) {
+      try { src = p.getComputedStyle(p.document.documentElement); } catch (err) { src = null; }
+    }
+    var root = document.documentElement;
+    if (src) {
+      for (var i = 0; i < PAL_VARS.length; i++) {
+        var v = src.getPropertyValue(PAL_VARS[i]).trim();
+        if (v) root.style.setProperty(PAL_VARS[i], v);
+      }
+    }
+    // standalone fallback palette from habits.css :root stays active
+    // for any var the shell does not define.
+  }
+
+  function watchPalette() {
+    inheritPalette();
+    var p = (window.parent && window.parent !== window) ? window.parent : null;
+    if (!p) return;
+    // 1) shell broadcasts palette changes via postMessage
+    window.addEventListener("message", function (e) {
+      var d = e.data;
+      if (!d || typeof d !== "object") return;
+      if (d.type === "oros-palette") inheritPalette();
+      if (d.type === "oros-lang" && (d.lang === "en" || d.lang === "el")) {
+        LANG = d.lang;
+        document.documentElement.lang = LANG;
+        render();
+      }
+    });
+    // 2) belt & braces — style/class swaps on the shell root
+    try {
+      var mo = new MutationObserver(function () { inheritPalette(); });
+      mo.observe(p.document.documentElement,
+        { attributes: true, attributeFilter: ["class", "style"] });
+    } catch (err) { /* observer unavailable — message path still live */ }
+  }
+
+  // ===== PUBLIC HANDLE (debug / shell introspection) =====
+  window.orosHabits = {
+    version: SCRIPT_V || "?",
+    dataVersion: DATA_VER,
+    week: function () { return dateKey(weekStart(period)); },
+    stats: function () {
+      return {
+        habits: livingHabits().length,
+        comps: db.comps.filter(function (c) { return !c.del; }).length
+      };
+    }
+  };
+
+  // ===== BOOT =====
+  dom();
+  dbInit();
+  wire();
+  registerSync();
+  watchPalette();
+  render();
+  console.log("[orOS] habits.js " + (SCRIPT_V ? "v" + SCRIPT_V : "") + " booted");
+
+})();
