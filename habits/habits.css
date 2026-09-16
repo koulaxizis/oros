@@ -1,0 +1,416 @@
+/* ============================================================
+   orOS Habits v0.1.0 — OS-pure palette (no hardcoded colours)
+   Palette inherited from parent shell runtime at boot
+   (habits.js · inheritPalette); :root defaults below are the
+   standalone/offline fallback ONLY. Var names match the
+   mood.js PAL_VARS vocabulary so inheritance is 1:1.
+   Layout: single column, mobile-first. Monday-first weeks
+   (platform-wide convention, no setting).
+   ============================================================ */
+
+/* ---------- Standalone fallback palette (shell absent) ---------- */
+:root {
+  --bg:            #131820;
+  --bg-desktop:    #131820;
+  --bar-bg:        #1b1a18;
+  --text:          #e8e6e3;
+  --text-dim:      #9aa0ac;
+  --accent:        #c8a96e;
+  --accent-hover:  #d9be88;
+  --accent-soft:   rgba(200, 169, 110, 0.18);
+  --panel-bg:      #1c222e;
+  --border:        #2a3040;
+  --shadow:        rgba(0, 0, 0, 0.35);
+  --danger:        #e06c75;
+  --font-stack:    'Nunito', sans-serif;
+}
+
+/* ---------- Reset & base ---------- */
+* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-stack);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+body { overflow: hidden; display: flex; flex-direction: column; }
+
+/* ---------- Top bar ---------- */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bar-bg);
+  z-index: 100;
+  flex-shrink: 0;
+}
+.spacer { flex: 1; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 36px;
+  min-height: 36px;
+  font-family: inherit;
+  transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--panel-bg); border-color: var(--accent); }
+.btn.ghost { background: transparent; }
+.btn.prim {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.btn.prim:hover { background: var(--accent-hover); }
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Inline icon wrapper — sizes viewBox-only SVGs
+   (SVG without width/height defaults to 300×150px) */
+.ico { display: inline-flex; align-items: center; flex-shrink: 0; }
+.ico svg { width: 16px; height: 16px; }
+
+/* Week period selector */
+.period {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pbtn { min-width: 32px; padding: 6px 8px; }
+.plabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 130px;
+  text-align: center;
+  white-space: nowrap;
+}
+.plabel.this-week { color: var(--accent); }
+
+/* ---------- Main view ---------- */
+.view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* Scrollbar standard (orOS §11) */
+.view::-webkit-scrollbar { width: 10px; }
+.view::-webkit-scrollbar-track { background: transparent; }
+.view::-webkit-scrollbar-thumb {
+  background: var(--text-dim);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+.view::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+.view { scrollbar-width: thin; scrollbar-color: var(--text-dim) transparent; }
+.view { overscroll-behavior: contain; }
+
+/* ---------- Habit rows (list view) ---------- */
+.habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px var(--shadow);
+  transition: border-color .15s;
+}
+.habit-row:hover { border-color: var(--accent); }
+
+.habit-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.habit-icon-box .ico svg { width: 18px; height: 18px; }
+
+.habit-info { flex: 1; min-width: 0; }
+.habit-name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.habit-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.habit-streak {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.habit-streak .ico svg { width: 11px; height: 11px; }
+.habit-streak-value { font-weight: 800; color: var(--accent); }
+.habit-streak-value.zero { color: var(--text-dim); }
+.habit-freq-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+/* Week dots — one tap = toggle that day */
+.week-dots {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.wdot {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-dim);
+  font-family: inherit;
+  padding: 0;
+  transition: background .15s, border-color .15s;
+}
+.wdot:hover { border-color: var(--accent); }
+.wdot.completed {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.wdot.today { box-shadow: inset 0 0 0 2px var(--accent); }
+.wdot.future { opacity: 0.35; cursor: default; }
+.wdot.future:hover { border-color: var(--border); }
+.wdot.not-scheduled { opacity: 0.3; cursor: default; }
+.wdot.not-scheduled:hover { border-color: var(--border); }
+
+.habit-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* ---------- Empty state ---------- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--text-dim);
+}
+.empty svg { width: 40px; height: 40px; opacity: 0.5; }
+
+/* ---------- Dialog (modal) ---------- */
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  padding: 20px;
+  width: min(380px, calc(100vw - 32px));
+  box-shadow: 0 12px 36px var(--shadow);
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(1.5px);
+}
+dialog h3 { margin: 0 0 12px; font-size: 14px; }
+.confirm-body {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin: 0 0 16px;
+}
+.dialog-form .field { margin-bottom: 12px; }
+.dialog-form label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.dialog-form input[type="text"] {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+.dialog-form input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.dialog-err {
+  font-size: 12px;
+  color: var(--danger);
+  min-height: 16px;
+  margin: -4px 0 4px;
+}
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Icon picker (inline SVG grid) */
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.icon-picker::-webkit-scrollbar { width: 6px; }
+.icon-picker::-webkit-scrollbar-thumb {
+  background: var(--text-dim); border-radius: 999px;
+}
+.icon-option {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  padding: 0;
+  transition: background .15s, border-color .15s;
+}
+.icon-option:hover { color: var(--accent); }
+.icon-option.selected {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Color picker (shared orOS LABEL_COLORS) */
+.color-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.color-option {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  padding: 0;
+  transition: transform .15s;
+}
+.color-option:hover { transform: scale(1.15); }
+.color-option.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 4px currentColor;
+}
+
+/* Days selector (schedule chips) */
+.days-selector { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-chip {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.day-chip:hover { border-color: var(--accent); }
+.day-chip.on {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+/* ---------- Toast (lazy, top-right) ---------- */
+.toast {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 55px);
+  right: 12px;
+  max-width: calc(100vw - 24px);
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px var(--shadow);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .25s, transform .25s;
+  z-index: 1400;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .habit-row { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .habit-info { flex-basis: calc(100% - 52px); }
+  .week-dots {
+    flex-basis: 100%;
+    justify-content: space-between;
+  }
+  .wdot { width: 34px; height: 34px; }
+  .plabel { min-width: 90px; font-size: 11px; }
+  .icon-picker { grid-template-columns: repeat(6, 1fr); }
+}
+
+/* ---------- Utility ---------- */
+[hidden] { display: none !important; }

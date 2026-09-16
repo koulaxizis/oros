@@ -138,7 +138,10 @@ window.OROS_TRANSLATIONS = {
 	"sync.pwfix.hint.vault": "Sync failed and this device has a sealed vault. The passphrase likely changed elsewhere. Enter the new passphrase to re-unlock and re-seal.",
 	"sync.pwfix.err": "Incorrect passphrase — try again",
     "app.time": "Time",
-    "app.calendar": "Calendar"
+    "app.calendar": "Calendar",
+	"app.prompter": "Prompter",
+    "app.characters": "Characters",
+    "app.storage": "Storage"
   },
 
   el: {
@@ -276,7 +279,10 @@ window.OROS_TRANSLATIONS = {
 	"sync.pwfix.hint.vault": "Το sync απέτυχε και αυτή η συσκευή έχει sealed vault. Η passphrase πιθανότατα άλλαξε αλλού. Εισάγετε τη νέα passphrase για ξανα-ξεκλείδωμα και ξανασφράγισμα.",
 	    "sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
     "app.time": "Ώρα",
-    "app.calendar": "Ημερολόγιο"
+    "app.calendar": "Ημερολόγιο",
+	"app.prompter": "Γεννήτρια θεμάτων",
+    "app.characters": "Χαρακτήρες",
+    "app.storage": "Αποθήκη"
 	 }
   };
 

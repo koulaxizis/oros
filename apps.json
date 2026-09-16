@@ -64,6 +64,30 @@
       "icon": "quote",
       "url": "quote/",
       "type": "internal"
+    },
+    {
+      "id": "prompter",
+      "name": "Prompter",
+      "category": "Productivity",
+      "icon": "prompter",
+      "url": "prompter/",
+      "type": "internal"
+    },
+    {
+      "id": "characters",
+      "name": "Characters",
+      "category": "Productivity",
+      "icon": "characters",
+      "url": "characters/",
+      "type": "internal"
+    },
+    {
+      "id": "storage",
+      "name": "Storage",
+      "category": "Productivity",
+      "icon": "storage",
+      "url": "storage/",
+      "type": "internal"
     }
   ]
 }

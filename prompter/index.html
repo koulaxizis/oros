@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prompter · orOS</title>
+
+<link rel="stylesheet" href="prompter.css?v=0.32.20">
+
+</head>
+<body>
+<header id="topbar">
+  <span id="app-title" data-i18n="app.title">Prompter</span>
+  <span class="spacer"></span>
+  <button id="browse-btn" type="button" aria-label="Browse"></button>
+  <button id="stats-btn" type="button" aria-label="Statistics"></button>
+  <button id="settings-btn" type="button" aria-label="Settings"></button>
+</header>
+
+<main id="promptmain">
+  <!-- Browse view (JS-built cards) -->
+  <section id="browse"></section>
+
+  <!-- Stats view (JS-built KPIs + breakdowns) -->
+  <section id="stats" hidden></section>
+</main>
+
+<script src="prompter.js?v=0.32.20"></script>
+
+</body>
+</html>
