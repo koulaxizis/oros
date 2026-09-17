@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Calendar v0.1.0 — stylesheet
+   orOS Calendar v0.2.0 — stylesheet
    Palette: inherited at runtime from the shell (JS copies the
    CSS vars); fallbacks below for standalone loads (oros dark).
    Mobile-first, no external deps.
@@ -37,8 +37,8 @@ body {
   overscroll-behavior: contain;
   padding: 14px 12px calc(24px + env(safe-area-inset-bottom, 0px));
 }
-/* Scrollbars — orOS-wide Mood standard (§6b): 10px,
-   transparent track, pill thumb 999px w/ 2px border. */
+/* Scrollbars — orOS-wide standard (§6b): 10px, transparent track,
+   pill thumb 999px w/ 2px border. */
 #cmain::-webkit-scrollbar { width: 10px; height: 10px; }
 #cmain::-webkit-scrollbar-track { background: transparent; }
 #cmain::-webkit-scrollbar-thumb {
@@ -92,6 +92,41 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------- Label filter chips ---------- */
+#lbl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 12px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.chip:hover { background: var(--accent-soft); }
+.chip.off { opacity: 0.38; }
+.chip.off .chip-dot { background: var(--text-dim) !important; }
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.chip-manage { border-style: dashed; color: var(--text-dim); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ---------- Weekday header + grid ---------- */
 #cal-wd {
@@ -170,6 +205,15 @@ body {
 }
 .ev-dot.timed { border-radius: 1px; }
 
+/* Desktop: distinctly rectangular cells — a wider stage means
+   the grid gets vertical presence instead of stretching flat. */
+@media (min-width: 700px) {
+  #cmain { max-width: 920px; margin: 0 auto; }
+  .cal-cell { min-height: 84px; }
+  .cal-cell .cal-num { font-size: 13.5px; }
+  .ev-dot { width: 6px; height: 6px; }
+}
+
 /* Small screens: slimmer cells, dots only */
 @media (max-width: 420px) {
   .cal-cell { min-height: 42px; padding: 3px 3px 2px; }
@@ -234,6 +278,26 @@ body {
 .ev-title {
   font-size: 14px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ev-title > span:first-child,
+.ev-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ev-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #14120d;
+  border-radius: 999px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+  max-width: 40%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -246,6 +310,7 @@ body {
   white-space: nowrap;
   margin-top: 1px;
 }
+.ev-loc { font-weight: 700; }
 .empty {
   padding: 14px 2px;
   font-size: 12.5px;
@@ -260,7 +325,7 @@ dialog#ev-dlg {
   border-radius: 12px;
   box-shadow: 0 12px 40px var(--shadow);
   padding: 16px;
-  width: min(340px, calc(100vw - 32px));
+  width: min(360px, calc(100vw - 32px));
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
 }
@@ -278,7 +343,6 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   color: var(--text-dim);
 }
 .ev-form input[type="text"],
-.ev-form input[type="time"],
 .ev-form textarea {
   background: var(--bg);
   color: var(--text);
@@ -296,6 +360,62 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .chk { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
 .chk input { width: 15px; height: 15px; accent-color: var(--accent); }
 .chk span { font-size: 12.5px; color: var(--text-dim); font-weight: 700; }
+
+/* ---------- Time picker (custom 24h) ---------- */
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tp-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.tp-sep {
+  color: var(--text-dim);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.tp-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 10px 32px var(--shadow);
+  z-index: 40;
+  padding: 4px;
+}
+.tp-menu::-webkit-scrollbar { width: 8px; }
+.tp-menu::-webkit-scrollbar-track { background: transparent; }
+.tp-menu::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+.tp-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  padding: 7px 10px;
+  min-height: 34px;
+  cursor: pointer;
+}
+.tp-opt:hover { background: var(--accent-soft); }
+.tp-opt.active { background: var(--accent); color: #14120d; font-weight: 800; }
+.tp-opt.tp-none { color: var(--text-dim); font-style: italic; }
+.tp-opt.tp-none.active { background: var(--text-dim); color: var(--bg); }
 
 .dlg-row { display: flex; gap: 8px; margin-top: 12px; }
 .dlg-row .btn { flex: 1; }
@@ -353,8 +473,76 @@ dialog#del-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   margin: 4px 0 2px;
 }
 
-/* Invalid-field flash (empty-title validation) */
-.ev-form input.invalid { border-color: var(--danger, #e06c75); }
+/* ---------- Label management dialog ---------- */
+dialog#lbl-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 16px;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+dialog#lbl-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+#lbl-dlg h3 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+#lbl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.lbl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lbl-row .chip-dot { width: 10px; height: 10px; }
+.lbl-name-in {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 38px;
+  outline: none;
+}
+.lbl-name-in:focus { border-color: var(--accent); }
+.lbl-del { min-height: 38px; padding: 6px 12px; font-size: 12px; }
+.lbl-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.lbl-add-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 38px;
+  outline: none;
+}
+.lbl-add-row input:focus { border-color: var(--accent); }
+.lbl-add-row .btn { flex: 0 0 auto; min-height: 38px; padding: 6px 14px; font-size: 12.5px; }
+
+/* Invalid-field flash (validation) */
+.ev-form input.invalid,
+.lbl-name-in.invalid,
+.lbl-add-row input.invalid { border-color: var(--danger, #e06c75); }
 
 /* ---------- Toast (orOS standard: top-right lazy singleton) ---------- */
 .app-toast {

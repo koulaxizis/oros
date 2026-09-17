@@ -1465,3 +1465,39 @@ calendar/calendar.js · calendar/index.html · calendar/calendar.css
 
 ### Verification pending (R19)
 Paste-back of all three files for explicit correctness confirmation before commit.
+
+## [Calendar] v0.2.0 — Feature Wave 2
+
+### Schema (additive, zero-loss)
+- Events: `time` → `start` + new `end` ("HH:MM"|null), new
+  `location` (≤150), new `labelId` (string|null).
+- New top-level `labels: [{ id, name, color, mtime }]` (fixed
+  8-color palette). v0.1 blobs migrate at load; seeds
+  (Personal/Work/Family) only when empty. mtime 0 seeds → any
+  user edit wins the merge.
+- Labels share the event tombstone list: rename = newer mtime
+  survives; delete pushes {id, mtime}. Feed-app labels (future
+  cycle/habits) inherit the same guarantees.
+
+### Features
+- Custom 24h time picker (15' slots + free typing: "9" → 09:00,
+  "937" → 09:37). Start + End, "No end" option. Styled dropdown,
+  keyboard nav, no native AM/PM anywhere.
+- End-time validation (end ≥ start, inline flash).
+- Location field.
+- Labels: filter chips on month view (toggle, dimmed = hidden),
+  label picker in dialog, color-coded dots/rows/tags, management
+  dialog (rename/delete; delete blocked while in use).
+- Undo delete: 5s resurrection toast (fresh mtime).
+- Desktop: distinctly rectangular cells (84px min-height,
+  920px stage) instead of stretched flat grid.
+
+### Hygiene preserved
+- Strict merge sanitizers extended (labels, start/end, location,
+  labelId); end<start normalized deterministically. Fixed key
+  order → JSON tie-break remains deterministic.
+- Contract Β forwarding, boot marker, __orosSyncApi funnel,
+  deep-copy getter fallback, [hidden] guard — all carried over.
+
+### Files touched
+calendar/calendar.js · calendar/index.html · calendar/calendar.css

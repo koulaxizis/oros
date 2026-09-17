@@ -19,6 +19,9 @@
       <h2 id="cal-title"></h2>
     </header>
 
+    <!-- ===== Label filter chips ===== -->
+    <div id="lbl-chips"></div>
+
     <!-- ===== Month grid ===== -->
     <div id="cal-wd"></div>
     <div id="cal-grid"></div>
@@ -39,12 +42,31 @@
     <div class="ev-form">
       <label for="ev-title" data-i18n="ev.field.title"></label>
       <input id="ev-title" type="text" maxlength="80" data-i18n-ph="ev.ph.title">
-      <label for="ev-time" data-i18n="ev.field.time"></label>
-      <input id="ev-time" type="time">
+
       <label class="chk">
         <input id="ev-allday" type="checkbox">
         <span data-i18n="ev.allday"></span>
       </label>
+
+      <label for="ev-start" data-i18n="ev.field.when"></label>
+      <div class="tp-row">
+        <div class="tp-wrap">
+          <input id="ev-start" type="text" autocomplete="off" inputmode="numeric">
+          <div id="ev-start-menu" class="tp-menu" hidden></div>
+        </div>
+        <span class="tp-sep">–</span>
+        <div class="tp-wrap">
+          <input id="ev-end" type="text" autocomplete="off" inputmode="numeric" data-i18n-ph="ev.end.none">
+          <div id="ev-end-menu" class="tp-menu" hidden></div>
+        </div>
+      </div>
+
+      <label for="ev-location" data-i18n="ev.field.loc"></label>
+      <input id="ev-location" type="text" maxlength="150" data-i18n-ph="ev.ph.loc">
+
+      <label data-i18n="cal.filters.lbl"></label>
+      <div id="ev-label-row" class="chip-row"></div>
+
       <label for="ev-note" data-i18n="ev.field.note"></label>
       <textarea id="ev-note" rows="3" maxlength="500" data-i18n-ph="ev.ph.note"></textarea>
     </div>
@@ -57,6 +79,7 @@
     </div>
   </dialog>
 
+  <!-- Delete confirmation (R14 themed dialog) -->
   <dialog id="del-dlg">
     <h3 data-i18n="ev.delete"></h3>
     <p id="del-dlg-text" class="del-name"></p>
@@ -64,6 +87,19 @@
     <div class="dlg-row">
       <button id="del-dlg-yes" type="button" class="btn danger" data-i18n="ev.del.yes"></button>
       <button id="del-dlg-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- Label management -->
+  <dialog id="lbl-dlg">
+    <h3 data-i18n="lbl.manage"></h3>
+    <div id="lbl-list"></div>
+    <div class="lbl-add-row">
+      <input id="lbl-new-name" type="text" maxlength="40" data-i18n-ph="lbl.ph.name">
+      <button id="lbl-add" type="button" class="btn prim" data-i18n="lbl.new"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="lbl-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
     </div>
   </dialog>
 
