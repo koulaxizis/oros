@@ -615,7 +615,9 @@
       var segs = op.path ? parsePath(op.path) : null;
       if (segs === null) throw err("EINVAL", "invalid path: " + op.path);
       var fn = (mode === MODE_OPFS) ? opfsFn : idbFn;
-      return fn.apply(null, op.args.concat([segs]));
+      // Drivers take segments FIRST: opfsWrite(segs, blob),
+      // opfsMv(segs, dstSegs). Args order must match signatures.
+      return fn.apply(null, [segs].concat(op.args));
     });
   }
 
@@ -625,7 +627,16 @@
     return backendReady().then(function () {
       if (mode === MODE_OPFS) {
         return opfsMount(false)
-          .then(function (m) { return opfsCollect(m, ROOT_PATH + "/", []); })
+          .catch(function (e) {
+            // Empty disk: the mount dir was never created (nothing
+            // written yet) — an EMPTY export, never an error.
+            var m = mapErr(e);
+            if (m.code === "ENOENT") return null;
+            throw m;
+          })
+          .then(function (m) {
+            return m ? opfsCollect(m, ROOT_PATH + "/", []) : [];
+          })
           .then(function (entries) {
             return { ver: 1, backend: MODE_OPFS, at: new Date().toISOString(), entries: entries };
           });

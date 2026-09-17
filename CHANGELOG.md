@@ -1034,6 +1034,37 @@ UNDER CONSIDERATION (future waves)
       G2/G3 guards don't apply to root modules; NOTE: fs.js is a
       NEW file — must be in the manual commit (git add -u in the
       bot never stages untracked files).
+	  
+	  ## [Wave 1 — OrosFS: Internal Virtual Disk] v0.34.00
+
+**New Module**: `fs.js` v0.1.0 — Virtual File System with OPFS backend (IndexedDB fallback)
+
+### Added
+- **window.orosFS API**: read/readText/write/writeText/ls/mkdir/rm/mv/stat/usage
+- **Full-disk export/import**: Portable JSON with base64 payloads, cross-backend compatible
+- **Dirty flag**: `oras-ofs-dirty` key for future sync integration (Wave 2)
+- **Factory reset support**: wipeOrosFS() + "oros-ofs" IDB in stage-2 sweep
+
+### Integration Verified
+- GitHub Action (`bump-version.yml`) stamps `?v=` automatically via directory-scan regex
+- G2/G3 guards pass (root module, no palette contract needed)
+- Precache coverage: `./fs.js` added to sw.js PRECACHE_URLS
+
+### Zero-Contact Guarantee
+- No existing localStorage keys touched
+- No collision: new DB `oros-ofs` (existing ones: `oros-vault`, `oros-fs` remain untouched)
+- No sync.js changes, no data migration, no app modifications
+
+### Next Steps (Wave 2)
+- File Manager app (UI layer over OrosFS)
+- Optional: Dropbox mount integration (cross-device file sync)
+
+FIXED (Wave 1 hotfix)
+- dispatch() argument order: drivers take segments FIRST —
+  [segs].concat(args), not args.concat([segs]). All write/mv
+  calls were failing with a misleading EINVAL "/internal".
+- exportDisk(): empty OPFS disk (mount never created) now yields
+  an EMPTY export instead of NotFoundError.
 
 ────────────────────────────────────────────────────────────
 SESSION HANDOFF — template
