@@ -307,7 +307,7 @@
             });
         });
       });
-      return chain;
+      return chain.then(function () { return out; });
     });
   }
 
