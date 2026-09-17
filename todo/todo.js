@@ -102,6 +102,7 @@
       "confirm.listdel": "Delete this list and all its tasks?",
       "confirm.itemdel": "Delete this task?",
       "confirm.lbldel":  "Delete this label? It will be removed from all tasks.",
+      "confirm.no":      "Cancel",
       "new.list":      "New list",
       "recur.list.next": "Next reset:",
       "drag.reorder":   "Reorder",
@@ -165,6 +166,7 @@
       "confirm.listdel": "Διαγραφή λίστας και όλων των εργασιών της;",
       "confirm.itemdel": "Διαγραφή αυτής της εργασίας;",
       "confirm.lbldel":  "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις εργασίες.",
+      "confirm.no":     "Άκυρο",
       "new.list":      "Νέα λίστα",
       "recur.list.next": "Επόμενο reset:",
       "drag.reorder":   "Αναδιάταξη",
@@ -1646,8 +1648,9 @@
         '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
       del.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        if (!confirm(t("confirm.lbldel"))) return;
-        deleteLabel(label.id);
+        confirmDialog("confirm.lbldel", function () {
+          deleteLabel(label.id);
+        });
       });
       item.appendChild(del);
 
@@ -1660,10 +1663,18 @@
   // tombstone: the OTHER device merges the deletion instead of
   // resurrecting the label from its stale local copy.
   function deleteLabel(labelId) {
+    pushUndo("toast.labeldel");   // audit #18: the ONLY destructive op without undo — now consistent
     state.labels = state.labels.filter(function (l) { return l.id !== labelId; });
     state.lists.forEach(function (list) {
       list.items.forEach(function (item) {
-        item.labels = (item.labels || []).filter(function (id) { return id !== labelId; });
+        var next = (item.labels || []).filter(function (id) { return id !== labelId; });
+        // audit #18: detach MUST stamp the item's content version —
+        // otherwise remote copies (older mtime, stale label id) can
+        // win the JSON tie-break lottery and resurrect dead refs.
+        if (next.length !== (item.labels || []).length) {
+          item.labels = next;
+          touch(item);
+        }
       });
     });
     tombstone(labelId);      // merge-safe deletion
@@ -1674,7 +1685,7 @@
     if (!$("filter-pop").hidden) renderFilterPop();
     var item = editingItem();
     if (item) renderItemLabels(item);
-    showToast(t("toast.labeldel"), false);
+    // toast now comes from pushUndo() — with Undo button
   }
 
   // ---------- 11. Undo / toast ----------
@@ -1717,6 +1728,66 @@
 
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 5000);
+  }
+  
+    // ---------- 11b. Themed confirm (R14) ----------
+  // Native confirm() is RETIRED (Bible R14): a themed <dialog> built
+  // from the app palette. Esc/backdrop/click-outside = cancel;
+  // focus starts on CANCEL so Enter never fires the destructive act.
+  function confirmDialog(msgKey, onYes) {
+    var stale = document.getElementById("todo-confirm");
+    if (stale) stale.remove();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "todo-confirm";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:18px;" +
+      "width:min(340px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.method = "dialog";
+
+    var msg = document.createElement("div");
+    msg.style.cssText = "font-size:13px;line-height:1.5;margin-bottom:16px;";
+    msg.textContent = t(msgKey);
+    form.appendChild(msg);
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+
+    var no = document.createElement("button");
+    no.type = "button";
+    no.style.cssText =
+      "border:1px solid var(--border);border-radius:7px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    row.appendChild(no);
+
+    var yes = document.createElement("button");
+    yes.type = "submit";
+    yes.style.cssText =
+      "border:1px solid var(--danger);border-radius:7px;background:transparent;" +
+      "color:var(--danger);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    yes.textContent = t("item.delete");
+    row.appendChild(yes);
+
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      dlg.close();
+      onYes();
+    });
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { no.focus(); }, 50);
   }
 
   // ---------- 12. Sync slice (merge-registered) + palette ----------
@@ -1925,17 +1996,18 @@
     // editing ids BEFORE close() makes the close-commit handler skip —
     // the item is already deleted, there is nothing to flush.
     $("f-delete").addEventListener("click", function () {
-      if (!confirm(t("confirm.itemdel"))) return;
-      var list = listById(editingListId);
-      if (list) {
-        pushUndo("toast.deleted");
-        tombstone(editingItemId);          // merge-safe deletion
-        list.items = list.items.filter(function (it) { return it.id !== editingItemId; });
-      }
-      editingListId = null;
-      editingItemId = null;
-      $("dlg-item").close();
-      save(); scheduleRender();
+      confirmDialog("confirm.itemdel", function () {
+        var list = listById(editingListId);
+        if (list) {
+          pushUndo("toast.deleted");
+          tombstone(editingItemId);        // merge-safe deletion
+          list.items = list.items.filter(function (it) { return it.id !== editingItemId; });
+        }
+        editingListId = null;
+        editingItemId = null;
+        $("dlg-item").close();
+        save(); scheduleRender();
+      });
     });
 
     // --- List dialog ---
@@ -1948,27 +2020,28 @@
     $("l-delete").addEventListener("click", function () {
       var list = listById(editingListId);
       if (!list) return;
-      if (!confirm(t("confirm.listdel"))) return;
 
-      pushUndo("toast.listdel");
-      tombstone(list.id);
-      list.items.forEach(function (it) { tombstone(it.id); });   // cascade
-      state.lists = state.lists.filter(function (l) { return l.id !== list.id; });
+      confirmDialog("confirm.listdel", function () {
+        pushUndo("toast.listdel");
+        tombstone(list.id);
+        list.items.forEach(function (it) { tombstone(it.id); });   // cascade
+        state.lists = state.lists.filter(function (l) { return l.id !== list.id; });
 
-      if (state.lists.length === 0) {
-        var fresh = newListObj(t("new.list"));
-        fresh.pos = 0;
-        state.lists.push(fresh);
-      }
-      if (!state.lists.some(function (l) { return l.id === state.activeList; })) {
-        state.activeList = state.lists[0].id;
-      }
-      state.om = Date.now();
-      state.sm = Date.now();
-      editingListId = null;
+        if (state.lists.length === 0) {
+          var fresh = newListObj(t("new.list"));
+          fresh.pos = 0;
+          state.lists.push(fresh);
+        }
+        if (!state.lists.some(function (l) { return l.id === state.activeList; })) {
+          state.activeList = state.lists[0].id;
+        }
+        state.om = Date.now();
+        state.sm = Date.now();
+        editingListId = null;
 
-      $("dlg-list").close();
-      save(); renderAll();
+        $("dlg-list").close();
+        save(); renderAll();
+      });
     });
 
     // Recurrence toggles (item + list editors)
@@ -2025,5 +2098,20 @@
   registerSync();
   inheritPalette();
   watchPalette();
+
+  // Midnight rollover (audit #20): cycles + overdue chips must catch
+  // up when the app stays open across the date change. applyListCycles
+  // self-saves ONLY when it actually resets something — no pointless
+  // dirty/sync push on a no-op wake. scheduleRender refreshes the
+  // overdue chips either way.
+  var cycleDay = todayISO();
+  window.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    if (todayISO() === cycleDay) return;
+    cycleDay = todayISO();
+    applyListCycles();
+    scheduleRender();
+  });
+
   renderAll();
 })();

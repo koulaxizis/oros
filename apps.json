@@ -96,6 +96,14 @@
       "icon": "habits",
       "url": "habits/",
       "type": "internal"
+    },
+    {
+      "id": "files",
+      "name": "Files",
+      "category": "Productivity",
+      "icon": "storage",
+      "url": "files/",
+      "type": "internal"
     }
   ]
 }

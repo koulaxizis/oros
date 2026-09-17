@@ -338,11 +338,17 @@ UNIVERSAL CONTRACTS:
 ╚══════════════════════════════════════════════════════════╝
 
 ──────────────────────────────────────
-6. CURRENT STATE — v0.32.15 (2026-09-15)
+6. CURRENT STATE — v0.34.02 (2026-09-17)
 ──────────────────────────────────────
   Core shell  : APP_VERSION in shell.js (single truth; CI stamps
                 sw.js/manifest/root ?v= automatically).
-  Sync engine : sync.js v0.9.0 (Zero-Knowledge Sync v0.9).
+  Sync engine : sync.js v0.9.1 (ZK v0.9 + empty-cloud 409 fix).
+  Core audit  : 2026-09 — all six core files reviewed (index.html,
+                shell.js, translations.js, sync.js, sw.js,
+                apps.json); findings #1–#16 closed; shipped as
+                v0.34.02: R14 themed restore dialog, alarm i18n
+                keys, CRITICAL sync 409 empty-cloud fix, dead
+                pwEpoch sketch removed, headers aligned.
   Skins       : 16 · Wallpapers: 15 (Desert Sand default).
   Domain      : useoros.online ONLY (no alt domains).
   Version surf: Info modal (Ctrl+Alt+Shift+I) + version toast.
@@ -374,6 +380,7 @@ UNIVERSAL CONTRACTS:
   Prompter  | prompter/ | oros-prompter-data       | 1   | union + LWW + tombs
   Storage   | storage/  | oros-storage-data        | 1   | flat ents union + LWW + del
   Habits    | habits/   | oros-habits-data         | 1   | habit/comp LWW + del
+  Characters| characters/ | (see app audit)        | —   | (see app audit)
   Slices with NO app open: registered via persisted registry —
   data travels while apps are closed. syncApi() per R8.
   REFERENCE APP (canonical template): mood/ v0.27.00 — every
@@ -392,7 +399,7 @@ REPO ROOT
                         sync dot §9b, scToast §9, info modal,
                         alarms (window.orosAlarms), i18n, ICONS,
                         APP_VERSION (SINGLE SOURCE OF TRUTH)
-  sync.js               orOS sync engine v0.9.0
+  sync.js               orOS sync engine v0.9.1
   fs.js                 OrosFS virtual disk v0.1.0 (OPFS +
                         IndexedDB "oros-ofs" fallback)
   style.css             shell stylesheet — skin palettes =
@@ -558,7 +565,7 @@ WEATHER (VER 1)
 ╚══════════════════════════════════════════════════════════╝
 
 ──────────────────────────────────────
-11. SYNC ENGINE — sync.js v0.9.0 (Zero-Knowledge Sync v0.9)
+11. SYNC ENGINE — sync.js v0.9.1 (Zero-Knowledge Sync v0.9)
 ──────────────────────────────────────
 SECURITY MODEL (ABSOLUTE — non-negotiable)
   · Zero user tracking. No cookies, no analytics, no telemetry.
@@ -579,9 +586,18 @@ ZK v0.9 HARDENING (v0.30.03)
     (tab-hide, shortcut, manual) — verifies cloud blob decrypts
     before encrypting.
   · Trust window: lastSuccessfulPullAt (<30s skips redundant
-    verification). pwEpoch tracking (oros-sync-pw-epoch) +
-    detectPwEpochMismatch(). errorKey() maps OperationError +
-    wrong-passphrase → sync.err.passphrase.
+    verification). pwEpoch counter in payload.meta (written by
+    changePassphrase; passive console.warn in decryptBlob —
+    proactive detection is BACKLOG, dormant sketch removed
+    v0.9.1). errorKey() maps OperationError + wrong-passphrase
+    → sync.err.passphrase.
+  · contentDownload() NEVER throws on 409 (path/not_found =
+    empty cloud): every caller's status===409 branch is LIVE
+    (pull → honest empty-cloud toast, push guard → skip,
+    changePassphrase → accept-new). Status errors pass through
+    UNWRAPPED so errorKey() maps auth correctly. (v0.9.1 fix —
+    the eager !res.ok throw made all 409 branches unreachable:
+    first-ever push failed on fresh/factory-reset installs.)
   · Dialogs: showChangePassDialog / showPassChangedDialog.
 
 SLICE REGISTRATION (apps → engine)
@@ -1020,7 +1036,13 @@ GLOBAL (future): export/import parity audit across apps ·
 Core / Sync
   · Hierarchical key rotation (transitional windows).
   · Cross-device notification for passphrase changes.
-  · PW epoch PROACTIVE detection (eliminate OperationError).
+  · PW epoch PROACTIVE detection (eliminate OperationError) —
+    reactive coverage is complete today (OperationError →
+    passphrase dialog; ensureCloudReadable push guard; decryptBlob
+    console.warn). The dormant code sketch (detectPwEpochMismatch/
+    setPWEpoch) was REMOVED in sync v0.9.1 — if ever built, it is
+    a designed UX feature (boot-time notification), not dormant
+    code. Decision logged 2026-09 (audit #12).
   · Additional cloud providers (Google Drive, OneDrive,
     pDrive, Box) — E2EE mandatory.
   · Synced alarms with proper merge semantics (optional).
@@ -1052,7 +1074,6 @@ New apps (planned, not started)
   · Pagination/typesetting app (Scribus/InDesign/Affinity).
   · Public Domain Calculator (country presets, GR default,
     Wikipedia/web lookup for unknown publication dates).
-  · Characters app (character design, traits, relations).
   · Cycle (women's health: cycle, symptoms, meds, irregularities).
   · Desk suite (linux-OS-style desktop — experimental).
   · Native Windows/Android conversion of selected apps
@@ -1061,6 +1082,12 @@ New apps (planned, not started)
 ──────────────────────────────────────
 20. RELEASE HISTORY (condensed — newest first)
 ──────────────────────────────────────
+  v0.34.02 — Core audit batch (findings #1–#16): R14 themed
+    restore-snapshot dialog (was window.confirm); alarm toast
+    strings → i18n keys; sync v0.9.1 CRITICAL empty-cloud fix
+    (409 throw broke first push/pull/changePassphrase on fresh
+    installs); dead pwEpoch code removed; app.quote key; all
+    core headers realigned; Bible registry/§19 synced.
   v0.32.15 — Alarm snooze (shell): +9min one-shot on shell
     alarm toast. Time closed v0.1.1d–e (quick-zone chips i18n,
     STR restoration — R11 lesson).

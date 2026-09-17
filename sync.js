@@ -1,5 +1,13 @@
 // ============================================================
-// orOS Core v0.8.1 — Dropbox Sync module
+// orOS Core v0.9.1 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// v0.9.1 — CRITICAL: contentDownload no longer throws on 409
+//   (empty cloud). The eager !res.ok throw made every caller's
+//   status===409 branch unreachable: push-on-empty-cloud failed,
+//   pull-on-empty-cloud surfaced a generic error instead of the
+//   honest "cloud is empty" toast, and changePassphrase broke on
+//   a fresh reset. Status errors also pass through unwrapped so
+//   errorKey() maps auth failures correctly.
+//
 // v0.8.1 — divergence-guard hardening: a MISSING baseline counts
 //   as DIVERGED (not clean) for mergeless slices (baselineExists
 //   discriminator in applySlice).
@@ -280,25 +288,40 @@
   }
 
   function contentDownload(path) {
-  return ensureFreshToken().then(function (token) {
-    return fetch(CONTENT_API + "files/download", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + token,
-        "Dropbox-API-Arg": JSON.stringify({ path: path })
-      }
+    return ensureFreshToken().then(function (token) {
+      return fetch(CONTENT_API + "files/download", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Dropbox-API-Arg": JSON.stringify({ path: path })
+        }
+      });
     }).then(function (res) {
-      if (!res.ok) {
+      // 409 = "path/not_found" — EMPTY CLOUD (first push, factory reset).
+      // ALL callers branch on res.status === 409 themselves (pull →
+      // {empty:true}, ensureCloudReadable → skip, changePassphrase →
+      // accept-new). This wrapper must therefore NEVER throw on 409 —
+      // v0.9.1 fix: the eager !res.ok throw made every 409 branch in
+      // the engine unreachable and broke push-on-empty-cloud entirely.
+      // Any OTHER non-ok status is a real failure and stays fatal.
+      if (!res.ok && res.status !== 409) {
         console.warn("orOS sync: Dropbox download failed:", res.status);
         throw new Error("download failed: " + res.status);
       }
       return res;
     }).catch(function (err) {
-      console.error("orOS sync: contentDownload network error:", err);
-      throw new Error("network error: " + (err.message || "unknown"));
+      // Wrap only GENUINE network failures (fetch rejects with
+      // TypeError when the request never lands). Our own status
+      // errors must pass through intact — the old blanket wrap
+      // disguised auth failures as "check your connection" and
+      // broke the errorKey() mapping.
+      if (err instanceof TypeError) {
+        console.error("orOS sync: contentDownload network error:", err);
+        throw new Error("network error: " + (err.message || "unknown"));
+      }
+      throw err;
     });
-  });
-}
+  }
 
   function contentUpload(path, text) {
     return ensureFreshToken().then(function (token) {
@@ -1222,43 +1245,9 @@
   }
   
   function getWVEpoch() {
-  var v = parseInt(localStorage.getItem("oros-sync-pw-epoch") || "0", 10);
-  return isNaN(v) ? 0 : v;
-}
-
-function setPWEpoch(epoch) {
-  localStorage.setItem("oros-sync-pw-epoch", String(epoch));
-}
-
-function detectPwEpochMismatch() {
-  // Compare local known epoch with what's in cloud
-  if (!isConnected() || !passphrase) return Promise.resolve(null);
-  
-  return contentDownload(BLOB_PATH)
-    .then(function (res) {
-      if (res.status === 409 || !res.ok) return null;
-      return res.text();
-    })
-    .then(function (blobText) {
-      if (!blobText) return null;
-      var blob = JSON.parse(blobText);
-      if (!blob || blob.ver !== BLOB_VERSION) return null;
-      return decryptBlob(blobText)
-        .then(function (payload) {
-          var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
-          var localEpoch = getWVEpoch();
-          if (localEpoch === 0 || cloudEpoch === 0) return null; // No epochs yet
-          if (cloudEpoch > localEpoch) return cloudEpoch; // Epoch increased elsewhere
-          return null;
-        })
-        .catch(function () {
-          // Decryption failed — could be wrong passphrase or epoch change
-          return "decryption-failed";
-        });
-    });
-}
-
-// Boot sequence:
+    var v = parseInt(localStorage.getItem("oros-sync-pw-epoch") || "0", 10);
+    return isNaN(v) ? 0 : v;
+  }
 
   // ---------- Boot sequence ----------
   restoreTokens();

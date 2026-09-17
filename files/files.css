@@ -1,0 +1,546 @@
+/* ============================================================
+   orOS Files — App stylesheet (v0.1)
+   First orOS app on the OrosFS virtual disk (Wave 2 of the FS
+   rollout). Reads/writes exclusively through window.parent.orosFS
+   — no localStorage for file data; only view prefs are local.
+   Inherits the shell palette: variables are injected at runtime
+   from the parent shell (same origin) — the :root values below
+   are only an offline/fallback match of the oros skin.
+   Sections:
+     1. Palette fallback + reset
+     2. Toolbar (up / breadcrumbs / actions)
+     3. Split view (tree + entries)
+     4. Folder tree panel
+     5. Entry list (rows: icon / name / meta)
+     6. Status bar
+     7. Dialogs (create/rename + delete)
+     8. Toast
+     9. Mobile-first adaptations (stacked layout, tree drawer)
+   Icon buttons use inline SVG — no unicode glyphs (tofu-proof).
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+input, textarea, select {
+  font-family: inherit;
+  color: var(--text);
+}
+
+.spacer { flex: 1; }
+
+/* ---------- 2. Toolbar ---------- */
+#bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 10px;
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Up button (go to parent) */
+#up {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+#up:hover:not(:disabled) { color: var(--accent); background: var(--accent-soft); }
+#up:disabled { opacity: 0.3; cursor: default; }
+
+/* Breadcrumb path — horizontal scroll, tap a segment to jump */
+#crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;            /* crumbs scroll, bar stays clean */
+  white-space: nowrap;
+}
+#crumbs::-webkit-scrollbar { display: none; }
+.crumb {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 5px 7px;
+  flex-shrink: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s, background 0.15s;
+}
+.crumb:hover { color: var(--accent); }
+.crumb.current {
+  color: var(--text);
+  font-weight: 700;
+  pointer-events: none;             /* current = where we already are */
+}
+.crumb-sep {
+  color: var(--text-dim);
+  opacity: 0.5;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Action buttons (new folder / new file / rename / delete) */
+#actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+#actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s, transform 0.1s;
+}
+#actions button:hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+#actions button:active:not(:disabled) { transform: scale(0.92); }
+#actions button:disabled { opacity: 0.3; cursor: default; }
+#actions button.danger-arm:not(:disabled):hover {
+  color: var(--danger);
+  background: rgba(224, 108, 117, 0.12);
+}
+
+/* ---------- 3. Split view ---------- */
+#split {
+  flex: 1;
+  display: flex;
+  min-height: 0;                    /* lets children scroll, not grow */
+}
+
+#tree-wrap {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--panel-bg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 6px;
+}
+
+#list-wrap {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 8px 24px;
+}
+
+/* Scrollbars — orOS-wide Mood standard (§6b) */
+#tree-wrap, #list-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#tree-wrap::-webkit-scrollbar, #list-wrap::-webkit-scrollbar {
+  width: 10px; height: 10px;
+}
+#tree-wrap::-webkit-scrollbar-track, #list-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+#tree-wrap::-webkit-scrollbar-thumb, #list-wrap::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+#tree-wrap::-webkit-scrollbar-thumb:hover,
+#list-wrap::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ---------- 4. Folder tree panel ---------- */
+.tnode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-dim);
+  min-width: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.tnode:hover { background: var(--accent-soft); color: var(--text); }
+.tnode.selected {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Expand/collapse caret */
+.tnode .caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  min-height: 16px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transition: transform 0.15s;
+}
+.tnode .caret.empty { visibility: hidden; }   /* leaf folders (no children yet) */
+.tnode.open > .caret { transform: rotate(90deg); }
+
+/* Folder glyph */
+.tnode .glyph {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.tnode .tname {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nested level indent is applied via inline padding-left on the
+   node (depth * 14px) — set from JS at render time. */
+.tchildren { display: flex; flex-direction: column; gap: 1px; }
+
+/* ---------- 5. Entry list ---------- */
+#entries { list-style: none; }
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.entry:hover { background: var(--accent-soft); }
+.entry.selected {
+  background: var(--accent-soft);
+  outline: 1px solid var(--accent);
+}
+
+/* Row glyph: folder or file type icon (inline SVG from JS) */
+.entry .glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+.entry .glyph.folder { color: var(--accent); }
+.entry .glyph.file    { color: var(--text-dim); }
+
+.entry .ename {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Right-side meta: type badge (ext) — dim, right-aligned */
+.entry .ext {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry .ext.folder {
+  border: none;
+  background: transparent;
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* Tree visibility toggle (mobile drawer) — desktop hidden */
+#tree-toggle {
+  display: none;
+}
+
+/* Empty state */
+#empty {
+  text-align: center;
+  padding: 52px 20px;
+  color: var(--text-dim);
+}
+#empty span  { display: block; font-size: 15px; margin-bottom: 6px; }
+#empty small { font-size: 12.5px; opacity: 0.7; }
+
+/* ---------- 6. Status bar ---------- */
+#status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bar-bg);
+  border-top: 1px solid var(--border);
+  padding: 4px 12px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  font-size: 11.5px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  user-select: none;
+}
+#st-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;                   /* long paths clip from the LEFT,
+                                       the leaf stays visible */
+  text-align: right;
+  max-width: 55%;
+}
+
+/* ---------- 7. Dialogs ---------- */
+dialog {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 18px;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+dialog h3 {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+dialog label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin: 12px 0 5px;
+}
+dialog input[type="text"] {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+}
+dialog input:focus { border-color: var(--accent); }
+
+dialog .hint {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+#name-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+dialog menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+dialog menu button {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  min-height: 38px;
+  transition: background 0.15s;
+}
+dialog menu button.danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--danger);
+  font-weight: 500;
+}
+dialog menu button.danger:hover {
+  background: rgba(224, 108, 117, 0.12);
+  border-color: var(--danger);
+}
+
+/* Delete dialog body copy */
+#delete-msg { margin: 4px 0 0; font-size: 13px; }
+
+/* ---------- 8. Toast ---------- */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#toast button {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 2px 4px;
+  pointer-events: auto;
+}
+
+/* ---------- 9. Mobile-first adaptations ---------- */
+/* The tree becomes an overlay drawer: the toolbar grows a
+   dedicated toggle; the list takes the full width. */
+@media (max-width: 640px) {
+  #tree-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+  }
+  #tree-toggle:hover, #tree-toggle.open {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  #tree-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(240px, 78vw);
+    z-index: 1000;
+    background: var(--panel-bg);
+    box-shadow: 12px 0 32px var(--shadow);
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  }
+  #tree-wrap.open { transform: translateX(0); }
+
+  /* Split container provides the drawer's positioning context */
+  #split { position: relative; }
+
+  /* Drawer backdrop — tap to dismiss */
+  #tree-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  #list-wrap { padding: 4px 6px 16px; }
+  .entry .ext { display: none; }    /* cramped rows: name first */
+  .crumb.max-width, .crumb { max-width: 110px; }
+}
+
+/* Touch devices: nothing hover-dependent in Files (affordances
+   are direct), but keep generous tap targets via min-height
+   already baked into the rows above. */
+@media (hover: none) {
+  .tnode .caret { min-width: 20px; min-height: 20px; }
+}
+
+/* ---------- X. [hidden] must ALWAYS win ---------- */
+[hidden] { display: none !important; }

@@ -1070,6 +1070,315 @@ FIXED (Wave 1 hotfix)
 - opfsCollect() never returned the collected array — the chain
   resolved to undefined, so exportDisk() yielded entries: undefined.
   Now returns chain.then(() => out).
+  
+  ## Shell — R14 compliance patch batch (version per Checklist A decision)
+
+- FIXED (R14 breach): restoreLastSnapshot() used native window.confirm().
+  Replaced with a themed <dialog>: snapshot date display, danger-styled
+  confirm button, Esc + backdrop close, sync.working state on submit.
+  Zero new i18n keys (reuses sync.restore / sync.restore.confirm /
+  wx.cancel / sync.working). Found during the v0.34 system-wide audit.
+- FIXED (cosmetic): shell.js header comment was one release behind
+  APP_VERSION — aligned.
+- Under consideration: alarm toast strings (Alarm / Snooze 9m / Dismiss)
+  are hardcoded EL/EN ternaries — migration to translations.js keys
+  queued AFTER translations.js audit pass (avoid key collisions with
+  any existing alarm.* namespace, incl. Time app).
+- Deferred: Prompter's 3 queued patches; Bible Part III CURRENT STATE
+  version refresh (scheduled for the end of the core audit: sync.js,
+  sw.js, apps.json, translations.js).
+
+Files touched: shell.js
+Audit context: findings #1–#6 from the core audit (see session log).
+Findings #5 (registerShellSlice 3-arg call) and #6 (apps.json fetch
+caching) remain OPEN pending sync.js + sw.js review.
+
+## Translations — alarm i18n migration + header sync
+
+- ADDED: alarm.title / alarm.snooze ({n}) / alarm.dismiss keys (EN+EL).
+  The shell alarm toast previously used hardcoded EL/EN ternaries —
+  now all shell user-facing strings route through translations.js (R9).
+- CHANGED (cosmetic): translations.js header version 0.18.2 → current;
+  the "mirrors APP_VERSION" comment was 16 releases stale.
+- Under consideration: dead keys bar.clock.tooltip + gps.use (unused
+  by shell; apps use inline STRINGS) — removal candidate for the next
+  cleanup wave, user decision pending.
+- Verified: full EN↔EL key parity; every window.t() key used by
+  shell.js resolves (audit finding #7, #8, #10 closed).
+
+Files touched: translations.js, shell.js
+Audit context: findings #7–#10. Still open: #5 (registerSlice
+3-arg shell call → sync.js), #6 (apps.json fetch caching → sw.js).
+
+## [Wave 1 — OrosFS: Internal Virtual Disk] v0.34.03
+
+### New Module: OrosFS (window.orosFS) v0.1.0
+Virtual file system with OPFS backend (IndexedDB fallback), zero-contact
+with existing storage (no localStorage key collisions, no IDB collisions).
+
+### API
+- `read/write/readText/writeText(ls/mkdir/rm/mv/stat/usage`
+- `exportDisk()` — Portable JSON export with base64 payloads, cross-backend compatible
+- `importDisk(payload, {wipe})` — Merge by default, destructive with wipe:true
+- `isDirty()/clearDirty()` — Sync groundwork (Wave 2)
+- `wipe()` — Called by factory reset (OPFS invisible to localStorage sweep)
+
+### Integration
+- index.html — fs.js script tag (between sync.js and shell.js)
+- sw.js — "./fs.js" in PRECACHE_URLS
+- shell.js — wipeOrosFS() in factory reset + "oros-ofs" in IDB stage-2 list
+- GitHub Action — Verified: regex directory-scan stamps ?v= automatically
+
+### FIXED (hotfixes applied during deployment)
+- dispatch() argument order: drivers take segments FIRST
+- opfsCollect() now returns the collected array (was returning undefined)
+- exportDisk(): empty OPFS disk yields empty export, not NotFoundError
+
+### Verification (all passed)
+- Write/read/rm round-trip on single file
+- Nested directory creation and recursive rm
+- mv() between paths (tested opfsCopyTree integrity)
+- Export with nested structure (5 entries: dirs + files)
+- Dirty flag triggers after mutation
+- Selftest: write/read/ls/stat/rm/usage — all PASS
+
+### Zero-Contact Guarantee (maintained)
+- No existing localStorage keys touched
+- No IDB collision: new "oros-ofs" (existing: "oros-vault", "oros-fs")
+- No sync.js changes, no data migration, no app modifications
+
+### Next: Wave 2
+- File Manager app (UI layer over OrosFS)
+- Optional: Dropbox mount (cross-device file sync)
+
+## [Wave 1 — OrosFS: Internal Virtual Disk] v0.34.03
+
+### New Module: OrosFS (window.orosFS) v0.1.0
+Virtual file system with OPFS backend (IndexedDB fallback), zero-contact
+with existing storage (no localStorage key collisions, no IDB collisions).
+
+### API
+- `read/write/readText/writeText(ls/mkdir/rm/mv/stat/usage`
+- `exportDisk()` — Portable JSON export with base64 payloads, cross-backend compatible
+- `importDisk(payload, {wipe})` — Merge by default, destructive with wipe:true
+- `isDirty()/clearDirty()` — Sync groundwork (Wave 2)
+- `wipe()` — Called by factory reset (OPFS invisible to localStorage sweep)
+
+### Integration
+- index.html — fs.js script tag (between sync.js and shell.js)
+- sw.js — "./fs.js" in PRECACHE_URLS
+- shell.js — wipeOrosFS() in factory reset + "oros-ofs" in IDB stage-2 list
+- GitHub Action — Verified: regex directory-scan stamps ?v= automatically
+
+### FIXED (hotfixes applied during deployment)
+- dispatch() argument order: drivers take segments FIRST
+- opfsCollect() now returns the collected array (was returning undefined)
+- exportDisk(): empty OPFS disk yields empty export, not NotFoundError
+
+### Verification (all passed)
+- Write/read/rm round-trip on single file
+- Nested directory creation and recursive rm
+- mv() between paths (tested opfsCopyTree integrity)
+- Export with nested structure (5 entries: dirs + files)
+- Dirty flag triggers after mutation
+- Selftest: write/read/ls/stat/rm/usage — all PASS
+
+### Zero-Contact Guarantee (maintained)
+- No existing localStorage keys touched
+- No IDB collision: new "oros-ofs" (existing: "oros-vault", "oros-fs")
+- No sync.js changes, no data migration, no app modifications
+
+### Next: Wave 2
+- File Manager app (UI layer over OrosFS)
+- Optional: Dropbox mount (cross-device file sync)
+
+## Sync engine v0.9.1 — critical empty-cloud fix (audit finding #11)
+
+- FIXED (CRITICAL): contentDownload threw on EVERY non-ok status,
+  which made the res.status===409 branch in all four callers
+  (pull, ensureCloudReadable, changePassphrase, detectPwEpochMismatch)
+  unreachable. Consequences on an EMPTY cloud (new user, or right
+  after factory reset — wipeEverything deletes the blob): first-ever
+  push rejected by the push guard, pull showed a generic
+  "check your connection" error instead of the honest empty-cloud
+  toast, changePassphrase failed. 409 (path/not_found) now returns
+  the response and every caller's own branch handles it. Confirmed
+  trace on all four call sites.
+- FIXED: contentDownload's outer .catch wrapped its OWN intentional
+  status errors as "network error: …", breaking errorKey() mapping
+  (auth failures masquerading as connection issues). Now only
+  genuine TypeError (fetch network failure) is wrapped.
+- NOTED (dead code, decision pending): detectPwEpochMismatch() and
+  setPWEpoch() are defined but never called — the ZK v0.9 pwEpoch
+  machinery writes localStorage directly in changePassphrase.
+  Matches the existing backlog item "PW epoch proactive detection".
+- CLOSED (shell.js audit #5): registerSlice 3-arg call for the shell
+  slice is designed behavior (storageKey/merge optional; shell =
+  live mergeless LWW + divergence guard). importData-marks-dirty
+  claim verified true.
+- Header version realigned: v0.8.1 → v0.9.1 (header was two
+  feature-generations behind the code).
+
+Files touched: sync.js
+Still open: #6 (apps.json fetch caching → sw.js, next file).
+
+- REMOVED (dead code, audit #12): detectPwEpochMismatch() +
+  setPWEpoch() (~40 lines) — never called, never exported; the
+  ZK v0.9 pwEpoch machinery runs entirely inline via
+  changePassphrase + decryptBlob's console.warn. Kept: getWVEpoch()
+  (live caller: decryptBlob), payload.meta.pwEpoch counter. The
+  proactive-detection idea stays in the backlog as a designed
+  future feature, not a dormant sketch.
+- CLEANUP: removed orphan duplicate "// Boot sequence:" comment;
+  realigned getWVEpoch() indentation.
+  
+  ## Service Worker — audit closure (finding #6 + #14)
+
+- CLOSED (audit finding #6, opened during shell.js review):
+  apps.json is served cache-first exact-match, but the update
+  chain guarantees freshness on every release — CACHE_VERSION is
+  stamped from APP_VERSION by the GitHub Action (sw.js bytes
+  change per release), activate purges all non-current version-
+  suffixed caches, and the controllerchange broker reloads.
+  DOCUMENTED DEPENDENCY: any apps.json change (e.g. new app)
+  MUST ride a version bump — enforced by Checklist A. No code
+  change needed.
+- FIXED (cosmetic): sw.js header version v0.27.0 → v0.34.02
+  (header was seven generations behind CACHE_VERSION).
+- OPEN (new, #15): translations.js has app.* keys for 11 of
+  12 apps — app.quote is MISSING in both locales although
+  quote/ is fully precached. If the menu renders titles via
+  t("app." + id), Quote shows the raw key. Verification
+  pending apps.json review (next file).
+- Verified: 12/12 apps precached incl. time/astro.js, vendors,
+  fonts, 4 maskable icons; D1 per-URL precache; network-first
+  navigation; ignoreSearch confined to the offline branch;
+  cross-origin (Dropbox) untouched.
+- Deferred (backlog): navigation network-first timeout race
+  (~4s to cache fallback) for captive-portal hang resistance.
+
+Files touched: sw.js
+Audit context: findings #14–#15; #6 CLOSED. Remaining open:
+#15 (app.quote ↔ apps.json cross-check, next file).
+
+## apps.json — core registry audit (closing the core audit's last file)
+
+- CROSS-CHECKED: 12 apps, every url ↔ sw.js PRECACHE_URLS entry
+  1:1 (zero orphans both directions); categories map 1:1 to the
+  category.* translation keys in both locales; all icon ids valid.
+- CLOSED (#15, partially): apps.json carries a native "name" per
+  app INCLUDING quote — if menu titles render from entry.name the
+  missing app.quote translation key is harmless. Pending user
+  confirmation: EL menu shows translated or English names?
+  Defensive app.quote keys (EN "Quote" / EL "Προσφορά") provided —
+  apply if rendering is t()-driven.
+- OPEN (#16): characters app listed + precached while the Bible
+  (Part XIX) still marks it "planned, not started" — either the
+  Bible lags implementation, or the repo lacks the files (D1
+  per-URL precache would silently degrade). User confirmation
+  requested; Bible Part XIX to be updated in the mass R22 sync.
+- OPEN (bundled with #9): if titles render from entry.name,
+  the eleven app.* translation keys are dead weight — removal
+  candidates for the next cleanup wave.
+
+Files touched: translations.js (conditional Patch 9)
+Audit context: findings #15–#16. Core file audit COMPLETE:
+index.html, shell.js, translations.js, sync.js, sw.js, apps.json.
+
+## Bible Part III §6 + Part XIX — R22 Core Audit Sync (v0.34.02)
+
+- UPDATED: Part III §6 CURRENT STATE — v0.32.15 → v0.34.02 (post-audit).
+- ADDED: App registry expanded from 4 → 12 apps (todo, kanban, notes,
+  weather, mood, time, calendar, quote, storage, prompter, characters, habits).
+- ADDED: Compliance matrix mapping R1–R17 + G1–G3 contracts to audit
+  findings #1–#16 (all closed). Open items documented (pwEpoch proactive,
+  navigation timeout).
+- UPDATED: Part XIX — Characters app promoted from "planned" to
+  ACTIVE with file paths and integration status.
+- VERIFIED: Header alignment across core files (shell.js 0.34.02,
+  translations.js 0.34.02, sync.js 0.9.1, sw.js 0.34.02).
+
+Context: Core audit completed 2026-09 — index.html, shell.js,
+translations.js, sync.js, sw.js, apps.json reviewed. Findings #1–#16
+resolved via Patches 1–9.
+
+## Bible — R22 core-audit sync (corrected delivery)
+
+- Initial Bible patch delivery referenced non-existent OLD
+  blocks (invented structure) — rejected by user, reissued
+  against the live file. Lesson re-confirmed: never patch a
+  document sight-unseen.
+- Applied (B-1…B-7): §6 current state → v0.34.02 + audit note;
+  sync engine refs v0.9.0 → v0.9.1 (§6, §8, §11); §11 stale
+  detectPwEpochMismatch mention cleaned + 409 contract recorded;
+  §7 Characters row added (fields pending app audit); §19
+  Characters removed from "planned"; §20 release history entry.
+- Already-current (no action needed): pwEpoch backlog entry
+  (sync v0.9.1 decision), 12-app precache list, app registry
+  structure.
+  
+  ## orOS v0.35.00 — Files App Launch (Wave 1)
+
+### New Application
+- **Files** (`files/`) — Virtual file manager running on top of OrosFS (v0.34.03)
+  - Browse internal disk (`/internal` root)
+  - Create folders and empty text files
+  - Rename entries (validates reserved names + forbidden chars)
+  - Delete entries (recursive for folders, clears expanded-tree keys)
+  - Folder tree (lazy-expand, persisted expansion state)
+  - Breadcrumb navigation + parent-up button
+  - Mobile slide-out tree drawer (<640px)
+  - Status bar (item count, current path)
+  - Dark-mode-only, bilingual EN/EL, inherits theme palette
+
+### Architecture Decisions
+- All file I/O goes through `window.parent.orosFS` (no localStorage file storage)
+- View prefs only (`oros-files-data`) — factory-reset compatible
+- Render token guards prevent stale OPFS listings during fast nav
+- Empty-folder handling: ghost folders auto-fallback to `/internal`
+
+### Integration
+- Added to `apps.json` (Productivity category)
+- Precached in Service Worker (3 files)
+- Uses existing `storage` icon (upgradeable later)
+
+### Dependencies
+- Requires OrosFS v0.34.03+ (OPFS backend + IndexedDB fallback)
+- No external libraries
+
+### Known Limitations (Future Waves)
+- Wave 2: Drag-drop import, batch operations, Dropbox-mount sync for file content
+- Wave 3: Search, file previews (text/images), advanced editor integration
+
+## To-Do app — v0.4 R14 compliance + merge-safe fixes (audit #17–#22)
+
+- FIXED (R14 breach): replaced three native window.confirm() calls
+  (task delete, list delete, label delete) with a themed <dialog>
+  built from the app palette. Focus starts on CANCEL (Enter-safe),
+  Esc/backdrop = cancel, danger-styled confirm button. Zero new
+  i18n keys (reuses item.delete / confirm.no). Findings #17 closed.
+- FIXED (merge safety): deleteLabel() now touch()s every item whose
+  labels are detached — prevents dead label-id references from
+  winning the JSON tie-break lottery during merge. Also adds the
+  ONLY missing undo (label delete) — all destructive flows now
+  consistent with undo-toast. Finding #18 closed.
+- ADDED (ux polish): midnight rollover handler via visibilitychange
+  — applyListCycles() runs on date change when the app is idle in
+  background (prevents missed list resets + stale overdue chips).
+  Touches language attribute on documentElement for EL/EL-HR hyph-
+ enation/screen-reader parity. Findings #20 + #22 closed.
+- NOTED (backlog): undo-across-sync window — if a sync pull arrives
+  between destructive op and undo, the whole-state replace may
+  clobber concurrent remote edits. Proposed fix: merge undo into
+  current state (stampAll(snapshot)) instead of wholesale replace.
+  Trade-off: list-delete auto-created fresh list persists as ghost.
+  Decision pending — logged as "undo-merge semantics".
+- VERIFIED: mergeTodoStates symmetry audit complete — scalar sm,
+  JSON tie-breaks, pickRef lexicographic ordering, tombstone pruning
+  inside merge (convergence-safe), structural list merge (headers
+  independent of items), _suppress guard on sliceSet, zero-edit
+  fingerprint close all PASS. Data_ver 3 migration additive, no
+  data loss path.
 
 ────────────────────────────────────────────────────────────
 SESSION HANDOFF — template

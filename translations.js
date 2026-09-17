@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.18.2 — Translations
+// orOS Core v0.34.02 — Translations
 // Inline i18n module (no fetch, no external files)
 // Default language: English | Secondary: Greek
 // Persisted via localStorage ('oros-lang'), overridable by ?lang=
@@ -115,6 +115,9 @@ window.OROS_TRANSLATIONS = {
     "wx.notfound": "City not found",
     "wx.offline":  "Offline",
     "wx.waiting":  "waiting…",
+    "alarm.title":    "Alarm",
+    "alarm.snooze":   "Snooze {n}m",
+    "alarm.dismiss":  "Dismiss",
     "sc.info.tagline": "A static operating system in your browser.",
     "sc.info.shortcuts": "Shortcuts",
     "sc.info.repo": "Source code",
@@ -146,8 +149,10 @@ window.OROS_TRANSLATIONS = {
     "app.calendar": "Calendar",
 	"app.prompter": "Prompter",
     "app.characters": "Characters",
+    "app.quote": "Quote",
     "app.storage": "Storage",
-    "app.habits": "Habits"
+    "app.habits": "Habits",
+    "app.files": "Files"
   },
 
   el: {
@@ -257,6 +262,9 @@ window.OROS_TRANSLATIONS = {
     "wx.notfound": "Δεν βρέθηκε η πόλη",
     "wx.offline":  "Εκτός σύνδεσης",
     "wx.waiting":  "σε αναμονή…",
+    "alarm.title":    "Ειδοποίηση",
+    "alarm.snooze":   "Αναβολή {n}′",
+    "alarm.dismiss":  "Σταμάτα",
     "sc.info.tagline": "Ένα στατικό λειτουργικό στον browser σου.",
     "sc.info.shortcuts": "Συντομεύσεις",
     "sc.info.repo": "Πηγαίος κώδικας",
@@ -288,8 +296,10 @@ window.OROS_TRANSLATIONS = {
     "app.calendar": "Ημερολόγιο",
 	"app.prompter": "Γεννήτρια θεμάτων",
     "app.characters": "Χαρακτήρες",
+    "app.quote": "Προσφορά",
     "app.storage": "Αποθήκη",
-    "app.habits": "Συνήθειες"
+    "app.habits": "Συνήθειες",
+    "app.files": "Αρχεία"
 	 }
   };
 

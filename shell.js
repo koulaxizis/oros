@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.34.03 — Shell logic
+// orOS Core v0.34.05 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.34.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.34.05";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -353,20 +353,94 @@
   // Restore: replays the NEWEST snapshot through orosSync.importData
   // — the same guarded/merge-aware apply path a cloud pull uses.
   // Restored data is marked dirty → reaches the cloud on next push.
+  // R14 fix: native window.confirm() RETIRED — themed <dialog> with
+  // the snapshot's own date (the user must SEE what they restore),
+  // danger-styled confirm, Esc + backdrop close. Zero new i18n keys:
+  // reuses sync.restore / sync.restore.confirm / wx.cancel / sync.working.
   function restoreLastSnapshot() {
     var snaps = readSnapshots();
     if (!snaps.length) return;
     var snap = snaps[snaps.length - 1];
 
-    if (!window.confirm(window.t("sync.restore.confirm"))) return;
+    var stale = document.getElementById("restoresnap-dialog");
+    if (stale) stale.remove();
 
-    try {
-      var payload = { shell: snap.data.shell, apps: snap.data.apps };
-      window.orosSync.importData(JSON.stringify(payload));
-      setSyncMsg("ok", "sync.ok.snapshot.restored");
-    } catch (e) {
-      handleSyncError(e);
-    }
+    var dlg = document.createElement("dialog");
+    dlg.id = "restoresnap-dialog";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:20px;" +
+      "width:min(360px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.noValidate = true;
+
+    var title = document.createElement("h3");
+    title.style.cssText = "margin:0 0 6px;font-size:14px;";
+    title.textContent = window.t("sync.restore");
+    form.appendChild(title);
+
+    var hint = document.createElement("div");
+    hint.style.cssText =
+      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin-bottom:14px;";
+    hint.textContent = window.t("sync.restore.confirm");
+    form.appendChild(hint);
+
+    // Snapshot identity — restored WHAT, taken WHEN.
+    var dateEl = document.createElement("div");
+    dateEl.style.cssText =
+      "font-size:12.5px;font-weight:600;margin-bottom:14px;" +
+      "font-variant-numeric:tabular-nums;";
+    dateEl.textContent = new Date(snap.at).toLocaleString(
+      state.lang === "el" ? "el-GR" : "en-GB",
+      { day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit" });
+    form.appendChild(dateEl);
+
+    var btnRow = document.createElement("div");
+    btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.style.cssText =
+      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    cancelBtn.textContent = window.t("wx.cancel");
+    cancelBtn.addEventListener("click", function () { dlg.close(); });
+    btnRow.appendChild(cancelBtn);
+
+    var okBtn = document.createElement("button");
+    okBtn.type = "submit";
+    okBtn.style.cssText =
+      "border:1px solid #e06c75;border-radius:8px;background:#e06c75;" +
+      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+    okBtn.textContent = window.t("sync.restore");
+    btnRow.appendChild(okBtn);
+
+    form.appendChild(btnRow);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      okBtn.disabled = true;
+      okBtn.textContent = window.t("sync.working");
+      try {
+        var payload = { shell: snap.data.shell, apps: snap.data.apps };
+        window.orosSync.importData(JSON.stringify(payload));
+        dlg.close();
+        setSyncMsg("ok", "sync.ok.snapshot.restored");
+      } catch (e2) {
+        dlg.close();
+        handleSyncError(e2);
+      }
+    });
+
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
   
     // ---------- 5d. Backup folder (File System Access API) ----------
@@ -2776,7 +2850,7 @@
     var title = document.createElement("div");
     title.style.cssText = "font-size:11px;font-weight:800;text-transform:uppercase;" +
       "letter-spacing:1px;color:var(--accent);";
-    var titleText = window.orosLang === "el" ? "Ειδοποίηση" : "Alarm";
+    var titleText = window.t("alarm.title");
     title.textContent = titleText;
     var label = document.createElement("div");
     label.style.cssText = "font-size:13.5px;font-weight:700;margin-top:2px;" +
@@ -2799,9 +2873,8 @@
     var SNOOZE_MIN = 9;
     var snoozeBtn = document.createElement("button");
     snoozeBtn.type = "button";
-    snoozeBtn.textContent = window.orosLang === "el"
-      ? "Αναβολή " + SNOOZE_MIN + "′"
-      : "Snooze " + SNOOZE_MIN + "m";
+    snoozeBtn.textContent = window.t("alarm.snooze")
+      .replace("{n}", String(SNOOZE_MIN));
     snoozeBtn.style.cssText =
       "flex-shrink:0;border:1px solid var(--border);background:transparent;" +
       "color:var(--text-dim);font:inherit;font-weight:700;font-size:12.5px;" +
@@ -2816,7 +2889,7 @@
     });
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = window.orosLang === "el" ? "Σταμάτα" : "Dismiss";
+    btn.textContent = window.t("alarm.dismiss");
     btn.style.cssText =
       "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft);" +
       "color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;" +

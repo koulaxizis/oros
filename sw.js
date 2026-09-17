@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.27.0 — Service Worker
+// orOS Core v0.34.02 — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
@@ -77,6 +77,10 @@ var PRECACHE_URLS = [
   "habits/index.html",
   "habits/habits.css",
   "habits/habits.js",
+  "files/",
+  "files/index.html",
+  "files/files.css",
+  "files/files.js",
   "characters/",
   "characters/index.html",
   "characters/characters.css",
