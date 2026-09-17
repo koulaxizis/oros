@@ -101,6 +101,7 @@
       "confirm.coldel":   "Delete this column and all its cards?",
       "confirm.lbldel":   "Delete this label? It will be removed from all cards.",
       "confirm.boarddel": "Delete this board and ALL its data?",
+      "confirm.no":       "Cancel",
       "new.col":          "New column",
       "new.board":        "New board",
       "update.checking": "Checking for update…"
@@ -169,6 +170,7 @@
       "confirm.coldel":   "Διαγραφή στήλης και όλων των καρτών της;",
       "confirm.lbldel":   "Διαγραφή αυτής της ετικέτας; Θα αφαιρεθεί από όλες τις κάρτες.",
       "confirm.boarddel": "Διαγραφή αυτού του board και ΟΛΩΝ των δεδομένων του;",
+      "confirm.no":       "Άκυρο",
       "new.col":          "Νέα στήλη",
       "new.board":        "Νέο board",
       "update.checking": "Έλεγχος για ενημερώσεις…",
@@ -184,6 +186,66 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
   function $(id) { return document.getElementById(id); }
+  
+    // ---------- 1b. Themed confirm (R14) ----------
+  // Native confirm() is RETIRED (Bible R14): a themed <dialog> built
+  // from the app palette. Esc/backdrop/click-outside = cancel;
+  // focus starts on CANCEL so Enter never fires the destructive act.
+  function confirmDialog(msgKey, onYes) {
+    var stale = document.getElementById("kanban-confirm");
+    if (stale) stale.remove();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "kanban-confirm";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:18px;" +
+      "width:min(340px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.method = "dialog";
+
+    var msg = document.createElement("div");
+    msg.style.cssText = "font-size:13px;line-height:1.5;margin-bottom:16px;";
+    msg.textContent = t(msgKey);
+    form.appendChild(msg);
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+
+    var no = document.createElement("button");
+    no.type = "button";
+    no.style.cssText =
+      "border:1px solid var(--border);border-radius:7px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    row.appendChild(no);
+
+    var yes = document.createElement("button");
+    yes.type = "submit";
+    yes.style.cssText =
+      "border:1px solid var(--danger);border-radius:7px;background:transparent;" +
+      "color:var(--danger);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    yes.textContent = t("card.delete");  // reuse existing "Delete"/"Διαγραφή"
+    row.appendChild(yes);
+
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      dlg.close();
+      onYes();
+    });
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { no.focus(); }, 50);
+  }
 
   // ---------- 2. Μοντέλο δεδομένων, αποθήκευση, migration ----------
   // v5 STRUCTURE:
@@ -207,9 +269,13 @@
   var state = null;
   var renderQueued = false;
 
-  var SWATCH_COLORS = ["#d4af37", "#4caf50", "#f44336", "#2196f3",
-                       "#ff9800", "#9c27b0", "#e91e63", "#03a9f4"];
-  var FALLBACK_COLOR = "#d4af37";
+  // §14 LABEL_COLORS — shared 8-color vocabulary (Notes/To-Do/
+  // Mood/Habits). Audit #28: kanban shipped a private palette;
+  // unified. Stored label/board colors are data — untouched;
+  // only the picker options change.
+  var SWATCH_COLORS = ["#e06c75", "#ecc75f", "#87cf3e", "#4fc4cf",
+                       "#6d4aff", "#e09ecf", "#f28c5a", "#9aa4b0"];
+  var FALLBACK_COLOR = "#ecc75f";
 
   // --- Board-level helpers ---
   function currentBoard() {
@@ -292,7 +358,7 @@
   }
 
   // ========== ΜΕΤΑΓΡΑΦΗ v4 → v5 ==========
-  // Additive migration:包裹 παλαιό single-board state μέσα σε νέο multi-board structure
+  // Additive migration: wraps παλαιό single-board state μέσα σε νέο multi-board structure
   // v4 → v5: το υπάρχον state τυλίγεται σε board.id="migrated-" + timestamp
   function migrate(data) {
     // Legacy v1-v4 SINGLE-BODY FORMAT detection:
@@ -492,7 +558,7 @@
   //     διαγράψει το board (deleted[boardId] με ts νεότερο από το
   //     board.mtime), το board ΠΕΘΑΙΝΕΙ μαζί με ΟΛΑ τα περιεχόμενά
   //     του (columns, cards, labels) — cascade, κανένα zombie.
-  //   · Ordering boards — η πλευρά με το μεγαλύτερο ΡΙΖΙΚΟ om
+  //   · Ordering boards — η πλευρά με το μεγαλύτερο ROOT om — η πλευρά με το μεγαλύτερο ROOT om
   //     προσφέρει τη σειρά των boards (ίσος κανόνας με στηλές).
   //     Η ενεργή επιλογή board (activeBoardId) είναι DEVICE-LOCAL —
   //     ΔΕΝ ταξιδεύει στο merge: καθε συσκευή κρατά το board που
@@ -517,26 +583,18 @@
     return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
   }
 
-  // --- Τοπικά tombstones ΟΛΩΝ των boards (root-level map ---
+    // --- Τοπικά tombstones ΟΛΩΝ των boards (root-level map ---
   // board διαγραφές ζουν στο ΔΙΚΟ τους state.deleted με το board.id
   // ως key — ψάχνουμε global κάθε φορά που χρειάζεται)
-  function boardTombstoneOf(st, boardId) {
-    if (!st || !st.boards) return 0;
-    for (var i = 0; i < st.boards.length; i++) {
-      var d = st.boards[i].deleted || {};
-      if (d[boardId] !== undefined) return d[boardId];
-    }
-    return 0;
-  }
 
-  // ΠΡΟΣΟΧΗ: το board-level tombstone ΕΧΕΙ смысλ только ως marker
+  // ΠΡΟΣΟΧΗ: το board-level tombstone ΕΧΕΙ νόημα μόνο ως marker смысл μόνο ως marker
   // στο ίδιο το board object. Η τυπική ροή: deleteBoard() γράφει
   // tombstone στο ΕΝΕΡΓΟ board αν είναι το ίδιο, αλλιώς στο δικό
   // του deleted map ΔΕΝ υπάρχει — το board απομακρύνεται απλώς
   // από το boards[]. Στο merge, ένα board που λείπει από μία πλευρά
   // ΔΕΝ σημαίνει διαγραφή (μπορεί να είναι απλώς ακόμα-μη-φτάσιμο
   // νέο board). Γι' αυτό κρατάμε εξωτερικό root map: βλ.
-  // ROOT_TOMB ниже.
+  // ROOT_TOMB παρακάτω.
 
   // Root-level board tombstones: state.boardDeleted = { id: ts }.
   // ΑΝΩΤΑΤΟ επίπεδο — ένα board θεωρείται νεκρό αν υπάρχει εδώ
@@ -548,11 +606,11 @@
     var ts = rootTomb[board.id];
     return ts === undefined || (board.mtime || 0) > ts;
   }
-  // Σημείωση: επιτρέπουμε formalsymμετρική συνθήκη mtime > ts για
+  // Σημείωση: επιτρέπουμε πλήρως συμμετρική συνθήκη mtime > ts για
   // συνέπεια με το entAlive — τοπικά ποτέ δεν την προκαλούμε (η
   // διαγραφή board είναι μονόδρομη), αλλά δεν βλάπτει.
 
-  // --- Пер-BOARD merge: ΟΛΟΙ οι κανόνες v0.5, με κάποιο board ως
+  // --- Per-BOARD merge: ΟΛΟΙ οι κανόνες v0.5, με κάποιο board ως
   // εύρος (scope). Πρώην mergeKanbanStates τοπικό σώμα — τώρα
   // mergeBoardBody(boardA, boardB) → merged board | null. ---
   function mergeEntityMaps(aDel, bDel) {
@@ -755,7 +813,7 @@
 
     // Board tombstones: root maps ένωση με max ts. Τα boards
     // κρατούν το δικό τους board.deleted για τις οντότητες τους·
-    // το state.boardDeleted αφορά ΜΟΝΟ τα boards самих.
+    // το state.boardDeleted αφορά ΜΟΝΟ τα boards.
     var boardTomb = mergeEntityMaps(a.boardDeleted, b.boardDeleted);
     var cutoff = Date.now() - TOMB_LIFETIME_MS;
     Object.keys(boardTomb).forEach(function (id) {
@@ -804,7 +862,7 @@
     // → null → fallback σε plain apply από το sync.js
     if (mergedBoards.length === 0) return null;
 
-    // Σειρά boards: ref = πλευρά με μεγαλύτερο РИΖΙΚΟ om
+    // Σειρά boards: ref = πλευρά με μεγαλύτερο ROOT om
     orderEntities(mergedBoards,
       pickRef(a.boards || [], b.boards || [], a.om || 0, b.om || 0));
 
@@ -1267,6 +1325,16 @@
     state.boards.push(board);
     state.activeBoardId = board.id;
 
+    // #33: consistent UX with switchBoard — reset session filters
+    searchQuery = "";
+    activeFilters = [];
+    var sb = $("search");
+    if (sb) sb.value = "";
+    var fb = $("filter-btn");
+    if (fb) fb.classList.remove("has-filters");
+    var fp = $("filter-pop");
+    if (fp) fp.hidden = true;
+
     save();
     renderAll();
     showToast(t("toast.boardadded"), true);
@@ -1315,9 +1383,9 @@
     if (!host) return;
     host.innerHTML = "";
 
-    // Ζωντανά πρώτα, μετά τα αρχειοθετημένα με τηνου their σειρά
+          // Ζωντανά πρώτα, μετά τα αρχειοθετημένα με τη σειρά τους
     var live    = state.boards.filter(function (b) { return !b.archived; });
-    var archived = state.boards.filter(function (b) { return  !!b.archived; });
+    var archived = state.boards.filter(function (b) { return !!b.archived; });
 
     if (live.length > 0) host.appendChild(makeManageSection(live, false));
     if (archived.length > 0) host.appendChild(makeManageSection(archived, true));
@@ -1560,15 +1628,17 @@
 
     save();
     renderAll();
+    renderManageList();  // #32: keep manage dialog in sync
     showToast(t("toast.boardadded"), false);
   }
 
   function deleteBoard(boardId) {
     var bd = boardByIdIn(state.boards, boardId);
     if (!bd) return;
-    if (!confirm(t("confirm.boarddel"))) return;
 
-    pushUndo("toast.undone");
+    confirmDialog("confirm.boarddel", function () {
+
+      pushUndo("toast.undone");
 
     // Root-level board tombstone (state.boardDeleted) — το ΜΟΝΟ σημείο που
     // κοιτάζει το mergeKanbanStates/boardAlive. Tombstones μέσα στο bd
@@ -1587,8 +1657,9 @@
       state.activeBoardId = state.boards.length > 0 ? state.boards[0].id : null;
     }
 
-        save(); renderAll();
-    showToast(t("toast.boarddel"), false);
+            save(); renderAll();
+        showToast(t("toast.boarddel"), false);
+      });
   }
 
   // Archive = soft-hide (browser-bar αποκρύβεται από dropdown), ΟΧΙ διαγραφή.
@@ -2273,8 +2344,9 @@
         '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
       del.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        if (!confirm(t("confirm.lbldel"))) return;
-        deleteLabel(label.id);
+        confirmDialog("confirm.lbldel", function () {
+          deleteLabel(label.id);
+        });
       });
       item.appendChild(del);
 
@@ -2286,6 +2358,7 @@
   function deleteLabel(labelId) {
     var board = currentBoard();
     if (!board) return;
+    pushUndo("toast.labeldel");
     board.labels = board.labels.filter(function (l) { return l.id !== labelId; });
     board.columns.forEach(function (col) {
       col.cards.forEach(function (card) {
@@ -2302,7 +2375,7 @@
     if (!$("filter-pop").hidden) renderFilterPop();
     var card = editingCard();
     if (card) renderCardLabels(card);
-    showToast(t("toast.labeldel"), false);
+    // toast + Undo button from pushUndo() above
   }
 
   // ---------- 8. Card drag & drop (board-scoped) ----------
@@ -2718,19 +2791,20 @@
     var cDelete = $("c-delete");
     if (cDelete) {
       cDelete.addEventListener("click", function () {
-        if (!confirm(t("confirm.carddel"))) return;
-        var col = colById(editingColId);
-        if (col) {
-          pushUndo("toast.deleted");
-          var board = currentBoard();
-          tombstone(board, editingCardId);       // board-scoped tombstone
-          col.cards = col.cards.filter(function (c) { return c.id !== editingCardId; });
-        }
-        editingColId = null;
-        editingCardId = null;
-        var dlg = $("dlg-card");
-        if (dlg) dlg.close();
-        save(); scheduleRender();
+        confirmDialog("confirm.carddel", function () {
+            var col = colById(editingColId);
+          if (col) {
+            pushUndo("toast.deleted");
+            var board = currentBoard();
+            tombstone(board, editingCardId);
+            col.cards = col.cards.filter(function (c) { return c.id !== editingCardId; });
+          }
+          editingColId = null;
+          editingCardId = null;
+          var dlg = $("dlg-card");
+          if (dlg) dlg.close();
+          save(); scheduleRender();
+        });
       });
     }
 
@@ -2812,31 +2886,25 @@
       colDelete.addEventListener("click", function () {
         var col = colById(editingColId);
         if (!col) return;
-        if (!confirm(t("confirm.coldel"))) return;
-
-        pushUndo("toast.coldel");
-        
-        var board = currentBoard();
-        if (!board) return;
-        
-        // Cascade tombstones: διαγραφή στήλης = διαγραφή ΟΛΩΝ των καρτών της
-        tombstone(board, col.id);
-        col.cards.forEach(function (c) { tombstone(board, c.id); });
-        
-        board.columns = board.columns.filter(function (c) { return c.id !== col.id; });
-
-        if (board.columns.length === 0) {
-          var fresh = newColumnObj(t("new.col"));
-          fresh.pos = 0;
-          board.columns.push(fresh);
-        }
-        board.om = Date.now();
-        board.columns.forEach(function (c, i) { c.pos = i; });
-
-        editingColId = null;
-        var dlg = $("dlg-col");
-        if (dlg) dlg.close();
-        save(); renderAll();
+        confirmDialog("confirm.coldel", function () {
+          pushUndo("toast.coldel");
+          var board = currentBoard();
+          if (!board) return;
+          tombstone(board, col.id);
+          col.cards.forEach(function (c) { tombstone(board, c.id); });
+          board.columns = board.columns.filter(function (c) { return c.id !== col.id; });
+          if (board.columns.length === 0) {
+            var fresh = newColumnObj(t("new.col"));
+            fresh.pos = 0;
+            board.columns.push(fresh);
+          }
+          board.om = Date.now();
+          board.columns.forEach(function (c, i) { c.pos = i; });
+          editingColId = null;
+          var dlg = $("dlg-col");
+          if (dlg) dlg.close();
+          save(); renderAll();
+        });
       });
     }
 
@@ -2854,7 +2922,17 @@
   }
 
   function boot() {
-    document.documentElement.setAttribute("lang", LANG);
+    // BOOT MARKER (Part VII §16 + Checklist F): stale-bundle
+    // detection (R3/R11) + lang attr at boot (F: i18N).
+    var SCRIPT_V = "";
+    (function () {
+      var m = ((document.currentScript && document.currentScript.src) || "")
+        .match(/[?&]v=([^&#]+)/);
+      SCRIPT_V = m ? m[1] : "";
+      document.documentElement.lang = LANG;
+      console.log("kanban.js v" + (SCRIPT_V || "?") + " boot");
+    })();
+
     applyI18n();
     load();
     wire();

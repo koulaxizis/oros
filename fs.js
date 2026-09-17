@@ -106,8 +106,7 @@
 
   // ---------- Path plumbing ----------
   // Accepted form: "/internal/a/b.txt". Segments after the mount.
-  // Returns null for malformed paths. Empty segments [] = mount
-  // root (valid for ls/stat only).
+  // Returns [] for the mount root (valid for ls/stat), null for malformed.
 
   function parsePath(p) {
     if (typeof p !== "string" || p.charAt(0) !== "/") return null;
@@ -119,7 +118,7 @@
       if (s === "..") return null;          // no upward escapes
       segs.push(s);
     }
-    if (!segs.length) return [];            // "/" alone → malformed below
+    if (!segs.length) return [];            // "/" alone = mount root (VALID)
     if (segs[0] !== ROOT_DIR) return null;  // Wave 1: internal only
     return segs.slice(1);
   }
@@ -242,6 +241,7 @@
     if (!segs.length) return Promise.resolve();      // mount root exists
     return opfsMount(true)
       .then(function (m) { return opfsWalk(m, segs, true); })
+      .then(function () { markDirty(); })            // #16 FIX: mkdir marks dirty
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -283,6 +283,7 @@
           }
         });
       })
+      .then(function () { markDirty(); })            // #16 FIX: rm marks dirty
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -341,6 +342,7 @@
             .then(function () { return ctx.srcParent.removeEntry(srcLeaf.name); });
         });
       })
+      .then(function () { markDirty(); })              // #16 FIX: mv marks dirty
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -481,7 +483,7 @@
       if (!rec || !rec.dir) throw err("ENOENT", key);
       return idbKeys();
     }).then(function (keys) {
-      var prefix = key === ROOT_PATH ? key + "/" : key + "/";
+      var prefix = (key === ROOT_PATH) ? key + "/" : key + "/"; // #17 FIX: removed redundant ternary
       var seen = {}, names = {};
       var i, k;
       for (i = 0; i < keys.length; i++) {
@@ -546,7 +548,10 @@
       keys.forEach(function (k) {
         chain = chain.then(function () { return idbDel(k); });
       });
-      return chain.then(function () { return keys.length; });
+      return chain.then(function () {
+        markDirty();                           // #16 FIX: idb rm marks dirty
+        return keys.length;
+      });
     });
   }
 
@@ -576,7 +581,9 @@
           });
           return del;
         });
-        return chain;
+        return chain.then(function () {
+          markDirty();                           // #16 FIX: idb mv marks dirty
+        });
       });
     });
   }
@@ -705,7 +712,7 @@
         return { usage: est.usage || 0, quota: est.quota || 0, backend: mode };
       });
     }
-    return Promise.resolve({ usage: null, quota: null, backend: mode });
+    return Promise.resolve({ usage: null, quota: null, backend: mode || null }); // #18 FIX: handle pre-boot
   }
 
   // ---------- Public API ----------

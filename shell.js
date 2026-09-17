@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.34.05 — Shell logic
+// orOS Core v0.34.08 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.34.05";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.34.08";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -137,7 +137,8 @@
     prompter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/><line x1="21" y1="2" x2="21" y2="6"/><line x1="19" y1="4" x2="23" y2="4"/></svg>',
     characters: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     storage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>',
-    habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>'
+    habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>',
+    files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -1013,6 +1014,9 @@
       });
       wxFetch(false);        // silent: throttled, location is new
       wxRenderChip();
+      wxPushToApp();         // #S3-fix: a RUNNING Weather app adopts the
+                             // pulled prefs live — tray and app must never
+                             // show different locations.
     }
 
     // Pull-fed alarms: sanitize each (past/duplicate "once" items are
@@ -1045,6 +1049,128 @@
     if (window.orosSync) {
       window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet);
     }
+  }
+
+  // ---------- 9f. Files disk slice (Wave 3 glue) ----------
+  // The Files app exposes window.orosFilesDisk on its PARENT — i.e.
+  // THIS window. The engine slice is registered HERE so the disk
+  // travels even when the app is closed: the slice body is the
+  // last JSON snapshot of /internal, staged in localStorage.
+  // Transport stays 100% engine-owned: the cache is plaintext
+  // on-device only (same trust zone as every other slice);
+  // AES-GCM encryption happens inside sync.js, untouched.
+
+  var FD_CACHE_KEY   = "oros-files-disk-cache";
+  var FD_PENDING_KEY = "oros-files-disk-pending";
+
+  function fdLive() {
+    return (window.orosFilesDisk &&
+            typeof window.orosFilesDisk.snapshot === "function")
+      ? window.orosFilesDisk : null;
+  }
+
+  function fdCacheRead() {
+    try {
+      var raw = localStorage.getItem(FD_CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function fdCacheWrite(obj) {
+    try {
+      localStorage.setItem(FD_CACHE_KEY, JSON.stringify(obj));
+      return true;
+    } catch (e) {
+      // Quota exceeded (very large disks): keep the previous cache.
+      // Known blob-model limitation — future per-entry model removes it.
+      return false;
+    }
+  }
+
+  // DELIBERATELY not called from fdSliceGet: get() must be PURE —
+  // the engine records baselines from a second get() call after
+  // push, and a refresh there would inject a new "ts" and make
+  // the baseline mismatch forever (spurious park/push cycles).
+  var fdRefreshTimer = null;
+
+  function refreshFilesDiskCache() {
+    var d = fdLive();
+    if (!d) return;
+    d.snapshot().then(function (str) {
+      var obj;
+      try { obj = JSON.parse(str); } catch (e) { return; }
+      fdCacheWrite(obj);
+    }).catch(function () { /* snapshot failed — cache stays */ });
+  }
+
+  // Called by files.js on EVERY disk mutation (its markDirty hooks
+  // this). Engine dirty → 5s debounce coalesces bursts; cache
+  // refresh is 1s-debounced → always settled well before the push.
+  window.__orosFilesDiskTouched = function () {
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") {
+      window.orosSync.markDirty();
+    }
+    if (fdRefreshTimer) clearTimeout(fdRefreshTimer);
+    fdRefreshTimer = setTimeout(refreshFilesDiskCache, 1000);
+  };
+
+  // Consumed by files.js at boot — a remote that arrived while the
+  // app was closed (staged in the cache by fdSet + this flag).
+  window.__orosFilesTakePending = function () {
+    if (localStorage.getItem(FD_PENDING_KEY) !== "1") return null;
+    localStorage.removeItem(FD_PENDING_KEY);
+    return fdCacheRead();
+  };
+
+  function fdSliceGet() {
+    return fdCacheRead();
+  }
+
+  function fdSliceSet(data) {
+    var snap = data;
+    if (typeof data === "string") {
+      try { snap = JSON.parse(data); } catch (e) { return; }
+    }
+    if (!snap || snap.kind !== "oros-files-disk") return;
+
+    var d = fdLive();
+    if (d) {
+      // App open: its own applyRemote handles import + conflict
+      // dialog. The cache is NOT written blindly first — if the
+      // user keeps local, the cache must keep mirroring the LOCAL
+      // disk, never the rejected remote.
+      d.applyRemote(snap).then(function (applied) {
+        if (applied === false) {
+          refreshFilesDiskCache();   // local won — cache mirrors the disk
+        } else {
+          fdCacheWrite(snap);        // remote won — exact baseline match
+        }
+      }).catch(function () { /* app showed its own error toast */ });
+    } else {
+      // App closed: OPFS is untouchable from the shell. Stage the
+      // snapshot + flag it; files.js consumes it at next open and
+      // runs it through its own conflict-aware applyRemote.
+      fdCacheWrite(snap);
+      localStorage.setItem(FD_PENDING_KEY, "1");
+    }
+  }
+
+  function registerFilesDiskSlice() {
+    if (window.orosSync) {
+      window.orosSync.registerSlice(
+        "files-disk", fdSliceGet, fdSliceSet, FD_CACHE_KEY);
+    }
+  }
+
+  // Engine finished clean — the Files pill flips to "Disk synced".
+  function fdMarkCleanIfIdle() {
+    try {
+      if (window.orosFilesDisk &&
+          typeof window.orosFilesDisk.markClean === "function" &&
+          window.orosSync && !window.orosSync.isDirty()) {
+        window.orosFilesDisk.markClean();
+      }
+    } catch (e) {}
   }
 
   // v0.18.1 — taskbar toast: sync/shortcut messages must be VISIBLE,
@@ -1416,7 +1542,7 @@
         setSyncMsgRaw("dim", window.t("sync.working"));
         setSyncDot("syncing");
         window.orosSync.push()
-          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
+          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); fdMarkCleanIfIdle(); })
           .catch(handleSyncError);
       });
       actions.appendChild(pushBtn);
@@ -1899,7 +2025,7 @@
     if (!scRequireConnected()) return;
     setSyncDot("syncing");
     window.orosSync.push()
-      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
+      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); fdMarkCleanIfIdle(); })
       .catch(handleSyncError);
   }
 
@@ -2709,6 +2835,8 @@
 
   function initSyncIntegration() {
     registerShellSlice();
+    registerFilesDiskSlice();
+    setTimeout(refreshFilesDiskCache, 1500);   // warm the transport cache (app open or not)
 
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
@@ -2732,6 +2860,10 @@
         if (kind === "start") setSyncDot("syncing");
         else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
         else setSyncDot("synced", 4000);   // transient green, then auto
+      });
+      // Files disk: full reconcile finished clean → the pill follows.
+      window.orosSync.onAutoSync(function (kind) {
+        if (kind === "done") fdMarkCleanIfIdle();
       });
     }
 
@@ -3070,6 +3202,7 @@
         if (window.orosSync.isDirty()) {
           return window.orosSync.push()
             .then(function () {
+              fdMarkCleanIfIdle();
               setSyncMsgRaw("ok", (pulled
                   ? window.t("sync.ok.pull") + " (" + pulled + ") · "
                   : "") + window.t("sync.ok.push"));

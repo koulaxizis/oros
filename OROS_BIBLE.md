@@ -124,12 +124,16 @@ QUALITY GATES
       correctness confirmation before committing to production.
       All exports (manual/auto/snapshot) must capture EVERY
       parameter and state variation — zero-loss recovery.
-  R20 APP-LOCAL VERSION REFS: per-asset ?v= params in an app's
-    index.html are MANUAL (bump when shipping app-local
-    changes). APP_VERSION (shell.js), CACHE_VERSION (sw.js),
-    manifest version and ROOT-level ?v= stamps are CI-AUTOMATED
-    — never edit those by hand. shell.js APP_VERSION is the
-    single source of truth, bumped manually in a dev commit.
+  R20 VERSION REFS — FULLY AUTOMATED: every relative .css/.js
+    ref in EVERY index.html (root + all app folders) is
+    stamped ?v=<APP_VERSION> by the CI bot (directory scan,
+    overwrite semantics). NO ?v= param is ever edited by hand.
+    APP_VERSION (shell.js) is the only manual version — the
+    single source of truth, bumped in a dev commit; every
+    release-stamped ref derives from it. (2026-09, audit #24:
+    the old manual app-local ?v= rule described a pre-v3
+    workflow and was retired; every change rides a version
+    bump by Checklist A, so manual refs served no scenario.)
 R21 CHANGELOG DISCIPLINE: after EVERY significant change
     (bug fix batch, feature, wave, audit closure, architecture
     change), write a CHANGELOG.md entry BEFORE moving to the
@@ -359,10 +363,18 @@ UNIVERSAL CONTRACTS:
                 "/?source=pwa", standalone, maskable icons,
                 theme #1b1a18, bg #131820).
   Compliance  : Mood 100% (reference cert) · Weather 100% ·
-                Time 100% · Notes 100% · Prompter 97% (3
-                cosmetic patches pending) · Habits Waves 1–3
-                complete (v0.3.0, R18 acceptance pending) ·
-                OrosFS Wave 1 complete (fs.js v0.1.0).
+                Time 100% · Notes 100% · To-Do v0.4 merge-era
+                (2026-09 audit #17–#25: R14 batch, merge-safe
+                deleteLabel, midnight rollover, boot marker +
+                lang attr; 2 decisions pending) · Kanban v0.6
+                (2026-09 audit #26–#35: R14 batch ×4 confirm→
+                themed dialog, deleteLabel undo parity,
+                LABEL_COLORS unified, dead code removed,
+                mojibake cleanup, boot marker added; 2 decisions
+                pending) · Prompter 97% (3 cosmetic patches
+                pending) · Habits Waves 1–3 complete (v0.3.0,
+                R18 acceptance pending) · OrosFS Wave 1 complete
+                (fs.js v0.1.0).
 
 ──────────────────────────────────────
 7. APP REGISTRY
@@ -939,10 +951,11 @@ BUTTONS: deleting = danger styling; undo via toast action
      watchPalette present in app JS).
   5. Commit `git add -u` — "chore: sync orOS assets to vX
      (auto)". Bot commit re-runs once, no diff → terminates.
-  COVERED BY ACTION: CACHE_VERSION, manifest, root-level ?v=.
-  MANUAL BY DESIGN: shell.js APP_VERSION only; app-local ?v=
-  in <app>/index.html (R20). Bot never stages untracked files
-  — NEW files must be in the manual commit.
+  COVERED BY ACTION: CACHE_VERSION, manifest, and ?v= on every
+  relative .css/.js ref in EVERY index.html (root + all apps).
+  MANUAL BY DESIGN: shell.js APP_VERSION only — the single
+  trigger for everything else. Bot never stages untracked
+  files — NEW files must be in the manual commit.
 
 CHECKLIST A — VERSION BUMP (every release)
   1. shell.js: APP_VERSION (+ banner text, same commit).
@@ -964,7 +977,9 @@ CHECKLIST B — NEW APP INTEGRATION (9 items)
      FAILS the CI push until present
   8. Shortcut forwarding listener (Contract Β template, VII)
   9. CHANGELOG entry + Bible registry update (Part III)
-  NOTHING in bump-version.yml — ?v= auto-stamped (root refs).
+  NOTHING in bump-version.yml — ?v= auto-stamped everywhere
+  (root + all app index.html refs). APP_VERSION bump is the
+  only manual step of app integration, riding Checklist A.
 
 CHECKLIST C — SYNC ENGINE CHANGES: version bump only; re-read
   the DEPLOYED file (cachebust fetch) before diagnosing —
@@ -1069,6 +1084,17 @@ Apps
     per-habit weekly targets (Wave 4 — data model migration);
     streak freeze; Mood-habits bridge; PDF stats export;
     seeded bilingual starter habits.
+  · To-Do: undo-across-sync semantics — undo is a whole-state
+    replace stamped newest; if a sync pull lands inside the 5s
+    undo window, concurrent remote edits are clobbered.
+    Proposed: state = mergeTodoStates(current,
+    stampAll(snapshot)) — preserves remote-only entities.
+    Trade-off: list-delete fallback list may persist as ghost.
+    Design decision pending (audit #19).
+  · Kanban: createBoard UX parity — new board creation does
+    not reset searchQuery/activeFilters, causing "empty" new
+    board when filters are active. Fix proposed (K-7);
+    approve to align with switchBoard() behavior.
 New apps (planned, not started)
   · Pad (Notepad++-style: Python grammar, diff viewer).
   · Pagination/typesetting app (Scribus/InDesign/Affinity).
@@ -1088,6 +1114,23 @@ New apps (planned, not started)
     (409 throw broke first push/pull/changePassphrase on fresh
     installs); dead pwEpoch code removed; app.quote key; all
     core headers realigned; Bible registry/§19 synced.
+    + To-Do batch (findings #17–#25): three R14 native
+    confirms → themed dialog (task/list/label delete);
+    deleteLabel merge-safe (touch stamps + undo parity);
+    midnight rollover via visibilitychange; boot marker +
+    lang attr (Checklist F); LABEL_COLORS unified (§14).
+    Same batch: R20 retired-manual rule rewritten to full
+    automation (audit #24 — workflow v3 directory-scans every
+    index.html; manual app-local ?v= was a stale artifact),
+    workflow header comment fixed.
+    + Kanban batch (findings #26–#35): four R14 native
+    confirms → themed dialog (card/column/label/board delete);
+    deleteLabel undo parity; dead code (boardTombstoneOf)
+    removed; mojibake cleanup (7 foreign-char injections);
+    boot marker added; duplicateBoard manage-list refresh;
+    createBoard search/filter parity (pending approval);
+    LABEL_COLORS unified (§14). Pending: version clarifica-
+    tion (index.html shows ?v=0.34.03 vs 0.34.02 batch target).
   v0.32.15 — Alarm snooze (shell): +9min one-shot on shell
     alarm toast. Time closed v0.1.1d–e (quick-zone chips i18n,
     STR restoration — R11 lesson).

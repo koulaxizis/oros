@@ -799,7 +799,7 @@
       var rs = applySlice("shell", payload.shell);
       if (rs.changed) {
         try {
-          slices.shell.set(rs.data, { merged: false });
+          slices.shell.set(rs.data, { merged: !!slices.shell.merge });
           if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
           applied++;
         } catch (e) {}
@@ -1012,10 +1012,16 @@
         // this is what makes the NEXT pull able to tell "local has
         // unpushed work" (hash ≠ baseline) from "local is exactly
         // what we shipped" (hash == baseline → clean LWW apply OK).
+        // #S2-fix: baseline describes the PAYLOAD WE UPLOADED, not a
+        // re-read of live state. Between collectPayload() and this
+        // success moment, a user edit can change a slice — stamping
+        // THAT as "synced" (while the cloud holds the older payload)
+        // defeats the next pull's divergence guard and lets a remote
+        // LWW wipe the newer local edit. The payload snapshot taken
+        // at collect time is exactly what the cloud now holds.
         Object.keys(slices).forEach(function (name) {
-          var data;
-          try { data = slices[name].get(); } catch (e) { data = null; }
-          recordBaseline(name, data === null ? "null" : JSON.stringify(data));
+          var data = (name === "shell") ? payload.shell : payload.apps[name];
+          recordBaseline(name, (data === null || data === undefined) ? "null" : JSON.stringify(data));
         });
         clearDirty();
         return { ok: true };

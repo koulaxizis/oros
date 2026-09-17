@@ -1797,7 +1797,19 @@
     }
     savePrefs();
     renderAll();
-    if (info && info.merged) toast(t("toast.merged"));
+    if (info && info.merged) {
+      // #38: a merge that folded LOCAL edits into the result means
+      // the CLOUD copy is stale — push the merged state back so all
+      // devices converge on it. If the result equals the incoming
+      // payload (pure pull, nothing local contributed), skip the
+      // push — the cloud already holds that exact state.
+      var after = JSON.stringify({
+        ver: state.ver, notebooks: state.notebooks, pages: state.pages,
+        labels: state.labels, tombs: state.tombs
+      });
+      if (after !== incoming) markSyncDirty();
+      toast(t("toast.merged"));
+    }
   }
 
   function registerNotesSlice() {
@@ -2095,6 +2107,15 @@
   }
 
   // ---------- Boot ----------
+  // BOOT MARKER (Bible Part VII §16 + Checklist F): stale-bundle
+  // detection (R3/R11). Printed BEFORE any heavy work so a stalled
+  // boot is instantly visible in the console.
+  (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "")
+      .match(/[?&]v=([^&#]+)/);
+    console.log("notes.js v" + (m ? m[1] : "?") + " boot");
+  })();
+
   loadPrefs();
   loadData();
   applyI18n();

@@ -237,9 +237,24 @@
   }
   function $(id) { return document.getElementById(id); }
 
-  var SWATCH_COLORS = ["#d4af37", "#4caf50", "#f44336", "#2196f3",
-                       "#ff9800", "#9c27b0", "#e91e63", "#03a9f4"];
-  var FALLBACK_COLOR = "#d4af37";
+  // BOOT MARKER (Part VII §16 + Checklist F): stale-bundle
+  // detection (R3/R11) + lang attr at boot (F: i18N).
+  var SCRIPT_V = "";
+  (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "")
+      .match(/[?&]v=([^&#]+)/);
+    SCRIPT_V = m ? m[1] : "";
+    document.documentElement.lang = LANG;
+    console.log("todo.js v" + (SCRIPT_V || "?") + " boot");
+  })();
+
+  // §14 LABEL_COLORS — shared 8-color vocabulary (Notes/To-Do/
+  // Mood/Habits). Audit #23: todo shipped a private palette;
+  // unified. Stored label colors are data — untouched; only the
+  // picker options change.
+  var SWATCH_COLORS = ["#e06c75", "#ecc75f", "#87cf3e", "#4fc4cf",
+                       "#6d4aff", "#e09ecf", "#f28c5a", "#9aa4b0"];
+  var FALLBACK_COLOR = "#ecc75f";
 
   // ---------- 2. Data model, storage, migration ----------
   // state = {

@@ -1,8 +1,9 @@
 name: Bump orOS version
 
-# FULLY AUTOMATED versioning — APP_VERSION is never hand-edited:
+# Version stamping is FULLY AUTOMATED — this workflow never
+# edits APP_VERSION itself:
 #   • push to main  → stamp assets to the CURRENT APP_VERSION
-#     (APP_VERSION itself is bumped MANUALLY in shell.js —
+#     (APP_VERSION is bumped MANUALLY in shell.js —
 #     that file is the single source of truth and is NEVER
 #     touched by this workflow)
 #   • manual run    → re-stamp on demand (same rules)
