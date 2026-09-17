@@ -53,11 +53,11 @@
   var STR = {
     en: {
       "cal.today": "Today",
-      "cal.dlg.ym": "{m} {y}",
+      "cal.prev": "Previous month",
+      "cal.next": "Next month",
       "wd": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       "months": ["January", "February", "March", "April", "May", "June",
                  "July", "August", "September", "October", "November", "December"],
-      "day.title": "{d} {m}",
       "day.today": "Today",
       "ev.add": "Add",
       "ev.dlg.new": "New event",
@@ -75,16 +75,18 @@
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
       "ev.alltime": "All day",
-      "ev.err.title": "Enter a title first"
+      "ev.err.title": "Enter a title first",
+      "ev.del.yes": "Delete",
+      "sync.merged": "Updated from sync"
     },
     el: {
       "cal.today": "Σήμερα",
-      "cal.dlg.ym": "{m} {y}",
+      "cal.prev": "Προηγούμενος μήνας",
+      "cal.next": "Επόμενος μήνας",
       "wd": ["Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ", "Κυρ"],
       "months": ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος",
                  "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος",
                  "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"],
-      "day.title": "{d} {m}",
       "day.today": "Σήμερα",
       "ev.add": "Προσθήκη",
       "ev.dlg.new": "Νέο συμβάν",
@@ -102,7 +104,9 @@
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
       "ev.alltime": "Όλη μέρα",
-      "ev.err.title": "Δώσε πρώτα έναν τίτλο"
+      "ev.err.title": "Δώσε πρώτα έναν τίτλο",
+      "ev.del.yes": "Διαγραφή",
+      "sync.merged": "Ενημερώθηκε από συγχρονισμό"
     }
   };
   function t(k) {
@@ -114,11 +118,54 @@
     for (var i = 0; i < els.length; i++) els[i].textContent = t(els[i].getAttribute("data-i18n"));
     var phs = document.querySelectorAll("[data-i18n-ph]");
     for (var j = 0; j < phs.length; j++) phs[j].placeholder = t(phs[j].getAttribute("data-i18n-ph"));
+    var airs = document.querySelectorAll("[data-i18n-aria]");
+    for (var k = 0; k < airs.length; k++) airs[k].setAttribute("aria-label", t(airs[k].getAttribute("data-i18n-aria")));
   }
+
+  // Boot marker (stale-bundle detection — R3/R11) + live lang attr
+  var SCRIPT_V = "";
+  (function () {
+    var m = (document.currentScript && document.currentScript.src || "")
+      .match(/[?&]v=([^&#]+)/);
+    SCRIPT_V = m ? m[1] : "";
+    document.documentElement.lang = LANG;
+    console.log("calendar.js v" + (SCRIPT_V || "?") + " boot");
+  })();
 
   function $(id) { return document.getElementById(id); }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // Lazy singleton toast (orOS standard: top-right, text node FIRST,
+  // optional action button SECOND, 5s auto-hide, single-slot).
+  var toastEl = null, toastTimer = null;
+  function hideToast() {
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    if (toastEl) toastEl.classList.remove("show");
+  }
+  function toast(text, actionLabel, actionFn) {
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.className = "app-toast";
+      document.body.appendChild(toastEl);
+    }
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    toastEl.textContent = "";               // wipe before append
+    toastEl.appendChild(document.createTextNode(text));
+    if (actionLabel && typeof actionFn === "function") {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "app-toast-btn";
+      b.textContent = actionLabel;
+      b.addEventListener("click", function () {
+        hideToast();
+        actionFn();
+      });
+      toastEl.appendChild(b);
+    }
+    toastEl.classList.add("show");
+    toastTimer = setTimeout(hideToast, 5000);
+  }
 
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
@@ -168,12 +215,10 @@
     markDirty();
   }
 
-  // Shell sync bridge: same pattern as the other orOS apps.
+  // Shell sync bridge — canonical __orosSyncApi funnel (Part VII).
   function markDirty() {
     try {
-      if (window.parent && window.parent.orosSync && window.parent.orosSync.markDirty) {
-        window.parent.orosSync.markDirty();
-      }
+      if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     } catch (e) {}
   }
 
@@ -378,6 +423,7 @@
     $("ev-note").value = existing ? existing.note : "";
     $("ev-del-row").className = "dlg-row" + (existing ? " show" : "");
     $("ev-dlg").showModal();
+    if (existing) setTimeout(function () { $("ev-delete").focus(); }, 50);
   }
 
   $("ev-allday").addEventListener("change", function () {
@@ -391,11 +437,18 @@
 
     $("ev-save").addEventListener("click", function () {
     var title = $("ev-title").value.trim();
-    if (!title) { alert(t("ev.err.title")); return; }
+    if (!title) {
+      var ti = $("ev-title");
+      ti.classList.add("invalid");
+      ti.focus();
+      setTimeout(function () { ti.classList.remove("invalid"); }, 1600);
+      return;
+    }
     if (!selDate) { $("ev-dlg").close(); return; }
 
     var time = $("ev-allday").checked ? null : $("ev-time").value;
     if (time && !/^\d{2}:\d{2}$/.test(time)) time = null;
+    if (time === "") time = null;   // empty string never reaches storage
 
     if (editingId) {
       var found = false;
@@ -450,15 +503,45 @@
 
   $("ev-delete").addEventListener("click", function () {
     if (!editingId) return;
-    if (!confirm(t("ev.delete.confirm"))) return;
+    var ev = null;
+    for (var i = 0; i < state.events.length; i++) {
+      if (state.events[i].id === editingId) { ev = state.events[i]; break; }
+    }
+    $("del-dlg-text").textContent =
+      (ev && ev.title ? ev.title : t("ev.untitled"));
+    $("del-dlg").showModal();
+    $("del-dlg-yes").focus();
+  });
+
+  $("del-dlg-yes").addEventListener("click", function () {
+    if (!editingId) { $("del-dlg").close(); return; }
     state.events = state.events.filter(function (e) { return e.id !== editingId; });
     state.deleted.push({ id: editingId, mtime: Date.now() });
     saveState();
     editingId = null;   // clear dangling state
+    $("del-dlg").close();
     $("ev-dlg").close();
     renderGrid();
     renderDay();
   });
+
+  $("del-dlg-no").addEventListener("click", function () {
+    $("del-dlg").close();
+  });
+
+  // Outside-click close (same pattern as #ev-dlg)
+  $("del-dlg").addEventListener("click", function (ev) {
+    if (ev.target === this) this.close();
+  });
+
+  /* ---------- 7b. Shell shortcut forwarding (Contract Β) ---------- */
+  document.addEventListener("keydown", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+    var p = window.parent;
+    if (!(p && p.orosShortcuts &&
+        typeof p.orosShortcuts.handle === "function")) return;
+    if (p.orosShortcuts.handle(e)) e.stopPropagation();
+  }, true);
 
   /* ---------- 8. Boot ---------- */
   loadState();
@@ -484,6 +567,19 @@
     renderTitle();
     selectDay(td);
   }, 30000);
+  // Immediate rollover check when the tab becomes visible again
+  // (battery-friendly — same guard as To-Do audit #20).
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    var td = todayYMD();
+    if (td === shownDay) return;
+    shownDay = td;
+    var n = new Date();
+    viewYear = n.getFullYear();
+    viewMonth = n.getMonth();
+    renderTitle();
+    selectDay(td);
+  });
 
   /* ---------- 9. Sync slice registration ---------- */
   // Same self-registration contract as todo/kanban/notes: the app
@@ -497,6 +593,30 @@
   // device regardless of processing order — the engine contract).
   // Tombstones beat events on ties (a delete must not resurrect).
   // A surviving NEWER event cancels its tombstone (resurrection).
+  // Strict merge-time sanitizers — DROP rows with invalid mtime.
+  // Never Date.now() inside merge: non-determinism (Storage #6 precedent).
+  function mergeSanitizeEv(e) {
+    if (!e || typeof e !== "object") return null;
+    if (typeof e.id !== "string" || !e.id) return null;
+    if (typeof e.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) return null;
+    if (typeof e.mtime !== "number" || !isFinite(e.mtime)) return null;
+    var time = (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time)) ? e.time : null;
+    return {
+      id: e.id,
+      date: e.date,
+      time: time,
+      title: (typeof e.title === "string" ? e.title : "").slice(0, 80),
+      note: (typeof e.note === "string" ? e.note : "").slice(0, 500),
+      mtime: e.mtime
+    };
+  }
+  function mergeSanitizeTomb(d) {
+    if (!d || typeof d !== "object") return null;
+    if (typeof d.id !== "string" || !d.id) return null;
+    if (typeof d.mtime !== "number" || !isFinite(d.mtime)) return null;
+    return { id: d.id, mtime: d.mtime };
+  }
+
   function mergeCalendars(local, remote) {
     var tomb = {};
     function takeTomb(d) {
@@ -515,9 +635,9 @@
     [local, remote].forEach(function (side) {
       if (!side || typeof side !== "object") return;
       (Array.isArray(side.deleted) ? side.deleted : [])
-        .map(sanitizeTomb).filter(Boolean).forEach(takeTomb);
+        .map(mergeSanitizeTomb).filter(Boolean).forEach(takeTomb);
       (Array.isArray(side.events) ? side.events : [])
-        .map(sanitizeEvent).filter(Boolean).forEach(takeEv);
+        .map(mergeSanitizeEv).filter(Boolean).forEach(takeEv);
     });
 
     var events = [], deleted = [];
@@ -537,7 +657,7 @@
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
   // (pull → set → push would loop; the engine owns dirtiness here).
-  function setFromSync(data) {
+  function setFromSync(data, info) {
     if (!data || typeof data !== "object" || !Array.isArray(data.events)) return;
     var evs = data.events.map(sanitizeEvent).filter(Boolean);
     var dels = (Array.isArray(data.deleted) ? data.deleted : [])
@@ -547,16 +667,31 @@
     renderTitle();
     renderGrid();
     renderDay();          // selDate-aware (guarded when null)
+    if (info && info.merged) toast(t("sync.merged"));   // receipt, not "Saved"
   }
 
+  // Canonical dirty funnel (Part VII) — created BEFORE registration,
+  // even when sync is absent (dirty becomes a safe no-op).
+  var syncApi = (window.parent && window.parent.orosSync) || window.orosSync;
+  window.__orosSyncApi = {
+    _suppress: false,
+    dirty: function () {
+      if (this._suppress) return;
+      if (syncApi && typeof syncApi.markDirty === "function") syncApi.markDirty();
+    }
+  };
+
   try {
-    if (window.parent && window.parent.orosSync &&
-        typeof window.parent.orosSync.registerSlice === "function") {
-      window.parent.orosSync.registerSlice(
+    if (syncApi && typeof syncApi.registerSlice === "function") {
+      syncApi.registerSlice(
         "calendar",
         function () {     // getter: localStorage is the durable truth
-          try { return JSON.parse(localStorage.getItem(DATA_KEY)) || state; }
-          catch (e) { return state; }
+          try {
+            return JSON.parse(localStorage.getItem(DATA_KEY)) ||
+              { ver: 1, events: [], deleted: [] };
+          } catch (e) {
+            return { ver: 1, events: [], deleted: [] };
+          }
         },
         setFromSync,
         DATA_KEY,          // persisted → closed-app proxies on next boots

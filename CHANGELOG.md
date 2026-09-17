@@ -1431,3 +1431,37 @@ at a time, byte-verified OLD/NEW patches):
 - If GitHub Action fails: manual stamp via `sed` on sw.js + manifest + index.html
 - If Writer 404 blocks: remove `writer/` entries from PRECACHE_URLS temporarily
 - If sync regression: revert `changePassphrase` patch (`null` → `{ok:true}`)
+
+## [Calendar] v0.1.1 — Deep audit batch (#C1–#C14)
+
+### Critical
+- #C1 R14 breach ×2: native alert() + confirm() → inline title
+  validation (red border flash + focus) + themed delete-confirm
+  dialog (#del-dlg, outside-click + Esc, Delete focused).
+- #C2 Contract Β: shortcut forwarding listener added (capture phase).
+- #C3 Boot marker (SCRIPT_V + console) + live lang attr.
+
+### Serious
+- #C4 Strict merge-time sanitizers (mergeSanitizeEv/Tomb): rows with
+  invalid mtime are DROPPED — no Date.now() inside merge (Storage #6
+  precedent). Load-time sanitizers stay lenient for legacy blobs.
+- #C5 Getter deep-copy fallback ({ver:1,events:[],deleted:[]} instead
+  of live state reference on parse failure).
+- #C6 Touch targets ≥44px (cal-prev/next, nav-mini, mini).
+
+### Minor
+- #C7 Dead i18n keys removed (cal.dlg.ym, day.title).
+- #C8 time "" → null before storage.
+- #C9 Merged-receipt toast ("Updated from sync") + app toast
+  singleton (top-right, text-first, 5s, single-slot).
+- #C10 Canonical __orosSyncApi dirty funnel (_suppress).
+- #C11 Delete button focus in edit dialog.
+- #C12 aria-labels localized (cal.prev/cal.next, data-i18n-aria).
+- #C13 visibilitychange midnight rollover (To-Do #20 parity).
+- #C14 ?v=0.34.05 refs recorded (CI stamps on next push — R20).
+
+### Files touched
+calendar/calendar.js · calendar/index.html · calendar/calendar.css
+
+### Verification pending (R19)
+Paste-back of all three files for explicit correctness confirmation before commit.

@@ -12,9 +12,9 @@
     <!-- ===== Month navigation ===== -->
     <header id="cal-top">
       <div id="cal-nav">
-        <button id="cal-prev" type="button" aria-label="‹">‹</button>
+        <button id="cal-prev" type="button" data-i18n-aria="cal.prev">‹</button>
         <button id="cal-today" type="button" class="nav-mini" data-i18n="cal.today"></button>
-        <button id="cal-next" type="button" aria-label="›">›</button>
+        <button id="cal-next" type="button" data-i18n-aria="cal.next">›</button>
       </div>
       <h2 id="cal-title"></h2>
     </header>
@@ -54,6 +54,17 @@
     </div>
     <div class="dlg-row" id="ev-del-row">
       <button id="ev-delete" type="button" class="btn danger" data-i18n="ev.delete"></button>
+    </div>
+  </dialog>
+
+  <!-- Delete confirmation (R14 themed dialog) -->
+  <dialog id="del-dlg">
+    <h3 data-i18n="ev.delete"></h3>
+    <p id="del-dlg-text" class="del-name"></p>
+    <p class="del-text" data-i18n="ev.delete.confirm"></p>
+    <div class="dlg-row">
+      <button id="del-dlg-yes" type="button" class="btn danger" data-i18n="ev.del.yes"></button>
+      <button id="del-dlg-no" type="button" class="btn" data-i18n="ev.cancel"></button>
     </div>
   </dialog>
 
