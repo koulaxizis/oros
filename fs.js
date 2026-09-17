@@ -307,7 +307,7 @@
             });
         });
       });
-      return chain.then(function () { return out; });
+      return chain;
     });
   }
 
@@ -380,7 +380,7 @@
             });
         });
       });
-      return chain;
+      return chain.then(function () { return out; });   // FIX: was "return chain;"
     });
   }
 

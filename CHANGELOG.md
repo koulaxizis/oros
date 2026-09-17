@@ -1065,6 +1065,11 @@ FIXED (Wave 1 hotfix)
   calls were failing with a misleading EINVAL "/internal".
 - exportDisk(): empty OPFS disk (mount never created) now yields
   an EMPTY export instead of NotFoundError.
+  
+  FIXED (Wave 1 hotfix 2)
+- opfsCollect() never returned the collected array — the chain
+  resolved to undefined, so exportDisk() yielded entries: undefined.
+  Now returns chain.then(() => out).
 
 ────────────────────────────────────────────────────────────
 SESSION HANDOFF — template
