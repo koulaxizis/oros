@@ -86,7 +86,6 @@
       "range.30": "30d",
       "range.90": "90d",
       "range.all": "All",
-      "stats.overview": "Overview",
       "stats.per.habit": "By habit",
       "stats.insights": "Insights",
       "stats.total.comps": "Check-offs",
@@ -96,7 +95,6 @@
       "stats.current": "current",
       "stats.longest": "longest",
       "stats.rate": "{n}% completed",
-      "stats.empty": "No check-offs in this range yet.",
       "ins.none": "Not enough data for insights yet — keep checking in.",
       "ins.top": "{n} is your most consistent habit ({p}% completion).",
       "ins.perfect": "You completed every scheduled habit on {n} day(s).",
@@ -150,7 +148,6 @@
       "range.30": "30μ",
       "range.90": "90μ",
       "range.all": "Όλα",
-      "stats.overview": "Συνολικά",
       "stats.per.habit": "Ανά συνήθεια",
       "stats.insights": "Ευρήματα",
       "stats.total.comps": "Καταγραφές",
@@ -160,10 +157,9 @@
       "stats.current": "τρέχον",
       "stats.longest": "μεγαλύτερο",
       "stats.rate": "{n}% ολοκλήρωση",
-      "stats.empty": "Καμία καταγραφή σε αυτό το εύρος ακόμα.",
       "ins.none": "Ακόμα δεν υπάρχουν αρκετά δεδομένα για ευρήματα — συνέχισε!",
       "ins.top": "Το «{n}» είναι η πιο σταθερή σου συνήθεια ({p}% ολοκλήρωση).",
-      "ins.perfect": "Τες έκανες όλες στις προγραμματισμένες συνήθειες σε {n} μέρες.",
+      "ins.perfect": "Ολοκλήρωσες όλες τις προγραμματισμένες συνήθειες σε {n} μέρες.",
       "ins.up": "Ανοδική τάση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα.",
       "ins.down": "Μικρή πτώση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα."
     }
@@ -868,12 +864,7 @@
     var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
     return p ? new Date(+p[1], +p[2] - 1, +p[3]) : null;
   }
-  function rawComps() {
-    try {
-      var db = JSON.parse(localStorage.getItem("oros-habits-data") || "{}");
-      return Array.isArray(db.comps) ? db.comps : [];
-    } catch (e) { return []; }
-  }
+
   function rangeStart() {
     if (!statRange) {                    // all-time → earliest completion
       var out = todayStart();
@@ -980,13 +971,15 @@
     var sd = computeStats(hs);
     var html = '<div class="stat-wrap">';
 
-    // range chips (reuse .day-chip styling — no new CSS, by design)
+    // range chips (reuse .day-chip styling)
     var ranges = [[30, "range.30"], [90, "range.90"], [0, "range.all"]];
+    html += '<div class="range-row">';
     for (var r = 0; r < ranges.length; r++) {
       html += '<button type="button" class="day-chip' +
         (statRange === ranges[r][0] ? " on" : "") +
-        '" data-rng="' + ranges[r][0] + '">' + esc(t(ranges[r][1])) + "</button>";
+        '" data-act="rng" data-rng="' + ranges[r][0] + '">' + esc(t(ranges[r][1])) + "</button>";
     }
+    html += "</div>";
 
     html += '<div class="stat-cards">' +
       statCard(sd.totalComps, t("stats.total.comps")) +
@@ -1263,6 +1256,10 @@
       var actEl = e.target.closest("[data-act]");
       if (!actEl) return;
       var act = actEl.getAttribute("data-act");
+      if (act === "rng") {                 // range chip: no habit row
+        setStatRange(parseInt(actEl.getAttribute("data-rng"), 10));
+        return;
+      }
       var hid = actEl.getAttribute("data-h");
       var h = hid ? habitById(hid) : null;
       if (!h) { if (act === "new") openHabitDialog(null); return; }
@@ -1294,9 +1291,6 @@
         if (cFuture || (!cSched && !cDone)) return;
         toggleComp(h, cd);
         render();
-      } else if (act === "rng") {
-        setStatRange(parseInt(actEl.getAttribute("data-rng"), 10));
-      }
     });
   }
 

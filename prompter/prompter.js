@@ -1,5 +1,6 @@
 // ============================================================
-// orOS Prompter — App logic (v0.1.0) — Ground-up rewrite
+// orOS Prompter — App logic (v0.33.05) — Ground-up rewrite
+
 // Writing inspiration, daily prompts, and custom creations —
 // all offline, all synced, all yours.
 // Sections:
@@ -112,7 +113,7 @@
       "cat.song":            "Τραγούδι",
       "cat.aphorism":        "Αφορισμός",
       "cat.theatrical":      "Θεατρικό",
-      "cat.novel":           "Ρομαντικό",
+      "cat.novel":           "Μυθιστόρημα",
       "cat.monologue":       "Μονόλογος",
       "cat.letter":          "Επιστολή/Ημερολόγιο",
       "fav.badge":           "★",
@@ -186,7 +187,7 @@
     { id: "song",     en: "Song",         el: "Τραγούδι" },
     { id: "aphorism", en: "Aphorism",     el: "Αφορισμός" },
     { id: "theatrical", en: "Theatrical",  el: "Θεατρικό" },
-    { id: "novel",    en: "Novel",        el: "Ρομαντικό" },
+    { id: "novel",    en: "Novel",        el: "Μυθιστόρημα" },
     { id: "monologue", en: "Monologue",   el: "Μονόλογος" },
     { id: "letter",   en: "Letter/Diary", el: "Επιστολή/Ημερολόγιο" }
   ];
@@ -634,7 +635,7 @@
 
   // Helpers
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
-  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}}[c];}
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function promptById(id){
     for(var i=0;i<PROMPTS_DATA.length;i++) if(PROMPTS_DATA[i].id===id) return PROMPTS_DATA[i];
     for(i=0;i<(state.customs||[]).length;i++) if(state.customs[i].id===id) return state.customs[i];
@@ -771,8 +772,10 @@
         sbtn.textContent="#"+tagLabel(tid);
         sbtn.addEventListener("mousedown", function(ev){
           ev.preventDefault();
-          var v=tgIn.value.replace(/\s*,\s*$/,"").trim();
-          if(v && v.slice(-1)!==",") v+=", ";
+          var parts=tgIn.value.split(",");
+          parts.pop();                       // αντικαθιστά το ημιτελές fragment
+          var v=parts.join(",").trim();
+          if(v) v+=", ";
           v+=tid+", ";
           tgIn.value=v;
           renderTagSug();
@@ -884,11 +887,19 @@
     if(viewMode==="browse") renderBrowse();
     else if(viewMode==="stats") renderStats();
   }
+  
+  var loader=document.createElement("div");
+loader.id="prompter-boot-loader";
+loader.style.cssText="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:var(--text-dim);";
+loader.textContent=(LANG==="el"? "Φόρτωση..." : "Loading...");
+document.body.appendChild(loader);
 
   function renderBrowse(){
     var host=$("browse");
     if(!host) return;
     host.innerHTML="";
+	
+	if(loader) loader.remove();
 
     // Search (focus-preserving: re-render restores caret + typed casing)
     var sr=document.createElement("input");
@@ -986,7 +997,7 @@
       if(activeCategory!=="all" && p.cat!==activeCategory) return;
       if(activeTag && tagsFor(p).indexOf(activeTag)<0) return;
       if(searchQuery && !promptMatchesQuery(p)) return;
-      if(!activeTag && !searchQuery && shown>=50) return;
+      if(!activeTag && !searchQuery && shown>=50 && p.id!==dailyId) return;
 
       var card=document.createElement("div");
       card.className="prompt-card"+(isCustom(p.id)? " custom":"");
@@ -1125,7 +1136,7 @@
     if(!grid.childNodes.length){
       var emp=document.createElement("div");
       emp.className="empty-state";
-      emp.textContent=t("empty.browse");
+      emp.innerHTML=t("empty.browse")+'<br><span class="hint" style="margin-top:8px;display:block;">'+t("cat.all")+' — '+t("search.placeholder")+'</span>';
       host.appendChild(emp);
     } else {
       host.appendChild(grid);
@@ -1161,8 +1172,10 @@
     var totalCustom=state.customs.length;
     var totalFavs=state.favorites.length;
     var totalComp=Object.keys(state.completed||{}).length;
-    // Cap at 100% — customs don't inflate built-in completion (fix #8)
-    var progress=totalBuiltIn>0 ? Math.min(100, Math.round(totalComp/totalBuiltIn*100)) : 0;
+    // Completed built-ins only — customs don't inflate the built-in progress %
+    var compBuiltIn=0;
+    PROMPTS_DATA.forEach(function(p){ if(state.completed[p.id]) compBuiltIn++; });
+    var progress=totalBuiltIn>0 ? Math.min(100, Math.round(compBuiltIn/totalBuiltIn*100)) : 0;
 
     var kpis=document.createElement("div");
     kpis.className="stats-kpis";
@@ -1259,12 +1272,6 @@
     });
     host.appendChild(byCat);
 
-    if(!host.childNodes.length){
-      var emp=document.createElement("div");
-      emp.className="empty-state";
-      emp.textContent=t("empty.stats");
-      host.appendChild(emp);
-    }
   }
 
   function renderAll(){
@@ -1284,10 +1291,7 @@
     var y=document.createElement("button");
     y.type="button"; y.className="prim danger"; y.textContent=t("rst.btn");
     y.addEventListener("click", function(){ factoryReset(); });
-    var cl=document.createElement("button");
-    cl.type="button"; cl.style.marginLeft="12px"; cl.textContent=t("settings.close");
-    cl.addEventListener("click", function(){ settingsModal.close(); settingsModal.remove(); settingsModal=null; });
-    settingsModal.appendChild(c); settingsModal.appendChild(y); settingsModal.appendChild(cl);
+    settingsModal.appendChild(c); settingsModal.appendChild(y);
     document.body.appendChild(settingsModal);
     settingsModal.showModal();
   }

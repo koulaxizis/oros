@@ -77,6 +77,7 @@
       "empty.chars.hint": "Press Ctrl+Alt+N or click New to create your first character.",
       "empty.rels": "Nothing to relate yet",
       "empty.rels.hint": "Create at least two characters, then come back to link them.",
+      "empty.search": "No characters match your search.",
 
       "count.chars": "{n} characters",
       "count.rels": "{n} relationships",
@@ -104,6 +105,7 @@
       "rel.title": "Relationship",
       "rel.type":  "Type",
       "rel.desc":  "Notes",
+      "rel.label": "Short label",
       "rel.hint":  "Click a cell to define the relationship between the two characters.",
       "rel.cell.add": "Add",
       "rel.cell.self": "—",
@@ -152,6 +154,7 @@
       "empty.chars.hint": "Πάτα Ctrl+Alt+N ή «Νέος» για να δημιουργήσεις τον πρώτο σου χαρακτήρα.",
       "empty.rels": "Δεν υπάρχουν σχέσεις ακόμα",
       "empty.rels.hint": "Δημιούργησε τουλάχιστον δύο χαρακτήρες και μετά έλα να τους συνδέσεις.",
+      "empty.search": "Κανένας χαρακτήρας δεν ταιριάζει με την αναζήτηση.",
 
       "count.chars": "{n} χαρακτήρες",
       "count.rels":  "{n} σχέσεις",
@@ -179,6 +182,7 @@
       "rel.title": "Σχέση",
       "rel.type":  "Τύπος",
       "rel.desc":  "Σημειώσεις",
+      "rel.label": "Σύντομη ετικέτα",
       "rel.hint":  "Πάτα ένα κελί για να ορίσεις τη σχέση των δύο χαρακτήρων.",
       "rel.cell.add": "Προσθήκη",
       "rel.cell.self": "—",
@@ -473,7 +477,10 @@
       var ma = la ? la.mtime : 0;
       var mb = lb ? lb.mtime : 0;
 
-      var bestLive = (ma >= mb) ? la : lb;          // (ties: local wins)
+      var bestLive;                                   // ties: local wins,
+      if (!la)      bestLive = lb;                    // but a LIVE copy must
+      else if (!lb) bestLive = la;                    // never lose to a
+      else          bestLive = (ma >= mb) ? la : lb;  // missing one
       var bestMT   = Math.max(ma, mb);
       var deadMT   = Math.max(ta, tb);
 
@@ -819,8 +826,7 @@
       return;
     }
     if (!shown.length) {
-      list.appendChild(el("div", "empty-state hint", "…"));
-      list.firstChild.textContent = t("search.ph");
+      list.appendChild(el("div", "empty-state hint", t("empty.search")));
       return;
     }
 
@@ -1452,6 +1458,7 @@
       b.style.height = "30px";
       b.addEventListener("click", function () {
         currentType = tk;
+        iText.placeholder = relTypeLabel(tk);
         Object.keys(typeBtns).forEach(function (k) {
           typeBtns[k].classList.toggle("primary", k === tk);
         });
@@ -1464,8 +1471,7 @@
 
     // Short label
     var fText = el("div", "field");
-    fText.appendChild(el("label", null, t("rel.desc") + " — " + t("fld.trait") + "?"));
-    fText.firstChild.textContent = "Label";
+    fText.appendChild(el("label", null, t("rel.label")));
     var iText = document.createElement("input");
     iText.type = "text";
     iText.value = relEditing.existing ? relEditing.existing.text : "";
@@ -1940,15 +1946,8 @@
     pop.style.left = rect.left + "px";
     pop.hidden = false;
 
-    var hide = function (e) {
-      if (!pop.contains(e.target)) { pop.hidden = true; };
-    };
-    setTimeout(function () {
-      document.addEventListener("click", hide, { once: true });
-    }, 0);
-
-    md.addEventListener("click", function () { exportMD(); });
-    js.addEventListener("click", function () { exportJSON(); });
+    md.addEventListener("click", function () { pop.hidden = true; exportMD(); });
+    js.addEventListener("click", function () { pop.hidden = true; exportJSON(); });
   }
 
   // ---------- Export: Markdown ----------

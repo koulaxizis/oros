@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.33.05 — Shell logic
+// orOS Core v0.34.00 — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.33.05";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.34.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2031,6 +2031,19 @@
       });
     }).catch(function () { return false; });
   }
+  
+    // OrosFS disk wipe — Wave 1: the internal virtual disk (OPFS /
+  // IndexedDB fallback backend) must die with the OS it belongs to.
+  // The localStorage sweep catches "oros-ofs-dirty" via the oros-
+  // prefix; this covers the storage the sweep cannot see. Best-
+  // effort, like every leg of the reset — never blocks it.
+  function wipeOrosFS() {
+    if (!window.orosFS || typeof window.orosFS.wipe !== "function") {
+      return Promise.resolve(false);
+    }
+    return window.orosFS.wipe().then(function () { return true; })
+      .catch(function () { return false; });
+  }
 
   function scFactoryReset(btn) {
     btn.disabled = true;
@@ -2046,8 +2059,9 @@
       : Promise.resolve(null);
 
     // Folder wipe FIRST — it needs the oros-fs handle, which the
-    // upcoming local sweep would orphan.
-    Promise.all([wipeFolderMirror(), cloud]).then(function () {
+    // upcoming local sweep would orphan. OrosFS wipe rides along —
+    // independent storage, best-effort like the rest.
+    Promise.all([wipeFolderMirror(), wipeOrosFS(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -2084,7 +2098,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };

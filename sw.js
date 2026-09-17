@@ -23,6 +23,7 @@ var PRECACHE_URLS = [
   "./style.css",
   "./shell.js",
   "./sync.js",
+  "./fs.js",
   "./translations.js",
   "./apps.json",
   "./manifest.webmanifest",

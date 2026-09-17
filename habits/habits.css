@@ -561,6 +561,7 @@ dialog h3 { margin: 0 0 12px; font-size: 14px; }
   flex-direction: column;
   gap: 14px;
 }
+.range-row { display: flex; gap: 6px; }
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -651,12 +652,6 @@ dialog h3 { margin: 0 0 12px; font-size: 14px; }
 }
 .insight .ico { color: var(--accent); }
 .insight .ico svg { width: 14px; height: 14px; }
-.stat-empty {
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 12.5px;
-  padding: 24px 12px;
-}
 
 /* ---------- Utility ---------- */
 [hidden] { display: none !important; }

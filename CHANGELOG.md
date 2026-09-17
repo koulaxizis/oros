@@ -996,6 +996,45 @@ heatmap intensity, per-habit zoom
   targets (touches data model → separate migration wave)
 **Under consideration:** week-row calendar variant, PDF stats export
 
+## [Wave 1 — OrosFS: internal virtual disk] fs.js v0.1.0
+
+ADDED
+- New core module fs.js: window.orosFS — virtual file system with
+  one mount (/internal). Backend: OPFS primary, IndexedDB fallback
+  (db "oros-ofs"), identical promise-based API for callers:
+  read/readText/write/writeText/ls/mkdir/rm/mv/stat + usage().
+- Full-disk export (portable JSON, base64 payloads, cross-backend)
+  and import (MERGE by default — never deletes absent files;
+  {wipe:true} is the only destructive mode).
+- Dirty flag groundwork ("oros-ofs-dirty" key, swept by factory
+  reset via the oros- prefix). No sync registration yet — Wave 2.
+- factoryReset: wipeOrosFS() leg added (OPFS is invisible to the
+  localStorage sweep); "oros-ofs" added to the stage-2 IDB list.
+
+ZERO-CONTACT GUARANTEE
+- No existing localStorage keys read or written.
+- No existing IDB touched: "oros-fs" (backup-folder handles) and
+  "oros-vault" (sync) belong to the shell/sync — fs.js uses only
+  the NEW "oros-ofs" database. No collision.
+- No sync.js changes, no app changes, no data migration.
+
+INTEGRATION CHECKLIST (updated files)
+- [x] index.html — fs.js script tag (between sync.js and shell.js)
+- [x] sw.js — "./fs.js" in PRECACHE_URLS (per-URL add, all-or-
+      nothing safe)
+- [x] shell.js — factory reset: wipeOrosFS() + "oros-ofs" IDB list
+- [ ] GitHub Action — VERIFY it picks up fs.js (see below)
+
+UNDER CONSIDERATION (future waves)
+- Wave 2: File Manager app (UI over OrosFS)
+- Wave 3: Dropbox mount (files travel cross-device, E2E)
+
+- [x] GitHub Action — VERIFIED (bump-version.yml): directory-scan
+      regex stamps ?v= on fs.js automatically (no hardcoded list);
+      G2/G3 guards don't apply to root modules; NOTE: fs.js is a
+      NEW file — must be in the manual commit (git add -u in the
+      bot never stages untracked files).
+
 ────────────────────────────────────────────────────────────
 SESSION HANDOFF — template
 ────────────────────────────────────────────────────────────
