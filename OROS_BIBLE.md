@@ -342,26 +342,33 @@ UNIVERSAL CONTRACTS:
 ╚══════════════════════════════════════════════════════════╝
 
 ──────────────────────────────────────
-6. CURRENT STATE — v0.34.02 (2026-09-17)
-──────────────────────────────────────
-  Core shell  : APP_VERSION in shell.js (single truth; CI stamps
-                sw.js/manifest/root ?v= automatically).
-  Sync engine : sync.js v0.9.1 (ZK v0.9 + empty-cloud 409 fix).
-  Core audit  : 2026-09 — all six core files reviewed (index.html,
-                shell.js, translations.js, sync.js, sw.js,
-                apps.json); findings #1–#16 closed; shipped as
-                v0.34.02: R14 themed restore dialog, alarm i18n
-                keys, CRITICAL sync 409 empty-cloud fix, dead
-                pwEpoch sketch removed, headers aligned.
+6. CURRENT STATE — v0.35.00 (2026-09-17)
+═══════════════════════════════════════════════════════════
+  Core shell  : APP_VERSION "0.35.00" (single truth; CI stamps
+                sw.js/manifest/?v= automatically).
+  Sync engine : sync.js v0.9.1 — second-pass regression audit
+                CLEAN (changePassphrase pushInFlight lock
+                patch applied).
+  Core audit  : 2026-09-17 — full second-pass regression audit
+                of all core files (shell/sync/fs/sw/index/apps/
+                manifest/translations/style/bump-version.yml).
+                ~20 patches applied; zero critical regressions.
   Skins       : 16 · Wallpapers: 15 (Desert Sand default).
   Domain      : useoros.online ONLY (no alt domains).
   Version surf: Info modal (Ctrl+Alt+Shift+I) + version toast.
   Locale      : EN default, EL secondary. Dark default, light
                 optional. 24h clock. EN/EL switch chips.
   Fonts       : Nunito woff2 vendored (5 weights, fonts/).
-  Platform    : static GitHub Pages, PWA (start_url
-                "/?source=pwa", standalone, maskable icons,
-                theme #1b1a18, bg #131820).
+LABEL_COLORS (8-color, shared Notes/To-Do/Mood/Habits):
+  #e06c75 #ecc75f #87cf3e #4fc4cf #6d4aff #e09ecf #f28c5a
+  #9aa4b0
+
+HABITS APP ICONS (16 SVG set):
+  check, star, heart, fire, book, music, bulb, target, sun,
+  moon, trophy, leaf, coffee, dumbbell, bed, run
+
+MOOD EMOTIONS (9, immutable — statistics need a stable
+dictionary; tile carries the hue, glyph is currentColor):
   Compliance  : Mood 100% (reference cert) · Weather 100% ·
                 Time 100% · Notes 100% · To-Do v0.4 merge-era
                 (2026-09 audit #17–#25: R14 batch, merge-safe
@@ -392,7 +399,8 @@ UNIVERSAL CONTRACTS:
   Prompter  | prompter/ | oros-prompter-data       | 1   | union + LWW + tombs
   Storage   | storage/  | oros-storage-data        | 1   | flat ents union + LWW + del
   Habits    | habits/   | oros-habits-data         | 1   | habit/comp LWW + del
-  Characters| characters/ | (see app audit)        | —   | (see app audit)
+  Characters| characters/ | oros-characters-data   | 1   | non-merge LWW + divergence
+  Files     | files/    | files-disk slice         | 1   | blob transport + OrosFS
   Slices with NO app open: registered via persisted registry —
   data travels while apps are closed. syncApi() per R8.
   REFERENCE APP (canonical template): mood/ v0.27.00 — every
@@ -427,8 +435,11 @@ REPO ROOT
   fonts/                Nunito woff2 (regular/medium/semibold/
                         bold/extrabold)
   todo/ kanban/ notes/ weather/ mood/ time/ calendar/ quote/
-    prompter/ storage/ habits/ — one dir per app:
-                        index.html + <app>.css + <app>.js
+    prompter/ storage/ habits/ characters/ files/ — one dir
+                        per app: index.html + <app>.css + <app>.js
+  vendor/               jspdf.umd.min.js, NotoSans-Regular.ttf
+  fonts/                Nunito woff2 (regular/medium/semibold/
+                        bold/extrabold)
   .github/workflows/bump-version.yml   release pipeline (v3)
   OROS_BIBLE.md         THIS FILE
   CHANGELOG.md          release history log (living document)
@@ -801,7 +812,7 @@ MOOD SEEDS (deterministic ids, bi {en,el}):
 FILE STRUCTURE (per app)
   <app>/index.html   minimal markup, EMPTY icon buttons (R9),
                       cache-busted app-local refs ?v=x.y.z
-                      (MANUAL bumps, R20)
+                      (CI-stamped automatically — R20 fully automated)
   <app>/<app>.css    :root palette fallbacks (standalone),
                       scrollbar standard + [hidden] guard (VIII)
   <app>/<app>.js     IIFE, "use strict", ES5 — sections:
@@ -1034,6 +1045,13 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
 ──────────────────────────────────────
 18. KNOWN GAPS + IMMEDIATE QUEUE
 ──────────────────────────────────────
+SECOND-PASS REGRESSION AUDIT (0.35.00): COMPLETE ✓
+  All core files audited (shell/sync/fs/sw/index/apps/
+  manifest/translations/style/bump-version.yml).
+  ~20 patches applied; zero critical regressions.
+  Next phase: queued app audits (weather/mood/time/calendar/
+  quote/storage/prompter/characters/habits/files).
+
 PROMPTER (97% compliant — 3 patches pending):
   · Dead empty.stats branch in renderStats() → delete
   · CSS version comment stale → v0.33.05

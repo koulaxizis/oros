@@ -1,5 +1,7 @@
 // ============================================================
-// orOS Core — fs.js v0.1.0 (OrosFS, Wave 1: internal disk)
+// orOS Core — fs.js (OrosFS, Wave 1: internal disk)
+// Versioning: orOS-wide version lives ONLY in shell.js —
+// FS_VERSION below tracks this module's own API revision.
 // ------------------------------------------------------------
 // Virtual file system for orOS. Wave 1 scope:
 //   • One mount: "/internal" — the orOS private disk
@@ -238,10 +240,10 @@
   }
 
   function opfsMkdir(segs) {
-    if (!segs.length) return Promise.resolve();      // mount root exists
+    if (!segs.length) return Promise.resolve();
     return opfsMount(true)
       .then(function (m) { return opfsWalk(m, segs, true); })
-      .then(function () { markDirty(); })            // #16 FIX: mkdir marks dirty
+      .then(function () { markDirty(); })            // dirty flag: mkdir is a disk mutation
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -277,8 +279,14 @@
           var req = dh.removeEntry(leaf.name, { recursive: true });
           if (req && typeof req.then === "function") {
             req.then(resolve, function (e) { reject(mapErr(e)); });
+          } else if (req && typeof req.onsuccess === "function") {
+            // IDB-style success/error callbacks
+            req.onsuccess = function () { resolve(); };
+            req.onerror   = function () { reject(mapErr(req.error)); };
           } else {
-            // Older engines: request without completion callback support
+            // Fallback: no way to detect failure — resolve anyway
+            // but log to console for debugging
+            console.warn("[orOS] fs.rm: no completion signal — assuming success");
             setTimeout(resolve, 0);
           }
         });
@@ -483,7 +491,7 @@
       if (!rec || !rec.dir) throw err("ENOENT", key);
       return idbKeys();
     }).then(function (keys) {
-      var prefix = (key === ROOT_PATH) ? key + "/" : key + "/"; // #17 FIX: removed redundant ternary
+      var prefix = key + "/";   // simplified — both branches were identical
       var seen = {}, names = {};
       var i, k;
       for (i = 0; i < keys.length; i++) {
@@ -696,7 +704,13 @@
           return write(e.path, dataUrlToBlob(e.data)).then(function () { applied++; });
         });
       });
-      return chain.then(function () { return applied; });
+      return chain.then(function (result) {
+        // Imported disk MUST reach the cloud — the dirty flag
+        // was already armed by individual mutations, but we
+        // reinforce it now in case of partial failures.
+        if (applied > 0) markDirty();
+        return applied;
+      });
     });
   }
 
@@ -708,11 +722,15 @@
 
   function usage() {
     if (navigator.storage && typeof navigator.storage.estimate === "function") {
-      return navigator.storage.estimate().then(function (est) {
-        return { usage: est.usage || 0, quota: est.quota || 0, backend: mode };
+      return backendReady().then(function () {
+        return navigator.storage.estimate().then(function (est) {
+          return { usage: est.usage || 0, quota: est.quota || 0, backend: mode };
+        });
       });
     }
-    return Promise.resolve({ usage: null, quota: null, backend: mode || null }); // #18 FIX: handle pre-boot
+    return backendReady().then(function () {
+      return { usage: null, quota: null, backend: mode };
+    });
   }
 
   // ---------- Public API ----------
@@ -724,7 +742,10 @@
       .then(function (r) { markDirty(); return r; });
   }
   function ls(path)            { return dispatch({ path: path, args: [] }, opfsLs,    idbLs); }
-  function mkdir(path)         { return dispatch({ path: path, args: [] }, opfsMkdir, idbMkdir); }
+  function mkdir(path)         {
+    return dispatch({ path: path, args: [] }, opfsMkdir, idbMkdir)
+      .then(function (r) { markDirty(); return r; });
+  }
   function rm(path)            {
     return dispatch({ path: path, args: [] }, opfsRm, idbRm)
       .then(function (r) { markDirty(); return r; });

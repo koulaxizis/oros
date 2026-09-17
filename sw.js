@@ -1,19 +1,21 @@
 // ============================================================
-// orOS Core v0.34.02 — Service Worker
+// orOS Core — Service Worker
 // Offline-first:
 //   - Precache shell on install
 //   - Cache-first assets, network-first navigations
 //   - AUTO-UPDATE: skipWaiting() fires on install — a new worker
-//     activates immediately; the inline broker in index.html
+//     activates immediately; the timer-based broker in index.html
 //     reloads the page on controllerchange. Zero user gates.
 // Update ritual: the GitHub Action stamps CACHE_VERSION from
 // APP_VERSION (shell.js) on every push to main. This value below
 // is a manual safety stamp in case the Action ever fails.
+// Versioning: orOS-wide version lives ONLY in shell.js (single
+// source of truth) — CACHE_VERSION mirrors it as the cache key.
 // Dropbox calls are cross-origin — never touched by this SW.
 // (strata: v0.13.1 notes/* precache — full banner history in CHANGELOG)
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.34.05";
+var CACHE_VERSION = "oros-v0.35.00"; // MANUAL STAMP — GitHub Action should match APP_VERSION from shell.js; bump on every deploy if Action fails
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
@@ -81,6 +83,10 @@ var PRECACHE_URLS = [
   "files/index.html",
   "files/files.css",
   "files/files.js",
+  "writer/",
+  "writer/index.html",
+  "writer/writer.css",
+  "writer/writer.js",
   "characters/",
   "characters/index.html",
   "characters/characters.css",
@@ -138,10 +144,15 @@ self.addEventListener("fetch", function (event) {
     event.respondWith(
       fetch(request)
         .then(function (response) {
-          var copy = response.clone();
-          caches.open(RUNTIME_CACHE).then(function (cache) {
-            cache.put(request, copy);
-          });
+          // Cache only REAL pages: a cached 404/502 becomes the
+          // offline "truth" for that URL. OAuth redirects (?code=...)
+          // are one-shot URLs — never worth a cache entry.
+          if (response.ok && url.search.indexOf("code=") === -1) {
+            var copy = response.clone();
+            caches.open(RUNTIME_CACHE).then(function (cache) {
+              cache.put(request, copy);
+            });
+          }
           return response;
         })
         .catch(function () {

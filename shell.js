@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Core v0.34.08 — Shell logic
+// orOS Core — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
 //   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.34.08";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1215,20 +1215,19 @@
     }, kind === "err" ? 4500 : 2600);
   }
 
-  function setSyncMsg(kind, textKey) {
+    function setSyncMsg(kind, textKey) {
     state.syncMsg = { kind: kind, text: window.t(textKey) };
+    if (kind === "err") setSyncDot("err", 6000);   // parity with setSyncMsgRaw
     scToast(kind, state.syncMsg.text);
     renderMenu();
   }
   function setSyncMsgRaw(kind, raw) {
     state.syncMsg = { kind: kind, text: raw };
-    if (kind === "err") setSyncDot("err", 6000);   // v0.18.0: red transient
+    if (kind === "err") setSyncDot("err", 6000);   // v0.9: red transient
     scToast(kind, raw);
     renderMenu();
   }
   
-    // setSyncMsgRaw τέλος ↑ — ο helper μπαίνει ΕΔΩ:
-
   // v0.21.2 — three-way pull outcome: empty cloud → honest
   // "nothing to pull yet"; identical states → calm "nothing new";
   // real changes → the usual count. ONE truth for the menu pull
@@ -2589,13 +2588,13 @@
   var WXS_AC_MIN = 3, WXS_AC_DELAY = 250;
 
   function wxGeocodeSuggest(q) {
-    var tok = ++wxsAcToken;
+    var tok = ++wxCAcToken;
     return fetch("https://geocoding-api.open-meteo.com/v1/search?count=5&language=" +
                  (state.lang === "el" ? "el" : "en") +
                  "&name=" + encodeURIComponent(q))
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (tok !== wxsAcToken) return [];   // stale response — discard
+        if (tok !== wxCAcToken) return [];   // stale response — discard
         return (d && d.results) || [];
       })
       .catch(function () { return []; });    // silent — optional data
@@ -2622,7 +2621,6 @@
   // autocomplete). Lazy singleton; suggestions from the 3rd
   // character via wxGeocodeSuggest (debounced, tokened).
   var wxCDlg = null, wxCInput = null, wxCAc = null;
-  var wxCTimer = null;
 
   function wxEnsureCityDlg() {
     if (wxCDlg) return;
@@ -2663,10 +2661,10 @@
     wxCInput.addEventListener("input", function () {
       clearTimeout(wxCATimer);
       var q = wxCInput.value.trim();
-      if (q.length < 3 || !navigator.onLine) { wxHideAc(); return; }
+      if (q.length < WXS_AC_MIN || !navigator.onLine) { wxHideAc(); return; }
       wxCATimer = setTimeout(function () {
         wxGeocodeSuggest(q).then(wxRenderAc);
-      }, 250);
+      }, WXS_AC_DELAY);
     });
     wxCInput.addEventListener("keydown", function (e) {
       var n = wxCAc.hidden ? 0 : wxCAc.querySelectorAll(".wxc-item").length;
@@ -2676,7 +2674,7 @@
         wxPaintAcSel();
       } else if (e.key === "ArrowUp" && n) {
         e.preventDefault();
-        wxCAcSel = (wxCAcSel - 1 + n) % n;
+        wxCAcSel = (wxCAcSel <= 0 ? n - 1 : wxCAcSel - 1);
         wxPaintAcSel();
       } else if (e.key === "Enter") {
         e.preventDefault();
@@ -2938,8 +2936,9 @@
       var ctx = alarmRing.ctx;
       if (ctx.state === "suspended") {
         ctx.resume().catch(function () {});
-        if (ctx.state === "suspended") return;
       }
+      // resumed is async — schedule pips anyway; they'll fire when ready
+      var t0 = ctx.currentTime;
       var t0 = ctx.currentTime;
       for (var i = 0; i < 3; i++) {
         var o = ctx.createOscillator();

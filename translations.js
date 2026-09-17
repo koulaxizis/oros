@@ -1,10 +1,10 @@
 // ============================================================
-// orOS Core v0.34.02 — Translations
+// orOS Core — Translations
 // Inline i18n module (no fetch, no external files)
 // Default language: English | Secondary: Greek
 // Persisted via localStorage ('oros-lang'), overridable by ?lang=
-// (version mirrors shell.js APP_VERSION — bumped at every release)
-// ============================================================
+// Versioning: orOS-wide version lives ONLY in shell.js (single
+// source of truth) — this file carries no version number.
 
 window.OROS_TRANSLATIONS = {
 
@@ -76,13 +76,15 @@ window.OROS_TRANSLATIONS = {
     "sync.err.version":     "Cloud data uses an unsupported version",
     "sync.err.auth":        "Dropbox authorization failed — reconnect",
     "sync.err.generic":     "Sync failed — check your connection",
-    "sync.snapshots.info":     "{n}/5 snapshots · last: {date}",
+    "sync.snapshots.info":     "{n}/5 αντίγραφα · τελευταίο: {date}",
     "sync.snapshots.none":     "No snapshots yet — turn on Auto backup.",
     "sync.fsfolder.label":     "Backup folder",
     "sync.fsfolder.choose":    "Choose…",
     "sync.fsfolder.stop":      "Stop",
     "sync.fsfolder.enablefirst": "Turn on Auto backup first — folder writes mirror snapshots.",
     "sync.ok.fsfolder.saved":  "Snapshot written to folder",
+    "sync.fsfolder.reconnect": "Reconnect folder",
+    "sync.fsfolder.lapsed":   "permission expired — click to re-grant",
     "syncdot.off":     "Sync: not connected",
     "syncdot.locked":  "Sync: connected — passphrase locked",
     "syncdot.idle":    "Sync: everything up to date",
@@ -230,6 +232,8 @@ window.OROS_TRANSLATIONS = {
     "sync.fsfolder.stop":      "Διακοπή",
     "sync.fsfolder.enablefirst": "Ενεργοποίησε πρώτα το αυτόματο αντίγραφο — ο φάκελος καθρεφτίζει αντίγραφα.",
     "sync.ok.fsfolder.saved":  "Το αντίγραφο γράφτηκε στον φάκελο",
+    "sync.fsfolder.reconnect": "Επανασύνδεση φακέλου",
+    "sync.fsfolder.lapsed":   "λήξη άδειας — πάτησε για επαναχορήγηση",
     "syncdot.off":     "Συγχρονισμός: χωρίς σύνδεση",
     "syncdot.locked":  "Συγχρονισμός: συνδεδεμένος — κλειδωμένος",
     "syncdot.idle":    "Συγχρονισμός: όλα ενημερωμένα",
@@ -277,20 +281,20 @@ window.OROS_TRANSLATIONS = {
     "app.notes": "Σημειώσεις",
     "app.weather": "Καιρός",
     "app.mood": "Διάθεση",
-	"sync.err.passphrase": "Λάθος passphrase — τα δεδομένα σας δεν μπορούν να αποκρυπτογραφηθούν με αυτή τη φράση.",
-	"sync.changepw": "Αλλαγή passphrase",
-	"sync.changepw.hint": "Επανακρυπτογράφησε τα δεδομένα σου στο cloud με νέα passphrase. Όλες οι συσκευές θα χρειαστεί να χρησιμοποιήσουν τη νέα passphrase μετά από αυτό.",
-	"sync.changepw.old": "Τρέχουσα passphrase",
-	"sync.changepw.new": "Νέα passphrase",
-	"sync.changepw.confirm": "Επιβεβαίωσε τη νέα passphrase",
+	"sync.err.passphrase": "Λάθος κωδικός κρυπτογράφησης — τα δεδομένα σου δεν μπορούν να αποκρυπτογραφηθούν με αυτόν.",
+	"sync.changepw": "Αλλαγή κωδικού κρυπτογράφησης",
+	"sync.changepw.hint": "Επανακρυπτογράφησε τα δεδομένα σου στο cloud με νέο κωδικό. Όλες οι συσκευές θα χρειαστεί να χρησιμοποιούν τον νέο κωδικό μετά από αυτό.",
+	"sync.changepw.old": "Τρέχων κωδικός",
+	"sync.changepw.new": "Νέος κωδικός",
+	"sync.changepw.confirm": "Επιβεβαίωσε τον νέο κωδικό",
 	"sync.changepw.ok": "Αλλαγή",
 	"sync.changepw.mismatch": "Η νέα passphrase και η επιβεβαίωση δεν ταιριάζουν",
 	"sync.changepw.same": "Η νέα passphrase πρέπει να διαφέρει από την παλιά",
 	"sync.err.wrongold": "Η τρέχουσα passphrase που έδωσες είναι λανθασμένη",
 	"sync.ok.changepw": "Η passphrase άλλαξε επιτυχώς",
-	"sync.pwfix.title": "Η passphrase άλλαξε σε άλλη συσκευή;",
-	"sync.pwfix.hint": "Το sync απέτυχε επειδή το cloud blob δεν μπορεί να αποκρυπτογραφηθεί. Αν άλλη συσκευή άλλαξε τη passphrase, εισάγετέ την εδώ για ανάκτηση.",
-	"sync.pwfix.hint.vault": "Το sync απέτυχε και αυτή η συσκευή έχει sealed vault. Η passphrase πιθανότατα άλλαξε αλλού. Εισάγετε τη νέα passphrase για ξανα-ξεκλείδωμα και ξανασφράγισμα.",
+	"sync.pwfix.title": "Ο κωδικός κρυπτογράφησης άλλαξε σε άλλη συσκευή;",
+	"sync.pwfix.hint": "Ο συγχρονισμός απέτυχε επειδή το cloud δεν μπορεί να αποκρυπτογραφηθεί. Αν άλλη συσκευή άλλαξε τον κωδικό, δώσε τον νέο εδώ για ανάκτηση.",
+	"sync.pwfix.hint.vault": "Ο συγχρονισμός απέτυχε και αυτή η συσκευή έχει σφραγισμένο vault. Ο κωδικός πιθανότατα άλλαξε αλλού. Δώσε τον νέο κωδικό για ξεκλείδωμα και εκ νέου σφράγιση.",
 	"sync.pwfix.err": "Λανθασμένη passphrase — δοκίμασε ξανά",
     "app.time": "Ώρα",
     "app.calendar": "Ημερολόγιο",

@@ -21,24 +21,28 @@
   <meta name="apple-mobile-web-app-title" content="orOS">
 
   <!-- ============ Shell ============ -->
-  <link rel="stylesheet" href="style.css?v=0.34.05">
+  <link rel="stylesheet" href="style.css?v=0.35.00">
+</head>
+<body>
 
   <noscript>
     <div style="font-family: system-ui, sans-serif; background:#1b1a18; color:#e8eaf0;
                 min-height:100vh; display:flex; align-items:center; justify-content:center;
                 text-align:center; padding:24px;">
-      <p>orOS needs JavaScript to run.<br>Ενεργοποίησε τη JavaScript και ξαναδοκίμασε.</p>
+      <p>orOS needs JavaScript to run.<br>Enable JavaScript and try again.</p>
     </div>
   </noscript>
-</head>
-<body>
+
 
   <!-- ================= BOOT SPLASH =================
-       Static in HTML: visible BEFORE any JS parses, so the user
-       can never reach an app before the SW update check settles.
-       Hidden by the self-contained script below (load + 700ms),
-       fail-safe at 10s. Survives even if shell.js fails to load. -->
-  <div id="oro-splash" role="status">
+       Static in HTML: visible BEFORE any JS parses, styled inline
+       (FOUC-proof). TIMER-based, not lifecycle-based: hides on
+       load + 700ms (fail-safe 10s) — it does NOT wait for the SW
+       update check. The broker's update-path reload bypasses this
+       splash entirely via the "oros-skip-splash" flag. Survives
+       even if shell.js fails to load (see onerror below). -->
+        <div id="oro-splash" role="status"
+       style="position:fixed;inset:0;z-index:9999;background:#14120d;color:#e8eaf0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;transition:opacity .4s;">
     <span id="oro-splash-text">Welcome to orOS. Searching for updates, please wait…</span>
   </div>
 
@@ -48,6 +52,18 @@
     var s = document.getElementById("oro-splash");
     var txt = document.getElementById("oro-splash-text");
     if (!s) return;
+
+    // Mobile visibility: a failed boot must not look like waiting —
+    // the splash is the only surface that exists before shell.js.
+    window.addEventListener("error", function (ev) {
+      if (done) return;
+      if (txt) {
+        txt.textContent = (localStorage.getItem("oros-lang") === "el")
+          ? "Σφάλμα εκκίνησης: " + (ev.message || "άγνωστο") + " — δοκίμασε hard refresh."
+          : "Startup error: " + (ev.message || "unknown") + " — try a hard refresh.";
+        txt.style.color = "#e06c75";
+      }
+    });
     // (β) update-triggered reload: NO second splash — the user was
     // already looking at this same screen. The broker sets the flag
     // right before reloading (controllerchange); consume it here.
@@ -71,6 +87,7 @@
       if (done) return;
       done = true;
       s.classList.add("hide");
+      s.style.opacity = "0";   // inline fallback: hides even without style.css
       setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 400);
     }
     if (document.readyState === "complete") setTimeout(hide, 700);
@@ -83,7 +100,7 @@
   <!-- ================= TOP BAR (persistent) ================= -->
   <header id="oros-bar">
     <div class="bar-left">
-      <button id="btn-menu" data-i18n-title="bar.menu" title="Applications"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span id="btn-menu-label">Applications</span></button>
+      <button id="btn-menu" data-i18n-title="bar.menu"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span id="btn-menu-label">orOS</span></button>
     </div>
     <div class="bar-right">
       <button id="btn-lang" title="Language"></button>
@@ -159,9 +176,9 @@
   });
 })();
 </script>
-  <script src="translations.js?v=0.34.05"></script>
-  <script src="sync.js?v=0.34.05"></script>
-  <script src="fs.js?v=0.34.05"></script>
-  <script src="shell.js?v=0.34.05"></script>
+  <script src="translations.js?v=0.35.00"></script>
+  <script src="sync.js?v=0.35.00"></script>
+  <script src="fs.js?v=0.35.00"></script>
+  <script src="shell.js?v=0.35.00"></script>
 </body>
 </html>

@@ -7,9 +7,9 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#131820",
+  "background_color": "#14120d",
   "theme_color": "#1b1a18",
-  "version": "0.34.05",
+  "version": "0.35.00",
   "icons": [
     {
       "src": "/icon.svg",

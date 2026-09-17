@@ -1,6 +1,7 @@
 /* ============================================================
-   orOS Core v0.18.1 — Shell stylesheet (PWA / mobile-first)
-   (version mirrors shell.js APP_VERSION — bumped at every release)
+   orOS Core — Shell stylesheet (PWA / mobile-first)
+   Versioning: orOS-wide version lives ONLY in shell.js (single
+   source of truth) — this file carries no version number.
    Architecture:
      data-skin  = palette (16 skins)
      data-theme = light/dark (orthogonal to skin)
@@ -573,13 +574,6 @@ body {
 
 #btn-menu.running { color: var(--accent-hover); }
 
-#bar-clock {
-  font-size: 13.5px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.3px;
-  white-space: nowrap;   /* v0.18.2: the chip may squeeze, the clock never wraps */
-}
-
 /* ---------- 4. Desktop ---------- */
 #oros-desktop {
   position: fixed;
@@ -820,7 +814,6 @@ body {
 
   /* Top bar: keep everything on one row on narrow screens */
   #btn-menu { font-size: 13.5px; padding: 6px 8px; }
-  #bar-clock { font-size: 12.5px; }
   .bar-left, .bar-right { gap: 5px; }
   #version-toast { font-size: 11.5px; padding: 7px 12px; }
 
@@ -1320,7 +1313,6 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
   max-width: 340px;
 }
 
-/* ===== E1/E2: split clock — time & date buttons ===== */
 /* They replace the old plain-text #bar-clock. Visual weight matches
    the dead span it replaces (same size/tabular-nums) so the bar
    doesn't LOOK busier — but hover + cursor now signal that they're
@@ -1342,6 +1334,12 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 #bar-time:hover,
 #bar-date:hover { background: var(--accent-soft); }
+
+/* ===== Z-index ladder (shell) ===== */
+/* sc-toast 1400, alarm-dialog 1450 — above version-toast (1200) and
+   info-overlay (1300), below splash (2000) */
+.sc-toast { z-index: 1400 !important; }
+.dialog-alarm { z-index: 1450 !important; }
 
 /* Narrow phones: same shrink the old #bar-clock got. A later rule
    at equal specificity wins — no need to touch the 480px block. */

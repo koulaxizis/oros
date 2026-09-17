@@ -124,7 +124,6 @@
   // Engine guards: never two pushes/pulls racing each other
   var pushInFlight = false;
   var reconcileInFlight = false;
-  var lastPushFailed = false;
 
   // v0.9 Part 4: timestamp of the last pull that PROVED the current
   // passphrase decrypts the cloud blob (or the cloud is empty).
@@ -710,7 +709,16 @@
       // (No known-slice deletion here anymore — see comment above.)
     }
 
-    payload.meta = { lastPush: new Date().toISOString(), device: navigator.userAgent.slice(0, 80) };
+    var epoch = getWVEpoch();
+    payload.meta = {
+      lastPush: new Date().toISOString(),
+      device:   navigator.userAgent.slice(0, 80),
+      pwEpoch:  epoch > 0 ? epoch : 0   // SY-3: survive every push, not just
+                                        // the changePassphrase upload — the
+                                        // epoch must travel with the data or
+                                        // the decryptBlob mismatch check
+                                        // goes permanently silent.
+    };
     return payload;
   }
 
@@ -930,8 +938,9 @@
   // every correctly-updated device. Verification = download + try
   // decrypt; skipped while a recent pull already proved it
   // (reconcile's pull→push pair costs nothing extra). Empty cloud =
-  // nothing to protect. Unreachable/transient network errors do NOT
-  // block the push — a genuine failure surfaces at upload time.
+  // nothing to protect. Network failures REJECT this chain and the
+  // push is refused (offline it could not land anyway) — every other
+  // failure surfaces at upload time.
   var PULL_TRUST_MS = 30000;
 
   function ensureCloudReadable() {
@@ -1368,14 +1377,24 @@
       if (suspended) {
         return Promise.reject(new Error("engine-suspended"));
       }
+      if (pushInFlight || reconcileInFlight) {
+        return Promise.reject(new Error("push already in flight"));
+      }
+      pushInFlight = true;   // cp holds the engine lock for its whole
+                             // flight — no concurrent push may encrypt
+                             // with the mid-transition passphrase.
 
       return contentDownload(BLOB_PATH)
         .then(function (res) {
           if (res.status === 409) {
-            // Nothing in cloud yet — accept new passphrase
-            setPassphrase(newPw, remember);
-            markDirty();
-            return { ok: true, changed: true };
+            // Nothing in cloud yet — fall through to the empty-cloud
+            // branch BELOW: setPassphrase + markDirty happen there,
+            // exactly once. A duplicate setPassphrase here would run
+            // TWO concurrent sealPassphrase() chains — on a first-ever
+            // vault (no device key yet) the race can leave localStorage
+            // sealed with key1 while IndexedDB keeps key2 = a vault
+            // that can never unseal. Return null only.
+            return null;
           }
           if (!res.ok) throw new Error("download failed: " + res.status);
           return res.text();
@@ -1409,10 +1428,16 @@
               if (!payload.meta) payload.meta = {};
               payload.meta.pwEpoch = (payload.meta.pwEpoch || 0) + 1;
 
-              // Now re-encrypt with new passphrase
+              // Now re-encrypt with new passphrase. Backup the
+              // OLD-encrypted blob first: it is the only recovery
+              // path if the new passphrase is ever forgotten while
+              // the old one is remembered (zero-knowledge = no
+              // backdoor). Mirrors push()'s overwrite-with-net rule.
               passphrase = newPw;
               return encryptBlob(payload).then(function (encrypted) {
-                return contentUpload(BLOB_PATH, encrypted)
+                return backupExistingRemote().then(function () {
+                  return contentUpload(BLOB_PATH, encrypted)
+                })
                   .then(function (uploadRes) {
                     if (!uploadRes.ok) throw new Error("upload failed: " + uploadRes.status);
                     setPassphrase(newPw, remember);
@@ -1444,6 +1469,9 @@
             console.error("orOS sync: wrong old passphrase");
           }
           throw err;
+        })
+        .finally(function () {
+          pushInFlight = false;   // released on EVERY exit path
         });
     }
   };

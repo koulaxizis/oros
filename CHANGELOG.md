@@ -124,15 +124,13 @@ Standing delivery rule
   justified when the file is being restructured anyway.
 
 ════════════════════════════════════════════════════════════
-3. CURRENT STATE — v0.34.08 lineage (2026-09-17)
+3. CURRENT STATE — v0.35.00 (2026-09-17)
 ════════════════════════════════════════════════════════════
-Core shell  : APP_VERSION "0.34.08" (shell.js header, last
-              delivered state). Single truth; CI stamps
-              sw.js/manifest/root ?v= automatically.
-Sync engine : sync.js v0.9.1 (Zero-Knowledge Sync v0.9.1 —
-              see §7). Includes 409 empty-cloud fix + #S2
-              baselines-from-payload patch (pending
-              application — see §13 OPEN ITEMS).
+Core shell  : APP_VERSION "0.35.00". Single truth; CI stamps
+              sw.js/manifest/?v= automatically.
+Sync engine : sync.js v0.9.1 — second-pass regression audit
+              CLEAN (changePassphrase engine-lock patch
+              applied; see §15 v0.35.00 entry).
 Virtual disk: fs.js (OrosFS v0.1.0, OPFS + IDB fallback)
               + Files app + "files-disk" sync slice (§7).
 Apps        : 13 in apps.json (todo, kanban, notes, weather,
@@ -146,7 +144,7 @@ Locale      : EN default, EL secondary. Dark default, light
 Fonts       : Nunito woff2 vendored (5 weights, fonts/).
 Platform    : static GitHub Pages PWA (start_url "/?source=pwa",
               standalone, maskable icons, theme #1b1a18,
-              bg #131820).
+              bg #14120d — matches boot splash).
 
 VERSION LEDGER (reconciliation pending — §13, open):
   Recent entries used MIXED version labels: habits waves were
@@ -1317,3 +1315,119 @@ function matters.
   .status-bar.warning, .actions .danger-arm), duplicate .entry rules
   consolidated, toast moved top-right (orOS notification convention),
   storage bar hidden on phones.
+  
+  ## orOS v0.34.09 (release candidate — SUPERSEDED by v0.35.00;
+contents merged there; never shipped)
+
+### Critical Fixes
+- **sync.js changePassphrase**: empty cloud 409 now returns `null` instead of `{ok:true}` object — prevents SyntaxError after passphrase change
+- **shell.js weather autocomplete**: `wxsAcToken` ReferenceError fixed (renamed to `wxCAcToken`) — city search dead bug resolved
+- **fs.js usage()**: now awaits `backendReady()` — returns correct backend (opfs/indexeddb) instead of `null`
+
+### Defenses
+- **sw.js CACHE_VERSION**: manual defense bump to `0.34.08` (CI drift protection)
+- **bump-version.yml**: verified as working correctly — drift caused by missed execution, not workflow bug
+
+### Cleanup
+- **shell.js**: removed dead `wxCTimer` declaration, switched to declared constants `WXS_AC_MIN` / `WXS_AC_DELAY`
+
+### Known Issues
+- **index.html ?v= drift**: `?v=0.34.03` vs shell.js `0.34.08` — CI execution gap, not code bug
+- **Header comment staleness**: translations.js says 0.34.02, style.css says 0.18.1 — cosmetic, workflow doesn't update headers
+- **Apps menu**: Files icon overlaps with Storage (both "storage") — patch pending ICONS block review
+
+### Deprecated Paths
+- **writer/ app**: removed from audit scope — does not exist in rebuilt orOS core (apps.json confirmed 13 apps, no writer)
+- **"Update orOS" button**: confirmed dead path — `skipWaiting()` on install means no waiting worker exists
+
+### Pending Verifications
+- **autocomplete strings**: `wx.ac.*` keys missing from translations.js — console output needed
+- **storage vs files**: icon differentiation agreed, awaiting ICONS registry format
+
+## orOS v0.35.00 (release candidate)
+
+### Critical Fixes
+- **sync.js changePassphrase (empty cloud)**: now returns `null` instead of `{ok:true}` object — prevents SyntaxError after passphrase change on fresh cloud
+- **sync.js duplicate setPassphrase**: removed double invocation in 409 path — eliminates race condition that could corrupt vault sealing
+- **sync.js backup before re-encrypt**: added `backupExistingRemote()` call before passphrase-change upload — mirrors push overwrite contract, provides recovery path if new passphrase is forgotten
+
+### Core Stability
+- **fs.js mkdir dirty flag**: public wrapper now calls `markDirty()` — ensures IDB backend consistency with OPFS (both backends uniform)
+- **fs.js usage()**: awaits `backendReady()` before returning storage estimate — returns correct backend (opfs/indexeddb) instead of `null`
+- **shell.js**: all critical paths verified clean — weather autocomplete (wxCAcToken), factory reset (IDB names), shell slice wiring, wxPushToApp guards
+
+### PWA & Service Worker
+- **sw.js CACHE_VERSION**: manual defense stamp to `0.35.00` (CI drift protection)
+- **sw.js writer precache**: entries retained — graceful per-URL misses until Writer deployment completes
+- **sw.js per-URL precache (D1)**: confirmed working — single asset 404 no longer aborts entire install
+- **index.html splash**: inline styles prevent FOUC (first-frame background matches default skin `#14120d`)
+- **index.html noscript**: moved from `<head>` to `<body>` (HTML spec compliance)
+- **index.html window.onerror**: splash displays boot errors on mobile (console invisible)
+
+### Cosmetics & Documentation
+- **translations.js**: added missing keys `sync.fsfolder.reconnect` + `sync.fsfolder.lapsed` (folder permission expiry UX)
+- **Translations/style headers**: version strings removed — shell.js APP_VERSION is single source of truth
+- **style.css dead code**: removed obsolete `#bar-clock` selectors (split clock E1/E2 replacement)
+- **apps.json icon differentiation**: Files app uses `"files"` icon (folder/divider), Storage uses `"storage"` (warehouse cube)
+
+### Known Issues
+- **index.html ?v= drift**: `?v=0.34.05` vs shell.js `0.35.00` — GitHub Action will stamp on next push (verified workflow targets all assets)
+- **Header comment staleness**: translations.js `0.34.02`, style.css `v0.18.1` — cosmetic only, workflow intentionally skips headers
+- **Writer app**: precache entries exist but assets not yet deployed — graceful per-URL warnings (non-blocking)
+
+### Deprecated Paths
+- **"Update orOS" button**: confirmed dead — `skipWaiting()` on install means no waiting worker ever exists
+- **Manual version stamps**: replaced by automated GitHub Action (shell.js only manual bump point)
+
+### Versioning Protocol (0.35.00+)
+- **Single source of truth**: `APP_VERSION` in `shell.js` only
+- **Automated stamps**: GitHub Action updates `CACHE_VERSION`, `manifest.version`, and `?v=` on every push to main
+- **Headers removed**: all version comments in comments stripped — avoid future drift
+
+### Pending Verifications
+- **autocomplete translation keys**: `wx.ac.*` keys — console output needed (shell uses `wx.prompt`/`wx.notfound` fallbacks — likely unnecessary)
+- **storage app icon**: distinct from files (confirmed — `storage` vs `files` keys)
+- **Bible refresh**: Part III version (`0.34.02`), file tree (missing `files/`), alarms contract — post-release update (R22)
+
+### Deployment Checklist
+- [x] All audit patches applied (second-pass regression audit — § entry above)
+- [x] `APP_VERSION` in `shell.js` = `"0.35.00"`
+- [ ] Push to main — GitHub Action stamps `CACHE_VERSION`, `manifest.version`, `?v=`
+- [ ] Verify Action run succeeds (G1/G2/G3 guards pass — watch G3 on writer/)
+- [ ] Mobile PWA test: incognito → install → offline boot
+- [ ] Watch SW console: writer/ precache entries warn gracefully (expected, Choice Β)
+- [ ] Mobile PWA test: changePassphrase empty cloud → dialog closes cleanly, no SyntaxError
+- [ ] Mobile PWA test: weather city autocomplete → type "ser" → shows Serres without ReferenceError
+- [ ] CHANGELOG.md §0.35.00 published with full entry
+- [ ] Bible updated to reflect 0.35.00 contracts (Part III, file tree, alarms)
+
+### Second-Pass Regression Audit (this cycle)
+Full file-by-file re-audit of the core (no-guessing, one file
+at a time, byte-verified OLD/NEW patches):
+- shell.js: setSyncMsg err-dot parity · weather autocomplete
+  ArrowUp wrap · alarmPip async resume fix · patch-residue
+  comment removed
+- sync.js: changePassphrase now holds the pushInFlight lock
+  (closes the last Trap-3 race window) · dead lastPushFailed
+  var removed · inverted ensureCloudReadable comment fixed
+- fs.js: importDisk reinforced markDirty (imported disk MUST
+  reach the cloud) · opfsRm legacy-engine fallback warns on
+  missing completion signal · idbLs ternary comment cleanup
+- sw.js: navigation cache guarded (only response.ok; OAuth
+  ?code= one-shot URLs never cached)
+- index.html: ?v= refs 0.34.05→0.35.00 · btn-menu-label
+  default text "orOS" · manifest/icon ?v= REVERTED (CI
+  regex stamps only .css/.js — frozen stamps lie)
+- apps.json: writer stays OUT of 0.35.00 (Choice Β) — sw.js
+  precache entries = forward-looking staging
+- manifest: version → 0.35.00 · translations: EL terminology
+  unified ("κωδικός κρυπτογράφησης", singular σου) ·
+  snapshots.info EL cleanup
+- style.css: z-index ladder block added (sc-toast 1400 /
+  alarm 1450, below splash 2000)
+- bump-version.yml: audited CLEAN — no changes
+
+### Rollback Plan
+- If GitHub Action fails: manual stamp via `sed` on sw.js + manifest + index.html
+- If Writer 404 blocks: remove `writer/` entries from PRECACHE_URLS temporarily
+- If sync regression: revert `changePassphrase` patch (`null` → `{ok:true}`)

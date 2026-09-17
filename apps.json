@@ -38,8 +38,8 @@
       "name": "Mood",
       "category": "Lifestyle",
       "url": "mood/",
-      "type": "internal",
-      "icon": "mood"
+      "icon": "mood",
+	  "type": "internal"
     },
     {
       "id": "time",
@@ -101,7 +101,7 @@
       "id": "files",
       "name": "Files",
       "category": "Productivity",
-      "icon": "storage",
+      "icon": "files",
       "url": "files/",
       "type": "internal"
     }
