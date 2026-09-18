@@ -28,11 +28,12 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY  = "oros-weatherapp-data";
-  var CACHE_KEY    = "oros-weatherapp-cache";
-  var DATA_VER     = 1;
-  var FETCH_GAP_MS = 30 * 60 * 1000;   // min gap between forecast fetches
-  var CACHE_MAX    = 6;                // cities kept in device cache
+	var STORAGE_KEY  = "oros-weatherapp-data";
+	var CACHE_KEY    = "oros-weatherapp-cache";
+	var DATA_VER     = 1;
+	var FETCH_GAP_MS = 30 * 60 * 1000;
+	var CACHE_MAX    = 6;
+	var WX_CACHE_KEY = "oros-wx-cache";
 
   var netDown = false;   // last fetch attempt FAILED while online
                          // (truth from the network, not navigator.onLine)
@@ -1517,6 +1518,20 @@
 
   // ---------- Boot ----------
   console.log("weather.js v0.3.0 boot");
+  // WA2 fix: the api stub must exist BEFORE the first save() —
+  // load()/syncShellLocation() mutate state at boot (fresh state,
+  // shell-pref city upsert) and their dirty flag was silently
+  // dropped: __orosSyncApi was only defined in registerSync(),
+  // several statements later. Dynamic engine resolution (the
+  // parent's orosSync is loaded with the shell — always present).
+  window.__orosSyncApi = {
+    _suppress: false,
+    dirty: function () {
+      if (this._suppress) return;
+      var api = (window.parent && window.parent.orosSync) || window.orosSync;
+      if (api && typeof api.markDirty === "function") api.markDirty();
+    }
+  };
   load();
   syncShellLocation();
   applyI18n();

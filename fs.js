@@ -324,7 +324,7 @@
     });
   }
 
-  function opfsMv(srcSegs, dstSegs) {
+    function opfsMv(srcSegs, dstSegs) {
     if (!srcSegs.length || !dstSegs.length) {
       return Promise.reject(err("EINVAL", "mv needs two non-root paths"));
     }
@@ -339,22 +339,43 @@
         });
       })
       .then(function (ctx) {
-        // Determine source kind: dir first (file attempt falls through)
+        // FP2: the dir/file PROBE gets its OWN rejection handler
+        // (2nd .then argument) so ONLY "source is not a directory"
+        // routes to the file fallback. The old single .catch also
+        // grabbed mid-tree COPY/REMOVE failures — those then went
+        // through the file probe (which fails on a real dir),
+        // and the rethrown dir error told the user the SOURCE
+        // DIDN'T EXIST while the actual cause was a disk/quota
+        // error. Real copy/remove failures now propagate as
+        // themselves — honest diagnostics.
         return ctx.srcParent.getDirectoryHandle(srcLeaf.name).then(function (srcDir) {
+          // Source IS a dir — do the tree copy + remove.
+          // Failures here propagate as THEMSELVES (real errors).
           return ctx.dstParent.getDirectoryHandle(dstLeaf.name, { create: true })
             .then(function (dstDir) { return opfsCopyTree(srcDir, dstDir); })
-            .then(function () { return ctx.srcParent.removeEntry(srcLeaf.name, { recursive: true }); });
-        }).catch(function () {
+            .then(function () { return ctx.srcParent.removeEntry(srcLeaf.name, { recursive: true }); })
+            .then(function () { return "dir"; });             // success marker
+        }, function (probeErr) {
+          // Source is NOT a directory — try the file path.
           return ctx.srcParent.getFileHandle(srcLeaf.name)
             .then(function (fh) { return fh.getFile(); })
             .then(function (f) {
               return ctx.dstParent.getFileHandle(dstLeaf.name, { create: true })
                 .then(function (nf) { return opfsWriteHandle(nf, f); });
             })
-            .then(function () { return ctx.srcParent.removeEntry(srcLeaf.name); });
+            .then(function () { return ctx.srcParent.removeEntry(srcLeaf.name); })
+            .then(function () { return "file"; })            // success marker
+            .catch(function (fileError) {
+              // Both probes failed — the dir-probe error is the
+              // user-friendly one ("this path doesn't exist").
+              throw probeErr;
+            });
         });
       })
-      .then(function () { markDirty(); })              // #16 FIX: mv marks dirty
+      .then(function (kind) {                               // kind = "dir" or "file"
+        markDirty();
+        return kind;
+      })
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -700,7 +721,7 @@
   // options.wipe === true → wipe the disk first (destructive!).
   // Default: MERGE — files in the payload overwrite matching paths,
   // everything else is left alone. NEVER deletes what's absent.
-  function importDisk(payload, options) {
+    function importDisk(payload, options) {
     var opts = options || {};
     var obj = (typeof payload === "string") ? JSON.parse(payload) : payload;
     if (!obj || !Array.isArray(obj.entries)) {
@@ -709,15 +730,40 @@
     var prep = opts.wipe ? wipe() : Promise.resolve();
     return prep.then(function () {
       var applied = 0;
+      var failed = [];
       var chain = Promise.resolve();
       obj.entries.forEach(function (e) {
         chain = chain.then(function () {
           var segs = parsePath(e.path);
-          if (segs === null) return null;
-          if (e.dir) {
-            return mkdir(e.path).then(function () { applied++; });
+          if (segs === null) {
+            failed.push({ path: e.path, reason: "invalid path" });
+            return null;
           }
-          return write(e.path, dataUrlToBlob(e.data)).then(function () { applied++; });
+          var op;
+          if (e.dir) {
+            op = mkdir(e.path).then(function () { applied++; });
+          } else {
+            // FP1: dataUrlToBlob THROWS synchronously on a corrupt
+            // data URL (or a missing e.data). As written, the throw
+            // escaped BEFORE op was assigned — and thus BEFORE its
+            // .catch existed — aborting the WHOLE chain: every valid
+            // entry after the corrupt one was silently skipped and
+            // callers got a raw rejection with the {applied, failed}
+            // contract violated. Route it through the same per-entry
+            // failure collector instead.
+            var blob;
+            try {
+              blob = dataUrlToBlob(e.data);
+            } catch (e2) {
+              failed.push({ path: e.path, reason: e2.message || "corrupt data URL" });
+              return null;
+            }
+            op = write(e.path, blob).then(function () { applied++; });
+          }
+          return op.catch(function (err) {
+            // Don't abort whole import — collect failure and continue
+            failed.push({ path: e.path, reason: err.message || String(err) });
+          });
         });
       });
       return chain.then(function (result) {
@@ -725,7 +771,8 @@
         // was already armed by individual mutations, but we
         // reinforce it now in case of partial failures.
         if (applied > 0) markDirty();
-        return applied;
+        // Return both counts so caller can warn about partial failures
+        return { applied: applied, failed: failed };
       });
     });
   }

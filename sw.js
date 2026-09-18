@@ -15,7 +15,11 @@
 // (strata: v0.13.1 notes/* precache — full banner history in CHANGELOG)
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.35.06"; // MANUAL STAMP — GitHub Action should match APP_VERSION from shell.js; bump on every deploy if Action fails
+// SW-H: Normalize to ensure consistent cache key regardless of
+// APP_VERSION format (shell may store "0.35.07" or "v0.35.07").
+// GitHub Action should stamp just the version number; we prepend
+// the oros-v prefix here for cache namespace separation.
+var CACHE_VERSION = "oros-v0.35.06";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
@@ -120,15 +124,27 @@ self.addEventListener("install", function (event) {
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
   var keep = [SHELL_CACHE, RUNTIME_CACHE];
-  event.waitUntil(
-    caches.keys().then(function (names) {
-      return Promise.all(names.map(function (name) {
-        if (keep.indexOf(name) === -1) return caches.delete(name);
-      }));
-    }).then(function () {
-      return self.clients.claim();
+  // SW-I: Add a guard against slow cache cleanup blocking claim.
+  // If cleanup takes >30s (extreme), we still want to claim clients
+  // to restore online/offline functionality. The background cleanup
+  // continues but doesn't block activation indefinitely.
+  var cleanup = caches.keys().then(function (names) {
+    return Promise.all(names.map(function (name) {
+      if (keep.indexOf(name) === -1) return caches.delete(name);
+    }));
+  });
+
+  var claimWithTimeout = Promise.race([
+    cleanup.then(function () { return self.clients.claim(); }),
+    new Promise(function (resolve) {
+      setTimeout(function () {
+        console.warn("[SW] Activate: cache cleanup took >30s, claiming clients anyway");
+        resolve(self.clients.claim());
+      }, 30000);
     })
-  );
+  ]);
+
+  event.waitUntil(claimWithTimeout);
 });
 
 // ---------- Fetch strategy ----------
@@ -139,6 +155,33 @@ self.addEventListener("fetch", function (event) {
 
   var url = new URL(request.url);
   if (url.origin !== self.location.origin) return;   // Dropbox & externals: untouched
+
+  // S1 FIX: apps.json is NETWORK-FIRST. It is fetched unversioned
+  // (no ?v= stamp), so a cache-first exact match would freeze the
+  // app list at whatever the last CACHE_VERSION precached — a newly
+  // added app would stay invisible to already-installed PWAs until
+  // the next full release. Network-first keeps the list fresh on
+  // every online visit; the precached copy remains the offline
+  // fallback (zero offline regression).
+  if (url.pathname.indexOf("apps.json") !== -1) {
+    event.respondWith(
+      fetch(request).then(function (response) {
+        if (response && response.ok) {
+          var copy = response.clone();
+          event.waitUntil(
+            caches.open(RUNTIME_CACHE).then(function (cache) {
+              return cache.put(request, copy);
+            })
+          );
+        }
+        return response;
+      }).catch(function () {
+        return caches.match(request)
+          .then(function (c) { return c || Response.error(); });
+      })
+    );
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

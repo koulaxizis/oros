@@ -123,7 +123,17 @@
 
   // Engine guards: never two pushes/pulls racing each other
   var pushInFlight = false;
+  var pullInFlight = false;
   var reconcileInFlight = false;
+
+  // sync #1: dirty generation counter. Incremented on EVERY
+  // markDirty() — lets push() tell "the dirty flag I am about to
+  // clear is still the one my payload was collected for" from
+  // "an edit raced my upload and the flag now stands for NEWER,
+  // unuploaded work". Without it, clearDirty() after a slow
+  // upload silently stranded raced edits until the next
+  // unrelated user action.
+  var dirtyGen = 0;
 
   // v0.9 Part 4: timestamp of the last pull that PROVED the current
   // passphrase decrypts the cloud blob (or the cloud is empty).
@@ -243,8 +253,18 @@
     } catch (e) { cachedAccount = null; }
   }
 
+  var refreshInFlight = null;
+
   function refreshAccessToken() {
     if (!refreshToken) return Promise.reject(new Error("not-connected"));
+
+    // SP4: memoize the in-flight refresh. Concurrent API legs (pull
+    // racing a push, several rpc() calls in one tick) each saw the
+    // same expired token and fired their OWN refresh — the loser
+    // could burn a rotating refresh_token and hard-fail with
+    // "auth refresh failed". One flight at a time; everyone awaits
+    // the same promise.
+    if (refreshInFlight) return refreshInFlight;
 
     var body = new URLSearchParams({
       grant_type:    "refresh_token",
@@ -252,7 +272,7 @@
       client_id:     DROPBOX_APP_KEY
     });
 
-    return fetch(TOKEN_API, {
+    refreshInFlight = fetch(TOKEN_API, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: body.toString()
@@ -264,7 +284,11 @@
       .then(function (tokens) {
         storeTokens(tokens);
         return accessToken;
+      })
+      .finally(function () {
+        refreshInFlight = null;
       });
+    return refreshInFlight;
   }
 
   function ensureFreshToken() {
@@ -509,6 +533,17 @@
   function writeJson(key, obj) {
     try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
   }
+  // SP3 — STRICT variant, used ONLY by proxy set(): quota failures
+  // must THROW. applyPayload runs set() inside try/catch and skips
+  // baseline recording + the applied counter on failure, so a failed
+  // write is honestly reported as "not applied". The silent variant
+  // above did the opposite: recorded the remote hash as synced while
+  // local storage kept older content → the NEXT pull misread local
+  // as diverged (unpushed) and pushed the STALE local over the
+  // cloud. Quota must never launder into remote data loss.
+  function writeJsonStrict(key, obj) {
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
 
   function readCarry() { return readJson(CARRY_KEY); }
   function writeCarry(obj) {
@@ -599,7 +634,7 @@
       slices[name] = {
         live: false,
         get: function () { return readJson(storageKey); },
-        set: function (data) { writeJson(storageKey, data); },
+        set: function (data) { writeJsonStrict(storageKey, data); },
         merge: null
       };
     });
@@ -896,6 +931,7 @@
 
   // ---------- Dirty flag ----------
   function markDirty() {
+    dirtyGen++;                                // sync #1
     localStorage.setItem(DIRTY_KEY, "1");
     resetDebounce();
   }
@@ -918,11 +954,22 @@
   function resetDebounce() {
     if (debounceTimer) clearTimeout(debounceTimer);
     if (!isConnected() || !passphrase) return;   // nothing to send anyway
-    debounceTimer = setTimeout(function () {
-      debounceTimer = null;
-      if (!isDirty()) return;                    // already pushed elsewhere
-      reconcile("debounce");
-    }, DEBOUNCE_MS);
+    debounceTimer = setTimeout(debounceFire, DEBOUNCE_MS);
+  }
+  function debounceFire() {
+    debounceTimer = null;
+    if (!isDirty()) return;                      // already pushed elsewhere
+    if (reconcileInFlight || pushInFlight) {
+      // SP5: the timer is consumed but the engine is busy with
+      // another flight — this raced edit's ONLY scheduled uploader
+      // just vanished, stranding it for the interval (default
+      // 3 min) or the next user event. Re-arm short: retry as soon
+      // as the engine frees up. Still isDirty()-guarded — a
+      // converged state no-ops and never loops.
+      debounceTimer = setTimeout(debounceFire, 1000);
+      return;
+    }
+    reconcile("debounce");
   }
   function clearDirty() {
     localStorage.removeItem(DIRTY_KEY);
@@ -952,7 +999,14 @@
     }
     return contentDownload(BLOB_PATH)
       .then(function (res) {
-        if (res.status === 409 || !res.ok) return null;
+        // 409 = empty cloud (nothing to protect). ANY OTHER non-ok
+        // is an INCONCLUSIVE check — a server error must NOT be
+        // laundered into "empty cloud = free to overwrite": that
+        // re-opens the exact Trap-3 hole this guard exists to close
+        // (stale local passphrase + indeterminate cloud → overwrite).
+        // Reject → the push refuses to run; the next attempt rechecks.
+        if (res.status === 409) return null;
+        if (!res.ok) throw new Error("download failed: " + res.status);
         return res.text();
       })
       .then(function (blobText) {
@@ -969,14 +1023,25 @@
     if (suspended)      return Promise.reject(new Error("engine-suspended"));
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
     if (!passphrase)    return Promise.reject(new Error("no-passphrase"));
+    // SP2: the manual UI paths (Pull button, shortcut, sync dot,
+    // unlock flow) call pull() DIRECTLY — unlike reconcile, nothing
+    // upstream guarantees an idle engine. A pull racing a push
+    // downloads the PRE-push cloud and then LWW-applies it over the
+    // just-uploaded state (local clean, baseline = new) → silent
+    // local/cloud split with a clean dirty flag. Refuse instead —
+    // the honest error beats the silent clobber. Two concurrent
+    // pulls are equally refused (double-apply of merges).
+    if (pushInFlight)   return Promise.reject(new Error("push already in flight"));
+    if (pullInFlight)   return Promise.reject(new Error("pull already in flight"));
 
+    pullInFlight = true;
     return contentDownload(BLOB_PATH)
       .then(function (res) {
         if (res.status === 409) return null;
         if (!res.ok) throw new Error("download failed: " + res.status);
         return res.text();
       })
-            .then(function (blobText) {
+      .then(function (blobText) {
         if (!blobText) {
           lastSuccessfulPullAt = Date.now();   // empty cloud — any passphrase OK
           return { ok: true, empty: true, applied: 0 };
@@ -991,8 +1056,11 @@
       .catch(function (err) {
         console.error("orOS sync: pull() failed:", err);
         throw err;
+      })
+      .finally(function () {
+        pullInFlight = false;
       });
-}
+  }
 
   function push() {
     if (suspended)      return Promise.reject(new Error("engine-suspended"));
@@ -1003,6 +1071,12 @@
     pushInFlight = true;
     var payload = collectPayload();
     var encryptedText = null;
+    var dirtyGenAtCollect = dirtyGen;   // sync #1: generation of the
+                                        // dirty state this payload
+                                        // represents. Edits landing
+                                        // after this point are NOT in
+                                        // this upload — their flag
+                                        // must survive the push.
 
     return ensureCloudReadable()
       .then(function () { return encryptBlob(payload); })
@@ -1035,7 +1109,13 @@
           var data = (name === "shell") ? payload.shell : payload.apps[name];
           recordBaseline(name, (data === null || data === undefined) ? "null" : JSON.stringify(data));
         });
-        clearDirty();
+        // sync #1: clear the flag ONLY when no markDirty() landed
+        // between collectPayload() and this success moment. An edit
+        // that raced the upload is by construction NOT in this
+        // payload — wiping its flag would strand it until the next
+        // unrelated edit. Keeping the flag makes the 5s debounce /
+        // interval push the raced edit normally.
+        if (dirtyGen === dirtyGenAtCollect) clearDirty();
         return { ok: true };
       })
       .finally(function () {

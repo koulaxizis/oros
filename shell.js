@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.06";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.10";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -303,6 +303,7 @@
   function writeSnapshots(snaps) {
     try {
       localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snaps));
+      return true;
     } catch (e) {
       // Quota exceeded: drop the OLDEST entry and retry once —
       // newest snapshots are the valuable ones.
@@ -310,9 +311,11 @@
         try {
           snaps.shift();
           localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snaps));
-        } catch (e2) { /* give up silently — next cycle retries */ }
+          return true;
+        } catch (e2) { /* give up — next cycle retries */ }
       }
     }
+    return false;   // honest contract: callers can trust the result
   }
 
   // Period check + snapshot. "force" = run regardless of the last
@@ -344,7 +347,13 @@
 
     snaps.push({ at: new Date().toISOString(), data: body });
     while (snaps.length > SNAPSHOT_MAX) snaps.shift();
-    writeSnapshots(snaps);
+    if (!writeSnapshots(snaps)) {
+      // Honest feedback: quota failure = nothing stored. Reporting
+      // "saved" would be a false sense of backup. Key lives in
+      // translations.js (TP1, kernel-lock batch).
+      setSyncMsgRaw("err", window.t("sync.err.snapshot.quota"));
+      return false;
+    }
 
     // Folder mirror (Chromium desktop, if a folder was chosen):
     // best-effort, fire-and-forget — the localStorage net above is
@@ -682,24 +691,24 @@
 
     localStorage.setItem(VERSION_KEY, APP_VERSION);
 
-    var t = document.createElement("div");
-    t.id = "version-toast";
-    t.setAttribute("role", "status");
-    t.innerHTML =
+    var vt = document.createElement("div");
+    vt.id = "version-toast";
+    vt.setAttribute("role", "status");
+    vt.innerHTML =
       "<span>" + window.t("update.done") + "</span>" +
       "<strong>v" + APP_VERSION + "</strong>";
-    document.body.appendChild(t);
+    document.body.appendChild(vt);
 
-    requestAnimationFrame(function () { t.classList.add("show"); });
+    requestAnimationFrame(function () { vt.classList.add("show"); });
 
     var gone = false;
     function dismiss() {
       if (gone) return;
       gone = true;
-      t.classList.remove("show");
-      setTimeout(function () { t.remove(); }, 450);
+      vt.classList.remove("show");
+      setTimeout(function () { vt.remove(); }, 450);
     }
-    t.addEventListener("click", dismiss);
+    vt.addEventListener("click", dismiss);
     setTimeout(dismiss, 4000);
   }
 
@@ -1104,7 +1113,24 @@
     d.snapshot().then(function (str) {
       var obj;
       try { obj = JSON.parse(str); } catch (e) { return; }
+      // SP6 (cross-file fix, pairs with sync.js S-F): a push that
+      // raced the 1s refresh debounce uploaded the OLD cache, then
+      // stamped baseline=old and cleared dirty (same dirtyGen — the
+      // touch's markDirty predated the collect). This refresh then
+      // wrote the NEW disk content with nothing re-marking it dirty
+      // → the change sat unpushed until the next touch. Fix: when
+      // the refresh produces CHANGED content, re-mark dirty. Direct
+      // markDirty only — NOT __orosFilesDiskTouched (it re-arms this
+      // same refresh timer; harmless but redundant, and a loop-ish
+      // shape is never worth the risk).
+      var prev = fdCacheRead();
+      var prevStr = (prev === null) ? null : JSON.stringify(prev);
+      var objStr = JSON.stringify(obj);
+      if (prevStr === objStr) return;   // steady state — nothing new
       fdCacheWrite(obj);
+      if (window.orosSync && typeof window.orosSync.markDirty === "function") {
+        window.orosSync.markDirty();
+      }
     }).catch(function () { /* snapshot failed — cache stays */ });
   }
 
@@ -1185,10 +1211,10 @@
   function scToast(kind, text, onClick) {
     var old = document.getElementById("sc-toast");
     if (old) old.remove();
-    var t = document.createElement("div");
-    t.id = "sc-toast";
-    t.setAttribute("role", "status");
-    t.textContent = text;
+    var tt = document.createElement("div");
+    tt.id = "sc-toast";
+    tt.setAttribute("role", "status");
+    tt.textContent = text;
     var borderColor = kind === "err" ? "#e06c75"
                     : kind === "ok" ? "var(--accent)"
                     : "var(--border)";
@@ -1196,27 +1222,27 @@
     // the clock (bar = 40px + safe-area, so +8px breathing room). If the
     // version toast happens to be alive (boot burst), stack below it.
     var extraTop = document.getElementById("version-toast") ? 44 : 0;
-    t.style.cssText =
+    tt.style.cssText =
       "position:fixed;top:calc(48px + env(safe-area-inset-top,0px) + " + extraTop + "px);right:12px;" +
       "transform:translateX(12px);" +
       "background:var(--panel-bg);color:var(--text);border:1px solid " + borderColor + ";" +
       "border-radius:10px;padding:8px 16px;font-size:12.5px;font-weight:600;" +
       "box-shadow:0 8px 24px var(--shadow);opacity:0;transition:opacity .25s,transform .25s;" +
       "z-index:1400;pointer-events:none;max-width:calc(100vw - 24px);text-align:left;";
-    document.body.appendChild(t);
+    document.body.appendChild(tt);
     if (onClick) {
-      t.style.pointerEvents = "auto";
-      t.style.cursor = "pointer";
-      t.addEventListener("click", onClick);
+      tt.style.pointerEvents = "auto";
+      tt.style.cursor = "pointer";
+      tt.addEventListener("click", onClick);
     }
     requestAnimationFrame(function () {
-      t.style.opacity = "1";
-      t.style.transform = "translateX(0)";
+      tt.style.opacity = "1";
+      tt.style.transform = "translateX(0)";
     });
     setTimeout(function () {
-      t.style.opacity = "0";
-      t.style.transform = "translateX(12px)";
-      setTimeout(function () { t.remove(); }, 300);
+      tt.style.opacity = "0";
+      tt.style.transform = "translateX(12px)";
+      setTimeout(function () { tt.remove(); }, 300);
     }, kind === "err" ? 4500 : 2600);
   }
 
@@ -2363,6 +2389,7 @@
   var WX_CACHE_KEY = "oros-wx-cache";    // {at, temp, code}  (device-local)
   var WX_LAST_KEY  = "oros-wx-last";     // epoch ms of last fetch attempt
   var WX_MIN_MS    = 30 * 60 * 1000;     // min gap between auto fetches
+  var WX_RETRY_MS  = 2 * 60 * 1000;      // FAILED-fetch cooldown (no 30-min lockout)
   var WX_STALE_MS  = 3 * 60 * 60 * 1000; // cache older than 3h → dim state
 
   var WX_SUN   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
@@ -2563,7 +2590,16 @@
           wxRenderChip();
         }
       })
-      .catch(function () { /* offline/blocked — chip keeps last state */ });
+      .catch(function () {
+        /* offline/blocked — chip keeps last state. BUT a FAILED fetch
+           must not buy the full 30-min throttle: rewind the stamp to a
+           short retry window so the next visibility/online event
+           retries instead of sitting in "waiting" for half an hour. */
+        try {
+          localStorage.setItem(WX_LAST_KEY,
+            String(Date.now() - WX_MIN_MS + WX_RETRY_MS));
+        } catch (e2) {}
+      });
   }
   
   // Menu/pull weather changes → straight into the RUNNING app.
@@ -3377,6 +3413,7 @@
     mb.classList.add("running");
     document.getElementById("btn-menu-label").textContent = window.t("running.back");
     mb.setAttribute("data-i18n-title", "running.home");
+    mb.setAttribute("title", window.t("running.home"));   // paint NOW — don't wait for applyLang()
     var nk = "app." + app.id, tv = window.t(nk);
     document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
   }
@@ -3390,6 +3427,7 @@
     mb.classList.remove("running");
     document.getElementById("btn-menu-label").textContent = window.t("bar.menu");
     mb.setAttribute("data-i18n-title", "bar.menu");
+    mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
     document.title = "orOS";                 // v0.18.2: back to the bare OS title
   }
 

@@ -1850,6 +1850,151 @@ Verified chain: notes.js (retry + migration + merge salvage) ×
 shell.js × sw.js × apps.json × sync.js v0.9.1 (audited clean).
 Engine untouched — fix is app-side merge semantics.
 
+## [Kernel Lock re-audit — shell.js] 2026-09-18 · shell.js
+### Fixed (findings from shell.js full re-audit, v0.35.07)
+- #2 maybeAutoExport: honest quota failure — writeSnapshots now returns
+  boolean; failed snapshot storage reports an ERROR toast instead of a
+  false "saved" (new i18n key sync.err.snapshot.quota, inline bilingual
+  fallback until translations.js batch).
+- #3 wxFetch: failed fetch no longer locks the tray chip for 30 min —
+  short 2-min retry cooldown (WX_RETRY_MS) written only on failure.
+- #4 checkVersionToast/scToast: local `t` renamed (vt/tt) — DOM variable
+  no longer shadows window.t (preventive, no behavior change).
+- #6 openApp/returnToDesktop: menu button tooltip painted immediately
+  (title attribute set at transition, not only via applyLang).
+### Files touched
+- shell.js (patches 1–6, OLD→NEW copy-paste blocks)
+### Deferred / open (tracked in audit registry)
+- #1 factoryResetPending vs OrosFS IDB-fallback eager connection —
+  pending fs.js review (potential factory-reset survival bug).
+- #5 alarmsWrite/calRemFiredAdd silent write failures — policy pending.
+- #7 fdSliceSet app-closed echo — pending sync.js divergence-guard
+  cross-check. Bible §6 version drift (0.35.00 vs actual 0.35.07) noted.
+  
+  ## [Kernel Lock re-audit — sync.js] 2026-09-18 · sync.js + shell.js
+### Verified (patches from prior audit — CONFIRMED PRESENT)
+- F1 dirtyGen race guard: markDirty gen counter + dirtyGenAtCollect
+  capture in push() + conditional clearDirty — fully wired.
+- v0.9.1 contentDownload 409 passthrough; v0.8.1 baselineExists
+  discriminator; #S2 baseline-from-payload; SY-3 pwEpoch in meta;
+  v0.9.2 fresh read-modify-write carry in applyPayload.
+- shell.js #S2/#S3/#S1 clean; importDisk consumers absent from
+  shell.js (F7 impact = files.js only, pending).
+### Fixed (new findings S-A..S-F)
+- S-A ensureCloudReadable: non-409 status errors no longer launder
+  as "empty cloud" — inconclusive checks now REJECT the push
+  (Trap-3 hardening). [SP1]
+- S-B pull() in-flight guards: pullInFlight flag + refusal while
+  push/reconcile in flight — manual pull can no longer LWW-clobber
+  a racing push's freshly-uploaded state. [SP2]
+- S-C proxy set() strict write: quota failures THROW → applyPayload
+  skips baseline recording → stale-local-over-cloud push path
+  eliminated (writeJsonStrict for proxies only). [SP3]
+- S-D refreshAccessToken memoized (single in-flight refresh) —
+  concurrent API legs can no longer burn a rotating token. [SP4]
+- S-E debounce re-arms (1s) when the engine is busy instead of
+  silently consuming the raced edit's only scheduled uploader. [SP5]
+- S-F shell.js refreshFilesDiskCache: changed disk content now
+  re-marks dirty — closes the push-vs-cache-refresh race window. [SP6]
+### Open (tracked)
+- S decryptBlob pwEpoch mismatch: console.warn only (informational,
+  standing limit — unchanged).
+- importData unconditional markDirty on applied===0: benign noise.
+
+## [Kernel Lock re-audit — fs.js] 2026-09-18 · fs.js
+### Verified (prior findings — CONFIRMED PRESENT / RESOLVED)
+- #1 factory-reset vs IDB fallback: RESOLVED — idbOpen() is lazy
+  (only real ops open it; boot never does on the IDB path) and
+  carries an onversionchange release handler. Closed permanently.
+- F6 opfsMv: dir→file dual probe with rethrow present (silent
+  failure fixed) — refinement applied as FP2 below.
+- F7 importDisk: {applied, failed} return type + per-entry failure
+  collection present. No fs.js-internal consumers break; shell.js
+  consumes importDisk nowhere. Files-app consumers pending review.
+### Fixed (new findings)
+- FP1 importDisk: synchronous dataUrlToBlob throw on corrupt entries
+  aborted the WHOLE import chain (valid entries after the corrupt
+  one silently skipped, raw rejection to caller) — now routed
+  through the per-entry failure collector.
+- FP2 opfsMv: probe failures and mid-tree copy/remove failures are
+  now separated (probe-scoped rejection handler) — a disk error is
+  no longer misreported as "source doesn't exist".
+### Recorded (no action)
+- importDisk does not preserve original mtimes (writes Date.now()) —
+  fidelity note, candidate future polish.
+- mv copy-then-delete is non-atomic: worst case a duplicate remains
+  on partial failure (never a loss). Standing limit.
+- Double markDirty on some paths (public wrapper + driver #16) —
+  harmless (flag, not counter).
+  
+  ## [Kernel Lock re-audit — translations.js] 2026-09-18 · translations.js
+### Verified (prior finding F9 — CONFIRMED PRESENT)
+- F9 sc.snapshot: keys present in EN + EL ("Take snapshot now" /
+  "Δημιουργία στιγμιότυπου τώρα"), no shell.js usage issues.
+### Added (new key for F9 batch)
+- sync.err.snapshot.quota: permanent i18n entry replacing the
+  inline bilingual fallback from shell.js Patch 1. [TP1]
+### Status
+- All shell.js/sync.js referenced keys now present in translations.js.
+- Shell.js micro-patch (remove inline fallback) pending your
+  confirmation that TP1 is applied.
+  
+  ### [Kernel Lock — shell.js follow-up] 2026-09-18 · shell.js
+- maybeAutoExport: inline bilingual fallback for
+  sync.err.snapshot.quota REMOVED — key now permanently in
+  translations.js (TP1). Toast text sourced via window.t() only.
+  
+  ## [Kernel Lock re-audit — index.html] 2026-09-18 · index.html
+### Verified
+- All statically-referenced DOM IDs used by shell.js present;
+  toasts/sync-dot/weather chip correctly runtime-created.
+- Script load order (splash → broker → translations → sync → fs →
+  shell) correct; skip-splash writer/consumer pair consistent.
+### Fixed
+- IP1 splash error handler: localStorage read wrapped in try/catch
+  — blocked-storage throws can no longer recurse the window error
+  listener.
+- IP2 splash: boot errors now hold the splash for a 45s message
+  window (hide deferral) instead of being erased ~700ms after load
+  by the normal fade — a failed boot no longer ends in a blank page.
+### Recorded (no action)
+- Cache-buster ?v=0.35.06 lags APP_VERSION 0.35.07 — folded into
+  open item H/#27 (version ledger reconciliation). Deployment note:
+  this session's patches (shell/sync/fs/translations) REQUIRE a
+  version bump via the Action when shipped.
+- <html lang="en"> static — minor a11y note if applyLang doesn't
+  update it (unverified; cosmetic).
+  
+  ## [Kernel Lock re-audit — sw.js] 2026-09-18 · sw.js
+### Verified (prior finding F8 — CONFIRMED PRESENT)
+- F8 apps.json: NETWORK-FIRST strategy present (S1 FIX comment +
+  implementation). Precache per-URL add (D1 fix), navigate 200-only
+  cache, waitUntil guards, origin guard — all confirmed present.
+### Fixed
+- SW-I activate: added 30s timeout guard around cache cleanup →
+  clients.claim() won't be blocked indefinitely by slow cache
+  deletion in extreme conditions.
+### Recorded (no action)
+- CACHE_VERSION string normalization note: comment added to
+  document expected format independence (standing watch).
+- CACHE_VERSION = "oros-v0.35.06" vs APP_VERSION = "0.35.07" —
+  folded into open item H/#27 (version ledger reconciliation).
+- QUOTA growth risk in RUNTIME_CACHE (no max-size enforcement)
+  — standing limit, monitor during testing.
+  
+  ## [Kernel Lock re-audit — apps.json] 2026-09-18 · apps.json
+### Verified — CLEAN, no patches required
+- All 13 apps (todo, kanban, notes, weather, mood, time, calendar,
+  quote, prompter, characters, storage, habits, files) fully
+  cross-referenced against sw.js PRECACHE_URLS, shell.js ICONS map,
+  and translations.js app.* / category.* keys — zero mismatches.
+- Writer: precached in SW but absent from apps.json — CONSISTENT
+  with the forward-looking staging strategy (Bible).
+- Valid JSON, no duplicates, no missing fields.
+### Recorded (design note, no action)
+- Storage categorized as "Productivity" — arguably "Utilities"
+  (space analytics). Cosmetic classification, owner's call.
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

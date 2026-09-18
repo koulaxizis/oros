@@ -57,11 +57,22 @@
     // the splash is the only surface that exists before shell.js.
     window.addEventListener("error", function (ev) {
       if (done) return;
+      // IP1: a throw INSIDE this handler (blocked localStorage →
+      // SecurityError in hardened browsers) fires ANOTHER window
+      // error event → this listener again → recursion. Diagnostics
+      // must never crash the diagnostics.
+      var lang = "en";
+      try { lang = localStorage.getItem("oros-lang") || "en"; } catch (e0) {}
       if (txt) {
-        txt.textContent = (localStorage.getItem("oros-lang") === "el")
+        txt.textContent = (lang === "el")
           ? "Σφάλμα εκκίνησης: " + (ev.message || "άγνωστο") + " — δοκίμασε hard refresh."
           : "Startup error: " + (ev.message || "unknown") + " — try a hard refresh.";
         txt.style.color = "#e06c75";
+        // IP2: keep the message readable. Without this, the load+700ms
+        // hide() erases it almost instantly — and the desktop behind
+        // the splash never rendered (that's WHY the error exists).
+        // hideNotBefore is hoisted (var) with `done` below — safe.
+        hideNotBefore = Date.now() + 45000;
       }
     });
     // (β) update-triggered reload: NO second splash — the user was
@@ -83,8 +94,17 @@
     } catch (e) {}
 
     var done = false;
+    var hideNotBefore = 0;    // IP2: boot-error message visibility window
     function hide() {
       if (done) return;
+      if (Date.now() < hideNotBefore) {
+        // IP2: defer every hide attempt (load+700ms AND the 10s
+        // fail-safe re-arm themselves here) until the error message
+        // window lapses. Never a permanent trap: hide eventually
+        // runs — the window is bounded (45s).
+        setTimeout(hide, hideNotBefore - Date.now() + 50);
+        return;
+      }
       done = true;
       s.classList.add("hide");
       s.style.opacity = "0";   // inline fallback: hides even without style.css
