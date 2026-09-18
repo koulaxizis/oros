@@ -76,7 +76,7 @@ window.OROS_TRANSLATIONS = {
     "sync.err.version":     "Cloud data uses an unsupported version",
     "sync.err.auth":        "Dropbox authorization failed — reconnect",
     "sync.err.generic":     "Sync failed — check your connection",
-    "sync.snapshots.info":     "{n}/5 αντίγραφα · τελευταίο: {date}",
+    "sync.snapshots.info":     "{n}/5 snapshots · latest: {date}",
     "sync.snapshots.none":     "No snapshots yet — turn on Auto backup.",
     "sync.fsfolder.label":     "Backup folder",
     "sync.fsfolder.choose":    "Choose…",

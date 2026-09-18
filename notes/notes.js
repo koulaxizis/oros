@@ -84,6 +84,7 @@
       // Assign all old pages/labels to the new notebook
       (raw.pages || []).forEach(function (p) {
         p.nb = firstNb.id;
+        if (typeof p.pinned !== "boolean") p.pinned = false; // MIGRATION: add missing pinned field
       });
       // Labels: assign nb too (for consistent per-book isolation)
       (raw.labels || []).forEach(function (l) {
@@ -91,7 +92,16 @@
       });
     }
 
+    // LEGACY COMPATIBILITY: ensure all required fields exist even in v3+ data
+    // (migration artifacts, manual edits, or partial restores)
+    // Orphan pages without a notebook ref are re-assigned by normalizeState()
+    (raw.pages || []).forEach(function (p) {
+      if (typeof p.pinned !== "boolean") p.pinned = false;
+      if (!Array.isArray(p.labels)) p.labels = [];
+    });
+
     state.ver       = DATA_VER;
+
     state.notebooks = Array.isArray(raw.notebooks) ? raw.notebooks : [];
     state.pages     = Array.isArray(raw.pages)     ? raw.pages     : [];
     state.labels    = Array.isArray(raw.labels)    ? raw.labels    : [];
@@ -163,6 +173,7 @@
       p.parent = (p.parent === null || alive[p.parent]) ? p.parent : null;
       p.pos    = (typeof p.pos === "number" && isFinite(p.pos)) ? p.pos : 0;
       p.mtime  = p.mtime || Date.now();
+      p.pinned = !!p.pinned;   // v0.35.03 fix: coerce for merged data from unpatched devices
       // labels: array of known, alive label ids, de-duplicated
       var ll = Array.isArray(p.labels) ? p.labels : [];
       var seen = {};
@@ -249,6 +260,7 @@
       "labels.detach":      "Remove",        // v0.14.0
       "labels.confirm":     "Delete this label?",      // v0.14.0
       "labels.detached":     "Label removed", // v0.14.0
+      "labels.deleted":      "Label deleted",  // v0.35.00 fix
       "page.pin":           "Pin to top",
       "page.unpin":         "Unpin",
       "toast.pinned":       "Pinned to top",
@@ -303,6 +315,7 @@
       "labels.detach":      "Αφαίρεση",        // v0.14.0
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
       "labels.detached":     "Η ετικέτα αφαιρέθηκε", // v0.14.0
+      "labels.deleted":      "Η ετικέτα διαγράφηκε",  // v0.35.00 fix
       "page.pin":           "Καρφίτσωμα στην κορυφή",
       "page.unpin":         "Αφαίρεση καρφιτσίματος",
       "toast.pinned":       "Καρφιτσώθηκε στην κορυφή",
@@ -765,14 +778,20 @@
   function movePage(id, dir) {
     var page = pageById(id);
     if (!page) return;
-    var sibs = siblingListByParent(page.parent);
+    
+    // USE kidsOf() instead of siblingListByParent — pinned ordering matters!
+    // siblingListByParent ignores pinned status, causing visual jump in tree
+    var sibs = kidsOf(page.parent);
     var idx = -1;
     for (var i = 0; i < sibs.length; i++) if (sibs[i].id === id) { idx = i; break; }
     var swapWith = sibs[idx + dir];
     if (!swapWith) return;
 
+    // Swap positions — but preserve relative pinned/unpinned grouping
+    // by using actual positions from the sorted array
     var tmp = page.pos; page.pos = swapWith.pos; swapWith.pos = tmp;
-    if (page.pos === swapWith.pos) swapWith.pos = page.pos + dir; // equal-pos tie breaker
+    if (page.pos === swapWith.pos) swapWith.pos = page.pos + dir;
+    
     page.mtime    = Date.now();
     swapWith.mtime = Date.now();
     saveNow();
@@ -1363,11 +1382,16 @@
   function backlinkPages(current) {
     var title = ((current && current.title) || "").trim();
     if (!title) return [];
-    var needle = "[[" + title + "]]";
+    
+    var needleLower = "[[" + title.toLowerCase() + "]]";
     var nbId = current.nb || currentNbId();
+    
     return state.pages.filter(function (p) {
-      return p.id !== current.id && p.nb === nbId &&
-             ((p.text || "").indexOf(needle) !== -1);
+      if (p.id === current.id || p.nb !== nbId) return false;
+      
+      // Case-insensitive match — wiki links should work regardless of capitalization
+      var textLower = (p.text || "").toLowerCase();
+      return textLower.indexOf(needleLower) !== -1;
     });
   }
 
@@ -1651,7 +1675,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("labels.detached"));
+    toast(t("labels.deleted")); // v0.35.00 fix: correct message for LABEL deletion
   }
 
   function toggleAttach(page, labelId) {
@@ -1707,6 +1731,25 @@
       })
       .sort(function (x, y) { return x.pos - y.pos || x.name.localeCompare(y.name); });
 
+    // v0.35.04 SALVAGE TARGET (root cause of the "notes stopped
+    // syncing" outage): a peer still running schema-old code (no
+    // notebooks, DATA_VER < 3) pushes pages/labels WITHOUT nb.
+    // Such entries are ADOPTED by the first notebook instead of
+    // being silently dropped — dropping produced merged == local
+    // (0 applied) on every pull plus an endless cloudStale loop.
+    // Deterministic pick: lowest pos, then id — locale-independent,
+    // both devices compute the same target from the same inputs.
+    var fallbackNb = notebooks.slice().sort(function (x, y) {
+      return (x.pos - y.pos) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
+    })[0];
+    if (!fallbackNb) {
+      // Degenerate: pages exist but no notebook survived on EITHER
+      // side — enforce the app's "always >= 1 notebook" invariant.
+      fallbackNb = { id: "nb-default", name: "Notes", mtime: 0, pos: 0 };
+      notebooks = [fallbackNb];
+    }
+    var fallbackNbId = fallbackNb.id;
+
     // -- Labels: per-id LWW, then tomb-drop, filtered by nb --
     var labelMap = {};
     [].concat(a.labels || [], b.labels || []).forEach(function (l) {
@@ -1721,7 +1764,12 @@
     var labels = Object.keys(labelMap).map(function (k) { return labelMap[k]; })
       .filter(function (l) {
         var tomb = tombs["lbl:" + l.id] || 0;
-        return !(tomb >= (l.mtime || 0)) && notebookIdsInMerge[l.nb];
+        return !(tomb >= (l.mtime || 0));
+      })
+      .map(function (l) {
+        // v0.35.04: nb salvage — schema-old peers send no nb.
+        if (!notebookIdsInMerge[l.nb]) l.nb = fallbackNbId;
+        return l;
       })
       .sort(function (x, y) { return x.pos - y.pos || x.name.localeCompare(y.name); });
 
@@ -1739,11 +1787,15 @@
     var pages = Object.keys(pageMap).map(function (k) { return pageMap[k]; })
       .filter(function (p) {
         var tomb = tombs[p.id] || 0;
-        var nbAlive = notebookIdsInMerge[p.nb];
-        return !(tomb >= (p.mtime || 0)) && nbAlive;
+        return !(tomb >= (p.mtime || 0));
       })
       .map(function (p) {
-        // Dead label refs and wrong-nb refs never survive
+        // v0.35.04: nb salvage — schema-old peers send pages without
+        // nb; adopt into the fallback notebook instead of dropping
+        // (dropping was the root cause of the silent no-op sync).
+        if (!notebookIdsInMerge[p.nb]) p.nb = fallbackNbId;
+        if (typeof p.pinned !== "boolean") p.pinned = false;
+        // Dead label refs never survive
         p.labels = (p.labels || []).filter(function (lid) {
           return labelIdsInMerge[lid];
         });
@@ -1814,11 +1866,37 @@
 
   function registerNotesSlice() {
     var api = syncApi();
+    
+    // CRITICAL: retry if orosSync isn't ready yet (race condition fix)
+    // This happens when shell.js loads before orosSync is fully initialized.
     if (api && typeof api.registerSlice === "function") {
-      // (name, get, set, storageKey, merge) — merge-capable slice:
-      // closed-app proxies stay guarded, live opens merge.
       api.registerSlice("notes", sliceGet, sliceSet, STORAGE_KEY, mergeNotesStates);
+      console.log('[notes] Slice registered successfully');
+      return;
     }
+    
+    // Retry for up to 5 seconds — shell may still be booting
+    console.warn('[notes] orosSync not ready yet, retrying for 5s...');
+    var attempts = 0;
+    var maxAttempts = 50; // 50 × 100ms = 5s
+    
+    var retryTimer = setInterval(function () {
+      attempts++;
+      api = syncApi();
+      
+      if (api && typeof api.registerSlice === "function") {
+        clearInterval(retryTimer);
+        api.registerSlice("notes", sliceGet, sliceSet, STORAGE_KEY, mergeNotesStates);
+        console.log('[notes] Slice registered after ' + attempts + ' retries');
+        return;
+      }
+      
+      if (attempts >= maxAttempts) {
+        clearInterval(retryTimer);
+        console.error('[notes] CRITICAL: orosSync never became available — sync WILL FAIL');
+        console.error('[notes] Check shell.js boot order and sync.js initialization');
+      }
+    }, 100);
   }
 
   // ---------- 9. Wiring & boot ----------
@@ -1866,15 +1944,18 @@
       // Context menu for notebook actions
       nbSel.addEventListener("contextmenu", function (e) {
         e.preventDefault();
+        e.stopPropagation();
         var nb = currentNotebook();
         if (!nb) return;
+        
+        closeMenus();   // v0.35.03 fix: kill any open #node-menu — prevents duplicate-id stale menu
+        
+        // REUSE #node-menu styling — no inline cssText (design system parity)
         var menu = document.createElement("div");
-        menu.id = "nb-menu";
-        menu.style.cssText =
-          "position:fixed;z-index:999;background:var(--panel-bg);" +
-          "border:1px solid var(--border);border-radius:10px;" +
-          "padding:4px;box-shadow:0 12px 32px var(--shadow);";
+        menu.id = "node-menu"; 
+        
         var actions = [
+          [t("book.menu.title"), null],
           [t("book.rename"), function () {
             var name = window.prompt(t("book.rename"), nb.name);
             if (name && name.trim()) {
@@ -1885,24 +1966,29 @@
             deleteNotebook(nb.id);
           }]
         ];
+        
         actions.forEach(function (pair) {
-          var b = document.createElement("button");
-          b.className = "node-menu-item";
-          b.style.cssText =
-            "display:block;width:100%;min-height:38px;padding:6px 10px;" +
-            "background:transparent;border:none;border-radius:7px;" +
-            "color:var(--text);font:inherit;font-size:13.5px;" +
-            "text-align:left;cursor:pointer;";
-          b.textContent = pair[0];
-          b.addEventListener("click", function () {
-            menu.remove();
-            pair[1]();
-          });
-          menu.appendChild(b);
+          if (pair[1] === null) {
+            var sep = document.createElement("div");
+            sep.className = "node-menu-separator";
+            sep.textContent = pair[0];
+            menu.appendChild(sep);
+          } else {
+            var b = document.createElement("button");
+            b.className = "node-menu-item";
+            b.textContent = pair[0];
+            b.addEventListener("click", function () {
+              menu.remove();
+              pair[1]();
+            });
+            menu.appendChild(b);
+          }
         });
+        
         document.body.appendChild(menu);
         menu.style.left = e.clientX + "px";
         menu.style.top = e.clientY + "px";
+        
         // Close on outside click
         setTimeout(function () {
           document.addEventListener("click", function closeMenu(ev) {

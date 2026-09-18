@@ -333,6 +333,7 @@
     else if (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time)) start = e.time;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
     if (start && end && end < start) end = null;   // corrupted range → no end
+    if (start && end && end < start) end = null;   // corrupted range → no end
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
     var remindMin = (typeof e.remindMin === "number" &&
                      REMIND_PRESETS.indexOf(e.remindMin) !== -1)

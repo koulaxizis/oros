@@ -1667,6 +1667,188 @@ template:
   items consolidated into Part X (incl. #S2/#S3 status
   reconciliation and deprecated-path registry). Entry
   template added at the top of this Part.
+  
+  ## orOS Notes app — v0.35.00 sync & stability audit
+Date: 2026-09-18 · Files: notes.js, notes.css
+
+### Context
+Reported: "notes no longer sync between devices."
+Audit covered notes.html/notes.css/notes.js against sync.js (v0.9.1).
+
+### Root-cause hypothesis (sync)
+registerNotesSlice() ran ONCE at script-boot with no retry — if
+window.parent.orosSync was not yet initialized at that moment,
+the slice never registered, silently, forever. Most likely culprit
+for the outage. Fixed with a bounded retry loop (50 × 100ms = 5s),
+with explicit console success/failure markers.
+NOTE: if sync still fails after this fix with "registered
+successfully" in the log, the problem is inside the engine/baseline
+state — collect oros-slices / oros-sync-baselines / oros-sync-dirty
+from BOTH devices before further patching. DO NOT GUESS.
+
+### Patches applied (OLD → NEW, copy-paste format)
+1. notes.js registerNotesSlice(): retry loop + console diagnostics.
+2. notes.js loadData(): migration fills p.pinned (bool) and
+   sanitizes p.labels arrays on legacy/merged data. The merge
+   engine drops pages/labels whose `nb` refs are unknown, so
+   migration guarantees field shape BEFORE sync merges.
+3. notes.js movePage(): now uses kidsOf() (pinned-aware sort)
+   instead of siblingListByParent() — tree visuals and swap
+   arithmetic agree.
+4. notes.js backlinkPages(): case-insensitive match, parity with
+   pageByTitle()'s case-insensitive title lookup.
+5. notes.js nb-selector contextmenu: reuses #node-menu /
+   .node-menu-item / .node-menu-separator design-system classes;
+   inline cssText styling removed.
+6. notes.js deleteLabel(): new i18n keys labels.deleted ("Label
+   deleted" / "Η ετικέτα διαγράφηκε") — was showing the DETACH
+   message (and an intermediate fix mistakenly used toast.deleted
+   "page deleted"; superseded).
+7. notes.css header comment updated to v0.35.00 (doc drift).
+
+### Retracted
+- Claimed duplicate `padding` in #nb-selector: DOES NOT EXIST in
+  the file (padding + intentional padding-right: 32px for the
+  dropdown arrow). Lesson re-confirmed: verify OLD blocks against
+  the shipped file before delivering patches.
+
+### Known/pending (not blocking)
+- notes.js APP_VERSION = "0.17.0" and __notesDebug.version are
+  stale vs stratum 0.35.00. Left as-is: versioning policy says
+  shell.js is the single source of truth — decide deliberately.
+- localStorage keys touched: oros-notes-data (shape unchanged,
+  additive fields only), oros-sync-baselines (via engine push).
+  No data-loss risk: all patches are additive-field or UI-level.
+
+### Verification checklist (both devices)
+[ ] Boot: "[notes] Slice registered successfully" in console
+[ ] Boot: "notes.js v0.35.00 boot" line
+[ ] Edit on device A → arrives on device B (≤ interval)
+[ ] Baselines contain "notes" entry after first push
+[ ] Pinned page + Move up/down behaves
+[ ] [[lowercase]] backlink appears on target page
+[ ] Label delete toast says "Η ετικέτα διαγράφηκε" / "Label deleted"
+
+## orOS sync — engine audit closure (post v0.35.03)
+Files audited in full: notes.js, notes.css, shell.js, sw.js, apps.json, sync.js.
+
+### Final diagnosis — "notes no longer sync"
+ROOT CAUSE: version-skew merge warfare between devices. One device
+(stale cached notes.js, pre-notebooks schema, DATA_VER < 3 — writes
+lack nb/notebooks/pinned) pushes schema-old notes data; the updated
+device's mergeNotesStates FILTERS OUT pages without valid nb refs
+(notebookIdsInMerge map lookup on undefined). Result on the updated
+device: merged == local → 0 applied (silent no-op, "nothing new"),
+yet merged != remote → cloudStale → dirty → repush. The stale device
+rewrites/strips unknown fields → pushes nb-less data again → loop.
+Symptom: notes appear permanently unsynced; all other apps fine.
+
+### What was RULED OUT (verified, not guessed)
+- Registration race in notes.js: covered by retry patch (kept as
+  defense-in-depth); shell loads orosSync before any app iframe.
+- Stale SW bundles ONLINE: ruled out — sw.js navigate branch is
+  network-first; iframes are navigations.
+- sync.js engine v0.9.1: clean for merge-capable slices. Baselines
+  (v0.8.1 + #S2-fix), park/carry/flush, divergence guard (mergeless
+  only), push guard, 409 paths, vault, wipe: all verified sound.
+- Applied and KEPT: notes.js patches 1-7 (registration retry,
+  loadData migration/sanitization incl. pinned+labels coercion,
+  kidsOf move sort, case-insensitive backlinks, labels.deleted i18n,
+  nb-menu design-system reuse), CSS header v0.35.03.
+- RETRACTED (never apply): openApp/refreshRunningApp cache-bust
+  patch — would break the SW offline navigate fallback (iframe would
+  load ./index.html inside the Notes window) with zero online gain.
+
+### Remaining work (blocking closure)
+1. mergeNotesStates must SALVAGE pages with unknown/missing nb
+   (assign to default notebook) instead of dropping them — the
+   loadData migration (Patch 2) alone does not cover the merge
+   input path. Exact OLD/NEW patch pending current function text.
+2. Per-device verification: boot log shows notes.js v0.35.03 AND
+   oros-notes-data has ver:3 + nb on pages, on BOTH devices.
+
+## [Calendar] v0.2.0 — Wave 3 Final Verification Pass (audit CLOSED)
+
+### Paste-back verification (R19) — all three files confirmed
+All Wave 3 patches verified PRESENT in the pasted calendar.js /
+calendar.css / index.html:
+- ✅ Horizon prune: checkReminders walks today+8d and STOPS past
+  it (multi-day presets 1d/3d/5d fire BEFORE the event day,
+  not on it) + STOP-the-walk optimization (ascending order).
+- ✅ Dynamic MAX_STEPS (D=40000 / W=5200 / M,Y=600) — daily
+  series older than ~17 months no longer vanish.
+- ✅ Corruption guard in eachOccurrence (occYmd falsy → stop).
+- ✅ Series chooser: "cancel" event listener + null-vs-"all"
+  distinction — Esc/backdrop = pure cancel, never "Edit series".
+- ✅ Undo stacks (lastMoved/lastDeleted/lastExdate) cleared in
+  setFromSync — undo can never resurrect a sync-overwritten
+  state.
+- ✅ renderChips() refresh on label color change (main view +
+  dots update live while the manage dialog stays open).
+- ✅ tp-menu open/close transition (opacity + translate, hidden
+  pointer-events).
+- ✅ CSS coverage: #ser-dlg dialog, #ev-until-row show/hide
+  contract, .ev-form select + input[type=date] skinned
+  (color-scheme: dark), [hidden] authority guard intact.
+
+### Confirmed-OK design findings (no action — documented)
+- reseedSeedNames mtime-0 seeds: merge-inert by design; user
+  edit (fresh mtime) detaches permanently. Re-translation on
+  language change = FUTURE feature, not a bug.
+- exdates 100-cap in eachOccurrence: intentional corruption
+  bound (sanitizer dedupes+sorts anyway).
+- makeTP document-level listeners: negligible in a
+  single-dialog app; accepted.
+- del-dlg/ser-dlg: outside-click + Esc verified against R14.
+
+### Open (cosmetic, non-blocking)
+- F6: .cal-cell.drop-target still carries transform:scale(1.02)
+  — one-line CSS simplification recommended before commit
+  (inset shadow instead of scale; no grid overflow on small
+  screens).
+- F8 variant (console.warn when exdateMaster finds no master):
+  optional diagnostic; saveState NOT needed (both call sites
+  already save).
+
+### Pre-completion status (R18 gates)
+- [x] Perfect sync (no data loss): recur/remindMin whitelisted
+      in BOTH sanitizeEvent and mergeSanitizeEv; exdates sorted
+      + deduped → deterministic stringify tie-break; override
+      clones + exdates travel via standard entity merge.
+- [x] Full local export: events carry recur + remindMin inside
+      the standard slice funnel (collectPayload/applyPayload).
+- [x] Offline-first: zero network dependencies; reminder
+      engines (shell + in-app) are device-local.
+- [x] Mobile-first: 44px targets throughout, small-screen cell
+      sizing, no drag dependence (DnD is desktop-only bonus).
+
+READY FOR COMMIT after F6 (optional one-liner).
+   
+   ### v0.35.04 — notes.js mergeNotesStates: nb salvage (FINAL sync fix)
+ROOT CAUSE CONFIRMED against live mergeNotesStates source: pages/
+labels arriving from a schema-old peer (pre-notebooks, DATA_VER < 3,
+no nb field) were DROPPED by the merge filters
+(notebookIdsInMerge[l.nb] / [p.nb] === undefined). Result: every
+pull produced merged == local → 0 applied (silent no-op), while
+merged != remote → cloudStale → dirty → repush → loop. Symptom:
+"notes no longer sync"; all other apps unaffected (no schema
+migration during this period).
+
+FIX: merge now ADOPTS nb-less entries into the fallback notebook
+(deterministic pick: lowest pos, then id — locale-independent)
+instead of dropping them. Degenerate no-notebook case synthesizes
+a stable "nb-default" notebook (invariant: always >= 1). Also
+coerces p.pinned to boolean inside the merge (parity with
+normalizeState fix).
+
+ACCEPTED LIMIT: while a stale device keeps winning LWW on a page,
+that page's notebook may relocate to the fallback notebook until
+the device runs 0.35.03+. Position in tree is the only casualty;
+content is never lost.
+
+Verified chain: notes.js (retry + migration + merge salvage) ×
+shell.js × sw.js × apps.json × sync.js v0.9.1 (audited clean).
+Engine untouched — fix is app-side merge semantics.
 
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
