@@ -15,7 +15,7 @@
 // (strata: v0.13.1 notes/* precache — full banner history in CHANGELOG)
 // ============================================================
 
-var CACHE_VERSION = "oros-v0.35.03"; // MANUAL STAMP — GitHub Action should match APP_VERSION from shell.js; bump on every deploy if Action fails
+var CACHE_VERSION = "oros-v0.35.06"; // MANUAL STAMP — GitHub Action should match APP_VERSION from shell.js; bump on every deploy if Action fails
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
