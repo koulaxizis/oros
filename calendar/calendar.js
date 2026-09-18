@@ -98,10 +98,30 @@
       "lbl.new": "New label",
       "lbl.name": "Label name",
       "lbl.ph.name": "Name…",
+      "lbl.color": "Color",
       "lbl.done": "Done",
       "lbl.delete": "Delete",
       "lbl.inuse": "This label is used by events",
-      "lbl.none": "No label"
+      "lbl.none": "No label",
+      "lbl.empty": "No labels yet",
+      "ev.field.repeat": "Repeat",
+      "rep.none": "None",
+      "rep.daily": "Daily",
+      "rep.weekly": "Weekly",
+      "rep.biweekly": "Every 2 weeks",
+      "rep.monthly": "Monthly",
+      "rep.yearly": "Yearly",
+      "ev.field.until": "Until",
+      "ev.field.remind": "Reminder",
+      "rem.none": "None",
+      "rem.min": "{n} min before",
+      "rem.hour": "{n} h before",
+      "rem.day": "{n} day(s) before",
+      "ser.edit.q": "Edit this occurrence or the whole series?",
+      "ser.this": "This occurrence",
+      "ser.all": "Entire series",
+      "remind.toast": "Reminder",
+      "ev.moved": "Moved"
     },
     el: {
       "cal.today": "Σήμερα",
@@ -147,10 +167,30 @@
       "lbl.new": "Νέα ετικέτα",
       "lbl.name": "Όνομα ετικέτας",
       "lbl.ph.name": "Όνομα…",
+      "lbl.color": "Χρώμα",
       "lbl.done": "Τέλος",
       "lbl.delete": "Διαγραφή",
       "lbl.inuse": "Η ετικέτα χρησιμοποιείται από συμβάντα",
-      "lbl.none": "Χωρίς ετικέτα"
+      "lbl.none": "Χωρίς ετικέτα",
+      "lbl.empty": "Δεν υπάρχουν ετικέτες ακόμα",
+      "ev.field.repeat": "Επανάληψη",
+      "rep.none": "Καμία",
+      "rep.daily": "Καθημερινά",
+      "rep.weekly": "Εβδομαδιαία",
+      "rep.biweekly": "Κάθε 2 εβδομάδες",
+      "rep.monthly": "Μηνιαία",
+      "rep.yearly": "Ετήσια",
+      "ev.field.until": "Έως",
+      "ev.field.remind": "Υπενθύμιση",
+      "rem.none": "Καμία",
+      "rem.min": "{n} λεπτά πριν",
+      "rem.hour": "{n} ώρες πριν",
+      "rem.day": "{n} μέρες πριν",
+      "ser.edit.q": "Να επεξεργαστείς αυτή την εμφάνιση ή όλη τη σειρά;",
+      "ser.this": "Αυτή η εμφάνιση",
+      "ser.all": "Όλη η σειρά",
+      "remind.toast": "Υπενθύμιση",
+      "ev.moved": "Μετακινήθηκε"
     }
   };
   function t(k) {
@@ -232,6 +272,28 @@
     ];
   }
 
+  // Untouched seeds (mtime 0) follow the ACTIVE language: the fixed
+  // id map re-translates them at every boot. Any user edit (fresh
+  // mtime) detaches the label forever. No markDirty on purpose — a
+  // pure name swap has mtime 0, merge-inert on both devices.
+  function reseedSeedNames() {
+    var map = {
+      "lbl-personal": t("lbl.personal"),
+      "lbl-work":     t("lbl.work"),
+      "lbl-family":   t("lbl.family")
+    };
+    var changed = false;
+    state.labels.forEach(function (l) {
+      if (l.mtime === 0 && map[l.id] && l.name !== map[l.id]) {
+        l.name = map[l.id];
+        changed = true;
+      }
+    });
+    if (changed) {
+      try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    }
+  }
+
   function sanitizeLabel(l) {
     if (!l || typeof l !== "object") return null;
     if (typeof l.id !== "string" || !l.id) return null;
@@ -270,7 +332,11 @@
     if (typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start)) start = e.start;
     else if (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time)) start = e.time;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
+    if (start && end && end < start) end = null;   // corrupted range → no end
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
+    var remindMin = (typeof e.remindMin === "number" &&
+                     REMIND_PRESETS.indexOf(e.remindMin) !== -1)
+      ? e.remindMin : null;
     return {
       id: e.id,
       date: e.date,
@@ -280,6 +346,8 @@
       note: (typeof e.note === "string" ? e.note : "").slice(0, 500),
       location: (typeof e.location === "string" ? e.location : "").slice(0, 150),
       labelId: labelId,
+      recur: sanitizeRecur(e.recur),
+      remindMin: remindMin,
       mtime: (typeof e.mtime === "number" && isFinite(e.mtime)) ? e.mtime : Date.now()
     };
   }
@@ -469,12 +537,7 @@
   /* ---------- 2c. Rollup holders (wired in Part 2) ---------- */
   var tpStart = null, tpEnd = null;
 
-  function hideTPMenus() {
-    if (tpStart) tpStart.close();
-    if (tpEnd) tpEnd.close();
-  }
-  
-    /* ---------- 3. Date helpers + label visibility ---------- */
+  /* ---------- 3. Date helpers + label visibility ---------- */
   function ymd(y, m, d) { return y + "-" + pad(m + 1) + "-" + pad(d); }
   function todayYMD() {
     var n = new Date();
@@ -489,9 +552,127 @@
     return labelVis[labelId] !== false;
   }
 
+  /* ---------- 3b. Recurrence engine (Wave 3) ----------
+     Masters stored in state.events with "recur". Occurrences are
+     COMPUTED here — never stored. Algorithm mirrors shell.js
+     calRemEachOccurrence 1:1 (sticky-clamp contract: Jan 31 →
+     Feb 28 → Mar 31; D/W step days; interval 2 = bi-weekly;
+     exdates skipped; "until" stops the walk). The reminder engine
+     and this expansion MUST never disagree. */
+
+  // Whitelist — also the sync-sanitizer contract (deterministic).
+  var REMIND_PRESETS = [5, 15, 30, 60, 1440, 4320, 7200];
+
+  function validRecur(r) {
+    return !!(r && typeof r === "object" &&
+              /^[DWMY]$/.test(r.freq || ""));
+  }
+
+  function dimOfMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  // Normalizer: interval 2 is legal ONLY on weekly (bi-weekly).
+  // exdates deduped + SORTED → identical JSON.stringify on every
+  // device → the merge tie-break stays deterministic.
+  function sanitizeRecur(r) {
+    if (!validRecur(r)) return null;
+    var interval = (r.freq === "W" && r.interval === 2) ? 2 : 1;
+    var until = (typeof r.until === "string" &&
+                 /^\d{4}-\d{2}-\d{2}$/.test(r.until)) ? r.until : null;
+    var exSet = {};
+    if (Array.isArray(r.exdates)) {
+      r.exdates.forEach(function (d) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) exSet[d] = true;
+      });
+    }
+    return {
+      freq: r.freq,
+      interval: interval,
+      until: until,
+      exdates: Object.keys(exSet).sort()
+    };
+  }
+
+  // Generator: walks occurrences in strict ascending date order.
+  // cb(occYmd) — return false to stop. Exdate occurrences are
+  // skipped (but the walk continues past them, so an occurrence
+  // AFTER the exclusion is still reachable).
+  function eachOccurrence(e, cb) {
+    if (!validRecur(e.recur)) return;
+    var p = e.date.split("-");
+    var y = +p[0], m = +p[1] - 1;
+    var origDay = +p[2];
+    var d = origDay;
+    var r = e.recur;
+    var interval = (r.interval === 2) ? 2 : 1;
+    var until = (typeof r.until === "string" &&
+                 /^\d{4}-\d{2}-\d{2}$/.test(r.until)) ? r.until : null;
+    var exSet = {};
+    if (Array.isArray(r.exdates)) {
+      for (var x = 0; x < r.exdates.length && x < 100; x++) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(r.exdates[x])) exSet[r.exdates[x]] = true;
+      }
+    }
+    // Step budget must outlive any realistic series age (500 ≈ 16
+    // months of dailies was too tight): D ≈ 110 years, W (incl. ×2)
+    // ≈ 200 years, M/Y ≈ 50+ years. Reminders stop far earlier via
+    // the horizon, occursOn exits at the target date — both cheap.
+    var MAX_STEPS = (r.freq === "D") ? 40000 : (r.freq === "W") ? 5200 : 600;
+    for (var step = 0; step < MAX_STEPS; step++) {
+      var occYmd = ymd(y, m, d);
+      if (until && occYmd > until) return;
+      if (!occYmd) return;   // corruption guard: stop if ymd() fails
+      if (!exSet[occYmd]) {
+        if (cb(occYmd) === false) return;
+      }
+      if (r.freq === "D") {
+        d += interval;
+      } else if (r.freq === "W") {
+        d += 7 * interval;
+      } else if (r.freq === "M") {
+        m += interval;
+        while (m > 11) { m -= 12; y++; }
+        d = Math.min(origDay, dimOfMonth(y, m));   // sticky clamp
+      } else if (r.freq === "Y") {
+        y += interval;
+        d = Math.min(origDay, dimOfMonth(y, m));   // Feb 29 → Feb 28
+      } else {
+        return;
+      }
+      // normalize day overflow from D/W stepping (max +14 days)
+      var dim = dimOfMonth(y, m);
+      if (d > dim) { d -= dim; m++; if (m > 11) { m = 0; y++; } }
+    }
+  }
+
+  function occursOn(e, dateStr) {
+    if (!validRecur(e.recur)) return e.date === dateStr;
+    if (e.recur.until && dateStr > e.recur.until) return false;
+    var found = false;
+    eachOccurrence(e, function (occYmd) {
+      if (occYmd >= dateStr) {          // ascending walk: past the
+        found = (occYmd === dateStr);   // target → answer is final
+        return false;
+      }
+    });
+    return found;
+  }
+
+  function recurDesc(e) {
+    if (!validRecur(e.recur)) return "";
+    var map = {
+      "D-1":  ["Daily",         "Καθημερινά"],
+      "W-1":  ["Weekly",        "Εβδομαδιαία"],
+      "W-2":  ["Every 2 weeks", "Κάθε 2 εβδομάδες"],
+      "M-1":  ["Monthly",       "Μηνιαία"],
+      "Y-1":  ["Yearly",        "Ετήσια"]
+    };
+    var key = e.recur.freq + "-" + (e.recur.interval === 2 ? 2 : 1);
+    return map[key] ? map[key][LANG === "el" ? 1 : 0] : "";
+  }
+
   function eventsOn(dateStr) {
     return state.events.filter(function (e) {
-      return e.date === dateStr && labelVisible(e.labelId);
+      return occursOn(e, dateStr) && labelVisible(e.labelId);
     }).sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;     // all-day last
@@ -578,6 +759,27 @@
 
       (function (cd) {
         btn.addEventListener("click", function () { selectDay(cd); });
+        // Wave 3: drop target — accepts only calendar-event payloads
+        // (the "cal-ev:" prefix check happens in the drop handler).
+        btn.addEventListener("dragover", function (de) {
+          var types = de.dataTransfer.types;
+          if (types && Array.prototype.indexOf.call(types, "text/plain") !== -1) {
+            de.preventDefault();               // required: makes the drop legal
+            de.dataTransfer.dropEffect = "move";
+            btn.classList.add("drop-target");
+          }
+        });
+        btn.addEventListener("dragleave", function () {
+          btn.classList.remove("drop-target");
+        });
+        btn.addEventListener("drop", function (de) {
+          de.preventDefault();
+          btn.classList.remove("drop-target");
+          var raw = "";
+          try { raw = de.dataTransfer.getData("text/plain") || ""; } catch (e2) {}
+          if (raw.indexOf("cal-ev:") !== 0) return;
+          moveEventToDate(raw.slice(7), cd);
+        });
       })(cellDate);
 
       grid.appendChild(btn);
@@ -665,6 +867,13 @@
       titleTxt.className = "ev-title-text";
       titleTxt.textContent = e.title || t("ev.untitled");
       title.appendChild(titleTxt);
+      if (validRecur(e.recur)) {
+        var rp = document.createElement("span");
+        rp.className = "ev-repeat";
+        rp.title = recurDesc(e);
+        rp.textContent = "↻";
+        title.appendChild(rp);
+      }
 
       var lb = e.labelId ? labelById(e.labelId) : null;
       if (lb) {
@@ -691,7 +900,28 @@
       li.appendChild(time);
       li.appendChild(main);
       (function (ev) {
-        li.addEventListener("click", function () { openDlg(ev); });
+        li.addEventListener("click", function () {
+          // Series occurrence → chooser first (this occurrence vs
+          // the whole series). Saved overrides are plain events.
+          if (validRecur(ev.recur)) showSerChooser(ev, selDate);
+          else openDlg(ev);
+        });
+        // Wave 3 drag & drop (desktop): plain events + overrides
+        // only. Series occurrences are NOT draggable — the anchor
+        // belongs to the recurrence math, not to a mouse gesture.
+        if (!validRecur(ev.recur)) {
+          li.draggable = true;
+          li.addEventListener("dragstart", function (de) {
+            try {
+              de.dataTransfer.setData("text/plain", "cal-ev:" + ev.id);
+              de.dataTransfer.effectAllowed = "move";
+            } catch (e2) {}
+            li.classList.add("dragging");
+          });
+          li.addEventListener("dragend", function () {
+            li.classList.remove("dragging");
+          });
+        }
       })(e);
       ul.appendChild(li);
     });
@@ -735,6 +965,117 @@
   // committed on Save (unlike the month-view chips which filter).
   var dlgLabelId = null;
 
+  /* ---------- 7c. Wave 3 dialog state + series helpers ---------- */
+  // dlgMode: null = plain event / new, "master" = editing the whole
+  // series, "occ" = editing ONE occurrence (override on save).
+  // pendingOverride carries master id + occurrence date across
+  // chooser → dialog → save.
+  var dlgMode = null;
+  var pendingOverride = null;
+
+  function dlgReadRecur() {
+    var sel = $("ev-repeat");
+    if (!sel) return null;
+    var v = sel.value;                  // "" | "D-1" | "W-1" | "W-2" | "M-1" | "Y-1"
+    if (!v) return null;
+    var p = v.split("-");
+    var r = { freq: p[0], interval: p[1] === "2" ? 2 : 1 };
+    var untilRaw = $("ev-until") ? $("ev-until").value : "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(untilRaw)) r.until = untilRaw;
+    return sanitizeRecur(r);
+  }
+
+  function dlgReadRemind() {
+    var sel = $("ev-remind");
+    if (!sel || !sel.value) return null;
+    var v = parseInt(sel.value, 10);
+    return REMIND_PRESETS.indexOf(v) !== -1 ? v : null;
+  }
+
+  function remLabel(min) {
+    if (min >= 1440) return t("rem.day").replace("{n}", String(Math.round(min / 1440)));
+    if (min >= 60)   return t("rem.hour").replace("{n}", String(Math.round(min / 60)));
+    return t("rem.min").replace("{n}", String(min));
+  }
+
+  // Occurrence exclusion on a master: push + SORT (the sanitized
+  // shape keeps exdates sorted — merge determinism depends on it).
+  function exdateMaster(masterId, occYmd) {
+    for (var i = 0; i < state.events.length; i++) {
+      var m = state.events[i];
+      if (m.id === masterId && validRecur(m.recur)) {
+        if (m.recur.exdates.indexOf(occYmd) === -1) {
+          m.recur.exdates.push(occYmd);
+          m.recur.exdates.sort();
+        }
+        m.mtime = Date.now();
+        saveState();
+        return true;
+      }
+    }
+    console.warn("[Calendar] exdateMaster: master not found", masterId);
+    return false;
+  }
+
+  // Chooser: recurring event clicked in the day panel → ask which
+  // scope before opening the dialog. Override clones (already
+  // split off) are plain events and skip this entirely.
+  function showSerChooser(master, occYmd) {
+    var dlg = $("ser-dlg");
+    if (!dlg) { openDlg(master, "master"); return; }   // stale HTML — safe fallback
+    $("ser-q").textContent = t("ser.edit.q");
+    serCb = function (which) {
+      if (which === "this") openDlgOccurrence(master, occYmd);
+      else if (which === "all") openDlg(master, "master");
+      // which === null → backdrop dismissal: pure cancel, nothing opens
+    };
+    dlg.showModal();
+  }
+  var serCb = null;
+
+  function openDlgOccurrence(master, occYmd) {
+    pendingOverride = { masterId: master.id, occYmd: occYmd };
+    openDlg(master, "occ");
+  }
+
+  // Series chooser wiring + reminder select options + until-row
+  // toggle — all guarded so a stale index.html cannot crash the app.
+  if ($("ser-this") && $("ser-all")) {
+    $("ser-this").addEventListener("click", function () {
+      $("ser-dlg").close();
+      if (serCb) serCb("this");
+    });
+    $("ser-all").addEventListener("click", function () {
+      $("ser-dlg").close();
+      if (serCb) serCb("all");
+    });
+    $("ser-dlg").addEventListener("click", function (ev) {
+      if (ev.target === this) { this.close(); if (serCb) serCb(null); }
+    });
+    $("ser-dlg").addEventListener("cancel", function () {
+      serCb = null;   // Esc: dismissed — never act on the stale callback
+    });
+  }
+  if ($("ev-remind")) {
+    var remSel = $("ev-remind");
+    var noneOpt = document.createElement("option");
+    noneOpt.value = "";
+    noneOpt.textContent = t("rem.none");
+    remSel.appendChild(noneOpt);
+    REMIND_PRESETS.forEach(function (m) {
+      var o = document.createElement("option");
+      o.value = String(m);
+      o.textContent = remLabel(m);
+      remSel.appendChild(o);
+    });
+  }
+  if ($("ev-repeat")) {
+    $("ev-repeat").addEventListener("change", function () {
+      var row = $("ev-until-row");
+      if (row) row.className = "dlg-row" + (this.value ? " show" : "");
+    });
+  }
+
   function renderDlgLabels() {
     var row = $("ev-label-row");
     row.textContent = "";
@@ -759,8 +1100,10 @@
     state.labels.forEach(function (l) { mk(l.id, l.name, l.color); });
   }
 
-  function openDlg(existing) {
-    editingId = existing ? existing.id : null;
+  function openDlg(existing, mode) {
+    dlgMode = mode || null;
+    if (mode !== "occ") pendingOverride = null;   // kept by openDlgOccurrence
+    editingId = (mode === "occ") ? null : (existing ? existing.id : null);
     $("ev-dlg-title").textContent = t(existing ? "ev.dlg.edit" : "ev.dlg.new");
     $("ev-title").value = existing ? existing.title : "";
     $("ev-start").value = existing && existing.start ? existing.start : "09:00";
@@ -769,9 +1112,30 @@
     $("ev-allday").dispatchEvent(new Event("change"));
     $("ev-location").value = existing ? existing.location : "";
     $("ev-note").value = existing ? existing.note : "";
+
+    // Repeat: masters carry it; an occurrence override starts plain.
+    var r = (mode === "occ") ? null : (existing ? existing.recur : null);
+    var rv = validRecur(r) ? (r.freq + "-" + (r.interval === 2 ? 2 : 1)) : "";
+    var repSel = $("ev-repeat");
+    if (repSel) {
+      repSel.value = rv;
+      var uIn = $("ev-until");
+      if (uIn) uIn.value = (rv && r.until) ? r.until : "";
+      var uRow = $("ev-until-row");
+      if (uRow) uRow.className = "dlg-row" + (rv ? " show" : "");
+    }
+    // Reminder: prefilled from the event (occurrence inherits master's).
+    var remSel = $("ev-remind");
+    if (remSel) {
+      remSel.value = (existing && existing.remindMin) ? String(existing.remindMin) : "";
+    }
+
     dlgLabelId = existing ? existing.labelId : null;
     renderDlgLabels();
-    $("ev-del-row").className = "dlg-row" + (existing ? " show" : "");
+    // Occurrence mode keeps the delete button too — del-dlg-yes
+    // routes occ-mode deletes to exdateMaster (the series lives on).
+    $("ev-del-row").className = "dlg-row" +
+      (existing ? " show" : "");
     $("ev-dlg").showModal();
     setTimeout(function () { $("ev-title").focus(); }, 50);
   }
@@ -793,6 +1157,7 @@
       var ti = $("ev-title");
       ti.classList.add("invalid");
       ti.focus();
+      toast(t("ev.err.title"));
       setTimeout(function () { ti.classList.remove("invalid"); }, 1600);
       return;
     }
@@ -801,31 +1166,74 @@
     var start = tpStart ? tpStart.value() : null;
     var end = tpEnd ? tpEnd.value() : null;
     if ($("ev-allday").checked) { start = null; end = null; }
-    // "no end" option commits "" → picker value() returns null there
-    if (start === null && !$("ev-allday").checked && $("ev-start").value) {
-      // typed garbage that survived normalization → treat as absent
-      start = null;
-    }
     if (start && end && end <= start) {
       $("ev-end").classList.add("invalid");
       $("ev-end").focus();
+      toast(t("ev.err.time"));
       setTimeout(function () { $("ev-end").classList.remove("invalid"); }, 1600);
       return;
     }
     var location = $("ev-location").value.trim().slice(0, 150);
     var note = $("ev-note").value.trim().slice(0, 500);
+    var recur = dlgReadRecur();
+    var remindMin = dlgReadRemind();
+
+    // "until" sanity: an end date at/before the anchor date would
+    // kill every occurrence — drop it instead (series stays open).
+    var anchorDate = selDate;
+    if (editingId) {
+      for (var ad = 0; ad < state.events.length; ad++) {
+        if (state.events[ad].id === editingId) {
+          anchorDate = state.events[ad].date;
+          break;
+        }
+      }
+    }
+    if (recur && recur.until && recur.until <= anchorDate) recur.until = null;
+
+    // "This occurrence" save → OVERRIDE: exdate on the master, then
+    // a standalone copy here. The rest of the series is untouched.
+    if (dlgMode === "occ" && pendingOverride) {
+      exdateMaster(pendingOverride.masterId, pendingOverride.occYmd);
+      state.events.push({
+        id: uid(),
+        date: pendingOverride.occYmd,
+        start: start,
+        end: end,
+        title: title,
+        note: note,
+        location: location,
+        labelId: dlgLabelId,
+        recur: null,          // a single instance — never a series
+        remindMin: remindMin,
+        mtime: Date.now()
+      });
+      pendingOverride = null;
+      dlgMode = null;
+      saveState();
+      $("ev-dlg").close();
+      renderChips();
+      renderGrid();
+      renderDay();
+      return;
+    }
 
     if (editingId) {
       var found = false;
       for (var i = 0; i < state.events.length; i++) {
         if (state.events[i].id === editingId) {
+          // A series keeps its anchor date — the recurrence math
+          // depends on it. A plain event follows the selected day.
+          var isSeries = validRecur(state.events[i].recur);
           state.events[i].title = title;
           state.events[i].start = start;
           state.events[i].end = end;
           state.events[i].location = location;
           state.events[i].note = note;
           state.events[i].labelId = dlgLabelId;
-          state.events[i].date = selDate;
+          if (!isSeries) state.events[i].date = selDate;
+          state.events[i].recur = recur;
+          state.events[i].remindMin = remindMin;
           state.events[i].mtime = Date.now();
           found = true;
           break;
@@ -843,6 +1251,8 @@
           note: note,
           location: location,
           labelId: dlgLabelId,
+          recur: recur,
+          remindMin: remindMin,
           mtime: Date.now()
         });
       }
@@ -860,8 +1270,17 @@
         note: note,
         location: location,
         labelId: dlgLabelId,
+        recur: recur,
+        remindMin: remindMin,
         mtime: Date.now()
       });
+    }
+    // Web-notification permission: Save is a legal user gesture —
+    // the ONLY moment we may ask. Fire-and-forget, no-op if already
+    // decided or unsupported (the shell fires only when granted).
+    if (remindMin && "Notification" in window &&
+        Notification.permission === "default") {
+      try { Notification.requestPermission(); } catch (e) {}
     }
     saveState();
     $("ev-dlg").close();
@@ -881,6 +1300,20 @@
   var lastDeleted = null;
 
   $("ev-delete").addEventListener("click", function () {
+    // Occurrence mode: delete THIS occurrence (exdate on the master).
+    // editingId is null here by design — the pendingOverride pair
+    // carries the identity instead.
+    if (dlgMode === "occ" && pendingOverride) {
+      var m = null;
+      for (var oi = 0; oi < state.events.length; oi++) {
+        if (state.events[oi].id === pendingOverride.masterId) { m = state.events[oi]; break; }
+      }
+      $("del-dlg-text").textContent =
+        (m && m.title ? m.title : t("ev.untitled"));
+      $("del-dlg").showModal();
+      $("del-dlg-yes").focus();
+      return;
+    }
     if (!editingId) return;
     var ev = null;
     for (var i = 0; i < state.events.length; i++) {
@@ -892,7 +1325,29 @@
     $("del-dlg-yes").focus();
   });
 
+  var lastExdate = null;   // { id, ymd } — undo data for occurrence deletes
+
   $("del-dlg-yes").addEventListener("click", function () {
+    // Deleting from occurrence mode = exdate on the master: the
+    // series survives, this instance goes away. No tombstone — the
+    // master is still very much alive.
+    if (dlgMode === "occ" && pendingOverride) {
+      exdateMaster(pendingOverride.masterId, pendingOverride.occYmd);
+      lastExdate = {
+        id: pendingOverride.masterId,
+        ymd: pendingOverride.occYmd
+      };
+      saveState();
+      pendingOverride = null;
+      dlgMode = null;
+      editingId = null;
+      $("del-dlg").close();
+      $("ev-dlg").close();
+      renderGrid();
+      renderDay();
+      toast(t("del.done"), t("undo"), undoExdate);
+      return;
+    }
     if (!editingId) { $("del-dlg").close(); return; }
     var ev = null;
     for (var i = 0; i < state.events.length; i++) {
@@ -932,6 +1387,68 @@
     renderDay();
   }
 
+  // Undo an occurrence delete: pull the date back out of the
+  // master's exdates — the occurrence simply reappears.
+  function undoExdate() {
+    if (!lastExdate) return;
+    for (var i = 0; i < state.events.length; i++) {
+      var m = state.events[i];
+      if (m.id === lastExdate.id && validRecur(m.recur)) {
+        m.recur.exdates = m.recur.exdates.filter(function (d) {
+          return d !== lastExdate.ymd;
+        });
+        m.mtime = Date.now();
+        break;
+      }
+    }
+    lastExdate = null;
+    saveState();
+    renderGrid();
+    renderDay();
+  }
+
+  /* ---------- 7d. Drag & drop move + undo (Wave 3) ---------- */
+  // Plain events + overrides only (see renderDay dragstart note).
+  // A move = date change + fresh mtime → travels via sync merge.
+  // Undo restores the old date with ANOTHER fresh mtime (beats
+  // everything, same resurrection contract as undoDelete).
+  var lastMoved = null;   // { id, fromYmd }
+
+  function moveEventToDate(id, targetYmd) {
+    var ev = null;
+    for (var i = 0; i < state.events.length; i++) {
+      if (state.events[i].id === id) { ev = state.events[i]; break; }
+    }
+    if (!ev || validRecur(ev.recur)) return;   // defensive: series never moves by drag
+    if (ev.date === targetYmd) { selectDay(targetYmd); return; }   // no-op drop on self
+
+    lastMoved = { id: id, fromYmd: ev.date };
+    ev.date = targetYmd;
+    ev.mtime = Date.now();
+    saveState();
+    selectDay(targetYmd);   // day panel follows the event to its new home
+    renderGrid();
+    renderDay();
+    toast(t("ev.moved"), t("undo"), undoMove);
+  }
+
+  function undoMove() {
+    if (!lastMoved) return;
+    var backTo = lastMoved.fromYmd;   // capture BEFORE nulling —
+    for (var i = 0; i < state.events.length; i++) {
+      if (state.events[i].id === lastMoved.id) {
+        state.events[i].date = backTo;
+        state.events[i].mtime = Date.now();
+        break;
+      }
+    }
+    lastMoved = null;
+    saveState();
+    selectDay(backTo);   // day panel returns to where the event came from
+    renderGrid();
+    renderDay();
+  }
+
   /* ---------- 7a. Label management dialog ---------- */
   function nextFreeColor() {
     for (var i = 0; i < LABEL_PALETTE.length; i++) {
@@ -941,8 +1458,29 @@
     return LABEL_PALETTE[state.labels.length % LABEL_PALETTE.length];
   }
 
+  var lblAddColor = null;          // chosen color for the NEXT new label
+  function renderLblAddColors() {
+    var wrap = $("lbl-add-colors");
+    wrap.textContent = "";
+    var def = nextFreeColor();
+    LABEL_PALETTE.forEach(function (c) {
+      var sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "lbl-swatch" +
+        ((lblAddColor || def) === c ? " active" : "");
+      sw.style.background = c;
+      sw.setAttribute("aria-label", c);
+      sw.addEventListener("click", function () {
+        lblAddColor = c;
+        renderLblAddColors();
+      });
+      wrap.appendChild(sw);
+    });
+  }
+
   function openLblDlg() {
     renderLblList();
+    renderLblAddColors();
     $("lbl-dlg").showModal();
     $("lbl-new-name").focus();
   }
@@ -954,9 +1492,38 @@
       var row = document.createElement("div");
       row.className = "lbl-row";
 
-      var dot = document.createElement("span");
-      dot.className = "chip-dot";
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "lbl-color-btn";
       dot.style.background = l.color;
+      dot.setAttribute("aria-label", t("lbl.color"));
+      dot.title = t("lbl.color");
+      var pal = document.createElement("div");
+      pal.className = "lbl-palette";
+      pal.hidden = true;
+      dot.addEventListener("click", function () {
+        document.querySelectorAll(".lbl-palette").forEach(function (p) {
+          if (p !== pal) p.hidden = true;
+        });
+        pal.hidden = !pal.hidden;
+      });
+      LABEL_PALETTE.forEach(function (c) {
+        var sw = document.createElement("button");
+        sw.type = "button";
+        sw.className = "lbl-swatch" + (c === l.color ? " active" : "");
+        sw.style.background = c;
+        sw.setAttribute("aria-label", c);
+        sw.addEventListener("click", function () {
+          l.color = c;
+          l.mtime = Date.now();   // color change propagates via merge
+          saveState();
+          renderLblList();
+          renderChips();
+          renderGrid();
+          renderDay();
+        });
+        pal.appendChild(sw);
+      });
       row.appendChild(dot);
 
       var inp = document.createElement("input");
@@ -991,12 +1558,13 @@
         renderDay();
       });
       row.appendChild(del);
+      row.appendChild(pal);   // color palette (toggled by the dot button)
       list.appendChild(row);
     });
     if (!state.labels.length) {
       var emp = document.createElement("div");
       emp.className = "empty";
-      emp.textContent = t("lbl.none");
+      emp.textContent = t("lbl.empty");
       list.appendChild(emp);
     }
   }
@@ -1008,10 +1576,12 @@
       return;
     }
     var id = "lbl-" + uid();
-    state.labels.push({ id: id, name: name, color: nextFreeColor(), mtime: Date.now() });
+    state.labels.push({ id: id, name: name, color: lblAddColor || nextFreeColor(), mtime: Date.now() });
     $("lbl-new-name").value = "";
+    lblAddColor = null;
     saveState();
     renderLblList();
+    renderLblAddColors();
     renderChips();
   });
   $("lbl-new-name").addEventListener("keydown", function (e) {
@@ -1036,6 +1606,7 @@
   applyI18n();
   // Re-translate seeded labels if the store was freshly seeded with
   // the other language (seeds depend on LANG at seed time).
+  reseedSeedNames();
   tpStart = makeTP("ev-start", "ev-start-menu");
   tpEnd = makeTP("ev-end", "ev-end-menu", { noEnd: true });
   var boot = new Date();
@@ -1046,6 +1617,7 @@
   renderChips();
   renderGrid();
   selectDay(todayYMD());
+  setTimeout(checkReminders, 1500);   // Wave 3: boot sweep (after paints settle)
 
   // Midnight rollover: grid "today", day title and ev-add must
   // follow the real calendar day without a re-open.
@@ -1072,8 +1644,84 @@
     viewMonth = n.getMonth();
     renderTitle();
     selectDay(td);
+    checkReminders();   // Wave 3: catch-up sweep on tab-visible
   });
-  
+  // Open-tab sweep: covers a standalone foreground tab where neither
+  // the shell tick nor visibilitychange ever fires (mobile PWA).
+  // Doubling with the shell engine is impossible — the fired-log
+  // dedupe key settles who wins.
+  setInterval(checkReminders, 30000);
+
+  /* ---------- 8b. In-app reminder check (Wave 3) ----------
+     Belt-and-braces companion of the shell engine (shell.js 9e2):
+     covers the standalone-load case (calendar opened directly,
+     no parent shell). DEDUPE: both engines share the device-local
+     "oros-cal-reminders-fired" key — whoever fires first wins,
+     a reminder can never double-toast. Note: when orOS runs the
+     app in its iframe, the shell is always alive, so this path
+     is normally quiet. */
+
+  var REM_FIRED_KEY = "oros-cal-reminders-fired";
+
+  function remOccTs(e, occYmd) {
+    var p = occYmd.split("-");
+    var ts = new Date(+p[0], +p[1] - 1, +p[2], 0, 0, 0).getTime();
+    if (e.start && /^\d{2}:\d{2}$/.test(e.start)) {
+      ts += (+e.start.slice(0, 2)) * 3600000 + (+e.start.slice(3)) * 60000;
+    }
+    return ts;
+  }
+
+  function checkReminders() {
+    var now = Date.now();
+    var fired;
+    try {
+      var f = JSON.parse(localStorage.getItem(REM_FIRED_KEY));
+      fired = Array.isArray(f) ? f : [];
+    } catch (e2) { fired = []; }
+
+    var due = null;   // earliest due wins — same doctrine as the shell
+    // Walk horizon: today + 8 days. Largest preset is 5 days, so no
+    // occurrence beyond it can have an open reminder window — and
+    // ascending order lets us STOP the walk there (perf + correctness).
+    var hz = new Date();
+    hz.setDate(hz.getDate() + 8);
+    var horizonYmd = ymd(hz.getFullYear(), hz.getMonth(), hz.getDate());
+    state.events.forEach(function (e) {
+      if (typeof e.remindMin !== "number" || e.remindMin <= 0) return;
+
+      function check(ts, occYmd) {
+        if (ts < now) return;                       // already started
+        var remTs = ts - e.remindMin * 60000;
+        if (remTs > now) return;                    // not due yet
+        var remKey = "rem:" + e.id + ":" + occYmd;
+        if (fired.indexOf(remKey) !== -1) return;
+        if (!due || remTs < due.remTs) {
+          due = { remTs: remTs, ev: e, remKey: remKey };
+        }
+      }
+
+      if (validRecur(e.recur)) {
+        eachOccurrence(e, function (occYmd) {
+          if (occYmd > horizonYmd) return false;   // STOP: past horizon,
+          check(remOccTs(e, occYmd), occYmd);      // nothing due further
+        });
+      } else {
+        check(remOccTs(e, e.date), e.date);
+      }
+    });
+
+    if (!due) return;
+    // Claim BEFORE toasting — the shell tick (30s cadence) must not
+    // pick the same reminder up one second later.
+    fired.push(due.remKey);
+    try {
+      localStorage.setItem(REM_FIRED_KEY,
+        JSON.stringify(fired.slice(-500)));
+    } catch (e3) {}
+    toast(t("remind.toast") + " · " + (due.ev.title || t("ev.untitled")));
+  }
+
     /* ---------- 9. Sync slice registration ---------- */
   // Same self-registration contract as todo/kanban/notes: the app
   // registers itself, the engine persists the storageKey and builds
@@ -1096,8 +1744,13 @@
     if (typeof e.mtime !== "number" || !isFinite(e.mtime)) return null;
     var start = (typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start)) ? e.start : null;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
+    // Mirror of mergeSanitizeEv: an end before the start is corrupt
+    // data, not a valid range — same normalization on every path.
     if (start && end && end < start) end = null;   // deterministic normalization
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
+    var remindMin = (typeof e.remindMin === "number" &&
+                     REMIND_PRESETS.indexOf(e.remindMin) !== -1)
+      ? e.remindMin : null;
     return {
       id: e.id,
       date: e.date,
@@ -1107,6 +1760,8 @@
       note: (typeof e.note === "string" ? e.note : "").slice(0, 500),
       location: (typeof e.location === "string" ? e.location : "").slice(0, 150),
       labelId: labelId,
+      recur: sanitizeRecur(e.recur),
+      remindMin: remindMin,
       mtime: e.mtime
     };
   }
@@ -1201,9 +1856,12 @@
     var lbls = (Array.isArray(data.labels) ? data.labels : [])
       .map(sanitizeLabel).filter(Boolean);
     if (!lbls.length) lbls = defaultLabels();
-    state = { ver: 1, labels: lbls, events: evs, deleted: dels };
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
-    renderTitle();
+      state = { ver: 1, labels: lbls, events: evs, deleted: dels };
+  lastMoved = null;
+  lastDeleted = null;
+  lastExdate = null;
+  try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+  renderTitle();
     renderChips();
     renderGrid();
     renderDay();          // selDate-aware (guarded when null)
@@ -1238,5 +1896,9 @@
         mergeCalendars
       );
     }
-  } catch (e) { /* standalone preview — sync simply absent */ }
+  } catch (e) {
+    // Standalone load = normal. A real registration crash = loudly
+    // visible in the console instead of a silently dead sync.
+    console.warn("[Calendar] sync registration failed:", e);
+  }
 })();

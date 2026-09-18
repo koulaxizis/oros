@@ -68,7 +68,11 @@
     if (typeof Blob === "function" && data instanceof Blob) return data;
     if (typeof data === "string") return new Blob([data], { type: "text/plain" });
     if (data && typeof data.buffer === "object") {
-      return new Blob([data.buffer], { type: "application/octet-stream" });
+      // Typed-array VIEWS carry their own byteOffset/length — the
+      // Blob constructor honors them. Passing the raw .buffer would
+      // write the WHOLE underlying buffer whenever the view is a
+      // slice of a bigger one (subarray) — silent data corruption.
+      return new Blob([data], { type: "application/octet-stream" });
     }
     return new Blob([data], { type: "application/octet-stream" });
   }
@@ -406,7 +410,19 @@
       req.onupgradeneeded = function () {
         req.result.createObjectStore("nodes");
       };
-      req.onsuccess = function () { idbDb = req.result; resolve(idbDb); };
+      req.onsuccess = function () {
+        idbDb = req.result;
+        // The shell's factory reset deletes this DB via
+        // indexedDB.deleteDatabase("oros-ofs"). Without releasing
+        // here, our never-closing connection keeps that delete
+        // BLOCKED until the page unloads. Close on demand — the
+        // next idbOpen() after the reset recreates cleanly.
+        idbDb.onversionchange = function () {
+          idbDb.close();
+          idbDb = null;
+        };
+        resolve(idbDb);
+      };
       req.onerror   = function () { reject(req.error); };
     });
   }
@@ -766,6 +782,7 @@
   // reports PASS/FAIL per step. Leaves no trace behind on success.
   function selftest() {
     var probe = ROOT_PATH + "/.oros-selftest";
+    var wasDirty = isDirty();   // don't erase a dirty flag the USER armed
     return writeText(probe, "OrosFS selftest " + new Date().toISOString())
       .then(function () { return readText(probe); })
       .then(function (txt) {
@@ -786,6 +803,10 @@
       })
       .then(function (u) {
         console.log("[orOS] fs selftest: usage", u);
+        // Probe writes + rm armed the dirty flag — the selftest
+        // promised "no trace", so disarm it — but ONLY when it was
+        // clean before we started.
+        if (!wasDirty) clearDirty();
         return "selftest complete";
       });
   }

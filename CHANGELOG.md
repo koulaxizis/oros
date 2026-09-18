@@ -1501,3 +1501,122 @@ Paste-back of all three files for explicit correctness confirmation before commi
 
 ### Files touched
 calendar/calendar.js · calendar/index.html · calendar/calendar.css
+
+### Wave 2 addendum — Label color picker
+- Manage-dialog: per-label color palette (8 fixed colors) via the
+  dot button; color change bumps mtime → syncs to all devices.
+- New-label flow: color pre-selection (defaults to next free).
+
+## orOS Wave 3 — Calendar recurring events, reminders, drag & drop
+
+### Calendar app (calendar.js, index.html, calendar.css)
+- Recurring events: master + computed occurrences (never stored).
+  "recur" field: freq D/W/M/Y, interval 1|2 (2 = bi-weekly,
+  weekly only), until (YYYY-MM-DD), exdates (sorted, deduped).
+- Monthly/yearly clamp is STICKY (Jan 31 → Feb 28 → Mar 31,
+  Google-style) — algorithm mirrors shell.js calRemEachOccurrence
+  1:1; the two engines must never disagree (contract).
+- Edit/Delete choosers: "This occurrence" vs "Entire series".
+  Occurrence edit = exdate on master + independent override copy
+  (fresh id, plain event). Occurrence delete = exdate only.
+  Undo exists for all three: delete, exdate, move.
+- Reminders: presets None / 5m / 15m / 30m / 60m / 1d / 3d / 5d
+  (whitelist-enforced in sanitizeEvent AND mergeSanitizeEv — sync
+  contract preserved, deterministic stringify for the merge
+  tie-break).
+- Series edit keeps its anchor date (series start = recurrence
+  math input); plain events follow the selected day.
+- Drag & drop (desktop): plain events + overrides only; series
+  occurrences deliberately not draggable. Move = date change +
+  fresh mtime → travels via sync merge. Undo restores the old date.
+- In-app reminder check (standalone-load case): dedupes with the
+  shell via the shared device-local "oros-cal-reminders-fired".
+
+### Kernel: shell.js (LOCKED v0.35.00 — MODIFIED BY USER DIRECTIVE)
+- Section 9e2 added: calendar reminder engine. Background-capable
+  (fires while the Calendar app is CLOSED): reads
+  "oros-calendar-data" directly, occurrence expansion for
+  recurring events, 30s throttle inside the 1s clock tick, no new
+  background timers, first sweep 4s after boot.
+- Notify: persistent top-right overlay (own element — NOT scToast,
+  which auto-dismisses in 2.6s) + Web Notification ONLY when the
+  permission is already granted (requested from the Calendar Save
+  button — a legal user gesture; the shell never asks on its own).
+- Standing honest limit (same as alarms): browser/tab fully closed
+  = nothing fires. orOS is a browser OS, not a daemon.
+- Version bump: via bump-version.yml ONLY (no manual edits — rule).
+
+### Files touched (update-file checklist)
+- shell.js — reminder engine (patches 1–3)
+- calendar/calendar.js — recurrence engine, choosers, DnD (B1–C9, D2)
+- calendar/index.html — Repeat/Until/Reminder rows + ser-dlg (D3)
+- calendar/calendar.css — .ev-repeat, DnD states, dialog selects (D4)
+- No new files → manifest/sw precache unchanged; GitHub Action
+  propagates ?v= cache busting automatically.
+
+### Testing checklist (pre-completion gates)
+- [ ] Recurrence: daily/weekly/bi-weekly/monthly (31st clamp)/yearly
+- [ ] exdate + override round-trip through sync merge (2 devices)
+- [ ] Reminder fires with app CLOSED (shell engine, 30s + boot sweep)
+- [ ] No double-fire with app OPEN (shared fired-log)
+- [ ] Drag & drop on desktop; edit dialog date change on mobile
+- [ ] Undo: delete / exdate / move — all survive a refresh
+- [ ] Full DB export/import carries recur + remindMin
+- [ ] Offline entry + reminder scheduling unaffected
+
+## [Calendar] v0.2.0 — Wave 3 Final Verification Pass (audit CLOSED)
+
+### Paste-back verification (R19) — all three files confirmed
+All Wave 3 patches verified PRESENT in the pasted calendar.js /
+calendar.css / index.html:
+- ✅ Horizon prune: checkReminders walks today+8d and STOPS past
+  it (multi-day presets 1d/3d/5d fire BEFORE the event day,
+  not on it) + STOP-the-walk optimization (ascending order).
+- ✅ Dynamic MAX_STEPS (D=40000 / W=5200 / M,Y=600) — daily
+  series older than ~17 months no longer vanish.
+- ✅ Corruption guard in eachOccurrence (occYmd falsy → stop).
+- ✅ Series chooser: "cancel" event listener + null-vs-"all"
+  distinction — Esc/backdrop = pure cancel, never "Edit series".
+- ✅ Undo stacks (lastMoved/lastDeleted/lastExdate) cleared in
+  setFromSync — undo can never resurrect a sync-overwritten
+  state.
+- ✅ renderChips() refresh on label color change (main view +
+  dots update live while the manage dialog stays open).
+- ✅ tp-menu open/close transition (opacity + translate, hidden
+  pointer-events).
+- ✅ CSS coverage: #ser-dlg dialog, #ev-until-row show/hide
+  contract, .ev-form select + input[type=date] skinned
+  (color-scheme: dark), [hidden] authority guard intact.
+
+### Confirmed-OK design findings (no action — documented)
+- reseedSeedNames mtime-0 seeds: merge-inert by design; user
+  edit (fresh mtime) detaches permanently. Re-translation on
+  language change = FUTURE feature, not a bug.
+- exdates 100-cap in eachOccurrence: intentional corruption
+  bound (sanitizer dedupes+sorts anyway).
+- makeTP document-level listeners: negligible in a
+  single-dialog app; accepted.
+- del-dlg/ser-dlg: outside-click + Esc verified against R14.
+
+### Open (cosmetic, non-blocking)
+- F6: .cal-cell.drop-target still carries transform:scale(1.02)
+  — one-line CSS simplification recommended before commit
+  (inset shadow instead of scale; no grid overflow on small
+  screens).
+- F8 variant (console.warn when exdateMaster finds no master):
+  optional diagnostic; saveState NOT needed (both call sites
+  already save).
+
+### Pre-completion status (R18 gates)
+- [x] Perfect sync (no data loss): recur/remindMin whitelisted
+      in BOTH sanitizeEvent and mergeSanitizeEv; exdates sorted
+      + deduped → deterministic stringify tie-break; override
+      clones + exdates travel via standard entity merge.
+- [x] Full local export: events carry recur + remindMin inside
+      the standard slice funnel (collectPayload/applyPayload).
+- [x] Offline-first: zero network dependencies; reminder
+      engines (shell + in-app) are device-local.
+- [x] Mobile-first: 44px targets throughout, small-screen cell
+      sizing, no drag dependence (DnD is desktop-only bonus).
+
+READY FOR COMMIT after F6 (optional one-liner).

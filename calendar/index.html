@@ -61,6 +61,24 @@
         </div>
       </div>
 
+      <label for="ev-repeat" data-i18n="ev.field.repeat"></label>
+      <select id="ev-repeat">
+        <option value="" data-i18n="rep.none"></option>
+        <option value="D-1" data-i18n="rep.daily"></option>
+        <option value="W-1" data-i18n="rep.weekly"></option>
+        <option value="W-2" data-i18n="rep.biweekly"></option>
+        <option value="M-1" data-i18n="rep.monthly"></option>
+        <option value="Y-1" data-i18n="rep.yearly"></option>
+      </select>
+
+      <div class="dlg-row" id="ev-until-row">
+        <label for="ev-until" data-i18n="ev.field.until"></label>
+        <input type="date" id="ev-until">
+      </div>
+
+      <label for="ev-remind" data-i18n="ev.field.remind"></label>
+      <select id="ev-remind"></select>
+
       <label for="ev-location" data-i18n="ev.field.loc"></label>
       <input id="ev-location" type="text" maxlength="150" data-i18n-ph="ev.ph.loc">
 
@@ -90,6 +108,15 @@
     </div>
   </dialog>
 
+  <!-- Wave 3: occurrence vs series chooser -->
+  <dialog id="ser-dlg">
+    <h3 id="ser-q"></h3>
+    <div class="dlg-row">
+      <button id="ser-this" type="button" class="btn" data-i18n="ser.this"></button>
+      <button id="ser-all" type="button" class="btn prim" data-i18n="ser.all"></button>
+    </div>
+  </dialog>
+
   <!-- Label management -->
   <dialog id="lbl-dlg">
     <h3 data-i18n="lbl.manage"></h3>
@@ -98,6 +125,7 @@
       <input id="lbl-new-name" type="text" maxlength="40" data-i18n-ph="lbl.ph.name">
       <button id="lbl-add" type="button" class="btn prim" data-i18n="lbl.new"></button>
     </div>
+    <div id="lbl-add-colors" class="lbl-palette lbl-add-palette"></div>
     <div class="dlg-row">
       <button id="lbl-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
     </div>

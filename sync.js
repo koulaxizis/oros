@@ -820,8 +820,6 @@
     }
 
     if (payload.apps) {
-      var carry = readCarry() || {};
-      var carryChanged = false;
       Object.keys(payload.apps).forEach(function (name) {
         var data = payload.apps[name];
         if (data === null || data === undefined) return;
@@ -843,11 +841,16 @@
         } else {
           // Unknown slice: park it in the carry mailbox. Never dropped,
           // never overwritten — the next push relays it forward.
-          carry[name] = data;
-          carryChanged = true;
+          // v0.9.2 FRESH read-modify-write: parkRemote() may have
+          // written the mailbox EARLIER in this same loop (a diverged
+          // known slice guarding itself). A snapshot taken before the
+          // loop would silently clobber that park — destroying the
+          // other device's only surviving copy of its work.
+          var liveCarry = readCarry() || {};
+          liveCarry[name] = data;
+          writeCarry(liveCarry);
         }
       });
-      if (carryChanged) writeCarry(carry);
     }
 
     // Merge convergence OR guarded divergence produced something the

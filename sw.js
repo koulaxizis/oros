@@ -149,9 +149,15 @@ self.addEventListener("fetch", function (event) {
           // are one-shot URLs — never worth a cache entry.
           if (response.ok && url.search.indexOf("code=") === -1) {
             var copy = response.clone();
-            caches.open(RUNTIME_CACHE).then(function (cache) {
-              cache.put(request, copy);
-            });
+            // waitUntil: the SW stays alive until the cache write
+            // LANDS. A fire-and-forget put can be killed mid-flight
+            // by an idle SW termination — the user who then goes
+            // offline loses an asset they were entitled to.
+            event.waitUntil(
+              caches.open(RUNTIME_CACHE).then(function (cache) {
+                return cache.put(request, copy);
+              })
+            );
           }
           return response;
         })
@@ -177,9 +183,12 @@ self.addEventListener("fetch", function (event) {
       return fetch(request).then(function (response) {
         if (response && response.status === 200) {
           var copy = response.clone();
-          caches.open(RUNTIME_CACHE).then(function (cache) {
-            cache.put(request, copy);   // stored under the EXACT ?v= key
-          });
+          // Same waitUntil contract as the navigation branch above.
+          event.waitUntil(
+            caches.open(RUNTIME_CACHE).then(function (cache) {
+              return cache.put(request, copy);   // stored under the EXACT ?v= key
+            })
+          );
         }
         return response;
       }).catch(function () {

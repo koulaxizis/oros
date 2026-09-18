@@ -851,17 +851,7 @@ body {
   font-size: 12.5px;
   color: var(--text-dim);
 }
-.sync-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-dim);
-  flex-shrink: 0;
-}
-.sync-status-dot.on {
-  background: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+/* (v0.18.0: menu sync dot removed — the taskbar #sync-dot owns it) */
 .sync-status .email {
   color: var(--text);
   overflow: hidden;
@@ -869,9 +859,7 @@ body {
   white-space: nowrap;
 }
 
-.sync-status-dot.pulse {
-  animation: sync-pulse 1s ease infinite;
-}
+/* (idle pulse moved to #sync-dot[data-state="syncing"]) */
 @keyframes sync-pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.25; }
@@ -1335,14 +1323,109 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 #bar-time:hover,
 #bar-date:hover { background: var(--accent-soft); }
 
-/* ===== Z-index ladder (shell) ===== */
-/* sc-toast 1400, alarm-dialog 1450 — above version-toast (1200) and
-   info-overlay (1300), below splash (2000) */
-.sc-toast { z-index: 1400 !important; }
-.dialog-alarm { z-index: 1450 !important; }
+/* ===== Z-index ladder (inline, shell.js) ===== */
+/* version-toast 1200 (CSS) · sc/info-overlay 1300 (CSS) ·
+   #sc-toast 1400 (inline) · #alarm-toast/#calrem-toast 1450 (inline) ·
+   splash 2000 (CSS). All inline values live in shell.js builders. */
 
 /* Narrow phones: same shrink the old #bar-clock got. A later rule
    at equal specificity wins — no need to touch the 480px block. */
 @media (max-width: 480px) {
   #bar-time, #bar-date { font-size: 12.5px; padding: 6px 5px; }
+}
+
+/* ============================================================
+   Wave 3 (Calendar) — recurrence, reminders, drag & drop
+   ALL styling lives in calendar/calendar.css (app iframe —
+   shell selectors never reached this DOM; rescued only
+   .ev-row[draggable] cursor → calendar.css Patch 1).
+   ============================================================ */
+
+/* Repeat indicator in the day-panel event rows */
+.ev-repeat {
+  margin-left: 6px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: help;
+}
+
+/* Dialog selects: must match the styled inputs — native look
+   rejected by design (design-system dropdown rule) */
+#ev-repeat, #ev-remind, #ev-until {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+#ev-repeat:focus, #ev-remind:focus, #ev-until:focus {
+  border-color: var(--accent);
+}
+#ev-until {
+  appearance: auto;       /* keep native date picker widget */
+  background-image: none; /* …but no caret on the date input */
+  color-scheme: dark;     /* dark calendar popup where supported */
+}
+
+/* Series chooser: reuse .dlg-row (existing pattern) — ID rules
+   override the generic button-row geometry where needed */
+#ser-dlg .dlg-row {
+  margin-top: 14px;
+}
+#ser-dlg h3 {
+  margin-bottom: 0;
+}
+
+/* Until row: hidden unless the JS paints .show (dlg-row/show
+   contract — same mechanism as ev-del-row) */
+#ev-until-row {
+  display: none;
+}
+#ev-until-row.show {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#ev-until-row.show label {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+#ev-until-row.show input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Drag & drop states (plain events only — series anchors never drag) */
+.ev-row.dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+.ev-row[draggable="true"] {
+  cursor: grab;
+}
+.cal-cell.drop-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
 }

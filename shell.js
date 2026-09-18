@@ -318,15 +318,18 @@
   // Period check + snapshot. "force" = run regardless of the last
   // check (used when the user switches the mode on, so enabling
   // Daily instantly produces the first snapshot).
+  // Returns TRUE when a snapshot was actually written, FALSE on every
+  // no-op path (schedule guard, dedup, missing engine). Callers can
+  // report honestly instead of claiming success unconditionally.
   function maybeAutoExport(force) {
-    if (state.autoexport === "off") return;
-    if (!window.orosSync || typeof window.orosSync.exportData !== "function") return;
+    if (state.autoexport === "off") return false;
+    if (!window.orosSync || typeof window.orosSync.exportData !== "function") return false;
 
     var period = AUTOEXPORT_PERIODS[state.autoexport];
-    if (!period) return;
+    if (!period) return false;
 
     var last = parseInt(localStorage.getItem(AUTOEXPORT_LAST) || "0", 10) || 0;
-    if (!force && (Date.now() - last) < period) return;
+    if (!force && (Date.now() - last) < period) return false;
 
     // Check happened now — record it even if no snapshot follows
     // (unchanged content must not re-check on every tab-visible).
@@ -337,7 +340,7 @@
 
     var snaps = readSnapshots();
     // On-change-only: identical content never duplicates an entry.
-    if (snaps.length && JSON.stringify(snaps[snaps.length - 1].data) === bodyStr) return;
+    if (snaps.length && JSON.stringify(snaps[snaps.length - 1].data) === bodyStr) return false;
 
     snaps.push({ at: new Date().toISOString(), data: body });
     while (snaps.length > SNAPSHOT_MAX) snaps.shift();
@@ -349,6 +352,7 @@
     writeSnapshotFile(false);
 
     setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
+    return true;
   }
 
   // Restore: replays the NEWEST snapshot through orosSync.importData
@@ -647,6 +651,7 @@
     autoSyncDot();          // v0.18.0: piggybacks the clock tick
     wxRenderChip();         // v0.18.0: weather chip, cheap paint only
     alarmTick();            // E1: shell-owned alarm engine tick
+    calRemTickThrottled();  // Wave 3: calendar reminders (30s throttle)
   }
 
   // ---------- 7. PWA ----------
@@ -767,12 +772,12 @@
         wrap.className = "menu-category";
 
         var h = document.createElement("h4");
-        var label = window.t("category." + cat.toLowerCase());
+        var catLabel = window.t("category." + cat.toLowerCase());
         // Unknown category → t() returns the key itself → fall back
         // to the prettified raw name (future-proof for new apps).
-        h.textContent = (label === "category." + cat.toLowerCase())
+        h.textContent = (catLabel === "category." + cat.toLowerCase())
           ? cat.charAt(0).toUpperCase() + cat.slice(1)
-          : label;
+          : catLabel;
         wrap.appendChild(h);
 
         cats[cat].forEach(function (app) {
@@ -2045,8 +2050,12 @@
       setSyncMsgRaw("err", window.t("sync.autoexport.off"));
       return;
     }
-    maybeAutoExport(true);   // force = snapshot now regardless of schedule
-    setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
+    // Honest feedback: the "saved" toast fires INSIDE maybeAutoExport,
+    // only when a snapshot was really written. A dedup (identical
+    // content) is reported as such — never a false success.
+    if (!maybeAutoExport(true)) {   // force = snapshot now regardless of schedule
+      setSyncMsgRaw("dim", window.t("sync.ok.none"));
+    }
   }
 
   function scExportDb() {
@@ -2447,11 +2456,20 @@
 
     var titleBase = w.label || window.t("wx.title");
 
+    // Tick-safe paint: renderClock calls this EVERY second, but the
+    // DOM is touched only when state/html/title actually changed
+    // (same doctrine as autoSyncDot — no per-second repaint churn).
+    function paintChip(st, html, title) {
+      if (chip.getAttribute("data-state") === st &&
+          chip.innerHTML === html && chip.title === title) return;
+      chip.setAttribute("data-state", st);
+      chip.innerHTML = html;
+      chip.title = title;
+    }
+
     // OFFLINE first: slashed cloud, NO temperature — always
     if (!navigator.onLine) {
-      chip.setAttribute("data-state", "off");
-      chip.innerHTML = WX_OFF;
-      chip.title = titleBase + " · " + window.t("wx.offline");
+      paintChip("off", WX_OFF, titleBase + " · " + window.t("wx.offline"));
       return;
     }
 
@@ -2459,18 +2477,16 @@
     var stale = !c || !c.at || (Date.now() - c.at) > WX_STALE_MS;
 
     if (stale || w.lat === null) {
-      chip.setAttribute("data-state", "off");
-      chip.innerHTML = WX_OFF;
-      chip.title = titleBase + " · " + window.t("wx.waiting");
+      paintChip("off", WX_OFF, titleBase + " · " + window.t("wx.waiting"));
       return;
     }
 
-    chip.setAttribute("data-state", "on");
-    chip.innerHTML = wxIconFor(c.code) +
-      '<span class="wx-temp">' + Math.round(c.temp) + "°</span>";
-    chip.title = titleBase + " · " + new Date(c.at).toLocaleTimeString(
-      state.lang === "el" ? "el-GR" : "en-GB",
-      { hour: "2-digit", minute: "2-digit" });
+    paintChip("on",
+      wxIconFor(c.code) +
+        '<span class="wx-temp">' + Math.round(c.temp) + "°</span>",
+      titleBase + " · " + new Date(c.at).toLocaleTimeString(
+        state.lang === "el" ? "el-GR" : "en-GB",
+        { hour: "2-digit", minute: "2-digit" }));
   }
   
     // One truth, two consumers: if the Weather app holds NEWER data
@@ -2820,7 +2836,7 @@
 
     var hint = document.createElement("div");
     hint.className = "sync-hint";
-    if (w.lat !== null) {
+    if (w.lat !== null && w.lon !== null) {
       hint.textContent = (w.auto ? "GPS" : w.label) +
         " · " + w.lat.toFixed(2) + ", " + w.lon.toFixed(2);
     } else {
@@ -2938,7 +2954,6 @@
         ctx.resume().catch(function () {});
       }
       // resumed is async — schedule pips anyway; they'll fire when ready
-      var t0 = ctx.currentTime;
       var t0 = ctx.currentTime;
       for (var i = 0; i < 3; i++) {
         var o = ctx.createOscillator();
@@ -3093,6 +3108,258 @@
     },
     list: function () { return alarmsRead(); }
   };
+
+  // ---------- 9e2. Calendar reminder engine (Wave 3) ----------
+  // Reads "oros-calendar-data" directly from localStorage — same
+  // origin, so it works even when the Calendar app is CLOSED.
+  // Fires a persistent top-right overlay (own element, NOT scToast
+  // — reminders must not vanish in 2.6s) + optional web
+  // Notification (only if the permission was already granted).
+  //
+  // Fired-log: device-local "oros-cal-reminders-fired" (trimmed,
+  // never synced). The Calendar app checks the SAME key → an open
+  // app and the shell can never double-fire one reminder.
+  //
+  // Standing honest limit (same as alarms): browser/tab fully
+  // closed = nothing fires. orOS is a browser OS, not a daemon.
+  //
+  // Catch-up contract: a reminder fires if due AND the occurrence
+  // has NOT started yet. An already-started event never notifies —
+  // stale reminders stay silent instead of spamming on wake.
+
+  var CALREM_DATA_KEY  = "oros-calendar-data";
+  var CALREM_FIRED_KEY = "oros-cal-reminders-fired";
+  var CALREM_FIRED_MAX = 500;
+  // Longest preset = 7200 min (5 days); +3-day tail so a reminder
+  // that came due while the tab slept still catches up on open.
+  var CALREM_STOP_MS   = (7200 + 3 * 1440) * 60000;
+
+  function calRemT(en, el) {
+    return state.lang === "el" ? el : en;
+  }
+
+  function calRemFiredRead() {
+    try {
+      var arr = JSON.parse(localStorage.getItem(CALREM_FIRED_KEY));
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function calRemFiredAdd(key) {
+    try {
+      var arr = calRemFiredRead();
+      arr.push(key);
+      localStorage.setItem(CALREM_FIRED_KEY,
+        JSON.stringify(arr.slice(-CALREM_FIRED_MAX)));
+    } catch (e) {}
+  }
+
+  function calRemPad(n) { return (n < 10 ? "0" : "") + n; }
+  function calRemYmd(y, m, d) {
+    return y + "-" + calRemPad(m + 1) + "-" + calRemPad(d);
+  }
+  function calRemDim(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  // Start timestamp of one OCCURRENCE — ev.start rides along with
+  // every occurrence; all-day = local midnight.
+  function calRemOccTs(ev, y, m, d) {
+    var ts = new Date(y, m, d, 0, 0, 0).getTime();
+    if (ev.start && /^\d{2}:\d{2}$/.test(ev.start)) {
+      ts += (+ev.start.slice(0, 2)) * 3600000 + (+ev.start.slice(3)) * 60000;
+    }
+    return ts;
+  }
+
+  // Occurrence generator — MUST mirror calendar.js exactly:
+  //   D/W step days (interval 2 = bi-weekly),
+  //   M/Y clamp to month length with the ORIGINAL day sticky
+  //     (Jan 31 → Feb 28 → Mar 31, Google-style),
+  //   exdates skipped, "until" stops the walk.
+  // cb(ts, ymd) — return false to stop iterating.
+  function calRemEachOccurrence(ev, cb) {
+    var p = ev.date.split("-");
+    var y = +p[0], m = +p[1] - 1;
+    var origDay = +p[2];
+    var d = origDay;
+    var r = ev.recur;
+    var interval = (r.interval === 2) ? 2 : 1;
+    var until = (typeof r.until === "string" &&
+                /^\d{4}-\d{2}-\d{2}$/.test(r.until)) ? r.until : null;
+    var exSet = {};
+    if (Array.isArray(r.exdates)) {
+      for (var x = 0; x < r.exdates.length && x < 100; x++) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(r.exdates[x])) exSet[r.exdates[x]] = true;
+      }
+    }
+
+    // Mirror of calendar.js MAX_STEPS (per freq). The old uniform
+    // 500 was NOT a mirror: a daily series anchored more than ~500
+    // DAYS ago ends this walk before it ever reaches NOW — the
+    // shell engine silently never fires for old daily reminders.
+    var maxSteps = (r.freq === "D") ? 40000
+                 : (r.freq === "W") ? 5200 : 600;
+    for (var step = 0; step < maxSteps; step++) {
+      var occYmd = calRemYmd(y, m, d);
+      if (until && occYmd > until) return;
+      if (!exSet[occYmd]) {
+        var ts = calRemOccTs(ev, y, m, d);
+        if (cb(ts, occYmd) === false) return;
+      }
+      if (r.freq === "D") {
+        d += interval;
+      } else if (r.freq === "W") {
+        d += 7 * interval;
+      } else if (r.freq === "M") {
+        m += interval;
+        while (m > 11) { m -= 12; y++; }
+        d = Math.min(origDay, calRemDim(y, m));   // sticky clamp
+      } else if (r.freq === "Y") {
+        y += interval;
+        d = Math.min(origDay, calRemDim(y, m));   // Feb 29 → Feb 28
+      } else {
+        return;
+      }
+      // normalize day overflow from D/W stepping (max +14 days)
+      var dim = calRemDim(y, m);
+      if (d > dim) { d -= dim; m++; if (m > 11) { m = 0; y++; } }
+    }
+  }
+
+  function calRemTick() {
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(CALREM_DATA_KEY)); }
+    catch (e) { return; }
+    if (!raw || !Array.isArray(raw.events)) return;
+
+    var now = Date.now();
+    var due = null;          // earliest due wins — no flood
+    var firedArr = null;     // lazy: read the log once, only if needed
+
+    function check(ev, remindMin, ts, occYmd) {
+      if (ts < now) return;                      // already started — skip
+      var remTs = ts - remindMin * 60000;
+      if (remTs > now) return;                   // not due yet
+      var remKey = "rem:" + ev.id + ":" + occYmd;
+      if (firedArr === null) firedArr = calRemFiredRead();
+      for (var f = 0; f < firedArr.length; f++) {
+        if (firedArr[f] === remKey) return;
+      }
+      if (!due || remTs < due.remTs) {
+        due = { ev: ev, remTs: remTs, startTs: ts, remKey: remKey };
+      }
+    }
+
+    for (var i = 0; i < raw.events.length; i++) {
+      var ev = raw.events[i];
+      if (!ev || typeof ev !== "object" ||
+          typeof ev.remindMin !== "number" || !isFinite(ev.remindMin) ||
+          ev.remindMin <= 0) continue;
+      var remindMin = ev.remindMin;
+
+      if (ev.recur && typeof ev.recur === "object" &&
+          /^[DWMY]$/.test(ev.recur.freq || "")) {
+        calRemEachOccurrence(ev, function (ts, occYmd) {
+          if (ts > now + CALREM_STOP_MS) return false;   // past horizon — stop
+          check(ev, remindMin, ts, occYmd);
+        });
+      } else {
+        var p = String(ev.date || "").split("-");
+        if (p.length === 3) {
+          check(ev, remindMin, calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), ev.date);
+        }
+      }
+    }
+
+    if (due) {
+      calRemFiredAdd(due.remKey);   // mutate BEFORE notify — no double-fire
+      calRemNotify(due);
+    }
+  }
+
+  var calRemRing = { timer: null };
+
+  function calRemStopRing() {
+    if (calRemRing.timer) { clearInterval(calRemRing.timer); calRemRing.timer = null; }
+    var ov = document.getElementById("calrem-toast");
+    if (ov) ov.remove();
+  }
+
+  // Persistent overlay: Dismiss button + 30s hard cap (same
+  // doctrine as alarmNotify). Inline styles, palette vars only.
+  function calRemNotify(due) {
+    calRemStopRing();   // one at a time — new replaces old
+    var loc = state.lang === "el" ? "el-GR" : "en-GB";
+    var titleTxt = calRemT("Reminder", "Υπενθύμιση");
+    var when = new Date(due.startTs);
+    var whenStr = when.toLocaleDateString(loc, { day: "2-digit", month: "short" }) +
+      " · " + when.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+
+    var el = document.createElement("div");
+    el.id = "calrem-toast";
+    el.setAttribute("role", "alert");
+    el.style.cssText =
+      "position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:12px;" +
+      "z-index:1450;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);" +
+      "background:var(--panel-bg);color:var(--text);border:1px solid var(--accent);" +
+      "border-radius:10px;box-shadow:0 8px 24px var(--shadow);padding:10px 14px;";
+    var body = document.createElement("div");
+    body.style.cssText = "flex:1;min-width:0;";
+    var title = document.createElement("div");
+    title.style.cssText = "font-size:11px;font-weight:800;text-transform:uppercase;" +
+      "letter-spacing:1px;color:var(--accent);";
+    title.textContent = titleTxt;
+    var label = document.createElement("div");
+    label.style.cssText = "font-size:13.5px;font-weight:700;margin-top:2px;" +
+      "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+    label.textContent = due.ev.title || titleTxt;
+    var timeStr = document.createElement("div");
+    timeStr.style.cssText = "font-size:12px;color:var(--text-dim);margin-top:1px;" +
+      "font-variant-numeric:tabular-nums;";
+    timeStr.textContent = whenStr;
+    body.appendChild(title);
+    body.appendChild(label);
+    body.appendChild(timeStr);
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = calRemT("Dismiss", "Απόρριψη");
+    btn.style.cssText =
+      "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft);" +
+      "color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;" +
+      "border-radius:7px;padding:7px 12px;cursor:pointer;";
+    btn.addEventListener("click", calRemStopRing);
+    el.appendChild(body);
+    el.appendChild(btn);
+    document.body.appendChild(el);
+
+    // Web Notification — ONLY if permission was already granted
+    // (asked from the Calendar app's Save button = legal gesture).
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        var n = new Notification("orOS — " + titleTxt, {
+          body: due.ev.title || "",
+          tag: due.remKey
+        });
+        n.onclick = function () { window.focus(); calRemStopRing(); };
+      } catch (e) { /* visual overlay stands alone */ }
+    }
+
+    alarmPip();                              // same pip path as alarms
+    calRemRing.timer = setInterval(alarmPip, 1500);
+    setTimeout(function () {
+      var ov = document.getElementById("calrem-toast");
+      if (ov) calRemStopRing();
+    }, 30000);                               // hard cap
+  }
+
+  // Throttle: renderClock ticks every 1s — the reminder scan runs
+  // at most every 30s (JSON.parse of the whole calendar is not a
+  // per-second job). No new setInterval, no background timers.
+  var calRemLastTick = 0;
+  function calRemTickThrottled() {
+    var now = Date.now();
+    if (now - calRemLastTick < 30000) return;
+    calRemLastTick = now;
+    calRemTick();
+  }
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 
@@ -3289,6 +3556,11 @@
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
   
+  // Wave 3 — first calendar reminder sweep shortly after boot:
+  // reminders that came due while orOS was closed surface almost
+  // immediately instead of waiting up to 30s for the clock tick.
+  setTimeout(function () { calRemTickThrottled(); }, 4000);
+
     // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
   wxRenderChip();
   wxFetch(false);
