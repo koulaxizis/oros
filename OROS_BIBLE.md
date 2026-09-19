@@ -1994,6 +1994,87 @@ Engine untouched — fix is app-side merge semantics.
 ### Recorded (design note, no action)
 - Storage categorized as "Productivity" — arguably "Utilities"
   (space analytics). Cosmetic classification, owner's call.
+  
+  ## [Kernel Lock re-audit — files.js] 2026-09-18 · files.js
+### Verified (prior findings — CONFIRMED PRESENT / RESOLVED)
+- F2: No duplicate ~700-line block — cleanup confirmed (section
+  headers appear once, dead stubs removed).
+- F3: renderImagePreview handles Blob/ArrayBuffer/base64 verbatim,
+    with 60s sweep-revoke (#FA2 FIX). Minor leak persists — see FA7.
+- F4: recursive search uses 250ms debounce + renderToken +
+    sequential chain, caps at SEARCH_CAP (#23 FIX).
+- #8 FIX: wipe:true in reallyApply ensures "Take cloud version"
+    truly replaces local disk.
+- Shell §9f contract: orosFilesDisk exposes correct keys + boot
+    consumes __orosFilesTakePending post-render (#13 FIX).
+- F7: importDisk consumers reviewed — single consumer (reallyApply)
+    found ignoring {applied, failed} return value (FA3 below).
+### Critical / High Fixes
+- FA1 performMove: added guard against moving a folder into itself
+    or into one of its descendants — prevents catastrophic self-
+    wipe (copy-then-delete scenario). [patch]
+- FA2 performCopy: added identical self-containment guards to
+    prevent infinite recursion when copying a folder into itself.
+    [patch]
+- FA3 reallyApply: honors importDisk {applied, failed} contract.
+    Partial/zero-success restores do NOT mark clean or toast
+    "restored" — next sync will retry, preventing silent cloud
+    data loss. [patch]
+### Medium / Low Fixes
+- FA4 clearSearch: replaced stale re-render with full refresh()
+    to restore proper lastEntries and status bar (fixes "0 items"
+    bug on search clear). [patch]
+- FA5 mdToHtml: strips javascript: and data: URLs from markdown
+    links before rendering — prevents same-origin XSS in preview.
+    [patch]
+- FA6 importFilesList: honest toast messaging — FS failures no
+    longer reported as "skipped (kept both)". [patch]
+- FA7 renderImagePreview: revoke object URL immediately on preview
+    close, not just after 60s timeout. [patch]
+- FA8 Dead code: removed empty updateSortIndicators stub (real
+    implementation exists later in file). [deletion]
+### Recorded (no action)
+- Search does not early-exit after SEARCH_CAP hits (perf only).
+- Recents-click selection uses setTimeout(150ms) race guard.
+- Copy content on binary files returns garbage (could hide non-text
+    extensions).
+- Clock skew between devices may affect snap.ts > syncMeta.ts check.
+- Search-result rows lack keyboard accessibility.
+- Minor mixed tabs/spaces in STRINGS object.
+
+## [Files app re-audit] 2026-09-18 · files.js + files.css
+### Verified (prior findings FA1-FA8)
+- FA1-FA2 performMove/performCopy guards: present and functional.
+- FA3 reallyApply: honored {applied, failed} — but the delivery
+  incorrectly rejected empty-disk restores (total > 0 guard). Fixed.
+- FA4 clearSearch: replaced stale re-render with refresh() — but
+  caused redundant fetches on navigation. Fixed.
+- FA5 mdInline: security sanitize applied BUT reversed the escape→
+  linkify order, breaking ALL markdown links. Critical regression.
+- FA6-FA7 import toast + image revoke: confirmed present.
+- FA8 dead stub removed: but leftover comment remained.
+### Fixed (regressions + secondary issues)
+- FB1 mdInline: correct escape→linkify order restored; dangerous
+  schemes (javascript:, data:) still stripped. Links render.
+- FB2 clearSearch/navigate: eliminate redundant fetches; only
+  fetch when search was actually active.
+- FB3 reallyApply: empty-disk (applied=0, failed=0) now correctly
+  marked as success.
+- FB4 performMove: one toast per guard pass instead of stack.
+- FB5 leftover FA8 comment removed.
+- FB6 runSearch: status bar shows match count (was hardcoded 0).
+### Optional CSS fixes
+- OP1 .spacer: toolbar spacer functionality restored; removed
+  dead .bar-spacer rule.
+- OP2 .danger-arm: delete button visual arm added (border color
+  when selection > 0).
+### Recorded (no action)
+- Toast top offset 48px targets OS shell — may need adjustment
+  within app iframe context.
+- Cache-buster lag (?v=0.35.06 vs APP_VERSION 0.35.07) — tracked
+  in H/#27.
+- Search results lack dblclick-open + tabIndex — standing a11y
+  item.
 
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*

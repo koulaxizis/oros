@@ -10,7 +10,7 @@
 
   <!-- Toolbar: up-navigation | breadcrumbs | actions -->
   <header id="bar">
-    <button id="up" data-i18n-title="nav.up" title="Up"
+    <button id="up" class="tool" data-i18n-title="nav.up" title="Up"
             aria-label="Go to parent folder">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
     </button>
@@ -20,19 +20,19 @@
     <span class="spacer"></span>
 
     <div id="actions">
-      <button id="new-folder" data-i18n-title="act.newFolder" title="New folder"
+      <button id="new-folder" class="tool" data-i18n-title="act.newFolder" title="New folder"
               aria-label="New folder">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       </button>
-      <button id="new-file" data-i18n-title="act.newFile" title="New file"
+      <button id="new-file" class="tool" data-i18n-title="act.newFile" title="New file"
               aria-label="New file">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       </button>
-      <button id="rename" data-i18n-title="act.rename" title="Rename"
+      <button id="rename" class="tool" data-i18n-title="act.rename" title="Rename"
               aria-label="Rename" disabled>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
       </button>
-      <button id="delete" data-i18n-title="act.delete" title="Delete"
+      <button id="delete" class="tool" data-i18n-title="act.delete" title="Delete"
               aria-label="Delete" disabled>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </button>
@@ -75,7 +75,7 @@
       <p class="hint" id="name-error" hidden></p>
 
       <menu>
-        <button type="button" id="name-cancel" class="danger"
+        <button type="button" id="name-cancel"
                 data-i18n="dlg.cancel">Cancel</button>
         <span class="spacer"></span>
         <button type="submit" data-i18n="dlg.ok">Create</button>
@@ -87,13 +87,13 @@
   <dialog id="dlg-delete">
     <form method="dialog" id="delete-form" autocomplete="off">
       <h3 id="delete-title" data-i18n="dlg.deleteTitle">Delete</h3>
-      <p id="delete-msg" class="hint"></p>
-      <input id="confirm-input" type="text" autocomplete="off" spellcheck="false" hidden>
+      <p id="delete-msg"></p>
       <menu>
-        <button type="button" id="delete-cancel" class="danger"
+        <button type="button" id="delete-cancel"
                 data-i18n="dlg.cancel">Cancel</button>
         <span class="spacer"></span>
-        <button type="submit" data-i18n="dlg.deleteConfirm">Delete</button>
+        <button type="submit" class="danger"
+                data-i18n="dlg.deleteConfirm">Delete</button>
       </menu>
     </form>
   </dialog>

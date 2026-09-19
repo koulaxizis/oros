@@ -338,8 +338,6 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><polyline points="13 6 19 12 13 18"/></svg>';
   var CP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-  var CLOCK_SVG =
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>';
   var IMPORT_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>';
   var EDIT_SVG =
@@ -378,8 +376,7 @@
   // Single click = exclusive select; Ctrl/Cmd+click = toggle; Shift
   // = anchor-range (desktop list convention). Everything downstream
   // (rename/delete/move/copy/menu) reads selectionPaths().
-  var selectedPaths = {};        // path → true (order via lastListIndex)
-  var lastClickedIndex = -1;
+  var selectedPaths = {};        // path → true
   var anchorIndex = -1;
 
   // Last listing snapshot — powers range selection + status count
@@ -548,15 +545,19 @@
   function navigate(path) {
     cwd = path;
     clearSelection();
-    clearSearch();               // navigation ends search — honest list
+    // FB2: exactly ONE listing fetch per navigation. When a search
+    // is active, clearSearch() re-fetches the real listing itself;
+    // otherwise this refresh() is the only one. (Previously BOTH
+    // ran: clearSearch's unconditional refresh + this one.)
+    var hadSearch = (searchQuery !== null);
+    if (hadSearch) clearSearch();
     prefs.last = path;
     savePrefs();
-    refresh();
+    if (!hadSearch) refresh();
   }
 
   function clearSelection() {
     selectedPaths = {};
-    lastClickedIndex = -1;
     anchorIndex = -1;
     var rows = $("entries") ? $("entries").querySelectorAll(".entry") : [];
     for (var i = 0; i < rows.length; i++) rows[i].classList.remove("selected");
@@ -727,21 +728,16 @@
     updateSortIndicators();
   }
 
-  function updateSortIndicators() {
-    // Will be wired after rendering
-  }
-
   // ---------- 6. Entry list render + MULTI selection ----------
 
   function renderEntries(entries) {
     var ul = $("entries");
     ul.innerHTML = "";
-    var emptyShown = false;
 
-    // Recents section occupies the root view only (no search active)
-    if (cwd === ROOT && searchQuery === null && entries.length === 0) {
-      $("empty").hidden = false;
-    } else if (searchQuery === null) {
+    // FD/FE4: single branch — the old first case (root + empty) was
+    // fully covered by the second: entries.length > 0 === false →
+    // hidden = false. Identical outcome, half the code.
+    if (searchQuery === null) {
       $("empty").hidden = entries.length > 0;
     }
 
@@ -902,7 +898,7 @@
     if (ev.ctrlKey || ev.metaKey) {
       // Toggle this one, keep the rest
       selectedPaths[path] = !selectedPaths[path];
-      if (selectedPaths[path]) { anchorIndex = idx; lastClickedIndex = idx; }
+      if (selectedPaths[path]) { anchorIndex = idx; }
       paintSelection();
       updateActionButtons();
       return;
@@ -912,7 +908,6 @@
     clearSelection();
     selectedPaths[path] = true;
     anchorIndex = idx;
-    lastClickedIndex = idx;
     paintSelection();
     updateActionButtons();
   }
@@ -1041,7 +1036,6 @@
         err.textContent = check.err;
         err.hidden = false;
         $("name-input").focus();
-        $("dlg-name").showModal();
         return;
       }
       var name = check.name;
@@ -1251,16 +1245,32 @@
     var parent = function (p) {
       return p.slice(0, p.lastIndexOf("/")) || "/";
     };
+    // FA1 (critical): the picker shows ALL folders INCLUDING the
+    // items being moved — selecting the SAME folder or ONE OF ITS
+    // CHILDREN as destination would cause opfsMv to copy then
+    // delete, wiping the source WITH the copy inside it. Two
+    // additional guards are required:
+    //   1) source == destination
+    //   2) destination starts with source/ (child containment)
+    var warned = false;    // FB4: one toast per guard pass, not a stack
     var moves = paths.filter(function (p) {
-      if (parent(p) === dst) return false;
-      if (p.indexOf(dst + "/") === 0) {
-        showToast(t("toast.intoItself"));
+      if (p === dst) {
+        if (!warned) { showToast(t("toast.sameFolder")); warned = true; }
         return false;
       }
+      if (dst.indexOf(p + "/") === 0) {
+        if (!warned) { showToast(t("toast.intoItself")); warned = true; }
+        return false;
+      }
+      if (parent(p) === dst) return false;   // same folder — silent noop
       return true;
     });
     if (!moves.length) {
-      if (paths.length) showToast(t("toast.sameFolder"));
+      // FB4: previously the filter's own toast PLUS this fallback
+      // stacked (an into-itself case showed BOTH intoItself and
+      // sameFolder). Show the fallback only when the filter was
+      // completely silent (pure same-folder noops).
+      if (paths.length && !warned) showToast(t("toast.sameFolder"));
       return;
     }
     dstListChain(dst).then(function (dstNames) {
@@ -1274,7 +1284,10 @@
             return null;
           }
           return FS().mv(p, join(dst, name)).then(function () {
-            dropExpandedPrefix(p);
+            // FD4: rename alone — it relocates the folder AND all
+            // descendant expanded keys. The preceding drop wiped
+            // the very keys rename needed, so every moved folder
+            // arrived COLLAPSED (expansion state silently lost).
             renameExpandedPrefix(p, join(dst, name));
             moved++;
             dstNames.push(name);
@@ -1296,6 +1309,22 @@
   }
 
   function performCopy(paths, dst) {
+    // FA2 (critical): same guards as performMove — copying a folder
+    // into itself or into one of its children causes infinite
+    // recursion in copyEntry (mkdir → ls → find newly created
+    // child → recurse forever until quota/stack exhaustion).
+    // The picker must NOT prevent this — we guard here.
+    for (var i = 0; i < paths.length; i++) {
+      var p = paths[i];
+      if (p === dst) {
+        showToast(t("toast.sameFolder"));
+        return;
+      }
+      if (dst.indexOf(p + "/") === 0) {
+        showToast(t("toast.intoItself"));
+        return;
+      }
+    }
     if (dst === cwd && paths.length) {
       showToast(t("toast.sameFolder"));
       return;
@@ -1429,24 +1458,41 @@
   // Shared import pipeline for drag-drop AND file picker.
   // Sequence: stat destination → ENOENT = clean write (normal
   // case for new files), exists-as-file = ask overwrite/keep-both.
+  var importCancelled = false;
+
   function importFilesList(files, dstPath) {
     var imported = 0, skipped = 0;
-    var promises = [];
+    importCancelled = false;          // FC4: fresh batch, fresh flag
+    // FD1: SERIAL chain, not Promise.all. Two birds:
+    //  1) FC4's importCancelled flag now actually works — with
+    //     Promise.all every importFile() had already been CALLED
+    //     (guard already passed) before any dialog got answered.
+    //  2) Multiple conflicting files fired askOverwrite()
+    //     concurrently → the second showModal() threw
+    //     InvalidStateError while the first dialog was open.
+    var chain = Promise.resolve();
     for (var i = 0; i < files.length; i++) {
       (function (f) {
-        promises.push(importFile(f, dstPath).then(function (ok) {
-          if (ok === true) imported++;
-          else if (ok === false) skipped++;
-          // ok == null means cancelled whole import
-        }));
+        chain = chain.then(function () {
+          return importFile(f, dstPath).then(function (ok) {
+            if (ok === true) imported++;
+            else if (ok === false) skipped++;
+            // ok == null means cancelled whole import
+          });
+        });
       })(files[i]);
     }
-    return Promise.all(promises).then(function () {
+    return chain.then(function () {
       if (imported) {
         showToast(tfmt("toast.imported", { n: imported }));
-        if (skipped) showToast(tfmt("toast.skippedDupes", { n: skipped }));
+        if (skipped) showToast(t("toast.skippedDupes").split("{n}").join(String(skipped)));
         forceStorageRecalc();
         markDirty();
+      } else if (skipped) {
+        // FA6: honest feedback — "skipped (kept both)" refers to
+        // keep-both decisions, NOT FS failures. Failures should
+        // report "import failed" not "kept both".
+        showToast(t("toast.importFail"));
       }
       refresh();
     });
@@ -1458,6 +1504,7 @@
   // keep-both, and keep-both now consults the REAL destination
   // listing (was: empty array → same name → silent overwrite).
   function importFile(file, dstPath) {
+    if (importCancelled) return Promise.resolve(null);   // FC4: batch was cancelled
     var name = sanitizeFileName(file.name);
     var dst = join(dstPath, name);
     return FS().stat(dst).then(function (st) {
@@ -1467,14 +1514,19 @@
       }
       if (st.dir) {
         // Destination is a folder → write INSIDE it, uniquified
-        return dstListChain(st.path).then(function (innerNames) {
+        // FC3: list the KNOWN path `dst` — never rely on st.path
+        // being part of the fs.js stat contract
+        return dstListChain(dst).then(function (innerNames) {
           var inner = uniqueName(name, innerNames);
           return writeFileDst(file, join(dst, inner)).then(function () { return true; });
         });
       }
       // Destination exists as file → ask
       return askOverwrite(name).then(function (decision) {
-        if (decision === null) return null;              // cancel whole import
+        if (decision === null) {                         // FC4: cancel REST of batch
+          importCancelled = true;
+          return null;
+        }
         if (decision === false) {
           // Keep both → rename against the REAL listing
           return dstListChain(dstPath).then(function (dstNames) {
@@ -1694,6 +1746,12 @@
     if (!query.trim()) { clearSearch(); return; }
     searchQuery = query.trim();
     searchDir = cwd;
+    // FD3: entering search mode — drop stale root views. Otherwise
+    // the Recents section and/or #empty from the last plain
+    // listing stay visible alongside the search results.
+    hideRecents();
+    var em = $("empty");
+    if (em) em.hidden = true;
     setStatusLoading();
 
     if (searchDebounce) clearTimeout(searchDebounce);
@@ -1703,7 +1761,7 @@
         if (token !== renderToken) return;
         lastEntries = [];  // no list
         renderSearchResults(matches);
-        renderStatus(0);
+        renderStatus(matches.length);   // FB6: was hardcoded 0 — "0 items" over a full result list
       });
     }, 250);
   }
@@ -1740,11 +1798,17 @@
 
   function clearSearch() {
     if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
+    var wasSearching = (searchQuery !== null);   // capture BEFORE nulling
     searchQuery = null;
     searchDir = null;
-    renderEntries(lastEntries);
-    renderStatus(lastEntries.length);
-    renderRecentsMaybe();
+    // FA4 + FB2: runSearch() sets lastEntries=[] (no list), so
+    // clearing must re-fetch the real listing. BUT only when a
+    // search was actually ACTIVE: clearSearch() is called on EVERY
+    // navigation and on every empty-keyup — an unconditional
+    // refresh() meant double and triple fetches per navigation.
+    // renderRecentsMaybe() is called inside refresh() already; the
+    // explicit call here was a second, redundant prune walk.
+    if (wasSearching) refresh();
   }
 
   function renderSearchResults(matches) {
@@ -2122,8 +2186,33 @@
   // making "take cloud" a lie. Data-loss window: ONLY after the
   // user explicitly chose the remote over the local in the
   // conflict dialog (or when local is clean).
+  //
+  // FA3 (high): importDisk now returns {applied, failed} per F7.
+  // Partial failure (quota, transient FS errors) means some entries
+  // DIDN'T make it to disk. If we markClean() and toast "restored",
+  // the next push will overwrite the cloud with this PARTIAL state
+  // — the failed entries are lost from cloud FOREVER. Honor the
+  // contract: only markClean/toast when applied===total, and report
+  // failures honestly so the user can retry before the next sync.
   function reallyApply(snap, resolve, reject) {
-    FS().importDisk(snap.disk, { wipe: true }).then(function () {
+    FS().importDisk(snap.disk, { wipe: true }).then(function (result) {
+      // FB3: an EMPTY remote disk is a VALID, successfully-restored
+      // state (fresh cloud, or everything deliberately deleted).
+      // applied===0 with failed===0 is SUCCESS — the earlier
+      // `total > 0` guard turned it into a permanent "failure":
+      // never markClean → the remote re-applied on every cycle,
+      // sync pill stuck pending. Failure is defined purely as
+      // failed > 0.
+      var failed = (result && result.failed) || 0;
+      if (failed > 0) {
+        // Partial success — report failure but DO NOT mark clean.
+        // Baseline stays old, so the next reconcile re-attempts
+        // this remote. Users see honest diagnostics. Resolve
+        // false (not reject): not fatal, just "not fully restored".
+        showToast(t("sync.snapshotFail") + ": " + failed);
+        resolve(false);
+        return;
+      }
       markClean(snap.ts || Date.now());
       forceStorageRecalc();
       clearSelection();
@@ -2266,8 +2355,23 @@
 
   var pvOverlay = null;
 
+  // FG5: registry of live preview object URLs — revoked on EVERY
+  // close path (Esc / X button / overlay click / new preview),
+  // replacing the old closePreview-reassignment hack that only
+  // intercepted Esc. Closing always removes the overlay, so no
+  // <img> can outlive its URL.
+  var pvActiveUrls = [];
+
+  function pvRevokeAll() {
+    for (var i = 0; i < pvActiveUrls.length; i++) {
+      try { URL.revokeObjectURL(pvActiveUrls[i]); } catch (e) {}
+    }
+    pvActiveUrls = [];
+  }
+
   function closePreview() {
     if (!pvOverlay) return;
+    pvRevokeAll();
     pvOverlay.remove();
     pvOverlay = null;
     document.removeEventListener("keydown", pvOnKey);
@@ -2442,12 +2546,28 @@
   }
 
   function mdInline(s) {
+    // FA5 + FB1 (security + regression fix): escape FIRST, then
+    // linkify the ESCAPED string. The prior delivery linkified raw
+    // text and THEN ran escapeHtml over the result — the injected
+    // <a> tags were themselves escaped, so every markdown link
+    // rendered as literal HTML source text. Matching after escape
+    // is safe: the URL substring can no longer contain quotes,
+    // brackets or angle brackets, and the scheme test still works
+    // verbatim on unescaped scheme characters.
     return escapeHtml(s)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (m, txt, url) {
+        var clean = url.trim();
+        if (/^[a-z]+:/i.test(clean)) {
+          var scheme = clean.split(":")[0].toLowerCase();
+          if (scheme === "javascript" || scheme === "data") {
+            return txt;   // dangerous link — keep text, drop the href
+          }
+        }
+        return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + txt + "</a>";
+      })
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/(^|\W)\*([^*]+)\*(?=\W|$)/g, "$1<em>$2</em>")
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      .replace(/(^|\W)\*([^*]+)\*(?=\W|$)/g, "$1<em>$2</em>");
   }
 
   function injectEditButton(path, name) {
@@ -2565,12 +2685,8 @@
       }
       if (!blob) throw new Error("unreadable");
       var url = URL.createObjectURL(blob);
+      pvActiveUrls.push(url);              // FG5: revoked in pvRevokeAll()
       pvBodySet('<img class="pv-img" alt="" src="' + url + '">');
-      // Sweep-revoke: overlay may already be closed/replaced by then
-      var img = $("pv-body").querySelector("img");
-      setTimeout(function () {
-        if (!document.body.contains(img)) URL.revokeObjectURL(url);
-      }, 60000);
     }).catch(function () {
       pvBodySet('<div class="pv-msg">' + escapeHtml(t("pv.imageFail")) + "</div>");
     });
@@ -2646,6 +2762,7 @@
     if (!$("pick-files")) {
       var pick = document.createElement("button");
       pick.type = "button";
+      pick.className = "tool";          // FD2: match toolbar button chrome
       pick.id = "pick-files";
       pick.title = t("act.import");
       pick.setAttribute("aria-label", t("act.import"));
@@ -2815,10 +2932,10 @@
     hdr.id = "list-header";
     hdr.className = "entry-list-header";
 
-    var mkCol = function (labelKey, field, gridCol) {
+    var mkCol = function (labelKey, field) {
       var th = document.createElement("button");
       th.type = "button";
-      th.className = "col-th" + (gridCol ? " " + gridCol : "");
+      th.className = "col-th";
       th.dataset.field = field;
       th.innerHTML = '<span class="col-th-label"></span><span class="sort-ind"></span>';
       th.querySelector(".col-th-label").textContent = t(labelKey);
@@ -2827,9 +2944,11 @@
     };
 
     // #7 FIX: 4 grid tracks to mirror the rows: icon-gap | name | size | date
-    hdr.appendChild(mkCol("col.name", "name", "col-th-name"));
-    hdr.appendChild(mkCol("col.size", "size", ""));
-    hdr.appendChild(mkCol("col.date", "date", ""));
+    // (FG4: the gridCol param was dead — placement comes from the
+    // .col-th:nth-child rules in files.css)
+    hdr.appendChild(mkCol("col.name", "name"));
+    hdr.appendChild(mkCol("col.size", "size"));
+    hdr.appendChild(mkCol("col.date", "date"));
 
     var wrap = $("list-wrap");
     if (wrap) wrap.insertBefore(hdr, wrap.firstChild);

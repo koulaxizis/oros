@@ -213,7 +213,6 @@ body {
 /* Desktop: distinctly rectangular cells — a wider stage means
    the grid gets vertical presence instead of stretching flat. */
 @media (min-width: 700px) {
-  #cmain { max-width: 920px; margin: 0 auto; }
   .cal-cell { min-height: 84px; }
   .cal-cell .cal-num { font-size: 13.5px; }
   .ev-dot { width: 6px; height: 6px; }

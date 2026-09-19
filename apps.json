@@ -100,7 +100,7 @@
     {
       "id": "files",
       "name": "Files",
-      "category": "Productivity",
+      "category": "Utilities",
       "icon": "files",
       "url": "files/",
       "type": "internal"

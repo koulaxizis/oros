@@ -35,6 +35,8 @@ button {
 
 button:disabled { opacity: 0.4; cursor: default; }
 
+.spacer { flex: 1; }   /* FB7: toolbar spacers (inline HTML) now functional */
+
 /* ---------- Toolbar / bar ---------- */
 
 #bar {
@@ -46,8 +48,6 @@ button:disabled { opacity: 0.4; cursor: default; }
   border-bottom: 1px solid var(--border, #2c2b31);
   flex-wrap: wrap;
 }
-
-#bar .bar-spacer { flex: 1; }
 
 #bar button.tool {
   display: inline-flex;
@@ -64,6 +64,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 
 #bar button.tool.primary { background: var(--accent, #6d4aff); color: #fff; border-color: transparent; }
 #bar button.tool.primary:hover:not(:disabled) { background: var(--accent-hover, #7d5aff); }
+#bar button#delete.danger-arm { border-color: #e06c75; }   /* visual arm when selection > 0 */
 
 #bar #actions { display: flex; gap: 6px; margin-left: auto; }
 
@@ -468,10 +469,58 @@ dialog::backdrop { background: rgba(0,0,0,0.55); }
 .dlg-row button.danger { background: #a33; color: #fff; border-color: transparent; }
 .dlg-row button.danger:hover { background: #c44; }
 
-.dlg-error {
+.dlg-error,
+dialog .hint {
   color: #f88;
   font-size: 12px;
   margin-top: 8px;
+}
+
+/* FC2: static index.html dialogs (dlg-name / dlg-delete) — their
+   menu buttons + text inputs never matched .dlg-row styles */
+dialog menu {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+dialog menu .spacer { flex: 1; }
+
+dialog menu button {
+  padding: 7px 14px;
+  border-radius: 6px;
+  background: var(--panel-bg, #2a2832);
+  border: 1px solid var(--border, #2c2b31);
+}
+
+dialog menu button:hover { background: var(--accent-soft, #33313d); }
+dialog menu button.danger { background: #a33; color: #fff; border-color: transparent; }
+dialog menu button.danger:hover { background: #c44; }
+dialog menu button[type="submit"] { background: var(--accent, #6d4aff); color: #fff; border-color: transparent; }
+dialog menu button[type="submit"]:hover { background: var(--accent-hover, #7d5aff); }
+
+dialog input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg, #17161a);
+  color: var(--text, #eee);
+  border: 1px solid var(--border, #2c2b31);
+  font: inherit;
+  outline: none;
+}
+
+dialog input[type="text"]:focus { border-color: var(--accent, #6d4aff); }
+
+dialog label {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-dim, #999);
 }
 
 /* Picker tree (move/copy dialog) */
