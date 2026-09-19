@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mood — App logic (v0.27.00) — Clean release
+// orOS Mood — App logic (version stamped by CI) — Clean release
 // Capturing how you feel must take seconds, not minutes.
 // Entries are additive-primary; edits are LWW by mtime; deletes
 // leave tombstones (merge-safe). Mood data is PERSONAL: it lives
@@ -171,7 +171,8 @@
       "exp.row.days":    "Days logged",
 	  "sync.pull":      "Updated from sync",
       "exp.font.err":   "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
-      "ent.empty":      "No entries yet — they'll appear here after your first check-in."
+      "ent.empty":      "No entries yet — they'll appear here after your first check-in.",
+      "ent.noRes":      "No entries match \u201C{q}\u201D."
     },
     el: {
       "app.title":     "Διάθεση",
@@ -312,7 +313,8 @@
       "exp.row.days":    "Ημέρες με καταγραφή",
 	  "sync.pull":      "Ενημερώθηκε από συγχρονισμό",
       "exp.font.err":   "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
-      "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή."
+      "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή.",
+      "ent.noRes":      "Καμία καταχώρηση δεν ταιριάζει με «{q}»."
     }
   };
 
@@ -583,8 +585,8 @@ function migrate(data) {
       if (v.bi) return;                                  // already bilingual
       var nl = normLabel(v.label);
       (SEEDSETS[cname] || []).some(function (sv) {
-        if (normLabel(sv.en) === nl || normLabel(sv.el) === nl ||
-            normLabel(sv.en) === nl.toLowerCase() || normLabel(sv.el) === nl.toLowerCase()) {
+        // #8: normLabel already lowercases — dead comparisons gone
+        if (normLabel(sv.en) === nl || normLabel(sv.el) === nl) {
           v.bi = { en: sv.en, el: sv.el };
           return true;
         }
@@ -592,6 +594,15 @@ function migrate(data) {
       });
     });
   });
+  // #7: pre-flag data (ver < 3) has lived through the trigger
+  // feature's birth at least once — mark it seeded so a
+  // deliberately emptied trig column never respawns defaults
+  // on the next boot cycle. Trade-off: a pre-ver3 install whose
+  // user never touched triggers also skips the factory presets.
+  if (data.trigSeeded === undefined &&
+      typeof data.ver === "number" && data.ver < DATA_VER) {
+    data.trigSeeded = true;
+  }
   data.ver = DATA_VER;
   return data;
 }
@@ -926,6 +937,7 @@ function mergeMoodStates(A, B) {
 
   // --- capture state ---
   var editing   = null;   // entry id | null (new-entry mode)
+  var pendingNote = null;  // #3: note carried by an in-flight editEntry
   var managing = false;   // view state: chip management mode (rename/delete)
   var picked    = {};     // emotionKey → intensity 1–5
   var selLoc    = null;   // column-value id | null
@@ -936,6 +948,7 @@ function mergeMoodStates(A, B) {
 
   function resetCapture() {
     editing = null;
+    pendingNote = null;   // #3: stale edit-notes never leak
     picked = {};
     // Smart preselection (changelog contract): most-used value in
     // the CURRENT time-of-day bucket → most recent → pos 0.
@@ -974,7 +987,11 @@ function mergeMoodStates(A, B) {
 
   function buildCapture() {
     var host = $("capture");
-    var prevNote = $("fld-note") ? $("fld-note").value : "";   // read BEFORE clear
+    // #3: an in-flight edit carries ITS note; everything else
+    // keeps whatever the user typed (draft survives rebuilds)
+    var prevNote = (editing !== null && pendingNote !== null) ?
+      pendingNote : ($("fld-note") ? $("fld-note").value : "");
+    pendingNote = null;
     var prevAdd = { loc: "", person: "", trig: "" };           // #12: same for Add…
     ["loc", "person", "trig"].forEach(function (c) {
       var ip = document.getElementById("add-in-" + c);
@@ -1568,9 +1585,9 @@ function mergeMoodStates(A, B) {
     if (!e) return;
     editing = id;
     loadEntryIntoCapture(e);
+    pendingNote = e.note || "";         // #3: BEFORE showTab — applyView's
+                                        // single buildCapture consumes it
     showTab("capture");                 // #8: the form must actually SHOW
-    buildCapture();
-    $("fld-note").value = e.note || "";
     var mm = $("moodmain");
     if (mm) mm.scrollTop = 0; else window.scrollTo(0, 0);
   }
@@ -1752,6 +1769,13 @@ function mergeMoodStates(A, B) {
 
       list.appendChild(li);
     });
+    // #5: explicit no-results state when the query matches nothing
+    if (q && !shown) {
+      var nr = document.createElement("div");
+      nr.id = "empty-note";
+      nr.textContent = t("ent.noRes").replace("{q}", searchQ.trim());
+      list.appendChild(nr);
+    }
   }
 
   function renderRecent() {
@@ -2223,6 +2247,7 @@ function mergeMoodStates(A, B) {
         if (e[h.f] === "yes") yesDays += 1;      // per-entry, not
         if (e[h.f] === "no")  noDays += 1;       // per-day — honest
       });
+      if (!yesDays && !noDays) return;   // #1: no "0 of 0" ghost rows
             var row = document.createElement("div");
       row.className = "dist-row";
       var lab = document.createElement("span");
@@ -2692,9 +2717,10 @@ function mergeMoodStates(A, B) {
   // jsPDF is VENDORED LOCALLY (vendor/jspdf.umd.min.js) — never a
   // CDN. Optional: if the file is absent, export degrades to a
   // toast error; nothing else breaks.
-  var pdfLibLoading = false;
+  var pdfLibLoading = false, pdfLibPending = [];
   function loadPdfLib(done) {
     if (window.jspdf && window.jspdf.jsPDF) { done(); return; }
+    pdfLibPending.push(done);            // #2: clicks queue, never vanish
     if (pdfLibLoading) return;
     pdfLibLoading = true;
     // #13: currentScript is null inside a click handler — MV is
@@ -2703,10 +2729,18 @@ function mergeMoodStates(A, B) {
     var cands = ["../vendor/jspdf.umd.min.js"];   // mood/ has no vendor/ — verified in repo
     var i = 0;
     (function next() {
-      if (i >= cands.length) { pdfLibLoading = false; showToast(t("exp.err")); return; }
+      if (i >= cands.length) {
+        pdfLibLoading = false;
+        pdfLibPending.splice(0);   // queued requests die — error toast is the receipt
+        showToast(t("exp.err"));
+        return;
+      }
       var s = document.createElement("script");
       s.src = cands[i++] + (MV ? "?v=" + MV : "");
-      s.onload = function () { pdfLibLoading = false; done(); };
+      s.onload = function () {
+        pdfLibLoading = false;
+        pdfLibPending.splice(0).forEach(function (cb) { cb(); });
+      };
       s.onerror = function () { s.remove(); next(); };
       document.head.appendChild(s);
     })();
@@ -2876,7 +2910,7 @@ function mergeMoodStates(A, B) {
             .replace("{y}", yy).replace("{n}", tot) +
             "  ·  " + Math.round(yy / tot * 100) + "%");
         });
-        if (grp === "hab" && !anyIn) line(t("ins.ctx.none"));
+        if (!anyIn) line(t("ins.ctx.none"));   // #4: same fallback, both groups
       });
       y += 4;
       y += 4;
@@ -3244,6 +3278,18 @@ function mergeMoodStates(A, B) {
     $("ins-btn").addEventListener("click", function () { showTab("insights"); });
   }
 
+  // Wave 4 — deep-link receiver. The shell (__orosOpenMood) calls
+  // this on the LIVE iframe when the Mood app is already open; a
+  // closed app gets the staged-ID path at boot (Patch 2 below).
+  // entryId = state.entries[].id. Opens the entry in edit mode —
+  // the entry IS the mood app's natural destination (Discard is
+  // always one tap away, and the recent-guard still applies).
+  window.__orosMoodOpen = function (entryId) {
+    if (typeof entryId !== "string" || !entryId) return;
+    if (!entryById(entryId)) return;      // deleted elsewhere — land on capture
+    editEntry(entryId);
+  };
+
   // ---------- Boot ----------
   var SCRIPT_V = "";
   (function () {
@@ -3263,5 +3309,27 @@ function mergeMoodStates(A, B) {
   resetCapture();     // smart preselection fires here (suggestFor)
   renderThread();     // #17: renderAll would rebuild capture a 2nd time
   renderRecent();
+
+  // Boot-time deep-link take: the shell staged an entry ID (Mood
+  // was closed when the Calendar feed row was clicked). Consume
+  // exactly ONCE — the parent funnel owns the take when we run in
+  // the shell; standalone reads sessionStorage directly (nothing
+  // there in that mode — staging only happens via the shell).
+  // Order matters: AFTER resetCapture(), so the form exists before
+  // editEntry fills it (one harmless extra capture paint).
+  var pendingMood = null;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosMoodTakePending === "function") {
+      pendingMood = window.parent.__orosMoodTakePending();
+    } else {
+      var mid = sessionStorage.getItem("oros-mood-open");
+      if (mid) {
+        sessionStorage.removeItem("oros-mood-open");
+        pendingMood = mid;
+      }
+    }
+  } catch (e) { pendingMood = null; }
+  if (pendingMood) __orosMoodOpen(pendingMood);
 
 })();

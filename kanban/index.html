@@ -51,11 +51,15 @@
     <form method="dialog" id="card-form" autocomplete="off">
       <h3 data-i18n="card.title">Card</h3>
 
-      <label data-i18n="card.text">Text</label>
+      <label for="c-text" data-i18n="card.text">Text</label>
       <input id="c-text" type="text" required>
 
-      <label data-i18n="card.notes">Notes</label>
+      <label for="c-notes" data-i18n="card.notes">Notes</label>
       <textarea id="c-notes" rows="4"></textarea>
+
+      <!-- Due date (Kanban → Calendar integration): live-save, all-day event -->
+      <label for="c-due" data-i18n="card.due">Due</label>
+      <input id="c-due" type="date" autocomplete="off">
 
       <!-- Labels (feature 9): chips + picker, all inside the dialog -->
       <label data-i18n="card.labels">Labels</label>
@@ -105,7 +109,7 @@
     <form method="dialog" id="col-form" autocomplete="off">
       <h3 data-i18n="col.settings">Column settings</h3>
 
-      <label data-i18n="col.name">Name</label>
+      <label for="col-name" data-i18n="col.name">Name</label>
       <input id="col-name" type="text" required>
 
       <menu>
@@ -121,7 +125,7 @@
     <form method="dialog" id="board-form" autocomplete="off">
       <h3 data-i18n="board.rename">Rename board</h3>
 
-      <label data-i18n="col.name">Name</label>
+      <label for="b-name" data-i18n="col.name">Name</label>
       <input id="b-name" type="text" required>
 
       <menu>

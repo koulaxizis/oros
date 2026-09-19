@@ -2613,6 +2613,320 @@ All 8 audit patches confirmed applied and cross-validated:
 
 Status: CLEAN — ready for stable.
 
+## Wave 2.1 — Contacts ⇄ Calendar integration (done)
+
+### Birthday/anniversary feed (calendar.js)
+- Virtual feed labels `lbl-feed-bday|anniv|custom` (LABEL_PALETTE colors)
+  added OUTSIDE state.labels by design: never synced, never deletable
+  from the label manager, retranslated via i18n at every paint.
+- `contactsFeedOn(dateStr)` reads `oros-contacts-data` (shared
+  localStorage, same-origin iframe) with a 1s micro-cache. Builds
+  ephemeral all-day events tagged `_feed:true` + `_contactId`.
+  Read-only by construction: absent/corrupt blob → no feed events.
+- `eventsOn()` concatenates feed events → Month dots, Week, Agenda,
+  Day panel all render them. Feed rows are NOT draggable, never
+  open the event dialog, bypass search/stats/ICS/reminder engine.
+- Stats KPIs stay store-backed (CP1): no feed events in stats.
+
+### Click-through bridge
+- shell.js: `window.__orosOpenContact(id)` — live iframe push when
+  Contacts is running (wxPushToApp pattern), else sessionStorage
+  staging (`oros-contacts-open`, swept by factory reset) + app open.
+- contacts.js: exposes `__orosContactsOpen(id)` (opens the edit
+  dialog, stale id → silent no-op); consumes pending deep-link at
+  boot AFTER first paint.
+
+### Accepted edge cases (backlog)
+- Calendar search does not surface contact feed events (future).
+- Stale Contacts iframe without the bridge → pending id deferred
+  until next Contacts cold boot (theoretical; cache-bust covers).
+  
+  ## Kanban — Deep audit pass (orOS 0.35.x, Kanban v0.6.x)
+
+**Scope:** Full logic + consistency audit of the Kanban app
+(index.html / kanban.css / kanban.js). All 14 identified issues
+resolved and verified against the delivered files.
+
+### Critical fixes
+- **Live Save (card editing):** typed text (card text, notes,
+  subtask text, extra-info fields) is now written to state +
+  localStorage immediately via a 250 ms debounced `liveSaveCard()`,
+  with `mtime` stamped so live edits win merge conflicts. Previously
+  edits were only persisted on dialog close — an unexpected tab
+  close could lose data.
+- **Residual live-save gaps:** subtask checkbox toggle, subtask
+  add/remove and extra-info remove now persist immediately
+  (`touch(card) + save()`), no longer relying on the dialog close
+  handler. Empty extra-info adds intentionally remain close-flushed
+  (no content to lose).
+- **Close handler retained** as a safety net: filters empty info
+  rows, and a fingerprint check avoids stamping `mtime` on
+  zero-edit closes (no spurious LWW wins).
+
+### Ecosystem alignment (characters/weather patterns)
+- **Language fallback chain:** `window.parent.orosLang` →
+  `localStorage("oros-lang")` → English. `<html lang>` set at boot.
+  The app now boots in the shell's language immediately.
+- **Global shortcut forwarding:** capture-phase keydown listener
+  forwards modifier combos (Ctrl/Alt/Meta) to the parent shell so
+  global orOS shortcuts work while the Kanban iframe has focus.
+  Plain typing is never forwarded. Alt+B = quick new board.
+- **Toast repositioned top-right** (14px insets, downward reveal,
+  mobile media query) matching the ecosystem-wide shell toast
+  convention (Linux-desktop style, below the clock area).
+
+### Silent saves (sync traffic hygiene)
+- Added `saveLocal()`: writes localStorage only, never calls
+  `markDirty()`. Used by `switchBoard()` — switching boards is
+  device-local UI state and must not trigger network sync.
+- `createBoard()` deliberately keeps `save()` (real content that
+  must sync). `activeBoardId` never travels through the merge
+  engine; each device keeps its own selection.
+
+### Refactors & cleanup
+- Extracted `resetSessionView()` shared by `switchBoard()` /
+  `createBoard()` (was duplicated filter-reset blocks). Now also
+  explicitly hides `#search-clear` and the filter popover when
+  switching boards.
+- Replaced hardcoded "New board" / column/card metadata strings
+  with i18n keys (`new.board`, `meta.columns`, `meta.cards`) in
+  both EN and EL dictionaries.
+- Removed dead `update.checking` i18n key (unused in app; the
+  shell owns update notifications).
+- Repaired corrupted comment fragments in the merge-engine section
+  (stray characters / duplicated phrases — no functional change).
+- Verified `.info-x` / `.i-label` / `.sub-x` CSS classes are live
+  (referenced by `makeRemoveBtn` / `makeInfoRow`); no dead CSS
+  removal performed. `.info-x` remains as a harmless alias of
+  `.sub-x`.
+
+### Accessibility (HTML)
+- Dialog labels now carry `for` attributes (`c-text`, `c-notes`,
+  `col-name`, `b-name`) so clicking a label focuses its control.
+
+### Architecture notes (for future sessions)
+- **Save discipline:** `save()` = localStorage + `markDirty()`
+  (network sync eligible); `saveLocal()` = localStorage only
+  (device-local state). Choose deliberately per action.
+- **Merge model:** unchanged multi-board union merge (board tomb-
+  stones at root `state.boardDeleted`, per-board entity merges,
+  `om`-based ordering). No schema changes in this pass.
+- Live edits stamp `mtime` per keystroke-debounce; zero-edit
+  closes stamp nothing (fingerprint equality).
+- Version references (`?v=0.35.11`) are owned by the GitHub Action
+  — no manual bumps in this pass.
+
+### Verification checklist
+- [x] All OLD blocks for the 15 patches matched the delivered files
+- [x] Dialog close handlers safe against double-commits (early
+      return on `editingColId === null` after deletes)
+- [x] `DRAG_THRESHOLD` hoisting safe (IIFE-level init before boot)
+- [x] No dead functions or unreachable branches found beyond
+      the flagged i18n key
+	  
+	  ## v0.4.0 — Cross-app virtual feeds
+
+### Architecture: virtual feed labels (Wave 2.1)
+- FEED_LABELS array (bday/anniv/cycle/mood/habits) is DISPLAY-ONLY:
+  never in state.labels, never in the synced blob, no mtime.
+  Cannot be deleted/renamed/recolor by construction — renderLblList
+  iterates state.labels only.
+- Feed events carry _feed:true + a source id (_contactId/_habitId/
+  _cycleId/_moodId), are never stored, never synced, never exported
+  (.ics walks state.events only), never counted in Stats (CP1 rule).
+- Read-only rows ARE shown in the Label Manager (🔒, app-managed):
+  transparency without mutability.
+
+### New feeds
+- habitsFeedOn(): completed habits from oros-habits-data as teal
+  all-day rows. Comp key: "<habitId>|<YYYY-MM-DD>", skips tombstoned
+  (del) habits/comps.
+- cycleFeedOn(): days inside a CLOSED period (start..end inclusive)
+  from oros-cycle-data as pink all-day rows. OPEN period (end:null)
+  paints ONLY day 1 — no projection, no guessing. Honors the deleted{}
+  tombstone map.
+- moodFeedOn(): every entry whose LOCAL calendar day matches the cell
+  from oros-mood-data, purple all-day row. Title = note excerpt
+  (≤40 chars) else the generic localized label. Honors deleted{}.
+
+### Conventions
+- All cross-app reads: same-origin localStorage, 1s micro-cache
+  ({when, data} holder) to survive the ~31 eventsOn calls per month
+  paint without JSON.parse storms.
+- Time math is local-midnight aligned (setHours(0,0,0,0)) — never
+  UTC-shifted.
+- Click-through exists ONLY for Contacts (__orosOpenContact in
+  shell). Cycle/Mood rows are passive read-only until a matching
+  deep-link hook ships in the shell.
+
+### Under consideration
+- Dominant emotion in Mood feed titles (needs cols mapping decision).
+- Deep links to Mood/Cycle apps from their feed rows.
+
+## Wave 2.3 — Avatars, Relations, Transliteration (done)
+
+### Hotfix (2.2 debt, patches A1–A7)
+- FIXED: scanDuplicates threw `ReferenceError: reasonMap is not
+  defined` the moment a real duplicate existed (references survived
+  the declaration removal). Dead writes removed from email+phone
+  loops.
+- FIXED: hardcoded "Definitive/Possible matches" headers → i18n
+  keys dup.sect.def/pos (textContent, no innerHTML).
+- Group badge reason now truthful: email vs phone vs name (A7).
+
+### Avatars (B1–B13)
+- New schema field `photo`: base64 JPEG data URI (center-crop
+  square, 128×128, q0.85, hard cap 50000 chars — sanitizer also
+  accepts PNG for imports).
+- Dialog uploader: upload → canvas resize → circular 48px preview;
+  remove resets to initials. List + dedup rows + merge preview
+  use the shared mkAvatarEl().
+- Merge: photo joins the scalar fill-if-empty chain (loser photos
+  survive when the primary has none).
+- vCard: PHOTO exported as data URI; imported from data URIs and
+  raw base64 (TYPE=JPEG|PNG). Remote http(s) URLs NOT fetched
+  (static OS — no network dependency in imports), skipped silently.
+
+### Relations (C1–C16)
+- New schema field `relations: [{ with: <contactId>, type }]`,
+  RELATION_TYPES whitelist, dedupe by with+type, sorted
+  (deterministic merge bytes). Stored ONLY on the initiator; the
+  inverse direction is COMPUTED at render (RELATION_INVERSE map,
+  incomingRelations()) — zero double-write, zero sync races.
+- Dialog: [contact select][type select][✕] rows, no self-relations,
+  unpicked rows dropped at read time; read-only "Linked from other
+  contacts" block shows computed inverses. Deleted targets render
+  as absent (dangling refs are safe, tombstones never leak).
+- Merge unions relations by with+type. Search haystack includes
+  names of related contacts.
+- NOT in vCard round-trip (no standard slot) — backlog:
+  X-RELATED custom property export/import.
+
+### Transliteration + phonetic sorting
+- greekFold (lowercase + accent-strip + ς→σ) and latinize
+  (Greek→Latin letter map): "dionisis" finds "Διονύσης", "μαιρια"
+  matches "Μαρία" ignoring accents. SEARCH-ONLY — nothing stored
+  transliterated. Limitation: single deterministic letter map,
+  no digraph fuzziness (μπ→b, ντ→nd) — backlog.
+- List + export sorting use folded collation: "Ήλιος" sorts with
+  H, not at the end of the list.
+
+### Files touched
+contacts.js, contacts.css, contacts/index.html (no new files →
+apps.json/sw.js untouched; version bump via GitHub Action).
+
+## Mood — Audit fixes (8 items, post-0.35.11)
+
+1. FIXED: Insights showed "0 of 0" ghost rows for habits/rituals
+   with zero data — empty rows now skipped, sections fall back
+   to the "nothing logged" placeholder.
+2. FIXED: "Export PDF" was a dead button while jsPDF was
+   loading (silent return on second click) — clicks now queue
+   and all fire on onload; on failure the queue drains with
+   the error toast.
+3. FIXED: editEntry rebuilt the entire capture form twice and
+   set the note after the rebuild — the note now travels with
+   the edit (pendingNote), consumed by the single buildCapture
+   inside applyView.
+4. FIXED: PDF export printed the "nothing logged" fallback for
+   the basics group only — rituals group now gets it too.
+5. ADDED: explicit no-results state in the Entries search
+   ("No entries match …"), ent.noRes key in EN+EL.
+6. CLEANUP: stale (v0.27.00) header comments in mood.js /
+   mood.css → "(version stamped by CI)" — never stale again.
+7. FIXED: migration edge — pre-ver3 data lacking trigSeeded
+   could respawn factory triggers on a deliberately emptied
+   column; ver<3 states are now marked seeded in migrate().
+   Trade-off: pre-ver3 installs that never used triggers skip
+   factory presets (accepted, rare).
+8. CLEANUP: dead .toLowerCase() comparisons in the seed
+   backfill matcher (normLabel already lowercases).
+   
+   ## orOS Calendar v0.4.0 — Virtual Feeds & Deep Linking
+
+Wave 2.1 (calendar) + Wave 4 (cross-app navigation). Companion
+changes: shell.js (deep-link bridges), cycle.js (receiver),
+mood.js (receiver). Core sync engine untouched.
+
+### Added — Calendar virtual feeds
+- FEED_LABELS in calendar.js: read-only pseudo-labels (Cycle,
+  Mood, Habits) painted on the calendar grid as colored rows /
+  dots. Display-only by contract: never stored in state.labels,
+  never synced, never renamed or deleted by the user.
+- Data sources (shared localStorage, same-origin read-only peek):
+  - cycleFeedOn() → "oros-cycle-data" (periods only; open-ended
+    periods paint ONLY the start day — no projection)
+  - moodFeedOn() → "oros-mood-data" (entries; row title = note
+    excerpt, fallback emotion face/labels)
+  - habitsFeedOn() → "oros-habits-data"
+- 1-second micro-cache on each feed reader to keep render-time
+  reads cheap during repaints.
+- Feed rows integrated into eventsOn() and surfaced in the Label
+  Manager as locked (lock icon), non-editable rows alongside
+  user labels.
+
+### Added — Deep-link protocol (shell + source apps)
+- Shell bridges (window.* on parent):
+  - __orosOpenCycle(id) / __orosOpenMood(id): if the app iframe
+    is live → push to its receiver directly; else stage the ID
+    (sessionStorage "oros-cycle-open" / "oros-mood-open") and
+    open the app.
+  - __orosCycleTakePending() / __orosMoodTakePending(): one-shot
+    consume of the staged ID. DEFINED IN THE SHELL ONLY — apps
+    call the parent, never redefine it.
+- Receivers (inside the apps):
+  - cycle.js → window.__orosCycleOpen(periodId): read-only
+    navigation — calendar view, month of the period start,
+    cycle info strip. No editor, no edit mode.
+  - mood.js → window.__orosMoodOpen(entryId): opens the entry in
+    EDIT mode (the entry is the mood app's natural destination;
+    Discard and entryById guard protect it). Deleted entry →
+    lands on capture silently.
+  - Both consume the staged ID at boot AFTER first paint
+    (resetCapture()/applyView() first), so the target view is
+    painted in one pass.
+
+### Fixed (audit fallout, this wave)
+- calendar.js: removed duplicate feedLabelName() definition that
+  shadowed the correct one.
+- cycle.js: preferences edits now update state.om alongside
+  state.sm (sync race — prefs could be overwritten by pull).
+- Palette inheritance: --danger / --ok / --warn added to PAL_VARS
+  in all apps that shipped without them (theme mismatch).
+- Toasts across touched apps: pinned top-right; fade-out now
+  ends in visibility:hidden (removed the invisible click trap).
+- cycle.js: syntax fix — missing closing brace in wire() had
+  blocked app boot entirely.
+
+### Contract notes (for future apps joining the protocol)
+- Staged-ID keys follow the pattern "oros-<app>-open".
+- Receiver naming: window.__oros<App>Open, take:
+  window.__oros<App>TakePending (shell-owned).
+- Boot-time take order: load data → first paint → take pending.
+- Deep-link navigation is view-only unless the app's natural
+  unit demands editing (Mood entries); receivers must guard
+  against IDs deleted on other devices.
+
+### Testing checklist (pre-stable)
+- [ ] Calendar feed rows: Cycle periods, Mood entries, Habits.
+- [ ] Feed row click with app CLOSED → app boots on target.
+- [ ] Feed row click with app OPEN → live navigation, no reload.
+- [ ] Deep-link to an entry deleted from another device →
+      graceful landing (Mood: capture tab).
+- [ ] Feed rows survive label manager add/rename/delete of REAL
+      labels (feeds must never enter state.labels).
+- [ ] Micro-cache: no perf regression while paging months fast.
+
+### Under consideration
+- Kanban / To-Do feeds for items carrying dates (same
+  virtual-feed pattern).
+- Cross-app deep links from Mood trends ("period days") into
+  Cycle.
+
+### Files touched
+calendar.js, calendar.css, shell.js, cycle.js, cycle.css,
+mood.js — no data-schema changes, no sync-engine changes.
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

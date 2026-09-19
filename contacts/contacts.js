@@ -25,6 +25,8 @@
 // birthdays) — feeds the Calendar birthday feed (Wave 2) and the
 // vCard BDAY round-trip ("--MM-DD" form) with zero ambiguity.
 // id + mtime exist from day one for the merge sync (Part 5).
+// photo: base64 JPEG data URI (≤50KB, 128×128), set via the
+// dialog avatar uploader; round-trips as vCard PHOTO.
 // ============================================================
 (function () {
   "use strict";
@@ -141,6 +143,42 @@
       "ct.year.unknown": "No year",
       "ct.unnamed": "(no name)",
       "ct.lbl.filter": "Labels",
+      "dup.scan": "Duplicates",
+      "dup.title": "Duplicate contacts",
+      "dup.none": "No duplicates found",
+      "dup.count": "Groups",
+      "dup.merge": "Merge duplicates",
+      "dup.primary": "Primary contact",
+      "dup.flip": "Flip primary",
+      "dup.do": "Merge now",
+      "dup.cancel": "Cancel",
+      "dup.reason.phone": "Same phone",
+      "dup.reason.email": "Same email",
+      "dup.reason.name": "Similar name",
+      "dup.merged": "Contacts merged",
+      "dup.undo": "Undo",
+      "dup.preview": "Proposed merged contact",
+      "dup.warning": "This action cannot be undone",
+      "dup.sect.def": "Definitive matches",
+      "dup.sect.pos": "Possible matches",
+      "ct.avatar": "Photo",
+      "ct.avatar.up": "Upload photo",
+      "ct.avatar.rem": "Remove",
+      "ct.avatar.bad": "Could not read that image",
+      "ct.avatar.big": "Image too large after compression — try another one",
+      "ct.field.relations": "Relations",
+      "ct.add.relation": "＋ Relation",
+      "ct.rel.pick": "— contact —",
+      "ct.rel.in": "Linked from other contacts",
+      "rel.spouse": "Spouse",
+      "rel.partner": "Partner",
+      "rel.parent": "Parent",
+      "rel.child": "Child",
+      "rel.sibling": "Sibling",
+      "rel.friend": "Friend",
+      "rel.colleague": "Colleague",
+      "rel.manager": "Manager",
+      "rel.other": "Other",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -217,6 +255,42 @@
       "ct.year.unknown": "Χωρίς έτος",
       "ct.unnamed": "(χωρίς όνομα)",
       "ct.lbl.filter": "Ετικέτες",
+      "dup.scan": "Διπλότυπα",
+      "dup.title": "Διπλότυπες επαφές",
+      "dup.none": "Δεν βρέθηκαν διπλότυπα",
+      "dup.count": "Ομάδες",
+      "dup.merge": "Συγχώνευση διπλότυπων",
+      "dup.primary": "Κύρια επαφή",
+      "dup.flip": "Αντιστροφή κύριας",
+      "dup.do": "Συγχώνευση τώρα",
+      "dup.cancel": "Άκυρο",
+      "dup.reason.phone": "Ίδιο τηλέφωνο",
+      "dup.reason.email": "Ίδιο email",
+      "dup.reason.name": "Παρόμοιο όνομα",
+      "dup.merged": "Οι επαφές συγχωνεύτηκαν",
+      "dup.undo": "Αναίρεση",
+      "dup.preview": "Προτεινόμενη συγχωνευμένη επαφή",
+      "dup.warning": "Η πράξη αυτή δεν μπορεί να ανακληθεί",
+      "dup.sect.def": "Βέβαια ταιριάσματα",
+      "dup.sect.pos": "Πιθανά ταιριάσματα",
+      "ct.avatar": "Φωτογραφία",
+      "ct.avatar.up": "Μεταφόρτωση φωτογραφίας",
+      "ct.avatar.rem": "Αφαίρεση",
+      "ct.avatar.bad": "Η εικόνα δεν μπόρεσε να διαβαστεί",
+      "ct.avatar.big": "Η εικόνα είναι πολύ μεγάλη μετά τη συμπίεση — δοκίμασε άλλη",
+      "ct.field.relations": "Σχέσεις",
+      "ct.add.relation": "＋ Σχέση",
+      "ct.rel.pick": "— επαφή —",
+      "ct.rel.in": "Σύνδεση από άλλες επαφές",
+      "rel.spouse": "Σύζυγος",
+      "rel.partner": "Σύντροφος",
+      "rel.parent": "Γονέας",
+      "rel.child": "Παιδί",
+      "rel.sibling": "Αδελφός/ή",
+      "rel.friend": "Φίλος/η",
+      "rel.colleague": "Συνάδελφος",
+      "rel.manager": "Αφεντικό",
+      "rel.other": "Άλλη",
     }
   };
   function t(k) {
@@ -296,6 +370,19 @@
   var WEB_TYPES   = ["home", "work", "blog", "other"];
   var IM_TYPES    = ["home", "work", "other"];
   var EVENT_TYPES = ["birthday", "anniversary", "custom"];
+
+  // Wave 2.3 — cross-contact relations. Stored ONLY on the
+  // initiator (ONE record); the inverse direction is COMPUTED at
+  // render time via the inverse map — no double-write, so no
+  // merge races and no risk of half-updated pairs on sync.
+  var RELATION_TYPES = ["spouse", "partner", "parent", "child",
+                        "sibling", "friend", "colleague", "manager", "other"];
+  var RELATION_INVERSE = {
+    spouse: "spouse", partner: "partner",
+    parent: "child",  child: "parent",
+    sibling: "sibling", friend: "friend",
+    colleague: "colleague", manager: "other", other: "other"
+  };
 
   // Calendar day validity: year 2000 is leap → Feb 29 is legal.
   function validDay(day) {
@@ -399,6 +486,13 @@
     };
   }
 
+  function sanRelation(row) {
+    if (!row || typeof row !== "object") return null;
+    if (typeof row.with !== "string" || !row.with) return null;
+    var ty = (RELATION_TYPES.indexOf(row.type) !== -1) ? row.type : "other";
+    return { with: row.with, type: ty };
+  }
+
   // Load-time sanitizer (lenient mtime fallback — the strict merge
   // twin lives in §9 with the no-Date.now() merge contract).
   function sanitizeContact(c) {
@@ -427,9 +521,19 @@
       im:        (Array.isArray(c.im) ? c.im : []).map(function (r) { return sanVal(r, 120, IM_TYPES); }).filter(Boolean),
       events:    (Array.isArray(c.events) ? c.events : []).map(sanEvent).filter(Boolean)
                    .sort(function (a, b) { return a.type < b.type ? -1 : (a.type > b.type ? 1 : (a.day < b.day ? -1 : 1)); }),
+      relations: (function () {
+        var seen = {}, out = [];
+        (Array.isArray(c.relations) ? c.relations : []).forEach(function (r) {
+          var s = sanRelation(r);
+          if (s && !seen[s.with + "|" + s.type]) { seen[s.with + "|" + s.type] = 1; out.push(s); }
+        });
+        out.sort(function (a, b) { return a.with < b.with ? -1 : (a.with > b.with ? 1 : 0); });
+        return out;   // deterministic bytes → JSON tie-break in merge
+      })(),
       labelIds:  lids,
       starred:   c.starred === true,
       note:      (typeof c.note === "string" ? c.note : "").slice(0, 500),
+      photo:     (typeof c.photo === "string" && /^data:image\/(jpeg|png);base64,/.test(c.photo)) ? c.photo.slice(0, 50000) : null,
       mtime:     (typeof c.mtime === "number" && isFinite(c.mtime)) ? c.mtime : Date.now()
     };
   }
@@ -505,6 +609,276 @@
     return String(s || "").replace(/\D+/g, "");
   }
 
+  // ===== TRANSLITERATION SEARCH (Wave 2.3) =====
+  // greekFold: lowercase + accent-strip (ά→α, ή→η…) + ς→σ.
+  // Latin passes through untouched. latinize: greekFold +
+  // Greek→Latin letter map — "dionisis" finds "Διονύσης".
+  // SEARCH-ONLY: nothing is ever stored transliterated.
+  function greekFold(s) {
+    var n = String(s || "").toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    return n.replace(/ς/g, "σ");
+  }
+  var LATIN_MAP = {
+    "α": "a", "β": "v", "γ": "g", "δ": "d", "ε": "e", "ζ": "z",
+    "η": "i", "θ": "th", "ι": "i", "κ": "k", "λ": "l", "μ": "m",
+    "ν": "n", "ξ": "x", "ο": "o", "π": "p", "ρ": "r", "σ": "s",
+    "τ": "t", "υ": "y", "φ": "f", "χ": "ch", "ψ": "ps", "ω": "o"
+  };
+  function latinize(s) {
+    var f = greekFold(s);
+    var out = "";
+    for (var i = 0; i < f.length; i++) {
+      out += (LATIN_MAP[f.charAt(i)] !== undefined) ? LATIN_MAP[f.charAt(i)] : f.charAt(i);
+    }
+    return out;
+  }
+  function contactById(id) {
+    for (var i = 0; i < state.contacts.length; i++) {
+      if (state.contacts[i].id === id) return state.contacts[i];
+    }
+    return null;
+  }
+  // Text haystack per contact: own fields + names of related
+  // contacts (searching "Maria" finds everyone married to a Maria).
+  function searchHay(c) {
+    var hay = [displayName(c), c.nickname, c.org, c.jobTitle, c.note].join(" ");
+    (c.relations || []).forEach(function (r) {
+      var o = contactById(r.with);
+      if (o) hay += " " + displayName(o);
+    });
+    return hay;
+  }
+  // Relations pointing AT this contact — COMPUTED inverse, never
+  // stored. Deleted targets are skipped by contactById returning
+  // null wherever used (dangling refs are render-safe by design).
+  function incomingRelations(c) {
+    var out = [];
+    state.contacts.forEach(function (o) {
+      if (o.id === c.id) return;
+      (o.relations || []).forEach(function (r) {
+        if (r.with === c.id) out.push({ id: o.id, type: RELATION_INVERSE[r.type] || "other" });
+      });
+    });
+    return out;
+  }
+
+  // ===== DUPLICATE DETECTION ENGINE =====
+  // Union-find structure for grouping contacts by match criteria.
+  // Matches are definitive (email/phone) or possible (name-only).
+  function normalizeEmail(e) {
+    return String(e || "").toLowerCase().trim();
+  }
+  function nameKey(c) {
+    // Simple normalization: given+family, trimmed lowercase.
+    var s = [c.given, c.family].filter(Boolean).join(" ").toLowerCase().trim();
+    // Collapse multiple spaces, strip accents (basic).
+    return s.replace(/\s+/g, " ");
+  }
+
+  // Union-Find data structure for contact IDs.
+  function UnionFind(ids) {
+    this.parent = {};
+    this.rank = {};
+    ids.forEach(function (id) {
+      this.parent[id] = id;
+      this.rank[id] = 0;
+    }.bind(this));
+  }
+  UnionFind.prototype.find = function (x) {
+    if (this.parent[x] !== x) this.parent[x] = this.find(this.parent[x]);
+    return this.parent[x];
+  };
+  UnionFind.prototype.union = function (x, y) {
+    var rx = this.find(x), ry = this.find(y);
+    if (rx === ry) return;
+    if (this.rank[rx] < this.rank[ry]) this.parent[rx] = ry;
+    else if (this.rank[rx] > this.rank[ry]) this.parent[ry] = rx;
+    else { this.parent[ry] = rx; this.rank[rx]++; }
+  };
+
+  // Scan contacts for duplicates. Returns { definitive: [], possible: [] }.
+  // definitive = shared email OR shared normalized phone.
+  // possible = name key collision (needs second signal).
+  function scanDuplicates() {
+    var ids = state.contacts.map(function (c) { return c.id; });
+    var uf = new UnionFind(ids);
+    var definitive = [];
+    var possible = [];
+
+    // Build lookup maps for email/phone → contact IDs.
+    var emailMap = {}, phoneMap = {};
+    state.contacts.forEach(function (c) {
+      c.emails.forEach(function (e) {
+        var em = normalizeEmail(e.v);
+        if (!emailMap[em]) emailMap[em] = [];
+        emailMap[em].push(c.id);
+      });
+      c.phones.forEach(function (p) {
+        var pd = phoneDigits(p.v);
+        if (pd.length < 5) return; // too short to be meaningful
+        if (!phoneMap[pd]) phoneMap[pd] = [];
+        phoneMap[pd].push(c.id);
+      });
+    });
+
+    // Definitive matches: shared email or phone.
+    // Also compute name collision groups for "possible matches".
+    Object.keys(emailMap).forEach(function (em) {
+      var group = emailMap[em];
+      if (group.length < 2) return;
+      for (var i = 0; i < group.length - 1; i++) {
+        uf.union(group[i], group[i + 1]);
+      }
+    });
+    Object.keys(phoneMap).forEach(function (pd) {
+      var group = phoneMap[pd];
+      if (group.length < 2) return;
+      for (var j = 0; j < group.length - 1; j++) {
+        uf.union(group[j], group[j + 1]);
+      }
+    });
+
+    // Name-based collision groups (separate from definitive).
+    var nameMap = {};
+    state.contacts.forEach(function (c) {
+      var nk = nameKey(c);
+      if (!nk || nk.length < 2) return; // too short to be meaningful
+      if (!nameMap[nk]) nameMap[nk] = [];
+      nameMap[nk].push(c.id);
+    });
+    Object.keys(nameMap).forEach(function (nk) {
+      var group = nameMap[nk];
+      if (group.length < 2) return;
+      for (var ni = 0; ni < group.length - 1; ni++) {
+        uf.union(group[ni], group[ni + 1]);
+      }
+    });
+
+    // Group by root ID.
+    var groups = {};
+    ids.forEach(function (id) {
+      var root = uf.find(id);
+      if (!groups[root]) groups[root] = [];
+      groups[root].push(id);
+    });
+
+    // Filter to groups with 2+ members.
+    Object.keys(groups).forEach(function (root) {
+      var mem = groups[root];
+      if (mem.length < 2) return;
+      var members = mem.map(function (id) {
+        return state.contacts.find(function (c) { return c.id === id; });
+      });
+      var hasSharedEmail = members[0].emails.some(function (e) {
+        return members.slice(1).some(function (m) {
+          return m.emails.some(function (e2) { return normalizeEmail(e.v) === normalizeEmail(e2.v); });
+        });
+      });
+      var hasSharedPhone = members[0].phones.some(function (p) {
+        return members.slice(1).some(function (m) {
+          return m.phones.some(function (p2) { return phoneDigits(p.v) === phoneDigits(p2.v); });
+        });
+      });
+      var hasDefinite = hasSharedEmail || hasSharedPhone;
+      var reason = hasSharedEmail ? t("dup.reason.email")
+                 : (hasSharedPhone ? t("dup.reason.phone") : t("dup.reason.name"));
+      var groupObj = { ids: mem, reason: reason, definitive: hasDefinite };
+      if (hasDefinite) definitive.push(groupObj);
+      else possible.push(groupObj);
+    });
+
+    return { definitive: definitive, possible: possible };
+  }
+
+  // Render duplicate groups into a dialog.
+  function renderDupDialog(scanResult) {
+    var box = $("dedup-groups");
+    box.textContent = "";
+    var noneMsg = $("dedup-none");
+    var hasAny = scanResult.definitive.length + scanResult.possible.length > 0;
+    noneMsg.hidden = hasAny;
+
+    if (!hasAny) {
+      noneMsg.textContent = t("dup.none");
+      return;
+    }
+
+    // Helper to create a group row.
+    function makeGroupRow(group, idx) {
+      var div = document.createElement("div");
+      div.className = "dup-group";
+
+      var head = document.createElement("div");
+      head.className = "dup-group-head";
+      var badge = document.createElement("span");
+      badge.className = "dup-badge";
+      badge.textContent = group.ids.length + " " + t("dup.count");
+      var reason = document.createElement("span");
+      reason.textContent = " · " + group.reason;
+      head.appendChild(badge);
+      head.appendChild(reason);
+      div.appendChild(head);
+
+      // Mini contact rows for each member.
+      var list = document.createElement("ul");
+      list.className = "dup-members";
+      group.ids.forEach(function (id) {
+        var c = state.contacts.find(function (x) { return x.id === id; });
+        if (!c) return;
+        var li = document.createElement("li");
+        li.className = "ct-row dup-member";
+        li.appendChild(mkAvatarEl(c));
+        var main = document.createElement("div");
+        main.className = "ct-main";
+        var nm = document.createElement("div");
+        nm.className = "ct-name";
+        nm.textContent = displayName(c);
+        main.appendChild(nm);
+        var sb = subLine(c);
+        if (sb) {
+          var sub = document.createElement("div");
+          sub.className = "ct-sub";
+          sub.textContent = sb;
+          main.appendChild(sub);
+        }
+        li.appendChild(main);
+        // Click to open merge dialog for this group.
+        (function (gid) {
+          li.addEventListener("click", function () { openMergeDlg(gid); });
+        })(group.ids);
+        list.appendChild(li);
+      });
+      div.appendChild(list);
+
+      return div;
+    }
+
+    // Section: definitive matches.
+    if (scanResult.definitive.length) {
+      var secDef = document.createElement("div");
+      var hDef = document.createElement("h4");
+      hDef.textContent = t("dup.sect.def");
+      secDef.appendChild(hDef);
+      scanResult.definitive.forEach(function (g, i) {
+        secDef.appendChild(makeGroupRow(g, i));
+      });
+      box.appendChild(secDef);
+    }
+
+    // Section: possible matches.
+    if (scanResult.possible.length) {
+      var secPos = document.createElement("div");
+      var hPos = document.createElement("h4");
+      hPos.textContent = t("dup.sect.pos");
+      secPos.appendChild(hPos);
+      scanResult.possible.forEach(function (g, i) {
+        secPos.appendChild(makeGroupRow(g, i));
+      });
+      box.appendChild(secPos);
+    }
+  }
+
   // Label visibility: id -> true/false. Absent = visible.
   var labelVis = {};
   function labelVisible(labelId) {
@@ -528,13 +902,16 @@
 
     var q = searchQ.trim().toLowerCase();
     var qDigits = phoneDigits(q);
+    var qFold = greekFold(q);
 
     var hits = state.contacts.filter(function (c) {
       if (!anyLabelVisible(c)) return false;
       if (!q) return true;
-      var hay = [displayName(c), c.nickname, c.org, c.jobTitle, c.note]
-        .join(" ").toLowerCase();
-      if (hay.indexOf(q) !== -1) return true;
+      // Layer 1: accent-insensitive direct match (Greek↔Greek).
+      // Layer 2: transliterated match (Latin query → Greek names).
+      var hay = searchHay(c);
+      if (greekFold(hay).indexOf(qFold) !== -1) return true;
+      if (latinize(hay).indexOf(q) !== -1) return true;
       if (qDigits.length >= 3) {
         for (var i = 0; i < c.phones.length; i++) {
           if (phoneDigits(c.phones[i].v).indexOf(qDigits) !== -1) return true;
@@ -546,7 +923,8 @@
       return false;
     }).sort(function (a, b) {
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
-      var la = displayName(a).localeCompare(displayName(b), LANG);
+      // Accent-insensitive collation: "Ήλιος" sorts with H, not last.
+      var la = greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), LANG);
       return la !== 0 ? la : (a.id < b.id ? -1 : 1);
     });
 
@@ -564,10 +942,7 @@
       row.type = "button";
       row.className = "ct-row";
 
-      var av = document.createElement("span");
-      av.className = "ct-avatar";
-      av.textContent = initials(c);
-      row.appendChild(av);
+      row.appendChild(mkAvatarEl(c));
 
       var main = document.createElement("div");
       main.className = "ct-main";
@@ -890,9 +1265,94 @@
     return out;
   }
 
+  // Relation row: [ contact select ][ type select ][ ✕ ].
+  // The "who" select excludes the contact being edited (no
+  // self-relations). Unpicked rows are dropped at read time.
+  function buildRelRow(holder, rel) {
+    rel = rel || {};
+    var row = document.createElement("div");
+    row.className = "mf-row rel";
+
+    var who = document.createElement("select");
+    who.className = "mf-val rel-who";
+    var blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = t("ct.rel.pick");
+    who.appendChild(blank);
+    state.contacts.forEach(function (o) {
+      if (o.id === editingId) return;
+      var op = document.createElement("option");
+      op.value = o.id;
+      op.textContent = displayName(o);
+      if (o.id === rel.with) op.selected = true;
+      who.appendChild(op);
+    });
+    row.appendChild(who);
+
+    var sel = document.createElement("select");
+    sel.className = "mf-type";
+    RELATION_TYPES.forEach(function (ty) {
+      var o = document.createElement("option");
+      o.value = ty;
+      o.textContent = t("rel." + ty);
+      if (ty === (rel.type || "friend")) o.selected = true;
+      sel.appendChild(o);
+    });
+    row.appendChild(sel);
+
+    var rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "mf-rm";
+    rm.textContent = "✕";
+    rm.setAttribute("aria-label", t("ct.cancel"));
+    rm.addEventListener("click", function () {
+      row.parentNode.removeChild(row);
+    });
+    row.appendChild(rm);
+
+    holder.appendChild(row);
+  }
+
+  function readRelRows(holder) {
+    var out = [];
+    var rows = holder.querySelectorAll(".mf-row.rel");
+    for (var i = 0; i < rows.length; i++) {
+      var who = rows[i].querySelector(".rel-who");
+      var sel = rows[i].querySelector(".mf-type");
+      if (!who || !who.value || !sel) continue;   // unpicked → dropped
+      out.push({ with: who.value, type: sel.value });
+    }
+    return out;
+  }
+
+  // Read-only inverse links (computed, never stored). Shown under
+  // the editable relation rows; dangling (deleted) targets are
+  // silently hidden — tombstones never leak into the UI.
+  function renderDlgIncoming(existing) {
+    var box = $("ct-rel-in");
+    if (!box) return;
+    box.textContent = "";
+    if (!existing) return;
+    var inc = incomingRelations(existing);
+    if (!inc.length) return;
+    var head = document.createElement("div");
+    head.className = "rel-in-head";
+    head.textContent = t("ct.rel.in");
+    box.appendChild(head);
+    inc.forEach(function (r) {
+      var o = contactById(r.id);
+      if (!o) return;
+      var line = document.createElement("div");
+      line.className = "rel-in-row";
+      line.textContent = "· " + t("rel." + r.type) + " · " + displayName(o);
+      box.appendChild(line);
+    });
+  }
+
   /* ---------- 5b. Dialog open/save/delete ---------- */
   var editingId = null;
   var dlgLabelIds = [];      // working copy of the contact's labels
+  var editingPhoto = null;   // working copy of the contact's photo (data URI | null)
 
   function renderDlgLabels() {
     var row = $("ct-label-row");
@@ -928,6 +1388,81 @@
     }
   }
 
+  // ===== AVATAR HANDLING (Wave 2.3) =====
+  // Upload → center-crop to square → 128×128 JPEG (quality 0.85,
+  // typically 8–20KB) → data URI stored on the contact. Hard cap
+  // 50000 chars (sanitizeContract's photo slot) protects
+  // localStorage + sync payload.
+  var AVATAR_SIZE = 128;
+
+  // Shared avatar element: photo if present, initials otherwise.
+  // Used by BOTH the contact list and the dedup member rows.
+  function mkAvatarEl(c) {
+    if (c.photo) {
+      var im = document.createElement("img");
+      im.className = "ct-avatar ct-avatar-img";
+      im.alt = "";
+      im.src = c.photo;
+      return im;
+    }
+    var sp = document.createElement("span");
+    sp.className = "ct-avatar";
+    sp.textContent = initials(c);
+    return sp;
+  }
+
+  // Dialog preview painter: draws the current data URI onto the
+  // 64×64 canvas (scaled by CSS) and toggles the Remove button.
+  function paintAvatarPreview(uri) {
+    var cv = $("avatar-preview");
+    var rmBtn = $("ct-avatar-remove");
+    if (!cv) return;
+    if (rmBtn) rmBtn.hidden = !uri;
+    if (!uri) { cv.hidden = true; return; }
+    var ctx = cv.getContext("2d");
+    var img = new Image();
+    img.onload = function () {
+      cv.width = img.width;
+      cv.height = img.height;
+      cv.hidden = false;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.onerror = function () { cv.hidden = true; };
+    img.src = uri;
+  }
+
+  function readAvatarFile(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png)$/.test(file.type)) { toast(t("ct.avatar.bad")); return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        // Center-crop to square, then scale down to AVATAR_SIZE.
+        var side = Math.min(img.width, img.height);
+        var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+        var cv = document.createElement("canvas");
+        cv.width = AVATAR_SIZE; cv.height = AVATAR_SIZE;
+        var ctx = cv.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+        try {
+          var uri = cv.toDataURL("image/jpeg", 0.85);
+          if (uri.length > 50000) { toast(t("ct.avatar.big")); return; }
+          editingPhoto = uri;
+          paintAvatarPreview(editingPhoto);
+        } catch (e) {
+          toast(t("ct.avatar.bad"));
+        }
+      };
+      img.onerror = function () { toast(t("ct.avatar.bad")); };
+      img.src = fr.result;
+    };
+    fr.onerror = function () { toast(t("ct.avatar.bad")); };
+    fr.readAsDataURL(file);
+  }
+
   function openDlg(existing) {
     editingId = existing ? existing.id : null;
     $("ct-dlg-title").textContent = t(existing ? "ct.dlg.edit" : "ct.dlg.new");
@@ -939,6 +1474,8 @@
     $("ct-jobtitle").value = existing ? existing.jobTitle : "";
     $("ct-note").value     = existing ? existing.note : "";
     $("ct-starred").checked = existing ? existing.starred : false;
+    editingPhoto = (existing && existing.photo) ? existing.photo : null;
+    paintAvatarPreview(editingPhoto);
 
     fillHolder($("ct-phones"),    existing ? existing.phones    : [], function (h, r) { buildValRow(h, r && r.v, r && r.type, PHONE_TYPES, "+30 69…", 40, "ph"); });
     fillHolder($("ct-emails"),    existing ? existing.emails    : [], function (h, r) { buildValRow(h, r && r.v, r && r.type, EMAIL_TYPES, "name@example.com", 120, "em"); });
@@ -946,6 +1483,8 @@
     fillHolder($("ct-im"),        existing ? existing.im        : [], function (h, r) { buildValRow(h, r && r.v, r && r.type, IM_TYPES, "handle…", 120, "im"); });
     fillHolder($("ct-addresses"), existing ? existing.addresses : [], buildAddrRow);
     fillHolder($("ct-events"),    existing ? existing.events    : [], buildEvtRow);
+    fillHolder($("ct-relations"), existing ? existing.relations : [], buildRelRow);
+    renderDlgIncoming(existing);
 
     dlgLabelIds = existing ? existing.labelIds.slice() : [];
     renderDlgLabels();
@@ -982,8 +1521,32 @@
   if ($("ct-ev-add")) {
     $("ct-ev-add").addEventListener("click", function () { buildEvtRow($("ct-events")); });
   }
+  if ($("ct-rel-add")) {
+    $("ct-rel-add").addEventListener("click", function () { buildRelRow($("ct-relations")); });
+  }
 
   $("ct-add").addEventListener("click", function () { openDlg(null); });
+
+  // Avatar wiring: upload button opens the picker, the hidden file
+  // input feeds readAvatarFile, remove clears both state + preview.
+  if ($("ct-avatar-upload")) {
+    $("ct-avatar-upload").addEventListener("click", function () {
+      $("ct-avatar-input").value = "";            // allow re-pick of same file
+      $("ct-avatar-input").click();
+    });
+  }
+  if ($("ct-avatar-input")) {
+    $("ct-avatar-input").addEventListener("change", function () {
+      var f = this.files && this.files[0];
+      if (f) readAvatarFile(f);
+    });
+  }
+  if ($("ct-avatar-remove")) {
+    $("ct-avatar-remove").addEventListener("click", function () {
+      editingPhoto = null;
+      paintAvatarPreview(null);
+    });
+  }
 
   /* Save — collects every holder, sanitizes through the SAME
      sanitizeContact() the loader uses (one truth), then pushes or
@@ -1015,9 +1578,11 @@
       websites: readValRows($("ct-websites")),
       im: readValRows($("ct-im")),
       events: readEvtRows($("ct-events")),
+      relations: readRelRows($("ct-relations")),
       labelIds: dlgLabelIds.slice().sort(),
       starred: $("ct-starred").checked,
       note: $("ct-note").value.trim(),
+      photo: editingPhoto,
       mtime: Date.now()
     };
     var clean = sanitizeContact(draft);
@@ -1054,6 +1619,17 @@
   $("ct-dlg").addEventListener("click", function (ev) {
     if (ev.target === this) this.close();
   });
+
+  // Wave 2.1 — shell deep-link target. Calendar contact-feed rows
+  // land here via window.parent.__orosOpenContact (live iframe push
+  // when Contacts is already open). Opens the contact's edit dialog
+  // — identical to tapping its row. Stale/deleted id → silent no-op.
+  window.__orosContactsOpen = function (contactId) {
+    if (typeof contactId !== "string" || !contactId) return;
+    for (var i = 0; i < state.contacts.length; i++) {
+      if (state.contacts[i].id === contactId) { openDlg(state.contacts[i]); return; }
+    }
+  };
 
   /* Delete: themed confirm + UNDO (resurrection via fresh mtime). */
   var lastDeleted = null;
@@ -1105,6 +1681,238 @@
     saveState();
     renderChips();
     renderList();
+  }
+
+// ===== DUPLICATE MERGE LOGIC =====
+
+  var pendingMergeGroup = null;    // group IDs awaiting merge
+  var pendingMergePrimaryIndex = 0; // which member is primary (0-based)
+  var pendingMergeSnapshot = null;  // pre-merge state for undo
+
+  // Build a proposed merged contact from a group.
+  function buildMergePreview(groupIds, primaryIdx) {
+    var members = groupIds.map(function (id) {
+      return state.contacts.find(function (c) { return c.id === id; });
+    }).filter(Boolean);
+    if (!members.length) return null;
+
+    var primary = members[primaryIdx];
+    var preview = JSON.parse(JSON.stringify(primary)); // deep copy
+    preview.id = primary.id;
+    preview.mtime = Date.now();
+
+    // Scalar fields: keep primary unless empty, then take first non-empty.
+    ["given", "middle", "family", "nickname", "org", "jobTitle", "note", "photo"].forEach(function (f) {
+      if (!preview[f]) {
+        for (var i = 0; i < members.length; i++) {
+          if (members[i][f]) { preview[f] = members[i][f]; break; }
+        }
+      }
+    });
+
+    // Arrays: union with dedup.
+    function arrayUnion(arrA, arrB, keyFn) {
+      var map = {};
+      arrA.forEach(function (x) { var k = keyFn(x); if (k && !map[k]) map[k] = x; });
+      arrB.forEach(function (x) { var k = keyFn(x); if (k && !map[k]) map[k] = x; });
+      return Object.keys(map).map(function (k) { return map[k]; });
+    }
+
+    preview.phones = arrayUnion(preview.phones,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.phones; })),
+      function (p) { return phoneDigits(p.v); });
+
+    preview.emails = arrayUnion(preview.emails,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.emails; })),
+      function (e) { return normalizeEmail(e.v); });
+
+    preview.addresses = arrayUnion(preview.addresses,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.addresses; })),
+      function (a) { return a.street + "|" + a.city + "|" + a.zip; });
+
+    preview.websites = arrayUnion(preview.websites,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.websites; })),
+      function (w) { return w.v; });
+
+    preview.im = arrayUnion(preview.im,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.im; })),
+      function (i) { return i.v; });
+
+    preview.relations = arrayUnion(preview.relations || [],
+      [].concat.apply([], members.slice(1).map(function (m) { return m.relations || []; })),
+      function (r) { return r.with + "|" + r.type; });
+
+    preview.events = arrayUnion(preview.events,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.events; })),
+      function (e) { return e.type + "|" + e.day; });
+
+    preview.labelIds = arrayUnion(preview.labelIds,
+      [].concat.apply([], members.slice(1).map(function (m) { return m.labelIds; })),
+      function (l) { return l; });
+    preview.labelIds.sort();
+
+    preview.starred = primary.starred || members.some(function (m) { return m.starred; });
+
+    return { preview: preview, members: members, primaryIdx: primaryIdx };
+  }
+
+  function openMergeDlg(groupIds) {
+    pendingMergeGroup = groupIds;
+    pendingMergePrimaryIndex = 0;
+    pendingMergeSnapshot = {
+      contacts: JSON.parse(JSON.stringify(state.contacts)),
+      deleted: JSON.parse(JSON.stringify(state.deleted))
+    };
+
+    renderMergePreview();
+    $("merge-dlg").showModal();
+  }
+
+  function renderMergePreview() {
+    if (!pendingMergeGroup) return;
+    var prep = buildMergePreview(pendingMergeGroup, pendingMergePrimaryIndex);
+    if (!prep) return;
+
+    $("merge-title").textContent = t("dup.merge");
+    var via = $("merge-via");
+    via.innerHTML = t("dup.primary") + ": <strong>" + displayName(prep.members[pendingMergePrimaryIndex]) + "</strong>";
+    var prevBox = $("merge-preview");
+    prevBox.textContent = "";
+
+    // Show scalar fields.
+    ["given", "middle", "family", "nickname", "org", "jobTitle"].forEach(function (f) {
+      if (!prep.preview[f]) return;
+      var div = document.createElement("div");
+      div.className = "dup-preview-section";
+      div.innerHTML = "<div class=\"dup-preview-label\">" + t("ct.field." + f) + "</div><div class=\"dup-preview-value\">" + prep.preview[f] + "</div>";
+      prevBox.appendChild(div);
+    });
+
+    // Show arrays (phones, emails, labels).
+    if (prep.preview.phones.length) {
+      var phDiv = document.createElement("div");
+      phDiv.className = "dup-preview-section";
+      phDiv.innerHTML = "<div class=\"dup-preview-label\">" + t("ct.field.phones") + "</div>";
+      prep.preview.phones.forEach(function (p) {
+        var span = document.createElement("span");
+        span.textContent = p.v + " (" + t("ty." + p.type) + ") · ";
+        phDiv.appendChild(span);
+      });
+      prevBox.appendChild(phDiv);
+    }
+
+    if (prep.preview.emails.length) {
+      var emDiv = document.createElement("div");
+      emDiv.className = "dup-preview-section";
+      emDiv.innerHTML = "<div class=\"dup-preview-label\">" + t("ct.field.emails") + "</div>";
+      prep.preview.emails.forEach(function (e) {
+        var span = document.createElement("span");
+        span.textContent = e.v + " · ";
+        emDiv.appendChild(span);
+      });
+      prevBox.appendChild(emDiv);
+    }
+
+    if (prep.preview.labelIds.length) {
+      var lbDiv = document.createElement("div");
+      lbDiv.className = "dup-preview-section";
+      lbDiv.innerHTML = "<div class=\"dup-preview-label\">" + t("ct.lbl.filter") + "</div>";
+      prep.preview.labelIds.forEach(function (lid) {
+        var l = labelById(lid);
+        if (l) {
+          var chip = document.createElement("span");
+          chip.className = "chip";
+          chip.style.setProperty("--chip", l.color);
+          chip.textContent = l.name + " · ";
+          lbDiv.appendChild(chip);
+        }
+      });
+      prevBox.appendChild(lbDiv);
+    }
+  }
+
+  // Commit merge: winners keep, losers become tombstones.
+  function commitMerge() {
+    if (!pendingMergeGroup) return;
+    var prep = buildMergePreview(pendingMergeGroup, pendingMergePrimaryIndex);
+    if (!prep) return;
+
+    // Store winner.
+    var winnerId = prep.members[pendingMergePrimaryIndex].id;
+    for (var i = 0; i < state.contacts.length; i++) {
+      if (state.contacts[i].id === winnerId) {
+        state.contacts[i] = prep.preview;
+        break;
+      }
+    }
+
+    // Losers become tombstones.
+    pendingMergeGroup.forEach(function (id) {
+      if (id !== winnerId) {
+        state.deleted.push({ id: id, mtime: Date.now() });
+        state.contacts = state.contacts.filter(function (c) { return c.id !== id; });
+      }
+    });
+
+    saveState();
+    $("merge-dlg").close();
+    $("dedup-sec").hidden = true;
+    renderChips();
+    renderList();
+    toast(t("dup.merged"), t("dup.undo"), undoMerge);
+  }
+
+  function undoMerge() {
+    if (!pendingMergeSnapshot) return;
+    state.contacts = pendingMergeSnapshot.contacts;
+    state.deleted = pendingMergeSnapshot.deleted;
+    pendingMergeSnapshot = null;
+    saveState();
+    renderChips();
+    renderList();
+  }
+
+  // Wiring: scan button + merge dialog controls.
+  if ($("ct-dedup")) {
+    $("ct-dedup").addEventListener("click", function () {
+      var scan = scanDuplicates();
+      var total = scan.definitive.length + scan.possible.length;
+      $("dedup-title").textContent = t("dup.title") + " · " + total;
+      renderDupDialog(scan);
+      $("dedup-sec").hidden = false;
+    });
+  }
+
+  if ($("dedup-done")) {
+    $("dedup-done").addEventListener("click", function () {
+      $("dedup-sec").hidden = true;
+    });
+  }
+
+  if ($("merge-flip")) {
+    $("merge-flip").addEventListener("click", function () {
+      if (!pendingMergeGroup || pendingMergeGroup.length < 2) return;
+      pendingMergePrimaryIndex = (pendingMergePrimaryIndex + 1) % pendingMergeGroup.length;
+      renderMergePreview();
+    });
+  }
+
+  if ($("merge-do")) {
+    $("merge-do").addEventListener("click", function () {
+      commitMerge();
+    });
+  }
+
+  if ($("merge-cancel")) {
+    $("merge-cancel").addEventListener("click", function () {
+      $("merge-dlg").close();
+    });
+  }
+
+  if ($("merge-dlg")) {
+    $("merge-dlg").addEventListener("click", function (ev) {
+      if (ev.target === this) this.close();
+    });
   }
 
 // ===== LABEL MANAGEMENT =====
@@ -1361,7 +2169,7 @@
       given: "", middle: "", family: "", nickname: "",
       org: "", jobTitle: "",
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: ""
+      events: [], cats: [], note: "", photo: null
     };
     lines.forEach(function (line) {
       if (!line) return;
@@ -1432,6 +2240,21 @@
           }
           break;
         case "NOTE": c.note = vcfUnesc(p.value).trim().slice(0, 500); break;
+        case "PHOTO": {
+          // Accepted forms: our own data URI ("data:image/…;base64,…")
+          // or raw base64 with an explicit TYPE=JPEG|PNG param.
+          // http(s) URLs are NOT fetched (static OS, no network
+          // dependency in imports) — silently skipped.
+          var pv = p.value.trim();
+          if (/^data:image\/(jpeg|png);base64,/.test(pv)) {
+            c.photo = pv.slice(0, 50000);
+          } else if (/(?:JPEG|JPG|PNG)/i.test(ty) &&
+                     pv.length > 64 && pv.length <= 50000 &&
+                     /^[A-Za-z0-9+/=]+$/.test(pv)) {
+            c.photo = "data:image/" + (/PNG/i.test(ty) ? "png" : "jpeg") + ";base64," + pv;
+          }
+          break;
+        }
         case "CATEGORIES":
           vcfUnesc(p.value).split(",").forEach(function (cat) {
             var n = cat.trim();
@@ -1526,6 +2349,8 @@
           websites: pc.websites, im: pc.im, events: pc.events,
           labelIds: lids.sort(),
           starred: false, note: pc.note,
+          photo: pc.photo || null,
+          relations: [],
           mtime: Date.now()
         };
         var clean = sanitizeContact(draft);
@@ -1640,6 +2465,7 @@
     }
     // Apple/Android starred extension — harmless if ignored.
     if (c.starred) L.push("X-ABShowAs:COMPANY-NOTE");
+    if (c.photo) L.push("PHOTO:" + c.photo);
     L.push("REV:" + new Date(c.mtime).toISOString());
     L.push("END:VCARD");
     return L;
@@ -1658,7 +2484,7 @@
       var lines = [];
       // Alphabetical export (deterministic, merge-order agnostic).
       var sorted = state.contacts.slice().sort(function (a, b) {
-        return displayName(a).localeCompare(displayName(b), LANG);
+        return greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), LANG);
       });
       sorted.forEach(function (c) {
         contactToVcard(c).forEach(function (l) {
@@ -1798,6 +2624,18 @@
   applyI18n();
   renderChips();
   renderList();
+
+  // Wave 2.1 — the shell staged a contact deep-link while we were
+  // closed (sessionStorage, one-shot take). Runs AFTER render so the
+  // list is already painted behind the opening dialog.
+  try {
+    if (window.parent &&
+        typeof window.parent.__orosContactsTakePending === "function") {
+      var pending = window.parent.__orosContactsTakePending();
+      if (pending) window.__orosContactsOpen(pending);
+    }
+  } catch (e) {}
+
   console.log("contacts.js v" + (SCRIPT_V || "?") + " ready · " +
               state.contacts.length + " contact(s), " +
               state.labels.length + " label(s)");

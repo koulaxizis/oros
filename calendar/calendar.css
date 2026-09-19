@@ -18,6 +18,7 @@
   --shadow: rgba(0, 0, 0, 0.5);
   --danger: #e06c75;
 }
+/* Extended palette support for feed labels (brown for Custom) */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -992,6 +993,44 @@ dialog#stat-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   flex-shrink: 0;
 }
 .app-toast-btn:hover { background: var(--accent-soft); }
+
+/* ---------- Label manager: read-only feed rows (v0.4.0) ----------
+   Same geometry as .lbl-row, but static: no input, no delete,
+   no palette. The lock marks it as app-managed. */
+.lbl-feeds-head {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  padding-top: 4px;
+}
+.lbl-row.feed {
+  cursor: default;
+  opacity: 0.85;
+}
+.lbl-color-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+.lbl-feed-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;   /* the .ro hint lives on the title attr */
+}
+.lbl-lock {
+  font-size: 13px;
+  flex-shrink: 0;
+  line-height: 1;
+}
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }

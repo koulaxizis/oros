@@ -2579,6 +2579,10 @@
 
   // R9 parity: static buttons ship EMPTY in HTML, JS paints
   // aria-labels/titles/icons at boot. calendar · list · bar-chart.
+  // Deep-link suppressor: when navigating programmatically via
+  // __orosCycleOpen, we don't want applyView() to reset to today.
+  var applyingDeepLink = false;
+
   function paintStaticAria() {
     var cal = $("cal-btn");
     if (cal) {
@@ -2613,6 +2617,22 @@
     $("ins-btn").addEventListener("click", function () { showTab("insights"); });
   }
 
+  // Wave 4 — deep-link receiver. The shell (__orosOpenCycle) calls
+  // this on the LIVE iframe when the Cycle app is already open; a
+  // closed app gets the staged-ID path at boot (Patch 2 below).
+  // periodId = state.periods[].id. Read-only navigation: calendar
+  // view, month of the period's start — no editor, no edit mode.
+  window.__orosCycleOpen = function (periodId) {
+    if (typeof periodId !== "string" || !periodId) return;
+    var p = periodById(periodId);
+    if (!p) return;
+    openDay = null;
+    viewMode = "calendar";
+    var dt = new Date(p.start);
+    calMonth = { y: dt.getFullYear(), m: dt.getMonth() };
+    applyView();   // single paint: calendar + cycle info strip
+  };
+
   // ---------- Boot ----------
   var SCRIPT_V = "";
   (function () {
@@ -2622,7 +2642,7 @@
     document.documentElement.lang = LANG;   // lang attr follows locale
     console.log("cycle.js v" + (SCRIPT_V || "?") + " boot");
   })();
-  load();
+    load();
   applyI18n();
   paintStaticAria();
   wire();
@@ -2630,6 +2650,27 @@
   inheritPalette();
   watchPalette();
   applyView();
+
+  // Boot-time deep-link take: the shell staged a period ID (Cycle
+  // was closed when the Calendar feed row was clicked). Consume
+  // exactly ONCE — the parent funnel owns the take when we run in
+  // the shell; standalone reads sessionStorage directly (nothing
+  // there in that mode anyway — staging only happens via the shell).
+  var pendingPeriod = null;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosCycleTakePending === "function") {
+      pendingPeriod = window.parent.__orosCycleTakePending();
+    } else {
+      var pid = sessionStorage.getItem("oros-cycle-open");
+      if (pid) {
+        sessionStorage.removeItem("oros-cycle-open");
+        pendingPeriod = pid;
+      }
+    }
+  } catch (e) { pendingPeriod = null; }
+  if (pendingPeriod) __orosCycleOpen(pendingPeriod);
+
   setTimeout(maybeRemind, 900);   // after the first paint settles
 
 })();

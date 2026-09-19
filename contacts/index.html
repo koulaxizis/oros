@@ -13,6 +13,7 @@
     <header id="ct-top">
       <button id="ct-import" type="button" class="nav-mini" data-i18n="ct.import"></button>
       <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
+      <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
 
@@ -36,6 +37,16 @@
         <button id="imp-done" type="button" class="mini" data-i18n="lbl.done"></button>
       </div>
       <ul id="imp-list"></ul>
+    </section>
+
+    <!-- Dedup scan results (shown after scanning for duplicates) -->
+    <section class="sec" id="dedup-sec" hidden>
+      <div class="sec-head">
+        <span id="dedup-title"></span>
+        <button id="dedup-done" type="button" class="mini" data-i18n="lbl.done"></button>
+      </div>
+      <div id="dedup-groups"></div>
+      <p id="dedup-none" class="empty" hidden></p>
     </section>
   </main>
 
@@ -89,6 +100,11 @@
       <div id="ct-events" class="mf-holder"></div>
       <button id="ct-ev-add" type="button" class="mini mf-add" data-i18n="ct.add.event"></button>
 
+      <label data-i18n="ct.field.relations"></label>
+      <div id="ct-relations" class="mf-holder"></div>
+      <button id="ct-rel-add" type="button" class="mini mf-add" data-i18n="ct.add.relation"></button>
+      <div id="ct-rel-in" class="rel-incoming"></div>
+
       <label data-i18n="ct.lbl.filter"></label>
       <div id="ct-label-row" class="chip-row"></div>
 
@@ -96,6 +112,14 @@
         <input id="ct-starred" type="checkbox">
         <span data-i18n="ct.starred"></span>
       </label>
+
+      <label data-i18n="ct.avatar"></label>
+      <div class="avatar-uploader">
+        <canvas id="avatar-preview" width="64" height="64" hidden></canvas>
+        <button id="ct-avatar-upload" type="button" class="mini" data-i18n="ct.avatar.up"></button>
+        <button id="ct-avatar-remove" type="button" class="mini" hidden data-i18n="ct.avatar.rem"></button>
+        <input id="ct-avatar-input" type="file" accept="image/jpeg,image/png" hidden>
+      </div>
 
       <label for="ct-note" data-i18n="ct.field.note"></label>
       <textarea id="ct-note" rows="3" maxlength="500" data-i18n-ph="ct.ph.note"></textarea>
@@ -117,6 +141,20 @@
     <div class="dlg-row">
       <button id="del-dlg-yes" type="button" class="btn danger" data-i18n="ct.del.yes"></button>
       <button id="del-dlg-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- Merge confirmation (shows proposed merged data) -->
+  <dialog id="merge-dlg">
+    <h3 id="merge-title" data-i18n="dup.merge"></h3>
+    <div class="dup-via" id="merge-via"></div>
+    <div id="merge-preview" class="ev-form"></div>
+    <div class="chg-row" id="chg-row">
+      <button id="merge-flip" type="button" class="btn prim" data-i18n="dup.flip"></button>
+      <button id="merge-do" type="button" class="btn prim" data-i18n="dup.do"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="merge-cancel" type="button" class="btn" data-i18n="ct.cancel"></button>
     </div>
   </dialog>
 

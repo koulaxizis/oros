@@ -34,7 +34,16 @@
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 ημέρες
 
   // ---------- 1. Σταθερές, i18n, βοηθητικές συναρτήσεις ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // Ecosystem: η γλώσσα έρχεται από το shell (window.orosLang) με
+  // fallback στο τοπικό κλειδί — ίδια αλυσίδα με Characters/Weather.
+  var LANG = (function () {
+    try {
+      if (window.parent && window.parent.orosLang) {
+        return window.parent.orosLang === "el" ? "el" : "en";
+      }
+    } catch (e) { /* cross-origin guard */ }
+    return localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  })();
 
   var STRINGS = {
     en: {
@@ -68,6 +77,10 @@
       "card.title":       "Card",
       "card.text":        "Text",
       "card.notes":       "Notes",
+      "card.due":         "Due",
+      "card.overdue":     "Overdue",
+      "card.due.today":   "Today",
+      "card.due.tomorrow":"Tomorrow",
       "card.labels":      "Labels",
       "card.labels.manage": "Add / manage labels",
       "labels.chipRemove": "Click to remove",
@@ -104,7 +117,8 @@
       "confirm.no":       "Cancel",
       "new.col":          "New column",
       "new.board":        "New board",
-      "update.checking": "Checking for update…"
+      "meta.columns":     "columns",
+      "meta.cards":       "cards",
     },
     el: {
       "board.title":      "Kanban",
@@ -137,6 +151,10 @@
       "card.title":       "Κάρτα",
       "card.text":        "Κείμενο",
       "card.notes":       "Σημειώσεις",
+      "card.due":         "Προθεσμία",
+      "card.overdue":     "Καθυστέρηση",
+      "card.due.today":   "Σήμερα",
+      "card.due.tomorrow":"Αύριο",
       "card.labels":      "Ετικέτες",
       "card.labels.manage": "Προσθήκη / διαχείριση ετικετών",
       "labels.chipRemove": "Κλικ για αφαίρεση",
@@ -173,7 +191,8 @@
       "confirm.no":       "Άκυρο",
       "new.col":          "Νέα στήλη",
       "new.board":        "Νέο board",
-      "update.checking": "Έλεγχος για ενημερώσεις…",
+      "meta.columns":     "στήλες",
+      "meta.cards":       "κάρτες",
     }
   };
 
@@ -349,6 +368,7 @@
       id: uid(),
       text: text,
       notes: "",
+      due: null,          // "YYYY-MM-DD" | null — Kalender integration
       labels: [],
       subtasks: [],
       info: [],
@@ -405,6 +425,7 @@
             if (!Array.isArray(card.info)) card.info = [];
             if (typeof card.mtime !== "number") card.mtime = 0;
             if (typeof card.pos !== "number") card.pos = 0;
+            if (typeof card.due !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(card.due)) card.due = null;
           });
         });
 
@@ -446,6 +467,7 @@
           if (!Array.isArray(card.info)) card.info = [];
           if (typeof card.mtime !== "number") card.mtime = 0;
           if (typeof card.pos !== "number") card.pos = 0;
+          if (typeof card.due !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(card.due)) card.due = null;
         });
       });
     });
@@ -508,6 +530,14 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch (e) { /* quota exceeded — localStorage net stays durable */ }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+
+  // Silent save: γράφει ΜΟΝΟ στο localStorage, χωρίς markDirty.
+  // Για καθαρά τοπικές ενέργειες (π.χ. switchBoard) που δεν πρέπει
+  // να πυροδοτούν δικτυακό sync.
+  function saveLocal() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { /* quota exceeded */ }
   }
 
   function scheduleRender() {
@@ -587,7 +617,7 @@
   // board διαγραφές ζουν στο ΔΙΚΟ τους state.deleted με το board.id
   // ως key — ψάχνουμε global κάθε φορά που χρειάζεται)
 
-  // ΠΡΟΣΟΧΗ: το board-level tombstone ΕΧΕΙ νόημα μόνο ως marker смысл μόνο ως marker
+  // ΠΡΟΣΟΧΗ: το board-level tombstone ΕΧΕΙ νόημα μόνο ως marker
   // στο ίδιο το board object. Η τυπική ροή: deleteBoard() γράφει
   // tombstone στο ΕΝΕΡΓΟ board αν είναι το ίδιο, αλλιώς στο δικό
   // του deleted map ΔΕΝ υπάρχει — το board απομακρύνεται απλώς
@@ -1160,8 +1190,8 @@
     var meta = document.createElement("span");
     meta.className = "dropdown-meta";
     var colCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
-    meta.textContent = String(bd.columns.length) + " " + (LANG === "el" ? "στήλες" : "columns") +
-                       " · " + String(colCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
+    meta.textContent = String(bd.columns.length) + " " + t("meta.columns") +
+                       " · " + String(colCount) + " " + t("meta.cards");
     item.appendChild(meta);
 
     item.addEventListener("click", function () {
@@ -1296,44 +1326,42 @@
     if (pop && !pop.contains(e.target)) closeBoardDropdown();
   }
 
-  // Switch to a different board (device-local only — doesn't sync)
-  function switchBoard(boardId) {
-    if (!boardByIdIn(state.boards, boardId)) return;
-    state.activeBoardId = boardId;
-    // Reset session-only search/filter when switching boards
+  // Reset session-only search/filter — κοινός helper για
+  // switchBoard/createBoard (πρώην διπλότυπο block).
+  function resetSessionView() {
     searchQuery = "";
     activeFilters = [];
     var sb = $("search");
     if (sb) sb.value = "";
+    var sc = $("search-clear");
+    if (sc) sc.hidden = true;          // fix: το clear button έμενε ορατό
     var fb = $("filter-btn");
     if (fb) fb.classList.remove("has-filters");
     var fp = $("filter-pop");
     if (fp) fp.hidden = true;
-    
-    save();
+  }
+
+  // Switch to a different board (device-local only — doesn't sync)
+  function switchBoard(boardId) {
+    if (!boardByIdIn(state.boards, boardId)) return;
+    state.activeBoardId = boardId;
+    resetSessionView();
+
+    saveLocal();                        // silent: καμία ενεργοποίηση sync
     renderAll();
     closeBoardDropdown();
   }
 
   // Board creation: creates new board, switches to it
   function createBoard() {
-    var name = LANG === "el" ? "Νέο board" : "New Board";
-    var board = newBoardObj(name);
+    var board = newBoardObj(t("new.board"));   // i18n αντί hardcoded string
     board.pos = state.boards.length;
 
     state.om = Date.now();
     state.boards.push(board);
     state.activeBoardId = board.id;
 
-    // #33: consistent UX with switchBoard — reset session filters
-    searchQuery = "";
-    activeFilters = [];
-    var sb = $("search");
-    if (sb) sb.value = "";
-    var fb = $("filter-btn");
-    if (fb) fb.classList.remove("has-filters");
-    var fp = $("filter-pop");
-    if (fp) fp.hidden = true;
+    resetSessionView();                 // κοινός helper (πρώην διπλότυπο)
 
     save();
     renderAll();
@@ -1442,8 +1470,8 @@
     meta.className = "manage-meta";
     var colCount = bd.columns.length;
     var cardCount = bd.columns.reduce(function (acc, c) { return acc + (c.cards || []).length; }, 0);
-    meta.textContent = String(colCount) + " " + (LANG === "el" ? "στήλες, " : "columns, ") +
-                       String(cardCount) + " " + (LANG === "el" ? "κάρτες" : "cards");
+    meta.textContent = String(colCount) + " " + t("meta.columns") + ", " +
+                       String(cardCount) + " " + t("meta.cards");
     info.appendChild(meta);
 
     row.appendChild(info);
@@ -1607,6 +1635,7 @@
         nc.cards = col.cards.map(function (c) {
           var ncard = newCardObj(c.text);
           ncard.notes = c.notes || "";
+          ncard.due = c.due || null;
           ncard.labels = c.labels.slice();
           ncard.subtasks = JSON.parse(JSON.stringify(c.subtasks || []));
           ncard.info = JSON.parse(JSON.stringify(c.info || []));
@@ -1785,6 +1814,36 @@
 
     return el;
   }
+  
+    // --- Due date formatting ---
+  function formatDateChip(isoDate) {
+    if (!isoDate) return null;
+    var now = new Date();
+    var todayStr = now.toISOString().slice(0, 10);  // "YYYY-MM-DD"
+    var tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    var tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+    var label, colorClass;
+    if (isoDate === todayStr) {
+      label = t("card.due.today");
+      colorClass = "due-today";
+    } else if (isoDate === tomorrowStr) {
+      label = t("card.due.tomorrow");
+      colorClass = "due-today";  // ίδιο χρώμα με το "today"
+    } else if (isoDate < todayStr) {
+      label = t("card.overdue");
+      colorClass = "due-overdue";
+    } else {
+      var d = new Date(isoDate);
+      var dd = String(d.getDate()).padStart(2, "0");
+      var mm = d.toLocaleString(LANG === "el" ? "el" : "en", { month: "short" }).replace(".", "");
+      // ΕΛ: "19 Σεπ" | EN: "19 Sep"
+      label = dd + " " + mm;
+      colorClass = "due-future";
+    }
+    return { label: label, css: colorClass };
+  }
 
   function makeCardEl(col, card) {
     var el = document.createElement("button");
@@ -1842,6 +1901,21 @@
     }
 
     // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"
+	    }
+
+    // Due date chip (Kanban → Calendar integration)
+    if (card.due) {
+      var fmt = formatDateChip(card.due);
+      if (fmt) {
+        var dueEl = document.createElement("div");
+        dueEl.className = "due-chip " + fmt.css;
+        dueEl.textContent = fmt.label;
+        dueEl.title = card.due;  // full ISO date σε tooltip
+        el.appendChild(dueEl);
+      }
+    }
+
+    // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"
     var infoParts = [];
     (card.info || []).forEach(function (f) {
       var l = (f.label || "").trim();
@@ -1896,10 +1970,29 @@
 
   function cardFingerprint(card) {
     return JSON.stringify([
-      card.text, card.notes || "",
+      card.text, card.notes || "", card.due || null,
       card.subtasks || [], card.info || [],
       (card.labels || []).slice().sort()
     ]);
+  }
+
+  // LIVE SAVE: το τυπώμενο κείμενο γράφεται στο state + localStorage
+  // άμεσα (debounce 250ms) — καμία απώλεια αν κλείσει ξαφνικά το tab
+  // με ανοιχτό το διάλογο. Το mtime stampάρεται (touch) ώστε η live
+  // έκδοση να κερδίζει και στο merge. Το close handler παραμένει ως
+  // safety net (filtration κενών info rows + zero-edit check).
+  var liveSaveTimer = null;
+  function liveSaveCard() {
+    clearTimeout(liveSaveTimer);
+    liveSaveTimer = setTimeout(function () {
+      var card = editingCard();
+      if (!card) return;
+      card.text  = $("c-text").value;
+      card.notes = $("c-notes").value;
+      touch(card);
+      save();
+      scheduleRender();               // το board πίσω από το dialog φρεσκάρει
+    }, 250);
   }
 
   // Η κάρτα που είναι αυτή τη στιγμή ανοιχτή στο διάλογο (ή null).
@@ -1920,6 +2013,7 @@
 
     $("c-text").value = card.text;
     $("c-notes").value = card.notes || "";
+    $("c-due").value = card.due || "";   // "" = cleared (native date input)
 
     renderCardLabels(card);
     renderSubtasks(card);
@@ -2068,6 +2162,8 @@
     cb.addEventListener("change", function () {
       sub.completed = cb.checked;
       txt.classList.toggle("completed", cb.checked);
+      touch(card);
+      save();
       scheduleRender();
     });
     row.appendChild(cb);
@@ -2077,11 +2173,13 @@
     txt.className = "s-text" + (sub.completed ? " completed" : "");
     txt.value = sub.text;
     txt.autocomplete = "off";
-    txt.addEventListener("input", function () { sub.text = txt.value; });
+    txt.addEventListener("input", function () { sub.text = txt.value; liveSaveCard(); });
     row.appendChild(txt);
 
     row.appendChild(makeRemoveBtn(function () {
       card.subtasks = card.subtasks.filter(function (s) { return s !== sub; });
+      touch(card);
+      save();
       scheduleRender();
       renderSubtasks(card);
     }));
@@ -2109,6 +2207,8 @@
     if (!raw) return;
     card.subtasks.push({ id: uid(), text: raw, completed: false });
     input.value = "";
+    touch(card);
+    save();
     scheduleRender();
     renderSubtasks(card);
     input.focus();
@@ -2133,7 +2233,7 @@
     lbl.setAttribute("placeholder", t("card.info.label"));
     lbl.value = f.label;
     lbl.autocomplete = "off";
-    lbl.addEventListener("input", function () { f.label = lbl.value; });
+    lbl.addEventListener("input", function () { f.label = lbl.value; liveSaveCard(); });
     row.appendChild(lbl);
 
     var val = document.createElement("input");
@@ -2142,11 +2242,14 @@
     val.setAttribute("placeholder", t("card.info.value"));
     val.value = f.value;
     val.autocomplete = "off";
-    val.addEventListener("input", function () { f.value = val.value; });
+    val.addEventListener("input", function () { f.value = val.value; liveSaveCard(); });
     row.appendChild(val);
 
     row.appendChild(makeRemoveBtn(function () {
       card.info = card.info.filter(function (x) { return x !== f; });
+      touch(card);
+      save();
+      scheduleRender();
       renderInfo(card);
     }));
 
@@ -2173,6 +2276,7 @@
 
     var copy = newCardObj(card.text + t("dup.suffix"));
     copy.notes = card.notes || "";
+    copy.due = card.due || null;
     copy.labels = card.labels.slice();
     copy.subtasks = JSON.parse(JSON.stringify(card.subtasks || []));
     copy.info = JSON.parse(JSON.stringify(card.info || []));
@@ -2260,6 +2364,7 @@
   function matchesSearch(card) {
     if ((card.text || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     if ((card.notes || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
+    if (card.due && card.due.toLowerCase().indexOf(searchQuery) !== -1) return true;
     for (var i = 0; i < (card.info || []).length; i++) {
       var f = card.info[i];
       if ((f.label || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
@@ -2777,7 +2882,34 @@
 
     // --- Card dialog ---
     // Text/notes flush στο κλείσιμο του dialog — handled above
-    
+    // + LIVE SAVE στο input (καμία απώλεια σε αιφνίδιο κλείσιμο tab)
+    var cTextInput = $("c-text");
+    var cNotesInput = $("c-notes");
+    if (cTextInput)  cTextInput.addEventListener("input", liveSaveCard);
+    if (cNotesInput) cNotesInput.addEventListener("input", liveSaveCard);
+
+    // Due date — live save, ΞΕΧΩΡΙΣΤΟ handler (όχι το liveSaveCard):
+    // το date input δεν περνάει από text flush στο close handler.
+    var cDueInput = $("c-due");
+    if (cDueInput) {
+      cDueInput.addEventListener("input", function () {
+        var card = editingCard();
+        if (!card) return;
+        card.due = cDueInput.value || null;   // "" → null (cleared)
+        touch(card);
+        save();
+        scheduleRender();       // date chip πίσω από το dialog φρεσκάρει
+      });
+      cDueInput.addEventListener("change", function () {
+        var card = editingCard();
+        if (!card) return;
+        card.due = cDueInput.value || null;
+        touch(card);
+        save();
+        scheduleRender();
+      });
+    }
+
     var cardForm = $("card-form");
     if (cardForm) {
       cardForm.addEventListener("submit", function (e) {
@@ -2907,6 +3039,24 @@
         });
       });
     }
+
+    // Ecosystem: capture-phase shortcut forwarding — τα modifier
+    // combos (Ctrl/Alt/Meta) προωθούννονται στο shell ενώ το iframe
+    // έχει focus, ώστε τα global shortcuts να λειτουργούν και μέσα
+    // από την εφαρμογή. Τα απλά γράμματα (typing) ΔΕΝ προωθούνονται.
+    document.addEventListener("keydown", function (e) {
+      if (!(e.ctrlKey || e.altKey || e.metaKey)) return;
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.dispatchEvent(new KeyboardEvent("keydown", {
+            key: e.key, code: e.code,
+            ctrlKey: e.ctrlKey, altKey: e.altKey,
+            shiftKey: e.shiftKey, metaKey: e.metaKey,
+            repeat: e.repeat
+          }));
+        }
+      } catch (err) { /* standalone — αγνόησε */ }
+    }, true);
 
     // Alt+B → γρήγορη δημιουργία νέου board (δεν συγκρούεται με
     // browser shortcuts — δεν υπάρχει browser reserve στο Alt+B)

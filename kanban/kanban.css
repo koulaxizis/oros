@@ -1046,11 +1046,14 @@ dialog menu button.danger:hover {
 }
 
 /* ---------- 8. Toast ---------- */
+/* Top-right positioning (ecosystem: same as shell's sc-toast & alarms) */
 #toast {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px);
+  top: 14px;
+  right: 14px;
+  left: auto;
+  bottom: auto;
+  transform: translateY(-8px);
   z-index: 1200;
   display: flex;
   align-items: center;
@@ -1064,11 +1067,20 @@ dialog menu button.danger:hover {
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: none;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - 60px);
 }
 #toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
+}
+
+/* Mobile: slightly smaller toast on phones */
+@media (max-width: 480px) {
+  #toast {
+    max-width: calc(100vw - 40px);
+    padding: 8px 12px;
+    font-size: 12px;
+  }
 }
 #toast button {
   background: transparent;
@@ -1078,6 +1090,49 @@ dialog menu button.danger:hover {
   font-size: 13px;
   padding: 2px 4px;
   pointer-events: auto;
+}
+
+/* ---- Due date chip (Kanban → Calendar integration) ---- */
+.due-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--text-dim);
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.due-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.due-chip.due-overdue {
+  color: #e06c75;
+  background: rgba(230, 108, 117, 0.08);
+  border-color: rgba(230, 108, 117, 0.3);
+}
+
+.due-chip.due-today {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: rgba(109, 74, 255, 0.3);
+}
+
+.due-chip.due-future {
+  color: var(--text-dim);
+  background: transparent;
 }
 
 /* ---------- 9. Mobile-first ---------- */

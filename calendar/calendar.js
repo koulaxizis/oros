@@ -110,6 +110,15 @@
       "lbl.family": "Family",
       "lbl.feed.bday": "Birthdays",
       "lbl.feed.anniv": "Anniversaries",
+      "lbl.feed.cycle": "Cycle",
+      "lbl.feed.mood": "Mood",
+      "lbl.feed.habits": "Habits",
+      "lbl.feed.kanban": "Kanban",
+      "feed.cycle.period": "Period",
+      "feed.mood.entry": "Mood entry",
+      "lbl.feed.custom": "Custom Feed",
+      "lbl.feeds": "App feeds",
+      "lbl.feed.ro": "Read-only — managed by its app",
       "lbl.manage": "Manage labels",
       "lbl.new": "New label",
       "lbl.ph.name": "Name…",
@@ -199,6 +208,15 @@
       "lbl.family": "Οικογένεια",
       "lbl.feed.bday": "Γενέθλια",
       "lbl.feed.anniv": "Επέτειοι",
+      "lbl.feed.cycle": "Κύκλος",
+      "lbl.feed.mood": "Διάθεση",
+      "lbl.feed.habits": "Συνήθειες",
+      "lbl.feed.kanban": "Kanban",
+      "feed.cycle.period": "Περίοδος",
+      "feed.mood.entry": "Καταγραφή διάθεσης",
+      "lbl.feed.custom": "Προσαρμοσμένο Feed",
+      "lbl.feeds": "Ροές εφαρμογών",
+      "lbl.feed.ro": "Μόνο ανάγνωση — διαχειρίζεται η εφαρμογή της",
       "lbl.manage": "Διαχείριση ετικετών",
       "lbl.new": "Νέα ετικέτα",
       "lbl.ph.name": "Όνομα…",
@@ -314,18 +332,28 @@
     "#e06c75", "#ff9e64", "#4ec9b0", "#f28fb6"
   ];
 
-  // Wave 2.1 — virtual feed labels (Contacts birthdays/anniversaries).
+  // Wave 2.1 — virtual feed labels (Contacts/Cycle/Mood/Habits feeds).
   // DELIBERATELY not in state.labels: they never travel in the synced
   // blob, can never be deleted/renamed from the label manager
   // (renderLblList iterates state.labels only), and carry no mtime.
   // Display-only constants; the name is painted via i18n at render time.
   // Colors come from LABEL_PALETTE so they match the design system.
   var FEED_LABELS = [
-    { id: "lbl-feed-bday",  color: "#9ece6a" },   // green (reserved)
-    { id: "lbl-feed-anniv", color: "#f28fb6" }
+    { id: "lbl-feed-bday",    color: "#9ece6a" },   // green — Birthdays
+    { id: "lbl-feed-anniv",   color: "#f28fb6" },   // pink — Anniversaries
+    { id: "lbl-feed-cycle",   color: "#f28fb6" },   // pink — Cycle (same as anniv by design)
+    { id: "lbl-feed-mood",    color: "#a78bfa" },   // purple — Mood
+    { id: "lbl-feed-habits",  color: "#4ec9b0" },   // teal — Habits
+    { id: "lbl-feed-kanban",  color: "#7aa2f7" }    // blue — Kanban (teal taken by Habits)
   ];
   function feedLabelName(l) {
-    return t(l.id === "lbl-feed-bday" ? "lbl.feed.bday" : "lbl.feed.anniv");
+    if (l.id === "lbl-feed-bday") return t("lbl.feed.bday");
+    if (l.id === "lbl-feed-anniv") return t("lbl.feed.anniv");
+    if (l.id === "lbl-feed-cycle") return t("lbl.feed.cycle");
+    if (l.id === "lbl-feed-mood") return t("lbl.feed.mood");
+    if (l.id === "lbl-feed-habits") return t("lbl.feed.habits");
+    if (l.id === "lbl-feed-kanban") return t("lbl.feed.kanban");
+    return t("lbl.feed.custom");
   }
 
   // Seeds for fresh installs (mtime 0 → any user edit wins the merge
@@ -363,7 +391,10 @@
   function sanitizeLabel(l) {
     if (!l || typeof l !== "object") return null;
     if (typeof l.id !== "string" || !l.id) return null;
-    if (LABEL_PALETTE.indexOf(l.color) === -1) return null;
+    // Extended whitelist: include brown (#c8a96e) for Custom
+    var validColors = ["#d4af37", "#e06c75", "#7aa2f7", "#9ece6a",
+                       "#ff9e64", "#f28fb6", "#a78bfa", "#4ec9b0", "#c8a96e"];
+    if (validColors.indexOf(l.color) === -1) return null;
     return {
       id: l.id,
       name: (typeof l.name === "string" ? l.name : "").slice(0, 40),
@@ -777,25 +808,334 @@
     return map[key] ? map[key][LANG === "el" ? 1 : 0] : "";
   }
 
-  function eventsOn(dateStr) {
+  // Wave 2.1 — Contacts read-only feed. Same-origin iframe → shared
+  // localStorage: reads the blob contacts.js owns. Read-only by
+  // construction: absent/corrupt data → no feed events (standalone
+  // Calendar unaffected). Feed events carry _feed/_contactId and
+  // are NEVER written back (not stored, not synced, not exported).
+  var CT_DATA_KEY = "oros-contacts-data";
+  var contactsCache = { when: 0, data: {} };
+
+  function contactsRaw() {
+    // 1s micro-cache — month render calls eventsOn ~31× per paint.
+    // Keeps a Contacts edit visible here within ~1s, without a
+    // JSON.parse storm on every cell.
+    var now = Date.now();
+    if (now - contactsCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(CT_DATA_KEY));
+        contactsCache.data = (d && typeof d === "object") ? d : {};
+      } catch (e) { contactsCache.data = {}; }
+      contactsCache.when = now;
+    }
+    return contactsCache.data;
+  }
+
+  // Mirrors contacts.js displayName() composition:
+  // given+middle+family → nickname → org → "?"
+  function ctName(c) {
+    var parts = [c.given, c.middle, c.family].filter(Boolean);
+    if (parts.length) return parts.join(" ");
+    if (c.nickname) return c.nickname;
+    if (c.org) return c.org;
+    return "?";
+  }
+
+  function feedLabelIdFor(type) {
+    if (type === "birthday") return "lbl-feed-bday";
+    if (type === "anniversary") return "lbl-feed-anniv";
+    return "lbl-feed-custom";
+  }
+
+  function contactsFeedOn(dateStr) {
+    // dateStr "YYYY-MM-DD" → tail is the "MM-DD" the contact
+    // events carry (yearless by design: the day is the whole story).
+    var mmdd = dateStr.slice(5);
+    var out = [];
+    var cs = contactsRaw().contacts;
+    if (!Array.isArray(cs)) return out;
+    cs.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      (Array.isArray(c.events) ? c.events : []).forEach(function (ev, ix) {
+        if (!ev || typeof ev !== "object" || ev.day !== mmdd) return;
+        var labelId = feedLabelIdFor(ev.type);
+        if (!labelVisible(labelId)) return;
+        var who = ctName(c);
+        out.push({
+          id: "feed-" + c.id + "-" + ix,        // per-render key, never stored
+          title: (ev.type === "custom" && ev.label)
+            ? who + " · " + ev.label.slice(0, 40)
+            : who,
+          labelId: labelId,
+          start: null,                          // all-day → sorted last
+          _feed: true,
+          _contactId: c.id
+        });
+      });
+    });
+    return out;
+  }
+  
+    // Wave 2.1 — Habits read-only feed. Reads completions from
+  // oros-habits-data, injects completed habits as colored dots.
+  // Same-origin localStorage → micro-cached for ~1s to avoid
+  // JSON.parse storms during month render.
+  var HBT_DATA_KEY = "oros-habits-data";
+  var habitsCache = { when: 0, data: null };
+
+  function habitsRaw() {
+    var now = Date.now();
+    if (now - habitsCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(HBT_DATA_KEY));
+        habitsCache.data = (d && typeof d === "object" && Array.isArray(d.comps)) ? d : null;
+      } catch (e) { habitsCache.data = null; }
+      habitsCache.when = now;
+    }
+    return habitsCache.data;
+  }
+
+  function isHabitDoneOn(habitId, dateStr) {
+    var data = habitsRaw();
+    if (!data || !Array.isArray(data.comps)) return false;
+    var compKey = habitId + "|" + dateStr;
+    for (var i = 0; i < data.comps.length; i++) {
+      var c = data.comps[i];
+      if (c.id === compKey && !c.del) return true;
+    }
+    return false;
+  }
+
+  function habitsFeedOn(dateStr) {
+    var data = habitsRaw();
+    if (!data || !Array.isArray(data.habits) || !Array.isArray(data.comps)) return [];
+    
+    var out = [];
+    var livingHabits = data.habits.filter(function (h) { return h && !h.del; });
+    
+    livingHabits.forEach(function (h) {
+      if (isHabitDoneOn(h.id, dateStr)) {
+        if (!labelVisible("lbl-feed-habits")) return;
+        out.push({
+          id: "habit-" + h.id + "-" + dateStr,
+          title: h.name,
+          labelId: "lbl-feed-habits",
+          start: null,                    // all-day dot
+          _feed: true,
+          _habitId: h.id
+        });
+      }
+    });
+    
+    return out;
+  }
+
+  // Wave 2.1 — Cycle read-only feed. Reads periods from
+  // oros-cycle-data and paints every day inside a closed period
+  // (start..end, inclusive) with the pink Cycle label. An OPEN
+  // period (end null) paints ONLY its first day — projecting the
+  // usual length forward would be a guess, and we never guess.
+  // Tombstone map honored (stale open app on another tab).
+  // Same-origin localStorage → micro-cached for ~1s.
+  var CYC_DATA_KEY = "oros-cycle-data";
+  var cycleCache = { when: 0, data: null };
+
+  function cycleRaw() {
+    var now = Date.now();
+    if (now - cycleCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(CYC_DATA_KEY));
+        cycleCache.data = (d && typeof d === "object") ? d : null;
+      } catch (e) { cycleCache.data = null; }
+      cycleCache.when = now;
+    }
+    return cycleCache.data;
+  }
+
+  function cycleFeedOn(dateStr) {
+    var data = cycleRaw();
+    if (!data || !Array.isArray(data.periods)) return [];
+    if (!labelVisible("lbl-feed-cycle")) return [];
+
+    var target = dparse(dateStr);   // local midnight of the cell
+    var out = [];
+
+    data.periods.forEach(function (p) {
+      if (!p || typeof p !== "object" || typeof p.start !== "number" ||
+          !isFinite(p.start)) return;
+      if (data.deleted && data.deleted[p.id]) return;   // tombstone
+      var ps = new Date(p.start);
+      if (isNaN(ps.getTime())) return;
+      ps.setHours(0, 0, 0, 0);
+      var startTs = ps.getTime();
+      var endTs = startTs;                                // open → day 1 only
+      if (typeof p.end === "number" && isFinite(p.end) && p.end >= p.start) {
+        var pe = new Date(p.end);
+        if (!isNaN(pe.getTime())) {
+          pe.setHours(0, 0, 0, 0);
+          endTs = pe.getTime();
+        }
+      }
+      if (target >= startTs && target <= endTs) {
+        out.push({
+          id: "cycle-" + p.id + "-" + dateStr,   // per-render key, never stored
+          title: t("feed.cycle.period"),
+          labelId: "lbl-feed-cycle",
+          start: null,                           // all-day band
+          _feed: true,
+          _cycleId: p.id
+        });
+      }
+    });
+    return out;
+  }
+
+  // Wave 2.1 — Mood read-only feed. Reads entries from
+  // oros-mood-data: every entry whose LOCAL calendar day matches
+  // the cell becomes a purple all-day row. Title = note excerpt
+  // when present, else the generic localized label. Tombstone
+  // map honored. Micro-cached ~1s like the other feeds.
+  var MOOD_DATA_KEY = "oros-mood-data";
+  var moodCache = { when: 0, data: null };
+
+  function moodRaw() {
+    var now = Date.now();
+    if (now - moodCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(MOOD_DATA_KEY));
+        moodCache.data = (d && typeof d === "object" && Array.isArray(d.entries))
+          ? d : null;
+      } catch (e) { moodCache.data = null; }
+      moodCache.when = now;
+    }
+    return moodCache.data;
+  }
+
+  function tsToLocalYmd(ts) {
+    var dt = new Date(ts);
+    if (isNaN(dt.getTime())) return null;
+    return ymd(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  }
+
+  function moodFeedOn(dateStr) {
+    var data = moodRaw();
+    if (!data || !Array.isArray(data.entries)) return [];
+    if (!labelVisible("lbl-feed-mood")) return [];
+
+    var out = [];
+    data.entries.forEach(function (en) {
+      if (!en || typeof en !== "object" ||
+          typeof en.ts !== "number" || !isFinite(en.ts)) return;
+      if (data.deleted && data.deleted[en.id]) return;   // tombstone
+      if (tsToLocalYmd(en.ts) !== dateStr) return;
+      out.push({
+        id: "mood-" + en.id + "-" + dateStr,   // per-render key, never stored
+        title: (typeof en.note === "string" && en.note.trim())
+          ? en.note.trim().slice(0, 40)
+          : t("feed.mood.entry"),
+        labelId: "lbl-feed-mood",
+        start: null,                            // all-day
+        _feed: true,
+        _moodId: en.id
+      });
+    });
+    return out;
+  }
+
+  // Wave — Kanban read-only feed. Reads the multi-board blob
+  // (oros-kanban-data) and surfaces every card carrying a due date
+  // as an all-day event on that day. Title: "COLUMN · card text"
+  // (decision record #3); the notes field lands in e.note, which
+  // buildEvRow already renders (#4: description = detail, not
+  // title clutter). ARCHIVED boards are skipped by design (#6):
+  // hidden boards must not leak into the calendar. Feed rows are
+  // never stored, synced or exported — micro-cached ~1s like the
+  // other feeds.
+  var KB_DATA_KEY = "oros-kanban-data";
+  var kanbanCache = { when: 0, data: null };
+
+  function kanbanRaw() {
+    var now = Date.now();
+    if (now - kanbanCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(KB_DATA_KEY));
+        kanbanCache.data = (d && typeof d === "object" &&
+                            Array.isArray(d.boards)) ? d : null;
+      } catch (e) { kanbanCache.data = null; }
+      kanbanCache.when = now;
+    }
+    return kanbanCache.data;
+  }
+
+  function kanbanFeedOn(dateStr) {
+    var data = kanbanRaw();
+    if (!data) return [];
+    if (!labelVisible("lbl-feed-kanban")) return [];
+
+    var out = [];
+    (data.boards || []).forEach(function (bd) {
+      if (!bd || bd.archived) return;            // archived board → skip
+      (Array.isArray(bd.columns) ? bd.columns : []).forEach(function (col) {
+        (Array.isArray(col.cards) ? col.cards : []).forEach(function (card) {
+          if (!card || card.due !== dateStr) return;
+          out.push({
+            id: "kb-" + card.id + "-" + dateStr,   // per-render key, never stored
+            title: (col.name || "").slice(0, 24) + " · " +
+                   (card.text || "").slice(0, 60),
+            labelId: "lbl-feed-kanban",
+            start: null,                           // all-day event
+            note: (card.notes || "").slice(0, 500),
+            _feed: true,
+            _kanban: { boardId: bd.id, colId: col.id, cardId: card.id }
+          });
+        });
+      });
+    });
+    return out;
+  }
+
+    function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
-    }).sort(function (a, b) {
+    })
+    .concat(contactsFeedOn(dateStr))
+    .concat(habitsFeedOn(dateStr))
+    .concat(cycleFeedOn(dateStr))
+    .concat(moodFeedOn(dateStr))
+    .concat(kanbanFeedOn(dateStr))
+    .sort(function (a, b) {
       if (a.start === b.start) return 0;
-      if (a.start === null) return 1;     // all-day last
+      if (a.start === null) return 1;
       if (b.start === null) return -1;
       return a.start < b.start ? -1 : 1;
     });
   }
 
-  // Wave 2.1 — click-through: a contact feed row → the Contacts app.
-  // The shell owns the deep link (live iframe push or sessionStorage
-  // staging + app open). Standalone load (no parent shell): ignored.
-  function openContactFromFeed(ev) {
-    if (!ev._contactId) return;
+  // Wave 4 — click-through: any feed row → its owning app. The shell
+  // owns every deep link (live iframe push or sessionStorage staging
+  // + app open). One dispatcher, three contracts: Contacts / Cycle /
+  // Mood. Habits rows carry no bridge yet → silently inert. Standalone
+  // load (no parent shell): ignored — the source app is only a tab
+  // away in that mode anyway.
+  function openFeedRow(ev) {
+    if (!ev || !ev._feed) return;
     try {
-      if (window.parent && typeof window.parent.__orosOpenContact === "function") {
-        window.parent.__orosOpenContact(ev._contactId);
+      var p = window.parent;
+      if (!p) return;
+      if (ev._contactId &&
+          typeof p.__orosOpenContact === "function") {
+        p.__orosOpenContact(ev._contactId);
+      } else if (ev._cycleId &&
+                 typeof p.__orosOpenCycle === "function") {
+        p.__orosOpenCycle(ev._cycleId);
+      } else if (ev._moodId &&
+                 typeof p.__orosOpenMood === "function") {
+        p.__orosOpenMood(ev._moodId);
+      } else if (ev._kanban &&
+                 typeof p.__orosOpenKanbanCard === "function") {
+        p.__orosOpenKanbanCard(ev._kanban.boardId,
+                               ev._kanban.colId,
+                               ev._kanban.cardId);
       }
     } catch (e) {}
   }
@@ -984,7 +1324,7 @@
         (function (ee) {
           ev.addEventListener("click", function (evt) {
             evt.stopPropagation();
-            if (ee._feed) { openContactFromFeed(ee); return; }
+            if (ee._feed) { openFeedRow(ee); return; }
             if (validRecur(ee.recur)) showSerChooser(ee, dayYmd);
             else openDlg(ee);
           });
@@ -1307,9 +1647,10 @@
     li.appendChild(main);
     (function (ev) {
       li.addEventListener("click", function () {
-        // Wave 2.1: contact feed rows are read-only — one click
-        // deep-links to the Contacts app, never the event dialog.
-        if (ev._feed) { openContactFromFeed(ev); return; }
+        // Wave 4: feed rows are read-only — one click deep-links
+        // to the owning app (Contacts/Cycle/Mood), never the
+        // event dialog.
+        if (ev._feed) { openFeedRow(ev); return; }
         // Series occurrence → chooser first (this occurrence vs
         // the whole series). Saved overrides are plain events.
         if (validRecur(ev.recur)) showSerChooser(ev, dayYmd);
@@ -2077,6 +2418,38 @@
       row.appendChild(pal);   // color palette (toggled by the dot button)
       list.appendChild(row);
     });
+    // Feed labels — visible but IMMUTABLE: born from FEED_LABELS,
+    // never from state.labels, so no rename/delete/color controls.
+    // Pure transparency: the user sees why these chips exist.
+    if (FEED_LABELS.length) {
+      var fh = document.createElement("div");
+      fh.className = "lbl-feeds-head";
+      fh.textContent = t("lbl.feeds");
+      list.appendChild(fh);
+      FEED_LABELS.forEach(function (fl) {
+        var row = document.createElement("div");
+        row.className = "lbl-row feed";
+
+        var dot = document.createElement("span");
+        dot.className = "lbl-color-dot";
+        dot.style.background = fl.color;
+        row.appendChild(dot);
+
+        var nm = document.createElement("span");
+        nm.className = "lbl-feed-name";
+        nm.textContent = feedLabelName(fl);
+        nm.title = t("lbl.feed.ro");
+        row.appendChild(nm);
+
+        var lk = document.createElement("span");
+        lk.className = "lbl-lock";
+        lk.textContent = "🔒";
+        lk.title = t("lbl.feed.ro");
+        lk.setAttribute("aria-hidden", "true");
+        row.appendChild(lk);
+        list.appendChild(row);
+      });
+    }
     if (!state.labels.length) {
       var emp = document.createElement("div");
       emp.className = "empty";
@@ -2209,11 +2582,17 @@
       return validRecur(e.recur);
     }).length;
 
-    // upcoming 30 days — occurrences included, label-filter aware
+    // upcoming 30 days — occurrences included, label-filter aware.
+    // CP1 (Wave 2.1 close-out): state.events ONLY. eventsOn() now
+    // injects the read-only Contacts feed, but "total" and byLabel
+    // are store-backed — one truth for every KPI here: no feed
+    // events in stats.
     var up = 0;
     var today = todayYMD();
     for (var i = 0; i < 30; i++) {
-      up += eventsOn(dAdd(today, i)).length;
+      up += state.events.filter(function (e) {
+        return occursOn(e, dAdd(today, i)) && labelVisible(e.labelId);
+      }).length;
     }
 
     var kpis = document.createElement("div");

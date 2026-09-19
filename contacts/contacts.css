@@ -252,6 +252,22 @@ h2 {
   color: var(--accent);
 }
 
+.dup-badge {
+  flex: none;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.dup-via {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin: 6px 0 12px;
+}
+
 #ct-list .empty,
 .empty {
   color: var(--text-dim);
@@ -319,6 +335,60 @@ dialog h3 {
 .dlg-row.show { display: flex; }
 #ct-del-row { justify-content: flex-start; }
 
+.chg-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.dup-group {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.dup-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dup-members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dup-member {
+  cursor: pointer;
+}
+
+.dup-preview-section {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.dup-preview-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.dup-preview-value {
+  font-size: 13.5px;
+}
+
 .del-name {
   margin: 6px 0;
   font-weight: 600;
@@ -358,6 +428,39 @@ dialog h3 {
 .ev-form select:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.avatar-uploader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.avatar-uploader canvas {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.ct-avatar-img {
+  object-fit: cover;
+}
+.rel-incoming {
+  margin-top: 2px;
+}
+.rel-in-head {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+.rel-in-row {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  padding: 2px 0;
+}
+.mf-row.rel .rel-who {
+  max-width: 55%;
 }
 .ev-form input.invalid {
   border-color: #c05252;

@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.15";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.16";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3612,7 +3612,63 @@
       return id || null;
     } catch (e) { return null; }
   };
-  
+
+  // Wave 4 — Cycle deep-link bridge (πρωτότυπο: Contacts). Calendar
+  // read-only feed rows καλούν αυτό από το iframe. App ανοιχτό → live
+  // push· κλειστό → stage σε sessionStorage (device-local, swept από
+  // το factory reset, δεν ταξιδεύει ποτέ στο sync) + άνοιγμα app.
+  window.__orosOpenCycle = function (entryId) {
+    if (typeof entryId !== "string" || !entryId) return;
+    if (state.running && state.running.id === "cycle") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosCycleOpen === "function") {
+          f.contentWindow.__orosCycleOpen(entryId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-cycle-open", entryId); } catch (e) {}
+    openAppById("cycle");
+  };
+
+  // Consumed by cycle.js at boot — one-shot take (ίδιο μάθημα
+  // με το contacts: αν το take λείπει από το app, το pending id
+  // απλά αγνοείται — τίποτα δεν σπάει).
+  window.__orosCycleTakePending = function () {
+    try {
+      var id = sessionStorage.getItem("oros-cycle-open");
+      if (id) sessionStorage.removeItem("oros-cycle-open");
+      return id || null;
+    } catch (e) { return null; }
+  };
+
+  // Wave 4 — Mood deep-link bridge (ίδιο ακριβώς σχήμα).
+  window.__orosOpenMood = function (entryId) {
+    if (typeof entryId !== "string" || !entryId) return;
+    if (state.running && state.running.id === "mood") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosMoodOpen === "function") {
+          f.contentWindow.__orosMoodOpen(entryId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-mood-open", entryId); } catch (e) {}
+    openAppById("mood");
+  };
+
+  window.__orosMoodTakePending = function () {
+    try {
+      var id = sessionStorage.getItem("oros-mood-open");
+      if (id) sessionStorage.removeItem("oros-mood-open");
+      return id || null;
+    } catch (e) { return null; }
+  };
+
     // v0.18.0 — global shortcuts at the shell level
   document.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) window.orosShortcuts.handle(e);
