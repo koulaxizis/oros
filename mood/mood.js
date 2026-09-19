@@ -150,6 +150,7 @@
       "tr.freq":         "You mark \u201C{h}\u201D on {p}% of your logged days.",
       "tr.pair":         "When you feel {a}, you also mark {b} ({p}% of the time).",
       "tr.trig":         "When \u201C{x}\u201D triggers it, you often feel {e} ({d}pt more than usual).",
+      "tr.per":          "On period days, you often feel {e} ({d}pt more than usual).",
       "ins.int.title":   "Intensity shifts",
       "ins.int.hint":    "Average intensity now vs earlier in this range",
       "ins.dow.title":   "By weekday",
@@ -290,6 +291,7 @@
       "tr.freq":         "Σημειώνεις «{h}» στο {p}% των ημερών με καταγραφή.",
       "tr.pair":         "Όταν νιώθεις {a}, σημειώνεις και {b} ({p}% των φορών).",
       "tr.trig":         "Όταν σε «πυροδοτεί» «{x}», νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
+      "tr.per":          "Κατά τις ημέρες περιόδου νιώθεις συχνότερα {e} (κατά {d}pt πάνω από το σύνηθες).",
       "ins.int.title":   "Αλλαγές έντασης",
       "ins.int.hint":    "Μέση ένταση τώρα vs νωρίτερα στο εύρος",
       "ins.dow.title":   "Ανά ημέρα της εβδομάδας",
@@ -2410,6 +2412,36 @@ function mergeMoodStates(A, B) {
         .replace("{e}", t("emo." + b.k))
         .replace("{d}", b.d); });
     });
+
+    // -- cross-app: period days (Wave 2.2) — READ-ONLY peek at
+    //    the Cycle app's slice in the shared localStorage (same
+    //    origin). Absent / corrupt data contributes NOTHING;
+    //    this section never writes, ever. --
+    try {
+      var craw = localStorage.getItem("oros-cycle-data");
+      if (craw) {
+        var cd = JSON.parse(craw);
+        if (cd && Array.isArray(cd.periods)) {
+          var cycDays = {};
+          cd.periods.forEach(function (p) {
+            if (!p || typeof p.start !== "number") return;
+            var pend = (p.end === null) ? Date.now() :
+              ((typeof p.end === "number") ? p.end : p.start);
+            if (pend < p.start) pend = p.start;
+            if ((pend - p.start) / 86400000 > 60) return;   // pathological guard
+            var cur = new Date(p.start);                     // DST-safe walk
+            while (cur.getTime() <= pend) {
+              cycDays[dayKey(cur.getTime())] = true;
+              cur.setDate(cur.getDate() + 1);
+            }
+          });
+          var pcond = sub.filter(function (e) { return cycDays[dayKey(e.ts)]; });
+          consider(pcond, function (b) { return t("tr.per")
+            .replace("{e}", t("emo." + b.k))
+            .replace("{d}", b.d); });
+        }
+      }
+    } catch (err) { /* not our data — ignore silently */ }
 
     out.sort(function (a, b) { return b.d - a.d; });
     return out.slice(0, TR_MAX).map(function (o) { return o.fn; });

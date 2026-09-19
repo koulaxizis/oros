@@ -1,5 +1,5 @@
 // ============================================================
-// orOS · Characters v1.0.0 — characters.js
+// orOS · Characters — characters.js
 // Ground-up port of the beta app into the orOS architecture.
 //
 // Architecture (Mood-app pattern):
@@ -21,7 +21,15 @@
 (function () {
   "use strict";
 
-  var APP_VER     = "1.0.0";
+  // Version comes from the cache-bust param (?v=…) — canonical orOS
+  // pattern; the literal is the standalone/first-paint fallback only.
+  var APP_VER = (function () {
+    try {
+      var src = (document.currentScript && document.currentScript.src) || "";
+      var m = /[?&]v=([^&]+)/.exec(src);
+      return (m && decodeURIComponent(m[1])) || "1.0.0";
+    } catch (e) { return "1.0.0"; }
+  })();
   var STORAGE_KEY = "oros-characters-data";   // new home
   var LEGACY_KEY  = "oros_characters_data";   // beta app (migration source)
   var SLICE_NAME  = "characters";
@@ -134,6 +142,7 @@
       "toast.sync":      "Updated from sync",
       "toast.exported":  "Exported",
       "toast.needtwo":   "You need at least two characters",
+      "toast.migrated":  "Imported {n} items from the beta app",
 
       "help.title": "Characters",
       "help.shortcut.new": "New character",
@@ -211,6 +220,7 @@
       "toast.sync":      "Ενημερώθηκε από συγχρονισμό",
       "toast.exported":  "Εξήχθη",
       "toast.needtwo":   "Χρειάζεσαι τουλάχιστον δύο χαρακτήρες",
+      "toast.migrated":  "Μεταφέρθηκαν {n} στοιχεία από το beta app",
 
       "help.title": "Χαρακτήρες",
       "help.shortcut.new": "Νέος χαρακτήρας",
@@ -419,10 +429,6 @@
     persist();
     markDirty();
     if (!opts || !opts.silent) paint();
-  }
-
-  function touchChar(id) {
-    if (db.characters[id]) db.characters[id].mtime = Date.now();
   }
 
   // Ordered character list (pos first, newcomers appended, deleted out)
@@ -640,11 +646,7 @@
     if (text !== undefined && text !== null) e.textContent = text;
     return e;
   }
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+   
   function initials(name) {
     var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return "?";
@@ -1194,7 +1196,7 @@
       commit();
 
       toast("ok", t("toast.deleted"), {
-        label: t("toast.undone") === t("toast.undone") ? "↩" : "↩",
+        label: "↩",
         fn: function () {
           var stamp = Date.now();             // strictly newer than tombstones
           removedChar.mtime = stamp;
@@ -1203,6 +1205,10 @@
           if (db.pos.indexOf(id) < 0) db.pos.push(id);
           Object.keys(removedRels).forEach(function (rid) {
             var r = removedRels[rid];
+            // Restore ONLY if both endpoints still exist — if the
+            // other character was deleted meanwhile, the rel would
+            // be orphaned and deleteRel would crash on .name lookups.
+            if (!db.characters[r.a] || !db.characters[r.b]) return;
             r.mtime = stamp;
             db.rels[rid] = r;
             delete db.deleted[rid];
@@ -1417,9 +1423,9 @@
 
     // -- head --
     var head = el("div", "dlg-head");
-    var title = el("h3", null, t("rel.title"));
-    title.textContent = t("rel.title") + ": " +
-      db.characters[aId].name + " ↔ " + db.characters[bId].name;
+    var title = el("h3", null,
+      t("rel.title") + ": " +
+      db.characters[aId].name + " ↔ " + db.characters[bId].name);
     head.appendChild(title);
     var x = el("button", "dlg-x", "");
     x.type = "button";
@@ -1606,9 +1612,9 @@
       last:  ["Αντωνόπουλος","Βλάχος","Γεωργίου","Δημάκης","Ευσταθίου","Ζωιτός",
               "Ηλιάδης","Θεοδωρίδης","Καραγιάννης","Λαμπρόπουλος","Μακρής",
               "Νικολαΐδης","Οικονόμου","Παπαδόπουλος","Ρούσσος","Σταυρόπουλος"],
-      roles: ["Αστυνόμος","Χαρτογράφος","Επαγγελματίας δανειστής","Αρχειοθέτης",
-              "Λαθρέμπορος","Συνθέτης","Βοτανολόγος","Bodyguard","Δημοσιογράφος",
-              "Βιβλιοθηκονόμος","Εκτελεστής","Ιατρός","Ναυτικός","Μεταφραστής",
+      roles: ["Αστυνόμος","Χαρτογράφος","Μεταπράτης κλεμμένων","Αρχειοθέτης",
+              "Λαθρέμπορος","Συνθέτης","Βοτανολόγος","Σωματοφύλακας","Δημοσιογράφος",
+              "Βιβλιοθηκονόμος","Μισθοφόρος","Ιατρός","Ναυτικός","Μεταφραστής",
               "Ρολογάς","Ξενοδόχος"],
       traits:["πείσμων","περίεργος","πιστός","κυνικός","φιλόδοξος","συμπονετικός",
               "κλειστός","παρορμητικός","υπομονετικός","σαρκαστικός","γενναίος",
@@ -1638,9 +1644,12 @@
 
   function poolLang() { return window.orosLang === "el" ? "el" : "en"; }
 
-  function existingNames() {
+  function existingFirstNames() {
+    // FIRST tokens only — the old full-name comparison could never
+    // match a pool entry ("alma ashwood" ≠ "alma"), so the
+    // duplicate guard was effectively dead.
     return Object.keys(db.characters).map(function (id) {
-      return db.characters[id].name.toLowerCase();
+      return (db.characters[id].name || "").trim().split(/\s+/)[0].toLowerCase();
     });
   }
 
@@ -1652,7 +1661,7 @@
 
   function genName(L) {
     var p = POOLS[L];
-    var first = pickUnused(p.first, existingNames());
+    var first = pickUnused(p.first, existingFirstNames());
     return first + " " + p.last[Math.floor(Math.random() * p.last.length)];
   }
 
@@ -1876,13 +1885,19 @@
     col.appendChild(h4);
     col.appendChild(el("div", "role", c.role || "—"));
 
+    // Valid HTML: dt/dd pairs live inside a <dl>. The old code
+    // dropped them straight into the column — invalid markup AND
+    // the .compare-col dl CSS rule never matched anything.
+    var dl = el("dl");
+
     if (c.bio) {
-      var dt = el("dt", null, t("fld.bio"));
-      var dd = el("dd", null, c.bio.length > 220 ? c.bio.slice(0, 219) + "…" : c.bio);
-      col.appendChild(dt); col.appendChild(dd);
+      dl.appendChild(el("dt", null, t("fld.bio")));
+      dl.appendChild(el("dd", null,
+        c.bio.length > 220 ? c.bio.slice(0, 219) + "…" : c.bio));
     }
     if (c.traits.length) {
-      col.appendChild(el("dt", null, t("fld.traits")));
+      dl.appendChild(el("dt", null, t("fld.traits")));
+      var tray = el("dd");
       c.traits.forEach(function (tr) {
         var bar = el("div", null);
         bar.style.cssText =
@@ -1900,18 +1915,23 @@
         var val = el("span", null, String(tr.str) + "/5");
         val.style.cssText = "font-size:10.5px;color:var(--text-dim);font-weight:700;flex-shrink:0;";
         bar.appendChild(nm); bar.appendChild(track); bar.appendChild(val);
-        col.appendChild(bar);
+        tray.appendChild(bar);
       });
+      dl.appendChild(tray);
     }
     if (c.goals.length) {
-      col.appendChild(el("dt", null, t("fld.goals")));
+      dl.appendChild(el("dt", null, t("fld.goals")));
+      var gwrap = el("dd");
       c.goals.forEach(function (g) {
         var row = el("div", null, (g.done ? "☑ " : "☐ ") + g.text);
         row.style.cssText = "margin:3px 0;font-size:12px;" +
           (g.done ? "text-decoration:line-through;color:var(--text-dim);" : "");
-        col.appendChild(row);
+        gwrap.appendChild(row);
       });
+      dl.appendChild(gwrap);
     }
+    if (dl.childNodes.length) col.appendChild(dl);
+
     if (c.traits.length) {
       var rb = buildRadarBox();
       rb.update(c.traits);
@@ -1981,7 +2001,7 @@
         buf.push("");
       }
       if (c.goals.length) {
-        // BUG #4 FIX: > 0 instead of > 4 — never drop goals silently
+        // Only non-empty goals — blank draft rows never reach the export
         var active = c.goals.filter(function (g) { return g.text.trim(); });
         if (active.length) {
           buf.push("### Goals");
@@ -2042,11 +2062,7 @@
     toast("ok", t("toast.exported"));
   }
 
-  // ---------- Shortcuts (forwarded to parent shell) ----------
-  var SHORTCUT_MAP = {
-    newChar:  "Ctrl+Alt+N",
-    export:   "Ctrl+Alt+E"
-  };
+  // ---------- Shortcuts (local app combos + shell forwarding) ----------
 
   function handleAppShortcut(key) {
     if (key === "newChar") {
@@ -2064,21 +2080,27 @@
   // handler. This app forwards ONLY its own bindings; everything else
   // bubbles up to the parent for the global SC_DEFS table.
   function registerShortcuts() {
+    // Ctrl+Alt+Shift+Letter — iframe key events never bubble to the
+    // shell's document, so Contract Α/Β requires CAPTURE-PHASE
+    // FORWARDING: hand the combo to the parent's SC_DEFS table
+    // first (Info modal, force push/pull, snapshot…). Only if the
+    // shell does NOT match do we keep it — N/E are not in SC_DEFS,
+    // so there is no collision either way.
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+      try {
+        if (window.parent && window.parent.orosShortcuts &&
+            window.parent.orosShortcuts.handle(e)) return;
+      } catch (eFwd) { /* standalone — fall through */ }
       var code = e.code || "";
       if (code.indexOf("Key") !== 0) return;
       var letter = code.charAt(code.length - 1).toUpperCase();
-
       if (letter === "N") {
         e.preventDefault();
         handleAppShortcut("newChar");
-        return;
-      }
-      if (letter === "E") {
+      } else if (letter === "E") {
         e.preventDefault();
         handleAppShortcut("export");
-        return;
       }
     }, true);  // capture phase
 
@@ -2137,18 +2159,28 @@
     inheritPalette();
     watchPalette();
 
-    // 2. Language sync with parent
-    if (window.orosLang) {
-      document.documentElement.lang = window.orosLang;
-    } else {
-      // Standalone mode: read localStorage or default to EN
-      window.orosLang = localStorage.getItem("oros-lang") || "en";
-      document.documentElement.lang = window.orosLang;
+    // 2. Language sync with parent. Same-origin iframe → the
+    // parent's orosLang is reachable directly; localStorage is the
+    // standalone fallback (shared with the shell anyway).
+    if (!window.orosLang) {
+      try {
+        if (window.parent && window.parent.orosLang) {
+          window.orosLang = window.parent.orosLang;
+        }
+      } catch (eParent) { /* cross-origin — next line covers it */ }
     }
+    if (!window.orosLang) window.orosLang = localStorage.getItem("oros-lang") || "en";
+    document.documentElement.lang = window.orosLang;
 
     // 3. Load DB (try legacy migration first)
     var migrated = migrateLegacy();
     db = loadDB();
+    if (migrated) {
+      toast("ok", tf("toast.migrated", {
+        n: Object.keys(db.characters).length +
+           Object.keys(db.rels).length
+      }));
+    }
 
     // 4. Register sync slice
     registerSlice();

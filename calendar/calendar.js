@@ -1,16 +1,22 @@
 // ============================================================
-// orOS Calendar v0.2.0
-// Monthly grid (Monday-first), day selection, event CRUD,
-// labels (color-coded, filterable), start/end times, location.
+// orOS Calendar v0.3.0
+// Views: Month (Monday-first grid), Week, Agenda, search.
+// Event CRUD, labels (color-coded, filterable), start/end times,
+// location, multi-day spans (dateEnd), recurrence, reminders.
 // Data: localStorage "oros-calendar-data"
 //   { ver: 1,
 //     labels:  [ { id, name, color, mtime } ],
 //     events:  [ { id, date: "YYYY-MM-DD",
+//                  dateEnd: "YYYY-MM-DD" | null,  // v0.3: multi-day,
+//                                              // plain events only
 //                  start: "HH:MM" | null, end: "HH:MM" | null,
 //                  title, note, location,
 //                  labelId: string | null, mtime } ],
 //     deleted: [ { id, mtime } ] }
 // v0.1 legacy "time" → "start" at load (zero-loss migration).
+// v0.3 legacy: no "dateEnd" → null = single-day (zero-loss).
+// Multi-day + recurrence is a deliberate non-goal (see §3b notes):
+// combining both opens a combinatorial hole in the occurrence math.
 // id + mtime exist from day one for the Part 5 merge sync.
 // ============================================================
 (function () {
@@ -59,6 +65,12 @@
       "cal.today": "Today",
       "cal.prev": "Previous month",
       "cal.next": "Next month",
+      "cal.export": "Export",
+      "cal.stats": "Stats",
+      "cal.search.ph": "Search events…",
+      "vw.month": "Month",
+      "vw.week": "Week",
+      "vw.agenda": "Agenda",
       "cal.filters.lbl": "Labels",
       "wd": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       "months": ["January", "February", "March", "April", "May", "June",
@@ -70,8 +82,7 @@
       "ev.field.title": "Title",
       "ev.ph.title": "What's happening?",
       "ev.field.when": "Time",
-      "ev.start": "Starts",
-      "ev.end": "Ends",
+      "ev.ph.start": "Start time…",
       "ev.end.none": "No end",
       "ev.allday": "All day",
       "ev.field.loc": "Location",
@@ -87,16 +98,20 @@
       "ev.alltime": "All day",
       "ev.err.title": "Enter a title first",
       "ev.err.time": "End time must be after start time",
+      "ev.err.dateend": "End date must be on or after the start date",
+      "ev.spanHint": "Multi-day event: {b} days total. Saving here moves the start to the selected day.",
       "ev.del.yes": "Delete",
       "del.done": "Event deleted",
       "undo": "Undo",
       "sync.merged": "Updated from sync",
+      "exp.done": "Calendar exported (.ics)",
       "lbl.personal": "Personal",
       "lbl.work": "Work",
       "lbl.family": "Family",
+      "lbl.feed.bday": "Birthdays",
+      "lbl.feed.anniv": "Anniversaries",
       "lbl.manage": "Manage labels",
       "lbl.new": "New label",
-      "lbl.name": "Label name",
       "lbl.ph.name": "Name…",
       "lbl.color": "Color",
       "lbl.done": "Done",
@@ -112,6 +127,8 @@
       "rep.monthly": "Monthly",
       "rep.yearly": "Yearly",
       "ev.field.until": "Until",
+      "ev.field.dateend": "Ends on (day)",
+      "ev.cont": "Day {a} of {b}",
       "ev.field.remind": "Reminder",
       "rem.none": "None",
       "rem.min": "{n} min before",
@@ -121,12 +138,27 @@
       "ser.this": "This occurrence",
       "ser.all": "Entire series",
       "remind.toast": "Reminder",
-      "ev.moved": "Moved"
+      "ev.moved": "Moved",
+      "srch.empty": "No events found",
+      "ag.more": "Show more",
+      "ag.empty": "Nothing scheduled in the next 30 days",
+      "stat.title": "Statistics",
+      "stat.kpi.total": "Events",
+      "stat.kpi.upcoming": "Next 30 days",
+      "stat.kpi.recurring": "Recurring",
+      "stat.byLabel": "Events by label",
+      "stat.perMonth": "{n} events stored"
     },
     el: {
       "cal.today": "Σήμερα",
       "cal.prev": "Προηγούμενος μήνας",
       "cal.next": "Επόμενος μήνας",
+      "cal.export": "Εξαγωγή",
+      "cal.stats": "Στατιστικά",
+      "cal.search.ph": "Αναζήτηση συμβάντων…",
+      "vw.month": "Μήνας",
+      "vw.week": "Εβδομάδα",
+      "vw.agenda": "Ατζέντα",
       "cal.filters.lbl": "Ετικέτες",
       "wd": ["Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ", "Κυρ"],
       "months": ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος",
@@ -139,8 +171,7 @@
       "ev.field.title": "Τίτλος",
       "ev.ph.title": "Τι συμβαίνει;",
       "ev.field.when": "Ώρα",
-      "ev.start": "Έναρξη",
-      "ev.end": "Λήξη",
+      "ev.ph.start": "Ώρα έναρξης…",
       "ev.end.none": "Χωρίς λήξη",
       "ev.allday": "Όλη μέρα",
       "ev.field.loc": "Τοποθεσία",
@@ -156,16 +187,20 @@
       "ev.alltime": "Όλη μέρα",
       "ev.err.title": "Δώσε πρώτα έναν τίτλο",
       "ev.err.time": "Η ώρα λήξης πρέπει να είναι μετά την έναρξη",
+      "ev.err.dateend": "Η ημερομηνία λήξης πρέπει να είναι ίδια ή μετά την έναρξη",
+      "ev.spanHint": "Πολυήμερο συμβάν: {b} μέρες συνολικά. Η αποθήκευση εδώ μεταφέρει την έναρξη στην επιλεγμένη μέρα.",
       "ev.del.yes": "Διαγραφή",
       "del.done": "Το συμβάν διαγράφηκε",
       "undo": "Αναίρεση",
       "sync.merged": "Ενημερώθηκε από συγχρονισμό",
+      "exp.done": "Το ημερολόγιο εξήχθη (.ics)",
       "lbl.personal": "Προσωπικό",
       "lbl.work": "Εργασία",
       "lbl.family": "Οικογένεια",
+      "lbl.feed.bday": "Γενέθλια",
+      "lbl.feed.anniv": "Επέτειοι",
       "lbl.manage": "Διαχείριση ετικετών",
       "lbl.new": "Νέα ετικέτα",
-      "lbl.name": "Όνομα ετικέτας",
       "lbl.ph.name": "Όνομα…",
       "lbl.color": "Χρώμα",
       "lbl.done": "Τέλος",
@@ -181,6 +216,8 @@
       "rep.monthly": "Μηνιαία",
       "rep.yearly": "Ετήσια",
       "ev.field.until": "Έως",
+      "ev.field.dateend": "Λήξη (ημέρα)",
+      "ev.cont": "Ημέρα {a} από {b}",
       "ev.field.remind": "Υπενθύμιση",
       "rem.none": "Καμία",
       "rem.min": "{n} λεπτά πριν",
@@ -190,7 +227,16 @@
       "ser.this": "Αυτή η εμφάνιση",
       "ser.all": "Όλη η σειρά",
       "remind.toast": "Υπενθύμιση",
-      "ev.moved": "Μετακινήθηκε"
+      "ev.moved": "Μετακινήθηκε",
+      "srch.empty": "Κανένα αποτέλεσμα",
+      "ag.more": "Περισσότερα",
+      "ag.empty": "Τίποτα προγραμματισμένο τις επόμενες 30 μέρες",
+      "stat.title": "Στατιστικά",
+      "stat.kpi.total": "Συμβάντα",
+      "stat.kpi.upcoming": "Επόμενες 30 μέρες",
+      "stat.kpi.recurring": "Επαναλαμβανόμενα",
+      "stat.byLabel": "Συμβάντα ανά ετικέτα",
+      "stat.perMonth": "{n} συμβάντα αποθηκευμένα"
     }
   };
   function t(k) {
@@ -255,12 +301,32 @@
   var DATA_KEY = "oros-calendar-data";
   var state = { ver: 1, labels: [], events: [], deleted: [] };
 
+  // Whitelist — the sync-sanitizer contract (deterministic).
+  // Declared HERE (moved up from §3b in v0.3): sanitizeEvent runs
+  // at load and at merge time, so the presets must be initialized
+  // before any sanitizer ever touches an event.
+  var REMIND_PRESETS = [5, 15, 30, 60, 1440, 4320, 7200];
+
   // Fixed label palette — deterministic across devices (stored
   // verbatim inside the synced blob; theme-independent by design).
   var LABEL_PALETTE = [
     "#d4af37", "#a78bfa", "#7aa2f7", "#9ece6a",
     "#e06c75", "#ff9e64", "#4ec9b0", "#f28fb6"
   ];
+
+  // Wave 2.1 — virtual feed labels (Contacts birthdays/anniversaries).
+  // DELIBERATELY not in state.labels: they never travel in the synced
+  // blob, can never be deleted/renamed from the label manager
+  // (renderLblList iterates state.labels only), and carry no mtime.
+  // Display-only constants; the name is painted via i18n at render time.
+  // Colors come from LABEL_PALETTE so they match the design system.
+  var FEED_LABELS = [
+    { id: "lbl-feed-bday",  color: "#9ece6a" },   // green (reserved)
+    { id: "lbl-feed-anniv", color: "#f28fb6" }
+  ];
+  function feedLabelName(l) {
+    return t(l.id === "lbl-feed-bday" ? "lbl.feed.bday" : "lbl.feed.anniv");
+  }
 
   // Seeds for fresh installs (mtime 0 → any user edit wins the merge
   // everywhere; identical bytes on every device — no Date.now() here).
@@ -310,6 +376,9 @@
     for (var i = 0; i < state.labels.length; i++) {
       if (state.labels[i].id === id) return state.labels[i];
     }
+    for (var f = 0; f < FEED_LABELS.length; f++) {
+      if (FEED_LABELS[f].id === id) return FEED_LABELS[f];
+    }
     return null;
   }
   function labelColor(labelId) {
@@ -332,15 +401,24 @@
     if (typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start)) start = e.start;
     else if (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time)) start = e.time;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
-    if (start && end && end < start) end = null;   // corrupted range → no end
-    if (start && end && end < start) end = null;   // corrupted range → no end
+    // Audit #2 fix: this range guard existed TWICE — one dead no-op
+    // removed. Corrupted range → no end.
+    if (start && end && end < start) end = null;
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
     var remindMin = (typeof e.remindMin === "number" &&
                      REMIND_PRESETS.indexOf(e.remindMin) !== -1)
       ? e.remindMin : null;
+    // v0.3 multi-day: dateEnd is legal ONLY on plain (non-recurring)
+    // events, and only when it lands on/after the anchor. A stray
+    // value on a series or before the anchor is dropped, never fatal.
+    var dateEnd = null;
+    if (typeof e.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.dateEnd)) {
+      if (!validRecur(e.recur) && e.dateEnd >= e.date) dateEnd = e.dateEnd;
+    }
     return {
       id: e.id,
       date: e.date,
+      dateEnd: dateEnd,
       start: start,
       end: end,
       title: (typeof e.title === "string" ? e.title : "").slice(0, 80),
@@ -375,12 +453,14 @@
       if (d && Array.isArray(d.deleted)) {
         state.deleted = d.deleted.map(sanitizeTomb).filter(Boolean);
       }
-      // v0.1 blobs have no "labels" → seed once (never overwritten
-      // afterwards; user edits carry a fresh mtime).
+      // Seed ΜΟΝΟ όταν λείπει το κλειδί "labels" (φρέσκια
+      // εγκατάσταση / v0.1 blob). Άδειο-but-παρόν array = ο χρήστης
+      // τα σβήσε όλα — το σεβόμαστε, δεν τα φυτεύουμε ξανά.
       if (d && Array.isArray(d.labels)) {
         state.labels = d.labels.map(sanitizeLabel).filter(Boolean);
+      } else {
+        state.labels = defaultLabels();
       }
-      if (!state.labels.length) state.labels = defaultLabels();
     } catch (e) {
       if (!state.labels.length) state.labels = defaultLabels();
     }
@@ -483,7 +563,6 @@
       input.value = value;
       input.classList.remove("invalid");
       close();
-      input.dispatchEvent(new CustomEvent("tp-commit", { bubbles: false }));
     }
 
     input.addEventListener("focus", open);
@@ -535,7 +614,7 @@
     };
   }
 
-  /* ---------- 2c. Rollup holders (wired in Part 2) ---------- */
+  /* ---------- 2c. Rollup holders (wired at boot) ---------- */
   var tpStart = null, tpEnd = null;
 
   /* ---------- 3. Date helpers + label visibility ---------- */
@@ -543,6 +622,17 @@
   function todayYMD() {
     var n = new Date();
     return ymd(n.getFullYear(), n.getMonth(), n.getDate());
+  }
+  // Both operate on "YYYY-MM-DD" strings only (local timezone math).
+  function dparse(s) {
+    var p = s.split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+  }
+  function dAdd(s, n) {
+    var p = s.split("-");
+    var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+    dt.setDate(dt.getDate() + n);
+    return ymd(dt.getFullYear(), dt.getMonth(), dt.getDate());
   }
 
   // Label visibility: id -> true/false. Absent = visible. Chips row
@@ -553,16 +643,16 @@
     return labelVis[labelId] !== false;
   }
 
-  /* ---------- 3b. Recurrence engine (Wave 3) ----------
+  /* ---------- 3b. Recurrence + multi-day engine ----------
      Masters stored in state.events with "recur". Occurrences are
      COMPUTED here — never stored. Algorithm mirrors shell.js
      calRemEachOccurrence 1:1 (sticky-clamp contract: Jan 31 →
      Feb 28 → Mar 31; D/W step days; interval 2 = bi-weekly;
      exdates skipped; "until" stops the walk). The reminder engine
-     and this expansion MUST never disagree. */
-
-  // Whitelist — also the sync-sanitizer contract (deterministic).
-  var REMIND_PRESETS = [5, 15, 30, 60, 1440, 4320, 7200];
+     and this expansion MUST never disagree.
+     MULTI-DAY (v0.3): plain events may span date → dateEnd. Spans
+     and recurrence are mutually exclusive BY SANITIZER (see §2) —
+     one engine per shape keeps occurrencesOn provable. */
 
   function validRecur(r) {
     return !!(r && typeof r === "object" &&
@@ -621,7 +711,6 @@
     for (var step = 0; step < MAX_STEPS; step++) {
       var occYmd = ymd(y, m, d);
       if (until && occYmd > until) return;
-      if (!occYmd) return;   // corruption guard: stop if ymd() fails
       if (!exSet[occYmd]) {
         if (cb(occYmd) === false) return;
       }
@@ -645,17 +734,34 @@
     }
   }
 
+  // The single truth of "does e occupy dateStr":
+  //   - series: computed occurrences (exdates respected)
+  //   - plain:  anchor day, or the whole date → dateEnd span
   function occursOn(e, dateStr) {
-    if (!validRecur(e.recur)) return e.date === dateStr;
-    if (e.recur.until && dateStr > e.recur.until) return false;
-    var found = false;
-    eachOccurrence(e, function (occYmd) {
-      if (occYmd >= dateStr) {          // ascending walk: past the
-        found = (occYmd === dateStr);   // target → answer is final
-        return false;
-      }
-    });
-    return found;
+    if (validRecur(e.recur)) {
+      if (e.recur.until && dateStr > e.recur.until) return false;
+      var found = false;
+      eachOccurrence(e, function (occYmd) {
+        if (occYmd >= dateStr) {          // ascending walk: past the
+          found = (occYmd === dateStr);   // target → answer is final
+          return false;
+        }
+      });
+      return found;
+    }
+    if (e.date > dateStr) return false;
+    return dateStr <= (e.dateEnd || e.date);
+  }
+
+  // Multi-day span info: null on single-day events, otherwise
+  // { days: total, idx: 1-based position of dateStr inside }.
+  // Guards against span-crossing corruption (idx < 1 / > days).
+  function spanInfo(e, dateStr) {
+    if (validRecur(e.recur) || !e.dateEnd || e.dateEnd === e.date) return null;
+    var days = Math.round((dparse(e.dateEnd) - dparse(e.date)) / 86400000) + 1;
+    var idx = Math.round((dparse(dateStr) - dparse(e.date)) / 86400000) + 1;
+    if (days < 1 || idx < 1 || idx > days) return null;
+    return { days: days, idx: idx };
   }
 
   function recurDesc(e) {
@@ -682,9 +788,25 @@
     });
   }
 
-  /* ---------- 4. Month grid ---------- */
+  // Wave 2.1 — click-through: a contact feed row → the Contacts app.
+  // The shell owns the deep link (live iframe push or sessionStorage
+  // staging + app open). Standalone load (no parent shell): ignored.
+  function openContactFromFeed(ev) {
+    if (!ev._contactId) return;
+    try {
+      if (window.parent && typeof window.parent.__orosOpenContact === "function") {
+        window.parent.__orosOpenContact(ev._contactId);
+      }
+    } catch (e) {}
+  }
+  
+    /* ---------- 4. View system + month grid ---------- */
   var viewYear, viewMonth;          // month currently displayed
   var selDate = null;               // "YYYY-MM-DD" or null
+  var curView = "month";            // "month" | "week" | "agenda"
+  var weekAnchor = null;            // Monday (YMD) of the shown week
+  var searchQ = "";                 // non-empty → results overlay
+  var AGENDA_STEP = 30;             // days per "show more" chunk
 
   function renderWeekdays() {
     var wd = $("cal-wd");
@@ -697,9 +819,28 @@
     }
   }
 
+  // Monday (YMD) of the week containing the given date.
+  function mondayOf(dateStr) {
+    var p = dateStr.split("-");
+    var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+    var lead = (dt.getDay() + 6) % 7;
+    dt.setDate(dt.getDate() - lead);
+    return ymd(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  }
+
   function renderTitle() {
-    var m = t("months")[viewMonth];
-    $("cal-title").textContent = m + " " + viewYear;
+    var el = $("cal-title");
+    if (curView === "agenda") { el.textContent = t("vw.agenda"); return; }
+    if (curView === "week") {
+      var m = t("months");
+      var a = weekAnchor.split("-");
+      var b = dAdd(weekAnchor, 6).split("-");
+      var s1 = (+a[2]) + " " + m[+a[1] - 1].slice(0, 3);
+      var s2 = (+b[2]) + " " + m[+b[1] - 1].slice(0, 3) + " " + b[0];
+      el.textContent = s1 + " – " + s2;
+      return;
+    }
+    el.textContent = t("months")[viewMonth] + " " + viewYear;
   }
 
   function renderGrid() {
@@ -787,7 +928,266 @@
     }
   }
 
-  /* ---------- 4b. Label filter chips ---------- */
+  /* ---------- 4b. Week view ---------- */
+  function renderWeek() {
+    var grid = $("week-grid");
+    grid.textContent = "";
+    var today = todayYMD();
+
+    for (var i = 0; i < 7; i++) {
+      var dayYmd = dAdd(weekAnchor, i);
+      var p = dayYmd.split("-");
+
+      // A11y fix: div + role="button" — the day column CONTAINS
+      // .wk-ev buttons, so it must not itself be a button.
+      var col = document.createElement("div");
+      col.setAttribute("role", "button");
+      col.tabIndex = 0;
+      col.className = "wk-col" +
+        (dayYmd === today ? " today" : "") +
+        (selDate === dayYmd ? " sel" : "");
+
+      var head = document.createElement("div");
+      head.className = "wk-head";
+      var dn = document.createElement("span");
+      dn.className = "wk-dnum";
+      dn.textContent = t("wd")[i] + " " + (+p[2]);
+      head.appendChild(dn);
+      col.appendChild(head);
+
+      var body = document.createElement("div");
+      body.className = "wk-body";
+      var dayEvents = eventsOn(dayYmd);
+      if (!dayEvents.length) {
+        var em = document.createElement("div");
+        em.className = "wk-empty";
+        em.textContent = "—";
+        body.appendChild(em);
+      }
+      dayEvents.forEach(function (e) {
+        var sp = spanInfo(e, dayYmd);
+        var ev = document.createElement("button");
+        ev.type = "button";
+        ev.className = "wk-ev";
+        ev.style.borderLeftColor = labelColor(e.labelId);
+        if (e.start) {
+          var tm = document.createElement("span");
+          tm.className = "wk-ev-time";
+          tm.textContent = e.start;
+          ev.appendChild(tm);
+        }
+        ev.appendChild(document.createTextNode(
+          (sp && sp.idx > 1 ? "…" : "") +
+          (e.title || t("ev.untitled")) +
+          (sp ? " (" + sp.idx + "/" + sp.days + ")" : "") +
+          (validRecur(e.recur) ? " ↻" : "")));
+        (function (ee) {
+          ev.addEventListener("click", function (evt) {
+            evt.stopPropagation();
+            if (ee._feed) { openContactFromFeed(ee); return; }
+            if (validRecur(ee.recur)) showSerChooser(ee, dayYmd);
+            else openDlg(ee);
+          });
+        })(e);
+        body.appendChild(ev);
+      });
+      col.appendChild(body);
+
+      (function (cd) {
+        col.addEventListener("click", function () { selectDay(cd); });
+        col.addEventListener("keydown", function (ke) {
+          if (ke.key === "Enter" || ke.key === " ") {
+            ke.preventDefault();
+            selectDay(cd);
+          }
+        });
+      })(dayYmd);
+
+      grid.appendChild(col);
+    }
+  }
+
+  /* ---------- 4c. Agenda view + search results ---------- */
+  var agendaStart = null, agendaLimitDays = AGENDA_STEP;
+
+  function renderAgenda() {
+    var ul = $("agenda-list");
+    ul.textContent = "";
+    if (!agendaStart) agendaStart = todayYMD();
+    var today = todayYMD();
+
+    var shown = 0;
+    for (var i = 0; i < agendaLimitDays; i++) {
+      var dayYmd = dAdd(agendaStart, i);
+      var dayEvents = eventsOn(dayYmd);
+      if (!dayEvents.length) continue;
+
+      var li = document.createElement("li");
+      li.className = "ag-day" + (dayYmd === today ? " ag-today" : "");
+
+      var head = document.createElement("div");
+      head.className = "ag-day-head";
+      var nm = document.createElement("span");
+      nm.className = "ag-day-name";
+      var p = dayYmd.split("-");
+      var d = new Date(+p[0], +p[1] - 1, +p[2]);
+      nm.textContent = t("wd")[(d.getDay() + 6) % 7] + " " +
+        (+p[2]) + " " + t("months")[+p[1] - 1];
+      var cnt = document.createElement("span");
+      cnt.className = "ag-count";
+      cnt.textContent = String(dayEvents.length);
+      head.appendChild(nm);
+      head.appendChild(cnt);
+      li.appendChild(head);
+
+      dayEvents.forEach(function (e) {
+        li.appendChild(buildEvRow(e, dayYmd));
+      });
+      ul.appendChild(li);
+      shown++;
+    }
+
+    if (!shown) {
+      var emp = document.createElement("li");
+      emp.className = "empty";
+      emp.textContent = t("ag.empty");
+      ul.appendChild(emp);
+    }
+    // Το κουμπί εμφανίζεται μόνο όταν το τρέχον παράθυρο είχε
+    // περιεχόμενο — δίπλα σε μήνυμα κενού δεν προφέρουμε paginator.
+    if (shown) {
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "mini ag-more";
+      more.textContent = t("ag.more");
+      more.addEventListener("click", function () {
+        agendaLimitDays += AGENDA_STEP;
+        renderAgenda();
+      });
+      ul.appendChild(more);
+    }
+  }
+
+  function renderSearch() {
+    var ul = $("search-results");
+    ul.textContent = "";
+    var q = searchQ.trim().toLowerCase();
+    if (!q) return;
+
+    var hits = state.events.filter(function (e) {
+      return labelVisible(e.labelId) &&
+        ((e.title || "").toLowerCase().indexOf(q) !== -1 ||
+         (e.note || "").toLowerCase().indexOf(q) !== -1 ||
+         (e.location || "").toLowerCase().indexOf(q) !== -1);
+    }).sort(function (a, b) {
+      return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0);
+    });
+
+    if (!hits.length) {
+      var emp = document.createElement("li");
+      emp.className = "res-empty";
+      emp.textContent = t("srch.empty");
+      ul.appendChild(emp);
+      return;
+    }
+    hits.forEach(function (e) {
+      var li = document.createElement("li");
+      li.className = "res-row";
+      var dt = document.createElement("span");
+      dt.className = "res-date";
+      var p = e.date.split("-");
+      dt.textContent = (+p[2]) + " " + t("months")[+p[1] - 1].slice(0, 3) + " " + p[0] +
+        (e.dateEnd ? " –" : "");
+      var ti = document.createElement("span");
+      ti.className = "res-title";
+      ti.textContent = (e.title || t("ev.untitled")) +
+        (validRecur(e.recur) ? " ↻" : "");
+      li.appendChild(dt);
+      li.appendChild(ti);
+      li.addEventListener("click", function () {
+        // jump: clear search, show that month, select the day
+        setSearch("");
+        var pd = e.date.split("-");
+        viewYear = +pd[0];
+        viewMonth = +pd[1] - 1;
+        if (curView === "week") {
+          weekAnchor = mondayOf(e.date);
+        } else if (curView === "agenda") {
+          // Agenda: τραβάμε το παράθυρο πίσω ώστε η εβδομάδα του
+          // συμβάντος να οδηγεί τη λίστα.
+          agendaStart = mondayOf(e.date);
+          agendaLimitDays = AGENDA_STEP;
+        }
+        selectDay(e.date);
+        var sec = document.querySelector(".sec");
+        if (sec) sec.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+      ul.appendChild(li);
+    });
+  }
+
+  function setSearch(q) {
+    searchQ = q;
+    renderAll();
+  }
+
+  /* ---------- Pane switching — ONE place decides visibility ---------- */
+  function syncPanes() {
+    var searching = searchQ.trim().length > 0;
+    var month = curView === "month" && !searching;
+    var week = curView === "week" && !searching;
+    var agenda = curView === "agenda" && !searching;
+    $("cal-wd").hidden = !month;
+    $("cal-grid").hidden = !month;
+    $("week-grid").hidden = !week;
+    $("agenda-list").hidden = !agenda;
+    $("search-results").hidden = !searching;
+  }
+
+  function setView(v) {
+    curView = v;
+    ["month", "week", "agenda"].forEach(function (k) {
+      var b = $("vw-" + k);
+      if (b) b.classList.toggle("active", k === v);
+    });
+    if (v === "week") {
+      weekAnchor = mondayOf(selDate || todayYMD());
+    }
+    if (v === "agenda") { agendaStart = todayYMD(); agendaLimitDays = AGENDA_STEP; }
+    renderAll();
+  }
+
+  function renderAll() {
+    renderTitle();
+    syncPanes();
+    var searching = searchQ.trim().length > 0;
+    if (searching) { renderSearch(); return; }
+    if (curView === "month") { renderWeekdays(); renderGrid(); }
+    else if (curView === "week") { renderWeek(); }
+    else if (curView === "agenda") { renderAgenda(); }
+  }
+
+  // View switcher + search wiring (guarded — stale HTML cannot crash)
+  ["month", "week", "agenda"].forEach(function (k) {
+    var b = $("vw-" + k);
+    if (b) b.addEventListener("click", function () { setSearch(""); setView(k); });
+  });
+  if ($("search-in")) {
+    $("search-in").addEventListener("input", function () {
+      setSearch(this.value);
+    });
+    // Esc inside the field clears the search too (the global
+    // keydown handler skips INPUT targets — special case here)
+    $("search-in").addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && searchQ) {
+        e.preventDefault();
+        this.value = "";
+        setSearch("");
+      }
+    });
+  }
+
+  /* ---------- 4d. Label filter chips ---------- */
   function renderChips() {
     var row = $("lbl-chips");
     row.textContent = "";
@@ -795,7 +1195,6 @@
       var c = document.createElement("button");
       c.type = "button";
       c.className = "chip" + (labelVisible(l.id) ? "" : " off");
-      c.style.setProperty("--chip", l.color);
       var dot = document.createElement("span");
       dot.className = "chip-dot";
       dot.style.background = l.color;
@@ -804,10 +1203,27 @@
       c.addEventListener("click", function () {
         labelVis[l.id] = !labelVisible(l.id);
         renderChips();
-        renderGrid();
+        renderAll();
         renderDay();
       });
       row.appendChild(c);
+    });
+    FEED_LABELS.forEach(function (fl) {
+      var fc = document.createElement("button");
+      fc.type = "button";
+      fc.className = "chip" + (labelVisible(fl.id) ? "" : " off");
+      var fdot = document.createElement("span");
+      fdot.className = "chip-dot";
+      fdot.style.background = fl.color;
+      fc.appendChild(fdot);
+      fc.appendChild(document.createTextNode(feedLabelName(fl)));
+      fc.addEventListener("click", function () {
+        labelVis[fl.id] = !labelVisible(fl.id);
+        renderChips();
+        renderAll();
+        renderDay();
+      });
+      row.appendChild(fc);
     });
     var mg = document.createElement("button");
     mg.type = "button";
@@ -820,13 +1236,104 @@
   /* ---------- 5. Day section ---------- */
   function selectDay(dateStr) {
     selDate = dateStr;
-    renderGrid();
+    renderAll();
     renderDay();
   }
 
   function timeSpan(e) {
     if (e.start === null) return t("ev.alltime");
     return e.start + (e.end ? " – " + e.end : "");
+  }
+
+  // Shared row builder — day list AND agenda use the exact same
+  // markup + interactions (chooser logic included), so a click
+  // behaves identically everywhere.
+  function buildEvRow(e, dayYmd) {
+    var li = document.createElement("li");
+    li.className = "ev-row";
+
+    var time = document.createElement("span");
+    time.className = "ev-time";
+    time.textContent = timeSpan(e);
+
+    var main = document.createElement("div");
+    main.className = "ev-main";
+    var title = document.createElement("div");
+    title.className = "ev-title";
+    var titleTxt = document.createElement("span");
+    titleTxt.className = "ev-title-text";
+    titleTxt.textContent = e.title || t("ev.untitled");
+    title.appendChild(titleTxt);
+    if (validRecur(e.recur)) {
+      var rp = document.createElement("span");
+      rp.className = "ev-repeat";
+      rp.title = recurDesc(e);
+      rp.textContent = "↻";
+      title.appendChild(rp);
+    }
+
+    var lb = e.labelId ? labelById(e.labelId) : null;
+    if (lb) {
+      var tag = document.createElement("span");
+      tag.className = "ev-label";
+      tag.style.background = lb.color;
+      tag.textContent = (lb.name !== undefined) ? lb.name : feedLabelName(lb);
+      title.appendChild(tag);
+    }
+    main.appendChild(title);
+
+    var sp = spanInfo(e, dayYmd);
+    if (sp) {
+      var cont = document.createElement("div");
+      cont.className = "ev-cont";
+      cont.textContent = t("ev.cont")
+        .replace("{a}", String(sp.idx))
+        .replace("{b}", String(sp.days));
+      main.appendChild(cont);
+    }
+    if (e.location) {
+      var loc = document.createElement("div");
+      loc.className = "ev-note ev-loc";
+      loc.textContent = "▸ " + e.location;
+      main.appendChild(loc);
+    }
+    if (e.note) {
+      var note = document.createElement("div");
+      note.className = "ev-note";
+      note.textContent = e.note;
+      main.appendChild(note);
+    }
+    li.appendChild(time);
+    li.appendChild(main);
+    (function (ev) {
+      li.addEventListener("click", function () {
+        // Wave 2.1: contact feed rows are read-only — one click
+        // deep-links to the Contacts app, never the event dialog.
+        if (ev._feed) { openContactFromFeed(ev); return; }
+        // Series occurrence → chooser first (this occurrence vs
+        // the whole series). Saved overrides are plain events.
+        if (validRecur(ev.recur)) showSerChooser(ev, dayYmd);
+        else openDlg(ev);
+      });
+      // Wave 3 drag & drop (desktop): plain, SINGLE-day events +
+      // overrides only. Series anchors and multi-day spans are
+      // NOT draggable — moving a span by a mouse gesture would
+      // silently redefine its duration.
+      if (!ev._feed && !validRecur(ev.recur) && !ev.dateEnd) {
+        li.draggable = true;
+        li.addEventListener("dragstart", function (de) {
+          try {
+            de.dataTransfer.setData("text/plain", "cal-ev:" + ev.id);
+            de.dataTransfer.effectAllowed = "move";
+          } catch (e2) {}
+          li.classList.add("dragging");
+        });
+        li.addEventListener("dragend", function () {
+          li.classList.remove("dragging");
+        });
+      }
+    })(e);
+    return li;
   }
 
   function renderDay() {
@@ -852,110 +1359,60 @@
       ul.appendChild(li0);
       return;
     }
-    list.forEach(function (e) {
-      var li = document.createElement("li");
-      li.className = "ev-row";
-
-      var time = document.createElement("span");
-      time.className = "ev-time";
-      time.textContent = timeSpan(e);
-
-      var main = document.createElement("div");
-      main.className = "ev-main";
-      var title = document.createElement("div");
-      title.className = "ev-title";
-      var titleTxt = document.createElement("span");
-      titleTxt.className = "ev-title-text";
-      titleTxt.textContent = e.title || t("ev.untitled");
-      title.appendChild(titleTxt);
-      if (validRecur(e.recur)) {
-        var rp = document.createElement("span");
-        rp.className = "ev-repeat";
-        rp.title = recurDesc(e);
-        rp.textContent = "↻";
-        title.appendChild(rp);
-      }
-
-      var lb = e.labelId ? labelById(e.labelId) : null;
-      if (lb) {
-        var tag = document.createElement("span");
-        tag.className = "ev-label";
-        tag.style.background = lb.color;
-        tag.textContent = lb.name;
-        title.appendChild(tag);
-      }
-      main.appendChild(title);
-
-      if (e.location) {
-        var loc = document.createElement("div");
-        loc.className = "ev-note ev-loc";
-        loc.textContent = "▸ " + e.location;
-        main.appendChild(loc);
-      }
-      if (e.note) {
-        var note = document.createElement("div");
-        note.className = "ev-note";
-        note.textContent = e.note;
-        main.appendChild(note);
-      }
-      li.appendChild(time);
-      li.appendChild(main);
-      (function (ev) {
-        li.addEventListener("click", function () {
-          // Series occurrence → chooser first (this occurrence vs
-          // the whole series). Saved overrides are plain events.
-          if (validRecur(ev.recur)) showSerChooser(ev, selDate);
-          else openDlg(ev);
-        });
-        // Wave 3 drag & drop (desktop): plain events + overrides
-        // only. Series occurrences are NOT draggable — the anchor
-        // belongs to the recurrence math, not to a mouse gesture.
-        if (!validRecur(ev.recur)) {
-          li.draggable = true;
-          li.addEventListener("dragstart", function (de) {
-            try {
-              de.dataTransfer.setData("text/plain", "cal-ev:" + ev.id);
-              de.dataTransfer.effectAllowed = "move";
-            } catch (e2) {}
-            li.classList.add("dragging");
-          });
-          li.addEventListener("dragend", function () {
-            li.classList.remove("dragging");
-          });
-        }
-      })(e);
-      ul.appendChild(li);
-    });
+    list.forEach(function (e) { ul.appendChild(buildEvRow(e, selDate)); });
   }
-
-  /* ---------- 6. Navigation ---------- */
+  
+    /* ---------- 6. Navigation (view-aware) ---------- */
   // Selection follows the viewed month: the day panel always shows
   // a date that is actually on screen (Add targets the visible day).
-  function followView() {
-    if (!selDate) return;
-    var p = selDate.split("-");
-    if (+p[0] === viewYear && (+p[1] - 1) === viewMonth) return;
-    selectDay(ymd(viewYear, viewMonth, 1));
-  }
-  $("cal-prev").addEventListener("click", function () {
-    viewMonth--;
+  function navStep(dir) {
+    if (curView === "week") {
+      weekAnchor = dAdd(weekAnchor, dir * 7);
+      // Η επιλογή ταξιδεύει στην ΙΔΙΑ μέρα της εβδομάδας (shift 7
+      // ημερών). Το clamp την κρατά πάντα μέσα στην ορατή εβδομάδα.
+      var newSel = selDate ? dAdd(selDate, dir * 7) : weekAnchor;
+      if (newSel < weekAnchor) newSel = weekAnchor;
+      if (newSel > dAdd(weekAnchor, 6)) newSel = dAdd(weekAnchor, 6);
+      selectDay(newSel);   // single paint
+      return;
+    }
+    if (curView === "agenda") {
+      agendaStart = dAdd(agendaStart || todayYMD(), dir * AGENDA_STEP);
+      agendaLimitDays = AGENDA_STEP;
+      renderAll();
+      return;
+    }
+    // month
+    viewMonth += dir;
     if (viewMonth < 0) { viewMonth = 11; viewYear--; }
-    renderTitle();
-    renderGrid();
-    followView();
-  });
-  $("cal-next").addEventListener("click", function () {
-    viewMonth++;
     if (viewMonth > 11) { viewMonth = 0; viewYear++; }
-    renderTitle();
-    renderGrid();
     followView();
-  });
+  }
+  // Ακριβώς ΕΝΑ paint ανά πλοήγηση: αν η επιλογή μετακινείται,
+  // το selectDay ζωγραφίζει· αλλιώς ζωγραφίζει εδώ.
+  function followView() {
+    if (selDate) {
+      var p = selDate.split("-");
+      if (+p[0] === viewYear && (+p[1] - 1) === viewMonth) {
+        renderAll(); renderDay();
+        return;
+      }
+      selectDay(ymd(viewYear, viewMonth, 1));   // paints internally
+      return;
+    }
+    renderAll(); renderDay();
+  }
+  $("cal-prev").addEventListener("click", function () { navStep(-1); });
+  $("cal-next").addEventListener("click", function () { navStep(1); });
   $("cal-today").addEventListener("click", function () {
     var n = new Date();
     viewYear = n.getFullYear();
     viewMonth = n.getMonth();
-    renderTitle();
+    agendaStart = todayYMD();
+    agendaLimitDays = AGENDA_STEP;
+    weekAnchor = mondayOf(todayYMD());
+    $("search-in").value = "";
+    searchQ = "";              // σιωπηλά — το selectDay κάνει το ΜΟΝΟ repaint
     selectDay(todayYMD());
   });
 
@@ -966,7 +1423,7 @@
   // committed on Save (unlike the month-view chips which filter).
   var dlgLabelId = null;
 
-  /* ---------- 7c. Wave 3 dialog state + series helpers ---------- */
+  /* ---------- 7c. Dialog state + series helpers ---------- */
   // dlgMode: null = plain event / new, "master" = editing the whole
   // series, "occ" = editing ONE occurrence (override on save).
   // pendingOverride carries master id + occurrence date across
@@ -984,6 +1441,17 @@
     var untilRaw = $("ev-until") ? $("ev-until").value : "";
     if (/^\d{4}-\d{2}-\d{2}$/.test(untilRaw)) r.until = untilRaw;
     return sanitizeRecur(r);
+  }
+
+  // Multi-day end date: valid only when Repeat = None. An empty
+  // or equal-to-anchor value = plain single-day event.
+  function dlgReadDateEnd() {
+    var row = $("ev-dateend-row");
+    var inp = $("ev-date-end");
+    if (!row || !inp || !inp.value) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(inp.value)) return null;
+    if (row.className.indexOf("show") === -1) return null;   // hidden → stale
+    return inp.value;
   }
 
   function dlgReadRemind() {
@@ -1072,8 +1540,16 @@
   }
   if ($("ev-repeat")) {
     $("ev-repeat").addEventListener("change", function () {
-      var row = $("ev-until-row");
-      if (row) row.className = "dlg-row" + (this.value ? " show" : "");
+      var uRow = $("ev-until-row");
+      if (uRow) uRow.className = "dlg-row" + (this.value ? " show" : "");
+      // Multi-day end is the OPPOSITE face: visible only on
+      // Repeat = None (a series defines its own boundary via Until).
+      var deRow = $("ev-dateend-row");
+      if (deRow) deRow.className = "dlg-row" + (this.value ? "" : " show");
+      var sh = $("ev-spanhint");
+      // Series → κρυφό. Επιστροφή σε None → ξαναδείχνεται, αλλά
+      // ΜΟΝΟ αν το openDlg γέμισε πραγματικά το κείμενο.
+      if (sh) sh.hidden = !!this.value || !sh.textContent;
     });
   }
 
@@ -1124,6 +1600,27 @@
       if (uIn) uIn.value = (rv && r.until) ? r.until : "";
       var uRow = $("ev-until-row");
       if (uRow) uRow.className = "dlg-row" + (rv ? " show" : "");
+      var deRow = $("ev-dateend-row");
+      var deIn = $("ev-date-end");
+      if (deRow && deIn) {
+        // Multi-day: prefilled from the event, offered only on
+        // plain events (a series never carries a dateEnd).
+        var hasEnd = (existing && existing.dateEnd && !rv) ? existing.dateEnd : "";
+        deIn.value = hasEnd;
+        deRow.className = "dlg-row" + (rv ? "" : " show");
+      }
+    }
+    // Span hint (v0.3.1): editing an EXISTING multi-day event →
+    // warn that Save re-anchors the start to the selected day.
+    var sh = $("ev-spanhint");
+    if (sh) {
+      var bDays = (existing && existing.dateEnd && !rv)
+        ? Math.round((dparse(existing.dateEnd) - dparse(existing.date)) / 86400000) + 1
+        : 0;
+      sh.textContent = bDays
+        ? t("ev.spanHint").replace("{b}", String(bDays))
+        : "";
+      sh.hidden = !bDays;
     }
     // Reminder: prefilled from the event (occurrence inherits master's).
     var remSel = $("ev-remind");
@@ -1174,9 +1671,26 @@
       setTimeout(function () { $("ev-end").classList.remove("invalid"); }, 1600);
       return;
     }
+
+    var recur = dlgReadRecur();
+    var dateEnd = null;
+    if (!recur) {
+      dateEnd = dlgReadDateEnd();
+      // Validation: end day must be on/after the anchor. The anchor
+      // for edits of plain events is the SELECTED day (date follows
+      // selDate below); for new events it IS selDate — same thing.
+      if (dateEnd && dateEnd < selDate) {
+        var deIn = $("ev-date-end");
+        deIn.classList.add("invalid");
+        deIn.focus();
+        toast(t("ev.err.dateend"));
+        setTimeout(function () { deIn.classList.remove("invalid"); }, 1600);
+        return;
+      }
+    }
+
     var location = $("ev-location").value.trim().slice(0, 150);
     var note = $("ev-note").value.trim().slice(0, 500);
-    var recur = dlgReadRecur();
     var remindMin = dlgReadRemind();
 
     // "until" sanity: an end date at/before the anchor date would
@@ -1199,6 +1713,7 @@
       state.events.push({
         id: uid(),
         date: pendingOverride.occYmd,
+        dateEnd: dateEnd,
         start: start,
         end: end,
         title: title,
@@ -1213,8 +1728,7 @@
       dlgMode = null;
       saveState();
       $("ev-dlg").close();
-      renderChips();
-      renderGrid();
+      renderAll();
       renderDay();
       return;
     }
@@ -1233,6 +1747,9 @@
           state.events[i].note = note;
           state.events[i].labelId = dlgLabelId;
           if (!isSeries) state.events[i].date = selDate;
+          // Plain edit: a cleared dateEnd = single-day again;
+          // series edit can never set one (recur dominates).
+          state.events[i].dateEnd = isSeries ? null : dateEnd;
           state.events[i].recur = recur;
           state.events[i].remindMin = remindMin;
           state.events[i].mtime = Date.now();
@@ -1246,6 +1763,7 @@
         state.events.push({
           id: editingId,
           date: selDate,
+          dateEnd: dateEnd,
           start: start,
           end: end,
           title: title,
@@ -1265,6 +1783,7 @@
       state.events.push({
         id: uid(),
         date: selDate,
+        dateEnd: dateEnd,
         start: start,
         end: end,
         title: title,
@@ -1285,8 +1804,7 @@
     }
     saveState();
     $("ev-dlg").close();
-    renderChips();
-    renderGrid();
+    renderAll();
     renderDay();
   });
 
@@ -1344,7 +1862,7 @@
       editingId = null;
       $("del-dlg").close();
       $("ev-dlg").close();
-      renderGrid();
+      renderAll();
       renderDay();
       toast(t("del.done"), t("undo"), undoExdate);
       return;
@@ -1361,7 +1879,7 @@
     editingId = null;   // clear dangling state
     $("del-dlg").close();
     $("ev-dlg").close();
-    renderGrid();
+    renderAll();
     renderDay();
     if (lastDeleted) toast(t("del.done"), t("undo"), undoDelete);
   });
@@ -1384,7 +1902,7 @@
     });
     lastDeleted = null;
     saveState();
-    renderGrid();
+    renderAll();
     renderDay();
   }
 
@@ -1404,12 +1922,12 @@
     }
     lastExdate = null;
     saveState();
-    renderGrid();
+    renderAll();
     renderDay();
   }
 
   /* ---------- 7d. Drag & drop move + undo (Wave 3) ---------- */
-  // Plain events + overrides only (see renderDay dragstart note).
+  // Plain SINGLE-DAY events + overrides only (see buildEvRow note).
   // A move = date change + fresh mtime → travels via sync merge.
   // Undo restores the old date with ANOTHER fresh mtime (beats
   // everything, same resurrection contract as undoDelete).
@@ -1420,16 +1938,14 @@
     for (var i = 0; i < state.events.length; i++) {
       if (state.events[i].id === id) { ev = state.events[i]; break; }
     }
-    if (!ev || validRecur(ev.recur)) return;   // defensive: series never moves by drag
+    if (!ev || validRecur(ev.recur) || ev.dateEnd) return;   // defensive: spans/series never move by drag
     if (ev.date === targetYmd) { selectDay(targetYmd); return; }   // no-op drop on self
 
     lastMoved = { id: id, fromYmd: ev.date };
     ev.date = targetYmd;
     ev.mtime = Date.now();
     saveState();
-    selectDay(targetYmd);   // day panel follows the event to its new home
-    renderGrid();
-    renderDay();
+    selectDay(targetYmd);   // day panel follows — selectDay paints once
     toast(t("ev.moved"), t("undo"), undoMove);
   }
 
@@ -1445,9 +1961,7 @@
     }
     lastMoved = null;
     saveState();
-    selectDay(backTo);   // day panel returns to where the event came from
-    renderGrid();
-    renderDay();
+    selectDay(backTo);   // day panel returns — selectDay paints once
   }
 
   /* ---------- 7a. Label management dialog ---------- */
@@ -1520,7 +2034,7 @@
           saveState();
           renderLblList();
           renderChips();
-          renderGrid();
+          renderAll();
           renderDay();
         });
         pal.appendChild(sw);
@@ -1538,6 +2052,7 @@
         l.mtime = Date.now();
         saveState();
         renderChips();
+        renderAll();
         renderDay();
       });
       row.appendChild(inp);
@@ -1555,7 +2070,7 @@
         saveState();
         renderLblList();
         renderChips();
-        renderGrid();
+        renderAll();
         renderDay();
       });
       row.appendChild(del);
@@ -1592,8 +2107,8 @@
   $("lbl-dlg").addEventListener("click", function (ev) {
     if (ev.target === this) this.close();
   });
-
-  /* ---------- 7b. Shell shortcut forwarding (Contract Β) ---------- */
+  
+    /* ---------- 7b. Shell shortcut forwarding (Contract Β) ---------- */
   document.addEventListener("keydown", function (e) {
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
     var p = window.parent;
@@ -1601,6 +2116,210 @@
         typeof p.orosShortcuts.handle === "function")) return;
     if (p.orosShortcuts.handle(e)) e.stopPropagation();
   }, true);
+
+  /* ---------- 7e. ICS export (v0.3.0) ----------
+     RFC 5545 subset: VEVENT with UID/DTSTART/DTEND/SUMMARY/
+     DESCRIPTION/LOCATION/RRULE/EXDATE. All-day → VALUE=DATE;
+     timed → floating local datetimes (no TZID — portable and
+     faithful for personal calendars). Text escaping per spec. */
+  function icsEsc(s) {
+    return String(s == null ? "" : s)
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\r?\n/g, "\\n");
+  }
+  function icsDt(dateYmd, hm) {
+    var d = dateYmd.replace(/-/g, "");
+    if (!hm) return d;                       // VALUE=DATE form
+    return d + "T" + hm.replace(":", "") + "00";
+  }
+  function exportICS() {
+    var L = [];
+    L.push("BEGIN:VCALENDAR");
+    L.push("VERSION:2.0");
+    L.push("PRODID:-//orOS//Calendar//EN");
+    L.push("CALSCALE:GREGORIAN");
+
+    state.events.forEach(function (e) {
+      L.push("BEGIN:VEVENT");
+      L.push("UID:" + icsEsc(e.id) + "@oros.calendar");
+      // 2000-01-01 fallback mtime as a stable STAMP source
+      L.push("DTSTAMP:" + new Date(e.mtime || 946684800000).toISOString()
+        .replace(/[-:]/g, "").replace(/\.\d+/, ""));
+      if (e.start === null) {
+        // all-day: DTEND is exclusive in RFC 5545 → +1 day
+        var endDate = e.dateEnd ? dAdd(e.dateEnd, 1) : dAdd(e.date, 1);
+        L.push("DTSTART;VALUE=DATE:" + icsDt(e.date));
+        L.push("DTEND;VALUE=DATE:" + icsDt(endDate));
+      } else {
+        L.push("DTSTART:" + icsDt(e.date, e.start));
+        L.push("DTEND:" + icsDt(e.dateEnd || e.date, e.end || e.start));
+      }
+      L.push("SUMMARY:" + icsEsc(e.title || t("ev.untitled")));
+      if (e.note) L.push("DESCRIPTION:" + icsEsc(e.note));
+      if (e.location) L.push("LOCATION:" + icsEsc(e.location));
+      if (validRecur(e.recur)) {
+        var FREQ_MAP = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
+        var rr = "RRULE:FREQ=" + FREQ_MAP[e.recur.freq];
+        if (e.recur.interval === 2) rr += ";INTERVAL=2";
+        if (e.recur.until) rr += ";UNTIL=" + icsDt(e.recur.until);
+        L.push(rr);
+        if (e.recur.exdates.length) {
+          L.push("EXDATE;VALUE=DATE:" +
+            e.recur.exdates.map(function (d) { return icsDt(d); }).join(","));
+        }
+      }
+      var lb = e.labelId ? labelById(e.labelId) : null;
+      if (lb) L.push("CATEGORIES:" + icsEsc(lb.name));
+      if (typeof e.remindMin === "number" && e.remindMin > 0) {
+        L.push("BEGIN:VALARM");
+        L.push("ACTION:DISPLAY");
+        L.push("TRIGGER:-PT" + e.remindMin + "M");
+        L.push("DESCRIPTION:" + icsEsc(e.title || t("ev.untitled")));
+        L.push("END:VALARM");
+      }
+      L.push("END:VEVENT");
+    });
+
+    L.push("END:VCALENDAR");
+
+    var blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "oros-calendar.ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    toast(t("exp.done"));
+  }
+  if ($("cal-export")) {
+    $("cal-export").addEventListener("click", exportICS);
+  }
+
+  /* ---------- 7f. Stats dialog (v0.3.0) ---------- */
+  function openStats() {
+    var body = $("stat-body");
+    body.textContent = "";
+
+    var total = state.events.length;
+    var recurring = state.events.filter(function (e) {
+      return validRecur(e.recur);
+    }).length;
+
+    // upcoming 30 days — occurrences included, label-filter aware
+    var up = 0;
+    var today = todayYMD();
+    for (var i = 0; i < 30; i++) {
+      up += eventsOn(dAdd(today, i)).length;
+    }
+
+    var kpis = document.createElement("div");
+    kpis.className = "stat-kpis";
+    [["stat.kpi.total", total], ["stat.kpi.upcoming", up],
+     ["stat.kpi.recurring", recurring]].forEach(function (pair) {
+      var k = document.createElement("div");
+      k.className = "stat-kpi";
+      var b = document.createElement("b");
+      b.textContent = String(pair[1]);
+      var s = document.createElement("span");
+      s.textContent = t(pair[0]);
+      k.appendChild(b);
+      k.appendChild(s);
+      kpis.appendChild(k);
+    });
+    body.appendChild(kpis);
+
+    // per-label distribution (bar share of labelled events)
+    var byLbl = {};
+    state.events.forEach(function (e) {
+      var id = e.labelId || "";
+      byLbl[id] = (byLbl[id] || 0) + 1;
+    });
+    var entries = Object.keys(byLbl).map(function (id) {
+      return { id: id, count: byLbl[id] };
+    }).sort(function (a, b) { return b.count - a.count; });
+
+    if (entries.length) {
+      var hdr = document.createElement("div");
+      hdr.className = "ag-day-head";
+      var hs = document.createElement("span");
+      hs.className = "ag-day-name";
+      hs.textContent = t("stat.byLabel");
+      hdr.appendChild(hs);
+      body.appendChild(hdr);
+
+      var bars = document.createElement("div");
+      bars.id = "stat-bars";
+      var max = entries[0].count;
+      entries.forEach(function (en) {
+        var row = document.createElement("div");
+        row.className = "stat-row";
+        var nm = document.createElement("span");
+        nm.className = "stat-lbl-name";
+        var lb = en.id ? labelById(en.id) : null;
+        nm.textContent = lb ? lb.name : t("lbl.none");
+        var wrap = document.createElement("div");
+        wrap.className = "stat-bar-wrap";
+        var bar = document.createElement("div");
+        bar.className = "stat-bar";
+        bar.style.width = Math.max(4, Math.round(en.count / max * 100)) + "%";
+        bar.style.background = lb ? lb.color : "var(--text-dim)";
+        wrap.appendChild(bar);
+        var num = document.createElement("span");
+        num.className = "stat-num";
+        num.textContent = String(en.count);
+        row.appendChild(nm);
+        row.appendChild(wrap);
+        row.appendChild(num);
+        bars.appendChild(row);
+      });
+      body.appendChild(bars);
+    } else {
+      var emp = document.createElement("div");
+      emp.className = "stat-empty";
+      emp.textContent = t("ev.none");
+      body.appendChild(emp);
+    }
+
+    if (total > 0) {
+      var sub = document.createElement("div");
+      sub.className = "stat-sub";
+      sub.textContent = t("stat.perMonth").replace("{n}", String(total));
+      body.appendChild(sub);
+    }
+    $("stat-dlg").showModal();
+  }
+  if ($("cal-stats")) {
+    $("cal-stats").addEventListener("click", openStats);
+  }
+  if ($("stat-done")) {
+    $("stat-done").addEventListener("click", function () { $("stat-dlg").close(); });
+  }
+  if ($("stat-dlg")) {
+    $("stat-dlg").addEventListener("click", function (ev) {
+      if (ev.target === this) this.close();
+    });
+  }
+
+  /* ---------- 7g. Keyboard navigation (v0.3.0) ----------
+     ←/→ = prev/next (view-aware). Esc = clear search (when not in
+     a dialog/input). Skipped whenever focus sits in a field — the
+     time picker owns its own arrow keys, inputs own theirs. */
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (document.querySelector("dialog[open]")) return;   // modal open
+    if (e.key === "ArrowLeft") { e.preventDefault(); navStep(-1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); navStep(1); }
+    else if (e.key === "Escape" && searchQ) {
+      e.preventDefault();
+      $("search-in").value = "";
+      setSearch("");
+    }
+  });
 
   /* ---------- 8. Boot ---------- */
   loadState();
@@ -1613,12 +2332,10 @@
   var boot = new Date();
   viewYear = boot.getFullYear();
   viewMonth = boot.getMonth();
-  renderWeekdays();
-  renderTitle();
   renderChips();
-  renderGrid();
+  setView("month");
   selectDay(todayYMD());
-  setTimeout(checkReminders, 1500);   // Wave 3: boot sweep (after paints settle)
+  setTimeout(checkReminders, 1500);   // boot sweep (after paints settle)
 
   // Midnight rollover: grid "today", day title and ev-add must
   // follow the real calendar day without a re-open.
@@ -1630,7 +2347,7 @@
     var n = new Date();
     viewYear = n.getFullYear();
     viewMonth = n.getMonth();
-    renderTitle();
+    renderAll();
     selectDay(td);
   }, 30000);
   // Immediate rollover check when the tab becomes visible again
@@ -1643,9 +2360,9 @@
     var n = new Date();
     viewYear = n.getFullYear();
     viewMonth = n.getMonth();
-    renderTitle();
+    renderAll();
     selectDay(td);
-    checkReminders();   // Wave 3: catch-up sweep on tab-visible
+    checkReminders();   // catch-up sweep on tab-visible
   });
   // Open-tab sweep: covers a standalone foreground tab where neither
   // the shell tick nor visibilitychange ever fires (mobile PWA).
@@ -1653,7 +2370,7 @@
   // dedupe key settles who wins.
   setInterval(checkReminders, 30000);
 
-  /* ---------- 8b. In-app reminder check (Wave 3) ----------
+  /* ---------- 8b. In-app reminder check ----------
      Belt-and-braces companion of the shell engine (shell.js 9e2):
      covers the standalone-load case (calendar opened directly,
      no parent shell). DEDUPE: both engines share the device-local
@@ -1708,6 +2425,8 @@
           check(remOccTs(e, occYmd), occYmd);      // nothing due further
         });
       } else {
+        // Multi-day spans: the reminder anchors on the FIRST day —
+        // the start of the event, per the v0.3 design note.
         check(remOccTs(e, e.date), e.date);
       }
     });
@@ -1723,7 +2442,7 @@
     toast(t("remind.toast") + " · " + (due.ev.title || t("ev.untitled")));
   }
 
-    /* ---------- 9. Sync slice registration ---------- */
+  /* ---------- 9. Sync slice registration ---------- */
   // Same self-registration contract as todo/kanban/notes: the app
   // registers itself, the engine persists the storageKey and builds
   // closed-app proxies on future boots. mergeFn = deterministic
@@ -1745,9 +2464,14 @@
     if (typeof e.mtime !== "number" || !isFinite(e.mtime)) return null;
     var start = (typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start)) ? e.start : null;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
-    // Mirror of mergeSanitizeEv: an end before the start is corrupt
-    // data, not a valid range — same normalization on every path.
     if (start && end && end < start) end = null;   // deterministic normalization
+    // v0.3 multi-day: same contract as sanitizeEvent — plain events
+    // only, dateEnd >= date. Identical rule on EVERY device, so the
+    // JSON tie-break stays byte-deterministic.
+    var dateEnd = null;
+    if (typeof e.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.dateEnd)) {
+      if (!validRecur(e.recur) && e.dateEnd >= e.date) dateEnd = e.dateEnd;
+    }
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
     var remindMin = (typeof e.remindMin === "number" &&
                      REMIND_PRESETS.indexOf(e.remindMin) !== -1)
@@ -1755,6 +2479,7 @@
     return {
       id: e.id,
       date: e.date,
+      dateEnd: dateEnd,
       start: start,
       end: end,
       title: (typeof e.title === "string" ? e.title : "").slice(0, 80),
@@ -1793,8 +2518,7 @@
   function mergeCalendars(local, remote) {
     var tomb = {};
     function takeTomb(d) {
-      if (!tomb[d.id] || d.mtime > tomb[d.id].mtime ||
-          (d.mtime === tomb[d.id].mtime && d.id < tomb[d.id].id)) tomb[d.id] = d;
+      if (!tomb[d.id] || d.mtime > tomb[d.id].mtime) tomb[d.id] = d;
     }
     var byId = {};
     function takeEv(e) {
@@ -1854,17 +2578,28 @@
     var evs = data.events.map(sanitizeEvent).filter(Boolean);
     var dels = (Array.isArray(data.deleted) ? data.deleted : [])
       .map(sanitizeTomb).filter(Boolean);
-    var lbls = (Array.isArray(data.labels) ? data.labels : [])
-      .map(sanitizeLabel).filter(Boolean);
-    if (!lbls.length) lbls = defaultLabels();
-      state = { ver: 1, labels: lbls, events: evs, deleted: dels };
-  lastMoved = null;
-  lastDeleted = null;
-  lastExdate = null;
-  try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
-  renderTitle();
-    renderChips();
-    renderGrid();
+    var lbls = Array.isArray(data.labels)
+      ? data.labels.map(sanitizeLabel).filter(Boolean)
+      : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
+    state = { ver: 1, labels: lbls, events: evs, deleted: dels };
+    lastMoved = null;
+    lastDeleted = null;
+    lastExdate = null;
+    // Audit #7: sync arriving with a half-open dialog would leave
+    // editingId pointing at a row that may no longer exist → the
+    // next Save would resurrect a stale ghost. Safer: close the
+    // dialog (user input is preserved in the fields, re-edit is one
+    // click away; silent data surgery mid-edit is worse).
+    try {
+      if ($("ev-dlg") && $("ev-dlg").open) {
+        editingId = null;
+        dlgMode = null;
+        pendingOverride = null;
+        $("ev-dlg").close();
+      }
+    } catch (e2) {}
+    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    renderAll();
     renderDay();          // selDate-aware (guarded when null)
     if (info && info.merged) toast(t("sync.merged"));   // receipt, not "Saved"
   }
@@ -1873,9 +2608,7 @@
   // even when sync is absent (dirty becomes a safe no-op).
   var syncApi = (window.parent && window.parent.orosSync) || window.orosSync;
   window.__orosSyncApi = {
-    _suppress: false,
     dirty: function () {
-      if (this._suppress) return;
       if (syncApi && typeof syncApi.markDirty === "function") syncApi.markDirty();
     }
   };

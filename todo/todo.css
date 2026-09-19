@@ -863,9 +863,9 @@ dialog menu button.danger:hover {
 /* ---------- 9. Toast ---------- */
 #toast {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px);
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
   z-index: 1200;
   display: flex;
   align-items: center;
@@ -877,13 +877,17 @@ dialog menu button.danger:hover {
   padding: 9px 14px;
   font-size: 13px;
   opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease,
+              visibility 0s linear 0.3s;
   pointer-events: none;
   max-width: calc(100vw - 32px);
 }
 #toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 #toast button {
   background: transparent;

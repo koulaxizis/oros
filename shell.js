@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.11";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.15";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -138,7 +138,9 @@
     characters: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     storage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>',
     habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>',
-    files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>'
+    files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
+    cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+    contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -2963,16 +2965,26 @@
   }
 
   // Specs arrive from an iframe (untrusted shape) — sanitize hard.
-  // Past timestamps are junk (a "later" caller never gets a pass).
+  // Past timestamps: "once" = fired junk (dropped). "daily" = the
+  // series fired on the source device but the advance hasn't
+  // travelled yet (or this device slept past due) — catch-up by
+  // WHOLE days, mirroring alarmTick. Never a silent data-loss drop.
   function alarmSanitize(spec) {
     if (!spec || typeof spec !== "object") return null;
     var at = (typeof spec.at === "number" && isFinite(spec.at)) ? Math.round(spec.at) : null;
-    if (at === null || at <= Date.now()) return null;
+    if (at === null) return null;
+    var rep = spec.repeat === "daily" ? "daily" : "once";
+    if (at <= Date.now()) {
+      if (rep !== "daily") return null;
+      var d = new Date(at);
+      do { d.setDate(d.getDate() + 1); } while (d.getTime() <= Date.now());
+      at = d.getTime();
+    }
     return {
       id:     (typeof spec.id === "string" && spec.id) ? spec.id : (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
       at:     at,
       label:  (typeof spec.label === "string" && spec.label) ? spec.label.slice(0, 60) : "",
-      repeat: spec.repeat === "daily" ? "daily" : "once",
+      repeat: rep,
       state:  "pending"
     };
   }
@@ -3111,6 +3123,12 @@
       list.splice(dueIdx, 1);
     }
     alarmsWrite(list);
+    // #9: a fired alarm MUTATED data (daily advance / once retire) —
+    // same dirty contract as orosAlarms.add/remove. Without this, the
+    // firing never reaches the cloud and other devices ring again.
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") {
+      window.orosSync.markDirty();
+    }
     alarmNotify(due);
   }
 
@@ -3563,6 +3581,37 @@
       openAppById("calendar");
     });
   })();
+
+  // Wave 2.1 — Contacts deep-link bridge. Calendar feed rows
+  // (contact birthdays/anniversaries) call this from their iframe.
+  // Contacts ALREADY running → live push into the iframe (same
+  // pattern as wxPushToApp). Otherwise: stage the id in sessionStorage
+  // (device-local, swept by the factory reset, never synced) and
+  // open the app — it consumes the pending id at boot.
+  window.__orosOpenContact = function (contactId) {
+    if (typeof contactId !== "string" || !contactId) return;
+    if (state.running && state.running.id === "contacts") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosContactsOpen === "function") {
+          f.contentWindow.__orosContactsOpen(contactId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-contacts-open", contactId); } catch (e) {}
+    openAppById("contacts");
+  };
+
+  // Consumed by contacts.js at boot — one-shot take.
+  window.__orosContactsTakePending = function () {
+    try {
+      var id = sessionStorage.getItem("oros-contacts-open");
+      if (id) sessionStorage.removeItem("oros-contacts-open");
+      return id || null;
+    } catch (e) { return null; }
+  };
   
     // v0.18.0 — global shortcuts at the shell level
   document.addEventListener("keydown", function (e) {

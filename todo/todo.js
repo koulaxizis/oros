@@ -1,5 +1,5 @@
 // ============================================================
-// orOS To-Do — App logic (v0.4)
+// orOS To-Do — App logic
 // New in v0.4 (cross-device MERGE):
 //   - Every entity (list / task / label) carries mtime (content
 //     version) + pos/om (ordering version). Every mutation stamps.
@@ -66,6 +66,7 @@
       "labels.none":   "No labels yet — create one below.",
       "item.info":     "Extra info",
       "item.info.add": "Add field",
+      "item.info.remove": "Remove field",
       "item.info.label": "Field",
       "item.info.value": "Value",
       "recur.title":   "Repeat",
@@ -130,6 +131,7 @@
       "labels.none":   "Δεν υπάρχουν ετικέτες — δημιούργησε από κάτω.",
       "item.info":     "Επιπλέον στοιχεία",
       "item.info.add": "Προσθήκη πεδίου",
+      "item.info.remove": "Αφαίρεση πεδίου",
       "item.info.label": "Πεδίο",
       "item.info.value": "Τιμή",
       "recur.title":   "Επανάληψη",
@@ -1123,6 +1125,7 @@
         touch(item);
         save(); scheduleRender();
         renderItemLabels(item);
+        if (!$("f-lbl-picker").hidden) renderLblPicker();
       });
       host.appendChild(chip);
     });
@@ -1247,8 +1250,8 @@
     var x = document.createElement("button");
     x.type = "button";
     x.className = "row-x";
-    x.setAttribute("aria-label", t("item.info.add"));
-    x.title = t("item.info.add");
+    x.setAttribute("aria-label", t("item.info.remove"));
+    x.title = t("item.info.remove");
     x.innerHTML =
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     x.addEventListener("click", function () {
@@ -1266,8 +1269,9 @@
     var item = editingItem();
     if (!item) return;
     item.info.push({ id: uid(), label: "", value: "" });
-    touch(item);
-    save();
+    // No touch/save here: a blank row is not a change yet. The
+    // dialog close-flush commits real edits (filled rows) and
+    // silently drops blank ones — zero sync noise for no-ops.
     renderInfoRows(item);
     var rows = $("f-info-list").querySelectorAll(".info-row");
     if (rows.length > 0) {
@@ -1808,7 +1812,7 @@
   // ---------- 12. Sync slice (merge-registered) + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
-                  "--panel-bg", "--border", "--shadow"];
+                  "--panel-bg", "--border", "--shadow", "--danger"];
 
   function inheritPalette() {
     try {
@@ -1921,6 +1925,11 @@
       el.setAttribute("aria-label", t(pair[1]));
       el.setAttribute("title", t(pair[1]));
     });
+    var ta = $("tab-add");
+    if (ta && !ta.innerHTML.trim()) {
+      ta.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+    }
   }
 
   function wire() {

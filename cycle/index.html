@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cycle · orOS</title>
+
+<link rel="stylesheet" href="cycle.css?v=0.35.10">
+
+</head>
+<body>
+<header id="topbar">
+  <span id="app-title" data-i18n="app.title">Cycle</span>
+  <span class="spacer"></span>
+  <button id="cal-btn" type="button"></button>
+  <button id="day-btn" type="button"></button>
+  <button id="ins-btn" type="button"></button>
+</header>
+
+<main id="cyclemain">
+  <!-- cycle-day strip (JS-built; calendar view only) -->
+  <div id="cycleinfo" hidden></div>
+
+  <!-- month calendar (JS-built) -->
+  <section id="calview"></section>
+
+  <!-- day editor (JS-built; opened from calendar tap) -->
+  <section id="dayview" hidden></section>
+
+  <!-- logged days list (JS-built rows, newest first) -->
+  <section id="dayslist" hidden>
+    <h2 class="sec-title" data-i18n="days.title">Logged days</h2>
+    <ul id="day-list"></ul>
+  </section>
+
+  <!-- insights (Wave 1: averages + breakdowns) -->
+  <section id="insights" hidden></section>
+</main>
+
+<script src="cycle.js?v=0.35.10"></script>
+
+</body>
+</html>

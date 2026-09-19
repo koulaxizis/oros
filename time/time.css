@@ -51,6 +51,7 @@ body {
 
 /* ---------- Big clock faces ----------
    EVERY display rule is :not([hidden])-guarded. */
+/* .face-wrap removed (dead container — never referenced in JS or CSS) */
 #face-digital:not([hidden]) {
   display: flex;
   align-items: baseline;
@@ -343,6 +344,17 @@ body {
 }
 .z-del:hover, .a-del:hover { color: var(--danger, #e06c75); background: var(--accent-soft); }
 
+/* #8: pencil icon for zone edit-in-place */
+.z-name.edit-icon::after {
+  content: "✎";
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.z-name.edit-icon:hover::after { opacity: 1; }
+
 /* ---------- Tabs & panes ---------- */
 #tabs { display: flex; gap: 6px; padding: 2px 0 10px; flex-wrap: wrap; }
 .tab {
@@ -474,7 +486,7 @@ body {
 .btn.prim:hover { filter: brightness(1.1); }
 
 /* ---------- Dialogs ---------- */
-dialog#zone-dlg, dialog#snooze-dlg {
+dialog#zone-dlg {
   background: var(--panel-bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -483,10 +495,10 @@ dialog#zone-dlg, dialog#snooze-dlg {
   padding: 16px;
   width: min(340px, calc(100vw - 32px));
 }
-dialog#zone-dlg::backdrop, dialog#snooze-dlg::backdrop {
+dialog#zone-dlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
-dialog#zone-dlg h3, dialog#snooze-dlg h3 {
+dialog#zone-dlg h3 {
   font-size: 14px;
   color: var(--accent);
   margin-bottom: 10px;
@@ -506,8 +518,6 @@ dialog#zone-dlg h3, dialog#snooze-dlg h3 {
 #zone-sel:focus { border-color: var(--accent); }
 .dlg-row { display: flex; gap: 8px; margin-top: 12px; }
 .dlg-row .btn { flex: 1; }
-.sn-buttons { display: flex; gap: 8px; }
-.sn-buttons .btn { flex: 1; }
 
 /* ---------- Shared toast ---------- */
 .oro-toast {

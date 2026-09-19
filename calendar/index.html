@@ -4,27 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Calendar · orOS</title>
-  <link rel="stylesheet" href="calendar.css?v=0.35.10">
+  <link rel="stylesheet" href="calendar.css?v=0.35.06">
 </head>
 <body>
   <main id="cmain">
 
-    <!-- ===== Month navigation ===== -->
+    <!-- ===== Month/week navigation ===== -->
     <header id="cal-top">
       <div id="cal-nav">
         <button id="cal-prev" type="button" data-i18n-aria="cal.prev">‹</button>
         <button id="cal-today" type="button" class="nav-mini" data-i18n="cal.today"></button>
         <button id="cal-next" type="button" data-i18n-aria="cal.next">›</button>
+        <button id="cal-export" type="button" class="nav-mini" data-i18n="cal.export"></button>
+        <button id="cal-stats" type="button" class="nav-mini" data-i18n="cal.stats"></button>
       </div>
       <h2 id="cal-title"></h2>
     </header>
 
+    <!-- ===== View switcher + search ===== -->
+    <div id="view-bar">
+      <div class="view-switch">
+        <button id="vw-month" type="button" class="view-btn active" data-i18n="vw.month"></button>
+        <button id="vw-week" type="button" class="view-btn" data-i18n="vw.week"></button>
+        <button id="vw-agenda" type="button" class="view-btn" data-i18n="vw.agenda"></button>
+      </div>
+      <input id="search-in" type="search" autocomplete="off"
+             data-i18n-ph="cal.search.ph">
+    </div>
+
     <!-- ===== Label filter chips ===== -->
     <div id="lbl-chips"></div>
 
-    <!-- ===== Month grid ===== -->
+    <!-- ===== Month view ===== -->
     <div id="cal-wd"></div>
     <div id="cal-grid"></div>
+
+    <!-- ===== Week view ===== -->
+    <div id="week-grid" hidden></div>
+
+    <!-- ===== Agenda view ===== -->
+    <ul id="agenda-list" hidden></ul>
+
+    <!-- ===== Search results (replaces the active view) ===== -->
+    <ul id="search-results" hidden></ul>
 
     <!-- ===== Selected day ===== -->
     <section class="sec">
@@ -37,7 +59,7 @@
   </main>
 
   <!-- Event dialog (add & edit share it) -->
-  <dialog id="ev-dlg">
+  <dialog id="ev-dlg" aria-labelledby="ev-dlg-title">
     <h3 id="ev-dlg-title" data-i18n="ev.dlg.new"></h3>
     <div class="ev-form">
       <label for="ev-title" data-i18n="ev.field.title"></label>
@@ -51,7 +73,7 @@
       <label for="ev-start" data-i18n="ev.field.when"></label>
       <div class="tp-row">
         <div class="tp-wrap">
-          <input id="ev-start" type="text" autocomplete="off" inputmode="numeric">
+          <input id="ev-start" type="text" autocomplete="off" inputmode="numeric" data-i18n-ph="ev.ph.start">
           <div id="ev-start-menu" class="tp-menu" hidden></div>
         </div>
         <span class="tp-sep">–</span>
@@ -76,10 +98,16 @@
         <input type="date" id="ev-until">
       </div>
 
+      <div class="dlg-row" id="ev-dateend-row">
+        <label for="ev-date-end" data-i18n="ev.field.dateend"></label>
+        <input type="date" id="ev-date-end">
+      </div>
+      <div id="ev-spanhint" class="span-hint" hidden></div>
+
       <label for="ev-remind" data-i18n="ev.field.remind"></label>
       <select id="ev-remind"></select>
 
-      <label for="ev-location" data-i18n="ev.field.loc"></label>
+            <label for="ev-location" data-i18n="ev.field.loc"></label>
       <input id="ev-location" type="text" maxlength="150" data-i18n-ph="ev.ph.loc">
 
       <label data-i18n="cal.filters.lbl"></label>
@@ -98,8 +126,8 @@
   </dialog>
 
   <!-- Delete confirmation (R14 themed dialog) -->
-  <dialog id="del-dlg">
-    <h3 data-i18n="ev.delete"></h3>
+  <dialog id="del-dlg" aria-labelledby="del-dlg-title">
+      <h3 id="del-dlg-title" data-i18n="ev.delete"></h3>
     <p id="del-dlg-text" class="del-name"></p>
     <p class="del-text" data-i18n="ev.delete.confirm"></p>
     <div class="dlg-row">
@@ -109,7 +137,7 @@
   </dialog>
 
   <!-- Wave 3: occurrence vs series chooser -->
-  <dialog id="ser-dlg">
+  <dialog id="ser-dlg" aria-labelledby="ser-q">
     <h3 id="ser-q"></h3>
     <div class="dlg-row">
       <button id="ser-this" type="button" class="btn" data-i18n="ser.this"></button>
@@ -118,8 +146,8 @@
   </dialog>
 
   <!-- Label management -->
-  <dialog id="lbl-dlg">
-    <h3 data-i18n="lbl.manage"></h3>
+  <dialog id="lbl-dlg" aria-labelledby="lbl-dlg-title">
+      <h3 id="lbl-dlg-title" data-i18n="lbl.manage"></h3>
     <div id="lbl-list"></div>
     <div class="lbl-add-row">
       <input id="lbl-new-name" type="text" maxlength="40" data-i18n-ph="lbl.ph.name">
@@ -131,6 +159,15 @@
     </div>
   </dialog>
 
-  <script src="calendar.js?v=0.35.10"></script>
+  <!-- Stats (v0.3.0) -->
+  <dialog id="stat-dlg" aria-labelledby="stat-dlg-title">
+      <h3 id="stat-dlg-title" data-i18n="stat.title"></h3>
+    <div id="stat-body"></div>
+    <div class="dlg-row">
+      <button id="stat-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <script src="calendar.js?v=0.35.06"></script>
 </body>
 </html>

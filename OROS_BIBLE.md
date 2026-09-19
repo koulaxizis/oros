@@ -34,7 +34,7 @@
 #   architecture.
 #
 # Document map:
-#   Part I   — MANTRA + STANDING PROCESS RULES (R1–R22)
+#   Part I   — MANTRA + STANDING PROCESS RULES (R1–R23)
 #   Part II  — MASTER RULE REGISTRY (system-wide, per-app)
 #   Part III — CURRENT STATE + REGISTRIES (apps, files, keys)
 #   Part IV  — DATA MODELS (per app)
@@ -63,7 +63,7 @@
   it; never guess or assume.
 
 ──────────────────────────────
-2. STANDING PROCESS RULES (R1–R22)
+2. STANDING PROCESS RULES (R1–R23)
 ──────────────────────────────
 DELIVERY & PATCHING
   R1  NO WHOLESALE REGENERATION for fixes. Surgical patches
@@ -160,6 +160,14 @@ QUALITY GATES
       CURRENT truth. The Bible changes when contracts change;
       the changelog changes when code changes. If a session ends
       with an unlogged decision, it did not happen.
+  R23 VERSIONING IS USER-OWNED: version numbers, cache-busters
+      (?v= refs), CACHE_VERSION stamps and APP_VERSION bumps are
+      the USER'S sole responsibility (CI executes, user decides).
+      Audits NEVER propose, apply or "fix" versions. Version
+      / cache-buster mismatches are EXPECTED mid-cycle and OUT
+      OF AUDIT SCOPE by default — never flag them as findings.
+      (Full rule text at the bottom of Part XIII; this rule
+      closes and retires open item H/#27.)
 
 STANDING DELIVERY RULE
   SMALL change → OLD/NEW replacement blocks with exact anchors +
@@ -374,28 +382,8 @@ PROMPTER:
   · Known gaps (pending): dead empty.stats branch in
     renderStats(), CSS version comment stale, Contract Β
     forwarding — 3 patches queued.
-
-──────────────────────────────
-5. RESOLVED CROSS-APP CONFLICTS (precedents)
-──────────────────────────────
-  #1 LONG-PRESS THRESHOLD: 450ms (Mood standard) — all apps.
-  #2 PERSISTENCE STRATEGY: per data shape — editing-heavy apps
-     (Notes) debounce; entry-based apps (Mood) save immediately.
-     Document the choice in the app header.
-  #3 RENDER STRATEGY: surgical updates = premium/performance
-     (Notes); full rebuild + draft rescue = simpler (Mood).
-     Choose per complexity; the draft-preservation discipline is
-     MANDATORY either way.
-  #4 SEARCH UI: created-once-survives-renders (Mood) = mobile
-     default; persisted sidebar (Notes) = desktop enhancement.
-
-UNIVERSAL CONTRACTS:
-  · Contract Β — ALL apps forward shell shortcuts (capture
-    phase, verbatim template in Part VII).
-  · Palette inheritance system — all apps, CI-enforced (G3).
-
-
-╔══════════════════════════════════════════════════════════╗
+	
+	╔══════════════════════════════════════════════════════════╗
 ║  PART III — CURRENT STATE + REGISTRIES                   ║
 ╚══════════════════════════════════════════════════════════╝
 
@@ -435,20 +423,29 @@ AUDIT POSTURE (full detail in Part X):
   · Second-pass shell+sync audit #S1–#S5 (S1 verification
     pending, S2/S3 status reconciliation pending, S5 decision
     pending — see Part X).
-  · Files: full audit (29 items) applied at 0.34.08; deeper
-    glue audit queued.
+  · Kernel Lock re-audit (F1–F11 + SP1–SP6 + IP1/IP2 + FP1/FP2
+    + SW-I + TP1): CLOSED — core files verified/patched
+    (shell.js, sync.js, fs.js, translations.js, index.html,
+    sw.js, apps.json — see Part XIII entries).
+  · Files: initial audit (29 items, 0.34.08) + deep re-audit
+    (FA1–FA8 → FB1–FB6 → FC1–FC4 → FD1–FD5 → FE1–FE4 → FF1–FF3
+    → FG1–FG5) ALL APPLIED AND VERIFIED — audit CLOSED (detail
+    in Part X §23). Blob-sync limits = documented standing
+    limit (Part V), NOT an open item.
   · Remaining queued audits: weather, mood, time, quote,
     storage, prompter, characters, habits — NOT yet deep-audited.
+  · Weather is the NEXT audit in the queue (high priority:
+    taskbar widget + app sync coupling).
 
-VERSION LEDGER RECONCILIATION (OPEN — Part X.H):
+VERSION LEDGER RECONCILIATION: CLOSED via R23 (versioning is
+  user-owned; version/cache-buster observations are out of
+  audit scope). The historical mixed-label note is retained
+  below for archaeology only.
   Recent entries used MIXED labels: habits waves tagged
   0.34.00/0.35.00, files sync glue 0.34.07, Files app launch
   0.35.00, delivered shell.js read 0.34.08. These look like
   audit-cycle/app-wave labels rather than a clean APP_VERSION
-  sequence. ACTION: `git log` review to establish the actual
-  APP_VERSION sequence. App-local ?v= refs observed: notes
-  0.34.03, index.html 0.34.05 vs 0.35.00 (CI stamps on next
-  push — R20).
+  sequence. Superseded by R23 — no assistant action required.
 
 DEPRECATED PATHS (verified dead — do not chase):
   · writer/ app: does NOT exist in the rebuilt orOS core
@@ -466,10 +463,10 @@ DEPRECATED PATHS (verified dead — do not chase):
   To-Do     | todo/       | oros-todo-data         | 3   | entity LWW + tombs     | DONE #17–25 (2 open)
   Kanban    | kanban/     | oros-kanban-data       | 5   | boards[] union, tombs  | DONE #26–35 (2 open)
   Notes     | notes/     | oros-notes-data        | 2   | page/label LWW + tombs | DONE #36–44 (2 open)
-  Weather   | weather/    | oros-weatherapp-data   | 1   | merge-lite             | QUEUED
+  Weather   | weather/    | oros-weatherapp-data   | 1   | merge-lite             | QUEUED (NEXT)
   Mood      | mood/       | oros-mood-data         | 3   | entity LWW + cols      | QUEUED
             |             |                        |     | dedupe                 |
-  Time      | time/      | oros-time-data         | 1   | entity union +         | QUEUED
+  Time      | time/      | oros-time-data         | 1   | entity union +          | QUEUED
             |             |                        |     | scalar smtime          |
   Calendar  | calendar/   | oros-calendar-data     | 1   | event union + tombs,   | DONE #C1–14
             |             |                        |     | v0.2.0 schema          | + Waves 2–3 (F6 open)
@@ -479,11 +476,11 @@ DEPRECATED PATHS (verified dead — do not chase):
   Storage   | storage/    | oros-storage-data      | 1   | flat ents union + del  | QUEUED
   Habits    | habits/     | oros-habits-data       | 1   | habits/comps LWW +     | QUEUED (v0.3.0)
             |             |                        |     | tombs                  |
-  Characters| characters/ | oros-characters-data   | 1   | non-merge LWW +        | QUEUED (key/model
+  Characters| characters/ | oros-characters-data  | 1   | non-merge LWW +        | QUEUED (key/model
             |             | (PENDING audit)       |     | divergence guard       | pending)
   Files     | files/      | oros-files-data (view  | 1   | files-disk slice:      | 29-item audit DONE;
-            |             | prefs only) +         |     | blob snapshot via      | deeper audit QUEUED
-            |             | "files-disk" slice    |     | shell §9f (Part V)     |
+            |             | prefs only) +         |     | blob snapshot via      | deep re-audit FA1–FG5
+            |             | "files-disk" slice    |     | shell §9f (Part V)     | ALL CLOSED (§23)
   · Slices with NO app open: registered via persisted registry —
     data travels while apps are closed (v0.8.1 divergence guard
     applies automatically). syncApi() resolution per R8.
@@ -582,6 +579,8 @@ LOCALSTORAGE / STORAGE KEYS
     oros-files-disk-pending  flag: remote arrived while app
                              closed; consumed by files.js boot
     oros-files-data          Files app VIEW prefs only
+    oros-files-disk-meta     device-local sync pill state
+                             {ts, dirty} for the Files app
     oros-ofs-dirty          OrosFS dirty flag (swept by
                              factory reset oros- prefix)
   IndexedDB:
@@ -595,14 +594,16 @@ LOCALSTORAGE / STORAGE KEYS
     oros-weatherapp-cache (MAX 6 cities, NEVER synced),
     oros-storage-data-broken, oros-habits-data-broken
     (corrupt-data rescue backups), oros-habits-view,
-    oros-habits-range (view prefs — never in the slice)
+    oros-habits-range (view prefs — never in the slice),
+    oros-files-recents (Files app recents journal — device-
+    local by design), oros-files-storage-cache (Files app
+    storage-bar cache, 5min TTL)
   DEVICE-LOCAL WHITELIST (intentionally excluded from sync):
     oros-wx-cache, oros-auto-snapshots, oros-fs-*,
     oros-files-disk-pending, oros-cal-reminders-fired, all
     *-prefs/*-cache/*-seen keys. (NOTE:
     oros-files-disk-CACHE is the slice BODY — it IS synced
     content, not a whitelist member.)
-
 
 ╔══════════════════════════════════════════════════════════╗
 ║  PART IV — DATA MODELS                                  ║
@@ -753,7 +754,6 @@ FILES (view prefs + transport blob)
 CHARACTERS — model PENDING deep audit (registry: non-merge
   LWW + divergence guard; key oros-characters-data tentative).
 
-
 ╔══════════════════════════════════════════════════════════╗
 ║  PART V — SYNC ARCHITECTURE + DATA SAFETY SUPREMACY      ║
 ╚══════════════════════════════════════════════════════════╝
@@ -801,6 +801,26 @@ ZK v0.9/v0.9.1 HARDENING
     Kept: getWVEpoch(), payload.meta.pwEpoch. Proactive
     pwEpoch detection remains backlog (designed UX feature,
     not dormant code — decision logged 2026-09, audit #12).
+
+KERNEL-LOCK HARDENING (SP1–SP6, 2026-09-19 — applied + verified)
+  · SP1 ensureCloudReadable: non-409 status errors no longer
+    launder as "empty cloud" — inconclusive checks REJECT the
+    push (Trap-3 hardening).
+  · SP2 pull() in-flight guards: pullInFlight flag + refusal
+    while push/reconcile in flight — manual pull can no longer
+    LWW-clobber a racing push's freshly-uploaded state.
+  · SP3 proxy set() strict write: quota failures THROW →
+    applyPayload skips baseline recording → stale-local-
+    over-cloud push path eliminated (writeJsonStrict for
+    proxies only).
+  · SP4 refreshAccessToken memoized (single in-flight refresh)
+    — concurrent API legs can no longer burn a rotating token.
+  · SP5 debounce re-arms (1s) when the engine is busy instead
+    of silently consuming the raced edit's only scheduled
+    uploader.
+  · SP6 shell.js refreshFilesDiskCache: changed disk content
+    re-marks dirty — closes the push-vs-cache-refresh race
+    window.
 
 BASELINE CONTRACT (#S2): push() records per-slice baselines
   from the PAYLOAD COLLECTED AT PUSH START, never from a
@@ -890,8 +910,8 @@ EVERY app and every change MUST satisfy ALL of these:
   · BACKWARD COMPATIBILITY: updates to deployed apps NEVER
     lose user data; migrations additive-only; schemas carry
     forward unknown fields.
-
-╔══════════════════════════════════════════════════════════╗
+	
+	╔══════════════════════════════════════════════════════════╗
 ║  PART VI — SHELL SUBSYSTEMS + PALETTE CONTRACT           ║
 ╚══════════════════════════════════════════════════════════╝
 
@@ -1209,8 +1229,10 @@ BUTTONS: deleting = danger styling; undo via toast action
 FILES APP SPECIFIC: breadcrumb navigation + parent-up button,
   mobile slide-out tree drawer (<640px), status bar (item
   count, current path), 4-track list grid (icon|name|size|
-  date) matching the column header. Recursive delete
-  confirmation via themed dialog (R14).
+  date) matching the column header — COLUMN HEADER FIRST,
+  then the Recents section, then entries (root view DOM
+  order contract, FG fix). Recursive delete confirmation via
+  themed dialog (R14).
 
 ╔══════════════════════════════════════════════════════════╗
 ║  PART IX — RELEASE PIPELINE + ALL CHECKLISTS             ║
@@ -1241,6 +1263,8 @@ CHECKLIST A — VERSION BUMP (every release)
   3. Verify on BOTH devices (Info modal + boot marker).
   4. Append changelog entry (R21) + Bible registry sync if
      any contract shipped (R22).
+  (Version numbers themselves are USER-OWNED — R23. The
+  assistant never proposes or applies version bumps.)
 
 CHECKLIST B — NEW APP INTEGRATION (9 items)
   1. <app>/ folder (index.html + css + js)
@@ -1349,6 +1373,9 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
        search/filter reset
   #34 ⊗ DECISION — index.html ?v=0.34.03 vs batch target:
        manual edit (R20 violation) or CI post-push?
+       (SUPERSEDED by R23: version refs are user-owned —
+       no assistant action required; residual question is
+       cosmetic only.)
   #35 ⊗ DECISION — dead keys + "live editing" comment
        cleanup: approve?
 
@@ -1358,7 +1385,8 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
   #38 ✓ CRITICAL: sliceSet markSyncDirty() after merge
   #42 ✓ boot marker added
   #41 ⊗ DECISION — 3 native confirm() R14 patches: approve?
-  #44 ⊗ DECISION — ?v=0.34.03 discrepancy (same as #34)
+  #44 ⊗ DECISION — ?v=0.34.03 discrepancy (same as #34,
+       SUPERSEDED by R23)
 
 ──────────────────────────────
 22. SECOND-PASS SHELL + SYNC AUDIT (#S1–#S5)
@@ -1382,8 +1410,9 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
        "Αυγή" (Dawn)?
 
 ──────────────────────────────
-23. FILES APP AUDIT (29 items) — APPLIED at 0.34.08
+23. FILES APP AUDITS — ALL CLOSED (0.34.08 → FG)
 ──────────────────────────────
+  ROUND 1 (29 items, applied at 0.34.08):
   Critical: boot() stray-brace SyntaxError · importFile
   ENOENT/keep-both · tree-drop move · recents/toolbar DOM
   injection · sync pill anchor · 4-track list grid.
@@ -1392,8 +1421,44 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
   pending-remote at end of boot · APP_VER alignment.
   Minor: fs.js mkdir dirty · dead code · search debounce
   250ms · CSS consolidation.
-  STATUS: all applied; deeper glue audit (blob-sync limits)
-  remains QUEUED in the app-audit queue below.
+
+  ROUND 2 (FA1–FA8): performMove/performCopy self-containment
+  guards (folder-into-itself / descendant = catastrophic
+  self-wipe prevention) · reallyApply honors importDisk
+  {applied, failed} (partial restores never toast "restored")
+  · clearSearch refresh() · mdInline javascript:/data: scheme
+  stripping · import toast honesty · object-URL revoke on
+  preview close · dead updateSortIndicators stub removed.
+
+  ROUND 3 (FB1–FB6): mdInline escape→linkify ORDER restored
+  (FA5 regression — links render again, schemes still
+  stripped) · clearSearch/navigate redundant-fetch elimination
+  · empty-disk restore = success · one toast per guard pass
+  · FA8 leftover comment · search status-bar match count.
+
+  ROUNDS 4–6 (FC–FF): follow-up compliance pass — regression
+  repairs on the FA/FB batches, toast/i18n wording, CSS
+  polish (spacer + danger-arm), status-bar and preview
+  cleanups. All verified by paste-back.
+
+  ROUND 7 (FG1–FG5) — FINAL PASS, CLOSED:
+  · FG-DOM: ensureRecentsSection() now inserts the Recents
+    section AFTER #list-header instead of at host.firstChild —
+    root view order is COLUMN HEADER → Recents → entries
+    (was: Recents above the header). Subfolders unaffected
+    (Recents hidden there). Pure DOM-order fix, no
+    showRecents/hideRecents logic change.
+  · Remaining FG items: minor a11y (search-row keyboard
+    access), toast offset in iframe context, binary copy
+    note — all recorded as standing limits, no action.
+
+  STATUS: Files app audit trail CLOSED. The queued "deeper
+  glue audit" (blob-sync limits) is RESOLVED AS DOCUMENTED:
+  the blob model's limits (quota on very large disks,
+  conflict surface at app open/boot-flush) are STANDING
+  DOCUMENTED LIMITS in Part V §Files — not defects, not
+  open items. The per-entry model remains a backlog upgrade
+  (Part XI).
 
 ──────────────────────────────
 24. CALENDAR APP — DEEP AUDIT CLOSED, R19 VERIFIED
@@ -1414,9 +1479,8 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
 ──────────────────────────────
 25. QUEUED APP AUDITS (NEXT PHASE — NOT YET STARTED)
 ──────────────────────────────
-  Weather    High — taskbar widget + app sync coupling
+  Weather    High — taskbar widget + app sync coupling (NEXT)
   Mood       High — deepest data model, stats engine
-  Files glue High — OrosFS blob-sync limits
   Time       Medium — multiple views
   Calendar   Medium — post-Wave-3 secondary pass (F6 + minor)
   Quote      Medium — computed totals, numbering logic
@@ -1424,12 +1488,16 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
   Habits     Medium — 3-view app, streak logic
   Prompter   Low — 3 cosmetic patches pending
   Characters Low — registry + model pending (also core #16)
+  (Files REMOVED from this queue — all audit rounds closed,
+  see §23.)
 
 ──────────────────────────────
 26. OPEN DECISION SUMMARY (USER RESPONSE NEEDED)
 ──────────────────────────────
   ⊗ #21 (To-Do) — priority keywords: implement/strike/defer?
-  ⊗ #34/#44 (Kanban/Notes) — ?v=0.34.03: CI or manual edit?
+  ⊗ #34/#44 (Kanban/Notes) — SUPERSEDED by R23 (versions
+     are user-owned); no action needed unless you want the
+     cosmetic cleanup noted anyway.
   ⊗ #41 (Notes) — approve 3 confirm() → themed dialog?
   ⊗ #35 (Kanban) — clean up unused keys + stale comment?
   ⊗ #S5 (Shell) — aurora label: Σέλας or Αυγή?
@@ -1439,19 +1507,24 @@ CHECKLIST F — UNIVERSAL COMPLIANCE (every app, master audit)
   △ #S2/#S3 — confirm the 0.35.00 second-pass audit marks
      are accurate against live files (reconciliation above).
   △ #19 (To-Do) — undo-across-sync: tackle now or defer?
-  △ H (below) — version ledger reconciliation via git log.
+  ✓ CLOSED — H/#27 (version ledger reconciliation): resolved
+     by POLICY, not patch — R23 (versioning is user-owned;
+     version/cache-buster observations are out of audit
+     scope). See §27.
 
 ──────────────────────────────
-27. VERSION LEDGER RECONCILIATION NEEDED
+27. VERSION LEDGER RECONCILIATION — CLOSED (R23)
 ──────────────────────────────
-  Mixed labels in recent history: habits waves 0.34.00/
-  0.35.00, files glue 0.34.07, Files app 0.35.00, delivered
-  shell.js read 0.34.08 — these look like audit-cycle labels,
-  not a clean APP_VERSION sequence. ACTION: `git log` review
-  to establish the ACTUAL APP_VERSION sequence and re-anchor
-  Part III §6. index.html ?v= drift (0.34.05/0.34.03 vs
-  0.35.00) resolves itself on the next push (R20 — CI
-  stamps); sw.js holds a manual defense stamp 0.35.00.
+  Original concern: mixed labels in recent history (habits
+  waves 0.34.00/0.35.00, files glue 0.34.07, Files app
+  0.35.00, delivered shell.js read 0.34.08; index.html
+  ?v= drift 0.34.05/0.34.03 vs 0.35.00; sw.js CACHE_VERSION
+  0.35.06 vs APP_VERSION 0.35.07).
+  RESOLUTION: standing policy — version numbers and
+  cache-busters are USER-OWNED (R23). Mismatches are expected
+  mid-cycle, resolved at deploy time by the GitHub Action,
+  and are OUT OF AUDIT SCOPE. No git-log reconciliation or
+  assistant action required. Do not reopen.
 
 ──────────────────────────────
 28. HOUSEKEEPING FROM THE MERGE (2026-09-18)
@@ -1478,7 +1551,9 @@ CORE / SYNC
   · Additional cloud providers (Google Drive, OneDrive,
     pDrive, Box) — E2EE mandatory.
   · Synced alarms with proper merge semantics (optional).
-  · Per-entry file sync for OrosFS (replace blob model).
+  · Per-entry file sync for OrosFS (replace blob model —
+    the documented standing limit is tracked here, not as
+    an audit item).
   · Navigation network-first timeout race (~4s fallback).
   · Export/import parity audit across apps · manual snapshot
     visual distinction (Manual badge + dedicated delete).
@@ -1543,8 +1618,8 @@ Copy this block into a new chat's first message:
    the Bible registries contain the contracts; request files
    only when the LIVE code state of a specific function
    matters."
-
-╔══════════════════════════════════════════════════════════╗
+   
+   ╔══════════════════════════════════════════════════════════╗
 ║  PART XIII — CHANGELOG                                   ║
 ╚══════════════════════════════════════════════════════════╝
 ASCENDING ORDER (oldest → newest). NEW ENTRIES ARE APPENDED
@@ -1599,7 +1674,7 @@ template:
     mergeRows; R14 dialogs; 16 icons.
   v0.32.00 — Alarms synced via shell slice; Kanban
     archived/color merge survival; all-app sync audit.
-  v0.32.14–0.32.15 — Quote ICONS entry; system-wide
+  v0.32.14–v0.32.15 — Quote ICONS entry; system-wide
     scrollbar + [hidden] standard; alarm snooze +9min;
     Time quick-zone chips i18n + STR restoration.
   Habits v0.2.0 (v0.34.00) — Calendar view (month × habits
@@ -2075,6 +2150,468 @@ Engine untouched — fix is app-side merge semantics.
   in H/#27.
 - Search results lack dblclick-open + tabIndex — standing a11y
   item.
+  
+  ## [Files app] Root view DOM order fix — Recents below the
+  column header
+  Date: 2026-09-19 · Files: files.js
+
+  ### Fixed
+  - ensureRecentsSection(): the section was inserted at
+    host.firstChild, which placed it ABOVE the list column
+    header (Name/Size/Date) in the root view. It now inserts
+    immediately AFTER #list-header (fallback: host.firstChild
+    when no header exists — defensive edge case).
+  - Root view order is now: column header → "Recent" section →
+    entries. Subfolders are unaffected (Recents is hidden
+    there).
+  - No change to showRecents/hideRecents logic — that is
+    CSS-display based, position-independent.
+
+  ### Delivery
+  - OLD/NEW replacement pair (R1), files.js ensureRecentsSection().
+  - R19 paste-back verification: pending user confirmation.
+  - This is the closing fix of the Files audit trail (FG) —
+    Part X §23 records the full sequence.
+
+  ## [BIBLE] 2026-09-19 — Registry sync: R23 + Files audit closure
+  Files touched: OROS_BIBLE.md ONLY (no code files).
+
+  ### Added / Changed
+  - R23 (versioning is USER-OWNED) registered in the Part I rule
+    registry — closes open item H/#27 as a standing POLICY,
+    not a code fix. #34/#44 (Kanban/Notes ?v= discrepancies)
+    superseded by the same rule.
+  - Part X §23: Files audit ledger consolidated and CLOSED
+    (29-item round at 0.34.08, FA1–FA8, FB1–FB6, follow-up
+    compliance rounds, final FG pass incl. the DOM-order fix).
+    The queued "deeper glue audit" (blob-sync limits) resolved
+    AS DOCUMENTED: the blob-model limits (quota on very large
+    disks, conflict surface at app open/boot-flush) are standing
+    documented limits in Part V — not defects, not open items.
+    Files REMOVED from the §25 audit queue.
+  - Part III §6/§7: audit posture + Files registry row updated
+    (deep re-audit CLOSED).
+  - Part III §8: localStorage registry extended with the
+    Files-app device-local keys (oros-files-disk-meta sync-pill
+    state, oros-files-recents journal, oros-files-storage-cache
+    5min TTL).
+  - Part V: Kernel-Lock hardening SP1–SP6 documented in the
+    sync engine section (registry parity with the changelog
+    entries above).
+  - Part VIII: Files-app root view DOM-order contract recorded
+    (column header FIRST, then Recents, then entries).
+  - Document-map headers updated R1–R22 → R1–R23.
+
+  ### Deferred
+  - Files per-entry sync model — remains backlog (Part XI).
+  - Search-row keyboard accessibility, iframe toast offset —
+    recorded as standing limits in §23, no action planned.
+
+  ### Rule: Versioning is USER-OWNED (closes #27 as a standing rule)
+
+Cache-buster / version numbers are NOT the assistant's responsibility.
+The user manages all versioning (APP_VERSION, ?v= parameters, GitHub Action
+bumps) personally. During audits and fixes:
+
+- Never propose, apply, or "fix" version numbers or ?v= parameters.
+- Never flag cache-buster / APP_VERSION mismatches as findings — they are
+  expected mid-cycle and resolved by the user at deploy time.
+- Version references in code comments or logs are informational only.
+
+Historical note: finding H/#27 (0.35.06 vs 0.35.07 cache-buster lag) was
+resolved by this policy — not by a code patch. All future "version mismatch"
+observations are out of audit scope by default. (Rule text ALSO lives in
+Part I as R23 — the registry entry is the normative pointer; this block
+is retained here verbatim as the historical closure record.)
+
+## Cycle app — Wave 1 (initial release)
+
+### Added
+- New app **Cycle** (Lifestyle): menstrual cycle tracking — periods
+  (start/end/flow), symptoms (preset + custom chips), pain-relief
+  intake log (timestamped per day), free-text daily notes.
+- Three views: Calendar (month grid, period days shaded by flow),
+  Days (searchable log), Insights (avg cycle / avg period length,
+  symptom frequency, pain-relief counts).
+- Full sync slice `oros-cycle-data` via `registerSlice("cycle", ...)`
+  with deterministic merge (union by id, mtime LWW, tombstones).
+
+### Architecture (decisions locked for future waves)
+- **Deterministic day ids** (`d-YYYY-MM-DD`): two devices logging
+  the same calendar day converge instead of duplicating.
+- **Whole-day LWW** merge granularity (a day is the atomic unit,
+  like a period) — med-intake deletes are day edits.
+- **Absence is never imputed**: an unlogged day is UNKNOWN, not
+  "no period" (mood-thread honesty rule applies).
+- Flow is a PERIOD-level property in Wave 1 (day-level flow =
+  candidate future upgrade).
+
+### Files
+- NEW: `cycle/cycle.html`, `cycle/cycle.css`, `cycle/cycle.js`
+- UPDATED: `apps.json`, `sw.js` (precache), `shell.js` (ICONS),
+  `translations.js` (`app.cycle`)
+
+### Under consideration (later waves — do NOT promise)
+- Wave 2: prediction engine (next period / ovulation estimate)
+  WITH medical disclaimer string shipped together.
+- Wave 2: Mood ↔ Cycle cross-insights (shared patterns view).
+- Wave 3: PDF export for the doctor (NotoSans Greek path exists
+  from mood), symptom trend charts, reminders.
+  
+  ### Styling Rule — Single OS Skin (added with Contacts wave)
+- ALL orOS apps inherit the active OS skin via inheritPalette() +
+  watchPalette(). No per-app accent palettes, ever.
+- The shell's CSS variables (--accent etc.) are the ONLY styling
+  truth; apps may not override them locally.
+- Existing exceptions (Notes custom accent, Weather custom accent)
+  are DEPRECATED and scheduled for unification in a core cleanup
+  wave — new apps (Contacts onwards) ship with no local accent.
+- The LABEL_PALETTE (8 fixed colors) is unaffected: label colors
+  are DATA, not skin.
+  
+  ## v0.3.2 — Post-audit re-review fixes
+Files: calendar.js, calendar.css, index.html
+
+### Fixed
+- Search-jump in Agenda view: result click now rewinds the agenda
+  window (agendaStart = event's Monday) instead of doing nothing.
+- Deleted-all-labels no longer reseeds Personal/Work/Family on the
+  next load or sync. Seeding now happens ONLY when the "labels"
+  key is absent (fresh install / v0.1 blob). Empty array is
+  honored as a deliberate empty label set.
+- Span hint (multi-day edit warning) re-appears when the Repeat
+  select returns to "None" during the same dialog session.
+- "Today" button now clears the search overlay (searchQ wiped
+  before the single selectDay paint).
+- Week nav: selection carries to the same weekday (7-day shift,
+  clamped to the visible week) instead of snapping to Monday.
+- Agenda "Show more" hidden when the current window is empty.
+
+### Cleanup (dead code)
+- Removed unused "tp-commit" CustomEvent dispatch in makeTP().
+- Removed never-true "_suppress" flag from __orosSyncApi.
+- Removed unreachable `if (!occYmd) return;` guard in
+  eachOccurrence (ymd() always returns a non-empty string).
+
+### Improved
+- Single-paint doctrine enforced: navStep (week/month), Today,
+  moveEventToDate, undoMove now render exactly once per action
+  via selectDay/followView instead of double renderAll.
+- ICS export now includes VALARM blocks for reminders
+  (TRIGGER:-PT{n}M, ACTION:DISPLAY).
+- Disabled time inputs (All-day ticked) visually greyed out.
+- Start-time field gets a bilingual placeholder (ev.ph.start).
+- All five dialogs wired with aria-labelledby to their titles.
+
+## orOS v0.35.06 — 2024-XX-XX (Contacts Wave 1)
+
+### New Applications
+- **Contacts** — Full alternative to Google Contacts (contacts/)
+  - Structured name fields (given/middle/family/nickname)
+  - Phones, emails, addresses, websites, IM (multi-field rows)
+  - Events: birthday/anniversary/custom with yearless support (--MM-DD)
+  - Labels (color-coded, filterable, manage dialog)
+  - Starred favorites, notes
+  - vCard (.vcf) import/export (RFC 6350 subset)
+  - Duplicate detection ready (mergeContacts in sync)
+  - Feed to Calendar birthdays (Wave 2)
+  - Dropbox sync via registerSlice (merge-capable, carry-forward)
+
+### Category Reorganization
+- Moved: Weather/Time/Files → **Accessories**
+- Created: **Office** category (To-Do, Kanban, Notes, Calendar, Quote, Contacts)
+- Created: **Creativity** category (Prompter, Characters)
+- Kept: **Personal** (Mood, Habits, Cycle)
+- Removed: Productivity/Utilities/Lifestyle legacy categories
+
+### Infrastructure
+- Single OS Skin rule enforced (no per-app accent palettes)
+- Updated translations keys for new categories
+- Added contacts icon to shell.js ICONS map
+- Updated sw.js PRECACHE for contacts/ folder
+
+### Known Limitations (Wave 2 backlog)
+- Relations (cross-contact links) — pending
+- Birthday feed to Calendar reminders — pending
+- Avatar images — pending (Wave 2 with size limit)
+- Transliteration search — pending
+
+BIBLE-1 — §6 Current State (μετρητής apps + κατηγορίες):
+
+OLD:
+  Apps        : 13 in apps.json — see registry §7.
+NEW:
+  Apps        : 15 in apps.json (Contacts + Cycle added) —
+                see registry §7. Categories reorganized
+                Linux-style: Accessories / Office /
+                Creativity / Personal.
+				
+				BIBLE-2 — §7 App Registry (προσθήκη δύο γραμμών, αμέσως μετά τη γραμμή Files):
+
+OLD:
+  Files     | files/      | oros-files-data (view  | 1   | files-disk slice:      | 29-item audit DONE;
+            |             | prefs only) +         |     | blob snapshot via      | deep re-audit FA1–FG5
+            |             | "files-disk" slice    |     | shell §9f (Part V)     | ALL CLOSED (§23)
+NEW:
+  Files     | files/      | oros-files-data (view  | 1   | files-disk slice:      | 29-item audit DONE;
+            |             | prefs only) +         |     | blob snapshot via      | deep re-audit FA1–FG5
+            |             | "files-disk" slice    |     | shell §9f (Part V)     | ALL CLOSED (§23)
+  Contacts  | contacts/   | oros-contacts-data    | 1   | union-by-id, mtime     | QUEUED (Wave 1 shipped;
+            |             |                        |     | LWW, tombstones        | stabilization pass
+            |             |                        |     | (mergeContacts)         | this session)
+  Cycle     | cycle/      | oros-cycle-data        | 1   | day-entity union,      | QUEUED (Wave 1 shipped)
+            |             |                        |     | whole-day LWW, tombs   |
+			
+			BIBLE-3 — §8 File Tree (προσθήκη directories):
+
+OLD:
+  todo/ kanban/ notes/ weather/ mood/ time/ calendar/ quote/
+    prompter/ storage/ habits/ files/ characters/
+NEW:
+  todo/ kanban/ notes/ weather/ mood/ time/ calendar/ quote/
+    prompter/ storage/ habits/ files/ characters/ contacts/
+    cycle/
+	
+	BIBLE-4 — §25 Queued Audits (προσθήκη πριν το Weather):
+
+OLD:
+  Weather    High — taskbar widget + app sync coupling (NEXT)
+NEW:
+  Contacts   Medium — Wave 1 shipped; stabilization pass
+             pending shell.js verification; Wave 2 (relations,
+             dedup UI, Calendar reminder feed, avatars) queued
+  Cycle      Medium — Wave 1 shipped; Wave 2 (prediction engine
+             + medical disclaimer) queued
+  Weather    High — taskbar widget + app sync coupling (NEXT)
+  
+  BIBLE-5 — Part XI: το Cycle αναφέρεται στα «NEW APPS (planned, not started)» ενώ έχει ήδη-shipped — πρόταση: διαγραφή του bullet · Cycle (women's health: cycle, symptoms, meds, irregularities). από τα NEW APPS, και προσθήκη στο τέλος της λίστας APPS (μετά το To-Do bullet):
+
+NEW (append):
+  · Cycle Wave 2: prediction engine (next period / ovulation)
+    WITH medical disclaimer; Mood ↔ Cycle cross-insights.
+  · Cycle Wave 3: PDF export (NotoSans Greek path exists from
+    mood), symptom trend charts, reminders.
+
+Η changelog entry (BIBLE-6) — στο ΚΑΤΩ μέρος του Part XIII
+OLD:
+──────────────────────────────
+*Designed by Christos Koulaxizis — koulaxizis.gr*
+NEW:
+## [Contacts] Wave 1 — integration & stabilization — 2026-09-19
+
+### Fixed
+- shell.js ICONS["contacts"]: hard-coded #6d4aff stroke →
+  currentColor + explicit width/height attrs. Single OS Skin
+  compliance — the icon now follows the active skin instead of
+  rendering purple in every palette (Standing Styling Rule).
+- fmtEvtDate: TypeError from calling a non-existent String .pad()
+  → replaced with direct zero-pad concatenation.
+
+### Removed
+- Dead pad() helper left unused by the fmtEvtDate fix.
+
+### Cleanup
+- apps.json: Contacts/Cycle entry indentation normalized to the
+  project 2-space standard (tabs → spaces).
+
+### Process
+- sw.js CACHE_VERSION deliberately NOT touched — versioning is
+  user-owned (R23); the GitHub Action stamps it at release.
+
+### Files touched
+- shell.js, apps.json, OROS_BIBLE.md (this entry + BIBLE-1–5
+  registry sync).
+
+### Deferred ("under consideration")
+- Wave 2 per the Wave 1 entry: relations, duplicate-merge UI,
+  Calendar birthday reminder feed, avatars, transliteration
+  search.
+
+──────────────────────────────
+## [Contacts] Wave 1 — integration & stabilization — 2026-09-19
+
+### Fixed (verified against live shell.js + delivered contacts.js)
+- shell.js ICONS["contacts"]: hard-coded #6d4aff stroke →
+  currentColor + explicit width/height attrs (Single OS Skin
+  compliance — icon follows the active skin). VERIFIED PRESENT
+  in live shell.js; no further patch needed.
+- contacts.js fmtEvtDate: TypeError from calling non-existent
+  String .pad() → replaced with direct zero-pad concatenation
+  (inside the delivered Wave 1 full file).
+- apps.json: Contacts/Cycle entry indentation normalized to the
+  project 2-space standard (tabs → spaces).
+
+### Removed
+- Dead pad() helper left unused by the fmtEvtDate fix (contacts.js).
+
+### Process
+- sw.js CACHE_VERSION deliberately NOT touched — versioning is
+  user-owned (R23); the GitHub Action stamps it at release.
+  Expected mid-cycle lag is out of audit scope.
+
+### Files touched
+- shell.js (ICONS), contacts.js (fmtEvtDate, pad()), apps.json
+  (formatting), OROS_BIBLE.md (this entry + BIBLE-1–5 registry
+  sync: §6 app count 15, §7 Contacts/Cycle rows, §8 dirs,
+  §25 audit queue, Part XI Cycle backlog).
+
+### Deferred ("under consideration")
+- Wave 2 per the Wave 1 entry: relations, duplicate-merge UI,
+  Calendar birthday reminder feed (lbl-bday-feed), avatars,
+  transliteration search.
+
+──────────────────────────────
+
+## orOS Cycle — Waves 2.1–2.3 (shipped @ core 0.35.10)
+
+App files: cycle/index.html, cycle/cycle.css, cycle/cycle.js (v0.35.10 on HTML+JS script src; app-local only — shell.js stays the single version source of truth for the OS itself).
+
+### Wave 2.1 — Predictions & Reminders
+- Prediction engine: next start = last period start + avg cycle length; window = avg period
+  length (fallback 5d until first ended period exists). RENDER-DERIVED ONLY — never stored,
+  never synced, never authoritative.
+- Calendar renders predicted days as dashed/faint red cells (.cal-cell.pred) — an estimate
+  must be visually distinct from a fact. Legend hint shown only while a prediction exists.
+- Reminder system: toggleable via state.prefs.remind (synced through the slice), toast on
+  app open — "expected in ~N days" (≤2 days ahead) or "appears overdue ~N days ago".
+  No native notifications, no timers while closed (R14 spirit).
+- Ongoing-period render guard: an open-ended period never shades FUTURE calendar days
+  (render-side cutoff only — periodCovering() itself untouched).
+
+### Wave 2.2 — Cross-app Mood bridge (READ-ONLY)
+- Cycle Insights gains "Mood on period days": prevalence per mood key during period days vs
+  other days, from localStorage "oros-mood-data" (same origin, shared storage).
+- Bridge contract: READ-ONLY, defensive parse (absent/garbage → no section, never throws),
+  ZERO writes to mood data — EVER. Keys off mood.js's IMMUTABLE emotion dictionary (stable
+  keys by design for statistics); unknown keys are silently ignored.
+- Honesty guards identical to the trends engines: min 5 mood entries PER SIDE, min +12pt
+  delta, max 2 sentences, positive-share bars (happy · calm · excited), explicit
+  "correlations, not causes" disclaimer string (xm.disc) shipped WITH the feature.
+- Mood app has the symmetric counterpart (period-day emotional patterns) — see mood entry.
+
+### Wave 2.3 — Doctor Report (PDF export)
+- "Doctor report" button in Insights top row (chip ghost). A4 PDF, sections: Overview
+  (avg cycle / avg period / periods count / min–max gap variability), Period log
+  (dates, inclusive duration, flow), Symptoms (frequency + "mostly on period days"
+  marker), Pain relief (per-med intake counts + % of intakes on period days), Day notes,
+  closing disclaimer (rep.disc) — the self-tracking disclaimer travels to paper.
+- Cluster marker guards: symptom must appear ≥3 times AND land ≥70% on period days
+  before the "mostly on period days" claim is printed. Nothing claimed on thin evidence.
+- Range contract: the on-screen range chip (All / 6 months) defines the paper range —
+  same as mood's export.
+- PDF stack is a 1:1 port of mood.js's proven pipeline: vendored jspdf.umd.min.js
+  (lazy-loaded from ../vendor/, cache-busted, graceful toast if absent), NotoSans TTF for
+  Greek (fetched once, cached in window.__cyclePdfFont), NFC normalization funnel wrapped
+  around doc.text() (mobile keyboards emit NFD — jsPDF draws combining marks as glyphs),
+  pagination-safe section/kv/line helpers with footer on every page.
+- Export guard: with zero data the button now shows a feedback toast instead of a
+  silent no-op.
+
+### Fixes this pass
+- CRITICAL (sync): prefs edits now stamp state.om alongside state.sm. mergeCycleStates
+  resolves prefs from the OM-DONOR side; a remind-toggle that only bumped sm could be
+  silently overwritten by any device with a newer om. RULE: any prefs-touching edit
+  bumps BOTH sm and om. (Same class of bug as the mood prefs race — hunt it in every
+  app that resolves prefs by om-donor.)
+- Empty-state dead button: "Doctor report" rendered before the empty-state return —
+  now gives toast feedback.
+
+### New standing rules recorded (Bible-grade)
+1. Disclaimer-accompaniment contract: every predictive/correlational/estimative feature
+   ships WITH its own disclaimer string, rendered next to it (screen AND paper). No
+   disclaimers-before-the-fact, no orphan estimates.
+2. Cross-app read-only bridge: apps may READ sibling slices from localStorage on the
+   same origin, defensively, without writes. Claims built on another app's data must
+   state the source and use that app's documented immutable vocabularies.
+3. Om-donor prefs resolution: prefs live in the slice and resolve via om-side donor in
+   merge; therefore prefs edits MUST bump om (see fix above).
+4. Estimates are visually distinct: predicted/estimated UI states use dashed/faint
+   variants of the SAME hue family — never full-strength rendering of a guess.
+
+### Sync/storage surface (unchanged since Wave 1)
+- Slice "oros-cycle-data": periods, days (deterministic d-YYYY-MM-DD ids, whole-day LWW),
+  cols (sym/med vocabularies, bilingual seeds with bi labels, label-normalized dedupe),
+  prefs, tombstones. Absence of data is never imputed (unknown ≠ no).
+
+### Update guide (from previous 2.2-era install)
+1. Replace cycle/index.html, cycle/cycle.js. cycle.css unchanged this pass.
+2. Confirm sw.js PRECACHE_URLS includes vendor/jspdf.umd.min.js and
+   vendor/NotoSans-Regular.ttf (already required by Mood) — verified this pass.
+3. No data migration: DATA_VER stays 1; state shape unchanged (new prefs key optional,
+   defaults to remind:true on migrate).
+4. Post-deploy check: Insights → "Doctor report" exports (EN + EL), file downloads as
+   oros-cycle-YYYY-MM-DD.pdf; reminder toggle survives a sync round-trip across devices.
+
+### Files-touched checklist (release propagation)
+- cycle/index.html — yes (script/css version refs)
+- cycle/cycle.js — yes (STRINGS en/el +28 keys, PDF stack, button wiring, prefs fix, export guard)
+- cycle/cycle.css — no
+- apps.json / shell.js ICONS / translations.js — no (done at Wave 1 introduction)
+- sw.js — no new entries needed (vendor files already precached)
+- GitHub Action: version parameters untouched (auto-bump handles cache busting)
+
+## Weather app — audit fixes
+- Boot log: dynamic SCRIPT_V from ?v= cache-bust param (time.js pattern).
+- Toast styling externalized to weather.css (.oro-toast / .sn-btn) —
+  no inline style.cssText. CSS header no longer carries a version
+  number (shell.js is the single source of truth for versions).
+- GPS/shell location dedup tolerance 0.02° → 0.15° in
+  __orosWeatherUpdate, fetchForecast tray mirror and
+  syncShellLocation — aligned with shell.js nearest-city adoption;
+  typed-city guard in commitCity intentionally stays 0.02°.
+  
+  ## Weather v0.3.0 — Audit Completed (2026-09-19)
+
+### Fixes Applied
+- **Toast positioning & interaction**: Moved to top-right (Linux convention), added `visibility`/`pointer-events` guard to prevent click-trap after fade-out
+- **Palette inheritance**: Added `--danger`, `--ok`, `--warn` to `PAL_VARS` for AQI/UV semantic coloring
+- **Theme consistency**: Replaced hardcoded `rgba(224, 108, 117, …)` with `color-mix(in srgb, var(--danger) N%, transparent)`
+- **Sync UX**: Changed merged-ack toast from generic "Updated" to "Synced changes from another device" (bilingual)
+- **Dead code removal**: Removed unused `data-skin="oros"` attribute from HTML
+- **CSS cleanup**: Eliminated redundant `overscroll-behavior-y` declaration (already covered by `overscroll-behavior: contain`)
+
+### Architecture Verified
+- Timezone-correct "now" (utc_offset_seconds from API response)
+- Undo-delete with tombstone resurrection
+- No-data state (lazy-created, between offline badge & empty)
+- Autocomplete (debounce/token/mousedown-vs-blur)
+- WA2 sync stub (`__orosSyncApi`) defined BEFORE `load()`
+- Merge engine symmetrical + deterministic
+
+### Ready for Stable Release
+No blocking issues. All audit findings resolved.
+
+## Habits v0.3.1 — Audit Fixes (2026-09-19)
+
+- CRITICAL: missing `}` in wire() cdot branch — SyntaxError killed the
+  entire IIFE at parse time (blank app, no boot log)
+- Shortcut forwarding now limited to shell-owned combos (Ctrl+Alt+Shift+*)
+  instead of forwarding every plain keystroke to the parent document
+- sliceGet() deep-clones the shipped payload (Weather-contract; no live
+  db references in the sync layer)
+- PAL_VARS extended with --ok/--warn (standing orOS palette rule)
+- Toast standardized: top-right below app topbar, var(--border) stroke,
+  z-index 1200 — adopted as OS-wide toast convention
+- EL strings: "30μ"/"90μ" → "30 ημ"/"90 ημ" (misread as minutes)
+- Dead code: daysWrap.dataset.built remnant removed
+- CSS: .btn.danger color #fff → var(--bg) (palette purity)
+
+Note: weather.js toast top offset (12px) pending alignment to the new
+convention (below-app-topbar) — next Weather touch-up.
+
+## Habits v0.3.1 — Verified (2026-09-19)
+
+All 8 audit patches confirmed applied and cross-validated:
+- SyntaxError fix (wire cdot branch) — app boots
+- Shell-owned-only combo forwarding (§10 Weather parity)
+- sliceGet deep clone (Weather-contract)
+- PAL_VARS --ok/--warn
+- Toast standardized (top-right below topbar, --border, z 1200)
+- EL: "30 ημ"/"90 ημ"
+- dataset.built remnant removed
+- .btn.danger var(--bg)
+
+Status: CLEAN — ready for stable.
 
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*

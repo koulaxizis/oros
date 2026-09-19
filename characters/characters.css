@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS · Characters v1.0.0
+   orOS · Characters
    Dark-first, OS palette via runtime inheritance (JS injects
    the parent's computed skin vars); these :root values are the
    standalone/first-paint FALLBACK only.
@@ -82,10 +82,17 @@ button {
 .tb-btn.accent:hover { filter: brightness(1.08); color: #fff; }
 .tb-btn svg { flex-shrink: 0; }
 
+#tb-left, #tb-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0;                 /* symmetric sides → true center */
+}
+#tb-right { justify-content: flex-end; }
 #tb-tabs {
   display: flex;
   gap: 2px;
-  margin: 0 auto;             /* tabs centered */
+  justify-content: center;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -329,9 +336,6 @@ dialog#dlg-help { width: min(400px, calc(100vw - 24px)); }
 .field textarea { resize: vertical; min-height: 70px; line-height: 1.55; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
 
-.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-@media (max-width: 480px) { .frow { grid-template-columns: 1fr; } }
-
 /* Trait rows (name + strength slider + remove) */
 .trait-row {
   display: grid;
@@ -437,7 +441,6 @@ dialog#dlg-help { width: min(400px, calc(100vw - 24px)); }
 }
 .matrix td.cell:hover { background: var(--panel-2); }
 .matrix td.cell.has { color: var(--accent); font-weight: 700; }
-.matrix td.cell.self { background: var(--panel-2); cursor: default; }
 .matrix td.diag {
   background: var(--panel-2);
   color: var(--text-dim);

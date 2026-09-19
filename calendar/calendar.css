@@ -1,8 +1,9 @@
 /* ============================================================
-   orOS Calendar v0.2.0 — stylesheet
+   orOS Calendar v0.3.0 — stylesheet
    Palette: inherited at runtime from the shell (JS copies the
    CSS vars); fallbacks below for standalone loads (oros dark).
    Mobile-first, no external deps.
+   Views: Month (grid), Week, Agenda + search results overlay.
    ============================================================ */
 
 :root {
@@ -56,8 +57,9 @@ body {
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 10px;
+  flex-wrap: wrap;
 }
-#cal-nav { display: flex; gap: 6px; align-items: center; }
+#cal-nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 #cal-prev, #cal-next {
   width: 44px;
   min-height: 44px;
@@ -92,6 +94,52 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------- View switcher + search (v0.3.0) ---------- */
+#view-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+}
+.view-switch {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+.view-btn {
+  min-height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.view-btn:hover { color: var(--text); }
+.view-btn.active { background: var(--accent-soft); color: var(--accent); }
+#search-in {
+  flex: 1;
+  min-width: 120px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 40px;
+  outline: none;
+}
+#search-in:focus { border-color: var(--accent); }
+#search-in::-webkit-search-cancel-button { cursor: pointer; }
 
 /* ---------- Label filter chips ---------- */
 #lbl-chips {
@@ -210,8 +258,9 @@ body {
 }
 .ev-dot.timed { border-radius: 1px; }
 
-/* Desktop: distinctly rectangular cells — a wider stage means
-   the grid gets vertical presence instead of stretching flat. */
+/* Desktop: distinctly rectangular cells. Audit #1: full-width —
+   no max-width cap; the grid fills the whole viewport like every
+   other orOS app. */
 @media (min-width: 700px) {
   .cal-cell { min-height: 84px; }
   .cal-cell .cal-num { font-size: 13.5px; }
@@ -222,6 +271,157 @@ body {
 @media (max-width: 420px) {
   .cal-cell { min-height: 42px; padding: 3px 3px 2px; }
   .cal-num { font-size: 11.5px; }
+}
+
+/* ---------- Week view (v0.3.0) ---------- */
+#week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.wk-col {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-bg);
+  min-height: 240px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+}
+.wk-col.sel {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.wk-col:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.wk-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.wk-head .wk-dnum {
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.wk-col.today .wk-head,
+.wk-col.today .wk-head .wk-dnum { color: var(--accent); }
+.wk-body {
+  flex: 1;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+}
+.wk-ev {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg);
+  border: none;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  padding: 4px 6px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wk-ev:hover { filter: brightness(1.2); }
+.wk-ev-time {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
+}
+.wk-empty { font-size: 11px; color: var(--text-dim); padding: 4px 6px; }
+
+/* Mobile: week stacks vertically as day cards — every app is
+   mobile-first; 7 squeezed columns on a phone are unreadable. */
+@media (max-width: 700px) {
+  #week-grid { grid-template-columns: 1fr; }
+  .wk-col { min-height: 0; }
+  .wk-body { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* ---------- Agenda view (v0.3.0) ---------- */
+#agenda-list { list-style: none; }
+.ag-day { border-top: 1px solid var(--border); padding: 8px 0 2px; }
+.ag-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 2px 8px;
+}
+.ag-day-name {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+}
+.ag-day.ag-today .ag-day-name { color: var(--accent); }
+.ag-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.ag-more {
+  margin: 10px 0 4px;
+  width: 100%;
+}
+
+/* ---------- Search results (v0.3.0) ---------- */
+#search-results { list-style: none; }
+.res-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.res-row:last-child { border-bottom: none; }
+.res-row:hover { background: var(--accent-soft); }
+.res-date {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 92px;
+}
+.res-title {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.res-empty {
+  padding: 14px 2px;
+  font-size: 12.5px;
+  color: var(--text-dim);
 }
 
 /* ---------- Day section ---------- */
@@ -322,6 +522,13 @@ body {
   flex-shrink: 0;
   cursor: help;
 }
+/* Multi-day continuation hint (v0.3.0) — e.g. "Day 2 of 3" */
+.ev-cont {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
 .ev-row[draggable="true"] { cursor: grab; }
 .ev-row.dragging { opacity: 0.45; cursor: grabbing; }
 .empty {
@@ -389,6 +596,9 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .ev-form select:focus,
 .ev-form input[type="date"]:focus,
 .ev-form textarea:focus { border-color: var(--accent); }
+/* «Όλη μέρα» τικαρισμένο → τα greyed-out time fields πρέπει
+   να ΔΕΙΚΝΟΥΝ disabled */
+.ev-form input:disabled { opacity: 0.45; }
 .chk { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
 .chk input { width: 15px; height: 15px; accent-color: var(--accent); }
 .chk span { font-size: 12.5px; color: var(--text-dim); font-weight: 700; }
@@ -422,15 +632,10 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   box-shadow: 0 10px 32px var(--shadow);
   z-index: 40;
   padding: 4px;
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.15s ease, transform 0.15s ease;
 }
-.tp-menu[hidden] {
-  opacity: 0;
-  transform: translateY(-4px);
-  pointer-events: none;
-}
+/* Audit #4: no [hidden] transition rules — the global
+   [hidden] { display: none !important } kills display anyway,
+   so the old opacity/transform dance was dead weight. */
 .tp-menu::-webkit-scrollbar { width: 8px; }
 .tp-menu::-webkit-scrollbar-track { background: transparent; }
 .tp-menu::-webkit-scrollbar-thumb {
@@ -496,6 +701,27 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   color: var(--text-dim);
 }
 #ev-until-row.show input { flex: 1 1 auto; min-width: 0; }
+
+/* Multi-day end date (v0.3.0): shown only when Repeat = None —
+   exact same contract as ev-until-row. */
+#ev-dateend-row { display: none; }
+#ev-dateend-row.show { display: flex; align-items: center; gap: 10px; }
+#ev-dateend-row.show label {
+  flex: 0 0 auto;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+#ev-dateend-row.show input { flex: 1 1 auto; min-width: 0; }
+/* Multi-day span hint (v0.3.1) — shown when EDITING an existing
+   multi-day event: warns the anchor moves to the selected day. */
+.span-hint {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  padding: 2px 0;
+}
 
 /* ---------- Series chooser dialog (Wave 3) ---------- */
 dialog#ser-dlg {
@@ -638,6 +864,90 @@ dialog#lbl-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 .lbl-add-row input:focus { border-color: var(--accent); }
 .lbl-add-row .btn { flex: 0 0 auto; min-height: 38px; padding: 6px 14px; font-size: 12.5px; }
+
+/* ---------- Stats dialog (v0.3.0) ---------- */
+dialog#stat-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 16px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+dialog#stat-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+#stat-dlg h3 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.stat-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.stat-kpi {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.stat-kpi b {
+  display: block;
+  font-size: 18px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.stat-kpi span {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#stat-bars { display: flex; flex-direction: column; gap: 8px; }
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.stat-lbl-name {
+  flex: 0 0 auto;
+  max-width: 32%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-bar-wrap {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.stat-bar { height: 100%; border-radius: 5px; }
+.stat-num {
+  flex-shrink: 0;
+  font-weight: 800;
+  color: var(--text-dim);
+  min-width: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stat-sub {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+.stat-empty {
+  padding: 10px 2px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
 
 /* Invalid-field flash (validation) */
 .ev-form input.invalid,

@@ -145,8 +145,8 @@
       "week.prev": "Προηγούμενη εβδομάδα",
       "week.next": "Επόμενη εβδομάδα",
       "view.stats": "Στατιστικά",
-      "range.30": "30μ",
-      "range.90": "90μ",
+      "range.30": "30 ημ",
+      "range.90": "90 ημ",
       "range.all": "Όλα",
       "stats.per.habit": "Ανά συνήθεια",
       "stats.insights": "Ευρήματα",
@@ -588,7 +588,10 @@
       if (db.comps[i].del && db.comps[i].mtime < CUTOFF) continue;
       comps.push(db.comps[i]);
     }
-    return { ver: db.ver, habits: db.habits, comps: comps };
+    // deep clone — live db references must never leak into the sync
+    // layer (aliasing = mutation mid-merge; Weather-contract)
+    return JSON.parse(JSON.stringify(
+      { ver: db.ver, habits: db.habits, comps: comps }));
   }
 
   function sliceSet(data, info) {
@@ -1159,7 +1162,6 @@
       })(i);
     }
     updateDaysHint();
-    daysWrap.dataset.built = "1";
 
     dlgHabit.showModal();
     nameEl.focus();
@@ -1291,6 +1293,7 @@
         if (cFuture || (!cSched && !cDone)) return;
         toggleComp(h, cd);
         render();
+      }
     });
   }
 
@@ -1308,10 +1311,13 @@
       openHabitDialog(null);
       return;
     }
-    // forward everything else to the shell so GLOBAL shortcuts
-    // (force push/pull, snapshot…) keep working while the app
-    // iframe has focus (§10 shortcut-forwarding contract)
-    if (!inField) forwardKey(e);
+    // forward SHELL-OWNED combos only (Ctrl/Cmd+Alt+Shift+*) so
+    // GLOBAL shortcuts (force push/pull, snapshot…) keep working
+    // while the app iframe has focus (§10 — same rule as Weather).
+    // Plain keys stay local — no synthetic-event spam on the shell.
+    if (!inField && (e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) {
+      forwardKey(e);
+    }
   });
 
   function forwardKey(e) {
@@ -1330,7 +1336,8 @@
   // ===== PALETTE INHERITANCE (§9 — parent shell vars win) =====
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft", "--panel-bg",
-                  "--border", "--shadow", "--danger", "--font-stack"];
+                  "--border", "--shadow", "--danger", "--ok", "--warn",
+                  "--font-stack"];
 
   function inheritPalette() {
     var p = (window.parent && window.parent !== window) ? window.parent : null;

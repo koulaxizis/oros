@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Weather — App logic (v0.3.0)
+// orOS Weather — App logic
 // Provider: Open-Meteo (no key, no cookies). One forecast
 // request per refresh: current + hourly 48h + daily 7d,
 // timezone=auto. Feels-like/humidity/UV derive from the hourly
@@ -90,7 +90,8 @@
       "aqi.poor":      "Poor",
       "aqi.vpoor":     "Very poor",
       "aqi.epoor":     "Extremely poor",
-      "aqi.legend":    "European AQI: ≤20 Good · ≤40 Fair · ≤60 Moderate · ≤80 Poor · ≤100 Very poor · >100 Extremely poor"
+      "aqi.legend":    "European AQI: ≤20 Good · ≤40 Fair · ≤60 Moderate · ≤80 Poor · ≤100 Very poor · >100 Extremely poor",
+      "toast.merged":  "Synced changes from another device"
     },
     el: {
       "refresh":       "Ανανέωση",
@@ -140,7 +141,8 @@
       "aqi.poor":      "Κακή",
       "aqi.vpoor":     "Πολύ κακή",
       "aqi.epoor":     "Εξαιρετικά κακή",
-      "aqi.legend":    "Ευρωπαϊκός AQI: ≤20 Καλή · ≤40 Αρκετή · ≤60 Μέτρια · ≤80 Κακή · ≤100 Πολύ κακή · >100 Εξαιρετικά κακή"
+      "aqi.legend":    "Ευρωπαϊκός AQI: ≤20 Καλή · ≤40 Αρκετή · ≤60 Μέτρια · ≤80 Κακή · ≤100 Πολύ κακή · >100 Εξαιρετικά κακή",
+      "toast.merged":  "Συγχρονίστηκαν αλλαγές από άλλη συσκευή"
     }
   };
 
@@ -274,7 +276,7 @@
     return Math.round(state.units === "imperial"
       ? (c * 9 / 5 + 32) : c) + "°";
   }
-    function fmtSpeed(kmh) {
+  function fmtSpeed(kmh) {
     if (kmh === null || kmh === undefined || isNaN(Number(kmh))) return "—";
     var v = state.units === "imperial" ? kmh * 0.621371 : kmh;
     return Math.round(v) + (state.units === "imperial" ? " mph" : " km/h");
@@ -748,12 +750,7 @@
   function showToast(text, actionLabel, actionFn) {
     if (!toastEl) {
       toastEl = document.createElement("div");
-      toastEl.style.cssText =
-        "position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(8px);" +
-        "z-index:1200;background:var(--panel-bg);border:1px solid var(--border);" +
-        "border-radius:8px;box-shadow:0 4px 16px var(--shadow);padding:9px 14px;" +
-        "font-size:13px;color:var(--text);opacity:0;transition:opacity .3s,transform .3s;" +
-        "max-width:calc(100vw - 32px);";
+      toastEl.className = "oro-toast";
       document.body.appendChild(toastEl);
     }
     if (toastAction) { toastAction.remove(); toastAction = null; }
@@ -764,10 +761,7 @@
       toastAction = document.createElement("button");
       toastAction.type = "button";
       toastAction.textContent = actionLabel;
-      toastAction.style.cssText =
-        "margin-left:10px;background:transparent;color:var(--accent);" +
-        "border:none;border-left:1px solid var(--border);padding:0 0 0 10px;" +
-        "font-size:13px;font-weight:700;cursor:pointer;";
+      toastAction.className = "sn-btn";
       toastAction.addEventListener("click", function () {
         actionFn();
         hideToast();
@@ -775,17 +769,19 @@
       toastEl.appendChild(toastAction);                  // action SECOND
     }
     void toastEl.offsetWidth;
-    toastEl.style.opacity = "1";
-    toastEl.style.transform = "translateX(-50%) translateY(0)";
+    toastEl.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, 5000);
   }
   function hideToast() {
     if (!toastEl) return;
-    toastEl.style.opacity = "0";
-    toastEl.style.transform = "translateX(-50%) translateY(8px)";
+    toastEl.classList.remove("show");
     if (toastAction) { toastAction.remove(); toastAction = null; }
-    toastEl.textContent = "";
+    // text survives the 0.3s fade-out (no empty-box flash),
+    // cleared after — visibility gate already blocked clicks
+    setTimeout(function () {
+      if (toastEl && !toastEl.classList.contains("show")) toastEl.textContent = "";
+    }, 350);
   }
 
   // No-data state (finding 4): city EXISTS but no cached payload
@@ -1202,7 +1198,8 @@
     // ---------- 5. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
-                  "--panel-bg", "--border", "--shadow"];
+                  "--panel-bg", "--border", "--shadow",
+                  "--danger", "--ok", "--warn"];
 
   function inheritPalette() {
     try {
@@ -1263,7 +1260,7 @@
     if (!ok) state.active = state.cities.length ? state.cities[0].id : null;
 
     scheduleRender();    // remote change landed (units/cities) — repaint live
-    if (info && info.merged) showToast(t("updated.at"));   // light ack — no noise
+    if (info && info.merged) showToast(t("toast.merged"));   // light ack — no noise
   }
 
   // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) forward FIRST.
@@ -1456,7 +1453,7 @@
         typeof w.lon !== "number" || isNaN(w.lat) || isNaN(w.lon)) return;
     var dup = null;
     state.cities.forEach(function (c) {
-      if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) dup = c;
+      if (Math.abs(c.lat - w.lat) < 0.15 && Math.abs(c.lon - w.lon) < 0.15) dup = c;
     });
     if (dup) {
       if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
@@ -1499,7 +1496,7 @@
 
     var dup = null;
     state.cities.forEach(function (c) {
-      if (Math.abs(c.lat - w.lat) < 0.02 && Math.abs(c.lon - w.lon) < 0.02) dup = c;
+      if (Math.abs(c.lat - w.lat) < 0.15 && Math.abs(c.lon - w.lon) < 0.15) dup = c;
     });
     if (dup) {
       if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
@@ -1517,7 +1514,12 @@
   }
 
   // ---------- Boot ----------
-  console.log("weather.js v0.3.0 boot");
+  var SCRIPT_V = "0.3.0";
+  try {
+    var vm = document.currentScript && String(document.currentScript.src).match(/[?&]v=([^&]+)/);
+    if (vm) SCRIPT_V = decodeURIComponent(vm[1]);
+  } catch (e) {}
+  console.log("[orOS] weather.js v" + SCRIPT_V + " boot");
   // WA2 fix: the api stub must exist BEFORE the first save() —
   // load()/syncShellLocation() mutate state at boot (fresh state,
   // shell-pref city upsert) and their dirty flag was silently

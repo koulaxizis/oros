@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Contacts · orOS</title>
+  <link rel="stylesheet" href="contacts.css?v=0.35.06">
+</head>
+<body>
+  <main id="cmain">
+
+    <!-- ===== Top bar ===== -->
+    <header id="ct-top">
+      <button id="ct-import" type="button" class="nav-mini" data-i18n="ct.import"></button>
+      <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
+      <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
+    </header>
+
+    <!-- ===== Search + add ===== -->
+    <div id="view-bar">
+      <input id="search-in" type="search" autocomplete="off"
+             data-i18n-ph="ct.search.ph">
+      <button id="ct-add" type="button" class="btn prim" data-i18n="ct.add"></button>
+    </div>
+
+    <!-- ===== Label filter chips ===== -->
+    <div id="lbl-chips"></div>
+
+    <!-- ===== Contact list ===== -->
+    <ul id="ct-list"></ul>
+
+    <!-- ===== Import results (shown after a vCard import) ===== -->
+    <section class="sec" id="import-sec" hidden>
+      <div class="sec-head">
+        <span id="imp-title"></span>
+        <button id="imp-done" type="button" class="mini" data-i18n="lbl.done"></button>
+      </div>
+      <ul id="imp-list"></ul>
+    </section>
+  </main>
+
+  <!-- Hidden file input for vCard import (single reliable path) -->
+  <input type="file" id="vcard-file" accept=".vcf,text/vcard" hidden>
+
+  <!-- Contact dialog (add & edit share it) -->
+  <dialog id="ct-dlg">
+    <h3 id="ct-dlg-title" data-i18n="ct.dlg.new"></h3>
+    <div class="ev-form">
+
+      <label for="ct-given" data-i18n="ct.field.given"></label>
+      <input id="ct-given" type="text" maxlength="60" data-i18n-ph="ct.ph.given">
+
+      <label for="ct-middle" data-i18n="ct.field.middle"></label>
+      <input id="ct-middle" type="text" maxlength="60" data-i18n-ph="ct.ph.middle">
+
+      <label for="ct-family" data-i18n="ct.field.family"></label>
+      <input id="ct-family" type="text" maxlength="60" data-i18n-ph="ct.ph.family">
+
+      <label for="ct-nickname" data-i18n="ct.field.nickname"></label>
+      <input id="ct-nickname" type="text" maxlength="60" data-i18n-ph="ct.ph.nickname">
+
+      <label for="ct-org" data-i18n="ct.field.org"></label>
+      <input id="ct-org" type="text" maxlength="80" data-i18n-ph="ct.ph.org">
+
+      <label for="ct-jobtitle" data-i18n="ct.field.jobtitle"></label>
+      <input id="ct-jobtitle" type="text" maxlength="80" data-i18n-ph="ct.ph.jobtitle">
+
+      <label data-i18n="ct.field.phones"></label>
+      <div id="ct-phones" class="mf-holder"></div>
+      <button id="ct-phone-add" type="button" class="mini mf-add" data-i18n="ct.add.phone"></button>
+
+      <label data-i18n="ct.field.emails"></label>
+      <div id="ct-emails" class="mf-holder"></div>
+      <button id="ct-email-add" type="button" class="mini mf-add" data-i18n="ct.add.email"></button>
+
+      <label data-i18n="ct.field.addresses"></label>
+      <div id="ct-addresses" class="mf-holder"></div>
+      <button id="ct-addr-add" type="button" class="mini mf-add" data-i18n="ct.add.address"></button>
+
+      <label data-i18n="ct.field.websites"></label>
+      <div id="ct-websites" class="mf-holder"></div>
+      <button id="ct-web-add" type="button" class="mini mf-add" data-i18n="ct.add.website"></button>
+
+      <label data-i18n="ct.field.im"></label>
+      <div id="ct-im" class="mf-holder"></div>
+      <button id="ct-im-add" type="button" class="mini mf-add" data-i18n="ct.add.im"></button>
+
+      <label data-i18n="ct.field.events"></label>
+      <div id="ct-events" class="mf-holder"></div>
+      <button id="ct-ev-add" type="button" class="mini mf-add" data-i18n="ct.add.event"></button>
+
+      <label data-i18n="ct.lbl.filter"></label>
+      <div id="ct-label-row" class="chip-row"></div>
+
+      <label class="chk">
+        <input id="ct-starred" type="checkbox">
+        <span data-i18n="ct.starred"></span>
+      </label>
+
+      <label for="ct-note" data-i18n="ct.field.note"></label>
+      <textarea id="ct-note" rows="3" maxlength="500" data-i18n-ph="ct.ph.note"></textarea>
+    </div>
+    <div class="dlg-row">
+      <button id="ct-save" type="button" class="btn prim" data-i18n="ct.save"></button>
+      <button id="ct-cancel" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+    <div class="dlg-row" id="ct-del-row">
+      <button id="ct-delete" type="button" class="btn danger" data-i18n="ct.delete"></button>
+    </div>
+  </dialog>
+
+  <!-- Delete confirmation (R14 themed dialog) -->
+  <dialog id="del-dlg">
+    <h3 data-i18n="ct.delete"></h3>
+    <p id="del-dlg-text" class="del-name"></p>
+    <p class="del-text" data-i18n="ct.delete.confirm"></p>
+    <div class="dlg-row">
+      <button id="del-dlg-yes" type="button" class="btn danger" data-i18n="ct.del.yes"></button>
+      <button id="del-dlg-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- Label management -->
+  <dialog id="lbl-dlg">
+    <h3 data-i18n="lbl.manage"></h3>
+    <div id="lbl-list"></div>
+    <div class="lbl-add-row">
+      <input id="lbl-new-name" type="text" maxlength="40" data-i18n-ph="lbl.ph.name">
+      <button id="lbl-add" type="button" class="btn prim" data-i18n="lbl.new"></button>
+    </div>
+    <div id="lbl-add-colors" class="lbl-palette lbl-add-palette"></div>
+    <div class="dlg-row">
+      <button id="lbl-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <script src="contacts.js?v=0.35.06"></script>
+</body>
+</html>

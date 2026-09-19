@@ -116,8 +116,9 @@
     ver: 1, style: 0, sound: true,
     zones: [], zonesDeleted: [],
     pmWork: 25, pmBreak: 5, pmDone: 0,
-    smtime: 0,
-    astro: null   // written by astro.js — MUST round-trip or it gets wiped
+    smtime: 0, convOn: false,
+    astro: null,   // written by astro.js — MUST round-trip or it gets wiped
+    astroTomb: 0   // deletion stamp — a Clear must survive merges AND saveState
   };
 
   function sanitizeZone(z) {
@@ -130,9 +131,14 @@
   }
   function sanitizeZoneTomb(z) {
     if (!z || typeof z !== "object" || typeof z.tz !== "string" || !z.tz) return null;
+    // #3: Date.now() here broke merge determinism — a malformed
+    // remote tombstone got a DEVICE-LOCAL stamp inside mergeTime,
+    // so two devices could compute different merges. A malformed
+    // tombstone now gets 0: deterministic everywhere, and on any
+    // tie the surviving zone wins — always the safe side.
     return {
       tz: z.tz,
-      mtime: (typeof z.mtime === "number" && isFinite(z.mtime)) ? z.mtime : Date.now()
+      mtime: (typeof z.mtime === "number" && isFinite(z.mtime)) ? z.mtime : 0
     };
   }
 
@@ -148,6 +154,8 @@
         if (typeof d.pmBreak === "number") state.pmBreak = Math.min(60, Math.max(1, d.pmBreak));
         if (typeof d.pmDone === "number") state.pmDone = d.pmDone;
         if (typeof d.smtime === "number" && isFinite(d.smtime)) state.smtime = d.smtime;
+        if (typeof d.convOn === "boolean") state.convOn = d.convOn;
+        if (typeof d.astroTomb === "number" && isFinite(d.astroTomb)) state.astroTomb = d.astroTomb;
         if (d.astro && typeof d.astro.lat === "number" && typeof d.astro.lon === "number") {
           state.astro = { lat: d.astro.lat, lon: d.astro.lon,
             mtime: (typeof d.astro.mtime === "number" && isFinite(d.astro.mtime)) ? d.astro.mtime : 0 };
@@ -156,6 +164,29 @@
     } catch (e) {}
   }
   function saveState() {
+    // #1: astro.js mutates DATA_KEY DIRECTLY (read→modify→write),
+    // bypassing this in-memory state object. Re-read and adopt the
+    // freshest astro state before persisting — BOTH directions:
+    //   • a newer manual save (astro.js wrote mtime=now) must win
+    //     over the stale in-memory copy, AND
+    //   • a Clear (astro.js deleted it, left astroTomb=now) must
+    //     NOT be resurrected by writing the stale copy back.
+    try {
+      var stored = JSON.parse(localStorage.getItem(DATA_KEY));
+      if (stored && typeof stored === "object") {
+        var sAstro = (stored.astro && typeof stored.astro.lat === "number" &&
+                      typeof stored.astro.lon === "number") ? stored.astro : null;
+        var sTomb = (typeof stored.astroTomb === "number" && isFinite(stored.astroTomb))
+                  ? stored.astroTomb : 0;
+        var cM = (state.astro && typeof state.astro.mtime === "number" &&
+                  isFinite(state.astro.mtime)) ? state.astro.mtime : -1;
+        if (sAstro && (sAstro.mtime || 0) > cM) state.astro = sAstro;
+        var t = Math.max(sTomb, state.astroTomb || 0);
+        state.astroTomb = t;
+        // Deletion wins on tie (same contract as zone tombstones)
+        if (t > 0 && t >= ((state.astro && state.astro.mtime) || 0)) state.astro = null;
+      }
+    } catch (e) { /* unreadable/empty — keep in-memory state */ }
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
     markDirty();
   }
@@ -496,7 +527,7 @@
       var li = document.createElement("li");
       li.className = "z-row editable";
       var nm = document.createElement("span");
-      nm.className = "z-name";
+      nm.className = "z-name edit-icon";     // #8: shows pencil on hover
       nm.textContent = zoneName(tz);
       nm.title = t("zones.edit");
       // Double-click → swap this zone's tz (edit-in-place)
@@ -856,6 +887,9 @@
   }
   $("conv-toggle").addEventListener("click", function () {
     convOn = !convOn;
+    state.convOn = convOn;          // #7: travels in the smtime scalar family
+    state.smtime = Date.now();
+    saveState();
     convSync();
   });
 
@@ -902,6 +936,7 @@
   $("al-sound").checked = state.sound;
   renderZones();
   renderAlarms();
+  convOn = state.convOn;            // loadState ran above — safe to adopt now
   convSync();
   $("pm-work").value = state.pmWork;
   $("pm-break").value = state.pmBreak;
@@ -910,7 +945,16 @@
   timerPaint();
   tick();
   setInterval(tick, 250);   // smooth hands + fast bit-flips, trivial cost
-  console.log("[orOS] time.js v0.1.1 booted — styles 0–4, sound " + state.sound);
+  // #5: version derives from the cache-bust query (?v=…) — the
+  // GitHub Action aligns it with shell.js, the single source of
+  // truth. Never hardcoded: stale-bundle debugging relies on the
+  // log matching the ACTUALLY loaded bundle.
+  var SCRIPT_V = "0.1.1";
+  try {
+    var vm = document.currentScript && String(document.currentScript.src).match(/[?&]v=([^&]+)/);
+    if (vm) SCRIPT_V = decodeURIComponent(vm[1]);
+  } catch (e) {}
+  console.log("[orOS] time.js v" + SCRIPT_V + " booted — styles 0–4, sound " + state.sound);
 
   /* ---------- 14. Sync slice registration ---------- */
   // Entity union for zones (tombstoned deletes, idempotent), LWW for
@@ -957,24 +1001,32 @@
     var rbs = (typeof rb.smtime === "number" && isFinite(rb.smtime)) ? rb.smtime : 0;
     var pickLocal;
     if (las !== rbs) pickLocal = las > rbs;
-    else pickLocal = JSON.stringify([la.style || 0, la.pmWork || 25, la.pmBreak || 5, la.sound !== false]) <=
-                     JSON.stringify([rb.style || 0, rb.pmWork || 25, rb.pmBreak || 5, rb.sound !== false]);
+    else pickLocal = JSON.stringify([la.style || 0, la.pmWork || 25, la.pmBreak || 5, la.sound !== false, la.convOn === true]) <=
+                     JSON.stringify([rb.style || 0, rb.pmWork || 25, rb.pmBreak || 5, rb.sound !== false, rb.convOn === true]);
 
     var mA = (la.astro && typeof la.astro.lat === "number" && typeof la.astro.lon === "number") ? la.astro : null;
     var mB = (rb.astro && typeof rb.astro.lat === "number" && typeof rb.astro.lon === "number") ? rb.astro : null;
     var astro = (mA && mB) ? (((mB.mtime || 0) > (mA.mtime || 0)) ? mB : mA) : (mA || mB || null);
+    // #1: deletion tombstone — Clear on one device must reach the
+    // others. Tomb wins on tie (zone-tombstone contract).
+    var tA = (typeof la.astroTomb === "number" && isFinite(la.astroTomb)) ? la.astroTomb : 0;
+    var tB = (typeof rb.astroTomb === "number" && isFinite(rb.astroTomb)) ? rb.astroTomb : 0;
+    var astroTomb = Math.max(tA, tB);
+    if (astro && astroTomb >= (astro.mtime || 0)) astro = null;
 
     return {
       ver: 1,
       style:  pickLocal ? Math.min(4, la.style || 0) : Math.min(4, rb.style || 0),
       sound:  pickLocal ? (la.sound !== false) : (rb.sound !== false),
+      convOn: pickLocal ? (la.convOn === true) : (rb.convOn === true),
       pmWork: pickLocal ? (la.pmWork || 25) : (rb.pmWork || 25),
       pmBreak: pickLocal ? (la.pmBreak || 5) : (rb.pmBreak || 5),
       pmDone: Math.max(la.pmDone || 0, rb.pmDone || 0),
       smtime: Math.max(las, rbs),
       zones: zones,
       zonesDeleted: zonesDeleted,
-      astro: astro
+      astro: astro,
+      astroTomb: astroTomb
     };
   }
 
@@ -987,9 +1039,18 @@
     state.pmWork  = Math.min(120, Math.max(1, (typeof data.pmWork === "number") ? data.pmWork : state.pmWork));
     state.pmBreak = Math.min(60,  Math.max(1, (typeof data.pmBreak === "number") ? data.pmBreak : state.pmBreak));
     state.pmDone  = (typeof data.pmDone === "number") ? data.pmDone : state.pmDone;
+    state.convOn  = (typeof data.convOn === "boolean") ? data.convOn : state.convOn;
+    state.astroTomb = (typeof data.astroTomb === "number" && isFinite(data.astroTomb))
+      ? data.astroTomb : state.astroTomb;
     state.smtime  = (typeof data.smtime === "number" && isFinite(data.smtime)) ? data.smtime : state.smtime;
-    state.astro = (data.astro && typeof data.astro.lat === "number" && typeof data.astro.lon === "number")
-      ? { lat: data.astro.lat, lon: data.astro.lon, mtime: data.astro.mtime || 0 } : state.astro;
+    if (data.astro && typeof data.astro.lat === "number" && typeof data.astro.lon === "number") {
+      state.astro = { lat: data.astro.lat, lon: data.astro.lon, mtime: data.astro.mtime || 0 };
+    } else if ("astro" in data) {
+      // Ετυμηγορία merge: το tombstone νίκησε → υιοθετείται ΚΑΙ η
+      // διαγραφή. Το "astro" in data κρατά ασφαλές raw remote blob
+      // χωρίς το κλειδί (παλιά carry) — εκεί δεν αγγίζουμε το τοπικό.
+      state.astro = null;
+    }
     state.zones        = (Array.isArray(data.zones) ? data.zones : []).map(sanitizeZone).filter(Boolean);
     state.zonesDeleted = (Array.isArray(data.zonesDeleted) ? data.zonesDeleted : []).map(sanitizeZoneTomb).filter(Boolean);
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
@@ -998,6 +1059,8 @@
     $("pm-work").value = state.pmWork;
     $("pm-break").value = state.pmBreak;
     pmPaint();
+    convOn = state.convOn;
+    convSync();
     renderZones();
   }
 

@@ -2,9 +2,33 @@
   "version": 1,
   "apps": [
     {
+      "id": "weather",
+      "name": "Weather",
+      "category": "Accessories",
+      "icon": "weather",
+      "url": "weather/",
+      "type": "internal"
+    },
+    {
+      "id": "time",
+      "name": "Time",
+      "icon": "clock",
+      "category": "Accessories",
+      "url": "time/",
+      "type": "internal"
+    },
+    {
+      "id": "files",
+      "name": "files",
+      "icon": "files",
+      "category": "Accessories",
+      "url": "files/",
+      "type": "internal"
+    },
+    {
       "id": "todo",
       "name": "To-Do",
-      "category": "Productivity",
+      "category": "Office",
       "icon": "check",
       "url": "todo/",
       "type": "internal"
@@ -12,7 +36,7 @@
     {
       "id": "kanban",
       "name": "Kanban",
-      "category": "Productivity",
+      "category": "Office",
       "icon": "columns",
       "url": "kanban/",
       "type": "internal"
@@ -20,55 +44,39 @@
     {
       "id": "notes",
       "name": "Notes",
-      "category": "Productivity",
+      "category": "Office",
       "icon": "notes",
       "url": "notes/",
-      "type": "internal"
-    },
-    {
-      "id": "weather",
-      "name": "Weather",
-      "category": "Utilities",
-      "icon": "weather",
-      "url": "weather/",
-      "type": "internal"
-    },
-    {
-      "id": "mood",
-      "name": "Mood",
-      "category": "Lifestyle",
-      "url": "mood/",
-      "icon": "mood",
-	  "type": "internal"
-    },
-    {
-      "id": "time",
-      "name": "Time",
-      "icon": "clock",
-      "category": "Utilities",
-      "url": "time/",
       "type": "internal"
     },
     {
       "id": "calendar",
       "name": "Calendar",
       "icon": "calendar",
-      "category": "Utilities",
+      "category": "Office",
       "url": "calendar/",
       "type": "internal"
     },
     {
       "id": "quote",
       "name": "Quote",
-      "category": "Productivity",
+      "category": "Office",
       "icon": "quote",
       "url": "quote/",
       "type": "internal"
     },
     {
+      "id": "contacts",
+      "name": "Contacts",
+      "category": "Office",
+      "icon": "contacts",
+      "url": "contacts/",
+      "type": "internal"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
-      "category": "Productivity",
+      "category": "Creativity",
       "icon": "prompter",
       "url": "prompter/",
       "type": "internal"
@@ -76,33 +84,33 @@
     {
       "id": "characters",
       "name": "Characters",
-      "category": "Productivity",
+      "category": "Creativity",
       "icon": "characters",
       "url": "characters/",
       "type": "internal"
     },
     {
-      "id": "storage",
-      "name": "Storage",
-      "category": "Productivity",
-      "icon": "storage",
-      "url": "storage/",
+      "id": "mood",
+      "name": "Mood",
+      "category": "Personal",
+      "url": "mood/",
+      "icon": "mood",
       "type": "internal"
     },
     {
       "id": "habits",
       "name": "Habits",
-      "category": "Lifestyle",
+      "category": "Personal",
       "icon": "habits",
       "url": "habits/",
       "type": "internal"
     },
     {
-      "id": "files",
-      "name": "Files",
-      "category": "Utilities",
-      "icon": "files",
-      "url": "files/",
+      "id": "cycle",
+      "name": "Cycle",
+      "category": "Personal",
+      "icon": "cycle",
+      "url": "cycle/",
       "type": "internal"
     }
   ]

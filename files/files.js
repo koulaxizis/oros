@@ -875,8 +875,14 @@
     list.className = "recents-list";
     sec.appendChild(list);
     
+    // DOM order in #list-wrap: column header FIRST, then recents
+    // section, then entries. Previously the recents went before
+    // host.firstChild — but the header had already claimed that
+    // spot, so recents landed ABOVE the header on the root view.
     var host = $("list-wrap");
-    if (host) host.insertBefore(sec, host.firstChild);
+    if (!host) return;
+    var hdr = $("list-header");
+    host.insertBefore(sec, hdr ? hdr.nextSibling : host.firstChild);
   }
 
   function handleClickSelect(ev, li, idx, e) {

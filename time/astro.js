@@ -381,6 +381,7 @@
         Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
       var d = readData();
       d.astro = { lat: lat, lon: lon, mtime: Date.now() };
+      d.astroTomb = 0;   // υγιεινή: το tomb περιγράφει το ΠΡΟΗΓΟΥΜΕΝΟ deletion
       writeData(d);
       markDirty();
       render();
@@ -394,6 +395,10 @@
   $("as-clear").addEventListener("click", function () {
     var d = readData();
     delete d.astro;
+    // #1: tombstone, not just absence — a bare delete would be
+    // resurrected by time.js saveState (stale in-memory copy) and
+    // ignored by mergeTime on other devices.
+    d.astroTomb = Date.now();
     writeData(d);
     markDirty();
     $("astro-dlg").close();
@@ -411,7 +416,15 @@
   // Boot + periodic refresh (positions drift, moon barely moves)
   render();
   setInterval(render, 30000);
-  console.log("[orOS] astro.js v0.1.1 booted — lang " + LANG);
+  // #5: version derives from the cache-bust query (?v=…) — never
+  // hardcoded; stale-bundle debugging needs the log to match the
+  // ACTUALLY loaded bundle. Same pattern as time.js.
+  var SCRIPT_V = "0.1.1";
+  try {
+    var vm = document.currentScript && String(document.currentScript.src).match(/[?&]v=([^&]+)/);
+    if (vm) SCRIPT_V = decodeURIComponent(vm[1]);
+  } catch (e) {}
+  console.log("[orOS] astro.js v" + SCRIPT_V + " booted — lang " + LANG);
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") render();
   });

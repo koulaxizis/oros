@@ -1,0 +1,588 @@
+/* ============================================================
+   orOS Contacts — Wave 1 stylesheet
+   Inherits the OS skin via inheritPalette() (CSS variables);
+   NO local accent palette — Single OS Skin rule (see Bible).
+   Structure mirrors calendar.css: top bar → search bar →
+   chips → list → section. Mobile-first, dark-first.
+   ============================================================ */
+
+/* ---------- Base ---------- */
+:root {
+  /* Fallbacks only — real values come from the shell (same-origin
+     iframe). Matches inheritPalette()'s variable list verbatim. */
+  --bg: #16181d;
+  --text: #e6e6e6;
+  --text-dim: #9a9a9a;
+  --accent: #d4af37;
+  --accent-hover: #e0bd4f;
+  --accent-soft: rgba(212, 175, 55, 0.16);
+  --panel-bg: #1d2026;
+  --border: #2c3038;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#cmain {
+  max-width: 900px;          /* desktop: centered column, full-width below */
+  margin: 0 auto;
+  padding: 14px 16px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  #cmain { padding: 10px 10px 20px; }
+}
+
+h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Top bar ---------- */
+#ct-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#ct-top h2 { flex: 1; min-width: 0; }
+
+.nav-mini {
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-mini:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Search + add bar ---------- */
+#view-bar {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+#search-in {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+}
+#search-in:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.prim {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #14130f;
+  font-weight: 700;
+}
+.btn.prim:hover { background: var(--accent-hover); }
+.btn.danger {
+  background: transparent;
+  border-color: #c05252;
+  color: #c05252;
+}
+.btn.danger:hover { background: rgba(192, 82, 82, 0.14); }
+
+.mini {
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mini:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- Label filter chips ---------- */
+#lbl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  --chip: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+}
+.chip .chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--chip);
+  flex: none;
+}
+.chip.off {
+  opacity: 0.42;
+  filter: saturate(0.35);
+}
+.chip-manage { color: var(--text-dim); }
+.chip-manage:hover { color: var(--accent); }
+
+/* ---------- Contact list ---------- */
+#ct-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ct-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+}
+.ct-row:hover { border-color: var(--accent); }
+
+.ct-avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.ct-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ct-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ct-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ct-tags {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.ct-tag {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;       /* square-ish indicator, Calendar-consistent */
+  flex: none;
+}
+
+.ct-star {
+  flex: none;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+#ct-list .empty,
+.empty {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 26px 10px;
+  font-size: 14px;
+}
+
+/* ---------- Section (import results) ---------- */
+.sec {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+#imp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+}
+.imp-new { color: var(--accent); }
+.imp-upd { color: var(--text-dim); }
+.imp-skip { color: var(--text-dim); font-style: italic; }
+
+/* ---------- Dialogs ---------- */
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  padding: 18px 20px;
+  max-width: 480px;
+  width: min(92vw, 480px);
+  max-height: 86vh;
+  box-shadow: var(--shadow);
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+dialog h3 {
+  margin: 0 0 12px;
+  font-size: 17px;
+}
+
+.dlg-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.dlg-row.show { display: flex; }
+#ct-del-row { justify-content: flex-start; }
+
+.del-name {
+  margin: 6px 0;
+  font-weight: 600;
+}
+.del-text {
+  margin: 4px 0;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
+/* ---------- Contact form ---------- */
+.ev-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ev-form label {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.ev-form input[type="text"],
+.ev-form input[type="date"],
+.ev-form textarea,
+.ev-form select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  padding: 7px 10px;
+  border-radius: 8px;
+  width: 100%;
+}
+.ev-form textarea { resize: vertical; }
+.ev-form input:focus,
+.ev-form textarea:focus,
+.ev-form select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.ev-form input.invalid {
+  border-color: #c05252;
+  background: rgba(192, 82, 82, 0.08);
+}
+
+.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chk input { accent-color: var(--accent); }
+
+/* Multi-field rows (phones / emails / addresses / …) */
+.mf-holder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mf-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mf-row input,
+.mf-row select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  min-width: 0;
+}
+.mf-row .mf-val { flex: 1; }
+.mf-row .mf-type { flex: none; width: auto; }
+.mf-rm {
+  flex: none;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 7px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.mf-rm:hover { color: #c05252; border-color: #c05252; }
+
+/* Address row: stacked street/city/zip lines */
+.mf-row.addr { flex-wrap: wrap; }
+.mf-addr-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+.mf-addr-fields input { flex: 1 1 120px; }
+
+/* Event rows (birthday / anniversary / custom) */
+.mf-row.ev { flex-wrap: wrap; }
+.mf-row.ev .mf-type { width: auto; }
+.mf-yr-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mf-add { align-self: flex-start; margin-top: 2px; }
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ---------- Label management dialog ---------- */
+.lbl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lbl-color-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  flex: none;
+}
+.lbl-name-in {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  padding: 5px 9px;
+  border-radius: 7px;
+}
+.lbl-del { flex: none; padding: 4px 10px; }
+
+.lbl-palette {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+.lbl-add-palette { position: static; margin-top: 10px; }
+
+.lbl-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex: none;
+}
+
+.lbl-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.lbl-add-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* ---------- Toast (lazy singleton, JS-built) ---------- */
+.app-toast {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  padding: 10px 14px;
+  font-size: 13.5px;
+  max-width: min(86vw, 380px);
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 90;
+}
+.app-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.app-toast-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  white-space: nowrap;
+}
+
+.mf-evt-label {
+  display: inline-block;
+  margin-left: auto;
+  margin-right: 6px;
+}
+.mf-evt-label-in {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  padding: 5px 8px;
+  border-radius: 6px;
+  width: 120px;
+  font-size: 12.5px;
+}
+.mf-evt-label-in:focus { outline: none; border-color: var(--accent); }
+.lbl-swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 4px var(--accent);
+}
+
+/* ---------- Scrollbar (browser-consistent, orOS pattern) ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ---------- Mobile tightening ---------- */
+@media (max-width: 720px) {
+  #ct-top { flex-wrap: wrap; }
+  #ct-top h2 { order: -1; flex-basis: 100%; }
+  .ct-row { padding: 8px 10px; gap: 10px; }
+  .ct-tags { display: none; }   /* dots hidden on phones: name+sub is king */
+  dialog { padding: 14px 14px; }
+}

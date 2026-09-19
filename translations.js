@@ -19,9 +19,11 @@ window.OROS_TRANSLATIONS = {
     "menu.title":          "Applications",
     "menu.empty":          "No applications installed",
     "menu.empty.hint":     "Apps will appear here as they are installed.",
-    "category.productivity": "Productivity",
-	"category.utilities": "Utilities",
-	"category.lifestyle": "Lifestyle",
+    "category.accessories": "Accessories",
+    "category.office": "Office",
+    "category.creativity": "Creativity",
+    "category.personal": "Personal",
+    "category.system": "System",
 
     "running.home":        "Return to desktop",
     "running.back":        "Back",
@@ -156,7 +158,9 @@ window.OROS_TRANSLATIONS = {
     "app.quote": "Quote",
     "app.storage": "Storage",
     "app.habits": "Habits",
-    "app.files": "Files"
+    "app.files": "Files",
+	"app.cycle": "Cycle",
+	"app.contacts": "Contacts"
   },
 
   el: {
@@ -170,9 +174,11 @@ window.OROS_TRANSLATIONS = {
     "menu.title":          "Εφαρμογές",
     "menu.empty":          "Δεν υπάρχουν εγκατεστημένες εφαρμογές",
     "menu.empty.hint":     "Οι εφαρμογές θα εμφανιστούν εδώ μόλις εγκατασταθούν.",
-    "category.productivity": "Παραγωγικότητα",
-	"category.utilities": "Βοηθήματα",
-	"category.lifestyle": "Τρόπος ζωής",
+    "category.accessories": "Βοηθήματα",
+    "category.office": "Γραφείο",
+    "category.creativity": "Δημιουργικότητα",
+    "category.personal": "Προσωπικά",
+    "category.system": "Σύστημα",
 
     "running.home":        "Επιστροφή στην επιφάνεια εργασίας",
     "running.back":        "Πίσω",
@@ -307,7 +313,9 @@ window.OROS_TRANSLATIONS = {
     "app.quote": "Προσφορά",
     "app.storage": "Αποθήκη",
     "app.habits": "Συνήθειες",
-    "app.files": "Αρχεία"
+    "app.files": "Αρχεία",
+	"app.cycle": "Κύκλος",
+	"app.contacts": "Επαφές"
 	 }
   };
 
