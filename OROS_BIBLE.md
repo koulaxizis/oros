@@ -3106,6 +3106,31 @@ mood.js — no data-schema changes, no sync-engine changes.
    Wave 3.5 duplicate override deleted.
 No schema, sync, or storage changes — DATA_VER 3 untouched.
 
+## Prompter — v0.35.15 deep audit (7 fixes + 1 open decision)
+1. DIALOG LOCK/LEAK: all three <dialog>s (settings, custom editor,
+   delete-confirm) now self-remove on Esc ("close" event). Before:
+   one Esc permanently disabled the Settings / New-prompt buttons
+   until refresh.
+2. SYNC: un-complete now tombstones the id (deletion survives
+   the union merge); re-complete still resurrects via fresh ts >
+   tombstone — the completed map needed NO schema change.
+3. MERGE: customs tie-break on equal mtime now deterministic and
+   symmetric (JSON compare, mood's newerObj contract) — devices
+   can no longer diverge on same-mtime edits.
+4. R9 PARITY: hardcoded English aria-labels removed from
+   index.html; paintStaticAria() is the single source at boot.
+5. I18N: badge tooltips (★/✓/✦) localized via new
+   badge.fav/badge.comp/badge.custom keys (was hardcoded English).
+6. CSS: [hidden] authority guard added — promised by the file
+   header, previously missing.
+7. RESET: factoryReset now also clears activeCategory and the
+   search box (view state matched the wiped data).
+OPEN: favorites array cannot beat tombstones (no mtime) —
+unfavorite reverts across devices in merge, re-favoriting after
+factory reset can be undone by a stale device's tombstone.
+Decision pending: A) favorites → {id:mtime} object (mirrors
+completed) or B) document as known limitation.
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

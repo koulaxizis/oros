@@ -593,3 +593,6 @@ input, textarea, select {
 /* Wave 5: tag suggestions inside the custom editor */
 .editor-tag-suggest { margin: -6px 0 6px; min-height: 0; }
 .editor-tag-suggest:not(:empty) { margin: 4px 0 10px; }
+
+/* ---------- X. [hidden] must ALWAYS win ---------- */
+[hidden] { display: none !important; }

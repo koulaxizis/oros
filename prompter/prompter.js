@@ -45,6 +45,9 @@
       "cat.novel":           "Novel",
       "cat.monologue":       "Monologue",
       "cat.letter":          "Letter/Diary",
+      "badge.fav":           "Favorite",
+      "badge.comp":          "Completed",
+      "badge.custom":        "Custom",
       "fav.badge":           "★",
       "comp.badge":          "✓",
       "custom.badge":        "✦",
@@ -116,6 +119,9 @@
       "cat.novel":           "Μυθιστόρημα",
       "cat.monologue":       "Μονόλογος",
       "cat.letter":          "Επιστολή/Ημερολόγιο",
+      "badge.fav":           "Αγαπημένο",
+      "badge.comp":          "Ολοκληρωμένο",
+      "badge.custom":        "Δικό μου",
       "fav.badge":           "★",
       "comp.badge":          "✓",
       "custom.badge":        "✦",
@@ -535,7 +541,10 @@
 
   // ---------- 2b. Merge engine ----------
   // Union favorites, union completed (newest ts wins), union customs (LWW mtime), tombstones resurrect
-  function newerTs(a, b) { return (a.mtime||0) > (b.mtime||0) ? a : b; }
+  function newerTs(a, b) {
+    if ((a.mtime||0) !== (b.mtime||0)) return (a.mtime||0) > (b.mtime||0) ? a : b;
+    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;   // tie → deterministic + symmetric
+  }
 
   function mergePrompterStates(A, B) {
     var a = A || {}, b = B || {};
@@ -685,8 +694,8 @@
     state.sm=Date.now(); save(); renderAll();
   }
   function toggleComplete(id){
-    if(state.completed[id]) delete state.completed[id];
-    else { delete state.deleted[id]; state.completed[id]=Date.now(); }   // resurrection
+    if(state.completed[id]) { delete state.completed[id]; state.deleted[id]=Date.now(); }   // tombstone — survives merge
+    else { delete state.deleted[id]; state.completed[id]=Date.now(); }   // fresh ts beats tombstone
     state.sm=Date.now(); save(); renderAll();
   }
   function copyText(text){
@@ -825,6 +834,7 @@
       }
     });
 
+    editorModal.addEventListener("close", function(){ editorModal.remove(); editorModal=null; });   // Esc too
     document.body.appendChild(editorModal);
     editorModal.showModal();
     setTimeout(function(){ enIn.focus(); }, 50);
@@ -856,6 +866,7 @@
     y.type="button"; y.className="prim danger"; y.textContent=t("custom.delete");
     y.addEventListener("click", function(){ dlg.close(); dlg.remove(); deleteCustom(id); });
     dlg.appendChild(c); dlg.appendChild(y);
+    dlg.addEventListener("close", function(){ dlg.remove(); });   // Esc too
     document.body.appendChild(dlg);
     dlg.showModal();
   }
@@ -1016,21 +1027,21 @@ document.body.appendChild(loader);
         var fb=document.createElement("span");
         fb.className="badge";
         fb.textContent=t("fav.badge");
-        fb.title="Favorite";
+        fb.title=t("badge.fav");
         badges.appendChild(fb);
       }
       if(isCompleted(p.id)){
         var cb=document.createElement("span");
         cb.className="badge completed";
         cb.textContent=t("comp.badge");
-        cb.title="Completed";
+        cb.title=t("badge.comp");
         badges.appendChild(cb);
       }
       if(isCustom(p.id)){
         var xfb=document.createElement("span");
         xfb.className="badge";
         xfb.textContent=t("custom.badge");
-        xfb.title="Custom";
+        xfb.title=t("badge.custom");
         badges.appendChild(xfb);
       }
       if(p.id===dailyId){
@@ -1292,6 +1303,7 @@ document.body.appendChild(loader);
     y.type="button"; y.className="prim danger"; y.textContent=t("rst.btn");
     y.addEventListener("click", function(){ factoryReset(); });
     settingsModal.appendChild(c); settingsModal.appendChild(y);
+    settingsModal.addEventListener("close", function(){ settingsModal.remove(); settingsModal=null; });   // Esc too
     document.body.appendChild(settingsModal);
     settingsModal.showModal();
   }
@@ -1307,7 +1319,10 @@ document.body.appendChild(loader);
     var fresh=newState();
     fresh.deleted=tomb; fresh.sm=now; fresh.om=now;
     state=fresh; save();
+    activeCategory="all";
     activeTag=null;
+    searchQuery="";
+    searchRaw="";
     varShown={};
     showMineOnly=false;
     renderAll();

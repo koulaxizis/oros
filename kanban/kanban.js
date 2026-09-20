@@ -2810,6 +2810,43 @@
     save(); scheduleRender();
   });
   
+  // ---------- 10b. Calendar deep-link consumer (Kanban ↔ Calendar) ----------
+  // Live path: το shell (window.__orosOpenKanbanCard) καλεί απευθείας
+  // εδώ όταν το Kanban τρέχει ήδη. Cold path: το shell stageάρει το
+  // payload στο sessionStorage["oros-kanban-open"] και κάνει
+  // openAppById("kanban") — το boot() το καταναλώνει one-shot.
+  //
+  // Guards (καθαρή σιωπή — τίποτα δεν ανοίγει, τίποτα δεν σπάει):
+  //   · board δεν υπάρχει ή είναι archived → return (δεν αγγίζουμε
+  //     το «τουλάχιστον ένα board ενεργό»: δεν αρχειοθετούμε ποτέ εδώ)
+  //   · στήλη/κάρωα δεν βρέθηκαν → το openCardDialog κάνει ήδη silent return
+  //   · card dialog ήδη ανοιχτό → κλείνει πρώτα (commit-flush), αλλιώς
+  //     το showModal() πετάει InvalidStateError
+  window.__orosKanbanOpen = function (payload) {
+    if (!payload || typeof payload !== "object" || !state) return;
+
+    var bd = boardByIdIn(state.boards, payload.board);
+    if (!bd || bd.archived) return;     // διαγράφηκε/αρχειοθετήθηκε στο μεταξύ
+
+    // Board switch: device-local + silent (saveLocal, ΟΧΙ sync dirty).
+    // Πάντα resetSessionView — παλιό search/filter κρύβει την κάρτα-στόχο.
+    if (state.activeBoardId !== payload.board) {
+      switchBoard(payload.board);       // self-guarded + silent + renderAll
+    } else {
+      resetSessionView();
+      saveLocal();
+      scheduleRender();
+    }
+
+    // Κλείσιμο τυχόν ανοιχτού card dialog πριν το νέο άνοιγμα
+    var dlg = $("dlg-card");
+    if (dlg && dlg.open) dlg.close();
+
+    // colById/cardById κοιτούν πια στο currentBoard (= payload.board).
+    // Αν δεν βρεθούν → openCardDialog επιστρέφει σιωπηλά.
+    openCardDialog(payload.col, payload.card);
+  };
+
   // ---------- 11. Wiring & boot ----------
   function applyI18n() {
     var n = document.querySelectorAll("[data-i18n]");
@@ -3087,6 +3124,21 @@
     inheritPalette();
     watchPalette();
     scheduleRender();
+
+    // Cold path: payload staged από το shell (__orosOpenKanbanCard)
+    // στο sessionStorage["oros-kanban-open"]. One-shot: το
+    // __orosKanbanTakePending() κάνει JSON.parse + removeItem και
+    // επιστρέφει {board, col, card} | null. Καμία εκκρεμότητα δεν
+    // μένει πίσω — ακόμα κι αν το board/stήλη/κάρωα έχουν στο
+    // μεταξύ διαγραφεί, το __orosKanbanOpen κάνει καθαρή σιωπή.
+    // try/catch: σε standalone open (χωρίς parent) δεν σπάει το boot.
+    try {
+      var pending = window.parent &&
+                    typeof window.parent.__orosKanbanTakePending === "function"
+        ? window.parent.__orosKanbanTakePending()
+        : null;
+      if (pending) window.__orosKanbanOpen(pending);
+    } catch (e) { /* standalone — δεν υπάρχει pending */ }
   }
 
   boot();
