@@ -231,7 +231,6 @@ function applyI18n(root) {
 /* ---------- 3. State, schema, sanitizers, persistence ---------- */
 
 let state = null;
-let suppressDirty = false;        // set while a sync pull writes state
 let lastUndoSnapshot = null;
 
 /* Whitelisted, bounded field sanitizers — everything else is dropped. */
@@ -255,8 +254,9 @@ function sanitizeItem(raw, idHint) {
     url = "https://" + url.replace(/^\/+/, "");
   }
   try { new URL(url); } catch (e) { return null; }   // must parse
-  const folderId = (state && state.folders &&
-    state.folders[raw.folderId]) ? raw.folderId : ROOT_FOLDER;
+  const ctxFolders = (arguments.length > 2 && arguments[2]) ||
+                     (state && state.folders) || {};
+  const folderId = ctxFolders[raw.folderId] ? raw.folderId : ROOT_FOLDER;
   const tags = Array.isArray(raw.tags)
     ? raw.tags.slice(0, 12).map((tg) => sanText(tg, 32)).filter(Boolean)
     : [];
@@ -311,7 +311,7 @@ function sanitizeState(raw) {
   }
   if (raw && raw.items) {
     Object.keys(raw.items).forEach((id) => {
-      const it = sanitizeItem(raw.items[id], id);
+      const it = sanitizeItem(raw.items[id], id, out.folders);
       if (it && !out.deleted[it.id]) out.items[it.id] = it;
     });
   }
@@ -352,36 +352,21 @@ function load() {
 function save(dirty) {
   try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); }
   catch (e) { /* storage full — app still works in memory */ }
-  if (dirty !== false && !suppressDirty) markDirty();
+  if (dirty !== false) markDirty();
+}
+
+/* The sync engine lives in the PARENT window (the app iframe never
+   loads sync.js itself) — same-origin, so parent lookup is legal.
+   Same resolution order as registerSync in §11. */
+function syncHost() {
+  if (window.orosSync) return window.orosSync;
+  try { return window.parent.orosSync || null; } catch (e) { return null; }
 }
 
 function markDirty() {
-  if (window.__orosSyncApi && typeof window.__orosSyncApi.dirty === "function") {
-    window.__orosSyncApi.dirty();
-  }
+  const api = syncHost();
+  if (api && typeof api.markDirty === "function") api.markDirty();
 }
-
-/* Dirty funnel — defined BEFORE the slice registers (§11/boot).
-   The sync layer pulls through this callback; _suppress stops the
-   incoming write from echoing back as a push (loop guard). */
-window.__orosSyncApi = {
-  dirty: function () {
-    const api = window.orosSync;
-    if (api && typeof api.markDirty === "function") api.markDirty("bookmarks");
-  },
-  /* Called by the sync layer when a remote payload arrives. */
-  pullSet: function (remoteRaw) {
-    suppressDirty = true;
-    try {
-      const merged = mergeBookmarks(
-        JSON.parse(JSON.stringify(state)),
-        sanitizeState(remoteRaw));
-      state = merged;
-      save(false);
-      renderAll();                 // defined in §4
-    } finally { suppressDirty = false; }
-  }
-};
 
 /* Snapshot for Undo (delete / move operations in later sections). */
 function snapshotForUndo() {
@@ -404,8 +389,7 @@ function undoFromSnapshot() {
 }
 
 /* Boot marker (visible in the shell's console, like every orOS app). */
-console.log("[orOS] bookmarks.js v" + SCRIPT_V + " booted (" + LANG + ")");
-})();
+console.log("[orOS] bookmarks.js v" + SCRIPT_V + " loaded (" + LANG + ")");
 
 /* ===== 4. UI STATE + RENDER ===== */
 
@@ -437,6 +421,7 @@ function renderTabs() {
     b.setAttribute("role", "tab");
     b.textContent = folderName(f);
     b.dataset.folder = f.id;
+    b.addEventListener("dblclick", () => openFolderDialog("edit", f.id));
     b.addEventListener("click", () => {
       uiActiveFolder = f.id;
       uiQuery = "";                    // switching folder clears search
@@ -444,6 +429,7 @@ function renderTabs() {
       $("#search-clear").hidden = true;
       renderAll();
     });
+    wireTabDrop(b);
     tabs.appendChild(b);
   });
 }
@@ -792,3 +778,443 @@ function showToast(msg, opts) {
   toastTimer = setTimeout(hideToast, 5000);
 }
 function hideToast() { $("#toast").classList.remove("show"); }
+
+/* ===== 7. ITEM DIALOG ===== */
+
+let editingItemId = null;
+
+function openItemDialog(id) {
+  const it = state.items[id];
+  if (!it) return;
+  editingItemId = id;
+  $("#f-title").value = it.title;
+  $("#f-url").value = it.url;
+  $("#f-note").value = it.note || "";
+  fillFolderSelect(it.folderId);
+  $("#dlg-item").showModal();
+}
+
+function fillFolderSelect(selectedId) {
+  const sel = $("#f-folder");
+  sel.textContent = "";
+  folderList().forEach((f) => {
+    const o = document.createElement("option");
+    o.value = f.id;
+    o.textContent = folderName(f);
+    if (f.id === selectedId) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function submitItemDialog(normUrl) {
+  const it = state.items[editingItemId];
+  if (!it) return;
+  it.title = sanText($("#f-title").value, 256) || normUrl;
+  it.url = normUrl;
+  it.note = sanText($("#f-note").value, 1024);
+  it.folderId = $("#f-folder").value || ROOT_FOLDER;
+  it.modified = Date.now();
+  save();
+  renderAll();
+}
+
+function deleteItem(id) {
+  const it = state.items[id];
+  if (!it) return;
+  snapshotForUndo();
+  delete state.items[id];
+  state.deleted[id] = Date.now();          // tombstone wins over stale copy
+  save();
+  renderAll();
+  showToast(t("deleted"), {
+    action: { label: t("undo"), fn: undoFromSnapshot }
+  });
+}
+
+/* ===== 8. FOLDER DIALOG (create / rename / delete) ===== */
+
+let folderDlgMode = "edit";
+let folderDlgId = null;
+let folderArmDelete = false;
+
+function openFolderDialog(mode, folderId) {
+  folderDlgMode = mode;
+  folderDlgId = folderId || null;
+  folderArmDelete = false;
+  const isRoot = mode === "edit" && folderId === ROOT_FOLDER;
+  const nameInput = $("#l-name");
+  nameInput.readOnly = isRoot;
+  if (mode === "create") {
+    folderDlgId = null;
+    nameInput.value = "";
+  } else {
+    nameInput.value = isRoot ? t("folder.unsorted")
+                             : state.folders[folderId].name;
+  }
+  $("#l-delete").hidden = mode !== "edit" || isRoot;
+  const n = mode === "edit" ? itemsInFolder(folderId).length : 0;
+  $("#l-count").textContent = t("folder.count", { n: n });
+  updateFolderDeleteLabel();
+  $("#dlg-folder").showModal();
+}
+
+function updateFolderDeleteLabel() {
+  $("#l-delete").textContent = folderArmDelete
+    ? t("folder.confirm.delete")
+    : t("folder.delete");
+}
+
+function uniquifyFolderName(name) {
+  const names = folderList().map((f) => f.name.toLowerCase());
+  if (!names.includes(name.toLowerCase())) return name;
+  let i = 2;
+  while (names.includes((name + " " + i).toLowerCase())) i++;
+  return name + " " + i;
+}
+
+function nextFolderPos() {
+  return folderList().reduce((m, f) => Math.max(m, f.pos), 0) + 1;
+}
+
+function submitFolderDialog(name) {
+  if (folderDlgMode === "create") {
+    const f = sanitizeFolder({
+      name: uniquifyFolderName(name),
+      pos: nextFolderPos(),
+      modified: Date.now()
+    });
+    if (!f) return;
+    state.folders[f.id] = f;
+    uiActiveFolder = f.id;
+  } else if (folderDlgId && folderDlgId !== ROOT_FOLDER) {
+    const f = state.folders[folderDlgId];
+    const newName = uniquifyFolderName(name);
+    if (f.name !== newName) {
+      f.name = newName;
+      f.modified = Date.now();
+    }
+  }
+  save();
+  renderAll();
+}
+
+function deleteFolderNow() {
+  if (!folderDlgId || folderDlgId === ROOT_FOLDER) return;
+  snapshotForUndo();
+  /* Orphans fall back to Unsorted — never lost. */
+  Object.keys(state.items).forEach((id) => {
+    if (state.items[id].folderId === folderDlgId) {
+      state.items[id].folderId = ROOT_FOLDER;
+      state.items[id].modified = Date.now();
+    }
+  });
+  delete state.folders[folderDlgId];
+  state.deleted[folderDlgId] = Date.now();
+  uiActiveFolder = ROOT_FOLDER;
+  $("#dlg-folder").close();
+  save();
+  renderAll();
+  showToast(t("deleted"), {
+    action: { label: t("undo"), fn: undoFromSnapshot }
+  });
+}
+
+/* ===== 9. NETSCAPE IMPORT / EXPORT ===== */
+
+function parseNetscape(htmlText) {
+  const doc = new DOMParser().parseFromString(htmlText, "text/html");
+  const out = [];
+
+  /* Walks <DT><H3>Folder</H3> + sibling <DL> (the classic
+     Netscape/Chrome/Firefox export shape) and nested <DL>
+     inside the same <DT> (some exporters do this instead). */
+  function walkDL(dl, path) {
+    let curFolder = null;
+    Array.from(dl.childNodes).forEach((node) => {
+      if (node.nodeType !== 1) return;
+      const tag = node.tagName;
+      if (tag === "DT") {
+        const a = node.querySelector(":scope > a[href]");
+        const h3 = node.querySelector(":scope > h3");
+        if (a) {
+          out.push({
+            url: a.getAttribute("href"),
+            title: (a.textContent || "").trim(),
+            path: curFolder ? path.concat([curFolder]) : path
+          });
+        } else if (h3) {
+          curFolder = h3.textContent.trim();
+          const inner = node.querySelector(":scope > dl");
+          if (inner) walkDL(inner, path.concat([curFolder]));
+        }
+      } else if (tag === "DL") {
+        if (curFolder) {
+          walkDL(node, path.concat([curFolder]));
+          curFolder = null;            // back at parent level
+        } else {
+          walkDL(node, path);
+        }
+      }
+    });
+  }
+
+  const rootDL = doc.querySelector("dl");
+  if (rootDL) walkDL(rootDL, []);
+  return out;
+}
+
+function applyImport(entries) {
+  let newItems = 0, newFolders = 0;
+  const nameToId = {};
+  folderList().forEach((f) => { nameToId[f.name.toLowerCase()] = f.id; });
+  let nextPos = nextFolderPos();
+
+  entries.forEach((entry) => {
+    let fid = ROOT_FOLDER;
+    (entry.path || []).forEach((pn) => {
+      const key = pn.toLowerCase();
+      if (!nameToId[key]) {
+        const f = sanitizeFolder({ name: pn, pos: nextPos++, modified: Date.now() });
+        if (f) {
+          state.folders[f.id] = f;
+          nameToId[key] = f.id;
+          newFolders++;
+        }
+      }
+      if (nameToId[key]) fid = nameToId[key];
+    });
+
+    const norm = normalizeUrl(entry.url);
+    if (!norm || findByUrl(norm)) return;   // dedup against existing
+    const it = sanitizeItem({ url: norm, title: entry.title, folderId: fid });
+    if (!it) return;
+    state.items[it.id] = it;
+    newItems++;
+  });
+
+  save();
+  renderAll();
+  showToast(newItems || newFolders
+    ? t("import.picked", { n: newItems, f: newFolders })
+    : t("import.none"));
+}
+
+function exportNetscape() {
+  const lines = [
+    "<!DOCTYPE NETSCAPE-Bookmark-file-1>",
+    "<!-- This is an automatically generated file. It will be read and overwritten. DO NOT EDIT! -->",
+    '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
+    "<TITLE>Bookmarks</TITLE>",
+    "<H1>Bookmarks</H1>",
+    "<DL><p>"
+  ];
+
+  folderList().forEach((f) => {
+    const items = itemsInFolder(f.id);
+    if (!items.length) return;
+    lines.push("    <DT><H3>" + esc(folderName(f)) + "</H3>");
+    lines.push("    <DL><p>");
+    items.forEach((it) => {
+      lines.push("        <DT><A HREF=\"" + esc(it.url) +
+        "\" ADD_DATE=\"" + Math.floor(it.added / 1000) + "\">" +
+        esc(it.title) + "</A>");
+    });
+    lines.push("    </DL><p>");
+  });
+  lines.push("</DL><p>");
+
+  const blob = new Blob([lines.join("\n")], { type: "text/html" });
+  const objUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objUrl;
+  a.download = "oros-bookmarks.html";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
+
+  showToast(t("exported", { n: Object.keys(state.items).length }));
+}
+
+/* ===== 10. MERGE ENGINE (deterministic, clock-free) ===== */
+
+/* Union merge by entity id:
+   - newest "modified" wins per entity
+   - identical mtimes → lexicographic canon() tie-break
+   - tombstone beats an older entity; an entity modified AFTER
+     its tombstone resurrects (that is how Undo survives sync)
+   Both devices run this function on identical inputs, so the
+   output converges without any coordination. */
+
+function mergeBookmarks(aRaw, bRaw) {
+  const A = aRaw || { items: {}, folders: {}, deleted: {}, settings: {} };
+  const B = bRaw || { items: {}, folders: {}, deleted: {}, settings: {} };
+
+  const out = { ver: 1, items: {}, folders: {}, deleted: {}, settings: {} };
+
+  /* Deleted map: union, newest timestamp. */
+  const delIds = new Set(
+    Object.keys(A.deleted || {}).concat(Object.keys(B.deleted || {})));
+  delIds.forEach((id) => {
+    out.deleted[id] = Math.max(A.deleted[id] || 0, B.deleted[id] || 0);
+  });
+
+  function winner(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    if ((b.modified || 0) !== (a.modified || 0))
+      return (b.modified || 0) > (a.modified || 0) ? b : a;
+    return canon(b) >= canon(a) ? b : a;
+  }
+
+  /* Entities whose sync-resurrection logic applies:
+     tombstone only wins while it is newer than the entity. */
+  function place(kind, map) {
+    const ids = new Set(
+      Object.keys(A[kind] || {}).concat(Object.keys(B[kind] || {})));
+    ids.forEach((id) => {
+      const ent = winner(A[kind] && A[kind][id], B[kind] && B[kind][id]);
+      if (!ent) return;
+      const death = out.deleted[id] || 0;
+      if (death && (ent.modified || 0) <= death) return;  // stays dead
+      if (death) delete out.deleted[id];                  // resurrected
+      map[id] = ent;
+    });
+  }
+
+  place("folders", out.folders);
+  place("items", out.items);
+
+  /* Root folder is immortal. */
+  if (!out.folders[ROOT_FOLDER]) {
+    out.folders[ROOT_FOLDER] =
+      { id: ROOT_FOLDER, name: ROOT_FOLDER, pos: 0, modified: 0 };
+    delete out.deleted[ROOT_FOLDER];
+  }
+
+  /* Deterministic settings pick — lexicographic JSON tie-break,
+     symmetric on both devices (Object.assign was remote-wins =
+     divergent). Empty settings lose to non-empty. */
+  const sa = JSON.stringify(A.settings || {}),
+        sb = JSON.stringify(B.settings || {});
+  out.settings = (sa === "{}") ? (B.settings || {})
+               : (sb === "{}") ? (A.settings || {})
+               : (sb >= sa ? (B.settings || {}) : (A.settings || {}));
+  return sanitizeState(out);   // re-checks folder refs + drops junk
+}
+
+/* ===== 11. SYNC SLICE REGISTRATION ===== */
+
+function registerSync(retries) {
+  let host = window.orosSync;
+  if (!host) {
+    try { host = window.parent.orosSync; } catch (e) { /* standalone */ }
+  }
+  if (host && typeof host.registerSlice === "function") {
+    host.registerSlice(
+      "bookmarks",
+      function getState() { return state; },
+      function setState(remoteRaw) {
+        const before = JSON.stringify(state);
+        state = mergeBookmarks(state, remoteRaw);
+        save(false);                     // no dirty echo — pull path
+        if (JSON.stringify(state) !== before) renderAll();
+      },
+      DATA_KEY,
+      mergeBookmarks
+    );
+  } else if (retries < 40) {
+    /* The shell may still be loading sync.js — retry ~20s max. */
+    setTimeout(() => registerSync(retries + 1), 500);
+  }
+}
+
+/* ===== 12. WIRE + BOOT ===== */
+
+function wire() {
+  /* Quick-add */
+  $("#quick-add-btn").addEventListener("click", quickAdd);
+  $("#quick-add").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); quickAdd(); }
+  });
+
+  wireSearch();
+
+  /* Import (file picker in — fully offline) */
+  $("#import-btn").addEventListener("click", () => $("#import-in").click());
+  $("#import-in").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      applyImport(parseNetscape(await file.text()));
+    } catch (err) {
+      showToast(t("import.none"));
+    }
+  });
+
+  /* Export */
+  $("#export-btn").addEventListener("click", exportNetscape);
+
+  /* Folders */
+  $("#folder-settings").addEventListener("click",
+    () => openFolderDialog("edit", uiActiveFolder));
+  $("#tab-add").addEventListener("click",
+    () => openFolderDialog("create"));
+
+  /* Item dialog */
+  $("#item-form").addEventListener("submit", (e) => {
+    const norm = normalizeUrl($("#f-url").value);
+    if (!norm) { e.preventDefault(); $("#f-url").focus(); return; }
+    submitItemDialog(norm);            // dialog closes via method="dialog"
+  });
+  $("#f-delete").addEventListener("click", () => {
+    const id = editingItemId;
+    editingItemId = null;
+    $("#dlg-item").close();
+    deleteItem(id);
+  });
+
+  /* Folder dialog */
+  $("#folder-form").addEventListener("submit", (e) => {
+    const name = sanText($("#l-name").value, 64);
+    if (!name) { e.preventDefault(); return; }
+    submitFolderDialog(name);
+  });
+  $("#l-delete").addEventListener("click", () => {
+    if (!folderArmDelete) {            // two-step confirm, in-dialog
+      folderArmDelete = true;
+      updateFolderDeleteLabel();
+    } else {
+      deleteFolderNow();
+    }
+  });
+  $("#dlg-folder").addEventListener("close", () => {
+    folderArmDelete = false;
+  });
+
+  /* Close dialogs on backdrop click (orOS convention) */
+  ["#dlg-item", "#dlg-folder"].forEach((sel) => {
+    $(sel).addEventListener("click", (e) => {
+      if (e.target === $(sel)) $(sel).close();
+    });
+  });
+}
+
+function boot() {
+  load();
+  applyI18n();
+  wire();
+  registerSync(0);
+  renderAll();
+  inheritPalette();
+  watchPalette();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
+
+})();

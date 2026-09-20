@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.19";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.20";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -140,7 +140,8 @@
     habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
-    contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>'
+    contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>',
+    bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -817,6 +818,7 @@
     renderInstallRow(menu);
     renderWxSection(menu);
     renderSyncSection(menu);
+    renderNotifsSection(menu);   // Wave 1B: notification settings
 
     // v0.18.0 — Info row (mirrors Ctrl+Alt+Shift+I)
     var infoRow = document.createElement("div");
@@ -1829,6 +1831,224 @@
       msg.textContent = state.syncMsg.text;
       section.appendChild(msg);
     }
+
+    host.appendChild(section);
+  }
+  
+    // ---------- 9g. Notifications settings (Wave 1B) ----------
+  // Renders ONLY when notifications.js is present (progressive: a
+  // stale cached index.html without the module shows nothing —
+  // zero breakage). All writes go through window.orosNotifs —
+  // the module owns settingsRev + noteChange, so every change
+  // travels via the sync engine with LWW semantics.
+  function renderNotifsSection(host) {
+    var N = window.orosNotifs;
+    if (!N || typeof N.getSetting !== "function") return;
+
+    var section = document.createElement("div");
+    section.className = "sync-section";
+
+    var heading = document.createElement("div");
+    heading.className = "menu-heading";
+    heading.textContent = window.t("notifs.title");
+    section.appendChild(heading);
+
+    // — Master toggle + test notification —
+    var on = !!N.getSetting("enabled", true);
+
+    var masterRow = document.createElement("div");
+    masterRow.className = "sync-actions";
+
+    var toggleBtn = document.createElement("button");
+    toggleBtn.className = "menu-item";
+    toggleBtn.textContent = window.t(on ? "notifs.on" : "notifs.off");
+    toggleBtn.addEventListener("click", function () {
+      N.setSetting("enabled", !on);
+      renderMenu();
+    });
+    masterRow.appendChild(toggleBtn);
+
+    var testBtn = document.createElement("button");
+    testBtn.className = "menu-item";
+    testBtn.textContent = window.t("notifs.test");
+    testBtn.addEventListener("click", function () {
+      // Plain item — fireToast never touches the inbox, so the
+      // test leaves no trace in history and no dedup residue.
+      N.fireToast({
+        id: "test_" + Date.now(),
+        ns: "system",
+        type: "test",
+        title: window.t("notifs.test.title"),
+        body: window.t("notifs.test.body")
+      }, false);
+    });
+    masterRow.appendChild(testBtn);
+    section.appendChild(masterRow);
+
+    // — Select-row factory (same visual contract as the sync
+    // interval selector: label + native select) —
+    function mkSelectRow(labelKey, options, current, onChange) {
+      var row = document.createElement("div");
+      row.className = "sync-interval";
+      var lbl = document.createElement("label");
+      lbl.textContent = window.t(labelKey);
+      row.appendChild(lbl);
+      var sel = document.createElement("select");
+      options.forEach(function (opt) {
+        var o = document.createElement("option");
+        o.value = opt.value;
+        o.textContent = opt.label;
+        if (opt.value === current) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () { onChange(sel.value); });
+      row.appendChild(sel);
+      return row;
+    }
+
+    // — Position (8) — module TOAST_POSITIONS mirrored 1:1 —
+    var posIds = ["top-left", "top", "top-right", "right",
+                  "bottom-right", "bottom", "bottom-left", "left"];
+    var posKeys = {
+      "top-left": "topleft", "top": "top", "top-right": "topright",
+      "right": "right", "bottom-right": "bottomright", "bottom": "bottom",
+      "bottom-left": "bottomleft", "left": "left"
+    };
+    section.appendChild(mkSelectRow("notifs.position",
+      posIds.map(function (p) {
+        return { value: p, label: window.t("notifs.pos." + posKeys[p]) };
+      }),
+      N.getSetting("position", "top-right"),
+      function (v) { N.setSetting("position", v); }));
+
+    // — Style (4) — proper nouns (skin/desktop culture names), no i18n —
+    section.appendChild(mkSelectRow("notifs.style",
+      ["oros", "dunst", "plasma", "gnome"].map(function (s) {
+        return { value: s, label: s.charAt(0).toUpperCase() + s.slice(1) };
+      }),
+      N.getSetting("style", "oros"),
+      function (v) { N.setSetting("style", v); }));
+
+    // — Sound (4) —
+    section.appendChild(mkSelectRow("notifs.sound",
+      [["none", "notifs.sound.none"], ["bell", "notifs.sound.bell"],
+       ["ding", "notifs.sound.ding"], ["chime", "notifs.sound.chime"]]
+        .map(function (p) { return { value: p[0], label: window.t(p[1]) }; }),
+      N.getSetting("sound", "none"),
+      function (v) { N.setSetting("sound", v); }));
+
+    // — Volume (range, palette-aware) —
+    var volRow = document.createElement("div");
+    volRow.className = "sync-interval";
+    var volLbl = document.createElement("label");
+    volLbl.textContent = window.t("notifs.volume");
+    volRow.appendChild(volLbl);
+    var volWrap = document.createElement("div");
+    volWrap.style.cssText = "display:flex;align-items:center;gap:8px;";
+    var vol = document.createElement("input");
+    vol.type = "range";
+    vol.min = "0"; vol.max = "1"; vol.step = "0.05";
+    vol.value = String(N.getSetting("soundVolume", 0.7));
+    vol.style.cssText =
+      "width:110px;accent-color:var(--accent);cursor:pointer;margin:0;";
+    var volPct = document.createElement("span");
+    volPct.style.cssText =
+      "font-size:12px;color:var(--text-dim);min-width:36px;" +
+      "text-align:right;font-variant-numeric:tabular-nums;";
+    volPct.textContent = Math.round(parseFloat(vol.value) * 100) + "%";
+    vol.addEventListener("input", function () {
+      volPct.textContent = Math.round(parseFloat(vol.value) * 100) + "%";
+    });
+    vol.addEventListener("change", function () {
+      N.setSetting("soundVolume", parseFloat(vol.value));
+    });
+    volWrap.appendChild(vol);
+    volWrap.appendChild(volPct);
+    volRow.appendChild(volWrap);
+    section.appendChild(volRow);
+
+    // — Duration — "2s"/"5s"… universal notation (no i18n needed) —
+    section.appendChild(mkSelectRow("notifs.duration",
+      [[2000, "2s"], [5000, "5s"], [8000, "8s"], [12000, "12s"]]
+        .map(function (p) { return { value: p[0], label: p[1] }; }),
+      N.getSetting("duration", 5000),
+      function (v) { N.setSetting("duration", parseInt(v, 10)); }));
+
+    // — Quiet hours: toggle + From/To hour selects —
+    var qhCur = N.getSetting("quietHours", {}) || {};
+    var qhOn  = !!qhCur.enabled;
+    var qStart = (typeof qhCur.quietHoursStart === "number") ? qhCur.quietHoursStart : 22;
+    var qEnd   = (typeof qhCur.quietHoursEnd === "number") ? qhCur.quietHoursEnd : 8;
+
+    // Writes the FULL legacy-compatible shape: isQuietHour reads the
+    // numeric pair, from/to strings ride along for any consumer.
+    function writeQuiet(enabled, start, end) {
+      function pad(n) { return (n < 10 ? "0" : "") + n; }
+      N.setSetting("quietHours", {
+        enabled: enabled,
+        quietHoursStart: start,
+        quietHoursEnd: end,
+        from: pad(start) + ":00",
+        to: pad(end) + ":00"
+      });
+    }
+
+    var quietRow = document.createElement("div");
+    quietRow.className = "sync-actions";
+    var quietBtn = document.createElement("button");
+    quietBtn.className = "menu-item";
+    quietBtn.textContent = window.t("notifs.quiet") + ": " +
+      window.t(qhOn ? "notifs.on" : "notifs.off");
+    quietBtn.addEventListener("click", function () {
+      writeQuiet(!qhOn, qStart, qEnd);
+      renderMenu();
+    });
+    quietRow.appendChild(quietBtn);
+    section.appendChild(quietRow);
+
+    function mkHourRow(labelKey, current, setter) {
+      var opts = [];
+      for (var h = 0; h <= 23; h++) {
+        var hh = (h < 10 ? "0" : "") + h;
+        opts.push({ value: h, label: hh + ":00" });
+      }
+      return mkSelectRow(labelKey, opts, current, setter);
+    }
+
+    section.appendChild(mkHourRow("notifs.quiet.from", qStart, function (v) {
+      writeQuiet(qhOn, parseInt(v, 10), qEnd);
+    }));
+    section.appendChild(mkHourRow("notifs.quiet.to", qEnd, function (v) {
+      writeQuiet(qhOn, qStart, parseInt(v, 10));
+    }));
+
+    // — Per-app toggles (module's knownApps, mirrored 1:1) —
+    var appsLbl = document.createElement("div");
+    appsLbl.className = "sync-hint";
+    appsLbl.textContent = window.t("notifs.apps");
+    section.appendChild(appsLbl);
+
+    var appsCol = document.createElement("div");
+    appsCol.style.cssText =
+      "display:flex;flex-direction:column;gap:8px;margin-top:4px;";
+    ["calendar", "cycle", "mood", "todo", "habits"].forEach(function (appId) {
+      var nameKey = "app." + appId;
+      var tv = window.t(nameKey);
+      var label = document.createElement("label");
+      label.className = "remember-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = N.getAppToggle(appId);
+      cb.addEventListener("change", function () {
+        N.setAppToggle(appId, cb.checked);   // N1 makes this travel
+      });
+      label.appendChild(cb);
+      var txt = document.createElement("span");
+      txt.textContent = (tv === nameKey) ? appId : tv;   // apps.json fallback
+      label.appendChild(txt);
+      appsCol.appendChild(label);
+    });
+    section.appendChild(appsCol);
 
     host.appendChild(section);
   }
@@ -3326,9 +3546,38 @@
 
     if (due) {
       calRemFiredAdd(due.remKey);   // mutate BEFORE notify — no double-fire
-      calRemNotify(due);
+      // Wave 1B: the reminder flows through the unified notification
+      // system — inbox history + badge + styled toast + per-app
+      // toggle + quiet hours. calRemNotify (bespoke overlay + web
+      // Notification + pips) survives ONLY as the stale-bundle
+      // fallback: a cached index.html without notifications.js must
+      // never lose a reminder. NOTE: when the module exists but
+      // returns null (user disabled calendar notifs / quiet hours /
+      // dedup) we do NOT fall back — suppression is the point.
+      if (window.orosNotifs && typeof window.orosNotifs.emit === "function") {
+        window.orosNotifs.emit({
+          ns: "calendar",
+          key: due.remKey,
+          type: "reminder",
+          title: due.ev.title || calRemT("Reminder", "Υπενθύμιση"),
+          body: calRemWhen(due.startTs),
+          deepLink: "calendar:" + due.ev.id + ":" + due.remKey.split(":")[2]
+        });
+      } else {
+        calRemNotify(due);   // module absent — legacy path stands alone
+      }
     }
   }
+  
+    // Wave 1B — when-string for emitted calendar reminders (shared
+  // shape with the legacy overlay's body copy).
+  function calRemWhen(ts) {
+    var loc = state.lang === "el" ? "el-GR" : "en-GB";
+    var when = new Date(ts);
+    return when.toLocaleDateString(loc, { day: "2-digit", month: "short" }) +
+      " · " + when.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+  }
+
 
   var calRemRing = { timer: null };
 
@@ -3721,6 +3970,43 @@
       if (raw) sessionStorage.removeItem("oros-kanban-open");
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
+  };
+
+  // Wave 1B — Calendar deep-link bridge (πρωτότυπο: Cycle/Mood,
+  // με μία διαφορά: το payload φτάνει ως deepLink STRING της μορφής
+  // "calendar:<evId>:<YYYY-MM-DD>" — το ίδιο σχήμα που μπαίνει στο
+  // emit() από ΚΑΙ τα δύο engines (shell + in-app). Flexible
+  // signature: δέχεται το full string ή ξεχωριστά (evId, ymd), ώστε
+  // να μην εξαρτόμαστε από το πώς το DL_BRIDGES του notifications.js
+  // θα το αποσυνθέσει. App ανοιχτό → live push στο iframe· κλειστό
+  // → stage στο "oros-cal-pending" (ίδιο key που διαβάζει το
+  // calendar.js στο boot του Patch C4 — same-origin sessionStorage)
+  // + άνοιγμα app.
+  window.__orosOpenCalendar = function (a, b) {
+    var evId = null, ymd = null;
+    if (typeof a === "string" && a.indexOf("calendar:") === 0) {
+      var parts = a.split(":");
+      if (parts.length === 3) { evId = parts[1]; ymd = parts[2]; }
+    } else if (typeof a === "string" && typeof b === "string") {
+      evId = a; ymd = b;
+    }
+    if (!evId || !ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
+
+    if (state.running && state.running.id === "calendar") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__calDeepLink === "function") {
+          f.contentWindow.__calDeepLink({ id: evId, date: ymd });
+          return;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-cal-pending",
+        JSON.stringify({ id: evId, date: ymd }));
+    } catch (e) {}
+    openAppById("calendar");
   };
 
     // v0.18.0 — global shortcuts at the shell level

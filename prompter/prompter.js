@@ -478,7 +478,7 @@
   };
 
   // ---------- 2. Data model + storage ----------
-  // state = { ver:1, sm, om, favorites:[ids], completed:{id:ts},
+  // state = { ver:1, sm, om, favorites:{id:mtime}, completed:{id:ts},
   //           customs:[{id, cat, en, el, mtime, pos}], deleted:{} }
   var state = null;
 
@@ -487,11 +487,32 @@
       ver: DATA_VER,
       sm: Date.now(),
       om: Date.now(),
-      favorites: [],
+      favorites: {},   // id → mtime (mirrors completed — tombstone-aware)
       completed: {},
       customs: [],
       deleted: {}
     };
+  }
+
+  // Favorites schema v2: { id → mtime }. Legacy arrays (pre-v2) migrate:
+  // tombstoned ids drop (their last signal was a delete), survivors get
+  // mtime NOW — local truth wins ONCE, then normal LWW applies. Mixed-age
+  // sync payloads funnel through here too.
+  function normalizeFavs(data) {
+    if (!data.favorites) { data.favorites = {}; return; }
+    if (Array.isArray(data.favorites)) {
+      var now = Date.now(), out = {};
+      data.favorites.forEach(function(id){
+        if (data.deleted && data.deleted[id] !== undefined) return;
+        out[id] = now;
+      });
+      data.favorites = out;
+      return;
+    }
+    if (typeof data.favorites !== "object") { data.favorites = {}; return; }
+    Object.keys(data.favorites).forEach(function(id){   // defensive strip
+      if (typeof data.favorites[id] !== "number") delete data.favorites[id];
+    });
   }
 
   function load() {
@@ -501,7 +522,7 @@
         var data = JSON.parse(raw);
         if (data && typeof data.ver === "number") {
           state = data;
-          if (!state.favorites) state.favorites = [];
+          normalizeFavs(state);
           if (!state.completed) state.completed = {};
           if (!state.customs) state.customs = [];
           if (!state.deleted) state.deleted = {};
@@ -558,12 +579,25 @@
       return (tomb[id] === undefined) || ((mtime || 0) > tomb[id]);
     };
 
-    var favSet = {};
-    (a.favorites||[]).forEach(function(id){ favSet[id] = true; });
-    (b.favorites||[]).forEach(function(id){ favSet[id] = true; });
-    var favorites = Object.keys(favSet)
-      .filter(function(id){ return alive(id, 0); })
-      .sort();
+    // favorites: union by id, LWW by mtime. Arrays (legacy payloads from
+    // not-yet-updated devices) contribute mtime 0 — they survive only
+    // without a tombstone, so an unfavorite anywhere still wins.
+    var favMap = function(side) {
+      var f = side.favorites || {}, out = {};
+      if (Array.isArray(f)) { f.forEach(function(id){ out[id] = 0; }); }
+      else { Object.keys(f).forEach(function(id){ if (typeof f[id] === "number") out[id] = f[id]; }); }
+      return out;
+    };
+    var fa = favMap(a), fb = favMap(b);
+    var favorites = {};
+    [fa, fb].forEach(function(fm){
+      Object.keys(fm).forEach(function(id){
+        favorites[id] = Math.max(favorites[id] || 0, fm[id]);
+      });
+    });
+    Object.keys(favorites).forEach(function(id){
+      if (!alive(id, favorites[id])) delete favorites[id];
+    });
 
     var completed = {};
     Object.keys(a.completed||{}).forEach(function(id){
@@ -583,7 +617,7 @@
     Object.keys(customsMap).forEach(function(id){
       if (alive(id, customsMap[id].mtime)) customs.push(customsMap[id]);
     });
-    customs.sort(function(x,y){ return (x.pos||0)-(y.pos||0); });
+    customs.sort(function(x,y){ return (x.pos||0)-(y.pos||0) || (x.id<y.id?-1:x.id>y.id?1:0); });   // pos, then id — deterministic across devices
 
     return {
       ver: DATA_VER,
@@ -607,7 +641,8 @@
   function sliceGet() { return JSON.parse(JSON.stringify(state)); }
   function sliceSet(data, info) {
     data = JSON.parse(JSON.stringify(data||null));
-    if (!data || !Array.isArray(data.favorites)) return;
+    if (!data || data.favorites === undefined) return;
+    normalizeFavs(data);
     window.__orosSyncApi._suppress = true;
     try { state = data; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     finally { window.__orosSyncApi._suppress = false; }
@@ -684,13 +719,12 @@
     return out.slice(0,6);
   }
 
-  function isInFavs(id){ return state.favorites.indexOf(id)>=0; }
+  function isInFavs(id){ return Object.prototype.hasOwnProperty.call(state.favorites, id); }
   function isCompleted(id){ return state.completed.hasOwnProperty(id); }
   function isCustom(id){ return id.indexOf("c")===0; }
   function toggleFav(id){
-    var idx=state.favorites.indexOf(id);
-    if(idx>=0) state.favorites.splice(idx,1);
-    else { delete state.deleted[id]; state.favorites.push(id); }   // resurrection
+    if(isInFavs(id)){ delete state.favorites[id]; state.deleted[id]=Date.now(); }   // tombstone — survives merge
+    else { delete state.deleted[id]; state.favorites[id]=Date.now(); }   // fresh ts beats tombstone
     state.sm=Date.now(); save(); renderAll();
   }
   function toggleComplete(id){
@@ -834,7 +868,7 @@
       }
     });
 
-    editorModal.addEventListener("close", function(){ editorModal.remove(); editorModal=null; });   // Esc too
+    editorModal.addEventListener("close", function(){ if(editorModal){ editorModal.remove(); editorModal=null; } });   // Esc too (async event — buttons null it first)
     document.body.appendChild(editorModal);
     editorModal.showModal();
     setTimeout(function(){ enIn.focus(); }, 50);
@@ -845,8 +879,7 @@
     for(var i=0;i<state.customs.length;i++){
       if(state.customs[i].id===id){ state.customs.splice(i,1); break; }
     }
-    var fi=state.favorites.indexOf(id);
-    if(fi>=0) state.favorites.splice(fi,1);
+    delete state.favorites[id];
     delete state.completed[id];
     state.deleted[id]=now;   // tombstone → merge-proof wipe on all devices
     state.sm=now; save(); renderAll();
@@ -1181,7 +1214,7 @@ document.body.appendChild(loader);
 
     var totalBuiltIn=PROMPTS_DATA.length;
     var totalCustom=state.customs.length;
-    var totalFavs=state.favorites.length;
+    var totalFavs=Object.keys(state.favorites).length;
     var totalComp=Object.keys(state.completed||{}).length;
     // Completed built-ins only — customs don't inflate the built-in progress %
     var compBuiltIn=0;
@@ -1303,7 +1336,7 @@ document.body.appendChild(loader);
     y.type="button"; y.className="prim danger"; y.textContent=t("rst.btn");
     y.addEventListener("click", function(){ factoryReset(); });
     settingsModal.appendChild(c); settingsModal.appendChild(y);
-    settingsModal.addEventListener("close", function(){ settingsModal.remove(); settingsModal=null; });   // Esc too
+    settingsModal.addEventListener("close", function(){ if(settingsModal){ settingsModal.remove(); settingsModal=null; } });   // Esc too (async event — buttons null it first)
     document.body.appendChild(settingsModal);
     settingsModal.showModal();
   }
@@ -1313,7 +1346,7 @@ document.body.appendChild(loader);
     var tomb={};
     Object.keys(state.deleted||{}).forEach(function(id){ tomb[id]=state.deleted[id]; });
     // tombstone EVERYTHING user-owned → merge-proof wipe on all devices
-    state.favorites.forEach(function(id){ tomb[id]=now; });
+    Object.keys(state.favorites).forEach(function(id){ tomb[id]=now; });
     Object.keys(state.completed).forEach(function(id){ tomb[id]=now; });
     (state.customs||[]).forEach(function(c){ tomb[c.id]=now; });
     var fresh=newState();
@@ -1394,5 +1427,10 @@ document.body.appendChild(loader);
   watchPalette();
   dailyFresh=isNewDaily();
   renderBrowse();
+
+  // boot: paint the DEFAULT tab's active state (applyView only
+  // fires on tab clicks — without this, no button looks "on")
+  var b0=$("browse-btn");
+  if(b0){ b0.classList.add("on"); b0.setAttribute("aria-pressed","true"); }
 
 })();

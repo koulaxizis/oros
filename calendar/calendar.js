@@ -2699,6 +2699,50 @@
       setSearch("");
     }
   });
+  
+    /* ---------- 8c. Deep-link consumer (Wave 1B) ----------
+     The unified notification system routes "calendar:" payloads
+     here (via the shell's __orosOpenCalendar bridge): the app
+     navigates to the reminder's day, selects it, and opens the
+     event (series → occurrence chooser, plain → edit dialog).
+     Payload: { id: eventId, date: "YYYY-MM-DD" }. Stale/unknown
+     ids (event deleted meanwhile, or tombstoned by sync) are
+     dropped safely — the day selection alone still lands. */
+  var CAL_PENDING_KEY = "oros-cal-pending";
+
+  function deepLink(payload) {
+    if (!payload || typeof payload !== "object") return;
+    var evId = (typeof payload.id === "string") ? payload.id : null;
+    var day = (typeof payload.date === "string" &&
+               /^\d{4}-\d{2}-\d{2}$/.test(payload.date))
+      ? payload.date : null;
+    if (!day) return;
+
+    var p = day.split("-");
+    viewYear = +p[0];
+    viewMonth = +p[1] - 1;
+    if (curView !== "month") setView("month");
+    var si = $("search-in");
+    if (si) si.value = "";
+    setSearch("");
+    selectDay(day);
+
+    if (!evId) return;
+    var ev = null;
+    for (var i = 0; i < state.events.length; i++) {
+      if (state.events[i].id === evId) { ev = state.events[i]; break; }
+    }
+    if (!ev) return;   // deleted meanwhile — day selection suffices
+
+    // Paint settle first (mirrors the checkReminders boot sweep
+    // timing — dialogs need the paints finished before showModal).
+    setTimeout(function () {
+      if (validRecur(ev.recur)) showSerChooser(ev, day);
+      else openDlg(ev);
+    }, 60);
+  }
+  window.__calDeepLink = deepLink;
+
 
   /* ---------- 8. Boot ---------- */
   loadState();
@@ -2715,6 +2759,20 @@
   setView("month");
   selectDay(todayYMD());
   setTimeout(checkReminders, 1500);   // boot sweep (after paints settle)
+  // Wave 1B: staged deep link — the notification system opened us
+  // cold via the shell bridge. Consume ONCE (remove BEFORE acting:
+  // a stale payload must never hijack a later manual open). The
+  // live-iframe case arrives via window.__calDeepLink directly.
+  try {
+    var pend = sessionStorage.getItem(CAL_PENDING_KEY);
+    if (pend) {
+      sessionStorage.removeItem(CAL_PENDING_KEY);
+      var pl = JSON.parse(pend);
+      if (pl && typeof pl === "object") {
+        setTimeout(function () { deepLink(pl); }, 100);
+      }
+    }
+  } catch (e4) {}
 
   // Midnight rollover: grid "today", day title and ev-add must
   // follow the real calendar day without a re-open.
@@ -2748,6 +2806,16 @@
   // Doubling with the shell engine is impossible — the fired-log
   // dedupe key settles who wins.
   setInterval(checkReminders, 30000);
+  
+    // Wave 1B — start-moment label for emitted reminders (mirrors
+  // the shell engine's calRemWhen: "20 Sep · 09:30", locale-aware).
+  function remStartLabel(due) {
+    var startTs = due.remTs + due.ev.remindMin * 60000;
+    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var d = new Date(startTs);
+    return d.toLocaleDateString(loc, { day: "2-digit", month: "short" }) +
+      " · " + d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+  }
 
   /* ---------- 8b. In-app reminder check ----------
      Belt-and-braces companion of the shell engine (shell.js 9e2):
@@ -2811,14 +2879,38 @@
     });
 
     if (!due) return;
-    // Claim BEFORE toasting — the shell tick (30s cadence) must not
-    // pick the same reminder up one second later.
+    // Claim BEFORE notifying — whichever engine claims first, the
+    // other must stay silent one tick later.
     fired.push(due.remKey);
     try {
       localStorage.setItem(REM_FIRED_KEY,
         JSON.stringify(fired.slice(-500)));
     } catch (e3) {}
-    toast(t("remind.toast") + " · " + (due.ev.title || t("ev.untitled")));
+
+    // Wave 1B: inside orOS (parent shell alive) the reminder flows
+    // through the unified system — inbox + badge + styled toast +
+    // per-app toggle + quiet hours. The emit key is the SAME remKey
+    // the shell engine uses, so the inbox-level dedup makes a
+    // double-fire impossible no matter which engine wins the race.
+    // A null return (calendar notifs off / quiet hours / already in
+    // inbox) is a USER DECISION — we never fall back to a local
+    // toast, suppression is the point (same contract as shell T3).
+    var pNotifs = null;
+    try { pNotifs = window.parent && window.parent.orosNotifs; } catch (e4) {}
+    if (pNotifs && typeof pNotifs.emit === "function") {
+      pNotifs.emit({
+        ns: "calendar",
+        key: due.remKey,
+        type: "reminder",
+        title: (due.ev.title || t("ev.untitled")),
+        body: remStartLabel(due),
+        deepLink: "calendar:" + due.ev.id + ":" + due.remKey.split(":")[2]
+      });
+    } else {
+      // Standalone load / stale shell without the module — the
+      // legacy local toast stands alone (a reminder is never lost).
+      toast(t("remind.toast") + " · " + (due.ev.title || t("ev.untitled")));
+    }
   }
 
   /* ---------- 9. Sync slice registration ---------- */

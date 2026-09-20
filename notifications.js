@@ -167,6 +167,16 @@
       if (item.firedAt) return false; // Already fired somewhere
       if (!getAppToggle(item.ns)) return false; // Disabled app
       if (isQuietHour(now)) return false; // Silent period
+      // Wave 1B — badge fallback rule: an unread item older than
+      // 24h is too late for a toast — waking the whole screen for
+      // yesterday's reminder is noise, not service. It stays in the
+      // inbox and drives the badge ONLY (the catch-up loop below
+      // then stamps firedAt so it is never rescanned). Honest
+      // contract: badge presence = "you have history to review".
+      if (now - (item.createdAt || 0) > 24 * 60 * 60 * 1000) {
+        item.firedAt = item.createdAt;   // mark scanned, never toast
+        return false;
+      }
       
       return true;
     });
@@ -315,6 +325,10 @@
   function setAppToggle(appNs, enabled) {
     if (!state.slice.appToggles) state.slice.appToggles = {};
     state.slice.appToggles[appNs] = enabled;
+    noteChange();          // N1: toggle = user data — must travel (same
+                           // dirty contract as setSetting/markAsRead;
+                           // notifSliceSet never passes through here,
+                           // so no pull → set → push loop is possible)
     saveSliceThrottled(500);
   }
 
@@ -445,15 +459,27 @@
   var DL_BRIDGES = {
     contacts: function (id) { window.__orosOpenContact(id); },
     cycle:    function (id) { window.__orosOpenCycle(id); },
-    mood:     function (id) { window.__orosOpenMood(id); }
+    mood:     function (id) { window.__orosOpenMood(id); },
+    // Wave 1B — "calendar:<evId>:<YYYY-MM-DD>": TWO-part payload
+    // (event id + occurrence date). The shell bridge accepts both
+    // (evId, ymd) args and the full string; we pass the pair.
+    calendar: function (evId, ymd) { window.__orosOpenCalendar(evId, ymd); }
   };
 
   function openTarget(item) {
     if (!item || typeof item.deepLink !== 'string') return;
     var parts = item.deepLink.split(':');   // "cycle:entry:e_123"
     var bridge = DL_BRIDGES[parts[0]];
+    if (!bridge) return;
+    // Wave 1B — calendar carries a two-part payload: the event id
+    // AND the occurrence date ("calendar:<evId>:<ymd>"). All other
+    // namespaces keep the single-id contract (parts[2]).
+    if (parts[0] === 'calendar' && parts.length >= 3) {
+      bridge(parts[1], parts[2]);
+      return;
+    }
     var payload = parts.length >= 3 ? parts[2] : null;
-    if (bridge && payload) bridge(payload);
+    if (payload) bridge(payload);
   }
 
 
@@ -754,6 +780,58 @@
     applyToastStyle();
   }
   
+    // ===== EMIT — the shell-side bridge (Wave 1B) =====
+  // The ONE entry point for shell-owned detectors (calendar engine,
+  // cycle predictor, mood daily check, …). Everything flows through
+  // here: inbox item + badge + toast, respecting enabled/appToggles/
+  // quiet hours. Dedup is inbox-level (dedupKey) — a key fires once,
+  // ever, until TTL prunes it or the caller uses a fresh key.
+  // Returns the item id, or null when suppressed (disabled/quiet/
+  // dedup/invalid) — suppression is a USER DECISION, not a failure.
+  function emitCandidate(cand) {
+    if (!state.ready) return null;
+    if (!cand || typeof cand !== 'object' ||
+        typeof cand.ns !== 'string' || !cand.ns ||
+        typeof cand.title !== 'string' || !cand.title) return null;
+    if (!getSetting('enabled', true)) return null;
+    if (!getAppToggle(cand.ns)) return null;
+
+    var now = Date.now();
+    // Caller-supplied stable key (preferred: "cal:ev_x:2026-09-20")
+    // or a synthesized one-per-day fallback.
+    var dedupKey = (typeof cand.key === 'string' && cand.key)
+      ? cand.ns + ':' + cand.key
+      : cand.ns + ':' + (cand.type || 'reminder') + ':' +
+        Math.floor(now / 86400000);
+
+    for (var i = 0; i < state.slice.items.length; i++) {
+      if (state.slice.items[i].dedupKey === dedupKey) return null;
+    }
+
+    var item = {
+      id: 'nt_' + now.toString(36) + Math.random().toString(36).slice(2, 7),
+      dedupKey: dedupKey,
+      ns: cand.ns,
+      type: cand.type || 'reminder',
+      title: cand.title,
+      body: (typeof cand.body === 'string') ? cand.body : '',
+      deepLink: (typeof cand.deepLink === 'string') ? cand.deepLink : null,
+      createdAt: now,
+      firedAt: null,
+      readAt: null,
+      expiresAt: cand.ttlDays ? now + cand.ttlDays * 86400000 : null
+    };
+    state.slice.items.unshift(item);
+    noteChange();          // new inbox item = data → travels
+    saveSliceThrottled(500);
+
+    // Quiet hours = inbox + badge ONLY, no toast (silent capture —
+    // the bell never misses anything, sleep is respected).
+    if (!isQuietHour(now)) fireToast(item, false);
+    updateBadge();
+    return item.id;
+  }
+  
     // ===== PUBLIC API (exposed to apps) =====
   
   window.orosNotifs = {
@@ -771,6 +849,7 @@
     // Manual operations
     fireToast,
     markAsRead,
+    emit: emitCandidate,
     openNotificationPanel,
     updateBadge,
     

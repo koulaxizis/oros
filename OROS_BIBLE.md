@@ -3131,6 +3131,192 @@ factory reset can be undone by a stale device's tombstone.
 Decision pending: A) favorites → {id:mtime} object (mirrors
 completed) or B) document as known limitation.
 
+## Prompter — favorites schema v2 (Patch series 8–16)
+FAVORITES: array of ids → { id: mtime } object (mirrors completed).
+Un-favorite now tombstones the id — deletions survive the union
+merge, and re-favoriting after a factory reset beats the wipe
+tombstone via fresh ts (previously impossible with no mtime).
+ON-THE-FLY MIGRATION: normalizeFavs() runs in load() and
+sliceSet(); legacy arrays (own device or remote payloads from
+not-yet-updated devices) contribute mtime 0 in merge — an
+unfavorite anywhere still outranks them. No DATA_VER bump
+needed (normalization is version-agnostic). No data loss.
+ONE-TIME CAVEAT: old array-code devices must be updated before
+the new object form reaches them via sync (indexOf TypeError
+otherwise). Deploy → reload all devices → then sync.
+Also: deleteCustom cleans favorites via object delete;
+renderStats counts via Object.keys; factoryReset tombstones
+via Object.keys; data-model comment updated.
+
+## CHANGELOG — Bookmarks (orOS)
+
+### Architecture context (standing)
+- **Mantra:** Offline first · Mobile first · No external deps ·
+  Full manual export · Full auto export · Snapshots · Auto merge
+  sync · No guessing.
+- **Files:** bookmarks/index.html · bookmarks/bookmarks.css ·
+  bookmarks/bookmarks.js — app runs in same-origin iframe inside
+  the orOS shell; palette inherited at runtime from the parent
+  (:root values in CSS are offline fallback only, oros dark skin).
+- **Data:** single localStorage blob, key "oros-bookmarks-data",
+  SCHEMA v1 = { ver:1, items{}, folders{}, deleted{} (tombstones,
+  30d prune), settings{} }. Root folder id "unsorted" — permanent,
+  undeletable, re-labeled via i18n.
+- **Merge:** entity-union by id; newest "modified" wins; ties break
+  on canonical JSON (deterministic, clock-free). Tombstone wins over
+  older entity; entity modified after its tombstone resurrects.
+- **Sync:** slice registered as "bookmarks" via the parent's
+  window.orosSync.registerSlice (same pattern as other orOS apps).
+  Dirty funnel: syncHost() resolves window.orosSync → window.parent.
+- **i18n:** EN default / EL inline in bookmarks.js (STR). Shell menu
+  name pending translations.js key "app.bookmarks" (Wave 4).
+- Version stamps (?v=) are owned by the GitHub Action on deploy —
+  never manual.
+
+### Wave 1 — initial build (delivered)
+- Quick-add with URL normalization (https:// prepend, trailing
+  slash strip), "url | title" syntax, dedup detection + red flash
+  + toast pointing at the existing folder.
+- Folder tabs (create/rename via dblclick or ⋮ dialog, delete with
+  two-step confirm; deletes orphan items to Unsorted), real-time
+  search across title/url/tags/folder with source chips, per-row
+  domain-hash favicon color chips.
+- Drag & drop rows → tabs (desktop); long-press context menu with
+  move/edit/open/delete (mobile, 500ms hold, viewport-clamped).
+- Netscape HTML import (DOMParser walk, folder hierarchy → folders,
+  case-insensitive folder name reuse, dedup vs existing) + export.
+- Undo (snapshot-based) for delete item / delete folder / move.
+- Visit counters + relTime in row meta; status "dead" styling hook.
+
+### Post-assembly audit (this session)
+FIXED:
+- #1 CRITICAL: stray "})();" after §3 closed the IIFE prematurely →
+  SyntaxError, app never booted. Removed; sections 4–12 now live in
+  the same IIFE as intended.
+- #2 CRITICAL: dirty funnel looked up window.orosSync inside the
+  app iframe (always undefined — sync.js loads only in the parent)
+  → no change ever reached the sync engine. Replaced with
+  syncHost() resolving parent.orosSync (mirrors registerSync).
+- Dead code removed: window.__orosSyncApi (pullSet was never
+  called; pulls go through the slice's setState) + orphaned
+  suppressDirty flag (pull path uses explicit save(false)).
+
+PENDING / KNOWN:
+- VERIFY: registerSlice called with a 5th argument (custom merge
+  fn). Args 1–4 confirmed supported from shell.js usage; arg 5
+  needs sync.js confirmation before deploy. Do not ship until
+  verified.
+- Integration patches (apps.json entry, shell.js ICONS.bookmarks,
+  sw.js precache) drafted — apply at deploy time.
+- Wave 2 backlog: dedup check in the edit dialog, i18n titles for
+  #tab-add / #quick-add-btn, translations.js "app.bookmarks" key.
+- Testing phase (planned after implementation, per workflow):
+  desktop + mobile PWA, offline add → online merge, two-device
+  concurrent edit convergence, import round-trip, export fidelity.
+  
+  ## Prompter — v0.35.17 follow-up re-audit (3 fixes)
+1. CRITICAL: null-guard added to the dialog "close" listeners
+   (settings + editor). The close event fires ASYNC — the buttons
+   null the variable before the queued event ran, so every
+   button-based close threw an uncaught TypeError (invisible in
+   UI; Esc worked fine). Factory-reset path covered too.
+2. BOOT: default Browse tab now gets .on + aria-pressed at boot
+   (applyView only fires on clicks — same as the mood fix).
+3. MERGE: customs sort now tie-breaks by id after pos — devices
+   can no longer disagree on order when pos collides across
+   devices (mirrors the Notes deterministic-sort fix).
+All 16 patches from the deep audit + favorites schema v2
+verified present and correct. Rolling-upgrade caveat unchanged:
+update all devices before letting sync carry object-form
+favorites to old array-code devices.
+
+  ### sync.js verification (this session)
+  - #3 RESOLVED: registerSlice 5-arg mergeFn is official engine API
+    (v0.7 SLICE MERGE API) — contract "deterministic, bigger mtime
+    wins, then lexicographic" matches mergeBookmarks exactly.
+  - Confirmed: merge-capable slices exempt from v0.8 divergence
+    guard; proxy hydration travels closed-app slices (DATA_KEY
+    passed as arg 4); markDirty() takes NO arguments (Patch 2's
+    api.markDirty() is the correct signature); engine reconciles
+    ~100ms after registration.
+  - #10 noted: setter double-merges (engine merges via mergeFn,
+    our set merges again) — idempotent for union merge, kept as
+    defense-in-depth.
+  - #11 (optional Patch 4): settings merge was asymmetric
+    (Object.assign = remote-wins on both sides = divergence).
+    Fixed with deterministic lexicographic pick. Harmless while
+    settings is {} (Wave 1); REQUIRED before Wave 2 settings.
+  - #12 noted (theoretical): sanitizeItem Date.now() fallback could
+    make malformed timestamp-less entities diverge across devices.
+    Our code always writes timestamps — accepted limit.
+	
+	# CHANGELOG — orOS Bookmarks
+
+## Standing context (for future chats)
+- **Mantra:** Offline first · Mobile first · No external deps ·
+  Full manual export · Full auto export · Snapshots · Auto merge
+  sync · No guessing.
+- **Stack:** bookmarks/ (index.html, bookmarks.css, bookmarks.js)
+  in same-origin iframe under the orOS shell. Palette inherited
+  at runtime from parent (inheritPalette + watchPalette); CSS
+  :root values are offline fallback only.
+- **Data:** localStorage "oros-bookmarks-data", SCHEMA v1 =
+  { ver:1, items{}, folders{}, deleted{} (tombstones, 30d prune
+  at load), settings{} }. Root folder "unsorted" — permanent,
+  undeletable, i18n-labeled.
+- **Sync:** slice "bookmarks", registered 5-arg with mergeFn
+  (mergeBookmarks: entity-union by id, newest modified wins,
+  canon() lexicographic tie-break, tombstone/resurrect logic,
+  deterministic settings pick, no Date.now() inside merge).
+  Merge-capable → exempt from v0.8 divergence guard. Dirty funnel:
+  syncHost() → parent.orosSync.markDirty() (NO arguments).
+  Engine double-merge in setter is idempotent (known, accepted).
+- **Version stamps** (?v=): owned by GitHub Action on deploy —
+  never manual.
+- i18n: EN/EL inline STR; shell menu name needs
+  translations.js "app.bookmarks" key (Wave 4).
+
+## v0.1.0 — Wave 1 (built this cycle)
+Features: quick-add w/ normalization + "url | title" + dedup;
+folder tabs (create/rename dblclick, two-step delete → orphans to
+Unsorted); real-time search + source chips; D&D rows→tabs;
+long-press ctx menu (mobile); Netscape HTML import (folder tree
+preserved, case-insensitive folder reuse, dedup) + export; Undo
+(snapshot + fresh mtimes) for delete/move; visit counters;
+domain-hash favicon colors.
+
+## Post-assembly audit + fixes
+- FIX #1 (CRITICAL): stray "})();" after §3 killed the file with
+  SyntaxError → removed.
+- FIX #2 (CRITICAL): dirty funnel looked up window.orosSync
+  inside the iframe (sync.js only lives in parent) → syncHost().
+- FIX #3: registerSlice 5-arg mergeFn VERIFIED against sync.js
+  v0.9.1 (official v0.7 SLICE MERGE API, signature matches).
+- FIX #11: settings merge made deterministic (was remote-wins on
+  both sides = divergence).
+- Removed dead code: __orosSyncApi.pullSet, suppressDirty flag.
+- Verified final file: IIFE balanced, patches 1/2/2b/4 confirmed
+  applied, ready to deploy.
+
+## Known / deferred (tracked, not blocking)
+- #12 (theoretical): sanitizeItem Date.now() fallback for
+  timestamp-less entities could diverge across devices — our
+  code always writes timestamps; accepted limit.
+- #7: i18n aria/title for #tab-add, #quick-add-btn (Wave 2).
+- #8: edit-dialog URL dedup warning (Wave 2).
+- translations.js "app.bookmarks" key (Wave 4).
+
+## Deployment checklist (next steps)
+1. [ ] Apply Patch 3 integration: apps.json entry (Office),
+       shell.js ICONS.bookmarks, sw.js precache (4 paths).
+2. [ ] Commit → push → GitHub Action stamps ?v= across files.
+3. [ ] Testing phase (after implementation, per workflow):
+       - offline add → online merge (no data loss)
+       - two devices, both app-open, concurrent edits converge
+       - import round-trip (browser export → import → export)
+       - mobile: long-press move, D&D fallback, dialogs
+       - Undo across a sync boundary (tombstone resurrect)
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

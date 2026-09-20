@@ -81,6 +81,14 @@
       "url": "storage/",
       "type": "internal"
     },
+	{
+      "id": "bookmarks",
+      "name": "Bookmarks",
+      "category": "Office",
+      "icon": "bookmarks",
+      "url": "bookmarks/",
+      "type": "internal"
+    },
     {
       "id": "prompter",
       "name": "Prompter",
