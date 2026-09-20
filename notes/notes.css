@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Notes v0.35.00 — App stylesheet  
+   orOS Notes — App stylesheet (version stamped by CI)
    Strata: base v0.13.1 + appended blocks v0.14.1–v0.17.1.
    Sync fix v0.35.00: registration retry, legacy migration, pinned sort.
    Inherits the shell palette: variables are injected at runtime
@@ -71,6 +71,10 @@ body {
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
 }
+
+/* #10: header's uppercase style was meant for the old static label,
+   not the notebook <select> living inside it now */
+#nb-selector { text-transform: none; }
 
 #tree-scroller {
   flex: 1 1 auto;

@@ -131,7 +131,7 @@ input, textarea, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 6px;    /* consolidated here (was a Wave 3.5 override further down) */
   margin-bottom: 14px;
   padding: 8px;
   background: var(--panel-bg);
@@ -523,7 +523,7 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 #moodmain::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 #moodmain { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
-/* ---------- 8. Chip context menu ---------- */
+/* ---------- 7. Chip context menu ---------- */
 .ctxmenu {
   position: fixed;
   z-index: 1300;
@@ -571,7 +571,7 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
   outline: none;
 }
 
-/* ---------- 9. Insights ---------- */
+/* ---------- 8. Insights ---------- */
 .ins-top {
   display: flex;
   align-items: center;
@@ -624,7 +624,6 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
 }
 
 /* 7-day thread: dot + narrow weekday label, stacked */
-#thread { gap: 6px; }
 .tdotwrap {
   display: flex;
   flex-direction: column;
@@ -694,7 +693,7 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 10. Calendar ---------- */
+/* ---------- 9. Calendar ---------- */
 .cal-head {
   display: flex;
   align-items: center;

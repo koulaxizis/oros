@@ -30,6 +30,7 @@ var PRECACHE_URLS = [
   "./shell.js",
   "./sync.js",
   "./fs.js",
+  "./notifications.js",
   "./translations.js",
   "./apps.json",
   "./manifest.webmanifest",

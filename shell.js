@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.16";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.17";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -663,6 +663,7 @@
     wxRenderChip();         // v0.18.0: weather chip, cheap paint only
     alarmTick();            // E1: shell-owned alarm engine tick
     calRemTickThrottled();  // Wave 3: calendar reminders (30s throttle)
+    notifTickThrottled();   // Wave 1A: notification sweep (60s throttle)
   }
 
   // ---------- 7. PWA ----------
@@ -3414,6 +3415,21 @@
     calRemLastTick = now;
     calRemTick();
   }
+  
+    // Wave 1A — notification scheduler piggyback: renderClock ticks
+  // 1/s; the notifs sweep runs at most every 60s (the module self-
+  // throttles). Cheap noop when notifications.js hasn't loaded.
+  var notifLastTick = 0;
+  function notifTickThrottled() {
+    var now = Date.now();
+    if (now - notifLastTick < 60000) return;
+    notifLastTick = now;
+    try {
+      if (window.orosNotifs && typeof window.orosNotifs.tick === 'function') {
+        window.orosNotifs.tick();
+      }
+    } catch (e) {}
+  }
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 
@@ -3666,6 +3682,44 @@
       var id = sessionStorage.getItem("oros-mood-open");
       if (id) sessionStorage.removeItem("oros-mood-open");
       return id || null;
+    } catch (e) { return null; }
+  };
+
+  // Kanban deep-link bridge (Calendar feed rows → συγκεκριμένη κάρτα).
+  // Πρωτότυπο: Contacts/Cycle/Mood — με μία διαφορά: τρία ids
+  // (board, column, card) που ταξιδεύουν ως JSON payload, γιατί το
+  // board της κάρτας δεν είναι απαραίτητα το ενεργό board στη
+  // συσκευή-προορισμό (το activeBoardId είναι device-local).
+  window.__orosOpenKanbanCard = function (boardId, colId, cardId) {
+    if (typeof boardId !== "string" || !boardId ||
+        typeof colId   !== "string" || !colId ||
+        typeof cardId  !== "string" || !cardId) return;
+    if (state.running && state.running.id === "kanban") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosKanbanOpen === "function") {
+          f.contentWindow.__orosKanbanOpen(
+            { board: boardId, col: colId, card: cardId });
+          return;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-kanban-open", JSON.stringify(
+        { board: boardId, col: colId, card: cardId }));
+    } catch (e) {}
+    openAppById("kanban");
+  };
+
+  // Consumed by kanban.js at boot — one-shot take (ίδιο μάθημα με
+  // το contacts/cycle/mood: αν το app δεν προσφέρει το take, το
+  // pending payload απλά αγνοείται — τίποτα δεν σπάει).
+  window.__orosKanbanTakePending = function () {
+    try {
+      var raw = sessionStorage.getItem("oros-kanban-open");
+      if (raw) sessionStorage.removeItem("oros-kanban-open");
+      return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   };
 

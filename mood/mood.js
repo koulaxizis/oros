@@ -873,6 +873,7 @@ function mergeMoodStates(A, B) {
     dlg1.appendChild(c1);
     dlg1.appendChild(y1);
     document.body.appendChild(dlg1);
+    dlg1.addEventListener("close", function () { dlg1.remove(); });  // Esc too
     dlg1.showModal();
   }
 
@@ -898,6 +899,7 @@ function mergeMoodStates(A, B) {
     dlg2.appendChild(c2);
     dlg2.appendChild(y2);
     document.body.appendChild(dlg2);
+    dlg2.addEventListener("close", function () { dlg2.remove(); });  // Esc too
     dlg2.showModal();
   }
 
@@ -1481,8 +1483,7 @@ function mergeMoodStates(A, B) {
     if (col === "loc") selLoc = v.id;
     else if (col === "person") selPerson = v.id;
     else selTrig = v.id;
-    buildCapture();
-    $("moodmain").scrollTop = 0;            // fresh entry starts at the top
+    buildCapture();   // keepScroll restores the viewport — no mid-form jump
   }
 
   // ---- save flow ----
@@ -1642,8 +1643,10 @@ function mergeMoodStates(A, B) {
     // last 7 calendar days, oldest → newest
     var out = [];
     for (var d = 6; d >= 0; d--) {
-      var ts = Date.now() - d * 24 * 60 * 60 * 1000;
-      out.push({ key: dayKey(ts), entry: days[dayKey(ts)] || null });
+      var dd = new Date();                     // DST-safe calendar step
+      dd.setDate(dd.getDate() - d);
+      out.push({ key: dayKey(dd.getTime()),
+                 entry: days[dayKey(dd.getTime())] || null });
     }
     out.forEach(function (day, idx) {
       var wrap = document.createElement("span");
@@ -1660,8 +1663,9 @@ function mergeMoodStates(A, B) {
       wrap.appendChild(dot);
       var lb = document.createElement("span");
       lb.className = "twd";
-      lb.textContent = new Date(Date.now() - (6 - idx) * 86400000)
-        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      var lbd = new Date();                    // DST-safe calendar step
+      lbd.setDate(lbd.getDate() - (6 - idx));
+      lb.textContent = lbd.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
           { weekday: "narrow" });
       wrap.appendChild(lb);
       host.appendChild(wrap);
@@ -1771,7 +1775,7 @@ function mergeMoodStates(A, B) {
     });
     // #5: explicit no-results state when the query matches nothing
     if (q && !shown) {
-      var nr = document.createElement("div");
+      var nr = document.createElement("li");   // li inside ul — valid HTML
       nr.id = "empty-note";
       nr.textContent = t("ent.noRes").replace("{q}", searchQ.trim());
       list.appendChild(nr);
@@ -2170,9 +2174,13 @@ function mergeMoodStates(A, B) {
     if (!dl) return;
     dl.hidden = false;
     dl.innerHTML = "";
+    var dparts = dayK.split("-");              // "YYYY-MM-DD" → local Date
+    var dstr = new Date(+dparts[0], +dparts[1] - 1, +dparts[2])
+      .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        { weekday: "short", day: "numeric", month: "long", year: "numeric" });
     var title = document.createElement("div");
     title.className = "col-lab";
-    title.textContent = t("ins.day.entries") + " · " + dayK;
+    title.textContent = t("ins.day.entries") + " · " + dstr;
     dl.appendChild(title);
     var list = document.createElement("ul");
     state.entries.forEach(function (e) {
@@ -2221,12 +2229,12 @@ function mergeMoodStates(A, B) {
     var streak = 0;
     var cur = new Date();
     if (!daySet[dayKey(cur.getTime())]) {
-      cur = new Date(cur.getTime() - 24 * 60 * 60 * 1000);
+      cur.setDate(cur.getDate() - 1);          // DST-safe calendar step
       if (!daySet[dayKey(cur.getTime())]) return { streak: 0, logged: logged };
     }
     while (daySet[dayKey(cur.getTime())]) {
       streak++;
-      cur = new Date(cur.getTime() - 24 * 60 * 60 * 1000);
+      cur.setDate(cur.getDate() - 1);          // DST-safe calendar step
     }
     return { streak: streak, logged: logged };
   }
@@ -2624,7 +2632,7 @@ function mergeMoodStates(A, B) {
       var c = st.n[em.k] || 0;
       if (c > topN) { topN = c; top = em; }
     });
-    if (top) mkKpi(t("rec.top"), t(top.i18n), topN + "×");
+    if (top) mkKpi(t("rec.top"), t(top.i18n), topN + "×", "up");
 
     var posShare = function (set) {
       var n = set.filter(function (e) {
@@ -2822,6 +2830,7 @@ function mergeMoodStates(A, B) {
         y += 15;
       };
       var line = function (txt, indent) {
+        txt = pdfClean(txt);   // measure the SAME string the draw funnel sees
         doc.setFontSize(10); doc.setTextColor(25);
         var w = doc.splitTextToSize(txt, W - M * 2 - (indent || 0));
         need(w.length * 13 + 4);

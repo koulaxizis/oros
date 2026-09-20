@@ -2927,6 +2927,185 @@ mood.js (receiver). Core sync engine untouched.
 calendar.js, calendar.css, shell.js, cycle.js, cycle.css,
 mood.js — no data-schema changes, no sync-engine changes.
 
+## Notes — Audit fixes (14 items, post-0.35.11)
+
+1. FIXED: corrupted empty-notebooks store crashed boot at
+   currentNotebook().id — normalizeState now enforces the ">= 1
+   notebook" invariant (rescue notebook on every load/merge).
+2. FIXED: pages parented under a page in ANOTHER notebook were
+   invisible in the tree yet leaked into ZIP exports —
+   normalizeState re-parents cross-nb children to ROOT.
+3. FIXED: merge sorts used localeCompare (browser-locale
+   dependent) — notebooks/labels/pages now sort with locale-
+   independent id tiebreaks; kills potential sync ping-pong via
+   serialized-equality mismatch.
+4. FIXED: saveNow crashed on quota/private-mode — guarded write
+   with console error + user-visible toast (toast.saveFail).
+5. FIXED: notebook ZIP export order ignored pinned pages —
+   childrenSorted is now pinned-aware and nb-safe, matching the
+   visible tree order.
+6. FIXED: movePage was a silent no-op at the pinned/unpinned zone
+   boundary and could produce negative/duplicate pos on colliding
+   positions — boundary is now an explicit no-op; collisions
+   renumber the sibling group.
+7. FIXED: label toggles and sync merges while typing reset the
+   caret/scroll (full renderEditor re-write) — same page + editor
+   focus now refreshes only chips/links strip. Local edits win
+   LWW, no data loss.
+8. FIXED: deleteNotebook left stale prefs.open keys (device-local
+   leak) — expanded-state open-map entries cleaned on delete.
+9. FIXED: hardcoded "Show tree" / "Close" aria-labels → i18n keys
+   (menu.showTree / menu.close, EN+EL), removed from index.html.
+10. FIXED: notebook selector rendered ALL-CAPS (inherited
+    text-transform:uppercase from the old static header) —
+    override #nb-selector { text-transform: none }.
+11. FIXED: nb-selector context menu could open off-screen on
+    mobile — now clamps via clampToViewport like every menu.
+12. ADDED: empty-notebook export shows a toast instead of
+    silently doing nothing (toast.emptyExport, EN+EL).
+13. CLEANUP: version drift (js "0.17.0" vs css "v0.35.00" vs
+    ?v=0.35.11) — APP_VERSION now reads the CI-stamped ?v=
+    param; CSS header neutralized ("version stamped by CI").
+14. CLEANUP: local vars shadowing the currentNbId() function in
+    runSearch/renderTagPanel — renamed to nbId.
+	
+	15. FIXED: P14 rename was half-applied — the tags-panel page count
+    still referenced the old shadowed variable name (now resolving
+    to the currentNbId FUNCTION, always falsy) → all tag counts
+    showed 0. Renamed to nbId.
+	
+	## [Unreleased] — Wave 1A: Unified Notification System (core)
+
+### Added
+- notifications.js (new module, v1.0.0): hybrid pull-scheduler
+  notification engine for the orOS shell
+  - Central scheduler: boot sweep + visibilitychange catch-up +
+    60s piggyback on renderClock (NO new setInterval — shell
+    doctrine respected)
+  - oros-notifs localStorage slice: {settings, appToggles, items,
+    meta}; 7-day TTL pruning, 300-item sync cap
+  - Registered via window.orosSync.registerSlice("notifs", get, set)
+    — same contract as shell/files-disk slices
+  - LWW per-field merge: readAt (non-null beats null, both-read →
+    max), firedAt → max, createdAt → min; settings via settingsRev
+    clock; anti-loop contract (setter never marks dirty)
+  - Taskbar bell (.bar-right, before #btn-lang): inline SVG bell,
+    palette vars only, unread badge (99+ cap), full inbox panel
+    (click → openTarget deep link, dismiss, clear all)
+  - Deep links routed to REAL bridges (__orosOpenContact /
+    __orosOpenCycle / __orosOpenMood) — apps without a bridge
+    no-op gracefully
+  - Sounds: bell/ding/chime presets, pure WebAudio oscillators,
+    zero external assets
+  - All user mutations (read, clear, settings, toggles, new items)
+    call orosSync.markDirty() — data travels to the cloud
+  - beforeunload flushes via saveSliceNow() (replaces the broken
+    saveSliceThrottled(0))
+
+### Changed
+- shell.js: renderClock now calls notifTickThrottled() (60s gate,
+  try-guarded — cheap noop when notifications.js is absent)
+- index.html: loads notifications.js after shell.js (bar order:
+  sync-dot, bell, lang, time, date)
+
+### Pending (later waves)
+- Wave 1B: Inbox panel UI refinement, per-app trigger migration
+  (calendar/cycle/mood/todo/habits), settings UI (position/style/
+  sound customization), translations.js keys for notif strings
+- sw.js: precache entry for notifications.js (see handoff note)
+
+## [Unreleased] — Wave 1A: Unified Notification System (core)
+
+### Added
+- notifications.js (new module, v1.0.0): hybrid pull-scheduler
+  notification engine for the orOS shell
+  - Scheduler: boot sweep + visibilitychange catch-up + 60s sweep
+    piggybacked on the shell's renderClock tick (NO new setInterval
+    — shell "no idle timers" doctrine)
+  - oros-notifs localStorage slice: {ver, settings, appToggles,
+    items, meta}; 7-day TTL pruning; 300-item sync cap
+  - Registered via window.orosSync.registerSlice("notifs", get, set)
+    — same contract as shell / files-disk slices
+  - LWW per-field merge: readAt (non-null beats null, both-read →
+    max), firedAt → max, createdAt → min; settings LWW via
+    settingsRev counter; anti-loop contract (pull-fed setter never
+    marks dirty — shellSliceSet lesson)
+  - Taskbar bell: injected into .bar-right before #btn-lang (real
+    shell reality, sync-dot pattern); inline SVG bell (no emoji,
+    no icon fonts); unread badge with 99+ cap, palette vars only
+  - Inbox panel: click → deep link via REAL app bridges
+    (__orosOpenContact / __orosOpenCycle / __orosOpenMood);
+    apps without a bridge no-op gracefully; Clear all + per-item
+    dismiss (both mark read)
+  - Sounds: bell/ding/chime presets via WebAudio oscillators,
+    zero external assets (alarmPip precedent)
+  - Every user mutation (read, clear, settings, toggles, new
+    items) calls orosSync.markDirty() — data travels to cloud
+  - beforeunload flushes via saveSliceNow() (the old
+    saveSliceThrottled(0) never ran before page death)
+  - Bilingual UI strings via nt() helper (orosLang, EN default) —
+    zero new translations.js keys for Wave 1A
+- Deep-link contract: format "ns:type:id", routed via DL_BRIDGES
+  map; extend the map (not the shell) when new apps gain bridges
+
+### Changed
+- shell.js: renderClock calls notifTickThrottled() — 60s gate,
+  try-guarded, cheap noop when notifications.js is absent (same
+  shape as calRemTickThrottled)
+- index.html: loads notifications.js after shell.js (final bar
+  order: sync-dot, bell, lang, time, date)
+- sw.js: "./notifications.js" added to PRECACHE_URLS (unversioned,
+  same pattern as all core scripts)
+
+### Fixed (bugs found in the draft against real shell contracts)
+- Slice registration: api.registerSlice(obj) (nonexistent) →
+  window.orosSync.registerSlice(name, getFn, setFn) (real)
+- state.meta.lastSyncPush crashed (no state.meta) →
+  state.slice.meta.lastSyncPush + saveSliceNow()
+- __orosOpenX (nonexistent) → DL_BRIDGES routing to the real
+  per-app bridges
+- #oros-taskbar / #oros-clock (nonexistent) → .bar-right /
+  before #btn-lang
+- setInterval(60000) idle timer removed → renderClock piggyback
+- beforeunload saveSliceThrottled(0) → saveSliceNow()
+- Hardcoded #6d4aff/#fff/#333 styling → palette vars
+  (--accent/--panel-bg/--border/--text-dim) — follows every skin
+- renderPanelItems sorted the LIVE array (mutation) → .slice()
+
+### Pending (later waves)
+- Wave 1B: inbox panel UI refinement; per-app trigger migration
+  (calendar/cycle/mood/todo/habits registerTrigger adoption);
+  settings UI in the menu (position/style/sound); quiet-hours UI
+- translations.js keys for notification strings (currently nt()
+  inline bilingual, deliberate for Wave 1A — promote to window.t()
+  keys in Wave 1B when the settings UI lands)
+- Badge-only fallback for unread items fired >24h ago (design
+  agreed, fires when trigger migration lands in Wave 1B)
+  
+  ## Mood — v0.35.15 follow-up audit (9 fixes)
+1. DST-SAFE: renderThread() + streakInfo() now step by calendar days
+   (setDate) instead of subtracting 24h in ms — fall-back Sundays no
+   longer duplicate/skip a thread dot or double-count a streak day.
+   Matches the Cycle-peek pattern already in buildTrends().
+2. RECAP: "Top feeling" count badge renders green (was red — missing
+   "up" direction arg defaulted to "down").
+3. HTML VALIDITY: entries search no-results state is now a <li>, not
+   a <div> inside the <ul>.
+4. LEAK: reset dialogs (both stages) remove themselves on Esc /
+   "close" event, not only via their buttons.
+5. I18N: calendar day-list title renders a locale-formatted date
+   (EL: "Σάβ 20 Σεπτεμβρίου 2026"), not raw ISO "2026-09-20".
+6. PDF: line() NFC-normalizes BEFORE splitTextToSize — measurement
+   now matches the drawn (pdfClean'd) string for decomposed Greek.
+7. R9 PARITY: hardcoded English aria-labels removed from index.html;
+   paintStaticAria() remains the single source at boot.
+8. UX: adding a column value no longer scrolls to top mid-form —
+   buildCapture()'s keepScroll restores the viewport.
+9. CSS: section numbering made sequential (7 chip menu, 8 insights,
+   9 calendar, 10 mobile); #thread gap consolidated in §3 (6px),
+   Wave 3.5 duplicate override deleted.
+No schema, sync, or storage changes — DATA_VER 3 untouched.
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

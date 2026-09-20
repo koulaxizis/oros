@@ -20,7 +20,12 @@
 (function () {
   "use strict";
 
-  var APP_VERSION   = "0.17.0";
+  // #13: single source of truth — the CI-stamped ?v= in the script URL
+  var APP_VERSION = (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "")
+      .match(/[?&]v=([^&#]+)/);
+    return m ? m[1] : "0.0.0";
+  })();
   var STORAGE_KEY   = "oros-notes-data";
   var PREFS_KEY     = "oros-notes-prefs";
   var DATA_VER      = 3;  // v0.17.1: notebooks added
@@ -138,6 +143,15 @@
     });
     state.notebooks = state.notebooks.filter(function (n) { return !!n && notebookIds[n.id]; });
 
+    // #1: invariant — at least one notebook ALWAYS exists. A crafted/
+    // corrupted ver-3 store with empty notebooks[] would otherwise
+    // crash currentNotebook().id → boot black screen.
+    if (!state.notebooks.length) {
+      var rescueNb = { id: uid("nb"), name: t("book.default"), mtime: Date.now(), pos: 0 };
+      state.notebooks.push(rescueNb);
+      notebookIds[rescueNb.id] = true;
+    }
+
     // Orphaned pages/labels (dead notebook ref) → first notebook
     var firstNb = state.notebooks[0];
     if (firstNb) {
@@ -171,6 +185,13 @@
 
     state.pages.forEach(function (p) {
       p.parent = (p.parent === null || alive[p.parent]) ? p.parent : null;
+      // #2: parent alive but living in ANOTHER notebook → the page is
+      // invisible in the tree (kidsOf filters by nb) yet leaks into
+      // exports (childrenSorted ignores nb). Re-parent to ROOT.
+      if (p.parent !== null) {
+        var par = pageById(p.parent);
+        if (par && par.nb !== p.nb) p.parent = null;
+      }
       p.pos    = (typeof p.pos === "number" && isFinite(p.pos)) ? p.pos : 0;
       p.mtime  = p.mtime || Date.now();
       p.pinned = !!p.pinned;   // v0.35.03 fix: coerce for merged data from unpatched devices
@@ -216,7 +237,14 @@
 
   function saveNow() {
     normalizeState();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // #4: quota exceeded / private mode — never crash the boot loop
+      // or the beforeunload flush; the user gets a visible receipt.
+      console.error("[notes] saveNow failed:", e);
+      toast(t("toast.saveFail"));
+    }
   }
 
   // Debounced save — burst edits coalesce; the dirty flag reaches
@@ -293,7 +321,11 @@
       "book.switch": "Switch notebook",
       "toast.nbCreated": "Notebook created",
       "toast.nbRenamed": "Notebook renamed",
-      "toast.nbDeleted": "Notebook deleted"
+      "toast.nbDeleted": "Notebook deleted",
+      "toast.saveFail":    "Couldn't save — storage may be full",
+      "toast.emptyExport": "Nothing to export yet",
+      "menu.showTree":     "Show tree",
+      "menu.close":        "Close"
     },
     el: {
       "tree.empty":         "Καμία σελίδα ακόμη",
@@ -346,9 +378,13 @@
       "book.confirm": "Διαγραφή αυτού του σημειωματαρίου; Θα διαγραφούν όλες οι σελίδες και οι ετικέτες του.",
       "book.empty": "Κανένα σημειωματάριο",
       "book.switch": "Αλλαγή σημειωματαρίου",
-      "toast.nbCreated": "Δημιουργήθηκε το σημειωματάριο",
+            "toast.nbCreated": "Δημιουργήθηκε το σημειωματάριο",
       "toast.nbRenamed": "Μετονομαστηκε το σημειωματάριο",
-      "toast.nbDeleted": "Διαγράφηκε το σημειωματάριο"
+      "toast.nbDeleted": "Διαγράφηκε το σημειωματάριο",
+      "toast.saveFail":    "Αποτυχία αποθήκευσης — ίσως γεμάτος αποθηκευτικός χώρος",
+      "toast.emptyExport": "Δεν υπάρχει κάτι προς εξαγωγή ακόμα",
+      "menu.showTree":     "Εμφάνιση δέντρου",
+      "menu.close":        "Κλείσιμο"
     }
   };
 
@@ -446,6 +482,10 @@
     if (nb) { nb.title = t("page.new"); nb.setAttribute("aria-label", t("page.new")); }
     var st = document.getElementById("btn-show-tree");
     if (st && !st.innerHTML.trim()) st.innerHTML = BURGER_SVG;
+    if (st) {
+      st.title = t("menu.showTree");                       // #9
+      st.setAttribute("aria-label", t("menu.showTree"));
+    }
   }
 
   function uid(prefix) {
@@ -652,11 +692,24 @@
     document.getElementById("notes-app").classList.remove("tree-open");
   }
 
+  var lastRenderedPage = null;   // #7: caret/scroll preservation state
+
   function renderEditor() {
     var title = document.getElementById("page-title");
     var text  = document.getElementById("page-text");
     var page  = pageById(prefs.current);
     if (!title || !text) return;
+
+    // #7: full re-render would clobber the caret & scroll mid-typing
+    // (label toggle, sync pull while editing). Same page + editor
+    // focus → refresh chips/links strip ONLY, leave values alone.
+    if (page && page.id === lastRenderedPage &&
+        (document.activeElement === title || document.activeElement === text)) {
+      renderChips(page);
+      renderLinksStrip(page);
+      return;
+    }
+    lastRenderedPage = page ? page.id : null;
 
     title.disabled = !page;
     text.disabled  = !page;
@@ -786,11 +839,18 @@
     for (var i = 0; i < sibs.length; i++) if (sibs[i].id === id) { idx = i; break; }
     var swapWith = sibs[idx + dir];
     if (!swapWith) return;
+    // #6: zone boundary (pinned ↔ unpinned) — crossing zones is
+    // invisible by design (pinned always sits on top): no-op.
+    if (!!page.pinned !== !!swapWith.pinned) return;
 
     // Swap positions — but preserve relative pinned/unpinned grouping
     // by using actual positions from the sorted array
     var tmp = page.pos; page.pos = swapWith.pos; swapWith.pos = tmp;
-    if (page.pos === swapWith.pos) swapWith.pos = page.pos + dir;
+    // #6: collided positions (duplicate pos from legacy merges) →
+    // renumber the sibling group so the sort is stable again
+    if (page.pos === swapWith.pos) {
+      sibs.forEach(function (s, j) { s.pos = j + 1; });
+    }
     
     page.mtime    = Date.now();
     swapWith.mtime = Date.now();
@@ -850,7 +910,10 @@
     // Tombstones for notebook + all its pages/labels (delete wins on merge)
     state.tombs["nb:" + id] = Date.now();
     state.pages.forEach(function (p) {
-      if (p.nb === id) state.tombs[p.id] = Date.now();
+      if (p.nb === id) {
+        state.tombs[p.id] = Date.now();
+        delete prefs.open[p.id];   // #8: no device-local key leak
+      }
     });
     state.labels.forEach(function (l) {
       if (l.nb === id) state.tombs["lbl:" + l.id] = Date.now();
@@ -1029,10 +1092,18 @@
   
     // ---------- 6c. Export functions (page .txt / notebook .zip) ----------
 
-  function childrenSorted(parentId) {
+  function childrenSorted(parentId, nbId) {
     return state.pages
-      .filter(function (p) { return parentId ? (p.parent === parentId) : (!p.parent); })
-      .sort(function (a, b) { return (a.pos || 0) - (b.pos || 0); });
+      .filter(function (p) {
+        var okParent = parentId ? (p.parent === parentId) : (!p.parent);
+        return okParent && (!nbId || p.nb === nbId);   // #2/#5: nb-safe
+      })
+      .sort(function (a, b) {
+        var ap = a.pinned ? 1 : 0, bp = b.pinned ? 1 : 0;
+        if (ap !== bp) return bp - ap;   // #5: pinned first — tree parity
+        return (a.pos || 0) - (b.pos || 0) ||
+               (a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
+      });
   }
 
   function sanitizeFolder(name) {
@@ -1062,7 +1133,7 @@
       var nbId = currentNbId();
       rootPages = rootPages.filter(function (p) { return p.nb === nbId; });
     }
-    if (!rootPages.length) return;
+    if (!rootPages.length) { toast(t("toast.emptyExport")); return; }   // #12
 
     var entries = [];
     var used = {};     // "dir|name" (lowercase) -> duplicate count
@@ -1079,7 +1150,7 @@
       if (depth > 50 || visited[page.id]) { return; } // cycle guard
       visited[page.id] = true;
 
-      var kids = childrenSorted(page.id);
+      var kids = childrenSorted(page.id, page.nb);
       if (kids.length) {
         // Folder-carrying page: its own .txt lives INSIDE its folder
         var sub = dir + sanitizeFolder(page.title) + "/";
@@ -1145,9 +1216,9 @@
     }
 
     var hits = [];
-    var currentNbId = currentNotebook().id;
+    var nbId = currentNotebook().id;   // #14: no shadowing of currentNbId()
     state.pages.forEach(function (p) {
-      if (p.nb !== currentNbId) return;
+      if (p.nb !== nbId) return;
       var inTitle = ((p.title || "")).toLowerCase().indexOf(needle) !== -1;
       var inText  = ((p.text  || "")).toLowerCase().indexOf(needle) !== -1;
       if (inTitle || inText) hits.push({ p: p, w: inTitle ? 0 : 1 });
@@ -1260,7 +1331,7 @@
     x.className = "tp-close";
     x.type = "button";
     x.innerHTML = X_SVG;
-    x.setAttribute("aria-label", "Close");
+    x.setAttribute("aria-label", t("menu.close"));   // #9
     x.addEventListener("click", function () { panel.remove(); });
     head.appendChild(x);
     panel.appendChild(head);
@@ -1275,14 +1346,14 @@
         none.textContent = t("labels.none");
         list.appendChild(none);
       } else {
-        var currentNbId = currentNotebook().id;
+        var nbId = currentNotebook().id;   // #14
         state.labels
-          .filter(function (l) { return l.nb === currentNbId; })
+          .filter(function (l) { return l.nb === nbId; })
           .slice()
           .sort(function (a, b) { return (a.pos - b.pos) || a.name.localeCompare(b.name); })
           .forEach(function (lb) {
             var cnt = state.pages.filter(function (p) {
-              return p.nb === currentNbId && (p.labels || []).indexOf(lb.id) !== -1;
+              return p.nb === nbId && (p.labels || []).indexOf(lb.id) !== -1;
             }).length;
             var row = document.createElement("button");
             row.className = "tp-item";
@@ -1304,10 +1375,10 @@
           });
       }
     } else {
-      var currentNbId = currentNotebook().id;
+      var nbId = currentNotebook().id;   // #14
       var pages = state.pages
         .filter(function (p) {
-          return p.nb === currentNbId && (p.labels || []).indexOf(filterId) !== -1;
+          return p.nb === nbId && (p.labels || []).indexOf(filterId) !== -1;
         })
         .sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
       if (!pages.length) {
@@ -1729,7 +1800,8 @@
         var tomb = tombs["nb:" + n.id] || 0;
         return !(tomb >= (n.mtime || 0));
       })
-      .sort(function (x, y) { return x.pos - y.pos || x.name.localeCompare(y.name); });
+      .sort(function (x, y) { return (x.pos - y.pos) ||
+        (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });   // #3: no localeCompare
 
     // v0.35.04 SALVAGE TARGET (root cause of the "notes stopped
     // syncing" outage): a peer still running schema-old code (no
@@ -1771,7 +1843,8 @@
         if (!notebookIdsInMerge[l.nb]) l.nb = fallbackNbId;
         return l;
       })
-      .sort(function (x, y) { return x.pos - y.pos || x.name.localeCompare(y.name); });
+      .sort(function (x, y) { return (x.pos - y.pos) ||
+        (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });   // #3: no localeCompare
 
     var labelIdsInMerge = {};
     labels.forEach(function (l) { labelIdsInMerge[l.id] = true; });
@@ -1802,7 +1875,8 @@
         p.labels.sort();
         return p;
       })
-      .sort(function (x, y) { return (x.mtime || 0) - (y.mtime || 0); });
+      .sort(function (x, y) { return ((x.mtime || 0) - (y.mtime || 0)) ||
+        (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });  // #3: total order
 
     return { ver: DATA_VER, notebooks: notebooks, pages: pages, labels: labels, tombs: tombs };
   }
@@ -1986,8 +2060,7 @@
         });
         
         document.body.appendChild(menu);
-        menu.style.left = e.clientX + "px";
-        menu.style.top = e.clientY + "px";
+        clampToViewport(menu, e.clientX, e.clientY);   // #11: on-screen always
         
         // Close on outside click
         setTimeout(function () {

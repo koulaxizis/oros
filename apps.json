@@ -73,6 +73,14 @@
       "url": "contacts/",
       "type": "internal"
     },
+	{
+      "id": "storage",
+      "name": "Storage",
+      "category": "Office",
+      "icon": "storage",
+      "url": "storage/",
+      "type": "internal"
+    },
     {
       "id": "prompter",
       "name": "Prompter",
