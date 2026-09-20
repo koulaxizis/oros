@@ -3294,6 +3294,15 @@ function mergeMoodStates(A, B) {
   // the entry IS the mood app's natural destination (Discard is
   // always one tap away, and the recent-guard still applies).
   window.__orosMoodOpen = function (entryId) {
+    // "mood:checkin" — notification deep link: land on the
+    // capture tab FRESH. No resetCapture(): a half-typed draft
+    // is precious, buildCapture already preserves it.
+    if (entryId === "checkin") {
+      showTab("capture");
+      var mc = $("moodmain");
+      if (mc) mc.scrollTop = 0; else window.scrollTo(0, 0);
+      return;
+    }
     if (typeof entryId !== "string" || !entryId) return;
     if (!entryById(entryId)) return;      // deleted elsewhere — land on capture
     editEntry(entryId);

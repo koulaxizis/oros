@@ -33,11 +33,11 @@
   "use strict";
 
   var STORAGE_KEY = "oros-quote-data";
+  var DRAFT_KEY   = "oros-quote-draft";   // device-local draft shelter — ΠΟΤΕ synced
   var DATA_VER = 1;
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 ημέρες
 
-  // ⚠️ PATH ASSUMPTION — επιβεβαίωση από τον χρήστη απαιτείται
-  var VENDOR_JSPDF_PATH = "../vendor/jspdf.umd.min.js";
+  // PDF font — lazy fetch στο export (το jspdf φορτώνει με <script> στο HTML)
   var VENDOR_FONT_PATH  = "../vendor/NotoSans-Regular.ttf";
 
   var STATUSES = ["draft", "sent", "accepted", "rejected", "expired"];
@@ -143,6 +143,7 @@
       "paypresets.title":     "Payment Presets",
       "toast.paypresets_saved": "Payment presets saved",
       "toast.sync_replaced":   "This quote was deleted on another device",
+      "toast.draft_restored":  "Unsaved draft restored",
       "notes.ph":             "Additional terms, conditions…"
     },
     el: {
@@ -242,6 +243,7 @@
       "paypresets.title":     "Presets Πληρωμής",
       "toast.paypresets_saved": "Τα presets πληρωμής αποθηκεύτηκαν",
       "toast.sync_replaced":   "Αυτή η προσφορά διαγράφηκε σε άλλη συσκευή",
+      "toast.draft_restored":  "Το μη αποθηκευμένο πρόχειρο ανακτήθηκε",
       "notes.ph":             "Επιπλέον όροι, προϋποθέσεις…"
     }
   };
@@ -633,6 +635,7 @@
   var activeTab = "create";
 
   function newDraft() {
+    clearShelter();                     // το νέο draft αντικαθιστά κάθε παλιό
     cur = newQuoteObj();
     cur.items.push(newItemObj());      // μία κενή γραμμή για αρχή
     curIsDraft = true;
@@ -675,8 +678,46 @@
     recalcTotals();
   }
 
+  // --- Draft shelter (Option A): device-local, never synced ---
+  // Debounced write on every draft edit; cleared on save/new/template/
+  // duplicate; restored at boot BEFORE the activeQuoteId check —
+  // unsaved work outranks last-viewed. Opening another quote mid-
+  // session loses the draft in-memory, but the shelter resurrects
+  // it on next reload.
+  var draftShelterTimer = null;
+
+  function scheduleShelterWrite() {
+    if (!curIsDraft || !cur) return;
+    clearTimeout(draftShelterTimer);
+    draftShelterTimer = setTimeout(writeShelterNow, 800);
+  }
+  function writeShelterNow() {
+    if (!curIsDraft || !cur) return;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(cur)); } catch (e) {}
+  }
+  function clearShelter() {
+    clearTimeout(draftShelterTimer);
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  }
+  function restoreDraftShelter() {
+    var raw = null;
+    try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) {}
+    if (!raw) return false;
+    var d = null;
+    try { d = JSON.parse(raw); } catch (e) { d = null; }
+    if (!d || typeof d !== "object" || !Array.isArray(d.items)) {
+      clearShelter();
+      return false;
+    }
+    cur = d;
+    curIsDraft = true;
+    loadOfferIntoEditor();
+    return true;
+  }
+
   function editCommitted() {
     if (!curIsDraft) { touch(cur); save(); }
+    else scheduleShelterWrite();   // unsaved draft → debounce to shelter
     scheduleRender();
   }
 
@@ -849,7 +890,9 @@
   }
 
   function addItem() {
-    cur.items.push(newItemObj());
+    var it = newItemObj();
+    it.vat = parseNum($("global-vat").value);   // υιοθετεί το global VAT field
+    cur.items.push(it);
     renderItems();
     var rows = $("items-container").querySelectorAll(".item-row");
     var last = rows[rows.length - 1];
@@ -1091,7 +1134,11 @@
     state.deleted[id] = Date.now();
     state.clients = state.clients.filter(function (c) { return c.id !== id; });
     state.om = Date.now();
-    if (cur && cur.clientId === id) renderClientDisplay();
+    if (cur && cur.clientId === id) {
+      cur.clientId = null;                        // καθαρισμός, όχι μόνο οπτικό fix
+      renderClientDisplay();
+      editCommitted();
+    }
     save(); scheduleRender();
     showToast(t("toast.client_deleted"));
     $("dlg-client").close();
@@ -1187,6 +1234,7 @@
   }
 
   function applyTemplate(tp) {
+    clearShelter();                     // το template draft αντικαθιστά το προηγούμενο
     cur = newQuoteObj();
     cur.currency = tp.currency || "EUR";
     cur.items = JSON.parse(JSON.stringify(tp.items || []));
@@ -1347,6 +1395,7 @@
       notoFontBase64 = btoa(bin);
       cb(notoFontBase64);
     }).catch(function () {
+      fontLoadAttempted = false;   // επιτρέπει retry στο επόμενο export
       cb(null);
     });
   }
@@ -1400,6 +1449,7 @@
     var c = cur.clientId ? clientById(cur.clientId) : null;
     var tt = calcTotals(cur);
     var M = 16, W = 210, y = M;
+    var FONT = greekOK ? "NotoSans" : "helvetica";   // ρητό — ποτέ setFont(undefined,…)
 
     // Header
     doc.setFontSize(18);
@@ -1702,6 +1752,7 @@
       state.om = Date.now();
       curIsDraft = false;
       state.activeQuoteId = cur.id;
+      clearShelter();                   // το draft υιοθετήθηκε — το shelter αδειάζει
     }
     touch(cur);
     state.om = Date.now();
@@ -1724,6 +1775,7 @@
     state.activeQuoteId = copy.id;
     cur = copy;
     curIsDraft = false;
+    clearShelter();               // το αντίγραφο έγινε committed — το draft εγκαταλείφθηκε
     save();
     loadOfferIntoEditor();
     renderQuoteList();
@@ -1822,6 +1874,12 @@
 
     // --- Client selector ---
     $("client-selector").addEventListener("click", toggleClientDropdown);
+    $("client-selector").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleClientDropdown();
+      }
+    });
     $("client-select-new").addEventListener("click", function () {
       closeClientDropdown();
       openClientDialog(null);
@@ -1867,7 +1925,9 @@
     inheritPalette();
     watchPalette();
 
-    if (state.activeQuoteId && quoteById(state.activeQuoteId)) {
+    if (restoreDraftShelter()) {
+      showToast(t("toast.draft_restored"));
+    } else if (state.activeQuoteId && quoteById(state.activeQuoteId)) {
       openQuote(state.activeQuoteId);
     } else {
       newDraft();

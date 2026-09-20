@@ -2671,6 +2671,38 @@
   } catch (e) { pendingPeriod = null; }
   if (pendingPeriod) __orosCycleOpen(pendingPeriod);
 
-  setTimeout(maybeRemind, 900);   // after the first paint settles
+  // ---- Unified Notification System (Wave: Cycle migration) ----
+  // Legacy maybeRemind() DISABLED (boot call commented below).
+  // The shell's clock tick calls this INTO the Cycle iframe on a
+  // throttled schedule. Throttling lives in the SHELL, not here.
+  // This side only DECIDES: it returns null when there is nothing
+  // to say, otherwise a ready-to-emit notification payload. The
+  // shell owns the emitting — i18n stays here because this file
+  // owns STRINGS.
+  window.__orosCycleCheck = function () {
+    if (!state.prefs || !state.prefs.remind) return null;
+    var pr = nextPrediction();
+    if (!pr) return null;
+    var daysLeft = Math.ceil((pr.start - todayTs()) / DAY_MS);
+    if (daysLeft > 2) return null;
+    var ymd = dayKey(pr.start);
+    if (daysLeft >= 0) {
+      return {
+        key: "pred-" + ymd + "-soon",
+        title: t("app.title"),
+        body: t("rem.soon").replace("{n}", Math.max(1, daysLeft)),
+        deepLink: "cycle:pred:" + ymd
+      };
+    }
+    return {
+      key: "pred-" + ymd + "-late",
+      title: t("app.title"),
+      body: t("rem.late").replace("{n}", -daysLeft),
+      deepLink: "cycle:pred:" + ymd
+    };
+  };
+
+  // Legacy app-open reminder — disabled, replaced by the shell tick.
+  // setTimeout(maybeRemind, 900);   // after the first paint settles
 
 })();

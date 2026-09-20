@@ -13,7 +13,7 @@
        drag = reorder (Wave 2), long-press = move menu (mobile). -->
   <header id="tabbar-wrap">
     <nav id="tabs" role="tablist" aria-label="Folders"></nav>
-    <button id="tab-add"></button>
+    <button id="tab-add" data-i18n-title="tab.add" title="New folder"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   </header>
 
   <!-- Quick-add bar: URL (auto-normalized) + optional title after '|'.
@@ -37,6 +37,28 @@
 
     <span class="spacer"></span>
 
+    <!-- Selection mode toggle (folders / All view only) -->
+    <button type="button" class="ctrl-btn icon" id="select-btn"
+            data-i18n-title="sel.mode" title="Select bookmarks">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </button>
+
+    <!-- All-tags panel -->
+    <button type="button" class="ctrl-btn icon" id="tags-btn"
+            data-i18n-title="tags.all" title="All tags">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    </button>
+
+    <!-- Sort dropdown -->
+    <div id="sort-wrap">
+      <select id="sort-select">
+        <option value="recent" data-i18n="sort.recent">Recent</option>
+        <option value="title" data-i18n="sort.title">Title A–Z</option>
+        <option value="visited" data-i18n="sort.visited">Most visited</option>
+        <option value="manual" data-i18n="sort.manual">Manual</option>
+      </select>
+    </div>
+
     <!-- Netscape HTML import (file picker — never any network) -->
     <input type="file" id="import-in" accept=".html,.htm" hidden>
     <button type="button" class="ctrl-btn icon" id="import-btn"
@@ -54,6 +76,9 @@
     <button class="ctrl-btn icon" id="folder-settings"
             data-i18n-title="folder.settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
   </div>
+
+  <!-- Active tag filters (populated at runtime, hidden when empty) -->
+  <div id="tag-filter" hidden></div>
 
   <!-- Bookmark rows (also renders flattened cross-folder search
        results, with a source chip per row) -->
@@ -73,6 +98,15 @@
     </div>
   </main>
 
+  <!-- Bulk action bar (selection mode, bottom-fixed) -->
+  <div id="bulk-bar">
+    <span class="sel-count" id="sel-count"></span>
+    <span class="spacer"></span>
+    <button type="button" id="sel-move"></button>
+    <button type="button" id="sel-delete" class="danger"></button>
+    <button type="button" id="sel-done"></button>
+  </div>
+
   <!-- Bookmark editor dialog (tap a row to open).
        Moving happens via the folder select here, drag & drop
        (desktop) or long-press move menu (mobile). -->
@@ -88,6 +122,13 @@
 
       <label data-i18n="item.note">Description</label>
       <textarea id="f-note" rows="3"></textarea>
+
+      <label data-i18n="item.tags">Tags</label>
+      <div id="f-tags-editor" class="tags-editor">
+        <input id="f-tags-input" type="text" autocomplete="off"
+               spellcheck="false" data-i18n-ph="tags.hint">
+      </div>
+      <div id="f-tags-ac" class="tags-ac" hidden></div>
 
       <label data-i18n="item.folder">Folder</label>
       <select id="f-folder"></select>

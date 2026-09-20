@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.20";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.35.22";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -660,11 +660,13 @@
       if (legacy) legacy.textContent =
         hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
     }
-    autoSyncDot();          // v0.18.0: piggybacks the clock tick
-    wxRenderChip();         // v0.18.0: weather chip, cheap paint only
-    alarmTick();            // E1: shell-owned alarm engine tick
-    calRemTickThrottled();  // Wave 3: calendar reminders (30s throttle)
-    notifTickThrottled();   // Wave 1A: notification sweep (60s throttle)
+      autoSyncDot();          // v0.18.0: piggybacks the clock tick
+  wxRenderChip();         // v0.18.0: weather chip, cheap paint only
+  alarmTick();            // E1: shell-owned alarm engine tick
+  calRemTickThrottled();  // Wave 3: calendar reminders (30s throttle)
+  moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
+  cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
+  notifTickThrottled();   // Wave 1A: notification sweep (60s throttle)
   }
 
   // ---------- 7. PWA ----------
@@ -3654,7 +3656,7 @@
     }, 30000);                               // hard cap
   }
 
-  // Throttle: renderClock ticks every 1s — the reminder scan runs
+    // Throttle: renderClock ticks every 1s — the reminder scan runs
   // at most every 30s (JSON.parse of the whole calendar is not a
   // per-second job). No new setInterval, no background timers.
   var calRemLastTick = 0;
@@ -3664,8 +3666,208 @@
     calRemLastTick = now;
     calRemTick();
   }
-  
-    // Wave 1A — notification scheduler piggyback: renderClock ticks
+
+  // Mood daily check-in reminder: same contract as Calendar — fires
+  // once per day when no entry exists for today. Reads oros-mood-data
+  // directly (same-origin), emits via window.orosNotifs.emit() with
+  // deepLink "mood:checkin" (lands on capture tab). Device-local
+  // dedupe key "checkin-YYYY-MM-DD" prevents double-firing.
+  function moodCheckInDayKey(d) {
+    // Accepts the entry's Date — guards against invalid/missing ts
+    // (falls back to "today", same as the Calendar engine's stance
+    // on corrupt data: never crash on a bad entry).
+    if (!(d instanceof Date) || isNaN(d.getTime())) d = new Date();
+    var yy = d.getFullYear();
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    var dd = String(d.getDate()).padStart(2, "0");
+    return yy + "-" + mm + "-" + dd;
+  }
+
+  function moodCheckInHasToday() {
+    try {
+      var raw = JSON.parse(localStorage.getItem("oros-mood-data"));
+      if (!raw || !Array.isArray(raw.entries)) return false;
+      var dk = moodCheckInDayKey();
+      for (var i = 0; i < raw.entries.length; i++) {
+        var e = raw.entries[i];
+        if (!e || !e.ts) continue;
+        var edk = moodCheckInDayKey(new Date(e.ts));
+        if (edk === dk) return true;
+      }
+      return false;
+    } catch (e) { return false; }
+  }
+
+  function moodCheckInTick() {
+    if (moodCheckInHasToday()) return;   // entry exists — silent
+    var dedupeKey = "checkin-" + moodCheckInDayKey();
+    // Emit through unified notification system: inbox history +
+    // badge + styled toast + per-app toggle + quiet hours.
+    if (window.orosNotifs && typeof window.orosNotifs.emit === "function") {
+      window.orosNotifs.emit({
+        ns: "mood",
+        key: dedupeKey,
+        type: "checkin",
+        title: calRemT("Mood check-in", "Καταγραφή διάθεσης"),
+        body: calRemT("How are you feeling today? Log your entry.",
+                     "Πώς νιώθεις σήμερα; Κατέγραψε την είσοδό σου."),
+        deepLink: "mood:checkin"
+      });
+    }
+  }
+
+    var moodCheckInLastTick = 0;
+  function moodCheckInTickThrottled() {
+    var now = Date.now();
+    if (now - moodCheckInLastTick < 60000) return; // 1-minute throttle
+    moodCheckInLastTick = now;
+    moodCheckInTick();
+  }
+
+  // Wave 5 — closed-app fallback. When the Cycle iframe is NOT
+  // running, the shell reads "oros-cycle-data" directly (same
+  // origin — moodCheckInTick pattern) and re-applies the
+  // nextPrediction math shell-side: byte-level mirror of cycle.js
+  // (avg cycle = mean gap between consecutive starts, avg period =
+  // mean inclusive length over ENDED periods, default 5, threshold
+  // ≤2 days, Math.ceil against local midnight). The i18n strings
+  // are DUPLICATED here on purpose — cycle.js STRINGS are
+  // unreachable with the app closed; keys/bodies must stay
+  // IDENTICAL so the app-open and app-closed paths produce the
+  // same dedup key. If a string changes in cycle.js, change it
+  // here too (maintenance note — changelog knows).
+  var CYCLE_DATA_KEY = "oros-cycle-data";
+
+  function cycleT(en, el) {
+    return state.lang === "el" ? el : en;
+  }
+
+  function cycleSnapMidnight(ts) {
+    if (typeof ts !== "number" || !isFinite(ts)) return null;
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return null;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+
+  function cycleDayKey(ts) {
+    var d = new Date(ts);
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+  }
+
+  function cycleShellCheck() {
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(CYCLE_DATA_KEY)); }
+    catch (e) { return null; }
+    if (!raw || !Array.isArray(raw.periods)) return null;
+    if (raw.prefs && raw.prefs.remind === false) return null;
+
+    // valid starts, snapped to local midnight (storage arrives
+    // migrated, but the app snaps defensively — we mirror that)
+    var starts = [];
+    raw.periods.forEach(function (p) {
+      if (!p) return;
+      var s = cycleSnapMidnight(p.start);
+      if (s !== null) starts.push(s);
+    });
+    starts.sort(function (a, b) { return a - b; });   // oldest first
+    if (starts.length < 2) return null;               // avgCycleLen honesty
+
+    var gaps = [];
+    for (var i = 1; i < starts.length; i++) {
+      gaps.push(Math.round((starts[i] - starts[i - 1]) / DAY_MS));
+    }
+    var sum = 0;
+    gaps.forEach(function (g) { sum += g; });
+    var avg = Math.round(sum / gaps.length);
+
+    // avg period length: ENDED periods only, inclusive days,
+    // cycle.js default 5 when history has no ended period yet
+    var lenSum = 0, lenN = 0;
+    raw.periods.forEach(function (p) {
+      if (p && typeof p.end === "number" && isFinite(p.end) &&
+          typeof p.start === "number" && p.end >= p.start) {
+        lenSum += Math.round((p.end - p.start) / DAY_MS) + 1;
+        lenN++;
+      }
+    });
+    var len = lenN ? Math.round(lenSum / lenN) : 5;
+
+    var last = starts[starts.length - 1];
+    var predStart = last + avg * DAY_MS;
+    var ymd = cycleDayKey(predStart);
+
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var daysLeft = Math.ceil((predStart - today) / DAY_MS);
+    if (daysLeft > 2) return null;
+
+    if (daysLeft >= 0) {
+      return {
+        key: "pred-" + ymd + "-soon",
+        title: cycleT("Cycle", "Κύκλος"),
+        body: cycleT(
+          "Period expected in ~{n} days",
+          "Η περίοδος αναμένεται σε ~{n} ημέρες"
+        ).replace("{n}", String(Math.max(1, daysLeft))),
+        deepLink: "cycle:pred:" + ymd
+      };
+    }
+    return {
+      key: "pred-" + ymd + "-late",
+      title: cycleT("Cycle", "Κύκλος"),
+      body: cycleT(
+        "Period appears overdue — expected ~{n} days ago",
+        "Η περίοδος φαίνεται να αργεί — αναμενόταν πριν ~{n} ημέρες"
+      ).replace("{n}", String(-daysLeft)),
+      deepLink: "cycle:pred:" + ymd
+    };
+  }
+
+  // Wave 4 — Cycle prediction reminder. The running Cycle iframe
+  // owns the DECISION (prefs + prediction math + i18n strings — all
+  // live in cycle.js); the shell owns timing + emission. Relay into
+  // the iframe via contentWindow (same pattern as __orosOpenCycle).
+  // Wave 5: app CLOSED → cycleShellCheck() decides shell-side over
+  // localStorage — same key space, so dedup holds across both paths.
+  var cycleCheckLastTick = 0;
+  function cycleCheckTickThrottled() {
+    var now = Date.now();
+    if (now - cycleCheckLastTick < 60000) return;  // 1-minute throttle
+    cycleCheckLastTick = now;
+    cycleCheckTick();
+  }
+
+  function cycleCheckTick() {
+    var payload = null;
+    if (state.running && state.running.id === "cycle") {
+      // App open: the iframe owns the decision (prefs + math +
+      // i18n — all in cycle.js). Mid-load iframe → next tick.
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosCycleCheck === "function") {
+          payload = f.contentWindow.__orosCycleCheck();
+        }
+      } catch (e) { return; }   // iframe mid-load — next tick retries
+    } else {
+      // Wave 5 — app closed: shell-side fallback over localStorage.
+      payload = cycleShellCheck();
+    }
+    if (!payload || typeof payload !== "object") return;
+    if (!payload.key || !payload.title || !payload.body) return;
+    if (!(window.orosNotifs && typeof window.orosNotifs.emit === "function")) return;
+    window.orosNotifs.emit({
+      ns:      "cycle",
+      key:     payload.key,
+      type:    "pred",
+      title:   payload.title,
+      body:    payload.body,
+      deepLink: payload.deepLink || ""
+    });
+  }
+
+  // Wave 1A — notification scheduler piggyback: renderClock ticks
   // 1/s; the notifs sweep runs at most every 60s (the module self-
   // throttles). Cheap noop when notifications.js hasn't loaded.
   var notifLastTick = 0;
@@ -4043,6 +4245,8 @@
   // reminders that came due while orOS was closed surface almost
   // immediately instead of waiting up to 30s for the clock tick.
   setTimeout(function () { calRemTickThrottled(); }, 4000);
+  setTimeout(function () { moodCheckInTickThrottled(); }, 4500);
+  setTimeout(function () { cycleCheckTickThrottled(); }, 5000);
 
     // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
   wxRenderChip();
