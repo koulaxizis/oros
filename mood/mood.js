@@ -3319,6 +3319,14 @@ function mergeMoodStates(A, B) {
   renderThread();     // #17: renderAll would rebuild capture a 2nd time
   renderRecent();
 
+  // boot: paint the DEFAULT tab's active state (applyView only
+  // fires on tab clicks — without this, no button looks "on")
+  var b0 = $("cap-btn");
+  if (b0) {
+    b0.classList.add("on");
+    b0.setAttribute("aria-pressed", "true");
+  }
+
   // Boot-time deep-link take: the shell staged an entry ID (Mood
   // was closed when the Calendar feed row was clicked). Consume
   // exactly ONCE — the parent funnel owns the take when we run in

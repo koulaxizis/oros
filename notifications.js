@@ -10,11 +10,13 @@
     'bottom-left', 'left'
   ];
 
+  // Palette vars ONLY — follows every skin. Hardcoded hex would
+  // break on Adwaita/Ubuntu/Mint etc. (scToast doctrine)
   const TOAST_STYLES = {
-    oros: { border: '#6d4aff', borderRadius: 8, padding: '12px 16px', bg: 'rgba(18,18,20,0.95)' },
-    dunst: { border: '#fff', borderRadius: 4, padding: '10px 14px', bg: 'rgba(15,15,17,0.98)', fontWeight: 400 },
-    plasma: { border: '#6d4aff', borderRadius: 12, padding: '14px 18px', bg: 'rgba(20,20,22,0.97)', fontWeight: 600 },
-    gnome: { border: '#6d4aff', borderRadius: 12, padding: '16px 20px', bg: 'rgba(18,18,20,0.95)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }
+    oros:   { border: 'var(--accent)', borderRadius: 8,  padding: '12px 16px', bg: 'var(--panel-bg)' },
+    dunst:  { border: 'var(--border)', borderRadius: 4,  padding: '10px 14px', bg: 'var(--panel-bg)', fontWeight: 400 },
+    plasma: { border: 'var(--accent)', borderRadius: 12, padding: '14px 18px', bg: 'var(--panel-bg)', fontWeight: 600 },
+    gnome:  { border: 'var(--accent)', borderRadius: 12, padding: '16px 20px', bg: 'var(--panel-bg)', boxShadow: '0 4px 12px var(--shadow, rgba(0,0,0,0.3))' }
   };
 
   const SOUNDS = { none: null, bell: 440, ding: 880, chime: 660 }; // Hz frequencies
@@ -58,7 +60,9 @@
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.value = freqHz;
-    gain.gain.setValueAtTime(state.settings?.soundVolume ?? 0.7, now);
+    // FIX: state.settings never existed — the volume lives in the
+    // slice. Use getSetting so the persisted volume is honored.
+    gain.gain.setValueAtTime(getSetting('soundVolume', 0.7), now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + durationSec);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -101,20 +105,38 @@
       sound: 'none',
       soundVolume: 0.7,
       duration: 5000,
+      settingsRev: 1,   // LWW clock for the settings object (merge: max wins)
       quietHours: { enabled: false, from: '22:00', quietHoursStart: 22, to: '08:00', quietHoursEnd: 8 }
     };
   }
 
+  // FLUSH now — used by beforeunload AND notifSliceSet (a
+  // setTimeout(0) would never run before the page dies; a pull-fed
+  // merge must be on disk before the next tick).
+  function saveSliceNow() {
+    clearTimeout(state._saveTimer);
+    try {
+      localStorage.setItem('oros-notifs', JSON.stringify(state.slice));
+      state.slice.meta.lastSyncPush = Date.now();
+      return true;
+    } catch (e) {
+      err('Failed to save slice', e);
+      return false;
+    }
+  }
+
   function saveSliceThrottled(delay = 1000) {
     clearTimeout(state._saveTimer);
-    state._saveTimer = setTimeout(() => {
-      try {
-        localStorage.setItem('oros-notifs', JSON.stringify(state.slice));
-        state.meta.lastSyncPush = Date.now();
-      } catch (e) {
-        err('Failed to save slice', e);
-      }
-    }, delay);
+    state._saveTimer = setTimeout(saveSliceNow, delay);
+  }
+
+  // User-initiated mutation → the sync engine must know. NEVER call
+  // from notifSliceSet — pull → set → push would loop (shellSliceSet
+  // lesson).
+  function noteChange() {
+    if (window.orosSync && typeof window.orosSync.markDirty === 'function') {
+      window.orosSync.markDirty();
+    }
   }
 
   function getSetting(key, defaultVal) {
@@ -124,6 +146,8 @@
   function setSetting(key, value) {
     if (!state.slice.settings) state.slice.settings = defaultSettings();
     state.slice.settings[key] = value;
+    state.slice.settings.settingsRev = (state.slice.settings.settingsRev || 0) + 1;
+    noteChange();          // user action → sync engine must know
     saveSliceThrottled(500);
     // Reactivity: re-apply CSS vars immediately
     if (key === 'position' || key === 'style') applyToastStyle();
@@ -268,6 +292,7 @@
           
           // Add to inbox
           state.slice.items.unshift(item);
+          noteChange();    // new inbox item is data — travels via slice
           
           // Mark as fired for dedup
           state.lastFireTimestamp[dedupKey] = now;
@@ -333,7 +358,7 @@
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'polite');
     
-    // Apply style inline (CSS classes would be better but we're keeping it simple)
+    // Apply style inline — palette vars via TOAST_STYLES (A1)
     Object.assign(toast.style, {
       position: 'fixed',
       zIndex: 10000,
@@ -343,11 +368,12 @@
       borderRadius: `${style.borderRadius}px`,
       padding: style.padding,
       fontFamily: 'Nunito, sans-serif',
-      color: '#fff',
+      fontWeight: style.fontWeight,
+      color: 'var(--text)',
       cursor: 'pointer',
       opacity: '0',
       transition: 'opacity 0.3s ease',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      boxShadow: '0 4px 12px var(--shadow, rgba(0,0,0,0.3))',
       // Position calculation
       ...getPositionStyles(position)
     });
@@ -359,17 +385,15 @@
           <div style="font-weight:600; margin-bottom:4px; white-space:normal;">${escapeHtml(item.title)}</div>
           <div style="font-size:0.9em; opacity:0.9; white-space:normal;">${escapeHtml(item.body)}</div>
         </div>
-        <button class="notif-dismiss" aria-label="Dismiss" 
-          style="background:none; border:none; color:#fff; font-size:1.2em; cursor:pointer; padding:0 0 0 12px; line-height:1;">✕</button>
+        <button class="notif-dismiss" aria-label="${escapeHtml(window.t('notifs.dismiss'))}"
+          style="background:none; border:none; color:var(--text); font-size:1.2em; cursor:pointer; padding:0 0 0 12px; line-height:1;">✕</button>
       </div>
     `;
     
-    // Click → deep link
+    // Click → deep link via the REAL per-app bridges (A7 router)
     toast.addEventListener('click', (e) => {
       if (e.target.classList.contains('notif-dismiss')) return;
-      if (item.deepLink) {
-        window.__orosOpenX?.(item.deepLink);
-      }
+      openTarget(item);
       // Mark as read
       markAsRead(item.id);
       toast.remove();
@@ -411,6 +435,27 @@
     
     log(`Toast fired: ${item.title}`);
   }
+  
+    // ===== DEEP LINK ROUTER — shell reality =====
+  // There is NO generic window.__orosOpenX — each app owns its own
+  // bridge (verified bridges: __orosOpenContact / __orosOpenCycle /
+  // __orosOpenMood). deepLink format: "ns:type:id" — we route by
+  // namespace. Apps without a bridge yet (calendar, Wave 1B+):
+  // navigation no-ops gracefully, the badge/inbox still works.
+  var DL_BRIDGES = {
+    contacts: function (id) { window.__orosOpenContact(id); },
+    cycle:    function (id) { window.__orosOpenCycle(id); },
+    mood:     function (id) { window.__orosOpenMood(id); }
+  };
+
+  function openTarget(item) {
+    if (!item || typeof item.deepLink !== 'string') return;
+    var parts = item.deepLink.split(':');   // "cycle:entry:e_123"
+    var bridge = DL_BRIDGES[parts[0]];
+    var payload = parts.length >= 3 ? parts[2] : null;
+    if (bridge && payload) bridge(payload);
+  }
+
 
   function getPositionStyles(position) {
     const map = {
@@ -436,6 +481,7 @@
     const item = state.slice.items.find(i => i.id === id);
     if (item && !item.readAt) {
       item.readAt = Date.now();
+      noteChange();        // read state must travel to the cloud
       saveSliceThrottled(200);
       updateBadge();
     }
@@ -446,7 +492,7 @@
   function updateBadge() {
     const unreadCount = state.slice.items.filter(i => !i.readAt).length;
     
-    // Find taskbar bell element (created by shell.js)
+    // Find taskbar bell element
     const bellBtn = document.getElementById('oros-taskbar-bell');
     if (!bellBtn) return;
     
@@ -456,27 +502,16 @@
       if (!badge) {
         badge = document.createElement('span');
         badge.className = 'notif-badge';
-        badge.setAttribute('aria-label', `${unreadCount} unread notifications`);
-        badge.style.cssText = `
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          min-width: 16px;
-          height: 16px;
-          background: #6d4aff;
-          color: #fff;
-          border-radius: 10px;
-          font-size: 10px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 4px;
-          transition: transform 0.2s ease;
-        `;
+        badge.style.cssText =
+          'position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;' +
+          'background:var(--accent);color:#fff;border-radius:10px;font-size:10px;' +
+          'font-weight:700;display:flex;align-items:center;justify-content:center;' +
+          'padding:0 4px;transition:transform 0.2s ease;';
         bellBtn.style.position = 'relative';
         bellBtn.appendChild(badge);
       }
+      badge.setAttribute('aria-label',
+        window.t('notifs.badge.aria').replace('{n}', String(unreadCount)));
       badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
       badge.style.transform = 'scale(1)';
     } else {
@@ -497,7 +532,7 @@
       return;
     }
     
-    // Create panel
+    // Create panel — palette vars only (follows every skin)
     panel = document.createElement('div');
     panel.id = 'oros-notif-panel';
     panel.style.cssText = `
@@ -506,41 +541,45 @@
       right: 20px;
       width: 360px;
       max-height: 500px;
-      background: rgba(18,18,20,0.98);
-      border: 1px solid #6d4aff;
+      background: var(--panel-bg);
+      color: var(--text);
+      border: 1px solid var(--accent);
       border-radius: 8px;
       z-index: 10001;
       overflow-y: auto;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 32px var(--shadow, rgba(0,0,0,0.5));
     `;
     
     // Header
     const header = document.createElement('div');
     header.style.cssText = `
       padding: 12px 16px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
     `;
     header.innerHTML = `
-      <span style="font-weight:600;">Notifications</span>
-      <button id="notif-clear-all" style="background:none; border:none; color:#888; cursor:pointer;">Clear all</button>
+      <span style="font-weight:600;">${escapeHtml(window.t('notifs.panel.title'))}</span>
+      <button id="notif-clear-all" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">${escapeHtml(window.t('notifs.clear'))}</button>
     `;
     panel.appendChild(header);
+    
+    // Items container FIRST (clear-all re-render targets THIS,
+    // never the panel itself — otherwise the container duplicates)
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'notif-items';
+    itemsContainer.style.cssText = 'max-height: 400px; overflow-y: auto;';
+    panel.appendChild(itemsContainer);
     
     // Clear all handler
     header.querySelector('#notif-clear-all').addEventListener('click', () => {
       state.slice.items.forEach(item => { if (!item.readAt) item.readAt = Date.now(); });
+      noteChange();        // read state must travel
       saveSliceThrottled(200);
-      renderPanelItems(panel);
+      renderPanelItems(itemsContainer);
       updateBadge();
     });
-    
-    // Items container
-    const itemsContainer = document.createElement('div');
-    itemsContainer.style.cssText = 'max-height: 400px; overflow-y: auto;';
-    panel.appendChild(itemsContainer);
     
     // Render items
     renderPanelItems(itemsContainer);
@@ -558,11 +597,14 @@
   }
 
   function renderPanelItems(container) {
-    const items = state.slice.items.sort((a, b) => b.createdAt - a.createdAt);
-    const unreadCount = items.filter(i => !i.readAt).length;
+    // .slice() — sort() mutates; the live slice must stay untouched
+    // (pure-read doctrine, same lesson as fdSliceGet)
+    const items = state.slice.items.slice().sort((a, b) => b.createdAt - a.createdAt);
     
     if (items.length === 0) {
-      container.innerHTML = `<div style="padding:20px; text-align:center; color:#666;">No notifications</div>`;
+      container.innerHTML =
+        `<div style="padding:20px; text-align:center; color:var(--text-dim);">` +
+        escapeHtml(window.t('notifs.empty')) + `</div>`;
       return;
     }
     
@@ -571,10 +613,10 @@
       const el = document.createElement('div');
       el.style.cssText = `
         padding: 12px 16px;
-        border-bottom: 1px solid #222;
+        border-bottom: 1px solid var(--border);
         cursor: pointer;
         opacity: ${item.readAt ? '0.7' : '1'};
-        background: ${item.readAt ? 'transparent' : 'rgba(109,74,255,0.1)'};
+        background: ${item.readAt ? 'transparent' : 'var(--accent-soft, rgba(109,74,255,0.1))'};
       `;
       
       const timeStr = formatDate(item.firedAt || item.createdAt);
@@ -582,18 +624,18 @@
       el.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
           <span style="font-weight:600;">${escapeHtml(item.title)}</span>
-          <span style="color:#666; font-size:0.85em;">${timeStr}</span>
+          <span style="color:var(--text-dim); font-size:0.85em;">${timeStr}</span>
         </div>
         <div style="opacity:0.9; font-size:0.95em;">${escapeHtml(item.body)}</div>
-        ${!item.readAt ? '<div style="margin-top:8px; font-size:0.8em; color:#6d4aff;">● Unread</div>' : ''}
+        ${!item.readAt ? `<div style="margin-top:8px; font-size:0.8em; color:var(--accent);">● ` +
+          escapeHtml(window.t('notifs.unread')) + `</div>` : ''}
       `;
       
       el.addEventListener('click', () => {
-        if (item.deepLink) {
-          window.__orosOpenX?.(item.deepLink);
-        }
+        openTarget(item);        // real per-app bridges (A7 router)
         if (!item.readAt) {
           item.readAt = Date.now();
+          noteChange();        // read state must travel
           saveSliceThrottled(200);
           renderPanelItems(container);
           updateBadge();
@@ -611,13 +653,14 @@
     const diffMin = Math.floor(diffMs / 60000);
     const diffHour = Math.floor(diffMs / 3600000);
     const diffDay = Math.floor(diffMs / 86400000);
+    var loc = window.orosLang === 'el' ? 'el-GR' : 'en-GB';
     
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return `${diffMin} min ago`;
-    if (diffHour < 24) return `${diffHour}h ago`;
-    if (diffDay < 7) return `${diffDay}d ago`;
+    if (diffMin < 1) return window.t('notifs.justnow');
+    if (diffMin < 60) return window.t('notifs.minago').replace('{n}', String(diffMin));
+    if (diffHour < 24) return window.t('notifs.hourago').replace('{n}', String(diffHour));
+    if (diffDay < 7) return window.t('notifs.dayago').replace('{n}', String(diffDay));
     
-    return d.toLocaleDateString();
+    return d.toLocaleDateString(loc, { day: '2-digit', month: 'short' });
   }
   
     // ===== SYNC SLICE — LWW PER-FIELD MERGE =====
@@ -790,40 +833,40 @@
       return;
     }
     
-    // Find taskbar container (assumes shell creates #oros-taskbar)
-    const taskbar = document.getElementById('oros-taskbar');
-    if (!taskbar) {
-      // Try again in 100ms
-      setTimeout(ensureTaskbarBell, 100);
+    // VERIFIED shell reality (index.html): the taskbar tray is
+    // ".bar-right" — static buttons are #btn-lang, #bar-time,
+    // #bar-date. There is NO #oros-taskbar and NO #oros-clock.
+    var bar = document.querySelector('.bar-right');
+    if (!bar) {
+      setTimeout(ensureTaskbarBell, 100);   // shell hasn't painted yet
       return;
     }
     
-    // Create bell button
-    const bellBtn = document.createElement('button');
-    bellBtn.id = 'oros-taskbar-bell';
-    bellBtn.className = 'taskbar-btn';
-    bellBtn.setAttribute('aria-label', 'Notifications');
-    bellBtn.innerHTML = '🔔';
-    bellBtn.style.cssText = `
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.2em;
-      cursor: pointer;
-      padding: 8px 12px;
-      position: relative;
-    `;
+    // Inline SVG bell (orOS doctrine: no emoji icons, no icon fonts)
+    var BELL_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
     
-    bellBtn.addEventListener('click', () => {
+    var bellBtn = document.createElement('button');
+    bellBtn.id = 'oros-taskbar-bell';
+    bellBtn.type = 'button';
+    bellBtn.innerHTML = BELL_SVG;
+    bellBtn.setAttribute('aria-label', window.t('notifs.title'));
+    bellBtn.style.cssText =
+      'background:none;border:none;color:var(--text);cursor:pointer;' +
+      'position:relative;display:flex;align-items:center;justify-content:center;' +
+      'width:34px;height:34px;flex-shrink:0;';
+    
+    bellBtn.addEventListener('click', function (e) {
+      e.stopPropagation();   // never falls through to the outside-close handler
       openNotificationPanel();
     });
     
-    // Insert bell before the clock (assuming clock has ID #oros-clock)
-    const clock = document.getElementById('oros-clock');
-    if (clock && clock.parentNode) {
-      clock.parentNode.insertBefore(bellBtn, clock);
+    // Insert before #btn-lang (JS-injected widgets like the sync dot
+    // sit even earlier — final order: sync-dot, bell, lang, time, date)
+    var lang = document.getElementById('btn-lang');
+    if (lang && lang.parentNode === bar) {
+      bar.insertBefore(bellBtn, lang);
     } else {
-      taskbar.appendChild(bellBtn);
+      bar.appendChild(bellBtn);
     }
     
     updateBadge();

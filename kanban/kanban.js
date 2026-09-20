@@ -1900,9 +1900,6 @@
       el.appendChild(ind);
     }
 
-    // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"
-	    }
-
     // Due date chip (Kanban → Calendar integration)
     if (card.due) {
       var fmt = formatDateChip(card.due);
