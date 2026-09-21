@@ -2710,24 +2710,22 @@
      dropped safely — the day selection alone still lands. */
   var CAL_PENDING_KEY = "oros-cal-pending";
 
-  function deepLink(payload) {
-    if (!payload || typeof payload !== "object") return;
-    var evId = (typeof payload.id === "string") ? payload.id : null;
-    var day = (typeof payload.date === "string" &&
-               /^\d{4}-\d{2}-\d{2}$/.test(payload.date))
-      ? payload.date : null;
-    if (!day) return;
-
-    var p = day.split("-");
+  // Wave 6/#C1 — deep-link receiver RENAMED to match the
+  // DL_BRIDGE contract (shell sends __orosOpenCalendar(evId, ymd)).
+  // The DL_BRIDGE wraps this as a 2-arg call for backward-compat
+  // with the shell's generic routing pattern.
+  function __orosCalendarOpen(evId, ymd) {
+    if (typeof evId !== "string" || !evId) return;
+    if (typeof ymd !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
+    var p = ymd.split("-");
     viewYear = +p[0];
     viewMonth = +p[1] - 1;
     if (curView !== "month") setView("month");
     var si = $("search-in");
     if (si) si.value = "";
     setSearch("");
-    selectDay(day);
+    selectDay(ymd);
 
-    if (!evId) return;
     var ev = null;
     for (var i = 0; i < state.events.length; i++) {
       if (state.events[i].id === evId) { ev = state.events[i]; break; }
@@ -2737,11 +2735,15 @@
     // Paint settle first (mirrors the checkReminders boot sweep
     // timing — dialogs need the paints finished before showModal).
     setTimeout(function () {
-      if (validRecur(ev.recur)) showSerChooser(ev, day);
+      if (validRecur(ev.recur)) showSerChooser(ev, ymd);
       else openDlg(ev);
     }, 60);
   }
-  window.__calDeepLink = deepLink;
+  // Legacy alias for backward compatibility (stale index.html might
+  // reference the old name — it just redirects to the canonical one).
+  window.__calDeepLink = __orosCalendarOpen;
+  // Primary export matching the DL_BRIDGE contract
+  window.__orosCalendarOpen = __orosCalendarOpen;
 
 
   /* ---------- 8. Boot ---------- */
@@ -2759,17 +2761,17 @@
   setView("month");
   selectDay(todayYMD());
   setTimeout(checkReminders, 1500);   // boot sweep (after paints settle)
-  // Wave 1B: staged deep link — the notification system opened us
-  // cold via the shell bridge. Consume ONCE (remove BEFORE acting:
-  // a stale payload must never hijack a later manual open). The
-  // live-iframe case arrives via window.__calDeepLink directly.
+  // Wave 6/#C1: staged deep link consumption — renamed from
+  // deepLink() to __orosCalendarOpen() for DL_BRIDGE parity.
   try {
     var pend = sessionStorage.getItem(CAL_PENDING_KEY);
     if (pend) {
       sessionStorage.removeItem(CAL_PENDING_KEY);
       var pl = JSON.parse(pend);
-      if (pl && typeof pl === "object") {
-        setTimeout(function () { deepLink(pl); }, 100);
+      if (pl && typeof pl === "object" && pl.id && pl.date) {
+        setTimeout(function () {
+          __orosCalendarOpen(pl.id, pl.date);
+        }, 100);
       }
     }
   } catch (e4) {}

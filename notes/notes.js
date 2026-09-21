@@ -243,7 +243,8 @@
       // #4: quota exceeded / private mode — never crash the boot loop
       // or the beforeunload flush; the user gets a visible receipt.
       console.error("[notes] saveNow failed:", e);
-      toast(t("toast.saveFail"));
+      notifyEmit(t("toast.saveFail"),
+                 "sf:" + Math.floor(Date.now() / 3600000));
     }
   }
 
@@ -280,14 +281,11 @@
       "toast.created":      "Page created",
       "toast.deleted":      "Page deleted",
       "toast.moved":        "Page moved",
-      "toast.merged":       "Merged from sync",
       "labels.title":       "Labels",        // v0.14.0
       "labels.none":        "No labels yet",  // v0.14.0
       "labels.new":         "New label…",    // v0.14.0
       "labels.add":         "Add",           // v0.14.0
-      "labels.detach":      "Remove",        // v0.14.0
       "labels.confirm":     "Delete this label?",      // v0.14.0
-      "labels.detached":     "Label removed", // v0.14.0
       "labels.deleted":      "Label deleted",  // v0.35.00 fix
       "page.pin":           "Pin to top",
       "page.unpin":         "Unpin",
@@ -339,14 +337,11 @@
       "toast.created":      "Η σελίδα δημιουργήθηκε",
       "toast.deleted":      "Η σελίδα διαγράφηκε",
       "toast.moved":        "Η σελίδα μετακινήθηκε",
-      "toast.merged":       "Συγχωνεύτηκε από sync",
       "labels.title":       "Ετικέτες",        // v0.14.0
       "labels.none":        "Καμία ετικέτα ακόμη",  // v0.14.0
       "labels.new":         "Νέα ετικέτα…",    // v0.14.0
       "labels.add":         "Προσθήκη",        // v0.14.0
-      "labels.detach":      "Αφαίρεση",        // v0.14.0
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
-      "labels.detached":     "Η ετικέτα αφαιρέθηκε", // v0.14.0
       "labels.deleted":      "Η ετικέτα διαγράφηκε",  // v0.35.00 fix
       "page.pin":           "Καρφίτσωμα στην κορυφή",
       "page.unpin":         "Αφαίρεση καρφιτσίματος",
@@ -524,6 +519,40 @@
       d.style.transform = "translateX(-50%) translateY(8px)";
       setTimeout(function () { d.remove(); }, 300);
     }, 2200);
+  }
+
+  // --- Unified notifications (Wave 11 migration) ---
+  // Ίδιο doctrine με kanban.js: το module ζει στο shell (parent),
+  // dynamic resolution, το τοπικό toast() στέκεται ως stale-bundle
+  // fallback. Το Notes δεν έχει undo-bearing toasts (τα deletes
+  // πάνε σε confirm) — η migration είναι πλήρης.
+  function notifyTransient(text) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) ||
+               window.orosNotifs || null;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "notes", title: text, body: "" });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);
+  }
+
+  // Background failure → INBOX (not transient): το saveFail μπορεί
+  // να πυροδοτηθεί σε beforeunload/visibilitychange flush, όπου το
+  // in-app toast πεθαίνει αόρατο. Το dedupKey sf:<hour> κρατά το
+  // quota-full storm υπό έλεγχο (το queueSave τρέχει ανά 500ms —
+  // χωρίς dedup θα είχαμε ένα toast ανά keystroke burst).
+  function notifyEmit(text, key) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) ||
+               window.orosNotifs || null;
+      if (N && typeof N.emit === "function") {
+        N.emit({ ns: "notes", title: text, body: "", key: key || null });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);   // fallback: stale bundle — ο χρήστης το βλέπει ακόμα
   }
 
   function pageById(id) {
@@ -771,7 +800,7 @@
     prefs.current = p.id;
     savePrefs();
     renderAll();
-    toast(t("toast.created"));
+    notifyTransient(t("toast.created"));
     var titleEl = document.getElementById("page-title");
     if (titleEl) { titleEl.focus(); titleEl.select(); }
   }
@@ -798,7 +827,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("toast.deleted"));
+    notifyTransient(t("toast.deleted"));
   }
 
   function renamePage(id) {
@@ -825,7 +854,7 @@
     saveNow();
     markSyncDirty();
     renderTree();
-    toast(t(page.pinned ? "toast.pinned" : "toast.unpinned"));
+    notifyTransient(t(page.pinned ? "toast.pinned" : "toast.unpinned"));
   }
 
   function movePage(id, dir) {
@@ -857,7 +886,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("toast.moved"));
+    notifyTransient(t("toast.moved"));
   }
   
     function currentNotebook() {
@@ -887,7 +916,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("toast.nbCreated"));
+    notifyTransient(t("toast.nbCreated"));
     return nb;
   }
 
@@ -899,7 +928,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("toast.nbRenamed"));
+    notifyTransient(t("toast.nbRenamed"));
   }
 
   function deleteNotebook(id) {
@@ -939,7 +968,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("toast.nbDeleted"));
+    notifyTransient(t("toast.nbDeleted"));
   }
 
   // ---------- 6. Context menu + label picker (Wave 2.1) ----------
@@ -1133,7 +1162,7 @@
       var nbId = currentNbId();
       rootPages = rootPages.filter(function (p) { return p.nb === nbId; });
     }
-    if (!rootPages.length) { toast(t("toast.emptyExport")); return; }   // #12
+    if (!rootPages.length) { notifyTransient(t("toast.emptyExport")); return; }   // #12
 
     var entries = [];
     var used = {};     // "dir|name" (lowercase) -> duplicate count
@@ -1746,7 +1775,7 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    toast(t("labels.deleted")); // v0.35.00 fix: correct message for LABEL deletion
+    notifyTransient(t("labels.deleted")); // v0.35.00 fix: correct message for LABEL deletion
   }
 
   function toggleAttach(page, labelId) {
@@ -1934,7 +1963,11 @@
         labels: state.labels, tombs: state.tombs
       });
       if (after !== incoming) markSyncDirty();
-      toast(t("toast.merged"));
+      // toast.merged removed (Wave 11, doctrine): το info.merged σημαίνει
+      // «χρησιμοποιήθηκε merge engine», ΟΧΙ «άλλαξαν δεδομένα». Το echo
+      // suppression από πάνω φιλτράρει ήδη τα pure pulls· ένα merge που
+      // ενσωματώνει remote αλλαγές θα έβγαζε toast σε κάθε sync.
+      // Feedback sync = το taskbar sync dot.
     }
   }
 

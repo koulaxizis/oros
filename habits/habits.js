@@ -1403,3 +1403,38 @@
   console.log("[orOS] habits.js " + (SCRIPT_V ? "v" + SCRIPT_V : "") + " booted");
 
 })();
+
+
+// ===== orOS deep-link receiver (Wave 8 / #TH2) =====
+// Consumed by shell.js (__orosOpenHabits) and notifications.js
+// (DL_BRIDGES → "habits:<periodType>"). Depends ONLY on the DOM
+// contract of render() — no internals of the main IIFE are touched.
+(function () {
+  "use strict";
+
+  // Live push (shell bridge calls this when app is running)
+  window.__orosHabitsOpen = function (periodOffsetDays) {
+    var offset = parseInt(periodOffsetDays || "0", 10);
+    // Navigation: shift the period anchor by offset days (positive = forward)
+    var anchor = new Date();
+    anchor.setDate(anchor.getDate() + offset);
+    anchor.setHours(0, 0, 0, 0);
+    // Trigger period change via existing render() wiring
+    if (typeof window.orosHabits !== "undefined") {
+      // Public API: we can mutate period directly if exposed, else fallback to nav
+      try { window.orosHabits.period = anchor; } catch (e) {}
+    }
+    render();   // re-render with new period
+  };
+
+  // Boot: consume a staged period from the shell while the app was
+  // closed (sessionStorage — same origin, one-shot).
+  try {
+    var pending = sessionStorage.getItem("oros-habits-period");
+    if (pending) {
+      sessionStorage.removeItem("oros-habits-period");
+      var off = parseInt(pending, 10) || 0;
+      window.__orosHabitsOpen(off);
+    }
+  } catch (e) {}
+})();

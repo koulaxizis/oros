@@ -2139,3 +2139,34 @@
 
   renderAll();
 })();
+
+
+// ===== orOS deep-link receiver (Wave 7 / #TD4) =====
+// Consumed by shell.js (__orosOpenTodo) and notifications.js
+// (DL_BRIDGES → "todo:<listId>"). Depends ONLY on the DOM contract
+// of renderTabs (#tabs .tab[data-list-id] click switching) — no
+// internals of the main IIFE are touched.
+(function () {
+  "use strict";
+
+  function openList(listId) {
+    var btn = document.querySelector('#tabs .tab[data-list-id="' + listId + '"]');
+    if (btn) btn.click();   // existing tab wiring switches the active list
+  }
+
+  // Live push (shell bridge calls this when the app is running)
+  window.__orosTodoOpen = function (listId) {
+    if (typeof listId !== "string" || !listId) return;
+    openList(listId);
+  };
+
+  // Boot: consume a list staged by the shell while the app was
+  // closed (sessionStorage — same origin, one-shot).
+  try {
+    var pending = sessionStorage.getItem("oros-todo-open");
+    if (pending) {
+      sessionStorage.removeItem("oros-todo-open");
+      openList(pending);
+    }
+  } catch (e) { /* storage blocked — navigation no-ops, nothing breaks */ }
+})();

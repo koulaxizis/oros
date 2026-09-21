@@ -257,6 +257,52 @@
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function idOf(c) { return c.id; }
 
+  // ---- Unified notifications (migration wave) ----
+  // The module lives in the SHELL (parent) — dynamic resolution,
+  // same doctrine as orosSync in registerSync().
+  function notifMod() {
+    try {
+      return (window.parent && window.parent.orosNotifs) ||
+             window.orosNotifs || null;
+    } catch (e) { return null; }
+  }
+
+  function ymdLocal() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  // Immediate feedback (toast, no inbox) — the module's transient.
+  // Module absent (stale bundle / standalone) → legacy showToast
+  // stands alone as fallback.
+  function notifyTransient(text) {
+    var N = notifMod();
+    if (N && typeof N.transient === "function") {
+      N.transient({ ns: "weather", title: text, body: "" });
+      return;
+    }
+    showToast(text);
+  }
+
+  // History-worthy failure (background fetch died): once per day,
+  // inbox + badge — an invisible API outage must never evaporate.
+  function notifyFetchFail() {
+    var N = notifMod();
+    if (N && typeof N.emit === "function") {
+      var c = activeCity();
+      N.emit({
+        ns: "weather",
+        key: "fetchfail-" + ymdLocal(),
+        type: "sys",
+        title: t("err.fetch"),
+        body: c ? c.label : "",
+        deepLink: "weather:open"
+      });
+      return;
+    }
+    showToast(t("err.fetch"));
+  }
+
   // "YYYY-MM-DDTHH:00" for NOW, expressed in the timezone given by
   // offSec (seconds east of UTC). Open-Meteo (timezone=auto)
   // returns hourly/daily/AQI times in the CITY's local wall clock —
@@ -859,7 +905,7 @@
         state.active = c.id;
         state.sm = Date.now();
         save();
-        refresh(false);
+        refresh(false, true);
       });
       host.appendChild(d);
     });
@@ -1095,7 +1141,7 @@
           save();
         }
         $("dlg-city").close();
-        refresh(false);
+        refresh(false, true);
       });
       host.appendChild(row);
     });
@@ -1124,7 +1170,7 @@
     $("city-input").value = "";
     renderCityList();
     $("dlg-city").close();
-    refresh(true);            // brand new city → force fetch
+    refresh(true, true);      // brand new city → force fetch (user action)
   }
 
   function addCity(geo) {
@@ -1190,7 +1236,7 @@
           state.sm = Date.now();
           save();
           scheduleRender();
-          refresh(true);                  // cache was purged — force
+          refresh(true, true);            // cache was purged — force (user action)
         }
       });
   }
@@ -1260,7 +1306,7 @@
     if (!ok) state.active = state.cities.length ? state.cities[0].id : null;
 
     scheduleRender();    // remote change landed (units/cities) — repaint live
-    if (info && info.merged) showToast(t("toast.merged"));   // light ack — no noise
+    if (info && info.merged) notifyTransient(t("toast.merged"));   // light ack — no noise, no inbox line
   }
 
   // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) forward FIRST.
@@ -1298,7 +1344,7 @@
     });
   }
 
-  function refresh(force) {
+  function refresh(force, userInit) {
     var btn = $("refresh-btn");
     var hadCity = !!activeCity();
     btn.classList.add("loading");
@@ -1306,7 +1352,14 @@
       .then(function (res) {
         // Silent failures were invisible — a dead fetch looked
         // like "offline". Now it SPEAKS (online + no result).
-        if (!res && hadCity && navigator.onLine) showToast(t("err.fetch"));
+        // userInit → transient (answer to the user's own click);
+        // background (boot/visibility) → emit: one inbox line per
+        // day, so a persistent outage surfaces instead of dying
+        // with an invisible 5s toast nobody saw.
+        if (!res && hadCity && navigator.onLine) {
+          if (userInit) notifyTransient(t("err.fetch"));
+          else notifyFetchFail();
+        }
         scheduleRender();
       })
       .catch(function () { /* fetchForecast never throws */ })
@@ -1315,7 +1368,7 @@
 
   function wire() {
     $("city-btn").addEventListener("click", openCityDialog);
-    $("refresh-btn").addEventListener("click", function () { refresh(true); });
+    $("refresh-btn").addEventListener("click", function () { refresh(true, true); });
 
     $("city-add-btn").addEventListener("click", function () { addCity(); });
 
@@ -1435,7 +1488,7 @@
       state.active = sorted[nxt].id;
       state.sm = Date.now();
       save();
-      refresh(false);
+      refresh(false, true);
     });
     $("wxmain").addEventListener("pointercancel", function () {
       tracking = false;    // interrupted gesture — clean slate, no false swipes
@@ -1469,7 +1522,7 @@
     }
     save();
     scheduleRender();
-    refresh(true);        // a location change deserves fresh data
+    refresh(true, true);  // a location change deserves fresh data (user action)
   };
 
   // Boot-time reconciliation with the shell's weather preference.

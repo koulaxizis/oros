@@ -205,6 +205,23 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
   function $(id) { return document.getElementById(id); }
+
+  // --- Unified notifications (Wave 10 migration) ---
+  // Το module ζει στο SHELL (parent) — dynamic resolution, ίδιο
+  // doctrine με weather.js/orosSync. Το module λείπει (stale
+  // bundle / standalone) → το τοπικό showToast στέκεται ως
+  // fallback: καμία orphaned λειτουργία.
+  function notifyTransient(text) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) ||
+               window.orosNotifs || null;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "kanban", title: text, body: "" });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    showToast(text);
+  }
   
     // ---------- 1b. Themed confirm (R14) ----------
   // Native confirm() is RETIRED (Bible R14): a themed <dialog> built
@@ -1617,7 +1634,7 @@
     var bd = boardByIdIn(state.boards, boardId);
     if (!bd) return;
 
-    pushUndo("toast.undone");
+    pushUndo("toast.duplicated");   // το κείμενο της ΕΝΕΡΓΕΙΑΣ — το Undo ζει (was: toast.undone)
 
     var copy = {
       id: uid(),
@@ -1658,7 +1675,7 @@
     save();
     renderAll();
     renderManageList();  // #32: keep manage dialog in sync
-    showToast(t("toast.boardadded"), false);
+    // Δεν υπάρχει δεύτερο toast — η pushUndo() από πάνω κρατάει το Undo ζωντανό
   }
 
   function deleteBoard(boardId) {
@@ -1667,7 +1684,7 @@
 
     confirmDialog("confirm.boarddel", function () {
 
-      pushUndo("toast.undone");
+      pushUndo("toast.boarddel");   // το κείμενο της ΕΝΕΡΓΕΙΑΣ — το Undo ζει (was: toast.undone)
 
     // Root-level board tombstone (state.boardDeleted) — το ΜΟΝΟ σημείο που
     // κοιτάζει το mergeKanbanStates/boardAlive. Tombstones μέσα στο bd
@@ -1687,7 +1704,6 @@
     }
 
             save(); renderAll();
-        showToast(t("toast.boarddel"), false);
       });
   }
 
@@ -1704,7 +1720,7 @@
       // Δεν αρχειοθετούμε το τελευταίο ενεργό board
       var live = state.boards.filter(function (b) { return !b.archived; });
       if (live.length <= 1 && !bd.archived) {
-        showToast(t("toast.boardarchlast"), false);
+        notifyTransient(t("toast.boardarchlast"));
         return;
       }
     }
@@ -1719,7 +1735,7 @@
     }
 
     save(); renderAll();
-    showToast(archived ? t("toast.boardarchived") : t("toast.boardunarchived"), false);
+    notifyTransient(archived ? t("toast.boardarchived") : t("toast.boardunarchived"));
   }
 
   function escapeHtml(s) {
@@ -2137,7 +2153,7 @@
     if (card) renderCardLabels(card);
     renderLblPicker();
     input.focus();                      // διατηρεί focus → γρήγορα batch ετικετών
-    showToast(t("toast.labeladd"), false);
+    notifyTransient(t("toast.labeladd"));
   }
 
   // --- Subtasks μέσα στο card dialog ---
@@ -2286,7 +2302,7 @@
     stampColOrder(col);                 // νέα σειρά τοποθέτησης στη στήλη
 
     save(); scheduleRender();
-    showToast(t("toast.duplicated"), false);
+    notifyTransient(t("toast.duplicated"));
   }
 
   function stampColOrder(col) {
@@ -2763,7 +2779,7 @@
     undoSnapshot = null;
     stampAllState();          // το restored snapshot είναι η πιο ΝΕΑ αλήθεια
     save(); renderAll();
-    showToast(t("toast.undone"), false);
+    notifyTransient(t("toast.undone"));
   }
 
   function showToast(text, withUndo) {

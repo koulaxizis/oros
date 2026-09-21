@@ -21,6 +21,13 @@
 
   const SOUNDS = { none: null, bell: 440, ding: 880, chime: 660 }; // Hz frequencies
 
+  // Wave 6 — single source of truth for per-app toggles (the
+  // shell's settings section renders from getKnownApps — no more
+  // mirrored arrays). "time" (alarms) and "system" (sync/version/
+  // sc results) joined the toggleable universe: suppression is a
+  // user decision there too.
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes'];
+
   // ——— Runtime state ———
   let state = {
     ready: false,
@@ -76,9 +83,9 @@
       const raw = localStorage.getItem('oros-notifs');
       state.slice = raw ? JSON.parse(raw) : { ver: 1, settings: defaultSettings(), items: [], meta: { lastSweep: 0 }, appToggles: {} };
       
-      // Initialize appToggles for known apps
-      const knownApps = ['calendar', 'cycle', 'mood', 'todo', 'habits'];
-      knownApps.forEach(app => {
+      // Initialize appToggles for known apps (KNOWN_APPS is the one
+      // truth — the shell renders its toggle list from it too)
+      KNOWN_APPS.forEach(app => {
         if (typeof state.slice.appToggles[app] !== 'boolean') {
           state.slice.appToggles[app] = true;
         }
@@ -210,9 +217,6 @@
     // 1. PRUNE EXPIRED ITEMS
     pruneExpiredItems();
     
-    // 2. CHECK FOR NEW TRIGGERS FROM REGISTERED SOURCES
-    checkRegisteredTriggers();
-    
     state.slice.meta.lastSweep = now;
     saveSliceThrottled(500);
     updateBadge();
@@ -246,75 +250,6 @@
     
     if (state.slice.items.length !== beforeCount) {
       log(`Pruned ${beforeCount - state.slice.items.length} expired items`);
-    }
-  }
-
-  // Trigger registry for apps to inject reminders
-  const triggerRegistry = [];
-  
-  function registerTrigger(triggerFn) {
-    // triggerFn: async function() { return [{ ns, type, title, body, deepLink, ttlDays }] }
-    triggerRegistry.push(triggerFn);
-  }
-
-  async function checkRegisteredTriggers() {
-    const now = Date.now();
-    
-    for (const triggerFn of triggerRegistry) {
-      try {
-        const candidates = await triggerFn();
-        if (!Array.isArray(candidates)) continue;
-        
-        for (const cand of candidates) {
-          // Validate required fields
-          if (!cand.ns || !cand.title || !cand.body) {
-            err('Invalid trigger candidate', cand);
-            continue;
-          }
-          
-          // Skip if app toggled off
-          if (!getAppToggle(cand.ns)) continue;
-          
-          // Create deterministic ID
-          const id = `${cand.ns}_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
-          const dedupKey = `${cand.ns}_${cand.type || 'reminder'}_${Math.floor(now / (24*60*60*1000))}`;
-          
-          // Check deduplication (fire only once per day per logical event)
-          if (state.lastFireTimestamp[dedupKey] && (now - state.lastFireTimestamp[dedupKey]) < (23 * 60 * 60 * 1000)) {
-            log(`Dedup skipped: ${dedupKey}`);
-            continue;
-          }
-          
-          // Create notification item
-          const item = {
-            id,
-            dedupKey,
-            ns: cand.ns,
-            type: cand.type || 'reminder',
-            title: cand.title,
-            body: cand.body,
-            deepLink: cand.deepLink || null,
-            createdAt: now,
-            firedAt: now, // Will be set when toast actually fires
-            readAt: null,
-            expiresAt: cand.ttlDays ? now + (cand.ttlDays * 24 * 60 * 60 * 1000) : null
-          };
-          
-          // Add to inbox
-          state.slice.items.unshift(item);
-          noteChange();    // new inbox item is data — travels via slice
-          
-          // Mark as fired for dedup
-          state.lastFireTimestamp[dedupKey] = now;
-          
-          // Fire toast if not in quiet hours
-          if (!isQuietHour(now)) {
-            fireToast(item, false);
-          }
-        }
-      } catch (e) {
-        err('Trigger execution failed', triggerFn.name, e);
-      }
     }
   }
 
@@ -438,6 +373,27 @@
       playTone(SOUNDS[soundType], 'sine', 0.2);
     }
     
+    // Wave 6 — native Web Notification: OS-level deliverability when
+    // the tab is backgrounded/minimized (mobile pain point). ONLY
+    // when permission was ALREADY granted — the module never asks
+    // (legal ask sites stay: Calendar Save, alarms). Catch-up
+    // toasts stay in-tab only: waking the OS for yesterday's
+    // history is noise. tag = dedupKey → the OS coalesces dupes.
+    // Wave 10 — transient toasts stay in-tab too: they are feedback
+    // to an action the user JUST took (they're looking at the
+    // screen) — waking the OS would be noise, not service.
+    if (!isCatchUp && item.type !== 'transient' &&
+        'Notification' in window &&
+        Notification.permission === 'granted') {
+      try {
+        var wn = new Notification('orOS — ' + item.title, {
+          body: item.body || '',
+          tag: item.dedupKey || undefined
+        });
+        wn.onclick = function () { window.focus(); try { wn.close(); } catch (e2) {} };
+      } catch (e) { /* in-tab toast stands alone */ }
+    }
+    
     // Cleanup timer on removal
     const observer = new MutationObserver(() => {
       if (!toast.parentNode) {
@@ -463,7 +419,20 @@
     // Wave 1B — "calendar:<evId>:<YYYY-MM-DD>": TWO-part payload
     // (event id + occurrence date). The shell bridge accepts both
     // (evId, ymd) args and the full string; we pass the pair.
-    calendar: function (evId, ymd) { window.__orosOpenCalendar(evId, ymd); }
+    calendar: function (evId, ymd) { window.__orosOpenCalendar(evId, ymd); },
+    // Wave 6/#T3 — "time:<pane>": alarm/timer notifications land on
+    // the corresponding tab of the Time app.
+    time:     function (pane) { window.__orosOpenTime(pane); },
+    // Wave 7/#TD4 — "todo:<listId>": due-task notifications land
+    // on that list's tab in the To-Do app.
+    todo:     function (listId) { window.__orosOpenTodo(listId); },
+    // Wave 8/#TH2 — "habits:<offsetDays>": check-in reminders navigate
+    // the week view to the relevant period (0 = current week anchor)
+    habits:   function (offStr) { window.__orosHabitsOpen(offStr); },
+    // Weather unification — "weather:open": informational notifications
+    // (fetch failures / morning briefing). Payload-agnostic by design:
+    // the app has no panes to target, a plain open is the whole job.
+    weather:  function () { window.__orosOpenWeather(); }
   };
 
   function openTarget(item) {
@@ -478,7 +447,15 @@
       bridge(parts[1], parts[2]);
       return;
     }
-    var payload = parts.length >= 3 ? parts[2] : null;
+    // Two shapes reach the single-payload bridges: "ns:type:id"
+    // (parts[2] — the type is context, the id is the target) and
+    // the SHORT "ns:target" (parts[1] IS the target: "mood:checkin",
+    // "time:alarms"). The short form used to silently no-op (#N1) —
+    // "mood:checkin" never reached __orosMoodOpen. Three-part wins
+    // when present; two-part fills the gap.
+    var payload = parts.length >= 3 ? parts[2]
+                : parts.length === 2 ? parts[1]
+                : null;
     if (payload) bridge(payload);
   }
 
@@ -819,9 +796,17 @@
       createdAt: now,
       firedAt: null,
       readAt: null,
-      expiresAt: cand.ttlDays ? now + cand.ttlDays * 86400000 : null
+      // Wave 6 — default 7-day TTL: the inbox is history, not an
+      // archive (pruneExpiredItems doctrine finally applies to the
+      // LOCAL path too, not just remote merges).
+      expiresAt: cand.ttlDays ? now + cand.ttlDays * 86400000
+                              : now + 7 * 86400000
     };
     state.slice.items.unshift(item);
+    // Wave 6 — local hard cap (parity with notifSliceSet's 300):
+    // engine emissions must never balloon the slice beyond the
+    // merge cap. Items are newest-first → pop drops the OLDEST.
+    while (state.slice.items.length > 300) state.slice.items.pop();
     noteChange();          // new inbox item = data → travels
     saveSliceThrottled(500);
 
@@ -829,6 +814,33 @@
     // the bell never misses anything, sleep is respected).
     if (!isQuietHour(now)) fireToast(item, false);
     updateBadge();
+    return item.id;
+  }
+  
+  // Wave 6 — TRANSIENT toast: no inbox, no badge, no dedup, no
+  // quiet-hours gate. Purpose: immediate feedback for an action the
+  // user JUST took ("Working…", "Checking…") — it is the answer to
+  // their own click, so it is never history and never sleeps.
+  // Toggles are bypassed by design (same class as the menu closing);
+  // style/position/sound/duration settings DO apply.
+  function transientToast(cand) {
+    if (!state.ready) return null;
+    if (!cand || typeof cand !== 'object' ||
+        typeof cand.title !== 'string' || !cand.title) return null;
+    var item = {
+      id: 'tmp_' + Date.now().toString(36),
+      dedupKey: 'transient',
+      ns: (typeof cand.ns === 'string') ? cand.ns : 'system',
+      type: 'transient',
+      title: cand.title,
+      body: (typeof cand.body === 'string') ? cand.body : '',
+      deepLink: null,
+      createdAt: Date.now(),
+      firedAt: Date.now(),   // pre-fired: never eligible for catch-up
+      readAt: Date.now(),    // pre-read: can never drive the badge
+      expiresAt: null
+    };
+    fireToast(item, false);
     return item.id;
   }
   
@@ -843,13 +855,15 @@
     getAppToggle,
     setAppToggle,
     
-    // Triggers (for apps to register)
-    registerTrigger,
-    
+    // Wave 6 — the shell's toggle UI renders from THIS list
+    // (single source of truth, no mirrored arrays)
+    getKnownApps: () => KNOWN_APPS.slice(),
+ 
     // Manual operations
     fireToast,
     markAsRead,
     emit: emitCandidate,
+    transient: transientToast,
     openNotificationPanel,
     updateBadge,
     

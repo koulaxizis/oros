@@ -113,10 +113,11 @@
       "ct.none": "No contacts yet",
       "ct.search.none": "No contacts found",
       "ct.export.done": "Contacts exported (.vcf)",
-      "ct.import.pick": "Import vCard (.vcf)",
       "ct.import.bad": "Could not read that file",
       "ct.import.done": "{n} contact(s) imported",
-      "sync.merged": "Updated from sync",
+      "ct.import.csv.bad": "Could not read that CSV file",
+      "ct.import.csv.noheader": "No recognizable columns — expected a Google Contacts CSV",
+      "ct.import.csv.norows": "No importable contacts found in the CSV",
       "undo": "Undo",
       "lbl.personal": "Personal",
       "lbl.work": "Work",
@@ -128,7 +129,6 @@
       "lbl.done": "Done",
       "lbl.delete": "Delete",
       "lbl.inuse": "This label is used by contacts",
-      "lbl.none": "No label",
       "lbl.empty": "No labels yet",
       "ty.mobile": "Mobile",
       "ty.home": "Home",
@@ -140,7 +140,6 @@
       "evt.anniversary": "Anniversary",
       "evt.custom": "Custom",
       "evt.ph": "Nameday…",
-      "ct.year.unknown": "No year",
       "ct.unnamed": "(no name)",
       "ct.lbl.filter": "Labels",
       "dup.scan": "Duplicates",
@@ -151,14 +150,11 @@
       "dup.primary": "Primary contact",
       "dup.flip": "Flip primary",
       "dup.do": "Merge now",
-      "dup.cancel": "Cancel",
       "dup.reason.phone": "Same phone",
       "dup.reason.email": "Same email",
       "dup.reason.name": "Similar name",
       "dup.merged": "Contacts merged",
       "dup.undo": "Undo",
-      "dup.preview": "Proposed merged contact",
-      "dup.warning": "This action cannot be undone",
       "dup.sect.def": "Definitive matches",
       "dup.sect.pos": "Possible matches",
       "ct.avatar": "Photo",
@@ -225,10 +221,11 @@
       "ct.none": "Καμία επαφή ακόμα",
       "ct.search.none": "Καμία επαφή δεν βρέθηκε",
       "ct.export.done": "Οι επαφές εξήχθησαν (.vcf)",
-      "ct.import.pick": "Εισαγωγή vCard (.vcf)",
       "ct.import.bad": "Το αρχείο δεν μπόρεσε να διαβαστεί",
       "ct.import.done": "{n} επαφή/ές εισήχθησαν",
-      "sync.merged": "Ενημερώθηκε από συγχρονισμό",
+      "ct.import.csv.bad": "Το αρχείο CSV δεν μπόρεσε να διαβαστεί",
+      "ct.import.csv.noheader": "Δεν αναγνωρίστηκαν στήλες — αναμενόταν CSV από Google Contacts",
+      "ct.import.csv.norows": "Δεν βρέθηκαν εισαγώμενες επαφές στο CSV",
       "undo": "Αναίρεση",
       "lbl.personal": "Προσωπικό",
       "lbl.work": "Εργασία",
@@ -240,7 +237,6 @@
       "lbl.done": "Τέλος",
       "lbl.delete": "Διαγραφή",
       "lbl.inuse": "Η ετικέτα χρησιμοποιείται από επαφές",
-      "lbl.none": "Χωρίς ετικέτα",
       "lbl.empty": "Δεν υπάρχουν ετικέτες ακόμα",
       "ty.mobile": "Κινητό",
       "ty.home": "Σπίτι",
@@ -252,7 +248,6 @@
       "evt.anniversary": "Επέτειος",
       "evt.custom": "Προσαρμοσμένη",
       "evt.ph": "Ονομαστική εορτή…",
-      "ct.year.unknown": "Χωρίς έτος",
       "ct.unnamed": "(χωρίς όνομα)",
       "ct.lbl.filter": "Ετικέτες",
       "dup.scan": "Διπλότυπα",
@@ -263,14 +258,11 @@
       "dup.primary": "Κύρια επαφή",
       "dup.flip": "Αντιστροφή κύριας",
       "dup.do": "Συγχώνευση τώρα",
-      "dup.cancel": "Άκυρο",
       "dup.reason.phone": "Ίδιο τηλέφωνο",
       "dup.reason.email": "Ίδιο email",
       "dup.reason.name": "Παρόμοιο όνομα",
       "dup.merged": "Οι επαφές συγχωνεύτηκαν",
       "dup.undo": "Αναίρεση",
-      "dup.preview": "Προτεινόμενη συγχωνευμένη επαφή",
-      "dup.warning": "Η πράξη αυτή δεν μπορεί να ανακληθεί",
       "dup.sect.def": "Βέβαια ταιριάσματα",
       "dup.sect.pos": "Πιθανά ταιριάσματα",
       "ct.avatar": "Φωτογραφία",
@@ -348,6 +340,37 @@
     }
     toastEl.classList.add("show");
     toastTimer = setTimeout(hideToast, 5000);
+  }
+
+  // --- Unified notifications (Wave 12 migration) ---
+  // Dynamic parent resolution + cross-origin guard; local toast()
+  // remains as stale-bundle fallback for zero-crash boot.
+  function notifyTransient(text) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) ||
+               window.orosNotifs || null;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "contacts", title: text, body: "" });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);
+  }
+
+  // Background failures → inbox (not transient): the only case
+  // where we might need emit() in the future (currently unused
+  // in Contacts — no timers/fetch), but the stub is here so
+  // the Doctrine stays consistent across the orOS ecosystem.
+  function notifyEmit(text, key) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) ||
+               window.orosNotifs || null;
+      if (N && typeof N.emit === "function") {
+        N.emit({ ns: "contacts", title: text, body: "", key: key || null });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);
   }
 
   /* ---------- 2. State + schemas ---------- */
@@ -1028,11 +1051,6 @@
     });
   }
 
-  // NOTE (schema honesty): relations (cross-contact links) and the
-  // birthday Calendar feed are NOT in Wave 1 — relations arrive as
-  // an additive schema field in Wave 2 (UI + id links), the feed as a
-  // calendar.js enhancement. Recorded in the changelog as pending.
-
 // ===== CONTACT DIALOG =====
 
   /* ---------- 5. Multi-field editors ----------
@@ -1434,7 +1452,7 @@
 
   function readAvatarFile(file) {
     if (!file) return;
-    if (!/^image\/(jpeg|png)$/.test(file.type)) { toast(t("ct.avatar.bad")); return; }
+    if (!/^image\/(jpeg|png)$/.test(file.type)) { notifyTransient(t("ct.avatar.bad")); return; }
     var fr = new FileReader();
     fr.onload = function () {
       var img = new Image();
@@ -1449,17 +1467,17 @@
         ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
         try {
           var uri = cv.toDataURL("image/jpeg", 0.85);
-          if (uri.length > 50000) { toast(t("ct.avatar.big")); return; }
+          if (uri.length > 50000) { notifyTransient(t("ct.avatar.big")); return; }
           editingPhoto = uri;
           paintAvatarPreview(editingPhoto);
         } catch (e) {
-          toast(t("ct.avatar.bad"));
+          notifyTransient(t("ct.avatar.bad"));
         }
       };
-      img.onerror = function () { toast(t("ct.avatar.bad")); };
+      img.onerror = function () { notifyTransient(t("ct.avatar.bad")); };
       img.src = fr.result;
     };
-    fr.onerror = function () { toast(t("ct.avatar.bad")); };
+    fr.onerror = function () { notifyTransient(t("ct.avatar.bad")); };
     fr.readAsDataURL(file);
   }
 
@@ -1563,7 +1581,7 @@
       var ti = $("ct-given");
       ti.classList.add("invalid");
       ti.focus();
-      toast(t("ct.err.name"));
+      notifyTransient(t("ct.err.name"));
       setTimeout(function () { ti.classList.remove("invalid"); }, 1600);
       return;
     }
@@ -1775,7 +1793,11 @@
 
     $("merge-title").textContent = t("dup.merge");
     var via = $("merge-via");
-    via.innerHTML = t("dup.primary") + ": <strong>" + displayName(prep.members[pendingMergePrimaryIndex]) + "</strong>";
+    via.textContent = "";
+    via.appendChild(document.createTextNode(t("dup.primary") + ": "));
+    var viaStrong = document.createElement("strong");
+    viaStrong.textContent = displayName(prep.members[pendingMergePrimaryIndex]);
+    via.appendChild(viaStrong);
     var prevBox = $("merge-preview");
     prevBox.textContent = "";
 
@@ -1784,7 +1806,14 @@
       if (!prep.preview[f]) return;
       var div = document.createElement("div");
       div.className = "dup-preview-section";
-      div.innerHTML = "<div class=\"dup-preview-label\">" + t("ct.field." + f) + "</div><div class=\"dup-preview-value\">" + prep.preview[f] + "</div>";
+      var lab = document.createElement("div");
+      lab.className = "dup-preview-label";
+      lab.textContent = t("ct.field." + f);
+      var val = document.createElement("div");
+      val.className = "dup-preview-value";
+      val.textContent = prep.preview[f];
+      div.appendChild(lab);
+      div.appendChild(val);
       prevBox.appendChild(div);
     });
 
@@ -1985,7 +2014,7 @@
       del.className = "mini lbl-del";
       del.textContent = t("lbl.delete");
       del.addEventListener("click", function () {
-        if (labelInUse(l.id)) { toast(t("lbl.inuse")); return; }
+        if (labelInUse(l.id)) { notifyTransient(t("lbl.inuse")); return; }
         state.labels = state.labels.filter(function (x) { return x.id !== l.id; });
         state.deleted.push({ id: l.id, mtime: Date.now() });   // shared tombstone
         delete labelVis[l.id];
@@ -2315,6 +2344,7 @@
         ["nickname", "org", "jobTitle", "note"].forEach(function (f) {
           if (!existing[f] && pc[f]) { existing[f] = pc[f]; touched = true; }
         });
+        if (pc.starred && !existing.starred) { existing.starred = true; touched = true; }
         pc.phones.forEach(function (p) {
           if (!existing.phones.some(function (x) { return phoneDigits(x.v) === phoneDigits(p.v); })) {
             existing.phones.push(p); touched = true;
@@ -2348,7 +2378,7 @@
           phones: pc.phones, emails: pc.emails, addresses: pc.addresses,
           websites: pc.websites, im: pc.im, events: pc.events,
           labelIds: lids.sort(),
-          starred: false, note: pc.note,
+          starred: pc.starred === true, note: pc.note,
           photo: pc.photo || null,
           relations: [],
           mtime: Date.now()
@@ -2369,6 +2399,235 @@
     renderList();
     return { created: created, updated: updated, report: report };
   }
+  
+  // ===== CSV IMPORT (Google Contacts) =====
+  // Google's "Google CSV" export: RFC 4180 quoted rows, UTF-8 BOM,
+  // scalar name/org/note/birthday columns, numbered value/type pairs
+  // ("Phone 1 - Type" / "Phone 1 - Value", "E-mail 1 - Value"…),
+  // "Group Membership" (:::-separated) → labels, "* starred" →
+  // favorite, "Birthday" (ISO or "Mon D, YYYY") → event.
+  // Photos are URL-only in CSV → skipped (no network imports —
+  // same doctrine as vCard http PHOTOs). English headers are the
+  // canonical format; Greek aliases cover the scalar fields.
+
+  // RFC 4180-tolerant CSV rows (quoted fields, "" escapes, embedded
+  // commas/newlines). Strips the UTF-8 BOM Google ships — otherwise
+  // it glues onto the first header and breaks matching.
+  function parseCsvRows(text) {
+    var s = String(text || "");
+    if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
+    var rows = [], row = [], field = "", inQ = false;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      if (inQ) {
+        if (ch === '"') {
+          if (s.charAt(i + 1) === '"') { field += '"'; i++; }
+          else inQ = false;
+        } else { field += ch; }
+      } else if (ch === '"') {
+        inQ = true;
+      } else if (ch === ",") {
+        row.push(field); field = "";
+      } else if (ch === "\n") {
+        row.push(field); field = "";
+        rows.push(row); row = [];
+      } else if (ch !== "\r") {
+        field += ch;
+      }
+    }
+    if (field !== "" || row.length) { row.push(field); rows.push(row); }
+    // drop fully-empty rows (trailing blank lines)
+    return rows.filter(function (r) {
+      return r.some(function (c) { return String(c).trim() !== ""; });
+    });
+  }
+
+  var CSV_H = {
+    first:    ["first name", "given name", "όνομα"],
+    middle:   ["middle name", "δεύτερο όνομα"],
+    last:     ["last name", "family name", "surname", "επώνυμο"],
+    nick:     ["nickname", "ψευδώνυμο"],
+    fullname: ["name", "ονοματεπώνυμο"],
+    org:      ["organization 1 - name", "organization", "company", "εταιρεία"],
+    title:    ["organization 1 - title", "title", "job title", "θέση"],
+    note:     ["notes", "note", "σημειώσεις"],
+    bday:     ["birthday", "γενέθλια"],
+    group:    ["group membership", "group memberships"]
+  };
+
+  // Exact-match a folded header against an alias list.
+  function csvHeaderIndex(headers, aliases) {
+    for (var i = 0; i < headers.length; i++) {
+      var h = greekFold(headers[i]).trim();
+      for (var a = 0; a < aliases.length; a++) {
+        if (greekFold(aliases[a]) === h) return i;
+      }
+    }
+    return -1;
+  }
+
+  // Header-only presence check ("phone 1 - value" etc.).
+  function csvHasHeader(headers, target) {
+    var tt = greekFold(target);
+    for (var i = 0; i < headers.length; i++) {
+      if (greekFold(headers[i]).trim() === tt) return true;
+    }
+    return false;
+  }
+
+  // Numbered pair lookup: prefix + " n - want" ("phone 3 - value").
+  function csvPair(row, headers, prefix, n, want) {
+    var target = greekFold(prefix + " " + n + " - " + want);
+    for (var i = 0; i < headers.length; i++) {
+      if (greekFold(headers[i]).trim() === target) return String(row[i] || "").trim();
+    }
+    return "";
+  }
+
+  // Google birthday spellings: 1975-03-17 · 1975-3-17 · 19750317 ·
+  // --03-17 · 03-17 · Mar 17, 1975 · March 17 1975.
+  var CSV_MONTHS = {
+    jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+    jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
+  };
+  function csvPad2(n) { return (n < 10 ? "0" : "") + n; }
+  function parseCsvBirthday(v) {
+    var s = String(v || "").trim();
+    if (!s) return null;
+    var m;
+    if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)) ||
+        (m = s.match(/^(\d{4})(\d{2})(\d{2})$/))) {
+      var day = csvPad2(+m[2]) + "-" + csvPad2(+m[3]);
+      return validDay(day) ? { day: day, year: +m[1] } : null;
+    }
+    if ((m = s.match(/^-{0,2}(\d{1,2})-(\d{1,2})$/))) {
+      var d2 = csvPad2(+m[1]) + "-" + csvPad2(+m[2]);
+      return validDay(d2) ? { day: d2, year: null } : null;
+    }
+    if ((m = s.match(/^([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/))) {
+      var mo = CSV_MONTHS[m[1].slice(0, 3).toLowerCase()];
+      if (mo) {
+        var d3 = csvPad2(mo) + "-" + csvPad2(+m[2]);
+        return validDay(d3) ? { day: d3, year: +m[3] } : null;
+      }
+    }
+    return null;
+  }
+
+  // One CSV row → the SAME shape parseVcardBlock emits, so
+  // importParsed() handles dedup (email/phone match), label
+  // creation and the import report with zero extra code.
+  function csvRowToContact(row, headers) {
+    var pick = function (keys) {
+      var ix = csvHeaderIndex(headers, keys);
+      return ix === -1 ? "" : String(row[ix] || "").trim();
+    };
+    var pc = {
+      given: pick(CSV_H.first).slice(0, 60),
+      middle: pick(CSV_H.middle).slice(0, 60),
+      family: pick(CSV_H.last).slice(0, 60),
+      nickname: pick(CSV_H.nick).slice(0, 60),
+      org: pick(CSV_H.org).slice(0, 80),
+      jobTitle: pick(CSV_H.title).slice(0, 80),
+      phones: [], emails: [], addresses: [], websites: [], im: [],
+      events: [], cats: [], note: pick(CSV_H.note).slice(0, 500),
+      photo: null, starred: false
+    };
+    // FN-style fallback: "Name" split when parts are missing.
+    if (!pc.given && !pc.family && !pc.org && !pc.nickname) {
+      var fn = pick(CSV_H.fullname).split(/\s+/).filter(Boolean);
+      if (fn.length) {
+        pc.given = fn[0].slice(0, 60);
+        pc.family = fn.slice(1).join(" ").slice(0, 60);
+      }
+    }
+    var n;
+    for (n = 1; n <= 15; n++) {
+      var pv = csvPair(row, headers, "phone", n, "value");
+      if (!pv) continue;
+      pc.phones.push({
+        v: pv.slice(0, 40),
+        type: typeFromVcf(csvPair(row, headers, "phone", n, "type"), PHONE_TYPES, "other")
+      });
+    }
+    // Email spelling check: remember WHICH alias matched ("e-mail"
+    // vs "email") so the type column is read from the same spelling.
+    for (n = 1; n <= 15; n++) {
+      var evKey = csvPair(row, headers, "e-mail", n, "value") ? "e-mail"
+                : (csvPair(row, headers, "email", n, "value") ? "email" : null);
+      if (!evKey) continue;
+      pc.emails.push({
+        v: csvPair(row, headers, evKey, n, "value").slice(0, 120),
+        type: typeFromVcf(csvPair(row, headers, evKey, n, "type"), EMAIL_TYPES, "other")
+      });
+    }
+    for (n = 1; n <= 10; n++) {
+      var street = csvPair(row, headers, "address", n, "street") ||
+                   csvPair(row, headers, "address", n, "formatted");
+      var city = csvPair(row, headers, "address", n, "city");
+      var region = csvPair(row, headers, "address", n, "region");
+      var zip = csvPair(row, headers, "address", n, "postal code") ||
+                csvPair(row, headers, "address", n, "zip");
+      var country = csvPair(row, headers, "address", n, "country");
+      if (!street && !city && !zip && !region && !country) continue;
+      pc.addresses.push({
+        street: street.slice(0, 120), city: city.slice(0, 60),
+        zip: zip.slice(0, 20), region: region.slice(0, 60),
+        country: country.slice(0, 60),
+        type: typeFromVcf(csvPair(row, headers, "address", n, "type"), ADDR_TYPES, "other")
+      });
+    }
+    for (n = 1; n <= 10; n++) {
+      var wv = csvPair(row, headers, "website", n, "value");
+      if (!wv) continue;
+      pc.websites.push({
+        v: wv.slice(0, 300),
+        type: typeFromVcf(csvPair(row, headers, "website", n, "type"), WEB_TYPES, "other")
+      });
+    }
+    var bd = parseCsvBirthday(pick(CSV_H.bday));
+    if (bd) {
+      pc.events.push({ day: bd.day, year: bd.year, type: "birthday", label: "" });
+    }
+    // Group Membership: "* myContacts ::: * starred ::: Family" —
+    // starred flag honored, * system groups dropped, the rest become
+    // labels via importParsed's CATEGORIES machinery.
+    var gm = pick(CSV_H.group);
+    if (gm) {
+      gm.split(":::").forEach(function (g) {
+        var name = g.trim();
+        if (!name) return;
+        if (name === "* starred") { pc.starred = true; return; }
+        if (name.charAt(0) === "*") return;
+        if (pc.cats.indexOf(name) === -1) pc.cats.push(name.slice(0, 40));
+      });
+    }
+    return pc;
+  }
+
+  function importCsvText(text) {
+    var rows = parseCsvRows(text);
+    if (rows.length < 2) { notifyTransient(t("ct.import.csv.noheader")); return; }
+    var headers = rows[0];
+    // Sanity gate: at least one recognisable column (or numbered
+    // family) must exist before we touch state.
+    var known = Object.keys(CSV_H).some(function (k) {
+      return csvHeaderIndex(headers, CSV_H[k]) !== -1;
+    }) || csvHasHeader(headers, "phone 1 - value") ||
+         csvHasHeader(headers, "e-mail 1 - value") ||
+         csvHasHeader(headers, "email 1 - value");
+    if (!known) { notifyTransient(t("ct.import.csv.bad")); return; }
+
+    var parsed = [];
+    for (var r = 1; r < rows.length; r++) {
+      var pc = csvRowToContact(rows[r], headers);
+      if (pc.given || pc.family || pc.org || pc.nickname) parsed.push(pc);
+    }
+    if (!parsed.length) { notifyTransient(t("ct.import.csv.norows")); return; }
+    var res = importParsed(parsed);
+    showImportReport(res);
+    notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
+  }
 
   // ---- Import wiring ----
   if ($("ct-import")) {
@@ -2381,6 +2640,17 @@
       if (!f) return;
       var fr = new FileReader();
       fr.onload = function () {
+        // Route by extension: .csv → Google Contacts CSV path,
+        // everything else → vCard path.
+        if (f && (/\.csv$/i.test(f.name) || f.type === "text/csv")) {
+          try {
+            importCsvText(String(fr.result));
+          } catch (e) {
+            console.error("contacts: CSV import failed:", e);
+            notifyTransient(t("ct.import.csv.bad"));
+          }
+          return;
+        }
         try {
           var lines = vcfUnfold(fr.result);
           var blocks = [], cur = null;
@@ -2393,16 +2663,16 @@
           var parsed = blocks.map(parseVcardBlock).filter(function (b) {
             return b.given || b.family || b.org || b.nickname;
           });
-          if (!parsed.length) { toast(t("ct.import.bad")); return; }
+          if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
           var res = importParsed(parsed);
           showImportReport(res);
-          toast(t("ct.import.done").replace("{n}", String(res.created)));
+          notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
         } catch (e) {
           console.error("contacts: vCard import failed:", e);
-          toast(t("ct.import.bad"));
+          notifyTransient(t("ct.import.bad"));
         }
       };
-      fr.onerror = function () { toast(t("ct.import.bad")); };
+      fr.onerror = function () { notifyTransient(t("ct.import.bad")); };
       fr.readAsText(f, "utf-8");
     });
   }
@@ -2480,7 +2750,7 @@
 
   if ($("ct-export")) {
     $("ct-export").addEventListener("click", function () {
-      if (!state.contacts.length) { toast(t("ct.none")); return; }
+      if (!state.contacts.length) { notifyTransient(t("ct.none")); return; }
       var lines = [];
       // Alphabetical export (deterministic, merge-order agnostic).
       var sorted = state.contacts.slice().sort(function (a, b) {
@@ -2503,8 +2773,8 @@
           document.body.removeChild(a);
           URL.revokeObjectURL(a.href);
         }, 200);
-        toast(t("ct.export.done"));
-      } catch (e) { toast(t("ct.import.bad")); }
+        notifyTransient(t("ct.export.done"));
+      } catch (e) { notifyTransient(t("ct.import.bad")); }
     });
   }
 
@@ -2584,7 +2854,7 @@
     labelVis = {};
     renderChips();
     renderList();
-    if (info && info.merged) toast(t("sync.merged"));
+    // info.merged → sync dot (taskbar), not toast (Wave 11 doctrine)
   }
 
   // Canonical sync bridge — Contract B funnel. Live registration

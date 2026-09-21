@@ -2624,10 +2624,25 @@
   // view, month of the period's start — no editor, no edit mode.
   window.__orosCycleOpen = function (periodId) {
     if (typeof periodId !== "string" || !periodId) return;
-    var p = periodById(periodId);
-    if (!p) return;
     openDay = null;
     viewMode = "calendar";
+    // Two payload shapes arrive here:
+    //   1. a period uid (Calendar feed row clicks) → month of
+    //      that period's start
+    //   2. a predicted-start day key "YYYY-MM-DD" (notification
+    //      deepLink "cycle:pred:<ymd>" — the shell's openTarget
+    //      forwards only the tail) → month of the prediction,
+    //      where the dashed prediction days are visible
+    // Period ids are base36 uids (Date.now().toString(36) +
+    // random) — never contain "-", so the shapes cannot collide.
+    var mPred = /^(\d{4})-(\d{2})-(\d{2})$/.exec(periodId);
+    if (mPred) {
+      calMonth = { y: +mPred[1], m: +mPred[2] - 1 };
+      applyView();   // single paint: calendar + prediction dashes
+      return;
+    }
+    var p = periodById(periodId);
+    if (!p) return;
     var dt = new Date(p.start);
     calMonth = { y: dt.getFullYear(), m: dt.getMonth() };
     applyView();   // single paint: calendar + cycle info strip

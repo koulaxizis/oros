@@ -1080,3 +1080,47 @@
     }
   } catch (e) { /* standalone preview — sync simply absent */ }
 })();
+
+// ===== orOS deep-link receiver (Wave 6 / #T3) =====
+// Consumed by shell.js (__orosOpenTime) and notifications.js
+// (DL_BRIDGES → "time:<target>"). Depends ONLY on the time.html
+// DOM contract (.tab[data-pane] click switching) — no internals
+// of this file are touched. Panes: pane-alarm / pane-timer /
+// pane-stop / pane-pomo.
+(function () {
+  "use strict";
+
+  // Shorthands from notification deepLinks + full pane ids pass
+  // through unchanged ("alarms" → the alarm tab, etc.).
+  var PANE_MAP = {
+    alarms:   "pane-alarm",
+    alarm:    "pane-alarm",
+    timer:    "pane-timer",
+    stopwatch:"pane-stop",
+    stop:     "pane-stop",
+    pomodoro: "pane-pomo",
+    pomo:     "pane-pomo"
+  };
+
+  function openPane(name) {
+    var paneId = PANE_MAP[name] || name;
+    var btn = document.querySelector('.tab[data-pane="' + paneId + '"]');
+    if (btn) btn.click();   // existing tab wiring does the switch
+  }
+
+  // Live push (shell bridge calls this when the app is running)
+  window.__orosTimeOpen = function (pane) {
+    if (typeof pane !== "string" || !pane) return;
+    openPane(pane);
+  };
+
+  // Boot: consume a pane staged by the shell while the app was
+  // closed (sessionStorage — same origin, same tab; one-shot).
+  try {
+    var pending = sessionStorage.getItem("oros-time-open");
+    if (pending) {
+      sessionStorage.removeItem("oros-time-open");
+      openPane(pending);
+    }
+  } catch (e) { /* storage blocked — navigation no-ops, nothing breaks */ }
+})();

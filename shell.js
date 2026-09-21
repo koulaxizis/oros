@@ -28,7 +28,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.35.22";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -363,7 +363,11 @@
     // already durable, the file is the bonus copy.
     writeSnapshotFile(false);
 
-    setSyncMsgRaw("dim", window.t("sync.ok.snapshot.saved"));
+    // Wave 6 — snapshot confirmations are DATA the user wants in
+    // the inbox (decision record: "snapshots/confirmations go in").
+    // Promoted dim→ok: it is a real success, not busy talk. The
+    // daily dedup key keeps auto-snapshots to one line per day.
+    setSyncMsg("ok", "sync.ok.snapshot.saved");
     return true;
   }
 
@@ -667,6 +671,7 @@
   moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
   cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
   notifTickThrottled();   // Wave 1A: notification sweep (60s throttle)
+  wxBriefTickThrottled(); // Weather unification: daily morning briefing (60s throttle)
   }
 
   // ---------- 7. PWA ----------
@@ -696,6 +701,21 @@
     if (last === APP_VERSION) return;
 
     localStorage.setItem(VERSION_KEY, APP_VERSION);
+
+    // Wave 6 — update notice rides the unified system: inbox + badge
+    // + toast + (permission granted) OS notification. The old
+    // #version-toast DOM stays ONLY as the stale-bundle fallback —
+    // hence scToast's stacking hack for it is kept too.
+    if (window.orosNotifs && typeof window.orosNotifs.emit === "function") {
+      window.orosNotifs.emit({
+        ns: "system",
+        key: "ver-" + APP_VERSION,
+        type: "update",
+        title: window.t("update.done"),
+        body: "v" + APP_VERSION
+      });
+      return;
+    }
 
     var vt = document.createElement("div");
     vt.id = "version-toast";
@@ -1253,16 +1273,53 @@
     }, kind === "err" ? 4500 : 2600);
   }
 
-    function setSyncMsg(kind, textKey) {
+  // Wave 6 — every shell-produced message flows through the unified
+  // notification system when the module is present:
+  //   dim → TRANSIENT toast (no inbox — busy/ephemeral feedback is
+  //         the answer to the user's own click, never history),
+  //   ok/err → real emit (inbox + badge + toast), deduplicated to
+  //         once per day per (kind + semantic id) — a flaky network
+  //         on a 3-min autosync must be one inbox line, not twenty.
+  // Module absent (stale bundle) → scToast stands alone (calRemNotify
+  // fallback doctrine). state.syncMsg keeps painting the menu section
+  // regardless — local UI, not part of the notification flow.
+  function sysYmd() {
+    var d = new Date();
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+  }
+
+  function notifySys(kind, text, ident) {
+    var N = window.orosNotifs;
+    if (N && typeof N.emit === "function" &&
+        typeof N.transient === "function") {
+      if (kind === "dim") {
+        N.transient({ ns: "system", title: text, body: "" });
+      } else {
+        N.emit({
+          ns: "system",
+          key: "msg-" + kind + "-" + ident + "-" + sysYmd(),
+          type: "sys",
+          title: "orOS",
+          body: text
+        });
+      }
+      return;                    // module handled the toast
+    }
+    scToast(kind, text);         // stale-bundle fallback
+  }
+
+  function setSyncMsg(kind, textKey) {
     state.syncMsg = { kind: kind, text: window.t(textKey) };
     if (kind === "err") setSyncDot("err", 6000);   // parity with setSyncMsgRaw
-    scToast(kind, state.syncMsg.text);
+    notifySys(kind, state.syncMsg.text,
+      String(textKey).replace(/[^a-zA-Z0-9]+/g, "-"));
     renderMenu();
   }
   function setSyncMsgRaw(kind, raw) {
     state.syncMsg = { kind: kind, text: raw };
     if (kind === "err") setSyncDot("err", 6000);   // v0.9: red transient
-    scToast(kind, raw);
+    notifySys(kind, raw, "raw");   // raw messages: one line/day per kind
     renderMenu();
   }
   
@@ -2033,9 +2090,13 @@
     var appsCol = document.createElement("div");
     appsCol.style.cssText =
       "display:flex;flex-direction:column;gap:8px;margin-top:4px;";
-    ["calendar", "cycle", "mood", "todo", "habits"].forEach(function (appId) {
-      var nameKey = "app." + appId;
-      var tv = window.t(nameKey);
+    // Wave 6 — the list comes from the module (getKnownApps): one
+    // source of truth, no mirrored arrays. "time" = alarms,
+    // "system" = sync/version/sc results — toggleable like any app.
+    var knownApps = (typeof N.getKnownApps === "function")
+      ? N.getKnownApps()
+      : ["calendar", "cycle", "mood", "todo", "habits"];
+    knownApps.forEach(function (appId) {
       var label = document.createElement("label");
       label.className = "remember-row";
       var cb = document.createElement("input");
@@ -2046,7 +2107,13 @@
       });
       label.appendChild(cb);
       var txt = document.createElement("span");
-      txt.textContent = (tv === nameKey) ? appId : tv;   // apps.json fallback
+      if (appId === "system") {
+        txt.textContent = "orOS";                            // the shell itself
+      } else {
+        var nameKey = "app." + appId;
+        var tv = window.t(nameKey);
+        txt.textContent = (tv === nameKey) ? appId : tv;    // apps.json fallback
+      }
       label.appendChild(txt);
       appsCol.appendChild(label);
     });
@@ -2305,7 +2372,7 @@
     // only when a snapshot was really written. A dedup (identical
     // content) is reported as such — never a false success.
     if (!maybeAutoExport(true)) {   // force = snapshot now regardless of schedule
-      setSyncMsgRaw("dim", window.t("sync.ok.none"));
+      setSyncMsg("ok", "sync.ok.none");
     }
   }
 
@@ -2824,6 +2891,23 @@
           localStorage.setItem(WX_LAST_KEY,
             String(Date.now() - WX_MIN_MS + WX_RETRY_MS));
         } catch (e2) {}
+        // Weather unification: a persistent tray failure belongs in
+        // the INBOX (invisible outage ≠ silence). Dedup by key =
+        // one line per day, never per-attempt spam. The chip itself
+        // keeps painting the off/waiting state — no toast here.
+        if (navigator.onLine &&
+            window.orosNotifs && typeof window.orosNotifs.emit === "function") {
+          var wxfEl = (localStorage.getItem("oros-lang") === "el");
+          window.orosNotifs.emit({
+            ns: "weather",
+            key: "trayfail-" + sysYmd(),
+            type: "sys",
+            title: wxfEl ? "Καιρός" : "Weather",
+            body: wxfEl
+              ? "Αποτυχία λήψης καιρού — έλεγξε τη σύνδεση"
+              : "Weather fetch failed — check connection"
+          });
+        }
       });
   }
   
@@ -2846,6 +2930,83 @@
         f.contentWindow.__orosWeatherUpdate(w);
       }
     } catch (e) { /* app not running/loaded — tray keeps it */ }
+  }
+
+  // Morning briefing: one daily advisory between 08:00–11:59 local,
+  // built from the app cache of the city nearest the tray location
+  // (same 0.15° nearest-city rule as wxAdoptAppCache — one truth).
+  // Hint priority mirrors weather.js pickHint: storm > fog > rain >
+  // UV > heat > cold > swing. A pleasant day stays SILENT — the
+  // briefing speaks only when it matters. Dedup by key, rides the
+  // existing clock tick (60s throttle), zero new timers.
+  var wxBriefLastTick = 0;
+  function wxBriefTickThrottled() {
+    var now = Date.now();
+    if (now - wxBriefLastTick < 60000) return;
+    wxBriefLastTick = now;
+    wxBriefTick();
+  }
+
+  function wxBriefTick() {
+    var w = wxRead();
+    if (!w.on || w.lat === null || w.lon === null) return;
+    var h = new Date().getHours();
+    if (h < 8 || h >= 12) return;   // outside the morning window
+    if (!(window.orosNotifs && typeof window.orosNotifs.emit === "function")) return;
+
+    var data = null, cache = null;
+    try {
+      data  = JSON.parse(localStorage.getItem("oros-weatherapp-data"));
+      cache = JSON.parse(localStorage.getItem("oros-weatherapp-cache"));
+    } catch (e) { return; }
+    if (!data || !Array.isArray(data.cities) || !cache) return;
+
+    var best = null, bestDist = Infinity;
+    for (var i = 0; i < data.cities.length; i++) {
+      var c = data.cities[i];
+      if (typeof c.lat !== "number" || typeof c.lon !== "number") continue;
+      var d = Math.abs(c.lat - w.lat) + Math.abs(c.lon - w.lon);
+      if (d < bestDist) { bestDist = d; best = c; }
+    }
+    if (!best || bestDist >= 0.15) return;
+    var p = cache[best.id];
+    if (!p || !p.current || !Array.isArray(p.daily) || !p.daily.length) return;
+
+    var code = Number(p.current.code) || 0;
+    var maxPop = 0, dmax = null, dmin = null;
+    p.daily.forEach(function (dd) {
+      if (dd.pop > maxPop) maxPop = dd.pop;
+      if (dd.max !== null && (dmax === null || dd.max > dmax)) dmax = dd.max;
+      if (dd.min !== null && (dmin === null || dd.min < dmin)) dmin = dd.min;
+    });
+    var en, el;
+    if (code >= 95) {
+      en = "Storms around — take cover"; el = "Καταιγίδες — απόφυγε την έκθεση";
+    } else if (code === 45 || code === 48) {
+      en = "Fog patches — slow down"; el = "Ομίχλη — προσοχή στην οδήγηση";
+    } else if (maxPop >= 60 || (code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+      en = "Umbrella day"; el = "Μέρα για ομπρέλα";
+    } else if (p.current.uv !== null && p.current.uv >= 6) {
+      en = "High UV — wear sunscreen"; el = "Υψηλή UV — αντηλιακό";
+    } else if (dmax !== null && dmax >= 33) {
+      en = "Hot one — stay hydrated"; el = "Ζέστη — πίνε νερό";
+    } else if (dmin !== null && dmin <= 0) {
+      en = "Freezing temperatures"; el = "Παγωμένες θερμοκρασίες";
+    } else if (dmax !== null && dmin !== null && (dmax - dmin) > 12) {
+      en = "Layer up — big day-night swing"; el = "Πάρε ζακέτα — μεγάλη διακύμανση";
+    } else {
+      return;   // pleasant day — no briefing noise
+    }
+    var wbEl = (localStorage.getItem("oros-lang") === "el");
+
+    window.orosNotifs.emit({
+      ns: "weather",
+      key: "brief-" + sysYmd(),
+      type: "reminder",
+      title: best.label || (wbEl ? "Καιρός" : "Weather"),
+      body: wbEl ? el : en,
+      deepLink: "weather:open"
+    });
   }
 
   function wxGeocodeCity(name) {
@@ -3253,6 +3414,21 @@
   // overlay, Dismiss button, 30s hard cap (ringing forever with
   // nobody home helps nobody). Inline styles, palette vars only.
   function alarmNotify(a) {
+    // Wave 6 — the alarm ALSO lands in the unified inbox (badge +
+    // history): an ignored or snoozed alarm must never evaporate.
+    // Suppression (emit → null: toggles/quiet/dedup) does NOT
+    // suppress the overlay — the persistent overlay is the alarm's
+    // primary channel and stands on its own.
+    if (window.orosNotifs && typeof window.orosNotifs.emit === "function") {
+      window.orosNotifs.emit({
+        ns: "time",
+        key: "alarm-" + a.id + "-" + sysYmd(),
+        type: "alarm",
+        title: window.t("alarm.title"),
+        body: (a.label || window.t("alarm.title")),
+        deepLink: "time:alarms"
+      });
+    }
     alarmStopRing();
     var el = document.createElement("div");
     el.id = "alarm-toast";
@@ -3823,6 +3999,59 @@
       deepLink: "cycle:pred:" + ymd
     };
   }
+  
+    // Wave 7 — Todo due reminders (#TD4). Shell-side scan of
+  // "oros-todo-data" (same doctrine as cycleShellCheck: app stays
+  // untouched, works with the app closed, dedup key carries the
+  // day + count so a GROWING backlog re-fires — new information,
+  // not spam). Criterion mirrors overdueCount(): !done && due <=
+  // today (ISO string compare). Suppression = the "todo" toggle
+  // in Settings → Notifications; no in-app pref by design.
+  var TODO_DATA_KEY = "oros-todo-data";
+
+  function todoCheckTick() {
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(TODO_DATA_KEY)); }
+    catch (e) { return; }
+    if (!raw || !Array.isArray(raw.lists)) return;
+
+    var today = sysYmd();
+    var due = 0, earliest = null, earliestList = null;
+    raw.lists.forEach(function (l) {
+      if (!l || !Array.isArray(l.items)) return;
+      l.items.forEach(function (it) {
+        if (!it || it.done || typeof it.due !== "string") return;
+        if (it.due <= today) {
+          due++;
+          if (earliest === null || it.due < earliest) {
+            earliest = it.due;
+            earliestList = l.id;
+          }
+        }
+      });
+    });
+    if (due === 0) return;
+
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
+
+    var title = window.t("app.todo");
+    if (title === "app.todo") title = "To-Do";          // missing-key fallback
+    var el = state.lang === "el";
+    N.emit({
+      ns: "todo",
+      key: "due-" + today + "-" + due,
+      type: "due",
+      title: title,
+      body: el
+        ? (due + (due === 1 ? " εργασία λήγει ή έχει λήξει"
+                            : " εργασίες λήγουν ή έχουν λήξει"))
+        : (due + (due === 1 ? " task is due or overdue"
+                            : " tasks are due or overdue")),
+      deepLink: earliestList ? "todo:" + earliestList : ""
+    });
+  }
+
 
   // Wave 4 — Cycle prediction reminder. The running Cycle iframe
   // owns the DECISION (prefs + prediction math + i18n strings — all
@@ -3839,6 +4068,7 @@
   }
 
   function cycleCheckTick() {
+    todoCheckTick();                  // Wave 7 — rides the same 60s throttle
     var payload = null;
     if (state.running && state.running.id === "cycle") {
       // App open: the iframe owns the decision (prefs + math +
@@ -4134,6 +4364,70 @@
       if (id) sessionStorage.removeItem("oros-mood-open");
       return id || null;
     } catch (e) { return null; }
+  };
+
+  // Wave 6/#T3 — Time deep-link bridge (πρωτότυπο: Cycle/Mood).
+  // Payload = pane name ("alarms") — the app receiver maps it to
+  // its own tab. App ανοιχτό → live push στο iframe· κλειστό →
+  // stage στο sessionStorage (device-local, swept από το factory
+  // reset, δεν ταξιδεύει στο sync ποτέ) + άνοιγμα app.
+  window.__orosOpenTime = function (pane) {
+    if (typeof pane !== "string" || !pane) return;
+    if (state.running && state.running.id === "time") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosTimeOpen === "function") {
+          f.contentWindow.__orosTimeOpen(pane);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-time-open", pane); } catch (e) {}
+    openAppById("time");
+  };
+
+  // Consumed by time.js at boot — one-shot take (ίδιο μάθημα με
+  // cycle/mood: αν το receiver λείπει από το app, το pending pane
+  // απλά αγνοείται — τίποτα δεν σπάει).
+  window.__orosTimeTakePending = function () {
+    try {
+      var pane = sessionStorage.getItem("oros-time-open");
+      if (pane) sessionStorage.removeItem("oros-time-open");
+      return pane || null;
+    } catch (e) { return null; }
+  };
+  
+  
+  // Wave 7/#TD4 — To-Do deep-link bridge (same pattern as
+  // Cycle/Mood/Time). Payload = list id. App ανοιχτό → live push
+  // στο iframe· κλειστό → staging στο sessionStorage + άνοιγμα app
+  // (ο receiver στο EOF του todo.js το καταναλώνει one-shot —
+  // ίδιο μάθημα με το time.js, δεν χρειάζεται TakePending εκτος
+  // shell).
+  window.__orosOpenTodo = function (listId) {
+    if (typeof listId !== "string" || !listId) return;
+    if (state.running && state.running.id === "todo") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosTodoOpen === "function") {
+          f.contentWindow.__orosTodoOpen(listId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-todo-open", listId); } catch (e) {}
+    openAppById("todo");
+  };
+
+  // Weather unification — deep-link bridge (pattern: Time). The app
+  // has no panes to target: weather notifications are informational
+  // (fetch failures / daily briefing), a plain open is all the
+  // deepLink "weather:open" ever asks for.
+  window.__orosOpenWeather = function () {
+    if (state.running && state.running.id === "weather") return;
+    openAppById("weather");
   };
 
   // Kanban deep-link bridge (Calendar feed rows → συγκεκριμένη κάρτα).
