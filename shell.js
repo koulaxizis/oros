@@ -2,18 +2,22 @@
 // orOS Core — Shell logic
 // Sections:
 //   1. State, skin registry, wallpaper registry, icon constants
-//   (appended strata v0.13–v0.18.1: sync dot, global shortcuts,
-//    Info modal, weather chip, taskbar toast — see bottom sections)
 //   2. Preferences (skin, language, theme, wallpaper, auto-backup)
 //   3. Language apply
 //   4. Theme apply
-//   5. Skin apply
-//   5b. Wallpaper apply
-//   5c. Auto-backup (rolling local snapshots)
-//   6. Clock (24h)
+//   5. Skin apply · 5b. Wallpaper · 5c. Auto-backup snapshots ·
+//       5d. Backup folder (File System Access API)
+//   6. Clock (24h) — hosts ALL throttled engine ticks (weather,
+//       alarms, calendar/mood/cycle/todo/quote scans, notifs sweep)
 //   7. PWA: install flow + version toast
-//   8. Apps loading & menu rendering (+ appearance + install/SYNC)
-//   9. Sync UI & shell slice registration
+//   8. Apps loading & menu rendering
+//   9. Sync UI & shell slice registration · 9f. Files disk slice ·
+//       9g. Notifications settings (module-driven)
+//   9b. Taskbar sync dot · 9c. Shortcuts + Info modal + factory
+//       reset · 9d. Weather widget · 9e. Alarm engine ·
+//       9e2. Calendar reminders + shell-side app scans ·
+//       deep-link bridges (Contacts/Cycle/Mood/Time/Todo/Quote/
+//       Weather/Maps/Kanban/Calendar)
 //  10. App opening / return (fullscreen takeover)
 //  11. Menu open/close
 //  12. Wiring & boot
@@ -28,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -141,7 +145,10 @@
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
     contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>',
-    bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>'
+    bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>',
+    maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
+    writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -434,7 +441,7 @@
     var okBtn = document.createElement("button");
     okBtn.type = "submit";
     okBtn.style.cssText =
-      "border:1px solid #e06c75;border-radius:8px;background:#e06c75;" +
+      "border:1px solid var(--danger);border-radius:8px;background:var(--danger);" +
       "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
     okBtn.textContent = window.t("sync.restore");
     btnRow.appendChild(okBtn);
@@ -664,15 +671,24 @@
       if (legacy) legacy.textContent =
         hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
     }
-      autoSyncDot();          // v0.18.0: piggybacks the clock tick
-  wxRenderChip();         // v0.18.0: weather chip, cheap paint only
-  alarmTick();            // E1: shell-owned alarm engine tick
-  calRemTickThrottled();  // Wave 3: calendar reminders (30s throttle)
-  moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
-  cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
-  notifTickThrottled();   // Wave 1A: notification sweep (60s throttle)
-  wxBriefTickThrottled(); // Weather unification: daily morning briefing (60s throttle)
+    autoSyncDot();              // v0.18.0: piggybacks the clock tick
+    wxRenderChip();             // v0.18.0: weather chip, cheap paint only
+    alarmTick();                // E1: shell-owned alarm engine tick
+    calRemTickThrottled();      // Wave 3: calendar reminders (30s throttle)
+    moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
+    cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
+    notifTickThrottled();       // Wave 1A: notification sweep (60s throttle)
+    wxBriefTickThrottled();     // Weather unification: daily morning briefing (60s throttle)
+    quoteCheckTickThrottled();  // Wave 13: Quote due-date reminders (60s throttle)
   }
+
+  function quoteCheckTickThrottled() {
+    var now = Date.now();
+    if (now - (quoteCheckLastTick || 0) < 60000) return;
+    quoteCheckLastTick = now;
+    quoteCheckTick();
+  }
+  var quoteCheckLastTick = 0;
 
   // ---------- 7. PWA ----------
   function setupInstallFlow() {
@@ -706,7 +722,12 @@
     // + toast + (permission granted) OS notification. The old
     // #version-toast DOM stays ONLY as the stale-bundle fallback —
     // hence scToast's stacking hack for it is kept too.
-    if (window.orosNotifs && typeof window.orosNotifs.emit === "function") {
+    // IN-3: module present but init still pending (retry loop)?
+    // Fall through to the legacy toast — the notice is never lost.
+    if (window.orosNotifs &&
+        typeof window.orosNotifs.emit === "function" &&
+        typeof window.orosNotifs.getState === "function" &&
+        window.orosNotifs.getState().ready) {
       window.orosNotifs.emit({
         ns: "system",
         key: "ver-" + APP_VERSION,
@@ -1242,7 +1263,7 @@
     tt.id = "sc-toast";
     tt.setAttribute("role", "status");
     tt.textContent = text;
-    var borderColor = kind === "err" ? "#e06c75"
+    var borderColor = kind === "err" ? "var(--danger)"
                     : kind === "ok" ? "var(--accent)"
                     : "var(--border)";
     // v0.18.2 — Linux convention: OS toasts dock TOP-RIGHT, just below
@@ -1431,7 +1452,7 @@
 
     var errBox = document.createElement("div");
     errBox.style.cssText =
-      "font-size:12px;color:#e06c75;min-height:18px;margin:2px 0 8px;";
+      "font-size:12px;color:var(--danger);min-height:18px;margin:2px 0 8px;";
     form.appendChild(errBox);
 
     var btnRow = document.createElement("div");
@@ -2195,7 +2216,7 @@
     form.appendChild(rememberRow);
 
     var errBox = document.createElement("div");
-    errBox.style.cssText = "font-size:12px;color:#e06c75;min-height:18px;margin:2px 0 8px;";
+    errBox.style.cssText = "font-size:12px;color:var(--danger);min-height:18px;margin:2px 0 8px;";
     form.appendChild(errBox);
 
     var btnRow = document.createElement("div");
@@ -2365,7 +2386,7 @@
   function scSnapshot() {
     // Honest toast: a snapshot only exists when auto-backup is ON.
     if (state.autoexport === "off") {
-      setSyncMsgRaw("err", window.t("sync.autoexport.off"));
+      setSyncMsgRaw("err", window.t("sync.err.autobackup.off"));
       return;
     }
     // Honest feedback: the "saved" toast fires INSIDE maybeAutoExport,
@@ -2505,8 +2526,8 @@
       if (!armed) {
         armed = true;
         btn.textContent = window.t("sc.reset.confirm");
-        btn.style.borderColor = "#e06c75";
-        btn.style.color = "#e06c75";
+        btn.style.borderColor = "var(--danger)";
+        btn.style.color = "var(--danger)";
         hint = document.createElement("div");
         hint.style.cssText =
           "font-size:11px;line-height:1.5;color:var(--text-dim);" +
@@ -2756,6 +2777,7 @@
       chip = document.createElement("button");
       chip.id = "wx-chip";
       chip.type = "button";
+      chip.style.minHeight = "44px";   // SH-R6: Part VIII doctrine (touch targets)
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
         // Inside Weather → back to desktop. Inside ANY OTHER app →
@@ -2784,6 +2806,9 @@
       chip.setAttribute("data-state", st);
       chip.innerHTML = html;
       chip.title = title;
+      chip.setAttribute("aria-label", title);   // SH-R11: chip content is icon +
+                                                // text, screen readers need the
+                                                // state spoken (offline/stale/on)
     }
 
     // OFFLINE first: slashed cloud, NO temperature — always
@@ -3484,7 +3509,7 @@
     btn.type = "button";
     btn.textContent = window.t("alarm.dismiss");
     btn.style.cssText =
-      "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft);" +
+      "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft, rgba(109,74,255,0.1));" +
       "color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;" +
       "border-radius:7px;padding:7px 12px;cursor:pointer;";
     btn.addEventListener("click", alarmStopRing);
@@ -3892,7 +3917,7 @@
     }
   }
 
-    var moodCheckInLastTick = 0;
+  var moodCheckInLastTick = 0;
   function moodCheckInTickThrottled() {
     var now = Date.now();
     if (now - moodCheckInLastTick < 60000) return; // 1-minute throttle
@@ -4052,6 +4077,61 @@
     });
   }
 
+  // Wave 13 — Quote due-date reminders. Shell-side scan of
+  // "oros-quote-data" for sent/accepted quotes with due dates
+  // within ≤2 days or overdue. Drafts/expired/rejected excluded.
+  // Dedup key "due-<ymd>-<count>" prevents spam while growing
+  // backlogs re-trigger (new information each time).
+  var QUOTE_DATA_KEY = "oros-quote-data";
+
+  function quoteCheckTick() {
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(QUOTE_DATA_KEY)); }
+    catch (e) { return; }
+    if (!raw || !Array.isArray(raw.quotes)) return;
+
+    var today = sysYmd();
+    var due = 0, earliestId = null, earliestDue = null;
+    raw.quotes.forEach(function (q) {
+      if (!q || !q.id || typeof q.dueDate !== "string") return;
+      // Filter: only sent/accepted quotes trigger reminders
+      if (q.status !== "sent" && q.status !== "accepted") return;
+      
+      // Horizon: today + 2 days (≤2 days or overdue)
+      var hd = new Date();
+      hd.setDate(hd.getDate() + 2);
+      var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+      var horizon = hd.getFullYear() + "-" + p2(hd.getMonth() + 1) + "-" + p2(hd.getDate());
+      
+      if (q.dueDate <= horizon) {
+        due++;
+        if (earliestDue === null || q.dueDate < earliestDue) {
+          earliestId = q.id;
+          earliestDue = q.dueDate;
+        }
+      }
+    });
+    if (due === 0) return;
+
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
+
+    var title = window.t("app.quote");
+    if (title === "app.quote") title = "Quote";         // missing-key fallback
+    var el = state.lang === "el";
+    N.emit({
+      ns: "quote",
+      key: "due-" + today + "-" + due,
+      type: "due",
+      title: title,
+      body: el
+        ? (due + (due === 1 ? " προσφορά λήγει ή έχει λήξει"
+                            : " προσφορές λήγουν ή έχουν λήξει"))
+        : (due + (due === 1 ? " quote is due or overdue"
+                            : " quotes are due or overdue")),
+      deepLink: earliestId ? "quote:" + earliestId : ""
+    });
+  }
 
   // Wave 4 — Cycle prediction reminder. The running Cycle iframe
   // owns the DECISION (prefs + prediction math + i18n strings — all
@@ -4214,6 +4294,7 @@
       document.getElementById("app-menu").classList.add("open");
       return;
     }
+    setSyncMsgRaw("dim", window.t("sync.working"));
     setSyncDot("syncing");
     window.orosSync.pull()
       .then(function (result) {
@@ -4421,6 +4502,26 @@
     openAppById("todo");
   };
 
+  // Wave 13 — Quote deep-link bridge (pattern: Todo/Time).
+  // Payload = quote id. App ανοιχτό → live push στο iframe· κλειστό
+  // → staging στο sessionStorage + άνοιγμα app (receiver στο EOF
+  // του quote.js καταναλώνει one-shot).
+  window.__orosOpenQuote = function (quoteId) {
+    if (typeof quoteId !== "string" || !quoteId) return;
+    if (state.running && state.running.id === "quote") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosQuoteOpen === "function") {
+          f.contentWindow.__orosQuoteOpen(quoteId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-quote-open", quoteId); } catch (e) {}
+    openAppById("quote");
+  };
+
   // Weather unification — deep-link bridge (pattern: Time). The app
   // has no panes to target: weather notifications are informational
   // (fetch failures / daily briefing), a plain open is all the
@@ -4428,6 +4529,47 @@
   window.__orosOpenWeather = function () {
     if (state.running && state.running.id === "weather") return;
     openAppById("weather");
+  };
+
+  // Maps deep-link bridge (pattern: Contacts/Cycle/Mood). Payload:
+  // lat/lon numbers + optional label. App ανοιχτό → live push στο
+  // iframe· κλειστό → stage στο sessionStorage (device-local, swept
+  // από το factory reset, δεν ταξιδεύει στο sync ποτέ) + άνοιγμα
+  // app. Wave 6 consumers: Calendar «Πλοήγηση» από event,
+  // Bookmarks/Contacts place pins. maps.js προσφέρει __orosMapsOpen
+  // (receiver) και καταναλώνει το pending στο boot.
+  window.__orosOpenMaps = function (lat, lon, label) {
+    if (typeof lat !== "number" || typeof lon !== "number" ||
+        isNaN(lat) || isNaN(lon)) return;
+    if (state.running && state.running.id === "maps") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosMapsOpen === "function") {
+          f.contentWindow.__orosMapsOpen({
+            lat: lat, lon: lon, label: (typeof label === "string") ? label : ""
+          });
+          return;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-maps-open", JSON.stringify({
+        lat: lat, lon: lon, label: (typeof label === "string") ? label : ""
+      }));
+    } catch (e) {}
+    openAppById("maps");
+  };
+
+  // Consumed by maps.js at boot — one-shot take (ίδιο μάθημα με
+  // contacts/cycle/mood: αν το take λείπει από το app, το pending
+  // payload απλά αγνοείται — τίποτα δεν σπάει).
+  window.__orosMapsTakePending = function () {
+    try {
+      var raw = sessionStorage.getItem("oros-maps-open");
+      if (raw) sessionStorage.removeItem("oros-maps-open");
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
   };
 
   // Kanban deep-link bridge (Calendar feed rows → συγκεκριμένη κάρτα).
@@ -4521,7 +4663,14 @@
   initSyncIntegration();
   setInterval(renderClock, 1000);
   renderClock();
-  checkVersionToast();
+  // IN-3: defer past shell boot — notifications.js loads AFTER
+  // shell.js, so a synchronous call here always saw the module
+  // missing and the Wave 6 unified path was dead code. "load" is the
+  // safe signal: every classic script (incl. notifications.js) has
+  // executed by then. The ready-guard inside checkVersionToast
+  // covers the stale-bundle case; the legacy toast is the fallback.
+  if (document.readyState === "complete") checkVersionToast();
+  else window.addEventListener("load", function () { checkVersionToast(); });
 
   // D1: Android evicts non-persistent Cache Storage under disk
   // pressure — desktop doesn't. This is why offline "broke by itself"

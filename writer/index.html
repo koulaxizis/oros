@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Writer</title>
+  <link rel="stylesheet" href="writer.css">
+</head>
+<body>
+  <div id="w-app" class="w-app">
+
+    <!-- TAB BAR (JS renders tabs + new-tab button) -->
+    <div class="tab-bar" id="tab-bar" role="tablist"></div>
+
+    <!-- TOOLBAR (buttons EMPTY per R9 — JS injects SVG icons) -->
+    <div class="main-toolbar" id="main-toolbar">
+      <div class="toolbar-group toolbar-left">
+        <button type="button" class="tb-btn" id="btn-undo" data-i18n-title="tt.undo"></button>
+        <button type="button" class="tb-btn" id="btn-redo" data-i18n-title="tt.redo"></button>
+        <span class="tb-sep"></span>
+        <select id="styles-select" class="styles-select" data-i18n-title="tt.styles">
+          <option value="p" data-i18n="style.p"></option>
+          <option value="h1" data-i18n="style.h1"></option>
+          <option value="h2" data-i18n="style.h2"></option>
+          <option value="h3" data-i18n="style.h3"></option>
+          <option value="h4" data-i18n="style.h4"></option>
+          <option value="blockquote" data-i18n="style.quote"></option>
+          <option value="pre" data-i18n="style.code"></option>
+        </select>
+      </div>
+
+      <div class="toolbar-group toolbar-center">
+        <button type="button" class="tb-btn" id="btn-bold" data-i18n-title="tt.bold"></button>
+        <button type="button" class="tb-btn" id="btn-italic" data-i18n-title="tt.italic"></button>
+        <button type="button" class="tb-btn" id="btn-underline" data-i18n-title="tt.underline"></button>
+        <button type="button" class="tb-btn" id="btn-strike" data-i18n-title="tt.strike"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-indent" data-i18n-title="tt.indent"></button>
+        <button type="button" class="tb-btn" id="btn-outdent" data-i18n-title="tt.outdent"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-bullets" data-i18n-title="tt.bullets"></button>
+        <button type="button" class="tb-btn" id="btn-numbers" data-i18n-title="tt.numbers"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-align-left" data-i18n-title="tt.alignLeft"></button>
+        <button type="button" class="tb-btn" id="btn-align-center" data-i18n-title="tt.alignCenter"></button>
+        <button type="button" class="tb-btn" id="btn-align-right" data-i18n-title="tt.alignRight"></button>
+        <button type="button" class="tb-btn" id="btn-align-justify" data-i18n-title="tt.alignJustify"></button>
+      </div>
+
+      <div class="toolbar-group toolbar-right">
+        <button type="button" class="tb-btn" id="btn-hr" data-i18n-title="tt.hr"></button>
+        <button type="button" class="tb-btn" id="btn-page-break" data-i18n-title="tt.pageBreak"></button>
+      </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="rich-wrapper" id="rich-wrapper">
+      <div class="rich-editor" id="rich-editor" contenteditable="true" data-placeholder=""></div>
+    </div>
+
+  </div>
+  <script src="writer.js"></script>
+</body>
+</html>

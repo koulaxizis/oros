@@ -22,6 +22,13 @@
 
   <!-- ============ Shell ============ -->
   <link rel="stylesheet" href="style.css?v=0.35.22">
+
+  <!-- IN-2: without JS the splash script never runs, so the splash
+       would sit (z-index 9999, opaque) FOREVER on top of the
+       noscript message. Pure-HTML land must hide it too. -->
+  <noscript>
+    <style>#oro-splash { display: none !important; }</style>
+  </noscript>
 </head>
 <body>
 
@@ -41,7 +48,7 @@
        update check. The broker's update-path reload bypasses this
        splash entirely via the "oros-skip-splash" flag. Survives
        even if shell.js fails to load (see onerror below). -->
-        <div id="oro-splash" role="status"
+  <div id="oro-splash" role="status"
        style="position:fixed;inset:0;z-index:9999;background:#14120d;color:#e8eaf0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;transition:opacity .4s;">
     <span id="oro-splash-text">Welcome to orOS. Searching for updates, please wait…</span>
   </div>
@@ -57,6 +64,17 @@
     // the splash is the only surface that exists before shell.js.
     window.addEventListener("error", function (ev) {
       if (done) return;
+      // IN-4: capture=true — resource load failures (script/link)
+      // never bubble: the error dies on the element unless we listen
+      // in the CAPTURE phase. ev.target (not ev.message) identifies
+      // the failed asset. Decorative assets (icons, manifest) never
+      // count as boot failures — a missing favicon is not a broken OS.
+      var failedSrc = "";
+      if (ev && ev.target && ev.target !== window &&
+          (ev.target.tagName === "SCRIPT" || ev.target.tagName === "LINK")) {
+        failedSrc = String(ev.target.src || ev.target.href || "");
+        if (!failedSrc || /icon|manifest/i.test(failedSrc)) return;
+      }
       // IP1: a throw INSIDE this handler (blocked localStorage →
       // SecurityError in hardened browsers) fires ANOTHER window
       // error event → this listener again → recursion. Diagnostics
@@ -64,9 +82,13 @@
       var lang = "en";
       try { lang = localStorage.getItem("oros-lang") || "en"; } catch (e0) {}
       if (txt) {
+        var why;
+        if (ev.message) why = ev.message;
+        else if (failedSrc) why = "failed to load " + failedSrc.split("/").pop();
+        else why = (lang === "el") ? "άγνωστο" : "unknown";
         txt.textContent = (lang === "el")
-          ? "Σφάλμα εκκίνησης: " + (ev.message || "άγνωστο") + " — δοκίμασε hard refresh."
-          : "Startup error: " + (ev.message || "unknown") + " — try a hard refresh.";
+          ? "Σφάλμα εκκίνησης: " + why + " — δοκίμασε hard refresh."
+          : "Startup error: " + why + " — try a hard refresh.";
         txt.style.color = "#e06c75";
         // IP2: keep the message readable. Without this, the load+700ms
         // hide() erases it almost instantly — and the desktop behind
@@ -74,7 +96,7 @@
         // hideNotBefore is hoisted (var) with `done` below — safe.
         hideNotBefore = Date.now() + 45000;
       }
-    });
+    }, true);
     // (β) update-triggered reload: NO second splash — the user was
     // already looking at this same screen. The broker sets the flag
     // right before reloading (controllerchange); consume it here.
@@ -90,6 +112,7 @@
     try {
       if (localStorage.getItem("oros-lang") === "el" && txt) {
         txt.textContent = "Καλώς ήρθατε στο orOS. Γίνεται αναζήτηση ενημερώσεων, παρακαλώ περιμένετε…";
+        document.documentElement.lang = "el";
       }
     } catch (e) {}
 

@@ -26,15 +26,15 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote'];
 
   // ——— Runtime state ———
+  // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
+  // dead fields (sweeps piggyback the shell clock tick; dedup is
+  // the dedupKey scan in emitCandidate).
   let state = {
     ready: false,
     slice: null,
-    intervalId: null,
-    lastFireTimestamp: {},     // dedupKey → last firedAt
-    pendingToasts: [],         // queue for micro-cache
     audioCtx: null
   };
 
@@ -156,8 +156,6 @@
     state.slice.settings.settingsRev = (state.slice.settings.settingsRev || 0) + 1;
     noteChange();          // user action → sync engine must know
     saveSliceThrottled(500);
-    // Reactivity: re-apply CSS vars immediately
-    if (key === 'position' || key === 'style') applyToastStyle();
   }
   
     // ===== SCHEDULER ENGINE — HYBRID PULL-DESIGN =====
@@ -167,7 +165,6 @@
     
     log('Boot sweep starting...');
     const now = Date.now();
-    const lastSweep = state.slice.meta.lastSweep || 0;
     
     // Catch-up: fire everything missed since last boot
     const missedItems = state.slice.items.filter(item => {
@@ -280,15 +277,6 @@
   
     // ===== TOAST EMITTER — CENTRALIZED =====
 
-  function applyToastStyle() {
-    // Set CSS custom vars for toast zone
-    const pos = getSetting('position', 'top-right');
-    const style = getSetting('style', 'oros');
-    
-    document.documentElement.style.setProperty('--notif-position', pos);
-    document.documentElement.style.setProperty('--notif-style', style);
-  }
-
   function fireToast(item, isCatchUp = false) {
     if (!state.ready) return;
     
@@ -368,8 +356,11 @@
       if (toast.parentNode) toast.remove();
     }, duration);
     
-    // Sound (if enabled)
-    if (soundType !== 'none' && SOUNDS[soundType]) {
+    // Sound (if enabled) — NOT-R4: transient toasts are instant
+    // feedback to a click the user JUST made; a chime on "Working…"
+    // is noise, not information.
+    if (soundType !== 'none' && SOUNDS[soundType] &&
+        item.type !== 'transient') {
       playTone(SOUNDS[soundType], 'sine', 0.2);
     }
     
@@ -413,26 +404,32 @@
   // namespace. Apps without a bridge yet (calendar, Wave 1B+):
   // navigation no-ops gracefully, the badge/inbox still works.
   var DL_BRIDGES = {
-    contacts: function (id) { window.__orosOpenContact(id); },
-    cycle:    function (id) { window.__orosOpenCycle(id); },
-    mood:     function (id) { window.__orosOpenMood(id); },
+    // NOT-R2: uniform typeof guards — a stale cached shell.js must
+    // no-op a deep link gracefully, never throw. (habits/quote already
+    // had the guard; the rest were one TypeError away from a dead click.)
+    contacts: function (id) { if (typeof window.__orosOpenContact === 'function') window.__orosOpenContact(id); },
+    cycle:    function (id) { if (typeof window.__orosOpenCycle === 'function') window.__orosOpenCycle(id); },
+    mood:     function (id) { if (typeof window.__orosOpenMood === 'function') window.__orosOpenMood(id); },
     // Wave 1B — "calendar:<evId>:<YYYY-MM-DD>": TWO-part payload
     // (event id + occurrence date). The shell bridge accepts both
     // (evId, ymd) args and the full string; we pass the pair.
-    calendar: function (evId, ymd) { window.__orosOpenCalendar(evId, ymd); },
+    calendar: function (evId, ymd) { if (typeof window.__orosOpenCalendar === 'function') window.__orosOpenCalendar(evId, ymd); },
     // Wave 6/#T3 — "time:<pane>": alarm/timer notifications land on
     // the corresponding tab of the Time app.
-    time:     function (pane) { window.__orosOpenTime(pane); },
+    time:     function (pane) { if (typeof window.__orosOpenTime === 'function') window.__orosOpenTime(pane); },
     // Wave 7/#TD4 — "todo:<listId>": due-task notifications land
     // on that list's tab in the To-Do app.
-    todo:     function (listId) { window.__orosOpenTodo(listId); },
+    todo:     function (listId) { if (typeof window.__orosOpenTodo === 'function') window.__orosOpenTodo(listId); },
     // Wave 8/#TH2 — "habits:<offsetDays>": check-in reminders navigate
     // the week view to the relevant period (0 = current week anchor)
-    habits:   function (offStr) { window.__orosHabitsOpen(offStr); },
+    habits:   function (offStr) { if (typeof window.__orosOpenHabits === 'function') window.__orosOpenHabits(offStr); },
     // Weather unification — "weather:open": informational notifications
     // (fetch failures / morning briefing). Payload-agnostic by design:
     // the app has no panes to target, a plain open is the whole job.
-    weather:  function () { window.__orosOpenWeather(); }
+    weather:  function () { if (typeof window.__orosOpenWeather === 'function') window.__orosOpenWeather(); },
+    // Wave 13 — "quote:<id>": due-date notifications open the quote
+    // in the editor. Guarded until the shell bridge ships.
+    quote:    function (id) { if (typeof window.__orosOpenQuote === 'function') window.__orosOpenQuote(id); }
   };
 
   function openTarget(item) {
@@ -462,9 +459,9 @@
 
   function getPositionStyles(position) {
     const map = {
-      'top-left': { top: '20px', left: '20px', right: 'auto' },
-      'top': { top: '20px', left: '50%', transform: 'translateX(-50%)', right: 'auto' },
-      'top-right': { top: '20px', right: '20px', left: 'auto' },
+      'top-left': { top: 'calc(48px + env(safe-area-inset-top,0px))', left: '20px', right: 'auto' },
+      'top': { top: 'calc(48px + env(safe-area-inset-top,0px))', left: '50%', transform: 'translateX(-50%)', right: 'auto' },
+      'top-right': { top: 'calc(48px + env(safe-area-inset-top,0px))', right: '20px', left: 'auto' },
       'right': { top: '50%', right: '20px', transform: 'translateY(-50%)', left: 'auto' },
       'bottom-right': { bottom: '20px', right: '20px', left: 'auto', top: 'auto' },
       'bottom': { bottom: '20px', left: '50%', transform: 'translateX(-50%)', right: 'auto', top: 'auto' },
@@ -540,7 +537,7 @@
     panel.id = 'oros-notif-panel';
     panel.style.cssText = `
       position: fixed;
-      top: 50px;
+      top: calc(58px + env(safe-area-inset-top,0px));
       right: 20px;
       width: 360px;
       max-height: 500px;
@@ -754,7 +751,6 @@
     // Pull-fed: save + repaint, deliberately NO noteChange().
     saveSliceNow();
     updateBadge();
-    applyToastStyle();
   }
   
     // ===== EMIT — the shell-side bridge (Wave 1B) =====
@@ -905,7 +901,6 @@
     // notifTickThrottled() (added in renderClock by the shell patch).
     // Until that patch is applied, the visibility hook alone keeps
     // sweeps alive (boot + every tab-visible).
-    applyToastStyle();
     log(`Module v${VERSION} initialized`);
   }
 
@@ -931,7 +926,8 @@
     // #bar-date. There is NO #oros-taskbar and NO #oros-clock.
     var bar = document.querySelector('.bar-right');
     if (!bar) {
-      setTimeout(ensureTaskbarBell, 100);   // shell hasn't painted yet
+      if (state._bellRetryTimer) clearTimeout(state._bellRetryTimer);
+      state._bellRetryTimer = setTimeout(ensureTaskbarBell, 100);
       return;
     }
     
@@ -946,7 +942,7 @@
     bellBtn.style.cssText =
       'background:none;border:none;color:var(--text);cursor:pointer;' +
       'position:relative;display:flex;align-items:center;justify-content:center;' +
-      'width:34px;height:34px;flex-shrink:0;';
+      'width:44px;height:44px;flex-shrink:0;';   // NOT-R1: Part VIII touch target
     
     bellBtn.addEventListener('click', function (e) {
       e.stopPropagation();   // never falls through to the outside-close handler
@@ -954,7 +950,7 @@
     });
     
     // Insert before #btn-lang (JS-injected widgets like the sync dot
-    // sit even earlier — final order: sync-dot, bell, lang, time, date)
+    // sit even earlier — final order: sync-dot, wx-chip, bell, lang, time, date)
     var lang = document.getElementById('btn-lang');
     if (lang && lang.parentNode === bar) {
       bar.insertBefore(bellBtn, lang);

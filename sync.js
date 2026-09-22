@@ -1,5 +1,9 @@
 // ============================================================
-// orOS Core v0.9.1 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// orOS Core v0.9.2 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// v0.9.2 — applyPayload unknown-slice carry: FRESH read-modify-write
+//   (parkRemote may have written the mailbox earlier in the SAME
+//   loop — a pre-loop snapshot would clobber that park, destroying
+//   another device's only surviving copy of its work).
 // v0.9.1 — CRITICAL: contentDownload no longer throws on 409
 //   (empty cloud). The eager !res.ok throw made every caller's
 //   status===409 branch unreachable: push-on-empty-cloud failed,
@@ -227,6 +231,10 @@
       })
       .catch(function (err) {
         console.warn("orOS sync: OAuth redirect handling failed:", err);
+        sessionStorage.removeItem("oros-pkce-verifier");   // SY-R4: failed
+                              // exchange leaves a dead verifier behind —
+                              // symmetric with the success path, and a
+                              // retry starts clean instead of stale.
         window.history.replaceState({}, "", "/");
         return false;
       });
@@ -584,7 +592,7 @@
   // dirty flag, that is exactly the reported offline-loss blind
   // spot: a device upgraded mid-session carries unpushed offline
   // edits with NO baseline yet. Such a local is NOT clean.
-  function baselineExists(name) {
+    function baselineExists(name) {
     var bl = readBaselines();
     var b = bl[name];
     return !(b === undefined || b === null);
@@ -698,9 +706,10 @@
           }
         } else {
           // Mergeless live slice: apply only the empty-local restore.
-          var cur = null;
-          try { cur = slices[name].get(); } catch (e) { cur = null; }
-          if (cur === null || cur === undefined) {
+          // (SY3: reuse the `local` snapshot read at the top of the
+          // flush — the second get() was leftover from an older shape
+          // and could theoretically race the first read.)
+          if (local === null || local === undefined) {
             slices[name].set(data);
             markDirty();
           }
@@ -959,7 +968,7 @@
   function debounceFire() {
     debounceTimer = null;
     if (!isDirty()) return;                      // already pushed elsewhere
-    if (reconcileInFlight || pushInFlight) {
+    if (reconcileInFlight || pushInFlight || pullInFlight) {
       // SP5: the timer is consumed but the engine is busy with
       // another flight — this raced edit's ONLY scheduled uploader
       // just vanished, stranding it for the interval (default
@@ -993,7 +1002,7 @@
   // failure surfaces at upload time.
   var PULL_TRUST_MS = 30000;
 
-  function ensureCloudReadable() {
+    function ensureCloudReadable() {
     if (Date.now() - lastSuccessfulPullAt < PULL_TRUST_MS) {
       return Promise.resolve();
     }
@@ -1005,7 +1014,13 @@
         // re-opens the exact Trap-3 hole this guard exists to close
         // (stale local passphrase + indeterminate cloud → overwrite).
         // Reject → the push refuses to run; the next attempt rechecks.
-        if (res.status === 409) return null;
+        // SY1: 409 IS conclusive — arm the trust window so pushes on
+        // a persistently empty cloud don't re-download every time
+        // (pull() already does this in its own empty branch).
+        if (res.status === 409) {
+          lastSuccessfulPullAt = Date.now();
+          return null;
+        }
         if (!res.ok) throw new Error("download failed: " + res.status);
         return res.text();
       })
@@ -1135,7 +1150,10 @@
     if (suspended) return;                      // factory reset owns the engine
     if (!isConnected() || !passphrase) return;
     if (!navigator.onLine) return;
-    if (reconcileInFlight || pushInFlight) return;
+    // SY-R1: a manual pull in flight is ALSO a busy engine — entering
+    // here made pull() reject ("pull already in flight") and surfaced
+    // a FALSE "fail" auto event on the sync dot. Skip silently instead.
+    if (reconcileInFlight || pushInFlight || pullInFlight) return;
 
     reconcileInFlight = true;
     emitAutoEvent("start", reason);
@@ -1436,13 +1454,18 @@
       }
     },
 
-        // Error mapping
-    errorKey: function (err) {
+          // Error mapping
+  errorKey: function (err) {
       var msg = (err && err.message) || "";
       var name = (err && err.name) || "";
       if (msg === "not-connected")  return "sync.err.notconnected";
       if (msg === "no-passphrase")  return "sync.err.nopass";
       if (msg === "wrong-passphrase") return "sync.err.passphrase";
+      // TR-R3 / SY-R3: healthy refusals (SP2 engine locks, factory
+      // reset suspension) are NOT failures — an honest "busy" message
+      // replaces the misleading generic "sync failed".
+      if (/already in flight/.test(msg)) return "sync.err.busy";
+      if (msg === "engine-suspended")   return "sync.err.suspended";
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
       if (name === "OperationError" || /OperationError/.test(msg)) return "sync.err.passphrase";
@@ -1485,6 +1508,11 @@
         .then(function (blobText) {
           if (!blobText) {
             setPassphrase(newPw, remember);
+            // SY2: symmetrical with the non-empty path — the local
+            // passphrase changed, so the local epoch advances. If a
+            // second device ever pushes a cloud blob carrying the
+            // OLD epoch, decryptBlob's mismatch check stays honest.
+            localStorage.setItem("oros-sync-pw-epoch", String(getWVEpoch() + 1));
             markDirty();
             return { ok: true, changed: true };
           }

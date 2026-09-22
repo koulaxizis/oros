@@ -801,7 +801,7 @@
     if (changed) {
       state.om = Date.now();
       save(); renderPaymentPresets();
-      showToast(t("toast.paypresets_saved"));
+      notifyTransient(t("toast.paypresets_saved"));
     }
   });
 
@@ -1119,7 +1119,7 @@
     state.om = Date.now();
     save(); scheduleRender();
     renderClientDisplay();
-    showToast(t("toast.client_saved"));
+    notifyTransient(t("toast.client_saved"));
   });
 
   $("dlg-client").addEventListener("close", function () {
@@ -1140,7 +1140,7 @@
       editCommitted();
     }
     save(); scheduleRender();
-    showToast(t("toast.client_deleted"));
+    notifyTransient(t("toast.client_deleted"));
     $("dlg-client").close();
   }
   
@@ -1167,7 +1167,7 @@
     state.templates.push(tp);
     state.om = Date.now();
     save();
-    showToast(t("toast.template_saved"));
+    notifyTransient(t("toast.template_saved"));
   }
 
   function openTemplateLibrary() {
@@ -1247,7 +1247,7 @@
     curIsDraft = true;
     loadOfferIntoEditor();
     switchTab("create");
-    showToast(t("toast.template_used"));
+    notifyTransient(t("toast.template_used"));
   }
 
   // ---------- 9. Λίστα προσφορών (list tab) ----------
@@ -1542,7 +1542,7 @@
     doc.setTextColor(0);
 
     doc.save((cur.num || "quote") + ".pdf");
-    showToast(t("toast.exported"));
+    notifyTransient(t("toast.exported"));
   }
 
   function printFallback() {
@@ -1620,6 +1620,17 @@
     el.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3500);
+  }
+
+  function notifyTransient(text) {
+    try {
+      var n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+      if (n && typeof n.transient === "function") {
+        n.transient({ ns: "quote", title: text });
+        return;
+      }
+    } catch (e) { /* cross-origin / stale bundle */ }
+    showToast(text);
   }
 
   // ---------- 12. Sync slice + palette ----------
@@ -1757,7 +1768,7 @@
     touch(cur);
     state.om = Date.now();
     save();
-    showToast(t("toast.saved"));
+    notifyTransient(t("toast.saved"));
   }
 
   function duplicateCurrent() {
@@ -1779,7 +1790,7 @@
     save();
     loadOfferIntoEditor();
     renderQuoteList();
-    showToast(t("toast.duplicated"));
+    notifyTransient(t("toast.duplicated"));
   }
 
   function deleteCurrent() {
@@ -1792,7 +1803,7 @@
     save();
     newDraft();
     renderQuoteList();
-    showToast(t("toast.deleted"));
+    notifyTransient(t("toast.deleted"));
   }
 
   function wire() {
@@ -1926,7 +1937,7 @@
     watchPalette();
 
     if (restoreDraftShelter()) {
-      showToast(t("toast.draft_restored"));
+      notifyTransient(t("toast.draft_restored"));
     } else if (state.activeQuoteId && quoteById(state.activeQuoteId)) {
       openQuote(state.activeQuoteId);
     } else {
@@ -1937,4 +1948,21 @@
   }
 
   boot();
+
+  // Wave 13 — deep-link receiver. Contract: __orosOpenQuote(id)
+  // in the shell pushes here for a running app; the sessionStorage
+  // staging key 'oros-quote-open' covers cold boots.
+  window.__orosQuoteOpen = function (quoteId) {
+    if (!quoteId) return;
+    try { openQuote(quoteId); switchTab("create"); } catch (e) {}
+  };
+  setTimeout(function () {
+    try {
+      var staged = sessionStorage.getItem("oros-quote-open");
+      if (staged) {
+        sessionStorage.removeItem("oros-quote-open");
+        window.__orosQuoteOpen(staged);
+      }
+    } catch (e) {}
+  }, 100);
 })();

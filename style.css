@@ -12,15 +12,23 @@
      3. Top bar (persistent, safe-area aware)
      4. Desktop
      5. Applications menu
-     5bis. Running app (fullscreen takeover)
+          5bis. Running app (fullscreen takeover)
+     6. (reserved — never assigned, numbering continuity)
      7. Appearance controls (swatches + theme toggle)
-        Wallpaper picker
+           Wallpaper picker
      8. Mobile-first adaptations
      9. Sync section (in menu)
     10. Version toast
    Appended blocks (bottom of file):
      v0.18.0 — folder-row fix · taskbar sync dot · Info modal ·
                weather chip
+     v0.18.2 — weather chip narrow-phone breakpoint (≤420px)
+     v0.27.04 — boot splash · Greek sync-label wrap · mobile
+               shortcut-row stacking
+     post-0.35 — #bar-time/#bar-date taskbar buttons · weather
+               city dialog · Wave-3 (Calendar) delegation note
+     kernel-audit — semantic tokens Σ2α (--danger/--ok/--warn) ·
+               z-index ladder documentation (splash 9999)
    ============================================================ */
 
 /* ---------- 0. Local fonts (Nunito, vendored) ---------- */
@@ -580,6 +588,7 @@ body {
   top: calc(40px + env(safe-area-inset-top, 0px)); left: 0; right: 0; bottom: 0;
   background: var(--bg-desktop);
   overflow-y: auto;
+  overscroll-behavior: contain;  /* Part VIII: no scroll chaining */
   transition: background 0.4s ease;
 }
 
@@ -588,8 +597,9 @@ body {
   position: fixed;
   top: calc(48px + env(safe-area-inset-top, 0px)); left: 12px;
   width: 320px;
-  max-height: calc(100vh - 120px - env(safe-area-inset-top, 0px));
+  max-height: calc(100dvh - 120px - env(safe-area-inset-top, 0px));
   overflow-y: auto;
+  overscroll-behavior: contain;  /* Part VIII: no scroll chaining */
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -762,7 +772,7 @@ body {
   padding-top: 6px;
 }
 .install-section .install-row {
-  min-height: 40px;
+  min-height: 44px;
   font-size: 13px;
   border: 1px solid var(--accent);
   color: var(--accent);
@@ -873,10 +883,10 @@ body {
 .sync-actions .menu-item {
   flex: 1;
   justify-content: center;
-  min-height: 38px;
+  min-height: 44px;
   font-size: 13px;
   border: 1px solid var(--border);
-  padding: 6px 8px;
+  padding: 8px 8px;
 }
 .sync-actions .menu-item:hover { background: var(--accent-soft); }
 
@@ -893,14 +903,14 @@ body {
 }
 .sync-pass input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 10px;
   font-size: 13.5px;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
   outline: none;
-  min-height: 38px;
+  min-height: 44px;
 }
 .sync-pass input:focus {
   border-color: var(--accent);
@@ -927,8 +937,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-dim);
-  width: 38px;
-  min-height: 38px;
+  width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -964,7 +974,7 @@ body {
   color: var(--text-dim);
 }
 .sync-msg.ok   { color: var(--accent-hover); }
-.sync-msg.err  { color: #e06c75; }
+.sync-msg.err  { color: var(--danger); }
 
 .sync-interval {
   display: flex;
@@ -979,9 +989,9 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 8px 8px;
   font-size: 12.5px;
-  min-height: 34px;
+  min-height: 44px;
 }
 
 .sync-hint {
@@ -1036,8 +1046,8 @@ body {
 .sync-interval .menu-item {
   width: auto;
   flex-shrink: 0;
-  min-height: 34px;
-  padding: 5px 12px;
+  min-height: 44px;
+  padding: 8px 12px;
   font-size: 12.5px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1072,9 +1082,9 @@ body {
 #sync-dot[data-state="locked"]  { background: transparent; border: 2px solid var(--text-dim); opacity: 0.8; }
 #sync-dot[data-state="idle"]    { background: var(--text-dim); opacity: 0.7; }
 #sync-dot[data-state="syncing"] { background: var(--accent); opacity: 1; animation: sync-pulse 1s ease infinite; }
-#sync-dot[data-state="synced"]  { background: #3fbf6f; opacity: 1; box-shadow: 0 0 0 3px var(--accent-soft); }
-#sync-dot[data-state="dirty"]   { background: #f28c5a; opacity: 1; }
-#sync-dot[data-state="err"]     { background: #e06c75; opacity: 1; }
+#sync-dot[data-state="synced"]  { background: var(--ok); opacity: 1; box-shadow: 0 0 0 3px var(--accent-soft); }
+#sync-dot[data-state="dirty"]   { background: var(--warn); opacity: 1; }
+#sync-dot[data-state="err"]     { background: var(--danger); opacity: 1; }
 
 /* ===== v0.18.0: Info modal (Ctrl+Alt+Shift+I) ===== */
 #sc-info-overlay {
@@ -1187,7 +1197,7 @@ dialog#wxcity {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 40px var(--shadow);
   padding: 16px;
   width: min(340px, calc(100vw - 32px));
   max-height: calc(100dvh - 40px);
@@ -1200,8 +1210,8 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 #wxc-input {
   width: 100%;
   min-width: 0;
-  min-height: 36px;
-  padding: 7px 10px;
+  min-height: 44px;
+  padding: 10px 10px;
   font-size: 13.5px;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -1220,10 +1230,11 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 .wxc-item {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   width: 100%;
+  min-height: 44px;
   background: transparent;
   border: none;
   padding: 8px 10px;
@@ -1245,7 +1256,7 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 .wxc-row { display: flex; gap: 8px; margin-top: 12px; }
 .wxc-btn {
   flex: 1;
-  min-height: 36px;
+  min-height: 44px;
   border-radius: 7px;
   font-size: 13px;
   font-weight: 700;
@@ -1283,7 +1294,7 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
   position: fixed;
   inset: 0;
   background: var(--bg);
-  z-index: 2000;               /* above everything: bar (1000), sc-overlay (1300) */
+  z-index: 9999;               /* matches the inline splash style (inline wins anyway) — nothing lives between 1450 and 10000 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1324,9 +1335,21 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 #bar-date:hover { background: var(--accent-soft); }
 
 /* ===== Z-index ladder (inline, shell.js) ===== */
-/* version-toast 1200 (CSS) · sc/info-overlay 1300 (CSS) ·
+/* Semantic tokens (Σ2, Bible §14): skin-neutral, same value in
+   every skin. Consumers: .sync-msg, #sync-dot, shell.js dialogs. */
+:root {
+  --danger: #e06c75;
+  --ok:     #87cf3e;
+  --warn:   #f28c5a;
+}
+
+/* Z-INDEX LADDER (canonical documentation):
+   version-toast 1200 (CSS) · sc/info-overlay 1300 (CSS) ·
    #sc-toast 1400 (inline) · #alarm-toast/#calrem-toast 1450 (inline) ·
-   splash 2000 (CSS). All inline values live in shell.js builders. */
+   splash 9999 (CSS + inline) ·
+   notifications.js module tier: toasts 10000 / inbox panel 10001 —
+   INTENTIONALLY above the splash: catch-up toasts must never fall
+   behind the boot splash (Σ1 decision β1 — Bible §13 amended, R23). */
 
 /* Narrow phones: same shrink the old #bar-clock got. A later rule
    at equal specificity wins — no need to touch the 480px block. */
@@ -1340,3 +1363,10 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
    shell selectors never reached this DOM; rescued only
    .ev-row[draggable] cursor → calendar.css Patch 1).
    ============================================================ */
+   
+   
+/* Authority guard: the HTML [hidden] attribute must always win over
+   any author display rule (e.g. #wxc-ac in the wxcity dialog).
+   Bible Part VII — now applied to the shell itself, not just app
+   stylesheets. (Σ-R4, resolved via notifications.js cross-check.) */
+[hidden] { display: none !important; }

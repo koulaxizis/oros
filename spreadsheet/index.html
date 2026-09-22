@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spreadsheet — orOS</title>
+<link rel="stylesheet" href="spreadsheet.css">
+</head>
+<body>
+<div id="app">
+  <header id="shead">
+    <div id="doc-title" data-i18n="title">Spreadsheet</div>
+    <div id="fx-wrap">
+      <span id="fx-ref" aria-live="polite">A1</span>
+      <span id="fx-mark" aria-hidden="true">ƒx</span>
+      <input id="fx-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+  </header>
+  <main id="grid-wrap" tabindex="-1">
+    <table id="grid"></table>
+  </main>
+  <footer id="sstat">
+    <span id="st-sel">A1</span>
+    <span id="st-note"></span>
+  </footer>
+</div>
+<script src="spreadsheet.js"></script>
+</body>
+</html>

@@ -3229,6 +3229,413 @@ Standing rule added to anti-hallucination doctrine:
   loadSlice() self-initializes appToggles.notes = true on existing
   slices — no migration step required. No DL_BRIDGES entry (by design:
   Notes emits carry no deepLink).
+  
+  ## Wave 12 — Unified Notifications: Contacts ✅
+
+**Date:** 2026-09-21 · **File:** contacts.js · **Status:** COMPLETE
+
+### What changed
+Contacts migrated fully to the orosNotifs unified notification
+system, following the exact Wave 11 (Notes) pattern.
+
+### Migration details
+- **Helpers added:** `notifyTransient(text)` + `notifyEmit(text, key)`
+  (dynamic parent resolution `window.parent.orosNotifs` →
+  `window.orosNotifs`, cross-origin guarded, local `toast()` kept
+  as stale-bundle fallback for zero-crash boot). notifyEmit is a
+  stub — Contacts has NO background events (no timers/fetch), so
+  it never fires; kept for Doctrine consistency.
+- **9 call groups migrated to notifyTransient:** avatar errors
+  (ct.avatar.bad ×4, ct.avatar.big ×1), validation (ct.err.name),
+  label protection (lbl.inuse), CSV import errors ×3 keys, vCard
+  import errors (ct.import.bad), import successes ×2, export
+  success (ct.export.done), empty export (ct.none), CSV catch
+  (ct.import.csv.bad).
+- **Action-bearing toasts RETAINED (local toast()):** contact
+  delete undo (ct.del.done + undo) and duplicate merge undo
+  (dup.merged + undo). The Undo contract means in-app toasts —
+  orosNotifs cannot host action buttons per current API.
+- **Removed:** `sync.merged` toast in setFromSync() — sync feedback
+  is the taskbar sync dot (Wave 11 doctrine). Dead keys
+  `sync.merged` deleted from STR.en + STR.el.
+
+### Verification protocol (reuse for next waves)
+1. Fetch file with cache-bust, grep for `notifyTransient(...)` /
+   stray `toast(` outside undo-bearing calls + helper fallback.
+2. Console boot check: `[orOS] contacts.js vX booted` + version
+   from ?v= param matches.
+3. Functional: avatar upload error, CSV bad file, export success
+   → all should render via shell toast (top-right, os-level).
+
+### Known pitfall recorded
+Hand-editing during patch application produced literal `...`
+placeholders (SyntaxError at parse time — entire app fails to
+boot). Final grep check is MANDATORY before commit. Fixed instance:
+CSV catch block → `notifyTransient(t("ct.import.csv.bad"))`.
+
+## Wave 13 — Quote toast unification ✅
+
+### quote.js
+- Added notifyTransient(text) helper (ns:"quote", dynamic parent
+  resolution, local showToast fallback — stale-bundle doctrine).
+- MIGRATED 10 plain toasts: paypresets_saved, client_saved,
+  client_deleted, template_saved, template_used, exported,
+  saved, duplicated, deleted, draft_restored (first-ever boot-
+  time migration point — parent shell always loaded before app
+  iframe; fallback covers absence).
+- RETAINED in-app per doctrine: toast.sync_replaced (Exemption
+  B — live sliceSet only) + showToast itself (fallback home).
+- Quote has NO action-bearing toasts, NO background events →
+  no KNOWN_APPS slot, no DL_BRIDGES entry (same as Kanban
+  Wave 10). Pure quote.js wave.
+
+### Under consideration (backlog)
+- R14 violations ×4: confirm() in deleteCurrent,
+  deleteClientFromDialog, template delete; prompt() in
+  saveCurrentAsTemplate → themed dialogs + undo-toast parity
+  (same backlog family as Notes Wave 11).
+- deleteCurrent could become undo-toast instead of confirm.
+
+## [Spreadsheet] Wave 1 — bare core — 2026-09-21
+### Added
+- Νέα εφαρμογή "Spreadsheet / Λογιστικά φύλλα" (clean-room, Part VII).
+- CELL-ENTITY sync model: cells {"<sid>|<r>|<c>":{v,mtime}}, sparse (τα κενά κελιά δεν αποθηκεύονται), LWW per cell, shared tombstones (cell + sheet-level), delete-wins-ties, resurrection R17, 30d prune.
+- Mtime-0 bilingual sheet seed (merge-inert, Calendar precedent)· hand rename σκοτώνει το bi (R15).
+- Formula engine από το μηδέν (no external deps): tokenizer → shunting-yard parser → RPN evaluator με recursion-based cycle detection (#REF!), στήριξη operators (+ - * / ^ & συγκρίσεις), συναρτήσεις SUM/AVERAGE/MIN/MAX/COUNT/COUNTA/ROUND/ABS/IF/AND/OR/NOT/CONCAT, single refs, ranges A1:B10, cross-sheet Wave 2.
+- Rendering: cached grid build (single pass at boot), surgical paint με per-render display memo, row/col header highlight, num/err alignment.
+- Editing: in-cell editor + formula bar (bidirectional mirror), Enter/Tab commit navigation, Esc cancel, type-to-replace, zero-edit close ΔΕΝ στάμπει mtime/tombstone, second-tap-to-edit mobile pattern, arrows/scrollIntoView navigation.
+- Storage funnel: debounce 400ms, beforeunload flush, corrupt rescue ("oros-spreadsheet-data-broken").
+- Sync: registerSlice 5-arg με mergeFn=mergeState (deterministic, symmetric), sliceSet NEVER dirty (R6), merged toast ΔΕΝ εμφανίζεται (Wave 10/11 doctrine — sync dot). Notifications: notifyTransient only (Kanban precedent, no KNOWN_APPS slot, no background events).
+### Fixed
+- Stray `lastWasOperand = true` in evaluate() (strict-mode ReferenceError) — caught in paste-back before commit.
+### Deferred ("under consideration")
+- Wave 2: multi-sheet tabs + cross-sheet refs (=Φύλλο2!A1) + cascade tombstones σε διαγραφή φύλλου + CSV import/export + save-fail inbox channel.
+- Wave 3: μορφοποίηση, copy/paste ranges, undo/redo, resize στηλών, dirty-dependency recalc (τώρα: full re-render per commit — αποδεκτό σε 100×26).
+- Wave 4: extended function library (κείμενο/ημερομηνίες/VLOOKUP/SUMIF/οικονομικές).
+- Backlog: charts, iterative calculation (#CYC! strict τώρα), conditional formatting, cross-workbook refs, PDF export, EUR/EL κόμμα-decimal.
+### Files touched
+- ΝΕΑ: spreadsheet/index.html, spreadsheet/spreadsheet.css, spreadsheet/spreadsheet.js.
+- ΣΕ ΕΞΕΛΙΞΗ (Checklist B): apps.json, sw.js, shell.js ICONS, translations.js.
+
+## [style.css] Core audit Patch set Σ — 2026-09-21
+
+### Fixed
+- Σ4: overscroll-behavior: contain added to #oros-desktop and
+  #app-menu (Part VIII scroll-pane doctrine — iOS PWA scroll
+  chaining eliminated).
+- Σ5: touch targets raised to 44px (Part VIII mobile doctrine):
+  .sync-actions .menu-item, .sync-pass input, .pass-eye,
+  .sync-interval .menu-item + select, .wxc-btn, #wxc-input.
+- Σ6: dialog#wxcity box-shadow hardcoded rgba → var(--shadow)
+  (palette-vars-only rule).
+- Σ8: header comment appended-blocks list refreshed to current
+  reality (was stalled at v0.18.0).
+
+### Held (cross-file verification pending)
+- Σ1: z-index ladder comment lacks notifications.js entry —
+  needs the module's actual inline z-index values.
+- Σ2: --danger/--ok/--warn NOT defined in shell CSS (Bible §14
+  says "ecosystem-wide"); hardcoded #e06c75/#3fbf6f/#f28c5a in
+  .sync-msg.err + #sync-dot states. Decision (α) define tokens
+  or (β) fix Bible §14 — pending shell.js + notifications.js
+  + app CSS inspection.
+- Σ3: sync-dot green #3fbf6f ≠ LABEL_COLORS green #87cf3e —
+  rides on Σ2 decision.
+
+### Documented exceptions (R22)
+- Σ7: #app-menu / #oros-desktop thin scrollbar (8px, border
+  color, radius 4px) is a CONSCIOUS SHELL EXCEPTION to the app
+  §6b standard — the browser default ate ~15px of menu width.
+  App CSS files keep the §6b pill standard.
+- Touch-target exemptions by design: top-bar controls (~32px,
+  constrained by the fixed 40px bar), skin swatches (18px),
+  wallpaper thumbs, theme toggle (28px) — dense pickers inside
+  menus/dialogs, never primary navigation.
+
+### Files touched
+- style.css ONLY (11 patches). No shell.js / JS / HTML changes.
+
+## [shell.js + notifications.js + style.css] Cross-file audit closures — 2026-09-21
+
+### Closed (Σ set — cross-file verification completed)
+- Σ1 (β1): z-index ladder documented in code: notifications.js
+  toasts 10000 / panel 10001 sit INTENTIONALLY above the splash
+  2000 (catch-up toasts must not fall behind boot splash).
+  Bible §13 amendment: ladder is now version-toast 1200 · sc/info
+  1300 · sc-toast 1400 · alarm/calrem 1450 · splash 2000 ·
+  module tier 10000/10001. Documentation-only.
+- Σ2 (α): semantic tokens --danger (#e06c75) / --ok (#87cf3e) /
+  --warn (#f28c5a) DEFINED in style.css (:root, skin-neutral).
+  All hardcoded semantic-red usages replaced with var(--danger):
+  shell.js scToast border, restoresnap OK button, chpw + pwfix
+  errBoxes, factory-reset armed state; style.css .sync-msg.err +
+  #sync-dot err. Known concession: .sync-msg.ok stays
+  var(--accent-hover) (already a var — recoloring it green would
+  be a design change, not a fix).
+- Σ3: #3fbf6f → var(--ok) (#87cf3e) on sync-dot synced — aligned
+  with LABEL_COLORS ecosystem green.
+
+### Fixed (H set)
+- H1: quoteCheckTick compared dueDate against a QUOTE ID when
+  picking the earliest — wrong deepLink target. Mirrored the
+  todoCheckTick pattern (separate earliestDue tracker).
+- H2: habits deep-link bridge guarded (typeof check) — the shell
+  ships no __orosHabitsOpen, an unguarded click threw TypeError
+  and skipped markAsRead. Quote-style guard now.
+- H3: notification toasts sat at top:20px UNDER the 40px taskbar,
+  no safe-area (notched phones worse). Top three positions →
+  calc(48px + env(safe-area-inset-top,0px)) (scToast doctrine);
+  panel → calc(58px + …).
+- H4: var(--accent-soft) in alarm/calrem Dismiss buttons now has
+  a fallback (rgba(109,74,255,0.1), matching notifications.js) —
+  safe regardless of whether the skin defines the var.
+- H5: applyToastStyle + dead --notif-position/--notif-style CSS
+  vars REMOVED (never consumed — fireToast is inline-styled).
+- H6: duplicate orphaned comment before cycleCheckTickThrottled.
+- H8: tray order comment corrected (wx-chip was missing).
+- H9: dead lastSweep const in bootSweep.
+- H11: shell.js header comment refreshed to the real section
+  map (5d, 9b–9g, 9e/9e2, deep-link bridges).
+
+### Open (queued for next files)
+- H7: onAutoSync called twice from initSyncIntegration — depends
+  on whether sync.js onAutoSync REPLACES or ADDS listeners. To be
+  resolved in the sync.js audit (next file).
+- H10: loadApps fetches apps.json without cache-bust ?v= — to be
+  judged together with sw.js per-URL precache matching.
+
+### Files touched
+- style.css: CS-1..CS-4 (token block + ladder doc + 3 hex→var sweeps)
+- shell.js: SH-1..SH-10
+- notifications.js: N-1..N-9
+
+## [sync.js] Sync engine audit — 2026-09-21
+
+### Verified clean (no patch)
+- H7 CLOSED as non-issue: onAutoSync is ADDITIVE (pushes onto
+  autoListeners array, emitAutoEvent forEach-invokes with per-
+  listener try/catch). Both shell.js subscribers fire. Documented.
+- Race-safety of the triple in-flight guard system confirmed:
+  reconcile's pull→push flag gap spans microtasks only — no user-
+  initiated pull can interleave. No extra guard warranted.
+- 409 empty-cloud contract (v0.9.1), network-vs-auth error
+  wrapping, SP2/SP3/SP4/SP5 hardening (pull guards, quota-strict
+  proxy writes, memoized token refresh, debounce re-arm),
+  dirtyGen raced-edit protection, baseline-from-payload (#S2),
+  baselineExists discriminator (v0.8.1), Trap-3 stale-passphrase
+  push guard, changePassphrase lock+restore discipline, factory
+  reset suspension, carry mailbox fresh RMW — all verified sound.
+
+### Fixed (SY set)
+- SY1: ensureCloudReadable now arms lastSuccessfulPullAt on 409
+  (empty cloud = conclusive check) — pushes on an empty cloud no
+  longer re-download the blob every time. Perf-only, guard logic
+  unchanged.
+- SY2: changePassphrase empty-cloud branch now advances
+  oros-sync-pw-epoch (symmetry with the non-empty path — keeps
+  other devices' decryptBlob mismatch check honest if a second
+  device later pushes an old-epoch blob).
+- SY3: registerSlice carry-flush mergeless branch reuses the
+  `local` snapshot instead of a second get() (leftover from an
+  older shape; also eliminates a theoretical read-race window).
+- SY4: header version corrected v0.9.1 → v0.9.2 (the code already
+  carried a v0.9.2-labeled fix — applyPayload fresh carry RMW).
+
+### Documented observations (no patch)
+- SY5: a manual pull rejected due to in-flight push/pull maps to
+  sync.err.generic ("Sync error") — mildly misleading for
+  double-clicks but never a lie; not worth a new translation key.
+
+### Files touched
+- sync.js ONLY (4 patches: SY-1..SY-4).
+
+## [fs.js] OrosFS audit — 2026-09-21
+
+### F3 CLOSED (cross-file verification via shell.js section 9f)
+- Files-disk sync wiring CONFIRMED: files.js calls
+  __orosFilesDiskTouched() on every mutation (engine dirty + 1s-
+  debounced cache refresh, with SP6 re-mark-dirty on changed
+  refresh). fs.js now ALSO fires the same hook from its own
+  markDirty() — safety net for non-files.js orosFS consumers
+  (console, future apps). Double-fire from the app path is
+  harmless (debounce coalesces). Guarded with typeof + try/catch:
+  module fully functional shell-less.
+
+### Fixed (F set)
+- F1 (BUG): idbLs("/internal") threw ENOENT on EVERY call in IDB
+  fallback mode — the root has no IDB record by design
+  (idbEnsureDirs records only children). Root now lists directly.
+- F2 (BUG): opfsLs on a fresh never-written disk threw ENOENT
+  (mount dir not created). Root + ENOENT now returns [] — same
+  contract as exportDisk's empty-disk branch. Files app shows an
+  empty listing on clean installs instead of an error.
+- F4 (DATA-LOSS BUG, upgraded from robustness): mv(a, a) DESTROYED
+  the file in BOTH backends (OPFS: write-onto-self then
+  removeEntry; IDB: put + delete same keys). And mv into own
+  subtree nested the content inside itself. One guard at the
+  public mv() — normalized pathKey compare (raw-string compare
+  could be fooled by "/internal//a" formatting).
+- F5: driver-level markDirty calls removed (opfsMkdir, opfsRm,
+  opfsMv, idbRm, idbMv) — public wrappers own the single dirty
+  mark now that markDirty also fires the sync hook. No double
+  hook invocations.
+
+### Documented observations (F6, no patch — Bible limits)
+- exportDisk materializes the WHOLE disk as data URLs in memory
+  (blob-model Wave 1 limit; per-entry model is the future fix).
+- wipe() return type inconsistency (bool vs count) — ignored by
+  callers, harmless.
+- opfsWipe's no-completion-signal fallback lacks the console.warn
+  that opfsRm's equivalent has (observability asymmetry only).
+- selftest now arms the ENGINE dirty flag (via the F3 hook) even
+  though its probe leaves content unchanged — one redundant push
+  of identical content. Harmless; selftest must stay zero-contact
+  with sync keys.
+
+### Files touched
+- fs.js ONLY (9 patches: FS-1..FS-9).
+- shell.js section 9f reviewed — no issues found; the pasted
+  fragment appears truncated after fdMarkCleanIfIdle's catch (no
+  closing brace) — assumed paste artifact, not file damage.
+  
+  ## [translations.js] i18n audit — 2026-09-21
+
+### Fixed (T set)
+- T1: 20 duplicated keys per language REMOVED from the legacy
+  first block (16 originally reported + 4 missed: notifs.pos.
+  top/right/bottom/left). Object literals keep the LAST
+  definition — the appended block has been silently overriding
+  these since it was added, so deletion is zero-behavior-change.
+  Value drift already live in the UI: notifs.pos.top "Top"→
+  "Top center", notifs.pos.bottom "Bottom"→"Bottom center" (EL:
+  "Πάνω"→"Πάνω κέντρο", "Κάτω"→"Κάτω κέντρο").
+- notifs.duration.sec KEPT (defined once, no duplicate).
+- notifs.pos hyphenated corner keys (top-left/top-right/bottom-
+  right/bottom-left) left UNTOUCHED — pending T2 verdict.
+
+### Open (awaiting user verification)
+- T2: position-key fork — code consumes either hyphenated
+  (notifs.pos.top-left) or concatenated (notifs.pos.topleft)
+  corner labels; one set of 4 keys per language is orphaned.
+  Verification offered via (a) live console monkey-patch probe
+  of window.t, or (b) notifications.js settings-renderer
+  section.
+
+### Deferred (scheduled, not skipped)
+- T3: full-file formatting normalization (mixed tabs/spaces,
+  ragged indentation in skin.app/app.contact clusters) — moved
+  to the end-of-core lock wave to keep audit patch anchors
+  stable. Functional impact: none.
+
+### Recorded observations (no patch)
+- T4: t() helper uses const while the file's style header says
+  ES5 — harmless (all OPFS-capable browsers support it), noted
+  for style-consistency only.
+
+### Files touched
+- translations.js ONLY (4 patches: TR-1..TR-4).
+
+## [index.html + sw.js + apps.json] Core audit, final kernel files — 2026-09-22
+
+### index.html
+- IN-2 (BUG): noscript visitors saw the splash (z 9999, opaque)
+  forever ON TOP of the noscript message — the splash script never
+  runs without JS. Added a head-scoped noscript <style> that hides
+  #oro-splash when scripting is disabled.
+- IN-3 (BUG): checkVersionToast ran synchronously in shell.js boot,
+  BEFORE notifications.js loaded — the Wave 6 "update notice rides
+  the unified system" path was DEAD CODE (always fell to the legacy
+  #version-toast). Fix: boot call deferred to the window load
+  event (deterministic "all classic scripts executed" signal) +
+  ready-guard (via public orosNotifs.getState()) so a
+  present-but-still-initializing module falls back to the legacy
+  toast instead of dropping the notice.
+- IN-4 (hardening): splash error handler now listens in the CAPTURE
+  phase — resource-load failures (script/link 404) never bubble and
+  were invisible before. Failed asset name surfaces in the message;
+  decorative assets (icons/manifest) excluded.
+- IN-1 (OPEN — user action): all asset URLs stamped ?v=0.35.22
+  while shell.js declares 0.36.02 — the GitHub Action either did
+  not run or failed on the last bump. Repo check pending.
+
+### sw.js
+- SW-A: navigations now fetch(request, {cache:"no-cache"}) —
+  GitHub Pages max-age=600 meant a plain fetch() could serve a
+  10-min-stale index.html (old ?v= stamps), cracking the silent
+  auto-update chain exactly at the post-update reload moment.
+- SW-B: apps.json network-first made REAL with {cache:"no-store"}
+  — H10 CLOSED: plain fetch() honors the HTTP cache, so the
+  network-first branch could serve stale app lists. RUNTIME_CACHE
+  copy remains the offline fallback. Residual limit (accepted):
+  first visit with no SW controller still uses the HTTP cache.
+- Verified: per-URL precache (D1), activate claim timeout (SW-I),
+  waitUntil on all cache puts, navigation cache guard (ok + no
+  ?code=), ignoreSearch confined to the offline branch.
+- SW-1 (OPEN — same root as IN-1): CACHE_VERSION manual stamp
+  "oros-v0.35.22" lags shell 0.36.02 — confirms the Action/commit
+  gap. Pending repo check.
+- SW-3 CLOSED AS BUG: maps/ listed in apps.json (menu, Internet
+  category) but ABSENT from PRECACHE_URLS — the only app with zero
+  offline coverage. Patch AP-A adds the 4 URLs (subject to
+  filename verification against the repo).
+- SW-4 (observation): loose "apps.json" pathname matching is safe
+  (no nested apps.json exists) — documented, no patch.
+- Staging confirmed intentional: writer/ precached but not in
+  apps.json (Bible: forward-looking). spreadsheet/ precached but
+  not in apps.json — staging status TO BE CONFIRMED by user.
+
+### apps.json
+- AP-2: "files" name field lowercased — the only app violating the
+  capitalized-name convention. Data-consistency fix, zero risk
+  (display name comes from the app.files translation).
+- AP-3: storage/bookmarks entries carry tab indentation — frozen
+  with T3 for the end-of-core reformat wave. Valid JSON regardless.
+
+### Files touched
+- index.html: IN-2, IN-4 (IN-3 lives in shell.js)
+- shell.js: IN-3 (two blocks)
+- sw.js: SW-A, SW-B, AP-A
+- apps.json: AP-B
+
+## 2026-09-22 — Kernel Audit Wave Complete (v0.36.03+)
+
+### Scope
+Deep sequential audit of 9 core files: style.css, shell.js, notifications.js, sync.js, fs.js, translations.js, index.html, sw.js, apps.json.
+
+### Patches Applied
+| File | Patches |
+|------|---------|
+| style.css | V-1a (splash z-index doc alignment), V-1b (ladder splash 9999), V-2 (header appended-blocks refresh) |
+| shell.js | SH-c1 (renderClock tick-call indentation AP-3), SH-c2 (moodCheckInLastTick alignment) |
+| notifications.js | N-B1 (mood bridge __orosOpenMood naming fix), N-B2 (habits bridge guarding optional) |
+| sync.js | None (standing notes only: O-1 pullInFlight gate, O-3 OAuth redirect clean URL) |
+| fs.js | FP3 (opfsMv file branch honest error propagation—mirror of FP2 dir branch) |
+| translations.js | TO-1a–e (κωδικός κρυπτογράφησης terminology uniformity), J-B1 (app.bookmarks EN/EL keys) |
+| sw.js | AP-A (maps/ precache entry + spreadsheet trailing whitespace cleanup) |
+| apps.json | AJ-1 staging→live confirmation (Writer/Spreadsheet), AJ-3 Files capitalization user action |
+| index.html | Clean (IN-1/IN-2/IN-4/Broker verified, zero leftovers) |
+
+### Open Items (Non-blocking)
+| ID | Status | Notes |
+|----|--------|-------|
+| IN-1 | User action | Version mismatch `?v=0.35.22` vs shell 0.36.x — repo check via `git log origin/main`. Not a finding, not a bug |
+| SW-O2 | Standing note | CACHE_VERSION 0.35.22 — GitHub Action handles auto-stamping |
+| TO-2 | Standing note | Tabs vs spaces in translations.js data file — cosmetic, no functional impact |
+| FO-1/FO-2 | Standing notes | fs.js selftest dirty flag / no-op mkdir — dev-tool only |
+| O-1/O-3 | Standing notes | sync.js theoretical observations — no data-loss paths identified |
+
+### Standing Policies Recorded
+- **N-B1:** DL_BRIDGES → shell bridge 1:1 mapping (prefix `__orosOpenX`)
+- **FP3:** opfsMv error propagation — probe failures separated from copy/remove failures
+- **TO-1:** Greek terminology uniformity for passphrase ("κωδικός κρυπτογράφησης")
+- **AW-1:** Writer/Spreadsheet — forward-looking staging → live (2026-09-22 decision)
+- **AW-2:** Bookmarks — full integration (precache entries + translation keys)
+
+### Next Phase
+Applications deep audit queue (sequential, one app at a time): Weather → Mood → Time → Calendar → Quote → Storage → Prompter → Characters → Habits → Files → Cycle → Contacts → Maps
+
+### Kernel Lock Status
+✅ **CORE LOCKED** — Zero-risk to proceed with application-level development. All critical contracts verified: sync (v0.9.2), fs (OPFS+IDB), notifications (unified system), precache (maps/staging), translations (parity + terminology).
 
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*

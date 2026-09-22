@@ -12,16 +12,16 @@
     {
       "id": "time",
       "name": "Time",
-      "icon": "clock",
       "category": "Accessories",
+      "icon": "clock",
       "url": "time/",
       "type": "internal"
     },
     {
       "id": "files",
-      "name": "files",
-      "icon": "files",
+      "name": "Files",
       "category": "Accessories",
+      "icon": "files",
       "url": "files/",
       "type": "internal"
     },
@@ -52,8 +52,8 @@
     {
       "id": "calendar",
       "name": "Calendar",
-      "icon": "calendar",
       "category": "Office",
+      "icon": "calendar",
       "url": "calendar/",
       "type": "internal"
     },
@@ -73,7 +73,7 @@
       "url": "contacts/",
       "type": "internal"
     },
-	{
+    {
       "id": "storage",
       "name": "Storage",
       "category": "Office",
@@ -81,12 +81,20 @@
       "url": "storage/",
       "type": "internal"
     },
-	{
-      "id": "bookmarks",
-      "name": "Bookmarks",
+    {
+      "id": "spreadsheet",
+      "name": "Spreadsheet",
       "category": "Office",
-      "icon": "bookmarks",
-      "url": "bookmarks/",
+      "icon": "spreadsheet",
+      "url": "spreadsheet/",
+      "type": "internal"
+    },
+    {
+      "id": "writer",
+      "name": "Writer",
+      "category": "Office",
+      "icon": "writer",
+      "url": "writer/",
       "type": "internal"
     },
     {
@@ -109,8 +117,8 @@
       "id": "mood",
       "name": "Mood",
       "category": "Personal",
-      "url": "mood/",
       "icon": "mood",
+      "url": "mood/",
       "type": "internal"
     },
     {
@@ -127,6 +135,14 @@
       "category": "Personal",
       "icon": "cycle",
       "url": "cycle/",
+      "type": "internal"
+    },
+    {
+      "id": "maps",
+      "name": "Maps",
+      "category": "Internet",
+      "icon": "maps",
+      "url": "maps/",
       "type": "internal"
     }
   ]

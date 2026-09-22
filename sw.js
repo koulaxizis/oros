@@ -108,6 +108,14 @@ var PRECACHE_URLS = [
   "contacts/index.html",
   "contacts/contacts.css",
   "contacts/contacts.js",
+  "maps/",
+  "maps/index.html",
+  "maps/maps.css",
+  "maps/maps.js",
+  "spreadsheet/",
+  "spreadsheet/index.html",
+  "spreadsheet/spreadsheet.css",
+  "spreadsheet/spreadsheet.js",
   "vendor/jspdf.umd.min.js",
   "vendor/NotoSans-Regular.ttf",
   "fonts/nunito-regular.woff2",
@@ -177,8 +185,13 @@ self.addEventListener("fetch", function (event) {
   // every online visit; the precached copy remains the offline
   // fallback (zero offline regression).
   if (url.pathname.indexOf("apps.json") !== -1) {
+    // SW-2/H10: "network-first" must mean network. A plain fetch()
+    // honors the HTTP cache — a freshly deployed app could stay
+    // invisible for the max-age window. no-store bypasses the HTTP
+    // cache entirely; the RUNTIME_CACHE copy below stays as the
+    // offline fallback (zero offline regression).
     event.respondWith(
-      fetch(request).then(function (response) {
+      fetch(request, { cache: "no-store" }).then(function (response) {
         if (response && response.ok) {
           var copy = response.clone();
           event.waitUntil(
@@ -198,7 +211,14 @@ self.addEventListener("fetch", function (event) {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
+      // SW-2: GitHub Pages serves HTML with max-age=600 — a plain
+      // fetch() honors the HTTP disk cache, so an online user (and
+      // critically the broker's post-update reload) could receive a
+      // 10-minute-stale index.html carrying old ?v= stamps: the
+      // version toast would then LIE about having updated. no-cache
+      // = always revalidate with the server (304s are cheap) — the
+      // auto-update chain stays end-to-end fresh.
+      fetch(request, { cache: "no-cache" })
         .then(function (response) {
           // Cache only REAL pages: a cached 404/502 becomes the
           // offline "truth" for that URL. OAuth redirects (?code=...)

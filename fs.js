@@ -57,8 +57,17 @@
   // Map a raw DOMException to a coded error (NotFoundError → ENOENT).
   function mapErr(e) {
     if (e && e.code) return e;
-    if (e && (e.name === "NotFoundError" || e.name === "TypeMismatchError")) {
+    // FS-R1: TypeMismatchError means "file-handle asked on a dir" (or
+    // a path crossing THROUGH a file) — that is EISDIR (what it IS),
+    // never ENOENT (what it is not). Parity with the IDB driver's
+    // honest EISDIR on rec.dir. No catch path inspects the mapped
+    // code — the stat/mv probes catch generically — so this change
+    // only fixes read/walk diagnostics.
+    if (e && e.name === "NotFoundError") {
       return err("ENOENT", e.message || "ENOENT");
+    }
+    if (e && e.name === "TypeMismatchError") {
+      return err("EISDIR", e.message || "EISDIR");
     }
     return e || err("EIO", "unknown FS error");
   }
@@ -137,6 +146,17 @@
 
   function markDirty() {
     try { localStorage.setItem(DIRTY_KEY, "1"); } catch (e) {}
+    // F3: engine dirty TOO. The shell's Files-disk glue (section
+    // 9f) owns the sync wiring — files.js calls this same hook on
+    // its own mutations, so app usage double-fires (harmless: the
+    // 1s cache-refresh debounce coalesces). The hook here is the
+    // safety net for EVERY OTHER orosFS consumer (console, future
+    // apps): a disk write with no app open must still reach the
+    // cloud, never sit unpushed. Guarded + wrapped — the module
+    // stays fully functional when the shell is absent.
+    if (typeof window.__orosFilesDiskTouched === "function") {
+      try { window.__orosFilesDiskTouched(); } catch (e2) {}
+    }
   }
   function isDirty() {
     return localStorage.getItem(DIRTY_KEY) === "1";
@@ -240,14 +260,20 @@
         list.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
         return list;
       })
-      .catch(function (e) { throw mapErr(e); });
+      .catch(function (e) {
+        var m = mapErr(e);
+        // F2: ENOENT while listing the ROOT of a never-written disk
+        // (fresh install — the mount dir was never created) is an
+        // EMPTY listing, not an error (exportDisk's own contract).
+        if (!segs.length && m.code === "ENOENT") return [];
+        throw m;
+      });
   }
 
   function opfsMkdir(segs) {
     if (!segs.length) return Promise.resolve();
     return opfsMount(true)
       .then(function (m) { return opfsWalk(m, segs, true); })
-      .then(function () { markDirty(); })            // dirty flag: mkdir is a disk mutation
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -295,7 +321,6 @@
           }
         });
       })
-      .then(function () { markDirty(); })            // #16 FIX: rm marks dirty
       .catch(function (e) { throw mapErr(e); });
   }
 
@@ -324,7 +349,7 @@
     });
   }
 
-    function opfsMv(srcSegs, dstSegs) {
+  function opfsMv(srcSegs, dstSegs) {
     if (!srcSegs.length || !dstSegs.length) {
       return Promise.reject(err("EINVAL", "mv needs two non-root paths"));
     }
@@ -358,23 +383,25 @@
         }, function (probeErr) {
           // Source is NOT a directory — try the file path.
           return ctx.srcParent.getFileHandle(srcLeaf.name)
+            .catch(function () {
+              // Source is NEITHER dir NOR file — genuinely absent.
+              // THIS is the only case where the dir-probe error is
+              // the user-friendly one ("this path doesn't exist").
+              throw probeErr;
+            })
             .then(function (fh) { return fh.getFile(); })
             .then(function (f) {
               return ctx.dstParent.getFileHandle(dstLeaf.name, { create: true })
                 .then(function (nf) { return opfsWriteHandle(nf, f); });
             })
             .then(function () { return ctx.srcParent.removeEntry(srcLeaf.name); })
-            .then(function () { return "file"; })            // success marker
-            .catch(function (fileError) {
-              // Both probes failed — the dir-probe error is the
-              // user-friendly one ("this path doesn't exist").
-              throw probeErr;
-            });
+            .then(function () { return "file"; });           // success marker
+            // FP3: once the source file HANDLE was obtained, real
+            // copy/remove failures propagate as THEMSELVES. The
+            // old blanket catch rethrew probeErr ("source doesn't
+            // exist") for quota/disk errors on a source that
+            // verifiably existed — mirror of FP2, file branch.
         });
-      })
-      .then(function (kind) {                               // kind = "dir" or "file"
-        markDirty();
-        return kind;
       })
       .catch(function (e) { throw mapErr(e); });
   }
@@ -455,9 +482,9 @@
     });
   }
 
-  function idbStore(mode) {
+  function idbStore(txMode) {
     return idbOpen().then(function (db) {
-      return db.transaction("nodes", mode).objectStore("nodes");
+      return db.transaction("nodes", txMode).objectStore("nodes");
     });
   }
 
@@ -524,10 +551,18 @@
 
   function idbLs(segs) {
     var key = pathKey(segs);
-    return idbGet(key).then(function (rec) {
-      if (!rec || !rec.dir) throw err("ENOENT", key);
-      return idbKeys();
-    }).then(function (keys) {
+    // F1: the root "/internal" has NO IDB record BY DESIGN
+    // (idbEnsureDirs records "/internal/<seg>" and deeper only).
+    // The old existence check made root ls throw ENOENT on EVERY
+    // call, even on a full disk. The root exists conceptually
+    // forever — skip the check for it.
+    var listing = (!segs.length)
+      ? Promise.resolve(idbKeys())
+      : idbGet(key).then(function (rec) {
+          if (!rec || !rec.dir) throw err("ENOENT", key);
+          return idbKeys();
+        });
+    return listing.then(function (keys) {
       var prefix = key + "/";   // simplified — both branches were identical
       var seen = {}, names = {};
       var i, k;
@@ -594,7 +629,6 @@
         chain = chain.then(function () { return idbDel(k); });
       });
       return chain.then(function () {
-        markDirty();                           // #16 FIX: idb rm marks dirty
         return keys.length;
       });
     });
@@ -626,9 +660,7 @@
           });
           return del;
         });
-        return chain.then(function () {
-          markDirty();                           // #16 FIX: idb mv marks dirty
-        });
+        return chain;
       });
     });
   }
@@ -721,9 +753,17 @@
   // options.wipe === true → wipe the disk first (destructive!).
   // Default: MERGE — files in the payload overwrite matching paths,
   // everything else is left alone. NEVER deletes what's absent.
-    function importDisk(payload, options) {
+  function importDisk(payload, options) {
     var opts = options || {};
-    var obj = (typeof payload === "string") ? JSON.parse(payload) : payload;
+    var obj;
+    try {
+      obj = (typeof payload === "string") ? JSON.parse(payload) : payload;
+    } catch (e) {
+      // FS-R2: malformed JSON must REJECT, not throw synchronously —
+      // a promise API keeps its contract even on garbage input
+      // (same spirit as FP1's per-entry failure collector).
+      return Promise.reject(err("EINVAL", "corrupt disk export JSON"));
+    }
     if (!obj || !Array.isArray(obj.entries)) {
       return Promise.reject(err("EINVAL", "not an orOS disk export"));
     }
@@ -816,6 +856,21 @@
   function mv(src, dst)        {
     var parsedDst = parsePath(dst);
     if (parsedDst === null) return Promise.reject(err("EINVAL", "invalid dst: " + dst));
+    var parsedSrc = parsePath(src);
+    if (parsedSrc === null) return Promise.reject(err("EINVAL", "invalid src: " + src));
+    // F4 — TWO lethal shapes, one guard (normalized compare, so
+    // "/internal//a" can't sneak past a raw-string check):
+    //   · dst === src: the OPFS driver writes the file onto itself
+    //     and then REMOVEs the source path — i.e. mv(a,a) DESTROYS
+    //     the file. The IDB driver does the same (put + delete of
+    //     the same keys). Genuine data-loss bug.
+    //   · dst inside src's subtree: a directory moved into itself
+    //     nests the content inside itself instead of relocating it.
+    var srcKey = pathKey(parsedSrc);
+    var dstKey = pathKey(parsedDst);
+    if (dstKey === srcKey || dstKey.indexOf(srcKey + "/") === 0) {
+      return Promise.reject(err("EINVAL", "cannot move a path into itself"));
+    }
     return dispatch({ path: src, args: [parsedDst] }, opfsMv, idbMv)
       .then(function (r) { markDirty(); return r; });
   }
