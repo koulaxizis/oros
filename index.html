@@ -7,6 +7,8 @@
   <title>orOS</title>
 
   <!-- ============ PWA ============ -->
+    <!-- Ι3: Explicit permission for indexing + AI crawlers (Bible directive) -->
+  <meta name="robots" content="index, follow">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1b1a18">
 
@@ -112,7 +114,10 @@
     // (translations.js loads too late to matter for the splash)
     try {
       if (localStorage.getItem("oros-lang") === "el" && txt) {
-        txt.textContent = "Καλώς ήρθατε στο orOS. Γίνεται αναζήτηση ενημερώσεων, παρακαλώ περιμένετε…";
+        // Ι2: singular "Καλώς ήρθες" for personal tone (single user,
+        // personal OS — not corporate "you guys"). Matches the
+        // welcoming aesthetic better than formal plural.
+        txt.textContent = "Καλώς ήρθες στο orOS. Γίνεται αναζήτηση ενημερώσεων, παρακαλώ περιμένετε…";
         document.documentElement.lang = "el";
       }
     } catch (e) {}

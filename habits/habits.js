@@ -868,10 +868,11 @@
     return p ? new Date(+p[1], +p[2] - 1, +p[3]) : null;
   }
 
-  function rangeStart() {
+    function rangeStart() {
     if (!statRange) {                    // all-time → earliest completion
       var out = todayStart();
-      var comps = rawComps();
+      var comps = db.comps;   // H1: rawConps() never existed — tombstones
+                              // are filtered by the .del check below
       for (var i = 0; i < comps.length; i++) {
         if (comps[i].del) continue;
         var cd = parseDateKey(comps[i].date);
@@ -887,8 +888,8 @@
     var per = [], i, j;
     for (i = 0; i < hs.length; i++) per.push({ h: hs[i], sched: 0, done: 0 });
 
-    var totalComps = 0;
-    var comps = rawComps();
+        var totalComps = 0;
+    var comps = db.comps;   // H1: same fix — tombstones skipped below
     for (i = 0; i < comps.length; i++) {
       if (comps[i].del) continue;
       var cd = parseDateKey(comps[i].date);
@@ -1385,6 +1386,21 @@
     dataVersion: DATA_VER,
     view: function () { return viewMode; },
     week: function () { return dateKey(weekStart(period)); },
+    // H2/H3 (Wave 8/#TH2): the ONLY sanctioned deep-link entry —
+    // the old receiver called render() out of scope and mutated a
+    // .period property the handle never had. Navigation only:
+    // period + re-render, never data, never sync. offsetDays=0 →
+    // current week/month anchor; list walks weeks, cal anchors the
+    // month containing that day.
+    navigateByOffset: function (offsetDays) {
+      var n = parseInt(offsetDays, 10);
+      if (isNaN(n)) return;
+      var anchor = todayStart();
+      anchor.setDate(anchor.getDate() + n);
+      anchor.setHours(0, 0, 0, 0);
+      period = anchor;
+      render();
+    },
     stats: function () {
       return {
         habits: livingHabits().length,
@@ -1407,28 +1423,25 @@
 
 // ===== orOS deep-link receiver (Wave 8 / #TH2) =====
 // Consumed by shell.js (__orosOpenHabits) and notifications.js
-// (DL_BRIDGES → "habits:<periodType>"). Depends ONLY on the DOM
-// contract of render() — no internals of the main IIFE are touched.
+// (DL_BRIDGES → "habits:<offsetDays>"). Routes ONLY through the
+// public handle (orosHabits.navigateByOffset) — the previous version
+// called render() from THIS scope (ReferenceError — render is
+// closure-private) and mutated orosHabits.period (silent no-op).
 (function () {
   "use strict";
 
   // Live push (shell bridge calls this when app is running)
   window.__orosHabitsOpen = function (periodOffsetDays) {
-    var offset = parseInt(periodOffsetDays || "0", 10);
-    // Navigation: shift the period anchor by offset days (positive = forward)
-    var anchor = new Date();
-    anchor.setDate(anchor.getDate() + offset);
-    anchor.setHours(0, 0, 0, 0);
-    // Trigger period change via existing render() wiring
-    if (typeof window.orosHabits !== "undefined") {
-      // Public API: we can mutate period directly if exposed, else fallback to nav
-      try { window.orosHabits.period = anchor; } catch (e) {}
+    if (window.orosHabits &&
+        typeof window.orosHabits.navigateByOffset === "function") {
+      window.orosHabits.navigateByOffset(periodOffsetDays || 0);
     }
-    render();   // re-render with new period
   };
 
   // Boot: consume a staged period from the shell while the app was
-  // closed (sessionStorage — same origin, one-shot).
+  // closed (sessionStorage — same origin, one-shot). Safe even at
+  // script-parse time: the main IIFE sets the handle synchronously
+  // before this point.
   try {
     var pending = sessionStorage.getItem("oros-habits-period");
     if (pending) {

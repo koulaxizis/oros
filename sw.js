@@ -184,7 +184,11 @@ self.addEventListener("fetch", function (event) {
   // the next full release. Network-first keeps the list fresh on
   // every online visit; the precached copy remains the offline
   // fallback (zero offline regression).
-  if (url.pathname.indexOf("apps.json") !== -1) {
+  // SW2: exact-match the ROOT apps.json (pathname ends with it).
+  // A substring test would silently swallow any future asset whose
+  // name merely CONTAINS "apps.json" into the network-first branch.
+  if (url.pathname.lastIndexOf("/apps.json") ===
+        url.pathname.length - "/apps.json".length) {
     // SW-2/H10: "network-first" must mean network. A plain fetch()
     // honors the HTTP cache — a freshly deployed app could stay
     // invisible for the max-age window. no-store bypasses the HTTP

@@ -3637,6 +3637,171 @@ Applications deep audit queue (sequential, one app at a time): Weather → Mood 
 ### Kernel Lock Status
 ✅ **CORE LOCKED** — Zero-risk to proceed with application-level development. All critical contracts verified: sync (v0.9.2), fs (OPFS+IDB), notifications (unified system), precache (maps/staging), translations (parity + terminology).
 
+# KERNEL RE-AUDIT + T3 FORMATTING WAVE — COMPLETE
+
+Date: 2026-09-22
+Scope: Full kernel re-audit (all 10 core files, zero applications touched),
+       followed by the T3 full-file formatting wave.
+Result: 0 critical findings, 0 data-loss risks, ~30 patches delivered,
+        formatting debt fully cleared. Kernel status: CORE LOCKED (re-confirmed).
+
+## AUDIT SCOPE & METHOD
+
+Files audited in order: style.css → index.html → shell.js → notifications.js
+→ sync.js → fs.js → translations.js → sw.js → apps.json → bump-version.yml.
+One file at a time, full scan, numbered findings, user-approved patches only,
+all patches as verified OLD → NEW copy-paste blocks (zero-guessing doctrine).
+
+## PATCHES APPLIED (per file)
+
+### style.css (4 patches)
+- Σ-R1: .install-section .install-row min-height 40→44px (Part VIII touch target)
+- Σ-R2: .wxc-item min-height 44px + align-items center (autocomplete rows)
+- Σ-R5: #app-menu max-height 100vh → 100dvh (viewport harmonization)
+- Σ-R6: header comment map — reserved slot for missing section 6
+- Σ-R4 (later): appended [hidden] { display: none !important; } authority
+  guard at EOF (cross-validated via notifications.js — shell uses the
+  hidden attribute on #wxc-ac)
+
+### index.html (2 patches)
+- IN-R1: Greek splash branch now sets document.documentElement.lang = "el"
+  (screen-reader pronunciation before shell.js loads)
+- IN-R2: splash div indentation normalized (8 stray spaces removed)
+
+### shell.js (3+1 patches)
+- SH-R6: wx-chip minHeight 44px (inline, injected-element doctrine)
+- SH-R11: paintChip() sets aria-label alongside title (offline/stale/on
+  states now spoken by screen readers)
+- SH-R12: syncNowFromDot() fires dim "sync.working" toast before pull
+  (mirrors unlock-flow pattern)
+- TR36-R1: scSnapshot() now uses new key sync.err.autobackup.off instead
+  of the context-free sync.autoexport.off error toast
+
+### notifications.js (4 patches)
+- NOT-R1: taskbar bell 34→44px (was below Part VIII doctrine)
+- NOT-R2: uniform typeof guards on ALL DL_BRIDGES entries (contacts, cycle,
+  mood, calendar, time, todo, weather previously unguarded — stale cached
+  shell.js caused silent TypeError dead clicks; now graceful no-ops)
+- NOT-R3: dead state fields removed (intervalId, pendingToasts,
+  lastFireTimestamp — no references anywhere)
+- NOT-R4: transient toasts no longer play sound (feedback to a click the
+  user JUST made is not information; regular notifications still chime)
+
+### sync.js (2 patches)
+- SY-R1: reconcile() and debounceFire() busy-checks now include
+  pullInFlight — a manual pull in flight no longer causes a FALSE "fail"
+  auto event on the sync dot, and the debounce re-arms instead of
+  stranding raced edits
+- SY-R4: failed OAuth token exchange now removes oros-pkce-verifier
+  from sessionStorage (symmetric with success path)
+
+### fs.js (2 patches)
+- FS-R1: mapErr() — TypeMismatchError now maps to EISDIR (not the lying
+  ENOENT); backend parity with IDB driver restored. Verified safe: no
+  catch path inspects the mapped code.
+- FS-R2: importDisk() malformed JSON now REJECTS (Promise contract) instead
+  of throwing synchronously before callers can .catch()
+
+### translations.js (3 patches + full T3 rewrite)
+- TR-R3: new keys sync.err.busy + sync.err.suspended (EN/EL) + sync.js
+  errorKey() mappings — healthy refusals (engine busy, factory-reset
+  suspension) no longer masquerade as generic failures
+- TR36-R1: new key sync.err.autobackup.off (EN/EL) — see shell.js above
+- T3: full-file rewrite (2-space indent, aligned values, tabs removed,
+  trailing whitespace stripped, EN/EL blocks in identical key order)
+
+### sw.js (2 T3 patches)
+- CACHE_VERSION declaration indentation
+- blank-line normalization before install listener
+
+### fs.js T3 (3 patches)
+- opfsMv declaration 4→2 spaces; importDisk declaration 4→2 spaces;
+  idbStore parameter renamed mode → txMode (shadowing fix)
+
+### sync.js T3 (3 patches)
+- baselineExists / ensureCloudReadable declarations 4→2 spaces;
+  errorKey comment+declaration indentation
+
+### apps.json (full T3 rewrite)
+- Tabs → spaces (storage/spreadsheet/writer entries), key order
+  normalized to id → name → category → icon → url → type across all
+  18 entries. App ORDER unchanged (alphabetical within category is a
+  content decision, deliberately NOT taken).
+
+### bump-version.yml (2 patches)
+- BV-R2: G2 guard now matches '"' + d + '/' (exact quoted-URL prefix)
+  instead of substring indexOf — kills false positives
+- BV-R3: NEW G4 guard — apps.json entries cross-checked against app
+  folders (missing folder = ERROR + hard fail; orphan folders = WARNING)
+- BV-R1 CONFIRMED: version schema = manual APP_VERSION bump in shell.js
+  + fully automated propagation via the Action. Matches the Bible.
+
+## T2 FORK — CLOSED (non-issue)
+
+The feared hyphenated-vs-concatenated toast-position key fork does not
+exist. Stored setting values are hyphenated (top-right etc., 1:1 with
+notifications.js TOAST_POSITIONS); shell.js converts to concatenated keys
+via its posKeys map, and translations.js already ships concatenated
+notifs.pos.* keys (8/8, EN/EL). Also verified: no notifs.style.* keys
+exist (style names oros/dunst/plasma/gnome are deliberate proper nouns,
+no i18n by design).
+
+## CROSS-FILE OBSERVATIONS RESOLVED
+
+- Bell/badge injection (Σ-R3, IN-R4): by design — ensureTaskbarBell()
+  injects inline with palette vars, insert before #btn-lang. Correct.
+- Bar titles (IN-R3): #bar-time/#bar-date/#btn-lang painted directly by
+  applyLang() — direct painting for critical UI is the documented pattern.
+- Dead selector suspects (.sync-pass .row, .skin-divider): ALIVE — both
+  built by notifications.js renderers. Never delete.
+- syncdot busy/suspended errors now carry dedicated i18n keys (see TR-R3).
+- sw.js CACHE_VERSION (0.35.22) vs shell.js APP_VERSION (0.36.03): the
+  bump Action simply hadn't run yet — next push to main propagates.
+  Never patch manually (versioning doctrine).
+
+## OPEN BACKLOG (explicitly deferred, none blocking)
+
+1. prefers-reduced-motion media query (style.css) — accessibility polish
+2. Unified z-index ladder doctrine across shell/module layers
+   (notification toasts 10000/10001 vs shell overlays 1400-1450)
+3. playTone exponential-ramp attack (currently setValueAtTime = audible
+   click; alarmPip in shell.js already does it right)
+4. Retry caps on notifications.js init/ensureTaskbarBell 100ms loops
+5. NOT-R6: fireToast role="alert" + aria-live="polite" contradiction →
+   role="status" (deferred, user's call)
+6. SW-R3: PRECACHE_URLS rationale comments (jspdf = PDF export, etc.)
+7. sc-box mobile modal max-height (100dvh harmonization candidate)
+8. quoteCheckTick horizon hoisted out of forEach (trivial perf)
+9. fs.js dead defensive branches: opfsRm IDB-style onsuccess/onerror
+   branch (unreachable — removeEntry always returns a Promise) and
+   opfsWipe silent setTimeout fallback — cleanup candidate, not urgent
+10. FS-R5 trivia: mkdir("/") arms dirty flag on a no-op (harmless via
+    debounce coalesce)
+
+## BIBLE ENTRIES REQUIRED (documentation debt)
+
+- SY-R2 / Trap-3 residual: with the 30s PULL_TRUST_MS window, a SECOND
+  device changing the passphrase within 30s of this device's successful
+  pull can result in a push encrypted with the old passphrase (content
+  is never lost — changePassphrase re-uploads the same payload). Known
+  accepted limit, documented trade-off.
+- Record the closed T2 fork resolution and the by-design style-label
+  decision (proper nouns, no i18n).
+- Record the new G4 guard in the bump-version.yml contract section.
+- Record sync.err.busy / sync.err.suspended / sync.err.autobackup.off
+  as new i18n keys.
+- Dead-key verification deferred to application-level audit wave:
+  sc.snapshot, bar.clock.tooltip (possibly legacy — must grep app files
+  before deleting; audit scope was core-only).
+
+## WORKFLOW DOCTRINE (unchanged, re-affirmed)
+
+- One file at a time, full scan, numbered findings, approval per patch
+- OLD → NEW copy-paste blocks with exact locations, zero guessing
+- Never conclusions about files not on the table
+- Version refs are user-owned; the assistant never touches versioning
+- Standing mode: PERMANENT DEV (no stable/beta freeze assumptions)
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

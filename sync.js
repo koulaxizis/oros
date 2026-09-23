@@ -607,7 +607,11 @@
   function baselineMatches(name, localStr) {
     var bl = readBaselines();
     var b = bl[name];
-    if (b === undefined || b === null) return true;    // missing = clean (bootstrap)
+    // Missing = clean ONLY for legacy callers. Since v0.8.1,
+    // applySlice ORs in baselineExists() FIRST — a missing baseline
+    // counts as DIVERGED there — so this branch can never weaken
+    // the divergence guard.
+    if (b === undefined || b === null) return true;
     return b === hashString(localStr);
   }
 
@@ -677,8 +681,14 @@
     var carry = readCarry();
     if (carry && carry[name] !== undefined) {
       var data = carry[name];
-      delete carry[name];
-      writeCarry(carry);
+      // SY6: consume-on-success. The old upfront delete meant a
+      // throwing set() (quota via a strict setter, app bug) hit the
+      // catch with the parked copy ALREADY GONE — the other
+      // device's only surviving copy of its work, destroyed with
+      // nothing applied. The entry is now removed only after the
+      // flush landed (or was deliberately dropped); a failed flush
+      // replays at the next registration.
+      var consumeCarry = false;
       try {
         var local = null;
         try { local = slices[name].get(); } catch (e) { local = null; }
@@ -697,11 +707,13 @@
           var dataStr  = JSON.stringify(data);
           if (dataStr !== localStr) markDirty();
           slices[name].set(data, { merged: true });
+          consumeCarry = true;                  // landed — safe to consume
           recordBaseline(name, dataStr);       // flushed through set — synced-ish, push will confirm
         } else if (slices[name].merge && (local === null || data === null)) {
           // Degenerate pair (one side empty): whichever exists wins.
           if (data !== null) {
             slices[name].set(data);
+            consumeCarry = true;
             markDirty();
           }
         } else {
@@ -713,8 +725,18 @@
             slices[name].set(data);
             markDirty();
           }
+          consumeCarry = true;   // applied restore OR deliberate drop
+                                // (parked copy by construction older
+                                // than this device's last push)
         }
-      } catch (e) {}
+      } catch (e) {
+        // Failed flush — consumeCarry stays false, the parked copy
+        // survives and replays at the next registration.
+      }
+      if (consumeCarry) {
+        delete carry[name];
+        writeCarry(carry);
+      }
     }
 
     // v0.7.1b: an app just OPENED — pull immediately so the freshly
@@ -1082,6 +1104,17 @@
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
     if (!passphrase)    return Promise.reject(new Error("no-passphrase"));
     if (pushInFlight)   return Promise.reject(new Error("push already in flight"));
+    // SY5: the SP2 mirror. A push racing an in-flight pull uploads
+    // the FRESH local state, while the pull then applies the
+    // PRE-upload cloud over it — local silently reverts to the older
+    // remote, and because final == remote the dirty flag stays
+    // clean (cloudStale false): only the next interval pull
+    // self-heals it. Unsequenced callers are the manual shortcut,
+    // tab-hide autoSyncAttempt and any direct UI push. Refuse — the
+    // honest busy beats the transient revert. Safe for reconcile():
+    // its pull().then(push) chain runs AFTER pull's .finally
+    // released the flag, so the sequenced path never trips this.
+    if (pullInFlight)   return Promise.reject(new Error("pull already in flight"));
 
     pushInFlight = true;
     var payload = collectPayload();
@@ -1182,6 +1215,10 @@
     if (suspended) return;                      // factory reset owns the engine
     if (!isConnected() || !passphrase || !isDirty()) return;
     if (pushInFlight || reconcileInFlight) return;
+    if (pullInFlight) return;   // SY5: hide-push racing a manual/interval pull
+                                // → silent skip (SY-R1 doctrine), no red dot.
+                                // Data is safe in localStorage; the next
+                                // visible reconcile uploads it.
     if (!navigator.onLine) return;              // no wasted attempts offline
 
     emitAutoEvent("start", reason);
@@ -1552,6 +1589,12 @@
                   .then(function (uploadRes) {
                     if (!uploadRes.ok) throw new Error("upload failed: " + uploadRes.status);
                     setPassphrase(newPw, remember);
+                    // SY7: the blob just uploaded is encrypted with
+                    // the passphrase now in memory — arm the trust
+                    // window so the next push skips the redundant
+                    // download+decrypt proof (same contract as the
+                    // pull success path).
+                    lastSuccessfulPullAt = Date.now();
                     // Deliberately NO clearDirty(): the re-encrypted
                     // blob is the OLD remote content, not this
                     // device's local state. If local had unsynced

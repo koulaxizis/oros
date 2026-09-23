@@ -228,10 +228,10 @@
     const end = qh.quietHoursEnd ?? 8;
     
     if (start <= end) {
-      // Normal range (e.g., 22:00–08:00)
+      // Normal range (e.g., 08:00–22:00)
       return hour >= start && hour < end;
     } else {
-      // Overnight range (e.g., 22:00–06:00 crosses midnight)
+      // Overnight range (e.g., 22:00–08:00 crosses midnight)
       return hour >= start || hour < end;
     }
   }
@@ -323,7 +323,7 @@
           <div style="font-size:0.9em; opacity:0.9; white-space:normal;">${escapeHtml(item.body)}</div>
         </div>
         <button class="notif-dismiss" aria-label="${escapeHtml(window.t('notifs.dismiss'))}"
-          style="background:none; border:none; color:var(--text); font-size:1.2em; cursor:pointer; padding:0 0 0 12px; line-height:1;">✕</button>
+          style="background:none; border:none; color:var(--text); font-size:1.2em; cursor:pointer; padding:8px 0 8px 12px; line-height:1; align-self:stretch; display:flex; align-items:center;">✕</button>
       </div>
     `;
     
@@ -677,8 +677,10 @@
 
     var local = state.slice;
 
-    // 1. Settings: LWW via settingsRev clock (non-null number wins;
-    //    equal/missing → keep local — deterministic, zero surprise).
+    // 1. Settings: LWW via settingsRev clock (higher rev wins; on an
+    //    EXACT tie the remote settings win — deterministic tie-break;
+    //    equal-rev replicas with differing content cannot exist in
+    //    practice, so there is nothing local to protect).
     var rRev = (typeof remote.settings === 'object' &&
                 remote.settings !== null &&
                 typeof remote.settings.settingsRev === 'number')
@@ -751,6 +753,30 @@
     // Pull-fed: save + repaint, deliberately NO noteChange().
     saveSliceNow();
     updateBadge();
+    // Σ2-N3: items that fired on ANOTHER device while this tab was
+    // closed get their toast NOW — same rules as bootSweep: fresh
+    // (<24h), enabled, app-toggled, not quiet. Too-late items go
+    // badge-only exactly like the boot path. firedAt stamping follows
+    // the bootSweep contract (in-place, throttled save, NO noteChange
+    // — the Math.max LWW above converges firedAt across devices).
+    if (state.ready && getSetting('enabled', true)) {
+      var cuNow = Date.now();
+      var cuFresh = state.slice.items.filter(function (it) {
+        if (it.firedAt) return false;
+        if (!getAppToggle(it.ns)) return false;
+        if (isQuietHour(cuNow)) return false;
+        if (cuNow - (it.createdAt || 0) > 24 * 60 * 60 * 1000) {
+          it.firedAt = it.createdAt;   // too late — badge only
+          return false;
+        }
+        return true;
+      });
+      cuFresh.forEach(function (it) {
+        fireToast(it, false);
+        it.firedAt = cuNow;
+      });
+      if (cuFresh.length) saveSliceThrottled(500);
+    }
   }
   
     // ===== EMIT — the shell-side bridge (Wave 1B) =====

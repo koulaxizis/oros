@@ -566,6 +566,12 @@ body {
   color: var(--text);
   font-size: 14px;
   padding: 6px 10px;
+  min-height: 40px;   /* Φ2α: full bar height (40px) — the safe maximum
+                         with zero protrusion. Text buttons don't join
+                         the 44px icon doctrine (dot/bell/wx-chip protrude
+                         2px, invisible); 40px keeps every hit area
+                         flush-inside the bar while more than doubling
+                         the previous ~32px targets. */
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
@@ -754,8 +760,8 @@ body {
   border: none;
   color: var(--text);
   font-size: 15px;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   line-height: 1;
   border-radius: 6px;
   cursor: pointer;
@@ -1061,8 +1067,9 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  width: 34px; height: 34px;
-  min-width: 34px;              /* flex won't squeeze the hit area */
+  width: 44px; height: 44px;    /* Σ2-R1: Part VIII — joins the bell
+                                    (44) and wx-chip (44) touch targets */
+  min-width: 44px;              /* flex won't squeeze the hit area */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1096,7 +1103,8 @@ body {
 }
 .sc-box {
   width: min(420px, 94vw);
-  max-height: 86vh;
+  max-height: 86dvh;             /* Σ2-R3: mobile URL-bar safe — same
+                                    harmonization as #app-menu (Σ-R5) */
   overflow-y: auto;
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -1170,6 +1178,13 @@ body {
   align-items: center;
   gap: 5px;
   padding: 5px 7px;
+  min-height: 44px;             /* Φ1: makes Σ2-R1's comment TRUE — the
+                                   chip claimed "44" in the sync-dot
+                                   doctrine note but carried no height
+                                   constraint (~27px actual). Same
+                                   in-bar precedent as #sync-dot-btn:
+                                   44px in a 40px bar protrudes 2px,
+                                   glyphs stay centered, invisible. */
   border-radius: 6px;
   font: inherit;
   font-size: 12.5px;
@@ -1327,6 +1342,8 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
   letter-spacing: 0.3px;
   white-space: nowrap;
   padding: 6px 8px;
+  min-height: 40px;   /* Φ2α: same doctrine as #btn-menu — flush
+                         full-bar hit area for the clock/date buttons. */
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
@@ -1363,7 +1380,6 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
    shell selectors never reached this DOM; rescued only
    .ev-row[draggable] cursor → calendar.css Patch 1).
    ============================================================ */
-   
    
 /* Authority guard: the HTML [hidden] attribute must always win over
    any author display rule (e.g. #wxc-ac in the wxcity dialog).

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.04";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -44,8 +44,7 @@
     apps:            [],
     running:         null,
     deferredPrompt:  null,   // PWA install event
-
-        // sync UI state
+    // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
 
@@ -176,6 +175,10 @@
     state.lang     = (urlLang === "el" || urlLang === "en") ? urlLang
                    : (storedLang === "el" || storedLang === "en") ? storedLang
                    : "en";
+    // Χ2: persist — wxFetch trayfail copy and wxBriefTick (plus iframe
+    // apps) read localStorage["oros-lang"] directly; a URL-param lang
+    // left them stale until the first toggle/pull ever ran.
+    localStorage.setItem("oros-lang", state.lang);
 
     var urlSkin    = params.get("skin");
     var storedSkin = localStorage.getItem("oros-skin");
@@ -198,7 +201,7 @@
   function applyLang() {
     window.orosLang = state.lang;
     document.documentElement.setAttribute("lang", state.lang);
-	
+
     var nodes = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < nodes.length; i++) {
       nodes[i].textContent = window.t(nodes[i].getAttribute("data-i18n"));
@@ -334,7 +337,10 @@
   // Returns TRUE when a snapshot was actually written, FALSE on every
   // no-op path (schedule guard, dedup, missing engine). Callers can
   // report honestly instead of claiming success unconditionally.
+  var lastAutoExportFailed = false;
+
   function maybeAutoExport(force) {
+    lastAutoExportFailed = false;
     if (state.autoexport === "off") return false;
     if (!window.orosSync || typeof window.orosSync.exportData !== "function") return false;
 
@@ -361,6 +367,7 @@
       // Honest feedback: quota failure = nothing stored. Reporting
       // "saved" would be a false sense of backup. Key lives in
       // translations.js (TP1, kernel-lock batch).
+      lastAutoExportFailed = true;
       setSyncMsgRaw("err", window.t("sync.err.snapshot.quota"));
       return false;
     }
@@ -1774,7 +1781,7 @@
     var hasSnapshots = readSnapshots().length > 0;
     var restoreBtn = document.createElement("button");
     restoreBtn.className = "menu-item";
-    restoreBtn.innerHTML = EYE_OFF_SVG + "<span>" + window.t("sync.restore") + "</span>";
+    restoreBtn.innerHTML = EYE_SVG + "<span>" + window.t("sync.restore") + "</span>";
     if (!hasSnapshots) {
       restoreBtn.disabled = true;
       restoreBtn.style.opacity = "0.5";
@@ -1803,7 +1810,7 @@
     }
     section.appendChild(snapInfo);
 
-        // Backup folder (option 2 — File System Access API, Chromium
+    // Backup folder (option 2 — File System Access API, Chromium
     // desktop only; the row is never rendered where unsupported)
     if (fsSupported()) {
       var folderRow = document.createElement("div");
@@ -2298,6 +2305,12 @@
       showPassChangedDialog();
       return;
     }
+    // Χ6: engine missing (stale bundle / load-order edge) — surface the
+    // real message, never a nested TypeError that buries it.
+    if (!window.orosSync || typeof window.orosSync.errorKey !== "function") {
+      setSyncMsgRaw("err", (err && err.message) ? err.message : String(err));
+      return;
+    }
     var key = window.orosSync.errorKey(err);
     setSyncMsg("err", key);
   }
@@ -2392,7 +2405,9 @@
     // Honest feedback: the "saved" toast fires INSIDE maybeAutoExport,
     // only when a snapshot was really written. A dedup (identical
     // content) is reported as such — never a false success.
-    if (!maybeAutoExport(true)) {   // force = snapshot now regardless of schedule
+    // Χ1: failure paths painted their own err message inside
+    // maybeAutoExport — never bury it under a misleading "nothing new".
+    if (!maybeAutoExport(true) && !lastAutoExportFailed) {
       setSyncMsg("ok", "sync.ok.none");
     }
   }
@@ -2678,6 +2693,16 @@
     // Match on e.code (PHYSICAL key) — e.key lies under the Greek
     // layout (physical P arrives as "π"), e.code is "KeyP" always.
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return false;
+    // Χ5: focused editable target → the shortcut yields (AltGr
+    // keyboards emit Ctrl+Alt natively; a typed character must never
+    // trigger an OS action). Covers shell AND forwarded iframe
+    // events — same-origin e.target is the real focused element.
+    var tgt = e.target;
+    if (tgt) {
+      var tn = (tgt.tagName || "").toLowerCase();
+      if (tn === "input" || tn === "textarea" || tn === "select" ||
+          tgt.isContentEditable) return false;
+    }
     var code = e.code || "";
     if (code.indexOf("Key") !== 0) return false;   // letters only
     var letter = code.charAt(code.length - 1).toUpperCase();
@@ -2704,6 +2729,7 @@
   var WX_MIN_MS    = 30 * 60 * 1000;     // min gap between auto fetches
   var WX_RETRY_MS  = 2 * 60 * 1000;      // FAILED-fetch cooldown (no 30-min lockout)
   var WX_STALE_MS  = 3 * 60 * 60 * 1000; // cache older than 3h → dim state
+  var WX_NEAR_DEG  = 0.15;             // ~15km nearest-city tolerance (adoptAppCache + briefing)
 
   var WX_SUN   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
   var WX_MOON  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
@@ -2847,7 +2873,7 @@
       // diverging numbers). Nearest city within ~15km wins, unconditionally:
       // the app is the single source of truth when a match exists —
       // never "newer fetch wins", that oscillates between two sources.
-      var WX_NEAR_DEG = 0.15;
+      // Uses module-level WX_NEAR_DEG (hoisted above) — one truth.
       var best = null, bestDist = Infinity;
       for (var i = 0; i < data.cities.length; i++) {
         var c = data.cities[i];
@@ -2993,7 +3019,7 @@
       var d = Math.abs(c.lat - w.lat) + Math.abs(c.lon - w.lon);
       if (d < bestDist) { bestDist = d; best = c; }
     }
-    if (!best || bestDist >= 0.15) return;
+    if (!best || bestDist >= WX_NEAR_DEG) return;
     var p = cache[best.id];
     if (!p || !p.current || !Array.isArray(p.daily) || !p.daily.length) return;
 
@@ -3232,6 +3258,9 @@
   }
 
   function wxSetCity() {
+    // Χ4: rebuild on every open — the singleton baked its labels at
+    // first creation, so a language toggle left stale strings behind.
+    if (wxCDlg) { wxCDlg.remove(); wxCDlg = null; }
     wxEnsureCityDlg();
     wxCInput.value = "";
     wxHideAc();
@@ -3827,9 +3856,9 @@
     body.appendChild(timeStr);
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = calRemT("Dismiss", "Απόρριψη");
+    btn.textContent = window.t("alarm.dismiss");
     btn.style.cssText =
-      "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft);" +
+      "flex-shrink:0;border:1px solid var(--accent);background:var(--accent-soft, rgba(109,74,255,0.1));" +
       "color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;" +
       "border-radius:7px;padding:7px 12px;cursor:pointer;";
     btn.addEventListener("click", calRemStopRing);
@@ -4186,7 +4215,7 @@
     if (now - notifLastTick < 60000) return;
     notifLastTick = now;
     try {
-      if (window.orosNotifs && typeof window.orosNotifs.tick === 'function') {
+      if (window.orosNotifs && typeof window.orosNotifs.tick === "function") {
         window.orosNotifs.tick();
       }
     } catch (e) {}
@@ -4500,6 +4529,31 @@
     }
     try { sessionStorage.setItem("oros-todo-open", listId); } catch (e) {}
     openAppById("todo");
+  };
+
+  // Habits deep-link bridge (Wave 8/#TH2 — closes Σ2-N1). Payload =
+  // period offset in DAYS (number or numeric string; 0 = current
+  // period, negative = back). App open → live push __orosHabitsOpen
+  // into the iframe; closed → stage "oros-habits-period" in
+  // sessionStorage (the EXACT key the habits.js boot receiver
+  // reads — device-local, swept by the factory reset, never
+  // synced) + open app. Non-numeric input → 0 (current period),
+  // never a guess.
+  window.__orosOpenHabits = function (periodOffsetDays) {
+    var n = parseInt(periodOffsetDays, 10);
+    if (isNaN(n)) n = 0;
+    if (state.running && state.running.id === "habits") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosHabitsOpen === "function") {
+          f.contentWindow.__orosHabitsOpen(n);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-habits-period", String(n)); } catch (e) {}
+    openAppById("habits");
   };
 
   // Wave 13 — Quote deep-link bridge (pattern: Todo/Time).
