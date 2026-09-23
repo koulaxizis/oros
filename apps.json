@@ -136,14 +136,6 @@
       "icon": "cycle",
       "url": "cycle/",
       "type": "internal"
-    },
-    {
-      "id": "maps",
-      "name": "Maps",
-      "category": "Internet",
-      "icon": "maps",
-      "url": "maps/",
-      "type": "internal"
     }
   ]
 }
