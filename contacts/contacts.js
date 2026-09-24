@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Contacts v0.1.0 (Wave 1)
+// orOS Contacts
 // Contact CRUD, structured names, multi-field phones/emails/
 // addresses/websites/IM/events (birthday, anniversary, custom),
 // labels (color-coded, filterable), starred favorites,
@@ -113,6 +113,7 @@
       "ct.none": "No contacts yet",
       "ct.search.none": "No contacts found",
       "ct.export.done": "Contacts exported (.vcf)",
+      "ct.export.bad": "Export failed — please retry",
       "ct.import.bad": "Could not read that file",
       "ct.import.done": "{n} contact(s) imported",
       "ct.import.csv.bad": "Could not read that CSV file",
@@ -221,6 +222,7 @@
       "ct.none": "Καμία επαφή ακόμα",
       "ct.search.none": "Καμία επαφή δεν βρέθηκε",
       "ct.export.done": "Οι επαφές εξήχθησαν (.vcf)",
+      "ct.export.bad": "Η εξαγωγή απέτυχε — δοκίμασε ξανά",
       "ct.import.bad": "Το αρχείο δεν μπόρεσε να διαβαστεί",
       "ct.import.done": "{n} επαφή/ές εισήχθησαν",
       "ct.import.csv.bad": "Το αρχείο CSV δεν μπόρεσε να διαβαστεί",
@@ -351,22 +353,6 @@
                window.orosNotifs || null;
       if (N && typeof N.transient === "function") {
         N.transient({ ns: "contacts", title: text, body: "" });
-        return;
-      }
-    } catch (e) { /* cross-origin guard */ }
-    toast(text);
-  }
-
-  // Background failures → inbox (not transient): the only case
-  // where we might need emit() in the future (currently unused
-  // in Contacts — no timers/fetch), but the stub is here so
-  // the Doctrine stays consistent across the orOS ecosystem.
-  function notifyEmit(text, key) {
-    try {
-      var N = (window.parent && window.parent.orosNotifs) ||
-               window.orosNotifs || null;
-      if (N && typeof N.emit === "function") {
-        N.emit({ ns: "contacts", title: text, body: "", key: key || null });
         return;
       }
     } catch (e) { /* cross-origin guard */ }
@@ -793,16 +779,26 @@
       var members = mem.map(function (id) {
         return state.contacts.find(function (c) { return c.id === id; });
       });
-      var hasSharedEmail = members[0].emails.some(function (e) {
-        return members.slice(1).some(function (m) {
-          return m.emails.some(function (e2) { return normalizeEmail(e.v) === normalizeEmail(e2.v); });
-        });
-      });
-      var hasSharedPhone = members[0].phones.some(function (p) {
-        return members.slice(1).some(function (m) {
-          return m.phones.some(function (p2) { return phoneDigits(p.v) === phoneDigits(p2.v); });
-        });
-      });
+      // Pair-wise ANY-to-ANY check (members[0]-centric check lied for
+      // chained groups: A~B by email, B~C by name → whole group judged
+      // from A alone could miss the definitive pair).
+      function pairShare(listOf, normOf) {
+        for (var i = 0; i < members.length; i++) {
+          for (var j = i + 1; j < members.length; j++) {
+            var ai = listOf(members[i]), bj = listOf(members[j]);
+            for (var x = 0; x < ai.length; x++) {
+              for (var y = 0; y < bj.length; y++) {
+                if (normOf(ai[x]) === normOf(bj[y])) return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+      var hasSharedEmail = pairShare(function (m) { return m.emails; },
+                                     function (e) { return normalizeEmail(e.v); });
+      var hasSharedPhone = pairShare(function (m) { return m.phones; },
+                                     function (p) { return phoneDigits(p.v); });
       var hasDefinite = hasSharedEmail || hasSharedPhone;
       var reason = hasSharedEmail ? t("dup.reason.email")
                  : (hasSharedPhone ? t("dup.reason.phone") : t("dup.reason.name"));
@@ -1645,7 +1641,14 @@
   window.__orosContactsOpen = function (contactId) {
     if (typeof contactId !== "string" || !contactId) return;
     for (var i = 0; i < state.contacts.length; i++) {
-      if (state.contacts[i].id === contactId) { openDlg(state.contacts[i]); return; }
+      if (state.contacts[i].id === contactId) {
+        // Guard: programmatic deep-link while ct-dlg is already open
+        // would throw InvalidStateError from showModal(). Close the
+        // stale edit first — the deep link is the newer intent.
+        try { if ($("ct-dlg").open) $("ct-dlg").close(); } catch (e) {}
+        openDlg(state.contacts[i]);
+        return;
+      }
     }
   };
 
@@ -2198,7 +2201,7 @@
       given: "", middle: "", family: "", nickname: "",
       org: "", jobTitle: "",
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: "", photo: null
+      events: [], cats: [], note: "", photo: null, starred: false
     };
     lines.forEach(function (line) {
       if (!line) return;
@@ -2284,6 +2287,9 @@
           }
           break;
         }
+        case "X-OROS-STARRED":
+          if (/^TRUE$/i.test(p.value.trim())) c.starred = true;
+          break;
         case "CATEGORIES":
           vcfUnesc(p.value).split(",").forEach(function (cat) {
             var n = cat.trim();
@@ -2733,8 +2739,9 @@
       }).filter(Boolean);
       if (names.length) L.push("CATEGORIES:" + names.map(vcfEsc).join(","));
     }
-    // Apple/Android starred extension — harmless if ignored.
-    if (c.starred) L.push("X-ABShowAs:COMPANY-NOTE");
+    // Round-trippable starred flag (X-ABShowAs was never parsed back
+    // — favorite status silently died on vCard re-import).
+    if (c.starred) L.push("X-OROS-STARRED:TRUE");
     if (c.photo) L.push("PHOTO:" + c.photo);
     L.push("REV:" + new Date(c.mtime).toISOString());
     L.push("END:VCARD");
@@ -2774,7 +2781,7 @@
           URL.revokeObjectURL(a.href);
         }, 200);
         notifyTransient(t("ct.export.done"));
-      } catch (e) { notifyTransient(t("ct.import.bad")); }
+      } catch (e) { notifyTransient(t("ct.export.bad")); }
     });
   }
 

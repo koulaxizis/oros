@@ -73,14 +73,6 @@
       "url": "contacts/",
       "type": "internal"
     },
-	{
-      "id": "bookmarks",
-      "name": "Bookmarks",
-      "category": "Bookmarks",
-      "icon": "bookmarks",
-      "url": "bookmarks/",
-      "type": "internal"
-    },
     {
       "id": "storage",
       "name": "Storage",
@@ -144,6 +136,14 @@
       "icon": "cycle",
       "url": "cycle/",
       "type": "internal"
-    }
+    },
+	{
+      "id": "bookmarks",
+      "name": "Bookmarks",
+      "category": "Internet",
+      "icon": "bookmarks",
+      "url": "bookmarks/",
+      "type": "internal"
+    },
   ]
 }

@@ -115,9 +115,9 @@
       "rel.desc":  "Notes",
       "rel.label": "Short label",
       "rel.hint":  "Click a cell to define the relationship between the two characters.",
-      "rel.cell.add": "Add",
+ 
       "rel.cell.self": "—",
-      "rel.matrix.title": "Relationship matrix",
+ 
       "rel.empty.cell": "empty",
 
       "cmp.title": "Compare",
@@ -131,7 +131,7 @@
       "rnd.done":   "Filled the empty fields.",
 
       "tpl.title": "Start from a template",
-      "tpl.skip":  "No thanks",
+ 
 
       "exp.md":   "Markdown (.md)",
       "exp.json": "Data (.json)",
@@ -141,8 +141,9 @@
       "toast.undone":    "Restored",
       "toast.sync":      "Updated from sync",
       "toast.exported":  "Exported",
-      "toast.needtwo":   "You need at least two characters",
+ 
       "toast.migrated":  "Imported {n} items from the beta app",
+      "err.name.req":    "Name is required",
 
       "help.title": "Characters",
       "help.shortcut.new": "New character",
@@ -193,9 +194,9 @@
       "rel.desc":  "Σημειώσεις",
       "rel.label": "Σύντομη ετικέτα",
       "rel.hint":  "Πάτα ένα κελί για να ορίσεις τη σχέση των δύο χαρακτήρων.",
-      "rel.cell.add": "Προσθήκη",
+ 
       "rel.cell.self": "—",
-      "rel.matrix.title": "Πλέγμα σχέσεων",
+ 
       "rel.empty.cell": "κενό",
 
       "cmp.title": "Σύγκριση",
@@ -209,7 +210,7 @@
       "rnd.done":   "Συμπλήρωσα τα κενά πεδία.",
 
       "tpl.title": "Ξεκίνα από πρότυπο",
-      "tpl.skip":  "Όχι, ευχαριστώ",
+ 
 
       "exp.md":   "Markdown (.md)",
       "exp.json": "Δεδομένα (.json)",
@@ -219,8 +220,9 @@
       "toast.undone":    "Επαναφέρθηκε",
       "toast.sync":      "Ενημερώθηκε από συγχρονισμό",
       "toast.exported":  "Εξήχθη",
-      "toast.needtwo":   "Χρειάζεσαι τουλάχιστον δύο χαρακτήρες",
+ 
       "toast.migrated":  "Μεταφέρθηκαν {n} στοιχεία από το beta app",
+      "err.name.req":    "Το όνομα είναι υποχρεωτικό",
 
       "help.title": "Χαρακτήρες",
       "help.shortcut.new": "Νέος χαρακτήρας",
@@ -522,6 +524,17 @@
     mergeSide(out, "characters", saneChar, A, B);
     mergeSide(out, "rels",       saneRel,  A, B);
 
+    // Orphan guard: a rel resurrected (undo) with a newer mtime than
+    // its cascade tombstone can outlive a deleted endpoint. Retire
+    // it with a fresh tombstone so no replica resurrects it again.
+    Object.keys(out.rels).forEach(function (rid) {
+      var r = out.rels[rid];
+      if (!out.characters[r.a] || !out.characters[r.b]) {
+        delete out.rels[rid];
+        out.deleted[rid] = Date.now();
+      }
+    });
+
     var donor = (B.om || 0) > (A.om || 0) ? B : A;
     out.pos  = orderFrom(donor, "pos",  out.characters);
     out.posR = orderFrom(donor, "posR", out.rels);
@@ -623,7 +636,7 @@
     suppressDirty = false;
     if (changed) {
       paint();
-      toast("ok", t("toast.sync"));
+      transientNote(t("toast.sync"));
     }
   }
 
@@ -631,7 +644,16 @@
     var api = syncApi();
     if (api && typeof api.registerSlice === "function") {
       try {
-        api.registerSlice(SLICE_NAME, sliceGet, sliceSet, STORAGE_KEY);
+        // 5th arg = mergeFn (v0.7 contract): without it the engine
+        // treats this slice as MERGELESS → divergence guard PARKS the
+        // remote while local has unpushed work, and the registerSlice
+        // flush DROPS the parked copy (mergeless branch). mergeDB
+        // exists precisely for this — hand it to the engine so
+        // two-device edits converge instead of last-write-wins.
+        api.registerSlice(SLICE_NAME, sliceGet, sliceSet, STORAGE_KEY,
+          function (local, remote) {
+            return mergeDB(local, saneDB(remote));
+          });
       } catch (e) { /* engine busy — next boot re-registers */ }
     }
   }
@@ -657,7 +679,6 @@
   var ICO = {
     plus:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
     x:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
-    trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
     link:  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
     dl:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
   };
@@ -684,6 +705,27 @@
       box.classList.remove("show");
       setTimeout(function () { box.remove(); }, 300);
     }, action ? 5000 : (kind === "err" ? 4500 : 2600));
+  }
+
+  // Unified transient note (Axis ②): informational feedback goes to
+  // the shell's orosNotifs.transient() when embedded; standalone
+  // falls back to the local toast. Undo-bearing toasts stay local
+  // by doctrine (unified system has no action callbacks).
+  function notifsApi() {
+    try {
+      if (window.orosNotifs) return window.orosNotifs;
+      if (window.parent && window.parent.orosNotifs) return window.parent.orosNotifs;
+    } catch (e) { /* cross-origin / standalone */ }
+    return null;
+  }
+
+  function transientNote(text) {
+    var api = notifsApi();
+    if (api && typeof api.transient === "function") {
+      api.transient({ title: text, ns: "characters" });
+      return;
+    }
+    toast("ok", text);
   }
 
   // ---------- Confirm dialog (promise-based, no native confirm()) ----------
@@ -974,7 +1016,7 @@
           iName.value = ui.editing.name;
           iRole.value = ui.editing.role;
           paintTraitRows();
-          toast("ok", t("rnd.done"));
+          transientNote(t("rnd.done"));
         }
       });
       startRow.appendChild(rnd);
@@ -1138,7 +1180,7 @@
     var draft = ui.editing;
 
     if (!draft.name.trim()) {
-      toast("err", t("fld.name") + "?");
+      transientNote(t("err.name.req"));
       return;
     }
     var rec = saneChar({
@@ -1158,7 +1200,7 @@
     if (db.pos.indexOf(rec.id) < 0) db.pos.push(rec.id);
     commit();
     $("dlg-editor").close();
-    toast("ok", t("toast.saved"));
+    transientNote(t("toast.saved"));
   }
 
   // Delete = tombstone + cascade rels, with a 5s Undo net.
@@ -1215,7 +1257,7 @@
             if (db.posR.indexOf(rid) < 0) db.posR.push(rid);
           });
           commit();
-          toast("ok", t("toast.undone"));
+          transientNote(t("toast.undone"));
         }
       });
       return true;
@@ -1550,7 +1592,7 @@
     // (their CONTENT did not change) — only the pair record is newer.
     commit();
     $("dlg-rel").close();
-    toast("ok", t("toast.saved"));
+    transientNote(t("toast.saved"));
   }
 
   function deleteRel(id) {
@@ -1578,7 +1620,7 @@
           delete db.deleted[id];
           if (db.posR.indexOf(id) < 0) db.posR.push(id);
           commit();
-          toast("ok", t("toast.undone"));
+          transientNote(t("toast.undone"));
         }
       });
       return true;
@@ -1944,8 +1986,6 @@
     // ===== SECTION: EXPORTS + SHORTCUTS + BOOT =====
 
   // ---------- Export popovers ----------
-  var exportPopup = null;
-
   function toggleExportMenu() {
     var pop = $("export-pop");
     if (!pop) return;
@@ -1964,6 +2004,7 @@
     pop.appendChild(js);
     pop.style.top = (rect.bottom + 6) + "px";
     pop.style.left = rect.left + "px";
+    pop.style.right = "auto";
     pop.hidden = false;
 
     md.addEventListener("click", function () { pop.hidden = true; exportMD(); });
@@ -2059,7 +2100,7 @@
       URL.revokeObjectURL(url);
       a.remove();
     }, 1000);
-    toast("ok", t("toast.exported"));
+    transientNote(t("toast.exported"));
   }
 
   // ---------- Shortcuts (local app combos + shell forwarding) ----------
@@ -2176,7 +2217,7 @@
     var migrated = migrateLegacy();
     db = loadDB();
     if (migrated) {
-      toast("ok", tf("toast.migrated", {
+      transientNote(tf("toast.migrated", {
         n: Object.keys(db.characters).length +
            Object.keys(db.rels).length
       }));

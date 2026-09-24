@@ -411,7 +411,6 @@ dialog h3 {
   margin-top: 4px;
 }
 .ev-form input[type="text"],
-.ev-form input[type="date"],
 .ev-form textarea,
 .ev-form select {
   background: var(--bg);
@@ -527,16 +526,6 @@ dialog h3 {
 /* Event rows (birthday / anniversary / custom) */
 .mf-row.ev { flex-wrap: wrap; }
 .mf-row.ev .mf-type { width: auto; }
-.mf-yr-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  color: var(--text-dim);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
 .mf-add { align-self: flex-start; margin-top: 2px; }
 
 .chip-row {

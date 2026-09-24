@@ -1797,44 +1797,49 @@ function deleteFolderNow() {
 /* ===== 9. NETSCAPE IMPORT / EXPORT ===== */
 
 function parseNetscape(htmlText) {
-  const doc = new DOMParser().parseFromString(htmlText, "text/html");
+  /* Token-level scan of the RAW text, not a DOM walk:
+     DOMParser mangles the <DT><H3>…<DL> soup (browsers keep
+     DLs nested inside earlier DTs), which made the old walker
+     skip every subtree after the first folder. The text itself
+     from Chrome/Firefox exports is structurally clean, so a
+     tag scan with depth tracking is exact. */
   const out = [];
+  const stack = [];               // enclosing folder names (outer → inner)
+  let pendingFolder = null;       // last <H3>, adopted by the next <DL>
 
-  /* Walks <DT><H3>Folder</H3> + sibling <DL> (the classic
-     Netscape/Chrome/Firefox export shape) and nested <DL>
-     inside the same <DT> (some exporters do this instead). */
-  function walkDL(dl, path) {
-    let curFolder = null;
-    Array.from(dl.childNodes).forEach((node) => {
-      if (node.nodeType !== 1) return;
-      const tag = node.tagName;
-      if (tag === "DT") {
-        const a = node.querySelector(":scope > a[href]");
-        const h3 = node.querySelector(":scope > h3");
-        if (a) {
-          out.push({
-            url: a.getAttribute("href"),
-            title: (a.textContent || "").trim(),
-            path: curFolder ? path.concat([curFolder]) : path
-          });
-        } else if (h3) {
-          curFolder = h3.textContent.trim();
-          const inner = node.querySelector(":scope > dl");
-          if (inner) walkDL(inner, path.concat([curFolder]));
-        }
-      } else if (tag === "DL") {
-        if (curFolder) {
-          walkDL(node, path.concat([curFolder]));
-          curFolder = null;            // back at parent level
-        } else {
-          walkDL(node, path);
-        }
-      }
-    });
+  /* Entity decoding via detached textarea (DOM-native, no deps). */
+  const dec = document.createElement("textarea");
+  function decodeText(s) {
+    dec.innerHTML = String(s == null ? "" : s);
+    return dec.value;
   }
+  const stripTags = (s) => s.replace(/<[^>]+>/g, "").trim();
 
-  const rootDL = doc.querySelector("dl");
-  if (rootDL) walkDL(rootDL, []);
+  const RE = /<dl\b[^>]*>|<\/dl\s*>|<h3\b[^>]*>([\s\S]*?)<\/h3\s*>|<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi;
+  let m;
+  while ((m = RE.exec(htmlText))) {
+    const tok = m[0];
+    if (/^<dl\b/i.test(tok)) {
+      stack.push(pendingFolder);      // null at root depth
+      pendingFolder = null;
+    } else if (/^<\/dl/i.test(tok)) {
+      stack.pop();
+    } else if (m[1] !== undefined) {              // <H3>…</H3>
+      const name = stripTags(decodeText(m[1]));
+      pendingFolder = name || null;
+    } else {                                      // <A …>…</A>
+      const attrs = m[2] || "";
+      const hm = attrs.match(/href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+      const href = hm ? (hm[1] || hm[2] || hm[3]) : "";
+      if (href) {
+        out.push({
+          url: href,
+          title: stripTags(decodeText(m[3])),
+          path: stack.filter(Boolean)
+        });
+      }
+    }
+  }
   return out;
 }
 
