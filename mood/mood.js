@@ -89,7 +89,6 @@
       "rit.outd.no":   "Mostly indoors",
       "grp.rit":       "Rituals",
       "l4.note":       "Reflection (optional)",
-      "l4.trigger":    "What triggered this? (optional)",
       "l4.trig.title": "What triggered this?",
       "save":          "Save entry",
       "discard":       "Discard",
@@ -98,10 +97,6 @@
       "recent.del":    "Delete entry",
       "del.done":      "Deleted",
       "del.undo":      "Undo",
-      "tod.morning":   "Morning",
-      "tod.afternoon": "Afternoon",
-      "tod.evening":   "Evening",
-      "tod.night":     "Night",
       "must.feel":     "Pick at least one feeling to save",
       "recent.q":      "Logged {time} ago — update it?",
       "recent.new":    "New entry",
@@ -169,7 +164,7 @@
       "exp.summary":     "Overview",
       "exp.row.entries": "Entries in range",
       "exp.row.days":    "Days logged",
-	  "sync.pull":      "Updated from sync",
+      "sync.pull":      "Updated from sync",
       "exp.font.err":   "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
       "ent.empty":      "No entries yet — they'll appear here after your first check-in.",
       "ent.noRes":      "No entries match \u201C{q}\u201D."
@@ -231,7 +226,6 @@
       "rit.outd.no":   "Έμεινα κυρίως μέσα",
       "grp.rit":       "Ιεροτελεστίες",
       "l4.note":       "Σκέψη (προαιρετικό)",
-      "l4.trigger":    "Τι το προκάλεσε; (προαιρετικό)",
       "l4.trig.title": "Τι το προκάλεσε;",
       "save":          "Αποθήκευση",
       "discard":       "Απόρριψη",
@@ -240,10 +234,6 @@
       "recent.del":    "Διαγραφή",
       "del.done":      "Διαγράφηκε",
       "del.undo":      "Αναίρεση",
-      "tod.morning":   "Πρωί",
-      "tod.afternoon": "Απόγευμα",
-      "tod.evening":   "Βράδυ",
-      "tod.night":     "Νύχτα",
       "must.feel":     "Διάλεξε τουλάχιστον ένα συναίσθημα για αποθήκευση",
       "recent.q":      "Καταχωρήθηκε πριν {time} — να ενημερωθεί;",
       "recent.new":    "Νέα καταχώρηση",
@@ -311,7 +301,7 @@
       "exp.summary":     "Επισκόπηση",
       "exp.row.entries": "Καταχωρήσεις στο εύρος",
       "exp.row.days":    "Ημέρες με καταγραφή",
-	  "sync.pull":      "Ενημερώθηκε από συγχρονισμό",
+      "sync.pull":      "Ενημερώθηκε από συγχρονισμό",
       "exp.font.err":   "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
       "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή.",
       "ent.noRes":      "Καμία καταχώρηση δεν ταιριάζει με «{q}»."
@@ -1059,16 +1049,14 @@ function mergeMoodStates(A, B) {
         sl.min = "1"; sl.max = "5"; sl.step = "1";
         sl.value = String(picked[k]);
         sl.setAttribute("aria-label", t(em.i18n));
-        sl.addEventListener("input", function () {
-          picked[k] = parseInt(sl.value, 10);
-        });
-        row.appendChild(sl);
         var num = document.createElement("span");
         num.className = "int-num";
         num.textContent = String(picked[k]);
         sl.addEventListener("input", function () {
+          picked[k] = parseInt(sl.value, 10);
           num.textContent = sl.value;
         });
+        row.appendChild(sl);
         row.appendChild(num);
         ints.appendChild(row);
       });
@@ -1140,7 +1128,7 @@ function mergeMoodStates(A, B) {
       addRow.className = "addrow";
       var addIn = document.createElement("input");
       addIn.type = "text";
-	  addIn.id = "add-in-" + col;
+      addIn.id = "add-in-" + col;
       addIn.value = prevAdd[col];
       addIn.placeholder = t("l2.add.ph");
       addIn.maxLength = 40;
@@ -1248,7 +1236,7 @@ function mergeMoodStates(A, B) {
     tAddRow.className = "addrow";
     var tAddIn = document.createElement("input");
     tAddIn.type = "text";
-	tAddIn.id = "add-in-trig";
+    tAddIn.id = "add-in-trig";
     tAddIn.value = prevAdd.trig;
     tAddIn.placeholder = t("l2.add.ph");
     tAddIn.maxLength = 40;
@@ -1297,7 +1285,11 @@ function mergeMoodStates(A, B) {
         if (!last) return;
         loadEntryIntoCapture(last);
         buildCapture();
-        $("fld-note").value = last.note || "";
+        // MO6: a half-typed draft is precious (same rule as the
+        // deep-link): repeat fills the old note ONLY when the
+        // user hasn't typed anything new.
+        var nb = $("fld-note");
+        if (nb && !nb.value.trim()) nb.value = last.note || "";
         // selTrig comes from loadEntryIntoCapture(last) above
         var mm2 = $("moodmain");
         if (mm2) mm2.scrollTop = 0;
@@ -1436,8 +1428,7 @@ function mergeMoodStates(A, B) {
     v.mtime = Date.now();                // LWW — rename travels
     state.sm = Date.now();
     save();
-    buildCapture();
-    renderAll();                          // recent list shows labels live
+    renderAll();                          // recent list shows labels live (paints capture too)
     showToast(t("col.renamed"));
   }
 
@@ -1452,7 +1443,6 @@ function mergeMoodStates(A, B) {
     else if (col === "trig" && selTrig === v.id) selTrig = null;
     state.sm = Date.now();
     save();
-    buildCapture();
     renderAll();
     showToast(t("col.del.done"), t("col.del.undo"), function () {
       // resurrection: fresh mtime beats the tombstone (same
@@ -1462,7 +1452,6 @@ function mergeMoodStates(A, B) {
       delete state.deleted[v.id];
       state.sm = Date.now();
       save();
-      buildCapture();
       renderAll();
     });
   }
@@ -1527,6 +1516,16 @@ function mergeMoodStates(A, B) {
       var vn = [last.note || "", $("fld-note").value.trim()].filter(Boolean);
       $("fld-note").value = vn.join("\n");
       selTrig = selTrig || last.trig || null;   // fresh pick wins, legacy fallback
+      // MO1: same fallback for loc/person/habits — an untouched
+      // field is NOT a conscious "erase it". Without this, a quick
+      // re-check-in inside the 1h window silently wiped the
+      // previous entry's habit marks. Fresh picks always win.
+      selLoc = selLoc || last.loc || null;
+      selPerson = selPerson || last.person || null;
+      HABITS.forEach(function (h) {
+        if (hab[h.f] === null &&
+            (last[h.f] === "yes" || last[h.f] === "no")) hab[h.f] = last[h.f];
+      });
       commitEntry(emos);
     }));
     g.appendChild(mk(t("recent.new"), "ghost", function () {
@@ -2245,8 +2244,7 @@ function mergeMoodStates(A, B) {
   function renderHabits(host, es, grp) {
     var daySet = {};
     es.forEach(function (e) { daySet[dayKey(e.ts)] = 1; });
-    var loggedDays = Object.keys(daySet).length;
-    if (!loggedDays) return;
+    if (!Object.keys(daySet).length) return;
 
     HABITS.forEach(function (h) {
       if (h.grp !== grp) return;
@@ -2256,7 +2254,7 @@ function mergeMoodStates(A, B) {
         if (e[h.f] === "no")  noDays += 1;       // per-day — honest
       });
       if (!yesDays && !noDays) return;   // #1: no "0 of 0" ghost rows
-            var row = document.createElement("div");
+      var row = document.createElement("div");
       row.className = "dist-row";
       var lab = document.createElement("span");
       lab.className = "dist-lab";
@@ -3186,15 +3184,8 @@ function mergeMoodStates(A, B) {
 
   function registerSync() {
     var api = (window.parent && window.parent.orosSync) || window.orosSync;
-
-    window.__orosSyncApi = {
-      _suppress: false,
-      dirty: function () {
-        if (this._suppress) return;
-        if (api && typeof api.markDirty === "function") api.markDirty();
-      }
-    };
-
+    // __orosSyncApi is defined at boot (MO2) — only the slice
+    // registration needs the engine here.
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("mood", sliceGet, sliceSet, STORAGE_KEY, mergeMoodStates);
   }
@@ -3317,6 +3308,19 @@ function mergeMoodStates(A, B) {
     document.documentElement.lang = LANG;   // #18: lang attr follows locale
     console.log("mood.js v" + (SCRIPT_V || "?") + " boot");
   })();
+  // MO2: dirty hook BEFORE load() — the fresh-install / seed path
+  // calls save() at boot, and (weather's WA2 lesson) the hook used
+  // to live inside registerSync, which runs after load(). Slice
+  // registration still comes later: registerSlice may collect on
+  // registration (SY6) and state must exist by then.
+  window.__orosSyncApi = {
+    _suppress: false,
+    dirty: function () {
+      var api = (window.parent && window.parent.orosSync) || window.orosSync;
+      if (this._suppress) return;
+      if (api && typeof api.markDirty === "function") api.markDirty();
+    }
+  };
   load();
   applyI18n();
   paintStaticAria();

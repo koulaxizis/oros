@@ -3802,6 +3802,32 @@ no i18n by design).
 - Version refs are user-owned; the assistant never touches versioning
 - Standing mode: PERMANENT DEV (no stable/beta freeze assumptions)
 
+## orOS Time app v0.1.1 — post-audit closure (T1–T8)
+- FIXED (T1): internal timer/pomodoro alarms hidden from user alarm
+  list — prevented accidental deletion killing runtime timers, and
+  prevented pmWatchdog from miscounting deletions as completions.
+- FIXED (T3): renderSub + convRender now minute-gated (was 4×/s
+  DOM rebuild for no visual change). Zone times remain live in tick
+  (cheap textContent updates, no DOM rebuild).
+- FIXED (T4): loadState now respects astroTomb (Clear wins on ties,
+  same contract as saveState/mergeTime) — no resurrection at boot.
+- FIXED (T5): zone delete button uses "zones.del" i18n key with
+  aria-label, both EN ("Delete zone") and EL ("Διαγραφή ζώνης").
+- FIXED (T6): invalid/empty timer input now shakes + focuses both
+  duration inputs instead of silent no-op. No new CSS dependency.
+- VERIFIED OK (T2): deep-link contract between shell.js Wave 6/#T3
+  bridge and time.js receiver IIFE (`__orosTimeOpen` /
+  `sessionStorage["oros-time-open"]`) — exact match, no fix needed.
+- VERIFIED OK (T8): no double-counting pmDone between shell engine
+  and app watchdog — confirmed shell only emits `alarmNotify()`,
+  never touches DATA_KEY.
+- CLOSED (flag #1): time.html script order (time.js loads before
+  astro.js) is safe — time.js never reads the astro module, only
+  localStorage, asynchronously.
+- KNOWN LIMIT (documented, no fix — per Bible): timer/pomodoro
+  finish deep-links land on "alarms" pane (shell doesn't know alarm
+  origin — would require new i18n/structure change).
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

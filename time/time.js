@@ -54,7 +54,7 @@
       "sty.flip": "Flip", "sty.neon": "Neon",
       "zones.title": "World clock", "zones.add": "Add", "zones.dlg": "Add time zone",
       "zones.ok": "Add", "zones.cancel": "Cancel", "zones.none": "No zones yet",
-      "zones.edit": "Change zone",
+      "zones.edit": "Change zone", "zones.del": "Delete zone",
       "qc.athens": "Athens", "qc.london": "London", "qc.nyork": "New York", "qc.tokyo": "Tokyo",
       "tab.alarm": "Alarm", "tab.timer": "Timer", "tab.stopwatch": "Stopwatch", "tab.pomodoro": "Pomodoro",
       "al.ph.label": "Label…", "al.daily": "Daily", "al.sound": "Sound",
@@ -73,7 +73,7 @@
       "sty.flip": "Αναδιπλούμενο", "sty.neon": "Νεόν",
       "zones.title": "Παγκόσμια ώρα", "zones.add": "Προσθήκη", "zones.dlg": "Προσθήκη ζώνης ώρας",
       "zones.ok": "Προσθήκη", "zones.cancel": "Άκυρο", "zones.none": "Δεν έχουν προστεθεί ζώνες",
-      "zones.edit": "Αλλαγή ζώνης",
+      "zones.edit": "Αλλαγή ζώνης", "zones.del": "Διαγραφή ζώνης",
       "tab.alarm": "Ξυπνητήρι", "tab.timer": "Αντίστροφη μέτρηση", "tab.stopwatch": "Χρονόμετρο", "tab.pomodoro": "Pomodoro",
       "al.ph.label": "Ετικέτα…", "al.daily": "Καθημερινά", "al.sound": "Ήχος",
       "al.add": "Προσθήκη ξυπνητηριού", "al.none": "Κανένα ξυπνητήρι",
@@ -107,6 +107,7 @@
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-time-data";
   var lastMinuteKey = -1;
+  var lastSubKey = -1, lastConvKey = -1;   // T3: minute-gates for face-sub / converter
   // zones = entities { tz, mtime }; zonesDeleted = tombstones { tz, mtime }
   // (same merge contract as Calendar). smtime stamps SCALAR-pref edits
   // only — a zone add/delete never clobbers the other device's
@@ -157,8 +158,12 @@
         if (typeof d.convOn === "boolean") state.convOn = d.convOn;
         if (typeof d.astroTomb === "number" && isFinite(d.astroTomb)) state.astroTomb = d.astroTomb;
         if (d.astro && typeof d.astro.lat === "number" && typeof d.astro.lon === "number") {
-          state.astro = { lat: d.astro.lat, lon: d.astro.lon,
-            mtime: (typeof d.astro.mtime === "number" && isFinite(d.astro.mtime)) ? d.astro.mtime : 0 };
+          var aM = (typeof d.astro.mtime === "number" && isFinite(d.astro.mtime)) ? d.astro.mtime : 0;
+          // T4: same reconciliation contract as saveState/mergeTime —
+          // a Clear (tomb ≥ mtime, deletion wins ties) must not be
+          // resurrected into memory at load either.
+          if (state.astroTomb > 0 && state.astroTomb >= aM) state.astro = null;
+          else state.astro = { lat: d.astro.lat, lon: d.astro.lon, mtime: aM };
         }
       }
     } catch (e) {}
@@ -538,7 +543,9 @@
       var del = document.createElement("button");
       del.type = "button";
       del.className = "z-del";
-      del.title = "✕";
+      var delLbl = t("zones.del");
+      del.title = delLbl;
+      del.setAttribute("aria-label", delLbl);   // glyph-only buttons need spoken text
       del.textContent = "✕";
       del.addEventListener("click", function () {
         state.zones = state.zones.filter(function (z) { return z.tz !== tz; });
@@ -644,7 +651,16 @@
   function renderAlarms() {
     var ul = $("alarm-list");
     ul.innerHTML = "";
-    var list = alarmsApi.list().slice().sort(function (a, b) { return a.at - b.at; });
+    // T1: the page's OWN timer/pomodoro registrations are engine
+    // bookkeeping, not user alarms — showing them in this list lets
+    // the user delete them (killing the timer) and the pmWatchdog
+    // mistakes that deletion for a COMPLETED pomodoro leg
+    // (state.pmDone++ → synced everywhere). Hidden from view only.
+    var hidden = {};
+    if (timerId) hidden[timerId] = true;
+    if (pmAlarmId) hidden[pmAlarmId] = true;
+    var list = alarmsApi.list().filter(function (a) { return !hidden[a.id]; })
+      .sort(function (a, b) { return a.at - b.at; });
     if (!list.length) {
       var li0 = document.createElement("li");
       li0.className = "empty";
@@ -737,7 +753,20 @@
     if (timerId) { timerStop(); return; }     // acts as cancel
     var m = Math.max(0, Math.min(999, parseInt($("tm-min").value, 10) || 0));
     var s = Math.max(0, Math.min(59, parseInt($("tm-sec").value, 10) || 0));
-    if (m * 60 + s <= 0) return;
+    if (m * 60 + s <= 0) {
+      // T6: silent no-op retired — shake both inputs briefly and
+      // focus, so the user sees WHY nothing started (no CSS, no beep).
+      ["tm-min", "tm-sec"].forEach(function (id) {
+        var el = $(id);
+        var n = 0;
+        var iv = setInterval(function () {
+          el.style.transform = (n % 2 === 0) ? "translateX(3px)" : "translateX(-3px)";
+          if (++n > 5) { clearInterval(iv); el.style.transform = ""; }
+        }, 70);
+      });
+      $("tm-min").focus();
+      return;
+    }
     timerEnd = Date.now() + (m * 60 + s) * 1000;
     ovDismissed = false;
     timerId = alarmsApi.add({ at: timerEnd, label: t("tm.done") });
@@ -909,9 +938,14 @@
     } else {
       renderNeon(now);
     }
-    renderSub(now);
+    // T3: face-sub (date + UTC offset) and the converter show
+    // MINUTE-granularity values — painting them 4×/s rebuilt the
+    // whole converter DOM for nothing. Gated on the same minute
+    // boundary the alarm list already uses.
+    var minuteKey = now.getHours() * 60 + now.getMinutes();
+    if (minuteKey !== lastSubKey) { lastSubKey = minuteKey; renderSub(now); }
     zoneTick();
-    if (convOn) convRender();
+    if (convOn && minuteKey !== lastConvKey) { lastConvKey = minuteKey; convRender(); }
     timerPaint();
     swPaint();
     if (pmRunning) {
@@ -921,7 +955,6 @@
     }
     pmWatchdog();
     // Minute-boundary refresh of the alarm list ordering (once per minute)
-    var minuteKey = now.getHours() * 60 + now.getMinutes();
     if (minuteKey !== lastMinuteKey) { lastMinuteKey = minuteKey; renderAlarms(); }
   }
 

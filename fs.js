@@ -212,7 +212,16 @@
 
   function opfsWriteHandle(fh, blob) {
     return fh.createWritable().then(function (w) {
-      return w.write(blob).then(function () { return w.close(); });
+      return w.write(blob).then(function () { return w.close(); })
+        .catch(function (e) {
+          // F5: mid-write failure (quota/disk) left the writable
+          // handle dangling — its OPFS swap file lingered until the
+          // context died. Abort is the documented "discard" path;
+          // it never promotes the partial content. Guarded: abort
+          // on an already-settled handle is a no-op at worst.
+          try { w.abort(); } catch (e2) {}
+          throw e;
+        });
     });
   }
 
@@ -820,6 +829,15 @@
   function wipe() {
     return backendReady().then(function () {
       return (mode === MODE_OPFS) ? opfsWipe() : idbWipe();
+    }).then(function (r) {
+      // F6: a wiped disk is not "unsynced changes" — it is an
+      // EMPTY disk. With the flag left armed, a future Wave-2 push
+      // would upload that empty disk OVER the cloud copy (a
+      // zero-loss violation). Clear it here. importDisk(payload,
+      // {wipe:true}) stays correct: it re-arms via the per-write
+      // markDirty hooks and the applied>0 reinforcement.
+      clearDirty();
+      return r;
     });
   }
 

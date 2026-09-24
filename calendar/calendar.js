@@ -332,6 +332,12 @@
     "#e06c75", "#ff9e64", "#4ec9b0", "#f28fb6"
   ];
 
+  // CA3/CA4: THE single color source for both sanitizers. Brown
+  // (#c8a96e) is reserved for the Contacts "Custom" feed label —
+  // the user-facing picker still iterates LABEL_PALETTE only.
+  // A color can never again "pass at load but die at merge".
+  var VALID_COLORS = LABEL_PALETTE.concat(["#c8a96e"]);
+
   // Wave 2.1 — virtual feed labels (Contacts/Cycle/Mood/Habits feeds).
   // DELIBERATELY not in state.labels: they never travel in the synced
   // blob, can never be deleted/renamed from the label manager
@@ -344,7 +350,8 @@
     { id: "lbl-feed-cycle",   color: "#f28fb6" },   // pink — Cycle (same as anniv by design)
     { id: "lbl-feed-mood",    color: "#a78bfa" },   // purple — Mood
     { id: "lbl-feed-habits",  color: "#4ec9b0" },   // teal — Habits
-    { id: "lbl-feed-kanban",  color: "#7aa2f7" }    // blue — Kanban (teal taken by Habits)
+    { id: "lbl-feed-kanban",  color: "#7aa2f7" },   // blue — Kanban (teal taken by Habits)
+    { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
   function feedLabelName(l) {
     if (l.id === "lbl-feed-bday") return t("lbl.feed.bday");
@@ -391,10 +398,8 @@
   function sanitizeLabel(l) {
     if (!l || typeof l !== "object") return null;
     if (typeof l.id !== "string" || !l.id) return null;
-    // Extended whitelist: include brown (#c8a96e) for Custom
-    var validColors = ["#d4af37", "#e06c75", "#7aa2f7", "#9ece6a",
-                       "#ff9e64", "#f28fb6", "#a78bfa", "#4ec9b0", "#c8a96e"];
-    if (validColors.indexOf(l.color) === -1) return null;
+    // CA4: single palette source (VALID_COLORS = LABEL_PALETTE + brown)
+    if (VALID_COLORS.indexOf(l.color) === -1) return null;
     return {
       id: l.id,
       name: (typeof l.name === "string" ? l.name : "").slice(0, 40),
@@ -491,6 +496,12 @@
         state.labels = d.labels.map(sanitizeLabel).filter(Boolean);
       } else {
         state.labels = defaultLabels();
+        // CA1: persist NOW — merge-inert, NO markDirty. A fresh
+        // install otherwise hands the merge an empty local blob,
+        // and a labels-less peer wipes the seeds in setFromSync.
+        // Writing immediately means the merge union sees them;
+        // mtime 0 keeps cloud traffic at exactly zero.
+        try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e2) {}
       }
     } catch (e) {
       if (!state.labels.length) state.labels = defaultLabels();
@@ -876,7 +887,7 @@
     return out;
   }
   
-    // Wave 2.1 — Habits read-only feed. Reads completions from
+  // Wave 2.1 — Habits read-only feed. Reads completions from
   // oros-habits-data, injects completed habits as colored dots.
   // Same-origin localStorage → micro-cached for ~1s to avoid
   // JSON.parse storms during month render.
@@ -1140,7 +1151,7 @@
     } catch (e) {}
   }
   
-    /* ---------- 4. View system + month grid ---------- */
+  /* ---------- 4. View system + month grid ---------- */
   var viewYear, viewMonth;          // month currently displayed
   var selDate = null;               // "YYYY-MM-DD" or null
   var curView = "month";            // "month" | "week" | "agenda"
@@ -1703,7 +1714,7 @@
     list.forEach(function (e) { ul.appendChild(buildEvRow(e, selDate)); });
   }
   
-    /* ---------- 6. Navigation (view-aware) ---------- */
+  /* ---------- 6. Navigation (view-aware) ---------- */
   // Selection follows the viewed month: the day panel always shows
   // a date that is actually on screen (Add targets the visible day).
   function navStep(dir) {
@@ -2481,7 +2492,7 @@
     if (ev.target === this) this.close();
   });
   
-    /* ---------- 7b. Shell shortcut forwarding (Contract Β) ---------- */
+  /* ---------- 7b. Shell shortcut forwarding (Contract Β) ---------- */
   document.addEventListener("keydown", function (e) {
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
     var p = window.parent;
@@ -2700,7 +2711,7 @@
     }
   });
   
-    /* ---------- 8c. Deep-link consumer (Wave 1B) ----------
+  /* ---------- 8c. Deep-link consumer (Wave 1B) ----------
      The unified notification system routes "calendar:" payloads
      here (via the shell's __orosOpenCalendar bridge): the app
      navigates to the reminder's day, selects it, and opens the
@@ -2715,6 +2726,13 @@
   // The DL_BRIDGE wraps this as a 2-arg call for backward-compat
   // with the shell's generic routing pattern.
   function __orosCalendarOpen(evId, ymd) {
+    // CA2: the shell's live path calls __calDeepLink({ id, date }) —
+    // an OBJECT payload — while the staged/boot path calls this with
+    // two plain args. Normalize both contracts at the door.
+    if (evId && typeof evId === "object") {
+      ymd = evId.date;
+      evId = evId.id;
+    }
     if (typeof evId !== "string" || !evId) return;
     if (typeof ymd !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
     var p = ymd.split("-");
@@ -2739,11 +2757,11 @@
       else openDlg(ev);
     }, 60);
   }
-  // Legacy alias for backward compatibility (stale index.html might
-  // reference the old name — it just redirects to the canonical one).
+  // The shell's live-path contract (verified in shell.js): it calls
+  // contentWindow.__calDeepLink({ id, date }) — the object payload
+  // normalized inside __orosCalendarOpen. The 2-arg shape stays
+  // internal (boot staging + this file's own callers only).
   window.__calDeepLink = __orosCalendarOpen;
-  // Primary export matching the DL_BRIDGE contract
-  window.__orosCalendarOpen = __orosCalendarOpen;
 
 
   /* ---------- 8. Boot ---------- */
@@ -2809,7 +2827,7 @@
   // dedupe key settles who wins.
   setInterval(checkReminders, 30000);
   
-    // Wave 1B — start-moment label for emitted reminders (mirrors
+  // Wave 1B — start-moment label for emitted reminders (mirrors
   // the shell engine's calRemWhen: "20 Sep · 09:30", locale-aware).
   function remStartLabel(due) {
     var startTs = due.remTs + due.ev.remindMin * 60000;
@@ -2974,7 +2992,7 @@
     if (!l || typeof l !== "object") return null;
     if (typeof l.id !== "string" || !l.id) return null;
     if (typeof l.mtime !== "number" || !isFinite(l.mtime)) return null;
-    if (LABEL_PALETTE.indexOf(l.color) === -1) return null;
+    if (VALID_COLORS.indexOf(l.color) === -1) return null;
     return {
       id: l.id,
       name: (typeof l.name === "string" ? l.name : "").slice(0, 40),
@@ -3058,6 +3076,9 @@
     lastMoved = null;
     lastDeleted = null;
     lastExdate = null;
+    // CA6: seeds follow the ACTIVE language after a live pull —
+    // untouched (mtime 0) defaults re-translate; merge-inert, no dirty.
+    reseedSeedNames();
     // Audit #7: sync arriving with a half-open dialog would leave
     // editingId pointing at a row that may no longer exist → the
     // next Save would resurrect a stale ghost. Safer: close the

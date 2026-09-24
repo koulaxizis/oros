@@ -117,7 +117,9 @@
         // Ι2: singular "Καλώς ήρθες" for personal tone (single user,
         // personal OS — not corporate "you guys"). Matches the
         // welcoming aesthetic better than formal plural.
-        txt.textContent = "Καλώς ήρθες στο orOS. Γίνεται αναζήτηση ενημερώσεων, παρακαλώ περιμένετε…";
+        // Δ6: singular throughout — matches the Ι2 personal tone
+        // ("ήρθες" was already singular; "περιμένετε" broke the register).
+        txt.textContent = "Καλώς ήρθες στο orOS. Γίνεται αναζήτηση ενημερώσεων, περίμενε λίγο…";
         document.documentElement.lang = "el";
       }
     } catch (e) {}

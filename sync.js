@@ -1304,7 +1304,13 @@
     // or it would recreate the file after us. If it somehow exceeds
     // 3s, we proceed anyway — the revoke below kills its token after.
     function waitFlight(msLeft) {
-      if (!pushInFlight && !reconcileInFlight) return Promise.resolve();
+      // SY9: a MANUAL pull in flight is engine business too — its
+      // applyPayload microtasks could land BETWEEN the localStorage
+      // sweep and the reload, writing oros-* keys back AFTER the
+      // wipe (factoryResetPending cleans IndexedDB only — those
+      // leftovers would survive the reset). Bounded by the same 3s
+      // cap; a stuck pull costs at most 3s of patience.
+      if (!pushInFlight && !reconcileInFlight && !pullInFlight) return Promise.resolve();
       if (msLeft <= 0) return Promise.resolve();
       return new Promise(function (r) {
         setTimeout(function () { r(waitFlight(msLeft - 150)); }, 150);
@@ -1522,6 +1528,18 @@
       }
       if (pushInFlight || reconcileInFlight) {
         return Promise.reject(new Error("push already in flight"));
+      }
+      // SY8: mirror of the SP2/SY5 race family — a MANUAL pull in
+      // flight keeps decrypting with whatever `passphrase` holds at
+      // each await point, and changePassphrase flips that variable
+      // mid-flight (passphrase = oldPw … = newPw). The racing pull
+      // can then fail decryption with a PROVEN-good passphrase →
+      // spurious OperationError → the misleading "passphrase changed
+      // on another device" dialog right as the change succeeds.
+      // Reject with the honest busy — errorKey maps it to
+      // sync.err.busy; the retry is one click away.
+      if (pullInFlight) {
+        return Promise.reject(new Error("pull already in flight"));
       }
       pushInFlight = true;   // cp holds the engine lock for its whole
                              // flight — no concurrent push may encrypt

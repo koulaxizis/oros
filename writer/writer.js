@@ -7,6 +7,38 @@
 (function () {
 'use strict';
 
+/* ========== SECTION 0: SHELL PALETTE INHERITANCE ========== */
+// CRITICAL: CI guard (bump-version.yml G3) greps for these function
+// NAMES in every app's JS. Same contract as todo/kanban/notes/weather/mood/time.
+// Without them, the app doesn't inherit --bg/--text/--accent/etc.
+// from the orOS shell → CI failure + broken visuals.
+function inheritPalette() {
+  try {
+    var pDoc = window.parent.document;
+    var pCs = window.parent.getComputedStyle(pDoc.documentElement);
+    ["--bg", "--text", "--text-dim", "--accent", "--accent-hover",
+     "--accent-soft", "--panel-bg", "--border", "--shadow"].forEach(function (v) {
+      var val = pCs.getPropertyValue(v).trim();
+      if (val) document.documentElement.style.setProperty(v, val);
+    });
+    var th = pDoc.documentElement.getAttribute("data-theme");
+    if (th) document.documentElement.setAttribute("data-theme", th);
+  } catch (e) { /* standalone load — CSS fallbacks apply */ }
+}
+
+function watchPalette() {
+  try {
+    var pRoot = window.parent.document.documentElement;
+    if (typeof MutationObserver !== "function") return;
+    new MutationObserver(inheritPalette).observe(pRoot, {
+      attributes: true, attributeFilter: ["data-theme", "data-skin"]
+    });
+  } catch (e) { /* standalone — nothing to watch */ }
+}
+
+inheritPalette();
+watchPalette();
+
 /* ===== SECTION 1: REFERENCES & STATE ===== */
 const EL = {
   app:         document.getElementById('w-app'),

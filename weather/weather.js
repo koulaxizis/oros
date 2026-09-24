@@ -754,12 +754,17 @@
   }
 
   // Throttled entry point: fresh within 30 min → cache, else fetch.
+  // W2: a fresh cache must NOT veto the retry when the offline
+  // badge is lit by a FAILED attempt while online — the badge
+  // stays honest ("last attempt failed") only until ONE good
+  // fetch lands. Online + netDown → retry every refresh path
+  // (visibility/boot/button); a success clears both in one shot.
   function maybeFetch(force) {
     var city = activeCity();
     if (!city) return Promise.resolve(null);
     var c = readCityCache(city.id);
     if (!force && c && c.at && (Date.now() - c.at) < FETCH_GAP_MS) {
-      return Promise.resolve(c);
+      if (!netDown || !navigator.onLine) return Promise.resolve(c);
     }
     return fetchForecast(city);
   }
@@ -800,6 +805,10 @@
       document.body.appendChild(toastEl);
     }
     if (toastAction) { toastAction.remove(); toastAction = null; }
+    // W1: the element is REUSED — old text nodes survived the fade
+    // and concatenated with the next toast (back-to-back deletes
+    // printed both labels in one line). Fresh text, always.
+    toastEl.textContent = "";
 
     toastEl.appendChild(document.createTextNode(text));   // text FIRST
 
