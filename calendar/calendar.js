@@ -314,6 +314,23 @@
     toastEl.classList.add("show");
     toastTimer = setTimeout(hideToast, 5000);
   }
+  
+  /* Unified notifications (orOS compliance): informational toasts
+   route through the shell's orosNotifs.transient() — click
+   feedback, no inbox, no toggle needed. Falls back to the local
+   toast when the app runs standalone (no shell present).
+   Undo-bearing toasts keep the local path (interactive action). */
+function transientNote(title, body) {
+  var api = null;
+  try { api = window.parent.orosNotifs; } catch (e) {}
+  if (!api && window.orosNotifs) api = window.orosNotifs;
+  
+  if (api && typeof api.transient === "function") {
+    api.transient({ ns: "calendar", title: title, body: body || "" });
+  } else {
+    toast(title + (body ? " — " + body : ""));
+  }
+}
 
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
@@ -2415,7 +2432,7 @@
       del.textContent = t("lbl.delete");
       del.addEventListener("click", function () {
         var inUse = state.events.some(function (e) { return e.labelId === l.id; });
-        if (inUse) { toast(t("lbl.inuse")); return; }
+        if (inUse) { transientNote(t("lbl.inuse")); return; }
         state.labels = state.labels.filter(function (x) { return x.id !== l.id; });
         state.deleted.push({ id: l.id, mtime: Date.now() });   // label tombstone (shared list)
         delete labelVis[l.id];
@@ -2577,7 +2594,7 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-    toast(t("exp.done"));
+    transientNote(t("exp.done"));
   }
   if ($("cal-export")) {
     $("cal-export").addEventListener("click", exportICS);

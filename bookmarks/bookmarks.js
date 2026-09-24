@@ -167,7 +167,12 @@ const STR = {
     "sel.none": "Select at least one bookmark",
     "tab.rename": "Rename",
     "tab.movel": "Move left",
-    "tab.mover": "Move right"
+    "tab.mover": "Move right",
+    "dupe.title": "Duplicate bookmarks",
+    "dupe.none": "No duplicates found — each address exists only once.",
+    "dupe.keep": "Keep oldest, delete {n}",
+    "dupe.deleted": "Deleted {n} duplicate(s)",
+    "dupe.keeper": "oldest — kept"
   },
   "el": {
     "app.name": "Συντομεύσεις",
@@ -239,7 +244,12 @@ const STR = {
     "sel.none": "Επίλεξε τουλάχιστον έναν σελιδοδείκτη",
     "tab.rename": "Μετονομασία",
     "tab.movel": "Κίνηση αριστερά",
-    "tab.mover": "Κίνηση δεξιά"
+    "tab.mover": "Κίνηση δεξιά",
+    "dupe.title": "Διπλότυπες εγγραφές",
+    "dupe.none": "Δεν βρέθηκαν διπλότυπα — κάθε διεύθυνση υπάρχει μόνο μία φορά.",
+    "dupe.keep": "Διατήρηση παλαιότερης, διαγραφή {n}",
+    "dupe.deleted": "Διεγράφησαν {n} διπλότυπες",
+    "dupe.keeper": "παλαιότερη — διατηρήθηκε"
   }
 };
 
@@ -278,6 +288,8 @@ function applyI18n(root) {
 
 let state = null;
 let lastUndoSnapshot = null;
+// Snapshots: handled globally by the orOS shell (oros-auto-snapshots, max 5).
+// Bookmarks travels inside the full DB snapshot via its sync slice.
 
 /* Whitelisted, bounded field sanitizers — everything else is dropped. */
 
@@ -457,6 +469,11 @@ let uiActiveFolder = ROOT_FOLDER;
 let uiQuery = "";
 
 function renderAll() {
+  /* Guard: if the active folder vanished (remote delete via sync),
+     fall back safely to the root folder. */
+  if (uiActiveFolder !== "ALL_VIEW" && !state.folders[uiActiveFolder]) {
+    uiActiveFolder = ROOT_FOLDER;
+  }
   renderTabs();
   renderList();
 }
@@ -829,7 +846,7 @@ function bulkMoveMenu() {
     return Array.from(selectedIds).some(
       (id) => state.items[id] && state.items[id].folderId !== f.id);
   });
-  if (!others.length) { showToast(t("sel.none")); return; }
+  if (!others.length) { transientNote(t("sel.none")); return; }
 
   const m = document.createElement("div");
   m.id = "ctx-menu";
@@ -866,7 +883,7 @@ function bulkMove(folderId) {
       n++;
     }
   });
-  if (!n) { showToast(t("sel.none")); return; }
+  if (!n) { transientNote(t("sel.none")); return; }
   save();
   exitSelectionMode();
   renderAll();
@@ -939,12 +956,13 @@ function reorderFolder(srcId, dstId) { swapFolders(srcId, dstId); }
 function wireTabLongPress(tab, id) {
   let timer = null, startY = 0;
   tab.addEventListener("touchstart", (e) => {
+    const startX = e.touches[0].clientX;   // cache before timeout
     startY = e.touches[0].clientY;
     timer = setTimeout(() => {
       timer = null;
       if (e.cancelable) e.preventDefault();
       navigator.vibrate && navigator.vibrate(15);
-      showTabContextMenu(id, e.touches[0].clientX, e.touches[0].clientY);
+      showTabContextMenu(id, startX, startY);
     }, 500);
   }, { passive: false });
   ["touchmove", "touchend", "touchcancel"].forEach((ev) => {
@@ -1128,6 +1146,137 @@ function showTagsPanel() {
     Math.min(btn.left, innerWidth - r.width - 8)) + "px";
 }
 
+/* ---- Duplicates (same-address bookmarks): finder + purge ---- */
+
+/* Groups items by normalized address (same rule as findByUrl:
+   trailing-slash-stripped stored url). Each group is sorted
+   oldest-first, so g[0] is the original. */
+function findDupeGroups() {
+  const byNorm = {};
+  Object.keys(state.items).forEach((id) => {
+    const it = state.items[id];
+    const key = it.url.replace(/\/$/, "");
+    (byNorm[key] = byNorm[key] || []).push(it);
+  });
+  return Object.keys(byNorm)
+    .filter((k) => byNorm[k].length > 1)
+    .map((k) => byNorm[k].sort((a, b) =>
+      (a.added - b.added) || (a.id < b.id ? -1 : 1)))
+    .sort((g1, g2) => (g2.length - g1.length) ||
+      (g1[0].id < g2[0].id ? -1 : 1));
+}
+
+function closeDupesPanel() {
+  const ov = $("#dupes-overlay");
+  if (ov) ov.remove();
+}
+
+function showDupesPanel() {
+  closeDupesPanel();
+  closeTagsPanel();
+  const groups = findDupeGroups();
+
+  const ov = document.createElement("div");
+  ov.id = "dupes-overlay";
+
+  const panel = document.createElement("div");
+  panel.id = "dupes-panel";
+
+  const h = document.createElement("h4");
+  h.textContent = t("dupe.title");
+  panel.appendChild(h);
+
+  if (!groups.length) {
+    const none = document.createElement("div");
+    none.className = "tag-none";
+    none.textContent = t("dupe.none");
+    panel.appendChild(none);
+  } else {
+    groups.forEach((g) => {
+      const keep = g[0];                // oldest — the original
+      const blk = document.createElement("div");
+      blk.className = "dupe-group";
+
+      const head = document.createElement("div");
+      head.className = "dupe-head";
+      head.textContent = hostOf(keep.url) || keep.url;
+      blk.appendChild(head);
+
+      g.forEach((it) => {
+        const row = document.createElement("div");
+        row.className = "dupe-row";
+        const lbl = document.createElement("span");
+        lbl.className = "dupe-lbl";
+        lbl.textContent = it.title +
+          (it.id === keep.id ? " — " + t("dupe.keeper") : "");
+        const sub = document.createElement("span");
+        sub.className = "dupe-sub";
+        const fld = state.folders[it.folderId];
+        sub.textContent = (fld ? folderName(fld) : "?") +
+          " · " + relTime(it.added);
+        row.append(lbl, sub);
+        blk.appendChild(row);
+      });
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "dupe-purge";
+      btn.textContent = t("dupe.keep", { n: g.length - 1 });
+      btn.addEventListener("click", () => purgeDupeGroup(g));
+      blk.appendChild(btn);
+
+      panel.appendChild(blk);
+    });
+  }
+
+  ov.appendChild(panel);
+  ov.addEventListener("click", (e) => {
+    if (e.target === ov) closeDupesPanel();
+  });
+  document.body.appendChild(ov);
+
+  /* Anchor below the button, clamped (tags-panel pattern). */
+  const anchorBtn = $("#dupes-btn");
+  panel.style.position = "absolute";
+  if (anchorBtn) {
+    const btn = anchorBtn.getBoundingClientRect();
+    panel.style.top = (btn.bottom + 8) + "px";
+    const r = panel.getBoundingClientRect();
+    panel.style.left = Math.max(8,
+      Math.min(btn.left, innerWidth - r.width - 8)) + "px";
+  } else {
+    panel.style.left = "50%";
+    panel.style.transform = "translateX(-50%)";
+    panel.style.top = "72px";
+  }
+}
+
+/* Deletes every copy except the oldest. Visits and lastVisit
+   are folded into the keeper so stats survive the purge. */
+function purgeDupeGroup(g) {
+  if (!g || g.length < 2) return;
+  const keep = g[0];                   // oldest — the original
+  snapshotForUndo();
+  const now = Date.now();
+  let n = 0;
+  g.forEach((it) => {
+    if (it.id === keep.id) return;
+    keep.visits += it.visits;
+    keep.lastVisit = Math.max(keep.lastVisit || 0, it.lastVisit || 0);
+    delete state.items[it.id];
+    state.deleted[it.id] = now;         // tombstones — sync-safe
+    n++;
+  });
+  if (!n) return;
+  keep.modified = now;
+  save();
+  closeDupesPanel();
+  renderAll();
+  showToast(t("dupe.deleted", { n: n }), {
+    action: { label: t("undo"), fn: undoFromSnapshot }
+  });
+}
+
 /* ===== 5. SEARCH + QUICK-ADD ===== */
 
 function wireSearch() {
@@ -1167,7 +1316,8 @@ function findByUrl(normalized) {
 
 function quickAdd() {
   const input = $("#quick-add");
-  const raw = input.value;
+  const raw = input.value.trim();
+  if (!raw) return;                 // silent exit — empty input is not an error
   let urlPart = raw, titlePart = "";
   const bar = raw.indexOf("|");
   if (bar > -1) {
@@ -1181,7 +1331,7 @@ function quickAdd() {
   if (existing) {
     flashDuplicate();
     const fld = state.folders[existing.folderId];
-    showToast(t("added.dup", { f: folderName(fld) }));
+    transientNote(t("added.dup", { f: folderName(fld) }));
     return;
   }
 
@@ -1196,7 +1346,7 @@ function quickAdd() {
   save();
   input.value = "";
   renderAll();
-  showToast(t("added"));
+  transientNote(t("added"));
 }
 
 function flashDuplicate() {
@@ -1284,13 +1434,13 @@ function clearDropTargets() {
 function wireLongPress(li, id) {
   let timer = null, startY = 0;
   li.addEventListener("touchstart", (e) => {
+    const startX = e.touches[0].clientX;   // cache before timeout
     startY = e.touches[0].clientY;
     timer = setTimeout(() => {
       timer = null;
       if (e.cancelable) e.preventDefault();
-      const tx = e.touches[0].clientX, ty = e.touches[0].clientY;
       navigator.vibrate && navigator.vibrate(15);
-      showCtxMenu(id, tx, ty);
+      showCtxMenu(id, startX, startY);
     }, 500);
   }, { passive: false });
   ["touchmove", "touchend", "touchcancel"].forEach((ev) => {
@@ -1375,6 +1525,23 @@ function showToast(msg, opts) {
 }
 function hideToast() { $("#toast").classList.remove("show"); }
 
+/* Unified notifications (orOS compliance): informational toasts
+   route through the shell's orosNotifs.transient() — click
+   feedback, no inbox, no toggle needed. Falls back to the local
+   toast when the app runs standalone (no shell present).
+   Undo-bearing toasts keep the local path (interactive action). */
+function transientNote(title, body) {
+  let api = window.orosNotifs;
+  if (!api) {
+    try { api = window.parent.orosNotifs; } catch (e) {}
+  }
+  if (api && typeof api.transient === "function") {
+    api.transient({ ns: "bookmarks", title: title, body: body || "" });
+  } else {
+    showToast(title + (body ? " — " + body : ""));
+  }
+}
+
 /* ===== 7. ITEM DIALOG ===== */
 
 let editingItemId = null;
@@ -1409,7 +1576,7 @@ function addDlgTag(raw) {
   const tg = sanText(raw, 32);
   if (!tg) return;
   if (dlgTags.includes(tg)) {
-    showToast(t("tags.dup") + ": " + tg);
+    transientNote(t("tags.dup"), tg);
     return;
   }
   if (dlgTags.length >= 12) return;  // sanitizer cap: max 12 tags
@@ -1702,7 +1869,7 @@ function applyImport(entries) {
 
   save();
   renderAll();
-  showToast(newItems || newFolders
+  transientNote(newItems || newFolders
     ? t("import.picked", { n: newItems, f: newFolders })
     : t("import.none"));
 }
@@ -1741,7 +1908,7 @@ function exportNetscape() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
 
-  showToast(t("exported", { n: Object.keys(state.items).length }));
+  transientNote(t("exported", { n: Object.keys(state.items).length }));
 }
 
 /* ===== 10. MERGE ENGINE (deterministic, clock-free) ===== */
@@ -1826,6 +1993,9 @@ function registerSync(retries) {
       "bookmarks",
       function getState() { return state; },
       function setState(remoteRaw) {
+        if (typeof remoteRaw === "string") {
+          try { remoteRaw = JSON.parse(remoteRaw); } catch (e) { return; }
+        }
         const before = JSON.stringify(state);
         state = mergeBookmarks(state, remoteRaw);
         save(false);                     // no dirty echo — pull path
@@ -1858,6 +2028,9 @@ function wire() {
   });
   wireTagEditor();
   $("#tags-btn").addEventListener("click", showTagsPanel);
+  /* Duplicate finder — button is optional in HTML (guarded). */
+  const dupesBtn = $("#dupes-btn");
+  if (dupesBtn) dupesBtn.addEventListener("click", showDupesPanel);
 
   /* Selection mode */
   $("#select-btn").addEventListener("click", () => {
@@ -1883,7 +2056,7 @@ function wire() {
     try {
       applyImport(parseNetscape(await file.text()));
     } catch (err) {
-      showToast(t("import.none"));
+      transientNote(t("import.none"));
     }
   });
 
@@ -1901,6 +2074,16 @@ function wire() {
   $("#item-form").addEventListener("submit", (e) => {
     const norm = normalizeUrl($("#f-url").value);
     if (!norm) { e.preventDefault(); $("#f-url").focus(); return; }
+    /* Duplicate guard: editing may not collide with another
+       bookmark's address — same rule as quick-add. */
+    const dup = findByUrl(norm);
+    if (dup && dup.id !== editingItemId) {
+      e.preventDefault();             // keep the dialog open for a fix
+      const fld = state.folders[dup.folderId];
+      transientNote(t("added.dup", { f: folderName(fld) }));
+      $("#f-url").focus();
+      return;
+    }
     submitItemDialog(norm);            // dialog closes via method="dialog"
   });
   $("#f-delete").addEventListener("click", () => {
