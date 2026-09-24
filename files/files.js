@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Files — App logic (v0.5, Wave 2 + Wave 3 fixes)
+// orOS Files — App logic
 // ------------------------------------------------------------
 // ALL file operations go through window.parent.orosFS (fs.js).
 // View preferences + Recents journal live in localStorage:
@@ -40,7 +40,19 @@
 (function () {
   "use strict";
 
-  var APP_VER = "0.5";                              // #14 FIX: align with URL params
+  // FL-3: shell.js owns the version (?v=) — derive, never hardcode.
+  var SCRIPT_V = null;
+  (function extractVersion() {
+    try {
+      var src = document.currentScript && document.currentScript.src;
+      if (src) {
+        var m = src.match(/[?&]v=([^&]+)/);
+        if (m) SCRIPT_V = decodeURIComponent(m[1]);
+      }
+    } catch (e) {}
+    if (!SCRIPT_V) SCRIPT_V = "0.5";
+  })();
+  var APP_VER = SCRIPT_V;
   var STORAGE_KEY = "oros-files-data";
   var RECENTS_KEY = "oros-files-recents";
   var DATA_VER = 1;
@@ -108,6 +120,7 @@
       "toast.imported":      "Imported {n} file(s)",
       "toast.importFail":    "Import failed",
       "toast.skippedDupes":  "{n} skipped (kept both)",
+      "toast.importPartial": "{n} imported, {m} failed",
       "toast.downloaded":    "Download started",
       "toast.downloadFail":  "Download failed",
       "toast.copiedClip":    "Copied to clipboard",
@@ -153,6 +166,7 @@
       "sync.restored":      "Disk restored from cloud",
       "sync.restoreFail":   "Could not restore disk from cloud",
       "sync.snapshotFail":  "Could not build disk snapshot",
+      "sync.restorePartial":"{n} restored, {m} failed",
       "pv.title":        "Preview",
       "pv.edit":         "Edit",
       "pv.previewMd":    "Live preview",
@@ -228,6 +242,7 @@
       "toast.imported":      "Εισήχθησαν {n} αρχεία",
       "toast.importFail":    "Η εισαγωγή απέτυχε",
       "toast.skippedDupes":  "{n} παραλείφθηκαν (διατηρήθηκαν και τα δύο)",
+      "toast.importPartial": "{n} εισήχθησαν, {m} απέτυχαν",
       "toast.downloaded":    "Ξεκίνησε η λήψη",
       "toast.downloadFail":  "Η λήψη απέτυχε",
       "toast.copiedClip":    "Αντιγράφηκε στο πρόχειρο",
@@ -273,6 +288,7 @@
       "sync.restored":      "Ο δίσκος επαναφέρθηκε από το cloud",
       "sync.restoreFail":   "Αποτυχία επαναφοράς δίσκου από το cloud",
       "sync.snapshotFail":  "Αποτυχία δημιουργίας snapshot δίσκου",
+      "sync.restorePartial":"{n} ανακτήθηκαν, {m} απέτυχαν",
       "pv.title":        "Προεπισκόπηση",
       "pv.edit":         "Επεξεργασία",
       "pv.previewMd":    "Ζωντανή προεπισκόπηση",
@@ -531,6 +547,7 @@
       renderStatus(0);
       if (e && e.code === "ENOENT") {
         prefs.last = ROOT;
+        savePrefs();   // FL-8: persist the fallback — no ghost-folder loop after reboot
         // #11 FIX: do NOT reset sortField/sortAsc here (ghost folder protection)
         cwd = ROOT;
         clearSelection();
@@ -702,6 +719,9 @@
     var asc = prefs.sortAsc !== false;
 
     return entries.slice().sort(function (a, b) {
+      // FL-Q2: dirs always first, matching fsList()'s contract —
+      // size/date sorts were silently interleaving folders/files.
+      if (a.dir !== b.dir) return a.dir ? -1 : 1;
       var cmp = 0;
       if (field === "name") {
         cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase(), LANG === "el" ? "el" : "en");
@@ -857,10 +877,7 @@
   // #4 FIX: ensure recents-section DOM element exists
   function ensureRecentsSection() {
     var sec = $("recents-section");
-    if (sec) {
-      sec.style.display = "block";
-      return;
-    }
+    if (sec) return;   // FL-10: visibility owned by showRecents/hideRecents
     sec = document.createElement("section");
     sec.id = "recents-section";
     sec.className = "recents-section";
@@ -1048,19 +1065,19 @@
       var op = null;
       if (DIALOG_MODE === "folder") {
         op = FS().mkdir(join(cwd, name)).then(function () {
-          showToast(t("toast.createdFolder"));
+          transientNote(t("toast.createdFolder"));
         });
       } else if (DIALOG_MODE === "file") {
         op = FS().writeText(join(cwd, name), "").then(function () {
           recentsTouch(join(cwd, name));
-          showToast(t("toast.createdFile"));
+          transientNote(t("toast.createdFile"));	
         });
       } else if (DIALOG_MODE === "rename" && selectionPrimary()) {
         var prim = selectionPrimary();
         op = FS().mv(prim.path, join(cwd, name)).then(function () {
           if (prim.dir) renameExpandedPrefix(prim.path, join(cwd, name));
           recentsTouch(join(cwd, name));
-          showToast(t("toast.renamed"));
+          transientNote(t("toast.renamed"));
         });
       }
       if (!op) { $("dlg-name").close(); return; }
@@ -1070,7 +1087,7 @@
         $("dlg-name").close();
         refresh();
       }).catch(function () {
-        showToast(t("toast.opFail"));
+        transientNote(t("toast.opFail"));
         $("dlg-name").close();
         refresh();
       });
@@ -1103,12 +1120,12 @@
         return true;
       }).catch(function () { return false; });
     })).then(function (results) {
-      var ok = results.filter(Boolean).length;
+        var ok = results.filter(Boolean).length;
       if (ok === paths.length) {
-        showToast(ok === 1 ? t("toast.deleted")
-                          : tfmt("toast.deletedMulti", { n: ok }));
+        transientNote(ok === 1 ? t("toast.deleted")
+                               : tfmt("toast.deletedMulti", { n: ok }));
       } else {
-        showToast(t("toast.opFail"));
+        transientNote(t("toast.opFail"));
       }
       clearSelection();
       if (ok > 0) { forceStorageRecalc(); markDirty(); }
@@ -1302,11 +1319,11 @@
       });
       return chain.then(function () {
         if (moved) {
-          showToast(moves.length === 1
+          transientNote(moved === 1
             ? tfmt("toast.movedSingle", { dst: dst === ROOT ? t("tree.root") : baseName(dst) })
             : tfmt("toast.movedMulti", { n: moved }));
         }
-        if (skipped) showToast(tfmt("toast.skippedDupes", { n: skipped }));
+        if (skipped) transientNote(tfmt("toast.skippedDupes", { n: skipped }));
         if (moved > 0) markDirty();
         clearSelection();
         refresh();
@@ -1331,10 +1348,7 @@
         return;
       }
     }
-    if (dst === cwd && paths.length) {
-      showToast(t("toast.sameFolder"));
-      return;
-    }
+
     dstListChain(dst).then(function (dstNames) {
       var chain = Promise.resolve();
       var copied = 0, skipped = 0;
@@ -1348,11 +1362,11 @@
       });
       return chain.then(function () {
         if (copied) {
-          showToast(copied === 1
+          transientNote(copied === 1
             ? tfmt("toast.copiedSingle", { dst: dst === ROOT ? t("tree.root") : baseName(dst) })
             : tfmt("toast.copiedMulti", { n: copied }));
         }
-        if (skipped) showToast(tfmt("toast.skippedDupes", { n: skipped }));
+        if (skipped) transientNote(tfmt("toast.skippedDupes", { n: skipped }));
         if (copied > 0) { forceStorageRecalc(); markDirty(); }
         refresh();
       });
@@ -1490,15 +1504,14 @@
     }
     return chain.then(function () {
       if (imported) {
-        showToast(tfmt("toast.imported", { n: imported }));
-        if (skipped) showToast(t("toast.skippedDupes").split("{n}").join(String(skipped)));
+        transientNote(tfmt("toast.imported", { n: imported }));
+        // FL-1: skipped counts REAL write failures (post FL-1c),
+        // never keep-both decisions — keep-both returns true.
+        if (skipped) transientNote(tfmt("toast.importPartial", { n: imported, m: skipped }));
         forceStorageRecalc();
         markDirty();
       } else if (skipped) {
-        // FA6: honest feedback — "skipped (kept both)" refers to
-        // keep-both decisions, NOT FS failures. Failures should
-        // report "import failed" not "kept both".
-        showToast(t("toast.importFail"));
+        transientNote(t("toast.importFail"));
       }
       refresh();
     });
@@ -1516,7 +1529,7 @@
     return FS().stat(dst).then(function (st) {
       if (!st) {
         // No record → fresh write
-        return writeFileDst(file, dst).then(function () { return true; });
+        return writeFileDst(file, dst).then(function (ok) { return ok; });
       }
       if (st.dir) {
         // Destination is a folder → write INSIDE it, uniquified
@@ -1524,7 +1537,7 @@
         // being part of the fs.js stat contract
         return dstListChain(dst).then(function (innerNames) {
           var inner = uniqueName(name, innerNames);
-          return writeFileDst(file, join(dst, inner)).then(function () { return true; });
+          return writeFileDst(file, join(dst, inner)).then(function (ok) { return ok; });
         });
       }
       // Destination exists as file → ask
@@ -1537,7 +1550,7 @@
           // Keep both → rename against the REAL listing
           return dstListChain(dstPath).then(function (dstNames) {
             var both = uniqueName(name, dstNames);
-            return writeFileDst(file, join(dstPath, both)).then(function () { return true; });
+            return writeFileDst(file, join(dstPath, both)).then(function (ok) { return ok; });
           });
         }
         // Overwrite
@@ -1694,19 +1707,19 @@
       a.click();
       setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
       recentsTouch(path);
-      showToast(t("toast.downloaded"));
+      transientNote(t("toast.downloaded"));
     };
     if (isTextExt(name)) {
       FS().readText(path).then(function (content) {
         doDownload(content, "text/plain");
       }).catch(function () {
-        showToast(t("toast.downloadFail"));
+        transientNote(t("toast.downloadFail"));
       });
     } else {
       FS().read(path).then(function (blob) {
         doDownload(blob, mimeForExt(extOf(name)));
       }).catch(function () {
-        showToast(t("toast.downloadFail"));
+        transientNote(t("toast.downloadFail"));
       });
     }
   }
@@ -1732,13 +1745,13 @@
     else {
       return FS().readText(entry.path).then(function (c) {
         return navigator.clipboard.writeText(c !== undefined ? c : "")
-          .then(function () { showToast(t("toast.copiedClip")); })
-          .catch(function () { showToast(t("toast.clipFail")); });
-      }).catch(function () { showToast(t("toast.clipFail")); });
+          .then(function () { transientNote(t("toast.copiedClip")); })
+          .catch(function () { transientNote(t("toast.clipFail")); });
+      }).catch(function () { transientNote(t("toast.clipFail")); });
     }
     return navigator.clipboard.writeText(text)
-      .then(function () { showToast(t("toast.copiedClip")); })
-      .catch(function () { showToast(t("toast.clipFail")); });
+      .then(function () { transientNote(t("toast.copiedClip")); })
+      .catch(function () { transientNote(t("toast.clipFail")); });
   }
 
   // ---------- 11. Search (recursive within folder + subfolders) ----------
@@ -1752,6 +1765,7 @@
     if (!query.trim()) { clearSearch(); return; }
     searchQuery = query.trim();
     searchDir = cwd;
+    clearSelection();   // FL-4: selection survives into search results invisibly
     // FD3: entering search mode — drop stale root views. Otherwise
     // the Recents section and/or #empty from the last plain
     // listing stay visible alongside the search results.
@@ -1798,7 +1812,7 @@
       });
       return chain.then(function () { return matches.slice(0, SEARCH_CAP); });
     }).catch(function () {
-      return (token !== renderToken) ? [] : [];
+      return [];
     });
   }
 
@@ -1993,7 +2007,7 @@
     ctxMenu.appendChild(mkItem("", "menu.copyPath", function () {
       copyToClipboard(p, "path");
     }));
-    if (!p.dir) {
+    if (!p.dir && isTextExt(p.name)) {
       ctxMenu.appendChild(mkItem("", "menu.copyContent", function () {
         copyToClipboard(p, "content");
       }));
@@ -2090,6 +2104,22 @@
     el.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 4000);
+  }
+
+  // Unified notifications (orOS compliance): informational toasts
+  // route through the shell's orosNotifs.transient() — click
+  // feedback, no inbox, no toggle needed. Falls back to the local
+  // toast when the app runs standalone (no shell present).
+  // Files has NO undo-bearing toasts — everything is routable.
+  function transientNote(text) {
+    var api = null;
+    try { api = window.parent.orosNotifs; } catch (e) {}
+    if (!api && window.orosNotifs) api = window.orosNotifs;
+    if (api && typeof api.transient === "function") {
+      api.transient({ ns: "files", title: text, body: "" });
+    } else {
+      showToast(text);
+    }
   }
 
   // ---------- 15b. Disk sync — blob bridge to oros-sync (Wave 3) ----------
@@ -2215,7 +2245,7 @@
         // Baseline stays old, so the next reconcile re-attempts
         // this remote. Users see honest diagnostics. Resolve
         // false (not reject): not fatal, just "not fully restored".
-        showToast(t("sync.snapshotFail") + ": " + failed);
+        transientNote(tfmt("sync.restorePartial", { n: (result && result.applied) || 0, m: failed }));
         resolve(false);
         return;
       }
@@ -2225,10 +2255,10 @@
       // If the current folder vanished in the remote state, the
       // refresh() ENOENT guard falls back to ROOT.
       refresh();
-      showToast(t("sync.restored"));
+      transientNote(t("sync.restored"));
       resolve(true);
     }).catch(function (e) {
-      showToast(t("sync.restoreFail"));
+      transientNote(t("sync.restoreFail"));
       reject(e);
     });
   }
@@ -2309,7 +2339,7 @@
     sliceKey: SYNC_SLICE_KEY,
     snapshot: function () {
       return diskSnapshot().catch(function (e) {
-        showToast(t("sync.snapshotFail"));
+        transientNote(t("sync.snapshotFail"));
         throw e;
       });
     },
@@ -2638,7 +2668,7 @@
       ta.value = String(text !== undefined ? text : "");
       paintMd();
     }).catch(function () {
-      showToast(t("toast.opFail"));
+      transientNote(t("toast.opFail"));
       closePreview();
     });
 
@@ -2653,12 +2683,12 @@
     save.addEventListener("click", function () {
       FS().writeText(path, ta.value).then(function () {
         recentsTouch(path);
-        showToast(t("pv.saved"));
+        transientNote(t("pv.saved"));
         forceStorageRecalc();
         markDirty();
         renderTextPreview(path);          // back to view mode
         $("pv-actions").dataset.hasEdit = "";   // allow Edit again
-      }).catch(function () { showToast(t("toast.opFail")); });
+      }).catch(function () { transientNote(t("toast.opFail")); });
     });
     row.appendChild(save);
 

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.08";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.09";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1259,6 +1259,27 @@
     } catch (e) {}
   }
 
+  // FL-Q3 — manual export freshness: the Files disk travels via the
+  // transport cache, which refreshes on a 1s debounce. An export can
+  // therefore serialize a disk that is one mutation behind. When the
+  // Files app is RUNNING (live handle on this window), snapshot the
+  // REAL disk first and stage it in the cache, THEN export. App
+  // closed → the cache IS the latest known state; nothing fresher
+  // exists. DELIBERATELY no markDirty here: an export must never
+  // trigger a push (and the pending touch-debounce will mark dirty
+  // on its own if the content truly changed).
+  function fdRefreshForExport() {
+    var d = fdLive();
+    if (!d) return Promise.resolve(false);
+    return d.snapshot().then(function (str) {
+      var obj;
+      try { obj = JSON.parse(str); } catch (e) { return false; }
+      return fdCacheWrite(obj);
+    }).catch(function () {
+      return false;   // snapshot failed — export proceeds with the cache
+    });
+  }
+
   // v0.18.1 — taskbar toast: sync/shortcut messages must be VISIBLE,
   // not buried in the menu. Inline styles only (palette vars —
   // follows every skin, zero new CSS). One toast at a time: a new
@@ -1860,20 +1881,24 @@
     exportBtn.className = "menu-item";
     exportBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.export") + "</span>";
     exportBtn.addEventListener("click", function () {
-      try {
-        var json = window.orosSync.exportData();
-        var blob = new Blob([json], { type: "application/json" });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement("a");
-        a.href = url;
-        a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
-        setSyncMsg("ok", "sync.ok.export");
-      } catch (e) {
-        handleSyncError(e);
-      }
+      // FL-Q3: live disk snapshot first — export must reflect the
+      // OPFS content as it is NOW, not as the debounce last saw it.
+      fdRefreshForExport().then(function () {
+        try {
+          var json = window.orosSync.exportData();
+          var blob = new Blob([json], { type: "application/json" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+          setSyncMsg("ok", "sync.ok.export");
+        } catch (e) {
+          handleSyncError(e);
+        }
+      });
     });
     backupRow.appendChild(exportBtn);
 
@@ -2413,18 +2438,21 @@
   }
 
   function scExportDb() {
-    try {
-      var json = window.orosSync.exportData();
-      var blob = new Blob([json], { type: "application/json" });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url;
-      a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
-      setSyncMsg("ok", "sync.ok.export");
-    } catch (e) { handleSyncError(e); }
+    // FL-Q3: same freshness contract as the menu export button.
+    fdRefreshForExport().then(function () {
+      try {
+        var json = window.orosSync.exportData();
+        var blob = new Blob([json], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        setSyncMsg("ok", "sync.ok.export");
+      } catch (e) { handleSyncError(e); }
+    });
   }
 
   function scCheckUpdates() {

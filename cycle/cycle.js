@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Cycle — App logic (v0.1.00)
+// orOS Cycle — App logic
 // Tracking the menstrual cycle must be seconds, not minutes.
 // Data model mirrors mood.js v0.27.00 verbatim: entities are
 // LWW by mtime; deletes leave tombstones (merge-safe); day
@@ -62,6 +62,7 @@
       "per.title":     "Period",
       "per.start":     "Start period",
       "per.endhere":   "End period here",
+      "per.extend":    "Extend one day",
       "per.remove":    "Remove this period",
       "per.ongoing":   "Ongoing",
       "per.flow":      "Flow",
@@ -83,6 +84,7 @@
       "med.at":        "at {h}",
       "note.title":    "Notes (optional)",
       "save":          "Save day",
+      "discard":       "Discard",
       "saved.toast":   "Saved",
       "del.done":      "Deleted",
       "del.undo":      "Undo",
@@ -163,6 +165,7 @@
       "per.title":     "Περίοδος",
       "per.start":     "Έναρξη περιόδου",
       "per.endhere":   "Λήξη περιόδου εδώ",
+      "per.extend":    "Προέκταση μιας μέρας",
       "per.remove":    "Αφαίρεση περιόδου",
       "per.ongoing":   "Σε εξέλιξη",
       "per.flow":      "Ροή",
@@ -184,6 +187,7 @@
       "med.at":        "στις {h}",
       "note.title":    "Σημειώσεις (προαιρετικό)",
       "save":          "Αποθήκευση ημέρας",
+      "discard":       "Απόρριψη",
       "saved.toast":   "Αποθηκεύτηκε",
       "del.done":      "Διαγράφηκε",
       "del.undo":      "Αναίρεση",
@@ -608,6 +612,22 @@
     toastEl.textContent = "";
   }
 
+  // Unified notifications (orOS compliance): informational toasts
+  // route through the shell's orosNotifs.transient() — click
+  // feedback, no inbox, no toggle needed. Falls back to the local
+  // toast when the app runs standalone (no shell present).
+  // Undo-bearing toasts keep the local path (interactive action).
+  function transientNote(text) {
+    var api = null;
+    try { api = window.parent.orosNotifs; } catch (e) {}
+    if (!api && window.orosNotifs) api = window.orosNotifs;
+    if (api && typeof api.transient === "function") {
+      api.transient({ ns: "cycle", title: text, body: "" });
+    } else {
+      showToast(text);
+    }
+  }
+
   // Factory reset — double custom confirmation (destructive
   // actions get TWO doors; tombstones make it merge-proof).
   function askReset() {
@@ -683,7 +703,7 @@
     calMonth = null;
     openDay = null;
     renderAll();
-    showToast(t("rst.done"));
+    transientNote(t("rst.done"));
   }
 
   // ---- view state (never persisted) ----
@@ -779,21 +799,6 @@
   function dayInPrediction(ts) {
     var pr = nextPrediction();
     return !!pr && ts >= pr.start && ts <= pr.end;
-  }
-
-  // Reminder at app open: soon (≤2 days) or overdue. Toast only —
-  // no native notifications (R14 spirit), no timer while closed.
-  function maybeRemind() {
-    if (!state.prefs || !state.prefs.remind) return;
-    var pr = nextPrediction();
-    if (!pr) return;
-    var daysLeft = Math.ceil((pr.start - todayTs()) / DAY_MS);
-    if (daysLeft > 2) return;
-    if (daysLeft >= 0) {
-      showToast(t("rem.soon").replace("{n}", Math.max(1, daysLeft)));
-    } else {
-      showToast(t("rem.late").replace("{n}", -daysLeft));
-    }
   }
 
   // Cycle info strip — where you are RIGHT NOW. Facts only.
@@ -1100,7 +1105,7 @@
           state.sm = Date.now();
           save();
           buildEditorChromeless();
-          showToast(t("saved.toast"));
+          transientNote(t("saved.toast"));
         });
         perActs.appendChild(endHere);
       }
@@ -1108,14 +1113,14 @@
         var extHere = document.createElement("button");
         extHere.type = "button";
         extHere.className = "ghost";
-        extHere.textContent = t("per.endhere");
+        extHere.textContent = t("per.extend");
         extHere.addEventListener("click", function () {
           per.end = ts + DAY_MS;
           per.mtime = Date.now();
           state.sm = Date.now();
           save();
           buildEditorChromeless();
-          showToast(t("saved.toast"));
+          transientNote(t("saved.toast"));
         });
         perActs.appendChild(extHere);
       }
@@ -1422,7 +1427,7 @@
     state.sm = Date.now();
     state.om = Date.now();
     save();
-    showToast(t("saved.toast"));
+    transientNote(t("saved.toast"));
   }
 
   // Start period AT a day — OVERLAP-GUARDED: a new period may
@@ -1430,9 +1435,11 @@
   function startPeriodAt(ts) {
     var clash = state.periods.some(function (p) {
       var end = (p.end === null) ? Infinity : p.end;
-      return ts <= end && (ts + DAY_MS) > p.start;
+      // Η νέα περίοδος είναι ongoing ([ts, ∞)): επικαλύπτει
+      // ΟΠΟΙΑΔΗΠΟΤΕ περίοδο που δεν έχει τελειώσει πριν το ts.
+      return ts <= end;
     });
-    if (clash) { showToast(t("per.warn")); return; }
+    if (clash) { transientNote(t("per.warn")); return; }
     state.periods.push({
       id: uid(), start: ts, end: null, flow: 2, mtime: Date.now()
     });
@@ -1440,7 +1447,7 @@
     state.om = Date.now();
     save();
     renderAll();
-    showToast(t("saved.toast"));
+    transientNote(t("saved.toast"));
   }
 
   // Remove period — immediate + undo toast (fresh mtime beats
@@ -1499,14 +1506,14 @@
         save();
         openDay = null;
         renderAll();
-        showToast(t("saved.toast"));
+        transientNote(t("saved.toast"));
         return;
       }
     }
     state.sm = Date.now();
     save();
     renderAll();
-    showToast(t("saved.toast"));
+    transientNote(t("saved.toast"));
   }
 
   // ---- chip context menu: rename / delete column values ----
@@ -1604,12 +1611,7 @@
       if (e.key === "Escape") closeChipMenu();
     });
     m.addEventListener("click", function (e) { e.stopPropagation(); });
-  }
-
-  // rename needs a "discard" key — mood has it via capture flow;
-  // here it ships explicitly (same label)
-  STRINGS.en["discard"] = "Discard";
-  STRINGS.el["discard"] = "Απόρριψη";
+  } 
 
   function colLabelExists(col, label, exceptId) {
     var norm = String(label).trim().toLowerCase();
@@ -1624,14 +1626,14 @@
     label = String(label).trim().normalize("NFC");
     closeChipMenu();
     if (!label || label === v.label) return;
-    if (colLabelExists(col, label, v.id)) { showToast(t("col.dup")); return; }
+    if (colLabelExists(col, label, v.id)) { transientNote(t("col.dup")); return; }
     v.label = label;
     delete v.bi;   // a hand-renamed value is a CUSTOM value now
     v.mtime = Date.now();
     state.sm = Date.now();
     save();
     refreshInView();
-    showToast(t("col.renamed"));
+    transientNote(t("col.renamed"));
   }
 
   function deleteColVal(col, v) {
@@ -1640,16 +1642,22 @@
       return x.id !== v.id;
     });
     state.deleted[v.id] = Date.now();
-    // day records holding the deleted value: drop the reference
+    // day records holding the deleted value: drop the reference.
+    // mtime stamped ONLY on days that actually changed — no
+    // dataset-wide mtime inflation per value delete.
     state.days.forEach(function (d) {
+      var changed = false;
       if (col === "sym" && d.sym) {
+        var before = d.sym.length;
         d.sym = d.sym.filter(function (s) { return s !== v.id; });
-        d.mtime = Date.now();
+        if (d.sym.length !== before) changed = true;
       }
       if (col === "med" && d.meds) {
+        var beforeM = d.meds.length;
         d.meds = d.meds.filter(function (m) { return m.med !== v.id; });
-        d.mtime = Date.now();
+        if (d.meds.length !== beforeM) changed = true;
       }
+      if (changed) d.mtime = Date.now();
     });
     state.sm = Date.now();
     save();
@@ -1668,7 +1676,7 @@
     var label = input.value.trim().normalize("NFC");
     if (!label) return;
     if (colLabelExists(col, label, null)) {
-      showToast(t("col.dup"));
+      transientNote(t("col.dup"));
       return;
     }
     input.value = "";
@@ -2242,7 +2250,7 @@
     var cands = ["../vendor/jspdf.umd.min.js"];   // cycle/ has no vendor/
     var i = 0;
     (function next() {
-      if (i >= cands.length) { pdfLibLoading = false; showToast(t("exp.err")); return; }
+      if (i >= cands.length) { pdfLibLoading = false; transientNote(t("exp.err")); return; }
       var s = document.createElement("script");
       s.src = cands[i++] + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
       s.onload = function () { pdfLibLoading = false; done(); };
@@ -2267,7 +2275,7 @@
         window.__cyclePdfFont = { file: "NotoSans-Regular.ttf", b64: b64 };
         done();
       })
-      .catch(function () { showToast(t("exp.font.err")); done(); });
+      .catch(function () { transientNote(t("exp.font.err")); done(); });
   }
 
   function pdfClean(s) {
@@ -2456,7 +2464,7 @@
 
       footer();
       doc.save("oros-cycle-" + dayKey(Date.now()) + ".pdf");
-      showToast(t("exp.done"));
+      transientNote(t("exp.done"));
       });
     });
   }
@@ -2511,6 +2519,13 @@
     if (!data || !Array.isArray(data.periods) ||
         !Array.isArray(data.days)) return;
 
+    // post-condition of the merge: canonical ordering — applied
+    // BEFORE the persist so the stored blob is byte-canonical
+    data.periods.sort(function (x, y) { return y.start - x.start; });
+    data.days.sort(function (x, y) { return x.day - y.day; });
+    data.cols.sym.forEach(function (v, i) { v.pos = i; });
+    data.cols.med.forEach(function (v, i) { v.pos = i; });
+
     window.__orosSyncApi._suppress = true;
     try {
       state = data;
@@ -2518,12 +2533,6 @@
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-
-    // post-condition of the merge: canonical ordering
-    state.periods.sort(function (x, y) { return y.start - x.start; });
-    state.days.sort(function (x, y) { return x.day - y.day; });
-    state.cols.sym.forEach(function (v, i) { v.pos = i; });
-    state.cols.med.forEach(function (v, i) { v.pos = i; });
 
     // a day being edited may have been deleted remotely — drop
     // the editor without yanking the keyboard from under it
@@ -2554,7 +2563,7 @@
       if (mm2) mm2.scrollTop = syncKeepScroll;
     }
     if (viewMode === "insights") renderInsights();
-    if (info && info.merged) showToast(t("sync.pull"));
+    if (info && info.merged) transientNote(t("sync.pull"));
   }
 
   // Contract Β: shell-owned combos forward FIRST (capture phase).
@@ -2612,9 +2621,10 @@
   }
 
   function wire() {
-    $("cal-btn").addEventListener("click", function () { showTab("calendar"); });
-    $("day-btn").addEventListener("click", function () { showTab("days"); });
-    $("ins-btn").addEventListener("click", function () { showTab("insights"); });
+    var c = $("cal-btn"), d = $("day-btn"), i = $("ins-btn");
+    if (c) c.addEventListener("click", function () { showTab("calendar"); });
+    if (d) d.addEventListener("click", function () { showTab("days"); });
+    if (i) i.addEventListener("click", function () { showTab("insights"); });
   }
 
   // Wave 4 — deep-link receiver. The shell (__orosOpenCycle) calls
@@ -2657,7 +2667,7 @@
     document.documentElement.lang = LANG;   // lang attr follows locale
     console.log("cycle.js v" + (SCRIPT_V || "?") + " boot");
   })();
-    load();
+  load();
   applyI18n();
   paintStaticAria();
   wire();
@@ -2687,7 +2697,7 @@
   if (pendingPeriod) __orosCycleOpen(pendingPeriod);
 
   // ---- Unified Notification System (Wave: Cycle migration) ----
-  // Legacy maybeRemind() DISABLED (boot call commented below).
+  // Legacy maybeRemind() REMOVED — dead code since the shell tick.
   // The shell's clock tick calls this INTO the Cycle iframe on a
   // throttled schedule. Throttling lives in the SHELL, not here.
   // This side only DECIDES: it returns null when there is nothing
@@ -2716,8 +2726,5 @@
       deepLink: "cycle:pred:" + ymd
     };
   };
-
-  // Legacy app-open reminder — disabled, replaced by the shell tick.
-  // setTimeout(maybeRemind, 900);   // after the first paint settles
 
 })();

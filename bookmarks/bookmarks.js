@@ -1148,14 +1148,15 @@ function showTagsPanel() {
 
 /* ---- Duplicates (same-address bookmarks): finder + purge ---- */
 
-/* Groups items by normalized address (same rule as findByUrl:
-   trailing-slash-stripped stored url). Each group is sorted
-   oldest-first, so g[0] is the original. */
+/* Groups items by dupeKey() — the exact same canonical rule as
+   findByUrl (scheme/www/case/fragment-insensitive), so whatever
+   quick-add would have blocked as a duplicate IS found here too.
+   Each group is sorted oldest-first, so g[0] is the original. */
 function findDupeGroups() {
   const byNorm = {};
   Object.keys(state.items).forEach((id) => {
     const it = state.items[id];
-    const key = it.url.replace(/\/$/, "");
+    const key = dupeKey(it.url);
     (byNorm[key] = byNorm[key] || []).push(it);
   });
   return Object.keys(byNorm)
@@ -1308,10 +1309,28 @@ function normalizeUrl(raw) {
   } catch (e) { return null; }
 }
 
+/* Canonical equality key — one rule for BOTH the quick-add/edit
+   duplicate guard AND the duplicate finder, so the two can never
+   disagree again:
+   - scheme-insensitive (http ≡ https)
+   - host lowercased, "www." dropped
+   - fragment (#…) ignored, trailing slashes stripped
+   - query string KEPT (different query = different page) */
+function dupeKey(raw) {
+  let u = String(raw || "").trim();
+  u = u.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");   // scheme
+  u = u.replace(/#.*$/, "");                        // fragment
+  u = u.replace(/\/+$/, "");                        // trailing slashes
+  const m = u.match(/^([^\/?#]*)([\/?#].*)?$/);
+  const host = (m[1] || "").toLowerCase().replace(/^www\./, "");
+  return host + (m[2] || "");
+}
+
 function findByUrl(normalized) {
+  const target = dupeKey(normalized);
   return Object.keys(state.items)
     .map((id) => state.items[id])
-    .find((it) => it.url.replace(/\/$/, "") === normalized) || null;
+    .find((it) => dupeKey(it.url) === target) || null;
 }
 
 function quickAdd() {

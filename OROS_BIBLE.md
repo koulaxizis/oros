@@ -4220,6 +4220,88 @@ Recommended next: Weather (tray coupling + multi-city complexity).
 - **Sync Merge Determinism**: LWW + tombstones, id + mtime contract from inception
 - **No Dead Code Remaining**: All patches applied, orphaned selectors removed
 
+orOS Cycle — Changelog «Five-Axis Verified» (v0.1.00 → 0.37.00)
+
+=== ΚΡΙΣΙΜΕΣ ΔΙΟΡΘΩΣΕΙΣ (ΛΕΙΤΟΥΡΓΙΚΟΤΗΤΑ) ===
+
+CY-1 — Overlap guard (HIGH) Το startPeriodAt() έλεγχε μόνο αν η νέα μέρα πέφτει μέσα σε υπάρχουσα περίοδο, αγνοώντας ότι η νέα περίοδος εκτείνεται στο άπειρο (end: null). Σενάριο: υπάρχουσα περίοδος που ξεκινά αύριο — νέα περίοδος σήμερα γινόταν δεκτή, δημιουργώντας δύο αλληλεπικαλυπτόμενες περιόδους και αναξιόπιστο periodCovering/grid. Η συνθήκη απλοποιήθηκε σε "return ts <= end;" — η νέα ongoing περίοδος απορρίπτεται όταν οποιαδήποτε υπάρχουσα δεν έχει λήξει πριν από το ts.
+
+CY-2 — Label «Λήξη εδώ» πάνω σε κλειμένη μέρα Το κουμπί στην τελευταία μέρα κλεισμένης περιόδου εκτελούσε επέκταση (per.end = ts + DAY_MS) αλλά εμφανιζόταν ως «Λήξη περιόδου εδώ». Νέο i18n key per.extend (EN: «Extend one day», EL: «Προέκταση μιας μέρας») και routing του call site.
+
+CY-3 — Migration στο Unified Notification System Το Cycle ήταν το πρώτο audited app με μηδενική διασύνδεση με το orosNotifs. Προστέθηκε η transientNote(text) (pattern mood/calendar: window.parent.orosNotifs με local fallback στο standalone toast). Routing όλων των καθαρά πληροφοριακών toasts: saved.toast (x6: takeMed, startPeriodAt, endHere, extHere, saveDay-prune, saveDay), per.warn, col.dup (x2), col.renamed, rst.done, sync.pull, exp.done, exp.err, exp.font.err. Τα undo-bearing calls (del.done, col.del.done) παραμένουν σκόπιμα τοπικά — διαδραστική πράξη. (Σημείωση QA: η πρώτη εφαρμογή κάλυψε 5 από τα 6 saved.toast — εντοπίστηκαν και διορθώθηκαν στο follow-up pass.)
+
+=== ΔΙΟΡΘΩΣΕΙΣ ΠΛΗΡΟΤΗΤΑΣ ΔΕΔΟΜΕΝΩΝ ===
+
+CY-4 — mtime inflation στο deleteColVal() Κάθε διαγραφή symptom/med τιμής στάμπανε d.mtime = Date.now() σε όλες τις ημέρες, φουσκώνοντας άσκοπα το dataset και δημιουργώντας ψευδή LWW νίκη σε merge. Πλέον gate με changed flag — mtime μόνο στις πραγματικά επηρεασμένες ημέρες.
+
+CY-5 — Byte-canonical persist στο sliceSet() Το canonical sorting (periods newest-first, days ASC, pos reindex) εκτελούνταν μετά το localStorage.setItem, οπότε το αποθηκευμένο blob είχε μη-κανωνική σειρά. Το sorting μεταφέρθηκε πριν το persist. Χωρίς ρίσκο δεδομένων — οι consumers ξαναταξινομούν — αλλά το stored blob είναι πλέον byte-canonical.
+
+=== ΚΑΘΑΡΙΣΜΟΣ / DEAD CODE ===
+
+CY-6 — Dead maybeRemind() Η legacy συνάρτηση υπενθύμισης ήταν πλήρως νεκρή από τη μετανάστευση στο shell tick (__orosCycleCheck). Διαγράφηκε function και commented boot call. Τα strings rem.soon/rem.late παραμένουν — τα καταναλώνει το __orosCycleCheck.
+
+CY-7 — wire() DOM guards Το paintStaticAria φυλούσε με if, το wire() έκανε naked addEventListener — crash σε stale HTML. Προστέθηκαν guards στα 3 tab buttons (consistency με το υπόλοιπο suite).
+
+CY-8 — discard key εκτός λεξικού Το mid-file injection STRINGS.en["discard"] = ... fold στα κανονικά STRINGS literals (EN + EL).
+
+CY-9 — PervCrLf indent στο boot — καθαρά αισθητικό.
+
+CY-10 — Post-re-verification cleanup (a) Stale (v0.1.00) version string από το JS header — το shell.js είναι η single source of truth, το version ζει μόνο στο ?v=. (b) Stale (v0.27.00-pattern) στο CSS header → (mood.js pattern). (c) Παραπλανητικό σχόλιο «boot call commented below» → «REMOVED — dead code since the shell tick».
+
+=== ΑΠΟΦΑΣΗ CY-Q1 — AXIS 5: EXPORT ===
+
+Απόφαση: shell-level export αρκετό. Το slice oros-cycle-data ταξιδεύει στο πλήρες manual DB export και στο auto-export μέσω του registered storageKey. Το Doctor Report PDF είναι παράγωγο (report), όχι backup. Δεν προστίθεται in-app export — δεν δημιουργείται διπλή οδός εξαγωγής.
+
+=== ΕΠΑΛΗΘΕΥΜΕΝΑ ΧΩΡΙΣ PATCHES (CROSS-FILE) ===
+
+Calendar Integration (Axis 1): Το calendar.js cycleFeedOn διαβάζει oros-cycle-data — τα σχήματα ταιριάζουν ακριβώς (periods[].start/end/flow, deleted map, open period → πρώτη μέρα μόνο). Η ροή feedback υπογραμμίζει το «never guess» αμφίπλευρα.
+Unified Notifications (Axis 2): Το cycle υπάρχει ήδη στο KNOWN_APPS. Το __orosCycleCheck επιστρέφει null/payload σωστά (key: "pred-<ymd>-soon/late" = μία ειδοποίηση ανά μέρα, deepLink: "cycle:pred:<ymd>").
+Deep-links (Axis 2): __orosCycleOpen χειρίζεται και τα δύο payload σχήματα (period uid + prediction YYYY-MM-DD) — το regex δεν συγκρούεται με base36 uids. Boot take και από parent funnel και από sessionStorage (oros-cycle-open). Πλήρης αλυσίδα notification → shell → iframe/dialog.
+Dropbox Sync (Axis 3): 5-arg registerSlice, _suppress guard στο dirty funnel, note/scroll preservation στο editor κατά το live pull.
+Merge engine: Deterministic + symmetric (id-union + whole-object LWW + JSON tie-break + max-ts tombstones), bilingual seed ids (bi), label-normalized dedupe-cols με remap των day references. Whole-day LWW για med intakes — τεκμηριωμένο και merge-safe.
+Ροή editor: rebuildDraft one-shot channel, pruneIfEmpty αυτοκαθαρισμός, takeMed σε παρελθοντική μέρα (clock never lies).
+=== FIVE-AXIS STATUS ===
+
+Calendar Integration: VERIFIED (Cycle feed στο Calendar — περίοδοι + προβλέψεις) Unified Notifications: VERIFIED (transientNote στα informational, shell tick για reminders) Dropbox Sync: VERIFIED (5-arg registerSlice + deterministic merge) Snapshots: VERIFIED (oros-cycle-data blob + autosnapshots μέσω sync engine) Manual & Auto Export: VERIFIED (shell-level — απόφαση CY-Q1 — + Doctor Report PDF ως παράγωγο)
+
+Cycle — Five-Axis Verified. 5/5.
+
+=== ΣΗΜΕΙΩΣΗ PARITY ===
+
+Το takeMed εκτελούσε state.om = Date.now() σωστά (συμμετέχει στο merge ordering) — επιβεβαιώθηκε ότι δεν χρειάζεται διόρθωση. Το showToast(t("ins.empty")) στο export guard παρέμεινε τοπικό σκόπιμα (ο χρήστης βρίσκεται ήδη στην προβολή Insights).
+
+=== NEXT ===
+
+Επόμενο target: Weather, Mood, Time, Kanban, To-Do, Notes, Quote, Storage, Prompter, Habits, Files, Calendar. Στείλε το αρχείο (π.χ. weather.js) και συνεχίζω με το ίδιο πρωτόκολλο: deep scan → numbered errors → OLD → NEW patches → changelog → Bible entry.
+
+Files — Πενταξόνιος Έλεγχος: ΠΛΗΡΗΣ
+Status: Verified (FL-1 → FL-10 + FL-Q1/Q2/Q3). Calendar Integration: εξαίρεση εκ δόγματος — το app είναι μη χρονικά δεσμευμένο (κανένα due date, κανένα reminder trigger), άρα δεν τροφοδοτεί Calendar ούτε δέχεται deep-link reminders.
+
+Axis 1 — Calendar Integration: N/A ( doctrinal exemption). Καμία υποχρέωση.
+
+Axis 2 — Unified Notifications: ✅ Πλήρης. Όλα τα informational toasts (created/renamed/deleted/moved/copied/downloaded/import/restored/clipboard) τρέχουν μέσω transientNote() → orosNotifs.transient() με ns: "files". Κανένα undo-bearing toast δεν υπάρχει στο app (επιβεβαιωμένο) — δεν έμεινε τίποτα local από ἀνάγκη. Το files καταχωρήθηκε στο KNOWN_APPS (notifications.js). Standalone fallback: τοπικό showToast().
+
+Axis 3 — Dropbox Sync: ✅ Πλήρης. files-disk slice στο shell (transport cache FD_CACHE_KEY, AES-GCM στο sync.js αδιατάρακτο). Live handle → applyRemote με conflict dialog· κλειστό app → pending flag (FD_PENDING_KEY) που καταναλώνεται στο επόμενο boot. SP6 cross-file fix (race old-cache push) ήδη in place.
+
+Axis 4 — Snapshots: ✅ Πλήρης. Ο δίσκος ταξιδεύει στο shell slice άρα κάθε auto-snapshot τον καλύπτει. In-app: στηλ sync.restored/restorePartial/snapshotFail (FL-5) με σωστή σημασιολογία.
+
+Axis 5 — Manual & Auto Export: ✅ Πλήρης μετά το FL-Q3. Δίσκος → engine slice → κάθε exportData() (menu, shortcut, auto-snapshot, folder mirror). FL-Q3: fdRefreshForExport() εγγυάται live OPFS snapshot πριν τη σειριοποίηση και στα δύο manual paths, χωρίς markDirty (export δεν προκαλεί push ποτέ).
+
+Σημειώσεις συντήρησης:
+
+files.js versioning: dynamic από document.currentScript.src (?v=) — shell.js παραμένει single source of truth.
+importPartial/restorePartial keys: bilingual EN/EL.
+Διδάγματα FL-1b: promise chains που τυλίγουν αποτυχίες σε .then(() => true) — παντού όπου writeFileDst καλείται, το result πρέπει να διαδίδεται.
+CHANGELOG entry (Files audit closure)
+orOS Files — Wave "Five-Axes" closure (patches FL-1 … FL-Q3)
+files.js: FL-1a/b (i18n toast.importPartial EN/EL), FL-1c (writeFileDst result propagation ×3 call sites — αποτυχημένες εγγραφές δεν μετράνε πλέον ως imports), FL-1d (mixed-case partial toast), FL-2a (transientNote() helper + fallback), FL-2b/c/d (migration όλων των informational toasts), FL-3a (dynamic APP_VER από URL), FL-4 (clearSelection στο search mode), FL-5a/b/c (sync.restorePartial + σωστό partial-restore toast), FL-6 (single/plural μέτρηση στο performMove: moved === 1), FL-7 (dead ternary), FL-8 (savePrefs() στο ENOENT fallback), FL-9 (binary clipboard gate — isTextExt hide στο context menu), FL-10 (dead display force), FL-Q1 (same-folder copy επιτρέπεται — uniqueName duplication), FL-Q2 (dirs-first sorting σε όλα τα sort fields).
+
+notifications.js: FL-2e — files στο KNOWN_APPS.
+
+shell.js: FL-Q3a/b/c — fdRefreshForExport(): live OPFS snapshot πριν από κάθε manual database export (menu + Ctrl+Alt+Shift+X). Χωρίς markDirty. Coverage επιβεβαιωμένη: files-disk slice rides σε κάθε exportData().
+
+Files status: 100% Five-Axis compliant. Calendar: doctrinally exempt.
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*
