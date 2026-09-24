@@ -73,6 +73,14 @@
       "url": "contacts/",
       "type": "internal"
     },
+	{
+      "id": "bookmarks",
+      "name": "Bookmarks",
+      "category": "Bookmarks",
+      "icon": "bookmarks",
+      "url": "bookmarks/",
+      "type": "internal"
+    },
     {
       "id": "storage",
       "name": "Storage",

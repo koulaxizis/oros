@@ -3992,6 +3992,82 @@ OPEN DECISION (non-blocking): #3 — block duplicate URL on edit?
 
 **Next App in Queue:** [Pending Confirmation — Weather / Calendar / Mood]
 
+---
+
+## Calendar App — Five-Axis Deep Audit COMPLETE
+**Date:** 2026-09-24 · **Scope:** calendar.js, index.html, calendar.css
+**Cross-verified files:** shell.js, notifications.js, sync.js
+**Status:** ✅ 5/5 AXES COMPLIANT — AUDIT CLOSED
+
+### Notification Migration (Axis ② — 7 patches applied)
+
+All informational toasts migrated to the unified notification system.
+Undo-bearing toasts stay LOCAL by design (unified system has no
+action callbacks — Bookmarks precedent).
+
+| Patch | Target | Change |
+|-------|--------|--------|
+| A | helper | Added `transientNote()` after `toast()` — wraps `window.orosNotifs.transient()` with standalone local fallback, `ns: "calendar"` |
+| B | `exportICS()` | `toast(t("exp.done"))` → `transientNote(t("exp.done"))` |
+| C | label mgr delete | `toast(t("lbl.inuse"))` → `transientNote(t("lbl.inuse"))` |
+| D | §7 save handler | `toast(t("ev.err.title"))` → `transientNote(...)` |
+| E | §7 save handler | `toast(t("ev.err.time"))` → `transientNote(...)` |
+| F | §7 save handler | `toast(t("ev.err.dateend"))` → `transientNote(...)` |
+| G | §9 `setFromSync()` | `toast(t("sync.merged"))` → `transientNote(...)` |
+
+**Kept local (by doctrine, not omission):**
+- `del.done` ×2 + Undo buttons, `ev.moved` + Undo → action-callback toasts
+- `remind.toast` → runs only in standalone fallback (no parent shell);
+  `transientNote()` would collapse to the same local toast anyway
+
+### Deep-Link Bridge — TRIPLE-VERIFIED, zero changes needed
+
+Chain confirmed across all three files:
+1. Emit: `deepLink: "calendar:<evId>:<ymd>"` (shell reminder engine +
+   calendar app)
+2. Router: notifications.js `DL_BRIDGES.calendar(evId, ymd)` →
+   `window.__orosOpenCalendar(evId, ymd)` — flexible signature accepts
+   `(evId, ymd)` pair OR full string
+3. Delivery: shell calls `contentWindow.__calDeepLink({ id, date })`
+   when app is open; `sessionStorage "oros-cal-pending"` staging when
+   closed (consumed at app boot)
+
+### KNOWN_APPS Verification — CLOSED
+`notifications.js` KNOWN_APPS includes `'calendar'` (plus all shell
+emit namespaces: cycle, mood, todo, habits, time, system, weather,
+notes, quote — no gaps). Toggle UI renders from `getKnownApps()`
+single source of truth.
+
+### HTML/CSS Verification — CLEAN, no changes
+- `index.html`: all 5 dialogs (ev-dlg, del-dlg, ser-dlg, lbl-dlg,
+  stat-dlg) present with correct IDs + data-i18n keys
+- `calendar.css`: validation `.invalid` styling, all UI components
+  skin-compliant (palette vars only), mobile-first verified
+  (week view stacks ≤700px), zero external dependencies
+
+### Axes Compliance — FINAL
+
+| Axis | Status | Evidence |
+|------|--------|----------|
+| ① Calendar Integration | ✅ N/A | IS the host — feeds: Contacts, Cycle, Mood, Habits, Kanban |
+| ② Unified Notifications | ✅ | Patches A–G + reminders via `emit()` w/ dedup keys |
+| ③ Dropbox Sync | ✅ | Slice + `mergeCalendars` (deterministic, tombstones, canon tie-break) |
+| ④ Snapshots | ✅ | Global shell system — slice in payload |
+| ⑤ Manual & Auto Export | ✅ | Shell DB export + ICS interop (feeds excluded read-only) |
+
+### Functional Findings — NONE CRITICAL
+- Merge/recurrence/multi-day engine: no functional defects found
+- Sanitizer series (CA1–CA4): VALID_COLORS single source, seed persist,
+  dual-contract normalization — all verified correct
+- No dead code, no orphaned functions, no data-loss paths
+
+### Backlog (non-blocking, cosmetic)
+- notifications.js DL_BRIDGES header comment says "Apps without a
+  bridge yet (calendar…)" — outdated, bridge exists. Comment-only fix,
+  deferred to notifications.js general cleanup pass.
+
+---
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

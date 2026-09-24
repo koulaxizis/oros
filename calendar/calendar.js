@@ -2024,7 +2024,7 @@ function transientNote(title, body) {
       var ti = $("ev-title");
       ti.classList.add("invalid");
       ti.focus();
-      toast(t("ev.err.title"));
+      transientNote(t("ev.err.title"));
       setTimeout(function () { ti.classList.remove("invalid"); }, 1600);
       return;
     }
@@ -2036,7 +2036,7 @@ function transientNote(title, body) {
     if (start && end && end <= start) {
       $("ev-end").classList.add("invalid");
       $("ev-end").focus();
-      toast(t("ev.err.time"));
+      transientNote(t("ev.err.time"));
       setTimeout(function () { $("ev-end").classList.remove("invalid"); }, 1600);
       return;
     }
@@ -2052,7 +2052,7 @@ function transientNote(title, body) {
         var deIn = $("ev-date-end");
         deIn.classList.add("invalid");
         deIn.focus();
-        toast(t("ev.err.dateend"));
+        transientNote(t("ev.err.dateend"));
         setTimeout(function () { deIn.classList.remove("invalid"); }, 1600);
         return;
       }
@@ -3112,7 +3112,7 @@ function transientNote(title, body) {
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
-    if (info && info.merged) toast(t("sync.merged"));   // receipt, not "Saved"
+    if (info && info.merged) transientNote(t("sync.merged"));   // receipt, not "Saved"
   }
 
   // Canonical dirty funnel (Part VII) — created BEFORE registration,
