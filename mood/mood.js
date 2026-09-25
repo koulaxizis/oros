@@ -835,8 +835,28 @@ function mergeMoodStates(A, B) {
     if (!toastEl) return;
     toastEl.style.opacity = "0";
     toastEl.style.transform = "translateY(-8px)";
-    if (toastAction) { toastAction.remove(); toastAction = null; }
-    toastEl.textContent = "";
+    setTimeout(function () {
+      // guard: a re-show within the window raised opacity again —
+      // never wipe the NEW text
+      if (toastEl.style.opacity === "0") toastEl.textContent = "";
+      if (toastAction) { toastAction.remove(); toastAction = null; }
+    }, 320);
+  }
+
+  // Unified notifications (orOS doctrine): informational toasts
+  // route through orosNotifs.transient() (ns "mood" — already in
+  // KNOWN_APPS). Undo-bearing toasts (del.done, col.del.done) stay
+  // LOCAL per doctrine; must.feel is form validation, never migrates.
+  // Falls back to the local toast when standalone.
+  function transientNote(text) {
+    var api = null;
+    try { api = window.parent.orosNotifs; } catch (e) {}
+    if (!api && window.orosNotifs) api = window.orosNotifs;
+    if (api && typeof api.transient === "function") {
+      api.transient({ ns: "mood", title: text, body: "" });
+    } else {
+      showToast(text);
+    }
   }
 
   // Factory reset — double custom confirmation (destructive
@@ -909,8 +929,12 @@ function mergeMoodStates(A, B) {
     // (deterministic ids) — a fresh mtime beats the tombstone, same
     // resurrection contract as undo-delete. Renamed seeds on other
     // devices also lose to the newer mtime → true pristine state.
+    // MD-1: mergeUnionList requires STRICT mtime > ts. Stamping
+    // seeds with `now` (= the tombstone ts, same synchronous block)
+    // made them lose the equality on merge → empty columns after
+    // the first post-reset sync. +1 guarantees strict victory.
     ["loc", "person", "trig"].forEach(function (c) {
-      (fresh.cols[c] || []).forEach(function (v) { v.mtime = now; });
+      (fresh.cols[c] || []).forEach(function (v) { v.mtime = now + 1; });
     });
     fresh.deleted = tomb;             // tombstones travel, merge-proof
     fresh.sm = now; fresh.om = now;
@@ -924,7 +948,7 @@ function mergeMoodStates(A, B) {
     resetCapture();
     renderAll();
     if (viewMode === "insights") renderInsights();
-    showToast(t("rst.done"));
+    transientNote(t("rst.done"));
   }
 
   // --- capture state ---
@@ -1422,14 +1446,14 @@ function mergeMoodStates(A, B) {
     label = String(label).trim().normalize("NFC");
     closeChipMenu();
     if (!label || label === v.label) return;
-    if (colLabelExists(col, label, v.id)) { showToast(t("col.dup")); return; }
+    if (colLabelExists(col, label, v.id)) { transientNote(t("col.dup")); return; }
     v.label = label;
     delete v.bi;   // B2: a hand-renamed value is a CUSTOM value now
     v.mtime = Date.now();                // LWW — rename travels
     state.sm = Date.now();
     save();
     renderAll();                          // recent list shows labels live (paints capture too)
-    showToast(t("col.renamed"));
+    transientNote(t("col.renamed"));
   }
 
   function deleteColVal(col, v) {
@@ -1460,7 +1484,7 @@ function mergeMoodStates(A, B) {
     var label = input.value.trim().normalize("NFC");
     if (!label) return;
     if (colLabelExists(col, label, null)) {
-      showToast(t("col.dup"));            // no silent duplicates — ever again
+      transientNote(t("col.dup"));            // no silent duplicates — ever again
       return;
     }
     input.value = "";                     // consumed — don't resurrect via prevAdd
@@ -1577,7 +1601,7 @@ function mergeMoodStates(A, B) {
     save();
     resetCapture();
     renderAll();
-    showToast(t("saved.toast"));
+    transientNote(t("saved.toast"));
   }
 
   function editEntry(id) {
@@ -1636,8 +1660,11 @@ function mergeMoodStates(A, B) {
       }
     });
     var keys = Object.keys(days);
-    if (!keys.length) { host.hidden = true; return; }
-    host.hidden = false;
+    // Capture-tab-only contract (mirror of applyView): renderAll
+    // also fires from entries/insights context (entry delete, sync
+    // pull) — never leak the thread into those views.
+    host.hidden = (viewMode !== "capture") || !keys.length;
+    if (host.hidden) return;
     host.innerHTML = "";
     // last 7 calendar days, oldest → newest
     var out = [];
@@ -2248,10 +2275,18 @@ function mergeMoodStates(A, B) {
 
     HABITS.forEach(function (h) {
       if (h.grp !== grp) return;
-      var yesDays = 0, noDays = 0;
+      // MD-3: per-DAY counting — the label says "logged days",
+      // so two check-ins in one day count once. Within a day
+      // "yes" outranks "no" (positive evidence wins).
+      var marks = {};
       es.forEach(function (e) {
-        if (e[h.f] === "yes") yesDays += 1;      // per-entry, not
-        if (e[h.f] === "no")  noDays += 1;       // per-day — honest
+        if (e[h.f] !== "yes" && e[h.f] !== "no") return;
+        var mk = dayKey(e.ts);
+        if (e[h.f] === "yes" || marks[mk] !== "yes") marks[mk] = e[h.f];
+      });
+      var yesDays = 0, noDays = 0;
+      Object.keys(marks).forEach(function (mk) {
+        if (marks[mk] === "yes") yesDays++; else noDays++;
       });
       if (!yesDays && !noDays) return;   // #1: no "0 of 0" ghost rows
       var row = document.createElement("div");
@@ -2738,7 +2773,7 @@ function mergeMoodStates(A, B) {
       if (i >= cands.length) {
         pdfLibLoading = false;
         pdfLibPending.splice(0);   // queued requests die — error toast is the receipt
-        showToast(t("exp.err"));
+        transientNote(t("exp.err"));
         return;
       }
       var s = document.createElement("script");
@@ -2771,7 +2806,7 @@ function mergeMoodStates(A, B) {
         window.__moodPdfFont = { file: "NotoSans-Regular.ttf", b64: b64 };
         done();
       })
-      .catch(function () { showToast(t("exp.font.err")); done(); });
+      .catch(function () { transientNote(t("exp.font.err")); done(); });
   }
 
   // B1: NFC funnel for the PDF. Mobile keyboards often emit
@@ -2905,10 +2940,17 @@ function mergeMoodStates(A, B) {
         var anyIn = false;
         HABITS.forEach(function (h) {
           if (h.grp !== grp) return;
-          var yy = 0, nn = 0;
+          // MD-3b: per-day, same as renderHabits — the PDF must
+          // agree with the on-screen numbers.
+          var mks = {};
           fes.forEach(function (e) {
-            if (e[h.f] === "yes") yy += 1;
-            if (e[h.f] === "no") nn += 1;
+            if (e[h.f] !== "yes" && e[h.f] !== "no") return;
+            var dk = dayKey(e.ts);
+            if (e[h.f] === "yes" || mks[dk] !== "yes") mks[dk] = e[h.f];
+          });
+          var yy = 0, nn = 0;
+          Object.keys(mks).forEach(function (dk) {
+            if (mks[dk] === "yes") yy++; else nn++;
           });
           if (!yy && !nn) return;
           if (!anyIn) { section(habGrpTitle[grp]); anyIn = true; }
@@ -2999,7 +3041,7 @@ function mergeMoodStates(A, B) {
 
       footer();
       doc.save("oros-mood-" + dayKey(Date.now()) + ".pdf");
-      showToast(t("exp.done"));
+      transientNote(t("exp.done"));
       });
     });
   }
@@ -3191,7 +3233,33 @@ function mergeMoodStates(A, B) {
   }
 
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    var out = JSON.parse(JSON.stringify(state));
+    // MD-4: deterministic tombstone pruning (HB-3 pattern). The
+    // cutoff derives from the dataset's newest timestamp, never
+    // the wall clock — same data yields the same payload on every
+    // device at any time. The max tombstone always survives its
+    // own cutoff, so the boundary can't drift between merged
+    // devices. Payload-only: local state keeps everything.
+    // Trade-off (accepted, same as Habits): a tombstone pruned
+    // after 30d of silence no longer shields against a stale
+    // remote copy older than that.
+    var maxTs = 0, i;
+    for (i = 0; i < (out.entries || []).length; i++) {
+      if (out.entries[i].mtime > maxTs) maxTs = out.entries[i].mtime;
+    }
+    ["loc", "trig", "person"].forEach(function (c) {
+      (out.cols[c] || []).forEach(function (v) {
+        if (v.mtime > maxTs) maxTs = v.mtime;
+      });
+    });
+    Object.keys(out.deleted || {}).forEach(function (id) {
+      if (out.deleted[id] > maxTs) maxTs = out.deleted[id];
+    });
+    var CUTOFF = maxTs - 30 * 24 * 60 * 60 * 1000;
+    Object.keys(out.deleted).forEach(function (id) {
+      if (out.deleted[id] < CUTOFF) delete out.deleted[id];
+    });
+    return out;
   }
 
   function sliceSet(data, info) {
@@ -3218,7 +3286,7 @@ function mergeMoodStates(A, B) {
 
     renderAll();                          // repaint live
     if (viewMode === "insights") renderInsights();   // live views too
-    if (info && info.merged) showToast(t("sync.pull"));   // #19: receipt, not save
+    if (info && info.merged) transientNote(t("sync.pull"));   // #19: receipt, not save
   }
 
   // Contract Β: shell-owned combos forward FIRST (capture phase).

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Habits v0.3.0 — Habit tracker (List · Calendar · Stats)
+// orOS Habits — Habit tracker (List · Calendar · Stats)
 // Clean-room rewrite of the beta habits app (functional
 // reference only — zero code carried over).
 //
@@ -382,10 +382,15 @@
   }
   // Schedule: empty days = flexible (any day counts), subset = those
   // weekdays only. Always consults the MONDAY-FIRST schedIdx.
+  // HB-1: flexible habits (days=[] = any day) are interactable
+  // everywhere but excluded from rate-based metrics (perfect days,
+  // consistency ranking). They count toward total completions.
   function isScheduledOn(habit, d) {
-    if (!habit.days.length) return true;
+    if (!habit.days.length) return false;   // flexible ≠ scheduled
     return habit.days.indexOf(schedIdx(d)) !== -1;
   }
+
+  function isFlexible(habit) { return !habit.days.length; }
   function freqBadge(habit) {
     if (!habit.days.length) return t("freq.any");
     if (habit.days.length === 7) return t("freq.daily");
@@ -580,9 +585,14 @@
   }
 
   function sliceGet() {
-    // Prune dead tombstones (>30d) from the SHIPPED payload only —
-    // never from db, so pruning can't trigger dirty loops.
-    var CUTOFF = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    // HB-3: prune tombstones deterministically — cutoff is based on
+    // the newest mtime in the dataset (payload-internal), NOT wall
+    // clock. Same data → same payload on every device at any time.
+    var maxMtime = 0;
+    for (var i = 0; i < db.comps.length; i++) {
+      if (db.comps[i].mtime > maxMtime) maxMtime = db.comps[i].mtime;
+    }
+    var CUTOFF = maxMtime - 30 * 24 * 60 * 60 * 1000;
     var comps = [];
     for (var i = 0; i < db.comps.length; i++) {
       if (db.comps[i].del && db.comps[i].mtime < CUTOFF) continue;
@@ -602,7 +612,7 @@
     db = next;
     dbPersist();
     render();                          // pull-fed path: NEVER dirty
-    if (info && info.merged) toast(t("toast.merged"));
+    if (info && info.merged) transientNote(t("toast.merged"));
   }
 
     // ===== VIEW & RENDER =====
@@ -742,16 +752,16 @@
           if (done) cls += " completed";
           if (isSameDayLocal(d, today)) cls += " today";
           if (d > today) cls += " future";
-          if (!sched && !done) cls += " not-scheduled";
+          if (!sched && !done && !isFlexible(h)) cls += " not-scheduled";
           var wStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
-          dots += '<button type="button" class="' + cls + '"' + wStyle + ' data-act="dot" data-h="' + h.id + '" data-i="' + w + '">' +
+          dots += '<button type="button" class="' + cls + '"' + wStyle + ' data-act="dot" data-h="' + esc(h.id) + '" data-i="' + w + '">' +
                   esc(t("dkey." + w)) + "</button>";
         }
 
         var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
 
         html +=
-          '<div class="habit-row" data-h="' + h.id + '">' +
+          '<div class="habit-row" data-h="' + esc(h.id) + '">' +
             '<div class="habit-icon-box" style="background:' + h.color + '33;color:' + h.color + '">' +
               '<span class="ico">' + ICONS[h.icon] + "</span></div>" +
             '<div class="habit-info">' +
@@ -764,8 +774,8 @@
               "</div></div>" +
             '<div class="week-dots">' + dots + "</div>" +
             '<div class="habit-actions">' +
-              '<button type="button" class="btn ghost" data-act="edit" data-h="' + h.id + '" title="' + esc(t("rename")) + '">' + ICO_PEN + "</button>" +
-              '<button type="button" class="btn ghost" data-act="del"  data-h="' + h.id + '" title="' + esc(t("del")) + '">' + ICO_TRASH + "</button>" +
+              '<button type="button" class="btn ghost" data-act="edit" data-h="' + esc(h.id) + '" title="' + esc(t("rename")) + '">' + ICO_PEN + "</button>" +
+              '<button type="button" class="btn ghost" data-act="del"  data-h="' + esc(h.id) + '" title="' + esc(t("del")) + '">' + ICO_TRASH + "</button>" +
             "</div>" +
           "</div>";
       }
@@ -829,7 +839,7 @@
 
         html +=
           "<tr>" +
-            '<td class="cal-gutter"><div class="cal-gcell" data-act="gedit" data-h="' + h.id +
+            '<td class="cal-gutter"><div class="cal-gcell" data-act="gedit" data-h="' + esc(h.id) +
               '" title="' + esc(t("rename")) + '">' +
               '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
                 '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
@@ -847,9 +857,9 @@
           if (done) cls += " completed";
           if (isSameDayLocal(d, today)) cls += " today";
           if (d > today) cls += " future";
-          if (!sched && !done) cls += " not-scheduled";
+          if (!sched && !done && !isFlexible(h)) cls += " not-scheduled";
           var cStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
-          html += '<td><button type="button" class="' + cls + '"' + cStyle + ' data-act="cdot" data-h="' + h.id +
+          html += '<td><button type="button" class="' + cls + '"' + cStyle + ' data-act="cdot" data-h="' + esc(h.id) +
                   '" data-c="' + c + '">' + dayNum(d) + "</button></td>";
         }
         html += "</tr>";
@@ -888,10 +898,15 @@
     var per = [], i, j;
     for (i = 0; i < hs.length; i++) per.push({ h: hs[i], sched: 0, done: 0 });
 
-        var totalComps = 0;
-    var comps = db.comps;   // H1: same fix — tombstones skipped below
+        var livingIds = {};
+    for (i = 0; i < hs.length; i++) livingIds[hs[i].id] = true;
+
+    var totalComps = 0;
+    var comps = db.comps;
     for (i = 0; i < comps.length; i++) {
       if (comps[i].del) continue;
+      // HB-5: skip comps whose habit has been deleted
+      if (!livingIds[comps[i].habitId]) continue;
       var cd = parseDateKey(comps[i].date);
       if (cd && cd >= start && cd <= today) totalComps++;
     }
@@ -998,20 +1013,45 @@
     });
     for (var i = 0; i < ordered.length; i++) {
       var p = ordered[i], h = p.h;
-      var pct = p.sched ? Math.round((p.done / p.sched) * 100) : 0;
-      html += '<div class="srow">' +
-        '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
-          '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
-        '<div class="srow-body">' +
-          '<div class="srow-top">' +
-            '<span class="srow-name">' + esc(h.name) + "</span>" +
-            '<span class="srow-nums" title="' + esc(tpl("stats.rate", { n: pct })) + '">' +
-              t("stats.current") + " " + currentStreak(h) + " · " +
-              t("stats.longest") + " " + longestStreak(h) + " · " + pct + "%" +
-            "</span>" +
-          "</div>" +
-          '<div class="sbar"><div class="sbar-fill" style="width:' + pct + "%;background:" + h.color + '"></div></div>' +
-        "</div></div>";
+      if (isFlexible(h)) {
+        // HB-1b: flexible → raw count, no %, no bar.
+        // HB-8: per[].done stays 0 for flexible (metrics exemption)
+        // — count comps directly in the active range instead.
+        var cnt = 0, rs = rangeStart(), rt = todayStart();
+        for (var q = 0; q < db.comps.length; q++) {
+          var cq = db.comps[q];
+          if (cq.del || cq.habitId !== h.id) continue;
+          var cdq = parseDateKey(cq.date);
+          if (cdq && cdq >= rs && cdq <= rt) cnt++;
+        }
+        html += '<div class="srow">' +
+          '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
+            '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
+          '<div class="srow-body">' +
+            '<div class="srow-top">' +
+              '<span class="srow-name">' + esc(h.name) + "</span>" +
+              '<span class="srow-nums">' +
+                t("stats.current") + " " + currentStreak(h) + " · " +
+                t("stats.longest") + " " + longestStreak(h) + " · " + cnt + " " + t("stats.total.comps").toLowerCase() +
+              "</span>" +
+            "</div>" +
+          "</div></div>";
+      } else {
+        var pct = p.sched ? Math.round((p.done / p.sched) * 100) : 0;
+        html += '<div class="srow">' +
+          '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
+            '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
+          '<div class="srow-body">' +
+            '<div class="srow-top">' +
+              '<span class="srow-name">' + esc(h.name) + "</span>" +
+              '<span class="srow-nums" title="' + esc(tpl("stats.rate", { n: pct })) + '">' +
+                t("stats.current") + " " + currentStreak(h) + " · " +
+                t("stats.longest") + " " + longestStreak(h) + " · " + pct + "%" +
+              "</span>" +
+            "</div>" +
+            '<div class="sbar"><div class="sbar-fill" style="width:' + pct + "%;background:" + h.color + '"></div></div>' +
+          "</div></div>";
+      }
     }
 
     html += '<div class="stat-h">' + esc(t("stats.insights")) + "</div>";
@@ -1037,6 +1077,21 @@
       els.toast.classList.remove("show");
       setTimeout(function () { els.toast.hidden = true; }, 250);
     }, 2600);
+  }
+
+  // Unified notifications (orOS doctrine): informational toasts route
+  // through orosNotifs.transient(). All habit toasts are non-undoing —
+  // actions have confirm dialogs. Falls back to local toast when
+  // standalone.
+  function transientNote(text) {
+    var api = null;
+    try { api = window.parent.orosNotifs; } catch (e) {}
+    if (!api && window.orosNotifs) api = window.orosNotifs;
+    if (api && typeof api.transient === "function") {
+      api.transient({ ns: "habits", title: text, body: "" });
+    } else {
+      toast(text);
+    }
   }
 
   // ===== HABIT DIALOG (add / edit — one lazy modal) =====
@@ -1194,10 +1249,10 @@
 
     if (editing) {
       updateHabit(editing, name, pickIcon, pickColor, days);
-      toast(t("toast.updated"));
+      transientNote(t("toast.updated"));
     } else {
       addHabit(name, pickIcon, pickColor, days);
-      toast(t("toast.created"));
+      transientNote(t("toast.created"));
     }
     dlgHabit.close();
     render();
@@ -1227,7 +1282,7 @@
       dlgConfirm.close();
       deleteHabit(h);
       render();
-      toast(t("toast.deleted"));
+      transientNote(t("toast.deleted"));
     };
     dlgConfirm.showModal();
   }
@@ -1281,8 +1336,9 @@
         var done = isDone(h.id, dateKey(d));
         var sched = isScheduledOn(h, d);
         var future = d > todayStart();
-        // allowed: past/today AND (scheduled OR already completed → undo)
-        if (future || (!sched && !done)) return;
+        // allowed: past/today AND (scheduled OR flexible OR completed → undo)
+        // HB-7: flexible exemption is METRICS-ONLY — never locks the toggle.
+        if (future || (!sched && !done && !isFlexible(h))) return;
         toggleComp(h, d);
         render();
       } else if (act === "cdot") {
@@ -1291,7 +1347,7 @@
         var cDone = isDone(h.id, dateKey(cd));
         var cSched = isScheduledOn(h, cd);
         var cFuture = cd > todayStart();
-        if (cFuture || (!cSched && !cDone)) return;
+        if (cFuture || (!cSched && !cDone && !isFlexible(h))) return;
         toggleComp(h, cd);
         render();
       }

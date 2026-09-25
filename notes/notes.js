@@ -521,6 +521,109 @@
     }, 2200);
   }
 
+  // --- NT-3 (Wave A): custom dialogs — no native confirm/prompt
+  // (standing doctrine, mood.js askReset pattern). Styled inline with
+  // the shell palette vars so notes.css needs no new rules. <dialog>
+  // gives us native Esc/backdrop handling for free. ---
+  STRINGS.en["dlg.cancel"] = "Cancel";
+  STRINGS.el["dlg.cancel"] = "Ακύρωση";
+  STRINGS.en["dlg.ok"] = "OK";
+  STRINGS.el["dlg.ok"] = "ΟΚ";
+
+  function closeUiDlg() {
+    var d = document.getElementById("nt-dlg");
+    if (d) { try { d.close(); } catch (e) {} d.remove(); }
+  }
+
+  // uiDlg(title, bodyText, buttons, inputOpts)
+  //   buttons: [{label, primary, danger, fn}]
+  //   inputOpts: {value, placeholder, onEnter(value)} | null
+  function uiDlg(titleText, bodyText, buttons, inputOpts) {
+    closeUiDlg();
+    var dlg = document.createElement("dialog");
+    dlg.id = "nt-dlg";
+    dlg.style.cssText =
+      "background:var(--panel-bg);color:var(--text);border:1px solid var(--border);" +
+      "border-radius:10px;padding:18px 20px 16px;max-width:min(430px,86vw);" +
+      "box-shadow:0 12px 36px var(--shadow);";
+    var h = document.createElement("h3");
+    h.style.cssText = "margin:0 0 8px;font-size:15px;font-weight:700;";
+    h.textContent = titleText;
+    dlg.appendChild(h);
+    if (bodyText) {
+      var p = document.createElement("p");
+      p.style.cssText =
+        "margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--text-dim);" +
+        "word-break:break-word;";
+      p.textContent = bodyText;
+      dlg.appendChild(p);
+    }
+    var input = null;
+    if (inputOpts) {
+      input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 80;
+      input.value = inputOpts.value || "";
+      input.placeholder = inputOpts.placeholder || "";
+      input.style.cssText =
+        "display:block;width:100%;box-sizing:border-box;margin:0 0 14px;padding:8px 10px;" +
+        "background:var(--bg);color:var(--text);border:1px solid var(--border);" +
+        "border-radius:7px;font-size:13px;";
+      dlg.appendChild(input);
+    }
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+    (buttons || []).forEach(function (b) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = b.label;
+      btn.style.cssText =
+        "padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;" +
+        (b.primary
+          ? "background:" + (b.danger ? "#e06c75" : "var(--accent)") +
+            ";color:#fff;border:none;"
+          : "background:transparent;color:var(--text);border:1px solid var(--border);");
+      btn.addEventListener("click", function () {
+        closeUiDlg();
+        if (b.fn) b.fn(input ? input.value : undefined);
+      });
+      row.appendChild(btn);
+    });
+    dlg.appendChild(row);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    if (input) {
+      input.focus();
+      input.select();
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (inputOpts.onEnter) {
+            closeUiDlg();
+            inputOpts.onEnter(input.value);
+          }
+        }
+      });
+    }
+    return dlg;
+  }
+
+  function askConfirm(titleText, bodyText, okLabel, onOk) {
+    uiDlg(titleText, bodyText, [
+      { label: t("dlg.cancel") },
+      { label: okLabel, primary: true, danger: true, fn: onOk }
+    ], null);
+  }
+
+  function askPrompt(titleText, value, placeholder, okLabel, onOk) {
+    uiDlg(titleText, null, [
+      { label: t("dlg.cancel") },
+      { label: okLabel, primary: true, fn: onOk }
+    ], { value: value, placeholder: placeholder, onEnter: onOk });
+  }
+
   // --- Unified notifications (Wave 11 migration) ---
   // Ίδιο doctrine με kanban.js: το module ζει στο shell (parent),
   // dynamic resolution, το τοπικό toast() στέκεται ως stale-bundle
@@ -815,8 +918,12 @@
   function deletePage(id) {
     var page = pageById(id);
     if (!page) return;
-    if (!window.confirm('"' + (page.title || t("page.untitled")) + '" — ' + t("page.delete") + "?")) return;
+    askConfirm(t("page.delete"),
+      '"' + (page.title || t("page.untitled")) + '"',
+      t("page.delete"), function () { doDeletePage(id); });
+  }
 
+  function doDeletePage(id) {
     // Tombstone — delete wins on merge, resurrected pages revive
     state.tombs[id] = Date.now();
     state.pages = state.pages.filter(function (p) { return p.id !== id; });
@@ -833,17 +940,18 @@
   function renamePage(id) {
     var page = pageById(id);
     if (!page) return;
-    var name = window.prompt(t("page.rename"), page.title);
-    if (name === null) return;
-    page.title = name;
-    page.mtime = Date.now();
-    saveNow();
-    markSyncDirty();
-    renderAll();
-    if (prefs.current === id) {
-      var titleEl = document.getElementById("page-title");
-      if (titleEl) titleEl.value = name;
-    }
+    askPrompt(t("page.rename"), page.title || "", t("page.untitled"),
+      t("dlg.ok"), function (val) {
+        page.title = val;
+        page.mtime = Date.now();
+        saveNow();
+        markSyncDirty();
+        renderAll();
+        if (prefs.current === id) {
+          var titleEl = document.getElementById("page-title");
+          if (titleEl) titleEl.value = val;
+        }
+      });
   }
   
     function togglePin(id) {
@@ -934,8 +1042,12 @@
   function deleteNotebook(id) {
     var nb = state.notebooks.find(function (n) { return n.id === id; });
     if (!nb) return;
-    if (!window.confirm('"' + nb.name + '" — ' + t("book.confirm"))) return;
+    askConfirm(t("book.delete"),
+      '"' + nb.name + '" — ' + t("book.confirm"),
+      t("book.delete"), function () { doDeleteNotebook(id); });
+  }
 
+  function doDeleteNotebook(id) {
     // Tombstones for notebook + all its pages/labels (delete wins on merge)
     state.tombs["nb:" + id] = Date.now();
     state.pages.forEach(function (p) {
@@ -1476,6 +1588,16 @@
       saveNow();
       markSyncDirty();
       renderAll();
+      // NT-1: renderEditor's #7 shortcut (same page + focused input)
+      // skips the value update — paint the REAL title into the input
+      // or the user sees "Untitled" while the data already holds the
+      // link title (typing would clobber it back).
+      var ntTitleEl = document.getElementById("page-title");
+      if (ntTitleEl && prefs.current === fresh.id) {
+        ntTitleEl.value = title;
+        ntTitleEl.focus();
+        ntTitleEl.select();
+      }
     }
   }
 
@@ -1558,8 +1680,10 @@
     var nbActions = [
       [t("book.menu.title"), null],
       [t("book.rename"), function () {
-        var name = window.prompt(t("book.rename"), nb.name);
-        if (name && name.trim()) renameNotebook(nb.id, name.trim());
+        askPrompt(t("book.rename"), nb.name, "",
+          t("dlg.ok"), function (val) {
+            if (val && val.trim()) renameNotebook(nb.id, val.trim());
+          });
       }],
       [t("book.delete"), function () {
         deleteNotebook(nb.id);
@@ -1735,10 +1859,11 @@
     x.innerHTML = X_SVG;
     x.addEventListener("click", function (e) {
       e.stopPropagation();
-      if (window.confirm(t("labels.confirm") + "\n\"" + lb.name + "\"")) {
-        deleteLabel(lb.id);
-        refreshPicker(page, null);
-      }
+      askConfirm(t("labels.confirm"), '"' + lb.name + '"',
+        t("page.delete"), function () {
+          deleteLabel(lb.id);
+          refreshPicker(page, null);
+        });
     });
     row.appendChild(x);
 
@@ -1915,10 +2040,32 @@
   function sliceGet() {
     // Deep-copy: the engine JSON-stringifies for comparison — a
     // live reference would race the debounce timer mid-edit.
-    return JSON.parse(JSON.stringify({
+    var out = JSON.parse(JSON.stringify({
       ver: state.ver, notebooks: state.notebooks,
       pages: state.pages, labels: state.labels, tombs: state.tombs
     }));
+    // NT-2: deterministic tombstone pruning (HB-3 / MD-4 pattern).
+    // The cutoff derives from the dataset's newest timestamp, never
+    // the wall clock — same data yields the same payload on every
+    // device at any time. Payload-only: local state keeps everything.
+    var maxTs = 0, i;
+    for (i = 0; i < (out.pages || []).length; i++) {
+      if ((out.pages[i].mtime || 0) > maxTs) maxTs = out.pages[i].mtime;
+    }
+    for (i = 0; i < (out.labels || []).length; i++) {
+      if ((out.labels[i].mtime || 0) > maxTs) maxTs = out.labels[i].mtime;
+    }
+    for (i = 0; i < (out.notebooks || []).length; i++) {
+      if ((out.notebooks[i].mtime || 0) > maxTs) maxTs = out.notebooks[i].mtime;
+    }
+    Object.keys(out.tombs || {}).forEach(function (k) {
+      if ((out.tombs[k] || 0) > maxTs) maxTs = out.tombs[k];
+    });
+    var NT_CUTOFF = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
+    Object.keys(out.tombs || {}).forEach(function (k) {
+      if ((out.tombs[k] || 0) < NT_CUTOFF) delete out.tombs[k];
+    });
+    return out;
   }
 
   function sliceSet(data, info) {
@@ -2064,10 +2211,12 @@
         var actions = [
           [t("book.menu.title"), null],
           [t("book.rename"), function () {
-            var name = window.prompt(t("book.rename"), nb.name);
-            if (name && name.trim()) {
-              renameNotebook(nb.id, name.trim());
-            }
+            askPrompt(t("book.rename"), nb.name, "",
+              t("dlg.ok"), function (val) {
+                if (val && val.trim()) {
+                  renameNotebook(nb.id, val.trim());
+                }
+              });
           }],
           [t("book.delete"), function () {
             deleteNotebook(nb.id);
@@ -2226,10 +2375,12 @@
       nbBtn.setAttribute("aria-label", t("book.plusTitle"));
       nbBtn.innerHTML = BOOKPLUS_SVG;
       nbBtn.addEventListener("click", function () {
-        var name = window.prompt(t("book.new"), t("book.default"));
-        if (name && name.trim()) {
-          createNotebook(name.trim());
-        }
+        askPrompt(t("book.new"), t("book.default"), t("book.default"),
+          t("dlg.ok"), function (val) {
+            if (val && val.trim()) {
+              createNotebook(val.trim());
+            }
+          });
       });
       newBtn.parentNode.appendChild(nbBtn);
     }

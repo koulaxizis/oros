@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.09";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.12";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2482,6 +2482,76 @@
       reconnectFolder();
     }
   }
+  
+    // ---------- Support / donations (Info modal only — no footer) ----------
+  // Plain <a> links, NEVER platform widgets: embeds mean third-party
+  // scripts/requests — violates the no-tracking doctrine. Opened in
+  // a new tab with rel=noopener (same contract as the repo link).
+  // i18n: inline EN/EL literals via supT() — same doctrine as
+  // calRemT/cycleT; no translations.js dependency.
+  var SUPPORT_OPTS = [
+    {
+      name: "Ko-fi",
+      url:  "https://ko-fi.com/koulaxizis",
+      en:   "Buy me a coffee!",
+      el:   "Κέρασέ με έναν καφέ!"
+    }
+  ];
+
+  function supT(en, el) {
+    return state.lang === "el" ? el : en;
+  }
+
+  function wireSupportSection(ov) {
+    var box = ov.querySelector(".sc-box");
+    if (!box) return;
+    var resetWrap = box.querySelector("#sc-reset-wrap");
+
+    var sec = document.createElement("div");
+    sec.id = "sc-support";
+
+    var head = document.createElement("div");
+    head.className = "sc-sec";
+    head.textContent = supT("Support", "Στήριξη");
+    sec.appendChild(head);
+
+    var intro = document.createElement("div");
+    intro.style.cssText =
+      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin:2px 0 8px;";
+    intro.textContent = supT(
+      "orOS is free, open source, and self-hostable. If it helps you, consider supporting it.",
+      "Το orOS είναι δωρεάν, ανοιχτού κώδικα και self-hostable. Αν σε βοηθάει, σκέψου να το στηρίξεις."
+    );
+    sec.appendChild(intro);
+
+    var cards = document.createElement("div");
+    cards.style.cssText =
+      "display:flex;flex-direction:column;gap:6px;margin-bottom:8px;";
+    SUPPORT_OPTS.forEach(function (opt) {
+      var a = document.createElement("a");
+      a.href = opt.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.style.cssText =
+        "display:flex;align-items:baseline;justify-content:space-between;" +
+        "gap:10px;padding:8px 10px;border:1px solid var(--border);" +
+        "border-radius:8px;color:var(--text);text-decoration:none;" +
+        "font-size:12.5px;font-weight:600;flex-wrap:wrap;";
+      var nm = document.createElement("span");
+      nm.textContent = opt.name;
+      var ds = document.createElement("span");
+      ds.style.cssText =
+        "font-size:11px;color:var(--text-dim);font-weight:400;";
+      ds.textContent = supT(opt.en, opt.el);
+      a.appendChild(nm);
+      a.appendChild(ds);
+      cards.appendChild(a);
+    });
+    sec.appendChild(cards);
+
+    if (resetWrap) box.insertBefore(sec, resetWrap);
+    else box.appendChild(sec);
+  }
 
   // Info modal — the FULL table is generated from SC_DEFS, never
   // handwritten twice. Flat, minimal, no chrome: title, version,
@@ -2538,6 +2608,7 @@
     document.addEventListener("keydown", onKey);
     scInfoClose = close;    // registered so the toggle path can call it too
 
+    wireSupportSection(ov);   // Support section (donation links)
     wireResetButton(ov);    // α: factory reset row
 
     document.body.appendChild(ov);

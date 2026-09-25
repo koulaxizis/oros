@@ -172,7 +172,10 @@ const STR = {
     "dupe.none": "No duplicates found — each address exists only once.",
     "dupe.keep": "Keep oldest, delete {n}",
     "dupe.deleted": "Deleted {n} duplicate(s)",
-    "dupe.keeper": "oldest — kept"
+    "dupe.keeper": "oldest — kept",
+    "dupe.apply.all": "Apply all ({n} groups)",
+    "dupe.apply.sel": "Apply selected",
+    "dupe.none.sel": "Select at least one group"
   },
   "el": {
     "app.name": "Συντομεύσεις",
@@ -249,7 +252,10 @@ const STR = {
     "dupe.none": "Δεν βρέθηκαν διπλότυπα — κάθε διεύθυνση υπάρχει μόνο μία φορά.",
     "dupe.keep": "Διατήρηση παλαιότερης, διαγραφή {n}",
     "dupe.deleted": "Διεγράφησαν {n} διπλότυπες",
-    "dupe.keeper": "παλαιότερη — διατηρήθηκε"
+    "dupe.keeper": "παλαιότερη — διατηρήθηκε",
+    "dupe.apply.all": "Εφαρμογή όλων ({n} ομάδες)",
+    "dupe.apply.sel": "Εφαρμογή επιλεγμένων",
+    "dupe.none.sel": "Επίλεξε τουλάχιστον μία ομάδα"
   }
 };
 
@@ -1193,6 +1199,33 @@ function showDupesPanel() {
     none.textContent = t("dupe.none");
     panel.appendChild(none);
   } else {
+    /* Action bar: Apply all / Apply selected. */
+    const actions = document.createElement("div");
+    actions.className = "dupe-actions";
+    const allBtn = document.createElement("button");
+    allBtn.type = "button";
+    allBtn.className = "dupe-apply-all";
+    allBtn.textContent = t("dupe.apply.all", { n: groups.length });
+    allBtn.addEventListener("click", () => purgeGroups(groups));
+    const selBtn = document.createElement("button");
+    selBtn.type = "button";
+    selBtn.className = "dupe-apply-sel";
+    selBtn.textContent = t("dupe.apply.sel");
+    selBtn.addEventListener("click", () => {
+      const chosen = [];
+      panel.querySelectorAll(".dupe-group").forEach((blk) => {
+        const cb = blk.querySelector(".dupe-check");
+        if (cb && cb.checked) {
+          const g = groups.find((gr) => gr[0] && gr[0].id === cb.dataset.keep);
+          if (g) chosen.push(g);
+        }
+      });
+      if (!chosen.length) { transientNote(t("dupe.none.sel")); return; }
+      purgeGroups(chosen);
+    });
+    actions.append(allBtn, selBtn);
+    panel.appendChild(actions);
+
     groups.forEach((g) => {
       const keep = g[0];                // oldest — the original
       const blk = document.createElement("div");
@@ -1201,6 +1234,13 @@ function showDupesPanel() {
       const head = document.createElement("div");
       head.className = "dupe-head";
       head.textContent = hostOf(keep.url) || keep.url;
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.className = "dupe-check";
+      chk.checked = true;              // selected by default
+      chk.dataset.keep = keep.id;      // links box → group
+      chk.addEventListener("click", (e) => e.stopPropagation());
+      head.appendChild(chk);
       blk.appendChild(head);
 
       g.forEach((it) => {
@@ -1252,12 +1292,13 @@ function showDupesPanel() {
   }
 }
 
-/* Deletes every copy except the oldest. Visits and lastVisit
-   are folded into the keeper so stats survive the purge. */
-function purgeDupeGroup(g) {
-  if (!g || g.length < 2) return;
+/* Core: folds duplicates into the oldest copy. Visits and
+   lastVisit are merged into the keeper so stats survive. Returns
+   the number of deleted copies — NO snapshot/save/toast here,
+   so single and bulk purges share one source of truth. */
+function purgeGroupCore(g) {
+  if (!g || g.length < 2) return 0;
   const keep = g[0];                   // oldest — the original
-  snapshotForUndo();
   const now = Date.now();
   let n = 0;
   g.forEach((it) => {
@@ -1268,12 +1309,39 @@ function purgeDupeGroup(g) {
     state.deleted[it.id] = now;         // tombstones — sync-safe
     n++;
   });
+  if (n) keep.modified = now;
+  return n;
+}
+
+/* Single-group purge (per-group button path). */
+function purgeDupeGroup(g) {
+  snapshotForUndo();
+  const n = purgeGroupCore(g);
   if (!n) return;
-  keep.modified = now;
   save();
   closeDupesPanel();
   renderAll();
   showToast(t("dupe.deleted", { n: n }), {
+    action: { label: t("undo"), fn: undoFromSnapshot }
+  });
+}
+
+/* Bulk purge: ONE undo snapshot, ONE save, ONE toast — atomic.
+   A single Undo restores every purged copy at once. */
+function purgeGroups(groups) {
+  /* Guard against stale group references (panel open while a
+     sync pulled changes): only groups whose keeper still lives. */
+  const live = (groups || []).filter(
+    (g) => g && g.length > 1 && state.items[g[0].id]);
+  if (!live.length) return;
+  snapshotForUndo();
+  let total = 0;
+  live.forEach((g) => { total += purgeGroupCore(g); });
+  if (!total) return;
+  save();
+  closeDupesPanel();
+  renderAll();
+  showToast(t("dupe.deleted", { n: total }), {
     action: { label: t("undo"), fn: undoFromSnapshot }
   });
 }

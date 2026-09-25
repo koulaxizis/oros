@@ -855,12 +855,45 @@ dialog menu button.danger:hover {
   font-size: 13px;
   color: var(--text-dim);
 }
+/* Checkbox in dupe group headers */
+.dupe-check {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  margin-right: 6px;
+  cursor: pointer;
+  transition: background .1s, border-color .1s, color .1s;
+}
+.dupe-check:hover { border-color: var(--accent); }
+.dupe-check:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+.dupe-check:checked::after {
+  content: "✓";
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .dupe-group {
   border-top: 1px solid var(--border);
   padding: 8px;
   margin-top: 4px;
 }
 .dupe-head {
+  display: flex;
+  align-items: center;
   font-size: 13px;
   font-weight: 700;
   margin-bottom: 4px;
@@ -902,8 +935,46 @@ dialog menu button.danger:hover {
   color: var(--bg);
 }
 
+/* Action bar: Apply all / Apply selected */
+.dupe-actions {
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.dupe-apply-all,
+.dupe-apply-sel {
+  flex: 1;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  white-space: nowrap;
+  text-align: center;
+}
+.dupe-apply-all:hover,
+.dupe-apply-sel:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.dupe-apply-sel {
+  background: var(--panel-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.dupe-apply-sel:hover {
+  background: var(--accent-soft);
+}
+
 @media (max-width: 480px) {
   #dupes-panel { width: calc(100vw - 24px); }
+  .dupe-actions { flex-wrap: wrap; }
+  .dupe-apply-all,
+  .dupe-apply-sel { flex: 1 1 100%; }
 }
 
 /* ---------- 21. Duplicates mobile adjustments ---------- */

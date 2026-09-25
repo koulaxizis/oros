@@ -1306,6 +1306,7 @@
 
   // moveBoard — reorder μέσα στο state.boards + stamp state.om.
   // Επιστρέφει true αν έγινε μετακίνηση.
+  var boardMoveSaveTimer = null;
   function moveBoard(srcId, destId, before) {
     var from = -1;
     for (var i = 0; i < state.boards.length; i++) {
@@ -1327,7 +1328,16 @@
     state.boards.splice(before ? to : to + 1, 0, bd);
     state.om = Date.now();               // αυτή η πλευρά προσφέρει τη σειρά
     state.boards.forEach(function (b, i) { b.pos = i; });
-    save();
+
+    // KN-5: debounced save — rapid successive reorders μέσα στο
+    // dropdown καταλήγουν σε ΕΝΑ save/dirty αντί για πολλά. Το
+    // state.om stampάρεται σε κάθε κίνηση (σωστό για το merge),
+    // μόνο το localStorage/sync flush συγχρονίζεται. Το UI δεν
+    // επηρεάζεται: το renderBoardDropdownItems() διαβάζει το
+    // state απευθείας, όχι το localStorage.
+    clearTimeout(boardMoveSaveTimer);
+    boardMoveSaveTimer = setTimeout(function () { save(); }, 300);
+
     return true;
   }
 
@@ -1371,6 +1381,12 @@
 
   // Board creation: creates new board, switches to it
   function createBoard() {
+    // KN-1b: real undo — snapshot ΠΡΙΝ τη μετάλλαξη (ίδιο pattern
+    // με deleteBoard/duplicateBoard). Το παλιό showToast(..., true)
+    // έδειχνε Undo button χωρίς pushUndo: noop, ή χειρότερα,
+    // επαναφορά σε ΣΤΑΛΕΜΕΝΟ snapshot προηγούμενης ενέργειας.
+    pushUndo("toast.boardadded");
+
     var board = newBoardObj(t("new.board"));   // i18n αντί hardcoded string
     board.pos = state.boards.length;
 
@@ -1382,7 +1398,6 @@
 
     save();
     renderAll();
-    showToast(t("toast.boardadded"), true);
   }
 
   // ========== BOARD MANAGE DIALOG ==========
@@ -1832,13 +1847,27 @@
   }
   
     // --- Due date formatting ---
+  // KN-6: τοπικός (όχι UTC) υπολογισμός του "today/tomorrow". Το
+  // toISOString() είναι UTC — στη Ελλάδα μεταξύ τοπικής και UTC
+  // μεσονυκτίου (~00:00–03:00 καλοκαίρι) το chip έδειχνε λάθος
+  // μέρα: κάρτα "σήμερα" ως Tomorrow, "χθες" ως Today. Το card.due
+  // από το <input type="date"> είναι πάντα ΤΟΠΙΚΗ ημερομηνία.
+  // Επίσης manual parse του ISO date: το date-only string γίνεται
+  // UTC midnight — σε αρνητικά UTC offsets το getDate() επέστρεφε
+  // την προηγούμενη μέρα. Display-only: δεν αγγίζει data/sync/feed.
+  function localDateStr(d) {
+    return d.getFullYear() + "-" +
+           String(d.getMonth() + 1).padStart(2, "0") + "-" +
+           String(d.getDate()).padStart(2, "0");
+  }
+
   function formatDateChip(isoDate) {
     if (!isoDate) return null;
     var now = new Date();
-    var todayStr = now.toISOString().slice(0, 10);  // "YYYY-MM-DD"
+    var todayStr = localDateStr(now);        // τοπικό "YYYY-MM-DD"
     var tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    var tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    var tomorrowStr = localDateStr(tomorrow);
 
     var label, colorClass;
     if (isoDate === todayStr) {
@@ -1851,7 +1880,8 @@
       label = t("card.overdue");
       colorClass = "due-overdue";
     } else {
-      var d = new Date(isoDate);
+      var parts = isoDate.split("-");
+      var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);  // τοπικό μεσονύκτιο
       var dd = String(d.getDate()).padStart(2, "0");
       var mm = d.toLocaleString(LANG === "el" ? "el" : "en", { month: "short" }).replace(".", "");
       // ΕΛ: "19 Σεπ" | EN: "19 Sep"
