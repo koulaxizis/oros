@@ -19,7 +19,7 @@
 // APP_VERSION format (shell may store "0.35.07" or "v0.35.07").
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
-var CACHE_VERSION = "oros-v0.36.09";
+var CACHE_VERSION = "oros-v0.36.12";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 
