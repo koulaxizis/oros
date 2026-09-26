@@ -62,7 +62,6 @@
       "contains.items":    "{n} items",
       "toast.saved":      "Saved",
       "toast.deleted":    "Deleted",
-      "toast.merged":     "Updated from sync — merged with another device",
       "toast.name.req":   "Name is required",
       "back":             "Back"
     },
@@ -94,7 +93,6 @@
       "contains.items":    "{n} αντικείμενα",
       "toast.saved":      "Αποθηκεύτηκε",
       "toast.deleted":    "Διαγράφτηκε",
-      "toast.merged":     "Ενημερώθηκε από συγχρονισμό — συγχωνεύτηκε με άλλη συσκευή",
       "toast.name.req":   "Απαιτείται όνομα",
       "back":             "Πίσω"
     }
@@ -119,6 +117,8 @@
   var DATA_KEY = "oros-storage-data";
   var BROKEN_KEY = "oros-storage-data-broken";   // local rescue copy, never synced
   var DATA_VER = 1;
+  var TOMB_PRUNE_DAYS = 30;   // ST-1: payload-only tombstone cutoff
+  var DAY_MS          = 24 * 60 * 60 * 1000;
 
   // type → child type; the drill-down spine of the app
   var LEVELS = {
@@ -397,11 +397,17 @@
   } catch (e) { syncApi = window.orosSync || null; }
 
   function sliceGet() {
-    // Prune long-dead tombstones before shipping: anything deleted
-    // more than 30 days ago has been delivered everywhere already.
-    // Pruning touches ONLY the shipped payload — never db itself —
-    // so it can never trigger a dirty loop.
-    var CUTOFF = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    // ST-1: deterministic tombstone pruning (HB-3 / MD-4 / NT-2
+    // pattern — Prompter PR-2 / Quote Q-1 parity). The cutoff
+    // derives from the dataset's newest mtime, never the wall
+    // clock — same data yields the same payload on every device
+    // at any time. Payload-only: db keeps every tombstone, so a
+    // lagging device can never resurrect a deleted entity.
+    var maxTs = 0;
+    for (var mi = 0; mi < db.ents.length; mi++) {
+      if ((db.ents[mi].mtime || 0) > maxTs) maxTs = db.ents[mi].mtime;
+    }
+    var CUTOFF = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
     var ents = [];
     for (var i = 0; i < db.ents.length; i++) {
       var e = db.ents[i];
@@ -433,9 +439,9 @@
     dbPersist();
     sanitizeNav();               // BEFORE render — no dead-target empty states
     render();
-    if (info && info.merged) {
-      toast(t("toast.merged"));
-    }
+    // ST-2: per-sync toast removed (Notes Wave 11 doctrine) —
+    // info.merged means "the merge engine ran", not "data changed".
+    // Sync feedback = the taskbar sync dot, never a per-sync toast.
   }
 
   function registerSync() {
@@ -847,7 +853,7 @@
         }
       }
       dlg.close();
-      toast(t("toast.saved"));
+      notifyTransient(t("toast.saved"));
       render();
     });
 
@@ -916,7 +922,7 @@
 
   function confirmDelete(ent) {
     deleteEnt(ent);
-    toast(t("toast.deleted"));
+    notifyTransient(t("toast.deleted"));
     sanitizeNav();               // shared with sliceSet (#3) — no dead refs
     render();
   }
@@ -926,6 +932,7 @@
   var toastTimer = null;
   function toast(text) {
     var el = document.getElementById("toast");
+    if (!el) return;            // ST-2: stale/embedded HTML guard
     el.textContent = text;
     el.hidden = false;
     requestAnimationFrame(function () { el.classList.add("show"); });
@@ -934,6 +941,18 @@
       el.classList.remove("show");
       setTimeout(function () { el.hidden = true; }, 300);
     }, 2200);
+  }
+  
+    // ST-2: unified notifications doctrine (Wave 6 — mood/kanban/
+  // prompter/quote pattern). The module lives in the shell
+  // (parent), dynamic resolution; the local toast() above stays
+  // as the stale-bundle fallback.
+  function notifyTransient(text) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+      if (N && typeof N.transient === "function") { N.transient({ ns: "storage", title: text, body: "" }); return; }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);
   }
 
   // ===== PALETTE INHERITANCE (parent shell) =====
@@ -993,20 +1012,34 @@
       }, 150);
     });
 
-    // Shell-owned global shortcuts: capture-phase forwarding (the
-    // canonical template — parity with todo/kanban/notes/mood).
-    // NOTE: the modifier predicate below is UNVERIFIED against the
-    // live mood.js keydown block — do not align it blindly. Pending
-    // the exact mood.js snippet, worst case nothing forwards (safe
-    // failure). See v0.1.1 changelog entry "#13".
+    // ST-4: Contract B — shell-owned combos (Ctrl+Alt+Shift+*) get
+    // the CANONICAL capture-phase forwarding (parity with todo/
+    // kanban/writer/notes/prompter/quote). When the shell handles
+    // the combo, stopPropagation prevents any app-level keydown
+    // from double-reacting to it. Stale bundle (no orosShortcuts)
+    // = safe no-op.
     document.addEventListener("keydown", function (e) {
       if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) {
         try {
-          if (window.parent.orosShortcuts && window.parent.orosShortcuts.handle(e)) return;
+          if (window.parent.orosShortcuts &&
+              typeof window.parent.orosShortcuts.handle === "function" &&
+              window.parent.orosShortcuts.handle(e)) {
+            e.stopPropagation();
+            return;
+          }
         } catch (err) {}
       }
-      if (e.key === "Escape" && nav.id &&
-          !document.querySelector("dialog[open]")) {
+      // ST-6: Escape → goUp(), but yield to editable targets first
+      // (an Escape closing a native select dropdown must not also
+      // navigate up) and never while a dialog is open (Esc cancels
+      // dialogs natively).
+      if (e.key === "Escape" && nav.id) {
+        var tgt = e.target;
+        var editable = tgt && (tgt.tagName === "INPUT" ||
+          tgt.tagName === "TEXTAREA" || tgt.tagName === "SELECT" ||
+          tgt.isContentEditable);
+        if (editable) return;
+        if (document.querySelector("dialog[open]")) return;
         goUp();
       }
     }, true);

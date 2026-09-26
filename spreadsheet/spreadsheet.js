@@ -867,7 +867,25 @@ var lastPainted = [];/* lastPainted[r][c] -> last text set (skip no-op) */
 
 function buildGrid() {
   var tbl = $("grid");
+  console.log("[SS] buildGrid: #grid found =", !!tbl);
+  if (!tbl) { console.error("[SS] CRITICAL: #grid element missing!"); return; }
+
   var sheet = getActiveSheet();
+  console.log("[SS] buildGrid: sheet =", JSON.stringify(sheet));
+
+  /* Safety net: repair invalid dimensions before building */
+  if (!sheet || typeof sheet.rows !== "number" || sheet.rows < 1 ||
+      typeof sheet.cols !== "number" || sheet.cols < 1) {
+    console.error("[SS] CRITICAL: invalid sheet dimensions!");
+    if (!sheet) {
+      state.sheets = [blankState().sheets[0]];
+      sheet = state.sheets[0];
+    }
+    sheet.rows = (typeof sheet.rows === "number" && sheet.rows > 0) ? sheet.rows : ROWS;
+    sheet.cols = (typeof sheet.cols === "number" && sheet.cols > 0) ? sheet.cols : COLS;
+    console.warn("[SS] repaired dims:", sheet.rows + "x" + sheet.cols);
+  }
+
   var r, c, tr, th, td;
 
   var thead = document.createElement("thead");
@@ -904,6 +922,7 @@ function buildGrid() {
     tbody.appendChild(tr);
   }
   tbl.appendChild(tbody);
+  console.log("[SS] buildGrid COMPLETE:", sheet.rows + "x" + sheet.cols);
 }
 
 function displayVal(r, c) {
@@ -1257,7 +1276,10 @@ document.addEventListener("keydown", function (e) {
 }, true);
 
 function boot() {
+  console.log("[SS] boot start, LANG =", LANG);
   loadState();
+  console.log("[SS] loadState ok, sheets:",
+    state.sheets.length, "| cells:", Object.keys(state.cells).length);
   applyI18n();
   wire();
   registerSync();
@@ -1265,8 +1287,9 @@ function boot() {
   watchPalette();
   buildGrid();
   selR = 0; selC = 0;
-  renderGrid();       /* SINGLE PASS — never render twice at boot */
+  renderGrid();
   renderSelection();
+  console.log("[SS] boot COMPLETE");
   $("grid-wrap").focus();
 }
 

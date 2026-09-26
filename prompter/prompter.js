@@ -22,6 +22,8 @@
 
   var STORAGE_KEY = "oros-prompter-data";
   var DATA_VER    = 1;
+  var TOMB_PRUNE_DAYS = 30;   // PR-2: payload-only tombstone cutoff
+  var DAY_MS          = 24 * 60 * 60 * 1000;
 
   // ---------- 1. Constants, i18n ----------
   var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
@@ -486,7 +488,6 @@
     return {
       ver: DATA_VER,
       sm: Date.now(),
-      om: Date.now(),
       favorites: {},   // id → mtime (mirrors completed — tombstone-aware)
       completed: {},
       customs: [],
@@ -622,7 +623,6 @@
     return {
       ver: DATA_VER,
       sm: Math.max(a.sm||0, b.sm||0),
-      om: Math.max(a.om||0, b.om||0),
       favorites: favorites,
       completed: completed,
       customs: customs,
@@ -638,16 +638,49 @@
     api.registerSlice("prompter", sliceGet, sliceSet, STORAGE_KEY, mergePrompterStates);
   }
 
-  function sliceGet() { return JSON.parse(JSON.stringify(state)); }
+  function sliceGet() {
+    // PR-2: deep-copy (the engine JSON-stringifies for comparison).
+    var out = JSON.parse(JSON.stringify(state));
+    // Deterministic tombstone pruning (HB-3 / MD-4 / NT-2 pattern):
+    // the cutoff derives from the dataset's newest timestamp, never
+    // the wall clock — same data yields the same payload on every
+    // device at any time. Payload-only: local state keeps everything.
+    var maxTs = 0, id;
+    for (id in out.favorites) {
+      if ((out.favorites[id] || 0) > maxTs) maxTs = out.favorites[id];
+    }
+    for (id in out.completed) {
+      if ((out.completed[id] || 0) > maxTs) maxTs = out.completed[id];
+    }
+    for (id in out.deleted) {
+      if ((out.deleted[id] || 0) > maxTs) maxTs = out.deleted[id];
+    }
+    (out.customs || []).forEach(function (c) {
+      if ((c.mtime || 0) > maxTs) maxTs = c.mtime;
+    });
+    var cutoff = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
+    for (id in out.deleted) {
+      if ((out.deleted[id] || 0) < cutoff) delete out.deleted[id];
+    }
+    return out;
+  }
   function sliceSet(data, info) {
     data = JSON.parse(JSON.stringify(data||null));
     if (!data || data.favorites === undefined) return;
     normalizeFavs(data);
+    // PR-4: defensive guards — same contract as load(). A crafted or
+    // partial payload must never null-ify completed/customs/deleted
+    // (isCompleted/deletion paths would throw on undefined maps).
+    if (typeof data.completed !== "object" || data.completed === null) data.completed = {};
+    if (!Array.isArray(data.customs)) data.customs = [];
+    if (typeof data.deleted !== "object" || data.deleted === null) data.deleted = {};
     window.__orosSyncApi._suppress = true;
     try { state = data; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     finally { window.__orosSyncApi._suppress = false; }
     renderAll();
-    if (info && info.merged) showToast(t("sync.pull"));
+    // PR-1a-6: sync.pull toast removed (Notes Wave 11 doctrine) —
+    // info.merged means "the merge engine ran", not "data changed".
+    // Sync feedback = the taskbar sync dot, never a per-sync toast.
   }
 
   // Toast (lazy, top-right)
@@ -676,6 +709,17 @@
     toastTimer=setTimeout(hideToast, 5000);
   }
   function hideToast(){ if(!toastEl)return; toastEl.style.opacity="0"; toastEl.style.transform="translateY(-8px)"; if(toastAction){ toastAction.remove(); toastAction=null;} toastEl.textContent=""; }
+
+  // PR-1: unified notifications doctrine (kanban/notes pattern). The
+  // module lives in the shell (parent), dynamic resolution; the local
+  // showToast stays as stale-bundle fallback.
+  function notifyTransient(text){
+    try {
+      var N=(window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+      if(N && typeof N.transient==="function"){ N.transient({ ns:"prompter", title:text, body:"" }); return; }
+    } catch(e){ /* cross-origin guard */ }
+    showToast(text);
+  }
 
   // Helpers
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
@@ -733,8 +777,8 @@
     state.sm=Date.now(); save(); renderAll();
   }
   function copyText(text){
-    if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ showToast(t("saved.toast")); }); }
-    else { var ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); showToast(t("saved.toast")); }catch(e){} document.body.removeChild(ta);}
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ notifyTransient(t("saved.toast")); }); }
+    else { var ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); notifyTransient(t("saved.toast")); }catch(e){} document.body.removeChild(ta);}
   }
 
   // ---------- Wave 4: Custom prompt CRUD ----------
@@ -857,7 +901,7 @@
         });
       }
       state.sm=now; save(); closeEditor(); renderAll();
-      showToast(t("custom.saved"));
+      notifyTransient(t("custom.saved"));
     });
     btns.appendChild(cn); btns.appendChild(sv);
     editorModal.appendChild(btns);
@@ -883,7 +927,7 @@
     delete state.completed[id];
     state.deleted[id]=now;   // tombstone → merge-proof wipe on all devices
     state.sm=now; save(); renderAll();
-    showToast(t("custom.deleted"));
+    notifyTransient(t("custom.deleted"));
   }
   function confirmCustomDelete(id){
     var dlg=document.createElement("dialog");
@@ -965,7 +1009,7 @@ document.body.appendChild(loader);
     }
 
     // Tag suggestions — from the 3rd character, max 6, toggle on click
-    if(searchQuery.length>=3){
+    if(searchQuery.length>=2){
       var hits=tagSuggestions(searchQuery);
       if(hits.length){
         var sg=document.createElement("div");
@@ -1350,7 +1394,7 @@ document.body.appendChild(loader);
     Object.keys(state.completed).forEach(function(id){ tomb[id]=now; });
     (state.customs||[]).forEach(function(c){ tomb[c.id]=now; });
     var fresh=newState();
-    fresh.deleted=tomb; fresh.sm=now; fresh.om=now;
+    fresh.deleted=tomb; fresh.sm=now;
     state=fresh; save();
     activeCategory="all";
     activeTag=null;
@@ -1360,7 +1404,7 @@ document.body.appendChild(loader);
     showMineOnly=false;
     renderAll();
     if(settingsModal){ settingsModal.close(); settingsModal.remove(); settingsModal=null; }
-    showToast(t("rst.done"));
+    notifyTransient(t("rst.done"));
   }
 
   // ---------- 5. Wiring & boot ----------
@@ -1374,6 +1418,18 @@ document.body.appendChild(loader);
     $("browse-btn").addEventListener("click", function(){ showTab("browse"); });
     $("stats-btn").addEventListener("click", function(){ showTab("stats"); });
     $("settings-btn").addEventListener("click", function(){ openSettings(); });
+
+    // PR-3: Contract B — shell-owned combos (Ctrl+Alt+Shift+*) get
+    // canonical capture-phase forwarding (parity with todo/kanban/
+    // writer/notes). Without this, shell shortcuts die inside the
+    // prompter's inputs.
+    document.addEventListener("keydown", function (e) {
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+      var p = window.parent;
+      if (!(p && p.orosShortcuts &&
+            typeof p.orosShortcuts.handle === "function")) return;
+      if (p.orosShortcuts.handle(e)) e.stopPropagation();
+    }, true);
   }
 
   function applyI18n(){

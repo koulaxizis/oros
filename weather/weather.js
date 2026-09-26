@@ -34,6 +34,7 @@
 	var FETCH_GAP_MS = 30 * 60 * 1000;
 	var CACHE_MAX    = 6;
 	var WX_CACHE_KEY = "oros-wx-cache";
+	var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // todo parity: 30 days
 
   var netDown = false;   // last fetch attempt FAILED while online
                          // (truth from the network, not navigator.onLine)
@@ -367,12 +368,34 @@
     return data;
   }
 
+  // Tombstone pruning (todo parity, W2): a deleted city rides the
+  // slice for at most 30 days, then the tombstone expires and the
+  // entry stops travelling to every device forever. Convergence-
+  // safe: pruning is ALSO applied inside the merge, so both
+  // replicas compute from the same trimmed tombstone set.
+  // Accepted trade-off (identical to todo): a remote state older
+  // than 30 days may resurrect an ancient deletion — the next
+  // delete re-buries it; bounded blast radius, zero data loss.
+  function pruneTombstones(deleted) {
+    if (!deleted) return {};
+    var cut = Date.now() - TOMB_LIFETIME_MS;
+    var out = {};
+    Object.keys(deleted).forEach(function (id) {
+      if (deleted[id] > cut) out[id] = deleted[id];
+    });
+    return out;
+  }
+
   function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var data = migrate(JSON.parse(raw));
-        if (data) { state = data; return; }
+        if (data) {
+          state = data;
+          state.deleted = pruneTombstones(state.deleted);
+          return;
+        }
       }
     } catch (e) { /* corrupted → fresh */ }
     state = defaultState();
@@ -419,8 +442,10 @@
 
   // ---------- 2b. Merge engine lite (todo-contract, compact) ----------
   // Deterministic + symmetric: merge(A,B) === merge(B,A).
-  //   · active — LWW by root sm; ties by lexicographic JSON
-  //   · units + shellWx — same scalars side as active (LWW by sm)
+  //   · active + units + shellWx — LWW by root sm; ties by
+  //     lexicographic JSON of the FULL scalar triple (symmetric:
+  //     a partial tie-break on `active` alone let two replicas
+  //     keep different units on an sm tie and ping-pong forever)
   //   · cities — union by id, content LWW by mtime
   //     (ties by lexicographic JSON — identical both sides)
   //   · ordering — the side with larger om donates positions;
@@ -440,18 +465,20 @@
   function mergeWeatherStates(A, B) {
     var a = A || {}, b = B || {};
 
-    // tombstones: union, max ts
+    // tombstones: union, max ts — then prune to 30d (todo parity,
+    // W2): unbounded tombstone growth bloated every slice forever.
     var tomb = {};
     Object.keys(a.deleted || {}).forEach(function (id) { tomb[id] = a.deleted[id]; });
     Object.keys(b.deleted || {}).forEach(function (id) {
       tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
     });
+    tomb = pruneTombstones(tomb);
 
     // scalars: the winning side donates active AND units AND
     // shellWx — losing them on merge wiped the units toggle and
     // resurrected deleted shell cities (fingerprint reset).
-    var sa = JSON.stringify([a.active || null]);
-    var sb = JSON.stringify([b.active || null]);
+    var sa = JSON.stringify([a.active || null, a.units || "metric", a.shellWx || null]);
+    var sb = JSON.stringify([b.active || null, b.units || "metric", b.shellWx || null]);
     var scalars = (a.sm || 0) !== (b.sm || 0)
       ? ((a.sm || 0) > (b.sm || 0) ? a : b)
       : (sa >= sb ? a : b);
@@ -726,7 +753,7 @@
           // adoption in shell.js — GPS vs geocoded center routinely diverge.
           try {
             var sh = JSON.parse(localStorage.getItem("oros-weather"));
-            if (sh && typeof sh.lat === "number" &&
+            if (sh && sh.on && typeof sh.lat === "number" &&
                 Math.abs(sh.lat - city.lat) < 0.15 &&
                 Math.abs(sh.lon - city.lon) < 0.15) {
               localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
@@ -1305,6 +1332,7 @@
 
     window.__orosSyncApi._suppress = true;
     try {
+      data.deleted = pruneTombstones(data.deleted);
       state = data;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } finally {
@@ -1504,6 +1532,13 @@
     });
   }
 
+  // Shell pref fingerprint — ONE construction, used by BOTH the
+  // live bridge and the boot reconciliation, so they can never
+  // disagree about what "the shell last asked for" means.
+  function wxPrefFingerprint(w) {
+    return [w.lat.toFixed(3), w.lon.toFixed(3), w.label || ""].join("|");
+  }
+
   // Shell→app bridge: the menu's weather settings push location
   // changes straight into the RUNNING app. Upsert by coords, set
   // active, stamp (stamps stay owned by this app), refresh.
@@ -1513,6 +1548,14 @@
     // (NaN coord-compare never matched a dup) on every push.
     if (!w || typeof w.lat !== "number" ||
         typeof w.lon !== "number" || isNaN(w.lat) || isNaN(w.lon)) return;
+    // Shell-vs-GPS discriminator (verified in shell.js): every
+    // shell push carries wxRead()'s boolean `on` (guard rejects
+    // !w.on upstream); GPS pushes ({lat, lon, label}) carry none.
+    // A shell push must STAMP state.shellWx NOW — otherwise the
+    // next boot's syncShellLocation() still holds the OLD
+    // fingerprint, sees fp_new !== fp_old and re-forces the shell
+    // city active, overriding the user's in-app choice meanwhile.
+    if (w.on === true) state.shellWx = wxPrefFingerprint(w);
     var dup = null;
     state.cities.forEach(function (c) {
       if (Math.abs(c.lat - w.lat) < 0.15 && Math.abs(c.lon - w.lon) < 0.15) dup = c;
@@ -1547,7 +1590,7 @@
     try { w = JSON.parse(localStorage.getItem("oros-weather")); } catch (e) {}
     if (!w || !w.on || typeof w.lat !== "number" || typeof w.lon !== "number") return;
 
-    var fp = [w.lat.toFixed(3), w.lon.toFixed(3), w.label || ""].join("|");
+    var fp = wxPrefFingerprint(w);
     // Skip only when nothing changed AND the list isn't empty.
     // An EMPTY list re-adopts the shell location on boot — deleting
     // everything resets to the tray's truth instead of stranding

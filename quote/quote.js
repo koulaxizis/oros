@@ -458,12 +458,29 @@
     return data;
   }
 
-  function pruneTombstones() {
-    if (!state || !state.deleted) return;
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(state.deleted).forEach(function (id) {
-      if (state.deleted[id] < cutoff) delete state.deleted[id];
+  // Q-1: deterministic tombstone pruning (HB-3 / MD-4 / NT-2
+  // pattern). The cutoff derives from the dataset's newest mtime,
+  // never the wall clock — same data yields the same payload on
+  // every device at any time. Payload-only: local state keeps
+  // every tombstone, so a lagging device can never resurrect an
+  // entity by re-sending it alive.
+  function datasetMaxTs(data) {
+    var max = 0;
+    ["quotes", "clients", "templates", "payMethods"].forEach(function (k) {
+      (data[k] || []).forEach(function (e) {
+        if ((e.mtime || 0) > max) max = e.mtime;
+      });
     });
+    return max;
+  }
+
+  function pruneDeletedMap(deleted, data) {
+    var tomb = {};
+    var cutoff = datasetMaxTs(data) - TOMB_LIFETIME_MS;
+    Object.keys(deleted || {}).forEach(function (id) {
+      if (deleted[id] >= cutoff) tomb[id] = deleted[id];
+    });
+    return tomb;
   }
 
   function load() {
@@ -473,7 +490,6 @@
         var data = migrate(JSON.parse(raw));
         if (data) {
           state = data;
-          pruneTombstones();
           return;
         }
       }
@@ -571,11 +587,10 @@
   function mergeQuoteStates(A, B) {
     var a = A || {}, b = B || {};
 
+    // Q-1: pruning moved to the sliceGet payload boundary and made
+    // deterministic (dataset maxTs) — never Date.now(). The merge
+    // itself stays pure: same inputs, same output, every device.
     var tomb = mergeEntityMaps(a.deleted, b.deleted);
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(tomb).forEach(function (id) {
-      if (tomb[id] < cutoff) delete tomb[id];
-    });
 
     var quotes   = unionEntities(a.quotes, b.quotes, tomb);
     var clients  = unionEntities(a.clients, b.clients, tomb);
@@ -649,7 +664,7 @@
     curIsDraft = false;
     state.activeQuoteId = id;
     // Quiet persist: device-local τιμή — δεν ταξιδεύει στο cloud,
-    // άρα ΚΑΝΟΥΜΕ dirty/push, μόνο τοπική επιβίωση σε reload.
+    // άρα ΔΕΝ κάνουμε dirty/push, μόνο τοπική επιβίωση σε reload.
     window.__orosSyncApi._suppress = true;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -695,6 +710,9 @@
     if (!curIsDraft || !cur) return;
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(cur)); } catch (e) {}
   }
+  // Q-2: κλείσιμο καρτέλας/PWA flush — το debounce των 800ms δεν
+  // προλαβαίνει πάντα το τελευταίο keystroke burst.
+  window.addEventListener("pagehide", writeShelterNow);
   function clearShelter() {
     clearTimeout(draftShelterTimer);
     try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
@@ -709,6 +727,14 @@
       clearShelter();
       return false;
     }
+    // Q-3: minimal shape guards — το shelter draft δεν περνά από
+    // migrate(), άρα συμπληρώνουμε ό,τι μπορεί να λείπει σε
+    // legacy/corrupt drafts (boot TypeError prevention).
+    if (!Array.isArray(d.instalments)) d.instalments = [];
+    if (typeof d.currency !== "string") d.currency = "EUR";
+    if (typeof d.gDisc !== "number") d.gDisc = 0;
+    if (typeof d.payment !== "string") d.payment = "";
+    if (typeof d.notes !== "string") d.notes = "";
     cur = d;
     curIsDraft = true;
     loadOfferIntoEditor();
@@ -980,14 +1006,17 @@
   function updateInstalmentSum() {
     var el = $("inst-sum");
     if (!el || !cur) return;
+    // Q-3: το shelter draft παρακάμπτει το migrate() — το
+    // instalments μπορεί να λείπει σε legacy/corrupt drafts.
+    var inst = Array.isArray(cur.instalments) ? cur.instalments : [];
     var sum = 0;
-    (cur.instalments || []).forEach(function (i) { sum += (i.amount || 0); });
+    inst.forEach(function (i) { sum += (i.amount || 0); });
     var tt = calcTotals(cur);
-    var ok = Math.abs(round2(sum) - tt.total) < 0.005 && cur.instalments.length > 0;
+    var ok = Math.abs(round2(sum) - tt.total) < 0.005 && inst.length > 0;
     el.textContent = t("inst.sum") + " " + money(round2(sum), cur.currency) +
-      (cur.instalments.length === 0 ? "" :
+      (inst.length === 0 ? "" :
         (ok ? " — " + t("inst.match") : " — " + t("inst.mismatch")));
-    el.className = "inst-sum" + (cur.instalments.length && !ok ? " mismatch" : "");
+    el.className = "inst-sum" + (inst.length && !ok ? " mismatch" : "");
   }
 
   // ---------- 7. Clients (dropdown + dialog με edit mode) ----------
@@ -1512,10 +1541,13 @@
 
     // Instalments
     if (cur.instalments && cur.instalments.length) {
+      // Q-10: pagination — κανένα block δεν τρέχει εκτός σελίδας
+      if (y > 250) { doc.addPage(); y = M; }
       doc.setFont(undefined, "bold");
       doc.text(t("inst.title"), M, y); y += 5;
       doc.setFont(undefined, "normal");
       cur.instalments.forEach(function (ins) {
+        if (y > 280) { doc.addPage(); y = M; }
         doc.text(fmtDate(ins.date) + "  —  " + money(ins.amount, cur.currency), M, y);
         y += 5;
       });
@@ -1524,16 +1556,30 @@
 
     // Payment + notes
     if (cur.payment) {
+      if (y > 250) { doc.addPage(); y = M; }
       doc.setFont(undefined, "bold");
       doc.text(t("payment.title"), M, y); y += 5;
       doc.setFont(undefined, "normal");
-      doc.text(doc.splitTextToSize(cur.payment, W - 2 * M), M, y); y += 8;
+      // Q-10: γραμμή-γραμμή με page breaks — το array-print του
+      // splitTextToSize τρέχει εκτός σελίδας σε μεγάλα κείμενα
+      var plines = doc.splitTextToSize(cur.payment, W - 2 * M);
+      for (var pi = 0; pi < plines.length; pi++) {
+        if (y > 282) { doc.addPage(); y = M; }
+        doc.text(plines[pi], M, y); y += 5;
+      }
+      y += 3;
     }
     if (cur.notes) {
+      if (y > 250) { doc.addPage(); y = M; }
       doc.setFont(undefined, "bold");
       doc.text(t("offer.notes"), M, y); y += 5;
       doc.setFont(undefined, "normal");
-      doc.text(doc.splitTextToSize(cur.notes, W - 2 * M), M, y);
+      // Q-10: ίδιο pattern με το payment block
+      var nlines = doc.splitTextToSize(cur.notes, W - 2 * M);
+      for (var ni = 0; ni < nlines.length; ni++) {
+        if (y > 282) { doc.addPage(); y = M; }
+        doc.text(nlines[ni], M, y); y += 5;
+      }
     }
 
     doc.setFontSize(8);
@@ -1678,6 +1724,7 @@
   function sliceGet() {
     var out = JSON.parse(JSON.stringify(state));
     delete out.activeQuoteId;   // device-local — δεν ταξιδεύει ποτέ στο cloud
+    out.deleted = pruneDeletedMap(out.deleted, out);
     return out;
   }
 
@@ -1693,7 +1740,6 @@
         data.activeQuoteId = data.quotes.length > 0 ? data.quotes[0].id : null;
       }
       state = data;
-      pruneTombstones();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } finally {
       window.__orosSyncApi._suppress = false;
@@ -1706,7 +1752,7 @@
         loadOfferIntoEditor();
       } else {
         newDraft();
-        showToast(t("toast.sync_replaced"));
+        notifyTransient(t("toast.sync_replaced"));
       }
     }
     scheduleRender();
@@ -1918,11 +1964,31 @@
     document.addEventListener("keydown", function (e) {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
           (e.key === "n" || e.key === "N")) {
+        // Q-9: yield σε editable targets και ανοιχτά modals —
+        // δεν hijack την πληκτρολόγηση (macOS dead keys κ.λπ.).
+        var tgt = e.target;
+        var editable = tgt && (tgt.tagName === "INPUT" ||
+          tgt.tagName === "TEXTAREA" || tgt.tagName === "SELECT" ||
+          tgt.isContentEditable);
+        if (editable) return;
+        if (document.querySelector("dialog[open]")) return;
         e.preventDefault();
         newDraft();
         switchTab("create");
       }
     });
+
+    // Q-4: Contract B — shell-owned combos (Ctrl+Alt+Shift+*)
+    // προωθονται στο shell σε capture phase (parity με todo/
+    // kanban/writer/notes/prompter). Χωρίς αυτό, τα global
+    // shortcuts πεθαίνουν μέσα από τα quote inputs.
+    document.addEventListener("keydown", function (e) {
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+      var p = window.parent;
+      if (!(p && p.orosShortcuts &&
+            typeof p.orosShortcuts.handle === "function")) return;
+      if (p.orosShortcuts.handle(e)) e.stopPropagation();
+    }, true);
   }
 
   function boot() {

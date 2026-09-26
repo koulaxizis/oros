@@ -1088,6 +1088,350 @@ Export: pageText footer funnel (.txt + zip entries), sanitized filenames, zero-d
 3. NT series complete; Notes joins the Five-Axis Verified roster (Files, Habits, Kanban, Mood, Notes)
 4. Next audit queue candidate: Calendar (already fully read — fast audit) or Weather
 
+---
+
+Prompter — Five-Axis Verified (Bible Entry)
+Prompter (orOS Suite) — Five-Axis Verified
+App ID: prompter · File: js/prompter.js · Storage key: oros-prompter-data (ver 1) · Sync slice: registered via window.orosSync · Status: AUDITED & PATCHED (Five-Axes Doctrine compliant)
+
+Purpose: Writing prompt generator featuring 100 bilingual (EN/EL) writing prompts and techniques, with favorite/completed tracking, custom prompt CRUD, tag-based search, statistics, and factory reset. Externally loaded JSON prompts (prompts-en.json / prompts-el.json), enabling independent enrichment without code changes.
+
+Data Model:
+
+{ "ver": 1, "sm": 1730000000000, "favorites": { "<promptId>": "<mtime epoch ms>" }, "completed": { "<promptId>": "<mtime epoch ms>" }, "customs": [ { "id": "...", "mtag": "...", "mod": "...", "mtime": 1730000000000, "body": { "title": {}, "task": {}, "technique": {}, "prompt": {} } } ], "deleted": { "<promptId>": "<mtime epoch ms>" } }
+
+favorites / completed / deleted are mtime-keyed maps (tombstone-aware, mirrors habits/notes pattern). deleted tombstones are payload-pruned (see Determinism Rule). The legacy om (order-modifier) field was removed in this audit (PR-7): no readers existed anywhere; old payloads carrying it are harmlessly ignored.
+
+Architectural Decisions (Audit-Certified):
+
+Unified Notifications (Wave 6 doctrine) — All informational toasts (copy/save/delete/reset) route through notifyTransient() → parent.orosNotifs.transient({ ns: "prompter" }). Form-validation errors (editor.errEmpty) remain local per doctrine (answer to user's own keystroke, not history-worthy). Sync feedback is exclusively the taskbar sync dot — the per-sync sync.pull toast was retired (PR-1).
+Deterministic Tombstone Pruning (HB-3 / MD-4 / NT-2 pattern) — sliceGet() derives the prune cutoff from maxTs across all datasets (favorites, completed, customs.mtime, deleted), never from wall clock (Date.now()). Same data ⇒ identical payload on every device, at any time. Payload-only pruning: local state retains every tombstone; TOMB_PRUNE_DAYS = 30.
+Contract B (global shortcuts) — Canonical capture-phase keydown listener forwards Ctrl+Alt+Shift+* to parent.orosShortcuts.handle(e). Shell handlers remain the single source of truth; the physical-key (e.code) match and editable-target yield logic live exclusively in shell.js.
+Defensive sliceSet — Partial/crafted payloads can never null-ify completed/customs/deleted; guards mirror the load() contract (PR-4). normalizeFavs() continues to sanitize favorites.
+Language detection — reads localStorage["oros-lang"] directly, which shell.js (initPrefs) persists unconditionally at boot and on every toggle — canonical orOS language key. Verified against shell v0.36.12: NO change needed (PR-5 closed as already-compliant).
+Tag autocomplete — Uniform 2-character minimum across Browse and Custom Editor (PR-6), matching the 2-char threshold used across the suite.
+Offline-first — External JSON prompts are cached by the SW; all state in localStorage; zero network dependencies.
+Merge Semantics: Standard per-map last-writer-wins by mtime, mirroring habits.js: favorites/completed/deleted merged key-wise with max ts; customs merged per-id by mtime; sm = max(sm_a, sm_b).
+
+Pre-Sync Checklist (MANDATORY, per audit):
+
+Calendar integration: N/A — no dated entities (by design; deferred to Writer hand-off) Unified notification system: ✅ transient via ns:"prompter"; KNOWN_APPS updated in notifications.js Dropbox sync: ✅ slice registered, deterministic payload Snapshot capability: ✅ covered by full-DB snapshots (single localStorage key) Manual/auto export: ✅ covered by orOS full-database export/import Offline-first: ✅ zero network deps beyond SW-cached JSON Mobile-first: ✅ responsive, no hover-dependent UI
+
+Audit Trail:
+
+PR-1: Notification migration (5 toast sites + KNOWN_APPS registration) PR-2: Deterministic tombstone pruning in sliceGet() PR-3: Contract B shortcut forwarding in wire() PR-4: sliceSet defensive guards + sync.pull toast retirement PR-5: oros-lang key verified canonical against shell.js — no change PR-6: Autocomplete threshold harmonization (2 chars) PR-7: Dead om field removal (newState / merge / factoryReset)
+
+Changelog Entry (repo-ready)
+[prompter] Five-Axis Audit — Notifications, Sync Determinism, Contract B
+
+Scope: Full functional audit of the Prompter app (prompter.js, notifications.js) under the Five-Axes Doctrine. All patches verified against actual source before delivery.
+
+Fixed:
+
+Unified notifications: migrated all informational toasts (copy prompt, save custom, delete custom, factory reset) to the unified system via a new notifyTransient() helper (fallback: local showToast for stale bundles). Added "prompter" to KNOWN_APPS in notifications.js so per-app notification toggles appear in Settings → Notifications. Form validation errors stay local per doctrine. (PR-1)
+
+Sync determinism: tombstones in the "deleted" map are now pruned in sliceGet() with a cutoff derived from the dataset's newest timestamp (maxTs across favorites/completed/customs/deleted) minus 30 days — never from wall clock. Identical data now produces identical sync payloads across devices. Local state keeps all tombstones (payload-only pruning). (PR-2)
+
+Global shortcuts: added the canonical Contract B capture-phase keydown listener in wire(), forwarding Ctrl+Alt+Shift+* combos to the shell (window.parent.orosShortcuts.handle). Shell shortcuts previously died while focus was inside the prompter's inputs. (PR-3)
+
+Defensive guards: sliceSet() now validates completed/customs/deleted shapes before assignment (mirroring the load() contract), preventing TypeErrors from partial or crafted payloads. (PR-4)
+
+Tag autocomplete: unified to a 2-character minimum across Browse and the Custom Editor (was 3 in Browse). (PR-6)
+
+Removed the dead om (order-modifier) field from newState(), the merge engine, and factoryReset(). No readers existed; backward compatible — old payloads carrying om are ignored. (PR-7)
+
+Removed the per-sync sync.pull toast — sync feedback is exclusively the taskbar sync dot (suite-wide doctrine). (PR-4, rides along)
+
+Verified (no change needed):
+
+Language detection: prompter.js reads localStorage["oros-lang"], which shell.js persists unconditionally at boot (initPrefs) — confirmed canonical against shell v0.36.12. (PR-5, closed)
+
+Smoke tests:
+
+Copy prompt → system toast (consistent with taskbar bell styling). Save/delete custom prompt, factory reset → transient notifications. Ctrl+Alt+Shift+P/F/S/E fire correctly while focus is inside the search input. Tag suggestions appear from the 2nd typed character in Browse. Manual sync produces no toast; sync dot reflects state.
+
+---
+
+Quote (orOS Suite) — Five-Axis Verified
+App ID: quote · Files: index.html / quote.css / quote.js · Storage key: oros-quote-data (ver 1) · Draft key: oros-quote-draft (device-local, NEVER synced) · Status: AUDITED & PATCHED (Five-Axes Doctrine compliant)
+
+Purpose: Client-side quote/offer generator (clean-room rewrite of the beta "Offer" app). Quote CRUD with line items (qty, price, disc %, VAT % per item), global discount, instalment generation, client directory, template library, synced payment presets (bank / PayPal / IRIS / cash), PDF export via vendored jsPDF with NotoSans Greek font (print iframe fallback), and mailto send.
+
+Data Model:
+
+state = { ver: 1, om: <list order mtime>, deleted: { id: ts }, activeQuoteId: <DEVICE-LOCAL>, quotes: [offer], clients: [client], templates: [template], payMethods: [preset] }
+
+Offer: { id, num ("OFF-YYYY-NNN"), clientId, status (draft/sent/accepted/rejected/expired), date, dueDate, currency (EUR/USD only — matches the select in HTML), items: [{ id, code, desc, qty, price, disc, vat }], gDisc, payment, notes, instalments: [{ id, date, amount }], mtime, pos } Client: { id, name, email, phone, address, taxId, mtime, pos } Template: offer-shaped + name. payMethods: deterministic ids "pm-<method>", seeded per language.
+
+Architectural Decisions (Audit-Certified):
+
+Computed totals are NEVER stored — calcTotals()/itemNet() are pure functions over stored inputs (qty, price, disc, vat). No sync merge can ever create an arithmetic contradiction.
+Numbering is recovery-based: nextNumber() scans state for max OFF-YYYY-NNN of the current year. No synced counter.
+Deterministic tombstone pruning (Q-1, HB-3/MD-4/NT-2 pattern): ONE tombstone map for ALL entity types. The prune cutoff derives from datasetMaxTs() across quotes/clients/templates/payMethods, never from wall clock. Pruning happens ONLY at the sliceGet() payload boundary; local state retains every tombstone (a lagging device can never resurrect a deleted entity). The merge engine (mergeQuoteStates) is pure: same inputs, same output, every device.
+Draft shelter (Option A): unsaved drafts live in oros-quote-draft (separate key, excluded from sync). Debounced 800ms writes plus a pagehide flush (Q-2). Restored at boot BEFORE activeQuoteId — unsaved work outranks last-viewed. Cleared on save/duplicate/template/new.
+Shelter restoration bypasses migrate(), so restoreDraftShelter() carries minimal shape guards (instalments/currency/gDisc/payment/notes) and updateInstalmentSum() guards its instalments access (Q-3) — corrupt/legacy drafts can never crash boot.
+migrate() doubles as the defensive sliceSet filter: every incoming payload (cloud or local) is fully normalized before assignment.
+Unified notifications: all informational toasts route through notifyTransient() → orosNotifs.transient({ ns: "quote" }) (Q-5 closed the last gap: sync_replaced). "quote" already present in notifications.js KNOWN_APPS.
+Contract B (Q-4): capture-phase keydown forwards Ctrl+Alt+Shift+* to parent.orosShortcuts.handle. Local Alt+N yields to editable targets and open dialogs (Q-9).
+activeQuoteId persists via suppressed quiet-write (device-local, never travels; sliceGet strips it, sliceSet reseeds/repairs it).
+Deep-link (Wave 13): __orosQuoteOpen(id) for warm hand-offs; sessionStorage "oros-quote-open" for cold boots.
+PDF: vendored jsPDF + lazily fetched NotoSans-Regular (base64, retry allowed). Greek detection scans the ENTIRE content (not just interface language) — EN interface with a Greek client falls back to the print path instead of producing garbled glyphs. All trailing blocks (instalments/payment/notes) paginate line-by-line (Q-10).
+Merge Semantics: per-entity last-writer-wins by mtime across four unions (quotes/clients/templates/payMethods) filtered by the shared tombstone map; ties broken by JSON serialization comparison; ordering via pickRef() (om mtime, then id-sequence comparison), stable fallback by mtime then id.
+
+Pre-Sync Checklist (MANDATORY, per audit):
+
+Calendar integration: PENDING — due dates + accepted status are natural Calendar feed candidates (roadmapped, not yet wired). Unified notification system: present via ns:"quote" (already in KNOWN_APPS). Dropbox sync: slice registered, deterministic payload, pure merge. Snapshot capability: covered by full-DB snapshots. Manual/auto export: covered by orOS full-database export/import. Offline-first: zero network deps beyond SW-cached vendored font/jsPDF. Mobile-first: responsive grids (items collapse to card layout), 16px inputs on mobile, safe-area insets.
+
+Audit Trail:
+
+Q-1a..e: deterministic payload-only tombstone pruning (replaced wall-clock pruneTombstones in load/merge/sliceSet; pruning now at sliceGet only) Q-2: pagehide flush for the draft shelter debounce Q-3a/b: shape guards for shelter-restored drafts (boot TypeError prevention) Q-4: Contract B capture-phase shortcut forwarding Q-5: sync_replaced toast migrated to unified notifications Q-9: Alt+N editable-target and open-dialog guards Q-10α/β/γ: PDF pagination for instalments/payment/notes blocks Q-11: comment typo in openQuote() Closed as already-correct via HTML inspection: currency whitelist (EUR/USD), readonly q-number, method="dialog" client form.
+
+Changelog Entry (paste στο CHANGELOG.md)
+[quote] Five-Axis Audit — deterministic sync, draft safety, Contract B
+
+Scope: Full functional audit of the Quote app (quote.js, quote.html, quote.css) under the Five-Axes Doctrine. All patches verified against actual source before delivery; all confirmed applied.
+
+Fixed:
+
+Sync determinism: replaced wall-clock tombstone pruning (Date.now()) with a dataset-derived cutoff. pruneTombstones() was removed entirely; a new pruneDeletedMap(deleted, data) computes the cutoff from the newest mtime across quotes/clients/templates/payMethods and runs ONLY inside sliceGet(), so identical data yields identical sync payloads on every device at any time. Local state keeps every tombstone — a lagging device can never resurrect a deleted entity. mergeQuoteStates() is now fully pure. (Q-1)
+
+Draft shelter durability: added a pagehide flush (writeShelterNow) so the 800ms debounce can never drop the final keystroke burst when the tab closes or the PWA backgrounds. (Q-2)
+
+Boot safety: the shelter draft bypasses migrate(), so restoreDraftShelter() now backfills missing shape fields (instalments/currency/gDisc/payment/notes) and updateInstalmentSum() guards its instalments access — legacy or partially-corrupt drafts can no longer crash boot with a TypeError. (Q-3)
+
+Global shortcuts: added the canonical Contract B capture-phase keydown listener forwarding Ctrl+Alt+Shift+* to window.parent.orosShortcuts.handle. Shell shortcuts previously died while focus was inside quote inputs. (Q-4)
+
+Notifications: migrated the last local toast (sync_replaced — "this quote was deleted on another device") to notifyTransient(). All informational toasts now go through the unified system with ns "quote". (Q-5)
+
+Local shortcut guard: Alt+N (new quote) now yields to editable targets and open dialogs instead of hijacking typing (macOS dead keys, etc.). (Q-9)
+
+PDF pagination: the instalments, payment and notes blocks now render line-by-line with page breaks instead of running off the first page; previously only the items loop paginated. (Q-10)
+
+Comment typo in openQuote() corrected ("ΔΕΝ κάνουμε dirty/push"). (Q-11)
+
+Verified (no change needed):
+
+Currency handling: migrate() coerces to EUR/USD — matches the two-option select in the HTML. Number input is readonly and only mutated via the Regenerate button. Client form uses method="dialog", so the fingerprint-unchanged early return closes the dialog natively.
+
+Roadmap (under consideration):
+
+Calendar integration: due dates and status changes (sent/accepted) are natural Calendar feed candidates following the Contacts/Cycle pattern.
+
+Smoke tests:
+
+Type in an unsaved draft, close the tab within 800ms of the last keystroke, reload — draft restored complete.
+Ctrl+Alt+Shift+P/F/S/E fire while focus is inside the payment textarea.
+Alt+N outside inputs opens a new draft; inside an input or with a dialog open it does nothing.
+Delete a quote on device A while it is open on device B, sync — B shows the transient "deleted on another device" notification.
+Manual sync produces no toast; the taskbar sync dot is the only feedback.
+PDF export with many instalments and a long notes field spans pages cleanly.
+Two devices computing a sync payload from identical data produce byte-identical JSON.
+
+---
+
+1) Storage — Five-Axis Verified (Bible Entry)
+Storage (orOS Suite) — Five-Axis Verified
+App ID: storage · Files: index.html / storage.css / storage.js · Storage key: oros-storage-data (ver 1) · Rescue key: oros-storage-data-broken (device-local, NEVER synced) · Status: AUDITED & PATCHED (Five-Axes Doctrine compliant)
+
+Purpose: Hierarchical home inventory (Space → Room → Furniture → Position → Items) with breadcrumb drill-down, desktop split-tree view, quantity controls, cascade tombstone deletes, and deterministic sync merge (strict mergeRow() normalizer, no volatile defaults).
+
+Data Model:
+
+flat entity array { ver: 1, ents: [entity...] } entity = { id, type: space|room|furniture|position|item, name, bi: {en, el} (until rename), parentId, pos, mtime, del: bool } item extends: qty (>= 1), note (<= 300 chars) bilingual seeds resolve per active language until first explicit rename; rename kills the bi pair.
+
+Architectural Decisions (Audit-Certified):
+
+Strict mergeRow() normalizer — Merge-side validator (unlike entDefaults) introduces NO volatile values (no uid(), no Date.now()). Malformed rows DROP deterministically — same data yields identical merged output on every device at any time. Tie-breaks: bigger mtime → tombstone wins → bigger qty → lexicographic id.
+Deterministic tombstone pruning (HB-3 / MD-4 / NT-2 pattern — Prompter PR-2 / Quote Q-1 parity) — The sliceGet() payload cutoff derives from the dataset's newest mtime (maxTs across ALL entities), never from wall clock. Pruning is payload-only: local db retains every tombstone so a lagging device can never resurrect a deleted entity. TOMB_PRUNE_DAYS = 30.
+Rescue backup (BROKEN_KEY) — If localStorage parsing fails or normalize() rejects the shape, the raw string is backed up verbatim to oros-storage-data-broken BEFORE re-seeding. Destructive data loss eliminated; BROKEN_KEY is excluded from sync slices.
+Cascade tombstones — Deleting a parent recursively tombstoned all descendants; tombstones propagate through merge (delete made on ANY device wins).
+Nav-target sanitizer — Both sliceSet() and confirmDelete() call sanitizeNav(): if the viewed entity was deleted remotely, climb to the nearest surviving ancestor; never render a dead reference.
+Unified notifications (Wave 6 doctrine) — All informational toasts (save/delete) route through notifyTransient() → parent.orosNotifs.transient({ ns: "storage" }). Validation errors (name required) stay local in errBox (answer to user keystroke, not history-worthy). Per-sync toast (sync.merged) removed — sync feedback = taskbar dot only.
+Contract B (Capture-phase forwarding) — Ctrl+Alt+Shift+* combos forwarded to window.parent.orosShortcuts.handle(e) with stopPropagation when handled (parity with todo/kanban/writer/notes/prompter/quote). Alt+yield pattern: local Escape → goUp() yields to editable targets (INPUT/TEXTAREA/SELECT/isContentEditable) and open dialogs.
+Palette inheritance — runtime copy of parent shell's data-theme + palette variables via setProperty (not cssText +=); MutationObserver watches data-skin/data-theme for live repaints.
+qty floor enforcement — Math.max(1, Math.floor()) in entDefaults, mergeRow, dialog submit, and setQty. Note clamp (300 chars) consistent across all mutation paths.
+Desktop split view (≥1024px) — Grid layout built on .view (mobile drill-down ↔ desktop split via debounced resize). Inline SVG icons (ForkAwesome exiled).
+Merge Semantics: union by id across quotes/clients/templates/payMethods filtered by shared tombstone map; ties broken by mtime then del flag then qty then id (deterministic).
+
+Pre-Sync Checklist (MANDATORY, per audit):
+
+Calendar integration: N/A — no dated entities (deferred to future Wave). Unified notification system: ✅ transient via ns:"storage"; 'storage' added to KNOWN_APPS in notifications.js. Dropbox sync: ✅ slice registered, deterministic merge + payload-only pruning. Snapshot capability: ✅ covered by full-DB snapshots. Manual/auto export: ✅ covered by orOS full-database export/import. Offline-first: ✅ zero network deps; standalone :root fallback palette if shell absent. Mobile-first: ✅ responsive (card layout collapses qty controls), safe-area insets respected.
+
+Audit Trail:
+
+ST-1a/b: constants + deterministic payload-only tombstone pruning (replaced wall-clock Date.now() cutoff) ST-2a/b/c: unified notifications (notifyTransient helper + 2 toast migrations + toast.merged removal + KNOWN_APPS registration) ST-4: Contract B capture-phase listener with stopPropagation ST-6: Escape editable-target + dialog-yield guard KN-1: notifications.js KNOWN_APPS updated Closed as already-correct: rescue backup (BROKEN_KEY), cascade tombstones, strict mergeRow normalizer, sanitizeNav(), qty floor/note clamp.
+
+2) Changelog Entry (repo-ready)
+[storage] Five-Axis Audit — deterministic sync, unified notifications, Contract B
+
+Scope: Full functional audit of the Storage app (storage.js, storage.html, storage.css) under the Five-Axes Doctrine. All patches verified against actual source before delivery.
+
+Fixed:
+
+Sync determinism: replaced wall-clock tombstone pruning (Date.now()) with a dataset-derived cutoff. The new sliceGet() computes the prune cutoff from the newest mtime across ALL entities (maxTs), never from wall clock — identical data now produces identical sync payloads on every device at any time. Pruning is payload-only: the local database retains every tombstone, so a lagging device can never resurrect a deleted entity. TOMB_PRUNE_DAYS = 30. (ST-1)
+
+Unified notifications: migrated the two informational toasts (save entity, delete entity) from local toast() to notifyTransient() → parent.orosNotifs.transient({ ns: "storage" }). The per-sync toast (toast.merged) was removed entirely — sync feedback is now exclusively the taskbar sync dot (doctrine: info.merged means "merge engine ran", not "data changed"). 'storage' added to KNOWN_APPS in notifications.js so the toggle appears in Settings → Notifications. Validation error (name required) stays local in the dialog's errBox. (ST-2)
+
+Global shortcuts: added the canonical Contract B capture-phase keydown listener forwarding Ctrl+Alt+Shift+* to window.parent.orosShortcuts.handle(e). When the shell handles the combo, stopPropagation prevents any app-level keydown from double-reacting. Local Escape → goUp() now yields to editable targets (INPUT/TEXTAREA/SELECT/isContentEditable) and open dialogs (Esc cancels dialogs natively). (ST-4 + ST-6)
+
+Verified (already-correct, no change needed):
+
+Rescue backup: corrupted/uncrackable localStorage data is verbatim backed up to oros-storage-data-broken BEFORE re-seeding — destructive data loss eliminated; rescue key excluded from sync slices. Strict merge normalizer: mergeRow() introduces no volatile values (uid/Date.now) — malformed rows drop deterministically; same inputs, same output, every device. Cascade tombstones: parent delete tombstoned descendants; tombstones propagate through merge. Nav sanitizer: both sliceSet and confirmDelete call sanitizeNav() to prevent dead-reference empty states. qty floor & note clamp: enforced consistently across all mutation paths (entDefaults, mergeRow, dialog, setQty).
+
+Smoke tests:
+
+Save/rename entity → unified system toast (taskbar bell styling), NOT local toast.
+Delete entity → transient notification, cascade tombstones descendants, nav climbs to surviving ancestor.
+Sync pull → NO toast; sync dot reflects state; if viewed entity was deleted remote, nav sanitizes before render.
+Ctrl+Alt+Shift+P/F/S/E fire while focus is inside dialog inputs.
+Escape inside input → nothing (yield); Esc outside inputs (no open dialog) → goUp().
+Two devices with identical data → byte-identical sync payload (cutoff from maxTs, not from push time).
+Settings → Notifications → toggle "storage" now appears.
+
+---
+
+Time app — Five-Axis Audit Complete (T-1..T-4)
+
+Verified cross-file contracts with fresh sources: shell.js deep-link bridge (__orosOpenTime → iframe __orosTimeOpen, staging key oros-time-open, one-shot take __orosTimeTakePending) — the suspected __orosOpenTime/__orosTimeOpen naming conflict is INTENTIONAL two-role naming (shell bridge vs iframe receiver), NOT a bug. No rename. Finding #7 CLOSED with zero patches.
+notifications.js: KNOWN_APPS factory entry "time" present; shell alarmNotify emits ns:"time" with deepLink:"time:alarms" — per-app toggle covers a real emitter. Doctrine-compliant.
+T-1 (Contract B): added canonical capture-phase keydown forward in time.js (section 12b) — shell combos (Ctrl+Alt+Shift+letters) now work with focus inside Time inputs. Parity with todo/kanban/notes/writer.
+T-2 (Alarm Add UX): invalid HH:MM or engine rejection now shakes the time input + focuses it (shared shakeInput helper, same gesture as timer T6) instead of a silent return; on success BOTH al-time and al-label clear (al-daily intentionally kept). Patches T-2a/b/c.
+T-3 (Timer overlay): Escape now dismisses the fullscreen countdown overlay for the current run (keyboard parity with click; timer keeps running).
+T-4 (Pomodoro state loss): new device-local runtime record oros-time-pmrun (section 10b). pmRunSave hooks: pm-start, pmStop, pmWatchdog. Boot reconciliation (pmRunRestore): leg fired while app closed → pmDone++ (synced, work legs only) + phase advance; leg still running + engine alarm alive → countdown resumes against the same alarm. Record is never part of the sync blob (section 14 doctrine intact), swept by factory reset.
+Astro reconciliation (time.js ↔ astro.js): tombstone contract verified identical across load/save/merge — no changes needed.
+Zone tombstones: bounded by fixed ZONE_LIST, no pruning needed — documented as correct.
+Alarms remain shell-engine-owned (localStorage oros-alarms, alarmSanitize catch-up, markDirty on fire/add/remove). In-page firing path is standalone-only fallback by design.
+No new files, no manifest/sw.js changes required; version bump via bump-version.yml as usual.
+Standing rules reaffirmed: deep-link naming is a two-role contract (shell __orosOpen<App> bridge ↔ iframe __oros<App>Open receiver) — never "fix" the asymmetry; app runtime state stays out of sync blobs (device-local keys for recovery records).
+
+BIBLE ENTRY — TIME (Five-Axis Verified)
+Architecture. Shell owns alarm firing (engine: alarmTick in shell.js §9e, storage oros-alarms, sanitize + daily catch-up by whole days, markDirty on add/remove/fire). time.js renders + registers via window.parent.orosAlarms; standalone fallback replicates the contract in-page with toasts + snooze.
+
+Sync slice ("time"). Entities: zones {tz, mtime} + bounded tombstones zonesDeleted (delete wins ties). Scalars (style 0–4, sound, pmWork/pmBreak, convOn) LWW via smtime family; pmDone = Math.max. Astro coordinate: mtime LWW + astroTomb deletion-wins — reconciled identically in loadState, saveState, mergeTime. Runtime (timer/stopwatch/pomodoro leg, alarm registrations) is OUT of the blob; the pomodoro leg's recovery record lives in device-local oros-time-pmrun (T-4), consumed at boot.
+
+Deep links. Chain: notifications.js DL_BRIDGES time:<pane> → shell __orosOpenTime(pane) → iframe __orosTimeOpen(pane); closed-app path stages oros-time-open in sessionStorage → one-shot take at boot. Pane map: alarms/alarm/timer/stopwatch/pomodoro → tab click.
+
+Notifications. ns:"time" = alarms; toggle in Settings → Notifications (KNOWN_APPS factory). Shell emit is the only orOS-mode path; in-app toast = standalone fallback only.
+
+Contract B. Capture-phase forward present (T-1, §12b) — the editable-target yield (Χ5) stays in the shell handler.
+
+---
+
+To-Do — Five-Axis Audit (TD-1, TD-2, TD-4, TD-6)
+
+HTML/CSS axis closed: all 39+ DOM ids, radio names (f-rec/l-rec) and JS-painted classes verified present in todo.html/todo.css — zero orphans, zero unstyled selectors. Version pins v0.36.09 consistent across html/css/js; bump via bump-version.yml after patches.
+TD-1 (Undo ordering loss): stampAll now stamps state.om AND per-list list.om in addition to sm/mtimes. Previously an Undo of a list deletion could win content (mtime) but lose ordering (stale om) — the merge reference came from remote and the resurrected list landed at the end of the tab strip. Undo now asserts the FULL snapshot as newest, matching its documented contract.
+TD-2 (Recurrence early-completion): recycleItem anchors on item.due when the due date is still in the future — completing early now yields the NEXT cycle instead of re-issuing the period just completed (e.g. Friday task finished Wednesday now rolls to next Friday, not this one). Daily/monthly rules also stay on their true cadence grid. Overdue/absent-due behavior unchanged (anchor = now). Bonus: weekly-weekday math is now exact for biweekly rules since the anchor lands on the due weekday.
+TD-4 (Quick-add under search/filter): adding a task while a search or label filter is active now clears the session-only view state (searchQuery/activeFilters + UI) so the new task is immediately visible instead of silently hidden — previously indistinguishable from a failed add.
+TD-6 (Filter popover Esc): Escape now dismisses the open label-filter popover (keyboard parity with outside-click), bubble-phase listener; Contract B capture listener unaffected.
+OPEN (#3): sync.js handling of a null mergeTodoStates result (empty-merge fresh-install fallback) not yet verified against live source — pending sync.js review.
+UNDER CONSIDERATION (#5): Calendar feed for tasks with due dates (todo → Calendar, alongside Kanban discussion); unified notifications ns:"todo" for due-today/overdue reminders via the shell engine. Both require shell contracts — recorded, not scheduled.
+Verified clean (no patch needed): Contract B forwarding (canonical reference implementation for the suite), deep-link receiver (__orosTodoOpen + oros-todo-open one-shot staging), symmetric merge engine (structural list merge, tombstone union + prune-inside-merge, JSON tie-breaks), R14 themed confirm, audit #18 label-detach stamping, v0.4b zero-edit dialog fingerprint, audit #20 midnight rollover, v1→3 additive migration.
+BIBLE ENTRY — TO-DO (Five-Axis Verified)
+Architecture. Single-IIFE app + separate deep-link receiver IIFE (depends only on the DOM contract #tabs .tab[data-list-id] click — never touches main IIFE internals). Data: oros-todo-data, DATA_VER 3, additive migration (unknown stamps default 0 = oldest).
+
+Merge engine (reference implementation). mergeTodoStates(local, remote) registered as the 5th arg of registerSlice — deterministic + symmetric: scalars LWW by root sm (symmetric JSON tie-break), entity content LWW by mtime (JSON tie-break), ordering donated by the larger-om side (pickRef with symmetric id-sequence tie-break), lists merge STRUCTURALLY (headers LWW, items independent), tombstones union+max-ts with edit-after-delete resurrection, pruning inside the merge is convergence-safe. Undo = stampAll asserts the WHOLE snapshot newest — INCLUDING om since TD-1. Returns null on empty merge (fresh-install fallback) — sync.js handling under verification (#3).
+
+Deletion model. Soft tombstones state.deleted[id], 30-day lifetime, pruned at load + inside merge + sliceSet. Cascades: list delete tombstones list + all items; clear-completed tombstones; label delete detaches + stamps affected items (audit #18) + tombstone.
+
+Canonical templates owned by this app. Contract B forward (capture, typeof guard, handle(e) return → stopPropagation) — THE reference for all other apps (Time T-1 aligned to it). Deep-link two-role naming + one-shot sessionStorage staging.
+
+Rules for future work. Search/filter = session-only view state, never persisted, cleared on quick-add (TD-4). Dialog close-flush commit on ALL paths with zero-edit fingerprint (v0.4b). applyListCycles self-saves only on real resets.
+
+- CLOSED (#3): sync.js verified — null merge results degrade to documented
+  remote-LWW (both applySlice and registerSlice flush), unreachable in
+  practice due to the delete-cascade fresh-list invariant, and double-
+  guarded by todo's sliceSet empty-lists rejection. No patch. sync.js
+  untouched.
+  
+  ---
+  
+  ## orOS Weather App — Five-Axes Audit Complete
+**Version:** v0.36.09 (patches pending)
+**Status:** ✅ All five axes verified, zero data loss risk
+
+### Summary
+The Weather application is now the second fully-audited orOS app (after To-Do).
+It implements the canonical Contract B pattern for keyboard shortcuts,
+uses a symmetric deterministic merge engine with LWW per-field semantics,
+and follows the cache doctrine (cache/slice stay metric, units are render-only).
+
+### Patches Ready for Deployment
+1. **W1 — Scalar tie-break fix** (merge ping-pong prevention)
+   - Expanded scalar triple `[active, units, shellWx]` for lexicographic tie-break
+   - Ensures symmetric convergence: `merge(A,B) === merge(B,A)` even on sm ties
+   - Prevents infinite push/pull loops when two devices have different units
+
+2. **W2 — Tombstone pruning (30-day lifetime)**
+   - Matches To-Do parity: deleted cities stop travelling after 30 days
+   - Pruning occurs in three places: load(), sliceSet(), merge()
+   - Trade-off: ancient deletions (>30d) may resurrect, re-delete re-buries them
+
+3. **#3 — Shell pref stamping in live bridge**
+   - `__orosWeatherUpdate` now stamps `state.shellWx` when incoming object has `on:true`
+   - Discriminator: shell pushes carry boolean `on`; GPS pushes do not
+   - Fixes boot-time override bug where shell city re-forced itself on user's in-app choice
+
+4. **#5 — Tray mirror guard (optional)**
+   - Added `&& sh.on` check before writing to tray cache
+   - Ensures tray chip being OFF stops all writes (clean state only)
+
+### Verified Clean (No Patch Required)
+- **Deep-link chain:** `weather:open` → DL_BRIDGES → `__orosOpenWeather` bridge → app
+- **Notification namespace:** `weather` registered in KNOWN_APPS
+- **Null merge handling:** No data loss — remote-LWW fallback documented
+- **HTML/CSS cross-check:** 39+ IDs, all present; zero orphans
+- **Offline badge:** `[hidden]` authority guard works correctly
+
+### Architecture Notes
+- **Provider:** Open-Meteo (no API key, no cookies)
+- **Cache:** Device-local (`oros-wx-cache`), NEVER travels in slice
+- **Units:** Render-only conversion (metric ↔ imperial); slice stays metric
+- **Timezone:** City-local `now` derived from `utc_offset_seconds` (response, not device clock)
+- **AQI:** Serial second request (European AQI 0–100+), optional/non-blocking
+- **Undo-delete:** Native toast (5s), resurrects with same id + fresh mtime > tombstone
+
+### Integration Checklist
+- [x] Contract B keyboard shortcut forwarding
+- [x] Unified notifications (transient + inbox for fetch failures)
+- [x] Calendar integration (placeholder label — protected default)
+- [x] Dropbox sync with merge engine
+- [x] Snapshot capability
+- [x] Full manual/auto export
+
+### Next Steps
+Apply patches W1, W2, #3 to `weather.js` and update changelog.
+Proceed to next app audit (Calendar).
+
+---
+
+## Weather App Architecture (v0.36)
+
+### Merge Engine Scalars
+Three scalars travel together: `active`, `units`, `shellWx`. Tie-break uses
+lexicographic JSON of the **full triple** (symmetric: prevents ping-pong on
+equal-sm merges).
+
+### Shell Pref Stamping Rule
+Live bridge (`__orosWeatherUpdate`) must stamp `state.shellWx` **only** when
+incoming object carries `on:true` (shell push). GPS pushes lack this property
+and must NOT stamp — preserving user's in-app location choice across boots.
+
+### Cache Doctrine
+- Cache key: `oros-wx-cache` (device-local, never in slice)
+- Slice key: `oros-weatherapp-data` (travels with units, cities, shellWx)
+- Units are **render-only**: cache/slice always store metric (°C/km/h)
+- Offline badge: true offline OR last fetch failed while online (`netDown` flag)
+
+### Tombstone Lifetime
+Deleted cities carry tombstones for 30 days maximum (prune in load/sliceSet/merge).
+Trade-off: a remote state >30d older may resurrect an ancient deletion;
+the next delete re-buries it. Zero data loss, bounded blast radius.
+
+### Deep-Link Pattern
+`weather:open` → DL_BRIDGES routing → `__orosOpenWeather` bridge → app activation
+(idempotent: if app runs, no-op). Pane-less design: no iframe receiver needed.
+
 ──────────────────────────────
 *Designed by Christos Koulaxizis — koulaxizis.gr*
 *orOS — A static operating system in your browser*

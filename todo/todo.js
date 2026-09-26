@@ -298,9 +298,16 @@
   function stampAll() {
     var nowMs = Date.now();
     state.sm = nowMs;
+    state.om = nowMs;                 // TD1: the restored snapshot must be
+                                      // the ordering REFERENCE too — with a
+                                      // stale root om a newer remote om would
+                                      // donate positions and resurrected
+                                      // entities would land at the END of
+                                      // the tab strip / list.
     (state.labels || []).forEach(function (lb) { lb.mtime = nowMs; });
     (state.lists || []).forEach(function (l) {
       l.mtime = nowMs;
+      l.om = nowMs;                   // TD1: same contract per-list (items)
       (l.items || []).forEach(function (it) { it.mtime = nowMs; });
     });
   }
@@ -652,7 +659,18 @@
   // instead of staying done. Returns true if the item recycled.
   function recycleItem(item) {
     if (!item.recurrence) return false;
-    var anchor = new Date();                                // now
+    // TD2: anchor on the CURRENT due date when it is still ahead —
+    // finishing early must skip to the NEXT cycle instead of
+    // re-issuing the period that was just completed. Past/absent
+    // due dates anchor on now (overdue catch-up unchanged). This
+    // also keeps the weekly-weekday math exact for biweekly rules,
+    // since the anchor now lands on the due weekday.
+    var now = new Date();
+    var anchor = now;
+    if (item.due) {
+      var dIso = isoToDate(item.due);
+      if (!isNaN(dIso.getTime()) && dIso >= now) anchor = dIso;
+    }
     var next = nextOccurrence(anchor, item.recurrence);
     item.due = dateToISO(next);
     item.done = false;
@@ -1002,6 +1020,18 @@
                                    // reference (v0.4 — same contract as drag)
 
     input.value = "";
+    // TD4: adding while a search/filter was active used to HIDE the
+    // new task (it didn't match the view) — felt like a silent
+    // failure. Adding is an explicit "show me this" action: clear
+    // the session-only view state (never synced) so the task is
+    // immediately visible.
+    searchQuery = "";
+    activeFilters = [];
+    var si = $("search");
+    if (si) si.value = "";
+    var sc = $("search-clear");
+    if (sc) sc.hidden = true;
+    updateFilterBtn();
     save(); scheduleRender();
   }
 
@@ -1989,6 +2019,16 @@
       if (!e.target.closest("#filter-slot")) {
         $("filter-pop").hidden = true;
       }
+    });
+    // TD6: keyboard parity — Esc dismisses the open label filter
+    // popover (same gesture as outside-click). Bubble phase: the
+    // Contract B capture listener only intercepts Ctrl+Alt+Shift
+    // combos and is unaffected.
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if ($("filter-pop").hidden) return;
+      $("filter-pop").hidden = true;
+      e.stopPropagation();
     });
 
     // --- Item dialog: labels ---

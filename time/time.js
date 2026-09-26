@@ -644,6 +644,19 @@
   // #5 (24-hour): input[type=time] VALUE is always "HH:MM" 24h per
   // HTML spec; rendering below uses pad(getHours()) — never AM/PM.
   // Validation below additionally rejects anything non-24h-shaped.
+  // T2: shared no-feedback fix — an invalid input shakes + focuses,
+  // never a silent return (same gesture as the timer's T6 shake).
+  function shakeInput(ids) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      var n = 0;
+      var iv = setInterval(function () {
+        el.style.transform = (n % 2 === 0) ? "translateX(3px)" : "translateX(-3px)";
+        if (++n > 5) { clearInterval(iv); el.style.transform = ""; }
+      }, 70);
+    });
+    $(ids[0]).focus();
+  }
   function fmtAt(at) {
     var d = new Date(at);
     return pad(d.getHours()) + ":" + pad(d.getMinutes());
@@ -701,8 +714,9 @@
   }
   $("al-add").addEventListener("click", function () {
     var v = $("al-time").value;
-    // Strict 24h "HH:MM" — reject AM/PM shapes outright (#5)
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) return;
+    // Strict 24h "HH:MM" — reject AM/PM shapes outright (#5).
+    // T2: no more silent return — the invalid time input shakes.
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) { shakeInput(["al-time"]); return; }
     var parts = v.split(":");
     var d = new Date();
     d.setHours(+parts[0], +parts[1], 0, 0);
@@ -712,7 +726,9 @@
       label: $("al-label").value.trim(),
       repeat: $("al-daily").checked ? "daily" : "once"
     });
-    if (!id) return;
+    if (!id) { shakeInput(["al-time"]); return; }   // T2: engine rejection — visible too
+    // T2: clear BOTH fields on success — no stale residue re-submitted
+    $("al-time").value = "";
     $("al-label").value = "";
     renderAlarms();
   });
@@ -782,6 +798,15 @@
     ovDismissed = true;
     $("tm-overlay").hidden = true;
   });
+  // T3: Escape dismisses the fullscreen countdown the same way —
+  // keyboard parity with the click, the timer keeps running.
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && !$("tm-overlay").hidden) {
+      ovDismissed = true;
+      $("tm-overlay").hidden = true;
+      ev.preventDefault();
+    }
+  });
 
   /* ---------- 9. Stopwatch ---------- */
   var swRun = false, swStart = 0, swBase = 0;
@@ -823,6 +848,7 @@
   function pmStop() {
     pmRunning = false;
     if (pmAlarmId) { alarmsApi.remove(pmAlarmId); pmAlarmId = null; }
+    pmRunSave();      // T4: stopped by hand — clear the runtime record
     pmPaint();
   }
   $("pm-start").addEventListener("click", function () {
@@ -835,6 +861,7 @@
     if (!id) { pmRunning = false; pmPaint(); return; }   // engine rejected — stay idle
     pmRunning = true;
     pmAlarmId = id;
+    pmRunSave();      // T4: the leg must survive an app close
     pmPaint();
   });
   $("pm-reset").addEventListener("click", function () {
@@ -863,8 +890,57 @@
       pmPhase = pmPhase === "work" ? "break" : "work";
       pmRunning = false;
       pmAlarmId = null;
+      pmRunSave();    // T4: leg finished live — clear the runtime record
       pmPaint();
     }
+  }
+
+  /* ---------- 10b. Pomodoro runtime persistence (T4) ---------- */
+  // Runtime is device-local BY DESIGN (the sync blob carries pmDone,
+  // never the live leg — section 14 doctrine holds). The leg record
+  // lives in its own key so a close mid-leg reconciles at boot:
+  // fired while closed → the session counts (pmDone syncs like any
+  // edit); still running → the countdown resumes against the SAME
+  // engine alarm. Swept by the factory reset ("oros-" prefix),
+  // never synced.
+  var PMRUN_KEY = "oros-time-pmrun";
+
+  function pmRunSave() {
+    try {
+      if (!pmRunning) { localStorage.removeItem(PMRUN_KEY); return; }
+      localStorage.setItem(PMRUN_KEY, JSON.stringify({
+        phase: pmPhase, end: pmEnd, alarmId: pmAlarmId
+      }));
+    } catch (e) {}
+  }
+
+  function pmRunRestore() {
+    var rt = null;
+    try { rt = JSON.parse(localStorage.getItem(PMRUN_KEY)); } catch (e) { return; }
+    if (!rt || typeof rt.end !== "number" || !isFinite(rt.end)) return;
+    if (rt.end > Date.now()) {
+      // Leg still running: resume only if the engine alarm survived
+      var alive = rt.alarmId && alarmsApi.list().some(function (a) {
+        return a.id === rt.alarmId;
+      });
+      if (alive) {
+        pmPhase = rt.phase === "break" ? "break" : "work";
+        pmRunning = true;
+        pmEnd = rt.end;
+        pmAlarmId = rt.alarmId;
+        pmPaint();
+      } else {
+        localStorage.removeItem(PMRUN_KEY);   // orphaned record — drop
+      }
+      return;
+    }
+    // Leg FIRED while the app was closed — count it, advance phase
+    if (rt.phase === "work") { state.pmDone++; saveState(); }
+    pmPhase = rt.phase === "work" ? "break" : "work";
+    pmRunning = false;
+    pmAlarmId = null;
+    localStorage.removeItem(PMRUN_KEY);
+    pmPaint();
   }
 
   /* ---------- 11. Faces wiring ---------- */
@@ -922,6 +998,20 @@
     convSync();
   });
 
+  /* ---------- 12b. Contract B: shell shortcut forwarding ---------- */
+  // Ctrl+Alt+Shift+<letter> combos are SHELL-owned (push/pull/
+  // snapshot/export/info/updates/lang/reconnect). Focus inside
+  // this iframe hides keystrokes from the parent document — the
+  // capture-phase forward hands the raw event to the shell's
+  // handler, which decides (the editable-target yield guard Χ5
+  // lives there). Parity with todo/kanban/notes/writer.
+  document.addEventListener("keydown", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+    var p = window.parent;
+    if (!(p && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
+    if (p.orosShortcuts.handle(e)) e.stopPropagation();
+  }, true);
+
   /* ---------- 13. Master tick + boot ---------- */
   function tick() {
     var now = new Date();
@@ -974,6 +1064,7 @@
   $("pm-work").value = state.pmWork;
   $("pm-break").value = state.pmBreak;
   pmPaint();
+  pmRunRestore();   // T4: reconcile a leg that fired/ran while closed
   swPaint();
   timerPaint();
   tick();
