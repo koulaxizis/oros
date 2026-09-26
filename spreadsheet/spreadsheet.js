@@ -1137,9 +1137,12 @@ function inheritPalette() {
   var pd = null;
   try { pd = window.parent && window.parent.document; } catch (e) {}
   if (!pd || !pd.documentElement) return;
-  var rs = document.documentElement.style;
-  rs.setAttribute("data-theme", pd.documentElement.getAttribute("data-theme") || "");
-  rs.setAttribute("data-skin", pd.documentElement.getAttribute("data-skin") || "");
+  var de = document.documentElement;      /* element — for attributes */
+  var rs = de.style;                        /* CSSStyleDeclaration — for props */
+  try {
+    de.setAttribute("data-theme", pd.documentElement.getAttribute("data-theme") || "");
+    de.setAttribute("data-skin", pd.documentElement.getAttribute("data-skin") || "");
+  } catch (e) { /* standalone run — attribute inheritance skipped */ }
   for (var i = 0; i < PAL_VARS.length; i++) {
     var v = pd.documentElement.style.getPropertyValue(PAL_VARS[i]);
     if (v) rs.setProperty(PAL_VARS[i], v);
