@@ -1,7 +1,9 @@
 /* ============================================================
    spreadsheet.js — orOS Spreadsheet / Λογιστικά φύλλα
-   Wave 1 (bare core) — built from scratch per OROS_BIBLE.md
-   Part VII. Designed by Christos Koulaxizis · koulaxizis.gr
+   Wave 3 (formatting + ranges + clipboard + undo/redo +
+           column resize + fixed dependent recalc)
+   — built from scratch per OROS_BIBLE.md Part VII.
+   Designed by Christos Koulaxizis · koulaxizis.gr
    ============================================================ */
 (function(){
 "use strict";
@@ -10,7 +12,9 @@
 
 var SCRIPT_V = "";
 var STORAGE_KEY = "oros-spreadsheet-data";
-var DATA_VER = 1;
+var ACTIVE_KEY = "oros-spreadsheet-active"; /* device-local, NEVER synced */
+var DATA_VER = 2; /* stays 2: f (format) + cw (col widths) are additive,
+                     riding whole-object LWW — no migration needed */
 var ROWS = 100, COLS = 26;
 var LANG = "en";
 
@@ -25,21 +29,35 @@ try {
     .match(/[?&]v=([^&#]+)/);
   SCRIPT_V = m ? m[1] : "";
   document.documentElement.lang = LANG;
-  console.log("spreadsheet.js v" + (SCRIPT_V || "?") + " boot");
+  console.log("spreadsheet.js v" + (SCRIPT_V || "?") + " boot [Wave 3]");
 })();
 
 var STRINGS = {
   en: {
     "title": "Spreadsheet",
     "sheet.default": "Sheet1",
-    "toast.updated": "Updated from sync",
-    "err.corrupt": "Corrupted data rescued — a fresh sheet was created"
+    "sheet.last": "Can't delete the last sheet",
+    "tab.confirm": "Tap ✕ again to delete this sheet",
+    "csv.imported": "CSV imported as a new sheet",
+    "csv.exported": "CSV exported",
+    "err.corrupt": "Corrupted data rescued — a fresh sheet was created",
+    "undo.empty": "Nothing to undo",
+    "redo.empty": "Nothing to redo",
+    "clip.empty": "Clipboard is empty",
+    "fmt.cleared": "Formatting cleared"
   },
   el: {
     "title": "Λογιστικά φύλλα",
     "sheet.default": "Φύλλο1",
-    "toast.updated": "Ενημερώθηκε από συγχρονισμό",
-    "err.corrupt": "Τα δεδομένα ήταν κατεστραμμένα — δημιουργήθηκε νέο φύλλο"
+    "sheet.last": "Δεν μπορεί να διαγραφεί το τελευταίο φύλλο",
+    "tab.confirm": "Πάτησε ξανά ✕ για διαγραφή του φύλλου",
+    "csv.imported": "Το CSV εισήχθη ως νέο φύλλο",
+    "csv.exported": "Το CSV εξήχθη",
+    "err.corrupt": "Τα δεδομένα ήταν κατεστραμμένα — δημιουργήθηκε νέο φύλλο",
+    "undo.empty": "Τίποτα προς αναίρεση",
+    "redo.empty": "Τίποτα προς επανάληψη",
+    "clip.empty": "Το πρόχειρο είναι κενό",
+    "fmt.cleared": "Η μορφοποίηση καθαρίστηκε"
   }
 };
 
@@ -51,16 +69,13 @@ function t(k) {
 
 function $(id) { return document.getElementById(id); }
 
-function esc(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
 function now() { return Date.now(); }
+
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 function colName(n) { /* 0 -> "A", 25 -> "Z", 26 -> "AA" */
   var s = ""; n += 1;
@@ -82,21 +97,23 @@ function colFromName(s) { /* "A" -> 0, "AA" -> 26; -1 on garbage */
   return n - 1;
 }
 
-/* ===== SECTION 2: DATA MODEL + STORAGE ===== */
+/* ===== SECTION 2: DATA MODEL ===== */
 
-/* STATE SHAPE (Bible Part IV candidate — cell-entity contract):
-   { ver: 1,
-     sheets: [{ id, name: null, bi: {en, el}, rows, cols, mtime }],
-     cells:  { "<sheetId>|<r>|<c>": { v: "<raw input>", mtime } },
+/* STATE SHAPE (Wave 3):
+   { ver: 2,
+     sheets: [{ id, name: null, bi: {en, el}, rows, cols, pos, mtime,
+                cw: { "<colIdx>": pxWidth } }],
+     cells:  { "<sheetId>|<r>|<c>":
+               { v: "<raw input>", mtime, f?: { b?, i?, u?,
+                 al?: "l|c|r", co?: "#hex", nf?: "gen|0|2|%|€" } } },
      deleted:{ "<sheetId>": ts, "<sheetId>|<r>|<c>": ts } }
-   · name === null => seed using bi (R15); a hand rename writes name
-     and kills bi permanently.
-   · mtime-0 sheet seeds are merge-inert (Calendar precedent).
-   · Empty cells are NEVER stored (sparse model).               */
+   · f-only cells allowed: v === "" && f present (format on empty cell).
+   · cw rides the sheet entity → synced via sheet LWW.
+   · actSID, CLIP, undoStack are DEVICE-LOCAL, never synced. */
 
 var state = null;
-var SID = "s-main";   /* Wave 1: single sheet, deterministic fixed id (R16) */
-var bootCorrupt = false;
+var actSID = "s-main";
+var SID = "s-main";
 
 function blankState() {
   return {
@@ -104,18 +121,34 @@ function blankState() {
     sheets: [{
       id: SID, name: null,
       bi: { en: t("sheet.default"), el: "Φύλλο1" },
-      rows: ROWS, cols: COLS, mtime: 0
+      rows: ROWS, cols: COLS, pos: 0, mtime: 0, cw: {}
     }],
     cells: {},
     deleted: {}
   };
 }
 
+/* sanitize format sub-object; null if nothing usable */
+function sanitizeF(f) {
+  if (!f || typeof f !== "object") return undefined;
+  var out = {};
+  if (f.b) out.b = 1;
+  if (f.i) out.i = 1;
+  if (f.u) out.u = 1;
+  if (f.al === "l" || f.al === "c" || f.al === "r") out.al = f.al;
+  if (typeof f.co === "string" && /^#[0-9a-fA-F]{6}$/.test(f.co)) out.co = f.co;
+  if (f.nf === "gen" || f.nf === "0" || f.nf === "2" ||
+      f.nf === "%" || f.nf === "\u20AC") out.nf = f.nf;
+  var has = false;
+  for (var kk in out) { has = true; break; }
+  return has ? out : undefined;
+}
+
 function normalizeState(st) {
   if (!st || typeof st !== "object") return null;
   st.ver = DATA_VER;
   if (!Array.isArray(st.sheets)) st.sheets = [];
-  var hasMain = false, i, sh;
+  var i, sh;
   for (i = 0; i < st.sheets.length; i++) {
     sh = st.sheets[i];
     if (!sh || typeof sh !== "object" || typeof sh.id !== "string") {
@@ -124,22 +157,29 @@ function normalizeState(st) {
     sh.rows = Math.min(Math.max(parseInt(sh.rows, 10) || ROWS, 1), 500);
     sh.cols = Math.min(Math.max(parseInt(sh.cols, 10) || COLS, 1), 64);
     if (typeof sh.mtime !== "number" || !isFinite(sh.mtime)) sh.mtime = 0;
+    if (sh.pos === undefined || typeof sh.pos !== "number") sh.pos = 0;
+    if (sh.cw === undefined || typeof sh.cw !== "object" || !sh.cw) sh.cw = {};
     if (sh.name !== null && sh.name !== undefined &&
         typeof sh.name !== "string") sh.name = String(sh.name);
-    if (sh.id === SID) hasMain = true;
   }
-  if (!hasMain) st.sheets.push(blankState().sheets[0]);
+  if (!st.sheets.length) st.sheets = [blankState().sheets[0]];
   if (!st.cells || typeof st.cells !== "object") st.cells = {};
   if (!st.deleted || typeof st.deleted !== "object") st.deleted = {};
 
   var k;
   for (k in st.cells) {
     var cel = st.cells[k];
-    if (!cel || typeof cel !== "object" || typeof cel.v !== "string" ||
-        typeof cel.mtime !== "number" || !isFinite(cel.mtime) ||
-        !/^[\w-]+\|\d+\|\d+$/.test(k) || cel.v === "") {
-      delete st.cells[k];
+    var keep = false;
+    if (cel && typeof cel === "object" && typeof cel.v === "string" &&
+        typeof cel.mtime === "number" && isFinite(cel.mtime) &&
+        /^[\w-]+\|\d+\|\d+$/.test(k)) {
+      if (cel.v !== "" || cel.f) {
+        keep = true;
+        var sf = sanitizeF(cel.f);
+        if (sf) cel.f = sf; else delete cel.f;
+      }
     }
+    if (!keep) delete st.cells[k];
   }
   for (k in st.deleted) {
     if (typeof st.deleted[k] !== "number" || !isFinite(st.deleted[k]))
@@ -148,8 +188,6 @@ function normalizeState(st) {
   return st;
 }
 
-/* alive if mtime beats BOTH the cell tombstone and the sheet tombstone;
-   delete wins ties (R17).                                       */
 function tombFor(del, key) {
   var ts = del[key];
   if (ts && typeof ts === "number" && isFinite(ts)) return ts;
@@ -159,18 +197,10 @@ function tombFor(del, key) {
 }
 
 function cellKey(sid, r, c) { return sid + "|" + r + "|" + c; }
-function parseCellKey(k) { /* returns {sid, r, c} or null */
-  var p = k.split("|");
-  if (p.length !== 3) return null;
-  var r = parseInt(p[1], 10), c = parseInt(p[2], 10);
-  if (!isFinite(r) || !isFinite(c) || r < 0 || c < 0) return null;
-  return { sid: p[0], r: r, c: c };
-}
 
-/* ===== SECTION 2b: MERGE ENGINE (deterministic, symmetric) ===== */
+/* ===== SECTION 2b: MERGE ENGINE (unchanged semantics — f rides
+   whole-cell LWW, cw rides whole-sheet LWW) ===== */
 
-/* NEWER WINS: mtime comparison → lexicographic JSON/id tie-break
-   (Bible Part VII §16 — canonical pattern from mood.js).         */
 function newerObj(a, b) {
   if (!a) return b;
   if (!b) return a;
@@ -181,8 +211,6 @@ function newerObj(a, b) {
   return (aj < bj) ? a : b;
 }
 
-/* Merges incoming payload into local state with R17 tombstone
-   discipline: cell survives iff mtime > cell-tomb AND mtime > sheet-tomb. */
 function mergeState(local, remote) {
   if (!local || typeof local !== "object") local = blankState();
   if (!remote || typeof remote !== "object") return local;
@@ -191,37 +219,56 @@ function mergeState(local, remote) {
   var remoteVer = remote.ver || DATA_VER;
   if (remoteVer > localVer) localVer = remoteVer;
 
-  /* 1. Sheets merge: entity union, LWW by mtime, mtime-0 seeds inert */
+  /* 1. DELETED UNION (first — sheet-tombstones computed early) */
+  var mergedDel = {};
+  for (var k in local.deleted)
+    mergedDel[k] = Math.max(local.deleted[k] || 0, mergedDel[k] || 0);
+  for (k in remote.deleted)
+    mergedDel[k] = Math.max(remote.deleted[k] || 0, mergedDel[k] || 0);
+  /* deterministic cutoff: dataset max tombstone ts — NEVER wall clock.
+     Merge must be pure: two devices must reach identical results at
+     any moment (Bible Lesson 3 / HB-3 / NT-2 / MD-4). */
+  var maxTs = 0;
+  for (k in mergedDel) if (mergedDel[k] > maxTs) maxTs = mergedDel[k];
+  var pruneCutoff = maxTs - (30 * 24 * 60 * 60 * 1000);
+  for (k in mergedDel) {
+    if (mergedDel[k] < pruneCutoff) delete mergedDel[k];
+  }
+
+  /* 2. Sheets merge — union, LWW by mtime, tombstone-filtered */
   var sheetsMap = {}, i, sh;
   for (i = 0; i < local.sheets.length; i++) {
     sh = local.sheets[i];
-    if (sh && typeof sh === "object" && typeof sh.id === "string")
-      sheetsMap[sh.id] = sh;
+    if (!sh || typeof sh !== "object" || typeof sh.id !== "string") continue;
+    if (tombFor(mergedDel, sh.id) && (sh.mtime || 0) <= tombFor(mergedDel, sh.id))
+      continue;
+    sheetsMap[sh.id] = sh;
   }
   for (i = 0; i < remote.sheets.length; i++) {
     sh = remote.sheets[i];
     if (!sh || typeof sh !== "object" || typeof sh.id !== "string") continue;
-    var existing = sheetsMap[sh.id];
-    if (!existing) {
-      sheetsMap[sh.id] = sh;
+    if (tombFor(mergedDel, sh.id) && (sh.mtime || 0) <= tombFor(mergedDel, sh.id))
       continue;
-    }
+    var existing = sheetsMap[sh.id];
+    if (!existing) { sheetsMap[sh.id] = sh; continue; }
     if (existing.mtime === 0 && sh.mtime === 0) {
-      /* both seeds, lex tie-break on id ensures determinism */
       sheetsMap[sh.id] = (existing.id <= sh.id) ? existing : sh;
     } else {
       sheetsMap[sh.id] = newerObj(existing, sh);
     }
   }
 
-  var mergedSheets = [], ks = Object.keys(sheetsMap).sort();
+  var mergedSheets = [], ks = Object.keys(sheetsMap).sort(function(a,b){
+    var sa = sheetsMap[a], sb = sheetsMap[b];
+    var d = (sa.pos || 0) - (sb.pos || 0);
+    /* id tie-break: same pos must order identically on every device */
+    return d !== 0 ? d : (a < b ? -1 : (a > b ? 1 : 0));
+  });
   for (i = 0; i < ks.length; i++) mergedSheets.push(sheetsMap[ks[i]]);
 
-  /* 2. Cells merge: sparse union with tombstone filtering */
-  var mergedCells = {}, k;
-
-  /* First: gather all candidate cells (local ∪ remote) */
-  var candidates = {}, tombKey, sk;
+  /* 3. Cells merge — sparse union, tombstone-filtered */
+  var mergedCells = {};
+  var candidates = {};
   for (k in local.cells) {
     if (!local.cells[k] || typeof local.cells[k] !== "object") continue;
     candidates[k] = local.cells[k];
@@ -232,131 +279,293 @@ function mergeState(local, remote) {
     else candidates[k] = newerObj(remote.cells[k], local.cells[k]);
   }
 
-  /* Apply tombstone filter: cell dies if mtime ≤ max(sheet-tomb, cell-tomb) */
   for (k in candidates) {
     var cel = candidates[k];
-    var pk = parseCellKey(k);
+    var pk = (function(key){ var p = key.split("|"); if (p.length !== 3) return null;
+      return { sid: p[0], r: parseInt(p[1], 10), c: parseInt(p[2], 10) }; })(k);
     if (!pk) continue;
-    tombKey = k;
-    var cellTomb = tombFor(remote.deleted, tombKey) ||
-                   tombFor(local.deleted, tombKey);
-    tombKey = pk.sid;
-    var sheetTomb = tombFor(remote.deleted, tombKey) ||
-                    tombFor(local.deleted, tombKey);
+    var cellTomb = tombFor(mergedDel, k);
+    var sheetTomb = tombFor(mergedDel, pk.sid);
     var maxTomb = Math.max(cellTomb || 0, sheetTomb || 0);
     if ((cel.mtime || 0) > maxTomb) {
       mergedCells[k] = cel;
     }
   }
 
-  /* 3. Deleted union: max-ts per key (tombstone persistence) */
-  var mergedDel = {};
-  for (k in local.deleted)
-    mergedDel[k] = Math.max(local.deleted[k] || 0, mergedDel[k] || 0);
-  for (k in remote.deleted)
-    mergedDel[k] = Math.max(remote.deleted[k] || 0, mergedDel[k] || 0);
-
-  /* Prune tombstones older than 30 days */
-  var nowTs = now(), pruneCutoff = nowTs - (30 * 24 * 60 * 60 * 1000);
-  for (k in mergedDel) {
-    if (mergedDel[k] < pruneCutoff) delete mergedDel[k];
-  }
-
   return { ver: localVer, sheets: mergedSheets, cells: mergedCells, deleted: mergedDel };
 }
 
-/* ===== SECTION 3: CAPTURE + RENDER FLOW ===== */
+/* ===== SECTION 2c: STORAGE FUNNEL ===== */
 
-var selSheet = null;   /* current sheet pointer (always SID for Wave 1) */
-var selR = 0, selC = 0;/* selection coordinates (row, col) */
-var editing = false;   /* in-cell edit mode flag */
-var renderPending = false; /* debounce render guard */
-var syncApi = null;    /* sync api wrapper (Section 4) */
-var dirtyFlag = false; /* local dirty flag (user edits) */
+var saveTimer = null;
 
-/* --- 3a. Data access (pure, no DOM) --- */
+function queueSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 400);
+}
+
+function saveNow() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function loadState() {
+  var raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  var st = null;
+  if (raw) {
+    try { st = JSON.parse(raw); } catch (e) { st = null; }
+    if (!st) {
+      try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e2) {}
+    }
+  }
+  state = normalizeState(st);
+  if (!state) {
+    state = blankState();
+    if (raw) setTimeout(function(){ toast(t("err.corrupt")); }, 400);
+  }
+  try {
+    var loadedAct = localStorage.getItem(ACTIVE_KEY);
+    if (loadedAct) {
+      var exists = false, ix;
+      for (ix = 0; ix < state.sheets.length; ix++)
+        if (state.sheets[ix] && state.sheets[ix].id === loadedAct) { exists = true; break; }
+      if (exists && !state.deleted[loadedAct]) actSID = loadedAct;
+    }
+  } catch (e) {}
+  if (!getActiveSheet()) { actSID = state.sheets[0].id; }
+  saveActive();
+}
+
+function saveActive() {
+  try { localStorage.setItem(ACTIVE_KEY, actSID); } catch (e) {}
+}
+
+/* ===== SECTION 3: STATE · RAW OPS · UNDO · SELECTION ===== */
+
+var selR = 0, selC = 0;        /* cursor */
+var selAR = 0, selAC = 0;      /* selection ANCHOR (range start) */
+var editing = false, editingR = -1, editingC = -1;
+var editInput = null;
+var fxFocused = false;
+var dirtyFlag = false;
+
+/* selection rectangle (normalized, inclusive) */
+function selTop()    { return Math.min(selR, selAR); }
+function selBottom() { return Math.max(selR, selAR); }
+function selLeft()   { return Math.min(selC, selAC); }
+function selRight()  { return Math.max(selC, selAC); }
+function selIsRange() { return selR !== selAR || selC !== selAC; }
+
+function collapseSel(r, c) {
+  if (r === undefined) { r = selR; c = selC; }
+  selR = selAR = r; selC = selAC = c;
+}
 
 function getActiveSheet() {
-  var i, sh;
-  for (i = 0; i < state.sheets.length; i++) {
-    sh = state.sheets[i];
-    if (sh && sh.id === SID) return sh;
+  for (var i = 0; i < state.sheets.length; i++) {
+    if (state.sheets[i] && state.sheets[i].id === actSID)
+      return state.sheets[i];
   }
-  return state.sheets[0];
+  return state.sheets[0] || null;
+}
+
+function getSheetById(id) {
+  for (var i = 0; i < state.sheets.length; i++) {
+    if (state.sheets[i] && state.sheets[i].id === id)
+      return state.sheets[i];
+  }
+  return null;
+}
+
+function findSheetByName(name) {
+  var nl = String(name).toLowerCase().replace(/[^\w]/g, "");
+  for (var i = 0; i < state.sheets.length; i++) {
+    var sh = state.sheets[i];
+    if (!sh) continue;
+    var n = sh.name || sh.bi[LANG] || sh.bi.en || "";
+    if (String(n).toLowerCase().replace(/[^\w]/g, "") === nl) return sh;
+  }
+  return null;
 }
 
 function getCell(r, c) {
-  var key = cellKey(SID, r, c);
+  var key = cellKey(actSID, r, c);
   return state.cells[key] || null;
 }
 
-function setCell(r, c, rawValue) {
-  if (!state.cells) state.cells = {};
-  var key = cellKey(SID, r, c);
-  var oldVal = state.cells[key];
-  state.cells[key] = { v: String(rawValue), mtime: now() };
-  if (oldVal) {
-    /* value changed — mark dirty */
-    markDirty();
+/* --- evaluation cache invalidation (Wave 3 recalc fix) --- */
+var EVAL_DIRTY = true;
+function invalidateEval() { EVAL_DIRTY = true; }
+
+/* --- raw mutations (no undo, no UI) — used by undo/paste/sync --- */
+function rawSet(sid, r, c, v, f) {
+  var key = cellKey(sid, r, c);
+  delete state.deleted[key];
+  var o = { v: String(v), mtime: now() };
+  var sf = sanitizeF(f);
+  if (sf) o.f = sf;
+  state.cells[key] = o;
+}
+
+function rawDel(sid, r, c) {
+  var key = cellKey(sid, r, c);
+  delete state.cells[key];
+  state.deleted[key] = now();
+}
+
+/* cell content snapshot for undo entries: {v, f}|null (null = absent) */
+function snapCell(sid, r, c) {
+  var cel = state.cells[cellKey(sid, r, c)];
+  if (!cel) return null;
+  var o = { v: cel.v };
+  if (cel.f) o.f = clone(cel.f);
+  return o;
+}
+
+/* --- UNDO/REDO (device-local, op-based, batch entries) ---
+   entry = [ {key, before:snap|null, after:snap|null}, ... ]
+   undo restores `before`, redo reapplies `after`; every apply
+   stamps a FRESH mtime so sync stays LWW-consistent.          */
+var undoStack = [], redoStack = [], UNDO_MAX = 100;
+
+function pushUndo(entries) {
+  if (!entries || !entries.length) return;
+  undoStack.push(entries);
+  if (undoStack.length > UNDO_MAX) undoStack.shift();
+  redoStack.length = 0; /* new edit kills the redo branch */
+  updateToolbar();
+}
+
+function applyEntries(entries, useAfter) {
+  var e, i;
+  for (i = 0; i < entries.length; i++) {
+    e = entries[i];
+    var target = useAfter ? e.after : e.before;
+    var pk = e.key.split("|");
+    var r = parseInt(pk[1], 10), c = parseInt(pk[2], 10);
+    if (target === null) {
+      rawDel(pk[0], r, c);
+    } else {
+      rawSet(pk[0], r, c, target.v, target.f);
+    }
   }
+  invalidateEval();
+  markDirty();
+  queueSave();
+  renderGrid();
+  renderSelection();
+}
+
+function doUndo() {
+  if (editing) cancelEdit();
+  var entries = undoStack.pop();
+  if (!entries) { notifyTransient(t("undo.empty")); return; }
+  redoStack.push(entries);
+  applyEntries(entries, false);
+}
+
+function doRedo() {
+  if (editing) cancelEdit();
+  var entries = redoStack.pop();
+  if (!entries) { notifyTransient(t("redo.empty")); return; }
+  undoStack.push(entries);
+  applyEntries(entries, true);
+}
+
+/* --- undo-capturing single-cell edit ops (UI path) --- */
+function setCell(r, c, rawValue) {
+  var key = cellKey(actSID, r, c);
+  var before = snapCell(actSID, r, c);
+  var after = { v: String(rawValue) };
+  var cur = state.cells[key];
+  if (cur && cur.f) after.f = clone(cur.f); /* keep format on retype */
+  rawSet(actSID, r, c, rawValue, after.f);
+  invalidateEval();
+  markDirty();
+  pushUndo([{ key: key, before: before, after: snapCell(actSID, r, c) }]);
 }
 
 function deleteCell(r, c) {
-  var key = cellKey(SID, r, c);
-  delete state.cells[key];
-  state.deleted[key] = now();
+  var key = cellKey(actSID, r, c);
+  var before = snapCell(actSID, r, c);
+  if (!before) return;
+  rawDel(actSID, r, c);
+  invalidateEval();
   markDirty();
+  pushUndo([{ key: key, before: before, after: null }]);
+}
+
+/* delete a whole selection rect (single undo entry) */
+function deleteSelection() {
+  var entries = [], r, c;
+  var top = selTop(), bot = selBottom(), lef = selLeft(), rig = selRight();
+  for (r = top; r <= bot; r++)
+    for (c = lef; c <= rig; c++) {
+      var key = cellKey(actSID, r, c);
+      var before = snapCell(actSID, r, c);
+      if (before) {
+        rawDel(actSID, r, c);
+        entries.push({ key: key, before: before, after: null });
+      }
+    }
+  if (!entries.length) return;
+  invalidateEval();
+  markDirty();
+  pushUndo(entries);
+  queueSave();
+  renderGrid();
 }
 
 function markDirty() {
   dirtyFlag = true;
   updateStatus();
+  queueSave();
   if (syncApi && syncApi.dirty) syncApi.dirty();
 }
 
 function updateStatus() {
   var st = $("st-note");
-  if (!st) return;
-  st.textContent = dirtyFlag ? "*" : "";
+  if (st) st.textContent = dirtyFlag ? "*" : "";
 }
 
-/* --- 3b. Formula evaluation (Wave 1 core) --- */
+/* ===== SECTION 3b: FORMULA ENGINE (Wave 3 — cache invalidation aware) ===== */
 
-/* Token types for the lexer */
-var TT_NUM = 1, TT_STR = 2, TT_OP = 3, TT_REF = 4, TT_FUNC = 5, TT_SEP = 6, TT_LPAREN = 7, TT_RPAREN = 8, TT_ERROR = 9;
+var TT_NUM = 1, TT_STR = 2, TT_OP = 3, TT_REF = 4, TT_FUNC = 5,
+    TT_SEP = 6, TT_LPAREN = 7, TT_RPAREN = 8, TT_ERROR = 9;
 
-/* Operators with precedence */
 var OPERATORS = {
-  "+": { prec: 2, assoc: "L", fn: function(a,b){return a+b;} },
-  "-": { prec: 2, assoc: "L", fn: function(a,b){return a-b;} },
-  "*": { prec: 3, assoc: "L", fn: function(a,b){return a*b;} },
-  "/": { prec: 3, assoc: "L", fn: function(a,b){return b===0?NaN:a/b;} },
-  "^": { prec: 4, assoc: "R", fn: function(a,b){return Math.pow(a,b);} },
-  "&": { prec: 1, assoc: "L", fn: function(a,b){return String(a||"")+String(b||"");} }
+  "+": { prec: 2, assoc: "L" },
+  "-": { prec: 2, assoc: "L" },
+  "*": { prec: 3, assoc: "L" },
+  "/": { prec: 3, assoc: "L" },
+  "^": { prec: 4, assoc: "R" },
+  "&": { prec: 1, assoc: "L" },
+  "=":  { prec: 0, assoc: "L", cmp: true },
+  "<>": { prec: 0, assoc: "L", cmp: true },
+  "<":  { prec: 0, assoc: "L", cmp: true },
+  ">":  { prec: 0, assoc: "L", cmp: true },
+  "<=": { prec: 0, assoc: "L", cmp: true },
+  ">=": { prec: 0, assoc: "L", cmp: true }
 };
 
-/* Comparison operators return boolean (converted to number when needed) */
-var COMPARISONS = { "=":1, "<>":1, "<":1, ">":1, "<=":1, ">=":1 };
+var BOOL_LITERALS = { "TRUE": 1, "FALSE": 0 };
 
-/* Lexer: converts formula string into tokens */
 function tokenize(formula) {
   var tokens = [];
   var i = 0, s = String(formula).trim();
-  
+
   if (!s || s.charAt(0) !== "=") {
-    /* Plain value — treated as a single string token */
     if (s) tokens.push({ type: TT_STR, value: s });
     return tokens;
   }
-  
-  i++; /* skip '=' */
+
+  i++;
   while (i < s.length) {
     var ch = s.charAt(i);
-    
-    /* Skip whitespace */
+
     if (/\s/.test(ch)) { i++; continue; }
-    
-    /* Strings (double quotes) */
+
     if (ch === '"') {
       var str = "", j = i + 1;
       while (j < s.length && s.charAt(j) !== '"') {
@@ -367,415 +576,398 @@ function tokenize(formula) {
       i = j + 1;
       continue;
     }
-    
-    /* Numbers (including decimals) */
+
     if (/[0-9]/.test(ch) || (ch === "." && /[0-9]/.test(s.charAt(i+1)))) {
       var num = "", hasDot = false;
       while (i < s.length && /[0-9.]/.test(s.charAt(i))) {
         var digit = s.charAt(i);
-        if (digit === ".") {
-          if (hasDot) break;
-          hasDot = true;
-        }
-        num += digit;
-        i++;
+        if (digit === ".") { if (hasDot) break; hasDot = true; }
+        num += digit; i++;
       }
       tokens.push({ type: TT_NUM, value: parseFloat(num) });
       continue;
     }
-    
-    /* Operators (multi-char first: <=, >=, <>) */
+
     var op = "";
     if (i + 1 < s.length) {
       var twoChar = s.substr(i, 2);
-      if (COMPARISONS[twoChar] || twoChar === "&&" || twoChar === "||") {
-        op = twoChar;
-        i += 2;
-      }
+      if (OPERATORS[twoChar]) { op = twoChar; i += 2; }
     }
-    if (!op && OPERATORS[ch]) {
-      op = ch;
-      i++;
-    }
-    if (op) {
-      tokens.push({ type: TT_OP, value: op });
-      continue;
-    }
-    
-    /* Parentheses */
+    if (!op && OPERATORS[ch]) { op = ch; i++; }
+    if (op) { tokens.push({ type: TT_OP, value: op }); continue; }
+
     if (ch === "(") { tokens.push({ type: TT_LPAREN, value: ch }); i++; continue; }
     if (ch === ")") { tokens.push({ type: TT_RPAREN, value: ch }); i++; continue; }
-    
-    /* Commas and colons (range operator) */
     if (ch === ",") { tokens.push({ type: TT_SEP, value: "," }); i++; continue; }
+    if (ch === ";") { tokens.push({ type: TT_SEP, value: ";" }); i++; continue; }
     if (ch === ":") { tokens.push({ type: TT_SEP, value: ":" }); i++; continue; }
-    
-    /* References (A1, B10, AA100, A1:B10) */
-    if (/[A-Z]/i.test(ch)) {
-      var ref = "", j = i;
-      while (j < s.length && /[A-Za-z0-9:!]/.test(s.charAt(j))) {
-        ref += s.charAt(j++);
-      }
-      
-      /* Check if this is a function name (ref followed by '(') */
-      var lookahead = s.charAt(j);
-      if (lookahead === "(" && !ref.match(/:\d+/)) {
-        tokens.push({ type: TT_FUNC, value: ref.toUpperCase() });
-      } else {
-        tokens.push({ type: TT_REF, value: ref.toUpperCase() });
-      }
-      i = j;
-      continue;
+
+    var sheetPrefix = null;
+    var m1 = s.slice(i).match(/^([^\s():;,+*/^&<>=!]+)!/);
+    if (m1) {
+      sheetPrefix = m1[1];
+      i += m1[0].length;
+      ch = s.charAt(i);
     }
-    
-    /* Unknown character — error */
-    tokens.push({ type: TT_ERROR, value: ch });
-    i++;
+
+    var ident = "", j = i;
+    while (j < s.length && /[A-Za-zΑ-Ωα-ω0-9_]/.test(s.charAt(j)))
+      ident += s.charAt(j++);
+    if (!ident) { tokens.push({ type: TT_ERROR, value: ch }); i++; continue; }
+
+    var lookahead = s.charAt(j);
+    var refMatch = ident.toUpperCase().match(/^([A-Z]+)(\d+)$/);
+
+    if (lookahead === "(") {
+      tokens.push({ type: TT_FUNC, value: ident.toUpperCase() });
+    } else if (refMatch && BOOL_LITERALS.hasOwnProperty(ident.toUpperCase())) {
+      tokens.push({ type: TT_NUM, value: BOOL_LITERALS[ident.toUpperCase()] });
+    } else if (refMatch) {
+      if (sheetPrefix) {
+        if (s.charAt(j) === ":") {
+          var rest = s.slice(j + 1).match(/^([A-Z]+[0-9]+)/i);
+          if (rest) {
+            j += 1 + rest[0].length;
+            tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident + ":" + rest[0].toUpperCase() });
+          } else {
+            tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident });
+          }
+        } else {
+          tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident });
+        }
+      } else {
+        tokens.push({ type: TT_REF, value: ident.toUpperCase() });
+      }
+    } else if (sheetPrefix) {
+      tokens.push({ type: TT_ERROR, value: "#REF!" });
+    } else {
+      tokens.push({ type: TT_STR, value: ident });
+    }
+    i = j;
   }
-  
+
   return tokens;
 }
 
-/* Parser: builds AST from tokens (shunting-yard algorithm for infix operators) */
 function parse(tokens) {
   var output = [], opStack = [];
   var i = 0, lastWasOperand = false;
-  
+
   while (i < tokens.length) {
     var tok = tokens[i];
-    
+
     if (tok.type === TT_NUM || tok.type === TT_STR) {
       output.push(tok);
       lastWasOperand = true;
     }
     else if (tok.type === TT_REF) {
-      /* Cell reference or range — evaluate lazily */
       output.push(tok);
       lastWasOperand = true;
     }
     else if (tok.type === TT_FUNC) {
-      output.push(tok);
-      opStack.push({ type: "FUNC_START" });
+      opStack.push({ type: "FUNC", name: tok.value, argc: 0, seenArg: false });
       lastWasOperand = false;
     }
     else if (tok.type === TT_LPAREN) {
-      if (lastWasOperand) {
-        /* Implicit multiplication: value( -> value * ( */
-        output.push({ type: TT_OP, value: "*" });
-      }
       opStack.push(tok);
       lastWasOperand = false;
     }
     else if (tok.type === TT_RPAREN) {
-      while (opStack.length && opStack[opStack.length-1].type !== TT_LPAREN) {
+      while (opStack.length && opStack[opStack.length-1].type !== "LPAREN" &&
+             opStack[opStack.length-1].type !== "FUNC") {
         output.push(opStack.pop());
       }
-      if (opStack.length) opStack.pop(); /* pop '(' */
-      
-      /* If function name on top, pop it too */
-      if (opStack.length && opStack[opStack.length-1].type === "FUNC_START") {
+      var topT = opStack.length ? opStack[opStack.length-1] : null;
+      if (topT && topT.type === "LPAREN") {
         opStack.pop();
       }
+      else if (topT && topT.type === "FUNC") {
+        var fn = opStack.pop();
+        output.push({ type: TT_FUNC, value: fn.name, argc: fn.argc });
+        lastWasOperand = true;
+      }
+      if (opStack.length && opStack[opStack.length-1].type === "LPAREN")
+        opStack.pop();
       lastWasOperand = true;
     }
     else if (tok.type === TT_OP) {
       var o1 = tok.value;
-      var o1Prec = OPERATORS[o1] ? OPERATORS[o1].prec : 0;
-      
+      var o1Def = OPERATORS[o1] || { prec: 0, assoc: "L" };
       while (opStack.length) {
         var top = opStack[opStack.length-1];
-        if (top.type !== TT_OP) break;
-        
-        var o2 = top.value;
-        var o2Prec = OPERATORS[o2] ? OPERATORS[o2].prec : 0;
-        
-        if ((o1Prec < o2Prec) || (o1Prec === o2Prec && OPERATORS[o1].assoc === "L")) {
+        if (top.type !== "OP") break;
+        var o2Def = OPERATORS[top.value] || { prec: 0, assoc: "L" };
+        if ((o1Def.prec < o2Def.prec) ||
+            (o1Def.prec === o2Def.prec && o1Def.assoc === "L")) {
           output.push(opStack.pop());
-        } else {
-          break;
-        }
+        } else break;
       }
-      opStack.push(tok);
+      opStack.push({ type: "OP", value: o1 });
       lastWasOperand = false;
     }
     else if (tok.type === TT_SEP) {
-      /* Comma separator in functions — pop until LPAREN */
-      while (opStack.length && opStack[opStack.length-1].type !== TT_LPAREN && 
-             opStack[opStack.length-1].type !== "FUNC_START") {
-        output.push(opStack.pop());
+      if (tok.value === ":") { /* range colon — handled in lexer */ }
+      else {
+        while (opStack.length &&
+               opStack[opStack.length-1].type !== "LPAREN" &&
+               opStack[opStack.length-1].type !== "FUNC") {
+          output.push(opStack.pop());
+        }
+        var ft = opStack.length ? opStack[opStack.length-1] : null;
+        if (ft && ft.type === "FUNC") { ft.argc++; ft.seenArg = true; }
       }
       lastWasOperand = false;
     }
-    else {
-      /* Error token or unknown — skip */
-    }
-    
     i++;
   }
-  
+
   while (opStack.length) {
-    output.push(opStack.pop());
+    var rem = opStack.pop();
+    if (rem.type === "FUNC")
+      output.push({ type: TT_FUNC, value: rem.name, argc: rem.argc });
+    else if (rem.type === "OP") output.push(rem);
   }
-  
-  return output; /* Reverse Polish Notation */
+
+  return output; /* RPN */
 }
 
-/* Evaluator: executes RPN with cell resolution and functions */
-function evaluate(ast, visitingRefSet) {
-  if (!visitingRefSet) visitingRefSet = {};
+function cellRaw(sid, r, c) {
+  var cel = state.cells[cellKey(sid, r, c)];
+  return cel ? cel.v : "";
+}
+
+function resolveRef(refStr) {
+  var bang = refStr.indexOf("!"), sheetPart = null, cellPart = refStr;
+  if (bang >= 0) {
+    sheetPart = refStr.slice(0, bang);
+    cellPart = refStr.slice(bang + 1);
+  }
+  var m = cellPart.match(/^([A-Z]+)(\d+)$/);
+  if (!m) return null;
+  var c = colFromName(m[1]), r = parseInt(m[2], 10) - 1;
+  if (c < 0 || r < 0) return null;
+  var sid = actSID;
+  if (sheetPart !== null) {
+    var sh = findSheetByName(decodeURIComponent(sheetPart));
+    if (!sh) return null;
+    sid = sh.id;
+  }
+  return { sid: sid, r: r, c: c };
+}
+
+function coerceNum(v) {
+  if (typeof v === "number") return v;
+  if (v === "" || v === null || v === undefined) return 0;
+  var n = parseFloat(v);
+  return isNaN(n) ? v : n;
+}
+
+function isError(v) { return typeof v === "string" && v.charAt(0) === "#"; }
+
+var EVAL_CACHE = {};
+
+function evalCell(sid, r, c, visiting) {
+  var key = sid + "|" + r + "|" + c;
+  if (EVAL_CACHE.hasOwnProperty(key)) return EVAL_CACHE[key];
+  if (visiting[key]) return "#CYC!";
+  var raw = cellRaw(sid, r, c);
+  if (raw === "") return 0;
+  if (raw.charAt(0) !== "=") return coerceNum(raw);
+  visiting[key] = true;
+  var res;
+  try {
+    res = evaluate(parse(tokenize(raw)), visiting);
+  } catch (e) { res = "#ERROR!"; }
+  delete visiting[key];
+  EVAL_CACHE[key] = res;
+  return res;
+}
+
+function flattenArgs(args) {
+  var out = [];
+  for (var i = 0; i < args.length; i++) {
+    if (Array.isArray(args[i])) {
+      for (var j = 0; j < args[i].length; j++) out.push(args[i][j]);
+    } else out.push(args[i]);
+  }
+  return out;
+}
+
+function numsOf(vals) {
+  var out = [];
+  for (var i = 0; i < vals.length; i++)
+    if (typeof vals[i] === "number" && !isNaN(vals[i])) out.push(vals[i]);
+  return out;
+}
+
+function compareVals(a, b) {
+  var na = coerceNum(a), nb = coerceNum(b);
+  if (typeof na === "number" && typeof nb === "number") return na - nb;
+  var sa = String(a), sb = String(b);
+  return sa < sb ? -1 : (sa > sb ? 1 : 0);
+}
+
+function evaluate(ast, visiting) {
   var stack = [];
-  
+
   for (var i = 0; i < ast.length; i++) {
     var tok = ast[i];
-    
-    if (tok.type === TT_NUM) {
-      stack.push(tok.value);
-    }
-    else if (tok.type === TT_STR) {
-      stack.push(tok.value);
-    }
+
+    if (tok.type === TT_NUM || tok.type === TT_STR) { stack.push(tok.value); }
+
     else if (tok.type === TT_REF) {
       var ref = tok.value;
-      /* Detect circular reference */
-      if (visitingRefSet[ref]) return "#REF!";
-      
-      /* Parse range (A1:B10) or single cell (A1) */
       if (ref.indexOf(":") >= 0) {
-        /* Range — expand to array of values */
         var parts = ref.split(":");
-        var startCol = colFromName(parts[0]), startRow = parseInt(parts[0].match(/\d+/)[0], 10) - 1;
-        var endCol = colFromName(parts[1]), endRow = parseInt(parts[1].match(/\d+/)[0], 10) - 1;
-        
-        if (startCol < 0 || endCol < 0 || startRow < 0 || endRow < 0) {
-          stack.push("#REF!");
-          continue;
-        }
-        
+        var rl = parts[0].indexOf("!") >= 0 ? parts[0].split("!") : [null, parts[0]];
+        var rr = parts[1].indexOf("!") >= 0 ? parts[1].split("!") : [null, parts[1]];
+        var a = resolveRef((rl[0] ? rl[0] + "!" : "") + rl[1]);
+        var b = resolveRef((rr[0] ? rr[0] + "!" : (rl[0] ? rl[0] + "!" : "")) + rr[1]);
+        if (!a || !b) { stack.push("#REF!"); continue; }
         var vals = [];
-        for (var r = Math.min(startRow,endRow); r <= Math.max(startRow,endRow); r++) {
-          for (var c = Math.min(startCol,endCol); c <= Math.max(startCol,endCol); c++) {
-            var key = cellKey(SID, r, c);
-            var cel = state.cells[key];
-            var val = cel ? cel.v : "";
-            
-            /* Recursively evaluate if it's a formula */
-            if (typeof val === "string" && val.charAt(0) === "=") {
-              visitingRefSet[ref] = true;
-              val = evaluate(parse(tokenize(val)), visitingRefSet);
-              delete visitingRefSet[ref];
-            }
-            
-            /* Coerce to number if possible */
-            var numVal = parseFloat(val);
-            vals.push(isNaN(numVal) ? (val === "" ? 0 : 0) : numVal);
-          }
-        }
+        for (var r = Math.min(a.r,b.r); r <= Math.max(a.r,b.r); r++)
+          for (var c = Math.min(a.c,b.c); c <= Math.max(a.c,b.c); c++)
+            vals.push(evalCell(a.sid, r, c, visiting));
         stack.push(vals);
-      }
-      else {
-        /* Single cell */
-        var cMatch = ref.match(/([A-Z]+)(\d+)/);
-        if (!cMatch) { stack.push("#NAME?"); continue; }
-        
-        var cCol = colFromName(cMatch[1]);
-        var cRow = parseInt(cMatch[2], 10) - 1;
-        if (cCol < 0 || cRow < 0) { stack.push("#REF!"); continue; }
-        
-        var key = cellKey(SID, cRow, cCol);
-        var cell = state.cells[key];
-        var val = cell ? cell.v : "";
-        
-        if (val === "") {
-          stack.push(0); /* Empty cell = 0 in arithmetic */
-        } else if (val.charAt(0) === "=") {
-          /* Evaluate formula recursively */
-          visitingRefSet[ref] = true;
-          val = evaluate(parse(tokenize(val)), visitingRefSet);
-          delete visitingRefSet[ref];
-          
-          /* Check for errors */
-          if (typeof val === "string" && val.charAt(0) === "#") {
-            stack.push(val);
-          } else {
-            var numVal = parseFloat(val);
-            stack.push(isNaN(numVal) ? val : numVal);
-          }
-        } else {
-          var numVal = parseFloat(val);
-          stack.push(isNaN(numVal) ? val : numVal);
-        }
+      } else {
+        var rc = resolveRef(ref);
+        if (!rc) { stack.push("#REF!"); continue; }
+        stack.push(evalCell(rc.sid, rc.r, rc.c, visiting));
       }
     }
+
     else if (tok.type === TT_OP) {
+      if (tok.value === "&") {
+        var bs = stack.pop(), as = stack.pop();
+        if (isError(as)) { stack.push(as); continue; }
+        if (isError(bs)) { stack.push(bs); continue; }
+        stack.push(String(fmtVal(as)) + String(fmtVal(bs)));
+        continue;
+      }
       if (stack.length < 2) { stack.push("#ERROR!"); continue; }
-      var b = stack.pop();
-      var a = stack.pop();
-      
-      /* Handle errors propagate */
-      if (typeof a === "string" && a.charAt(0) === "#") { stack.push(a); continue; }
-      if (typeof b === "string" && b.charAt(0) === "#") { stack.push(b); continue; }
-      
+      var bv = stack.pop(), av = stack.pop();
+      if (isError(av)) { stack.push(av); continue; }
+      if (isError(bv)) { stack.push(bv); continue; }
       var opDef = OPERATORS[tok.value];
       if (!opDef) { stack.push("#ERROR!"); continue; }
-      
-      var result = opDef.fn(a, b);
-      if (tok.value === "+" && typeof a === "string" && typeof b === "string") {
-        /* String concatenation via & */
-        result = a + b;
+      if (opDef.cmp) {
+        var cmp = compareVals(av, bv);
+        var res;
+        switch (tok.value) {
+          case "=":  res = cmp === 0; break;
+          case "<>": res = cmp !== 0; break;
+          case "<":  res = cmp < 0; break;
+          case ">":  res = cmp > 0; break;
+          case "<=": res = cmp <= 0; break;
+          case ">=": res = cmp >= 0; break;
+        }
+        stack.push(res ? 1 : 0);
+      } else {
+        var an = coerceNum(av), bn = coerceNum(bv);
+        if (typeof an !== "number" || typeof bn !== "number") { stack.push("#VALUE!"); continue; }
+        switch (tok.value) {
+          case "+": stack.push(an + bn); break;
+          case "-": stack.push(an - bn); break;
+          case "*": stack.push(an * bn); break;
+          case "/": stack.push(bn === 0 ? "#DIV/0!" : an / bn); break;
+          case "^": stack.push(Math.pow(an, bn)); break;
+        }
       }
-      stack.push(result);
     }
+
     else if (tok.type === TT_FUNC) {
-      /* Extract arguments from stack until we hit the FUNC_START marker or comma separators */
-      /* This is simplified — full implementation would need better argument tracking */
-      /* For Wave 1: we support SUM(A1:A10) style functions */
-      var funcName = tok.value;
+      var argc = (typeof tok.argc === "number") ? tok.argc + 1 : 1;
       var args = [];
-      
-      /* Pop arguments (simplified: assume last n items are args, where n varies by function) */
-      /* Better approach: mark argument boundaries during parsing */
-      
-      /* Simplified function handler for Wave 1 */
-      if (funcName === "SUM") {
-        var sum = 0, arr = stack.pop();
-        if (Array.isArray(arr)) {
-          for (var j = 0; j < arr.length; j++) {
-            var v = arr[j];
-            if (typeof v === "number" && !isNaN(v)) sum += v;
-          }
-        } else if (typeof arr === "number" && !isNaN(arr)) {
-          sum = arr;
-        }
-        stack.push(sum);
+      var enough = true;
+      while (argc-- > 0) {
+        if (!stack.length) { enough = false; break; }
+        args.unshift(stack.pop());
       }
-      else if (funcName === "AVERAGE" || funcName === "AVG") {
-        var total = 0, count = 0, arr = stack.pop();
-        if (Array.isArray(arr)) {
-          for (var j = 0; j < arr.length; j++) {
-            var v = arr[j];
-            if (typeof v === "number" && !isNaN(v)) { total += v; count++; }
-          }
-        } else if (typeof arr === "number" && !isNaN(arr)) {
-          total = arr; count = 1;
-        }
-        stack.push(count > 0 ? (total / count) : "#DIV/0!");
+      if (!enough) { stack.push("#ERROR!"); continue; }
+
+      var fn = tok.value;
+      var flat = flattenArgs(args);
+
+      var errArg = null;
+      for (var ai = 0; ai < flat.length; ai++)
+        if (isError(flat[ai])) { errArg = flat[ai]; break; }
+      if (errArg !== null) { stack.push(errArg); continue; }
+
+      var nums = numsOf(flat);
+
+      if (fn === "SUM") {
+        var s = 0; for (var q = 0; q < nums.length; q++) s += nums[q];
+        stack.push(s);
       }
-      else if (funcName === "MIN") {
-        var min = Infinity, arr = stack.pop();
-        if (Array.isArray(arr)) {
-          for (var j = 0; j < arr.length; j++) {
-            var v = arr[j];
-            if (typeof v === "number" && !isNaN(v) && v < min) min = v;
-          }
-        } else if (typeof arr === "number" && !isNaN(arr)) {
-          min = arr;
-        }
-        stack.push(min === Infinity ? "#N/A" : min);
+      else if (fn === "AVERAGE" || fn === "AVG") {
+        if (!nums.length) { stack.push("#DIV/0!"); }
+        else { var tt = 0; for (var q = 0; q < nums.length; q++) tt += nums[q];
+               stack.push(tt / nums.length); }
       }
-      else if (funcName === "MAX") {
-        var max = -Infinity, arr = stack.pop();
-        if (Array.isArray(arr)) {
-          for (var j = 0; j < arr.length; j++) {
-            var v = arr[j];
-            if (typeof v === "number" && !isNaN(v) && v > max) max = v;
-          }
-        } else if (typeof arr === "number" && !isNaN(arr)) {
-          max = arr;
-        }
-        stack.push(max === -Infinity ? "#N/A" : max);
+      else if (fn === "MIN") {
+        if (!nums.length) stack.push("#N/A");
+        else { var mn = Infinity; for (var q = 0; q < nums.length; q++)
+                 if (nums[q] < mn) mn = nums[q];
+               stack.push(mn); }
       }
-      else if (funcName === "COUNT") {
-        var cnt = 0, arr = stack.pop();
-        if (Array.isArray(arr)) {
-          for (var j = 0; j < arr.length; j++) {
-            var v = arr[j];
-            if (typeof v === "number" && !isNaN(v)) cnt++;
-          }
-        } else if (typeof arr === "number" && !isNaN(arr)) {
-          cnt = 1;
-        }
-        stack.push(cnt);
+      else if (fn === "MAX") {
+        if (!nums.length) stack.push("#N/A");
+        else { var mx = -Infinity; for (var q = 0; q < nums.length; q++)
+                 if (nums[q] > mx) mx = nums[q];
+               stack.push(mx); }
       }
-      else if (funcName === "COUNTA") {
-        var cnt = 0, arr = stack.pop();
-        if (Array.isArray(arr)) {
-          for (var j = 0; j < arr.length; j++) {
-            var v = arr[j];
-            if (v !== "" && v !== undefined && v !== null && !(typeof v === "number" && isNaN(v))) cnt++;
-          }
-        } else if (arr !== "" && arr !== undefined && arr !== null) {
-          cnt = 1;
-        }
-        stack.push(cnt);
+      else if (fn === "COUNT") { stack.push(nums.length); }
+      else if (fn === "COUNTA") {
+        var ca = 0; for (var q = 0; q < flat.length; q++)
+          if (flat[q] !== "" && flat[q] !== null && flat[q] !== undefined &&
+              !(typeof flat[q] === "number" && isNaN(flat[q]))) ca++;
+        stack.push(ca);
       }
-      else if (funcName === "ROUND") {
-        var arr = [];
-        while (arr.length < 2) arr.unshift(stack.pop());
-        var num = arr[0], places = arr[1];
-        if (typeof num === "number" && typeof places === "number") {
-          var factor = Math.pow(10, places);
-          stack.push(Math.round(num * factor) / factor);
-        } else {
-          stack.push("#VALUE!");
-        }
+      else if (fn === "ROUND") {
+        if (args.length < 2) { stack.push("#VALUE!"); continue; }
+        var rn = coerceNum(args[0]), rp = args.length > 1 ? coerceNum(args[1]) : 0;
+        if (typeof rn !== "number" || typeof rp !== "number") { stack.push("#VALUE!"); continue; }
+        var f = Math.pow(10, rp);
+        stack.push(Math.round(rn * f) / f);
       }
-      else if (funcName === "ABS") {
-        var val = stack.pop();
-        stack.push(typeof val === "number" && !isNaN(val) ? Math.abs(val) : "#VALUE!");
+      else if (fn === "ABS") {
+        var ab = coerceNum(args[0]);
+        stack.push(typeof ab === "number" ? Math.abs(ab) : "#VALUE!");
       }
-      else if (funcName === "IF") {
-        var argsIf = [];
-        while (argsIf.length < 3) argsIf.unshift(stack.pop());
-        var cond = argsIf[0], thenV = argsIf[1], elseV = argsIf[2];
-        var result = (cond && cond !== 0 && cond !== "false") ? thenV : elseV;
-        stack.push(result);
+      else if (fn === "IF") {
+        if (args.length < 2) { stack.push("#VALUE!"); continue; }
+        var cond = args[0];
+        var truthy = (typeof cond === "number" && cond !== 0) || cond === "TRUE";
+        stack.push(truthy ? args[1] : (args.length > 2 ? args[2] : ""));
       }
-      else if (funcName === "AND") {
-        var result = true, arr = [];
-        while (stack.length && typeof stack[stack.length-1] !== "string" || stack.length > 0) {
-          arr.unshift(stack.pop());
-          if (arr.length >= 30) break; /* safety */
-          if (stack.length === 0) break;
-        }
-        for (var j = 0; j < arr.length; j++) {
-          if (!arr[j] || arr[j] === 0 || arr[j] === "false") { result = false; break; }
-        }
-        stack.push(result ? 1 : 0);
+      else if (fn === "AND") {
+        var ra = 1;
+        for (var q = 0; q < flat.length; q++)
+          if (!(flat[q] === 1 || (typeof flat[q] === "number" && flat[q] !== 0) || flat[q] === "TRUE"))
+            { ra = 0; break; }
+        stack.push(ra);
       }
-      else if (funcName === "OR") {
-        var result = false, arr = [];
-        while (stack.length && (typeof stack[stack.length-1] !== "string" || stack.length > 0)) {
-          arr.unshift(stack.pop());
-          if (arr.length >= 30) break;
-          if (stack.length === 0) break;
-        }
-        for (var j = 0; j < arr.length; j++) {
-          if (arr[j] && arr[j] !== 0 && arr[j] !== "false") { result = true; break; }
-        }
-        stack.push(result ? 1 : 0);
+      else if (fn === "OR") {
+        var ro = 0;
+        for (var q = 0; q < flat.length; q++)
+          if (flat[q] === 1 || (typeof flat[q] === "number" && flat[q] !== 0) || flat[q] === "TRUE")
+            { ro = 1; break; }
+        stack.push(ro);
       }
-      else if (funcName === "NOT") {
-        var val = stack.pop();
-        stack.push(!(val && val !== 0 && val !== "false") ? 1 : 0);
+      else if (fn === "NOT") {
+        var nn = args[0];
+        stack.push(!(nn === 1 || (typeof nn === "number" && nn !== 0) || nn === "TRUE") ? 1 : 0);
       }
-      else if (funcName === "CONCAT") {
-        var str = "", arr = [];
-        while (stack.length && typeof stack[stack.length-1] !== "string" || stack.length > 0) {
-          arr.unshift(stack.pop());
-          if (stack.length === 0) break;
-        }
-        for (var j = 0; j < arr.length; j++) {
-          str += (arr[j] !== undefined && arr[j] !== null) ? String(arr[j]) : "";
-        }
-        stack.push(str);
+      else if (fn === "CONCAT" || fn === "CONCATENATE") {
+        var cs = "";
+        for (var q = 0; q < flat.length; q++)
+          cs += (flat[q] === null || flat[q] === undefined) ? "" : String(fmtVal(flat[q]));
+        stack.push(cs);
       }
-      else {
-        /* Unknown function */
-        stack.push("#NAME?");
-      }
+      else { stack.push("#NAME?"); }
     }
   }
-  
+
   if (stack.length !== 1) return "#ERROR!";
   var result = stack[0];
   if (result === undefined || result === null) return "";
@@ -784,109 +976,190 @@ function evaluate(ast, visitingRefSet) {
   return result;
 }
 
-function computeCellValue(r, c) {
-  var cell = getCell(r, c);
-  if (!cell) return "";
-  var raw = cell.v;
-  
-  if (typeof raw !== "string") return raw;
-  if (raw === "") return "";
-  
-  /* Check for error markers already in the cell */
-  if (raw === "#CYC!" || raw === "#REF!" || raw === "#VALUE!" || 
-      raw === "#NAME?" || raw === "#ERROR!") return raw;
-  
-  /* Plain formula */
-  if (raw.charAt(0) === "=") {
-    var tokens = tokenize(raw);
-    var ast = parse(tokens);
-    var visiting = {};
-    var result = evaluate(ast, visiting);
-    if (typeof result === "string" && result.charAt(0) === "#") return result;
-    if (typeof result === "number") {
-      /* Format nicely — no trailing zeros */
-      return String(Number(result.toFixed(10)));
+function fmtVal(v) {
+  if (typeof v === "number") return String(Number(v.toFixed(10)));
+  return String(v);
+}
+ 
+/* --- NUMBER FORMAT rendering (display layer only) --- */
+function fmtDisplay(disp, nf) {
+  if (nf === "gen" || !nf || disp === "" || disp.charAt(0) === "#") return disp;
+  var n = parseFloat(disp);
+  if (isNaN(n)) return disp; /* text: format ignores */
+  if (nf === "0") return String(Math.round(n));
+  if (nf === "2") return n.toFixed(2);
+  if (nf === "%") return (n * 100).toFixed(1) + "%";
+  if (nf === "\u20AC") return n.toFixed(2) + " \u20AC";
+  return disp;
+}
+
+/* ===== SECTION 3b2: CLIPBOARD (internal, ref-shifting) ===== */
+
+/* CLIP = { sid, w, h, cells: [[{v,f}|null,...],...] } — device-local */
+var CLIP = null;
+
+function copySelection(cut) {
+  if (editing) cancelEdit();
+  var top = selTop(), bot = selBottom(), lef = selLeft(), rig = selRight();
+  var cells = [], r, c;
+  for (r = top; r <= bot; r++) {
+    var rowArr = [];
+    for (c = lef; c <= rig; c++) {
+      var sn = snapCell(actSID, r, c);
+      rowArr.push(sn ? { v: sn.v, f: sn.f ? clone(sn.f) : undefined } : null);
     }
-    return result;
+    cells.push(rowArr);
   }
-  
-  /* Plain text or number literal */
-  return raw;
+    CLIP = { sid: actSID, w: rig - lef + 1, h: bot - top + 1, cells: cells,
+           originR: top, originC: lef };
+
+  if (cut) {
+    var entries = [];
+    for (r = top; r <= bot; r++)
+      for (c = lef; c <= rig; c++) {
+        var before = snapCell(actSID, r, c);
+        if (before) {
+          rawDel(actSID, r, c);
+          entries.push({ key: cellKey(actSID, r, c), before: before, after: null });
+        }
+      }
+    if (entries.length) {
+      invalidateEval();
+      markDirty();
+      pushUndo(entries);
+    }
+    renderGrid();
+    renderSelection();
+  }
 }
 
-/* ===== SECTION 2c: STORAGE FUNNEL (load/save) ===== */
-
-var saveTimer = null;
-
-function queueSave() {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveNow, 400); /* rapid cell-entry cadence */
-}
-
-function saveNow() {
-  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) { /* quota — notifications channel is Wave 2 (emit inbox) */ }
-}
-
-function loadState() {
-  var raw = null;
-  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-  var st = null;
-  if (raw) {
-    try { st = JSON.parse(raw); } catch (e) { st = null; }
-    if (!st) {
-      /* CORRUPTION RESCUE (Data Safety Supremacy) */
-      try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e2) {}
+/* Shift relative refs in "=FORMULA" by (dr, dc). Built on tokenize:
+   strings stay verbatim; plain A1 / A1:B10 refs shift; SHEET!refs
+   stay (Calc behaviour); refs shifting out of bounds -> #REF!. */
+function shiftFormula(formula, dr, dc) {
+  if (dr === 0 && dc === 0) return formula;
+  var tokens = tokenize(formula);
+  var out = "", i, tk;
+  /* We rebuild from tokens: faithful because tokenize round-trips
+     everything we accept in input. Separator ; preserved. */
+  for (i = 0; i < tokens.length; i++) {
+    tk = tokens[i];
+    if (tk.type === TT_REF) {
+      out += shiftRefToken(tk.value, dr, dc);
+    } else if (tk.type === TT_FUNC) {
+      out += tk.value; /* "(" arrives from the TT_LPAREN token itself */
+    } else if (tk.type === TT_OP || tk.type === TT_LPAREN ||
+               tk.type === TT_RPAREN || tk.type === TT_SEP) {
+      out += (tk.type === TT_SEP) ? tk.value : tk.value;
+      if (tk.type === TT_FUNC) out += "";
+    } else if (tk.type === TT_NUM) {
+      out += String(tk.value);
+    } else if (tk.type === TT_STR) {
+      out += '"' + String(tk.value).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    } else if (tk.type === TT_ERROR) {
+      out += tk.value;
     }
   }
-  state = normalizeState(st);
-  if (!state) {
-    state = blankState();
-    if (raw) setTimeout(function () { toast(t("err.corrupt")); }, 400);
-  }
+  return "=" + out;
 }
 
-/* markDirty gains the persistence funnel (hoisting makes the
-   queueSave declaration above visible here) — the sync echo
-   path NEVER comes through here (sliceSet writes directly). */
-/* replaces the Section 3a stub:
-   function markDirty() { dirtyFlag = true; updateStatus();
-     if (syncApi && syncApi.dirty) syncApi.dirty(); }
-   — full replacement below in Section 4 wiring order. */
+/* token reconstruction cleanup: SEP tokens emit ',' or ';' as-is. */
 
-/* ===== SECTION 3c: RENDER ===== */
+function shiftRefToken(ref, dr, dc) {
+  var parts = ref.split("!");
+  var sheetPart = parts.length > 1 ? parts[0] + "!" : "";
+  var cellPart = parts[parts.length - 1];
+  var halves = cellPart.split(":");
+  var shifted = [], hi;
+  for (hi = 0; hi < halves.length; hi++) {
+    var m = halves[hi].match(/^([A-Z]+)(\d+)$/);
+    if (!m) return ref; /* unparseable — leave untouched */
+    var c = colFromName(m[1]), r = parseInt(m[2], 10) - 1;
+    var nr = r + dr, nc = c + dc;
+    if (nr < 0 || nc < 0 || nc > 63) return "#REF!";
+    shifted.push(colName(nc) + (nr + 1));
+  }
+  return sheetPart + shifted.join(":");
+}
 
-var cellRefs = [];   /* cellRefs[r][c] -> td */
-var headRow = null;  /* thead row */
-var rowHeads = [];   /* rowHeads[r] -> th.rowh */
-var colHeads = [];   /* colHeads[c] -> thead th */
-var DISP = {};       /* per-render display memo (cleared each pass) */
-var lastPainted = [];/* lastPainted[r][c] -> last text set (skip no-op) */
+/* Copy/Cut strips the leading "=" problem: tokenizer emits raw for
+   non-"=" strings, so formulas always enter shiftFormula with "=".
+   But our token rebuild loses original spacing — acceptable, we
+   STORE canonical rebuilt form (single source of truth).        */
+
+function pasteClipboard() {
+  if (editing) cancelEdit();
+  if (!CLIP) { notifyTransient(t("clip.empty")); return; }
+  var sheet = getActiveSheet();
+  if (!sheet) return;
+
+  var top = selTop(), lef = selLeft();
+  var entries = [], r, c;
+
+  for (r = 0; r < CLIP.h; r++) {
+    for (c = 0; c < CLIP.w; c++) {
+      var tr = top + r, tc = lef + c;
+      if (tr >= sheet.rows || tc >= sheet.cols) continue; /* clip overflow */
+      var src = CLIP.cells[r][c];
+      var key = cellKey(actSID, tr, tc);
+      var before = snapCell(actSID, tr, tc);
+      if (!src) {
+        /* source empty — clear target */
+        if (before) {
+          rawDel(actSID, tr, tc);
+          entries.push({ key: key, before: before, after: null });
+        }
+        continue;
+      }
+      var nv = src.v;
+      /* shift relative refs by the paste offset from source origin */
+      if (nv.charAt(0) === "=" && CLIP.originR !== undefined) {
+        nv = shiftFormula(nv, top - CLIP.originR, lef - CLIP.originC);
+      }
+      var after = { v: nv };
+      if (src.f) after.f = clone(src.f);
+      rawSet(actSID, tr, tc, nv, after.f);
+      entries.push({ key: key, before: before,
+        after: { v: nv, f: src.f ? clone(src.f) : undefined } });
+    }
+  }
+
+  if (entries.length) {
+    invalidateEval();
+    markDirty();
+    pushUndo(entries);
+  }
+  /* selection expands to pasted rect */
+  selR = top; selC = lef;
+  selAR = Math.min(top + CLIP.h - 1, sheet.rows - 1);
+  selAC = Math.min(lef + CLIP.w - 1, sheet.cols - 1);
+  renderGrid();
+  renderSelection();
+}
+
+/* ===== SECTION 3c: RENDER (formats + rangesel + col widths) ===== */
+
+var cellRefs = [];
+var headRow = null;
+var rowHeads = [];
+var colHeads = [];
+var DISP = {};
+var lastPainted = [];
 
 function buildGrid() {
   var tbl = $("grid");
-  console.log("[SS] buildGrid: #grid found =", !!tbl);
   if (!tbl) { console.error("[SS] CRITICAL: #grid element missing!"); return; }
 
   var sheet = getActiveSheet();
-  console.log("[SS] buildGrid: sheet =", JSON.stringify(sheet));
+  if (!sheet) { console.error("[SS] CRITICAL: no active sheet!"); return; }
 
-  /* Safety net: repair invalid dimensions before building */
-  if (!sheet || typeof sheet.rows !== "number" || sheet.rows < 1 ||
-      typeof sheet.cols !== "number" || sheet.cols < 1) {
-    console.error("[SS] CRITICAL: invalid sheet dimensions!");
-    if (!sheet) {
-      state.sheets = [blankState().sheets[0]];
-      sheet = state.sheets[0];
-    }
-    sheet.rows = (typeof sheet.rows === "number" && sheet.rows > 0) ? sheet.rows : ROWS;
-    sheet.cols = (typeof sheet.cols === "number" && sheet.cols > 0) ? sheet.cols : COLS;
-    console.warn("[SS] repaired dims:", sheet.rows + "x" + sheet.cols);
-  }
+  if (typeof sheet.rows !== "number" || sheet.rows < 1) sheet.rows = ROWS;
+  if (typeof sheet.cols !== "number" || sheet.cols < 1) sheet.cols = COLS;
+  if (!sheet.cw || typeof sheet.cw !== "object") sheet.cw = {};
 
   var r, c, tr, th, td;
+
+  tbl.innerHTML = "";
 
   var thead = document.createElement("thead");
   headRow = document.createElement("tr");
@@ -897,6 +1170,7 @@ function buildGrid() {
   for (c = 0; c < sheet.cols; c++) {
     th = document.createElement("th");
     th.textContent = colName(c);
+    if (sheet.cw[c]) th.style.width = sheet.cw[c] + "px";
     headRow.appendChild(th);
     colHeads.push(th);
   }
@@ -915,6 +1189,7 @@ function buildGrid() {
     cellRefs[r] = []; lastPainted[r] = [];
     for (c = 0; c < sheet.cols; c++) {
       td = document.createElement("td");
+      if (sheet.cw[c]) { td.style.width = sheet.cw[c] + "px"; td.style.minWidth = sheet.cw[c] + "px"; }
       tr.appendChild(td);
       cellRefs[r][c] = td;
       lastPainted[r][c] = null;
@@ -922,34 +1197,69 @@ function buildGrid() {
     tbody.appendChild(tr);
   }
   tbl.appendChild(tbody);
-  console.log("[SS] buildGrid COMPLETE:", sheet.rows + "x" + sheet.cols);
+  initColResize();
 }
 
 function displayVal(r, c) {
   var k = r + "," + c;
   if (DISP.hasOwnProperty(k)) return DISP[k];
-  var v = computeCellValue(r, c);
+  var cel = getCell(r, c);
+  var v = cel ? cel.v : "";
+  if (v !== "" && v.charAt(0) === "=") {
+    var res = evalCell(actSID, r, c, {});
+    v = isError(res) ? res : fmtVal(res);
+  }
+  if (cel && cel.f && cel.f.nf) v = fmtDisplay(v, cel.f.nf);
   DISP[k] = v;
   return v;
 }
 
 function paintCell(r, c) {
-  if (editing && editingR === r && editingC === c) return; /* editor owns it */
+  if (editing && editingR === r && editingC === c) return;
   var td = cellRefs[r] && cellRefs[r][c];
   if (!td) return;
+  var cel = getCell(r, c);
   var disp = displayVal(r, c);
-  if (lastPainted[r][c] === disp) return; /* surgical — skip no-op */
-  lastPainted[r][c] = disp;
-  td.textContent = disp;
+  if (lastPainted[r][c] !== disp) {
+    lastPainted[r][c] = disp;
+    td.textContent = disp;
+  }
+
+  /* class rebuild: base (num/err) + format + selection */
   var cls = "";
   if (disp !== "" && disp.charAt(0) === "#") cls = "err";
   else if (disp !== "" && isFinite(parseFloat(disp))) cls = "num";
-  td.className = cls; /* .sel re-applied by renderSelection */
+
+  var f = cel && cel.f;
+  if (f) {
+    if (f.b) cls += " fb";
+    if (f.i) cls += " fi";
+    if (f.u) cls += " fu";
+    if (f.al === "c") cls += " fa-c";
+    else if (f.al === "r") cls += " fa-r";
+  }
+  var inRange = (r >= selTop() && r <= selBottom() &&
+                 c >= selLeft() && c <= selRight());
+  if (inRange && !(r === selR && c === selC) && selIsRange()) cls += " rangesel";
+  if (r === selR && c === selC) cls += " sel";
+
+  /* cssText rebuild is cheap but className compares stale: use data attr */
+  if (td.dataset.cls !== cls) {
+    td.dataset.cls = cls;
+    td.className = cls;
+  }
+  if (f && f.co) td.style.color = f.co;
+  else if (td.style.color) td.style.color = "";
 }
 
+/* format CSS lives in stylesheet? No — minimal inline classes: */
+/* injected once via a <style> tag at the end of this section.   */
+
 function renderGrid() {
+  if (EVAL_DIRTY) { EVAL_CACHE = {}; EVAL_DIRTY = false; }
   DISP = {};
   var sheet = getActiveSheet(), r, c;
+  if (!sheet) return;
   for (r = 0; r < sheet.rows; r++)
     for (c = 0; c < sheet.cols; c++) paintCell(r, c);
 }
@@ -963,34 +1273,44 @@ function renderSelection() {
   for (i = 0; i < colHeads.length; i++)
     colHeads[i].classList.remove("hl");
 
-  /* clear previous .sel (single-cursor Wave 1 — O(visible) scan) */
-  var prev = document.querySelectorAll("#grid td.sel");
+  var prev = document.querySelectorAll("#grid td.sel, #grid td.rangesel");
   for (i = 0; i < prev.length; i++)
-    prev[i].classList.remove("sel");
+    prev[i].classList.remove("sel", "rangesel");
 
   if (selR < 0 || selC < 0) return;
   var td = cellRefs[selR] && cellRefs[selR][selC];
   if (td) td.classList.add("sel");
   if (rowHeads[selR]) rowHeads[selR].classList.add("hl");
   if (colHeads[selC + 1]) colHeads[selC + 1].classList.add("hl");
+  if (selIsRange()) {
+    var r, c;
+    for (r = selTop(); r <= selBottom(); r++)
+      for (c = selLeft(); c <= selRight(); c++) {
+        if (r === selR && c === selC) continue;
+        var rt = cellRefs[r] && cellRefs[r][c];
+        if (rt) rt.classList.add("rangesel");
+      }
+    /* header spans light up across the range */
+    for (i = selTop(); i <= selBottom(); i++) rowHeads[i].classList.add("hl");
+    for (i = selLeft(); i <= selRight(); i++) colHeads[i + 1].classList.add("hl");
+  }
 
-  var refTxt = colName(selC) + (selR + 1);
+  var refTxt = colName(selC) + (selR + 1) +
+    (selIsRange() ? ":" + colName(selRight()) + (selBottom() + 1) : "");
   $("st-sel").textContent = refTxt;
-  $("fx-ref").textContent = refTxt;
+  $("fx-ref").textContent = colName(selC) + (selR + 1);
   if (!fxFocused) {
     var cel = getCell(selR, selC);
     $("fx-input").value = cel ? cel.v : "";
   }
+  updateToolbar();
 }
 
 /* ===== SECTION 3d: EDITING FLOW ===== */
 
-var editing = false, editingR = -1, editingC = -1;
-var editInput = null;
-var fxFocused = false;
-
 function beginEdit(initialText) {
   if (editing) return;
+  collapseSel(); /* typing replaces the range — single-cell edit */
   editing = true; editingR = selR; editingC = selC;
   var td = cellRefs[selR] && cellRefs[selR][selC];
   if (!td) { editing = false; return; }
@@ -1017,19 +1337,21 @@ function beginEdit(initialText) {
     if (e.key === "Enter") { e.preventDefault(); commitEdit(1, 0); }
     else if (e.key === "Tab") { e.preventDefault(); commitEdit(0, 1); }
     else if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
-    e.stopPropagation(); /* Contract Β forwarder must not see editor keys */
+    e.stopPropagation();
   });
   editInput.addEventListener("input", function () {
-    $("fx-input").value = editInput.value; /* live mirror to formula bar */
+    $("fx-input").value = editInput.value;
   });
 }
 
 function endEditDom() {
   var td = cellRefs[editingR] && cellRefs[editingR][editingC];
-  if (td && td.contains(editInput)) td.removeChild(editInput);
+  if (td && editInput && td.contains(editInput)) td.removeChild(editInput);
   editInput = null;
   editing = false;
-  lastPainted[editingR][editingC] = null; /* force repaint */
+  lastPainted[editingR][editingC] = null;
+  if (cellRefs[editingR] && cellRefs[editingR][editingC])
+    delete cellRefs[editingR][editingC].dataset.cls;
   editingR = -1; editingC = -1;
 }
 
@@ -1040,14 +1362,13 @@ function commitEdit(dr, dc) {
   var r = editingR, c = editingC;
   if (val === "") {
     if (getCell(r, c)) deleteCell(r, c);
-    else { /* editing an empty cell to nothing = zero-edit close,
-              NO mtime stamp, NO tombstone (Bible Part VIII) */ }
   } else {
     setCell(r, c, val);
   }
   endEditDom();
   queueSave();
-  refreshCell(r, c);
+  invalidateEval();
+  renderGrid();
   if (dr || dc) navigate(dr, dc);
   renderSelection();
 }
@@ -1061,12 +1382,24 @@ function cancelEdit() {
   $("grid-wrap").focus();
 }
 
-function navigate(dr, dc) {
+function navigate(dr, dc, extend) {
   var sheet = getActiveSheet();
+  if (!sheet) return;
   var nr = Math.min(Math.max(selR + dr, 0), sheet.rows - 1);
   var nc = Math.min(Math.max(selC + dc, 0), sheet.cols - 1);
+  if (extend) {
+    /* Shift+Arrow: extend the range from the anchor */
+    selR = nr; selC = nc;
+    renderSelection();
+    var td = cellRefs[selR] && cellRefs[selR][selC];
+    if (td) {
+      try { td.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+      catch (e) {}
+    }
+    return;
+  }
   if (nr === selR && nc === selC) return;
-  selR = nr; selC = nc;
+  collapseSel(nr, nc);
   renderSelection();
   var td = cellRefs[selR] && cellRefs[selR][selC];
   if (td) {
@@ -1077,14 +1410,505 @@ function navigate(dr, dc) {
 
 function clearSelected() {
   if (editing) return;
+  if (selIsRange()) { deleteSelection(); return; }
   if (getCell(selR, selC)) {
     deleteCell(selR, selC);
     queueSave();
-    refreshCell(selR, selC);
+    invalidateEval();
+    renderGrid();
   }
 }
 
+/* ===== SECTION 3d2: FORMAT OPS (undoable, whole-selection) ===== */
+
+function applyFormatToSelection(mut) {
+  if (editing) cancelEdit();
+  var entries = [], r, c, changed = false;
+  for (r = selTop(); r <= selBottom(); r++)
+    for (c = selLeft(); c <= selRight(); c++) {
+      var key = cellKey(actSID, r, c);
+      var before = snapCell(actSID, r, c);
+      var cel = state.cells[key];
+      var f = cel && cel.f ? clone(cel.f) : {};
+      var res = mut(f); /* returns {v?, f} or null to delete cell */
+      if (!res) continue;
+      if (res.remove) {
+        if (before) {
+          rawDel(actSID, r, c);
+          entries.push({ key: key, before: before, after: null });
+          changed = true;
+        }
+        continue;
+      }
+      var nv = res.v !== undefined ? res.v : (cel ? cel.v : "");
+      var sf = sanitizeF(res.f);
+      if (!sf && nv === "") {
+        if (before) {
+          rawDel(actSID, r, c);
+          entries.push({ key: key, before: before, after: null });
+          changed = true;
+        }
+        continue;
+      }
+      rawSet(actSID, r, c, nv, sf);
+      entries.push({ key: key, before: before,
+        after: snapCell(actSID, r, c) });
+      changed = true;
+    }
+  if (changed) {
+    markDirty();
+    pushUndo(entries);
+    invalidateEval();
+    renderGrid();
+    renderSelection();
+  }
+}
+
+function fmtToggle(field) {
+  return function (f) {
+    f[field] = f[field] ? 0 : 1;
+    return { f: f };
+  };
+}
+
+function fmtAlign(al) {
+  return function (f) {
+    if (f.al === al) delete f.al; else f.al = al;
+    return { f: f };
+  };
+}
+
+function fmtColor(co) {
+  return function (f) {
+    if (f.co === co) delete f.co; else f.co = co;
+    return { f: f };
+  };
+}
+
+function fmtNumFormat(nf) {
+  return function (f) {
+    if (!nf || f.nf === nf || (nf === "gen")) delete f.nf; else f.nf = nf;
+    return { f: f };
+  };
+}
+
+function clearFormat() {
+  return function (f) { return { f: {} }; };
+}
+
+/* SWATCHES — 8 preset colors from OS palette space */
+var SWATCHES = ["#c8a96e","#d9bd88","#87cf3e","#e0a44c",
+                "#e06c75","#a78bfa","#7dd3fc","#e8e4dc"];
+
+function toggleSwatchPopover() {
+  var pop = $("swatches");
+  if (!pop) return;
+  if (!pop.hidden) { pop.hidden = true; return; }
+  pop.innerHTML = "";
+  var btn = $("tb-col");
+  var br = btn.getBoundingClientRect();
+  pop.style.left = Math.max(4, br.left) + "px";
+  pop.style.top = (br.bottom + 4) + "px";
+  var i;
+  for (i = 0; i < SWATCHES.length; i++) {
+    (function (co) {
+      var sw = document.createElement("div");
+      sw.className = "sw";
+      sw.style.background = co;
+      sw.title = co;
+      sw.addEventListener("click", function () {
+        applyFormatToSelection(fmtColor(co));
+        pop.hidden = true;
+      });
+      pop.appendChild(sw);
+    })(SWATCHES[i]);
+  }
+  pop.hidden = false;
+}
+
+/* --- toolbar state reflection --- */
+function updateToolbar() {
+  var u = $("tb-undo"), rd = $("tb-redo");
+  if (u) u.disabled = undoStack.length === 0;
+  if (rd) rd.disabled = redoStack.length === 0;
+
+  var cel = getCell(selR, selC);
+  var f = cel && cel.f;
+  var on = function (id, flag) {
+    var el = $(id);
+    if (el) { if (flag) el.classList.add("on"); else el.classList.remove("on"); }
+  };
+  on("tb-bold", !!(f && f.b));
+  on("tb-ital", !!(f && f.i));
+  on("tb-und",  !!(f && f.u));
+  on("tb-al-l", !f || !f.al || f.al === "l");
+  on("tb-al-c", !!(f && f.al === "c"));
+  on("tb-al-r", !!(f && f.al === "r"));
+  var nf = $("tb-nf");
+  if (nf) nf.value = (f && f.nf) ? f.nf : "gen";
+}
+
+/* ===== SECTION 3d3: COLUMN RESIZE (mouse only) ===== */
+
+function initColResize() {
+  var dragging = null, startX = 0, startW = 0, colIdx = -1;
+  var i;
+  for (i = 1; i < colHeads.length; i++) {
+    (function (th, ci) {
+      th.addEventListener("mousemove", function (e) {
+        if (dragging) return;
+        var rect = th.getBoundingClientRect();
+        if (e.clientX > rect.right - 6) th.classList.add("colresize");
+        else th.classList.remove("colresize");
+      });
+      th.addEventListener("mousedown", function (e) {
+        var rect = th.getBoundingClientRect();
+        if (e.clientX <= rect.right - 6) return; /* not on the edge */
+        e.preventDefault();
+        dragging = th; startX = e.clientX;
+        startW = rect.width; colIdx = ci - 1;
+      });
+    })(colHeads[i], i);
+  }
+  var sheet = getActiveSheet();
+  function onMouseMove(e) {
+    if (!dragging || !sheet) return;
+    var w = Math.max(40, Math.min(400, startW + (e.clientX - startX)));
+    sheet.cw = sheet.cw || {};
+    sheet.cw[colIdx] = w;
+    if (colHeads[colIdx + 1]) colHeads[colIdx + 1].style.width = w + "px";
+    var r;
+    for (r = 0; r < cellRefs.length; r++) {
+      if (cellRefs[r][colIdx]) {
+        cellRefs[r][colIdx].style.width = w + "px";
+        cellRefs[r][colIdx].style.minWidth = w + "px";
+      }
+    }
+  }
+  function onMouseUp() {
+    if (!dragging) return;
+    dragging = null;
+    /* persist via sheet entity LWW */
+    sheet.mtime = now();
+    markDirty();
+  }
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+}
+
+/* ===== SECTION 3e: SHEET TABS (unchanged from Wave 2) ===== */
+
+function displayName(sh) {
+  if (!sh) return "";
+  if (sh.name !== null && sh.name !== undefined) return sh.name;
+  return sh.bi ? (sh.bi[LANG] || sh.bi.en || sh.id) : sh.id;
+}
+
+function nextSheetNumber() {
+  var n = 1, i;
+  for (i = 0; i < state.sheets.length; i++) {
+    var m = displayName(state.sheets[i]).match(/(\d+)\s*$/);
+    if (m) n = Math.max(n, parseInt(m[1], 10));
+  }
+  return n + 1;
+}
+
+function maxPos() {
+  var p = 0, i;
+  for (i = 0; i < state.sheets.length; i++)
+    if ((state.sheets[i].pos || 0) > p) p = state.sheets[i].pos;
+  return p;
+}
+
+var armX = { id: null, timer: null };
+
+function renderTabs() {
+  var nav = $("stabs");
+  if (!nav) return;
+  nav.innerHTML = "";
+
+  var sheets = state.sheets.slice().sort(function (a, b) {
+    var d = (a.pos || 0) - (b.pos || 0);
+    return d !== 0 ? d : (a.id < b.id ? -1 : (a.id > b.id ? 1 : 0));
+  });
+
+  var i;
+  for (i = 0; i < sheets.length; i++) {
+    (function (sh) {
+      var tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "stab" + (sh.id === actSID ? " active" : "");
+
+      var label = document.createElement("span");
+      label.className = "stab-label";
+      label.textContent = displayName(sh);
+      tab.appendChild(label);
+
+      var x = document.createElement("span");
+      x.className = "stab-x";
+      x.innerHTML = IC_X;
+      x.title = t("tab.confirm");
+      if (armX.id === sh.id) x.classList.add("armed");
+      x.addEventListener("click", function (e) {
+        e.stopPropagation();
+        tryDeleteSheet(sh.id);
+      });
+      tab.appendChild(x);
+
+      tab.addEventListener("click", function (e) {
+        if (e.target.classList && e.target.classList.contains("stab-x")) return;
+        if (editing) commitEdit(0, 0);
+        switchTo(sh.id);
+      });
+      tab.addEventListener("dblclick", function (e) {
+        if (e.target.classList && e.target.classList.contains("stab-x")) return;
+        beginRename(tab, label, sh);
+      });
+
+      nav.appendChild(tab);
+    })(sheets[i]);
+  }
+
+  var add = document.createElement("button");
+  add.type = "button";
+  add.className = "stab-add";
+  add.innerHTML = IC_ADD;
+  add.title = "+";
+  add.addEventListener("click", function () {
+    if (editing) commitEdit(0, 0);
+    addSheet();
+  });
+  nav.appendChild(add);
+}
+
+function switchTo(id) {
+  if (id === actSID) return;
+  if (!getSheetById(id)) return;
+  actSID = id;
+  saveActive();
+  collapseSel(0, 0);
+  buildGrid();
+  renderTabs();
+  renderGrid();
+  renderSelection();
+  $("grid-wrap").focus();
+}
+
+function addSheet() {
+  var n = nextSheetNumber();
+  var sh = {
+    id: uid(),
+    name: null,
+    bi: { en: "Sheet" + n, el: "\u03A6\u03CD\u03BB\u03BB\u03BF" + n },
+    rows: ROWS, cols: COLS, cw: {},
+    pos: maxPos() + 1,
+    mtime: now()
+  };
+  state.sheets.push(sh);
+  markDirty();
+  switchTo(sh.id);
+}
+
+function tryDeleteSheet(id) {
+  if (state.sheets.length <= 1) { toast(t("sheet.last")); return; }
+
+  if (armX.id !== id) {
+    if (armX.timer) clearTimeout(armX.timer);
+    armX.id = id;
+    armX.timer = setTimeout(function () {
+      armX.id = null; renderTabs();
+    }, 3000);
+    toast(t("tab.confirm"));
+    renderTabs();
+    return;
+  }
+  if (armX.timer) { clearTimeout(armX.timer); }
+  armX = { id: null, timer: null };
+
+  deleteSheet(id);
+}
+
+function deleteSheet(id) {
+  var i, k;
+
+  for (i = 0; i < state.sheets.length; i++) {
+    if (state.sheets[i] && state.sheets[i].id === id) {
+      state.sheets.splice(i, 1); break;
+    }
+  }
+
+  var ts = now();
+  state.deleted[id] = ts;
+  var pref = id + "|";
+  for (k in state.cells)
+    if (k.indexOf(pref) === 0) delete state.cells[k];
+
+  if (actSID === id) {
+    actSID = state.sheets[0] ? state.sheets[0].id : SID;
+    collapseSel(0, 0);
+    buildGrid();
+  }
+
+  markDirty();
+  renderTabs();
+  renderGrid();
+  renderSelection();
+  $("grid-wrap").focus();
+}
+
+function beginRename(tabEl, labelEl, sh) {
+  var inp = document.createElement("input");
+  inp.type = "text";
+  inp.value = displayName(sh);
+  inp.maxLength = 24;
+  inp.autocomplete = "off";
+  inp.spellcheck = false;
+  labelEl.style.display = "none";
+  tabEl.insertBefore(inp, labelEl);
+  inp.focus();
+  inp.setSelectionRange(inp.value.length, inp.value.length);
+
+  var done = false;
+  function finish(commit) {
+    if (done) return;
+    done = true;
+    if (commit) {
+      var nv = inp.value.replace(/^\s+|\s+$/g, "");
+      if (nv && nv !== displayName(sh)) {
+        sh.name = nv;
+        sh.bi = undefined;
+        sh.mtime = now();
+        markDirty();
+      }
+    }
+    tabEl.removeChild(inp);
+    labelEl.style.display = "";
+    renderTabs();
+    renderGrid();
+    $("grid-wrap").focus();
+  }
+
+  inp.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); finish(true); }
+    else if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    e.stopPropagation();
+  });
+  inp.addEventListener("blur", function () { finish(true); });
+  inp.addEventListener("click", function (e) { e.stopPropagation(); });
+}
+
+/* ===== SECTION 3f: CSV IMPORT / EXPORT ===== */
+
+function csvEscape(v) {
+  v = String(v);
+  if (/[",;\n]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
+  return v;
+}
+
+function csvExport() {
+  var sheet = getActiveSheet();
+  if (!sheet) return;
+
+  var maxR = -1, maxC = -1, pref = actSID + "|", k;
+  for (k in state.cells) {
+    if (k.indexOf(pref) !== 0) continue;
+    var p = k.split("|");
+    var r = parseInt(p[1], 10), c = parseInt(p[2], 10);
+    if (r > maxR) maxR = r;
+    if (c > maxC) maxC = c;
+  }
+  if (maxR < 0) { toast(t("err.corrupt")); return; }
+
+  var lines = [], r, c, row;
+  for (r = 0; r <= maxR; r++) {
+    row = [];
+    for (c = 0; c <= maxC; c++) {
+      var cel = state.cells[cellKey(actSID, r, c)];
+      row.push(cel ? csvEscape(cel.v) : "");
+    }
+    lines.push(row.join(","));
+  }
+  var csv = lines.join("\r\n");
+
+  var safeName = displayName(sheet).replace(/[^\w\- ]+/g, "_") || "sheet";
+  var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = safeName + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () {
+    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
+  }, 500);
+  notifyTransient(t("csv.exported"));
+}
+
+function csvParse(text) {
+  var rows = [], row = [], field = "", inQ = false, i, ch;
+  for (i = 0; i < text.length; i++) {
+    ch = text.charAt(i);
+    if (inQ) {
+      if (ch === '"') {
+        if (text.charAt(i + 1) === '"') { field += '"'; i++; }
+        else inQ = false;
+      } else field += ch;
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === "\n") { row.push(field); field = ""; rows.push(row); row = []; }
+      else if (ch === "\r") { }
+      else field += ch;
+    }
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function csvImport(file) {
+  var reader = new FileReader();
+  reader.onload = function () {
+    try {
+      var rows = csvParse(String(reader.result));
+      if (!rows.length) { toast(t("err.corrupt")); return; }
+
+      var n = nextSheetNumber();
+      var maxCols = 0, ii;
+      for (ii = 0; ii < rows.length; ii++)
+        if (rows[ii].length > maxCols) maxCols = rows[ii].length;
+
+      var sh = {
+        id: uid(),
+        name: null,
+        bi: { en: "Sheet" + n, el: "\u03A6\u03CD\u03BB\u03BB\u03BF" + n },
+        rows: Math.max(ROWS, rows.length + 5),
+        cols: Math.max(COLS, maxCols),
+        cw: {},
+        pos: maxPos() + 1,
+        mtime: now()
+      };
+      state.sheets.push(sh);
+
+      var r, c, ts = now();
+      for (r = 0; r < rows.length; r++)
+        for (c = 0; c < rows[r].length; c++)
+          if (rows[r][c] !== "")
+            state.cells[cellKey(sh.id, r, c)] = { v: rows[r][c], mtime: ts };
+
+      markDirty();
+      switchTo(sh.id);
+      notifyTransient(t("csv.imported"));
+    } catch (e) {
+      console.error("[SS] CSV import failed:", e);
+      toast(t("err.corrupt"));
+    }
+  };
+  reader.readAsText(file, "utf-8");
+}
+
 /* ===== SECTION 4: SYNC SLICE + PALETTE + NOTIFICATIONS ===== */
+
+var syncApi = null;
 
 var __ss = { _suppress: false,
   dirty: function () {
@@ -1093,28 +1917,46 @@ var __ss = { _suppress: false,
     if (api && typeof api.markDirty === "function") api.markDirty();
   } };
 
-function markDirty() {
-  dirtyFlag = true;
-  updateStatus();
-  queueSave();
-  __ss.dirty();
-}
+syncApi = __ss;
 
-function sliceGet() { return JSON.parse(JSON.stringify(state)); }
+function sliceGet() {
+  var out = clone(state);
+  /* Prune ancient tombstones from the SYNC PAYLOAD ONLY — local
+     state keeps everything. Deterministic cutoff (dataset max ts,
+     never wall clock) mirrors the mergeState rule exactly. */
+  var maxTs = 0, k;
+  for (k in out.deleted) if (out.deleted[k] > maxTs) maxTs = out.deleted[k];
+  if (maxTs > 0) {
+    var cutoff = maxTs - (30 * 24 * 60 * 60 * 1000);
+    for (k in out.deleted) if (out.deleted[k] < cutoff) delete out.deleted[k];
+  }
+  return out;
+}
 
 function sliceSet(data, info) {
   __ss._suppress = true;
   try {
     var merged = normalizeState(mergeState(sliceGet(), data));
     if (merged) state = merged;
-  } catch (e) { /* defensive: keep local state on malformed payload */ }
+  } catch (e) {}
   __ss._suppress = false;
-  saveNow(); /* local persistence only — NEVER markDirty (R6) */
-  if (editing) { cancelEdit(); } /* stale-target hygiene (R7 spirit) */
+
+  var act = getSheetById(actSID);
+  if (!act || state.deleted[actSID]) {
+    actSID = state.sheets[0] ? state.sheets[0].id : SID;
+    collapseSel(0, 0);
+    buildGrid();
+  }
+
+  saveNow();
+  if (editing) cancelEdit();
+  undoStack.length = 0; /* sync reshape — device-local undo voids */
+  redoStack.length = 0;
+  invalidateEval();
+  renderTabs();
   renderGrid();
   renderSelection();
-  /* NO merged-receipt toast — Wave 10/11 doctrine: the taskbar
-     sync dot is the feedback surface. info.merged noted, unused. */
+  updateToolbar();
 }
 
 function mergeFn(local, remote) {
@@ -1128,7 +1970,6 @@ function registerSync() {
     STORAGE_KEY, mergeFn);
 }
 
-/* IFRAME PALETTE CONTRACT (G3 — CI-enforced, MUST exist) */
 var PAL_VARS = ["--bg","--bg-desktop","--bar-bg","--text","--text-dim",
   "--accent","--accent-hover","--accent-soft","--panel-bg","--border",
   "--shadow","--danger","--ok","--warn","--font-stack","--mono"];
@@ -1137,12 +1978,12 @@ function inheritPalette() {
   var pd = null;
   try { pd = window.parent && window.parent.document; } catch (e) {}
   if (!pd || !pd.documentElement) return;
-  var de = document.documentElement;      /* element — for attributes */
-  var rs = de.style;                        /* CSSStyleDeclaration — for props */
+  var de = document.documentElement;
+  var rs = de.style;
   try {
     de.setAttribute("data-theme", pd.documentElement.getAttribute("data-theme") || "");
     de.setAttribute("data-skin", pd.documentElement.getAttribute("data-skin") || "");
-  } catch (e) { /* standalone run — attribute inheritance skipped */ }
+  } catch (e) {}
   for (var i = 0; i < PAL_VARS.length; i++) {
     var v = pd.documentElement.style.getPropertyValue(PAL_VARS[i]);
     if (v) rs.setProperty(PAL_VARS[i], v);
@@ -1159,8 +2000,6 @@ function watchPalette() {
       attributeFilter: ["data-skin", "data-theme"] });
 }
 
-/* NOTIFICATIONS — Kanban Wave 10 pattern (no KNOWN_APPS slot:
-   transient bypasses toggles by design; no background events). */
 function notifyTransient(text) {
   var nm = null;
   try { nm = (window.parent && window.parent.orosNotifs) || window.orosNotifs; }
@@ -1169,7 +2008,7 @@ function notifyTransient(text) {
     try { nm.transient({ ns: "spreadsheet", title: text }); return; }
     catch (e) {}
   }
-  toast(text); /* stale-bundle fallback */
+  toast(text);
 }
 
 function toast(text) {
@@ -1180,7 +2019,7 @@ function toast(text) {
     el.className = "ss-toast";
     document.body.appendChild(el);
   }
-  el.textContent = text; /* text node FIRST (Bible §16 toast contract) */
+  el.textContent = text;
   el.classList.add("on");
   clearTimeout(toast._t);
   toast._t = setTimeout(function () { el.classList.remove("on"); }, 5000);
@@ -1195,12 +2034,119 @@ function applyI18n() {
   document.documentElement.lang = LANG;
 }
 
+/* ---- inline SVG icons (Bible R9: HTML ships buttons EMPTY,
+        JS injects SVGs — no external deps, no unicode glyphs) ---- */
+var SVG_ATTRS = ' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"' +
+  ' width="15" height="15" fill="none" stroke="currentColor"' +
+  ' stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"' +
+  ' aria-hidden="true">';
+function svg(inner, txt) {
+  return "<svg" + SVG_ATTRS + (txt ? ' fill="currentColor" stroke="none"' : "") +
+    ">" + inner + "</svg>";
+}
+var ICONS = {
+  "tb-undo":  svg('<path d="M8 5 4 9l4 4"/><path d="M4 9h7a5 5 0 1 1 0 10H8"/>'),
+  "tb-redo":  svg('<path d="M12 5l4 4-4 4"/><path d="M16 9H9a5 5 0 1 0 0 10h3"/>'),
+  "tb-copy":  svg('<rect x="7" y="7" width="9" height="9" rx="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7"/>'),
+  "tb-cut":   svg('<circle cx="5.5" cy="5.5" r="2.2"/><circle cx="5.5" cy="14.5" r="2.2"/><path d="M7.4 7.2 17 16.5M7.4 12.8 17 3.5"/>'),
+  "tb-paste": svg('<rect x="5" y="4" width="10" height="13" rx="1.5"/><path d="M8 2.5h4v3H8z"/>'),
+  "tb-bold":  svg('<text x="10" y="15" text-anchor="middle" style="font:700 13px sans-serif">B</text>', true),
+  "tb-ital":  svg('<text x="10" y="15" text-anchor="middle" style="font:italic 600 13px sans-serif">I</text>', true),
+  "tb-und":   svg('<text x="10" y="14" text-anchor="middle" style="font:600 12px sans-serif">U</text><path d="M6 16h8"/>', true),
+  "tb-al-l":  svg('<path d="M3 6h14M3 10h9M3 14h12"/>'),
+  "tb-al-c":  svg('<path d="M3 6h14M5.5 10h9M4.5 14h11"/>'),
+  "tb-al-r":  svg('<path d="M3 6h14M8 10h9M5 14h12"/>'),
+  "tb-col":   svg('<circle cx="10" cy="10" r="6"/><path d="M10 4a6 6 0 0 1 0 12z" fill="currentColor" stroke="none"/>'),
+  "tb-clr":   svg('<path d="M4 14 12 6l4 4-6 6H6z"/><path d="M3 17h14"/>'),
+  "csv-imp":  svg('<path d="M10 12V3"/><path d="M6.5 6.5 10 3l3.5 3.5"/><path d="M4 13v3.5h12V13"/>'),
+  "csv-exp":  svg('<path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M4 13v3.5h12V13"/>')
+};
+var IC_X   = svg('<path d="M5 5l10 10M15 5 5 15"/>');
+var IC_ADD = svg('<path d="M10 4v12M4 10h12"/>');
+
+function injectIcons() {
+  var k;
+  for (k in ICONS) {
+    var el = $(k);
+    if (el) {
+      el.innerHTML = ICONS[k];
+      if (!el.getAttribute("aria-label")) {
+        var ttl = el.getAttribute("title");
+        if (ttl) el.setAttribute("aria-label", ttl);
+      }
+    }
+  }
+  var imp = $("btn-csv-imp"), exp = $("btn-csv-exp");
+  if (imp) imp.innerHTML = ICONS["csv-imp"] + "CSV";
+  if (exp) exp.innerHTML = ICONS["csv-exp"] + "CSV";
+}
+
+
+/* format CSS injection (kept in JS — single-file discipline) */
+(function injectFmtCss() {
+  var st = document.createElement("style");
+  st.textContent =
+    "#grid td.fb{font-weight:700;}" +
+    "#grid td.fi{font-style:italic;}" +
+    "#grid td.fu{text-decoration:underline;}" +
+    "#grid td.fa-c{text-align:center;}" +
+    "#grid td.fa-r{text-align:right;}";
+  document.head.appendChild(st);
+})();
+
 function wire() {
   var wrap = $("grid-wrap");
+  var dragSelecting = false;
 
-  /* Grid clicks: 1st tap selects, tap on the SELECTED cell edits
-     (mobile fill-mode pattern); dblclick edits on desktop too. */
+  $("grid").addEventListener("mousedown", function (e) {
+    if (e.button !== 0) return;
+    var td = e.target;
+    while (td && td.tagName !== "TD") td = td.parentElement;
+    if (!td || td.tagName !== "TD") return;
+    var r = td.parentElement.rowIndex - 1;
+    var c = td.cellIndex - 1;
+    if (r < 0 || c < 0) return;
+    if (editing) { commitEdit(0, 0); return; }
+    if (e.shiftKey) {
+      /* Shift+click: extend selection from anchor */
+      selR = r; selC = c;
+      renderSelection();
+    } else {
+      collapseSel(r, c);
+      dragSelecting = true;
+      renderSelection();
+    }
+  });
+
+  $("grid").addEventListener("mousemove", function (e) {
+    if (!dragSelecting) return;
+    var td = e.target;
+    while (td && td.tagName !== "TD") td = td.parentElement;
+    if (!td || td.tagName !== "TD") return;
+    var r = td.parentElement.rowIndex - 1;
+    var c = td.cellIndex - 1;
+    if (r < 0 || c < 0) return;
+    if (r !== selR || c !== selC) {
+      selR = r; selC = c;
+      renderSelection();
+    }
+  });
+
+  document.addEventListener("mouseup", function () {
+    dragSelecting = false;
+  });
+
+  /* dblclick on cell = edit (desktop fast path) */
+  $("grid").addEventListener("dblclick", function (e) {
+    var td = e.target;
+    while (td && td.tagName !== "TD") td = td.parentElement;
+    if (!td) return;
+    if (!editing) beginEdit();
+  });
+
+  /* mobile: tap selects, tap on SELECTED cell edits */
   $("grid").addEventListener("click", function (e) {
+    if (e.pointerType === "mouse") return; /* mousedown handled it */
     var td = e.target;
     while (td && td.tagName !== "TD") td = td.parentElement;
     if (!td || td.tagName !== "TD") return;
@@ -1209,40 +2155,56 @@ function wire() {
     if (r < 0 || c < 0) return;
     if (editing) commitEdit(0, 0);
     if (selR === r && selC === c && !editing) beginEdit();
-    else { selR = r; selC = c; renderSelection(); }
+    else { collapseSel(r, c); renderSelection(); }
   });
 
-  $("grid").addEventListener("dblclick", function (e) {
-    var td = e.target;
-    while (td && td.tagName !== "TD") td = td.parentElement;
-    if (!td) return;
-    if (!editing) beginEdit();
-  });
-
-  /* Keyboard: selection navigation + edit entry */
   wrap.addEventListener("keydown", function (e) {
-    if (editing) return; /* editor input handles its own keys */
+    if (editing) return;
     var k = e.key;
-    if (k === "ArrowUp") { e.preventDefault(); navigate(-1, 0); }
-    else if (k === "ArrowDown") { e.preventDefault(); navigate(1, 0); }
-    else if (k === "ArrowLeft") { e.preventDefault(); navigate(0, -1); }
-    else if (k === "ArrowRight") { e.preventDefault(); navigate(0, 1); }
+    if (k === "ArrowUp") { e.preventDefault(); navigate(-1, 0, e.shiftKey); }
+    else if (k === "ArrowDown") { e.preventDefault(); navigate(1, 0, e.shiftKey); }
+    else if (k === "ArrowLeft") { e.preventDefault(); navigate(0, -1, e.shiftKey); }
+    else if (k === "ArrowRight") { e.preventDefault(); navigate(0, 1, e.shiftKey); }
     else if (k === "Enter" || k === "F2") { e.preventDefault(); beginEdit(); }
     else if (k === "Tab") { e.preventDefault(); navigate(0, 1); }
     else if (k === "Delete" || k === "Backspace") {
       e.preventDefault(); clearSelected();
     }
+    else if ((e.ctrlKey || e.metaKey) && (k === "z" || k === "Z") && !e.shiftKey) {
+      e.preventDefault(); doUndo();
+    }
+    else if ((e.ctrlKey || e.metaKey) &&
+             ((k === "y" || k === "Y") || (e.shiftKey && (k === "z" || k === "Z")))) {
+      e.preventDefault(); doRedo();
+    }
+    else if ((e.ctrlKey || e.metaKey) && (k === "c" || k === "C")) {
+      e.preventDefault(); copySelection(false);
+    }
+    else if ((e.ctrlKey || e.metaKey) && (k === "x" || k === "X")) {
+      e.preventDefault(); copySelection(true);
+    }
+    else if ((e.ctrlKey || e.metaKey) && (k === "v" || k === "V")) {
+      e.preventDefault(); pasteClipboard();
+    }
+    else if ((e.ctrlKey || e.metaKey) && (k === "b" || k === "B")) {
+      e.preventDefault(); applyFormatToSelection(fmtToggle("b"));
+    }
+    else if ((e.ctrlKey || e.metaKey) && (k === "i" || k === "I")) {
+      e.preventDefault(); applyFormatToSelection(fmtToggle("i"));
+    }
+    else if ((e.ctrlKey || e.metaKey) && (k === "u" || k === "U")) {
+      e.preventDefault(); applyFormatToSelection(fmtToggle("u"));
+    }
     else if (k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      e.preventDefault(); beginEdit(k); /* type-to-replace (Excel) */
+      e.preventDefault(); beginEdit(k);
     }
   });
 
-  /* Formula bar */
   var fx = $("fx-input");
   fx.addEventListener("focus", function () { fxFocused = true; });
   fx.addEventListener("blur", function () {
     fxFocused = false;
-    renderSelection(); /* re-sync bar with any commit that raced */
+    renderSelection();
   });
   fx.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
@@ -1250,7 +2212,7 @@ function wire() {
       var val = fx.value.replace(/^\s+|\s+$/g, "");
       if (val === "") { if (getCell(selR, selC)) deleteCell(selR, selC); }
       else setCell(selR, selC, val);
-      queueSave(); refreshCell(selR, selC);
+      queueSave(); invalidateEval(); renderGrid();
       navigate(1, 0);
       fx.blur();
     } else if (e.key === "Escape") {
@@ -1262,14 +2224,61 @@ function wire() {
     e.stopPropagation();
   });
 
-  /* Flush safety net */
+  /* ---- toolbar buttons ---- */
+  var btn = function (id, fn) {
+    var el = $(id);
+    if (el) el.addEventListener("click", fn);
+  };
+  btn("tb-undo", doUndo);
+  btn("tb-redo", doRedo);
+  btn("tb-copy", function () { copySelection(false); });
+  btn("tb-cut", function () { copySelection(true); });
+  btn("tb-paste", pasteClipboard);
+  btn("tb-bold", function () { applyFormatToSelection(fmtToggle("b")); });
+  btn("tb-ital", function () { applyFormatToSelection(fmtToggle("i")); });
+  btn("tb-und", function () { applyFormatToSelection(fmtToggle("u")); });
+  btn("tb-al-l", function () { applyFormatToSelection(fmtAlign("l")); });
+  btn("tb-al-c", function () { applyFormatToSelection(fmtAlign("c")); });
+  btn("tb-al-r", function () { applyFormatToSelection(fmtAlign("r")); });
+  btn("tb-col", toggleSwatchPopover);
+  btn("tb-clr", function () {
+    applyFormatToSelection(clearFormat());
+    notifyTransient(t("fmt.cleared"));
+  });
+  var nf = $("tb-nf");
+  if (nf) nf.addEventListener("change", function () {
+    applyFormatToSelection(fmtNumFormat(nf.value));
+  });
+
+  /* swatch popover closes on outside click */
+  document.addEventListener("click", function (e) {
+    var pop = $("swatches");
+    if (!pop || pop.hidden) return;
+    if (pop.contains(e.target)) return;
+    if (e.target === $("tb-col") || $("tb-col").contains(e.target)) return;
+    pop.hidden = true;
+  });
+
+  /* CSV buttons */
+  var bi = $("btn-csv-imp"), be = $("btn-csv-exp");
+  if (be) be.addEventListener("click", csvExport);
+  if (bi) bi.addEventListener("click", function () {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".csv,text/csv";
+    inp.addEventListener("change", function () {
+      if (inp.files && inp.files[0]) csvImport(inp.files[0]);
+    });
+    inp.click();
+  });
+
   window.addEventListener("beforeunload", function () {
     if (editing) commitEdit(0, 0);
     saveNow();
   });
 }
 
-/* SHELL SHORTCUT FORWARDING (Contract Β — verbatim, capture phase) */
+/* SHELL SHORTCUT FORWARDING (Contract Β — capture phase) */
 document.addEventListener("keydown", function (e) {
   if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
   var p = window.parent;
@@ -1284,15 +2293,17 @@ function boot() {
   console.log("[SS] loadState ok, sheets:",
     state.sheets.length, "| cells:", Object.keys(state.cells).length);
   applyI18n();
+  injectIcons();
   wire();
   registerSync();
   inheritPalette();
   watchPalette();
   buildGrid();
-  selR = 0; selC = 0;
+  renderTabs();
+  collapseSel(0, 0);
   renderGrid();
   renderSelection();
-  console.log("[SS] boot COMPLETE");
+  console.log("[SS] boot COMPLETE [Wave 3]");
   $("grid-wrap").focus();
 }
 

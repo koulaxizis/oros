@@ -50,12 +50,40 @@
       <div class="toolbar-group toolbar-right">
         <button type="button" class="tb-btn" id="btn-hr" data-i18n-title="tt.hr"></button>
         <button type="button" class="tb-btn" id="btn-page-break" data-i18n-title="tt.pageBreak"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-find" data-i18n-title="tt.find"></button>
+        <button type="button" class="tb-btn" id="btn-chars" data-i18n-title="tt.chars"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-footnotes" data-i18n-title="tt.footnotes"></button>
+        <button type="button" class="tb-btn" id="btn-comments" data-i18n-title="tt.comments"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-toc" data-i18n-title="tt.toc"></button>
+        <button type="button" class="tb-btn" id="btn-meta" data-i18n-title="tt.meta"></button>
+        <button type="button" class="tb-btn" id="btn-page" data-i18n-title="tt.page"></button>
+        <span class="tb-sep"></span>
+        <button type="button" class="tb-btn" id="btn-templates" data-i18n-title="tt.templates"></button>
+        <button type="button" class="tb-btn" id="btn-versions" data-i18n-title="tt.versions"></button>
+        <button type="button" class="tb-btn" id="btn-goal" data-i18n-title="tt.goal"></button>
       </div>
     </div>
 
     <!-- EDITOR -->
     <div class="rich-wrapper" id="rich-wrapper">
+      <div class="reading-progress" id="reading-progress" hidden><div class="reading-progress-fill"></div></div>
       <div class="rich-editor" id="rich-editor" contenteditable="true" data-placeholder=""></div>
+    </div>
+
+    <!-- GOAL BAR (bottom strip) -->
+    <div class="goal-bar" id="goal-bar" hidden>
+      <div class="goal-info">
+        <span class="goal-label" id="goal-label"></span>
+        <span class="goal-stats" id="goal-stats"></span>
+      </div>
+      <div class="goal-meter"><div class="goal-fill" id="goal-fill"></div></div>
+      <div class="goal-actions">
+        <button type="button" class="goal-mini-btn" id="goal-lock" data-i18n-title="goal.lock"></button>
+        <button type="button" class="goal-mini-btn" id="goal-clear" data-i18n-title="goal.clear"></button>
+      </div>
     </div>
 
   </div>

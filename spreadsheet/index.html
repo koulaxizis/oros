@@ -16,12 +16,44 @@
       <input id="fx-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
   </header>
+  <div id="sbar" role="toolbar" aria-label="Formatting">
+    <button id="tb-undo" class="tbtn" type="button" title="Undo (Ctrl+Z)"></button>
+    <button id="tb-redo" class="tbtn" type="button" title="Redo (Ctrl+Y)"></button>
+    <span class="tsep"></span>
+    <button id="tb-copy" class="tbtn" type="button" title="Copy (Ctrl+C)"></button>
+    <button id="tb-cut" class="tbtn" type="button" title="Cut (Ctrl+X)"></button>
+    <button id="tb-paste" class="tbtn" type="button" title="Paste (Ctrl+V)"></button>
+    <span class="tsep"></span>
+    <button id="tb-bold" class="tbtn tgl" type="button" title="Bold (Ctrl+B)"></button>
+    <button id="tb-ital" class="tbtn tgl" type="button" title="Italic (Ctrl+I)"></button>
+    <button id="tb-und" class="tbtn tgl" type="button" title="Underline (Ctrl+U)"></button>
+    <span class="tsep"></span>
+    <button id="tb-al-l" class="tbtn tgl" type="button" title="Align left"></button>
+    <button id="tb-al-c" class="tbtn tgl" type="button" title="Align center"></button>
+    <button id="tb-al-r" class="tbtn tgl" type="button" title="Align right"></button>
+    <span class="tsep"></span>
+    <select id="tb-nf" class="tsel" title="Number format">
+      <option value="gen">auto</option>
+      <option value="0">123</option>
+      <option value="2">123.00</option>
+      <option value="%">%</option>
+      <option value="€">€</option>
+    </select>
+    <button id="tb-col" class="tbtn" type="button" title="Text color"></button>
+    <button id="tb-clr" class="tbtn" type="button" title="Clear formatting"></button>
+  </div>
+  <div id="swatches" hidden></div>
   <main id="grid-wrap" tabindex="-1">
     <table id="grid"></table>
   </main>
+  <nav id="stabs" aria-label="Sheets"></nav>
   <footer id="sstat">
     <span id="st-sel">A1</span>
     <span id="st-note"></span>
+    <span id="sstat-actions">
+      <button id="btn-csv-imp" class="sbtn" type="button" title="Import CSV" aria-label="Import CSV"></button>
+      <button id="btn-csv-exp" class="sbtn" type="button" title="Export CSV" aria-label="Export CSV"></button>
+    </span>
   </footer>
 </div>
 <script src="spreadsheet.js?v=0.36.13"></script>
