@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.15";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.16";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -201,6 +201,14 @@
   function applyLang() {
     window.orosLang = state.lang;
     document.documentElement.setAttribute("lang", state.lang);
+
+    // TP-guard: applyLang() is called EARLY in boot (before "load" event).
+    // If translations.js hasn't finished loading yet, skip t()-calls entirely
+    // — the menu will repaint correctly on first user interaction instead.
+    if (typeof window.t !== "function") {
+      console.warn("[orOS] applyLang: window.t not ready yet — deferring i18n paint");
+      return;
+    }
 
     var nodes = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < nodes.length; i++) {
