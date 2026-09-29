@@ -60,6 +60,8 @@ let state = {
     typewriterSound: false
   },
   autocorrect: null,   // { rules:[{find,repl,def}], mtime } — seeded on first AC dialog use
+  templates: [],       // custom templates [{id,name,desc,html,mtime}]
+  tplTombs: [],        // [{id,ts}] — deleted template tombstones
   seeded: false
 };
 
@@ -227,7 +229,67 @@ const STRINGS = {
     'goal.stats.time': '{cur} / {target} min',
     'goal.stats.session': '{cur} session words',
     'goal.locked': 'Editing locked — clear or raise the goal to continue',
-    'goal.unlockConfirm': 'Unlock editing?',
+        'goal.unlockConfirm': 'Unlock editing?',
+    'page.settings': 'Page settings',
+    'tpl.builtin.essay': 'Essay',
+    'tpl.builtin.essay.d': 'Title, introduction, body sections, conclusion.',
+    'tpl.builtin.letter': 'Formal letter',
+    'tpl.builtin.letter.d': 'Sender, date, recipient, salutation, body, closing.',
+    'tpl.builtin.novel': 'Novel chapter',
+    'tpl.builtin.novel.d': 'Chapter heading, scene breaks, narrative paragraphs.',
+    'tpl.builtin.screenplay': 'Screenplay',
+    'tpl.builtin.screenplay.d': 'FADE IN, scene headings, action, dialogue.',
+    'tpl.builtin.poem': 'Poem',
+    'tpl.builtin.poem.d': 'Title and stanzas with a spare layout.',
+    'tpl.builtin.notes': 'Meeting notes',
+    'tpl.builtin.notes.d': 'Date, attendees, agenda, decisions, action items.',
+    'tpl.builtin.blank': 'Blank',
+    'tpl.builtin.blank.d': 'An empty page.',
+    'tpl.confirmDel': 'Delete template "{name}"?',
+    'tpl.confirmOverwrite': 'A template with this name exists — overwrite?',
+    'ver.confirmRestore': 'Restore this version? Current content will be replaced.',
+    'ver.confirmDel': 'Delete this version snapshot?',
+    'ver.delta': '{n} words',
+    'tt.export': 'Export',
+    'tt.import': 'Import',
+    'io.title.exp': 'Export document',
+    'io.title.imp': 'Import document',
+    'io.txt.name': 'Plain text',
+    'io.txt.desc': 'Text only, no formatting.',
+    'io.md.name': 'Markdown',
+    'io.md.desc': 'Portable formatted text for writers and editors.',
+    'io.md.note': 'More formats coming soon',
+    'io.docx.name': 'Word document',
+    'io.docx.desc': 'Editable in Word, LibreOffice, Google Docs.',
+    'io.docx.note': 'Large documents may take a moment',
+    'io.pdf.name': 'PDF',
+    'io.pdf.desc': 'Fixed layout, perfect for sharing and printing.',
+    'io.rtf.name': 'RTF',
+    'io.rtfdescr': 'Rich text usable almost everywhere.',
+    'io.rtfnote': 'Universal but lossy',
+    'io.html.name': 'HTML',
+    'io.html.desc': 'Web-ready with full formatting.',
+    'io.orosdoc.name': 'orOS Writer',
+    'io.orosdoc.desc': 'Round-trip archive: text, footnotes, comments, metadata.',
+    'io.json.name': 'Database (JSON)',
+    'io.json.desc': 'Complete slice — all tabs, settings, templates, autocorrect.',
+    'io.busy': 'Preparing…',
+    'io.ready': '{n} formats available',
+    'io.pickFile': 'Choose a file',
+    'io.pickFileSub': 'Supported: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.impOpts': 'How to import?',
+    'io.impNew': 'New tab (recommended)',
+    'io.impNew.d': 'Everything lands in a fresh document.',
+    'io.impAppend': 'Append to current',
+    'io.impAppend.d': 'Appended at the end of the active document.',
+    'io.impReplace': 'Replace current',
+    'io.impReplace.d': 'Dupes current first into Version History.',
+    'io.imported': 'Imported',
+    'io.importfailed': 'Could not parse this file',
+    'io.ddTitle': 'Drop to open',
+    'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.metaLabel': 'Riding along:',
+    'io.naming': 'Exports take document title, falls back to untitled.',
   },
   el: {
     'app.name': 'Writer',
@@ -392,7 +454,64 @@ const STRINGS = {
     'opt.format.bold': 'Μόνο έντονη',
     'opt.format.italic': 'Μόνο πλάγια',
     'opt.format.underline': 'Μόνο υπογραμμένη',
-    'opt.format.strike': 'Μόνο διαγραμμένη'
+    'opt.format.strike': 'Μόνο διαγραμμένη',
+    'page.settings': 'Ρυθμίσεις σελίδας',
+    'tpl.builtin.essay': 'Δοκίμιο',
+    'tpl.builtin.essay.d': 'Τίτλος, εισαγωγή, ενότητες, συμπέρασμα.',
+    'tpl.builtin.letter': 'Επίσημη επιστολή',
+    'tpl.builtin.letter.d': 'Αποστολέας, ημερομηνία, παραλήπτης, προσφώνηση, σώμα, κλείσιμο.',
+    'tpl.builtin.novel': 'Κεφάλαιο μυθιστορήματος',
+    'tpl.builtin.novel.d': 'Τίτλος κεφαφαίου, διαχωριστικά σκηνών, αφηγηματικές παράγραφοι.',
+    'tpl.builtin.screenplay': 'Σενάριο',
+    'tpl.builtin.screenplay.d': 'FADE IN, επικεφαλίδες σκηνών, δράση, διάλογοι.',
+    'tpl.builtin.poem': 'Ποίημα',
+    'tpl.builtin.poem.d': 'Τίτλος και στροφές σε λιτή διάταξη.',
+    'tpl.builtin.notes': 'Σημειώσεις συνάντησης',
+    'tpl.builtin.notes.d': 'Ημερομηνία, συμμετέχοντες, ατζέντα, αποφάσεις, ενέργειες.',
+    'tpl.builtin.blank': 'Κενό',
+    'tpl.builtin.blank.d': 'Μια κενή σελίδα.',
+    'tpl.confirmDel': 'Διαγραφή προτύπου «{name}»;',
+    'tpl.confirmOverwrite': 'Υπάρχει πρότυπο με αυτό το όνομα — αντικατάσταση;',
+    'ver.confirmRestore': 'Επαναφορά αυτής της έκδοσης; Το τρέχον περιεχόμενο θα αντικατασταθεί.',
+    'ver.confirmDel': 'Διαγραφή αυτού του snapshot;',
+    'ver.delta': '{n} λέξεις',
+    'tt.export': 'Εξαγωγή',
+    'tt.import': 'Εισαγωγή',
+    'io.title.exp': 'Εξαγωγή εγγράφου',
+    'io.title.imp': 'Εισαγωγή εγγράφου',
+    'io.txt.name': 'Απλό κείμενο',
+    'io.txt.desc': 'Μόνο κείμενο, χωρίς μορφοποίηση.',
+    'io.md.name': 'Markdown',
+    'io.md.desc': 'Φορητό μορφοποιημένο κείμενο για συγγραφείς.',
+    'io.md.note': 'Περισσότερες μορφές σύντομα',
+    'io.docx.name': 'Document Word',
+    'io.docx.desc': 'Επεξεργάσιμο σε Word, LibreOffice, Google Docs.',
+    'io.docx.note': 'Μεγάλα έγγραφα ίσως αργήσουν',
+    'io.pdf.name': 'PDF',
+    'io.pdf.desc': 'Σταθερή διάταξη, ιδανικό για κοινοποίηση και εκτύπωση.',
+    'io.rtf.name': 'RTF',
+    'io.rtf.desc': 'Πλούσιο κείμενο, σχεδόν παντού συμβατό.',
+    'io.rtf.note': 'Καθολικό αλλά απωλεστικό',
+    'io.orosdoc.name': 'orOS Writer',
+    'io.orosdoc.desc': 'Πλήρες αρχείο: κείμενο, υποσημειώσεις, σχόλια, μεταδεδομένα.',
+    'io.json.name': 'Βάση δεδομένων (JSON)',
+    'io.json.desc': 'Πλήρες slice — όλα τα tabs, ρυθμίσεις, πρότυπα, διορθώσεις.',
+    'io.busy': 'Προετοιμασία…',
+    'io.ready': '{n} μορφές διαθέσιμες',
+    'io.pickFile': 'Επιλογή αρχείου',
+    'io.pickFileSub': 'Υποστηρίζονται: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.impOpts': 'Πώς να γίνει η εισαγωγή;',
+    'io.impNew': 'Νέο tab (συνιστάται)',
+    'io.impNew.d': 'Όλα καταλήγουν σε νέο έγγραφο.',
+    'io.impAppend.d': 'Προστίθεται στο τέλος του τρέχοντος εγγράφου.',
+    'io.impReplace': 'Αντικατάσταση τρέχοντος',
+    'io.impReplace.d': 'Το τρέχον αποθηκεύεται πρώτα στο Ιστορικό εκδόσεων.',
+    'io.imported': 'Εισήχθη',
+    'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
+    'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
+    'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.metaLabel': 'Συνοδεύουν:',
+    'io.naming': 'Η εξαγωγή παίρνει τον τίτλο του εγγράφου, αλλιώς «Χωρίς τίτλο».'
   }
 };
 
@@ -435,7 +554,9 @@ const ICONS = {
   page:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="10" height="12" rx="1"/><line x1="6" y1="5" x2="10" y2="5"/><line x1="6" y1="9" x2="10" y2="9"/><line x1="6" y1="13" x2="10" y2="13"/></svg>',
   tpl:    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="2"/><path d="M7 3v10M10 6h-4M10 10h-4"/><path d="M12 12l2 2M14 12l-2 2"/></svg>',
   versions:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/><path d="M12 12l-2 2M14 12l-2 2"/></svg>',
-  goal:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/><polygon points="8,2 8,14"/></svg>'
+  goal:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/><polygon points="8,2 8,14"/></svg>',
+  export: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3h12v-3"/><path d="M8 11V2"/><path d="M5 5l3-3 3 3"/></svg>',
+  import: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3h12v-3"/><path d="M8 2v9"/><path d="M5 8l3 3 3-3"/></svg>'
 };
 
 function paintIcons() {
@@ -484,6 +605,16 @@ function showToast(msg) {
 
 function escapeRegex(s) {
   return String(s == null ? '' : s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
 // Serialize editor content WITHOUT transient UI artifacts (find marks).
@@ -645,6 +776,14 @@ function closeDoc(id) {
 /* ===== SECTION 7: SLICE — LOAD / SAVE / MERGE ===== */
 const SLICE_KEY = 'oros-writer-data';
 
+// Retention guard: manual snapshots always survive; only the newest
+// 8 auto versions travel in the slice (document feature, not backup).
+function capVersions(vers) {
+  const manual = vers.filter(v => v.manual);
+  const auto = vers.filter(v => !v.manual).slice(-8);
+  return manual.concat(auto).sort((a, b) => a.ts - b.ts);
+}
+
 function serialize() {
   return {
     ver: 1,
@@ -652,7 +791,7 @@ function serialize() {
       id: d.id, title: d.title, author: d.author, tags: d.tags,
       category: d.category, html: d.html,
       footnotes: d.footnotes || [], comments: d.comments || [],
-      versions: (d.versions || []).slice(0, 8),   // retention guard
+      versions: capVersions(d.versions || []),
       pageSize: d.pageSize, margins: d.margins,
       header: d.header, footer: d.footer,
       mtime: d.mtime, del: !!d.del
@@ -662,6 +801,8 @@ function serialize() {
     }),
     settings: state.settings,
     autocorrect: state.autocorrect,
+    templates: state.templates || [],
+    tplTombs: state.tplTombs || [],
     seeded: state.seeded
   };
 }
@@ -678,7 +819,7 @@ function hydrate(raw) {
     html: typeof d.html === 'string' ? d.html : '',
     footnotes: Array.isArray(d.footnotes) ? d.footnotes : [],
     comments: Array.isArray(d.comments) ? d.comments : [],
-    versions: Array.isArray(d.versions) ? d.versions.slice(0, 8) : [],
+    versions: Array.isArray(d.versions) ? capVersions(d.versions) : [],
     pageSize: typeof d.pageSize === 'string' ? d.pageSize : 'a4',
     margins: (d.margins && typeof d.margins === 'object') ? d.margins
              : { top: 25, bottom: 25, left: 25, right: 25 },
@@ -695,6 +836,10 @@ function hydrate(raw) {
     ? raw.settings : state.settings;
   state.autocorrect = (raw.autocorrect && Array.isArray(raw.autocorrect.rules))
     ? raw.autocorrect : null;
+  state.templates = Array.isArray(raw.templates) ? raw.templates
+    .filter(x => x && typeof x.id === 'string' && typeof x.name === 'string') : [];
+  state.tplTombs = Array.isArray(raw.tplTombs) ? raw.tplTombs
+    .filter(x => x && typeof x.id === 'string') : [];
   // activeTab: device-local — restore best effort from tabOrder
   if (!getDoc(state.activeTab)) {
     state.activeTab = state.tabOrder[0] || null;
@@ -723,6 +868,18 @@ function mergeSlices(local, remote) {
     if (byId[id] && !byId[id].del && base.indexOf(id) === -1) base.push(id);
   });
 
+  // Templates: LWW per entity, respecting tombstones (deleted wins over
+  // stale-but-newer edit? No — mtime vs tombstone ts: newer wins.)
+  const tombs = {};
+  [].concat(local.tplTombs || [], remote.tplTombs || []).forEach(tb => {
+    if (!tombs[tb.id] || tb.ts > tombs[tb.id]) tombs[tb.id] = tb.ts;
+  });
+  const tplById = {};
+  [].concat(local.templates || [], remote.templates || []).forEach(tp => {
+    if (tombs[tp.id] >= (tp.mtime || 0)) return;   // tombstoned
+    if (!tplById[tp.id] || (tp.mtime || 0) >= (tplById[tp.id].mtime || 0)) tplById[tp.id] = tp;
+  });
+
   const lm = (local.autocorrect && local.autocorrect.mtime) || 0;
   const rm = (remote.autocorrect && remote.autocorrect.mtime) || 0;
   const lset = (local.settings && local.settings._mtime) || 0;
@@ -734,6 +891,8 @@ function mergeSlices(local, remote) {
     tabOrder: base,
     settings: (rset >= lset) ? remote.settings : local.settings,
     autocorrect: (rm >= lm) ? remote.autocorrect : local.autocorrect,
+    templates: Object.keys(tplById).map(k => tplById[k]),
+    tplTombs: Object.keys(tombs).map(k => ({ id: k, ts: tombs[k] })),
     seeded: local.seeded || remote.seeded
   };
 }
@@ -822,6 +981,7 @@ function renderEditor() {
   updateEmptyState();
   footnotesAfterRender();          // renumber + refresh panel (Wave 3)
   commentsAfterRender();           // refresh comment cards (Wave 3)
+  goalAfterRender();               // goal bar + reading progress (Wave 4)
 }
 
 function updateEmptyState() {
@@ -866,6 +1026,8 @@ function bindToolbar() {
   binds['btn-templates'] = () => openTemplates();
   binds['btn-versions'] = () => openVersionsPanel();
   binds['btn-goal'] = () => toggleGoalBar();
+  binds['btn-export'] = () => openExportDialog();
+  binds['btn-import'] = () => openImportDialog();
 
   Object.keys(binds).forEach(id => {
     const btn = document.getElementById(id);
@@ -928,6 +1090,9 @@ function wireEvents() {
     updateEmptyState();
     scheduleSave();
   });
+
+  // Goal bar + reading progress live refresh (Wave 4)
+  EL.editor.addEventListener('input', goalAfterInput);
 
   // Keyup — special handling for placeholder visibility (edge case: paste via menu)
   EL.editor.addEventListener('keyup', updateEmptyState);
@@ -1033,6 +1198,8 @@ function boot() {
     wireFootnoteRefClicks();
     wireCommentMarkEvents();
     startFootnoteObserver();
+    wireGoalBar();
+    wireReadingProgress();
 
     // 6. First render — set initial dirty flag based on content
     dirty = false;
@@ -2658,6 +2825,612 @@ function toggleTocPanel() {
   });
   body.appendChild(ul);
 }
+
+// ===== SECTION 19: TEMPLATES & VERSION HISTORY =====
+
+/* ----- TEMPLATES -----
+   Built-ins: seeded, read-only (badge "Built-in"). Customs: full CRUD,
+   import/export JSON. All stored in state.templates — synced, LWW per
+   entity with tombstones (see slice patch below). Rendering grids
+   built-ins + customs immediately, no manual refresh. */
+
+const TPL_BUILTIN = [
+  { id: 'essay',     builtin: true, name: 'tpl.builtin.essay',     desc: 'tpl.builtin.essay.d',
+    html: '<h1>Essay title</h1><p>Introduction…</p><h2>Section</h2><p>Body…</p><h2>Conclusion</h2><p>Summing up…</p>' },
+  { id: 'letter',    builtin: true, name: 'tpl.builtin.letter',    desc: 'tpl.builtin.letter.d',
+    html: '<p style="text-align:right">City, date</p><p>Recipient<br>Address</p><p>Dear Sir or Madam,</p><p>Body…</p><p>Sincerely,<br>Your name</p>' },
+  { id: 'novel',     builtin: true, name: 'tpl.builtin.novel',     desc: 'tpl.builtin.novel.d',
+    html: '<h1>Chapter One</h1><p>Narrative…</p><p>* * *</p><p>Next scene…</p>' },
+  { id: 'screenplay',builtin: true, name: 'tpl.builtin.screenplay',desc: 'tpl.builtin.screenplay.d',
+    html: '<p><strong>FADE IN:</strong></p><h3>INT. ROOM — DAY</h3><p>Action description.</p><p><strong>CHARACTER</strong><br>(dialogue)</p>' },
+  { id: 'poem',      builtin: true, name: 'tpl.builtin.poem',      desc: 'tpl.builtin.poem.d',
+    html: '<h1>Poem title</h1><p>First stanza…</p><p>&nbsp;</p><p>Second stanza…</p>' },
+  { id: 'notes',     builtin: true, name: 'tpl.builtin.notes',    desc: 'tpl.builtin.notes.d',
+    html: '<h1>Meeting notes</h1><p>Date / attendees…</p><h2>Agenda</h2><ul><li>Item…</li></ul><h2>Decisions</h2><ul><li>Decision…</li></ul><h2>Action items</h2><ul><li>Who — what — when…</li></ul>' },
+  { id: 'blank',     builtin: true, name: 'tpl.builtin.blank',    desc: 'tpl.builtin.blank.d', html: '' }
+];
+
+function allTemplates() {
+  const customs = state.templates || [];
+  return TPL_BUILTIN.concat(customs);
+}
+
+let tplDlg = null;
+
+function openTemplates() {
+  tplDlg = openDialog(t('tpl.title'), '', [
+    { class: 'fb-btn', label: t('tpl.import'), onClick: importTemplateJson },
+    { class: 'fb-btn', label: t('tpl.saveCurrent'), onClick: saveCurrentAsTemplate },
+    { class: 'fb-btn primary', label: 'OK', onClick: () => tplDlg.close() }
+  ]);
+  renderTemplates();
+}
+
+function renderTemplates() {
+  const body = tplDlg.querySelector('.w-dialog-body');
+  body.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'tpl-grid';
+
+  allTemplates().forEach(tpl => {
+    const card = document.createElement('div');
+    card.className = 'tpl-card';
+
+    const nm = document.createElement('div');
+    nm.className = 'tpl-name';
+    nm.textContent = tpl.builtin ? t(tpl.name) : tpl.name;
+
+    const ds = document.createElement('div');
+    ds.className = 'tpl-desc';
+    ds.textContent = tpl.builtin ? t(tpl.desc) : (tpl.desc || '');
+
+    card.append(nm, ds);
+
+    const actions = document.createElement('div');
+    actions.className = 'tpl-actions';
+
+    const use = document.createElement('button');
+    use.type = 'button';
+    use.className = 'fb-btn primary';
+    use.textContent = t('tpl.use');
+    use.addEventListener('click', () => {
+      createDoc({ html: tpl.html, title: tpl.builtin ? t(tpl.name) : tpl.name, silent: true });
+      tplDlg.close();
+    });
+    actions.appendChild(use);
+
+    if (!tpl.builtin) {
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'ac-icon-btn';
+      edit.title = t('tpl.edit');
+      edit.textContent = '✎';
+      edit.addEventListener('click', () => editTemplate(tpl));
+      actions.appendChild(edit);
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'ac-icon-btn danger';
+      del.title = t('tpl.del');
+      del.innerHTML = ICONS.trash;
+      del.addEventListener('click', () => {
+        if (!confirm(t('tpl.confirmDel').replace('{name}', tpl.name))) return;
+        state.templates = state.templates.filter(x => x.id !== tpl.id);
+        state.tplTombs = state.tplTombs || [];
+        state.tplTombs.push({ id: tpl.id, ts: Date.now() });   // tombstone
+        scheduleSave();
+        renderTemplates();
+      });
+      actions.appendChild(del);
+    } else {
+      const badge = document.createElement('span');
+      badge.className = 'tpl-badge';
+      badge.textContent = 'Built-in';
+      card.appendChild(badge);
+    }
+
+    card.appendChild(actions);
+    grid.appendChild(card);
+  });
+
+  body.appendChild(grid);
+}
+
+function saveCurrentAsTemplate() {
+  const doc = activeDoc();
+  if (!doc) return;
+  const name = prompt(t('tpl.name'), doc.title || '');
+  if (!name) return;
+  const existing = (state.templates || []).find(x => x.name === name);
+  if (existing && !confirm(t('tpl.confirmOverwrite'))) return;
+
+  const tpl = {
+    id: existing ? existing.id : 'tp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name,
+    desc: '',
+    html: editorHTMLForSave(),
+    mtime: Date.now()
+  };
+  if (existing) { Object.assign(existing, tpl); }
+  else {
+    state.templates = state.templates || [];
+    state.templates.push(tpl);
+  }
+  scheduleSave();
+  renderTemplates();
+  showToast(t('tpl.saved'));
+}
+
+function editTemplate(tpl) {
+  const dlg = openDialog(t('tpl.edit'), `
+    <div class="form-grid">
+      <label>${t('tpl.name')}</label>
+      <input type="text" class="w-field" id="et-name" value="${escAttr(tpl.name)}">
+      <label>${t('tpl.desc')}</label>
+      <input type="text" class="w-field" id="et-desc" value="${escAttr(tpl.desc || '')}">
+    </div>
+  `, [
+    { class: 'fb-btn', label: 'OK', onClick: () => {
+        tpl.name = document.getElementById('et-name').value.trim() || tpl.name;
+        tpl.desc = document.getElementById('et-desc').value;
+        tpl.mtime = Date.now();
+        scheduleSave();
+        dlg.close();
+        renderTemplates();
+      } }
+  ]);
+}
+
+function exportTemplateJson() {
+  const data = JSON.stringify({ orOSTemplates: state.templates || [] }, null, 2);
+  downloadBlob(data, 'oros-writer-templates.json', 'application/json');
+  showToast(t('tpl.exported'));
+}
+
+function importTemplateJson() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.addEventListener('change', () => {
+    const file = inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        const arr = Array.isArray(parsed) ? parsed : parsed.orOSTemplates;
+        if (!Array.isArray(arr)) throw new Error('bad');
+        state.templates = state.templates || [];
+        arr.forEach(tpl => {
+          if (!tpl || typeof tpl.name !== 'string' || typeof tpl.html !== 'string') return;
+          const id = (typeof tpl.id === 'string') ? tpl.id
+            : 'tp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+          const existing = state.templates.find(x => x.name === tpl.name);
+          if (existing) { Object.assign(existing, tpl, { id: existing.id, mtime: Date.now() }); }
+          else { state.templates.push({ id, name: tpl.name, desc: tpl.desc || '', html: tpl.html, mtime: Date.now() }); }
+        });
+        scheduleSave();
+        if (tplDlg) renderTemplates();
+        showToast(t('tpl.imported'));
+      } catch (e) {
+        showToast(t('tpl.imErr'));
+      }
+    };
+    reader.readAsText(file);
+  });
+  inp.click();
+}
+
+/* ----- VERSION HISTORY -----
+   Per-doc versions: 8 auto (every 30s IF content changed) + unlimited-enough
+   manual snapshots. Manual: green badge + dedicated delete. Restore puts
+   back text AND footnotes AND comments. Lives inside doc (LWW sync).
+   Distinct from orOS core DB snapshots — this is a document feature. */
+
+let verPanel = null;
+let verTimer = null;
+
+function openVersionsPanel() {
+  const doc = activeDoc();
+  if (!doc) return;
+
+  // Auto-version tick: every 30s, if content changed since last version
+  clearInterval(verTimer);
+  verTimer = setInterval(() => {
+    const d = activeDoc();
+    if (!d || d !== doc) { clearInterval(verTimer); return; }
+    maybeAutoVersion(d);
+  }, 30000);
+
+  const dlg = openDialog(t('ver.title'), '', [
+    { class: 'fb-btn', label: t('ver.snapshot'), onClick: () => {
+        takeManualSnapshot(doc);
+        renderVersions(dlg, doc);
+      } },
+    { class: 'fb-btn primary', label: 'OK', onClick: () => { clearInterval(verTimer); dlg.close(); } }
+  ]);
+  dlg.addEventListener('close', () => clearInterval(verTimer));
+  renderVersions(dlg, doc);
+}
+
+function renderVersions(dlg, doc) {
+  const body = dlg.querySelector('.w-dialog-body');
+  body.innerHTML = '';
+  if (!doc.versions || doc.versions.length === 0) {
+    const e = document.createElement('div');
+    e.className = 'ver-empty';
+    e.textContent = t('ver.empty');
+    body.appendChild(e);
+    return;
+  }
+  const ul = document.createElement('ul');
+  ul.className = 'ver-list';
+
+  // newest first
+  doc.versions.slice().reverse().forEach(v => {
+    const li = document.createElement('li');
+    li.className = 'ver-item';
+
+    const ts = document.createElement('span');
+    ts.className = 'ver-ts';
+    ts.textContent = formatTs(v.ts);
+
+    const words = document.createElement('span');
+    words.className = 'ver-words';
+    words.textContent = t('ver.delta').replace('{n}', countWordsInHtml(v.html));
+
+    li.append(ts, words);
+
+    if (v.manual) {
+      const badge = document.createElement('span');
+      badge.className = 'ver-badge';
+      badge.textContent = t('ver.manual');
+      li.appendChild(badge);
+    } else {
+      const badge = document.createElement('span');
+      badge.className = 'ac-badge';
+      badge.textContent = t('ver.auto');
+      li.appendChild(badge);
+    }
+
+    const acts = document.createElement('span');
+    acts.className = 'ver-item-actions';
+
+    const restore = document.createElement('button');
+    restore.type = 'button';
+    restore.className = 'fb-btn';
+    restore.textContent = t('ver.restore');
+    restore.addEventListener('click', () => {
+      if (!confirm(t('ver.confirmRestore'))) return;
+      restoreVersion(doc, v);
+      renderVersions(dlg, doc);
+    });
+
+    acts.appendChild(restore);
+
+    // Dedicated delete ONLY for manual snapshots (requirement)
+    if (v.manual) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'ac-icon-btn danger';
+      del.title = t('ver.delete');
+      del.innerHTML = ICONS.trash;
+      del.addEventListener('click', () => {
+        if (!confirm(t('ver.confirmDel'))) return;
+        doc.versions = doc.versions.filter(x => x !== v);
+        scheduleSave();
+        renderVersions(dlg, doc);   // immediate UI removal, no stale state
+      });
+      acts.appendChild(del);
+    }
+
+    li.appendChild(acts);
+    ul.appendChild(li);
+  });
+
+  body.appendChild(ul);
+}
+
+function countWordsInHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+  // strip annotation chrome before counting
+  tmp.querySelectorAll('sup.fn-ref').forEach(x => x.remove());
+  const words = tmp.textContent.trim().split(/\s+/).filter(Boolean);
+  // beta bug fix: punctuation between spaces ('word - word') is NOT a word
+  return words.filter(w => /[\p{L}\p{N}]/u.test(w)).length;
+}
+
+function maybeAutoVersion(doc) {
+  flushSave();
+  const current = doc.html || '';
+  const last = doc.versions && doc.versions.length
+    ? doc.versions[doc.versions.length - 1].html : null;
+  if (current === last) return;
+
+  doc.versions = doc.versions || [];
+  doc.versions.push({ ts: Date.now(), html: current, manual: false });
+  // Cap: keep the newest 8 auto versions (manual ones never dropped by cap)
+  const manual = doc.versions.filter(v => v.manual);
+  const auto = doc.versions.filter(v => !v.manual).slice(-8);
+  doc.versions = doc.versions.filter(v => v.manual)
+    .concat(auto)
+    .sort((a, b) => a.ts - b.ts);
+  scheduleSave();
+}
+
+function takeManualSnapshot(doc) {
+  flushSave();
+  doc.versions = doc.versions || [];
+  doc.versions.push({ ts: Date.now(), html: doc.html || '', manual: true });
+  scheduleSave();
+  showToast(t('ver.snapshotted'));
+}
+
+function restoreVersion(doc, v) {
+  // Full-fidelity restore: text + footnotes + comments
+  // Snapshot the CURRENT state first (safety — restoring is undoable via its own entry)
+  takeManualSnapshot(doc);
+
+  doc.html = v.html;
+  doc.mtime = Date.now();
+  flushSave();
+
+  EL.editor.innerHTML = doc.html;
+  fnSuspendObserver = true;
+  cmtSuspendObserver = true;
+  renumberFootnotes();
+  cleanupFootnotes();
+  cleanupComments();
+  fnSuspendObserver = false;
+  cmtSuspendObserver = false;
+
+  footnotesAfterRender();
+  commentsAfterRender();
+  renderTabs();
+  scheduleSave();
+  showToast(t('ver.restored') + ' — ' + t('ver.restoredFull'));
+}
+
+// ===== SECTION 20: GOAL TRACKER + READING PROGRESS =====
+//
+// Goal model (per doc, RENDER-DERIVED where possible):
+//   doc.goal = { type:'words'|'chars'|'paras'|'time'|'sessionWords',
+//                target:number, lock:boolean, startTs:number, startWords:number }
+//   Words/chars/paras: measured from live editor — never stored.
+//   Session words: delta from startWords — startTs/startWords stored (they
+//     define the session anchor); the CURRENT count is always derived.
+//   Time: minutes elapsed since goal was set — derived from Date.now().
+// The goal itself syncs (part of doc, LWW) but RUNTIME state (lock armed,
+// done-fired flag) is device-local.
+
+let goalRuntime = { fired: false };   // device-local: toast once per achievement
+
+/* ----- Stats (shared with the goal bar) ----- */
+function editorStats() {
+  const clone = document.createElement('div');
+  clone.innerHTML = editorHTMLForSave();
+  clone.querySelectorAll('sup.fn-ref').forEach(x => x.remove());
+  const text = clone.textContent || '';
+  const words = text.trim().split(/\s+/).filter(Boolean)
+    .filter(w => /[\p{L}\p{N}]/u.test(w)).length;
+  const paras = Array.from(clone.children)
+    .filter(el => el.tagName === 'P' && el.textContent.trim()).length;
+  return { words: words, chars: text.replace(/\s+/g, ' ').trim().length, paras: paras };
+}
+
+/* ----- Toggle / render the bar ----- */
+function toggleGoalBar(forceOn) {
+  const bar = document.getElementById('goal-bar');
+  const goal = activeDoc() && activeDoc().goal;
+  if (forceOn || !goal) { openGoalDialog(); return; }
+  bar.hidden = !bar.hidden;
+  if (!bar.hidden) updateGoalBar();
+}
+
+function openGoalDialog() {
+  const doc = activeDoc();
+  if (!doc) return;
+  const g = doc.goal || { type: 'words', target: 500, lock: false };
+
+  const dlg = openDialog(t('tt.goal'), `
+    <div class="form-grid">
+      <label>${t('goal.type')}</label>
+      <select class="w-field" id="g-type">
+        <option value="words" ${g.type==='words'?'selected':''}>${t('goal.type.words')}</option>
+        <option value="chars" ${g.type==='chars'?'selected':''}>${t('goal.type.chars')}</option>
+        <option value="paras" ${g.type==='paras'?'selected':''}>${t('goal.type.paras')}</option>
+        <option value="time" ${g.type==='time'?'selected':''}>${t('goal.type.time')}</option>
+        <option value="sessionWords" ${g.type==='sessionWords'?'selected':''}>${t('goal.type.sessionWords')}</option>
+      </select>
+      <label>${t('goal.target')}</label>
+      <input type="number" class="w-field" id="g-target" min="1" value="${g.target}">
+      <label class="full" style="text-align:left;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="g-lock" ${g.lock?'checked':''}> ${t('goal.lock')}
+      </label>
+    </div>
+  `, [
+    { class: 'fb-btn', label: t('goal.clear'), onClick: () => {
+        doc.goal = null;
+        scheduleSave();
+        dlg.close();
+        document.getElementById('goal-bar').hidden = true;
+        unlockEditor();
+      } },
+    { class: 'fb-btn primary', label: t('goal.set'), onClick: () => {
+        const type = document.getElementById('g-type').value;
+        const target = Math.max(1, parseInt(document.getElementById('g-target').value, 10) || 1);
+        const st = editorStats();
+        doc.goal = {
+          type: type, target: target,
+          lock: document.getElementById('g-lock').checked,
+          startTs: Date.now(), startWords: st.words
+        };
+        goalRuntime.fired = false;
+        scheduleSave();
+        dlg.close();
+        const bar = document.getElementById('goal-bar');
+        bar.hidden = false;
+        updateGoalBar();
+      } }
+  ]);
+}
+
+/* ----- Progress computation ----- */
+function goalProgress(goal) {
+  const st = editorStats();
+  let cur = 0, pct = 0, done = false, statsLabel = '';
+  switch (goal.type) {
+    case 'words':
+      cur = st.words; break;
+    case 'chars':
+      cur = st.chars; break;
+    case 'paras':
+      cur = st.paras; break;
+    case 'time':
+      cur = Math.floor((Date.now() - goal.startTs) / 60000); break;
+    case 'sessionWords':
+      cur = Math.max(0, st.words - (goal.startWords || 0)); break;
+  }
+  pct = Math.min(100, Math.round(cur / goal.target * 100));
+  done = cur >= goal.target;
+
+  const typeKey = { words:'goal.stats.words', chars:'goal.stats.chars',
+                    time:'goal.stats.time', sessionWords:'goal.stats.session' }[goal.type];
+  if (goal.type === 'paras') {
+    statsLabel = t('goal.stats.paras').replace('{n}', String(st.paras)) +
+                 ' · ' + cur + ' / ' + goal.target;
+  } else {
+    statsLabel = t(typeKey).replace('{cur}', String(cur)).replace('{target}', String(goal.target));
+  }
+  return { cur: cur, pct: pct, done: done, statsLabel: statsLabel, stats: st };
+}
+
+function updateGoalBar() {
+  const doc = activeDoc();
+  const bar = document.getElementById('goal-bar');
+  if (!doc || !doc.goal) { bar.hidden = true; return; }
+
+  const p = goalProgress(doc.goal);
+  bar.classList.toggle('done', p.done);
+
+  const label = document.getElementById('goal-label');
+  label.textContent = p.done ? t('goal.done') : t('tt.goal');
+
+  // stats INLINE next to the label (requirement — not a separate block)
+  document.getElementById('goal-stats').textContent = p.statsLabel + ' · ' + p.pct + '%';
+
+  document.getElementById('goal-fill').style.width = p.pct + '%';
+
+  // Lock button reflects state
+  const lockBtn = document.getElementById('goal-lock');
+  lockBtn.classList.toggle('on', doc.goal.lock && p.done);
+
+  // Achieved: emit once + arm lock
+  if (p.done && !goalRuntime.fired) {
+    goalRuntime.fired = true;
+    const typeStr = {
+      words: t('goal.type.words'), chars: t('goal.type.chars'),
+      paras: t('goal.type.paras'), time: t('goal.type.time'),
+      sessionWords: t('goal.type.sessionWords')
+    }[doc.goal.type];
+    showToast(t('goal.done.msg')
+      .replace('{type}', typeStr)
+      .replace('{cur}', String(p.cur))
+      .replace('{target}', String(doc.goal.target)));
+    if (window.orosSync && typeof window.orosSync.emit === 'function') {
+      window.orosSync.emit({ ns: 'writer', kind: 'goal' });   // Notification-worthy (Wave 6 refines)
+    }
+  }
+  if (p.done && doc.goal.lock) lockEditor();
+  else unlockEditor();
+}
+
+/* ----- Lock: hard input block via beforeinput guard ----- */
+function lockEditor() {
+  if (!EL.editor.dataset.goalLocked) {
+    EL.editor.dataset.goalLocked = '1';
+    document.getElementById('w-app').classList.add('goal-lock');
+  }
+}
+function unlockEditor() {
+  delete EL.editor.dataset.goalLocked;
+  document.getElementById('w-app').classList.remove('goal-lock');
+}
+
+/* ----- Goal bar wiring (once, in wireEvents) ----- */
+function wireGoalBar() {
+  const lockBtn = document.getElementById('goal-lock');
+  lockBtn.addEventListener('click', () => {
+    const doc = activeDoc();
+    if (!doc || !doc.goal) return;
+    const p = goalProgress(doc.goal);
+    if (p.done && doc.goal.lock) {
+      if (confirm(t('goal.unlockConfirm'))) {
+        doc.goal.lock = false;
+        scheduleSave();
+        unlockEditor();
+      }
+    } else {
+      doc.goal.lock = !doc.goal.lock;
+      if (!p.done) doc.goal.lock = false;   // lock only makes sense after done
+      scheduleSave();
+      updateGoalBar();
+    }
+  });
+
+  document.getElementById('goal-clear').addEventListener('click', () => {
+    const doc = activeDoc();
+    if (!doc) return;
+    doc.goal = null;
+    scheduleSave();
+    document.getElementById('goal-bar').hidden = true;
+    unlockEditor();
+  });
+
+  // Hard input block when locked
+  EL.editor.addEventListener('beforeinput', (e) => {
+    if (EL.editor.dataset.goalLocked) {
+      e.preventDefault();
+      showToast(t('goal.locked'));
+    }
+  });
+}
+
+/* ----- Reading progress bar ----- */
+function updateReadingProgress() {
+  const el = document.getElementById('reading-progress');
+  const ed = EL.editor;
+  const max = ed.scrollHeight - ed.clientHeight;
+  const pct = max <= 0 ? (ed.textContent.trim() ? 100 : 0)
+            : Math.min(100, Math.round(ed.scrollTop / max * 100));
+  el.querySelector('.reading-progress-fill').style.width = pct + '%';
+}
+
+function wireReadingProgress() {
+  const el = document.getElementById('reading-progress');
+  el.hidden = false;
+  EL.editor.addEventListener('scroll', updateReadingProgress, { passive: true });
+  updateReadingProgress();
+}
+
+/* ----- Refresh hooks: keep bar + progress live on every edit ----- */
+function goalAfterInput() {
+  const doc = activeDoc();
+  const bar = document.getElementById('goal-bar');
+  if (doc && doc.goal && !bar.hidden) updateGoalBar();
+  updateReadingProgress();
+}
+
+function goalAfterRender() {
+  const doc = activeDoc();
+  const bar = document.getElementById('goal-bar');
+  if (doc && doc.goal) { bar.hidden = false; goalRuntime.fired = false; updateGoalBar(); }
+  else { bar.hidden = true; unlockEditor(); }
+  updateReadingProgress();
+}
+
+
 
 /* ----- BOOT INTEGRATION (SECTION 13) ----- */
 // Append to existing boot sequence:

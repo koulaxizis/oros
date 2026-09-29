@@ -1532,3 +1532,206 @@ sup.fn-ref:hover { text-decoration: underline; }
   .goal-bar, .reading-progress { display: none !important; }
   .toc-inline { border: none; background: none; padding: 0; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Wave 5 — I/O styles
+   ══════════════════════════════════════════════════════════ */
+
+/* ===== IO FORMAT LIST (inside export/import dialogs) ===== */
+.io-list { display: flex; flex-direction: column; gap: 6px; }
+
+.io-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-stack);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.io-row:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+.io-ext {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 7px;
+  min-width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.io-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.io-name { font-size: 13px; color: var(--text); font-weight: 600; }
+
+.io-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.io-note {
+  font-size: 11px;
+  color: var(--warn);
+  margin-top: 8px;
+}
+
+/* ===== DRAG & DROP OVERLAY ===== */
+.dd-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(2px);
+  border: 2px dashed var(--accent);
+  margin: 8px;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.dd-overlay .dd-icon {
+  width: 56px;
+  height: 56px;
+  color: var(--accent);
+}
+
+.dd-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.dd-sub { font-size: 12px; color: var(--text-dim); }
+
+/* ===== IMPORT OPTIONS (create new vs append vs replace) ===== */
+.imp-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.imp-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.imp-opt:hover { border-color: var(--accent); }
+.imp-opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.imp-opt input { accent-color: var(--accent); }
+
+/* ===== STYLED FILE PICKER BUTTON (never raw default input look) ===== */
+.file-pick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  background: var(--bg);
+  border: 1px dashed var(--accent);
+  border-radius: 6px;
+  color: var(--accent);
+  font-family: var(--font-stack);
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.15s;
+}
+
+.file-pick-btn:hover { background: var(--accent-soft); }
+
+.file-pick-btn input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.file-pick-name {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== EXPORT METADATA ROW (shown in export dialog — tags/category ride along) ===== */
+.io-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.io-meta .io-meta-chip {
+  font-size: 11px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+/* ===== BUSY INDICATOR (large exports: DOCX/PDF) ===== */
+.io-busy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+@keyframes ioSpin {
+  to { transform: rotate(360deg); }
+}
+
+.io-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: ioSpin 0.8s linear infinite;
+}
+
+/* ===== TOUCH ADJUSTMENTS ===== */
+@media (hover: none) and (pointer: coarse) {
+  .io-row { min-height: 52px; }
+  .imp-opt { min-height: 46px; }
+  .file-pick-btn { height: 46px; }
+}
+
+/* ===== PRINT: never show io chrome ===== */
+@media print {
+  .dd-overlay { display: none !important; }
+}
