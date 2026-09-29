@@ -175,7 +175,12 @@ const STR = {
     "dupe.keeper": "oldest — kept",
     "dupe.apply.all": "Apply all ({n} groups)",
     "dupe.apply.sel": "Apply selected",
-    "dupe.none.sel": "Select at least one group"
+    "dupe.none.sel": "Select at least one group",
+    "fav.title": "Favorites",
+    "fav.add": "Add to favorites",
+    "fav.remove": "Remove from favorites",
+    "fav.added": "Added to favorites",
+    "fav.removed": "Removed from favorites"
   },
   "el": {
     "app.name": "Συντομεύσεις",
@@ -255,7 +260,12 @@ const STR = {
     "dupe.keeper": "παλαιότερη — διατηρήθηκε",
     "dupe.apply.all": "Εφαρμογή όλων ({n} ομάδες)",
     "dupe.apply.sel": "Εφαρμογή επιλεγμένων",
-    "dupe.none.sel": "Επίλεξε τουλάχιστον μία ομάδα"
+    "dupe.none.sel": "Επίλεξε τουλάχιστον μία ομάδα",
+    "fav.title": "Αγαπημένες",
+    "fav.add": "Προσθήκη στις αγαπημένες",
+    "fav.remove": "Αφαίρεση από τις αγαπημένες",
+    "fav.added": "Προστέθηκε στις αγαπημένες",
+    "fav.removed": "Αφαιρέθηκε από τις αγαπημένες"
   }
 };
 
@@ -335,6 +345,7 @@ function sanitizeItem(raw, idHint) {
           : raw.status === "unknown" ? "unknown" : "ok",
     visits: Math.max(0, parseInt(raw.visits, 10) || 0),
     lastVisit: RE_TS.test(String(raw.lastVisit)) ? Number(raw.lastVisit) : 0,
+    fav: raw.fav === true,       // quick-launch flag — syncs via entity merge
     pos: (raw.pos !== undefined && Number.isFinite(raw.pos)) ? raw.pos : null, // manual order
     added: RE_TS.test(String(raw.added)) ? Number(raw.added)
           : (Date.now()),
@@ -607,6 +618,7 @@ function renderList() {
         .sort((a, b) => (b.added - a.added) || (a.id < b.id ? -1 : 1));
   else                 list = itemsInFolder(uiActiveFolder);
   list = list.filter(itemMatchesTags);
+  renderFavorites(filterMode);
 
   const total = Object.keys(state.items).length;
   $("#empty").hidden = total > 0;
@@ -754,6 +766,142 @@ function openItem(id) {
   save();
   window.open(it.url, "_blank", "noopener,noreferrer");
   renderList();
+}
+
+/* ===== 4a. FAVORITES (quick-launch strip) ===== */
+
+/* Favorites order: most recently favorited first. Toggling fav
+   bumps "modified", so the existing merge propagates both the
+   flag AND the order with zero schema changes beyond the bool. */
+function favoriteItems() {
+  return Object.keys(state.items)
+    .map((id) => state.items[id])
+    .filter((it) => it.fav)
+    .sort((a, b) => ((b.modified || 0) - (a.modified || 0)) ||
+      (a.id < b.id ? -1 : 1));
+}
+
+function toggleFav(id) {
+  const it = state.items[id];
+  if (!it) return;
+  it.fav = !it.fav;
+  it.modified = Date.now();
+  save();
+  renderAll();
+  transientNote(it.fav ? t("fav.added") : t("fav.removed"));
+}
+
+/* One-time mount: strip + injected styles (self-contained — we
+   deliberately don't rely on unseen selectors in bookmarks.css). */
+let favStripMounted = false;
+function mountFavStrip() {
+  if (favStripMounted) return;
+  const itemsEl = $("#items");
+  if (!itemsEl) return;
+  const strip = document.createElement("div");
+  strip.id = "fav-strip";
+  strip.hidden = true;
+  itemsEl.parentNode.insertBefore(strip, itemsEl);
+  favStripMounted = true;
+
+  const st = document.createElement("style");
+  st.textContent =
+    "#fav-strip{display:block;margin:0 0 10px}" +
+    "#fav-strip[hidden]{display:none}" +
+    ".fav-head{font-size:11px;font-weight:600;text-transform:uppercase;" +
+      "letter-spacing:.06em;color:var(--text-dim);margin:0 0 6px 2px;" +
+      "display:flex;align-items:center;gap:5px}" +
+    "#fav-grid{display:flex;flex-wrap:wrap;gap:8px}" +
+    ".fav-tile{display:flex;flex-direction:column;align-items:center;" +
+      "gap:6px;width:78px;padding:9px 4px 7px;border:1px solid var(--border);" +
+      "border-radius:10px;background:var(--panel-bg);cursor:pointer;" +
+      "color:var(--text);font:inherit}" +
+    ".fav-tile:hover{border-color:var(--accent)}" +
+    ".fav-icon{width:38px;height:38px;border-radius:10px;display:flex;" +
+      "align-items:center;justify-content:center;color:#fff;" +
+      "font-weight:700;font-size:16px;flex-shrink:0}" +
+    ".fav-name{font-size:11px;line-height:1.2;max-width:70px;overflow:hidden;" +
+      "text-overflow:ellipsis;white-space:nowrap;text-align:center}";
+  document.head.appendChild(st);
+}
+
+/* Paint: shown above the list in folder / All views only —
+   hidden while searching, tag-filtering, or in selection mode
+   (same foot-gun rule as selection itself). */
+function renderFavorites(filterMode) {
+  const strip = $("#fav-strip");
+  if (!strip) return;
+  const favs = favoriteItems();
+  strip.hidden = !favs.length || filterMode || selectionMode;
+  strip.textContent = "";
+  if (strip.hidden) return;
+
+  const h = document.createElement("div");
+  h.className = "fav-head";
+  h.innerHTML =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">' +
+    '<path d="M12 2l2.9 6.26 6.85.74-5.1 4.6 1.43 6.77L12 16.9l-6.08 3.47' +
+    ' 1.43-6.77-5.1-4.6 6.85-.74z"/></svg>';
+  const hTxt = document.createElement("span");
+  hTxt.textContent = t("fav.title");
+  h.appendChild(hTxt);
+  strip.appendChild(h);
+
+  const grid = document.createElement("div");
+  grid.id = "fav-grid";
+  favs.forEach((it) => grid.appendChild(buildFavTile(it)));
+  strip.appendChild(grid);
+}
+
+/* Tile = favicon-style chip + name; click opens, right-click /
+   long-press opens the SAME ctx menu as the row (with the new
+   favorite toggle row) — one source of truth for item actions. */
+function buildFavTile(it) {
+  const host = hostOf(it.url) || it.url;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "fav-tile";
+  b.title = it.title;
+
+  const ic = document.createElement("span");
+  ic.className = "fav-icon";
+  ic.style.background = faviconStyle(host);
+  ic.textContent = (host[0] || "?").toUpperCase();
+
+  const nm = document.createElement("span");
+  nm.className = "fav-name";
+  nm.textContent = it.title;
+  b.append(ic, nm);
+
+  b.addEventListener("click", () => {
+    if (!selectionMode) openItem(it.id);
+  });
+  b.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    showCtxMenu(it.id, e.clientX, e.clientY);
+  });
+
+  /* Mobile long-press — same 500ms pattern as rows/tabs. */
+  let lpTimer = null, lpY = 0;
+  b.addEventListener("touchstart", (e) => {
+    const x = e.touches[0].clientX;
+    lpY = e.touches[0].clientY;
+    lpTimer = setTimeout(() => {
+      lpTimer = null;
+      if (e.cancelable) e.preventDefault();
+      navigator.vibrate && navigator.vibrate(15);
+      showCtxMenu(it.id, x, lpY);
+    }, 500);
+  }, { passive: false });
+  ["touchmove", "touchend", "touchcancel"].forEach((ev) => {
+    b.addEventListener(ev, (e2) => {
+      if (ev === "touchmove" && e2.touches &&
+          Math.abs(e2.touches[0].clientY - lpY) < 12) return;
+      clearTimeout(lpTimer);
+      lpTimer = null;
+    });
+  });
+  return b;
 }
 
 /* ===== 4b. TAGS (Wave 2): state, helpers, filter row, panel ===== */
@@ -1566,6 +1714,7 @@ function showCtxMenu(id, x, y) {
 
   row(t("ctx.open"), () => openItem(id));
   row(t("ctx.edit"), () => openItemDialog(id));
+  row(it.fav ? t("fav.remove") : t("fav.add"), () => toggleFav(id));
   const others = folderList().filter((f) => f.id !== it.folderId);
   if (others.length) {
     const sep = document.createElement("div");
@@ -2215,6 +2364,7 @@ function boot() {
   load();
   applyI18n();
   wire();
+  mountFavStrip();
   registerSync(0);
   renderAll();
   inheritPalette();

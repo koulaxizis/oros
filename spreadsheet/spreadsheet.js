@@ -40,6 +40,7 @@ var STRINGS = {
     "tab.confirm": "Tap ✕ again to delete this sheet",
     "csv.imported": "CSV imported as a new sheet",
     "csv.exported": "CSV exported",
+    "csv.empty": "Cannot export an empty sheet",
     "err.corrupt": "Corrupted data rescued — a fresh sheet was created",
     "undo.empty": "Nothing to undo",
     "redo.empty": "Nothing to redo",
@@ -53,6 +54,7 @@ var STRINGS = {
     "tab.confirm": "Πάτησε ξανά ✕ για διαγραφή του φύλλου",
     "csv.imported": "Το CSV εισήχθη ως νέο φύλλο",
     "csv.exported": "Το CSV εξήχθη",
+    "csv.empty": "Δεν μπορεί να εξάγει κενό φύλλο",
     "err.corrupt": "Τα δεδομένα ήταν κατεστραμμένα — δημιουργήθηκε νέο φύλλο",
     "undo.empty": "Τίποτα προς αναίρεση",
     "redo.empty": "Τίποτα προς επανάληψη",
@@ -301,6 +303,7 @@ var saveTimer = null;
 
 function queueSave() {
   if (saveTimer) clearTimeout(saveTimer);
+  dirtyFlag = false;       /* saved state */
   saveTimer = setTimeout(saveNow, 400);
 }
 
@@ -379,12 +382,13 @@ function getSheetById(id) {
 }
 
 function findSheetByName(name) {
-  var nl = String(name).toLowerCase().replace(/[^\w]/g, "");
+  /* Keep Greek letters (α-ω, Α-Ω) + ASCII word chars */
+  var nl = String(name).toLowerCase().replace(/[^a-z0-9\u03b1-\u03c9]/g, "");
   for (var i = 0; i < state.sheets.length; i++) {
     var sh = state.sheets[i];
     if (!sh) continue;
     var n = sh.name || sh.bi[LANG] || sh.bi.en || "";
-    if (String(n).toLowerCase().replace(/[^\w]/g, "") === nl) return sh;
+    if (String(n).toLowerCase().replace(/[^a-z0-9\u03b1-\u03c9]/g, "") === nl) return sh;
   }
   return null;
 }
@@ -620,7 +624,7 @@ function tokenize(formula) {
 
     if (lookahead === "(") {
       tokens.push({ type: TT_FUNC, value: ident.toUpperCase() });
-    } else if (refMatch && BOOL_LITERALS.hasOwnProperty(ident.toUpperCase())) {
+    } else if (BOOL_LITERALS.hasOwnProperty(ident.toUpperCase())) {
       tokens.push({ type: TT_NUM, value: BOOL_LITERALS[ident.toUpperCase()] });
     } else if (refMatch) {
       if (sheetPrefix) {
@@ -925,18 +929,21 @@ function evaluate(ast, visiting) {
       }
       else if (fn === "ROUND") {
         if (args.length < 2) { stack.push("#VALUE!"); continue; }
-        var rn = coerceNum(args[0]), rp = args.length > 1 ? coerceNum(args[1]) : 0;
+        var flat = flattenArgs(args);
+        var rn = coerceNum(flat[0]), rp = flat.length > 1 ? coerceNum(flat[1]) : 0;
         if (typeof rn !== "number" || typeof rp !== "number") { stack.push("#VALUE!"); continue; }
         var f = Math.pow(10, rp);
         stack.push(Math.round(rn * f) / f);
       }
       else if (fn === "ABS") {
-        var ab = coerceNum(args[0]);
+        var flat = flattenArgs(args);
+        var ab = coerceNum(flat[0]);
         stack.push(typeof ab === "number" ? Math.abs(ab) : "#VALUE!");
       }
       else if (fn === "IF") {
         if (args.length < 2) { stack.push("#VALUE!"); continue; }
-        var cond = args[0];
+        var flat = flattenArgs(args);
+        var cond = flat[0];
         var truthy = (typeof cond === "number" && cond !== 0) || cond === "TRUE";
         stack.push(truthy ? args[1] : (args.length > 2 ? args[2] : ""));
       }
@@ -955,7 +962,8 @@ function evaluate(ast, visiting) {
         stack.push(ro);
       }
       else if (fn === "NOT") {
-        var nn = args[0];
+        var flat = flattenArgs(args);
+        var nn = flat[0];
         stack.push(!(nn === 1 || (typeof nn === "number" && nn !== 0) || nn === "TRUE") ? 1 : 0);
       }
       else if (fn === "CONCAT" || fn === "CONCATENATE") {
@@ -1550,13 +1558,17 @@ function updateToolbar() {
 
 /* ===== SECTION 3d3: COLUMN RESIZE (mouse only) ===== */
 
+var rsDrag = null, rsStartX = 0, rsStartW = 0, rsCol = -1;
+
 function initColResize() {
-  var dragging = null, startX = 0, startW = 0, colIdx = -1;
+  /* per-header handlers only — <th> elements are discarded with the
+     table rebuild, so they cannot leak. Document-level handlers are
+     attached ONCE (initResizeDocHandlers, called from wire()). */
   var i;
   for (i = 1; i < colHeads.length; i++) {
     (function (th, ci) {
       th.addEventListener("mousemove", function (e) {
-        if (dragging) return;
+        if (rsDrag) return;
         var rect = th.getBoundingClientRect();
         if (e.clientX > rect.right - 6) th.classList.add("colresize");
         else th.classList.remove("colresize");
@@ -1565,35 +1577,38 @@ function initColResize() {
         var rect = th.getBoundingClientRect();
         if (e.clientX <= rect.right - 6) return; /* not on the edge */
         e.preventDefault();
-        dragging = th; startX = e.clientX;
-        startW = rect.width; colIdx = ci - 1;
+        rsDrag = th; rsStartX = e.clientX;
+        rsStartW = rect.width; rsCol = ci - 1;
       });
     })(colHeads[i], i);
   }
-  var sheet = getActiveSheet();
-  function onMouseMove(e) {
-    if (!dragging || !sheet) return;
-    var w = Math.max(40, Math.min(400, startW + (e.clientX - startX)));
+}
+
+function initResizeDocHandlers() {
+  /* attached exactly once for the app lifetime */
+  document.addEventListener("mousemove", function (e) {
+    if (!rsDrag) return;
+    var sheet = getActiveSheet(); /* fresh: never a stale sheet entity */
+    if (!sheet) return;
+    var w = Math.max(40, Math.min(400, rsStartW + (e.clientX - rsStartX)));
     sheet.cw = sheet.cw || {};
-    sheet.cw[colIdx] = w;
-    if (colHeads[colIdx + 1]) colHeads[colIdx + 1].style.width = w + "px";
+    sheet.cw[rsCol] = w;
+    if (colHeads[rsCol + 1]) colHeads[rsCol + 1].style.width = w + "px";
     var r;
     for (r = 0; r < cellRefs.length; r++) {
-      if (cellRefs[r][colIdx]) {
-        cellRefs[r][colIdx].style.width = w + "px";
-        cellRefs[r][colIdx].style.minWidth = w + "px";
+      if (cellRefs[r][rsCol]) {
+        cellRefs[r][rsCol].style.width = w + "px";
+        cellRefs[r][rsCol].style.minWidth = w + "px";
       }
     }
-  }
-  function onMouseUp() {
-    if (!dragging) return;
-    dragging = null;
+  });
+  document.addEventListener("mouseup", function () {
+    if (!rsDrag) return;
+    rsDrag = null;
     /* persist via sheet entity LWW */
-    sheet.mtime = now();
-    markDirty();
-  }
-  document.addEventListener("mousemove", onMouseMove);
-  document.addEventListener("mouseup", onMouseUp);
+    var sheet = getActiveSheet();
+    if (sheet) { sheet.mtime = now(); markDirty(); }
+  });
 }
 
 /* ===== SECTION 3e: SHEET TABS (unchanged from Wave 2) ===== */
@@ -1817,7 +1832,7 @@ function csvExport() {
     if (r > maxR) maxR = r;
     if (c > maxC) maxC = c;
   }
-  if (maxR < 0) { toast(t("err.corrupt")); return; }
+  if (maxR < 0) { notifyTransient(t("csv.empty")); return; }
 
   var lines = [], r, c, row;
   for (r = 0; r <= maxR; r++) {
@@ -1862,6 +1877,10 @@ function csvParse(text) {
     }
   }
   if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  /* Hard cap at 64 columns — matches normalizeState limit */
+  for (var r = 0; r < rows.length; r++) {
+    if (rows[r].length > COLS) rows[r].length = COLS;
+  }
   return rows;
 }
 
@@ -2097,6 +2116,14 @@ function injectIcons() {
 function wire() {
   var wrap = $("grid-wrap");
   var dragSelecting = false;
+  var mdSelected = false;     /* mouse mousedown owns the next click */
+  var tapWasSelected = false; /* tap target already selected pre-mousedown */
+  var ptrType = "mouse";      /* last pointerdown type (mouse|touch|pen) */
+  initResizeDocHandlers();   /* document-level: attach EXACTLY once */
+
+  $("grid").addEventListener("pointerdown", function (e) {
+    ptrType = e.pointerType || "mouse";
+  }, true);
 
   $("grid").addEventListener("mousedown", function (e) {
     if (e.button !== 0) return;
@@ -2106,7 +2133,9 @@ function wire() {
     var r = td.parentElement.rowIndex - 1;
     var c = td.cellIndex - 1;
     if (r < 0 || c < 0) return;
-    if (editing) { commitEdit(0, 0); return; }
+    tapWasSelected = (r === selR && c === selC && !editing);
+    mdSelected = (ptrType === "mouse");
+    if (editing) commitEdit(0, 0); /* then KEEP selecting the clicked cell */
     if (e.shiftKey) {
       /* Shift+click: extend selection from anchor */
       selR = r; selC = c;
@@ -2144,9 +2173,11 @@ function wire() {
     if (!editing) beginEdit();
   });
 
-  /* mobile: tap selects, tap on SELECTED cell edits */
+  /* mobile: tap selects, tap on SELECTED cell edits.
+     ptrType comes from pointerdown (works in every browser —
+     click/mousedown never expose pointerType in Firefox/Safari). */
   $("grid").addEventListener("click", function (e) {
-    if (e.pointerType === "mouse") return; /* mousedown handled it */
+    if (mdSelected) { mdSelected = false; return; } /* mouse: mousedown owned it */
     var td = e.target;
     while (td && td.tagName !== "TD") td = td.parentElement;
     if (!td || td.tagName !== "TD") return;
@@ -2154,7 +2185,7 @@ function wire() {
     var c = td.cellIndex - 1;
     if (r < 0 || c < 0) return;
     if (editing) commitEdit(0, 0);
-    if (selR === r && selC === c && !editing) beginEdit();
+    if (tapWasSelected && r === selR && c === selC) beginEdit();
     else { collapseSel(r, c); renderSelection(); }
   });
 

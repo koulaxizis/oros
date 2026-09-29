@@ -176,6 +176,7 @@
       "rel.colleague": "Colleague",
       "rel.manager": "Manager",
       "rel.other": "Other",
+      "ct.back": "Back",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -284,7 +285,8 @@
       "rel.friend": "Φίλος/η",
       "rel.colleague": "Συνάδελφος",
       "rel.manager": "Αφεντικό",
-      "rel.other": "Άλλη",
+      "rel.other": "Αλλη",
+      "ct.back": "Πίσω"
     }
   };
   function t(k) {
@@ -406,7 +408,7 @@
   function defaultLabels() {
     return [
       { id: "lbl-personal", name: t("lbl.personal"), color: LABEL_PALETTE[0], mtime: 0 },
-      { id: "lbl-work",     name: t("lbl.work"),     color: LABEL_PALETTE[2], mtime: 0 },
+      { id: "lbl-work",     name: t("lbl.work"),     color: LABEL_PALETTE[4], mtime: 0 },
       { id: "lbl-family",   name: t("lbl.family"),   color: LABEL_PALETTE[3], mtime: 0 }
     ];
   }
@@ -419,11 +421,26 @@
       "lbl-work":     t("lbl.work"),
       "lbl-family":   t("lbl.family")
     };
+    // #3 — seed colors must match the Calendar's defaults byte-for-
+    // byte (shared palette): Personal gold, Work red, Family green.
+    // mtime === 0 means never user-touched (every recolor bumps
+    // mtime), so this migration can never override user intent.
+    var seedColors = {
+      "lbl-personal": LABEL_PALETTE[0],
+      "lbl-work":     LABEL_PALETTE[4],
+      "lbl-family":   LABEL_PALETTE[3]
+    };
     var changed = false;
     state.labels.forEach(function (l) {
-      if (l.mtime === 0 && map[l.id] && l.name !== map[l.id]) {
-        l.name = map[l.id];
-        changed = true;
+      if (l.mtime === 0 && map[l.id]) {
+        if (l.name !== map[l.id]) {
+          l.name = map[l.id];
+          changed = true;
+        }
+        if (seedColors[l.id] && l.color !== seedColors[l.id]) {
+          l.color = seedColors[l.id];
+          changed = true;
+        }
       }
     });
     if (changed) {
@@ -997,7 +1014,7 @@
       }
 
       (function (cc) {
-        row.addEventListener("click", function () { openDlg(cc); });
+        row.addEventListener("click", function () { openViewCard(cc); });
       })(c);
 
       li.appendChild(row);
@@ -1046,6 +1063,257 @@
       $("imp-list").textContent = "";
     });
   }
+
+// ===== VIEW CARD (#4 — read-only contact card) =====
+// List rows open a READ card first; Edit lives behind a button on
+// the card. The shell deep-link (__orosContactsOpen) lands on the
+// same card. Fully JS-built with injected styles — no dependency
+// on unseen contacts.css selectors.
+
+var VIEW_CSS_DONE = false;
+function ensureViewCss() {
+  if (VIEW_CSS_DONE) return;
+  VIEW_CSS_DONE = true;
+  var st = document.createElement("style");
+  st.textContent =
+    "#ct-view{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);" +
+      "display:flex;align-items:flex-start;justify-content:center;overflow:auto;" +
+      "padding:24px 12px}" +
+    ".ct-view-card{background:var(--panel-bg,#22242a);color:var(--text,#eee);" +
+      "border:1px solid var(--border,#333);border-radius:14px;" +
+      "box-shadow:var(--shadow,0 8px 30px rgba(0,0,0,.4));" +
+      "width:100%;max-width:480px;padding:18px 18px 16px;position:relative}" +
+    ".ct-view-x{position:absolute;top:10px;right:10px;width:30px;height:30px;" +
+      "border:1px solid var(--border,#333);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim,#999);cursor:pointer;font-size:14px;line-height:1}" +
+    ".ct-view-head{display:flex;flex-direction:column;align-items:center;gap:8px;" +
+      "text-align:center}" +
+    "#ct-view .ct-avatar{width:76px;height:76px;border-radius:50%;font-size:24px}" +
+    "#ct-view .ct-avatar-img{width:76px;height:76px;border-radius:50%;object-fit:cover}" +
+    ".ct-view-name{font-size:19px;font-weight:700;margin:0}" +
+    ".ct-view-sub{font-size:12.5px;color:var(--text-dim,#999);margin:0}" +
+    ".ct-view-star{color:#d4af37;font-size:13px}" +
+    ".ct-view-lbls{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 4px}" +
+    ".ct-vs-title{font-size:11px;font-weight:700;text-transform:uppercase;" +
+      "letter-spacing:.06em;color:var(--text-dim,#999);margin:16px 0 6px}" +
+    ".ct-vs-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;" +
+      "border-top:1px solid var(--border,#333);font-size:13px;align-items:baseline}" +
+    ".ct-vs-key{color:var(--text-dim,#999);flex-shrink:0}" +
+    ".ct-vs-val{color:var(--text,#eee);text-decoration:none;word-break:break-word;text-align:right}" +
+    "a.ct-vs-val:hover{color:var(--accent,#d4af37);text-decoration:underline}" +
+    ".ct-view-note{font-size:13px;white-space:pre-wrap;line-height:1.5;" +
+      "padding-top:8px;border-top:1px solid var(--border,#333)}" +
+    ".ct-view-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}" +
+    ".ct-view-edit{border:1px solid var(--accent,#d4af37);background:transparent;" +
+      "color:var(--accent,#d4af37);border-radius:8px;padding:8px 18px;font:inherit;" +
+      "cursor:pointer;font-weight:600}" +
+    ".ct-view-edit:hover{background:var(--accent-soft,rgba(212,175,55,.15))}" +
+    "@media (max-width:520px){" +
+      "#ct-view{padding:0;align-items:stretch}" +
+      ".ct-view-card{max-width:none;border-radius:0;border:none;min-height:100%}}";
+  document.head.appendChild(st);
+}
+
+function closeViewCard() {
+  var ov = $("ct-view");
+  if (ov) ov.parentNode.removeChild(ov);
+}
+
+// One row: dim key on the left, value on the right (link when an
+// href is given). RETURNS the value node so callers can attach
+// click handlers (incoming-relation navigation).
+function viewRow(parent, key, text, href) {
+  var row = document.createElement("div");
+  row.className = "ct-vs-row";
+  var k = document.createElement("span");
+  k.className = "ct-vs-key";
+  k.textContent = key;
+  var v;
+  if (href) {
+    v = document.createElement("a");
+    v.href = href;
+    if (/^https?:/i.test(href)) { v.target = "_blank"; v.rel = "noopener noreferrer"; }
+  } else {
+    v = document.createElement("span");
+  }
+  v.className = "ct-vs-val";
+  v.textContent = text;
+  row.appendChild(k);
+  row.appendChild(v);
+  parent.appendChild(row);
+  return v;
+}
+
+function viewSection(card, titleKey) {
+  var h = document.createElement("div");
+  h.className = "ct-vs-title";
+  h.textContent = t(titleKey);
+  var body = document.createElement("div");
+  card.appendChild(h);
+  card.appendChild(body);
+  return body;
+}
+
+function evtDateText(ev) {
+  return ev.year ? (ev.year + "-" + ev.day) : ev.day;
+}
+
+function openViewCard(c) {
+  if (!c) return;
+  closeViewCard();
+  ensureViewCss();
+
+  var ov = document.createElement("div");
+  ov.id = "ct-view";
+  var card = document.createElement("div");
+  card.className = "ct-view-card";
+
+  var x = document.createElement("button");
+  x.type = "button";
+  x.className = "ct-view-x";
+  x.textContent = "✕";
+  x.setAttribute("aria-label", t("ct.back"));
+  x.addEventListener("click", closeViewCard);
+  card.appendChild(x);
+
+  var head = document.createElement("div");
+  head.className = "ct-view-head";
+  head.appendChild(mkAvatarEl(c));
+  var nm = document.createElement("h2");
+  nm.className = "ct-view-name";
+  nm.textContent = displayName(c);
+  head.appendChild(nm);
+  var sb = subLine(c);
+  if (sb) {
+    var sub = document.createElement("p");
+    sub.className = "ct-view-sub";
+    sub.textContent = sb;
+    head.appendChild(sub);
+  }
+  if (c.starred) {
+    var star = document.createElement("span");
+    star.className = "ct-view-star";
+    star.textContent = "★";
+    head.appendChild(star);
+  }
+  card.appendChild(head);
+
+  if (c.labelIds.length) {
+    var lbls = document.createElement("div");
+    lbls.className = "ct-view-lbls";
+    c.labelIds.forEach(function (lid) {
+      var l = labelById(lid);
+      if (!l) return;
+      var chip = document.createElement("span");
+      chip.className = "chip";
+      chip.style.setProperty("--chip", l.color);
+      var dot = document.createElement("span");
+      dot.className = "chip-dot";
+      dot.style.background = l.color;
+      chip.appendChild(dot);
+      chip.appendChild(document.createTextNode(l.name));
+      lbls.appendChild(chip);
+    });
+    card.appendChild(lbls);
+  }
+
+  if (c.phones.length) {
+    var ph = viewSection(card, "ct.field.phones");
+    c.phones.forEach(function (p) {
+      viewRow(ph, t("ty." + p.type), p.v,
+        "tel:" + p.v.replace(/[\s()\u2013\u2014-]/g, ""));
+    });
+  }
+  if (c.emails.length) {
+    var em = viewSection(card, "ct.field.emails");
+    c.emails.forEach(function (e) {
+      viewRow(em, t("ty." + e.type), e.v, "mailto:" + e.v);
+    });
+  }
+  if (c.addresses.length) {
+    var ad = viewSection(card, "ct.field.addresses");
+    c.addresses.forEach(function (a) {
+      var txt = [a.street, a.city,
+        [a.zip, a.region].filter(Boolean).join(" "), a.country]
+        .filter(Boolean).join(", ");
+      viewRow(ad, t("ty." + a.type), txt);
+    });
+  }
+  if (c.websites.length) {
+    var wb = viewSection(card, "ct.field.websites");
+    c.websites.forEach(function (w) {
+      var href = /^https?:/i.test(w.v) ? w.v : ("https://" + w.v);
+      viewRow(wb, t("ty." + w.type), w.v, href);
+    });
+  }
+  if (c.im.length) {
+    var im = viewSection(card, "ct.field.im");
+    c.im.forEach(function (m) {
+      viewRow(im, t("ty." + m.type), m.v);
+    });
+  }
+  if (c.events.length) {
+    var ev = viewSection(card, "ct.field.events");
+    c.events.forEach(function (e) {
+      var key = t("evt." + e.type) +
+        ((e.type === "custom" && e.label) ? " · " + e.label : "");
+      viewRow(ev, key, evtDateText(e));
+    });
+  }
+  var outRels = c.relations || [];
+  var incRels = incomingRelations(c);
+  if (outRels.length || incRels.length) {
+    var rl = viewSection(card, "ct.field.relations");
+    outRels.forEach(function (r) {
+      var o = contactById(r.with);
+      var v = viewRow(rl, t("rel." + r.type),
+        o ? displayName(o) : t("ct.unnamed"));
+      if (o) {
+        v.style.cursor = "pointer";
+        v.addEventListener("click", function () { openViewCard(o); });
+      }
+    });
+    incRels.forEach(function (r) {
+      var o = contactById(r.id);
+      if (!o) return;
+      var v = viewRow(rl, t("rel." + r.type), displayName(o));
+      v.style.cursor = "pointer";
+      v.addEventListener("click", function () { openViewCard(o); });
+    });
+  }
+  if (c.note) {
+    var nt = viewSection(card, "ct.field.note");
+    var p = document.createElement("div");
+    p.className = "ct-view-note";
+    p.textContent = c.note;
+    nt.appendChild(p);
+  }
+
+  var foot = document.createElement("div");
+  foot.className = "ct-view-foot";
+  var ed = document.createElement("button");
+  ed.type = "button";
+  ed.className = "ct-view-edit";
+  ed.textContent = t("ct.dlg.edit");
+  ed.addEventListener("click", function () {
+    closeViewCard();
+    openDlg(c);
+  });
+  foot.appendChild(ed);
+  card.appendChild(foot);
+
+  ov.addEventListener("click", function (e) {
+    if (e.target === ov) closeViewCard();
+  });
+  ov.appendChild(card);
+  document.body.appendChild(ov);
+}
+
+// Escape closes the card (persistent, cheap — checks for the
+// overlay's existence before acting).
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" && $("ct-view")) closeViewCard();
+});
 
 // ===== CONTACT DIALOG =====
 
@@ -1646,7 +1914,7 @@
         // would throw InvalidStateError from showModal(). Close the
         // stale edit first — the deep link is the newer intent.
         try { if ($("ct-dlg").open) $("ct-dlg").close(); } catch (e) {}
-        openDlg(state.contacts[i]);
+        openViewCard(state.contacts[i]);
         return;
       }
     }
@@ -2851,6 +3119,7 @@
     if (Array.isArray(data.deleted)) {
       state.deleted = data.deleted.map(sanitizeTomb).filter(Boolean);
     }
+    closeViewCard();
     try {
       $("ct-dlg").close();
       $("del-dlg").close();

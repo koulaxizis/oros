@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.17";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.19";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -708,6 +708,9 @@
     }
     autoSyncDot();              // v0.18.0: piggybacks the clock tick
     wxRenderChip();             // v0.18.0: weather chip, cheap paint only
+    wxFetchTickThrottled();     // #6: fetch retry (60s throttle) — a failed
+                                // boot fetch no longer sits in "waiting"
+                                // until an online/visibility event
     alarmTick();                // E1: shell-owned alarm engine tick
     calRemTickThrottled();      // Wave 3: calendar reminders (30s throttle)
     moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
@@ -853,7 +856,51 @@
 
     var heading = document.createElement("div");
     heading.className = "menu-heading";
-    heading.textContent = window.t("menu.title");
+    heading.style.cssText =
+      "display:flex;align-items:center;gap:5px;";
+    var hTxt = document.createElement("span");
+    hTxt.style.cssText = "flex:1;min-width:0;";
+    hTxt.textContent = window.t("menu.title");
+    heading.appendChild(hTxt);
+
+    // #1 — Expand/Collapse (all): two tiny icon buttons next to the
+    // menu title. Expand = clear the collapsed map; Collapse = mark
+    // every current category. Device-local (MENU_CAT_KEY), same as
+    // the per-category toggles — never synced, never dirty.
+    function mkCatBtn(svg, titleEn, titleEl, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = svg;
+      b.title = (state.lang === "el") ? titleEl : titleEn;
+      b.setAttribute("aria-label", b.title);
+      b.style.cssText =
+        "flex-shrink:0;width:22px;height:22px;padding:0;display:inline-flex;" +
+        "align-items:center;justify-content:center;border:1px solid var(--border);" +
+        "border-radius:6px;background:transparent;color:var(--text-dim);cursor:pointer;";
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    heading.appendChild(mkCatBtn(
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>',
+      "Expand all", "Άνοιγμα όλων",
+      function () {
+        catCollapsedWrite({});
+        renderMenu();
+      }));
+
+    heading.appendChild(mkCatBtn(
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 11 12 6 17 11"/><polyline points="7 18 12 13 17 18"/></svg>',
+      "Collapse all", "Κλείσιμο όλων",
+      function () {
+        var m = {};
+        state.apps.forEach(function (app) {
+          m[app.category || "other"] = true;
+        });
+        catCollapsedWrite(m);
+        renderMenu();
+      }));
+
     menu.appendChild(heading);
 
     if (state.apps.length === 0) {
@@ -3041,8 +3088,25 @@
         state.lang === "el" ? "el-GR" : "en-GB",
         { hour: "2-digit", minute: "2-digit" }));
   }
-  
-    // One truth, two consumers: if the Weather app holds NEWER data
+  // #6 — fetch retry tick: the BOOT fetch (wxFetch(false) at the
+  // bottom of the file) can fail silently — slow network, Open-Meteo
+  // hiccup — and nothing retried until an online/visibility event,
+  // leaving the chip in the "waiting" paint until the user clicked
+  // it or opened the Weather app. Piggyback the clock tick at a 60s
+  // throttle: wxFetch keeps its own gates (30-min happy path, 2-min
+  // post-failure retry window, offline/coords guards), so this tick
+  // costs one localStorage read per minute and nothing else. It also
+  // adopts the app's fresh cache (wxAdoptAppCache) without needing
+  // the app to be opened.
+  var wxFetchLastTick = 0;
+  function wxFetchTickThrottled() {
+    var now = Date.now();
+    if (now - wxFetchLastTick < 60000) return;
+    wxFetchLastTick = now;
+    wxFetch(false);
+  }
+
+  // One truth, two consumers: if the Weather app holds NEWER data
   // for this location than we do, adopt it — the tray and the app
   // must never show different numbers for the same place.
   function wxAdoptAppCache(w) {
