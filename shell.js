@@ -2365,9 +2365,13 @@
     syncDotHold = holdMs ? (Date.now() + holdMs) : 0;
     dot.setAttribute("data-state", status);
     var key = "syncdot." + status;
-    var title = window.t(key);
+    // TP-guard: σε load-order race το window.t μπορεί να λείπει ακόμα —
+    // το tooltip πέφτει στο raw status αντί να σκοτώνει το tick chain.
+    var title = (typeof window.t === "function") ? window.t(key) : key;
     dot.parentNode.setAttribute("title", title !== key ? title : status);
-    dot.parentNode.setAttribute("aria-label", window.t("sync.dot.aria"));
+    if (typeof window.t === "function") {
+      dot.parentNode.setAttribute("aria-label", window.t("sync.dot.aria"));
+    }
   }
 
   function autoSyncDot() {
@@ -2384,7 +2388,9 @@
     if (dot.getAttribute("data-state") !== s) {
       dot.setAttribute("data-state", s);
       var key = "syncdot." + s;
-      var title = window.t(key);
+      // TP-guard: ίδιο race με το setSyncDot — το tooltip πέφτει στο
+      // raw state, ο tick δεν πεθαίνει ποτέ εδώ.
+      var title = (typeof window.t === "function") ? window.t(key) : key;
       dot.parentNode.setAttribute("title", title !== key ? title : s);
     }
   }
