@@ -346,7 +346,10 @@
       "toast.saveFail":    "Couldn't save — storage may be full",
       "toast.emptyExport": "Nothing to export yet",
       "menu.showTree":     "Show tree",
-      "menu.close":        "Close"
+      "menu.close":        "Close",
+      "page.moveto":       "Move to…",
+      "dnd.root":          "Top level",
+      "dnd.bad":           "Can't move a page into itself or its sub-pages"
     },
     el: {
       "tree.empty":         "Καμία σελίδα ακόμη",
@@ -402,7 +405,10 @@
       "toast.saveFail":    "Αποτυχία αποθήκευσης — ίσως γεμάτος αποθηκευτικός χώρος",
       "toast.emptyExport": "Δεν υπάρχει κάτι προς εξαγωγή ακόμα",
       "menu.showTree":     "Εμφάνιση δέντρου",
-      "menu.close":        "Κλείσιμο"
+      "menu.close":        "Κλείσιμο",
+      "page.moveto":       "Μετακίνηση σε…",
+      "dnd.root":          "Πρώτο επίπεδο",
+      "dnd.bad":           "Αδύνατη η μετακίνηση μέσα στην ίδια σελίδα ή τις υποσελίδες της"
     }
   };
 
@@ -798,6 +804,8 @@
         row.appendChild(cnt);
       }
 
+      row.draggable = true;      // #5: DnD target/handler wiring lives
+                                 // on #tree-root (attachTreeDnD)
       row.addEventListener("click", function () { selectPage(p.id); });
 
       // Long-press (touch) + right-click → context menu
@@ -1104,6 +1112,225 @@
     markSyncDirty();
     renderAll();
     notifyTransient(t("toast.nbDeleted"));
+  }
+
+  // ---------- 5z. DRAG & DROP (#5: pages in/out of parent pages) -----
+  // Delegated on #tree-root (which persists across renderTree passes —
+  // renderTree only clears innerHTML). Rows get draggable=true in
+  // buildNodes; all handlers live here, attached ONCE.
+  // Sync safety: reparentPage bumps mtime → per-page LWW carries the
+  // new parent/pos to every device. No merge-engine change needed.
+
+  var DND_CSS_DONE = false;
+  function ensureDndCss() {
+    if (DND_CSS_DONE) return;
+    DND_CSS_DONE = true;
+    var st = document.createElement("style");
+    st.textContent =
+      "#tree-root .node-row.dragging{opacity:.35}" +
+      "#tree-root .node-row.drop-target{background:var(--accent-soft);" +
+        "outline:1px dashed var(--accent);outline-offset:-1px;border-radius:6px}" +
+      "#tree-root .node-kids.drop-target{outline:1px dashed var(--accent);" +
+        "outline-offset:-2px;border-radius:6px}";
+    document.head.appendChild(st);
+  }
+
+  var dragPageId  = null;
+  var draggingRow = null;
+  var dropHintEl  = null;
+
+  function clearDropHint() {
+    if (dropHintEl) { dropHintEl.classList.remove("drop-target"); dropHintEl = null; }
+  }
+
+  // Walk UP from targetId: if we ever meet the dragged page, the
+  // target lives inside the dragged subtree — invalid.
+  function validDropTarget(dragId, targetId) {
+    var cur = targetId, hops = 0;
+    while (cur && hops++ < 200) {
+      if (cur === dragId) return false;
+      var pg = pageById(cur);
+      if (!pg) return false;
+      cur = pg.parent;
+    }
+    return true;
+  }
+
+  function setDropHint(el) {
+    if (dropHintEl === el) return;
+    clearDropHint();
+    dropHintEl = el;
+    if (el) el.classList.add("drop-target");
+  }
+
+  // Resolve the drop target under the cursor: a row (→ that page),
+  // a .node-kids UL (→ its parent page), or the root area.
+  function dndTargetInfo(e, rootEl) {
+    if (e.target && e.target.closest) {
+      var row = e.target.closest(".node-row");
+      if (row && row.parentElement && row.parentElement.dataset.id) {
+        return { kind: "page", id: row.parentElement.dataset.id, el: row };
+      }
+      var kids = e.target.closest(".node-kids");
+      if (kids && kids.parentElement && kids.parentElement.dataset.id) {
+        return { kind: "page", id: kids.parentElement.dataset.id, el: kids };
+      }
+    }
+    return { kind: "root", id: null, el: rootEl };
+  }
+
+  function reparentPage(id, newParentId) {
+    var p = pageById(id);
+    if (!p) return;
+    if (newParentId && !validDropTarget(id, newParentId)) {
+      notifyTransient(t("dnd.bad"));
+      return;
+    }
+    // Top-level page dropped on the root area: no-op by design —
+    // prevents surprise reordering to the end of the root list.
+    if (newParentId === null && p.parent === null) return;
+
+    p.parent = newParentId;
+    var maxPos = 0;
+    siblingListByParent(newParentId).forEach(function (s) {
+      if (s.pos > maxPos) maxPos = s.pos;
+    });
+    p.pos = maxPos + 1;                    // lands at the end of the list
+    p.mtime = Date.now();
+    if (newParentId) prefs.open[newParentId] = true;   // auto-expand target
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyTransient(t("toast.moved"));
+  }
+
+  var DND_ATTACHED = false;
+  function attachTreeDnD() {
+    if (DND_ATTACHED) return;
+    var rootEl = document.getElementById("tree-root");
+    if (!rootEl) return;
+    DND_ATTACHED = true;
+    ensureDndCss();
+
+    rootEl.addEventListener("dragstart", function (e) {
+      if (!e.target || !e.target.closest) return;
+      var row = e.target.closest(".node-row");
+      if (!row || !row.parentElement) return;
+      dragPageId = row.parentElement.dataset.id || null;
+      if (!dragPageId) return;
+      draggingRow = row;
+      try {
+        e.dataTransfer.setData("text/plain", dragPageId);
+        e.dataTransfer.effectAllowed = "move";
+      } catch (err) {}
+      row.classList.add("dragging");
+    });
+
+    rootEl.addEventListener("dragend", function () {
+      dragPageId = null;
+      clearDropHint();
+      if (draggingRow) { draggingRow.classList.remove("dragging"); draggingRow = null; }
+    });
+
+    rootEl.addEventListener("dragover", function (e) {
+      if (!dragPageId) return;
+      var tgt = dndTargetInfo(e, rootEl);
+      if (tgt.kind === "page" && !validDropTarget(dragPageId, tgt.id)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDropHint(tgt.el);
+    });
+
+    rootEl.addEventListener("drop", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      clearDropHint();
+      if (!dragPageId) return;
+      var tgt = dndTargetInfo(e, rootEl);
+      if (tgt.kind === "page") {
+        var src = pageById(dragPageId);
+        var dst = pageById(tgt.id);
+        if (!src || !dst || src.nb !== dst.nb) return;   // same-notebook only
+        if (!validDropTarget(dragPageId, tgt.id)) {
+          notifyTransient(t("dnd.bad"));
+          return;
+        }
+        reparentPage(dragPageId, tgt.id);
+      } else {
+        reparentPage(dragPageId, null);
+      }
+      dragPageId = null;
+    });
+  }
+
+  // Mobile/no-DnD fallback: "Move to…" destination list, built with
+  // the same dialog id as uiDlg (nt-dlg) so closeUiDlg()/Esc work.
+  function askMoveTo(page) {
+    closeMenus();
+    var banned = {};   // self + own descendants are not destinations
+    (function mark(pid) {
+      banned[pid] = true;
+      state.pages.forEach(function (q) { if (q.parent === pid) mark(q.id); });
+    })(page.id);
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "nt-dlg";
+    dlg.style.cssText =
+      "background:var(--panel-bg);color:var(--text);border:1px solid var(--border);" +
+      "border-radius:10px;padding:16px 14px;max-width:min(380px,88vw);" +
+      "box-shadow:0 12px 36px var(--shadow);";
+    var h = document.createElement("h3");
+    h.style.cssText = "margin:0 0 10px;font-size:15px;font-weight:700;";
+    h.textContent = t("page.moveto") + " · " +
+      (page.title !== "" ? page.title : t("page.untitled"));
+    dlg.appendChild(h);
+
+    var list = document.createElement("div");
+    list.style.cssText =
+      "max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:2px;";
+
+    function dest(label, depth, targetId) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.style.cssText =
+        "text-align:left;padding:7px 10px;font:inherit;font-size:13px;" +
+        "background:transparent;color:var(--text);border:1px solid var(--border);" +
+        "border-radius:7px;cursor:pointer;margin-left:" + (depth * 14) + "px;";
+      b.addEventListener("click", function () {
+        closeUiDlg();
+        reparentPage(page.id, targetId);
+      });
+      list.appendChild(b);
+    }
+
+    dest("⬆ " + t("dnd.root"), 0, null);
+    (function walk(parentId, depth) {
+      if (depth > 32) return;
+      kidsOf(parentId).forEach(function (p) {
+        if (banned[p.id]) return;
+        dest(p.title !== "" ? p.title : t("page.untitled"), depth, p.id);
+        walk(p.id, depth + 1);
+      });
+    })(null, 0);
+    dlg.appendChild(list);
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;margin-top:12px;";
+    var c = document.createElement("button");
+    c.type = "button";
+    c.textContent = t("dlg.cancel");
+    c.style.cssText =
+      "padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;" +
+      "background:transparent;color:var(--text);border:1px solid var(--border);";
+    c.addEventListener("click", closeUiDlg);
+    row.appendChild(c);
+    dlg.appendChild(row);
+
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   // ---------- 6. Context menu + label picker (Wave 2.1) ----------
@@ -1743,6 +1970,7 @@
       [t("page.rename"),   function () { renamePage(page.id); }],
       [t("page.move.up"),  function () { movePage(page.id, -1); }],
       [t("page.move.down"),function () { movePage(page.id, +1); }],
+      [t("page.moveto"),   function () { askMoveTo(page); }],
       [page.pinned ? t("page.unpin") : t("page.pin"), function () { togglePin(page.id); }],
       [t("labels.title"),  function () { openLabelPicker(page, x, y); }],
       [t("menu.exportPage"),       function () { exportPageTxt(page); }],
@@ -2489,6 +2717,7 @@
   renderAll();
   registerNotesSlice();
   wireUI();
+  attachTreeDnD();     // #5: tree drag & drop (guard: attach once)
   initSplitter();
   watchPalette();
 

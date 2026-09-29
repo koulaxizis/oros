@@ -138,7 +138,12 @@
       "rep.disc":     "Self-tracked data, informational only — not a medical diagnosis or advice.",
       "exp.done":     "PDF exported",
       "exp.err":      "PDF library not found (vendor/jspdf missing).",
-      "exp.font.err": "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF."
+      "exp.font.err":  "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
+      "ql.title":      "Quick Log",
+      "ql.fullcal":    "Full Calendar",
+      "ql.quick":     "Quick Log view",
+      "ql.flowonly":  "Only log flow"
+    },
     },
     el: {
       "app.title":     "Κύκλος",
@@ -241,7 +246,11 @@
       "rep.disc":      "Δεδομένα αυτο-καταγραφής, μόνο ενημερωτικά — όχι ιατρική διάγνωση ή συμβουλή.",
       "exp.done":      "Το PDF εξήχθη",
       "exp.err":       "Δεν βρέθηκε η βιβλιοθήκη PDF (λείπει το vendor/jspdf).",
-      "exp.font.err":  "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF."
+      "exp.font.err":  "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
+      "ql.title":      "Γρήγορη Καταγραφή",
+      "ql.fullcal":    "Πλήρες Ημερολόγιο",
+      "ql.quick":     "Προβολή Γρήγορης Καταγραφής",
+      "ql.flowonly":  "Καταγραφή μόνο ροής"
     }
   };
 
@@ -708,6 +717,7 @@
 
   // ---- view state (never persisted) ----
   var viewMode = "calendar";            // "calendar" | "days" | "insights"
+  var calCompact = true;                // true = Quick Log grid | false = Full Calendar
   var calMonth = null;                  // null = current month
   var openDay = null;                   // "d-YYYY-MM-DD" | null
   var managing = false;                // chip management mode (rename/delete)
@@ -844,6 +854,149 @@
   function todayTs() {
     var d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+
+  // ---------- Quick Log Grid (#10) ------------------------------
+  // Compact 7×5 grid — same underlying data, different visual
+  // density. Click → openDay editor (unchanged). Toggle between
+  // compact/full via a chip in the calendar header.
+
+  function renderQuickLogGrid() {
+    var host = $("calview");
+    if (!host) return;
+    host.innerHTML = "";
+
+    var now = new Date();
+    var base = calMonth ? new Date(calMonth.y, calMonth.m, 1) :
+      new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Header with toggle chip
+    var head = document.createElement("div");
+    head.className = "cal-head";
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "cal-nav";
+    prev.textContent = "‹";
+    prev.setAttribute("aria-label", t("cal.prev"));
+    prev.addEventListener("click", function () {
+      calMonth = { y: base.getFullYear() - (base.getMonth() === 0 ? 1 : 0),
+                   m: base.getMonth() === 0 ? 11 : base.getMonth() - 1 };
+      renderQuickLogGrid();
+    });
+    head.appendChild(prev);
+    var mt = document.createElement("span");
+    mt.className = "cal-month";
+    mt.textContent = base.toLocaleDateString(
+      LANG === "el" ? "el-GR" : "en-GB",
+      { month: "long", year: "numeric" });
+    head.appendChild(mt);
+    var next = document.createElement("button");
+    next.type = "button";
+    next.className = "cal-nav";
+    next.textContent = "›";
+    next.setAttribute("aria-label", t("cal.next"));
+    next.addEventListener("click", function () {
+      calMonth = { y: base.getFullYear() + (base.getMonth() === 11 ? 1 : 0),
+                   m: base.getMonth() === 11 ? 0 : base.getMonth() + 1 };
+      renderQuickLogGrid();
+    });
+    head.appendChild(next);
+
+    // Toggle chip: Quick Log ↔ Full Calendar
+    var toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "chip ghost" + (calCompact ? "" : " on");
+    toggle.style.marginLeft = "8px";
+    toggle.textContent = calCompact ? t("ql.fullcal") : t("ql.title");
+    toggle.setAttribute("title", t("ql.quick"));
+    toggle.addEventListener("click", function () {
+      calCompact = !calCompact;
+      if (calCompact) renderQuickLogGrid();
+      else renderCalendar();
+    });
+    head.appendChild(toggle);
+
+    var td = document.createElement("button");
+    td.type = "button";
+    td.className = "cal-today";
+    td.textContent = t("cal.today");
+    td.addEventListener("click", function () {
+      calMonth = null;
+      renderQuickLogGrid();
+    });
+    head.appendChild(td);
+    host.appendChild(head);
+
+    // Day index for marks
+    var dayMap = {};
+    state.days.forEach(function (d) { dayMap[d.id] = d; });
+
+    // Compact grid — 7 columns, 5 rows max
+    var grid = document.createElement("div");
+    grid.className = "cal-grid compact";
+    var first = new Date(base.getFullYear(), base.getMonth(), 1);
+    var lead = (first.getDay() + 6) % 7;
+    var dim = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+    var todayK = dayKey(Date.now());
+
+    // Pad leading empty cells
+    for (var e2 = 0; e2 < lead; e2++) {
+      var padEl = document.createElement("span");
+      padEl.className = "cal-cell empty";
+      grid.appendChild(padEl);
+    }
+
+    // Days — smaller cells, only number + mark
+    for (var d2 = 1; d2 <= dim; d2++) {
+      var dt = new Date(base.getFullYear(), base.getMonth(), d2);
+      var ts = dt.getTime();
+      var dk = "d-" + dayKey(ts);
+      var cell = document.createElement("button");
+      cell.type = "button";
+      var per = periodCovering(ts);
+      if (per && per.end === null && ts > todayTs()) per = null;
+      var cls = "cal-cell compact";
+      if (per) cls += " per" + per.flow;
+      else if (dayInPrediction(ts)) cls += " pred";
+      if (dk === "d-" + todayK) cls += " today";
+      cell.className = cls;
+
+      var num = document.createElement("span");
+      num.className = "cal-d";
+      num.textContent = String(d2);
+      cell.appendChild(num);
+
+      if (dayMap[dk]) {
+        var mk = document.createElement("span");
+        mk.className = "cal-mark tiny";
+        cell.appendChild(mk);
+      } else {
+        var nm = document.createElement("span");
+        nm.className = "cal-nomark tiny";
+        cell.appendChild(nm);
+      }
+
+      (function (dayId) {
+        cell.addEventListener("click", function () {
+          openDay = dayId;
+          managing = false;
+          applyView();
+        });
+      })(dk);
+      grid.appendChild(cell);
+    }
+    host.appendChild(grid);
+
+    // Legend for compact view
+    var lg = document.createElement("div");
+    lg.className = "hint";
+    lg.style.textAlign = "center";
+    lg.style.marginTop = "12px";
+    lg.style.fontSize = "11px";
+    lg.innerHTML = '<span style="display:inline-block;width:8px;height:8px;background:#e06c75;border-radius:50%;vertical-align:middle;margin-right:4px;"></span>' +
+      t("per.title") + ' · <span style="display:inline-block;width:8px;height:8px;border:1px dashed var(--text-dim);border-radius:50%;vertical-align:middle;margin-right:4px;"></span>' +
+      t("ci.next");
+    host.appendChild(lg);
   }
 
   // ---------- calendar ----------
@@ -1844,7 +1997,8 @@
     if (viewMode === "calendar" && openDay !== null) {
       renderDayEditor(openDay);
     } else if (viewMode === "calendar") {
-      renderCalendar();
+      if (calCompact) renderQuickLogGrid();
+      else renderCalendar();
       renderCycleInfo();
     } else if (viewMode === "days") {
       renderDaysList();
@@ -2469,6 +2623,22 @@
     });
   }
 
+  // ---------- Quick Log CSS (#10) --------------------------------
+  // Compact grid cells — smaller, tighter, no extra decoration.
+  var QL_CSS_DONE = false;
+  function ensureQlCss() {
+    if (QL_CSS_DONE) return;
+    QL_CSS_DONE = true;
+    var st = document.createElement("style");
+    st.textContent =
+      ".cal-grid.compact{gap:4px}" +
+      ".cal-cell.compact{width:38px;height:42px;font-size:13px;padding:2px}" +
+      ".cal-cell.compact .cal-d{font-size:13px;font-weight:600}" +
+      ".cal-cell.compact .cal-mark.tiny,.cal-cell.compact .cal-nomark.tiny{width:6px;height:6px}" +
+      "@media (min-width:768px){.cal-cell.compact{width:48px;height:52px}.cal-cell.compact .cal-d{font-size:14px}}";
+    document.head.appendChild(st);
+  }
+
   // ---------- 4. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
@@ -2667,6 +2837,7 @@
     document.documentElement.lang = LANG;   // lang attr follows locale
     console.log("cycle.js v" + (SCRIPT_V || "?") + " boot");
   })();
+  ensureQlCss();
   load();
   applyI18n();
   paintStaticAria();

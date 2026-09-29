@@ -66,7 +66,8 @@
       "pm.done": "{n} session(s) completed",
       "sn.title": "Snooze", "sn.5": "5 min", "sn.10": "10 min", "sn.15": "15 min",
       "conv.title": "Time zone converter",
-      "conv.toggle.show": "Show", "conv.toggle.hide": "Hide", "conv.local": "You"
+      "conv.toggle.show": "Show", "conv.toggle.hide": "Hide", "conv.local": "You",
+      "tab.astro": "Astro", "astro.panel": "Sun & Moon"
     },
     el: {
       "sty.digital": "Ψηφιακό", "sty.analog": "Αναλογικό", "sty.binary": "Δυαδικό",
@@ -84,7 +85,8 @@
       "pm.done": "{n} ολοκληρωμένες περίοδοι",
       "sn.title": "Αναβολή", "sn.5": "5 λεπτά", "sn.10": "10 λεπτά", "sn.15": "15 λεπτά",
       "conv.title": "Μετατροπέας ζωνών ώρας",
-      "conv.toggle.show": "Εμφάνιση", "conv.toggle.hide": "Απόκρυψη", "conv.local": "Εσύ"
+      "conv.toggle.show": "Εμφάνιση", "conv.toggle.hide": "Απόκρυψη", "conv.local": "Εσύ",
+      "tab.astro": "Άστρο", "astro.panel": "Ήλιος & Σελήνη"
     }
   };
   function t(k) {

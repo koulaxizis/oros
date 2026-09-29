@@ -19,7 +19,38 @@
   var STR = {
     en: {
       "astro.title": "Sun & Moon",
+      "astro.dlg": "Location",
+      "astro.lat": "Latitude",
+      "astro.lon": "Longitude",
+      "astro.save": "Save",
+      "astro.cancel": "Cancel",
+      "astro.clear": "Use weather location",
       "astro.none": "No location set",
+      "astro.none.hint": "Uses the Weather app location automatically, or set one manually.",
+      "astro.manual": "Set location",
+      "astro.uses": "Using weather location",
+      "astro.using": "Manual location",
+      "astro.geo": "Device location",
+      "astro.geo.detect": "Use device location",
+      "astro.geo.wait": "Detecting…",
+      "astro.geo.fail": "Location unavailable",
+      "astro.sunrise": "Sunrise",
+      "astro.sunset": "Sunset",
+      "astro.noon": "Solar noon",
+      "astro.len": "Day length",
+      "astro.polar.day": "Sun never sets today",
+      "astro.polar.night": "Sun never rises today",
+      "astro.sunpos": "Sun now",
+      "astro.moonage": "Moon age",
+      "astro.illum": "Illumination",
+      "astro.status.day": "Daylight",
+      "astro.status.night": "Night",
+      "astro.status.twilight": "Twilight",
+      "ph.0": "New moon", "ph.1": "Waxing crescent", "ph.2": "First quarter",
+      "ph.3": "Waxing gibbous", "ph.4": "Full moon", "ph.5": "Waning gibbous",
+      "ph.6": "Last quarter", "ph.7": "Waning crescent",
+      "u.days": "d"
+    },
       "astro.none.hint": "Uses the Weather app location automatically, or set one manually.",
       "astro.manual": "Set location",
       "astro.uses": "Using weather location",
@@ -428,4 +459,6 @@
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") render();
   });
+  // Expose for deep-links / shell notifications (defensive)
+  window.__orosAstroRender = render;
 })();

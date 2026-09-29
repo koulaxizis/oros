@@ -3009,6 +3009,9 @@ function transientNote(title, body) {
     if (!l || typeof l !== "object") return null;
     if (typeof l.id !== "string" || !l.id) return null;
     if (typeof l.mtime !== "number" || !isFinite(l.mtime)) return null;
+    // CA4: VALID_COLORS = LABEL_PALETTE + brown (#c8a96e for
+    // Contacts custom events). Both merge and load sanitizers
+    // must agree — if one drops brown, the other resurrects it.
     if (VALID_COLORS.indexOf(l.color) === -1) return null;
     return {
       id: l.id,
