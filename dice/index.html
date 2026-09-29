@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dice &amp; Coin · orOS</title>
+  <link rel="stylesheet" href="dice.css?v=0.36.19">
+</head>
+<body>
+
+  <!-- Dice builder: count/type/modifier -->
+  <header id="builder">
+    <div class="group">
+      <label for="dice-count" data-i18n="builder.count">Count</label>
+      <input id="dice-count" type="number" min="1" max="30" value="1">
+    </div>
+    <div class="group">
+      <label for="dice-type" data-i18n="builder.type">Type</label>
+      <select id="dice-type">
+        <option value="4">d4</option>
+        <option value="6" selected>d6</option>
+        <option value="8">d8</option>
+        <option value="10">d10</option>
+        <option value="12">d12</option>
+        <option value="20">d20</option>
+        <option value="100">d100</option>
+      </select>
+    </div>
+    <div class="group">
+      <label for="dice-mod" data-i18n="builder.modifier">Modifier</label>
+      <input id="dice-mod" type="number" min="-99" max="99" value="0">
+    </div>
+  </header>
+
+  <!-- Modes (segmented control) -->
+  <div id="modes">
+    <button type="button" class="mode-btn active" data-mode="normal" data-i18n="mode.normal">Normal</button>
+    <button type="button" class="mode-btn" data-mode="keep-high" data-i18n="mode.keepHigh">Keep Highest</button>
+    <button type="button" class="mode-btn" data-mode="keep-low" data-i18n="mode.keepLow">Keep Lowest</button>
+    <button type="button" class="mode-btn" data-mode="drop-low" data-i18n="mode.dropLow">Drop Lowest</button>
+  </div>
+
+  <!-- Controls -->
+  <div id="actions">
+    <button type="button" id="roll-btn" class="primary" data-i18n="actions.roll">Roll</button>
+    <button type="button" id="coin-btn" data-i18n="actions.coin">Flip Coin</button>
+  </div>
+
+  <!-- Result box -->
+  <main id="result-box">
+    <div id="result-notation" data-i18n="result.none">Press Roll to start</div>
+    <div id="result-total"></div>
+    <div id="result-dice-row"></div>
+    <div id="badges">
+      <span id="crit-badge" hidden data-i18n="badge.crit">Max!</span>
+      <span id="fumble-badge" hidden data-i18n="badge.fumble">1 — Fumble</span>
+    </div>
+  </main>
+
+  <!-- Coin display -->
+  <section id="coin-section">
+    <div id="coin" role="button" tabindex="0" aria-label="Flip coin">
+      <div class="coin-face front">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#f0d5a8"/><text x="50" y="62" font-size="32" text-anchor="middle" fill="#6d4aff">H</text></svg>
+      </div>
+      <div class="coin-face back">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#c0c0c0"/><text x="50" y="62" font-size="32" text-anchor="middle" fill="#333">T</text></svg>
+      </div>
+    </div>
+    <div id="coin-stats">
+      <span class="stat"><strong id="heads-count">0</strong> <small data-i18n="coin.heads">Heads</small></span>
+      <span class="stat"><strong id="tails-count">0</strong> <small data-i18n="coin.tails">Tails</small></span>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section id="history">
+    <div id="history-header">
+      <h3 data-i18n="history.title">History</h3>
+      <button type="button" id="share-btn" data-i18n="history.share">Share</button>
+      <button type="button" id="history-clear" data-i18n="history.clear">Clear</button>
+    </div>
+    <ul id="history-list"></ul>
+    <div id="history-empty" hidden>
+      <span data-i18n="history.empty">No rolls yet</span>
+    </div>
+  </section>
+
+  <div id="toast" role="status"></div>
+
+  <script src="dice.js?v=0.36.19"></script>
+</body>
+</html>

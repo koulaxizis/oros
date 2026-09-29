@@ -144,6 +144,14 @@
       "icon": "bookmarks",
       "url": "bookmarks/",
       "type": "internal"
+    },
+    {
+      "id": "dice",
+      "name": "Dice & Coin",
+      "category": "Fun",
+      "icon": "dice",
+      "url": "dice/",
+      "type": "internal"
     }
   ]
 }

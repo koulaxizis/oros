@@ -45,7 +45,16 @@ var STRINGS = {
     "undo.empty": "Nothing to undo",
     "redo.empty": "Nothing to redo",
     "clip.empty": "Clipboard is empty",
-    "fmt.cleared": "Formatting cleared"
+    "fmt.cleared": "Formatting cleared",
+    "xl.imp":      "Import Excel / Calc (.xlsx, .ods, .xls)",
+    "xl.exp":      "Export Excel / Calc",
+    "xl.xlsx":     "Excel (.xlsx)",
+    "xl.ods":      "LibreOffice Calc (.ods)",
+    "xl.imported": "Imported — {n} sheet(s)",
+    "xl.exported": "Exported as {f}",
+    "xl.lib":      "Library not found (vendor/xlsx.full.min.js)",
+    "xl.readerr":  "Could not read this file",
+    "xl.trunc":    "Import capped at {r} rows × {c} columns"
   },
   el: {
     "title": "Λογιστικά φύλλα",
@@ -59,7 +68,16 @@ var STRINGS = {
     "undo.empty": "Τίποτα προς αναίρεση",
     "redo.empty": "Τίποτα προς επανάληψη",
     "clip.empty": "Το πρόχειρο είναι κενό",
-    "fmt.cleared": "Η μορφοποίηση καθαρίστηκε"
+    "fmt.cleared": "Η μορφοποίηση καθαρίστηκε",
+    "xl.imp":      "Εισαγωγή Excel / Calc (.xlsx, .ods, .xls)",
+    "xl.exp":      "Εξαγωγή Excel / Calc",
+    "xl.xlsx":     "Excel (.xlsx)",
+    "xl.ods":      "LibreOffice Calc (.ods)",
+    "xl.imported": "Εισήχθησαν — {n} φύλλα",
+    "xl.exported": "Εξήχθη ως {f}",
+    "xl.lib":      "Δεν βρέθηκε η βιβλιοθήκη (vendor/xlsx.full.min.js)",
+    "xl.readerr":  "Αδύνατη η ανάγνωση του αρχείου",
+    "xl.trunc":    "Η εισαγωγή περικόπηκε σε {r} γραμμές × {c} στήλες"
   }
 };
 
@@ -1925,6 +1943,300 @@ function csvImport(file) {
   reader.readAsText(file, "utf-8");
 }
 
+/* ===== SECTION 3g: XLSX / ODS IMPORT + EXPORT (#9) ===== */
+/* SheetJS vendored locally (vendor/xlsx.full.min.js) — never a
+   CDN, same discipline as jspdf in cycle.js. Reads AND writes
+   .xlsx, .ods (plus legacy .xls). Optional dependency: if the
+   file is absent, import/export degrade to a toast — nothing
+   else breaks. Lazy-loaded on first use only.               */
+
+var XL_ROWS_CAP = 500, XL_COLS_CAP = 64;   /* = normalizeState limits */
+var xlLibLoading = false;
+
+function loadXlsxLib(done) {
+  if (window.XLSX && window.XLSX.utils) { done(); return; }
+  if (xlLibLoading) return;
+  xlLibLoading = true;
+  var cands = ["vendor/xlsx.full.min.js", "../vendor/xlsx.full.min.js"];
+  var i = 0;
+  (function next() {
+    if (i >= cands.length) {
+      xlLibLoading = false;
+      notifyTransient(t("xl.lib"));
+      return;
+    }
+    var s = document.createElement("script");
+    s.src = cands[i++] + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+    s.onload = function () { xlLibLoading = false; done(); };
+    s.onerror = function () { s.remove(); next(); };
+    document.head.appendChild(s);
+  })();
+}
+
+function xlPad(n) { return (n < 10 ? "0" : "") + n; }
+
+function xlDateStr(d) {
+  var s = d.getFullYear() + "-" + xlPad(d.getMonth() + 1) + "-" + xlPad(d.getDate());
+  if (d.getHours() || d.getMinutes() || d.getSeconds())
+    s += " " + xlPad(d.getHours()) + ":" + xlPad(d.getMinutes());
+  return s;
+}
+
+function xlStamp() {
+  var d = new Date();
+  return d.getFullYear() + "-" + xlPad(d.getMonth() + 1) + "-" + xlPad(d.getDate());
+}
+
+/* Excel sheet-name rules: no []:*?/\ , max 31 chars */
+function xlSafeName(nm) {
+  var s = String(nm).replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31).trim();
+  return s || "Sheet";
+}
+
+/* worksheet cell -> our raw v string. Formulas ride through as
+   "=..." (our engine evaluates the ones it knows; unknown ones
+   show #NAME? but the text is preserved and round-trips).    */
+function xlCellToRaw(cell) {
+  if (cell.f) return "=" + String(cell.f);
+  if (cell.t === "n") return isFinite(cell.v) ? String(cell.v) : "";
+  if (cell.t === "b") return cell.v ? "TRUE" : "FALSE";
+  if (cell.t === "d") return xlDateStr(cell.v);
+  if (cell.v === null || cell.v === undefined) return "";
+  return String(cell.v);
+}
+
+/* IMPORT — every worksheet becomes a NEW orOS sheet (never
+   overwrites existing data; same contract as csvImport).     */
+function xlImport(file) {
+  loadXlsxLib(function () {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var made = 0, truncated = false, lastId = null;
+      try {
+        var wb = window.XLSX.read(reader.result, { type: "array", cellDates: true });
+        var X = window.XLSX.utils;
+        var ts = now();
+        for (var si = 0; si < wb.SheetNames.length; si++) {
+          var ws = wb.Sheets[wb.SheetNames[si]];
+          if (!ws || !ws["!ref"]) continue;
+          var rng = X.decode_range(ws["!ref"]);
+          var needRows = rng.e.r - rng.s.r + 1;
+          var needCols = rng.e.c - rng.s.c + 1;
+          if (needRows > XL_ROWS_CAP || needCols > XL_COLS_CAP) truncated = true;
+
+          var sh = {
+            id: uid(),
+            name: xlSafeName(wb.SheetNames[si]),
+            bi: undefined,
+            rows: Math.min(Math.max(ROWS, needRows + 5), XL_ROWS_CAP),
+            cols: Math.min(Math.max(COLS, needCols), XL_COLS_CAP),
+            cw: {},
+            pos: maxPos() + 1,
+            mtime: ts
+          };
+          state.sheets.push(sh);
+          lastId = sh.id;
+          made++;
+
+          for (var R = rng.s.r; R <= rng.e.r; R++) {
+            if (R - rng.s.r >= XL_ROWS_CAP) break;
+            for (var C = rng.s.c; C <= rng.e.c; C++) {
+              if (C - rng.s.c >= XL_COLS_CAP) break;
+              var cell = ws[X.encode_cell({ r: R, c: C })];
+              if (!cell) continue;
+              var v = xlCellToRaw(cell);
+              if (v === "") continue;
+              state.cells[cellKey(sh.id, R - rng.s.r, C - rng.s.c)] =
+                { v: v, mtime: ts };
+            }
+          }
+        }
+        if (!made) { notifyTransient(t("xl.readerr")); return; }
+        markDirty();
+        invalidateEval();
+        switchTo(lastId);   /* rebuilds tabs + grid, focuses */
+        notifyTransient(t("xl.imported").replace("{n}", made));
+        if (truncated) toast(t("xl.trunc")
+          .replace("{r}", XL_ROWS_CAP).replace("{c}", XL_COLS_CAP));
+      } catch (e) {
+        console.error("[SS] XLSX import failed:", e);
+        notifyTransient(t("xl.readerr"));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/* EXPORT — ALL sheets -> one workbook. Raw v goes out as-is:
+   strings starting "=" become formulas (aoa_to_sheet contract);
+   numeric-looking strings become real numbers (no green Excel
+   triangles), EXCEPT leading-zero values like phone numbers. */
+function xlOutVal(v) {
+  if (typeof v === "string" && v !== "" && v.charAt(0) !== "=" &&
+      /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(v.trim()) &&
+      !/^-?0\d/.test(v.trim()) &&
+      isFinite(parseFloat(v))) {
+    return parseFloat(v);
+  }
+  return v;
+}
+
+function xlExport(bookType) {
+  var sheets = state.sheets.slice().sort(function (a, b) {
+    var d = (a.pos || 0) - (b.pos || 0);
+    return d !== 0 ? d : (a.id < b.id ? -1 : (a.id > b.id ? 1 : 0));
+  });
+  if (!sheets.length) { notifyTransient(t("csv.empty")); return; }
+
+  /* any data at all, anywhere? (same emptiness rule as csvExport) */
+  var any = false, k, q, pref;
+  for (q = 0; q < sheets.length && !any; q++) {
+    pref = sheets[q].id + "|";
+    for (k in state.cells) { if (k.indexOf(pref) === 0) { any = true; break; } }
+  }
+  if (!any) { notifyTransient(t("csv.empty")); return; }
+
+  loadXlsxLib(function () {
+    try {
+      var X = window.XLSX.utils;
+      var wb = X.book_new();
+      var used = {};
+      sheets.forEach(function (sh) {
+        var maxR = -1, maxC = -1, p, r, c;
+        pref = sh.id + "|";
+        for (k in state.cells) {
+          if (k.indexOf(pref) !== 0) continue;
+          p = k.split("|");
+          r = parseInt(p[1], 10); c = parseInt(p[2], 10);
+          if (r > maxR) maxR = r;
+          if (c > maxC) maxC = c;
+        }
+        var aoa = [], row;
+        for (r = 0; r <= maxR; r++) {
+          row = [];
+          for (c = 0; c <= maxC; c++) {
+            var cel = state.cells[cellKey(sh.id, r, c)];
+            row.push(cel ? xlOutVal(cel.v) : "");
+          }
+          aoa.push(row);
+        }
+        var ws = X.aoa_to_sheet(aoa);
+        /* column widths ride along (px -> approx character width) */
+        var colw = [];
+        for (c = 0; c <= Math.max(maxC, 0); c++) {
+          colw.push(sh.cw && sh.cw[c]
+            ? { wch: Math.max(4, Math.round(sh.cw[c] / 8)) } : undefined);
+        }
+        try { ws["!cols"] = colw; } catch (e2) {}
+        var nm = xlSafeName(displayName(sh));
+        while (used[nm]) nm = nm.slice(0, 28) + "_" + (Object.keys(used).length + 1);
+        used[nm] = true;
+        X.book_append_sheet(wb, ws, nm);
+      });
+
+      var out = window.XLSX.write(wb, { bookType: bookType, type: "array" });
+      var ext = (bookType === "ods") ? "ods" : "xlsx";
+      var mime = (bookType === "ods")
+        ? "application/vnd.oasis.opendocument.spreadsheet"
+        : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      var blob = new Blob([out], { type: mime });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "oros-spreadsheet-" + xlStamp() + "." + ext;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        URL.revokeObjectURL(a.href);
+        document.body.removeChild(a);
+      }, 500);
+      notifyTransient(t("xl.exported")
+        .replace("{f}", ext.toUpperCase()));
+    } catch (e) {
+      console.error("[SS] XLSX export failed:", e);
+    }
+  });
+}
+
+/* ---- toolbar buttons (JS-injected — zero dependence on
+   unseen spreadsheet.html markup) ---- */
+var xlMenu = null;
+function closeXlMenu() { if (xlMenu) { xlMenu.remove(); xlMenu = null; } }
+
+function toggleXlExportMenu(btn) {
+  if (xlMenu) { closeXlMenu(); return; }
+  var m = document.createElement("div");
+  m.style.cssText =
+    "position:fixed;z-index:1100;background:var(--panel-bg,#22242a);" +
+    "border:1px solid var(--border,#333);border-radius:8px;" +
+    "box-shadow:0 6px 20px rgba(0,0,0,.35);padding:4px;" +
+    "display:flex;flex-direction:column;gap:2px;min-width:175px;";
+  [["xlsx", t("xl.xlsx")], ["ods", t("xl.ods")]].forEach(function (o) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = o[1];
+    b.style.cssText =
+      "text-align:left;padding:7px 12px;font:inherit;font-size:12.5px;" +
+      "background:transparent;color:var(--text,#eee);border:none;" +
+      "border-radius:6px;cursor:pointer;";
+    b.addEventListener("mouseenter", function () {
+      b.style.background = "var(--accent-soft,rgba(212,175,55,.15))";
+    });
+    b.addEventListener("mouseleave", function () {
+      b.style.background = "transparent";
+    });
+    b.addEventListener("click", function () { closeXlMenu(); xlExport(o[0]); });
+    m.appendChild(b);
+  });
+  var br = btn.getBoundingClientRect();
+  document.body.appendChild(m);
+  void m.offsetWidth;
+  m.style.left = Math.max(4, Math.min(br.left, window.innerWidth - 195)) + "px";
+  m.style.top = (br.bottom + 4) + "px";
+  xlMenu = m;
+}
+
+function injectXlButtons() {
+  var host = $("btn-csv-exp");
+  if (!host || !host.parentElement) return;
+  if ($("btn-xl-imp")) return;   /* idempotent */
+
+  var imp = document.createElement("button");
+  imp.type = "button";
+  imp.id = "btn-xl-imp";
+  imp.className = host.className;
+  imp.title = t("xl.imp");
+  imp.innerHTML = ICONS["csv-imp"] + "XLS";
+  imp.addEventListener("click", function () {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".xlsx,.xls,.ods";
+    inp.addEventListener("change", function () {
+      if (inp.files && inp.files[0]) xlImport(inp.files[0]);
+    });
+    inp.click();
+  });
+
+  var exp = document.createElement("button");
+  exp.type = "button";
+  exp.id = "btn-xl-exp";
+  exp.className = host.className;
+  exp.title = t("xl.exp");
+  exp.innerHTML = ICONS["csv-exp"] + "XL";
+  exp.addEventListener("click", function () { toggleXlExportMenu(exp); });
+
+  host.parentElement.insertBefore(imp, host.nextSibling);
+  host.parentElement.insertBefore(exp, imp.nextSibling);
+
+  /* close the export menu on outside click (swatch pattern) */
+  document.addEventListener("click", function (e) {
+    if (!xlMenu) return;
+    if (xlMenu.contains(e.target)) return;
+    var be = $("btn-xl-exp");
+    if (be && be.contains(e.target)) return;
+    closeXlMenu();
+  });
+}
+
 /* ===== SECTION 4: SYNC SLICE + PALETTE + NOTIFICATIONS ===== */
 
 var syncApi = null;
@@ -2302,6 +2614,8 @@ function wire() {
     });
     inp.click();
   });
+
+  injectXlButtons();   /* #9: XLSX/ODS import + export buttons */
 
   window.addEventListener("beforeunload", function () {
     if (editing) commitEdit(0, 0);

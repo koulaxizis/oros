@@ -144,7 +144,6 @@
       "ql.quick":     "Quick Log view",
       "ql.flowonly":  "Only log flow"
     },
-    },
     el: {
       "app.title":     "Κύκλος",
       "tab.cal":       "Ημερολόγιο",

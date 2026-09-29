@@ -276,6 +276,7 @@ APP REGISTRY
   Prompter   | oros-prompter-data     | union + LWW + tombs     | 5/5 VERIFIED (PR series)
   Characters | oros-characters-data   | union + LWW + tombs     | 5/5 VERIFIED COMPLETE
   Spreadsheet| oros-spreadsheet-data  | CELL-ENTITY LWW + f/cw  | 5/5 VERIFIED (Wave 3 + audit)
+  Dice       | oros-dice-data         | union + LWW + tombstones | 5/5 VERIFIED (v0.4 merge-aware)
   Notifications| oros-notifs          | per-field LWW           | Wave 1A core done
 
   REFERENCE APP (canonical template): mood.js — every contract
@@ -370,6 +371,9 @@ PER-APP MODELS (schemas):
              "unsorted" permanent; dedup via shared dupeKey()
              canonical rule (scheme/www/case/fragment-
              insensitive, query string KEPT).
+  DICE v1:   { ver, sm, deleted{}, history[{id,kind,ts,mtime,...}] } — kind∈{dice,coin};
+             dice entries carry notation/total/rolls/kept/type/mod/mode/isCrit/isFumble;
+             coin entries carry result; tombstones prune on max-mtime - 30d.
   NOTIFICATIONS v1: { ver, settings{position,style,sound,
              volume}, appToggles{}, items[{id,ns,key,deepLink,
              createdAt,firedAt,readAt,sound?,ttl?}], meta{} }.
@@ -710,6 +714,8 @@ DOCTRINAL EXEMPTIONS RECORDED:
     phantom-push symptom appears — use HB-3 pattern).
   · Storage/Quote — deterministic sliceGet pruning mandatory
     (both adopted); deviating apps get the Q-1/ST-1 treatment.
+  · Dice & Coin — Calendar exempt (non-time-bound, no dated entities),
+    Notifications exempt (no reminders/emitters, transient feedback only via toasts).
 
 ╔══════════════════════════════════════════════════════════╗
 ║  PART X — BACKLOG (long-term, not scheduled)               ║
@@ -1049,3 +1055,150 @@ deployment after the testing checklist is completed. On the sync/snapshot/export
 no changes to the state shape or merge engine — zero risk of data loss.
 
 Designed by Christos Koulaxizis · koulaxizis.gr
+
+---
+
+orOS Changelog — Desktop & Apps Wave (v0.36.x)
+This entry documents the full "10-item UX/functionality wave" rolled out across the shell and six applications. All patches were delivered as verified OLD → NEW blocks against actual file contents. No version bumps were made manually — versioning remains GitHub Action territory (shell.js is the single source of truth).
+
+Summary of the Wave
+Ten user-reported issues / feature requests were implemented or diagnosed:
+
+#	Area	Item	Status
+1	shell.js	Expand/Collapse (all) menu buttons	Done
+2	bookmarks.js	Favorites quick-launch strip	Done
+3	contacts.js	Label colors aligned with Calendar	Done
+4	contacts.js	Read-only contact card + Edit	Done
+5	notes.js	Drag & drop notes into/out of parents	Done
+6	shell.js	Weather tray retry tick (empty icon fix)	Done
+7	time.js / astro.js	Astro panel integration + i18n	Done
+8	calendar.js	Custom feed chip explained	No change needed
+9	spreadsheet.js	Excel/Calc import & export	Done
+10	cycle.js	Quick Log compact grid + toggle	Done
+1. Menu: Expand / Collapse all (shell.js)
+Two small icon buttons next to the "Applications" menu title. Expand clears the collapsed-categories map; Collapse marks every current category. State is device-local (MENU_CAT_KEY), never synced, never marks sync dirty. Tooltips are inline EN/EL literals (supT pattern) — no new translation keys needed. Both buttons operate on ALL categories, matching the "(all)" semantics.
+
+2. Bookmarks: Favorites strip (bookmarks.js)
+Browser quick-launch style grid rendered above the item list. Key architecture: a boolean fav: true field on each bookmark entity (added to sanitizeItem), so favorites sync through the existing whole-entity merge — no separate array that could break sync. Favoriting bumps modified, so newest-favorite sorts first. Strip is built entirely from JS (mount + injected <style>) to avoid depending on unseen bookmarks.css selectors. Hidden during search, tag filtering, and selection mode. Toggle lives in the item context menu (right-click / long-press). Tiles use favicon-style letter chips with host brand color.
+
+Known limitation: Netscape HTML export/import does not carry the favorite flag (format has no concept of it). Possible future work: export favorites as a dedicated "Favorites" folder.
+
+3. Contacts: label colors match Calendar (contacts.js)
+Diagnosis: the Contacts LABEL_PALETTE was already identical to Calendar's; the mismatch was in seed mapping — lbl-work was seeded blue while Calendar's Work is red. Fix in two parts:
+
+Seed color change for new installs: Work → red (palette[4]), Personal stays gold, Family stays green.
+Migration for existing installs inside reseedSeedNames(): only touches seeds with mtime === 0 (never user-recolored), so user intent is never overridden.
+Open follow-up: true single-source-of-truth recoloring (change color in Calendar → Contacts follow on all devices) requires a calendar.js side wiring — deferred.
+
+4. Contacts: read card (contacts.js)
+Clicking a contact now opens a read-only card instead of the edit dialog. Card shows avatar, name, sub-line, star, label chips, and grouped sections (phones/emails/addresses/websites/IM/events/relations/note). Phones are tel: links, emails mailto:, websites open in new tabs. Relations are clickable and navigate between cards within the same overlay. An Edit button closes the card and opens the existing edit dialog — zero changes to the save/delete/undo paths.
+
+Also changed: the shell deep-link (__orosContactsOpen, e.g. from Calendar birthday events) now lands on the read card; a sync pull while the card is open closes it cleanly. Duplicate-merge integration was deliberately skipped this wave (dedup machinery already exists elsewhere).
+
+5. Notes: drag & drop re-parenting (notes.js)
+Desktop: HTML5 DnD delegated on the persistent #tree-root element (attached once, guarded flag). Rows became draggable. Dropping onto a row makes the note a child of that page (auto-expands it); dropping on empty tree area promotes to root; a top-level page dropped on root is a no-op (prevents surprise reordering). Dropping a page into its own subtree is blocked with a toast (validDropTarget walks ancestors).
+
+Mobile: long-press → "Move to…" dialog lists all valid destinations (own subtree excluded) with depth indentation, "Top level" at the top.
+
+Sync safety: moves only edit parent/pos and bump mtime, so the existing per-page LWW propagates them — no schema or merge changes.
+
+6. Weather tray: retry tick (shell.js)
+Root cause: the boot-time wxFetch could fail silently, and nothing retried until an online/visibilitychange event — the tray chip sat in its "waiting" paint indefinitely. Fix: wxFetchTickThrottled() piggybacked on the existing clock tick with a 60-second throttle. wxFetch keeps its own gates (30-min happy path, 2-min retry window), so the tick costs one localStorage read per minute and lets the tray self-heal within minutes without user interaction.
+
+7. Time: Astro section (time.js / astro.js)
+astro.js was already complete and functional. The Astro section turned out to be a permanently visible section in the app (not a tab), so earlier tab-integration patches were withdrawn. Final state: complete EN i18n key block added to astro.js (EL already existed), and render exposed defensively as window.__orosAstroRender for future deep-links. Astro refreshes on visibilitychange and on location changes (manual/GPS/weather-sourced).
+
+8. Calendar: custom feed chip — diagnosis only (calendar.js)
+No code changes. The "Custom Feed" chip surfaces Contacts events of type custom with a label (e.g. namedays, job milestones). It is brown (#c8a96e), deliberately outside LABEL_PALETTE so it cannot be deleted or recolored from the label manager; it lives in FEED_LABELS and never travels through the sync blob. Clicking deep-links to the contact. This is all by design and correct.
+
+9. Spreadsheet: Excel / LibreOffice import & export (spreadsheet.js)
+SheetJS (xlsx.full.min.js) vendored locally in vendor/ — lazy-loaded on first use with candidate paths, graceful toast degradation if the file is absent (same discipline as jspdf in cycle.js; no CDN ever).
+
+Import: every worksheet becomes a NEW orOS sheet (never overwrites data, same contract as CSV import). Values, booleans, dates (as ISO-ish strings), and formulas ride through as raw "=..." strings — our evaluator computes what it knows; unknown functions show #NAME? locally but round-trip intact on export. Capped at 500 rows × 64 columns (normalizeState limits) with a truncation toast.
+Export: ALL sheets → one workbook, .xlsx or .ods via a small menu. Sheet names sanitized to Excel rules (no []:*?/, ≤31 chars, deduplicated). Column widths ride along (cw → !cols). Numeric-looking strings become real numbers (no green Excel triangles), except leading-zero values like phone numbers, which stay text.
+Buttons ("XLS" import, "XL" export with mini-menu) are JS-injected next to the CSV buttons — zero dependence on unseen spreadsheet.html markup. Export menu closes on outside click (swatch popover pattern).
+Not exported (yet): cell formatting (bold/colors/number formats) — data, formulas, and column widths only; a future wave can map the f field to SheetJS cell styles.
+
+10. Cycle: Quick Log grid (cycle.js)
+The full calendar view is kept intact (it still feeds the orOS Calendar as agreed) but is no longer the default. New compact Quick Log grid (7×5, smaller cells with flow-color fills, prediction borders, tiny marks) renders first, with a header toggle chip switching between Quick Log and Full Calendar. Clicking a day opens the existing day editor flow unchanged. Month navigation (‹ › + Today) mirrors the existing calendar. Uses the same state.days/state.periods and merge engine — sync-compatible by construction. All UI is built with the existing cal-* classes plus an injected compact CSS block.
+
+Standing rules reaffirmed this wave
+All patches: verified OLD → NEW copy-paste blocks against actual file content. No hallucinated targets, no guesses.
+Optional dependencies (SheetJS) are vendored, lazy-loaded, non-breaking when absent.
+Every new feature must survive the pre-sync checklist: Calendar feed integration where relevant, unified notifications, Dropbox sync, snapshot coverage, full manual/auto export.
+Core kernel is frozen during feature waves — only verified app-level files were touched.
+Data safety: no migration in this wave can lose user data (all migrations guard on never-user-touched flags).
+Pending / future work backlog
+Bookmarks: favorites survival across Netscape HTML export/import (dedicated folder).
+Contacts: true shared label palette with Calendar (needs calendar.js wiring).
+Spreadsheet: cell formatting (bold/color/number format) export via SheetJS cell styles.
+Cycle: optional quick-action buttons above the Quick Log grid (Start Period, Symptom, etc.).
+
+---
+
+Writer Wave 5 — I/O COMPLETE
+Pre-fixes (7 patches, prerequisite bugs):
+
+ICONS: added missing close/plus (tab bar and dialog close rendered "undefined")
+paintIcons: extended map to cover all 31 toolbar buttons (footnotes, comments, toc, meta, page, templates, versions, goal, export, import, find, chars were invisible)
+EN strings: fixed broken rtf keys (io.rtfdescr/io.rtfnote → io.rtf.desc/io.rtf.note)
+EL strings: added missing io.impAppend
+resetMargins: no longer calls nested updatePreview() — self-contained preview refresh (was ReferenceError on Reset click)
+updatePreview: .paper-caption is a sibling, not a child of #preview-paper — fixed null crash
+toggleTocPanel: headings now get stable ids before listing — TOC entries are clickable again
+Exports (8 formats):
+
+TXT: plain text, footnotes as [n], page breaks as blank separators
+MD: full Markdown round-trip incl. pipe tables, nested lists, real [^n] footnotes with definitions
+HTML: standalone document, metadata as meta tags, footnotes appendix in ref order
+RTF: hand-rolled writer, \uXXXX escapes per UTF-16 unit (Greek-safe), page geometry from doc settings, metadata in \info
+DOCX: 100% native OOXML builder — hand-rolled ZIP STORE with own CRC32, heading styles (Word navigation), tables, page breaks, metadata in docProps/core.xml (tags + category ride along). Images → [image: alt] placeholder (documented v1 limit)
+PDF: lazy-loaded jsPDF + NotoSans-Regular.ttf (fixes historical Greek mojibake), word-flow renderer preserving bold/italic/underline/superscript across line breaks, header/footer + page numbers, footnote/comment appendix. Faux-bold only (single TTF) — swap in NotoSans-Bold.ttf later if wanted
+OROSDOC: full round-trip archive (html, footnotes, comments, metadata, page setup)
+JSON: entire slice (all tabs, settings, templates, autocorrect)
+Imports (7 formats):
+
+TXT/MD/HTML/RTF/OROSDOC/DOCX/ODT via unified dispatcher
+HTML sanitizer strips scripts, iframes, on* handlers, javascript: URLs
+DOCX/ODT: native ZIP reader (hand-parsed central directory + DecompressionStream deflate-raw), conservative formatting import (headings, bold/italic/underline/strike/superscript, tables, line breaks; Word list numbering → plain paragraphs for now)
+Import modes: New tab (default) / Append to current / Replace current (duplicates current into Version History first)
+Annotations always receive fresh ids on import — no clashes with existing doc state
+JSON full-database import → hydrate() restore offer with confirm
+Drag & drop:
+
+Fullscreen overlay on the editor area (.rich-wrapper, the positioned ancestor), counter-guarded nested drags
+Dropped file feeds the same parse → mode-selection flow as the import dialog
+Architecture notes:
+
+All exports are built from editorHTMLForSave() clones — live editor never touched
+jsPDF loads ON DEMAND only (vendor/jspdf.umd.min.js + vendor/NotoSans-Regular.ttf relative to index.html — verify paths against your repo layout)
+Zero new external dependencies: DOCX export/import fully native, ZIP CRC32 hand-rolled
+Known v1 limits (deliberate, for future waves):
+
+RTF lists literal markers (lossy, flagged in UI); images not carried in RTF
+DOCX/RTF/PDF: images → placeholders
+PDF: single font face (faux bold via same TTF)
+DOCX import: w:b w:val="0" edge ignored; numbering.xml not processed
+Dead code candidates: rtfInline/rtfFmt/rtfInlineOk (optional cleanup block provided)
+Checklist after deploy (verify before stable):
+
+Greek text → RTF/DOCX/PDF round-trip in Word + LibreOffice
+Export JSON → wipe → import → verify all tabs/templates/autocorrect intact
+Drag & drop a DOCX and an MD file → New/Append/Replace all behave
+Confirm vendor paths resolve (404 in console = wrong location)
+
+---
+
+2026-09-29 — [Dice & Coin v0.4 5/5 VERIFIED] First orOS-native port from Soffitta:
+  · BUILD: separated index.html/dice.css/dice.js (offline-first iframe pattern)
+  · SYNC: union-by-id + LWW + tombstones with deterministic merge (max-mtime pruning + id tie-break)
+  · MODES: Normal / Keep Highest / Keep Lowest / Drop Lowest (generalized for any count/type)
+  · CRIT/FUMBLE: any die (single=max=crit, single=1=fumble; multi=all-max=crit)
+  · COIN: 3D flip animation + persistent stats (derived from merged history, never stored)
+  · HISTORY: 50-entry cap, tombstone resurrection, clipboard share
+  · UX: Space=roll/C=coin (scoped + Contract Β forwarding), 5s toasts, touch targets ≥44px
+  · SECURITY: esc() on share card, mtime field on entries for merge determinism
+  · DOCTRINAL EXEMPTION: Calendar-exempt (non-time-bound), Notifications-exempt (no emitters)
+  · FIVE-AXES: Calendar=N/A, Notifications=PASS(transient only), Sync=PASS, Snapshots=PASS(shell), Export=PASS(shell DB)
+  · BIBLE PATCHES: B-1 (Part III registry: +Dice 5/5 verified), B-2 (Part IV data model: DICE v1 schema),
+    B-3 (Part IX exemptions: Dice calendar/notifs exempt)
