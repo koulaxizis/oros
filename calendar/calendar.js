@@ -3110,6 +3110,14 @@ function transientNote(title, body) {
       }
     } catch (e2) {}
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    // INVALIDATE ALL FEED CACHES — sync may have just pulled fresh
+    // data for Contacts/Cycle/Mood/Habits/Kanban; the 1s micro-cache
+    // would otherwise serve stale reads on the immediate renderAll()
+    contactsCache = { when: 0, data: {} };
+    habitsCache = { when: 0, data: null };
+    cycleCache = { when: 0, data: null };
+    moodCache = { when: 0, data: null };
+    kanbanCache = { when: 0, data: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
     if (info && info.merged) transientNote(t("sync.merged"));   // receipt, not "Saved"
