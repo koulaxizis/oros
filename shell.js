@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.16";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.36.17";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -403,7 +403,6 @@
   function restoreLastSnapshot() {
     var snaps = readSnapshots();
     if (!snaps.length) return;
-    var snap = snaps[snaps.length - 1];
 
     var stale = document.getElementById("restoresnap-dialog");
     if (stale) stale.remove();
@@ -413,7 +412,7 @@
     dlg.style.cssText =
       "border:1px solid var(--border);border-radius:12px;" +
       "background:var(--panel-bg);color:var(--text);padding:20px;" +
-      "width:min(360px,calc(100vw - 32px));";
+      "width:min(380px,calc(100vw - 32px));";
 
     var form = document.createElement("form");
     form.noValidate = true;
@@ -429,16 +428,34 @@
     hint.textContent = window.t("sync.restore.confirm");
     form.appendChild(hint);
 
-    // Snapshot identity — restored WHAT, taken WHEN.
-    var dateEl = document.createElement("div");
-    dateEl.style.cssText =
-      "font-size:12.5px;font-weight:600;margin-bottom:14px;" +
-      "font-variant-numeric:tabular-nums;";
-    dateEl.textContent = new Date(snap.at).toLocaleString(
-      state.lang === "el" ? "el-GR" : "en-GB",
-      { day: "2-digit", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit" });
-    form.appendChild(dateEl);
+    // Picker: ALL snapshots, newest first, newest pre-selected.
+    // Same import path as before — only the selection is new.
+    var list = document.createElement("div");
+    list.style.cssText =
+      "display:flex;flex-direction:column;gap:6px;margin-bottom:14px;" +
+      "max-height:40vh;overflow-y:auto;";
+    for (var i = snaps.length - 1; i >= 0; i--) {
+      var row = document.createElement("label");
+      row.style.cssText =
+        "display:flex;align-items:center;gap:10px;padding:7px 10px;" +
+        "border:1px solid var(--border);border-radius:8px;cursor:pointer;" +
+        "font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;";
+      var rb = document.createElement("input");
+      rb.type = "radio";
+      rb.name = "snap-pick";
+      rb.value = String(i);
+      if (i === snaps.length - 1) rb.checked = true;   // newest preselected
+      rb.style.accentColor = "var(--accent)";
+      row.appendChild(rb);
+      var dt = document.createElement("span");
+      dt.textContent = new Date(snaps[i].at).toLocaleString(
+        state.lang === "el" ? "el-GR" : "en-GB",
+        { day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit" });
+      row.appendChild(dt);
+      list.appendChild(row);
+    }
+    form.appendChild(list);
 
     var btnRow = document.createElement("div");
     btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
@@ -465,6 +482,9 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
+      var sel = form.querySelector('input[name="snap-pick"]:checked');
+      var idx = sel ? parseInt(sel.value, 10) : snaps.length - 1;
+      var snap = snaps[idx];
       okBtn.disabled = true;
       okBtn.textContent = window.t("sync.working");
       try {
@@ -814,6 +834,19 @@
       });
   }
 
+  // Collapsible menu categories — device-local ergonomics only:
+  // NEVER synced, NEVER marked dirty (menu layout ≠ user data).
+  var MENU_CAT_KEY = "oros-menu-cat-collapsed";
+  function catCollapsedRead() {
+    try {
+      var o = JSON.parse(localStorage.getItem(MENU_CAT_KEY));
+      return (o && typeof o === "object") ? o : {};
+    } catch (e) { return {}; }
+  }
+  function catCollapsedWrite(map) {
+    try { localStorage.setItem(MENU_CAT_KEY, JSON.stringify(map)); } catch (e) {}
+  }
+
   function renderMenu() {
     var menu = document.getElementById("app-menu");
     menu.innerHTML = "";
@@ -839,17 +872,40 @@
       });
 
       Object.keys(cats).sort().forEach(function (cat) {
+        var collapsed = !!catCollapsedRead()[cat];
         var wrap = document.createElement("div");
         wrap.className = "menu-category";
 
+        // Collapsible header: chevron rotates, app rows hide/show.
         var h = document.createElement("h4");
+        h.style.cssText =
+          "display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;";
         var catLabel = window.t("category." + cat.toLowerCase());
         // Unknown category → t() returns the key itself → fall back
         // to the prettified raw name (future-proof for new apps).
-        h.textContent = (catLabel === "category." + cat.toLowerCase())
+        var catText = (catLabel === "category." + cat.toLowerCase())
           ? cat.charAt(0).toUpperCase() + cat.slice(1)
           : catLabel;
+        var chev = document.createElement("span");
+        chev.style.cssText =
+          "display:inline-flex;transition:transform .15s;" +
+          (collapsed ? "transform:rotate(-90deg);" : "");
+        chev.innerHTML =
+          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+        h.appendChild(chev);
+        var hTxt = document.createElement("span");
+        hTxt.textContent = catText;
+        h.appendChild(hTxt);
+        h.addEventListener("click", function () {
+          var m = catCollapsedRead();
+          m[cat] = !collapsed;
+          catCollapsedWrite(m);
+          renderMenu();
+        });
         wrap.appendChild(h);
+
+        var catList = document.createElement("div");
+        if (collapsed) catList.style.display = "none";
 
         cats[cat].forEach(function (app) {
           var btn = document.createElement("button");
@@ -865,8 +921,9 @@
             btn.textContent = label;
           }
           btn.addEventListener("click", function () { openApp(app); });
-          wrap.appendChild(btn);
+          catList.appendChild(btn);
         });
+        wrap.appendChild(catList);
         menu.appendChild(wrap);
       });
     }
@@ -2143,14 +2200,23 @@
     }));
 
     // — Per-app toggles (module's knownApps, mirrored 1:1) —
-    var appsLbl = document.createElement("div");
-    appsLbl.className = "sync-hint";
-    appsLbl.textContent = window.t("notifs.apps");
-    section.appendChild(appsLbl);
+    // Expandable per-app block: native <details>/<summary> (zero JS
+    // open/close state) + compact wrapped chips instead of one full
+    // row per app. One menu line when collapsed, tidy grid when open.
+    var appsDetails = document.createElement("details");
+    appsDetails.style.cssText =
+      "margin-top:6px;border:1px solid var(--border);border-radius:8px;" +
+      "padding:0 10px;";
+    var appsSummary = document.createElement("summary");
+    appsSummary.style.cssText =
+      "padding:7px 0;font-size:12px;font-weight:600;color:var(--text-dim);" +
+      "cursor:pointer;user-select:none;";
+    appsSummary.textContent = window.t("notifs.apps");
+    appsDetails.appendChild(appsSummary);
 
     var appsCol = document.createElement("div");
     appsCol.style.cssText =
-      "display:flex;flex-direction:column;gap:8px;margin-top:4px;";
+      "display:flex;flex-wrap:wrap;gap:6px 14px;padding:2px 0 10px;";
     // Wave 6 — the list comes from the module (getKnownApps): one
     // source of truth, no mirrored arrays. "time" = alarms,
     // "system" = sync/version/sc results — toggleable like any app.
@@ -2159,9 +2225,12 @@
       : ["calendar", "cycle", "mood", "todo", "habits"];
     knownApps.forEach(function (appId) {
       var label = document.createElement("label");
-      label.className = "remember-row";
+      label.style.cssText =
+        "display:flex;align-items:center;gap:6px;font-size:12px;" +
+        "color:var(--text-dim);cursor:pointer;";
       var cb = document.createElement("input");
       cb.type = "checkbox";
+      cb.style.cssText = "margin:0;accent-color:var(--accent);";
       cb.checked = N.getAppToggle(appId);
       cb.addEventListener("change", function () {
         N.setAppToggle(appId, cb.checked);   // N1 makes this travel
@@ -2178,7 +2247,8 @@
       label.appendChild(txt);
       appsCol.appendChild(label);
     });
-    section.appendChild(appsCol);
+    appsDetails.appendChild(appsCol);
+    section.appendChild(appsDetails);
 
     host.appendChild(section);
   }

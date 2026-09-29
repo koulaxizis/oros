@@ -811,3 +811,54 @@ Copy into a new chat's first message:
   · SMOKE TEST (R19): recalc fix verified, formula paste with functions works, € format displays, SVGs load, touch targets ≥44px, CSV export via transient, Settings → Notifications shows Spreadsheet toggle
 
 2026-09-27 — [Bible Update] OROS_BIBLE.md Parts I–XII consolidated: Spreadsheet entries incorporated (registry, data model, exemptions, KNOWN_APPS); stale app queues reconciled (Bookmarks/Characters/Contacts/Cycle/Time/Quote/Storage/Prompter/Spreadsheet → CLOSED); duplicate verbose blocks pruned (Workflow Reaffirmations removed from Part XII, live in Part I standing rules); three identical "Support section" changelog entries merged into one canonical reference.
+
+---
+
+orOS Sync Recovery & Kernel Hardening — Chat Session Changelog
+Session scope: Final closure of the multi-device sync failure saga (duplicate seeds, calendar feed blackout, contacts wipe) and complete diagnosis + lockdown of the window.t is not a function shell crash. Files examined and verified: shell.js (0.36.15), translations.js, index.html.
+
+Critical Incident — Full Root Cause Record (multi-session, closed here)
+1. Duplicate seeds on new device login (Notes / To-Do / Kanban)
+
+Cause: boot-phase default seeding used non-deterministic IDs (uid(), Date.now()) running before sync pull; merge engine unioned distinct IDs → parallel empty app instances.
+Fix: deterministic seed IDs (nb-default, tdl-general, kb-seed-main, mtime: 0) in notes.js, todo.js, kanban.js. Remote version collapses to one; fresh install gets the same seed. Verified post-patch: single correct entries in oros-notes-data / oros-todo-data.
+Status: CLOSED.
+2. Calendar feed events (birthdays, anniversaries) not appearing on new device
+
+Cause: calendar.js feed caches (contacts/habits, 1s micro-cache) served stale empty data when setFromSync() re-rendered immediately after pull.
+Fix: explicit cache invalidation inside setFromSync() before renderAll().
+Status: CLOSED.
+3. Contacts wiped across ALL devices after new-device login
+
+Cause: mergeless slice with no baseline pushed an empty local blob to cloud; divergence guard (local !== null) failed on null/empty stores → overwrite propagated everywhere.
+Fix: empty-blob guard in sync.js collectPayload() — blocks pushes for unpushed slices lacking a baseline unless remote is confirmed empty.
+Recovery: contacts restored from .vcf backup export.
+Status: CLOSED. Lesson recorded: mergeless slices without baselines must never push empty payloads — candidate kernel rule.
+Shell Crash — window.t is not a function
+Diagnosis trail:
+
+Crash site: shell.js — autoSyncDot (~line 2387) and renderClock tick chain.
+Console diagnostics post-hard-refresh: typeof window.t === "function" ✓, correct source body, single translations script loaded, clean boot, no recurrence after reload.
+translations.js audit: CLEAN — window.OROS_TRANSLATIONS and window.t defined top-level synchronously, no fetch/callback paths; fallback chain (active lang → en → key) means t() can never throw on its own.
+index.html audit: CLEAN — script order correct: translations.js → sync.js → fs.js → shell.js → notifications.js, all classic scripts (guaranteed execution order).
+Conclusion: the crash was a transient partial-bundle boot (Service Worker served shell.js while translations.js failed/delayed once). Guards now make this class of failure non-fatal.
+Fixes verified present in shell.js (all three TP-guards, confirmed against actual file content):
+
+applyLang() (Section 3): early-return guard when window.t is not yet a function, logs deferral, menu repaints on next paint cycle.
+setSyncDot() (Section 9b): guarded tooltip lookup + conditional aria-label.
+autoSyncDot() (Section 9b): guarded tooltip — the 1s clock tick chain (alarmTick, notifTick, weather chip, calendar/mood/cycle/todo/quote scans) can never be killed by a missing translation function again.
+Status: CLOSED.
+
+False Alarms Resolved (documented to avoid re-chasing)
+Banner not shown: beforeinstallpromptevent.preventDefault() called — expected by design; the shell keeps deferredPrompt for the menu Install button. Not a bug.
+Console dot state: null — was a faulty diagnostic selector ([id*="sync-dot"] matched the parent button #sync-dot-btn, which carries no data-state). The actual dot element is the child span #sync-dot.
+Architectural Notes for Future Sessions
+Shell's renderClock (1s tick) hosts ALL throttled engine ticks — a throw in ANY unguarded callee kills the entire chain. New ticks must guard against missing modules (window.t, window.orosNotifs, window.orosSync) per existing patterns.
+Translations contract: translations.js must stay synchronous top-level, no version number in the file (version lives ONLY in shell.js — single source of truth, GitHub Action propagates).
+Tripwire snippet available for future recurrence: Object.defineProperty setter on window.t logging overwrites with stack trace — use if the crash ever reappears with translations.js confirmed loaded.
+Pending Work
+Legacy Kanban board mumfy266amf80 — pre-patch duplicate, requires manual deletion on client to propagate tombstone via sync.
+Final verification cycle — hard refresh + full sync on TWO devices (desktop + mobile PWA), confirming: no new duplicate seeds; calendar feeds render immediately after sync; contacts stable (no empty-blob overwrite); shell clock and notification ticks error-free.
+Optional: consider promoting the empty-blob guard and TP-guard patterns into the project Bible (OROS_BIBLE.md) as standing kernel rules.
+Workflow rules honoured this session: all patches verified against actual file content before delivery (no guesses); files requested one by one (translations.js → index.html → shell.js); OLD → NEW format for all patches; no version number changes made by the assistant (versioning stays owner-controlled / Action-automated).
+
