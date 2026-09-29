@@ -502,11 +502,15 @@
       if (!badge) {
         badge = document.createElement('span');
         badge.className = 'notif-badge';
+        // NB1: badge stays INSIDE the 44×44 touch target (top:2px
+        // instead of -4px) — an ancestor with overflow:hidden
+        // (taskbar/tray in some browsers) was clipping the top
+        // half of the count. In-bounds = unclippable everywhere.
         badge.style.cssText =
-          'position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;' +
-          'background:var(--accent);color:#fff;border-radius:10px;font-size:10px;' +
+          'position:absolute;top:2px;right:2px;min-width:14px;height:14px;' +
+          'background:var(--accent);color:#fff;border-radius:9px;font-size:9px;' +
           'font-weight:700;display:flex;align-items:center;justify-content:center;' +
-          'padding:0 4px;transition:transform 0.2s ease;';
+          'padding:0 3px;transition:transform 0.2s ease;line-height:1;';
         bellBtn.style.position = 'relative';
         bellBtn.appendChild(badge);
       }
