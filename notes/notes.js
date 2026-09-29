@@ -54,12 +54,18 @@
   // ---------- 2. Load / migrate / normalize ----------
 
   function defaultData() {
+    // SEEDS MUST BE DETERMINISTIC (v0.36.00 fix)
+    // Fixed IDs + mtime:0 means every device computes the SAME seed bytes.
+    // The merge engine (union LWW) will never duplicate them — identical
+    // IDs collide and keep ONE instance; mtime:0 means any user edit wins.
+    // DO NOT use uid()/Date.now() here — that was the root cause of
+    // parallel notebook creation on fresh devices.
     return {
       ver: DATA_VER,
-      notebooks: [{ id: uid("nb"), name: t("book.default"), mtime: Date.now(), pos: 0 }],
+      notebooks: [{ id: "nb-default", name: t("book.default"), mtime: 0, pos: 0 }],
       pages: [{
-        id: uid(), nb: null, parent: null, title: t("page.untitled"),
-        text: "", mtime: Date.now(), pos: 0, labels: []
+        id: "p-welcome", nb: "nb-default", parent: null,
+        title: t("page.untitled"), text: "", mtime: 0, pos: 0, labels: []
       }],
       labels: [],
       tombs: {}
@@ -70,7 +76,16 @@
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
     if (!raw || typeof raw !== "object") {
-      state = defaultData();
+      // SEED DEFERRAL (v0.36.00): do NOT populate defaults immediately.
+      // If a sync pull is pending/completed, the merge engine will
+      // create the default notebook/page from remote (or merge them).
+      // Only seed when BOTH local AND remote are truly empty.
+      state = {
+        ver: DATA_VER, notebooks: [], pages: [], labels: [], tombs: {}
+      };
+      // Let normalizeState() inject the "always ≥1 notebook" invariant
+      // only when the slice actually needs it (empty remote + empty local).
+      normalizeState();
       saveNow();
       return;
     }
@@ -113,7 +128,15 @@
     state.tombs     = (raw.tombs && typeof raw.tombs === "object") ? raw.tombs : {};
 
     normalizeState();
-    if (JSON.stringify(raw) !== JSON.stringify(state)) saveNow();
+    if (JSON.stringify(raw) !== JSON.stringify(state)) {
+      saveNow();
+      // v0.36.00: after-load guard — if we just seeded defaults but a
+      // sync pull is in-flight or completed, the seed may duplicate
+      // remote notebooks/pages. We'll let the merge engine handle it
+      // (IDs are now deterministic), but we DO mark dirty so the
+      // converged state reaches the cloud.
+      markSyncDirty();
+    }
   }
 
   // Normalization is IDEMPOTENT and runs on every load AND on every

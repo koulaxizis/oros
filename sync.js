@@ -776,6 +776,27 @@
     }
 
     var epoch = getWVEpoch();
+
+    // CRITICAL SAFEGUARD: a mergeless slice (closed-app proxy) whose
+    // local content is empty BUT lacks a baseline indicates "never
+    // pushed before". DO NOT upload an empty blob for such slices —
+    // it would overwrite non-empty data from other devices. Exception:
+    // if the slice is empty AND baseline exists AND cloud is empty
+    // (first-run on this device only), allow the push.
+    var baselines = readBaselines();
+    Object.keys(slices).forEach(function (name) {
+      if (name === "shell") return;
+      var data = payload.apps[name];
+      if (!slices[name].merge &&
+          (data === null || data === undefined ||
+           JSON.stringify(data) === "{}" || JSON.stringify(data) === 'null') &&
+          !baselines[name]) {
+        // Slice has never been pushed; empty local = nothing to send
+        delete payload.apps[name];
+        console.warn('[orOS sync] Guarded empty slice:', name, '- not uploading');
+      }
+    });
+
     payload.meta = {
       lastPush: new Date().toISOString(),
       device:   navigator.userAgent.slice(0, 80),

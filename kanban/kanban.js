@@ -528,18 +528,56 @@
       }
     } catch (e) { /* corrupted → fresh start */ }
 
-    // Fresh install: create one default board
+    // Fresh install: create one default board.
+    //
+    // SEEDS MUST BE DETERMINISTIC (v0.36.00 fix — "parallel Kanban
+    // boards on fresh device" root cause). Fixed board id + mtime/om = 0
+    // + fixed column ids mean:
+    //   · every device computes IDENTICAL seed ids → the multi-board
+    //     merge unions by board.id, so the seed COLLIDES with its
+    //     remote twin (if any) and keeps ONE instance — no duplicates
+    //   · mtime 0 = oldest possible → any real user edit, and any
+    //     remote copy (which has mtime > 0), wins every LWW battle;
+    //     the seed can never override real data or board order
+    //   · root om 0 → a seeded device never claims board ordering
+    //     authority over a device that actually reordered boards
+    //   · root boardDeleted tombstone (ts > 0) always beats a
+    //     mtime-0 seed → deleted default boards stay deleted
+    // DO NOT use newBoardObj()/uid()/Date.now() for the seed —
+    // newBoardObj stays for USER-created boards (real new entities
+    // that must carry fresh ids/mtimes).
     state = {
       ver: DATA_VER,
-      om: Date.now(),
+      om: 0,
       activeBoardId: null,
       boards: []
     };
-    
-    var defaultBoard = newBoardObj(LANG === "el" ? "Κύριο" : "Main");
-    state.boards.push(defaultBoard);
-    state.activeBoardId = defaultBoard.id;
-    
+
+    var seedCols = (LANG === "el"
+      ? ["Εκκρεμεί", "Σε εξέλιξη", "Ολοκληρωμένα"]
+      : ["To Do", "Doing", "Done"])
+      .map(function (n, i) {
+        return {
+          id: "kb-seed-col-" + i,          // deterministic per-position
+          name: n,
+          mtime: 0,
+          om: 0,
+          pos: i,
+          cards: []
+        };
+      });
+
+    state.boards.push({
+      id: "kb-seed-main",                 // THE fixed seed board id
+      name: LANG === "el" ? "Κύριο" : "Main",
+      mtime: 0,
+      om: 0,
+      deleted: {},
+      labels: [],
+      columns: seedCols
+    });
+    state.activeBoardId = state.boards[0].id;
+
     save();
   }
 

@@ -313,19 +313,38 @@
   }
 
   function defaultState() {
-    var first = newListObj(LANG === "el" ? "Γενικά" : "General");
-    var work   = newListObj(LANG === "el" ? "Ψώνια" : "Groceries");
-    first.pos = 0;
-    work.pos = 1;
+    // SEEDS MUST BE DETERMINISTIC (v0.36.00 fix — "parallel lists on
+    // fresh device" root cause). Fixed IDs + mtime/sm/om = 0 mean:
+    //   · every device computes byte-identical seeds → the merge
+    //     union-by-id COLLAPSES them into ONE instance (no twins)
+    //   · mtime 0 = "oldest possible content" → any real user edit
+    //     or remote copy wins LWW, seeds never override real data
+    //   · sm 0   = seeded settings can NEVER beat the remote's
+    //     activeList/hideCompleted (the "opens the new empty list
+    //     by default" symptom)
+    //   · tombstones (user deleted defaults elsewhere) always beat
+    //     mtime-0 seeds → deleted defaults stay deleted
+    // DO NOT use newListObj()/uid()/Date.now() here. The names are
+    // language-dependent by design (localized per device); LWW picks
+    // one deterministically — never duplicates.
+    var mkSeed = function (id, name, pos) {
+      return {
+        id: id, name: name, mtime: 0, om: 0, pos: pos,
+        recurrence: null, lastReset: null, nextReset: null, items: []
+      };
+    };
     return {
       ver: DATA_VER,
-      sm: Date.now(),
-      om: Date.now(),
-      activeList: first.id,
+      sm: 0,
+      om: 0,
+      activeList: "tdl-general",
       hideCompleted: false,
       deleted: {},
       labels: [],
-      lists:       [first, work]
+      lists: [
+        mkSeed("tdl-general", LANG === "el" ? "Γενικά" : "General", 0),
+        mkSeed("tdl-groceries", LANG === "el" ? "Ψώνια" : "Groceries", 1)
+      ]
     };
   }
 
