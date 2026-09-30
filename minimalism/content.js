@@ -1375,4 +1375,379 @@ window.MINIMALISM_CONTENT = {
       title: "Mark this checkpoint: photograph every room again; compare to Day 55 photos",
       why: "Fifty days of system-building show different results than fifty days of purging. Side-by-side photos reveal the transformation."
     },
+	    {
+      id: "d56-dig", level: "dig", difficulty: 1,
+      title: "Delete 100 old photos in one batch (blurry, duplicates, accidental shots)",
+      why: "Large deletions break the perfectionism paralysis. Removing the obvious garbage first makes the rest easier to evaluate."
+    },
+    {
+      id: "d57-dig", level: "dig", difficulty: 2,
+      title: "Organize your Downloads folder with a 'keep', 'delete', 'archive' triage session",
+      why: "Downloaded files decay into digital rot. A single triage session creates a new baseline for future downloads."
+    },
+    {
+      id: "d58-dig", level: "dig", difficulty: 2,
+      title: "Unfollow everyone on social media who doesn't inspire or educate you",
+      why: "Your feed is a curated diet. Every unfollow reduces the noise that competes with meaningful content."
+    },
+    {
+      id: "d59-dig", level: "dig", difficulty: 1,
+      title: "Clear your email drafts folder; delete unfinished ideas that never became posts",
+      why: "Email drafts become confession boxes for abandoned projects. Clearing them releases unfinished thoughts without judgment."
+    },
+    {
+      id: "d60-dig", level: "dig", difficulty: 2,
+      title: "Create separate folders for work vs personal files; move everything into them",
+      why: "Mixed files create constant decision fatigue. Separation by context makes retrieval automatic and stress-free."
+    },
+    {
+      id: "d61-dig", level: "dig", difficulty: 2,
+      title: "Review your subscription services; cancel any you haven't used in 30 days",
+      why: "Monthly charges accumulate invisibly. Cancelling underused services returns money to your control and attention to your choice."
+    },
+    {
+      id: "d62-dig", level: "dig", difficulty: 1,
+      title: "Rename 10 files with proper naming convention instead of random characters",
+      why: "Random filenames hide in folders forever. A naming standard makes your archives searchable again."
+    },
+    {
+      id: "d63-dig", level: "dig", difficulty: 3,
+      title: "Implement end-to-end encryption for sensitive documents (password manager, encrypted drives)",
+      why: "Cloud storage exposes data to providers. Encryption puts you back in control of who sees your secrets."
+    },
+    {
+      id: "d64-dig", level: "dig", difficulty: 2,
+      title: "Audit your browser history; delete searches you'd be embarrassed to show someone",
+      why: "Browser history is a diary you didn't mean to keep. Clearing embarrassing searches restores privacy from your own past self."
+    },
+    {
+      id: "d65-dig", level: "dig", difficulty: 2,
+      title: "Set up automatic backups for all critical data to an external drive",
+      why: "Data loss happens without warning. Automatic backups mean you only lose what happened since the last backup, not everything."
+    },
+    {
+      id: "d66-dig", level: "dig", difficulty: 1,
+      title: "Remove apps from your phone's home screen; move them to the app drawer",
+      why: "Home screen real estate shapes daily habits. Moving apps off the home screen reduces unconscious checking."
+    },
+    {
+      id: "d67-dig", level: "dig", difficulty: 2,
+      title: "Consolidate multiple messaging accounts into one platform where possible",
+      why: "Fragmented chats scatter conversations across platforms. Consolidation means you see messages when you're already looking."
+    },
+    {
+      id: "d68-dig", level: "dig", difficulty: 1,
+      title: "Delete browser cache and cookies; start fresh with only trusted sites",
+      why: "Cached data accumulates tracking information over years. A fresh cache resets your digital footprint to today."
+    },
+    {
+      id: "d69-dig", level: "dig", difficulty: 2,
+      title: "Review connected smart home devices; remove ones you don't actually use",
+      why: "Smart devices become surveillance points when idle. Disconnecting unused ones closes attack surfaces in your home network."
+    },
+    {
+      id: "d70-dig", level: "dig", difficulty: 1,
+      title: "Create a digital will document: list important accounts and access instructions",
+      why: "Digital assets outlive us without planning. A digital will ensures loved ones can access what matters after you're gone."
+    },
+    {
+      id: "d71-dig", level: "dig", difficulty: 2,
+      title: "Set screen time limits for your most distracting apps (social media, games)",
+      why: "Willpower fails against infinite scroll. Automated limits enforce boundaries you can't resist breaking yourself."
+    },
+    {
+      id: "d72-dig", level: "dig", difficulty: 2,
+      title: "Organize your photo library by date; delete blurry or duplicate shots",
+      why: "Unorganized photos become digital junk. Sorting by date creates a timeline you'll actually look through later."
+    },
+    {
+      id: "d73-dig", level: "dig", difficulty: 1,
+      title: "Turn off location tracking for all non-essential apps",
+      why: "Location data paints a detailed map of your life. Denying it to unnecessary apps reduces surveillance without breaking functionality."
+    },
+    {
+      id: "d74-dig", level: "dig", difficulty: 3,
+      title: "Implement two-factor authentication on all accounts that support it",
+      why: "Passwords alone are vulnerable to phishing and breaches. 2FA adds a second barrier that stops most attackers automatically."
+    },
+    {
+      id: "d75-dig", level: "dig", difficulty: 2,
+      title: "Audit your cloud storage; remove files you've downloaded to local storage",
+      why: "Double storage wastes quota and confuses versions. Keeping files in one place means you know where to find them."
+    },
+    {
+      id: "d76-dig", level: "dig", difficulty: 1,
+      title: "Create a 'reading list' for articles you want to read later, then actually read it",
+      why: "Saved articles pile up unread. A dedicated list forces curation and eventual consumption instead of endless saving."
+    },
+    {
+      id: "d77-dig", level: "dig", difficulty: 2,
+      title: "Set up a password rotation schedule; change critical passwords every 90 days",
+      why: "Stagnant passwords become targets over time. Regular rotation limits exposure windows if credentials are compromised."
+    },
+    {
+      id: "d78-dig", level: "dig", difficulty: 1,
+      title: "Disable auto-updates for non-security apps; update manually once a week",
+      why: "Automatic updates sometimes break workflow. Controlled updates let you test before rolling out to all devices."
+    },
+    {
+      id: "d79-dig", level: "dig", difficulty: 2,
+      title: "Review your digital footprint; search for yourself on Google and delete unwanted results",
+      why: "Your online presence grows without permission. Active pruning keeps your public profile aligned with how you want to be seen."
+    },
+    {
+      id: "d80-dig", level: "dig", difficulty: 1,
+      title: "Establish a 'no-phone dinner' rule for yourself and anyone you live with",
+      why: "Mealtime conversation dissolves under notifications. Phone-free meals rebuild connection and attention span simultaneously."
+    },
+	    {
+      id: "d81-dig", level: "dig", difficulty: 2,
+      title: "Perform a full backup restore test: verify one backup actually restores",
+      why: "Untested backups are wishful thinking. A restore test proves your system works before you need it to."
+    },
+    {
+      id: "d82-dig", level: "dig", difficulty: 1,
+      title: "Delete every app from your phone you haven't opened in 30 days",
+      why: "Unused apps still phone home, track, and update. Deleting them is maintenance for both storage and privacy."
+    },
+    {
+      id: "d83-dig", level: "dig", difficulty: 2,
+      title: "Set up automatic photo backups to one location only; eliminate duplicate syncs",
+      why: "Multiple photo backups create version confusion and eat storage quotas twice. One pipeline means one truth."
+    },
+    {
+      id: "d84-dig", level: "dig", difficulty: 1,
+      title: "Turn off 'usage sharing' and 'analytics' options in every app that offers a setting",
+      why: "Analytics toggles are opt-out telemetry. Flipping them off cuts the data exhaust you leave on every app you use."
+    },
+    {
+      id: "d85-dig", level: "dig", difficulty: 2,
+      title: "Consolidate your notes apps into one system",
+      why: "Ideas scattered across five apps are ideas half-lost. One system means one search and one habit."
+    },
+    {
+      id: "d86-dig", level: "dig", difficulty: 2,
+      title: "Review your email aliases and forwarding rules; delete the obsolete ones",
+      why: "Forwarding rules written years ago still reroute mail silently. An audit reveals loops you forgot existed."
+    },
+    {
+      id: "d87-dig", level: "dig", difficulty: 1,
+      title: "Empty your 'read later' queue completely: read, skim or delete everything",
+      why: "A read-later queue over a hundred deep is a graveyard. Emptying it resets the pact: save means intend to read."
+    },
+    {
+      id: "d88-dig", level: "dig", difficulty: 2,
+      title: "Unsubscribe from podcasts you no longer listen to; keep an active rotation of five",
+      why: "Podcast backlogs become homework. An honest rotation keeps listening a pleasure, not a debt."
+    },
+    {
+      id: "d89-dig", level: "dig", difficulty: 1,
+      title: "Clean your contacts list: merge duplicates, delete unknown numbers",
+      why: "Contacts accumulate like sediment. A lean list means faster dialing and no mystery entries when you search."
+    },
+    {
+      id: "d90-dig", level: "dig", difficulty: 2,
+      title: "Review the browser bookmarks you've saved for over a year; delete or convert to actions",
+      why: "Old bookmarks are a to-do list wearing a disguise. Converting them to actions or deleting them ends the pretense."
+    },
+    {
+      id: "d91-dig", level: "dig", difficulty: 2,
+      title: "Set up a 'payment email alias' for online shopping; keep commerce out of your main inbox",
+      why: "Order confirmations and receipts flood primary inboxes. A dedicated alias contains commerce noise in one folder."
+    },
+    {
+      id: "d92-dig", level: "dig", difficulty: 1,
+      title: "Delete every 'free trial' app you signed up for and forgot",
+      why: "Forgotten trials become paid subscriptions. A quarterly sweep converts silent charges back into your money."
+    },
+    {
+      id: "d93-dig", level: "dig", difficulty: 3,
+      title: "Conduct a full account audit: list every online account you have, close the dead ones",
+      why: "Accounts multiply across a decade of internet life. A master list exposes forgotten profiles holding stale personal data."
+    },
+    {
+      id: "d94-dig", level: "dig", difficulty: 1,
+      title: "Turn off badge counts on all apps except messaging",
+      why: "Red badges are psychological leashes. Keeping them only for people removes manufactured urgency from your screen."
+    },
+    {
+      id: "d95-dig", level: "dig", difficulty: 2,
+      title: "Standardize your devices' backup schedule; put it in your calendar",
+      why: "Backups work only when they run. A calendared ritual turns good intentions into automatic protection."
+    },
+    {
+      id: "d96-dig", level: "dig", difficulty: 1,
+      title: "Reply to or archive the five oldest emails in your inbox",
+      why: "Ancient emails occupy mental RAM rent-free. Clearing the deepest strata shrinks the backlog mountain from the bottom."
+    },
+    {
+      id: "d97-dig", level: "dig", difficulty: 2,
+      title: "Review your RSS or news feeds; cut sources you skim but never value",
+      why: "Feeds fill hours with skimming. Cutting low-value sources raises the average quality of what remains."
+    },
+    {
+      id: "d98-dig", level: "dig", difficulty: 1,
+      title: "Delete your saved payment cards from online shops you rarely use",
+      why: "Stored cards remove friction from impulse spending. Re-entering card details is a built-in deliberation pause."
+    },
+    {
+      id: "d99-dig", level: "dig", difficulty: 2,
+      title: "Set a 15-minute daily email window: process to zero, then close the tab",
+      why: "Email open all day means attention fractured all day. A scheduled window compresses it into a single daily event."
+    },
+    {
+      id: "d100-dig", level: "dig", difficulty: 1,
+      title: "Turn your phone's screen to grayscale for a full day at work",
+      why: "Grayscale strips the visual candy that hooks scrolling. Most people check their phone measurably less without color."
+    },
+    {
+      id: "d101-dig", level: "dig", difficulty: 2,
+      title: "Move your most addictive app off your phone entirely; access it only on desktop",
+      why: "Friction is a feature. The extra steps of desktop access give rational thought time to override habit."
+    },
+    {
+      id: "d102-dig", level: "dig", difficulty: 1,
+      title: "Review your Bluetooth pairings; forget devices you no longer own",
+      why: "Pairing lists hold stale connections and minor security residue. Forgetting old devices is digital hygiene."
+    },
+    {
+      id: "d103-dig", level: "dig", difficulty: 2,
+      title: "Write down your 'break glass' procedure: what to do if you lose your phone",
+      why: "Lost phones are emergencies; procedures prevent panic. Knowing the steps — remote wipe, carrier, passwords — turns crisis into checklist."
+    },
+    {
+      id: "d104-dig", level: "dig", difficulty: 1,
+      title: "Take a screenshot inventory: review your device's screenshot folder, delete the majority",
+      why: "Screenshots taken 'for later' are almost never later. Deleting them closes hundreds of tiny open loops."
+    },
+    {
+      id: "d105-dig", level: "dig", difficulty: 2,
+      title: "Checkpoint: review your screen time trend since Day 45; write one paragraph on what changed",
+      why: "Data becomes insight through reflection. Writing the story of your attention's movement makes the change real and repeatable."
+    },
+	    {
+      id: "d56-phys", level: "phys", difficulty: 1,
+      title: "Μέτρησε όλα τα ρούχα που έχεις· γράψε τον αριθμό σε χαρτί",
+      why: "Η απογραφή της γκαρνταρόμπας ακούγεται κουραστική αλλά παίρνει δέκα λεπτά. Ο ακατέργαστος αριθμός — συχνά τριπλάσιος της εκτίμησης — είναι η ειλικρινής βάση πάνω στην οποία θα χτιστούν οι αποφάσεις σου για capsule."
+    },
+    {
+      id: "d57-phys", level: "phys", difficulty: 3,
+      title: "Σχεδίασε capsule γκαρνταρόμπα: διάλεξε 33 αντικείμενα (μαζί με παπούτσια) για μια εποχή",
+      why: "Ο περιορισμός γεννά δημιουργικότητα. Οι περισσότεροι φοράμε το 20% όσων έχουμε· ένα capsule αποκαλύπτει ποια 33 αντικείμενα κερδίζουν πραγματικά τη θέση τους."
+    },
+    {
+      id: "d58-phys", level: "phys", difficulty: 2,
+      title: "Βγάλε πέντε βιβλία που δεν θα ξαναδιαβάσεις ή δεν άρχισες ποτέ",
+      why: "Τα βιβλία που κρατάς αδιάβαστα γίνονται μνημεία ενοχής. Εκείνα που αγαπάς πραγματικά λάμπουν περισσότερο σε ένα πιο λιτό ράφι."
+    },
+    {
+      id: "d59-phys", level: "phys", difficulty: 2,
+      title: "Κράδεψε τη συλλογή DVD, CD ή παιχνιδιών σε ό,τι όντως ξαναπαίζεις",
+      why: "Το streaming και τα ψηφιακά αντίγραφα έκαναν τα περισσότερα φυσικά μέσα περιττά. Οι δίσκοι που κρατάς πρέπει να σημαίνουν κάτι, όχι απλώς να γεμίζουν μια βάση."
+    },
+    {
+      id: "d60-phys", level: "phys", difficulty: 1,
+      title: "Αποφάσισε τους αριθμούς πετσετών και σκεπασμάτων: πόσες χρειάζεται πραγματικά το σπίτι σου;",
+      why: "Τα περισσότερα σπίτια έχουν πετσέτες για ένα υποθετικό ξενοδοχείο. Δύο ανά άτομο συν επιπλέον για φιλοξενούμενους καλύπτουν την πραγματικότητα — τα υπόλοιπα είναι φορτίο ντουλαπιών."
+    },
+    {
+      id: "d61-phys", level: "phys", difficulty: 2,
+      title: "Εφάρμοσε τον κανόνα 20/20 στα αμφίβολα αντικείμενα: θα μπορούσες να το αντικαταστήσεις με λιγότερα από 20 ευρώ σε λιγότερο από 20 λεπτά;",
+      why: "Αν ναι, το να το κρατάς «για κάθε περίπτωση» σημαίνει να πληρώνεις ενοίκιο για αποθήκευση. Οι πραγματικές εκτάκτες ανάγκες είναι σπάνιες· το κόστος αποθήκευσης είναι καθημερινό."
+    },
+    {
+      id: "d62-phys", level: "phys", difficulty: 3,
+      title: "Κάνε πλήρη επαναφορά του συρταριού-απορριμματοδεξαμενής: άδειασέ το σε ένα τραπέζι, γύρισε μόνο ό,τι κέρδισε τη θέση του",
+      why: "Το χάος-συρτάρι απορροφά ό,τι δεν έχει αποφασιστεί. Η επαναφορά του αναγκάζει κάθε ορφανό αντικείμενο να δικαιολογήσει τον εαυτό του μία φορά."
+    },
+    {
+      id: "d63-phys", level: "phys", difficulty: 2,
+      title: "Έλεγξε το ντουλάπι του μπάνιου: πέταξε ό,τι ληγμένο, μισοχρησιμοποιημένο ή ξεχασμένο",
+      why: "Τα καλλυντικά γερνούν πιο γρήγορα απ' όσο παραδεχόμαστε. Ένα λιτό ντουλάπι σημαίνει ότι τελειώνεις ό,τι αγοράζεις αντί να το ανακατεύεις."
+    },
+    {
+      id: "d64-phys", level: "phys", difficulty: 2,
+      title: "Δοκίμασε 30 λεπτά στον αποθηκευτικό σου χώρο (γκαράζ, υπόγειο, πατάρι): άγγιξε πέντε κουτιά",
+      why: "Οι αποθηκευτικοί χώροι λειτουργούν επειδή είναι εκτός οπτικού πεδίου. Το να αγγίζεις ό,τι αποθηκεύεις επαναφέρει τη λογοδοσία σε πράγματα που πληρώνεις για να ξεχάσεις."
+    },
+    {
+      id: "d65-phys", level: "phys", difficulty: 2,
+      title: "Αξιολόγησε τον αθλητικό εξοπλισμό για χόμπι που δεν ασκείς πια",
+      why: "Τα σκι του 2019 δεν είναι γυμναστική — είναι μια συγγνώμη σε έναν πρώην εαυτό. Ο εξοπλισμός για ενεργά σπορ μένει· τα μουσειακά κομμάτια φεύγουν."
+    },
+    {
+      id: "d66-phys", level: "phys", difficulty: 2,
+      title: "Συγκέντρωσε τα υλικά χειροτεχνίας και χόμπι σε ένα ορισμένο δοχείο",
+      why: "Όταν τα υλικά ξεπερνούν το δοχείο τους, τα σχέδια ξεπερνούν τον χρόνο σου. Το δοχείο γίνεται ειλικρινές budget για τον ενθουσιασμό σου."
+    },
+    {
+      id: "d67-phys", level: "phys", difficulty: 1,
+      title: "Έλεγξε την εργαλειοθήκη σου για διπλά· κράτα το καλύτερο κάθε τύπου",
+      why: "Τρία μετροταινίες δεν είναι προετοιμασία, είναι αταξία. Μια λιτή εργαλειοθήκη δουλεύει καλύτερα επειδή ξέρεις τι περιέχει."
+    },
+    {
+      id: "d68-phys", level: "phys", difficulty: 1,
+      title: "Μέτρησε τα αντικείμενα στο λινό ντουλάπι· δώσε την περίσσεια σε καταφύγιο ζώων",
+      why: "Τα καταφύγια έχουν πραγματική ανάγκη για παλιές πετσέτες και κουβέρτες. Η περίσσειά σου αποκτά δεύτερη ζωή αντί για τέταρτο δίπλωμα."
+    },
+    {
+      id: "d69-phys", level: "phys", difficulty: 2,
+      title: "Αφαίρεσε τρία καθαρά διακοσμητικά αντικείμενα που δεν προσέχεις πια",
+      why: "Η διακόσμηση που σταματάς να βλέπεις είναι οπτικός θόρυβος, όχι ομορφιά. Λιγότερα αντικείμενα κάνουν τα κρατημένα ορατά ξανά."
+    },
+    {
+      id: "d70-phys", level: "phys", difficulty: 1,
+      title: "Εναλλάσσε τις κορνιζαρισμένες φωτογραφίες και τα ενθύμια αντί να συσσωρεύεις νέα",
+      why: "Ένα ιερό απ' όλα δεν δείχνει τίποτα. Η εναλλαγή κρατά τις αναμνήσεις ζωντανές· η συσσώρευση τις θάβει η μία κάτω από την άλλη."
+    },
+    {
+      id: "d71-phys", level: "phys", difficulty: 2,
+      title: "Μάζεψε όλα τα χαρτιά σε ένα σημείο και ταξινόμησέ τα σε τρεις σωρούς: ενέργεια, αρχείο, κοπής",
+      why: "Τα χαρτιά σκορπίζουν επειδή σκορπίζουν οι αποφάσεις. Ένα σημείο, μία συνεδρία, τρεις σωροί — τα χαρτιά αποκτούν επιτέλους σύστημα."
+    },
+    {
+      id: "d72-phys", level: "phys", difficulty: 1,
+      title: "Πέταξε παλιά εγχειρίδια και εγγυήσεις — σχεδόν όλα είναι πια online",
+      why: "Το internet είναι το συρτάρι των συσκευών σου πια. Ένας φάκελος με σκαναρισμένες αποδείξεις εγγύησης αντικαθιστά το παπούτσι για πάντα."
+    },
+    {
+      id: "d73-phys", level: "phys", difficulty: 1,
+      title: "Έλεγξε τα κουτιά περιτυλίγματος και τις κάρτες· κράτα μόνο όσα θα χρησιμοποιήσεις φέτος",
+      why: "Τα υλικά περιτυλίγματος πολλαπλασιάζονται ύπουλα — κάθε δώρο φέρνει κορδέλες και σακούλες. Ένα ετήσιο όριο κρατά το συρτάρι ειλικρινές."
+    },
+    {
+      id: "d74-phys", level: "phys", difficulty: 2,
+      title: "Μεitores τα ταξιδιωτικά σου σε ένα kit: ένα τουαλετάκι, ένα σετ adapters, μία ρουτίνα πακεταρίσματος",
+      why: "Ο μινιμαλισμός ταξιδιού είναι πρόβα αναχώρησης. Ένα μόνιμο kit μετατρέπει την προετοιμασία του ταξιδιού σε άρπαγμα, όχι σε μαζέμα."
+    },
+    {
+      id: "d75-phys", level: "phys", difficulty: 2,
+      title: "Θεσπίσε εποχιακή πειθαρχία ανταλλαγής: τίποτα δεν μπαίνει στην αποθήκη αν δεν σου έλειψε αυτή την εποχή",
+      why: "Η εποχιακή αποθήκη είναι εκεί που τα ρούχα πάνε για να ξεχαστούν. Το «μου έλειψε;» είναι η μόνη ερώτηση που πρέπει να απαντήσει ένα αντικείμενο που επιστρέφει."
+    },
+    {
+      id: "d76-phys", level: "phys", difficulty: 1,
+      title: "Όρισε τον αριθμό παπουτσιών σου: καθημερινά, αθλητικά, επίσημα, αντίξοα καιρού — μέτρησε πόσα είναι αρκετά",
+      why: "Τα παπούτσια πολλαπλασιάζονται σιωπηλά σε διαδρόμους και κουτιά. Ένας ορισμένος αριθμός — πες επτά — δίνει σε κάθε μελλοντική αγορά ένα ταβάνι που πρέπει να σέβεται."
+    },
+    {
+      id: "d77-phys", level: "phys", difficulty: 1,
+      title: "Άδειασε το συρτάρι με κάλτσες και εσώρουχα· πέταξε τα μονά, τα φθαρμένα, τα ποτέ-αγαπημένα",
+      why: "Αυτά τα συρτάρια κρατούν αντικείμενα που κανείς δεν αγαπά. Κάθε πρωί σκάβεις ανάμεσα στα απόβλητα — η αντικατάστασή τους με τα ακριβή αγαπημένα τελειώνει την καθημερινή τριβή."
+    },
+    {
+      id: "d78-phys", level: "phys", difficulty: 2,
+      title: "Μέτρησε τις τσάντες σου: κράτα μία για καθημερινή χρήση, μία για ταξίδια, μία για περιστάσεις",
+      why: "Οι τσάντες είναι φορητά δωμάτια αποθήκευσης. Τρεις καλά διαλεγμένες καλύπτουν μια ολόκληρη ζωή· οι υπόλοιπες είναι απόθεμα που συντηρείς για κανέναν."
+    },
+    {
+      id: "d79-phys", level: "phys", difficulty: 2,
+      title: "Υιοθέτησε κανόνα «δανείσου ή αγόρασε μεταχειρισμένο» για βιβλία και εργαλεία που χρειάζεσαι μία φορά",
+      why: "Τα μοναδικής χρήσης αγαθά είναι συνήθειες ενοικίασης ντυμένες ως επενδύσεις. Οι βιβλιοθήκες, οι φίλοι και οι μεταχειρισμένες αγορές τα εξυπηρετούν καλύτερα."
+    },
+    {
+      id: "d80-phys", level: "phys", difficulty: 1,
+      title: "Ενδιάμεσο checkpoint: περπάτησε το σπίτι σου με το κινητό· φωτογράφισε ό,τι σε ενοχλεί ακόμα",
+      why: "Ογδόντα μέρες μέσα, τα χειρότερα έχουν φύγει και τα αόρατα παραμένουν. Μια φωτογραφική βόλτα ξυπνά ξανά τα μάθημα του αρχάριου με τα οποία ξεκίνησες."
+    },
 	

@@ -1466,15 +1466,62 @@ function updateSleepChip(){
 
 /* ===== PALETTE INHERITANCE ===== */
 
-function inheritPalette(){
-  var accent = "#6d4aff";
+// Skins mirrored from shell.js SKINS registry (16 entries, v0.12.0
+// grid). The shell's single source of truth is the data-skin
+// attribute on the PARENT <html> — same-origin iframe, so we read
+// it directly. No window.orosAppTheme exists in the shell (verified
+// against shell.js), no palette broadcast either.
+var RX_SKIN_COLORS = {
+  adwaita:    "#3584e4",
+  lumo:       "#6d4aff",
+  oros:       "#d4af37",
+  ubuntu:     "#e95420",
+  fedora:     "#51a2da",
+  mint:       "#87cf3e",
+  arch:       "#1793d1",
+  debian:     "#d70a53",
+  elementary: "#8c5ec7",
+  tux:        "#c9c9c9",
+  manjaro:    "#35bf5c",
+  opensuse:   "#73ba25",
+  nixos:      "#5277c3",
+  gentoo:     "#7d5ba6",
+  popos:      "#ff7043",
+  zorin:      "#15a6a0"
+};
+
+function shellAccent(){
   try{
+    var skin = window.parent.document.documentElement.getAttribute("data-skin");
+    if(skin && RX_SKIN_COLORS[skin]) return RX_SKIN_COLORS[skin];
+    // Defensive fallback: a future shell build may publish the
+    // orosAppTheme contract — if it does, honor it.
     var w = window.parent;
-    if(w && w.orosAppTheme && w.orosAppTheme.accent){
-      accent = w.orosAppTheme.accent;
-    }
+    if(w && w.orosAppTheme && w.orosAppTheme.accent) return w.orosAppTheme.accent;
   }catch(e){}
-  document.documentElement.style.setProperty("--accent", accent);
+  return "#6d4aff";
+}
+
+function inheritPalette(){
+  document.documentElement.style.setProperty("--accent", shellAccent());
+}
+
+// W3: LIVE palette tracking. Same-origin gives full DOM access to
+// the parent document, so a MutationObserver on the parent <html>
+// reflects a skin/theme swap INSTANTLY — zero timers, zero polls,
+// zero event contract required. If observation fails, the boot
+// value from inheritPalette() stands (graceful degradation).
+function watchPalette(){
+  try{
+    var root = window.parent.document.documentElement;
+    var apply = function(){
+      document.documentElement.style.setProperty("--accent", shellAccent());
+    };
+    new MutationObserver(apply).observe(root, {
+      attributes: true,
+      attributeFilter: ["data-skin", "data-theme"]
+    });
+  }catch(e){ /* same-origin read failed — boot value stands */ }
 }
 
 /* ===== DEEP LINK RECEIVER ===== */
@@ -1552,6 +1599,7 @@ function wire(){
   });
   
   inheritPalette();
+  watchPalette();
   updateOnlineState();
   applyI18n();
 }

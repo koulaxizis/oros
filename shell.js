@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -264,6 +264,15 @@
   function applySkin() {
     if (!isValidSkin(state.skin)) state.skin = "oros";
     document.documentElement.setAttribute("data-skin", state.skin);
+    // Public palette contract for same-origin iframe apps: readers of
+    // window.parent.orosAppTheme.accent get the live accent without
+    // their own skin map.
+    for (var i = 0; i < SKINS.length; i++) {
+      if (SKINS[i].id === state.skin) {
+        window.orosAppTheme = { accent: SKINS[i].color };
+        break;
+      }
+    }
   }
 
   // ---------- 5b. Wallpaper ----------

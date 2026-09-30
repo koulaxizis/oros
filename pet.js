@@ -1208,7 +1208,6 @@
 
   function loop(ts) {
     if (!runtime.active) return;                    // stopped → loop dies
-    runtime.rafId = ts;                             // track last RAF frame
     var dt = Math.min(0.05, (ts - runtime.lastTs) / 1000 || 0.016);
     runtime.lastTs = ts;
 
