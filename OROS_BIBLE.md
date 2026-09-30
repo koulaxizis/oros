@@ -1823,3 +1823,28 @@ RX-N2: the isFavorite parameter in createStationCard shadows the isFavorite() fu
 RX-N3: unused wasOffline in updateOnlineState.
 RX-N4: player/sleep chips update via host subscription, tray chip via its own 1s tick — asymmetric but harmless polling.
 RX-N5: no stop-playback control in the UI (pause only) — possible kill switch in the player bar.
+
+---
+
+Changelog entry
+Calendar — Screen Pet feed integration (Wave 5, pet.js v0.3 counterpart)
+Added read-only Screen Pet feed (petFeedOn): care events (fed / petted / sleep / wake / new pet / ball catch) from the device-local oros-pet-events log, rendered as all-day rows on their local day.
+Birthday row computed from the SYNCED oros-pet-data birthTs (every anniversary, birth day itself excluded) — works on fresh devices even with an empty event log. Log-type "birthday" entries are deliberately skipped to prevent double rows.
+New immutable feed label lbl-feed-pet (#b39ddb, light purple — visually distinct from the Mood feed's #a78bfa). Appears automatically in filter chips and the locked "App feeds" section of the label manager; not synced, not deletable.
+Device-local opt-out honored: oros-pet-calendar-sync === "0" suppresses all feed rows without touching the log.
+Feed rows follow the existing _feed contract: never stored, never synced, excluded from ICS export, excluded from stats, not draggable, click-through instead of edit dialog.
+Click-through deep-link: rows carry _petOpen/_petEvId; openFeedRow() dispatches to window.parent.__orosOpenPet(eventId) (pet.js registers the bridge on the shell; guard-checked so absence is inert).
+petRaw() micro-cache (~1s, same as all other feeds) + petCache reset added to setFromSync() invalidation block.
+Feed rows render in Month, Week, and Agenda views via the shared eventsOn() concat chain (appended after kanbanFeedOn).
+Rule for the Bible (patch delivery format)
+PATCH DELIVERY FORMAT — MANDATORY RULE
+All code corrections must be delivered as precise, find-and-replace patches. Never regenerate full files for minor fixes. Every patch MUST follow this exact structure:
+
+Each patch gets a header line in plain text: PATCH X/N — short description, plus a one-line location hint (file + function/section).
+The OLD block: the exact code currently in the user's file, wrapped in its own fenced code block. It must be verbatim, byte-exact (indentation, spacing, comments included), taken from the file the user actually provided — never from memory or assumption. It must be uniquely findable via simple text search (Ctrl+F → exactly one match).
+The NEW block: the replacement code, wrapped in a SEPARATE fenced code block immediately after. Same indentation conventions as the surrounding file.
+Never mix OLD and NEW inside one code block. Never add markers/comments inside either block. Never deliver patches as unfenced plaintext — chat rendering collapses indentation and breaks indented code (leading spaces are silently converted), making the text non-searchable and non-copyable.
+Verification before delivery: confirm every OLD block exists in the current file state. If any target segment cannot be located (missing file, compacted context, changed code), STOP and request the source file instead of guessing.
+Apply patches in numbered order (1 → N); each patch is independent and self-contained.
+Large file deliveries (new files, rewrites) are exempt from this rule and are delivered as full files split into numbered sequential parts to prevent truncation.
+RATIONALE: plain text without fences loses leading whitespace and line structure to the markdown renderer; OLD/NEW combined in a single block defeats copy-search workflows. Separate fenced blocks are the only format where the copy button yields byte-exact, searchable text.
