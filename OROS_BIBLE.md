@@ -164,7 +164,10 @@ CORE RULES (shell.js):
   · Shell subsystems: scToast §9, sync dot §9b, SC_DEFS §9c,
     weather widget §9d, alarms §9e (window.orosAlarms, survive
     iframe close), calendar reminder engine §9e2, notification
-    engine §9e3 (notifications.js), files-disk slice §9f.
+    engine §9e3 (notifications.js), files-disk slice §9f,
+    screen pet §9h (pet.js root-level component: window.orosPet,
+    #pet-layer overlay, progressive guard — renders nothing on
+    stale bundles without pet.js).
   · REQUEST shell.js when a fix needs the exact current
     function — never quote from memory.
 
@@ -278,6 +281,8 @@ APP REGISTRY
   Spreadsheet| oros-spreadsheet-data  | CELL-ENTITY LWW + f/cw  | 5/5 VERIFIED (Wave 3 + audit)
   Dice       | oros-dice-data         | union + LWW + tombstones | 5/5 VERIFIED (v0.4 merge-aware)
   Notifications| oros-notifs          | per-field LWW           | Wave 1A core done
+  Screen Pet  | oros-pet-data        | identity field-LWW +    | Integrated — pending
+             |                        | temporal anchors        | smoke test (PT series)
 
   REFERENCE APP (canonical template): mood.js — every contract
   in Part V is extracted VERBATIM from it. Tie-breaker: "what
@@ -285,9 +290,10 @@ APP REGISTRY
 
 LOCALSTORAGE KEYS (synced): oros-lang, oros-theme, oros-skin,
   oros-wallpaper, oros-sync-interval, oros-autoexport,
-  oros-weather, oros-alarms (shell slice), oros-notifs, all
-  oros-*-data app keys.
+  oros-weather, oros-alarms (shell slice), oros-notifs,
+  oros-pet-data, all oros-*-data app keys.
 DEVICE-LOCAL (never synced): oros-last-version, oros-wx-cache,
+  oros-pet-enabled (pet menu toggle — ergonomics),
   oros-wx-last, oros-auto-snapshots, oros-fs-*, oros-cal-
   reminders-fired, oros-cal-pending, oros-*-open staging keys,
   all *-prefs/*-cache/*-seen keys, oros-sync-* engine keys.
@@ -295,7 +301,8 @@ IndexedDB: "oros-vault" (keys), "oros-fs" (handles), "oros-ofs"
   (OrosFS fallback — wiped via wipeOrosFS()).
 
 FILE TREE: index.html, shell.js, notifications.js, sync.js,
-  fs.js, style.css, translations.js, apps.json, sw.js,
+  fs.js, style.css, pet.css, pet.js, translations.js, apps.json,
+  sw.js,
   manifest.webmanifest, vendor/ (jspdf + NotoSans), fonts/
   (Nunito), one dir per app (todo, kanban, notes, bookmarks,
   weather, mood, time, calendar, quote, prompter, storage,
@@ -374,6 +381,17 @@ PER-APP MODELS (schemas):
   DICE v1:   { ver, sm, deleted{}, history[{id,kind,ts,mtime,...}] } — kind∈{dice,coin};
              dice entries carry notation/total/rolls/kept/type/mod/mode/isCrit/isFumble;
              coin entries carry result; tombstones prune on max-mtime - 30d.
+  PET v1:    { ver, pet{ id, name, palette, birthTs, fm{field:
+             mtime} }, lastFed, lastPetted, wokeAt/awakeE?,
+             asleepSince/asleepE?, tombs{} } — stats (food/happy/
+             energy) NEVER stored: DERIVED at render from anchors
+             (relaxed decay: food →0 in 24h, happy in 36h, energy
+             in 10h awake / +8 per min asleep; auto-sleep <8,
+             auto-wake ≥95, retroactive cycle resolution for long
+             absences). Identity = per-field LWW via fm (R5
+             symmetric); temporal anchors = max-value merge;
+             anchor pairs (wokeAt/awakeE) travel together; delete
+             = tombstone (no death mechanic; stats floor at 0).
   NOTIFICATIONS v1: { ver, settings{position,style,sound,
              volume}, appToggles{}, items[{id,ns,key,deepLink,
              createdAt,firedAt,readAt,sound?,ttl?}], meta{} }.
@@ -691,6 +709,10 @@ CLOSED (reference):
     (Part I §3).
 
 QUEUED (next phase):
+  · Screen Pet smoke test (PT checklist: retroactive energy after
+    simulated 2-day absence; identity merge — rename on Device A
+    → check Device B; drag vs click threshold; EL/EN speech +
+    HUD; shortcut modifier guards).
   · Remaining app audits: Mood (high — deepest model), then
     Weather re-visit, Kanban/Contacts/Notes pattern sweep
     (light re-checks after pattern rule changes).
@@ -716,6 +738,12 @@ DOCTRINAL EXEMPTIONS RECORDED:
     (both adopted); deviating apps get the Q-1/ST-1 treatment.
   · Dice & Coin — Calendar exempt (non-time-bound, no dated entities),
     Notifications exempt (no reminders/emitters, transient feedback only via toasts).
+  · Screen Pet — Calendar exempt (no dated entities; birthTs is
+    display-only), Notifications exempt (speech bubbles are
+    in-context transient feedback; no emitters, no KNOWN_APPS
+    entry). NOT an apps.json app: root-level shell component
+    (pet.js/pet.css, #pet-layer); menu toggle device-local
+    (oros-pet-enabled, never synced, never marks dirty).
 
 ╔══════════════════════════════════════════════════════════╗
 ║  PART X — BACKLOG (long-term, not scheduled)               ║
@@ -1328,3 +1356,62 @@ Export RTF succeeds and opens in Word/LibreOffice.
 Language switch EL: no duplicate strings, all dialog buttons show "Ακύρωση"/"Ολοκλήρωση" instead of ✕/Close/Cancel.
 PDF export font loads fresh when the vendor font file changes.
 Wave 5 (I/O) is now closed. Next in queue per roadmap: deep audit of the next application (as ordered in OROS_BIBLE).
+
+---
+
+Cycle — Timeline Rewrite (Wave: Quick Log → Timeline)
+Summary
+Replaced the month calendar view (both Full Calendar and Quick Log grid) with a single horizontal Gantt-style Timeline view. The orOS Calendar app is now the authoritative "month" view for cycle events; the Cycle app focuses on history, trends and day-entry.
+
+Changes
+View architecture
+Removed renderCalendar() — the full month grid (JS + its renderCalendar-scoped UI: month nav, weekday header, day cells, reminder toggle).
+Removed renderQuickLogGrid() and the Quick Log ↔ Full Calendar toggle (calCompact, ql.fullcal chip).
+Added renderTimeline() — a Gantt strip rendering on the existing #calview host element (no HTML structural change needed):
+One colored bar per period; fill opacity encodes flow intensity (per1/per2/per3, red family #e06c75).
+Ongoing periods render up to today — the future is never painted as bleeding.
+Prediction renders as a dashed bar (accent color), guarded by nextPrediction().
+Vertical today-marker line.
+Zoom controls: −/+ adjust visible range in 7-day steps (min 7, max 90 days); default 30 days.
+Navigation: ‹ › scroll by half the visible window; "Today" button resets anchor to null (= today-centered).
+Legend: three flow levels + prediction.
+Click on a period bar → opens the day editor of that period's LAST day.
+New view state (session-only, never persisted): timelineZoom, timelineAnchor ("YYYY-MM-DD" or null = today). Replaced dead vars calCompact, calMonth.
+All "calendar" references migrated to "timeline"
+viewMode default and all checks: "calendar" → "timeline" throughout applyView(), renderAll(), refreshInView(), sliceSet() (both the openDay-drop check and the syncing-in-editor check), wire(), fillDayRows() edit button, factoryReset() (resets timelineAnchor).
+__orosCycleOpen() (deep-link receiver, shell-called):
+Period uid payload → timeline anchored on that period's start date.
+Prediction day key ("YYYY-MM-DD" from cycle:pred: notification deepLinks) → timeline anchored on that date so the dashed prediction bar is visible.
+Shape collision impossible: period uids are base36, day keys contain dashes.
+i18n
+EN: "tab.cal" "Calendar" → "Timeline".
+EL: "tab.cal" "Ημερολόγιο" → "Χρονογραμμή".
+Strings ql.title, ql.fullcal, ql.quick, ql.flowonly remain in both dictionaries but are now orphaned (no code references) — candidates for a future cleanup pass.
+Dead code removed
+dayInPrediction(ts) — its only callers were the two deleted grids; the timeline uses the prediction bar via nextPrediction() range math instead.
+Styling
+ensureQlCss() (compact-grid CSS) replaced by ensureTlCss() — injects .tl-head, .tl-nav, .tl-bars, .tl-bar (.per1/.per2/.per3/.pred), .tl-today, .tl-legend, .leg-item, .leg-dot, .zoom-val via a one-shot <style> tag at boot.
+cycle.css untouched — all timeline styling is JS-injected; the file's old .cal-cell, .cal-wk, .cal-grid rules are now inert (no matching DOM) and can be pruned in a future CSS cleanup.
+Buttons reuse the existing .chip.ghost and .cal-today classes where possible for palette inheritance.
+Preserved contracts (unchanged)
+Data model, merge engine, tombstones, deterministic day ids — untouched.
+Unified notifications (__orosCycleCheck, transientNote, boot-time staged deep-link take) — untouched.
+Sync slice registration and unsaved-edit survival during remote pulls — untouched (only the viewMode literal changed).
+Day editor, days list, insights, mood cross-app section, doctor report PDF, factory reset double-confirm — untouched.
+periodCovering() and nextPrediction() logic unchanged; only consumption sites changed.
+Known notes
+index.html comment above #calview still says "month calendar" — cosmetic only, optional fix.
+Verification checklist: (1) reload boots timeline with no console errors, (2) period bar click opens day editor of the period's last day, (3) Calendar feed row click anchors the timeline on the period, (4) notification deepLink cycle:pred: anchors on the prediction date, (5) Save day returns to the timeline (previously fixed: openDay = null before renderAll()).
+
+---
+
+2026-09-30 — [Screen Pet v0.1 Integration (Soffitta port)] Second orOS-native Soffitta port — first port as a SHELL COMPONENT (not an iframe app):
+  · BUILD: root-level pet.js + pet.css, own overlay layer #pet-layer above taskbar; menu toggle via renderPetSection() (inline EN/EL literals per supT doctrine — zero translations.js changes); progressive guard (stale bundle without pet.js renders nothing)
+  · MODEL: stats DERIVED never stored (relaxed decay: food 24h, happy 36h, energy 10h awake / +8min asleep; auto-sleep <8, auto-wake ≥95; retroactive energy cycle resolution keeps multi-day absences deterministic and identical across devices)
+  · SYNC: oros-pet-data slice (5-arg registerSlice with mergeFn); identity per-field LWW via fm mtime map; temporal anchors max-value; anchor pairs travel together; tombstones prevent dead-pet resurrection (R17-conformant)
+  · FEATURES: 16×16 sprite engine with corrected directional pupils + walk animation; drag (pointer capture, 8px threshold vs click); click-to-pet (hearts); click-to-walk (targeted movement); F=feed / S=sleep with strict modifier guards + input-field exclusion; HUD with dynamic bars; "New Pet" confirmation + tombstone; no death mechanic
+  · INTEGRATION: index.html (pet.css link + pet.js after sync.js, before shell.js); shell.js (renderPetSection + renderMenu call, device-local toggle); sw.js already precached both files (no change)
+  · BIBLE: registry + keys + file tree + subsystems + PET v1 schema + Part IX exemptions recorded
+  · DEVICE-LOCAL: oros-pet-enabled (ergonomics, never synced)
+  · EXEMPT: Calendar axis + Notifications axis (see Part IX doctrinal exemptions)
+  · STATUS: integration complete — pending smoke test (QUEUED list)
