@@ -26,7 +26,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -107,7 +107,7 @@
   function defaultSettings() {
     return {
       enabled: true,
-      position: 'top-right',
+      position: 'bottom-right',
       style: 'oros',
       sound: 'none',
       soundVolume: 0.7,
@@ -315,21 +315,38 @@
       ...getPositionStyles(position)
     });
     
-    // Inner content
+    // Inner content (optional action button — transient undo pattern)
+    var hasAction = item.action && typeof item.action.label === 'string' &&
+                    typeof item.action.fn === 'function';
     toast.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:start;">
         <div style="flex:1; min-width:0;">
           <div style="font-weight:600; margin-bottom:4px; white-space:normal;">${escapeHtml(item.title)}</div>
           <div style="font-size:0.9em; opacity:0.9; white-space:normal;">${escapeHtml(item.body)}</div>
         </div>
-        <button class="notif-dismiss" aria-label="${escapeHtml(window.t('notifs.dismiss'))}"
-          style="background:none; border:none; color:var(--text); font-size:1.2em; cursor:pointer; padding:8px 0 8px 12px; line-height:1; align-self:stretch; display:flex; align-items:center;">✕</button>
+        <div style="display:flex; align-items:center;">
+          ${hasAction ? `<button class="notif-action" style="background:none; border:none; color:var(--accent); font-size:0.95em; font-weight:700; cursor:pointer; padding:8px 0 8px 12px; line-height:1;">${escapeHtml(item.action.label)}</button>` : ''}
+          <button class="notif-dismiss" aria-label="${escapeHtml(window.t('notifs.dismiss'))}"
+            style="background:none; border:none; color:var(--text); font-size:1.2em; cursor:pointer; padding:8px 0 8px 12px; line-height:1; align-self:stretch; display:flex; align-items:center;">✕</button>
+        </div>
       </div>
     `;
     
+    // Action button (undo-style): runs the callback, never the deep link
+    if (hasAction) {
+      toast.querySelector('.notif-action').addEventListener('click', (e) => {
+        e.stopPropagation();
+        try { item.action.fn(); }
+        catch (actErr) { err('Action callback failed', actErr); }
+        markAsRead(item.id);
+        toast.remove();
+      });
+    }
+
     // Click → deep link via the REAL per-app bridges (A7 router)
     toast.addEventListener('click', (e) => {
       if (e.target.classList.contains('notif-dismiss')) return;
+      if (e.target.classList.contains('notif-action')) return;
       openTarget(item);
       // Mark as read
       markAsRead(item.id);
@@ -351,10 +368,12 @@
       toast.style.opacity = '1';
     });
     
-    // Auto-remove
+    // Auto-remove (undo-bearing toasts get an extended window —
+    // an undo that vanishes in 5s is a cruel joke)
+    const actDuration = item.action ? Math.max(duration, 8000) : duration;
     const timerId = setTimeout(() => {
       if (toast.parentNode) toast.remove();
-    }, duration);
+    }, actDuration);
     
     // Sound (if enabled) — NOT-R4: transient toasts are instant
     // feedback to a click the user JUST made; a chime on "Working…"
@@ -429,7 +448,13 @@
     weather:  function () { if (typeof window.__orosOpenWeather === 'function') window.__orosOpenWeather(); },
     // Wave 13 — "quote:<id>": due-date notifications open the quote
     // in the editor. Guarded until the shell bridge ships.
-    quote:    function (id) { if (typeof window.__orosOpenQuote === 'function') window.__orosOpenQuote(id); }
+    quote:    function (id) { if (typeof window.__orosOpenQuote === 'function') window.__orosOpenQuote(id); },
+    // Wave 2 — "minimalism:today:<ymd>": daily ritual reminder opens
+    // the app on that exact date. Payload = bare ymd ("today" is
+    // context, same shape as "mood:entry:<id>"). The shell bridge
+    // stages via sessionStorage when the app is closed; the
+    // receiver validates the ymd format (never garbage).
+    minimalism: function (ymd) { if (typeof window.__orosOpenMinimalism === 'function') window.__orosOpenMinimalism(ymd); }
   };
 
   function openTarget(item) {
@@ -853,6 +878,16 @@
     if (!state.ready) return null;
     if (!cand || typeof cand !== 'object' ||
         typeof cand.title !== 'string' || !cand.title) return null;
+    // Action support (undo pattern): validated ONCE here — fireToast
+    // only checks presence. Transient items never enter slice.items,
+    // so a function reference in the payload is NEVER serialized
+    // or synced (same-origin iframe closure, safe by construction).
+    var act = null;
+    if (cand.action && typeof cand.action === 'object' &&
+        typeof cand.action.label === 'string' && cand.action.label &&
+        typeof cand.action.fn === 'function') {
+      act = { label: cand.action.label, fn: cand.action.fn };
+    }
     var item = {
       id: 'tmp_' + Date.now().toString(36),
       dedupKey: 'transient',
@@ -860,7 +895,8 @@
       type: 'transient',
       title: cand.title,
       body: (typeof cand.body === 'string') ? cand.body : '',
-      deepLink: null,
+      deepLink: (typeof cand.deepLink === 'string') ? cand.deepLink : null,
+      action: act,
       createdAt: Date.now(),
       firedAt: Date.now(),   // pre-fired: never eligible for catch-up
       readAt: Date.now(),    // pre-read: can never drive the badge

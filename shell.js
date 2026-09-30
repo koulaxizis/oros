@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.37.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.37.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -148,7 +148,8 @@
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
-    dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>'
+    dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -719,6 +720,7 @@
     notifTickThrottled();       // Wave 1A: notification sweep (60s throttle)
     wxBriefTickThrottled();     // Weather unification: daily morning briefing (60s throttle)
     quoteCheckTickThrottled();  // Wave 13: Quote due-date reminders (60s throttle)
+    minimalismCheckTickThrottled(); // Wave 2: Minimalism daily ritual (60s throttle)
   }
 
   function quoteCheckTickThrottled() {
@@ -728,6 +730,76 @@
     quoteCheckTick();
   }
   var quoteCheckLastTick = 0;
+
+  // Wave 2 — Minimalism daily ritual reminder (pattern: Mood
+  // check-in). Shell-side scan of "oros-minimalism-data": fires
+  // once per day at/after the user's preferred hour (prefs.
+  // remindHour, design default 10) while NO entry exists for
+  // today on EITHER level. A skip counts as deliberate
+  // engagement — it silences the nudge too (no guilt spam).
+  // Days with no entries are transparent by design; the ritual
+  // whisper is ONE notification, never a penalty. Suppressible
+  // via the "minimalism" per-app toggle + quiet hours (unified
+  // notification system). deepLink "minimalism:today:<ymd>"
+  // routes through the notifications.js bridge → the shell's
+  // __orosOpenMinimalism opens the app on that exact date.
+  var MINIMALISM_DATA_KEY = "oros-minimalism-data";
+
+  function minT(en, el) {
+    return state.lang === "el" ? el : en;
+  }
+
+  function minimalismHasToday() {
+    var today = sysYmd();
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY)); }
+    catch (e) { return false; }
+    if (!raw || !Array.isArray(raw.days)) return false;
+    for (var i = 0; i < raw.days.length; i++) {
+      var e = raw.days[i];
+      if (e && e.date === today &&
+          (e.status === "done" || e.status === "skip")) return true;
+    }
+    return false;
+  }
+
+  // Prefs live in the app's slice; read defensively — a fresh
+  // install has no data yet, the design default (10:00) stands.
+  function minimalismPrefHour() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY));
+      if (raw && raw.prefs && typeof raw.prefs.remindHour === "number" &&
+          raw.prefs.remindHour >= 0 && raw.prefs.remindHour <= 23) {
+        return raw.prefs.remindHour;
+      }
+    } catch (e) {}
+    return 10;
+  }
+
+  function minimalismCheckTick() {
+    if (minimalismHasToday()) return;   // engaged today — silent
+    if (new Date().getHours() < minimalismPrefHour()) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
+    var today = sysYmd();
+    N.emit({
+      ns: "minimalism",
+      key: "ritual-" + today,
+      type: "reminder",
+      title: minT("Minimalism", "Μινιμαλισμός"),
+      body: minT("A small proposal for your day awaits.",
+                 "Μια μικρή πρόταση για τη μέρα σου σε περιμένει."),
+      deepLink: "minimalism:today:" + today
+    });
+  }
+
+  var minimalismLastTick = 0;
+  function minimalismCheckTickThrottled() {
+    var now = Date.now();
+    if (now - minimalismLastTick < 60000) return;
+    minimalismLastTick = now;
+    minimalismCheckTick();
+  }
 
   // ---------- 7. PWA ----------
   function setupInstallFlow() {
@@ -3548,7 +3620,7 @@
 
     var toggle = document.createElement("button");
     toggle.className = "menu-item";
-    toggle.textContent = window.t(on ? "wx.on" : "wx.off");
+    toggle.textContent = petT(on ? "On" : "Off", on ? "Ενεργό" : "Ανενεργό");
     toggle.addEventListener("click", function () {
       window.orosPet.toggle();
       renderMenu();
@@ -4875,6 +4947,38 @@
     openAppById("quote");
   };
 
+  // Minimalism deep-link bridge (Wave 2 — pattern: Quote/Todo).
+  // Payload = ymd ("YYYY-MM-DD"). App ανοιχτό → live push στο
+  // iframe· κλειστό → staging στο sessionStorage (device-local,
+  // swept από το factory reset, δεν ταξιδεύει στο sync ποτέ) +
+  // άνοιγμα app. Receiver στο minimalism.js καταναλώνει one-shot.
+  window.__orosOpenMinimalism = function (ymd) {
+    if (typeof ymd !== "string" || !ymd) return;
+    if (state.running && state.running.id === "minimalism") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosMinimalismOpen === "function") {
+          f.contentWindow.__orosMinimalismOpen(ymd);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-minimalism-open", ymd); } catch (e) {}
+    openAppById("minimalism");
+  };
+
+  // Consumed by minimalism.js at boot — one-shot take (ίδιο μάθημα
+  // με todo/quote: αν το receiver λείπει από το app, το pending
+  // ymd απλά αγνοείται — τίποτα δεν σπάει).
+  window.__orosMinimalismTakePending = function () {
+    try {
+      var pending = sessionStorage.getItem("oros-minimalism-open");
+      if (pending) sessionStorage.removeItem("oros-minimalism-open");
+      return pending || null;
+    } catch (e) { return null; }
+  };
+
   // Weather unification — deep-link bridge (pattern: Time). The app
   // has no panes to target: weather notifications are informational
   // (fetch failures / daily briefing), a plain open is all the
@@ -5043,6 +5147,7 @@
   setTimeout(function () { calRemTickThrottled(); }, 4000);
   setTimeout(function () { moodCheckInTickThrottled(); }, 4500);
   setTimeout(function () { cycleCheckTickThrottled(); }, 5000);
+  setTimeout(function () { minimalismCheckTickThrottled(); }, 5500);
 
     // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
   wxRenderChip();

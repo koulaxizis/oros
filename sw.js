@@ -114,6 +114,7 @@ var PRECACHE_URLS = [
   "dice/index.html",
   "dice/dice.css",
   "dice/dice.js",
+  "minimalism/",
   "minimalism/index.html",
   "minimalism/minimalism.css",
   "minimalism/minimalism.js",

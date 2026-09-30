@@ -45,6 +45,7 @@
       "cal.prev":      "Previous month",
       "cal.next":      "Next month",
       "cal.today":     "Today",
+      "tl.log":        "Log today",
       "ci.none":       "First period not logged yet",
       "ci.next":       "expected",
       "ci.late":       "~{n} days late",
@@ -152,6 +153,7 @@
       "cal.prev":      "Προηγούμενος μήνας",
       "cal.next":      "Επόμενος μήνας",
       "cal.today":     "Σήμερα",
+      "tl.log":        "Καταγραφή σήμερα",
       "ci.none":       "Καμία περίοδος καταγεγραμμένη ακόμα",
       "ci.next":       "αναμενόμενη",
       "ci.late":       "~{n} ημέρες αργεί",
@@ -620,19 +622,23 @@
     toastEl.textContent = "";
   }
 
-  // Unified notifications (orOS compliance): informational toasts
-  // route through the shell's orosNotifs.transient() — click
-  // feedback, no inbox, no toggle needed. Falls back to the local
-  // toast when the app runs standalone (no shell present).
-  // Undo-bearing toasts keep the local path (interactive action).
-  function transientNote(text) {
+  // Unified notifications (orOS compliance): ALL toasts — plain and
+  // undo-bearing — route through the shell's orosNotifs.transient().
+  // Falls back to the local toast when the app runs standalone (no
+  // shell present); showToast has the same signature, so the
+  // fallback is a straight pass-through.
+  function transientNote(text, actionLabel, actionFn) {
     var api = null;
     try { api = window.parent.orosNotifs; } catch (e) {}
     if (!api && window.orosNotifs) api = window.orosNotifs;
     if (api && typeof api.transient === "function") {
-      api.transient({ ns: "cycle", title: text, body: "" });
+      var cand = { ns: "cycle", title: text, body: "" };
+      if (actionLabel && typeof actionFn === "function") {
+        cand.action = { label: actionLabel, fn: actionFn };
+      }
+      api.transient(cand);
     } else {
-      showToast(text);
+      showToast(text, actionLabel, actionFn);
     }
   }
 
@@ -920,6 +926,17 @@
       renderTimeline();
     });
     head.appendChild(td);
+    var lg = document.createElement("button");
+    lg.type = "button";
+    lg.className = "cal-today";
+    lg.textContent = "+ " + t("tl.log");
+    lg.addEventListener("click", function () {
+      openDay = "d-" + dayKey(todayTs());
+      managing = false;
+      timelineAnchor = null;
+      applyView();
+    });
+    head.appendChild(lg);
     host.appendChild(head);
 
     // bars — one per period; ongoing ends at today (never paints
@@ -964,6 +981,29 @@
       bars.appendChild(tm);
     }
     host.appendChild(bars);
+
+    // day-record dots — one lane below the bars: logged days are
+    // visible again (even outside periods) and each is a direct
+    // door into its day editor
+    if (state.days.length) {
+      var dots = document.createElement("div");
+      dots.className = "tl-days";
+      state.days.forEach(function (d) {
+        if (d.day < leftTs || d.day > rightTs) return;
+        var dt = document.createElement("button");
+        dt.type = "button";
+        dt.className = "tl-dot";
+        dt.style.left = (((d.day - leftTs) / DAY_MS) * scale) + "%";
+        dt.title = dayKey(d.day);
+        dt.addEventListener("click", function () {
+          openDay = d.id;
+          managing = false;
+          applyView();
+        });
+        dots.appendChild(dt);
+      });
+      host.appendChild(dots);
+    }
 
     // legend
     var lg = document.createElement("div");
@@ -1079,7 +1119,6 @@
           state.sm = Date.now();
           save();
           buildEditorChromeless();
-          transientNote(t("saved.toast"));
         });
         perActs.appendChild(endHere);
       }
@@ -1094,7 +1133,6 @@
           state.sm = Date.now();
           save();
           buildEditorChromeless();
-          transientNote(t("saved.toast"));
         });
         perActs.appendChild(extHere);
       }
@@ -1401,7 +1439,6 @@
     state.sm = Date.now();
     state.om = Date.now();
     save();
-    transientNote(t("saved.toast"));
   }
 
   // Start period AT a day — OVERLAP-GUARDED: a new period may
@@ -1421,7 +1458,6 @@
     state.om = Date.now();
     save();
     renderAll();
-    transientNote(t("saved.toast"));
   }
 
   // Remove period — immediate + undo toast (fresh mtime beats
@@ -1435,7 +1471,7 @@
     save();
     openDay = null;
     renderAll();
-    showToast(t("del.done"), t("del.undo"), function () {
+    transientNote(t("del.done"), t("del.undo"), function () {
       p.mtime = Date.now();
       state.periods.push(p);
       delete state.deleted[id];
@@ -1637,7 +1673,7 @@
     state.sm = Date.now();
     save();
     refreshInView();
-    showToast(t("col.del.done"), t("col.del.undo"), function () {
+    transientNote(t("col.del.done"), t("col.del.undo"), function () {
       v.mtime = Date.now();
       state.cols[col].push(v);
       delete state.deleted[v.id];
@@ -1773,7 +1809,7 @@
     save();
     if (openDay === id) openDay = null;
     renderAll();
-    showToast(t("del.done"), t("del.undo"), function () {
+    transientNote(t("del.done"), t("del.undo"), function () {
       d.mtime = Date.now();
       state.days.push(d);
       delete state.deleted[id];
@@ -1815,15 +1851,13 @@
     fillDayRows();
   }
 
+  // renderAll = applyView: visibility flags (#calview/#dayview/tabs)
+  // and rendering are ONE operation. The old render-only body left
+  // the dead editor on screen after Save (dayview stayed visible,
+  // calview stayed hidden). Every exit path funnels through
+  // applyView now — editor closes, timeline shows, tabs repaint.
   function renderAll() {
-    if (viewMode === "timeline" && openDay !== null) {
-      renderDayEditor(openDay);
-    } else if (viewMode === "timeline") {
-      renderTimeline();
-      renderCycleInfo();
-    } else if (viewMode === "days") {
-      renderDaysList();
-    }
+    applyView();
   }
 
   // ---------- 3b. Insights view (Wave 1: reporting only) ----------
@@ -2468,7 +2502,10 @@
       ".leg-dot.per1{background:#e06c75;opacity:.45}" +
       ".leg-dot.per2{background:#e06c75;opacity:.7}" +
       ".leg-dot.per3{background:#e06c75;opacity:.95}" +
-      ".leg-dot.pred{background:transparent;border:1px dashed var(--accent)}";
+      ".leg-dot.pred{background:transparent;border:1px dashed var(--accent)}" +
+      ".tl-days{position:relative;height:16px;margin-top:2px}" +
+      ".tl-dot{position:absolute;top:2px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--accent);opacity:.65;border:none;padding:0;cursor:pointer}" +
+      ".tl-dot:hover{opacity:1}";
     document.head.appendChild(st);
   }
 
@@ -2565,7 +2602,6 @@
       var mm2 = $("cyclemain");
       if (mm2) mm2.scrollTop = syncKeepScroll;
     }
-    if (viewMode === "insights") renderInsights();
     if (info && info.merged) transientNote(t("sync.pull"));
   }
 

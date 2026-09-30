@@ -141,9 +141,11 @@ const STRINGS = {
     'opt.repall': 'Replace all',
     'link.displayText': 'Display text',
     'table.headerRow': 'Header row',
+    'table.insert': 'Insert',
     'find.replaced.all': 'All occurrences replaced',
     'wx.done': 'Done',
     'wx.cancel': 'Cancel',
+    'ac.del': 'Delete rule',
     'tt.footnotes': 'Footnotes',
     'fn.title': 'Footnotes',
     'fn.add': 'Add footnote',
@@ -297,6 +299,7 @@ const STRINGS = {
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Riding along:',
     'io.naming': 'Exports take document title, falls back to untitled.',
+    'io.pickFirst': 'Pick a file first',
   },
   el: {
     'app.name': 'Writer',
@@ -369,9 +372,11 @@ const STRINGS = {
     'opt.repall': 'Αντικατάσταση όλων',
     'link.displayText': 'Κείμενο εμφάνισης',
     'table.headerRow': 'Γραμμή κεφαλίδας',
+    'table.insert': 'Εισαγωγή',
     'find.replaced.all': 'Όλες οι εμφανίσεις αντικαταστάθηκαν',
     'wx.done': 'Ολοκλήρωση',
     'wx.cancel': 'Ακύρωση',
+    'ac.del': 'Διαγραφή κανόνα',
     'tt.footnotes': 'Υποσημειώσεις',
     'fn.title': 'Υποσημειώσεις',
     'fn.add': 'Προσθήκη υποσημείωσης',
@@ -522,7 +527,8 @@ const STRINGS = {
     'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Συνοδεύουν:',
-    'io.naming': 'Η εξαγωγή παίρνει τον τίτλο του εγγράφου, αλλιώς «Χωρίς τίτλο».'
+    'io.naming': 'Η εξαγωγή παίρνει τον τίτλο του εγγράφου, αλλιώς «Χωρίς τίτλο».',
+    'io.pickFirst': 'Επίλεξε πρώτα ένα αρχείο'
   }
 };
 
@@ -571,7 +577,8 @@ const ICONS = {
   close:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
   plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
   lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>',
-  settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>'
+  settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>',
+  lock:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>'
 };
 
 function paintIcons() {
@@ -684,9 +691,9 @@ function renderTabs() {
     label.textContent = doc.title || t('tab.untitled');
     label.addEventListener('dblclick', startTabRename.bind(null, id, label));
 
-    const close = document.createElement('button');
-    close.type = 'button';
+    const close = document.createElement('span');
     close.className = 'tab-close';
+    close.setAttribute('role', 'button');
     close.title = t('tab.close');
     close.innerHTML = ICONS.close;
     close.addEventListener('click', e => {
@@ -861,7 +868,10 @@ function hydrate(raw) {
     : state.docs.filter(d => !d.del).map(d => d.id);
   state.seeded = !!raw.seeded;
   state.settings = (raw.settings && typeof raw.settings === 'object')
-    ? raw.settings : state.settings;
+    ? Object.assign({}, state.settings, raw.settings)
+    : state.settings;
+  if (typeof state.settings.smartTypography === 'undefined')
+    state.settings.smartTypography = true;
   state.autocorrect = (raw.autocorrect && Array.isArray(raw.autocorrect.rules))
     ? raw.autocorrect : null;
   state.templates = Array.isArray(raw.templates) ? raw.templates
@@ -1169,7 +1179,7 @@ function wireEvents() {
   // Auto-correction: check the word just typed when Space is pressed
   EL.editor.addEventListener('keydown', (e) => {
     if (e.key === ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      setTimeout(autoCorrectLastWord, 0);
+      autoCorrectLastWord();
     }
   });
 
@@ -1191,12 +1201,6 @@ function wireEvents() {
     }
   });
 
-  // Before unload — warn if dirty and unsaved (mobile/desktop safety)
-  window.addEventListener('beforeunload', (e) => {
-    if (dirty && window.oros) {
-      // Shell handles sync-on-close; we don't need redundant warning
-    }
-  });
 }
 
 /* ===== SECTION 12: KEYBOARD SHORTCUTS (Bible: avoid browser-reserved combos) ===== */
@@ -1233,10 +1237,6 @@ function bindShortcuts() {
       if (tab) startTabRename(state.activeTab, tab);
     }
 
-    // Escape — deselect any open UI (future panels)
-    if (e.key === 'Escape') {
-      // Future: close any open modals/panels
-    }
   });
 }
 
@@ -1339,6 +1339,7 @@ function openDialog(title, bodyHTML, footerButtons) {
   dlg.addEventListener('click', (e) => {
     if (e.target === dlg) dlg.close();
   });
+  dlg.addEventListener('close', () => dlg.remove());
   return dlg;
 }
 
@@ -1613,8 +1614,12 @@ function openCharsDialog() {
     gridWrap.innerHTML = '';
     const grid = document.createElement('div');
     grid.className = 'char-grid';
-    [...CHAR_SETS[setKey]].forEach(ch => {
-      if (ch === ' ') return;
+    Array.from(CHAR_SETS[setKey]).reduce((acc, ch) => {
+      if (ch === ' ') return acc;
+      if (ch === '\uFE0F' && acc.length) { acc[acc.length - 1] += ch; return acc; }
+      acc.push(ch);
+      return acc;
+    }, []).forEach(ch => {
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = 'char-cell' + (setKey === 'emoji' ? ' is-emoji' : '');
@@ -1748,6 +1753,12 @@ function autoCorrectLastWord() {
 let acDlgRef = null;
 
 function openAcDialog() {
+  if (!state.autocorrect || !Array.isArray(state.autocorrect.rules)) {
+    state.autocorrect = {
+      rules: JSON.parse(JSON.stringify(AC_DEFAULTS)),
+      mtime: 0
+    };
+  }
   const dlg = openDialog(t('dialog.acTitle'), '', [
     { class: 'fb-btn', label: t('ac.reset'), onClick: resetAcDefaults },
     { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
@@ -1782,7 +1793,7 @@ function renderAcBody(body) {
     del.type = 'button';
     del.className = 'ac-icon-btn danger';
     del.innerHTML = ICONS.trash;
-    del.title = t('doc.deleted');
+    del.title = t('ac.del');
     del.addEventListener('click', () => {
       state.autocorrect.rules.splice(idx, 1);
       state.autocorrect.mtime = Date.now();
@@ -1848,7 +1859,7 @@ function openSettingsDialog() {
     </div>
   `, [
     { class: 'fb-btn', label: t('tt.autoCorrect'), onClick: () => openAcDialog() },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => dlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
   ]);
 
   // Live-apply, autosave design — no save button. _mtime drives the
@@ -1947,7 +1958,7 @@ function openLinkDialog() {
     </div>
   `, [
     { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => { doInsertLink(dlg); } }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => { doInsertLink(dlg); } }
   ]);
   dlg.querySelector('#lk-text').value = selText;
 }
@@ -1978,7 +1989,7 @@ function openImageDialog() {
     </div>
   `, [
     { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => { doInsertImage(dlg); } }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => { doInsertImage(dlg); } }
   ]);
 
   dlg.querySelector('#img-file').addEventListener('change', (e) => {
@@ -2023,8 +2034,8 @@ function openTableDialog() {
       <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="tbl-h"> ${t('table.headerRow')}</label>
     </div>
   `, [
-    { class: 'fb-btn', label: '✕', onClick: () => dlg.close() },
     { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
+    { class: 'fb-btn primary', label: t('table.insert'), onClick: () => doInsertTable(dlg) }
   ]);
 }
 
@@ -2643,19 +2654,19 @@ function openMetadataDialog() {
   if (!doc) return;
 
   metaDlg = openDialog(t('tt.meta'), '', [
-    { class: 'fb-btn primary', label: 'OK', onClick: () => metaDlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => metaDlg.close() }
   ]);
   const body = metaDlg.querySelector('.w-dialog-body');
   body.innerHTML = `
     <div class="form-grid">
       <label>${t('meta.title')}</label>
-      <input type="text" class="w-field" id="meta-title" value="${esc(doc.title || '')}">
+      <input type="text" class="w-field" id="meta-title" value="${escAttr(doc.title || '')}">
       
       <label>${t('meta.author')}</label>
-      <input type="text" class="w-field" id="meta-author" value="${esc(doc.author || '')}">
+      <input type="text" class="w-field" id="meta-author" value="${escAttr(doc.author || '')}">
       
       <label>${t('meta.category')}</label>
-      <input type="text" class="w-field" id="meta-category" value="${esc(doc.category || '')}">
+      <input type="text" class="w-field" id="meta-category" value="${escAttr(doc.category || '')}">
       
       <label>${t('meta.tags')}</label>
       <div class="full">
@@ -2741,7 +2752,7 @@ function openPageSettings() {
 
   pageDlg = openDialog(t('page.settings'), '', [
     { class: 'fb-btn', label: t('page.mReset'), onClick: resetMargins },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => pageDlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => pageDlg.close() }
   ]);
 
   const body = pageDlg.querySelector('.w-dialog-body');
@@ -2766,10 +2777,10 @@ function openPageSettings() {
       </div>
 
       <label>${t('page.header')}</label>
-      <input type="text" class="w-field full" id="page-header" placeholder="${t('page.headFootNote')}" value="${esc(doc.header || '')}">
+      <input type="text" class="w-field full" id="page-header" placeholder="${t('page.headFootNote')}" value="${escAttr(doc.header || '')}">
 
       <label>${t('page.footer')}</label>
-      <input type="text" class="w-field full" id="page-footer" placeholder="${t('page.headFootNote')}" value="${esc(doc.footer || '')}">
+      <input type="text" class="w-field full" id="page-footer" placeholder="${t('page.headFootNote')}" value="${escAttr(doc.footer || '')}">
 
       <div class="full paper-preview">
         <div class="paper-preview-inner" id="preview-paper">
@@ -2899,7 +2910,7 @@ function toggleTocPanel() {
 
   const dlg = openDialog(t('toc.title'), '', [
     { class: 'fb-btn', label: t('toc.insert'), onClick: () => { insertInlineToc(); dlg.close(); } },
-    { class: 'fb-btn primary', label: 'Close', onClick: () => dlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
   ]);
 
   const body = dlg.querySelector('.w-dialog-body');
@@ -2962,7 +2973,7 @@ function openTemplates() {
     { class: 'fb-btn', label: t('tpl.export'), onClick: exportTemplateJson },
     { class: 'fb-btn', label: t('tpl.import'), onClick: importTemplateJson },
     { class: 'fb-btn', label: t('tpl.saveCurrent'), onClick: saveCurrentAsTemplate },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => tplDlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => tplDlg.close() }
   ]);
   renderTemplates();
 }
@@ -3071,7 +3082,7 @@ function editTemplate(tpl) {
       <input type="text" class="w-field" id="et-desc" value="${escAttr(tpl.desc || '')}">
     </div>
   `, [
-    { class: 'fb-btn', label: 'OK', onClick: () => {
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => {
         tpl.name = document.getElementById('et-name').value.trim() || tpl.name;
         tpl.desc = document.getElementById('et-desc').value;
         tpl.mtime = Date.now();
@@ -3148,7 +3159,7 @@ function openVersionsPanel() {
         takeManualSnapshot(doc);
         renderVersions(dlg, doc);
       } },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => { clearInterval(verTimer); dlg.close(); } }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => { clearInterval(verTimer); dlg.close(); } }
   ]);
   dlg.addEventListener('close', () => clearInterval(verTimer));
   renderVersions(dlg, doc);
@@ -3461,6 +3472,11 @@ function unlockEditor() {
 
 /* ----- Goal bar wiring (once, in wireEvents) ----- */
 function wireGoalBar() {
+  const lockIcon = document.getElementById('goal-lock');
+  if (lockIcon) lockIcon.innerHTML = ICONS.lock;
+  const clrIcon = document.getElementById('goal-clear');
+  if (clrIcon) clrIcon.innerHTML = ICONS.close;
+
   const lockBtn = document.getElementById('goal-lock');
   lockBtn.addEventListener('click', () => {
     const doc = activeDoc();
@@ -3839,7 +3855,7 @@ function openExportDialog() {
   if (!doc) return;
 
   const dlg = openDialog(t('io.title.exp'), '', [
-    { class: 'fb-btn primary', label: 'OK', onClick: () => dlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
   ]);
   const body = dlg.querySelector('.w-dialog-body');
 
@@ -3884,7 +3900,6 @@ function openExportDialog() {
       const nt = document.createElement('div');
       nt.className = 'io-note';
       nt.textContent = '· ' + t(f.note);
-      nt.style.marginTop = f.ext === 'rtf' ? '0' : '0';
       list.appendChild(nt);
     }
   });
@@ -5042,7 +5057,7 @@ function ioApplyImport(parsed, mode) {
 /* ----- IMPORT DIALOG ----- */
 function openImportDialog(prefile) {
   const dlg = openDialog(t('io.title.imp'), '', [
-    { class: 'fb-btn primary', label: t('tt.import'), onClick: () => { /* wired after parse */ } }
+    { class: 'fb-btn primary', label: t('tt.import'), onClick: () => showToast(t('io.pickFirst')) }
   ]);
   const body = dlg.querySelector('.w-dialog-body');
   const foot = dlg.querySelector('.w-dialog-foot');

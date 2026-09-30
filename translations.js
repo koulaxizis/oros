@@ -171,6 +171,7 @@ window.OROS_TRANSLATIONS = {
     "app.calendar":              "Calendar",
     "app.prompter":              "Prompter",
     "app.characters":            "Characters",
+	"app.minimalism": 			 "Minimalism",
     "app.quote":                 "Quote",
     "app.storage":               "Storage",
     "app.habits":                "Habits",
@@ -207,7 +208,8 @@ window.OROS_TRANSLATIONS = {
     "notifs.pos.bottomright":    "Bottom right",
     "notifs.pos.bottom":         "Bottom center",
     "notifs.pos.bottomleft":     "Bottom left",
-    "notifs.pos.left":           "Left"
+    "notifs.pos.left":           "Left",
+	"category.lifestyle":		 "Lifestyle",
   },
 
   el: {
@@ -369,6 +371,7 @@ window.OROS_TRANSLATIONS = {
     "app.calendar":              "Ημερολόγιο",
     "app.prompter":              "Γεννήτρια θεμάτων",
     "app.characters":            "Χαρακτήρες",
+	"app.minimalism": 			 "Μινιμαλισμός",
     "app.quote":                 "Προσφορά",
     "app.storage":               "Αποθήκη",
     "app.habits":                "Συνήθειες",
@@ -405,7 +408,8 @@ window.OROS_TRANSLATIONS = {
     "notifs.pos.bottomright":    "Κάτω δεξιά",
     "notifs.pos.bottom":         "Κάτω κέντρο",
     "notifs.pos.bottomleft":     "Κάτω αριστερά",
-    "notifs.pos.left":           "Αριστερά"
+    "notifs.pos.left":           "Αριστερά",
+	"category.lifestyle": 		 "Τρόπος Ζωής",
   }
 
 };

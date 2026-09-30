@@ -65,6 +65,13 @@
       "url": "quote/",
       "type": "internal"
     },
+	{
+      "id": "minimalism",
+      "name": "Minimalism",
+      "icon": "minimalism",
+      "url": "minimalism/index.html",
+      "category": "lifestyle"
+    },
     {
       "id": "contacts",
       "name": "Contacts",

@@ -1415,3 +1415,40 @@ Verification checklist: (1) reload boots timeline with no console errors, (2) pe
   · DEVICE-LOCAL: oros-pet-enabled (ergonomics, never synced)
   · EXEMPT: Calendar axis + Notifications axis (see Part IX doctrinal exemptions)
   · STATUS: integration complete — pending smoke test (QUEUED list)
+  
+  ---
+  
+  Wave 2 — Minimalism: Shell Integration (App #minimalism)
+Goal: Embed the Minimalism app (Wave 1 bare core) into the orOS shell: menu presence, deep links, unified notifications, sync, offline precache. All patches additive — zero existing behavior touched.
+
+Architecture decisions (locked):
+
+Notification logic lives SHELL-SIDE (minimalismCheckTick detector in shell.js), scanning the app's localStorage slice directly. The app itself never emits reminders — works even when the app is closed (same contract as Mood/Cycle detectors).
+Reminder fires once/day at/after prefs.remindHour (design default 10:00, user-adjustable in app Settings, travels in the sync slice). ANY entry for today (done OR skip) silences it — a skip is deliberate engagement, never punished.
+Deep link format: minimalism:today:<ymd> → three parts → router passes bare ymd to __orosOpenMinimalism. Closed app = sessionStorage staging (one-shot take at app boot, device-local, never synced). Receiver validates ^\d{4}-\d{2}-\d{2}$.
+Icon: circle with centered dot ("less is more") — feather glyph was taken by prompter, smile-circle by mood, rotation-arrows by cycle. No collisions.
+Category: lifestyle (Lifestyle / Τρόπος Ζωής). New category.* keys required in translations.js if the category didn't exist yet.
+Patches applied:
+
+shell.js S1: ICONS.minimalism (circle + dot SVG, after dice:) — APPLIED
+shell.js S5: bridges __orosOpenMinimalism + __orosMinimalismTakePending (after Quote bridge) — APPLIED
+shell.js S2: minimalismCheckTickThrottled() call in renderClock (after quoteCheckTickThrottled) — DELIVERED, awaiting application confirmation
+shell.js S3: detector block minimalismCheckTick (60s throttle, hour-gate from slice prefs, dedup key ritual-<ymd> via emit, ns "minimalism", inline minT i18n — mood/cycle pattern, zero new shell translation keys) — DELIVERED
+shell.js S4: boot catch-up sweep at 5500ms (after cycle 5000ms) — DELIVERED
+notifications.js N1: KNOWN_APPS += 'minimalism' (toggle auto-initializes true via loadSlice; Settings UI renders from getKnownApps single source) — DELIVERED
+notifications.js N2: DL_BRIDGES.minimalism → __orosOpenMinimalism, guarded typeof (NOT-R2 pattern) — DELIVERED
+apps.json AJ1: entry {id: "minimalism", icon, url: "minimalism/index.html", category: "lifestyle"} — DELIVERED
+translations.js TR1/TR2: app.minimalism (EN "Minimalism" / EL "Μινιμαλισμός") + category.lifestyle if missing — DELIVERED
+sw.js SW1: PRECACHE_URLS += minimalism/, index.html, css, js, content.js (per-URL add — one missing file degrades, never kills the precache) — 4 entries applied earlier; directory entry "minimalism/" added this pass
+Free wins verified (no code needed): dedup is inbox-level (minimalism:ritual-<ymd>, 7-day TTL); catch-up <24h re-toasts on mobile wake; >24h badge-only; quiet hours suppress toast but keep inbox+badge; per-app toggle honored via emitCandidate; transient path never involved.
+
+Verification checklist before shipping:
+
+shell.js — confirm S2/S3/S4 applied and boot log shows no ReferenceError on minimalismCheckTickThrottled (stale-bundle proof: detector guards typeof emit).
+Confirm sysYmd() and state.lang exist in shell.js scope as used by S3 (same identifiers the mood/cycle detectors use — quick console grep before release).
+Menu → Lifestyle → Minimalism opens with correct icon + label in both languages.
+Set remindHour to current hour (app History → daily reminder select), no entry today → toast within 60s; clicking the toast/inbox item opens the app on today's card.
+Todo/Quote/Cycle apps unaffected (regression smoke).
+Offline: disable network after install → Minimalism loads from precache.
+Sync: complete entries on device A, cold-start device B → History view reflects merged days, no duplicates.
+Next up: Content expansion — Days 6–365 of content.js in review batches (currently Days 1–5 placeholders; shorter arrays wrap via modulo, so partial batches never crash). Backlog (future waves): Calendar feed visualization for minimalism completions, Revisit mode for skipped items, year-end contribution graph widget.
