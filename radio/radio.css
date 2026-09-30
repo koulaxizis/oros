@@ -245,6 +245,19 @@ body {
   border-color: var(--accent, #6d4aff);
 }
 
+.rx-card.playing .rx-card-name { color: var(--accent, #6d4aff); }
+
+/* W3: icon-style player buttons (sleep, stop) */
+.rx-pl-icon {
+  background: transparent;
+  color: var(--muted, #9aa4b0);
+  border: 1px solid var(--line, #2e2c28);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.rx-pl-icon:hover { color: var(--fg, #e8e6e3); }
+
 .rx-logo {
   flex: 0 0 auto;
   width: 44px;
@@ -395,6 +408,138 @@ body {
 @media (max-width: 360px) {
   .rx-tabs { width: 100%; }
   .rx-search { width: 100%; flex-basis: 100%; }
+}
+
+/* ===== W3: tag chips, sleep chip, sleep dialog, toast ===== */
+
+/* Tag filter chips inside country views. The stations list is a
+   grid, so span a full row. */
+.rx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  grid-column: 1 / -1;
+  margin: 2px 0 10px;
+}
+
+.rx-chip {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted, #9aa4b0);
+  background: transparent;
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 999px;
+  padding: 5px 12px;
+  min-height: 34px;
+  cursor: pointer;
+}
+
+.rx-chip:hover { color: var(--fg, #e8e6e3); }
+
+.rx-chip.on {
+  color: var(--accent, #6d4aff);
+  border-color: var(--accent, #6d4aff);
+  background: rgba(109, 74, 255, 0.12);
+}
+
+/* Sleep countdown chip in the player bar */
+.rx-sleep-chip {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--warn, #e0a44c);
+  white-space: nowrap;
+}
+
+/* Sleep dialog (created dynamically by radio.js) */
+.rx-sleep-content {
+  background: var(--panel, #1b1a18);
+  color: var(--fg, #e8e6e3);
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 14px;
+  padding: 18px;
+  min-width: 260px;
+  max-width: 90vw;
+}
+
+.rx-sleep-content h3 {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.rx-sleep-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.rx-sleep-preset {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted, #9aa4b0);
+  background: transparent;
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 999px;
+  padding: 9px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.rx-sleep-preset:hover {
+  color: var(--accent, #6d4aff);
+  border-color: var(--accent, #6d4aff);
+}
+
+.rx-sleep-status {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--warn, #e0a44c);
+  margin-bottom: 12px;
+  min-height: 18px;
+}
+
+.rx-sleep-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger, #e06c75);
+  background: transparent;
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.rx-sleep-btn:hover { border-color: var(--danger, #e06c75); }
+
+/* Local fallback toast (used only if the shell notif system is
+   unavailable — standalone/stale-bundle case) */
+.rx-toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  z-index: 60;
+  background: var(--panel, #1b1a18);
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg, #e8e6e3);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+
+.rx-toast.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ===== Scrollbar standard (Bible Part VII) ===== */

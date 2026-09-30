@@ -27,7 +27,7 @@
   cursor: grab;
   touch-action: none;   /* drag belongs to us, not the page */
 }
-#pet-layer.dragging #pet-canvas { cursor: grabbing; }
+// #pet-layer.dragging #pet-canvas removed (drag class never applied)
 
 .pet-bubble {
   position: absolute;
@@ -156,5 +156,5 @@
   #pet-hud { width: 156px; left: 8px; bottom: 8px; }
 }
 
-/* [hidden] must ALWAYS win */
-[hidden] { display: none !important; }
+/* [hidden] must ALWAYS win (scoped to pet layer) */
+#pet-layer [hidden] { display: none !important; }

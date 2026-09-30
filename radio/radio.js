@@ -60,7 +60,12 @@ var STRINGS = {
     "sleep.off":      "Turn off",
     "sleep.set":      "Playback stops after {n} min",
     "sleep.remaining":"{n} min left",
-    "sleep.stopped":  "Playback stopped — sleep timer"
+    "sleep.stopped":  "Playback stopped — sleep timer",
+    "stop":           "Stop",
+    "tab.discover":   "Discover",
+    "view.discover":  "Top Stations Worldwide",
+    "random":         "Surprise me",
+    "random.hint":    "Play a random top station"
   },
   el: {
     "tab.countries":  "Χώρες",
@@ -90,7 +95,12 @@ var STRINGS = {
     "sleep.off":      "Απενεργοποίηση",
     "sleep.set":      "Η αναπαραγωγή σταματά σε {n} λεπτά",
     "sleep.remaining":"απομένουν {n} λεπτά",
-    "sleep.stopped":  "Η αναπαραγωγή σταμάτησε — χρονοδιακόπτης ύπνου"
+    "sleep.stopped":  "Η αναπαραγωγή σταμάτησε — χρονοδιακόπτης ύπνου",
+    "stop":           "Διακοπή",
+    "tab.discover":   "Ανακάλυψη",
+    "view.discover":  "Κορυφαίοι σταθμοί παγκοσμίως",
+    "random":         "Τυχαίος σταθμός",
+    "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό"
   }
 };
 
@@ -144,7 +154,8 @@ function normalizeStation(s){
 /* ===== STATE ===== */
 
 var state = {
-  viewMode: "countries",     // countries | genres | favorites | recents | stations | search
+  viewMode: "discover",      // discover | countries | genres | favorites | recents | stations | search
+  tagFilter: "",             // active tag chip filter inside country views (W3-8)
   parent: null,             // { type:"country"|"genre", code|tag, name }
   data: null,               // full slice { ver, favorites[], deleted{} }
   recents: [],
@@ -362,7 +373,14 @@ function ensureHost(){
         audio.pause();
       }
     },
-    stop: function(){ audio.pause(); },
+    stop: function(){
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();          // releases the live stream connection
+      host.current = null;   // tray chip disappears (zero-DOM rule)
+      host.api.cancelSleep(true);
+      host.notify();
+    },
     getState: function(){
       return {
         current: host.current,
@@ -495,23 +513,41 @@ window.addEventListener("offline", updateOnlineState);
 
 /* ===== API LAYER (Radio Browser) ===== */
 
-function resolveMirror(){
-  if(Math.random() < 0.25){
-    var idx = Math.floor(Math.random() * RB_MIRRORS.length);
-    return RB_MIRRORS[idx];
+var rbMirrorIdx = 0; // sticky index of the last healthy mirror
+
+// W3-6: sequential mirror fallback. The healthy mirror is STICKY —
+// a dead mirror costs at most one failed request (3s abort
+// ceiling), then we rotate and stick to the next healthy one.
+// The offline flag short-circuits honestly (no doomed requests).
+function rbRequest(path){
+  if(state.offline) return Promise.reject(new Error("offline"));
+  var tries = 0;
+  function attempt(){
+    var mirror = RB_MIRRORS[rbMirrorIdx];
+    var ctl = (typeof AbortController === "function") ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 3000) : null;
+    var opts = { cache: "no-store" };
+    if(ctl) opts.signal = ctl.signal;
+    return fetch(mirror + path, opts).then(function(res){
+      if(timer) clearTimeout(timer);
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).catch(function(err){
+      if(timer) clearTimeout(timer);
+      tries++;
+      if(tries >= RB_MIRRORS.length) throw err; // all mirrors dead — honest fail
+      rbMirrorIdx = (rbMirrorIdx + 1) % RB_MIRRORS.length;
+      return attempt();
+    });
   }
-  return "https://de1.api.radio-browser.info";
+  return attempt();
 }
 
 function fetchCountries(){
   var cached = getCached("countries");
   if(cached) return Promise.resolve(cached);
   
-  var mirror = resolveMirror();
-  return fetch(mirror + "/json/countries", { cache: "no-store" }).then(function(res){
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    return res.json();
-  }).then(function(data){
+  return rbRequest("/json/countries").then(function(data){
     var filtered = data.filter(function(c){ return c.stationcount > 0; });
     filtered.sort(function(a,b){ return b.stationcount - a.stationcount; });
     setCached("countries", filtered);
@@ -527,11 +563,7 @@ function fetchGenres(){
   var cached = getCached("genres");
   if(cached) return Promise.resolve(cached);
   
-  var mirror = resolveMirror();
-  return fetch(mirror + "/json/tags", { cache: "no-store" }).then(function(res){
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    return res.json();
-  }).then(function(data){
+  return rbRequest("/json/tags").then(function(data){
     var filtered = data.filter(function(g){ return g.stationcount >= 50; });
     filtered.sort(function(a,b){ return b.stationcount - a.stationcount; });
     filtered = filtered.slice(0, 100);
@@ -547,13 +579,8 @@ function fetchStationsByCountry(code, limit){
   var cached = getCached("stations_country_" + code);
   if(cached) return Promise.resolve(cached);
   
-  var mirror = resolveMirror();
-  var url = mirror + "/json/stations/bycountryexact/" + encodeURIComponent(code) + "?limit=" + (limit || 200);
-  
-  return fetch(url, { cache: "no-store" }).then(function(res){
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    return res.json();
-  }).then(function(data){
+  return rbRequest("/json/stations/bycountryexact/" + encodeURIComponent(code) +
+    "?limit=" + (limit || 200)).then(function(data){
     var filtered = data.filter(function(s){
       var codec = (s.codec || "").toLowerCase();
       return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
@@ -572,13 +599,8 @@ function fetchStationsByTag(tag, limit){
   var cached = getCached("stations_tag_" + tag);
   if(cached) return Promise.resolve(cached);
   
-  var mirror = resolveMirror();
-  var url = mirror + "/json/stations/bytag/" + encodeURIComponent(tag) + "?limit=" + (limit || 200);
-  
-  return fetch(url, { cache: "no-store" }).then(function(res){
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    return res.json();
-  }).then(function(data){
+  return rbRequest("/json/stations/bytag/" + encodeURIComponent(tag) +
+    "?limit=" + (limit || 200)).then(function(data){
     var filtered = data.filter(function(s){
       var codec = (s.codec || "").toLowerCase();
       return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
@@ -600,13 +622,8 @@ function searchStations(query, limit){
   var cached = getCached("search_" + q);
   if(cached) return Promise.resolve(cached);
   
-  var mirror = resolveMirror();
-  var url = mirror + "/json/stations/search?name=" + encodeURIComponent(query) + "&limit=" + (limit || 50);
-  
-  return fetch(url, { cache: "no-store" }).then(function(res){
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    return res.json();
-  }).then(function(data){
+  return rbRequest("/json/stations/search?name=" + encodeURIComponent(query) +
+    "&limit=" + (limit || 50)).then(function(data){
     var filtered = data.filter(function(s){
       var codec = (s.codec || "").toLowerCase();
       return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
@@ -616,6 +633,24 @@ function searchStations(query, limit){
     return filtered;
   }).catch(function(err){
     console.warn("[radio] search failed:", err.message);
+    return [];
+  });
+}
+
+function fetchTopVoted(limit){
+  var cached = getCached("topvote");
+  if(cached) return Promise.resolve(cached);
+  
+  return rbRequest("/json/stations/topvote/" + (limit || 50)).then(function(data){
+    var filtered = data.filter(function(s){
+      var codec = (s.codec || "").toLowerCase();
+      return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
+    });
+    filtered.sort(function(a,b){ return (b.votes||0) - (a.votes||0); });
+    setCached("topvote", filtered);
+    return filtered;
+  }).catch(function(err){
+    console.warn("[radio] topvote fetch failed:", err.message);
     return [];
   });
 }
@@ -673,6 +708,10 @@ function openSleepDialog(){
       '<button type="button" class="rx-sleep-btn" id="rx-sleep-cancel">' + t("sleep.off") + '</button>' +
     '</div>';
     document.body.appendChild(dlg);
+    // Attach ONCE at creation — the dialog element is reused
+    dlg.addEventListener("click", function(e){
+      if(e.target === dlg) dlg.close();
+    });
   }
   
   // Build presets
@@ -698,11 +737,6 @@ function openSleepDialog(){
       renderSleepStatus();
     });
   }
-  
-  // External click closes
-  dlg.addEventListener("click", function(e){
-    if(e.target === dlg) dlg.close();
-  });
   
   dlg.showModal();
   renderSleepStatus();
@@ -754,6 +788,13 @@ function renderMain(){
   
   // Render based on view mode
   switch(state.viewMode){
+    case "discover":
+      crumb.textContent = t("view.discover");
+      crumb.removeAttribute("hidden");
+      list.className = "rx-list stations";
+      renderDiscover(list);
+      break;
+      
     case "countries":
       crumb.textContent = t("view.countries");
       crumb.removeAttribute("hidden");
@@ -845,6 +886,7 @@ function renderCountries(container){
       tile.addEventListener("click", function(){
         state.parent = { type: "country", code: country.iso_3166_1, name: country.name };
         state.viewMode = "stations";
+        state.tagFilter = "";
         renderMain();
       });
       container.appendChild(tile);
@@ -874,6 +916,49 @@ function renderGenres(container){
       });
       container.appendChild(tile);
     });
+  });
+}
+
+function renderDiscover(container){
+  // W3-5: surprise-me tile first
+  var dice = document.createElement("button");
+  dice.type = "button";
+  dice.className = "rx-tile";
+  dice.innerHTML = '<span class="rx-tile-flag">🎲</span>' +
+    '<div class="rx-tile-body"><div class="rx-tile-name">' + esc(t("random")) + '</div>' +
+    '<div class="rx-tile-count">' + esc(t("random.hint")) + '</div></div>';
+  dice.addEventListener("click", surpriseMe);
+  container.appendChild(dice);
+  
+  fetchTopVoted().then(function(data){
+    if(!data || data.length === 0){
+      $("rx-empty").textContent = t("noresults");
+      $("rx-empty").removeAttribute("hidden");
+      return;
+    }
+    
+    data.forEach(function(station){
+      var card = createStationCard(station);
+      container.appendChild(card);
+    });
+  });
+}
+
+function surpriseMe(){
+  // Pool: cached topvote first (instant, offline-friendly), else
+  // a fresh fetch. Honest offline: no pool + no network → nothing
+  // happens (the offline banner is already speaking).
+  var pool = getCached("topvote") || [];
+  if(pool.length){
+    var st = pool[Math.floor(Math.random() * pool.length)];
+    playStation(st);
+    return;
+  }
+  fetchTopVoted(100).then(function(data){
+    if(data && data.length){
+      var st = data[Math.floor(Math.random() * data.length)];
+      playStation(st);
+    }
   });
 }
 
@@ -917,7 +1002,7 @@ function renderFavorites(container){
       codec: fav.codec,
       bitrate: fav.bitrate,
       countrycode: fav.countrycode
-    }, true);
+    });
     container.appendChild(card);
   });
 }
@@ -928,7 +1013,7 @@ function renderRecents(container){
   }
   
   state.recents.forEach(function(rec){
-    var card = createStationCard(rec, false);
+    var card = createStationCard(rec);
     container.appendChild(card);
   });
 }
@@ -941,8 +1026,42 @@ function renderStationsByCountry(container, code){
       return;
     }
     
+    // W3-8: tag filter chips — client-side aggregation of the most
+    // popular tags in this country. Clicking a chip filters the
+    // cards (data is cached, so re-render is instant, no network).
+    var counts = {};
+    data.forEach(function(s){
+      String(s.tags || "").split(",").forEach(function(tag){
+        tag = tag.trim();
+        if(tag) counts[tag] = (counts[tag] || 0) + 1;
+      });
+    });
+    var topTags = Object.keys(counts).sort(function(a, b){
+      return counts[b] - counts[a];
+    }).slice(0, 12);
+    
+    if(topTags.length){
+      var chips = document.createElement("div");
+      chips.className = "rx-chips";
+      topTags.forEach(function(tag){
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "rx-chip";
+        chip.textContent = tag;
+        if(state.tagFilter === tag) chip.classList.add("on");
+        chip.addEventListener("click", function(){
+          state.tagFilter = (state.tagFilter === tag) ? "" : tag;
+          renderMain();
+        });
+        chips.appendChild(chip);
+      });
+      container.appendChild(chips);
+    }
+    
     data.forEach(function(station){
-      var card = createStationCard(station, false);
+      if(state.tagFilter &&
+         String(station.tags || "").indexOf(state.tagFilter) === -1) return;
+      var card = createStationCard(station);
       container.appendChild(card);
     });
   });
@@ -957,7 +1076,7 @@ function renderStationsByTag(container, tag){
     }
     
     data.forEach(function(station){
-      var card = createStationCard(station, false);
+      var card = createStationCard(station);
       container.appendChild(card);
     });
   });
@@ -973,13 +1092,13 @@ function renderSearchResults(container){
     }
     
     data.forEach(function(station){
-      var card = createStationCard(station, false);
+      var card = createStationCard(station);
       container.appendChild(card);
     });
   });
 }
 
-function createStationCard(station, isFavorite){
+function createStationCard(station){
   var card = document.createElement("div");
   card.className = "rx-card";
   card.dataset.uuid = station.stationuuid;
@@ -991,16 +1110,15 @@ function createStationCard(station, isFavorite){
   }
   
   var initials = (station.name || "?").substring(0,2).toUpperCase();
-  var logoHtml = '<div class="rx-logo">' + initials + '</div>';
+  var logoHtml = '<div class="rx-logo">' + esc(initials) + '</div>';
   if(station.favicon){
-    try{
-      var img = new Image();
-      img.src = station.favicon;
-      img.onerror = function(){
-        // Fallback handled by CSS if image fails
-      };
-      logoHtml = '<div class="rx-logo"><img src="' + esc(station.favicon) + '" alt=""></div>';
-    }catch(e){}
+    // W3-1 (RX-N1): no preload — the image loads only when the
+    // card is in the DOM (lazy). Initials stay underneath the
+    // overlay and show through if the image errors (self-remove).
+    logoHtml = '<div class="rx-logo" style="position:relative;">' + esc(initials) +
+      '<img src="' + esc(station.favicon) + '" alt="" loading="lazy" ' +
+      'style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;" ' +
+      'onerror="this.remove()"></div>';
   }
   
   var metaStr = "";
@@ -1031,6 +1149,24 @@ function playStation(station){
   if(player) player.removeAttribute("hidden");
   
   updatePlayerUI();
+  highlightPlayingCard(station.stationuuid);
+}
+
+// W3-7: single-source highlight — clears any previous .playing
+// card, marks and scrolls to the new one. Called from playStation
+// only (cards are also re-marked at render time).
+function highlightPlayingCard(uuid){
+  if(!uuid) return;
+  var list = $("rx-list");
+  if(!list) return;
+  var prev = list.querySelector(".rx-card.playing");
+  if(prev) prev.classList.remove("playing");
+  // stationuuid chars are [a-z0-9-] — attribute-selector safe
+  var card = list.querySelector('.rx-card[data-uuid="' + uuid + '"]');
+  if(card){
+    card.classList.add("playing");
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 }
 
 /* ===== PLAYER UI ===== */
@@ -1108,9 +1244,10 @@ function doSearch(query){
     state.searchQuery = query.trim();
     renderMain();
   }else{
-    state.viewMode = "countries";
+    state.viewMode = "discover";
     state.searchQuery = "";
     state.parent = null;
+    state.tagFilter = "";
     renderMain();
   }
   
@@ -1197,6 +1334,7 @@ function setupTabs(){
       state.viewMode = mode;
       state.parent = null;
       state.searchQuery = "";
+      state.tagFilter = "";
       renderMain();
     });
   });
@@ -1293,10 +1431,21 @@ function setupPlayerControls(){
   var playBtn = $("rx-pl-play");
   var favBtn  = $("rx-pl-fav");
   var sleepBtn = $("rx-pl-sleep");
+  var stopBtn = $("rx-pl-stop");
   
   if(playBtn)  playBtn.addEventListener("click", togglePlayPause);
   if(favBtn)   favBtn.addEventListener("click", toggleFavorite);
   if(sleepBtn) sleepBtn.addEventListener("click", openSleepDialog);
+  if(stopBtn){
+    stopBtn.addEventListener("click", function(){
+      host.api.stop();
+      var player = $("rx-player");
+      if(player) player.setAttribute("hidden", ""); // hide the bar
+      updatePlayerUI();
+    });
+    stopBtn.setAttribute("aria-label", t("stop"));
+    stopBtn.title = t("stop");
+  }
 }
 
 /* ===== SLEEP CHIP ===== */
@@ -1370,6 +1519,7 @@ function consumeDeepLink(){
 
 function applyI18n(){
   var map = {
+    "rx-tab-discover":  "tab.discover",
     "rx-tab-countries": "tab.countries",
     "rx-tab-genres":    "tab.genres",
     "rx-tab-favorites": "tab.favorites",
@@ -1414,7 +1564,7 @@ function start(){
   renderMain();
   wire();
   consumeDeepLink();
-  console.log("[radio] ready — v0.2 Wave 2 complete");
+  console.log("[radio] ready — v0.3 Wave 3 complete");
 }
 
 if(document.readyState === "loading"){

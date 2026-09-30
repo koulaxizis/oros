@@ -145,6 +145,8 @@
       "evt.today": "Today",
       "evt.yesterday": "Yesterday",
       "evt.date": "{d}/{m}/{y}",
+      "notif.bday.first": "First birthday for {name}!",
+      "notif.bday.years": "{name} turns {years} years old!",
       "cal.pet.feed": "{name} was fed",
       "cal.pet.pet": "{name} was petted",
       "cal.pet.sleep": "{name} went to sleep",
@@ -206,6 +208,8 @@
       "evt.today": "Σήμερα",
       "evt.yesterday": "Χθες",
       "evt.date": "{d}/{m}/{y}",
+      "notif.bday.first": "Το πρώτο γενέθλιο του/της {name}!",
+      "notif.bday.years": "{name} γιορτάζει {years} χρονών!",
       "cal.pet.feed": "{name} τάγηθηκε",
       "cal.pet.pet": "{name} χαιδεύτηκε",
       "cal.pet.sleep": "{name} πήγε για ύπνο",
@@ -265,10 +269,7 @@
     var n = new Date();
     return ymd(n.getFullYear(), n.getMonth(), n.getDate());
   }
-  function dparse(s) {
-    var p = s.split("-");
-    return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
-  }
+  // dparse removed (unused — replaced by tsLocalYmd)
 
   // BOOT MARKER
   var SCRIPT_V = "";
@@ -279,26 +280,7 @@
     console.log("pet.js v" + (SCRIPT_V || "?") + " boot");
   })();
 
-  // v0.3: Theme sync (canvas background adapts to orOS theme)
-  var canvasBgTransparent = true;  // default: no fill
-  function updateCanvasTheme() {
-    try {
-      var style = getComputedStyle(document.documentElement);
-      var bg = style.getPropertyValue("--panel-bg").trim();
-      // If --panel-bg is set, we can optionally draw a semi-transparent
-      // background behind the sprite — for now, keep transparent.
-    } catch (e) {}
-  }
-  if (typeof MutationObserver === "function") {
-    try {
-      var pRoot = window.parent ? window.parent.document.documentElement : document.documentElement;
-      if (pRoot) {
-        new MutationObserver(updateCanvasTheme).observe(pRoot, {
-          attributes: true, attributeFilter: ["data-theme", "data-skin"]
-        });
-      }
-    } catch (e) {}
-  }
+  // v0.3: Theme sync removed (no-op — canvas stays transparent)
   
     // ---------- 2. State model, storage, field writes, position memory ----------
   // state = {
@@ -712,7 +694,7 @@
   var BALL_G = 900;       // catch-ball gravity (px/s²)
   var BALL_LIFE_MS = 4200;// catch-ball lifetime before fade-out
 
-  var GRID_COLORS = null;
+  // GRID_COLORS removed (unused — sprite uses inline colors)
 
   function createLayer() {
     var layer = document.createElement("div");
@@ -744,7 +726,7 @@
   // lastPetId (identity-swap guard from sliceSet, Part 3).
   runtime = {
     layer: null, canvas: null, ctx: null,
-    bubble: null, bubbleTimer: null,
+    bubble: null, bubbleTimer: null, rafId: 0,
     x: 0, y: 0, dir: 1,
     mode: "idle",           // idle | walk | happy | eat | drag
     frame: 0, walkTimer: 0, targetX: null,
@@ -816,8 +798,8 @@
 
   // v0.3: BIRTHDAY CHECK — fired from the behavior loop (cheap:
   // one string compare per second thanks to the stats throttle).
-  // Dedupe: once per LOCAL day per pet id. Fires toast (scToast,
-  // guarded), hearts, happy pose, and a birthday log event.
+  // Dedupe: once per LOCAL day per pet id. Fires unified notification
+  // (emit, with dedup key), hearts, happy pose, and a birthday log event.
   function checkBirthday(now, stats) {
     if (!isBirthdayToday(now)) return;
     var today = todayYMD();
@@ -827,10 +809,18 @@
     runtime.birthdayFiredPetId = state.pet.id;
 
     var years = birthdayYears(now);
-    var msg = (years + 1) + (LANG === "el" ? " γενέθλια! 🎂" : (years === 0 ? "st birthday! 🎂" : "th birthday! 🎂"));
-    // Shell toast — guarded (signature unverified; harmless no-op)
+    var msgTitle = t("event.type.birthday");
+    var msgBodyKey = years === 0 ? "notif.bday.first" : "notif.bday.years";
+    var msgBody = t(msgBodyKey, { name: state.pet.name || "?", years: years });
+
+    // Unified notification (orOS toast + inbox). Guarded so absent
+    // orosNotifs is harmless; key ensures 1x/day per pet id.
+    var notifKey = "pet-bday:" + state.pet.id + ":" + today;
     try {
-      if (typeof window.scToast === "function") window.scToast(msg);
+      var api = window.orosNotifs;
+      if (api && typeof api.emit === "function") {
+        api.emit({ ns: "pet", key: notifKey, type: "reminder", title: msgTitle, body: msgBody });
+      }
     } catch (e) {}
     if (!stats.asleep) {
       runtime.mode = "happy";
@@ -1006,7 +996,7 @@
     var b = stageBounds();
     if (runtime.x < 0) { runtime.x = 0; runtime.dir = 1; runtime.targetX = null; }
     if (runtime.x > b.w) { runtime.x = b.w; runtime.dir = -1; runtime.targetX = null; }
-    if (runtime.mode !== "drag") runtime.y = Math.max(b.floorY, 60);
+    if (runtime.mode !== "drag") runtime.y = b.floorY;
 
     // Threshold speech (flags are runtime, not synced)
     if (!speechAllowed()) return;
@@ -1218,6 +1208,7 @@
 
   function loop(ts) {
     if (!runtime.active) return;                    // stopped → loop dies
+    runtime.rafId = ts;                             // track last RAF frame
     var dt = Math.min(0.05, (ts - runtime.lastTs) / 1000 || 0.016);
     runtime.lastTs = ts;
 
@@ -1233,7 +1224,7 @@
     // HUD refresh piggybacks the 1s stats throttle
     if (runtime.statsAt === now) refreshHUD(runtime.stats);
 
-    requestAnimationFrame(loop);
+    if (runtime.active) runtime.rafId = requestAnimationFrame(loop);
   }
   
     // ---------- 7. Interactions + HUD ----------
@@ -1765,20 +1756,8 @@
     runtime.canvas.addEventListener("pointerup", releaseHandler);
     runtime.canvas.addEventListener("pointercancel", releaseHandler);
 
-    // Tap/click on empty desktop → walk there
-    runtime.layer.addEventListener("pointerdown", function (e) {
-      if (e.target === runtime.canvas || e.target === hud) return;
-      if (hud && hud.contains(e.target)) return;
-      if (runtime.ball && runtime.ball.el === e.target) return;   // ball owns its clicks
-      touchInteraction();
-      var stats = computeStats(Date.now(), state.pet);
-      if (stats.asleep) return;
-      var rect = runtime.layer.getBoundingClientRect();
-      var px = e.clientX - rect.left;
-      var b = stageBounds();
-      runtime.targetX = clamp(px - runtime.canvas.width / 2, 0, b.w);
-      runtime.mode = "walk";
-    });
+    // Tap/click on empty desktop → walk there (disabled: layer is pointer-events:none)
+    // TODO: re-enable by moving click handling to shell document or changing layer CSS
   }
 
   // Keyboard: F=feed, C=catch, L=log, S=sleep — modifier-guarded
@@ -1816,7 +1795,7 @@
       if (!runtime.active) return;
       var b = stageBounds();
       runtime.x = clamp(runtime.x, 0, b.w);
-      runtime.y = clamp(runtime.y, 60, b.floorY);
+      runtime.y = clamp(runtime.y, b.floorY - runtime.canvas.height, b.floorY);
     });
   }
 
@@ -1862,7 +1841,7 @@
     var pos = loadPos();
     if (pos) {
       runtime.x = clamp(pos.fx * b.w, 0, b.w);
-      runtime.y = clamp(pos.fy * b.floorY, 60, b.floorY);
+      runtime.y = clamp(pos.fy * b.floorY, b.floorY - runtime.canvas.height, b.floorY);
     } else {
       runtime.x = Math.max(0, b.w / 2 - runtime.canvas.width / 2);
       runtime.y = b.floorY;
@@ -1897,7 +1876,9 @@
     if (!runtime.active) return;
     savePos();
     destroyBall(false);                          // v0.3: no orphan balls
-    runtime.active = false;                      // kills the rAF loop
+    runtime.active = false;
+    if (runtime.rafId) cancelAnimationFrame(runtime.rafId); // prevent dual loops
+    runtime.rafId = 0;
     clearTimeout(runtime.bubbleTimer);
     if (runtime.layer) runtime.layer.remove();
     runtime.layer = null;

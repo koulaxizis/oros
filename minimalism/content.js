@@ -1124,3 +1124,255 @@ window.MINIMALISM_CONTENT = {
     }
   ]
 };
+
+    {
+      id: "d56-phys", level: "phys", difficulty: 1,
+      title: "Count every piece of clothing you own; write the number down",
+      why: "A wardrobe census sounds tedious but takes ten minutes. The raw number — often triple the estimate — is the honest baseline your capsule decisions will build on."
+    },
+    {
+      id: "d57-phys", level: "phys", difficulty: 3,
+      title: "Draft a capsule wardrobe: choose 33 items (including shoes) to wear for a season",
+      why: "Constraint breeds creativity. Most people wear 20% of what they own; a capsule reveals which 33 items actually earn their space."
+    },
+    {
+      id: "d58-phys", level: "phys", difficulty: 2,
+      title: "Remove five books you'll never reread or never started",
+      why: "Books you keep unread become monuments to guilt. The ones you truly love get brighter on a sparser shelf."
+    },
+    {
+      id: "d59-phys", level: "phys", difficulty: 2,
+      title: "Cull your DVD, CD or game collection to what you actually replay",
+      why: "Streaming and emulation made most physical media redundant. The discs you keep should mean something, not just occupy a rack."
+    },
+    {
+      id: "d60-phys", level: "phys", difficulty: 1,
+      title: "Decide your towel and linen numbers: how many does your household really need?",
+      why: "Most homes own towels for a hypothetical hotel. Two per person plus guest spares covers reality — the rest is closet ballast."
+    },
+    {
+      id: "d61-phys", level: "phys", difficulty: 2,
+      title: "Apply the 20/20 rule to questionable items: could you replace it for under 20 euros in under 20 minutes?",
+      why: "If yes, keeping it 'just in case' is paying rent for storage. True emergencies are rare; storage costs are daily."
+    },
+    {
+      id: "d62-phys", level: "phys", difficulty: 3,
+      title: "Do a total reset of your junk drawer: empty it on a table, return only what earned its place",
+      why: "The junk drawer absorbs whatever lacks a decision. Resetting it forces every orphan item to justify itself once."
+    },
+    {
+      id: "d63-phys", level: "phys", difficulty: 2,
+      title: "Audit your bathroom cabinet: discard everything expired, half-used, or unloved",
+      why: "Cosmetics age faster than we admit. A lean cabinet means you actually finish what you buy instead of shuffling it."
+    },
+    {
+      id: "d64-phys", level: "phys", difficulty: 2,
+      title: "Spend 30 minutes in your storage area (garage, basement, loft): touch five boxes",
+      why: "Storage spaces work by being out of sight. Touching what you store reintroduces accountability to the things you're paying to forget."
+    },
+    {
+      id: "d65-phys", level: "phys", difficulty: 2,
+      title: "Assess sports equipment for hobbies you no longer practice",
+      why: "The skis from 2019 are not exercise, they're an apology to a former self. Equipment for active sports stays; museum pieces go."
+    },
+    {
+      id: "d66-phys", level: "phys", difficulty: 2,
+      title: "Consolidate craft and hobby supplies into one defined container",
+      why: "When supplies outgrow their container, projects outpace your time. The container becomes an honest budget for enthusiasm."
+    },
+    {
+      id: "d67-phys", level: "phys", difficulty: 1,
+      title: "Check your toolbox for duplicates; keep the best of each type",
+      why: "Three tape measures is not preparedness, it's disorder. A lean toolkit works better because you know what it contains."
+    },
+    {
+      id: "d68-phys", level: "phys", difficulty: 1,
+      title: "Count the items in your linen closet; donate the surplus to an animal shelter",
+      why: "Shelters genuinely need old towels and blankets. Your surplus gets a second life instead of a fourth fold."
+    },
+    {
+      id: "d69-phys", level: "phys", difficulty: 2,
+      title: "Remove three purely decorative items that you no longer notice",
+      why: "Decoration you stop seeing is visual noise, not beauty. Fewer objects make the kept ones visible again."
+    },
+    {
+      id: "d70-phys", level: "phys", difficulty: 1,
+      title: "Rotate framed photos and mementos instead of accumulating new ones",
+      why: "A shrine of everything displays nothing. Rotation keeps memories alive; accumulation buries them under each other."
+    },
+    {
+      id: "d71-phys", level: "phys", difficulty: 2,
+      title: "Gather all loose paperwork into one place and triage it into three piles: act, file, shred",
+      why: "Paper scatters because decisions scatter. One place, one session, three piles — the paperwork finally has a system."
+    },
+    {
+      id: "d72-phys", level: "phys", difficulty: 1,
+      title: "Discard old manuals and warranties — nearly all are online now",
+      why: "The internet is your appliance drawer now. One folder of digitized warranty receipts replaces the shoebox forever."
+    },
+    {
+      id: "d73-phys", level: "phys", difficulty: 1,
+      title: "Audit your gift wrap and greeting card stash; keep only what you'll use this year",
+      why: "Wrapping supplies multiply by stealth — every gift received brings ribbons and bags. An annual cap keeps the drawer honest."
+    },
+    {
+      id: "d74-phys", level: "phys", difficulty: 2,
+      title: "Reduce travel gear to one kit: one toiletry bag, one adapter set, one packing routine",
+      why: "Travel minimalism is rehearsed departure. One permanent kit turns trip preparation into grabbing, not gathering."
+    },
+    {
+      id: "d75-phys", level: "phys", difficulty: 2,
+      title: "Run a seasonal swap discipline: nothing enters storage that you didn't miss this season",
+      why: "Seasonal storage is where clothes go to be forgotten. 'Did I miss it?' is the only question a returning item must answer."
+    },
+    {
+      id: "d76-phys", level: "phys", difficulty: 1,
+      title: "Define your shoe number: everyday, sport, formal, weather — count what's enough",
+      why: "Shoes breed quietly in hallways and boxes. A defined number — say seven — gives every future purchase a ceiling to respect."
+    },
+    {
+      id: "d77-phys", level: "phys", difficulty: 1,
+      title: "Empty your sock and underwear drawer; discard the singles, the worn, the never-favorites",
+      why: "These drawers hold items nobody loves. Every morning dig through the rejects — replacing them with exact favorites ends daily friction."
+    },
+    {
+      id: "d78-phys", level: "phys", difficulty: 2,
+      title: "Count your bags: keep one for daily use, one for travel, one for occasions",
+      why: "Bags are portable storage rooms. Three well-chosen ones cover a whole life; the rest are inventory you maintain for no one."
+    },
+    {
+      id: "d79-phys", level: "phys", difficulty: 2,
+      title: "Adopt a 'borrow or buy used' rule for books and tools you need once",
+      why: "Single-use possessions are rental habits disguised as investments. Libraries, friends and second-hand markets serve them better."
+    },
+    {
+      id: "d80-phys", level: "phys", difficulty: 1,
+      title: "Halfway checkpoint: walk through your home with your phone; photograph what still bothers you",
+      why: "Eighty days in, the worst offenders are gone and the invisible remain. A photo tour reawakens the beginner's eyes you started with."
+    },
+	    {
+      id: "d81-phys", level: "phys", difficulty: 2,
+      title: "Remove duplicate kitchen utensils; keep one of each function",
+      why: "Multiple spatulas don't prevent accidents, they clutter drawers. A single good tool of each type is faster to reach and easier to wash."
+    },
+    {
+      id: "d82-phys", level: "phys", difficulty: 1,
+      title: "Empty every pocket in your bags; reassemble only what belongs there",
+      why: "Bag pockets become graves for receipts and odds-and-ends. Emptying them resets the system and reveals what you actually carry."
+    },
+    {
+      id: "d83-phys", level: "phys", difficulty: 2,
+      title: "Assess your winter gear; repair, donate or store what won't see use",
+      why: "Seasonal gear hides in corners until it's urgent. Handling it mid-year removes the panic of spring and the weight of winter."
+    },
+    {
+      id: "d84-phys", level: "phys", difficulty: 1,
+      title: "Clear the top of your dresser; nothing but a lamp and a clock",
+      why: "Dresser tops attract random items by gravity. A bare surface reminds you that getting dressed doesn't require clutter."
+    },
+    {
+      id: "d85-phys", level: "phys", difficulty: 2,
+      title: "Audit your pet supplies; consolidate food bins, discard old treats",
+      why: "Pet food expires without fanfare. One sealed bin and a 'first in, first out' rule keep everything fresh and safe."
+    },
+    {
+      id: "d86-phys", level: "phys", difficulty: 2,
+      title: "Review your spare bedding and pillow collection",
+      why: "Extra linens are sensible until you own four sets per bed. Keep one backup set per sleeper, the rest fills space."
+    },
+    {
+      id: "d87-phys", level: "phys", difficulty: 1,
+      title: "Organize your shoe rack by season; rotate out-of-season shoes to storage",
+      why: "Visible shoes tempt daily outfit overthinking. Rotating seasonally keeps choices relevant and the hallway clear."
+    },
+    {
+      id: "d88-phys", level: "phys", difficulty: 2,
+      title: "Cull your makeup and skincare to what you actually use weekly",
+      why: "Beauty products accumulate through impulse and gifts. Using what you have before buying new saves money and counter space."
+    },
+    {
+      id: "d89-phys", level: "phys", difficulty: 1,
+      title: "Designate one spot for all charging cables; label or bag them",
+      why: "Cables scatter because they lack a home. A single charging station ends the daily hunt for the right brick."
+    },
+    {
+      id: "d90-phys", level: "phys", difficulty: 2,
+      title: "Sort your recycling bin habits; remove items you don't actually recycle",
+      why: "Contamination ruins recycling batches. If you don't recycle plastic bags, stop collecting them in the bin."
+    },
+    {
+      id: "d91-phys", level: "phys", difficulty: 1,
+      title: "Clear the fridge door shelves; condiments belong there, not jars",
+      why: "Door shelves wobble and spill. Heavy items on lower shelves keep the fridge organized and stable."
+    },
+    {
+      id: "d92-phys", level: "phys", difficulty: 2,
+      title: "Evaluate your workout clothes; donate anything stained or stretched",
+      why: "Workout gear degrades silently. Fresh fabrics make exercise feel easier, while old gear makes excuses."
+    },
+    {
+      id: "d93-phys", level: "phys", difficulty: 1,
+      title: "Remove all magnets from your fridge; keep the surface clear",
+      why: "Magnets are magnetic clutter. Photos and notes deserve a frame or a corkboard, not a metal door."
+    },
+    {
+      id: "d94-phys", level: "phys", difficulty: 2,
+      title: "Consolidate all cleaning cloths into one basket; wash weekly",
+      why: "Cleaning rags live in every room and no room. A single basket creates a laundry rhythm and prevents buildup."
+    },
+    {
+      id: "d95-phys", level: "phys", difficulty: 1,
+      title: "Create a 'lost and found' box for single items (missing puzzles, board games)",
+      why: "Single-piece orphanage breeds resentment. A holding box gives incomplete games a place to wait for their pair."
+    },
+    {
+      id: "d96-phys", level: "phys", difficulty: 2,
+      title: "Review your emergency kit; replace expired first-aid items and batteries",
+      why: "Emergency supplies lose potency. A biannual check ensures they work when needed instead of becoming landfill."
+    },
+    {
+      id: "d97-phys", level: "phys", difficulty: 1,
+      title: "Count your pillows; keep only those that support you well",
+      why: "Painful pillows ruin sleep. A comfortable pillow is health gear, not decor; keep what serves rest."
+    },
+    {
+      id: "d98-phys", level: "phys", difficulty: 2,
+      title: "Audit your desk accessories; keep only tools you touch daily",
+      why: "Desk clutter slows deep work. Pen, notebook, phone — the rest waits in drawers until needed."
+    },
+    {
+      id: "d99-phys", level: "phys", difficulty: 1,
+      title: "Remove holiday decorations except those you truly love",
+      why: "Decorations multiply through guilt and sales. A smaller set displays better and stores easily."
+    },
+    {
+      id: "d100-phys", level: "phys", difficulty: 2,
+      title: "Digitize paper records older than one year where possible",
+      why: "Paper decays and occupies. Scanning bills, letters and certificates turns closets into archives you can search."
+    },
+    {
+      id: "d101-phys", level: "phys", difficulty: 2,
+      title: "Reduce your cookware to what fits your stove and cooking style",
+      why: "Most people own pans they haven't used in years. Five versatile pieces cover ninety percent of meals."
+    },
+    {
+      id: "d102-phys", level: "phys", difficulty: 1,
+      title: "Clear your vanity or dressing table; nothing sits out unless used daily",
+      why: "Vanity surfaces collect perfume bottles and unused cosmetics. Clear glass reflects light, not clutter."
+    },
+    {
+      id: "d103-phys", level: "phys", difficulty: 3,
+      title: "Do a full inventory of valuables; photograph and document for insurance",
+      why: "Inventories sound paranoid but protect real wealth. A digital catalog helps claims and clarifies what you own."
+    },
+    {
+      id: "d104-phys", level: "phys", difficulty: 1,
+      title: "Adopt a 'one-week rule' for impulse buys: wait seven days before purchasing",
+      why: "Impulse purchases fade after a week. The cooling-off period separates desire from decision."
+    },
+    {
+      id: "d105-phys", level: "phys", difficulty: 2,
+      title: "Mark this checkpoint: photograph every room again; compare to Day 55 photos",
+      why: "Fifty days of system-building show different results than fifty days of purging. Side-by-side photos reveal the transformation."
+    },
+	

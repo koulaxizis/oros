@@ -12,9 +12,11 @@
   <!-- ===== Top bar: view tabs + search ===== -->
   <header class="rx-bar">
     <nav class="rx-tabs" id="rx-tabs">
-      <button type="button" id="rx-tab-countries" class="rx-tab" aria-pressed="true"></button>
+      <button type="button" id="rx-tab-discover"  class="rx-tab" aria-pressed="true"></button>
+      <button type="button" id="rx-tab-countries" class="rx-tab" aria-pressed="false"></button>
       <button type="button" id="rx-tab-genres"    class="rx-tab" aria-pressed="false"></button>
       <button type="button" id="rx-tab-favorites" class="rx-tab" aria-pressed="false"></button>
+      <button type="button" id="rx-tab-recents"   class="rx-tab" aria-pressed="false"></button>
     </nav>
     <div class="rx-search">
       <input type="search" id="rx-search-input"
@@ -44,6 +46,9 @@
       <div class="rx-pl-name" id="rx-pl-name"></div>
       <div class="rx-pl-meta" id="rx-pl-meta"></div>
     </div>
+    <span class="rx-sleep-chip" id="rx-sleep-chip" hidden></span>
+    <button type="button" class="rx-pl-btn rx-pl-icon" id="rx-pl-sleep" aria-label="Sleep timer">☾</button>
+    <button type="button" class="rx-pl-btn rx-pl-icon" id="rx-pl-stop" aria-label="Stop">■</button>
     <button type="button" class="rx-pl-btn rx-pl-fav" id="rx-pl-fav" aria-label="Favorite"></button>
   </footer>
 

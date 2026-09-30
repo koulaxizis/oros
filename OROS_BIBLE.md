@@ -1848,3 +1848,109 @@ Verification before delivery: confirm every OLD block exists in the current file
 Apply patches in numbered order (1 → N); each patch is independent and self-contained.
 Large file deliveries (new files, rewrites) are exempt from this rule and are delivered as full files split into numbered sequential parts to prevent truncation.
 RATIONALE: plain text without fences loses leading whitespace and line structure to the markdown renderer; OLD/NEW combined in a single block defeats copy-search workflows. Separate fenced blocks are the only format where the copy button yields byte-exact, searchable text.
+
+---
+
+orOS Dice & Coin v0.38.00 — Full Feature Wave
+
+CRITICAL FIXES:
+- Fixed 3D coin flip bug (perspective → #coin-section, preserve-3d → #coin, backface on SVG)
+- Removed dead flex:1/overflow-y:auto on #result-box
+- i18n completeness: H/T → Κ/Γ, share card, copy-fail toast, aria labels
+- Plain-text clipboard share (removed incorrect esc() calls)
+- Manual dd/mm/yyyy HH:MM timestamp format (locale-independent)
+
+NEW FEATURES:
+- Free notation parser (NdM±K + kh/kl/dl suffixes)
+- Presets system (synced, cap 20, union-by-name merge)
+- Statistics dialog (dice rolls, coin flips, avg per die type, crits/fumbles)
+- History export to TXT (UTF-8 Blob download)
+- Sound effects toggle (WebAudio synth: dice noise + coin ping)
+
+VISUAL UPGRADES:
+- Die shapes via clip-path (d4 triangle, d8/d10 rhombus, d12/d20 polygons, d100 circle)
+- Unicode pips for d6 (⚀-⚅)
+- Tumble animation (3D rotation sequence)
+- Crit pulse (gold box-shadow) + Fumble wobble animation
+- Dropped dice: grayscale + tilt + scale
+- Count-up total with tabular-nums
+- Theme-aware coin (var(--accent)/var(--text-dim))
+
+DATA:
+- DATA_VER bump to 2 (+presets[])
+- Migration: v1→v2 adds presets:[] automatically
+- Merge: presets union-by-name LWW by ts, cap 20, alphabetic sort
+
+DEPS: None (pure vanilla JS/CSS/HTML)
+
+---
+
+## Wave 3 — Radio v0.3 (Discovery + Mirror Fallback)
+
+**Files touched:** radio/radio.js (v0.3), radio/radio.css, radio/index.html
+
+### What shipped
+
+Radio received discovery features and robust mirror handling. A new **Discover** view (default) shows top-voted stations worldwide plus a "Surprise me" button for random playback. Country views gained **tag filter chips** for instant client-side filtering of the most popular genres. The Radio Browser API layer now uses **sequential mirror fallback** with a sticky healthy mirror, 3-second abort ceilings, and offline-honest short-circuiting. All player controls (play/pause, sleep, stop, favorite) are wired correctly.
+
+### Architecture rules added
+
+- Sequential mirror fallback (sticky index, 3s abort, offline bypass)
+- Tag chips aggregate from cached country data (no network on filter)
+- Surprse me draws from cached topvote pool first (instant, offline-friendly)
+- Stop button clears audio src/load() to release live stream connection, hides player bar, tray chip follows zero-DOM rule
+
+### Fixes applied
+
+- FIXED: Multiple createStationCard calls passed unused isFavorite argument (cleaned signature)
+- ADDED: Discover tab + recents tab (index.html)
+- ADDED: Sleep chip + sleep button + stop button (index.html)
+- ADDED: Tag chips, sleep dialog, toast fallback CSS (radio.css)
+- FIXED: Dialog click listener attached only once at creation (not on every open)
+- ADDED: Highlight playing card with smooth scroll-in-view
+
+### Deferred (Wave 4 candidates)
+
+- Tag chips centering on mobile narrow screens
+- Consolidated createStationCard call sites (remove stray ,false arguments)
+- Discover view: add more filter options (e.g., bitrate range)
+
+---
+
+Changelog entry — orOS Screen Pet v0.3.1
+Fixes & Cleanup (pre-release stabilization)
+Floor alignment fix: corrected Math.max(b.floorY, 60) → b.floorY in updateBehavior(), petEnable(), and wireResize() to prevent pet from sinking below stage floor. Position clamping now uses floorY - canvas.height as lower bound.
+
+Dual rAF loop prevention: added rafId tracking in runtime; cancelAnimationFrame called in petDisable() to kill stale loop chains on rapid toggle.
+
+Dead code removal: removed unused functions (dparse, updateCanvasTheme, GRID_COLORS) and CSS rules (.dragging class never set). Commented-out walk-to-click handler (layer pointer-events conflict).
+
+i18n consolidation: birthday notification body now uses t() with translation keys (notif.bday.first, notif.bday.years) instead of inline EL/EN ternary.
+
+CSS scoping: [hidden] rule scoped to #pet-layer [hidden] to avoid global side effects.
+
+No data model changes: all fixes preserve existing schema (DATA_VER=1), event log contract, calendar feed, and sync behavior.
+
+---
+
+Wave 3 — Radio v0.3 (Discovery + Mirror Fallback)
+Files touched: radio/radio.js (v0.3), radio/radio.css, radio/index.html
+
+What shipped
+A new Discover view (now the default) shows top-voted stations worldwide plus a "Surprise me" tile that plays a random top station (cached pool first, offline-friendly). Country views gained tag filter chips — client-side aggregation of the most popular tags in the country, filtering is instant with no network. The Radio Browser API layer now uses sequential mirror fallback: sticky healthy mirror, 3-second abort ceiling per attempt, rotation through all mirrors before honest failure, and an offline short-circuit that fires no doomed requests. New player bar buttons: sleep timer (☾, dialog with presets) and stop (■, releases the live stream connection, hides the player bar, tray chip follows the zero-DOM rule). Now-playing card is highlighted with the accent color and scrolled into view.
+
+Architecture rules added
+rbRequest is the ONLY network gateway to Radio Browser. It rotates mirrors sequentially, sticks to the last healthy one, aborts after 3s, and refuses to fetch while offline.
+Tag chips and Surprise me operate on cached data — zero additional network.
+host.api.stop() clears the audio source and calls load() to release the stream connection (browsers keep live-stream sockets open on pause alone).
+tagFilter state resets on tab change, country tile click, and cleared search.
+Fixes applied
+Cleaned createStationCard signature (single arg, removed shadowing isFavorite param).
+Lazy favicon loading — the img element carries loading="lazy" and self-removes on error revealing the initials underneath; no preload network cost per card.
+openSleepDialog attaches its outside-click listener once at creation (was re-attached on every open).
+index.html: added rx-tab-discover and rx-tab-recents (recents was missing entirely — its renderer existed but no button), rx-sleep-chip, rx-pl-sleep, rx-pl-stop.
+radio.css: tag chips, sleep chip, sleep dialog, local toast fallback, icon-style player buttons, hidden-guard compliance.
+Deferred (next cleanup pass, not a wave)
+Search results renderSearchResults call site still passes a stray second argument (harmless).
+Tag chips centering on narrow screens (optional cosmetic).
+Discover view could gain bitrate/country filters (future feature).
