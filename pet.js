@@ -1246,6 +1246,10 @@
     hud.innerHTML =
       '<div class="pet-hud-name-row" style="display:flex;align-items:center;' +
         'justify-content:center;gap:5px;">' +
+        '<button type="button" id="pet-minimize-btn" title="' +
+          (LANG === "el" ? "Ελαχιστοποίηση" : "Minimize") + '" ' +
+          'style="border:none;background:transparent;color:inherit;padding:2px;' +
+          'cursor:pointer;line-height:0;font-size:14px;">◀</button>' +
         '<span class="pet-hud-name" id="pet-hud-name"></span>' +
         '<button type="button" id="pet-pencil-btn" title="' +
           (LANG === "el" ? "Μετονομασία" : "Rename") + '" ' +
@@ -1303,6 +1307,15 @@
       confirmNewPet();
     });
     hud.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+
+    // Minimize toggle (left of name) — collapses stats & actions, shows only name
+    var minBtn = $("pet-minimize-btn");
+    minBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      touchInteraction();
+      toggleMinimize();
+    });
+    minBtn.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
 
     // Rename entry points: pencil (single click) + dblclick (kept)
     var nameEl = $("pet-hud-name");
@@ -1402,9 +1415,37 @@
     refreshHUD(computeStats(Date.now(), state.pet));
   }
 
+  // COLLAPSED STATE — device-local memory
+  function isMinimized() {
+    return localStorage.getItem("oros-pet-minimized") === "1";
+  }
+  function setMinimized(on) {
+    try { localStorage.setItem("oros-pet-minimized", on ? "1" : "0"); } catch (e) {}
+  }
+  function toggleMinimize() {
+    var nowMin = !isMinimized();
+    setMinimized(nowMin);
+    refreshHUD(computeStats(Date.now(), state.pet));
+  }
+
   function refreshHUD(stats) {
     if (!hud || !stats || !state.pet) return;
     $("pet-hud-name").textContent = state.pet.name;
+
+    // Apply collapsed/expanded layout
+    var collapsed = isMinimized();
+    hud.classList.toggle("pet-hud-collapsed", collapsed);
+    $("pet-minimize-btn").textContent = collapsed ? "▶" : "◀";
+    $("pet-minimize-btn").title = collapsed
+      ? (LANG === "el" ? "Ανάπτυξη" : "Expand")
+      : (LANG === "el" ? "Ελαχιστοποίηση" : "Minimize");
+
+    // Show/hide dependent sections based on collapsed state
+    $("pet-hud-age").style.display = collapsed ? "none" : "block";
+    $("pet-palettes").style.display = collapsed ? "none" : "flex";
+    $("pet-stat-food").style.display = collapsed ? "none" : "flex";
+    $("pet-stat-happy").style.display = collapsed ? "none" : "flex";
+    $("pet-stat-energy").style.display = collapsed ? "none" : "flex";
 
     var d = ageDays(Date.now());
     $("pet-hud-age").textContent =
@@ -1864,6 +1905,8 @@
     runtime.birthdayShownYmd = "";               // let the loop fire if today IS the day
     runtime.birthdayFiredPetId = null;
     runtime.active = true;
+    // v0.3: apply collapsed state from localStorage
+    if (isMinimized()) hud && hud.classList.add("pet-hud-collapsed");
     refreshHUD(computeStats(Date.now(), state.pet));
     setTimeout(function () {
       speak(t("speech.hello", { name: state.pet.name }));

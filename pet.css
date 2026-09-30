@@ -76,6 +76,19 @@
   left: 16px;
   bottom: 12px;
   width: 178px;
+  transition: height 0.2s ease, padding 0.2s ease;
+}
+/* Collapsed mode: show only name row, hide everything else */
+.pet-hud-collapsed #pet-hud-age,
+.pet-hud-collapsed #pet-palettes,
+.pet-hud-collapsed .pet-stat,
+.pet-hud-collapsed .pet-hud-actions {
+  display: none !important;
+}
+.pet-hud-collapsed {
+  height: auto !important;
+  padding: 10px 12px !important;
+}
   pointer-events: auto;
   display: flex;
   flex-direction: column;

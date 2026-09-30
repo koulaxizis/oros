@@ -7,7 +7,19 @@
    insets, touch targets >= 44px.
    ============================================================ */
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  /* W1: Theme inheritance from orOS shell */
+  --accent: var(--accent, #6d4aff);
+  --bg: var(--bg, #131820);
+  --panel: var(--panel, #1b1a18);
+  --fg: var(--fg, #e8e6e3);
+  --muted: var(--muted, #9aa4b0);
+  --line: var(--line, #2e2c28);
+  --ok: var(--ok, #87cf3e);
+  --warn: var(--warn, #e0a44c);
+  --danger: var(--danger, #e06c75);
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -97,6 +109,19 @@ body {
 }
 
 .rx-search input::placeholder { color: var(--muted, #9aa4b0); }
+
+/* Clear recents button */
+.rx-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted, #9aa4b0);
+  font-size: 18px;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+}
+.rx-clear-btn:hover { color: var(--danger, #e06c75); }
 
 /* Autocomplete dropdown */
 .rx-ac {

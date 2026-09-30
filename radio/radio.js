@@ -172,6 +172,45 @@ var state = {
 
 var __orosSyncApi = null; // FIX-W2-1: properly declared
 
+// FIX-2: Tray icon registration
+var trayUnsub = null;
+
+function registerTrayIcon(){
+  var shell = window.parent || window;
+  if(!shell.orosTray || typeof shell.orosTray.register !== "function") return;
+  
+  var iconEl = document.createElement("button");
+  iconEl.className = "rx-tray-icon";
+  iconEl.innerHTML = "📻";
+  iconEl.style.cssText = "width:44px;height:44px;border:none;background:transparent;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;";
+  
+  iconEl.addEventListener("click", function(){
+    if(shell.orosShell && typeof shell.orosShell.openApp === "function"){
+      shell.orosShell.openApp("radio");
+    }
+  });
+  
+  try{
+    trayUnsub = shell.orosTray.register("radio", iconEl, {
+      title: "Radio",
+      active: false
+    });
+    
+    var unsub = host.api.subscribe(function(hostState){
+      if(trayUnsub && typeof trayUnsub.update === "function"){
+        trayUnsub.update({
+          active: hostState.playing,
+          icon: hostState.playing ? "🔊" : "📻"
+        });
+      }
+    });
+    
+    window.addEventListener("beforeunload", function(){
+      if(unsub) unsub();
+    });
+  }catch(e){ /* tray not available */ }
+}
+
 /* ===== SYNC CONTRACT (Bible Part V/VI, 5-arg) ===== */
 
 function saveLocal(){ 
@@ -312,12 +351,22 @@ function hostWin(){
 
 function ensureHost(){
   var w = hostWin();
-  if(w.__orosRadioHost && w.__orosRadioHost.audio) return w.__orosRadioHost;
+  if(w.__orosRadioHost && w.__orosRadioHost.audio &&
+     w.__orosRadioHost.audio.isConnected) return w.__orosRadioHost;
 
-  var audio = w.document.createElement("audio");
-  audio.preload = "none";
-  audio.style.display = "none";
-  try{ w.document.body.appendChild(audio); }catch(e){}
+  // FIX-RX-5: reuse ANY existing tagged audio element from a
+  // previous generation instead of appending a second one
+  // (duplicate element = simultaneous playback). An audio element
+  // REMOVED from the DOM keeps playing — it must be reused, not
+  // replaced.
+  var audio = w.document.querySelector("audio[data-oros-radio]");
+  if(!audio){
+    audio = w.document.createElement("audio");
+    audio.preload = "none";
+    audio.style.display = "none";
+    try{ w.document.body.appendChild(audio); }catch(e){}
+  }
+  audio.setAttribute("data-oros-radio", "1");
 
   var host = {
     audio: audio,
@@ -352,6 +401,14 @@ function ensureHost(){
   host.api = {
     play: function(station){
       if(!station || !station.url_resolved) return false;
+      // FIX-RX-4: force-abort the previous stream BEFORE switching.
+      // Simply overwriting .src can leave the old connection live
+      // while the new one starts (overlapping audio).
+      if(host.current){
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load(); // abort the previous network connection
+      }
       host.current = station;
       host.flags.buffering = true;
       host.flags.error = false;
@@ -364,6 +421,12 @@ function ensureHost(){
         host.notify();
       });
       host.notify();
+      
+      // FIX-3: Notify when playback starts
+      setTimeout(function(){
+        transientNote(station.name);
+      }, 500);
+      
       return true;
     },
     toggle: function(){
@@ -480,6 +543,13 @@ function saveRecents(){
   try{
     localStorage.setItem(RECENTS_KEY, JSON.stringify(state.recents.slice(0, RECENTS_CAP)));
   }catch(e){}
+}
+
+function clearRecents(){
+  state.recents = [];
+  saveRecents();
+  renderMain();
+  transientNote("Πρόσφατοι σταθμοί εκκαθαρίστηκαν");
 }
 
 function addRecent(station){
@@ -905,6 +975,13 @@ function renderMain(){
   
   // Update player UI to match host state
   updatePlayerUI();
+  
+  // FIX-6: Keep player visible if audio is playing
+  var player = $("rx-player");
+  var hostState = getHostState();
+  if(player && hostState.current && !player.hidden){
+    player.removeAttribute("hidden");
+  }
 }
 
 function renderCountries(container){
@@ -1189,6 +1266,9 @@ function playStation(station){
   
   updatePlayerUI();
   highlightPlayingCard(station.stationuuid);
+  
+  // FIX-3: Send notification
+  transientNote(station.name);
 }
 
 // W3-7: single-source highlight — clears any previous .playing
@@ -1385,6 +1465,15 @@ function setupSearch(){
   var input = $("rx-search-input");
   if(!input) return;
   
+  var clearBtn = $("rx-clear-recents");
+  if(clearBtn){
+    clearBtn.addEventListener("click", function(){
+      if(confirm("Εκκαθάριση όλων των πρόσφατων σταθμών;")){
+        clearRecents();
+      }
+    });
+  }
+  
   // Focus shows recents suggestions
   input.addEventListener("focus", function(){
     if(state.recents.length === 0) return;
@@ -1411,8 +1500,6 @@ function setupSearch(){
       var self = this;
       state.searchTimer = setTimeout(function(){
         searchStations(val).then(function(results){
-          // Only paint if input still holds the query (stale
-          // responses never overwrite newer typing)
           if(self.value.trim() === val){
             var rect = self.getBoundingClientRect();
             renderAutocomplete(results.slice(0, 8), rect);
@@ -1462,6 +1549,15 @@ function setupSearch(){
       state.acSel = -1;
     }, 200);
   });
+  
+  // Hook into renderMain to toggle clear button visibility
+  var origRenderMain = renderMain;
+  renderMain = function(){
+    origRenderMain();
+    if(clearBtn){
+      clearBtn.style.display = (state.viewMode === "recents" && state.recents.length) ? "" : "none";
+    }
+  };
 }
 
 /* ===== PLAYER CONTROLS ===== */
@@ -1646,8 +1742,16 @@ function wire(){
 /* ===== BOOT ===== */
 
 function start(){
-  registerSync();   // slice ASAP so a pull can land early
+  registerSync();
   loadRecents();
+  
+  // FIX-6: Check if audio is already playing from shell
+  var initialState = getHostState();
+  if(initialState.playing){
+    var player = $("rx-player");
+    if(player) player.removeAttribute("hidden");
+  }
+  
   renderMain();
   wire();
   consumeDeepLink();

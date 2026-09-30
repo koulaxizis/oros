@@ -689,6 +689,31 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
   color: var(--text-dim);
 }
 
+/* Insights trend strip (90d synopsis) */
+.ins-timeline {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px 0 0;
+  background: var(--panel-bg);
+}
+.ins-timeline .col-lab { margin-bottom: 8px; }
+.ins-timeline .tl-bars { height: 44px; }
+
+.ins-timeline {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+  background: var(--panel-bg);
+}
+.ins-timeline .col-lab {
+  margin-bottom: 8px;
+}
+.ins-timeline .tl-bars {
+  height: 44px;
+}
+
 /* ---------- 9. Mobile-first ---------- */
 @media (max-width: 480px) {
   #cyclemain { padding: 10px 8px 40px; }

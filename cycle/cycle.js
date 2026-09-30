@@ -110,6 +110,7 @@
       "ins.med.title": "Pain relief taken",
       "ins.days.n":    "{n} days",
       "ins.ctx.none":  "Nothing logged in this range.",
+      "ins.strip":     "Timeline — last 90 days",
       "col.menu.rename": "Rename",
       "col.menu.del":    "Delete",
       "col.dup":         "That value already exists",
@@ -218,6 +219,7 @@
       "ins.med.title": "Λήψεις παυσίπονων",
       "ins.days.n":    "{n} ημέρες",
       "ins.ctx.none":  "Τίποτα καταγεγραμμένο σε αυτό το εύρος.",
+      "ins.strip":     "Χρονογραμμή — τελευταίες 90 ημέρες",
       "col.menu.rename": "Μετονομασία",
       "col.menu.del":    "Διαγραφή",
       "col.dup":         "Υπάρχει ήδη αυτή η τιμή",
@@ -865,7 +867,7 @@
     var inp = document.createElement("input");
     inp.type = "date";
     inp.className = "tl-date";
-    inp.value = dayKey(todayTs());
+    inp.value = timelineAnchor ? timelineAnchor : dayKey(todayTs());
     inp.setAttribute("aria-label", t("tl.pick"));
     inp.title = t("tl.pick");
     inp.addEventListener("change", function () {
@@ -874,28 +876,8 @@
       openDay = "d-" + v;
       managing = false;
       timelineAnchor = null;
-      applyView();
-    });
-    return inp;
-  }
-
-  // date picker — the "I forgot to log" door: opens the day
-  // editor for ANY date, through the same openDay path every
-  // other entry uses (bar clicks, dots, log-today). Nothing
-  // else knows it exists — pure UI, zero state, zero sync.
-  function mkDatePicker() {
-    var inp = document.createElement("input");
-    inp.type = "date";
-    inp.className = "tl-date";
-    inp.value = dayKey(todayTs());
-    inp.setAttribute("aria-label", t("tl.pick"));
-    inp.title = t("tl.pick");
-    inp.addEventListener("change", function () {
-      var v = inp.value;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
-      openDay = "d-" + v;
-      managing = false;
-      timelineAnchor = null;
+      // keep picker synced with current view
+      inp.value = dayKey(todayTs());
       applyView();
     });
     return inp;
@@ -1254,6 +1236,7 @@
     back.setAttribute("aria-label", t("dg.back"));
     back.addEventListener("click", function () {
       openDay = null;
+      timelineAnchor = null;
       applyView();
     });
     dh.appendChild(back);
@@ -2252,6 +2235,11 @@
       host.appendChild(nn);
     }
 
+    // Timeline synopsis — compact trend strip in Insights
+    // Fixed ~90d window, no zoom controls, purely observational
+    var synth = renderInsightTimelineStrip();
+    if (synth) host.appendChild(synth);
+
     appendResetLink(host);
   }
 
@@ -2487,6 +2475,65 @@
   function pdfClean(s) {
     if (Array.isArray(s)) return s.map(pdfClean);
     return String(s).normalize("NFC");
+  }
+  
+    // Compact trend strip for Insights — fixed 90d window
+  function renderInsightTimelineStrip() {
+    if (!state.periods.length && !state.days.length) return null;
+    var host = document.createElement("div");
+    host.className = "ins-timeline";
+
+    var hdr = document.createElement("div");
+    hdr.className = "col-lab";
+    hdr.textContent = t("ins.strip");
+    host.appendChild(hdr);
+
+    // Fixed 90-day window ending today
+    var endTs = todayTs();
+    var startTs = endTs - 90 * DAY_MS;
+    var scale = 100 / 90;
+
+    var strip = document.createElement("div");
+    strip.className = "tl-bars";
+
+    // Grid (weeks only, simplified)
+    var grid = document.createElement("div");
+    grid.className = "tl-grid";
+    var wkStart = new Date(startTs);
+    while (wkStart.getTime() <= endTs) {
+      var pct = ((wkStart.getTime() - startTs) / DAY_MS) * scale;
+      var gl = document.createElement("div");
+      gl.className = "tl-gl major";
+      gl.style.left = pct + "%";
+      grid.appendChild(gl);
+      wkStart.setDate(wkStart.getDate() + 7);
+    }
+    strip.appendChild(grid);
+
+    // Period bars
+    state.periods.forEach(function (p) {
+      var pEnd = (p.end !== null) ? p.end : endTs;
+      if (p.start > endTs || pEnd < startTs) return;
+      var sX = Math.max(0, (p.start - startTs) / DAY_MS);
+      var eX = Math.min(90, (pEnd - startTs) / DAY_MS + 1);
+      var bar = document.createElement("div");
+      bar.className = "tl-bar per" + p.flow;
+      bar.style.left = (sX * scale) + "%";
+      bar.style.width = (Math.max(1, eX - sX) * scale) + "%";
+      strip.appendChild(bar);
+    });
+
+    // Today line
+    if (startTs <= endTs && endTs < startTs + 90 * DAY_MS) {
+      var tm = document.createElement("div");
+      tm.className = "tl-today";
+      var tPct = ((endTs - startTs) / DAY_MS) * scale;
+      tm.style.left = tPct + "%";
+      strip.appendChild(tm);
+    }
+
+    host.appendChild(strip);
+    return host;
   }
 
   function exportDoctorReport() {
