@@ -672,10 +672,12 @@ function fetchGenres(){
   var cached = getCached("genres");
   if(cached) return Promise.resolve(cached);
   
-  return rbRequest("/json/tags").then(function(data){
+  // Diagnostic-proven: plain /json/tags surfaced decade tags at
+  // the top. Explicit server-side ordering (order=stationcount,
+  // reverse, hidebroken) returns real genres (pop, rock, news…).
+  return rbRequest("/json/tags?order=stationcount&reverse=true&hidebroken=true&limit=100").then(function(data){
     var filtered = data.filter(function(g){ return g.stationcount >= 50; });
     filtered.sort(function(a,b){ return b.stationcount - a.stationcount; });
-    filtered = filtered.slice(0, 100);
     setCached("genres", filtered);
     return filtered;
   }).catch(function(err){
@@ -1626,13 +1628,20 @@ var RX_SKIN_COLORS = {
 };
 
 function shellAccent(){
+  // Read the LIVE computed --accent from the shell root — the real
+  // single source of truth. Survives skin renames/additions; the
+  // static RX_SKIN_COLORS mirror went stale and fell back to the
+  // hardcoded purple.
+  try{
+    var v = getComputedStyle(window.parent.document.documentElement)
+            .getPropertyValue("--accent");
+    v = (v || "").trim();
+    if(v) return v;
+  }catch(e){}
+  // Legacy fallback: stale-shell static map
   try{
     var skin = window.parent.document.documentElement.getAttribute("data-skin");
     if(skin && RX_SKIN_COLORS[skin]) return RX_SKIN_COLORS[skin];
-    // Defensive fallback: a future shell build may publish the
-    // orosAppTheme contract — if it does, honor it.
-    var w = window.parent;
-    if(w && w.orosAppTheme && w.orosAppTheme.accent) return w.orosAppTheme.accent;
   }catch(e){}
   return "#6d4aff";
 }
@@ -1743,6 +1752,11 @@ function wire(){
 
 function start(){
   registerSync();
+  // FIX-F1: boot-load the synced slice. state.data stayed null on
+  // boot, so favoriteToggle()'s null guard made every heart click
+  // a silent no-op — isFavorite() always returned false and the
+  // toast always said "Removed from favorites".
+  state.data = sliceGet();
   loadRecents();
   
   // FIX-6: Check if audio is already playing from shell

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator — orOS</title>
+<link rel="stylesheet" href="calculator.css">
+</head>
+<body>
+<div class="calc-app">
+  <div class="calc-wrap">
+    <div class="calc-topbar">
+      <button class="calc-pill" id="histBtn" type="button" data-i18n="history" title="History">History</button>
+      <button class="calc-pill" id="exportBtn" type="button" data-i18n="exportCSV" title="Export CSV">Export CSV</button>
+      <button class="calc-pill" id="soundBtn" type="button" aria-label="sounds">🔊</button>
+      <button class="calc-pill" id="resetBtn" type="button" data-i18n="resetAll" title="Reset All">Reset All</button>
+    </div>
+
+    <div class="calc-card">
+      <div class="calc-face" id="face"></div>
+
+      <div class="calc-display">
+        <div class="calc-expr" id="expr"></div>
+        <div class="calc-result" id="result">0</div>
+      </div>
+
+      <div class="calc-hist-panel" id="histPanel">
+        <div class="calc-hist-list" id="histList"></div>
+      </div>
+
+      <button class="calc-share-btn" id="shareBtn" type="button" data-i18n="sharePrank">📋 Copy the joke</button>
+
+      <div class="calc-row">
+        <div class="calc-switch" id="modeSwitch" role="switch" tabindex="0" aria-checked="false">
+          <div class="calc-knob"></div>
+          <span data-i18n="modeNormal">Normal</span><span data-i18n="modeTroll">Troll</span>
+        </div>
+        <div class="calc-skin-strip" id="skinStrip"></div>
+      </div>
+
+      <div class="calc-pad" id="pad">
+        <button class="calc-key util" data-k="C" data-i18n-title="clear" title="Clear">AC</button>
+        <button class="calc-key util" data-k="⌫">⌫</button>
+        <button class="calc-key util" data-k="%">%</button>
+        <button class="calc-key op" data-k="/">÷</button>
+
+        <button class="calc-key" data-k="7">7</button><button class="calc-key" data-k="8">8</button>
+        <button class="calc-key" data-k="9">9</button><button class="calc-key op" data-k="*">×</button>
+
+        <button class="calc-key" data-k="4">4</button><button class="calc-key" data-k="5">5</button>
+        <button class="calc-key" data-k="6">6</button><button class="calc-key op" data-k="-">−</button>
+
+        <button class="calc-key" data-k="1">1</button><button class="calc-key" data-k="2">2</button>
+        <button class="calc-key" data-k="3">3</button><button class="calc-key op" data-k="+">+</button>
+
+        <button class="calc-key" data-k="±">±</button><button class="calc-key" data-k="0">0</button>
+        <button class="calc-key" data-k=".">.</button><button class="calc-key eq" data-k="=">=</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="calculator.js"></script>
+</body>
+</html>

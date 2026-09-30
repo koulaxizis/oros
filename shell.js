@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.05";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.07";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2798,6 +2798,7 @@
         '<div class="sc-cap">' + escapeHtml(window.t("sc.info.cap")) + '</div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.radio")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +

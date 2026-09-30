@@ -89,6 +89,7 @@
   height: auto !important;
   padding: 10px 12px !important;
 }
+#pet-hud {
   pointer-events: auto;
   display: flex;
   flex-direction: column;
