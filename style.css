@@ -1170,7 +1170,28 @@ body {
 .sc-cred { color: var(--text-dim); }
 
 /* ===== v0.18.0: weather chip (taskbar) ===== */
-#wx-chip {
+#rx-tray-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 10px;
+  cursor: pointer;
+  max-width: 180px;
+}
+
+#rx-tray-chip[data-state="false"] {
+  color: var(--text-dim);
+}
+
+#rx-tray-chip[data-state="true"] .rx-tray-eq {
+  color: var(--accent);
+}
   background: transparent;
   border: none;
   cursor: pointer;

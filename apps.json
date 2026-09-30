@@ -159,6 +159,14 @@
       "icon": "dice",
       "url": "dice/",
       "type": "internal"
+    },
+	{
+      "id": "radio",
+      "name": "Radio",
+      "category": "sound",
+      "icon": "radio",
+      "url": "radio/",
+      "type": "internal"
     }
   ]
 }

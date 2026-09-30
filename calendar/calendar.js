@@ -116,6 +116,14 @@
       "lbl.feed.kanban": "Kanban",
       "feed.cycle.period": "Period",
       "feed.mood.entry": "Mood entry",
+      "lbl.feed.pet": "Screen Pet",
+      "feed.pet.feed": "{name} was fed",
+      "feed.pet.pet": "{name} was petted",
+      "feed.pet.sleep": "{name} went to sleep",
+      "feed.pet.wake": "{name} woke up",
+      "feed.pet.newpet": "{name} joined the family",
+      "feed.pet.catch": "{name} caught the ball",
+      "feed.pet.bday": "{name}'s birthday",
       "lbl.feed.custom": "Custom Feed",
       "lbl.feeds": "App feeds",
       "lbl.feed.ro": "Read-only — managed by its app",
@@ -214,6 +222,14 @@
       "lbl.feed.kanban": "Kanban",
       "feed.cycle.period": "Περίοδος",
       "feed.mood.entry": "Καταγραφή διάθεσης",
+      "lbl.feed.pet": "Screen Pet",
+      "feed.pet.feed": "{name} τάγηθηκε",
+      "feed.pet.pet": "{name} χαιδεύτηκε",
+      "feed.pet.sleep": "{name} πήγε για ύπνο",
+      "feed.pet.wake": "{name} ξύπνησε",
+      "feed.pet.newpet": "{name} ήρθε στην οικογένεια",
+      "feed.pet.catch": "{name} έπιασε την μπάλα",
+      "feed.pet.bday": "Γενέθλια του/της {name}",
       "lbl.feed.custom": "Προσαρμοσμένο Feed",
       "lbl.feeds": "Ροές εφαρμογών",
       "lbl.feed.ro": "Μόνο ανάγνωση — διαχειρίζεται η εφαρμογή της",
@@ -368,6 +384,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-mood",    color: "#a78bfa" },   // purple — Mood
     { id: "lbl-feed-habits",  color: "#4ec9b0" },   // teal — Habits
     { id: "lbl-feed-kanban",  color: "#7aa2f7" },   // blue — Kanban (teal taken by Habits)
+    { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
   function feedLabelName(l) {
@@ -377,6 +394,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-mood") return t("lbl.feed.mood");
     if (l.id === "lbl-feed-habits") return t("lbl.feed.habits");
     if (l.id === "lbl-feed-kanban") return t("lbl.feed.kanban");
+    if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     return t("lbl.feed.custom");
   }
 
@@ -1122,6 +1140,101 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Wave 5 — Screen Pet read-only feed (pet.js v0.3). Two sources:
+  //   1. "oros-pet-data" (SYNCED identity) → birthday row on every
+  //      local-day anniversary of birthTs (birth day excluded) —
+  //      every device agrees on the day, even with an empty log.
+  //   2. "oros-pet-events" (DEVICE-LOCAL rolling log) → care rows
+  //      (fed/petted/sleep/wake/new pet/catch) on their day.
+  // Opt-out: "oros-pet-calendar-sync" === "0" (device-local, shell
+  // toggle). Feed rows are never stored, synced or exported;
+  // micro-cached ~1s like the other feeds. Corrupt/absent blobs
+  // simply yield no rows — standalone load is unaffected.
+  var PET_DATA_KEY   = "oros-pet-data";
+  var PET_LOG_KEY    = "oros-pet-events";
+  var PET_OPTOUT_KEY = "oros-pet-calendar-sync";
+  var petCache = { when: 0, optOut: false, petData: null, logData: null };
+
+  function petRaw() {
+    var now = Date.now();
+    if (now - petCache.when > 1000) {
+      try {
+        petCache.optOut = localStorage.getItem(PET_OPTOUT_KEY) === "0";
+        petCache.petData = JSON.parse(localStorage.getItem(PET_DATA_KEY)) || null;
+        petCache.logData = JSON.parse(localStorage.getItem(PET_LOG_KEY)) || null;
+      } catch (e) {
+        petCache.petData = null;
+        petCache.logData = null;
+      }
+      petCache.when = now;
+    }
+    return petCache;
+  }
+
+  // Log type → i18n title key. "birthday" log entries are skipped:
+  // the computed birthTs row above is the richer source and the
+  // two must never double up on the same cell.
+  var PET_TITLE_KEYS = {
+    feed:   "feed.pet.feed",
+    pet:    "feed.pet.pet",
+    sleep:  "feed.pet.sleep",
+    wake:   "feed.pet.wake",
+    newpet: "feed.pet.newpet",
+    catch:  "feed.pet.catch"
+  };
+
+  function petFeedOn(dateStr) {
+    var c = petRaw();
+    if (c.optOut) return [];
+    if (!labelVisible("lbl-feed-pet")) return [];
+
+    var out = [];
+    var pet = (c.petData && c.petData.pet &&
+               typeof c.petData.pet === "object") ? c.petData.pet : null;
+
+    // 1. Birthday — computed from the synced birthTs
+    if (pet && typeof pet.birthTs === "number" && isFinite(pet.birthTs)) {
+      var b = new Date(pet.birthTs);
+      var pd = dateStr.split("-");
+      var cell = new Date(+pd[0], +pd[1] - 1, +pd[2]);
+      if (!isNaN(cell.getTime()) && cell.getMonth() === b.getMonth() &&
+          cell.getDate() === b.getDate() &&
+          cell.getFullYear() > b.getFullYear()) {
+        out.push({
+          id: "pet-bday-" + dateStr,        // per-render key, never stored
+          title: t("feed.pet.bday")
+            .replace("{name}", String(pet.name || "?")),
+          labelId: "lbl-feed-pet",
+          start: null,                      // all-day
+          _feed: true,
+          _petOpen: true
+        });
+      }
+    }
+
+    // 2. Care events from the device-local log (local YMD match —
+    // same convention as the Mood feed's tsToLocalYmd)
+    var events = (c.logData && Array.isArray(c.logData.events))
+      ? c.logData.events : [];
+    events.forEach(function (ev) {
+      if (!ev || typeof ev.ts !== "number" || !isFinite(ev.ts)) return;
+      var key = PET_TITLE_KEYS[String(ev.type)];
+      if (key === undefined) return;
+      if (tsToLocalYmd(ev.ts) !== dateStr) return;
+      out.push({
+        id: "pet-" + ev.id + "-" + dateStr, // per-render key, never stored
+        title: t(key)
+          .replace("{name}", String(ev.name || (pet && pet.name) || "?")),
+        labelId: "lbl-feed-pet",
+        start: null,                        // all-day
+        _feed: true,
+        _petOpen: true,
+        _petEvId: String(ev.id)
+      });
+    });
+    return out;
+  }
+
     function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
@@ -1131,6 +1244,7 @@ function transientNote(title, body) {
     .concat(cycleFeedOn(dateStr))
     .concat(moodFeedOn(dateStr))
     .concat(kanbanFeedOn(dateStr))
+    .concat(petFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
@@ -1164,6 +1278,12 @@ function transientNote(title, body) {
         p.__orosOpenKanbanCard(ev._kanban.boardId,
                                ev._kanban.colId,
                                ev._kanban.cardId);
+      } else if (ev._petOpen &&
+                 typeof p.__orosOpenPet === "function") {
+        // Screen Pet is a SHELL component — the bridge lives on the
+        // parent, not this iframe. Care rows pass the log entry id;
+        // the birthday row passes null (plain log, no highlight).
+        p.__orosOpenPet(ev._petEvId || null);
       }
     } catch (e) {}
   }
@@ -3121,6 +3241,7 @@ function transientNote(title, body) {
     cycleCache = { when: 0, data: null };
     moodCache = { when: 0, data: null };
     kanbanCache = { when: 0, data: null };
+    petCache = { when: 0, optOut: false, petData: null, logData: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
     if (info && info.merged) transientNote(t("sync.merged"));   // receipt, not "Saved"

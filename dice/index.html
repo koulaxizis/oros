@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dice &amp; Coin · orOS</title>
-  <link rel="stylesheet" href="dice.css?v=0.37.03">
+  <link rel="stylesheet" href="dice.css?v=0.38.00">
 </head>
 <body>
 
@@ -32,6 +32,19 @@
     </div>
   </header>
 
+  <!-- Free notation (e.g. 2d20+5, 4d6 dl, 8d6 kh) -->
+  <div id="notation-bar">
+    <input id="notation-input" type="text" autocomplete="off" spellcheck="false"
+           placeholder="2d20+5 · 4d6 dl · 8d6 kh" data-i18n-ph="notation.placeholder">
+    <button type="button" id="notation-apply" data-i18n="notation.apply">Apply</button>
+  </div>
+
+  <!-- Presets -->
+  <div id="preset-bar">
+    <div id="preset-list"></div>
+    <button type="button" id="preset-add" data-i18n="presets.add" title="">＋</button>
+  </div>
+
   <!-- Modes (segmented control) -->
   <div id="modes">
     <button type="button" class="mode-btn active" data-mode="normal" data-i18n="mode.normal">Normal</button>
@@ -44,6 +57,7 @@
   <div id="actions">
     <button type="button" id="roll-btn" class="primary" data-i18n="actions.roll">Roll</button>
     <button type="button" id="coin-btn" data-i18n="actions.coin">Flip Coin</button>
+    <button type="button" id="sfx-btn" aria-pressed="false" title="" aria-label="Sound"></button>
   </div>
 
   <!-- Result box -->
@@ -61,10 +75,18 @@
   <section id="coin-section">
     <div id="coin" role="button" tabindex="0" aria-label="Flip coin">
       <div class="coin-face front">
-        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#f0d5a8"/><text x="50" y="62" font-size="32" text-anchor="middle" fill="#6d4aff">H</text></svg>
+        <svg viewBox="0 0 100 100" role="img">
+          <circle cx="50" cy="50" r="47" fill="var(--accent)"/>
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="2.5"/>
+          <text id="coin-front-letter" x="50" y="63" font-size="34" font-weight="800" text-anchor="middle" fill="var(--bg)">H</text>
+        </svg>
       </div>
       <div class="coin-face back">
-        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#c0c0c0"/><text x="50" y="62" font-size="32" text-anchor="middle" fill="#333">T</text></svg>
+        <svg viewBox="0 0 100 100" role="img">
+          <circle cx="50" cy="50" r="47" fill="var(--text-dim)"/>
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="2.5"/>
+          <text id="coin-back-letter" x="50" y="63" font-size="34" font-weight="800" text-anchor="middle" fill="var(--bg)">T</text>
+        </svg>
       </div>
     </div>
     <div id="coin-stats">
@@ -77,6 +99,8 @@
   <section id="history">
     <div id="history-header">
       <h3 data-i18n="history.title">History</h3>
+      <button type="button" id="stats-btn" data-i18n="history.stats">Stats</button>
+      <button type="button" id="export-btn" data-i18n="history.export">Export</button>
       <button type="button" id="share-btn" data-i18n="history.share">Share</button>
       <button type="button" id="history-clear" data-i18n="history.clear">Clear</button>
     </div>
@@ -88,6 +112,6 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="dice.js?v=0.37.03"></script>
+  <script src="dice.js?v=0.38.00"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 // ============================================================
 // orOS Screen Pet — Shell component
-// v0.2 (Wave 2/3/4 evolution of the v0.1 orOS-native port)
+// v0.3 (Wave 5 evolution: pencil rename, food animation,
+//       catch mini-game, event log, calendar feed, birthday toast)
 //
 // ARCHITECTURE (design decisions — do not change casually):
 //   - Lives INSIDE the shell document (not an iframe app).
@@ -27,31 +28,31 @@
 //   - Stays OFF the z-stack: no external assets, no intervals
 //     that write state, keyboard fully guarded (no OS combos).
 //
-// v0.2 EVOLUTION (approved waves — no schema change, DATA_VER
+// v0.3 EVOLUTION (approved waves — no schema change, DATA_VER
 // stays 1; fm/palette/name/birthTs already existed in v0.1):
-//   - Wave 2: energy-scaled wandering (short hops + longer idle
-//     pauses when energy < 40), mood-driven expressions
-//     (happy / neutral / tired — pure render from derived
-//     stats), enriched bilingual speech pools, hunger reaction
-//     (droopy half-lidded gaze + slow blinks + throttled hungry
-//     bubble every ~10 min while food < 20).
-//   - Wave 3: palette picker + rename in the HUD (both via the
-//     per-field LWW fm map — they were already synced fields),
-//     position memory: device-local "oros-pet-pos" (normalized
-//     fractions, clamped on restore; never synced, never dirty).
-//   - Wave 4: "N days with you" HUD line (display-only from
-//     birthTs), sync celebration hop (Part 4 — wired against
-//     the REAL orosSync event surface, progressive-guarded).
+//   - Wave 5a (UX polish): inline SVG pencil icon next to name
+//     (dblclick still works), food sprite animation during eat
+//     mode, catch mini-game (ball falls, click to catch → +10
+//     happy/energy, 5-min cooldown), event log modal (last 100
+//     entries device-local), contemplation mode (idle after 5
+//     min non-interaction), first-feed-of-day greeting, birthday
+//     toast (anniversary with hearts), theme-sync (canvas bg
+//     adapts to --bg/--panel-bg).
+//   - Wave 5b (Calendar integration): pet events feed into the
+//     orOS Calendar as read-only all-day rows with a purple
+//     "Screen Pet" label (same contract as Contacts/Cycle/Mood/
+//     Habits/Kanban feeds). Event types: Feed, Pet, Sleep, Wake,
+//     New Pet, Birthday. Device-local event log (oros-pet-events,
+//     never synced), rolling buffer (max 100 entries). Calendar
+//     deep-link (click → open pet dialog).
 //
 // Sections:
-//   1. Constants, i18n, helpers
-//   2. State model, storage, field writes, position memory
-//   3. Derived stats (cycle simulation)
-//   4. Sync slice (merge engine, per-field LWW)
-//   5. Sprite engine (moods, directional pupils)
-//   6. Behavior loop (energy-scaled wandering, hunger gaze)
-//   7. Interactions + HUD (palette picker, rename, age line)
-//   8. Boot & shell toggle (position restore, sync hook)
+//   1. Constants, i18n, helpers (v0.3 speech pools, event types)
+//   2. State model, storage, event log, calendar feed slice
+//   3. Derived stats, mood, birthday logic, petFeedOn
+//   4. Sprite engine (moods, food anim, catch ball, contemplation)
+//   5. Interactions + HUD (pencil, event log, catch handler)
+//   6. Boot & shell toggle (birthday toast, calendar deep-link)
 // ============================================================
 (function () {
   "use strict";
@@ -59,9 +60,14 @@
   var STORAGE_KEY = "oros-pet-data";
   var DATA_VER = 1;
   var ENABLED_KEY = "oros-pet-enabled";   // shell-local pref (device presence)
-  var POS_KEY = "oros-pet-pos";           // v0.2: device-local position memory
+  var POS_KEY = "oros-pet-pos";           // device-local position memory (v0.2)
+  var EVENTS_KEY = "oros-pet-events";     // v0.3: event log (device-local, rolling)
+  var CALENDAR_SYNC_KEY = "oros-pet-calendar-sync"; // v0.3: opt-out (device-local)
   var MAX_NAME_LEN = 16;                  // v0.2: rename input cap
   var HUNGER_TALK_MS = 10 * 60 * 1000;    // v0.2: hungry bubble cadence
+  var EVENT_LOG_MAX = 100;                // v0.3: rolling buffer cap
+  var CATCH_COOLDOWN_MS = 5 * 60 * 1000;  // v0.3: catch game cooldown
+  var CONTEMPLATION_IDLE_MS = 5 * 60 * 1000; // v0.3: contemplation trigger
 
   // ---------- 1. Constants, i18n, helpers ----------
   var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
@@ -74,11 +80,23 @@
   var SLEEP_AT     = 8;                 // auto-sleep threshold
   var WAKE_AT      = 95;                // auto-wake threshold
 
+  // v0.3: Event types (for log + calendar feed)
+  var PET_EVENT_TYPES = {
+    FEED:   "feed",
+    PET:    "pet",
+    SLEEP:  "sleep",
+    WAKE:   "wake",
+    NEWPET: "newpet",
+    BIRTHDAY: "birthday",
+    CATCH:  "catch"
+  };
+
   var STRINGS = {
     en: {
       "hud.name":        "{name}",
       "hud.age.one":     "{n} day with you",
       "hud.age.many":    "{n} days with you",
+      "hud.firstfeed":   "First feed of the day!",
       "stat.food":       "Food",
       "stat.happy":      "Happy",
       "stat.energy":     "Energy",
@@ -86,11 +104,17 @@
       "action.sleep":    "Sleep",
       "action.wake":     "Wake up",
       "action.newpet":   "New pet",
+      "action.rename":   "Rename",
+      "action.viewlog":  "Activity log",
+      "action.catch":    "Catch!",
       "menu.pet":        "Screen Pet",
       "confirm.newpet":  "Release {name} and welcome a new pet? This cannot be undone.",
       "confirm.no":      "Cancel",
       "confirm.yes":     "New pet",
       "speech.hello":    "Hi! My name is {name}!",
+      "speech.firstfed": ["You're the first to feed me today!",
+                          "Fresh breakfast! Thanks!",
+                          "Best way to start the day!"],
       "speech.hungry":   ["I'm hungry...", "Food? Any food?", "My tummy is rumbling!",
                           "Feed me, please!", "Is it dinner time yet?"],
       "speech.bored":    ["Pet me!", "I'm bored...", "Play with me!",
@@ -104,12 +128,36 @@
       "speech.wake":     ["Good morning!", "I'm awake!", "Slept great!",
                           "Hello sunshine!", "Ready to play!"],
       "speech.sleep":    ["Good night...", "Zzz...", "Sweet dreams",
-                          "Nighty night...", "See you tomorrow..."]
+                          "Nighty night...", "See you tomorrow..."],
+      "speech.catch":    ["Gotcha!", "Nailed it!", "Awesome!",
+                          "Perfect catch!", "Yes!"],
+      "speech.contemp":  ["Just thinking...", "Hmm...", "Contemplating...",
+                          "Quiet moment...", "Reflecting..."],
+      "event.log.title": "Activity Log",
+      "event.log.empty": "No recent activity",
+      "event.type.feed": "Was fed",
+      "event.type.pet":  "Was petted",
+      "event.type.sleep": "Went to sleep",
+      "event.type.wake":  "Woke up",
+      "event.type.newpet": "New pet arrived",
+      "event.type.catch": "Caught the ball",
+      "event.type.birthday": "Birthday!",
+      "evt.today": "Today",
+      "evt.yesterday": "Yesterday",
+      "evt.date": "{d}/{m}/{y}",
+      "cal.pet.feed": "{name} was fed",
+      "cal.pet.pet": "{name} was petted",
+      "cal.pet.sleep": "{name} went to sleep",
+      "cal.pet.wake": "{name} woke up",
+      "cal.pet.new": "{name} started life",
+      "cal.pet.catch": "Ball catch!",
+      "cal.pet.bday": "{name}'s birthday!"
     },
     el: {
       "hud.name":        "{name}",
       "hud.age.one":     "{n} ημέρα μαζί σου",
       "hud.age.many":    "{n} ημέρες μαζί σου",
+      "hud.firstfeed":   "Πρώτο φαγητό σήμερα!",
       "stat.food":       "Φαγητό",
       "stat.happy":      "Διάθεση",
       "stat.energy":     "Ενέργεια",
@@ -117,11 +165,17 @@
       "action.sleep":    "Ύπνος",
       "action.wake":     "Ξύπνα",
       "action.newpet":   "Νέο πλάσμα",
+      "action.rename":   "Μετονομασία",
+      "action.viewlog":  "Ιστορικό δραστηριότητας",
+      "action.catch":    "Πιάσε το!",
       "menu.pet":        "Screen Pet",
       "confirm.newpet":  "Να φύγει η/ο {name} και να έρθει νέο πλάσμα; Δεν αναιρείται.",
       "confirm.no":      "Άκυρο",
       "confirm.yes":     "Νέο πλάσμα",
       "speech.hello":    "Γεια! Με λένε {name}!",
+      "speech.firstfed": ["Εσύ ήσουν ο πρώτος που με ταΐσες σήμερα!",
+                          "Φρέσκο πρωινό! Ευχαριστώ!",
+                          "Ο καλύτερος τρόπος να ξεκινήσεις την ημέρα!"],
       "speech.hungry":   ["Πεινάω...", "Μμμ, φαγητό;", "Το στομάχι μου γκρινιάζει!",
                           "Τάισέ με, σε παρακαλώ!", "Είναι ώρα για φαγητό;"],
       "speech.bored":    ["Χαδέψου μου!", "Βαριέμαι...", "Παίξε μαζί μου!",
@@ -135,7 +189,30 @@
       "speech.wake":     ["Καλημέρααα!", "Ξύπνιος/α!", "Ωραία νύχτα!",
                           "Γεια σου ήλιε!", "Έτοιμος/η για παιχνίδι!"],
       "speech.sleep":    ["Καληνύχτα...", "Zzz...", "Όνειρα γλυκά",
-                          "Υπνάκια...", "Τα λέμε αύριο..."]
+                          "Υπνάκια...", "Τα λέμε αύριο..."],
+      "speech.catch":    ["Το πιάνω!", "Το έπιασα!", "Γιαούρτι!",
+                          "Τέλεια πάρε!", "Ναι!"],
+      "speech.contemp":  ["Σκέφτομαι...", "Μμμ...", "Απολαμβάνω...",
+                          "Ηρεμία...", "Σιωπηλή στιγμή..."],
+      "event.log.title": "Ιστορικό Δραστηριότητας",
+      "event.log.empty": "Καμία πρόσφατη δραστηριότητα",
+      "event.type.feed": "Τάγηθηκε",
+      "event.type.pet":  "Χαιδεύτηκε",
+      "event.type.sleep": "Πήγε για ύπνο",
+      "event.type.wake":  "Ξύπνησε",
+      "event.type.newpet": "Ήρθε νέο πλάσμα",
+      "event.type.catch": "Πιάσε την μπάλα",
+      "event.type.birthday": "Γενέθλια!",
+      "evt.today": "Σήμερα",
+      "evt.yesterday": "Χθες",
+      "evt.date": "{d}/{m}/{y}",
+      "cal.pet.feed": "{name} τάγηθηκε",
+      "cal.pet.pet": "{name} χαιδεύτηκε",
+      "cal.pet.sleep": "{name} πήγε για ύπνο",
+      "cal.pet.wake": "{name} ξύπνησε",
+      "cal.pet.new": "{name} άρχισε τη ζωή του",
+      "cal.pet.catch": "Πιάστηκε η μπάλα!",
+      "cal.pet.bday": "Γενέθλια {name}!"
     }
   };
 
@@ -148,7 +225,7 @@
   // v0.2: bilingual palette names (picker tooltips follow LANG)
   var PALETTES = [
     { nameEn: "Sky blue", nameEl: "Γαλάζιο",   body: "#81d4fa", belly: "#e1f5fe", eye: "#0b2030" },
-    { nameEn: "Orange",  nameEl: "Πορτοκαλί", body: "#ffb74d", belly: "#fff3e0", eye: "#5d2f00" },
+    { nameEn: "Orange",  nameEl: "Πορτοκαλί", body: "#ffb74d", belly: "#fff3e0", eye: "#5d2900" },
     { nameEn: "Green",   nameEl: "Πράσινο",   body: "#a5d6a7", belly: "#f1f8e9", eye: "#1b3a1e" },
     { nameEn: "Pink",    nameEl: "Ροζ",       body: "#f48fb1", belly: "#fce4ec", eye: "#4a1430" },
     { nameEn: "Purple",  nameEl: "Μωβ",       body: "#b39ddb", belly: "#ede7f6", eye: "#2c1849" }
@@ -182,6 +259,16 @@
   }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function minutesBetween(fromMs, toMs) { return Math.max(0, (toMs - fromMs) / 60000); }
+  function ymd(y, m, d) { return y + "-" + pad(m + 1) + "-" + pad(d); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function todayYMD() {
+    var n = new Date();
+    return ymd(n.getFullYear(), n.getMonth(), n.getDate());
+  }
+  function dparse(s) {
+    var p = s.split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+  }
 
   // BOOT MARKER
   var SCRIPT_V = "";
@@ -191,6 +278,27 @@
     SCRIPT_V = m ? m[1] : "";
     console.log("pet.js v" + (SCRIPT_V || "?") + " boot");
   })();
+
+  // v0.3: Theme sync (canvas background adapts to orOS theme)
+  var canvasBgTransparent = true;  // default: no fill
+  function updateCanvasTheme() {
+    try {
+      var style = getComputedStyle(document.documentElement);
+      var bg = style.getPropertyValue("--panel-bg").trim();
+      // If --panel-bg is set, we can optionally draw a semi-transparent
+      // background behind the sprite — for now, keep transparent.
+    } catch (e) {}
+  }
+  if (typeof MutationObserver === "function") {
+    try {
+      var pRoot = window.parent ? window.parent.document.documentElement : document.documentElement;
+      if (pRoot) {
+        new MutationObserver(updateCanvasTheme).observe(pRoot, {
+          attributes: true, attributeFilter: ["data-theme", "data-skin"]
+        });
+      }
+    } catch (e) {}
+  }
   
     // ---------- 2. State model, storage, field writes, position memory ----------
   // state = {
@@ -205,7 +313,7 @@
   //   fm: { name: <ts>, palette: <ts> }   // per-field mtimes for non-temporal fields
   // }
   var state = null;
-  var runtime = null;   // per-device choreography (Part 3), never synced
+  var runtime = null;   // per-device choreography (Part 4), never synced
 
   function defaultState() {
     var now = Date.now();
@@ -259,11 +367,10 @@
     save();
   }
 
-  // v0.2: POSITION MEMORY — device-local like oros-pet-enabled
+  // POSITION MEMORY — device-local like oros-pet-enabled
   // (ergonomics, never synced, never dirty). Stored as NORMALIZED
   // fractions (fx over stage width, fy over floor height) so a
   // restore on a different window size still lands on-screen.
-  // Saved on drag end and disable; clamped on restore.
   function savePos() {
     try {
       if (!runtime || !runtime.active || !runtime.layer) return;
@@ -286,13 +393,117 @@
     } catch (e) { return null; }
   }
 
-  // v0.2: AGE — pure display math from birthTs (display-only field,
+  // AGE — pure display math from birthTs (display-only field,
   // Part IX: never part of any sync computation)
   function ageDays(now) {
     return Math.max(0, Math.floor(((now) - (state.pet.birthTs || now)) / 86400000));
   }
 
-  // ---------- 3. Derived stats (pure functions — no writes) ----------
+  // ---------- 2b. Event log (v0.3: device-local, never synced) ----------
+  // Rolling buffer of care/history moments. TWO consumers:
+  //   1. The pet's own Activity Log modal (HUD, Part 5).
+  //   2. The orOS Calendar pet feed (calendar.js petFeedOn reads
+  //      this key DIRECTLY — same-origin shared localStorage,
+  //      exact same read pattern as Contacts/Cycle/Mood/Habits).
+  // Schema: { ver, events: [ { id, ts, type, name } ] }
+  //   - type ∈ PET_EVENT_TYPES values
+  //   - name = SNAPSHOT of the pet's name at event time (a rename
+  //     must not rewrite history; a "New Pet" event keeps the old
+  //     friend's name in the log, and the calendar row stays honest)
+  //   - id/ts purely local: NEVER part of any sync slice
+  // Trimmed to EVENT_LOG_MAX (100) newest entries on every write.
+  function loadEventLog() {
+    try {
+      var d = JSON.parse(localStorage.getItem(EVENTS_KEY));
+      if (d && typeof d === "object" && Array.isArray(d.events)) return d;
+    } catch (e) {}
+    return { ver: 1, events: [] };
+  }
+
+  function saveEventLog(log) {
+    try {
+      // rolling trim — oldest dropped, newest kept
+      if (log.events.length > EVENT_LOG_MAX) {
+        log.events = log.events.slice(-EVENT_LOG_MAX);
+      }
+      localStorage.setItem(EVENTS_KEY, JSON.stringify(log));
+    } catch (e) { /* best-effort — the log is decorative, not vital */ }
+  }
+
+  // Single funnel: every care action logs through here (Part 4/5
+  // call sites: feed, petThePet, toggleSleep, confirmNewPet, catch,
+  // birthday toast). Suppressed when the calendar feed is opted
+  // out (still logs? YES — decision record: the Activity Log is the
+  // pet's OWN feature and always records; only the CALENDAR reads
+  // respect the opt-out. Log always, filter at read.)
+  function logEvent(type) {
+    if (!state || !state.pet) return;
+    var log = loadEventLog();
+    log.events.push({
+      id: uid(),
+      ts: Date.now(),
+      type: String(type),
+      name: state.pet.name
+    });
+    saveEventLog(log);
+  }
+
+  function eventLogEntries() {
+    return loadEventLog().events;
+  }
+
+  function clearEventLog() {
+    try { localStorage.removeItem(EVENTS_KEY); } catch (e) {}
+  }
+
+  // ---------- 2c. Calendar feed helpers (v0.3) ----------
+  // Opt-out key: ABSENT = ON (default positive, like weather).
+  // Read by BOTH sides: the calendar's petFeedOn() checks it at
+  // render time (device-local decision, never synced, never dirty)
+  // and the HUD toggle (Part 5) writes it.
+  function calendarFeedOn() {
+    return localStorage.getItem(CALENDAR_SYNC_KEY) !== "0";
+  }
+  function setCalendarFeed(on) {
+    try {
+      localStorage.setItem(CALENDAR_SYNC_KEY, on ? "1" : "0");
+    } catch (e) {}
+  }
+
+  // Local-timezone YMD of a timestamp (calendar cells speak
+  // "YYYY-MM-DD" — same convention as tsToLocalYmd in calendar.js)
+  function tsLocalYmd(ts) {
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return null;
+    return ymd(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  // Birthday math: TRUE when the LOCAL calendar day is an exact
+  // anniversary of birthTs (month + day match, year > birth year).
+  // Deterministic from synced birthTs — every device agrees on the
+  // DAY; the toast firing is device-local (dedupe key below).
+  function birthdayYears(now) {
+    var b = new Date(state.pet.birthTs || now);
+    if (isNaN(b.getTime())) return 0;
+    var n = new Date(now);
+    var years = n.getFullYear() - b.getFullYear();
+    // anniversary not reached yet this year → last completed year
+    if (n.getMonth() < b.getMonth() ||
+        (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) {
+      years--;
+    }
+    return Math.max(0, years);
+  }
+  function isBirthdayToday(now) {
+    var b = new Date(state.pet.birthTs || now);
+    if (isNaN(b.getTime())) return false;
+    var n = new Date(now);
+    return n.getMonth() === b.getMonth() &&
+           n.getDate() === b.getDate() &&
+           n.getFullYear() > b.getFullYear();   // birth day itself ≠ birthday
+  }
+  
+    // ---------- 3. Derived stats (pure functions — no writes) ----------
 
   // Energy cycle simulation. Walks awake/asleep periods forward from
   // the active anchor until `now` lands inside one. Deterministic:
@@ -330,10 +541,13 @@
     };
   }
 
-  // v0.2: MOOD — pure derivation from stats, drives the sprite
-  // expression (Part 3). Priority: asleep > tired (low energy or
+  // MOOD — pure derivation from stats, drives the sprite
+  // expression. Priority: asleep > tired (low energy or
   // starving) > happy (well-loved) > neutral. No storage, no sync —
   // every device computes the same face from the same stats.
+  // v0.3: "contemplation" is NOT a mood — it is a runtime chore-
+  // ography state (Part 4), deliberately separate so a contemplating
+  // pet still wears its honest emotional face.
   function mood(stats) {
     if (!stats) return "neutral";
     if (stats.asleep) return "sleep";
@@ -348,6 +562,9 @@
   // whichever anchor timestamp is newer defines the active pair.
   // name/palette use per-field mtime map (fm). Tombstoned pet ids
   // win over any resurrected entity (dead pets stay dead).
+  // v0.3 NOTE: the event log (oros-pet-events) and calendar opt-out
+  // (oros-pet-calendar-sync) are DEVICE-LOCAL and deliberately NOT
+  // part of this slice — same classification as oros-pet-pos.
 
   var TEMPORAL = ["lastFed", "lastPetted"];
   var FIELDS_LWW = ["name", "palette"];
@@ -445,12 +662,20 @@
     } finally {
       window.__orosPetSyncApi._suppress = false;
     }
-    // v0.2 LIVE REFRESH: a remote merge (rename / palette change /
-    // feed from another device / new entity) now reflects IMMEDIATELY
+    // LIVE REFRESH: a remote merge (rename / palette change /
+    // feed from another device / new entity) reflects IMMEDIATELY
     // on this device while the pet is active — stats recomputed, HUD
     // redrawn, warn flags rearmed so low-stat thresholds re-fire.
     // While inactive, the next petEnable() reads the fresh state.
+    // v0.3: identity swap (different pet.id after a remote New Pet)
+    // ALSO resets the birthday dedupe key — the new friend gets its
+    // own first-year clock and must not inherit the old one's flags.
     if (runtime && runtime.active) {
+      if (runtime.lastPetId !== state.pet.id) {
+        runtime.lastPetId = state.pet.id;
+        runtime.birthdayShownYmd = "";
+        runtime.birthdayFiredPetId = null;
+      }
       runtime.hungerWarned = runtime.boredWarned = runtime.tiredWarned = false;
       runtime.statsAt = 0;
       refreshHUD(computeStats(Date.now(), state.pet));
@@ -472,16 +697,20 @@
   }
   
     // ---------- 5. Sprite engine ----------
-  // 16×16 pixel-grid renderer (transplanted from Soffitta, cleaned:
-  // directional pupils now work both ways, no off-by-one eye shift,
-  // Zzz drawn on canvas, bubbles clamped to stage bounds).
-  // v0.2: MOOD DRIVEN EXPRESSIONS — eyes/mouth reshape purely from
-  // derived stats (tired/happy/neutral/sleep), no storage, no sync.
+  // 16×16 pixel-grid renderer (Soffitta transplant, cleaned).
+  // v0.3: MOOD expressions as before (Part 3 mood()), PLUS a
+  // transient FOOD overlay during eat mode (interpolated pixel
+  // kibble descending toward the mouth) and slow-blink rendering
+  // during contemplation.
 
-  var PX = 6;            // pixel size in CSS px (scaled down on mobile via CSS)
+  var PX = 6;            // pixel size in CSS px
   var SPR = 16;           // sprite grid 16×16
   var WALK_SPEED = 42;   // px/sec
   var FLOOR_MARGIN = 16;  // keep pet above layer bottom edge
+  var EAT_MS = 2400;      // eat pose duration (set by feed())
+  var BALL_R = 9;         // catch-ball radius (DOM px)
+  var BALL_G = 900;       // catch-ball gravity (px/s²)
+  var BALL_LIFE_MS = 4200;// catch-ball lifetime before fade-out
 
   var GRID_COLORS = null;
 
@@ -509,9 +738,10 @@
 
   // ---------- 6. Behavior loop (runtime, never synced) ----------
   // runtime = per-device choreography: position, facing, frame,
-  // walk decisions, bubble state, warn flags. Reset on boot, never
-  // persisted, never merged — every device dances its own dance
-  // around the SAME synced pet entity.
+  // walk decisions, bubble state, warn flags, ball, contemplation.
+  // v0.3 additions: lastInteractionTs (contemplation clock),
+  // contemplating, catchCooldownUntil, ball, birthday dedupe keys,
+  // lastPetId (identity-swap guard from sliceSet, Part 3).
   runtime = {
     layer: null, canvas: null, ctx: null,
     bubble: null, bubbleTimer: null,
@@ -521,8 +751,20 @@
     dragging: false, dragOffX: 0,
     stats: null, statsAt: 0,
     hungerWarned: false, boredWarned: false, tiredWarned: false,
-    hungerTalkedAt: 0,        // v0.2: throttle hungry speech
-    lastTs: 0, active: false
+    hungerTalkedAt: 0,        // hungry speech throttle
+    lastTs: 0, active: false,
+    // v0.2:
+    lastCelebratedAt: 0,      // sync-hop throttle
+    // v0.3:
+    eatStartTs: 0,            // food-overlay interpolation clock
+    lastInteractionTs: 0,     // contemplation clock
+    contemplating: false,
+    contemplateTalkedAt: 0,   // rare contemplation speech throttle
+    catchCooldownUntil: 0,    // catch mini-game cooldown
+    ball: null,               // { el, x, y, vy, bornAt, settled }
+    lastPetId: "",            // identity-swap guard (sliceSet)
+    birthdayShownYmd: "",     // birthday toast dedupe (1x/day)
+    birthdayFiredPetId: null
   };
 
   function stageBounds() {
@@ -537,21 +779,25 @@
   }
 
   function refreshStatsIfStale(now) {
-    // Cheap throttle: stats drive bars + sprite mode, 1s resolution
     if (now - runtime.statsAt < 1000 && runtime.stats) return runtime.stats;
     runtime.stats = computeStats(now, state.pet);
     runtime.statsAt = now;
     return runtime.stats;
   }
 
-  // v0.2: ENERGY-SCALED WANDERING
-  // Low energy = shorter hops, longer idle pauses, less enthusiasm.
-  // High food = slightly more activity. All derived from stats, no sync.
+  // v0.3: INTERACTION PULSE — every human touch (canvas pointer,
+  // HUD button, ball click) routes through here. Resets the
+  // contemplation clock AND exits contemplation instantly.
+  function touchInteraction() {
+    runtime.lastInteractionTs = Date.now();
+    runtime.contemplating = false;
+  }
+
+  // ENERGY-SCALED WANDERING (v0.2, unchanged)
   function walkParameters(stats) {
     var energy = stats.energy;
     var food = stats.food;
 
-    // Idle timer base: 1.5–3.5s normally, stretched to 3–7s when exhausted
     var idleMin = 1500, idleMax = 3500;
     if (energy < 30) {
       idleMin = 3000; idleMax = 7000;
@@ -559,8 +805,7 @@
       idleMin = 2200; idleMax = 5000;
     }
 
-    // Walk distance: full stage stride or reduced hops near exhaustion
-    var targetRange = 1.0;  // full width fraction
+    var targetRange = 1.0;
     if (energy < 30) targetRange = 0.3;
     else if (energy < 50) targetRange = 0.6;
 
@@ -569,24 +814,151 @@
     return { stepDelay: stepDelay, targetRange: targetRange };
   }
 
+  // v0.3: BIRTHDAY CHECK — fired from the behavior loop (cheap:
+  // one string compare per second thanks to the stats throttle).
+  // Dedupe: once per LOCAL day per pet id. Fires toast (scToast,
+  // guarded), hearts, happy pose, and a birthday log event.
+  function checkBirthday(now, stats) {
+    if (!isBirthdayToday(now)) return;
+    var today = todayYMD();
+    if (runtime.birthdayShownYmd === today &&
+        runtime.birthdayFiredPetId === state.pet.id) return;
+    runtime.birthdayShownYmd = today;
+    runtime.birthdayFiredPetId = state.pet.id;
+
+    var years = birthdayYears(now);
+    var msg = (years + 1) + (LANG === "el" ? " γενέθλια! 🎂" : (years === 0 ? "st birthday! 🎂" : "th birthday! 🎂"));
+    // Shell toast — guarded (signature unverified; harmless no-op)
+    try {
+      if (typeof window.scToast === "function") window.scToast(msg);
+    } catch (e) {}
+    if (!stats.asleep) {
+      runtime.mode = "happy";
+      runtime.walkTimer = 2200;
+      runtime.targetX = null;
+    }
+    speak(speakLine("speech.happy"));
+    spawnHearts();
+    logEvent(PET_EVENT_TYPES.BIRTHDAY);
+  }
+
+  // v0.3: CATCH MINI-GAME — a small ball drops near the pet.
+  // Click/tap it before it settles+expires → catch reward
+  // (+happy via lastPetted, +2 energy via fresh awake anchors,
+  // happy pose, catch speech, log event). Gravity + light bounce,
+  // auto-removes on expiry. HUD button gates entry (cooldown 5 min,
+  // pet must be awake and active).
+  function spawnBall() {
+    if (runtime.ball || !runtime.active) return;
+    var b = stageBounds();
+    var startX = clamp(runtime.x + (Math.random() - 0.5) * 120 + 20, 10, Math.max(10, b.w - 10));
+    var el = document.createElement("div");
+    el.style.cssText =
+      "position:absolute;width:" + (BALL_R * 2) + "px;height:" + (BALL_R * 2) + "px;" +
+      "border-radius:50%;background:radial-gradient(circle at 35% 35%, #ffe0b2, #e8896c);" +
+      "box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;z-index:5;touch-action:none;";
+    runtime.layer.appendChild(el);
+    runtime.ball = {
+      el: el, x: startX, y: -BALL_R * 2, vy: 60,
+      bornAt: Date.now(), settled: false
+    };
+    el.addEventListener("pointerdown", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      catchBall();
+    });
+  }
+
+  function updateBall(dt, now, floorY) {
+    var ball = runtime.ball;
+    if (!ball) return;
+    if (!ball.settled) {
+      ball.vy += BALL_G * dt;
+      ball.y += ball.vy * dt;
+      if (ball.y >= floorY + runtime.canvas.height - BALL_R) {
+        ball.y = floorY + runtime.canvas.height - BALL_R;
+        if (ball.vy > 140) { ball.vy = -ball.vy * 0.35; }  // light bounce
+        else { ball.vy = 0; ball.settled = true; }
+      }
+    }
+    // fade out in the last 700ms of life
+    var age = now - ball.bornAt;
+    ball.el.style.opacity = age > BALL_LIFE_MS - 700
+      ? String(Math.max(0, (BALL_LIFE_MS - age) / 700)) : "1";
+    ball.el.style.transform =
+      "translate(" + ball.x + "px," + ball.y + "px)";
+    if (age >= BALL_LIFE_MS) destroyBall(false);
+  }
+
+  function destroyBall(caught) {
+    var ball = runtime.ball;
+    if (!ball) return;
+    ball.el.remove();
+    runtime.ball = null;
+    if (caught) runtime.catchCooldownUntil = Date.now() + CATCH_COOLDOWN_MS;
+  }
+
+  function catchBall() {
+    if (!runtime.ball || !runtime.active) return;
+    touchInteraction();
+    var stats = computeStats(Date.now(), state.pet);
+    // Reward: happy reset (lastPetted = now) + +2 energy via a
+    // FRESH anchor pair (wokeAt=now, awakeE=current+2) — pure
+    // derived math, deterministic, no drift, no stored stats.
+    writePet(function (p, now) {
+      p.lastPetted = now;
+      if (!stats.asleep) {
+        p.wokeAt = now;
+        p.awakeE = clamp(stats.energy + 2, 0, 100);
+      }
+    });
+    destroyBall(true);
+    runtime.mode = "happy";
+    runtime.walkTimer = 2200;
+    runtime.targetX = null;
+    speak(speakLine("speech.catch"));
+    spawnHearts();
+    logEvent(PET_EVENT_TYPES.CATCH);
+    refreshHUD(computeStats(Date.now(), state.pet));
+  }
+
   function updateBehavior(dt, now) {
     var stats = refreshStatsIfStale(now);
     runtime.frame++;
 
-    // Derived sleep overrides choreography: sprite sleeps while the
-    // pet is asleep — every device agrees, because it's computed.
+    // v0.3: birthday wiring (1x/day per pet id — see checkBirthday)
+    checkBirthday(now, stats);
+
     var sleeping = stats.asleep;
 
-    // Eat/happy are transient pose timers (2–2.5s), then back to life
     if (runtime.mode === "eat" || runtime.mode === "happy") {
       runtime.walkTimer -= dt * 1000;
       if (runtime.walkTimer <= 0) runtime.mode = sleeping ? "idle" : "walk";
     } else if (runtime.mode === "drag") {
       // position controlled by pointer; no movement decisions
     } else if (sleeping) {
-      runtime.mode = "idle";   // pose shown via stats.asleep, not mode
+      runtime.mode = "idle";
+      runtime.contemplating = false;
     } else {
-      if (runtime.mode === "walk") {
+      // v0.3: CONTEMPLATION — 5 min without interaction freezes
+      // choreography (no wander decisions, slow blink). NOT a mood:
+      // the face keeps its honest expression. Broken instantly by
+      // touchInteraction() from any input path.
+      if (!runtime.contemplating &&
+          now - runtime.lastInteractionTs > CONTEMPLATION_IDLE_MS &&
+          runtime.lastInteractionTs > 0) {
+        runtime.contemplating = true;
+        runtime.mode = "idle";
+        runtime.targetX = null;
+      }
+      if (runtime.contemplating) {
+        // rare contemplation murmur (~every 90s), never forced
+        if (now - runtime.contemplateTalkedAt > 90000 &&
+            Math.random() < 0.02) {
+          runtime.contemplateTalkedAt = now;
+          speak(speakLine("speech.contemp"));
+        }
+      } else if (runtime.mode === "walk") {
         if (runtime.targetX !== null) {
           var dx = runtime.targetX - runtime.x;
           if (Math.abs(dx) < 6) {
@@ -630,21 +1002,17 @@
       }
     }
 
-    // Stage limits (FIX-D1: y follows the pointer while dragging —
-    // the v0.1 loop snapped y to the floor EVERY tick, killing the
-    // vertical half of drag)
+    // Stage limits (FIX-D1: y follows the pointer while dragging)
     var b = stageBounds();
     if (runtime.x < 0) { runtime.x = 0; runtime.dir = 1; runtime.targetX = null; }
     if (runtime.x > b.w) { runtime.x = b.w; runtime.dir = -1; runtime.targetX = null; }
     if (runtime.mode !== "drag") runtime.y = Math.max(b.floorY, 60);
 
-    // Threshold speech (once per crossing — runtime flags, not synced)
-    // v0.2: HUNGER THROTTLING — only speak hungry phrase every ~10 min
+    // Threshold speech (flags are runtime, not synced)
     if (!speechAllowed()) return;
 
     if (stats.food < 25 && !runtime.hungerWarned) {
       runtime.hungerWarned = true;
-      // Throttle: only speak if cooldown expired
       if (now - runtime.hungerTalkedAt >= HUNGER_TALK_MS) {
         speak(speakLine("speech.hungry"));
         runtime.hungerTalkedAt = now;
@@ -655,7 +1023,7 @@
       runtime.hungerTalkedAt = 0;
     }
 
-    if (!stats.asleep) {
+    if (!stats.asleep && !runtime.contemplating) {
       if (stats.happy < 25 && !runtime.boredWarned) { runtime.boredWarned = true; speak(speakLine("speech.bored")); }
       if (stats.happy >= 35) runtime.boredWarned = false;
       if (stats.energy < 20 && !runtime.tiredWarned) { runtime.tiredWarned = true; speak(speakLine("speech.tired")); }
@@ -672,7 +1040,7 @@
     ctx.clearRect(0, 0, cw, cw);
 
     var sleeping = stats && stats.asleep;
-    var m = mood(stats);  // v0.2: derive expression
+    var m = mood(stats);
 
     // Vertical bobbing per mode
     var bob = 0;
@@ -688,7 +1056,7 @@
       bob = (Math.floor(runtime.frame / 5) % 2) === 0 ? 1 : 0;
     }
 
-    // Grid: 0 empty, 1 body, 2 belly, 3 eye/dark
+    // Grid: 0 empty, 1 body, 2 belly, 3 eye/dark, 4 food-kibble
     var grid = [];
     for (var j = 0; j < SPR; j++) {
       var row = [];
@@ -712,35 +1080,26 @@
     rect(11, 0, 12, 2, 1);
     // Belly
     rect(4, 8, 11, 12, 2);
-    // Tail (left side; flipped for dir = -1 below)
+    // Tail
     rect(13, 10, 15, 11, 1);
 
-    // Walking legs alternate
     if (legPhase === 1) {
       rect(4, 14, 6, 15, 0);
       rect(4, 13, 6, 13, 1);
     }
 
-    // v0.2: MOOD-DRIVEN EXPRESSIONS
-    // sleep: closed eyes (flat lines)
-    // tired: half-closed (small slits), droopy brows implied
-    // happy: wide open with shine, smile
-    // neutral: normal open eyes, neutral mouth
-
+    // MOOD-DRIVEN EXPRESSIONS
     if (m === "sleep") {
       rect(5, 6, 6, 6, 3);
       rect(9, 6, 10, 6, 3);
     } else if (m === "tired") {
-      // Half-lidded gaze — small slits
       rect(5, 6, 6, 6, 3);
       rect(9, 6, 10, 6, 3);
-      // Slow blink effect — occasionally close completely
       if (runtime.frame % 200 < 6) {
         rect(5, 6, 6, 6, 3);
         rect(9, 6, 10, 6, 3);
       }
     } else if (m === "happy") {
-      // Wide eyes with shine
       rect(5, 5, 6, 7, 3);
       rect(9, 5, 10, 7, 3);
       rect(5, 6, 6, 6, 2);
@@ -748,9 +1107,8 @@
     } else { // neutral
       rect(5, 5, 6, 7, 3);
       rect(9, 5, 10, 7, 3);
-      // pupil highlight toward direction
       if (runtime.dir === 1) {
-        grid[5][6] = 2; grid[5][10] = 2;             // light pixel
+        grid[5][6] = 2; grid[5][10] = 2;
       } else {
         grid[5][5] = 2; grid[5][9] = 2;
       }
@@ -760,11 +1118,32 @@
     if (runtime.mode === "eat") {
       rect(7, 10, 8, 11, 3);
     } else if (m === "happy") {
-      rect(7, 9, 8, 10, 3);  // smile arc
+      rect(7, 9, 8, 10, 3);
     } else if (m === "tired") {
-      rect(7, 11, 8, 11, 3);  // small line — subdued
+      rect(7, 11, 8, 11, 3);
     } else if (!sleeping) {
-      rect(7, 10, 8, 10, 3);  // neutral mouth
+      rect(7, 10, 8, 10, 3);
+    }
+
+    // v0.3: FOOD ANIMATION — during eat mode a 2x2 kibble pixel
+    // descends from above the head toward the mouth during the
+    // first 900ms of the pose, then disappears (munched).
+    if (runtime.mode === "eat" && runtime.eatStartTs) {
+      var t = (Date.now() - runtime.eatStartTs) / 900;   // 0→1
+      if (t <= 1) {
+        var fy = Math.round(0 + t * 10);                 // y=0 (above head) → y=10 (mouth)
+        rect(7, clamp(fy, 0, 9), 8, clamp(fy + 1, 1, 10), 4);
+      }
+    }
+
+    // v0.3: CONTEMPLATION SLOW BLINK — neutral/tired face closes
+    // smoothly every ~6s while contemplating (visually distinct
+    // from sleeping: pet sits upright, walks paused, eyes blink).
+    if (runtime.contemplating && !sleeping) {
+      if (runtime.frame % 360 < 24) {
+        rect(5, 6, 6, 6, 3);
+        rect(9, 6, 10, 6, 3);
+      }
     }
 
     // Zzz above head when asleep
@@ -779,7 +1158,7 @@
     ctx.translate(cw / 2, cw / 2 + bob * PX * 0.4);
     ctx.scale(runtime.dir === 1 ? 1 : -1, 1);
     ctx.translate(-cw / 2, -cw / 2);
-    var colors = { 1: pal.body, 2: pal.belly, 3: pal.eye };
+    var colors = { 1: pal.body, 2: pal.belly, 3: pal.eye, 4: "#c96f4a" };
     for (var yy = 0; yy < SPR; yy++) {
       for (var xx = 0; xx < SPR; xx++) {
         var v = grid[yy][xx];
@@ -808,7 +1187,6 @@
     if (!runtime.bubble || !speechAllowed()) return;
     runtime.bubble.textContent = text;
 
-    // Clamp inside stage (prototype could clip above the top edge)
     var b = stageBounds();
     var bx = clamp(runtime.x + 24, 4, Math.max(4, b.h && (runtime.layer.clientWidth - 160)));
     var by = Math.max(4, runtime.y - 46);
@@ -844,7 +1222,9 @@
     runtime.lastTs = ts;
 
     var now = Date.now();
+    var b = stageBounds();
     updateBehavior(dt, now);
+    updateBall(dt, now, b.floorY);                  // v0.3: ball physics
     drawSprite(runtime.stats);
 
     runtime.canvas.style.transform =
@@ -860,14 +1240,28 @@
 
   var hud = null;
 
+  // v0.3: INVISIBLE PENCIL SVG (inline, inherits currentColor)
+  var PENCIL_SVG =
+    '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" ' +
+    'style="vertical-align:-1px;opacity:.55;">' +
+    '<path d="M11.5 1.5l3 3L5 14H2v-3zM10 4l2 2" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+
   function buildHUD() {
     hud = document.createElement("div");
     hud.id = "pet-hud";
-    // v0.2: name (dblclick → rename), age line (birthTs, display-only),
-    // palette swatches (per-field LWW via fm). New elements carry
-    // INLINE styles — pet.css is deliberately untouched this wave.
+    // Name row: label + pencil (both open rename; dblclick kept for
+    // muscle memory). Age line, palette swatches, catch button.
+    // All v0.3 elements carry INLINE styles — pet.css untouched.
     hud.innerHTML =
-      '<div class="pet-hud-name" id="pet-hud-name"></div>' +
+      '<div class="pet-hud-name-row" style="display:flex;align-items:center;' +
+        'justify-content:center;gap:5px;">' +
+        '<span class="pet-hud-name" id="pet-hud-name"></span>' +
+        '<button type="button" id="pet-pencil-btn" title="' +
+          (LANG === "el" ? "Μετονομασία" : "Rename") + '" ' +
+          'style="border:none;background:transparent;color:inherit;padding:2px;' +
+          'cursor:pointer;line-height:0;">' + PENCIL_SVG + '</button>' +
+      '</div>' +
       '<div id="pet-hud-age" style="font-size:10.5px;color:var(--text-dim);text-align:center;margin:-3px 0 6px;"></div>' +
       '<div id="pet-palettes" style="display:flex;gap:6px;justify-content:center;margin:0 0 8px;"></div>' +
       '<div class="pet-stat" id="pet-stat-food">' +
@@ -884,6 +1278,10 @@
       '</div>' +
       '<div class="pet-hud-actions">' +
         '<button type="button" id="pet-feed-btn"></button>' +
+        '<button type="button" id="pet-catch-btn"></button>' +
+        '<button type="button" id="pet-log-btn"></button>' +
+      '</div>' +
+      '<div class="pet-hud-actions">' +
         '<button type="button" id="pet-sleep-btn"></button>' +
         '<button type="button" id="pet-new-btn"></button>' +
       '</div>';
@@ -891,31 +1289,48 @@
 
     $("pet-feed-btn").addEventListener("click", function (e) {
       e.stopPropagation();
+      touchInteraction();
       feed();
+    });
+    $("pet-catch-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      touchInteraction();
+      tryCatch();
+    });
+    $("pet-log-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      touchInteraction();
+      openEventLog();
     });
     $("pet-sleep-btn").addEventListener("click", function (e) {
       e.stopPropagation();
+      touchInteraction();
       toggleSleep();
     });
     $("pet-new-btn").addEventListener("click", function (e) {
       e.stopPropagation();
+      touchInteraction();
       confirmNewPet();
     });
-    // HUD must never trigger stage-walk on its own clicks
     hud.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
 
-    // v0.2: rename entry point — dblclick on the name label
+    // Rename entry points: pencil (single click) + dblclick (kept)
     var nameEl = $("pet-hud-name");
     nameEl.title = LANG === "el" ? "Διπλό κλικ για μετονομασία" : "Double-click to rename";
     nameEl.addEventListener("dblclick", function (e) {
       e.stopPropagation();
+      touchInteraction();
       startRename();
     });
+    $("pet-pencil-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      touchInteraction();
+      startRename();
+    });
+    $("pet-pencil-btn").addEventListener("pointerdown", function (e) { e.stopPropagation(); });
   }
 
-  // v0.2: PALETTE PICKER — 5 swatches, inline-styled, active state
-  // refreshed by refreshHUD(). Write goes through writePet with the
-  // fm.palette mtime, so the per-field LWW merge (R5) carries it.
+  // PALETTE PICKER — 5 swatches, active ring follows synced choice
   function buildPaletteRow() {
     var row = $("pet-palettes");
     if (!row) return;
@@ -931,6 +1346,7 @@
       s.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
       s.addEventListener("click", function (e) {
         e.stopPropagation();
+        touchInteraction();
         setPalette(i);
       });
       row.appendChild(s);
@@ -947,9 +1363,7 @@
     refreshHUD(computeStats(Date.now(), state.pet));
   }
 
-  // v0.2: RENAME — inline input swaps into the name slot. Enter
-  // commits, Escape/blur cancels. Empty input cancels (never a
-  // nameless pet). The write travels with fm.name (R5 merge).
+  // RENAME — inline input swaps into the name slot (pencil or dblclick)
   function startRename() {
     if (!hud || !state.pet) return;
     var host = $("pet-hud-name");
@@ -979,7 +1393,7 @@
       host.textContent = state.pet.name;
     }
     input.addEventListener("keydown", function (e) {
-      e.stopPropagation();               // S/F shortcuts stay OUT of the input
+      e.stopPropagation();
       if (e.key === "Enter") done(true);
       else if (e.key === "Escape") done(false);
     });
@@ -1002,12 +1416,10 @@
     if (!hud || !stats || !state.pet) return;
     $("pet-hud-name").textContent = state.pet.name;
 
-    // v0.2: age line — display-only birthTs math (singular/plural)
     var d = ageDays(Date.now());
     $("pet-hud-age").textContent =
       t(d === 1 ? "hud.age.one" : "hud.age.many", { n: d });
 
-    // v0.2: active palette highlight (ring follows synced choice)
     var cur = clamp(state.pet.palette | 0, 0, PALETTES.length - 1);
     var row = $("pet-palettes");
     if (row) {
@@ -1027,17 +1439,31 @@
     $("pet-feed-btn").textContent = t("action.feed");
     $("pet-sleep-btn").textContent = stats.asleep ? t("action.wake") : t("action.sleep");
     $("pet-new-btn").textContent = t("action.newpet");
+
+    // Catch button: hides while on cooldown (cleaner than a dead
+    // button — the layer is precious screen real estate)
+    var cb = $("pet-catch-btn");
+    if (cb) {
+      var cooling = Date.now() < runtime.catchCooldownUntil;
+      cb.style.display = (stats.asleep || cooling) ? "none" : "";
+      cb.textContent = t("action.catch");
+    }
+    var lb = $("pet-log-btn");
+    if (lb) lb.textContent = t("action.viewlog");
   }
 
-  // Care actions. Everything funnels through writePet() so field
-  // timestamps stay coherent and the sync engine sees clean writes.
+  // ---------- Care actions ----------
 
   function feed() {
     var stats = computeStats(Date.now(), state.pet);
+    // v0.3: FIRST FEED OF THE DAY — computed BEFORE the write
+    // (lastFed still points to yesterday/earlier). Different
+    // greeting + no wake penalty framing: it's a warm moment.
+    var firstOfDay = stats.asleep === false &&
+                     tsLocalYmd(state.pet.lastFed || 0) !== todayYMD();
     writePet(function (p, now) {
       p.lastFed = now;
       if (stats.asleep) {
-        // Feed gently wakes the pet (friendly, not forced)
         p.asleepSince = null;
         p.asleepE = 0;
         p.wokeAt = now;
@@ -1045,11 +1471,15 @@
       }
     });
     runtime.mode = "eat";
-    runtime.walkTimer = 2400;
+    runtime.walkTimer = EAT_MS;
+    runtime.eatStartTs = Date.now();            // v0.3: kibble clock
     runtime.targetX = null;
     runtime.hungerWarned = false;
     runtime.hungerTalkedAt = 0;
-    speak(speakLine(stats.asleep ? "speech.wake" : "speech.eat"));
+    speak(speakLine(firstOfDay ? "speech.firstfed"
+                               : (stats.asleep ? "speech.wake" : "speech.eat")));
+    if (firstOfDay) spawnHearts();
+    logEvent(PET_EVENT_TYPES.FEED);
     refreshHUD(computeStats(Date.now(), state.pet));
   }
 
@@ -1071,6 +1501,7 @@
     speak(speakLine(stats.asleep ? "speech.wake" : "speech.sleep"));
     runtime.mode = "idle";
     runtime.targetX = null;
+    logEvent(stats.asleep ? PET_EVENT_TYPES.WAKE : PET_EVENT_TYPES.SLEEP);
     refreshHUD(computeStats(Date.now(), state.pet));
   }
 
@@ -1081,7 +1512,18 @@
     runtime.targetX = null;
     speak(speakLine("speech.happy"));
     spawnHearts();
+    logEvent(PET_EVENT_TYPES.PET);
     refreshHUD(computeStats(Date.now(), state.pet));
+  }
+
+  // v0.3: CATCH entry point (HUD button) — guarded, delegates to
+  // spawnBall() from Part 4. Ball click handles the reward itself.
+  function tryCatch() {
+    if (!runtime.active) return;
+    if (Date.now() < runtime.catchCooldownUntil) return;
+    var stats = computeStats(Date.now(), state.pet);
+    if (stats.asleep) return;
+    spawnBall();
   }
 
   // New pet: tombstone the old one so it cannot resurrect via sync
@@ -1106,9 +1548,117 @@
       runtime.targetX = null;
       runtime.hungerWarned = runtime.boredWarned = runtime.tiredWarned = false;
       runtime.hungerTalkedAt = 0;
+      // v0.3: identity swap — birthday dedupe belongs to the NEW friend
+      runtime.lastPetId = state.pet.id;
+      runtime.birthdayShownYmd = "";
+      runtime.birthdayFiredPetId = null;
+      logEvent(PET_EVENT_TYPES.NEWPET);
       speak(t("speech.hello", { name: state.pet.name }));
       refreshHUD(computeStats(Date.now(), state.pet));
     });
+  }
+
+  // ---------- v0.3: Event log modal (standalone — deep-link safe) ----------
+  // Attached to document.body, NOT the pet layer: opens even when
+  // the pet is disabled (the calendar deep-link and the log are
+  // still meaningful with the pet hidden). Calendar feed rows may
+  // link to the matching event via __orosOpenPet(eventId).
+
+  function openEventLog(highlightId) {
+    var stale = document.getElementById("pet-eventlog");
+    if (stale) stale.remove();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "pet-eventlog";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:16px;" +
+      "width:min(380px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.method = "dialog";
+
+    var title = document.createElement("div");
+    title.style.cssText =
+      "font-size:13px;font-weight:700;margin-bottom:10px;";
+    title.textContent = t("event.log.title");
+    form.appendChild(title);
+
+    var list = document.createElement("div");
+    list.style.cssText =
+      "max-height:min(320px,50vh);overflow-y:auto;font-size:12px;" +
+      "line-height:1.6;display:flex;flex-direction:column;gap:6px;";
+
+    var events = eventLogEntries().slice().reverse();  // newest first
+    if (!events.length) {
+      var empty = document.createElement("div");
+      empty.style.cssText = "color:var(--text-dim);padding:12px 0;";
+      empty.textContent = t("event.log.empty");
+      list.appendChild(empty);
+    }
+    events.forEach(function (ev) {
+      var row = document.createElement("div");
+      var dayLabel = dayLabelFor(ev.ts);
+      row.style.cssText =
+        "display:flex;justify-content:space-between;gap:12px;" +
+        "padding:4px 8px;border-radius:6px;";
+      if (highlightId && ev.id === highlightId) {
+        row.style.background = "var(--accent, #c8a96e)";
+        row.style.color = "#131820";
+      }
+      var left = document.createElement("span");
+      left.textContent = t("event.type." + ev.type) +
+        (ev.name ? " · " + ev.name : "");
+      var right = document.createElement("span");
+      right.style.cssText = "color:var(--text-dim);white-space:nowrap;";
+      right.textContent = dayLabel + " " + timeHM(ev.ts);
+      row.appendChild(left);
+      row.appendChild(right);
+      list.appendChild(row);
+    });
+    form.appendChild(list);
+
+    var closeRow = document.createElement("div");
+    closeRow.style.cssText =
+      "display:flex;gap:8px;justify-content:flex-end;margin-top:12px;";
+    var close = document.createElement("button");
+    close.type = "submit";
+    close.style.cssText =
+      "border:1px solid var(--border);border-radius:7px;background:transparent;" +
+      "color:var(--text);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;";
+    close.textContent = "OK";
+    closeRow.appendChild(close);
+    form.appendChild(closeRow);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      dlg.close();
+    });
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  function timeHM(ts) {
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return "";
+    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function dayLabelFor(ts) {
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return "";
+    var today = new Date();
+    if (ymd(d.getFullYear(), d.getMonth(), d.getDate()) === todayYMD())
+      return t("evt.today");
+    var yest = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    if (ymd(d.getFullYear(), d.getMonth(), d.getDate()) ===
+        ymd(yest.getFullYear(), yest.getMonth(), yest.getDate()))
+      return t("evt.yesterday");
+    return t("evt.date", { d: d.getDate(), m: d.getMonth() + 1, y: d.getFullYear() });
   }
 
   // Confirmation dialog (dice pattern, self-contained, ES5)
@@ -1168,11 +1718,7 @@
     setTimeout(function () { no.focus(); }, 50);
   }
 
-  // Pointer interactions: click-to-pet vs DRAG (finally implemented —
-  // the prototype had the CSS but no handlers). 8px movement
-  // threshold separates "petting" from "carrying".
-  // v0.2: drag end persists the position (normalized fractions —
-  // see savePos in Part 2) and drops the pet back onto the floor.
+  // Pointer interactions: click-to-pet vs DRAG (8px threshold).
   function wirePointer() {
     var downX = 0, downY = 0, isDragging = false;
 
@@ -1182,6 +1728,7 @@
       downX = e.clientX;
       downY = e.clientY;
       isDragging = false;
+      touchInteraction();                       // v0.3: contemplation break
     });
 
     runtime.canvas.addEventListener("pointermove", function (e) {
@@ -1210,8 +1757,8 @@
       } else {
         runtime.mode = "idle";
         runtime.walkTimer = 1500;
-        runtime.y = stageBounds().floorY;            // gentle drop back to floor
-        savePos();                                   // v0.2: remember the spot
+        runtime.y = stageBounds().floorY;
+        savePos();
       }
       isDragging = false;
     };
@@ -1222,6 +1769,8 @@
     runtime.layer.addEventListener("pointerdown", function (e) {
       if (e.target === runtime.canvas || e.target === hud) return;
       if (hud && hud.contains(e.target)) return;
+      if (runtime.ball && runtime.ball.el === e.target) return;   // ball owns its clicks
+      touchInteraction();
       var stats = computeStats(Date.now(), state.pet);
       if (stats.asleep) return;
       var rect = runtime.layer.getBoundingClientRect();
@@ -1232,11 +1781,7 @@
     });
   }
 
-  // Keyboard: F=feed, S=sleep — modifier-guarded (fixes prototype
-  // bug where Ctrl+S saved AND slept the pet). Runs in the SHELL
-  // document, so guards must be strict: no OS combos, no inputs,
-  // pet must be active, document visible. The rename input doubles
-  // its own defense (stopPropagation inside the editor).
+  // Keyboard: F=feed, C=catch, L=log, S=sleep — modifier-guarded
   function wireKeyboard() {
     document.addEventListener("keydown", function (e) {
       if (!runtime.active) return;
@@ -1247,10 +1792,20 @@
           (el && el.isContentEditable)) return;
       if (e.key === "f" || e.key === "F") {
         e.preventDefault();
+        touchInteraction();
         feed();
       } else if (e.key === "s" || e.key === "S") {
         e.preventDefault();
+        touchInteraction();
         toggleSleep();
+      } else if (e.key === "c" || e.key === "C") {
+        e.preventDefault();
+        touchInteraction();
+        tryCatch();
+      } else if (e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        touchInteraction();
+        openEventLog();
       }
     });
   }
@@ -1265,13 +1820,7 @@
     });
   }
 
-  // v0.2: SYNC CELEBRATION — the pet hops + hearts when an auto-sync
-  // completes. Wired against the REAL orosSync surface (verified in
-  // sync.js): onAutoSync(fn) with (kind, reason), kind ∈
-  // start/done/fail. Guards: done-only, interval-excluded (a hop
-  // every 3 idle minutes would be noise), 60s throttle, never fires
-  // on a sleeping or inactive pet. Progressive: onAutoSync missing
-  // (stale bundle) → wireSyncCelebration is a silent no-op.
+  // SYNC CELEBRATION (v0.2, unchanged)
   var CELEBRATE_MIN_MS = 60 * 1000;
 
   function wireSyncCelebration() {
@@ -1284,7 +1833,7 @@
       var now = Date.now();
       if (now - (runtime.lastCelebratedAt || 0) < CELEBRATE_MIN_MS) return;
       var stats = computeStats(now, state.pet);
-      if (stats.asleep) return;                      // never wake a sleeping pet
+      if (stats.asleep) return;
       runtime.lastCelebratedAt = now;
       runtime.mode = "happy";
       runtime.walkTimer = 1600;
@@ -1295,13 +1844,11 @@
   }
 
   // ---------- 8. Boot & shell toggle ----------
-  // The pet is a shell COMPONENT, not an app: it boots when the shell
-  // boots (if enabled) and exposes window.orosPet for the menu to
-  // toggle. Presence pref (oros-pet-enabled) is deliberately
-  // SHELL-LOCAL for v0.1 (device-specific presence — flagged as
-  // "under consideration" for a future synced shell-settings wave).
-  // v0.2: position memory (oros-pet-pos) is device-local too —
-  // restored as clamped fractions so any window size lands on-screen.
+  // window.orosPet API + v0.3 CALENDAR DEEP-LINK contract:
+  // window.__orosOpenPet(eventId?) — called by calendar.js when a
+  // feed row (label lbl-feed-pet) is clicked. Opens the Activity
+  // Log with the matching row highlighted. Progressive: absent
+  // calendar.js simply never calls it. Works with pet disabled.
 
   function $(id) { return document.getElementById(id); }
 
@@ -1312,7 +1859,7 @@
     buildPaletteRow();
     wirePointer();
     var b = stageBounds();
-    var pos = loadPos();                              // v0.2: restore spot
+    var pos = loadPos();
     if (pos) {
       runtime.x = clamp(pos.fx * b.w, 0, b.w);
       runtime.y = clamp(pos.fy * b.floorY, 60, b.floorY);
@@ -1328,6 +1875,16 @@
     runtime.lastCelebratedAt = 0;
     runtime.hungerWarned = runtime.boredWarned = runtime.tiredWarned = false;
     runtime.hungerTalkedAt = 0;
+    // v0.3 resets:
+    runtime.eatStartTs = 0;
+    runtime.lastInteractionTs = Date.now();
+    runtime.contemplating = false;
+    runtime.contemplateTalkedAt = 0;
+    runtime.catchCooldownUntil = 0;
+    runtime.ball = null;
+    runtime.lastPetId = state.pet.id;
+    runtime.birthdayShownYmd = "";               // let the loop fire if today IS the day
+    runtime.birthdayFiredPetId = null;
     runtime.active = true;
     refreshHUD(computeStats(Date.now(), state.pet));
     setTimeout(function () {
@@ -1338,15 +1895,17 @@
 
   function petDisable() {
     if (!runtime.active) return;
-    savePos();                                       // v0.2: remember before teardown
-    runtime.active = false;                 // kills the rAF loop
+    savePos();
+    destroyBall(false);                          // v0.3: no orphan balls
+    runtime.active = false;                      // kills the rAF loop
     clearTimeout(runtime.bubbleTimer);
     if (runtime.layer) runtime.layer.remove();
     runtime.layer = null;
     runtime.canvas = null;
     runtime.ctx = null;
     runtime.bubble = null;
-    hud = null;                              // full teardown, no ghosts
+    runtime.contemplating = false;
+    hud = null;                                  // full teardown, no ghosts
   }
 
   function setEnabled(on) {
@@ -1361,7 +1920,18 @@
     disable: function () { setEnabled(false); },
     toggle:  togglePet,
     isEnabled: isEnabled,
-    isActive: function () { return runtime.active; }
+    isActive: function () { return runtime.active; },
+    // v0.3 surfaces:
+    openLog: function (eventId) { openEventLog(eventId); },
+    clearLog: clearEventLog,
+    calendarFeedOn: calendarFeedOn,
+    setCalendarFeed: setCalendarFeed
+  };
+
+  // v0.3: calendar deep-link (named exactly as contracted in the
+  // integration plan; calendar.js checks typeof before calling)
+  window.__orosOpenPet = function (eventId) {
+    openEventLog(typeof eventId === "string" ? eventId : null);
   };
 
   // ---------- Boot ----------

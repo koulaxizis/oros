@@ -1710,3 +1710,116 @@ Hovering bars and dots shows the new localized date tooltips.
 Under consideration
 Pruning orphaned i18n strings (ql.title, ql.fullcal, ql.quick, ql.flowonly) and inert .cal-cell / .cal-grid / .cal-wk rules from cycle.css.
 index.html comment above #calview still says "month calendar" — cosmetic only.
+
+---
+
+---
+
+2026-09-30 — [Radio Wave 1] Bare core implementation:
+  · BUILD: radio/ folder (index.html, radio.css, radio.js v0.1.0)
+  · DATA: RADIO v1 schema (favorites[] + deleted{}, stationuuid-based union)
+  · SYNC: oros-radio-data slice (5-arg registerSlice with mergeFn: Dice pattern)
+  · FEATURES: Countries/genres browse, search autocomplete (3-char trigger),
+    favorites sync, recently played (device-local, 20-cap), mini player with
+    buffer/error states, offline honesty banner
+  · API: Radio Browser API (radio-browser.info) with mirror fallbacks, 30-min
+    cache (localStorage), online/offline detection
+  · INTEGRATION: apps.json entry (category: "sound"), sw.js precache URLs,
+    translations.js keys (EN/EL), Contract Β shortcut forwarding
+  · DESIGN: Single OS Skin (shell CSS vars), scrollbar standard, [hidden]
+    guard EOF, touch targets ≥44px, safe-area insets, mobile-first grid
+  · EXEMPTIONS: Calendar-exempt (non-time-bound), Notifications-exempt
+    (transient feedback only — Dice pattern)
+  · BIBLE PATCHES: B-1 (Part III registry: Radio v0.1.0), B-2 (Part IV:
+    RADIO v1 schema), B-3 (Part IX: exemptions recorded)
+
+Status: Wave 1 COMPLETE — ready for testing.
+
+---
+
+## Batch 1 — Content Expansion: Days 1–55
+
+**Goal:** Replace placeholder Days 1–5 with full bilingual content (Days 1–55, both streams).
+
+**Changes:**
+- EN: Added 100 entries (55 physical + 55 digital)
+- EL: Added 100 entries (55 physical + 55 digital), fully reviewed for translation quality
+- Total content: 220 entries (55 days × 2 streams × 2 languages)
+
+**Theme coverage:**
+- Days 1–7: Awareness (observation/counting)
+- Days 8–21: First Wins (low-risk removals)
+- Days 22–30: Physical Depth (closets/cabinets/hobbies)
+- Days 31–45: Subscriptions & Maintenance
+- Days 46–55: Systems Building (reset rituals, "enough" definition)
+
+**Difficulty distribution:** ~45% easy (1) / ~45% medium (2) / ~10% hard (3) — no 3 consecutive hard entries
+
+**Quality notes:** Fixed typos from original Days 1–5 (d1/d4/d5). All Greek entries reviewed for natural phrasing and grammar — zero foreign language artifacts.
+
+**Next:** Days 56–105 (Phase 3: "Depth" — advanced minimalism challenges).
+
+---
+
+Cycle — Wave: DST Hardening & Cleanup
+Summary
+The timeline received seasonal-hardening and cleanup: all date walking is now calendar-day based (immune to daylight-saving transitions), window edges snap to true local midnights, and four edge bugs around the exclusive right boundary were fixed. Dead i18n strings from the removed month calendar and never-implemented Quick Log view were purged from both locales, the empty-profile experience was reduced to a single welcoming call-to-action box, and the changelog now reflects implementation reality.
+
+Fixes
+DST-safe day walking: leftTs/rightTs snap to real local midnights via dayTsFromKey(dayKey(...)); the grid, axis and bar-click walks use Date.setDate(+1) instead of += 86400000, eliminating double lines or hour-skew at DST transitions (late March / late October, GR).
+Weekend band closure: the last Saturday in view now closes its band correctly (wpos + DAY_MS >= rightTs, width Math.round) — previously depended on accidental DST drift.
+Excluded-edge leaks: day dots and the today marker no longer paint at 100% width on the first day outside the window (>= rightTs guards).
+Range caption: shows the last visible day (rightTs - DAY_MS), not the first excluded one.
+Bar clicks across DST: clicking a period bar in a fallback window resolves the calendar day via a walked Date, never raw millisecond arithmetic.
+Removed
+Dead strings: cal.prev, cal.next, cal.empty (orphaned by the month-calendar removal) and ql.title, ql.fullcal, ql.quick, ql.flowonly (Quick Log never landed) — both en and el.
+Duplicate .tl-dot:hover{opacity:1} rule from the injected timeline CSS (superseded by the scale-up hover rule). (pending — one-line deletion offered)
+UX
+Empty profile: with zero periods and zero day records, the timeline renders ONLY the welcome box (icon, title, subtitle, CTA button). Head controls, range caption, axis, bars strip, dots lane, legend and reminder toggle are all suppressed until first data exists.
+Corrections to earlier changelog claims
+Day numbers render on Mondays (week boundaries, Monday-first convention), not "every 7th day".
+Grid lines are 1px at opacity .06 (.14 major), not "3px / 12%".
+Tooltips are native title attributes (browser-default delay), not a custom 500ms timer.
+Untouched
+Data model, merge engine, tombstones, predictions, Doctor Report, mood cross-analysis, sync slice, notification check, deep links — no changes.
+
+---
+
+
+Wave 2 — Radio v0.2 (Shell-hosted audio)
+Files touched: radio/radio.js (v0.2), radio/radio.css, radio/index.html, apps.json, sw.js, translations.js, shell.js, style.css
+
+What shipped
+Radio (Radio Browser API, online-only browsing by country/genre) upgraded from iframe-local audio to a shell-hosted audio element. The host lives on the shell window (window.__orosRadioHost), created lazily by radio.js on first app open — same doctrine as orosAlarms. Playback survives app close and surfaces as a tray chip in the taskbar. The shell never creates a host, only reads it (radioTrayTick inside renderClock, 1s tick, DOM touched only on state change). No slice access from the shell side.
+
+Architecture rules (permanent)
+Host contract: window.__orosRadioHost.api = { play, toggle, stop, getState, setSleep, cancelSleep, subscribe }. getState() returns { current, paused, playing, flags{buffering,error}, sleepUntil }. The shell tray chip reads getState ONLY.
+Audio living in the shell document means Media Session API works with hardware keys / lock screen even while the app is closed.
+Deep link bridge (shell section 9i): the shell stores a RAW uuid string (never a JSON object) under sessionStorage key "oros-radio-open". The app consumes it one-shot via window.__orosRadioTakePending(), with a fallback to direct sessionStorage read. One format, one source of truth: always a raw string.
+Tray chip click: inside Radio → back to desktop. Inside any other app → straight to Radio (no desktop hop). From desktop → open Radio. Always single click.
+Sync: slice "radio" (STORAGE_KEY oros-radio-data), 5-arg registerSlice, R5-symmetric merge (union by stationuuid, LWW by mtime, lexicographic JSON tie-break, tombstones: delete wins ties, newer edit resurrects). Model RADIO v1 { ver, favorites[], deleted{} }.
+Recents (oros-radio-recents): device-local, cap 20, NEVER synced. Swept by factory reset as an oros- prefixed key.
+Cache (oros-radio-cache:{key}): 30-minute TTL, browsing data only, offline-honest (offline banner, never fabricated fallback data).
+i18n: ALL app strings live in the inline STRINGS object (Bible Part VI) — the app never depends on shell translations.js. translations.js keeps ONLY shell-consumed keys: app.radio, category.sound.
+Fixes applied in this wave
+FIX-RX-1 (fatal): a corrupted line in the Media Session play handler (double identifier) killed the entire radio.js parse. Fixed.
+FIX-RX-2 (FIX-W2-0 regression): Part 2 had ended up outside the IIFE (references to state/host/t from a closed scope). Parts merged into one continuous IIFE. Lesson recorded: multi-part deliveries are appended into one scope, never assembled as separate scopes.
+FIX-RX-3: two functions named toggleFavorite (core with station arg, player-bar without) caused infinite recursion on the heart button (hoisting kept the second one). Core renamed to favoriteToggle.
+FIX-RX-4: missing i18n keys view.countries/view.genres/view.favorites/view.recents (en+el) added to STRINGS.
+FIX-RX-5: the synchronous empty-state check in renderMain ran before async fetches resolved → "No stations found" flash that never re-hid. Sync empty state now covers favorites/recents only; async views own their banner inside fetch callbacks, after data lands.
+FIX-APP-JSON (blocker): trailing comma after the Radio entry made apps.json invalid JSON — NO app loaded (note D1: one typo in one file takes down the whole system). Fixed.
+Search stale-response guard: autocomplete responses paint only if the input still holds the query the response belongs to.
+Shell integration (patches 1–4)
+ICONS.radio: broadcast tower SVG (menu).
+renderClock(): calls radioTrayTick() — cheap 1s tick.
+Section 9i: radioTrayTick (chip paint, zero-DOM when idle), __orosOpenRadio (deep link bridge), __orosRadioTakePending (one-shot take).
+style.css: #rx-tray-chip styling (parallel to #wx-chip), data-state driven.
+Propagation checklist (must-touch files on every Radio change)
+apps.json (entry), sw.js (precache: radio/, radio/index.html, radio/radio.css, radio/radio.js), translations.js (app.radio, category.sound ONLY), shell.js (ICONS + tick + section 9i), style.css (#rx-tray-chip). Version stamping by the GitHub Action — never a manual bump.
+
+Deferred — candidates for Wave 3 (recorded, not implemented)
+RX-N1: favicon preloading via new Image() per card (redundant network requests, no SW coverage).
+RX-N2: the isFavorite parameter in createStationCard shadows the isFavorite() function.
+RX-N3: unused wasOffline in updateOnlineState.
+RX-N4: player/sleep chips update via host subscription, tray chip via its own 1s tick — asymmetric but harmless polling.
+RX-N5: no stop-playback control in the UI (pause only) — possible kill switch in the player bar.

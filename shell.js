@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.37.04";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.37.06";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -149,7 +149,8 @@
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
-    minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>'
+    minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
+    radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -721,6 +722,7 @@
     wxBriefTickThrottled();     // Weather unification: daily morning briefing (60s throttle)
     quoteCheckTickThrottled();  // Wave 13: Quote due-date reminders (60s throttle)
     minimalismCheckTickThrottled(); // Wave 2: Minimalism daily ritual (60s throttle)
+    radioTrayTick();              // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
 
   function quoteCheckTickThrottled() {
@@ -4591,6 +4593,108 @@
       }
     } catch (e) {}
   }
+
+  // ---------- 9i. Radio tray chip (Wave 2 Radio) ----------
+  // The audio host lives on THIS window (window.__orosRadioHost),
+  // created by radio.js on first app open — playback survives the
+  // app's iframe close (about:blank), same doctrine as orosAlarms.
+  // The shell owns ONLY the tray chip: single click opens the Radio
+  // app directly (standing rule), and the chip paints the now-
+  // playing station. No host / no station → no chip (zero DOM).
+  // Paint is tick-safe: renderClock ticks 1/s but the DOM is touched
+  // only when state actually changed (same doctrine as wxRenderChip).
+  function radioTrayTick() {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+
+    var host = window.__orosRadioHost;
+    var chip = document.getElementById("rx-tray-chip");
+
+    if (!host || !host.api || typeof host.api.getState !== "function") {
+      if (chip) chip.remove();
+      return;
+    }
+
+    var st = null;
+    try { st = host.api.getState(); } catch (e) { st = null; }
+
+    // No station ever played (or stale host shape) → no chip
+    if (!st || !st.current || !st.current.name) {
+      if (chip) chip.remove();
+      return;
+    }
+
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "rx-tray-chip";
+      chip.type = "button";
+      chip.style.minHeight = "44px";   // SH-R6: Part VIII doctrine (touch targets)
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        // Inside Radio → back to desktop. Inside ANY OTHER app →
+        // jump straight to Radio (no desktop hop). Desktop → open.
+        if (state.running && state.running.id === "radio") {
+          returnToDesktop();
+          return;
+        }
+        openAppById("radio");
+      });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+    }
+
+    var playing = !!(st.playing && !st.paused);
+    var name = st.current.name;
+    // Stream error → keep the name, show the ⚠ state honestly
+    var errored = !!(st.flags && st.flags.error);
+    var html =
+      '<span class="rx-tray-eq" style="font-size:12px;">' +
+      (errored ? "⚠" : (playing ? "♪" : "⏸")) +
+      "</span>" +
+      '<span style="overflow:hidden;text-overflow:ellipsis;' +
+      'white-space:nowrap;max-width:140px;">' + escapeHtml(name) + "</span>";
+    var title =
+      (playing ? "▶ " : "⏸ ") + name +
+      (errored ? " · " + (state.lang === "el" ? "Σφάλμα ροής" : "Stream error") : "");
+
+    if (chip.getAttribute("data-state") !== String(playing) ||
+        chip.innerHTML !== html || chip.title !== title) {
+      chip.setAttribute("data-state", String(playing));
+      chip.innerHTML = html;
+      chip.title = title;
+      chip.setAttribute("aria-label", title);   // SH-R11: state spoken
+    }
+  }
+
+  // Radio deep-link bridge (pattern: Quote/Minimalism). Payload =
+  // stationuuid. App ανοιχτό → live push __orosRadioOpen στο iframe·
+  // κλειστό → staging στο sessionStorage (device-local, swept από το
+  // factory reset, δεν ταξιδεύει στο sync ποτέ) + άνοιγμα app.
+  window.__orosOpenRadio = function (stationUuid) {
+    if (typeof stationUuid !== "string" || !stationUuid) return;
+    if (state.running && state.running.id === "radio") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosRadioOpen === "function") {
+          f.contentWindow.__orosRadioOpen(stationUuid);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-radio-open", stationUuid); } catch (e) {}
+    openAppById("radio");
+  };
+
+  // Consumed by radio.js at boot — one-shot take (ίδιο μάθημα με
+  // todo/minimalism: αν το receiver λείπει από το app, το pending
+  // uuid απλά αγνοείται — τίποτα δεν σπάει).
+  window.__orosRadioTakePending = function () {
+    try {
+      var id = sessionStorage.getItem("oros-radio-open");
+      if (id) sessionStorage.removeItem("oros-radio-open");
+      return id || null;
+    } catch (e) { return null; }
+  };
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 

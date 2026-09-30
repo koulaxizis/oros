@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radio</title>
+<link rel="stylesheet" href="radio.css">
+</head>
+<body>
+<div id="rx-app">
+
+  <!-- ===== Top bar: view tabs + search ===== -->
+  <header class="rx-bar">
+    <nav class="rx-tabs" id="rx-tabs">
+      <button type="button" id="rx-tab-countries" class="rx-tab" aria-pressed="true"></button>
+      <button type="button" id="rx-tab-genres"    class="rx-tab" aria-pressed="false"></button>
+      <button type="button" id="rx-tab-favorites" class="rx-tab" aria-pressed="false"></button>
+    </nav>
+    <div class="rx-search">
+      <input type="search" id="rx-search-input"
+             autocomplete="off" spellcheck="false"
+             aria-label="Search stations">
+      <div class="rx-ac" id="rx-ac" hidden></div>
+    </div>
+  </header>
+
+  <!-- ===== Offline / error honesty banner ===== -->
+  <div class="rx-banner" id="rx-banner" hidden>
+    <span id="rx-banner-text"></span>
+  </div>
+
+  <!-- ===== Main list area ===== -->
+  <main class="rx-main" id="rx-main">
+    <div class="rx-crumb" id="rx-crumb" hidden></div>
+    <div class="rx-sec-title" id="rx-sec-title"></div>
+    <div class="rx-list" id="rx-list"></div>
+    <div class="rx-empty" id="rx-empty" hidden></div>
+  </main>
+
+  <!-- ===== Player bar (docked, appears on first play) ===== -->
+  <footer class="rx-player" id="rx-player" hidden>
+    <button type="button" class="rx-pl-btn" id="rx-pl-play" aria-label="Play / Pause"></button>
+    <div class="rx-pl-info">
+      <div class="rx-pl-name" id="rx-pl-name"></div>
+      <div class="rx-pl-meta" id="rx-pl-meta"></div>
+    </div>
+    <button type="button" class="rx-pl-btn rx-pl-fav" id="rx-pl-fav" aria-label="Favorite"></button>
+  </footer>
+
+</div>
+<script src="radio.js"></script>
+</body>
+</html>

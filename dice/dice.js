@@ -38,7 +38,7 @@
   "use strict";
 
   var STORAGE_KEY = "oros-dice-data";
-  var DATA_VER = 1;
+  var DATA_VER = 2;   // v2: + presets[]
   var HISTORY_CAP = 50;
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 days
 
@@ -62,6 +62,10 @@
       "result.dice":       "Dice: {dice}",
       "coin.heads":        "Heads",
       "coin.tails":        "Tails",
+      "coin.face.heads":   "H",
+      "coin.face.tails":   "T",
+      "share.coin":        "Coin",
+      "toast.copyfail":    "Copy failed",
       "history.title":     "History",
       "history.share":     "Share",
       "history.clear":     "Clear",
@@ -72,7 +76,27 @@
       "toast.cleared":     "History cleared",
       "confirm.cleared":   "Clear all history?",
       "confirm.no":        "Cancel",
-      "share.card":        "🎲 Dice & Coin — {time}\n{notation} → {total}\n{details}\n\nvia orOS"
+      "share.card":        "🎲 Dice & Coin — {time}\n{notation} → {total}\n{details}\n\nvia orOS",
+      "notation.placeholder": "2d20+5 · 4d6 dl · 8d6 kh",
+      "notation.apply":    "Apply",
+      "notation.bad":      "Unknown notation",
+      "presets.add":       "Save preset",
+      "presets.prompt":    "Preset name",
+      "presets.saved":     "Preset saved",
+      "presets.deleted":   "Preset deleted",
+      "history.stats":     "Stats",
+      "history.export":    "Export",
+      "stats.title":       "Statistics",
+      "stats.dicerolls":   "Dice rolls",
+      "stats.coinflips":   "Coin flips",
+      "stats.avg":         "avg {v}",
+      "stats.crits":       "Max rolls",
+      "stats.fumbles":     "Fumbles",
+      "stats.empty":       "No data yet",
+      "export.done":       "History exported",
+      "export.filename":   "oros-dice-history.txt",
+      "export.header":     "orOS Dice & Coin — History",
+      "export.exported":   "Exported: {time}"
     },
     el: {
       "builder.count":     "Πλήθος",
@@ -90,6 +114,10 @@
       "result.dice":       "Ζάρια: {dice}",
       "coin.heads":        "Κεφάλια",
       "coin.tails":        "Γράμματα",
+      "coin.face.heads":   "Κ",
+      "coin.face.tails":   "Γ",
+      "share.coin":        "Κέρμα",
+      "toast.copyfail":    "Αποτυχία αντιγραφής",
       "history.title":     "Ιστορικό",
       "history.share":     "Μοιραστείτε",
       "history.clear":     "Καθαρισμός",
@@ -100,7 +128,27 @@
       "toast.cleared":     "Το ιστορικό εκκαθαρίστηκε",
       "confirm.cleared":   "Εκκαθάριση όλου του ιστορικού;",
       "confirm.no":        "Άκυρο",
-      "share.card":        "🎲 Ζάρια & Κέρμα — {time}\n{notation} → {total}\n{details}\n\nvia orOS"
+      "share.card":        "🎲 Ζάρια & Κέρμα — {time}\n{notation} → {total}\n{details}\n\nvia orOS",
+      "notation.placeholder": "2d20+5 · 4d6 dl · 8d6 kh",
+      "notation.apply":    "Εφαρμογή",
+      "notation.bad":      "Άγνωστη σημειογραφία",
+      "presets.add":       "Αποθήκευση preset",
+      "presets.prompt":    "Όνομα preset",
+      "presets.saved":     "Το preset αποθηκεύτηκε",
+      "presets.deleted":   "Το preset διαγράφηκε",
+      "history.stats":     "Στατιστικά",
+      "history.export":    "Εξαγωγή",
+      "stats.title":       "Στατιστικά",
+      "stats.dicerolls":   "Ρίψεις ζαριών",
+      "stats.coinflips":   "Ρίψεις κέρματος",
+      "stats.avg":         "μ.ό. {v}",
+      "stats.crits":       "Μέγιστες ρίψεις",
+      "stats.fumbles":     "Fumbles",
+      "stats.empty":       "Δεν υπάρχουν δεδομένα ακόμα",
+      "export.done":       "Το ιστορικό εξήχθη",
+      "export.filename":   "oros-dice-history.txt",
+      "export.header":     "orOS Ζάρια & Κέρμα — Ιστορικό",
+      "export.exported":   "Εξήχθη: {time}"
     }
   };
 
@@ -127,11 +175,11 @@
   }
 
   function fmtTimestamp(ts) {
+    // Manual, locale-independent: dd/mm/yyyy HH:MM (24h) — orOS date doctrine
     var d = new Date(ts);
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
-   var dateStr = d.toLocaleDateString(loc, { day: "2-digit", month: "2-digit", year: "numeric" });
-    var timeStr = d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit", hour12: false });
-    return dateStr + " " + timeStr;
+    function p2(n) { return n < 10 ? "0" + n : String(n); }
+    return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() +
+      " " + p2(d.getHours()) + ":" + p2(d.getMinutes());
   }
 
   // BOOT MARKER
@@ -181,7 +229,7 @@
   }
 
   function defaultState() {
-    return { ver: DATA_VER, sm: 0, deleted: {}, history: [] };
+    return { ver: DATA_VER, sm: 0, deleted: {}, history: [], presets: [] };
   }
 
   function load() {
@@ -191,6 +239,8 @@
         var data = JSON.parse(raw);
         if (data && Array.isArray(data.history)) {
           state = data;
+          if (!Array.isArray(state.presets)) state.presets = [];   // v1 → v2
+          state.ver = DATA_VER;
           pruneTombstones(state);
           return;
         }
@@ -211,6 +261,7 @@
       renderResult();
       renderHistory();
       renderCoinStats();
+      renderPresets();
     });
   }
 
@@ -232,6 +283,18 @@
         if (tomb[id] < cutoff) delete tomb[id];
       });
     }
+
+    // --- presets: union by name, LWW by ts (same doctrine as history) ---
+    var pres = {};
+    [a.presets || [], b.presets || []].forEach(function (list) {
+      list.forEach(function (p) {
+        var ex = pres[p.name];
+        if (!ex || (p.ts || 0) > (ex.ts || 0)) pres[p.name] = p;
+      });
+    });
+    var presetArr = Object.keys(pres).map(function (n) { return pres[n]; });
+    presetArr.sort(function (x, y) { return x.name.localeCompare(y.name); });
+    if (presetArr.length > 20) presetArr = presetArr.slice(0, 20);   // cap
 
     var map = {};
     (a.history || []).forEach(function (h) { map[h.id] = h; });
@@ -267,7 +330,8 @@
       ver: DATA_VER,
       sm: Math.max(a.sm || 0, b.sm || 0),
       deleted: tomb,
-      history: arr
+      history: arr,
+      presets: presetArr
     };
     if (out.history.length === 0 && out.sm === 0) return null;
     return out;
@@ -356,6 +420,7 @@
     };
 
     lastResult = entry;
+    playSfx("dice");
     state.history.unshift(entry);
     if (state.history.length > HISTORY_CAP) {
       var removed = state.history.splice(HISTORY_CAP);
@@ -373,14 +438,16 @@
     coin.classList.add("flipping");
 
     var result = randInt(0, 1) === 0 ? "heads" : "tails";
-    var turns = randInt(3, 6) * 360;
+    var finalRot = result === "heads" ? 0 : 180;
+    var turns = randInt(3, 6) * 360 + finalRot;   // lands exactly on target face
+    coin.style.transform = "";                     // clear leftover before animating
     coin.style.setProperty("--flip-turns", turns + "deg");
 
     setTimeout(function () {
       coin.classList.remove("flipping");
-      var finalRot = result === "heads" ? 0 : 180;
       coin.style.transform = "rotateY(" + finalRot + "deg)";
 
+      playSfx("coin");
       var now = Date.now();
       var entry = {
         id: uid(),
@@ -419,21 +486,47 @@
 
     if (lastResult.kind === "dice") {
       notationEl.textContent = lastResult.notation;
-      totalEl.textContent = t("result.total", { total: lastResult.total });
+      totalEl.textContent = "0";
+      totalEl.style.animation = "none";
+      void totalEl.offsetWidth;
+      totalEl.style.animation = "countUp 0.3s ease-out";
+      var target = lastResult.total;
+      var current = 0;
+      var step = Math.ceil(target / 12);
+      var timer = setInterval(function () {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        totalEl.textContent = String(current);
+      }, 28);
       diceRow.innerHTML = "";
+      var pipMap = { 4: ["","⚀","⚁","⚂","⚃"], 6: ["","⚀","⚁","⚂","⚃","⚄","⚅"], 8: null, 10: null, 12: null, 20: null, 100: null };
       lastResult.rolls.forEach(function (val, idx) {
         var die = document.createElement("span");
         die.className = "die";
+        die.setAttribute("data-type", String(lastResult.type));
+        die.setAttribute("data-value", String(val));
+        var pipArr = pipMap[lastResult.type];
+        if (pipArr && val >= 1 && val <= 6) {
+          die.setAttribute("data-pipped", "true");
+          die.setAttribute("data-pip-text", pipArr[val]);
+          die.textContent = pipArr[val];
+        } else {
+          die.textContent = val;
+        }
         if (lastResult.kept && !lastResult.kept[idx]) die.classList.add("dropped");
-        if (val === lastResult.type) die.classList.add("crit");   // max face
-        die.textContent = val;
+        if (val === lastResult.type) {
+          die.classList.add("crit");
+        }
+        if (val === 1 && lastResult.rolls.length === 1) {
+          die.classList.add("fumble");
+        }
         diceRow.appendChild(die);
       });
       critBadge.hidden = !lastResult.isCrit;
       fumbleBadge.hidden = !lastResult.isFumble;
     } else {
       notationEl.textContent = t("actions.coin");
-      totalEl.textContent = lastResult.result === "heads" ? "H" : "T";
+      totalEl.textContent = t(lastResult.result === "heads" ? "coin.face.heads" : "coin.face.tails");
       diceRow.innerHTML = "";
       critBadge.hidden = true;
       fumbleBadge.hidden = true;
@@ -522,23 +615,23 @@
     var details = "";
     if (lastResult.kind === "dice") {
       details = t("result.dice", { dice: lastResult.rolls.join(", ") });
-      if (lastResult.isCrit) details += " — Max!";
-      if (lastResult.isFumble) details += " — Fumble";
+      if (lastResult.isCrit) details += " — " + t("badge.crit");
+      if (lastResult.isFumble) details += " — " + t("badge.fumble");
     } else {
-      details = lastResult.result === "heads" ? "Heads" : "Tails";
+      details = t(lastResult.result === "heads" ? "coin.heads" : "coin.tails");
     }
 
     var card = t("share.card", {
-      time: esc(time),
-      notation: esc(lastResult.kind === "dice" ? lastResult.notation : "Coin"),
-      total: esc(String(lastResult.kind === "dice" ? lastResult.total : "")),
-      details: esc(details)
+      time: time,
+      notation: lastResult.kind === "dice" ? lastResult.notation : t("share.coin"),
+      total: String(lastResult.kind === "dice" ? lastResult.total : ""),
+      details: details
     });
 
     navigator.clipboard.writeText(card).then(function () {
       showToast(t("toast.share"), false);
     }).catch(function () {
-      showToast("Copy failed", false);
+      showToast(t("toast.copyfail"), false);
     });
   }
 
@@ -653,6 +746,286 @@
       showToast(t("toast.cleared"), false);
     });
   }
+  
+    // ---------- 10b. Free notation parser ----------
+  // Accepts: NdM, NdM+K, NdM-K, optional mode suffix kh/kl/dl (e.g. 4d6 dl)
+  function parseNotation(input) {
+    var s = String(input || "").trim().toLowerCase().replace(/\s+/g, "");
+    var m = s.match(/^(\d{1,2})d(\d{1,3})(?:([+-])(\d{1,2}))?(kh|kl|dl)?$/);
+    if (!m) return null;
+    var count = parseInt(m[1], 10);
+    var type = parseInt(m[2], 10);
+    var mod = m[3] ? (m[3] === "-" ? -1 : 1) * parseInt(m[4], 10) : 0;
+    var allowed = [4, 6, 8, 10, 12, 20, 100];
+    if (count < 1 || count > 30) return null;
+    if (allowed.indexOf(type) === -1) return null;
+    var modeMap = { kh: "keep-high", kl: "keep-low", dl: "drop-low" };
+    return {
+      count: count,
+      type: type,
+      mod: mod,
+      mode: (m[5] && modeMap[m[5]]) || "normal"
+    };
+  }
+
+  function applyNotation() {
+    var input = $("notation-input");
+    var parsed = parseNotation(input.value);
+    if (!parsed) {
+      input.classList.add("err");
+      setTimeout(function () { input.classList.remove("err"); }, 900);
+      return;
+    }
+    input.classList.remove("err");
+    $("dice-count").value = parsed.count;
+    $("dice-type").value = String(parsed.type);
+    $("dice-mod").value = parsed.mod;
+    var btn = document.querySelector('#modes .mode-btn[data-mode="' + parsed.mode + '"]');
+    if (btn) btn.click();
+    rollDice();
+  }
+
+  // ---------- 10c. Presets ----------
+  function currentBuilderConfig() {
+    return {
+      name: "",
+      count: Math.min(30, Math.max(1, parseInt($("dice-count").value, 10) || 1)),
+      type: parseInt($("dice-type").value, 10),
+      mod: parseInt($("dice-mod").value, 10) || 0,
+      mode: getCurrentMode()
+    };
+  }
+
+  function setMode(mode) {
+    var target = document.querySelector('#modes .mode-btn[data-mode="' + mode + '"]');
+    if (target) target.click();
+  }
+
+  function renderPresets() {
+    var list = $("preset-list");
+    if (!list) return;
+    list.innerHTML = "";
+    (state.presets || []).forEach(function (p) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "preset-chip";
+      chip.title = p.count + "d" + p.type +
+        (p.mod ? (p.mod > 0 ? "+" : "") + p.mod : "") +
+        (p.mode !== "normal" ? " " + p.mode : "");
+
+      var label = document.createElement("span");
+      label.textContent = p.name;
+      chip.appendChild(label);
+
+      var del = document.createElement("span");
+      del.className = "preset-del";
+      del.setAttribute("role", "button");
+      del.textContent = "✕";
+      del.title = t("presets.deleted");
+      chip.appendChild(del);
+
+      chip.addEventListener("click", function (e) {
+        if (e.target === del || del.contains(e.target)) return;   // delete handled below
+        $("dice-count").value = p.count;
+        $("dice-type").value = String(p.type);
+        $("dice-mod").value = p.mod;
+        setMode(p.mode);
+      });
+      del.addEventListener("click", function (e) {
+        e.stopPropagation();
+        state.presets = (state.presets || []).filter(function (x) { return x.name !== p.name; });
+        touch();
+        save();
+        renderPresets();
+        showToast(t("presets.deleted"));
+      });
+      list.appendChild(chip);
+    });
+  }
+
+  function addPreset() {
+    var cfg = currentBuilderConfig();
+    var name = prompt(t("presets.prompt"),
+      cfg.count + "d" + cfg.type + (cfg.mod ? (cfg.mod > 0 ? "+" : "") + cfg.mod : ""));
+    if (!name) return;
+    name = name.trim().slice(0, 24);
+    if (!name) return;
+    if (!state.presets) state.presets = [];
+    state.presets = state.presets.filter(function (x) { return x.name !== name; });
+    state.presets.push({
+      name: name,
+      count: cfg.count,
+      type: cfg.type,
+      mod: cfg.mod,
+      mode: cfg.mode,
+      ts: Date.now()
+    });
+    touch();
+    save();
+    renderPresets();
+    showToast(t("presets.saved"));
+  }
+
+  // ---------- 10d. Statistics ----------
+  function buildStats() {
+    var diceRolls = 0, coinFlips = 0, crits = 0, fumbles = 0;
+    var byType = {};   // type -> {count, sum}
+    var heads = 0, tails = 0;
+    state.history.forEach(function (h) {
+      if (state.deleted[h.id]) return;
+      if (h.kind === "dice") {
+        diceRolls++;
+        if (h.isCrit) crits++;
+        if (h.isFumble) fumbles++;
+        if (!byType[h.type]) byType[h.type] = { count: 0, sum: 0 };
+        (h.rolls || []).forEach(function (v, i) {
+          if (!h.kept || h.kept[i]) {
+            byType[h.type].count++;
+            byType[h.type].sum += v;
+          }
+        });
+      } else if (h.kind === "coin") {
+        coinFlips++;
+        if (h.result === "heads") heads++; else tails++;
+      }
+    });
+    return { diceRolls: diceRolls, coinFlips: coinFlips, crits: crits,
+             fumbles: fumbles, byType: byType, heads: heads, tails: tails };
+  }
+
+  function statsDialog() {
+    var s = buildStats();
+    var stale = document.getElementById("dice-stats-dialog");
+    if (stale) stale.remove();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "dice-stats-dialog";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:18px;" +
+      "width:min(340px,calc(100vw - 32px));";
+
+    var title = document.createElement("div");
+    title.style.cssText = "font-size:13px;font-weight:800;text-transform:uppercase;" +
+      "letter-spacing:1px;color:var(--text-dim);margin-bottom:14px;";
+    title.textContent = t("stats.title");
+    dlg.appendChild(title);
+
+    if (s.diceRolls + s.coinFlips === 0) {
+      var em = document.createElement("div");
+      em.style.cssText = "font-size:13px;color:var(--text-dim);padding:8px 0 4px;";
+      em.textContent = t("stats.empty");
+      dlg.appendChild(em);
+    } else {
+      var rows = [
+        [t("stats.dicerolls"), String(s.diceRolls)],
+        [t("stats.coinflips"), s.coinFlips + " (" + s.heads + " / " + s.tails + ")"],
+        [t("stats.crits"), String(s.crits)],
+        [t("stats.fumbles"), String(s.fumbles)]
+      ];
+      Object.keys(s.byType).sort(function (a, b) { return a - b; }).forEach(function (tp) {
+        var d = s.byType[tp];
+        var avg = d.count ? (d.sum / d.count).toFixed(1) : "0";
+        rows.push(["d" + tp, t("stats.avg", { v: avg })]);
+      });
+      rows.forEach(function (r) {
+        var row = document.createElement("div");
+        row.style.cssText = "display:flex;justify-content:space-between;" +
+          "font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);";
+        var k = document.createElement("span");
+        k.style.cssText = "color:var(--text-dim);";
+        k.textContent = r[0];
+        var v = document.createElement("strong");
+        v.style.cssText = "color:var(--accent);font-variant-numeric:tabular-nums;";
+        v.textContent = r[1];
+        row.appendChild(k); row.appendChild(v);
+        dlg.appendChild(row);
+      });
+    }
+
+    var close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "OK";
+    close.style.cssText = "margin-top:14px;width:100%;min-height:38px;border-radius:7px;" +
+      "border:1px solid var(--border);background:transparent;color:var(--accent);" +
+      "font-weight:700;font-size:13px;cursor:pointer;";
+    close.addEventListener("click", function () { dlg.close(); });
+    dlg.appendChild(close);
+
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // ---------- 10e. History export (TXT) ----------
+  function exportHistory() {
+    var visible = state.history.filter(function (h) { return !state.deleted[h.id]; });
+    var lines = [t("export.header"),
+                 t("export.exported", { time: fmtTimestamp(Date.now()) }), ""];
+    visible.forEach(function (h) {
+      if (h.kind === "dice") {
+        lines.push("[" + fmtTimestamp(h.ts) + "] " + h.notation + " → " + h.total +
+          "  (" + (h.rolls || []).join(", ") + ")" +
+          (h.isCrit ? " MAX!" : "") + (h.isFumble ? " Fumble" : ""));
+      } else {
+        lines.push("[" + fmtTimestamp(h.ts) + "] " +
+          t(h.result === "heads" ? "coin.heads" : "coin.tails"));
+      }
+    });
+    var blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = t("export.filename");
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    showToast(t("export.done"));
+  }
+
+  // ---------- 10f. SFX (WebAudio synth — no external files) ----------
+  var sfxCtx = null;
+  function sfxEnabled() { return localStorage.getItem("oros-dice-sfx") === "1"; }
+
+  function paintSfxBtn() {
+    var b = $("sfx-btn");
+    b.setAttribute("aria-pressed", sfxEnabled() ? "true" : "false");
+    b.textContent = sfxEnabled() ? "🔊" : "🔇";
+  }
+
+  function playSfx(kind) {
+    if (!sfxEnabled()) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!sfxCtx) sfxCtx = new AC();
+      var ctx = sfxCtx;
+      if (ctx.state === "suspended") ctx.resume();
+      if (kind === "dice") {
+        var buf = ctx.createBuffer(1, 2400, 22050);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < d.length; i++) {
+          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+        }
+        var src = ctx.createBufferSource(); src.buffer = buf;
+        var f = ctx.createBiquadFilter();
+        f.type = "bandpass"; f.frequency.value = 2400; f.Q.value = 0.9;
+        var g = ctx.createGain(); g.gain.value = 0.5;
+        src.connect(f); f.connect(g); g.connect(ctx.destination);
+        src.start();
+      } else {
+        var o = ctx.createOscillator(), og = ctx.createGain();
+        o.type = "triangle"; o.frequency.value = 1050;
+        og.gain.setValueAtTime(0.25, ctx.currentTime);
+        og.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+        o.connect(og); og.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + 0.42);
+      }
+    } catch (e) { /* audio unavailable → silent */ }
+  }
 
   // ---------- 11. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
@@ -716,6 +1089,12 @@
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
       el.textContent = t(el.getAttribute("data-i18n"));
     });
+    var fl = document.getElementById("coin-front-letter");
+    var bl = document.getElementById("coin-back-letter");
+    if (fl) fl.textContent = t("coin.face.heads");
+    if (bl) bl.textContent = t("coin.face.tails");
+    var ni = document.getElementById("notation-input");
+    if (ni) ni.setAttribute("placeholder", t("notation.placeholder"));
   }
 
   function paintStaticAria() {
@@ -753,6 +1132,18 @@
     });
     $("history-clear").addEventListener("click", clearHistory);
     $("share-btn").addEventListener("click", shareResult);
+    $("stats-btn").addEventListener("click", statsDialog);
+    $("export-btn").addEventListener("click", exportHistory);
+    $("notation-apply").addEventListener("click", applyNotation);
+    $("notation-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); applyNotation(); }
+    });
+    $("preset-add").addEventListener("click", addPreset);
+    $("sfx-btn").addEventListener("click", function () {
+      localStorage.setItem("oros-dice-sfx", sfxEnabled() ? "0" : "1");
+      paintSfxBtn();
+      if (sfxEnabled()) playSfx("coin");   // audible confirmation
+    });
 
     wireKeyboard();
     paintStaticAria();
@@ -764,6 +1155,7 @@
   inheritPalette();
   watchPalette();
   wire();
+  paintSfxBtn();
   registerSync();
   scheduleRender();
 })();

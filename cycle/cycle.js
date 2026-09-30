@@ -42,12 +42,13 @@
       "tab.cal":       "Timeline",
       "tab.days":      "Days",
       "tab.ins":       "Insights",
-      "cal.prev":      "Previous month",
-      "cal.next":      "Next month",
       "cal.today":     "Today",
       "tl.log":        "Log today",
       "tl.back":       "Earlier",
       "tl.fwd":        "Later",
+      "tl.welcome":    "Welcome to Cycle",
+      "tl.sub":        "Start by logging today — a period, symptoms, or meds.",
+      "tl.cta":        "Make your first entry",
       "ci.none":       "First period not logged yet",
       "ci.next":       "expected",
       "ci.late":       "~{n} days late",
@@ -141,23 +142,20 @@
       "rep.disc":     "Self-tracked data, informational only — not a medical diagnosis or advice.",
       "exp.done":     "PDF exported",
       "exp.err":      "PDF library not found (vendor/jspdf missing).",
-      "exp.font.err":  "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
-      "ql.title":      "Quick Log",
-      "ql.fullcal":    "Full Calendar",
-      "ql.quick":     "Quick Log view",
-      "ql.flowonly":  "Only log flow"
+      "exp.font.err":  "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF."
     },
     el: {
       "app.title":     "Κύκλος",
       "tab.cal":       "Χρονογραμμή",
       "tab.days":      "Ημέρες",
       "tab.ins":       "Στατιστικά",
-      "cal.prev":      "Προηγούμενος μήνας",
-      "cal.next":      "Επόμενος μήνας",
       "cal.today":     "Σήμερα",
       "tl.log":        "Καταγραφή σήμερα",
       "tl.back":       "Νωρίτερα",
       "tl.fwd":        "Αργότερα",
+      "tl.welcome":    "Καλωσόρισες στον Κύκλο",
+      "tl.sub":        "Ξεκίνα καταγράφοντας σήμερα — περίοδο, συμπτώματα ή φάρμακα.",
+      "tl.cta":        "Κάνε την πρώτη σου καταγραφή",
       "ci.none":       "Καμία περίοδος καταγεγραμμένη ακόμα",
       "ci.next":       "αναμενόμενη",
       "ci.late":       "~{n} ημέρες αργεί",
@@ -251,11 +249,7 @@
       "rep.disc":      "Δεδομένα αυτο-καταγραφής, μόνο ενημερωτικά — όχι ιατρική διάγνωση ή συμβουλή.",
       "exp.done":      "Το PDF εξήχθη",
       "exp.err":       "Δεν βρέθηκε η βιβλιοθήκη PDF (λείπει το vendor/jspdf).",
-      "exp.font.err":  "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
-      "ql.title":      "Γρήγορη Καταγραφή",
-      "ql.fullcal":    "Πλήρες Ημερολόγιο",
-      "ql.quick":     "Προβολή Γρήγορης Καταγραφής",
-      "ql.flowonly":  "Καταγραφή μόνο ροής"
+      "exp.font.err":  "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF."
     }
   };
 
@@ -870,8 +864,8 @@
 
     var anchor = timelineAnchor ? dayTsFromKey(timelineAnchor) : todayTs();
     var half = Math.floor(timelineZoom / 2);
-    var leftTs = anchor - half * DAY_MS;
-    var rightTs = anchor + (timelineZoom - half) * DAY_MS;
+    var leftTs  = dayTsFromKey(dayKey(anchor - half * DAY_MS));
+    var rightTs = dayTsFromKey(dayKey(anchor + (timelineZoom - half) * DAY_MS));
     var scale = 100 / timelineZoom;
 
     // head: ‹ · − zoom + · › · Today
@@ -934,7 +928,7 @@
     head.appendChild(td);
     var lg = document.createElement("button");
     lg.type = "button";
-    lg.className = "cal-today";
+    lg.className = "tl-log";
     lg.textContent = "+ " + t("tl.log");
     lg.addEventListener("click", function () {
       openDay = "d-" + dayKey(todayTs());
@@ -943,7 +937,8 @@
       applyView();
     });
     head.appendChild(lg);
-    host.appendChild(head);
+    var isEmpty = !state.days.length && !state.periods.length;
+    if (!isEmpty) host.appendChild(head);
 
     // WHERE AM I? — the two anchors every timeline needs: a
     // date-range caption under the controls and a month axis on
@@ -956,8 +951,9 @@
     cap.className = "tl-range";
     cap.textContent =
       dstr(leftTs, { day: "numeric", month: "short" }) + " – " +
-      dstr(rightTs, { day: "numeric", month: "short", year: "numeric" });
-    host.appendChild(cap);
+      dstr(dayTsFromKey(dayKey(rightTs - DAY_MS)),
+        { day: "numeric", month: "short", year: "numeric" });
+    if (!isEmpty) host.appendChild(cap);
 
     var axis = document.createElement("div");
     axis.className = "tl-axis";
@@ -977,12 +973,55 @@
       }
       walk.setDate(walk.getDate() + 1);
     }
-    host.appendChild(axis);
+    if (!isEmpty) host.appendChild(axis);
 
     // bars — one per period; ongoing ends at today (never paints
     // the future as bleeding forever — same honesty rule as before)
     var bars = document.createElement("div");
     bars.className = "tl-bars";
+
+    // day grid — one hairline per day, Mondays emphasized (the
+    // week boundaries), date number on every Monday, weekends
+    // shaded. Painted FIRST so the period bars sit on top.
+    var grid = document.createElement("div");
+    grid.className = "tl-grid";
+    var wcur = new Date(leftTs), wpos = leftTs, weL = -1;
+    while (wpos < rightTs) {
+      var wd = wcur.getDay();                   // 0=Sun … 6=Sat
+      var px = ((wpos - leftTs) / DAY_MS) * scale;
+      var gl = document.createElement("div");
+      gl.className = "tl-gl" + (wd === 1 ? " major" : "");
+      gl.style.left = px + "%";
+      grid.appendChild(gl);
+      if (wd === 1) {
+        var dn = document.createElement("span");
+        dn.className = "tl-dnum";
+        dn.style.left = px + "%";
+        dn.textContent = wcur.getDate();
+        grid.appendChild(dn);
+      }
+      if (wd === 6) weL = wpos;                 // Sat opens a run
+      if (wd === 0 && weL < 0 && wpos === leftTs) {
+        var wz0 = document.createElement("div"); // strip BEGINS on a
+        wz0.className = "tl-we";                // lone Sunday — shade it
+        wz0.style.left = "0%";                  // as a 1-day weekend
+        wz0.style.width = scale + "%";
+        grid.appendChild(wz0);
+      }
+      if ((wd === 0 || wpos + DAY_MS >= rightTs) && weL >= 0) {
+        var wz = document.createElement("div");
+        wz.className = "tl-we";
+        wz.style.left = (((weL - leftTs) / DAY_MS) * scale) + "%";
+        wz.style.width =
+          (Math.round((wpos - weL) / DAY_MS) + 1) * scale + "%";
+        grid.appendChild(wz);
+        weL = -1;
+      }
+      wcur.setDate(wcur.getDate() + 1);         // DST-safe midnight walk
+      wpos = wcur.getTime();
+    }
+    bars.appendChild(grid);
+
     state.periods.forEach(function (p) {
       var pEnd = (p.end !== null) ? p.end : todayTs();
       if (p.start > rightTs || pEnd < leftTs) return;
@@ -1005,8 +1044,9 @@
         var rect = bars.getBoundingClientRect();
         var frac = (ev.clientX - rect.left) / Math.max(1, rect.width);
         var off = Math.floor(frac * timelineZoom);
-        var ts = Math.min(pEnd, Math.max(p.start,
-                        leftTs + off * DAY_MS));
+        var cw = new Date(leftTs);              // DST-safe: calendar
+        cw.setDate(cw.getDate() + off);         // days, not 24h units
+        var ts = Math.min(pEnd, Math.max(p.start, cw.getTime()));
         openDay = "d-" + dayKey(ts);
         managing = false;
         applyView();
@@ -1026,7 +1066,7 @@
       bars.appendChild(pb);
     }
 
-    if (leftTs <= todayTs() && todayTs() <= rightTs) {
+    if (leftTs <= todayTs() && todayTs() < rightTs) {
       var tm = document.createElement("div");
       tm.className = "tl-today";
       var tPct = ((todayTs() - leftTs) / DAY_MS) * scale;
@@ -1038,16 +1078,16 @@
       tm.appendChild(tLab);
       bars.appendChild(tm);
     }
-    host.appendChild(bars);
+    if (!isEmpty) host.appendChild(bars);
 
     // day-record dots — one lane below the bars: logged days are
     // visible again (even outside periods) and each is a direct
     // door into its day editor
-    if (state.days.length) {
+    if (state.days.length && !isEmpty) {
       var dots = document.createElement("div");
       dots.className = "tl-days";
       state.days.forEach(function (d) {
-        if (d.day < leftTs || d.day > rightTs) return;
+        if (d.day < leftTs || d.day >= rightTs) return;
         var dt = document.createElement("button");
         dt.type = "button";
         dt.className = "tl-dot";
@@ -1086,43 +1126,63 @@
     pit.appendChild(pd);
     pit.appendChild(document.createTextNode(t("ci.next")));
     legend.appendChild(pit);
-    host.appendChild(legend);
+    if (!isEmpty) {
+      host.appendChild(legend);
 
-    // reminder toggle — restored from the old calendar footer;
-    // it was lost with renderCalendar() and left
-    // state.prefs.remind unreachable from the UI
-    var rt = document.createElement("button");
-    rt.type = "button";
-    rt.className = "chip ghost" + (state.prefs.remind ? " on" : "");
-    rt.style.margin = "14px auto 0";
-    rt.style.display = "flex";
-    rt.style.alignItems = "center";
-    rt.style.gap = "6px";
-    rt.title = t("rem.title");
-    rt.setAttribute("aria-pressed", state.prefs.remind ? "true" : "false");
-    rt.innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">' +
-      '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
-      '<path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' +
-      "<span></span>";
-    rt.lastChild.textContent =
-      state.prefs.remind ? t("rem.on") : t("rem.off");
-    rt.addEventListener("click", function () {
-      state.prefs.remind = !state.prefs.remind;
-      state.sm = Date.now();
-      state.om = Date.now();   // prefs resolve by om-donor in merge
-      save();
-      renderTimeline();
-    });
-    host.appendChild(rt);
+      // reminder toggle — restored from the old calendar footer;
+      // it was lost with renderCalendar() and left
+      // state.prefs.remind unreachable from the UI
+      var rt = document.createElement("button");
+      rt.type = "button";
+      rt.className = "chip ghost" + (state.prefs.remind ? " on" : "");
+      rt.style.margin = "14px auto 0";
+      rt.style.display = "flex";
+      rt.style.alignItems = "center";
+      rt.style.gap = "6px";
+      rt.title = t("rem.title");
+      rt.setAttribute("aria-pressed", state.prefs.remind ? "true" : "false");
+      rt.innerHTML =
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">' +
+        '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+        '<path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' +
+        "<span></span>";
+      rt.lastChild.textContent =
+        state.prefs.remind ? t("rem.on") : t("rem.off");
+      rt.addEventListener("click", function () {
+        state.prefs.remind = !state.prefs.remind;
+        state.sm = Date.now();
+        state.om = Date.now();   // prefs resolve by om-donor in merge
+        save();
+        renderTimeline();
+      });
+      host.appendChild(rt);
+    }
 
     if (!state.days.length && !state.periods.length) {
-      var hl = document.createElement("div");
-      hl.className = "hint";
-      hl.style.textAlign = "center";
-      hl.style.marginTop = "12px";
-      hl.textContent = t("cal.empty");
-      host.appendChild(hl);
+      var emp = document.createElement("div");
+      emp.className = "tl-empty";
+      emp.innerHTML =
+        '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+        'stroke-linejoin="round">' +
+        '<rect x="3" y="4" width="18" height="18" rx="2"/>' +
+        '<path d="M16 2v4M8 2v4M3 10h18"/></svg>' +
+        '<div class="tl-empty-t"></div>' +
+        '<div class="tl-empty-s"></div>';
+      emp.querySelector(".tl-empty-t").textContent = t("tl.welcome");
+      emp.querySelector(".tl-empty-s").textContent = t("tl.sub");
+      var cta = document.createElement("button");
+      cta.type = "button";
+      cta.className = "tl-log";
+      cta.textContent = t("tl.cta");
+      cta.addEventListener("click", function () {
+        openDay = "d-" + dayKey(todayTs());
+        managing = false;
+        timelineAnchor = null;
+        applyView();
+      });
+      emp.appendChild(cta);
+      host.appendChild(emp);
     }
   }
 
@@ -2594,12 +2654,25 @@
       ".leg-dot.pred{background:transparent;border:1px dashed var(--accent)}" +
       ".tl-days{position:relative;height:16px;margin-top:2px}" +
       ".tl-dot{position:absolute;top:2px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--accent);opacity:.65;border:none;padding:0;cursor:pointer}" +
-      ".tl-dot:hover{opacity:1}" +
       ".tl-range{text-align:center;font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}" +
       ".tl-axis{position:relative;height:14px;margin-bottom:2px}" +
       ".tl-mk{position:absolute;top:0;left:0;transform:translateX(2px);font-size:10px;color:var(--text-dim);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}" +
-      ".tl-today-lab{position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;color:var(--accent);white-space:nowrap;pointer-events:none}" +
-      ".tl-today-lab.flip{left:auto;right:4px}";
+      ".tl-today-lab{position:absolute;top:2px;left:4px;font-size:10px;font-weight:800;color:var(--accent);white-space:nowrap;pointer-events:none}" +
+      ".tl-today-lab.flip{left:auto;right:4px}" +
+      ".tl-grid{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none}" +
+      ".tl-gl{position:absolute;top:0;bottom:0;width:1px;background:var(--text);opacity:.06}" +
+      ".tl-gl.major{opacity:.14}" +
+      ".tl-we{position:absolute;top:0;bottom:0;background:var(--text);opacity:.05}" +
+      ".tl-dnum{position:absolute;bottom:2px;transform:translateX(2px);font-size:9px;color:var(--text-dim)}" +
+      ".tl-log{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}" +
+      ".tl-log:hover{filter:brightness(1.1)}" +
+      ".tl-bar:hover{opacity:1!important;box-shadow:0 2px 8px rgba(0,0,0,.35)}" +
+      ".tl-dot:hover{opacity:1;transform:scale(1.3)}" +
+      ".tl-today{box-shadow:2px 0 8px var(--accent)}" +
+      ".tl-empty{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px;padding:26px 14px;border:1px dashed var(--border);border-radius:10px;color:var(--text-dim)}" +
+      ".tl-empty-t{font-size:17px;font-weight:800;color:var(--text)}" +
+      ".tl-empty-s{font-size:13px;text-align:center}" +
+      ".tl-empty .tl-log{margin-top:6px}";
     document.head.appendChild(st);
   }
 
