@@ -1452,3 +1452,261 @@ Todo/Quote/Cycle apps unaffected (regression smoke).
 Offline: disable network after install → Minimalism loads from precache.
 Sync: complete entries on device A, cold-start device B → History view reflects merged days, no duplicates.
 Next up: Content expansion — Days 6–365 of content.js in review batches (currently Days 1–5 placeholders; shorter arrays wrap via modulo, so partial batches never crash). Backlog (future waves): Calendar feed visualization for minimalism completions, Revisit mode for skipped items, year-end contribution graph widget.
+
+---
+
+# Writer — Wave 5 Audit Fixes (14 patches, post-Wave-5 stabilization pass)
+
+## Context
+
+Deep audit of the Writer app (wave 5 — I/O) after completion of the main
+feature set. The audit surfaced 14 issues: functional bugs, localization
+errors, an XSS vector, a DOM leak, dead code, and one missing CSS print rule.
+All fixes were delivered as verified OLD -> NEW blocks and confirmed applied
+against the live files (writer.js, writer.css, index.html).
+
+## Fixes applied (writer.js)
+
+1. Table dialog — the footer had two buttons but no Insert action. The
+   secondary button was rebound to t('table.insert') triggering doInsertTable;
+   the cancel button now uses t('wx.cancel'). New key: table.insert (EN/EL).
+2. Auto-correction never fired — the rule check ran inside a setTimeout
+   after the Space keypress, so the caret had already moved and the regex
+   tail match failed. Converted to a direct synchronous call inside the
+   keydown handler.
+3. Auto-correction crash — state.autocorrect is null until the user first
+   opens the AC dialog; deleting a rule on first use crashed. openAcDialog()
+   now seeds state.autocorrect with a deep copy of AC_DEFAULTS before
+   rendering.
+4. Goal bar lock/clear buttons were empty (no icons). wireGoalBar() now
+   injects ICONS.lock and ICONS.close. New ICONS.lock entry (SVG padlock).
+5. Ten dialogs shipped hardcoded 'OK' / 'Close' labels: settings, metadata,
+   page settings, link, image, TOC, templates, edit template, export, version
+   history. All replaced with t('wx.done').
+6. AC row delete tooltip incorrectly showed t('doc.deleted'). Now uses the
+   dedicated key ac.del ("Delete rule" / "Διαγραφή κανόνα").
+7. XSS-hardening: five input value attributes in metadata and page settings
+   dialogs used esc(), which does not neutralize quotes — a crafted document
+   title could break out of the attribute and inject markup. All five now
+   use escAttr().
+8. DOM leak: openDialog() appended <dialog> elements to the body on every
+   open and never removed them. Added a close listener that removes the node
+   (dlg.addEventListener('close', () => dlg.remove())).
+9. (writer.css) The @media print block hid .tab-bar, .main-toolbar and
+   .w-toast but not .find-bar — an open find bar printed as a black strip.
+   .find-bar added to the hide list in the Wave 1 print block.
+10. Dead code removal: empty beforeunload listener, empty Escape shortcut
+    branch, and a redundant ternary in openExportDialog (both arms identical).
+11. Emoji grid: characters were split by Array.from() such that the
+    variation selector U+FE0F became a standalone cell. renderCharGrid() now
+    merges a leading U+FE0F into the preceding character during reduce.
+12. Import dialog primary button was disabled/no-op with no feedback. It now
+    shows the toast io.pickFirst ("Pick a file first"). New key EN/EL.
+13. Hydrate robustness: raw slices synced from older/parallel installs could
+    miss the settings object entirely, wiping smartTypography. hydrate() now
+    merges incoming settings over defaults (Object.assign) and re-guards
+    smartTypography.
+14. Invalid HTML: renderTabs() nested a <button> inside the tab <button>.
+    The close control is now a <span role="button"> — .tab-close CSS is
+    tag-agnostic, no stylesheet change needed.
+
+## New i18n keys (EN/EL): table.insert, ac.del, io.pickFirst
+
+## Verification checklist (all passed)
+
+- writer.js boots clean (IIFE intact, boot marker logs)
+- Table insert produces a table; AC rules fire on Space; AC delete works on
+  first visit; goal bar shows lock/close icons
+- EL mode shows zero raw keys (wx.done, table.insert, ac.del, io.pickFirst
+  all present in both packs)
+- Quote-containing titles no longer break dialog attributes
+- Repeated dialog open/close leaves no orphan dialog nodes in the DOM
+- Print preview hides find bar, panels, goal bar, dd overlay
+- Emojis render whole in the chars grid (✍️, 📖, 🗓️ etc.)
+
+## Status
+
+Writer Wave 5 (I/O) is feature-complete and audit-clean. Next queued work:
+final OROS_BIBLE integration for the full Wave 5 changelog entry (I/O
+architecture notes: export chain, native ZIP DOCX, DecompressionStream
+imports, lazy jsPDF+NotoSans), then proceed to the next application in the
+audit queue.
+
+---
+
+Cycle — Changelog
+Wave: Timeline Rewrite + Unified Notification Migration
+Summary
+Two major tracks landed together: (1) the Cycle app's month calendar view (Full Calendar + Quick Log grid) was replaced with a single horizontal Gantt-style Timeline view, making the orOS Calendar the authoritative "month" view for cycle events while Cycle itself now shows history and trend; (2) all remaining Cycle notifications — including the three undo-bearing toasts — were migrated to the shell's unified notification system, which gained first-class action-button support in transient toasts.
+
+A. Timeline Rewrite (Cycle)
+View architecture
+Removed renderCalendar() — the full month grid, month navigation, weekday header, day cells, and its reminder toggle.
+Removed renderQuickLogGrid() and the Quick Log / Full Calendar toggle chip (calCompact state).
+Added renderTimeline() rendering onto the existing #calview host element (no HTML structural change):
+One bar per period; fill opacity encodes flow intensity (per1/.45, per2/.7, per3/.95, red family #e06c75).
+Ongoing periods render up to today only — the future is never painted as bleeding (same honesty rule as the old grid).
+Prediction renders as a dashed bar guarded by nextPrediction().
+Vertical today-marker line.
+Day-record dots lane below the bars: logged days (even outside periods) are visible and each dot is a direct click-target into that day's editor.
+"+ Log today" button in the timeline head — the primary entry into the day editor without needing an existing period.
+Zoom controls: −/+ adjust visible range in 7-day steps (min 7, max 90); default 30 days.
+Navigation: ‹ › scroll by half the visible window; "Today" button recenters.
+Legend: three flow levels + prediction.
+Click on a period bar → day editor of that period's last day.
+New session-only view state: timelineZoom, timelineAnchor ("YYYY-MM-DD" or null = today-centered). Replaced calCompact and calMonth.
+viewMode migration ("calendar" → "timeline")
+All literal checks and assignments migrated in: applyView(), renderAll(), refreshInView(), wire(), fillDayRows() edit button, sliceSet() (both the openDay-drop check and the syncing-in-editor check), factoryReset() (now resets timelineAnchor).
+
+Deep links
+__orosCycleOpen() (shell bridge, called by Calendar feed rows and notification deepLinks):
+
+Period uid payload → timeline anchored on that period's start date.
+Prediction day key ("YYYY-MM-DD" from cycle:pred: notification deepLinks) → timeline anchored on that date so the dashed prediction bar is visible.
+Shape collision impossible: period uids are base36, day keys contain dashes.
+i18n
+EN: tab.cal "Calendar" → "Timeline".
+EL: tab.cal "Ημερολόγιο" → "Χρονογραμμή".
+Added tl.log ("Log today" / "Καταγραφή σήμερα").
+Strings ql.title, ql.fullcal, ql.quick, ql.flowonly remain in both dictionaries but are now orphaned (no code references) — candidates for a future cleanup pass.
+Dead code removed
+dayInPrediction(ts) — its only callers were the two deleted grids; the timeline uses nextPrediction() range math instead.
+Styling
+ensureQlCss() (compact-grid CSS) replaced by ensureTlCss() — injects .tl-head, .tl-nav, .tl-bars, .tl-bar (.per1/.per2/.per3/.pred), .tl-today, .tl-days, .tl-dot, .tl-legend, .leg-item, .leg-dot, .zoom-val via a one-shot <style> tag at boot.
+cycle.css untouched — timeline styling is JS-injected; the file's old .cal-cell / .cal-wk / .cal-grid rules are inert (no matching DOM) and can be pruned in a future CSS cleanup.
+B. Bug Fixes (Cycle)
+Editor did not close after Save day
+Root cause: applyView() was the sole owner of the hidden flags on #calview / #dayview, but renderAll() only repainted container contents. On Save: openDay was nulled and the timeline repainted — inside a still-hidden #calview, with the dead editor still visible in #dayview. Fix: renderAll() now simply calls applyView() — visibility flags and rendering are one operation. Every exit path (save, remove period, delete day, factory reset) funnels through applyView.
+
+"Saved" toast fired before pressing Save day
+Intermediate mutations were calling transientNote(t("saved.toast")) on every change. Removed the toast from takeMed(), endHere, extendHere, and startPeriodAt() — the visual result (chip list, editor chrome) is already immediate feedback; the single remaining "Saved" toast is the Save day button itself.
+
+"No periods logged yet" via legacy toast
+exportDoctorReport() guard used the local showToast() instead of transientNote(). Fixed earlier in this wave; retained.
+
+C. Unified Notification Migration (Cycle → orosNotifs)
+Remaining legacy toasts
+Three undo-bearing toasts were the last Cycle notifications still on the local showToast() system: removePeriod(), deleteDay(), deleteColVal(). Root blocker: the shell's transient() payload was one-dimensional (ns/title/body only) with no action callback — the undo button had nowhere to attach.
+
+Shell extension (notifications.js)
+transientToast() now accepts action: { label, fn } (validated once, label must be non-empty string, fn must be function) and an optional deepLink. Transient items never enter state.slice.items, so a function reference in the payload is never serialized or synced — same-origin iframe closure, safe by construction.
+fireToast() renders an action button (.notif-action, accent color, beside the ✕ dismiss) when the item carries a valid action.
+Action click handler: stopPropagation(), runs fn inside try/catch (errors logged as [orOS][notifs] ERROR: Action callback failed), marks the item read, removes the toast — never triggers the deep link.
+Undo-bearing toasts get an extended auto-remove window: Math.max(duration, 8000) — an undo that vanishes in 5s is a cruel joke.
+Body clicks unaffected: dismiss click and action click are excluded from the deep-link handler.
+Transient toasts remain exempt from sound (NOT-R4) and from OS-level native notifications (Wave 10).
+App-side integration (cycle.js)
+transientNote(text, actionLabel, actionFn) — same signature as the local showToast(), so migrating the three call sites was a one-word change. Falls back to showToast(text, actionLabel, actionFn) when the app runs standalone (no shell / no orosNotifs).
+removePeriod(), deleteDay(), deleteColVal() now route through transientNote() with del.done / col.del.done titles and del.undo / col.del.undo action labels, restoring the pre-deletion state on undo (bump mtime, re-push record, clear tombstone, save, render).
+Default position
+First-boot (fresh installs) notification position default changed from top-right to bottom-right in defaultSettings(). Existing devices keep their persisted choice (LWW via settingsRev — unaffected).
+
+D. Preserved Contracts (unchanged)
+Data model, merge engine, tombstones, deterministic day ids.
+Unified notification scheduling (__orosCycleCheck, boot sweep, quiet hours, app toggles) — untouched.
+Sync slice registration and unsaved-edit survival during remote pulls — only the viewMode literal changed.
+Day editor, days list, insights, mood cross-app section, doctor report PDF (vendored NotoSans), factory reset double-confirm.
+periodCovering() and nextPrediction() logic unchanged; only consumption sites changed.
+E. Verification Checklist
+Reload → timeline renders with no console errors; toast position bottom-right on fresh installs.
+Period bar click → day editor of the period's last day; day dot click → that day's editor; "+ Log today" → today's editor.
+Save day → return to timeline, editor fully closed (no stale #dayview overlay).
+Med chip / End here / Extend here / Start period → no premature "Saved" toast; only Save day fires it.
+Delete period / day / custom value → toast with undo button (8s minimum window) → undo restores the record; console free of Action callback failed.
+Calendar feed row click → timeline anchors on the period; cycle:pred: deepLink → anchors on the prediction date.
+Standalone cycle.html (no shell) → local showToast() fallback with working undo.
+F. Standing Rules (reaffirmed)
+No guessing: patches are verified character-by-character against the actual submitted file before delivery; if a target segment cannot be located, the assistant stops and requests the real file.
+All patches delivered as OLD → NEW copy-paste blocks with searchable OLD text and exact location instructions.
+Transient items never enter the synced slice — closures remain in-memory, same-origin only.
+Changelogs are plain Markdown, English, structured for assistant-facing continuity across chat sessions.
+G. Under Consideration
+Removing the orphaned i18n strings (ql.title, ql.fullcal, ql.quick, ql.flowonly) from both dictionaries.
+Pruning inert .cal-cell / .cal-grid / .cal-wk rules from cycle.css.
+Cosmetic comment fix in index.html above #calview ("month calendar" → "timeline").
+
+---
+
+2026-09-30 — Screen Pet v0.2 (Waves 2/3/4): energy-scaled wandering + mood-driven sprite expressions + enriched bilingual speech (5 phrases/category) + throttled hunger reaction (10 min); HUD palette picker + dblclick rename (both per-field LWW via fm) + age line from birthTs; device-local position memory (oros-pet-pos, normalized fractions); sync celebration hop via orosSync.onAutoSync (done-only, interval-excluded, 60s throttle); sliceSet live-refresh on remote merges; FIX-D1: vertical drag no longer snapped to floor every tick. DATA_VER stays 1 — no schema change. pet.css untouched (inline styles).
+
+---
+
+2026-09-30 — Screen Pet v0.2 (Waves 2/3/4 — behavior, identity, OS integration)
+
+CONTEXT orOS Screen Pet is a SHELL component (pet.js/pet.css, root-level, not an iframe app), second Soffitta port. Entity identity (name/palette/timestamps) syncs via the "pet" slice on window.orosSync (registerSlice, 5-arg, mergeFn = mergePetStates); runtime position/frame/mode are per-device, never stored. Stats (food/happy/energy) are DERIVED from temporal anchors, never stored (DATA_VER stays 1 — no schema change). Relaxed pacing: food ~24h, happy ~36h, energy ~10h awake / ~5h asleep; auto-sleep <8, auto-wake >=95; no death mechanic (floor 0). Merge doctrine: temporal fields are their own clocks (max wins), anchor pairs (wokeAt/awakeE, asleepSince/asleepE) travel together, name/palette per-field LWW via fm mtime map (R5), tombstones prevent resurrection. Keys: oros-pet-data (synced), oros-pet-enabled (device-local toggle), oros-pet-pos (device-local position).
+
+WAVE 2 — BEHAVIOR & LIFE
+
+Energy-scaled wandering: walkParameters(stats) derives idle pauses (1.5–3.5s normal → 3–7s when energy <30) and walk range (100% → 30% of stage when energy <30) from derived stats. No new mechanism — tuning of the v0.1 wander loop.
+Mood-driven sprite expressions: mood() derives sleep > tired (energy <25 or food <20) > happy (happy >60) > neutral from stats; drawSprite reshapes eyes/mouth accordingly (closed eyes asleep, half-lidded slits + slow blink when tired, wide eyes + shine + smile when happy). Pure rendering, zero storage.
+Enriched bilingual speech: 5 phrases per category per language (hungry, bored, tired, happy, eat, wake, sleep), random pick via speakLine().
+Hunger reaction: speech-bubble warning once per threshold crossing, throttled to one hungry phrase per 10 minutes (HUNGER_TALK_MS) while food <25; flags reset at food >=35.
+WAVE 3 — IDENTITY & PRESENTATION
+
+Palette picker in HUD: 5 swatches (bilingual tooltips), active ring follows synced choice; write via writePet + fm.palette (per-field LWW).
+Rename via double-click on the HUD name: inline input, Enter commits / Escape-blur cancels, 16-char cap; write via fm.name. Input defends itself (stopPropagation) so S/F shortcuts stay out of the editor.
+Position memory: oros-pet-pos device-local, saved on drag end and disable, stored as normalized fractions (fx/fy in [0,1]) and clamped on restore — survives window-size changes. Never synced, never dirty.
+HUD age line: "N days with you" (singular/plural, EN/EL) — display-only math from birthTs (Part IX: never part of sync computation).
+WAVE 4 — OS INTEGRATION
+
+Sync celebration: orosSync.onAutoSync(kind, reason) listener — happy hop + heart on kind "done", excluded for reason "interval", 60s throttle (CELEBRATE_MIN_MS), never fires on sleeping/inactive pet. Progressive no-op if orosSync/onAutoSync missing (stale bundle safe).
+sliceSet live refresh: remote merges (rename/palette/feed/new entity from another device) now reflect immediately on this device while the pet is active — stats recomputed, HUD redrawn, warn flags rearmed. Inactive → next petEnable() reads fresh state.
+FIXES
+
+FIX-D1 (found during v0.2 assembly): updateBehavior() no longer snaps y to the floor every tick while dragging — vertical drag now works (guard: if (runtime.mode !== "drag") runtime.y = Math.max(b.floorY, 60)).
+shell.js pet section toggle label: was reusing wx.on/wx.off keys (which read "Weather tray on/off") — replaced with inline EN/EL literals ("On/Off", "Ενεργό/Ανενεργό") via the section-local petT() helper. renderPetSection untouched otherwise.
+FILES
+
+pet.js — rewritten (v0.2, sections 1–8). pet.css — UNTOUCHED (all new HUD elements use inline styles). shell.js — one-line toggle label fix in renderPetSection. sw.js/index.html/translations.js — no changes this wave (integration completed in v0.1 wave).
+STATUS Integration complete, FIX-D1 applied, pet (3).js verified as final. PT smoke test PENDING (QUEUED in Bible Part IX): retroactive energy after simulated 2-day absence, identity merge rename A→B, drag vs click with vertical axis, position restore after reload, rename/palette sync A↔B, sync hop with throttle, EL/EN speech + HUD + tooltips, modifier guards. Bible updates (Parts III registry status → Done, IV PET v1 schema, IX exemptions, XII changelog) await smoke test closure — draft patches B-1 through B-8 already prepared in-session.
+
+
+
+
+Cycle — Changelog
+Wave: Timeline Orientation & Usability Recovery
+Summary
+The timeline rewrite shipped functional but temporally blind: bars, dots and the today-marker rendered with zero date anchoring, making the view unreadable — the user could not tell which day they were looking at, what the arrows did, or why elements moved. This wave gives the timeline its missing orientation layer, fixes bar-click semantics, restores a lost preference control, and cleans a variable shadowing trap. No data-model, merge, or sync changes — everything is render-side only.
+
+Diagnosis driving the changes
+No date information anywhere on the canvas: bars floated over a blank strip with no month axis, no day numbers, no range caption. The only visible cues were colored bars, dots, and a vertical line that shifted with panning — the "element that changes position".
+Bar click opened the period's LAST day regardless of where the user clicked (openDay = last day of period), which reads as a random date.
+Real regression found: the "Reminders on/off" toggle lived at the end of the deleted renderCalendar() and was never migrated — state.prefs.remind became unreachable from the UI (the __orosCycleCheck gate honors it, but no control could flip it).
+Cleanliness: renderTimeline() declared var lg twice (the "Log today" head button and, later, the legend). Legal in strict mode and functionally harmless, but a hazard for future search-based patches.
+Changes
+Orientation layer (renderTimeline)
+Range caption below the controls: "15 Sep – 15 Oct 2026"-style line (locale-aware, el-GR / en-GB), refreshed on every pan and zoom.
+Month axis above the bars: one uppercase short-month marker per month boundary crossing the visible window (skipped when it would land past 99% to avoid clipping at the right edge).
+Today marker gains a label chip: "Today · 30 Sep" in accent color, positioned right of the line; flips to the left side of the line when the marker sits past 78% of the strip width (flip class).
+Period bar tooltips now carry the dates: "Period · Heavy · 3 Sep – 8 Sep" (ongoing periods show start only).
+Day-record dot tooltips use the full local form "Mon 3 Sep" instead of the raw Y-M-D key.
+Interaction fix
+Bar click now opens the day UNDER THE FINGER, not the period's last day: click position fraction × visible window → day offset, clamped to the period's own span (start..effective end). A bar never opens a day outside itself.
+Restored control
+Reminder toggle returned to the timeline (below the legend), lifted verbatim from the old calendar footer: bell icon + "Reminders on/off", aria-pressed, routes through the om-donor merge rule (prefs edits bump both sm and om — same contract as before). This re-enables the only user control over __orosCycleCheck.
+i18n
+Added tl.back ("Earlier" / "Νωρίτερα") and tl.fwd ("Later" / "Αργότερα").
+Arrow buttons now use these for aria-label AND title; previously they said "Previous month" / "Next month", which was wrong copy for a panning timeline.
+Code cleanliness
+The legend element renamed lg → legend, eliminating the double-var shadowing with the head's Log-today button.
+CSS (ensureTlCss)
+New rules injected: .tl-range (centered bold caption), .tl-axis (14px month strip), .tl-mk (positioned month marker, 10px, text-transform uppercase), .tl-today-lab (+ .flip variant for near-right placement).
+
+What did NOT change
+Data model, migrate(), merge engine, tombstones, sync slice — untouched.
+Prediction math, cycle info strip, day editor, days list, insights, mood cross-app section, doctor report PDF.
+Zoom limits (7–90, ±7 steps), pan distance (half the visible window), "+ Log today" entry point, day-dot click (still opens that exact day), __orosCycleOpen anchoring.
+Day drafts surviving remote pulls, chip management, factory reset flow.
+Application order note
+Patches must be applied in numbered sequence — the range-caption patch defines the dstr helper (and the loc locale) used by the bar tooltip, today label, and dot tooltip patches that follow it inside renderTimeline.
+
+Verification checklist
+Reload → range caption and month axis visible under the controls; no console errors.
+Click different spots along the same period bar → editor opens different days, always within that period's span; editor header shows the clicked day's full date.
+Pan with ‹ › and zoom with −/+ → caption updates every time; arrows show the new "Earlier/Later" tooltips.
+Today line carries its "Today · <date>" label, flipping sides near the right edge.
+Reminder toggle visible below the legend; toggling flips the text/icon state and survives a reload.
+Hovering bars and dots shows the new localized date tooltips.
+Under consideration
+Pruning orphaned i18n strings (ql.title, ql.fullcal, ql.quick, ql.flowonly) and inert .cal-cell / .cal-grid / .cal-wk rules from cycle.css.
+index.html comment above #calview still says "month calendar" — cosmetic only.

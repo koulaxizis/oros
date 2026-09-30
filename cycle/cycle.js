@@ -46,6 +46,8 @@
       "cal.next":      "Next month",
       "cal.today":     "Today",
       "tl.log":        "Log today",
+      "tl.back":       "Earlier",
+      "tl.fwd":        "Later",
       "ci.none":       "First period not logged yet",
       "ci.next":       "expected",
       "ci.late":       "~{n} days late",
@@ -154,6 +156,8 @@
       "cal.next":      "Επόμενος μήνας",
       "cal.today":     "Σήμερα",
       "tl.log":        "Καταγραφή σήμερα",
+      "tl.back":       "Νωρίτερα",
+      "tl.fwd":        "Αργότερα",
       "ci.none":       "Καμία περίοδος καταγεγραμμένη ακόμα",
       "ci.next":       "αναμενόμενη",
       "ci.late":       "~{n} ημέρες αργεί",
@@ -877,7 +881,8 @@
     prev.type = "button";
     prev.className = "tl-nav";
     prev.textContent = "‹";
-    prev.setAttribute("aria-label", t("cal.prev"));
+    prev.setAttribute("aria-label", t("tl.back"));
+    prev.title = t("tl.back");
     prev.addEventListener("click", function () {
       timelineAnchor = dayKey(anchor - Math.round(timelineZoom / 2) * DAY_MS);
       renderTimeline();
@@ -911,7 +916,8 @@
     next.type = "button";
     next.className = "tl-nav";
     next.textContent = "›";
-    next.setAttribute("aria-label", t("cal.next"));
+    next.setAttribute("aria-label", t("tl.fwd"));
+    next.title = t("tl.fwd");
     next.addEventListener("click", function () {
       timelineAnchor = dayKey(anchor + Math.round(timelineZoom / 2) * DAY_MS);
       renderTimeline();
@@ -939,6 +945,40 @@
     head.appendChild(lg);
     host.appendChild(head);
 
+    // WHERE AM I? — the two anchors every timeline needs: a
+    // date-range caption under the controls and a month axis on
+    // the strip itself. Without them the bars float in a vacuum.
+    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var dstr = function (ts, o) {
+      return new Date(ts).toLocaleDateString(loc, o);
+    };
+    var cap = document.createElement("div");
+    cap.className = "tl-range";
+    cap.textContent =
+      dstr(leftTs, { day: "numeric", month: "short" }) + " – " +
+      dstr(rightTs, { day: "numeric", month: "short", year: "numeric" });
+    host.appendChild(cap);
+
+    var axis = document.createElement("div");
+    axis.className = "tl-axis";
+    var walk = new Date(leftTs), lastM = -1;
+    while (walk.getTime() <= rightTs) {
+      if (walk.getMonth() !== lastM) {
+        lastM = walk.getMonth();
+        var pct = ((walk.getTime() - leftTs) / DAY_MS) * scale;
+        if (pct < 99) {
+          var mk = document.createElement("span");
+          mk.className = "tl-mk";
+          mk.style.left = pct + "%";
+          mk.textContent =
+            walk.toLocaleDateString(loc, { month: "short" });
+          axis.appendChild(mk);
+        }
+      }
+      walk.setDate(walk.getDate() + 1);
+    }
+    host.appendChild(axis);
+
     // bars — one per period; ongoing ends at today (never paints
     // the future as bleeding forever — same honesty rule as before)
     var bars = document.createElement("div");
@@ -953,9 +993,21 @@
       bar.className = "tl-bar per" + p.flow;
       bar.style.left = (sX * scale) + "%";
       bar.style.width = (Math.max(1, eX - sX) * scale) + "%";
-      bar.title = t("per.title") + " · " + t("flow." + p.flow);
-      bar.addEventListener("click", function () {
-        openDay = "d-" + dayKey(pEnd);
+      bar.title = t("per.title") + " · " + t("flow." + p.flow) + " · " +
+        dstr(p.start, { day: "numeric", month: "short" }) +
+        (p.end === null ? "" : " – " +
+          dstr(p.end, { day: "numeric", month: "short" }));
+      bar.addEventListener("click", function (ev) {
+        // the day under the finger — NOT the period's last day.
+        // Fraction of the strip → day offset → clamped inside
+        // the period's own span (a bar never opens a day that
+        // is not its own).
+        var rect = bars.getBoundingClientRect();
+        var frac = (ev.clientX - rect.left) / Math.max(1, rect.width);
+        var off = Math.floor(frac * timelineZoom);
+        var ts = Math.min(pEnd, Math.max(p.start,
+                        leftTs + off * DAY_MS));
+        openDay = "d-" + dayKey(ts);
         managing = false;
         applyView();
       });
@@ -977,7 +1029,13 @@
     if (leftTs <= todayTs() && todayTs() <= rightTs) {
       var tm = document.createElement("div");
       tm.className = "tl-today";
-      tm.style.left = (((todayTs() - leftTs) / DAY_MS) * scale) + "%";
+      var tPct = ((todayTs() - leftTs) / DAY_MS) * scale;
+      tm.style.left = tPct + "%";
+      var tLab = document.createElement("span");
+      tLab.className = "tl-today-lab" + (tPct > 78 ? " flip" : "");
+      tLab.textContent = t("cal.today") + " · " +
+        dstr(todayTs(), { day: "numeric", month: "short" });
+      tm.appendChild(tLab);
       bars.appendChild(tm);
     }
     host.appendChild(bars);
@@ -994,7 +1052,8 @@
         dt.type = "button";
         dt.className = "tl-dot";
         dt.style.left = (((d.day - leftTs) / DAY_MS) * scale) + "%";
-        dt.title = dayKey(d.day);
+        dt.title = dstr(d.day,
+          { weekday: "short", day: "numeric", month: "short" });
         dt.addEventListener("click", function () {
           openDay = d.id;
           managing = false;
@@ -1005,9 +1064,11 @@
       host.appendChild(dots);
     }
 
-    // legend
-    var lg = document.createElement("div");
-    lg.className = "tl-legend";
+    // legend (renamed from lg — the head's Log-today button
+    // already owns that name; the double var was legal but a
+    // trap for future patches)
+    var legend = document.createElement("div");
+    legend.className = "tl-legend";
     [[t("flow.1"), "per1"], [t("flow.2"), "per2"], [t("flow.3"), "per3"]]
       .forEach(function (f) {
         var it = document.createElement("span");
@@ -1016,7 +1077,7 @@
         d.className = "leg-dot " + f[1];
         it.appendChild(d);
         it.appendChild(document.createTextNode(f[0]));
-        lg.appendChild(it);
+        legend.appendChild(it);
       });
     var pit = document.createElement("span");
     pit.className = "leg-item";
@@ -1024,8 +1085,36 @@
     pd.className = "leg-dot pred";
     pit.appendChild(pd);
     pit.appendChild(document.createTextNode(t("ci.next")));
-    lg.appendChild(pit);
-    host.appendChild(lg);
+    legend.appendChild(pit);
+    host.appendChild(legend);
+
+    // reminder toggle — restored from the old calendar footer;
+    // it was lost with renderCalendar() and left
+    // state.prefs.remind unreachable from the UI
+    var rt = document.createElement("button");
+    rt.type = "button";
+    rt.className = "chip ghost" + (state.prefs.remind ? " on" : "");
+    rt.style.margin = "14px auto 0";
+    rt.style.display = "flex";
+    rt.style.alignItems = "center";
+    rt.style.gap = "6px";
+    rt.title = t("rem.title");
+    rt.setAttribute("aria-pressed", state.prefs.remind ? "true" : "false");
+    rt.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">' +
+      '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+      '<path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' +
+      "<span></span>";
+    rt.lastChild.textContent =
+      state.prefs.remind ? t("rem.on") : t("rem.off");
+    rt.addEventListener("click", function () {
+      state.prefs.remind = !state.prefs.remind;
+      state.sm = Date.now();
+      state.om = Date.now();   // prefs resolve by om-donor in merge
+      save();
+      renderTimeline();
+    });
+    host.appendChild(rt);
 
     if (!state.days.length && !state.periods.length) {
       var hl = document.createElement("div");
@@ -2505,7 +2594,12 @@
       ".leg-dot.pred{background:transparent;border:1px dashed var(--accent)}" +
       ".tl-days{position:relative;height:16px;margin-top:2px}" +
       ".tl-dot{position:absolute;top:2px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--accent);opacity:.65;border:none;padding:0;cursor:pointer}" +
-      ".tl-dot:hover{opacity:1}";
+      ".tl-dot:hover{opacity:1}" +
+      ".tl-range{text-align:center;font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}" +
+      ".tl-axis{position:relative;height:14px;margin-bottom:2px}" +
+      ".tl-mk{position:absolute;top:0;left:0;transform:translateX(2px);font-size:10px;color:var(--text-dim);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}" +
+      ".tl-today-lab{position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;color:var(--accent);white-space:nowrap;pointer-events:none}" +
+      ".tl-today-lab.flip{left:auto;right:4px}";
     document.head.appendChild(st);
   }
 

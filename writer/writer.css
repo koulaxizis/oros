@@ -454,7 +454,7 @@ html, body {
   .page-break-marker::after { display: none; }
 
   /* Remove floating elements (future panels) */
-  .tab-bar, .main-toolbar, .w-toast { display: none !important; }
+  .tab-bar, .main-toolbar, .find-bar, .w-toast { display: none !important; }
 
   /* Ensure background colors print for blockquotes/code blocks */
   blockquote, pre, code {

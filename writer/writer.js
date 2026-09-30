@@ -1334,6 +1334,10 @@ function openDialog(title, bodyHTML, footerButtons) {
   dlg.appendChild(body);
   dlg.appendChild(foot);
 
+  // MUST be in the document before showModal() — detached <dialog>
+  // throws InvalidStateError (Wave 5 regression: append was lost in patching)
+  document.body.appendChild(dlg);
+
   // Close on outside click or Esc (native)
   dlg.showModal();
   dlg.addEventListener('click', (e) => {
