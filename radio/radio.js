@@ -65,7 +65,8 @@ var STRINGS = {
     "tab.discover":   "Discover",
     "view.discover":  "Top Stations Worldwide",
     "random":         "Surprise me",
-    "random.hint":    "Play a random top station"
+    "random.hint":    "Play a random top station",
+    "catalog.err":    "Couldn't reach the station directory — check your connection or blockers."
   },
   el: {
     "tab.countries":  "Χώρες",
@@ -100,7 +101,8 @@ var STRINGS = {
     "tab.discover":   "Ανακάλυψη",
     "view.discover":  "Κορυφαίοι σταθμοί παγκοσμίως",
     "random":         "Τυχαίος σταθμός",
-    "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό"
+    "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό",
+    "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο σταθμών — έλεγξε τη σύνδεση ή τυχόν blockers."
   }
 };
 
@@ -440,6 +442,24 @@ function ensureHost(){
   return host;
 }
 
+// FIX-RX-1: was called in host.api.play() but never defined —
+// ReferenceError killed playback before audio.play().
+function applyMediaSession(w, station){
+  try{
+    var ms = w.navigator.mediaSession;
+    if(!ms || typeof w.MediaMetadata !== "function") return;
+    var artwork = [];
+    if(station.favicon){
+      artwork = [{ src: station.favicon, sizes: "192x192" }];
+    }
+    ms.metadata = new w.MediaMetadata({
+      title: station.name || "",
+      artist: station.country || station.countrycode || "",
+      artwork: artwork
+    });
+  }catch(e){ /* no Media Session support — degrade gracefully */ }
+}
+
 var host = ensureHost();
 
 function getHostState(){
@@ -508,6 +528,20 @@ function updateOnlineState(){
   }
 }
 
+/* FIX-RX-2: honest banner when the directory is unreachable while
+   "online" (dead mirrors / blocker / DNS). Does NOT overwrite the
+   offline banner — updateOnlineState() still owns that state. */
+function showCatalogBanner(){
+  var banner = $("rx-banner"), txt = $("rx-banner-text");
+  if(banner && !banner.hasAttribute("hidden")) return; // already speaking
+  if(txt) txt.textContent = t("catalog.err");
+  if(banner) banner.removeAttribute("hidden");
+}
+function hideCatalogBanner(){
+  var banner = $("rx-banner");
+  if(banner) banner.setAttribute("hidden", "");
+}
+
 window.addEventListener("online", updateOnlineState);
 window.addEventListener("offline", updateOnlineState);
 
@@ -532,10 +566,16 @@ function rbRequest(path){
       if(timer) clearTimeout(timer);
       if(!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
+    }).then(function(data){
+      hideCatalogBanner(); // FIX-RX-2: healthy request clears the notice
+      return data;
     }).catch(function(err){
       if(timer) clearTimeout(timer);
       tries++;
-      if(tries >= RB_MIRRORS.length) throw err; // all mirrors dead — honest fail
+      if(tries >= RB_MIRRORS.length){
+        showCatalogBanner(); // FIX-RX-2: honest "directory unreachable" banner
+        throw err;
+      }
       rbMirrorIdx = (rbMirrorIdx + 1) % RB_MIRRORS.length;
       return attempt();
     });
@@ -554,8 +594,7 @@ function fetchCountries(){
     return filtered;
   }).catch(function(err){
     console.warn("[radio] countries fetch failed:", err.message);
-    state.offline = true;
-    return []; // honest offline response
+    return []; // honest offline response (banner handled by FIX-RX-2)
   });
 }
 

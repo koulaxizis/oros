@@ -1192,6 +1192,7 @@ body {
 #rx-tray-chip[data-state="true"] .rx-tray-eq {
   color: var(--accent);
 }
+#wx-chip {
   background: transparent;
   border: none;
   cursor: pointer;

@@ -44,6 +44,7 @@
       "tab.ins":       "Insights",
       "cal.today":     "Today",
       "tl.log":        "Log today",
+      "tl.pick":       "Pick another day",
       "tl.back":       "Earlier",
       "tl.fwd":        "Later",
       "tl.welcome":    "Welcome to Cycle",
@@ -151,6 +152,7 @@
       "tab.ins":       "Στατιστικά",
       "cal.today":     "Σήμερα",
       "tl.log":        "Καταγραφή σήμερα",
+      "tl.pick":       "Επιλογή άλλης ημέρας",
       "tl.back":       "Νωρίτερα",
       "tl.fwd":        "Αργότερα",
       "tl.welcome":    "Καλωσόρισες στον Κύκλο",
@@ -855,6 +857,50 @@
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   }
 
+  // date picker — the "I forgot to log" door: opens the day
+  // editor for ANY date, through the same openDay path every
+  // other entry uses (bar clicks, dots, log-today). Nothing
+  // else knows it exists — pure UI, zero state, zero sync.
+  function mkDatePicker() {
+    var inp = document.createElement("input");
+    inp.type = "date";
+    inp.className = "tl-date";
+    inp.value = dayKey(todayTs());
+    inp.setAttribute("aria-label", t("tl.pick"));
+    inp.title = t("tl.pick");
+    inp.addEventListener("change", function () {
+      var v = inp.value;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+      openDay = "d-" + v;
+      managing = false;
+      timelineAnchor = null;
+      applyView();
+    });
+    return inp;
+  }
+
+  // date picker — the "I forgot to log" door: opens the day
+  // editor for ANY date, through the same openDay path every
+  // other entry uses (bar clicks, dots, log-today). Nothing
+  // else knows it exists — pure UI, zero state, zero sync.
+  function mkDatePicker() {
+    var inp = document.createElement("input");
+    inp.type = "date";
+    inp.className = "tl-date";
+    inp.value = dayKey(todayTs());
+    inp.setAttribute("aria-label", t("tl.pick"));
+    inp.title = t("tl.pick");
+    inp.addEventListener("change", function () {
+      var v = inp.value;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+      openDay = "d-" + v;
+      managing = false;
+      timelineAnchor = null;
+      applyView();
+    });
+    return inp;
+  }
+
   // ---------- timeline (Gantt strip — the month grid lives in the
   // orOS Calendar now; Cycle shows HISTORY + TREND) ----------
   function renderTimeline() {
@@ -937,6 +983,7 @@
       applyView();
     });
     head.appendChild(lg);
+    head.appendChild(mkDatePicker());
     var isEmpty = !state.days.length && !state.periods.length;
     if (!isEmpty) host.appendChild(head);
 
@@ -1182,6 +1229,7 @@
         applyView();
       });
       emp.appendChild(cta);
+      emp.appendChild(mkDatePicker());
       host.appendChild(emp);
     }
   }
@@ -2672,7 +2720,10 @@
       ".tl-empty{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px;padding:26px 14px;border:1px dashed var(--border);border-radius:10px;color:var(--text-dim)}" +
       ".tl-empty-t{font-size:17px;font-weight:800;color:var(--text)}" +
       ".tl-empty-s{font-size:13px;text-align:center}" +
-      ".tl-empty .tl-log{margin-top:6px}";
+      ".tl-empty .tl-log{margin-top:6px}" +
+      ".tl-date{background:var(--panel-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit;cursor:pointer}" +
+      ".tl-date:focus{outline:none;border-color:var(--accent)}" +
+      ".tl-empty .tl-date{margin-top:2px;font-size:12px}";
     document.head.appendChild(st);
   }
 

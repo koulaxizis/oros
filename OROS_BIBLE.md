@@ -1954,3 +1954,22 @@ Deferred (next cleanup pass, not a wave)
 Search results renderSearchResults call site still passes a stray second argument (harmless).
 Tag chips centering on narrow screens (optional cosmetic).
 Discover view could gain bitrate/country filters (future feature).
+
+---
+
+Radio app — hotfix: playback blocker + honest network banner (FIX-RX series)
+Context: Console dump (v0.38.03) revealed a ReferenceError: applyMediaSession is not defined thrown inside host.api.play() at radio.js:358. Since the call sits before audio.play(), the error aborted playback entirely — no station could start, regardless of network. Additionally, all Radio Browser mirrors failed with ERR_NAME_NOT_RESOLVED inside the app while https://de1.api.radio-browser.info/json/countries opened fine in a regular tab, pointing to page-context blocking (adblocker/extension) rather than an orOS bug. Finally, fetchCountries() set a dead state.offline = true on failure, which permanently poisoned all future API calls without any UI explanation.
+
+Changes:
+
+FIX-RX-1 (critical): Defined the missing applyMediaSession(w, station) function (placed right after ensureHost(), same IIFE — hoisting makes it available to the already-running host). It sets Media Session metadata (title, country, favicon artwork as 192x192). This unblocks playback: host.api.play() now reaches audio.play() instead of throwing before it.
+FIX-RX-2 (honesty banner): New i18n key catalog.err (EN + EL). New helpers showCatalogBanner() / hideCatalogBanner() placed above the online/offline listeners; updateOnlineState() remains the sole owner of the offline banner (guard: catalog banner never overwrites an already-visible one). rbRequest() now calls hideCatalogBanner() on the first healthy response and showCatalogBanner() when ALL mirrors fail (after rotation is exhausted), giving honest feedback when the directory is unreachable while the browser is "online".
+Dead flag removal: Removed state.offline = true; from the fetchCountries() catch block. Reason: state.offline is never re-evaluated (only navigator.onLine via updateOnlineState()), so a single transient fetch failure permanently short-circuited every future rbRequest() with an offline rejection even after connectivity returned — the app appeared dead until reboot. Failure honesty is now handled by the catalog banner instead.
+Verified against delivered file (radio (2).js): FIX-RX-1 through FIX-RX-2d applied and confirmed; PATCH 6 (dead flag removal) flagged as pending during review, then applied.
+
+Known issues / next steps:
+
+DNS/blocking: ERR_NAME_NOT_RESOLVED for all three mirrors from page context while a direct tab navigation works. Suspected adblocker/browser extension filtering subresource requests. Diagnosis snippet provided to the user (fetch de1 from app console; retry in incognito without extensions). No code change — awaiting test results.
+PWA: browser warning Banner not shown: beforeinstallpromptevent.preventDefault() called originates from the shell/index (not radio.js — no beforeinstallprompt handling exists in the radio app files). Pending: inspect shell.js / index handler to confirm prompt() is invoked manually, per standing PWA rule.
+Mirror list: current RB_MIRRORS are de1/nl1/fi1; all reachable via tab navigation for at least de1 — no mirror changes made this round.
+Methodology: All patches delivered as OLD → NEW copy-paste blocks with searchable OLD text, verified against actual file content before delivery, per Bible rules. No version bump performed (versioning is GitHub Action-managed; shell.js is single source of truth).
