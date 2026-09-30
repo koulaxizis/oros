@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.36.22";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.37.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -980,6 +980,7 @@
     renderWallpaperSection(menu);
     renderInstallRow(menu);
     renderWxSection(menu);
+    renderPetSection(menu);        // Soffitta port: desktop companion
     renderSyncSection(menu);
     renderNotifsSection(menu);   // Wave 1B: notification settings
 
@@ -3514,6 +3515,56 @@
     wxHideAc();
     wxCDlg.showModal();
     setTimeout(function () { wxCInput.focus(); }, 50);
+  }
+
+  // ---------- 9h. Screen Pet toggle (Soffitta port) ----------
+  // The pet is a SHELL component (pet.js, loaded before shell.js):
+  // its own overlay layer (#pet-layer), its own storage
+  // ("oros-pet-data") and its own sync slice registered directly on
+  // window.orosSync. The shell owns ONLY the on/off switch —
+  // device-local key "oros-pet-enabled", ergonomics like the menu
+  // category collapse (never synced, never dirty). Progressive: a
+  // stale bundle without pet.js renders NOTHING here (zero breakage).
+  function petT(en, el) {
+    return state.lang === "el" ? el : en;
+  }
+
+  function renderPetSection(host) {
+    if (!window.orosPet || typeof window.orosPet.toggle !== "function") return;
+
+    var section = document.createElement("div");
+    section.className = "sync-section";
+
+    var heading = document.createElement("div");
+    heading.className = "menu-heading";
+    heading.textContent = petT("Screen Pet", "Συντροφάκι");
+    section.appendChild(heading);
+
+    var row = document.createElement("div");
+    row.className = "sync-actions";
+
+    var on = (typeof window.orosPet.isEnabled === "function")
+      ? !!window.orosPet.isEnabled() : false;
+
+    var toggle = document.createElement("button");
+    toggle.className = "menu-item";
+    toggle.textContent = window.t(on ? "wx.on" : "wx.off");
+    toggle.addEventListener("click", function () {
+      window.orosPet.toggle();
+      renderMenu();
+    });
+    row.appendChild(toggle);
+
+    section.appendChild(row);
+
+    var hint = document.createElement("div");
+    hint.className = "sync-hint";
+    hint.textContent = petT(
+      "A tiny companion on your desktop · Feed it, pet it, let it sleep",
+      "Ένας μικρός σύντροφος στην επιφάνεια εργασίας · Ταΐστε το, χαϊδέψτε το, αφήστε το να κοιμηθεί");
+    section.appendChild(hint);
+
+    host.appendChild(section);
   }
 
   // Menu section — toggle + GPS + city (all user-gesture legal)

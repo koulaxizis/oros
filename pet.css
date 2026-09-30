@@ -1,0 +1,160 @@
+/* ============================================================
+   orOS Screen Pet — Shell component styles
+   Strip overlay above the taskbar. The layer itself is inert
+   (pointer-events:none); only canvas + HUD buttons are alive.
+   ============================================================ */
+
+#pet-layer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 132px;
+  /* Sit above the taskbar: --tb-h = taskbar height (set by shell) */
+  bottom: calc(var(--tb-h, 48px) + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  z-index: 400;
+  /* Floor feel — a soft gradient the pet walks on */
+  background: linear-gradient(to top, rgba(0,0,0,0.10), transparent 60%);
+}
+
+#pet-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  image-rendering: pixelated;
+  will-change: transform;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;   /* drag belongs to us, not the page */
+}
+#pet-layer.dragging #pet-canvas { cursor: grabbing; }
+
+.pet-bubble {
+  position: absolute;
+  background: var(--text, #f0ead9);
+  color: var(--panel-bg, #1d1a13);
+  border-radius: 12px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  z-index: 5;
+}
+.pet-bubble.visible { opacity: 1; }
+.pet-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 18px;
+  border: 6px solid transparent;
+  border-top-color: var(--text, #f0ead9);
+  border-bottom: none;
+}
+
+.pet-heart {
+  position: absolute;
+  font-size: 16px;
+  pointer-events: none;
+  animation: petHeartUp 1.1s ease forwards;
+  z-index: 4;
+}
+@keyframes petHeartUp {
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
+  100% { transform: translateY(-70px) scale(1.3); opacity: 0; }
+}
+
+/* ---------- HUD ---------- */
+#pet-hud {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  width: 178px;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bar-bg, rgba(20,18,13,0.93));
+  border: 1px solid var(--border, #322d20);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  user-select: none;
+}
+.pet-hud-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent, #d4af37);
+  margin-bottom: 2px;
+}
+.pet-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-dim, #a89f8a);
+}
+.pet-stat-ico { font-size: 0.9rem; }
+.pet-stat-track {
+  flex: 1;
+  height: 6px;
+  background: var(--panel-bg, #1d1a13);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pet-stat-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--accent, #d4af37);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.pet-stat.low .pet-stat-fill { background: var(--danger, #e06c75); }
+
+.pet-hud-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.pet-hud-actions button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 6px 4px;
+  cursor: pointer;
+  border: 1px solid var(--border, #322d20);
+  background: var(--panel-bg, #1d1a13);
+  color: var(--text, #f0ead9);
+  transition: border-color 0.12s, background 0.12s;
+}
+.pet-hud-actions button:hover {
+  border-color: var(--accent, #d4af37);
+  background: var(--accent-soft, rgba(212,175,55,0.20));
+}
+#pet-new-btn {
+  border-color: var(--danger, #e06c75) !important;
+  color: var(--danger, #e06c75) !important;
+  background: transparent !important;
+}
+
+/* Touch targets ≥44px on coarse pointers (Bible Part VII) */
+@media (pointer: coarse) {
+  .pet-hud-actions button { min-height: 44px; }
+  #pet-hud { width: 210px; }
+}
+
+@media (max-width: 420px) {
+  #pet-hud { width: 156px; left: 8px; bottom: 8px; }
+}
+
+/* [hidden] must ALWAYS win */
+[hidden] { display: none !important; }

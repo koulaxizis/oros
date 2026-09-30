@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Minimalism — a 365-day guided journey into physical and digital minimalism. Part of orOS. Works offline, no cookies, no tracking.">
+  <title>Minimalism · orOS</title>
+
+  <!-- ============ PWA ============ -->
+  <!-- Ι3: explicit permission for indexing, same directive as root -->
+  <meta name="robots" content="index, follow">
+  <!-- Theme color mirrors root shell; the CSS layer re-syncs from
+       the OS skin via --accent inheritance (Contract Β / watchPalette) -->
+  <meta name="theme-color" content="#1b1a18">
+
+  <!-- Icons (shared orOS root assets) -->
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+
+  <!-- ============ Styles ============ -->
+  <link rel="stylesheet" href="minimalism.css?v=0.36.21">
+
+  <!-- Script load ORDER is a contract here: content.js declares
+       window.MINIMALISM_CONTENT and MUST parse before
+       minimalism.js boots — no fetch, no race, deterministic. -->
+</head>
+<body>
+
+  <noscript>
+    <div style="font-family: system-ui, sans-serif; background:#1b1a18; color:#e8eaf0;
+                min-height:100vh; display:flex; align-items:center; justify-content:center;
+                text-align:center; padding:24px;">
+      <p id="min-noscript-text">Minimalism needs JavaScript to run.<br>Enable JavaScript and try again.</p>
+    </div>
+  </noscript>
+
+  <!-- ================= BOOT SPLASH =================
+       Static in HTML: visible BEFORE minimalism.js parses,
+       styled inline (FOUC-proof). Hidden by minimalism.js on
+       successful boot; a fail-safe below guarantees it can
+       NEVER get stuck if the app script fails to load/run. -->
+  <div id="min-splash" role="status"
+       style="position:fixed;inset:0;z-index:9999;background:#14120d;color:#e8eaf0;
+              display:flex;align-items:center;justify-content:center;text-align:center;
+              padding:24px;font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;
+              transition:opacity .4s;opacity:1;">
+    <span id="min-splash-text">Minimalism · loading…</span>
+  </div>
+
+  <main id="app-root" aria-live="polite"></main>
+
+  <script>
+  (function () {
+    "use strict";
+    var s = document.getElementById("min-splash");
+    var txt = document.getElementById("min-splash-text");
+    if (!s) return;
+
+    // Greek from the very first frame if it's the stored language
+    // (translations arrive too late to matter for the splash)
+    try {
+      var lang = localStorage.getItem("oros-lang") || "en";
+      if (lang === "el" && txt) {
+        txt.textContent = "Μινιμαλισμός · φόρτωση…";
+        document.documentElement.lang = "el";
+      }
+    } catch (e) {}
+
+    // Boot-error surface: the splash is the only thing that exists
+    // before the app script — if it dies, SAY so, don't spin forever.
+    var done = false;
+    window.addEventListener("error", function (ev) {
+      if (done) return;
+      var failedSrc = "";
+      if (ev && ev.target && ev.target !== window &&
+          ev.target.tagName === "SCRIPT") {
+        failedSrc = String(ev.target.src || "");
+        if (!failedSrc || /favicon|icon/i.test(failedSrc)) return;
+      }
+      var lang2 = "en";
+      try { lang2 = localStorage.getItem("oros-lang") || "en"; } catch (e0) {}
+      if (txt) {
+        var why;
+        if (ev.message) why = ev.message;
+        else if (failedSrc) why = "failed to load " + failedSrc.split("/").pop();
+        else why = (lang2 === "el") ? "άγνωστο" : "unknown";
+        txt.textContent = (lang2 === "el")
+          ? "Σφάλμα εκκίνησης: " + why + " — δοκίμασε hard refresh."
+          : "Startup error: " + why + " — try a hard refresh.";
+        txt.style.color = "#e06c75";
+      }
+      done = true;
+    }, true);
+
+    // Fail-safe: hide the splash after 8s NO MATTER WHAT.
+    // (normal path: minimalism.js removes the element on boot)
+    setTimeout(function () {
+      if (done) return;
+      done = true;
+      s.style.opacity = "0";
+      setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+      }, 400);
+    }, 8000);
+  })();
+  </script>
+
+  <script src="content.js?v=0.36.21"></script>
+  <script src="minimalism.js?v=0.36.21"></script>
+</body>
+</html>

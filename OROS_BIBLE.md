@@ -1202,3 +1202,129 @@ Confirm vendor paths resolve (404 in console = wrong location)
   · FIVE-AXES: Calendar=N/A, Notifications=PASS(transient only), Sync=PASS, Snapshots=PASS(shell), Export=PASS(shell DB)
   · BIBLE PATCHES: B-1 (Part III registry: +Dice 5/5 verified), B-2 (Part IV data model: DICE v1 schema),
     B-3 (Part IX exemptions: Dice calendar/notifs exempt)
+	
+	---
+	
+	Writer Wave 5 — Post-Audit Corrections
+=======================================
+
+String fixes:
+- EN+EL: added 'doc.saved' (Ctrl+S feedback now localized)
+- EN+EL: added 'link.displayText' (fixed broken placeholder in
+  Insert Link dialog that showed "Document renamed")
+- EN+EL: added 'table.headerRow' (fixed broken checkbox label that
+  showed "Whole word")
+- EN+EL: added 'wx.done' + 'wx.cancel' (replaced wx.cancel hack
+  with real keys across all dialogs)
+
+Cache-buster fix:
+- ioFetchFontB64 (PDF export): changed from
+  ?v=encodedPath (wrong — not a real version, just the filename)
+  to ?t=timestamp (forces reload when font file updates locally)
+
+Dead code removal:
+- Deleted rtfInline() + rtfFmt() — unused (only rtfInlineRe +
+  rtfWrap are active in ioExportRtf)
+- Deleted wireHeadingsForToc() — never called anywhere
+- Removed unused saveLines shim in blockFromLines (md parser)
+
+Duplicate removal:
+- EL opt.format.* keys existed twice (before find.none AND before
+  page.settings) — removed the second block, kept first intact
+
+Deploy checklist:
+1. Ctrl+S toast now bilingual ("Document saved" / "Το έγγραφο
+   αποθηκεύτηκε")
+2. Link dialog placeholder shows "Display text" / "Κείμενο
+   εμφάνισης" instead of "Document renamed"
+3. Table dialog checkbox shows "Header row" / "Γραμμή
+   κεφαλίδας" instead of "Whole word"
+4. PDF font loads fresh when vendor/NotoSans-Regular.ttf changes
+5. Dialog close buttons use proper translation keys
+6. No dead functions or duplicate strings remain
+
+Wave 5 is now 100% complete. Next step: deep audit of the
+next queued application (Bookmarks, Kanban, etc.).
+
+---
+
+Writer Wave 5 — Post-Audit Corrections (FINAL)
+===============================================
+
+Critical fixes:
+- RTF EXPORT CRASH: B1 (dead code removal) was applied half-way —
+  the old rtfFmt body got renamed to rtfInlineRe while the real
+  rtfInlineRe already existed, and rtfWrap vanished from the file.
+  Any RTF export threw "ReferenceError: rtfWrap is not defined".
+  Fix: restored rtfWrap(text, fmt) as its own function; single
+  rtfInlineRe walker remains (verified — no duplicate names now)
+
+String / i18n cleanup:
+- EL: removed the second opt.format.* block (duplicate entries
+  after goal.unlockConfirm — first block before find.none kept)
+- openCharsDialog / openLinkDialog: removed the
+  t('wx.cancel') === 'wx.cancel' hack → real t('wx.cancel')
+- openImageDialog / openTableDialog: '✕' → t('wx.cancel')
+
+Already applied and verified in writer (6).js (no action needed):
+- doc.saved (Ctrl+S toast localization), link.displayText,
+  table.headerRow, wx.done/wx.cancel keys (EN+EL)
+- ioFetchFontB64 cache-bust (?t=timestamp)
+- wireHeadingsForToc removed, saveLines shim removed,
+  openAcDialog uses t('wx.done')
+
+Known-clean leftovers (documented, deliberate):
+- state.settings.typewriterSound — dead setting, no consumer
+- DOCX import: w:b w:val="0" ignored; numbering.xml lists →
+  plain paragraphs (v1 conservative import)
+- DOCX appendix dxRun({super:false}) — harmless dead key
+
+Deploy checklist:
+1. Export RTF succeeds and opens in Word/LibreOffice (Patch 1)
+2. Language switch EL: no duplicate strings, all dialog buttons
+   localized ("Ακύρωση" everywhere instead of ✕/Close)
+3. Ctrl+Alt+T / Ctrl+Alt+W, Ctrl+S toast, Lorem button, Settings
+   dialog (Smart Typography + Auto-correction entry) all intact
+   
+   ---
+   
+   Writer Wave 5 — Post-Audit Corrections (FINAL)
+Critical fixes
+GOALS SYNC DATA LOSS: serialize()/hydrate() now round-trip doc.goal (type/target/lock/startTs/startWords) — active goals no longer wiped on reload/sync.
+DD-OVERLAY STICK BUG: .dd-overlay{display:flex} appeared after the global [hidden] guard at equal !important specificity — overlay stayed visible forever after first drag. Fixed with .dd-overlay[hidden]{display:none!important} (0-2-0 specificity).
+BROWSER-RESERVED SHORTCUTS: Ctrl+T / Ctrl+W replaced by Ctrl+Alt+T (new doc tab) / Ctrl+Alt+W (close doc tab) — preventDefault is honored for these in all browsers.
+RTF EXPORT CRASH: the B1 dead-code removal was applied half-way — the old rtfFmt body got renamed to rtfInlineRe while the real rtfInlineRe already existed, and rtfWrap vanished from the file. Any RTF export threw "ReferenceError: rtfWrap is not defined". Restored rtfWrap(text, fmt) as its own function; single rtfInlineRe walker remains (verified, no duplicate names).
+Feature wiring (previously orphaned code)
+TOC inline: generateTocHTML now assigns real ids to live headings before building the list — anchors resolve, links navigate. Removed dead wireHeadingsForToc() (never called anywhere).
+Templates dialog: Export JSON button added (exportTemplateJson was unreachable — only Import had a button).
+btn-lorem added to toolbar (dynamic injection in bindToolbar, R9 icon painting) — insertLorem() reachable at last; placed after btn-chars.
+NEW app-scoped Settings dialog (btn-settings, dynamic injection, last toolbar slot): Smart Typography toggle (live-apply, _mtime drives settings LWW in mergeSlices) + Auto-Correction Rules entry (openAcDialog stacks on top of the settings modal) — smartTypography had no UI before, openAcDialog had no trigger.
+String / i18n cleanup
+EN+EL: added tt.settings, tt.lorem, doc.saved, link.displayText, table.headerRow, io.dbConfirm, io.naming, wx.done, wx.cancel.
+EN+EL: Ctrl+S toast localized ('Saved' → doc.saved).
+EL: 'char.symbols' was Spanish ('Símbola') → corrected to 'Σύμβολα'.
+EL: added missing io.html.name / io.html.desc.
+EL: removed the second opt.format.* block (duplicate entries after goal.unlockConfirm — the first block before find.none kept).
+Dialog buttons: removed the t('wx.cancel') === 'wx.cancel' hack and hardcoded '✕'/'Close' labels across openAcDialog, openCharsDialog, openLinkDialog, openImageDialog, openTableDialog — all now use real t('wx.cancel') / t('wx.done') keys.
+Insert Link dialog: broken placeholder that showed the unrelated "Document renamed" string → link.displayText.
+Insert Table dialog: header-row checkbox label that showed the unrelated "Whole word" string → table.headerRow.
+Other fixes
+ioFetchFontB64 (PDF export): cache-buster was ?v=<font path itself> (static, wrong) → ?t=timestamp (forces reload when the local NotoSans-Regular.ttf changes).
+Dead code removal
+Deleted rtfInline() + rtfFmt() (unused; only rtfInlineRe + rtfWrap are active in ioExportRtf).
+Deleted wireHeadingsForToc() (never called).
+Removed unused saveLines shim in blockFromLines (markdown parser).
+Known-clean leftovers (documented, deliberate)
+state.settings.typewriterSound — dead setting, no consumer yet.
+DOCX import: w:b w:val="0" ignored; numbering.xml lists → plain paragraphs (v1 conservative import).
+DOCX exporter dxRun({super:false}) — harmless dead key, ignored.
+Dialog DOM accumulation on many open/close cycles (minor leak).
+Deploy checklist
+Toolbar single row at 1920px with the 2 new buttons (31+2 total).
+Lorem button inserts paragraph; Settings gear opens dialog; Smart Typography toggle persists across reload + sync; Auto-Correction rules dialog opens from Settings, add/delete/reset OK.
+Ctrl+Alt+T / Ctrl+Alt+W behave; plain Ctrl+T/Ctrl+W go to the browser. Ctrl+S toast localized in both languages.
+Drag & drop overlay hides after drop/leave (CSS guard).
+Export RTF succeeds and opens in Word/LibreOffice.
+Language switch EL: no duplicate strings, all dialog buttons show "Ακύρωση"/"Ολοκλήρωση" instead of ✕/Close/Cancel.
+PDF export font loads fresh when the vendor font file changes.
+Wave 5 (I/O) is now closed. Next in queue per roadmap: deep audit of the next application (as ordered in OROS_BIBLE).

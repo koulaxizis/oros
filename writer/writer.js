@@ -91,6 +91,7 @@ const STRINGS = {
     'tab.untitled': 'Untitled',
     'doc.new': 'New document',
     'doc.created': 'Document created',
+    'doc.saved': 'Document saved',
     'doc.closed': 'Document closed',
     'doc.renamed': 'Document renamed',
     'doc.deleted': 'Document deleted',
@@ -138,7 +139,11 @@ const STRINGS = {
     'opt.replace': 'Replace with…',
     'opt.rep1': 'Replace',
     'opt.repall': 'Replace all',
+    'link.displayText': 'Display text',
+    'table.headerRow': 'Header row',
     'find.replaced.all': 'All occurrences replaced',
+    'wx.done': 'Done',
+    'wx.cancel': 'Cancel',
     'tt.footnotes': 'Footnotes',
     'fn.title': 'Footnotes',
     'fn.add': 'Add footnote',
@@ -314,6 +319,7 @@ const STRINGS = {
     'tab.untitled': 'Χωρίς τίτλο',
     'doc.new': 'Νέο έγγραφο',
     'doc.created': 'Το έγγραφο δημιουργήθηκε',
+    'doc.saved': 'Το έγγραφο αποθηκεύτηκε',
     'doc.closed': 'Το έγγραφο έκλεισε',
     'doc.renamed': 'Το έγγραφο μετονομάστηκε',
     'doc.deleted': 'Το έγγραφο διαγράφηκε',
@@ -361,7 +367,11 @@ const STRINGS = {
     'opt.replace': 'Αντικατάσταση με…',
     'opt.rep1': 'Αντικατάσταση',
     'opt.repall': 'Αντικατάσταση όλων',
+    'link.displayText': 'Κείμενο εμφάνισης',
+    'table.headerRow': 'Γραμμή κεφαλίδας',
     'find.replaced.all': 'Όλες οι εμφανίσεις αντικαταστάθηκαν',
+    'wx.done': 'Ολοκλήρωση',
+    'wx.cancel': 'Ακύρωση',
     'tt.footnotes': 'Υποσημειώσεις',
     'fn.title': 'Υποσημειώσεις',
     'fn.add': 'Προσθήκη υποσημείωσης',
@@ -452,12 +462,6 @@ const STRINGS = {
     'goal.stats.session': '{cur} λέξεις συνεδρίας',
     'goal.locked': 'Γραφή μπλοκαρισμένη — καθαρίστε ή αυξήστε τον στόχο',
     'goal.unlockConfirm': 'Ξεκλείδωμα;',
-    'opt.format': 'Μορφή',
-    'opt.format.any': 'Οποιαδήποτε μορφή',
-    'opt.format.bold': 'Μόνο έντονη',
-    'opt.format.italic': 'Μόνο πλάγια',
-    'opt.format.underline': 'Μόνο υπογραμμένη',
-    'opt.format.strike': 'Μόνο διαγραμμένη',
     'page.settings': 'Ρυθμίσεις σελίδας',
     'tpl.builtin.essay': 'Δοκίμιο',
     'tpl.builtin.essay.d': 'Τίτλος, εισαγωγή, ενότητες, συμπέρασμα.',
@@ -566,7 +570,8 @@ const ICONS = {
   import: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3h12v-3"/><path d="M8 2v9"/><path d="M5 8l3 3 3-3"/></svg>',
   close:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
   plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
-  lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>'
+  lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>',
+  settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>'
 };
 
 function paintIcons() {
@@ -584,7 +589,7 @@ function paintIcons() {
       'footnotes': 'fn', 'comments': 'cmt',
       'toc': 'toc', 'meta': 'meta', 'page': 'page',
       'templates': 'tpl', 'versions': 'versions', 'goal': 'goal',
-      'export': 'export', 'import': 'import', 'lorem': 'lorem'
+      'export': 'export', 'import': 'import', 'lorem': 'lorem', 'settings': 'settings'
     };
     const ic = map[key];
     if (ic && ICONS[ic]) btn.innerHTML = ICONS[ic];
@@ -1073,6 +1078,21 @@ function bindToolbar() {
   binds['btn-export'] = () => openExportDialog();
   binds['btn-import'] = () => openImportDialog();
 
+  // btn-settings — same dynamic pattern as btn-lorem (R9 icon painting;
+  // guarded so a static HTML button, if ever added, is not duplicated)
+  let setBtn = document.getElementById('btn-settings');
+  if (!setBtn) {
+    setBtn = document.createElement('button');
+    setBtn.type = 'button';
+    setBtn.id = 'btn-settings';
+    setBtn.className = 'tb-btn';
+    setBtn.title = t('tt.settings');
+    setBtn.setAttribute('aria-label', t('tt.settings'));
+    setBtn.innerHTML = ICONS.settings;
+    EL.toolbar.appendChild(setBtn);
+  }
+  binds['btn-settings'] = () => openSettingsDialog();
+
   Object.keys(binds).forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener('click', binds[id]);
@@ -1186,7 +1206,7 @@ function bindShortcuts() {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
       flushSave();
-      showToast('Saved');
+      showToast(t('doc.saved'));
     }
 
     // Ctrl+Alt+W — close current tab (browser-reserved-safe combo:
@@ -1565,7 +1585,7 @@ let charsDlgRef = null;
 
 function openCharsDialog() {
   const dlg = openDialog(t('dialog.charsTitle'), '', [
-    { class: 'fb-btn', label: t('wx.cancel') === 'wx.cancel' ? 'Close' : 'OK', onClick: () => dlg.close() }
+    { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() }
   ]);
   charsDlgRef = dlg;
 
@@ -1730,7 +1750,7 @@ let acDlgRef = null;
 function openAcDialog() {
   const dlg = openDialog(t('dialog.acTitle'), '', [
     { class: 'fb-btn', label: t('ac.reset'), onClick: resetAcDefaults },
-    { class: 'fb-btn primary', label: t('wx.cancel') === 'wx.cancel' ? 'OK' : 'Done', onClick: () => dlg.close() }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
   ]);
   acDlgRef = dlg;
   const body = dlg.querySelector('.w-dialog-body');
@@ -1817,6 +1837,29 @@ function insertLorem() {
   scheduleSave();
 }
 
+/* ----- SETTINGS (app-scoped, minimal: typography + auto-correct) ----- */
+function openSettingsDialog() {
+  const dlg = openDialog(t('tt.settings'), `
+    <div class="form-grid">
+      <label class="full" style="text-align:left;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="set-smart" ${state.settings.smartTypography ? 'checked' : ''}>
+        ${t('tt.smartTypography')}
+      </label>
+    </div>
+  `, [
+    { class: 'fb-btn', label: t('tt.autoCorrect'), onClick: () => openAcDialog() },
+    { class: 'fb-btn primary', label: 'OK', onClick: () => dlg.close() }
+  ]);
+
+  // Live-apply, autosave design — no save button. _mtime drives the
+  // settings LWW branch in mergeSlices (Section 7).
+  dlg.querySelector('#set-smart').addEventListener('change', (e) => {
+    state.settings.smartTypography = e.target.checked;
+    state.settings._mtime = Date.now();
+    scheduleSave();
+  });
+}
+
 /* ----- QUICK FORMAT MENU (Alt+Right-click) ----- */
 let qfMenu = null;
 
@@ -1899,11 +1942,11 @@ function openLinkDialog() {
   })();
   const dlg = openDialog(t('tt.qf.link'), `
     <div style="display:flex;flex-direction:column;gap:8px;">
-      <input type="text" class="w-field" id="lk-text" placeholder="${t('doc.renamed')}">
+      <input type="text" class="w-field" id="lk-text" placeholder="${t('link.displayText')}">
       <input type="url" class="w-field" id="lk-url" placeholder="https://…">
     </div>
   `, [
-    { class: 'fb-btn', label: t('wx.cancel') === 'wx.cancel' ? 'Cancel' : '✕', onClick: () => dlg.close() },
+    { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
     { class: 'fb-btn primary', label: 'OK', onClick: () => { doInsertLink(dlg); } }
   ]);
   dlg.querySelector('#lk-text').value = selText;
@@ -1934,7 +1977,7 @@ function openImageDialog() {
       <input type="text" class="w-field" id="img-cap" placeholder="Caption">
     </div>
   `, [
-    { class: 'fb-btn', label: '✕', onClick: () => dlg.close() },
+    { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
     { class: 'fb-btn primary', label: 'OK', onClick: () => { doInsertImage(dlg); } }
   ]);
 
@@ -1977,11 +2020,11 @@ function openTableDialog() {
         <input type="number" class="w-field" id="tbl-r" min="1" max="20" value="3" style="width:70px;"> ×
         <input type="number" class="w-field" id="tbl-c" min="1" max="10" value="3" style="width:70px;">
       </label>
-      <input type="checkbox" id="tbl-h"> <span>${t('opt.word')}</span>
+      <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="tbl-h"> ${t('table.headerRow')}</label>
     </div>
   `, [
     { class: 'fb-btn', label: '✕', onClick: () => dlg.close() },
-    { class: 'fb-btn primary', label: 'OK', onClick: () => { doInsertTable(dlg); } }
+    { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
   ]);
 }
 
@@ -2838,16 +2881,6 @@ function generateTocHTML() {
   });
   html += '</ol></div>';
   return html;
-}
-
-function wireHeadingsForToc() {
-  // Auto-id headings for anchor links
-  EL.editor.addEventListener('input', () => {
-    let idx = 0;
-    EL.editor.querySelectorAll('h1,h2,h3,h4').forEach(h => {
-      if (!h.id || h.id.startsWith('toc-')) h.id = 'toc-' + idx++;
-    });
-  });
 }
 
 function toggleTocPanel() {
@@ -3928,45 +3961,7 @@ function rtfEsc(s) {
   return out;
 }
 
-function rtfInline(node, fmt) {
-  // fmt: {b, i, u, strike, sup}
-  let out = '';
-  Array.from(node.childNodes).forEach(ch => {
-    if (ch.nodeType === 3) { out += rtfEsc(ch.nodeValue.replace(/[\r\n\t]+/g, ' ')); return; }
-    switch (ch.nodeName) {
-      case 'BR': out += '\\line '; break;
-      case 'STRONG': case 'B': rtfInline(ch, Object.assign({}, fmt, { b: true })); break;
-      case 'EM': case 'I': rtfInline(ch, Object.assign({}, fmt, { i: true })); break;
-      case 'U': rtfInline(ch, Object.assign({}, fmt, { u: true })); break;
-      case 'DEL': case 'S': case 'STRIKE':
-        rtfInline(ch, Object.assign({}, fmt, { strike: true })); break;
-      case 'SUP':
-        rtfInline(ch, Object.assign({}, fmt, { sup: true })); break;
-      case 'IMG': {
-        const alt = ch.getAttribute('alt') || '';
-        if (alt) out += rtfInline(ch.parentNode === node ? ch : ch, fmt) || '';
-        break;
-      }
-      default: out += rtfInline(ch, fmt);
-    }
-  });
-  return rtfFmt(out, fmt);
-}
-
-function rtfFmt(text, fmt) {
-  if (!text) return '';
-  let open = '', close = '';
-  if (fmt.b)      { open += '\\b ';      close = close + '\\b0 '; }
-  if (fmt.i)      { open += '\\i ';      close = '}' + close; }
-  if (fmt.u)      { open += '\\ul ';     close = '}' + close; }
-  if (fmt.strike) { open += '\\strike '; close = '}' + close; }
-  if (fmt.sup)    { open += '\\super ';  close = '}' + close; }
-  // NOTE: b/i/u/strike/sup toggle on with \X and off with \X0 inside
-  // a group — wrapped below so each span is self-contained.
-  return open ? '{' + text.replace(/^/, '') + '}' : text;
-}
-
-/* Cleaner rtfFmt (kept simple + correct): wraps in a group with toggles */
+/* Group wrapper: wraps text with RTF format toggles */
 function rtfWrap(text, fmt) {
   if (!text) return '';
   let on = '', off = '';
@@ -3978,6 +3973,7 @@ function rtfWrap(text, fmt) {
   return on ? '{' + on + text + off + '}' : text;
 }
 
+/* Inline walker for RTF (uses rtfWrap for grouping) */
 function rtfInlineRe(node, fmt) {
   let out = '';
   Array.from(node.childNodes).forEach(ch => {
@@ -4451,7 +4447,10 @@ function ioLoadScript(src) {
 }
 
 function ioFetchFontB64(url) {
-  return fetch(url + '?v=' + encodeURIComponent(IO_VENDOR_NOTO))
+  // Cache-bust using version of font file (vendor folder hash would be ideal,
+  // falling back to timestamp when building). For now use timestamp on dev
+  // to force reload when font is updated locally.
+  return fetch(url + '?t=' + Date.now())
     .then(r => { if (!r.ok) throw new Error('font http ' + r.status); return r.arrayBuffer(); })
     .then(buf => {
       const u8 = new Uint8Array(buf);
@@ -4838,7 +4837,6 @@ function ioParseMd(text, footnoteDefs) {
   }
 
   function blockFromLines(buf) {
-    const saveLines = lines;   // recursion via a tiny shim
     let html = '';
     // simple: paragraphs only inside quotes (nesting rare in practice)
     html = buf.map(l => l.trim()).filter(Boolean)

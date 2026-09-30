@@ -39,7 +39,7 @@
   var STRINGS = {
     en: {
       "app.title":     "Cycle",
-      "tab.cal":       "Calendar",
+      "tab.cal":       "Timeline",
       "tab.days":      "Days",
       "tab.ins":       "Insights",
       "cal.prev":      "Previous month",
@@ -146,7 +146,7 @@
     },
     el: {
       "app.title":     "Κύκλος",
-      "tab.cal":       "Ημερολόγιο",
+      "tab.cal":       "Χρονογραμμή",
       "tab.days":      "Ημέρες",
       "tab.ins":       "Στατιστικά",
       "cal.prev":      "Προηγούμενος μήνας",
@@ -708,16 +708,16 @@
     state = fresh;
     save();
     searchQ = "";
-    calMonth = null;
+    timelineAnchor = null;
     openDay = null;
     renderAll();
     transientNote(t("rst.done"));
   }
 
   // ---- view state (never persisted) ----
-  var viewMode = "calendar";            // "calendar" | "days" | "insights"
-  var calCompact = true;                // true = Quick Log grid | false = Full Calendar
-  var calMonth = null;                  // null = current month
+  var viewMode = "timeline";            // "timeline" | "days" | "insights"
+  var timelineZoom = 30;                // days shown (7–90)
+  var timelineAnchor = null;            // "YYYY-MM-DD" | null = today
   var openDay = null;                   // "d-YYYY-MM-DD" | null
   var managing = false;                // chip management mode (rename/delete)
   var searchQ = "";
@@ -732,14 +732,14 @@
     var cal = $("calview"), dl = $("dayslist"),
         ci = $("cycleinfo"), ins = $("insights"), dv = $("dayview");
     var b1 = $("cal-btn"), b2 = $("day-btn"), b3 = $("ins-btn");
-    var inEditor = (viewMode === "calendar" && openDay !== null);
-    if (cal) cal.hidden = (viewMode !== "calendar") || inEditor;
+    var inEditor = (viewMode === "timeline" && openDay !== null);
+    if (cal) cal.hidden = (viewMode !== "timeline") || inEditor;
     if (dv)  dv.hidden  = !inEditor;
-    if (ci)  ci.hidden  = (viewMode !== "calendar") || inEditor ||
+    if (ci)  ci.hidden  = (viewMode !== "timeline") || inEditor ||
                           !(state.periods.length || state.days.length);
     if (dl)  dl.hidden  = (viewMode !== "days");
     if (ins) ins.hidden = (viewMode !== "insights");
-    [[b1, viewMode === "calendar"],
+    [[b1, viewMode === "timeline"],
      [b2, viewMode === "days"],
      [b3, viewMode === "insights"]].forEach(function (p) {
       if (!p[0]) return;
@@ -756,7 +756,7 @@
     } else if (inEditor) {
       renderDayEditor(openDay);
     } else {
-      renderCalendar();
+      renderTimeline();
       renderCycleInfo();
     }
   }
@@ -805,10 +805,6 @@
     var start = last.start + avg * DAY_MS;
     return { start: start, end: start + (len - 1) * DAY_MS, avg: avg };
   }
-  function dayInPrediction(ts) {
-    var pr = nextPrediction();
-    return !!pr && ts >= pr.start && ts <= pr.end;
-  }
 
   // Cycle info strip — where you are RIGHT NOW. Facts only.
   function renderCycleInfo() {
@@ -855,278 +851,142 @@
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   }
 
-  // ---------- Quick Log Grid (#10) ------------------------------
-  // Compact 7×5 grid — same underlying data, different visual
-  // density. Click → openDay editor (unchanged). Toggle between
-  // compact/full via a chip in the calendar header.
-
-  function renderQuickLogGrid() {
+  // ---------- timeline (Gantt strip — the month grid lives in the
+  // orOS Calendar now; Cycle shows HISTORY + TREND) ----------
+  function renderTimeline() {
     var host = $("calview");
     if (!host) return;
     host.innerHTML = "";
 
-    var now = new Date();
-    var base = calMonth ? new Date(calMonth.y, calMonth.m, 1) :
-      new Date(now.getFullYear(), now.getMonth(), 1);
+    var anchor = timelineAnchor ? dayTsFromKey(timelineAnchor) : todayTs();
+    var half = Math.floor(timelineZoom / 2);
+    var leftTs = anchor - half * DAY_MS;
+    var rightTs = anchor + (timelineZoom - half) * DAY_MS;
+    var scale = 100 / timelineZoom;
 
-    // Header with toggle chip
+    // head: ‹ · − zoom + · › · Today
     var head = document.createElement("div");
-    head.className = "cal-head";
+    head.className = "tl-head";
     var prev = document.createElement("button");
     prev.type = "button";
-    prev.className = "cal-nav";
+    prev.className = "tl-nav";
     prev.textContent = "‹";
     prev.setAttribute("aria-label", t("cal.prev"));
     prev.addEventListener("click", function () {
-      calMonth = { y: base.getFullYear() - (base.getMonth() === 0 ? 1 : 0),
-                   m: base.getMonth() === 0 ? 11 : base.getMonth() - 1 };
-      renderQuickLogGrid();
+      timelineAnchor = dayKey(anchor - Math.round(timelineZoom / 2) * DAY_MS);
+      renderTimeline();
     });
     head.appendChild(prev);
-    var mt = document.createElement("span");
-    mt.className = "cal-month";
-    mt.textContent = base.toLocaleDateString(
-      LANG === "el" ? "el-GR" : "en-GB",
-      { month: "long", year: "numeric" });
-    head.appendChild(mt);
+    var zoomOut = document.createElement("button");
+    zoomOut.type = "button";
+    zoomOut.className = "chip ghost";
+    zoomOut.textContent = "−";
+    zoomOut.setAttribute("title", "-7d");
+    zoomOut.addEventListener("click", function () {
+      timelineZoom = Math.max(7, timelineZoom - 7);
+      renderTimeline();
+    });
+    head.appendChild(zoomOut);
+    var zv = document.createElement("span");
+    zv.className = "zoom-val";
+    zv.textContent = timelineZoom + "d";
+    head.appendChild(zv);
+    var zoomIn = document.createElement("button");
+    zoomIn.type = "button";
+    zoomIn.className = "chip ghost";
+    zoomIn.textContent = "+";
+    zoomIn.setAttribute("title", "+7d");
+    zoomIn.addEventListener("click", function () {
+      timelineZoom = Math.min(90, timelineZoom + 7);
+      renderTimeline();
+    });
+    head.appendChild(zoomIn);
     var next = document.createElement("button");
     next.type = "button";
-    next.className = "cal-nav";
+    next.className = "tl-nav";
     next.textContent = "›";
     next.setAttribute("aria-label", t("cal.next"));
     next.addEventListener("click", function () {
-      calMonth = { y: base.getFullYear() + (base.getMonth() === 11 ? 1 : 0),
-                   m: base.getMonth() === 11 ? 0 : base.getMonth() + 1 };
-      renderQuickLogGrid();
+      timelineAnchor = dayKey(anchor + Math.round(timelineZoom / 2) * DAY_MS);
+      renderTimeline();
     });
     head.appendChild(next);
-
-    // Toggle chip: Quick Log ↔ Full Calendar
-    var toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "chip ghost" + (calCompact ? "" : " on");
-    toggle.style.marginLeft = "8px";
-    toggle.textContent = calCompact ? t("ql.fullcal") : t("ql.title");
-    toggle.setAttribute("title", t("ql.quick"));
-    toggle.addEventListener("click", function () {
-      calCompact = !calCompact;
-      if (calCompact) renderQuickLogGrid();
-      else renderCalendar();
-    });
-    head.appendChild(toggle);
-
     var td = document.createElement("button");
     td.type = "button";
     td.className = "cal-today";
     td.textContent = t("cal.today");
     td.addEventListener("click", function () {
-      calMonth = null;
-      renderQuickLogGrid();
+      timelineAnchor = null;
+      renderTimeline();
     });
     head.appendChild(td);
     host.appendChild(head);
 
-    // Day index for marks
-    var dayMap = {};
-    state.days.forEach(function (d) { dayMap[d.id] = d; });
-
-    // Compact grid — 7 columns, 5 rows max
-    var grid = document.createElement("div");
-    grid.className = "cal-grid compact";
-    var first = new Date(base.getFullYear(), base.getMonth(), 1);
-    var lead = (first.getDay() + 6) % 7;
-    var dim = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
-    var todayK = dayKey(Date.now());
-
-    // Pad leading empty cells
-    for (var e2 = 0; e2 < lead; e2++) {
-      var padEl = document.createElement("span");
-      padEl.className = "cal-cell empty";
-      grid.appendChild(padEl);
-    }
-
-    // Days — smaller cells, only number + mark
-    for (var d2 = 1; d2 <= dim; d2++) {
-      var dt = new Date(base.getFullYear(), base.getMonth(), d2);
-      var ts = dt.getTime();
-      var dk = "d-" + dayKey(ts);
-      var cell = document.createElement("button");
-      cell.type = "button";
-      var per = periodCovering(ts);
-      if (per && per.end === null && ts > todayTs()) per = null;
-      var cls = "cal-cell compact";
-      if (per) cls += " per" + per.flow;
-      else if (dayInPrediction(ts)) cls += " pred";
-      if (dk === "d-" + todayK) cls += " today";
-      cell.className = cls;
-
-      var num = document.createElement("span");
-      num.className = "cal-d";
-      num.textContent = String(d2);
-      cell.appendChild(num);
-
-      if (dayMap[dk]) {
-        var mk = document.createElement("span");
-        mk.className = "cal-mark tiny";
-        cell.appendChild(mk);
-      } else {
-        var nm = document.createElement("span");
-        nm.className = "cal-nomark tiny";
-        cell.appendChild(nm);
-      }
-
-      (function (dayId) {
-        cell.addEventListener("click", function () {
-          openDay = dayId;
-          managing = false;
-          applyView();
-        });
-      })(dk);
-      grid.appendChild(cell);
-    }
-    host.appendChild(grid);
-
-    // Legend for compact view
-    var lg = document.createElement("div");
-    lg.className = "hint";
-    lg.style.textAlign = "center";
-    lg.style.marginTop = "12px";
-    lg.style.fontSize = "11px";
-    lg.innerHTML = '<span style="display:inline-block;width:8px;height:8px;background:#e06c75;border-radius:50%;vertical-align:middle;margin-right:4px;"></span>' +
-      t("per.title") + ' · <span style="display:inline-block;width:8px;height:8px;border:1px dashed var(--text-dim);border-radius:50%;vertical-align:middle;margin-right:4px;"></span>' +
-      t("ci.next");
-    host.appendChild(lg);
-  }
-
-  // ---------- calendar ----------
-  function renderCalendar() {
-    var host = $("calview");
-    if (!host) return;
-    host.innerHTML = "";
-
-    var now = new Date();
-    var base = calMonth ? new Date(calMonth.y, calMonth.m, 1) :
-      new Date(now.getFullYear(), now.getMonth(), 1);
-
-    // month header: ‹ month year › + Today
-    var head = document.createElement("div");
-    head.className = "cal-head";
-    var prev = document.createElement("button");
-    prev.type = "button";
-    prev.className = "cal-nav";
-    prev.textContent = "‹";
-    prev.setAttribute("aria-label", t("cal.prev"));
-    prev.addEventListener("click", function () {
-      calMonth = { y: base.getFullYear() - (base.getMonth() === 0 ? 1 : 0),
-                   m: base.getMonth() === 0 ? 11 : base.getMonth() - 1 };
-      renderCalendar();
-    });
-    head.appendChild(prev);
-    var mt = document.createElement("span");
-    mt.className = "cal-month";
-    mt.textContent = base.toLocaleDateString(
-      LANG === "el" ? "el-GR" : "en-GB",
-      { month: "long", year: "numeric" });
-    head.appendChild(mt);
-    var next = document.createElement("button");
-    next.type = "button";
-    next.className = "cal-nav";
-    next.textContent = "›";
-    next.setAttribute("aria-label", t("cal.next"));
-    next.addEventListener("click", function () {
-      calMonth = { y: base.getFullYear() + (base.getMonth() === 11 ? 1 : 0),
-                   m: base.getMonth() === 11 ? 0 : base.getMonth() + 1 };
-      renderCalendar();
-    });
-    head.appendChild(next);
-    if (calMonth) {
-      var td = document.createElement("button");
-      td.type = "button";
-      td.className = "cal-today";
-      td.textContent = t("cal.today");
-      td.addEventListener("click", function () {
-        calMonth = null;
-        renderCalendar();
+    // bars — one per period; ongoing ends at today (never paints
+    // the future as bleeding forever — same honesty rule as before)
+    var bars = document.createElement("div");
+    bars.className = "tl-bars";
+    state.periods.forEach(function (p) {
+      var pEnd = (p.end !== null) ? p.end : todayTs();
+      if (p.start > rightTs || pEnd < leftTs) return;
+      var sX = Math.max(0, (p.start - leftTs) / DAY_MS);
+      var eX = Math.min(timelineZoom, (pEnd - leftTs) / DAY_MS + 1);
+      var bar = document.createElement("button");
+      bar.type = "button";
+      bar.className = "tl-bar per" + p.flow;
+      bar.style.left = (sX * scale) + "%";
+      bar.style.width = (Math.max(1, eX - sX) * scale) + "%";
+      bar.title = t("per.title") + " · " + t("flow." + p.flow);
+      bar.addEventListener("click", function () {
+        openDay = "d-" + dayKey(pEnd);
+        managing = false;
+        applyView();
       });
-      head.appendChild(td);
+      bars.appendChild(bar);
+    });
+
+    var pr = nextPrediction();
+    if (pr && pr.start <= rightTs && pr.end >= leftTs) {
+      var sXp = Math.max(0, (pr.start - leftTs) / DAY_MS);
+      var eXp = Math.min(timelineZoom, (pr.end - leftTs) / DAY_MS + 1);
+      var pb = document.createElement("div");
+      pb.className = "tl-bar pred";
+      pb.style.left = (sXp * scale) + "%";
+      pb.style.width = (Math.max(1, eXp - sXp) * scale) + "%";
+      pb.title = t("pred.hint");
+      bars.appendChild(pb);
     }
-    host.appendChild(head);
 
-    // weekday header (Mon-first, locale names — mood calendar contract)
-    var wk = document.createElement("div");
-    wk.className = "cal-wk";
-    for (var i = 0; i < 7; i++) {
-      var wd = document.createElement("span");
-      wd.textContent = new Date(2024, 0, 1 + i)
-        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
-          { weekday: "narrow" });
-      wk.appendChild(wd);
+    if (leftTs <= todayTs() && todayTs() <= rightTs) {
+      var tm = document.createElement("div");
+      tm.className = "tl-today";
+      tm.style.left = (((todayTs() - leftTs) / DAY_MS) * scale) + "%";
+      bars.appendChild(tm);
     }
-    host.appendChild(wk);
+    host.appendChild(bars);
 
-    // day index: which day-record exists (for the accent mark)
-    var dayMap = {};
-    state.days.forEach(function (d) { dayMap[d.id] = d; });
+    // legend
+    var lg = document.createElement("div");
+    lg.className = "tl-legend";
+    [[t("flow.1"), "per1"], [t("flow.2"), "per2"], [t("flow.3"), "per3"]]
+      .forEach(function (f) {
+        var it = document.createElement("span");
+        it.className = "leg-item";
+        var d = document.createElement("span");
+        d.className = "leg-dot " + f[1];
+        it.appendChild(d);
+        it.appendChild(document.createTextNode(f[0]));
+        lg.appendChild(it);
+      });
+    var pit = document.createElement("span");
+    pit.className = "leg-item";
+    var pd = document.createElement("span");
+    pd.className = "leg-dot pred";
+    pit.appendChild(pd);
+    pit.appendChild(document.createTextNode(t("ci.next")));
+    lg.appendChild(pit);
+    host.appendChild(lg);
 
-    var grid = document.createElement("div");
-    grid.className = "cal-grid";
-    var first = new Date(base.getFullYear(), base.getMonth(), 1);
-    var lead = (first.getDay() + 6) % 7;   // Monday-first offset
-    for (var e2 = 0; e2 < lead; e2++) {
-      var padEl = document.createElement("span");
-      padEl.className = "cal-cell empty";
-      grid.appendChild(padEl);
-    }
-    var dim = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
-    var todayK = dayKey(Date.now());
-    for (var d2 = 1; d2 <= dim; d2++) {
-      var dt = new Date(base.getFullYear(), base.getMonth(), d2);
-      var ts = dt.getTime();
-      var dk = "d-" + dayKey(ts);
-      var cell = document.createElement("button");
-      cell.type = "button";
-      var per = periodCovering(ts);
-      // an ongoing period never paints FUTURE days — the grid
-      // would read as "bleeding forever". Render-side only:
-      // periodCovering itself stays untouched.
-      if (per && per.end === null && ts > todayTs()) per = null;
-      var cls = "cal-cell";
-      if (per) cls += " per" + per.flow;
-      else if (dayInPrediction(ts)) cls += " pred";
-      if (dk === "d-" + todayK) cls += " today";
-      cell.className = cls;
-
-      var num = document.createElement("span");
-      num.className = "cal-d";
-      num.textContent = String(d2);
-      cell.appendChild(num);
-      if (per) {
-        num.style.color = "#e06c75";
-        num.style.fontWeight = "700";
-      }
-
-      if (dayMap[dk]) {
-        var mk = document.createElement("span");
-        mk.className = "cal-mark";
-        cell.appendChild(mk);
-      } else {
-        var nm = document.createElement("span");
-        nm.className = "cal-nomark";
-        cell.appendChild(nm);
-      }
-
-      (function (dayId) {
-        cell.addEventListener("click", function () {
-          openDay = dayId;
-          managing = false;
-          applyView();
-        });
-      })(dk);
-      grid.appendChild(cell);
-    }
-    host.appendChild(grid);
-
-    // hint line — teaches the single gesture this view has
     if (!state.days.length && !state.periods.length) {
       var hl = document.createElement("div");
       hl.className = "hint";
@@ -1135,44 +995,6 @@
       hl.textContent = t("cal.empty");
       host.appendChild(hl);
     }
-
-    // prediction legend — only when there IS a prediction
-    if (nextPrediction()) {
-      var lg = document.createElement("div");
-      lg.className = "hint";
-      lg.style.textAlign = "center";
-      lg.style.marginTop = "12px";
-      lg.textContent = t("pred.hint");
-      host.appendChild(lg);
-    }
-
-    // reminder toggle — always visible (a setting for the future
-    // too), sync-scoped through state.prefs
-    var rt = document.createElement("button");
-    rt.type = "button";
-    rt.className = "chip ghost" + (state.prefs.remind ? " on" : "");
-    rt.style.margin = "14px auto 0";
-    rt.style.display = "flex";
-    rt.style.alignItems = "center";
-    rt.style.gap = "6px";
-    rt.title = t("rem.title");
-    rt.setAttribute("aria-pressed", state.prefs.remind ? "true" : "false");
-    rt.innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">' +
-      '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
-      '<path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' +
-      "<span></span>";
-    rt.lastChild.textContent =
-      state.prefs.remind ? t("rem.on") : t("rem.off");
-    rt.addEventListener("click", function () {
-      state.prefs.remind = !state.prefs.remind;
-      state.sm = Date.now();
-      state.om = Date.now();   // prefs resolve by om-donor in merge —
-                               // a prefs edit MUST travel through om
-      save();
-      renderCalendar();
-    });
-    host.appendChild(rt);
   }
 
   // ---------- day editor ----------
@@ -1555,7 +1377,7 @@
   // context-aware refresh: in-editor → note-preserving rebuild;
   // editor closed → full renderAll (menu lists, calendar, etc.)
   function refreshInView() {
-    if (dayDraft && viewMode === "calendar" && openDay !== null) {
+    if (dayDraft && viewMode === "timeline" && openDay !== null) {
       buildEditorChromeless();
     } else {
       renderAll();
@@ -1924,7 +1746,7 @@
         eb.addEventListener("click", function () {
           openDay = d.id;
           managing = false;
-          viewMode = "calendar";
+          viewMode = "timeline";
           applyView();
         });
         btns.appendChild(eb);
@@ -1994,11 +1816,10 @@
   }
 
   function renderAll() {
-    if (viewMode === "calendar" && openDay !== null) {
+    if (viewMode === "timeline" && openDay !== null) {
       renderDayEditor(openDay);
-    } else if (viewMode === "calendar") {
-      if (calCompact) renderQuickLogGrid();
-      else renderCalendar();
+    } else if (viewMode === "timeline") {
+      renderTimeline();
       renderCycleInfo();
     } else if (viewMode === "days") {
       renderDaysList();
@@ -2623,19 +2444,31 @@
     });
   }
 
-  // ---------- Quick Log CSS (#10) --------------------------------
-  // Compact grid cells — smaller, tighter, no extra decoration.
-  var QL_CSS_DONE = false;
-  function ensureQlCss() {
-    if (QL_CSS_DONE) return;
-    QL_CSS_DONE = true;
+  // ---------- Timeline CSS ----------------------------------------
+  var TL_CSS_DONE = false;
+  function ensureTlCss() {
+    if (TL_CSS_DONE) return;
+    TL_CSS_DONE = true;
     var st = document.createElement("style");
     st.textContent =
-      ".cal-grid.compact{gap:4px}" +
-      ".cal-cell.compact{width:38px;height:42px;font-size:13px;padding:2px}" +
-      ".cal-cell.compact .cal-d{font-size:13px;font-weight:600}" +
-      ".cal-cell.compact .cal-mark.tiny,.cal-cell.compact .cal-nomark.tiny{width:6px;height:6px}" +
-      "@media (min-width:768px){.cal-cell.compact{width:48px;height:52px}.cal-cell.compact .cal-d{font-size:14px}}";
+      ".tl-head{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}" +
+      ".tl-nav{background:transparent;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}" +
+      ".tl-nav:hover{background:var(--accent-soft)}" +
+      ".zoom-val{font-size:12px;font-weight:700;color:var(--text-dim);min-width:34px;text-align:center}" +
+      ".tl-bars{position:relative;height:56px;background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;overflow:hidden}" +
+      ".tl-bar{position:absolute;top:6px;bottom:6px;border:none;padding:0;border-radius:4px;cursor:pointer}" +
+      ".tl-bar.per1{background:#e06c75;opacity:.45}" +
+      ".tl-bar.per2{background:#e06c75;opacity:.7}" +
+      ".tl-bar.per3{background:#e06c75;opacity:.95}" +
+      ".tl-bar.pred{background:transparent;border-top:2px dashed var(--accent);border-bottom:2px dashed var(--accent);cursor:default}" +
+      ".tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);pointer-events:none}" +
+      ".tl-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:11px;color:var(--text-dim)}" +
+      ".leg-item{display:flex;align-items:center;gap:5px}" +
+      ".leg-dot{width:10px;height:10px;border-radius:3px;display:inline-block}" +
+      ".leg-dot.per1{background:#e06c75;opacity:.45}" +
+      ".leg-dot.per2{background:#e06c75;opacity:.7}" +
+      ".leg-dot.per3{background:#e06c75;opacity:.95}" +
+      ".leg-dot.pred{background:transparent;border:1px dashed var(--accent)}";
     document.head.appendChild(st);
   }
 
@@ -2707,7 +2540,7 @@
     // a day being edited may have been deleted remotely — drop
     // the editor without yanking the keyboard from under it
     if (openDay !== null && !dayById(openDay) &&
-        viewMode === "calendar") {
+        viewMode === "timeline") {
       openDay = null;
     }
 
@@ -2718,7 +2551,7 @@
     // so rebuildDraft is never left unconsumed.
     var syncKeepNote = null;
     var syncKeepScroll = 0;
-    var syncingInEditor = (dayDraft && viewMode === "calendar" &&
+    var syncingInEditor = (dayDraft && viewMode === "timeline" &&
                            openDay !== null);
     if (syncingInEditor) {
       syncKeepNote = $("fld-note") ? $("fld-note").value : null;
@@ -2792,7 +2625,7 @@
 
   function wire() {
     var c = $("cal-btn"), d = $("day-btn"), i = $("ins-btn");
-    if (c) c.addEventListener("click", function () { showTab("calendar"); });
+    if (c) c.addEventListener("click", function () { showTab("timeline"); });
     if (d) d.addEventListener("click", function () { showTab("days"); });
     if (i) i.addEventListener("click", function () { showTab("insights"); });
   }
@@ -2805,27 +2638,26 @@
   window.__orosCycleOpen = function (periodId) {
     if (typeof periodId !== "string" || !periodId) return;
     openDay = null;
-    viewMode = "calendar";
+    viewMode = "timeline";
     // Two payload shapes arrive here:
-    //   1. a period uid (Calendar feed row clicks) → month of
-    //      that period's start
+    //   1. a period uid (Calendar feed row clicks) → timeline
+    //      anchored on that period's start
     //   2. a predicted-start day key "YYYY-MM-DD" (notification
     //      deepLink "cycle:pred:<ymd>" — the shell's openTarget
-    //      forwards only the tail) → month of the prediction,
-    //      where the dashed prediction days are visible
+    //      forwards only the tail) → timeline anchored on the
+    //      prediction, where the dashed bar is visible
     // Period ids are base36 uids (Date.now().toString(36) +
     // random) — never contain "-", so the shapes cannot collide.
     var mPred = /^(\d{4})-(\d{2})-(\d{2})$/.exec(periodId);
     if (mPred) {
-      calMonth = { y: +mPred[1], m: +mPred[2] - 1 };
-      applyView();   // single paint: calendar + prediction dashes
+      timelineAnchor = periodId;
+      applyView();   // single paint: timeline + prediction bar
       return;
     }
     var p = periodById(periodId);
     if (!p) return;
-    var dt = new Date(p.start);
-    calMonth = { y: dt.getFullYear(), m: dt.getMonth() };
-    applyView();   // single paint: calendar + cycle info strip
+    timelineAnchor = dayKey(p.start);
+    applyView();   // single paint: timeline anchored on the period
   };
 
   // ---------- Boot ----------
@@ -2837,7 +2669,7 @@
     document.documentElement.lang = LANG;   // lang attr follows locale
     console.log("cycle.js v" + (SCRIPT_V || "?") + " boot");
   })();
-  ensureQlCss();
+  ensureTlCss();
   load();
   applyI18n();
   paintStaticAria();
