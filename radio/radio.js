@@ -1601,70 +1601,70 @@ function updateSleepChip(){
   }
 }
 
-/* ===== PALETTE INHERITANCE ===== */
+/* ===== PALETTE INHERITANCE (iframe theme bridge) ===== */
 
-// Skins mirrored from shell.js SKINS registry (16 entries, v0.12.0
-// grid). The shell's single source of truth is the data-skin
-// attribute on the PARENT <html> — same-origin iframe, so we read
-// it directly. No window.orosAppTheme exists in the shell (verified
-// against shell.js), no palette broadcast either.
-var RX_SKIN_COLORS = {
-  adwaita:    "#3584e4",
-  lumo:       "#6d4aff",
-  oros:       "#d4af37",
-  ubuntu:     "#e95420",
-  fedora:     "#51a2da",
-  mint:       "#87cf3e",
-  arch:       "#1793d1",
-  debian:     "#d70a53",
-  elementary: "#8c5ec7",
-  tux:        "#c9c9c9",
-  manjaro:    "#35bf5c",
-  opensuse:   "#73ba25",
-  nixos:      "#5277c3",
-  gentoo:     "#7d5ba6",
-  popos:      "#ff7043",
-  zorin:      "#15a6a0"
-};
+// CSS custom properties do NOT cross document boundaries, so an
+// iframe app never inherits shell variables naturally. This bridge
+// copies the shell's LIVE computed variables onto the radio root
+// (boot + every skin/theme swap via MutationObserver).
+var SHELL_VAR_MAP = [
+  // [shell variable, radio variable]
+  ["--accent",   "--accent"],
+  ["--bg",       "--bg"],
+  ["--panel-bg", "--panel"],
+  ["--text",     "--fg"],
+  ["--text-dim", "--muted"],
+  ["--border",   "--line"],
+  ["--danger",   "--danger"],
+  ["--warn",     "--warn"],
+  ["--ok",       "--ok"]
+];
 
-function shellAccent(){
-  // Read the LIVE computed --accent from the shell root — the real
-  // single source of truth. Survives skin renames/additions; the
-  // static RX_SKIN_COLORS mirror went stale and fell back to the
-  // hardcoded purple.
+function readShellVar(name){
   try{
     var v = getComputedStyle(window.parent.document.documentElement)
-            .getPropertyValue("--accent");
+            .getPropertyValue(name);
     v = (v || "").trim();
     if(v) return v;
   }catch(e){}
-  // Legacy fallback: stale-shell static map
-  try{
-    var skin = window.parent.document.documentElement.getAttribute("data-skin");
-    if(skin && RX_SKIN_COLORS[skin]) return RX_SKIN_COLORS[skin];
-  }catch(e){}
-  return "#6d4aff";
+  return null;
+}
+
+// hex → rgba(), used to derive a soft tint that follows the
+// accent (replaces the old hardcoded purple tints in radio.css)
+function hexToRgba(hex, alpha){
+  var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((hex || "").trim());
+  if(!m) return null;
+  var h = m[1];
+  if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  return "rgba(" + parseInt(h.slice(0,2),16) + "," +
+                  parseInt(h.slice(2,4),16) + "," +
+                  parseInt(h.slice(4,6),16) + "," + alpha + ")";
 }
 
 function inheritPalette(){
-  document.documentElement.style.setProperty("--accent", shellAccent());
+  var root = document.documentElement;
+  SHELL_VAR_MAP.forEach(function(pair){
+    var v = readShellVar(pair[0]);
+    if(v) root.style.setProperty(pair[1], v);
+  });
+  var acc = readShellVar("--accent") || "#6d4aff";
+  var soft = hexToRgba(acc, 0.14);
+  if(soft) root.style.setProperty("--accent-soft", soft);
 }
 
-// W3: LIVE palette tracking. Same-origin gives full DOM access to
-// the parent document, so a MutationObserver on the parent <html>
-// reflects a skin/theme swap INSTANTLY — zero timers, zero polls,
-// zero event contract required. If observation fails, the boot
-// value from inheritPalette() stands (graceful degradation).
+// LIVE palette tracking: a MutationObserver on the parent <html>
+// re-runs the full bridge instantly on skin/theme swaps — zero
+// timers, zero polls. If observation fails, the boot value from
+// inheritPalette() stands (graceful degradation).
 function watchPalette(){
   try{
-    var root = window.parent.document.documentElement;
-    var apply = function(){
-      document.documentElement.style.setProperty("--accent", shellAccent());
-    };
-    new MutationObserver(apply).observe(root, {
-      attributes: true,
-      attributeFilter: ["data-skin", "data-theme"]
-    });
+    var apply = function(){ inheritPalette(); };
+    new MutationObserver(apply).observe(
+      window.parent.document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-skin", "data-theme"]
+      });
   }catch(e){ /* same-origin read failed — boot value stands */ }
 }
 

@@ -26,6 +26,14 @@
       "type": "internal"
     },
     {
+      "id": "calculator",
+      "name": "Calculator",
+      "category": "Accessories",
+      "icon": "calculator",
+      "url": "calculator/",
+      "type": "internal"
+    },
+    {
       "id": "todo",
       "name": "To-Do",
       "category": "Office",
@@ -68,9 +76,10 @@
 	{
       "id": "minimalism",
       "name": "Minimalism",
+	  "category": "lifestyle",
       "icon": "minimalism",
-      "url": "minimalism/index.html",
-      "category": "lifestyle"
+      "url": "minimalism/",
+	  "type": "internal"
     },
     {
       "id": "contacts",

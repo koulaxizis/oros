@@ -184,6 +184,7 @@ window.OROS_TRANSLATIONS = {
     "app.maps":                  "Maps",
     "app.bookmarks":             "Bookmarks",
     "app.dice":                  "Dice & Coin",
+    "app.calculator":            "Calculator",
     "notifs.on":                 "On",
     "notifs.off":                "Off",
     "notifs.test":               "Test notification",
@@ -228,6 +229,9 @@ window.OROS_TRANSLATIONS = {
     "radio.norecents":         "No recent stations yet — start listening!",
     "radio.fav.added":         "Added to favorites",
     "radio.fav.removed":       "Removed from favorites",
+	"sc.desc.reconnect":        "Reconnect folder",
+    "sc.desc.calculator":       "Open Calculator",
+    "notifs.on":                "On",
   },
 
   el: {
@@ -402,6 +406,7 @@ window.OROS_TRANSLATIONS = {
     "app.maps":                  "Χάρτες",
     "app.bookmarks":             "Σελιδοδείκτες",
     "app.dice":                  "Ζάρια & Κέρμα",
+    "app.calculator":            "Αριθμομηχανή",
     "notifs.on":                 "Ενεργές",
     "notifs.off":                "Ανενεργές",
     "notifs.test":               "Δοκιμή ειδοποίησης",
@@ -446,8 +451,10 @@ window.OROS_TRANSLATIONS = {
     "radio.norecents":         "Δεν υπάρχουν πρόσφατοι σταθμοί — ξεκίνα να ακούς!",
     "radio.fav.added":         "Προστέθηκε στα αγαπημένα",
     "radio.fav.removed":       "Αφαιρέθηκε από τα αγαπημένα",
+	"sc.desc.reconnect":        "Επανασύνδεση φακέλου",
+    "sc.desc.calculator":       "Άνοιγμα Αριθμομηχανής",
+    "notifs.on":                "Ενεργές",
   }
-
 };
 
 // ============================================================

@@ -33,7 +33,7 @@ var STRINGS = {
     ],
     calc:"Calculate", sound:"Sound", theme:"Theme", lang:"Language",
     skin:"Skin", resetAll:"Reset All", exportCSV:"Export CSV",
-    resetConfirmMsg:"Clear the calculation history?", cancel:"Cancel"
+    resetConfirmMsg:"Clear the calculation history?", cancel:"Cancel", error:"Error"
   },
   el:{
     appName:"Αριθμομηχανή", history:"Ιστορικό", clear:"Καθαρισμός",
@@ -54,7 +54,7 @@ var STRINGS = {
     ],
     calc:"Υπολογισμός", sound:"Ήχος", theme:"Θέμα", lang:"Γλώσσα",
     skin:"Δερματικό", resetAll:"Επαναφορά", exportCSV:"Εξαγωγή CSV",
-    resetConfirmMsg:"Διαγραφή του ιστορικού υπολογισμών;", cancel:"Άκυρο"
+    resetConfirmMsg:"Διαγραφή του ιστορικού υπολογισμών;", cancel:"Άκυρο", error:"Σφάλμα"
   }
 };
 
@@ -68,23 +68,58 @@ var SKINS = [
 ];
 
 /* ===================== STATE ===================== */
-var data = { hist: [] };
-var prefs = { skin:"neko", troll:false, sound:true, lang:"en", theme:"dark" };
-var expr = "", lastQuip = false, lastHidden = null, typingTimer = null, moodTimer = null, prevAnswer = null, evalCache = null;
+/* Ενιαίο synced slice (έγκριση: «Όλα sync»).
+   Schema: { ver:1, hist:[{id,e,v,f,mtime}], tombs{},
+             skin, troll, sound, sm:{skin,troll,sound} }
+   sm = per-field mtime stamps (Pet fm pattern) για LWW merge. */
+var data = { ver:1, hist: [], tombs: {},
+             skin:"neko", troll:false, sound:true,
+             sm:{ skin:0, troll:0, sound:0 } };
+/* prefs = runtime mirror μόνο (lang = render-only, shell-owned) */
+var prefs = { lang:"en", skin:"neko", troll:false, sound:true };
+var expr = "", lastQuip = false, lastHidden = null, typingTimer = null, moodTimer = null, prevAnswer = null;
 
 /* Load state */
 try{
   var savedData = localStorage.getItem(DATA_KEY);
-  if(savedData){ var d = JSON.parse(savedData); if(Array.isArray(d.hist)) data.hist = d.hist; }
-  var savedPrefs = localStorage.getItem(PREFS_KEY);
-  if(savedPrefs) Object.assign(prefs, JSON.parse(savedPrefs));
-  /* Suite-wide lang sync */
-  var suiteLang = localStorage.getItem("oros.lang");
-  if(suiteLang === "en" || suiteLang === "el") prefs.lang = suiteLang;
+  if(savedData){
+    var d = JSON.parse(savedData);
+    if(typeof d === "object" && d !== null){
+      if(Array.isArray(d.hist)) data.hist = d.hist;
+      if(d.tombs && typeof d.tombs === "object") data.tombs = d.tombs;
+      if(typeof d.skin === "string"){ data.skin = d.skin; prefs.skin = d.skin; }
+      if(typeof d.troll === "boolean"){ data.troll = d.troll; prefs.troll = d.troll; }
+      if(typeof d.sound === "boolean"){ data.sound = d.sound; prefs.sound = d.sound; }
+      if(d.sm && typeof d.sm === "object") data.sm = d.sm;
+    }
+  }
+  /* Shell language (το shell είναι owner της γλώσσας) */
+  var shellLang = localStorage.getItem("oros.lang");
+  if(shellLang === "en" || shellLang === "el") prefs.lang = shellLang;
 }catch(e){}
 
-function saveData(){ localStorage.setItem(DATA_KEY, JSON.stringify(data)); __orosSyncApi && __orosSyncApi.dirty(); }
-function savePrefs(){ localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }
+function saveData(){
+  localStorage.setItem(DATA_KEY, JSON.stringify(data));
+  if(window.__orosSyncApi) window.__orosSyncApi.dirty();
+}
+function setPref(field, value){
+  /* LWW: κάθε αλλαγή pref σφραγίζει και το sm[field] */
+  if(data[field] === value) return;
+  data[field] = value; prefs[field] = value;
+  data.sm[field] = Date.now();
+  saveData();
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function shellIsLight(){
+  /* Ανίχνευση shell theme μέσω --bg luminance (graceful, χωρίς fake data) */
+  try{
+    var bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    var m = bg.match(/^#([0-9a-f]{6})$/i);
+    if(!m) return false;
+    var r = parseInt(m[1].slice(0,2),16), g = parseInt(m[1].slice(2,4),16), b = parseInt(m[1].slice(4,6),16);
+    return (0.2126*r + 0.7152*g + 0.0722*b) > 128;
+  }catch(e){ return false; }
+}
 function t(key){ return STRINGS[prefs.lang][key] || STRINGS.en[key] || key; }
 function esc(x){ return String(x).replace(/[<>&"'`]/g,function(c){return "&#"+c.charCodeAt(0)+";";}); }
 
@@ -242,11 +277,11 @@ var KEYSOUND = {
 
 /* ===================== UI HELPERS ===================== */
 var $ = function(id){ return document.getElementById(id); };
-var faceEl, exprEl, resEl, padEl, stripEl, modeSw, langBtn, themeBtn, soundBtn, histBtn, histPanel, histList, shareBtn, exportBtn;
+var faceEl, exprEl, resEl, padEl, stripEl, modeSw, soundBtn, histBtn, histPanel, histList, shareBtn, exportBtn;
 
 /* ===================== FACE SVG ===================== */
 function faceSVG(id){
-  var open  ='<g class="eyes-open"><g class="pupil-g"><circle cx="42" cy="52" r="4.5" fill="#241a30"/><circle cx="78" cy="52" r="4.5" fill="#241a30"/></g></g>';
+  var open  ='<g class="eyes-open eyeblink"><g class="pupil-g"><circle cx="42" cy="52" r="4.5" fill="#241a30"/><circle cx="78" cy="52" r="4.5" fill="#241a30"/></g></g>';
   var smug  ='<g class="eyes-smug"><path d="M35 53 Q42 47 49 53" stroke="#241a30" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M71 53 Q78 47 85 53" stroke="#241a30" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>';
   var think ='<g class="eyes-think"><circle cx="42" cy="52" r="4.5" fill="#241a30"/><circle cx="78" cy="52" r="4.5" fill="#241a30"/><path d="M31 43 Q42 38 53 42" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M67 42 Q78 38 89 43" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/></g>';
   var mIdle ='<g class="mouth-idle"><path d="M52 66 Q60 73 68 66" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/></g>';
@@ -276,35 +311,30 @@ function applySkin(id,silent){
   r.setProperty("--skin-a",sk.a); r.setProperty("--skin-b",sk.b);
   r.setProperty("--btn-op",sk.a); r.setProperty("--fur",sk.fur);
   r.setProperty("--furDark",sk.furDark); r.setProperty("--blush",sk.blush);
-  r.setProperty("--skin-dark", prefs.theme==="light" ? "#ffffff" : "#1b1230");
+  r.setProperty("--skin-dark", shellIsLight() ? "#ffffff" : "#1b1230");
   faceEl.innerHTML = faceSVG(sk.id);
-  document.querySelectorAll(".skin-dot").forEach(function(d){d.classList.toggle("active",d.dataset.skin===sk.id);});
+  document.querySelectorAll(".calc-skin-dot").forEach(function(d){d.classList.toggle("active",d.dataset.skin===sk.id);});
   if(!silent) KEYSOUND.skin();
-  savePrefs();
+  setPref("skin", sk.id);
 }
-function applyTheme(){
-  document.body.classList.toggle("light",prefs.theme==="light");
-  var themeBtn = $("themeBtn");
-  if(themeBtn) themeBtn.textContent = prefs.theme==="light" ? "☀" : "☾";
-  applySkin(prefs.skin,true);
-}
+/* applyTheme() removed — theme is shell-owned (G3, Bible Part II) */
 function applyLang(){
   document.documentElement.lang = prefs.lang;
-  var langBtn = $("langBtn");
-  if(langBtn) langBtn.textContent = prefs.lang==="en" ? "ΕΛ" : "EN";
   var str = STRINGS[prefs.lang];
   document.querySelectorAll("[data-i18n]").forEach(function(el){
     el.textContent = str[el.getAttribute("data-i18n")] || el.textContent;
   });
-  try{ localStorage.setItem("oros.lang", prefs.lang); }catch(e){}
+  document.querySelectorAll("[data-i18n-title]").forEach(function(el){
+    var tk = el.getAttribute("data-i18n-title");
+    if(str[tk]) el.title = str[tk];
+  });
   renderHist();
-  savePrefs();
 }
 function applyTroll(){
   modeSw.classList.toggle("troll",prefs.troll);
   modeSw.setAttribute("aria-checked",String(prefs.troll));
   shareBtn.classList.toggle("show", prefs.troll && lastHidden!==null);
-  savePrefs();
+  setPref("troll", prefs.troll);
 }
 function applySound(){
   var soundBtn = $("soundBtn");
@@ -313,27 +343,45 @@ function applySound(){
 
 /* ===================== HISTORY ===================== */
 function pushHist(expression,value,isFake){
-  data.hist.push({e:expression,v:String(value),f:!!isFake});
-  if(data.hist.length>HIST_MAX) data.hist.shift();
+  data.hist.push({id:uid(), e:expression, v:String(value), f:!!isFake, mtime:Date.now()});
+  if(data.hist.length>HIST_MAX){
+    /* Cap 20: οι trimmed εγγραφές ΣΒΗΝΟΥΝ με tombstone (R17),
+       ώστε να μην ανασταίνονται από remote που δεν είχε κάνει ακόμα cap */
+    var drop = data.hist.shift();
+    data.tombs[drop.id] = Math.max(data.tombs[drop.id]||0, drop.mtime);
+  }
   saveData(); renderHist();
 }
 function renderHist(){
   histList.innerHTML = "";
   var str = STRINGS[prefs.lang];
-  if(!data.hist.length){
-    histList.innerHTML = '<div class="hist-empty">'+str.histEmpty+'</div>';
+  var alive = data.hist.filter(function(h){
+    return !data.tombs[h.id] || h.mtime > data.tombs[h.id];
+  });
+  if(!alive.length){
+    histList.innerHTML = '<div class="calc-hist-empty">'+str.histEmpty+'</div>';
   }else{
-    data.hist.slice().reverse().forEach(function(h){
-      var row = document.createElement("div"); row.className="hist-item";
-      var e = document.createElement("span"); e.className="hist-expr"; e.textContent=h.e+" =";
-      var v = document.createElement("span"); v.className="hist-val"+(h.f?" fake":""); v.textContent=h.v;
+    alive.slice().reverse().forEach(function(h){
+      var row = document.createElement("div"); row.className="calc-hist-item";
+      var e = document.createElement("span"); e.className="calc-hist-expr"; e.textContent=h.e+" =";
+      var v = document.createElement("span"); v.className="calc-hist-val"+(h.f?" fake":""); v.textContent=h.v;
       row.append(e,v); histList.appendChild(row);
     });
-    var cl = document.createElement("button"); cl.type="button"; cl.className="hist-clear";
+    var cl = document.createElement("button"); cl.type="button"; cl.className="calc-hist-clear";
     cl.textContent = str.clear;
-    cl.onclick = function(){ data.hist=[]; saveData(); renderHist(); KEYSOUND.util(); };
+    cl.onclick = function(){ clearHistory(); };
     histList.appendChild(cl);
   }
+}
+function clearHistory(){
+  /* R17: delete wins — κάθε εγγραφή παίρνει fresh tombstone,
+     ώστε να μην αναστηθεί από άλλη συσκευή μετά από merge */
+  var now = Date.now();
+  data.hist.forEach(function(h){
+    data.tombs[h.id] = Math.max(data.tombs[h.id]||0, now);
+  });
+  data.hist = [];
+  saveData(); renderHist(); KEYSOUND.util();
 }
 function fakeValue(real){
   var mag = Math.abs(real);
@@ -353,22 +401,25 @@ function pressKey(k){
   clearTypewriter();
   if(lastQuip){ expr=""; lastQuip=false; setMood(null); }
 
-  if(k==="C"){ expr=""; evalCache=null; showResult("0",false); setMood(null); KEYSOUND.util(); return; }
+  if(k==="C"){ expr=""; showResult("0",false); setMood(null); KEYSOUND.util(); return; }
   if(k==="⌫"){
-    if(lastQuip) return;
     if(currentNum()==="" && /[+\-*/]/.test(expr.slice(-1))) expr=expr.slice(0,-1);
     else expr=expr.replace(/(\d+\.?\d*)$/,"");
-    expr=expr.replace(/[+\-*/]$/,"");
     updateDisplay(false); KEYSOUND.util(); return;
   }
   if(k==="±"){
-    if(lastQuip) return;
     var n = currentNum();
-    if(n){ expr = expr.slice(0,expr.length-n.length) + (n.startsWith("-")?n.slice(1):"-"+n); updateDisplay(false); KEYSOUND.util();}
+    if(n){
+      var head = expr.slice(0, expr.length - n.length);
+      var neg = head.endsWith("-");
+      var unary = neg && (head.length === 1 || /[+\-*/]/.test(head.charAt(head.length-2)));
+      if(unary)     expr = head.slice(0,-1) + n;
+      else if(!neg) expr = head + "-" + n;
+      updateDisplay(false); KEYSOUND.util();
+    }
     return;
   }
   if(k==="%"){
-    if(lastQuip) return;
     var n = currentNum(); if(!n) return;
     expr = expr.slice(0,expr.length-n.length)+String(parseFloat(n)/100);
     updateDisplay(false); KEYSOUND.util(); return;
@@ -404,11 +455,12 @@ function doEquals(){
       val = Function('"use strict";return('+safe+')')();
       if(typeof val!=="number"||!isFinite(val)) throw 0;
     }catch(e){ val=null; }
-    evalCache = val; prevAnswer = val;
+    prevAnswer = val;
     var prettyExpr = expr.replace(/\*/g,"×").replace(/\//g,"÷");
 
     if(val===null){
-      showResult(STRINGS[prefs.lang].quips[0],true);
+      if(prefs.troll) showResult(STRINGS[prefs.lang].quips[0],true);
+      else showResult(t("error"),false);
       setMood(null); return;
     }
 
@@ -495,7 +547,6 @@ function fallbackCopy(txt,done){
   }catch(e){ flashToast("Ctrl+C"); }
 }
 function flashToast(msg){
-  var old = resEl.textContent;
   var d = document.createElement("div");
   d.textContent = msg;
   d.style.cssText = "position:fixed;left:50%;top:20px;transform:translateX(-50%);"+
@@ -541,7 +592,7 @@ function resetAll(){
   var closeDlg = function(){ dlg.close(); dlg.remove(); };
   dlg.querySelector(".calc-dialog-cancel").onclick = closeDlg;
   dlg.querySelector(".calc-dialog-danger").onclick = function(){
-    data.hist = []; saveData(); renderHist();
+    clearHistory();
     closeDlg(); chime();
   };
   dlg.addEventListener("close", function(){ if(document.body.contains(dlg)) dlg.remove(); });
@@ -550,19 +601,74 @@ function resetAll(){
 }
 
 /* ===================== SYNC SLICE ===================== */
-function sliceGet(){ return { hist: data.hist }; }
+function sliceGet(){
+  return { ver:data.ver, hist:data.hist, tombs:data.tombs,
+           skin:data.skin, troll:data.troll, sound:data.sound, sm:data.sm };
+}
 function sliceSet(payload){
-  if(payload && Array.isArray(payload.hist)){
-    data.hist = payload.hist.slice(0,HIST_MAX);
+  if(!payload || typeof payload !== "object") return;
+  window.__orosSyncApi._suppress = true; /* R6: pull-fed setters NEVER dirty */
+  try{
+    if(Array.isArray(payload.hist)) data.hist = payload.hist;
+    if(payload.tombs && typeof payload.tombs === "object") data.tombs = payload.tombs;
+    if(payload.sm && typeof payload.sm === "object") data.sm = payload.sm;
+    if(typeof payload.skin === "string"){
+      data.skin = payload.skin; prefs.skin = payload.skin;
+      applySkin(payload.skin, true);
+    }
+    if(typeof payload.troll === "boolean"){
+      data.troll = payload.troll; prefs.troll = payload.troll;
+      applyTroll();
+    }
+    if(typeof payload.sound === "boolean"){
+      data.sound = payload.sound; prefs.sound = payload.sound;
+      applySound();
+    }
     renderHist();
-  }
+  } finally { window.__orosSyncApi._suppress = false; }
 }
 function mergeFn(remote, local){
-  /* Symmetric merge: hist union by position, LWW not needed for simple append */
-  var merged = { hist: [] };
-  merged.hist = local.hist.concat(remote.hist);
-  if(merged.hist.length>HIST_MAX) merged.hist = merged.hist.slice(merged.hist.length-HIST_MAX);
-  return merged;
+  /* R5: merge(A,B) === merge(B,A). mtime → lexicographic JSON tie-break. */
+  var out = { ver:1, hist:[], tombs:{},
+              skin:"neko", troll:false, sound:true,
+              sm:{ skin:0, troll:0, sound:0 } };
+  var byId = {};
+  function absorb(list){
+    (list||[]).forEach(function(it){
+      /* Strict sanitizer: DROP invalid rows (Bible Part IV) */
+      if(!it || typeof it.id !== "string" ||
+         typeof it.mtime !== "number" || typeof it.e !== "string") return;
+      var cur = byId[it.id];
+      if(!cur){ byId[it.id]=it; return; }
+      if(it.mtime > cur.mtime) byId[it.id]=it;
+      else if(it.mtime === cur.mtime && JSON.stringify(it) > JSON.stringify(cur)) byId[it.id]=it;
+    });
+  }
+  absorb(remote && remote.hist); absorb(local && local.hist);
+  /* Tombstones: max-ts union, delete wins ties (R17) */
+  var rT = (remote && remote.tombs) || {}, lT = (local && local.tombs) || {};
+  Object.keys(rT).forEach(function(k){ out.tombs[k] = Math.max(out.tombs[k]||0, rT[k]); });
+  Object.keys(lT).forEach(function(k){ out.tombs[k] = Math.max(out.tombs[k]||0, lT[k]); });
+  Object.keys(byId).forEach(function(k){
+    if(!out.tombs[k] || byId[k].mtime > out.tombs[k]) out.hist.push(byId[k]);
+  });
+  out.hist.sort(function(a,b){ return a.mtime - b.mtime; }); /* χρονολογική σειρά */
+  if(out.hist.length > HIST_MAX) out.hist = out.hist.slice(out.hist.length-HIST_MAX);
+  /* Scalar prefs: per-field LWW via sm, lexicographic value tie-break */
+  ["skin","troll","sound"].forEach(function(f){
+    var rs = (remote && remote.sm) ? (remote.sm[f]||0) : 0;
+    var ls = (local  && local.sm)  ? (local.sm[f]||0)  : 0;
+    var rv = remote ? remote[f] : undefined;
+    var lv = local  ? local[f]  : undefined;
+    if(rv === undefined && lv === undefined) return;
+    if(rv === undefined) out[f] = lv;
+    else if(lv === undefined) out[f] = rv;
+    else if(rs > ls) out[f] = rv;
+    else if(ls > rs) out[f] = lv;
+    else out[f] = (String(rv) > String(lv)) ? rv : lv;
+    out.sm[f] = Math.max(rs, ls);
+  });
+  return out;
 }
 function registerSync(){
   var api = (window.parent && window.parent.orosSync) || window.orosSync;
@@ -592,13 +698,13 @@ window.__orosCalculatorOpen = function(){
 function wireUI(){
   faceEl = $("face"); exprEl = $("expr"); resEl = $("result");
   padEl = $("pad"); stripEl = $("skinStrip");
-  modeSw = $("modeSwitch"); langBtn = $("langBtn"); themeBtn = $("themeBtn");
+  modeSw = $("modeSwitch");
   soundBtn = $("soundBtn"); histBtn = $("histBtn"); histPanel = $("histPanel");
   histList = $("histList"); shareBtn = $("shareBtn");
   var exportBtn = $("exportBtn");
 
   padEl.addEventListener("click",function(e){
-    var b = e.target.closest(".key"); if(b) pressKey(b.dataset.k);
+    var b = e.target.closest(".calc-key"); if(b) pressKey(b.dataset.k);
   });
   modeSw.addEventListener("click",function(){
     prefs.troll=!prefs.troll; applyTroll(); KEYSOUND.op();
@@ -607,9 +713,13 @@ function wireUI(){
   modeSw.addEventListener("keydown",function(e){
     if(e.key===" "||e.key==="Enter"){e.preventDefault();prefs.troll=!prefs.troll;applyTroll();}
   });
-  langBtn.addEventListener("click",function(){ prefs.lang=prefs.lang==="en"?"el":"en"; applyLang(); KEYSOUND.util(); });
-  themeBtn.addEventListener("click",function(){ prefs.theme=prefs.theme==="light"?"dark":"light"; applyTheme(); KEYSOUND.util(); });
-  soundBtn.addEventListener("click",function(){ prefs.sound=!prefs.sound; applySound(); savePrefs(); if(prefs.sound) chime(); });
+  soundBtn.addEventListener("click",function(){ prefs.sound=!prefs.sound; applySound(); setPref("sound", prefs.sound); if(prefs.sound) chime(); });
+  /* Shell language changes propagate via storage event (iframe, same origin) */
+  window.addEventListener("storage", function(ev){
+    if(ev.key === "oros.lang" && (ev.newValue === "en" || ev.newValue === "el")){
+      prefs.lang = ev.newValue; applyLang();
+    }
+  });
   shareBtn.addEventListener("click",sharePrank);
   histBtn.addEventListener("click",function(){ histPanel.classList.toggle("open"); KEYSOUND.util(); });
   if(exportBtn) exportBtn.addEventListener("click",exportCSV);
@@ -619,7 +729,7 @@ function wireUI(){
   /* Skin strip */
   SKINS.forEach(function(sk){
     var b = document.createElement("button");
-    b.type="button"; b.className="skin-dot"; b.dataset.skin=sk.id;
+    b.type="button"; b.className="calc-skin-dot"; b.dataset.skin=sk.id;
     b.title=sk.id.charAt(0).toUpperCase()+sk.id.slice(1);
     b.setAttribute("aria-label",b.title+" skin");
     b.innerHTML = faceSVG(sk.id)
@@ -640,9 +750,10 @@ function wireUI(){
 
 /* ===================== INIT ===================== */
 function load(){
-  applyTheme(); applySkin(prefs.skin,true); applyTroll(); applySound(); applyLang();
-  renderHist(); showResult("0",false);
   wireUI();
+  applySkin(prefs.skin,true); applyTroll(); applySound(); applyLang();
+  renderHist(); showResult("0",false);
+  registerSync();
 }
 
 /* Boot sequence */

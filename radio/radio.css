@@ -9,16 +9,21 @@
 
 :root {
   color-scheme: dark;
-  /* W1: Theme inheritance from orOS shell */
-  --accent: var(--accent, #6d4aff);
-  --bg: var(--bg, #131820);
-  --panel: var(--panel, #1b1a18);
-  --fg: var(--fg, #e8e6e3);
-  --muted: var(--muted, #9aa4b0);
-  --line: var(--line, #2e2c28);
-  --ok: var(--ok, #87cf3e);
-  --warn: var(--warn, #e0a44c);
-  --danger: var(--danger, #e06c75);
+  /* Standalone fallback palette ONLY. Inside orOS the iframe
+     theme bridge (radio.js inheritPalette) copies the shell's
+     live computed variables onto this root, overriding these.
+     The old self-referencing declarations were invalid custom
+     properties and silently locked the app to these literals. */
+  --accent: #6d4aff;
+  --bg: #131820;
+  --panel: #1b1a18;
+  --fg: #e8e6e3;
+  --muted: #9aa4b0;
+  --line: #2e2c28;
+  --ok: #87cf3e;
+  --warn: #e0a44c;
+  --danger: #e06c75;
+  --accent-soft: rgba(109, 74, 255, 0.14);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,7 +87,7 @@ body {
 .rx-tab[aria-pressed="true"] {
   color: var(--accent, #6d4aff);
   border-color: var(--accent, #6d4aff);
-  background: rgba(109, 74, 255, 0.12);
+  background: var(--accent-soft, rgba(109, 74, 255, 0.12));
 }
 
 .rx-search {
@@ -157,7 +162,7 @@ body {
 .rx-ac-item small { color: var(--muted, #9aa4b0); margin-left: 6px; }
 
 .rx-ac-item:hover,
-.rx-ac-item.sel { background: rgba(109, 74, 255, 0.14); }
+.rx-ac-item.sel { background: var(--accent-soft, rgba(109, 74, 255, 0.14)); }
 
 /* ===== Honesty banner ===== */
 
@@ -288,7 +293,7 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(109, 74, 255, 0.16);
+  background: var(--accent-soft, rgba(109, 74, 255, 0.16));
   color: var(--accent, #6d4aff);
   font-size: 18px;
   font-weight: 800;
@@ -465,7 +470,7 @@ body {
 .rx-chip.on {
   color: var(--accent, #6d4aff);
   border-color: var(--accent, #6d4aff);
-  background: rgba(109, 74, 255, 0.12);
+  background: var(--accent-soft, rgba(109, 74, 255, 0.12));
 }
 
 /* Sleep countdown chip in the player bar */

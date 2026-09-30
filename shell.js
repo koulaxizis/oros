@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.07";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.10";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -149,6 +149,7 @@
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>'
   };
@@ -1442,6 +1443,30 @@
     if (window.orosSync) {
       window.orosSync.registerSlice(
         "files-disk", fdSliceGet, fdSliceSet, FD_CACHE_KEY);
+    }
+  }
+
+  // ---------- 9h. Radio proxy slice (sync when iframe closed) ----------
+  var RADIO_CACHE_KEY = "oros-radio-data";
+
+  function radioProxySliceGet() {
+    try {
+      var raw = localStorage.getItem(RADIO_CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function radioProxySliceSet(data) {
+    if (!data) return;
+    try {
+      localStorage.setItem(RADIO_CACHE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function registerRadioProxySlice() {
+    if (window.orosSync) {
+      window.orosSync.registerSlice(
+        "radio", radioProxySliceGet, radioProxySliceSet, RADIO_CACHE_KEY);
     }
   }
 
@@ -2998,7 +3023,8 @@
     { key: "i", label: "sc.desc.info",      fn: showInfoModal },
     { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
     { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
-    { key: "r", label: "sc.desc.reconnect", fn: scReconnect }
+    { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
+    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -3709,6 +3735,7 @@
   function initSyncIntegration() {
     registerShellSlice();
     registerFilesDiskSlice();
+    registerRadioProxySlice();
     setTimeout(refreshFilesDiskCache, 1500);   // warm the transport cache (app open or not)
 
     // OAuth return → flip the menu to connected state once tokens land

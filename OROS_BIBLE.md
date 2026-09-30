@@ -762,3 +762,95 @@ Touch interaction guard: Minimize button click routes through touchInteraction()
 Verified against delivered code: All 5 patches delivered as plain fenced blocks (no OLD/NEW markers inside), copy-paste ready. Implementation follows Bible Part VI patterns (localStorage for device-local prefs, refreshHUD() as single source of truth for UI state).
 
 Next steps: Pending Screen Pet smoke test (collapsing, persisting state across refresh, correct button icon flip). No version bump (versioning user-owned per R23).
+
+---
+
+pet.js — Event log full sync (ακολούθημα Wave 5b)
+
+New sync slice "petEvents" (key oros-pet-events, merge = union by id + clearedAt wipe propagation). The pet entity slice ("pet") was already synced — only the log was device-local. calendar.js untouched: it reads the same key.
+logEvent marks the slice dirty via the existing __orosPetSyncApi funnel (debounced push ~5s).
+Birthday events use a deterministic id (bday-<petId>-<ymd>), so two devices logging the same anniversary collapse to one row in log and calendar feed.
+window.orosPet.clearLog now writes a {clearedAt} wipe tombstone instead of removing the key; the wipe propagates to all devices through the merge.
+Manual export/import: both pet slices ride orosSync.exportData()/importData() — no shell change needed for manual flows.
+Mixed versions: older pet.js installs relay the unknown "petEvents" slice via the carry mailbox (sync.js v0.9.2) — no data loss.
+No schema change (ver stays 1); existing local logs merge on first push. No manual version bump (GitHub Action owns versions).
+
+---
+
+2026-09-30 — Calculator v0.1.0 (third Soffitta port; inverted concept: standard calculator + optional Troll mode)
+
+Ported the Soffitta Prank Calculator to orOS as a fully standard calculator with an optional troll mode (toggle in-app). Changes:
+
+New app folder calculator/ (index.html, calculator.css, calculator.js) following orOS boot pattern (IIFE, SCRIPT_V boot marker, single-pass first render, wireUI before any apply*).
+Class namespace: all Soffitta classes renamed calc-* (calc-pad, calc-display, calc-face, calc-switch, calc-knob, calc-skin-dot, calc-hist-*) to avoid collisions with shell/other apps.
+Schema: oros-calculator-data = { ver:1, hist[{id,e,v,f,mtime}], tombs{}, skin, troll, sound, sm{skin,troll,sound} }. Per user decision ALL state syncs (hist + skin + troll + sound). Scalar prefs merge via per-field LWW with sm timestamps (Screen Pet fm pattern); lexicographic value tie-break (R5).
+Hist entities carry id/mtime; mergeFn = symmetric union by id, mtime → lexicographic JSON tie-break; tombstones max-ts union, delete-wins-ties (R17). HIST_MAX=20 enforced with tombstoned trims (no resurrection). Strict sanitizer drops invalid rows.
+sliceSet suppresses dirty (R6); registerSync() actually invoked in load() (was defined-but-never-called in first draft — caught in re-audit).
+Language and theme are shell-owned: applyTheme() deleted, langBtn/themeBtn removed from UI, applyLang reads oros.lang and listens to storage events instead of writing them. skin-dark adapts to shell theme via --bg luminance sniff.
+R14: resetAll() uses themed <dialog> with outside-click + Esc close and node removal (native confirm() removed). Reset history uses tombstones (R17).
+CSV export of history (interop format per Five-Axes axis 5); download via Blob + revokeObjectURL.
+Kept: 5 skins (neko/dog/alien/robot/duck) with full WebAudio voices (no stubs), typewriter quips, truth-reveal 1/15, share-prank clipboard with fallback, reduced-motion support, scrollbar + hidden-guard CSS rules, mobile breakpoints 480/420/360.
+Deleted dead code: PREFS_KEY (state now single synced slice), evalCache, unused var in flashToast.
+Exemptions recorded: Calendar-axis (non-time-bound), unified Notifications (Dice pattern — transient feedback only), palette G3 (independent playful skins by design).
+Next: registry integration (apps.json, shell.js ICONS + SC_DEFS Ctrl+Alt+Shift+C, translations.js app.calculator + category strings, sw.js PRECACHE_URLS — G2/G4 will validate), then pre-flight Checklist D on both devices. No version bump (R23).
+
+📖 Bible registry update (για προσάρτηση στο Part III table + Part VIII exemptions)
+Row for Part III table:
+
+Calculator | oros-calculator-data | entity LWW (hist) + sm field-LWW (prefs) + tombs | Ported, pending registry + pre-flight
+
+Part VIII exemptions:
+
+Calculator — Calendar-axis exempt (non-time-bound); Notifications-exempt (transient feedback only, Dice pattern); G3 palette exemption (independent playful skins by design, Screen Pet precedent).
+
+---
+
+## v0.38.10 — 30 Sep 2026
+
+### Fixes
+- **Radio sync (shell-side proxy)**: Added `radio` slice registration to `orOS.sync` engine in `shell.js`. Favorites now synchronize across devices even when the Radio iframe is closed. The proxy uses `oros-radio-data` localStorage key and mirrors the same contract as `files-disk` and `shell` slices.
+
+### Architecture
+- New `radioProxySliceGet()` and `radioProxySliceSet()` functions in `shell.js`
+- New `registerRadioProxySlice()` called from `initSyncIntegration()`
+- Radio iframe's live registration overrides the proxy when open (merge-capable); proxy re-activates when iframe closes (LWW semantics)
+
+### Files Modified
+- `shell.js`: Added radio proxy slice (lines ~1798–1840)
+
+---
+
+pet.js — Full sync completion wave (v0.3.2 final)
+
+SUMMARY The Screen Pet now syncs completely across devices. Three synced slices carry everything that travels; device-local ergonomics stay local. Auto snapshots, manual export/import, and cloud push/pull all cover the pet (verified: all channels enumerate registered slices via orosSync.collectPayload/applyPayload).
+
+SYNCED SLICES
+
+"pet" (oros-pet-data) — entity: name, palette, birthTs, temporal stats, energy anchors. Merge: per-field LWW (temporal fields are their own clocks; anchor pairs travel together; fm map for name/palette; tombstones).
+"petEvents" (oros-pet-events) — event log. Merge: union by event id, deterministic sort by (ts, id), rolling trim to 100. Birthday events use a deterministic id (bday-<petId>-<ymd>) so two devices logging the same anniversary collapse to one row. clearLog writes a {clearedAt} tombstone — the wipe propagates deterministically to all devices.
+"petSettings" (oros-pet-settings) — calendar feed toggle. Merge: per-field LWW via calFeedTs.
+BUGS FIXED THIS WAVE
+
+setCalendarFeed did not mark the slice dirty (settingsSliceSet suppresses dirty during its own write) — the toggle could travel only with the next unrelated write, or never. Now armed explicitly after the write.
+Legacy migration ran before registerSync(), so a migrated pre-0.3.2 opt-out was never pushed. bootLegacyDirty now arms the first push right after registerSync().
+settingsSliceSet now maintains a legacy mirror key (oros-pet-calendar-sync) in lock-step with oros-pet-settings, because unmodified calendar.js still reads the legacy key at render time. oros-pet-settings remains the single source of truth; the legacy key is a derived read-only view.
+LEGACY MIGRATION
+
+One-time at boot: if oros-pet-settings is absent and the legacy key exists, the legacy value migrates in (calFeedTs=1 — beats epoch-0 default, loses to any real write). The legacy key is NOT deleted; it survives as the mirror.
+Old event log data (v0.3 device-local format) merges on first push — no data loss, no schema bump (ver stays 1).
+DEVICE-LOCAL (by design, never synced, not exported to cloud)
+
+oros-pet-enabled (presence per device)
+oros-pet-minimized (HUD collapse per device)
+oros-pet-pos (normalized screen position)
+runtime choreography (position, facing, frame, walk decisions, ball, contemplation)
+MIXED VERSIONS
+
+Older pet.js installs relay the unknown "petEvents"/"petSettings" slices via the sync.js carry mailbox (requires sync.js >= 0.9.2). No data loss, no shell.js change.
+FILES TOUCHED
+
+pet.js only. calendar.js untouched (reads the same keys as before). shell.js untouched (export/push channels enumerate slices generically).
+KNOWN COSMETICS (deferred, no functional weight)
+
+Section 2b-3 functions sit at zero indentation.
+Header Wave 5b comment lost the word "Calendar" before "deep-link" (fix available, one line).

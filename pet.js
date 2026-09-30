@@ -42,9 +42,9 @@
 //     orOS Calendar as read-only all-day rows with a purple
 //     "Screen Pet" label (same contract as Contacts/Cycle/Mood/
 //     Habits/Kanban feeds). Event types: Feed, Pet, Sleep, Wake,
-//     New Pet, Birthday. Device-local event log (oros-pet-events,
-//     never synced), rolling buffer (max 100 entries). Calendar
-//     deep-link (click → open pet dialog).
+//     New Pet, Birthday. Synced event log slice ("petEvents" —
+//     union merge, see 2b-2), rolling buffer (max 100 entries).
+//     Calendar deep-link (click → open pet dialog).
 //
 // Sections:
 //   1. Constants, i18n, helpers (v0.3 speech pools, event types)
@@ -61,8 +61,8 @@
   var DATA_VER = 1;
   var ENABLED_KEY = "oros-pet-enabled";   // shell-local pref (device presence)
   var POS_KEY = "oros-pet-pos";           // device-local position memory (v0.2)
-  var EVENTS_KEY = "oros-pet-events";     // v0.3: event log (device-local, rolling)
-  var CALENDAR_SYNC_KEY = "oros-pet-calendar-sync"; // v0.3: opt-out (device-local)
+  var EVENTS_KEY = "oros-pet-events";     // v0.3.1+: event log (SYNCED slice "petEvents")
+  var CALENDAR_SYNC_KEY = "oros-pet-calendar-sync"; // legacy mirror view (calendar.js reader)
   var MAX_NAME_LEN = 16;                  // v0.2: rename input cap
   var HUNGER_TALK_MS = 10 * 60 * 1000;    // v0.2: hungry bubble cadence
   var EVENT_LOG_MAX = 100;                // v0.3: rolling buffer cap
@@ -381,7 +381,7 @@
     return Math.max(0, Math.floor(((now) - (state.pet.birthTs || now)) / 86400000));
   }
 
-  // ---------- 2b. Event log (v0.3: device-local, never synced) ----------
+  // ---------- 2b. Event log (v0.3.1: synced slice "petEvents") ----------
   // Rolling buffer of care/history moments. TWO consumers:
   //   1. The pet's own Activity Log modal (HUD, Part 5).
   //   2. The orOS Calendar pet feed (calendar.js petFeedOn reads
@@ -392,7 +392,11 @@
   //   - name = SNAPSHOT of the pet's name at event time (a rename
   //     must not rewrite history; a "New Pet" event keeps the old
   //     friend's name in the log, and the calendar row stays honest)
-  //   - id/ts purely local: NEVER part of any sync slice
+  //   - v0.3.1: SYNCED SLICE ("petEvents") — union by id on merge;
+  //     birthday events use a DETERMINISTIC id (pet+day) so two
+  //     devices logging the same anniversary collapse to one row.
+  //     clearLog propagates via clearedAt (events older than the
+  //     newest wipe are dropped in the merge — deterministic).
   // Trimmed to EVENT_LOG_MAX (100) newest entries on every write.
   function loadEventLog() {
     try {
@@ -418,16 +422,19 @@
   // out (still logs? YES — decision record: the Activity Log is the
   // pet's OWN feature and always records; only the CALENDAR reads
   // respect the opt-out. Log always, filter at read.)
-  function logEvent(type) {
+  function logEvent(type, idOverride) {
     if (!state || !state.pet) return;
     var log = loadEventLog();
     log.events.push({
-      id: uid(),
+      id: idOverride || uid(),
       ts: Date.now(),
       type: String(type),
       name: state.pet.name
     });
     saveEventLog(log);
+    // v0.3.1: the log is a synced slice — a new entry is dirty work
+    // (debounced push fires ~5s later via the existing funnel)
+    if (window.__orosPetSyncApi) window.__orosPetSyncApi.dirty();
   }
 
   function eventLogEntries() {
@@ -435,21 +442,151 @@
   }
 
   function clearEventLog() {
-    try { localStorage.removeItem(EVENTS_KEY); } catch (e) {}
+    try {
+      localStorage.setItem(EVENTS_KEY, JSON.stringify({
+        ver: 1, clearedAt: Date.now(), events: []
+      }));
+    } catch (e) { return; }
+    if (window.__orosPetSyncApi) window.__orosPetSyncApi.dirty();
+  }
+  
+  // ---------- 2b-2. Event log sync slice (v0.3.1) ----------
+  // The log is a synced slice ("petEvents", storage key EVENTS_KEY
+  // — the SAME key the calendar feed reads, so calendar.js needs
+  // no change). Merge = UNION by event id (events are immutable
+  // after writing), deterministic sort by (ts, id), then a rolling
+  // trim to EVENT_LOG_MAX. clearedAt propagates a clearLog wipe:
+  // events with ts <= clearedAt are dropped on every merge, so a
+  // wipe performed on ANY device wins everywhere, deterministically.
+  function mergeEventLogs(A, B) {
+    var aEv = (A && Array.isArray(A.events)) ? A.events : [];
+    var bEv = (B && Array.isArray(B.events)) ? B.events : [];
+    var clearedAt = Math.max((A && A.clearedAt) || 0, (B && B.clearedAt) || 0);
+    var byId = {};
+    var ids = [];
+    aEv.concat(bEv).forEach(function (ev) {
+      if (!ev || !ev.id || typeof ev.ts !== "number") return;
+      if (ev.ts <= clearedAt) return;                 // wiped by the newer clear
+      if (!Object.prototype.hasOwnProperty.call(byId, ev.id)) {
+        byId[ev.id] = ev;
+        ids.push(ev.id);
+      } else {
+        // Same id, different payload (legacy anomaly): deterministic
+        // tie-break — smaller JSON serialization wins.
+        var prev = byId[ev.id];
+        if (JSON.stringify(ev) < JSON.stringify(prev)) byId[ev.id] = ev;
+      }
+    });
+    var merged = ids.map(function (id) { return byId[id]; })
+      .sort(function (x, y) {
+        return (x.ts - y.ts) || (x.id < y.id ? -1 : (x.id > y.id ? 1 : 0));
+      });
+    if (merged.length > EVENT_LOG_MAX) merged = merged.slice(-EVENT_LOG_MAX);
+    return { ver: 1, clearedAt: clearedAt, events: merged };
   }
 
-  // ---------- 2c. Calendar feed helpers (v0.3) ----------
-  // Opt-out key: ABSENT = ON (default positive, like weather).
-  // Read by BOTH sides: the calendar's petFeedOn() checks it at
-  // render time (device-local decision, never synced, never dirty)
-  // and the HUD toggle (Part 5) writes it.
+  function eventsSliceGet() {
+    // Deep clone — the sync engine stringifies for equality checks;
+    // never hand it the live object.
+    return JSON.parse(JSON.stringify(loadEventLog()));
+  }
+
+  function eventsSliceSet(data) {
+    if (!data || typeof data !== "object" || !Array.isArray(data.events)) return;
+    window.__orosPetSyncApi._suppress = true;
+    try {
+      localStorage.setItem(EVENTS_KEY, JSON.stringify(data));
+    } finally {
+      window.__orosPetSyncApi._suppress = false;
+    }
+    // No live rerender needed: the log modal reads on open, and the
+    // calendar feed reads localStorage at render time — the next
+    // paint of either picks the merged content up.
+  }
+
+// ---------- 2b-3. Pet Settings sync slice (v0.3.2) ----------
+// Synced preferences that MUST travel across devices:
+//   - calFeed: boolean (calendar feed enabled/disabled)
+// Device-local ergonomics (NOT synced, NOT in this slice):
+//   - oros-pet-enabled, oros-pet-minimized, oros-pet-pos
+// Merge = per-field LWW (last-write-wins), simplest possible.
+function mergePetSettings(A, B) {
+  var aCal = (A && typeof A.calFeed === "boolean") ? A.calFeed : true;
+  var bCal = (B && typeof B.calFeed === "boolean") ? B.calFeed : true;
+  var aTs = (A && typeof A.calFeedTs === "number") ? A.calFeedTs : 0;
+  var bTs = (B && typeof B.calFeedTs === "number") ? B.calFeedTs : 0;
+  // LWW per field
+  return {
+    ver:       1,
+    calFeed:   (aTs >= bTs) ? aCal : bCal,
+    calFeedTs: (aTs >= bTs) ? aTs : bTs
+  };
+}
+
+function settingsSliceGet() {
+  // Load settings from localStorage
+  var raw = localStorage.getItem("oros-pet-settings");
+  var def = { calFeed: true, calFeedTs: 0 };
+  try {
+    var s = JSON.parse(raw);
+    if (s && typeof s === "object") {
+      if (typeof s.calFeed === "boolean") def.calFeed = s.calFeed;
+      if (typeof s.calFeedTs === "number") def.calFeedTs = s.calFeedTs;
+    }
+  } catch (e) {}
+  return def;
+}
+
+function settingsSliceSet(data) {
+  if (!data || typeof data !== "object") return;
+  window.__orosPetSyncApi._suppress = true;
+  try {
+    var out = {
+      calFeed:   (typeof data.calFeed === "boolean") ? data.calFeed : true,
+      calFeedTs: (typeof data.calFeedTs === "number") ? data.calFeedTs : Date.now()
+    };
+    localStorage.setItem("oros-pet-settings", JSON.stringify(out));
+    // LEGACY MIRROR: calendar.js (unmodified) still reads
+    // "oros-pet-calendar-sync" at render time. We keep it in
+    // lock-step so the calendar honors the synced value on every
+    // device. oros-pet-settings remains the single source of
+    // truth; this key is a derived read-only view for the calendar.
+    try { localStorage.setItem(CALENDAR_SYNC_KEY, out.calFeed ? "1" : "0"); } catch (e) {}
+    applyPetSettings(out);
+  } finally {
+    window.__orosPetSyncApi._suppress = false;
+  }
+}
+
+function applyPetSettings(s) {
+  // Live application — calendar feed reads this directly
+  if (typeof s.calFeed === "boolean") {
+    window.__orosPetCalFeedEnabled = s.calFeed;
+  }
+}
+
+  // ---------- 2c. Calendar feed helpers (v0.3.2: synced) ----------
+  // The opt-out now travels in the synced "petSettings" slice
+  // (key "oros-pet-settings"). Default: ON when absent.
+  // Legacy key "oros-pet-calendar-sync" is migrated once at boot.
   function calendarFeedOn() {
-    return localStorage.getItem(CALENDAR_SYNC_KEY) !== "0";
+    var raw = localStorage.getItem("oros-pet-settings");
+    try {
+      var s = JSON.parse(raw);
+      if (s && typeof s.calFeed === "boolean") return s.calFeed;
+    } catch (e) {}
+    return true;   // default positive, like weather
   }
   function setCalendarFeed(on) {
-    try {
-      localStorage.setItem(CALENDAR_SYNC_KEY, on ? "1" : "0");
-    } catch (e) {}
+    var cur = settingsSliceGet();
+    cur.calFeed = !!on;
+    cur.calFeedTs = Date.now();
+    settingsSliceSet(cur);
+    // A user toggle is dirty work — settingsSliceSet suppresses
+    // dirty during its own write, so the push must be armed HERE.
+    // Without this the toggle rides only with the NEXT unrelated
+    // write (feed/pet/save) — or never.
+    if (window.__orosPetSyncApi) window.__orosPetSyncApi.dirty();
   }
 
   // Local-timezone YMD of a timestamp (calendar cells speak
@@ -544,9 +681,10 @@
   // whichever anchor timestamp is newer defines the active pair.
   // name/palette use per-field mtime map (fm). Tombstoned pet ids
   // win over any resurrected entity (dead pets stay dead).
-  // v0.3 NOTE: the event log (oros-pet-events) and calendar opt-out
-  // (oros-pet-calendar-sync) are DEVICE-LOCAL and deliberately NOT
-  // part of this slice — same classification as oros-pet-pos.
+  // v0.3.2 NOTE: the event log travels in its OWN slice
+  // ("petEvents", mergeEventLogs — see 2b-2) and the calendar
+  // feed toggle in "petSettings" (2b-3). Only oros-pet-pos and
+  // oros-pet-enabled/minimized stay DEVICE-LOCAL.
 
   var TEMPORAL = ["lastFed", "lastPetted"];
   var FIELDS_LWW = ["name", "palette"];
@@ -676,6 +814,15 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("pet", sliceGet, sliceSet, "oros-pet-data", mergePetStates);
+    // v0.3.1: the event log is a SECOND synced slice — events
+    // recorded on any device converge on every device (union by
+    // event id, clearedAt wipe propagation). Same storage key the
+    // calendar feed already reads: calendar.js needs no change.
+    api.registerSlice("petEvents", eventsSliceGet, eventsSliceSet, EVENTS_KEY, mergeEventLogs);
+    // v0.3.2: synced preferences (THIRD slice) — calendar feed
+    // toggle travels; device-local ergonomics (enabled/minimized/
+    // pos) stay device-local by design.
+    api.registerSlice("petSettings", settingsSliceGet, settingsSliceSet, "oros-pet-settings", mergePetSettings);
   }
   
     // ---------- 5. Sprite engine ----------
@@ -829,7 +976,9 @@
     }
     speak(speakLine("speech.happy"));
     spawnHearts();
-    logEvent(PET_EVENT_TYPES.BIRTHDAY);
+    // Deterministic id: two devices logging the same anniversary
+    // collapse to ONE row in the log + calendar feed at merge time.
+    logEvent(PET_EVENT_TYPES.BIRTHDAY, "bday-" + state.pet.id + ":" + today);
   }
 
   // v0.3: CATCH MINI-GAME — a small ball drops near the pet.
@@ -1959,7 +2108,32 @@
 
   // ---------- Boot ----------
   load();
+  // v0.3.2: one-time legacy migration — carry over a pre-0.3.2
+  // calendar opt-out ("oros-pet-calendar-sync" = "0") into the
+  // synced petSettings slice. calFeedTs=1 beats the epoch-0
+  // default but loses to any real write. The migrated value MUST
+  // reach the cloud: bootLegacyDirty arms the first push right
+  // after registerSync (the dirty funnel does not exist before
+  // it — see finding #1 in the same wave).
+  var bootLegacyDirty = false;
+  (function migrateLegacySettings() {
+    try {
+      if (localStorage.getItem("oros-pet-settings")) return;
+      var legacy = localStorage.getItem(CALENDAR_SYNC_KEY);
+      if (legacy !== null) {
+        localStorage.setItem("oros-pet-settings", JSON.stringify({
+          ver: 1,
+          calFeed: legacy !== "0",
+          calFeedTs: 1
+        }));
+        bootLegacyDirty = true;
+      }
+    } catch (e) {}
+  })();
   registerSync();
+  if (bootLegacyDirty && window.__orosPetSyncApi) {
+    window.__orosPetSyncApi.dirty();
+  }
   wireKeyboard();
   wireResize();
   wireSyncCelebration();
