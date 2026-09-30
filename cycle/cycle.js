@@ -1664,6 +1664,7 @@
     }
     state.sm = Date.now();
     save();
+    openDay = null;
     renderAll();
     transientNote(t("saved.toast"));
   }
@@ -2438,7 +2439,7 @@
 
   function exportDoctorReport() {
     if (!state.periods.length && !state.days.length) {
-      showToast(t("ins.empty"));
+      transientNote(t("ins.empty"));
       return;
     }
     loadPdfLib(function () {

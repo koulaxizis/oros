@@ -97,6 +97,7 @@ const STRINGS = {
     'sync.updated': 'Updated with changes from other devices',
     'tt.find': 'Find and replace',
     'tt.chars': 'Special characters',
+    'tt.settings': 'Settings',
     'tt.smartTypography': 'Smart typography',
     'tt.autoCorrect': 'Auto-correction rules',
     'tt.lorem': 'Insert Lorem Ipsum',
@@ -286,6 +287,7 @@ const STRINGS = {
     'io.impReplace.d': 'Dupes current first into Version History.',
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
+    'io.dbConfirm': 'Restore the full Writer database? Current tabs, documents and settings will be replaced.',
     'io.ddTitle': 'Drop to open',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Riding along:',
@@ -318,6 +320,7 @@ const STRINGS = {
     'sync.updated': 'Ενημερώθηκε με αλλαγές από άλλες συσκευές',
     'tt.find': 'Αναζήτηση και αντικατάσταση',
     'tt.chars': 'Ειδικοί χαρακτήρες',
+    'tt.settings': 'Ρυθμίσεις',
     'tt.smartTypography': 'Έξυπνη τυπογραφία',
     'tt.autoCorrect': 'Κανόνες αυτο-διόρθωσης',
     'tt.lorem': 'Εισαγωγή Lorem Ipsum',
@@ -345,7 +348,7 @@ const STRINGS = {
     'char.arrows': 'Βέλη',
     'char.currency': 'Νόμισμα',
     'char.punct': 'Στίξη',
-    'char.symbols': 'Símbola',
+    'char.symbols': 'Σύμβολα',
     'char.emoji': 'Emoji',
     'opt.case': 'Διατήρηση κεφαλαίων/μικρών',
     'opt.word': 'Ολόκληρη λέξη',
@@ -492,6 +495,8 @@ const STRINGS = {
     'io.rtf.name': 'RTF',
     'io.rtf.desc': 'Πλούσιο κείμενο, σχεδόν παντού συμβατό.',
     'io.rtf.note': 'Καθολικό αλλά απωλεστικό',
+    'io.html.name': 'HTML',
+    'io.html.desc': 'Έτοιμο για το web με πλήρη μορφοποίηση.',
     'io.orosdoc.name': 'orOS Writer',
     'io.orosdoc.desc': 'Πλήρες αρχείο: κείμενο, υποσημειώσεις, σχόλια, μεταδεδομένα.',
     'io.json.name': 'Βάση δεδομένων (JSON)',
@@ -509,6 +514,7 @@ const STRINGS = {
     'io.impReplace.d': 'Το τρέχον αποθηκεύεται πρώτα στο Ιστορικό εκδόσεων.',
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
+    'io.dbConfirm': 'Επαναφορά πλήρους βάσης δεδομένων; Τα τρέχοντα tabs, έγγραφα και ρυθμίσεις θα αντικατασταθούν.',
     'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Συνοδεύουν:',
@@ -559,7 +565,8 @@ const ICONS = {
   export: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3h12v-3"/><path d="M8 11V2"/><path d="M5 5l3-3 3 3"/></svg>',
   import: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3h12v-3"/><path d="M8 2v9"/><path d="M5 8l3 3 3-3"/></svg>',
   close:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
-  plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>'
+  plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
+  lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>'
 };
 
 function paintIcons() {
@@ -577,7 +584,7 @@ function paintIcons() {
       'footnotes': 'fn', 'comments': 'cmt',
       'toc': 'toc', 'meta': 'meta', 'page': 'page',
       'templates': 'tpl', 'versions': 'versions', 'goal': 'goal',
-      'export': 'export', 'import': 'import'
+      'export': 'export', 'import': 'import', 'lorem': 'lorem'
     };
     const ic = map[key];
     if (ic && ICONS[ic]) btn.innerHTML = ICONS[ic];
@@ -802,6 +809,10 @@ function serialize() {
       versions: capVersions(d.versions || []),
       pageSize: d.pageSize, margins: d.margins,
       header: d.header, footer: d.footer,
+      goal: (d.goal && typeof d.goal === 'object') ? {
+        type: d.goal.type, target: d.goal.target, lock: !!d.goal.lock,
+        startTs: d.goal.startTs || 0, startWords: d.goal.startWords || 0
+      } : null,
       mtime: d.mtime, del: !!d.del
     })),
     tabOrder: state.tabOrder.filter(id => {
@@ -833,6 +844,10 @@ function hydrate(raw) {
              : { top: 25, bottom: 25, left: 25, right: 25 },
     header: typeof d.header === 'string' ? d.header : '',
     footer: typeof d.footer === 'string' ? d.footer : '',
+    goal: (d.goal && typeof d.goal === 'object' && d.goal.target)
+          ? { type: d.goal.type, target: d.goal.target, lock: !!d.goal.lock,
+              startTs: d.goal.startTs || 0, startWords: d.goal.startWords || 0 }
+          : null,
     mtime: Number(d.mtime) || 0,
     del: !!d.del
   }));
@@ -1026,6 +1041,27 @@ function bindToolbar() {
 
   binds['btn-find'] = () => toggleFindBar();
   binds['btn-chars'] = () => openCharsDialog();
+
+  // btn-lorem does not exist in the static HTML — built here on purpose
+  // (single-row toolbar, inherits .tb-btn styling). Placed right after
+  // btn-chars: same "insert stuff" group.
+  let loremBtn = document.getElementById('btn-lorem');
+  if (!loremBtn) {
+    loremBtn = document.createElement('button');
+    loremBtn.type = 'button';
+    loremBtn.id = 'btn-lorem';
+    loremBtn.className = 'tb-btn';
+    loremBtn.title = t('tt.lorem');
+    loremBtn.setAttribute('aria-label', t('tt.lorem'));
+    loremBtn.innerHTML = ICONS.lorem;
+    const charsBtn = document.getElementById('btn-chars');
+    if (charsBtn && charsBtn.parentNode) {
+      charsBtn.parentNode.insertBefore(loremBtn, charsBtn.nextSibling);
+    } else {
+      EL.toolbar.appendChild(loremBtn);
+    }
+  }
+  binds['btn-lorem'] = () => insertLorem();
   binds['btn-footnotes'] = () => toggleFootnotesPanel();
   binds['btn-comments'] = () => toggleCommentsPanel();
   binds['btn-toc'] = () => toggleTocPanel();
@@ -1153,8 +1189,9 @@ function bindShortcuts() {
       showToast('Saved');
     }
 
-    // Ctrl/Cmd + W — close current tab (confirm if dirty)
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
+    // Ctrl+Alt+W — close current tab (browser-reserved-safe combo:
+    // plain Ctrl+W closes the browser tab and ignores preventDefault)
+    if (e.ctrlKey && e.altKey && !e.metaKey && e.key.toLowerCase() === 'w') {
       if (state.activeTab) {
         e.preventDefault();
         flushSave();
@@ -1162,8 +1199,8 @@ function bindShortcuts() {
       }
     }
 
-    // Ctrl/Cmd + T — new tab
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') {
+    // Ctrl+Alt+T — new tab (plain Ctrl/T opens a browser tab)
+    if (e.ctrlKey && e.altKey && !e.metaKey && e.key.toLowerCase() === 't') {
       e.preventDefault();
       createDoc();
     }
@@ -2783,8 +2820,13 @@ function insertInlineToc() {
 }
 
 function generateTocHTML() {
+  // assign REAL ids to the live headings — anchors must resolve
+  let n = 0;
+  EL.editor.querySelectorAll('h1,h2,h3,h4').forEach(h => {
+    if (!h.id) h.id = 'toc-' + n++;
+  });
   const headings = Array.from(EL.editor.querySelectorAll('h1,h2,h3,h4'))
-    .map((h, i) => ({ id: 'toc-' + i, level: h.tagName.toLowerCase(), text: h.textContent.trim() || t('toc.unnamed') }))
+    .map(h => ({ id: h.id, level: h.tagName.toLowerCase(), text: h.textContent.trim() || t('toc.unnamed') }))
     .filter(h => h.text);
 
   if (headings.length === 0) return null;
@@ -2884,6 +2926,7 @@ let tplDlg = null;
 
 function openTemplates() {
   tplDlg = openDialog(t('tpl.title'), '', [
+    { class: 'fb-btn', label: t('tpl.export'), onClick: exportTemplateJson },
     { class: 'fb-btn', label: t('tpl.import'), onClick: importTemplateJson },
     { class: 'fb-btn', label: t('tpl.saveCurrent'), onClick: saveCurrentAsTemplate },
     { class: 'fb-btn primary', label: 'OK', onClick: () => tplDlg.close() }
@@ -5038,7 +5081,7 @@ function openImportDialog(prefile) {
       .then(res => {
         busy.style.display = 'none';
         if (res.kind === 'db') {
-          if (confirm(t('tpl.confirmOverwrite'))) {
+          if (confirm(t('io.dbConfirm'))) {
             hydrate(res.data);
             renderTabs();
             renderEditor();

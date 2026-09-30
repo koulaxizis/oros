@@ -1616,6 +1616,9 @@ sup.fn-ref:hover { text-decoration: underline; }
   color: var(--accent);
 }
 
+/* hidden must beat .dd-overlay's display:flex (higher specificity) */
+.dd-overlay[hidden] { display: none !important; }
+
 .dd-title { font-size: 16px; font-weight: 700; color: var(--text); }
 .dd-sub { font-size: 12px; color: var(--text-dim); }
 

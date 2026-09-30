@@ -27,7 +27,7 @@ window.OROS_TRANSLATIONS = {
     "category.personal":         "Personal",
     "category.system":           "System",
     "category.internet":         "Internet",
-    "category.fun":              "Fun / Entertainment",
+    "category.fun":              "Fun",
     "running.home":              "Return to desktop",
     "running.back":              "Back",
     "skin.title":                "Appearance",

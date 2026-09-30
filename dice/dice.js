@@ -1,10 +1,12 @@
 // ============================================================
 // orOS Dice & Coin — App logic
 // New in v0.4 (merge-aware sync):
-//   - history entries carry uid + ts, merged by union-by-id
-//     then sorted by ts ascending, trimmed to cap 50
+//   - history entries carry id + ts + mtime, merged by union-by-id,
+//     LWW by ts with lexicographic JSON tie-break (R5), sorted
+//     newest-first, trimmed to cap 50
 //   - soft deletes: state.deleted = { <entryId>: ts } tombstones,
-//     pruned after 30 days (same contract as To-Do)
+//     pruned deterministically on dataset max mtime - 30 days
+//     (Storage/Quote doctrine — never wall-clock)
 //   - coinStats (heads/tails counts) are DERIVED from the merged
 //     history on load/render — never stored directly, zero merge
 //     conflicts on counters
@@ -70,8 +72,7 @@
       "toast.cleared":     "History cleared",
       "confirm.cleared":   "Clear all history?",
       "confirm.no":        "Cancel",
-      "share.card":        "🎲 Dice & Coin — {time}\n{notation} → {total}\n{details}\n\nvia orOS",
-      "toast.merged":      "Synced changes from another device"
+      "share.card":        "🎲 Dice & Coin — {time}\n{notation} → {total}\n{details}\n\nvia orOS"
     },
     el: {
       "builder.count":     "Πλήθος",
@@ -99,8 +100,7 @@
       "toast.cleared":     "Το ιστορικό εκκαθαρίστηκε",
       "confirm.cleared":   "Εκκαθάριση όλου του ιστορικού;",
       "confirm.no":        "Άκυρο",
-      "share.card":        "🎲 Ζάρια & Κέρμα — {time}\n{notation} → {total}\n{details}\n\nvia orOS",
-      "toast.merged":      "Συγχρονίστηκαν αλλαγές από άλλη συσκευή"
+      "share.card":        "🎲 Ζάρια & Κέρμα — {time}\n{notation} → {total}\n{details}\n\nvia orOS"
     }
   };
 
@@ -119,12 +119,13 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
   function $(id) { return document.getElementById(id); }
-  function pad(n) { return (n < 10 ? "0" : "") + n; }
-
-  function todayISO() {
-    var d = new Date();
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  function esc(s) {
+    if (typeof s !== "string") s = String(s);
+    return s.replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
+    });
   }
+
   function fmtTimestamp(ts) {
     var d = new Date(ts);
     var loc = LANG === "el" ? "el-GR" : "en-GB";
@@ -160,10 +161,23 @@
     state.deleted[id] = Date.now();
   }
   function pruneTombstones(st) {
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
+    // Deterministic: dataset max mtime/ts (never wall-clock — Bible
+    // Storage/Quote doctrine). Empty dataset → keep all tombstones.
+    var max = datasetMaxTs(st);
+    if (!max) return;
+    var cutoff = max - TOMB_LIFETIME_MS;
     Object.keys(st.deleted || {}).forEach(function (id) {
       if (st.deleted[id] < cutoff) delete st.deleted[id];
     });
+  }
+
+  function datasetMaxTs(st) {
+    var m = 0;
+    ((st && st.history) || []).forEach(function (h) {
+      var v = h.mtime || h.ts || 0;
+      if (v > m) m = v;
+    });
+    return m;
   }
 
   function defaultState() {
@@ -209,15 +223,15 @@
     Object.keys(bDel).forEach(function (id) {
       tomb[id] = Math.max(tomb[id] || 0, bDel[id]);
     });
-    // Pruning based on max mtime from history (deterministic, not wall-clock)
-    var maxMtime = 0;
-    (a.history || []).forEach(function (h) { if (h.mtime && h.mtime > maxMtime) maxMtime = h.mtime; });
-    (b.history || []).forEach(function (h) { if (h.mtime && h.mtime > maxMtime) maxMtime = h.mtime; });
-    // Fallback to max ts if mtime missing, but prefer mtime as per data model contract
-    var cutoff = (maxMtime > 0 ? maxMtime : (arr.reduce(function(m, h){ return h.ts > m ? h.ts : m; }, 0))) - TOMB_LIFETIME_MS;
-    Object.keys(tomb).forEach(function (id) {
-      if (tomb[id] < cutoff) delete tomb[id];
-    });
+    // Deterministic pruning: dataset max mtime (fall back to ts for
+    // legacy entries) across BOTH sides — never wall-clock.
+    var maxTs = datasetMaxTs({ history: (a.history || []).concat(b.history || []) });
+    if (maxTs) {
+      var cutoff = maxTs - TOMB_LIFETIME_MS;
+      Object.keys(tomb).forEach(function (id) {
+        if (tomb[id] < cutoff) delete tomb[id];
+      });
+    }
 
     var map = {};
     (a.history || []).forEach(function (h) { map[h.id] = h; });
@@ -232,8 +246,9 @@
         } else if (tsCompare < 0) {
           // keep existing
         } else {
-          // tie: lexicographic id comparison (deterministic)
-          map[h.id] = (h.id < existing.id) ? h : existing;
+          // tie on ts: lexicographic JSON tie-break (R5 — provably
+          // symmetric; identical payloads pick either, same result)
+          map[h.id] = (JSON.stringify(h) < JSON.stringify(existing)) ? h : existing;
         }
       }
     });
@@ -287,9 +302,6 @@
     for (var i = 0; i < count; i++) {
       rolls.push(randInt(1, type));
     }
-
-    var processed = rolls.slice();
-    var dropCount = 0;
 
     // kept[i] — μετράει το ζάρι i στο σύνολο;
     // δείκτης-βάσει (όχι τιμή-βάσει) για σωστή αντιμετώπιση ισοβαθμιών
@@ -420,7 +432,7 @@
       critBadge.hidden = !lastResult.isCrit;
       fumbleBadge.hidden = !lastResult.isFumble;
     } else {
-      notationEl.textContent = t("result.none");
+      notationEl.textContent = t("actions.coin");
       totalEl.textContent = lastResult.result === "heads" ? "H" : "T";
       diceRow.innerHTML = "";
       critBadge.hidden = true;
@@ -700,6 +712,12 @@
   }
 
   // ---------- 12. Wiring & boot ----------
+  function applyI18n() {
+    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+  }
+
   function paintStaticAria() {
     var pairs = [
       ["roll-btn", "actions.roll"],
@@ -725,7 +743,13 @@
     $("coin-btn").addEventListener("click", flipCoin);
     $("coin").addEventListener("click", flipCoin);
     $("coin").addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flipCoin(); }
+      // stopPropagation: Space/Enter ανήκουν στο coin, όχι στο
+      // document-level shortcut (που αλλιώς ρίχνει και ζάρι)
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        flipCoin();
+      }
     });
     $("history-clear").addEventListener("click", clearHistory);
     $("share-btn").addEventListener("click", shareResult);
@@ -736,6 +760,7 @@
 
   // ---------- Boot ----------
   load();
+  applyI18n();
   inheritPalette();
   watchPalette();
   wire();
