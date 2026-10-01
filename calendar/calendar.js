@@ -114,6 +114,7 @@
       "lbl.feed.mood": "Mood",
       "lbl.feed.habits": "Habits",
       "lbl.feed.kanban": "Kanban",
+      "lbl.feed.todo": "To-Do",
       "feed.cycle.period": "Period",
       "feed.mood.entry": "Mood entry",
       "lbl.feed.pet": "Screen Pet",
@@ -220,6 +221,7 @@
       "lbl.feed.mood": "Διάθεση",
       "lbl.feed.habits": "Συνήθειες",
       "lbl.feed.kanban": "Kanban",
+      "lbl.feed.todo": "Εργασίες",
       "feed.cycle.period": "Περίοδος",
       "feed.mood.entry": "Καταγραφή διάθεσης",
       "lbl.feed.pet": "Screen Pet",
@@ -384,6 +386,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-mood",    color: "#a78bfa" },   // purple — Mood
     { id: "lbl-feed-habits",  color: "#4ec9b0" },   // teal — Habits
     { id: "lbl-feed-kanban",  color: "#7aa2f7" },   // blue — Kanban (teal taken by Habits)
+    { id: "lbl-feed-todo",    color: "#e06c75" },   // red — To-Do due dates
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
@@ -395,6 +398,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-habits") return t("lbl.feed.habits");
     if (l.id === "lbl-feed-kanban") return t("lbl.feed.kanban");
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
+    if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
     return t("lbl.feed.custom");
   }
 
@@ -1140,6 +1144,53 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Wave — To-Do read-only feed. Reads "oros-todo-data" (written
+  // by todo.js, same-origin shared localStorage) and surfaces
+  // every UNCOMPLETED task whose due date lands on the cell as an
+  // all-day red row. Completed tasks are skipped — a due date
+  // already taken care of is not calendar noise. Feed rows are
+  // never stored, synced or exported; micro-cached ~1s like the
+  // other feeds. Corrupt/absent blob simply yields no rows —
+  // standalone Calendar unaffected.
+  var TODO_DATA_KEY = "oros-todo-data";
+  var todoCache = { when: 0, data: null };
+
+  function todoRaw() {
+    var now = Date.now();
+    if (now - todoCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(TODO_DATA_KEY));
+        todoCache.data = (d && typeof d === "object" &&
+                          Array.isArray(d.lists)) ? d : null;
+      } catch (e) { todoCache.data = null; }
+      todoCache.when = now;
+    }
+    return todoCache.data;
+  }
+
+  function todoFeedOn(dateStr) {
+    var data = todoRaw();
+    if (!data) return [];
+    if (!labelVisible("lbl-feed-todo")) return [];
+
+    var out = [];
+    (data.lists || []).forEach(function (list) {
+      (Array.isArray(list.items) ? list.items : []).forEach(function (item) {
+        if (!item || item.done || item.due !== dateStr) return;
+        out.push({
+          id: "tdo-" + item.id + "-" + dateStr,   // per-render key, never stored
+          title: (item.text || "").slice(0, 60),
+          labelId: "lbl-feed-todo",
+          start: null,                           // all-day
+          note: (item.notes || "").slice(0, 500),
+          _feed: true,
+          _todo: { listId: list.id, itemId: item.id }
+        });
+      });
+    });
+    return out;
+  }
+
   // Wave 5 — Screen Pet read-only feed (pet.js v0.3). Two sources:
   //   1. "oros-pet-data" (SYNCED identity) → birthday row on every
   //      local-day anniversary of birthTs (birth day excluded) —
@@ -1244,6 +1295,7 @@ function transientNote(title, body) {
     .concat(cycleFeedOn(dateStr))
     .concat(moodFeedOn(dateStr))
     .concat(kanbanFeedOn(dateStr))
+    .concat(todoFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
@@ -1278,6 +1330,9 @@ function transientNote(title, body) {
         p.__orosOpenKanbanCard(ev._kanban.boardId,
                                ev._kanban.colId,
                                ev._kanban.cardId);
+      } else if (ev._todo &&
+                 typeof p.__orosOpenTodo === "function") {
+        p.__orosOpenTodo(ev._todo.listId);
       } else if (ev._petOpen &&
                  typeof p.__orosOpenPet === "function") {
         // Screen Pet is a SHELL component — the bridge lives on the
@@ -3241,6 +3296,7 @@ function transientNote(title, body) {
     cycleCache = { when: 0, data: null };
     moodCache = { when: 0, data: null };
     kanbanCache = { when: 0, data: null };
+    todoCache = { when: 0, data: null };
     petCache = { when: 0, optOut: false, petData: null, logData: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
