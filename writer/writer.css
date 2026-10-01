@@ -153,8 +153,12 @@ html, body {
   flex-wrap: nowrap;
   gap: 4px;
   flex-shrink: 0;
-  overflow: visible;
+  overflow-x: auto;              /* ~34 buttons never fit a phone/tablet row */
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
+.main-toolbar::-webkit-scrollbar { display: none; }
 
 .toolbar-group,
 .toolbar-left,
@@ -404,14 +408,11 @@ html, body {
   .rich-editor { padding: 20px 16px 30vh; font-size: 15px; }
   .tab { max-width: 140px; padding: 6px 8px; }
   .tab-label { max-width: 100px; }
-  .toolbar-center { flex-wrap: wrap; }
+  .toolbar-center { flex: 0 0 auto; }
 }
 
 @media (max-width: 420px) {
-  .main-toolbar { flex-wrap: wrap; justify-content: center; }
-  .toolbar-left { order: 1; }
-  .toolbar-center { order: 3; flex: 1 1 100%; justify-content: center; }
-  .toolbar-right { order: 2; }
+  .main-toolbar { justify-content: flex-start; }
 }
 
 @media (max-width: 360px) {
@@ -419,12 +420,6 @@ html, body {
   .tab-label { max-width: 80px; }
 }
 
-/* ===== HELPER: [hidden] authority guard — must be last
-   so that it overrides any accidental display:inline/block
-   from inline styles or other rules. ===== */
-[hidden] {
-  display: none !important;
-}
 
 /* ===== PRINT STYLES — faithful port of beta logic
    but stripped of legacy shell hooks. Page numbers
@@ -691,6 +686,7 @@ dialog.w-dialog::backdrop {
 
 .w-dialog-foot {
   display: flex;
+  flex-wrap: wrap;               /* 4-button footers fit phones */
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 16px;
@@ -1737,4 +1733,107 @@ sup.fn-ref:hover { text-decoration: underline; }
 /* ===== PRINT: never show io chrome ===== */
 @media print {
   .dd-overlay { display: none !important; }
+}
+
+/* ===== DOSE 2 — documents manager, themed confirm, undo toast ===== */
+.tab-docs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  margin-right: 4px;
+  padding: 0 6px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-docs:hover { background: var(--accent-soft); color: var(--accent); }
+
+.w-toast-act {
+  margin-left: 12px;
+  padding: 2px 10px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.w-toast-act:hover { background: var(--accent-soft); }
+
+.w-confirm-msg { margin: 0; line-height: 1.5; white-space: pre-wrap; }
+
+.fb-btn.primary.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.fb-btn.primary.danger:hover { filter: brightness(1.08); }
+
+.docs-search { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+.docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: min(55vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.docs-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.docs-row.active { border-color: var(--accent); }
+.docs-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.docs-main:hover { background: var(--accent-soft); }
+.docs-name {
+  flex: 1 1 100%;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.docs-meta { font-size: 12px; color: var(--text-dim); }
+.tab-label.tab-label-auto { font-style: italic; }
+.docs-name.docs-untitled { font-weight: 400; font-style: italic; color: var(--text-dim); }
+
+.meta-tag-add { display: flex; gap: 6px; }
+.meta-tag-add .w-field { flex: 1; min-width: 0; }
+
+.ver-note { margin: 0 0 8px; }
+
+@media (hover: none) and (pointer: coarse) {
+  .tab-docs { min-width: 44px; height: 36px; }
+  .docs-main { min-height: 48px; }
+  .docs-row .ac-icon-btn { width: 44px; height: 44px; }
+  .w-toast-act { min-height: 36px; }
+}
+
+/* ===== HELPER: [hidden] authority guard — MUST stay the last rule
+   of this file (Bible CSS rules). ===== */
+[hidden] {
+  display: none !important;
 }

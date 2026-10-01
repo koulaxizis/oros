@@ -85,6 +85,12 @@ html, body {
   background: var(--accent-soft);
   color: var(--accent);
 }
+.troll-lvl {
+  font-size: 10px;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: inherit;
+}
 
 /* ---------- Main layout: full-width ----------
    Narrow: display / keypad / history stacked (mobile-first).

@@ -21,7 +21,7 @@
 (function () {
   "use strict";
 
-  var CALC_VER = "1.1.0";
+  var CALC_VER = "1.2.0";
   var LS_KEY = "oros-calculator-data";   // slice cache key (same as
                                          // radio/mood pattern)
   var HISTORY_MAX = 50;
@@ -57,7 +57,13 @@
       "calc.intensity": "Troll intensity",
       "calc.intensity.subtle": "Subtle",
       "calc.intensity.balanced": "Balanced",
-      "calc.intensity.rampant": "Rampant"
+      "calc.intensity.rampant": "Rampant",
+      "calc.exported": "History exported to CSV.",
+      "calc.history.empty_export": "History is empty.",
+      "calc.mem.stored": "Stored in memory.",
+      "calc.mem.recalled": "Recalled from memory.",
+      "calc.mem.cleared": "Memory cleared.",
+      "calc.mem.empty": "Memory is empty."
     },
     el: {
       "calc.title": "Αριθμομηχανή",
@@ -76,7 +82,13 @@
       "calc.intensity": "Ένταση πειράγματος",
       "calc.intensity.subtle": "Ήπιο",
       "calc.intensity.balanced": "Ισορροπημένο",
-      "calc.intensity.rampant": "Καταιγιστικό"
+      "calc.intensity.rampant": "Καταιγιστικό",
+      "calc.exported": "Το ιστορικό εξήχθη σε CSV.",
+      "calc.history.empty_export": "Το ιστορικό είναι κενό.",
+      "calc.mem.stored": "Αποθηκεύτηκε στη μνήμη.",
+      "calc.mem.recalled": "Ανακλήθηκε από τη μνήμη.",
+      "calc.mem.cleared": "Η μνήμη καθαρίστηκε.",
+      "calc.mem.empty": "Η μνήμη είναι κενή."
     }
   };
 
@@ -602,6 +614,10 @@
     // Toggle button state (+ intensity in the accessible label)
     els.trollToggle.setAttribute("aria-pressed", state.troll ? "true" : "false");
     els.trollState.textContent = state.troll ? t("calc.troll.on") : t("calc.troll.off");
+    // Intensity dots: ●○○ / ●●○ / ●●● (visible only while troll is on)
+    els.trollIntensity.textContent = state.troll
+      ? ["●○○", "●●○", "●●●"][state.trollIntensity] || "●●○"
+      : "";
 
     applyI18nText();
   }
@@ -821,11 +837,14 @@
     els.res = document.getElementById("calc-res");
     els.trollToggle = document.getElementById("troll-toggle");
     els.trollState = document.getElementById("troll-state");
+    els.trollIntensity = document.getElementById("troll-intensity");
+
+    // ⌫ keeps its glyph on screen; the label is translated here
+    document.querySelector('.key[data-k="back"]').setAttribute(
+      "aria-label", t("calc.key.back"));
     els.historyList = document.getElementById("calc-history");
     els.historyEmpty = document.getElementById("history-empty");
     els.pad = document.getElementById("calc-pad");
-    document.querySelector('.key[data-k="back"]').setAttribute(
-      "aria-label", t("calc.key.back"));
 
     // Keypad — single delegated handler, incl. Ans
     els.pad.addEventListener("click", function (e) {
@@ -852,11 +871,39 @@
     // Right-click (contextmenu) = cycle intensity — deliberately NOT
     // dblclick, because a double click would flip the troll state
     // twice (on→off) before reaching the intensity handler.
-    els.trollToggle.addEventListener("click", toggleTroll);
+    // Touch devices: long-press (500ms) = cycle intensity, since
+    // they don't produce right-clicks. touchmove cancels the hold,
+    // so scrolling never triggers it. If the hold fired, the
+    // trailing click is swallowed so the toggle doesn't ALSO flip.
+    var lpTimer = null;
+    var lpFired = false;
+    var touchActive = false;
+    els.trollToggle.addEventListener("click", function () {
+      if (lpFired) { lpFired = false; return; }
+      toggleTroll();
+    });
     els.trollToggle.addEventListener("contextmenu", function (e) {
       e.preventDefault();
+      // Some mobile browsers fire contextmenu after a long-press —
+      // skip it so the cycle doesn't run twice.
+      if (touchActive) return;
       setTrollIntensity(state.trollIntensity + 1);
     });
+    els.trollToggle.addEventListener("touchstart", function () {
+      touchActive = true;
+      lpFired = false;
+      lpTimer = setTimeout(function () {
+        lpFired = true;
+        setTrollIntensity(state.trollIntensity + 1);
+      }, 500);
+    }, { passive: true });
+    els.trollToggle.addEventListener("touchend", function () {
+      touchActive = false;
+      clearTimeout(lpTimer);
+    }, { passive: true });
+    els.trollToggle.addEventListener("touchmove", function () {
+      clearTimeout(lpTimer);
+    }, { passive: true });
 
     document.getElementById("history-clear").addEventListener("click", clearHistory);
 

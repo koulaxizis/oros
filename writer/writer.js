@@ -2,10 +2,18 @@
    orOS Writer — clean-room port, Wave 1 core
    Contract: iframe citizen. No theme, no notifications subsystem,
    no sync logic — slice registration only. Version lives in shell.js.
-   Boot marker: [orOS] writer.js booted
+   Boot marker: "writer.js v<ver> boot" (Bible Part VI pattern)
    ══════════════════════════════════════════════════════════ */
 (function () {
 'use strict';
+
+/* ----- BOOT MARKER (stale-file detection, R3) ----- */
+var SCRIPT_V = '';
+(function () {
+  var m = (document.currentScript && document.currentScript.src || '').match(/[?&]v=([^&#]+)/);
+  SCRIPT_V = m ? m[1] : '';
+  console.log('writer.js v' + (SCRIPT_V || '?') + ' boot');
+})();
 
 /* ========== SECTION 0: SHELL PALETTE INHERITANCE ========== */
 // CRITICAL: CI guard (bump-version.yml G3) greps for these function
@@ -54,7 +62,8 @@ const AUTOSAVE_DEBOUNCE_MS = 500;   // Bible: ≤500ms (Notes precedent)
 let state = {
   docs: [],            // [{id,title,author,tags,category,html,footnotes:[],comments:[],versions:[],pageSize,margins,header,footer,mtime,del:false}]
   activeTab: null,     // doc id — device-local, NEVER synced
-  tabOrder: [],        // ordered doc ids — synced
+  tabOrder: [],        // OPEN tabs — DEVICE-LOCAL (oros-writer-prefs)
+  seen: {},            // doc ids this device has already shown — device-local
   settings: {
     smartTypography: true,
     typewriterSound: false
@@ -67,6 +76,19 @@ let state = {
 
 let saveTimer = null;
 let dirty = false;
+
+// R8: the sync engine and the language live on the PARENT (shell)
+// window — this iframe's own window has neither.
+function syncApi() {
+  try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
+  catch (e) { return window.orosSync || null; }
+}
+// The shell re-opens the app on a language toggle, so one boot-time
+// mirror keeps every existing window.orosLang read in this file valid.
+try {
+  window.orosLang = (window.parent && window.parent.orosLang) ||
+                    localStorage.getItem('oros-lang') || 'en';
+} catch (e) { window.orosLang = 'en'; }
 
 /* ===== SECTION 2: STRINGS (EN / EL — Bible: EN default, EL full) ===== */
 const STRINGS = {
@@ -147,6 +169,7 @@ const STRINGS = {
     'wx.cancel': 'Cancel',
     'ac.del': 'Delete rule',
     'tt.footnotes': 'Footnotes',
+    'tt.comments': 'Comments',
     'fn.title': 'Footnotes',
     'fn.add': 'Add footnote',
     'fn.added': 'Footnote added',
@@ -192,8 +215,6 @@ const STRINGS = {
     'toc.empty': 'No headings — start with a heading style.',
     'toc.unnamed': 'Untitled heading',
     'tpl.title': 'Templates',
-    'tpl.blank': 'Blank',
-    'tpl.blownote': 'essay / letter / novel / screenplay / poem / meeting notes / blank + customs',
     'tpl.custom': 'Custom',
     'tpl.use': 'Use',
     'tpl.edit': 'Edit',
@@ -294,12 +315,38 @@ const STRINGS = {
     'io.impReplace.d': 'Dupes current first into Version History.',
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
-    'io.dbConfirm': 'Restore the full Writer database? Current tabs, documents and settings will be replaced.',
+    'io.dbConfirm': 'Merge this Writer backup? Its documents, templates and settings come back; documents that exist only here are kept.',
     'io.ddTitle': 'Drop to open',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Riding along:',
     'io.naming': 'Exports take document title, falls back to untitled.',
     'io.pickFirst': 'Pick a file first',
+    'io.exportfailed': 'Export failed',
+    'io.notes': 'Notes',
+    'io.comments': 'Comments',
+    'tt.docs': 'Documents',
+    'docs.title': 'Documents',
+    'docs.search': 'Search documents…',
+    'docs.empty': 'No documents yet.',
+    'docs.none': 'Nothing matches your search.',
+    'docs.open': 'Open',
+    'docs.isOpen': 'Open tab',
+    'docs.delete': 'Delete document',
+    'docs.confirmDel': 'Delete “{name}”? It is removed from all your devices (Undo available for a few seconds).',
+    'docs.words': '{n} words',
+    'doc.restored': 'Document restored',
+    'wx.undo': 'Undo',
+    'wx.ok': 'OK',
+    'wx.delete': 'Delete',
+    'wx.confirm': 'Confirm',
+    'tpl.builtinBadge': 'Built-in',
+    'tpl.deleted': 'Template deleted',
+    'img.caption': 'Caption',
+    'meta.tagAddBtn': 'Add tag',
+    'cmt.needSel': 'Select some text first, then add the comment.',
+    'cmt.oneBlock': 'A comment must stay within one paragraph — select less text.',
+    'ver.autoNote': 'Auto versions: at most one every 5 minutes while you write; the newest 8 are kept. Manual snapshots are never dropped.',
+    'goal.lockArmed': 'Editing will lock when the goal is reached'
   },
   el: {
     'app.name': 'Writer',
@@ -378,6 +425,7 @@ const STRINGS = {
     'wx.cancel': 'Ακύρωση',
     'ac.del': 'Διαγραφή κανόνα',
     'tt.footnotes': 'Υποσημειώσεις',
+    'tt.comments': 'Σχόλια',
     'fn.title': 'Υποσημειώσεις',
     'fn.add': 'Προσθήκη υποσημείωσης',
     'fn.added': 'Η υποσημείωση προστέθηκε',
@@ -523,12 +571,38 @@ const STRINGS = {
     'io.impReplace.d': 'Το τρέχον αποθηκεύεται πρώτα στο Ιστορικό εκδόσεων.',
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
-    'io.dbConfirm': 'Επαναφορά πλήρους βάσης δεδομένων; Τα τρέχοντα tabs, έγγραφα και ρυθμίσεις θα αντικατασταθούν.',
+    'io.dbConfirm': 'Συγχώνευση αυτού του αντιγράφου ασφαλείας; Τα έγγραφα, τα πρότυπα και οι ρυθμίσεις του επανέρχονται· όσα έγγραφα υπάρχουν μόνο εδώ διατηρούνται.',
     'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Συνοδεύουν:',
     'io.naming': 'Η εξαγωγή παίρνει τον τίτλο του εγγράφου, αλλιώς «Χωρίς τίτλο».',
-    'io.pickFirst': 'Επίλεξε πρώτα ένα αρχείο'
+    'io.pickFirst': 'Επίλεξε πρώτα ένα αρχείο',
+    'io.exportfailed': 'Η εξαγωγή απέτυχε',
+    'io.notes': 'Σημειώσεις',
+    'io.comments': 'Σχόλια',
+    'tt.docs': 'Έγγραφα',
+    'docs.title': 'Έγγραφα',
+    'docs.search': 'Αναζήτηση εγγράφων…',
+    'docs.empty': 'Δεν υπάρχουν έγγραφα ακόμα.',
+    'docs.none': 'Τίποτα δεν ταιριάζει με την αναζήτηση.',
+    'docs.open': 'Άνοιγμα',
+    'docs.isOpen': 'Ανοιχτή καρτέλα',
+    'docs.delete': 'Διαγραφή εγγράφου',
+    'docs.confirmDel': 'Διαγραφή του «{name}»; Αφαιρείται από όλες τις συσκευές σου (η Αναίρεση είναι διαθέσιμη για λίγα δευτερόλεπτα).',
+    'docs.words': '{n} λέξεις',
+    'doc.restored': 'Το έγγραφο επανήλθε',
+    'wx.undo': 'Αναίρεση',
+    'wx.ok': 'OK',
+    'wx.delete': 'Διαγραφή',
+    'wx.confirm': 'Επιβεβαίωση',
+    'tpl.builtinBadge': 'Ενσωματωμένο',
+    'tpl.deleted': 'Το πρότυπο διαγράφηκε',
+    'img.caption': 'Λεζάντα',
+    'meta.tagAddBtn': 'Προσθήκη ετικέτας',
+    'cmt.needSel': 'Επίλεξε πρώτα κείμενο και μετά πρόσθεσε το σχόλιο.',
+    'cmt.oneBlock': 'Το σχόλιο πρέπει να μένει μέσα σε μία παράγραφο — επίλεξε λιγότερο κείμενο.',
+    'ver.autoNote': 'Αυτόματες εκδόσεις: το πολύ μία ανά 5 λεπτά γραφής· κρατιούνται οι 8 νεότερες. Τα χειροκίνητα στιγμιότυπα δεν σβήνονται ποτέ.',
+    'goal.lockArmed': 'Η επεξεργασία θα κλειδώσει μόλις επιτευχθεί ο στόχος'
   }
 };
 
@@ -578,6 +652,7 @@ const ICONS = {
   plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
   lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>',
   settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>',
+  docs:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>',
   lock:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>'
 };
 
@@ -616,18 +691,53 @@ function escAttr(s) {   // attribute-safe (covers quotes — beta bug #3)
   return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+/* ----- Toasts (Five-Axes ②) -----
+   Informational → shell transient() (falls back to the local toast on a
+   stale bundle). Undo-bearing → ALWAYS local (closure never leaves the
+   frame), 8s. Lazy singleton, top-right, text first, action second. */
 let toastEl = null, toastTimer = null;
-function showToast(msg) {
+function localToast(msg, action) {
   if (!toastEl) {
     toastEl = document.createElement('div');
     toastEl.className = 'w-toast';
     toastEl.setAttribute('role', 'status');
     document.body.appendChild(toastEl);
   }
-  toastEl.textContent = msg;                 // textContent — never innerHTML
+  // A modal <dialog> makes everything outside it inert → an Undo button
+  // on <body> could not be clicked. Host the toast in the TOP dialog.
+  const host = Array.from(document.querySelectorAll('dialog[open]')).pop() || document.body;
+  if (toastEl.parentNode !== host) host.appendChild(toastEl);
+  toastEl.textContent = '';
+  toastEl.appendChild(document.createTextNode(String(msg)));   // never innerHTML
+  if (action && typeof action.fn === 'function') {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'w-toast-act';
+    b.textContent = action.label;
+    b.addEventListener('click', () => {
+      clearTimeout(toastTimer);
+      toastEl.classList.remove('visible');
+      action.fn();
+    });
+    toastEl.appendChild(b);
+  }
   toastEl.classList.add('visible');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2600);
+  toastTimer = setTimeout(() => toastEl.classList.remove('visible'),
+    action ? 8000 : 5000);
+}
+
+function showToast(msg) {
+  try {
+    const n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+    if (n && typeof n.transient === 'function' &&
+        n.transient({ ns: 'writer', title: String(msg) })) return;
+  } catch (e) { /* cross-frame hiccup → local */ }
+  localToast(msg);
+}
+
+function undoToast(msg, fn) {
+  localToast(msg, { label: t('wx.undo'), fn: fn });
 }
 
 function escapeRegex(s) {
@@ -673,8 +783,30 @@ function applyI18n() {
 function getDoc(id) { return state.docs.find(d => d.id === id); }
 function activeDoc() { return getDoc(state.activeTab); }
 
+// Untitled docs are labelled by their opening words (cached per html)
+const tabSnipCache = {};
+function tabLabel(doc) {
+  if (doc.title) return doc.title;
+  const c = tabSnipCache[doc.id];
+  if (c && c.html === doc.html) return c.snip || t('tab.untitled');
+  const snip = docPlainText(doc.html).trim().replace(/\s+/g, ' ').slice(0, 32);
+  tabSnipCache[doc.id] = { html: doc.html, snip: snip };
+  return snip || t('tab.untitled');
+}
+
 function renderTabs() {
   EL.tabBar.innerHTML = '';
+
+  // Documents manager — every doc (open or closed) is reachable here
+  const docsBtn = document.createElement('button');
+  docsBtn.type = 'button';
+  docsBtn.className = 'tab-docs';
+  docsBtn.title = t('tt.docs');
+  docsBtn.setAttribute('aria-label', t('tt.docs'));
+  docsBtn.innerHTML = ICONS.docs;
+  docsBtn.addEventListener('click', openDocsManager);
+  EL.tabBar.appendChild(docsBtn);
+
   state.tabOrder.forEach(id => {
     const doc = getDoc(id);
     if (!doc || doc.del) return;
@@ -684,11 +816,12 @@ function renderTabs() {
     tab.className = 'tab' + (id === state.activeTab ? ' active' : '');
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-selected', id === state.activeTab ? 'true' : 'false');
-    tab.title = doc.title || t('tab.untitled');
+    tab.title = tabLabel(doc);
 
     const label = document.createElement('span');
     label.className = 'tab-label';
-    label.textContent = doc.title || t('tab.untitled');
+    label.textContent = tabLabel(doc);
+    if (!doc.title) label.classList.add('tab-label-auto');
     label.addEventListener('dblclick', startTabRename.bind(null, id, label));
 
     const close = document.createElement('span');
@@ -714,6 +847,9 @@ function renderTabs() {
   newBtn.innerHTML = ICONS.plus;
   newBtn.addEventListener('click', () => createDoc());
   EL.tabBar.appendChild(newBtn);
+
+  const act = EL.tabBar.querySelector('.tab.active');
+  if (act && act.scrollIntoView) act.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 function startTabRename(id, labelEl) {
@@ -750,6 +886,7 @@ function startTabRename(id, labelEl) {
 /* ===== SECTION 6: DOCS CRUD ===== */
 function createDoc(opts) {
   opts = opts || {};
+  if (!opts.keepEditor) flushSave();   // pending keystrokes belong to the OLD doc
   const doc = {
     id: uid(),
     title: opts.title || '',
@@ -763,41 +900,180 @@ function createDoc(opts) {
     pageSize: 'a4',
     margins: { top: 25, bottom: 25, left: 25, right: 25 },
     header: '', footer: '',
+    goal: null,
     mtime: Date.now(),
     del: false
   };
   state.docs.push(doc);
   state.tabOrder.push(doc.id);
+  state.seen[doc.id] = 1;
   state.activeTab = doc.id;
+  savePrefs();
   scheduleSave();
   renderTabs();
-  renderEditor();
-  EL.editor.focus();
+  if (!opts.keepEditor) {        // adoption path keeps live text + caret
+    renderEditor();
+    EL.editor.focus();
+  }
   if (!opts.silent) showToast(t('doc.created'));
   return doc;
 }
 
 function activateTab(id) {
-  if (getDoc(id)) {
-    flushSave();
-    state.activeTab = id;   // device-local, not saved into slice
-    renderTabs();
-    renderEditor();
-    EL.editor.focus();
-  }
+  const d = getDoc(id);
+  if (!d || d.del) return;
+  flushSave();
+  if (state.tabOrder.indexOf(id) === -1) state.tabOrder.push(id);
+  state.activeTab = id;
+  savePrefs();
+  renderTabs();
+  renderEditor();
+  EL.editor.focus();
 }
 
 function closeDoc(id) {
   flushSave();
+  const idx = state.tabOrder.indexOf(id);
   state.tabOrder = state.tabOrder.filter(x => x !== id);
   if (state.activeTab === id) {
-    state.activeTab = state.tabOrder[state.tabOrder.length - 1] || null;
+    state.activeTab = state.tabOrder[Math.min(Math.max(idx - 1, 0), state.tabOrder.length - 1)] || null;
   }
-  // Doc stays in state.docs — openable again via future manager; tab closes only.
-  scheduleSave();
+  // The doc stays intact — reopen it any time from the Documents manager.
+  savePrefs();
   renderTabs();
   renderEditor();
   showToast(t('doc.closed'));
+}
+
+/* ----- Delete (tombstone, R17) with Undo toast ----- */
+function deleteDoc(id, onUndo) {
+  const d = getDoc(id);
+  if (!d || d.del) return;
+  flushSave();
+  const backup = JSON.parse(JSON.stringify(d));
+  // Tombstone keeps only id/mtime/del — content leaves every device.
+  Object.assign(d, {
+    title: '', author: '', tags: [], category: '', html: '',
+    footnotes: [], comments: [], versions: [], goal: null,
+    header: '', footer: '', del: true, mtime: Date.now()
+  });
+  const wasActive = state.activeTab === id;
+  state.tabOrder = state.tabOrder.filter(x => x !== id);
+  if (wasActive) state.activeTab = state.tabOrder[state.tabOrder.length - 1] || null;
+  savePrefs();
+  scheduleSave();
+  renderTabs();
+  if (wasActive) renderEditor();
+  undoToast(t('doc.deleted'), () => {
+    const cur = getDoc(id);
+    if (!cur) return;
+    // fresh mtime beats the tombstone everywhere (resurrection contract)
+    Object.assign(cur, backup, { del: false, mtime: Date.now() });
+    if (state.tabOrder.indexOf(id) === -1) state.tabOrder.push(id);
+    state.activeTab = id;
+    savePrefs();
+    scheduleSave();
+    renderTabs();
+    renderEditor();
+    showToast(t('doc.restored'));
+    if (typeof onUndo === 'function') onUndo();
+  });
+}
+
+/* ----- Documents manager (open / search / delete) ----- */
+function docPlainText(html) {
+  const box = ioInertDiv();
+  box.innerHTML = html || '';
+  box.querySelectorAll('sup.fn-ref').forEach(x => x.remove());
+  return box.textContent || '';
+}
+
+function openDocsManager() {
+  flushSave();
+  const dlg = openDialog(t('docs.title'), '', [
+    { class: 'fb-btn', label: '+ ' + t('tab.new'), onClick: () => { dlg.close(); createDoc(); } },
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
+  ]);
+  dlg.classList.add('w-dialog-docs');
+  const body = dlg.querySelector('.w-dialog-body');
+
+  const search = document.createElement('input');
+  search.type = 'search';
+  search.className = 'w-field docs-search';
+  search.placeholder = t('docs.search');
+  body.appendChild(search);
+
+  const list = document.createElement('div');
+  list.className = 'docs-list';
+  body.appendChild(list);
+
+  // plain text cache for this dialog session only
+  const plain = {};
+  const textOf = d => (plain[d.id] !== undefined) ? plain[d.id]
+    : (plain[d.id] = docPlainText(d.html));
+
+  function render() {
+    list.innerHTML = '';
+    const q = search.value.trim().toLocaleLowerCase();
+    const alive = state.docs.filter(d => !d.del);
+    const docs = alive
+      .filter(d => !q || (d.title || '').toLocaleLowerCase().indexOf(q) !== -1 ||
+                   textOf(d).toLocaleLowerCase().indexOf(q) !== -1)
+      .sort((a, b) => (b.mtime - a.mtime) || (a.id < b.id ? -1 : 1));
+
+    if (!docs.length) {
+      const e = document.createElement('div');
+      e.className = 'fn-empty';
+      e.textContent = alive.length ? t('docs.none') : t('docs.empty');
+      list.appendChild(e);
+      return;
+    }
+
+    docs.forEach(d => {
+      const row = document.createElement('div');
+      row.className = 'docs-row' + (d.id === state.activeTab ? ' active' : '');
+
+      const main = document.createElement('button');
+      main.type = 'button';
+      main.className = 'docs-main';
+      const nm = document.createElement('span');
+      nm.className = 'docs-name';
+      // untitled docs show their opening words (three "Untitled" rows help nobody)
+      const snip = textOf(d).trim().replace(/\s+/g, ' ').slice(0, 60);
+      nm.textContent = d.title || snip || t('tab.untitled');
+      if (!d.title) nm.classList.add('docs-untitled');
+      const meta = document.createElement('span');
+      meta.className = 'docs-meta';
+      const words = textOf(d).trim().split(/\s+/).filter(w => /[\p{L}\p{N}]/u.test(w)).length;
+      meta.textContent = formatTs(d.mtime) + ' · ' + t('docs.words').replace('{n}', String(words));
+      main.append(nm, meta);
+      if (state.tabOrder.indexOf(d.id) !== -1) {
+        const badge = document.createElement('span');
+        badge.className = 'ac-badge';
+        badge.textContent = t('docs.isOpen');
+        main.appendChild(badge);
+      }
+      main.addEventListener('click', () => { dlg.close(); activateTab(d.id); });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'ac-icon-btn danger';
+      del.title = t('docs.delete');
+      del.setAttribute('aria-label', t('docs.delete'));
+      del.innerHTML = ICONS.trash;
+      del.addEventListener('click', () => {
+        wConfirm(t('docs.confirmDel').replace('{name}', d.title || t('tab.untitled')),
+                 { danger: true, ok: t('wx.delete') })
+          .then(ok => { if (ok) { deleteDoc(d.id, () => { if (dlg.open) render(); }); render(); } });
+      });
+
+      row.append(main, del);
+      list.appendChild(row);
+    });
+  }
+
+  search.addEventListener('input', render);
+  render();
 }
 
 /* ===== SECTION 7: SLICE — LOAD / SAVE / MERGE ===== */
@@ -863,9 +1139,6 @@ function hydrate(raw) {
     mtime: Number(d.mtime) || 0,
     del: !!d.del
   }));
-  state.tabOrder = Array.isArray(raw.tabOrder)
-    ? raw.tabOrder.filter(id => getDoc(id))
-    : state.docs.filter(d => !d.del).map(d => d.id);
   state.seeded = !!raw.seeded;
   state.settings = (raw.settings && typeof raw.settings === 'object')
     ? Object.assign({}, state.settings, raw.settings)
@@ -878,10 +1151,52 @@ function hydrate(raw) {
     .filter(x => x && typeof x.id === 'string' && typeof x.name === 'string') : [];
   state.tplTombs = Array.isArray(raw.tplTombs) ? raw.tplTombs
     .filter(x => x && typeof x.id === 'string') : [];
-  // activeTab: device-local — restore best effort from tabOrder
-  if (!getDoc(state.activeTab)) {
+  reconcileTabs();
+}
+
+/* ----- Device-local tab state (never synced) -----
+   Open tabs are a per-device VIEW (like activeTab). Closing a tab on the
+   phone must not close it on the desktop, and a union-merged synced list
+   resurrected closed tabs. Docs never shown on this device auto-open
+   once (a doc written on the phone appears on the desktop). */
+const PREFS_KEY = 'oros-writer-prefs';
+
+function savePrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      open: state.tabOrder, active: state.activeTab, seen: state.seen
+    }));
+  } catch (e) { /* quota — tabs are only a view */ }
+}
+
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
+    return (p && typeof p === 'object' && Array.isArray(p.open)) ? p : null;
+  } catch (e) { return null; }
+}
+
+function reconcileTabs() {
+  const alive = id => { const d = getDoc(id); return !!(d && !d.del); };
+  state.tabOrder = state.tabOrder.filter((id, i, a) => alive(id) && a.indexOf(id) === i);
+  state.docs.forEach(d => {
+    if (d.del || state.seen[d.id]) return;
+    state.seen[d.id] = 1;
+    if (state.tabOrder.indexOf(d.id) === -1) state.tabOrder.push(d.id);
+  });
+  if (!alive(state.activeTab) || state.tabOrder.indexOf(state.activeTab) === -1) {
     state.activeTab = state.tabOrder[0] || null;
   }
+  savePrefs();
+}
+
+// R5: symmetric pick — mtime first, then lexicographic JSON.
+// merge(A,B) === merge(B,A); never "remote wins" on ties.
+function wNewer(a, b, key) {
+  const k = key || 'mtime';
+  const ma = (a && Number(a[k])) || 0, mb = (b && Number(b[k])) || 0;
+  if (ma !== mb) return ma > mb ? a : b;
+  return String(JSON.stringify(a)) >= String(JSON.stringify(b)) ? a : b;
 }
 
 // Entity LWW per doc + tombstones (R5/R17) — no Date.now() inside merge
@@ -896,13 +1211,18 @@ function mergeSlices(local, remote) {
     const R = (remote.docs || []).find(d => d.id === id);
     if (!R) { byId[id] = L; return; }               // local-only
     if (!L) { byId[id] = R; return; }               // remote-only
-    byId[id] = (R.mtime >= L.mtime) ? R : L;        // LWW per entity
+    byId[id] = wNewer(L, R);                        // LWW per entity (R5)
   });
 
-  // tabOrder: prefer the newer doc's owner side, dedup, drop deleted
-  const base = (remote.tabOrder || local.tabOrder || [])
-    .filter(id => byId[id] && !byId[id].del);
-  (local.tabOrder || []).forEach(id => {
+  // tabOrder: deterministic base (lexicographic), union, drop deleted
+  const lo = local.tabOrder || [], ro = remote.tabOrder || [];
+  const first = JSON.stringify(lo) >= JSON.stringify(ro) ? lo : ro;
+  const second = first === lo ? ro : lo;
+  const base = [];
+  first.forEach(id => {
+    if (byId[id] && !byId[id].del && base.indexOf(id) === -1) base.push(id);
+  });
+  second.forEach(id => {
     if (byId[id] && !byId[id].del && base.indexOf(id) === -1) base.push(id);
   });
 
@@ -915,20 +1235,15 @@ function mergeSlices(local, remote) {
   const tplById = {};
   [].concat(local.templates || [], remote.templates || []).forEach(tp => {
     if (tombs[tp.id] >= (tp.mtime || 0)) return;   // tombstoned
-    if (!tplById[tp.id] || (tp.mtime || 0) >= (tplById[tp.id].mtime || 0)) tplById[tp.id] = tp;
+    tplById[tp.id] = tplById[tp.id] ? wNewer(tplById[tp.id], tp) : tp;
   });
-
-  const lm = (local.autocorrect && local.autocorrect.mtime) || 0;
-  const rm = (remote.autocorrect && remote.autocorrect.mtime) || 0;
-  const lset = (local.settings && local.settings._mtime) || 0;
-  const rset = (remote.settings && remote.settings._mtime) || 0;
 
   return {
     ver: 1,
-    docs: Object.keys(byId).map(k => byId[k]),
+    docs: Object.keys(byId).sort().map(k => byId[k]),
     tabOrder: base,
-    settings: (rset >= lset) ? remote.settings : local.settings,
-    autocorrect: (rm >= lm) ? remote.autocorrect : local.autocorrect,
+    settings: wNewer(local.settings, remote.settings, '_mtime'),
+    autocorrect: wNewer(local.autocorrect, remote.autocorrect),
     templates: Object.keys(tplById).map(k => tplById[k]),
     tplTombs: Object.keys(tombs).map(k => ({ id: k, ts: tombs[k] })),
     seeded: local.seeded || remote.seeded
@@ -960,24 +1275,64 @@ function sliceGet() {
 
 function sliceSet(data, info) {
   if (!data || typeof data !== 'object') return;
-  hydrate(data);             // full sanity-checked hydrate (Section 7)
+  // Keystrokes typed while the pull was in flight: fold them in
+  // (local doc carries the newer mtime) instead of overwriting them.
+  const pendingLocal = dirty;
+  if (pendingLocal) {
+    clearTimeout(saveTimer);
+    const cur = activeDoc();
+    if (cur) {
+      const html = editorHTMLForSave();
+      if (html !== cur.html) { cur.html = html; cur.mtime = Date.now(); }
+    }
+    data = mergeSlices(serialize(), data);
+  }
+  hydrate(data);             // sanitized hydrate + device-local tab reconcile
+  localPersist();            // storage key mirrors live state — NO markDirty (R6)
   renderTabs();
-  renderEditor();
-  if (info && info.merged) showToast(t('sync.updated'));
+  const doc = activeDoc();
+  if (!doc || doc.html !== editorHTMLForSave()) renderEditor();   // keep caret if unchanged
+  else { footnotesAfterRender(); commentsAfterRender(); }
+  if (pendingLocal) scheduleSave();   // the user's own edits still need their push
+  // No toast: sync feedback = taskbar dot (Part VI)
 }
 
 function registerSlice() {
-  if (window.orosSync && typeof window.orosSync.registerSlice === 'function') {
-    window.orosSync.registerSlice(
+  // LOCAL FIRST: live registration does NOT hydrate (sync.js only
+  // replays the carry mailbox) — registering with an empty state
+  // would let the first sliceGet()/flushSave() persist an empty slice.
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(SLICE_KEY) || 'null'); } catch (e) { raw = null; }
+
+  // Device-local tabs: prefs win; first boot after the upgrade migrates
+  // the old synced tabOrder once and marks every existing doc as seen.
+  const prefs = loadPrefs();
+  if (prefs) {
+    state.tabOrder = prefs.open.filter(x => typeof x === 'string');
+    state.seen = (prefs.seen && typeof prefs.seen === 'object') ? prefs.seen : {};
+    if (typeof prefs.active === 'string') state.activeTab = prefs.active;
+  } else {
+    state.tabOrder = (raw && Array.isArray(raw.tabOrder)) ? raw.tabOrder.slice() : null;
+    state.seen = {};
+    (raw && Array.isArray(raw.docs) ? raw.docs : []).forEach(d => {
+      if (d && typeof d.id === 'string') state.seen[d.id] = 1;
+    });
+    if (!state.tabOrder) {
+      state.tabOrder = (raw && Array.isArray(raw.docs) ? raw.docs : [])
+        .filter(d => d && typeof d.id === 'string' && !d.del).map(d => d.id);
+    }
+  }
+  if (raw) hydrate(raw); else reconcileTabs();
+
+  const api = syncApi();
+  if (api && typeof api.registerSlice === 'function') {
+    api.registerSlice(
       'writer',              // slice name in the cloud payload
       sliceGet,              // getter
       sliceSet,              // setter
       SLICE_KEY,             // localStorage key for closed-app proxy
       mergeSlices            // mergeFn — deterministic, no Date.now()
     );
-  } else {
-    // Standalone mode: localStorage only
-    try { hydrate(JSON.parse(localStorage.getItem(SLICE_KEY) || 'null')); } catch (e) {}
   }
 }
 
@@ -995,31 +1350,60 @@ function scheduleSave() {
 
 function flushSave() {
   clearTimeout(saveTimer);
+  // Text typed with NO open tab (first run / all tabs closed) was
+  // silently discarded — adopt it into a fresh doc instead. Lazy
+  // (only on real input) → no duplicate seeds across devices (R16).
+  if (!activeDoc() && (EL.editor.textContent.trim() ||
+      EL.editor.querySelector('img,table,hr'))) {
+    createDoc({ silent: true, keepEditor: true });
+  }
   if (!dirty) return;
   dirty = false;
-  if (state.activeTab) {
-    const doc = activeDoc();
-    if (doc) {
-      doc.html = editorHTMLForSave();   // strips transient find-hit marks
+  const doc = activeDoc();
+  if (doc) {
+    // mtime moves ONLY on a real content change. Stamping on every
+    // flush let unrelated actions (settings, templates…) make a STALE
+    // copy "newer" and overwrite another device's edit (LWW).
+    // Doc-field edits stamp explicitly through markDoc().
+    const html = editorHTMLForSave();   // strips transient find-hit marks
+    if (html !== doc.html) {
+      doc.html = html;
       doc.mtime = Date.now();
+      autoVersionTick(doc);
     }
   }
   localPersist();
-  if (window.orosSync && typeof window.orosSync.markDirty === 'function') {
-    window.orosSync.markDirty();   // core engine: 5s debounce → reconcile
+  const api = syncApi();
+  if (api && typeof api.markDirty === 'function') {
+    api.markDirty();   // core engine: 5s debounce → reconcile
   }
+}
+
+// Doc-level field edit (meta, page setup, footnotes, comments, goal,
+// versions): stamp THIS doc, then the normal save pipeline.
+function markDoc(doc) {
+  if (doc) doc.mtime = Date.now();
+  scheduleSave();
 }
 
 /* ===== SECTION 9: RENDER EDITOR FROM ACTIVE DOC ===== */
 function renderEditor() {
   const doc = activeDoc();
+  findState.hits = [];               // old marks die with the old DOM
+  findState.index = -1;
+  if (findBar && !findBar.hidden) updateCount(0, 0);
   EL.editor.innerHTML = doc ? (doc.html || '') : '';
-  EL.editor.classList.toggle('editor-empty', !doc || !EL.editor.textContent.trim());
   EL.editor.setAttribute('data-page-size', doc ? doc.pageSize : 'a4');
   updateEmptyState();
   footnotesAfterRender();          // renumber + refresh panel (Wave 3)
   commentsAfterRender();           // refresh comment cards (Wave 3)
   goalAfterRender();               // goal bar + reading progress (Wave 4)
+  // Adopt the browser's serialization WITHOUT touching mtime, so a later
+  // unrelated flush never sees a "change" that is only formatting noise.
+  if (doc) {
+    const norm = editorHTMLForSave();
+    if (norm !== doc.html) doc.html = norm;
+  }
 }
 
 function updateEmptyState() {
@@ -1030,7 +1414,22 @@ function updateEmptyState() {
 
 /* ===== SECTION 10: TOOLBAR COMMANDS (execCommand era for Wave 1;
    blocks deprecated — Wave 2+ may move to Selection API if needed) ===== */
+let lockToastTs = 0;
+function lockToast() {              // one reminder per 3s, not per keystroke
+  const now = Date.now();
+  if (now - lockToastTs < 3000) return;
+  lockToastTs = now;
+  showToast(t('goal.locked'));
+}
+
+function isLocked() {
+  if (!EL.editor.dataset.goalLocked) return false;
+  lockToast();
+  return true;
+}
+
 function exec(cmd, val) {
+  if (isLocked()) return;
   EL.editor.focus();
   document.execCommand(cmd, false, val || null);
   scheduleSave();
@@ -1109,6 +1508,7 @@ function bindToolbar() {
   });
 
   EL.stylesSel.addEventListener('change', () => {
+    if (isLocked()) { updateStylesSelect(); return; }
     const v = EL.stylesSel.value;
     EL.editor.focus();
     if (v === 'p') {
@@ -1126,6 +1526,7 @@ function bindToolbar() {
   });
 
   document.getElementById('btn-page-break').addEventListener('click', () => {
+    if (isLocked()) return;
     EL.editor.focus();
     const marker = document.createElement('div');
     marker.className = 'page-break-marker';
@@ -1143,71 +1544,120 @@ function bindToolbar() {
   });
 }
 
-function insertNodeAtCursor(node) {
+// Last caret INSIDE the editor. Typing in a dialog field moves the
+// document selection into the dialog — inserts used to land there
+// (and vanish with the dialog on close).
+let lastEditorRange = null;
+document.addEventListener('selectionchange', () => {
   const sel = window.getSelection();
-  if (sel && sel.rangeCount && sel.getRangeAt(0).collapsed === false) {
-    sel.getRangeAt(0).deleteContents();
+  if (sel && sel.rangeCount &&
+      EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    lastEditorRange = sel.getRangeAt(0).cloneRange();
   }
-  if (sel && sel.rangeCount) {
-    const range = sel.getRangeAt(0);
-    range.insertNode(node);
-  } else {
+});
+
+function insertNodeAtCursor(node) {
+  if (isLocked()) return;
+  const sel = window.getSelection();
+  let range = (sel && sel.rangeCount) ? sel.getRangeAt(0) : null;
+  if (!range || !EL.editor.contains(range.commonAncestorContainer)) range = lastEditorRange;
+  if (!range || !EL.editor.contains(range.commonAncestorContainer)) {
     EL.editor.appendChild(node);
+    return;
   }
+  if (!range.collapsed) range.deleteContents();
+  range.insertNode(node);
+  range.setStartAfter(node);       // caret AFTER the node → sequential inserts keep order
+  range.collapse(true);
+  if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+  lastEditorRange = range.cloneRange();
 }
 
 /* ===== SECTION 11: EVENT WIRING ===== */
 function wireEvents() {
   // Input — track dirty state and empty-state placeholder
   EL.editor.addEventListener('input', () => {
+    // No open tab (first run / all closed): adopt the text NOW, before
+    // any tab action can re-render the editor over it.
+    if (!activeDoc()) createDoc({ silent: true, keepEditor: true });
     dirty = true;
     updateEmptyState();
     scheduleSave();
   });
 
-  // Goal bar + reading progress live refresh (Wave 4)
+  // Goal bar + reading progress live refresh (Wave 4, rAF-coalesced)
   EL.editor.addEventListener('input', goalAfterInput);
 
   // Keyup — special handling for placeholder visibility (edge case: paste via menu)
   EL.editor.addEventListener('keyup', updateEmptyState);
 
-  // Smart typography: transform quotes/dashes/ellipsis right after input
-  EL.editor.addEventListener('input', () => {
-    if (state.settings.smartTypography) smartTransformLastInsert();
+  // Smart typography: ONLY after typed characters (never on delete,
+  // paste or IME composition), and never inside code.
+  EL.editor.addEventListener('input', (e) => {
+    if (!state.settings.smartTypography || stBusy) return;
+    if (e.isComposing || e.inputType !== 'insertText') return;
+    smartTransformLastInsert();
   });
 
   // Auto-correction: check the word just typed when Space is pressed
   EL.editor.addEventListener('keydown', (e) => {
-    if (e.key === ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (e.key === ' ' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing) {
       autoCorrectLastWord();
     }
   });
 
   // Ctrl/Cmd + F — open find bar
   document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === 'KeyF') {
       e.preventDefault();
-      if (findBar) findBar.hidden = false;
-      else toggleFindBar();
+      if (!findBar) toggleFindBar();
+      findBar.hidden = false;
       const inp = findBar.querySelector('input[type="text"]');
       inp.focus(); inp.select();
     }
   });
 
-  // Focus — ensure editor is always ready after tab switch
+  // Leaving the app (tab switch, iframe close, mobile background):
+  // flush NOW — the 500ms debounce may never get to run.
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && state.activeTab) {
-      flushSave();
-    }
+    if (document.hidden) { flushSave(); return; }
+    const bar = document.getElementById('goal-bar');
+    if (bar && !bar.hidden) updateGoalBar();      // time goals catch up
   });
+  window.addEventListener('pagehide', flushSave);
 
+  // Paragraph-style dropdown mirrors the block at the caret
+  document.addEventListener('selectionchange', updateStylesSelect);
+}
+
+function updateStylesSelect() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount ||
+      !EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) return;
+  let v = '';
+  try { v = String(document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) { v = ''; }
+  v = v.replace(/[<>]/g, '');
+  if (v === 'blockquote' || v === 'pre' || /^h[1-4]$/.test(v)) EL.stylesSel.value = v;
+  else EL.stylesSel.value = 'p';
 }
 
 /* ===== SECTION 12: KEYBOARD SHORTCUTS (Bible: avoid browser-reserved combos) ===== */
 function bindShortcuts() {
+  // Contract Β — forward Ctrl+Alt+Shift+letter to the shell (capture)
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+    let p = null;
+    try { p = window.parent; } catch (err) { return; }
+    if (!(p && p !== window && p.orosShortcuts &&
+          typeof p.orosShortcuts.handle === 'function')) return;
+    if (p.orosShortcuts.handle(e)) e.stopPropagation();
+  }, true);
+
   document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.altKey) return;   // Ctrl+Alt+Shift = shell territory
     // Ctrl/Cmd + S — manual save trigger (feedback only — autosave runs anyway)
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    // e.code = physical key: e.key is 'σ' under the Greek layout (R12)
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.code === 'KeyS') {
       e.preventDefault();
       flushSave();
       showToast(t('doc.saved'));
@@ -1215,7 +1665,7 @@ function bindShortcuts() {
 
     // Ctrl+Alt+W — close current tab (browser-reserved-safe combo:
     // plain Ctrl+W closes the browser tab and ignores preventDefault)
-    if (e.ctrlKey && e.altKey && !e.metaKey && e.key.toLowerCase() === 'w') {
+    if (e.ctrlKey && e.altKey && !e.metaKey && e.code === 'KeyW') {
       if (state.activeTab) {
         e.preventDefault();
         flushSave();
@@ -1224,7 +1674,7 @@ function bindShortcuts() {
     }
 
     // Ctrl+Alt+T — new tab (plain Ctrl/T opens a browser tab)
-    if (e.ctrlKey && e.altKey && !e.metaKey && e.key.toLowerCase() === 't') {
+    if (e.ctrlKey && e.altKey && !e.metaKey && e.code === 'KeyT') {
       e.preventDefault();
       createDoc();
     }
@@ -1270,20 +1720,11 @@ function boot() {
     // 6. First render — set initial dirty flag based on content
     dirty = false;
 
-    // 7. Boot marker (console log for debugging)
-    console.log('[orOS] writer.js booted');
-
   } catch (err) {
     console.error('[orOS] writer boot failed:', err);
   }
 }
 
-// Boot when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
-}
 
 // ===== SECTION 14: DIALOGS & FIND BAR =====
 
@@ -1343,8 +1784,61 @@ function openDialog(title, bodyHTML, footerButtons) {
   dlg.addEventListener('click', (e) => {
     if (e.target === dlg) dlg.close();
   });
-  dlg.addEventListener('close', () => dlg.remove());
+  dlg.addEventListener('close', () => {
+    // keep a live (Undo) toast alive when its host dialog goes away
+    if (toastEl && dlg.contains(toastEl)) {
+      const next = Array.from(document.querySelectorAll('dialog[open]')).filter(d => d !== dlg).pop();
+      (next || document.body).appendChild(toastEl);
+    }
+    dlg.remove();
+  });
   return dlg;
+}
+
+/* ----- Themed confirm / prompt (R14: no native dialogs) ----- */
+function wConfirm(message, opts) {
+  opts = opts || {};
+  return new Promise(resolve => {
+    let done = false;
+    let dlg = null;
+    const finish = v => { if (done) return; done = true; resolve(v); if (dlg) dlg.close(); };
+    dlg = openDialog(opts.title || t('wx.confirm'), '', [
+      { class: 'fb-btn', label: t('wx.cancel'), onClick: () => finish(false) },
+      { class: 'fb-btn primary' + (opts.danger ? ' danger' : ''),
+        label: opts.ok || t('wx.ok'), onClick: () => finish(true) }
+    ]);
+    const p = document.createElement('p');
+    p.className = 'w-confirm-msg';
+    p.textContent = message;
+    dlg.querySelector('.w-dialog-body').appendChild(p);
+    dlg.addEventListener('close', () => { if (!done) { done = true; resolve(false); } });
+    const okBtn = dlg.querySelector('.w-dialog-foot .primary');
+    if (okBtn) okBtn.focus();
+  });
+}
+
+function wPrompt(title, value) {
+  return new Promise(resolve => {
+    let done = false;
+    let dlg = null;
+    const finish = v => { if (done) return; done = true; resolve(v); if (dlg) dlg.close(); };
+    dlg = openDialog(title, '', [
+      { class: 'fb-btn', label: t('wx.cancel'), onClick: () => finish(null) },
+      { class: 'fb-btn primary', label: t('wx.ok'), onClick: () => finish(inp.value.trim() || null) }
+    ]);
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'w-field';
+    inp.value = value || '';
+    inp.style.width = '100%';
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); finish(inp.value.trim() || null); }
+    });
+    dlg.querySelector('.w-dialog-body').appendChild(inp);
+    dlg.addEventListener('close', () => { if (!done) { done = true; resolve(null); } });
+    inp.focus();
+    inp.select();
+  });
 }
 
 /* ----- FIND & REPLACE BAR ----- */
@@ -1362,6 +1856,7 @@ let findState = {
 function toggleFindBar() {
   if (findBar) {
     findBar.hidden = !findBar.hidden;
+    if (findBar.hidden) { clearHighlights(); updateCount(0, 0); }
     if (!findBar.hidden) {
       findBar.querySelector('input[type="text"]').focus();
       findBar.querySelector('input[type="text"]').select();
@@ -1376,7 +1871,7 @@ function toggleFindBar() {
   EL.toolbar.parentNode.insertBefore(findBar, EL.toolbar.nextSibling);
 
   const html = `
-    <input type="text" placeholder="${t('tt.find')}" aria-label="Search text">
+    <input type="text" placeholder="${t('tt.find')}" aria-label="${escAttr(t('tt.find'))}">
     <span class="find-count"></span>
     <button type="button" class="fb-btn" data-action="prev">${ICONS.prev||ICONS.indent}</button>
     <button type="button" class="fb-btn primary" data-action="next">${ICONS.next||ICONS.indent}</button>
@@ -1410,6 +1905,7 @@ function toggleFindBar() {
     }
     if (e.key === 'Escape') {
       findBar.hidden = true;
+      clearHighlights();             // marks never linger after closing
       EL.editor.focus();
     }
   });
@@ -1458,10 +1954,14 @@ function findAndMark() {
     if (findState.formatFilter &&
         !nodeHasFormat(node.parentElement, findState.formatFilter)) return;
 
-    const flags = findState.matchCase ? 'g' : 'gi';
+    // 'u' + Unicode lookarounds: \b is ASCII-only (Greek whole-word failed)
+    const flags = findState.matchCase ? 'gu' : 'giu';
     const body = escapeRegex(findState.query);
-    const pattern = findState.wholeWord ? '\\b' + body + '\\b' : body;
-    const matches = [...txt.matchAll(new RegExp(pattern, flags))];
+    const pattern = findState.wholeWord
+      ? '(?<![\\p{L}\\p{N}_])' + body + '(?![\\p{L}\\p{N}_])' : body;
+    let re;
+    try { re = new RegExp(pattern, flags); } catch (e) { return; }
+    const matches = [...txt.matchAll(re)];
     highlightMatches(node, matches);
   });
 
@@ -1485,37 +1985,27 @@ function nodeHasFormat(el, fmt) {
 }
 
 function highlightMatches(textNode, matches) {
-  matches.forEach((m) => {
-    const start = m.index;
-    const end = start + m[0].length;
-    if (start < 0 || end > textNode.nodeValue.length) return;
-
-    const before = textNode.nodeValue.slice(0, start);
-    const match = textNode.nodeValue.slice(start, end);
-    const after = textNode.nodeValue.slice(end);
-
-    const fragment = document.createDocumentFragment();
-    if (before) fragment.appendChild(document.createTextNode(before));
-
-    const span = document.createElement('mark');
-    span.className = 'find-hit';
-    span.textContent = match;
-    fragment.appendChild(span);
-
-    if (after) fragment.appendChild(document.createTextNode(after));
-
-    textNode.parentNode.replaceChild(fragment, textNode);
-
-    findState.hits.push(span);
-  });
+  // Split from the END: earlier offsets stay valid on the same node.
+  // (The old forward loop detached textNode after the 1st hit →
+  //  parentNode null → TypeError on the 2nd hit in one paragraph.)
+  const marks = [];
+  for (let k = matches.length - 1; k >= 0; k--) {
+    const m = matches[k];
+    if (!m[0].length || !textNode.parentNode) continue;
+    const hit = textNode.splitText(m.index);
+    hit.splitText(m[0].length);
+    const mark = document.createElement('mark');
+    mark.className = 'find-hit';
+    hit.parentNode.replaceChild(mark, hit);
+    mark.appendChild(hit);
+    marks.unshift(mark);
+  }
+  marks.forEach(mk => findState.hits.push(mk));
 }
 
 function clearHighlights() {
   findState.hits.forEach(hit => {
-    const parent = hit.parentNode;
-    const frag = document.createDocumentFragment();
-    while (hit.firstChild) frag.appendChild(hit.firstChild);
-    parent.replaceChild(frag, hit);
+    if (hit.parentNode) ioUnwrap(hit);
   });
   findState.hits = [];
   findState.index = -1;
@@ -1538,39 +2028,42 @@ function highlightActive() {
     hit.classList.toggle('find-hit-active', i === findState.index);
   });
   const active = findState.hits[findState.index];
-  if (active) {
-    active.scrollIntoView({ block: 'center', inline: 'nearest' });
-    const range = document.createRange();
-    range.selectNode(active);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
+  // Scroll + highlight ONLY. Selecting the hit moved focus into the
+  // editor while typing in the find box → next keystrokes replaced it.
+  if (active) active.scrollIntoView({ block: 'center', inline: 'nearest' });
   updateCount(findState.hits.length, findState.index + 1);
 }
 
 function updateCount(total, curr) {
+  if (!findBar) return;
   const countEl = findBar.querySelector('.find-count');
-  if (total === 0) countEl.textContent = t('find.none');
+  if (total === 0) countEl.textContent = findState.query ? t('find.none') : '';
   else countEl.textContent = t('find.count').replace('{current}', curr).replace('{total}', total);
 }
 
 function replaceOne() {
   if (findState.index < 0 || findState.index >= findState.hits.length) return;
+  if (isLocked()) return;
   const hit = findState.hits[findState.index];
-  const rep = findBar.querySelector('#rep-text').value;
-  hit.textContent = rep;
+  hit.textContent = findBar.querySelector('#rep-text').value;
+  ioUnwrap(hit);                         // replaced text is no longer a hit
+  findState.hits.splice(findState.index, 1);
   scheduleSave();
-  findNext();
+  if (!findState.hits.length) { findState.index = -1; updateCount(0, 0); return; }
+  findState.index = findState.index % findState.hits.length;
+  highlightActive();
 }
 
 function replaceAll() {
-  if (findState.query === '') return;
+  if (findState.query === '' || !findState.hits.length) return;
+  if (isLocked()) return;
   const rep = findBar.querySelector('#rep-text').value;
+  const n = findState.hits.length;
   findState.hits.forEach(hit => { hit.textContent = rep; });
-  scheduleSave();
   clearHighlights();
-  showToast(t('find.replaced.all'));
+  scheduleSave();
+  updateCount(0, 0);
+  showToast(t('find.replaced.all') + ' (' + n + ')');
 }
 
 // ===== SECTION 15: WRITING TOOLS =====
@@ -1631,6 +2124,7 @@ function openCharsDialog() {
       cell.title = 'U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0');
       cell.addEventListener('click', () => {
         insertTextAtCursor(ch);
+        updateEmptyState();
         scheduleSave();
       });
       grid.appendChild(cell);
@@ -1641,18 +2135,7 @@ function openCharsDialog() {
 }
 
 function insertTextAtCursor(text) {
-  EL.editor.focus();
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount) {
-    const range = sel.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(document.createTextNode(text));
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  } else {
-    EL.editor.appendChild(document.createTextNode(text));
-  }
+  insertNodeAtCursor(document.createTextNode(text));
 }
 
 /* ----- SMART TYPOGRAPHY (post-input transforms at caret) ----- */
@@ -1663,53 +2146,64 @@ const ST_PAIRS = {
   '...': '\u2026'
 };
 
+let stBusy = false;   // our own insertText fires 'input' — ignore it
+
+// Replace [start,end) of a text node through the editing pipeline:
+// execCommand('insertText') lands in the native undo stack (Ctrl+Z
+// reverts the curly quote, not the whole word).
+function stReplace(node, start, end, rep) {
+  const sel = window.getSelection();
+  const r = document.createRange();
+  r.setStart(node, start);
+  r.setEnd(node, end);
+  sel.removeAllRanges();
+  sel.addRange(r);
+  stBusy = true;
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, rep); } catch (e) { ok = false; }
+  stBusy = false;
+  if (!ok) {                    // engine without insertText: direct edit
+    node.nodeValue = node.nodeValue.slice(0, start) + rep + node.nodeValue.slice(end);
+    const c = document.createRange();
+    c.setStart(node, start + rep.length);
+    c.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(c);
+  }
+  scheduleSave();
+}
+
+function inCode(node) {
+  const el = node.nodeType === 1 ? node : node.parentElement;
+  return !!(el && el.closest && el.closest('pre, code'));
+}
+
 function smartTransformLastInsert() {
   const sel = window.getSelection();
-  if (!sel.rangeCount) return;
-  const node = sel.getRangeAt(0).startContainer;
-  if (node.nodeType !== 3) return;
-  const caret = sel.getRangeAt(0).startOffset;
+  if (!sel || !sel.rangeCount) return;
+  const r0 = sel.getRangeAt(0);
+  if (!r0.collapsed) return;
+  const node = r0.startContainer;
+  if (node.nodeType !== 3 || inCode(node)) return;
+  const caret = r0.startOffset;
   if (caret < 1) return;
-
   const before = node.nodeValue.slice(0, caret);
-  let transformed = false;
-  const range = document.createRange();
 
-  // Dash sequences
-  const dash = before.match(/(\-\-\-|\-\-)$/);
-  if (dash) {
-    const rep = dash[1] === '---' ? '\u2014' : '\u2013';
-    node.nodeValue = before.slice(0, caret - dash[1].length) + rep + node.nodeValue.slice(caret);
-    range.setStart(node, caret - dash[1].length + rep.length);
-    range.setEnd(node, caret - dash[1].length + rep.length);
-    transformed = true;
-  }
+  // Dashes: "--" → en dash; one more "-" right after → em dash
+  // (the old "---" rule was unreachable: "--" always converted first)
+  if (/\u2013-$/.test(before)) { stReplace(node, caret - 2, caret, '\u2014'); return; }
+  if (/--$/.test(before))      { stReplace(node, caret - 2, caret, '\u2013'); return; }
 
   // Ellipsis
-  if (!transformed && /\.\.\.$/.test(before)) {
-    node.nodeValue = before.slice(0, caret - 3) + '\u2026' + node.nodeValue.slice(caret);
-    range.setStart(node, caret - 2);
-    range.setEnd(node, caret - 2);
-    transformed = true;
-  }
+  if (/\.\.\.$/.test(before))  { stReplace(node, caret - 3, caret, '\u2026'); return; }
 
-  // Curly quotes (direction: opening if previous char is start/space/open-bracket)
-  if (!transformed && /["']$/.test(before)) {
+  // Curly quotes (opening after start/space/open bracket/dash/opening quote)
+  if (/["']$/.test(before)) {
     const q = before.slice(-1);
     const prev = before.slice(0, -1).slice(-1);
-    const isOpen = prev === '' || /[\s\(\[\{>\u2013\u2014\u201C\u2018]/.test(prev);
+    const isOpen = prev === '' || /[\s\(\[\{>\u2013\u2014\u201C\u2018«]/.test(prev);
     const pair = ST_PAIRS[q];
-    const rep = isOpen ? pair[0] : pair[1];
-    node.nodeValue = before.slice(0, caret - 1) + rep + node.nodeValue.slice(caret);
-    range.setStart(node, caret);
-    range.setEnd(node, caret);
-    transformed = true;
-  }
-
-  if (transformed) {
-    sel.removeAllRanges();
-    sel.addRange(range);
-    scheduleSave();
+    stReplace(node, caret - 1, caret, isOpen ? pair[0] : pair[1]);
   }
 }
 
@@ -1731,26 +2225,19 @@ function autoCorrectLastWord() {
   const rules = acRules();
   if (!rules.length) return;
   const sel = window.getSelection();
-  if (!sel.rangeCount) return;
+  if (!sel || !sel.rangeCount || !sel.getRangeAt(0).collapsed) return;
   const node = sel.getRangeAt(0).startContainer;
-  if (node.nodeType !== 3) return;
+  if (node.nodeType !== 3 || inCode(node)) return;
   const caret = sel.getRangeAt(0).startOffset;
   const before = node.nodeValue.slice(0, caret);
-  const word = before.slice(-24);
 
   for (const rule of rules) {
-    if (rule && rule.find && word.endsWith(rule.find)) {
-      const range = document.createRange();
-      range.setStart(node, caret - rule.find.length);
-      range.setEnd(node, caret);
-      range.deleteContents();
-      range.insertNode(document.createTextNode(rule.repl));
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      scheduleSave();
-      return;
-    }
+    if (!rule || !rule.find || !before.endsWith(rule.find)) continue;
+    // Word boundary: "11/2" must not become "1½", "a(c)" stays as typed
+    const prev = before.slice(0, before.length - rule.find.length).slice(-1);
+    if (prev && /[\p{L}\p{N}]/u.test(prev)) continue;
+    stReplace(node, caret - rule.find.length, caret, rule.repl);
+    return;
   }
 }
 
@@ -1971,8 +2458,7 @@ function doInsertLink(dlg) {
   const text = dlg.querySelector('#lk-text').value.trim();
   const url = dlg.querySelector('#lk-url').value.trim();
   if (!url) return;
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount && !sel.getRangeAt(0).collapsed) sel.getRangeAt(0).deleteContents();
+  // insertNodeAtCursor() replaces the remembered editor selection itself
   const a = document.createElement('a');
   a.href = url;
   a.target = '_blank';
@@ -1989,7 +2475,7 @@ function openImageDialog() {
     <div style="display:flex;flex-direction:column;gap:8px;">
       <input type="url" class="w-field" id="img-url" placeholder="https://…">
       <input type="file" accept="image/*" id="img-file" class="w-field" style="height:auto;padding:6px;">
-      <input type="text" class="w-field" id="img-cap" placeholder="Caption">
+      <input type="text" class="w-field" id="img-cap" placeholder="${escAttr(t('img.caption'))}">
     </div>
   `, [
     { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
@@ -2135,7 +2621,7 @@ function cleanupFootnotes() {
 
   if (changed) {
     if (fnPanel && !fnPanel.hidden) renderFootnotesPanel();
-    scheduleSave();
+    markDoc(doc);
   }
   return changed;
 }
@@ -2155,9 +2641,10 @@ function addFootnote() {
   sup.textContent = '*';
   insertNodeAtCursor(sup);
   renumberFootnotes();
+  drainObserver();
   fnSuspendObserver = false;
 
-  scheduleSave();
+  markDoc(doc);
   if (!fnPanel || fnPanel.hidden) toggleFootnotesPanel();
   renderFootnotesPanel();
   showToast(t('fn.added'));
@@ -2290,7 +2777,7 @@ function renderFootnotesPanel() {
     ta.textContent = entry.text || '';
     ta.addEventListener('input', () => {
       const e = fnEntry(id);
-      if (e) { e.text = ta.textContent; scheduleSave(); }
+      if (e) { e.text = ta.textContent; markDoc(fnDoc()); }
     });
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') ta.blur();
@@ -2309,7 +2796,7 @@ function renderFootnotesPanel() {
       const d = fnDoc();
       if (d) d.footnotes = d.footnotes.filter(f => f.id !== id);
       renumberFootnotes();
-      scheduleSave();
+      markDoc(fnDoc());
       renderFootnotesPanel();
     });
 
@@ -2340,6 +2827,12 @@ function startFootnoteObserver() {
   fnObserver.observe(EL.editor, {
     childList: true, subtree: true, characterData: true
   });
+}
+
+// MutationObserver callbacks are ASYNC — toggling a flag around a sync
+// change never paused anything. Drain the queued records instead.
+function drainObserver() {
+  if (fnObserver) fnObserver.takeRecords();
 }
 
 /* ----- Restore on tab switch: cleanup after render (handles docs
@@ -2390,7 +2883,7 @@ function cleanupComments() {
   let changed = false;
 
   cmtMarks().forEach(mark => {
-    if (!cmtEntry(mark.dataset.cmt)) { mark.remove(); changed = true; }
+    if (!cmtEntry(mark.dataset.cmt)) { ioUnwrap(mark); changed = true; }   // keep the TEXT
   });
 
   const ids = new Set(cmtMarks().map(m => m.dataset.cmt));
@@ -2400,7 +2893,7 @@ function cleanupComments() {
 
   if (changed) {
     if (cmtPanel && !cmtPanel.hidden) renderCommentsPanel();
-    scheduleSave();
+    markDoc(doc);
   }
   return changed;
 }
@@ -2409,38 +2902,62 @@ function cleanupComments() {
 function addComment() {
   const doc = cmtDoc();
   if (!doc) return;
+  if (isLocked()) return;
 
+  // Selection: live one if it is in the editor, else the remembered one
+  // (clicking into the comments panel must not lose it).
   const sel = window.getSelection();
-  if (!sel || !sel.rangeCount || sel.getRangeAt(0).collapsed) {
-    showToast(t('cmt.empty'));
+  let range = null;
+  if (sel && sel.rangeCount && EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    range = sel.getRangeAt(0);
+  } else if (lastEditorRange && EL.editor.contains(lastEditorRange.commonAncestorContainer)) {
+    range = lastEditorRange;
+  }
+  if (!range || range.collapsed || !range.toString().trim()) {
+    showToast(t('cmt.needSel'));
     return;
   }
 
+  const BLK = 'p,div,li,h1,h2,h3,h4,blockquote,pre,td,th,figcaption';
+  const blockOf = n => {
+    let el = n.nodeType === 1 ? n : n.parentElement;
+    while (el && el !== EL.editor && !el.matches(BLK)) el = el.parentElement;
+    return el || EL.editor;
+  };
+
   const id = 'cm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const entry = { id: id, quote: sel.toString(), text: '', ts: Date.now() };
-  doc.comments.push(entry);
+  const quote = range.toString();
+  const mark = document.createElement('mark');
+  mark.className = 'cmt-mark';
+  mark.dataset.cmt = id;
 
   cmtSuspendObserver = true;
   try {
-    const range = sel.getRangeAt(0);
-    const mark = document.createElement('mark');
-    mark.className = 'cmt-mark';
-    mark.dataset.cmt = id;
-    range.surroundContents(mark);
-    sel.removeAllRanges();
-    const after = document.createRange();
-    after.setStartAfter(mark);
-    after.collapse(true);
-    sel.addRange(after);
-  } catch (e) {
+    try {
+      range.surroundContents(mark);          // clean case: one text run
+    } catch (e) {
+      // partial formatting (e.g. half-bold) → extract + wrap, but never
+      // across paragraphs (a <mark> cannot hold blocks)
+      if (blockOf(range.startContainer) !== blockOf(range.endContainer)) {
+        showToast(t('cmt.oneBlock'));
+        return;
+      }
+      mark.appendChild(range.extractContents());
+      range.insertNode(mark);
+    }
+  } finally {
+    drainObserver();
     cmtSuspendObserver = false;
-    doc.comments = doc.comments.filter(c => c.id !== id);
-    showToast(t('cmt.empty'));
-    return;
   }
-  cmtSuspendObserver = false;
 
-  scheduleSave();
+  doc.comments.push({ id: id, quote: quote, text: '', ts: Date.now() });
+  const after = document.createRange();
+  after.setStartAfter(mark);
+  after.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(after);
+
+  markDoc(doc);
   if (!cmtPanel || cmtPanel.hidden) toggleCommentsPanel();
   renderCommentsPanel();
 
@@ -2577,7 +3094,7 @@ function renderCommentsPanel() {
     ta.textContent = entry.text || '';
     ta.addEventListener('input', () => {
       const e = cmtEntry(id);
-      if (e) { e.text = ta.textContent; scheduleSave(); }
+      if (e) { e.text = ta.textContent; markDoc(cmtDoc()); }
     });
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') ta.blur();
@@ -2597,11 +3114,11 @@ function renderCommentsPanel() {
     del.title = t('cmt.delete');
     del.addEventListener('click', () => {
       cmtSuspendObserver = true;
-      EL.editor.querySelectorAll('mark.cmt-mark[data-cmt="' + id + '"]').forEach(m => m.remove());
+      EL.editor.querySelectorAll('mark.cmt-mark[data-cmt="' + id + '"]').forEach(ioUnwrap);   // text stays
       cmtSuspendObserver = false;
       const d = cmtDoc();
       if (d) d.comments = d.comments.filter(c => c.id !== id);
-      scheduleSave();
+      markDoc(cmtDoc());
       renderCommentsPanel();
     });
     meta.append(ts, del);
@@ -2674,7 +3191,10 @@ function openMetadataDialog() {
       
       <label>${t('meta.tags')}</label>
       <div class="full">
-        <input type="text" class="w-field" id="meta-tags-new" placeholder="${t('meta.tagsAdd')}">
+        <div class="meta-tag-add">
+          <input type="text" class="w-field" id="meta-tags-new" placeholder="${escAttr(t('meta.tagsAdd'))}" enterkeyhint="done">
+          <button type="button" class="fb-btn" id="meta-tags-btn" title="${escAttr(t('meta.tagAddBtn'))}" aria-label="${escAttr(t('meta.tagAddBtn'))}">+</button>
+        </div>
         <div class="form-tags-row" id="meta-tags-list"></div>
       </div>
     </div>
@@ -2684,35 +3204,38 @@ function openMetadataDialog() {
 
   // Live sync to doc (no save button needed per design)
   document.getElementById('meta-title').addEventListener('input', (e) => {
-    doc.title = e.target.value.trim();
+    doc.title = e.target.value.trim().slice(0, 120);
     renderTabs();
     document.title = t('app.name') + ' — ' + (doc.title || t('tab.untitled'));
-    scheduleSave();
+    markDoc(doc);
   });
 
   document.getElementById('meta-author').addEventListener('input', (e) => {
     doc.author = e.target.value;
-    scheduleSave();
+    markDoc(doc);
   });
 
   document.getElementById('meta-category').addEventListener('input', (e) => {
     doc.category = e.target.value;
-    scheduleSave();
+    markDoc(doc);
   });
 
-  document.getElementById('meta-tags-new').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const val = e.target.value.trim();
-      if (val && !(doc.tags || []).includes(val)) {
-        doc.tags = doc.tags || [];
-        doc.tags.push(val);
-        e.target.value = '';
-        renderMetaTags(doc.tags);
-        scheduleSave();
-      }
+  // keydown + explicit button: Android keyboards rarely fire 'keypress'
+  const tagInput = document.getElementById('meta-tags-new');
+  const addTag = () => {
+    const val = tagInput.value.trim();
+    if (val && !(doc.tags || []).includes(val)) {
+      doc.tags = doc.tags || [];
+      doc.tags.push(val);
+      renderMetaTags(doc.tags);
+      markDoc(doc);
     }
+    tagInput.value = '';
+  };
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addTag(); }
   });
+  document.getElementById('meta-tags-btn').addEventListener('click', addTag);
 }
 
 function renderMetaTags(tags) {
@@ -2731,7 +3254,7 @@ function renderMetaTags(tags) {
       if (d && d.tags) {
         d.tags = d.tags.filter(t => t !== tag);
         renderMetaTags(d.tags);
-        scheduleSave();
+        markDoc(d);
       }
     });
     chip.appendChild(del);
@@ -2801,7 +3324,7 @@ function openPageSettings() {
     doc.pageSize = sizeSel.value;
     EL.editor.setAttribute('data-page-size', doc.pageSize);
     updatePreview();
-    scheduleSave();
+    markDoc(doc);
   });
 
   ['top','right','bottom','left'].forEach(side => {
@@ -2809,18 +3332,18 @@ function openPageSettings() {
     inp.addEventListener('input', () => {
       doc.margins[side] = Math.max(0, Math.min(100, parseInt(inp.value) || 0));
       updatePreview();
-      scheduleSave();
+      markDoc(doc);
     });
   });
 
   document.getElementById('page-header').addEventListener('input', (e) => {
     doc.header = e.target.value;
-    scheduleSave();
+    markDoc(doc);
   });
 
   document.getElementById('page-footer').addEventListener('input', (e) => {
     doc.footer = e.target.value;
-    scheduleSave();
+    markDoc(doc);
   });
 
   function updatePreview() {
@@ -2838,7 +3361,7 @@ function openPageSettings() {
     const m = Math.min(doc.margins.top, 30);
     pm.querySelector('.paper-margin-box').style.setProperty('--pv-m', m + 'px');
     const cap = pageDlg.querySelector('.paper-caption');
-    if (cap) cap.textContent = `${size.w}×${size.h} mm`;
+    if (cap) cap.textContent = size.w === 'auto' ? t(size.label) : `${size.w}×${size.h} mm`;
   }
   updatePreview();
 }
@@ -2866,46 +3389,54 @@ function resetMargins() {
       if (mb) mb.style.setProperty('--pv-m', '25px');
     }
   }
-  scheduleSave();
+  markDoc(doc);
 }
 
 /* ----- TABLE OF CONTENTS (inline) ----- */
 function insertInlineToc() {
   const toc = generateTocHTML();
   if (!toc) { showToast(t('toc.empty')); return; }
-  insertNodeAtCursor(document.createRange().createContextualFragment(toc));
+  const box = document.createElement('div');
+  box.innerHTML = toc;
+  insertNodeAtCursor(box.firstChild);
   scheduleSave();
 }
 
-function generateTocHTML() {
-  // assign REAL ids to the live headings — anchors must resolve
-  let n = 0;
+// Unique, stable heading ids (one counter, collision-checked, persisted)
+function ensureHeadingIds() {
+  const used = new Set();
+  let changed = false;
   EL.editor.querySelectorAll('h1,h2,h3,h4').forEach(h => {
-    if (!h.id) h.id = 'toc-' + n++;
+    if (!h.id || used.has(h.id) || document.getElementById(h.id) !== h) {
+      let id;
+      do { id = 'h-' + Math.random().toString(36).slice(2, 8); }
+      while (document.getElementById(id) || used.has(id));
+      h.id = id;
+      changed = true;
+    }
+    used.add(h.id);
   });
-  const headings = Array.from(EL.editor.querySelectorAll('h1,h2,h3,h4'))
-    .map(h => ({ id: h.id, level: h.tagName.toLowerCase(), text: h.textContent.trim() || t('toc.unnamed') }))
-    .filter(h => h.text);
+  if (changed) scheduleSave();
+  return Array.from(EL.editor.querySelectorAll('h1,h2,h3,h4'))
+    .map(h => ({ id: h.id, level: h.tagName.toLowerCase(),
+                 text: h.textContent.trim() || t('toc.unnamed') }));
+}
 
+function generateTocHTML() {
+  const headings = ensureHeadingIds();
   if (headings.length === 0) return null;
 
   let html = '<div class="toc-inline">';
   html += '<ol>';
   headings.forEach(h => {
-    html += `<li class="toc-h${h.level.replace('h','')}"><a href="#${h.id}">${escAttr(h.text)}</a></li>`;
+    html += `<li class="toc-h${h.level.replace('h','')}"><a href="#${escAttr(h.id)}">${esc(h.text)}</a></li>`;
   });
   html += '</ol></div>';
   return html;
 }
 
 function toggleTocPanel() {
-  // Ensure headings carry stable ids so TOC entries are clickable
-  EL.editor.querySelectorAll('h1,h2,h3,h4').forEach((h, i) => {
-    if (!h.id) h.id = 'toc-' + i;
-  });
-  const headings = Array.from(EL.editor.querySelectorAll('h1,h2,h3,h4')).map((h,i) => ({
-    id: h.id || 'toc-' + i, level: h.tagName.toLowerCase(), text: h.textContent.trim() || t('toc.unnamed')
-  })).filter(h => h.text);
+  const headings = ensureHeadingIds();
 
   if (headings.length === 0) {
     showToast(t('toc.empty'));
@@ -2925,7 +3456,7 @@ function toggleTocPanel() {
     li.className = 'toc-item toc-' + h.level;
     li.innerHTML = `<span class="toc-level">${h.level.toUpperCase()}</span><span class="toc-title">${esc(h.text)}</span>`;
     li.addEventListener('click', () => {
-      const target = EL.editor.querySelector('#' + h.id);
+      const target = document.getElementById(h.id);   // no selector parsing of ids
       if (target) {
         target.scrollIntoView({ block: 'start', behavior: 'smooth' });
         const range = document.createRange();
@@ -2949,21 +3480,36 @@ function toggleTocPanel() {
    entity with tombstones (see slice patch below). Rendering grids
    built-ins + customs immediately, no manual refresh. */
 
+// R15: built-ins carry BOTH languages; the active one is used at insert time.
 const TPL_BUILTIN = [
-  { id: 'essay',     builtin: true, name: 'tpl.builtin.essay',     desc: 'tpl.builtin.essay.d',
-    html: '<h1>Essay title</h1><p>Introduction…</p><h2>Section</h2><p>Body…</p><h2>Conclusion</h2><p>Summing up…</p>' },
-  { id: 'letter',    builtin: true, name: 'tpl.builtin.letter',    desc: 'tpl.builtin.letter.d',
-    html: '<p style="text-align:right">City, date</p><p>Recipient<br>Address</p><p>Dear Sir or Madam,</p><p>Body…</p><p>Sincerely,<br>Your name</p>' },
-  { id: 'novel',     builtin: true, name: 'tpl.builtin.novel',     desc: 'tpl.builtin.novel.d',
-    html: '<h1>Chapter One</h1><p>Narrative…</p><p>* * *</p><p>Next scene…</p>' },
-  { id: 'screenplay',builtin: true, name: 'tpl.builtin.screenplay',desc: 'tpl.builtin.screenplay.d',
-    html: '<p><strong>FADE IN:</strong></p><h3>INT. ROOM — DAY</h3><p>Action description.</p><p><strong>CHARACTER</strong><br>(dialogue)</p>' },
-  { id: 'poem',      builtin: true, name: 'tpl.builtin.poem',      desc: 'tpl.builtin.poem.d',
-    html: '<h1>Poem title</h1><p>First stanza…</p><p>&nbsp;</p><p>Second stanza…</p>' },
-  { id: 'notes',     builtin: true, name: 'tpl.builtin.notes',    desc: 'tpl.builtin.notes.d',
-    html: '<h1>Meeting notes</h1><p>Date / attendees…</p><h2>Agenda</h2><ul><li>Item…</li></ul><h2>Decisions</h2><ul><li>Decision…</li></ul><h2>Action items</h2><ul><li>Who — what — when…</li></ul>' },
-  { id: 'blank',     builtin: true, name: 'tpl.builtin.blank',    desc: 'tpl.builtin.blank.d', html: '' }
+  { id: 'essay', builtin: true, name: 'tpl.builtin.essay', desc: 'tpl.builtin.essay.d', html: {
+    en: '<h1>Essay title</h1><p>Introduction…</p><h2>Section</h2><p>Body…</p><h2>Conclusion</h2><p>Summing up…</p>',
+    el: '<h1>Τίτλος δοκιμίου</h1><p>Εισαγωγή…</p><h2>Ενότητα</h2><p>Κύριο μέρος…</p><h2>Συμπέρασμα</h2><p>Σύνοψη…</p>' } },
+  { id: 'letter', builtin: true, name: 'tpl.builtin.letter', desc: 'tpl.builtin.letter.d', html: {
+    en: '<p style="text-align:right">City, date</p><p>Recipient<br>Address</p><p>Dear Sir or Madam,</p><p>Body…</p><p>Sincerely,<br>Your name</p>',
+    el: '<p style="text-align:right">Πόλη, ημερομηνία</p><p>Παραλήπτης<br>Διεύθυνση</p><p>Αξιότιμε κύριε / Αξιότιμη κυρία,</p><p>Κείμενο…</p><p>Με εκτίμηση,<br>Το όνομά σας</p>' } },
+  { id: 'novel', builtin: true, name: 'tpl.builtin.novel', desc: 'tpl.builtin.novel.d', html: {
+    en: '<h1>Chapter One</h1><p>Narrative…</p><p>* * *</p><p>Next scene…</p>',
+    el: '<h1>Κεφάλαιο πρώτο</h1><p>Αφήγηση…</p><p>* * *</p><p>Επόμενη σκηνή…</p>' } },
+  { id: 'screenplay', builtin: true, name: 'tpl.builtin.screenplay', desc: 'tpl.builtin.screenplay.d', html: {
+    en: '<p><strong>FADE IN:</strong></p><h3>INT. ROOM — DAY</h3><p>Action description.</p><p><strong>CHARACTER</strong><br>(dialogue)</p>',
+    el: '<p><strong>ΑΝΟΙΓΜΑ:</strong></p><h3>ΕΣΩΤ. ΔΩΜΑΤΙΟ — ΜΕΡΑ</h3><p>Περιγραφή δράσης.</p><p><strong>ΧΑΡΑΚΤΗΡΑΣ</strong><br>(διάλογος)</p>' } },
+  { id: 'poem', builtin: true, name: 'tpl.builtin.poem', desc: 'tpl.builtin.poem.d', html: {
+    en: '<h1>Poem title</h1><p>First stanza…</p><p>&nbsp;</p><p>Second stanza…</p>',
+    el: '<h1>Τίτλος ποιήματος</h1><p>Πρώτη στροφή…</p><p>&nbsp;</p><p>Δεύτερη στροφή…</p>' } },
+  { id: 'notes', builtin: true, name: 'tpl.builtin.notes', desc: 'tpl.builtin.notes.d', html: {
+    en: '<h1>Meeting notes</h1><p>Date / attendees…</p><h2>Agenda</h2><ul><li>Item…</li></ul><h2>Decisions</h2><ul><li>Decision…</li></ul><h2>Action items</h2><ul><li>Who — what — when…</li></ul>',
+    el: '<h1>Σημειώσεις σύσκεψης</h1><p>Ημερομηνία / συμμετέχοντες…</p><h2>Ατζέντα</h2><ul><li>Θέμα…</li></ul><h2>Αποφάσεις</h2><ul><li>Απόφαση…</li></ul><h2>Ενέργειες</h2><ul><li>Ποιος — τι — πότε…</li></ul>' } },
+  { id: 'blank', builtin: true, name: 'tpl.builtin.blank', desc: 'tpl.builtin.blank.d', html: { en: '', el: '' } }
 ];
+
+function tplHtml(tpl) {
+  if (tpl.html && typeof tpl.html === 'object') {
+    const lang = (window.orosLang === 'el') ? 'el' : 'en';
+    return tpl.html[lang] || tpl.html.en || '';
+  }
+  return tpl.html || '';
+}
 
 function allTemplates() {
   const customs = state.templates || [];
@@ -3010,7 +3556,7 @@ function renderTemplates() {
     use.className = 'fb-btn primary';
     use.textContent = t('tpl.use');
     use.addEventListener('click', () => {
-      createDoc({ html: tpl.html, title: tpl.builtin ? t(tpl.name) : tpl.name, silent: true });
+      createDoc({ html: tplHtml(tpl), title: tpl.builtin ? t(tpl.name) : tpl.name, silent: true });
       tplDlg.close();
     });
     actions.appendChild(use);
@@ -3030,18 +3576,27 @@ function renderTemplates() {
       del.title = t('tpl.del');
       del.innerHTML = ICONS.trash;
       del.addEventListener('click', () => {
-        if (!confirm(t('tpl.confirmDel').replace('{name}', tpl.name))) return;
-        state.templates = state.templates.filter(x => x.id !== tpl.id);
-        state.tplTombs = state.tplTombs || [];
-        state.tplTombs.push({ id: tpl.id, ts: Date.now() });   // tombstone
-        scheduleSave();
-        renderTemplates();
+        wConfirm(t('tpl.confirmDel').replace('{name}', tpl.name), { danger: true, ok: t('wx.delete') })
+          .then(ok => {
+            if (!ok) return;
+            state.templates = state.templates.filter(x => x.id !== tpl.id);
+            state.tplTombs = state.tplTombs || [];
+            state.tplTombs.push({ id: tpl.id, ts: Date.now() });   // tombstone (R17)
+            scheduleSave();
+            if (tplDlg && tplDlg.open) renderTemplates();
+            undoToast(t('tpl.deleted'), () => {
+              // fresh mtime beats the tombstone (resurrection contract)
+              state.templates.push(Object.assign({}, tpl, { mtime: Date.now() }));
+              scheduleSave();
+              if (tplDlg && tplDlg.open) renderTemplates();
+            });
+          });
       });
       actions.appendChild(del);
     } else {
       const badge = document.createElement('span');
       badge.className = 'tpl-badge';
-      badge.textContent = 'Built-in';
+      badge.textContent = t('tpl.builtinBadge');
       card.appendChild(badge);
     }
 
@@ -3055,26 +3610,30 @@ function renderTemplates() {
 function saveCurrentAsTemplate() {
   const doc = activeDoc();
   if (!doc) return;
-  const name = prompt(t('tpl.name'), doc.title || '');
-  if (!name) return;
-  const existing = (state.templates || []).find(x => x.name === name);
-  if (existing && !confirm(t('tpl.confirmOverwrite'))) return;
-
-  const tpl = {
-    id: existing ? existing.id : 'tp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    name: name,
-    desc: '',
-    html: editorHTMLForSave(),
-    mtime: Date.now()
-  };
-  if (existing) { Object.assign(existing, tpl); }
-  else {
-    state.templates = state.templates || [];
-    state.templates.push(tpl);
-  }
-  scheduleSave();
-  renderTemplates();
-  showToast(t('tpl.saved'));
+  flushSave();
+  wPrompt(t('tpl.name'), doc.title || '').then(name => {
+    if (!name) return;
+    const existing = (state.templates || []).find(x => x.name === name);
+    const go = existing ? wConfirm(t('tpl.confirmOverwrite')) : Promise.resolve(true);
+    go.then(ok => {
+      if (!ok) return;
+      const tpl = {
+        id: existing ? existing.id : 'tp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name: name,
+        desc: existing ? (existing.desc || '') : '',
+        html: editorHTMLForSave(),
+        mtime: Date.now()
+      };
+      if (existing) Object.assign(existing, tpl);
+      else {
+        state.templates = state.templates || [];
+        state.templates.push(tpl);
+      }
+      scheduleSave();
+      if (tplDlg && tplDlg.open) renderTemplates();
+      showToast(t('tpl.saved'));
+    });
+  });
 }
 
 function editTemplate(tpl) {
@@ -3119,6 +3678,7 @@ function importTemplateJson() {
         state.templates = state.templates || [];
         arr.forEach(tpl => {
           if (!tpl || typeof tpl.name !== 'string' || typeof tpl.html !== 'string') return;
+          tpl.html = ioSanitizeHtml(tpl.html);
           const id = (typeof tpl.id === 'string') ? tpl.id
             : 'tp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
           const existing = state.templates.find(x => x.name === tpl.name);
@@ -3143,35 +3703,28 @@ function importTemplateJson() {
    back text AND footnotes AND comments. Lives inside doc (LWW sync).
    Distinct from orOS core DB snapshots — this is a document feature. */
 
-let verPanel = null;
-let verTimer = null;
 
 function openVersionsPanel() {
   const doc = activeDoc();
   if (!doc) return;
-
-  // Auto-version tick: every 30s, if content changed since last version
-  clearInterval(verTimer);
-  verTimer = setInterval(() => {
-    const d = activeDoc();
-    if (!d || d !== doc) { clearInterval(verTimer); return; }
-    maybeAutoVersion(d);
-  }, 30000);
-
+  flushSave();
   const dlg = openDialog(t('ver.title'), '', [
     { class: 'fb-btn', label: t('ver.snapshot'), onClick: () => {
         takeManualSnapshot(doc);
         renderVersions(dlg, doc);
       } },
-    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => { clearInterval(verTimer); dlg.close(); } }
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
   ]);
-  dlg.addEventListener('close', () => clearInterval(verTimer));
   renderVersions(dlg, doc);
 }
 
 function renderVersions(dlg, doc) {
   const body = dlg.querySelector('.w-dialog-body');
   body.innerHTML = '';
+  const note = document.createElement('div');
+  note.className = 'io-note ver-note';
+  note.textContent = t('ver.autoNote');
+  body.appendChild(note);
   if (!doc.versions || doc.versions.length === 0) {
     const e = document.createElement('div');
     e.className = 'ver-empty';
@@ -3217,9 +3770,11 @@ function renderVersions(dlg, doc) {
     restore.className = 'fb-btn';
     restore.textContent = t('ver.restore');
     restore.addEventListener('click', () => {
-      if (!confirm(t('ver.confirmRestore'))) return;
-      restoreVersion(doc, v);
-      renderVersions(dlg, doc);
+      wConfirm(t('ver.confirmRestore')).then(ok => {
+        if (!ok) return;
+        restoreVersion(doc, v);
+        if (dlg.open) renderVersions(dlg, doc);
+      });
     });
 
     acts.appendChild(restore);
@@ -3232,10 +3787,12 @@ function renderVersions(dlg, doc) {
       del.title = t('ver.delete');
       del.innerHTML = ICONS.trash;
       del.addEventListener('click', () => {
-        if (!confirm(t('ver.confirmDel'))) return;
-        doc.versions = doc.versions.filter(x => x !== v);
-        scheduleSave();
-        renderVersions(dlg, doc);   // immediate UI removal, no stale state
+        wConfirm(t('ver.confirmDel'), { danger: true, ok: t('wx.delete') }).then(ok => {
+          if (!ok) return;
+          doc.versions = doc.versions.filter(x => x !== v);
+          markDoc(doc);
+          if (dlg.open) renderVersions(dlg, doc);   // immediate UI removal
+        });
       });
       acts.appendChild(del);
     }
@@ -3257,29 +3814,31 @@ function countWordsInHtml(html) {
   return words.filter(w => /[\p{L}\p{N}]/u.test(w)).length;
 }
 
-function maybeAutoVersion(doc) {
-  flushSave();
-  const current = doc.html || '';
-  const last = doc.versions && doc.versions.length
-    ? doc.versions[doc.versions.length - 1].html : null;
-  if (current === last) return;
+// Auto versions ride the save pipeline (no idle timers — battery rule):
+// flushSave() calls this only when the html really changed. At most one
+// auto version per AUTO_VER_MS; capVersions() keeps the newest 8.
+const AUTO_VER_MS = 5 * 60 * 1000;
 
-  doc.versions = doc.versions || [];
-  doc.versions.push({ ts: Date.now(), html: current, manual: false });
-  // Cap: keep the newest 8 auto versions (manual ones never dropped by cap)
-  const manual = doc.versions.filter(v => v.manual);
-  const auto = doc.versions.filter(v => !v.manual).slice(-8);
-  doc.versions = doc.versions.filter(v => v.manual)
-    .concat(auto)
-    .sort((a, b) => a.ts - b.ts);
-  scheduleSave();
+function autoVersionTick(doc) {
+  const vers = Array.isArray(doc.versions) ? doc.versions : (doc.versions = []);
+  let lastAuto = null;
+  for (let i = vers.length - 1; i >= 0; i--) { if (!vers[i].manual) { lastAuto = vers[i]; break; } }
+  if (lastAuto && Date.now() - lastAuto.ts < AUTO_VER_MS) return;
+  const last = vers.length ? vers[vers.length - 1] : null;
+  if (!doc.html || (last && last.html === doc.html)) return;
+  vers.push({ ts: Date.now(), html: doc.html, manual: false,
+    footnotes: JSON.parse(JSON.stringify(doc.footnotes || [])),
+    comments: JSON.parse(JSON.stringify(doc.comments || [])) });
+  doc.versions = capVersions(vers);
 }
 
 function takeManualSnapshot(doc) {
   flushSave();
   doc.versions = doc.versions || [];
-  doc.versions.push({ ts: Date.now(), html: doc.html || '', manual: true });
-  scheduleSave();
+  doc.versions.push({ ts: Date.now(), html: doc.html || '', manual: true,
+    footnotes: JSON.parse(JSON.stringify(doc.footnotes || [])),
+    comments: JSON.parse(JSON.stringify(doc.comments || [])) });
+  markDoc(doc);
   showToast(t('ver.snapshotted'));
 }
 
@@ -3287,24 +3846,22 @@ function restoreVersion(doc, v) {
   // Full-fidelity restore: text + footnotes + comments
   // Snapshot the CURRENT state first (safety — restoring is undoable via its own entry)
   takeManualSnapshot(doc);
+  // takeManualSnapshot() re-armed the debounce: the old flushSave()
+  // here re-read the OLD editor into doc.html → restore was a no-op.
+  clearTimeout(saveTimer);
+  dirty = false;
 
-  doc.html = v.html;
+  doc.html = v.html || '';
+  // Versions taken after this fix carry their annotations; older ones
+  // keep the current entries (comment marks unwrap, text survives).
+  if (Array.isArray(v.footnotes)) doc.footnotes = JSON.parse(JSON.stringify(v.footnotes));
+  if (Array.isArray(v.comments))  doc.comments  = JSON.parse(JSON.stringify(v.comments));
   doc.mtime = Date.now();
-  flushSave();
 
-  EL.editor.innerHTML = doc.html;
-  fnSuspendObserver = true;
-  cmtSuspendObserver = true;
-  renumberFootnotes();
-  cleanupFootnotes();
-  cleanupComments();
-  fnSuspendObserver = false;
-  cmtSuspendObserver = false;
-
-  footnotesAfterRender();
-  commentsAfterRender();
+  renderEditor();            // editor + footnote/comment panels + goal bar
   renderTabs();
-  scheduleSave();
+  dirty = true;
+  flushSave();               // persist + markDirty with the RESTORED html
   showToast(t('ver.restored') + ' — ' + t('ver.restoredFull'));
 }
 
@@ -3320,18 +3877,36 @@ function restoreVersion(doc, v) {
 // The goal itself syncs (part of doc, LWW) but RUNTIME state (lock armed,
 // done-fired flag) is device-local.
 
-let goalRuntime = { fired: false };   // device-local: toast once per achievement
+// device-local runtime: per doc, the goal signature already celebrated
+// (survives tab switches and sync re-renders — the toast fires once)
+let goalRuntime = { firedFor: {} };
+let goalRaf = 0;
 
 /* ----- Stats (shared with the goal bar) ----- */
 function editorStats() {
-  const clone = document.createElement('div');
-  clone.innerHTML = editorHTMLForSave();
-  clone.querySelectorAll('sup.fn-ref').forEach(x => x.remove());
-  const text = clone.textContent || '';
+  // Walk the live DOM (no clone per keystroke). Words never merge across
+  // blocks or <br>, and never split across inline formatting.
+  const BLK = /^(P|DIV|LI|H1|H2|H3|H4|BLOCKQUOTE|PRE|TD|TH|FIGCAPTION|TABLE|UL|OL)$/;
+  let text = '';
+  const walker = document.createTreeWalker(EL.editor,
+    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
+      acceptNode: n => (n.nodeType === 1 && n.matches('sup.fn-ref'))
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+  while (walker.nextNode()) {
+    const n = walker.currentNode;
+    if (n.nodeType === 3) text += n.nodeValue;
+    else if (n.nodeName === 'BR' || BLK.test(n.nodeName)) text += '\n';
+  }
   const words = text.trim().split(/\s+/).filter(Boolean)
     .filter(w => /[\p{L}\p{N}]/u.test(w)).length;
-  const paras = Array.from(clone.children)
-    .filter(el => el.tagName === 'P' && el.textContent.trim()).length;
+  let paras = 0;
+  Array.from(EL.editor.childNodes).forEach(n => {
+    if (n.nodeType === 3) { if (n.nodeValue.trim()) paras++; return; }
+    if (n.nodeType === 1 && /^(P|DIV)$/.test(n.nodeName) &&
+        !n.classList.contains('page-break-marker') &&
+        !n.classList.contains('toc-inline') && n.textContent.trim()) paras++;
+  });
   return { words: words, chars: text.replace(/\s+/g, ' ').trim().length, paras: paras };
 }
 
@@ -3368,7 +3943,8 @@ function openGoalDialog() {
   `, [
     { class: 'fb-btn', label: t('goal.clear'), onClick: () => {
         doc.goal = null;
-        scheduleSave();
+        delete goalRuntime.firedFor[doc.id];
+        markDoc(doc);
         dlg.close();
         document.getElementById('goal-bar').hidden = true;
         unlockEditor();
@@ -3382,8 +3958,8 @@ function openGoalDialog() {
           lock: document.getElementById('g-lock').checked,
           startTs: Date.now(), startWords: st.words
         };
-        goalRuntime.fired = false;
-        scheduleSave();
+        delete goalRuntime.firedFor[doc.id];
+        markDoc(doc);
         dlg.close();
         const bar = document.getElementById('goal-bar');
         bar.hidden = false;
@@ -3425,7 +4001,7 @@ function goalProgress(goal) {
 function updateGoalBar() {
   const doc = activeDoc();
   const bar = document.getElementById('goal-bar');
-  if (!doc || !doc.goal) { bar.hidden = true; return; }
+  if (!doc || !doc.goal) { bar.hidden = true; unlockEditor(); return; }
 
   const p = goalProgress(doc.goal);
   bar.classList.toggle('done', p.done);
@@ -3435,16 +4011,17 @@ function updateGoalBar() {
 
   // stats INLINE next to the label (requirement — not a separate block)
   document.getElementById('goal-stats').textContent = p.statsLabel + ' · ' + p.pct + '%';
-
   document.getElementById('goal-fill').style.width = p.pct + '%';
 
-  // Lock button reflects state
+  // Lock button shows the ARMED state (it can be armed before the goal)
   const lockBtn = document.getElementById('goal-lock');
-  lockBtn.classList.toggle('on', doc.goal.lock && p.done);
+  lockBtn.classList.toggle('on', !!doc.goal.lock);
+  lockBtn.title = doc.goal.lock ? t('goal.lockArmed') : t('goal.lock');
 
-  // Achieved: emit once + arm lock
-  if (p.done && !goalRuntime.fired) {
-    goalRuntime.fired = true;
+  // Achieved: celebrate ONCE per goal (in-context → transient, not inbox)
+  const sig = doc.goal.type + '|' + doc.goal.target + '|' + (doc.goal.startTs || 0);
+  if (p.done && goalRuntime.firedFor[doc.id] !== sig) {
+    goalRuntime.firedFor[doc.id] = sig;
     const typeStr = {
       words: t('goal.type.words'), chars: t('goal.type.chars'),
       paras: t('goal.type.paras'), time: t('goal.type.time'),
@@ -3454,9 +4031,6 @@ function updateGoalBar() {
       .replace('{type}', typeStr)
       .replace('{cur}', String(p.cur))
       .replace('{target}', String(doc.goal.target)));
-    if (window.orosSync && typeof window.orosSync.emit === 'function') {
-      window.orosSync.emit({ ns: 'writer', kind: 'goal' });   // Notification-worthy (Wave 6 refines)
-    }
   }
   if (p.done && doc.goal.lock) lockEditor();
   else unlockEditor();
@@ -3476,46 +4050,51 @@ function unlockEditor() {
 
 /* ----- Goal bar wiring (once, in wireEvents) ----- */
 function wireGoalBar() {
-  const lockIcon = document.getElementById('goal-lock');
-  if (lockIcon) lockIcon.innerHTML = ICONS.lock;
-  const clrIcon = document.getElementById('goal-clear');
-  if (clrIcon) clrIcon.innerHTML = ICONS.close;
-
   const lockBtn = document.getElementById('goal-lock');
+  const clrBtn = document.getElementById('goal-clear');
+  if (lockBtn) lockBtn.innerHTML = ICONS.lock;
+  if (clrBtn) clrBtn.innerHTML = ICONS.close;
+
   lockBtn.addEventListener('click', () => {
     const doc = activeDoc();
     if (!doc || !doc.goal) return;
     const p = goalProgress(doc.goal);
     if (p.done && doc.goal.lock) {
-      if (confirm(t('goal.unlockConfirm'))) {
+      wConfirm(t('goal.unlockConfirm')).then(ok => {
+        if (!ok) return;
         doc.goal.lock = false;
-        scheduleSave();
-        unlockEditor();
-      }
-    } else {
-      doc.goal.lock = !doc.goal.lock;
-      if (!p.done) doc.goal.lock = false;   // lock only makes sense after done
-      scheduleSave();
-      updateGoalBar();
+        markDoc(doc);
+        updateGoalBar();
+      });
+      return;
     }
+    doc.goal.lock = !doc.goal.lock;      // arming before the goal is allowed
+    markDoc(doc);
+    updateGoalBar();
+    if (doc.goal.lock && !p.done) showToast(t('goal.lockArmed'));
   });
 
-  document.getElementById('goal-clear').addEventListener('click', () => {
+  clrBtn.addEventListener('click', () => {
     const doc = activeDoc();
     if (!doc) return;
     doc.goal = null;
-    scheduleSave();
+    delete goalRuntime.firedFor[doc.id];
+    markDoc(doc);
     document.getElementById('goal-bar').hidden = true;
     unlockEditor();
   });
 
-  // Hard input block when locked
+  // Hard input block when locked (typing); toolbar paths use isLocked()
   EL.editor.addEventListener('beforeinput', (e) => {
     if (EL.editor.dataset.goalLocked) {
       e.preventDefault();
-      showToast(t('goal.locked'));
+      lockToast();
     }
   });
+  // Drops and pastes do not always raise a cancelable beforeinput
+  ['paste', 'drop', 'cut'].forEach(ev => EL.editor.addEventListener(ev, (e) => {
+    if (EL.editor.dataset.goalLocked) { e.preventDefault(); lockToast(); }
+  }));
 }
 
 /* ----- Reading progress bar ----- */
@@ -3537,16 +4116,20 @@ function wireReadingProgress() {
 
 /* ----- Refresh hooks: keep bar + progress live on every edit ----- */
 function goalAfterInput() {
-  const doc = activeDoc();
-  const bar = document.getElementById('goal-bar');
-  if (doc && doc.goal && !bar.hidden) updateGoalBar();
-  updateReadingProgress();
+  if (goalRaf) return;                       // coalesce bursts into one frame
+  goalRaf = requestAnimationFrame(() => {
+    goalRaf = 0;
+    const doc = activeDoc();
+    const bar = document.getElementById('goal-bar');
+    if (doc && doc.goal && !bar.hidden) updateGoalBar();
+    updateReadingProgress();
+  });
 }
 
 function goalAfterRender() {
   const doc = activeDoc();
   const bar = document.getElementById('goal-bar');
-  if (doc && doc.goal) { bar.hidden = false; goalRuntime.fired = false; updateGoalBar(); }
+  if (doc && doc.goal) { bar.hidden = false; updateGoalBar(); }
   else { bar.hidden = true; unlockEditor(); }
   updateReadingProgress();
 }
@@ -3579,10 +4162,74 @@ function ioBaseName(doc) {
 /* ----- Export clone (annotation-safe DOM source) ----- */
 const IO_BLOCK_RE = /^(P|DIV|H1|H2|H3|H4|BLOCKQUOTE|PRE|UL|OL|DL|TABLE|FIGURE|HR)$/;
 
+// Chrome's contenteditable writes lines as <div> (or bare text at the
+// root). The block walkers treated those as containers: every inline
+// child became its OWN paragraph and lost bold/italic. Normalize once
+// here → every exporter sees real <p> blocks.
+const IO_INLINE_RE = /^(#text|A|ABBR|B|BR|CITE|CODE|DEL|EM|FONT|I|IMG|KBD|MARK|Q|S|SMALL|SPAN|STRIKE|STRONG|SUB|SUP|TIME|U)$/;
+
+function ioNormalizeBlocks(container) {
+  // Chrome's indent writes <ul><li>a</li><ul>…</ul></ul> — a list as a
+  // DIRECT child of a list. Every exporter skipped non-LI children, so
+  // indented items vanished. Re-home each one into the previous <li>.
+  container.querySelectorAll('ul > ul, ul > ol, ol > ul, ol > ol').forEach(nl => {
+    const prev = nl.previousElementSibling;
+    if (prev && prev.nodeName === 'LI') prev.appendChild(nl);
+    else {
+      const li = document.createElement('li');
+      nl.parentNode.insertBefore(li, nl);
+      li.appendChild(nl);
+    }
+  });
+  const isInline = n => n.nodeType === 3 ||
+    (n.nodeType === 1 && IO_INLINE_RE.test(n.nodeName) &&
+     !(n.classList && n.classList.contains('page-break-marker')));
+  Array.from(container.children).forEach(el => {
+    if (el.nodeName !== 'DIV' || el.classList.contains('page-break-marker') ||
+        el.classList.contains('toc-inline')) return;
+    if (Array.from(el.childNodes).every(isInline)) {
+      const p = document.createElement('p');
+      Array.from(el.attributes).forEach(a => p.setAttribute(a.name, a.value));
+      while (el.firstChild) p.appendChild(el.firstChild);
+      el.replaceWith(p);
+    } else {
+      ioNormalizeBlocks(el);
+    }
+  });
+  let run = null;
+  Array.from(container.childNodes).forEach(n => {
+    if (n.nodeType === 8) return;
+    if (isInline(n)) {
+      if (!run && n.nodeType === 3 && !n.nodeValue.trim()) return;
+      if (!run) { run = document.createElement('p'); container.insertBefore(run, n); }
+      run.appendChild(n);
+    } else run = null;
+  });
+  return container;
+}
+
+/* Shared list flattener for every exporter: [{depth, ordered, marker,
+   body}] — body = the <li> WITHOUT its nested lists (no duplication). */
+function ioListItems(listEl, depth, out) {
+  out = out || [];
+  let n = 1;
+  Array.from(listEl.children).forEach(li => {
+    if (li.nodeName !== 'LI') return;
+    const ordered = listEl.nodeName === 'OL';
+    const body = li.cloneNode(true);
+    Array.from(body.children).forEach(c => { if (/^(UL|OL)$/.test(c.nodeName)) c.remove(); });
+    out.push({ depth: depth, ordered: ordered, marker: ordered ? (n++) + '.' : '\u2022', body: body });
+    Array.from(li.children).forEach(c => {
+      if (/^(UL|OL)$/.test(c.nodeName)) ioListItems(c, depth + 1, out);
+    });
+  });
+  return out;
+}
+
 function ioExportClone() {
   const c = document.createElement('div');
   c.innerHTML = editorHTMLForSave();
-  return c;
+  return ioNormalizeBlocks(c);
 }
 
 function ioUnwrap(el) {
@@ -3594,13 +4241,28 @@ function ioUnwrap(el) {
 /* ----- PLAIN TEXT (TXT) ----- */
 function ioWalkText(n) {
   let out = '';
+  const nl = () => { if (out && !out.endsWith('\n')) out += '\n'; };
   (function walk(node) {
     Array.from(node.childNodes).forEach(ch => {
       if (ch.nodeType === 3) { out += ch.nodeValue; return; }
       if (ch.nodeName === 'BR') { out += '\n'; return; }
-      if (ch.nodeName === 'HR') { out += (out.endsWith('\n') ? '' : '\n') + '\n'; return; }
+      if (ch.nodeName === 'HR') { nl(); out += '\n'; return; }
       if (ch.nodeType === 1 && ch.classList && ch.classList.contains('page-break-marker')) {
-        out += (out.endsWith('\n') ? '' : '\n') + '\n'; return;
+        nl(); out += '\n'; return;
+      }
+      if (ch.nodeName === 'LI') {
+        // list items: one line each, indented by nesting depth
+        let depth = 0, p = ch.parentElement;
+        while (p && p !== n) { if (/^(UL|OL)$/.test(p.nodeName)) depth++; p = p.parentElement; }
+        const par = ch.parentElement;
+        const marker = (par && par.nodeName === 'OL')
+          ? (Array.from(par.children).filter(x => x.nodeName === 'LI').indexOf(ch) + 1) + '. '
+          : '- ';
+        nl();
+        out += '  '.repeat(Math.max(0, depth - 1)) + marker;
+        walk(ch);
+        nl();
+        return;
       }
       walk(ch);
       if (IO_BLOCK_RE.test(ch.nodeName)) out += '\n\n';
@@ -3671,27 +4333,11 @@ function ioInlineMd(node) {
 }
 
 function ioListMd(listEl, ordered, depth) {
-  const pad = '  '.repeat(depth);
-  let out = '';
-  let n = 1;
-  Array.from(listEl.children).forEach(li => {
-    if (li.nodeName !== 'LI') return;
-    const marker = ordered ? (n++ ) + '. ' : '- ';
-    // single block child of LI that is itself a list → recurse inline
-    const inner = ioBlocksMd(li, depth + 1).trim();
-    const first = li.children.length === 1 &&
-                  /^(UL|OL)$/.test(li.children[0].nodeName)
-      ? ioInlineMd(li.firstChild)  // covered below by nested pass
-      : '';
-    if (first && inner.indexOf('\n') === -1) {
-      out += pad + marker + first + '\n';
-    } else if (inner.indexOf('\n') !== -1) {
-      out += pad + marker + ioInlineMd(li).trim() + '\n' + inner;
-    } else {
-      out += pad + marker + ioInlineMd(li).trim() + '\n';
-    }
-  });
-  return out;
+  // 3-space indent per level: valid under both "- " and "1. " parents
+  return ioListItems(listEl, depth).map(it =>
+    '   '.repeat(it.depth) + (it.ordered ? it.marker + ' ' : '- ') +
+    ioInlineMd(it.body).replace(/\s*\n\s*/g, ' ').trim()
+  ).join('\n') + '\n';
 }
 
 function ioBlocksMd(node, depth) {
@@ -3775,6 +4421,7 @@ function ioToMarkdown(doc) {
 /* ----- STANDALONE HTML ----- */
 function ioToStandaloneHTML(doc) {
   const c = ioExportClone();
+  c.querySelectorAll('mark.cmt-mark').forEach(ioUnwrap);   // comments stay private
   const lang = (window.orosLang === 'el') ? 'el' : 'en';
   const metaBits = [];
 
@@ -4050,12 +4697,11 @@ function rtfBlocks(node) {
         out += '\\pard\\brdrb\\brdrs\\brdrw10\\sa200\\par\n';
         break;
       case 'UL': case 'OL': {
-        let n = 1;
-        Array.from(ch.children).forEach(li => {
-          if (li.nodeName !== 'LI') return;
-          const marker = ch.nodeName === 'OL' ? (n++) + '. ' : '- ';
-          out += '\\pard\\fi-284\\li567\\sa120 ' + rtfEsc(marker) +
-                 rtfInlineRe(li, {}) + '\\par\n';
+        ioListItems(ch, 0).forEach(it => {
+          const li = 567 * (it.depth + 1);
+          out += '\\pard\\fi-284\\li' + li + '\\sa120 ' +
+                 rtfEsc((it.ordered ? it.marker : '\u2022') + ' ') +
+                 rtfInlineRe(it.body, {}) + '\\par\n';
         });
         break;
       }
@@ -4092,7 +4738,7 @@ function ioExportRtf(doc) {
     // Footnotes / comments appendix (end-of-document section)
     const app = [];
     if ((doc.footnotes || []).length) {
-      app.push('\\pard\\sb240\\b\\fs24 ' + rtfEsc('Notes') + '\\par\n');
+      app.push('\\pard\\sb240\\b\\fs24 ' + rtfEsc(t('io.notes')) + '\\par\n');
       const seen = new Set();
       c.querySelectorAll('sup.fn-ref').forEach(ref => {
         const id = ref.getAttribute('data-fn');
@@ -4104,7 +4750,7 @@ function ioExportRtf(doc) {
       });
     }
     if ((doc.comments || []).length) {
-      app.push('\\pard\\sb240\\b\\fs24 ' + rtfEsc('Comments') + '\\par\n');
+      app.push('\\pard\\sb240\\b\\fs24 ' + rtfEsc(t('io.comments')) + '\\par\n');
       doc.comments.forEach(cm => {
         app.push('\\pard\\sa120 ' +
           rtfEsc('\u201C' + (cm.quote || '') + '\u201D \u2014 ' + (cm.text || '')) +
@@ -4112,6 +4758,9 @@ function ioExportRtf(doc) {
       });
     }
     if (app.length) body += '\\page\n' + app.join('');
+    // \pard resets paragraph props ONLY — character props (\b\fs40 of
+    // a heading, \f0 of code) leaked into every following paragraph.
+    body = body.replace(/\\pard/g, '\\pard\\plain\\f1\\fs22 ');
 
     const rtf = '{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\froman Times New Roman;}{\\f1\\fswiss Calibri;}}' +
       '\\f1\\fs22\\viewkind4\\uc1' +
@@ -4218,7 +4867,9 @@ function dxRun(text, pr) {
   if (pr.strike) rPr += '<w:strike/>';
   if (pr.sup)    rPr += '<w:vertAlign w:val="superscript"/>';
   return '<w:r>' + (rPr ? '<w:rPr>' + rPr + '</w:rPr>' : '') +
-         '<w:t xml:space="preserve">' + esc(text) + '</w:t></w:r>';
+         '<w:t xml:space="preserve">' +
+         esc(String(text).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')) +
+         '</w:t></w:r>';
 }
 
 function dxRuns(node, pr) {
@@ -4281,11 +4932,9 @@ function dxBlocks(node) {
         break;
       case 'HR': out += dxPara('', { border: true }); break;
       case 'UL': case 'OL': {
-        let n = 1;
-        Array.from(ch.children).forEach(li => {
-          if (li.nodeName !== 'LI') return;
-          const marker = ch.nodeName === 'OL' ? (n++) + '. ' : '\u2022 ';
-          out += dxPara(dxRun(marker, {}) + dxRuns(li, {}), { ind: 567 });
+        ioListItems(ch, 0).forEach(it => {
+          out += dxPara(dxRun(it.marker + ' ', {}) + dxRuns(it.body, {}),
+                        { ind: 567 * (it.depth + 1) });
         });
         break;
       }
@@ -4339,7 +4988,7 @@ function ioExportDocx(doc) {
     // Footnotes / comments appendix
     const app = [];
     if ((doc.footnotes || []).length) {
-      app.push(dxPara(dxRun('Notes', { b: true }), { style: 'Heading2' }));
+      app.push(dxPara(dxRun(t('io.notes'), { b: true }), { style: 'Heading2' }));
       const seen = new Set();
       c.querySelectorAll('sup.fn-ref').forEach(ref => {
         const id = ref.getAttribute('data-fn');
@@ -4351,7 +5000,7 @@ function ioExportDocx(doc) {
       });
     }
     if ((doc.comments || []).length) {
-      app.push(dxPara(dxRun('Comments', { b: true }), { style: 'Heading2' }));
+      app.push(dxPara(dxRun(t('io.comments'), { b: true }), { style: 'Heading2' }));
       doc.comments.forEach(cm => {
         app.push(dxPara(
           dxRun('\u201C' + (cm.quote || '') + '\u201D', { i: true }) +
@@ -4444,32 +5093,32 @@ function ioExportDocx(doc) {
 // bold: documented v1 tradeoff, swap in NotoSans-Bold.ttf later
 // if wanted. Images become [image] placeholders (same as DOCX v1).
 
-const IO_VENDOR_JSPDF = 'vendor/jspdf.umd.min.js';
-const IO_VENDOR_NOTO  = 'vendor/NotoSans-Regular.ttf';
+// Root-level vendor/ (sw.js precaches "vendor/…" at the SW scope).
+// From writer/index.html that is "../vendor/…". NO query string: the SW
+// matches precache entries by EXACT URL — a cache-buster made the PDF
+// export fail offline.
+const IO_VENDOR_JSPDF = '../vendor/jspdf.umd.min.js';
+const IO_VENDOR_NOTO  = '../vendor/NotoSans-Regular.ttf';
 
+let ioJspdfPromise = null;
 function ioLoadScript(src) {
-  return new Promise((res, rej) => {
-    if (window.jspdf && window.jspdf.jsPDF) return res();
-    if (document.querySelector('script[data-io-vendor="jspdf"]')) {
-      // someone else is loading it — wait politely
-      const iv = setInterval(() => {
-        if (window.jspdf && window.jspdf.jsPDF) { clearInterval(iv); res(); }
-      }, 50);
-      return;
-    }
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+  if (ioJspdfPromise) return ioJspdfPromise;
+  ioJspdfPromise = new Promise((res, rej) => {
     const s = document.createElement('script');
     s.src = src; s.async = true; s.dataset.ioVendor = 'jspdf';
-    s.onload = () => res();
-    s.onerror = () => rej(new Error('Failed to load ' + src));
+    s.onload = () => (window.jspdf && window.jspdf.jsPDF)
+      ? res() : rej(new Error('jsPDF missing after load'));
+    s.onerror = () => { s.remove(); rej(new Error('Failed to load ' + src)); };
     document.head.appendChild(s);
-  });
+  }).catch(err => { ioJspdfPromise = null; throw err; });   // retry possible
+  return ioJspdfPromise;
 }
 
+let ioFontB64 = null;   // in-memory per session (no re-download per export)
 function ioFetchFontB64(url) {
-  // Cache-bust using version of font file (vendor folder hash would be ideal,
-  // falling back to timestamp when building). For now use timestamp on dev
-  // to force reload when font is updated locally.
-  return fetch(url + '?t=' + Date.now())
+  if (ioFontB64) return Promise.resolve(ioFontB64);
+  return fetch(url)
     .then(r => { if (!r.ok) throw new Error('font http ' + r.status); return r.arrayBuffer(); })
     .then(buf => {
       const u8 = new Uint8Array(buf);
@@ -4477,7 +5126,8 @@ function ioFetchFontB64(url) {
       const CHUNK = 0x8000;
       for (let i = 0; i < u8.length; i += CHUNK)
         bin += String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK));
-      return btoa(bin);
+      ioFontB64 = btoa(bin);
+      return ioFontB64;
     });
 }
 
@@ -4485,7 +5135,7 @@ function ioFetchFontB64(url) {
 function ioCollectRuns(node, fmt, out) {
   Array.from(node.childNodes).forEach(ch => {
     if (ch.nodeType === 3) {
-      out.push({ text: ch.nodeValue, b: fmt.b, i: fmt.i, u: fmt.u, sup: fmt.sup });
+      out.push({ text: ch.nodeValue, b: fmt.b, i: fmt.i, u: fmt.u, sup: fmt.sup, strike: fmt.strike });
       return;
     }
     if (ch.nodeName === 'BR') { out.push({ text: '\n', br: true }); return; }
@@ -4539,6 +5189,7 @@ function ioExportPdf(doc) {
         let x = startX;
 
         pdf.setTextColor(o.color || '#1a1a1a');
+        need(lh);   // first line too — paragraphs ran into the bottom margin
         // flatten to word tokens
         const words = [];
         runs.forEach(r => {
@@ -4570,7 +5221,9 @@ function ioExportPdf(doc) {
           if (!lineFirst) x += spW;
           const dy = w.f.sup ? -(fs * 0.14) : 0;
           pdf.text(w.t, x, y + dy);
-          if (w.f.u) pdf.line(x, y + 1.4, x + wordW, y + 1.4);
+          const tw = pdf.getTextWidth(w.t);
+          if (w.f.u) pdf.line(x, y + 1.4, x + tw, y + 1.4);
+          if (w.f.strike) pdf.line(x, y - sfs * 0.3528 * 0.3, x + tw, y - sfs * 0.3528 * 0.3);
           x += pdf.getTextWidth(w.t);
           lineFirst = false;
         }
@@ -4611,7 +5264,8 @@ function ioExportPdf(doc) {
               break;
             }
             case 'PRE': {
-              pdf.setFont('courier', 'normal'); pdf.setFontSize(9);
+              // NotoSans, not the built-in courier: courier has no Greek glyphs
+              pdf.setFont('noto', 'normal'); pdf.setFontSize(9); pdf.setTextColor('#333333');
               ch.textContent.replace(/\n$/, '').split('\n').forEach(line => {
                 need(5);
                 pdf.text(line, ML + 4, y);
@@ -4628,13 +5282,10 @@ function ioExportPdf(doc) {
               break;
             }
             case 'UL': case 'OL': {
-              let n = 1;
-              Array.from(ch.children).forEach(li => {
-                if (li.nodeName !== 'LI') return;
-                const marker = ch.nodeName === 'OL' ? (n++) + '. ' : '\u2022 ';
-                const runs = []; ioCollectRuns(li, {}, runs);
-                runs.unshift({ text: marker });
-                writeRuns(runs, { x: ML + 6, fs: 11 });
+              ioListItems(ch, 0).forEach(it => {
+                const runs = []; ioCollectRuns(it.body, {}, runs);
+                runs.unshift({ text: it.marker });
+                writeRuns(runs, { x: ML + 6 + it.depth * 6, fs: 11 });
               });
               y += 2;
               break;
@@ -4671,24 +5322,30 @@ function ioExportPdf(doc) {
       c.querySelectorAll('mark.cmt-mark').forEach(ioUnwrap);
       writeBlocks(c);
 
-      // Footnotes / comments appendix
-      const app = [];
+      // Footnotes / comments appendix (localized headings)
+      const notes = [];
       const seen = new Set();
       c.querySelectorAll('sup.fn-ref').forEach(ref => {
         const id = ref.getAttribute('data-fn');
         if (!id || seen.has(id)) return;
         seen.add(id);
         const e = (doc.footnotes || []).find(f => f.id === id);
-        if (e) app.push({ text: '[' + ref.textContent + '] ' + (e.text || '') });
+        if (e) notes.push({ text: '[' + ref.textContent + '] ' + (e.text || '') });
       });
-      (doc.comments || []).forEach(cm => {
-        app.push({ text: '\u201C' + (cm.quote || '') + '\u201D \u2014 ' + (cm.text || ''), i: true });
-      });
-      if (app.length) {
+      const cmts = (doc.comments || []).map(cm =>
+        ({ text: '\u201C' + (cm.quote || '') + '\u201D \u2014 ' + (cm.text || ''), i: true }));
+      if (notes.length || cmts.length) {
         newPage();
         y += 2;
-        writeRuns([{ text: 'Notes', b: true }], { fs: 16 });
-        app.forEach(a => writeRuns([{ text: a.text, i: a.i }], { fs: 10 }));
+        if (notes.length) {
+          writeRuns([{ text: t('io.notes'), b: true }], { fs: 16 });
+          notes.forEach(a => writeRuns([{ text: a.text }], { fs: 10 }));
+          y += 4;
+        }
+        if (cmts.length) {
+          writeRuns([{ text: t('io.comments'), b: true }], { fs: 16 });
+          cmts.forEach(a => writeRuns([{ text: a.text, i: a.i }], { fs: 10 }));
+        }
       }
 
       // Headers / footers / page numbers — every page, finalized pass
@@ -4714,7 +5371,7 @@ function ioExportPdf(doc) {
     })
     .catch(err => {
       console.error('[orOS] writer PDF export failed:', err);
-      showToast(t('io.importfailed'));
+      showToast(t('io.exportfailed'));
     });
 }
 
@@ -4768,13 +5425,47 @@ function ioParseRtf(raw) {
   return out;
 }
 
+/* ----- Sanitizer (all imports) — runs in an INERT document: no
+   browsing context → no image loads, no handlers fire while parsing.
+   (A live-document innerHTML fires <img onerror> even detached.) ----- */
+function ioInertDiv() {
+  return document.implementation.createHTMLDocument('').createElement('div');
+}
+function ioBadUrl(v) {
+  const s = String(v || '').replace(/[\u0000-\u0020]/g, '').toLowerCase();
+  return /^(?:javascript|vbscript):/.test(s) || /^data:text\/html/.test(s);
+}
+function ioSanitizeHtml(html) {
+  const box = ioInertDiv();
+  box.innerHTML = String(html || '');
+  box.querySelectorAll('script,style,iframe,frame,frameset,object,embed,noscript,' +
+    'link,meta,base,form,input,button,textarea,select,svg,math,template')
+    .forEach(n => n.remove());
+  box.querySelectorAll('*').forEach(el => {
+    Array.from(el.attributes).forEach(a => {
+      const n = a.name.toLowerCase();
+      if (n.startsWith('on') || n === 'srcdoc' || n === 'formaction' ||
+          (/(^|:)(href|src|action|data)$/.test(n) && ioBadUrl(a.value))) {
+        el.removeAttribute(a.name);
+      }
+    });
+  });
+  return box.innerHTML;
+}
+
 /* ----- Mini Markdown parser ----- */
 function ioMdInline(s) {
   s = esc(s);
+  // esc() leaves quotes alone → attribute values MUST be quote-escaped
+  // (`[x](a"onmouseover=…)` used to break out of href="…").
+  const q = v => String(v).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const u = v => ioBadUrl(v) ? '#' : q(v);
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img src="$2" alt="$1">');
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,
+    (m, alt, src) => '<img src="' + u(src) + '" alt="' + q(alt) + '">');
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    (m, label, href) => '<a href="' + u(href) +
+      '" target="_blank" rel="noopener noreferrer">' + label + '</a>');
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
   s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
@@ -4866,8 +5557,8 @@ function ioParseMd(text, footnoteDefs) {
   const html = block(0, lines.length - 1);
 
   // footnotes: convert data-mdfn refs into real ids + entries
-  const wrap = document.createElement('div');
-  wrap.innerHTML = html;
+  const wrap = ioInertDiv();                 // inert: nothing loads/fires
+  wrap.innerHTML = ioSanitizeHtml(html);
   const footnotes = [];
   wrap.querySelectorAll('sup.fn-ref[data-mdfn]').forEach(sup => {
     const n = sup.getAttribute('data-mdfn');
@@ -4980,8 +5671,8 @@ function ioParseFile(file) {
 
 /* ----- Annotation remap (fresh ids — append/replace never clash) ----- */
 function ioPrepareImport(parsed) {
-  const wrap = document.createElement('div');
-  wrap.innerHTML = parsed.html || '';
+  const wrap = ioInertDiv();                 // inert: nothing loads/fires
+  wrap.innerHTML = ioSanitizeHtml(parsed.html || '');
   const footnotes = [], comments = [];
   wrap.querySelectorAll('sup.fn-ref').forEach(sup => {
     const old = sup.getAttribute('data-fn');
@@ -5058,6 +5749,55 @@ function ioApplyImport(parsed, mode) {
   showToast(t('io.imported'));
 }
 
+/* ----- Writer DB backup → MERGE (Bible: import merges by default).
+   Backup docs/templates/settings are restamped NOW so they win LWW here
+   AND on every synced device (a plain hydrate kept old mtimes → the next
+   sync silently "undid" the restore). Docs that exist only here stay.
+   Tombstones in the backup are ignored (a restore never deletes). ----- */
+function ioMergeDbImport(data) {
+  const now = Date.now();
+  const cleanVers = vs => (Array.isArray(vs) ? vs : [])
+    .filter(v => v && typeof v.html === 'string')
+    .map(v => Object.assign({}, v, { html: ioSanitizeHtml(v.html) }));
+  const inc = {
+    ver: 1,
+    docs: (Array.isArray(data.docs) ? data.docs : [])
+      .filter(d => d && typeof d.id === 'string' && !d.del)
+      .map(d => Object.assign({}, d, {
+        html: ioSanitizeHtml(typeof d.html === 'string' ? d.html : ''),
+        versions: cleanVers(d.versions),
+        mtime: now
+      })),
+    tabOrder: [],
+    settings: (data.settings && typeof data.settings === 'object')
+      ? Object.assign({}, data.settings, { _mtime: now }) : undefined,
+    autocorrect: (data.autocorrect && Array.isArray(data.autocorrect.rules))
+      ? Object.assign({}, data.autocorrect, { mtime: now }) : null,
+    templates: (Array.isArray(data.templates) ? data.templates : [])
+      .filter(tp => tp && typeof tp.id === 'string' && typeof tp.name === 'string')
+      .map(tp => Object.assign({}, tp, {
+        html: ioSanitizeHtml(typeof tp.html === 'string' ? tp.html : ''), mtime: now })),
+    tplTombs: [],
+    seeded: !!data.seeded
+  };
+  if (!inc.settings) delete inc.settings;
+
+  flushSave();
+  const merged = mergeSlices(serialize(), inc);
+  if (!merged.settings) merged.settings = state.settings;
+  hydrate(merged);
+  inc.docs.forEach(d => {
+    state.seen[d.id] = 1;
+    if (state.tabOrder.indexOf(d.id) === -1) state.tabOrder.push(d.id);
+  });
+  if (inc.docs.length) state.activeTab = inc.docs[0].id;
+  reconcileTabs();
+  renderTabs();
+  renderEditor();
+  dirty = true;
+  flushSave();
+}
+
 /* ----- IMPORT DIALOG ----- */
 function openImportDialog(prefile) {
   const dlg = openDialog(t('io.title.imp'), '', [
@@ -5098,18 +5838,17 @@ function openImportDialog(prefile) {
       .then(res => {
         busy.style.display = 'none';
         if (res.kind === 'db') {
-          if (confirm(t('io.dbConfirm'))) {
-            hydrate(res.data);
-            renderTabs();
-            renderEditor();
-            scheduleSave();
-            showToast(t('io.imported'));
-            dlg.close();
-          } else {
-            busy.style.display = 'none';
-            pick.style.display = '';
-            inp.value = '';
-          }
+          wConfirm(t('io.dbConfirm')).then(ok => {
+            if (ok) {
+              ioMergeDbImport(res.data);
+              showToast(t('io.imported'));
+              dlg.close();
+            } else {
+              busy.style.display = 'none';
+              pick.style.display = '';
+              inp.value = '';
+            }
+          });
           return;
         }
         parsed = res;
@@ -5252,13 +5991,24 @@ function ioParseZipDoc(file, ext) {
       const dom = new DOMParser().parseFromString(
         new TextDecoder().decode(f.data), 'application/xml');
       if (dom.getElementsByTagName('parsererror').length) throw new Error('xml parse error');
-      return isDocx ? ioParseDocxXml(dom) : ioParseOdtXml(dom);
+      if (!isDocx) return ioParseOdtXml(dom);
+      const num = entries.find(e => e.name === 'word/numbering.xml');
+      return ioParseDocxXml(dom, ioDxNumbering(num ? new TextDecoder().decode(num.data) : ''));
     })
     .then(res => Object.assign({ kind: 'doc' }, res));
 }
 
 /* ----- DOCX: word/document.xml → HTML ----- */
 const IO_NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
+function ioDxAttr(el, name) {
+  return el.getAttributeNS(IO_NS_W, name) || el.getAttribute('w:' + name) || '';
+}
+
+// Word wraps runs in many containers (tracked insertions, content
+// controls, smart tags, simple fields…) — they used to be skipped, so
+// their text vanished. Recurse into them; skip deletions only.
+const IO_DX_WRAP = /^(hyperlink|ins|moveTo|smartTag|sdt|sdtContent|fldSimple|customXml|bdo|dir)$/;
 
 function ioDxRuns(node) {
   let out = '';
@@ -5267,20 +6017,22 @@ function ioDxRuns(node) {
     const ln = n.localName;
     if (ln === 'r') {
       let b = false, i = false, u = false, strike = false, sup = false, txt = '';
+      const on = pr => !/^(0|false|none|off)$/i.test(ioDxAttr(pr, 'val'));
       Array.from(n.children).forEach(c => {
         const cl = c.localName;
         if (cl === 'rPr') {
           Array.from(c.children).forEach(pr => {
             const pl = pr.localName;
-            if (pl === 'b') b = true;
-            if (pl === 'i') i = true;
-            if (pl === 'u') u = true;
-            if (pl === 'strike') strike = true;
-            if (pl === 'vertAlign' && pr.getAttributeNS(IO_NS_W, 'val') === 'superscript') sup = true;
+            if (pl === 'b') b = on(pr);
+            if (pl === 'i') i = on(pr);
+            if (pl === 'u') u = on(pr);
+            if (pl === 'strike' || pl === 'dstrike') strike = on(pr);
+            if (pl === 'vertAlign' && ioDxAttr(pr, 'val') === 'superscript') sup = true;
           });
         } else if (cl === 't') txt += c.textContent;
         else if (cl === 'tab') txt += '\t';
-        else if (cl === 'br') txt += '\n';
+        else if (cl === 'br' || cl === 'cr') txt += '\n';
+        else if (cl === 'noBreakHyphen') txt += '\u2011';
       });
       if (!txt) return;
       let h = esc(txt).replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -5290,63 +6042,138 @@ function ioDxRuns(node) {
       if (b)      h = '<strong>' + h + '</strong>';
       if (sup)    h = '<sup>' + h + '</sup>';
       out += h;
-    } else if (ln === 'hyperlink') {
+    } else if (IO_DX_WRAP.test(ln)) {
       out += ioDxRuns(n);
     } else if (ln === 'br') {
       out += '<br>';
     }
+    // del / moveFrom / pPr / bookmarks … → nothing
   });
   return out;
 }
 
-function ioDxPara(p) {
+function ioDxPara(p, inList) {
   let style = '';
   Array.from(p.children).forEach(c => {
     if (c.localName === 'pPr') {
       Array.from(c.children).forEach(pp => {
-        if (pp.localName === 'pStyle')
-          style = pp.getAttributeNS(IO_NS_W, 'val') || pp.getAttribute('w:val') || '';
+        if (pp.localName === 'pStyle') style = ioDxAttr(pp, 'val');
       });
     }
   });
   const inner = ioDxRuns(p);
+  if (inList) return inner;
   const m = /^heading\s*(\d)/i.exec(style);
   if (m && +m[1] >= 1 && +m[1] <= 4) return '<h' + m[1] + '>' + inner + '</h' + m[1] + '>';
+  if (/^title$/i.test(style)) return '<h1>' + inner + '</h1>';
   if (/quote/i.test(style)) return '<blockquote>' + inner + '</blockquote>';
   return '<p>' + inner + '</p>';
 }
 
-function ioParseDocxXml(dom) {
+// numbering.xml → { numId: { ilvl: numFmt } } (bullet vs numbered)
+function ioDxNumbering(xmlText) {
+  const map = {};
+  if (!xmlText) return map;
+  const dom = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (dom.getElementsByTagName('parsererror').length) return map;
+  const abs = {};
+  Array.from(dom.getElementsByTagNameNS(IO_NS_W, 'abstractNum')).forEach(a => {
+    const lv = {};
+    Array.from(a.getElementsByTagNameNS(IO_NS_W, 'lvl')).forEach(l => {
+      const f = l.getElementsByTagNameNS(IO_NS_W, 'numFmt')[0];
+      lv[ioDxAttr(l, 'ilvl')] = f ? ioDxAttr(f, 'val') : 'bullet';
+    });
+    abs[ioDxAttr(a, 'abstractNumId')] = lv;
+  });
+  Array.from(dom.getElementsByTagNameNS(IO_NS_W, 'num')).forEach(n => {
+    const an = n.getElementsByTagNameNS(IO_NS_W, 'abstractNumId')[0];
+    map[ioDxAttr(n, 'numId')] = (an && abs[ioDxAttr(an, 'val')]) || {};
+  });
+  return map;
+}
+
+function ioDxNumInfo(p) {
+  const pPr = Array.from(p.children).find(c => c.localName === 'pPr');
+  if (!pPr) return null;
+  const numPr = Array.from(pPr.children).find(c => c.localName === 'numPr');
+  if (!numPr) {
+    // style-defined lists ("List Bullet 2", "List Number") carry their
+    // numbering in styles.xml, not in the paragraph
+    const ps = Array.from(pPr.children).find(c => c.localName === 'pStyle');
+    const m = ps && /^List\s?(Bullet|Number)\s?(\d)?$/i.exec(ioDxAttr(ps, 'val'));
+    if (!m) return null;
+    return { ilvl: m[2] ? Math.max(0, +m[2] - 1) : 0, numId: '__style',
+             fmt: /bullet/i.test(m[1]) ? 'bullet' : 'decimal' };
+  }
+  let ilvl = 0, numId = '';
+  Array.from(numPr.children).forEach(c => {
+    if (c.localName === 'ilvl') ilvl = parseInt(ioDxAttr(c, 'val'), 10) || 0;
+    if (c.localName === 'numId') numId = ioDxAttr(c, 'val');
+  });
+  if (!numId || numId === '0') return null;
+  return { ilvl: Math.min(8, Math.max(0, ilvl)), numId: numId };
+}
+
+function ioParseDocxXml(dom, numbering) {
+  numbering = numbering || {};
   const body = dom.getElementsByTagNameNS(IO_NS_W, 'body')[0];
   if (!body) throw new Error('docx: no body');
-  let html = '';
-  Array.from(body.children).forEach(ch => {
-    const ln = ch.localName;
-    if (ln === 'p') {
-      html += ioDxPara(ch);
-    } else if (ln === 'tbl') {
-      html += '<table style="border-collapse:collapse;width:100%;">';
-      Array.from(ch.getElementsByTagNameNS(IO_NS_W, 'tr')).forEach(tr => {
-        html += '<tr>';
-        Array.from(tr.children).forEach(tc => {
-          if (tc.localName !== 'tc') return;
-          let cells = '';
-          Array.from(tc.children).forEach(tcp => {
-            if (tcp.localName === 'p') cells += ioDxPara(tcp);
-          });
-          html += '<td style="border:1px solid var(--border);padding:6px 10px;">' + cells + '</td>';
+  const box = ioInertDiv();
+  const d = box.ownerDocument;
+  let stack = [];   // open lists: [{ list, ilvl, lastLi }]
+
+  function emitTable(tbl) {
+    let html = '<table style="border-collapse:collapse;width:100%;">';
+    Array.from(tbl.children).forEach(tr => {
+      if (tr.localName !== 'tr') return;
+      html += '<tr>';
+      Array.from(tr.children).forEach(tc => {
+        if (tc.localName !== 'tc') return;
+        let cells = '';
+        Array.from(tc.children).forEach(tcp => {
+          if (tcp.localName === 'p') cells += ioDxPara(tcp, false);
         });
-        html += '</tr>';
+        html += '<td style="border:1px solid var(--border);padding:6px 10px;">' + cells + '</td>';
       });
-      html += '</table>';
+      html += '</tr>';
+    });
+    box.insertAdjacentHTML('beforeend', html + '</table>');
+  }
+
+  function emitPara(p) {
+    const info = ioDxNumInfo(p);
+    if (!info) { stack = []; box.insertAdjacentHTML('beforeend', ioDxPara(p, false)); return; }
+    const fmt = info.fmt ||
+      (numbering[info.numId] && numbering[info.numId][String(info.ilvl)]) || 'bullet';
+    const tag = (fmt === 'bullet' || fmt === 'none') ? 'UL' : 'OL';
+    while (stack.length && stack[stack.length - 1].ilvl > info.ilvl) stack.pop();
+    let top = stack[stack.length - 1];
+    if (top && top.ilvl === info.ilvl && top.list.nodeName !== tag) { stack.pop(); top = stack[stack.length - 1]; }
+    if (!top || top.ilvl < info.ilvl) {
+      const list = d.createElement(tag);
+      if (top && top.lastLi) top.lastLi.appendChild(list); else box.appendChild(list);
+      top = { list: list, ilvl: info.ilvl, lastLi: null };
+      stack.push(top);
     }
-    // sectPr and anything else skipped
-  });
-  const wrap = document.createElement('div');
-  wrap.innerHTML = html;
-  const first = wrap.querySelector('h1,h2,h3,h4,p');
+    const li = d.createElement('li');
+    li.innerHTML = ioDxPara(p, true);
+    top.list.appendChild(li);
+    top.lastLi = li;
+  }
+
+  (function walk(container) {
+    Array.from(container.children).forEach(ch => {
+      const ln = ch.localName;
+      if (ln === 'p') emitPara(ch);
+      else if (ln === 'tbl') { stack = []; emitTable(ch); }
+      else if (ln === 'sdt' || ln === 'sdtContent' || ln === 'customXml' || ln === 'ins') walk(ch);
+      // sectPr, bookmarks, deletions … skipped
+    });
+  })(body);
+
+  const first = box.querySelector('h1,h2,h3,h4,p,li');
   return { title: first ? first.textContent.trim().slice(0, 80) : '',
-           html: html, footnotes: [], comments: [] };
+           html: box.innerHTML, footnotes: [], comments: [] };
 }
 
 /* ----- ODT: content.xml → HTML ----- */
@@ -5389,15 +6216,21 @@ function ioParseOdtXml(dom) {
     } else if (ln === 'p') {
       html += '<p>' + ioOdFix(ioOdInline(ch)) + '</p>';
     } else if (ln === 'list') {
-      html += '<ul>';
-      Array.from(ch.getElementsByTagNameNS(IO_NS_TEXT, 'list-item')).forEach(li => {
-        let inner = '';
-        Array.from(li.children).forEach(c => {
-          if (c.localName === 'p') inner += '<p>' + ioOdFix(ioOdInline(c)) + '</p>';
+      // direct list-items only; nested text:list recurses (the old
+      // getElementsByTagNameNS walk flattened every level into one)
+      html += (function odList(list) {
+        let h = '<ul>';
+        Array.from(list.children).forEach(li => {
+          if (li.localName !== 'list-item') return;
+          let inner = '';
+          Array.from(li.children).forEach(c => {
+            if (c.localName === 'p' || c.localName === 'h') inner += ioOdFix(ioOdInline(c));
+            else if (c.localName === 'list') inner += odList(c);
+          });
+          h += '<li>' + inner + '</li>';
         });
-        html += '<li>' + inner + '</li>';
-      });
-      html += '</ul>';
+        return h + '</ul>';
+      })(ch);
     } else if (ln === 'table') {
       html += '<table style="border-collapse:collapse;width:100%;">';
       Array.from(ch.getElementsByTagNameNS('*', 'table-row')).forEach(tr => {
@@ -5460,6 +6293,7 @@ function ioWireDragDrop() {
     if (--ddCounter <= 0) { ddCounter = 0; ioShowDd(false); }
   });
   app.addEventListener('drop', e => {
+    if (!ioDndHasFiles(e)) return;   // internal text drag → native move/copy
     e.preventDefault();
     ddCounter = 0;
     ioShowDd(false);
@@ -5473,6 +6307,14 @@ function ioWireDragDrop() {
     }
     openImportDialog(f);   // reuses the full mode-selection flow
   });
+}
+
+// Boot LAST: every let/const above is initialized by now (no TDZ even
+// if the script is ever injected after DOMContentLoaded).
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
 }
 
 })();

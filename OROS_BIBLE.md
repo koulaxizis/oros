@@ -854,3 +854,96 @@ KNOWN COSMETICS (deferred, no functional weight)
 
 Section 2b-3 functions sit at zero indentation.
 Header Wave 5b comment lost the word "Calendar" before "deep-link" (fix available, one line).
+
+---
+
+orOS Calculator — Changelog
+v1.1.0 — Feature wave 1 (Troll mode, history sync, extras)
+Application: Calculator (full rewrite from scratch, replaces broken v1.0.0 that failed CI on missing theme inheritance).
+
+Architecture
+Full rewrite: calculator.html, calculator.css, calculator.js. Version string: CALC_VER "1.1.0".
+Palette bridge: canonical mood.js pattern — inheritPalette() copies shell CSS variables (--bg, --text, --accent, ...) from parent documentElement before first paint; watchPalette() MutationObserver re-applies on skin/theme change. CI requirement satisfied.
+Sync slice: registered as "calculator" via parent orosSync.registerSlice(get, set, LS_KEY) with cache key oros-calculator-data. Zero shell-side changes (export funnel consumes the slice).
+Shortcut forwarding (Contract B): Ctrl+Alt+Shift combos forwarded to parent orosShortcuts.handle() in capture phase.
+i18n: EN/EL lazy packs (normal + separate troll string pack). Language resolution: localStorage["oros-lang"] first (shell doctrine for iframe apps — initPrefs writes it on boot and toggle; shell reopens iframe on language change), parent window.orosLang as same-origin fallback, "en" default.
+Features
+Troll mode: teasing language ALWAYS (snark even when the result is correct); plausible lies sized by intensity, never two consecutive lies.
+Troll intensity, 3 levels: Subtle ~16%, Balanced ~34% (default), Rampant ~66% lie probability. Persisted in slice (trollIntensity).
+Intensity controls: right-click (contextmenu) on the Troll toggle cycles levels; touch devices use long-press (500ms, touchmove cancels; trailing click swallowed; mobile contextmenu double-fire guarded by touchActive). Visible feedback: dots ●○○ / ●●○ / ●●● next to the toggle (shown only while troll is on) + toast with level name.
+Synchronized history: cap 50 entries, LWW merge per entry by timestamp, tombstone map (deleted id → ts) survives merge and travels via sync. Clear = tombstone all.
+History reuse: click an entry loads its result (fresh replace, not append).
+Copy-to-clipboard: click the result display; clipboard API with legacy execCommand fallback.
+Ans key: recalls last valid answer (key A). Skips "Error" results — lastAnswer never holds "Error".
+Single-level undo: Ctrl+Z. Snapshot before every mutating press; no-op presses drop the snapshot.
+Negative-result feedback: history entries with negative results get danger tint (.neg class).
+Drag-resizable history panel on ≥880px: side-docked, 200–500px, width persisted in slice (panelWidth). Handle hit-test by distance from panel edge (::before sits outside border box).
+Full-width desktop layout; mobile-first stacked layout below 880px.
+Full keyboard support: digits, . / , → decimal, + − * /, Enter/=, Backspace, Escape/Delete → AC, %, A → Ans, Ctrl+Z → undo.
+Unified notifications: transientNote() routes to parent orosNotifs.transient (ns "calculator") with console fallback standalone. No inbox entries — no reminders in this app.
+Bugs fixed (vs. v1.0.0 draft)
+renderError() was called but never defined (latent ReferenceError on chained divide-by-zero) — now defined: surfaces "Error" cleanly, resets engine state.
+pressAns() set fresh=false → recalling Ans then typing a digit appended to it (Ans 42 then 5 → "425"). Fixed: fresh=true (same semantics as reuseHistory).
+pressEq() wrote "Error" into lastAnswer — Ans could then recall the literal string "Error" as an operand. Fixed: lastAnswer only updates on non-error results.
+lang() read window.orosLang which never exists in the iframe context (shell writes it on its own window). Fixed per shell doctrine: read localStorage["oros-lang"].
+Removed dead code: stagePendingRemote()/takePendingRemote()/REMOTE_PENDING_KEY — no callers existed; remote arrivals arrive via the registered slice, never the hack key.
+EL pack: "calc.key.back" mistranslated as "Πάτημα" — now "Διαγραφή".
+Back button (⌫) carried data-i18n, which overwrote the glyph with the word "Backspace"/"Διαραφή". Fixed: glyph stays on screen, label provided via translated aria-label.
+Known non-issues (left as-is)
+state.lang field is dead (t() reads lang() live) — harmless, kept.
+Indentation drift on pressAns declaration (4 spaces) — cosmetic only.
+Features under consideration for future waves: CSV export of history, memory keys (M+, MR), scientific functions.
+Pre-deploy checklist (unchanged, for reference)
+Files: calculator.html (this repo: index for the app folder), calculator.css, calculator.js.
+No shell.js / manifest / service-worker changes required — app integrates via slice registration, palette bridge, and existing export funnel.
+Verify boot log: [calc] calculator v1.1.0 booted — troll:off intensity:1 history:N
+Verify EL: header/buttons render Greek when shell language is EL.
+
+---
+
+orOS Calculator — Changelog
+v1.1.0 — Feature wave 1 (Troll mode, history sync, extras)
+Full rewrite from scratch, replacing the broken v1.0.0 that failed CI on missing theme inheritance.
+
+Architecture
+Files: index.html (app), calculator.css, calculator.js. Version string: CALC_VER "1.1.0". Assets served cache-busted (?v=0.38.x) by the standard GitHub Action pipeline.
+Palette bridge: canonical mood.js pattern — inheritPalette() copies shell CSS variables (--bg, --text, --accent, ...) from the parent documentElement before first paint; watchPalette() MutationObserver re-applies on skin/theme change. CI requirement satisfied.
+Sync slice: registered as "calculator" via parent orosSync.registerSlice(get, set, LS_KEY) with cache key oros-calculator-data. Zero shell-side changes — the export funnel consumes the slice.
+Shortcut forwarding (Contract B): Ctrl+Alt+Shift combos forwarded to parent orosShortcuts.handle() in capture phase.
+i18n: EN/EL lazy packs (normal + separate troll string pack). Language resolution per shell doctrine: localStorage["oros-lang"] first (initPrefs writes it on boot and toggle; shell reopens the iframe on language change), parent window.orosLang as same-origin fallback, "en" default.
+Features
+Troll mode: teasing language ALWAYS (snark even when the result is correct); plausible lies sized by intensity, never two consecutive lies.
+Troll intensity, 3 levels: Subtle ~16%, Balanced ~34% (default), Rampant ~66% lie probability. Persisted in the slice (trollIntensity).
+Intensity controls: right-click (contextmenu) on the Troll toggle cycles levels on desktop; touch devices use long-press (500ms) — touchmove cancels the hold, the trailing click is swallowed so the toggle does not also flip, and mobile contextmenu double-fire is guarded by a touchActive flag.
+Visible intensity indicator: dots ●○○ / ●●○ / ●●● inside the toggle (shown only while troll is on) + toast with the level name.
+Synchronized history: cap 50 entries, LWW merge per entry by timestamp, tombstone map (deleted id → ts) survives merge and travels via sync. Clear = tombstone all.
+History reuse: clicking an entry loads its result (fresh replace, not append).
+Copy-to-clipboard: click the result display; clipboard API with legacy execCommand fallback.
+Ans key: recalls last valid answer (key A). Never holds "Error".
+Single-level undo: Ctrl+Z. Snapshot before every mutating press; no-op presses drop the snapshot.
+Negative-result feedback: history entries with negative results get a danger tint (.neg class).
+Drag-resizable history panel on ≥880px: side-docked, 200–500px, width persisted in the slice (panelWidth). Handle hit-test by distance from the panel edge.
+Full-width desktop layout; mobile-first stacked layout below 880px.
+Full keyboard support: digits, . / , → decimal, + − * /, Enter/=, Backspace, Escape/Delete → AC, %, A → Ans, Ctrl+Z → undo.
+Bugs fixed (vs. the v1.0.0 draft)
+renderError() was called but never defined (latent ReferenceError on chained divide-by-zero) — now defined; surfaces "Error" cleanly and resets engine state.
+pressAns() set fresh=false → recalling Ans then typing a digit appended to it (Ans 42 then 5 → "425"). Fixed: fresh=true, same semantics as reuseHistory().
+pressEq() wrote "Error" into lastAnswer — Ans could then recall the literal string "Error" as an operand. Fixed: lastAnswer only updates on non-error results.
+lang() read window.orosLang, which never exists inside the iframe (the shell writes it on its own window). Fixed per shell doctrine: read localStorage["oros-lang"].
+Dead code removed: stagePendingRemote() / takePendingRemote() / REMOTE_PENDING_KEY — no callers existed; remote arrivals travel via the registered slice.
+EL pack: "calc.key.back" mistranslated as "Πάτημα" → now "Διαγραφή".
+Back button (⌫) carried data-i18n, which replaced the glyph with the word "Backspace"/"Διαγραφή". Fixed: glyph stays on screen; label provided via a translated aria-label set in wireUI().
+Duplicate aria-label assignment for the ⌫ key (artifact of the wave patches) — deduplicated to a single occurrence.
+Known non-issues (left as-is)
+state.lang field is dead (t() reads lang() live) — harmless, kept.
+Indentation drift on the pressAns declaration (4 spaces) — cosmetic only.
+Under consideration for future waves
+CSV export of history.
+Memory keys (M+, MR).
+Scientific functions.
+Pre-deploy checklist
+No shell.js / manifest / service-worker changes required — the app integrates via slice registration, palette bridge, and the existing export funnel.
+Verify boot log: [calc] calculator v1.1.0 booted — troll:off intensity:1 history:N
+Verify EL mode: header, buttons and toggle render Greek when the shell language is EL.
+Verify desktop: right-click on the Troll toggle cycles intensity; dots update.
+Verify mobile: long-press (500ms) on the toggle cycles intensity without flipping On/Off.
