@@ -12,6 +12,8 @@
   <header class="calc-bar">
     <span class="calc-title" data-i18n="calc.title">Calculator</span>
     <button id="troll-toggle" type="button" aria-pressed="false">
+      <span data-i18n="calc.troll" class="troll-label">Troll mode</span>
+      <span aria-hidden="true">·</span>
       <span id="troll-state">Off</span>
     </button>
   </header>
@@ -21,13 +23,13 @@
     <!-- Display -->
     <section class="calc-display" aria-live="polite">
       <div id="calc-expr"></div>
-      <div id="calc-res">0</div>
+      <div id="calc-res" title="Click to copy">0</div>
     </section>
 
     <!-- Keypad -->
     <section class="calc-pad" id="calc-pad">
       <button type="button" class="key fn" data-k="ac" data-i18n="calc.key.ac">AC</button>
-      <button type="button" class="key fn" data-k="back" data-i18n="calc.key.back" aria-label="Backspace">&#9003;</button>
+      <button type="button" class="key fn" data-k="back" aria-label="Backspace">&#9003;</button>
       <button type="button" class="key fn" data-k="pcnt">%</button>
       <button type="button" class="key op" data-k="div">&divide;</button>
 
@@ -46,7 +48,7 @@
       <button type="button" class="key num" data-k="3">3</button>
       <button type="button" class="key op" data-k="add">+</button>
 
-      <button type="button" class="key fn" data-k="sign">&plusmn;</button>
+      <button type="button" class="key ans" data-k="ans" data-i18n="calc.key.ans">Ans</button>
       <button type="button" class="key num" data-k="0">0</button>
       <button type="button" class="key fn" data-k="dot">.</button>
       <button type="button" class="key eq" data-k="eq">=</button>

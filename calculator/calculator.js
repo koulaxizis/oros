@@ -1,17 +1,19 @@
 // ============================================================
-// calculator.js — orOS Calculator (full rewrite)
+// calculator.js — orOS Calculator (full rewrite, feature wave 1)
 // Structure:
 //   1. i18n (EN/EL, lazy — normal + troll string packs)
 //   2. Palette bridge (inheritPalette / watchPalette, mood.js
 //      canonical pattern — CI requirement)
 //   3. State + persistence (slice "calculator", LWW + tombstones)
 //   4. Engine (standard calculator semantics, full keyboard)
-//   5. Troll mode (teasing language ALWAYS, plausible lies ~1/3,
-//      never consecutive)
+//   5. Troll mode (teasing language ALWAYS, plausible lies,
+//      never consecutive, 3 intensity levels)
 //   6. Rendering (display, keypad, history)
 //   7. Sync slice registration (parent orosSync, cache key)
 //   8. Contract B forwarding (Ctrl+Alt+Shift shell shortcuts)
-//   9. Boot logs, wiring
+//   9. Extras: copy-to-clipboard, Ans, single-level undo,
+//      drag-resizable history panel (persisted width)
+//  10. Boot logs, wiring
 // Mantras honored: offline first, mobile first, no external
 // dependencies, full sync + snapshots + manual/auto export via
 // the slice contract (zero shell changes needed).
@@ -19,14 +21,22 @@
 (function () {
   "use strict";
 
-  var CALC_VER = "1.0.0";
+  var CALC_VER = "1.1.0";
   var LS_KEY = "oros-calculator-data";   // slice cache key (same as
                                          // radio/mood pattern)
   var HISTORY_MAX = 50;
 
   // ---------- 1. i18n ----------
   function lang() {
-    return (window.orosLang === "el") ? "el" : "en";
+    // Shell doctrine: iframe apps read localStorage["oros-lang"]
+    // directly (initPrefs writes it on every boot and toggle; the
+    // shell re-opens the iframe on language change). Parent window
+    // is a same-origin fallback only.
+    if (localStorage.getItem("oros-lang") === "el") return "el";
+    try {
+      if (window.parent && window.parent.orosLang === "el") return "el";
+    } catch (e) {}
+    return "en";
   }
 
   var STRINGS = {
@@ -34,23 +44,39 @@
       "calc.title": "Calculator",
       "calc.key.ac": "AC",
       "calc.key.back": "Backspace",
+      "calc.key.ans": "Ans",
       "calc.history": "History",
       "calc.history.clear": "Clear",
       "calc.history.empty": "Nothing here yet.",
       "calc.troll": "Troll mode",
       "calc.troll.on": "On",
-      "calc.troll.off": "Off"
+      "calc.troll.off": "Off",
+      "calc.copy_hint": "Click to copy",
+      "calc.undo": "Undone.",
+      "calc.copied": "Copied to clipboard.",
+      "calc.intensity": "Troll intensity",
+      "calc.intensity.subtle": "Subtle",
+      "calc.intensity.balanced": "Balanced",
+      "calc.intensity.rampant": "Rampant"
     },
     el: {
       "calc.title": "Αριθμομηχανή",
       "calc.key.ac": "AC",
-      "calc.key.back": "Πάτημα",
+      "calc.key.back": "Διαγραφή",
+      "calc.key.ans": "Ans",
       "calc.history": "Ιστορικό",
       "calc.history.clear": "Καθαρισμός",
       "calc.history.empty": "Τίποτα εδώ ακόμα.",
       "calc.troll": "Λειτουργία πειράγματος",
       "calc.troll.on": "Ενεργό",
-      "calc.troll.off": "Ανενεργό"
+      "calc.troll.off": "Ανενεργό",
+      "calc.copy_hint": "Κλικ για αντιγραφή",
+      "calc.undo": "Αναίρεση πράξης.",
+      "calc.copied": "Αντιγράφηκε στο πρόχειρο.",
+      "calc.intensity": "Ένταση πειράγματος",
+      "calc.intensity.subtle": "Ήπιο",
+      "calc.intensity.balanced": "Ισορροπημένο",
+      "calc.intensity.rampant": "Καταιγιστικό"
     }
   };
 
@@ -121,16 +147,20 @@
   // ---------- 3. State + persistence ----------
   var state = {
     lang: lang(),
-    troll: false,        // travels in the slice
-    history: [],         // [{id, expr, res, ts}] newest-first, cap 50
-    deleted: {},         // tombstone map (id → ts) for merge
+    troll: false,            // travels in the slice
+    trollIntensity: 1,       // 0 subtle / 1 balanced / 2 rampant — slice
+    history: [],             // [{id, expr, res, ts}] newest-first, cap 50
+    deleted: {},             // tombstone map (id → ts) for merge
+    panelWidth: 300,         // history panel width (wide layout) — slice
     // --- transient (not persisted) ---
-    cur: "0",            // current entry string
-    acc: null,           // accumulated value
-    op: null,            // pending operator
-    fresh: true,         // true = next digit starts fresh
-    lastTrolled: false,  // prevents consecutive troll lies
-    lastAnswer: null     // reused by keyboard (= on empty entry)
+    cur: "0",                // current entry string
+    acc: null,               // accumulated value
+    op: null,                // pending operator
+    fresh: true,             // true = next digit starts fresh
+    lastTrolled: false,      // prevents consecutive troll lies
+    lastAnswer: null,        // reused by Ans
+    lastRes: "0",            // value offered by click-to-copy
+    prev: null               // single-level undo snapshot
   };
 
   function uid() {
@@ -149,6 +179,8 @@
     var payload = {
       ver: 1,
       troll: !!state.troll,
+      trollIntensity: state.trollIntensity,
+      panelWidth: state.panelWidth,
       history: state.history.slice(0, HISTORY_MAX),
       deleted: state.deleted
     };
@@ -158,13 +190,12 @@
 
   function hydrate() {
     var raw = readLS();
-    if (!raw) {
-      // Fresh install — check for a pending remote arrival
-      var remote = takePendingRemote();
-      if (remote) applyRemote(remote, false);
-      return;
-    }
+    if (!raw) return;
     if (typeof raw.troll === "boolean") state.troll = raw.troll;
+    if (raw.trollIntensity === 0 || raw.trollIntensity === 1 ||
+        raw.trollIntensity === 2) state.trollIntensity = raw.trollIntensity;
+    if (typeof raw.panelWidth === "number" && raw.panelWidth >= 200 &&
+        raw.panelWidth <= 500) state.panelWidth = raw.panelWidth;
     if (Array.isArray(raw.history)) {
       state.history = raw.history.filter(function (h) {
         return h && typeof h.expr === "string" &&
@@ -199,17 +230,25 @@
       .sort(function (a, b) { return b.ts - a.ts; })
       .slice(0, HISTORY_MAX);
 
-    // Troll pref: LWW by presence of fresher history ts, else keep local
+    // Prefs: remote wins if present, else local stands
     var newTroll = (typeof data.troll === "boolean")
       ? data.troll : !!local.troll;
-    var newDeletedObj = mergedDeleted;
-    if (data._deletedMap) newDeletedObj = data._deletedMap;
+    var newIntensity = local.trollIntensity;
+    if (data.trollIntensity === 0 || data.trollIntensity === 1 ||
+        data.trollIntensity === 2) newIntensity = data.trollIntensity;
+    var newPanelWidth = local.panelWidth;
+    if (typeof data.panelWidth === "number" && data.panelWidth >= 200 &&
+        data.panelWidth <= 500) newPanelWidth = data.panelWidth;
 
-    state.deleted = newDeletedObj || {};
+    state.deleted = mergedDeleted;
     state.history = merged;
     state.troll = newTroll;
+    state.trollIntensity = newIntensity;
+    state.panelWidth = newPanelWidth;
 
-    var payload = { ver: 1, troll: newTroll, history: merged, deleted: state.deleted };
+    var payload = { ver: 1, troll: newTroll, trollIntensity: newIntensity,
+                   panelWidth: newPanelWidth, history: merged,
+                   deleted: state.deleted };
     try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (e) {}
 
     if (notifyUser) {
@@ -217,24 +256,6 @@
         lang() === "el" ? "Τα δεδομένα συγχρονίστηκαν." : "Data synced.");
     }
     return merged.length;
-  }
-
-  // Pending-remote staging (engine pushes when app is closed)
-  var REMOTE_PENDING_KEY = "oros-calculator-remote";
-  function stagePendingRemote(data) {
-    try {
-      localStorage.setItem(REMOTE_PENDING_KEY, JSON.stringify(data));
-    } catch (e) {}
-  }
-  function takePendingRemote() {
-    try {
-      var raw = localStorage.getItem(REMOTE_PENDING_KEY);
-      if (raw) {
-        localStorage.removeItem(REMOTE_PENDING_KEY);
-        return JSON.parse(raw);
-      }
-    } catch (e) {}
-    return null;
   }
 
   function markDirty() {
@@ -276,7 +297,7 @@
 
   function fmtDisplay(s) {
     // Group integer part with thin spaces (locale-friendly)
-    if (s === "Error" || s === "-" ) return s;
+    if (s === "Error" || s === "-") return s;
     var neg = s.charAt(0) === "-";
     var body = neg ? s.slice(1) : s;
     var parts = body.split(".");
@@ -293,14 +314,54 @@
     return r;
   }
 
+  // Was called but never defined in v1.0.0 (latent ReferenceError
+  // on chained divide-by-zero). Now real: surface "Error" cleanly.
+  function renderError() {
+    state.cur = "Error";
+    state.acc = null;
+    state.op = null;
+    state.fresh = true;
+    render();
+  }
+
+  // Single-level undo: snapshot taken before every mutating press.
+  function saveUndoState() {
+    state.prev = {
+      cur: state.cur,
+      acc: state.acc,
+      op: state.op,
+      fresh: state.fresh,
+      lastRes: state.lastRes
+    };
+  }
+
+  function undoLast() {
+    if (!state.prev) return false;
+    state.cur = state.prev.cur;
+    state.acc = state.prev.acc;
+    state.op = state.prev.op;
+    state.fresh = state.prev.fresh;
+    state.lastRes = state.prev.lastRes;
+    state.prev = null;
+    render();
+    return true;
+  }
+
   function pressDigit(d) {
+    saveUndoState();
     if (state.fresh) {
       state.cur = d;
       state.fresh = false;
     } else {
-      if (state.cur.replace("-", "").replace(".", "").length >= 15) return;
-      if (d === "." ) {
-        if (state.cur.indexOf(".") !== -1) return;
+      if (state.cur.replace("-", "").replace(".", "").length >= 15) {
+        state.prev = null;   // nothing mutated — drop the snapshot
+        return;
+      }
+      if (d === ".") {
+        if (state.cur.indexOf(".") !== -1) {
+          state.prev = null;
+          return;
+        }
         state.cur = state.cur === "" ? "0." : state.cur + ".";
       } else {
         state.cur = state.cur === "0" ? d : state.cur + d;
@@ -310,6 +371,7 @@
   }
 
   function pressOp(op) {
+    saveUndoState();
     if (state.op !== null && state.acc !== null && !state.fresh) {
       // Chain: 2 + 3 + → evaluate first
       var r = computePending();
@@ -326,6 +388,7 @@
   }
 
   function pressEq() {
+    saveUndoState();
     if (state.op === null || state.acc === null) {
       // Bare "=" on a fresh number — troll still comments
       if (state.troll && state.cur !== "0") {
@@ -374,7 +437,8 @@
     state.acc = null;
     state.op = null;
     state.fresh = true;
-    state.lastAnswer = shown;
+    state.lastAnswer = (shown === "Error") ? state.lastAnswer : shown;
+    state.lastRes = shown;
 
     render();
 
@@ -382,6 +446,7 @@
   }
 
   function pressAc() {
+    saveUndoState();
     state.cur = "0";
     state.acc = null;
     state.op = null;
@@ -391,6 +456,7 @@
 
   function pressBack() {
     if (state.fresh) { pressAc(); return; }
+    saveUndoState();
     state.cur = state.cur.slice(0, -1);
     if (state.cur === "" || state.cur === "-") state.cur = "0";
     render();
@@ -398,12 +464,14 @@
 
   function pressSign() {
     if (state.cur === "0") return;
+    saveUndoState();
     if (state.cur.charAt(0) === "-") state.cur = state.cur.slice(1);
     else state.cur = "-" + state.cur;
     render();
   }
 
   function pressPercent() {
+    saveUndoState();
     // Binary %: reduces b relative to a (iOS/Android semantics):
     // 200 + 10% → 220 ; unary on fresh entry: 50% → 0.5
     if (state.op !== null && state.acc !== null && !state.fresh) {
@@ -416,9 +484,18 @@
     render();
   }
 
+    function pressAns() {
+    if (state.lastAnswer === null) return;
+    saveUndoState();
+    state.cur = state.lastAnswer;
+    state.fresh = true;
+    render();
+  }
+
   function reuseHistory(id) {
     for (var i = 0; i < state.history.length; i++) {
       if (state.history[i].id === id) {
+        saveUndoState();
         state.cur = state.history[i].res;
         state.fresh = true;
         state.acc = null;
@@ -440,18 +517,23 @@
   }
 
   // ---------- 5. Troll logic ----------
-  // Lie cadence: ~1 in 3 evaluations, NEVER two consecutive lies.
+  // Lie cadence by intensity, NEVER two consecutive lies.
   // If the last evaluation trolled, this one is honest.
   function shouldLie() {
     if (state.lastTrolled) return false;
-    return Math.random() < 0.34;
+    var probabilities = [0.16, 0.34, 0.66];  // subtle/balanced/rampant
+    var prob = probabilities[state.trollIntensity] || 0.34;
+    return Math.random() < prob;
   }
 
-  // Plausible lie: off by a small relative error (1–6%).
+  // Plausible lie: relative error sized by intensity.
   function applyLie(result) {
     var magnitude = Math.abs(result);
     if (magnitude === 0) return result + (Math.random() < 0.5 ? 1 : -1);
-    var pct = 0.01 + Math.random() * 0.05;           // 1%–6%
+    var magMult = (state.trollIntensity === 0) ? 0.02
+                : (state.trollIntensity === 2) ? 0.08
+                : 0.05;
+    var pct = 0.01 + Math.random() * magMult;
     var sign = Math.random() < 0.5 ? 1 : -1;
     var lied = result + sign * pct * magnitude;
     // Round to a "believable" precision (never surgically identical)
@@ -486,6 +568,16 @@
     }
   }
 
+  function setTrollIntensity(level) {
+    var lvl = ((level % 3) + 3) % 3;   // clamp/cycle 0–2
+    if (lvl === state.trollIntensity) return;
+    state.trollIntensity = lvl;
+    persist(true);
+    render();
+    transientNote(t("calc.intensity"), t("calc.intensity." +
+      ["subtle", "balanced", "rampant"][lvl]));
+  }
+
   // ---------- 6. Rendering ----------
   var els = {};
 
@@ -497,16 +589,17 @@
       : "";
     els.res.textContent = fmtDisplay(state.cur);
 
+    // Tooltip: trolling hint or the copy affordance
+    els.res.title = state.troll ? t("calc.troll.hint") : t("calc.copy_hint");
+
     // Troll flavor on the display itself
     if (state.troll) {
       els.root.setAttribute("data-troll", "on");
-      els.res.title = t("calc.troll.hint");
     } else {
       els.root.removeAttribute("data-troll");
-      els.res.title = "";
     }
 
-    // Toggle button state
+    // Toggle button state (+ intensity in the accessible label)
     els.trollToggle.setAttribute("aria-pressed", state.troll ? "true" : "false");
     els.trollState.textContent = state.troll ? t("calc.troll.on") : t("calc.troll.off");
 
@@ -516,6 +609,8 @@
   function applyI18nText() {
     var nodes = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < nodes.length; i++) {
+      // #calc-res deliberately has NO data-i18n (its textContent is
+      // the live result — i18n must never overwrite the number)
       nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
     }
   }
@@ -526,6 +621,10 @@
     state.history.forEach(function (h) {
       var li = document.createElement("li");
       li.dataset.id = h.id;
+      // Negative-result feedback (subtle danger tint)
+      if (typeof h.res === "string" && h.res.charAt(0) === "-") {
+        li.classList.add("neg");
+      }
 
       var expr = document.createElement("div");
       expr.className = "h-expr";
@@ -544,6 +643,97 @@
     });
     els.historyList.appendChild(frag);
     els.historyEmpty.hidden = state.history.length > 0;
+  }
+
+  // ---------- Copy to clipboard ----------
+  function copyToClipboard(text) {
+    if (!text) return;
+    var done = function () {
+      transientNote(t("calc.copied"), "");
+    };
+    try {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        legacyCopy(text, done);
+      });
+    } catch (e) {
+      legacyCopy(text, done);
+    }
+  }
+
+  function legacyCopy(text, done) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    } catch (e) { /* silent */ }
+  }
+
+  // ---------- Drag-resizable history panel (wide layout) ----------
+  function initDragResize() {
+    var panel = document.querySelector(".calc-history");
+    if (!panel) return;
+
+    var startX = null;
+    var startWidth = null;
+    var MIN_W = 200, MAX_W = 500;
+
+    // The ::before handle sits OUTSIDE the border box (left:-4px,
+    // width 8px) — hit-test by distance from the panel's left
+    // edge instead of target element.
+    panel.addEventListener("mousedown", function (e) {
+      if (!window.matchMedia("(min-width: 880px)").matches) return;
+      if (e.button !== 0) return;
+      if (e.target.closest("li") || e.target.closest("#history-clear")) return;
+      var rect = panel.getBoundingClientRect();
+      if (e.clientX - rect.left > 12) return;   // only the handle strip
+
+      startX = e.clientX;
+      startWidth = panel.offsetWidth;
+      panel.classList.add("resizing");
+      document.body.style.cursor = "col-resize";
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+      e.preventDefault();
+    });
+
+    function onMove(e) {
+      if (startX === null) return;
+      // Panel is docked RIGHT of the keypad → dragging LEFT
+      // grows it: newWidth = startWidth - delta
+      var delta = e.clientX - startX;
+      var w = Math.max(MIN_W, Math.min(MAX_W, startWidth - delta));
+      panel.style.width = w + "px";
+    }
+
+    function onUp() {
+      if (startX !== null) {
+        var w = parseInt(panel.style.width, 10);
+        if (w >= MIN_W && w <= MAX_W) {
+          state.panelWidth = w;
+          persist(false);   // saved in slice; no urgent cloud push
+        }
+      }
+      startX = null;
+      startWidth = null;
+      panel.classList.remove("resizing");
+      document.body.style.cursor = "";
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    }
+  }
+
+  function restorePanelWidth() {
+    var panel = document.querySelector(".calc-history");
+    if (!panel) return;
+    if (state.panelWidth >= 200 && state.panelWidth <= 500) {
+      panel.style.width = state.panelWidth + "px";
+    }
   }
 
   // ---------- 7. Sync slice registration ----------
@@ -605,6 +795,16 @@
     else if (k === "Escape") { pressAc(); }
     else if (k === "%") { pressPercent(); }
     else if (k === "Delete") { pressAc(); }
+    else if (k === "a" || k === "A") { pressAns(); }
+  }
+
+  // Ctrl+Z (no alt/shift — avoids any contract B combos)
+  function onUndoKey(e) {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey &&
+        e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      if (undoLast()) transientNote(t("calc.undo"), "");
+    }
   }
 
   function flashEq() {
@@ -614,7 +814,7 @@
     setTimeout(function () { eq.classList.remove("flash"); }, 120);
   }
 
-  // ---------- Boot ----------
+  // ---------- 10. Boot ----------
   function wireUI() {
     els.root = document.getElementById("calc-root");
     els.expr = document.getElementById("calc-expr");
@@ -623,8 +823,12 @@
     els.trollState = document.getElementById("troll-state");
     els.historyList = document.getElementById("calc-history");
     els.historyEmpty = document.getElementById("history-empty");
+    els.pad = document.getElementById("calc-pad");
+    document.querySelector('.key[data-k="back"]').setAttribute(
+      "aria-label", t("calc.key.back"));
 
-    document.getElementById("calc-pad").addEventListener("click", function (e) {
+    // Keypad — single delegated handler, incl. Ans
+    els.pad.addEventListener("click", function (e) {
       var btn = e.target.closest("button.key");
       if (!btn) return;
       var k = btn.dataset.k;
@@ -634,14 +838,30 @@
       else if (k === "back") pressBack();
       else if (k === "sign") pressSign();
       else if (k === "pcnt") pressPercent();
+      else if (k === "ans") pressAns();
       else if (k === "dot") pressDigit(".");
       else pressDigit(k);
     });
 
+    // Display click = copy current result
+    els.res.addEventListener("click", function () {
+      copyToClipboard(state.lastRes);
+    });
+
+    // Troll toggle: click = on/off.
+    // Right-click (contextmenu) = cycle intensity — deliberately NOT
+    // dblclick, because a double click would flip the troll state
+    // twice (on→off) before reaching the intensity handler.
     els.trollToggle.addEventListener("click", toggleTroll);
+    els.trollToggle.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      setTrollIntensity(state.trollIntensity + 1);
+    });
+
     document.getElementById("history-clear").addEventListener("click", clearHistory);
 
     document.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onUndoKey);
   }
 
   function boot() {
@@ -653,9 +873,13 @@
     registerSlice();
     render();
     renderHistory();
+    initDragResize();
+    restorePanelWidth();
 
     console.log("[calc] calculator v" + CALC_VER + " booted — troll:" +
-      (state.troll ? "on" : "off") + " history:" + state.history.length);
+      (state.troll ? "on" : "off") +
+      " intensity:" + state.trollIntensity +
+      " history:" + state.history.length);
   }
 
   if (document.readyState === "loading") {

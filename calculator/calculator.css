@@ -75,8 +75,11 @@ html, body {
   font-weight: 700;
   cursor: pointer;
   transition: color .15s, border-color .15s, background .15s;
+  user-select: none;
 }
 #troll-toggle:hover { color: var(--text); }
+#troll-toggle .troll-label { font-weight: 600; }
+#troll-toggle[aria-pressed="true"] .troll-label { color: var(--accent); }
 #troll-toggle[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent-soft);
@@ -117,6 +120,7 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-variant-numeric: tabular-nums;
+  cursor: pointer;               /* click = copy to clipboard */
 }
 
 /* ---------- Keypad ---------- */
@@ -168,6 +172,14 @@ html, body {
   font-size: clamp(15px, 2.8vw, 19px);
 }
 .key.fn:hover { color: var(--text); }
+.key.ans {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: clamp(15px, 2.8vw, 19px);
+}
+.key.ans:hover { background: var(--accent); color: #fff; }
 
 /* Keyboard equal visual state for Enter/Eq */
 .key.eq.flash { background: var(--accent-hover); }
@@ -243,6 +255,10 @@ html, body {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+/* Negative-result feedback (feature 5) */
+.calc-history-list li.neg .h-res {
+  color: var(--danger, #ff4444);
+}
 .calc-history-empty {
   font-size: 12px;
   color: var(--text-dim);
@@ -254,7 +270,7 @@ html, body {
   color: var(--accent);
 }
 
-/* ---------- Wide screens: side-docked history ---------- */
+/* ---------- Wide screens: side-docked, draggable history ---------- */
 @media (min-width: 880px) {
   .calc-main {
     flex-direction: row;
@@ -273,11 +289,37 @@ html, body {
     flex-direction: column;
     justify-content: flex-end;
   }
+  /* Single, deduplicated block. flex-basis "auto" so the inline
+     width from drag-resize actually governs (with 0 0 300px the
+     basis would win and dragging would never move the panel). */
   .calc-history {
     border-top: none;
     width: 300px;
-    flex: 0 0 300px;
+    flex: 0 0 auto;
     padding-top: 20px;
+    position: relative;
+  }
+  .calc-history::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -4px;
+    bottom: 0;
+    width: 8px;
+    background: transparent;
+    cursor: col-resize;
+    z-index: 1;
+  }
+  .calc-history.resizing::before,
+  .calc-history:hover::before {
+    background: var(--border);
+  }
+  .calc-history.resizing {
+    user-select: none;
+  }
+  .calc-history.resizing,
+  .calc-history.resizing * {
+    cursor: col-resize;
   }
   .key {
     min-height: 64px;            /* room to breathe on desktop */
