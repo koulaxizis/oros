@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calculator</title>
-<link rel="stylesheet" href="calculator.css?v=0.38.13">
+<link rel="stylesheet" href="calculator.css?v=0.38.12">
 </head>
 <body>
 <div id="calc-root">
@@ -29,6 +29,16 @@
 
     <!-- Keypad -->
     <section class="calc-pad" id="calc-pad">
+      <button type="button" class="key fn fnrow" data-k="mc">MC</button>
+      <button type="button" class="key fn fnrow" data-k="mr">MR</button>
+      <button type="button" class="key fn fnrow" data-k="mplus">M+</button>
+      <button type="button" class="key fn fnrow" data-k="fx" aria-pressed="false">fx</button>
+
+      <button type="button" class="key fn sci" data-k="sqrt">&radic;</button>
+      <button type="button" class="key fn sci" data-k="sqr">x&sup2;</button>
+      <button type="button" class="key fn sci" data-k="inv">1/x</button>
+      <button type="button" class="key fn sci" data-k="sign">&plusmn;</button>
+
       <button type="button" class="key fn" data-k="ac" data-i18n="calc.key.ac">AC</button>
       <button type="button" class="key fn" data-k="back" aria-label="Backspace">&#9003;</button>
       <button type="button" class="key fn" data-k="pcnt">%</button>
@@ -59,7 +69,10 @@
     <aside class="calc-history">
       <div class="calc-history-head">
         <span data-i18n="calc.history">History</span>
-        <button type="button" id="history-clear" data-i18n="calc.history.clear">Clear</button>
+        <div class="calc-history-actions">
+          <button type="button" id="history-csv">CSV</button>
+          <button type="button" id="history-clear" data-i18n="calc.history.clear">Clear</button>
+        </div>
       </div>
       <ul id="calc-history" class="calc-history-list"></ul>
       <div id="history-empty" class="calc-history-empty" data-i18n="calc.history.empty">
@@ -69,6 +82,6 @@
 
   </main>
 </div>
-<script src="calculator.js?v=0.38.13"></script>
+<script src="calculator.js?v=0.38.12"></script>
 </body>
 </html>

@@ -161,6 +161,8 @@
     lang: lang(),
     troll: false,            // travels in the slice
     trollIntensity: 1,       // 0 subtle / 1 balanced / 2 rampant — slice
+    mem: null,               // memory register (number or null) — slice
+    sciOn: false,             // scientific row visible — slice
     history: [],             // [{id, expr, res, ts}] newest-first, cap 50
     deleted: {},             // tombstone map (id → ts) for merge
     panelWidth: 300,         // history panel width (wide layout) — slice
@@ -192,6 +194,8 @@
       ver: 1,
       troll: !!state.troll,
       trollIntensity: state.trollIntensity,
+      mem: state.mem,
+      sciOn: state.sciOn,
       panelWidth: state.panelWidth,
       history: state.history.slice(0, HISTORY_MAX),
       deleted: state.deleted
@@ -208,24 +212,30 @@
         raw.trollIntensity === 2) state.trollIntensity = raw.trollIntensity;
     if (typeof raw.panelWidth === "number" && raw.panelWidth >= 200 &&
         raw.panelWidth <= 500) state.panelWidth = raw.panelWidth;
+    if (typeof raw.mem === "number") state.mem = raw.mem;
+    if (typeof raw.sciOn === "boolean") state.sciOn = raw.sciOn;
+    // Tombstones FIRST — the history filter below must see them,
+    // or deleted entries resurrect on reload (found in audit).
+    if (raw.deleted && typeof raw.deleted === "object") state.deleted = raw.deleted;
     if (Array.isArray(raw.history)) {
       state.history = raw.history.filter(function (h) {
         return h && typeof h.expr === "string" &&
                typeof h.res === "string" && !state.deleted[h.id];
       }).slice(0, HISTORY_MAX);
     }
-    if (raw.deleted && typeof raw.deleted === "object") state.deleted = raw.deleted;
   }
 
   // LWW by ts per entry, tombstones honored, cap enforced post-merge.
   function applyRemote(data, notifyUser) {
     if (!data || typeof data !== "object") return 0;
     var local = readLS() || { troll: false, history: [], deleted: {} };
+    var localDeleted = (local.deleted && typeof local.deleted === "object")
+      ? local.deleted : {};
     var remoteDeleted = (data.deleted && typeof data.deleted === "object")
       ? data.deleted : {};
     var mergedDeleted = {};
     var k;
-    for (k in local.deleted)  mergedDeleted[k] = local.deleted[k];
+    for (k in localDeleted)  mergedDeleted[k] = localDeleted[k];
     for (k in remoteDeleted)  mergedDeleted[k] = remoteDeleted[k];
 
     var map = {};
@@ -251,16 +261,22 @@
     var newPanelWidth = local.panelWidth;
     if (typeof data.panelWidth === "number" && data.panelWidth >= 200 &&
         data.panelWidth <= 500) newPanelWidth = data.panelWidth;
+    var newMem = local.mem;
+    if (typeof data.mem === "number") newMem = data.mem;
+    var newSciOn = local.sciOn;
+    if (typeof data.sciOn === "boolean") newSciOn = data.sciOn;
 
     state.deleted = mergedDeleted;
     state.history = merged;
     state.troll = newTroll;
     state.trollIntensity = newIntensity;
     state.panelWidth = newPanelWidth;
+    state.mem = newMem;
+    state.sciOn = newSciOn;
 
     var payload = { ver: 1, troll: newTroll, trollIntensity: newIntensity,
-                   panelWidth: newPanelWidth, history: merged,
-                   deleted: state.deleted };
+                   panelWidth: newPanelWidth, mem: newMem, sciOn: newSciOn,
+                   history: merged, deleted: state.deleted };
     try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (e) {}
 
     if (notifyUser) {
@@ -496,6 +512,61 @@
     render();
   }
 
+  // Memory register (M+ / MR / MC). Single value, slice-synced.
+  function pressMc() {
+    state.mem = null;
+    persist(true);
+    transientNote(t("calc.mem.cleared"), "");
+  }
+  function pressMr() {
+    if (state.mem === null) {
+      transientNote(t("calc.mem.empty"), "");
+      return;
+    }
+    saveUndoState();
+    state.cur = numToString(state.mem);
+    state.fresh = true;
+    state.acc = null;
+    state.op = null;
+    render();
+    transientNote(t("calc.mem.recalled"), "");
+  }
+  function pressMplus() {
+    var v = parseFloat(state.cur);
+    if (isNaN(v)) return;
+    state.mem = (state.mem === null) ? v : state.mem + v;
+    persist(true);
+    transientNote(t("calc.mem.stored"), "");
+  }
+
+  // Scientific unary row (revealed by the fx toggle).
+  function applyUnary(kind) {
+    if (state.cur === "Error") return;
+    var v = parseFloat(state.cur);
+    if (isNaN(v)) return;
+    saveUndoState();
+    var r = null;
+    if (kind === "sqrt") r = (v < 0) ? "Error" : Math.sqrt(v);
+    else if (kind === "sqr") r = v * v;
+    else if (kind === "inv") r = (v === 0) ? "Error" : 1 / v;
+    if (r === null) return;
+    if (r === "Error") { renderError(); return; }
+    state.cur = numToString(r);
+    render();
+  }
+
+  function toggleSciRow() {
+    state.sciOn = !state.sciOn;
+    persist(true);
+    if (state.sciOn) {
+      els.root.setAttribute("data-sci", "on");
+    } else {
+      els.root.setAttribute("data-sci", "off");
+    }
+    var fx = document.querySelector('.key[data-k="fx"]');
+    if (fx) fx.setAttribute("aria-pressed", state.sciOn ? "true" : "false");
+  }
+
     function pressAns() {
     if (state.lastAnswer === null) return;
     saveUndoState();
@@ -690,6 +761,40 @@
     } catch (e) { /* silent */ }
   }
 
+  // ---------- CSV export of history ----------
+  function exportHistory() {
+    if (!state.history.length) {
+      transientNote(t("calc.title"), t("calc.history.empty_export"));
+      return;
+    }
+    var esc = function (s) {
+      return '"' + String(s).replace(/"/g, '""') + '"';
+    };
+    var rows = [["timestamp", "expression", "result"].join(",")];
+    // Oldest-first: natural reading order in spreadsheets
+    state.history.slice().reverse().forEach(function (h) {
+      rows.push([
+        new Date(h.ts).toISOString(),
+        esc(h.expr),
+        esc(h.res)
+      ].join(","));
+    });
+    try {
+      // UTF-8 BOM so Greek/expression text opens cleanly in Excel
+      var blob = new Blob(["\uFEFF" + rows.join("\r\n")],
+        { type: "text/csv;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "oros-calculator-history.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      transientNote(t("calc.exported"), "");
+    } catch (e) {}
+  }
+
   // ---------- Drag-resizable history panel (wide layout) ----------
   function initDragResize() {
     var panel = document.querySelector(".calc-history");
@@ -858,6 +963,11 @@
       else if (k === "sign") pressSign();
       else if (k === "pcnt") pressPercent();
       else if (k === "ans") pressAns();
+      else if (k === "mc") pressMc();
+      else if (k === "mr") pressMr();
+      else if (k === "mplus") pressMplus();
+      else if (k === "fx") toggleSciRow();
+      else if (k === "sqrt" || k === "sqr" || k === "inv") applyUnary(k);
       else if (k === "dot") pressDigit(".");
       else pressDigit(k);
     });
@@ -906,6 +1016,7 @@
     }, { passive: true });
 
     document.getElementById("history-clear").addEventListener("click", clearHistory);
+    document.getElementById("history-csv").addEventListener("click", exportHistory);
 
     document.addEventListener("keydown", onKey);
     document.addEventListener("keydown", onUndoKey);
@@ -922,6 +1033,9 @@
     renderHistory();
     initDragResize();
     restorePanelWidth();
+    els.root.setAttribute("data-sci", state.sciOn ? "on" : "off");
+    var fxBtn = document.querySelector('.key[data-k="fx"]');
+    if (fxBtn) fxBtn.setAttribute("aria-pressed", state.sciOn ? "true" : "false");
 
     console.log("[calc] calculator v" + CALC_VER + " booted — troll:" +
       (state.troll ? "on" : "off") +

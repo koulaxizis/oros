@@ -947,3 +947,21 @@ Verify boot log: [calc] calculator v1.1.0 booted — troll:off intensity:1 histo
 Verify EL mode: header, buttons and toggle render Greek when the shell language is EL.
 Verify desktop: right-click on the Troll toggle cycles intensity; dots update.
 Verify mobile: long-press (500ms) on the toggle cycles intensity without flipping On/Off.
+
+---
+
+orOS Calculator — Changelog
+v1.2.0 — Feature wave 2 (memory, scientific row, CSV export)
+Features
+Memory register: MC / MR / M+ as a compact half-height row above the keypad. Single numeric value (null = empty), persisted in the slice (mem) — travels via sync, snapshots and manual/auto export with zero shell changes. M+ accumulates onto the stored value; MR recalls with fresh-replace semantics (same as Ans/history reuse) and resets pending operator; MC clears with toast feedback.
+Scientific row: fx toggle reveals a second compact row — √ (sqrt, clean Error on negative input), x² (square), 1/x (inverse, Error on zero), ± (finally a keypad button; the engine function existed since v1.0.0 but no button was wired). Row visibility persisted in the slice (sciOn). All unary ops participate in single-level undo (snapshot before mutation, also on the Error path).
+CSV export: CSV button in the history header next to Clear. Exports oldest-first rows (timestamp ISO, expression, result) with RFC-4180 quoting, UTF-8 BOM (Greek-safe in Excel), CRLF line endings, filename oros-calculator-history.csv via Blob download. Empty history → informative toast, no file.
+Version: CALC_VER 1.2.0.
+Bugs fixed
+hydrate() read the tombstone map AFTER filtering history — entries deleted on another device resurrected on every reload (locally only; sync re-suppressed them). Deleted map is now hydrated BEFORE the history filter. (Pre-existing since v1.1.0, caught in the pre-commit re-audit.)
+Defensive guard in applyRemote(): a local payload lacking the deleted field could throw a TypeError inside the merge loop; the local tombstone source is now normalized before iteration.
+Slice schema
+Added fields: mem (number | null), sciOn (boolean). Merge rule in applyRemote(): remote wins when present, else local stands — same doctrine as troll/panelWidth. Backward compatible: older payloads without the fields keep local state.
+Notes
+Keyboard shortcuts for memory/sci deliberately not added this wave (letter collision risk with A = Ans); candidates for later: M = M+, R = MR.
+No shell changes needed — SC_DEFS already maps the calculator entry.
