@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.18";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.19";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1272,14 +1272,27 @@
     // (same contract as syncInterval — pull → set → push loops).
     if (data.weather && typeof data.weather === "object") {
       var ww = data.weather;
+      var prevW = wxRead();   // coords BEFORE the pull overwrites them
+      var newLat = (typeof ww.lat === "number" && isFinite(ww.lat)) ? ww.lat : null;
+      var newLon = (typeof ww.lon === "number" && isFinite(ww.lon)) ? ww.lon : null;
+      // A pull that MOVES the location invalidates the cache (the
+      // old city's temp painted under the new label) AND must bypass
+      // the 30-min throttle — WX_LAST_KEY was stamped for the OLD
+      // city. Unchanged location → throttled, exactly as before.
+      var moved = (newLat !== null && newLon !== null &&
+                   (prevW.lat !== newLat || prevW.lon !== newLon));
+      if (moved) {
+        localStorage.removeItem(WX_CACHE_KEY);
+        localStorage.removeItem(WX_LAST_KEY);
+      }
       wxSave({
         on:    !!ww.on,
         auto:  !!ww.auto,
-        lat:   (typeof ww.lat === "number" && isFinite(ww.lat)) ? ww.lat : null,
-        lon:   (typeof ww.lon === "number" && isFinite(ww.lon)) ? ww.lon : null,
+        lat:   newLat,
+        lon:   newLon,
         label: (typeof ww.label === "string") ? ww.label : ""
       });
-      wxFetch(false);        // silent: throttled, location is new
+      wxFetch(moved);         // moved → force; unchanged → throttled
       wxRenderChip();
       wxPushToApp();         // #S3-fix: a RUNNING Weather app adopts the
                              // pulled prefs live — tray and app must never

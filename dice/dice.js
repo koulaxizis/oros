@@ -601,6 +601,34 @@
   }
 
   // ---------- 8. Clipboard share ----------
+  function copyToClipboard(text) {
+    // Guarded clipboard API: without it, navigator.clipboard being
+    // undefined threw a SYNCHRONOUS TypeError that killed the whole
+    // click handler (no toast, no copy — the "Share does nothing" bug)
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      return navigator.clipboard.writeText(text);
+    }
+    // Fallback: hidden textarea + execCommand, inside the click's
+    // user-gesture window (insecure context / older browsers)
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      try {
+        var ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) resolve(); else reject(new Error("copy failed"));
+      } catch (e) {
+        ta.remove();
+        reject(e);
+      }
+    });
+  }
+
   function shareResult() {
     if (!lastResult) return;
     var time = fmtTimestamp(lastResult.ts);
@@ -620,10 +648,10 @@
       details: details
     });
 
-    navigator.clipboard.writeText(card).then(function () {
-      showToast(t("toast.share"), false);
-    }).catch(function () {
-      showToast(t("toast.copyfail"), false);
+    copyToClipboard(card).then(function () {
+      showToast(t("toast.share"));
+    }, function () {
+      showToast(t("toast.copyfail"));
     });
   }
 
@@ -656,7 +684,17 @@
   var toastTimer = null;
 
   function showToast(text) {
+    // Unified orOS toast system (iframe-safe)
+    var parent = window.parent;
+    if (parent && parent.orosNotifs && typeof parent.orosNotifs.transient === "function") {
+      try {
+        parent.orosNotifs.transient({ ns: "dice", title: text });
+        return;   // unified toast handles timing
+      } catch (e) {}
+    }
+    // Fallback to local toast if unified system unavailable (stale bundle)
     var el = $("toast");
+    if (!el) return;
     el.innerHTML = "";
     el.classList.remove("show");
 
@@ -735,7 +773,7 @@
       touch();
       save();
       scheduleRender();
-      showToast(t("toast.cleared"), false);
+      showToast(t("toast.cleared"));
     });
   }
   
