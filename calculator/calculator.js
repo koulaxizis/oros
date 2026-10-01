@@ -880,6 +880,29 @@
     renderHistory();
   }
 
+  // ---------- 7b. Parent keyboard routing ----------
+  // When the calc iframe is open but focus sits on the shell
+  // (right after opening, before the first click inside the
+  // window), keydown events never reach this document. Browsers
+  // deliver key events only to the focused browsing context, so
+  // when the iframe DOES have focus the parent never fires —
+  // this cannot double-handle anything.
+  function wireParentKeyRouting() {
+    var parentDoc;
+    try { parentDoc = window.parent.document; } catch (e) { return; }
+    if (!parentDoc || parentDoc === document) return;   // standalone
+    parentDoc.addEventListener("keydown", function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;   // shell territory
+      // Stale-listener guard: window was closed meanwhile
+      if (!els.root || !els.root.isConnected) return;
+      // Never steal typing meant for shell inputs/modals
+      var tgt = e.target;
+      if (tgt && tgt.closest &&
+          tgt.closest("input, textarea, select, [contenteditable='true']")) return;
+      onKey(e);
+    });
+  }
+
   // ---------- 8. Contract B forwarding ----------
   function wireShortcutForwarding() {
     document.addEventListener("keydown", function (e) {
@@ -901,6 +924,17 @@
   function onKey(e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     var k = e.key;
+    // NumLock OFF: e.key is "End"/"PageUp" etc. — recover the
+    // numpad glyph from the physical key code so the numpad
+    // works in both NumLock states.
+    var NP = {
+      Numpad0: "0", Numpad1: "1", Numpad2: "2", Numpad3: "3",
+      Numpad4: "4", Numpad5: "5", Numpad6: "6", Numpad7: "7",
+      Numpad8: "8", Numpad9: "9",
+      NumpadAdd: "+", NumpadSubtract: "-", NumpadMultiply: "*",
+      NumpadDivide: "/", NumpadDecimal: ".", NumpadEnter: "Enter"
+    };
+    if (e.code && NP[e.code]) k = NP[e.code];
     if (k >= "0" && k <= "9") { pressDigit(k); }
     else if (k === "." || k === ",") { pressDigit("."); }
     else if (k === "+") { pressOp("add"); }
@@ -970,6 +1004,9 @@
       else if (k === "sqrt" || k === "sqr" || k === "inv") applyUnary(k);
       else if (k === "dot") pressDigit(".");
       else pressDigit(k);
+      // Drop focus so Enter/Space never re-fire the last key
+      // (double evaluation on Enter, stuck key on Space)
+      btn.blur();
     });
 
     // Display click = copy current result
@@ -1027,6 +1064,7 @@
     watchPalette();
     hydrate();
     wireUI();
+    wireParentKeyRouting();
     wireShortcutForwarding();
     registerSlice();
     render();

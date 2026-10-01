@@ -1088,3 +1088,100 @@ you will patch. Answer me in Greek; code and docs in English.
   - The Writer folder is `writer/`.
   - `vendor/xlsx` is not precached.
 - **Changelog:** `CHANGELOG.md` is retired; the changelog lives in this Part. The raw entries that sat at the end of the old Bible were normalized into the format above with every substantive fact kept; the duplicate Calculator v1.1.0 entry was merged into one.
+
+---
+
+orOS Changelog — To-Do → Calendar feed
+Change
+Added a read-only To-Do feed to the Calendar app (calendar.js). Tasks with a due date now appear as all-day red rows on their due day, with their own filterable feed label chip.
+
+What was added
+New feed label: lbl-feed-todo — red (#e06c75), named "To-Do" (EN) / "Εργασίες" (EL). Registered in FEED_LABELS, so it automatically appears in:
+the month/day label filter chips row (renderChips),
+the label manager's read-only "App feeds" section (immutable, 🔒 — born from FEED_LABELS, never from state.labels).
+New feed reader: todoFeedOn(dateStr) in calendar.js — reads oros-todo-data (written by todo.js via shared same-origin localStorage), surfaces every uncompleted task whose due equals the cell date as an all-day event. Row title = task text (≤60 chars), note = task notes (≤500 chars). Completed tasks are deliberately skipped — a handled due date is not calendar noise.
+Micro-cache (todoCache, ~1s refresh) — same pattern as the Contacts/Habits/Cycle/Mood/Kanban/Pet feeds, to avoid JSON.parse storms during month renders (~31 cells × paint).
+Click-through: clicking a To-Do row calls the shell bridge __orosOpenTodo(listId) — deep-links to the task's list in the To-Do app. The bridge already existed (Wave 7 deep-link receiver in todo.js), no todo.js changes needed.
+Sync cache invalidation: todoCache reset in setFromSync alongside the other feed caches, so a pull that refreshes To-Do data repainting immediately.
+Standing contract (unchanged, verified)
+Feed rows carry _feed: true and per-render keys (tdo-<itemId>-<date>): never stored in state.events, never synced, never exported in the .ics.
+Corrupt/absent oros-todo-data yields no rows — standalone Calendar load unaffected.
+No changes to todo.js; no changes to the synced blob schema; ver stays 1.
+labelVisible("lbl-feed-todo") respected — the chip toggles the feed on/off like every other feed.
+Patches applied
+8 patches in calendar.js, strict OLD → NEW find-and-replace format: 1–2. i18n EN/EL — lbl.feed.todo string. 3. FEED_LABELS — new entry (red, between Kanban and Screen Pet). 4. feedLabelName() — new id branch. 5. Feed block (TODO_DATA_KEY, todoCache, todoRaw(), todoFeedOn()) inserted after kanbanFeedOn, before the Screen Pet feed comment. 6. eventsOn() — .concat(todoFeedOn(dateStr)) between Kanban and Pet. 7. openFeedRow() — new ev._todo branch routing to __orosOpenTodo(ev._todo.listId). 8. setFromSync — todoCache reset added.
+
+Verification checklist (before stable)
+ Month grid: task with due today shows a red dot on today's cell; day panel shows the all-day "Εργασίες" row.
+ Completing the task removes the row within ~1s (micro-cache).
+ Feed chip toggle hides/shows To-Do rows without affecting other feeds.
+ Click on a To-Do row opens the To-Do app on the correct list.
+ Recurring task shows only on its current due date (re-check re-dates it).
+ .ics export contains no tdo- rows.
+ Console: calendar.js v<x> boot clean, no new warnings.
+Future work (under consideration)
+Option to also show completed tasks on their due day (dimmed), if requested.
+Cross-list source chip on the row (like To-Do's own search view) — deferred, keeps title clean for now.
+
+---
+
+orOS Changelog — Notifications Toast Stack (GNOME-style)
+Feature
+Toasts no longer overlap each other. The unified notification system now renders toasts in a vertical stack (GNOME-style): the newest notification slides in at the top and pushes older ones down, each toast keeps its own dismissal state, and a visibility limit keeps the stack on screen.
+
+Files changed
+notifications.js — all logic (stack container, stack-aware emitter, queue cleanup).
+style.css — appended #oros-toast-stack / .oros-toast base rules at the bottom of the file.
+Architecture
+Single stack container: #oros-toast-stack, fixed top-right (calc(58px + safe-area-inset-top), right 20px), created lazily by ensureToastStack() on module init. Column flex, 8px gap, pointerEvents: none on the container (clicks pass through empty areas); individual toasts re-enable pointerEvents: auto.
+Per-toast independence: every fireToast() creates its own DOM node, its own auto-remove timer, its own MutationObserver. No single-slot wipe anywhere — concurrent notifications (e.g. a mood check-in plus a Minimalism prompt) coexist visibly.
+Newest-first ordering: insertBefore(toast, toastStack.firstChild) + toastQueue.unshift(toast).
+Visibility limit — max 5: applyStackLimits() walks toastQueue; toasts at index ≥ 5 get opacity: 0, pointerEvents: 'none', and stay mounted (their timers keep running; they expire normally). Promotions run on BOTH membership changes: insertion (end of fireToast) and removal (observer callback) — see Bug 3.
+Position setting retired by design: the stack is pinned top-right per the orOS toast doctrine («top-right, below the clock»). The position setting value persists in existing slices but is inert.
+Bugs found during self-review (post-first-implementation audit)
+The first pass (patches 1–5 in chat) worked for the basic case but verification against the actual file caught five defects, all fixed before release:
+
+Dead double-mount: legacy document.body.appendChild(toast) survived alongside the stack insert (functionally harmless — insertBefore relocated the node — but dead and misleading). Removed together with the orphaned requestAnimationFrame opacity flip.
+Visibility limit broken by the rAF flip: the async requestAnimationFrame set opacity: '1' AFTER the enforcement loop dimmed excess toasts, resurrecting toast #6+. Fixed by folding the opacity 0→1 flip into applyStackLimits() itself.
+Queue never shrank — observer watched the wrong parent: the cleanup MutationObserver observed document.body while toasts lived in #oros-toast-stack; childList mutations on body never fired, so removed toasts stayed in toastQueue as detached nodes forever, corrupting the visibility-index math. Fixed: observer attaches to toastStack, removal splices the queue and calls applyStackLimits().
+Z-index ladder violation: stack shipped at 9999 (same tier as the boot splash) violating the documented ladder rule «toasts must never fall behind the splash». Fixed to 10000.
+No promotion on removal (introduced by my own Patch 3 of the fix round): hidden toasts (index ≥ 5) never reappeared when their seniors closed, because the limit loop only ran on insertion. Fixed by extracting applyStackLimits() and calling it from the observer's removal path too.
+Behaviors preserved (verified, unchanged)
+Inbox/badge/sync contracts: toasts are visual only; emitCandidate, transientToast, notifSliceSet, markAsRead, dedup, quiet hours, app toggles, 24h badge-fallback rule — untouched.
+Undo-bearing toasts keep their extended window (≥ 8s).
+Deep-link router and per-app bridges unchanged.
+Native Web Notifications logic unchanged (in-tab toasts unaffected).
+Per-app timers survive unrelated dismissals (each toast cleans up only its own timer via its observer).
+Known trade-offs / open items
+Insertion animation: a brand-new toast may appear without a slide-in (insertion and opacity:'1' land in the same frame); older toasts still shift smoothly. Optional fix on the table: call applyStackLimits() inside requestAnimationFrame at the end of fireToast.
+Dead code awaiting deletion (needs owner approval before removing): TOAST_POSITIONS constant, getPositionStyles() function, and the unused const position = getSetting('position', ...) inside fireToast. Legacy slices carrying a position value are harmless; do NOT migrate or strip the key — LWW settings merge tolerates it.
+Excess (>5) toasts are invisible-but-mounted rather than summarized («+N more» counter considered, deferred — no UI surface designed yet).
+Testing checklist
+ Two simultaneous notifications → both visible, stacked, no overlap.
+ Newer notification appears above; older slides down smoothly.
+ Six+ simultaneous → exactly 5 visible; closing one reveals the next.
+ Dismiss (✕), click-through (deep link), timeout — only the targeted toast disappears.
+ Undo-action toasts keep ~8s window in a full stack.
+ Toasts render above the boot splash layer if ever co-present (z-index 10000).
+ Mobile (≤ 480px): stack fits width (maxWidth: 90vw), safe-area respected.
+ No console errors; [orOS][notifs] Module v1.0.0 initialized still boots clean.
+ Console check after >6 fires then removals: toastQueue length shrinks (no detached-node buildup).
+Bible rules to record
+Toast layer = GNOME stack semantics: newest on top, max 5 visible, promote-on-removal. Container pointerEvents: none, children auto.
+Z-index ladder addition: #oros-toast-stack = 10000 (above splash 9999, below inbox panel 10001).
+Stack observers MUST observe the element that actually parents the observed node (toastStack, not document.body) — a generic-body observer is the canonical trap this feature nearly shipped with.
+
+---
+
+CHANGELOG — orOS Calculator v1.3.0
+Calculator — Keyboard reliability (v1.3.0)
+
+Fixed: number row and numpad now work even when focus is on the shell. Root cause: the calculator runs inside an iframe and browsers deliver keydown events only to the focused browsing context; until the user clicked inside the window, no keys reached the app. Added wireParentKeyRouting(): a same-origin keydown listener on the parent document forwards unmodified key events into onKey, with guards for stale listeners (window closed, root not connected) and for shell input fields/modals (input, textarea, select, contenteditable). Since browsers dispatch keys only to the focused context, this never double-handles events when the iframe itself has focus.
+
+Fixed: numpad now works with NumLock OFF. e.key on numpad keys in that state is "End", "PageUp", etc., so the old onKey ignored them. onKey now maps physical e.code values (Numpad0-9, NumpadAdd/Subtract/Multiply/Divide/Decimal/Enter) to their NumLock glyphs; with NumLock ON behavior is unchanged.
+
+Fixed: after clicking a keypad button, Enter and Space re-triggered the focused button (double evaluation on =, stuck repeats). The delegated pad click handler now calls btn.blur() after each action.
+
+Shell contracts unchanged: modifier combos (Ctrl/Cmd/Alt) are still excluded from forwarding, Contract B shortcut forwarding is untouched, modifier keys remain reserved for the shell.
+
+Verification steps: open Calculator from the orOS menu without clicking inside the window, then type on the number row and numpad (both NumLock states) — digits, + − × ÷, Enter/=, Backspace, ESC, %, Delete, Ans must all respond immediately. Then click any keypad button and press Enter — the action must fire exactly once.

@@ -1408,3 +1408,16 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
    Bible Part VII — now applied to the shell itself, not just app
    stylesheets. (Σ-R4, resolved via notifications.js cross-check.) */
 [hidden] { display: none !important; }
+
+/* ===== NOTIFICATIONS STACK — GNOME STYLE ===== */
+#oros-toast-stack {
+  pointer-events: none;
+  /* Container positioning handled inline in JS (safe-area aware) */
+}
+
+.oros-toast {
+  /* Individual toast base — overrides inline if needed */
+  pointer-events: auto;
+  z-index: 10000;
+  /* Transition already set inline for slide-in */
+}

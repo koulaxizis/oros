@@ -38,6 +38,14 @@
     audioCtx: null
   };
 
+  // ===== TOAST STACK — GNOME-STYLE STACKING =====
+  // One container at top-right; each fireToast appends a node,
+  // never replaces. Newest slides in at the top, older shift down.
+  // Max 5 visible; excess fade out but stay mounted (queue).
+  var TOAST_STACK_MAX_VISIBLE = 5;
+  var toastStack = null;
+  var toastQueue = [];   // ordered, newest first
+
   // ——— Logger helper ———
   function log(...args) {
     console.log(LOG_PREFIX, ...args);
@@ -277,6 +285,23 @@
   
     // ===== TOAST EMITTER — CENTRALIZED =====
 
+  // Stack discipline — runs on EVERY membership change (add AND
+  // remove). Without the remove-path call, a demoted toast stayed
+  // opacity:0/pointer-events:none forever as its seniors closed.
+  function applyStackLimits() {
+    toastQueue.forEach((t, i) => {
+      if (i < TOAST_STACK_MAX_VISIBLE) {
+        t.style.opacity = '1';
+        t.style.transform = 'translateY(0)';
+        t.style.pointerEvents = 'auto';
+      } else {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(-10px)';
+        t.style.pointerEvents = 'none';
+      }
+    });
+  }
+
   function fireToast(item, isCatchUp = false) {
     if (!state.ready) return;
     
@@ -296,10 +321,8 @@
     toast.setAttribute('aria-live', 'polite');
     
     // Apply style inline — palette vars via TOAST_STYLES (A1)
+    // NOTE: NO fixed positioning — the stack handles location.
     Object.assign(toast.style, {
-      position: 'fixed',
-      zIndex: 10000,
-      maxWidth: '400px',
       backgroundColor: style.bg,
       border: `2px solid ${style.border}`,
       borderRadius: `${style.borderRadius}px`,
@@ -309,10 +332,12 @@
       color: 'var(--text)',
       cursor: 'pointer',
       opacity: '0',
-      transition: 'opacity 0.3s ease',
+      transition: 'opacity 0.3s ease, transform 0.3s ease',
       boxShadow: '0 4px 12px var(--shadow, rgba(0,0,0,0.3))',
-      // Position calculation
-      ...getPositionStyles(position)
+      maxWidth: '400px',
+      pointerEvents: 'auto',
+      transform: 'translateY(-10px)',   // slide-in from above
+      willChange: 'transform, opacity'
     });
     
     // Inner content (optional action button — transient undo pattern)
@@ -360,14 +385,6 @@
       toast.remove();
     });
     
-    // Append to body
-    document.body.appendChild(toast);
-    
-    // Animate in
-    requestAnimationFrame(() => {
-      toast.style.opacity = '1';
-    });
-    
     // Auto-remove (undo-bearing toasts get an extended window —
     // an undo that vanishes in 5s is a cruel joke)
     const actDuration = item.action ? Math.max(duration, 8000) : duration;
@@ -404,14 +421,34 @@
       } catch (e) { /* in-tab toast stands alone */ }
     }
     
-    // Cleanup timer on removal
+    // Append to stack FIRST (newest-first) — must precede the
+    // observer, which attaches to the stack itself.
+    if (!toastStack) ensureToastStack();
+    toastStack.insertBefore(toast, toastStack.firstChild);
+    toastQueue.unshift(toast);
+
+    // Cleanup timer on removal — observing the STACK (the toast's
+    // real parent), not document.body: a removed toast mutates the
+    // stack's childList, never body's. The old body observer never
+    // fired — the queue never shrank, detached nodes piled up.
     const observer = new MutationObserver(() => {
       if (!toast.parentNode) {
         clearTimeout(timerId);
         observer.disconnect();
+        const idx = toastQueue.indexOf(toast);
+        if (idx !== -1) toastQueue.splice(idx, 1);
+        applyStackLimits();   // promote the next hidden toast up
       }
     });
-    observer.observe(document.body, { childList: true });
+    observer.observe(toastStack, { childList: true });
+    
+    // Enforce visibility limit — excess fade out but stay mounted.
+    // pointerEvents RESTORED for visible ones (a toast demoted
+    // from index ≥5 would otherwise stay click-dead forever).
+    // The opacity 0→1 flip right after insertion doubles as the
+    // slide-in animation (transition covers it — the removed rAF
+    // fought this loop and resurrected hidden toasts).
+    applyStackLimits();
     
     log(`Toast fired: ${item.title}`);
   }
@@ -952,6 +989,9 @@
     // same-trust-zone as every other slice.
     window.orosSync.registerSlice('notifs', notifSliceGet, notifSliceSet);
 
+    // Build GNOME-style toast stack container (top-right, below taskbar)
+    ensureToastStack();
+
     // Visibility change hook (mobile catch-up)
     document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -979,6 +1019,30 @@
     state._lastTick = now;
     scheduledSweep();
   };
+
+  // ===== STACK CONTAINER CREATION =====
+  function ensureToastStack() {
+    if (toastStack) return toastStack;
+    
+    toastStack = document.createElement('div');
+    toastStack.id = 'oros-toast-stack';
+    Object.assign(toastStack.style, {
+      position: 'fixed',
+      top: 'calc(58px + env(safe-area-inset-top,0px))',
+      right: '20px',
+      zIndex: 10000,   // ladder: toasts above splash (9999) — Σ1 β1
+      width: '400px',
+      maxWidth: '90vw',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      pointerEvents: 'none',   // clicks pass through to underlying UI
+      maxHeight: 'calc(100vh - 120px)',
+      overflow: 'visible'
+    });
+    document.body.appendChild(toastStack);
+    return toastStack;
+  }
 
   function ensureTaskbarBell() {
     // Check if bell already exists

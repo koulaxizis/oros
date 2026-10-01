@@ -59,7 +59,7 @@
 
   var STORAGE_KEY = "oros-pet-data";
   var DATA_VER = 1;
-  var ENABLED_KEY = "oros-pet-enabled";   // shell-local pref (device presence)
+  var ENABLED_KEY = "oros-pet-enabled";   // LEGACY (v0.3): migrated → synced petSettings.enabled
   var POS_KEY = "oros-pet-pos";           // device-local position memory (v0.2)
   var EVENTS_KEY = "oros-pet-events";     // v0.3.1+: event log (SYNCED slice "petEvents")
   var CALENDAR_SYNC_KEY = "oros-pet-calendar-sync"; // legacy mirror view (calendar.js reader)
@@ -516,22 +516,45 @@ function mergePetSettings(A, B) {
   var aTs = (A && typeof A.calFeedTs === "number") ? A.calFeedTs : 0;
   var bTs = (B && typeof B.calFeedTs === "number") ? B.calFeedTs : 0;
   // LWW per field
+  // v0.4: enabled + minimized ride the same slice — every pet
+  // preference travels (v0.3.2 had them device-local by design).
+  function lwwBool(field) {
+    var af = (A && typeof A[field] === "boolean") ? A[field] : false;
+    var bf = (B && typeof B[field] === "boolean") ? B[field] : false;
+    var at = (A && typeof A[field + "Ts"] === "number") ? A[field + "Ts"] : 0;
+    var bt = (B && typeof B[field + "Ts"] === "number") ? B[field + "Ts"] : 0;
+    return { v: (at >= bt) ? af : bf, ts: (at >= bt) ? at : bt };
+  }
+  var en = lwwBool("enabled");
+  var mn = lwwBool("minimized");
   return {
-    ver:       1,
-    calFeed:   (aTs >= bTs) ? aCal : bCal,
-    calFeedTs: (aTs >= bTs) ? aTs : bTs
+    ver:         1,
+    calFeed:     (aTs >= bTs) ? aCal : bCal,
+    calFeedTs:   (aTs >= bTs) ? aTs : bTs,
+    enabled:     en.v,
+    enabledTs:   en.ts,
+    minimized:   mn.v,
+    minimizedTs: mn.ts
   };
 }
 
 function settingsSliceGet() {
   // Load settings from localStorage
   var raw = localStorage.getItem("oros-pet-settings");
-  var def = { calFeed: true, calFeedTs: 0 };
+  var def = {
+    calFeed: true, calFeedTs: 0,
+    enabled: false, enabledTs: 0,
+    minimized: false, minimizedTs: 0
+  };
   try {
     var s = JSON.parse(raw);
     if (s && typeof s === "object") {
       if (typeof s.calFeed === "boolean") def.calFeed = s.calFeed;
       if (typeof s.calFeedTs === "number") def.calFeedTs = s.calFeedTs;
+      if (typeof s.enabled === "boolean") def.enabled = s.enabled;
+      if (typeof s.enabledTs === "number") def.enabledTs = s.enabledTs;
+      if (typeof s.minimized === "boolean") def.minimized = s.minimized;
+      if (typeof s.minimizedTs === "number") def.minimizedTs = s.minimizedTs;
     }
   } catch (e) {}
   return def;
@@ -542,8 +565,12 @@ function settingsSliceSet(data) {
   window.__orosPetSyncApi._suppress = true;
   try {
     var out = {
-      calFeed:   (typeof data.calFeed === "boolean") ? data.calFeed : true,
-      calFeedTs: (typeof data.calFeedTs === "number") ? data.calFeedTs : Date.now()
+      calFeed:     (typeof data.calFeed === "boolean") ? data.calFeed : true,
+      calFeedTs:   (typeof data.calFeedTs === "number") ? data.calFeedTs : Date.now(),
+      enabled:     (typeof data.enabled === "boolean") ? data.enabled : false,
+      enabledTs:   (typeof data.enabledTs === "number") ? data.enabledTs : 0,
+      minimized:   (typeof data.minimized === "boolean") ? data.minimized : false,
+      minimizedTs: (typeof data.minimizedTs === "number") ? data.minimizedTs : 0
     };
     localStorage.setItem("oros-pet-settings", JSON.stringify(out));
     // LEGACY MIRROR: calendar.js (unmodified) still reads
@@ -562,6 +589,15 @@ function applyPetSettings(s) {
   // Live application — calendar feed reads this directly
   if (typeof s.calFeed === "boolean") {
     window.__orosPetCalFeedEnabled = s.calFeed;
+  }
+  // v0.4: on/off + minimized apply LIVE from the synced slice.
+  // Idempotent (petEnable/petDisable guard on runtime.active),
+  // never writes back — no sync echo loop.
+  if (typeof s.enabled === "boolean") {
+    if (s.enabled) petEnable(); else petDisable();
+  }
+  if (runtime && runtime.active && state && state.pet) {
+    refreshHUD(computeStats(Date.now(), state.pet));
   }
 }
 
@@ -1566,10 +1602,15 @@ function applyPetSettings(s) {
 
   // COLLAPSED STATE — device-local memory
   function isMinimized() {
-    return localStorage.getItem("oros-pet-minimized") === "1";
+    return settingsSliceGet().minimized === true;
   }
   function setMinimized(on) {
-    try { localStorage.setItem("oros-pet-minimized", on ? "1" : "0"); } catch (e) {}
+    on = !!on;
+    var cur = settingsSliceGet();
+    cur.minimized = on;
+    cur.minimizedTs = Date.now();
+    settingsSliceSet(cur);
+    if (window.__orosPetSyncApi) window.__orosPetSyncApi.dirty();
   }
   function toggleMinimize() {
     var nowMin = !isMinimized();
@@ -2081,10 +2122,18 @@ function applyPetSettings(s) {
   }
 
   function setEnabled(on) {
-    try { localStorage.setItem(ENABLED_KEY, on ? "1" : "0"); } catch (e) {}
-    if (on) petEnable(); else petDisable();
+    on = !!on;
+    var cur = settingsSliceGet();
+    if (cur.enabled !== on) {
+      cur.enabled = on;
+      cur.enabledTs = Date.now();
+      settingsSliceSet(cur);        // applies live via applyPetSettings
+      if (window.__orosPetSyncApi) window.__orosPetSyncApi.dirty();
+    } else {
+      if (on) petEnable(); else petDisable();
+    }
   }
-  function isEnabled() { return localStorage.getItem(ENABLED_KEY) === "1"; }
+  function isEnabled() { return settingsSliceGet().enabled === true; }
   function togglePet() { setEnabled(!isEnabled()); }
 
   window.orosPet = {
@@ -2120,14 +2169,19 @@ function applyPetSettings(s) {
     try {
       if (localStorage.getItem("oros-pet-settings")) return;
       var legacy = localStorage.getItem(CALENDAR_SYNC_KEY);
-      if (legacy !== null) {
-        localStorage.setItem("oros-pet-settings", JSON.stringify({
-          ver: 1,
-          calFeed: legacy !== "0",
-          calFeedTs: 1
-        }));
-        bootLegacyDirty = true;
-      }
+      var legacyEnabled = localStorage.getItem(ENABLED_KEY);
+      var legacyMin = localStorage.getItem("oros-pet-minimized");
+      if (legacy === null && legacyEnabled === null && legacyMin === null) return;
+      localStorage.setItem("oros-pet-settings", JSON.stringify({
+        ver: 1,
+        calFeed: legacy !== null ? legacy !== "0" : true,
+        calFeedTs: legacy !== null ? 1 : 0,
+        enabled: legacyEnabled === "1",
+        enabledTs: legacyEnabled !== null ? 1 : 0,
+        minimized: legacyMin === "1",
+        minimizedTs: legacyMin !== null ? 1 : 0
+      }));
+      bootLegacyDirty = true;
     } catch (e) {}
   })();
   registerSync();

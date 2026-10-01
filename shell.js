@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.20";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.22";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3292,9 +3292,19 @@
               "&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weathercode,uv_index" +
               "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
               "&timezone=auto&forecast_days=7";
-    fetch(url)
+    // Boot-race hardening: a request that HANGS (cold PWA start racing
+    // a new SW activation — the >30s cache-cleanup log line) never
+    // reaches .catch, keeps WX_LAST_KEY stamped and locks the chip in
+    // "waiting" for the full 30-min throttle. A 10s abort converts
+    // the hang into a normal failure → the existing 2-min retry
+    // window (rewind in .catch) takes over. AbortController absent
+    // (ancient browser) → old behavior, zero breakage.
+    var wxCtl = (typeof AbortController === "function") ? new AbortController() : null;
+    var wxKill = wxCtl ? setTimeout(function () { wxCtl.abort(); }, 10000) : null;
+    fetch(url, wxCtl ? { signal: wxCtl.signal } : undefined)
       .then(function (r) { return r.json(); })
       .then(function (d) {
+        if (wxKill) clearTimeout(wxKill);
         if (d && d.current_weather &&
             typeof d.current_weather.temperature === "number") {
           localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
