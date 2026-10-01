@@ -1832,6 +1832,11 @@ sup.fn-ref:hover { text-decoration: underline; }
   .w-toast-act { min-height: 36px; }
 }
 
+/* ===== DOSE 3 — tabs are div[role=tab]; export rows without a doc ===== */
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.io-row[disabled], .io-row.io-row-disabled { opacity: 0.45; cursor: not-allowed; }
+.io-row[disabled]:hover, .io-row.io-row-disabled:hover { background: transparent; border-color: var(--border); }
+
 /* ===== HELPER: [hidden] authority guard — MUST stay the last rule
    of this file (Bible CSS rules). ===== */
 [hidden] {

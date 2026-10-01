@@ -499,20 +499,12 @@
         totalEl.textContent = String(current);
       }, 28);
       diceRow.innerHTML = "";
-      var pipMap = { 4: ["","⚀","⚁","⚂","⚃"], 6: ["","⚀","⚁","⚂","⚃","⚄","⚅"], 8: null, 10: null, 12: null, 20: null, 100: null };
       lastResult.rolls.forEach(function (val, idx) {
         var die = document.createElement("span");
         die.className = "die";
         die.setAttribute("data-type", String(lastResult.type));
         die.setAttribute("data-value", String(val));
-        var pipArr = pipMap[lastResult.type];
-        if (pipArr && val >= 1 && val <= 6) {
-          die.setAttribute("data-pipped", "true");
-          die.setAttribute("data-pip-text", pipArr[val]);
-          die.textContent = pipArr[val];
-        } else {
-          die.textContent = val;
-        }
+        die.textContent = val;
         if (lastResult.kept && !lastResult.kept[idx]) die.classList.add("dropped");
         if (val === lastResult.type) {
           die.classList.add("crit");

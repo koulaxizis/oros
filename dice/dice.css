@@ -31,6 +31,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+dialog { margin: auto; }
 
 html { color-scheme: dark; }
 html[data-theme="light"] { color-scheme: light; }
@@ -259,23 +260,6 @@ input, select {
 .die[data-type="12"] { clip-path: polygon(50% 0%, 95% 30%, 95% 70%, 50% 100%, 5% 70%, 5% 30%); border-radius: 0; border: none; }
 .die[data-type="20"] { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); border-radius: 0; border: none; }
 .die[data-type="100"]{ border-radius: 50%; }
-/* Pips for d6 only (dots instead of number) */
-.die[data-type="6"][data-pipped="true"]::before {
-  content: "";
-  width: 18px;
-  height: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 2px;
-}
-/* Pip placement per face */
-.die[data-type="6"][data-pipped="true"][data-value="1"]::before {
-  grid-template-areas: ". . . . . . . . ." !important;
-  background: radial-gradient(circle at center, var(--accent) 4px, transparent 5px);
-  background-size: 100% 100%;
-}
-/* Simplified: we use unicode pips via data-pip-text instead */
 .die.dropped {
   opacity: 0.45;
   filter: grayscale(0.7);

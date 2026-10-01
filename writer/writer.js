@@ -322,6 +322,8 @@ const STRINGS = {
     'io.naming': 'Exports take document title, falls back to untitled.',
     'io.pickFirst': 'Pick a file first',
     'io.exportfailed': 'Export failed',
+    'io.needDoc': 'Write something or open a document first',
+    'save.quota': 'Storage is full — recent changes could not be saved on this device. Export or remove large images.',
     'io.notes': 'Notes',
     'io.comments': 'Comments',
     'tt.docs': 'Documents',
@@ -345,7 +347,7 @@ const STRINGS = {
     'meta.tagAddBtn': 'Add tag',
     'cmt.needSel': 'Select some text first, then add the comment.',
     'cmt.oneBlock': 'A comment must stay within one paragraph — select less text.',
-    'ver.autoNote': 'Auto versions: at most one every 5 minutes while you write; the newest 8 are kept. Manual snapshots are never dropped.',
+    'ver.autoNote': 'Auto versions: at most one every 5 minutes while you write; the newest 8 are kept (fewer for very long documents). Manual snapshots are never dropped.',
     'goal.lockArmed': 'Editing will lock when the goal is reached'
   },
   el: {
@@ -578,6 +580,8 @@ const STRINGS = {
     'io.naming': 'Η εξαγωγή παίρνει τον τίτλο του εγγράφου, αλλιώς «Χωρίς τίτλο».',
     'io.pickFirst': 'Επίλεξε πρώτα ένα αρχείο',
     'io.exportfailed': 'Η εξαγωγή απέτυχε',
+    'io.needDoc': 'Γράψε κάτι ή άνοιξε πρώτα ένα έγγραφο',
+    'save.quota': 'Ο χώρος αποθήκευσης γέμισε — οι πρόσφατες αλλαγές δεν αποθηκεύτηκαν σε αυτή τη συσκευή. Κάνε εξαγωγή ή αφαίρεσε μεγάλες εικόνες.',
     'io.notes': 'Σημειώσεις',
     'io.comments': 'Σχόλια',
     'tt.docs': 'Έγγραφα',
@@ -601,7 +605,7 @@ const STRINGS = {
     'meta.tagAddBtn': 'Προσθήκη ετικέτας',
     'cmt.needSel': 'Επίλεξε πρώτα κείμενο και μετά πρόσθεσε το σχόλιο.',
     'cmt.oneBlock': 'Το σχόλιο πρέπει να μένει μέσα σε μία παράγραφο — επίλεξε λιγότερο κείμενο.',
-    'ver.autoNote': 'Αυτόματες εκδόσεις: το πολύ μία ανά 5 λεπτά γραφής· κρατιούνται οι 8 νεότερες. Τα χειροκίνητα στιγμιότυπα δεν σβήνονται ποτέ.',
+    'ver.autoNote': 'Αυτόματες εκδόσεις: το πολύ μία ανά 5 λεπτά γραφής· κρατιούνται οι 8 νεότερες (λιγότερες σε πολύ μεγάλα έγγραφα). Τα χειροκίνητα στιγμιότυπα δεν σβήνονται ποτέ.',
     'goal.lockArmed': 'Η επεξεργασία θα κλειδώσει μόλις επιτευχθεί ο στόχος'
   }
 };
@@ -794,6 +798,19 @@ function tabLabel(doc) {
   return snip || t('tab.untitled');
 }
 
+// The editor is always editable, so a blank page must behave like a
+// document. Doc-level actions materialize one on demand (lazy — never at
+// boot, so two fresh devices do not seed duplicate empty docs, R16).
+function ensureDoc() {
+  const cur = activeDoc();
+  if (cur && !cur.del) return cur;
+  const d = createDoc({ silent: true, keepEditor: true });
+  EL.editor.setAttribute('data-page-size', d.pageSize);
+  dirty = true;
+  flushSave();               // capture anything already on the page
+  return d;
+}
+
 function renderTabs() {
   EL.tabBar.innerHTML = '';
 
@@ -811,9 +828,10 @@ function renderTabs() {
     const doc = getDoc(id);
     if (!doc || doc.del) return;
 
-    const tab = document.createElement('button');
-    tab.type = 'button';
+    const tab = document.createElement('div');
     tab.className = 'tab' + (id === state.activeTab ? ' active' : '');
+    tab.dataset.id = id;
+    tab.tabIndex = 0;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-selected', id === state.activeTab ? 'true' : 'false');
     tab.title = tabLabel(doc);
@@ -837,6 +855,11 @@ function renderTabs() {
     tab.appendChild(label);
     tab.appendChild(close);
     tab.addEventListener('click', () => activateTab(id));
+    tab.addEventListener('keydown', e => {
+      if (e.target !== tab) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateTab(id); }
+      if (e.key === 'F2') { e.preventDefault(); e.stopPropagation(); startTabRename(id, label); }
+    });
     EL.tabBar.appendChild(tab);
   });
 
@@ -860,16 +883,22 @@ function startTabRename(id, labelEl) {
   input.className = 'tab-label-input';
   input.value = doc.title || '';
   input.maxLength = 120;
+  if (!labelEl.isConnected) return;
   labelEl.replaceWith(input);
   input.focus();
   input.select();
+  // clicks/keys inside the field must not reach the tab (re-activation)
+  ['click', 'mousedown', 'dblclick'].forEach(ev =>
+    input.addEventListener(ev, e => e.stopPropagation()));
+  let done = false;
 
   const commit = () => {
+    if (done) return;
+    done = true;
     const v = input.value.trim();
     if (v && v !== doc.title) {
-      doc.title = v;
-      doc.mtime = Date.now();
-      scheduleSave();
+      doc.title = v.slice(0, 120);
+      markDoc(doc);
       renderTabs();
       showToast(t('doc.renamed'));
     } else {
@@ -878,7 +907,8 @@ function startTabRename(id, labelEl) {
   };
   input.addEventListener('blur', commit);
   input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') input.blur();
+    e.stopPropagation();
+    if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); input.blur(); }
     if (e.key === 'Escape') { input.value = doc.title || ''; input.blur(); }
   });
 }
@@ -922,11 +952,23 @@ function createDoc(opts) {
 function activateTab(id) {
   const d = getDoc(id);
   if (!d || d.del) return;
+  if (id === state.activeTab) return;          // already showing — keep DOM
   flushSave();
-  if (state.tabOrder.indexOf(id) === -1) state.tabOrder.push(id);
+  const known = state.tabOrder.indexOf(id) !== -1;
+  if (!known) state.tabOrder.push(id);
   state.activeTab = id;
   savePrefs();
-  renderTabs();
+  if (known) {
+    // update in place: a re-built bar swallowed the 2nd click of a dblclick
+    EL.tabBar.querySelectorAll('.tab').forEach(el => {
+      const on = el.dataset.id === id;
+      el.classList.toggle('active', on);
+      el.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on && el.scrollIntoView) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+  } else {
+    renderTabs();
+  }
   renderEditor();
   EL.editor.focus();
 }
@@ -1081,16 +1123,37 @@ const SLICE_KEY = 'oros-writer-data';
 
 // Retention guard: manual snapshots always survive; only the newest
 // 8 auto versions travel in the slice (document feature, not backup).
+const VER_AUTO_MAX = 8;
+const VER_AUTO_BUDGET = 400000;   // chars of html across a doc's AUTO versions
+
 function capVersions(vers) {
-  const manual = vers.filter(v => v.manual);
-  const auto = vers.filter(v => !v.manual).slice(-8);
+  const manual = vers.filter(v => v && v.manual);
+  let auto = vers.filter(v => v && !v.manual).slice(-VER_AUTO_MAX);
+  const size = list => list.reduce((n, v) => n + String(v.html || '').length, 0);
+  while (auto.length > 1 && size(auto) > VER_AUTO_BUDGET) auto = auto.slice(1);
   return manual.concat(auto).sort((a, b) => a.ts - b.ts);
 }
 
+function cmpId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
+
+function canonTombs(list) {
+  const m = {};
+  (Array.isArray(list) ? list : []).forEach(tb => {
+    if (!tb || typeof tb.id !== 'string') return;
+    const ts = Number(tb.ts) || 0;
+    if (!(tb.id in m) || ts > m[tb.id]) m[tb.id] = ts;
+  });
+  return Object.keys(m).sort().map(k => ({ id: k, ts: m[k] }));
+}
+
 function serialize() {
+  const tombs = canonTombs(state.tplTombs);
+  const tombTs = {};
+  tombs.forEach(tb => { tombTs[tb.id] = tb.ts; });
+  const docs = state.docs.slice().sort(cmpId);
   return {
     ver: 1,
-    docs: state.docs.map(d => ({
+    docs: docs.map(d => ({
       id: d.id, title: d.title, author: d.author, tags: d.tags,
       category: d.category, html: d.html,
       footnotes: d.footnotes || [], comments: d.comments || [],
@@ -1103,14 +1166,17 @@ function serialize() {
       } : null,
       mtime: d.mtime, del: !!d.del
     })),
-    tabOrder: state.tabOrder.filter(id => {
-      const d = getDoc(id); return d && !d.del;
-    }),
+    // Compatibility field for pre-prefs builds ONLY. Open tabs are a
+    // device-local view (oros-writer-prefs); a device-varying value here
+    // made every reconcile see a "difference" and push forever.
+    tabOrder: docs.filter(d => !d.del).map(d => d.id),
     settings: state.settings,
     autocorrect: state.autocorrect,
-    templates: state.templates || [],
-    tplTombs: state.tplTombs || [],
-    seeded: state.seeded
+    templates: (state.templates || [])
+      .filter(tp => !(tombTs[tp.id] >= (tp.mtime || 0)))
+      .slice().sort(cmpId),
+    tplTombs: tombs,
+    seeded: !!state.seeded
   };
 }
 
@@ -1149,8 +1215,7 @@ function hydrate(raw) {
     ? raw.autocorrect : null;
   state.templates = Array.isArray(raw.templates) ? raw.templates
     .filter(x => x && typeof x.id === 'string' && typeof x.name === 'string') : [];
-  state.tplTombs = Array.isArray(raw.tplTombs) ? raw.tplTombs
-    .filter(x => x && typeof x.id === 'string') : [];
+  state.tplTombs = canonTombs(raw.tplTombs);
   reconcileTabs();
 }
 
@@ -1204,7 +1269,9 @@ function mergeSlices(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
   const byId = {};
   const ids = new Set();
-  [].concat(local.docs || [], remote.docs || []).forEach(d => ids.add(d.id));
+  [].concat(local.docs || [], remote.docs || []).forEach(d => {
+    if (d && typeof d.id === 'string') ids.add(d.id);
+  });
 
   ids.forEach(id => {
     const L = (local.docs || []).find(d => d.id === id);
@@ -1214,39 +1281,29 @@ function mergeSlices(local, remote) {
     byId[id] = wNewer(L, R);                        // LWW per entity (R5)
   });
 
-  // tabOrder: deterministic base (lexicographic), union, drop deleted
-  const lo = local.tabOrder || [], ro = remote.tabOrder || [];
-  const first = JSON.stringify(lo) >= JSON.stringify(ro) ? lo : ro;
-  const second = first === lo ? ro : lo;
-  const base = [];
-  first.forEach(id => {
-    if (byId[id] && !byId[id].del && base.indexOf(id) === -1) base.push(id);
-  });
-  second.forEach(id => {
-    if (byId[id] && !byId[id].del && base.indexOf(id) === -1) base.push(id);
-  });
+  const docIds = Object.keys(byId).sort();
 
   // Templates: LWW per entity, respecting tombstones (deleted wins over
   // stale-but-newer edit? No — mtime vs tombstone ts: newer wins.)
+  const tombList = canonTombs([].concat(local.tplTombs || [], remote.tplTombs || []));
   const tombs = {};
-  [].concat(local.tplTombs || [], remote.tplTombs || []).forEach(tb => {
-    if (!tombs[tb.id] || tb.ts > tombs[tb.id]) tombs[tb.id] = tb.ts;
-  });
+  tombList.forEach(tb => { tombs[tb.id] = tb.ts; });
   const tplById = {};
   [].concat(local.templates || [], remote.templates || []).forEach(tp => {
+    if (!tp || typeof tp.id !== 'string') return;
     if (tombs[tp.id] >= (tp.mtime || 0)) return;   // tombstoned
     tplById[tp.id] = tplById[tp.id] ? wNewer(tplById[tp.id], tp) : tp;
   });
 
   return {
     ver: 1,
-    docs: Object.keys(byId).sort().map(k => byId[k]),
-    tabOrder: base,
+    docs: docIds.map(k => byId[k]),
+    tabOrder: docIds.filter(k => !byId[k].del),
     settings: wNewer(local.settings, remote.settings, '_mtime'),
     autocorrect: wNewer(local.autocorrect, remote.autocorrect),
-    templates: Object.keys(tplById).map(k => tplById[k]),
-    tplTombs: Object.keys(tombs).map(k => ({ id: k, ts: tombs[k] })),
-    seeded: local.seeded || remote.seeded
+    templates: Object.keys(tplById).sort().map(k => tplById[k]),
+    tplTombs: tombList,
+    seeded: !!(local.seeded || remote.seeded)
   };
 }
 
@@ -1323,6 +1380,15 @@ function registerSlice() {
     }
   }
   if (raw) hydrate(raw); else reconcileTabs();
+  if (!state.tabOrder.length) {
+    const recent = state.docs.filter(d => !d.del)
+      .sort((a, b) => (b.mtime - a.mtime) || (a.id < b.id ? -1 : 1))[0];
+    if (recent) {
+      state.tabOrder.push(recent.id);
+      state.activeTab = recent.id;
+      savePrefs();
+    }
+  }
 
   const api = syncApi();
   if (api && typeof api.registerSlice === 'function') {
@@ -1336,9 +1402,16 @@ function registerSlice() {
   }
 }
 
+let quotaWarned = false;
 function localPersist() {
-  try { localStorage.setItem(SLICE_KEY, JSON.stringify(serialize())); }
-  catch (e) { /* quota — the shell snapshots/export remain the safety net */ }
+  try {
+    localStorage.setItem(SLICE_KEY, JSON.stringify(serialize()));
+    quotaWarned = false;
+  } catch (e) {
+    // Never silent: a failed write means edits will NOT survive a reload
+    console.error('[writer] local save failed:', e);
+    if (!quotaWarned) { quotaWarned = true; localToast(t('save.quota')); }
+  }
 }
 
 /* ===== SECTION 8: SAVE PIPELINE (dirty → 500ms debounce) ===== */
@@ -1507,6 +1580,17 @@ function bindToolbar() {
     if (btn) btn.addEventListener('click', binds[id]);
   });
 
+  // Formatting buttons must not steal focus from the editor: on touch,
+  // the blur collapsed the selection BEFORE execCommand ran.
+  ['btn-undo','btn-redo','btn-bold','btn-italic','btn-underline','btn-strike',
+   'btn-indent','btn-outdent','btn-bullets','btn-numbers','btn-align-left',
+   'btn-align-center','btn-align-right','btn-align-justify','btn-hr',
+   'btn-page-break','btn-lorem','btn-chars','btn-footnotes','btn-comments'
+  ].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('mousedown', e => e.preventDefault());
+  });
+
   EL.stylesSel.addEventListener('change', () => {
     if (isLocked()) { updateStylesSelect(); return; }
     const v = EL.stylesSel.value;
@@ -1626,6 +1710,24 @@ function wireEvents() {
   });
   window.addEventListener('pagehide', flushSave);
 
+  // Pasted images (screenshots): downscale instead of a raw multi-MB data URL
+  EL.editor.addEventListener('paste', (e) => {
+    const cd = e.clipboardData;
+    if (!cd || !cd.files || !cd.files.length) return;
+    const imgs = Array.from(cd.files).filter(f => /^image\//.test(f.type));
+    if (!imgs.length) return;
+    e.preventDefault();
+    if (isLocked()) return;
+    imgs.forEach(file => imageFileToDataUrl(file).then(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.maxWidth = '100%';
+      insertNodeAtCursor(img);
+      updateEmptyState();
+      scheduleSave();
+    }));
+  });
+
   // Paragraph-style dropdown mirrors the block at the caret
   document.addEventListener('selectionchange', updateStylesSelect);
 }
@@ -1680,7 +1782,8 @@ function bindShortcuts() {
     }
 
     // F2 — rename current tab (alt to dblclick)
-    if (e.key === 'F2' && state.activeTab) {
+    if (e.key === 'F2' && state.activeTab && !document.querySelector('.tab-label-input') &&
+        !(e.target && e.target.closest && e.target.closest('dialog'))) {
       e.preventDefault();
       const doc = activeDoc();
       const tab = EL.tabBar.querySelector('.tab.active .tab-label');
@@ -2004,9 +2107,14 @@ function highlightMatches(textNode, matches) {
 }
 
 function clearHighlights() {
+  const parents = new Set();
   findState.hits.forEach(hit => {
-    if (hit.parentNode) ioUnwrap(hit);
+    if (!hit.parentNode) return;
+    parents.add(hit.parentNode);
+    ioUnwrap(hit);
   });
+  // re-join split text nodes (live ranges/caret are preserved by normalize)
+  parents.forEach(p => { if (p.isConnected) p.normalize(); });
   findState.hits = [];
   findState.index = -1;
 }
@@ -2366,7 +2474,11 @@ function openSettingsDialog() {
 let qfMenu = null;
 
 function closeQfMenu() {
-  if (qfMenu) { qfMenu.remove(); qfMenu = null; }
+  if (qfMenu) {
+    if (qfMenu._ac) qfMenu._ac.abort();
+    qfMenu.remove();
+    qfMenu = null;
+  }
 }
 
 function openQuickFormat(x, y) {
@@ -2429,18 +2541,30 @@ function openQuickFormat(x, y) {
   qfMenu.style.left = px + 'px';
   qfMenu.style.top = py + 'px';
 
+  // One AbortController per menu: closing it removes BOTH listeners
+  const ac = new AbortController();
+  qfMenu._ac = ac;
   setTimeout(() => {
-    document.addEventListener('click', closeQfOnce, { once: true });
-    document.addEventListener('contextmenu', closeQfOnce, { once: true });
+    if (ac.signal.aborted) return;
+    document.addEventListener('click', e => {
+      if (qfMenu && qfMenu.contains(e.target)) return;   // item handlers close it
+      closeQfMenu();
+    }, { signal: ac.signal });
+    document.addEventListener('contextmenu', closeQfMenu, { signal: ac.signal });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQfMenu(); },
+      { signal: ac.signal });
+    window.addEventListener('blur', closeQfMenu, { signal: ac.signal });
   }, 0);
 }
-function closeQfOnce() { closeQfMenu(); }
 
 /* ----- LINK / IMAGE / TABLE DIALOGS ----- */
 function openLinkDialog() {
   const selText = (() => {
     const sel = window.getSelection();
-    return (sel && sel.rangeCount) ? sel.toString() : '';
+    if (sel && sel.rangeCount && EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      return sel.toString();
+    }
+    return lastEditorRange ? lastEditorRange.toString() : '';
   })();
   const dlg = openDialog(t('tt.qf.link'), `
     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -2485,9 +2609,7 @@ function openImageDialog() {
   dlg.querySelector('#img-file').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { dlg.querySelector('#img-url').value = reader.result; };
-    reader.readAsDataURL(file);
+    imageFileToDataUrl(file).then(url => { dlg.querySelector('#img-url').value = url; });
   });
 }
 
@@ -2512,6 +2634,35 @@ function doInsertImage(dlg) {
   insertNodeAtCursor(fig);
   scheduleSave();
   dlg.close();
+}
+
+// ≤1600px, JPEG 0.85 (PNG kept when already small) → typically 150–400 KB
+function imageFileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const src = reader.result;
+      if (file.size <= 300 * 1024 || /svg/.test(file.type)) { resolve(src); return; }
+      const img = new Image();
+      img.onerror = () => resolve(src);
+      img.onload = () => {
+        const MAX = 1600;
+        const k = Math.min(1, MAX / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        const w = Math.max(1, Math.round(img.naturalWidth * k));
+        const h = Math.max(1, Math.round(img.naturalHeight * k));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';            // JPEG has no alpha
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        try { resolve(c.toDataURL('image/jpeg', 0.85)); } catch (e) { resolve(src); }
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function openTableDialog() {
@@ -2628,8 +2779,9 @@ function cleanupFootnotes() {
 
 /* ----- Add: sup at cursor + empty entry + renumber ----- */
 function addFootnote() {
+  if (isLocked()) return;
+  ensureDoc();
   const doc = fnDoc();
-  if (!doc) return;
   const id = 'fn' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const entry = { id: id, text: '' };
   doc.footnotes.push(entry);
@@ -3171,8 +3323,7 @@ let tocObserver = null;
 
 /* ----- METADATA PANEL ----- */
 function openMetadataDialog() {
-  const doc = activeDoc();
-  if (!doc) return;
+  const doc = ensureDoc();
 
   metaDlg = openDialog(t('tt.meta'), '', [
     { class: 'fb-btn primary', label: t('wx.done'), onClick: () => metaDlg.close() }
@@ -3274,8 +3425,15 @@ const PAPER_SIZES = {
 };
 
 function openPageSettings() {
-  const doc = activeDoc();
-  if (!doc) return;
+  const doc = ensureDoc();
+  if (!PAPER_SIZES[doc.pageSize]) doc.pageSize = 'a4';
+  const dm = (doc.margins && typeof doc.margins === 'object') ? doc.margins : {};
+  doc.margins = {
+    top:    Number.isFinite(+dm.top)    ? +dm.top    : 25,
+    bottom: Number.isFinite(+dm.bottom) ? +dm.bottom : 25,
+    left:   Number.isFinite(+dm.left)   ? +dm.left   : 25,
+    right:  Number.isFinite(+dm.right)  ? +dm.right  : 25
+  };
 
   pageDlg = openDialog(t('page.settings'), '', [
     { class: 'fb-btn', label: t('page.mReset'), onClick: resetMargins },
@@ -3369,6 +3527,7 @@ function openPageSettings() {
 function resetMargins() {
   const doc = activeDoc();
   if (!doc) return;
+  if (!doc.margins || typeof doc.margins !== 'object') doc.margins = {};
   doc.margins = { top: 25, bottom: 25, left: 25, right: 25 };
   if (pageDlg) {
     ['top','right','bottom','left'].forEach(side => {
@@ -3608,8 +3767,7 @@ function renderTemplates() {
 }
 
 function saveCurrentAsTemplate() {
-  const doc = activeDoc();
-  if (!doc) return;
+  const doc = ensureDoc();
   flushSave();
   wPrompt(t('tpl.name'), doc.title || '').then(name => {
     if (!name) return;
@@ -3705,8 +3863,7 @@ function importTemplateJson() {
 
 
 function openVersionsPanel() {
-  const doc = activeDoc();
-  if (!doc) return;
+  const doc = ensureDoc();
   flushSave();
   const dlg = openDialog(t('ver.title'), '', [
     { class: 'fb-btn', label: t('ver.snapshot'), onClick: () => {
@@ -3911,17 +4068,12 @@ function editorStats() {
 }
 
 /* ----- Toggle / render the bar ----- */
-function toggleGoalBar(forceOn) {
-  const bar = document.getElementById('goal-bar');
-  const goal = activeDoc() && activeDoc().goal;
-  if (forceOn || !goal) { openGoalDialog(); return; }
-  bar.hidden = !bar.hidden;
-  if (!bar.hidden) updateGoalBar();
+function toggleGoalBar() {
+  openGoalDialog();
 }
 
 function openGoalDialog() {
-  const doc = activeDoc();
-  if (!doc) return;
+  const doc = ensureDoc();
   const g = doc.goal || { type: 'words', target: 500, lock: false };
 
   const dlg = openDialog(t('tt.goal'), `
@@ -4502,8 +4654,7 @@ function ioExportJSON() {
 
 /* ----- EXPORT DIALOG ----- */
 function openExportDialog() {
-  const doc = activeDoc();
-  if (!doc) return;
+  const doc = activeDoc();   // null on a blank page → only the DB export applies
 
   const dlg = openDialog(t('io.title.exp'), '', [
     { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
@@ -4520,6 +4671,14 @@ function openExportDialog() {
     { ext: 'orosdoc', name: 'io.orosdoc.name', desc: 'io.orosdoc.desc', fn: () => { ioExportOrosDoc(doc); dlg.close(); } },
     { ext: 'json',    name: 'io.json.name',    desc: 'io.json.desc',    fn: () => { ioExportJSON(); dlg.close(); } }
   ];
+
+  if (!doc) {                            // say WHY most rows are disabled
+    const why = document.createElement('div');
+    why.className = 'io-note';
+    why.style.marginTop = '0';
+    why.textContent = t('io.needDoc');
+    body.appendChild(why);
+  }
 
   const list = document.createElement('div');
   list.className = 'io-list';
@@ -4544,7 +4703,19 @@ function openExportDialog() {
     wrap.append(nm, ds);
 
     row.append(ext, wrap);
-    row.addEventListener('click', f.fn);
+    if (!doc && f.ext !== 'json') {
+      row.disabled = true;
+      row.classList.add('io-row-disabled');
+      row.title = t('io.needDoc');
+    } else {
+      row.addEventListener('click', () => {
+        try { f.fn(); }
+        catch (err) {                       // never fail silently
+          console.error('[writer] export ' + f.ext + ' failed:', err);
+          showToast(t('io.exportfailed'));
+        }
+      });
+    }
     list.appendChild(row);
 
     if (f.note) {
@@ -4558,9 +4729,9 @@ function openExportDialog() {
 
   // Metadata rides along (transparent to the user)
   const chips = [];
-  if (doc.author) chips.push(doc.author);
-  if (doc.category) chips.push(doc.category);
-  (doc.tags || []).forEach(tag => chips.push('#' + tag));
+  if (doc && doc.author) chips.push(doc.author);
+  if (doc && doc.category) chips.push(doc.category);
+  ((doc && doc.tags) || []).forEach(tag => chips.push('#' + tag));
   if (chips.length) {
     const meta = document.createElement('div');
     meta.className = 'io-meta';
@@ -5379,13 +5550,24 @@ function ioExportPdf(doc) {
 
 /* ----- RTF parser (scanner, unicode-aware, lossy formatting) ----- */
 function ioParseRtf(raw) {
-  const skipRe = /\\(?:fonttbl|colortbl|stylesheet|info|pict|listtable|listoverridetable|themedata|colorschememapping|latentstyles|datastore|generator)/;
+  const SKIP = /^(fonttbl|colortbl|stylesheet|info|pict|listtable|listoverridetable|themedata|colorschememapping|latentstyles|datastore|generator|header|headerl|headerr|headerf|footer|footerl|footerr|footerf|object|rsidtbl|xmlnstbl|mmathPr|filetbl|revtbl)$/;
+  const cpg = (raw.match(/\\ansicpg(\d+)/) || [])[1] || '1252';
+  let dec = null;
+  try { dec = new TextDecoder('windows-' + cpg); } catch (e) { dec = null; }
+  const byteChar = b => {
+    if (dec) { try { return dec.decode(new Uint8Array([b])); } catch (e) {} }
+    return String.fromCharCode(b);
+  };
+  let uc = 1;                                 // \ucN: fallback chars after \uN
   let out = '', i = 0, depth = 0, skipDepth = -1;
   while (i < raw.length) {
     const ch = raw[i];
     if (ch === '{') {
       depth++;
-      if (skipDepth === -1 && skipRe.test(raw.slice(i, i + 34))) skipDepth = depth;
+      if (skipDepth === -1) {
+        const head = /^\{\s*(\\\*)?\s*\\([a-zA-Z]+)/.exec(raw.slice(i, i + 48));
+        if (head && (head[1] || SKIP.test(head[2]))) skipDepth = depth;
+      }
       i++; continue;
     }
     if (ch === '}') {
@@ -5395,31 +5577,46 @@ function ioParseRtf(raw) {
     }
     if (skipDepth !== -1) { i++; continue; }
     if (ch === '\\') {
-      const cw = raw.slice(i).match(/^\\([a-zA-Z]+)(-?\d+)? ?/);
+      const cw = /^\\([a-zA-Z]+)(-?\d+)? ?/.exec(raw.slice(i, i + 40));
       if (cw) {
         const w = cw[1], num = cw[2];
-        if (w === 'par' || w === 'line') out += '\n';
+        i += cw[0].length;
+        if (w === 'par' || w === 'sect' || w === 'page') out += '\n\n';
+        else if (w === 'line') out += '\n';
         else if (w === 'tab') out += '\t';
+        else if (w === 'cell') out += '\t';
+        else if (w === 'row') out += '\n';
+        else if (w === 'emdash') out += '\u2014';
+        else if (w === 'endash') out += '\u2013';
+        else if (w === 'bullet') out += '\u2022';
+        else if (w === 'lquote') out += '\u2018';
+        else if (w === 'rquote') out += '\u2019';
+        else if (w === 'ldblquote') out += '\u201C';
+        else if (w === 'rdblquote') out += '\u201D';
+        else if (w === 'uc' && num !== undefined) uc = Math.max(0, parseInt(num, 10) || 0);
         else if (w === 'u' && num !== undefined) {
           let n = parseInt(num, 10);
           if (n < 0) n += 65536;
           out += String.fromCharCode(n);
-          i += cw[0].length;
-          // swallow the \'hh fallback byte Word writes after \uN
-          if (/^\\'[0-9a-fA-F]{2}/.test(raw.slice(i))) i += 4;
-          else if (raw[i] === '?') i++;
-          continue;
+          // swallow the fallback characters (\'hh or plain) Word writes after \uN
+          for (let k = 0; k < uc && i < raw.length; k++) {
+            if (/^\\'[0-9a-fA-F]{2}/.test(raw.slice(i, i + 4))) i += 4;
+            else if (raw[i] !== '\\' && raw[i] !== '{' && raw[i] !== '}') i++;
+          }
         }
-        i += cw[0].length; continue;
+        continue;
       }
-      const hex = raw.slice(i).match(/^\\'([0-9a-fA-F]{2})/);
+      const hex = /^\\'([0-9a-fA-F]{2})/.exec(raw.slice(i, i + 4));
       if (hex) {
-        out += String.fromCharCode(parseInt(hex[1], 16));
-        i += hex[0].length; continue;
+        out += byteChar(parseInt(hex[1], 16));
+        i += 4; continue;
       }
-      if (/^\\[{}\\]/.test(raw.slice(i))) { out += raw[i + 1]; i += 2; continue; }
+      if (/^\\[{}\\]/.test(raw.slice(i, i + 2))) { out += raw[i + 1]; i += 2; continue; }
+      if (raw[i + 1] === '~') { out += '\u00A0'; i += 2; continue; }
+      if (raw[i + 1] === '-' || raw[i + 1] === '_') { i += 2; continue; }
       i++; continue;
     }
+    if (ch === '\r' || ch === '\n') { i++; continue; }   // raw newlines are not text in RTF
     out += ch; i++;
   }
   return out;
@@ -5715,7 +5912,7 @@ function ioApplyImport(parsed, mode) {
 
   flushSave();
   const doc = activeDoc();
-  if (!doc) return;
+  if (!doc) { ioApplyImport(parsed, 'new'); return; }
   const prep = ioPrepareImport(parsed);
 
   if (mode === 'append') {
@@ -6179,23 +6376,66 @@ function ioParseDocxXml(dom, numbering) {
 /* ----- ODT: content.xml → HTML ----- */
 const IO_NS_TEXT = 'urn:oasis:names:tc:opendocument:xmlns:text:1.0';
 
-function ioOdInline(el) {
+function ioOdAttr(el, local) {
+  if (!el || !el.attributes) return '';
+  for (const a of Array.from(el.attributes)) if (a.localName === local) return a.value;
+  return '';
+}
+
+// style name → { b, i, u, s, sup } from <style:style><style:text-properties>
+function ioOdStyles(dom) {
+  const map = {};
+  Array.from(dom.getElementsByTagNameNS('*', 'style')).forEach(st => {
+    if (st.localName !== 'style') return;
+    const name = ioOdAttr(st, 'name');
+    if (!name) return;
+    const tp = Array.from(st.children).find(c => c.localName === 'text-properties');
+    if (!tp) return;
+    const ul = ioOdAttr(tp, 'text-underline-style');
+    const lt = ioOdAttr(tp, 'text-line-through-style');
+    map[name] = {
+      b: /^(bold|[6-9]00)$/.test(ioOdAttr(tp, 'font-weight')),
+      i: /^(italic|oblique)$/.test(ioOdAttr(tp, 'font-style')),
+      u: !!ul && ul !== 'none',
+      s: !!lt && lt !== 'none',
+      sup: /^super/.test(ioOdAttr(tp, 'text-position'))
+    };
+  });
+  return map;
+}
+
+function ioOdWrap(html, f) {
+  if (!f || !html) return html;
+  if (f.s)   html = '<del>' + html + '</del>';
+  if (f.u)   html = '<u>' + html + '</u>';
+  if (f.i)   html = '<em>' + html + '</em>';
+  if (f.b)   html = '<strong>' + html + '</strong>';
+  if (f.sup) html = '<sup>' + html + '</sup>';
+  return html;
+}
+
+// Returns ESCAPED html (formatting tags included).
+function ioOdInline(el, styles) {
+  styles = styles || {};
   let out = '';
   Array.from(el.childNodes).forEach(n => {
-    if (n.nodeType === 3) { out += n.nodeValue; return; }
+    if (n.nodeType === 3) { out += esc(n.nodeValue); return; }
     if (n.nodeType !== 1) return;
     const ln = n.localName;
-    if (ln === 'line-break') out += '\n';
-    else if (ln === 'tab') out += '\t';
-    else if (ln === 's') out += ' ';
-    else if (ln === 'span' || ln === 'a') out += ioOdInline(n);
-    else out += n.textContent;   // unknown inline → safe text only
+    if (ln === 'line-break') out += '<br>';
+    else if (ln === 'tab') out += ' ';
+    else if (ln === 's') out += ' '.repeat(Math.max(1, parseInt(ioOdAttr(n, 'c'), 10) || 1));
+    else if (ln === 'span') out += ioOdWrap(ioOdInline(n, styles), styles[ioOdAttr(n, 'style-name')]);
+    else if (ln === 'a') out += ioOdInline(n, styles);
+    else if (ln === 'note' || ln === 'annotation' || ln === 'bookmark' ||
+             ln === 'bookmark-start' || ln === 'bookmark-end' || ln === 'soft-page-break') { /* skip */ }
+    else out += esc(n.textContent);   // unknown inline → safe text only
   });
   return out;
 }
 
 function ioOdFix(s) {
-  return esc(s).replace(/\n/g, '<br>').replace(/\t/g, ' ');
+  return s;   // ioOdInline already returns escaped html
 }
 
 function ioParseOdtXml(dom) {
@@ -6204,17 +6444,21 @@ function ioParseOdtXml(dom) {
     if (!root && el.localName === 'text') root = el;   // office:text
   });
   if (!root) throw new Error('odt: no body');
+  const styles = ioOdStyles(dom);
+  const para = el => ioOdWrap(ioOdInline(el, styles), styles[ioOdAttr(el, 'style-name')]);
   let html = '';
-  Array.from(root.children).forEach(ch => {
+  (function walk(container) {
+  Array.from(container.children).forEach(ch => {
     const ln = ch.localName;
+    if (ln === 'section') { walk(ch); return; }
     if (ln === 'h') {
       const lvl = parseInt(
         ch.getAttributeNS(IO_NS_TEXT, 'outline-level') ||
         ch.getAttribute('text:outline-level') || '1', 10) || 1;
       const l = Math.min(4, Math.max(1, lvl));
-      html += '<h' + l + '>' + ioOdFix(ioOdInline(ch)) + '</h' + l + '>';
+      html += '<h' + l + '>' + ioOdInline(ch, styles) + '</h' + l + '>';
     } else if (ln === 'p') {
-      html += '<p>' + ioOdFix(ioOdInline(ch)) + '</p>';
+      html += '<p>' + para(ch) + '</p>';
     } else if (ln === 'list') {
       // direct list-items only; nested text:list recurses (the old
       // getElementsByTagNameNS walk flattened every level into one)
@@ -6224,7 +6468,7 @@ function ioParseOdtXml(dom) {
           if (li.localName !== 'list-item') return;
           let inner = '';
           Array.from(li.children).forEach(c => {
-            if (c.localName === 'p' || c.localName === 'h') inner += ioOdFix(ioOdInline(c));
+            if (c.localName === 'p' || c.localName === 'h') inner += para(c);
             else if (c.localName === 'list') inner += odList(c);
           });
           h += '<li>' + inner + '</li>';
@@ -6239,7 +6483,7 @@ function ioParseOdtXml(dom) {
           if (tc.localName !== 'table-cell') return;
           let cells = '';
           Array.from(tc.getElementsByTagNameNS(IO_NS_TEXT, 'p')).forEach(tp => {
-            cells += '<p>' + ioOdFix(ioOdInline(tp)) + '</p>';
+            cells += '<p>' + para(tp) + '</p>';
           });
           html += '<td style="border:1px solid var(--border);padding:6px 10px;">' + cells + '</td>';
         });
@@ -6248,7 +6492,8 @@ function ioParseOdtXml(dom) {
       html += '</table>';
     }
   });
-  const wrap = document.createElement('div');
+  })(root);
+  const wrap = ioInertDiv();
   wrap.innerHTML = html;
   const first = wrap.querySelector('h1,h2,h3,h4,p');
   return { title: first ? first.textContent.trim().slice(0, 80) : '',
