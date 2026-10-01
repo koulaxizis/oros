@@ -221,7 +221,7 @@ input, select {
 #result-dice-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   justify-content: center;
   margin-top: 8px;
 }
@@ -230,10 +230,10 @@ input, select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
-  padding: 6px;
-  font-size: 14px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 8px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
   border: 1px solid var(--border);
@@ -578,6 +578,8 @@ input, select {
   .mode-btn { font-size: 11px; padding: 6px 4px; }
   #actions { padding: 0 8px 8px; }
   #result-total { font-size: 34px; }
+  #result-dice-row { gap: 6px; }
+  .die { min-width: 44px; min-height: 44px; font-size: 17px; }
   #coin-section { gap: 14px; padding: 12px 8px; }
   #coin { width: 60px; height: 60px; }
   .hist-time { display: none; }        /* narrow screens: time off */
@@ -595,7 +597,7 @@ input, select {
 @media (max-width: 360px) {
   #result-total { font-size: 30px; }
   #coin { width: 52px; height: 52px; }
-  .die { min-width: 32px; min-height: 32px; font-size: 13px; padding: 4px; }
+  .die { min-width: 40px; min-height: 40px; font-size: 15px; padding: 5px; }
 }
 
 /* Touch targets ≥44px on coarse pointers (Bible Part VII) */
