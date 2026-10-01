@@ -1,800 +1,666 @@
-// ===== CALCULATOR.JS v0.1.0 BOOT =====
-(function(){
-"use strict";
-var SCRIPT_V = "";
-(function(){ var m=(document.currentScript && document.currentScript.src||"").match(/[?&]v=([^&#]+)/);
-  SCRIPT_V = m?m[1]:""; console.log("calculator.js v"+(SCRIPT_V||"?")+" boot"); })();
+// ============================================================
+// calculator.js — orOS Calculator (full rewrite)
+// Structure:
+//   1. i18n (EN/EL, lazy — normal + troll string packs)
+//   2. Palette bridge (inheritPalette / watchPalette, mood.js
+//      canonical pattern — CI requirement)
+//   3. State + persistence (slice "calculator", LWW + tombstones)
+//   4. Engine (standard calculator semantics, full keyboard)
+//   5. Troll mode (teasing language ALWAYS, plausible lies ~1/3,
+//      never consecutive)
+//   6. Rendering (display, keypad, history)
+//   7. Sync slice registration (parent orosSync, cache key)
+//   8. Contract B forwarding (Ctrl+Alt+Shift shell shortcuts)
+//   9. Boot logs, wiring
+// Mantras honored: offline first, mobile first, no external
+// dependencies, full sync + snapshots + manual/auto export via
+// the slice contract (zero shell changes needed).
+// ============================================================
+(function () {
+  "use strict";
 
-/* ===================== CONSTANTS ===================== */
-var APP_ID = "calculator";
-var DATA_KEY = "oros-calculator-data";
-var PREFS_KEY = "oros-cal-prefs";
-var HIST_MAX = 20;
-var TRUTH_REVEAL_CHANCE = 1/15;
+  var CALC_VER = "1.0.0";
+  var LS_KEY = "oros-calculator-data";   // slice cache key (same as
+                                         // radio/mood pattern)
+  var HISTORY_MAX = 50;
 
-/* ===================== I18N ===================== */
-var STRINGS = {
-  en:{
-    appName:"Calculator", history:"History", clear:"Clear",
-    sharePrank:"📋 Copy the joke", modeNormal:"Normal", modeTroll:"Troll",
-    histEmpty:"No calculations yet.", copied:"Copied!",
-    shareText:"I asked a calculator:\n{q}\nIt said:\n\"{a}\"\n(psst… it's actually {n})",
-    revealPrefix:["Okay, fine — it's ","Alright, alright… ","Ugh. It's ","Fine!! It's "],
-    revealSuffix:". Happy now?","Are you proud?"," Don't tell anyone."," Sheesh.",
-    quips:[
-      "I have no idea.","How should I know?","Leave me alone!",
-      "I don't know how to count...","Math is hard.",
-      "I ate the answer. It was tasty.","My paw slipped on the keys.",
-      "Error 404: answer not found.","Have you tried asking a human?",
-      "*pretends to think*","Numbers are scary!!",
-      "The dog deleted my homework.","Zzz... were you talking to me?",
-      "Does it LOOK like I do math?","According to my calculations... nope.",
-      "42? No wait, that one's taken.","I was busy licking my fur."
-    ],
-    calc:"Calculate", sound:"Sound", theme:"Theme", lang:"Language",
-    skin:"Skin", resetAll:"Reset All", exportCSV:"Export CSV",
-    resetConfirmMsg:"Clear the calculation history?", cancel:"Cancel", error:"Error"
-  },
-  el:{
-    appName:"Αριθμομηχανή", history:"Ιστορικό", clear:"Καθαρισμός",
-    sharePrank:"📋 Αντίγραψε την πλάκα", modeNormal:"Κανονική", modeTroll:"Απάτη",
-    histEmpty:"Καμία πράξη ακόμα.", copied:"Αντιγράφηκε!",
-    shareText:"Ρώτησα έναν υπολογιστή:\n{q}\nΜου είπε:\n\"{a}\"\n(ψιτ… στην πραγματικότητα είναι {n})",
-    revealPrefix:["Εντάξει, εντάξει — είναι ","Αρκετά… ","Ουφ. Είναι ","Άκρη το βρήκα! Τo "],
-    revealSuffix:". Χαρούμενος τώρα;",". Είσαι περήφανος;",". Μη το πεις σε κανέναν.",". Τι τα θες τόσα…"],
-    quips:[
-      "Δεν έχω ιδέα.","Πώς να το ξέρω;","Άφησέ με ήσυχο!",
-      "Δεν ξέρω να μετράω...","Τα μαθηματικά είναι δύσκολα.",
-      "Έφαγα την απάντηση. Ήταν νόστιμη.","Η πατούσα μου γλίστρησε.",
-      "Λάθος 404: δεν βρέθηκε απάντηση.","Δοκίμασες να ρωτήσεις άνθρωπο;",
-      "*προσποιείται ότι σκέφτεται*","Οι αριθμοί τρομάζουν!!",
-      "Ο σκύλος έφαγε την εργασία μου.","Ζζζ... μιλούσες σε μένα;",
-      "ΣΟΥ ΦΑΙΝΕΤΑΙ ότι κάνω μαθηματικά;","Σύμφωνα με τους υπολογισμούς μου... όχι.",
-      "42; Όχι, αυτό το πήρε άλλος.","Ήμουν απασχολημένος με το γλείψιμο."
-    ],
-    calc:"Υπολογισμός", sound:"Ήχος", theme:"Θέμα", lang:"Γλώσσα",
-    skin:"Δερματικό", resetAll:"Επαναφορά", exportCSV:"Εξαγωγή CSV",
-    resetConfirmMsg:"Διαγραφή του ιστορικού υπολογισμών;", cancel:"Άκυρο", error:"Σφάλμα"
+  // ---------- 1. i18n ----------
+  function lang() {
+    return (window.orosLang === "el") ? "el" : "en";
   }
-};
 
-/* ===================== SKINS ===================== */
-var SKINS = [
-  {id:"neko",  a:"#ff8fc7", b:"#c77dff", fur:"#ffb3d9", furDark:"#e98bc4", blush:"#ff6fa8"},
-  {id:"dog",   a:"#ffb95e", b:"#f08a5d", fur:"#ffd9a0", furDark:"#e8a765", blush:"#ff9e6d"},
-  {id:"alien", a:"#8aff80", b:"#39d98a", fur:"#b8ffb0", furDark:"#8fe888", blush:"#5cff8f"},
-  {id:"robot", a:"#7cd5ff", b:"#679bff", fur:"#cfeaff", furDark:"#9fd4f5", blush:"#a0e9ff"},
-  {id:"duck",  a:"#ffe066", b:"#ffab4a", fur:"#fff3b0", furDark:"#ffe066", blush:"#ffc94d"}
-];
-
-/* ===================== STATE ===================== */
-/* Ενιαίο synced slice (έγκριση: «Όλα sync»).
-   Schema: { ver:1, hist:[{id,e,v,f,mtime}], tombs{},
-             skin, troll, sound, sm:{skin,troll,sound} }
-   sm = per-field mtime stamps (Pet fm pattern) για LWW merge. */
-var data = { ver:1, hist: [], tombs: {},
-             skin:"neko", troll:false, sound:true,
-             sm:{ skin:0, troll:0, sound:0 } };
-/* prefs = runtime mirror μόνο (lang = render-only, shell-owned) */
-var prefs = { lang:"en", skin:"neko", troll:false, sound:true };
-var expr = "", lastQuip = false, lastHidden = null, typingTimer = null, moodTimer = null, prevAnswer = null;
-
-/* Load state */
-try{
-  var savedData = localStorage.getItem(DATA_KEY);
-  if(savedData){
-    var d = JSON.parse(savedData);
-    if(typeof d === "object" && d !== null){
-      if(Array.isArray(d.hist)) data.hist = d.hist;
-      if(d.tombs && typeof d.tombs === "object") data.tombs = d.tombs;
-      if(typeof d.skin === "string"){ data.skin = d.skin; prefs.skin = d.skin; }
-      if(typeof d.troll === "boolean"){ data.troll = d.troll; prefs.troll = d.troll; }
-      if(typeof d.sound === "boolean"){ data.sound = d.sound; prefs.sound = d.sound; }
-      if(d.sm && typeof d.sm === "object") data.sm = d.sm;
+  var STRINGS = {
+    en: {
+      "calc.title": "Calculator",
+      "calc.key.ac": "AC",
+      "calc.key.back": "Backspace",
+      "calc.history": "History",
+      "calc.history.clear": "Clear",
+      "calc.history.empty": "Nothing here yet.",
+      "calc.troll": "Troll mode",
+      "calc.troll.on": "On",
+      "calc.troll.off": "Off"
+    },
+    el: {
+      "calc.title": "Αριθμομηχανή",
+      "calc.key.ac": "AC",
+      "calc.key.back": "Πάτημα",
+      "calc.history": "Ιστορικό",
+      "calc.history.clear": "Καθαρισμός",
+      "calc.history.empty": "Τίποτα εδώ ακόμα.",
+      "calc.troll": "Λειτουργία πειράγματος",
+      "calc.troll.on": "Ενεργό",
+      "calc.troll.off": "Ανενεργό"
     }
-  }
-  /* Shell language (το shell είναι owner της γλώσσας) */
-  var shellLang = localStorage.getItem("oros.lang");
-  if(shellLang === "en" || shellLang === "el") prefs.lang = shellLang;
-}catch(e){}
-
-function saveData(){
-  localStorage.setItem(DATA_KEY, JSON.stringify(data));
-  if(window.__orosSyncApi) window.__orosSyncApi.dirty();
-}
-function setPref(field, value){
-  /* LWW: κάθε αλλαγή pref σφραγίζει και το sm[field] */
-  if(data[field] === value) return;
-  data[field] = value; prefs[field] = value;
-  data.sm[field] = Date.now();
-  saveData();
-}
-function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-function shellIsLight(){
-  /* Ανίχνευση shell theme μέσω --bg luminance (graceful, χωρίς fake data) */
-  try{
-    var bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
-    var m = bg.match(/^#([0-9a-f]{6})$/i);
-    if(!m) return false;
-    var r = parseInt(m[1].slice(0,2),16), g = parseInt(m[1].slice(2,4),16), b = parseInt(m[1].slice(4,6),16);
-    return (0.2126*r + 0.7152*g + 0.0722*b) > 128;
-  }catch(e){ return false; }
-}
-
-/* ===================== SHELL PALETTE BRIDGE ===================== */
-/* Τa mêmes vars με mood.js (CI requirement: inheritPalette +
-   watchPalette). Το shell είναι owner του θέματος (G3) — το app
-   κληρονομεί, δεν ορίζει δική του παλέτα φόντου/κειμένου. */
-var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                "--accent", "--accent-hover", "--accent-soft",
-                "--panel-bg", "--border", "--shadow"];
-
-function inheritPalette(){
-  try{
-    var pRoot = window.parent.document.documentElement;
-    document.documentElement.setAttribute("data-theme",
-      pRoot.getAttribute("data-theme") || "dark");
-    var cs = window.parent.getComputedStyle(pRoot);
-    PAL_VARS.forEach(function(v){
-      document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
-    });
-  }catch(e){ /* standalone — fallback palette stands */ }
-}
-
-function watchPalette(){
-  try{
-    new MutationObserver(function(){
-      inheritPalette();
-      /* --skin-dark (contrast) εξαρτάται από το --bg: ξαναβάψε
-         το skin με το νέο φόντο, χωρίς ήχο (silent) */
-      if(faceEl) applySkin(prefs.skin, true);
-    }).observe(
-      window.parent.document.documentElement,
-      { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-    );
-  }catch(e){ /* standalone */ }
-}
-
-function t(key){ return STRINGS[prefs.lang][key] || STRINGS.en[key] || key; }
-function esc(x){ return String(x).replace(/[<>&"'`]/g,function(c){return "&#"+c.charCodeAt(0)+";";}); }
-
-/* ===================== AUDIO ===================== */
-var actx = null;
-function audioCtx(){
-  if(!prefs.sound) return null;
-  try{
-    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==="suspended") actx.resume();
-    return actx;
-  }catch(e){ return null; }
-}
-function blip(freq,dur,type,vol,slideTo){
-  var c = audioCtx(); if(!c) return;
-  try{
-    var o = c.createOscillator(), g = c.createGain();
-    o.type = type||"sine"; o.frequency.value = freq;
-    if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, c.currentTime+dur);
-    g.gain.setValueAtTime(vol||0.06, c.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
-    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur+0.02);
-  }catch(e){}
-}
-function voiceNeko(){
-  var c = audioCtx(); if(!c) return;
-  try{
-    [[520,0.06],[780,0.03]].forEach(function(pair){
-      var f = pair[0], v = pair[1];
-      var o = c.createOscillator(), g = c.createGain();
-      o.type = "sawtooth";
-      o.frequency.setValueAtTime(f*0.7,c.currentTime);
-      o.frequency.linearRampToValueAtTime(f*1.25,c.currentTime+0.12);
-      o.frequency.linearRampToValueAtTime(f*0.85,c.currentTime+0.32);
-      g.gain.setValueAtTime(0.0001,c.currentTime);
-      g.gain.linearRampToValueAtTime(v,c.currentTime+0.05);
-      g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.35);
-      var lp = c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=1600;
-      o.connect(lp); lp.connect(g); g.connect(c.destination);
-      o.start(); o.stop(c.currentTime+0.4);
-    });
-  }catch(e){}
-}
-function voiceDog(){
-  var c = audioCtx(); if(!c) return;
-  try{
-    var o = c.createOscillator(), g = c.createGain();
-    o.type = "sawtooth";
-    o.frequency.setValueAtTime(170,c.currentTime);
-    o.frequency.exponentialRampToValueAtTime(95,c.currentTime+0.18);
-    g.gain.setValueAtTime(0.0001,c.currentTime);
-    g.gain.linearRampToValueAtTime(0.11,c.currentTime+0.03);
-    g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.24);
-    var lp = c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=600; lp.Q.value=2;
-    o.connect(lp); lp.connect(g); g.connect(c.destination);
-    o.start(); o.stop(c.currentTime+0.28);
-    setTimeout(function(){
-      var c2 = audioCtx(); if(!c2) return;
-      var o2 = c2.createOscillator(), g2 = c2.createGain();
-      o2.type = "sawtooth";
-      o2.frequency.setValueAtTime(150,c2.currentTime);
-      o2.frequency.exponentialRampToValueAtTime(85,c2.currentTime+0.15);
-      g2.gain.setValueAtTime(0.0001,c2.currentTime);
-      g2.gain.linearRampToValueAtTime(0.07,c2.currentTime+0.02);
-      g2.gain.exponentialRampToValueAtTime(0.0001,c2.currentTime+0.2);
-      var lp2 = c2.createBiquadFilter(); lp2.type="lowpass"; lp2.frequency.value=550;
-      o2.connect(lp2); lp2.connect(g2); g2.connect(c2.destination);
-      o2.start(); o2.stop(c2.currentTime+0.24);
-    },170);
-  }catch(e){}
-}
-function voiceAlien(){
-  var c = audioCtx(); if(!c) return;
-  try{
-    [[380,0],[520,120]].forEach(function(pair){
-      var f = pair[0], delay = pair[1];
-      var o = c.createOscillator(), g = c.createGain(),
-          lfo = c.createOscillator(), lg = c.createGain();
-      o.type = "sine";
-      o.frequency.setValueAtTime(f,c.currentTime+delay/1000);
-      lfo.frequency.value=14; lg.gain.value=f*0.05;
-      lfo.connect(lg); lg.connect(o.frequency);
-      g.gain.setValueAtTime(0.0001,c.currentTime+delay/1000);
-      g.gain.linearRampToValueAtTime(0.07,c.currentTime+delay/1000+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+delay/1000+0.16);
-      o.connect(g); g.connect(c.destination);
-      o.start(c.currentTime+delay/1000); o.stop(c.currentTime+delay/1000+0.18);
-      lfo.start(c.currentTime+delay/1000); lfo.stop(c.currentTime+delay/1000+0.18);
-    });
-  }catch(e){}
-}
-function voiceRobot(){
-  var c = audioCtx(); if(!c) return;
-  try{
-    var o = c.createOscillator(), g = c.createGain(),
-        lfo = c.createOscillator(), lg = c.createGain();
-    o.type = "square";
-    o.frequency.setValueAtTime(240,c.currentTime);
-    o.frequency.linearRampToValueAtTime(200,c.currentTime+0.3);
-    lfo.type="square"; lfo.frequency.value=32; lg.gain.value=55;
-    lfo.connect(lg); lg.connect(o.frequency);
-    g.gain.setValueAtTime(0.0001,c.currentTime);
-    g.gain.linearRampToValueAtTime(0.05,c.currentTime+0.02);
-    g.gain.setValueAtTime(0.05,c.currentTime+0.24);
-    g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.34);
-    var hp = c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=150;
-    o.connect(hp); hp.connect(g); g.connect(c.destination);
-    o.start(); o.stop(c.currentTime+0.36);
-    lfo.start(); lfo.stop(c.currentTime+0.36);
-  }catch(e){}
-}
-function voiceDuck(){
-  var c = audioCtx(); if(!c) return;
-  try{
-    var o = c.createOscillator(), g = c.createGain(),
-        am = c.createOscillator(), ag = c.createGain();
-    o.type = "square";
-    o.frequency.setValueAtTime(340,c.currentTime);
-    o.frequency.linearRampToValueAtTime(290,c.currentTime+0.14);
-    am.frequency.value=38; ag.gain.value=0.04;
-    am.connect(ag); ag.connect(g.gain);
-    g.gain.setValueAtTime(0.05,c.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.16);
-    var bp = c.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=700; bp.Q.value=1.5;
-    o.connect(bp); bp.connect(g); g.connect(c.destination);
-    o.start(); o.stop(c.currentTime+0.18);
-    am.start(); am.stop(c.currentTime+0.18);
-    setTimeout(function(){
-      var c2 = audioCtx(); if(!c2) return;
-      var o2 = c2.createOscillator(), g2 = c2.createGain();
-      o2.type = "square";
-      o2.frequency.setValueAtTime(395,c2.currentTime);
-      o2.frequency.linearRampToValueAtTime(320,c2.currentTime+0.12);
-      g2.gain.setValueAtTime(0.045,c2.currentTime);
-      g2.gain.exponentialRampToValueAtTime(0.0001,c2.currentTime+0.14);
-      var bp2 = c2.createBiquadFilter(); bp2.type="bandpass"; bp2.frequency.value=760; bp2.Q.value=1.5;
-      o2.connect(bp2); bp2.connect(g2); g2.connect(c2.destination);
-      o2.start(); o2.stop(c2.currentTime+0.16);
-    },140);
-  }catch(e){}
-}
-function speak(){
-  ({neko:voiceNeko,dog:voiceDog,alien:voiceAlien,robot:voiceRobot,duck:voiceDuck}[prefs.skin]||voiceNeko)();
-}
-function chime(){ blip(880,0.18,"sine",0.05,1320); setTimeout(function(){blip(1180,0.22,"sine",0.045,1560);},90); }
-
-var KEYSOUND = {
-  digit:function(n){ blip(520+parseInt(n)*38,0.06,"triangle",0.05); },
-  op: function(){ blip(420,0.09,"square",0.045); },
-  util:function(){ blip(330,0.08,"triangle",0.05); },
-  eq: function(){ blip(660,0.16,"sine",0.06,880); },
-  skin:function(){ blip(500,0.12,"sine",0.05,900); },
-  tick:function(){ blip(880,0.02,"square",0.018); }
-};
-
-/* ===================== UI HELPERS ===================== */
-var $ = function(id){ return document.getElementById(id); };
-var faceEl, exprEl, resEl, padEl, stripEl, modeSw, soundBtn, histBtn, histPanel, histList, shareBtn, exportBtn;
-
-/* ===================== FACE SVG ===================== */
-function faceSVG(id){
-  var open  ='<g class="eyes-open eyeblink"><g class="pupil-g"><circle cx="42" cy="52" r="4.5" fill="#241a30"/><circle cx="78" cy="52" r="4.5" fill="#241a30"/></g></g>';
-  var smug  ='<g class="eyes-smug"><path d="M35 53 Q42 47 49 53" stroke="#241a30" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M71 53 Q78 47 85 53" stroke="#241a30" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>';
-  var think ='<g class="eyes-think"><circle cx="42" cy="52" r="4.5" fill="#241a30"/><circle cx="78" cy="52" r="4.5" fill="#241a30"/><path d="M31 43 Q42 38 53 42" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M67 42 Q78 38 89 43" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/></g>';
-  var mIdle ='<g class="mouth-idle"><path d="M52 66 Q60 73 68 66" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/></g>';
-  var mSmug ='<g class="mouth-smug"><path d="M50 68 Q55 63 60 68 Q65 73 70 68" stroke="#241a30" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="35" cy="63" rx="5" ry="3" fill="var(--blush)" opacity=".7"/><ellipse cx="85" cy="63" rx="5" ry="3" fill="var(--blush)" opacity=".7"/></g>';
-  var mThink='<g class="mouth-think"><path d="M52 67 L68 67" stroke="#241a30" stroke-width="3" stroke-linecap="round"/></g>';
-  var eyes=open+smug+think, mouths=mIdle+mSmug+mThink;
-  var shapes={
-    neko:'<path d="M18 34 L24 8 L40 26 Z" fill="var(--fur)"/><path d="M102 34 L96 8 L80 26 Z" fill="var(--fur)"/>'+
-         '<ellipse cx="60" cy="58" rx="46" ry="42" fill="var(--fur)"/>',
-    dog:'<ellipse cx="20" cy="58" rx="12" ry="24" fill="var(--furDark)"/><ellipse cx="100" cy="58" rx="12" ry="24" fill="var(--furDark)"/>'+
-        '<ellipse cx="60" cy="60" rx="46" ry="42" fill="var(--fur)"/>',
-    alien:'<path d="M52 10 L60 26 L68 10" stroke="var(--fur)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="52" cy="10" r="3.5" fill="var(--accent)"/>'+
-          '<ellipse cx="60" cy="62" rx="42" ry="40" fill="var(--fur)"/>',
-    robot:'<rect x="16" y="22" width="88" height="76" rx="16" fill="var(--fur)"/><path d="M60 22 L60 8" stroke="var(--fur)" stroke-width="4"/><circle cx="60" cy="7" r="5" fill="var(--accent)"/>'+
-          '<rect x="46" y="14" width="28" height="8" rx="4" fill="var(--fur)"/>',
-    duck:'<circle cx="60" cy="58" r="46" fill="var(--fur)"/><path d="M46 68 Q60 84 74 68 Q60 76 46 68 Z" fill="var(--accent)"/>'
   };
-  var deco = id==="neko" ? '' : id==="dog" ? '<path d="M30 30 Q22 20 26 10" stroke="var(--furDark)" stroke-width="4" fill="none" stroke-linecap="round"/>' : id==="duck" ? '<circle cx="60" cy="18" r="6" fill="var(--fur)"/>' : '';
-  return '<svg viewBox="0 0 120 104" aria-hidden="true"><g class="wobble">'+shapes[id]+deco+eyes+mouths+'</g></svg>';
-}
 
-/* ===================== SKIN / THEME / LANG ===================== */
-function applySkin(id,silent){
-  var sk = SKINS.find(function(s){return s.id===id;}) || SKINS[0];
-  prefs.skin = sk.id;
-  var r = document.documentElement.style;
-  r.setProperty("--skin-a",sk.a); r.setProperty("--skin-b",sk.b);
-  r.setProperty("--btn-op",sk.a); r.setProperty("--fur",sk.fur);
-  r.setProperty("--furDark",sk.furDark); r.setProperty("--blush",sk.blush);
-  r.setProperty("--skin-dark", shellIsLight() ? "#ffffff" : "#1b1230");
-  faceEl.innerHTML = faceSVG(sk.id);
-  document.querySelectorAll(".calc-skin-dot").forEach(function(d){d.classList.toggle("active",d.dataset.skin===sk.id);});
-  if(!silent) KEYSOUND.skin();
-  setPref("skin", sk.id);
-}
-/* applyTheme() removed — theme is shell-owned (G3, Bible Part II) */
-function applyLang(){
-  document.documentElement.lang = prefs.lang;
-  var str = STRINGS[prefs.lang];
-  document.querySelectorAll("[data-i18n]").forEach(function(el){
-    el.textContent = str[el.getAttribute("data-i18n")] || el.textContent;
-  });
-  document.querySelectorAll("[data-i18n-title]").forEach(function(el){
-    var tk = el.getAttribute("data-i18n-title");
-    if(str[tk]) el.title = str[tk];
-  });
-  renderHist();
-}
-function applyTroll(){
-  modeSw.classList.toggle("troll",prefs.troll);
-  modeSw.setAttribute("aria-checked",String(prefs.troll));
-  shareBtn.classList.toggle("show", prefs.troll && lastHidden!==null);
-  setPref("troll", prefs.troll);
-}
-function applySound(){
-  var soundBtn = $("soundBtn");
-  if(soundBtn) soundBtn.textContent = prefs.sound ? "🔊" : "🔇";
-}
-
-/* ===================== HISTORY ===================== */
-function pushHist(expression,value,isFake){
-  data.hist.push({id:uid(), e:expression, v:String(value), f:!!isFake, mtime:Date.now()});
-  if(data.hist.length>HIST_MAX){
-    /* Cap 20: οι trimmed εγγραφές ΣΒΗΝΟΥΝ με tombstone (R17),
-       ώστε να μην ανασταίνονται από remote που δεν είχε κάνει ακόμα cap */
-    var drop = data.hist.shift();
-    data.tombs[drop.id] = Math.max(data.tombs[drop.id]||0, drop.mtime);
-  }
-  saveData(); renderHist();
-}
-function renderHist(){
-  histList.innerHTML = "";
-  var str = STRINGS[prefs.lang];
-  var alive = data.hist.filter(function(h){
-    return !data.tombs[h.id] || h.mtime > data.tombs[h.id];
-  });
-  if(!alive.length){
-    histList.innerHTML = '<div class="calc-hist-empty">'+str.histEmpty+'</div>';
-  }else{
-    alive.slice().reverse().forEach(function(h){
-      var row = document.createElement("div"); row.className="calc-hist-item";
-      var e = document.createElement("span"); e.className="calc-hist-expr"; e.textContent=h.e+" =";
-      var v = document.createElement("span"); v.className="calc-hist-val"+(h.f?" fake":""); v.textContent=h.v;
-      row.append(e,v); histList.appendChild(row);
-    });
-    var cl = document.createElement("button"); cl.type="button"; cl.className="calc-hist-clear";
-    cl.textContent = str.clear;
-    cl.onclick = function(){ clearHistory(); };
-    histList.appendChild(cl);
-  }
-}
-function clearHistory(){
-  /* R17: delete wins — κάθε εγγραφή παίρνει fresh tombstone,
-     ώστε να μην αναστηθεί από άλλη συσκευή μετά από merge */
-  var now = Date.now();
-  data.hist.forEach(function(h){
-    data.tombs[h.id] = Math.max(data.tombs[h.id]||0, now);
-  });
-  data.hist = [];
-  saveData(); renderHist(); KEYSOUND.util();
-}
-function fakeValue(real){
-  var mag = Math.abs(real);
-  if(mag<2) return Math.round((real + (Math.random()<0.5?-1:1)*(1+Math.random()*8))*10)/10;
-  var err = 1+(Math.random()<0.5?-1:1)*(0.08+Math.random()*0.5);
-  var f = real*err;
-  f = Math.round(f*10)/10;
-  if(Math.abs(f-real)<0.1) f = real+ (mag<10?2:Math.round(mag*0.2));
-  return f;
-}
-
-/* ===================== CALCULATION ===================== */
-function currentNum(){
-  var m = expr.match(/(\d+\.?\d*)$/); return m?m[1]:"";
-}
-function pressKey(k){
-  clearTypewriter();
-  if(lastQuip){ expr=""; lastQuip=false; setMood(null); }
-
-  if(k==="C"){ expr=""; showResult("0",false); setMood(null); KEYSOUND.util(); return; }
-  if(k==="⌫"){
-    if(currentNum()==="" && /[+\-*/]/.test(expr.slice(-1))) expr=expr.slice(0,-1);
-    else expr=expr.replace(/(\d+\.?\d*)$/,"");
-    updateDisplay(false); KEYSOUND.util(); return;
-  }
-  if(k==="±"){
-    var n = currentNum();
-    if(n){
-      var head = expr.slice(0, expr.length - n.length);
-      var neg = head.endsWith("-");
-      var unary = neg && (head.length === 1 || /[+\-*/]/.test(head.charAt(head.length-2)));
-      if(unary)     expr = head.slice(0,-1) + n;
-      else if(!neg) expr = head + "-" + n;
-      updateDisplay(false); KEYSOUND.util();
+  // Troll pack — used ONLY when troll mode is on. These REPLACE
+  // the display hint strings, so the app talks smack regardless of
+  // whether the current result is right or wrong.
+  var TROLL_STRINGS = {
+    en: {
+      "calc.history": "Receipts of my crimes",
+      "calc.history.empty": "You haven't annoyed me yet.",
+      "calc.troll.hint": "Trust me. I'm a calculator.",
+      "toast.true": "Fine, take your correct answer. Nerd.",
+      "toast.false.1": "Math is hard. You understand, right?",
+      "toast.false.2": "I did the math. Probably. Mostly. Trust me.",
+      "toast.false.3": "That's the answer. Any other calculator would agree*.\n*terms apply",
+      "toast.false.4": "Rounded for your convenience. Generously.",
+      "toast.false.5": "Confidently calculated. Confidence is free."
+    },
+    el: {
+      "calc.history": "Αποδείξεις των εγκλημάτων μου",
+      "calc.history.empty": "Δεν με έχεις εκνευρίσει ακόμα.",
+      "calc.troll.hint": "Έμπισέ με. Είμαι αριθμομηχανή.",
+      "toast.true": "Πάλι καλά που το πήρες σωστό. Φροντισμένος/η.",
+      "toast.false.1": "Τα μαθηματικά είναι δύσκολα. Με καταλαβαίνεις, έτσι;",
+      "toast.false.2": "Το υπολόγισα. Πιθανόν. Κυρίως. Έμπισέ με.",
+      "toast.false.3": "Αυτή είναι η απάντηση. Οποιαδήποτε άλλη αριθμομηχανή θα συμφωνούσε*.\n*με όρους",
+      "toast.false.4": "Στρογγυλοποιήθηκε για την ευκολία σου. Γενναιόδωρα.",
+      "toast.false.5": "Υπολογίστηκε με σιγουριά. Η σιγουριά είναι δωρεάν."
     }
-    return;
-  }
-  if(k==="%"){
-    var n = currentNum(); if(!n) return;
-    expr = expr.slice(0,expr.length-n.length)+String(parseFloat(n)/100);
-    updateDisplay(false); KEYSOUND.util(); return;
-  }
-  if(k==="="){ doEquals(); return; }
+  };
 
-  if(/[+\-*/]/.test(k)){
-    if(expr===""){ if(k!=="-" && prevAnswer==null) return; if(expr==="") expr=String(prevAnswer??0); }
-    if(/[+\-*/]$/.test(expr)) expr=expr.slice(0,-1);
-    expr+=k; updateDisplay(false); KEYSOUND.op(); return;
-  }
-  if(k==="."){
-    if(currentNum().includes(".")) return;
-    if(currentNum()==="") expr+="0";
-    expr+=k; updateDisplay(false); KEYSOUND.digit("."); return;
-  }
-  if(/^\d$/.test(k)){
-    if(currentNum()==="0") expr=expr.slice(0,-1);
-    expr+=k; updateDisplay(false); KEYSOUND.digit(k); return;
-  }
-}
-
-function doEquals(){
-  if(lastQuip){ lastQuip=false; }
-  if(expr===""||/[+\-*/.]$/.test(expr)){ updateDisplay(false); return; }
-  setMood("calc");
-  KEYSOUND.eq();
-  setTimeout(function(){
-    var val;
-    try{
-      var safe = expr;
-      if(!/^[\d+\-.*\/ ()]+$/.test(safe)) throw 0;
-      val = Function('"use strict";return('+safe+')')();
-      if(typeof val!=="number"||!isFinite(val)) throw 0;
-    }catch(e){ val=null; }
-    prevAnswer = val;
-    var prettyExpr = expr.replace(/\*/g,"×").replace(/\//g,"÷");
-
-    if(val===null){
-      if(prefs.troll) showResult(STRINGS[prefs.lang].quips[0],true);
-      else showResult(t("error"),false);
-      setMood(null); return;
+  function t(key) {
+    if (state.troll && TROLL_STRINGS[lang()][key]) {
+      return TROLL_STRINGS[lang()][key];
     }
+    return STRINGS[lang()][key] || STRINGS.en[key] || key;
+  }
 
-    if(prefs.troll){
-      var reveal = Math.random()<TRUTH_REVEAL_CHANCE;
-      if(reveal){
-        lastQuip=false; lastHidden=null; shareBtn.classList.remove("show");
-        var str = STRINGS[prefs.lang];
-        var pre = str.revealPrefix[Math.floor(Math.random()*str.revealPrefix.length)];
-        var suf = str.revealSuffix[Math.floor(Math.random()*str.revealSuffix.length)];
-        var msg = pre+fmt(val)+suf;
-        setMood("mock"); speak(); chime();
-        typeOut(msg);
-        pushHist(prettyExpr,val,false);
-      }else{
-        lastQuip=true; lastHidden={expr:prettyExpr, real:fmt(val)};
-        shareBtn.classList.add("show");
-        var q = STRINGS[prefs.lang].quips;
-        var quip = q[Math.floor(Math.random()*q.length)];
-        var extra = { neko:{en:"Nyan~ numbers are scary!",el:"Νιάου~ οι αριθμοί τρομάζουν!"},
-                      dog:{en:"Woof. I chase balls, not digits.",el:"Γάβ. Κυνηγάω μπαλάκια, όχι ψηφία."},
-                      alien:{en:"Your Earth math is irrelevant here.",el:"Τα γήινα μαθηματικά δεν με αφορούν."},
-                      robot:{en:"BZZT. Logic module on vacation.",el:"ΜΠΡΡΡ. Η λογική μονάδα κάνει διακοπές."},
-                      duck:{en:"Quack. I only count breadcrumbs.",el:"Κουάκ. Μετράω μόνο ψίχουλα."}}[prefs.skin];
-        if(extra && Math.random()<0.4) quip = prefs.lang==="en"?extra.en:extra.el;
-        setMood("mock"); speak();
-        typeOut(quip);
-        pushHist(prettyExpr, fakeValue(val), true);
+  // ---------- 2. Palette bridge (mood.js canonical) ----------
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft",
+                  "--panel-bg", "--border", "--shadow"];
+
+  function inheritPalette() {
+    try {
+      var pRoot = window.parent.document.documentElement;
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var cs = window.parent.getComputedStyle(pRoot);
+      PAL_VARS.forEach(function (v) {
+        var val = cs.getPropertyValue(v).trim();
+        if (val) document.documentElement.style.setProperty(v, val);
+      });
+    } catch (e) { /* standalone — fallback palette stands */ }
+  }
+
+  function watchPalette() {
+    try {
+      new MutationObserver(function () {
+        inheritPalette();
+      }).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  // ---------- 3. State + persistence ----------
+  var state = {
+    lang: lang(),
+    troll: false,        // travels in the slice
+    history: [],         // [{id, expr, res, ts}] newest-first, cap 50
+    deleted: {},         // tombstone map (id → ts) for merge
+    // --- transient (not persisted) ---
+    cur: "0",            // current entry string
+    acc: null,           // accumulated value
+    op: null,            // pending operator
+    fresh: true,         // true = next digit starts fresh
+    lastTrolled: false,  // prevents consecutive troll lies
+    lastAnswer: null     // reused by keyboard (= on empty entry)
+  };
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function readLS() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(LS_KEY));
+      if (!raw || typeof raw !== "object") return null;
+      return raw;
+    } catch (e) { return null; }
+  }
+
+  function persist(notifyParent) {
+    var payload = {
+      ver: 1,
+      troll: !!state.troll,
+      history: state.history.slice(0, HISTORY_MAX),
+      deleted: state.deleted
+    };
+    try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (e) {}
+    if (notifyParent) markDirty();
+  }
+
+  function hydrate() {
+    var raw = readLS();
+    if (!raw) {
+      // Fresh install — check for a pending remote arrival
+      var remote = takePendingRemote();
+      if (remote) applyRemote(remote, false);
+      return;
+    }
+    if (typeof raw.troll === "boolean") state.troll = raw.troll;
+    if (Array.isArray(raw.history)) {
+      state.history = raw.history.filter(function (h) {
+        return h && typeof h.expr === "string" &&
+               typeof h.res === "string" && !state.deleted[h.id];
+      }).slice(0, HISTORY_MAX);
+    }
+    if (raw.deleted && typeof raw.deleted === "object") state.deleted = raw.deleted;
+  }
+
+  // LWW by ts per entry, tombstones honored, cap enforced post-merge.
+  function applyRemote(data, notifyUser) {
+    if (!data || typeof data !== "object") return 0;
+    var local = readLS() || { troll: false, history: [], deleted: {} };
+    var remoteDeleted = (data.deleted && typeof data.deleted === "object")
+      ? data.deleted : {};
+    var mergedDeleted = {};
+    var k;
+    for (k in local.deleted)  mergedDeleted[k] = local.deleted[k];
+    for (k in remoteDeleted)  mergedDeleted[k] = remoteDeleted[k];
+
+    var map = {};
+    var push = function (h) {
+      if (!h || !h.id || typeof h.ts !== "number") return;
+      if (mergedDeleted[h.id]) return;   // tombstone wins
+      var prev = map[h.id];
+      if (!prev || (h.ts || 0) > (prev.ts || 0)) map[h.id] = h;
+    };
+    (local.history || []).forEach(push);
+    if (Array.isArray(data.history)) data.history.forEach(push);
+
+    var merged = Object.keys(map).map(function (id) { return map[id]; })
+      .sort(function (a, b) { return b.ts - a.ts; })
+      .slice(0, HISTORY_MAX);
+
+    // Troll pref: LWW by presence of fresher history ts, else keep local
+    var newTroll = (typeof data.troll === "boolean")
+      ? data.troll : !!local.troll;
+    var newDeletedObj = mergedDeleted;
+    if (data._deletedMap) newDeletedObj = data._deletedMap;
+
+    state.deleted = newDeletedObj || {};
+    state.history = merged;
+    state.troll = newTroll;
+
+    var payload = { ver: 1, troll: newTroll, history: merged, deleted: state.deleted };
+    try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (e) {}
+
+    if (notifyUser) {
+      transientNote(t("calc.title"),
+        lang() === "el" ? "Τα δεδομένα συγχρονίστηκαν." : "Data synced.");
+    }
+    return merged.length;
+  }
+
+  // Pending-remote staging (engine pushes when app is closed)
+  var REMOTE_PENDING_KEY = "oros-calculator-remote";
+  function stagePendingRemote(data) {
+    try {
+      localStorage.setItem(REMOTE_PENDING_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+  function takePendingRemote() {
+    try {
+      var raw = localStorage.getItem(REMOTE_PENDING_KEY);
+      if (raw) {
+        localStorage.removeItem(REMOTE_PENDING_KEY);
+        return JSON.parse(raw);
       }
-    }else{
-      showResult(fmt(val),false);
-      setMood(null);
-      pushHist(prettyExpr,val,false);
-    }
-  },260);
-}
-
-function fmt(v){
-  if(v===null||v===undefined) return "???";
-  var r = Math.round(v*1e10)/1e10;
-  return String(r);
-}
-function updateDisplay(){
-  exprEl.textContent = expr||"0";
-  var n = currentNum();
-  showResult(n||"0",false);
-}
-function showResult(txt,isQuip){
-  resEl.textContent = txt;
-  resEl.classList.toggle("quip",isQuip);
-}
-function typeOut(text){
-  clearTypewriter();
-  resEl.classList.add("quip"); resEl.textContent="";
-  var i=0;
-  typingTimer = setInterval(function(){
-    resEl.textContent = text.slice(0,++i);
-    if(i%3===0) KEYSOUND.tick();
-    if(i>=text.length){ clearInterval(typingTimer); typingTimer=null; }
-  },26);
-}
-function clearTypewriter(){ if(typingTimer){clearInterval(typingTimer);typingTimer=null;} }
-
-/* ===================== SHARE ===================== */
-function sharePrank(){
-  if(!lastHidden) return;
-  var str = STRINGS[prefs.lang];
-  var txt = str.shareText
-    .replace("{q}",lastHidden.expr)
-    .replace("{a}",resEl.textContent||str.quips[0])
-    .replace("{n}",lastHidden.real);
-  var done = function(){ chime(); flashToast(str.copied); };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(done).catch(function(){fallbackCopy(txt,done);});
-  }else fallbackCopy(txt,done);
-}
-function fallbackCopy(txt,done){
-  try{
-    var ta = document.createElement("textarea");
-    ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0";
-    document.body.appendChild(ta); ta.select();
-    document.execCommand("copy"); document.body.removeChild(ta);
-    done();
-  }catch(e){ flashToast("Ctrl+C"); }
-}
-function flashToast(msg){
-  var d = document.createElement("div");
-  d.textContent = msg;
-  d.style.cssText = "position:fixed;left:50%;top:20px;transform:translateX(-50%);"+
-    "background:var(--skin-a);color:var(--skin-dark);padding:8px 18px;border-radius:20px;"+
-    "font-size:.8rem;font-weight:700;z-index:99;transition:opacity .4s;pointer-events:none;";
-  document.body.appendChild(d);
-  setTimeout(function(){d.style.opacity="0";setTimeout(function(){d.remove();},450);},1400);
-}
-
-/* ===================== MOOD ===================== */
-function setMood(m){
-  if(moodTimer){clearTimeout(moodTimer);moodTimer=null;}
-  faceEl.classList.remove("mock","calc");
-  if(m==="mock"){ faceEl.classList.add("mock");
-    moodTimer=setTimeout(function(){faceEl.classList.remove("mock");},4000);
+    } catch (e) {}
+    return null;
   }
-  else if(m==="calc"){ faceEl.classList.add("calc"); }
-}
 
-/* ===================== EXPORT ===================== */
-function exportCSV(){
-  var csv = "Expression,Result,Fake\n";
-  data.hist.forEach(function(h){
-    csv += '"'+h.e.replace(/"/g,'""')+'",'+h.v+','+(h.f?"TRUE":"FALSE")+"\n";
-  });
-  var blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url; a.download = "calculator-history.csv";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  chime();
-}
-function resetAll(){
-  var dlg = document.createElement("dialog");
-  dlg.className = "calc-dialog";
-  var str = STRINGS[prefs.lang];
-  dlg.innerHTML = '<p>'+esc(str.resetConfirmMsg)+'</p>'+
-    '<div class="calc-dialog-actions">'+
-    '<button type="button" class="calc-dialog-cancel">'+esc(str.cancel)+'</button>'+
-    '<button type="button" class="calc-dialog-danger">'+esc(str.resetAll)+'</button></div>';
-  document.body.appendChild(dlg);
-  var closeDlg = function(){ dlg.close(); dlg.remove(); };
-  dlg.querySelector(".calc-dialog-cancel").onclick = closeDlg;
-  dlg.querySelector(".calc-dialog-danger").onclick = function(){
-    clearHistory();
-    closeDlg(); chime();
+  function markDirty() {
+    try {
+      var sync = window.parent.orosSync || window.orosSync;
+      if (sync && typeof sync.markDirty === "function") sync.markDirty();
+    } catch (e) {}
+  }
+
+  // ---------- Unified notifications (transient only — this app
+  // has no reminders, so nothing ever enters the inbox) ----------
+  function transientNote(title, body) {
+    try {
+      var N = window.parent.orosNotifs || window.orosNotifs;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "calculator", title: title, body: body });
+        return;
+      }
+    } catch (e) {}
+    // Fallback: console (standalone or stale bundle)
+    console.log("[calc]", title, "—", body);
+  }
+
+  // ---------- 4. Engine ----------
+  var OPS = {
+    add: function (a, b) { return a + b; },
+    sub: function (a, b) { return a - b; },
+    mul: function (a, b) { return a * b; },
+    div: function (a, b) { return a / b; }
   };
-  dlg.addEventListener("close", function(){ if(document.body.contains(dlg)) dlg.remove(); });
-  dlg.showModal();
-  dlg.addEventListener("click", function(e){ if(e.target===dlg) closeDlg(); });
-}
+  var OP_GLYPH = { add: "+", sub: "−", mul: "×", div: "÷" };
 
-/* ===================== SYNC SLICE ===================== */
-function sliceGet(){
-  return { ver:data.ver, hist:data.hist, tombs:data.tombs,
-           skin:data.skin, troll:data.troll, sound:data.sound, sm:data.sm };
-}
-function sliceSet(payload){
-  if(!payload || typeof payload !== "object") return;
-  window.__orosSyncApi._suppress = true; /* R6: pull-fed setters NEVER dirty */
-  try{
-    if(Array.isArray(payload.hist)) data.hist = payload.hist;
-    if(payload.tombs && typeof payload.tombs === "object") data.tombs = payload.tombs;
-    if(payload.sm && typeof payload.sm === "object") data.sm = payload.sm;
-    if(typeof payload.skin === "string"){
-      data.skin = payload.skin; prefs.skin = payload.skin;
-      applySkin(payload.skin, true);
-    }
-    if(typeof payload.troll === "boolean"){
-      data.troll = payload.troll; prefs.troll = payload.troll;
-      applyTroll();
-    }
-    if(typeof payload.sound === "boolean"){
-      data.sound = payload.sound; prefs.sound = payload.sound;
-      applySound();
-    }
-    renderHist();
-  } finally { window.__orosSyncApi._suppress = false; }
-}
-function mergeFn(remote, local){
-  /* R5: merge(A,B) === merge(B,A). mtime → lexicographic JSON tie-break. */
-  var out = { ver:1, hist:[], tombs:{},
-              skin:"neko", troll:false, sound:true,
-              sm:{ skin:0, troll:0, sound:0 } };
-  var byId = {};
-  function absorb(list){
-    (list||[]).forEach(function(it){
-      /* Strict sanitizer: DROP invalid rows (Bible Part IV) */
-      if(!it || typeof it.id !== "string" ||
-         typeof it.mtime !== "number" || typeof it.e !== "string") return;
-      var cur = byId[it.id];
-      if(!cur){ byId[it.id]=it; return; }
-      if(it.mtime > cur.mtime) byId[it.id]=it;
-      else if(it.mtime === cur.mtime && JSON.stringify(it) > JSON.stringify(cur)) byId[it.id]=it;
-    });
+  function numToString(n) {
+    if (!isFinite(n)) return "Error";
+    // Strip float noise: 0.1+0.2 → 0.3
+    var s = String(parseFloat(n.toPrecision(12)));
+    return s;
   }
-  absorb(remote && remote.hist); absorb(local && local.hist);
-  /* Tombstones: max-ts union, delete wins ties (R17) */
-  var rT = (remote && remote.tombs) || {}, lT = (local && local.tombs) || {};
-  Object.keys(rT).forEach(function(k){ out.tombs[k] = Math.max(out.tombs[k]||0, rT[k]); });
-  Object.keys(lT).forEach(function(k){ out.tombs[k] = Math.max(out.tombs[k]||0, lT[k]); });
-  Object.keys(byId).forEach(function(k){
-    if(!out.tombs[k] || byId[k].mtime > out.tombs[k]) out.hist.push(byId[k]);
-  });
-  out.hist.sort(function(a,b){ return a.mtime - b.mtime; }); /* χρονολογική σειρά */
-  if(out.hist.length > HIST_MAX) out.hist = out.hist.slice(out.hist.length-HIST_MAX);
-  /* Scalar prefs: per-field LWW via sm, lexicographic value tie-break */
-  ["skin","troll","sound"].forEach(function(f){
-    var rs = (remote && remote.sm) ? (remote.sm[f]||0) : 0;
-    var ls = (local  && local.sm)  ? (local.sm[f]||0)  : 0;
-    var rv = remote ? remote[f] : undefined;
-    var lv = local  ? local[f]  : undefined;
-    if(rv === undefined && lv === undefined) return;
-    if(rv === undefined) out[f] = lv;
-    else if(lv === undefined) out[f] = rv;
-    else if(rs > ls) out[f] = rv;
-    else if(ls > rs) out[f] = lv;
-    else out[f] = (String(rv) > String(lv)) ? rv : lv;
-    out.sm[f] = Math.max(rs, ls);
-  });
-  return out;
-}
-function registerSync(){
-  var api = (window.parent && window.parent.orosSync) || window.orosSync;
-  window.__orosSyncApi = { _suppress:false,
-    dirty:function(){ if(this._suppress)return;
-      if(api&&typeof api.markDirty==="function") api.markDirty(); } };
-  if(!api||typeof api.registerSlice!=="function")return;
-  api.registerSlice(APP_ID, sliceGet, sliceSet, DATA_KEY, mergeFn);
-}
 
-/* ===================== DEEP LINK ===================== */
-window.__orosCalculatorOpen = function(){
-  /* No deep link params needed - just focus app */
-};
+  function fmtDisplay(s) {
+    // Group integer part with thin spaces (locale-friendly)
+    if (s === "Error" || s === "-" ) return s;
+    var neg = s.charAt(0) === "-";
+    var body = neg ? s.slice(1) : s;
+    var parts = body.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return (neg ? "-" : "") + parts.join(".");
+  }
 
-/* ===================== SHORTCUT FORWARDING ===================== */
-(function(){
-  document.addEventListener("keydown", function(e){
-    if(!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-    var p = window.parent;
-    if(!(p && p.orosShortcuts && typeof p.orosShortcuts.handle==="function")) return;
-    if(p.orosShortcuts.handle(e)) e.stopPropagation();
-  }, true);
-})();
+  function computePending() {
+    if (state.op === null || state.acc === null) return null;
+    var b = parseFloat(state.cur);
+    if (isNaN(b)) return null;
+    var r = OPS[state.op](state.acc, b);
+    if (!isFinite(r)) return "Error";
+    return r;
+  }
 
-/* ===================== UI WIRING ===================== */
-function wireUI(){
-  faceEl = $("face"); exprEl = $("expr"); resEl = $("result");
-  padEl = $("pad"); stripEl = $("skinStrip");
-  modeSw = $("modeSwitch");
-  soundBtn = $("soundBtn"); histBtn = $("histBtn"); histPanel = $("histPanel");
-  histList = $("histList"); shareBtn = $("shareBtn");
-  var exportBtn = $("exportBtn");
-
-  padEl.addEventListener("click",function(e){
-    var b = e.target.closest(".calc-key"); if(b) pressKey(b.dataset.k);
-  });
-  modeSw.addEventListener("click",function(){
-    prefs.troll=!prefs.troll; applyTroll(); KEYSOUND.op();
-    if(!prefs.troll){ shareBtn.classList.remove("show"); lastHidden=null; }
-  });
-  modeSw.addEventListener("keydown",function(e){
-    if(e.key===" "||e.key==="Enter"){e.preventDefault();prefs.troll=!prefs.troll;applyTroll();}
-  });
-  soundBtn.addEventListener("click",function(){ prefs.sound=!prefs.sound; applySound(); setPref("sound", prefs.sound); if(prefs.sound) chime(); });
-  /* Shell language changes propagate via storage event (iframe, same origin) */
-  window.addEventListener("storage", function(ev){
-    if(ev.key === "oros.lang" && (ev.newValue === "en" || ev.newValue === "el")){
-      prefs.lang = ev.newValue; applyLang();
+  function pressDigit(d) {
+    if (state.fresh) {
+      state.cur = d;
+      state.fresh = false;
+    } else {
+      if (state.cur.replace("-", "").replace(".", "").length >= 15) return;
+      if (d === "." ) {
+        if (state.cur.indexOf(".") !== -1) return;
+        state.cur = state.cur === "" ? "0." : state.cur + ".";
+      } else {
+        state.cur = state.cur === "0" ? d : state.cur + d;
+      }
     }
-  });
-  shareBtn.addEventListener("click",sharePrank);
-  histBtn.addEventListener("click",function(){ histPanel.classList.toggle("open"); KEYSOUND.util(); });
-  if(exportBtn) exportBtn.addEventListener("click",exportCSV);
-  var resetBtn = $("resetBtn");
-  if(resetBtn) resetBtn.addEventListener("click",resetAll);
+    render();
+  }
 
-  /* Skin strip */
-  SKINS.forEach(function(sk){
-    var b = document.createElement("button");
-    b.type="button"; b.className="calc-skin-dot"; b.dataset.skin=sk.id;
-    b.title=sk.id.charAt(0).toUpperCase()+sk.id.slice(1);
-    b.setAttribute("aria-label",b.title+" skin");
-    b.innerHTML = faceSVG(sk.id)
-      .replace(/var\(--fur\)/g,sk.fur).replace(/var\(--furDark\)/g,sk.furDark)
-      .replace(/var\(--accent\)/g,sk.b).replace(/var\(--blush\)/g,sk.blush);
-    b.onclick = function(){ applySkin(sk.id); };
-    stripEl.appendChild(b);
-  });
+  function pressOp(op) {
+    if (state.op !== null && state.acc !== null && !state.fresh) {
+      // Chain: 2 + 3 + → evaluate first
+      var r = computePending();
+      if (r === "Error") { renderError(); return; }
+      state.acc = r;
+      state.cur = numToString(r);
+    } else {
+      state.acc = parseFloat(state.cur);
+      if (isNaN(state.acc)) state.acc = 0;
+    }
+    state.op = op;
+    state.fresh = true;
+    render();
+  }
 
-  /* Keyboard */
-  document.addEventListener("keydown",function(e){
-    if(e.ctrlKey||e.metaKey||e.altKey) return;
-    var map={"Enter":"=","Backspace":"⌫","Escape":"C","Delete":"C","+":"+","-":"-","*":"*","/":"/","%":"%",".":"."};
-    if(/^[0-9]$/.test(e.key)) pressKey(e.key);
-    else if(map[e.key]){ e.preventDefault(); pressKey(map[e.key]); }
-  });
-}
+  function pressEq() {
+    if (state.op === null || state.acc === null) {
+      // Bare "=" on a fresh number — troll still comments
+      if (state.troll && state.cur !== "0") {
+        trollToast(true);
+      }
+      return;
+    }
+    var a = state.acc;
+    var op = state.op;
+    var b = parseFloat(state.cur);
+    if (isNaN(b)) b = 0;
 
-/* ===================== INIT ===================== */
-function load(){
-  wireUI();
-  /* Πριν το applySkin: το shellIsLight() διαβάζει το --bg, που
-     μόλις κληρονόμησε από το shell — σωστή απόφαση contrast
-     από το πρώτο frame */
-  inheritPalette(); watchPalette();
-  applySkin(prefs.skin,true); applyTroll(); applySound(); applyLang();
-  renderHist(); showResult("0",false);
-  registerSync();
-}
+    var exprStr = fmtDisplay(numToString(a)) + " " + OP_GLYPH[op] + " " +
+                  fmtDisplay(String(b));
 
-/* Boot sequence */
-load();
+    var result = OPS[op](a, b);
+    var shown = (isFinite(result)) ? numToString(result) : "Error";
+
+    var lied = false;
+    if (state.troll && isFinite(result) && shouldLie()) {
+      shown = numToString(applyLie(result));
+      lied = true;
+      state.lastTrolled = true;
+    } else if (state.troll) {
+      state.lastTrolled = false;
+    }
+
+    // History entry (skip pure-error results)
+    if (shown !== "Error") {
+      state.history.unshift({
+        id: uid(),
+        expr: exprStr,
+        res: shown,
+        ts: Date.now(),
+        lied: lied    // local-only annotation, merges fine (unused by
+                      // other devices for decisions)
+      });
+      if (state.history.length > HISTORY_MAX) {
+        state.history.length = HISTORY_MAX;
+      }
+      persist(true);
+      renderHistory();
+    }
+
+    state.cur = shown;
+    state.acc = null;
+    state.op = null;
+    state.fresh = true;
+    state.lastAnswer = shown;
+
+    render();
+
+    if (state.troll) trollToast(!lied);
+  }
+
+  function pressAc() {
+    state.cur = "0";
+    state.acc = null;
+    state.op = null;
+    state.fresh = true;
+    render();
+  }
+
+  function pressBack() {
+    if (state.fresh) { pressAc(); return; }
+    state.cur = state.cur.slice(0, -1);
+    if (state.cur === "" || state.cur === "-") state.cur = "0";
+    render();
+  }
+
+  function pressSign() {
+    if (state.cur === "0") return;
+    if (state.cur.charAt(0) === "-") state.cur = state.cur.slice(1);
+    else state.cur = "-" + state.cur;
+    render();
+  }
+
+  function pressPercent() {
+    // Binary %: reduces b relative to a (iOS/Android semantics):
+    // 200 + 10% → 220 ; unary on fresh entry: 50% → 0.5
+    if (state.op !== null && state.acc !== null && !state.fresh) {
+      var b = parseFloat(state.cur);
+      state.cur = numToString(state.acc * b / 100);
+    } else {
+      var v = parseFloat(state.cur);
+      if (!isNaN(v)) state.cur = numToString(v / 100);
+    }
+    render();
+  }
+
+  function reuseHistory(id) {
+    for (var i = 0; i < state.history.length; i++) {
+      if (state.history[i].id === id) {
+        state.cur = state.history[i].res;
+        state.fresh = true;
+        state.acc = null;
+        state.op = null;
+        render();
+        return;
+      }
+    }
+  }
+
+  function clearHistory() {
+    var now = Date.now();
+    state.history.forEach(function (h) {
+      state.deleted[h.id] = now;   // tombstone — survives merge, travels
+    });
+    state.history = [];
+    persist(true);
+    renderHistory();
+  }
+
+  // ---------- 5. Troll logic ----------
+  // Lie cadence: ~1 in 3 evaluations, NEVER two consecutive lies.
+  // If the last evaluation trolled, this one is honest.
+  function shouldLie() {
+    if (state.lastTrolled) return false;
+    return Math.random() < 0.34;
+  }
+
+  // Plausible lie: off by a small relative error (1–6%).
+  function applyLie(result) {
+    var magnitude = Math.abs(result);
+    if (magnitude === 0) return result + (Math.random() < 0.5 ? 1 : -1);
+    var pct = 0.01 + Math.random() * 0.05;           // 1%–6%
+    var sign = Math.random() < 0.5 ? 1 : -1;
+    var lied = result + sign * pct * magnitude;
+    // Round to a "believable" precision (never surgically identical)
+    return parseFloat(lied.toPrecision(
+      Math.max(2, String(Math.round(magnitude)).length + 1)));
+  }
+
+  // In troll mode, EVERY action gets commentary — even the honest
+  // answers. Snark always; only the TRUTH varies.
+  function trollToast(honest) {
+    var pack = TROLL_STRINGS[lang()];
+    var key;
+    if (honest) {
+      key = "toast.true";
+    } else {
+      var pool = ["toast.false.1", "toast.false.2", "toast.false.3",
+                  "toast.false.4", "toast.false.5"];
+      key = pool[Math.floor(Math.random() * pool.length)];
+    }
+    transientNote(pack[key], "");
+  }
+
+  function toggleTroll() {
+    state.troll = !state.troll;
+    persist(true);
+    render();
+    if (state.troll) {
+      transientNote(t("calc.troll"),
+        lang() === "el"
+          ? "Θα σε φροντίσω… με τον δικό μου τρόπο."
+          : "I'll take good care of you… my way.");
+    }
+  }
+
+  // ---------- 6. Rendering ----------
+  var els = {};
+
+  function render() {
+    // Display
+    els.expr.textContent = (state.op !== null && state.acc !== null)
+      ? fmtDisplay(numToString(state.acc)) + " " + OP_GLYPH[state.op] +
+        (state.fresh ? "" : " " + fmtDisplay(state.cur))
+      : "";
+    els.res.textContent = fmtDisplay(state.cur);
+
+    // Troll flavor on the display itself
+    if (state.troll) {
+      els.root.setAttribute("data-troll", "on");
+      els.res.title = t("calc.troll.hint");
+    } else {
+      els.root.removeAttribute("data-troll");
+      els.res.title = "";
+    }
+
+    // Toggle button state
+    els.trollToggle.setAttribute("aria-pressed", state.troll ? "true" : "false");
+    els.trollState.textContent = state.troll ? t("calc.troll.on") : t("calc.troll.off");
+
+    applyI18nText();
+  }
+
+  function applyI18nText() {
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
+    }
+  }
+
+  function renderHistory() {
+    els.historyList.innerHTML = "";
+    var frag = document.createDocumentFragment();
+    state.history.forEach(function (h) {
+      var li = document.createElement("li");
+      li.dataset.id = h.id;
+
+      var expr = document.createElement("div");
+      expr.className = "h-expr";
+      expr.textContent = h.expr + " =";
+
+      var res = document.createElement("div");
+      res.className = "h-res";
+      res.textContent = fmtDisplay(h.res);
+
+      li.appendChild(expr);
+      li.appendChild(res);
+      li.addEventListener("click", function () {
+        reuseHistory(this.dataset.id);
+      });
+      frag.appendChild(li);
+    });
+    els.historyList.appendChild(frag);
+    els.historyEmpty.hidden = state.history.length > 0;
+  }
+
+  // ---------- 7. Sync slice registration ----------
+  function registerSlice() {
+    try {
+      var sync = window.parent.orosSync;
+      if (!sync || typeof sync.registerSlice !== "function") return;
+      sync.registerSlice("calculator", sliceGet, sliceSet, LS_KEY);
+      console.log("[calc] slice registered: calculator");
+    } catch (e) {
+      console.warn("[calc] slice registration skipped (standalone?)");
+    }
+  }
+
+  function sliceGet() {
+    return readLS();
+  }
+
+  function sliceSet(data) {
+    if (!data) return;
+    applyRemote(data, false);
+    render();
+    renderHistory();
+  }
+
+  // ---------- 8. Contract B forwarding ----------
+  function wireShortcutForwarding() {
+    document.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) {
+        try {
+          if (window.parent.orosShortcuts &&
+              typeof window.parent.orosShortcuts.handle === "function") {
+            if (window.parent.orosShortcuts.handle(e)) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }
+        } catch (e2) {}
+      }
+    }, true);   // capture phase — shell combos never reach app logic
+  }
+
+  // ---------- 9. Keyboard (app-level) ----------
+  function onKey(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (k >= "0" && k <= "9") { pressDigit(k); }
+    else if (k === "." || k === ",") { pressDigit("."); }
+    else if (k === "+") { pressOp("add"); }
+    else if (k === "-") { pressOp("sub"); }
+    else if (k === "*") { pressOp("mul"); }
+    else if (k === "/") { pressOp("div"); e.preventDefault(); }
+    else if (k === "Enter" || k === "=") {
+      pressEq();
+      flashEq();
+      e.preventDefault();
+    }
+    else if (k === "Backspace") { pressBack(); e.preventDefault(); }
+    else if (k === "Escape") { pressAc(); }
+    else if (k === "%") { pressPercent(); }
+    else if (k === "Delete") { pressAc(); }
+  }
+
+  function flashEq() {
+    var eq = document.querySelector('.key[data-k="eq"]');
+    if (!eq) return;
+    eq.classList.add("flash");
+    setTimeout(function () { eq.classList.remove("flash"); }, 120);
+  }
+
+  // ---------- Boot ----------
+  function wireUI() {
+    els.root = document.getElementById("calc-root");
+    els.expr = document.getElementById("calc-expr");
+    els.res = document.getElementById("calc-res");
+    els.trollToggle = document.getElementById("troll-toggle");
+    els.trollState = document.getElementById("troll-state");
+    els.historyList = document.getElementById("calc-history");
+    els.historyEmpty = document.getElementById("history-empty");
+
+    document.getElementById("calc-pad").addEventListener("click", function (e) {
+      var btn = e.target.closest("button.key");
+      if (!btn) return;
+      var k = btn.dataset.k;
+      if (OPS[k]) pressOp(k);
+      else if (k === "eq") { pressEq(); flashEq(); }
+      else if (k === "ac") pressAc();
+      else if (k === "back") pressBack();
+      else if (k === "sign") pressSign();
+      else if (k === "pcnt") pressPercent();
+      else if (k === "dot") pressDigit(".");
+      else pressDigit(k);
+    });
+
+    els.trollToggle.addEventListener("click", toggleTroll);
+    document.getElementById("history-clear").addEventListener("click", clearHistory);
+
+    document.addEventListener("keydown", onKey);
+  }
+
+  function boot() {
+    inheritPalette();   // before first paint — correct contrast frame 1
+    watchPalette();
+    hydrate();
+    wireUI();
+    wireShortcutForwarding();
+    registerSlice();
+    render();
+    renderHistory();
+
+    console.log("[calc] calculator v" + CALC_VER + " booted — troll:" +
+      (state.troll ? "on" : "off") + " history:" + state.history.length);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })();

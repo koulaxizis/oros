@@ -1768,6 +1768,7 @@ function start(){
   
   renderMain();
   wire();
+  registerTrayIcon();
   consumeDeepLink();
   console.log("[radio] ready — v0.3 Wave 3 complete");
 }
