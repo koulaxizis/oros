@@ -168,13 +168,11 @@ input, select {
   transition: background 0.12s, border-color 0.12s;
 }
 #roll-btn.primary {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-#roll-btn:hover {
   background: var(--accent);
   color: var(--bg);
+}
+#roll-btn:hover {
+  background: var(--accent-hover);
 }
 #coin-btn {
   background: var(--panel-bg);
@@ -186,6 +184,11 @@ input, select {
 }
 #roll-btn:active, #coin-btn:active {
   transform: scale(0.96);
+}
+#roll-btn:focus-visible, #coin-btn:focus-visible,
+.mode-btn:focus-visible, #sfx-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------- 6. Result box ---------- */
