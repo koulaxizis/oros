@@ -120,6 +120,41 @@ function shellIsLight(){
     return (0.2126*r + 0.7152*g + 0.0722*b) > 128;
   }catch(e){ return false; }
 }
+
+/* ===================== SHELL PALETTE BRIDGE ===================== */
+/* Τa mêmes vars με mood.js (CI requirement: inheritPalette +
+   watchPalette). Το shell είναι owner του θέματος (G3) — το app
+   κληρονομεί, δεν ορίζει δική του παλέτα φόντου/κειμένου. */
+var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                "--accent", "--accent-hover", "--accent-soft",
+                "--panel-bg", "--border", "--shadow"];
+
+function inheritPalette(){
+  try{
+    var pRoot = window.parent.document.documentElement;
+    document.documentElement.setAttribute("data-theme",
+      pRoot.getAttribute("data-theme") || "dark");
+    var cs = window.parent.getComputedStyle(pRoot);
+    PAL_VARS.forEach(function(v){
+      document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
+    });
+  }catch(e){ /* standalone — fallback palette stands */ }
+}
+
+function watchPalette(){
+  try{
+    new MutationObserver(function(){
+      inheritPalette();
+      /* --skin-dark (contrast) εξαρτάται από το --bg: ξαναβάψε
+         το skin με το νέο φόντο, χωρίς ήχο (silent) */
+      if(faceEl) applySkin(prefs.skin, true);
+    }).observe(
+      window.parent.document.documentElement,
+      { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+    );
+  }catch(e){ /* standalone */ }
+}
+
 function t(key){ return STRINGS[prefs.lang][key] || STRINGS.en[key] || key; }
 function esc(x){ return String(x).replace(/[<>&"'`]/g,function(c){return "&#"+c.charCodeAt(0)+";";}); }
 
@@ -751,6 +786,10 @@ function wireUI(){
 /* ===================== INIT ===================== */
 function load(){
   wireUI();
+  /* Πριν το applySkin: το shellIsLight() διαβάζει το --bg, που
+     μόλις κληρονόμησε από το shell — σωστή απόφαση contrast
+     από το πρώτο frame */
+  inheritPalette(); watchPalette();
   applySkin(prefs.skin,true); applyTroll(); applySound(); applyLang();
   renderHist(); showResult("0",false);
   registerSync();
