@@ -103,6 +103,8 @@
       "ct.add.im": "＋ IM",
       "ct.add.event": "＋ Event",
       "ct.starred": "Favorite",
+      "ct.filter.all": "All",
+      "ct.filter.starred": "Favorites",
       "ct.save": "Save",
       "ct.cancel": "Cancel",
       "ct.delete": "Delete contact",
@@ -114,6 +116,11 @@
       "ct.search.none": "No contacts found",
       "ct.export.done": "Contacts exported (.vcf)",
       "ct.export.bad": "Export failed — please retry",
+      "ct.export.json": "Export JSON",
+      "ct.export.json.done": "Database exported (.json)",
+      "ct.import.json": "Import JSON",
+      "ct.import.json.done": "Database restored · {n} contact(s)",
+      "ct.import.json.bad": "Not a valid orOS contacts JSON file",
       "ct.import.bad": "Could not read that file",
       "ct.import.done": "{n} contact(s) imported",
       "ct.import.csv.bad": "Could not read that CSV file",
@@ -216,6 +223,8 @@
       "ct.add.im": "＋ IM",
       "ct.add.event": "＋ Εκδήλωση",
       "ct.starred": "Αγαπημένη",
+      "ct.filter.all": "Όλες",
+      "ct.filter.starred": "Αγαπημένες",
       "ct.save": "Αποθήκευση",
       "ct.cancel": "Άκυρο",
       "ct.delete": "Διαγραφή επαφής",
@@ -227,6 +236,11 @@
       "ct.search.none": "Καμία επαφή δεν βρέθηκε",
       "ct.export.done": "Οι επαφές εξήχθησαν (.vcf)",
       "ct.export.bad": "Η εξαγωγή απέτυχε — δοκίμασε ξανά",
+      "ct.export.json": "Εξαγωγή JSON",
+      "ct.export.json.done": "Η βάση εξήχθη (.json)",
+      "ct.import.json": "Εισαγωγή JSON",
+      "ct.import.json.done": "Η βάση επαναφέρθηκε · {n} επαφή/ές",
+      "ct.import.json.bad": "Μη έγκυρο αρχείο JSON επαφών orOS",
       "ct.import.bad": "Το αρχείο δεν μπόρεσε να διαβαστεί",
       "ct.import.done": "{n} επαφή/ές εισήχθησαν",
       "ct.import.csv.bad": "Το αρχείο CSV δεν μπόρεσε να διαβαστεί",
@@ -702,10 +716,11 @@
     return String(e || "").toLowerCase().trim();
   }
   function nameKey(c) {
-    // Simple normalization: given+family, trimmed lowercase.
-    var s = [c.given, c.family].filter(Boolean).join(" ").toLowerCase().trim();
-    // Collapse multiple spaces, strip accents (basic).
-    return s.replace(/\s+/g, " ");
+    // Normalization: given+family, accent-folded via greekFold
+    // (lowercase + diacritics strip + ς→σ), so "Διονύσης" and
+    // "Διονυσης" collapse to one dedup key.
+    var s = greekFold([c.given, c.family].filter(Boolean).join(" "));
+    return s.replace(/\s+/g, " ").trim();
   }
 
   // Union-Find data structure for contact IDs.
@@ -869,8 +884,12 @@
         var c = state.contacts.find(function (x) { return x.id === id; });
         if (!c) return;
         var li = document.createElement("li");
-        li.className = "ct-row dup-member";
-        li.appendChild(mkAvatarEl(c));
+        // Real button (not plain li) — Enter/Space work, same as the
+        // main list rows; focus-visible outline comes free.
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ct-row dup-member";
+        btn.appendChild(mkAvatarEl(c));
         var main = document.createElement("div");
         main.className = "ct-main";
         var nm = document.createElement("div");
@@ -884,11 +903,12 @@
           sub.textContent = sb;
           main.appendChild(sub);
         }
-        li.appendChild(main);
-        // Click to open merge dialog for this group.
+        btn.appendChild(main);
+        // Click OR keyboard opens the merge dialog for this group.
         (function (gid) {
-          li.addEventListener("click", function () { openMergeDlg(gid); });
+          btn.addEventListener("click", function () { openMergeDlg(gid); });
         })(group.ids);
+        li.appendChild(btn);
         list.appendChild(li);
       });
       div.appendChild(list);
@@ -937,6 +957,26 @@
 
   var searchQ = "";
 
+  // Quick filter (Wave 1): "all" | "starred". Keeps the exclusive
+  // filter separate from the label VISIBILITY toggles in the chips.
+  var quickFilter = "all";
+  function setQuickFilter(mode) {
+    quickFilter = mode;
+    renderChips();
+    renderList();
+  }
+  // Injected styling for the active quick-filter chip (self-
+  // contained — no dependency on unseen contacts.css selectors).
+  (function () {
+    var st = document.createElement("style");
+    st.textContent =
+      ".chip.qf{font-weight:600}" +
+      ".chip.qf.on{border-color:var(--accent,#d4af37);" +
+        "color:var(--accent,#d4af37);" +
+        "background:var(--accent-soft,rgba(212,175,55,.15))}";
+    document.head.appendChild(st);
+  })();
+
   /* ---------- 4. List render ---------- */
   function renderList() {
     var ul = $("ct-list");
@@ -947,6 +987,7 @@
     var qFold = greekFold(q);
 
     var hits = state.contacts.filter(function (c) {
+      if (quickFilter === "starred" && !c.starred) return false;
       if (!anyLabelVisible(c)) return false;
       if (!q) return true;
       // Layer 1: accent-insensitive direct match (Greek↔Greek).
@@ -1032,6 +1073,17 @@
   function renderChips() {
     var row = $("lbl-chips");
     row.textContent = "";
+
+    // Quick filter tabs first (exclusive), then label chips (visibility).
+    ["all", "starred"].forEach(function (mode) {
+      var q = document.createElement("button");
+      q.type = "button";
+      q.className = "chip qf" + (quickFilter === mode ? " on" : "");
+      q.textContent = mode === "all" ? t("ct.filter.all") : "★ " + t("ct.filter.starred");
+      q.addEventListener("click", function () { setQuickFilter(mode); });
+      row.appendChild(q);
+    });
+
     state.labels.forEach(function (l) {
       var c = document.createElement("button");
       c.type = "button";
@@ -1057,10 +1109,15 @@
     row.appendChild(mg);
   }
 
+  var searchDebounceTimer = null;
   if ($("search-in")) {
     $("search-in").addEventListener("input", function () {
-      searchQ = this.value;
-      renderList();
+      var v = this.value;
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(function () {
+        searchQ = v;
+        renderList();
+      }, 250);
     });
   }
   if ($("imp-done")) {
@@ -1083,9 +1140,9 @@ function ensureViewCss() {
   var st = document.createElement("style");
   st.textContent =
     "#ct-view{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);" +
-      "display:flex;align-items:flex-start;justify-content:center;overflow:auto;" +
+      "display:flex;justify-content:center;overflow:auto;" +
       "padding:24px 12px}" +
-    ".ct-view-card{background:var(--panel-bg,#22242a);color:var(--text,#eee);" +
+    ".ct-view-card{margin:auto;background:var(--panel-bg,#22242a);color:var(--text,#eee);" +
       "border:1px solid var(--border,#333);border-radius:14px;" +
       "box-shadow:var(--shadow,0 8px 30px rgba(0,0,0,.4));" +
       "width:100%;max-width:480px;padding:18px 18px 16px;position:relative}" +
@@ -1183,11 +1240,23 @@ function legacyCopy(text) {
   return ok;
 }
 
-// Mobile (navigator.share exists) → native share sheet with the
-// full text. Desktop → clipboard copy + toast. Nothing stored.
+// Mobile-only native share: desktop browsers (Chrome/Edge on
+// Windows expose navigator.share → Windows Share sheet) must NOT
+// use it. Detection: navigator.share exists AND touch-capable AND
+// NOT a desktop UA. Android UAs contain "Android" (never "X11"),
+// iOS/iPadOS are touch-only — both pass cleanly.
+function shareOnMobile() {
+  if (!navigator.share) return false;
+  if (/Windows NT|Macintosh|X11|CrOS/.test(navigator.userAgent)) return false;
+  if (navigator.maxTouchPoints === 0 && !/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) return false;
+  return true;
+}
+
+// Mobile → native share sheet with the full text.
+// Desktop (incl. Windows) → clipboard copy + toast. Nothing stored.
 function shareContact(c) {
   var text = shareText(c);
-  if (navigator.share) {
+  if (shareOnMobile()) {
     navigator.share({ title: displayName(c), text: text }).catch(function () {});
     return;
   }
@@ -1400,10 +1469,47 @@ function openViewCard(c) {
   document.body.appendChild(ov);
 }
 
-// Escape closes the card (persistent, cheap — checks for the
-// overlay's existence before acting).
+// Global shortcuts. Ctrl+N is browser-reserved (cannot be
+// intercepted in Chrome) — new contact uses Alt+N instead.
 document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape" && $("ct-view")) closeViewCard();
+  // Ctrl/Cmd+F — focus search (browser find intentionally
+  // overridden). Guarded: skipped while a dialog or the view card
+  // is open, so focus never leaves an open modal's inputs.
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
+      (e.key === "f" || e.key === "F")) {
+    var busy = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg"]
+      .some(function (id) { var d = $(id); return d && d.open; })
+      || !!$("ct-view");
+    if (busy) return;
+    var si = $("search-in");
+    if (si) {
+      e.preventDefault();
+      si.focus();
+      si.select();
+    }
+    return;
+  }
+  // Alt+N — new contact (guarded: never closes an open edit
+  // dialog — an accidental shortcut must not silently discard
+  // typed input)
+  if (e.altKey && !e.ctrlKey && !e.metaKey &&
+      (e.key === "n" || e.key === "N")) {
+    var anyOpen = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg"]
+      .some(function (id) { var d = $(id); return d && d.open; })
+      || !!$("ct-view");
+    if (anyOpen) return;
+    e.preventDefault();
+    openDlg(null);
+    return;
+  }
+  // Escape — view card first, then any open dialog
+  if (e.key === "Escape") {
+    if ($("ct-view")) { closeViewCard(); return; }
+    ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg"].forEach(function (id) {
+      var d = $(id);
+      if (d && d.open) { try { d.close(); } catch (err) {} }
+    });
+  }
 });
 
 // ===== CONTACT DIALOG =====
@@ -2320,6 +2426,24 @@ document.addEventListener("keydown", function (e) {
     });
   }
 
+  // One delegated closer for the recolor popover — registered
+  // ONCE per app load. The old per-row version leaked a document
+  // listener on EVERY renderLblList call (closures piling up).
+  var lblPop = null;
+  var lblPopOwner = null;
+  function closeLblPop() {
+    if (lblPop && lblPop.parentNode) lblPop.parentNode.removeChild(lblPop);
+    lblPop = null;
+    lblPopOwner = null;
+  }
+  document.addEventListener("click", function (ev) {
+    if (!lblPop) return;
+    if (lblPop.contains(ev.target)) return;
+    if (ev.target && ev.target.closest &&
+        ev.target.closest(".lbl-color-btn")) return;
+    closeLblPop();
+  });
+
   function openLblDlg() {
     renderLblList();
     $("lbl-new-name").value = "";
@@ -2388,11 +2512,16 @@ document.addEventListener("keydown", function (e) {
       row.appendChild(del);
 
       // Recolor: inline palette popover beside the dot button.
-      var pop = null;
+      // Uses the SHARED single closer declared above openLblDlg —
+      // no per-render document listeners. lblPopOwner keeps the
+      // toggle behavior for the same button while clicking another
+      // row's dot switches the popover instead of just closing it.
       cb.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        if (pop) { pop.parentNode.removeChild(pop); pop = null; return; }
-        pop = document.createElement("div");
+        var reopen = (lblPopOwner !== cb);
+        closeLblPop();
+        if (!reopen) return;
+        var pop = document.createElement("div");
         pop.className = "lbl-palette";
         LABEL_PALETTE.forEach(function (col) {
           var s = document.createElement("button");
@@ -2406,7 +2535,7 @@ document.addEventListener("keydown", function (e) {
             renderLblList();
             renderChips();
             renderList();
-            if (pop) { pop.parentNode.removeChild(pop); pop = null; }
+            closeLblPop();
           });
           pop.appendChild(s);
         });
@@ -2415,11 +2544,8 @@ document.addEventListener("keydown", function (e) {
         var r = cb.getBoundingClientRect();
         pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 190)) + "px";
         pop.style.top = (r.bottom + 6) + "px";
-      });
-      document.addEventListener("click", function (ev) {
-        if (pop && !pop.contains(ev.target) && ev.target !== cb) {
-          pop.parentNode.removeChild(pop); pop = null;
-        }
+        lblPop = pop;
+        lblPopOwner = cb;
       });
 
       box.appendChild(row);
@@ -2630,6 +2756,30 @@ document.addEventListener("keydown", function (e) {
             }
           }
           break;
+        case "X-EVENT": {
+          // Our own custom-event round-trip form:
+          // X-EVENT;TYPE=CUSTOM;X-LABEL=<escaped label>:<date>.
+          // The label is extracted BEFORE unescaping — vcfProp()
+          // splits raw params on ";", which would cut an escaped
+          // "\;" inside the label, so the params are re-joined and
+          // regex-matched with escaped-atom tolerance, THEN unesc.
+          var xv = p.value.trim();
+          var xm;
+          var xlab = "";
+          var pm = p.params.join(";").match(/X-LABEL=((?:\\.|[^;])*)/i);
+          if (pm) xlab = vcfUnesc(pm[1]).trim().slice(0, 40);
+          if ((xm = xv.match(/^(\d{4})-(\d{2})-(\d{2})$/)) ||
+              (xm = xv.match(/^(\d{4})(\d{2})(\d{2})$/))) {
+            if (validDay(xm[2] + "-" + xm[3])) {
+              c.events.push({ day: xm[2] + "-" + xm[3], year: +xm[1], type: "custom", label: xlab });
+            }
+          } else if ((xm = xv.match(/^-{0,2}(\d{2})-(\d{2})$/))) {
+            if (validDay(xm[1] + "-" + xm[2])) {
+              c.events.push({ day: xm[1] + "-" + xm[2], year: null, type: "custom", label: xlab });
+            }
+          }
+          break;
+        }
         case "NOTE": c.note = vcfUnesc(p.value).trim().slice(0, 500); break;
         case "PHOTO": {
           // Accepted forms: our own data URI ("data:image/…;base64,…")
@@ -2706,7 +2856,7 @@ document.addEventListener("keydown", function (e) {
         // values without a match being obvious (Wave 2 dedup will
         // formalize field-level merging).
         var touched = false;
-        ["nickname", "org", "jobTitle", "note"].forEach(function (f) {
+        ["nickname", "org", "jobTitle", "note", "photo"].forEach(function (f) {
           if (!existing[f] && pc[f]) { existing[f] = pc[f]; touched = true; }
         });
         if (pc.starred && !existing.starred) { existing.starred = true; touched = true; }
@@ -2718,6 +2868,21 @@ document.addEventListener("keydown", function (e) {
         pc.emails.forEach(function (e) {
           if (!existing.emails.some(function (x) { return x.v.toLowerCase() === e.v.toLowerCase(); })) {
             existing.emails.push(e); touched = true;
+          }
+        });
+        pc.addresses.forEach(function (a) {
+          if (!existing.addresses.some(function (x) { return x.street === a.street && x.city === a.city && x.zip === a.zip; })) {
+            existing.addresses.push(a); touched = true;
+          }
+        });
+        pc.websites.forEach(function (w) {
+          if (!existing.websites.some(function (x) { return x.v === w.v; })) {
+            existing.websites.push(w); touched = true;
+          }
+        });
+        pc.im.forEach(function (m) {
+          if (!existing.im.some(function (x) { return x.v === m.v; })) {
+            existing.im.push(m); touched = true;
           }
         });
         pc.events.forEach(function (ev) {
@@ -3142,6 +3307,100 @@ document.addEventListener("keydown", function (e) {
         notifyTransient(t("ct.export.done"));
       } catch (e) { notifyTransient(t("ct.export.bad")); }
     });
+  }
+
+  // ---- Full-database JSON export (zero-loss backup) ----
+  // Mirrors the vcf download flow. Dumps ver + labels + contacts +
+  // deleted tombstones, so a restore preserves merge history and
+  // the no-phantom-delete guarantee (project mantra: FULL export).
+  function exportJson() {
+    try {
+      var text = JSON.stringify({
+        app: "contacts",
+        ver: state.ver,
+        labels: state.labels,
+        contacts: state.contacts,
+        deleted: state.deleted
+      }, null, 2);
+      var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "orOS-contacts.json";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      }, 200);
+      notifyTransient(t("ct.export.json.done"));
+    } catch (e) { notifyTransient(t("ct.export.bad")); }
+  }
+  // Button injected AFTER the vcf export button (same class →
+  // same styling, no contacts.html edit required).
+  if ($("ct-export")) {
+    var jsonBtn = document.createElement("button");
+    jsonBtn.type = "button";
+    jsonBtn.className = $("ct-export").className;
+    jsonBtn.textContent = t("ct.export.json");
+    jsonBtn.addEventListener("click", exportJson);
+    $("ct-export").parentNode.insertBefore(jsonBtn, $("ct-export").nextSibling);
+  }
+
+  // ---- Full-database JSON restore (merge, zero data loss) ----
+  // Accepts only our own export shape: { app: "contacts", ver,
+  // labels, contacts, deleted }. Runs through mergeContacts (union
+  // by id, bigger mtime wins, tombstones honored — the SAME
+  // contract as a cloud pull) and lands via setFromSync, so a
+  // restore can never overwrite newer local edits and can never
+  // resurrect phantom deletes. restore == cloud pull, by design.
+  function importJsonFile(file) {
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      try {
+        var d = JSON.parse(fr.result);
+        if (!d || typeof d !== "object" || d.app !== "contacts" ||
+            !Array.isArray(d.contacts)) {
+          notifyTransient(t("ct.import.json.bad"));
+          return;
+        }
+        var local = null;
+        try { local = JSON.parse(localStorage.getItem(DATA_KEY)); } catch (e) {}
+        var merged = mergeContacts(
+          local || { ver: 1, labels: [], contacts: [], deleted: [] }, d);
+        setFromSync(merged);
+        saveState();   // persist + markDirty → restore pushes to cloud
+        notifyTransient(t("ct.import.json.done")
+          .replace("{n}", String(state.contacts.length)));
+      } catch (e) {
+        console.error("contacts: JSON restore failed:", e);
+        notifyTransient(t("ct.import.json.bad"));
+      }
+    };
+    fr.onerror = function () { notifyTransient(t("ct.import.bad")); };
+    fr.readAsText(file, "utf-8");
+  }
+  // Hidden file input + injected button (mirror of the export
+  // injection — no contacts.html edit required).
+  if ($("ct-export")) {
+    var jsonImpIn = document.createElement("input");
+    jsonImpIn.type = "file";
+    jsonImpIn.accept = "application/json,.json";
+    jsonImpIn.style.display = "none";
+    document.body.appendChild(jsonImpIn);
+    jsonImpIn.addEventListener("change", function () {
+      var f = this.files && this.files[0];
+      this.value = "";                    // allow re-import of same file
+      importJsonFile(f);
+    });
+    var jsonImpBtn = document.createElement("button");
+    jsonImpBtn.type = "button";
+    jsonImpBtn.className = $("ct-export").className;
+    jsonImpBtn.textContent = t("ct.import.json");
+    jsonImpBtn.addEventListener("click", function () { jsonImpIn.click(); });
+    // Anchor: AFTER the Export JSON button (jsonBtn) — final order
+    // [Export] [Export JSON] [Import JSON].
+    $("ct-export").parentNode.insertBefore(jsonImpBtn, jsonBtn.nextSibling);
   }
 
 // ===== SYNC =====

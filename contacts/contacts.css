@@ -312,9 +312,11 @@ dialog {
   color: var(--text);
   font: inherit;
   padding: 18px 20px;
+  margin: auto;
   max-width: 480px;
   width: min(92vw, 480px);
   max-height: 86vh;
+  overflow-y: auto;
   box-shadow: var(--shadow);
 }
 dialog::backdrop {

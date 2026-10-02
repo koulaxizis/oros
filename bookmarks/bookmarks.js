@@ -1317,16 +1317,6 @@ function showTagsPanel() {
     if (e.target === ov) closeTagsPanel();
   });
   document.body.appendChild(ov);
-
-  /* Anchor: below the tags button, clamped to viewport. */
-  const btn = $("#tags-btn").getBoundingClientRect();
-  panel.style.left = "";
-  panel.style.transform = "";
-  panel.style.position = "absolute";
-  panel.style.top = (btn.bottom + 8) + "px";
-  const r = panel.getBoundingClientRect();
-  panel.style.left = Math.max(8,
-    Math.min(btn.left, innerWidth - r.width - 8)) + "px";
 }
 
 /* ---- Duplicates (same-address bookmarks): finder + purge ---- */
@@ -1453,20 +1443,6 @@ function showDupesPanel() {
   });
   document.body.appendChild(ov);
 
-  /* Anchor below the button, clamped (tags-panel pattern). */
-  const anchorBtn = $("#dupes-btn");
-  panel.style.position = "absolute";
-  if (anchorBtn) {
-    const btn = anchorBtn.getBoundingClientRect();
-    panel.style.top = (btn.bottom + 8) + "px";
-    const r = panel.getBoundingClientRect();
-    panel.style.left = Math.max(8,
-      Math.min(btn.left, innerWidth - r.width - 8)) + "px";
-  } else {
-    panel.style.left = "50%";
-    panel.style.transform = "translateX(-50%)";
-    panel.style.top = "72px";
-  }
 }
 
 /* Core: folds duplicates into the oldest copy. Visits and

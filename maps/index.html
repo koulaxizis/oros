@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Maps · orOS</title>
+  <link rel="stylesheet" href="../vendor/leaflet.css?v=0.38.22">
+  <link rel="stylesheet" href="maps.css?v=0.38.22">
+</head>
+<body>
+
+  <!-- Fullscreen map canvas -->
+  <div id="map"></div>
+
+  <!-- Search overlay (top-center, Nominatim autocomplete) -->
+  <div id="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input id="search" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Search a place…" data-i18n-ph="search.ph">
+    <button id="search-clear" hidden aria-label="Clear search"
+            data-i18n-title="search.clear" title="Clear">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div id="search-results" hidden></div>
+  </div>
+
+  <!-- Route bar (appears when a route is active) -->
+  <div id="route-bar" hidden>
+    <div id="route-summary">
+      <span id="route-dist"></span>
+      <span id="route-time"></span>
+    </div>
+    <div id="route-profiles" role="group" aria-label="Travel mode">
+      <button id="rp-car" class="rp active" data-i18n-title="route.car" title="Car">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+      </button>
+      <button id="rp-bike" class="rp" data-i18n-title="route.bike" title="Bike">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15.5" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+      </button>
+      <button id="rp-foot" class="rp" data-i18n-title="route.foot" title="Walk">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="4" r="1.5"/><path d="M12 21c1-4 1-7-1-9 0 0-3 2-3 5"/><path d="M11 12c-1-1.5-1-3.5 1-4.5l2-1.5c1.5-1 3.5 0 4 1.5L20 12"/><path d="M9 21c-2 0-3-1.5-3-3"/></svg>
+      </button>
+    </div>
+    <button id="steps-btn" aria-label="Directions" data-i18n-title="route.steps" title="Directions">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1" fill="currentColor"/><circle cx="3.5" cy="12" r="1" fill="currentColor"/><circle cx="3.5" cy="18" r="1" fill="currentColor"/></svg>
+    </button>
+    <button id="route-setstart" aria-label="Set start on map" data-i18n-title="route.setstart" title="Set start on map">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    </button>
+    <button id="route-setend" aria-label="Set destination on map" data-i18n-title="route.setend" title="Set destination on map">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="2.5"/></svg>
+    </button>
+    <button id="nav-start" aria-label="Start navigation" data-i18n-title="nav.start" title="Start navigation">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
+    </button>
+    <button id="route-clear" aria-label="Clear route" data-i18n-title="route.clear" title="Clear route">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <!-- Floating controls (bottom-left stack) -->
+  <div id="controls">
+    <button id="plan-btn" aria-label="Plan a route" data-i18n-title="route.plan" title="Plan a route">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 19h7a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h7"/></svg>
+    </button>
+    <button id="places-btn" aria-label="Saved places" data-i18n-title="places.title" title="Saved places">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.75L6 16.6 2 4l12.6 4.25L22 4l-4 12.6z"/><path d="M12 22V17.75"/></svg>
+    </button>
+    <button id="geo-btn" aria-label="Use my location" data-i18n-title="geo.title" title="Use my location">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+  </div>
+
+  <!-- Saved places drawer (left slide-in) -->
+  <aside id="places" hidden>
+    <header>
+      <h3 data-i18n="places.title">Saved places</h3>
+      <button id="places-close" aria-label="Close" data-i18n-title="places.close" title="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <ul id="places-list"></ul>
+    <div id="places-empty" hidden>
+      <span data-i18n="places.empty">No saved places yet</span>
+      <small data-i18n="places.empty.hint">Star a search result to save it.</small>
+    </div>
+  </aside>
+
+  <!-- Maneuvers panel (right slide-in, turn-by-turn) -->
+  <aside id="maneuvers" hidden>
+    <header>
+      <h3 data-i18n="route.steps">Directions</h3>
+      <button id="maneuvers-close" aria-label="Close" data-i18n-title="places.close" title="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <ol id="maneuvers-list"></ol>
+  </aside>
+
+  <!-- Navigation HUD (Wave 4: live navigation overlay) -->
+  <div id="nav-hud" hidden>
+    <div id="nav-top">
+      <span id="nav-icon"></span>
+      <div id="nav-info">
+        <span id="nav-dist"></span>
+        <span id="nav-instr"></span>
+      </div>
+    </div>
+    <div id="nav-bottom">
+      <span id="nav-speed">—</span>
+      <span id="nav-eta"></span>
+      <button id="nav-mute" aria-label="Mute voice" data-i18n-title="nav.mute" title="Mute voice">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      </button>
+      <button id="nav-exit" aria-label="Exit navigation" data-i18n-title="nav.exit" title="Exit navigation">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" role="status"></div>
+
+  <!-- Leaflet FIRST — maps.js depends on the global L -->
+  <script src="../vendor/leaflet.js?v=0.38.22"></script>
+  <script src="maps.js?v=0.38.22"></script>
+</body>
+</html>

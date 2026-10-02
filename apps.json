@@ -159,6 +159,14 @@
       "category": "Internet",
       "icon": "bookmarks",
       "url": "bookmarks/",
+	  "type": "internal"
+    },
+    {
+      "id": "maps",
+      "name": "Maps",
+      "category": "Internet",
+      "icon": "maps",
+      "url": "maps/",
       "type": "internal"
     },
     {

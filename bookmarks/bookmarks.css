@@ -373,7 +373,9 @@ dialog {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0;
+  margin: auto;
   width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
   box-shadow: 0 16px 48px var(--shadow);
 }
 dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
@@ -591,9 +593,9 @@ dialog menu button.danger:hover {
 }
 #tags-panel {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   width: min(380px, calc(100vw - 24px));
   max-height: 60vh;
   overflow-y: auto;
@@ -837,9 +839,9 @@ dialog menu button.danger:hover {
 }
 #dupes-panel {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   width: min(380px, calc(100vw - 24px));
   max-height: 60vh;
   overflow-y: auto;

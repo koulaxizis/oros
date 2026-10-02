@@ -482,6 +482,57 @@ input, textarea, select {
 }
 .manage-swatches .lbl-swatch { width: 20px; height: 20px; }
 
+/* Import button (board actions) */
+.board-import {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  transition: color 0.15s, background 0.15s;
+}
+.board-import:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.board-import:active { transform: scale(0.92); }
+
+/* Import dialog elements */
+.imp-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.imp-file {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+.imp-file:focus { border-color: var(--accent); }
+.imp-preview {
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.imp-preview.imp-error { color: var(--danger); }
+
 /* Archive button (manage dialog) */
 .manage-archive {
   display: inline-flex;
@@ -520,6 +571,7 @@ input, textarea, select {
   transition: filter 0.15s;
 }
 .dlg-foot button:hover { filter: brightness(1.1); }
+.dlg-foot button:disabled { opacity: 0.45; cursor: default; filter: none; }
 
 
 /* ---------- 3. Board shell ---------- */

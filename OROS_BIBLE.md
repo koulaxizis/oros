@@ -1185,3 +1185,270 @@ Fixed: after clicking a keypad button, Enter and Space re-triggered the focused 
 Shell contracts unchanged: modifier combos (Ctrl/Cmd/Alt) are still excluded from forwarding, Contract B shortcut forwarding is untouched, modifier keys remain reserved for the shell.
 
 Verification steps: open Calculator from the orOS menu without clicking inside the window, then type on the number row and numpad (both NumLock states) — digits, + − × ÷, Enter/=, Backspace, ESC, %, Delete, Ans must all respond immediately. Then click any keypad button and press Enter — the action must fire exactly once.
+
+---
+
+Weather tray — fetch throttle hardened (shell.js, wxBusy) Fixed the intermittent "Athens — waiting…" chip state on boot. Root cause: the shell stamped the 30-minute throttle (oros-wx-last) BEFORE starting the fetch — a killed in-flight request (tab close / PWA controllerchange auto-reload) left the stamp armed, the cache empty, and the catch-path rewind unreachable, locking the chip for up to 30 minutes. Open-Meteo replies carrying an HTTP error/rate-limit JSON body took the same silent-lockout path. Changes: (1) new wxBusy in-flight guard prevents stacked parallel fetches (boot tick + boot call no longer double-fire); (2) the 30-min throttle is now bought ONLY by a successful fetch, written in the success branch; (3) a response without a usable payload rewinds to the 2-minute retry window; (4) the catch path also releases wxBusy. weather.js verified compatible — no changes required; its app-cache shape (per-city current.temp/current.code) and the 0.15° mirror into oros-wx-cache match the shell's adoption path. One-time cleanup for devices already carrying the bad state: remove oros-wx-last once or wait out the stale window.
+
+---
+
+CHANGELOG — orOS Radio / Core Integration
+v0.2 (Hotfix — Tray Host Registration)
+Fixed
+RF-1: Radio tray chip never appeared in the taskbar (shell ⇄ radio host bridge)
+
+Symptom: With the Radio app playing, no playback chip appeared in the orOS taskbar. Console check on the top frame (typeof window.__orosRadioHost) returned undefined indefinitely.
+Root cause: ensureHost() in radio.js built the shell-hosted audio host correctly (audio element appended to the parent document, Media Session wiring, listeners, full API) and returned it into the module's local closure variable — but never attached it to the shell window. The shell's radioTrayTick() (runs every second from the taskbar clock tick) requires window.__orosRadioHost on the parent window with api.getState exposing current.name; since the host lived only in the iframe closure, the tray check found undefined and silently skipped chip creation every tick. By design there was no console error to surface it.
+Fix: One guarded assignment at the end of ensureHost() in radio.js, before return host:
+if(!w.__orosRadioHost) w.__orosRadioHost = host;
+Location: immediately after the Media Session try/catch block.
+Safety analysis:
+The early-return check at the top of ensureHost() (if(w.__orosRadioHost && w.__orosRadioHost.audio && w.__orosRadioHost.audio.isConnected)) now finds the existing host on app reopen and reuses it — consistent with the FIX-RX-5 duplicate-audio-element prevention model.
+Shell-surviving playback on app close remains intact: audio, host, and now the host reference all live on the parent window.
+No changes to playback logic, sync slices, favorites, or Media Session handling — visibility of the host to the shell only.
+Verification steps performed
+Confirmed host contract at top frame: window.__orosRadioHost → "object"; window.__orosRadioHost.api.getState().current.name → active station name.
+Chip appears within ~1 second of playback start (tick cycle of radioTrayTick()).
+Confirmed host survives app close (audio keeps playing, chip persists) and host reuse on app reopen (no duplicate audio[data-oros-radio] elements in the shell DOM).
+Unchanged / notes for future sessions
+The state shape expected by the shell (getState() → { current: { name, ... }, paused, playing, flags: { buffering, error }, sleepUntil }) was already correct — only the registration line was missing.
+Tray icon registration via shell.orosTray.register("radio", ...) in registerTrayIcon() is a separate mechanism from the shell's radioTrayTick() chip; both now operate on the same exposed host.
+Pending Radio items from earlier waves (per project tracker, not addressed here): favorites/recents sync-on-new-device verification, genre filter sanity check (already addressed via /json/tags?order=stationcount in W3 diagnostics).
+
+---
+
+Date: 2026-10-02 Scope: Contacts, Notifications (notifications.js), Bookmarks (bookmarks.css)
+
+CONTACTS — Share button on contact view card
+Added a Share button next to Edit in the read-only contact view card (#ct-view):
+
+Desktop (no navigator.share): copies a full plain-text dump of the contact to the clipboard (name, nickname, org, job title, phones, emails, addresses, websites, IM, events, relations, note — one line per field, typed). Toast confirms success or failure.
+Mobile (navigator.share present): opens the native share sheet with the same text as payload.
+Clipboard path: async Clipboard API first, execCommand textarea fallback for non-secure contexts / older browsers (legacyCopy).
+New i18n keys (en + el): ct.share, ct.share.done, ct.share.fail.
+New .ct-view-share CSS class (secondary style: transparent bg, border, dim text; hover lifts to primary text color) in the injected view-card stylesheet — Edit keeps the accent as primary action.
+Plain text only by design: nothing new is stored, nothing synced, no privacy surface added. Possible future work: .vcf payload in the mobile share sheet (deferred).
+NOTIFICATIONS — toast position setting was never applied (FIXED)
+Bug: changing the toast position in settings had no effect — the stack stayed top-right regardless of selection.
+
+Root cause:
+
+fireToast() read the 'position' setting but never used it (dead local variable).
+ensureToastStack() hardcoded top-right placement and ran only once — the persisted container was never repositioned.
+getPositionStyles() (the full 8-position map) was dead code, called nowhere.
+Fix (4 patches to notifications.js):
+
+New applyStackPosition(): moves the LIVE stack container per the persisted setting. Clears all placement keys (top/bottom/left/ right/transform) before writing the new ones, so switching positions never stacks conflicting values.
+setSetting('position') now calls applyStackPosition() — position changes apply immediately while the shell is running.
+init() applies the persisted position right after ensureToastStack().
+fireToast() lazy-creation path also calls applyStackPosition() if the stack was just built.
+Behavior detail: bottom-edge positions (bottom, bottom-left, bottom-right) flip the stack to column-reverse so newest toasts appear lowest (GNOME shell convention). DOM order, MutationObservers and applyStackLimits() queue discipline are untouched.
+
+Known limitation (accepted for now): a position change arriving via sync pull (notifSliceSet) is NOT applied live — it takes effect on next boot. Optional PATCH-5 (applyStackPosition() at the end of notifSliceSet) drafted, not applied.
+
+BOOKMARKS — dead/incorrect CSS cleanup for the three-button rows
+Context: each bookmark row now carries three action buttons (Favorite star, Edit pencil, Open). Follow-up corrections to bookmarks.css:
+
+Removed .item .open-btn:last-child { margin-left: auto } and the .item .open-btn[title*="remove"] svg rule (the latter broke in Greek locale — "remove" does not match localized titles; the fill is now handled inline by the JS patch, so the CSS hook was redundant).
+Row gap tightened 10px -> 8px in #items li.item (three buttons need breathing room).
+The previously added ".item { gap: 8px }" block after .host-text was DEAD (lost specificity vs #items li.item — ID beats class) and was replaced by a properly specific mobile block: #items li.item padding/gap + .item .open-btn 28px on max-width 480px.
+Removed the dead ".item.open-btn { display: none; }" rule and duplicated padding from the Section 11 mobile media query — it never matched anything (it targeted an element carrying BOTH classes; the button only has .open-btn).
+Net effect: the three row buttons (star/pencil/open) render correctly on desktop and mobile, with the star filling via JS inline fill when favorited.
+
+Standing rules reaffirmed this session
+Patches are delivered as exact OLD -> NEW copy-paste blocks with searchable OLD text and precise location instructions; no guessing, no hallucinated segments — missing files are requested explicitly.
+All changes verified against the actual file contents provided in the session before any patch was proposed.
+No user data shapes were altered: Contacts and Notifications schema/slice contracts untouched (no migration needed, no sync version bump required).
+
+---
+
+## RULE — All popups render centered on screen
+
+Every dialog and popup panel in every orOS application must appear
+vertically AND horizontally centered on the screen. This is not
+per-element discretion; it is a system-wide convention.
+
+Implementation requirements:
+1. Native `<dialog>` elements MUST declare `margin: auto` explicitly.
+   Reason: every orOS app stylesheet contains `* { margin: 0 }`,
+   which overrides the user-agent default `margin: auto` on dialog
+   and silently breaks native centering (dialog docks top-left).
+   Recommended: `margin: auto; max-height: calc(100vh - 32px);`.
+2. Overlay panels (non-<dialog> popups) MUST use
+   `position: absolute; top: 50%; left: 50%;
+   transform: translate(-50%, -50%)` inside a fixed full-inset
+   overlay (`position: fixed; inset: 0`). Panels must NOT set
+   inline style.top/style.left from JS anchor math — that defeats
+   the CSS centering.
+3. Long content inside a centered popup scrolls within the popup
+   (overflow-y: auto + max-height), never pushes it off-center.
+4. EXCEPTION — context menus (right-click / long-press, e.g.
+   #ctx-menu) are anchored at the pointer/touch position BY DESIGN.
+   They are excluded from this rule; centering them would defeat
+   their purpose. Only modal dialogs and overlay panels center.
+5. Existing apps must be retro-fitted (audit checklist item),
+   new apps must comply from the first commit.
+   
+   ---
+   
+   CHANGELOG — orOS Session 2026-10-02
+Contacts — View card now vertically & horizontally centered
+Bug: The read-only contact view card (#ct-view) opened aligned to the top of the screen (flex align-items: flex-start) instead of being vertically centered.
+
+Fix: Applied margin:auto to .ct-view-card and removed align-items:flex-start from #ct-view. Result: card centers on both axes while remaining fully scrollable when content exceeds viewport height. Mobile sheet mode (≤520px) unaffected (full-screen via min-height:100%).
+
+Bible note added: Flex overlays MUST use margin:auto on the panel (not align-items:center on the container) to avoid flexbox overflow clipping where top content becomes unreachable by scroll.
+
+Contacts — Share button added (desktop + mobile)
+New button next to Edit in the view card footer (Share / Κοινοποίηση).
+Desktop: copies full plain-text contact dump to clipboard (name, nickname, org, job title, phones, emails, addresses, websites, IM, events, relations, note) → toast on success/failure.
+Mobile: opens native Web Share sheet (navigator.share detection + UA sniffing for Windows/macOS exclusions).
+Clipboard path: async Clipboard API with execCommand fallback (legacyCopy).
+New i18n keys: ct.share, ct.share.done, ct.share.fail (en + el).
+CSS class .ct-view-share (secondary style: transparent bg, border, dim text; hover lifts to primary).
+No data stored, no sync impact.
+Bookmarks — Three-button rows (favorite, edit, open)
+Each bookmark row now carries three action buttons:
+
+★ Favorite (fills when active)
+✏️ Edit (opens dialog without opening link)
+↗ Open (increments visit count)
+CSS cleanup: Removed dead .item .open-btn:last-child margin rule and locale-sensitive [title*="remove"] selector (JS inline fill handles star state). Tightened row gap 10px → 8px for three-button breathing room. Mobile overrides properly specific (#items li.item not .item).
+
+Bookmarks — All dialogs & panels now centered
+Native <dialog> elements: explicit margin:auto added (contacts.css follows bookmarks.css pattern) + overflow-y: auto guard for long content.
+Tags panel (#tags-panel) & Duplicates panel (#dupes-panel): top:50% left:50% transform:translate(-50%,-50%).
+Inline anchoring JS removed from showTagsPanel() and showDupesPanel() (panels inherit centering from CSS overlay).
+Context menu (#ctx-menu) remains pointer-anchored (explicit exception in Bible).
+Notifications — Toast position setting now applied live
+Bug: Changing toast position in settings had no effect — stack stayed top-right regardless of selection.
+
+Root cause: fireToast() read 'position' but never used it; ensureToastStack() ran once with hard-coded placement; getPositionStyles() (8-position map) was dead code.
+
+Fix:
+
+New applyStackPosition(): moves LIVE stack per persisted setting, clears conflicting placement keys before writing new ones.
+setSetting('position') calls applyStackPosition() — immediate application.
+init() applies position after ensureToastStack().
+Lazy creation path in fireToast() also calls applyStackPosition().
+Bottom-edge positions use column-reverse (GNOME shell convention: newest toast lowest).
+Known limitation: Position change via sync pull (notifSliceSet) takes effect on next boot (optional PATCH-5 drafted but not applied).
+
+Standby rules reaffirmed
+Patches delivered as exact OLD → NEW copy-paste blocks with searchable text.
+All changes verified against actual file contents before proposal.
+No user data shapes altered (schema/slice contracts untouched — no migration needed, no sync version bump).
+
+---
+
+6. IMPLEMENTATION NOTE — flex overlays: center the panel with
+   `margin: auto` ON THE PANEL, never `align-items: center` on the
+   flex container. Reason: with `align-items: center`, a panel taller
+   than the viewport gets its TOP clipped and unscrollable (classic
+   flexbox overflow-clipping bug — the classic safe-crossing pattern
+   is to stay at flex-start and let auto margins absorb free space).
+   `margin: auto` centers when there is free space and yields to
+   scrolling when there is not. Reference implementation:
+   contacts.js view card (#ct-view + .ct-view-card). The same
+   technique is what native <dialog> uses internally (margin: auto
+   against its inset:0 box), which is why FIX-1 in bookmarks.css
+   restores exactly that.
+   
+   Wave: Contacts Round 3 — Backup/Restore & Fixes (contacts.js)
+
+Verified against contacts (4).js. Applied: PATCH-1..5.
+
+Share gate (Wave 1 carry-over, VERIFIED): shareContact() now uses shareOnMobile() — desktop (Windows NT / Macintosh / X11 / CrOS UA) always copies to clipboard with legacyCopy fallback; Android/iOS get the native share sheet. Toast via unified notifications (notifyTransient) with local toast fallback.
+Debounced search (VERIFIED): 250 ms closure-captured value (var v) — no this.value inside setTimeout bug.
+Quick filter tabs (VERIFIED): "All" / "★ Favorites" chips via quickFilter state, i18n keys ct.filter.all / ct.filter.starred (EN + EL), injected .chip.qf CSS (no contacts.css dependency). Exclusive from label VISIBILITY toggles (labelVis).
+Keyboard shortcuts (VERIFIED): Ctrl/Cmd+F focuses search, Alt+N opens new-contact dialog (Ctrl+N is browser-reserved), Escape closes view card → ct-dlg → del-dlg → merge-dlg → lbl-dlg in priority order.
+JSON export (VERIFIED): exportJson() dumps { app, ver, labels, contacts, deleted } — full DB incl. tombstones (zero-loss backup per project mantra). Button injected next to Export vCF, inherits className.
+NEW — JSON import/restore (PATCH-1/2/3): "Import JSON" button (injected, self-contained hidden file input). Validates shape (app === "contacts", contacts array), then merges via the SAME mergeContacts union-by-id/bigger-mtime/tombstone contract used by cloud sync, landing through setFromSync. Restore == cloud pull: never overwrites newer local edits, never resurrects phantom deletes, persists + marks dirty (propagates to cloud). Hoisting note: mergeContacts/setFromSync are function declarations → callable from the earlier wiring.
+FIX — label popover listener leak (PATCH-4/5): renderLblList() previously added one document "click" listener per render (unbounded accumulation). Now a single delegated closer (module-scope lblPop/lblPopOwner/closeLblPop, registered once). Behavior preserved: toggle same dot, switch on different dot, close on outside click.
+Wave 2 verification CLOSED: calendar.js feed contract (day "MM-DD", type whitelist, optional label ≤40, year 1850–2200|null) matches contacts sanitizers byte-for-byte. Birthday feed green #9ece6a, anniversary pink #f28fb6, custom brown #c8a96e — full loop operational.
+Known cosmetic notes (NOT fixed, deliberate): renderMergePreview uses innerHTML with trusted i18n strings only; stray 4-space indent on calendar.js eventsOn. Zero functional impact.
+Standing rules reconfirmed: full manual export must be restorable (now true for JSON export/import); restore paths reuse the sync merge contract (never blind overwrite); all UI strings bilingual EN/EL via i18n keys; no dependencies on unseen CSS/HTML files — new UI is JS-injected.
+
+---
+
+Wave: Contacts Round 4 — vCard round-trip & shortcut guards (contacts.js)
+
+Verified against contacts (5).js + index (2).html + contacts (2).css. Applied: PATCH 1–7.
+
+FIX — custom events vCard round-trip (PATCH 1): parseVcardBlock now parses our own X-EVENT;TYPE=CUSTOM;X-LABEL= export form (full date, compact legacy date, and yearless "--MM-DD" variants). The X-LABEL param is extracted with escaped-atom tolerance (params re-joined before regex, THEN vcfUnesc) because vcfEsc escapes ";" and "," inside labels. Custom events (namedays etc.) no longer silently vanish when our own .vcf export is re-imported or opened on Android/Google.
+FIX — dedup nameKey accent folding (PATCH 2): nameKey now uses greekFold (lowercase + diacritics strip + final sigma fold), so Greek names differing only in accents collapse to one duplicate key.
+FIX — importParsed fill coverage (PATCH 3a/3b): the update-in-place path now also fills photo on empty, and union-merges addresses (by street+city+zip), websites, and IM handles exactly like phones/emails — re-importing a fuller vCard over an existing contact no longer drops those fields.
+FIX — Alt+N shortcut guard (PATCH 4): Alt+N for "new contact" is ignored while any dialog (ct-dlg/del-dlg/merge-dlg/lbl-dlg) or the view card is open — an accidental keypress can no longer silently discard typed edits.
+FIX — Ctrl+F shortcut guard (PATCH 5): Ctrl/Cmd+F focus-search is skipped while a dialog or view card is open, so the focus never jumps out of an open modal's inputs.
+FIX — injected button order (PATCH 6): the Import JSON button is now anchored after the Export JSON button. Toolbar order: [Export] [Export JSON] [Import JSON].
+FIX — dedup member rows keyboard access (PATCH 7): duplicate-group members are real button elements (Enter/Space open the merge dialog), matching the main contact list's keyboard behavior.
+Verified COMPLETE (no action): previous wave's patches all present byte-for-byte (share mobile-gate, debounced search, quick filter tabs, keyboard shortcuts, JSON export/import via mergeContacts+setFromSync, shared label-popover closer — zero document-listener leaks).
+Deliberate non-fixes (recorded): renderMergePreview innerHTML uses trusted i18n strings only; static page title consistent with suite; calendar.js eventsOn indentation is in another file, cosmetic only.
+Rules reconfirmed: imports never overwrite user-curated values (fill-empty + union-by-key only); restore paths reuse the sync merge contract; every fix is self-contained in contacts.js (no HTML/CSS edits needed this round); patch format stays strict OLD→NEW with searchable anchors.
+
+---
+
+Kanban — Import from other apps (Kanri / Trello)
+
+Feature: Users can migrate data from other Kanban applications via JSON file import.
+
+What was added:
+
+Import button (upload icon) in the board header actions, between New board and Manage
+"Import from other apps" entry in the board dropdown
+Import dialog with file picker (.json), automatic source detection (KanriData vs Trello board export), dry-run stats preview (boards/cards/labels counts) and a two-button footer (Cancel/Import)
+Import adapters: Kanri (boards/columns/cards, globalTags + per-card tags to labels, card color mapped to a color label via Tailwind-class table, description to notes, tasks to subtasks) and Trello (lists to columns, cards, desc to notes, due to card.due — feeds Calendar via existing due pipeline, labels mapped to closest swatch colors, closed lists/cards skipped)
+Full i18n support (English + Greek) for all import strings
+Architecture decisions (standing rules):
+
+Imported boards are NEW entities following the duplicateBoard pattern: fresh mtime/om so they win LWW merge battles; existing boards are NEVER touched
+All imported ids carry prefixes ("imp-k-" Kanri, "imp-t-" Trello) to prevent uid() collisions; re-importing the same file replaces the same board ids (idempotent, zero duplicates) and stays consistent with union-by-id sync merge on a second device
+Import pushes a REAL undo snapshot before mutation (pushUndo) — Ctrl/toast Undo restores the full pre-import state; no second toast kills the Undo button
+Dialogs are built dynamically by kanban.js (manage-dialog pattern); index.html is untouched; the dialog inherits the global dialog CSS so it is automatically theme/skin-safe
+Card search/filter state is reset via resetSessionView() on import (the search must not hide the freshly imported cards)
+Files changed: kanban.js (i18n strings, board header button, dropdown entry, section 9b import engine), kanban.css (.board-import, .imp-hint / .imp-file / .imp-preview, disabled-state for dialog footer buttons). index.html unchanged.
+
+Known notes:
+
+Kanri subtask completion flag is read from st.done (defensive fallback to unchecked if the field name differs in a future export — data-safe either way)
+Trello checklists: real Trello exports keep checklists top-level (data.checklists + idChecklists); fixed via checkByCard precompute — pending application of FIX-1a/1b if not yet applied
+Under consideration (need real export samples before implementation, per the "No guessing" rule): Brisqi (CSV), KanbanFlow (JSON/CSV/XML), Taiga (project JSON dump)
+Testing checklist:
+
+Open board dropdown — Import entry below "New board"; icon button in header between New and Manage
+Import button opens dialog with file picker
+Select the Kanri export JSON — preview shows "Detected source: Kanri" with stats; Import button enables
+Import creates the new boards (e.g. "Βιβλία", "Μουσική") with all columns/cards/labels/subtasks and switches to the first one
+Re-import the same file — boards are replaced, not duplicated
+Undo (toast button) — full pre-import state restored, win in next sync merge
+Unknown file — "no Kanban data found" message, Import stays disabled
+
+---
+
+CHANGELOG — v0.38.25
+(orOS core — Retirement of the localStorage snapshot subsystem)
+
+REMOVED
+
+Entire localStorage-based "local snapshots" feature: SNAPSHOTS_KEY, SNAPSHOT_MAX, getSnapshotBody, readSnapshots, writeSnapshots, restoreLastSnapshot and all snapshot UI in renderSyncSection. The "storage is full" warning (sync.err.snapshot.quota toast path) is gone by design: the storage that filled up no longer exists.
+Shortcut scSnapshot's old behavior (restore last snapshot). The combo Ctrl+Alt+Shift+S now triggers a LIVE folder export instead.
+CHANGED
+
+writeSnapshotFile(body, manual) now accepts a full data payload. Auto exports capture the database at dispatch time via exportBodyNow() (fresh orosSync.exportData() call, never a stored list read). The manual path (Choose/Reconnect buttons) captures the body NOW for instant proof of function.
+The auto-backup scheduler (maybeAutoExport) is retained: daily/weekly/monthly cadence, boot check, tab-visible check, zero background timers. "Off" keeps its zero-footprint contract.
+chooseBackupFolder warns honestly when the auto-backup mode is off (sync.fsfolder.enablefirst) instead of failing silently.
+scSnapshot (Ctrl+Alt+Shift+S): honest error when auto-backup is off; otherwise dispatches an immediate live folder export. Confirmation ("sync.ok.fsfolder.saved") fires only when the file actually landed in the folder.
+Info modal capability line (sc.info.cap) and sync.fsfolder.enablefirst copy updated to reflect the new architecture: "Auto backup to folder", backups written straight to the user-chosen folder.
+FIXED
+
+translations.js: restored the corrupted notifs.on key (the earlier patch had mistaken the primary definition for the duplicate); removed the genuine duplicate entries (sc.desc.reconnect, notifs.on). All keys referenced by shell.js verified present in both EN and EL.
+ARCHITECTURE NOTES
+
+Auto-export to local folder (File System Access API, Chromium desktop) remains the ONLY snapshot mechanism: progressive enhancement, permission-lapse detection with one-click Reconnect, folder-mirror files (orOS-snapshot-*.json) wiped by factory reset.
+state.autoexport continues to travel in the shell slice (pull-fed sets never mark dirty — anti-loop contract preserved).
+Old localStorage snapshot keys on upgraded devices are inert leftovers; factory reset removes them via the oros- prefix sweep.
+UNDER CONSIDERATION
+
+Retitle sc.desc.snapshot from "Take database snapshot now" to "Export backup to folder now" (terminology alignment).
+Delete orphaned translation keys sync.ok.snapshot.saved and sync.err.snapshot.quota.
+Wrap exportBodyNow()'s JSON.parse in try/catch inside maybeAutoExport.

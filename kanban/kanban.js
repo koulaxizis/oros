@@ -119,6 +119,22 @@
       "new.board":        "New board",
       "meta.columns":     "columns",
       "meta.cards":       "cards",
+      "import.title":     "Import from other apps",
+      "import.hint":      "Supported: Kanri and Trello JSON exports. New boards are created — existing data is never touched.",
+      "import.detected":  "Detected source:",
+      "import.unknown":   "Unknown file — no Kanban data found.",
+      "import.err":       "Could not read the file.",
+      "import.run":       "Import",
+      "toast.imported":   "Import completed",
+      "import.boards":    "boards",
+      "import.labels":    "labels",
+      "color.blue":       "Blue",
+      "color.green":      "Green",
+      "color.red":        "Red",
+      "color.purple":     "Purple",
+      "color.yellow":     "Yellow",
+      "color.orange":     "Orange",
+      "color.gray":       "Gray",
     },
     el: {
       "board.title":      "Kanban",
@@ -193,6 +209,22 @@
       "new.board":        "Νέο board",
       "meta.columns":     "στήλες",
       "meta.cards":       "κάρτες",
+      "import.title":     "Εισαγωγή από άλλες εφαρμογές",
+      "import.hint":      "Υποστηρίζονται: εξαγωγές JSON από Kanri και Trello. Δημιουργούνται νέα boards — τα υπάρχοντα δεδομένα δεν αγγίζονται.",
+      "import.detected":  "Αναγνωρίστηκε προέλευση:",
+      "import.unknown":   "Άγνωστο αρχείο — δεν βρέθηκαν δεδομένα Kanban.",
+      "import.err":       "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
+      "import.run":       "Εισαγωγή",
+      "toast.imported":   "Η εισαγωγή ολοκληρώθηκε",
+      "import.boards":    "boards",
+      "import.labels":    "ετικέτες",
+      "color.blue":       "Μπλε",
+      "color.green":      "Πράσινο",
+      "color.red":        "Κόκκινο",
+      "color.purple":     "Μωβ",
+      "color.yellow":     "Κίτρινο",
+      "color.orange":     "Πορτοκαλί",
+      "color.gray":       "Γκρι",
     }
   };
 
@@ -1159,7 +1191,16 @@
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
     manageBtn.addEventListener("click", function () { openBoardManageDlg(); });
 
+    var importBtn = document.createElement("button");
+    importBtn.type = "button";
+    importBtn.className = "board-import";
+    importBtn.setAttribute("title", t("import.title"));
+    importBtn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+    importBtn.addEventListener("click", function () { openImportDlg(); });
+
     actions.appendChild(newBtn);
+    actions.appendChild(importBtn);
     actions.appendChild(manageBtn);
     dropdownHost.appendChild(actions);
 
@@ -1224,6 +1265,18 @@
       createBoard();
     });
     pop.appendChild(newItem);
+
+    var impItem = document.createElement("button");
+    impItem.type = "button";
+    impItem.className = "dropdown-item";
+    impItem.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> ' +
+      t("import.title");
+    impItem.addEventListener("click", function () {
+      closeBoardDropdown();
+      openImportDlg();
+    });
+    pop.appendChild(impItem);
   }
 
   function makeBoardDropItem(bd, pop) {
@@ -2876,6 +2929,346 @@
   }
 
   
+  // ---------- 9b. Import από άλλες εφαρμογές (Kanri / Trello) ----------
+  // Verified: Kanri δείγμα export 2026-03-07 (KanriData) + Trello
+  // documented board JSON export schema.
+  //
+  // Σχεδιαστικές αποφάσεις:
+  //   · Τα imported boards είναι ΝΕΕΣ οντότητες (duplicateBoard pattern):
+  //     φρέσκα mtime/om → νικητές LWW στο merge. Τα υπάρχοντα boards
+  //     δεν αγγίζονται ΠΟΤΕ.
+  //   · Όλα τα ids παίρνουν prefix ("imp-k-" / "imp-t-"): καμία σύγκρουση
+  //     με uid(). Επαν-εισαγωγή του ίδιου αρχείου = replace των ίδιων
+  //     ids (idempotent, zero duplicates — σύμφωνο με το union-by-id
+  //     του sync merge σε δεύτερη συσκευή).
+  //   · Kanri: card color → label χρώματος (on-demand), globalTags +
+  //     per-card tags → labels, description → notes, tasks → subtasks.
+  //   · Trello: lists→στήλες, cards→κάρτες, desc→notes, due→card.due,
+  //     labels→labels, checklists→subtasks. Closed lists/cards → skip.
+
+  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello" };
+
+  // Kanri Tailwind color classes → orOS swatch + i18n όνομα
+  var KANRI_COLORS = {
+    "bg-blue-600":    { hex: "#4fc4cf", key: "color.blue"   },
+    "bg-cyan-600":    { hex: "#4fc4cf", key: "color.blue"   },
+    "bg-sky-600":     { hex: "#4fc4cf", key: "color.blue"   },
+    "bg-teal-600":    { hex: "#4fc4cf", key: "color.blue"   },
+    "bg-green-600":   { hex: "#87cf3e", key: "color.green"  },
+    "bg-emerald-600": { hex: "#87cf3e", key: "color.green"  },
+    "bg-lime-600":    { hex: "#87cf3e", key: "color.green"  },
+    "bg-red-600":     { hex: "#e06c75", key: "color.red"    },
+    "bg-rose-600":    { hex: "#e06c75", key: "color.red"    },
+    "bg-pink-600":    { hex: "#e09ecf", key: "color.purple" },
+    "bg-purple-600":  { hex: "#e09ecf", key: "color.purple" },
+    "bg-yellow-600":  { hex: "#ecc75f", key: "color.yellow" },
+    "bg-orange-600":  { hex: "#f28c5a", key: "color.orange" },
+    "bg-gray-600":    { hex: "#9aa4b0", key: "color.gray"   },
+    "bg-slate-600":   { hex: "#9aa4b0", key: "color.gray"   }
+  };
+
+  var TRELLO_HEX = {
+    blue: "#4fc4cf", cyan: "#4fc4cf", sky: "#4fc4cf",
+    green: "#87cf3e", lime: "#87cf3e", yellow: "#ecc75f",
+    orange: "#f28c5a", red: "#e06c75",
+    purple: "#e09ecf", pink: "#e09ecf",
+    black: "#9aa4b0", gray: "#9aa4b0"
+  };
+
+  function importIsoDate(v) {
+    if (typeof v !== "string") return null;
+    var m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? (m[1] + "-" + m[2] + "-" + m[3]) : null;
+  }
+
+  function countImport(boards) {
+    var cards = 0, labels = 0;
+    boards.forEach(function (b) {
+      labels += (b.labels || []).length;
+      (b.columns || []).forEach(function (col) { cards += (col.cards || []).length; });
+    });
+    return { boards: boards.length, labels: labels, cards: cards };
+  }
+
+  function kanriAdapter(data) {
+    if (!data || !Array.isArray(data.boards)) return null;
+    var boards = [];
+
+    data.boards.forEach(function (bSrc) {
+      var labels = [];          // board-scoped label registry
+      var labelByKey = {};      // "gt:<id>" | "clr:<class>" | "tag:<text>"
+
+      function ensureLabel(key, id, name, color) {
+        if (labelByKey[key]) return labelByKey[key];
+        var lb = { id: id, name: name, color: color,
+                   mtime: Date.now(), pos: labels.length };
+        labels.push(lb);
+        labelByKey[key] = lb.id;
+        return lb.id;
+      }
+
+      // globalTags (board-level) → labels
+      (bSrc.globalTags || []).forEach(function (gt) {
+        if (!gt || !gt.text || !gt.id) return;
+        ensureLabel("gt:" + gt.id, "imp-k-" + gt.id, gt.text, FALLBACK_COLOR);
+      });
+
+      var columns = [];
+      (bSrc.columns || []).forEach(function (col) {
+        var cards = [];
+        (col.cards || []).forEach(function (c) {
+          if (!c.name) return;                // nameless → skip
+
+          var cardLabels = [];
+          var kc = KANRI_COLORS[(c.color || "").toLowerCase()];
+          if (kc) {
+            cardLabels.push(ensureLabel(
+              "clr:" + c.color, "imp-k-clr-" + c.color, t(kc.key), kc.hex));
+          }
+          (c.tags || []).forEach(function (tag) {
+            var txt = (typeof tag === "string") ? tag : (tag && tag.text);
+            if (!txt) return;
+            cardLabels.push(ensureLabel(
+              "tag:" + txt,
+              "imp-k-tag-" + encodeURIComponent(txt).replace(/%/g, ""),
+              txt, FALLBACK_COLOR));
+          });
+
+          var subtasks = [];
+          (c.tasks || []).forEach(function (st) {
+            var stTxt = (st && (st.title || st.text || st.name)) || "";
+            if (!stTxt) return;
+            subtasks.push({
+              id: "imp-k-" + (st.id || uid()),
+              text: stTxt,
+              completed: !!(st && st.done)
+            });
+          });
+
+          cards.push({
+            id: "imp-k-" + c.id,
+            text: c.name,
+            notes: c.description || "",
+            due: importIsoDate(c.dueDate || c.due),
+            labels: cardLabels,
+            subtasks: subtasks,
+            info: [],
+            mtime: Date.now(),
+            pos: cards.length
+          });
+        });
+        columns.push({
+          id: "imp-k-" + col.id,
+          name: col.title,
+          mtime: Date.now(),
+          om: Date.now(),
+          pos: columns.length,
+          cards: cards
+        });
+      });
+
+      boards.push({
+        id: "imp-k-" + bSrc.id,
+        name: bSrc.title,
+        mtime: Date.now(),
+        om: Date.now(),
+        deleted: {},
+        labels: labels,
+        columns: columns
+      });
+    });
+
+    if (boards.length === 0) return null;
+    return { source: "kanri", boards: boards, stats: countImport(boards) };
+  }
+
+  function trelloAdapter(data) {
+    if (!data || !Array.isArray(data.lists) || !Array.isArray(data.cards)) return null;
+
+    var lblMap = {};
+    var labels = [];
+    (data.labels || []).forEach(function (lb, i) {
+      if (lblMap[lb.id]) return;
+      var ol = {
+        id: "imp-t-" + lb.id,
+        name: lb.name || ("#" + (i + 1)),
+        color: TRELLO_HEX[lb.color] || SWATCH_COLORS[i % SWATCH_COLORS.length],
+        mtime: Date.now(), pos: labels.length
+      };
+      labels.push(ol);
+      lblMap[lb.id] = ol.id;
+    });
+
+    // Trello export: checklists ζουν TOP-LEVEL (data.checklists) —
+    // οι κάρτες αναφέρουν μόνο ids (c.idChecklists). Precompute
+    // ανά card id → flat λίστα subtask items.
+    var checkByCard = {};
+    (data.checklists || []).forEach(function (cl) {
+      (cl.checkItems || []).forEach(function (ci) {
+        if (!ci.name) return;
+        (checkByCard[cl.idCard] = checkByCard[cl.idCard] || []).push({
+          id: "imp-t-" + (ci.id || uid()),
+          text: ci.name,
+          completed: ci.state === "complete"
+        });
+      });
+    });
+
+    var columns = [];
+    (data.lists || []).forEach(function (list) {
+      if (list.closed) return;               // νεκρές λίστες → skip
+      var cards = [];
+      (data.cards || []).forEach(function (c) {
+        if (c.idList !== list.id || c.closed) return;
+        var cardLabels = [];
+        (c.idLabels || []).forEach(function (lid) {
+          if (lblMap[lid]) cardLabels.push(lblMap[lid]);
+        });
+        var subtasks = (checkByCard[c.id] || []).slice();
+        cards.push({
+          id: "imp-t-" + c.id,
+          text: c.name || "",
+          notes: c.desc || "",
+          due: importIsoDate(c.due),
+          labels: cardLabels,
+          subtasks: subtasks,
+          info: [],
+          mtime: Date.now(),
+          pos: cards.length
+        });
+      });
+      columns.push({
+        id: "imp-t-" + list.id,
+        name: list.name,
+        mtime: Date.now(),
+        om: Date.now(),
+        pos: columns.length,
+        cards: cards
+      });
+    });
+
+    var boards = [{
+      id: "imp-t-" + data.id,
+      name: data.name || "Trello",
+      mtime: Date.now(),
+      om: Date.now(),
+      deleted: {},
+      labels: labels,
+      columns: columns
+    }];
+    return { source: "trello", boards: boards, stats: countImport(boards) };
+  }
+
+  // --- Import dialog (dynamic construction, ίδιο pattern με manage-dialog) ---
+  function openImportDlg() {
+    if ($("import-dlg") && $("import-dlg").open) return;
+
+    var parsed = null;          // adapter result του επιλεγμένου αρχείου
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "import-dlg";
+
+    var h3 = document.createElement("h3");
+    h3.textContent = t("import.title");
+
+    var hint = document.createElement("div");
+    hint.className = "imp-hint";
+    hint.textContent = t("import.hint");
+
+    var file = document.createElement("input");
+    file.type = "file";
+    file.accept = ".json,application/json";
+    file.className = "imp-file";
+
+    var preview = document.createElement("div");
+    preview.className = "imp-preview";
+    preview.hidden = true;
+
+    var foot = document.createElement("div");
+    foot.className = "dlg-foot";
+    var no = document.createElement("button");
+    no.type = "button";
+    no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    var go = document.createElement("button");
+    go.type = "button";
+    go.textContent = t("import.run");
+    go.disabled = true;
+    foot.appendChild(no);
+    foot.appendChild(go);
+
+    dlg.appendChild(h3);
+    dlg.appendChild(hint);
+    dlg.appendChild(file);
+    dlg.appendChild(preview);
+    dlg.appendChild(foot);
+    document.body.appendChild(dlg);
+
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+
+    file.addEventListener("change", function () {
+      parsed = null;
+      go.disabled = true;
+      preview.hidden = false;
+      preview.textContent = "";
+
+      var f = file.files && file.files[0];
+      if (!f) { preview.hidden = true; return; }
+
+      var fr = new FileReader();
+      fr.onload = function (ev) {
+        var json = null;
+        try { json = JSON.parse(ev.target.result); } catch (e) { /* not JSON */ }
+
+        parsed = (json && kanriAdapter(json)) ||
+                 (json && trelloAdapter(json)) || null;
+
+        if (!parsed) {
+          preview.classList.add("imp-error");
+          preview.textContent = t("import.unknown");
+          return;
+        }
+        preview.classList.remove("imp-error");
+        preview.textContent = t("import.detected") + " " +
+          IMPORT_SOURCE_NAMES[parsed.source] + " — " +
+          String(parsed.stats.boards) + " " + t("import.boards") + ", " +
+          String(parsed.stats.cards) + " " + t("meta.cards") + ", " +
+          String(parsed.stats.labels) + " " + t("import.labels");
+        go.disabled = false;
+      };
+      fr.onerror = function () {
+        preview.classList.add("imp-error");
+        preview.textContent = t("import.err");
+      };
+      fr.readAsText(f);
+    });
+
+    go.addEventListener("click", function () {
+      if (!parsed || !parsed.boards || parsed.boards.length === 0) return;
+
+      pushUndo("toast.imported");     // real undo — snapshot ΠΡΙΝ τη μετάλλαξη
+
+      // Idempotent re-import: ίδια ids → replace (όχι διπλότυπα)
+      parsed.boards.forEach(function (nb) {
+        state.boards = state.boards.filter(function (b) { return b.id !== nb.id; });
+      });
+      state.boards = state.boards.concat(parsed.boards);
+      state.om = Date.now();
+      state.activeBoardId = parsed.boards[0].id;
+
+      resetSessionView();
+      save();
+      renderAll();
+      dlg.close();                    // η pushUndo κρατά το toast+Undo ζωντανό
+    });
+
+    dlg.showModal();
+    setTimeout(function () { file.focus(); }, 50);
+  }
+
   // ---------- 10. Undo / toast (closing handlers) ----------
   // Το close handler του card dialog ολοκληρώνεται εδώ —
   // έχει ήδη οριστεί στο Part 4 (μέσα στην IIFE).

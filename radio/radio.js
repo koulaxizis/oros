@@ -422,11 +422,6 @@ function ensureHost(){
       });
       host.notify();
       
-      // FIX-3: Notify when playback starts
-      setTimeout(function(){
-        transientNote(station.name);
-      }, 500);
-      
       return true;
     },
     toggle: function(){
@@ -479,6 +474,10 @@ function ensureHost(){
         host.lastEvent = "sleep-cancel";
         host.notify();
       }
+    },
+    favoriteToggle: function(){
+      if(!host.current) return;
+      favoriteToggle(host.current);
     },
     subscribe: function(fn){
       host.subs.push(fn);

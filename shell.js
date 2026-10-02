@@ -5,7 +5,7 @@
 //   2. Preferences (skin, language, theme, wallpaper, auto-backup)
 //   3. Language apply
 //   4. Theme apply
-//   5. Skin apply · 5b. Wallpaper · 5c. Auto-backup snapshots ·
+//   5. Skin apply · 5b. Wallpaper · 5c. Auto-backup scheduler ·
 //       5d. Backup folder (File System Access API)
 //   6. Clock (24h) — hosts ALL throttled engine ticks (weather,
 //       alarms, calendar/mood/cycle/todo/quote scans, notifs sweep)
@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.23";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.25";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -96,11 +96,9 @@
     { id: "clear",    pair: null,          css: "" }   // "None": theme background
   ];
 
-  // ---------- Auto-backup configuration ----------
+  // ---------- Auto-backup configuration (folder export — localStorage snapshots removed) ----------
   var AUTOEXPORT_PREF  = "oros-autoexport";        // mode: off/daily/weekly/monthly (travels in shell slice)
-  var AUTOEXPORT_LAST  = "oros-autoexport-last";  // epoch ms of last check/snapshot (device-local)
-  var SNAPSHOTS_KEY    = "oros-auto-snapshots";   // rolling window, device-local
-  var SNAPSHOT_MAX     = 5;
+  var AUTOEXPORT_LAST  = "oros-autoexport-last";  // epoch ms of last check/export (device-local)
   var DAY_MS           = 24 * 60 * 60 * 1000;
   var AUTOEXPORT_PERIODS = {
     daily:   DAY_MS,
@@ -311,57 +309,34 @@
     return false;
   }
 
-  // ---------- 5c. Auto-backup (rolling local snapshots) ----------
-  // Unencrypted full-database snapshots kept in localStorage — a
-  // rescue net INDEPENDENT of Dropbox, passphrase and connectivity.
+  // ---------- 5c. Auto-backup scheduler (folder export) ----------
   // Schedule check happens at boot and whenever the tab becomes
   // visible (NO background timers). "Off" = zero footprint: no
-  // snapshots, no key writes, nothing.
+  // key writes, nothing. localStorage snapshots are RETIRED — the
+  // ONLY destination is the user-chosen backup folder (5d). No
+  // folder chosen → the check stamps AUTOEXPORT_LAST and stays
+  // silent: honest silence, never a false "saved".
 
-  // Full-database body WITHOUT meta — exportData() stamps
-  // meta.exportedAt (timestamp), which would defeat the
-  // on-change-only comparison. Stripped here, re-added at restore.
-  function getSnapshotBody() {
+  // Export body captured NOW — the same shape writeSnapshotFile
+  // serializes into the real file.
+  function exportBodyNow() {
     var payload = JSON.parse(window.orosSync.exportData());
-    return { shell: payload.shell || null, apps: payload.apps || {} };
+    return {
+      shell:  payload.shell || null,
+      apps:   payload.apps || {},
+      at:     new Date().toISOString(),
+      source: "auto-export"
+    };
   }
 
-  function readSnapshots() {
-    try {
-      var raw = localStorage.getItem(SNAPSHOTS_KEY);
-      var arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) { return []; }
-  }
-
-  function writeSnapshots(snaps) {
-    try {
-      localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snaps));
-      return true;
-    } catch (e) {
-      // Quota exceeded: drop the OLDEST entry and retry once —
-      // newest snapshots are the valuable ones.
-      if (snaps.length > 1) {
-        try {
-          snaps.shift();
-          localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snaps));
-          return true;
-        } catch (e2) { /* give up — next cycle retries */ }
-      }
-    }
-    return false;   // honest contract: callers can trust the result
-  }
-
-  // Period check + snapshot. "force" = run regardless of the last
-  // check (used when the user switches the mode on, so enabling
-  // Daily instantly produces the first snapshot).
-  // Returns TRUE when a snapshot was actually written, FALSE on every
-  // no-op path (schedule guard, dedup, missing engine). Callers can
-  // report honestly instead of claiming success unconditionally.
-  var lastAutoExportFailed = false;
-
+  // Period check + folder export. "force" = run regardless of the
+  // last check (used when the user switches the mode on, so
+  // enabling Daily instantly produces the first file).
+  // Returns TRUE when an export was DISPATCHED, FALSE on every
+  // no-op path (schedule guard, missing engine). The write itself
+  // is async best-effort: the "saved" confirmation fires ONLY when
+  // the file actually landed (inside writeSnapshotFile).
   function maybeAutoExport(force) {
-    lastAutoExportFailed = false;
     if (state.autoexport === "off") return false;
     if (!window.orosSync || typeof window.orosSync.exportData !== "function") return false;
 
@@ -371,160 +346,20 @@
     var last = parseInt(localStorage.getItem(AUTOEXPORT_LAST) || "0", 10) || 0;
     if (!force && (Date.now() - last) < period) return false;
 
-    // Check happened now — record it even if no snapshot follows
-    // (unchanged content must not re-check on every tab-visible).
+    // Check happened now — record it even if no file follows
+    // (no folder chosen must not re-check on every tab-visible).
     localStorage.setItem(AUTOEXPORT_LAST, String(Date.now()));
 
-    var body = getSnapshotBody();
-    var bodyStr = JSON.stringify(body);
-
-    var snaps = readSnapshots();
-    // On-change-only: identical content never duplicates an entry.
-    if (snaps.length && JSON.stringify(snaps[snaps.length - 1].data) === bodyStr) return false;
-
-    snaps.push({ at: new Date().toISOString(), data: body });
-    while (snaps.length > SNAPSHOT_MAX) snaps.shift();
-    if (!writeSnapshots(snaps)) {
-      // Honest feedback: quota failure = nothing stored. Reporting
-      // "saved" would be a false sense of backup. Key lives in
-      // translations.js (TP1, kernel-lock batch).
-      lastAutoExportFailed = true;
-      setSyncMsgRaw("err", window.t("sync.err.snapshot.quota"));
-      return false;
-    }
-
-    // Folder mirror (Chromium desktop, if a folder was chosen):
-    // best-effort, fire-and-forget — the localStorage net above is
-    // already durable, the file is the bonus copy.
-    writeSnapshotFile(false);
-
-    // Wave 6 — snapshot confirmations are DATA the user wants in
-    // the inbox (decision record: "snapshots/confirmations go in").
-    // Promoted dim→ok: it is a real success, not busy talk. The
-    // daily dedup key keeps auto-snapshots to one line per day.
-    setSyncMsg("ok", "sync.ok.snapshot.saved");
+    writeSnapshotFile(exportBodyNow(), false);
     return true;
-  }
-
-  // Restore: replays the NEWEST snapshot through orosSync.importData
-  // — the same guarded/merge-aware apply path a cloud pull uses.
-  // Restored data is marked dirty → reaches the cloud on next push.
-  // R14 fix: native window.confirm() RETIRED — themed <dialog> with
-  // the snapshot's own date (the user must SEE what they restore),
-  // danger-styled confirm, Esc + backdrop close. Zero new i18n keys:
-  // reuses sync.restore / sync.restore.confirm / wx.cancel / sync.working.
-  function restoreLastSnapshot() {
-    var snaps = readSnapshots();
-    if (!snaps.length) return;
-
-    var stale = document.getElementById("restoresnap-dialog");
-    if (stale) stale.remove();
-
-    var dlg = document.createElement("dialog");
-    dlg.id = "restoresnap-dialog";
-    dlg.style.cssText =
-      "border:1px solid var(--border);border-radius:12px;" +
-      "background:var(--panel-bg);color:var(--text);padding:20px;" +
-      "width:min(380px,calc(100vw - 32px));";
-
-    var form = document.createElement("form");
-    form.noValidate = true;
-
-    var title = document.createElement("h3");
-    title.style.cssText = "margin:0 0 6px;font-size:14px;";
-    title.textContent = window.t("sync.restore");
-    form.appendChild(title);
-
-    var hint = document.createElement("div");
-    hint.style.cssText =
-      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin-bottom:14px;";
-    hint.textContent = window.t("sync.restore.confirm");
-    form.appendChild(hint);
-
-    // Picker: ALL snapshots, newest first, newest pre-selected.
-    // Same import path as before — only the selection is new.
-    var list = document.createElement("div");
-    list.style.cssText =
-      "display:flex;flex-direction:column;gap:6px;margin-bottom:14px;" +
-      "max-height:40vh;overflow-y:auto;";
-    for (var i = snaps.length - 1; i >= 0; i--) {
-      var row = document.createElement("label");
-      row.style.cssText =
-        "display:flex;align-items:center;gap:10px;padding:7px 10px;" +
-        "border:1px solid var(--border);border-radius:8px;cursor:pointer;" +
-        "font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;";
-      var rb = document.createElement("input");
-      rb.type = "radio";
-      rb.name = "snap-pick";
-      rb.value = String(i);
-      if (i === snaps.length - 1) rb.checked = true;   // newest preselected
-      rb.style.accentColor = "var(--accent)";
-      row.appendChild(rb);
-      var dt = document.createElement("span");
-      dt.textContent = new Date(snaps[i].at).toLocaleString(
-        state.lang === "el" ? "el-GR" : "en-GB",
-        { day: "2-digit", month: "short", year: "numeric",
-          hour: "2-digit", minute: "2-digit" });
-      row.appendChild(dt);
-      list.appendChild(row);
-    }
-    form.appendChild(list);
-
-    var btnRow = document.createElement("div");
-    btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
-
-    var cancelBtn = document.createElement("button");
-    cancelBtn.type = "button";
-    cancelBtn.style.cssText =
-      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
-      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;" +
-      "cursor:pointer;";
-    cancelBtn.textContent = window.t("wx.cancel");
-    cancelBtn.addEventListener("click", function () { dlg.close(); });
-    btnRow.appendChild(cancelBtn);
-
-    var okBtn = document.createElement("button");
-    okBtn.type = "submit";
-    okBtn.style.cssText =
-      "border:1px solid var(--danger);border-radius:8px;background:var(--danger);" +
-      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
-    okBtn.textContent = window.t("sync.restore");
-    btnRow.appendChild(okBtn);
-
-    form.appendChild(btnRow);
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var sel = form.querySelector('input[name="snap-pick"]:checked');
-      var idx = sel ? parseInt(sel.value, 10) : snaps.length - 1;
-      var snap = snaps[idx];
-      okBtn.disabled = true;
-      okBtn.textContent = window.t("sync.working");
-      try {
-        var payload = { shell: snap.data.shell, apps: snap.data.apps };
-        window.orosSync.importData(JSON.stringify(payload));
-        dlg.close();
-        setSyncMsg("ok", "sync.ok.snapshot.restored");
-      } catch (e2) {
-        dlg.close();
-        handleSyncError(e2);
-      }
-    });
-
-    dlg.appendChild(form);
-    dlg.addEventListener("click", function (e) {
-      if (e.target === dlg) dlg.close();
-    });
-    document.body.appendChild(dlg);
-    dlg.showModal();
   }
   
     // ---------- 5d. Backup folder (File System Access API) ----------
-  // Progressive enhancement: on Chromium desktop each NEW auto
-  // snapshot ALSO lands as a real JSON file in a user-chosen folder.
+  // Progressive enhancement: on Chromium desktop every auto-export
+  // ALSO lands as a real JSON file in a user-chosen folder, built
+  // LIVE via exportBodyNow() (localStorage snapshots are retired).
   // Where the API is absent (Firefox/Safari/all mobile browsers)
-  // nothing changes: localStorage-only, and the folder UI row is
-  // never rendered. The localStorage net is never dependent on this.
+  // nothing changes: the folder UI row is never rendered.
   //
   // Permission lifecycle (v0.12.2): the browser can revoke the
   // folder permission. Detection happens naturally — every write
@@ -584,12 +419,13 @@
     }).catch(function () {});
   }
 
-  // Writes the NEWEST snapshot as a real file. Auto path (manual=false):
-  // runs after a fresh snapshot was stored. Manual path (manual=true,
-  // from Choose/Reconnect buttons): overwrites with current content so
-  // the user instantly sees proof it works.
-  function writeSnapshotFile(manual) {
-    if (!fsSupported()) return;
+  // Writes an export body as a real file. Auto path (manual=false,
+  // fed by maybeAutoExport): the body captured at dispatch time.
+  // Manual path (manual=true, from Choose/Reconnect buttons): the
+  // same body captured NOW, so the user instantly sees proof it
+  // works. No localStorage snapshot dependency anywhere.
+  function writeSnapshotFile(body, manual) {
+    if (!fsSupported() || !body) return;
     loadFolderHandle().then(function (handle) {
       if (!handle) return;
       return handle.queryPermission({ mode: "readwrite" }).then(function (perm) {
@@ -606,17 +442,13 @@
         // the first write after a successful Reconnect).
         localStorage.removeItem(FS_LAPSED_KEY);
 
-        var snaps = readSnapshots();
-        if (!snaps.length) return;
-        var snap = snaps[snaps.length - 1];
-
-        // Real file → meta belongs in it (unlike the localStorage body)
+        // Real file → meta belongs in it
         var filePayload = {
-          shell: snap.data.shell,
-          apps:  snap.data.apps,
-          meta:  { ver: 1, exportedAt: snap.at, source: "auto-snapshot" }
+          shell: body.shell,
+          apps:  body.apps,
+          meta:  { ver: 1, exportedAt: body.at, source: body.source || "auto-export" }
         };
-        var name = "orOS-snapshot-" + snap.at.slice(0, 10) + ".json";
+        var name = "orOS-snapshot-" + String(body.at).slice(0, 10) + ".json";
         return handle.getFileHandle(name, { create: true })
           .then(function (fh) { return fh.createWritable(); })
           .then(function (stream) {
@@ -624,11 +456,11 @@
             return stream.close();
           })
           .then(function () {
-            if (manual) setSyncMsg("ok", "sync.ok.fsfolder.saved");
+            setSyncMsg("ok", "sync.ok.fsfolder.saved");
           });
       });
-    }).catch(function () { /* best-effort — the localStorage net stays durable */ });
-  }
+    }).catch(function () { /* best-effort — the sync engine data stays intact */ });
+}
 
   function chooseBackupFolder() {
     // MUST run inside the click handler (user activation required)
@@ -642,22 +474,17 @@
         // permission lifetime.
         localStorage.removeItem(FS_LAPSED_KEY);
 
-        // Folder writes mirror snapshots — without a mode there is
-        // nothing to mirror. Tell the user instead of failing silently.
+        // Folder writes are LIVE exports — without a mode there is
+        // no scheduler to write them. Tell the user instead of
+        // failing silently.
         if (state.autoexport === "off") {
           setSyncMsgRaw("dim", window.t("sync.fsfolder.enablefirst"));
           renderMenu();
           return;
         }
-        // No snapshot yet (just switched mode on)? Take one now so
-        // the very first folder write is real, visible proof.
-        if (!readSnapshots().length) {
-          writeSnapshots([{
-            at: new Date().toISOString(),
-            data: getSnapshotBody()
-          }]);
-        }
-        return writeSnapshotFile(true);
+        // Instant proof: capture the current database and write it
+        // to the freshly chosen folder right now.
+        return writeSnapshotFile(exportBodyNow(), true);
       })
       .catch(function () { /* user cancelled the picker — no drama */ });
   }
@@ -673,7 +500,7 @@
   // i.e. user activation. On success: flag down + instant manual
   // write as proof of recovery. On decline: flag stays up (the ⚠
   // keeps reminding on the next visit), nothing breaks, nothing
-  // is lost — the localStorage net was never affected.
+  // is lost.
   function reconnectFolder() {
     loadFolderHandle().then(function (handle) {
       if (!handle) {
@@ -688,7 +515,7 @@
         .then(function (perm) {
           if (perm === "granted") {
             localStorage.removeItem(FS_LAPSED_KEY);
-            return writeSnapshotFile(true);   // instant proof of recovery
+            return writeSnapshotFile(exportBodyNow(), true);   // instant proof of recovery
           }
           // Declined: keep the flag — ⚠ stays. No nagging beyond this.
         });
@@ -2018,53 +1845,17 @@
       localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
       noteLocalChange();          // travels in the shell slice
       if (state.autoexport === "off") {
-        // Off = zero footprint going forward. Existing snapshots are
-        // KEPT (they were earned) but nothing new is ever written.
+        // Off = zero footprint going forward — no checks, no files.
         renderMenu();
         return;
       }
-      // Switched on (or changed cadence): snapshot NOW so the user
-      // sees instant feedback that the net is active.
+      // Switched on (or changed cadence): export NOW so the user
+      // sees instant feedback that the folder net is active.
       maybeAutoExport(true);
       renderMenu();
     });
     autoRow.appendChild(autoSel);
     section.appendChild(autoRow);
-
-    // Restore last auto snapshot (disabled until one exists)
-    var utils2 = document.createElement("div");
-    utils2.className = "sync-actions";
-    var hasSnapshots = readSnapshots().length > 0;
-    var restoreBtn = document.createElement("button");
-    restoreBtn.className = "menu-item";
-    restoreBtn.innerHTML = EYE_SVG + "<span>" + window.t("sync.restore") + "</span>";
-    if (!hasSnapshots) {
-      restoreBtn.disabled = true;
-      restoreBtn.style.opacity = "0.5";
-      restoreBtn.style.cursor = "not-allowed";
-    }
-    restoreBtn.addEventListener("click", function () {
-      restoreLastSnapshot();
-    });
-    utils2.appendChild(restoreBtn);
-    section.appendChild(utils2);
-
-    // Local snapshots status line (option 3 — make the net visible)
-    var snapInfo = document.createElement("div");
-    snapInfo.className = "sync-hint";
-    var snapList = readSnapshots();
-    if (snapList.length) {
-      var lastAt = snapList[snapList.length - 1].at;
-      var lastLabel = new Date(lastAt).toLocaleDateString(
-        state.lang === "el" ? "el-GR" : "en-GB",
-        { day: "2-digit", month: "short" });
-      snapInfo.textContent = window.t("sync.snapshots.info")
-        .replace("{n}", String(snapList.length))
-        .replace("{date}", lastLabel);
-    } else {
-      snapInfo.textContent = window.t("sync.snapshots.none");
-    }
-    section.appendChild(snapInfo);
 
     // Backup folder (option 2 — File System Access API, Chromium
     // desktop only; the row is never rendered where unsupported)
@@ -2676,19 +2467,15 @@
   }
 
   function scSnapshot() {
-    // Honest toast: a snapshot only exists when auto-backup is ON.
+    // Folder-export trigger: honest error when auto-backup is OFF.
     if (state.autoexport === "off") {
       setSyncMsgRaw("err", window.t("sync.err.autobackup.off"));
       return;
     }
-    // Honest feedback: the "saved" toast fires INSIDE maybeAutoExport,
-    // only when a snapshot was really written. A dedup (identical
-    // content) is reported as such — never a false success.
-    // Χ1: failure paths painted their own err message inside
-    // maybeAutoExport — never bury it under a misleading "nothing new".
-    if (!maybeAutoExport(true) && !lastAutoExportFailed) {
-      setSyncMsg("ok", "sync.ok.none");
-    }
+    // Dispatch a LIVE folder export NOW. The "saved" confirmation
+    // fires inside writeSnapshotFile — only when the file really
+    // landed in the user-chosen folder.
+    maybeAutoExport(true);
   }
 
   function scExportDb() {
@@ -4681,6 +4468,216 @@
   // playing station. No host / no station → no chip (zero DOM).
   // Paint is tick-safe: renderClock ticks 1/s but the DOM is touched
   // only when state actually changed (same doctrine as wxRenderChip).
+  // Dropdown icon set (same SVG family as ICONS above)
+  var RX_STOP  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  var RX_PLAY  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>';
+  var RX_PAUSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var RX_HEART = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+
+  var RX_POP_ID = "rx-tray-pop";
+  var rxPopWired = false;
+
+  function rxTrayT(en, el) {
+    return state.lang === "el" ? el : en;
+  }
+
+  function rxTrayPop() { return document.getElementById(RX_POP_ID); }
+
+  function rxTrayClosePop() {
+    var p = rxTrayPop();
+    if (p) p.remove();
+  }
+
+  // Outside-click + Escape wiring — lazily, on first dropdown open
+  // (zero cost while the tray is never touched).
+  function rxTrayWireDoc() {
+    if (rxPopWired) return;
+    rxPopWired = true;
+    document.addEventListener("click", function (e) {
+      var pop = rxTrayPop();
+      if (!pop || pop.contains(e.target)) return;
+      var chip = document.getElementById("rx-tray-chip");
+      if (chip && chip.contains(e.target)) return;
+      rxTrayClosePop();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") rxTrayClosePop();
+    });
+  }
+
+  // Audio-element commands — the host's audio lives on THIS window
+  // (survives iframe close), so the tray controls speak to it
+  // directly. Works with the Radio app closed, standing doctrine.
+  // Live stream: stop ≈ pause (the src stays armed), play resumes.
+  function rxTrayStop() {
+    var host = window.__orosRadioHost;
+    if (host && host.audio) {
+      try { host.audio.pause(); } catch (e) {}
+    }
+  }
+
+  function rxTrayPlay() {
+    var host = window.__orosRadioHost;
+    if (!host || !host.audio) return;
+    var a = host.audio;
+    // Defensive re-arm: if the src was ever stripped, take it from
+    // the current station state (when exposed) before playing.
+    if (!a.src) {
+      var st = null;
+      try { st = host.api.getState(); } catch (e) {}
+      var url = st && st.current && st.current.url;
+      if (url) { a.src = url; a.load(); }
+    }
+    var pr = a.play();
+    if (pr && typeof pr.catch === "function") pr.catch(function () {});
+  }
+
+  function rxTrayFav() {
+    var host = window.__orosRadioHost;
+    // Preferred: a favorite hook on the host api. Fallback: open
+    // the app — favorites live in its data slice, the shell NEVER
+    // writes that slice blind.
+    if (host && host.api && typeof host.api.favoriteToggle === "function") {
+      try { host.api.favoriteToggle(); return; } catch (e) {}
+    }
+    openAppById("radio");
+  }
+
+  // Live repain of the Play/Pause icon while the dropdown is open
+  // (state changes from Media keys etc. must reflect immediately).
+  function rxTrayPaintLive() {
+    if (!rxTrayPop()) return;
+    var pp = document.getElementById("rx-pop-pp");
+    if (!pp) return;
+    var host = window.__orosRadioHost;
+    var paused = true;
+    try {
+      var st = host.api.getState();
+      paused = !(st && st.playing && !st.paused);
+    } catch (e) {}
+    pp.innerHTML = paused ? RX_PLAY : RX_PAUSE;
+    pp.title = rxTrayT(paused ? "Play" : "Pause",
+                       paused ? "Αναπαραγωγή" : "Παύση");
+    pp.setAttribute("aria-label", pp.title);
+  }
+
+  function rxTrayTogglePop() {
+    if (rxTrayPop()) { rxTrayClosePop(); return; }
+
+    var host = window.__orosRadioHost;
+    if (!host || !host.audio || !host.api ||
+        typeof host.api.getState !== "function") return;
+    rxTrayWireDoc();
+
+    var pop = document.createElement("div");
+    pop.id = RX_POP_ID;
+    pop.setAttribute("role", "menu");
+    // Top-right, just under the taskbar — same docking convention
+    // as scToast/alarm overlays. Inline styles, palette vars only.
+    pop.style.cssText =
+      "position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:12px;" +
+      "z-index:1460;background:var(--panel-bg);color:var(--text);" +
+      "border:1px solid var(--border);border-radius:12px;" +
+      "box-shadow:0 8px 24px var(--shadow);padding:10px;" +
+      "display:flex;flex-direction:column;gap:10px;" +
+      "max-width:calc(100vw - 24px);";
+
+    // One quiet station-name line — the context for what the
+    // buttons control. Remove this block for a pure-icon dropdown.
+    var st = null;
+    try { st = host.api.getState(); } catch (e) {}
+    var name = (st && st.current && st.current.name) ? st.current.name : "";
+    if (name) {
+      var lbl = document.createElement("div");
+      lbl.style.cssText =
+        "font-size:12px;font-weight:600;color:var(--text-dim);" +
+        "max-width:220px;overflow:hidden;text-overflow:ellipsis;" +
+        "white-space:nowrap;";
+      lbl.textContent = name;
+      pop.appendChild(lbl);
+    }
+
+    // Icon-button row: Stop · Play/Pause · Fav · App
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:6px;";
+
+    function mkIcoBtn(svg, tip, fn, idAttr) {
+      var b = document.createElement("button");
+      b.type = "button";
+      if (idAttr) b.id = idAttr;
+      b.innerHTML = svg;
+      b.title = tip;
+      b.setAttribute("aria-label", tip);
+      b.style.cssText =
+        "width:40px;height:40px;display:inline-flex;align-items:center;" +
+        "justify-content:center;border:1px solid var(--border);" +
+        "border-radius:9px;background:transparent;color:var(--text);" +
+        "cursor:pointer;";   // 40px+ = SH-R6 touch doctrine
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    row.appendChild(mkIcoBtn(RX_STOP, rxTrayT("Stop", "Διακοπή"), function () {
+      rxTrayStop();
+      rxTrayPaintLive();
+    }));
+
+    row.appendChild(mkIcoBtn(
+      RX_PLAY, rxTrayT("Play / Pause", "Αναπαραγωγή / Παύση"),
+      function () {
+        var h = window.__orosRadioHost;
+        if (h && h.audio) {
+          if (h.audio.paused) rxTrayPlay(); else rxTrayStop();
+        }
+        rxTrayPaintLive();
+      }, "rx-pop-pp"));
+
+    row.appendChild(mkIcoBtn(RX_HEART, rxTrayT("Favorite", "Αγαπημένο"),
+      rxTrayFav));
+
+    row.appendChild(mkIcoBtn(ICONS.radio,
+      rxTrayT("Open Radio", "Άνοιγμα Ραδιοφώνου"), function () {
+        rxTrayClosePop();
+        if (state.running && state.running.id === "radio") returnToDesktop();
+        else openAppById("radio");
+      }));
+
+    pop.appendChild(row);
+
+    // Volume — speaks straight to the host's audio element (0..1)
+    var volRow = document.createElement("div");
+    volRow.style.cssText = "display:flex;align-items:center;gap:8px;";
+    var vol = document.createElement("input");
+    vol.type = "range";
+    vol.min = "0"; vol.max = "1"; vol.step = "0.05";
+    var startVol = 1;
+    try {
+      if (typeof host.audio.volume === "number") startVol = host.audio.volume;
+    } catch (e) {}
+    vol.value = String(startVol);
+    vol.setAttribute("aria-label", rxTrayT("Volume", "Ένταση"));
+    vol.style.cssText =
+      "width:150px;accent-color:var(--accent);cursor:pointer;margin:0;";
+    var pct = document.createElement("span");
+    pct.style.cssText =
+      "font-size:11px;color:var(--text-dim);min-width:34px;text-align:right;" +
+      "font-variant-numeric:tabular-nums;";
+    pct.textContent = Math.round(startVol * 100) + "%";
+    vol.addEventListener("input", function () {
+      var h = window.__orosRadioHost;
+      if (h && h.audio) {
+        try { h.audio.volume = parseFloat(vol.value); } catch (e) {}
+      }
+      pct.textContent = Math.round(parseFloat(vol.value) * 100) + "%";
+    });
+    volRow.appendChild(vol);
+    volRow.appendChild(pct);
+    pop.appendChild(volRow);
+
+    document.body.appendChild(pop);
+    rxTrayPaintLive();
+  }
+
   function radioTrayTick() {
     var bar = document.querySelector(".bar-right");
     if (!bar) return;
@@ -4690,6 +4687,7 @@
 
     if (!host || !host.api || typeof host.api.getState !== "function") {
       if (chip) chip.remove();
+      rxTrayClosePop();
       return;
     }
 
@@ -4699,6 +4697,7 @@
     // No station ever played (or stale host shape) → no chip
     if (!st || !st.current || !st.current.name) {
       if (chip) chip.remove();
+      rxTrayClosePop();
       return;
     }
 
@@ -4709,38 +4708,32 @@
       chip.style.minHeight = "44px";   // SH-R6: Part VIII doctrine (touch targets)
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
-        // Inside Radio → back to desktop. Inside ANY OTHER app →
-        // jump straight to Radio (no desktop hop). Desktop → open.
-        if (state.running && state.running.id === "radio") {
-          returnToDesktop();
-          return;
-        }
-        openAppById("radio");
+        rxTrayTogglePop();   // click = dropdown (direct open lives in the App button)
       });
       bar.insertBefore(chip, document.getElementById("btn-lang"));
     }
 
     var playing = !!(st.playing && !st.paused);
     var name = st.current.name;
-    // Stream error → keep the name, show the ⚠ state honestly
     var errored = !!(st.flags && st.flags.error);
-    var html =
-      '<span class="rx-tray-eq" style="font-size:12px;">' +
-      (errored ? "⚠" : (playing ? "♪" : "⏸")) +
-      "</span>" +
-      '<span style="overflow:hidden;text-overflow:ellipsis;' +
-      'white-space:nowrap;max-width:140px;">' + escapeHtml(name) + "</span>";
+
+    // Radio icon ONLY — no station name on the bar. State rides on
+    // data-state (CSS color/opacity hook) + the tooltip carries
+    // the full now-playing info (set via .title property — safe).
+    var dstate = errored ? "err" : (playing ? "on" : "off");
     var title =
       (playing ? "▶ " : "⏸ ") + name +
       (errored ? " · " + (state.lang === "el" ? "Σφάλμα ροής" : "Stream error") : "");
 
-    if (chip.getAttribute("data-state") !== String(playing) ||
-        chip.innerHTML !== html || chip.title !== title) {
-      chip.setAttribute("data-state", String(playing));
-      chip.innerHTML = html;
+    if (chip.getAttribute("data-state") !== dstate || chip.title !== title) {
+      chip.setAttribute("data-state", dstate);
+      chip.innerHTML = ICONS.radio;
       chip.title = title;
       chip.setAttribute("aria-label", title);   // SH-R11: state spoken
     }
+
+    // Dropdown open → the Play/Pause icon follows live state
+    if (rxTrayPop()) rxTrayPaintLive();
   }
 
   // Radio deep-link bridge (pattern: Quote/Minimalism). Payload =
