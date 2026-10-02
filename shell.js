@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.25";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.26";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -350,7 +350,12 @@
     // (no folder chosen must not re-check on every tab-visible).
     localStorage.setItem(AUTOEXPORT_LAST, String(Date.now()));
 
-    writeSnapshotFile(exportBodyNow(), false);
+    // Body capture is best-effort: an engine hiccup must not turn
+    // the boot/visibility path into an uncaught async error. Null
+    // body → writeBackupFile's own guard skips the write silently.
+    var body = null;
+    try { body = exportBodyNow(); } catch (e) { body = null; }
+    if (body) writeBackupFile(body, false);
     return true;
   }
   
@@ -424,7 +429,7 @@
   // Manual path (manual=true, from Choose/Reconnect buttons): the
   // same body captured NOW, so the user instantly sees proof it
   // works. No localStorage snapshot dependency anywhere.
-  function writeSnapshotFile(body, manual) {
+  function writeBackupFile(body, manual) {
     if (!fsSupported() || !body) return;
     loadFolderHandle().then(function (handle) {
       if (!handle) return;
@@ -448,7 +453,7 @@
           apps:  body.apps,
           meta:  { ver: 1, exportedAt: body.at, source: body.source || "auto-export" }
         };
-        var name = "orOS-snapshot-" + String(body.at).slice(0, 10) + ".json";
+        var name = "orOS-backup-" + String(body.at).slice(0, 10) + ".json";
         return handle.getFileHandle(name, { create: true })
           .then(function (fh) { return fh.createWritable(); })
           .then(function (stream) {
@@ -484,7 +489,7 @@
         }
         // Instant proof: capture the current database and write it
         // to the freshly chosen folder right now.
-        return writeSnapshotFile(exportBodyNow(), true);
+        return writeBackupFile(exportBodyNow(), true);
       })
       .catch(function () { /* user cancelled the picker — no drama */ });
   }
@@ -515,7 +520,7 @@
         .then(function (perm) {
           if (perm === "granted") {
             localStorage.removeItem(FS_LAPSED_KEY);
-            return writeSnapshotFile(exportBodyNow(), true);   // instant proof of recovery
+            return writeBackupFile(exportBodyNow(), true);   // instant proof of recovery
           }
           // Declined: keep the flag — ⚠ stays. No nagging beyond this.
         });
@@ -2466,7 +2471,7 @@
       .catch(handleSyncError);
   }
 
-  function scSnapshot() {
+  function scBackupNow() {
     // Folder-export trigger: honest error when auto-backup is OFF.
     if (state.autoexport === "off") {
       setSyncMsgRaw("err", window.t("sync.err.autobackup.off"));
@@ -2706,9 +2711,10 @@
     wrap.appendChild(btn);
   }
 
-  // Folder-mirror wipe: every orOS-snapshot-*.json in the chosen
-  // backup folder. BEST-EFFORT — a lapsed permission simply skips
-  // it (transient activation expires once the async legs start).
+  // Folder-mirror wipe: every orOS-backup-*.json (and any legacy
+  // orOS-snapshot-*.json from older versions) in the chosen backup
+  // folder. BEST-EFFORT — a lapsed permission simply skips it
+  // (transient activation expires once the async legs start).
   function wipeFolderMirror() {
     if (!fsSupported()) return Promise.resolve(false);
     return loadFolderHandle().then(function (handle) {
@@ -2720,7 +2726,9 @@
           return it.next().then(function (r) {
             if (r.done) return found;
             var e = r.value;
-            if (e && e.name && e.name.indexOf("orOS-snapshot-") === 0) {
+            if (e && e.name &&
+                (e.name.indexOf("orOS-snapshot-") === 0 ||
+                 e.name.indexOf("orOS-backup-") === 0)) {
               found.push(e.name);
             }
             return drain(found);
@@ -2818,7 +2826,7 @@
   var SC_DEFS = [
     { key: "p", label: "sc.desc.push",      fn: scForcePush },
     { key: "o", label: "sc.desc.pull",      fn: scForcePull },
-    { key: "s", label: "sc.desc.snapshot",  fn: scSnapshot },
+    { key: "s", label: "sc.desc.snapshot",  fn: scBackupNow },
     { key: "x", label: "sc.desc.export",    fn: scExportDb },
     { key: "i", label: "sc.desc.info",      fn: showInfoModal },
     { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
@@ -5312,7 +5320,7 @@
     navigator.storage.persist().catch(function () {});
   }
 
-  // Auto-backup boot check — LAST, so snapshots capture the fully
+  // Auto-backup boot check — LAST, so exports capture the fully
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
   

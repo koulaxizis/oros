@@ -88,12 +88,23 @@
       "nav.start":           "Start navigation",
       "nav.exit":            "Exit navigation",
       "nav.exitconfirm":     "Tap again to exit navigation",
-      "nav.mute":           "Mute voice",
+      "nav.mute":            "Mute voice",
       "nav.muted":           "Voice muted",
       "nav.unmute":          "Unmute voice",
       "nav.rerouting":      "Recalculating route…",
       "nav.arrived":         "You have arrived",
-      "nav.gpslost":         "Waiting for GPS signal…"
+      "nav.gpslost":         "Waiting for GPS signal…",
+      "settings.title":     "Maps settings",
+      "settings.tiles":     "Offline tiles",
+      "settings.tiles.clear":"Clear tile cache",
+      "settings.tiles.none":"Cache is empty",
+      "settings.route":     "Last known route",
+      "settings.route.forget":"Forget saved route",
+      "settings.route.none":"No route saved yet",
+      "offline.chip":       "Offline",
+      "offline.enter":       "You are offline — cached areas still work",
+      "offline.leave":       "Back online",
+      "route.restored":     "Last known route restored"
     },
     el: {
       "search.ph":        "Αναζήτηση τοποθεσίας…",
@@ -160,7 +171,18 @@
       "nav.unmute":          "Ενεργοποίηση φωνής",
       "nav.rerouting":       "Επανυπολογισμός διαδρομής…",
       "nav.arrived":         "Έφτασες στον προορισμό",
-      "nav.gpslost":         "Αναμονή σήματος GPS…"
+      "nav.gpslost":         "Αναμονή σήματος GPS…",
+      "settings.title":      "Ρυθμίσεις Χαρτών",
+      "settings.tiles":      "Offline χάρτης",
+      "settings.tiles.clear":"Καθαρισμός cache πλακιδίων",
+      "settings.tiles.none": "Η cache είναι κενή",
+      "settings.route":      "Τελευταία γνωστή διαδρομή",
+      "settings.route.forget":"Διαγραφή αποθηκευμένης διαδρομής",
+      "settings.route.none": "Δεν έχει αποθηκευτεί διαδρομή ακόμα",
+      "offline.chip":        "Εκτός σύνδεσης",
+      "offline.enter":       "Είσαι offline — οι αποθηκευμένες περιοχές λειτουργούν",
+      "offline.leave":       "Επανήλθε η σύνδεση",
+      "route.restored":      "Επαναφορά τελευταίας γνωστής διαδρομής"
     }
   };
 
@@ -569,6 +591,12 @@
   var navRerouteAt = 0;        // last re-route timestamp (debounce)
   var navMuted = false;         // voice guidance muted
 
+  // Wave 5: last-known-route persistence + tile cache bookkeeping
+  var ROUTE_STORAGE_KEY = "oros-maps-route";
+  var TILE_CACHE_NAME = "oros-map-tiles";   // MUST match sw.js
+  var restoring = false;     // true while restoreRoute() repaints — blocks calcRoute()
+  var restoring = false;     // true while restoreRoute() repaints — blocks calcRoute()
+
   function fmtDist(m) {
     if (m < 1000) return Math.round(m) + " m";
     return (m / 1000).toFixed(m < 10000 ? 1 : 0) + " km";
@@ -584,7 +612,7 @@
     ["car", "bike", "foot"].forEach(function (k) {
       $("rp-" + k).classList.toggle("active", k === p);
     });
-    if (routeFrom && routeTo) calcRoute();   // re-route under new mode
+    if (routeFrom && routeTo && !restoring) calcRoute();   // re-route under new mode
   }
 
   function clearRoute() {
@@ -600,6 +628,7 @@
     $("maneuvers").hidden = true;
     $("steps-btn").classList.remove("on");
     $("maneuvers-list").innerHTML = "";
+    try { localStorage.removeItem(ROUTE_STORAGE_KEY); } catch (e) { /* noop */ }
   }
 
   // Entry: user asked for a route TO `place`. Origin = last known
@@ -676,6 +705,8 @@
 
         // Fresh route during live nav → restart step tracking
         if (navActive) resetNavProgress();
+
+        saveRoute();
       })
       .catch(function () {
         clearRoute();
@@ -1000,6 +1031,121 @@
 
   // ========== END LIVE NAVIGATION ==========
 
+  // ========== OFFLINE LAYER (Wave 5) ==========
+  // Last-known-route persistence: full route snapshot so the app
+  // is useful in degraded (offline) mode — polyline, steps, bar.
+  function saveRoute() {
+    if (!routeFrom || !routeTo || !routeCoords.length) return;
+    try {
+      localStorage.setItem(ROUTE_STORAGE_KEY, JSON.stringify({
+        ver: 1,
+        from: routeFrom, to: routeTo,
+        profile: routeProfile,
+        geometry: { type: "LineString", coordinates: routeCoords },
+        steps: lastSteps, distance: lastDist, duration: lastDur
+      }));
+    } catch (e) { /* quota — degraded: next successful route retries */ }
+    updateRouteSavedInfo();
+  }
+
+  function restoreRoute() {
+    var data;
+    try { data = JSON.parse(localStorage.getItem(ROUTE_STORAGE_KEY) || "null"); }
+    catch (e) { return false; }
+    if (!data || !data.from || !data.to ||
+        !Array.isArray(data.geometry.coordinates)) return false;
+
+    routeFrom = data.from; routeTo = data.to;
+    routeProfile = PROFILE_OSRM[data.profile] ? data.profile : "car";
+    lastSteps = Array.isArray(data.steps) ? data.steps : [];
+    lastDist = data.distance || 0;
+    lastDur = data.duration || 0;
+    routeCoords = data.geometry.coordinates;
+
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.geoJSON(data.geometry, {
+      style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
+    }).addTo(map);
+
+    if (!routeStartMarker) {
+      routeStartMarker = L.marker([routeFrom.lat, routeFrom.lon],
+        { icon: makeMarkerIcon(COLOR_ROUTE_START) }).addTo(map);
+    } else { routeStartMarker.setLatLng([routeFrom.lat, routeFrom.lon]); }
+    if (!routeEndMarker) {
+      routeEndMarker = L.marker([routeTo.lat, routeTo.lon],
+        { icon: makeMarkerIcon(COLOR_RESULT) }).addTo(map);
+      if (routeTo.name) bindPlacePopup(routeEndMarker, routeTo);
+    } else { routeEndMarker.setLatLng([routeTo.lat, routeTo.lon]); }
+
+    restoring = true;
+    setRouteProfile(routeProfile);        // paints profile buttons only — no OSRM call
+    restoring = false;
+    $("route-dist").textContent = fmtDist(lastDist);
+    $("route-time").textContent = fmtTime(lastDur);
+    $("route-bar").hidden = false;
+
+    map.fitBounds(routeLine.getBounds(), { padding: [48, 48] });
+    showToast(t("route.restored"));
+    return true;
+  }
+
+  // ---------- Settings drawer: tile stats / clear / route forget ----------
+  function updateTileStats() {
+    var host = $("tile-stats");
+    if (!("caches" in window)) { host.textContent = t("settings.tiles.none"); return; }
+    caches.open(TILE_CACHE_NAME).then(function (cache) {
+      return cache.keys().then(function (keys) {
+        if (!keys.length) { host.textContent = t("settings.tiles.none"); return; }
+        var base = keys.length + " ";
+        if (navigator.storage && navigator.storage.estimate) {
+          navigator.storage.estimate().then(function (est) {
+            host.textContent = base + "· ~" + (est.usage / 1048576).toFixed(1) + " MB";
+          }).catch(function () {
+            host.textContent = base;
+          });
+        } else {
+          host.textContent = base;
+        }
+      });
+    }).catch(function () { host.textContent = t("settings.tiles.none"); });
+  }
+
+  function clearTileCache() {
+    if (!("caches" in window)) return;
+    caches.delete(TILE_CACHE_NAME).then(function () {
+      updateTileStats();
+      showToast(t("settings.tiles.clear"));
+    });
+  }
+
+  function updateRouteSavedInfo() {
+    var host = $("route-saved-info");
+    var raw = null;
+    try { raw = localStorage.getItem(ROUTE_STORAGE_KEY); } catch (e) { /* noop */ }
+    if (!raw || !routeFrom) { host.textContent = t("settings.route.none"); return; }
+    host.textContent = (routeFrom.name || "·") + " → " + (routeTo && routeTo.name || "·");
+  }
+
+  function forgetSavedRoute() {
+    try { localStorage.removeItem(ROUTE_STORAGE_KEY); } catch (e) { /* noop */ }
+    updateRouteSavedInfo();
+  }
+
+  // ---------- Offline indicator (chip + toasts, Weather pattern) ----------
+  function paintOffline(on) { $("offline-chip").hidden = !on; }
+  function initOfflineChip() {
+    paintOffline(!navigator.onLine);
+    window.addEventListener("offline", function () {
+      paintOffline(true);
+      showToast(t("offline.enter"));
+    });
+    window.addEventListener("online", function () {
+      paintOffline(false);
+      showToast(t("offline.leave"));
+    });
+  }
+  // ========== END OFFLINE LAYER ==========
+
   // ---------- 12. Saved places: storage ops + drawer + markers ----------
   function addPlace(place) {
     state.places.push({
@@ -1137,8 +1283,33 @@
     if (!map) return;
     var lat = parseFloat(params.lat);
     var lon = parseFloat(params.lon);
-    if (isNaN(lat) || isNaN(lon)) return;
-    placeResult(lat, lon, params.label || "", "");
+    if (!isNaN(lat) && !isNaN(lon)) {
+      placeResult(lat, lon, params.label || "", "");
+      return;
+    }
+    // q-mode (Wave 6): free-text address from another app —
+    // geocode via Photon, then drop the result marker.
+    if (typeof params.q === "string" && params.q.trim()) {
+      geocodeAndShow(params.q.trim(), params.label);
+    }
+  }
+
+  function geocodeAndShow(query, label) {
+    if (!navigator.onLine) { showToast(t("search.offline")); return; }
+    fetch("https://photon.komoot.io/api/?limit=1&lang=" + LANG + "&q=" +
+          encodeURIComponent(query))
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (json) {
+        var f = json.features && json.features[0];
+        if (!f || !f.geometry) { showToast(t("search.empty")); return; }
+        var c = f.geometry.coordinates;
+        var p = f.properties || {};
+        var subParts = [p.city || p.town || p.village || p.county,
+                        p.state, p.country].filter(Boolean);
+        placeResult(parseFloat(c[1]), parseFloat(c[0]),
+                    label || p.name || query, subParts.join(", "));
+      })
+      .catch(function () { showToast(t("search.err")); });
   }
 
   window.__orosMapsOpen = function (params) {
@@ -1320,6 +1491,21 @@
 
     // Map click handler (pick mode)
     map.on("click", handleMapClick);
+
+    // Settings drawer (Wave 5)
+    $("mapsettings-btn").addEventListener("click", function () {
+      var panel = $("mapsettings");
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        updateTileStats();
+        updateRouteSavedInfo();
+      }
+    });
+    $("mapsettings-close").addEventListener("click", function () {
+      $("mapsettings").hidden = true;
+    });
+    $("tiles-clear").addEventListener("click", clearTileCache);
+    $("route-forget").addEventListener("click", forgetSavedRoute);
   }
 
   // ---------- Boot ----------
@@ -1330,7 +1516,17 @@
   renderSavedLayer();
   applyI18n();
   wire();
-  consumePending();
+  var bootedViaBridge = false;
+  try { bootedViaBridge = !!sessionStorage.getItem("oros-maps-open"); }
+  catch (e) { bootedViaBridge = false; }
 
-  setTimeout(function () { showToast(t("toast.welcome")); }, 800);
+  consumePending();
+  restoreRoute();
+  initOfflineChip();
+
+  setTimeout(function () {
+    if (!bootedViaBridge && !localStorage.getItem(ROUTE_STORAGE_KEY)) {
+      showToast(t("toast.welcome"));
+    }
+  }, 800);
 })();

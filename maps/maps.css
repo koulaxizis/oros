@@ -716,6 +716,98 @@ body.nav #maneuvers { display: none !important; }
   background: rgba(224, 108, 117, 0.12);
 }
 
+/* ---------- 8c. Offline chip + Maps settings (Wave 5) ---------- */
+#offline-chip {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bar-bg);
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  box-shadow: 0 4px 16px var(--shadow);
+  backdrop-filter: blur(6px);
+}
+#offline-chip svg { flex-shrink: 0; }
+
+#mapsettings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  width: min(300px, calc(100vw - 60px));
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 32px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  animation: settings-in 0.22s ease;
+}
+@keyframes settings-in {
+  from { transform: translateX(14px); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+#mapsettings header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bar-bg);
+  flex-shrink: 0;
+}
+#mapsettings h3 { flex: 1; font-size: 14px; color: var(--accent); }
+#mapsettings-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-dim);
+  transition: color 0.15s, background 0.15s;
+}
+#mapsettings-close:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+
+#mapsettings-body { padding: 14px; overflow-y: auto; }
+#mapsettings-body h4 {
+  font-size: 12px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 14px 0 8px;
+}
+#mapsettings-body h4:first-child { margin-top: 0; }
+#mapsettings-body p { font-size: 13px; color: var(--text); margin: 0 0 10px; }
+.ms-btn {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.ms-btn.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: rgba(224, 108, 117, 0.10);
+}
+
 /* ---------- 9. Toast ---------- */
 #toast {
   position: fixed;

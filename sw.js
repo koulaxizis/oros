@@ -19,9 +19,35 @@
 // APP_VERSION format (shell may store "0.35.07" or "v0.35.07").
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
-var CACHE_VERSION = "oros-v0.38.23";
+var CACHE_VERSION = "oros-v0.38.22";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
+// MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
+// Deliberately OUTSIDE CACHE_VERSION — tiles must survive SW
+// updates (browsing history is expensive to rebuild). Growth is
+// bounded by TILE_MAX via occasional trims (oldest first).
+var TILE_CACHE = "oros-map-tiles";
+var TILE_MAX   = 2000;
+var tilePutCount = 0;
+function isTileHost(hostname) {
+  return hostname === "tile.openstreetmap.org" ||
+         hostname.slice(-21) === "tile.openstreetmap.org" ||
+         hostname === "tile.openstreetmap.fr" ||
+         hostname.slice(-20) === "tile.openstreetmap.fr" ||
+         hostname === "server.arcgisonline.com" ||
+         hostname.slice(-23) === "server.arcgisonline.com";
+}
+function trimTileCache() {
+  return caches.open(TILE_CACHE).then(function (cache) {
+    return cache.keys().then(function (keys) {
+      var excess = keys.length - TILE_MAX;
+      if (excess <= 0) return;
+      return Promise.all(keys.slice(0, excess).map(function (k) {
+        return cache.delete(k);
+      }));
+    });
+  });
+}
 
 var PRECACHE_URLS = [
   "./",
@@ -165,7 +191,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -196,6 +222,34 @@ self.addEventListener("fetch", function (event) {
   if (request.method !== "GET") return;
 
   var url = new URL(request.url);
+
+  // MAPS-TILES: tile servers are cross-origin, but they are pure
+  // raster GETs — cache-first gives us offline maps for every
+  // area the user has already seen. Opaque responses (no-cors
+  // image requests) are storable via put() and servable back.
+  if (isTileHost(url.hostname)) {
+    event.respondWith(
+      caches.open(TILE_CACHE).then(function (cache) {
+        return cache.match(url).then(function (hit) {
+          if (hit) return hit;
+          return fetch(request).then(function (resp) {
+            if (resp && (resp.ok || resp.type === "opaque")) {
+              var copy = resp.clone();
+              event.waitUntil(cache.put(url, copy).then(function () {
+                // Bounded growth: trim occasionally, not per-tile
+                if (++tilePutCount % 100 === 0) return trimTileCache();
+              }));
+            }
+            return resp;
+          }).catch(function () {
+            return Response.error();   // offline & not cached → Leaflet shows its own blank
+          });
+        });
+      })
+    );
+    return;
+  }
+
   if (url.origin !== self.location.origin) return;   // Dropbox & externals: untouched
 
   // S1 FIX: apps.json is NETWORK-FIRST. It is fetched unversioned
