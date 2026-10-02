@@ -177,6 +177,9 @@
       "rel.manager": "Manager",
       "rel.other": "Other",
       "ct.back": "Back",
+      "ct.share": "Share",
+      "ct.share.done": "Contact copied to clipboard",
+      "ct.share.fail": "Could not copy — please retry",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -286,7 +289,10 @@
       "rel.colleague": "Συνάδελφος",
       "rel.manager": "Αφεντικό",
       "rel.other": "Αλλη",
-      "ct.back": "Πίσω"
+      "ct.back": "Πίσω",
+      "ct.share": "Κοινοποίηση",
+      "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
+      "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά"
     }
   };
   function t(k) {
@@ -1104,6 +1110,10 @@ function ensureViewCss() {
     ".ct-view-note{font-size:13px;white-space:pre-wrap;line-height:1.5;" +
       "padding-top:8px;border-top:1px solid var(--border,#333)}" +
     ".ct-view-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}" +
+    ".ct-view-share{border:1px solid var(--border,#333);background:transparent;" +
+      "color:var(--text-dim,#999);border-radius:8px;padding:8px 18px;font:inherit;" +
+      "cursor:pointer;font-weight:600}" +
+    ".ct-view-share:hover{color:var(--text,#eee);border-color:var(--text-dim,#999)}" +
     ".ct-view-edit{border:1px solid var(--accent,#d4af37);background:transparent;" +
       "color:var(--accent,#d4af37);border-radius:8px;padding:8px 18px;font:inherit;" +
       "cursor:pointer;font-weight:600}" +
@@ -1117,6 +1127,79 @@ function ensureViewCss() {
 function closeViewCard() {
   var ov = $("ct-view");
   if (ov) ov.parentNode.removeChild(ov);
+}
+
+// Full plain-text dump of a contact — one line per field, typed,
+// search-friendly. Same content goes to the clipboard (desktop)
+// and the Web Share sheet (mobile).
+function shareText(c) {
+  var L = [];
+  var head = displayName(c);
+  var sb = subLine(c);
+  L.push(sb ? head + " — " + sb : head);
+  if (c.nickname) L.push(t("ct.field.nickname") + ": " + c.nickname);
+  if (c.org) L.push(t("ct.field.org") + ": " + c.org);
+  if (c.jobTitle) L.push(t("ct.field.jobtitle") + ": " + c.jobTitle);
+  c.phones.forEach(function (p) {
+    L.push(t("ct.field.phones") + " (" + t("ty." + p.type) + "): " + p.v);
+  });
+  c.emails.forEach(function (e) {
+    L.push(t("ct.field.emails") + " (" + t("ty." + e.type) + "): " + e.v);
+  });
+  c.addresses.forEach(function (a) {
+    var txt = [a.street, a.city, [a.zip, a.region].filter(Boolean).join(" "), a.country]
+      .filter(Boolean).join(", ");
+    L.push(t("ct.field.addresses") + " (" + t("ty." + a.type) + "): " + txt);
+  });
+  c.websites.forEach(function (w) {
+    L.push(t("ct.field.websites") + " (" + t("ty." + w.type) + "): " + w.v);
+  });
+  c.im.forEach(function (m) {
+    L.push(t("ct.field.im") + " (" + t("ty." + m.type) + "): " + m.v);
+  });
+  c.events.forEach(function (e) {
+    L.push(t("evt." + e.type) + ": " + evtDateText(e));
+  });
+  (c.relations || []).forEach(function (r) {
+    var o = contactById(r.with);
+    L.push(t("rel." + r.type) + ": " + (o ? displayName(o) : t("ct.unnamed")));
+  });
+  if (c.note) L.push(t("ct.field.note") + ": " + c.note);
+  return L.join("\n");
+}
+
+// Legacy fallback for non-secure contexts / older browsers where
+// the async Clipboard API is unavailable (execCommand path).
+function legacyCopy(text) {
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  return ok;
+}
+
+// Mobile (navigator.share exists) → native share sheet with the
+// full text. Desktop → clipboard copy + toast. Nothing stored.
+function shareContact(c) {
+  var text = shareText(c);
+  if (navigator.share) {
+    navigator.share({ title: displayName(c), text: text }).catch(function () {});
+    return;
+  }
+  var done = function () { notifyTransient(t("ct.share.done")); };
+  var fail = function () { notifyTransient(t("ct.share.fail")); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () {
+      if (legacyCopy(text)) done(); else fail();
+    });
+    return;
+  }
+  if (legacyCopy(text)) done(); else fail();
 }
 
 // One row: dim key on the left, value on the right (link when an
@@ -1291,6 +1374,14 @@ function openViewCard(c) {
 
   var foot = document.createElement("div");
   foot.className = "ct-view-foot";
+  var sh = document.createElement("button");
+  sh.type = "button";
+  sh.className = "ct-view-share";
+  sh.textContent = t("ct.share");
+  sh.addEventListener("click", function () {
+    shareContact(c);
+  });
+  foot.appendChild(sh);
   var ed = document.createElement("button");
   ed.type = "button";
   ed.className = "ct-view-edit";

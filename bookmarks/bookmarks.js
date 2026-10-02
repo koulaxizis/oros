@@ -724,6 +724,37 @@ function buildRow(it, searchMode) {
     li.appendChild(chip);
   }
 
+  const favBtn = document.createElement("button");
+  favBtn.className = "open-btn";
+  favBtn.type = "button";
+  favBtn.title = it.fav ? t("fav.remove") : t("fav.add");
+  favBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="' +
+    (it.fav ? "currentColor" : "none") +
+    '" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round"><path d="M12 2l2.9 6.26 6.85.74-5.1 4.6 ' +
+    '1.43 6.77L12 16.9l-6.08 3.47 1.43-6.77-5.1-4.6 6.85-.74z"/></svg>';
+  favBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleFav(it.id);
+  });
+  li.appendChild(favBtn);
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "open-btn";
+  editBtn.type = "button";
+  editBtn.title = t("item.edit");
+  editBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 ' +
+    '20.5 2 22l1.5-5.5z"/></svg>';
+  editBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openItemDialog(it.id);
+  });
+  li.appendChild(editBtn);
+
   const openBtn = document.createElement("button");
   openBtn.className = "open-btn";
   openBtn.type = "button";
@@ -746,9 +777,7 @@ function buildRow(it, searchMode) {
       openItem(it.id);
     }
   });
-  li.addEventListener("dblclick", () => {
-    if (!selectionMode) openItemDialog(it.id);
-  });
+ 
   if (!selectionMode) {
     wireRowDrag(li, it.id);
     wireLongPress(li, it.id);

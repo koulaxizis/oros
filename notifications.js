@@ -164,6 +164,9 @@
     state.slice.settings.settingsRev = (state.slice.settings.settingsRev || 0) + 1;
     noteChange();          // user action → sync engine must know
     saveSliceThrottled(500);
+    // Position is visual, not data — apply immediately to the live
+    // stack (applyStackPositions no-ops until the stack exists).
+    if (key === 'position') applyStackPosition();
   }
   
     // ===== SCHEDULER ENGINE — HYBRID PULL-DESIGN =====
@@ -423,7 +426,10 @@
     
     // Append to stack FIRST (newest-first) — must precede the
     // observer, which attaches to the stack itself.
-    if (!toastStack) ensureToastStack();
+    if (!toastStack) {
+      ensureToastStack();
+      applyStackPosition();
+    }
     toastStack.insertBefore(toast, toastStack.firstChild);
     toastQueue.unshift(toast);
 
@@ -991,6 +997,7 @@
 
     // Build GNOME-style toast stack container (top-right, below taskbar)
     ensureToastStack();
+    applyStackPosition();
 
     // Visibility change hook (mobile catch-up)
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -1021,6 +1028,34 @@
   };
 
   // ===== STACK CONTAINER CREATION =====
+  // Reposition the LIVE stack container from the persisted
+  // setting. Runs on boot, on every position change and after
+  // lazy stack creation — the container is never rebuilt, only
+  // moved (open toasts keep their DOM/observers intact).
+  function applyStackPosition() {
+    if (!toastStack) return;
+    var pos = getPositionStyles(getSetting('position', 'top-right'));
+    // Wipe ALL placement keys first — switching from e.g.
+    // 'bottom-left' back to 'top-right' must clear the old
+    // bottom/left, not layer the new top/right over them.
+    toastStack.style.top = '';
+    toastStack.style.bottom = '';
+    toastStack.style.left = '';
+    toastStack.style.right = '';
+    toastStack.style.transform = '';
+    var k;
+    for (k in pos) {
+      if (Object.prototype.hasOwnProperty.call(pos, k) && pos[k]) {
+        toastStack.style[k] = pos[k];
+      }
+    }
+    // Vertical alignment: toasts stack downward from the top edge,
+    // upward from the bottom edge (GNOME shell convention).
+    toastStack.style.justifyContent = '';
+    if (pos.bottom) toastStack.style.flexDirection = 'column-reverse';
+    else toastStack.style.flexDirection = 'column';
+  }
+
   function ensureToastStack() {
     if (toastStack) return toastStack;
     

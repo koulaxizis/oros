@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.22";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.23";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3265,6 +3265,8 @@
     } catch (e) { return false; }
   }
 
+  var wxBusy = false;   // in-flight guard — never stack parallel fetches
+
   function wxFetch(force) {
     var w = wxRead();
     if (!w.on || w.lat === null || w.lon === null || !navigator.onLine) return;
@@ -3277,11 +3279,17 @@
       if (adopted && (Date.now() - adopted.at) < WX_MIN_MS) return;
     }
 
+    if (wxBusy) return;   // a fetch is already in flight — never stack
     if (!force) {
       var last = parseInt(localStorage.getItem(WX_LAST_KEY) || "0", 10) || 0;
       if (Date.now() - last < WX_MIN_MS) return;
     }
-    localStorage.setItem(WX_LAST_KEY, String(Date.now()));
+    wxBusy = true;
+    // The 30-min throttle is bought ONLY by a SUCCESSFUL fetch now
+    // (see success branch below). The old stamp-before-fetch died
+    // with the page — tab close or the SW controllerchange auto-
+    // reload mid-flight left the stamp armed and the cache empty,
+    // locking the chip in "waiting" for up to 30 minutes.
     // C1: same endpoint as the Weather app (timezone=auto + hourly/daily
     // fields we don't use here but ensure the SAME calculation path).
     // The tray only cares about current temp/code, but matching the
@@ -3305,6 +3313,7 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (wxKill) clearTimeout(wxKill);
+        wxBusy = false;
         if (d && d.current_weather &&
             typeof d.current_weather.temperature === "number") {
           localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
@@ -3312,10 +3321,19 @@
             temp: d.current_weather.temperature,
             code: d.current_weather.weathercode
           }));
+          // Success is the only path that buys the 30-min throttle.
+          localStorage.setItem(WX_LAST_KEY, String(Date.now()));
           wxRenderChip();
+        } else {
+          // Open-Meteo replied but with no usable payload (rate
+          // limit / error body): same 2-min cooldown as a network
+          // failure — never the silent 30-min lockout.
+          localStorage.setItem(WX_LAST_KEY,
+            String(Date.now() - WX_MIN_MS + WX_RETRY_MS));
         }
       })
       .catch(function () {
+        wxBusy = false;
         /* offline/blocked — chip keeps last state. BUT a FAILED fetch
            must not buy the full 30-min throttle: rewind the stamp to a
            short retry window so the next visibility/online event

@@ -502,6 +502,12 @@ function ensureHost(){
     }
   }catch(e){ /* no Media Session support — degrade gracefully */ }
 
+  // FIX: the host was built and returned, but never ATTACHED to
+  // the shell window — w.__orosRadioHost stayed undefined forever,
+  // so radioTrayTick() found no host and the tray chip never
+  // appeared. Guarded: a previous generation may still hold the
+  // same live host (early-return above handles that case anyway).
+  if(!w.__orosRadioHost) w.__orosRadioHost = host;
   return host;
 }
 

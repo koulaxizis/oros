@@ -299,7 +299,7 @@ small {
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subble, #2a2824);
+  border-bottom: 1px solid var(--border-subtle, #2a2824);
 }
 
 .history-list {
@@ -315,7 +315,12 @@ small {
   padding: 10px 12px;
   border-radius: 8px;
   background: var(--bg-surface, #23211d);
+  border: none;
   border-left: 3px solid var(--border-subtle, #2a2824);
+  color: var(--text-primary, #e8eaf0);
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.15s ease;
 }
@@ -478,7 +483,11 @@ dialog::backdrop {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  background: transparent;
+  border: none;
   border-bottom: 2px solid transparent;
+  color: var(--text-primary, #e8eaf0);
+  font-family: inherit;
   opacity: 0.7;
   transition: opacity 0.15s ease, border-color 0.15s ease;
 }

@@ -257,7 +257,7 @@ input:focus, textarea:focus, select:focus {
 #items li.item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 10px;
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -310,17 +310,22 @@ input:focus, textarea:focus, select:focus {
   border: 1px solid var(--border);
   border-radius: 999px;
 }
-.item.open-btn {
+.item .open-btn {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--text-dim);
   border-radius: 8px;
+  padding: 0;
+  margin-left: 4px;
 }
-.item.open-btn:hover { color: var(--accent); background: var(--accent-soft); }
+.item .open-btn:hover { 
+  color: var(--accent); 
+  background: var(--accent-soft); 
+}
 
 /* ---------- 7. Drag & drop states ---------- */
 li.item.dragging {
@@ -471,8 +476,6 @@ dialog menu button.danger:hover {
   /* iOS zoom guard: inputs must be >= 16px */
   #quick-add, #search { font-size: 16px; }
 
-  #items li.item { padding: 9px; }
-  .item.open-btn { display: none; }
   dialog { width: calc(100vw - 24px); }
 }
 @media (hover: none) {
@@ -528,6 +531,15 @@ dialog menu button.danger:hover {
   white-space: nowrap;
   min-width: 0;      /* flex children need this to shrink + ellipsize */
   flex-shrink: 1;
+}
+/* Mobile: keep all three buttons visible but compact */
+@media (max-width: 480px) {
+  #items li.item { padding: 8px; gap: 6px; }
+  .item .open-btn {
+    width: 28px;
+    height: 28px;
+    margin-left: 2px;
+  }
 }
 
 /* ---------- 14. Active tag filter row ---------- */
