@@ -187,6 +187,7 @@
       "ct.share": "Share",
       "ct.share.done": "Contact copied to clipboard",
       "ct.share.fail": "Could not copy — please retry",
+      "ct.maps": "Show on map",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -306,7 +307,8 @@
       "ct.back": "Πίσω",
       "ct.share": "Κοινοποίηση",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
-      "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά"
+      "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά",
+      "ct.maps": "Εμφάνιση στον χάρτη"
     }
   };
   function t(k) {
@@ -1164,6 +1166,8 @@ function ensureViewCss() {
     ".ct-vs-key{color:var(--text-dim,#999);flex-shrink:0}" +
     ".ct-vs-val{color:var(--text,#eee);text-decoration:none;word-break:break-word;text-align:right}" +
     "a.ct-vs-val:hover{color:var(--accent,#d4af37);text-decoration:underline}" +
+    ".ct-vs-val.map-link{cursor:pointer}" +
+    ".ct-vs-val.map-link:hover{color:var(--accent,#d4af37);text-decoration:underline}" +
     ".ct-view-note{font-size:13px;white-space:pre-wrap;line-height:1.5;" +
       "padding-top:8px;border-top:1px solid var(--border,#333)}" +
     ".ct-view-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}" +
@@ -1269,6 +1273,31 @@ function shareContact(c) {
     return;
   }
   if (legacyCopy(text)) done(); else fail();
+}
+
+// ===== MAPS BRIDGE (Wave 6) =====
+// Structured address → geocode query. Field order mirrors
+// shareText's address line: street, city, "zip region", country.
+function addrToQuery(a) {
+  return [a.street, a.city,
+    [a.zip, a.region].filter(Boolean).join(" "), a.country]
+    .filter(Boolean).join(", ");
+}
+
+// Shell bridge: parent dispatch (__orosMapsOpen) when running
+// inside orOS — live push if Maps is open, staged open otherwise.
+// Standalone fallback: maps page in a new tab with ?q= (geocode
+// on boot, see maps.js PATCH-47).
+function openInMaps(query, label) {
+  try {
+    if (window.parent &&
+        typeof window.parent.__orosOpenMapsQuery === "function") {
+      window.parent.__orosOpenMapsQuery(query, label || "");
+      return;
+    }
+  } catch (e) { /* cross-origin guard */ }
+  window.open("/maps/?q=" + encodeURIComponent(query),
+    "_blank", "noopener,noreferrer");
 }
 
 // One row: dim key on the left, value on the right (link when an
@@ -1385,10 +1414,19 @@ function openViewCard(c) {
   if (c.addresses.length) {
     var ad = viewSection(card, "ct.field.addresses");
     c.addresses.forEach(function (a) {
-      var txt = [a.street, a.city,
-        [a.zip, a.region].filter(Boolean).join(" "), a.country]
-        .filter(Boolean).join(", ");
-      viewRow(ad, t("ty." + a.type), txt);
+      var txt = addrToQuery(a);
+      var v = viewRow(ad, t("ty." + a.type), txt);
+      v.classList.add("map-link");
+      v.title = t("ct.maps");
+      v.insertAdjacentHTML("beforeend",
+        ' <svg width="11" height="11" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+        'stroke-linejoin="round" style="opacity:.6;vertical-align:-1px">' +
+        '<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>' +
+        '<circle cx="12" cy="10" r="3"/></svg>');
+      v.addEventListener("click", function () {
+        openInMaps(txt, displayName(c));
+      });
     });
   }
   if (c.websites.length) {

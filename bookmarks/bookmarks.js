@@ -139,9 +139,10 @@ const STR = {
     "import.none": "No bookmarks found in this file",
     "exported": "Exported {n} bookmark(s)",
     "ctx.open": "Open",
-    "ctx.edit": "Edit",
-    "ctx.move": "Move to…",
-    "ctx.delete": "Delete",
+  "ctx.open_maps": "Open in Maps",
+  "ctx.edit": "Edit",
+  "ctx.move": "Move to…",
+  "ctx.delete": "Delete",
     "time.just": "just now",
     "time.min": "{n} min ago",
     "time.hour": "{n} h ago",
@@ -224,6 +225,7 @@ const STR = {
     "import.none": "Δεν βρέθηκαν συντομεύσεις σε αυτό το αρχείο",
     "exported": "Εξήχθησαν {n} συντόμευση(εις)",
     "ctx.open": "Άνοιγμα",
+    "ctx.open_maps": "Άνοιγμα στον χάρτη",
     "ctx.edit": "Επεξεργασία",
     "ctx.move": "Μετακίνηση σε…",
     "ctx.delete": "Διαγραφή",
@@ -795,6 +797,26 @@ function openItem(id) {
   save();
   window.open(it.url, "_blank", "noopener,noreferrer");
   renderList();
+}
+
+/* Open bookmark location in orOS Maps app (bridge integration)
+   Combines title + note as geocode query (Photon API via Maps).
+   Works in two modes:
+   1. Inside orOS shell: calls window.parent.__orosMapsOpen (iframe comms)
+   2. Standalone PWA: opens Maps URL with ?q= param (fallback) */
+function openInMaps(it) {
+  const query = it.title + (it.note ? " " + it.note : "");
+
+  // 1. Shell mode: geocode bridge on the parent (orOS desktop)
+  try {
+    if (window.parent && typeof window.parent.__orosOpenMapsQuery === "function") {
+      window.parent.__orosOpenMapsQuery(query, it.title || "");
+      return;
+    }
+  } catch (e) {}
+
+  // 2. Standalone PWA mode: open Maps with query param (new window/tab)
+  window.open("/maps/?q=" + encodeURIComponent(query), "_blank", "noopener,noreferrer");
 }
 
 /* ===== 4a. FAVORITES (quick-launch strip) ===== */
@@ -1718,6 +1740,7 @@ function showCtxMenu(id, x, y) {
   }
 
   row(t("ctx.open"), () => openItem(id));
+  row(t("ctx.open_maps"), () => openInMaps(it)); // NEW: Open in Maps integration
   row(t("ctx.edit"), () => openItemDialog(id));
   row(it.fav ? t("fav.remove") : t("fav.add"), () => toggleFav(id));
   const others = folderList().filter((f) => f.id !== it.folderId);

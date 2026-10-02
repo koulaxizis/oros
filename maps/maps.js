@@ -1520,6 +1520,17 @@
   try { bootedViaBridge = !!sessionStorage.getItem("oros-maps-open"); }
   catch (e) { bootedViaBridge = false; }
 
+  /* Wave 6: standalone deep-link (?q=…) — bookmark/contact cards
+     opening Maps in a new tab land here. Geocode + marker, and
+     suppress the welcome toast (it's a bridge boot). */
+  try {
+    var urlQ = new URLSearchParams(location.search).get("q");
+    if (urlQ && urlQ.trim()) {
+      bootedViaBridge = true;
+      geocodeAndShow(urlQ.trim(), "");
+    }
+  } catch (e) {}
+
   consumePending();
   restoreRoute();
   initOfflineChip();

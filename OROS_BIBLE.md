@@ -1452,3 +1452,50 @@ UNDER CONSIDERATION
 Retitle sc.desc.snapshot from "Take database snapshot now" to "Export backup to folder now" (terminology alignment).
 Delete orphaned translation keys sync.ok.snapshot.saved and sync.err.snapshot.quota.
 Wrap exportBodyNow()'s JSON.parse in try/catch inside maybeAutoExport.
+
+---
+
+Weather tray — boot "Athens - waiting..." fix
+Problem: On boot, the tray chip showed Athens - waiting... indefinitely. Opening the Weather app "fixed" it.
+
+Root cause: wxAdoptAppCache() adopted the Weather app's city cache unconditionally on every 60s tick, regardless of freshness. A stale app entry (e.g. 7h old, from the app not being opened all day) was copied over the tray's freshly fetched cache. Result: chip paints from stale cache (>3h → "waiting") while WX_LAST was stamped by the successful fetch, arming the 30-min throttle — nothing retried, nothing recovered until the app itself refreshed. Diagnostic confirmed: cache age 420 min vs. last-fetch age 8 min.
+
+Fixes (shell.js):
+
+Freshness guard in wxAdoptAppCache — the app cache is now adopted only when it is strictly newer than the current tray cache (p.at <= cur.at → skip). "Newer wins" replaces "app wins": the two sources can no longer overwrite each other's fresh data.
+Stale-cache throttle bypass in wxFetch — when the 30-min throttle is armed but the cache is older than the throttle period itself (the "successful fetch, waiting chip" contradiction), the fetch proceeds instead of returning. Self-heals the stuck state at the next tick instead of holding it for up to 30 min.
+Notes:
+
+Behavior during genuine network outage is unchanged apart from retry cadence in the pathological stale-cache case (~60s via the clock-tick retry instead of 2-min); failure-notification dedup (one inbox line per day) still applies.
+wxAdoptAppCache remains the single nearest-city source of truth (~15km, WX_NEAR_DEG) for both the tray chip and the morning briefing — no change to that contract.
+Project mantra intact: offline-first (offline never paints a fake temperature), no external deps beyond Open-Meteo, no user data touched.
+Files changed: shell.js (two patches, wxAdoptAppCache + wxFetch).
+
+Under consideration: none.
+
+---
+
+## v0.38.26 — 02 Oct 2026
+
+### REMOVED
+- Translation keys `sync.ok.snapshot.saved` and `sync.err.snapshot.quota` (EN and EL) — unused since the snapshot subsystem retirement.
+- All legacy references to the deprecated localStorage-based snapshot system.
+
+### CHANGED
+- Terminology alignment throughout UI and codebase: `snapshot` → `backup` / `αντίγραφο`:
+  - Button label `sc.desc.snapshot` updated to "Export backup to folder now" / "Εξαγωγή αντιγράφου σε φάκελο τώρα"
+  - Translation `sync.ok.fsfolder.saved` updated to "Backup written to folder"
+  - Reset hint `sc.reset.hint` updated to mention "folder backups" instead of "snapshots"
+- Auto-export function renamed internally: `writeSnapshotFile()` → `writeBackupFile()`
+- Manual export shortcut callback renamed: `scSnapshot()` → `scBackupNow()`
+- Backup file naming convention updated: `orOS-snapshot-YYYY-MM-DD.json` → `orOS-backup-YYYY-MM-DD.json`
+- Factory reset description clarified to distinguish between cloud sync, folder backups, and local settings
+
+### IMPROVED
+- `maybeAutoExport()` now wraps `exportBodyNow()` in try/catch — an engine hiccup during `JSON.parse(window.orosSync.exportData())` degrades to a silent skip instead of an uncaught async error on boot or visibility-change path
+- Legacy cleanup routine (`wipeFolderMirror`) retains compatibility with older `orOS-snapshot-*.json` files from previous versions while targeting new `orOS-backup-*.json` files
+
+### NOTES
+- The translation key name `sc.desc.snapshot` was intentionally retained (only its displayed text changed) to avoid cached shell.js / new translations.js mismatch that would briefly show raw key names
+- Dropbox Sync, manual database export, and auto folder export remain fully functional and independent
+- No user data affected by this change; existing snapshots/backups remain valid

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.26";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.38.27";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -317,7 +317,7 @@
   // folder chosen → the check stamps AUTOEXPORT_LAST and stays
   // silent: honest silence, never a false "saved".
 
-  // Export body captured NOW — the same shape writeSnapshotFile
+  // Export body captured NOW — the same shape writeBackupFile
   // serializes into the real file.
   function exportBodyNow() {
     var payload = JSON.parse(window.orosSync.exportData());
@@ -335,7 +335,7 @@
   // Returns TRUE when an export was DISPATCHED, FALSE on every
   // no-op path (schedule guard, missing engine). The write itself
   // is async best-effort: the "saved" confirmation fires ONLY when
-  // the file actually landed (inside writeSnapshotFile).
+  // the file actually landed (inside writeBackupFile).
   function maybeAutoExport(force) {
     if (state.autoexport === "off") return false;
     if (!window.orosSync || typeof window.orosSync.exportData !== "function") return false;
@@ -2478,7 +2478,7 @@
       return;
     }
     // Dispatch a LIVE folder export NOW. The "saved" confirmation
-    // fires inside writeSnapshotFile — only when the file really
+    // fires inside writeBackupFile — only when the file really
     // landed in the user-chosen folder.
     maybeAutoExport(true);
   }
@@ -3051,6 +3051,12 @@
       if (!best || bestDist >= WX_NEAR_DEG) return false;
       var p = cache[best.id];
       if (!p || !p.at || !p.current) return false;
+      // Freshness guard: the app is the source of truth only when its
+      // data is NEWER than what the tray already holds. Unconditional
+      // adoption let a stale app cache overwrite a fresh tray fetch
+      // on every 60s tick — the chip stayed "waiting" forever.
+      var cur = wxCached();
+      if (cur && cur.at && p.at <= cur.at) return false;
       localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
         at:   p.at,
         temp: p.current.temp,
@@ -3077,7 +3083,14 @@
     if (wxBusy) return;   // a fetch is already in flight — never stack
     if (!force) {
       var last = parseInt(localStorage.getItem(WX_LAST_KEY) || "0", 10) || 0;
-      if (Date.now() - last < WX_MIN_MS) return;
+      if (Date.now() - last < WX_MIN_MS) {
+        // Stale-cache bypass: an armed throttle with a stale cache is
+        // the exact "successful fetch, waiting chip" contradiction —
+        // bypass only when the cache is older than the throttle period
+        // itself, never during the normal fresh-data cycle.
+        var sc = wxCached();
+        if (sc && sc.at && (Date.now() - sc.at) < WX_MIN_MS) return;
+      }
     }
     wxBusy = true;
     // The 30-min throttle is bought ONLY by a SUCCESSFUL fetch now
@@ -5210,6 +5223,35 @@
       if (raw) sessionStorage.removeItem("oros-maps-open");
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
+  };
+
+  // Wave 6 — Maps geocode deep-link bridge (pattern: Contacts/
+  // Cycle/Mood). Payload: free-text query + optional label. Το
+  // shell ΔΕΝ γεωκωδικοποιεί — το Maps (geocodeAndShow, Photon)
+  // είναι ο μόνος κάτοχος της λογικής. App ανοιχτό → live push στο
+  // iframe· κλειστό → stage στο ΙΔΙΟ "oros-maps-open" key (το
+  // maps.js consumePending → openAtLocation χειρίζεται και
+  // {lat,lon,label} και {q,label} — PATCH-38) + άνοιγμα app.
+  window.__orosOpenMapsQuery = function (query, label) {
+    if (typeof query !== "string" || !query.trim()) return;
+    var payload = {
+      q: query.trim(),
+      label: (typeof label === "string") ? label : ""
+    };
+    if (state.running && state.running.id === "maps") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosMapsOpen === "function") {
+          f.contentWindow.__orosMapsOpen(payload);
+          return;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-maps-open", JSON.stringify(payload));
+    } catch (e) {}
+    openAppById("maps");
   };
 
   // Kanban deep-link bridge (Calendar feed rows → συγκεκριμένη κάρτα).
