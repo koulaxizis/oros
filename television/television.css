@@ -1,0 +1,398 @@
+/* ============================================================
+   orOS — Television app stylesheet
+   Palette: shell CSS variables via inheritPalette (G3).
+   Fallback values below only paint the standalone case.
+   ============================================================ */
+
+:root {
+  /* Fallbacks (oros default skin) — overwritten at boot */
+  --bg:          #14120d;
+  --text:        #f0ead9;
+  --text-dim:    #a89f8a;
+  --accent:      #d4af37;
+  --accent-hover:#ecc75f;
+  --accent-soft: rgba(212, 175, 55, 0.20);
+  --panel-bg:    #1d1a13;
+  --border:      #322d20;
+  --shadow:      rgba(0, 0, 0, 0.50);
+  --danger:      #e06c75;
+  --ok:          #87cf3e;
+  --warn:        #f28c5a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#tv-app { display: flex; flex-direction: column; height: 100dvh; }
+
+/* ---------- Toolbar ---------- */
+.tv-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tv-tabs { display: flex; gap: 6px; }
+.tv-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 8px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.tv-tab:hover { background: var(--accent-soft); color: var(--text); }
+.tv-tab.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tv-tools {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 10px;
+  flex-wrap: wrap;                 /* narrow phones: rows, never clip */
+}
+.tv-search-wrap { position: relative; flex: 1; min-width: 160px; }
+
+#tv-search, .tv-tools select {
+  width: auto;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+#tv-search { width: 100%; }
+#tv-search:focus, .tv-tools select:focus { border-color: var(--accent); }
+.tv-tools select { cursor: pointer; max-width: 42vw; }
+.tv-tools select option { background: var(--panel-bg); color: var(--text); }
+
+/* Autocomplete dropdown (search, 3+ chars) */
+#tv-ac {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--shadow);
+  z-index: 50;
+}
+.tv-ac-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.tv-ac-item:hover, .tv-ac-item.sel { background: var(--accent-soft); }
+.tv-ac-item .tv-ac-name {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tv-ac-item .tv-ac-sub { color: var(--text-dim); font-size: 11.5px; }
+.tv-ac-none { padding: 10px; font-size: 12.5px; color: var(--text-dim); }
+
+/* ---------- Grid ---------- */
+#tv-main {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+#tv-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.tv-spin {
+  width: 28px; height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: tv-spin 0.9s linear infinite;
+}
+@keyframes tv-spin { to { transform: rotate(360deg); } }
+
+#tv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.tv-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s;
+}
+.tv-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.tv-logo {
+  position: relative;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tv-logo img {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 110px;
+  max-height: 48px;
+  object-fit: contain;
+}
+.tv-logo .tv-nologo {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  font-size: 20px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.tv-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  min-height: 34px;              /* uniform rows whether 1 or 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.tv-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.tv-meta .tv-q {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-weight: 700;
+  font-size: 10px;
+}
+/* Favorite star — span (NOT a button-inside-button, Part VII),
+   touch twin wired in JS. */
+.tv-fav {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.tv-fav:hover { color: var(--warn); background: var(--accent-soft); }
+.tv-fav.on { color: var(--warn); }
+
+#tv-empty { padding: 56px 16px; text-align: center; color: var(--text-dim); font-size: 13.5px; }
+
+#tv-more-row { display: flex; justify-content: center; padding: 14px 0 4px; }
+#tv-more {
+  min-height: 44px;
+  padding: 10px 22px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#tv-more:hover { filter: brightness(1.1); }
+
+/* ---------- Player dialog (R32: centered) ---------- */
+dialog#tv-player {
+  margin: auto;                   /* R32: * {margin:0} kills UA centering */
+  width: min(860px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px var(--shadow);
+  padding: 12px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+dialog#tv-player::backdrop { background: rgba(0, 0, 0, 0.6); }
+
+.tvp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 10px;
+}
+#tvp-title {
+  font-size: 15px;
+  font-weight: 800;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.tv-icon {
+  width: 44px; height: 44px;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.tv-icon:hover { background: var(--accent-soft); color: var(--accent); }
+.tv-icon.on { color: var(--warn); }
+.tv-icon svg { width: 20px; height: 20px; pointer-events: none; }
+
+.tvp-video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+#tvp-video { width: 100%; height: 100%; display: block; }
+.tvp-badge {
+  position: absolute;
+  bottom: 8px; left: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.tvp-badge.err { color: #ffb4ab; }
+
+.tvp-info {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 4px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+#tvp-labels .tv-lbl {
+  background: var(--accent-soft);
+  color: var(--warn);
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.tvp-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;                /* 360px phones: wraps, never clips */
+  padding: 4px 0 2px;
+}
+#tvp-vol {
+  width: 110px;
+  height: 44px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.tv-spacer { flex: 1; }
+
+/* ---------- Local toast fallback ---------- */
+#tv-toast {
+  position: fixed;
+  top: 12px; right: 12px;
+  max-width: calc(100vw - 24px);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px var(--shadow);
+  color: var(--text);
+  font-size: 12.5px;
+  padding: 10px 14px;
+  z-index: 100;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 480px) {
+  #tv-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
+  .tv-tools select { max-width: none; flex: 1 1 40%; }
+  #tvp-vol { width: 80px; }
+}
+
+/* ---------- Scrollbars (Part VII) ---------- */
+#tv-main, #tv-ac, dialog#tv-player {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#tv-main::-webkit-scrollbar, #tv-ac::-webkit-scrollbar, dialog#tv-player::-webkit-scrollbar { width: 10px; }
+#tv-main::-webkit-scrollbar-track, #tv-ac::-webkit-scrollbar-track, dialog#tv-player::-webkit-scrollbar-track { background: transparent; }
+#tv-main::-webkit-scrollbar-thumb, #tv-ac::-webkit-scrollbar-thumb, dialog#tv-player::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+#tv-main::-webkit-scrollbar-thumb:hover, #tv-ac::-webkit-scrollbar-thumb:hover, dialog#tv-player::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Authority guard — LAST RULE (Part VII) */
+[hidden] { display: none !important; }

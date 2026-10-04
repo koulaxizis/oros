@@ -748,14 +748,62 @@ function escapeRegex(s) {
   return String(s == null ? '' : s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ---------- Wave 2: unified file dialogs (dialogs.js) ----------
+// dialogHost(): the Writer runs in a same-origin iframe inside the
+// orOS shell — window.parent.orosDialog is the host. Standalone
+// (opened directly), both lookups fail and we return null: every
+// caller then keeps its legacy anchor-download / input behavior.
+function dialogHost() {
+  try {
+    const w = window;
+    if (w.orosDialog && typeof w.orosDialog.saveFile === 'function') return w.orosDialog;
+    if (w.parent && w.parent !== w && w.parent.orosDialog &&
+        typeof w.parent.orosDialog.saveFile === 'function') return w.parent.orosDialog;
+  } catch (e) { /* cross-origin parent — treat as standalone */ }
+  return null;
+}
+
+// Standalone fallback picker (only when no orosDialog exists at all).
+// One-shot hidden input, listener-clean, cancel -> null.
+function localPickFile(accept) {
+  return new Promise(resolve => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = accept || '';
+    inp.style.display = 'none';
+    inp.addEventListener('change', () => {
+      const f = inp.files && inp.files[0];
+      try { inp.remove(); } catch (e) {}
+      resolve(f || null);
+    });
+    inp.addEventListener('cancel', () => {
+      try { inp.remove(); } catch (e) {}
+      resolve(null);
+    });
+    document.body.appendChild(inp);
+    inp.click();
+  });
+}
+
 function downloadBlob(content, filename, mime) {
   const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+  const host = dialogHost();
+  if (host) {
+    // Wave 2: unified save dialog (native picker on Chromium, download
+    // fallback inside dialogs.js otherwise). Cancel (ok:false) is a
+    // SILENT exit — the returned boolean is the success flag callers
+    // may consume; fire-and-forget callers are unaffected.
+    return host.saveFile({ blob: blob, filename: filename, mime: mime })
+      .then(res => !!(res && res.ok));
+  }
+  // Standalone fallback — original anchor download, unchanged.
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  return Promise.resolve(true);
 }
 
 // Serialize editor content WITHOUT transient UI artifacts (find marks).
@@ -2611,6 +2659,21 @@ function openImageDialog() {
     if (!file) return;
     imageFileToDataUrl(file).then(url => { dlg.querySelector('#img-url').value = url; });
   });
+
+  // Wave 2: shell present → native image picker via orosDialog.
+  // Standalone keeps the built-in input above (change event, unchanged).
+  dlg.querySelector('#img-file').addEventListener('click', function (e) {
+    const host = dialogHost();
+    if (!host) return;
+    e.preventDefault();
+    e.stopPropagation();
+    host.openFile('image/*').then(function (file) {
+      if (!file) return;   // cancel → silent exit
+      imageFileToDataUrl(file).then(function (url) {
+        dlg.querySelector('#img-url').value = url;
+      });
+    });
+  }, true);
 }
 
 function doInsertImage(dlg) {
@@ -3816,17 +3879,19 @@ function editTemplate(tpl) {
 
 function exportTemplateJson() {
   const data = JSON.stringify({ orOSTemplates: state.templates || [] }, null, 2);
-  downloadBlob(data, 'oros-writer-templates.json', 'application/json');
-  showToast(t('tpl.exported'));
+  downloadBlob(data, 'oros-writer-templates.json', 'application/json')
+    .then(ok => { if (ok) showToast(t('tpl.exported')); });   // cancel = silent
 }
 
 function importTemplateJson() {
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = '.json,application/json';
-  inp.addEventListener('change', () => {
-    const file = inp.files[0];
-    if (!file) return;
+  // Wave 2: unified picker when the shell hosts orosDialog;
+  // localPickFile keeps the app usable standalone.
+  const host = dialogHost();
+  const picked = host
+    ? host.openFile('.json,application/json')
+    : localPickFile('.json,application/json');
+  picked.then(file => {
+    if (!file) return;   // user cancelled — silent exit
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -3852,7 +3917,6 @@ function importTemplateJson() {
     };
     reader.readAsText(file);
   });
-  inp.click();
 }
 
 /* ----- VERSION HISTORY -----
@@ -4753,6 +4817,14 @@ function openExportDialog() {
   naming.style.marginTop = '10px';
   naming.textContent = t('io.naming');
   body.appendChild(naming);
+
+  // Wave 2 (B-lite): pre-warm the PDF vendors while the user chooses
+  // a format, so the later saveFile() native-picker call happens well
+  // inside the transient-activation window. Silent on failure — the
+  // PDF export surfaces its own error if actually used.
+  ioLoadScript(IO_VENDOR_JSPDF)
+    .then(() => ioFetchFontB64(IO_VENDOR_NOTO))
+    .catch(function () { /* PDF export will report if needed */ });
 }
 
 /* ===== SECTION 22: WAVE 5 — RTF + DOCX EXPORTERS (native) ===== */
@@ -5538,7 +5610,12 @@ function ioExportPdf(doc) {
         pdf.text(p + ' / ' + pages, pg.w - MR, pg.h - Math.max(MB - 8, 6), { align: 'right' });
       }
 
-      pdf.save(ioBaseName(doc) + '.pdf');
+      // Wave 2: jsPDF's internal download path would BYPASS the
+      // unified dialog — emit a Blob and ride the downloadBlob
+      // funnel like every other format.
+      const out = pdf.output('blob');
+      Promise.resolve(out).then(b =>
+        downloadBlob(b, ioBaseName(doc) + '.pdf', 'application/pdf'));
     })
     .catch(err => {
       console.error('[orOS] writer PDF export failed:', err);
@@ -6064,6 +6141,20 @@ function openImportDialog(prefile) {
     const file = inp.files[0];
     if (file) ioPickDropped(file);
   });
+
+  // Wave 2: when the shell is present, capture the picker click and
+  // route through orosDialog (native picker). Standalone: the built-in
+  // browser picker stays — the change event above keeps working.
+  inp.addEventListener('click', function (e) {
+    const host = dialogHost();
+    if (!host) return;
+    e.preventDefault();
+    e.stopPropagation();
+    host.openFile('.orosdoc,.docx,.odt,.rtf,.html,.htm,.txt,.md,.markdown,.json')
+      .then(function (file) {
+        if (file) ioPickDropped(file);   // cancel → silent exit
+      });
+  }, true);
 
   // Drag & drop hands us a File directly (Section 25)
   if (prefile) ioPickDropped(prefile);

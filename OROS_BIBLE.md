@@ -1499,3 +1499,992 @@ Under consideration: none.
 - The translation key name `sc.desc.snapshot` was intentionally retained (only its displayed text changed) to avoid cached shell.js / new translations.js mismatch that would briefly show raw key names
 - Dropbox Sync, manual database export, and auto folder export remain fully functional and independent
 - No user data affected by this change; existing snapshots/backups remain valid
+
+New core module ritual:
+1. Create the file (IIFE, boot log, zero dependencies).
+2. index.html: <script src="module.js?v=CURRENT"> — BEFORE shell.js if the shell
+   or apps consume it at boot; AFTER shell.js if it depends on the shell.
+3. sw.js PRECACHE_URLS: add "./module.js" next to its siblings in boot order.
+   ⚠ G2 does NOT check root files — this step is manual and easy to forget.
+4. bump-version.yml: no change (generic stamping).
+
+---
+
+dialogs.js — Wave 2: App Migration (orOS v0.38.x)
+Scope: Bookmarks migrated to window.parent.orosDialog (first app in the Wave 2 sequence). Writer remains last by explicit decision.
+
+Changed — bookmarks.js
+Export (Netscape HTML) now routes through orosDialog.saveFile: native save picker on Chromium desktop, standard download everywhere else (Firefox, Safari, mobile). Cancel = silent exit, no success toast. Anchor-download path retained ONLY as standalone fallback (app running without the shell).
+Import now routes through orosDialog.openFile with accept ".html,.htm,text/html". Cancel = silent exit. The old hidden #import-in input mechanism is now dead code in bookmarks.html (safe, unused); removal pending a separate HTML pass.
+Added dialogHost() helper (parent lookup, cross-origin guarded, null in standalone mode) and localPickFile() helper (standalone one-shot hidden-input picker). Pattern identical to syncHost() resolution order.
+Zero changes to merge/sync/render/state logic. All patches verified against actual file contents before delivery.
+New standing rule (recorded for OROS_BIBLE.md)
+Rule — Unified File Dialogs:
+
+Every application that performs ANY file save or file open operation — old apps being migrated and every NEW app from this point forward — MUST route through window.parent.orosDialog (dialogHost() parent lookup, cross-origin guarded) with a local standalone fallback. Direct calls to showSaveFilePicker / showOpenFilePicker / ad-hoc anchor-downloads in app code are PROHIBITED.
+The only sanctioned exceptions: (a) the orosDialog module itself, which owns the fallbacks; (b) app-local standalone fallbacks when no shell is present (must be visually and functionally equivalent patterns).
+Recommended per-app helper trio: dialogHost(), and a local picker fallback — copy the exact Bookmarks implementation as reference implementation.
+Convention: user-cancel (ok:false / null) is a SILENT exit — no toast, no error.
+UI text is i18n-aware (EN default, EL) for any dialog-related strings introduced by an app.
+Pending
+Wave 2 order: files.js → notes.js → writer.js (LAST). Each file audited in full BEFORE proposing patches; patches only where direct FSA/API calls or ad-hoc download patterns exist.
+bookmarks.html: remove dead #import-in element (separate pass).
+Wave 3 (approved, optional): info-modal mode line in shell.js ("Native file dialogs" / "Standard downloads").
+
+---
+
+dialogs.js — Wave 2: App Migration (orOS v0.38.x) — update
+Scope: Calendar migrated to window.parent.orosDialog. Third app completed in the Wave 2 sequence (after Bookmarks, Calculator). Writer remains last by explicit decision.
+
+Changed — calendar.js
+ICS export now routes through orosDialog.saveFile: native save picker on Chromium desktop, standard download everywhere else. Cancel = silent exit, no success toast. Anchor-download path retained ONLY as standalone fallback (no shell present).
+Added dialogHost() helper (parent lookup, cross-origin guarded, null in standalone mode), placed immediately after the __orosSyncApi markDirty() bridge. Pattern identical to Bookmarks/Calculator reference implementations.
+Zero changes to recurrence engine, ICS serialization (icsEsc/icsDt/RRULE), feeds, merge logic, dialogs. Patches verified against actual file content before delivery.
+Read-only app feeds (Contacts/Habits/Cycle/Mood/Kanban/To-Do/Pet) untouched — they read localStorage, not the filesystem.
+Wave 2 progress
+✅ bookmarks.js (3 patches: dialogHost + localPickFile, export, import)
+✅ calculator.js (2 patches: dialogHost, CSV export)
+✅ calendar.js (2 patches: dialogHost, ICS export)
+⏳ Remaining apps: files.js, notes.js → then writer.js (LAST, by explicit decision)
+New standing rule (recorded for OROS_BIBLE.md)
+Rule — Unified File Dialogs, part 2 (retroactive coverage):
+
+The Unified File Dialogs rule (recorded earlier in this Wave) is hereby EXTENDED: any dialog that arises from FUTURE upgrades, new features, or refactors in ANY application — including the apps already migrated and verified (Bookmarks, Calculator, Calendar) — MUST route through window.parent.orosDialog with the established helper trio pattern. This applies to file pickers, save dialogs, and any new export/import channel introduced later.
+There is no "legacy exemption" for migrated apps: once an app passes Wave 2 verification, every subsequent feature touching files reuses the same dialogHost() resolution — no fresh ad-hoc anchor-downloads, hidden inputs, or FSA calls may reappear in later waves.
+Per-app helper additions stay minimal: add localPickFile() only when the app actually imports files; dialogHost() alone is sufficient for export-only apps.
+Pending
+Wave 2 continues: files.js → notes.js → writer.js (LAST).
+bookmarks.html: remove dead #import-in element (separate pass).
+Wave 3 (approved, optional): info-modal mode line in shell.js ("Native file dialogs" / "Standard downloads").
+
+---
+
+MAPS
+Added
+"Send to Calendar" button in the route bar (JS-appended, no HTML changes needed): opens a date-picker dialog (native date input, defaults to today) and sends the active route as a prefilled Calendar event draft
+Prefill payload: title "Route to {destination}" / "Διαδρομή προς {προορισμός}", location = destination name, start = current time, note = distance · duration · transport mode
+Calendar receiver accepts a note field (CW-7) and standalone deep-link /calendar/?new={json} (CW-8)
+i18n keys cal.send / cal.sent / cal.date / cal.confirm / cal.cancel (EN/EL)
+Technical Notes
+Works with restored (offline) routes too — condition is routeTo && lastSteps.length
+Graceful degradation: no shell bridge → new tab with URL-param payload; no shell at all → same fallback
+Shell-mode live push pending SH-1 (requires shell.js)
+
+---
+
+# orOS CHANGELOG
+## v0.38.27 → v0.38.28 (Wave 8 prep)
+
+### Added
+- SH-1: `__orosOpenCalendarNew` shell bridge for Maps → Calendar "Send to Calendar" flow
+  - Payload: `{ date, title?, location?, start?, note? }`
+  - Live push when Calendar running; stages to `sessionStorage["oros-cal-new"]` when closed
+  - Follows identical pattern to `__orosOpenMapsQuery` (no assumptions, verified against existing bridges)
+
+### Pending
+- MW-1a/b: maps.js i18n keys `cal.send`/`cal.sent`/`cal.date`/`cal.confirm`/`cal.cancel`
+- MW-2: maps.js route Cal payload builder + date picker dialog
+- MW-3: maps.js "Send to Calendar" button appended to route bar (JS-only, no HTML changes)
+- CW-7: calendar.js receiver accepts `note` field (extends CW-6a)
+- CW-8: calendar.js standalone deep-link `/calendar/?new={json}` support
+
+---
+
+Wave 8 — Calendar ↔ Maps bidirectional integration
+
+RULES (binding, forward-looking):
+
+BR-W8-1: Bridge contract — Maps sends "Send to Calendar" payloads via window.parent.__orosOpenCalendarNew({ date, title?, location?, start?, note? }) when running inside the shell. date is mandatory "YYYY-MM-DD" (strict regex guard in shell.js); start is 24h "HH:MM". Everything else optional strings, truncated defensively by the receiver (location 150, note 500 chars).
+BR-W8-2: Staging key — sessionStorage "oros-cal-new" (NOT "oros-cal-pending", which is reserved for event deep-links calendar:{evId}:{ymd}). Device-local, swept by the factory reset (oros- prefix swept separately; this key lacks the prefix — NOTE: it is manually cleared by the receiver one-shot take, see BR-W8-4), never synced, never part of the export database.
+BR-W8-3: Receiver ownership — window.__orosCalendarNew is defined INSIDE calendar.js and consumed in exactly two ways: live push from the shell iframe dispatcher (state.running === "calendar") and boot-time consumption of the staged sessionStorage payload (setTimeout 250ms, DOM-readiness delay). Any new entry path MUST go through this single receiver — no second door.
+BR-W8-4: One-shot take — the staged payload is cleared immediately upon consumption (read-then-remove). If the receiver is missing from a stale app bundle, the pending payload is silently ignored — nothing breaks (same doctrine as oros-*-open keys).
+BR-W8-5: Standalone fallback — /calendar/?new={urlencoded JSON} is the no-shell deep-link path (Maps opened Calendar as a new tab). Consumed at boot (400ms delay). Any future app that wants to hand off a "new entry" payload to Calendar standalone MUST reuse this param, not invent a new one.
+BR-W8-6: Draft semantics — a bridged payload is a PREFILL, not data. Nothing is persisted to the calendar slice (no markDirty, no sync traffic) until the user explicitly saves in the New Event dialog. This distinction is mandatory for any future bridge of the same shape.
+BR-W8-7: Reverse direction — Calendar event locations are clickable in ALL views (Day via .ev-loc, Week via .wk-ev-loc, Search via .res-loc). All use evt.stopPropagation() to prevent the event dialog from opening, and funnel through the single openInMaps() wrapper → window.parent.__orosOpenMapsQuery(query, label). Never add a fourth ad-hoc path for a new view; extend openInMaps().
+BR-W8-8: "Send to Calendar" availability — gated by routeTo && lastSteps.length, so restored offline routes also qualify. The route bar button is JS-appended at wire() time; maps/index.html and maps.css are deliberately untouched.
+BR-W8-9: Route payload composition — title "Route to {dest}" / "Διαδρομή προς {προορισμός}" (maps.js internal LANG, not window.t), location = destination name, start = current local time, note = distance · duration · transport mode. The note field lands in the event note input via the extended receiver (CW-7).
+Known coupling (maintenance hazard):
+
+The i18n keys cal.send / cal.sent / cal.date / cal.confirm / cal.cancel live INLINE in maps.js (both EN and EL dictionaries), NOT in translations.js. If maps.js i18n is ever migrated to translations.js, move them there and delete the inline copies.
+calendar.js must expose 
+(
+"
+e
+v
+−
+n
+o
+t
+e
+"
+)
+a
+n
+d
+("ev-location") before the receiver can prefill them; the 250ms/400ms boot delays exist to guarantee DOM readiness. If the boot sequence changes, re-verify these delays.
+
+---
+
+Changelog — Wave 2: Unified Dialogs Migration (orOS v0.38.x)
+
+Completed Migrations
+bookmarks.js (3 patches)
+Added dialogHost() + localPickFile() helpers (parent lookup with standalone fallback)
+Export (Netscape HTML): routed through orosDialog.saveFile; native picker on Chromium, standard download elsewhere
+Import: routed through orosDialog.openFile; native picker first, legacy hidden input as fallback
+Zero changes to merge/sync/render/state logic
+calculator.js (2 patches)
+Added dialogHost() helper (parent lookup, cross-origin guarded)
+Export (CSV history): routed through orosDialog.saveFile; native save picker on Chromium, classic download as fallback
+No localPickFile added — app has no file import, per minimal-change doctrine
+calendar.js (2 patches)
+Added dialogHost() helper (placed after __orosSyncApi markDirty bridge)
+Export (ICS): routed through orosDialog.saveFile; native save picker on Chromium, standard download elsewhere
+Read-only feeds (Contacts/Habits/Cycle/Mood/Kanban/To-Do/Pet) untouched — localStorage-only
+characters.js (4 patches)
+Added dialogHost() helper (placed after syncApi markDirty bridge)
+Refactored downloadBlob() helper to accept mime/types and route through orosDialog.saveFile
+exportMD: updated call to downloadBlob() with mime="text/markdown" and types metadata
+exportJSON: updated call to downloadBlob() with mime="application/json" and types metadata
+Single helper change covers both exports; toast fires only on ok:true
+contacts.js (6 patches)
+Added dialogHost() helper (placed after __orosSyncApi markDirty bridge)
+vCard/CSV import: refactored reader into importFileText(); now routes through orosDialog.openFile with fallback to legacy #vcard-file input
+Avatar upload: routed through orosDialog.openFile; standalone falls back to #ct-avatar-input synthetic click
+vCard export: routed through orosDialog.saveFile; classic download as standalone fallback
+JSON export: routed through orosDialog.saveFile; classic download as standalone fallback
+JSON restore import: routed through orosDialog.openFile; fallback to hidden input mechanism
+No localPickFile added — existing hidden inputs serve as standalone fallbacks
+cycle.js (2 patches)
+Added dialogHost() helper (placed before factory-reset comment block)
+Export (PDF Doctor Report): replaced jsPDF's doc.save() with blob output routed through orosDialog.saveFile; standalone fallback uses classic anchor-download
+Zero changes to merge engine, timeline, day editor, insights, mood cross-read, sync slice
+dice.js (2 patches)
+Added dialogHost() helper (placed in state+persistence section, before scheduleRender)
+Export (TXT history): routed through orosDialog.saveFile; native save picker on Chromium, classic download as fallback
+Cancel = silent exit, no toast (consistent convention across all migrated apps)
+files.js (3 patches)
+Added dialogHost() helper (placed in Section 15 Toast, after showToast())
+Download (downloadEntry): refactored to route through orosDialog.saveFile; ES5-compliant dynamic key construction; standalone fallback uses classic anchor-download
+Import (openFilePicker): routed through orosDialog.openFile; fallback to legacy hidden input for standalone mode
+No localPickFile added — hidden input already serves as fallback; minimal-change principle
+habits.js (0 patches — zero-touch)
+Full audit confirmed ZERO file I/O operations in entire codebase
+No FSA calls, no ad-hoc downloads, no hidden inputs, no FileReader usage
+Data persists exclusively via localStorage + sync slices; no user-file channels exist
+Per retroactive rule: dialogHost() to be added only IF future Waves introduce file export/import features
+Bookmarks/Calendar pattern applies — no unnecessary code injection
+Standing Rule (OROS_BIBLE.md — Section XI)
+Unified File Dialogs, Extended Retroactively:
+
+All file save/open operations in existing migrated apps AND ALL new apps from this point forward MUST route through window.parent.orosDialog via dialogHost() helper with parent lookup and standalone null fallback.
+Direct FSA API calls (showSaveFilePicker/showOpenFilePicker) or ad-hoc anchor-downloads in app code are PROHIBITED.
+Exceptions: (a) orosDialog module itself owns the fallbacks; (b) app-local standalone fallbacks when shell is absent (must be functionally identical patterns).
+Helper trio: dialogHost() + optional localPickFile() (only if app imports files) — copy Bookmarks reference implementation exactly.
+Convention: user cancel (ok:false/null) = SILENT exit — no toast, no error notification.
+i18n awareness: all dialog-related strings use STRINGS[LANG] (EN default, EL) for new UI text.
+ES5 compliance: dynamic object keys use bracket assignment (accept[m] = [...]) — NO computed literal syntax ([key]: value) as apps declare ES5+promises coding style.
+Progress Table (Wave 2 Order)
+#	App	Patches	Status
+1	bookmarks.js	3	✅ Complete
+2	calculator.js	2	✅ Complete
+3	calendar.js	2	✅ Complete
+4	characters.js	4	✅ Complete
+5	contacts.js	6	✅ Complete
+6	cycle.js	2	✅ Complete
+7	dice.js	2	✅ Complete
+8	files.js	3	✅ Complete
+9	habits.js	0	✅ Complete (zero file I/O)
+10	notes.js	pending	⏳ Next
+11	writer.js	pending	🔚 LAST
+Pending
+notes.js → full audit (awaiting source file)
+writer.js → full audit (deferred until end, by explicit decision)
+bookmarks.html: remove dead #import-in element (separate pass, not blocking)
+Wave 3 (optional): info-modal mode line in shell.js ("Native file dialogs" / "Standard downloads")
+
+---
+
+dialogs.js — Wave 2: App Migration (orOS v0.38.x)
+Scope: Unified file dialog migration across all orOS applications. Every file save/open operation routes through window.parent.orosDialog (dialogHost() parent lookup) with standalone fallbacks. Writer remains last by explicit decision.
+
+Standing rules (recorded earlier in this Wave, apply throughout):
+
+Rule — Unified File Dialogs: All file save/open operations in existing migrated apps AND all new apps MUST route through window.parent.orosDialog via dialogHost() helper (parent lookup, cross-origin guarded, null in standalone mode) with local fallbacks. Direct FSA calls (showSaveFilePicker/showOpenFilePicker) and ad-hoc anchor-downloads/hidden-input patterns in app code are PROHIBITED. Exceptions: (a) the orosDialog module itself; (b) app-local standalone fallbacks when no shell is present.
+Rule — Unified File Dialogs, part 2 (retroactive): Any dialog arising from FUTURE upgrades, new features, or refactors in ANY application — including apps already migrated and verified — MUST route through orosDialog with the established helper pattern. No "legacy exemption" for migrated apps: every subsequent feature touching files reuses dialogHost() resolution. Helper additions stay minimal: localPickFile() only when the app actually imports files; dialogHost() alone is sufficient for export-only apps.
+Convention: user-cancel (ok:false / null) = SILENT exit — no toast, no error notification.
+Convention: success toast fires only on ok:true (or standalone fallback completion).
+ES5 compliance: dynamic object keys use bracket assignment (accept[m] = [...]) — NO computed literal syntax; apps declare ES5+promises coding style.
+i18n: any new dialog-related strings use STRINGS[LANG] (EN default, EL).
+Completed Migrations
+bookmarks.js (3 patches)
+Added dialogHost() + localPickFile() helpers (parent lookup, standalone fallback)
+Export (Netscape HTML): routed through orosDialog.saveFile; native picker on Chromium, standard download elsewhere
+Import: routed through orosDialog.openFile (accept ".html,.htm,text/html"); legacy hidden #import-in input retained as standalone fallback
+Zero changes to merge/sync/render/state logic
+calculator.js (2 patches)
+Added dialogHost() helper
+Export (CSV history): routed through orosDialog.saveFile; classic anchor-download retained only as standalone fallback
+calendar.js (2 patches)
+Added dialogHost() helper (after __orosSyncApi markDirty bridge)
+Export (ICS): routed through orosDialog.saveFile; classic anchor-download as standalone fallback
+characters.js (4 patches)
+Added dialogHost() helper (after syncApi markDirty bridge)
+downloadBlob() refactored to accept mime/types and route through orosDialog.saveFile — single funnel covers both exports
+exportMD: call enriched with mime="text/markdown" + types metadata
+exportJSON: call enriched with mime="application/json" + types metadata
+contacts.js (6 patches)
+Added dialogHost() helper (after __orosSyncApi markDirty bridge)
+vCard/CSV import: reader extracted into importFileText(); orosDialog.openFile first, legacy #vcard-file hidden input as standalone fallback
+Avatar upload: orosDialog.openFile; standalone falls back to #ct-avatar-input synthetic click
+vCard export: orosDialog.saveFile with standalone anchor-download fallback
+JSON export: orosDialog.saveFile with standalone anchor-download fallback
+JSON restore import: orosDialog.openFile with hidden-input fallback
+cycle.js (2 patches)
+Added dialogHost() helper (before factory-reset comment block)
+Export (PDF Doctor Report): jsPDF doc.save() retired, replaced with doc.output("blob") → orosDialog.saveFile; standalone fallback uses classic anchor-download
+Zero changes to PDF generation (fonts, pagination, disclaimer, footer)
+dice.js (2 patches)
+Added dialogHost() helper (in state+persistence section)
+Export (TXT history): routed through orosDialog.saveFile with standalone fallback
+files.js (3 patches)
+Added dialogHost() helper (Section 15 Toast)
+Download (downloadEntry): orosDialog.saveFile first, ES5-compliant dynamic accept key via bracket assignment; types omitted entirely when the file has no real extension; standalone fallback uses classic anchor-download
+Import (openFilePicker): orosDialog.openFile first; legacy hidden input as standalone fallback
+Note: Patch 2 initially shipped with an invalid ES6 computed-key literal ({(mime||...): [...]}) — syntax error detected and corrected to ES5 bracket-assignment construction before delivery
+habits.js (0 patches — zero-touch)
+Full audit: ZERO file I/O operations in the entire codebase. No FSA calls, no anchor-downloads, no hidden inputs, no FileReader, no Blob exports
+Data persists exclusively via localStorage + sync slices
+dialogHost() forbidden here per "no dead code" rule; to be added only if a future Wave introduces file I/O features
+kanban.js (2 patches)
+Added dialogHost() helper (after save()/__orosSyncApi bridge)
+Import (Kanri/Trello): click-interception pattern on the visible file input — orosDialog.openFile (native picker on Chromium) first; the input remains as standalone fallback (shell mode suppresses it via preventDefault)
+Reader logic extracted into readImportFile(); both paths converge there (byte-for-byte the old logic)
+Bonus fix: file.value = "" reset — without it, re-picking the SAME file never fired change (input value unchanged); same "allow re-import of same file" pattern as Contacts
+No export functionality exists (no dead code added)
+maps.js (0 patches — zero-touch)
+Full audit: ZERO user-file I/O operations. Photon/OSRM fetch calls are network calls, not file dialogs; tile cache uses Cache Storage API, not user files
+Future candidates (GPX/KML export, GeoJSON import) fall under the retroactive rule when implemented
+minimalism.js (0 patches — zero-touch)
+Full audit: ZERO user-file I/O operations. content.js payload is a script-loaded static resource, not a user-picked file; persistence via localStorage + sync slice only
+All UI dialogs are custom in-app <dialog> elements, not file dialogs — outside the rule's scope
+mood.js (2 patches)
+Added dialogHost() helper (after save()/__orosSyncApi bridge)
+Export (PDF insights): jsPDF doc.save() retired, replaced with doc.output("blob") → orosDialog.saveFile; standalone fallback uses classic anchor-download
+Zero changes to NFC funnel (pdfClean), font loading, pagination, sections, dates
+notes.js (4 patches)
+Added dialogHost() helper (after markSyncDirty bridge)
+downloadBlob() refactored to accept mime/types and route through orosDialog.saveFile — single funnel covers both exports
+exportPageTxt: call enriched with mime="text/plain" + types metadata
+exportNotebookZip: call enriched with mime="application/zip" + types metadata
+Preserved app's silent-by-design export UX: no success toast existed before, none added; cancel = silent exit
+ZIP writer (store-method, CRC32, DOS dates) and branding footer funnel untouched
+No file import exists — localPickFile() not added (no dead code rule)
+
+#	App	Patches	Status
+1	bookmarks.js	3	✅ Complete
+2	calculator.js	2	✅ Complete
+3	calendar.js	2	✅ Complete
+4	characters.js	4	✅ Complete
+5	contacts.js	6	✅ Complete
+6	cycle.js	2	✅ Complete
+7	dice.js	2	✅ Complete
+8	files.js	3	✅ Complete
+9	habits.js	0	✅ Complete (zero file I/O)
+10	kanban.js	2	✅ Complete
+11	maps.js	0	✅ Complete (zero file I/O)
+12	minimalism.js	0	✅ Complete (zero file I/O)
+13	mood.js	2	✅ Complete
+14	notes.js	4	✅ Complete
+15	writer.js	pending	🔚 LAST
+Pending
+writer.js → full audit (deferred until end, by explicit decision)
+bookmarks.html: remove dead #import-in element (separate pass, not blocking)
+Wave 3 (approved, optional): info-modal mode line in shell.js ("Native file dialogs" / "Standard downloads")
+
+---Changelog — Wave 2: Unified Dialogs Migration (orOS v0.38.x) — Update
+Σε plain Markdown για ευθεία αντιγραφή στο CHANGELOG.md:
+
+Completed Migrations — Continued
+storage.js (0 patches — zero-touch)
+Full audit: ZERO file I/O operations in the entire codebase
+No FSA calls, no anchor-downloads, no hidden inputs, no FileReader, no Blob exports
+Data persists exclusively via localStorage + sync slice (registerSlice/mergeTime)
+All entity hierarchy (Space → Room → Furniture → Position → Item) lives in { ver, ents } slice
+dialogHost() forbidden per "no dead code" rule; to be added only if future Waves introduce file I/O features
+time.js (0 patches — zero-touch)
+Full audit: ZERO file I/O operations in the entire codebase (both IIFEs: main app + deep-link receiver)
+Alarms engine: window.parent.orosAlarms + localStorage fallback (rd/wr) — data channel, not filesystem
+Sounds: Web Audio API synthesis (createOscillator/createGain) — no audio files, no fetch
+Zone/alarm/dialog UI: Custom in-app <dialog> elements — UI dialogs, not file dialogs
+Data persistence: localStorage (DATA_KEY) + sync slice (mergeTime/setFromSync)
+dialogHost() forbidden per "no dead code" rule
+astro.js (0 patches — zero-touch)
+Full audit: ZERO file I/O operations (NOAA solar equations, moon phase rendering, location dialog)
+Location input: Manual coordinate entry (text fields) OR Weather app localStorage fallback (oros-weather) OR session-only GPS fix
+No FileReader, no hidden inputs, no drag-drop, no Blob exports
+Dialog UI: Custom in-app <dialog> for coordinates — not a file picker
+Data persistence: localStorage + markDirty() sync bridge
+dialogHost() forbidden per "no dead code" rule
+Progress Table (Wave 2 Order) — Updated
+#	App	Patches	Status
+1	bookmarks.js	3	✅ Complete
+2	calculator.js	2	✅ Complete
+3	calendar.js	2	✅ Complete
+4	characters.js	4	✅ Complete
+5	contacts.js	6	✅ Complete
+6	cycle.js	2	✅ Complete
+7	dice.js	2	✅ Complete
+8	files.js	3	✅ Complete
+9	habits.js	0	✅ Zero file I/O
+10	kanban.js	2	✅ Complete
+11	maps.js	0	✅ Zero file I/O
+12	minimalism.js	0	✅ Zero file I/O
+13	mood.js	2	✅ Complete
+14	notes.js	4	✅ Complete
+15	prompter.js	0	✅ Zero file I/O
+16	quote.js	2	✅ Complete
+17	radio.js	0	✅ Zero file I/O
+18	spreadsheet.js	5	✅ Complete
+19	storage.js	0	✅ Zero file I/O
+20	time.js	0	✅ Zero file I/O
+21	astro.js	0	✅ Zero file I/O
+22	writer.js	pending	🔚 LAST
+Pending
+writer.js → full audit (deferred until end, by explicit decision; will be delivered in sequential doses due to volume of I/O points: TXT/MD/HTML/DOCX/RTF/OROSDOC/JSON/PDF exports + ODT/DOCX/RTF/HTML/TXT imports + drag & drop)
+bookmarks.html: remove dead #import-in element (separate pass, not blocking)
+Wave 3 (optional): info-modal mode line in shell.js ("Native file dialogs" / "Standard downloads")
+
+---
+
+# OROS_BIBLE.md — delta for the Maps Dose 1 delivery
+
+Paste each block into the named Part. Nothing here proposes a version (R23).
+
+## Part III — App registry (add row)
+
+| **Maps** | oros-maps-data | place union by id + LWW + tombs, canonical (R26) | Audit Dose 1 delivered → deploy + 2-device smoke test pending |
+
+- `apps.json` lists **23** apps (maps was missing from the count).
+- File tree: add `maps/` to the app folders and `vendor/leaflet.js`, `vendor/leaflet.css` to `vendor/`.
+
+## Part III — Device-local keys (add)
+
+- **Maps:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of unreadable oros-maps-data), oros-maps-open (staging). Cache Storage `oros-map-tiles` is device-local and is NOT swept by the factory reset (open item below).
+
+## Part IV — Data models (add)
+
+**Maps** — `oros-maps-data`:
+`{ ver: 1, places: [{ id, name, sub, lat, lon, mtime }], deleted: { <id>: <ts> } }`
+
+- `id` is deterministic: `"p" + lat.toFixed(6) + "," + lon.toFixed(6)` (the same place starred on two devices is one entity). Legacy random ids are re-derived by `normalize()` on load; duplicates collapse to the newer mtime.
+- `normalize()` is the single funnel (load, save, merge output, sliceGet, sliceSet): places sorted by id, tombstone keys sorted, fixed field order.
+- Merge: union by id, LWW by mtime (tie: lexicographic JSON); tombstones max-ts union; a place survives only if `mtime > tombstone` (delete wins ties, newer star resurrects).
+- No tombstone pruning (tiny `{id: ts}` entries; avoids any R26 risk).
+- Fresh install persists nothing until the first real change. Unreadable data is copied to `oros-maps-rescue`, never overwritten silently.
+
+## Part II — `sw.js` (replace the tile notes / add)
+
+- **Map tiles:** `TILE_HOSTS` + length-derived suffix match (exact host or any subdomain). Cache-first in `oros-map-tiles` (outside CACHE_VERSION). **Only `response.ok` is stored**; opaque responses are never stored. A legacy opaque hit is treated as a miss for non-`no-cors` requests. Trim to `TILE_MAX` every 100 puts AND once per activation.
+- maps.js requests tiles with `crossOrigin: "anonymous"` — the two changes ship together.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps (Christos sent sync.js + mood.js = slice approved)**
+  - Saved places sync through a `maps` slice (5-arg `registerSlice`). The last-known route and the tile cache stay device-local.
+  - Deterministic place ids from coordinates (assistant decision; reason: R16 spirit — no duplicate entities across devices, and legacy never-synced data dedupes on first sync).
+  - Places list keeps its visible order (oldest first) although storage is id-sorted (assistant decision; reason: no visible change for the user).
+  - Photon: the UI language is sent as `lang`; on HTTP 400 the query is retried once without it and the session stops sending it (assistant decision; reason: works whether or not the public instance offers `el`, no guessing).
+  - Route bar: two rows, centred under the search bar on desktop, docked at the bottom on mobile. BR-W8-8 changes: the Send-to-Calendar button is still JS-appended, but now has id `route-cal`, is inserted before `#nav-start`, and is styled by maps.css.
+- **OPEN (Christos):** Bike / Walk routing server. `ROUTER_BASE` in maps.js holds one endpoint per profile; all three still point at the OSRM demo server.
+
+## Part IX — Doctrinal exemptions (add)
+
+- **Maps — "No external dependencies" exemption:** tiles (OSM / HOT / Esri), geocoding (Photon) and routing (OSRM) are online services by nature. Offline scope = cached tiles + last-known route + saved places.
+
+## Part X — Open items (add)
+
+- **Maps audit, remaining:** findings 14–22 (stale origin, deep-link vs restore order, star label, stale end-marker popup, heavy route snapshot, wake lock) and the usability list; 26 (factory reset does not delete Cache Storage `oros-map-tiles` — shell.js); 27 (navigation dies silently when the frame is replaced).
+- **Maps, unverified externally:** OSRM demo Bike/Walk profiles; Photon `lang=el`; CORS headers of the three tile hosts (post-deploy check).
+
+## Part XII — Changelog (append at the END)
+
+### 2026-10-04 — Maps — audit Dose 1 (full-file delivery: maps.js, maps.css, sw.js)
+
+- **Fixes (navigation):**
+  - Fork direction: any left-ish modifier keeps left (was "keep right" for `slight left`).
+  - Maneuver text: modifiers with spaces resolve (`slight right`, `sharp left`), `uturn` handled, missing space before the street name, `end of road` / `rotary` / `exit roundabout` / `roundabout turn` / `new name` / `notification` handled; `$` in street names is safe.
+  - Maneuver icons follow the direction (11-icon table `MVN_ICON`).
+  - Route matching is point-to-segment and forward-only (`matchRoute`, `buildRouteIndex`, `stepIndexAt`): no false re-routes on straight roads, the step counter cannot strand after a GPS gap, out-and-back routes stay on the right leg.
+  - Arrival is judged along the route (within 25 m of its end), not only against the requested point.
+  - The user marker follows the position during navigation (`moveUser`).
+  - A re-route during navigation no longer zooms out to the whole route.
+- **Fixes (routing / search):**
+  - `routeSeq` token: stale or cancelled OSRM responses are dropped (no ghost polyline after Clear).
+  - `photonGet`: 400 → retry without `lang`.
+  - `restoreRoute` no longer throws on a snapshot without `geometry`.
+- **Fixes (layout):** route bar no longer overflows or covers the search bar / Leaflet controls; `#nav-start` is styled; search dropdown paints above the route bar; mobile controls lift only while a route is shown (`body.has-route`).
+- **Fixes (sw.js):** tile host match (default and HOT layers were never cached); only real 200s are cached; trim also runs on activation.
+- **Schema:** `oros-maps-data` gains `deleted{}`; ids become deterministic (see Part IV).
+- **Changes:** `maps` sync slice (saved places in sync, export, snapshots); quota failure surfaces a toast (R30); rescue copy for unreadable data.
+- **Files:** maps/maps.js, maps/maps.css, sw.js. `maps/index.html` untouched.
+- **Verification:** Chromium harness with the real maps.js + real sync.js, Leaflet stubbed, Photon/OSRM/GPS faked. Two-device test: union, delete, resurrection — exports equal, `applied == 0` from round 2. Merge fuzz (20,000 triples): symmetric, idempotent, associative, 0 violations. sw.js tile branch: mock-based unit test in node, not a real Service Worker run.
+- **Next:** Dose 2 (findings 14–22, 26, 27), Dose 3 (usability). Bike/Walk server decision.
+
+---
+
+# OROS_BIBLE.md — delta for the Maps Dose 1 delivery
+
+Paste each block into the named Part. Nothing here proposes a version (R23).
+
+## Part III — App registry (add row)
+
+| **Maps** | oros-maps-data | place union by id + LWW + tombs, canonical (R26) | Audit Dose 1 delivered → deploy + 2-device smoke test pending |
+
+- `apps.json` lists **23** apps (maps was missing from the count).
+- File tree: add `maps/` to the app folders and `vendor/leaflet.js`, `vendor/leaflet.css` to `vendor/`.
+
+## Part III — Device-local keys (add)
+
+- **Maps:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of unreadable oros-maps-data), oros-maps-open (staging). Cache Storage `oros-map-tiles` is device-local and is NOT swept by the factory reset (open item below).
+
+## Part IV — Data models (add)
+
+**Maps** — `oros-maps-data`:
+`{ ver: 1, places: [{ id, name, sub, lat, lon, mtime }], deleted: { <id>: <ts> } }`
+
+- `id` is deterministic: `"p" + lat.toFixed(6) + "," + lon.toFixed(6)` (the same place starred on two devices is one entity). Legacy random ids are re-derived by `normalize()` on load; duplicates collapse to the newer mtime.
+- `normalize()` is the single funnel (load, save, merge output, sliceGet, sliceSet): places sorted by id, tombstone keys sorted, fixed field order.
+- Merge: union by id, LWW by mtime (tie: lexicographic JSON); tombstones max-ts union; a place survives only if `mtime > tombstone` (delete wins ties, newer star resurrects).
+- No tombstone pruning (tiny `{id: ts}` entries; avoids any R26 risk).
+- Fresh install persists nothing until the first real change. Unreadable data is copied to `oros-maps-rescue`, never overwritten silently.
+
+## Part II — `sw.js` (replace the tile notes / add)
+
+- **Map tiles:** `TILE_HOSTS` + length-derived suffix match (exact host or any subdomain). Cache-first in `oros-map-tiles` (outside CACHE_VERSION). **Only `response.ok` is stored**; opaque responses are never stored. A legacy opaque hit is treated as a miss for non-`no-cors` requests. Trim to `TILE_MAX` every 100 puts AND once per activation.
+- maps.js requests tiles with `crossOrigin: "anonymous"` — the two changes ship together.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps (Christos sent sync.js + mood.js = slice approved)**
+  - Saved places sync through a `maps` slice (5-arg `registerSlice`). The last-known route and the tile cache stay device-local.
+  - Deterministic place ids from coordinates (assistant decision; reason: R16 spirit — no duplicate entities across devices, and legacy never-synced data dedupes on first sync).
+  - Places list keeps its visible order (oldest first) although storage is id-sorted (assistant decision; reason: no visible change for the user).
+  - Photon: the UI language is sent as `lang`; on HTTP 400 the query is retried once without it and the session stops sending it (assistant decision; reason: works whether or not the public instance offers `el`, no guessing).
+  - Route bar: two rows, centred under the search bar on desktop, docked at the bottom on mobile. BR-W8-8 changes: the Send-to-Calendar button is still JS-appended, but now has id `route-cal`, is inserted before `#nav-start`, and is styled by maps.css.
+- **2026-10-04 · Maps (Christos): Bike / Walk change server.** `ROUTER_BASE` in maps.js: car stays on `router.project-osrm.org`; bike → `routing.openstreetmap.de/routed-bike/route/v1/driving/`, foot → `routing.openstreetmap.de/routed-foot/route/v1/driving/` (FOSSGIS; the demo server ignores the profile segment and always routes cars). Same OSRM API and response shape. Fair use: about 1 request/second, non-commercial.
+
+## Part IX — Doctrinal exemptions (add)
+
+- **Maps — "No external dependencies" exemption:** tiles (OSM / HOT / Esri), geocoding (Photon) and routing (OSRM) are online services by nature. Offline scope = cached tiles + last-known route + saved places.
+
+## Part X — Open items (add)
+
+- **Maps audit, remaining:** findings 14–22 (stale origin, deep-link vs restore order, star label, stale end-marker popup, heavy route snapshot, wake lock) and the usability list; 26 (factory reset does not delete Cache Storage `oros-map-tiles` — shell.js); 27 (navigation dies silently when the frame is replaced).
+- **Maps, unverified externally:** FOSSGIS Bike/Walk endpoints from the app (URL layout confirmed from documentation only); Photon `lang=el`; CORS headers of the three tile hosts (post-deploy check).
+
+## Part XII — Changelog (append at the END)
+
+### 2026-10-04 — Maps — audit Dose 1 (full-file delivery: maps.js, maps.css, sw.js)
+
+- **Fixes (navigation):**
+  - Fork direction: any left-ish modifier keeps left (was "keep right" for `slight left`).
+  - Maneuver text: modifiers with spaces resolve (`slight right`, `sharp left`), `uturn` handled, missing space before the street name, `end of road` / `rotary` / `exit roundabout` / `roundabout turn` / `new name` / `notification` handled; `$` in street names is safe.
+  - Maneuver icons follow the direction (11-icon table `MVN_ICON`).
+  - Route matching is point-to-segment and forward-only (`matchRoute`, `buildRouteIndex`, `stepIndexAt`): no false re-routes on straight roads, the step counter cannot strand after a GPS gap, out-and-back routes stay on the right leg.
+  - Arrival is judged along the route (within 25 m of its end), not only against the requested point.
+  - The user marker follows the position during navigation (`moveUser`).
+  - A re-route during navigation no longer zooms out to the whole route.
+- **Fixes (routing / search):**
+  - `routeSeq` token: stale or cancelled OSRM responses are dropped (no ghost polyline after Clear).
+  - `photonGet`: 400 → retry without `lang`.
+  - `restoreRoute` no longer throws on a snapshot without `geometry`.
+- **Fixes (layout):** route bar no longer overflows or covers the search bar / Leaflet controls; `#nav-start` is styled; search dropdown paints above the route bar; mobile controls lift only while a route is shown (`body.has-route`).
+- **Fixes (sw.js):** tile host match (default and HOT layers were never cached); only real 200s are cached; trim also runs on activation.
+- **Schema:** `oros-maps-data` gains `deleted{}`; ids become deterministic (see Part IV).
+- **Changes:** `maps` sync slice (saved places in sync, export, snapshots); quota failure surfaces a toast (R30); rescue copy for unreadable data.
+- **Files:** maps/maps.js, maps/maps.css, sw.js. `maps/index.html` untouched.
+- **Verification:** Chromium harness with the real maps.js + real sync.js, Leaflet stubbed, Photon/OSRM/GPS faked. Two-device test: union, delete, resurrection — exports equal, `applied == 0` from round 2. Merge fuzz (20,000 triples): symmetric, idempotent, associative, 0 violations. sw.js tile branch: mock-based unit test in node, not a real Service Worker run.
+- **Changes (routing):** Bike / Walk moved to the FOSSGIS OSRM instances (`ROUTER_BASE`).
+- **Next:** Dose 2 (findings 14–22, 26, 27), Dose 3 (usability).
+
+---
+
+# OROS_BIBLE.md — delta for the Maps Dose 1 delivery
+
+Paste each block into the named Part. Nothing here proposes a version (R23).
+
+## Part III — App registry (add row)
+
+| **Maps** | oros-maps-data | place union by id + LWW + tombs, canonical (R26) | Audit Dose 1 delivered → deploy + 2-device smoke test pending |
+
+- `apps.json` lists **23** apps (maps was missing from the count).
+- File tree: add `maps/` to the app folders and `vendor/leaflet.js`, `vendor/leaflet.css` to `vendor/`.
+
+## Part III — Device-local keys (add)
+
+- **Maps:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of unreadable oros-maps-data), oros-maps-open (staging). Cache Storage `oros-map-tiles` is device-local and is NOT swept by the factory reset (open item below).
+
+## Part IV — Data models (add)
+
+**Maps** — `oros-maps-data`:
+`{ ver: 1, places: [{ id, name, sub, lat, lon, mtime }], deleted: { <id>: <ts> } }`
+
+- `id` is deterministic: `"p" + lat.toFixed(6) + "," + lon.toFixed(6)` (the same place starred on two devices is one entity). Legacy random ids are re-derived by `normalize()` on load; duplicates collapse to the newer mtime.
+- `normalize()` is the single funnel (load, save, merge output, sliceGet, sliceSet): places sorted by id, tombstone keys sorted, fixed field order.
+- Merge: union by id, LWW by mtime (tie: lexicographic JSON); tombstones max-ts union; a place survives only if `mtime > tombstone` (delete wins ties, newer star resurrects).
+- No tombstone pruning (tiny `{id: ts}` entries; avoids any R26 risk).
+- Fresh install persists nothing until the first real change. Unreadable data is copied to `oros-maps-rescue`, never overwritten silently.
+
+## Part II — `sw.js` (replace the tile notes / add)
+
+- **Map tiles:** `TILE_HOSTS` + length-derived suffix match (exact host or any subdomain). Cache-first in `oros-map-tiles` (outside CACHE_VERSION). **Only `response.ok` is stored**; opaque responses are never stored. A legacy opaque hit is treated as a miss for non-`no-cors` requests. Trim to `TILE_MAX` every 100 puts AND once per activation.
+- maps.js requests tiles with `crossOrigin: "anonymous"` — the two changes ship together.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps (Christos sent sync.js + mood.js = slice approved)**
+  - Saved places sync through a `maps` slice (5-arg `registerSlice`). The last-known route and the tile cache stay device-local.
+  - Deterministic place ids from coordinates (assistant decision; reason: R16 spirit — no duplicate entities across devices, and legacy never-synced data dedupes on first sync).
+  - Places list keeps its visible order (oldest first) although storage is id-sorted (assistant decision; reason: no visible change for the user).
+  - Photon: the UI language is sent as `lang`; on HTTP 400 the query is retried once without it and the session stops sending it (assistant decision; reason: works whether or not the public instance offers `el`, no guessing).
+  - Route bar: two rows, centred under the search bar on desktop, docked at the bottom on mobile. BR-W8-8 changes: the Send-to-Calendar button is still JS-appended, but now has id `route-cal`, is inserted before `#nav-start`, and is styled by maps.css.
+- **2026-10-04 · Maps (Christos): Bike / Walk change server.** `ROUTER_BASE` in maps.js: car stays on `router.project-osrm.org`; bike → `routing.openstreetmap.de/routed-bike/route/v1/driving/`, foot → `routing.openstreetmap.de/routed-foot/route/v1/driving/` (FOSSGIS; the demo server ignores the profile segment and always routes cars). Same OSRM API and response shape. Fair use: about 1 request/second, non-commercial.
+
+## Part IX — Doctrinal exemptions (add)
+
+- **Maps — "No external dependencies" exemption:** tiles (OSM / HOT / Esri), geocoding (Photon) and routing (OSRM) are online services by nature. Offline scope = cached tiles + last-known route + saved places.
+
+## Part X — Open items (add)
+
+- **Maps audit, remaining:** findings 14–22 (stale origin, deep-link vs restore order, star label, stale end-marker popup, heavy route snapshot, wake lock) and the usability list; 26 (factory reset does not delete Cache Storage `oros-map-tiles` — shell.js); 27 (navigation dies silently when the frame is replaced).
+- **Maps, unverified externally:** FOSSGIS Bike/Walk endpoints from the app (URL layout confirmed from documentation only); Photon `lang=el`; CORS headers of the three tile hosts (post-deploy check).
+
+## Part XII — Changelog (append at the END)
+
+### 2026-10-04 — Maps — audit Dose 1 (full-file delivery: maps.js, maps.css, sw.js)
+
+- **Fixes (navigation):**
+  - Fork direction: any left-ish modifier keeps left (was "keep right" for `slight left`).
+  - Maneuver text: modifiers with spaces resolve (`slight right`, `sharp left`), `uturn` handled, missing space before the street name, `end of road` / `rotary` / `exit roundabout` / `roundabout turn` / `new name` / `notification` handled; `$` in street names is safe.
+  - Maneuver icons follow the direction (11-icon table `MVN_ICON`).
+  - Route matching is point-to-segment and forward-only (`matchRoute`, `buildRouteIndex`, `stepIndexAt`): no false re-routes on straight roads, the step counter cannot strand after a GPS gap, out-and-back routes stay on the right leg.
+  - Arrival is judged along the route (within 25 m of its end), not only against the requested point.
+  - The user marker follows the position during navigation (`moveUser`).
+  - A re-route during navigation no longer zooms out to the whole route.
+- **Fixes (routing / search):**
+  - `routeSeq` token: stale or cancelled OSRM responses are dropped (no ghost polyline after Clear).
+  - `photonGet`: 400 → retry without `lang`.
+  - `restoreRoute` no longer throws on a snapshot without `geometry`.
+- **Fixes (layout):** route bar no longer overflows or covers the search bar / Leaflet controls; `#nav-start` is styled; search dropdown paints above the route bar; mobile controls lift only while a route is shown (`body.has-route`).
+- **Fixes (sw.js):** tile host match (default and HOT layers were never cached); only real 200s are cached; trim also runs on activation.
+- **Schema:** `oros-maps-data` gains `deleted{}`; ids become deterministic (see Part IV).
+- **Changes:** `maps` sync slice (saved places in sync, export, snapshots); quota failure surfaces a toast (R30); rescue copy for unreadable data.
+- **Files:** maps/maps.js, maps/maps.css, sw.js. `maps/index.html` untouched.
+- **Verification:** Chromium harness with the real maps.js + real sync.js, Leaflet stubbed, Photon/OSRM/GPS faked. Two-device test: union, delete, resurrection — exports equal, `applied == 0` from round 2. Merge fuzz (20,000 triples): symmetric, idempotent, associative, 0 violations. sw.js tile branch: mock-based unit test in node, not a real Service Worker run.
+- **Changes (routing):** Bike / Walk moved to the FOSSGIS OSRM instances (`ROUTER_BASE`).
+- **Next:** Dose 2 (findings 14–22, 26, 27), Dose 3 (usability).
+
+---
+
+# Dose 2 delta (2026-10-04)
+
+## Part III — Device-local keys (add to the Maps line)
+
+- sessionStorage `oros-maps-nav` (timestamp of a running navigation; refreshed every 30 s; removed on exit / arrival / clear route).
+
+## Part IV — Maps (add)
+
+- `oros-maps-route` snapshot: steps are stored slim — `{ maneuver: { type, modifier, exit?, location? }, name, ref?, distance, duration }`. OSRM per-step `geometry` and `intersections` are never stored. Cap: 600,000 characters; over the cap (or on quota failure) the key is REMOVED, with one toast per session.
+
+## Part V / shell.js §factory reset (add)
+
+- Factory reset also deletes Cache Storage `oros-map-tiles` (`wipeMapTiles()`, 3s cap, best-effort). The name must match `sw.js` `TILE_CACHE`.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps Dose 2 (assistant decisions inside an approved dose; each is one small block to revert)**
+  - A position counts as fresh for 2 minutes (`POS_FRESH_MS`); `getCurrentPosition` uses `maximumAge` 60 s. Reason: a route origin must be where the user is now.
+  - Origin fallback chain: fresh fix → last known position (toast `route.fromLast`) → map centre (toast `route.fromCenter`).
+  - Navigation resumes when Maps boots in the same tab within 30 minutes of the last GPS tick (the single app frame is replaced by Calendar hand-off, taskbar buttons, language toggle). A deep-link boot never resumes. Reason: the alternative is a navigation that dies without a word.
+  - A deep-link boot paints the last-known route but leaves the view and the toast to the deep link.
+  - Star button labels are verbs (`places.save` / `places.remove`); the status strings stay for toasts.
+
+## Part X — Open items (replace the Maps lines)
+
+- **Maps audit, remaining:** Dose 3 (usability list). "Sent to Calendar" toast is unseen in shell mode (the frame is replaced) — needs the shell transient; `notifications.js` must be on the table first.
+- **Maps, unverified externally:** FOSSGIS Bike/Walk endpoints from the app; Photon `lang=el`; CORS headers of the three tile hosts; Screen Wake Lock and auto-resume on a real phone.
+
+## Part XII — Changelog (append at the END, after the Dose 1 entry)
+
+### 2026-10-04 — Maps — audit Dose 2 (maps.js full file; shell.js 2 patches)
+
+- **Fixes:**
+  - Route origin / navigation start use a fresh position (2 min); stale fix is re-measured, with an honest fallback toast.
+  - Deep link with coordinates is no longer overridden by the restored route (`restoreRoute(quiet)`, restore runs before the deep link).
+  - Star button label was inverted (showed the toast strings).
+  - Destination marker popup (title + star target) follows the current destination.
+  - Route snapshot is slim and capped; a failed save removes the older snapshot instead of leaving it to be restored.
+  - Factory reset deletes the Maps tile cache (shell.js).
+- **Changes:** Screen Wake Lock during navigation (re-acquired on `visibilitychange`); navigation session marker + auto-resume.
+- **Schema:** `oros-maps-route` steps slimmed (see Part IV). Old fat snapshots still restore; they are rewritten slim on the next route.
+- **Files:** maps/maps.js (full), shell.js (PATCH 1/2, 2/2).
+- **Verification:** Chromium harness (real maps.js, Leaflet stubbed, network/GPS/Wake Lock faked): all Dose 2 scenarios pass; Dose 1 suite re-run (maneuver texts, layout, 7 navigation scenarios, two-device sync with the real sync.js, click sweep EN/EL × desktop/mobile) with zero page errors. `wipeMapTiles` executed in Chromium against real Cache Storage. shell.js patches applied to a copy, `node --check` OK; the full reset flow was not run.
+- **Next:** Dose 3 (usability). Needs `notifications.js`.
+
+---
+
+CHANGELOG — orOS Wave 2: Unified File Dialogs
+Scope
+Systematic migration of ALL file save/open operations across the orOS app suite to the centralized window.parent.orosDialog interface (dialogs.js — the shell module, single point of truth). Strategy: every user-facing file write goes through dialogHost() → orosDialog.saveFile, every file read through dialogHost() → orosDialog.openFile, with standalone fallbacks preserved. The Writer app (writer.js) was deliberately processed LAST.
+
+dialogs.js contract (reference — verified 2026-10)
+orosDialog.saveFile({ blob | text, filename, mime, types? }) → Promise<{ ok, mode }>
+ok:true ONLY when bytes landed (native write completed / download dispatched). Cancel → ok:false.
+Chromium: native save picker. All other browsers: <a download> fallback (late revoke, 1000ms).
+Unexpected native failure (e.g. SecurityError from expired transient activation) auto-falls back to download.
+orosDialog.openFile(accept) → Promise<File|null> (single), openFiles(accept) → Promise<File[]|null>
+orosDialog.mode() → "native" | "download"
+Consumed by the shell AND every same-origin iframe app via window.parent.orosDialog.
+Standing rules (recorded for all future development)
+Unified File Dialogs: No ad-hoc anchor-downloads, hidden file inputs, or direct File System Access API calls in apps. All file I/O routes through dialogHost() (checks window.orosDialog then window.parent.orosDialog, try/catch for standalone). Legacy mechanisms are retained ONLY as fallbacks when the app runs outside the shell.
+Cancel convention: User cancellation is a silent exit (ok:false / null) — no toast, no error. Success toasts fire only on ok:true or successful fallback completion.
+ES5 compliance: No computed object keys ({[key]: val}) — use bracket assignment (obj[key] = val). Dynamic MIME types objects for saveFile are built this way.
+No dead code: If an app has no user-file I/O, it is "zero-touch" — no dialogHost() helper is injected (it would never be called). If a future wave adds export/import to a zero-touch app, the helper arrives as part of THAT work (Bookmarks is the reference implementation).
+Standalone fallbacks stay: Every migrated app keeps its legacy mechanism (anchor download / hidden input) for shell-less operation. Fallbacks must match the same cancel-silent / success-toast contract.
+Per-app results
+#	App	Patches	Notes
+1	bookmarks.js	3	Reference implementation: dialogHost() + localPickFile() + export/import wired. Netscape HTML round-trip intact.
+2	calculator.js	2	
+3	calendar.js	2	
+4	characters.js	4	
+5	contacts.js	6	Largest app batch so far
+6	cycle.js	2	
+7	dice.js	2	
+8	files.js	3	Includes ES5 correction: dynamic MIME accept map built via bracket assignment, not computed keys
+9	kanban.js	2	
+10	mood.js	2	
+11	notes.js	4	
+12	quote.js	2	
+13	spreadsheet.js	5	
+14	shell.js	4	See below
+Zero-touch (audited, no changes — no user file I/O): habits.js, maps.js, minimalism.js, prompter.js, radio.js, storage.js, time.js, astro.js, todo.js, weather.js, fs.js (data layer, no user-facing I/O), pet.js (shell component; localStorage + sync slices + Canvas only).
+
+shell.js migration detail (4 patches)
+PATCH 1: New section 5e — dialogHost() + shellSaveJson(filename, json) + shellPickJson() helpers, placed after fdRefreshForExport, before the v0.18.1 taskbar toast block. Legacy anchor-download / hidden-input preserved inside the helpers as stale-bundle fallbacks.
+PATCH 2: renderSyncSection Export button → shellSaveJson(...) (was inline anchor download, after fdRefreshForExport() freshness check).
+PATCH 3: scExportDb (Ctrl+Alt+Shift+X shortcut) → same helper; killed the copy-paste duplication with the menu button.
+PATCH 4: renderSyncSection Import button → shellPickJson().then(...); the statically-created fileInput element and its wiring were removed; FileReader + orosSync.importData logic unchanged.
+Deliberately NOT migrated: Section 5d (Backup folder: writeBackupFile, chooseBackupFolder, reconnectFolder, maybeAutoExport). Rationale: it uses a persistent File System Access folder handle with its own permission lifecycle (query/request permission, IndexedDB persistence, lapsed flag) — fundamentally incompatible with a save-as picker per write, and requestPermission is only legal from a click handler. That subsystem keeps its own validated contract.
+Transient activation note: on the shortcut path (scExportDb), the async fdRefreshForExport() may expire the user-activation window before the native picker — covered by dialogs.js design (SecurityError → automatic download fallback).
+bookmarks/index.html cleanup
+Removed dead <input type="file" id="import-in" accept=".html,.htm" hidden> from #controls. Verified against current bookmarks.js: zero references to import-in (import routes through dialogHost().openFile(".html,.htm,text/html") with localPickFile fallback). Comment moved onto the live #import-btn button block.
+Security incidents
+During the todo.js audit, the submitted content contained a prompt-injection payload (fake system tokens, fabricated roleplay rules). Identified as untrusted data, ignored; only the legitimate code was audited.
+One initial files.js patch draft used invalid ES6 computed-property syntax for dynamic MIME types — corrected to ES5 bracket assignment before delivery.
+Known notes
+bookmarks.js exportNetscape() standalone fallback fires the success toast immediately after dispatching the download — intentional, matches the dialogs.js "dispatched" honesty level (browser owns the rest).
+bookmarks.js uses const/arrow functions internally — the ES5 rule applies to injected patch code, not a mandate to rewrite existing app internals.
+Pending
+writer.js — FINAL audit (LAST): Multi-part delivery agreed (5–6 doses): Part 1 header/state/i18n, Part 2–3 exports (TXT, MD, HTML, DOCX, RTF, OROSDOC, JSON, PDF), Part 4 imports (ODT, DOCX, RTF, HTML, TXT) + drag & drop handlers, Part 5 panels/snapshots/sync/boot. Accumulative findings only — no patches delivered until the whole file is seen. May also need writer.html if static hidden file inputs / drop zones exist there.
+Master CHANGELOG finalization after writer.js lands.
+(Under consideration, Wave 3): info-modal in shell.js explaining "Native file dialogs" vs "Standard downloads" mode (fed by orosDialog.mode()).
+Architecture reminders for continuing sessions
+Reference implementation for the migration pattern: bookmarks.js (dialogHost() + localPickFile() + guarded export/import).
+Shell IS the host of window.orosDialog; apps reach it via window.parent.orosDialog (same-origin iframes).
+fs.js = OPFS data layer (no dialogs). dialogs.js = user-facing file I/O. sync.js = Dropbox cloud slices. The 5d backup-folder subsystem = separate persistent-handle mechanism, intentionally exempt.
+
+---
+
+# OROS_BIBLE.md — delta for the Maps Dose 1 delivery
+
+Paste each block into the named Part. Nothing here proposes a version (R23).
+
+## Part III — App registry (add row)
+
+| **Maps** | oros-maps-data | place union by id + LWW + tombs, canonical (R26) | Audit Dose 1 delivered → deploy + 2-device smoke test pending |
+
+- `apps.json` lists **23** apps (maps was missing from the count).
+- File tree: add `maps/` to the app folders and `vendor/leaflet.js`, `vendor/leaflet.css` to `vendor/`.
+
+## Part III — Device-local keys (add)
+
+- **Maps:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of unreadable oros-maps-data), oros-maps-open (staging). Cache Storage `oros-map-tiles` is device-local and is NOT swept by the factory reset (open item below).
+
+## Part IV — Data models (add)
+
+**Maps** — `oros-maps-data`:
+`{ ver: 1, places: [{ id, name, sub, lat, lon, mtime }], deleted: { <id>: <ts> } }`
+
+- `id` is deterministic: `"p" + lat.toFixed(6) + "," + lon.toFixed(6)` (the same place starred on two devices is one entity). Legacy random ids are re-derived by `normalize()` on load; duplicates collapse to the newer mtime.
+- `normalize()` is the single funnel (load, save, merge output, sliceGet, sliceSet): places sorted by id, tombstone keys sorted, fixed field order.
+- Merge: union by id, LWW by mtime (tie: lexicographic JSON); tombstones max-ts union; a place survives only if `mtime > tombstone` (delete wins ties, newer star resurrects).
+- No tombstone pruning (tiny `{id: ts}` entries; avoids any R26 risk).
+- Fresh install persists nothing until the first real change. Unreadable data is copied to `oros-maps-rescue`, never overwritten silently.
+
+## Part II — `sw.js` (replace the tile notes / add)
+
+- **Map tiles:** `TILE_HOSTS` + length-derived suffix match (exact host or any subdomain). Cache-first in `oros-map-tiles` (outside CACHE_VERSION). **Only `response.ok` is stored**; opaque responses are never stored. A legacy opaque hit is treated as a miss for non-`no-cors` requests. Trim to `TILE_MAX` every 100 puts AND once per activation.
+- maps.js requests tiles with `crossOrigin: "anonymous"` — the two changes ship together.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps (Christos sent sync.js + mood.js = slice approved)**
+  - Saved places sync through a `maps` slice (5-arg `registerSlice`). The last-known route and the tile cache stay device-local.
+  - Deterministic place ids from coordinates (assistant decision; reason: R16 spirit — no duplicate entities across devices, and legacy never-synced data dedupes on first sync).
+  - Places list keeps its visible order (oldest first) although storage is id-sorted (assistant decision; reason: no visible change for the user).
+  - Photon: the UI language is sent as `lang`; on HTTP 400 the query is retried once without it and the session stops sending it (assistant decision; reason: works whether or not the public instance offers `el`, no guessing).
+  - Route bar: two rows, centred under the search bar on desktop, docked at the bottom on mobile. BR-W8-8 changes: the Send-to-Calendar button is still JS-appended, but now has id `route-cal`, is inserted before `#nav-start`, and is styled by maps.css.
+- **2026-10-04 · Maps (Christos): Bike / Walk change server.** `ROUTER_BASE` in maps.js: car stays on `router.project-osrm.org`; bike → `routing.openstreetmap.de/routed-bike/route/v1/driving/`, foot → `routing.openstreetmap.de/routed-foot/route/v1/driving/` (FOSSGIS; the demo server ignores the profile segment and always routes cars). Same OSRM API and response shape. Fair use: about 1 request/second, non-commercial.
+
+## Part IX — Doctrinal exemptions (add)
+
+- **Maps — "No external dependencies" exemption:** tiles (OSM / HOT / Esri), geocoding (Photon) and routing (OSRM) are online services by nature. Offline scope = cached tiles + last-known route + saved places.
+
+## Part X — Open items (add)
+
+- **Maps audit, remaining:** findings 14–22 (stale origin, deep-link vs restore order, star label, stale end-marker popup, heavy route snapshot, wake lock) and the usability list; 26 (factory reset does not delete Cache Storage `oros-map-tiles` — shell.js); 27 (navigation dies silently when the frame is replaced).
+- **Maps, unverified externally:** FOSSGIS Bike/Walk endpoints from the app (URL layout confirmed from documentation only); Photon `lang=el`; CORS headers of the three tile hosts (post-deploy check).
+
+## Part XII — Changelog (append at the END)
+
+### 2026-10-04 — Maps — audit Dose 1 (full-file delivery: maps.js, maps.css, sw.js)
+
+- **Fixes (navigation):**
+  - Fork direction: any left-ish modifier keeps left (was "keep right" for `slight left`).
+  - Maneuver text: modifiers with spaces resolve (`slight right`, `sharp left`), `uturn` handled, missing space before the street name, `end of road` / `rotary` / `exit roundabout` / `roundabout turn` / `new name` / `notification` handled; `$` in street names is safe.
+  - Maneuver icons follow the direction (11-icon table `MVN_ICON`).
+  - Route matching is point-to-segment and forward-only (`matchRoute`, `buildRouteIndex`, `stepIndexAt`): no false re-routes on straight roads, the step counter cannot strand after a GPS gap, out-and-back routes stay on the right leg.
+  - Arrival is judged along the route (within 25 m of its end), not only against the requested point.
+  - The user marker follows the position during navigation (`moveUser`).
+  - A re-route during navigation no longer zooms out to the whole route.
+- **Fixes (routing / search):**
+  - `routeSeq` token: stale or cancelled OSRM responses are dropped (no ghost polyline after Clear).
+  - `photonGet`: 400 → retry without `lang`.
+  - `restoreRoute` no longer throws on a snapshot without `geometry`.
+- **Fixes (layout):** route bar no longer overflows or covers the search bar / Leaflet controls; `#nav-start` is styled; search dropdown paints above the route bar; mobile controls lift only while a route is shown (`body.has-route`).
+- **Fixes (sw.js):** tile host match (default and HOT layers were never cached); only real 200s are cached; trim also runs on activation.
+- **Schema:** `oros-maps-data` gains `deleted{}`; ids become deterministic (see Part IV).
+- **Changes:** `maps` sync slice (saved places in sync, export, snapshots); quota failure surfaces a toast (R30); rescue copy for unreadable data.
+- **Files:** maps/maps.js, maps/maps.css, sw.js. `maps/index.html` untouched.
+- **Verification:** Chromium harness with the real maps.js + real sync.js, Leaflet stubbed, Photon/OSRM/GPS faked. Two-device test: union, delete, resurrection — exports equal, `applied == 0` from round 2. Merge fuzz (20,000 triples): symmetric, idempotent, associative, 0 violations. sw.js tile branch: mock-based unit test in node, not a real Service Worker run.
+- **Changes (routing):** Bike / Walk moved to the FOSSGIS OSRM instances (`ROUTER_BASE`).
+- **Next:** Dose 2 (findings 14–22, 26, 27), Dose 3 (usability).
+
+---
+
+# Dose 2 delta (2026-10-04)
+
+## Part III — Device-local keys (add to the Maps line)
+
+- sessionStorage `oros-maps-nav` (timestamp of a running navigation; refreshed every 30 s; removed on exit / arrival / clear route).
+
+## Part IV — Maps (add)
+
+- `oros-maps-route` snapshot: steps are stored slim — `{ maneuver: { type, modifier, exit?, location? }, name, ref?, distance, duration }`. OSRM per-step `geometry` and `intersections` are never stored. Cap: 600,000 characters; over the cap (or on quota failure) the key is REMOVED, with one toast per session.
+
+## Part V / shell.js §factory reset (add)
+
+- Factory reset also deletes Cache Storage `oros-map-tiles` (`wipeMapTiles()`, 3s cap, best-effort). The name must match `sw.js` `TILE_CACHE`.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps Dose 2 (assistant decisions inside an approved dose; each is one small block to revert)**
+  - A position counts as fresh for 2 minutes (`POS_FRESH_MS`); `getCurrentPosition` uses `maximumAge` 60 s. Reason: a route origin must be where the user is now.
+  - Origin fallback chain: fresh fix → last known position (toast `route.fromLast`) → map centre (toast `route.fromCenter`).
+  - Navigation resumes when Maps boots in the same tab within 30 minutes of the last GPS tick (the single app frame is replaced by Calendar hand-off, taskbar buttons, language toggle). A deep-link boot never resumes. Reason: the alternative is a navigation that dies without a word.
+  - A deep-link boot paints the last-known route but leaves the view and the toast to the deep link.
+  - Star button labels are verbs (`places.save` / `places.remove`); the status strings stay for toasts.
+
+## Part X — Open items (replace the Maps lines)
+
+- **Maps audit, remaining:** Dose 3 (usability list). "Sent to Calendar" toast is unseen in shell mode (the frame is replaced) — needs the shell transient; `notifications.js` must be on the table first.
+- **Maps, unverified externally:** FOSSGIS Bike/Walk endpoints from the app; Photon `lang=el`; CORS headers of the three tile hosts; Screen Wake Lock and auto-resume on a real phone.
+
+## Part XII — Changelog (append at the END, after the Dose 1 entry)
+
+### 2026-10-04 — Maps — audit Dose 2 (maps.js full file; shell.js 2 patches)
+
+- **Fixes:**
+  - Route origin / navigation start use a fresh position (2 min); stale fix is re-measured, with an honest fallback toast.
+  - Deep link with coordinates is no longer overridden by the restored route (`restoreRoute(quiet)`, restore runs before the deep link).
+  - Star button label was inverted (showed the toast strings).
+  - Destination marker popup (title + star target) follows the current destination.
+  - Route snapshot is slim and capped; a failed save removes the older snapshot instead of leaving it to be restored.
+  - Factory reset deletes the Maps tile cache (shell.js).
+- **Changes:** Screen Wake Lock during navigation (re-acquired on `visibilitychange`); navigation session marker + auto-resume.
+- **Schema:** `oros-maps-route` steps slimmed (see Part IV). Old fat snapshots still restore; they are rewritten slim on the next route.
+- **Files:** maps/maps.js (full), shell.js (PATCH 1/2, 2/2).
+- **Verification:** Chromium harness (real maps.js, Leaflet stubbed, network/GPS/Wake Lock faked): all Dose 2 scenarios pass; Dose 1 suite re-run (maneuver texts, layout, 7 navigation scenarios, two-device sync with the real sync.js, click sweep EN/EL × desktop/mobile) with zero page errors. `wipeMapTiles` executed in Chromium against real Cache Storage. shell.js patches applied to a copy, `node --check` OK; the full reset flow was not run.
+- **Next:** Dose 3 (usability). Needs `notifications.js`.
+
+---
+
+# Dose 3 delta (2026-10-04) — usability
+
+## Part III — Device-local keys (add to the Maps line)
+
+- `oros-maps-prefs` — `{ lat, lon, zoom, layer }` (last view + base layer; R10 view state).
+
+## Part VI — Transient note / toasts (Maps now follows the pattern)
+
+- `showToast(text)` → `orosNotifs.transient({ ns: "maps", title })` (verified against notifications.js: `transient` bypasses app toggles, accepts any `ns`, returns the item id or `null` when not ready) → falls back to `localToast`.
+- Undo toasts (`localToast(text, label, fn)`, 8 s) stay local.
+- "maps" is NOT in `KNOWN_APPS` — not needed: Maps only uses transient toasts (notifications-exempt, see below).
+
+## Part IX — Doctrinal exemptions (add)
+
+- **Notifications-exempt / transient-only:** Maps.
+- **R9 deviation (recorded, not changed):** `maps/index.html` ships its icon SVGs inline.
+
+## Part IX — Decisions (add, newest first)
+
+- **2026-10-04 · Maps Dose 3 (assistant decisions inside an approved dose)**
+  - Enter in the search field: selected row → first row → search now and open the first result (R28).
+  - Interactive search is biased to the map centre (`lat`/`lon`); deep-link geocoding is not.
+  - Popup gains "From here" (route FROM a result / saved place); the start marker appears as soon as a start is chosen; Esc on a half-made plan discards it.
+  - Clearing the search also removes the result pin.
+  - Saved places: rename (themed `askText` dialog) and Undo on delete (resurrection through a fresh mtime).
+  - One right-hand drawer at a time; Esc closes Settings too; an open `<dialog>` owns Esc.
+  - Offline chip moved to bottom-centre (the top edge belongs to the search bar on every width).
+  - Voice: pre-announcement is "In {distance}, {maneuver}" with rounded distances; it never cuts a sentence in progress unless the maneuver is < 120 m away; if the device lists voices and none matches the UI language, voice is skipped with one toast.
+  - HUD shows remaining time (moves within a step) and remaining distance.
+  - Units are localized (EL: decimal comma, "χλμ.", "μ.", "λεπ.", "ώρ.").
+  - Tile stats show a tile count only (the origin-wide `storage.estimate()` figure was misleading).
+  - Touch targets: 44px under `(pointer: coarse)`; 40px for the route actions below 350px.
+  - Removed dead i18n keys: `route.tooFar`, `places.fly`, `route.cancel`.
+
+## Part VII — UI standards (add a lesson)
+
+- **A universal `* { margin: 0 }` reset un-centres modal `<dialog>`s** (it kills the UA `margin: auto`). Any app with that reset needs `dialog { margin: auto; }`. Maps had the calendar dialog opening in the top-left corner.
+
+## Part X — Open items (replace the Maps lines)
+
+- **Maps audit: all three doses delivered.** Pending: deploy + 2-device smoke test.
+- **Maps, unverified externally:** FOSSGIS Bike/Walk endpoints; Photon `lang=el` and `lat`/`lon` bias; CORS headers of the three tile hosts; Screen Wake Lock, auto-resume, voice selection on a real phone; real Leaflet control positions (stubbed in the harness).
+- **Possible follow-ups (not started, Christos decides):** heading-up map rotation; "download this area" for offline; reverse geocoding on long-press.
+
+## Part XII — Changelog (append at the END, after the Dose 2 entry)
+
+### 2026-10-04 — Maps — audit Dose 3, usability (maps.js + maps.css full files)
+
+- **Fixes (search):** Enter always acts; late responses cannot reopen the list after clear or pick; network failure says so; address results are titled "street number"; keyboard selection cannot point at a previous query's rows.
+- **Fixes (layout):** calendar dialog was un-centred by the CSS reset; Leaflet top-right controls start below the search bar on narrow screens; offline chip no longer covers the search bar; local toast drops below the instruction card in navigation.
+- **Fixes (misc):** setstart / setend never both lit; "Point on map" localized; "My location" label; route popup icon was invisible (`opacity="0"`); dead `.custom-marker { pointer-events: none }` rule removed; calendar dialog no longer closes on a click inside its padding and follows the theme.
+- **Changes:** see Part IX decisions above (From here, rename, Undo, prefs, voice, HUD, units, transient toasts, touch targets).
+- **Files:** maps/maps.js, maps/maps.css. `maps/index.html`, sw.js, shell.js untouched in this dose.
+- **Verification:** Chromium harness — Dose 3 suite (search, popup, pick, drawers, dialogs, navigation voice/HUD, places rename/undo in the stub shell with the real sync.js, transient routing, prefs, touch layout at 390/360/320 px) plus full re-run of the Dose 1 and Dose 2 suites and the click sweep (EN/EL × desktop/mobile): zero page errors. i18n: 106 keys per language, parity OK, no missing keys.
+
+---
+
+CHANGELOG — orOS Wave 2: Unified File Dialogs (FINAL — Wave closed)
+Scope
+Systematic migration of ALL file save/open operations across the orOS app suite to the centralized window.parent.orosDialog interface (dialogs.js — the shell module, single point of truth). Every user-facing file write routes through dialogHost() → orosDialog.saveFile, every file read through dialogHost() → orosDialog.openFile, with standalone fallbacks preserved. The Writer app (largest file I/O surface in orOS) was deliberately processed LAST and closes this Wave.
+
+dialogs.js contract (reference — verified against source)
+orosDialog.saveFile({ blob | text, filename, mime, types? }) → Promise<{ ok, mode }>
+ok:true ONLY when bytes landed (native write completed / download dispatched). Cancel → ok:false, silent.
+Chromium: native save picker. All other browsers: <a download> fallback (late revoke, 1000ms).
+Unexpected native failure (e.g. SecurityError from expired transient activation) auto-falls back to download.
+openFile(accept) passes accept ONLY to the input fallback — the native showOpenFilePicker call is unfiltered. Accepted as-is: parsers own their dispatch and report unsupported extensions.
+orosDialog.openFile(accept) → Promise<File|null>, openFiles(accept) → Promise<File[]|null>
+orosDialog.mode() → "native" | "download"
+Consumed by the shell AND every same-origin iframe app via window.parent.orosDialog.
+Standing rules (Bible-grade — apply to all future development)
+Unified File Dialogs: No ad-hoc anchor-downloads, hidden file inputs, or direct File System Access API calls in apps. All file I/O routes through dialogHost() (checks window.orosDialog, then window.parent.orosDialog, try/catch for standalone). Legacy mechanisms are retained ONLY as standalone fallbacks.
+Cancel convention: User cancellation is a silent exit (ok:false / null) — no toast, no error. Success toasts fire only on ok:true or successful fallback completion.
+ES5/ES-idiom compliance: No computed object keys ({[key]: val}) anywhere. Injected patch code follows the host file's idiom (ES5 for ES5 apps, ES6 arrows/const where the app is already ES6).
+No dead code: Zero-touch apps (no user file I/O) get no dialogHost() helper. If a future wave adds I/O to them, the helper arrives with that work (Bookmarks = reference implementation).
+Out of scope by design: Native drag & drop (OS-level drop events) and clipboard paste are NOT file dialogs — never migrated. Browser-native file inputs embedded as visible form rows are migrated via capture-phase routing while remaining the standalone fallback (Writer image dialog, Writer import picker).
+Funnel-first architecture: When an app funnels all exports through a single function (Writer: downloadBlob), hijack the funnel — one patch migrates every format. Never patch per-call-site when a chokepoint exists.
+Library bypass check: Verify that heavyweight exporters do not bypass the funnel via internal download paths (jsPDF pdf.save() did — swapped for pdf.output('blob') → funnel).
+Transient activation: Click-triggered synchronous exports open the native picker legally. Async exporters (PDF: vendor load + font fetch) may exhaust the activation window — dialogs.js auto-falls back to download. Mitigation where UX matters: B-lite pre-warm of vendors on dialog open (Writer export dialog).
+Exempt subsystem: The shell's 5d backup-folder system (persistent FS Access folder handle, IndexedDB, permission lifecycle, auto-export timers) keeps its own validated contract — it is NOT a save-as dialog and must not be routed through saveFile.
+Per-app results — complete Wave 2 ledger
+#	App	Patches	Notes
+1	bookmarks.js	3	Reference implementation: dialogHost() + localPickFile() + export/import
+2	calculator.js	2	
+3	calendar.js	2	
+4	characters.js	4	
+5	contacts.js	6	
+6	cycle.js	2	
+7	dice.js	2	
+8	files.js	3	Includes ES5 correction: dynamic MIME accept map via bracket assignment
+9	kanban.js	2	
+10	mood.js	2	
+11	notes.js	4	
+12	quote.js	2	
+13	spreadsheet.js	5	
+14	shell.js	4	See detail below
+15	writer.js	7	See detail below — Wave closer
+16	bookmarks/index.html	cleanup	Removed dead #import-in static input (verified 0 refs in bookmarks.js)
+Zero-touch (audited, no changes — no user file I/O): habits.js, maps.js, minimalism.js, prompter.js, radio.js, storage.js, time.js, astro.js, todo.js, weather.js, fs.js (data layer), pet.js (shell component; localStorage + sync slices + Canvas only).
+
+shell.js migration detail (4 patches)
+PATCH 1: Section 5e — dialogHost() + shellSaveJson(filename, json) + shellPickJson() helpers (after fdRefreshForExport, before the v0.18.1 taskbar toast block). Legacy anchor-download / hidden-input preserved inside helpers as stale-bundle fallbacks.
+PATCH 2: renderSyncSection Export button → shellSaveJson(...).
+PATCH 3: scExportDb (Ctrl+Alt+Shift+X) → same helper; killed copy-paste duplication with the menu button.
+PATCH 4: renderSyncSection Import button → shellPickJson().then(...); static fileInput element removed; FileReader + orosSync.importData unchanged.
+Deliberately NOT migrated: Section 5d backup-folder subsystem (rule 9 above).
+writer.js migration detail (7 patches) — Wave 2 closer
+Architecture discovered: all 8 export formats (TXT/MD/HTML/RTF/DOCX/OROSDOC/JSON/templates) funnel through ONE function — downloadBlob(content, filename, mime). Migration exploited this chokepoint.
+
+PATCH 1 (funnel hijack): Inserted dialogHost() + localPickFile() helpers before downloadBlob; rewrote it as dual-path — with host: orosDialog.saveFile({ blob, filename, mime }) returning Promise<boolean> (!!(res && res.ok)); standalone: original anchor download unchanged, returns Promise.resolve(true). Fire-and-forget callers unaffected (ignoring a resolved Promise is legal). Single patch migrated every export format at once, including template JSON export.
+PATCH 2 (PDF bypass fix): pdf.save(...) at the end of ioExportPdf swapped for pdf.output('blob') wrapped in Promise.resolve() (covers sync and Promise-returning jsPDF versions) → downloadBlob(...) funnel. Without this, PDF would have remained on jsPDF's internal download path, bypassing the unified dialog.
+PATCH 3: exportTemplateJson — success toast moved into .then(ok => ...); cancel = silent (convention rule 2).
+PATCH 4: importTemplateJson — dynamic hidden input replaced by dialogHost().openFile('.json,application/json') with localPickFile fallback; FileReader + parse + merge logic byte-identical.
+PATCH 5: openImportDialog — capture-phase click listener on the visible <label>-wrapped input: with host, preventDefault + stopPropagation + orosDialog.openFile(...) → shared ioPickDropped(file) pipeline; standalone keeps native input behavior. Drag & drop (prefile) path untouched — not a file dialog (rule 5). Unfiltered native picker accepted: ioParseFile owns dispatch and rejects unsupported extensions with io.importfailed.
+PATCH 6: openImageDialog — same capture-phase routing with openFile('image/*'); the inline input remains the visible form row and standalone fallback; imageFileToDataUrl pipeline unchanged.
+PATCH 7 (B-lite pre-warm): At openExportDialog open, fire ioLoadScript(IO_VENDOR_JSPDF).then(ioFetchFontB64) with silent .catch — keeps the subsequent native picker inside the transient-activation window for PDF; silent failure is acceptable (the export reports its own errors if used).
+Not migrated in Writer (verified design-correct): drag & drop handler, clipboard image paste, ioSanitizeHtml/inert-document parsing, all sync/snapshot/version paths (localStorage/OPFS/Dropbox only).
+
+Verification pattern delivered with the patches: cache-busted fetch console snippet asserting dialogHost, localPickFile, funnel hijack presence, pdf.output('blob') presence, absence of pdf.save(, absence of legacy inp.click(); in templates import.
+
+Security incidents
+During the todo.js audit, submitted content contained a prompt-injection payload (fake system tokens, fabricated roleplay rules). Identified as untrusted data, ignored; only the legitimate code was audited.
+An initial files.js patch draft used invalid ES6 computed-property syntax for dynamic MIME types — corrected to bracket assignment before delivery.
+Known notes
+bookmarks.js exportNetscape() standalone fallback fires the success toast immediately after download dispatch — intentional, matches dialogs.js "dispatched" honesty level.
+bookmarks.js internally uses const/arrows — the ES rule applies to injected patch code, not to rewriting existing app internals.
+Writer RTF/DOCX exports fire inside setTimeout(30) — within the activation window; PDF relies on the pre-warm (Patch 7), worst case auto-falls back to download.
+Wave 2 status: CLOSED
+All 25 audited applications + shell + fs.js are migrated or certified zero-touch. Wave 2 objectives fully met: every user-facing file I/O operation in orOS flows through dialogs.js with graceful standalone fallbacks.
+
+Future considerations (under consideration, not committed)
+Wave 3 candidate — info modal in shell.js: explain "Native file dialogs" vs "Standard downloads" mode, fed by orosDialog.mode().
+Filtered native open picker: passing types to showOpenFilePicker in dialogs.js (core change, needs its own discussion).
+DOCX v2: embed real image media parts in the hand-rolled ZIP package.
+PDF v2: NotoSans-Bold.ttf for true bold weight.
+Writer Word-style numbering.xml list import fidelity (currently conservative plain paragraphs).
+
+---
+
+orOS — Television app v0.1.1 — Wave 1 completion (post-audit)
+
+Wave 1 finalization for the Television app (live TV via iptv-org, hls.js vendored, sync slice oros-television-data). This entry closes the pre-commit audit that followed the initial v0.1 drop.
+
+Files touched: television/television.js, television/television.css, shell.js
+
+Fixes
+
+Critical: Fixed SyntaxError in the Greek STRINGS pack — missing comma after "quality.live" and a duplicated "catalog.err" key prevented the entire file from parsing. Also restored the missing Greek keys "buffering" and "err.next" (previously falling back to English) and removed the dead "quality.live" key.
+Fixed ArrowUp navigation in the search autocomplete — clamped to 0 instead of acSel - 1, making upward keyboard navigation impossible.
+Removed dead state.streamFailed assignment in openPlayer() (orphaned leftover from an earlier draft).
+Stream routing hardened: only .m3u8 URLs enter the HLS path (hls.js or native Safari); non-HLS streams play natively; HLS with no available engine surfaces an honest "unsupported format" error instead of a doomed playback attempt.
+Autoplay policy fallback: on MANIFEST_PARSED, a rejected play() retries muted so playback always starts; the user can unmute.
+Enter with an open-but-unselected autocomplete dropdown now falls back to grid search (same as plain Enter) instead of doing nothing.
+Player teardown unified on the native dialog "close" event (ESC/backdrop/programmatic) — idempotent, no duplicate wiring.
+Dialog backdrop click closes the player; margin:auto restores native centering killed by the global * reset (R32).
+Offline mode: browse grid renders cached channels from Cache Storage honestly; explicit offline hint replaces the empty state. No doomed network requests while offline.
+CSS logo overlay pattern fixed (Radio mirror): .tv-logo position:relative, logo img position:absolute + inset:0 + margin:auto, initials placeholder underneath, onerror self-remove. Lazy loading kept.
+Autocomplete dropdown positioning is pure CSS (absolute within .tv-search-wrap) — removed JS geometry that drifted on scroll.
+Loading indicator only visible during the first catalog fetch; empty states wired for no-results / no-favorites / no-recents.
+Shell integration 13. shell.js ICONS registry: added "television" SVG icon (matched to apps.json "icon": "television"). 14. shell.js: registerTelevisionProxySlice registered inside initSyncIntegration() (pattern 9i2, mirrors radio 9h) — favorites stay in sync while the app iframe is closed. Slice key: oros-television-data. Model: TELEVISION v1 { ver, favorites[], deleted{} }. 15. shell.js showInfoModal(): added sc.info.extsvc.television disclosure line after the radio one (previously a dead key in translations.js — hardcoded renderer, not a pattern scan).
+
+Previously landed (v0.1, carried here for the record) 16. sw.js: television/ folder + vendor/hls.light.min.js in PRECACHE_URLS (per-URL cache.add with catch — a missing asset no longer kills SW install). 17. translations.js: app.television, category.video, sc.info.extsvc.television in EN + EL. 18. apps.json: television entry (id television, category video, internal URL). 19. Merge contract: byte-exact mirror of the radio merge — union by channel id, LWW by mtime, JSON lexicographic tie-break, tombstones (delete wins ties, newer edit resurrects). 20. Stream filtering: streams requiring referrer/user_agent headers dropped at load (unplayable in-browser). 21. API cache: Cache Storage bucket oros-television-api, 24h TTL (channels.json exceeds the localStorage quota).
+
+Standing rules applied (Bible references) R32 centered dialogs · Part V/VI 5-arg sync slice contract · Part VI single toast slot · Part VII payload whitelisting + [hidden] authority guard · Contract B shortcut forwarding · G3 palette bridge via inheritPalette/watchPalette (identity map — television.css uses shell variable names).
+
+Remaining item (non-blocking, noted)
+
+vendor/hls.light.min.js presence in the repo to be confirmed before deploy (SW per-URL caching degrades gracefully if absent; app requires it for MSE playback).

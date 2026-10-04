@@ -1587,8 +1587,33 @@
     doc.text("Made with orOS | useoros.online", W / 2, 287, { align: "center" });
     doc.setTextColor(0);
 
-    doc.save((cur.num || "quote") + ".pdf");
-    notifyTransient(t("toast.exported"));
+    // Native save via orosDialog; jsPDF's own doc.save() (which
+    // does an ad-hoc anchor-download) is retired — same rule
+    // as every other orOS app (see cycle.js / mood.js).
+    var fname = (cur.num || "quote") + ".pdf";
+    var done = function () { notifyTransient(t("toast.exported")); };
+    var pdfBlob = doc.output("blob");
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: pdfBlob,
+        filename: fname,
+        mime: "application/pdf",
+        types: [{ description: "PDF",
+                  accept: { "application/pdf": [".pdf"] } }]
+      }).then(function (r) { if (r && r.ok) done(); });
+      return;                   // cancel (ok=false) = silent exit
+    }
+    // Standalone fallback — classic download (no shell present).
+    var url = URL.createObjectURL(pdfBlob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    done();
   }
 
   function printFallback() {
@@ -1677,6 +1702,14 @@
       }
     } catch (e) { /* cross-origin / stale bundle */ }
     showToast(text);
+  }
+
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
   }
 
   // ---------- 12. Sync slice + palette ----------

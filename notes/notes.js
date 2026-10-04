@@ -528,6 +528,14 @@
     if (api && typeof api.markDirty === "function") api.markDirty();
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   function toast(text) {
     var d = document.createElement("div");
     d.setAttribute("role", "status");
@@ -1471,7 +1479,19 @@
     return s || "Untitled";
   }
 
-  function downloadBlob(blob, filename) {
+  function downloadBlob(blob, filename, mime, types) {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: blob,
+        filename: filename,
+        mime: mime,
+        types: types
+      }).then(function (r) { if (r && r.ok) return; });
+      return;                         // cancel (ok=false) = silent exit
+    }
+
+    // Standalone fallback — classic download (no shell present).
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
@@ -1513,7 +1533,9 @@
   function exportPageTxt(page) {
     downloadBlob(
       new Blob([pageText(page)], { type: "text/plain;charset=utf-8" }),
-      sanitizeFilename(page.title) + ".txt"
+      sanitizeFilename(page.title) + ".txt",
+      "text/plain;charset=utf-8",
+      [{ description: "Plain Text", accept: { "text/plain": [".txt"] } }]
     );
   }
 
@@ -1564,7 +1586,9 @@
     var stamp = d.getFullYear() + "-" +
       String(d.getMonth() + 1).padStart(2, "0") + "-" +
       String(d.getDate()).padStart(2, "0");
-    downloadBlob(writeZip(entries), "notes-" + stamp + ".zip");
+    downloadBlob(writeZip(entries), "notes-" + stamp + ".zip",
+      "application/zip",
+      [{ description: "ZIP archive", accept: { "application/zip": [".zip"] } }]);
   }
   
     // ---------- 6d. Search (Ctrl+K) + Tags aggregation panel ----------

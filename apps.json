@@ -184,6 +184,14 @@
       "icon": "radio",
       "url": "radio/",
       "type": "internal"
+    },
+	{
+      "id": "television",
+      "name": "Television",
+      "category": "video",
+      "icon": "television",
+      "url": "television/",
+      "type": "internal"
     }
   ]
 }

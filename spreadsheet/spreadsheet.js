@@ -551,6 +551,14 @@ function updateStatus() {
   if (st) st.textContent = dirtyFlag ? "*" : "";
 }
 
+// orosDialog lives in the parent shell (same-origin iframe).
+// Standalone PWA mode -> null -> caller uses local fallback.
+function dialogHost() {
+  try {
+    return window.orosDialog || window.parent.orosDialog || null;
+  } catch (e) { return null; }
+}
+
 /* ===== SECTION 3b: FORMULA ENGINE (Wave 3 — cache invalidation aware) ===== */
 
 var TT_NUM = 1, TT_STR = 2, TT_OP = 3, TT_REF = 4, TT_FUNC = 5,
@@ -1865,6 +1873,19 @@ function csvExport() {
 
   var safeName = displayName(sheet).replace(/[^\w\- ]+/g, "_") || "sheet";
   var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  var done = function () { notifyTransient(t("csv.exported")); };
+  var dlg = dialogHost();
+  if (dlg && typeof dlg.saveFile === "function") {
+    dlg.saveFile({
+      blob: blob,
+      filename: safeName + ".csv",
+      mime: "text/csv;charset=utf-8",
+      types: [{ description: "CSV",
+                accept: { "text/csv": [".csv"] } }]
+    }).then(function (r) { if (r && r.ok) done(); });
+    return;                       // cancel (ok=false) = silent exit
+  }
+  // Standalone fallback — classic download (no shell present).
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = safeName + ".csv";
@@ -1874,7 +1895,7 @@ function csvExport() {
     URL.revokeObjectURL(a.href);
     document.body.removeChild(a);
   }, 500);
-  notifyTransient(t("csv.exported"));
+  done();
 }
 
 function csvParse(text) {
@@ -2139,18 +2160,37 @@ function xlExport(bookType) {
       var mime = (bookType === "ods")
         ? "application/vnd.oasis.opendocument.spreadsheet"
         : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      var fname = "oros-spreadsheet-" + xlStamp() + "." + ext;
+      var done = function () {
+        notifyTransient(t("xl.exported")
+          .replace("{f}", ext.toUpperCase()));
+      };
       var blob = new Blob([out], { type: mime });
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.saveFile === "function") {
+        // ES5: dynamic key via bracket assignment (bookType-dependent).
+        var accept = {};
+        accept[mime] = ["." + ext];
+        dlg.saveFile({
+          blob: blob,
+          filename: fname,
+          mime: mime,
+          types: [{ description: ext.toUpperCase(),
+                    accept: accept }]
+        }).then(function (r) { if (r && r.ok) done(); });
+        return;                   // cancel (ok=false) = silent exit
+      }
+      // Standalone fallback — classic download (no shell present).
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "oros-spreadsheet-" + xlStamp() + "." + ext;
+      a.download = fname;
       document.body.appendChild(a);
       a.click();
       setTimeout(function () {
         URL.revokeObjectURL(a.href);
         document.body.removeChild(a);
       }, 500);
-      notifyTransient(t("xl.exported")
-        .replace("{f}", ext.toUpperCase()));
+      done();
     } catch (e) {
       console.error("[SS] XLSX export failed:", e);
     }
@@ -2207,6 +2247,13 @@ function injectXlButtons() {
   imp.title = t("xl.imp");
   imp.innerHTML = ICONS["csv-imp"] + "XLS";
   imp.addEventListener("click", function () {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.openFile === "function") {
+      dlg.openFile(".xlsx,.xls,.ods").then(function (f) {
+        if (f) xlImport(f);       // cancel (null) = silent exit
+      });
+      return;
+    }
     var inp = document.createElement("input");
     inp.type = "file";
     inp.accept = ".xlsx,.xls,.ods";
@@ -2606,6 +2653,13 @@ function wire() {
   var bi = $("btn-csv-imp"), be = $("btn-csv-exp");
   if (be) be.addEventListener("click", csvExport);
   if (bi) bi.addEventListener("click", function () {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.openFile === "function") {
+      dlg.openFile(".csv,text/csv").then(function (f) {
+        if (f) csvImport(f);      // cancel (null) = silent exit
+      });
+      return;
+    }
     var inp = document.createElement("input");
     inp.type = "file";
     inp.accept = ".csv,text/csv";

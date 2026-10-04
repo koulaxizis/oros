@@ -30,13 +30,22 @@ var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 var TILE_CACHE = "oros-map-tiles";
 var TILE_MAX   = 2000;
 var tilePutCount = 0;
+// Exact host OR any subdomain of it ("a.tile.openstreetmap.org").
+// Length-derived suffix test: hand-counted slice() offsets were off
+// by one and silently excluded every {s}.tile.* subdomain — the
+// default layer was never cached.
+var TILE_HOSTS = [
+  "tile.openstreetmap.org",
+  "tile.openstreetmap.fr",
+  "server.arcgisonline.com"
+];
 function isTileHost(hostname) {
-  return hostname === "tile.openstreetmap.org" ||
-         hostname.slice(-21) === "tile.openstreetmap.org" ||
-         hostname === "tile.openstreetmap.fr" ||
-         hostname.slice(-20) === "tile.openstreetmap.fr" ||
-         hostname === "server.arcgisonline.com" ||
-         hostname.slice(-23) === "server.arcgisonline.com";
+  for (var i = 0; i < TILE_HOSTS.length; i++) {
+    var base = TILE_HOSTS[i];
+    if (hostname === base ||
+        hostname.slice(-(base.length + 1)) === "." + base) return true;
+  }
+  return false;
 }
 function trimTileCache() {
   return caches.open(TILE_CACHE).then(function (cache) {
@@ -57,6 +66,7 @@ var PRECACHE_URLS = [
   "./shell.js",
   "./sync.js",
   "./fs.js",
+  "./dialogs.js",
   "./notifications.js",
   "./pet.css",
   "./pet.js",
@@ -164,7 +174,12 @@ var PRECACHE_URLS = [
   "calculator/index.html",
   "calculator/calculator.css",
   "calculator/calculator.js",
+  "television/",
+  "television/index.html",
+  "television/television.css",
+  "television/television.js",
   "vendor/jspdf.umd.min.js",
+  "vendor/hls.light.min.js",
   "vendor/NotoSans-Regular.ttf",
   "fonts/nunito-regular.woff2",
   "fonts/nunito-medium.woff2",
@@ -201,6 +216,11 @@ self.addEventListener("activate", function (event) {
     return Promise.all(names.map(function (name) {
       if (keep.indexOf(name) === -1) return caches.delete(name);
     }));
+  }).then(function () {
+    // tilePutCount lives in memory and dies with every idle SW
+    // termination — short sessions could never reach the in-flight
+    // trim. One trim per activation keeps TILE_MAX honest.
+    return trimTileCache().catch(function () {});
   });
 
   var claimWithTimeout = Promise.race([
@@ -226,15 +246,21 @@ self.addEventListener("fetch", function (event) {
 
   // MAPS-TILES: tile servers are cross-origin, but they are pure
   // raster GETs — cache-first gives us offline maps for every
-  // area the user has already seen. Opaque responses (no-cors
-  // image requests) are storable via put() and servable back.
+  // area the user has already seen. maps.js requests tiles in CORS
+  // mode (crossOrigin), so the status is visible: ONLY real 200s
+  // are stored. Opaque responses are never stored — their status is
+  // unreadable (an error tile would be served forever) and browsers
+  // pad their quota cost heavily.
   if (isTileHost(url.hostname)) {
     event.respondWith(
       caches.open(TILE_CACHE).then(function (cache) {
         return cache.match(url).then(function (hit) {
-          if (hit) return hit;
+          // A legacy OPAQUE entry cannot answer a CORS request (the
+          // browser rejects it → blank tile forever). Treat it as a
+          // miss; the fresh 200 below overwrites it.
+          if (hit && !(hit.type === "opaque" && request.mode !== "no-cors")) return hit;
           return fetch(request).then(function (resp) {
-            if (resp && (resp.ok || resp.type === "opaque")) {
+            if (resp && resp.ok) {
               var copy = resp.clone();
               event.waitUntil(cache.put(url, copy).then(function () {
                 // Bounded growth: trim occasionally, not per-tile

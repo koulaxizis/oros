@@ -644,6 +644,14 @@
     }
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   // Factory reset — double custom confirmation (destructive
   // actions get TWO doors; tombstones make it merge-proof).
   function askReset() {
@@ -2716,8 +2724,33 @@
       doc.text(doc.splitTextToSize(t("rep.disc"), W - M * 2), M, y);
 
       footer();
-      doc.save("oros-cycle-" + dayKey(Date.now()) + ".pdf");
-      transientNote(t("exp.done"));
+      // Native save via orosDialog; jsPDF's own doc.save() (which
+      // does an ad-hoc anchor-download) is retired — same rule
+      // as every other orOS app.
+      var fname = "oros-cycle-" + dayKey(Date.now()) + ".pdf";
+      var done = function () { transientNote(t("exp.done")); };
+      var blob = doc.output("blob");
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.saveFile === "function") {
+        dlg.saveFile({
+          blob: blob,
+          filename: fname,
+          mime: "application/pdf",
+          types: [{ description: "PDF",
+                    accept: { "application/pdf": [".pdf"] } }]
+        }).then(function (r) { if (r && r.ok) done(); });
+      } else {
+        // Standalone fallback — classic download (no shell present).
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = fname;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        done();
+      }
       });
     });
   }

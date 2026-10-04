@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Television</title>
+  <link rel="stylesheet" href="television.css">
+  <!-- hls.js: STATIC tag, requested unversioned so the sw.js precache
+       entry matches (Part II sw.js contract: dynamically loaded
+       assets must be requested WITHOUT a query string). -->
+  <script src="../vendor/hls.light.min.js"></script>
+  <script src="television.js" defer></script>
+</head>
+<body>
+  <div id="tv-app">
+
+    <!-- ===== Toolbar: tabs + search + filters ===== -->
+    <header class="tv-top">
+      <div class="tv-tabs" role="tablist">
+        <button class="tv-tab" data-tab="browse" role="tab" data-i18n="tab.browse"></button>
+        <button class="tv-tab" data-tab="favorites" role="tab" data-i18n="tab.favorites"></button>
+        <button class="tv-tab" data-tab="recents" role="tab" data-i18n="tab.recents"></button>
+      </div>
+      <div class="tv-tools">
+        <div class="tv-search-wrap">
+          <input id="tv-search" type="search" autocomplete="off" spellcheck="false">
+          <div id="tv-ac" hidden></div>
+        </div>
+        <select id="tv-country"></select>
+        <select id="tv-category"></select>
+        <select id="tv-lang"></select>
+      </div>
+    </header>
+
+    <!-- ===== Channel grid ===== -->
+    <main id="tv-main">
+      <div id="tv-loading">
+        <div class="tv-spin"></div>
+        <p data-i18n="loading"></p>
+      </div>
+      <div id="tv-grid"></div>
+      <div id="tv-empty" hidden>
+        <p id="tv-empty-msg"></p>
+      </div>
+      <div id="tv-more-row">
+        <button id="tv-more" hidden data-i18n="more"></button>
+      </div>
+    </main>
+
+    <!-- ===== Player (native <dialog>, centered per R32) ===== -->
+    <dialog id="tv-player">
+      <div class="tvp-head">
+        <span id="tvp-title"></span>
+        <button id="tvp-close" class="tv-icon" data-i18n-title="close"></button>
+      </div>
+      <div class="tvp-video">
+        <video id="tvp-video" autoplay playsinline></video>
+        <div id="tvp-status" class="tvp-badge" hidden></div>
+      </div>
+      <div class="tvp-info">
+        <span id="tvp-meta"></span>
+        <span id="tvp-labels"></span>
+      </div>
+      <div class="tvp-controls">
+        <button id="tvp-play" class="tv-icon"></button>
+        <button id="tvp-mute" class="tv-icon"></button>
+        <input id="tvp-vol" type="range" min="0" max="1" step="0.05" value="1">
+        <span class="tv-spacer"></span>
+        <button id="tvp-fav" class="tv-icon"></button>
+        <button id="tvp-ext" class="tv-icon" data-i18n-title="openExt"></button>
+        <button id="tvp-fs" class="tv-icon" data-i18n-title="fullscreen"></button>
+      </div>
+    </dialog>
+
+    <!-- Local toast fallback ONLY (shell transient toast is primary,
+         Part VI Toasts contract). Single slot, per Bible. -->
+    <div id="tv-toast" hidden></div>
+  </div>
+</body>
+</html>

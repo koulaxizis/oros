@@ -256,6 +256,14 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   function scheduleRender() {
     requestAnimationFrame(function () {
       renderResult();
@@ -1005,6 +1013,19 @@
       }
     });
     var blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    var done = function () { showToast(t("export.done")); };
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: blob,
+        filename: t("export.filename"),
+        mime: "text/plain;charset=utf-8",
+        types: [{ description: "Plain Text",
+                  accept: { "text/plain": [".txt"] } }]
+      }).then(function (r) { if (r && r.ok) done(); });
+      return;                   // cancel (ok=false) = silent exit
+    }
+    // Standalone fallback — classic download (no shell present).
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
@@ -1013,7 +1034,7 @@
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-    showToast(t("export.done"));
+    done();
   }
 
   // ---------- 10f. SFX (WebAudio synth — no external files) ----------

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.38.27";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.39.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -149,7 +149,8 @@
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
-    radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>'
+    radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
+    television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -1315,6 +1316,34 @@
     }
   }
 
+  // ---------- 9i2. Television proxy slice (sync when iframe closed) ----------
+  // Mirror of the radio pattern: favorites + recents for the TV app
+  // live in "oros-television-data"; the shell-hosted slice keeps them
+  // travelling while the app's iframe is closed (about:blank).
+  var TELEVISION_CACHE_KEY = "oros-television-data";
+
+  function televisionProxySliceGet() {
+    try {
+      var raw = localStorage.getItem(TELEVISION_CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function televisionProxySliceSet(data) {
+    if (!data) return;
+    try {
+      localStorage.setItem(TELEVISION_CACHE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function registerTelevisionProxySlice() {
+    if (window.orosSync) {
+      window.orosSync.registerSlice(
+        "television", televisionProxySliceGet, televisionProxySliceSet,
+        TELEVISION_CACHE_KEY);
+    }
+  }
+
   // Engine finished clean — the Files pill flips to "Disk synced".
   function fdMarkCleanIfIdle() {
     try {
@@ -1344,6 +1373,77 @@
       return fdCacheWrite(obj);
     }).catch(function () {
       return false;   // snapshot failed — export proceeds with the cache
+    });
+  }
+
+  // ---------- 5e. Unified file dialogs (Wave 2 — dialogs.js) ----------
+  // Single funnel for shell-owned file I/O. The shell IS the host of
+  // window.orosDialog, but the lookup stays defensive: a stale bundle
+  // without the module falls back to the legacy anchor-download /
+  // hidden input (same code that used to live inline). The 5d
+  // backup-folder system deliberately does NOT ride this — it owns a
+  // persistent folder handle with its own permission lifecycle
+  // (choose/reconnect/lapsed), incompatible with a save-as picker
+  // per write. Cancel = silent exit (ok:false / null), success toast
+  // only on ok:true — the standing dialog convention.
+
+  function dialogHost() {
+    return (window.orosDialog &&
+            typeof window.orosDialog.saveFile === "function")
+      ? window.orosDialog : null;
+  }
+
+  function shellSaveJson(filename, json) {
+    var host = dialogHost();
+    if (host) {
+      host.saveFile({
+        text:     json,
+        filename: filename,
+        mime:     "application/json"
+      }).then(function (res) {
+        if (res && res.ok) setSyncMsg("ok", "sync.ok.export");
+        // cancel (ok:false) → silent exit
+      });
+      return;
+    }
+    // Legacy anchor download (stale bundle)
+    try {
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      setSyncMsg("ok", "sync.ok.export");
+    } catch (e) {
+      handleSyncError(e);
+    }
+  }
+
+  function shellPickJson() {
+    var host = dialogHost();
+    if (host) {
+      return host.openFile("application/json,.json");   // Promise<File|null>
+    }
+    // Legacy hidden input (stale bundle)
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = "application/json,.json";
+      inp.style.display = "none";
+      inp.addEventListener("change", function () {
+        var f = inp.files && inp.files[0];
+        try { inp.remove(); } catch (e) {}
+        resolve(f || null);
+      });
+      inp.addEventListener("cancel", function () {
+        try { inp.remove(); } catch (e) {}
+        resolve(null);
+      });
+      document.body.appendChild(inp);
+      inp.click();
     });
   }
 
@@ -1917,15 +2017,9 @@
       fdRefreshForExport().then(function () {
         try {
           var json = window.orosSync.exportData();
-          var blob = new Blob([json], { type: "application/json" });
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement("a");
-          a.href = url;
-          a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
-          setSyncMsg("ok", "sync.ok.export");
+          shellSaveJson(
+            "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
+            json);
         } catch (e) {
           handleSyncError(e);
         }
@@ -1937,29 +2031,21 @@
     importBtn.className = "menu-item";
     importBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.import") + "</span>";
 
-    var fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "application/json,.json";
-    fileInput.style.display = "none";
-    fileInput.addEventListener("change", function () {
-      var file = fileInput.files && fileInput.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        try {
-          var n = window.orosSync.importData(String(reader.result));
-          setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-            n + " " + window.t("sync.slices.applied"));
-        } catch (e) {
-          handleSyncError(e);
-        }
-        fileInput.value = "";
-      };
-      reader.readAsText(file);
+    importBtn.addEventListener("click", function () {
+      shellPickJson().then(function (file) {
+        if (!file) return;   // user cancelled — silent exit
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var n = window.orosSync.importData(String(reader.result));
+            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+              n + " " + window.t("sync.slices.applied"));
+          } catch (e) {
+            handleSyncError(e); }
+        };
+        reader.readAsText(file);
+      });
     });
-    section.appendChild(fileInput);
-
-    importBtn.addEventListener("click", function () { fileInput.click(); });
     backupRow.appendChild(importBtn);
     section.appendChild(backupRow);
 
@@ -2488,15 +2574,9 @@
     fdRefreshForExport().then(function () {
       try {
         var json = window.orosSync.exportData();
-        var blob = new Blob([json], { type: "application/json" });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement("a");
-        a.href = url;
-        a.download = "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
-        setSyncMsg("ok", "sync.ok.export");
+        shellSaveJson(
+          "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
+          json);
       } catch (e) { handleSyncError(e); }
     });
   }
@@ -2629,6 +2709,7 @@
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.radio")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
@@ -2756,6 +2837,21 @@
       .catch(function () { return false; });
   }
 
+  // Maps tile cache (Cache Storage "oros-map-tiles" — MUST match
+  // sw.js TILE_CACHE). It lives outside CACHE_VERSION and outside
+  // localStorage, so neither the SW activate purge nor the sweep
+  // below ever touched it: the areas the user had browsed survived a
+  // factory reset. Best-effort, 3s cap — never blocks the reset.
+  function wipeMapTiles() {
+    try {
+      if (!("caches" in window)) return Promise.resolve(false);
+      return Promise.race([
+        caches.delete("oros-map-tiles"),
+        new Promise(function (res) { setTimeout(function () { res(false); }, 3000); })
+      ]).catch(function () { return false; });
+    } catch (e) { return Promise.resolve(false); }
+  }
+
   function scFactoryReset(btn) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
@@ -2772,7 +2868,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), cloud]).then(function () {
+    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -3585,6 +3681,7 @@
     registerShellSlice();
     registerFilesDiskSlice();
     registerRadioProxySlice();
+    registerTelevisionProxySlice();
     setTimeout(refreshFilesDiskCache, 1500);   // warm the transport cache (app open or not)
 
     // OAuth return → flip the menu to connected state once tokens land
@@ -5290,6 +5387,35 @@
       if (raw) sessionStorage.removeItem("oros-kanban-open");
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
+  };
+
+  // Wave 8 — Maps → Calendar "Send to Calendar" bridge.
+  // Payload shape: { date, title?, location?, start?, note? }
+  // date = "YYYY-MM-DD", start = "HH:MM" (24h), note = route info.
+  // Live push when Calendar running; otherwise stage to sessionStorage
+  // key "oros-cal-new" for boot-time consumption (identical pattern to
+  // __orosOpenMapsQuery — no guessing, no assumptions).
+  window.__orosOpenCalendarNew = function (p) {
+    if (!p || typeof p !== "object" || typeof p.date !== "string") return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return;   // strict date guard
+    if (state.running && state.running.id === "calendar") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosCalendarNew === "function") {
+          f.contentWindow.__orosCalendarNew(p);
+          return;
+        }
+      } catch (e) {}
+    }
+    // Calendar closed — stage the payload for boot-time consumption.
+    // Same-session overwrite is fine (only one "send to calendar" at a
+    // time per device); the receiver reads this key once at boot and
+    // clears it (see calendar.js CW-6c / CW-8).
+    try {
+      sessionStorage.setItem("oros-cal-new", JSON.stringify(p));
+    } catch (e) {}
+    openAppById("calendar");
   };
 
   // Wave 1B — Calendar deep-link bridge (πρωτότυπο: Cycle/Mood,

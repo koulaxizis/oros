@@ -626,6 +626,14 @@
     } catch (e) {}
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   /* ---------- 3. Display helpers ---------- */
   function displayName(c) {
     var parts = [c.given, c.middle, c.family].filter(Boolean);
@@ -2048,6 +2056,12 @@ document.addEventListener("keydown", function (e) {
   // input feeds readAvatarFile, remove clears both state + preview.
   if ($("ct-avatar-upload")) {
     $("ct-avatar-upload").addEventListener("click", function () {
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.openFile === "function") {
+        dlg.openFile("image/jpeg,image/png,.jpg,.jpeg,.png")
+          .then(function (f) { if (f) readAvatarFile(f); });
+        return;                     // cancel (null) = silent exit
+      }
       $("ct-avatar-input").value = "";            // allow re-pick of same file
       $("ct-avatar-input").click();
     });
@@ -3198,50 +3212,64 @@ document.addEventListener("keydown", function (e) {
   }
 
   // ---- Import wiring ----
+  // orosDialog first (native picker on Chromium); standalone falls
+  // back to the legacy hidden #vcard-file input. Single reader:
+  // both paths converge on importFileText().
+  function importFileText(f) {
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      // Route by extension: .csv → Google Contacts CSV path,
+      // everything else → vCard path.
+      if (f && (/\.csv$/i.test(f.name) || f.type === "text/csv")) {
+        try {
+          importCsvText(String(fr.result));
+        } catch (e) {
+          console.error("contacts: CSV import failed:", e);
+          notifyTransient(t("ct.import.csv.bad"));
+        }
+        return;
+      }
+      try {
+        var lines = vcfUnfold(fr.result);
+        var blocks = [], cur = null;
+        lines.forEach(function (ln) {
+          var u = ln.trim().toUpperCase();
+          if (u === "BEGIN:VCARD") { cur = []; return; }
+          if (u === "END:VCARD") { if (cur) blocks.push(cur); cur = null; return; }
+          if (cur) cur.push(ln);
+        });
+        var parsed = blocks.map(parseVcardBlock).filter(function (b) {
+          return b.given || b.family || b.org || b.nickname;
+        });
+        if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
+        var res = importParsed(parsed);
+        showImportReport(res);
+        notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
+      } catch (e) {
+        console.error("contacts: vCard import failed:", e);
+        notifyTransient(t("ct.import.bad"));
+      }
+    };
+    fr.onerror = function () { notifyTransient(t("ct.import.bad")); };
+    fr.readAsText(f, "utf-8");
+  }
   if ($("ct-import")) {
-    $("ct-import").addEventListener("click", function () { $("vcard-file").click(); });
+    $("ct-import").addEventListener("click", function () {
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.openFile === "function") {
+        dlg.openFile(".vcf,.csv,text/vcard,text/csv")
+          .then(function (f) { if (f) importFileText(f); });
+        return;                     // cancel (null) = silent exit
+      }
+      $("vcard-file").click();      // standalone: legacy hidden input
+    });
   }
   if ($("vcard-file")) {
     $("vcard-file").addEventListener("change", function () {
       var f = this.files && this.files[0];
       this.value = "";                       // allow re-import of same file
-      if (!f) return;
-      var fr = new FileReader();
-      fr.onload = function () {
-        // Route by extension: .csv → Google Contacts CSV path,
-        // everything else → vCard path.
-        if (f && (/\.csv$/i.test(f.name) || f.type === "text/csv")) {
-          try {
-            importCsvText(String(fr.result));
-          } catch (e) {
-            console.error("contacts: CSV import failed:", e);
-            notifyTransient(t("ct.import.csv.bad"));
-          }
-          return;
-        }
-        try {
-          var lines = vcfUnfold(fr.result);
-          var blocks = [], cur = null;
-          lines.forEach(function (ln) {
-            var u = ln.trim().toUpperCase();
-            if (u === "BEGIN:VCARD") { cur = []; return; }
-            if (u === "END:VCARD") { if (cur) blocks.push(cur); cur = null; return; }
-            if (cur) cur.push(ln);
-          });
-          var parsed = blocks.map(parseVcardBlock).filter(function (b) {
-            return b.given || b.family || b.org || b.nickname;
-          });
-          if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
-          var res = importParsed(parsed);
-          showImportReport(res);
-          notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
-        } catch (e) {
-          console.error("contacts: vCard import failed:", e);
-          notifyTransient(t("ct.import.bad"));
-        }
-      };
-      fr.onerror = function () { notifyTransient(t("ct.import.bad")); };
-      fr.readAsText(f, "utf-8");
+      if (f) importFileText(f);
     });
   }
 
@@ -3333,6 +3361,19 @@ document.addEventListener("keydown", function (e) {
       var text = lines.join("\r\n") + "\r\n";
       try {
         var blob = new Blob([text], { type: "text/vcard;charset=utf-8" });
+        var done = function () { notifyTransient(t("ct.export.done")); };
+        var dlg = dialogHost();
+        if (dlg && typeof dlg.saveFile === "function") {
+          dlg.saveFile({
+            blob: blob,
+            filename: "orOS-contacts.vcf",
+            mime: "text/vcard;charset=utf-8",
+            types: [{ description: "vCard",
+                      accept: { "text/vcard": [".vcf"] } }]
+          }).then(function (r) { if (r && r.ok) done(); });
+          return;                   // cancel (ok=false) = silent exit
+        }
+        // Standalone fallback — classic download (no shell present).
         var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "orOS-contacts.vcf";
@@ -3342,7 +3383,7 @@ document.addEventListener("keydown", function (e) {
           document.body.removeChild(a);
           URL.revokeObjectURL(a.href);
         }, 200);
-        notifyTransient(t("ct.export.done"));
+        done();
       } catch (e) { notifyTransient(t("ct.export.bad")); }
     });
   }
@@ -3361,6 +3402,19 @@ document.addEventListener("keydown", function (e) {
         deleted: state.deleted
       }, null, 2);
       var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+      var done = function () { notifyTransient(t("ct.export.json.done")); };
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.saveFile === "function") {
+        dlg.saveFile({
+          blob: blob,
+          filename: "orOS-contacts.json",
+          mime: "application/json;charset=utf-8",
+          types: [{ description: "JSON",
+                    accept: { "application/json": [".json"] } }]
+        }).then(function (r) { if (r && r.ok) done(); });
+        return;                     // cancel (ok=false) = silent exit
+      }
+      // Standalone fallback — classic download (no shell present).
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = "orOS-contacts.json";
@@ -3370,7 +3424,7 @@ document.addEventListener("keydown", function (e) {
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
       }, 200);
-      notifyTransient(t("ct.export.json.done"));
+      done();
     } catch (e) { notifyTransient(t("ct.export.bad")); }
   }
   // Button injected AFTER the vcf export button (same class →
@@ -3435,7 +3489,15 @@ document.addEventListener("keydown", function (e) {
     jsonImpBtn.type = "button";
     jsonImpBtn.className = $("ct-export").className;
     jsonImpBtn.textContent = t("ct.import.json");
-    jsonImpBtn.addEventListener("click", function () { jsonImpIn.click(); });
+    jsonImpBtn.addEventListener("click", function () {
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.openFile === "function") {
+        dlg.openFile("application/json,.json")
+          .then(function (f) { if (f) importJsonFile(f); });
+        return;                     // cancel (null) = silent exit
+      }
+      jsonImpIn.click();            // standalone: legacy hidden input
+    });
     // Anchor: AFTER the Export JSON button (jsonBtn) — final order
     // [Export] [Export JSON] [Import JSON].
     $("ct-export").parentNode.insertBefore(jsonImpBtn, jsonBtn.nextSibling);

@@ -619,6 +619,14 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   // Silent save: γράφει ΜΟΝΟ στο localStorage, χωρίς markDirty.
   // Για καθαρά τοπικές ενέργειες (π.χ. switchBoard) που δεν πρέπει
   // να πυροδοτούν δικτυακό sync.
@@ -3209,14 +3217,13 @@
       if (e.target === dlg) dlg.close();
     });
 
-    file.addEventListener("change", function () {
+    // Single reader — shared by the orosDialog native picker and the
+    // hidden-input standalone fallback. Byte-for-byte the old logic.
+    function readImportFile(f) {
       parsed = null;
       go.disabled = true;
       preview.hidden = false;
       preview.textContent = "";
-
-      var f = file.files && file.files[0];
-      if (!f) { preview.hidden = true; return; }
 
       var fr = new FileReader();
       fr.onload = function (ev) {
@@ -3244,6 +3251,24 @@
         preview.textContent = t("import.err");
       };
       fr.readAsText(f);
+    }
+
+    // orosDialog first (native picker on Chromium). The visible file
+    // input remains the standalone fallback (no shell present) —
+    // when the shell exists we suppress it entirely.
+    file.addEventListener("click", function (ev) {
+      var dlg = dialogHost();
+      if (!(dlg && typeof dlg.openFile === "function")) return;   // standalone → default input
+      ev.preventDefault();                    // suppress the fallback input
+      dlg.openFile(".json,application/json").then(function (f) {
+        if (f) readImportFile(f);             // cancel (null) = silent exit
+      });
+    });
+
+    file.addEventListener("change", function () {
+      var f = file.files && file.files[0];
+      file.value = "";                       // allow re-pick of same file
+      if (f) readImportFile(f);
     });
 
     go.addEventListener("click", function () {

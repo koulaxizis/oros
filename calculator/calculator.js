@@ -293,6 +293,14 @@
     } catch (e) {}
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   // ---------- Unified notifications (transient only — this app
   // has no reminders, so nothing ever enters the inbox) ----------
   function transientNote(title, body) {
@@ -779,10 +787,27 @@
         esc(h.res)
       ].join(","));
     });
+    // UTF-8 BOM so Greek/expression text opens cleanly in Excel
+    var blob = new Blob(["\uFEFF" + rows.join("\r\n")],
+      { type: "text/csv;charset=utf-8" });
+    var done = function () {
+      transientNote(t("calc.exported"), "");
+    };
+    var dlg = dialogHost();
+
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: blob,
+        filename: "oros-calculator-history.csv",
+        mime: "text/csv;charset=utf-8",
+        types: [{ description: "CSV",
+                  accept: { "text/csv": [".csv"] } }]
+      }).then(function (r) { if (r && r.ok) done(); });
+      return;                         // cancel (ok=false) = silent exit
+    }
+
+    // Standalone fallback — classic download (no shell present).
     try {
-      // UTF-8 BOM so Greek/expression text opens cleanly in Excel
-      var blob = new Blob(["\uFEFF" + rows.join("\r\n")],
-        { type: "text/csv;charset=utf-8" });
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
       a.href = url;
@@ -791,7 +816,7 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      transientNote(t("calc.exported"), "");
+      done();
     } catch (e) {}
   }
 

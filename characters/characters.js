@@ -424,6 +424,14 @@
     if (api && typeof api.markDirty === "function") api.markDirty();
   }
 
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
   // Called after every USER-driven mutation: bump counter, persist,
   // notify the sync engine, repaint the UI.
   function commit(opts) {
@@ -2073,7 +2081,8 @@
 
     var text = buf.join("\n");
     var blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
-    downloadBlob(blob, "characters.md");
+    downloadBlob(blob, "characters.md", "text/markdown;charset=utf-8",
+      [{ description: "Markdown", accept: { "text/markdown": [".md"] } }]);
   }
 
   // ---------- Export: JSON ----------
@@ -2086,10 +2095,23 @@
     };
     var text = JSON.stringify(payload, null, 2);
     var blob = new Blob([text], { type: "application/json;charset=utf-8" });
-    downloadBlob(blob, "characters-data.json");
+    downloadBlob(blob, "characters-data.json", "application/json;charset=utf-8",
+      [{ description: "JSON", accept: { "application/json": [".json"] } }]);
   }
 
-  function downloadBlob(blob, fileName) {
+  function downloadBlob(blob, fileName, mime, types) {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: blob,
+        filename: fileName,
+        mime: mime,
+        types: types
+      }).then(function (r) { if (r && r.ok) transientNote(t("toast.exported")); });
+      return;                         // cancel (ok=false) = silent exit
+    }
+
+    // Standalone fallback — classic download (no shell present).
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;

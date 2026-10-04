@@ -1675,6 +1675,14 @@
   // File picker fallback for mobile / non-drag environments
   // #6 FIX: button injected (ensureToolbarExtras) — reachable now
   function openFilePicker() {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.openFile === "function") {
+      dlg.openFile("*/*").then(function (file) {
+        if (file) importFilesList([file], cwd);
+      });
+      return;                     // cancel (null) = silent exit
+    }
+    // Standalone fallback — legacy hidden input (no shell present).
     var input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
@@ -1688,17 +1696,35 @@
 
   // ---------- 10. Download / Clipboard ----------
 
-  // #9 FIX: binary-faithful downloads. Text files keep readText;
+    // #9 FIX: binary-faithful downloads. Text files keep readText;
   // everything else streams the raw Blob with a reasonable MIME.
   function downloadEntry(primary) {
     if (!primary || primary.dir) return;
     var path = primary.path;
     var name = primary.name;
-    var doDownload = function (data, mime) {
-      var blob = (data instanceof Blob)
-        ? data
-        : new Blob([data !== undefined ? data : ""],
-            { type: mime || "text/plain" });
+    var doDownload = function (blob, mime) {
+      var m = mime || "text/plain";
+      var done = function () {
+        recentsTouch(path);
+        transientNote(t("toast.downloaded"));
+      };
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.saveFile === "function") {
+        var opts = { blob: blob, filename: name, mime: m };
+        var ext = extOf(name);
+        if (ext && ext !== "file") {
+          // ES5: dynamic key via bracket assignment, no computed literal.
+          // Omitted entirely when the file has no real extension —
+          // same optional-types convention as Bookmarks/Calendar.
+          var accept = {};
+          accept[m] = ["." + ext];
+          opts.types = [{ description: ext.toUpperCase() + " file",
+                          accept: accept }];
+        }
+        dlg.saveFile(opts).then(function (r) { if (r && r.ok) done(); });
+        return;                     // cancel (ok=false) = silent exit
+      }
+      // Standalone fallback — classic download (no shell present).
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
       a.href = url;
@@ -1706,12 +1732,12 @@
       document.body.appendChild(a);
       a.click();
       setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
-      recentsTouch(path);
-      transientNote(t("toast.downloaded"));
+      done();
     };
     if (isTextExt(name)) {
       FS().readText(path).then(function (content) {
-        doDownload(content, "text/plain");
+        doDownload(new Blob([content !== undefined ? content : ""],
+          { type: "text/plain" }), "text/plain");
       }).catch(function () {
         transientNote(t("toast.downloadFail"));
       });
@@ -2104,6 +2130,14 @@
     el.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 4000);
+  }
+
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
   }
 
   // Unified notifications (orOS compliance): informational toasts

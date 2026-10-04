@@ -8,13 +8,14 @@
      1. Palette fallback + reset
      2. Fullscreen map canvas
      3. Leaflet overrides (themed controls / popups / layers)
-     4. Search overlay (Nominatim autocomplete)
+     4. Search overlay (Photon autocomplete)
      5. Route bar (+ profile buttons + clear)
      6. Floating controls stack
      7. Saved places drawer
      8. Marker divIcons
      9. Toast
     10. Mobile-first adaptations
+    11. Touch targets
    Icon buttons use inline SVG — no unicode glyphs (tofu-proof).
    ============================================================ */
 
@@ -158,6 +159,7 @@ input { font-family: inherit; color: var(--text); }
 /* Popup action row (star / route buttons) */
 .pop-actions {
   display: flex;
+  flex-wrap: wrap;               /* three actions: wrap, never overflow */
   gap: 6px;
   margin-top: 10px;
 }
@@ -186,7 +188,7 @@ input { font-family: inherit; color: var(--text); }
   top: calc(12px + env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 1001;                 /* results dropdown paints OVER the route bar */
   width: min(420px, calc(100vw - 24px));
   display: flex;
   align-items: center;
@@ -291,29 +293,43 @@ input { font-family: inherit; color: var(--text); }
 }
 
 /* ---------- 5. Route bar ---------- */
+/* Two rows, never overflowing:
+     row 1 — distance · time            | car / bike / walk
+     row 2 — steps, set start, set end, calendar … Start, Clear
+   Desktop: centred directly UNDER the search bar (same width), so it
+   never covers the search field or Leaflet's top-right controls.
+   Mobile (section 10): docked at the bottom, full width. */
 #route-bar {
+  --rb: 30px;                    /* action button size  */
+  --rp: 32px;                    /* profile button size */
   position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  right: calc(12px + env(safe-area-inset-right, 0px));
+  top: calc(66px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
+  width: min(420px, calc(100vw - 24px));
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px 8px;
   background: var(--bar-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 4px 16px var(--shadow);
-  padding: 6px 8px 6px 14px;
+  padding: 8px 10px;
   backdrop-filter: blur(6px);
-  max-width: min(360px, calc(100vw - 24px));
 }
+/* Basis = full row minus the profile group (3 buttons + 2×4px) and
+   one 8px gap: the summary + profiles always fill row 1 exactly, so
+   the action buttons always start row 2. */
 #route-summary {
   display: flex;
   align-items: baseline;
   gap: 8px;
   font-size: 13px;
-  flex: 1;
+  flex: 1 0 calc(100% - (3 * var(--rp) + 16px));
   min-width: 0;
+  overflow: hidden;
 }
 #route-dist { font-weight: 700; color: var(--accent); white-space: nowrap; }
 #route-time { color: var(--text-dim); white-space: nowrap; font-size: 12px; }
@@ -328,8 +344,8 @@ input { font-family: inherit; color: var(--text); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
+  width: var(--rp);
+  min-height: var(--rp);
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -343,20 +359,37 @@ input { font-family: inherit; color: var(--text); }
   background: var(--accent-soft);
 }
 
-#route-clear {
+/* Row 2 — every direct-child button of the bar shares one look
+   (steps / set start / set end / calendar / start / clear). */
+#route-bar > button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 30px;
-  min-height: 30px;
+  min-width: var(--rb);
+  min-height: var(--rb);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 7px;
   color: var(--text-dim);
   flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-#route-clear:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+#route-bar > button:hover { color: var(--text); background: var(--accent-soft); }
+#route-bar > button.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+/* Start navigation = the primary action: accent chip, pushed to the
+   right edge together with Clear. */
+#route-bar > #nav-start {
+  margin-left: auto;
+  min-width: 44px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+#route-bar > #nav-start:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
+#route-bar > #route-clear:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
 
 /* Route line drawn by Leaflet — themed via JS, classes here */
 .route-line { filter: drop-shadow(0 1px 3px var(--shadow)); }
@@ -499,6 +532,20 @@ input { font-family: inherit; color: var(--text); }
   transition: color 0.15s, background 0.15s;
 }
 .place .p-del:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+.place .p-ren {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.place .p-ren:hover { color: var(--accent); background: var(--accent-soft); }
 
 #places-empty {
   text-align: center;
@@ -591,45 +638,20 @@ input { font-family: inherit; color: var(--text); }
   font-weight: 600;
 }
 
-/* Route-bar extra buttons (steps / set start / set end) */
-#steps-btn,
-#route-setstart,
-#route-setend {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  min-height: 30px;
-  background: transparent;
-  border: none;
-  border-radius: 7px;
-  color: var(--text-dim);
-  flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
-}
-#steps-btn:hover,
-#route-setstart:hover,
-#route-setend:hover { color: var(--text); background: var(--accent-soft); }
-#steps-btn.on,
-#route-setstart.on,
-#route-setend.on {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
 /* Pick mode: crosshair cursor + armed control */
 body.pick #map { cursor: crosshair; }
-body.pick #plan-btn,
-body.pick #route-setstart,
-body.pick #route-setend { border-color: var(--accent); }
+body.pick #plan-btn.on,
+body.pick #route-setstart.on,
+body.pick #route-setend.on { border-color: var(--accent); }
 
 @media (max-width: 480px) {
   #maneuvers { width: calc(100vw - 56px); }
 }
 
 /* ---------- 8. Marker divIcons ---------- */
-.custom-marker { pointer-events: none; }  /* clicks pass to the map shape */
-.custom-marker.interactive { pointer-events: auto; }
+/* Markers must stay clickable (popup = star / route actions). The
+   wrapper has no box styling of its own. */
+.custom-marker { background: transparent; border: none; }
 
 /* ---------- 8b. Navigation HUD (Wave 4) ---------- */
 /* Nav mode: everything else hides — map + HUD only */
@@ -717,10 +739,13 @@ body.nav #maneuvers { display: none !important; }
 }
 
 /* ---------- 8c. Offline chip + Maps settings (Wave 5) ---------- */
+/* Bottom-centre: the top edge belongs to the search bar on every
+   width. Lifts above the docked route bar / the navigation bar. */
 #offline-chip {
   position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  left: 12px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1050;
   display: flex;
   align-items: center;
@@ -736,6 +761,7 @@ body.nav #maneuvers { display: none !important; }
   backdrop-filter: blur(6px);
 }
 #offline-chip svg { flex-shrink: 0; }
+body.nav #offline-chip { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 
 #mapsettings {
   position: absolute;
@@ -837,13 +863,17 @@ body.nav #maneuvers { display: none !important; }
   transform: translateY(0);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
+body.nav #toast { top: calc(96px + env(safe-area-inset-top, 0px)); }
 #toast button {
   background: transparent;
   border: none;
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
-  padding: 2px 4px;
+  padding: 6px 8px;
+  margin: -6px -6px -6px 0;
+  border-left: 1px solid var(--border);
+  padding-left: 12px;
   pointer-events: auto;
 }
 
@@ -852,23 +882,57 @@ body.nav #maneuvers { display: none !important; }
   #search-wrap { width: calc(100vw - 20px); }
   #search { font-size: 16px; }   /* ≥16px: iOS won't zoom on focus */
 
-  /* Route bar drops under the search bar, full-width stacked */
+  /* Route bar docks at the bottom, full width (thumb reach) */
   #route-bar {
     top: auto;
     bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    right: calc(12px + env(safe-area-inset-right, 0px));
-    left: auto;
-    flex-wrap: wrap;
-    padding: 8px 10px;
-    gap: 8px;
+    width: calc(100vw - 24px);
   }
-  #route-profiles { flex: 1; justify-content: flex-end; }
 
-  /* Controls sit above the (relocated) route bar */
-  #controls { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  /* Controls lift above the bar ONLY while a route is shown
+     (bar = 2 rows ≈ 88px, + 16px offset + 8px air). */
+  body.has-route #controls { bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
+  body.has-route #offline-chip { bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
 
   #places { width: calc(100vw - 56px); }
   #search-results { max-height: 46vh; }
+}
+
+/* Dialogs (calendar hand-off, rename): the universal reset above
+   zeroes the UA `margin: auto` that centres a modal <dialog> — put it
+   back, or the dialog opens in the top-left corner. */
+dialog { margin: auto; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+
+/* Narrow screens: the search bar spans the top edge — Leaflet's
+   top-right controls (zoom, layers) start BELOW it instead of under it. */
+@media (max-width: 520px) {
+  .leaflet-top { top: calc(56px + env(safe-area-inset-top, 0px)); }
+}
+
+/* ---------- 11. Touch targets (≥44px on touch devices) ---------- */
+@media (pointer: coarse) {
+  #route-bar { --rb: 44px; --rp: 44px; }
+  #search-clear,
+  #places-close,
+  #maneuvers-close,
+  #mapsettings-close,
+  #nav-mute,
+  #nav-exit,
+  .place .p-del,
+  .place .p-ren { min-width: 44px; min-height: 44px; }
+  .ms-btn { min-height: 44px; }
+  .sr-item { min-height: 44px; }
+  .pop-actions button { min-height: 40px; padding: 8px 12px; }
+}
+@media (pointer: coarse) and (max-width: 350px) {
+  /* very narrow phones: six actions still fit ONE row */
+  #route-bar { --rb: 40px; gap: 6px 4px; }
+}
+@media (pointer: coarse) and (max-width: 480px) {
+  /* taller route bar (2 rows of 44px ≈ 116px) */
+  body.has-route #controls,
+  body.has-route #offline-chip { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */

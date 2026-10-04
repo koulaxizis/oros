@@ -97,6 +97,7 @@
       "ev.untitled": "(untitled)",
       "ev.alltime": "All day",
       "ev.err.title": "Enter a title first",
+      "cal.maps": "Show on map",
       "ev.err.time": "End time must be after start time",
       "ev.err.dateend": "End date must be on or after the start date",
       "ev.spanHint": "Multi-day event: {b} days total. Saving here moves the start to the selected day.",
@@ -204,6 +205,7 @@
       "ev.untitled": "(χωρίς τίτλο)",
       "ev.alltime": "Όλη μέρα",
       "ev.err.title": "Δώσε πρώτα έναν τίτλο",
+      "cal.maps": "Εμφάνιση στον χάρτη",
       "ev.err.time": "Η ώρα λήξης πρέπει να είναι μετά την έναρξη",
       "ev.err.dateend": "Η ημερομηνία λήξης πρέπει να είναι ίδια ή μετά την έναρξη",
       "ev.spanHint": "Πολυήμερο συμβάν: {b} μέρες συνολικά. Η αποθήκευση εδώ μεταφέρει την έναρξη στην επιλεγμένη μέρα.",
@@ -556,6 +558,14 @@ function transientNote(title, body) {
     try {
       if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     } catch (e) {}
+  }
+
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
   }
 
   /* ---------- 2b. Time picker (custom, 24h) ----------
@@ -1342,6 +1352,22 @@ function transientNote(title, body) {
       }
     } catch (e) {}
   }
+
+  /* Wave 7 — Calendar → Maps geocode bridge (same contract as
+     Bookmarks/Contacts): shell first (live push or staged +
+     open), standalone fallback opens /maps/?q= in a new tab. */
+  function openInMaps(query, label) {
+    if (typeof query !== "string" || !query.trim()) return;
+    try {
+      if (window.parent &&
+          typeof window.parent.__orosOpenMapsQuery === "function") {
+        window.parent.__orosOpenMapsQuery(query.trim(), label || "");
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    window.open("/maps/?q=" + encodeURIComponent(query.trim()),
+      "_blank", "noopener,noreferrer");
+  }
   
   /* ---------- 4. View system + month grid ---------- */
   var viewYear, viewMonth;          // month currently displayed
@@ -1524,6 +1550,19 @@ function transientNote(title, body) {
           (e.title || t("ev.untitled")) +
           (sp ? " (" + sp.idx + "/" + sp.days + ")" : "") +
           (validRecur(e.recur) ? " ↻" : "")));
+        if (e.location && !e._feed) {
+          var wloc = document.createElement("span");
+          wloc.className = "wk-ev-loc map-link";
+          wloc.textContent = "▸ " + e.location;
+          wloc.title = t("cal.maps");
+          (function (lq, lbl) {
+            wloc.addEventListener("click", function (evt) {
+              evt.stopPropagation();
+              openInMaps(lq, lbl);
+            });
+          })(e.location, e.title || "");
+          ev.appendChild(wloc);
+        }
         (function (ee) {
           ev.addEventListener("click", function (evt) {
             evt.stopPropagation();
@@ -1647,6 +1686,19 @@ function transientNote(title, body) {
         (validRecur(e.recur) ? " ↻" : "");
       li.appendChild(dt);
       li.appendChild(ti);
+      if (e.location) {
+        var slo = document.createElement("span");
+        slo.className = "res-loc map-link";
+        slo.textContent = "▸ " + e.location;
+        slo.title = t("cal.maps");
+        (function (lq, lbl) {
+          slo.addEventListener("click", function (evt) {
+            evt.stopPropagation();
+            openInMaps(lq, lbl);
+          });
+        })(e.location, e.title || "");
+        li.appendChild(slo);
+      }
       li.addEventListener("click", function () {
         // jump: clear search, show that month, select the day
         setSearch("");
@@ -1836,8 +1888,17 @@ function transientNote(title, body) {
     }
     if (e.location) {
       var loc = document.createElement("div");
-      loc.className = "ev-note ev-loc";
+      loc.className = "ev-note ev-loc map-link";
       loc.textContent = "▸ " + e.location;
+      if (!e._feed) {
+        loc.title = t("cal.maps");
+        (function (lq, lbl) {
+          loc.addEventListener("click", function (evt) {
+            evt.stopPropagation();
+            openInMaps(lq, lbl);
+          });
+        })(e.location, e.title || "");
+      }
       main.appendChild(loc);
     }
     if (e.note) {
@@ -2761,6 +2822,21 @@ function transientNote(title, body) {
     L.push("END:VCALENDAR");
 
     var blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+    var done = function () { transientNote(t("exp.done")); };
+    var dlg = dialogHost();
+
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: blob,
+        filename: "oros-calendar.ics",
+        mime: "text/calendar;charset=utf-8",
+        types: [{ description: "iCalendar",
+                  accept: { "text/calendar": [".ics"] } }]
+      }).then(function (r) { if (r && r.ok) done(); });
+      return;                         // cancel (ok=false) = silent exit
+    }
+
+    // Standalone fallback — classic download (no shell present).
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
@@ -2769,7 +2845,7 @@ function transientNote(title, body) {
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-    transientNote(t("exp.done"));
+    done();
   }
   if ($("cal-export")) {
     $("cal-export").addEventListener("click", exportICS);
@@ -2912,6 +2988,7 @@ function transientNote(title, body) {
      ids (event deleted meanwhile, or tombstoned by sync) are
      dropped safely — the day selection alone still lands. */
   var CAL_PENDING_KEY = "oros-cal-pending";
+  var CAL_NEW_KEY = "oros-cal-new";
 
   // Wave 6/#C1 — deep-link receiver RENAMED to match the
   // DL_BRIDGE contract (shell sends __orosOpenCalendar(evId, ymd)).
@@ -2955,6 +3032,43 @@ function transientNote(title, body) {
   // internal (boot staging + this file's own callers only).
   window.__calDeepLink = __orosCalendarOpen;
 
+  /* Wave 8 — Maps → Calendar "plan route" receiver: navigates to
+     the date, selects it and opens the New Event dialog prefilled
+     (title / location / start time). Payload: { date: "YYYY-MM-DD",
+     title?: string, location?: string, start?: "HH:MM" }. Invalid
+     or absent date = silent no-op (the Maps side guards first,
+     this is the belt-and-braces layer). */
+  function __orosCalendarNew(p) {
+    if (!p || typeof p !== "object") return;
+    if (typeof p.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return;
+    var pd = p.date.split("-");
+    viewYear = +pd[0];
+    viewMonth = +pd[1] - 1;
+    if (curView !== "month") setView("month");
+    var si = $("search-in");
+    if (si) si.value = "";
+    setSearch("");
+    selectDay(p.date);
+    setTimeout(function () {
+      openDlg(null);
+      if (typeof p.title === "string" && p.title.trim()) {
+        $("ev-title").value = p.title.trim().slice(0, 80);
+      }
+      if (typeof p.location === "string" && p.location.trim()) {
+        $("ev-location").value = p.location.trim().slice(0, 150);
+      }
+      if (typeof p.note === "string" && p.note.trim()) {
+        $("ev-note").value = p.note.trim().slice(0, 500);
+      }
+      if (typeof p.start === "string" && /^\d{2}:\d{2}$/.test(p.start)) {
+        $("ev-allday").checked = false;
+        $("ev-allday").dispatchEvent(new Event("change"));
+        $("ev-start").value = p.start;
+      }
+    }, 60);
+  }
+  window.__calNewEvent = __orosCalendarNew;
+
 
   /* ---------- 8. Boot ---------- */
   loadState();
@@ -2985,6 +3099,29 @@ function transientNote(title, body) {
       }
     }
   } catch (e4) {}
+  // Wave 8: staged "new event" payload from Maps (shell staged it
+  // while the Calendar app was not running).
+  try {
+    var pendNew = sessionStorage.getItem(CAL_NEW_KEY);
+    if (pendNew) {
+      sessionStorage.removeItem(CAL_NEW_KEY);
+      var pn = JSON.parse(pendNew);
+      if (pn && typeof pn === "object" && pn.date) {
+        setTimeout(function () { __orosCalendarNew(pn); }, 250);
+      }
+    }
+  } catch (e5) {}
+  // Standalone deep-link: /calendar/?new={json} — Maps opened the
+  // Calendar in a new tab (no shell present in that context).
+  try {
+    var urlNew = new URLSearchParams(location.search).get("new");
+    if (urlNew) {
+      var un = JSON.parse(urlNew);
+      if (un && typeof un === "object" && un.date) {
+        setTimeout(function () { __orosCalendarNew(un); }, 400);
+      }
+    }
+  } catch (e6) {}
 
   // Midnight rollover: grid "today", day title and ev-add must
   // follow the real calendar day without a re-open.

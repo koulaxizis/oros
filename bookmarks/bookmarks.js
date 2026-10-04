@@ -459,6 +459,31 @@ function markDirty() {
   if (api && typeof api.markDirty === "function") api.markDirty();
 }
 
+/* orosDialog lives in the parent shell (same-origin iframe).
+   Standalone PWA mode -> null -> callers use local fallbacks. */
+function dialogHost() {
+  if (window.orosDialog) return window.orosDialog;
+  try { return window.parent.orosDialog || null; } catch (e) { return null; }
+}
+
+/* Standalone file picker (no shell present) — hidden input, one-shot. */
+function localPickFile(accept) {
+  return new Promise((resolve) => {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    if (accept) inp.accept = accept;
+    inp.style.display = "none";
+    inp.addEventListener("change", () => {
+      const f = inp.files && inp.files[0] ? inp.files[0] : null;
+      inp.remove();
+      resolve(f);
+    });
+    inp.addEventListener("cancel", () => { inp.remove(); resolve(null); });
+    document.body.appendChild(inp);
+    inp.click();
+  });
+}
+
 /* Snapshot for Undo (delete / move operations in later sections). */
 function snapshotForUndo() {
   lastUndoSnapshot = JSON.parse(JSON.stringify(state));
@@ -2168,6 +2193,22 @@ function exportNetscape() {
   lines.push("</DL><p>");
 
   const blob = new Blob([lines.join("\n")], { type: "text/html" });
+  const done = () =>
+    transientNote(t("exported", { n: Object.keys(state.items).length }));
+  const dlg = dialogHost();
+
+  if (dlg && typeof dlg.saveFile === "function") {
+    dlg.saveFile({
+      blob: blob,
+      filename: "oros-bookmarks.html",
+      mime: "text/html",
+      types: [{ description: "Bookmark HTML",
+                accept: { "text/html": [".html"] } }]
+    }).then((r) => { if (r && r.ok) done(); });
+    return;                           // cancel (ok=false) = silent exit
+  }
+
+  /* Standalone fallback — classic download (no shell present). */
   const objUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = objUrl;
@@ -2176,8 +2217,7 @@ function exportNetscape() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
-
-  transientNote(t("exported", { n: Object.keys(state.items).length }));
+  done();
 }
 
 /* ===== 10. MERGE ENGINE (deterministic, clock-free) ===== */
@@ -2316,12 +2356,16 @@ function wire() {
     if (selectionMode) exitSelectionMode();
   });
 
-  /* Import (file picker in — fully offline) */
-  $("#import-btn").addEventListener("click", () => $("#import-in").click());
-  $("#import-in").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
+  /* Import (file picker in — fully offline, orosDialog first) */
+  $("#import-btn").addEventListener("click", async () => {
+    const dlg = dialogHost();
+    let file = null;
+    if (dlg && typeof dlg.openFile === "function") {
+      file = await dlg.openFile(".html,.htm,text/html");
+    } else {
+      file = await localPickFile(".html,.htm,text/html");
+    }
+    if (!file) return;                // cancel — silent exit
     try {
       applyImport(parseNetscape(await file.text()));
     } catch (err) {
