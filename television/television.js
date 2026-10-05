@@ -381,9 +381,13 @@ window.addEventListener("offline", updateOnlineState);
 var HAS_CS = false;
 try{ HAS_CS = (typeof caches !== "undefined" && typeof caches.open === "function"); }catch(e){}
 
+// TV-6: any Cache Storage op can stall indefinitely while the SW
+// is activating/purging (observed: 0 fetches started, 0 rejections,
+// spinner forever). Race with a timeout — a stalled cache read
+// degrades to a network fetch instead of a dead boot.
 function cachedGet(file, allowStale){
   if(!HAS_CS) return Promise.resolve(null);
-  return caches.open(CACHE_STORE).then(function(cs){
+  var read = caches.open(CACHE_STORE).then(function(cs){
     return cs.match(file);
   }).then(function(res){
     if(!res) return null;
@@ -392,6 +396,13 @@ function cachedGet(file, allowStale){
     if(!wrap || !wrap.ts) return null;
     if(!allowStale && Date.now() - wrap.ts > API_TTL_MS) return null;
     return wrap.data;
+  });
+  var guard = new Promise(function(resolve){
+    setTimeout(function(){ resolve("__CACHE_TIMEOUT__"); }, 6000);
+  });
+  return Promise.race([read, guard]).then(function(v){
+    if(v === "__CACHE_TIMEOUT__") return null;   // stalled → network
+    return v;
   }).catch(function(){ return null; });
 }
 
@@ -414,13 +425,25 @@ function apiFetch(file){
 
 function netFetch(file){
   if(state.offline) return Promise.reject(new Error("offline"));
-  return fetch(API_BASE + "/" + file, { cache: "no-store" }).then(function(res){
+  // TV-N1: a plain fetch() can hang forever without ever rejecting
+  // (observed as an eternal spinner — catalogFailed only fires on
+  // rejection). AbortController gives every request a hard ceiling;
+  // streams.json is ~20MB, so it gets the bigger ceiling.
+  var ms = file === "streams.json" ? 30000 : 12000;
+  var ctl = (typeof AbortController === "function") ? new AbortController() : null;
+  var timer = ctl ? setTimeout(function(){ ctl.abort(); }, ms) : null;
+  var opts = { cache: "no-store" };
+  if(ctl) opts.signal = ctl.signal;
+  return fetch(API_BASE + "/" + file, opts).then(function(res){
+    if(timer) clearTimeout(timer);
     if(!res.ok) throw new Error("HTTP " + res.status);
     return res.json();
   }).then(function(data){
+    if(timer) clearTimeout(timer);
     cachedPut(file, data);
     return data;
   }).catch(function(err){
+    if(timer) clearTimeout(timer);
     // network failed — fall back to stale cache honestly
     return cachedGet(file, true).then(function(stale){
       if(stale) return stale;
@@ -435,13 +458,23 @@ function loadCatalog(){
   if(state.catalog) return Promise.resolve(state.catalog);
   if(state.catalogPromise) return state.catalogPromise;
 
-  state.catalogPromise = Promise.all([
+  // TV-N2: last-resort watchdog. Whatever hangs — cache layer,
+  // network, or parsing — the catalog promise MUST settle, because
+  // an eternally pending promise means an eternally pending
+  // spinner (catalogFailed only fires on rejection). Late success
+  // after a watchdog trip is not wasted: cachedPut() has already
+  // landed the data, so a retry resolves from cache instantly.
+  var work = Promise.all([
     apiFetch("channels.json"),
     apiFetch("streams.json"),
     apiFetch("countries.json"),
     apiFetch("categories.json"),
     apiFetch("languages.json")
-  ]).then(function(results){
+  ]);
+  var watchdog = new Promise(function(_, reject){
+    setTimeout(function(){ reject(new Error("catalog timeout")); }, 45000);
+  });
+  state.catalogPromise = Promise.race([work, watchdog]).then(function(results){
     var channelsRaw = results[0] || [];
     var streamsRaw   = results[1] || [];
     var countriesRaw = results[2] || [];
