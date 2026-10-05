@@ -414,8 +414,10 @@ function cachedPut(file, data){
 }
 
 function apiFetch(file){
+  console.log("[tv-dbg] apiFetch:", file, "| offline:", state.offline);
   if(HAS_CS){
     return cachedGet(file, state.offline).then(function(known){
+      console.log("[tv-dbg]", file, "cacheHit:", !!known);
       if(known) return known;
       return netFetch(file);
     });
@@ -434,15 +436,19 @@ function netFetch(file){
   var timer = ctl ? setTimeout(function(){ ctl.abort(); }, ms) : null;
   var opts = { cache: "no-store" };
   if(ctl) opts.signal = ctl.signal;
+  console.log("[tv-dbg] netFetch:", file, "→", API_BASE + "/" + file);
   return fetch(API_BASE + "/" + file, opts).then(function(res){
+    console.log("[tv-dbg]", file, "HTTP:", res.status);
     if(timer) clearTimeout(timer);
     if(!res.ok) throw new Error("HTTP " + res.status);
     return res.json();
   }).then(function(data){
+    console.log("[tv-dbg]", file, "parsed:", Array.isArray(data) ? data.length : typeof data);
     if(timer) clearTimeout(timer);
     cachedPut(file, data);
     return data;
   }).catch(function(err){
+    console.warn("[tv-dbg]", file, "netFetch ERROR:", err && err.message);
     if(timer) clearTimeout(timer);
     // network failed — fall back to stale cache honestly
     return cachedGet(file, true).then(function(stale){
@@ -474,7 +480,9 @@ function loadCatalog(){
   var watchdog = new Promise(function(_, reject){
     setTimeout(function(){ reject(new Error("catalog timeout")); }, 45000);
   });
-  state.catalogPromise = Promise.race([work, watchdog]).then(function(results){
+  state.catalogPromise = Promise.race([work, watchdog  ]).then(function(results){
+    console.log("[tv-dbg] Promise.all RESOLVED — sizes:",
+      results.map(function(r){ return r ? (Array.isArray(r) ? r.length : "?") : "null"; }));
     var channelsRaw = results[0] || [];
     var streamsRaw   = results[1] || [];
     var countriesRaw = results[2] || [];
@@ -1668,11 +1676,13 @@ function wire(){
   setupPlayerControls();
 
   // Load catalog immediately (background fetch)
-  loadCatalog().then(function(){
+  console.log("[tv-dbg] wire: calling loadCatalog");
+  loadCatalog().then(function(cat){
+    console.log("[tv-dbg] wire: catalog RESOLVED, channels:",
+      cat && cat.channels ? cat.channels.length : "?");
     renderMain();
   }).catch(function(err){
-    console.warn("[television] catalog failed:", err && err.message);
-    // renderMain shows the honest catalog error
+    console.warn("[tv-dbg] wire: catalog REJECTED:", err && err.message);
     renderMain();
   });
 
