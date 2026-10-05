@@ -2488,3 +2488,41 @@ Standing rules applied (Bible references) R32 centered dialogs · Part V/VI 5-ar
 Remaining item (non-blocking, noted)
 
 vendor/hls.light.min.js presence in the repo to be confirmed before deploy (SW per-URL caching degrades gracefully if absent; app requires it for MSE playback).
+
+---
+
+orOS Bible — Unified Storage Adapter Rule
+Rule Statement
+orOS applications MUST NEVER call cloud provider APIs (Dropbox, Google Drive, OneDrive, pCloud, Box, or any other) directly. All cloud access goes exclusively through the single unified storage adapter exposed by the sync layer. Every new provider added to orOS must implement the same adapter contract, making it a drop-in replacement.
+
+Rationale: The Vault Drive (Files app virtual disk) and all app sync logic depend only on the adapter interface, not on any provider-specific API. This guarantees that user-selected providers work identically across every orOS feature without app-level changes.
+
+Adapter Contract (mandatory interface)
+Every storage provider implementation MUST expose the following operations:
+
+putObject(key, blob) — Upload an opaque binary object under the given key.
+getObject(key) — Download the raw bytes of an object.
+deleteObject(key) — Remove an object by key.
+listPrefix(prefix) — Enumerate all object keys starting with the given prefix.
+getRevision(key) — Return the current revision/version identifier (ETag, rev, or equivalent) of an object, used for conflict detection.
+Mandatory Implementation Requirements
+Chunked uploads LIVE INSIDE the adapter. Large blobs are passed to the adapter as a single Blob; the adapter internally decides how to split them into provider-specific upload sessions (Dropbox upload sessions, Google resumable uploads, OneDrive sessions, etc.). Applications must never implement chunking themselves.
+Conditional writes are REQUIRED. push(key, blob, knownRevision) must succeed only if the remote revision still matches knownRevision. If the provider does not natively support conditional put, the adapter must implement a fallback of read-revision-compare-write so that silent concurrent overwrites are impossible.
+Provider selection is a user setting at the sync level. Applications receive no knowledge of which provider is active.
+Encryption happens BEFORE the adapter is called. All data crossing the adapter boundary must already be client-side encrypted (AES-GCM, passphrase-derived key per the existing orOS sync model). No provider may ever receive plaintext content, filenames, paths, or metadata.
+Content-addressed storage: object keys for file data MUST be content hashes (e.g., objects/<sha256>) so that dedupe, copies, and renames require no re-upload and providers learn nothing about the namespace structure.
+Conflict Resolution
+Last-writer-wins PER OBJECT, determined by revision identifiers, never blind overwrites. The adapter enforces this at write time; applications enforce it at merge time via the encrypted manifest. Both layers must cooperate: adapters reject stale writes, apps resolve manifests on read.
+
+Compliance Checklist (new provider)
+A new provider is considered compliant when ALL of the following are true:
+
+All five adapter operations implemented and functional.
+Chunked upload verified with a file larger than 150 MB.
+Conditional write (or fallback) verified with two simulated concurrent writers.
+Verified that no plaintext, filename, or path ever reaches the provider.
+Vault Drive (Files app) works end-to-end against the new provider with zero changes to files.js or fs.js.
+Enforcement
+Any code review finding of direct provider API calls from an application file (outside the sync adapter layer) is treated as a critical architecture violation and must be fixed before merge.
+
+---

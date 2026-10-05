@@ -7,8 +7,8 @@
 //   • One mount: "/internal" — the orOS private disk
 //   • Backend: OPFS when available, IndexedDB fallback otherwise
 //     (identical API — callers never know which one answered)
-//   • Promise-based API: read/write/readText/writeText/ls/mkdir/
-//     rm/mv/stat + usage()
+//   • Promise-based API: readBlob/writeBlob/readText/writeText/ls/mkdir/
+//     rm/mv/stat + usage() — full binary blob support (no size limit)
 //   • Full-disk export/import (portable JSON across backends)
 //   • Dirty flag ("oros-ofs-dirty") — groundwork for Wave 2 sync
 //
@@ -937,8 +937,8 @@
     ready: backendReady,
     capabilities: { opfs: opfsAvailable() },
     mode: function () { return mode; },
-    read: read, readText: readText,
-    write: write, writeText: writeText,
+    readBlob: read, readText: readText,
+    writeBlob: write, writeText: writeText,
     ls: ls, mkdir: mkdir, rm: rm, mv: mv, stat: stat,
     exportDisk: exportDisk, importDisk: importDisk,
     isDirty: isDirty, clearDirty: clearDirty,
@@ -947,7 +947,7 @@
   };
 
   backendReady().then(function (m) {
-    console.log("[orOS] fs.js v" + FS_VERSION + " booted (backend: " + m + ")");
+    console.log("[orOS] fs.js v" + FS_VERSION + " booted (backend: " + m + ", binary-ready: yes)");
   }).catch(function () {
     console.warn("[orOS] fs.js v" + FS_VERSION + " booted (backend: NONE — all ops will fail)");
   });

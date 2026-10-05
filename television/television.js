@@ -1,11 +1,13 @@
 // ============================================================
-// orOS Television — v0.1 (Wave 1)
+// orOS Television — v0.2 (Wave 2)
 // Live TV via iptv-org (community channel directory).
 // Single IIFE. Model: TELEVISION v1 { ver, favorites[], deleted{} }
 // Slice: oros-television-data · Recents: device-local
 // Streams: HLS playback via vendored hls.light.min.js
 // API cache: Cache Storage (R30 — channels.json is too big
 // for the localStorage 5MB quota)
+// Wave 2: stream picker, volume/mute persistence, player
+// keyboard shortcuts, cleanup (dead code removed)
 // ============================================================
 
 var SCRIPT_V = "";
@@ -19,8 +21,9 @@ var SCRIPT_V = "";
 
 var TV_VERSION   = 1;
 var STORAGE_KEY  = "oros-television-data";      // synced slice
-var RECENTS_KEY  = "oros-television-recents";  // device-local, never synced
+var RECENTS_KEY  = "oros-television-recents";   // device-local, never synced
 var RECENTS_CAP  = 20;
+var VOL_KEY      = "oros-television-volume";    // device-local, never synced
 var API_BASE     = "https://iptv-org.github.io/api";
 var API_TTL_MS   = 24 * 60 * 60 * 1000;        // directory refreshes daily
 var CACHE_STORE  = "oros-television-api";      // Cache Storage bucket
@@ -57,7 +60,8 @@ var STRINGS = {
     "err.nostreams":  "No playable streams for this channel",
     "err.nohls":      "This stream format is not supported here",
     "offline.hint":   "Offline — showing last known data. Playback needs a connection.",
-    "catalog.err":    "Couldn't reach the TV directory — check your connection or blockers."
+    "catalog.err":    "Couldn't reach the TV directory — check your connection or blockers.",
+    "stream.alt":     "Alternate streams"
   },
   el: {
     "tab.browse":     "Αναζήτηση",
@@ -86,7 +90,8 @@ var STRINGS = {
     "err.nostreams":  "Δεν υπάρχουν αναπαραγώγιμες ροές για αυτό το κανάλι",
     "err.nohls":      "Η μορφή αυτής της ροής δεν υποστηρίζεται εδώ",
     "offline.hint":   "Εκτός σύνδεσης — εμφανίζονται τα τελευταία γνωστά. Η αναπαραγωγή απαιτεί σύνδεση.",
-    "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο καναλιών — έλεγξε τη σύνδεση ή τυχόν blockers."
+    "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο καναλιών — έλεγξε τη σύνδεση ή τυχόν blockers.",
+    "stream.alt":     "Εναλλακτικές ροές"
   }
 };
 
@@ -153,7 +158,9 @@ var state = {
   // player:
   playerCh: null,            // channel currently in the dialog
   streamIdx: 0,              // index into playerCh.streams[]
-  hls: null                  // live Hls instance (destroyed on switch)
+  hls: null,                 // live Hls instance (destroyed on switch)
+  persistedVol: 1,           // loaded from localStorage
+  persistedMuted: false      // loaded from localStorage
 };
 
 var __orosSyncApi = null;
@@ -268,8 +275,6 @@ document.addEventListener("keydown", function(e){
 
 var toastEl = null, toastTimer = null;
 
-// FIX-3: Reuse the #tv-toast slot from index.html (single toast slot
-// per the Bible contract); create it only in standalone mode.
 function localToast(text){
   toastEl = document.getElementById("tv-toast");
   if(!toastEl){
@@ -297,9 +302,6 @@ function transientNote(text){
 function updateOnlineState(){
   var wasOffline = state.offline;
   state.offline = !navigator.onLine;
-  // Catalog banner is owned by the API layer (showCatalogBanner /
-  // hideCatalogBanner, part 2) — this only tracks the flag +
-  // honest offline banner handled in renderMain (part 2).
   if(state.offline !== wasOffline){
     renderMain();
     if(state.offline) transientNote(t("offline.hint"));
@@ -310,11 +312,6 @@ window.addEventListener("online", updateOnlineState);
 window.addEventListener("offline", updateOnlineState);
 
 /* ===== API CACHE (Cache Storage — R30) ===== */
-// channels.json is several MB: localStorage's ~5MB quota cannot
-// hold it. The Cache API has no such limit and is available in
-// secure contexts (iframe included). Wrapper JSON { ts, data }
-// gives us TTL control; offline reads fall back to stale data
-// honestly instead of doomed network requests.
 
 var HAS_CS = false;
 try{ HAS_CS = (typeof caches !== "undefined" && typeof caches.open === "function"); }catch(e){}
@@ -524,9 +521,38 @@ function favoriteToggle(channel){
   commitLocal();
 }
 
-// ============================================================
-// orOS Television — Part 2/3: UI & Rendering (same IIFE continues)
-// ============================================================
+/* ===== VOLUME/MUTE PERSISTENCE (device-local) ===== */
+
+function loadVolumePrefs(){
+  try{
+    var raw = localStorage.getItem(VOL_KEY);
+    if(raw){
+      var prefs = JSON.parse(raw);
+      if(prefs && typeof prefs.vol === "number") state.persistedVol = prefs.vol;
+      if(prefs && typeof prefs.muted === "boolean") state.persistedMuted = prefs.muted;
+    }
+  }catch(e){}
+}
+
+function applyVolumePrefs(){
+  var video = $("#tvp-video");
+  if(!video) return;
+  video.volume = state.persistedVol;
+  video.muted = state.persistedMuted;
+  var slider = $("#tvp-vol");
+  if(slider) slider.value = state.persistedVol;
+}
+
+function saveVolumePrefs(){
+  var video = $("#tvp-video");
+  if(!video) return;
+  try{
+    localStorage.setItem(VOL_KEY, JSON.stringify({
+      vol: video.volume,
+      muted: video.muted
+    }));
+  }catch(e){}
+}
 
 /* ===== DOM RENDERERS ===== */
 
@@ -550,7 +576,7 @@ function renderMain(){
   empty.setAttribute("hidden", "");
   if(moreBtn) moreBtn.setAttribute("hidden", "");
 
-  // FIX-4: Loading indicator: visible only while the catalog is being
+  // Loading indicator: visible only while the catalog is being
   // fetched for the first time in browse view.
   var loading = $("#tv-loading");
   if(loading){
@@ -661,7 +687,7 @@ function renderFavorites(container){
         streams: fav.url ? [{ url: fav.url, quality: "" }] : []
       };
     }
-    var card = createChannelCard(ch, true);
+    var card = createChannelCard(ch);
     container.appendChild(card);
   });
 }
@@ -687,12 +713,12 @@ function renderRecents(container){
   });
 }
 
-function createChannelCard(channel, isFavoriteView){
+function createChannelCard(channel){
   var card = document.createElement("div");
   card.className = "tv-card";
   card.dataset.id = channel.id;
 
-  // FIX-9: Radio overlay pattern: initials underneath, lazy logo on
+  // Radio overlay pattern: initials underneath, lazy logo on
   // top, self-remove on error — no inline-JS string gymnastics.
   var initials = (channel.name || "?").substring(0, 2).toUpperCase();
   var logoHtml = '<div class="tv-logo"><span class="tv-nologo">' + esc(initials) + '</span>';
@@ -703,7 +729,6 @@ function createChannelCard(channel, isFavoriteView){
   logoHtml += '</div>';
 
   // Metadata line
-  // FIX-10: Proper escaping + use display names from catalog
   var metaParts = [];
   if(channel.country && state.catalog && state.catalog.countryNames[channel.country]){
     metaParts.push(esc(state.catalog.countryNames[channel.country]));
@@ -827,7 +852,7 @@ function setupSearch(){
   var ac = $("#tv-ac");
   if(!input) return;
 
-  // FIX-8: Enter without autocomplete selection → filter the grid
+  // Enter without autocomplete selection → filter the grid
   input.addEventListener("keydown", function(e){
     if(e.key === "Enter" && !state.acItems.length &&
        this.value.trim().length >= MIN_SEARCH){
@@ -893,7 +918,7 @@ function setupSearch(){
       if(ac) ac.setAttribute("hidden", "");
       state.acItems = [];
       state.acSel = -1;
-      // FIX-8: Clear grid search when query drops below threshold
+      // Clear grid search when query drops below threshold
       if(state.searchQuery){
         state.searchQuery = "";
         state.rendered = PAGE_SIZE;
@@ -1042,6 +1067,12 @@ function openPlayer(channel){
   $("tvp-meta").textContent = (channel.country && state.catalog && state.catalog.countryNames[channel.country]) || "";
   $("tvp-labels").textContent = (channel.categories && channel.categories.join(", ")) || "";
 
+  // Restore volume/mute preferences for this session
+  applyVolumePrefs();
+
+  // Build stream picker (all available streams for this channel)
+  buildStreamPicker(channel);
+
   // Try first stream
   tryStream();
 
@@ -1052,6 +1083,7 @@ function tryStream(){
   var ch = state.playerCh;
   if(!ch || !ch.streams || !ch.streams.length){
     showError(t("err.nostreams"));
+    buildStreamPicker(null);
     return;
   }
 
@@ -1070,7 +1102,11 @@ function tryStream(){
     status.classList.remove("err");
   }
 
-  // FIX-5: Route by stream type — only .m3u8 URLs trigger HLS handling
+  // Keep the picker selection in sync with auto-fallback
+  var pick = $("#tvp-streampick");
+  if(pick && !pick.hidden) pick.value = String(state.streamIdx);
+
+  // Route by stream type — only .m3u8 URLs trigger HLS handling
   var isHlsUrl = /\.m3u8(\?|$)/i.test(stream.url);
 
   if(isHlsUrl && window.Hls && Hls.isSupported()){
@@ -1104,14 +1140,14 @@ function tryStream(){
       }
     });
   }else if(isHlsUrl && video.canPlayType("application/vnd.apple.mpegurl")){
-    // FIX-5: Native HLS (Safari/iOS) — only for .m3u8 URLs
+    // Native HLS (Safari/iOS) — only for .m3u8 URLs
     video.src = stream.url;
     video.onerror = handleNativeError;
     video.play().catch(function(e){
       console.warn("[television] play rejected:", e && e.message);
     });
   }else{
-    // FIX-5: Non-HLS URL → direct playback. HLS URL with neither
+    // Non-HLS URL → direct playback. HLS URL with neither
     // hls.js nor native support → honest error, no doomed attempt.
     if(isHlsUrl){
       showError(t("err.nohls"));
@@ -1126,6 +1162,29 @@ function tryStream(){
 
   // Update UI
   updatePlayerUI();
+}
+
+/* ===== STREAM PICKER ===== */
+
+function buildStreamPicker(channel){
+  var sel = $("#tvp-streampick");
+  if(!sel) return;
+
+  if(!channel || !channel.streams || channel.streams.length <= 1){
+    sel.setAttribute("hidden", "");
+    return;
+  }
+
+  sel.innerHTML = "";
+  channel.streams.forEach(function(s, idx){
+    var opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = s.quality || ("#" + (idx + 1));
+    sel.appendChild(opt);
+  });
+
+  sel.value = String(state.streamIdx);
+  sel.removeAttribute("hidden");
 }
 
 function handleHlsError(data){
@@ -1182,6 +1241,9 @@ function closePlayer(){
     video.load();
   }
 
+  // Persist volume/mute on close
+  saveVolumePrefs();
+
   if(dlg) dlg.close();
   state.playerCh = null;
 }
@@ -1208,6 +1270,7 @@ function updatePlayerUI(){
       ? '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>'
       : '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
     muteBtn.setAttribute("aria-label", muted ? t("unmute") : t("mute"));
+    volSlider.value = video ? video.volume : 1;
   }
 
   if(favBtn && state.playerCh){
@@ -1252,6 +1315,7 @@ function setupPlayerControls(){
       var video = $("#tvp-video");
       if(!video) return;
       video.muted = !video.muted;
+      saveVolumePrefs();
       updatePlayerUI();
     });
   }
@@ -1261,6 +1325,8 @@ function setupPlayerControls(){
       var video = $("#tvp-video");
       if(!video) return;
       video.volume = parseFloat(this.value);
+      if(video.volume > 0 && video.muted) video.muted = false;
+      saveVolumePrefs();
     });
   }
 
@@ -1299,11 +1365,65 @@ function setupPlayerControls(){
     });
   }
 
-  // Dialog backdrop click closes
+  // Stream picker: manual selection switches source immediately
+  var streamPick = $("#tvp-streampick");
+  if(streamPick){
+    streamPick.addEventListener("change", function(){
+      if(this.value !== "" && this.value !== null){
+        state.streamIdx = parseInt(this.value, 10);
+        if(state.hls){ state.hls.destroy(); state.hls = null; }
+        tryStream();
+      }
+    });
+  }
+
+  // Keyboard shortcuts inside the player dialog
+  // (Space = play/pause · M = mute · F = fullscreen ·
+  //  ↑/↓ = volume ± · ESC = close, native dialog)
   var dlg = $("#tv-player");
   if(dlg){
-    dlg.addEventListener("click", function(e){
-      if(e.target === dlg){
+    dlg.addEventListener("keydown", function(e){
+      if(e.ctrlKey || e.metaKey || e.altKey) return; // no modifier combos
+
+      var video = $("#tvp-video");
+      if(!video) return;
+
+      // Don't hijack keys while typing in form controls
+      var tag = (e.target && e.target.tagName || "").toLowerCase();
+      if(tag === "input" || tag === "select" || tag === "textarea") return;
+
+      if(e.key === " " || e.code === "Space"){
+        e.preventDefault();
+        if(video.paused) video.play().catch(function(){});
+        else video.pause();
+        updatePlayerUI();
+      }else if(e.key === "m" || e.key === "M"){
+        video.muted = !video.muted;
+        saveVolumePrefs();
+        updatePlayerUI();
+      }else if(e.key === "f" || e.key === "F"){
+        if(document.fullscreenElement) document.exitFullscreen();
+        else video.requestFullscreen().catch(function(){});
+      }else if(e.key === "ArrowUp"){
+        e.preventDefault();
+        video.volume = Math.min(1, video.volume + 0.05);
+        if(video.muted && video.volume > 0) video.muted = false;
+        saveVolumePrefs();
+        updatePlayerUI();
+      }else if(e.key === "ArrowDown"){
+        e.preventDefault();
+        video.volume = Math.max(0, video.volume - 0.05);
+        saveVolumePrefs();
+        updatePlayerUI();
+      }
+    });
+  }
+
+  // Dialog backdrop click closes
+  var dlg2 = $("#tv-player");
+  if(dlg2){
+    dlg2.addEventListener("click", function(e){
+      if(e.target === dlg2){
         closePlayer();
       }
     });
@@ -1317,20 +1437,21 @@ function setupPlayerControls(){
     vid.addEventListener("volumechange", updatePlayerUI);
   }
 
-  // FIX-6: Native dialog 'close' (ESC / backdrop / programmatic) is the
+  // Native dialog 'close' (ESC / backdrop / programmatic) is the
   // single teardown hook — idempotent, no duplicate wiring.
   var pdlg = $("#tv-player");
   if(pdlg) pdlg.addEventListener("close", function(){
     if(state.hls){ state.hls.destroy(); state.hls = null; }
     var v = $("#tvp-video");
     if(v){ v.pause(); v.removeAttribute("src"); v.load(); }
+    saveVolumePrefs();
     state.playerCh = null;
   });
 }
 
 /* ===== PALETTE INHERITANCE (iframe theme bridge — radio mirror) ===== */
 
-// FIX-7: television.css uses the shell's OWN variable names, so the map
+// television.css uses the shell's OWN variable names, so the map
 // is identity — unlike radio, which renamed them. Keep in sync
 // with the :root fallbacks in television.css.
 var SHELL_VAR_MAP = [
@@ -1406,9 +1527,24 @@ function applyI18n(){
   var moreBtn = $("#tv-more");
   if(moreBtn) moreBtn.textContent = t("more");
 
-  // Close button aria label
+  // Player control tooltips
   var closeBtn = $("#tvp-close");
   if(closeBtn) closeBtn.setAttribute("title", t("close"));
+
+  var playBtn = $("#tvp-play");
+  if(playBtn) playBtn.setAttribute("title", t("play"));
+
+  var muteBtn = $("#tvp-mute");
+  if(muteBtn) muteBtn.setAttribute("title", t("mute"));
+
+  var extBtn = $("#tvp-ext");
+  if(extBtn) extBtn.setAttribute("title", t("openExt"));
+
+  var fsBtn = $("#tvp-fs");
+  if(fsBtn) fsBtn.setAttribute("title", t("fullscreen"));
+
+  var streamPick = $("#tvp-streampick");
+  if(streamPick) streamPick.setAttribute("title", t("stream.alt"));
 }
 
 /* ===== WIRING ===== */
@@ -1423,7 +1559,7 @@ function wire(){
     renderMain();
   }).catch(function(err){
     console.warn("[television] catalog failed:", err && err.message);
-    // FIX-11: renderMain already shows the honest catalog error
+    // renderMain shows the honest catalog error
     renderMain();
   });
 
@@ -1437,7 +1573,7 @@ function wire(){
   // I18n
   applyI18n();
 
-  console.log("[television] ready — v0.1 Wave 1 complete");
+  console.log("[television] ready — v0.2 Wave 2 complete");
 }
 
 /* ===== BOOT ===== */
@@ -1446,6 +1582,8 @@ function start(){
   registerSync();
   state.data = sliceGet();
   loadRecents();
+  loadVolumePrefs();
+  applyVolumePrefs();
   wire();
 }
 
