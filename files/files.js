@@ -1077,6 +1077,13 @@
         op = FS().mv(prim.path, join(cwd, name)).then(function () {
           if (prim.dir) renameExpandedPrefix(prim.path, join(cwd, name));
           recentsTouch(join(cwd, name));
+          // Wave 2 vault hook — old path deleted, new path changed
+          try { if (window.orosVault && typeof window.orosVault.fileDeleted === "function") {
+            window.orosVault.fileDeleted(prim.path);
+          }} catch (e) {}
+          try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
+            window.orosVault.fileChanged(join(cwd, name));
+          }} catch (e) {}
           transientNote(t("toast.renamed"));
         });
       }
@@ -1117,6 +1124,10 @@
     Promise.all(paths.map(function (p) {
       return FS().rm(p).then(function () {
         dropExpandedPrefix(p);
+        // Wave 2 vault hook — mark path as deleted for cloud sync
+        try { if (window.orosVault && typeof window.orosVault.fileDeleted === "function") {
+          window.orosVault.fileDeleted(p);
+        }} catch (e) {}
         return true;
       }).catch(function () { return false; });
     })).then(function (results) {
@@ -1312,6 +1323,13 @@
             // the very keys rename needed, so every moved folder
             // arrived COLLAPSED (expansion state silently lost).
             renameExpandedPrefix(p, join(dst, name));
+            // Wave 2 vault hook — old path deleted, new path changed
+            try { if (window.orosVault && typeof window.orosVault.fileDeleted === "function") {
+              window.orosVault.fileDeleted(p);
+            }} catch (e) {}
+            try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
+              window.orosVault.fileChanged(join(dst, name));
+            }} catch (e) {}
             moved++;
             dstNames.push(name);
           }).catch(function () { skipped++; });
@@ -1398,7 +1416,13 @@
     // #9/#22 FIX: binary-faithful copy — read the raw Blob, write
     // the raw Blob. Images/düαδικά keep their bytes verbatim.
     return FS().read(src).then(function (blob) {
-      return FS().write(dst, blob || new Blob([""]));
+      return FS().write(dst, blob || new Blob([""])).then(function () {
+        // Wave 2 vault hook — new copy path changed
+        try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
+          window.orosVault.fileChanged(dst);
+        }} catch (e) {}
+        return true;
+      });
     });
   }
 
@@ -1576,6 +1600,10 @@
     // Direct pass-through: file is already a Blob, fs.toBlob handles it
     return FS().write(path, file).then(function () {
       recentsTouch(path);
+      // Wave 2 vault hook — mark path as changed for cloud sync
+      try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
+        window.orosVault.fileChanged(path);
+      }} catch (e) {}
       return true;
     }).catch(function () {
       return false;

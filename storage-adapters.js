@@ -377,4 +377,402 @@
       handleRedirect: handleRedirect,
       isConnected:    function () { return !!(accessToken || refreshToken); },
 
-      disconnect:
+      disconnect: function () {
+        accessToken  = null;
+        refreshToken = null;
+        tokenExpiry  = 0;
+        cachedAccount = null;
+        localStorage.removeItem("oros-db-access");
+        localStorage.removeItem("oros-db-refresh");
+        localStorage.removeItem("oros-db-expiry");
+        localStorage.removeItem("oros-db-account");
+      },
+
+      getUserInfo: function () {
+        if (cachedAccount) return Promise.resolve(cachedAccount);
+        return rpc("users/get_current_account", {}).then(function (res) {
+          if (!res.ok) throw new Error("account info failed: " + res.status);
+          return res.json();
+        }).then(function (info) {
+          cachedAccount = { email: info.email, name: info.name.display_name };
+          localStorage.setItem("oros-db-account", JSON.stringify(cachedAccount));
+          return cachedAccount;
+        });
+      },
+
+      putObject: function (key, data) {
+        var path = pathOf(key);
+        return toBlob(data).then(function (blob) {
+          if (blob.size <= SINGLE_UPLOAD_LIMIT) {
+            return singleUpload(path, blob, "overwrite");
+          }
+          return sessionUpload(path, blob).then(function () {
+            return { conflict: false, rev: null };
+          });
+        });
+      },
+
+      getObject: function (key) {
+        var path = pathOf(key);
+        return rawDownload(path).then(function (res) {
+          if (!res) return null;
+          return res.arrayBuffer().then(function (buf) {
+            return new Uint8Array(buf);
+          });
+        });
+      },
+
+      deleteObject: function (key) {
+        var path = pathOf(key);
+        return rpcJson("files/delete_v2", { path: path }).then(function () {
+          return { ok: true };
+        });
+      },
+
+      listPrefix: function (prefix) {
+        return rpcJson("files/list_folder", { path: "", recursive: false }).then(function (listing) {
+          var entries = listing ? (listing.entries || []) : [];
+          var keys = [];
+          for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            if (e.path_lower) keys.push(normKey(e.path_lower));
+          }
+          if (!prefix) return keys;
+          var pr = prefix.toLowerCase();
+          return keys.filter(function (k) { return k.indexOf(pr) === 0; });
+        });
+      },
+
+      getRevision: function (key) {
+        var path = pathOf(key);
+        return rpcJson("files/get_metadata", { path: path, include_deleted: false }).then(function (meta) {
+          return meta ? (meta.rev || null) : null;
+        });
+      },
+
+      putIfMatch: function (key, data, expectedRev) {
+        var path = pathOf(key);
+        return toBlob(data).then(function (blob) {
+          return singleUpload(path, blob, {".tag":"update","update":expectedRev}).then(function (res) {
+            if (res.conflict) return Promise.reject(new Error("revision mismatch"));
+            return { ok: true, newRev: res.rev };
+          });
+        });
+      }
+    };
+
+    registerAdapter(adapter);
+  })();
+
+  // ============================================================
+  // pCloud adapter (OAuth2 implicit flow, dual hostnames)
+  // ============================================================
+  (function () {
+    // TODO: client_id θα περάσει από το sync.js ως constant μετά τη ρύθμιση
+    var CLIENT_ID_PLACEHOLDER = "YOUR_PCLIENT_ID_HERE";
+
+    var HOSTNAME_US = "api.pcloud.com";
+    var HOSTNAME_EU = "eapi.pcloud.com";
+
+    var accessToken   = null;
+    var hostname      = HOSTNAME_EU;  // default EU, αλλάζουμε από redirect
+    var locationid    = null;         // αποθηκεύουμε για persistence
+
+    var PROVIDER_STATE_KEY = "oros-pc-state";   // random nonce για OAuth
+
+    function redirectUri() { return window.location.origin + "/"; }
+    function apiBaseUrl() { return "//" + hostname + "/"; }
+
+    function b64urlEncode(buf) {
+      var bytes = new Uint8Array(buf), str = "";
+      for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+      return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    // ----- OAuth2 Implicit Flow -----
+    function startOAuth() {
+      var state = b64urlEncode(crypto.getRandomValues(new Uint8Array(16)).buffer);
+      sessionStorage.setItem(PROVIDER_STATE_KEY, state);
+
+      window.location.href = "https://" + HOSTNAME_US + "/oauth2/" +
+        "authorize?" +
+        "response_type=token" +
+        "&client_id=" + encodeURIComponent(CLIENT_ID_PLACEHOLDER) +
+        "&redirect_uri=" + encodeURIComponent(redirectUri());
+      // Σημείωση: Το pCloud implicit flow επιστρέφει #access_token=...&locationid=...&hostname=...
+    }
+
+    function handleRedirect() {
+      var hash = window.location.hash.substring(1);
+      if (!hash) return Promise.resolve(false);
+
+      var params = {};
+      hash.split("&").forEach(function (pair) {
+        var eq = pair.indexOf("=");
+        if (eq > 0) {
+          var k = decodeURIComponent(pair.slice(0, eq));
+          var v = decodeURIComponent(pair.slice(eq+1));
+          params[k] = v;
+        }
+      });
+
+      var token = params.access_token;
+      var locId = params.locationid;
+      var host  = params.hostname;
+
+      if (!token) {
+        window.history.replaceState({}, "", "/");
+        return Promise.resolve(false);
+      }
+
+      // Αποθήκευση token και hostname
+      accessToken = token;
+      hostname    = host || (locId && locId.charAt(0)==="e" ? HOSTNAME_EU : HOSTNAME_US);
+      locationid  = locId;
+
+      localStorage.setItem("oros-pc-token",   accessToken);
+      localStorage.setItem("oros-pc-hostname", hostname);
+      localStorage.setItem("oros-pc-location", locationid || "");
+
+      window.history.replaceState({}, "", "/");
+
+      // Interim: μπορεί το sync.js να έχει το token στο localStorage —
+      // ελέγχουμε και τα δύο sources
+      return Promise.resolve(true);
+    }
+
+    function loadTokens() {
+      accessToken = localStorage.getItem("oros-pc-token") || null;
+      hostname    = localStorage.getItem("oros-pc-hostname") || HOSTNAME_EU;
+      locationid  = localStorage.getItem("oros-pc-location") || null;
+    }
+
+    // ----- API -----
+    function call(method, args) {
+      var url = apiBaseUrl() + method;
+      var query = "?" + Object.keys(args).map(function (k) {
+        return encodeURIComponent(k) + "=" + encodeURIComponent(args[k]);
+      }).join("&");
+
+      return ensureToken().then(function () {
+        return fetch(url + query, {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer " + accessToken
+          }
+        });
+      }).then(function (res) {
+        return res.json();
+      }).then(function (json) {
+        if (json.result !== 0) {
+          throw new Error("pCloud " + method + " result: " + json.result);
+        }
+        return json;
+      });
+    }
+
+    function ensureToken() {
+      if (accessToken) return Promise.resolve();
+      loadTokens();
+      if (!accessToken) return Promise.reject(new Error("not-connected"));
+      return Promise.resolve();
+    }
+
+    // ----- Chunked upload (pCloud) -----
+    // Υποδομή: uploadinit -> uploadwrite -> uploadsave
+    function chunkUpload(path, data) {
+      return toBytes(data).then(function (bytes) {
+        var CHUNK_SIZE = 8 * 1024 * 1024;  // 8MB chunks
+        var total = bytes.length;
+        var offset = 0;
+
+        // init
+        return ensureToken().then(function () {
+          return fetch(apiBaseUrl() + "uploadinit?folderid=0", {
+            method: "GET",
+            headers: { "Authorization": "Bearer " + accessToken }
+          }).then(function (res) {
+            if (!res.ok) throw new Error("upload init failed: " + res.status);
+            return res.json();
+          });
+        }).then(function (initRes) {
+          if (initRes.result !== 0) throw new Error("upload init error: " + initRes.result);
+          var fd = initRes.fd;
+          
+          function writeChunk() {
+            if (offset >= total) return save(fd);
+            
+            var chunk = bytes.slice(offset, Math.min(offset + CHUNK_SIZE, total));
+            return ensureToken().then(function () {
+              return fetch(apiBaseUrl() + "uploadwrite?fd=" + fd + "&start=" + offset, {
+                method: "POST",
+                headers: {
+                  "Authorization": "Bearer " + accessToken,
+                  "Content-Type": "application/octet-stream"
+                },
+                body: chunk
+              });
+            }).then(function (res) {
+              if (!res.ok) throw new Error("upload write failed: " + res.status);
+              offset += chunk.length;
+              return writeChunk();
+            });
+          }
+          
+          function save(fd) {
+            return ensureToken().then(function () {
+              return fetch(apiBaseUrl() + "uploadsave?fd=" + fd + "&filename=" + encodeURIComponent(path.split("/").pop()), {
+                method: "GET",
+                headers: { "Authorization": "Bearer " + accessToken }
+              });
+            }).then(function (res) {
+              if (!res.ok) throw new Error("upload save failed: " + res.status);
+              return res.json();
+            }).then(function (saveRes) {
+              if (saveRes.result !== 0) throw new Error("upload save error: " + saveRes.result);
+              return { ok: true, rev: saveRes.md ? saveRes.md.rev : null };
+            });
+          }
+          
+          return writeChunk();
+        });
+      });
+    }
+
+    // ----- Adapter -----
+    var adapter = {
+      name: "pcloud",
+
+      connect: startOAuth,
+
+      handleRedirect: handleRedirect,
+
+      isConnected: function () { return !!accessToken; },
+
+      disconnect: function () {
+        accessToken = null;
+        localStorage.removeItem("oros-pc-token");
+        localStorage.removeItem("oros-pc-hostname");
+        localStorage.removeItem("oros-pc-location");
+      },
+
+      getUserInfo: function () {
+        return ensureToken().then(function () {
+          return call("userinfo", {});
+        }).then(function (info) {
+          return { email: info.email, name: info.publicname || info.username };
+        });
+      },
+
+      putObject: function (key, data) {
+        var path = key.replace(/^\//, "");
+        return chunkUpload(path, data);
+      },
+
+      getObject: function (key) {
+        var path = key.replace(/^\//, "");
+        return call("downloadfile", { file: path }).then(function (res) {
+          if (res.result === 2055 || res.result === 2059) return null;  // missing
+          return fetch(res.downloadlink).then(function (res2) {
+            return res2.arrayBuffer().then(function (buf) {
+              return new Uint8Array(buf);
+            });
+          });
+        }).catch(function (err) {
+          if (err && err.message && /result.*2055/.test(err.message)) return null;
+          throw err;
+        });
+      },
+
+      deleteObject: function (key) {
+        var path = key.replace(/^\//, "");
+        return call("deletefile", { file: path }).then(function () {
+          return { ok: true };
+        });
+      },
+
+      listPrefix: function (prefix) {
+        return call("listfolder", { folderid: "0", recursive: true }).then(function (listing) {
+          var entries = listing.contents || [];
+          var keys = [];
+          for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            if (e.name && e.path) {
+              var k = normKey(e.path);
+              if (prefix && k.indexOf(prefix.toLowerCase()) !== 0) continue;
+              keys.push(k);
+            }
+          }
+          return keys;
+        });
+      },
+
+      getRevision: function (key) {
+        var path = key.replace(/^\//, "");
+        return call("getfileinfo", { file: path }).then(function (info) {
+          return info ? (info.md ? info.md.rev : null) : null;
+        });
+      },
+
+      // FALLBACK conditional write — pCloud doesn't have native support
+      putIfMatch: function (key, data, expectedRev) {
+        var path = key.replace(/^\//, "");
+        
+        // 1. Get current revision
+        return this.getRevision(key).then(function (currentRev) {
+          if (expectedRev && currentRev !== expectedRev) {
+            return Promise.reject(new Error("revision mismatch: expected " + expectedRev + " but got " + currentRev));
+          }
+          // 2. Upload
+          return this.putObject(key, data);
+        });
+      }
+    };
+
+    registerAdapter(adapter);
+
+    // Load persisted tokens at boot
+    loadTokens();
+  })();
+
+  // ============================================================
+  // Main API export
+  // ============================================================
+  var api = {
+    // Provider selection
+    getProvider: function () {
+      return localStorage.getItem(PROVIDER_KEY) || "dropbox";
+    },
+
+    setProvider: function (name) {
+      var a = adapters[name];
+      if (!a) return Promise.reject(new Error("unknown provider: " + name));
+      localStorage.setItem(PROVIDER_KEY, name);
+      return Promise.resolve();
+    },
+
+    // Operations
+    connect:        delegate("connect"),
+    handleRedirect: delegate("handleRedirect"),
+    disconnect:     delegate("disconnect"),
+    isConnected:    delegate("isConnected"),
+    getUserInfo:    delegate("getUserInfo"),
+    putObject:      delegate("putObject"),
+    getObject:      delegate("getObject"),
+    deleteObject:   delegate("deleteObject"),
+    listPrefix:     delegate("listPrefix"),
+    getRevision:    delegate("getRevision"),
+    putIfMatch:     delegate("putIfMatch"),
+
+    // Helpers
+    makeContentKey: makeContentKey
+  };
+
+  window.orosStorage = api;
+
+  // Boot marker
+  (function () {
+    var m = (document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&#]+)/);
+    console.log("[orOS] storage-adapters.js v" + (m ? m[1] : "?") + " boot");
+  })();
+})();

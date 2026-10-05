@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.39.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.39.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5455,7 +5455,43 @@
     openAppById("calendar");
   };
 
-    // v0.18.0 — global shortcuts at the shell level
+    // Television deep-link bridge (pattern: Radio/Contacts/Cycle). Payload:
+  // channel UUID (string) or stream selection object. App ανοιχτό → live push
+  // στο iframe· κλειστό → staging στο sessionStorage (device-local, swept
+  // από το factory reset, δεν ταξιδεύει στο sync ποτέ) + άνοιγμα app.
+  window.__orosOpenTelevision = function (channelIdOrPayload) {
+    if (!channelIdOrPayload) return;
+    var payload = channelIdOrPayload;
+    
+    // Backward compat: string ID gets wrapped
+    if (typeof channelIdOrPayload === "string") {
+      payload = { channelId: channelIdOrPayload };
+    }
+    
+    if (state.running && state.running.id === "television") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosTelevisionOpen === "function") {
+          f.contentWindow.__orosTelevisionOpen(payload);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-television-open", JSON.stringify(payload)); } catch (e) {}
+    openAppById("television");
+  };
+
+  // Consumed by television.js at boot — one-shot take.
+  window.__orosTelevisionTakePending = function () {
+    try {
+      var raw = sessionStorage.getItem("oros-television-open");
+      if (raw) sessionStorage.removeItem("oros-television-open");
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  };
+
+  // v0.18.0 — global shortcuts at the shell level
   document.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) window.orosShortcuts.handle(e);
   });

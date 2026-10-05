@@ -26,7 +26,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -497,7 +497,11 @@
     // context, same shape as "mood:entry:<id>"). The shell bridge
     // stages via sessionStorage when the app is closed; the
     // receiver validates the ymd format (never garbage).
-    minimalism: function (ymd) { if (typeof window.__orosOpenMinimalism === 'function') window.__orosOpenMinimalism(ymd); }
+    minimalism: function (ymd) { if (typeof window.__orosOpenMinimalism === 'function') window.__orosOpenMinimalism(ymd); },
+    // Wave 3/#6 — "television:channel:<id>": stream-failure
+    // notifications reopen the channel. The shell bridge accepts
+    // a bare string id (wrapped into { channelId } internally).
+    television: function (id) { if (typeof window.__orosOpenTelevision === 'function') window.__orosOpenTelevision(id); }
   };
 
   function openTarget(item) {

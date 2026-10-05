@@ -312,6 +312,14 @@ dialog#tv-player::backdrop { background: rgba(0, 0, 0, 0.6); }
   overflow: hidden;
 }
 #tvp-video { width: 100%; height: 100%; display: block; }
+/* Wrapper fullscreen (video + badge together) — the 16/9 ratio
+   must yield the whole viewport, borders/radius drop. */
+.tvp-video:fullscreen {
+  aspect-ratio: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
 .tvp-badge {
   position: absolute;
   bottom: 8px; left: 8px;
@@ -343,6 +351,23 @@ dialog#tv-player::backdrop { background: rgba(0, 0, 0, 0.6); }
   font-weight: 700;
   margin-left: 6px;
 }
+
+#tvp-streampick {
+  min-height: 40px;
+  margin: 4px 0;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  max-width: 260px;
+}
+#tvp-streampick:focus { border-color: var(--accent); }
+#tvp-streampick option { background: var(--panel-bg); color: var(--text); }
 
 .tvp-controls {
   display: flex;

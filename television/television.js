@@ -61,7 +61,9 @@ var STRINGS = {
     "err.nohls":      "This stream format is not supported here",
     "offline.hint":   "Offline — showing last known data. Playback needs a connection.",
     "catalog.err":    "Couldn't reach the TV directory — check your connection or blockers.",
-    "stream.alt":     "Alternate streams"
+    "stream.alt":     "Alternate streams",
+    "notifs.streamfail.title": "Stream failed",
+    "notifs.streamfail.body":  "Couldn't play on this device"
   },
   el: {
     "tab.browse":     "Αναζήτηση",
@@ -91,7 +93,9 @@ var STRINGS = {
     "err.nohls":      "Η μορφή αυτής της ροής δεν υποστηρίζεται εδώ",
     "offline.hint":   "Εκτός σύνδεσης — εμφανίζονται τα τελευταία γνωστά. Η αναπαραγωγή απαιτεί σύνδεση.",
     "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο καναλιών — έλεγξε τη σύνδεση ή τυχόν blockers.",
-    "stream.alt":     "Εναλλακτικές ροές"
+    "stream.alt":     "Εναλλακτικές ροές",
+    "notifs.streamfail.title": "Αποτυχία ροής",
+    "notifs.streamfail.body":  "Αδυναμία αναπαραγωγής σε αυτή τη συσκευή"
   }
 };
 
@@ -262,6 +266,46 @@ function registerSync(){
   api.registerSlice("television", sliceGet, sliceSet, STORAGE_KEY, mergeTelevisionStates);
 }
 
+/* ===== DEEP-LINK RECEIVER (shell bridge counterpart) ===== */
+
+// Resolve a channel by id even when the catalog hasn't loaded or
+// the channel was dropped from the directory: fall back to the
+// favorite entry (it carries a snapshot URL) — recents stay
+// device-local and are never a deep-link target by design.
+function resolveChannelById(id){
+  if(state.catalog && state.catalog.byId[id]) return state.catalog.byId[id];
+  var fav = state.data && state.data.favorites.find(function(f){
+    return f.id === id;
+  });
+  if(fav && fav.url){
+    return {
+      id: fav.id,
+      name: fav.name,
+      logo: fav.logo || "",
+      country: fav.country || "",
+      website: fav.website || "",
+      streams: [{ url: fav.url, quality: "" }]
+    };
+  }
+  return null;
+}
+
+// Called live by the shell when the app iframe is already running,
+// or once at boot after consuming the sessionStorage payload.
+function openFromShell(payload){
+  if(!payload || !payload.channelId) return;
+  loadCatalog().then(function(){
+    var ch = resolveChannelById(payload.channelId);
+    if(ch) playChannel(ch);
+  }).catch(function(){
+    // Catalog unreachable (offline) — favorites still resolve
+    var ch = resolveChannelById(payload.channelId);
+    if(ch) playChannel(ch);
+  });
+}
+
+window.__orosTelevisionOpen = function(payload){ openFromShell(payload); };
+
 /* ===== CONTRACT Β — shortcut forwarding ===== */
 
 document.addEventListener("keydown", function(e){
@@ -295,6 +339,26 @@ function transientNote(text){
     return;
   }
   localToast(text); // stale-bundle / standalone fallback
+}
+
+// #6 — persistent notification on TERMINAL playback failure
+// (auto-fallback exhausted / unsupported format). Dedup per
+// channel per hour: a flaky channel spams the inbox no more.
+function notifyStreamFail(ch){
+  if(!ch || !ch.id) return;
+  try{
+    var n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+    if(!n || typeof n.emit !== "function") return;
+    n.emit({
+      ns: "television",
+      type: "error",
+      title: t("notifs.streamfail.title"),
+      body: t("notifs.streamfail.body") + " — " + ch.name,
+      deepLink: "television:channel:" + ch.id,
+      key: "streamfail:" + ch.id + ":" + Math.floor(Date.now() / 3600000),
+      ttlDays: 3
+    });
+  }catch(e){}
 }
 
 /* ===== OFFLINE TRACKING ===== */
@@ -1089,6 +1153,7 @@ function tryStream(){
 
   if(state.streamIdx >= ch.streams.length){
     showError(t("err.nostreams"));
+    notifyStreamFail(ch);
     return;
   }
 
@@ -1151,6 +1216,7 @@ function tryStream(){
     // hls.js nor native support → honest error, no doomed attempt.
     if(isHlsUrl){
       showError(t("err.nohls"));
+      notifyStreamFail(ch);
       return;
     }
     video.src = stream.url;
@@ -1286,6 +1352,24 @@ function updatePlayerUI(){
   }
 }
 
+// Fullscreen the whole .tvp-video wrapper (video + status badge),
+// not the bare <video> — the badge would be left outside the
+// fullscreen layer. Bare-video fallback for stubborn engines.
+function toggleFullscreen(){
+  if(document.fullscreenElement){
+    document.exitFullscreen();
+    return;
+  }
+  var video = $("#tvp-video");
+  if(!video) return;
+  var wrap = video.closest(".tvp-video") || video;
+  if(wrap.requestFullscreen){
+    wrap.requestFullscreen().catch(function(){});
+  }else if(video.requestFullscreen){
+    video.requestFullscreen().catch(function(){});
+  }
+}
+
 /* ===== PLAYER CONTROLS ===== */
 
 function setupPlayerControls(){
@@ -1349,13 +1433,7 @@ function setupPlayerControls(){
 
   if(fsBtn){
     fsBtn.addEventListener("click", function(){
-      var video = $("#tvp-video");
-      if(!video) return;
-      if(document.fullscreenElement){
-        document.exitFullscreen();
-      }else{
-        video.requestFullscreen();
-      }
+      toggleFullscreen();
     });
   }
 
@@ -1402,8 +1480,7 @@ function setupPlayerControls(){
         saveVolumePrefs();
         updatePlayerUI();
       }else if(e.key === "f" || e.key === "F"){
-        if(document.fullscreenElement) document.exitFullscreen();
-        else video.requestFullscreen().catch(function(){});
+        toggleFullscreen();
       }else if(e.key === "ArrowUp"){
         e.preventDefault();
         video.volume = Math.min(1, video.volume + 0.05);
@@ -1585,6 +1662,15 @@ function start(){
   loadVolumePrefs();
   applyVolumePrefs();
   wire();
+
+  // Consume any staged deep-link payload from the shell (one-shot,
+  // sessionStorage — device-local, swept by factory reset)
+  try{
+    var take = (window.parent && window.parent.__orosTelevisionTakePending) ||
+               window.__orosTelevisionTakePending;
+    var pending = typeof take === "function" ? take() : null;
+    if(pending) openFromShell(pending);
+  }catch(e){}
 }
 
 if(document.readyState === "loading"){

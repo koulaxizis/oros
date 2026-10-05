@@ -2553,3 +2553,132 @@ Under consideration (deferred, not forgotten)
 ls() returning size/mtime per entry (OPFS opfsEntries enrichment) — unlocks the Size/Date columns currently showing "-", removes the per-file stat walk in calcStorageRecursive. Touches fs.js OPFS driver + idbLs record shape; needs care to keep both backends symmetric.
 Mobile: single-tap on folder = enter (dblclick unreliable on touch).
 diskSnapshot() calling FS().exportDisk(ROOT) with an ignored argument — cosmetic contract cleanup.
+
+---
+
+Television v0.2 — Wave 2 (shell.js PATCH 4 + integration)
+
+shell.js: Added Television deep-link bridge (window.__orosOpenTelevision / window.__orosTelevisionTakePending), pattern mirror of Radio/Contacts/Cycle. Live push into the running iframe, sessionStorage staging ("oros-television-open") when closed — device-local, swept by factory reset, never synced. Inserted before the global keyboard-shortcut wiring.
+shell.js: Television proxy slice (9i2, "oros-television-data") verified present and registered in initSyncIntegration() — favorites + recents travel while the app's iframe is closed. No changes needed.
+television.js v0.2 (Wave 1 fixes + Wave 2 features): Greek STRINGS syntax fixes, ArrowUp autocomplete, autoplay muted retry, stream routing (.m3u8 → hls.js / native, else direct playback), offline cache rendering, CSS logo overlay, stream picker (#tvp-streampick, synced with auto-fallback), volume/mute persistence (device-local key "oros-television-volume"), player keyboard shortcuts (Space/M/F/arrows, ESC native close, modifiers + form controls ignored), dead code cleanup (streamFailed, isFavoriteView, duplicate data-i18n-title).
+Architecture unchanged: IIFE single scope, 5-arg slice contract with LWW merge (mergeRadioStates mirror), recents device-local (cap 20), Cache Storage "oros-television-api", vendored vendor/hls.light.min.js, inline STRINGS EN/EL.
+Pending: television.js-side receiver (__orosTelevisionOpen + TakePending consumption at boot) — see Wave 3 item 1. PATCH 1 (HTML/CSS stream picker) application confirmation outstanding.
+
+---
+
+Wave 3 — Television scope agreed: app-side deep-link receiver (#1), country/category browsing (#3), player/fullscreen polish (#4), recents panel improvements (#5), unified notifications for stream errors (#6), cross-device sync verification (#7). Tray chip (#2) explicitly out of scope — deferred indefinitely. Order: #1 first (closes the Wave 2 shell bridge loop), then #6 (architecture-level), then UI items #3/#4/#5.
+
+---
+
+# Television v0.3 — Wave 3 Changelog
+
+**Date:** October 2026
+**Version bump:** television.js v0.2 → v0.3
+
+## Summary
+
+Wave 3 closed the Television app deep-link loop (#1), verified existing UI features (#3, #5), added unified stream-error notifications (#6), and polished fullscreen behavior (#4).
+
+---
+
+## Completed Items
+
+### #1 — App-Side Deep-Link Receiver (COMPLETE)
+
+- `window.__orosTelevisionOpen` registered at boot (PATCH A — already present in v0.2)
+- Boot-time pending consumption added (PATCH B — `start()` function consumes `__orosTelevisionTakePending` from sessionStorage)
+- `resolveChannelById()` fallback chain: catalog → favorite snapshot URL → silent ignore for unknown IDs
+- Offline-friendly: `openFromShell()` tries `loadCatalog()` first, falls back to favorite snapshot if unavailable
+
+### #3 — Country/Category/Language Browsing (VERIFIED EXISTING)
+
+- No changes required — `setupFilters()` and `renderBrowse()` already fully implemented
+- Filters (`#tv-country`, `#tv-category`, `#tv-lang`) populated from API cache after catalog loads
+- Search autocomplete works independently of filters
+- Tabs (browse/favorites/recents) clear filter state on switch
+
+### #4 — Fullscreen Polish (PATCHED)
+
+- **Problem identified:** F key / FS button made only `<video>` fullscreen — `.tvp-status` badge (buffering/error) was left outside
+- **Solution:** `toggleFullscreen()` function targets `.tvp-video` wrapper (contains video + badge)
+- Falls back to bare `<video>` fullscreen on stubborn browsers (defensive guard)
+- Keyboard handler `keydown` on dialog guards against form controls (select/input/textarea) — F/M/Space/arrows don't hijack when picker has focus
+- CSS: `tvp-video:fullscreen` yields 100% viewport, no radius/border, maintains 16:9 ratio via `video` element
+
+### #5 — Recents Panel (VERIFIED EXISTING)
+
+- No changes required — already functional
+- Device-local (`oros-television-recents`), cap 20 entries, deduped by channel ID
+- Click = replay, logo lazy-loaded, graceful fallback if channel removed from catalog
+- Never synced (design decision consistent with Radio)
+
+### #6 — Unified Error Notifications (PATCHED)
+
+- Added to `KNOWN_APPS` in notifications.js — appears in shell settings toggle list
+- Added to `DL_BRIDGES` in notifications.js — `television:channel:<id>` deep-links route to `__orosOpenTelevision`
+- New STRINGS keys: `notifs.streamfail.title/body` (EN/EL)
+- New helper `notifyStreamFail(ch)` — emits persistent notification on terminal playback failure
+- Dedup per channel per hour (`key: "streamfail:" + ch.id + ":" + floor(now/3600000)`)
+- TTL: 3 days (inbox retention)
+- Emit locations:
+  1. Exhausted auto-fallback (`streamIdx >= streams.length`)
+  2. Unsupported format (`.m3u8` with neither hls.js nor native support)
+- `orosNotifs.emit()` contract honored: `ns`, `title`, `body`, `deepLink`, `key` (dedup), `ttlDays`
+
+### Stream Picker Infrastructure (PATCH 1 — HTML/CSS)
+
+- HTML: `<select id="tvp-streampick" hidden>` inserted in `<dialog id="tv-player">` before `.tvp-controls`
+- CSS: Styled to match `.tv-tools select`, max-width 260px, theme-aware via palette vars
+- JS already handles it: `buildStreamPicker(channel)`, `tryStream()` syncs selection on auto-fallback
+- Visible only when channel has 2+ streams
+
+---
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `television.js` | PATCH A (existing), PATCH B (boot pending), PATCH C (STRINGS), PATCH D (notifyStreamFail), PATCH E (emit calls ×2), PATCH H (fullscreen toggle ×3 blocks) |
+| `television.css` | PATCH 1b (stream picker styling), PATCH I (fullscreen wrapper CSS) |
+| `index.html` | PATCH 1a (stream picker element) |
+| `notifications.js` | PATCH F (KNOWN_APPS), PATCH G (DL_BRIDGES) |
+
+---
+
+## Technical Details
+
+### Deep-Link Contract
+
+Shell → Television:
+
+1. App closed: `sessionStorage.setItem("oros-television-open", payload)` + `openAppById("television")`
+2. App open: `window.__orosTelevisionOpen(payload)` live push
+3. Receiver: `__orosTelevisionTakePending()` consumed at boot (one-shot, cleared after read)
+4. Payload: `{ channelId: string }` (backward compat: bare string ID wrapped into object)
+
+Notifications → Television:
+
+- `orosNotifs.emit({ ns: "television", ..., deepLink: "television:channel:<id>" })`
+- Click on toast: `openTarget(item)` → `DL_BRIDGES.television(id)` → `__orosOpenTelevision(id)`
+
+### Notification Dedup Logic
+
+```javascript
+key: "streamfail:" + ch.id + ":" + Math.floor(Date.now() / 3600000)
+Unique per channel per hour window
+Prevents spam from flaky channels
+Reset after 60 minutes allows retry notification
+Sync Integration Verified
+Proxy slice (registerTelevisionProxySlice()) already registered in shell.js
+Favorites synced via oros-television-data localStorage key
+Recents/prefs (oras-television-recents, oros-television-volume) device-local only
+Remaining Work (Future Waves)
+Tray playback chip — deferred indefinitely (explicitly out of scope)
+Desktop/mobile sync verification — user responsibility (#7 test checklist provided earlier)
+Channel categories browsing UI enhancements — already functional, polish optional
+Version Numbering
+shell.js v0.39.00 → update version to v0.40.00 after this wave
+television.js v0.2 → v0.3
+Update manifest precache entries for all modified files
+GitHub Action should propagate version bump automatically (per orOS doctrine)
+Changelog written in English per project documentation standards.
