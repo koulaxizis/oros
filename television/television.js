@@ -159,6 +159,7 @@ var state = {
   // catalog (loaded once, never synced):
   catalog: null,             // { channels[], byId{}, streams{} }
   catalogPromise: null,
+  catalogFailed: false,      // fetch rejected — spinner must die
   // player:
   playerCh: null,            // channel currently in the dialog
   streamIdx: 0,              // index into playerCh.streams[]
@@ -501,10 +502,12 @@ function loadCatalog(){
       categoryNames: categoryNames,
       languageNames: languageNames
     };
+    state.catalogFailed = false;
     state.catalog = catalog;
     return catalog;
   }).catch(function(err){
     console.warn("[television] catalog load failed:", err && err.message);
+    state.catalogFailed = true;   // spinner → honest error message
     state.catalogPromise = null; // allow retry on next interaction
     throw err;
   });
@@ -644,7 +647,7 @@ function renderMain(){
   // fetched for the first time in browse view.
   var loading = $("#tv-loading");
   if(loading){
-    if(state.viewMode === "browse" && !state.catalog && !state.offline){
+    if(state.viewMode === "browse" && !state.catalog && !state.catalogFailed && !state.offline){
       loading.removeAttribute("hidden");
     }else{
       loading.setAttribute("hidden", "");
@@ -676,8 +679,8 @@ function renderMain(){
 }
 
 function renderBrowse(container){
-  // Show loading while catalog loads
-  if(!state.catalog && !state.offline){
+  // Still loading (in flight, not failed) — spinner stays
+  if(!state.catalog && !state.catalogFailed && !state.offline){
     return; // #tv-loading handles this via CSS/JS
   }
 
