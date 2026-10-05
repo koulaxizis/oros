@@ -43,6 +43,8 @@
   var QUEUE_KEY      = "oros-vault-queue";        // dirty paths pending push
   var LM_KEY         = "oros-vault-manifest";     // local manifest cache
   var REV_KEY        = "oros-vault-rev";          // last-synced manifest rev
+  var ABSENT_KEY     = "oros-vault-absent-at";    // ts of last "no manifest" probe
+  var ABSENT_TTL_MS  = 60000;                     // absent-quiet window
   var DEBOUNCE_MS    = 3000;                      // auto-sync quiet period
   var MAX_SYNC_TRIES = 2;                         // conflict retry budget
 
@@ -112,10 +114,25 @@
   }
 
   // ---------- Cloud manifest fetch ----------
+  // ABSENT-QUIET: probing an EMPTY vault costs one 409 per sweep
+  // (boot + every tab-visible + every "online"). The browser paints
+  // that 409 red in the console — alarming noise for a state the
+  // code already handles. While no local work is queued, the
+  // "absent" verdict is cached for ABSENT_TTL_MS. Freshness
+  // contract: any queued push BYPASSES the cache (pushCloud needs
+  // the true rev for its conditional write), and the first sweep
+  // after the TTL lapses re-probes — a manifest created by another
+  // device is picked up within ~ABSENT_TTL_MS.
   function fetchCloudManifest() {
+    var queued = getQueue().length > 0;
+    var absentAt = parseInt(localStorage.getItem(ABSENT_KEY) || "0", 10) || 0;
+    if (!queued && Date.now() - absentAt < ABSENT_TTL_MS) {
+      return Promise.resolve({ rev: null, manifest: emptyManifest() });
+    }
     return ST().getRevision(MANIFEST_KEY).then(function (rev) {
       if (rev === null) {
         // No manifest in the cloud — empty vault (first run / after wipe)
+        try { localStorage.setItem(ABSENT_KEY, String(Date.now())); } catch (e) {}
         return { rev: null, manifest: emptyManifest() };
       }
       return ST().getObject(MANIFEST_KEY).then(function (buf) {
@@ -228,10 +245,19 @@
     });
 
     return Promise.all(uploads).then(function () {
-      clearQueue();
       // Conditional manifest write — the convergence point.
+      // SQ1: the queue is the record of "work that must reach the
+      // cloud". Clearing it BEFORE the manifest write meant a
+      // storage-conflict (another device won the race) entered the
+      // retry with the queue ALREADY EMPTY — the winning device's
+      // manifest never contained this device's queued paths and
+      // the retry had nothing left to push. Clear only AFTER the
+      // write lands; a conflict re-runs attempt() with the queue
+      // intact (objects are content-addressed — re-uploads of
+      // identical content are free) and both sides converge.
       return VC().encryptJson(lm).then(function (sealed) {
-        return ST().putObject(MANIFEST_KEY, sealed, cloudRev === null ? undefined : cloudRev);
+        return ST().putObject(MANIFEST_KEY, sealed, cloudRev === null ? undefined : cloudRev)
+          .then(function (res) { clearQueue(); return res; });
       });
     });
   }
@@ -248,23 +274,32 @@
 
     function attempt() {
       var lm = getLocalManifest();
+      var pulledRev = null;                         // cloud rev THIS attempt pulled
       return fetchCloudManifest()
         .then(function (cloud) {
+          pulledRev = cloud.rev;
           return applyRemote(cloud, lm, stats);
         })
         .then(function (lm) {
           if (!getQueue().length) {                 // nothing local pending
             setLocalManifest(lm);
-            setRev(null);                           // refreshed on next pull
-            return { rev: null, manifest: lm };
+            setRev(pulledRev);                      // honest cache of the cloud rev
+            return { rev: pulledRev, manifest: lm };
           }
-          return pushCloud(lm, getRev(), stats).then(function (res) {
-            // Success → the cloud rev we just wrote is ours. Fetch it
-            // cheaply to record, or leave rev=null (next pull learns it).
+          return pushCloud(lm, pulledRev, stats).then(function (res) {
+            // Success: the conditional write landed on pulledRev. The NEW
+            // cloud rev is unknown (putObject hands back the raw Response)
+            // — probe it once so REV_KEY is honest for the NEXT sync's
+            // conditional write. Probe failure is non-fatal: rev=null just
+            // means the next pull re-learns it.
             setLocalManifest(lm);
-            setRev(null);
-            clearQueue();
-            return res;
+            return ST().getRevision(MANIFEST_KEY).then(function (newRev) {
+              setRev(newRev);
+              return res;
+            }).catch(function () {
+              setRev(null);
+              return res;
+            });
           });
         })
         .catch(function (err) {

@@ -2682,3 +2682,47 @@ television.js v0.2 → v0.3
 Update manifest precache entries for all modified files
 GitHub Action should propagate version bump automatically (per orOS doctrine)
 Changelog written in English per project documentation standards.
+
+## Removed: storage-adapters.js (Dropbox-only sync)
+
+- Deleted storage-adapters.js — duplicated the internal sync.js
+  storageAdapter (v0.10). Two OAuth redirect handlers raced on the
+  same one-shot Dropbox authorization code (unpredictable winner),
+  and token state could diverge between the two owners.
+- index.html: removed storage-adapters.js script tag.
+- sw.js: removed ./storage-adapters.js from PRECACHE_URLS.
+- No functional change: sync.js internal storageAdapter is now the
+  single Dropbox transport. The 409 on files/get_metadata during
+  vault boot is the expected empty-cloud check (handled as null).
+- Deferred: pCloud (and other providers) provider support —
+  paused; architecture remains provider-agnostic via storageAdapter
+  if revisited.
+  
+  ---
+  
+  vault.js v0.1.1 — Conditional manifest write fix + empty-vault probe silencing
+Context — the "409 (Conflict)" console alarm: Reports surfaced a red POST https://api.dropboxapi.com/2/files/get_metadata 409 on every boot/visibility change, read as "my cloud is empty — my data is gone." Root cause investigation confirmed this was a false alarm: the 409 originates exclusively from the Vault Drive manifest probe (fetchCloudManifest → orosSync.storage.getRevision("manifest.json")), which hits /vault/manifest.json in the Dropbox app folder. That file has never been uploaded (the vault holds no files yet), so Dropbox answers 409 "not found", the adapter maps it to null ("empty vault, first run"), and the boot completes normally (vault: done boot). The slice-sync data (To-Do, Notes, Calendar, Kanban, etc.) is untouched by this path entirely — it lives encrypted in /orOS-data.json via pull()/push(), a completely separate channel. All diagnostic commands run during investigation (getObject, listPrefix, isConnected) were read-only; no cloud or local bytes were modified.
+
+Fixed:
+
+ABSENT-QUIET (console noise): probing an empty vault cost one 409 per sweep (boot + every tab-visible + every "online" event), painted red by the browser. The "manifest absent" verdict is now cached for 60s (ABSENT_TTL_MS) while no local work is queued. Freshness contract: any queued push bypasses the cache (pushCloud needs the true rev for its conditional write), and the first sweep after TTL expiry re-probes — a manifest created by another device is picked up within ~60s.
+
+Dead conditional manifest write (multi-device hazard): the header documented conditional manifest writes with storage-conflict retry (MAX_SYNC_TRIES), but attempt() discarded the pulled cloud rev and passed getRev() to pushCloud() — a value always null because every previous sync had called setRev(null). Result: the manifest was written unconditionally, and the conflict/convergence machinery could never fire on a second device. Fix: attempt() now captures pulledRev from fetchCloudManifest() and passes it into pushCloud(); after a successful conditional write, the new cloud rev is probed once and recorded honestly in REV_KEY.
+
+SQ1 — queue cleared before the manifest write landed: pushCloud() cleared the dirty queue before the conditional manifest write. On a storage-conflict (another device won the race), the retry re-entered with the queue already empty — the other device's manifest never contained this device's queued paths and the retry had nothing to push. Silent loss of in-flight work in multi-device setups. Fix: clearQueue() now runs only after the manifest write succeeds; a conflict re-runs attempt() with the queue intact (objects are content-addressed, identical re-uploads are free) and both sides converge.
+
+Removed (architecture decision):
+
+storage-adapters.js deleted (with its <script> tag in index.html and its sw.js PRECACHE_URLS entry). The external Unified Storage Adapter layer duplicated the internal storageAdapter (v0.10) already living in sync.js. Worse, it created two parallel Dropbox token owners: both OAuth redirect handlers attempted to exchange the same one-shot authorization code with the same PKCE verifier (unpredictable winner, one side gets a 400), and token state could diverge after disconnect() on either side. Sync.js is now the single cloud I/O owner. Multi-provider support (pCloud, etc.) is deferred — Dropbox-only for now; the provider-agnostic path remains the internal storageAdapter contract if revisited.
+Verification checklist (run after deploy):
+
+typeof window.orosStorage → "undefined"
+typeof window.orosSync.storage → "object"
+Boot logs show no storage-adapters.js boot line
+await window.orosSync.pull() → expect {ok: true, empty: false, applied: N} — confirms slice data intact in /orOS-data.json
+Empty-vault probes now appear at most once per 60s sweep window (no 409 spam on tab switching)
+Deferred / under consideration:
+
+Vault Drive object GC (deleted files leave orphaned encrypted blobs in /vault/objects/ — provider space only, zero leakage risk)
+Whole-file RAM encryption limit (SubtleCrypto has no streaming) — documented Wave 2 ceiling
+Multi-provider sync (pCloud/OneDrive/etc.) — paused, single Dropbox transport retained
