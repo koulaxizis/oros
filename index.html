@@ -74,8 +74,13 @@
       // the failed asset. Decorative assets (icons, manifest) never
       // count as boot failures — a missing favicon is not a broken OS.
       var failedSrc = "";
-      if (ev && ev.target && ev.target !== window &&
-          (ev.target.tagName === "SCRIPT" || ev.target.tagName === "LINK")) {
+      if (ev && ev.target && ev.target !== window) {
+        // IN-5: only a failed SCRIPT or stylesheet LINK is a boot
+        // failure. Every other element (img, audio, video, source)
+        // reports here too in the capture phase, with no message:
+        // it used to print "Startup error: unknown" and hold the
+        // screen for 45s over one broken image.
+        if (ev.target.tagName !== "SCRIPT" && ev.target.tagName !== "LINK") return;
         failedSrc = String(ev.target.src || ev.target.href || "");
         if (!failedSrc || /icon|manifest/i.test(failedSrc)) return;
       }
@@ -91,9 +96,13 @@
         else if (failedSrc) why = "failed to load " + failedSrc.split("/").pop();
         else why = (lang === "el") ? "άγνωστο" : "unknown";
         txt.textContent = (lang === "el")
-          ? "Σφάλμα εκκίνησης: " + why + " — δοκίμασε hard refresh."
-          : "Startup error: " + why + " — try a hard refresh.";
+          ? "Σφάλμα εκκίνησης: " + why + " — δοκίμασε hard refresh. (Πάτησε για κλείσιμο.)"
+          : "Startup error: " + why + " — try a hard refresh. (Tap to dismiss.)";
         txt.style.color = "#e06c75";
+        // IN-6: the update-reload path keeps the splash hidden (see
+        // below); a boot error must still be seen there.
+        s.style.display = "flex";
+        s.style.cursor = "pointer";
         // IP2: keep the message readable. Without this, the load+700ms
         // hide() erases it almost instantly — and the desktop behind
         // the splash never rendered (that's WHY the error exists).
@@ -107,8 +116,11 @@
     try {
       if (sessionStorage.getItem("oros-skip-splash") === "1") {
         sessionStorage.removeItem("oros-skip-splash");
-        if (s.parentNode) s.parentNode.removeChild(s);
-        return;
+        // IN-6: hide, do not remove, and do not return. The splash is
+        // the only surface for a boot error, and an update reload is
+        // exactly when a broken new bundle arrives. The normal hide()
+        // below removes the node after load.
+        s.style.display = "none";
       }
     } catch (e) {}
     // Greek from the very first frame if it's the stored language
@@ -142,6 +154,13 @@
       s.style.opacity = "0";   // inline fallback: hides even without style.css
       setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 400);
     }
+    // IN-6: a boot-error message holds the screen for up to 45s, and
+    // not every uncaught error is fatal: one tap lets the user through.
+    s.addEventListener("click", function () {
+      if (!hideNotBefore) return;
+      hideNotBefore = 0;
+      hide();
+    });
     if (document.readyState === "complete") setTimeout(hide, 700);
     else window.addEventListener("load", function () { setTimeout(hide, 700); });
     setTimeout(hide, 10000);   // fail-safe: never a stuck splash
