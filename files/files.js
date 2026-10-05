@@ -1278,11 +1278,11 @@
     var warned = false;    // FB4: one toast per guard pass, not a stack
     var moves = paths.filter(function (p) {
       if (p === dst) {
-        if (!warned) { showToast(t("toast.sameFolder")); warned = true; }
+        if (!warned) { transientNote(t("toast.sameFolder")); warned = true; }
         return false;
       }
       if (dst.indexOf(p + "/") === 0) {
-        if (!warned) { showToast(t("toast.intoItself")); warned = true; }
+        if (!warned) { transientNote(t("toast.intoItself")); warned = true; }
         return false;
       }
       if (parent(p) === dst) return false;   // same folder — silent noop
@@ -1293,7 +1293,7 @@
       // stacked (an into-itself case showed BOTH intoItself and
       // sameFolder). Show the fallback only when the filter was
       // completely silent (pure same-folder noops).
-      if (paths.length && !warned) showToast(t("toast.sameFolder"));
+      if (paths.length && !warned) transientNote(t("toast.sameFolder"));
       return;
     }
     dstListChain(dst).then(function (dstNames) {
@@ -1340,11 +1340,11 @@
     for (var i = 0; i < paths.length; i++) {
       var p = paths[i];
       if (p === dst) {
-        showToast(t("toast.sameFolder"));
+        transientNote(t("toast.sameFolder"));
         return;
       }
       if (dst.indexOf(p + "/") === 0) {
-        showToast(t("toast.intoItself"));
+        transientNote(t("toast.intoItself"));
         return;
       }
     }
@@ -1573,30 +1573,12 @@
   // FS().write() (fs.js toBlob handles Blob/ArrayBuffer/string).
   // Text files still route via readAsText for encoding sanity.
   function writeFileDst(file, path) {
-    return new Promise(function (resolve) {
-      if (isTextExt(file.name)) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          var text = String(e.target.result);
-          FS().writeText(path, text).then(function () {
-            recentsTouch(path);
-            resolve(true);
-          }).catch(function () { resolve(false); });
-        };
-        reader.onerror = function () { resolve(false); };
-        reader.readAsText(file);
-      } else {
-        var rb = new FileReader();
-        rb.onload = function (e) {
-          // Raw bytes → FS().write (Blob path, byte-faithful)
-          FS().write(path, e.target.result).then(function () {
-            recentsTouch(path);
-            resolve(true);
-          }).catch(function () { resolve(false); });
-        };
-        rb.onerror = function () { resolve(false); };
-        rb.readAsArrayBuffer(file);
-      }
+    // Direct pass-through: file is already a Blob, fs.toBlob handles it
+    return FS().write(path, file).then(function () {
+      recentsTouch(path);
+      return true;
+    }).catch(function () {
+      return false;
     });
   }
 
@@ -2457,11 +2439,28 @@
     FS().stat(path).then(function (st) {
       var size = (st && (st.size || st.bytes)) || 0;
       var mtime = (st && (st.mtime || st.modified)) || null;
+      // Pre-gate: reject extremely large images before loading blob
+      if (size > 10 * 1024 * 1024) { // 10 MB threshold
+        buildPreviewShell(path, name, size, mtime);
+        pvBodySet('<div class="pv-msg">' +
+          escapeHtml(tfmt("pv.bigFile", { n: Math.round(size / 1024) })) +
+          "</div>");
+        injectEditButton(path, name);
+        return;
+      }
       buildPreviewShell(path, name, size, mtime);
 
       if (isImageExt(name)) {
         renderImagePreview(path);
       } else {
+        // Gate: do not read text files larger than the preview cap
+        if (size > PV_TEXT_LIMIT) {
+          pvBodySet('<div class="pv-msg">' +
+            escapeHtml(tfmt("pv.bigFile", { n: Math.round(size / 1024) })) +
+            "</div>");
+          injectEditButton(path, name);
+          return;
+        }
         renderTextPreview(path);
       }
     }).catch(function () {

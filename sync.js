@@ -387,6 +387,241 @@
       });
   }
 
+  // ---------- v0.10 — UNIFIED STORAGE ADAPTER (Vault Drive, Wave 2) ----------
+  // Bible rule: orOS applications MUST NEVER call provider APIs
+  // directly — they talk to THIS surface only. Dropbox is today's
+  // implementation; any provider satisfying the same contract is a
+  // drop-in replacement. Contract:
+  //   storage.putObject(key, blob, knownRev?) — upload opaque bytes.
+  //     knownRev (when given) makes the write CONDITIONAL: the
+  //     adapter rejects with "storage-conflict" unless the remote
+  //     revision still matches (read-rev-compare-write fallback —
+  //     Dropbox has no native conditional put).
+  //   storage.getObject(key) → Promise<ArrayBuffer|null>
+  //     (null = object missing — never an error).
+  //   storage.deleteObject(key) → Promise<true> (gone = success).
+  //   storage.listPrefix(prefix) → Promise<string[]> (relative keys).
+  //   storage.getRevision(key) → Promise<string|null>.
+  // Chunked uploads LIVE INSIDE the adapter (upload sessions);
+  // callers always pass ONE whole Blob. Content is expected to be
+  // ALREADY ENCRYPTED — the adapter never sees plaintext.
+
+  var ADAPTER_ROOT    = "/vault";
+  var SESSION_CHUNK   = 4 * 1024 * 1024;    // 4 MiB per session append
+  var SINGLE_SHOT_MAX = 150 * 1024 * 1024;  // Dropbox single-upload cap
+
+  function adapterPath(key) {
+    return ADAPTER_ROOT + "/" + String(key).replace(/^\/+/, "");
+  }
+
+  function adapterEnsureConnected() {
+    if (suspended)      return Promise.reject(new Error("engine-suspended"));
+    if (!isConnected()) return Promise.reject(new Error("not-connected"));
+    return Promise.resolve();
+  }
+
+  function adapterUploadOnce(path, body) {
+    return ensureFreshToken().then(function (token) {
+      return fetch(CONTENT_API + "files/upload", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/octet-stream",
+          "Dropbox-API-Arg": JSON.stringify({
+            path: path,
+            mode: "overwrite",
+            autorename: false,
+            mute: true
+          })
+        },
+        body: body
+      });
+    });
+  }
+
+  function adapterSessionCall(endpoint, apiArg, chunk) {
+    return ensureFreshToken().then(function (token) {
+      return fetch(CONTENT_API + endpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/octet-stream",
+          "Dropbox-API-Arg": JSON.stringify(apiArg)
+        },
+        body: chunk
+      });
+    });
+  }
+
+  // No-size-limit upload: session start (first chunk) → append_v2
+  // (4 MiB pieces) → finish (commit). The whole Blob still lives in
+  // RAM (SubtleCrypto has no streaming) — documented Wave 2 limit.
+  function adapterUploadSession(path, blob) {
+    var sessionId = null;
+    var offset = 0;
+    var first = blob.slice(0, SESSION_CHUNK);
+
+    return adapterSessionCall("files/upload_sessions/start", { close: false }, first)
+      .then(function (res) {
+        if (!res.ok) throw new Error("session start failed: " + res.status);
+        offset += first.size;
+        return res.json();
+      })
+      .then(function (started) {
+        sessionId = started.session_id;
+        function appendNext() {
+          if (offset >= blob.size) return Promise.resolve();
+          var chunk = blob.slice(offset, offset + SESSION_CHUNK);
+          var arg = { cursor: { session_id: sessionId, offset: offset }, close: false };
+          return adapterSessionCall("files/upload_sessions/append_v2", arg, chunk)
+            .then(function (res) {
+              if (!res.ok) throw new Error("session append failed: " + res.status);
+              offset += chunk.size;
+              return appendNext();
+            });
+        }
+        return appendNext();
+      })
+      .then(function () {
+        var arg = {
+          cursor: { session_id: sessionId, offset: offset },
+          commit: { path: path, mode: "overwrite", autorename: false, mute: true }
+        };
+        return adapterSessionCall("files/upload_sessions/finish", arg, new Blob([]));
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error("session finish failed: " + res.status);
+        return res.json().catch(function () { return null; });
+      });
+  }
+
+  function adapterRevision(key) {
+    return rpc("files/get_metadata", { path: adapterPath(key) })
+      .then(function (res) {
+        if (res.status === 409) return null;   // not found — no revision
+        if (!res.ok) throw new Error("metadata failed: " + res.status);
+        return res.json();
+      })
+      .then(function (meta) { return meta ? (meta.rev || "") : null; });
+  }
+
+  function adapterList(prefix) {
+    var base = adapterPath(prefix || "");
+    var out = [];
+    function page(cursor) {
+      var req = cursor
+        ? rpc("files/list_folder/continue", { cursor: cursor })
+        : rpc("files/list_folder", { path: ADAPTER_ROOT, recursive: true, limit: 2000 });
+      return req
+        .then(function (res) {
+          if (res.status === 409) return { entries: [], has_more: false };  // no /vault yet
+          if (!res.ok) throw new Error("list failed: " + res.status);
+          return res.json();
+        })
+        .then(function (listing) {
+          (listing.entries || []).forEach(function (e) {
+            if (!e.path_lower) return;
+            if (e.path_lower.indexOf(base) === 0 && e.path_lower !== base + "/") {
+              out.push(e.path_lower.slice(ADAPTER_ROOT.length + 1));
+            }
+          });
+          if (listing.has_more && listing.cursor) return page(listing.cursor);
+          return out;
+        });
+    }
+    return page(null);
+  }
+
+  var storageAdapter = {
+    putObject: function (key, blob, knownRev) {
+      return adapterEnsureConnected().then(function () {
+        if (!(blob instanceof Blob)) blob = new Blob([blob]);
+        var path = adapterPath(key);
+        var doUpload = (blob.size > SINGLE_SHOT_MAX)
+          ? function () { return adapterUploadSession(path, blob); }
+          : function () { return adapterUploadOnce(path, blob); };
+        // Unconditional write (typical for immutable content-addressed
+        // objects — same content → same bytes, overwrite is a no-op).
+        if (knownRev === undefined || knownRev === null) return doUpload();
+        // Conditional write: Bible fallback read-rev-compare-write.
+        return adapterRevision(key).then(function (rev) {
+          if (rev !== knownRev) throw new Error("storage-conflict");
+          return doUpload();
+        });
+      });
+    },
+
+    getObject: function (key) {
+      return adapterEnsureConnected().then(function () {
+        return contentDownload(adapterPath(key)).then(function (res) {
+          if (res.status === 409) return null;   // missing — honest null
+          if (!res.ok) throw new Error("download failed: " + res.status);
+          return res.arrayBuffer();              // BINARY — never .text()
+        });
+      });
+    },
+
+    deleteObject: function (key) {
+      return adapterEnsureConnected().then(function () {
+        return rpc("files/delete_v2", { path: adapterPath(key) }).then(function (res) {
+          if (res.ok || res.status === 409) return true;  // gone = deleted
+          throw new Error("delete failed: " + res.status);
+        });
+      });
+    },
+
+    listPrefix: function (prefix) {
+      return adapterEnsureConnected().then(function () { return adapterList(prefix); });
+    },
+
+    getRevision: function (key) {
+      return adapterEnsureConnected().then(function () { return adapterRevision(key); });
+    }
+  };
+
+  // ---------- Vault crypto primitives (Wave 2) ----------
+  // Same passphrase-derived key model as the main blob (deriveKey).
+  // Object envelopes are RAW BINARY: salt(16) | iv(12) | ciphertext
+  // — no base64 inflation on the wire. JSON envelopes (manifest)
+  // reuse encryptBlob/decryptBlob.
+
+  function sha256Hex(buf) {
+    return crypto.subtle.digest("SHA-256", buf).then(function (d) {
+      var bytes = new Uint8Array(d), s = "";
+      for (var i = 0; i < bytes.length; i++) {
+        s += ("0" + bytes[i].toString(16)).slice(-2);
+      }
+      return s;
+    });
+  }
+
+  function encryptBytes(buf) {
+    if (!passphrase) return Promise.reject(new Error("no-passphrase"));
+    var salt = new Uint8Array(16); crypto.getRandomValues(salt);
+    var iv   = new Uint8Array(12); crypto.getRandomValues(iv);
+    return deriveKey(salt).then(function (key) {
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buf);
+    }).then(function (cipher) {
+      var env = new Uint8Array(16 + 12 + cipher.byteLength);
+      env.set(salt, 0);
+      env.set(iv, 16);
+      env.set(new Uint8Array(cipher), 28);
+      return env.buffer;
+    });
+  }
+
+  function decryptBytes(envBuf) {
+    if (!passphrase) return Promise.reject(new Error("no-passphrase"));
+    var env = new Uint8Array(envBuf);
+    if (env.length < 28) return Promise.reject(new Error("bad vault envelope"));
+    var salt = env.slice(0, 16);
+    var iv   = env.slice(16, 28);
+    var data = env.slice(28);
+    return deriveKey(salt).then(function (key) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+    });
+  }
+
   // ---------- Crypto (blob): AES-GCM + PBKDF2 ----------
   function deriveKey(salt) {
     var material = new TextEncoder().encode(passphrase);
@@ -1516,6 +1751,17 @@
       if (isConnected() && passphrase) {
         reconcile("kick");
       }
+    },
+
+    // Wave 2 — Vault Drive: unified storage adapter (provider-
+    // agnostic surface, Dropbox implementation) + vault crypto.
+    storage: storageAdapter,
+    vaultCrypto: {
+      sha256Hex:    sha256Hex,     // ArrayBuffer → hex digest (content addressing)
+      encryptBytes: encryptBytes,  // ArrayBuffer → sealed ArrayBuffer envelope
+      decryptBytes: decryptBytes, // sealed envelope → plaintext ArrayBuffer
+      encryptJson:  encryptBlob,   // object → sealed JSON string (manifest)
+      decryptJson:  decryptBlob    // sealed JSON string → object
     },
 
           // Error mapping

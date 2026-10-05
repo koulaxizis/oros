@@ -2526,3 +2526,30 @@ Enforcement
 Any code review finding of direct provider API calls from an application file (outside the sync adapter layer) is treated as a critical architecture violation and must be fixed before merge.
 
 ---
+
+CHANGELOG — orOS Files & FS: Binary API + Preview Hardening
+fs.js
+Binary API surface (Vault Drive groundwork, Wave 1):
+
+Added readBlob and writeBlob as explicit aliases of the existing read/write operations on the window.orosFS public object. The core Blob pipeline was already binary-capable (OPFS stores raw Blobs, IDB records store rec.blob); the aliases make the binary contract explicit for Vault Drive consumers coming in Wave 2.
+CRITICAL REGRESSION FIXED: an earlier patch had REPLACED read/write with readBlob/writeBlob in the public surface, which broke all existing Files app consumers (copyFileContent, downloadEntry, renderImagePreview, sync restore). Final state exposes BOTH names mapping to the same functions: read/readText/write/writeText AND readBlob/writeBlob. Rule for future waves: never rename existing orosFS public methods — only add.
+Boot log now prints binary-ready: yes as a quick console fingerprint for version verification (useful against PWA stale-cache confusion: a boot line WITHOUT it means the browser is running an old cached fs.js).
+Versioning note: FS_VERSION stays at 0.1.0 — the ?v= cache-buster is owned by shell.js / the GitHub Action, per the single-source-of-truth rule.
+files.js
+Unified notification compliance (Bible rule — no legacy toasts in interactive paths):
+
+performMove and performCopy guard toasts (toast.sameFolder, toast.intoItself) now route through transientNote() instead of raw showToast(), so they flow into the shell's orosNotifs.transient() system with local fallback in standalone mode. All Files toasts are now unified-system compliant.
+Preview memory protection (RAM-only decryption/preview doctrine):
+
+Text preview stat-gate: openPreview now checks size > PV_TEXT_LIMIT (512 KB) BEFORE calling renderTextPreview, which previously read the entire file into memory and only then decided it was too large. Oversized text files now show the "too large to preview" message immediately, with the Edit button still available.
+Image preview stat-gate: images larger than 10 MB are rejected before the Blob is read into an object URL. Threshold is a constant inline (10 * 1024 * 1024) — candidate for a named constant if more gates appear.
+Byte-faithful import:
+
+writeFileDst rewritten: imported File objects pass directly to FS().write(path, file) instead of round-tripping through FileReader (readAsText / readAsArrayBuffer). Fixes two defects: (1) BOM stripping — readAsText decodes UTF-8 and drops the BOM, so re-saving a BOM'd text file silently corrupted it on every import; (2) needless full-buffer copies. All imports are now byte-identical to the source file.
+Verification protocol
+Console check for binary API: typeof window.orosFS.read === "function" && typeof window.orosFS.write === "function" && typeof window.orosFS.readBlob === "function" && typeof window.orosFS.writeBlob === "function" must return true from the shell context.
+Files app must still: import a binary image (drag & drop + picker), show image preview, download a file, copy a file between folders (binary copy path), and restore disk from cloud (sync bridge). All exercise read/write.
+Under consideration (deferred, not forgotten)
+ls() returning size/mtime per entry (OPFS opfsEntries enrichment) — unlocks the Size/Date columns currently showing "-", removes the per-file stat walk in calcStorageRecursive. Touches fs.js OPFS driver + idbLs record shape; needs care to keep both backends symmetric.
+Mobile: single-tap on folder = enter (dblclick unreliable on touch).
+diskSnapshot() calling FS().exportDisk(ROOT) with an ignored argument — cosmetic contract cleanup.
