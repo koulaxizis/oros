@@ -166,17 +166,7 @@
       "stat.kpi.upcoming": "Next 30 days",
       "stat.kpi.recurring": "Recurring",
       "stat.byLabel": "Events by label",
-      "stat.perMonth": "{n} events stored",
-      "lbl.feed.hol": "Holidays",
-      "hol.row.name": "External holidays (internet)",
-      "hol.on.btn": "Enable",
-      "hol.off.btn": "Disable",
-      "hol.hint": "Fetches national holidays and name days from public APIs (no account, no tracking). Cached locally, refreshed weekly.",
-      "hol.fetch": "Fetching holidays…",
-      "hol.updated": "Holidays updated ({n})",
-      "hol.failed": "Holiday fetch failed",
-      "hol.disabled": "External holidays turned off",
-      "hol.nameday": "Name days"
+      "stat.perMonth": "{n} events stored"
     },
     el: {
       "cal.today": "Σήμερα",
@@ -284,17 +274,7 @@
       "stat.kpi.upcoming": "Επόμενες 30 μέρες",
       "stat.kpi.recurring": "Επαναλαμβανόμενα",
       "stat.byLabel": "Συμβάντα ανά ετικέτα",
-      "stat.perMonth": "{n} συμβάντα αποθηκευμένα",
-      "lbl.feed.hol": "Εορτές",
-      "hol.row.name": "Εξωτερικές εορτές (διαδίκτυο)",
-      "hol.on.btn": "Ενεργοποίηση",
-      "hol.off.btn": "Απενεργοποίηση",
-      "hol.hint": "Λήψη εθνικών εορτών και ονομαστικών από δημόσια APIs (χωρίς λογαριασμό, χωρίς tracking). Τοπική αποθήκευση, εβδομαδιαία ανανέωση.",
-      "hol.fetch": "Λήψη εορτών…",
-      "hol.updated": "Οι εορτές ενημερώθηκαν ({n})",
-      "hol.failed": "Αποτυχία λήψης εορτών",
-      "hol.disabled": "Οι εξωτερικές εορτές απενεργοποιήθηκαν",
-      "hol.nameday": "Ονομαστικές"
+      "stat.perMonth": "{n} συμβάντα αποθηκευμένα"
     }
   };
   function t(k) {
@@ -374,13 +354,7 @@ function transientNote(title, body) {
 
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
-  // settings: user PREFERENCES that travel in the synced blob —
-  // unlike the holidays EVENTS themselves, which stay device-local
-  // (public data, each device fetches its own copy).
-  // Shape: { holidaysOn: bool, mtime: number } — mtime drives the
-  // merge, same last-writer-wins contract as labels/events.
-  var state = { ver: 1, labels: [], events: [], deleted: [],
-                settings: { holidaysOn: false, mtime: 0 } };
+  var state = { ver: 1, labels: [], events: [], deleted: [] };
 
   // Whitelist — the sync-sanitizer contract (deterministic).
   // Declared HERE (moved up from §3b in v0.3): sanitizeEvent runs
@@ -416,7 +390,6 @@ function transientNote(title, body) {
     { id: "lbl-feed-kanban",  color: "#7aa2f7" },   // blue — Kanban (teal taken by Habits)
     { id: "lbl-feed-todo",    color: "#e06c75" },   // red — To-Do due dates
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
-    { id: "lbl-feed-hol",    color: "#ff9e64" },  // orange — External holidays (internet fetch)
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
   function feedLabelName(l) {
@@ -428,7 +401,6 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-kanban") return t("lbl.feed.kanban");
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
-    if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     return t("lbl.feed.custom");
   }
 
@@ -548,17 +520,6 @@ function transientNote(title, body) {
     };
   }
 
-  // Settings sanitizer (sync-shared preferences): keeps the default
-  // OFF state on any malformed input — a corrupt blob can never
-  // silently opt a user into network fetches.
-  function sanitizeSettings(s) {
-    if (!s || typeof s !== "object") return null;
-    return {
-      holidaysOn: s.holidaysOn === true,
-      mtime: (typeof s.mtime === "number" && isFinite(s.mtime)) ? s.mtime : 0
-    };
-  }
-
   function loadState() {
     try {
       var d = JSON.parse(localStorage.getItem(DATA_KEY));
@@ -568,23 +529,6 @@ function transientNote(title, body) {
       // Pre-sync blobs have no "deleted" → empty list, zero migration
       if (d && Array.isArray(d.deleted)) {
         state.deleted = d.deleted.map(sanitizeTomb).filter(Boolean);
-      }
-      // Settings: adopted when present. LEGACY MIGRATION (pre-sync
-      // installs kept the toggle in the device-local HOL_ON_KEY):
-      // fold an ON preference in ONCE with a real mtime so it
-      // survives the merge, then retire the key — it can never
-      // fight state.settings afterwards. Idempotent: the second
-      // boot finds d.settings present and skips this branch.
-      var st = d && sanitizeSettings(d.settings);
-      if (st) {
-        state.settings = st;
-      } else {
-        try {
-          if (localStorage.getItem(HOL_ON_KEY) === "1") {
-            state.settings = { holidaysOn: true, mtime: Date.now() };
-          }
-          localStorage.removeItem(HOL_ON_KEY);
-        } catch (e2) {}
       }
       // Seed ΜΟΝΟ όταν λείπει το κλειδί "labels" (φρέσκια
       // εγκατάσταση / v0.1 blob). Άδειο-but-παρόν array = ο χρήστης
@@ -1352,146 +1296,6 @@ function transientNote(title, body) {
     return out;
   }
 
-  /* ---------- 3c. External holidays feed (opt-in, internet) ----------
-     NON-goals by design: rows are NEVER stored in state.events,
-     NEVER synced, NEVER exported (.ics) — this is PUBLIC data
-     (dates/facts), cached DEVICE-LOCAL only. Opt-in: zero network
-     activity until the user flips the toggle in the label manager.
-     Sources (keyless GETs, no user data leaves the device):
-       - National (GR): Nager.Date v3 PublicHolidays (CORS-open)
-       - Namedays: greek-namedays API — response shape is normalized
-         defensively; edit HOL_SOURCES only if the endpoint moves.
-     TTL: weekly refresh at boot (only when enabled + stale). */
-  var HOL_CACHE_KEY = "oros-calendar-holidays";
-  // Legacy pre-sync key — read ONCE at load for migration, then
-  // retired (the toggle lives in the synced state.settings now).
-  var HOL_ON_KEY    = "oros-calendar-holidays-on";
-  var HOL_TTL_MS    = 7 * 24 * 60 * 60 * 1000;
-  var HOL_SOURCES   = {
-    national: "https://date.nager.at/api/v3/PublicHolidays/{y}/GR",
-    namedays: "https://greek-namedays.herokuapp.com/api/v1/dates/{y}"
-  };
-  var holCache = { when: 0, data: null };
-
-  function holEnabled() {
-    return !!(state && state.settings && state.settings.holidaysOn);
-  }
-
-  function holRaw() {
-    var now = Date.now();
-    if (now - holCache.when > 1000) {
-      try {
-        var d = JSON.parse(localStorage.getItem(HOL_CACHE_KEY));
-        holCache.data = (d && typeof d === "object" && Array.isArray(d.events))
-          ? d : null;
-      } catch (e) { holCache.data = null; }
-      holCache.when = now;
-    }
-    return holCache.data;
-  }
-
-  // Nager.Date v3 row → { date, kind, title }. localName is the
-  // localized ("Ελλάδα") name — prefer it, fall back to name.
-  function holNatRow(h) {
-    if (!h || typeof h !== "object") return null;
-    if (typeof h.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(h.date)) return null;
-    var title = (typeof h.localName === "string" && h.localName) ||
-                (typeof h.name === "string" && h.name);
-    if (!title) return null;
-    return { date: h.date, kind: "national", title: title.slice(0, 80) };
-  }
-
-  // Namedays row → ONE row per date (names joined, capped): a
-  // per-name flood would bury the calendar grid (same doctrine as
-  // the Contacts feed title cap).
-  function holNameRow(nd) {
-    if (!nd || typeof nd !== "object") return null;
-    var d = "";
-    if (typeof nd.date === "string") d = nd.date;
-    else if (typeof nd.day === "string") d = nd.day;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-    var names = [];
-    if (Array.isArray(nd.names)) names = nd.names;
-    else if (typeof nd.name === "string") names = [nd.name];
-    names = names.filter(function (n) {
-      return typeof n === "string" && n.trim();
-    });
-    if (!names.length) return null;
-    return { date: d, kind: "nameday",
-             title: names.slice(0, 6).join(", ").slice(0, 80) };
-  }
-
-  function holFetch() {
-    var year = String(new Date().getFullYear());
-    var urls = [
-      HOL_SOURCES.national.replace("{y}", year),
-      HOL_SOURCES.namedays.replace("{y}", year)
-    ];
-    Promise.allSettled(urls.map(function (u) {
-      return fetch(u).then(function (r) { return r.ok ? r.json() : []; });
-    })).then(function (res) {
-      var events = [];
-      if (res[0].status === "fulfilled" && Array.isArray(res[0].value)) {
-        res[0].value.forEach(function (h) {
-          var row = holNatRow(h);
-          if (row) events.push(row);
-        });
-      }
-      if (res[1].status === "fulfilled" && Array.isArray(res[1].value)) {
-        res[1].value.forEach(function (nd) {
-          var row = holNameRow(nd);
-          if (row) events.push(row);
-        });
-      }
-      events.sort(function (a, b) {
-        return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0);
-      });
-      var ts = Date.now();
-      try {
-        localStorage.setItem(HOL_CACHE_KEY,
-          JSON.stringify({ ts: ts, events: events }));
-      } catch (e) {}
-      holCache = { when: ts, data: { ts: ts, events: events } };
-      if (events.length) {
-        transientNote(t("hol.updated").replace("{n}", String(events.length)));
-      } else {
-        transientNote(t("hol.failed"));
-      }
-      renderAll();
-      renderDay();
-    }).catch(function () {
-      transientNote(t("hol.failed"));
-    });
-  }
-
-  // Boot hook: fetch ONLY when opted in AND the cache is stale.
-  function holInit() {
-    if (!holEnabled()) return;
-    var d = holRaw();
-    if (!d || Date.now() - d.ts > HOL_TTL_MS) holFetch();
-  }
-
-  function holFeedOn(dateStr) {
-    if (!holEnabled()) return [];
-    if (!labelVisible("lbl-feed-hol")) return [];
-    var d = holRaw();
-    if (!d || !Array.isArray(d.events)) return [];
-    var out = [];
-    d.events.forEach(function (h, ix) {
-      if (h.date !== dateStr) return;
-      out.push({
-        id: "hol-" + ix + "-" + dateStr,   // per-render key, never stored
-        title: (h.kind === "nameday"
-          ? t("hol.nameday") + ": " : "") + h.title,
-        labelId: "lbl-feed-hol",
-        start: null,                       // all-day
-        _feed: true,
-        _hol: true
-      });
-    });
-    return out;
-  }
-
     function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
@@ -1503,7 +1307,6 @@ function transientNote(title, body) {
     .concat(kanbanFeedOn(dateStr))
     .concat(todoFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
-    .concat(holFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
@@ -2911,45 +2714,6 @@ function transientNote(title, body) {
         list.appendChild(row);
       });
     }
-    // External holidays (opt-in internet fetch): the switch lives
-    // with the feed labels — same read-only territory. OFF is the
-    // default: nothing is fetched until the user flips this.
-    var holRow = document.createElement("div");
-    holRow.className = "lbl-row feed";
-    var holName = document.createElement("span");
-    holName.className = "lbl-feed-name";
-    holName.textContent = t("hol.row.name");
-    holName.title = t("hol.hint");
-    holRow.appendChild(holName);
-    var holOn = holEnabled();
-    var holBtn = document.createElement("button");
-    holBtn.type = "button";
-    holBtn.className = "mini hol-toggle" + (holOn ? " on" : "");
-    holBtn.textContent = t(holOn ? "hol.off.btn" : "hol.on.btn");
-    holBtn.title = t("hol.hint");
-    holBtn.addEventListener("click", function () {
-      var turnOn = !holEnabled();
-      // Preference change → state + saveState() → markDirty() →
-      // the blob travels via the sync slice, so the toggle lands
-      // ON/OFF identically on every device after the next pull.
-      // The CACHE stays device-local by design (public data).
-      state.settings.holidaysOn = turnOn;
-      state.settings.mtime = Date.now();
-      saveState();
-      if (turnOn) {
-        toast(t("hol.fetch"));
-        holFetch();
-      } else {
-        holCache = { when: 0, data: null };
-        transientNote(t("hol.disabled"));
-      }
-      renderLblList();
-      renderChips();
-      renderAll();
-      renderDay();
-    });
-    holRow.appendChild(holBtn);
-    list.appendChild(holRow);
     if (!state.labels.length) {
       var emp = document.createElement("div");
       emp.className = "empty";
@@ -3309,7 +3073,6 @@ function transientNote(title, body) {
   /* ---------- 8. Boot ---------- */
   loadState();
   applyI18n();
-  holInit();   // opt-in: fetches only when the toggle is on AND stale
   // Re-translate seeded labels if the store was freshly seeded with
   // the other language (seeds depend on LANG at seed time).
   reseedSeedNames();
@@ -3597,21 +3360,6 @@ function transientNote(title, body) {
       }
     }
 
-    // Settings merge: a SINGLE preference object per blob (not an
-    // entity list) — the newer mtime wins outright; equal mtimes
-    // fall back to the byte-deterministic JSON tie-break, same
-    // contract as labels/events, so every device converges.
-    var settings = { holidaysOn: false, mtime: 0 };
-    function takeSettings(s) {
-      if (!s || typeof s !== "object" || typeof s.mtime !== "number" ||
-          !isFinite(s.mtime)) return;
-      if (s.mtime > settings.mtime ||
-          (s.mtime === settings.mtime &&
-           JSON.stringify(s) < JSON.stringify(settings))) {
-        settings = { holidaysOn: s.holidaysOn === true, mtime: s.mtime };
-      }
-    }
-
     [local, remote].forEach(function (side) {
       if (!side || typeof side !== "object") return;
       (Array.isArray(side.deleted) ? side.deleted : [])
@@ -3620,7 +3368,6 @@ function transientNote(title, body) {
         .map(mergeSanitizeLabel).filter(Boolean).forEach(takeLbl);
       (Array.isArray(side.events) ? side.events : [])
         .map(mergeSanitizeEv).filter(Boolean).forEach(takeEv);
-      if (side.settings) takeSettings(side.settings);
     });
 
     var events = [], deleted = [], labels = [];
@@ -3644,8 +3391,7 @@ function transientNote(title, body) {
     events.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     labels.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     deleted.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
-    return { ver: 1, labels: labels, events: events, deleted: deleted,
-             settings: settings };
+    return { ver: 1, labels: labels, events: events, deleted: deleted };
   }
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
@@ -3658,12 +3404,7 @@ function transientNote(title, body) {
     var lbls = Array.isArray(data.labels)
       ? data.labels.map(sanitizeLabel).filter(Boolean)
       : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
-    // Settings arrive with the pull: sanitize (a corrupt cloud copy
-    // can never silently opt this device into network fetches).
-    var pulSettings = sanitizeSettings(data.settings) ||
-                      { holidaysOn: false, mtime: 0 };
-    state = { ver: 1, labels: lbls, events: evs, deleted: dels,
-              settings: pulSettings };
+    state = { ver: 1, labels: lbls, events: evs, deleted: dels };
     lastMoved = null;
     lastDeleted = null;
     lastExdate = null;
@@ -3696,12 +3437,6 @@ function transientNote(title, body) {
     petCache = { when: 0, optOut: false, petData: null, logData: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
-    // A pull that flipped the holidays preference ON lands here:
-    // honor it immediately — the user consented on another device,
-    // and this is that consent arriving. holInit is a no-op when
-    // OFF or when the device already holds a fresh cache (so a
-    // pull on a cached device never re-fetches).
-    holInit();
     if (info && info.merged) transientNote(t("sync.merged"));   // receipt, not "Saved"
   }
 
@@ -3721,11 +3456,9 @@ function transientNote(title, body) {
         function () {     // getter: localStorage is the durable truth
           try {
             return JSON.parse(localStorage.getItem(DATA_KEY)) ||
-              { ver: 1, labels: [], events: [], deleted: [],
-                settings: state.settings };
+              { ver: 1, labels: [], events: [], deleted: [] };
           } catch (e) {
-            return { ver: 1, labels: [], events: [], deleted: [],
-                     settings: state.settings };
+            return { ver: 1, labels: [], events: [], deleted: [] };
           }
         },
         setFromSync,
