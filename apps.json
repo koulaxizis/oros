@@ -192,14 +192,6 @@
       "icon": "television",
       "url": "television/",
       "type": "internal"
-    },
-    {
-      "id": "mail",
-      "name": "Mail",
-      "category": "Office",
-      "icon": "mail",
-      "url": "mail/",
-      "type": "internal"
     }
   ]
 }
