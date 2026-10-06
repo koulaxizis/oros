@@ -164,6 +164,9 @@
   // (Called ONLY from user action handlers — never from shellSliceSet,
   // which is fed by pulls. That would loop: pull → set → dirty → push.)
   function noteLocalChange() {
+    // SH-D1: stamp whichever setting just changed, at the moment it
+    // changed (the merge is last-writer-wins per setting).
+    try { shellStampsRefresh(); } catch (e) {}
     if (window.orosSync && typeof window.orosSync.markDirty === "function") {
       window.orosSync.markDirty();
     }
@@ -458,14 +461,22 @@
         return handle.getFileHandle(name, { create: true })
           .then(function (fh) { return fh.createWritable(); })
           .then(function (stream) {
-            stream.write(JSON.stringify(filePayload, null, 2));
-            return stream.close();
+            // SH-B5: write() is async. Close only after it settled, so
+            // a failed write rejects THIS chain instead of escaping as
+            // an unhandled rejection next to a "saved" message.
+            return stream.write(JSON.stringify(filePayload, null, 2))
+              .then(function () { return stream.close(); });
           })
           .then(function () {
             setSyncMsg("ok", "sync.ok.fsfolder.saved");
           });
       });
-    }).catch(function () { /* best-effort — the sync engine data stays intact */ });
+    }).catch(function () {
+      // Best-effort — the sync engine data stays intact. SH-B5: forget
+      // the schedule stamp, so the next boot / tab-visible check tries
+      // again instead of waiting out a whole day/week/month.
+      try { localStorage.removeItem(AUTOEXPORT_LAST); } catch (e) {}
+    });
 }
 
   function chooseBackupFolder() {
@@ -557,15 +568,37 @@
     wxFetchTickThrottled();     // #6: fetch retry (60s throttle) — a failed
                                 // boot fetch no longer sits in "waiting"
                                 // until an online/visibility event
-    alarmTick();                // E1: shell-owned alarm engine tick
-    calRemTickThrottled();      // Wave 3: calendar reminders (30s throttle)
-    moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
-    cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
-    notifTickThrottled();       // Wave 1A: notification sweep (60s throttle)
-    wxBriefTickThrottled();     // Weather unification: daily morning briefing (60s throttle)
-    quoteCheckTickThrottled();  // Wave 13: Quote due-date reminders (60s throttle)
-    minimalismCheckTickThrottled(); // Wave 2: Minimalism daily ritual (60s throttle)
+    if (enginesMayRun()) {        // SH-B1: see enginesMayRun below
+      alarmTick();                // E1: shell-owned alarm engine tick
+      calRemTickThrottled();      // Wave 3: calendar reminders (30s throttle)
+      moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
+      cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
+      notifTickThrottled();       // Wave 1A: notification sweep (60s throttle)
+      syncPendingTickThrottled(); // SY-D3: "changes waiting for a merge" notice (60s throttle)
+      wxBriefTickThrottled();     // Weather unification: daily morning briefing (60s throttle)
+      quoteCheckTickThrottled();  // Wave 13: Quote due-date reminders (60s throttle)
+      minimalismCheckTickThrottled(); // Wave 2: Minimalism daily ritual (60s throttle)
+    }
     radioTrayTick();              // Wave 2 Radio: tray chip paint (cheap, 1/s)
+  }
+
+  // SH-B1: every engine above ends in orosNotifs.emit(), but
+  // notifications.js loads AFTER shell.js and the first renderClock()
+  // runs during shell boot. That first sweep therefore ran with no
+  // module: a calendar reminder due at boot took the legacy overlay
+  // (no inbox, no quiet hours, no per-app toggle), and every other
+  // engine burned its 60s throttle on a silent return. The engines
+  // now start on the first tick where the module reports ready.
+  // Stale bundle / module that never becomes ready: they start after
+  // a short grace, exactly as before (legacy fallbacks intact).
+  var shellBootAt = Date.now();
+  var ENGINE_GRACE_MS = 8000;
+  function enginesMayRun() {
+    var N = window.orosNotifs;
+    if (N && typeof N.getState === "function") {
+      try { if (N.getState().ready) return true; } catch (e) {}
+    }
+    return (Date.now() - shellBootAt) > ENGINE_GRACE_MS;
   }
 
   function quoteCheckTickThrottled() {
@@ -621,7 +654,17 @@
     return 10;
   }
 
+  // SH-B7 (owner decision 2026-10-05): same rule as Mood — the ritual
+  // whisper starts only after the first day record (done or skip).
+  function minimalismHasAnyDay() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY));
+      return !!(raw && Array.isArray(raw.days) && raw.days.length > 0);
+    } catch (e) { return false; }
+  }
+
   function minimalismCheckTick() {
+    if (!minimalismHasAnyDay()) return;   // SH-B7: app never used — silent
     if (minimalismHasToday()) return;   // engaged today — silent
     if (new Date().getHours() < minimalismPrefHour()) return;
     var N = window.orosNotifs;
@@ -770,6 +813,20 @@
 
   function renderMenu() {
     var menu = document.getElementById("app-menu");
+    // SH-B3 (form rebuild discipline): this function rebuilds the whole
+    // menu, and it is called by background events too (sync messages,
+    // account e-mail, install prompt). Without capture/restore every
+    // toggle threw the menu back to the top, closed the per-app list
+    // and wiped a half-typed passphrase.
+    var keepTop  = menu.scrollTop;
+    var keepApps = !!menu.querySelector("details[open]");
+    var oldPw    = menu.querySelector(".sync-pass .input-row input");
+    var oldRem   = menu.querySelector("#sync-remember");
+    var keepPw   = oldPw ? {
+      value:    oldPw.value,
+      focus:    document.activeElement === oldPw,
+      remember: oldRem ? oldRem.checked : null
+    } : null;
     menu.innerHTML = "";
 
     var heading = document.createElement("div");
@@ -913,6 +970,22 @@
     });
     infoRow.appendChild(infoBtn);
     menu.appendChild(infoRow);
+
+    // SH-B3: restore what the rebuild destroyed.
+    if (keepApps) {
+      var newApps = menu.querySelector("details");
+      if (newApps) newApps.open = true;
+    }
+    if (keepPw) {
+      var newPw  = menu.querySelector(".sync-pass .input-row input");
+      var newRem = menu.querySelector("#sync-remember");
+      if (newPw) {
+        newPw.value = keepPw.value;
+        if (keepPw.focus) newPw.focus();
+      }
+      if (newRem && keepPw.remember !== null) newRem.checked = keepPw.remember;
+    }
+    menu.scrollTop = keepTop;
   }
 
   function renderSkinSwatches(host) {
@@ -1032,7 +1105,7 @@
       forest:   { en: "Forest Night",  el: "Νύχτα Δάσους" },
       ember:    { en: "Ember",         el: "Στάχτη" },
       nordic:   { en: "Nordic Frost",  el: "Σκανδιναβικός Πάγος" },
-      aurora:   { en: "Aurora",        el: "Αυγόρα" },
+      aurora:   { en: "Aurora",        el: "Αυγή" },
       sand:     { en: "Desert Sand",   el: "Άμμος Ερήμου" },
       mono:     { en: "Monochrome",    el: "Μονόχρωμο" },
       nebula:   { en: "Nebula",        el: "Νεφέλωμα" },
@@ -1053,28 +1126,303 @@
   // the auto-sync interval AND the auto-backup mode all travel.
   // Getter reads CURRENT state; setter is fed by pulls (no markDirty
   // inside user-settable paths!).
-  function shellSliceGet() {
+  //
+  // SH-D1 — SHELL SLICE v2 (merge-capable). The slice used to be
+  // mergeless, and the engine's rule for a mergeless slice is "local
+  // with unpushed work wins". The shell slice is never empty, so a
+  // brand-new device (no baseline) beat the cloud with its DEFAULTS
+  // and the next pull wiped theme, skin, weather location and every
+  // alarm on the other devices. Now:
+  //   · every setting carries its own stamp (sm) → last writer wins
+  //     PER SETTING; stamp 0 = "still the default", 1 = "customized
+  //     before stamps existed", otherwise the ms of the change. A
+  //     remote WITHOUT stamps (older bundle / old backup file) counts
+  //     as 1 for every setting it carries.
+  //   · alarms are entities: union by id, newer mtime wins, explicit
+  //     deletions leave a tombstone (alarmTombs). A "once" alarm whose
+  //     time has passed is dead by definition — no tombstone needed.
+  //   · shellMerge is symmetric and deterministic; shellSliceGet
+  //     always returns the canonical form (fixed key order, alarms
+  //     sorted by id), so a converged state produces no phantom push.
+  var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
+  var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather"];
+  var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
+
+  function shellDefault(name) {
+    switch (name) {
+      case "lang":         return "en";
+      case "theme":        return "dark";
+      case "skin":         return "oros";
+      case "wallpaper":    return DEFAULT_WALLPAPER;
+      case "syncInterval": return 3;
+      case "autoexport":   return "off";
+      default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
+    }
+  }
+
+  // Canonical form of ONE setting, or undefined when the value is not
+  // something shellSliceSet would accept (same validations).
+  function shellCanon(name, v) {
+    switch (name) {
+      case "lang":         return (v === "en" || v === "el") ? v : undefined;
+      case "theme":        return (v === "dark" || v === "light") ? v : undefined;
+      case "skin":         return isValidSkin(v) ? v : undefined;
+      case "wallpaper":    return (typeof v === "string" && findWallpaper(v)) ? v : undefined;
+      case "syncInterval": return (typeof v === "number" && isFinite(v) && v >= 0 && v <= 60) ? v : undefined;
+      case "autoexport":   return (v === "off" || v === "daily" || v === "weekly" || v === "monthly") ? v : undefined;
+      default:
+        if (!v || typeof v !== "object") return undefined;
+        return {
+          on:    !!v.on,
+          auto:  !!v.auto,
+          lat:   (typeof v.lat === "number" && isFinite(v.lat)) ? v.lat : null,
+          lon:   (typeof v.lon === "number" && isFinite(v.lon)) ? v.lon : null,
+          label: (typeof v.label === "string") ? v.label : ""
+        };
+    }
+  }
+
+  // The settings as they are RIGHT NOW on this device (canonical).
+  function shellNow() {
     var syncInterval = 3;
     if (window.orosSync && typeof window.orosSync.getIntervalMinutes === "function") {
       syncInterval = window.orosSync.getIntervalMinutes();
     }
-    return {
-      lang:         state.lang,
-      theme:        state.theme,
-      skin:         state.skin,
-      wallpaper:    state.wallpaper,
-      syncInterval: syncInterval,
-      autoexport:   state.autoexport,
-      alarms:       alarmsRead(),   // E1 gap fix: alarms are user data —
-                                   // they must travel + appear in every
-                                   // backup funnel like everything else.
-      weather:      wxRead()    // v0.32.x FIX: tray prefs were marked
-                                // dirty on every change but never left
-                                // this device — the getter was the
-                                // missing half of the slice contract.
-                                // wxRead is hoisted (function decl),
-                                // section order is irrelevant.
+    var raw = {
+      lang: state.lang, theme: state.theme, skin: state.skin,
+      wallpaper: state.wallpaper, syncInterval: syncInterval,
+      autoexport: state.autoexport, weather: wxRead()
     };
+    var out = {};
+    for (var i = 0; i < SHELL_FIELDS.length; i++) {
+      var n = SHELL_FIELDS[i];
+      var c = shellCanon(n, raw[n]);
+      out[n] = (c === undefined) ? shellDefault(n) : c;
+    }
+    return out;
+  }
+
+  function shellStampsRead() {
+    try {
+      var s = JSON.parse(localStorage.getItem(SHELL_STAMPS_KEY));
+      return (s && typeof s === "object") ? s : null;
+    } catch (e) { return null; }
+  }
+
+  // One-time, on the first run of v2: a copy of the shell slice that
+  // the OLD (mergeless) engine parked in the mailbox carries no stamps
+  // and no tombstones. Merging it now could bring back alarms deleted
+  // since. The old engine would have dropped it at this very
+  // registration ("older than this device's last push") — do the same.
+  function shellDropParkedLegacy() {
+    try {
+      var c = JSON.parse(localStorage.getItem("oros-remote-carry"));
+      if (c && typeof c === "object" && c.shell !== undefined) {
+        delete c.shell;
+        if (Object.keys(c).length > 0) localStorage.setItem("oros-remote-carry", JSON.stringify(c));
+        else localStorage.removeItem("oros-remote-carry");
+      }
+    } catch (e) {}
+  }
+
+  // Keeps the stamps in step with the settings and returns { field: t }.
+  // A setting whose value differs from the one last stamped gets "now"
+  // (monotonic). Called from every user action (noteLocalChange) and
+  // from the getter (catches a change made by any other path).
+  // Idempotent: a second call with nothing changed writes nothing.
+  function shellStampsRefresh() {
+    var cur = shellNow();
+    var st = shellStampsRead();
+    var first = !st;
+    if (first) { st = {}; shellDropParkedLegacy(); }
+    var now = Date.now(), changed = false, out = {};
+    for (var i = 0; i < SHELL_FIELDS.length; i++) {
+      var n = SHELL_FIELDS[i];
+      var v = JSON.stringify(cur[n]);
+      var e = st[n];
+      if (!e || typeof e.t !== "number" || !isFinite(e.t) || typeof e.v !== "string") {
+        // No stamp yet (first run of v2, or a setting added later):
+        // 0 = default value, nothing to defend; 1 = customized.
+        e = { t: (v === JSON.stringify(shellDefault(n))) ? 0 : 1, v: v };
+        changed = true;
+      } else if (e.v !== v) {
+        e = { t: Math.max(now, e.t + 1), v: v };
+        changed = true;
+      }
+      st[n] = e;
+      out[n] = e.t;
+    }
+    if (changed) {
+      try { localStorage.setItem(SHELL_STAMPS_KEY, JSON.stringify(st)); } catch (e2) {}
+    }
+    return out;
+  }
+
+  // ----- alarms as entities -----
+  function alarmCanon(a) {
+    if (!a || typeof a !== "object") return null;
+    if (typeof a.id !== "string" || !a.id) return null;
+    if (typeof a.at !== "number" || !isFinite(a.at)) return null;
+    return {
+      id:     a.id,
+      at:     Math.round(a.at),
+      label:  (typeof a.label === "string") ? a.label.slice(0, 60) : "",
+      repeat: (a.repeat === "daily") ? "daily" : "once",
+      state:  "pending",
+      mtime:  (typeof a.mtime === "number" && isFinite(a.mtime) && a.mtime > 0) ? Math.round(a.mtime) : 1
+    };
+  }
+
+  // Deterministic total order between two versions of one alarm.
+  function alarmBetter(a, b) {
+    if (a.mtime !== b.mtime) return (a.mtime > b.mtime) ? a : b;
+    return (JSON.stringify(a) >= JSON.stringify(b)) ? a : b;
+  }
+
+  function alarmTombsClean(raw) {
+    var out = {};
+    if (raw && typeof raw === "object") {
+      Object.keys(raw).forEach(function (id) {
+        var e = raw[id];
+        if (e && typeof e === "object" && typeof e.t === "number" && isFinite(e.t)) {
+          out[id] = { t: e.t, x: (typeof e.x === "number" && isFinite(e.x) && e.x > 0) ? e.x : 0 };
+        }
+      });
+    }
+    return out;
+  }
+
+  function alarmTombsRead() {
+    try { return alarmTombsClean(JSON.parse(localStorage.getItem(ALARM_TOMBS_KEY))); }
+    catch (e) { return {}; }
+  }
+
+  // Canonical tombstones: sorted ids; the tombstone of a ONCE alarm
+  // (x = its time) is dropped a day after that time — by then the
+  // alarm is dead on every device anyway. Daily ones (x = 0) stay.
+  function alarmTombsLive(tombs, now) {
+    var out = {};
+    Object.keys(tombs).sort().forEach(function (id) {
+      var e = tombs[id];
+      if (e.x > 0 && e.x + TOMB_GRACE_MS <= now) return;
+      out[id] = { t: e.t, x: e.x };
+    });
+    return out;
+  }
+
+  function alarmTombsWrite(tombs) {
+    try {
+      if (Object.keys(tombs).length > 0) localStorage.setItem(ALARM_TOMBS_KEY, JSON.stringify(tombs));
+      else localStorage.removeItem(ALARM_TOMBS_KEY);
+    } catch (e) {}
+  }
+
+  // The alarms that are ALIVE: valid, not deleted (tombstone at or
+  // after their mtime), and not a once-alarm whose time has passed.
+  // One entry per id (best version), sorted by id.
+  function alarmsCanonical(list, tombs, now) {
+    var byId = {};
+    for (var i = 0; i < list.length; i++) {
+      var c = alarmCanon(list[i]);
+      if (!c) continue;
+      if (c.repeat === "once" && c.at <= now) continue;
+      if (tombs[c.id] && c.mtime <= tombs[c.id].t) continue;
+      byId[c.id] = byId[c.id] ? alarmBetter(byId[c.id], c) : c;
+    }
+    return Object.keys(byId).sort().map(function (id) { return byId[id]; });
+  }
+
+  // Next firing of a daily alarm that is due: whole days forward.
+  // `last` = the most recent occurrence at or before `now` — used as
+  // the entity's mtime, so two devices that advance the same alarm
+  // write byte-identical data (no ping-pong between them).
+  function alarmNextDaily(at, now) {
+    var d = new Date(at), last = at;
+    do { last = d.getTime(); d.setDate(d.getDate() + 1); } while (d.getTime() <= now);
+    return { at: d.getTime(), last: last };
+  }
+
+  // One side of a merge, normalized. A side without `sm` is a legacy
+  // payload: every VALID setting it carries counts as stamp 1.
+  // An invalid / missing setting is the default at stamp 0.
+  function shellSide(x, now) {
+    x = (x && typeof x === "object") ? x : {};
+    var legacy = !(x.sm && typeof x.sm === "object");
+    var f = {};
+    for (var i = 0; i < SHELL_FIELDS.length; i++) {
+      var n = SHELL_FIELDS[i];
+      var v = shellCanon(n, x[n]);
+      if (v === undefined) { f[n] = { v: shellDefault(n), t: 0 }; continue; }
+      var t = legacy ? 1
+            : (typeof x.sm[n] === "number" && isFinite(x.sm[n]) && x.sm[n] >= 0) ? x.sm[n] : 0;
+      f[n] = { v: v, t: t };
+    }
+    return {
+      f: f,
+      alarms: Array.isArray(x.alarms) ? x.alarms : [],
+      // Expired tombstones are dropped per side, BEFORE the union: an
+      // entry that is already dead must not lend its stamp to a live
+      // one (that would make the result depend on the merge order).
+      tombs: alarmTombsLive(alarmTombsClean(x.alarmTombs), now)
+    };
+  }
+
+  // Canonical slice object — ONE builder for the getter and the merge.
+  function shellBuild(vals, stamps, alarms, tombs) {
+    var sm = {};
+    for (var i = 0; i < SHELL_FIELDS.length; i++) sm[SHELL_FIELDS[i]] = stamps[SHELL_FIELDS[i]];
+    return {
+      lang:         vals.lang,
+      theme:        vals.theme,
+      skin:         vals.skin,
+      wallpaper:    vals.wallpaper,
+      syncInterval: vals.syncInterval,
+      autoexport:   vals.autoexport,
+      alarms:       alarms,       // user data — travels in every backup funnel
+      weather:      vals.weather,
+      ver:          2,
+      sm:           sm,
+      alarmTombs:   tombs
+    };
+  }
+
+  function shellSliceGet() {
+    var now = Date.now();
+    var stamps = shellStampsRefresh();
+    var tombs = alarmTombsLive(alarmTombsRead(), now);
+    return shellBuild(shellNow(), stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs);
+  }
+
+  // mergeFn(local, remote) — symmetric: shellMerge(a, b) and
+  // shellMerge(b, a) are byte-identical.
+  function shellMerge(a, b) {
+    var now = Date.now();
+    var A = shellSide(a, now), B = shellSide(b, now);
+    var vals = {}, stamps = {};
+    for (var i = 0; i < SHELL_FIELDS.length; i++) {
+      var n = SHELL_FIELDS[i];
+      var p = A.f[n], q = B.f[n], w;
+      if (p.t !== q.t) w = (p.t > q.t) ? p : q;
+      else w = (JSON.stringify(p.v) >= JSON.stringify(q.v)) ? p : q;
+      vals[n] = w.v;
+      stamps[n] = w.t;
+    }
+    var tombs = {};
+    [A.tombs, B.tombs].forEach(function (src) {
+      Object.keys(src).forEach(function (id) {
+        var e = src[id], cur = tombs[id];
+        // Newest deletion stamp; "never expires" (x = 0) is sticky,
+        // otherwise the later expiry.
+        if (!cur) tombs[id] = { t: e.t, x: e.x };
+        else tombs[id] = {
+          t: Math.max(cur.t, e.t),
+          x: (cur.x === 0 || e.x === 0) ? 0 : Math.max(cur.x, e.x)
+        };
+      });
+    });
+    tombs = alarmTombsLive(tombs, now);
+    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs);
   }
 
   function shellSliceSet(data) {
@@ -1132,23 +1480,59 @@
                              // show different locations.
     }
 
-    // Pull-fed alarms: sanitize each (past/duplicate "once" items are
-    // junk), wholesale replace — a fired alarm is by construction
-    // already gone/advanced on the source device, so remote is
-    // always the freshest legitimate list. Anti-loop contract:
-    // pull-fed path, NO markDirty — same as weather/syncInterval.
+    // SH-D1 — pull-fed alarms. `data` is normally the MERGED slice
+    // (local ∪ remote, deletions honored), so writing it is not a
+    // wholesale replace any more. Anti-loop contract unchanged:
+    // pull-fed path, NO markDirty.
+    var nowSet = Date.now();
+    var side = shellSide(data, nowSet);
     if (Array.isArray(data.alarms)) {
-      var pulledAlarms = [];
-      for (var ai = 0; ai < data.alarms.length; ai++) {
-        var sa = alarmSanitize(data.alarms[ai]);
-        if (sa) pulledAlarms.push(sa);
+      var tombsNew = alarmTombsLive(side.tombs, nowSet);
+      var keep = alarmsCanonical(side.alarms, tombsNew, nowSet);
+      var keepIds = {};
+      for (var ai = 0; ai < keep.length; ai++) {
+        // A daily alarm that is already due (this device slept past
+        // it): advance by whole days, with the deterministic mtime.
+        if (keep[ai].repeat === "daily" && keep[ai].at <= nowSet) {
+          var nx = alarmNextDaily(keep[ai].at, nowSet);
+          keep[ai].at = nx.at;
+          keep[ai].mtime = Math.max(keep[ai].mtime, nx.last);
+        }
+        keepIds[keep[ai].id] = true;
       }
-      alarmsWrite(pulledAlarms);
+      // A LOCAL once-alarm that is due but has not rung yet (the tick
+      // runs once a second) is not in the merged list — it must still
+      // ring here, unless it was deleted on another device.
+      var mine = alarmsRead();
+      for (var li = 0; li < mine.length; li++) {
+        var lc = alarmCanon(mine[li]);
+        if (lc && lc.repeat === "once" && lc.at <= nowSet && !keepIds[lc.id] &&
+            !(tombsNew[lc.id] && lc.mtime <= tombsNew[lc.id].t)) {
+          keep.push(lc);
+          keepIds[lc.id] = true;
+        }
+      }
+      alarmsWrite(keep);
+      alarmTombsWrite(tombsNew);
     }
 
     localStorage.setItem("oros-lang",  state.lang);
     localStorage.setItem("oros-theme", state.theme);
     localStorage.setItem("oros-skin",  state.skin);
+
+    // SH-D1: adopt the stamps that came with the applied values — the
+    // value now on this device IS the stamped one, so the next getter
+    // must not read it as a fresh local change.
+    try {
+      var curNow = shellNow();
+      var stNew = shellStampsRead() || {};
+      for (var si = 0; si < SHELL_FIELDS.length; si++) {
+        var sn = SHELL_FIELDS[si];
+        if (shellCanon(sn, data[sn]) === undefined) continue;   // nothing valid came in for it
+        stNew[sn] = { t: side.f[sn].t, v: JSON.stringify(curNow[sn]) };
+      }
+      localStorage.setItem(SHELL_STAMPS_KEY, JSON.stringify(stNew));
+    } catch (eSt) {}
 
     applySkin();
     applyWallpaper();
@@ -1160,7 +1544,12 @@
 
   function registerShellSlice() {
     if (window.orosSync) {
-      window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet);
+      // SH-D1: stamps first (first-run migration + parked-legacy
+      // cleanup must precede the registration's mailbox flush), then
+      // register WITH the merge function. No storage key: the slice
+      // is assembled from several keys and the shell is always live.
+      try { shellStampsRefresh(); } catch (e) {}
+      window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet, null, shellMerge);
     }
   }
 
@@ -1512,13 +1901,26 @@
       if (kind === "dim") {
         N.transient({ ns: "system", title: text, body: "" });
       } else {
-        N.emit({
+        var shown = N.emit({
           ns: "system",
           key: "msg-" + kind + "-" + ident + "-" + sysYmd(),
           type: "sys",
           title: "orOS",
           body: text
         });
+        // SH-B9: the inbox keeps ONE line per message per day (the
+        // key above), so emit() answers null for a repeat — and the
+        // second export / pull / "nothing new" of the day used to get
+        // no feedback at all. A repeat is still an answer the user is
+        // waiting for: show it as a transient toast (no inbox entry,
+        // no badge). Only when the silence came from the dedupe — if
+        // notifications or the System toggle are off, silence is the
+        // user's own choice and stays.
+        if (shown === null &&
+            typeof N.getSetting === "function" && N.getSetting("enabled", true) &&
+            typeof N.getAppToggle === "function" && N.getAppToggle("system")) {
+          N.transient({ ns: "system", title: "orOS", body: text });
+        }
       }
       return;                    // module handled the toast
     }
@@ -1553,8 +1955,9 @@
       setSyncMsg("ok", "sync.ok.none");
       return 0;
     }
-    setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " + n + " " +
-      window.t("sync.slices.applied"));
+    // "label: n" — reads right for 1 and for many, in both languages.
+    setSyncMsgRaw("ok", window.t("sync.ok.pull") + " — " +
+      window.t("sync.slices.applied") + ": " + n);
     return n;
   }
 
@@ -1927,8 +2330,11 @@
       section.appendChild(utils);
     }
 
-        // Auto-backup selector + restore — visible even when disconnected:
-    // snapshots are a LOCAL rescue net, independent of Dropbox.
+    // Auto-backup selector — independent of the Dropbox connection.
+    // SH-B4: built always (the mode travels in the shell slice), but
+    // appended only where the File System Access API exists. On
+    // Firefox / Safari / mobile the selector promised a backup that
+    // can never be written.
     var autoRow = document.createElement("div");
     autoRow.className = "sync-interval";
     var autoLabel = document.createElement("label");
@@ -1960,7 +2366,7 @@
       renderMenu();
     });
     autoRow.appendChild(autoSel);
-    section.appendChild(autoRow);
+    if (fsSupported()) section.appendChild(autoRow);
 
     // Backup folder (option 2 — File System Access API, Chromium
     // desktop only; the row is never rendered where unsupported)
@@ -2039,7 +2445,7 @@
           try {
             var n = window.orosSync.importData(String(reader.result));
             setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-              n + " " + window.t("sync.slices.applied"));
+              window.t("sync.slices.applied") + ": " + n);
           } catch (e) {
             handleSyncError(e); }
         };
@@ -2147,7 +2553,7 @@
       posIds.map(function (p) {
         return { value: p, label: window.t("notifs.pos." + posKeys[p]) };
       }),
-      N.getSetting("position", "top-right"),
+      N.getSetting("position", "bottom-right"),
       function (v) { N.setSetting("position", v); }));
 
     // — Style (4) — proper nouns (skin/desktop culture names), no i18n —
@@ -2558,9 +2964,22 @@
   }
 
   function scBackupNow() {
+    // SH-B4: no File System Access API (Firefox, Safari, mobile) →
+    // "backup now" is the manual DB export. Never a silent no-op, and
+    // never an error about a setting this browser does not show.
+    if (!fsSupported()) { scExportDb(); return; }
     // Folder-export trigger: honest error when auto-backup is OFF.
     if (state.autoexport === "off") {
       setSyncMsgRaw("err", window.t("sync.err.autobackup.off"));
+      return;
+    }
+    // SH-B10: the mode is on but no folder was ever chosen — the
+    // export below would stamp its schedule and write nothing, in
+    // silence. Say what is missing.
+    var hasFolder = false;
+    try { hasFolder = !!localStorage.getItem(FS_FOLDER_NAME_KEY); } catch (e) {}
+    if (!hasFolder) {
+      setSyncMsg("err", "sync.fsfolder.choosefirst");
       return;
     }
     // Dispatch a LIVE folder export NOW. The "saved" confirmation
@@ -2709,6 +3128,7 @@
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.radio")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("maps.providers")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
@@ -3616,7 +4036,7 @@
     hint.className = "sync-hint";
     hint.textContent = petT(
       "A tiny companion on your desktop · Feed it, pet it, let it sleep",
-      "Ένας μικρός σύντροφος στην επιφάνεια εργασίας · Ταΐστε το, χαϊδέψτε το, αφήστε το να κοιμηθεί");
+      "Ένας μικρός σύντροφος στην επιφάνεια εργασίας · Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί");
     section.appendChild(hint);
 
     host.appendChild(section);
@@ -3925,10 +4345,15 @@
       // Catch-up: advance by WHOLE days — a device asleep for days
       // jumps straight to the next future firing, not a notification
       // storm for every missed day.
-      var d = new Date(due.at);
-      do { d.setDate(d.getDate() + 1); } while (d.getTime() <= Date.now());
-      list[dueIdx].at = d.getTime();
+      // SH-D1: mtime = the occurrence that just fired — every device
+      // that fires this alarm writes the same bytes.
+      var nx = alarmNextDaily(due.at, Date.now());
+      list[dueIdx].at = nx.at;
+      list[dueIdx].mtime = Math.max(
+        (typeof due.mtime === "number" && isFinite(due.mtime)) ? due.mtime : 1, nx.last);
     } else {
+      // A fired once-alarm needs no tombstone: its time has passed,
+      // so it is dead on every device by definition.
       list.splice(dueIdx, 1);
     }
     alarmsWrite(list);
@@ -3947,6 +4372,7 @@
     add: function (spec) {
       var a = alarmSanitize(spec);
       if (!a) return null;
+      a.mtime = Date.now();          // SH-D1: entity stamp (merge = newer wins)
       var list = alarmsRead();
       list.push(a);
       alarmsWrite(list);
@@ -3958,11 +4384,19 @@
       return a.id;
     },
     remove: function (id) {
-      var list = alarmsRead(), out = [];
+      var list = alarmsRead(), out = [], gone = null;
       for (var i = 0; i < list.length; i++) {
         if (list[i].id !== id) out.push(list[i]);
+        else gone = alarmCanon(list[i]);
       }
       alarmsWrite(out);
+      // SH-D1: a deletion must travel as a fact, or the union with a
+      // device that still holds the alarm brings it back.
+      if (gone) {
+        var tombs = alarmTombsRead();
+        tombs[id] = { t: Math.max(Date.now(), gone.mtime), x: (gone.repeat === "once") ? gone.at : 0 };
+        alarmTombsWrite(alarmTombsLive(tombs, Date.now()));
+      }
       // E1 Patch 3: alarm deletion is data loss if it never travels —
       // same dirty contract as add.
       if (window.orosSync && typeof window.orosSync.markDirty === "function") {
@@ -4284,7 +4718,17 @@
     } catch (e) { return false; }
   }
 
+  // SH-B7 (owner decision 2026-10-05): a reminder only makes sense
+  // once the app has data. No Mood entry ever → no daily nagging.
+  function moodHasAnyEntry() {
+    try {
+      var raw = JSON.parse(localStorage.getItem("oros-mood-data"));
+      return !!(raw && Array.isArray(raw.entries) && raw.entries.length > 0);
+    } catch (e) { return false; }
+  }
+
   function moodCheckInTick() {
+    if (!moodHasAnyEntry()) return;      // SH-B7: app never used — silent
     if (moodCheckInHasToday()) return;   // entry exists — silent
     var dedupeKey = "checkin-" + moodCheckInDayKey();
     // Emit through unified notification system: inbox history +
@@ -4565,6 +5009,39 @@
   // Wave 1A — notification scheduler piggyback: renderClock ticks
   // 1/s; the notifs sweep runs at most every 60s (the module self-
   // throttles). Cheap noop when notifications.js hasn't loaded.
+  // SY-D3 companion: a closed app whose local changes are waiting
+  // for a merge (sync.js getDeferred) gets ONE notice that opens the
+  // app — opening it is what resolves the conflict. The inbox dedupe
+  // keeps it to one line per app until the item expires; while the
+  // conflict is still pending after that, it is said again.
+  window.__orosOpenApp = function (id) {
+    openAppById(String(id));
+  };
+  var syncPendingLastTick = 0;
+  function syncPendingTickThrottled() {
+    var now = Date.now();
+    if (now - syncPendingLastTick < 60000) return;
+    syncPendingLastTick = now;
+    var S = window.orosSync, N = window.orosNotifs;
+    if (!S || typeof S.getDeferred !== "function" || !N || typeof N.emit !== "function") return;
+    var names;
+    try { names = S.getDeferred(); } catch (e) { return; }
+    for (var i = 0; i < names.length; i++) {
+      var id = names[i];
+      var nameKey = "app." + id;
+      var label = window.t(nameKey);
+      if (label === nameKey) label = id;
+      N.emit({
+        ns: "system",
+        key: "sync-pending-" + id,
+        type: "sys",
+        title: window.t("sync.pending.title").replace("{app}", label),
+        body: window.t("sync.pending.body"),
+        deepLink: "system:open:" + id
+      });
+    }
+  }
+
   var notifLastTick = 0;
   function notifTickThrottled() {
     var now = Date.now();
@@ -4949,6 +5426,11 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       if (document.getElementById("sc-info-overlay")) return;     // #5: modal owns Escape
+      // SH-B2: a native <dialog> and the radio tray popover close
+      // themselves on Escape. The same keypress must not ALSO close
+      // the running app behind them.
+      if (document.querySelector("dialog[open]")) return;
+      if (document.getElementById(RX_POP_ID)) return;
       if (document.getElementById("app-menu").classList.contains("open")) closeMenu();
       else if (state.running) returnToDesktop();
     }
@@ -4966,7 +5448,15 @@
   // (offline data is safe in localStorage — nothing to warn about).
   window.addEventListener("beforeunload", function (e) {
     if (osResetting) return;   // factory reset owns this unload
-    if (window.orosSync && window.orosSync.isDirty() && navigator.onLine) {
+    // SH-B8: sync.js arms the dirty flag on EVERY change, connected or
+    // not, and only a successful push clears it. Without Dropbox (or
+    // while locked) the flag is permanent — and this guard asked
+    // "Leave site?" on every single close. Warn only when a push
+    // could actually follow: connected + unlocked + online.
+    var sy = window.orosSync;
+    if (sy && sy.isDirty() && navigator.onLine &&
+        typeof sy.isConnected === "function" && sy.isConnected() &&
+        typeof sy.hasPassphrase === "function" && sy.hasPassphrase()) {
       e.preventDefault();
       e.returnValue = "";
     }
@@ -5528,13 +6018,10 @@
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
   
-  // Wave 3 — first calendar reminder sweep shortly after boot:
-  // reminders that came due while orOS was closed surface almost
-  // immediately instead of waiting up to 30s for the clock tick.
-  setTimeout(function () { calRemTickThrottled(); }, 4000);
-  setTimeout(function () { moodCheckInTickThrottled(); }, 4500);
-  setTimeout(function () { cycleCheckTickThrottled(); }, 5000);
-  setTimeout(function () { minimalismCheckTickThrottled(); }, 5500);
+  // SH-B1: no boot timers for the reminder engines. The four that
+  // lived here never ran anything: renderClock() above had already
+  // armed each engine's throttle. The clock tick now starts the
+  // engines the moment notifications.js is ready (enginesMayRun).
 
     // v0.18.0 — weather: paint at boot, refetch on reconnect/visible
   wxRenderChip();

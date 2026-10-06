@@ -7,7 +7,7 @@
 > - **Tagline:** "A static operating system in your browser"
 > - **Last full code revision:** 2026-10-01. Files re-read for this revision: `shell.js` (APP_VERSION 0.38.12 era), `sync.js` v0.9.2, `notifications.js`, `sw.js`, `apps.json`, `writer/*`. Everything else is carried forward from earlier revisions and marked as such where it matters.
 > - **Last consolidation:** 2026-10-05, editorial only. The raw session notes pasted below Part XII between 2026-10-01 and 2026-10-05 were folded into the Parts and normalized into Part XII. **No code file was re-read for it.** Facts taken from those notes carry the tag **[log]**: they were checked by the session that wrote them, not by this revision. Treat them as claims until checked against the file (Part I §3).
-> - **Core re-verification (full-suite audit, started 2026-10-05):** files are re-read one at a time; each one replaces its **[log]** / [carried] claims with a dated "verified". Done so far: `index.html` (as served with `?v=0.39.05`).
+> - **Core re-verification (full-suite audit, started 2026-10-05):** files are re-read one at a time; each one replaces its **[log]** / [carried] claims with a dated "verified". Done so far: `index.html` (as served with `?v=0.39.05`), `shell.js` (`APP_VERSION` 0.39.06, 5,562 lines), `sync.js` (header "v0.9.2", 1,916 lines), `notifications.js` (`VERSION` 1.0.0, 1,144 lines), `translations.js` (212 keys per language, 458 lines).
 > - **This file also IS the project changelog** (Part XII). `CHANGELOG.md` was retired and consolidated here.
 
 ## Map
@@ -171,7 +171,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Update broker (inline script 2):** inline so that it is always fresh (the page is fetched network-first).
   - `register("sw.js")` with up to 3 attempts, 4 s apart; a final failure is logged to the console.
   - `r.update()` on every load and every 60 minutes (the one `setInterval` of the shell page).
-  - `controllerchange` → set `oros-skip-splash` → `location.reload()`. No user gate; the version toast in `shell.js` is the only confirmation.
+  - `controllerchange` → `reloadWhenSafe()` (SW-2, 2026-10-05). Still no click needed, but the reload waits for a safe moment: no app open, menu / dialogs / Info modal closed, no ringing alarm, radio not playing, and no dirty state that the engine can still push (connected + unlocked + online). While waiting it polls every 3 s; no timer exists otherwise. Then it sets `oros-skip-splash` and reloads. The version toast in `shell.js` is the only confirmation.
 - `<noscript>`: message + a style that hides the splash.
 
 ### Shell-window globals (an app reads them via `window.parent`, R8)
@@ -184,81 +184,158 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | `orosShortcuts` | shell.js | `handle(e)` → boolean; yields when the target is contentEditable/input |
 | `orosLang` | shell.js | shell window ONLY; also mirrored to `localStorage["oros-lang"]` |
 | `orosAlarms` | shell.js | alarms survive iframe close |
+| `orosAppTheme` | shell.js | `{ accent }` of the active skin (verified 2026-10-05) |
 | `orosFS` | fs.js | `/internal` mount; OPFS primary, IndexedDB "oros-ofs" fallback |
 | `orosDialog` | dialogs.js | **[log]** `saveFile`, `openFile`, `openFiles`, `mode` (R33; contract below) |
-| `orosTray` | shell.js | **[log]** `register("radio", …)` is called by `radio.js`; the API itself is not verified |
+| `orosTray` | — | **[log]** `radio.js` is said to call `shell.orosTray.register("radio", …)`. `shell.js` 0.39.06 defines NO `orosTray` (verified): dead call or guarded no-op, check in `radio.js` (A31) |
 | `__orosRadioHost` | radio.js, set on the shell window | **[log]** shell-hosted audio host; `api.getState()` feeds `radioTrayTick()` |
 | `orosPet` | pet.js | screen pet component |
-| `__orosOpen<App>` | shell.js | deep-link bridges (`__orosOpenContact`, `…Cycle`, `…Mood`, `…Calendar`, `…Time`, `…Todo`, `…Habits`, `…Weather`, `…Quote`, `…Minimalism`). **[log]** added later: `__orosOpenCalendarNew`, `__orosOpenMapsQuery`, `__orosOpenTelevision` (+ `__orosTelevisionTakePending`) |
+| `__orosOpen<App>` | shell.js | deep-link bridges; full table under `shell.js` below (verified 2026-10-05) |
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
 
-### `shell.js`
+### `shell.js` [verified 2026-10-05, `APP_VERSION` 0.39.06]
 
-- IIFE + `"use strict"` in every JS file. `APP_VERSION` lives here only (manual, user-owned).
+- One IIFE + `"use strict"`. `APP_VERSION` lives here only (user-owned, R23). 187 functions, none unused.
 - **Offline honesty:** never fake data when offline (say it, show cached-with-age, or show nothing).
-- **Battery:** no idle timers. Throttled engine ticks piggyback on `renderClock` (1s). An unguarded throw in any callee kills the chain, so new ticks MUST guard missing modules (`window.t`, `orosNotifs`, `orosSync`).
-- **Subsystems:**
-  - toasts and sync dot: `scToast` §9, sync dot §9b;
-  - `SC_DEFS` §9c;
-  - weather widget §9d (Open-Meteo);
-  - alarms §9e, calendar reminder engine §9e2, notification engine §9e3;
-  - files-disk glue §9f;
-  - screen pet §9h;
-  - radio bridge + tray tick §9i;
-  - **[log]** backup folder §5d; file-dialog helpers §5e (`dialogHost`, `shellSaveJson`, `shellPickJson`); television proxy slice §9i2.
-- **Shell-side proxy slices:** `shell`, `files-disk`, `radio` (`registerRadioProxySlice`, v0.38.10 — favorites sync while Radio is closed; the live iframe registration overrides it while open). **[log]** Also `television` (`registerTelevisionProxySlice`, same model).
-- **`notifySys(kind, text, ident)`:** `dim` → `transient({ns:"system"})`; `ok`/`err` → `emit({ns:"system", type:"sys"})`.
-- **Shortcuts [log]:** Ctrl+Alt+Shift+S → `scBackupNow()` (immediate folder backup; honest error when auto-backup is off; its i18n key is still named `sc.desc.snapshot` on purpose). Ctrl+Alt+Shift+X → `scExportDb()` (DB export through `shellSaveJson`).
-- **Weather tray [log]:**
-  - `wxBusy` in-flight guard. The 30-min throttle (`oros-wx-last`) is written ONLY by a successful fetch; a reply without a usable payload rewinds to the 2-min retry.
-  - `wxFetch` ignores an armed throttle when the cache is older than the throttle period.
-  - `wxAdoptAppCache` adopts the Weather app cache only when it is strictly newer (`p.at <= cur.at` → skip). It stays the single nearest-city source (~15 km, `WX_NEAR_DEG`) for the chip and the morning briefing.
-- **Radio tray [log]:** `radioTrayTick()` (1s) needs `window.__orosRadioHost` on the shell window.
-- **Info modal [log]:** the external-service disclosure lines (`sc.info.extsvc.*`) are hardcoded in `showInfoModal()`, not scanned. An app that goes online needs its line added by hand.
-- **Factory reset [log]:** also deletes Cache Storage `oros-map-tiles` (`wipeMapTiles()`, 3 s cap, best-effort). The name must match `sw.js` `TILE_CACHE`.
+- **Sections (the file's own header):** 1 state, `SKINS` (16), `WALLPAPERS` (15), `ICONS` · 2 prefs · 3 language · 4 theme · 5 skin · 5b wallpaper · 5c auto-backup scheduler · 5d backup folder · 5e file-dialog helpers · 6 clock + engine ticks · 7 PWA install + version toast · 8 apps + menu · 9 sync UI + shell slice · 9f files-disk slice · 9h radio proxy slice · 9i2 television proxy slice · 9g notification settings · 9b sync dot · 9c shortcuts, Info modal, factory reset · 9d weather tray · 9h pet toggle · 9e alarms · 9e2 calendar reminders + app scans · 9i radio tray · deep-link bridges · 10 open/return · 11 menu · 12 wiring + boot.
+- **Boot order (end of file):** `initPrefs` → `applySkin` → `applyWallpaper` → `applyTheme` → `applyLang` → `loadApps` → `setupInstallFlow` → `initSyncIntegration` → `setInterval(renderClock, 1000)` + `renderClock()` → version toast at `load` → `storage.persist()` → `maybeAutoExport` after 2 s → weather paint + fetch.
+- **The clock tick is the only engine** (`renderClock`, 1/s; the only `setInterval` in the file besides the pips of a ringing alarm / legacy reminder overlay). It paints the clock, `autoSyncDot`, `wxRenderChip`, `radioTrayTick`, and drives the throttled engines:
+
+| Engine | Throttle | Reads | Emits (`ns` · key) |
+|---|---|---|---|
+| `wxFetchTickThrottled` | 60 s | `oros-weather`, `oros-wx-cache` | weather · `trayfail-<ymd>` on failure |
+| `alarmTick` | 1 s | `oros-alarms` | time · `alarm-<id>-<ymd>` + own overlay |
+| `calRemTickThrottled` | 30 s | `oros-calendar-data` | calendar · `rem:<evId>:<ymd>` |
+| `moodCheckInTickThrottled` | 60 s | `oros-mood-data` | mood · `checkin-<ymd>`; only when the app has at least one entry (SH-B7) |
+| `cycleCheckTickThrottled` (also runs `todoCheckTick`) | 60 s | `oros-cycle-data` or the running app; `oros-todo-data` | cycle · `pred-<ymd>-soon/late`; todo · `due-<ymd>-<count>` |
+| `notifTickThrottled` | 60 s | — | `orosNotifs.tick()` |
+| `syncPendingTickThrottled` | 60 s | `orosSync.getDeferred()` | system · `sync-pending-<app>` (deep link `system:open:<app>`) |
+| `wxBriefTickThrottled` | 60 s | `oros-weatherapp-data`, `oros-weatherapp-cache` | weather · `brief-<ymd>` (08:00–11:59 only) |
+| `quoteCheckTickThrottled` | 60 s | `oros-quote-data` | quote · `due-<ymd>-<count>` |
+| `minimalismCheckTickThrottled` | 60 s | `oros-minimalism-data` | minimalism · `ritual-<ymd>`; only when the app has at least one day record (SH-B7) |
+
+- **Engines wait for the module (SH-B1, 2026-10-05):** `notifications.js` loads AFTER `shell.js`, and the first `renderClock()` runs during shell boot. `enginesMayRun()` holds every emitting engine until `orosNotifs.getState().ready`, or 8 s after boot for a stale bundle. Rule: an engine that needs a later-loading module must not run from an earlier module's boot path.
+- **Shell slice `shell` v2 (SH-D1, 2026-10-06), merge-capable:** `registerSlice("shell", shellSliceGet, shellSliceSet, null, shellMerge)`. Schema in Part IV.
+  - Every setting has its own stamp (`sm`): last writer wins PER SETTING. Stamps live in `oros-shell-stamps` (`{ field: { t, v } }`); `shellStampsRefresh()` runs in `noteLocalChange()` and in the getter and stamps whatever differs from the value last stamped (monotonic).
+  - Alarms are entities (`mtime`); `orosAlarms.remove()` writes a tombstone to `oros-alarm-tombs`. A fired daily alarm advances with `mtime` = the occurrence that fired, so every device writes identical bytes. A fired or expired once-alarm needs no tombstone (dead by time).
+  - `shellSliceGet()` and `shellMerge()` share one builder (`shellBuild`): fixed key order, alarms sorted by id, tombstones sorted. `shellSliceSet()` never marks dirty; it adopts the incoming stamps, advances due daily alarms and keeps a local once-alarm that is due but has not rung yet.
+  - First run of v2: stamps are created (0 = default value, 1 = customized) and a `shell` copy parked in `oros-remote-carry` by the old mergeless engine is dropped.
+- **Proxy slices (4 args, no `mergeFn`):** `files-disk` (`oros-files-disk-cache`; pending flag `oros-files-disk-pending`; `fdSliceGet` is PURE), `radio` (`oros-radio-data`), `television` (`oros-television-data`). The live app registration overrides a proxy while the app is open.
+- **Shell globals it defines:** `orosLang`, `orosAppTheme` (`{accent}` of the active skin), `orosShortcuts.handle`, `orosAlarms` (`add`, `remove`, `list`), `__orosFilesDiskTouched`, `__orosFilesTakePending`, and the bridges below. It consumes `orosSync`, `orosNotifs`, `orosDialog`, `orosPet`, `orosFS`, `orosFilesDisk` (set by files.js), `__orosRadioHost` (set by radio.js).
+- **Deep-link bridges** (live push into `#app-frame` when that app runs, otherwise a sessionStorage staging key + `openAppById`):
+
+| Bridge | Receiver in the app | Staging key | Take-pending helper |
+|---|---|---|---|
+| `__orosOpenContact(id)` | `__orosContactsOpen` | `oros-contacts-open` | `__orosContactsTakePending` |
+| `__orosOpenCycle(id)` | `__orosCycleOpen` | `oros-cycle-open` | `__orosCycleTakePending` |
+| `__orosOpenMood(id)` | `__orosMoodOpen` | `oros-mood-open` | `__orosMoodTakePending` |
+| `__orosOpenTime(pane)` | `__orosTimeOpen` | `oros-time-open` | `__orosTimeTakePending` |
+| `__orosOpenTodo(listId)` | `__orosTodoOpen` | `oros-todo-open` | (app reads the key) |
+| `__orosOpenHabits(offsetDays)` | `__orosHabitsOpen` | `oros-habits-period` | (app reads the key) |
+| `__orosOpenQuote(id)` | `__orosQuoteOpen` | `oros-quote-open` | (app reads the key) |
+| `__orosOpenMinimalism(ymd)` | `__orosMinimalismOpen` | `oros-minimalism-open` | `__orosMinimalismTakePending` |
+| `__orosOpenWeather()` | — (plain open) | — | — |
+| `__orosOpenApp(id)` | — (plain open of any app; used by `system:open:<id>`) | — | — |
+| `__orosOpenMaps(lat, lon, label)` / `__orosOpenMapsQuery(q, label)` | `__orosMapsOpen` | `oros-maps-open` (JSON) | `__orosMapsTakePending` |
+| `__orosOpenKanbanCard(board, col, card)` | `__orosKanbanOpen` | `oros-kanban-open` (JSON) | `__orosKanbanTakePending` |
+| `__orosOpenCalendar("calendar:<evId>:<ymd>" \| evId, ymd)` | `__calDeepLink` | `oros-cal-pending` (JSON) | (app reads the key) |
+| `__orosOpenCalendarNew({date,…})` | `__orosCalendarNew` | `oros-cal-new` (JSON) | (app reads the key) |
+| `__orosOpenRadio(stationuuid)` | `__orosRadioOpen` | `oros-radio-open` | `__orosRadioTakePending` |
+| `__orosOpenTelevision(id \| payload)` | `__orosTelevisionOpen` | `oros-television-open` (JSON) | `__orosTelevisionTakePending` |
+
+- **Other frame calls:** `__orosWeatherUpdate(w)` (tray prefs → running Weather app), `__orosCycleCheck()` (running Cycle app decides its own reminder).
+- **`SC_DEFS` (Ctrl+Alt+Shift + letter, matched on `e.code`):** P push · O pull · S backup now (`scBackupNow`; key name `sc.desc.snapshot` kept on purpose) · X export DB (`scExportDb`) · I info · U check updates · L language · R reconnect (Dropbox, else backup folder) · C Calculator. A focused input/textarea/select/contentEditable makes the shortcut yield.
+- **Escape in the shell document:** Info modal owns it; an open native `<dialog>` or the radio popover owns it (SH-B2); otherwise it closes the menu, else returns to the desktop.
+- **Menu (`renderMenu`):** rebuilds everything on every call, including calls from background events; it captures and restores scroll position, the open per-app list and the passphrase field (SH-B3). Order: apps by category (label from `category.<lowercase>`, grouping by the RAW category string) → skins + theme → wallpapers → install row → weather → pet → sync → notifications → Info.
+- **`notifySys(kind, text, ident)`:** `dim` → `transient({ns:"system"})`; `ok`/`err` → `emit({ns:"system", type:"sys", key:"msg-<kind>-<ident>-<ymd>"})` = one inbox line per message per day. When `emit` answers `null` because of that dedupe (notifications and the System toggle both on), the message is shown as a transient toast (SH-B9). `scToast` is the stale-bundle fallback.
+- **Automatic export (5c/5d):** `maybeAutoExport(force)` stamps `oros-autoexport-last`, then `writeBackupFile(exportBodyNow())`. The folder handle lives in IndexedDB `oros-fs` (store `handles`, key `backup-folder`); `oros-fs-folder-name` and `oros-fs-lapsed` are display/flag keys. The selector is shown only where `showDirectoryPicker` exists, and Ctrl+Alt+Shift+S falls back to the DB export elsewhere (SH-B4). A failed write clears the stamp so the next boot / tab-visible retries (SH-B5).
+- **Weather tray (9d):**
+  - `wxBusy` in-flight guard; 10 s abort. The 30-min throttle (`oros-wx-last`) is written ONLY by a successful fetch; a failure or an unusable reply rewinds to a 2-min retry.
+  - `wxFetch` ignores an armed throttle when the cache is missing or older than the throttle period.
+  - `wxAdoptAppCache` adopts the Weather app cache only when it is strictly newer (`p.at <= cur.at` → skip); nearest city within `WX_NEAR_DEG` 0.15.
+  - Chip: offline or cache older than 3 h → slashed cloud, no temperature.
+- **Alarms (9e):** `oros-alarms` list of `{id, at, label, repeat: once|daily, state}`; first due wins; mutate before notify; daily alarms advance by whole days; overlay with Snooze (+9 min) and Dismiss, 30 s cap.
+- **Radio tray (9i):** chip + popover (`#rx-tray-chip`, `#rx-tray-pop`) talk to `__orosRadioHost.audio` directly. Stop and Pause both call `audio.pause()` (A31).
+- **Info modal:** version, tagline, `sc.info.cap`, external-service lines hardcoded (`sc.info.extsvc`, `sc.info.extsvc.radio`, `maps.providers`, `sc.info.extsvc.television`), shortcut table generated from `SC_DEFS`, support link (Ko-fi only), factory reset.
+- **Factory reset:** double confirm → in parallel `wipeFolderMirror()`, `orosFS.wipe()`, `wipeMapTiles()` (Cache Storage `oros-map-tiles`, 3 s cap; the name must match `sw.js` `TILE_CACHE`), `orosSync.wipeEverything()` (15 s cap) → sweep of every `oros-` key in sessionStorage AND localStorage → marker `oros-reset-db` → reload → stage 2 (`factoryResetPending`, top of the IIFE) deletes IndexedDB `oros-vault`, `oros-fs`, `oros-ofs` → reload.
+- **App frame:** `openApp` only sets `#app-frame.src` (no `allow` attribute, A22); an app of `type:"external"` opens in a new tab. A language toggle reloads the running app (`refreshRunningApp`).
+- **`beforeunload`:** warns when `orosSync.isDirty()` and online; silent during a factory reset. The broker's update reload waits until this guard would stay silent (SW-2).
+- **Service Worker nudges:** `swSelfHeal()` calls `r.update()` 2 s after every tab-visible and 3 s after every `online`, on top of the broker's load + hourly checks.
 - REQUEST `shell.js` whenever a fix needs an exact current function.
 
-### `sync.js` v0.9.2
+### `sync.js` [verified 2026-10-05; file header says "Core v0.9.2", but it already contains the "v0.10" storage adapter]
 
-- Deterministic symmetric merges (R5), tombstones (R17). Zero-knowledge passphrase, AES-GCM E2EE, PKCE OAuth (Dropbox).
+- One IIFE. Sets `window.orosSync`. No dependency on any other module.
+- **Cloud (Dropbox app folder, PKCE, no client secret):** `/orOS-data.json` (the encrypted blob), `/orOS-backup-<iso>.json` (a copy of the blob before the first push of the day from each device, newest 7 kept; SY-D2), `/vault/…` (storage adapter root).
+- **Blob:** `{ ver:1, salt, iv, data }` (base64), AES-GCM 256, key = PBKDF2-SHA-256 × 100,000 of the passphrase. Plain payload: `{ shell, apps{ <slice>: data }, meta{ lastPush, device (first 80 chars of the UA), pwEpoch } }`.
+- **Keys.** localStorage: `oros-db-access` / `-refresh` / `-expiry` / `-account` (tokens, account cache), `oros-sync-interval` (minutes, default 3, 0 = off), `oros-sync-dirty`, `oros-slices` (registry name → storage key), `oros-remote-carry` (mailbox), `oros-sync-baselines` (name → djb2 hash of the last synced content), `oros-vault-data` (sealed passphrase), `oros-sync-pw-epoch`, `oros-sync-last-backup` (ms of this device's last cloud backup copy), `oros-slices-merge` (name → 1: the app's live registration brought a `mergeFn` and a storage key), `oros-sync-deferred` (name → 1: SY-D3). sessionStorage: `oros-pkce-verifier`. IndexedDB `oros-vault` (store `keys`, key `device`: non-extractable AES key).
+- **Public API:** `connect`, `disconnect`, `isConnected`, `getUserInfo`, `redirectHandled` (promise), `vaultUnlocked` (promise) · `pull`, `push`, `reconcile`, `wipeEverything`, `suspendEngine` · `exportData`, `importData` · `setPassphrase(pw, remember)`, `hasPassphrase`, `forgetPassphrase`, `clearDevice`, `hasDeviceVault`, `changePassphrase(old, new, remember)` · `registerSlice`, `markDirty`, `isDirty`, `getDeferred`, `getIntervalMinutes`, `setIntervalMinutes`, `onAutoSync`, `kickAutoEngine` · `storage` (adapter), `vaultCrypto` (`sha256Hex`, `encryptBytes`, `decryptBytes`, `encryptJson`, `decryptJson`) · `errorKey(err)`.
 - **`registerSlice(name, get, set, storageKey?, mergeFn?)`:**
-  - The `name → storageKey` registry persists in `oros-slices`. Future boots hydrate **mergeless proxies** that read/write the storage key while the app is closed.
-  - **WITHOUT `mergeFn` a slice is mergeless:** the divergence guard parks remote data, and concurrent two-device edits lose one side. Always pass `mergeFn`.
-- **`applySlice`:** `merged = merge(clone(local), clone(remote))`.
-  - `changed = JSON(merged) !== JSON(local)` → `set(merged, {merged:true})`.
-  - `cloudStale = JSON(merged) !== JSON(remote)` → `markDirty` → push.
-  - Hence R26.
-- **Carry mailbox:** unknown remote slices are held and pushed forward, so a device never wipes data of an app it doesn't know.
-- **`collectPayload()` / `applyPayload()`** is the single funnel for cloud sync, manual export (`exportData`), import (`importData`, merge-aware) and auto-snapshots.
-- **`reconcile(reason)` triggers:** boot / interval / visible / online / register / debounce.
-- **Empty cloud:** `contentDownload` 409 means "empty cloud"; callers branch on `res.status === 409`.
-- **Accepted limit:** two offline devices with apps closed converge only via a live open.
-- **[log] Storage adapter.** Later notes describe an internal `storageAdapter` "v0.10" inside `sync.js`, exposed as `orosSync.storage`. The file was not re-read after 2026-10-01, so the version in this heading may be stale (A8).
-  - Operations named in the notes: `putObject(key, blob)`, `getObject(key)`, `deleteObject(key)`, `listPrefix(prefix)`, `getRevision(key)`.
-  - Conditional write by known revision; chunked uploads live inside the adapter; encryption happens before the adapter (R34).
-- **[log] Cloud layout (Dropbox app folder):**
-  - `/orOS-data.json`: the encrypted slice data (`pull()` / `push()`).
-  - `/vault/manifest.json` + `/vault/objects/<sha256>`: Vault Drive.
-  - The two channels are independent. A 409 on `files/get_metadata` for the manifest means "empty vault" and is expected.
+  - `storageKey` is persisted in `oros-slices`; at the next boot `hydratePersistedSlices()` installs a mergeless proxy (reads/writes that key) for every registered app that is not open. **An app that registers without a storage key does not travel, and is absent from `exportData()`, while it is closed.**
+  - It flushes the mailbox entry for that slice (merge-capable: merge parked + local; mergeless: apply only onto an empty local, otherwise the parked copy is DROPPED), then schedules `reconcile("register")` after 100 ms.
+- **`applySlice` (per slice, on pull and on import):**
+  1. Merge-capable, both sides present: `merged = merge(clone(local), clone(remote))`; a throwing merge degrades to remote-wins.
+  2. Mergeless, local present, and (NO baseline OR local hash ≠ baseline) and remote ≠ local: the remote is parked, local stays, `cloudStale` → dirty → local is pushed. "Local with unpushed work wins."
+  3. Mergeless and clean (or local empty): remote replaces local.
+  - `changed` → `set(data, {merged})` + baseline; `cloudStale` → `markDirty()`. Hence R26.
+- **Rule 2, refined by SY-D3 (2026-10-06):** when the app is CLOSED (proxy), can merge when open (`oros-slices-merge`), and the conflict is real (no baseline here, or the cloud copy is not the baseline either, or the slice is already deferred), the engine does NOT push local: it parks the cloud copy, sets `oros-sync-deferred[name]`, reports `cloudStale:false`, and `collectPayload(true)` relays the parked cloud copy in the upload. Nothing is overwritten on any device. The app's next live registration clears the flag and its mailbox flush merges parked + local; the reconcile that follows uploads the union. A one-sided change (cloud still equals the baseline) uploads at once, as before. An app without a `mergeFn` keeps the old rule 2.
+  - `orosSync.getDeferred()` → names. The shell turns each into one notice (`syncPendingTickThrottled`).
+  - `exportData()` and the folder export call `collectPayload()` without the flag and always carry this device's own local data.
+  - While deferred, no baseline is recorded for that slice after a push.
+- **`collectPayload()` / `applyPayload()`** is the single funnel for cloud sync, manual export (`exportData`, plaintext, pretty-printed, `meta{ver, exportedAt}`), import (`importData` → `applyPayload` + `markDirty`) and the folder export. Unknown remote slices are carried in the mailbox and relayed forward. A mergeless slice that is empty and has no baseline is left out of the payload.
+- **A failed `set()` during apply is swallowed** (proxy writes are strict, so a quota error means "not applied, no baseline"), but nothing tells the user (A37).
+- **Dirty flag:** `markDirty()` always sets `oros-sync-dirty`, connected or not, and bumps `dirtyGen`; only a successful push clears it, and only if no edit raced the upload. Without Dropbox the flag is permanent (the shell's close warning now accounts for that, SH-B8).
+- **Engine triggers:** boot (after the OAuth return and the vault unseal settle), interval, tab-visible, `online`, register, debounce (5 s after the last `markDirty`, re-armed every 1 s while the engine is busy), kick. Tab-hidden → `autoSyncAttempt("hide")` = push only, no pull. One flight at a time: `pull()` and `push()` reject with "… already in flight"; `reconcile` skips silently.
+- **`push()` (SY-D1, 2026-10-06, optimistic concurrency):**
+  - `cloudRev` (memory only) = revision of the blob this device has pulled, decrypted and applied: `undefined` unknown, `null` empty cloud, string = Dropbox `rev`. `syncDown()` (the shared download-decrypt-apply core of `pull()` and `push()`) sets it; a successful upload sets it to the new rev.
+  - `pushAttempt()`: unknown rev → `syncDown()` first → collect → `ensureCloudReadable()` → encrypt → `maybeBackup()` → **conditional upload** (`mode: {".tag":"update","update":rev}`, or `"add"` on an empty cloud, both with `strict_conflict`) → baselines from the uploaded payload → clear dirty (unless an edit raced the upload).
+  - A refused write (409 with `path/conflict` in `error_summary`) → `cloudRev = undefined` → pull, merge, fresh payload, retry; at most 4 attempts, then `cloud-changed` (`errorKey` → `sync.err.busy`), dirty flag untouched. Any other 409 (for example `insufficient_space`) is a plain failure, no retry.
+  - The rev comes from the `dropbox-api-result` response header of the download; if the browser cannot read it, the engine switches to `files/get_metadata` BEFORE each download (older rev + newer content can only cause a refused write, never a silent overwrite).
+  - No unconditional overwrite of the blob remains in the engine. `changePassphrase` uses the same conditional write and leaves `cloudRev` unknown afterwards.
+- **Cloud backups (SY-D2):** `maybeBackup()` copies the current blob at most once per `BACKUP_EVERY_MS` (24 h) per device (`oros-sync-last-backup`), then prunes to `MAX_BACKUPS` (7). Best-effort: a failed copy never blocks the push and is retried at the next. There is no UI to restore one (A43).
+- **Empty cloud:** `contentDownload` never throws on 409; callers branch on `res.status === 409`.
+- **OAuth return:** `handleOAuthRedirect()` exchanges `?code=` with the verifier from sessionStorage and cleans the URL (`replaceState("/")`) only when the exchange settles. The update broker waits for that (SW-3).
+- **`wipeEverything()`:** suspend → wait ≤3 s for flights → delete `/orOS-data.json`, every root entry named `orOS-*`, and `/vault` (SY-1) → revoke the token → `disconnect()`.
+- **`disconnect()`** clears tokens and the in-memory passphrase; it keeps the sealed vault, the dirty flag, baselines and the mailbox.
+- **Storage adapter (`orosSync.storage`, root `/vault`):** `putObject(key, blob, knownRev?)` (single-shot ≤150 MB, else upload session in 4 MiB chunks; with `knownRev` it reads the revision, compares, then writes: not atomic, A38), `getObject(key)` → `ArrayBuffer|null`, `deleteObject(key)`, `listPrefix(prefix)`, `getRevision(key)`. A failed upload rejects (SY-2). Object envelope for `encryptBytes`: `salt(16) | iv(12) | ciphertext`, raw binary.
+- **`errorKey`:** `sync.err.notconnected`, `.nopass`, `.passphrase`, `.busy`, `.suspended`, `.version`, `.auth`, `.generic`.
+- **Accepted limit:** two offline devices with the same app closed converge only when one of them opens it live.
 
-### `notifications.js`
+### `notifications.js` [verified 2026-10-06, `VERSION` 1.0.0]
 
+- One IIFE (modern idiom: `const`/`let`/arrows mixed with `var`). Sets `window.orosNotifs`. Loads AFTER `shell.js`; `init()` waits for `orosSync`, then: load slice → register slice → toast stack → bell → `state.ready = true` → `bootSweep()`.
+- **Public API:** `VERSION`, `getSetting`, `setSetting`, `getAppToggle`, `setAppToggle`, `getKnownApps`, `fireToast`, `markAsRead`, `emit`, `transient`, `openNotificationPanel`, `updateBadge`, `getState`, `getSlice`, `tick`.
 - **`emit(cand)`:**
-  - Fields: `ns`, `title` (required), `body`, `key` (stable dedupe: `ns:key`), `type` (default `reminder`), `deepLink`, `ttlDays` (default 7).
-  - Returns `null` when not ready, disabled, or the app toggle is off.
-  - **No `sound` field** in the 0.38.12 code.
-- **`transient(cand)`:** `title` required; bypasses app toggles; optional `action:{label, fn}` (in-memory closure, never serialized).
-- **`getAppToggle(ns)` defaults to `true`** for unknown namespaces. Apps not in `KNOWN_APPS` can emit but have no toggle in the settings UI.
-- **`KNOWN_APPS` (verified 0.38.12):** calendar, cycle, mood, todo, habits, time, system, weather, notes, quote, contacts, files, kanban, prompter, storage, spreadsheet, minimalism. (The previous Bible also listed dice — not in the code.) **[log]** `television` was added later.
-- **`DL_BRIDGES` keys:** contacts, cycle, mood, calendar (`evId, ymd`), time (pane), todo (listId), habits (offset), weather, quote, minimalism (ymd). All `typeof`-guarded. **[log]** Added later: television (`television:channel:<id>` → `__orosOpenTelevision`).
-- **Slice `oros-notifs`:** 7-day TTL, 300-item cap, per-field LWW (`readAt` non-null beats null, `firedAt` max, `createdAt` min). Quiet hours = inbox + badge, no toast. Sounds: WebAudio presets, zero assets.
-- **Toast stack [log]:**
-  - Container `#oros-toast-stack`, created lazily by `ensureToastStack()`; z-index 10000; `pointer-events:none` on the container, `auto` on each toast.
-  - Newest first (`insertBefore` + `toastQueue.unshift`). Max 5 visible; the rest stay mounted but hidden and are promoted when one leaves: `applyStackLimits()` runs on insertion AND on removal.
-  - Each toast owns its node, its timer and its observer. The cleanup observer watches the stack element, never `document.body`.
-  - `applyStackPosition()` applies the `position` setting live (on `setSetting('position')`, at `init()`, on lazy creation). Bottom positions use `column-reverse`. A position that arrives through a sync pull applies at the next boot.
-  - Boot line: `[orOS][notifs] Module v1.0.0 initialized`.
+  - Fields: `ns`, `title` (required), `body`, `key` (dedupe key `ns:key`; without a key: one per `ns:type` per day), `type` (default `reminder`), `deepLink`, `ttlDays` (default 7).
+  - Returns the item id, or `null` when: not ready, invalid, notifications disabled, the app toggle is off, or **the dedupe key is already in the inbox**. During quiet hours it still returns an id (inbox + badge, no toast).
+  - No `sound` field. Every stored item marks the sync engine dirty.
+- **`transient(cand)`:** `title` required; no inbox, no badge, no dedupe, no quiet hours, bypasses toggles; optional `action:{label, fn}` (toast stays ≥ 8 s); returns the id or `null` when not ready. No sound, no native notification.
+- **`getAppToggle(ns)` defaults to `true`** for unknown namespaces.
+- **`KNOWN_APPS`:** calendar, cycle, mood, todo, habits, time, system, weather, notes, quote, contacts, files, kanban, prompter, storage, spreadsheet, minimalism, television.
+- **`DL_BRIDGES`:** contacts, cycle, mood, calendar (`evId, ymd`), time (pane), todo (listId), habits (offset), weather, quote, minimalism (ymd), television (id), system (`system:open:<appId>` → `__orosOpenApp`). All `typeof`-guarded. `openTarget()` routes `ns:type:id` (third part) and the short `ns:target`.
+- **Slice `notifs`, merge-capable since NT-1 (2026-10-06):** `registerSlice('notifs', notifSliceGet, notifSliceSet, null, notifMerge)`. Storage key `oros-notifs` holds `{ ver, settings, appToggles, items, meta }`; `meta` (`lastSweep`) is device-local and is NOT part of the slice.
+  - Getter: pure and canonical through `notifBuild()` (sorted keys for settings and toggles; items valid, not gone, one per logical notification, newest first, cap 300).
+  - Item identity = `dedupKey` (or the id when there is none). Twins from two devices' engines join: the earlier copy is the base, `readAt` and `firedAt` take the latest stamp ("read" is never undone).
+  - Settings and app toggles travel together; `settingsRev` is a monotonic wall-clock stamp (`nextSettingsRev()`), bumped by a real change of a setting OR of a toggle; higher wins the pair, tie → greater JSON.
+  - Retention: an item is dropped AT its `expiresAt` (`itemGone`), by the sweep and by the merge alike: 7 days with the default `ttlDays` (decision 2026-10-06; it used to be 14).
+  - Setter adopts the merged slice, re-applies the stack position, then toasts fresh (<24 h), unfired items that came from another device.
+- **Sweeps:** `bootSweep()` (catch-up toasts; older than 24 h → badge only), `scheduledSweep()` every 60 s through `tick()` from the shell clock and on tab-visible (prune only).
+- **Toast stack:**
+  - Container `#oros-toast-stack`, z-index 10000, `pointer-events:none` on the container, `auto` on each toast; newest first; 5 visible, the rest mounted and promoted on removal (`applyStackLimits()` on insert and on removal); each toast owns its node, timer and observer (observing the stack).
+  - `applyStackPosition()` applies `position` live (`setSetting`, `init`, lazy creation, and after a sync apply). Bottom positions use `column-reverse`. Default `bottom-right` everywhere (decision 2026-10-06).
+  - A native Web Notification is added only when permission is already granted, never for catch-up or transient toasts.
+- **Inbox panel `#oros-notif-panel`:** z-index 10001, anchored under the bell, width `min(360px, 100vw − 24px)`; closes on the bell, an outside click, or Escape (capture phase on `window`, so the shell's Escape handler does not also close the running app).
+- **Bell:** `#oros-taskbar-bell`, 44×44, inserted before `#btn-lang`; badge = unread count.
+- Boot line: `[orOS][notifs] Module v1.0.0 initialized`.
+
+### `translations.js` [verified 2026-10-06]
+
+- `window.OROS_TRANSLATIONS = { en: {…}, el: {…} }` + `window.t(key)` (active language → English → the key itself). No version number in the file.
+- 215 keys per language after this round; parity exact, no duplicate keys (checked by script: Checklist D).
+- Holds shell strings, `app.<id>` (24 apps), `category.<lowercase id>` (10), `syncdot.<state>`, `notifs.*`, `sc.*`, `wx.*`, `alarm.*`. Keys built at runtime: `app.` + id, `category.` + id, `syncdot.` + state, `notifs.pos.` + position.
+- Counts are written as "label: n" (`sync.slices.applied`), relative times in Greek as abbreviations («πριν {n} λεπ. / ώρ. / ημ.»): both read correctly for 1 and for many.
+- Not referenced by any core file (2026-10-06): `bar.clock.tooltip`, `gps.use`, `notifs.duration.sec`, and 18 `radio.*` keys (A48).
 
 ### `sw.js`
 
@@ -342,7 +419,9 @@ Checked against the source by the Wave 2 sessions, not by this revision.
 
 ### Device-local keys (never synced)
 
-- **Shell:** oros-last-version, oros-auto-snapshots (⚠ belongs to the retired snapshot subsystem; if the code still touches it, it goes: A9), sessionStorage `oros-skip-splash` (verified 2026-10-05), oros-sync-* engine keys, oros-slices (registry), oros-menu-cat-collapsed, oros-lang (shell-written mirror).
+- **Shell (verified 2026-10-05):** oros-last-version, oros-autoexport-last, oros-fs-folder-name, oros-fs-lapsed, oros-menu-cat-collapsed, oros-wx-cache, oros-wx-last, oros-cal-reminders-fired, oros-files-disk-pending, oros-reset-db (factory-reset marker), oros-lang (mirror); sessionStorage `oros-skip-splash` and the bridge staging keys (table in Part II). IndexedDB `oros-fs` (backup-folder handle). Also device-local but owned by `sync.js`: oros-sync-* engine keys, oros-slices (registry).
+- **Shell keys that TRAVEL in the `shell` slice:** oros-lang, oros-theme, oros-skin, oros-wallpaper, oros-autoexport, oros-weather, oros-alarms, oros-shell-stamps, oros-alarm-tombs. `oros-files-disk-cache` is the body of the `files-disk` slice.
+- `oros-auto-snapshots` (listed here until 2026-10-05) does not appear anywhere in `shell.js` 0.39.06: the key is gone with the snapshot subsystem.
 - **Weather:** oros-wx-cache, oros-wx-last.
 - **FS:** oros-fs-*.
 - **Pet:** oros-pet-enabled, oros-pet-pos, oros-pet-minimized, oros-pet-calendar-sync (read-only legacy mirror of oros-pet-settings).
@@ -455,6 +534,22 @@ Checked against the source by the Wave 2 sessions, not by this revision.
 
 The v1.1.0 entry describes `registerSlice(get, set, LS_KEY)` WITHOUT `mergeFn`, and "remote wins when present" for scalars. Both contradict R5 and the sync doctrine. Audit queued (A2). **[log]** v1.3.0 changed keyboard handling only; no schema change.
 
+**SHELL slice v2** (SH-D1, verified 2026-10-06):
+
+```
+shell = { lang, theme, skin, wallpaper, syncInterval, autoexport,
+          alarms[{ id, at, label, repeat: once|daily, state:"pending", mtime }],
+          weather{ on, auto, lat, lon, label },
+          ver: 2,
+          sm{ lang, theme, skin, wallpaper, syncInterval, autoexport, weather },   // ms stamps
+          alarmTombs{ <id>: { t, x } } }                                           // t = deletion ms, x = the once-alarm's time, 0 for daily
+```
+
+- **Stamps:** 0 = still the default, 1 = customized before stamps existed, otherwise the ms of the change. A side WITHOUT `sm` (old bundle, old backup file) counts as 1 for every valid setting it carries. An invalid or missing setting is "default at 0".
+- **Merge (`shellMerge`):** per setting, higher stamp wins, tie → greater JSON. Alarms: union by id, higher `mtime` wins (tie → greater JSON), alive only if `mtime` > tombstone `t`; a once-alarm whose time has passed is dropped. Tombstones: expired ones (`x > 0` and `x` + 1 day ≤ now) are dropped per side BEFORE the union; then `t` = max, `x` = 0 if either is 0, else max.
+- Fuzz 2026-10-06: 20,000 random triples (legacy and v2 sides, invalid values, tombstones): symmetric, idempotent, associative, fixed point, every output setting comes from an input, no live alarm lost, no deleted alarm back. 0 violations.
+- Storage: the scalar settings stay in their own keys; `oros-shell-stamps`, `oros-alarms`, `oros-alarm-tombs` (all travel inside this slice).
+
 **MAPS v1** [log — Doses 1–3, 2026-10-04]:
 
 ```
@@ -525,6 +620,12 @@ Status per pattern: **[re-verified 2026-10-01]**, **[carried]** (from earlier re
 `load()` → `applyI18n()` → paint static aria/icons → `wire()` → `registerSync()` → `inheritPalette()` → `watchPalette()` → reset view state → first render (single pass) → consume staged deep link AFTER first paint.
 
 **Invoke `boot()` at the END of the IIFE** (after every `let`/`const`): a boot triggered early hits TDZ errors on later declarations.
+
+### Three things every sync slice must get right (2026-10-06)
+
+1. The merge function is the FIFTH ARGUMENT of `registerSlice`. A union written inside the setter never runs: for a slice without `mergeFn` the engine decides "local or remote" by itself and may never call the setter.
+2. The getter returns a canonical COPY of the data that travels, and nothing else: no device-local or volatile fields (sweep stamps, caches, timers). One field that moves by itself makes the slice "always changed" and every sync cycle uploads.
+3. Whatever prunes locally by the clock must also prune inside the merge with the same rule, or the pruned entry returns with every pull.
 
 ### Boot marker [re-verified in Writer]
 
@@ -751,7 +852,7 @@ Rule ids are kept as recorded.
 - **Scrollbars:** 10px, transparent track, pill thumb (999px radius, 2px border `var(--bg)`), hover `var(--accent)`; Firefox `scrollbar-width:thin`. `overscroll-behavior:contain` on main panes.
 - **Hidden guard:** `[hidden]{display:none!important}` is the LAST rule of every app stylesheet.
 - **Icons:** inline SVG with viewBox + explicit size (Fork Awesome abandoned).
-- **Toasts:** a stack (newest first, max 5 visible, promote on removal). Default top-right, below the clock/taskbar; the notifications `position` setting moves it live, and bottom positions grow upward. Text first, action second. Undo toasts ≥ 8 s. **[log]**
+- **Toasts:** a stack (newest first, max 5 visible, promote on removal). Default bottom-right; the notifications `position` setting moves it live, and bottom positions grow upward. Text first, action second. Undo toasts ≥ 8 s. **[log]**
 - **Centered popups (R32) [log]:**
   1. A native `<dialog>` MUST declare `margin: auto`. Every app stylesheet has `* { margin: 0 }`, which kills the UA default and docks the dialog top-left. Recommended: `margin: auto; max-height: calc(100vh - 32px);`.
   2. An overlay panel (not a `<dialog>`) uses `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)` inside a fixed full-inset overlay (`position: fixed; inset: 0`). No inline `style.top` / `style.left` from JS anchor math.
@@ -881,6 +982,13 @@ Rebuild this in any session where code is delivered.
 - Read storage ≥650ms after an action (500ms save debounce).
 - A right-click outside the selection collapses it.
 - `dblclick` tests catch DOM-rebuild bugs.
+- **Mock Dropbox (added 2026-10-05).** `sync.js` can be exercised end to end without network: route `**/*dropboxapi.com/**` in the browser context to an in-memory handler (`files/download` with a `dropbox-api-result` header, `files/upload` honoring `mode`, `copy_v2`, `list_folder`, `delete_v2`, `get_metadata`, `get_current_account`, `token/revoke`; answer `OPTIONS` and send CORS headers). "Connected" = seed `oros-db-access`, `oros-db-refresh`, `oros-db-expiry` before load, then `orosSync.setPassphrase("pw", false)`. Two contexts sharing one handler are two devices on one cloud.
+- **Kernel suite (added 2026-10-06; rerun on the exact bytes of every `sync.js` / merge-function delivery).** Mock switches: no rev header, forced conflicts (n or endless), "full" (409 without conflict), upload delay, counters for uploads and for unconditional overwrites of the blob (must stay 0). 39 checks: new device joins; new device customized first; both add; delete vs stale device; different settings; same setting; daily alarm rings on both; old-bundle cloud + old-bundle device; upgrade of existing storage; export → import on a fresh device; idle rounds (0 uploads); blind push with and without header; two reconciles at once; edit during upload; Dropbox full; endless conflict; wrong passphrase; change passphrase with and without interference; first push from two devices on an empty cloud; backups (5 pushes → 1, next day → 2, prune to 7).
+- **Capturing a merge function** that lives inside an IIFE: an init script defines a setter on `window.orosSync` that wraps `registerSlice` and stores `get` / `set` / `merge` of the slice under test. Fuzz properties: symmetric, idempotent, associative, `merge(merge(a,b), a) == merge(a,b)`, every output field equals an input's, nothing alive is lost, nothing deleted returns.
+- **Profiles (added 2026-10-06; every suite runs on all three).** `desktop` (default Chromium) · `firefox-like` (Firefox user agent; `showDirectoryPicker`, `showSaveFilePicker`, `showOpenFilePicker` removed before any script runs) · `mobile` (390×844, touch, mobile user agent). They exercise the code paths those browsers take; they are still Chromium. Engine behavior of Gecko / WebKit and of a real phone (background kill, timer freeze, storage eviction) is NOT covered and stays a post-deploy check.
+- **Notifications suite (2026-10-06, 18 checks):** `notifMerge` fuzz (20,000 triples, 8 properties) · getter stable, fixed point, no `meta` · idle rounds with the sweep forced (0 uploads) · two inboxes converge · "read" travels · twin reminders become one entry, no second toast · dismissing a toast whose entry was replaced by its twin · position applied live on the other device · toggle travels · same value again is not dirty · concurrent settings converge · expired item causes no loop · Escape with the inbox over a running app · panel inside a phone viewport · repeated user action still answers · partial stored slice repaired, parked legacy copy merged.
+- **SY-D3 suite (2026-10-06, 14 checks).** A fake app registered live from the page (`registerSlice(name, get, set, key, merge)`), "closed" by reloading the page (it becomes a proxy): new device that opened the app before unlocking sync; no upload loop while deferred; export carries local data; the other device keeps editing through this device's pushes; the notice (one, names the app, opens it); merge on open clears the flag; concurrent edits with baselines; one-sided change uploads at once; app without `mergeFn` keeps the old rule; no unconditional overwrite.
+- **Totals on 2026-10-06, each on desktop / firefox-like / mobile:** kernel 39, SY-D3 14, notifications 23 (22 on firefox-like: one check needs the folder API), plus two merge fuzzers (20,000 triples each).
 
 **Format oracles.**
 
@@ -892,6 +1000,28 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-06 · Christos (third round)**
+  - **SY-D3 approved** as recommended: on a true conflict for a closed app that can merge, nothing is overwritten; local stays, the cloud copy is relayed, the app merges at its next open, one notice says so.
+  - **Inbox retention is 7 days** (A44).
+  - **Default toast position is bottom-right**; after that everyone picks what suits them (A45).
+
+- **2026-10-06 · Christos: "yes to all; make sure not the slightest data is lost"**
+  - **SH-D1** approved: the shell slice is merge-capable (schema v2).
+  - **SY-D1** approved: every upload of the blob is conditional on the revision last applied.
+  - **SY-D2** approved as recommended: one cloud backup copy per device per day, 7 kept.
+  - Standing consequence: any change to `sync.js` or to a merge function ships only after the two-device suite of §F passes on the exact bytes delivered.
+
+- **2026-10-05 · Christos (second round of answers)**
+  - **SH-B4 confirmed:** no auto-backup selector where no folder export can exist; "backup now" becomes the DB export there.
+  - **Update reload waits for a safe moment** (option b; SW-2 in the `index.html` broker).
+  - **A reminder exists only once its app has data:** Mood and Minimalism no longer nudge people who never used them (SH-B7). Standing rule for every future shell-side reminder engine.
+  - **Aurora wallpaper** is «Αυγή» in Greek (#S5 closed).
+
+- **2026-10-05 · shell.js audit (assistant, inside the audit mandate; each is one block to revert)**
+  - Engines start when `orosNotifs` is ready, with an 8 s grace for stale bundles (SH-B1).
+  - Escape yields to any open native `<dialog>` and to the radio popover (SH-B2).
+  - Where the File System Access API is missing, the auto-backup selector is not shown and "backup now" becomes the DB export (SH-B4). Listed as an open decision for a possible veto.
 
 - **2026-10-05 · Christos (answers during the full-suite audit)**
   - **Snapshots are abolished completely.** What stays: Dropbox sync, manual export, automatic export where it is feasible. The mantra line "Full project snapshots" is removed; no replacement subsystem will be built.
@@ -959,7 +1089,7 @@ Rebuild this in any session where code is delivered.
 - **Version drift observations** are out of audit scope (R23).
 - **Kanban KN-Q1:** wall-clock tombstone pruning accepted as a known deviation (revisit only if phantom pushes appear).
 - **Storage / Quote:** deterministic `sliceGet` pruning is mandatory (both adopted).
-- **Maps — "No external dependencies" exemption [log]:** tiles (OSM / HOT / Esri), geocoding (Photon) and routing (OSRM) are online services by nature. Offline scope = cached tiles + last-known route + saved places. The same reasoning covers Radio and Television catalogs/streams and the Open-Meteo weather data; each has its `sc.info.extsvc.*` disclosure line.
+- **Maps — "No external dependencies" exemption [log]:** tiles (OSM / HOT / Esri), geocoding (Photon) and routing (OSRM) are online services by nature. Offline scope = cached tiles + last-known route + saved places. The same reasoning covers Radio and Television catalogs/streams and the Open-Meteo weather data. Disclosure lines in the Info modal: weather, Radio, Maps (`maps.providers`, since 2026-10-06), Television. The Maps text names OpenStreetMap, Photon and OSRM; check it against `maps.js` (HOT / Esri tiles, FOSSGIS routing) when that file is audited.
 - **Maps — R9 deviation (recorded, not changed):** `maps/index.html` ships its icon SVGs inline.
 - **R33 scope limits:** OS drag & drop, clipboard paste, and the shell backup-folder subsystem (§5d).
 
@@ -971,15 +1101,13 @@ Rebuild this in any session where code is delivered.
 
 - ⊗ #21 (To-Do) priority keywords: implement / strike / defer?
 - ⊗ #35 (Kanban) clean up unused keys + stale comment?
-- ⊗ #S5 (Shell) aurora label: Σέλας or Αυγή?
 - ⊗ #19 (To-Do) undo-across-sync: now or defer?
 - ⊗ Radio DNS/blocking diagnosis: de1 mirror opens in a tab but fails from page context (suspected adblocker). Retest in incognito without extensions.
 - ⊗ Radio RX-N1..N5 cleanup candidates (favicon preloading, shadowing `isFavorite`, unused `wasOffline`, asymmetric polling, stop/kill switch).
 - ⊗ **R31:** which rule is it? The Television v0.1.1 note cites "R32 centered dialogs"; nothing in this file defines R31. Until answered the number stays reserved.
-- ⊗ **Notifications:** optional PATCH-5 (`applyStackPosition()` at the end of `notifSliceSet`, so a synced position applies without a reboot): apply?
+- ⊗ **Greek wording (suggestions, not applied):** `alarm.title` «Ειδοποίηση» for "Alarm" (the same overlay serves timers); `sync.err.auth` «— επανασύνδεση» → «— συνδέσου ξανά»; English terms left in Greek strings (`sc.info.cap` "Offline-first", "tracking"; "API key" in the service lines; "cloud", "browser").
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
 - ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
-- ⊗ **Update reload in the middle of a session** (A20): reload at once (today), or wait until the tab is hidden / nothing is playing?
 - ⊗ **Maps follow-ups** (not started): heading-up map rotation; "download this area" for offline; reverse geocoding on long-press.
 
 ### Audit queue (assistant-raised; verify, then fix)
@@ -995,24 +1123,49 @@ Rebuild this in any session where code is delivered.
 - **A4 · `vendor/xlsx` not precached in `sw.js`.** If Spreadsheet loads it, offline import/export breaks. Verify usage and the load URL (no query string).
 - **A5 · R26 sweep.** Run the two-device convergence test on every app with a `mergeFn` (unsorted arrays or device-local fields cause silent endless pushes).
 - **A6 · R8 sweep.** grep apps for `window.orosLang`, `window.orosSync`, `window.orosNotifs` read from the app's own window.
-- **A7 · KNOWN_APPS gaps.** Apps that emit but are not listed get no settings toggle (`getAppToggle` defaults true). Confirm which apps emit; exempt apps are fine. **[log]** `television` was added; `maps` is not needed (transient only).
-- **A8 · Core drift since 2026-10-01.** `index.html` done (2026-10-05). Still to re-read: `sync.js` (version line, `storageAdapter`, `orosSync.storage` surface), `sw.js` (`PRECACHE_URLS` for `vault.js`, `dialogs.js`, `pet.js`, `television/`, `maps/`, Leaflet, hls; no `storage-adapters.js`), `apps.json` (count, category case: `video` joins `lifestyle` and `sound` in A3). Then replace the matching **[log]** tags in Parts II–III with a verification date.
-- **A9 · Snapshot leftovers** (decision 2026-10-05: abolished). Sweep `shell.js`, `translations.js`, `sync.js` for anything left: the `oros-auto-snapshots` key, strings, the word "snapshot" in UI copy, Restore UI. Are `sc.info.cap` and the reset hint accurate on Firefox, where no folder export exists? Approved dead code in `notifications.js` goes in the same pass.
-- **A10 · Staging keys vs factory reset.** The BR-W8-2 note says `oros-cal-new` "lacks the prefix" although the name starts with `oros-`, and the reset's prefix sweep is described for localStorage while this key lives in sessionStorage. Check what the reset does with sessionStorage keys (`oros-*-open`, `oros-cal-new`, `oros-maps-nav`, `oros-television-open`).
+- **A7 · KNOWN_APPS gaps.** List verified 2026-10-06 (18 entries, Part II). Apps that emit but are not listed get no settings toggle (`getAppToggle` defaults true): check each app while auditing it. `maps` is not needed (transient only).
+- **A8 · Core drift since 2026-10-01.** `index.html` and `shell.js` done (2026-10-05). Still to re-read: `sync.js` (version line, `storageAdapter`, `orosSync.storage` surface), `sw.js` (`PRECACHE_URLS` for `vault.js`, `dialogs.js`, `pet.js`, `television/`, `maps/`, Leaflet, hls; no `storage-adapters.js`), `apps.json` (count, category case: the menu groups by the RAW category string and sorts case-sensitively, so `lifestyle` / `sound` / `video` land after every Capitalized group), `notifications.js`, `translations.js`, `dialogs.js`, `fs.js`, `vault.js`, `pet.js`.
+- **A9 · Snapshot leftovers** (decision 2026-10-05: abolished). `shell.js` is clean: no snapshot code and no `oros-auto-snapshots`; two stale comments were the only trace (one fixed by SH-B4, the factory-reset header still says "folder-mirror snapshot files"). Still to sweep: `translations.js` (wording of `sc.info.cap`, `sc.reset.hint`, `sync.backup.hint` on browsers without folder export), `sync.js`. Approved dead code in `notifications.js` goes in the same pass.
+- **A10 · Staging keys vs factory reset — CLOSED 2026-10-05.** `scFactoryReset` sweeps every `oros-` key in sessionStorage as well as localStorage, so `oros-cal-new`, `oros-*-open`, `oros-maps-nav` and `oros-skip-splash` all go. The BR-W8-2 remark was simply wrong.
 - **A11 · Television.** (a) One note says the proxy slice carries "favorites + recents", the others say recents are device-local. (b) One note spells the key `oras-television-recents`: check the code for the typo. (c) `vendor/hls.light.min.js` present in the repo? (d) PATCH 1 (stream picker HTML/CSS) applied? (e) R26 two-device convergence was never run for it.
 - **A12 · `todo.js` hygiene.** The copy submitted during Wave 2 carried a prompt-injection payload. Check the repo file for foreign text (comments, strings).
 - **A13 · Kanban Trello checklists.** FIX-1a/1b (`checkByCard`): applied?
 - **A14 · R32 retro-fit sweep.** Every app with `* { margin: 0 }` needs `dialog { margin: auto; }`. Recorded as done: Bookmarks, Contacts, Maps, Television.
 - **A15 · R33 completeness.** Television was built after Wave 2: any file I/O? Quote and Spreadsheet are in the ledger with patch counts but no detail. Characters and Prompter are counted in the wave but are worth one grep each for `showSaveFilePicker`, `download=`, `type="file"`.
 - **A16 · Calculator v1.3.0 parent listener.** `wireParentKeyRouting()` adds a `keydown` listener to the parent document. Check that it is removed (or self-disables) when the app closes, and that it cannot stack on reopen. Folds into A2.
-- **A17 · Wave 8 completion.** The Wave 8 note lists MW-1…3 and CW-7/8 as pending; later notes treat the button as existing. Confirm in `maps.js` and `calendar.js`, including the two input ids the receiver prefills.
+- **A17 · Wave 8 completion.** Shell side confirmed 2026-10-05 (`__orosOpenCalendarNew`, `__orosOpenMapsQuery` present). Still to confirm in `maps.js` (MW-1…3) and `calendar.js` (CW-7/8, the two input ids the receiver prefills).
 - **A18 · Astro location fallback key.** A Wave 2 note says `astro.js` falls back to a Weather localStorage key named `oros-weather`; the Weather slice key in the registry is `oros-weatherapp-data`. Either the note abbreviates or the fallback reads a key nobody writes. Check `astro.js`.
-- **A19 · First-install reload and OAuth `?code=`** (from `index.html`). The broker reloads on every `controllerchange`. If `sw.js` calls `clients.claim()`, a first visit (no previous controller) reloads once for nothing, and a reload that lands while the URL still carries a Dropbox `?code=` would replay a one-shot code. Needs `sw.js` (claim?) and `sync.js` (when is the URL cleaned?). Candidate fix: remember `!!navigator.serviceWorker.controller` at load and reload only when it was true.
-- **A20 · Update reload in the middle of a session** (from `index.html`). `r.update()` runs hourly; a new worker → `controllerchange` → immediate `location.reload()`. That stops shell-hosted Radio audio, replaces a running app frame (Maps navigation resumes only by its own 30-min rule), and meets the `beforeunload` dirty warning. Needs `shell.js` (beforeunload, version toast, what is playing) and an owner decision.
-- **A21 · Hardcoded English in the top bar** (from `index.html`): `title="Language"`, `title="Time"`, `title="Date"`, and the iframe `title="orOS application"` have no `data-i18n-title` (only `#btn-menu` has one). Does `shell.js` overwrite them per language? If not: English leak in EL.
-- **A22 · `#app-frame` has no `allow` / `allowfullscreen`** (from `index.html`). Check whether `shell.js` sets it; otherwise test `document.fullscreenEnabled` inside the frame on Firefox (Television fullscreen), plus wake lock and clipboard for Maps and Contacts.
-- **A23 · Theme before `shell.js`** (from `index.html`): `data-theme="dark"` and `theme-color` are static. The splash covers the gap on a normal boot; on the update-reload path it is hidden. Where does `shell.js` apply a stored light theme, and is there a visible dark flash?
+- **A19 · First-install reload and OAuth `?code=`.** The OAuth half is CLOSED (2026-10-05, SW-3: the broker waits while `?code=` and the PKCE verifier are both present; reproduced before the fix). Left for `sw.js`: does it call `clients.claim()`? If so a first visit reloads once for nothing; candidate fix: reload only when a controller existed at load.
+- **A20 · Update reload in the middle of a session — CLOSED 2026-10-05** (SW-2 delivered). The `sync.js` follow-up is answered: yes, the dirty flag is permanent without Dropbox, and the shell's `beforeunload` asked "Leave site?" on every close for such users (reproduced). Fixed by SH-B8.
+- **A21 · Top-bar titles — CLOSED 2026-10-05.** `applyLang()` overwrites the three titles per language. Left: the static iframe `title="orOS application"` (could follow the running app in `openApp`).
+- **A22 · `#app-frame` has no `allow` / `allowfullscreen`.** Confirmed: neither `index.html` nor `shell.js` sets one. To test on Firefox with an app open: `document.getElementById("app-frame").contentDocument.fullscreenEnabled` (Television fullscreen), plus wake lock and clipboard for Maps and Contacts.
+- **A23 · Theme before `shell.js`.** Confirmed: `shell.js` applies `oros-theme` / `oros-skin` at its boot; until then the page is the static dark/oros. Low priority: two lines in the splash script could pre-apply both.
 - **A24 · Parse-time dependencies.** `vault.js` and `pet.js` load before `fs.js`, `dialogs.js`, `shell.js`. Confirm that they reach `orosFS`, `orosDialog` and shell globals only at call time.
+- **A25 · Shell slice — CLOSED 2026-10-06 (SH-D1).** A new device no longer wipes settings and alarms (reproduced before, verified after); import restores them on a fresh device.
+- **A26 · Per-day dedupe of shell messages — CLOSED 2026-10-06 (SH-B9).** Confirmed in `notifications.js`: a repeated key answers `null`, so the second export / pull / "nothing new" of a day was silent. Left: a user action during quiet hours still gets no toast (the item goes to the inbox silently): A46.
+- **A27 · Shell scanners vs tombstones** (from `shell.js`). `cycleShellCheck` reads `periods[]` without looking at `del` (the Bible schema says periods carry it) and claims to mirror `cycle.js` byte for byte; `todoCheckTick` and `quoteCheckTick` count items without any deleted check. Compare with `cycle.js`, `todo.js`, `quote.js`: a deleted period would shift the prediction and produce a second reminder under a different key.
+- **A28 · Reminders without usage.** Shell side done 2026-10-05 (SH-B7). Left for `mood.js` / `minimalism.js`: (a) does merely opening the app write an entry / day record (the gate would then open too early or never)? (b) Mood still fires from 00:00; an hour gate like Minimalism's `remindHour` is undecided. (c) The Greek body «Κατέγραψε την είσοδό σου» is unnatural (e.g. «Πώς νιώθεις σήμερα; Σημείωσέ το.»); check whether `mood.js` emits the same key with its own text first.
+- **A29 · Info modal: Maps line — CLOSED 2026-10-06.** The string already existed (`maps.providers`) and was simply never rendered.
+- **A30 · R32 for shell dialogs** (from `shell.js`). `#chpw-dialog` and `#pwfix-dialog` are styled inline with no `margin:auto`; `#wxcity` and `#sc-info-overlay` rely on `style.css`. Check the reset in `style.css`.
+- **A31 · Radio tray** (from `shell.js`). Stop and Pause do the same thing (`audio.pause()`); a real Stop would drop the stream. Also no `orosTray` exists in the shell. Needs `radio.js` (host API: is there `stop()`, `favoriteToggle()`?).
+- **A32 · Escape and forwarded keys.** Inbox panel CLOSED 2026-10-06 (NT-3). Left for `calculator.js` (A16): its parent-document key routing also uses Escape.
+- **A33 · Factory reset coverage.** Cloud side CLOSED 2026-10-05 (SY-1: `/vault` is deleted; reproduced before the fix). Still not wiped locally: Cache Storage `oros-television-api`. To confirm with `vault.js`: its own local state (queue, revision key, any IndexedDB beyond `oros-vault`).
+- **A34 · "Backup now" with a mode but no folder — CLOSED 2026-10-06 (SH-B10, `sync.fsfolder.choosefirst`).**
+- **A35 · Morning briefing fields** (from `shell.js`). `wxBriefTick` reads `daily[].pop/max/min` and `current.uv/code` from `oros-weatherapp-cache`. Confirm the shape in `weather.js`.
+- **A36 · Lost update on push — CLOSED 2026-10-06 (SY-D1).** Reproduced before, verified after, with and without the rev header. Not yet seen against the real Dropbox: first deploy check below (Part XII entry).
+- **A37 · Silent apply failure** (from `sync.js`). A quota error inside `applyPayload` is caught and dropped: the slice is not applied, no baseline is recorded, and every later pull repeats the same silent failure. The pull result should carry a failure count so the shell can say "storage is full" once (R30). Needs a string in `translations.js`.
+- **A38 · Vault adapter: conditional writes are read-compare-write** (from `sync.js`). The adapter comment says Dropbox has no native conditional put; it does, and the blob now uses it (SY-D1). `putObject(key, blob, knownRev)` still reads, compares, then overwrites. Give it the same native mode when `vault.js` is on the table (caller contract: rejects with `storage-conflict`).
+- **A39 · Cloud backups — CLOSED 2026-10-06 (SY-D2).**
+- **A40 · Apps without a storage key.** Per-app check while auditing each app: `registerSlice` must receive the storage key (4th argument), or the app is absent from sync and from every export while closed.
+- **A41 · `sync.js` header and comments.** A dated note now lists the audit changes under the title; the title still says v0.9.2 (user-owned). One old comment still says a missing baseline counts as clean, the code says the opposite. Cosmetic.
+- **A42 · True conflict on a closed app — CLOSED 2026-10-06 (SY-D3)** for every app that registers with a storage key and a `mergeFn`. An app without a `mergeFn` still loses one side in a true conflict (old rule 2): giving every app a merge function is tracked per app (A2, A40). The flag `oros-slices-merge` is written the first time an app is opened after this deploy, so the new protection starts per app at its first open on each device.
+- **A43 · No way to restore a cloud backup from the UI.** The 7 copies are encrypted blobs in the Dropbox app folder; using one today means renaming it by hand, and a pull then MERGES it into local (not a rollback). Backlog: "restore from cloud backup" in the sync section.
+- **A44 · Inbox retention — CLOSED 2026-10-06 (7 days).**
+- **A45 · Default toast position — CLOSED 2026-10-06 (bottom-right).**
+- **A46 · Feedback during quiet hours.** `emit` during quiet hours stores the item without a toast. For reminders that is the point; for the answer to a click (export done, sync failed) it means no feedback at night. Candidate: `notifySys` uses a transient toast for user-initiated results regardless of quiet hours.
+- **A47 · Stubs hide kernel bugs.** Until 2026-10-06 the kernel suite ran with a stub `notifications.js` and reported "0 uploads when idle"; with the real module the old code uploaded on every cycle. The suites run with every real core module on the table; real since 2026-10-06: `index.html`, `shell.js`, `sync.js`, `notifications.js`, `translations.js`. Still stubbed: `style.css`, `pet.js`, `fs.js`, `dialogs.js`, `vault.js`, `apps.json` (one fake app). The older shell-only scenarios (boot reminders, Escape, menu rebuild, update broker) still use stubs for `sync`, `notifications` and `translations` by design.
+- **A48 · Unreferenced strings.** `bar.clock.tooltip`, `gps.use`, `notifs.duration.sec` are used by no core file; the 18 `radio.*` keys are either used by `radio.js` through `window.parent.t` or dead (the Bible says app strings live in the app). Decide when `radio.js` is audited; remove what nothing reads (R36).
+- **A49 · `collectPayload` drops an empty mergeless slice from the payload** ("guarded empty slice"). The upload then carries NO entry for that app, so the cloud loses whatever another device had stored there until that device pushes again. With SY-D1 a device always holds the latest cloud copy when it pushes, and unknown/parked entries are relayed, but a known, empty, baseline-less proxy is neither. Reproduce and decide with the first app audit that has a storage key.
 
 ### Writer (post-Dose 3)
 
@@ -1104,6 +1257,17 @@ Rebuild this in any session where code is delivered.
 - **Vault "409":** a false alarm that hid two real bugs: a conditional write that was never conditional (rev always `null`), and a queue cleared before the write landed.
 - **`todo.js` prompt injection:** treated as data (Part 0, A12).
 - **Computed-key literal in a patch draft** (R37).
+- **A string that existed and a modal that never used it** (`maps.providers`, A29): check both directions, "used but undefined" and "defined but unused".
+- **A merge that never ran (2026-10-06):** `notifications.js` registered its slice with three arguments and merged inside the setter. The engine treated it as mergeless, its getter leaked a per-minute stamp, so the slice was "always changed": every cycle on every device uploaded the whole blob, and inboxes, read states and settings never converged. Nobody saw it because each device kept working alone.
+- **The first fuzz of `notifMerge` failed on impossible data** (one id under two dedupe keys). The fix was a simpler identity rule (one key per item), not a cleverer closure; the generator now produces only shapes the code can create.
+- **Fuzz found what the scenarios did not (2026-10-06):** the tombstone union was order-dependent (an expired tombstone lent its stamp to a live one). 451 of 20,000 triples failed associativity; fixed by expiring per side before the union. A merge function ships only with the fuzz.
+- **A test that "failed" because the code was right:** `applyLang()` repaints the clock, the clock tick fired the due alarm inside the apply. Read the effect, not only the storage.
+- **"Local with unpushed work wins" has no notion of a fresh device (found 2026-10-05):** a mergeless slice that is never null and has no baseline beats the cloud. Every always-present slice needs a `mergeFn`.
+- **An unconditional overwrite is a lost update waiting for two devices** (A36). The kernel's two-device harness must include "B pushes without pulling".
+- **A dirty flag that nothing can clear** made the close warning permanent for everyone without Dropbox.
+- **Boot order (found 2026-10-05):** the reminder engines ran from the first `renderClock()` while `notifications.js` did not exist yet. A reminder due at boot used the legacy overlay; four "first sweep" timers were dead from the day they were written. Seen only by running the real file with the real script order.
+- **`renderMenu` rebuilds on background events:** scroll, an open `<details>` and a half-typed passphrase were lost. The form-rebuild pattern (Part VI) applies to the shell too.
+- **Escape handled twice:** a dialog closed AND the app behind it closed.
 - **Process:**
   - Raw notes pasted below Part XII and deltas pasted up to four times instead of being applied (Part 0: no appendix).
   - A note suggested a `shell.js` version number (R23 deviation; not carried).
@@ -1781,5 +1945,123 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   4. IN-6: a click or tap on the splash dismisses a boot-error message at once instead of after 45 s.
 - **Decisions (Christos):** snapshots abolished completely (mantra reworded); Television on hold; removal of the notifications dead code approved (Part IX).
 - **Verification:** patches applied to a copy, each OLD block matched exactly once; `node --check` on both inline scripts OK. Chromium run, original vs patched, 8 scenarios each (normal, broken image, missing `shell.js`, uncaught throw in `pet.js`, the same three behind `oros-skip-splash`, Greek + missing script), Service Workers blocked, all other files empty stubs. Original: broken image → "Startup error: unknown"; the three update-path failures show nothing. Patched: broken image ignored; all failures shown, in the right language, and dismissed by one click. Not tested: Firefox, a real Service Worker update cycle, real `shell.js`.
-- **Status:** delivered; application not yet confirmed (R4).
+- **Status:** applied by Christos (confirmed 2026-10-05).
 - **Next:** A19–A24 wait for `sw.js`, `sync.js`, `shell.js`, `vault.js`, `pet.js`.
+
+### 2026-10-05 — shell.js — audit (full file, 11 edit blocks)
+
+- **Verified by reading (`shell.js`, `APP_VERSION` 0.39.06, 5,562 lines):** Part II rewritten from the file: sections, boot order, engine table, shell slice, proxy slices, bridge table, `SC_DEFS`, factory-reset order, storage keys. `node --check` clean; 187 functions, none unused; no snapshot code left.
+- **Fixes:**
+  - **SH-B1 · reminders at boot.** The first `renderClock()` ran every engine before `notifications.js` existed. A calendar reminder due at boot was marked fired and shown through the legacy overlay (no inbox, no quiet hours, no per-app toggle); the other engines returned silently and waited out their 60 s throttle. New `enginesMayRun()` gate; the four boot `setTimeout` sweeps (which never ran anything) removed.
+  - **SH-B2 · Escape.** With an app open, Escape inside a native `<dialog>` or the radio popover also returned to the desktop and closed the app. The shell handler now yields to both.
+  - **SH-B3 · menu rebuild.** `renderMenu()` (also called by background events) reset the scroll position, closed the per-app notifications list and wiped a half-typed passphrase and its "remember" box. Captured before the rebuild, restored after.
+  - **SH-B5 · folder export.** `stream.close()` no longer runs before `stream.write()` settled; a failed write clears `oros-autoexport-last`, so the next boot / tab-visible retries instead of waiting a whole period.
+  - **SH-B6 · Greek.** Screen Pet hint in the singular («Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί»).
+- **Changes (SH-B4, open to veto):** the auto-backup selector is appended only where `showDirectoryPicker` exists; Ctrl+Alt+Shift+S runs `scExportDb()` on browsers without it. One stale "snapshots" comment rewritten.
+- **Verification:** all 11 OLD blocks matched exactly once; `node --check` OK; CRLF kept; `APP_VERSION` untouched. Chromium, original vs patched, real `shell.js` + the patched `index.html` in the real script order, every other module a stub (`translations`, `sync`, `notifications`, CSS): boot with a due calendar reminder (original: legacy overlay and 0 emits in 2.5 s; patched: no overlay, `calendar`, `mood`, `minimalism` emitted); Escape in a dialog over a running app (original: app closed; patched: app stays, plain Escape still returns); menu toggle after scrolling (original: scroll 0, list closed; patched: both kept); passphrase typed, then a background re-render (original: empty; patched: kept); no File System Access API (original: selector shown, shortcut answers "auto-backup is off"; patched: selector hidden, shortcut downloads `orOS-backup-<date>.json`); API present: selector still shown. Zero page errors. NOT tested: real `notifications.js` / `sync.js` / `style.css`, Firefox, a phone, a real folder write (SH-B5 is by reading only).
+- **Closed:** A10, A21. **Narrowed:** A8, A9, A17, A20, A22, A23. **New:** A25–A35.
+- **Status:** delivered as a full file; superseded the same day by the file of the next entry (same content plus SH-B7 and the aurora label). Application not yet confirmed (R4).
+- **Next:** `sync.js` (A19, A25, A33), `notifications.js` (A26, A32, dead code), `translations.js` (A29, A34), `style.css` (A30), `sw.js` (A19).
+
+### 2026-10-05 — index.html + shell.js — approved follow-ups (SW-2, SH-B7, aurora)
+
+- **Decisions (Christos):** SH-B4 confirmed; update reload waits for a safe moment; reminders only once the app has data; aurora → «Αυγή» (Part IX).
+- **Changes (`index.html`, 1 patch, update broker):** SW-2. `controllerchange` → `reloadWhenSafe()`: immediate reload on an idle desktop, otherwise a 3 s poll until no app is open, menu / dialogs / Info modal are closed, no alarm rings, the radio is silent and no pushable dirty state remains. Dirty is ignored when the engine cannot clear it (not connected, locked or offline). The flag `oros-skip-splash` is written right before the reload, as before.
+- **Changes (`shell.js`, 3 patches):**
+  - SH-B7: `moodHasAnyEntry()` and `minimalismHasAnyDay()` gate the two daily reminders.
+  - `wallpaperTitle`: aurora EL «Αυγόρα» → «Αυγή».
+- **Verification:** each OLD block matched exactly once (the three `shell.js` blocks match both the uploaded 0.39.06 file and the full file delivered earlier today); `node --check` OK on `shell.js` and both inline scripts; CRLF kept. Chromium with the real `shell.js`, stub modules and a synthetic `controllerchange` event: old broker with an app open reloads at once (baseline); new broker: idle desktop reloads at once and shows no second splash; app open → no reload after 4.5 s, reload within 3.8 s of returning to the desktop; dirty + connected + unlocked → waits, reloads once clean; dirty but not connected → reloads at once; menu open → waits; two events while waiting → one poll, no errors. Reminders: fresh profile emits nothing; a profile with one old Mood entry and one old Minimalism day emits both. Aurora label reads "Aurora" / «Αυγή». NOT tested: a real Service Worker update, real `sync.js`, Firefox, a phone.
+- **Closed:** A20, #S5. **Narrowed:** A28.
+- **Status:** delivered; superseded the same day by the files of the next entry (cumulative). Application not yet confirmed (R4).
+
+### 2026-10-05 — sync.js — audit; four small fixes (SY-1, SY-2, SH-B8, SW-3); two critical findings
+
+- **Verified by reading (`sync.js`, 1,916 lines, header "v0.9.2"):** Part II rewritten from the file (cloud layout, blob, keys, API, `applySlice` rules, triggers, push sequence, adapter). `node --check` clean.
+- **Fixes:**
+  - **SY-1 (`sync.js`, `wipeEverything`):** the factory reset left `/vault` (manifest + every object) in Dropbox, because the name filter only matched root entries called `orOS-*`. `/vault` is now in the delete list.
+  - **SY-2 (`sync.js`, `storageAdapter.putObject`):** a single-shot upload answered with an HTTP error resolved as success. It now rejects with `upload failed: <status>`.
+  - **SH-B8 (`shell.js`, `beforeunload`):** the dirty flag is permanent without Dropbox, so every close asked "Leave site?". The warning now needs connected + unlocked + online + dirty.
+  - **SW-3 (`index.html`, broker):** no update reload while `?code=` and the PKCE verifier are present; the reload used to replay the one-shot code and break the sign-in.
+- **Findings waiting for approval (not changed):** A25 / SH-D1 (a new device wipes shell settings and alarms everywhere), A36 / SY-D1 (lost update when a device pushes without pulling), A39 / SY-D2 (cloud backups rotate within a minute).
+- **Verification:** OLD blocks matched once (SH-B8 also matches the uploaded 0.39.06 `shell.js`); `node --check` OK; CRLF kept; no version touched. Chromium, real `sync.js` + real `shell.js` + patched `index.html`, mock Dropbox (two contexts on one in-memory cloud), before vs after:
+  - new device joins → old device loses theme, skin, alarm, weather location: reproduced, NOT fixed (SH-D1);
+  - B pushes without pulling → A's edit of a closed app reverts: reproduced, NOT fixed (SY-D1);
+  - never connected + one change + close → browser prompt: before yes, after no; connected + unlocked + dirty → still prompts;
+  - `wipeEverything()` with `/vault/*` present → before: both vault files left; after: cloud empty;
+  - `putObject` with a 507 → before "resolved (ok=false)"; after rejected;
+  - update event during the token exchange → before: reloaded with `?code=` still in the URL; after: waits, then reloads on a clean URL.
+  - NOT tested: real Dropbox (all cloud behavior is the mock's), Firefox, a phone.
+- **Closed:** A19 (OAuth half), A20 follow-up, A33 (cloud half). **Confirmed:** A25. **New:** A36–A41.
+- **Status:** delivered; superseded on 2026-10-06 by the files of the next entry (cumulative). Application not yet confirmed (R4).
+- **Next:** decisions SH-D1, SY-D1, SY-D2; then `notifications.js`.
+
+### 2026-10-06 — sync.js + shell.js — SY-D1 conditional push, SH-D1 shell merge, SY-D2 spaced backups
+
+- **Decisions (Christos):** all three approved, with the instruction that no data may be lost (Part IX).
+- **Changes (`sync.js`):**
+  - **SY-D1.** `cloudRev`, `fetchCloudBlob()` (rev from the download header, metadata-first fallback), `syncDown()`, `pushAttempt()` with conditional upload (`update(rev)` / `add`, `strict_conflict`) and bounded pull-merge-retry; `contentUpload(path, text, rev)`; `uploadConflict()`; `changePassphrase` conditional; `errorKey` maps `cloud-changed` to `sync.err.busy`; `disconnect()` forgets the rev. Details in Part II.
+  - **SY-D2.** `maybeBackup()`, `BACKUP_EVERY_MS` 24 h, `MAX_BACKUPS` 7, key `oros-sync-last-backup`; `backupExistingRemote()` reports a refused copy as "no backup"; pruning runs only after a backup was made.
+  - A dated note under the file title lists the audit changes. No version touched.
+- **Changes (`shell.js`):** **SH-D1.** Shell slice v2: `shellMerge`, `shellSide`, `shellBuild`, `shellCanon`, `shellDefault`, `shellNow`, `shellStampsRefresh`, `shellDropParkedLegacy`, alarm entity helpers (`alarmCanon`, `alarmBetter`, `alarmsCanonical`, `alarmNextDaily`, tombstone read/clean/live/write); `shellSliceGet` and `shellSliceSet` rewritten around them; `noteLocalChange` stamps; `alarmTick` advances daily alarms deterministically; `orosAlarms.add` stamps `mtime`, `.remove` writes a tombstone.
+- **Schema:** `shell` slice v2 (Part IV). New keys `oros-shell-stamps`, `oros-alarm-tombs` (travel in the slice), `oros-sync-last-backup` (device-local). Additive: an old bundle ignores the new fields; a payload from an old bundle is read as "legacy".
+- **Verification (Chromium; real `sync.js`, `shell.js`, `index.html`; mock Dropbox; run on the exact bytes delivered):**
+  - Fuzz of `shellMerge`: 20,000 random triples, 7 properties, 0 violations (the first run found 451 associativity failures in the tombstone union; fixed, rerun clean).
+  - Kernel suite: 39 of 39 checks pass (list in Part VIII §F). The two bugs reproduced on 2026-10-05 no longer occur: a new device adopts the cloud and pushes nothing; a blind push is refused, merged and retried. Unconditional overwrites of the blob during the whole run: 0.
+  - Regression: every scenario of the 2026-10-05 entries rerun and passing (boot reminders, Escape, menu rebuild, no-FSA backup, update broker, OAuth guard, close warning, vault wipe, adapter failure).
+  - `node --check` OK; CRLF kept; `APP_VERSION` untouched.
+  - NOT tested: the real Dropbox (the conflict answer, the `strict_conflict` flag and the readable header are taken from its API contract and exercised only against the mock; the metadata fallback covers an unreadable header), Firefox, a phone, a mixed rollout longer than one sync round.
+- **Known limit, not part of this delivery:** A42 (true conflict on a closed app). Seen in the harness; proposal SY-D3 is open.
+- **Rollout (both devices):**
+  1. Before deploying, open orOS on both devices and let both sync (green dot), so that neither holds unsynced shell settings or alarms from the old engine.
+  2. Deploy the three files together.
+  3. First check with the real Dropbox, console of device A after a change has synced: `await orosSync.pull()` → `{ok:true,…}`; then change something on A and on B within the same few seconds and let both sync: both changes must be present on both. In the Network panel the `files/upload` request for `/orOS-data.json` must carry `"mode":{".tag":"update",…}`; a refused one answers 409 and is followed by a download and a second upload.
+  4. Dropbox app folder next day: one new `orOS-backup-…json` per device, never more than 7 in total.
+- **Closed:** A25, A36, A39. **New:** A42, A43. **Open decision:** SY-D3.
+- **Status:** delivered as full files (`sync.js`, `shell.js`; `index.html` unchanged since the previous entry); application not yet confirmed (R4).
+
+### 2026-10-06 — notifications.js + shell.js — NT-1 real slice merge, NT-2…NT-6, SH-B9
+
+- **Verified by reading (`notifications.js`, 1,144 lines, `VERSION` 1.0.0):** Part II rewritten from the file. `node --check` clean.
+- **Fixes (`notifications.js`):**
+  - **NT-1 · the slice never merged and uploaded forever.** Registered with 3 arguments; the union lived in the setter, which the engine does not call for a diverged mergeless slice; the getter returned the live object including `meta.lastSweep` (moves every 60 s) and `meta.lastSyncPush`. Reproduced with the real files: 2 uploads per idle round on 2 devices, inboxes and read states not converging. Now: `notifBuild()` (canonical), `notifSliceGet()` (pure copy, no `meta`), `notifMerge()` as 5th argument, `notifSliceSet()` adopts. Twins (same `dedupKey`, different ids) join into one entry. `markItemRead()` lets a toast mark its entry read after a merge replaced the id.
+  - **NT-2 · settings clock.** `settingsRev` counted +1 (two devices tie with different content) and `setAppToggle` did not move it at all (a toggle could never win elsewhere). Now a monotonic wall-clock stamp, bumped by both; setting the same value again is a no-op (R27).
+  - **NT-3 · inbox panel.** Escape closes it and nothing else (the shell handler used to close the running app and leave the panel open); width and height fit a phone.
+  - **NT-4 · `loadSlice` repairs** a stored slice without `appToggles` / `items` / `meta` instead of resetting inbox and settings to defaults.
+  - **NT-5 · synced position applies at once** (`applyStackPosition()` after an apply). This is the "optional PATCH-5" of the old notes.
+  - **NT-6 · dead code removed** (approved 2026-10-05): `TOAST_POSITIONS`, the unused `position` local in `fireToast`, the never-read `meta.lastSyncPush`. `getPositionStyles()` stays: `applyStackPosition()` uses it.
+- **Fixes (`shell.js`):** **SH-B9.** `notifySys` shows a transient toast when `emit` answered `null` because of the per-day dedupe; silence is kept when notifications or the System toggle are off.
+- **Schema:** slice `notifs` unchanged in shape (`ver, settings, appToggles, items`); it no longer carries `meta`. `settingsRev` values become timestamps (always greater than the old counters).
+- **Verification (Chromium; real `sync.js`, `shell.js`, `notifications.js`, `index.html`; mock Dropbox; exact bytes delivered; profiles desktop / firefox-like / mobile):**
+  - Notifications suite: 18 of 18 on each of the three profiles, including the `notifMerge` fuzz (20,000 triples, 8 properties, 0 violations; the first run failed on impossible inputs and led to a simpler identity rule).
+  - Kernel suite rerun WITH the real `notifications.js`: 39 of 39 on each of the three profiles. Shell-merge fuzz rerun: 0 violations.
+  - Before/after with the real files: idle uploads per round 2 → 0; inboxes "Buy milk | Dentist" vs "Buy milk" → equal on both; a read mark now reaches the other device.
+  - All earlier regressions pass. `node --check` OK; CRLF kept; `VERSION` and `APP_VERSION` untouched.
+  - NOT tested: real Dropbox, real Firefox, a real phone, real `translations.js` (stub returns the key).
+- **Effect to expect after deploy:** the first sync of each device merges the other device's inbox (a few toasts for fresh unread items, once). After that an idle orOS uploads nothing.
+- **Closed:** A26, A32 (inbox part), the dead-code approval, PATCH-5. **New:** A44–A47.
+- **Status:** delivered as full files (`notifications.js`, `shell.js`; `sync.js` and `index.html` unchanged since the previous entry); application not yet confirmed (R4).
+
+### 2026-10-06 — sync.js + shell.js + notifications.js + translations.js — SY-D3, retention 7 days, bottom-right default, translations audit
+
+- **Decisions (Christos):** SY-D3 approved; inbox retention 7 days; default toast position bottom-right (Part IX).
+- **Verified by reading (`translations.js`, 458 lines):** 212 keys per language, exact parity, no duplicate keys; every key referenced by `shell.js`, `notifications.js`, `sync.js` and `index.html` is defined (script). Part II section added.
+- **Changes (`sync.js`) — SY-D3:** `oros-slices-merge`, `oros-sync-deferred`, `flagHas` / `flagSet` / `isDeferred` / `deferredNames`; `registerSlice` records merge capability and clears a deferral; `applySlice` defers a true conflict on a closed merge-capable app; `collectPayload(forCloud)` relays the parked cloud copy for deferred slices; no baseline is recorded for them after a push; new API `getDeferred()`.
+- **Changes (`shell.js`):**
+  - SY-D3 companion: `syncPendingTickThrottled()` (one notice per deferred app, opens it) and `window.__orosOpenApp(id)`.
+  - A29: the Info modal renders `maps.providers`.
+  - SH-B10: "backup now" with a mode but no chosen folder answers `sync.fsfolder.choosefirst` instead of doing nothing.
+  - Counts as "label: n" in the pull and import messages; position fallback `bottom-right`.
+- **Changes (`notifications.js`):** `itemGone` = at `expiresAt` (A44); `bottom-right` in both fallbacks (A45); `DL_BRIDGES.system`.
+- **Changes (`translations.js`, EN + EL):**
+  - New: `sync.pending.title`, `sync.pending.body`, `sync.fsfolder.choosefirst`.
+  - Fixed: `radio.view.recents` EL «Πρόσφατα Σταθμά» → «Πρόσφατοι σταθμοί»; `syncdot.dirty` EN "unsaved changes" → "changes not synced yet" (they ARE saved locally); `notifs.minago` / `hourago` / `dayago` EL → abbreviations (was «πριν 1 λεπτά / ώρες / ημέρες»); `sync.slices.applied` EL → «ενημερωμένες ενότητες» for the "label: n" form.
+- **Schema:** none. New device-local keys `oros-slices-merge`, `oros-sync-deferred`.
+- **Verification (Chromium; real `index.html`, `shell.js`, `sync.js`, `notifications.js`, `translations.js`; mock Dropbox; exact bytes; profiles desktop / firefox-like / mobile):**
+  - SY-D3 suite 14 of 14 on each profile. The case that failed before (new device that opened the app first) now leaves the old device and the cloud untouched, keeps the new device's data, and both devices hold the union after the app is opened once.
+  - Kernel suite 39 of 39 and notifications suite 23 of 23 (22 on firefox-like) on each profile; both merge fuzzers 0 violations; all earlier regressions pass.
+  - Key script: 215 / 215, parity exact, nothing referenced-but-undefined.
+  - `node --check` OK on all four files; CRLF kept; no version touched.
+  - NOT tested: real Dropbox, real Firefox, a real phone, any real app (the SY-D3 app is a test double with a union merge).
+- **Effect to expect:** notifications older than 7 days disappear from the inbox at the first sweep after deploy. SY-D3 protects an app from its first open after deploy on each device.
+- **Closed:** A29, A34, A42 (merge-capable apps), A44, A45. **New:** A48, A49.
+- **Status:** delivered as full files (`sync.js`, `shell.js`, `notifications.js`, `translations.js`; `index.html` unchanged); application not yet confirmed (R4).

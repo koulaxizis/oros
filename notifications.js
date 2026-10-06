@@ -4,11 +4,7 @@
   const LOG_PREFIX = '[orOS][notifs]';
 
   // ——— Configuration constants ———
-  const TOAST_POSITIONS = [
-    'top-left', 'top', 'top-right',
-    'right', 'bottom-right', 'bottom',
-    'bottom-left', 'left'
-  ];
+  // (The valid positions are the keys of the map in getPositionStyles.)
 
   // Palette vars ONLY — follows every skin. Hardcoded hex would
   // break on Adwaita/Ubuntu/Mint etc. (scToast doctrine)
@@ -90,7 +86,18 @@
     try {
       const raw = localStorage.getItem('oros-notifs');
       state.slice = raw ? JSON.parse(raw) : { ver: 1, settings: defaultSettings(), items: [], meta: { lastSweep: 0 }, appToggles: {} };
-      
+
+      // NT-4: REPAIR a partial slice, never reset it. A stored slice
+      // without appToggles / items / meta (older bundle, interrupted
+      // write) used to throw two lines below and land in the catch,
+      // which replaced the whole inbox and every setting with defaults.
+      if (!state.slice || typeof state.slice !== 'object' || Array.isArray(state.slice)) {
+        state.slice = { ver: 1 };
+      }
+      if (!Array.isArray(state.slice.items)) state.slice.items = [];
+      if (!state.slice.appToggles || typeof state.slice.appToggles !== 'object') state.slice.appToggles = {};
+      if (!state.slice.meta || typeof state.slice.meta !== 'object') state.slice.meta = { lastSweep: 0 };
+
       // Initialize appToggles for known apps (KNOWN_APPS is the one
       // truth — the shell renders its toggle list from it too)
       KNOWN_APPS.forEach(app => {
@@ -132,7 +139,6 @@
     clearTimeout(state._saveTimer);
     try {
       localStorage.setItem('oros-notifs', JSON.stringify(state.slice));
-      state.slice.meta.lastSyncPush = Date.now();
       return true;
     } catch (e) {
       err('Failed to save slice', e);
@@ -160,13 +166,25 @@
 
   function setSetting(key, value) {
     if (!state.slice.settings) state.slice.settings = defaultSettings();
+    // NT-2: no change → no stamp, no dirty flag (R27).
+    if (JSON.stringify(state.slice.settings[key]) === JSON.stringify(value)) return;
     state.slice.settings[key] = value;
-    state.slice.settings.settingsRev = (state.slice.settings.settingsRev || 0) + 1;
+    state.slice.settings.settingsRev = nextSettingsRev();
     noteChange();          // user action → sync engine must know
     saveSliceThrottled(500);
     // Position is visual, not data — apply immediately to the live
     // stack (applyStackPositions no-ops until the stack exists).
     if (key === 'position') applyStackPosition();
+  }
+
+  // NT-2: the settings clock. It used to count (+1): two devices that
+  // each changed something ended on the SAME number with different
+  // content. Wall-clock ms, kept monotonic — the later change wins,
+  // and every old counter value is smaller than any timestamp.
+  function nextSettingsRev() {
+    var cur = (state.slice.settings && typeof state.slice.settings.settingsRev === 'number')
+      ? state.slice.settings.settingsRev : 0;
+    return Math.max(cur + 1, Date.now());
   }
   
     // ===== SCHEDULER ENGINE — HYBRID PULL-DESIGN =====
@@ -248,13 +266,11 @@
   }
 
   function pruneExpiredItems() {
-    const TTL_DAYS = 7;
-    const cutoff = Date.now() - (TTL_DAYS * 24 * 60 * 60 * 1000);
-    
+    const now = Date.now();
     const beforeCount = state.slice.items.length;
-    state.slice.items = state.slice.items.filter(item => {
-      return !item.expiresAt || item.expiresAt > cutoff;
-    });
+    // One rule for the sweep AND the sync merge (itemGone) — if they
+    // disagreed, a pruned item would come back with every pull.
+    state.slice.items = state.slice.items.filter(item => !itemGone(item, now));
     
     if (state.slice.items.length !== beforeCount) {
       log(`Pruned ${beforeCount - state.slice.items.length} expired items`);
@@ -267,7 +283,13 @@
   
   function setAppToggle(appNs, enabled) {
     if (!state.slice.appToggles) state.slice.appToggles = {};
+    if (state.slice.appToggles[appNs] === enabled) return;   // NT-2: no change
     state.slice.appToggles[appNs] = enabled;
+    // NT-2: the toggles travel WITH the settings object (newer
+    // settingsRev wins both). This path never moved the rev, so a
+    // toggle changed on one device could never win on another.
+    if (!state.slice.settings) state.slice.settings = defaultSettings();
+    state.slice.settings.settingsRev = nextSettingsRev();
     noteChange();          // N1: toggle = user data — must travel (same
                            // dirty contract as setSetting/markAsRead;
                            // notifSliceSet never passes through here,
@@ -308,7 +330,6 @@
   function fireToast(item, isCatchUp = false) {
     if (!state.ready) return;
     
-    const position = getSetting('position', 'top-right');
     const styleName = getSetting('style', 'oros');
     const style = TOAST_STYLES[styleName] || TOAST_STYLES.oros;
     const soundType = getSetting('sound', 'none');
@@ -366,7 +387,7 @@
         e.stopPropagation();
         try { item.action.fn(); }
         catch (actErr) { err('Action callback failed', actErr); }
-        markAsRead(item.id);
+        markItemRead(item);
         toast.remove();
       });
     }
@@ -377,14 +398,14 @@
       if (e.target.classList.contains('notif-action')) return;
       openTarget(item);
       // Mark as read
-      markAsRead(item.id);
+      markItemRead(item);
       toast.remove();
     });
     
     // Dismiss button
     toast.querySelector('.notif-dismiss').addEventListener('click', (e) => {
       e.stopPropagation();
-      markAsRead(item.id);
+      markItemRead(item);
       toast.remove();
     });
     
@@ -501,7 +522,10 @@
     // Wave 3/#6 — "television:channel:<id>": stream-failure
     // notifications reopen the channel. The shell bridge accepts
     // a bare string id (wrapped into { channelId } internally).
-    television: function (id) { if (typeof window.__orosOpenTelevision === 'function') window.__orosOpenTelevision(id); }
+    television: function (id) { if (typeof window.__orosOpenTelevision === 'function') window.__orosOpenTelevision(id); },
+    // "system:open:<appId>": plain open of an app (SY-D3 notice —
+    // opening the app is what merges its waiting changes).
+    system:   function (id) { if (typeof window.__orosOpenApp === 'function') window.__orosOpenApp(id); }
   };
 
   function openTarget(item) {
@@ -540,7 +564,7 @@
       'bottom-left': { bottom: '20px', left: '20px', right: 'auto', top: 'auto' },
       'left': { top: '50%', left: '20px', transform: 'translateY(-50%)', right: 'auto' }
     };
-    return map[position] || map['top-right'];
+    return map[position] || map['bottom-right'];
   }
 
   function escapeHtml(str) {
@@ -557,6 +581,19 @@
       saveSliceThrottled(200);
       updateBadge();
     }
+  }
+
+  // NT-1: a toast holds the item object it was fired with. A sync
+  // merge can replace that inbox entry by its twin from another
+  // device (same dedupKey, other id) while the toast is still on
+  // screen — look the entry up by id, then by dedupKey.
+  function markItemRead(item) {
+    if (!item) return;
+    var hit = state.slice.items.find(i => i.id === item.id);
+    if (!hit && item.dedupKey && item.type !== 'transient') {
+      hit = state.slice.items.find(i => i.dedupKey === item.dedupKey);
+    }
+    if (hit) markAsRead(hit.id);
   }
 
   // ===== BADGE LOGIC — TASKBAR INTEGRATION =====
@@ -614,9 +651,9 @@
     panel.style.cssText = `
       position: fixed;
       top: calc(58px + env(safe-area-inset-top,0px));
-      right: 20px;
-      width: 360px;
-      max-height: 500px;
+      right: 12px;
+      width: min(360px, calc(100vw - 24px));
+      max-height: min(500px, calc(100vh - 80px));
       background: var(--panel-bg);
       color: var(--text);
       border: 1px solid var(--accent);
@@ -668,6 +705,26 @@
       }
     };
     setTimeout(() => document.addEventListener('click', closeOutside), 0);
+
+    // NT-3: Escape closes the panel — and ONLY the panel. Capture
+    // phase on window + stopPropagation: the shell's own Escape
+    // handler (document, bubble) would otherwise ALSO return to the
+    // desktop and close the running app while the panel stayed open.
+    // Self-removing: whichever way the panel closed (bell, outside
+    // click, Escape), the next Escape finds no panel and unhooks.
+    const onEsc = (e) => {
+      if (!document.body.contains(panel)) {
+        window.removeEventListener('keydown', onEsc, true);
+        return;
+      }
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      panel.remove();
+      document.removeEventListener('click', closeOutside);
+      window.removeEventListener('keydown', onEsc, true);
+      updateBadge();
+    };
+    window.addEventListener('keydown', onEsc, true);
     
     document.body.appendChild(panel);
   }
@@ -739,96 +796,166 @@
     return d.toLocaleDateString(loc, { day: '2-digit', month: 'short' });
   }
   
-    // ===== SYNC SLICE — LWW PER-FIELD MERGE =====
-  // Contract (shell.js reality): registerSlice(name, getFn, setFn).
-  // Getter must be PURE (fdSliceGet lesson — no side effects).
-  // Setter is pull-fed: NO markDirty inside (anti-loop contract).
-  function notifSliceGet() {
-    return state.slice;
+    // ===== SYNC SLICE — REAL MERGE (NT-1) =====
+  // What was wrong: the slice was registered with THREE arguments —
+  // no merge function. The "merge" lived inside the setter, but the
+  // engine never called the setter: for a mergeless slice whose
+  // local copy differs from its baseline, sync.js parks the remote
+  // and pushes local. And local ALWAYS differed, because the getter
+  // returned the live object, device-local meta included, and
+  // meta.lastSweep moves every minute. Result: every sync cycle on
+  // every device uploaded the whole blob with nothing changed, and
+  // inboxes / read states / settings never converged between devices.
+  // Now: the getter returns a CANONICAL copy without meta, and the
+  // union is a pure, symmetric merge function the engine can call.
+
+  function sortKeys(v) {
+    if (Array.isArray(v)) return v.map(sortKeys);
+    if (v && typeof v === 'object') {
+      var o = {};
+      Object.keys(v).sort().forEach(function (k) { o[k] = sortKeys(v[k]); });
+      return o;
+    }
+    return v;
   }
 
+  // An item leaves the inbox AT its expiresAt (emit stamps
+  // now + ttlDays, default 7). Owner decision 2026-10-06: the old
+  // rule added 7 more days on top, so "7 days" was really 14.
+  // The sweep and the merge share this one rule.
+  function itemGone(item, now) {
+    return !!(item && typeof item.expiresAt === 'number' && item.expiresAt <= now);
+  }
+
+  function numOrNull(v) { return (typeof v === 'number' && isFinite(v)) ? v : null; }
+
+  function itemCanon(it) {
+    if (!it || typeof it !== 'object' || typeof it.id !== 'string' || !it.id) return null;
+    return {
+      id: it.id,
+      dedupKey: (typeof it.dedupKey === 'string' && it.dedupKey) ? it.dedupKey : null,
+      ns: (typeof it.ns === 'string') ? it.ns : '',
+      type: (typeof it.type === 'string') ? it.type : 'reminder',
+      title: (typeof it.title === 'string') ? it.title : '',
+      body: (typeof it.body === 'string') ? it.body : '',
+      deepLink: (typeof it.deepLink === 'string') ? it.deepLink : null,
+      createdAt: numOrNull(it.createdAt) || 0,
+      firedAt: numOrNull(it.firedAt),
+      readAt: numOrNull(it.readAt),
+      expiresAt: numOrNull(it.expiresAt)
+    };
+  }
+
+  function maxOrNull(a, b) {
+    if (a === null) return b;
+    if (b === null) return a;
+    return Math.max(a, b);
+  }
+
+  // Deterministic order between two copies of ONE logical item: the
+  // earlier one is the original; then the smaller id; then (same id,
+  // different text — should not exist) the greater JSON.
+  function itemFirst(a, b) {
+    if (a.createdAt !== b.createdAt) return (a.createdAt < b.createdAt) ? a : b;
+    if (a.id !== b.id) return (a.id < b.id) ? a : b;
+    return (JSON.stringify(a) >= JSON.stringify(b)) ? a : b;
+  }
+
+  // Two copies of one logical item → one. "Read" and "fired" can
+  // never be undone by a stale replica (latest stamp wins).
+  function itemJoin(a, b) {
+    var base = itemFirst(a, b);
+    return {
+      id: base.id, dedupKey: base.dedupKey, ns: base.ns, type: base.type,
+      title: base.title, body: base.body, deepLink: base.deepLink,
+      createdAt: base.createdAt,
+      firedAt: maxOrNull(a.firedAt, b.firedAt),
+      readAt: maxOrNull(a.readAt, b.readAt),
+      expiresAt: base.expiresAt
+    };
+  }
+
+  // Canonical slice — ONE builder for the getter, the merge and the
+  // setter. Items: valid, not gone, ONE per logical notification —
+  // identity = the dedupKey (both devices' engines emit the same
+  // reminder under the same key with different ids), or the id for
+  // an item without a key. Newest first, capped at 300.
+  // Settings / toggles with sorted keys.
+  function notifBuild(settings, toggles, rawItems, now) {
+    var byKey = {};
+    for (var i = 0; i < rawItems.length; i++) {
+      var c = itemCanon(rawItems[i]);
+      if (!c || itemGone(c, now)) continue;
+      var k = c.dedupKey ? ('k:' + c.dedupKey) : ('i:' + c.id);
+      byKey[k] = byKey[k] ? itemJoin(byKey[k], c) : c;
+    }
+    var items = Object.keys(byKey).map(function (k) { return byKey[k]; });
+    items.sort(function (a, b) {
+      if (a.createdAt !== b.createdAt) return b.createdAt - a.createdAt;
+      return (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0;
+    });
+    if (items.length > 300) items = items.slice(0, 300);
+    return {
+      ver: 1,
+      settings: sortKeys(settings),
+      appToggles: sortKeys(toggles),
+      items: items
+    };
+  }
+
+  function notifSide(x) {
+    x = (x && typeof x === 'object') ? x : {};
+    var settings = (x.settings && typeof x.settings === 'object') ? x.settings : defaultSettings();
+    return {
+      settings: settings,
+      rev: (typeof settings.settingsRev === 'number' && isFinite(settings.settingsRev)) ? settings.settingsRev : 0,
+      toggles: (x.appToggles && typeof x.appToggles === 'object') ? x.appToggles : {},
+      items: Array.isArray(x.items) ? x.items : []
+    };
+  }
+
+  // Getter: PURE (new objects, no writes) and canonical. meta is
+  // device-local and never leaves this device.
+  function notifSliceGet() {
+    var s = notifSide(state.slice);
+    return notifBuild(s.settings, s.toggles, s.items, Date.now());
+  }
+
+  // mergeFn(local, remote) — symmetric and deterministic.
+  // Settings + toggles travel together: higher settingsRev wins the
+  // pair; on an exact tie the greater JSON (the same on both devices).
+  function notifMerge(a, b) {
+    var A = notifSide(a), B = notifSide(b);
+    var w;
+    if (A.rev !== B.rev) w = (A.rev > B.rev) ? A : B;
+    else {
+      var ja = JSON.stringify([sortKeys(A.settings), sortKeys(A.toggles)]);
+      var jb = JSON.stringify([sortKeys(B.settings), sortKeys(B.toggles)]);
+      w = (ja >= jb) ? A : B;
+    }
+    return notifBuild(w.settings, w.toggles, A.items.concat(B.items), Date.now());
+  }
+
+  // Setter: pull-fed. Receives the MERGED slice from the engine (or
+  // a raw remote in the degraded paths) and adopts it. NO markDirty
+  // inside (anti-loop contract).
   function notifSliceSet(remote) {
     if (!remote || typeof remote !== 'object' ||
         !Array.isArray(remote.items)) return;
 
-    var local = state.slice;
-
-    // 1. Settings: LWW via settingsRev clock (higher rev wins; on an
-    //    EXACT tie the remote settings win — deterministic tie-break;
-    //    equal-rev replicas with differing content cannot exist in
-    //    practice, so there is nothing local to protect).
-    var rRev = (typeof remote.settings === 'object' &&
-                remote.settings !== null &&
-                typeof remote.settings.settingsRev === 'number')
-      ? remote.settings.settingsRev : -1;
-    var lRev = (typeof local.settings.settingsRev === 'number')
-      ? local.settings.settingsRev : -1;
-    var settings = (rRev > lRev)
-      ? remote.settings
-      : (rRev === lRev && rRev > -1 && remote.settings) ? remote.settings
-      : local.settings;
-
-    // 2. App toggles: per-app LWW is impossible without per-toggle
-    //    clocks — keep it honest: newer settingsRev owner wins WHOLE
-    //    object (toggles are part of the settings universe).
-    var appToggles = (rRev > lRev && remote.appToggles) ? remote.appToggles
-                    : (local.appToggles) ? local.appToggles : {};
-
-    // 3. Items: union by id, LWW per-field on the ONLY merge-sensitive
-    //    field (readAt — non-null timestamp always beats null:
-    //    "read" can never be undone by a stale unread replica).
-    var byId = {};
-    var i, it;
-    for (i = 0; i < local.items.length; i++) {
-      it = local.items[i];
-      if (it && typeof it.id === 'string') byId[it.id] = it;
-    }
-    for (i = 0; i < remote.items.length; i++) {
-      it = remote.items[i];
-      if (!it || typeof it !== 'object' || typeof it.id !== 'string') continue;
-      var mine = byId[it.id];
-      if (!mine) { byId[it.id] = it; continue; }
-      // Same logical item: merge the mutable fields, local-first for
-      // display fields, LWW for readAt.
-      var readAt = (typeof it.readAt === 'number' && it.readAt !== null)
-        ? ((typeof mine.readAt === 'number' && mine.readAt !== null)
-            ? Math.max(it.readAt, mine.readAt)   // both read → latest
-            : it.readAt)                          // remote read, local not
-        : ((typeof mine.readAt === 'number') ? mine.readAt : null);
-      var firedAt = Math.max(
-        (typeof mine.firedAt === 'number') ? mine.firedAt : 0,
-        (typeof it.firedAt === 'number') ? it.firedAt : 0) || null;
-      // Prefer whichever replica carries the richer payload.
-      var base = (typeof mine.body === 'string') ? mine : it;
-      byId[it.id] = {
-        id: base.id, dedupKey: base.dedupKey, ns: base.ns, type: base.type,
-        title: base.title, body: base.body, deepLink: base.deepLink,
-        createdAt: Math.min(
-          (typeof mine.createdAt === 'number') ? mine.createdAt : Infinity,
-          (typeof it.createdAt === 'number') ? it.createdAt : Infinity),
-        firedAt: firedAt, readAt: readAt, expiresAt: base.expiresAt || null
-      };
-    }
-
-    var items = [];
-    for (var k in byId) {
-      if (Object.prototype.hasOwnProperty.call(byId, k)) items.push(byId[k]);
-    }
-    items.sort(function (a, b) { return b.createdAt - a.createdAt; });
-    // Cap: keep the slice lean (matches the 7-day TTL doctrine;
-    // a synced past can never balloon the slice).
-    if (items.length > 300) items = items.slice(0, 300);
-
+    var side = notifSide(remote);
+    var built = notifBuild(side.settings, side.toggles, side.items, Date.now());
     state.slice = {
       ver: 1,
-      settings: settings,
-      appToggles: appToggles,
-      items: items,
-      meta: local.meta   // meta is device-local (never merge it)
+      settings: built.settings,
+      appToggles: built.appToggles,
+      items: built.items,
+      meta: (state.slice && state.slice.meta) ? state.slice.meta : { lastSweep: 0 }   // device-local
     };
     // Pull-fed: save + repaint, deliberately NO noteChange().
     saveSliceNow();
     updateBadge();
+    applyStackPosition();   // a position chosen on another device applies now, not at the next boot
     // Σ2-N3: items that fired on ANOTHER device while this tab was
     // closed get their toast NOW — same rules as bootSweep: fresh
     // (<24h), enabled, app-toggled, not quiet. Too-late items go
@@ -997,7 +1124,9 @@
     // Register sync slice — engine encrypts the payload in transit
     // (AES-GCM inside sync.js), the local cache is plaintext
     // same-trust-zone as every other slice.
-    window.orosSync.registerSlice('notifs', notifSliceGet, notifSliceSet);
+    // NT-1: no storage key (this module is always live, a closed-app
+    // proxy is never needed) — and the merge function as 5th argument.
+    window.orosSync.registerSlice('notifs', notifSliceGet, notifSliceSet, null, notifMerge);
 
     // Build GNOME-style toast stack container (top-right, below taskbar)
     ensureToastStack();
@@ -1038,7 +1167,7 @@
   // moved (open toasts keep their DOM/observers intact).
   function applyStackPosition() {
     if (!toastStack) return;
-    var pos = getPositionStyles(getSetting('position', 'top-right'));
+    var pos = getPositionStyles(getSetting('position', 'bottom-right'));   // default = defaultSettings()
     // Wipe ALL placement keys first — switching from e.g.
     // 'bottom-left' back to 'top-right' must clear the old
     // bottom/left, not layer the new top/right over them.

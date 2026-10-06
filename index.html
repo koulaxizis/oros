@@ -30,8 +30,8 @@
     <style>#oro-splash { display: none !important; }</style>
   </noscript>
 
-  <link rel="stylesheet" href="style.css?v=0.39.06">
-  <link rel="stylesheet" href="pet.css?v=0.39.06">
+  <link rel="stylesheet" href="style.css?v=0.39.05">
+  <link rel="stylesheet" href="pet.css?v=0.39.05">
 
 </head>
 <body>
@@ -234,28 +234,70 @@
 
   tryRegister();
 
+  // SW-2: the reload still needs no click, but it no longer lands in
+  // the middle of work. A new worker took over → reload at the first
+  // SAFE moment: desktop showing (no app open, menu and dialogs
+  // closed), nothing playing, nothing ringing, and no unsynced change
+  // that the engine is about to push (that one would also raise the
+  // browser's "Leave site?" prompt). Everything is read defensively:
+  // this broker must work against any cached shell.js.
   var reloading = false;
-  navigator.serviceWorker.addEventListener("controllerchange", function () {
+  var waitTimer = null;
+
+  function safeToReload() {
+    try {
+      // SW-3: back from Dropbox with ?code= — sync.js is exchanging a
+      // ONE-SHOT code. A reload now would replay it and the sign-in
+      // would fail. sync.js cleans the URL when the exchange settles.
+      if (/[?&]code=/.test(window.location.search) &&
+          sessionStorage.getItem("oros-pkce-verifier")) return false;
+      var run = document.getElementById("oros-running");
+      if (run && run.classList.contains("active")) return false;      // an app is open
+      var menu = document.getElementById("app-menu");
+      if (menu && menu.classList.contains("open")) return false;      // user is in the menu
+      if (document.querySelector("dialog[open]")) return false;        // a dialog is open
+      if (document.getElementById("sc-info-overlay")) return false;    // Info modal
+      if (document.getElementById("alarm-toast")) return false;        // an alarm is ringing
+      var h = window.__orosRadioHost;
+      if (h && h.audio && !h.audio.paused) return false;               // radio is playing
+      var sy = window.orosSync;
+      // Dirty blocks only while the engine can actually clear it
+      // (connected + unlocked + online); otherwise waiting is pointless.
+      if (sy && typeof sy.isDirty === "function" && sy.isDirty() &&
+          navigator.onLine &&
+          typeof sy.isConnected === "function" && sy.isConnected() &&
+          typeof sy.hasPassphrase === "function" && sy.hasPassphrase()) return false;
+    } catch (e) { /* unknown shell state — do not block the update */ }
+    return true;
+  }
+
+  function reloadWhenSafe() {
     if (reloading) return;
+    if (!safeToReload()) {
+      // Poll ONLY while an update is waiting (no idle timer otherwise).
+      if (!waitTimer) waitTimer = setInterval(reloadWhenSafe, 3000);
+      return;
+    }
     reloading = true;
-    // BUG (found during D1-4 review): the splash script CONSUMES
-    // "oros-skip-splash" but NOTHING ever wrote it — every silent-
-    // update reload re-showed the 10s splash screen. This is the
-    // missing writer, exactly where the consumer expects it.
+    if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
+    // The splash script consumes this flag: no second splash after
+    // an update reload.
     try { sessionStorage.setItem("oros-skip-splash", "1"); } catch (e) {}
     window.location.reload();
-  });
+  }
+
+  navigator.serviceWorker.addEventListener("controllerchange", reloadWhenSafe);
 })();
 </script>
 
-  <script src="translations.js?v=0.39.06"></script>
-  <script src="sync.js?v=0.39.06"></script>
-  <script src="vault.js?v=0.39.06"></script>
-  <script src="pet.js?v=0.39.06"></script>
-  <script src="fs.js?v=0.39.06"></script>
-  <script src="dialogs.js?v=0.39.06"></script>
-  <script src="shell.js?v=0.39.06"></script>
-  <script src="notifications.js?v=0.39.06"></script>
+  <script src="translations.js?v=0.39.05"></script>
+  <script src="sync.js?v=0.39.05"></script>
+  <script src="vault.js?v=0.39.05"></script>
+  <script src="pet.js?v=0.39.05"></script>
+  <script src="fs.js?v=0.39.05"></script>
+  <script src="dialogs.js?v=0.39.05"></script>
+  <script src="shell.js?v=0.39.05"></script>
+  <script src="notifications.js?v=0.39.05"></script>
 
 </body>
 </html>

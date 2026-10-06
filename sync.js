@@ -1,5 +1,16 @@
 // ============================================================
 // orOS Core v0.9.2 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// 2026-10-06 (audit; the version line above is unchanged on purpose):
+//   SY-D1 — every upload is CONDITIONAL on the cloud revision this
+//     device last pulled and applied (Dropbox mode "update"/"add" +
+//     strict_conflict). A refused write → pull, merge, retry. No
+//     device can replace a blob it has not seen any more.
+//   SY-D2 — cloud backup copies: one per device per day, newest 7.
+//   SY-D3 — a true conflict on a CLOSED app that can merge when open
+//     is deferred: local stays, the cloud copy is relayed untouched,
+//     the app's own merge joins both at its next open.
+//   SY-1 — factory reset also deletes /vault. SY-2 — a failed
+//     adapter upload rejects.
 // v0.9.2 — applyPayload unknown-slice carry: FRESH read-modify-write
 //   (parkRemote may have written the mailbox earlier in the SAME
 //   loop — a pre-loop snapshot would clobber that park, destroying
@@ -97,7 +108,10 @@
   var DROPBOX_APP_KEY = "wnohlxz79ie8w3e";
   var BLOB_PATH       = "/orOS-data.json";
   var BACKUP_PREFIX   = "/orOS-backup-";
-  var MAX_BACKUPS     = 5;
+  var MAX_BACKUPS     = 7;                    // SY-D2
+  var BACKUP_EVERY_MS = 24 * 60 * 60 * 1000;  // SY-D2: one cloud backup per device per day
+  var BACKUP_STAMP_KEY = "oros-sync-last-backup";   // device-local: ms of this device's last backup copy
+  var MAX_PUSH_RETRIES = 3;                   // SY-D1: pull-merge-retry rounds after a conflict
   var BLOB_VERSION    = 1;
   var PBKDF2_ROUNDS   = 100000;
   var INTERVAL_KEY = "oros-sync-interval";   // minutes; 0 = off
@@ -105,6 +119,8 @@
   var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
   var SLICES_KEY      = "oros-slices";       // persisted registry: name -> storageKey
   var CARRY_KEY       = "oros-remote-carry"; // mailbox: name -> data (unknown + parked-remote slices)
+  var MERGE_REG_KEY   = "oros-slices-merge"; // SY-D3: name -> 1 for apps whose LIVE registration brought a mergeFn
+  var DEFER_KEY       = "oros-sync-deferred"; // SY-D3: name -> 1 while a closed app's conflict waits for its live merge
   var BASELINES_KEY   = "oros-sync-baselines"; // v0.8: name -> hash(last synced content)
   var DEBOUNCE_MS     = 5000;                // v0.7.1: quiet period after last edit
 
@@ -144,6 +160,22 @@
   // Feeds ensureCloudReadable() — the push-side stale-passphrase
   // guard below.
   var lastSuccessfulPullAt = 0;
+
+  // SY-D1 — OPTIMISTIC CONCURRENCY. Revision of the cloud blob whose
+  // content this device has INCORPORATED (pulled, decrypted, applied):
+  //   undefined = unknown (boot, disconnect, after a conflict)
+  //   null      = the cloud is known to be EMPTY
+  //   string    = Dropbox "rev" of the blob we last applied / uploaded
+  // Every upload is conditional on it. If another device pushed in
+  // between, Dropbox refuses the write and the engine pulls, merges
+  // and retries — a device can no longer replace a blob it has not
+  // seen (the lost-update hole: tab-hide and manual pushes uploaded
+  // blind, and a clean closed-app proxy on the other device then
+  // LWW-applied the stale copy over its own newer edit).
+  var cloudRev;
+  // null = not probed yet; true/false = can the browser read the
+  // "dropbox-api-result" response header (it carries the rev)?
+  var revHeaderWorks = null;
 
   // v0.7.1: debounced reconcile timer (one shot at a time)
   var debounceTimer = null;
@@ -354,22 +386,98 @@
     });
   }
 
-  function contentUpload(path, text) {
+  // SY-D1: `rev` makes the write CONDITIONAL (Dropbox native modes):
+  //   string → {".tag":"update","update":rev}: lands only if the file
+  //            is still at that revision;
+  //   null   → "add": lands only if NO file exists at the path;
+  //   undefined → plain overwrite (no caller left in the engine).
+  // strict_conflict closes the documented soft spots of both modes
+  // (deleted file, identical content). A refused write answers 409
+  // with error_summary "path/conflict/…" — callers branch on it.
+  function contentUpload(path, text, rev) {
+    var arg = { path: path, mode: "overwrite", autorename: false, mute: true };
+    if (rev === null) {
+      arg.mode = "add";
+      arg.strict_conflict = true;
+    } else if (typeof rev === "string" && rev) {
+      arg.mode = { ".tag": "update", "update": rev };
+      arg.strict_conflict = true;
+    }
     return ensureFreshToken().then(function (token) {
       return fetch(CONTENT_API + "files/upload", {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + token,
           "Content-Type": "application/octet-stream",
-          "Dropbox-API-Arg": JSON.stringify({
-            path: path,
-            mode: "overwrite",
-            autorename: false,
-            mute: true
-          })
+          "Dropbox-API-Arg": JSON.stringify(arg)
         },
         body: text
       });
+    });
+  }
+
+  // SY-D1: was this 409 a refused conditional write?
+  function uploadConflict(res) {
+    return res.json().catch(function () { return null; }).then(function (body) {
+      var sum = (body && typeof body.error_summary === "string") ? body.error_summary : "";
+      return { conflict: /conflict/.test(sum), summary: sum };
+    });
+  }
+
+  // SY-D1: download the blob TOGETHER with its revision.
+  // Resolves { text: string|null, rev: string|null|undefined }
+  // (text null + rev null = empty cloud).
+  // Fast path: the rev rides the download's own response header.
+  // Fallback (header not readable): ask for the metadata FIRST, then
+  // download. If another device pushes between the two calls we hold
+  // NEWER content under an OLDER rev — the next conditional upload is
+  // then refused and we simply pull again. The opposite order could
+  // pair OLDER content with a NEWER rev, i.e. a silent overwrite.
+  function revFromDownload(res) {
+    try {
+      var h = res.headers.get("dropbox-api-result");
+      if (h) {
+        var meta = JSON.parse(h);
+        if (meta && typeof meta.rev === "string" && meta.rev) return meta.rev;
+      }
+    } catch (e) {}
+    return undefined;
+  }
+
+  function fetchCloudBlobSlow() {
+    return rpc("files/get_metadata", { path: BLOB_PATH })
+      .then(function (res) {
+        if (res.status === 409) return null;                 // no file (yet)
+        if (!res.ok) throw new Error("metadata failed: " + res.status);
+        return res.json().then(function (meta) {
+          return (meta && typeof meta.rev === "string" && meta.rev) ? meta.rev : undefined;
+        });
+      })
+      .then(function (revBefore) {
+        return contentDownload(BLOB_PATH).then(function (res) {
+          if (res.status === 409) return { text: null, rev: null };
+          if (!res.ok) throw new Error("download failed: " + res.status);
+          return res.text().then(function (text) {
+            // A file that appeared AFTER the metadata call has no rev
+            // we can vouch for → undefined (push will look again).
+            return { text: text, rev: (revBefore === null) ? undefined : revBefore };
+          });
+        });
+      });
+  }
+
+  function fetchCloudBlob() {
+    if (revHeaderWorks === false) return fetchCloudBlobSlow();
+    return contentDownload(BLOB_PATH).then(function (res) {
+      if (res.status === 409) return { text: null, rev: null };
+      if (!res.ok) throw new Error("download failed: " + res.status);
+      var rev = revFromDownload(res);
+      if (rev === undefined) {
+        revHeaderWorks = false;
+        return fetchCloudBlobSlow();
+      }
+      revHeaderWorks = true;
+      return res.text().then(function (text) { return { text: text, rev: rev }; });
     });
   }
 
@@ -539,7 +647,15 @@
         var path = adapterPath(key);
         var doUpload = (blob.size > SINGLE_SHOT_MAX)
           ? function () { return adapterUploadSession(path, blob); }
-          : function () { return adapterUploadOnce(path, blob); };
+          : function () {
+              // SY-2: the single-shot leg returned the raw Response and
+              // nobody looked at it — a 401/429/507 resolved as success
+              // (the session leg already throws). Same contract now.
+              return adapterUploadOnce(path, blob).then(function (res) {
+                if (!res.ok) throw new Error("upload failed: " + res.status);
+                return res;
+              });
+            };
         // Unconditional write (typical for immutable content-addressed
         // objects — same content → same bytes, overwrite is a no-op).
         if (knownRev === undefined || knownRev === null) return doUpload();
@@ -794,6 +910,21 @@
     else localStorage.removeItem(CARRY_KEY);
   }
 
+  // SY-D3 — tiny persisted name sets.
+  function flagHas(key, name) {
+    var o = readJson(key);
+    return !!(o && o[name]);
+  }
+  function flagSet(key, name, on) {
+    var o = readJson(key) || {};
+    if (!!o[name] === !!on) return;
+    if (on) o[name] = 1; else delete o[name];
+    if (Object.keys(o).length > 0) writeJson(key, o);
+    else { try { localStorage.removeItem(key); } catch (e) {} }
+  }
+  function isDeferred(name) { return flagHas(DEFER_KEY, name); }
+  function deferredNames() { return Object.keys(readJson(DEFER_KEY) || {}); }
+
   function persistSliceEntry(name, storageKey) {
     var reg = readJson(SLICES_KEY) || {};
     reg[name] = storageKey;
@@ -899,6 +1030,14 @@
 
     if (storageKey) persistSliceEntry(name, storageKey);
 
+    // SY-D3: remember that this app can merge when it is open — the
+    // closed-app proxy has no mergeFn of its own and needs to know.
+    // And the app is live now: whatever conflict was deferred for it
+    // is resolved by the mailbox flush right below (merge of the
+    // parked cloud copy with local) and by every pull from here on.
+    flagSet(MERGE_REG_KEY, name, !!storageKey && !!slices[name].merge);
+    flagSet(DEFER_KEY, name, false);
+
     // Mailbox flush: if remote data for this slice was carried here —
     // parked by the divergence guard while the app was closed, or
     // carried while the slice was unknown on this device — deliver it
@@ -984,11 +1123,23 @@
     }
   }
 
-  function collectPayload() {
+  // forCloud = true ONLY for the upload in pushAttempt (SY-D3): a
+  // closed app whose conflict is deferred sends the CLOUD's own copy
+  // (parked in the mailbox) instead of its local one — the cloud and
+  // the other devices stay exactly as they are until this app opens
+  // and merges. Manual export and the folder export pass nothing and
+  // always carry this device's own local data.
+  function collectPayload(forCloud) {
     var payload = { shell: null, apps: {}, meta: {} };
+    var relayCarry = forCloud ? (readCarry() || {}) : null;
     Object.keys(slices).forEach(function (name) {
       var data;
-      try { data = slices[name].get(); } catch (e) { data = null; }
+      if (relayCarry && !slices[name].live && isDeferred(name) &&
+          relayCarry[name] !== undefined && relayCarry[name] !== null) {
+        data = JSON.parse(JSON.stringify(relayCarry[name]));
+      } else {
+        try { data = slices[name].get(); } catch (e) { data = null; }
+      }
       if (name === "shell") payload.shell = data;
       else payload.apps[name] = data;
     });
@@ -1089,6 +1240,29 @@
       var unpushed = !baselineExists(name) ||
                      !baselineMatches(name, localStr);
       if (unpushed && remoteStr !== localStr) {
+        // SY-D3 — TRUE CONFLICT on a closed app that CAN merge when
+        // open: local has work the cloud never saw, AND the cloud
+        // copy is not the one this device last synced (or nothing was
+        // ever synced here). Pushing local would replace the other
+        // device's work in the cloud — and on that device, where a
+        // clean proxy would then adopt it. Instead: keep local, park
+        // the cloud copy, relay it untouched (collectPayload), and
+        // let the app's own merge join both the next time it opens
+        // here. Nothing is overwritten anywhere in the meantime.
+        // (Only-local-changed — cloud still equals the baseline — is
+        // not a conflict and takes the old path below: local goes up.)
+        if (!slice.live && flagHas(MERGE_REG_KEY, name) &&
+            (isDeferred(name) || !baselineExists(name) ||
+             !baselineMatches(name, remoteStr))) {
+          parkRemote(name, remoteData);
+          flagSet(DEFER_KEY, name, true);
+          return {
+            changed: false,
+            cloudStale: false,         // the cloud keeps its own copy
+            data: local,
+            baselineCandidate: null
+          };
+        }
         parkRemote(name, remoteData);
         return {
           changed: false,
@@ -1097,6 +1271,8 @@
           baselineCandidate: null    // local stays "diverged" until ITS push
         };
       }
+      // Both sides ended up identical: nothing left to defer.
+      if (remoteStr === localStr && isDeferred(name)) flagSet(DEFER_KEY, name, false);
     }
 
     var final = remoteData;
@@ -1193,8 +1369,29 @@
       from_path: BLOB_PATH,
       to_path:   BACKUP_PREFIX + new Date().toISOString().replace(/[:.]/g, "-") + ".json"
     })
-      .then(function () { return true; })
+      .then(function (res) { return !!(res && res.ok); })   // SY-D2: a refused
+                                // copy (409 = nothing to copy) is NOT a backup
       .catch(function () { return false; });   // nothing pushed yet — fine
+  }
+
+  // SY-D2 — spaced cloud backups. A copy before EVERY push with only
+  // the newest few kept meant the whole safety net covered the last
+  // minute of typing (a push follows every 5s burst). Now: one copy
+  // per device per day, newest MAX_BACKUPS kept — a week of history
+  // from one device. The copy is the blob as it was BEFORE today's
+  // first push, i.e. yesterday's last state. Best-effort, as before:
+  // a failed copy never blocks the push and is retried at the next.
+  function maybeBackup() {
+    if (cloudRev === null) return Promise.resolve(false);   // empty cloud — nothing to copy
+    var last = parseInt(localStorage.getItem(BACKUP_STAMP_KEY) || "0", 10) || 0;
+    var now = Date.now();
+    if (last > now) last = 0;                               // clock moved back
+    if (now - last < BACKUP_EVERY_MS) return Promise.resolve(false);
+    return backupExistingRemote().then(function (made) {
+      if (!made) return false;
+      try { localStorage.setItem(BACKUP_STAMP_KEY, String(now)); } catch (e) {}
+      return pruneBackups().then(function () { return true; });
+    });
   }
 
   function pruneBackups() {
@@ -1312,6 +1509,27 @@
   }
 
 
+  // SY-D1: the download-decrypt-apply core, shared by pull() and by
+  // push()'s "learn the cloud first" / conflict-retry legs (which
+  // already hold the push lock and must not go through pull()'s
+  // entry gates). cloudRev moves ONLY after the blob was decrypted
+  // and applied — a rev we could not read or apply is never ours.
+  function syncDown() {
+    return fetchCloudBlob().then(function (cloud) {
+      if (!cloud.text) {
+        lastSuccessfulPullAt = Date.now();   // empty cloud — any passphrase OK
+        cloudRev = null;
+        return { ok: true, empty: true, applied: 0 };
+      }
+      return decryptBlob(cloud.text).then(function (payload) {
+        var applied = applyPayload(payload);
+        lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
+        cloudRev = cloud.rev;              // may be undefined (fallback race) → push re-learns
+        return { ok: true, empty: false, applied: applied };
+      });
+    });
+  }
+
   function pull() {
     if (suspended)      return Promise.reject(new Error("engine-suspended"));
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
@@ -1328,24 +1546,7 @@
     if (pullInFlight)   return Promise.reject(new Error("pull already in flight"));
 
     pullInFlight = true;
-    return contentDownload(BLOB_PATH)
-      .then(function (res) {
-        if (res.status === 409) return null;
-        if (!res.ok) throw new Error("download failed: " + res.status);
-        return res.text();
-      })
-      .then(function (blobText) {
-        if (!blobText) {
-          lastSuccessfulPullAt = Date.now();   // empty cloud — any passphrase OK
-          return { ok: true, empty: true, applied: 0 };
-        }
-        return decryptBlob(blobText)
-          .then(function (payload) {
-            var applied = applyPayload(payload);
-            lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
-            return { ok: true, empty: false, applied: applied };
-          });
-      })
+    return syncDown()
       .catch(function (err) {
         console.error("orOS sync: pull() failed:", err);
         throw err;
@@ -1373,29 +1574,64 @@
     if (pullInFlight)   return Promise.reject(new Error("pull already in flight"));
 
     pushInFlight = true;
-    var payload = collectPayload();
+    return pushAttempt(0)
+      .finally(function () {
+        pushInFlight = false;
+      });
+  }
+
+  // SY-D1: one conditional upload round. Called again (bounded) after
+  // a refused write, each time with a FRESH payload collected after
+  // the cloud's newer state was pulled and merged.
+  function pushAttempt(attempt) {
+    // Unknown cloud (no pull yet this session, or a conflict just told
+    // us it moved): learn it first — download, decrypt, apply.
+    var learn = (cloudRev === undefined) ? syncDown() : Promise.resolve();
+    var payload = null;
     var encryptedText = null;
-    var dirtyGenAtCollect = dirtyGen;   // sync #1: generation of the
+    var dirtyGenAtCollect = 0;
+    var revAtCollect;
+
+    return learn
+      .then(function () {
+        // Still unknown = the provider gave us no revision at all.
+        // Refuse: an unconditional overwrite is exactly what this
+        // engine no longer does.
+        if (cloudRev === undefined) throw new Error("cloud-rev-unknown");
+        payload = collectPayload(true);   // SY-D3: deferred closed apps relay the cloud copy
+        dirtyGenAtCollect = dirtyGen;   // sync #1: generation of the
                                         // dirty state this payload
                                         // represents. Edits landing
                                         // after this point are NOT in
                                         // this upload — their flag
                                         // must survive the push.
-
-    return ensureCloudReadable()
+        revAtCollect = cloudRev;        // the state this payload was merged against
+        return ensureCloudReadable();
+      })
       .then(function () { return encryptBlob(payload); })
       .then(function (text) {
         encryptedText = text;
-        return backupExistingRemote();
+        return maybeBackup();           // SY-D2
       })
       .then(function () {
-        return contentUpload(BLOB_PATH, encryptedText);
+        return contentUpload(BLOB_PATH, encryptedText, revAtCollect);
       })
       .then(function (res) {
+        if (res.status === 409) {
+          return uploadConflict(res).then(function (c) {
+            if (c.conflict) {
+              cloudRev = undefined;     // the cloud moved — look again
+              throw new Error("cloud-changed");
+            }
+            throw new Error("upload failed: 409 " + c.summary);
+          });
+        }
         if (!res.ok) throw new Error("upload failed: " + res.status);
-        return pruneBackups();
+        return res.json().catch(function () { return null; });
       })
-      .then(function () {
+      .then(function (meta) {
+        // The blob in the cloud is now exactly our payload.
+        cloudRev = (meta && typeof meta.rev === "string" && meta.rev) ? meta.rev : undefined;
         // v0.8: the push that just succeeded IS the moment "what the
         // cloud holds" and "what the local slices hold" became one.
         // Record the baselines for every slice we just uploaded —
@@ -1410,6 +1646,9 @@
         // LWW wipe the newer local edit. The payload snapshot taken
         // at collect time is exactly what the cloud now holds.
         Object.keys(slices).forEach(function (name) {
+          // SY-D3: a deferred slice uploaded the CLOUD's copy, not its
+          // local one — that is no proof of "local is synced".
+          if (!slices[name].live && isDeferred(name)) return;
           var data = (name === "shell") ? payload.shell : payload.apps[name];
           recordBaseline(name, (data === null || data === undefined) ? "null" : JSON.stringify(data));
         });
@@ -1422,8 +1661,11 @@
         if (dirtyGen === dirtyGenAtCollect) clearDirty();
         return { ok: true };
       })
-      .finally(function () {
-        pushInFlight = false;
+      .catch(function (err) {
+        if (err && err.message === "cloud-changed" && attempt < MAX_PUSH_RETRIES) {
+          return pushAttempt(attempt + 1);   // pull + merge + fresh payload
+        }
+        throw err;   // dirty flag untouched — nothing was uploaded
       });
   }
 
@@ -1588,7 +1830,12 @@
         .then(function (res) { return res.ok ? res.json() : { entries: [] }; })
         .catch(function () { return { entries: [] }; })
         .then(function (listing) {
-          var paths = [BLOB_PATH];   // direct delete even if listing failed
+          // SY-1: ADAPTER_ROOT ("/vault") is a FOLDER, so the name
+          // filter below never matched it: every Vault Drive object
+          // and its manifest survived a "brand new OS" reset. One
+          // delete_v2 on the folder removes it recursively (409 when
+          // it never existed — harmless).
+          var paths = [BLOB_PATH, ADAPTER_ROOT];   // direct delete even if listing failed
           (listing.entries || []).forEach(function (e) {
             if (e.path_lower && e.name && e.name.indexOf("orOS-") === 0 &&
                 paths.indexOf(e.path_lower) === -1) paths.push(e.path_lower);
@@ -1623,6 +1870,7 @@
     tokenExpiry  = 0;
     cachedAccount = null;
     passphrase   = null;
+    cloudRev     = undefined;   // SY-D1: another account = another cloud
     localStorage.removeItem("oros-db-access");
     localStorage.removeItem("oros-db-refresh");
     localStorage.removeItem("oros-db-expiry");
@@ -1740,6 +1988,9 @@
     registerSlice:     registerSlice,    // (name, get, set, storageKey?, merge?)
     markDirty:         markDirty,        // apps call this on data change
     getIntervalMinutes: getIntervalMinutes,
+    // SY-D3: names of closed apps whose local changes wait for a
+    // merge (the shell turns each into one notice that opens the app).
+    getDeferred:        deferredNames,
     setIntervalMinutes: setIntervalMinutes,
     isDirty:           isDirty,
 
@@ -1775,6 +2026,9 @@
       // reset suspension) are NOT failures — an honest "busy" message
       // replaces the misleading generic "sync failed".
       if (/already in flight/.test(msg)) return "sync.err.busy";
+      // SY-D1: other devices kept pushing through every retry round —
+      // nothing was uploaded, nothing is lost, the next attempt wins.
+      if (msg === "cloud-changed")      return "sync.err.busy";
       if (msg === "engine-suspended")   return "sync.err.suspended";
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
@@ -1812,23 +2066,24 @@
                              // flight — no concurrent push may encrypt
                              // with the mid-transition passphrase.
 
-      return contentDownload(BLOB_PATH)
-        .then(function (res) {
-          if (res.status === 409) {
-            // Nothing in cloud yet — fall through to the empty-cloud
-            // branch BELOW: setPassphrase + markDirty happen there,
-            // exactly once. A duplicate setPassphrase here would run
-            // TWO concurrent sealPassphrase() chains — on a first-ever
-            // vault (no device key yet) the race can leave localStorage
-            // sealed with key1 while IndexedDB keeps key2 = a vault
-            // that can never unseal. Return null only.
-            return null;
-          }
-          if (!res.ok) throw new Error("download failed: " + res.status);
-          return res.text();
+      // SY-D1: the blob is fetched WITH its revision and re-uploaded
+      // conditionally — a push from another device between this
+      // download and the re-encrypted upload is refused instead of
+      // being silently replaced by the older content.
+      var cpRev;
+      return fetchCloudBlob()
+        .then(function (cloud) {
+          // Empty cloud → text null: fall through to the empty-cloud
+          // branch BELOW. setPassphrase + markDirty happen there,
+          // exactly once (a duplicate setPassphrase would run TWO
+          // concurrent sealPassphrase() chains — on a first-ever vault
+          // the race can leave a vault that can never unseal).
+          cpRev = cloud.rev;
+          return cloud.text;
         })
         .then(function (blobText) {
           if (!blobText) {
+            cloudRev = null;            // SY-D1: known-empty cloud
             setPassphrase(newPw, remember);
             // SY2: symmetrical with the non-empty path — the local
             // passphrase changed, so the local epoch advances. If a
@@ -1868,11 +2123,22 @@
               // backdoor). Mirrors push()'s overwrite-with-net rule.
               passphrase = newPw;
               return encryptBlob(payload).then(function (encrypted) {
+                if (cpRev === undefined) throw new Error("cloud-rev-unknown");
                 return backupExistingRemote().then(function () {
-                  return contentUpload(BLOB_PATH, encrypted)
+                  return contentUpload(BLOB_PATH, encrypted, cpRev);
                 })
                   .then(function (uploadRes) {
+                    if (uploadRes.status === 409) {
+                      return uploadConflict(uploadRes).then(function (c) {
+                        throw new Error(c.conflict ? "cloud-changed"
+                                                   : "upload failed: 409 " + c.summary);
+                      });
+                    }
                     if (!uploadRes.ok) throw new Error("upload failed: " + uploadRes.status);
+                    // SY-D1: the cloud now holds the OLD remote content
+                    // re-encrypted — not necessarily what this device
+                    // last applied. Unknown → the next push pulls first.
+                    cloudRev = undefined;
                     setPassphrase(newPw, remember);
                     // SY7: the blob just uploaded is encrypted with
                     // the passphrase now in memory — arm the trust
