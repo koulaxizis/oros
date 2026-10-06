@@ -7,7 +7,7 @@
 > - **Tagline:** "A static operating system in your browser"
 > - **Last full code revision:** 2026-10-01. Files re-read for this revision: `shell.js` (APP_VERSION 0.38.12 era), `sync.js` v0.9.2, `notifications.js`, `sw.js`, `apps.json`, `writer/*`. Everything else is carried forward from earlier revisions and marked as such where it matters.
 > - **Last consolidation:** 2026-10-05, editorial only. The raw session notes pasted below Part XII between 2026-10-01 and 2026-10-05 were folded into the Parts and normalized into Part XII. **No code file was re-read for it.** Facts taken from those notes carry the tag **[log]**: they were checked by the session that wrote them, not by this revision. Treat them as claims until checked against the file (Part I §3).
-> - **Core re-verification (full-suite audit, started 2026-10-05):** files are re-read one at a time; each one replaces its **[log]** / [carried] claims with a dated "verified". Done so far: `index.html` (as served with `?v=0.39.05`), `shell.js` (`APP_VERSION` 0.39.06, 5,562 lines), `sync.js` (header "v0.9.2", 1,916 lines), `notifications.js` (`VERSION` 1.0.0, 1,144 lines), `translations.js` (212 keys per language, 458 lines), `sw.js` (`CACHE_VERSION` oros-v0.39.06, 384 lines), `apps.json` (24 apps), `.github/workflows/bump-version.yml`, `dialogs.js` (204 lines), `fs.js` (`FS_VERSION` 0.1.0, 954 lines), `vault.js` (API `version` "0.1.0", 398 lines), `pet.js` (header "v0.3", 2,195 lines) + `pet.css`.
+> - **Core re-verification (full-suite audit, started 2026-10-05):** files are re-read one at a time; each one replaces its **[log]** / [carried] claims with a dated "verified". Done so far: `index.html` (as served with `?v=0.39.05`), `shell.js` (`APP_VERSION` 0.39.06, 5,562 lines), `sync.js` (header "v0.9.2", 1,916 lines), `notifications.js` (`VERSION` 1.0.0, 1,144 lines), `translations.js` (212 keys per language, 458 lines), `sw.js` (`CACHE_VERSION` oros-v0.39.06, 384 lines), `apps.json` (24 apps), `.github/workflows/bump-version.yml`, `dialogs.js` (204 lines), `fs.js` (`FS_VERSION` 0.1.0, 954 lines), `vault.js` (API `version` "0.1.0", 398 lines), `pet.js` (header "v0.3", 2,195 lines) + `pet.css`, `style.css` (1,422 lines), `manifest.webmanifest`. **Every core file has now been re-read** (A8 closed); what remains is the apps (audited so far: Files).
 > - **This file also IS the project changelog** (Part XII). `CHANGELOG.md` was retired and consolidated here.
 
 ## Map
@@ -222,7 +222,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - Alarms are entities (`mtime`); `orosAlarms.remove()` writes a tombstone to `oros-alarm-tombs`. A fired daily alarm advances with `mtime` = the occurrence that fired, so every device writes identical bytes. A fired or expired once-alarm needs no tombstone (dead by time).
   - `shellSliceGet()` and `shellMerge()` share one builder (`shellBuild`): fixed key order, alarms sorted by id, tombstones sorted. `shellSliceSet()` never marks dirty; it adopts the incoming stamps, advances due daily alarms and keeps a local once-alarm that is due but has not rung yet.
   - First run of v2: stamps are created (0 = default value, 1 = customized) and a `shell` copy parked in `oros-remote-carry` by the old mergeless engine is dropped.
-- **Proxy slices (4 args, no `mergeFn`):** `files-disk` (`oros-files-disk-cache`; pending flag `oros-files-disk-pending`; `fdSliceGet` is PURE), `radio` (`oros-radio-data`), `television` (`oros-television-data`). The live app registration overrides a proxy while the app is open.
+- **Proxy slices (4 args, no `mergeFn`):** `files-disk` (`oros-files-disk-cache`; pending flag `oros-files-disk-pending`; `fdSliceGet` is PURE; the cache is rewritten, and the engine marked dirty, only when `fdDiskKey` says the disk content changed; a failed cache write raises the daily notice `files-disk-toobig-<ymd>`), `radio` (`oros-radio-data`), `television` (`oros-television-data`). The live app registration overrides a proxy while the app is open.
 - **Shell globals it defines:** `orosLang`, `orosAppTheme` (`{accent}` of the active skin), `orosShortcuts.handle`, `orosAlarms` (`add`, `remove`, `list`), `__orosFilesDiskTouched`, `__orosFilesTakePending`, and the bridges below. It consumes `orosSync`, `orosNotifs`, `orosDialog`, `orosPet`, `orosFS`, `orosFilesDisk` (set by files.js), `__orosRadioHost` (set by radio.js).
 - **Deep-link bridges** (live push into `#app-frame` when that app runs, otherwise a sessionStorage staging key + `openAppById`):
 
@@ -295,6 +295,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - The rev comes from the `dropbox-api-result` response header of the download; if the browser cannot read it, the engine switches to `files/get_metadata` BEFORE each download (older rev + newer content can only cause a refused write, never a silent overwrite).
   - No unconditional overwrite of the blob remains in the engine. `changePassphrase` uses the same conditional write and leaves `cloudRev` unknown afterwards.
 - **Cloud backups (SY-D2):** `maybeBackup()` copies the current blob at most once per `BACKUP_EVERY_MS` (24 h) per device (`oros-sync-last-backup`), then prunes to `MAX_BACKUPS` (7). Best-effort: a failed copy never blocks the push and is retried at the next. There is no UI to restore one (A43).
+- **`changePassphrase` and the Vault (VD-KEY):** `vaultRewrapBegin(oldPw, newPw)` runs after the old passphrase is proven and BEFORE the blob is re-encrypted: `key.json` gets two wraps (new, old). After the blob has landed, `finish()` leaves only the new wrap. If the key file exists but cannot be read or written, the whole change is aborted with nothing changed (`vault-key-rewrap-failed`, or `cloud-changed`). The vault key itself does not change: a passphrase change is not a key rotation.
 - **Empty cloud:** `contentDownload` never throws on 409; callers branch on `res.status === 409`.
 - **OAuth return:** `handleOAuthRedirect()` exchanges `?code=` with the verifier from sessionStorage and cleans the URL (`replaceState("/")`) only when the exchange settles. The update broker waits for that (SW-3).
 - **`wipeEverything()`:** suspend → wait ≤3 s for flights → delete `/orOS-data.json`, every root entry named `orOS-*`, and `/vault` (SY-1) → revoke the token → `disconnect()`.
@@ -337,6 +338,15 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - Holds shell strings, `app.<id>` (24 apps), `category.<lowercase id>` (10), `syncdot.<state>`, `notifs.*`, `sc.*`, `wx.*`, `alarm.*`. Keys built at runtime: `app.` + id, `category.` + id, `syncdot.` + state, `notifs.pos.` + position.
 - Counts are written as "label: n" (`sync.slices.applied`), relative times in Greek as abbreviations («πριν {n} λεπ. / ώρ. / ημ.»): both read correctly for 1 and for many.
 - Not referenced by any core file (2026-10-06): `bar.clock.tooltip`, `gps.use`, `notifs.duration.sec`, and 18 `radio.*` keys (A48).
+
+### `style.css` + `manifest.webmanifest` [verified 2026-10-06]
+
+- `style.css` carries no version. 16 skins × 2 themes = 32 palette blocks, each defining the same 11 variables (`--bg`, `--bg-desktop`, `--bar-bg`, `--text`, `--text-dim`, `--accent`, `--accent-hover`, `--accent-soft`, `--panel-bg`, `--border`, `--shadow`; checked by script). Skin-neutral tokens in `:root`: `--danger`, `--ok`, `--warn`.
+- Reset `* { margin:0; padding:0; box-sizing:border-box }`, followed since 2026-10-06 by `dialog { margin: auto; }` (R32 for every native dialog in the shell document).
+- Layout: `#oros-bar` fixed at the TOP (40 px + safe area, z-index 1000) · `#oros-desktop` below it · `#app-menu` (the scroll container; z-index 999; a near-full-width sheet at ≤480 px) · `#oros-running` (z-index 900, covers the desktop AND the pet layer at 400) · version toast 1200 · Info overlay 1300 · inline `#sc-toast` 1400 · alarm / legacy reminder overlays 1450 · splash 9999 · toast stack 10000 · inbox panel 10001.
+- `[hidden] { display:none !important }` is the LAST rule of the file.
+- Fonts: Nunito 400–800 from `fonts/` (`font-display: swap`).
+- `manifest.webmanifest`: `name` / `short_name` orOS, `start_url` `/?source=pwa`, `id` and `scope` `/`, `display` standalone, `background_color` #14120d (the splash), `theme_color` #1b1a18 (the meta tag), five icons (SVG any, PNG 192 / 512 any, PNG 192 / 512 maskable), `lang` en, plus the non-standard `version` member stamped by the workflow.
 
 ### `sw.js` [verified 2026-10-06, `CACHE_VERSION` "oros-v0.39.06"]
 
@@ -383,7 +393,13 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 ### `vault.js` (Vault Drive, `window.orosVault`) [verified 2026-10-06; the file says version "0.1.0", older notes call it v0.1.1]
 
 - One IIFE, ES5. Everything is late-bound (`orosSync`, `orosSync.storage`, `orosSync.vaultCrypto`, `orosFS`), so loading before `fs.js` is fine (A24 closed for this file). Usable only when connected AND unlocked.
-- **Cloud:** `manifest.json` (encrypted JSON `{ ver:1, files{ <full path>: { h, s, m, mime } } }`, `h` = SHA-256 of the PLAINTEXT) and `objects/<h>` (encrypted content). Paths and names live only inside the manifest; the object key is the plaintext hash (A57).
+- **Cloud (VD-KEY, 2026-10-06):**
+  - `key.json` = `{ ver:1, wraps:[…] }`: one random 32-byte vault key, each wrap = that key sealed with a passphrase (`encryptJson({k})`). Created with a create-only write; `sync.js` re-wraps it on a passphrase change.
+  - From the vault key: an AES-GCM key (SHA-256 of `"orOS-vault-enc:"` + key) and an HMAC-SHA-256 key (`"orOS-vault-name:"` + key).
+  - `manifest.json` = envelope `0x02 | iv(12) | AES-GCM(JSON { ver:2, files{ <full path>: { h, s, m, mime } } })`; `h` = SHA-256 of the plaintext, visible only inside the manifest.
+  - `objects/<hex HMAC(h)>` = the same envelope around the file content. The provider sees neither names, nor contents, nor content hashes.
+  - LEGACY (written before VD-KEY): a manifest that is passphrase-sealed JSON text (first byte `{`), objects `objects/<h>` in the passphrase envelope. Read as entries marked `v:1`; an entry is converted when a device that holds the file pushes it again (done automatically at the next sync); the legacy object is deleted only after the new manifest has landed.
+  - The vault key lives in memory only (`vaultKeys`). It is looked up again when a manifest cannot be opened with it, and whenever the cloud has no manifest (the vault is being created or was wiped).
 - **Local keys (device-local):** `oros-vault-queue` (map path → generation; an older list is still read), `oros-vault-manifest` (cache of what this device has synced), `oros-vault-rev` (record only, nothing reads it), `oros-vault-absent-at`.
 - **API:** `version`, `fileChanged(path)`, `fileDeleted(path)` (both just queue the path), `sync(reason)` → `{ ok, stats{downloaded, uploaded, deleted, kept, failed} }` or `{ ok, skipped }`, rejects `vault busy` when one is running, `isQueued`, `queueLength`, `onStatus(fn)` (`start`, `done`, `fail`, `conflict-retry`, `file-fail`, `stats`), `manifestEntry(path)`, `localPaths()`.
 - **Triggers:** 3 s after the last queued change; tab hidden (only if something is queued); tab visible; `online`; 4 s after boot.
@@ -414,7 +430,21 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Runtime:** one `requestAnimationFrame` loop while enabled (it stops with the tab hidden); HUD refreshed once a second; language re-read on every HUD refresh (PT-4); `--pet-floor-lift` read at most once a second (PT-6).
 - **Keys (no modifiers, pet active, no input focused, no dialog open):** F feed · S sleep / wake · C catch · L activity log.
 - Notifications: `ns:"pet"`, key `pet-bday:<id>:<ymd>`; `pet` is not in `KNOWN_APPS` (no toggle, A7).
-- `pet.css`: the layer sits at `bottom: calc(var(--tb-h, 48px) + safe-area)`; `--tb-h` and `--pet-floor-lift` are not defined in `pet.css` or `shell.js` (check `style.css`, A61).
+- `pet.css`: the layer sits at `bottom: calc(var(--tb-h, 0px) + safe-area)` (the old 48 px fallback served a bottom taskbar that does not exist); `--tb-h` and `--pet-floor-lift` are hooks that nothing sets today. A running app covers the pet (z-index 900 over 400).
+
+### Files app (`files/`) [verified 2026-10-06, `?v=0.39.07`]
+
+- `files/index.html` (toolbar, tree, list, status bar, name and delete dialogs), `files/files.js` (3,075 lines, one IIFE, ES5), `files/files.css`. Search bar, import button, "More" button, column headers, storage bar, recents, context menu, preview overlay and the sync pill are built by JS.
+- All disk access goes through `window.parent.orosFS`. Device-local keys: `oros-files-data` (view prefs), `oros-files-recents`, `oros-files-storage-cache`, `oros-files-disk-meta` (`{ ts, dirty }`).
+- **How the disk syncs TODAY (blob model):** the app exposes `orosFilesDisk` on the shell window (`snapshot()`, `applyRemote(x)`, `isDirty()`, `markClean(ts)`). The shell (§9f) keeps a JSON snapshot of the WHOLE disk (base64) in localStorage `oros-files-disk-cache` and registers it as the mergeless slice `files-disk`; the snapshot travels inside the main encrypted blob.
+  - A disk change → `fs.js` and the app call `__orosFilesDiskTouched()` → 1 s later the shell re-snapshots; if the DISK differs from the cache (`fdDiskKey`: paths + kinds + contents, timestamps ignored) it rewrites the cache and marks the engine dirty (SH-F2).
+  - A remote snapshot → `fdSliceSet` → app open: `applyRemote`; app closed: staged in the cache + `oros-files-disk-pending`, applied at the next open.
+  - `applyRemote`: local dirty AND remote newer → conflict dialog (keep local / take cloud). Otherwise the snapshot is MERGED into the disk (FL-1): nothing local is deleted by an automatic apply; only "Take cloud version" replaces the disk.
+- **Known limits of the blob model (reason for FILES-V, Part X):** the whole disk must fit in localStorage next to every other app's data (a 6 MB file does not; the shell then says so once a day, SH-F1); every change re-uploads the whole disk inside the blob; a deletion on one device does not propagate (the file returns from the other device).
+- **Vault Drive is NOT wired:** the app's vault hooks test `window.orosVault` inside the app frame, where it does not exist (the module lives in the shell: `window.parent.orosVault`). They have never run. They also name only the top path of a folder operation, and file creation / Quick Edit saves have no hook.
+- Preview / Quick Edit: text ≤512 KB, images ≤10 MB; Markdown preview makes only `http`, `https`, `mailto` and relative links clickable; Quick Edit decodes strictly (a file that is not UTF-8 is not editable), keeps a BOM, and warns before discarding unsaved text.
+- Touch: first tap selects, a second tap on the same row opens it; "More" opens the actions menu (the context menu has no touch equivalent on iOS).
+- `files.css`: no `margin` reset (dialogs are centred by the browser); ends with the `[hidden]` guard; 44 px targets under `(pointer: coarse)`.
 
 ### Rules for every app
 
@@ -1050,6 +1080,11 @@ Rebuild this in any session where code is delivered.
 - **File-system suite (2026-10-06).** `fs.js` alone on a page, real OPFS and real IndexedDB in Chromium. One script of 22 probes (fresh disk, UTF-8 text, a 60,000-byte slice of a larger typed array, nested mkdir, ls, stat, every refusal with its code, moves, export, rm, merge import, import with a malformed entry, dirty flag, wipe) run on BOTH drivers; the two result objects must be identical except for `mode`. IndexedDB is forced by deleting `FileSystemFileHandle.prototype.createWritable` before the script loads (this is also the "Safari 15.2–18" simulation). Backend scenarios, each across a reload of the same profile: browser gains the write method; OPFS refuses to open for one session (`getDirectory` rejecting); first run with OPFS refusing.
 - **Vault suite (2026-10-06, 19 checks, three profiles).** Two devices with real OPFS disks, real `fs.js`, `sync.js` (adapter) and `vault.js`, mock Dropbox (delay switch for manifest uploads, object-upload counter). Checks: first file then another sweep; receive, edit, delete, later changes after a deletion; same content at a new path; idle; a file saved during a slow sync; two devices pushing at once; local content the queue never heard of vs a remote version and vs a remote deletion; one object missing in the cloud; the cloud vault removed; first manifest created by two devices at once; a queue in the old list format. The ORIGINAL `vault.js` fails 13 of the 19.
 - **Pet suite (2026-10-06, 8 checks, three profiles).** Real `pet.js` in the real shell, two devices: rename through the HUD (waiting longer than one HUD refresh), a new device joining, idle rounds, "pet on" travelling, sleep on one device and wake on the other (a tired pet: a rested one cannot stay asleep), language switch, and a fuzz of `mergePetStates` + `mergePetSettings` (20,000 rounds; symmetric, idempotent, fixed point, a provisional pet never wins, a later wake is never asleep). The ORIGINAL `pet.js` fails 6 of the 8.
+- **Vault-key checks (2026-10-06):** the vault suite grew to 27 checks (no object named after a content hash, binary v2 manifest, passphrase change on one device, a device left on the old passphrase, the new passphrase on that device, a brand-new device, vault rebuilt with a new key while another device holds the old one) plus a 6-check legacy suite: a vault written by the ORIGINAL `vault.js` is received, converted (v2 manifest, key file, keyed names, legacy objects removed), read by a third device, survives a passphrase change, and cannot be written by the old code.
+- **Stylesheet checks (2026-10-06):** real `style.css` + `pet.css`, desktop and mobile: centre offset of a plain shell `<dialog>` and of `dialog#wxcity`, gap under the pet layer, menu inside the viewport and scrolling inside `#app-menu`, menu scroll kept after a toggle, `[hidden]` winning.
+- **App suites run INSIDE the real shell (first one: Files, 2026-10-06).** The app's real files are served under `<site>/<app>/`, the test `apps.json` lists the app, the app is opened with `__orosOpenApp(id)` after the shell has settled (2 s), and the test drives its frame through the UI. Sync is exercised through `orosSync.reconcile()` (the automatic path, so the shell's listeners run), not through manual pull / push. Two-device loss scenario for any app with a mergeless slice: both devices in sync → each makes a different addition → A syncs, B syncs, A syncs, B syncs → both must hold both additions. Idle check: three blocks of four reconciles, the last two must upload nothing.
+- **Files suite (2026-10-06):** 12 checks on desktop, 14 on firefox-like, 15 on mobile (the download and picker checks need the fallback paths; the second-tap check needs a coarse pointer). The ORIGINAL files fail the two-device check (a file is deleted), the idle check (uploads 1, 1, 2), the hidden-state check, and have no touch access to the actions.
+- The `mobile` profile also removes the three File System Access pickers (as on iOS), so it exercises the download / input fallbacks.
 - **Menu test (2026-10-06):** real `apps.json`, category headers read in EN and EL with app counts and collapsed state; also the new shell against the old lowercase file.
 
 **Format oracles.**
@@ -1062,6 +1097,8 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-06 · Christos: "yes, prepare it" (VD-KEY).** The Vault gets its own key, wrapped by the passphrase; object names are keyed. His own vault is empty today, so no content of his is converted; the legacy path exists for any vault written by the earlier code.
 
 - **2026-10-06 · A52 (delegated: "fix it the way you think is most correct")**
   - The menu groups categories case-insensitively and orders them by the label the user reads, in the language shown.
@@ -1171,6 +1208,7 @@ Rebuild this in any session where code is delivered.
 - ⊗ Radio DNS/blocking diagnosis: de1 mirror opens in a tab but fails from page context (suspected adblocker). Retest in incognito without extensions.
 - ⊗ Radio RX-N1..N5 cleanup candidates (favicon preloading, shadowing `isFavorite`, unused `wasOffline`, asymmetric polling, stop/kill switch).
 - ⊗ **R31:** which rule is it? The Television v0.1.1 note cites "R32 centered dialogs"; nothing in this file defines R31. Until answered the number stays reserved.
+- ⊗ **FILES-V (recommended, waits for the owner):** make Vault Drive the sync channel of the Files app and retire the `files-disk` blob from the cloud payload. Plan: (1) `vault.js` gains `touchTree(path)` (queue every known path under it and every file found under it: covers create, edit, delete, move and folder operations with one call); (2) `files.js` calls it after every mutation through `window.parent.orosVault`, and its pill / conflict UI follows the vault; (3) `shell.js` stops registering `files-disk` for the cloud and removes the localStorage cache; (4) `sync.js` drops `files-disk` from the cloud payload and from the mailbox, while manual export / import keep carrying the disk (import = merge); (5) one-time seeding: each device queues its whole disk. Result: per-file union, deletions that propagate, no localStorage limit, no whole-disk upload per change.
 - ⊗ **Greek wording (suggestions, not applied):** `alarm.title` «Ειδοποίηση» for "Alarm" (the same overlay serves timers); `sync.err.auth` «— επανασύνδεση» → «— συνδέσου ξανά»; English terms left in Greek strings (`sc.info.cap` "Offline-first", "tracking"; "API key" in the service lines; "cloud", "browser").
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
 - ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
@@ -1190,7 +1228,7 @@ Rebuild this in any session where code is delivered.
 - **A5 · R26 sweep.** Run the two-device convergence test on every app with a `mergeFn` (unsorted arrays or device-local fields cause silent endless pushes).
 - **A6 · R8 sweep.** grep apps for `window.orosLang`, `window.orosSync`, `window.orosNotifs` read from the app's own window.
 - **A7 · KNOWN_APPS gaps.** List verified 2026-10-06 (18 entries, Part II). Apps that emit but are not listed get no settings toggle (`getAppToggle` defaults true): check each app while auditing it. `maps` is not needed (transient only).
-- **A8 · Core drift since 2026-10-01.** Done: `index.html`, `shell.js`, `sync.js`, `notifications.js`, `translations.js`, `sw.js`, `apps.json`, the workflow, `dialogs.js`, `fs.js`, `vault.js`, `pet.js`, `pet.css`. Still to re-read: `style.css`, `manifest.webmanifest`.
+- **A8 · Core drift since 2026-10-01 — CLOSED 2026-10-06.** Every core file re-read and its section in Part II–VIII rewritten from the file.
 - **A9 · Snapshot leftovers** (decision 2026-10-05: abolished). `shell.js` is clean: no snapshot code and no `oros-auto-snapshots`; two stale comments were the only trace (one fixed by SH-B4, the factory-reset header still says "folder-mirror snapshot files"). Still to sweep: `translations.js` (wording of `sc.info.cap`, `sc.reset.hint`, `sync.backup.hint` on browsers without folder export), `sync.js`. Approved dead code in `notifications.js` goes in the same pass.
 - **A10 · Staging keys vs factory reset — CLOSED 2026-10-05.** `scFactoryReset` sweeps every `oros-` key in sessionStorage as well as localStorage, so `oros-cal-new`, `oros-*-open`, `oros-maps-nav` and `oros-skip-splash` all go. The BR-W8-2 remark was simply wrong.
 - **A11 · Television.** (a) One note says the proxy slice carries "favorites + recents", the others say recents are device-local. (b) One note spells the key `oras-television-recents`: check the code for the typo. (c) `vendor/hls.light.min.js` present in the repo? (d) PATCH 1 (stream picker HTML/CSS) applied? (e) R26 two-device convergence was never run for it.
@@ -1212,7 +1250,7 @@ Rebuild this in any session where code is delivered.
 - **A27 · Shell scanners vs tombstones** (from `shell.js`). `cycleShellCheck` reads `periods[]` without looking at `del` (the Bible schema says periods carry it) and claims to mirror `cycle.js` byte for byte; `todoCheckTick` and `quoteCheckTick` count items without any deleted check. Compare with `cycle.js`, `todo.js`, `quote.js`: a deleted period would shift the prediction and produce a second reminder under a different key.
 - **A28 · Reminders without usage.** Shell side done 2026-10-05 (SH-B7). Left for `mood.js` / `minimalism.js`: (a) does merely opening the app write an entry / day record (the gate would then open too early or never)? (b) Mood still fires from 00:00; an hour gate like Minimalism's `remindHour` is undecided. (c) The Greek body «Κατέγραψε την είσοδό σου» is unnatural (e.g. «Πώς νιώθεις σήμερα; Σημείωσέ το.»); check whether `mood.js` emits the same key with its own text first.
 - **A29 · Info modal: Maps line — CLOSED 2026-10-06.** The string already existed (`maps.providers`) and was simply never rendered.
-- **A30 · R32 for shell dialogs** (from `shell.js`). `#chpw-dialog` and `#pwfix-dialog` are styled inline with no `margin:auto`; `#wxcity` and `#sc-info-overlay` rely on `style.css`. Check the reset in `style.css`.
+- **A30 · R32 for shell dialogs — CLOSED 2026-10-06.** Confirmed with the real stylesheet: every native dialog of the shell opened in the top-left corner (centre offset −507 / −297 px on desktop). Fixed by one rule in `style.css`.
 - **A31 · Radio tray** (from `shell.js`). Stop and Pause do the same thing (`audio.pause()`); a real Stop would drop the stream. Also no `orosTray` exists in the shell. Needs `radio.js` (host API: is there `stop()`, `favoriteToggle()`?).
 - **A32 · Escape and forwarded keys.** Inbox panel CLOSED 2026-10-06 (NT-3). Left for `calculator.js` (A16): its parent-document key routing also uses Escape.
 - **A33 · Factory reset coverage.** Cloud side CLOSED 2026-10-05 (SY-1). `vault.js` keeps no storage of its own beyond four `oros-vault-*` localStorage keys, which the reset sweep removes (verified 2026-10-06). Still not wiped locally: Cache Storage `oros-television-api`. Note for the reset hint: another device that still holds the files will put them back in the cloud at its next sync (VD-1), exactly like the slices do; "repeat on your other devices" is what prevents that.
@@ -1229,21 +1267,24 @@ Rebuild this in any session where code is delivered.
 - **A44 · Inbox retention — CLOSED 2026-10-06 (7 days).**
 - **A45 · Default toast position — CLOSED 2026-10-06 (bottom-right).**
 - **A46 · Feedback during quiet hours.** `emit` during quiet hours stores the item without a toast. For reminders that is the point; for the answer to a click (export done, sync failed) it means no feedback at night. Candidate: `notifySys` uses a transient toast for user-initiated results regardless of quiet hours.
-- **A47 · Stubs hide kernel bugs.** Three perpetual-upload loops were hidden by stubs: `notifications.js` (NT-1), and `pet.js` settings (PT-2), both invisible while the suites loaded empty files in their place. Real in every suite since 2026-10-06: `index.html`, `shell.js`, `sync.js`, `notifications.js`, `translations.js`, `sw.js`, `dialogs.js`, `fs.js`, `vault.js`, `pet.js`, `pet.css`. Still stubbed: `style.css`, `apps.json` (one fake app in the sync suites; the real file in the menu test). The older shell-only scenarios (boot reminders, Escape, menu rebuild, update broker) still use stubs for `sync`, `notifications` and `translations` by design.
+- **A47 · Stubs hide kernel bugs — CLOSED 2026-10-06 for the core.** Loops and layout bugs hidden by stubs so far: `notifications.js` (NT-1), `pet.js` settings (PT-2), shell dialogs (A30). Every suite now runs with ALL real core files (`index.html`, `shell.js`, `sync.js`, `notifications.js`, `translations.js`, `sw.js`, `dialogs.js`, `fs.js`, `vault.js`, `pet.js`, `pet.css`, `style.css`); only `apps.json` is a one-app double in the sync suites (the real file runs in the menu test). The same rule applies to each app when it is audited: its suite runs inside this real shell.
 - **A48 · Unreferenced strings.** `bar.clock.tooltip`, `gps.use`, `notifs.duration.sec` are used by no core file; the 18 `radio.*` keys are either used by `radio.js` through `window.parent.t` or dead (the Bible says app strings live in the app). Decide when `radio.js` is audited; remove what nothing reads (R36).
 - **A49 · `collectPayload` drops an empty mergeless slice from the payload** ("guarded empty slice"). The upload then carries NO entry for that app, so the cloud loses whatever another device had stored there until that device pushes again. With SY-D1 a device always holds the latest cloud copy when it pushes, and unknown/parked entries are relayed, but a known, empty, baseline-less proxy is neither. Reproduce and decide with the first app audit that has a storage key.
 - **A50 · Every release downloads the code twice — CLOSED 2026-10-06 (SW-D1, inside `sw.js`).** The workflow confirmed that `CACHE_VERSION` and `?v=` always carry the same version.
 - **A51 · Vendor files outside the precache.** `vendor/xlsx` is not listed (Spreadsheet import/export offline?), and Leaflet's own image assets (marker icons, layer control sprites) are not listed either. Check `spreadsheet.js`, `maps.js` / `maps.css` and the `vendor/` folder.
 - **A52 · Category order and case — CLOSED 2026-10-06 (SH-B11 + `apps.json`).**
 - **A53 · Workflow, small risks left.** A second manual push while the job runs makes the bot's `git push` fail (the next push repairs it; `git pull --rebase` before the push would avoid it). Single-quoted `src='…'` / `href='…'` are not stamped. Files loaded from JavaScript are never stamped: they stay correct only because the caches are per release.
-- **A54 · Download fallbacks outside `dialogs.js`.** The shell keeps its own legacy anchor download inside `shellSaveJson` (stale-bundle fallback), and every app keeps a standalone fallback of its own (R33). Each of them revokes its blob URL on its own schedule; `dialogs.js` now waits 40 s. Check the delay in `shell.js` and in each app's fallback while auditing it; anything near 1 s gets the same fix.
-- **A55 · `fs.js` consumers after FS-2 / FS-5.** `vault.js` done 2026-10-06 (it accepts the string codes and the old names/numbers; it stops on `EIO`). Left for `files.js`: (a) any test for the NUMERIC error code (8, 17); (b) a workaround that swallowed the old rejection of a fresh OPFS disk; (c) what the Files app shows when `ready()` rejects with `EIO`, and that the shell's files-disk slice does not push an empty disk then; (d) that every write, delete, move and import in the app calls `orosVault.fileChanged` / `fileDeleted` for each affected path (a move = delete old + change new), and how the Vault and the older `files-disk` slice share the same disk.
+- **A54 · Download fallbacks outside `dialogs.js`.** `files.js` standalone fallback: 40 s since 2026-10-06. Left: the stale-bundle fallback inside `shellSaveJson` (1 s) and each remaining app.
+- **A55 · `fs.js` consumers — CLOSED 2026-10-06.** `files.js` tests only the string code `ENOENT` (which, before FS-5, never matched on OPFS: a ghost-folder fallback and the "new file" branch of the import ran through other paths); it now shows "disk not available" on any other failure (FL-7); a failed snapshot leaves the cache untouched, so no empty disk is pushed. The vault hooks are dead code (see the Files section and FILES-V).
 - **A56 · `fs.js` leftovers.** `opfsRm` and `opfsWipe` keep branches for a `removeEntry` that would not return a promise (it always does): dead code, harmless. `exportDisk` holds the whole disk in memory as base64. `mv` on OPFS does not keep the file's mtime (IndexedDB does). `usage()` reports the whole origin, not the disk.
-- **A57 · Vault object names are plaintext hashes.** `objects/<sha256 of the plaintext>` lets the storage provider test whether a KNOWN file is stored (it cannot read anything). For a privacy-first project a keyed name (HMAC with a key derived from the passphrase) would close that. It changes every object key, so it needs a migration; owner decision.
+- **A57 · Vault object names — CLOSED 2026-10-06 (VD-KEY): keyed names.**
 - **A58 · Vault leftovers.** No object GC. `oros-vault-rev` is written and never read. The local manifest lives in localStorage (about 150 bytes per file against the shared quota). A failed write of the queue key (quota) loses the "must push" record silently. The version string in the file is "0.1.0" although notes refer to "v0.1.1".
 - **A59 · Upload sessions were never exercised.** The adapter used `files/upload_sessions/…`; the Dropbox endpoints are `files/upload_session/…`. Fixed by reading (SY-5); a real upload above 150 MB has still never been seen to work, and whole-file encryption in RAM makes that size questionable anyway.
-- **A60 · A passphrase change breaks the Vault — CONFIRMED 2026-10-06 (reproduced).** `changePassphrase` re-encrypts only `/orOS-data.json`. The Vault manifest and objects stay encrypted with the OLD passphrase: after a change the Vault stops syncing on every device (`OperationError`), and a new device with the new passphrase receives nothing. Local files are untouched. Proposed dose VD-KEY (owner decision): a random vault key, stored in the cloud wrapped by the passphrase; a passphrase change re-wraps that one small file; objects and manifest are encrypted with the vault key; object names become keyed (closes A57 in the same move). Migration without touching local files: entries are converted when their device next pushes them; old objects are deleted only after the new ones are confirmed.
-- **A61 · Screen Pet leftovers.** (a) `--tb-h` / `--pet-floor-lift`: where are they set (`style.css`)? The orOS bar is at the TOP, yet the layer is lifted 48 px from the bottom by default. (b) Is the pet layer hidden while an app is running? Its HUD (178 px wide, bottom-left, z-index 400) would cover the app. (c) Pressing Sleep with energy ≥ 95 says "Good night" and the pet is awake again at once (derived rule): a silent no-op (R28). (d) Every pat and feed is a synced event and a Calendar row. (e) Emoji in the HUD (🍖 💛 ⚡ ❤️) against the "no emoji icons" doctrine of `notifications.js`. (f) Header says v0.3 while comments describe v0.3.2 and v0.4. (g) The RAF loop redraws 256 cells 60 times a second while the pet is on.
+- **A60 · A passphrase change breaks the Vault — CLOSED 2026-10-06 (VD-KEY).** Limit that remains: a legacy (`v:1`) entry not yet converted is still sealed with the passphrase of its day; let every device sync once after deploy before changing the passphrase.
+- **A61 · Screen Pet leftovers.** (a) and (b) answered 2026-10-06 (`--tb-h` fallback removed; a running app covers the pet). Left: (c) pressing Sleep with energy ≥ 95 says "Good night" and the pet is awake again at once (R28); (d) every pat and feed is a synced event and a Calendar row; (e) emoji in the HUD (🍖 💛 ⚡ ❤️) against the "no emoji icons" doctrine; (f) header says v0.3 while comments describe v0.3.2 and v0.4; (g) the RAF loop redraws 256 cells 60 times a second while the pet is on.
+- **A62 · `style.css` leftovers.** (a) `.rx-tray-eq` is styled but no core file produces it (check `radio.js`, else remove: R36). (b) No `prefers-reduced-motion` rule (sync-dot pulse, pet). (c) `--ok` / `--warn` / `--danger` are the same in light and dark themes; on a white panel the contrast of `--ok` text is low. (d) Section labels drifted ("v0.18.0: weather chip" now holds the radio chip rules).
+- **A63 · Vault key limits.** A passphrase change re-wraps the key; it does not rotate it (someone who had the old passphrase AND a copy of `key.json` keeps the key). `key.json` deleted by hand while a manifest exists = an unreadable vault. Object GC still missing (A58).
+- **A64 · Files leftovers.** (a) Size and Modified columns always show "-" and sorting by them does nothing (`fs.js` `ls()` returns only `{name, dir}`; `fs.js` is now on the table, so `ls` can return `size` / `mtime` additively). (b) The vault hooks are dead code until FILES-V replaces them. (c) `.dlg-error` is styled and never produced. (d) Search results cannot be selected (a click navigates to the parent folder). (e) No multi-select on touch. (f) The storage figure walks every file with `stat`. (g) `oros-files-disk-cache` shares the localStorage quota with every app: a disk of a few MB can make OTHER apps' saves fail (R30).
 
 ### Writer (post-Dose 3)
 
@@ -1335,6 +1376,12 @@ Rebuild this in any session where code is delivered.
 - **Vault "409":** a false alarm that hid two real bugs: a conditional write that was never conditional (rev always `null`), and a queue cleared before the write landed.
 - **`todo.js` prompt injection:** treated as data (Part 0, A12).
 - **Computed-key literal in a patch draft** (R37).
+- **A snapshot is not a diff (Files, 2026-10-06):** "this device has nothing pending" was taken to mean "this device has nothing the incoming snapshot lacks". With two devices each adding a file before syncing, the engine's rule 2 pushed one disk over the other and the receiving device wiped its own new file, toast "Disk restored from cloud". A whole-state snapshot may be merged automatically; it may replace only when the user says so.
+- **A timestamp inside the compared value** (`ts` in the disk snapshot): every refresh looked like a change, so applying a remote disk produced a push, which produced an apply on the other device, forever. Compare content, never envelopes.
+- **`window.X` inside an app frame is not the shell's `X`.** The vault hooks tested `window.orosVault` in the iframe and silently never ran. Shell APIs are `window.parent.X`.
+- **`#id { display: flex }` beats the `hidden` attribute:** "This folder is empty" stayed on screen under a full list. Every stylesheet ends with the `[hidden]` guard.
+- **`* { margin: 0 }` un-centres every native dialog.** Known for apps (R32), missed in the shell itself because the shell was always tested with a stub stylesheet.
+- **A key cached in memory outlived its file (`vault.js`, found by the suite):** after the cloud vault was wiped, a device re-uploaded everything sealed with a key whose `key.json` no longer existed. Whenever the index is gone, re-establish the key first.
 - **A default object stamped "now" (`pet.js`, like the shell slice):** every fresh device created a random pet with the newest timestamp, and "newest wins" replaced the user's real pet everywhere. A default that nobody chose carries stamp 0.
 - **Three shapes for one slice (`pet.js` settings):** getter without `ver`, merge with it, setter without it. The value could never equal itself, so every sync cycle applied "1 section" and uploaded. One canonical builder per slice, used by getter, setter and merge.
 - **A refresh that overwrote an input every second (`pet.js` rename):** the HUD repaint replaced the name element while the user typed in it.
@@ -2271,3 +2318,103 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** real Dropbox, Firefox / Safari, a phone, the Calendar feed reader.
 - **Closed:** A24. **New:** A60, A61.
 - **Status:** delivered as a full file (`pet.js`); application not yet confirmed (R4).
+
+### 2026-10-06 — vault.js + sync.js + style.css + pet.css — VD-KEY (vault key), R32 for the shell, stylesheet audit; core re-verification complete
+
+- **Decision (Christos):** VD-KEY approved; his vault is empty today.
+- **Verified by reading:** `style.css` (1,422 lines; 32 palette blocks with identical variable sets, by script) and `manifest.webmanifest`. Part II section added. With this, every core file has been re-read (A8 closed).
+- **Changes (`vault.js`) — VD-KEY:** `KEY_FILE`, `loadVaultKeys(create)`, `openWraps`, `deriveVaultKeys`, `sealV2` / `openV2`, `objectKey` (HMAC names), `openManifest` (legacy text vs v2 envelope), `downloadObject(entry)` (legacy or v2), v2 manifest write, conversion of `v:1` entries on the next sync, deletion of legacy objects after the manifest has landed, key re-established whenever the cloud has no manifest.
+- **Changes (`sync.js`) — VD-KEY:** `withPass`, `vaultKeyDoc`, `vaultRewrapBegin` → `finish`, wired into both branches of `changePassphrase`; `errorKey` maps `vault-key-rewrap-failed`.
+- **Fixes (`style.css`):** `dialog { margin: auto; }` after the reset (every shell dialog opened top-left); `[hidden]` guard moved to the end of the file; `#rx-tray-chip` gets the 44 px touch height.
+- **Fixes (`pet.css`):** `--tb-h` fallback 48 px → 0 px (the pet walks on the bottom edge).
+- **`manifest.webmanifest`:** no change needed.
+- **Schema:** cloud vault format v2 (Part II); legacy vaults are read and converted. No change to slices or local keys.
+- **Verification (Chromium; every real core file, the real stylesheet included; mock Dropbox; exact bytes; three profiles):**
+  - Vault suite 27 of 27 and legacy suite 6 of 6 on each profile. Before VD-KEY (reproduced on 2026-10-06): after a passphrase change the vault failed on every device with `OperationError`. Now: the changing device keeps syncing, a device on the old passphrase fails without touching its files and works again once it has the new one, a brand-new device receives everything. One real bug of the new code was caught by the suite and fixed before delivery (key file not re-created after a cloud wipe).
+  - Stylesheet checks, old vs new, desktop and mobile: dialog centre offset −507 / −297 px → 0 / 0 (plain dialog) and −470 / −283 → 0 / 0 (`#wxcity`); gap under the pet layer 48 → 0 px; menu scroll kept (300 px) with the real CSS.
+  - Kernel 39, SY-D3 14, notifications 23 (22), pet 8 on the three profiles with the real stylesheet in the site.
+  - `node --check` OK on `sync.js` and `vault.js`; CSS braces balanced; CRLF kept; no version touched.
+- **NOT tested:** real Dropbox, Firefox / Safari, a phone, visual review of the 32 palettes, the Files app on top of the Vault (A55).
+- **Closed:** A8, A30, A47 (core), A57, A60, A61 (a, b). **New:** A62, A63.
+- **Status:** delivered as full files (`vault.js`, `sync.js`, `style.css`, `pet.css`); application not yet confirmed (R4).
+- **Next:** the apps, one at a time, each tested inside this real shell. Suggested order by data weight: `files.js` (A55), then Notes, To-Do, Calendar, Contacts, Kanban, Writer.
+
+### 2026-10-06 — Files app + shell.js + translations.js — FL-1…FL-9, SH-F1, SH-F2; Vault found unwired
+
+- **Verified by reading (`files/files.js` 3,075 lines, `files/files.css` 827, `files/index.html`; all `?v=0.39.07`):** Part II section added. `node --check` clean; every `$()` id exists; one unused selector.
+- **Reproduced before any change (real app in the real shell, two devices, automatic sync path):**
+  - Both devices in sync; A adds `z`, B adds `y`, both sync: A's `z` is DELETED from A without a dialog (toast "Disk restored from cloud") and exists nowhere.
+  - With Files open on two devices and nothing changing, the blob is uploaded again and again (1, 1, 2 uploads per four idle reconciles).
+  - "This folder is empty" is shown under a full file list.
+  - The Vault hooks never run (`window.orosVault` inside the frame).
+- **Fixes (`files/files.js`):**
+  - **FL-1** automatic apply of a remote disk merges (`importDisk` without `wipe`); only "Take cloud version" replaces; `localHasMore()` marks the app changed when the disk holds more than the snapshot; failures of `importDisk` are counted from the array `fs.js` returns (the old `failed > 0` test on an array was never true, so a partial restore was marked clean).
+  - **FL-2** downloads are the stored bytes for every file (text files were re-encoded as UTF-8 and lost their BOM).
+  - **FL-3** Quick Edit: strict UTF-8 decoding with a refusal for anything else, BOM preserved, a warning before unsaved text is discarded (Esc, X, backdrop).
+  - **FL-4** Markdown links: scheme allowlist (`http`, `https`, `mailto`).
+  - **FL-5** the import picker takes several files (`openFiles`).
+  - **FL-6** touch: second tap opens; "More" toolbar button for the actions menu.
+  - **FL-7** a failing disk shows "The disk is not available right now" and disables creation, instead of an empty folder.
+  - **FL-8** standalone download fallback: 40 s before the blob URL is revoked.
+  - **FL-9** Greek: «Λήψη εκδοσίας cloud» → «Λήψη έκδοσης cloud»; the word "snapshot" removed from two messages.
+- **Fixes (`files/files.css`):** `[hidden]` guard as last rule; 44 px targets under `(pointer: coarse)`.
+- **Fixes (`shell.js`):** **SH-F2** the disk cache is compared by content (`fdDiskKey`) and `__orosFilesDiskTouched` no longer marks the engine dirty by itself (ends the upload ping-pong); **SH-F1** a cache write that fails (disk larger than localStorage) raises one inbox notice per day (`sync.files.toobig`) instead of silently syncing an old disk.
+- **Changes (`translations.js`):** `sync.files.toobig` (EN + EL).
+- **Schema:** none.
+- **Verification (Chromium; every real core file + the real Files app; mock Dropbox; exact bytes):** Files suite 12 / 14 / 15 checks on desktop / firefox-like / mobile, all passing: the two-device scenario ends with all three files on both devices, then three idle blocks upload 0, 0, 0; hidden state; "More" menu; second tap (mobile); downloads byte-exact for a Windows-1253 text and a BOM file (fallback profiles); Quick Edit refusal, unsaved warning, BOM kept; Markdown links; several files through the picker; "too large" notice with a 6 MB file; unavailable disk. Kernel 39, SY-D3 14, notifications 23 / 22 / 22, vault 27, pet 8 on the three profiles with the new `shell.js` and `translations.js`. `node --check` OK; CRLF kept; no version touched.
+- **NOT tested:** real Dropbox, Firefox / Safari, a phone, the native save picker (desktop downloads), drag and drop from the OS.
+- **Trade-off accepted until FILES-V:** a deletion on one device does not delete on the other; the file returns.
+- **Closed:** A55. **New:** A64. **Open decision:** FILES-V.
+- **Status:** delivered as full files (`files/files.js`, `files/files.css`, `shell.js`, `translations.js`; `files/index.html` unchanged); application not yet confirmed (R4).
+
+---
+
+# orOS Changelog — Wave 0 (Mail Skeleton)
+**Version:** 0.39.13  
+**Date:** 06 Oct 2026  
+**Channel:** beta
+
+## Core Patches
+- Added `mail` proxy slice to `shell.js` — mirrors radio/television pattern for offline sync.
+- Proxy slice key: `"oros-mail-data"` — carries account config only (no credentials).
+
+## New Applications
+- **Mail v0.1.0** (`mail/`):
+  - Account setup dialog (IMAP/POP3 + SMTP, TLS enforced, Basic auth ready)
+  - Folder navigation: Inbox / Sent / Drafts / Trash / Archive
+  - Message list with unread badges, date formatting (bilingual EN/EL)
+  - Reading pane with quick actions (archive, move to trash)
+  - Compose dialog (Ctrl+Alt+N): save draft OR queue for sending
+  - Queue badge in header (sending engine ships in Wave 1)
+  - Device-local credentials storage (`oros-mail-creds`) — NEVER synced, NEVER exported
+  - Palette bridge inherits `--accent`, `--surface`, `--text` from parent shell
+  - Unified toast notifications (palette-aware, 2.6s timeout)
+
+## Integration Requirements (pending stable commit)
+- apps.json entry for Mail (id: "mail", category: Office/Productivity)
+- Add "mail" icon to shell.js ICONS map (inline SVG)
+- Add translation keys: app.mail, folder.*, btn.*, setup.*, compose.*, toast.*
+- Update sw.js precacheManifest: mail.html, mail.css, mail.js
+- Update GitHub Action: propagate version to precache URLs
+- Register per-app notification toggle: settings.notifications["mail"]
+- Register keyboard shortcut: Ctrl+Alt+N → openCompose()
+
+## Security Rules Recorded
+- Passwords stored ONLY in device-local key `oros-mail-creds`
+- Synced slice `oros-mail-data` contains ONLY account config (hosts, ports, email)
+- Unencrypted manual export excludes `oros-mail-creds` (compliance with orOS E2E policy)
+- TLS/SSL enforced for all IMAP/SMTP connections
+
+## Known Limitations (Wave 0)
+- Sending engine not implemented yet — messages queue in `sendQueue[]`
+- No real IMAP/SMTP fetching — UI skeleton only
+- Drafts/edit works only on local queued messages (no server sync yet)
+
+## Next Wave
+- **Wave 1 — I/O:** IMAP polling (TLS), SMTP sending, drag-drop attachments, OROSDOC/JSON/TXT export
+- **Wave 2:** Search across all folders, threading, attachment preview
+
+## Notes
+- Architecture decision: proxy slice pattern (shell-hosted) preferred over iframe-owned data for sync reliability when closed
+- Shortcut safety: Ctrl+Alt+N chosen because Ctrl+N triggers new window in browsers
+- Design pattern: all dialogs close on outside click (certified orOS standard)

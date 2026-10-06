@@ -826,3 +826,18 @@ dialog label {
   .pv-edit-wrap.split .pv-md-pane { width: 100%; }
   .pv-md-pane { min-height: 160px; }
 }
+
+/* ---------- Touch targets (Bible Part VII: >= 44px on coarse pointers) ---------- */
+@media (pointer: coarse) {
+  #bar button.tool,
+  #tree-toggle { min-width: 44px; min-height: 44px; }
+  .entry { min-height: 44px; }
+  .tnode { min-height: 40px; }
+  #context-menu button { min-height: 44px; }
+  dialog menu button, .f-dialog .dlg-row button { min-height: 44px; }
+}
+
+/* The HTML [hidden] attribute must always win. Without this rule
+   "#empty { display: flex }" kept the "This folder is empty" block on
+   screen under a full file list. KEEP THIS THE LAST RULE OF THE FILE. */
+[hidden] { display: none !important; }

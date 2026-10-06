@@ -6,6 +6,10 @@
 //     strict_conflict). A refused write → pull, merge, retry. No
 //     device can replace a blob it has not seen any more.
 //   SY-D2 — cloud backup copies: one per device per day, newest 7.
+//   SY-D4 — storage adapter: conditional writes are the provider's own
+//     ("add" / "update"), no read-compare-write window.
+//   VD-KEY — changePassphrase re-wraps /vault/key.json (two steps
+//     around the blob), so the Vault survives a passphrase change.
 //   SY-D3 — a true conflict on a CLOSED app that can merge when open
 //     is deferred: local stays, the cloud copy is relayed untouched,
 //     the app's own merge joins both at its next open.
@@ -819,6 +823,87 @@
         console.warn("orOS sync: pwEpoch mismatch detected — passphrase changed elsewhere?");
       }
       return payload;
+    });
+  }
+
+  // ---------- VD-KEY: re-wrapping the Vault Drive key ----------
+  // Vault Drive content is encrypted with a random vault key; the
+  // cloud keeps that key in /vault/key.json as { ver:1, wraps:[…] },
+  // each wrap = the key sealed (encryptBlob) with ONE passphrase.
+  // A passphrase change must therefore re-wrap this one small file —
+  // before VD-KEY the Vault was sealed with the passphrase itself and
+  // a change left it unreadable on every device.
+  // Two steps around the blob re-encryption, so that no failure in
+  // between can lock anybody out:
+  //   begin  → wraps = [new, old]   (either passphrase opens the key)
+  //   finish → wraps = [new]        (after the blob has landed)
+  var VAULT_KEY_FILE = "key.json";
+
+  // encryptBlob / decryptBlob read `passphrase` synchronously when
+  // they are called — so a temporary swap around the CALL is enough.
+  function withPass(pw, fn) {
+    var prev = passphrase;
+    passphrase = pw;
+    try { return fn(); } finally { passphrase = prev; }
+  }
+
+  function vaultKeyDoc() {
+    return storageAdapter.getRevision(VAULT_KEY_FILE).then(function (rev) {
+      if (rev === null) return null;
+      return storageAdapter.getObject(VAULT_KEY_FILE).then(function (buf) {
+        if (!buf) return null;
+        return { rev: rev, doc: JSON.parse(new TextDecoder().decode(buf)) };
+      });
+    });
+  }
+
+  // Resolves a finish() function. Rejects (and the passphrase change
+  // is ABORTED with nothing changed) when the key file exists but
+  // cannot be read or written — a silent skip here is exactly how
+  // the Vault got locked out.
+  function vaultRewrapBegin(oldPw, newPw) {
+    var noop = function () { return Promise.resolve(); };
+    return vaultKeyDoc().then(function (cur) {
+      if (!cur) return noop;                              // no Vault yet
+      var wraps = (cur.doc && Array.isArray(cur.doc.wraps)) ? cur.doc.wraps : [];
+      function openAt(i) {
+        if (i >= wraps.length) return Promise.resolve(null);
+        return withPass(oldPw, function () { return decryptBlob(wraps[i]); })
+          .then(function (o) { return (o && typeof o.k === "string") ? o : openAt(i + 1); },
+                function () { return openAt(i + 1); });
+      }
+      return openAt(0).then(function (keyObj) {
+        if (!keyObj) {
+          // The key file is sealed with some OTHER passphrase: this
+          // device could not open the Vault anyway. Nothing to carry.
+          console.warn("orOS sync: vault key not opened by the old passphrase — left as is");
+          return noop;
+        }
+        var payload = { k: keyObj.k };
+        return Promise.all([
+          withPass(newPw, function () { return encryptBlob(payload); }),
+          withPass(oldPw, function () { return encryptBlob(payload); })
+        ]).then(function (sealed) {
+          return storageAdapter.putObject(VAULT_KEY_FILE,
+            JSON.stringify({ ver: 1, wraps: [sealed[0], sealed[1]] }), cur.rev)
+            .then(function () {
+              return function finish() {
+                return storageAdapter.getRevision(VAULT_KEY_FILE).then(function (rev2) {
+                  if (rev2 === null) return null;
+                  return storageAdapter.putObject(VAULT_KEY_FILE,
+                    JSON.stringify({ ver: 1, wraps: [sealed[0]] }), rev2);
+                }).catch(function (e) {
+                  // Both wraps stay: still correct, the old passphrase
+                  // simply keeps opening the vault key until a later change.
+                  console.warn("orOS sync: vault key finish step skipped:", e && e.message);
+                });
+              };
+            });
+        });
+      });
+    }).catch(function (e) {
+      throw new Error((e && e.message === "storage-conflict") ? "cloud-changed"
+                                                              : "vault-key-rewrap-failed");
     });
   }
 
@@ -2056,6 +2141,7 @@
       // SY-D1: other devices kept pushing through every retry round —
       // nothing was uploaded, nothing is lost, the next attempt wins.
       if (msg === "cloud-changed")      return "sync.err.busy";
+      if (msg === "vault-key-rewrap-failed") return "sync.err.generic";
       if (msg === "engine-suspended")   return "sync.err.suspended";
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
@@ -2111,6 +2197,10 @@
         .then(function (blobText) {
           if (!blobText) {
             cloudRev = null;            // SY-D1: known-empty cloud
+            // VD-KEY: a vault key may exist even without a blob.
+            return vaultRewrapBegin(oldPw, newPw).then(function (finishVault) {
+              return finishVault();
+            }).then(function () {
             setPassphrase(newPw, remember);
             // SY2: symmetrical with the non-empty path — the local
             // passphrase changed, so the local epoch advances. If a
@@ -2119,6 +2209,7 @@
             localStorage.setItem("oros-sync-pw-epoch", String(getWVEpoch() + 1));
             markDirty();
             return { ok: true, changed: true };
+            });
           }
           var salt = b64decode(JSON.parse(blobText).salt);
           var iv   = b64decode(JSON.parse(blobText).iv);
@@ -2148,6 +2239,9 @@
               // path if the new passphrase is ever forgotten while
               // the old one is remembered (zero-knowledge = no
               // backdoor). Mirrors push()'s overwrite-with-net rule.
+              // VD-KEY: first make the vault key openable by BOTH
+              // passphrases (or abort with nothing changed)…
+              return vaultRewrapBegin(oldPw, newPw).then(function (finishVault) {
               passphrase = newPw;
               return encryptBlob(payload).then(function (encrypted) {
                 if (cpRev === undefined) throw new Error("cloud-rev-unknown");
@@ -2181,9 +2275,14 @@
                     // new passphrase — setPassphrase ran above).
                     // Update local vault epoch
                     localStorage.setItem("oros-sync-pw-epoch", String(payload.meta.pwEpoch));
-                    return { ok: true, changed: true };
+                    // …and only now, with the blob safely under the
+                    // new passphrase, drop the old wrap.
+                    return finishVault().then(function () {
+                      return { ok: true, changed: true };
+                    });
                   });
               });
+              });   // vaultRewrapBegin
             }).catch(function (err) {
               // Either the old passphrase was wrong (OperationError)
               // or the upload failed — either way the cloud blob is

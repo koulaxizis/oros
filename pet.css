@@ -9,8 +9,11 @@
   left: 0;
   right: 0;
   height: 132px;
-  /* Sit above the taskbar: --tb-h = taskbar height (set by shell) */
-  bottom: calc(var(--tb-h, 48px) + env(safe-area-inset-bottom, 0px));
+  /* The orOS bar is at the TOP of the screen, so the pet walks on the
+     bottom edge. --tb-h is kept as a hook (nothing sets it today):
+     its old 48px fallback lifted the whole layer for a bottom
+     taskbar that does not exist. */
+  bottom: calc(var(--tb-h, 0px) + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
   z-index: 400;
   /* Floor feel — a soft gradient the pet walks on */

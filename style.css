@@ -529,6 +529,13 @@
 /* ---------- 2. Reset & base ---------- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* R32 — the reset above also removes the browser's own
+   "margin: auto" from every native <dialog>, which is what centers
+   a modal: without this rule every shell dialog (weather city,
+   passphrase, change-passphrase, pet dialogs) opens docked in the
+   top-left corner. One rule for all of them, present and future. */
+dialog { margin: auto; }
+
 body {
   font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
   background: var(--bg);
@@ -1173,6 +1180,7 @@ body {
 #rx-tray-chip {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;             /* same touch target as #wx-chip / #sync-dot-btn */
   gap: 6px;
   background: transparent;
   border: none;
@@ -1403,11 +1411,6 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
    .ev-row[draggable] cursor → calendar.css Patch 1).
    ============================================================ */
    
-/* Authority guard: the HTML [hidden] attribute must always win over
-   any author display rule (e.g. #wxc-ac in the wxcity dialog).
-   Bible Part VII — now applied to the shell itself, not just app
-   stylesheets. (Σ-R4, resolved via notifications.js cross-check.) */
-[hidden] { display: none !important; }
 
 /* ===== NOTIFICATIONS STACK — GNOME STYLE ===== */
 #oros-toast-stack {
@@ -1421,3 +1424,9 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
   z-index: 10000;
   /* Transition already set inline for slide-in */
 }
+
+/* Authority guard: the HTML [hidden] attribute must always win over
+   any author display rule (e.g. #wxc-ac in the wxcity dialog).
+   Bible Part VII — applied to the shell itself, not just app
+   stylesheets. KEEP THIS THE LAST RULE OF THE FILE. */
+[hidden] { display: none !important; }

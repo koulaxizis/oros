@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.39.10";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.39.15";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -150,7 +150,8 @@
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
-    television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>'
+    television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
+    mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
 
   function isValidSkin(id) {
@@ -1643,24 +1644,66 @@
       // markDirty only — NOT __orosFilesDiskTouched (it re-arms this
       // same refresh timer; harmless but redundant, and a loop-ish
       // shape is never worth the risk).
+      // SH-F2: compare the DISK, not the envelope. Every snapshot
+      // carries a fresh "ts" (and the export a fresh "at"), so the old
+      // whole-string comparison called every refresh a change. Applying
+      // a remote disk rewrites files → fs.js signals "touched" → this
+      // refresh ran → "changed" → dirty → push → the other device
+      // applied it → its refresh pushed again: with Files open on two
+      // devices the whole blob was uploaded back and forth forever.
       var prev = fdCacheRead();
-      var prevStr = (prev === null) ? null : JSON.stringify(prev);
-      var objStr = JSON.stringify(obj);
-      if (prevStr === objStr) return;   // steady state — nothing new
-      fdCacheWrite(obj);
+      if (prev !== null && fdDiskKey(prev) === fdDiskKey(obj)) return;   // same files, same bytes
+      if (!fdCacheWrite(obj)) {
+        // SH-F1: the whole disk did not fit in localStorage. The cache
+        // (what the sync carries) is now OLDER than the disk, and
+        // nothing said so: files added from here on simply never
+        // synced. Say it — one inbox line per day, no toast storm —
+        // and do not mark the engine dirty for a cache that did not
+        // change.
+        fdTooBigNotice();
+        return;
+      }
       if (window.orosSync && typeof window.orosSync.markDirty === "function") {
         window.orosSync.markDirty();
       }
     }).catch(function () { /* snapshot failed — cache stays */ });
   }
 
+  // Identity of a disk snapshot: its entries (path, kind, content),
+  // sorted — independent of timestamps and of entry order.
+  function fdDiskKey(snap) {
+    var ents = (snap && snap.disk && Array.isArray(snap.disk.entries)) ? snap.disk.entries : [];
+    var rows = [];
+    for (var i = 0; i < ents.length; i++) {
+      var e = ents[i];
+      if (!e || typeof e.path !== "string") continue;
+      rows.push(e.path + "\u0000" + (e.dir ? "d" : "f") + "\u0000" + (e.dir ? "" : String(e.data || "")));
+    }
+    rows.sort();
+    return rows.join("\u0001");
+  }
+
+  function fdTooBigNotice() {
+    var N = window.orosNotifs;
+    if (!N || typeof N.emit !== "function") return;
+    N.emit({
+      ns: "system",
+      key: "files-disk-toobig-" + sysYmd(),
+      type: "sys",
+      title: window.t("app.files"),
+      body: window.t("sync.files.toobig"),
+      deepLink: "system:open:files"
+    });
+  }
+
   // Called by files.js on EVERY disk mutation (its markDirty hooks
   // this). Engine dirty → 5s debounce coalesces bursts; cache
   // refresh is 1s-debounced → always settled well before the push.
   window.__orosFilesDiskTouched = function () {
-    if (window.orosSync && typeof window.orosSync.markDirty === "function") {
-      window.orosSync.markDirty();
-    }
+    // SH-F2: no immediate markDirty. The engine carries the CACHE, so
+    // there is nothing new to push until the refresh below has
+    // rewritten it — and the refresh marks dirty itself, only when
+    // the disk really differs (a pull-fed rewrite does not).
     if (fdRefreshTimer) clearTimeout(fdRefreshTimer);
     fdRefreshTimer = setTimeout(refreshFilesDiskCache, 1000);
   };
@@ -1762,6 +1805,35 @@
       window.orosSync.registerSlice(
         "television", televisionProxySliceGet, televisionProxySliceSet,
         TELEVISION_CACHE_KEY);
+    }
+  }
+
+  // ---------- 9i3. Mail proxy slice (sync when iframe closed) ----------
+  // Same pattern as radio/television. The synced blob travels via
+  // "oros-mail-data" and contains account config + message
+  // metadata/content ONLY. Passwords live exclusively in the
+  // device-local "oros-mail-creds" key and never enter this slice.
+  var MAIL_CACHE_KEY = "oros-mail-data";
+
+  function mailProxySliceGet() {
+    try {
+      var raw = localStorage.getItem(MAIL_CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function mailProxySliceSet(data) {
+    if (!data) return;
+    try {
+      localStorage.setItem(MAIL_CACHE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function registerMailProxySlice() {
+    if (window.orosSync) {
+      window.orosSync.registerSlice(
+        "mail", mailProxySliceGet, mailProxySliceSet,
+        MAIL_CACHE_KEY);
     }
   }
 
@@ -4134,6 +4206,7 @@
     registerFilesDiskSlice();
     registerRadioProxySlice();
     registerTelevisionProxySlice();
+    registerMailProxySlice();
     setTimeout(refreshFilesDiskCache, 1500);   // warm the transport cache (app open or not)
 
     // OAuth return → flip the menu to connected state once tokens land

@@ -633,7 +633,8 @@ function tokenize(formula) {
     if (ch === ":") { tokens.push({ type: TT_SEP, value: ":" }); i++; continue; }
 
     var sheetPrefix = null;
-    var m1 = s.slice(i).match(/^([^\s():;,+*/^&<>=!]+)!/);
+    var m1 = s.slice(i).match(/^'([^']*)'!/);
+    if (!m1) m1 = s.slice(i).match(/^([^\s':();,+*/^&<>=!]+)!/);
     if (m1) {
       sheetPrefix = m1[1];
       i += m1[0].length;
@@ -778,7 +779,8 @@ function resolveRef(refStr) {
   if (c < 0 || r < 0) return null;
   var sid = actSID;
   if (sheetPart !== null) {
-    var sh = findSheetByName(decodeURIComponent(sheetPart));
+    var sp = decodeURIComponent(sheetPart).replace(/^'|'$/g, "");
+    var sh = findSheetByName(sp);
     if (!sh) return null;
     sid = sh.id;
   }
@@ -809,6 +811,14 @@ function evalCell(sid, r, c, visiting) {
     res = evaluate(parse(tokenize(raw)), visiting);
   } catch (e) { res = "#ERROR!"; }
   delete visiting[key];
+  /* Imported-formula fallback: unknown functions (#NAME?) etc. ->
+     use Excel's cached value so the sheet stays usable and any
+     dependent formulas keep computing.                        */
+  if (isError(res)) {
+    var cel = state.cells[cellKey(sid, r, c)];
+    if (cel && typeof cel.cv === "string" && cel.cv !== "")
+      res = coerceNum(cel.cv);
+  }
   EVAL_CACHE[key] = res;
   return res;
 }
@@ -1840,6 +1850,26 @@ function beginRename(tabEl, labelEl, sh) {
 
 /* ===== SECTION 3f: CSV IMPORT / EXPORT ===== */
 
+/* Encoding-safe decoder: BOM sniff first (UTF-8 / UTF-16 LE+BE),
+   then strict UTF-8 validation, then Greek ANSI (windows-1253).
+   Used by CSV + Excel import so Greek never turns to mojibake. */
+function sniffDecode(buf) {
+  var u = new Uint8Array(buf);
+  if (u.length >= 3 && u[0] === 0xEF && u[1] === 0xBB && u[2] === 0xBF)
+    return new TextDecoder("utf-8").decode(u.subarray(3));
+  if (u.length >= 2 && u[0] === 0xFF && u[1] === 0xFE)
+    return new TextDecoder("utf-16le").decode(u.subarray(2));
+  if (u.length >= 2 && u[0] === 0xFE && u[1] === 0xFF)
+    return new TextDecoder("utf-16be").decode(u.subarray(2));
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(u);
+  } catch (e) {}
+  try {
+    return new TextDecoder("windows-1253").decode(u);
+  } catch (e) {}
+  return new TextDecoder("utf-8").decode(u);
+}
+
 function csvEscape(v) {
   v = String(v);
   if (/[",;\n]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
@@ -1927,7 +1957,7 @@ function csvImport(file) {
   var reader = new FileReader();
   reader.onload = function () {
     try {
-      var rows = csvParse(String(reader.result));
+      var rows = csvParse(sniffDecode(reader.result));
       if (!rows.length) { toast(t("err.corrupt")); return; }
 
       var n = nextSheetNumber();
@@ -1961,7 +1991,7 @@ function csvImport(file) {
       toast(t("err.corrupt"));
     }
   };
-  reader.readAsText(file, "utf-8");
+  reader.readAsArrayBuffer(file);
 }
 
 /* ===== SECTION 3g: XLSX / ODS IMPORT + EXPORT (#9) ===== */
@@ -2026,6 +2056,16 @@ function xlCellToRaw(cell) {
   return String(cell.v);
 }
 
+/* Excel's own cached result for a formula cell — kept as `cv`
+   (additive field, rides whole-cell LWW, no DATA_VER bump).     */
+function xlCacheRaw(cell) {
+  if (cell.t === "n") return isFinite(cell.v) ? String(cell.v) : "";
+  if (cell.t === "b") return cell.v ? "TRUE" : "FALSE";
+  if (cell.t === "d") return xlDateStr(cell.v);
+  if (cell.v === null || cell.v === undefined) return "";
+  return String(cell.v);
+}
+
 /* IMPORT — every worksheet becomes a NEW orOS sheet (never
    overwrites existing data; same contract as csvImport).     */
 function xlImport(file) {
@@ -2034,7 +2074,16 @@ function xlImport(file) {
     reader.onload = function () {
       var made = 0, truncated = false, lastId = null;
       try {
-        var wb = window.XLSX.read(reader.result, { type: "array", cellDates: true });
+        /* Real .xlsx/.ods = ZIP (magic "PK") -> read as array.
+           Plain CSV/text disguised as .xls -> sniff decode, then
+           let SheetJS parse the STRING with correct encoding.  */
+        var u8 = new Uint8Array(reader.result);
+        var isZip = u8.length > 3 && u8[0] === 0x50 && u8[1] === 0x4B &&
+                    (u8[2] === 0x03 || u8[2] === 0x05 || u8[2] === 0x07);
+        var wb = isZip
+          ? window.XLSX.read(reader.result, { type: "array", cellDates: true })
+          : window.XLSX.read(sniffDecode(reader.result),
+              { type: "string", cellDates: true });
         var X = window.XLSX.utils;
         var ts = now();
         for (var si = 0; si < wb.SheetNames.length; si++) {
@@ -2067,8 +2116,12 @@ function xlImport(file) {
               if (!cell) continue;
               var v = xlCellToRaw(cell);
               if (v === "") continue;
-              state.cells[cellKey(sh.id, R - rng.s.r, C - rng.s.c)] =
-                { v: v, mtime: ts };
+              var rec = { v: v, mtime: ts };
+              if (cell.f) {
+                var cv = xlCacheRaw(cell);
+                if (cv !== "") rec.cv = cv;
+              }
+              state.cells[cellKey(sh.id, R - rng.s.r, C - rng.s.c)] = rec;
             }
           }
         }

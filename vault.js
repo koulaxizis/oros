@@ -39,6 +39,7 @@
 
   // ---------- Configuration / constants ----------
   var MANIFEST_KEY   = "manifest.json";
+  var KEY_FILE       = "key.json";                // VD-KEY: the wrapped vault key
   var OBJECTS_PREFIX = "objects/";
   var QUEUE_KEY      = "oros-vault-queue";        // dirty paths pending push
   var LM_KEY         = "oros-vault-manifest";     // local manifest cache
@@ -154,6 +155,126 @@
     return (typeof FS().ready === "function") ? FS().ready() : Promise.resolve();
   }
 
+  // ---------- VD-KEY: the vault key ----------
+  // The Vault used to be encrypted directly with the passphrase, and
+  // its objects were named by the SHA-256 of their PLAINTEXT. Two
+  // consequences: changing the passphrase re-encrypted only the main
+  // blob and left the whole Vault unreadable on every device; and the
+  // provider could test whether a KNOWN file was stored.
+  // Now: one random 32-byte vault key, stored in the cloud as
+  // key.json = { ver:1, wraps:[…] }, each wrap being that key sealed
+  // with a passphrase (sync.js re-wraps it on a passphrase change —
+  // one small file, the content is never touched). From it:
+  //   · an AES-GCM key   → manifest + objects (envelope 0x02|iv|data)
+  //   · an HMAC key      → object names: HMAC(plaintext hash) — the
+  //                        provider sees neither names nor contents
+  //                        nor content fingerprints.
+  // LEGACY (before VD-KEY): a manifest that is passphrase-sealed JSON
+  // text, entries whose objects are "objects/<plaintext hash>" in the
+  // passphrase envelope. They are read as entries marked v:1 and are
+  // converted the next time this device pushes them (it holds the
+  // file); the old object is removed only after the new manifest has
+  // landed.
+  var vaultKeys = null;                           // { enc, mac } — memory only
+
+  function hex(buf) {
+    var b = new Uint8Array(buf), s = "";
+    for (var i = 0; i < b.length; i++) s += ("0" + b[i].toString(16)).slice(-2);
+    return s;
+  }
+  function b64FromBytes(bytes) {
+    var s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+  function bytesFromB64(str) {
+    var bin = atob(str), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function subKey(raw, label) {
+    var tag = new TextEncoder().encode(label);
+    var buf = new Uint8Array(tag.length + raw.length);
+    buf.set(tag, 0);
+    buf.set(raw, tag.length);
+    return crypto.subtle.digest("SHA-256", buf);
+  }
+  function deriveVaultKeys(raw) {
+    return Promise.all([subKey(raw, "orOS-vault-enc:"), subKey(raw, "orOS-vault-name:")])
+      .then(function (d) {
+        return Promise.all([
+          crypto.subtle.importKey("raw", d[0], { name: "AES-GCM" }, false, ["encrypt", "decrypt"]),
+          crypto.subtle.importKey("raw", d[1], { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+        ]);
+      })
+      .then(function (k) { return { enc: k[0], mac: k[1] }; });
+  }
+
+  // Open the wraps with the passphrase currently in memory.
+  function openWraps(doc) {
+    var wraps = (doc && Array.isArray(doc.wraps)) ? doc.wraps : [];
+    function tryAt(i) {
+      if (i >= wraps.length) return Promise.reject(new Error("vault-key-locked"));
+      return VC().decryptJson(wraps[i]).then(function (o) {
+        if (!o || typeof o.k !== "string") throw new Error("bad wrap");
+        return bytesFromB64(o.k);
+      }).catch(function () { return tryAt(i + 1); });
+    }
+    return tryAt(0);
+  }
+
+  // create = true only on the push path: a vault with nothing in it
+  // needs no key yet.
+  function loadVaultKeys(create) {
+    if (vaultKeys) return Promise.resolve(vaultKeys);
+    return ST().getObject(KEY_FILE).then(function (buf) {
+      if (buf) {
+        var doc;
+        try { doc = JSON.parse(new TextDecoder().decode(buf)); }
+        catch (e) { throw new Error("bad vault key file"); }
+        return openWraps(doc).then(deriveVaultKeys);
+      }
+      if (!create) return null;
+      var raw = new Uint8Array(32);
+      crypto.getRandomValues(raw);
+      return VC().encryptJson({ k: b64FromBytes(raw) }).then(function (sealed) {
+        // "null" = create only: if another device made the key first,
+        // ours is discarded and theirs is used.
+        return ST().putObject(KEY_FILE, JSON.stringify({ ver: 1, wraps: [sealed] }), null);
+      }).then(function () {
+        return deriveVaultKeys(raw);
+      }, function (e) {
+        if (e && e.message === "storage-conflict") return loadVaultKeys(false);
+        throw e;
+      });
+    }).then(function (k) {
+      if (k) vaultKeys = k;
+      return k;
+    });
+  }
+
+  function sealV2(buf) {
+    var iv = new Uint8Array(12);
+    crypto.getRandomValues(iv);
+    return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, vaultKeys.enc, buf)
+      .then(function (ct) {
+        var out = new Uint8Array(1 + 12 + ct.byteLength);
+        out[0] = 2;
+        out.set(iv, 1);
+        out.set(new Uint8Array(ct), 13);
+        return out.buffer;
+      });
+  }
+  function openV2(buf) {
+    var env = new Uint8Array(buf);
+    if (env.length < 14 || env[0] !== 2) return Promise.reject(new Error("bad vault envelope"));
+    return crypto.subtle.decrypt({ name: "AES-GCM", iv: env.slice(1, 13) }, vaultKeys.enc, env.slice(13));
+  }
+  function objectKey(hash) {
+    return crypto.subtle.sign("HMAC", vaultKeys.mac, new TextEncoder().encode(hash))
+      .then(function (sig) { return OBJECTS_PREFIX + hex(sig); });
+  }
+
   // ---------- Cloud manifest fetch ----------
   // ABSENT-QUIET: probing an EMPTY vault costs one 409 per sweep
   // (boot + every tab-visible + every "online"). The browser paints
@@ -168,6 +289,42 @@
   // first push, the next sweep read the minute-old "absent" verdict
   // as "the cloud has no files" and deleted the local copy of what
   // had just been uploaded.
+  // The manifest as stored → { ver:1, files } as used in memory.
+  // First byte "{" = LEGACY (passphrase-sealed JSON text); 0x02 = v2.
+  function openManifest(buf) {
+    var first = new Uint8Array(buf)[0];
+    if (first === 0x7B) {
+      return VC().decryptJson(new TextDecoder().decode(buf)).then(function (m) {
+        if (!m || m.ver !== 1 || !m.files) throw new Error("bad manifest");
+        var files = {};
+        Object.keys(m.files).forEach(function (p) {
+          var e = m.files[p];
+          if (e && typeof e.h === "string") {
+            files[p] = { h: e.h, s: e.s, m: e.m, mime: e.mime, v: 1 };
+          }
+        });
+        return { ver: 1, files: files };
+      });
+    }
+    function attempt(retried) {
+      return loadVaultKeys(false).then(function (k) {
+        if (!k) throw new Error("vault key missing");
+        return openV2(buf);
+      }).then(function (plain) {
+        var m = JSON.parse(new TextDecoder().decode(plain));
+        if (!m || m.ver !== 2 || !m.files) throw new Error("bad manifest");
+        return { ver: 1, files: m.files };
+      }, function (e) {
+        // A key cached from BEFORE the cloud vault was wiped and
+        // rebuilt elsewhere cannot open the new manifest: forget it,
+        // fetch the current key once, try again.
+        if (!retried && vaultKeys) { vaultKeys = null; return attempt(true); }
+        throw e;
+      });
+    }
+    return attempt(false);
+  }
+
   function fetchCloudManifest(lm) {
     var idle = getQueue().length === 0 && Object.keys(lm.files).length === 0;
     var absentAt = parseInt(localStorage.getItem(ABSENT_KEY) || "0", 10) || 0;
@@ -182,23 +339,30 @@
       }
       return ST().getObject(MANIFEST_KEY).then(function (buf) {
         if (!buf) return { rev: null, manifest: emptyManifest() };
-        return VC().decryptJson(new TextDecoder().decode(buf))
-          .then(function (m) {
-            if (!m || m.ver !== 1 || !m.files) {
-              throw new Error("bad manifest");
-            }
-            try { localStorage.removeItem(ABSENT_KEY); } catch (e) {}
-            return { rev: rev, manifest: m };
-          });
+        return openManifest(buf).then(function (m) {
+          try { localStorage.removeItem(ABSENT_KEY); } catch (e) {}
+          return { rev: rev, manifest: m };
+        });
       });
     });
   }
 
   // ---------- Object download / decrypt ----------
-  function downloadObject(hash) {
-    return ST().getObject(OBJECTS_PREFIX + hash).then(function (buf) {
-      if (!buf) throw new Error("missing vault object: " + hash);
-      return VC().decryptBytes(buf);
+  function downloadObject(entry) {
+    if (entry.v === 1) {                           // LEGACY object
+      return ST().getObject(OBJECTS_PREFIX + entry.h).then(function (buf) {
+        if (!buf) throw new Error("missing vault object");
+        return VC().decryptBytes(buf);
+      });
+    }
+    return loadVaultKeys(false).then(function (k) {
+      if (!k) throw new Error("vault key missing");
+      return objectKey(entry.h);
+    }).then(function (key) {
+      return ST().getObject(key);
+    }).then(function (buf) {
+      if (!buf) throw new Error("missing vault object");
+      return openV2(buf);
     });
   }
 
@@ -282,7 +446,7 @@
             stats.kept++;
             return null;
           }
-          return downloadObject(entry.h).then(function (plain) {
+          return downloadObject(entry).then(function (plain) {
             if (queueHas(path)) return null;           // edited while downloading
             return FS().write(path, new Blob([plain], {
               type: entry.mime || "application/octet-stream"
@@ -324,8 +488,8 @@
 
   // ---------- Object upload (encrypt + content-address) ----------
   function uploadObject(plainBuf, hash) {
-    return VC().encryptBytes(plainBuf).then(function (env) {
-      return ST().putObject(OBJECTS_PREFIX + hash, new Blob([env]));
+    return Promise.all([sealV2(plainBuf), objectKey(hash)]).then(function (r) {
+      return ST().putObject(r[1], new Blob([r[0]]));
     });
   }
 
@@ -335,8 +499,9 @@
   // at nothing forever).
   function objectStored(hash, cloudHashes) {
     if (!cloudHashes[hash]) return Promise.resolve(false);
-    return ST().getRevision(OBJECTS_PREFIX + hash)
-      .then(function (rev) { return rev !== null; }, function () { return false; });
+    return objectKey(hash).then(function (key) {
+      return ST().getRevision(key);
+    }).then(function (rev) { return rev !== null; }, function () { return false; });
   }
 
   // ---------- Push: upload queued local work, then manifest ----------
@@ -353,13 +518,20 @@
   function pushCloud(lm, cloud, stats) {
     var snap = getQueueMap();
     var done = {};
-    var cloudHashes = {};
+    var cloudHashes = {};                          // content already stored as v2
     Object.keys(cloud.manifest.files).forEach(function (p) {
       var e = cloud.manifest.files[p];
-      if (e && typeof e.h === "string") cloudHashes[e.h] = true;
+      if (e && typeof e.h === "string" && e.v !== 1) cloudHashes[e.h] = true;
     });
+    var legacyDone = [];                           // legacy hashes converted in this push
 
-    var chain = Promise.resolve();
+    // VD-KEY: nothing goes up before the vault key exists IN THE
+    // CLOUD. No manifest there = the vault is being created or was
+    // wiped: a key still cached in memory may have no key file any
+    // more (everything would go up sealed with a key nobody else can
+    // obtain) — so look again, and create the file if it is gone.
+    if (cloud.rev === null) vaultKeys = null;
+    var chain = loadVaultKeys(true).then(function () {});
     Object.keys(snap).forEach(function (path) {
       chain = chain.then(function () {
         return FS().read(path).then(function (blob) {
@@ -378,6 +550,8 @@
                 return stored ? null : uploadObject(buf, hash);
               }).then(function () {
                 cloudHashes[hash] = true;
+                var was = lm.files[path];
+                if (was && was.v === 1 && typeof was.h === "string") legacyDone.push(was.h);
                 lm.files[path] = entry;
                 stats.uploaded++;
                 done[path] = snap[path];
@@ -404,11 +578,22 @@
       // is settled only AFTER it lands (SQ1), and only for what this
       // sync picked up (VD-5); a conflict re-runs attempt() with the
       // queue intact.
-      return VC().encryptJson(lm).then(function (sealed) {
-        return ST().putObject(MANIFEST_KEY, sealed, cloud.rev)
+      var plain = new TextEncoder().encode(JSON.stringify({ ver: 2, files: lm.files }));
+      return sealV2(plain.buffer).then(function (sealed) {
+        return ST().putObject(MANIFEST_KEY, new Blob([sealed]), cloud.rev)
           .then(function (res) {
             queueSettle(done);
             try { localStorage.removeItem(ABSENT_KEY); } catch (e) {}
+            // The new manifest has landed: legacy objects that no
+            // entry points to any more can go. Best-effort — a
+            // leftover is only wasted space.
+            var still = {};
+            Object.keys(lm.files).forEach(function (p) {
+              if (lm.files[p].v === 1) still[lm.files[p].h] = true;
+            });
+            legacyDone.forEach(function (h) {
+              if (!still[h]) ST().deleteObject(OBJECTS_PREFIX + h).catch(function () {});
+            });
             return res;
           });
       });
@@ -445,6 +630,11 @@
           return applyRemote(cloud, lm, stats);
         })
         .then(function (lm) {
+          // VD-KEY: a LEGACY entry whose file is on this device is
+          // converted by pushing it once more (new key, new name).
+          Object.keys(lm.files).forEach(function (p) {
+            if (lm.files[p] && lm.files[p].v === 1 && !queueHas(p)) queueTouch(p);
+          });
           if (!getQueue().length) {                 // nothing local pending
             setLocalManifest(lm);
             setRev(cloud.rev);                      // honest cache of the cloud rev

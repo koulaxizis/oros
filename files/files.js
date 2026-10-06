@@ -165,8 +165,12 @@
       "sync.conflictMsg":   "Your disk changed locally and in the cloud since the last sync. Keep the local version or take the cloud one?",
       "sync.restored":      "Disk restored from cloud",
       "sync.restoreFail":   "Could not restore disk from cloud",
-      "sync.snapshotFail":  "Could not build disk snapshot",
+      "sync.snapshotFail":  "Could not read the disk for sync",
       "sync.restorePartial":"{n} restored, {m} failed",
+      "disk.down":       "The disk is not available right now.",
+      "disk.downHint":   "Nothing was changed. Reload orOS and try again.",
+      "pv.unsaved":      "Unsaved changes — close again to discard them",
+      "pv.notUtf8":      "This file is not UTF-8 text. Editing it here would damage it — download it instead.",
       "pv.title":        "Preview",
       "pv.edit":         "Edit",
       "pv.previewMd":    "Live preview",
@@ -283,12 +287,16 @@
       "sync.state.pending": "Αλλαγές σε αναμονή συγχρονισμού",
       "sync.conflictTitle": "Σύγκρουση συγχρονισμού",
       "sync.conflictLocal": "Διατήρηση τοπικού",
-      "sync.conflictRemote":"Λήψη εκδοσίας cloud",
+      "sync.conflictRemote":"Λήψη έκδοσης cloud",
       "sync.conflictMsg":   "Ο δίσκος σου άλλαξε τοπικά και στο cloud από τον τελευταίο συγχρονισμό. Να διατηρηθεί η τοπική εκδοχή ή να ληφθεί αυτή του cloud;",
       "sync.restored":      "Ο δίσκος επαναφέρθηκε από το cloud",
       "sync.restoreFail":   "Αποτυχία επαναφοράς δίσκου από το cloud",
-      "sync.snapshotFail":  "Αποτυχία δημιουργίας snapshot δίσκου",
+      "sync.snapshotFail":  "Αποτυχία ανάγνωσης του δίσκου για συγχρονισμό",
       "sync.restorePartial":"{n} ανακτήθηκαν, {m} απέτυχαν",
+      "disk.down":       "Ο δίσκος δεν είναι διαθέσιμος αυτή τη στιγμή.",
+      "disk.downHint":   "Δεν άλλαξε τίποτα. Φόρτωσε ξανά το orOS και δοκίμασε πάλι.",
+      "pv.unsaved":      "Υπάρχουν μη αποθηκευμένες αλλαγές — κλείσε ξανά για απόρριψη",
+      "pv.notUtf8":      "Το αρχείο δεν είναι κείμενο UTF-8. Η επεξεργασία εδώ θα το αλλοίωνε — κατέβασέ το.",
       "pv.title":        "Προεπισκόπηση",
       "pv.edit":         "Επεξεργασία",
       "pv.previewMd":    "Ζωντανή προεπισκόπηση",
@@ -361,6 +369,8 @@
   var MD_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 15v-6l2.5 3 2.5-3v6"/><line x1="15" y1="15" x2="15" y2="9"/><path d="M18 9l1.5 3 1.5-3"/></svg>';
 
+  var MORE_SVG =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   var IMG_EXTS = ["png","jpg","jpeg","gif","webp","bmp","ico","avif"];
   var PV_TEXT_LIMIT = 512 * 1024;      // 512 KB text preview cap
 
@@ -545,6 +555,15 @@
       lastEntries = [];
       renderEntries([]);
       renderStatus(0);
+      // FL-7: any failure that is NOT "this folder does not exist"
+      // means the disk itself did not answer (fs.js EIO: the pinned
+      // backend could not be opened). An empty list under the words
+      // "This folder is empty" would be a lie — and an invitation to
+      // start over on top of files that are still there.
+      if (!e || e.code !== "ENOENT") {
+        showDiskDown();
+        return;
+      }
       if (e && e.code === "ENOENT") {
         prefs.last = ROOT;
         savePrefs();   // FL-8: persist the fallback — no ghost-folder loop after reboot
@@ -557,6 +576,21 @@
     renderTree();
     renderCrumbs();
     updateActionButtons();
+  }
+
+  function showDiskDown() {
+    var em = $("empty");
+    if (em) {
+      em.hidden = false;
+      var a = em.querySelector("span"), b = em.querySelector("small");
+      if (a) a.textContent = t("disk.down");
+      if (b) b.textContent = t("disk.downHint");
+    }
+    hideRecents();
+    ["new-folder", "new-file", "pick-files"].forEach(function (id) {
+      var el = $(id);
+      if (el) el.disabled = true;
+    });
   }
 
   function navigate(path) {
@@ -587,6 +621,8 @@
     $("rename").disabled = (n !== 1);
     $("delete").disabled = (n === 0);
     $("delete").classList.toggle("danger-arm", n > 0);
+    var more = $("more-actions");
+    if (more) more.disabled = (n === 0);
   }
 
   // ---------- 5. Folder tree render (lazy, expanded, DROP TARGETS) ----------
@@ -805,13 +841,7 @@
         handleClickSelect(ev, li, idx, e);
       });
       li.addEventListener("dblclick", function () {
-        if (e.dir) {
-          clearSelection();
-          navigate(path);
-        } else {
-          recentsTouch(path);
-          openPreview(path);
-        }
+        activateEntry(e, path);
       });
 
       // DRAG SOURCE (internal move). Payload: our private MIME type.
@@ -857,8 +887,7 @@
       li.addEventListener("keydown", function (ev) {
         if (ev.key === "Enter") {
           ev.preventDefault();
-          if (e.dir) { clearSelection(); navigate(path); }
-          else { recentsTouch(path); openPreview(path); }
+          activateEntry(e, path);
         } else if (ev.key === " ") {
           ev.preventDefault();
           selectedPaths[path] = !selectedPaths[path];
@@ -902,8 +931,33 @@
     host.insertBefore(sec, hdr ? hdr.nextSibling : host.firstChild);
   }
 
+  // Open a folder / preview a file (double click, Enter, second tap).
+  function activateEntry(e, path) {
+    if (e.dir) {
+      clearSelection();
+      navigate(path);
+    } else {
+      recentsTouch(path);
+      openPreview(path);
+    }
+  }
+
+  function coarsePointer() {
+    try { return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); }
+    catch (e) { return false; }
+  }
+
   function handleClickSelect(ev, li, idx, e) {
     var path = li.dataset.path;
+    // FL-6: on touch screens a double tap is not a reliable event
+    // (iOS never sends dblclick) — a folder could not be entered and
+    // a file could not be opened. First tap selects, a second tap on
+    // the SAME, only-selected row activates it.
+    if (!ev.shiftKey && !ev.ctrlKey && !ev.metaKey && coarsePointer() &&
+        selectedPaths[path] && selectionCount() === 1) {
+      activateEntry(e, path);
+      return;
+    }
 
     if (ev.shiftKey && anchorIndex >= 0) {
       // Range: anchor → clicked, inclusive, within current listing
@@ -1686,11 +1740,19 @@
   // #6 FIX: button injected (ensureToolbarExtras) — reachable now
   function openFilePicker() {
     var dlg = dialogHost();
+    // FL-5: several files at once, like the standalone fallback below
+    // (the shell picker was asked for ONE file).
+    if (dlg && typeof dlg.openFiles === "function") {
+      dlg.openFiles("*/*").then(function (files) {
+        if (files && files.length) importFilesList(files, cwd);
+      });
+      return;                     // cancel (null) = silent exit
+    }
     if (dlg && typeof dlg.openFile === "function") {
       dlg.openFile("*/*").then(function (file) {
         if (file) importFilesList([file], cwd);
       });
-      return;                     // cancel (null) = silent exit
+      return;
     }
     // Standalone fallback — legacy hidden input (no shell present).
     var input = document.createElement("input");
@@ -1741,23 +1803,23 @@
       a.download = name;
       document.body.appendChild(a);
       a.click();
-      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      a.remove();
+      // Late revoke (same reason as dialogs.js DLG-1): a download that
+      // starts after a browser prompt must still find the URL.
+      setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
       done();
     };
-    if (isTextExt(name)) {
-      FS().readText(path).then(function (content) {
-        doDownload(new Blob([content !== undefined ? content : ""],
-          { type: "text/plain" }), "text/plain");
-      }).catch(function () {
-        transientNote(t("toast.downloadFail"));
-      });
-    } else {
-      FS().read(path).then(function (blob) {
-        doDownload(blob, mimeForExt(extOf(name)));
-      }).catch(function () {
-        transientNote(t("toast.downloadFail"));
-      });
-    }
+
+    // FL-2: a download is the STORED BYTES, whatever the extension.
+    // Text files used to go through readText() → a new UTF-8 Blob:
+    // a file in any other encoding (a Windows-1253 Greek .txt, a
+    // UTF-16 export) came back with every non-ASCII character
+    // replaced, and a UTF-8 BOM was dropped.
+    FS().read(path).then(function (blob) {
+      doDownload(blob, isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)));
+    }).catch(function () {
+      transientNote(t("toast.downloadFail"));
+    });
   }
 
   function mimeForExt(ext) {
@@ -2251,13 +2313,28 @@
       // last sync. Blob model → explicit user decision.
       if (syncMeta.dirty && snap.ts && snap.ts > syncMeta.ts && !opts.force) {
         askConflict().then(function (takeRemote) {
-          if (takeRemote) { reallyApply(snap, resolve, reject); }
+          // The ONE path that replaces the disk: the user said so.
+          if (takeRemote) { reallyApply(snap, resolve, reject, true); }
           else { resolve(false); }         // keep local — next push wins
         });
         return;
       }
-      reallyApply(snap, resolve, reject);
+      reallyApply(snap, resolve, reject, false);
     });
+  }
+
+  // Does this disk hold a file the snapshot does not list?
+  function localHasMore(snap) {
+    var listed = {};
+    var ents = (snap.disk && Array.isArray(snap.disk.entries)) ? snap.disk.entries : [];
+    ents.forEach(function (e) { if (e && !e.dir && typeof e.path === "string") listed[e.path] = true; });
+    return FS().exportDisk(ROOT).then(function (disk) {
+      var mine = (disk && Array.isArray(disk.entries)) ? disk.entries : [];
+      for (var i = 0; i < mine.length; i++) {
+        if (mine[i] && !mine[i].dir && !listed[mine[i].path]) return true;
+      }
+      return false;
+    }).catch(function () { return false; });
   }
 
   // #8 FIX: wipe:true — "Take cloud version" now MEANS replace.
@@ -2274,8 +2351,22 @@
   // — the failed entries are lost from cloud FOREVER. Honor the
   // contract: only markClean/toast when applied===total, and report
   // failures honestly so the user can retry before the next sync.
-  function reallyApply(snap, resolve, reject) {
-    FS().importDisk(snap.disk, { wipe: true }).then(function (result) {
+  //
+  // FL-1 (data loss, reproduced on two devices): the blob arrives as
+  // ONE snapshot of the other device's whole disk, and "this device
+  // has no pending change" does not mean "this device has nothing
+  // the snapshot lacks": when two devices each added a file before
+  // syncing, the engine pushed one disk over the other, and the
+  // device whose file was missing from the snapshot wiped it here —
+  // silently, toast "Disk restored from cloud". An automatic apply
+  // now MERGES (fs.js importDisk default: nothing local is deleted);
+  // if this disk then holds more than the snapshot, it is marked
+  // changed so the union travels back. Only the conflict dialog's
+  // explicit "Take cloud version" still replaces the disk.
+  // Cost until Files syncs per file: a deletion made on one device
+  // does not remove the file on another (it comes back).
+  function reallyApply(snap, resolve, reject, replace) {
+    FS().importDisk(snap.disk, replace ? { wipe: true } : {}).then(function (result) {
       // FB3: an EMPTY remote disk is a VALID, successfully-restored
       // state (fresh cloud, or everything deliberately deleted).
       // applied===0 with failed===0 is SUCCESS — the earlier
@@ -2283,7 +2374,11 @@
       // never markClean → the remote re-applied on every cycle,
       // sync pill stuck pending. Failure is defined purely as
       // failed > 0.
-      var failed = (result && result.failed) || 0;
+      // fs.js reports failures as an ARRAY of { path, reason }. The
+      // old test (`failed > 0` on that array) was never true, so a
+      // partial restore was marked clean and then pushed as the truth.
+      var failedRaw = result && result.failed;
+      var failed = Array.isArray(failedRaw) ? failedRaw.length : (failedRaw | 0);
       if (failed > 0) {
         // Partial success — report failure but DO NOT mark clean.
         // Baseline stays old, so the next reconcile re-attempts
@@ -2300,6 +2395,11 @@
       // refresh() ENOENT guard falls back to ROOT.
       refresh();
       transientNote(t("sync.restored"));
+      if (!replace) {
+        localHasMore(snap).then(function (more) {
+          if (more) markDirty();          // the union goes back up
+        });
+      }
       resolve(true);
     }).catch(function (e) {
       transientNote(t("sync.restoreFail"));
@@ -2449,8 +2549,19 @@
     pvActiveUrls = [];
   }
 
-  function closePreview() {
+  var pvDirty = false;          // Quick Edit holds unsaved text
+  var pvDiscardUntil = 0;       // second close within this window discards
+  function closePreview(force) {
     if (!pvOverlay) return;
+    // FL-3: Esc, the X and a click on the backdrop all landed here and
+    // threw the typed text away without a word.
+    if (pvDirty && force !== true && Date.now() > pvDiscardUntil) {
+      pvDiscardUntil = Date.now() + 4000;
+      transientNote(t("pv.unsaved"));
+      return;
+    }
+    pvDirty = false;
+    pvDiscardUntil = 0;
     pvRevokeAll();
     pvOverlay.remove();
     pvOverlay = null;
@@ -2498,7 +2609,7 @@
   }
 
   function buildPreviewShell(path, name, size, mtime) {
-    closePreview();
+    closePreview(true);
     pvOverlay = document.createElement("div");
     pvOverlay.id = "pv-overlay";
     pvOverlay.setAttribute("role", "dialog");
@@ -2528,7 +2639,7 @@
     x.className = "pv-x";
     x.title = t("pv.close");
     x.innerHTML = X_SVG;
-    x.addEventListener("click", closePreview);
+    x.addEventListener("click", function () { closePreview(); });
     head.appendChild(x);
 
     var body = document.createElement("div");
@@ -2654,10 +2765,14 @@
     return escapeHtml(s)
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (m, txt, url) {
         var clean = url.trim();
-        if (/^[a-z]+:/i.test(clean)) {
-          var scheme = clean.split(":")[0].toLowerCase();
-          if (scheme === "javascript" || scheme === "data") {
-            return txt;   // dangerous link — keep text, drop the href
+        // FL-4: allowlist, not blocklist. A markdown file is content
+        // from anywhere (imports, the other device); only web and
+        // mail links become clickable, every other scheme stays text.
+        var sm = clean.match(/^([a-z][a-z0-9+.\-]*):/i);
+        if (sm) {
+          var scheme = sm[1].toLowerCase();
+          if (scheme !== "http" && scheme !== "https" && scheme !== "mailto") {
+            return txt;
           }
         }
         return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + txt + "</a>";
@@ -2725,15 +2840,34 @@
       if (isMd) rightPane.innerHTML = mdToHtml(ta.value);
     }
 
-    FS().readText(path).then(function (text) {
-      ta.value = String(text !== undefined ? text : "");
+    // FL-3: decode STRICTLY. readText() replaces every byte sequence
+    // that is not UTF-8 with U+FFFD, and Save would then write those
+    // replacement characters over the real file. A file that is not
+    // UTF-8 text is not editable here. A UTF-8 BOM is remembered and
+    // written back.
+    var hadBom = false;
+    FS().read(path).then(function (blob) {
+      return blob.arrayBuffer();
+    }).then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      hadBom = bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+      var text;
+      try { text = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+      catch (eDec) {
+        b.innerHTML = "";
+        var msg = document.createElement("div");
+        msg.className = "pv-msg";
+        msg.textContent = t("pv.notUtf8");
+        b.appendChild(msg);
+        return;
+      }
+      ta.value = text;
       paintMd();
     }).catch(function () {
       transientNote(t("toast.opFail"));
-      closePreview();
+      closePreview(true);
     });
-
-    ta.addEventListener("input", paintMd);
+    ta.addEventListener("input", function () { pvDirty = true; paintMd(); });
 
     var row = document.createElement("div");
     row.className = "pv-save-row";
@@ -2742,7 +2876,8 @@
     save.className = "pv-btn primary";
     save.textContent = t("pv.save");
     save.addEventListener("click", function () {
-      FS().writeText(path, ta.value).then(function () {
+      FS().writeText(path, (hadBom ? "\uFEFF" : "") + ta.value).then(function () {
+        pvDirty = false;
         recentsTouch(path);
         transientNote(t("pv.saved"));
         forceStorageRecalc();
@@ -2867,6 +3002,29 @@
       pick.addEventListener("click", openFilePicker);
       var actions = $("actions");
       if (actions) actions.insertBefore(pick, actions.firstChild);
+    }
+
+    // --- FL-6: "More actions" — the context menu for touch screens.
+    // Preview, Download, Move, Copy and the clipboard actions lived
+    // ONLY in the right-click menu; iOS has no such event, so on an
+    // iPhone none of them could be reached at all.
+    if (!$("more-actions")) {
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "tool";
+      more.id = "more-actions";
+      more.title = t("act.more");
+      more.setAttribute("aria-label", t("act.more"));
+      more.disabled = true;
+      more.innerHTML = MORE_SVG;
+      more.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (ctxMenu) { ctxMenu.remove(); ctxMenu = null; return; }
+        var r = more.getBoundingClientRect();
+        openContextMenu(r.left, r.bottom + 4);
+      });
+      var acts2 = $("actions");
+      if (acts2) acts2.appendChild(more);
     }
   }
 

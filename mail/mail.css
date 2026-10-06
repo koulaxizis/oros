@@ -1,0 +1,227 @@
+/* ============================================================
+   orOS Mail / Ταχυδρομείο — v0.1.0
+   All colors inherit from parent shell via CSS vars:
+   --accent, --accent-soft, --bg, --surface, --panel-bg,
+   --text, --text-dim, --border, --danger, --shadow
+   ============================================================ */
+
+/* Root fallback (if loaded standalone without parent) */
+:root {
+  --accent: #6d4aff;
+  --accent-soft: rgba(109, 74, 255, 0.2);
+  --bg: #131820;
+  --surface: #1b1a18;
+  --panel-bg: #1b1a18;
+  --text: #e8e6e3;
+  --text-dim: #9aa0a6;
+  --border: #2e323a;
+  --danger: #d94452;
+  --shadow: rgba(0,0,0,0.4);
+}
+
+/* Reset & base */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  height: 100%; width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Header */
+#mail-header {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.mh-title { font-weight: 600; font-size: 16px; }
+.mh-spacer { flex: 1; }
+.mh-queue {
+  font-size: 12px; color: var(--accent);
+  margin-left: 8px; padding: 2px 6px;
+  background: var(--accent-soft); border-radius: 4px;
+}
+.mh-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: none; border-radius: 4px;
+  background: var(--accent); color: var(--text);
+  cursor: pointer; font-size: 13px; font-weight: 500;
+}
+.mh-btn:hover { opacity: 0.9; }
+.mh-btn.small {
+  padding: 4px 8px; font-size: 12px;
+}
+.mh-btn.ghost {
+  background: transparent; border: 1px solid var(--border);
+}
+.mh-btn.danger { background: var(--danger); }
+
+/* Empty state */
+.ma-empty {
+  display: flex; justify-content: center; align-items: center;
+  height: calc(100% - 48px);
+}
+.ma-empty:not(.ma-empty) { display: none; }
+.me-content { text-align: center; opacity: 0.7; }
+.me-icon { font-size: 48px; display: block; margin-bottom: 16px; }
+.me-text p { margin: 4px 0; }
+
+/* Layout grid */
+.ma-layout {
+  display: grid;
+  height: calc(100% - 48px);
+  grid-template-columns: 220px 1fr 1fr;
+  overflow: hidden;
+}
+
+/* Folders sidebar */
+.ma-folders {
+  padding: 8px 0;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.mf-item {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; padding: 8px 16px; border: none; background: none;
+  color: var(--text); cursor: pointer; text-align: left;
+  font-size: 14px; border-left: 3px solid transparent;
+}
+.mf-item:hover { background: var(--accent-soft); }
+.mf-item.active {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+  font-weight: 500;
+}
+.mf-label { flex: 1; }
+.mf-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 2px 6px; background: var(--accent);
+  color: #fff; border-radius: 10px;
+}
+
+/* Message list */
+.ma-list {
+  padding: 8px; overflow-y: auto; border-right: 1px solid var(--border);
+}
+.ml-empty {
+  padding: 24px; text-align: center; color: var(--text-dim);
+}
+.ml-item {
+  padding: 10px 12px; margin-bottom: 4px; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+}
+.ml-item:hover { border-color: var(--accent-soft); }
+.ml-item.selected { border-color: var(--accent); background: var(--accent-soft); }
+.ml-item.unread { font-weight: 500; }
+.ml-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.ml-from { font-weight: 500; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml-date { font-size: 12px; color: var(--text-dim); }
+.ml-subject { margin-bottom: 2px; }
+.ml-preview {
+  font-size: 12px; color: var(--text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Reading pane */
+.ma-reading {
+  display: flex; flex-direction: column; padding: 0; overflow: hidden;
+}
+.mr-empty {
+  padding: 24px; text-align: center; color: var(--text-dim);
+  height: 100%; display: flex; align-items: center; justify-content: center;
+}
+.mr-head {
+  padding: 16px; border-bottom: 1px solid var(--border);
+}
+.mr-lines { margin-bottom: 12px; }
+.mr-line { display: flex; margin-bottom: 4px; }
+.mr-k { width: 80px; flex-shrink: 0; color: var(--text-dim); font-weight: 500; }
+.mr-v { flex: 1; word-break: break-word; }
+.mr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.mr-actions .mh-btn { flex: none; }
+.mr-body {
+  padding: 16px; overflow-y: auto; flex: 1;
+  white-space: pre-wrap; word-break: break-word;
+  background: var(--panel-bg);
+}
+
+/* Dialogs */
+.mail-dialog {
+  width: 90vw; max-width: 520px; max-height: 85vh;
+  border: none; border-radius: 8px; padding: 0;
+  background: var(--surface); color: var(--text);
+  box-shadow: 0 8px 32px var(--shadow);
+}
+.mail-dialog.wide { max-width: 720px; }
+.mail-dialog::backdrop {
+  background: rgba(0,0,0,0.6);
+}
+.md-box { padding: 20px; overflow-y: auto; max-height: 85vh; }
+.md-box h2 { margin: 0 0 16px 0; font-size: 18px; }
+.md-form { margin-bottom: 16px; }
+.md-field { margin-bottom: 14px; }
+.md-field label { display: block; margin-bottom: 4px; font-size: 13px; color: var(--text-dim); }
+.md-field input, .md-field select, .md-field textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 4px; background: var(--bg); color: var(--text);
+  font-size: 14px; font-family: inherit;
+}
+.md-field input:focus, .md-field select:focus, .md-field textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+.md-pass-row { display: flex; gap: 8px; }
+.md-pass-row input { flex: 1; }
+.md-btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.md-accounts { margin-bottom: 16px; }
+.md-empty { padding: 12px; text-align: center; color: var(--text-dim); }
+.md-acc-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; background: var(--bg); margin-bottom: 8px; border-radius: 4px;
+}
+.md-acc-info { flex: 1; }
+.md-acc-name { font-weight: 500; margin-bottom: 4px; }
+.md-acc-meta { font-size: 12px; color: var(--text-dim); }
+.md-acc-acts { display: flex; gap: 8px; }
+.md-note {
+  font-size: 12px; padding: 8px 12px; border-radius: 4px;
+  background: var(--bg); margin-bottom: 14px;
+}
+.md-note.warn { color: #ffb02e; }
+
+/* Toast */
+.mail-toast {
+  position: fixed; top: 56px; right: 16px; z-index: 9999;
+  padding: 10px 16px; border-radius: 6px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px var(--shadow);
+  opacity: 0; transform: translateY(-8px); transition: all 0.2s;
+  font-size: 13px; pointer-events: none;
+}
+.mail-toast.show { opacity: 1; transform: translateY(0); }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .ma-layout { grid-template-columns: 200px 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .ma-layout { grid-template-columns: 180px 1fr; }
+  .ma-reading { display: none; }
+  .ma-layout.reading .ma-list { display: none; }
+  .ma-layout.reading .ma-reading { display: flex; }
+}
+@media (max-width: 568px) {
+  .ma-layout { grid-template-columns: 1fr; }
+  .ma-folders, .ma-list { display: none; }
+  .ma-layout.list .ma-folders { display: block; }
+  .ma-layout.list .ma-list { display: block; }
+  .ma-layout.reading .ma-list { display: none; }
+  .ma-layout.reading .ma-reading { display: flex; }
+}
