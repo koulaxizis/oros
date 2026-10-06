@@ -166,7 +166,17 @@
       "stat.kpi.upcoming": "Next 30 days",
       "stat.kpi.recurring": "Recurring",
       "stat.byLabel": "Events by label",
-      "stat.perMonth": "{n} events stored"
+      "stat.perMonth": "{n} events stored",
+      "lbl.feed.hol": "Holidays",
+      "hol.row.name": "External holidays (internet)",
+      "hol.on.btn": "Enable",
+      "hol.off.btn": "Disable",
+      "hol.hint": "Fetches national holidays and name days from public APIs (no account, no tracking). Cached locally, refreshed weekly.",
+      "hol.fetch": "Fetching holidays…",
+      "hol.updated": "Holidays updated ({n})",
+      "hol.failed": "Holiday fetch failed",
+      "hol.disabled": "External holidays turned off",
+      "hol.nameday": "Name days"
     },
     el: {
       "cal.today": "Σήμερα",
@@ -274,7 +284,17 @@
       "stat.kpi.upcoming": "Επόμενες 30 μέρες",
       "stat.kpi.recurring": "Επαναλαμβανόμενα",
       "stat.byLabel": "Συμβάντα ανά ετικέτα",
-      "stat.perMonth": "{n} συμβάντα αποθηκευμένα"
+      "stat.perMonth": "{n} συμβάντα αποθηκευμένα",
+      "lbl.feed.hol": "Εορτές",
+      "hol.row.name": "Εξωτερικές εορτές (διαδίκτυο)",
+      "hol.on.btn": "Ενεργοποίηση",
+      "hol.off.btn": "Απενεργοποίηση",
+      "hol.hint": "Λήψη εθνικών εορτών και ονομαστικών από δημόσια APIs (χωρίς λογαριασμό, χωρίς tracking). Τοπική αποθήκευση, εβδομαδιαία ανανέωση.",
+      "hol.fetch": "Λήψη εορτών…",
+      "hol.updated": "Οι εορτές ενημερώθηκαν ({n})",
+      "hol.failed": "Αποτυχία λήψης εορτών",
+      "hol.disabled": "Οι εξωτερικές εορτές απενεργοποιήθηκαν",
+      "hol.nameday": "Ονομαστικές"
     }
   };
   function t(k) {
@@ -390,6 +410,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-kanban",  color: "#7aa2f7" },   // blue — Kanban (teal taken by Habits)
     { id: "lbl-feed-todo",    color: "#e06c75" },   // red — To-Do due dates
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
+    { id: "lbl-feed-hol",    color: "#ff9e64" },  // orange — External holidays (internet fetch)
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
   function feedLabelName(l) {
@@ -401,6 +422,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-kanban") return t("lbl.feed.kanban");
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
+    if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     return t("lbl.feed.custom");
   }
 
@@ -1296,6 +1318,145 @@ function transientNote(title, body) {
     return out;
   }
 
+  /* ---------- 3c. External holidays feed (opt-in, internet) ----------
+     NON-goals by design: rows are NEVER stored in state.events,
+     NEVER synced, NEVER exported (.ics) — this is PUBLIC data
+     (dates/facts), cached DEVICE-LOCAL only. Opt-in: zero network
+     activity until the user flips the toggle in the label manager.
+     Sources (keyless GETs, no user data leaves the device):
+       - National (GR): Nager.Date v3 PublicHolidays (CORS-open)
+       - Namedays: greek-namedays API — response shape is normalized
+         defensively; edit HOL_SOURCES only if the endpoint moves.
+     TTL: weekly refresh at boot (only when enabled + stale). */
+  var HOL_CACHE_KEY = "oros-calendar-holidays";
+  var HOL_ON_KEY    = "oros-calendar-holidays-on";
+  var HOL_TTL_MS    = 7 * 24 * 60 * 60 * 1000;
+  var HOL_SOURCES   = {
+    national: "https://date.nager.at/api/v3/PublicHolidays/{y}/GR",
+    namedays: "https://greek-namedays.herokuapp.com/api/v1/dates/{y}"
+  };
+  var holCache = { when: 0, data: null };
+
+  function holEnabled() {
+    try { return localStorage.getItem(HOL_ON_KEY) === "1"; }
+    catch (e) { return false; }
+  }
+
+  function holRaw() {
+    var now = Date.now();
+    if (now - holCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(HOL_CACHE_KEY));
+        holCache.data = (d && typeof d === "object" && Array.isArray(d.events))
+          ? d : null;
+      } catch (e) { holCache.data = null; }
+      holCache.when = now;
+    }
+    return holCache.data;
+  }
+
+  // Nager.Date v3 row → { date, kind, title }. localName is the
+  // localized ("Ελλάδα") name — prefer it, fall back to name.
+  function holNatRow(h) {
+    if (!h || typeof h !== "object") return null;
+    if (typeof h.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(h.date)) return null;
+    var title = (typeof h.localName === "string" && h.localName) ||
+                (typeof h.name === "string" && h.name);
+    if (!title) return null;
+    return { date: h.date, kind: "national", title: title.slice(0, 80) };
+  }
+
+  // Namedays row → ONE row per date (names joined, capped): a
+  // per-name flood would bury the calendar grid (same doctrine as
+  // the Contacts feed title cap).
+  function holNameRow(nd) {
+    if (!nd || typeof nd !== "object") return null;
+    var d = "";
+    if (typeof nd.date === "string") d = nd.date;
+    else if (typeof nd.day === "string") d = nd.day;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+    var names = [];
+    if (Array.isArray(nd.names)) names = nd.names;
+    else if (typeof nd.name === "string") names = [nd.name];
+    names = names.filter(function (n) {
+      return typeof n === "string" && n.trim();
+    });
+    if (!names.length) return null;
+    return { date: d, kind: "nameday",
+             title: names.slice(0, 6).join(", ").slice(0, 80) };
+  }
+
+  function holFetch() {
+    var year = String(new Date().getFullYear());
+    var urls = [
+      HOL_SOURCES.national.replace("{y}", year),
+      HOL_SOURCES.namedays.replace("{y}", year)
+    ];
+    Promise.allSettled(urls.map(function (u) {
+      return fetch(u).then(function (r) { return r.ok ? r.json() : []; });
+    })).then(function (res) {
+      var events = [];
+      if (res[0].status === "fulfilled" && Array.isArray(res[0].value)) {
+        res[0].value.forEach(function (h) {
+          var row = holNatRow(h);
+          if (row) events.push(row);
+        });
+      }
+      if (res[1].status === "fulfilled" && Array.isArray(res[1].value)) {
+        res[1].value.forEach(function (nd) {
+          var row = holNameRow(nd);
+          if (row) events.push(row);
+        });
+      }
+      events.sort(function (a, b) {
+        return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0);
+      });
+      var ts = Date.now();
+      try {
+        localStorage.setItem(HOL_CACHE_KEY,
+          JSON.stringify({ ts: ts, events: events }));
+      } catch (e) {}
+      holCache = { when: ts, data: { ts: ts, events: events } };
+      if (events.length) {
+        transientNote(t("hol.updated").replace("{n}", String(events.length)));
+      } else {
+        transientNote(t("hol.failed"));
+      }
+      renderAll();
+      renderDay();
+    }).catch(function () {
+      transientNote(t("hol.failed"));
+    });
+  }
+
+  // Boot hook: fetch ONLY when opted in AND the cache is stale.
+  function holInit() {
+    if (!holEnabled()) return;
+    var d = holRaw();
+    if (!d || Date.now() - d.ts > HOL_TTL_MS) holFetch();
+  }
+
+  function holFeedOn(dateStr) {
+    if (!holEnabled()) return [];
+    if (!labelVisible("lbl-feed-hol")) return [];
+    var d = holRaw();
+    if (!d || !Array.isArray(d.events)) return [];
+    var out = [];
+    d.events.forEach(function (h, ix) {
+      if (h.date !== dateStr) return;
+      out.push({
+        id: "hol-" + ix + "-" + dateStr,   // per-render key, never stored
+        title: (h.kind === "nameday"
+          ? t("hol.nameday") + ": " : "") + h.title,
+        labelId: "lbl-feed-hol",
+        start: null,                       // all-day
+        _feed: true,
+        _hol: true
+      });
+    });
+    return out;
+  }
+
     function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
@@ -1307,6 +1468,7 @@ function transientNote(title, body) {
     .concat(kanbanFeedOn(dateStr))
     .concat(todoFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
+    .concat(holFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
@@ -2714,6 +2876,41 @@ function transientNote(title, body) {
         list.appendChild(row);
       });
     }
+    // External holidays (opt-in internet fetch): the switch lives
+    // with the feed labels — same read-only territory. OFF is the
+    // default: nothing is fetched until the user flips this.
+    var holRow = document.createElement("div");
+    holRow.className = "lbl-row feed";
+    var holName = document.createElement("span");
+    holName.className = "lbl-feed-name";
+    holName.textContent = t("hol.row.name");
+    holName.title = t("hol.hint");
+    holRow.appendChild(holName);
+    var holOn = holEnabled();
+    var holBtn = document.createElement("button");
+    holBtn.type = "button";
+    holBtn.className = "mini hol-toggle" + (holOn ? " on" : "");
+    holBtn.textContent = t(holOn ? "hol.off.btn" : "hol.on.btn");
+    holBtn.title = t("hol.hint");
+    holBtn.addEventListener("click", function () {
+      var turnOn = !holEnabled();
+      try {
+        localStorage.setItem(HOL_ON_KEY, turnOn ? "1" : "0");
+      } catch (e2) {}
+      if (turnOn) {
+        toast(t("hol.fetch"));
+        holFetch();
+      } else {
+        holCache = { when: 0, data: null };
+        transientNote(t("hol.disabled"));
+      }
+      renderLblList();
+      renderChips();
+      renderAll();
+      renderDay();
+    });
+    holRow.appendChild(holBtn);
+    list.appendChild(holRow);
     if (!state.labels.length) {
       var emp = document.createElement("div");
       emp.className = "empty";
@@ -3073,6 +3270,7 @@ function transientNote(title, body) {
   /* ---------- 8. Boot ---------- */
   loadState();
   applyI18n();
+  holInit();   // opt-in: fetches only when the toggle is on AND stale
   // Re-translate seeded labels if the store was freshly seeded with
   // the other language (seeds depend on LANG at seed time).
   reseedSeedNames();
