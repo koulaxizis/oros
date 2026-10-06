@@ -374,7 +374,13 @@ function transientNote(title, body) {
 
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
-  var state = { ver: 1, labels: [], events: [], deleted: [] };
+  // settings: user PREFERENCES that travel in the synced blob —
+  // unlike the holidays EVENTS themselves, which stay device-local
+  // (public data, each device fetches its own copy).
+  // Shape: { holidaysOn: bool, mtime: number } — mtime drives the
+  // merge, same last-writer-wins contract as labels/events.
+  var state = { ver: 1, labels: [], events: [], deleted: [],
+                settings: { holidaysOn: false, mtime: 0 } };
 
   // Whitelist — the sync-sanitizer contract (deterministic).
   // Declared HERE (moved up from §3b in v0.3): sanitizeEvent runs
@@ -542,6 +548,17 @@ function transientNote(title, body) {
     };
   }
 
+  // Settings sanitizer (sync-shared preferences): keeps the default
+  // OFF state on any malformed input — a corrupt blob can never
+  // silently opt a user into network fetches.
+  function sanitizeSettings(s) {
+    if (!s || typeof s !== "object") return null;
+    return {
+      holidaysOn: s.holidaysOn === true,
+      mtime: (typeof s.mtime === "number" && isFinite(s.mtime)) ? s.mtime : 0
+    };
+  }
+
   function loadState() {
     try {
       var d = JSON.parse(localStorage.getItem(DATA_KEY));
@@ -551,6 +568,23 @@ function transientNote(title, body) {
       // Pre-sync blobs have no "deleted" → empty list, zero migration
       if (d && Array.isArray(d.deleted)) {
         state.deleted = d.deleted.map(sanitizeTomb).filter(Boolean);
+      }
+      // Settings: adopted when present. LEGACY MIGRATION (pre-sync
+      // installs kept the toggle in the device-local HOL_ON_KEY):
+      // fold an ON preference in ONCE with a real mtime so it
+      // survives the merge, then retire the key — it can never
+      // fight state.settings afterwards. Idempotent: the second
+      // boot finds d.settings present and skips this branch.
+      var st = d && sanitizeSettings(d.settings);
+      if (st) {
+        state.settings = st;
+      } else {
+        try {
+          if (localStorage.getItem(HOL_ON_KEY) === "1") {
+            state.settings = { holidaysOn: true, mtime: Date.now() };
+          }
+          localStorage.removeItem(HOL_ON_KEY);
+        } catch (e2) {}
       }
       // Seed ΜΟΝΟ όταν λείπει το κλειδί "labels" (φρέσκια
       // εγκατάσταση / v0.1 blob). Άδειο-but-παρόν array = ο χρήστης
@@ -1329,6 +1363,8 @@ function transientNote(title, body) {
          defensively; edit HOL_SOURCES only if the endpoint moves.
      TTL: weekly refresh at boot (only when enabled + stale). */
   var HOL_CACHE_KEY = "oros-calendar-holidays";
+  // Legacy pre-sync key — read ONCE at load for migration, then
+  // retired (the toggle lives in the synced state.settings now).
   var HOL_ON_KEY    = "oros-calendar-holidays-on";
   var HOL_TTL_MS    = 7 * 24 * 60 * 60 * 1000;
   var HOL_SOURCES   = {
@@ -1338,8 +1374,7 @@ function transientNote(title, body) {
   var holCache = { when: 0, data: null };
 
   function holEnabled() {
-    try { return localStorage.getItem(HOL_ON_KEY) === "1"; }
-    catch (e) { return false; }
+    return !!(state && state.settings && state.settings.holidaysOn);
   }
 
   function holRaw() {
@@ -2894,9 +2929,13 @@ function transientNote(title, body) {
     holBtn.title = t("hol.hint");
     holBtn.addEventListener("click", function () {
       var turnOn = !holEnabled();
-      try {
-        localStorage.setItem(HOL_ON_KEY, turnOn ? "1" : "0");
-      } catch (e2) {}
+      // Preference change → state + saveState() → markDirty() →
+      // the blob travels via the sync slice, so the toggle lands
+      // ON/OFF identically on every device after the next pull.
+      // The CACHE stays device-local by design (public data).
+      state.settings.holidaysOn = turnOn;
+      state.settings.mtime = Date.now();
+      saveState();
       if (turnOn) {
         toast(t("hol.fetch"));
         holFetch();
@@ -3558,6 +3597,21 @@ function transientNote(title, body) {
       }
     }
 
+    // Settings merge: a SINGLE preference object per blob (not an
+    // entity list) — the newer mtime wins outright; equal mtimes
+    // fall back to the byte-deterministic JSON tie-break, same
+    // contract as labels/events, so every device converges.
+    var settings = { holidaysOn: false, mtime: 0 };
+    function takeSettings(s) {
+      if (!s || typeof s !== "object" || typeof s.mtime !== "number" ||
+          !isFinite(s.mtime)) return;
+      if (s.mtime > settings.mtime ||
+          (s.mtime === settings.mtime &&
+           JSON.stringify(s) < JSON.stringify(settings))) {
+        settings = { holidaysOn: s.holidaysOn === true, mtime: s.mtime };
+      }
+    }
+
     [local, remote].forEach(function (side) {
       if (!side || typeof side !== "object") return;
       (Array.isArray(side.deleted) ? side.deleted : [])
@@ -3566,6 +3620,7 @@ function transientNote(title, body) {
         .map(mergeSanitizeLabel).filter(Boolean).forEach(takeLbl);
       (Array.isArray(side.events) ? side.events : [])
         .map(mergeSanitizeEv).filter(Boolean).forEach(takeEv);
+      if (side.settings) takeSettings(side.settings);
     });
 
     var events = [], deleted = [], labels = [];
@@ -3589,7 +3644,8 @@ function transientNote(title, body) {
     events.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     labels.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     deleted.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
-    return { ver: 1, labels: labels, events: events, deleted: deleted };
+    return { ver: 1, labels: labels, events: events, deleted: deleted,
+             settings: settings };
   }
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
@@ -3602,7 +3658,12 @@ function transientNote(title, body) {
     var lbls = Array.isArray(data.labels)
       ? data.labels.map(sanitizeLabel).filter(Boolean)
       : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
-    state = { ver: 1, labels: lbls, events: evs, deleted: dels };
+    // Settings arrive with the pull: sanitize (a corrupt cloud copy
+    // can never silently opt this device into network fetches).
+    var pulSettings = sanitizeSettings(data.settings) ||
+                      { holidaysOn: false, mtime: 0 };
+    state = { ver: 1, labels: lbls, events: evs, deleted: dels,
+              settings: pulSettings };
     lastMoved = null;
     lastDeleted = null;
     lastExdate = null;
@@ -3635,6 +3696,12 @@ function transientNote(title, body) {
     petCache = { when: 0, optOut: false, petData: null, logData: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
+    // A pull that flipped the holidays preference ON lands here:
+    // honor it immediately — the user consented on another device,
+    // and this is that consent arriving. holInit is a no-op when
+    // OFF or when the device already holds a fresh cache (so a
+    // pull on a cached device never re-fetches).
+    holInit();
     if (info && info.merged) transientNote(t("sync.merged"));   // receipt, not "Saved"
   }
 
@@ -3654,9 +3721,11 @@ function transientNote(title, body) {
         function () {     // getter: localStorage is the durable truth
           try {
             return JSON.parse(localStorage.getItem(DATA_KEY)) ||
-              { ver: 1, labels: [], events: [], deleted: [] };
+              { ver: 1, labels: [], events: [], deleted: [],
+                settings: state.settings };
           } catch (e) {
-            return { ver: 1, labels: [], events: [], deleted: [] };
+            return { ver: 1, labels: [], events: [], deleted: [],
+                     settings: state.settings };
           }
         },
         setFromSync,

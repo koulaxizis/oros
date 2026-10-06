@@ -2418,3 +2418,19 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Architecture decision: proxy slice pattern (shell-hosted) preferred over iframe-owned data for sync reliability when closed
 - Shortcut safety: Ctrl+Alt+N chosen because Ctrl+N triggers new window in browsers
 - Design pattern: all dialogs close on outside click (certified orOS standard)
+
+---
+
+Calendar: Sync holidays preference across devices
+  - New state.settings slice: { holidaysOn: bool, mtime } — travels
+    in the synced blob via the existing slice registration
+  - Holiday EVENTS remain device-local (public data, per-device
+    fetch); only the ON/OFF preference syncs (1 bool + mtime)
+  - Deterministic merge: newer mtime wins, JSON tie-break on equal
+  - setFromSync honors an incoming ON immediately via holInit()
+    (no-op when cached — no redundant refetch)
+  - Legacy migration: pre-sync localStorage toggle
+    ("oros-calendar-holidays-on") folded in once with a real
+    mtime, then the key is retired permanently
+  - Toggle flip in the label manager now calls saveState() →
+    markDirty() → standard sync propagation
