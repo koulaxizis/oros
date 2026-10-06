@@ -59,6 +59,27 @@ function trimTileCache() {
   });
 }
 
+// SW-D1: the release this worker belongs to — the same string the
+// GitHub Action writes as ?v= on every .css/.js reference (both come
+// from APP_VERSION in one pass).
+var RELEASE = CACHE_VERSION.replace(/^oros-v/, "");
+
+// SW-D1: the precache holds UNVERSIONED urls ("todo/todo.js"), the
+// pages ask for stamped ones ("todo/todo.js?v=0.39.06"). An exact
+// lookup never matched, so every release downloaded each file twice:
+// once for the precache, once more on first use. A request stamped
+// with THIS worker's release may be answered from THIS release's
+// precache: that cache is created at install, straight from the
+// network (SWK-1), and deleted with the release. A request with any
+// other stamp (a page newer or older than this worker) goes to the
+// network as before — the precache never decides for another release.
+function releaseCopy(request, url) {
+  if (url.searchParams.get("v") !== RELEASE) return Promise.resolve(undefined);
+  return caches.open(SHELL_CACHE).then(function (cache) {
+    return cache.match(request, { ignoreSearch: true, ignoreVary: true });
+  }).catch(function () { return undefined; });
+}
+
 var PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -197,8 +218,14 @@ self.addEventListener("install", function (event) {
       // ZERO offline, silently, forever. Per-URL add instead: a single
       // missing asset degrades (that one page offline-less) instead of
       // nuking the whole precache. Failures SPEAK in the SW console.
+      // SWK-1: cache.add(url) goes through the browser's HTTP cache,
+      // and GitHub Pages serves everything with max-age=600. Two
+      // releases within ten minutes could therefore precache the
+      // PREVIOUS release's files under the new version's name — and
+      // these unversioned copies are exactly what an offline first
+      // open of an app is served. "reload" = always from the network.
       return Promise.all(PRECACHE_URLS.map(function (u) {
-        return cache.add(u).catch(function (e) {
+        return cache.add(new Request(u, { cache: "reload" })).catch(function (e) {
           console.warn("[SW] precache MISS:", u, e && e.message);
         });
       }));
@@ -224,10 +251,18 @@ self.addEventListener("activate", function (event) {
     return trimTileCache().catch(function () {});
   });
 
+  // SWK-2: the timer was never cancelled — 30s after EVERY normal
+  // activation it logged "cleanup took >30s" (false) and claimed a
+  // second time. It is cleared the moment the cleanup path claims.
+  var slowTimer = null;
   var claimWithTimeout = Promise.race([
-    cleanup.then(function () { return self.clients.claim(); }),
+    cleanup.then(function () {
+      if (slowTimer) { clearTimeout(slowTimer); slowTimer = null; }
+      return self.clients.claim();
+    }),
     new Promise(function (resolve) {
-      setTimeout(function () {
+      slowTimer = setTimeout(function () {
+        slowTimer = null;
         console.warn("[SW] Activate: cache cleanup took >30s, claiming clients anyway");
         resolve(self.clients.claim());
       }, 30000);
@@ -330,7 +365,11 @@ self.addEventListener("fetch", function (event) {
           // Cache only REAL pages: a cached 404/502 becomes the
           // offline "truth" for that URL. OAuth redirects (?code=...)
           // are one-shot URLs — never worth a cache entry.
-          if (response.ok && url.search.indexOf("code=") === -1) {
+          // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
+          // replayed to a navigation from the cache — the browser
+          // rejects it and the page fails offline. Never store one.
+          if (response.ok && !response.redirected &&
+              url.search.indexOf("code=") === -1) {
             var copy = response.clone();
             // waitUntil: the SW stays alive until the cache write
             // LANDS. A fire-and-forget put can be killed mid-flight
@@ -347,6 +386,20 @@ self.addEventListener("fetch", function (event) {
         .catch(function () {
           return caches.match(request).then(function (cached) {
             if (cached) return cached;
+            // SWK-3: the shell page is the right fallback for the TOP
+            // window only. For an app frame it loaded orOS inside
+            // orOS — a second shell, with its own sync engine, in the
+            // iframe. An app that is not cached says so instead.
+            if (request.destination === "iframe" || request.destination === "frame") {
+              return new Response(
+                '<!doctype html><meta charset="utf-8"><title>orOS</title>' +
+                '<body style="margin:0;min-height:100vh;display:flex;align-items:center;' +
+                'justify-content:center;text-align:center;padding:24px;box-sizing:border-box;' +
+                'font-family:system-ui,sans-serif;background:#1b1a18;color:#e8eaf0;">' +
+                '<p>Offline — this app has not been saved for offline use yet.<br>' +
+                'Εκτός σύνδεσης — η εφαρμογή δεν έχει αποθηκευτεί ακόμη για χρήση χωρίς δίκτυο.</p></body>',
+                { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
+            }
             return caches.match("./index.html");
           });
         })
@@ -356,13 +409,16 @@ self.addEventListener("fetch", function (event) {
 
   // Sub-resources: cache-first with EXACT URL match. The ?v= stamp
   // in index.html changes the cache key on every release, so a new
-  // version can never resolve to an old cached body. Unversioned
-  // precache entries survive ONLY as an offline best-effort
-  // fallback (ignoreSearch moves to the network-failure branch —
-  // it must never decide what an ONLINE user sees).
+  // version can never resolve to an old cached body.
+  // SW-D1: next, a request stamped with THIS release is answered by
+  // this release's own precache copy (releaseCopy). Everything else
+  // goes to the network; the loose ignoreSearch match across caches
+  // stays in the network-FAILURE branch only (offline best effort).
   event.respondWith(
     caches.match(request).then(function (cached) {
       if (cached) return cached;
+      return releaseCopy(request, url).then(function (pre) {
+      if (pre) return pre;
       return fetch(request).then(function (response) {
         if (response && response.status === 200) {
           var copy = response.clone();
@@ -380,6 +436,7 @@ self.addEventListener("fetch", function (event) {
         return caches.match(request, { ignoreSearch: true })
           .then(function (c2) { return c2 || Response.error(); });
       });
+      });   // releaseCopy
     })
   );
 });

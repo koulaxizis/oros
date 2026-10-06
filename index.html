@@ -286,7 +286,37 @@
     window.location.reload();
   }
 
-  navigator.serviceWorker.addEventListener("controllerchange", reloadWhenSafe);
+  // SW-4: sw.js claims its clients on activation, so the very FIRST
+  // install also fires controllerchange — and reloaded a page that
+  // had just loaded everything fresh from the network (a new user's
+  // first impression: the screen restarting under their hands).
+  // "First install" = no controller AND no active worker at load; a
+  // hard refresh (no controller, but a worker exists) is not one.
+  var skipFirstClaim = false;
+  if (!navigator.serviceWorker.controller) {
+    navigator.serviceWorker.getRegistration().then(function (r) {
+      if (!r || !r.active) skipFirstClaim = true;
+    }).catch(function () {});
+  }
+
+  // SW-5: while an update waits for a safe moment, the page runs the
+  // OLD shell under the NEW worker — an app opened now would be the
+  // new version inside the old shell. Close that window: the instant
+  // the running app closes, check (no waiting for the 3s poll).
+  var runWatch = null;
+  function watchRunning() {
+    if (runWatch || typeof MutationObserver !== "function") return;
+    var run = document.getElementById("oros-running");
+    if (!run) return;
+    runWatch = new MutationObserver(function () { reloadWhenSafe(); });
+    runWatch.observe(run, { attributes: true, attributeFilter: ["class"] });
+  }
+
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (skipFirstClaim) { skipFirstClaim = false; return; }
+    reloadWhenSafe();
+    if (!reloading) watchRunning();
+  });
 })();
 </script>
 

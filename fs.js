@@ -56,18 +56,33 @@
 
   // Map a raw DOMException to a coded error (NotFoundError → ENOENT).
   function mapErr(e) {
-    if (e && e.code) return e;
+    // FS-5: "already coded" means one of OUR string codes. The old
+    // test (e.code truthy) also matched every DOMException that has a
+    // legacy NUMERIC code — NotFoundError is 8, TypeMismatchError 17 —
+    // so the two mappings below never ran on OPFS: a missing file
+    // surfaced as code 8 instead of "ENOENT", and the "empty disk is
+    // an empty listing / empty export" rules (which test for
+    // "ENOENT") threw instead.
+    if (e && typeof e.code === "string") return e;
     // FS-R1: TypeMismatchError means "file-handle asked on a dir" (or
     // a path crossing THROUGH a file) — that is EISDIR (what it IS),
     // never ENOENT (what it is not). Parity with the IDB driver's
     // honest EISDIR on rec.dir. No catch path inspects the mapped
     // code — the stat/mv probes catch generically — so this change
     // only fixes read/walk diagnostics.
+    // The mapped error keeps the ORIGINAL name too, so a caller that
+    // looks at e.name ("NotFoundError") keeps working next to one
+    // that looks at e.code ("ENOENT").
+    var mapped;
     if (e && e.name === "NotFoundError") {
-      return err("ENOENT", e.message || "ENOENT");
+      mapped = err("ENOENT", e.message || "ENOENT");
+      mapped.name = e.name;
+      return mapped;
     }
     if (e && e.name === "TypeMismatchError") {
-      return err("EISDIR", e.message || "EISDIR");
+      mapped = err("EISDIR", e.message || "EISDIR");
+      mapped.name = e.name;
+      return mapped;
     }
     return e || err("EIO", "unknown FS error");
   }
@@ -169,9 +184,18 @@
   // DRIVER A — OPFS (primary backend, all modern browsers)
   // ============================================================
 
+  // FS-1: getDirectory() alone is not enough. Safari has shipped
+  // OPFS since 15.2, but FileSystemFileHandle.createWritable() — the
+  // only way to write from the page (the other one is worker-only) —
+  // arrived with Safari 26. On every Safari in between this module
+  // chose OPFS and then failed EVERY write. Feature detection on the
+  // method we actually call; without it → IndexedDB driver.
   function opfsAvailable() {
     return !!(navigator.storage &&
-              typeof navigator.storage.getDirectory === "function");
+              typeof navigator.storage.getDirectory === "function" &&
+              typeof FileSystemFileHandle !== "undefined" &&
+              FileSystemFileHandle.prototype &&
+              typeof FileSystemFileHandle.prototype.createWritable === "function");
   }
 
   function opfsRootGet() {
@@ -520,7 +544,13 @@
       (function (upto) {
         chain = chain.then(function () {
           return idbGet(pathKey(upto)).then(function (rec) {
-            if (rec) return null;
+            if (rec) {
+              // FS-3: a FILE sits where a directory is needed. OPFS
+              // refuses this (TypeMismatch → EISDIR); this driver
+              // used to carry on and store children "inside" a file.
+              if (!rec.dir) throw err("EISDIR", pathKey(upto));
+              return null;
+            }
             return idbPut(pathKey(upto), { dir: true, mtime: Date.now(), blob: null });
           });
         });
@@ -552,6 +582,12 @@
   function idbWrite(segs, blob) {
     if (!segs.length) return Promise.reject(err("EINVAL", ROOT_PATH));
     return idbEnsureDirs(segs.slice(0, segs.length - 1)).then(function () {
+      return idbGet(pathKey(segs));
+    }).then(function (existing) {
+      // FS-3: writing a file over a DIRECTORY replaced its record and
+      // left every child orphaned under a "file". OPFS refuses
+      // (EISDIR) — so does this driver now.
+      if (existing && existing.dir) throw err("EISDIR", pathKey(segs));
       return idbPut(pathKey(segs), {
         dir: false, mtime: Date.now(), blob: blob
       });
@@ -652,6 +688,16 @@
     return idbSubtreeKeys(srcKey).then(function (keys) {
       if (!keys.length) throw err("ENOENT", srcKey);
       return idbEnsureDirs(dstSegs.slice(0, dstSegs.length - 1)).then(function () {
+        // FS-3: a file moved onto an existing directory (or the other
+        // way round) must fail like OPFS does, not overwrite the
+        // record and orphan what was under it.
+        return idbGet(srcKey).then(function (srcRec) {
+          return idbGet(dstKey).then(function (dstRec) {
+            var srcIsDir = srcRec ? !!srcRec.dir : true;   // no own record = implied directory
+            if (dstRec && !!dstRec.dir !== srcIsDir) throw err("EISDIR", dstKey);
+          });
+        });
+      }).then(function () {
         var chain = Promise.resolve();
         keys.forEach(function (k) {
           chain = chain.then(function () {
@@ -688,19 +734,79 @@
   // Dispatch — one public surface, two interchangeable drivers
   // ============================================================
 
+  // FS-2 — THE BACKEND IS PINNED PER DEVICE. The two drivers are two
+  // different places: a file written through one is invisible through
+  // the other. The choice used to be re-made on every boot from what
+  // the browser offered at that moment, so the disk could silently
+  // "become empty": OPFS failing once (private window, storage
+  // hiccup) showed an empty IndexedDB disk; a browser that gains OPFS
+  // writing (Safari 26, see FS-1) would leave an IndexedDB disk
+  // behind. Now the first decision is stored ("oros-ofs-backend",
+  // swept by the factory reset like every oros- key) and kept:
+  //   pinned indexeddb → IndexedDB, whatever the browser offers;
+  //   pinned opfs      → OPFS, and if it cannot be opened the disk is
+  //                      UNAVAILABLE (EIO) — never a second, empty one;
+  //   not pinned yet   → an existing OPFS disk wins; else an existing
+  //                      IndexedDB disk; else OPFS when writable.
+  //                      A failed OPFS open without a pin (e.g. a
+  //                      private window) falls back for this session
+  //                      only and pins nothing.
+  var BACKEND_KEY = "oros-ofs-backend";
+  var backendPromise = null;
+
+  function pinRead() {
+    try {
+      var v = localStorage.getItem(BACKEND_KEY);
+      return (v === MODE_OPFS || v === MODE_IDB) ? v : null;
+    } catch (e) { return null; }
+  }
+  function pinWrite(m) {
+    try { localStorage.setItem(BACKEND_KEY, m); } catch (e) {}
+  }
+
+  function resolveBackend() {
+    var pin = pinRead();
+    if (pin === MODE_IDB) return Promise.resolve(MODE_IDB);
+    if (!opfsAvailable()) {
+      if (pin === MODE_OPFS) {
+        return Promise.reject(err("EIO", "the disk backend (OPFS) is not available in this browser"));
+      }
+      pinWrite(MODE_IDB);
+      return Promise.resolve(MODE_IDB);
+    }
+    return opfsRootGet().then(function () {
+      if (pin === MODE_OPFS) return MODE_OPFS;
+      return opfsMount(false).then(function () { return true; }, function () { return false; })
+        .then(function (hasOpfsDisk) {
+          if (hasOpfsDisk) { pinWrite(MODE_OPFS); return MODE_OPFS; }
+          return idbKeys().then(function (keys) { return keys.length > 0; },
+                                function () { return false; })
+            .then(function (hasIdbDisk) {
+              var chosen = hasIdbDisk ? MODE_IDB : MODE_OPFS;
+              pinWrite(chosen);
+              return chosen;
+            });
+        });
+    }, function () {
+      if (pin === MODE_OPFS) {
+        throw err("EIO", "the disk backend (OPFS) could not be opened");
+      }
+      return MODE_IDB;          // session-only fallback, nothing pinned
+    });
+  }
+
   function backendReady() {
     if (mode) return Promise.resolve(mode);
-    if (opfsAvailable()) {
-      return opfsRootGet().then(function () {
-        mode = MODE_OPFS;
-        return mode;
-      }).catch(function () {
-        mode = MODE_IDB;
-        return mode;
+    if (!backendPromise) {
+      backendPromise = resolveBackend().then(function (m) {
+        mode = m;
+        return m;
+      }, function (e) {
+        backendPromise = null;  // a later call may try again
+        throw e;
       });
     }
-    mode = MODE_IDB;
-    return Promise.resolve(mode);
+    return backendPromise;
   }
 
   function dispatch(op, opfsFn, idbFn) {
@@ -783,6 +889,13 @@
       var chain = Promise.resolve();
       obj.entries.forEach(function (e) {
         chain = chain.then(function () {
+          // FS-4: a null / non-object entry threw on e.path and
+          // aborted the whole import (every valid entry after it was
+          // skipped). Same per-entry collector as FP1.
+          if (!e || typeof e !== "object") {
+            failed.push({ path: null, reason: "malformed entry" });
+            return null;
+          }
           var segs = parsePath(e.path);
           if (segs === null) {
             failed.push({ path: e.path, reason: "invalid path" });

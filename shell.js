@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.39.07";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.39.10";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -801,10 +801,24 @@
   // Collapsible menu categories — device-local ergonomics only:
   // NEVER synced, NEVER marked dirty (menu layout ≠ user data).
   var MENU_CAT_KEY = "oros-menu-cat-collapsed";
+  // SH-B11: categories are keyed in lowercase everywhere (grouping,
+  // label lookup, this map). Older maps used the raw apps.json
+  // spelling ("Office") — fold them, exact lowercase keys first.
   function catCollapsedRead() {
     try {
       var o = JSON.parse(localStorage.getItem(MENU_CAT_KEY));
-      return (o && typeof o === "object") ? o : {};
+      if (!o || typeof o !== "object") return {};
+      var out = {}, k;
+      for (k in o) {
+        if (Object.prototype.hasOwnProperty.call(o, k) && k === k.toLowerCase()) out[k] = !!o[k];
+      }
+      for (k in o) {
+        if (Object.prototype.hasOwnProperty.call(o, k) && k !== k.toLowerCase() &&
+            !Object.prototype.hasOwnProperty.call(out, k.toLowerCase())) {
+          out[k.toLowerCase()] = !!o[k];
+        }
+      }
+      return out;
     } catch (e) { return {}; }
   }
   function catCollapsedWrite(map) {
@@ -870,7 +884,7 @@
       function () {
         var m = {};
         state.apps.forEach(function (app) {
-          m[app.category || "other"] = true;
+          m[String(app.category || "other").toLowerCase()] = true;
         });
         catCollapsedWrite(m);
         renderMenu();
@@ -887,13 +901,36 @@
         '<div class="hint">' + window.t("menu.empty.hint") + '</div>';
       menu.appendChild(empty);
     } else {
-      var cats = {};
+      // SH-B11 (A52): ONE group per category whatever its spelling in
+      // apps.json ("lifestyle" and "Lifestyle" used to be two groups,
+      // and every lowercase name sorted after every capitalized one),
+      // and the groups in the alphabetical order of the label the
+      // user actually READS — in Greek the menu followed the English
+      // names.
+      var cats = {}, catRaw = {};
       state.apps.forEach(function (app) {
-        var c = app.category || "other";
+        var raw = String(app.category || "other");
+        var c = raw.toLowerCase();
+        if (!catRaw[c]) catRaw[c] = raw;
         (cats[c] = cats[c] || []).push(app);
       });
+      function catTextOf(c) {
+        var key = "category." + c;
+        var label = window.t(key);
+        // Unknown category → t() returns the key itself → fall back
+        // to the prettified raw name (future-proof for new apps).
+        return (label === key)
+          ? catRaw[c].charAt(0).toUpperCase() + catRaw[c].slice(1)
+          : label;
+      }
+      var catLocale = (state.lang === "el") ? "el" : "en";
 
-      Object.keys(cats).sort().forEach(function (cat) {
+      Object.keys(cats).sort(function (a, b) {
+        var r = 0;
+        try { r = catTextOf(a).localeCompare(catTextOf(b), catLocale, { sensitivity: "base" }); }
+        catch (e) { r = 0; }
+        return r || (a < b ? -1 : a > b ? 1 : 0);
+      }).forEach(function (cat) {
         var collapsed = !!catCollapsedRead()[cat];
         var wrap = document.createElement("div");
         wrap.className = "menu-category";
@@ -902,12 +939,7 @@
         var h = document.createElement("h4");
         h.style.cssText =
           "display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;";
-        var catLabel = window.t("category." + cat.toLowerCase());
-        // Unknown category → t() returns the key itself → fall back
-        // to the prettified raw name (future-proof for new apps).
-        var catText = (catLabel === "category." + cat.toLowerCase())
-          ? cat.charAt(0).toUpperCase() + cat.slice(1)
-          : catLabel;
+        var catText = catTextOf(cat);
         var chev = document.createElement("span");
         chev.style.cssText =
           "display:inline-flex;transition:transform .15s;" +

@@ -84,49 +84,94 @@
   }
 
   // ---------- Dirty queue (local work in flight) ----------
-  function getQueue() { return readJson(QUEUE_KEY) || []; }
-  function setQueue(q) {
-    if (q && q.length) writeJson(QUEUE_KEY, q);
+  // VD-5: the queue is a MAP path → generation. A plain list had no
+  // way to tell "the edit this sync uploaded" from "an edit made
+  // WHILE the sync ran": the old clearQueue() dropped both, so a
+  // file saved during a sync was never uploaded — and, unqueued, it
+  // was fair game for the next remote version to overwrite. A path
+  // now leaves the queue only if its generation is still the one
+  // the sync picked up. (An older stored LIST is read as a map.)
+  var queueSeq = 0;
+  function getQueueMap() {
+    var q = readJson(QUEUE_KEY);
+    var out = {};
+    if (Array.isArray(q)) {
+      q.forEach(function (p) { if (typeof p === "string") out[p] = 1; });
+    } else if (q && typeof q === "object") {
+      Object.keys(q).forEach(function (p) { out[p] = q[p]; });
+    }
+    return out;
+  }
+  function setQueueMap(m) {
+    if (Object.keys(m).length) writeJson(QUEUE_KEY, m);
     else localStorage.removeItem(QUEUE_KEY);
   }
-  function queueHas(path) { return getQueue().indexOf(path) !== -1; }
-
+  function getQueue() { return Object.keys(getQueueMap()); }
+  function queueHas(path) {
+    return Object.prototype.hasOwnProperty.call(getQueueMap(), path);
+  }
+  function queueTouch(path) {
+    var m = getQueueMap();
+    queueSeq = Math.max(queueSeq + 1, Date.now());
+    m[path] = queueSeq;
+    setQueueMap(m);
+  }
   function queueAdd(path) {
-    var q = getQueue();
-    if (q.indexOf(path) === -1) { q.push(path); setQueue(q); }
+    queueTouch(path);
     armDebounce();
   }
-  function queueRemove(path) {
-    var q = getQueue();
-    var i = q.indexOf(path);
-    if (i !== -1) { q.splice(i, 1); setQueue(q); }
+  // Settle what a sync really pushed: only generations it picked up.
+  function queueSettle(done) {
+    var m = getQueueMap();
+    Object.keys(done).forEach(function (p) {
+      if (m[p] === done[p]) delete m[p];
+    });
+    setQueueMap(m);
   }
-  function clearQueue() { setQueue([]); }
 
   // ---------- Local manifest cache + rev ----------
   function emptyManifest() { return { ver: 1, files: {} }; }
-  function getLocalManifest() { return readJson(LM_KEY) || emptyManifest(); }
+  function getLocalManifest() {
+    var m = readJson(LM_KEY);
+    return (m && m.files && typeof m.files === "object") ? m : emptyManifest();
+  }
   function setLocalManifest(m) { writeJson(LM_KEY, m); }
-  function getRev() { return localStorage.getItem(REV_KEY) || null; }
   function setRev(r) {
     if (r) localStorage.setItem(REV_KEY, r);
     else localStorage.removeItem(REV_KEY);
+  }
+
+  // ---------- FS error kinds ----------
+  // fs.js answers string codes; the DOMException name/number is
+  // accepted too (a cached older fs.js on OPFS let them through).
+  function isMissing(e) {
+    return !!e && (e.code === "ENOENT" || e.name === "NotFoundError" || e.code === 8);
+  }
+  function isDirErr(e) {
+    return !!e && (e.code === "EISDIR" || e.name === "TypeMismatchError" || e.code === 17);
+  }
+  function fsReady() {
+    return (typeof FS().ready === "function") ? FS().ready() : Promise.resolve();
   }
 
   // ---------- Cloud manifest fetch ----------
   // ABSENT-QUIET: probing an EMPTY vault costs one 409 per sweep
   // (boot + every tab-visible + every "online"). The browser paints
   // that 409 red in the console — alarming noise for a state the
-  // code already handles. While no local work is queued, the
-  // "absent" verdict is cached for ABSENT_TTL_MS. Freshness
-  // contract: any queued push BYPASSES the cache (pushCloud needs
-  // the true rev for its conditional write), and the first sweep
-  // after the TTL lapses re-probes — a manifest created by another
-  // device is picked up within ~ABSENT_TTL_MS.
-  function fetchCloudManifest() {
-    var queued = getQueue().length > 0;
+  // code already handles. While this device has NOTHING to do with
+  // the vault (nothing queued, nothing ever synced), the "absent"
+  // verdict is cached for ABSENT_TTL_MS; the first sweep after the
+  // TTL re-probes, so a manifest created by another device is picked
+  // up within ~ABSENT_TTL_MS.
+  // VD-2: the cache is used ONLY in that empty state. It used to be
+  // trusted with files already synced: right after this device's own
+  // first push, the next sweep read the minute-old "absent" verdict
+  // as "the cloud has no files" and deleted the local copy of what
+  // had just been uploaded.
+  function fetchCloudManifest(lm) {
+    var idle = getQueue().length === 0 && Object.keys(lm.files).length === 0;
     var absentAt = parseInt(localStorage.getItem(ABSENT_KEY) || "0", 10) || 0;
-    if (!queued && Date.now() - absentAt < ABSENT_TTL_MS) {
+    if (idle && Date.now() - absentAt < ABSENT_TTL_MS) {
       return Promise.resolve({ rev: null, manifest: emptyManifest() });
     }
     return ST().getRevision(MANIFEST_KEY).then(function (rev) {
@@ -142,6 +187,7 @@
             if (!m || m.ver !== 1 || !m.files) {
               throw new Error("bad manifest");
             }
+            try { localStorage.removeItem(ABSENT_KEY); } catch (e) {}
             return { rev: rev, manifest: m };
           });
       });
@@ -156,108 +202,215 @@
     });
   }
 
+  // VD-4: what is REALLY at a local path, compared with what this
+  // device last synced there (cached) and with what the cloud now
+  // says (remote, may be undefined). The pull used to trust the
+  // queue alone; any write that never reached the queue (another
+  // orosFS consumer, a disk import, an edit racing a sync) was
+  // overwritten or deleted without a look.
+  //   "absent"  — no file here
+  //   "remote"  — already identical to the cloud's version
+  //   "clean"   — exactly what was last synced: safe to replace/remove
+  //   "changed" — something else: local work, hands off
+  function localState(path, cached, remote) {
+    return FS().stat(path).then(function (st) {
+      if (st.dir) return "changed";
+      var couldBeCached = !!cached && (typeof cached.s !== "number" || cached.s === st.size);
+      var couldBeRemote = !!remote && (typeof remote.s !== "number" || remote.s === st.size);
+      if (!couldBeCached && !couldBeRemote) return "changed";   // size alone settles it
+      return FS().read(path)
+        .then(function (blob) { return blob.arrayBuffer(); })
+        .then(function (buf) { return VC().sha256Hex(buf); })
+        .then(function (hash) {
+          if (remote && hash === remote.h) return "remote";
+          if (cached && hash === cached.h) return "clean";
+          return "changed";
+        });
+    }, function (e) {
+      if (isMissing(e)) return "absent";
+      throw e;
+    });
+  }
+
+  function fileFail(stats, path, e) {
+    stats.failed++;
+    emit("file-fail", path + " — " + ((e && (e.code || e.message)) || "error"));
+  }
+
   // ---------- Pull: apply remote changes onto local FS ----------
   // Rules (per path, remote manifest = cloud truth):
   //   · path queued locally            → SKIP (local work wins; the
   //                                      queue is the in-flight override)
-  //   · remote entry ≠ local cache     → download + decrypt + FS write
-  //   · path in cache, gone from cloud → delete local file (remote
-  //                                      deletion) unless queued
+  //   · remote entry ≠ local cache     → download + decrypt + FS write,
+  //                                      unless the local file holds
+  //                                      unsynced content (VD-4: kept
+  //                                      and queued — same "local
+  //                                      wins" rule as the queue)
+  //   · path in cache, gone from cloud → delete the local file, only
+  //                                      if it still is what was
+  //                                      synced (VD-4), and ONLY when
+  //                                      a cloud manifest EXISTS.
+  // VD-1: an ABSENT manifest says nothing about deletions. It is what
+  // a factory reset on another device, a different Dropbox account or
+  // a manifest that was never written look like — the old code read
+  // it as "every file was deleted remotely" and removed the whole
+  // local vault. The caller re-queues what this device holds instead.
+  // VD-6: one file at a time, the local manifest saved after each
+  // one, and one bad file is one failure — not the end of the sync.
   function applyRemote(cloud, lm, stats) {
     var cf = cloud.manifest.files;
-    var work = [];
+    var chain = Promise.resolve();
 
     Object.keys(cf).forEach(function (path) {
-      if (queueHas(path)) return;                    // in-flight local edit
-      var entry = cf[path];
-      var cached = lm.files[path];
-      if (cached && cached.h === entry.h) {
-        lm.files[path] = entry;                      // meta refresh only
-        return;
-      }
-      work.push(downloadObject(entry.h).then(function (plain) {
-        return FS().write(path, new Blob([plain], {
-          type: entry.mime || "application/octet-stream"
-        })).then(function () {
-          lm.files[path] = entry;
-          stats.downloaded++;
+      chain = chain.then(function () {
+        if (queueHas(path)) return null;               // in-flight local edit
+        var entry = cf[path];
+        if (!entry || typeof entry.h !== "string") return null;
+        var cached = lm.files[path];
+        if (cached && cached.h === entry.h) {
+          lm.files[path] = entry;                      // meta refresh only
+          return null;
+        }
+        return localState(path, cached, entry).then(function (state) {
+          if (state === "remote") {                    // already there
+            lm.files[path] = entry;
+            setLocalManifest(lm);
+            return null;
+          }
+          if (state === "changed") {                   // unsynced local work
+            queueTouch(path);
+            stats.kept++;
+            return null;
+          }
+          return downloadObject(entry.h).then(function (plain) {
+            if (queueHas(path)) return null;           // edited while downloading
+            return FS().write(path, new Blob([plain], {
+              type: entry.mime || "application/octet-stream"
+            })).then(function () {
+              lm.files[path] = entry;
+              setLocalManifest(lm);
+              stats.downloaded++;
+            });
+          });
+        }).catch(function (e) { fileFail(stats, path, e); });
+      });
+    });
+
+    if (cloud.rev !== null) {
+      Object.keys(lm.files).forEach(function (path) {
+        if (cf[path]) return;                          // still exists remotely
+        chain = chain.then(function () {
+          if (queueHas(path)) return null;             // local edit in flight
+          return localState(path, lm.files[path], null).then(function (state) {
+            if (state === "changed") {                 // edited here since the last sync
+              queueTouch(path);
+              stats.kept++;
+              return null;
+            }
+            var gone = (state === "absent")
+              ? Promise.resolve()
+              : FS().rm(path).then(function () { stats.deleted++; });
+            return gone.then(function () {
+              delete lm.files[path];
+              setLocalManifest(lm);
+            });
+          }).catch(function (e) { fileFail(stats, path, e); });
         });
-      }));
-    });
+      });
+    }
 
-    Object.keys(lm.files).forEach(function (path) {
-      if (cf[path]) return;                          // still exists remotely
-      if (queueHas(path)) return;                    // local edit in flight
-      work.push(FS().rm(path).then(function () {
-        delete lm.files[path];
-        stats.deleted++;
-      }).catch(function () {
-        delete lm.files[path];                       // already gone locally
-      }));
-    });
-
-    return Promise.all(work).then(function () { return lm; });
+    return chain.then(function () { return lm; });
   }
-  
-    // ---------- Object upload (encrypt + content-address) ----------
+
+  // ---------- Object upload (encrypt + content-address) ----------
   function uploadObject(plainBuf, hash) {
     return VC().encryptBytes(plainBuf).then(function (env) {
       return ST().putObject(OBJECTS_PREFIX + hash, new Blob([env]));
     });
   }
 
+  // Is this content already stored? The manifest we pulled says so —
+  // and one cheap existence probe confirms it (an object upload that
+  // failed without anyone noticing must not leave a manifest pointing
+  // at nothing forever).
+  function objectStored(hash, cloudHashes) {
+    if (!cloudHashes[hash]) return Promise.resolve(false);
+    return ST().getRevision(OBJECTS_PREFIX + hash)
+      .then(function (rev) { return rev !== null; }, function () { return false; });
+  }
+
   // ---------- Push: upload queued local work, then manifest ----------
   // Uploads every queued path's current content (content-addressed,
   // immutable objects — no conditional write needed), then writes the
-  // merged manifest CONDITIONALLY on the cloud rev we pulled. On
-  // storage-conflict (another device won the race) we retry the whole
-  // sync (MAX_SYNC_TRIES) so both sides' work converges.
-  function pushCloud(lm, cloudRev, stats) {
-    var queue = getQueue();
+  // merged manifest CONDITIONALLY on the cloud rev we pulled (null =
+  // "there must be no manifest yet"). On storage-conflict (another
+  // device won the race) the whole sync is retried (MAX_SYNC_TRIES)
+  // so both sides' work converges.
+  // VD-3: a queued path whose file is GONE is a deletion. FS().read()
+  // rejects for a missing file (it never resolved null as the old
+  // code expected), so the first deleted file made every later sync
+  // fail — deletions never reached the cloud and nothing else did.
+  function pushCloud(lm, cloud, stats) {
+    var snap = getQueueMap();
+    var done = {};
+    var cloudHashes = {};
+    Object.keys(cloud.manifest.files).forEach(function (p) {
+      var e = cloud.manifest.files[p];
+      if (e && typeof e.h === "string") cloudHashes[e.h] = true;
+    });
 
-    var uploads = queue.map(function (path) {
-      return FS().read(path).then(function (blob) {
-        if (!blob) {                                 // deleted locally
-          delete lm.files[path];
-          stats.deleted++;
-          return null;
-        }
-        return blob.arrayBuffer().then(function (buf) {
-          return VC().sha256Hex(buf).then(function (hash) {
-            var entry = {
-              h: hash,
-              s: blob.size,
-              m: nowIso(),
-              mime: blob.type || "application/octet-stream"
-            };
-            // Upload only if this hash is NOT already known —
-            // copies/renames/re-pushes of identical content are free.
-            var alreadyThere = cloudRev !== null && getLocalManifest().files[path] &&
-              getLocalManifest().files[path].h === hash;
-            var job = alreadyThere ? Promise.resolve() : uploadObject(buf, hash);
-            return job.then(function () {
-              lm.files[path] = entry;
-              stats.uploaded++;
+    var chain = Promise.resolve();
+    Object.keys(snap).forEach(function (path) {
+      chain = chain.then(function () {
+        return FS().read(path).then(function (blob) {
+          return blob.arrayBuffer().then(function (buf) {
+            return VC().sha256Hex(buf).then(function (hash) {
+              var entry = {
+                h: hash,
+                s: blob.size,
+                m: nowIso(),
+                mime: blob.type || "application/octet-stream"
+              };
+              // Upload only if this content is NOT already stored —
+              // copies / renames / re-pushes of identical content
+              // cost one existence probe, not a transfer.
+              return objectStored(hash, cloudHashes).then(function (stored) {
+                return stored ? null : uploadObject(buf, hash);
+              }).then(function () {
+                cloudHashes[hash] = true;
+                lm.files[path] = entry;
+                stats.uploaded++;
+                done[path] = snap[path];
+              });
             });
           });
-        });
+        }, function (e) {
+          if (isMissing(e)) {                          // deleted locally
+            if (lm.files[path]) { delete lm.files[path]; stats.deleted++; }
+            done[path] = snap[path];
+            return null;
+          }
+          if (isDirErr(e)) {                           // a folder was queued: nothing to store
+            done[path] = snap[path];
+            return null;
+          }
+          throw e;
+        }).catch(function (e) { fileFail(stats, path, e); });   // stays queued
       });
     });
 
-    return Promise.all(uploads).then(function () {
-      // Conditional manifest write — the convergence point.
-      // SQ1: the queue is the record of "work that must reach the
-      // cloud". Clearing it BEFORE the manifest write meant a
-      // storage-conflict (another device won the race) entered the
-      // retry with the queue ALREADY EMPTY — the winning device's
-      // manifest never contained this device's queued paths and
-      // the retry had nothing left to push. Clear only AFTER the
-      // write lands; a conflict re-runs attempt() with the queue
-      // intact (objects are content-addressed — re-uploads of
-      // identical content are free) and both sides converge.
+    return chain.then(function () {
+      // Conditional manifest write — the convergence point. The queue
+      // is settled only AFTER it lands (SQ1), and only for what this
+      // sync picked up (VD-5); a conflict re-runs attempt() with the
+      // queue intact.
       return VC().encryptJson(lm).then(function (sealed) {
-        return ST().putObject(MANIFEST_KEY, sealed, cloudRev === null ? undefined : cloudRev)
-          .then(function (res) { clearQueue(); return res; });
+        return ST().putObject(MANIFEST_KEY, sealed, cloud.rev)
+          .then(function (res) {
+            queueSettle(done);
+            try { localStorage.removeItem(ABSENT_KEY); } catch (e) {}
+            return res;
+          });
       });
     });
   }
@@ -269,29 +422,38 @@
     syncInFlight = true;
     emit("start", reason);
 
-    var stats = { downloaded: 0, uploaded: 0, deleted: 0 };
+    var stats = { downloaded: 0, uploaded: 0, deleted: 0, kept: 0, failed: 0 };
     var tries = 0;
 
     function attempt() {
       var lm = getLocalManifest();
-      var pulledRev = null;                         // cloud rev THIS attempt pulled
-      return fetchCloudManifest()
-        .then(function (cloud) {
-          pulledRev = cloud.rev;
+      var cloud = null;                             // what THIS attempt pulled
+      // The disk must answer first: an unavailable disk (EIO) reads
+      // like "every file is missing" — never sync against that.
+      return fsReady()
+        .then(function () { return fetchCloudManifest(lm); })
+        .then(function (c) {
+          cloud = c;
+          if (cloud.rev === null) {
+            // VD-1: no manifest in the cloud. Whatever this device
+            // holds as "synced" is not there (any more) — it goes up
+            // again; nothing local is touched.
+            Object.keys(lm.files).forEach(function (p) {
+              if (!queueHas(p)) queueTouch(p);
+            });
+          }
           return applyRemote(cloud, lm, stats);
         })
         .then(function (lm) {
           if (!getQueue().length) {                 // nothing local pending
             setLocalManifest(lm);
-            setRev(pulledRev);                      // honest cache of the cloud rev
-            return { rev: pulledRev, manifest: lm };
+            setRev(cloud.rev);                      // honest cache of the cloud rev
+            return { rev: cloud.rev, manifest: lm };
           }
-          return pushCloud(lm, pulledRev, stats).then(function (res) {
-            // Success: the conditional write landed on pulledRev. The NEW
-            // cloud rev is unknown (putObject hands back the raw Response)
-            // — probe it once so REV_KEY is honest for the NEXT sync's
-            // conditional write. Probe failure is non-fatal: rev=null just
-            // means the next pull re-learns it.
+          return pushCloud(lm, cloud, stats).then(function (res) {
+            // Success: the conditional write landed on the rev we
+            // pulled. Probe the new rev once so REV_KEY stays an
+            // honest record; failure is non-fatal.
             setLocalManifest(lm);
             return ST().getRevision(MANIFEST_KEY).then(function (newRev) {
               setRev(newRev);
@@ -372,8 +534,7 @@
       queueAdd(path);
     },
     fileDeleted: function (path) {
-      queueRemove(path);          // pushCloud deletes via queue presence…
-      queueAdd(path);              // …so re-add to mark deletion pending
+      queueAdd(path);             // pushCloud turns "queued + gone" into a deletion
     },
 
     // Manual triggers

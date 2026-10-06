@@ -70,7 +70,18 @@
   var CONTEMPLATION_IDLE_MS = 5 * 60 * 1000; // v0.3: contemplation trigger
 
   // ---------- 1. Constants, i18n, helpers ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // PT-4: the pet lives in the shell document and is never reloaded
+  // by a language switch — a LANG read once at load left the whole
+  // HUD in the old language until the next full reload. currentLang()
+  // is re-read on every HUD refresh (once a second).
+  function currentLang() {
+    var l = window.orosLang;
+    if (l !== "el" && l !== "en") {
+      try { l = localStorage.getItem("oros-lang"); } catch (e) { l = "en"; }
+    }
+    return l === "el" ? "el" : "en";
+  }
+  var LANG = currentLang();
 
   // Relaxed decay (units per minute)
   var FOOD_RATE    = 100 / (24 * 60);   // ~24h from 100 to 0
@@ -171,52 +182,52 @@
       "action.viewlog":  "Ιστορικό δραστηριότητας",
       "action.catch":    "Πιάσε το!",
       "menu.pet":        "Screen Pet",
-      "confirm.newpet":  "Να φύγει η/ο {name} και να έρθει νέο πλάσμα; Δεν αναιρείται.",
+      "confirm.newpet":  "Αποχαιρετάς το πλάσμα «{name}» και έρχεται καινούργιο; Δεν αναιρείται.",
       "confirm.no":      "Άκυρο",
       "confirm.yes":     "Νέο πλάσμα",
       "speech.hello":    "Γεια! Με λένε {name}!",
-      "speech.firstfed": ["Εσύ ήσουν ο πρώτος που με ταΐσες σήμερα!",
+      "speech.firstfed": ["Το πρώτο φαγητό της ημέρας!",
                           "Φρέσκο πρωινό! Ευχαριστώ!",
                           "Ο καλύτερος τρόπος να ξεκινήσεις την ημέρα!"],
       "speech.hungry":   ["Πεινάω...", "Μμμ, φαγητό;", "Το στομάχι μου γκρινιάζει!",
                           "Τάισέ με, σε παρακαλώ!", "Είναι ώρα για φαγητό;"],
-      "speech.bored":    ["Χαδέψου μου!", "Βαριέμαι...", "Παίξε μαζί μου!",
+      "speech.bored":    ["Χάιδεψέ με!", "Βαριέμαι...", "Παίξε μαζί μου!",
                           "Έλα! Κοίτα με!", "Τόση ησυχία εδώ..."],
       "speech.tired":    ["Νυστάζω...", "Ωωχ...", "Νιώθω το κρεβάτι να με φωνάζει",
                           "Δεν ανοίγω τα μάτια μου...", "Χρειάζομαι... ύπνο..."],
-      "speech.happy":    ["Λαλάλα!", "Είμαι ευτυχισμένο/η!", "Χοοοοπ!",
+      "speech.happy":    ["Λαλάλα!", "Τι χαρά!", "Χοοοοπ!",
                           "Κορυφαία μέρα!", "Χιχι!"],
-      "speech.eat":      ["Ναμ νάμ!", "Νόστιμο!", "Περισσότερα!",
-                          "Νταξ!", "Ναμ ναμ ναμ!"],
-      "speech.wake":     ["Καλημέρααα!", "Ξύπνιος/α!", "Ωραία νύχτα!",
-                          "Γεια σου ήλιε!", "Έτοιμος/η για παιχνίδι!"],
+      "speech.eat":      ["Ναμ ναμ!", "Νόστιμο!", "Κι άλλο!",
+                          "Πεντανόστιμο!", "Ναμ ναμ ναμ!"],
+      "speech.wake":     ["Καλημέρααα!", "Ξύπνησα!", "Τι ωραίος ύπνος!",
+                          "Γεια σου ήλιε!", "Πάμε για παιχνίδι!"],
       "speech.sleep":    ["Καληνύχτα...", "Zzz...", "Όνειρα γλυκά",
                           "Υπνάκια...", "Τα λέμε αύριο..."],
-      "speech.catch":    ["Το πιάνω!", "Το έπιασα!", "Γιαούρτι!",
-                          "Τέλεια πάρε!", "Ναι!"],
+      "speech.catch":    ["Την έπιασα!", "Το 'χω!", "Τέλεια!",
+                          "Τι πιάσιμο!", "Ναι!"],
       "speech.contemp":  ["Σκέφτομαι...", "Μμμ...", "Απολαμβάνω...",
                           "Ηρεμία...", "Σιωπηλή στιγμή..."],
       "event.log.title": "Ιστορικό Δραστηριότητας",
       "event.log.empty": "Καμία πρόσφατη δραστηριότητα",
-      "event.type.feed": "Τάγηθηκε",
-      "event.type.pet":  "Χαιδεύτηκε",
+      "event.type.feed": "Έφαγε",
+      "event.type.pet":  "Πήρε χάδια",
       "event.type.sleep": "Πήγε για ύπνο",
       "event.type.wake":  "Ξύπνησε",
       "event.type.newpet": "Ήρθε νέο πλάσμα",
-      "event.type.catch": "Πιάσε την μπάλα",
+      "event.type.catch": "Έπιασε την μπάλα",
       "event.type.birthday": "Γενέθλια!",
       "evt.today": "Σήμερα",
       "evt.yesterday": "Χθες",
       "evt.date": "{d}/{m}/{y}",
-      "notif.bday.first": "Το πρώτο γενέθλιο του/της {name}!",
-      "notif.bday.years": "{name} γιορτάζει {years} χρονών!",
-      "cal.pet.feed": "{name} τάγηθηκε",
-      "cal.pet.pet": "{name} χαιδεύτηκε",
-      "cal.pet.sleep": "{name} πήγε για ύπνο",
-      "cal.pet.wake": "{name} ξύπνησε",
-      "cal.pet.new": "{name} άρχισε τη ζωή του",
+      "notif.bday.first": "Τα πρώτα γενέθλια: {name}!",
+      "notif.bday.years": "{name}: {years} χρόνια μαζί σου!",
+      "cal.pet.feed": "{name}: φαγητό",
+      "cal.pet.pet": "{name}: χάδια",
+      "cal.pet.sleep": "{name}: ύπνος",
+      "cal.pet.wake": "{name}: ξύπνημα",
+      "cal.pet.new": "{name}: πρώτη μέρα",
       "cal.pet.catch": "Πιάστηκε η μπάλα!",
-      "cal.pet.bday": "Γενέθλια {name}!"
+      "cal.pet.bday": "Γενέθλια: {name}!"
     }
   };
 
@@ -297,11 +308,18 @@
   var state = null;
   var runtime = null;   // per-device choreography (Part 4), never synced
 
+  // PT-1: a pet nobody has touched yet is PROVISIONAL — sm 0, fm 0.
+  // Every device creates one at its first boot, even with the pet
+  // switched off. Stamped "now" (as before), the newcomer's random
+  // pet was the NEWEST entity at the first sync and replaced the
+  // pet the user already had — name, age and history — on every
+  // device. With sm 0 any real pet wins; the first real interaction
+  // (writePet) stamps it and makes it real.
   function defaultState() {
     var now = Date.now();
     return {
       ver: DATA_VER,
-      sm: now,
+      sm: 0,
       deleted: {},
       pet: {
         id: uid(),
@@ -313,7 +331,7 @@
         wokeAt: now, awakeE: 100,
         asleepSince: null, asleepE: 0
       },
-      fm: { name: now, palette: now }
+      fm: { name: 0, palette: 0 }
     };
   }
 
@@ -331,7 +349,10 @@
       }
     } catch (e) { /* corrupted → fresh start */ }
     state = defaultState();
-    save();
+    // PT-1: stored, but NOT announced to the sync engine — a
+    // provisional pet is not work that must reach the cloud.
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e2) { /* quota */ }
   }
 
   function save() {
@@ -507,30 +528,45 @@
 // ---------- 2b-3. Pet Settings sync slice (v0.3.2) ----------
 // Synced preferences that MUST travel across devices:
 //   - calFeed: boolean (calendar feed enabled/disabled)
+//   - enabled / minimized (v0.4)
 // Device-local ergonomics (NOT synced, NOT in this slice):
-//   - oros-pet-enabled, oros-pet-minimized, oros-pet-pos
+//   - oros-pet-pos
 // Merge = per-field LWW (last-write-wins), simplest possible.
-function mergePetSettings(A, B) {
-  var aCal = (A && typeof A.calFeed === "boolean") ? A.calFeed : true;
-  var bCal = (B && typeof B.calFeed === "boolean") ? B.calFeed : true;
-  var aTs = (A && typeof A.calFeedTs === "number") ? A.calFeedTs : 0;
-  var bTs = (B && typeof B.calFeedTs === "number") ? B.calFeedTs : 0;
-  // LWW per field
-  // v0.4: enabled + minimized ride the same slice — every pet
-  // preference travels (v0.3.2 had them device-local by design).
-  function lwwBool(field) {
-    var af = (A && typeof A[field] === "boolean") ? A[field] : false;
-    var bf = (B && typeof B[field] === "boolean") ? B[field] : false;
-    var at = (A && typeof A[field + "Ts"] === "number") ? A[field + "Ts"] : 0;
-    var bt = (B && typeof B[field + "Ts"] === "number") ? B[field + "Ts"] : 0;
-    return { v: (at >= bt) ? af : bf, ts: (at >= bt) ? at : bt };
-  }
-  var en = lwwBool("enabled");
-  var mn = lwwBool("minimized");
+// PT-2: ONE shape everywhere. The getter returned the settings
+// WITHOUT "ver", the merge returned them WITH it, the setter stored
+// them without it again — so after every pull the merged value
+// differed from both the local and the cloud copy: "1 section
+// updated" and a fresh upload on EVERY sync cycle, forever. And a
+// tie between two stamps picked "the first argument", i.e. each
+// device picked its own value and the two never agreed.
+function petSettingsCanon(s) {
+  s = (s && typeof s === "object") ? s : {};
+  function ts(k) { return (typeof s[k] === "number" && isFinite(s[k]) && s[k] >= 0) ? s[k] : 0; }
   return {
     ver:         1,
-    calFeed:     (aTs >= bTs) ? aCal : bCal,
-    calFeedTs:   (aTs >= bTs) ? aTs : bTs,
+    calFeed:     (typeof s.calFeed === "boolean") ? s.calFeed : true,
+    calFeedTs:   ts("calFeedTs"),
+    enabled:     (typeof s.enabled === "boolean") ? s.enabled : false,
+    enabledTs:   ts("enabledTs"),
+    minimized:   (typeof s.minimized === "boolean") ? s.minimized : false,
+    minimizedTs: ts("minimizedTs")
+  };
+}
+
+function mergePetSettings(A, B) {
+  var a = petSettingsCanon(A), b = petSettingsCanon(B);
+  // Newer stamp wins; on an exact tie the same value on both
+  // devices: "true" (deterministic, symmetric).
+  function lww(field) {
+    var at = a[field + "Ts"], bt = b[field + "Ts"];
+    if (at !== bt) return (at > bt) ? { v: a[field], ts: at } : { v: b[field], ts: bt };
+    return { v: (a[field] || b[field]), ts: at };
+  }
+  var cf = lww("calFeed"), en = lww("enabled"), mn = lww("minimized");
+  return {
+    ver:         1,
+    calFeed:     cf.v,
+    calFeedTs:   cf.ts,
     enabled:     en.v,
     enabledTs:   en.ts,
     minimized:   mn.v,
@@ -539,39 +575,16 @@ function mergePetSettings(A, B) {
 }
 
 function settingsSliceGet() {
-  // Load settings from localStorage
-  var raw = localStorage.getItem("oros-pet-settings");
-  var def = {
-    calFeed: true, calFeedTs: 0,
-    enabled: false, enabledTs: 0,
-    minimized: false, minimizedTs: 0
-  };
-  try {
-    var s = JSON.parse(raw);
-    if (s && typeof s === "object") {
-      if (typeof s.calFeed === "boolean") def.calFeed = s.calFeed;
-      if (typeof s.calFeedTs === "number") def.calFeedTs = s.calFeedTs;
-      if (typeof s.enabled === "boolean") def.enabled = s.enabled;
-      if (typeof s.enabledTs === "number") def.enabledTs = s.enabledTs;
-      if (typeof s.minimized === "boolean") def.minimized = s.minimized;
-      if (typeof s.minimizedTs === "number") def.minimizedTs = s.minimizedTs;
-    }
-  } catch (e) {}
-  return def;
+  var s = null;
+  try { s = JSON.parse(localStorage.getItem("oros-pet-settings")); } catch (e) {}
+  return petSettingsCanon(s);
 }
 
 function settingsSliceSet(data) {
   if (!data || typeof data !== "object") return;
   window.__orosPetSyncApi._suppress = true;
   try {
-    var out = {
-      calFeed:     (typeof data.calFeed === "boolean") ? data.calFeed : true,
-      calFeedTs:   (typeof data.calFeedTs === "number") ? data.calFeedTs : Date.now(),
-      enabled:     (typeof data.enabled === "boolean") ? data.enabled : false,
-      enabledTs:   (typeof data.enabledTs === "number") ? data.enabledTs : 0,
-      minimized:   (typeof data.minimized === "boolean") ? data.minimized : false,
-      minimizedTs: (typeof data.minimizedTs === "number") ? data.minimizedTs : 0
-    };
+    var out = petSettingsCanon(data);
     localStorage.setItem("oros-pet-settings", JSON.stringify(out));
     // LEGACY MIRROR: calendar.js (unmodified) still reads
     // "oros-pet-calendar-sync" at render time. We keep it in
@@ -725,6 +738,48 @@ function applyPetSettings(s) {
   var TEMPORAL = ["lastFed", "lastPetted"];
   var FIELDS_LWW = ["name", "palette"];
 
+  // PT-3 — canonical form (R26): fixed key order, tombstones sorted,
+  // and exactly ONE active energy anchor pair. Used by the getter and
+  // by the merge, so a converged pet produces no phantom push.
+  var PET_KEYS = ["id", "name", "palette", "birthTs", "lastFed", "lastPetted",
+                  "wokeAt", "awakeE", "asleepSince", "asleepE"];
+
+  // The newer anchor is the active one: a pet woken AFTER it fell
+  // asleep is awake. (The old merge took the newest asleepSince and
+  // the newest wokeAt independently — a stale "asleep" from another
+  // device put a freshly woken pet back to sleep.)
+  function normalizeAnchors(pet) {
+    var as = (typeof pet.asleepSince === "number") ? pet.asleepSince : 0;
+    var wk = (typeof pet.wokeAt === "number") ? pet.wokeAt : 0;
+    if (as > 0 && as >= wk) {
+      pet.wokeAt = null;
+      pet.awakeE = 0;
+    } else {
+      pet.asleepSince = null;
+      pet.asleepE = 0;
+    }
+    return pet;
+  }
+
+  function canonPetState(st) {
+    if (!st || !st.pet || !st.pet.id) return null;
+    var del = {}, src = st.deleted || {};
+    Object.keys(src).sort().forEach(function (id) { del[id] = src[id]; });
+    var raw = {}, pet = {};
+    Object.keys(st.pet).forEach(function (k) { raw[k] = st.pet[k]; });
+    normalizeAnchors(raw);
+    PET_KEYS.forEach(function (k) { if (raw[k] !== undefined) pet[k] = raw[k]; });
+    Object.keys(raw).sort().forEach(function (k) { if (pet[k] === undefined && raw[k] !== undefined) pet[k] = raw[k]; });
+    var fm = st.fm || {};
+    return {
+      ver: DATA_VER,
+      sm: st.sm || 0,
+      deleted: del,
+      pet: pet,
+      fm: { name: fm.name || 0, palette: fm.palette || 0 }
+    };
+  }
+
   function mergePetStates(A, B) {
     var a = A || {}, b = B || {};
     var aPet = a.pet || null, bPet = b.pet || null;
@@ -737,31 +792,36 @@ function applyPetSettings(s) {
 
     // Pick base entity: alive side wins over tombstoned side;
     // otherwise newer entity sm; tie → lexicographic JSON (R5).
-    var pet;
-    var aAlive = aPet && !del[aPet.id];
-    var bAlive = bPet && !del[bPet.id];
-    if (aAlive && !bAlive) pet = aPet;
-    else if (bAlive && !aAlive) pet = bPet;
-    else if (!aAlive && !bAlive) pet = null;
+    var aAlive = !!(aPet && aPet.id && !del[aPet.id]);
+    var bAlive = !!(bPet && bPet.id && !del[bPet.id]);
+    if (!aAlive && !bAlive) return null;
+
+    var base, baseFm, other = null, otherFm = null;
+    if (aAlive && !bAlive) { base = aPet; baseFm = a.fm || {}; }
+    else if (bAlive && !aAlive) { base = bPet; baseFm = b.fm || {}; }
     else {
-      var aSm = a.sm || 0, bSm = b.sm || 0;
-      if (aSm > bSm) pet = aPet;
-      else if (bSm > aSm) pet = bPet;
-      else pet = (JSON.stringify(aPet) < JSON.stringify(bPet)) ? aPet : bPet;
+      var aSm = a.sm || 0, bSm = b.sm || 0, aWins;
+      if (aSm !== bSm) aWins = aSm > bSm;
+      else aWins = JSON.stringify(canonPetState(a)) < JSON.stringify(canonPetState(b));
+      base = aWins ? aPet : bPet;       baseFm = (aWins ? a.fm : b.fm) || {};
+      other = aWins ? bPet : aPet;      otherFm = (aWins ? b.fm : a.fm) || {};
+      // Two DIFFERENT creatures: the base wins whole. (Their care
+      // clocks, energy anchors and names used to be mixed into it.)
+      if (other.id !== base.id) other = null;
+    }
 
-      // Field-level reconciliation on the chosen base:
-      var other = (pet === aPet) ? bPet : aPet;
-      var out = {};
-      Object.keys(pet).forEach(function (k) { out[k] = pet[k]; });
+    var out = {};
+    Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+    var fm = { name: baseFm.name || 0, palette: baseFm.palette || 0 };
 
+    if (other) {
+      // Same creature on both sides — field-level reconciliation.
       TEMPORAL.forEach(function (k) {
-        if (other[k] !== undefined && (out[k] === undefined || other[k] > out[k])) out[k] = other[k];
+        if (typeof other[k] === "number" && (typeof out[k] !== "number" || other[k] > out[k])) out[k] = other[k];
       });
-
-      // Active anchor pair: newer anchor wins as a unit.
-      var otherAsleep = other.asleepSince || 0;
-      var outAsleep = out.asleepSince || 0;
-      if (otherAsleep > outAsleep) {
+      // Energy anchors: each pair travels as a unit, the newest of
+      // each kind is kept, then normalizeAnchors picks the active one.
+      if ((other.asleepSince || 0) > (out.asleepSince || 0)) {
         out.asleepSince = other.asleepSince;
         out.asleepE = other.asleepE || 0;
       }
@@ -769,44 +829,43 @@ function applyPetSettings(s) {
         out.wokeAt = other.wokeAt;
         out.awakeE = other.awakeE;
       }
-
-      var fmA = (pet === aPet) ? (a.fm || {}) : (b.fm || {});
-      var fmB = (pet === aPet) ? (b.fm || {}) : (a.fm || {});
-      var fm = {};
       FIELDS_LWW.forEach(function (k) {
-        if (fmB[k] !== undefined && (fmA[k] === undefined || fmB[k] > fmA[k])) {
+        var fo = otherFm[k] || 0;
+        if (fo > fm[k] ||
+            (fo === fm[k] && JSON.stringify(other[k]) > JSON.stringify(out[k]))) {
           out[k] = other[k];
-          fm[k] = fmB[k];
-        } else {
-          fm[k] = fmA[k] || 0;
+          fm[k] = fo;
         }
       });
-      pet = out;
-      var fmOut = fm;
-      var result = {
-        ver: DATA_VER,
-        sm: Math.max(a.sm || 0, b.sm || 0),
-        deleted: del,
-        pet: pet,
-        fm: fmOut
-      };
-      if (!result.pet) return null;
-      return result;
+      // Everything else is immutable for one creature and identical
+      // on both sides in practice. If it ever differs, the answer
+      // must not depend on which side happened to be the base:
+      // the earlier birth, otherwise the greater serialization.
+      var handled = { id: 1, lastFed: 1, lastPetted: 1, wokeAt: 1, awakeE: 1,
+                      asleepSince: 1, asleepE: 1, name: 1, palette: 1 };
+      Object.keys(other).forEach(function (k) {
+        if (handled[k] || other[k] === undefined) return;
+        if (out[k] === undefined) { out[k] = other[k]; return; }
+        if (k === "birthTs" && typeof out[k] === "number" && typeof other[k] === "number") {
+          out[k] = Math.min(out[k], other[k]);
+        } else if (JSON.stringify(other[k]) > JSON.stringify(out[k])) {
+          out[k] = other[k];
+        }
+      });
     }
 
-    var out2 = {
+    return canonPetState({
       ver: DATA_VER,
       sm: Math.max(a.sm || 0, b.sm || 0),
       deleted: del,
-      pet: pet,
-      fm: (pet && (a.pet === pet ? a.fm : b.fm)) || {}
-    };
-    if (!out2.pet) return null;
-    return out2;
+      pet: out,
+      fm: fm
+    });
   }
 
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    // Canonical clone (PT-3) — never the live object.
+    return JSON.parse(JSON.stringify(canonPetState(state) || state));
   }
 
   function sliceSet(data) {
@@ -932,14 +991,24 @@ function applyPetSettings(s) {
     birthdayFiredPetId: null
   };
 
+  // PT-6: stageBounds() runs several times per animation frame. It
+  // called getComputedStyle() every time (a forced style pass, 3+
+  // per frame, 60 frames a second, for as long as the pet is on).
+  // The lift is a CSS variable that changes rarely: read it at most
+  // once a second.
+  var floorLift = 0, floorLiftAt = 0;
   function stageBounds() {
     var w = runtime.layer ? runtime.layer.clientWidth : window.innerWidth;
     var h = runtime.layer ? runtime.layer.clientHeight : window.innerHeight;
+    var nowB = Date.now();
+    if (runtime.layer && nowB - floorLiftAt > 1000) {
+      floorLiftAt = nowB;
+      floorLift = parseFloat(getComputedStyle(runtime.layer).getPropertyValue("--pet-floor-lift")) || 0;
+    }
     return {
       w: w - runtime.canvas.width,
       h: h,
-      floorY: h - runtime.canvas.height - FLOOR_MARGIN -
-              (parseFloat(getComputedStyle(runtime.layer).getPropertyValue("--pet-floor-lift")) || 0)
+      floorY: h - runtime.canvas.height - FLOOR_MARGIN - floorLift
     };
   }
 
@@ -1620,7 +1689,18 @@ function applyPetSettings(s) {
 
   function refreshHUD(stats) {
     if (!hud || !stats || !state.pet) return;
-    $("pet-hud-name").textContent = state.pet.name;
+    // PT-4: follow a language switch made in the shell.
+    var langNow = currentLang();
+    if (langNow !== LANG) {
+      LANG = langNow;
+      var nm = $("pet-hud-name"), pc = $("pet-pencil-btn");
+      if (nm) nm.title = LANG === "el" ? "Διπλό κλικ για μετονομασία" : "Double-click to rename";
+      if (pc) pc.title = LANG === "el" ? "Μετονομασία" : "Rename";
+      buildPaletteRow();
+    }
+    if (!$("pet-hud-name").getAttribute("data-editing")) {
+      $("pet-hud-name").textContent = state.pet.name;
+    }
 
     // Apply collapsed/expanded layout
     var collapsed = isMinimized();
@@ -1794,7 +1874,8 @@ function applyPetSettings(s) {
     dlg.style.cssText =
       "border:1px solid var(--border);border-radius:12px;" +
       "background:var(--panel-bg);color:var(--text);padding:16px;" +
-      "width:min(380px,calc(100vw - 32px));";
+      "width:min(380px,calc(100vw - 32px));" +
+      "margin:auto;max-height:calc(100vh - 32px);overflow-y:auto;";   // R32
 
     var form = document.createElement("form");
     form.method = "dialog";
@@ -1892,7 +1973,8 @@ function applyPetSettings(s) {
     dlg.style.cssText =
       "border:1px solid var(--border);border-radius:12px;" +
       "background:var(--panel-bg);color:var(--text);padding:18px;" +
-      "width:min(340px,calc(100vw - 32px));";
+      "width:min(340px,calc(100vw - 32px));" +
+      "margin:auto;max-height:calc(100vh - 32px);overflow-y:auto;";   // R32
 
     var form = document.createElement("form");
     form.method = "dialog";
@@ -1995,6 +2077,11 @@ function applyPetSettings(s) {
     document.addEventListener("keydown", function (e) {
       if (!runtime.active) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // PT-7: F / S / C / L belong to whatever dialog is open (a
+      // focused button in the passphrase or Info dialog is not an
+      // input, so the tag test below let the keys through).
+      if (document.querySelector("dialog[open]") ||
+          document.getElementById("sc-info-overlay")) return;
       var el = document.activeElement;
       var tag = (el && el.tagName) || "";
       if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" ||

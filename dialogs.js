@@ -41,20 +41,25 @@
                     { type: mime });
   }
 
-  // Classic download fallback — same pattern as the shell's backup
-  // export button. Anchor click + late revoke (1000ms, mirrors the
-  // shell's own timing — never revoke before the download starts).
+  // Classic download fallback. Anchor click, then a LATE revoke.
+  // DLG-1: the URL used to be revoked after 1 second. A download does
+  // not always START within a second: Safari asks "Do you want to
+  // download…?", Firefox can show its open/save prompt, a phone can
+  // simply be slow with a large file — and a download that starts
+  // after the revoke has nothing left to read. 40s costs nothing but
+  // a little memory held a little longer. The anchor itself is only
+  // needed for the click.
+  var REVOKE_AFTER_MS = 40000;
   function downloadFallback(blob, name) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
     a.download = name;
+    a.style.display = "none";
     document.body.appendChild(a);
     a.click();
-    setTimeout(function () {
-      URL.revokeObjectURL(url);
-      a.remove();
-    }, 1000);
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, REVOKE_AFTER_MS);
     return { ok: true, mode: "download" };
   }
 
@@ -117,6 +122,15 @@
           return handle.createWritable().then(function (stream) {
             return stream.write(blob).then(function () {
               return stream.close();
+            }, function (werr) {
+              // DLG-2: a failed write (disk full, permission lost)
+              // left the writable open: its temporary swap file was
+              // never discarded and the target could stay locked.
+              // Abort it, then let the failure reach the catch below
+              // (which still delivers the file as a download).
+              var bail = null;
+              try { if (typeof stream.abort === "function") bail = stream.abort(); } catch (e) {}
+              return Promise.resolve(bail).catch(function () {}).then(function () { throw werr; });
             });
           });
         })

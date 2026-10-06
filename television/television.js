@@ -925,6 +925,8 @@ function setupFilters(){
         langSelect.appendChild(opt);
       });
     }
+  }).catch(function(err){
+    console.warn("[television] filter selects skipped — catalog unavailable:", err && err.message);
   });
 
   // Change handlers

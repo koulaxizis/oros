@@ -73,13 +73,13 @@
       "url": "quote/",
       "type": "internal"
     },
-	{
+    {
       "id": "minimalism",
       "name": "Minimalism",
-	  "category": "lifestyle",
+      "category": "Lifestyle",
       "icon": "minimalism",
       "url": "minimalism/",
-	  "type": "internal"
+      "type": "internal"
     },
     {
       "id": "contacts",
@@ -153,13 +153,13 @@
       "url": "cycle/",
       "type": "internal"
     },
-	{
+    {
       "id": "bookmarks",
       "name": "Bookmarks",
       "category": "Internet",
       "icon": "bookmarks",
       "url": "bookmarks/",
-	  "type": "internal"
+      "type": "internal"
     },
     {
       "id": "maps",
@@ -177,18 +177,18 @@
       "url": "dice/",
       "type": "internal"
     },
-	{
+    {
       "id": "radio",
       "name": "Radio",
-      "category": "sound",
+      "category": "Sound",
       "icon": "radio",
       "url": "radio/",
       "type": "internal"
     },
-	{
+    {
       "id": "television",
       "name": "Television",
-      "category": "video",
+      "category": "Video",
       "icon": "television",
       "url": "television/",
       "type": "internal"

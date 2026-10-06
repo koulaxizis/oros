@@ -11,8 +11,9 @@ name: Bump orOS version
 #   • docs-only pushes (*.md) never burn a version
 # Stamps in ONE pass: read shell.js APP_VERSION → sw.js
 # CACHE_VERSION → manifest version → ?v= on every app asset.
-# Guards (unchanged): G1 CACHE_VERSION exists · G2 offline
-# coverage in PRECACHE_URLS · G3 palette contract per app.
+# Guards: G1 CACHE_VERSION exists · G2 offline coverage of app
+# folders in PRECACHE_URLS · G3 palette contract per app · G4
+# apps.json <-> folders · G5 root files of index.html in PRECACHE_URLS.
 
 on:
   push:
@@ -35,11 +36,17 @@ jobs:
     steps:
       # Loop guard (belt+braces on top of GitHub's native [skip ci]):
       # our own stamp commits must never re-trigger this workflow.
+      # The commit message reaches the shell through an ENVIRONMENT
+      # VARIABLE, never pasted into the script text: pasted, a message
+      # with an unbalanced quote broke this step (job fails → no
+      # stamps → the release ships with the old CACHE_VERSION and no
+      # device updates), and a backtick or $( … ) in it was executed.
       - name: Loop guard
         id: guard
+        env:
+          HEAD_MSG: ${{ github.event.head_commit && github.event.head_commit.message || '' }}
         run: |
-          MSG="${{ github.event.head_commit && github.event.head_commit.message || '' }}"
-          if [[ "$MSG" == *"[skip ci]"* ]]; then
+          if [[ "$HEAD_MSG" == *"[skip ci]"* ]]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Bot stamp commit — nothing to bump."
           else
@@ -150,6 +157,24 @@ jobs:
             process.exit(1);
           }
           console.log('Offline coverage: all app folders present in PRECACHE_URLS.');
+
+          // ---- G5: ROOT FILES GUARD ----
+          // Every root-level .js/.css that index.html loads must be in
+          // PRECACHE_URLS too. G2 only looks at app folders, so a new
+          // core module (dialogs.js, vault.js, …) could ship without
+          // offline coverage and nothing would say so.
+          const rootHtml = fs.readFileSync('index.html', 'utf8');
+          const rootRefs = [...rootHtml.matchAll(/(?:src|href)="([^"#?]+\.(?:js|css))(?:\?[^"]*)?"/g)]
+            .map(m => m[1]).filter(p => !safe(p) && p.indexOf('/') === -1);
+          const rootMissing = rootRefs.filter(
+            f => pc[1].indexOf('"./' + f + '"') === -1 && pc[1].indexOf('"' + f + '"') === -1
+          );
+          if (rootMissing.length) {
+            console.error('ERROR: root file(s) loaded by index.html but MISSING from sw.js PRECACHE_URLS:');
+            rootMissing.forEach(f => console.error(`  - ${f}  → add "./${f}" to PRECACHE_URLS in sw.js`));
+            process.exit(1);
+          }
+          console.log('Root coverage: ' + rootRefs.length + ' root file(s) of index.html present in PRECACHE_URLS.');
 
           // ---- G4: apps.json <-> folder cross-check ----
           let appsList;

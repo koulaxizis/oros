@@ -500,11 +500,11 @@
   // directly — they talk to THIS surface only. Dropbox is today's
   // implementation; any provider satisfying the same contract is a
   // drop-in replacement. Contract:
-  //   storage.putObject(key, blob, knownRev?) — upload opaque bytes.
-  //     knownRev (when given) makes the write CONDITIONAL: the
-  //     adapter rejects with "storage-conflict" unless the remote
-  //     revision still matches (read-rev-compare-write fallback —
-  //     Dropbox has no native conditional put).
+  //   storage.putObject(key, blob, knownRev?) — upload opaque bytes
+  //     (knownRev: undefined = overwrite, null = create only, rev =
+  //     replace only that revision; refused → "storage-conflict").
+  //     The condition is enforced by the provider itself (Dropbox
+  //     write modes "add" / "update" + strict_conflict) — atomic.
   //   storage.getObject(key) → Promise<ArrayBuffer|null>
   //     (null = object missing — never an error).
   //   storage.deleteObject(key) → Promise<true> (gone = success).
@@ -528,19 +528,34 @@
     return Promise.resolve();
   }
 
-  function adapterUploadOnce(path, body) {
+  // SY-D4: the adapter's conditional write is the provider's own
+  // (same modes as the blob, SY-D1), not read-rev-compare-write:
+  //   knownRev undefined → plain overwrite (immutable objects)
+  //   knownRev null      → "add": the key must NOT exist yet
+  //   knownRev string    → "update": the key must still be at that rev
+  // Read-then-write left a window in which another device's write was
+  // silently replaced — and vault.js treats a path missing from the
+  // manifest as a remote deletion.
+  function adapterCommit(path, knownRev) {
+    var c = { path: path, mode: "overwrite", autorename: false, mute: true };
+    if (knownRev === null) {
+      c.mode = "add";
+      c.strict_conflict = true;
+    } else if (typeof knownRev === "string" && knownRev) {
+      c.mode = { ".tag": "update", "update": knownRev };
+      c.strict_conflict = true;
+    }
+    return c;
+  }
+
+  function adapterUploadOnce(path, body, knownRev) {
     return ensureFreshToken().then(function (token) {
       return fetch(CONTENT_API + "files/upload", {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + token,
           "Content-Type": "application/octet-stream",
-          "Dropbox-API-Arg": JSON.stringify({
-            path: path,
-            mode: "overwrite",
-            autorename: false,
-            mute: true
-          })
+          "Dropbox-API-Arg": JSON.stringify(adapterCommit(path, knownRev))
         },
         body: body
       });
@@ -564,12 +579,15 @@
   // No-size-limit upload: session start (first chunk) → append_v2
   // (4 MiB pieces) → finish (commit). The whole Blob still lives in
   // RAM (SubtleCrypto has no streaming) — documented Wave 2 limit.
-  function adapterUploadSession(path, blob) {
+  // SY-5: the Dropbox endpoints are "files/upload_session/…" (singular).
+  // The plural spelling used here answers 404, so no object above
+  // SINGLE_SHOT_MAX (150 MB) could ever be uploaded.
+  function adapterUploadSession(path, blob, knownRev) {
     var sessionId = null;
     var offset = 0;
     var first = blob.slice(0, SESSION_CHUNK);
 
-    return adapterSessionCall("files/upload_sessions/start", { close: false }, first)
+    return adapterSessionCall("files/upload_session/start", { close: false }, first)
       .then(function (res) {
         if (!res.ok) throw new Error("session start failed: " + res.status);
         offset += first.size;
@@ -581,7 +599,7 @@
           if (offset >= blob.size) return Promise.resolve();
           var chunk = blob.slice(offset, offset + SESSION_CHUNK);
           var arg = { cursor: { session_id: sessionId, offset: offset }, close: false };
-          return adapterSessionCall("files/upload_sessions/append_v2", arg, chunk)
+          return adapterSessionCall("files/upload_session/append_v2", arg, chunk)
             .then(function (res) {
               if (!res.ok) throw new Error("session append failed: " + res.status);
               offset += chunk.size;
@@ -593,11 +611,17 @@
       .then(function () {
         var arg = {
           cursor: { session_id: sessionId, offset: offset },
-          commit: { path: path, mode: "overwrite", autorename: false, mute: true }
+          commit: adapterCommit(path, knownRev)      // SY-D4
         };
-        return adapterSessionCall("files/upload_sessions/finish", arg, new Blob([]));
+        return adapterSessionCall("files/upload_session/finish", arg, new Blob([]));
       })
       .then(function (res) {
+        if (res.status === 409 && knownRev !== undefined) {
+          return uploadConflict(res).then(function (c) {
+            throw new Error(c.conflict ? "storage-conflict"
+                                       : "session finish failed: 409 " + c.summary);
+          });
+        }
         if (!res.ok) throw new Error("session finish failed: " + res.status);
         return res.json().catch(function () { return null; });
       });
@@ -645,25 +669,28 @@
       return adapterEnsureConnected().then(function () {
         if (!(blob instanceof Blob)) blob = new Blob([blob]);
         var path = adapterPath(key);
+        // knownRev: undefined = unconditional (immutable content-
+        // addressed objects), null = "must not exist yet", string =
+        // "must still be at this revision" (SY-D4, adapterCommit).
+        // A refused conditional write rejects with "storage-conflict".
         var doUpload = (blob.size > SINGLE_SHOT_MAX)
-          ? function () { return adapterUploadSession(path, blob); }
+          ? function () { return adapterUploadSession(path, blob, knownRev); }
           : function () {
               // SY-2: the single-shot leg returned the raw Response and
               // nobody looked at it — a 401/429/507 resolved as success
               // (the session leg already throws). Same contract now.
-              return adapterUploadOnce(path, blob).then(function (res) {
+              return adapterUploadOnce(path, blob, knownRev).then(function (res) {
+                if (res.status === 409 && knownRev !== undefined) {
+                  return uploadConflict(res).then(function (c) {
+                    throw new Error(c.conflict ? "storage-conflict"
+                                               : "upload failed: 409 " + c.summary);
+                  });
+                }
                 if (!res.ok) throw new Error("upload failed: " + res.status);
                 return res;
               });
             };
-        // Unconditional write (typical for immutable content-addressed
-        // objects — same content → same bytes, overwrite is a no-op).
-        if (knownRev === undefined || knownRev === null) return doUpload();
-        // Conditional write: Bible fallback read-rev-compare-write.
-        return adapterRevision(key).then(function (rev) {
-          if (rev !== knownRev) throw new Error("storage-conflict");
-          return doUpload();
-        });
+        return doUpload();
       });
     },
 
