@@ -835,6 +835,7 @@ dialog {
   width: min(420px, calc(100vw - 32px));
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
+  margin: auto;                  /* R32: το reset * {margin:0} ξε-κεντράρει το dialog */
 }
 dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 
@@ -852,6 +853,7 @@ dialog label {
   margin: 12px 0 5px;
 }
 dialog input[type="text"],
+dialog input[type="date"],
 dialog textarea {
   width: 100%;
   padding: 8px 10px;
@@ -1198,6 +1200,22 @@ dialog menu button.danger:hover {
   .col-quick { font-size: 16px; }
   dialog { width: calc(100vw - 20px); padding: 14px; }
   #filter-pop { right: -8px; }
+  /* KN-15: τα κουμπιά 44px δεν χωρούν δίπλα στο search — το search πάει σε δική του γραμμή */
+  #boardbar { flex-wrap: wrap; row-gap: 8px; }
+  #search-wrap { order: 10; flex: 1 0 100%; }
+  #filter-slot { margin-left: auto; }
+  dialog menu { flex-wrap: wrap; }
+  dialog menu button { padding: 8px 12px; }
+}
+
+/* Touch targets ≥44px σε οθόνες αφής (KN-15) */
+@media (pointer: coarse) {
+  .board-new, .board-manage, .board-import { min-width: 44px; min-height: 44px; }
+  .col-rename { min-width: 44px; min-height: 44px; }
+  .manage-rename, .manage-duplicate, .manage-delete, .manage-archive { min-width: 44px; min-height: 44px; }
+  .manage-dot { width: 28px; height: 28px; }
+  dialog input[type="date"] { min-height: 44px; font-size: 16px; }
+  dialog menu button, #kanban-confirm button { min-height: 44px; }
 }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */

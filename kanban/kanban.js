@@ -30,6 +30,8 @@
   "use strict";
 
   var STORAGE_KEY = "oros-kanban-data";
+  var PREFS_KEY   = "oros-kanban-prefs";        // device-local: { activeBoardId }
+  var RESCUE_KEY  = "oros-kanban-data-broken";  // device-local: unreadable data kept aside
   var DATA_VER = 5;                          // v0.6.0: multi-board schema
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 ημέρες
 
@@ -47,7 +49,6 @@
 
   var STRINGS = {
     en: {
-      "board.title":      "Kanban",
       "board.create":     "New board",
       "board.manage":     "Manage boards...",
       "board.close":      "Close",
@@ -96,6 +97,8 @@
       "card.info.value":  "Value",
       "card.delete":      "Delete",
       "card.duplicate":   "Duplicate",
+      "card.gone":        "This card was deleted on another device",
+      "toast.quota":      "Storage is full — changes are not saved on this device",
       "dup.suffix":       " (copy)",
       "toast.duplicated": "Duplicated",
       "toast.labeladd":   "Label created",
@@ -137,7 +140,6 @@
       "color.gray":       "Gray",
     },
     el: {
-      "board.title":      "Kanban",
       "board.create":     "Νέο board",
       "board.manage":     "Διαχείριση boards...",
       "board.close":      "Κλείσιμο",
@@ -186,6 +188,8 @@
       "card.info.value":  "Τιμή",
       "card.delete":      "Διαγραφή",
       "card.duplicate":   "Αντίγραφο",
+      "card.gone":        "Η κάρτα διαγράφηκε σε άλλη συσκευή",
+      "toast.quota":      "Ο χώρος αποθήκευσης γέμισε — οι αλλαγές δεν αποθηκεύονται σε αυτή τη συσκευή",
       "dup.suffix":       " (αντίγραφο)",
       "toast.duplicated": "Αντιγράφηκε",
       "toast.labeladd":   "Η ετικέτα δημιουργήθηκε",
@@ -370,18 +374,6 @@
     board.deleted[id] = Date.now();
   }
 
-  function stampAll(board) {
-    if (!board) return;
-    var nowMs = Date.now();
-    board.om = nowMs;
-    (board.labels || []).forEach(function (lb) { lb.mtime = nowMs; });
-    (board.columns || []).forEach(function (col) {
-      col.mtime = nowMs;
-      col.om = nowMs;
-      (col.cards || []).forEach(function (c) { c.mtime = nowMs; });
-    });
-  }
-
   function newBoardObj(name) {
     var names = LANG === "el"
       ? ["Εκκρεμεί", "Σε εξέλιξη", "Ολοκληρωμένα"]
@@ -535,14 +527,22 @@
 
   // ========== LOAD / SAVE ==========
   function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e0) { raw = null; }
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var data = migrate(JSON.parse(raw));
         if (data && Array.isArray(data.boards) && data.boards.length > 0) {
           state = data;
-          if (!state.activeBoardId) state.activeBoardId = state.boards[0].id;
-          
+          // KN-7: the active board is device-local and lives in its own
+          // key; a copy left inside the data (older versions) is only a
+          // fallback for the first boot on this version.
+          var pref = readPrefs().activeBoardId;
+          if (pref && boardById(pref)) state.activeBoardId = pref;
+          if (!state.activeBoardId || !boardById(state.activeBoardId)) {
+            state.activeBoardId = state.boards[0].id;
+          }
+
           // Prune tombstones in ALL boards
           state.boards.forEach(function (board) { pruneTombstones(board); });
 
@@ -554,11 +554,20 @@
             });
           }
 
-          save();
+          // KN-7: rewrite the stored copy in canonical form, quietly.
+          // Opening the app is not an edit: no markDirty here.
+          saveLocal();
           return;
         }
       }
-    } catch (e) { /* corrupted → fresh start */ }
+    } catch (e) { /* unreadable → rescued below, then fresh start */ }
+
+    // KN-12: stored data that cannot be read is copied aside BEFORE the
+    // fresh board is written over it (Bible: rescue backup before any
+    // reseed). Device-local key, never synced.
+    if (raw) {
+      try { localStorage.setItem(RESCUE_KEY, raw); } catch (e1) {}
+    }
 
     // Fresh install: create one default board.
     //
@@ -613,9 +622,35 @@
     save();
   }
 
+  // KN-7: the stored copy is the canonical synced form (what sliceGet
+  // returns, what a closed-app proxy uploads); the active board lives
+  // in the device-local PREFS_KEY.
+  var quotaWarned = false;
+  function writeStore() {
+    var ok = true;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(canonState(state))); }
+    catch (e) { ok = false; }
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ activeBoardId: state.activeBoardId || null })); }
+    catch (e2) {}
+    if (!ok && !quotaWarned) {             // R30: say it once, never swallow
+      quotaWarned = true;
+      notifyTransient(t("toast.quota"));
+    }
+    if (undoAfterPending) {                // KN-10: state right after the action
+      undoAfterPending = false;
+      undoAfter = JSON.stringify(canonState(state));
+    }
+  }
+
+  function readPrefs() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PREFS_KEY));
+      return (p && typeof p === "object") ? p : {};
+    } catch (e) { return {}; }
+  }
+
   function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { /* quota exceeded — localStorage net stays durable */ }
+    writeStore();
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
@@ -631,8 +666,7 @@
   // Για καθαρά τοπικές ενέργειες (π.χ. switchBoard) που δεν πρέπει
   // να πυροδοτούν δικτυακό sync.
   function saveLocal() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { /* quota exceeded */ }
+    writeStore();
   }
 
   function scheduleRender() {
@@ -991,14 +1025,81 @@
     orderEntities(mergedBoards,
       pickRef(a.boards || [], b.boards || [], a.om || 0, b.om || 0));
 
-    return {
+    // KN-7: one canonical form for the merge result and the getter.
+    return canonState({
       ver: DATA_VER,
       om: Math.max(a.om || 0, b.om || 0),
       boardDeleted: boardTomb,
       // activeBoardId ΔΕΝ θέτουμε εδώ — device-local, το κρατά
       // το sliceSet (υφιστάμενο αν το board ζει, αλλιώς πρώτο)
       boards: mergedBoards
-    };
+    });
+  }
+
+  // ---------- KN-7: canonical synced form ----------
+  // The engine compares JSON strings (R26). Getter and merge both end
+  // here, so merge(get, get) === get and merge(A, B) === merge(B, A)
+  // byte for byte:
+  //   · no device-local fields (activeBoardId lives in PREFS_KEY);
+  //   · tombstone maps with sorted keys, pruned by the same wall-clock
+  //     rule the merge uses (KN-Q1);
+  //   · known keys in a fixed order, unknown keys kept (sorted) so a
+  //     newer version's fields survive a pass through this one;
+  //   · pos = index everywhere (the merge's orderEntities does the same);
+  //   · board flags normalized (archived boolean, color only when set).
+  function canonOrder(obj, keys) {
+    var out = {};
+    keys.forEach(function (k) {
+      if (obj[k] !== undefined) out[k] = obj[k];
+    });
+    Object.keys(obj).sort().forEach(function (k) {
+      if (keys.indexOf(k) === -1 && obj[k] !== undefined) out[k] = obj[k];
+    });
+    return out;
+  }
+  function canonTombs(map) {
+    var out = {};
+    var cutoff = Date.now() - TOMB_LIFETIME_MS;
+    Object.keys(map || {}).sort().forEach(function (id) {
+      var ts = map[id];
+      if (typeof ts === "number" && ts >= cutoff) out[id] = ts;
+    });
+    return out;
+  }
+  var CARD_KEYS  = ["id", "text", "notes", "due", "labels", "subtasks", "info", "mtime", "pos"];
+  var COL_KEYS   = ["id", "name", "mtime", "om", "pos", "cards"];
+  var LABEL_KEYS = ["id", "name", "color", "mtime", "pos"];
+  var BOARD_KEYS = ["id", "name", "archived", "color", "mtime", "om", "pos",
+                    "deleted", "labels", "columns"];
+  function canonState(src) {
+    var s = JSON.parse(JSON.stringify(src || {}));
+    var boards = (Array.isArray(s.boards) ? s.boards : []).map(function (b, bi) {
+      var labels = (b.labels || []).map(function (lb, i) {
+        lb.pos = i;
+        return canonOrder(lb, LABEL_KEYS);
+      });
+      var columns = (b.columns || []).map(function (col, ci) {
+        col.pos = ci;
+        col.cards = (col.cards || []).map(function (c, ki) {
+          c.pos = ki;
+          return canonOrder(c, CARD_KEYS);
+        });
+        return canonOrder(col, COL_KEYS);
+      });
+      b.archived = !!b.archived;
+      if (!b.color) delete b.color;
+      b.pos = bi;
+      b.deleted = canonTombs(b.deleted);
+      b.labels = labels;
+      b.columns = columns;
+      return canonOrder(b, BOARD_KEYS);
+    });
+    delete s.activeBoardId;
+    s.ver = DATA_VER;
+    s.om = typeof s.om === "number" ? s.om : 0;
+    s.boardDeleted = canonTombs(s.boardDeleted);
+    s.boards = boards;
+    return canonOrder(s, ["ver", "om", "boardDeleted", "boards"]);
   }
 
 
@@ -1046,7 +1147,7 @@
   }
 
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    return canonState(state);            // KN-7: canonical, no device-local fields
   }
 
   // data — merged αποτέλεσμα (ή plain remote σε legacy LWW paths)
@@ -1054,6 +1155,8 @@
   function sliceSet(data, info) {
     data = migrate(JSON.parse(JSON.stringify(data || null)));
     if (!data || Array.isArray(data.boards) === false || data.boards.length === 0) return;
+    // KN-7: an echo of what this device already holds changes nothing.
+    var same = JSON.stringify(canonState(data)) === JSON.stringify(canonState(state));
 
     window.__orosSyncApi._suppress = true;
     try {
@@ -1069,12 +1172,17 @@
           : data.boards[0].id;
       state = data;
       state.boards.forEach(function (board) { pruneTombstones(board); });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      writeStore();
     } finally {
       window.__orosSyncApi._suppress = false;
     }
+    if (same) return;
 
     scheduleRender();
+    // KN-9: an open card dialog follows the merged card instead of
+    // writing its stale copy back; the manage list rebinds too.
+    refreshOpenCard();
+    if ($("manage-dialog") && $("manage-dialog").open) renderManageList();
     // toast.merged removed: εμφανιζόταν σε ΚΑΘΕ sync pull (το info.merged
     // σημαίνει «χρησιμοποιήθηκε merge engine», ΟΧΙ «άλλαξαν δεδομένα»).
     // Feedback sync = το taskbar sync dot.
@@ -1109,6 +1217,9 @@
     // Columns body
     var host = $("columns");
     if (!host) return;
+    // KN-8: the rebuild must not eat what the user is typing in a
+    // quick-add field (a pull re-renders while the keyboard is up).
+    var keep = captureQuick(host);
     host.innerHTML = "";
 
     var board = currentBoard();
@@ -1126,10 +1237,40 @@
     board.columns.forEach(function (col) {
       host.appendChild(makeColumnEl(col));
     });
+    restoreQuick(keep);
 
     // Filter popover update
     if (!$("filter-pop").hidden) renderFilterPop();
     updateFilterBtn();
+  }
+
+  function captureQuick(host) {
+    var out = { vals: {}, focus: null };
+    var cols = host.querySelectorAll(".k-col");
+    for (var i = 0; i < cols.length; i++) {
+      var q = cols[i].querySelector(".col-quick");
+      if (!q) continue;
+      var id = cols[i].dataset.colId;
+      if (q.value) out.vals[id] = q.value;
+      if (document.activeElement === q) {
+        out.focus = { col: id, a: q.selectionStart, b: q.selectionEnd };
+      }
+    }
+    return out;
+  }
+  function restoreQuick(keep) {
+    if (!keep) return;
+    Object.keys(keep.vals).forEach(function (id) {
+      var q = findQuickInput(id);
+      if (q) q.value = keep.vals[id];
+    });
+    if (keep.focus) {
+      var f = findQuickInput(keep.focus.col);
+      if (f) {
+        f.focus();
+        try { f.setSelectionRange(keep.focus.a, keep.focus.b); } catch (e) {}
+      }
+    }
   }
 
   // Board dropdown + management buttons
@@ -1691,8 +1832,10 @@
       b.className = "lbl-swatch" + ((bd.color || FALLBACK_COLOR) === (c || FALLBACK_COLOR) ? " sel" : "");
       b.style.background = c || FALLBACK_COLOR;
       b.addEventListener("click", function () {
-        bd.color = c || undefined;
-        bd.mtime = Date.now();           // LWW στο merge
+        var live = boardByIdIn(state.boards, bd.id);   // KN-9: by id, never a stale copy
+        if (!live) return;
+        live.color = c || undefined;
+        live.mtime = Date.now();         // LWW στο merge
         save();
         renderManageList();
         renderAll();                     // φρεσκάρει το dropdown dot
@@ -2108,40 +2251,114 @@
   var editingColId = null;
   var editingCardId = null;
   var pickedSwatch = FALLBACK_COLOR;     // νέο-ετικέτας χρώμα (accent default)
-  var openCardSnapshot = null;   // v0.5b: zero-edit close δεν stampάρει mtime
+  var lastGoodText = "";                 // restored on close if the text was emptied
 
-  function cardFingerprint(card) {
-    return JSON.stringify([
-      card.text, card.notes || "", card.due || null,
-      card.subtasks || [], card.info || [],
-      (card.labels || []).slice().sort()
-    ]);
-  }
-
-  // LIVE SAVE: το τυπώμενο κείμενο γράφεται στο state + localStorage
-  // άμεσα (debounce 250ms) — καμία απώλεια αν κλείσει ξαφνικά το tab
-  // με ανοιχτό το διάλογο. Το mtime stampάρεται (touch) ώστε η live
-  // έκδοση να κερδίζει και στο merge. Το close handler παραμένει ως
-  // safety net (filtration κενών info rows + zero-edit check).
+  // LIVE SAVE (KN-9): every edit lands in the LIVE card object at once
+  // and is stamped at once; only the write to storage is debounced
+  // (250ms). A pull in between therefore merges the edit, and nothing
+  // the dialog shows is ever written back later from a stale copy.
   var liveSaveTimer = null;
+  var cardSavePending = false;
   function liveSaveCard() {
+    var card = editingCard();
+    if (!card) return;
+    var tv = $("c-text").value;
+    if (tv.trim()) lastGoodText = tv;
+    card.text  = tv;
+    card.notes = $("c-notes").value;
+    touch(card);
+    scheduleCardSave();
+  }
+  function scheduleCardSave() {
+    cardSavePending = true;
     clearTimeout(liveSaveTimer);
     liveSaveTimer = setTimeout(function () {
-      var card = editingCard();
-      if (!card) return;
-      card.text  = $("c-text").value;
-      card.notes = $("c-notes").value;
-      touch(card);
+      cardSavePending = false;
       save();
       scheduleRender();               // το board πίσω από το dialog φρεσκάρει
     }, 250);
   }
 
   // Η κάρτα που είναι αυτή τη στιγμή ανοιχτή στο διάλογο (ή null).
-  // Κοιτάζει by-id στο board TOY state — μετά από merge δείχνει
-  // στη merged εκδοχή.
+  // KN-9: by id across the columns of the board — after a merge it is
+  // the merged object, also when another device moved the card to
+  // another column (editingColId follows).
   function editingCard() {
-    return cardById(colById(editingColId), editingCardId);
+    if (editingCardId === null) return null;
+    var board = currentBoard();
+    if (!board) return null;
+    for (var i = 0; i < board.columns.length; i++) {
+      var c = cardById(board.columns[i], editingCardId);
+      if (c) { editingColId = board.columns[i].id; return c; }
+    }
+    return null;
+  }
+
+  function itemRef(list, item, idx) {
+    // Subtasks / info rows by id; rows from old data may lack one.
+    var arr = list || [];
+    if (item && item.id) {
+      for (var i = 0; i < arr.length; i++) if (arr[i].id === item.id) return arr[i];
+      return null;
+    }
+    return arr[idx] || null;
+  }
+
+  // KN-9: a pull while the card dialog is open. Inputs follow the merged
+  // card (the user's own edits are already in it: they were stamped at
+  // the keystroke), lists are rebuilt from it, focus and caret stay.
+  function setInputKeep(el, v) {
+    if (!el || el.value === v) return;
+    var focused = document.activeElement === el;
+    var a = 0, b = 0;
+    try { a = el.selectionStart; b = el.selectionEnd; } catch (e) {}
+    el.value = v;
+    if (focused) { try { el.setSelectionRange(Math.min(a, v.length), Math.min(b, v.length)); } catch (e2) {} }
+  }
+  function refreshOpenCard() {
+    var dlg = $("dlg-card");
+    if (!dlg || !dlg.open || editingCardId === null) return;
+    var card = editingCard();
+    if (!card) {
+      // Deleted on another device after this device's last edit
+      // (a later edit here would have kept it alive in the merge).
+      clearTimeout(liveSaveTimer);
+      cardSavePending = false;
+      editingColId = null;
+      editingCardId = null;
+      dlg.close();
+      notifyTransient(t("card.gone"));
+      return;
+    }
+    if ((card.text || "").trim()) lastGoodText = card.text;
+    setInputKeep($("c-text"), card.text || "");
+    setInputKeep($("c-notes"), card.notes || "");
+    setInputKeep($("c-due"), card.due || "");
+
+    var ae = document.activeElement;
+    var row = ae && ae.closest ? ae.closest(".sub-row, .info-row") : null;
+    var focusInfo = null;
+    if (row && dlg.contains(row)) {
+      focusInfo = { kind: row.className.split(" ")[0], key: row.dataset.key,
+                    cls: String(ae.className || "").split(" ")[0] };
+      try { focusInfo.a = ae.selectionStart; focusInfo.b = ae.selectionEnd; } catch (e) {}
+    }
+    renderCardLabels(card);
+    if (!$("c-lbl-picker").hidden) renderLblPicker();
+    renderSubtasks(card);
+    renderInfo(card);
+    if (focusInfo && focusInfo.cls) {
+      var rows = dlg.querySelectorAll("." + focusInfo.kind);
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].dataset.key !== focusInfo.key) continue;
+        var inp = rows[i].querySelector("." + focusInfo.cls);
+        if (inp) {
+          inp.focus();
+          try { inp.setSelectionRange(focusInfo.a, focusInfo.b); } catch (e3) {}
+        }
+        break;
+      }
+    }
   }
 
   function openCardDialog(colId, cardId) {
@@ -2152,6 +2369,8 @@
 
     editingColId = colId;
     editingCardId = cardId;
+    lastGoodText = card.text || "";
+    cardSavePending = false;
 
     $("c-text").value = card.text;
     $("c-notes").value = card.notes || "";
@@ -2161,8 +2380,6 @@
     renderSubtasks(card);
     renderInfo(card);
     $("c-lbl-picker").hidden = true;
-
-    openCardSnapshot = cardFingerprint(card);
 
     $("dlg-card").showModal();
     setTimeout(function () { $("c-text").focus(); }, 50);
@@ -2184,10 +2401,12 @@
       name.textContent = label.name;
       chip.appendChild(name);
       chip.addEventListener("click", function () {
-        card.labels = card.labels.filter(function (id) { return id !== lid; });
-        touch(card);
+        var c = editingCard();             // KN-9: the live card, by id
+        if (!c) return;
+        c.labels = (c.labels || []).filter(function (id) { return id !== lid; });
+        touch(c);
         save(); scheduleRender();
-        renderCardLabels(card);
+        renderCardLabels(c);
       });
       host.appendChild(chip);
     });
@@ -2289,22 +2508,28 @@
   function renderSubtasks(card) {
     var host = $("c-sub-list");
     host.innerHTML = "";
-    card.subtasks.forEach(function (sub) {
-      host.appendChild(makeSubRow(card, sub));
+    (card.subtasks || []).forEach(function (sub, i) {
+      host.appendChild(makeSubRow(card, sub, i));
     });
   }
 
-  function makeSubRow(card, sub) {
+  // KN-9: every handler resolves the LIVE card and row by id at the
+  // moment of the action (a pull may have replaced both objects).
+  function makeSubRow(card, sub, idx) {
     var row = document.createElement("div");
     row.className = "sub-row";
+    row.dataset.key = sub.id ? "id:" + sub.id : "ix:" + idx;
 
     var cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = !!sub.completed;
     cb.addEventListener("change", function () {
-      sub.completed = cb.checked;
+      var c = editingCard();
+      var s = c && itemRef(c.subtasks, sub, idx);
+      if (!s) return;
+      s.completed = cb.checked;
       txt.classList.toggle("completed", cb.checked);
-      touch(card);
+      touch(c);
       save();
       scheduleRender();
     });
@@ -2315,15 +2540,24 @@
     txt.className = "s-text" + (sub.completed ? " completed" : "");
     txt.value = sub.text;
     txt.autocomplete = "off";
-    txt.addEventListener("input", function () { sub.text = txt.value; liveSaveCard(); });
+    txt.addEventListener("input", function () {
+      var c = editingCard();
+      var s = c && itemRef(c.subtasks, sub, idx);
+      if (!s) return;
+      s.text = txt.value;
+      liveSaveCard();
+    });
     row.appendChild(txt);
 
     row.appendChild(makeRemoveBtn(function () {
-      card.subtasks = card.subtasks.filter(function (s) { return s !== sub; });
-      touch(card);
+      var c = editingCard();
+      var s = c && itemRef(c.subtasks, sub, idx);
+      if (!s) return;
+      c.subtasks = c.subtasks.filter(function (x) { return x !== s; });
+      touch(c);
       save();
       scheduleRender();
-      renderSubtasks(card);
+      renderSubtasks(c);
     }));
 
     return row;
@@ -2360,14 +2594,15 @@
   function renderInfo(card) {
     var host = $("c-info-list");
     host.innerHTML = "";
-    card.info.forEach(function (f) {
-      host.appendChild(makeInfoRow(card, f));
+    (card.info || []).forEach(function (f, i) {
+      host.appendChild(makeInfoRow(card, f, i));
     });
   }
 
-  function makeInfoRow(card, f) {
+  function makeInfoRow(card, f, idx) {
     var row = document.createElement("div");
     row.className = "info-row";
+    row.dataset.key = f.id ? "id:" + f.id : "ix:" + idx;
 
     var lbl = document.createElement("input");
     lbl.type = "text";
@@ -2375,7 +2610,13 @@
     lbl.setAttribute("placeholder", t("card.info.label"));
     lbl.value = f.label;
     lbl.autocomplete = "off";
-    lbl.addEventListener("input", function () { f.label = lbl.value; liveSaveCard(); });
+    lbl.addEventListener("input", function () {
+      var c = editingCard();
+      var x = c && itemRef(c.info, f, idx);
+      if (!x) return;
+      x.label = lbl.value;
+      liveSaveCard();
+    });
     row.appendChild(lbl);
 
     var val = document.createElement("input");
@@ -2384,15 +2625,24 @@
     val.setAttribute("placeholder", t("card.info.value"));
     val.value = f.value;
     val.autocomplete = "off";
-    val.addEventListener("input", function () { f.value = val.value; liveSaveCard(); });
+    val.addEventListener("input", function () {
+      var c = editingCard();
+      var x = c && itemRef(c.info, f, idx);
+      if (!x) return;
+      x.value = val.value;
+      liveSaveCard();
+    });
     row.appendChild(val);
 
     row.appendChild(makeRemoveBtn(function () {
-      card.info = card.info.filter(function (x) { return x !== f; });
-      touch(card);
+      var c = editingCard();
+      var x = c && itemRef(c.info, f, idx);
+      if (!x) return;
+      c.info = c.info.filter(function (y) { return y !== x; });
+      touch(c);
       save();
       scheduleRender();
-      renderInfo(card);
+      renderInfo(c);
     }));
 
     return row;
@@ -2402,6 +2652,8 @@
     var card = editingCard();
     if (!card) return;
     card.info.push({ id: uid(), label: "", value: "" });
+    touch(card);                       // KN-9: the new row is local state now
+    scheduleCardSave();
     renderInfo(card);
     var rows = $("c-info-list").querySelectorAll(".info-row");
     if (rows.length > 0) {
@@ -2412,8 +2664,8 @@
 
   // --- Duplicate card ---
   function duplicateCard() {
+    var card = editingCard();            // first: it updates editingColId
     var col = colById(editingColId);
-    var card = editingCard();
     if (!col || !card) return;
 
     var copy = newCardObj(card.text + t("dup.suffix"));
@@ -2442,27 +2694,27 @@
   // Flush typed-but-unsaved text όταν το dialog κλείνει από ΟΠΟΙΟΔΗΠΟΤΕ
   // path (Save, Esc) — καμία απώλεια δεδομένων. Zero-edit close δεν
   // stampάρει mtime (identical fingerprint).
+  // KN-9: edits are already in the live card (stamped at the keystroke);
+  // the close only trims the text, drops empty info rows and flushes a
+  // pending write. A close without an edit writes and stamps nothing.
   $("dlg-card").addEventListener("close", function () {
-    if (editingColId === null) return;
+    if (editingCardId === null) return;
     var card = editingCard();
     editingColId = null;
     editingCardId = null;
-    if (!card) return;
-    card.info = (card.info || []).filter(function (f) {
+    clearTimeout(liveSaveTimer);
+    var pending = cardSavePending;
+    cardSavePending = false;
+    if (!card) { if (pending) save(); return; }
+    var changed = false;
+    var info = (card.info || []).filter(function (f) {
       return (f.label || "").trim() || (f.value || "").trim();
     });
-    card.text  = $("c-text").value.trim() || card.text;
-    card.notes = $("c-notes").value;
-
-    if (openCardSnapshot !== null &&
-        cardFingerprint(card) === openCardSnapshot) {
-      openCardSnapshot = null;
-      return;
-    }
-    openCardSnapshot = null;
-
-    touch(card);
-    save(); scheduleRender();
+    if (info.length !== (card.info || []).length) { card.info = info; changed = true; }
+    var tt = $("c-text").value.trim() || (lastGoodText || "").trim() || card.text;
+    if (tt !== card.text) { card.text = tt; changed = true; }
+    if (changed) touch(card);
+    if (changed || pending) { save(); scheduleRender(); }
   });
 
   // ---------- 6. Column dialog ----------
@@ -2883,30 +3135,161 @@
   }
 
   // ---------- 9. Undo / toast ----------
-  var undoSnapshot = null;
+  var undoSnapshot = null;       // canonical state BEFORE the action
+  var undoAfter = null;          // canonical state right AFTER it (writeStore)
+  var undoAfterPending = false;
+  var undoActive = null;         // board that was open before the action
   var toastTimer = null;
 
   function pushUndo(key) {
-    undoSnapshot = JSON.stringify(state);     // ΟΛΟ το multi-board state
+    undoSnapshot = JSON.stringify(canonState(state));
+    undoAfter = null;
+    undoAfterPending = true;
+    undoActive = state.activeBoardId;
     showToast(t(key), true);
   }
 
-  // Undo επαναφέρει ΟΛΟ το state (όλα τα boards) και το καθιερώνει
-  // ως την πιο πρόσφατη αλήθεια σε ΟΛΑ τα επίπεδα (root om + board
-  // om + mtimes) — κερδίζει το επόμενο merge και διαδίδεται.
-  function stampAllState() {
-    var nowMs = Date.now();
-    state.om = nowMs;
-    (state.boards || []).forEach(function (board) {
-      stampAll(board);                       // board-scoped stampAll (βλ. Part 1)
+  // KN-10: Undo reverses only what the action itself changed (the diff
+  // before → after), applied to the CURRENT state. The old Undo put the
+  // whole snapshot back and re-stamped every card, column and label of
+  // every board: whatever another device had changed in the meantime
+  // was reverted everywhere, and a board created and already synced
+  // came back at the next pull. Anything the user did not touch keeps
+  // its stamp; a thing changed again since the action is left alone.
+  function plain(x, drop) {
+    var o = JSON.parse(JSON.stringify(x || {}));
+    delete o.pos;
+    (drop || []).forEach(function (k) { delete o[k]; });
+    return JSON.stringify(o);
+  }
+  function indexById(arr) {
+    var m = {};
+    (arr || []).forEach(function (x, i) { m[x.id] = { v: x, i: i }; });
+    return m;
+  }
+  function unionIds(a, b) {
+    var ids = Object.keys(a);
+    Object.keys(b).forEach(function (k) { if (ids.indexOf(k) === -1) ids.push(k); });
+    return ids;
+  }
+  function revertList(beforeArr, afterArr, cur, field, now, drop, onInsert) {
+    var bM = indexById(beforeArr), aM = indexById(afterArr);
+    var touched = false;
+    unionIds(bM, aM).forEach(function (id) {
+      var pb = bM[id], pa = aM[id];
+      var list = cur[field];
+      var at = -1;
+      for (var i = 0; i < list.length; i++) if (list[i].id === id) { at = i; break; }
+      if (pb && !pa) {                                   // removed by the action
+        if (at !== -1) return;
+        var nv = JSON.parse(JSON.stringify(pb.v));
+        nv.mtime = now;
+        if (onInsert) onInsert(nv);
+        list.splice(Math.min(pb.i, list.length), 0, nv);
+        if (cur.deleted) delete cur.deleted[id];
+        touched = true;
+      } else if (!pb && pa) {                            // created by the action
+        if (at === -1) return;
+        list.splice(at, 1);
+        if (!cur.deleted) cur.deleted = {};
+        cur.deleted[id] = now;
+        touched = true;
+      } else if (pb && pa && plain(pb.v, drop) !== plain(pa.v, drop)) {   // changed by it
+        if (at === -1 || plain(list[at], drop) !== plain(pa.v, drop)) return;
+        var keep = list[at];
+        var rv = JSON.parse(JSON.stringify(pb.v));
+        rv.mtime = now;
+        if (keep.cards) rv.cards = keep.cards;           // a column keeps its live cards
+        list[at] = rv;
+      }
+    });
+    return touched;
+  }
+  function flatCards(board) {
+    var m = {};
+    ((board && board.columns) || []).forEach(function (col) {
+      (col.cards || []).forEach(function (c, i) { m[c.id] = { v: c, i: i, col: col.id }; });
+    });
+    return m;
+  }
+  function revertBoard(pb, pa, cur, now) {
+    var hdr = function (x) { return JSON.stringify([x.name, !!x.archived, x.color || null]); };
+    if (hdr(pb) !== hdr(pa) && hdr(cur) === hdr(pa)) {
+      cur.name = pb.name;
+      cur.archived = !!pb.archived;
+      if (pb.color) cur.color = pb.color; else delete cur.color;
+      cur.mtime = now;
+    }
+    if (revertList(pb.labels, pa.labels, cur, "labels", now)) cur.om = now;
+    if (revertList(pb.columns, pa.columns, cur, "columns", now, ["cards", "om"],
+                   function (col) { col.cards = []; col.om = now; })) cur.om = now;
+    var bC = flatCards(pb), aC = flatCards(pa);
+    unionIds(bC, aC).forEach(function (id) {
+      var b = bC[id], a = aC[id], c = flatCards(cur)[id];
+      if (b && !a) {                                     // removed by the action
+        if (c) return;
+        var col = null;
+        cur.columns.forEach(function (x) { if (x.id === b.col) col = x; });
+        if (!col) col = cur.columns[0];
+        if (!col) return;
+        var nv = JSON.parse(JSON.stringify(b.v));
+        nv.mtime = now;
+        col.cards.splice(Math.min(b.i, col.cards.length), 0, nv);
+        col.om = now;
+        if (cur.deleted) delete cur.deleted[id];
+      } else if (!b && a) {                              // created by the action
+        if (!c) return;
+        cur.columns.forEach(function (x) {
+          x.cards = x.cards.filter(function (k) { return k.id !== id; });
+        });
+        if (!cur.deleted) cur.deleted = {};
+        cur.deleted[id] = now;
+      } else if (b && a && (plain(b.v) !== plain(a.v) || b.col !== a.col)) {   // changed by it
+        if (!c || c.col !== a.col || plain(c.v) !== plain(a.v)) return;
+        var rv = JSON.parse(JSON.stringify(b.v));
+        rv.mtime = now;
+        var src = null, dst = null;
+        cur.columns.forEach(function (x) { if (x.id === c.col) src = x; if (x.id === b.col) dst = x; });
+        if (!dst) dst = src;
+        src.cards = src.cards.filter(function (k) { return k.id !== id; });
+        dst.cards.splice(Math.min(b.i, dst.cards.length), 0, rv);
+        if (dst !== src) { src.om = now; dst.om = now; }
+      }
+    });
+  }
+  function revertDiff(before, after, now) {
+    var bM = indexById(before.boards), aM = indexById(after.boards);
+    unionIds(bM, aM).forEach(function (id) {
+      var pb = bM[id], pa = aM[id], cur = boardById(id);
+      if (pb && !pa) {                                   // board removed by the action
+        if (cur) return;
+        var nb = JSON.parse(JSON.stringify(pb.v));
+        nb.mtime = now;
+        state.boards.splice(Math.min(pb.i, state.boards.length), 0, nb);
+        if (state.boardDeleted) delete state.boardDeleted[id];
+        state.om = now;
+      } else if (!pb && pa) {                            // board created by the action
+        if (!cur || state.boards.length < 2) return;
+        state.boards = state.boards.filter(function (b) { return b.id !== id; });
+        if (!state.boardDeleted) state.boardDeleted = {};
+        state.boardDeleted[id] = now;
+        state.om = now;
+      } else if (pb && pa && cur) {
+        revertBoard(pb.v, pa.v, cur, now);
+      }
     });
   }
 
   function doUndo() {
-    if (!undoSnapshot) return;
-    state = JSON.parse(undoSnapshot);
+    if (!undoSnapshot || !undoAfter) return;
+    var before = JSON.parse(undoSnapshot);
+    var after = JSON.parse(undoAfter);
     undoSnapshot = null;
-    stampAllState();          // το restored snapshot είναι η πιο ΝΕΑ αλήθεια
+    undoAfter = null;
+    revertDiff(before, after, Date.now());
+    var back = undoActive ? boardById(undoActive) : null;
+    if (back && !back.archived) state.activeBoardId = back.id;
+    else if (!boardById(state.activeBoardId)) state.activeBoardId = state.boards[0].id;
     save(); renderAll();
     notifyTransient(t("toast.undone"));
   }
@@ -2933,7 +3316,8 @@
     el.classList.add("show");
 
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 5000);
+    // Undo toasts stay at least 8 s (Part VII).
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, withUndo ? 8000 : 5000);
   }
 
   
@@ -3167,6 +3551,40 @@
     return { source: "trello", boards: boards, stats: countImport(boards) };
   }
 
+  function importInto(ex, nb) {
+    var now = Date.now();
+    var gone = ex.deleted || {};
+    var have = {};
+    ex.columns.forEach(function (col) {
+      have[col.id] = true;
+      col.cards.forEach(function (c) { have[c.id] = true; });
+    });
+    (ex.labels || []).forEach(function (lb) { have[lb.id] = true; });
+    var addedCols = false;
+    (nb.labels || []).forEach(function (lb) {
+      if (have[lb.id] || gone[lb.id]) return;
+      ex.labels.push(lb);
+      have[lb.id] = true;
+      ex.om = now;
+    });
+    (nb.columns || []).forEach(function (ncol) {
+      if (gone[ncol.id]) return;
+      var fresh = (ncol.cards || []).filter(function (c) { return !have[c.id] && !gone[c.id]; });
+      var col = null;
+      ex.columns.forEach(function (x) { if (x.id === ncol.id) col = x; });
+      if (!col) {
+        ncol.cards = fresh;
+        ex.columns.push(ncol);
+        addedCols = true;
+      } else if (fresh.length) {
+        col.cards = col.cards.concat(fresh);
+        col.om = now;
+      }
+      fresh.forEach(function (c) { have[c.id] = true; });
+    });
+    if (addedCols) ex.om = now;
+  }
+
   // --- Import dialog (dynamic construction, ίδιο pattern με manage-dialog) ---
   function openImportDlg() {
     if ($("import-dlg") && $("import-dlg").open) return;
@@ -3276,11 +3694,20 @@
 
       pushUndo("toast.imported");     // real undo — snapshot ΠΡΙΝ τη μετάλλαξη
 
-      // Idempotent re-import: ίδια ids → replace (όχι διπλότυπα)
+      // KN-11: idempotent re-import WITHOUT replacing anything: a board
+      // that is already here only receives the labels, columns and
+      // cards it does not have yet (and not the ones the user deleted).
+      // The old code swapped the whole board for the file's copy, so
+      // every edit made since the first import was lost.
       parsed.boards.forEach(function (nb) {
-        state.boards = state.boards.filter(function (b) { return b.id !== nb.id; });
+        var ex = boardByIdIn(state.boards, nb.id);
+        if (!ex) {
+          state.boards.push(nb);
+          if (state.boardDeleted) delete state.boardDeleted[nb.id];
+        } else {
+          importInto(ex, nb);
+        }
       });
-      state.boards = state.boards.concat(parsed.boards);
       state.om = Date.now();
       state.activeBoardId = parsed.boards[0].id;
 
@@ -3460,7 +3887,8 @@
     if (cDelete) {
       cDelete.addEventListener("click", function () {
         confirmDialog("confirm.carddel", function () {
-            var col = colById(editingColId);
+          editingCard();                       // KN-9: follow a card moved elsewhere
+          var col = colById(editingColId);
           if (col) {
             pushUndo("toast.deleted");
             var board = currentBoard();
@@ -3576,29 +4004,30 @@
       });
     }
 
-    // Ecosystem: capture-phase shortcut forwarding — τα modifier
-    // combos (Ctrl/Alt/Meta) προωθούννονται στο shell ενώ το iframe
-    // έχει focus, ώστε τα global shortcuts να λειτουργούν και μέσα
-    // από την εφαρμογή. Τα απλά γράμματα (typing) ΔΕΝ προωθούνονται.
+    // KN-14: shell shortcut forwarding, Contract Β (capture phase). The
+    // old code dispatched a synthetic keydown on the parent WINDOW; the
+    // shell listens on its document, so no global shortcut ever fired
+    // from inside Kanban.
     document.addEventListener("keydown", function (e) {
-      if (!(e.ctrlKey || e.altKey || e.metaKey)) return;
-      try {
-        if (window.parent && window.parent !== window) {
-          window.parent.dispatchEvent(new KeyboardEvent("keydown", {
-            key: e.key, code: e.code,
-            ctrlKey: e.ctrlKey, altKey: e.altKey,
-            shiftKey: e.shiftKey, metaKey: e.metaKey,
-            repeat: e.repeat
-          }));
-        }
-      } catch (err) { /* standalone — αγνόησε */ }
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+      var p = null;
+      try { p = window.parent; } catch (err) { return; }
+      if (!(p && p !== window && p.orosShortcuts &&
+            typeof p.orosShortcuts.handle === "function")) return;
+      if (p.orosShortcuts.handle(e)) e.stopPropagation();
     }, true);
 
     // Alt+B → γρήγορη δημιουργία νέου board (δεν συγκρούεται με
-    // browser shortcuts — δεν υπάρχει browser reserve στο Alt+B)
+    // browser shortcuts — δεν υπάρχει browser reserve στο Alt+B).
+    // KN-13: matched by e.code (Greek layout, macOS Option+B = "∫"),
+    // and never while the user types in a field or a dialog is open.
     document.addEventListener("keydown", function (e) {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
-          (e.key === "b" || e.key === "B")) {
+          e.code === "KeyB") {
+        var tg = e.target;
+        if (tg && (tg.tagName === "INPUT" || tg.tagName === "TEXTAREA" ||
+                   tg.tagName === "SELECT" || tg.isContentEditable)) return;
+        if (document.querySelector("dialog[open]")) return;
         e.preventDefault();
         closeBoardDropdown();
         if ($("manage-dialog") && $("manage-dialog").open) $("manage-dialog").close();
