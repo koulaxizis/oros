@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.40.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.40.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2104,6 +2104,7 @@
       if (!oldPw || !newPw || !cf) { errBox.textContent = window.t("sync.err.nopass"); return; }
       if (newPw !== cf) { errBox.textContent = window.t("sync.changepw.mismatch"); return; }
       if (newPw === oldPw) { errBox.textContent = window.t("sync.changepw.same"); return; }
+      if (newPw.length < MIN_PASS_LEN) { errBox.textContent = window.t("sync.err.shortpass"); return; }   // A70
       okBtn.disabled = true;
       okBtn.textContent = window.t("sync.working");
       window.orosSync.changePassphrase(oldPw, newPw, rememberCb.checked)
@@ -2230,20 +2231,36 @@
       unlockBtn.addEventListener("click", function () {
         var pw = input.value;
         if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
-        window.orosSync.setPassphrase(pw, rememberCb.checked);
+        // A70: an EMPTY cloud means this passphrase is being SET, not
+        // checked — it must be at least MIN_PASS_LEN long (an existing
+        // shorter one still unlocks). The device vault seals it only
+        // after the pull (A71b: a mistyped passphrase is no longer
+        // remembered); a pull that fails for any other reason
+        // (offline) still seals it, as before.
+        var remember = rememberCb.checked;
+        window.orosSync.setPassphrase(pw, false);
         setSyncMsgRaw("dim", window.t("sync.working"));
         setSyncDot("syncing");
         // Visible auto-pull on unlock: apply cloud state immediately,
         // then push if this device had unsynced changes.
         window.orosSync.pull()
           .then(function (result) {
+            if (result && result.empty && pw.length < MIN_PASS_LEN) {
+              window.orosSync.forgetPassphrase();
+              setSyncMsg("err", "sync.err.shortpass");
+              return;
+            }
+            if (remember) window.orosSync.setPassphrase(pw, true);
             reportPullResult(result);
             if (window.orosSync.isDirty()) {
               return window.orosSync.push()
                 .then(function () { setSyncMsg("ok", "sync.ok.push"); });
             }
           })
-          .catch(handleSyncError);
+          .catch(function (err) {
+            if (remember && !isPassphraseError(err)) window.orosSync.setPassphrase(pw, true);
+            handleSyncError(err);
+          });
       });
       row.appendChild(unlockBtn);
       passWrap.appendChild(row);
@@ -2878,6 +2895,11 @@
   // dedicated "changed on another device?" dialog instead of the
   // misleading generic toast. This is exactly the UX that would
   // have saved us the entire factory-reset debugging saga.
+  // A70: minimum length of a passphrase that is being SET (a new
+  // cloud, a passphrase change). Unlocking with an existing shorter
+  // one keeps working.
+  var MIN_PASS_LEN = 10;
+
   function isPassphraseError(err) {
     return (err && err.name === "OperationError") ||
            (err && err.message === "wrong-passphrase");

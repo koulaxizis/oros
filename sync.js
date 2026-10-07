@@ -1,5 +1,14 @@
 // ============================================================
 // orOS Core v0.9.2 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// 2026-10-07 (A70): the blob and the vault key wraps are sealed with
+//   PBKDF2 600,000 rounds (was 100,000) and say so in a new "iter"
+//   field. A blob without "iter" is read at 100,000, so every old
+//   blob and cloud backup stays readable. A device on an older bundle
+//   cannot read a 600,000 blob — and cannot overwrite it either (the
+//   push guard refuses a cloud it cannot decrypt) until it updates.
+//   Derived keys are cached per (passphrase, salt, rounds), and one
+//   salt is reused for a passphrase's writes in a session (fresh IV
+//   every time), so only the first push/pull pays the derivation.
 // 2026-10-07 (core audit):
 //   SY-Q1 — a FULL localStorage (R30) no longer breaks the engine or
 //     its callers. markDirty() never throws (it used to throw into
@@ -131,7 +140,9 @@
   var BACKUP_STAMP_KEY = "oros-sync-last-backup";   // device-local: ms of this device's last backup copy
   var MAX_PUSH_RETRIES = 3;                   // SY-D1: pull-merge-retry rounds after a conflict
   var BLOB_VERSION    = 1;
-  var PBKDF2_ROUNDS   = 100000;
+  var PBKDF2_ROUNDS   = 600000;               // A70: new writes
+  var PBKDF2_LEGACY   = 100000;               // blobs without "iter", raw vault envelopes
+  var PBKDF2_MAX      = 5000000;              // a larger "iter" is refused (a crafted blob must not hang the tab)
   var INTERVAL_KEY = "oros-sync-interval";   // minutes; 0 = off
   var DIRTY_KEY       = "oros-sync-dirty";
   var VAULT_KEY       = "oros-vault-data";   // localStorage: sealed passphrase
@@ -775,7 +786,9 @@
     if (!passphrase) return Promise.reject(new Error("no-passphrase"));
     var salt = new Uint8Array(16); crypto.getRandomValues(salt);
     var iv   = new Uint8Array(12); crypto.getRandomValues(iv);
-    return deriveKey(salt).then(function (key) {
+    // The raw envelope has no room for a round count: it stays at
+    // PBKDF2_LEGACY (only legacy Vault objects use it).
+    return deriveKey(salt, PBKDF2_LEGACY).then(function (key) {
       return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buf);
     }).then(function (cipher) {
       var env = new Uint8Array(16 + 12 + cipher.byteLength);
@@ -793,37 +806,70 @@
     var salt = env.slice(0, 16);
     var iv   = env.slice(16, 28);
     var data = env.slice(28);
-    return deriveKey(salt).then(function (key) {
+    return deriveKey(salt, PBKDF2_LEGACY).then(function (key) {
       return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
     });
   }
 
   // ---------- Crypto (blob): AES-GCM + PBKDF2 ----------
-  function deriveKey(salt) {
-    var material = new TextEncoder().encode(passphrase);
-    return crypto.subtle.importKey("raw", material, "PBKDF2", false, ["deriveKey"])
+  // A70: derived keys are cached. The passphrase is read
+  // SYNCHRONOUSLY at the call (withPass below relies on that).
+  var keyCache = {}, keyCacheSize = 0;
+  function deriveKey(salt, rounds) {
+    var pass = passphrase;
+    var cacheId = pass + "\u0000" + rounds + "\u0000" + b64encode(salt);
+    if (keyCache[cacheId]) return keyCache[cacheId];
+    var material = new TextEncoder().encode(pass);
+    var p = crypto.subtle.importKey("raw", material, "PBKDF2", false, ["deriveKey"])
       .then(function (key) {
         return crypto.subtle.deriveKey(
-          { name: "PBKDF2", salt: salt, iterations: PBKDF2_ROUNDS, hash: "SHA-256" },
+          { name: "PBKDF2", salt: salt, iterations: rounds, hash: "SHA-256" },
           key,
           { name: "AES-GCM", length: 256 },
           false,
           ["encrypt", "decrypt"]
         );
       });
+    if (keyCacheSize >= 16) { keyCache = {}; keyCacheSize = 0; }
+    keyCache[cacheId] = p;
+    keyCacheSize++;
+    p.catch(function () { if (keyCache[cacheId] === p) { delete keyCache[cacheId]; keyCacheSize--; } });
+    return p;
+  }
+
+  // A70: one random salt per passphrase for this session's writes.
+  // Safe with AES-GCM because every encryption draws a fresh 96-bit IV.
+  var writeSalt = { pass: null, salt: null };
+  function saltForWrite() {
+    if (writeSalt.pass !== passphrase || !writeSalt.salt) {
+      var salt = new Uint8Array(16); crypto.getRandomValues(salt);
+      writeSalt = { pass: passphrase, salt: salt };
+    }
+    return writeSalt.salt;
+  }
+
+  // Rounds a stored blob was sealed with: absent = PBKDF2_LEGACY.
+  function blobRounds(blob) {
+    if (blob.iter === undefined) return PBKDF2_LEGACY;
+    var n = blob.iter;
+    if (typeof n !== "number" || n !== Math.floor(n) || n < PBKDF2_LEGACY || n > PBKDF2_MAX) {
+      throw new Error("unsupported blob version");
+    }
+    return n;
   }
 
   function encryptBlob(payloadObj) {
-    var salt = new Uint8Array(16); crypto.getRandomValues(salt);
+    var salt = saltForWrite();
     var iv   = new Uint8Array(12); crypto.getRandomValues(iv);
     var plain = new TextEncoder().encode(JSON.stringify(payloadObj));
 
-    return deriveKey(salt).then(function (key) {
+    return deriveKey(salt, PBKDF2_ROUNDS).then(function (key) {
       return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, plain);
     })
       .then(function (cipher) {
         return JSON.stringify({
           ver:  BLOB_VERSION,
+          iter: PBKDF2_ROUNDS,                 // A70 (absent = PBKDF2_LEGACY)
           salt: b64encode(salt.buffer),
           iv:   b64encode(iv.buffer),
           data: b64encode(cipher)
@@ -836,11 +882,13 @@
     if (!blob || blob.ver !== BLOB_VERSION) {
       return Promise.reject(new Error("unsupported blob version"));
     }
+    var rounds;
+    try { rounds = blobRounds(blob); } catch (e) { return Promise.reject(e); }
     var salt = b64decode(blob.salt);
     var iv   = b64decode(blob.iv);
     var data = b64decode(blob.data);
 
-    return deriveKey(salt).then(function (key) {
+    return deriveKey(salt, rounds).then(function (key) {
         return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
   })
     .then(function (plain) {
@@ -2368,9 +2416,11 @@
             return { ok: true, changed: true };
             });
           }
-          var salt = b64decode(JSON.parse(blobText).salt);
-          var iv   = b64decode(JSON.parse(blobText).iv);
-          var data = b64decode(JSON.parse(blobText).data);
+          var cpBlob = JSON.parse(blobText);
+          var cpRounds = blobRounds(cpBlob);       // A70
+          var salt = b64decode(cpBlob.salt);
+          var iv   = b64decode(cpBlob.iv);
+          var data = b64decode(cpBlob.data);
 
           // Verify with the TYPED old passphrase — NEVER the
           // in-memory one. A vault-unlocked device must still prove
@@ -2378,7 +2428,7 @@
           // the cloud with a new one.
           var prevPass = passphrase;
           passphrase = oldPw;
-          return deriveKey(salt).then(function (key) {
+          return deriveKey(salt, cpRounds).then(function (key) {
             return crypto.subtle.decrypt(
               { name: "AES-GCM", iv: iv },
               key,
