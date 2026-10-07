@@ -217,12 +217,15 @@
     return { ver: DATA_VER, ents: ents };
   }
 
+  // ST-7: seeds carry mtime 0, never "now". A fresh device used to
+  // seed "Home" with the current time, so its untouched seed beat an
+  // older rename or delete made on another device (Q3 / R16).
   function seedDb() {
-    var ents = [], now = Date.now();
+    var ents = [];
     SEEDS.forEach(function (s, i) {
       var e = entDefaults({
         id: s.id, type: s.type, bi: s.bi,
-        parentId: null, pos: i, mtime: now, del: false
+        parentId: null, pos: i, mtime: 0, del: false
       });
       ents.push(e);
     });
@@ -284,13 +287,6 @@
     db.ents.push(e);
     save();
     return e;
-  }
-
-  function renameEnt(e, name) {
-    e.name = String(name || "").trim();
-    e.bi = null;                  // a rename kills the seed's bilingual name
-    touch(e);
-    save();
   }
 
   // Delete with cascade: descendants get tombstoned too (tombstones
@@ -371,12 +367,31 @@
       else if (l.del !== ex.del) put(l.del ? l : ex);         // tie → tombstone wins
       else if (typeof l.qty === "number" && typeof ex.qty === "number" &&
                l.qty !== ex.qty) put(l.qty > ex.qty ? l : ex); // tie → bigger qty
-      else put((l.id || "") <= (ex.id || "") ? l : ex);         // final tie-break
+      else put(JSON.stringify(l) >= JSON.stringify(ex) ? l : ex); // ST-9: content tie-break
+      // (the old final tie compared the two ids — always equal here —
+      // so "local" won and two devices kept different rows forever)
     }
 
     var out = [];
     for (var k in map) if (map.hasOwnProperty(k)) out.push(map[k]);
     out.sort(function (a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); });
+    return out;
+  }
+
+  // ST-9: one pruning rule for the getter AND the merge (Part VI,
+  // rule 3): tombstones older than the dataset's newest mtime minus
+  // 30 days leave the payload. Same data → same bytes everywhere.
+  function prunePayload(ents) {
+    var maxTs = 0, i;
+    for (i = 0; i < ents.length; i++) {
+      if ((ents[i].mtime || 0) > maxTs) maxTs = ents[i].mtime;
+    }
+    var cutoff = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
+    var out = [];
+    for (i = 0; i < ents.length; i++) {
+      if (ents[i].del && ents[i].mtime < cutoff) continue;
+      out.push(ents[i]);
+    }
     return out;
   }
 
@@ -386,7 +401,7 @@
     if (!local || !remote) return remote || local || null;
     return {
       ver: Math.max(local.ver || 1, remote.ver || 1),
-      ents: mergeEnts(local.ents || [], remote.ents || [])
+      ents: prunePayload(mergeEnts(local.ents || [], remote.ents || []))
     };
   }
 
@@ -401,20 +416,10 @@
     // pattern — Prompter PR-2 / Quote Q-1 parity). The cutoff
     // derives from the dataset's newest mtime, never the wall
     // clock — same data yields the same payload on every device
-    // at any time. Payload-only: db keeps every tombstone, so a
-    // lagging device can never resurrect a deleted entity.
-    var maxTs = 0;
-    for (var mi = 0; mi < db.ents.length; mi++) {
-      if ((db.ents[mi].mtime || 0) > maxTs) maxTs = db.ents[mi].mtime;
-    }
-    var CUTOFF = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
-    var ents = [];
-    for (var i = 0; i < db.ents.length; i++) {
-      var e = db.ents[i];
-      if (e.del && e.mtime < CUTOFF) continue;
-      ents.push(e);
-    }
-    return { ver: db.ver, ents: ents };
+    // at any time. ST-9: the payload is the canonical merge form
+    // (rows normalized + sorted by id, same pruning as mergeData),
+    // so merge(get, get) === get and two devices never ping-pong.
+    return { ver: db.ver, ents: prunePayload(mergeEnts(db.ents, [])) };
   }
 
   // Nav-target sanitizer (#3): if the entity the user is currently
@@ -802,6 +807,12 @@
     var nameInp = mkField(
       "name.label", "text",
       mode === "rename" ? nameOf(ent) : "");
+    // What the form showed at open (ST-8): only differences are saved.
+    var snap = (mode === "rename") ? {
+      name: nameOf(ent).trim(),
+      qty: (typeof ent.qty === "number") ? ent.qty : 1,
+      note: String(ent.note || "").trim()
+    } : null;
 
     var qtyInp = null, noteInp = null;
     if (type === "item") {
@@ -843,13 +854,24 @@
         }
         addEnt(type, parentForAdd, name, extra);
       } else {
-        renameEnt(ent, name);
-        if (ent.type === "item") {
-          var q2 = parseInt(qtyInp.value, 10);
-          ent.qty = (isNaN(q2) || q2 < 1) ? 1 : q2;
-          ent.note = noteInp ? (noteInp.value.trim() || undefined) : undefined;
-          touch(ent);
-          save();
+        // ST-8: a pull while the dialog is open replaces db with new
+        // objects — work on the CURRENT row (by id), and write only
+        // the fields the user changed. The old code saved into the
+        // detached object ("Saved", but nothing stored) and re-wrote
+        // untouched fields (qty, note) over another device's change;
+        // an unchanged Save stamped mtime anyway (R27).
+        var cur = byId(ent.id);
+        if (cur) {
+          var changed = false;
+          if (name !== snap.name) { cur.name = name; cur.bi = null; changed = true; }
+          if (cur.type === "item") {
+            var q2 = parseInt(qtyInp.value, 10);
+            q2 = (isNaN(q2) || q2 < 1) ? 1 : q2;
+            if (q2 !== snap.qty) { cur.qty = q2; changed = true; }
+            var n2 = noteInp ? noteInp.value.trim() : "";
+            if (n2 !== snap.note) { cur.note = n2 || undefined; changed = true; }
+          }
+          if (changed) { touch(cur); save(); }
         }
       }
       dlg.close();
@@ -921,7 +943,9 @@
   }
 
   function confirmDelete(ent) {
-    deleteEnt(ent);
+    // ST-8: the dialog may have outlived a pull — delete the current row.
+    var cur = byId(ent.id);
+    if (cur && !cur.del) deleteEnt(cur);
     notifyTransient(t("toast.deleted"));
     sanitizeNav();               // shared with sliceSet (#3) — no dead refs
     render();
