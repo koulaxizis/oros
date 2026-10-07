@@ -341,6 +341,10 @@ body {
   font: inherit;
   font-size: 15px;
   flex-shrink: 0;
+  /* TM-4: touch target (was 21×27) */
+  min-width: 36px;
+  min-height: 36px;
+  justify-content: center;
 }
 .z-del:hover, .a-del:hover { color: var(--danger, #e06c75); background: var(--accent-soft); }
 
@@ -494,6 +498,10 @@ dialog#zone-dlg {
   box-shadow: 0 12px 40px var(--shadow);
   padding: 16px;
   width: min(340px, calc(100vw - 32px));
+  /* TM-4 (R32): `* { margin: 0 }` docked the dialog top-left */
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 dialog#zone-dlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
@@ -636,6 +644,9 @@ dialog#astro-dlg {
   box-shadow: 0 12px 40px var(--shadow);
   padding: 16px;
   width: min(320px, calc(100vw - 32px));
+  margin: auto;                       /* TM-4 (R32) */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 dialog#astro-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 dialog#astro-dlg h3 {
@@ -663,6 +674,11 @@ dialog#astro-dlg h3 {
 }
 .ast-form input:focus { border-color: var(--accent); }
 .ast-form .mini { margin-top: 6px; }
+
+/* TM-4: touch targets on phones (chips were 24px tall) */
+@media (pointer: coarse) {
+  .sty, .mini, .qchip { min-height: 36px; }
+}
 
 /* ---------- X. [hidden] must ALWAYS win ----------
    orOS-wide authority guard (mood.css §X). Combined with the
