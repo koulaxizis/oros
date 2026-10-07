@@ -39,8 +39,8 @@
       "cat.all":             "All",
       "cat.micro":           "Micro-fiction",
       "cat.haiku":           "Haiku",
-      "cat.poetry.free":     "Free poetry",
-      "cat.poetry.metred":   "Metered poetry",
+      "cat.poetry_free":     "Free poetry",
+      "cat.poetry_metred":   "Metered poetry",
       "cat.song":            "Song",
       "cat.aphorism":        "Aphorism",
       "cat.theatrical":      "Theatrical",
@@ -54,14 +54,12 @@
       "comp.badge":          "✓",
       "custom.badge":        "✦",
       "btn.use":             "Use",
-      "btn.reroll":          "Reroll",
       "btn.copy":            "Copy",
       "btn.toggle":          "Variation",
       "btn.favorite":        "Star",
       "btn.unfavorite":      "Unstar",
       "btn.complete":        "Mark done",
       "btn.uncComplete":     "Undo",
-      "btn.daily":           "Today's prompt",
       "daily.pulse":         "New today!",
       "streak.val":          "{n} days in a row",
       "streak.zero":         "No streak yet",
@@ -69,21 +67,16 @@
       "stats.completed":     "Completed",
       "stats.favorites":     "Favorites",
       "stats.customs":       "Customs",
-      "stats.streak":        "Day streak",
       "daily.badge":         "Today",
       "stats.progress":      "Progress",
       "by.cat":              "By category",
       "empty.browse":        "No prompts found — adjust your filters.",
-      "empty.stats":         "Start using prompts to see your stats.",
       "saved.toast":         "Copied to clipboard",
-      "sync.pull":           "Updated from sync",
       "rst.btn":             "Factory reset",
       "rst.body":            "This permanently erases ALL custom prompts, favorites, and completed marks on every synced device. There is no undo.",
-      "rst.yes":             "Erase everything",
       "rst.cancel":          "Cancel",
       "rst.done":            "Fresh start — everything erased",
       "settings.title":      "Settings",
-      "settings.close":      "Close",
       "custom.new":           "New prompt",
       "custom.mine":          "✦ Mine",
       "custom.edit":          "Edit",
@@ -113,8 +106,8 @@
       "cat.all":             "Όλα",
       "cat.micro":           "Μικροϊστορίες",
       "cat.haiku":           "Χάικου",
-      "cat.poetry.free":     "Ελεύθερο ποίημα",
-      "cat.poetry.metred":   "Μετρική ποίηση",
+      "cat.poetry_free":     "Ελεύθερο ποίημα",
+      "cat.poetry_metred":   "Μετρική ποίηση",
       "cat.song":            "Τραγούδι",
       "cat.aphorism":        "Αφορισμός",
       "cat.theatrical":      "Θεατρικό",
@@ -128,14 +121,12 @@
       "comp.badge":          "✓",
       "custom.badge":        "✦",
       "btn.use":             "Χρήση",
-      "btn.reroll":          "Επανάληψη",
       "btn.copy":            "Αντιγραφή",
       "btn.toggle":          "Παραλλαγή",
       "btn.favorite":         "Αγαπημένο",
       "btn.unfavorite":      "Αφαίρεση",
       "btn.complete":        "Ολοκλήρωσα",
       "btn.uncComplete":     "Αναίρεση",
-      "btn.daily":           "Σημερινό θέμα",
       "daily.pulse":         "Καινούργιο σήμερα!",
       "streak.val":          "{n} συνεχόμενες ημέρες",
       "streak.zero":         "Δεν έχει ακόμα σειρά",
@@ -143,21 +134,16 @@
       "stats.completed":     "Ολοκληρωμένα",
       "stats.favorites":     "Αγαπημένα",
       "stats.customs":       "Δικά μου",
-      "stats.streak":        "Σειρά ημερών",
       "daily.badge":         "Σήμερα",
       "stats.progress":      "Πρόοδος",
       "by.cat":              "Ανά κατηγορία",
       "empty.browse":        "Δεν βρέθηκαν θέματα — προσαρμόστε τα φίλτρα.",
-      "empty.stats":         "Ξεκινήστε να χρησιμοποιείτε θέματα για να δείτε στατιστικά.",
       "saved.toast":         "Αντιγράφηκε στο πρόχειρο",
-      "sync.pull":           "Ενημερώθηκε από συγχρονισμό",
       "rst.btn":             "Επαναφορά εργοστασιακών",
       "rst.body":            "Θα διαγραφούν ΟΛΑ τα custom θέματα, αγαπημένα και σημεία ολοκλήρωσης από κάθε συγχρονισμένη συσκευή. Χωρίς αναίρεση.",
-      "rst.yes":             "Σβήσε τα όλα",
       "rst.cancel":          "Ακύρωση",
       "rst.done":            "Καθαρή αρχή — όλα διαγράφτηκαν",
       "settings.title":      "Ρυθμίσεις",
-      "settings.close":      "Κλείσιμο",
       "custom.new":           "Νέο θέμα",
       "custom.mine":          "✦ Δικά μου",
       "custom.edit":          "Επεξεργασία",
@@ -487,7 +473,7 @@
   function newState() {
     return {
       ver: DATA_VER,
-      sm: Date.now(),
+      sm: 0,           // PM-6: no "now" in a fresh state (Q3)
       favorites: {},   // id → mtime (mirrors completed — tombstone-aware)
       completed: {},
       customs: [],
@@ -517,8 +503,9 @@
   }
 
   function load() {
+    var raw = null;
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var data = JSON.parse(raw);
         if (data && typeof data.ver === "number") {
@@ -531,6 +518,11 @@
         }
       }
     } catch (e) { /* corrupted → fresh */ }
+    // PM-5: unreadable data is copied aside before the fresh state is
+    // written over it (rescue backup before any reseed).
+    if (raw) {
+      try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e2) { /* quota */ }
+    }
     state = newState();
     save();
   }
@@ -568,16 +560,42 @@
     return JSON.stringify(a) >= JSON.stringify(b) ? a : b;   // tie → deterministic + symmetric
   }
 
+  // PM-2: tombstone namespaces inside the ONE `deleted` map.
+  //   deleted[id]          → the custom prompt `id` was deleted (and, from
+  //                          devices on the previous version, ANY removal
+  //                          of id: unstar, un-done, delete — legacy)
+  //   deleted["fav:"+id]   → id was unstarred        (written since PM-2)
+  //   deleted["done:"+id]  → id was marked not done  (written since PM-2)
+  // Before PM-2 an unstar wrote deleted[id], and the merge used that one
+  // stamp for favorites, completions AND customs: unstarring a custom
+  // prompt deleted the prompt itself on the next sync, and unstarring a
+  // completed prompt erased its completion. Prefixed keys ride through
+  // the previous version untouched (it unions `deleted` by max and only
+  // ever looks up plain ids), so the change is additive both ways.
+  var TOMB_FAV = "fav:", TOMB_DONE = "done:";
+
   function mergePrompterStates(A, B) {
     var a = A || {}, b = B || {};
     var tomb = {};
-    Object.keys(a.deleted||{}).forEach(function(id){ tomb[id] = a.deleted[id]; });
-    Object.keys(b.deleted||{}).forEach(function(id){ tomb[id] = Math.max(tomb[id]||0, b.deleted[id]); });
+    var tombIn = function(side){
+      var d = side.deleted;
+      if (!d || typeof d !== "object") return;
+      Object.keys(d).forEach(function(id){
+        if (typeof d[id] !== "number" || !isFinite(d[id])) return;
+        tomb[id] = Math.max(tomb[id] || 0, d[id]);
+      });
+    };
+    tombIn(a); tombIn(b);
 
     // alive = no tombstone, or content newer than the tombstone
-    // (resurrection contract — same as mood/weather)
-    var alive = function(id, mtime){
-      return (tomb[id] === undefined) || ((mtime || 0) > tomb[id]);
+    // (resurrection contract — same as mood/weather). `ns` selects the
+    // namespaced tombstone (PM-2); a plain legacy tombstone still counts
+    // for favorites and completions (an older device's unstar / un-done
+    // must keep working), but only a plain one deletes a custom.
+    var alive = function(id, mtime, ns){
+      var t = tomb[id] || 0;
+      if (ns) t = Math.max(t, tomb[ns + id] || 0);
+      return !t || ((mtime || 0) > t);
     };
 
     // favorites: union by id, LWW by mtime. Arrays (legacy payloads from
@@ -597,37 +615,76 @@
       });
     });
     Object.keys(favorites).forEach(function(id){
-      if (!alive(id, favorites[id])) delete favorites[id];
+      if (!alive(id, favorites[id], TOMB_FAV)) delete favorites[id];
     });
 
     var completed = {};
-    Object.keys(a.completed||{}).forEach(function(id){
-      if (alive(id, a.completed[id])) completed[id] = a.completed[id];
-    });
-    Object.keys(b.completed||{}).forEach(function(id){
-      if (!alive(id, b.completed[id])) return;
-      completed[id] = Math.max(completed[id] || 0, b.completed[id]);
+    [a.completed, b.completed].forEach(function(cm){
+      if (!cm || typeof cm !== "object") return;
+      Object.keys(cm).forEach(function(id){
+        if (typeof cm[id] !== "number" || !alive(id, cm[id], TOMB_DONE)) return;
+        completed[id] = Math.max(completed[id] || 0, cm[id]);
+      });
     });
 
+    // PM-1: a custom present on ONE side only used to reach
+    // newerTs(undefined, c) and throw — the whole prompter slice
+    // stopped syncing (since SY-D6; before it, the cloud copy replaced
+    // this device's data). Rows without a string id are dropped.
     var customsMap = {};
-    (a.customs||[]).forEach(function(c){ customsMap[c.id] = c; });
-    (b.customs||[]).forEach(function(c){
-      customsMap[c.id] = newerTs(customsMap[c.id], c);
+    [a.customs, b.customs].forEach(function(list){
+      if (!Array.isArray(list)) return;
+      list.forEach(function(c){
+        if (!c || typeof c !== "object" || typeof c.id !== "string" || !c.id) return;
+        customsMap[c.id] = customsMap[c.id] ? newerTs(customsMap[c.id], c) : c;
+      });
     });
     var customs = [];
     Object.keys(customsMap).forEach(function(id){
       if (alive(id, customsMap[id].mtime)) customs.push(customsMap[id]);
     });
-    customs.sort(function(x,y){ return (x.pos||0)-(y.pos||0) || (x.id<y.id?-1:x.id>y.id?1:0); });   // pos, then id — deterministic across devices
 
-    return {
+    return canonState({
       ver: DATA_VER,
       sm: Math.max(a.sm||0, b.sm||0),
       favorites: favorites,
       completed: completed,
       customs: customs,
       deleted: tomb
+    });
+  }
+
+  // PM-3: ONE canonical form for the getter and the merge (R26). Map
+  // keys sorted (key order used to follow the argument order, so
+  // merge(A,B) and merge(B,A) differed in bytes); customs by pos, then
+  // id; tombstones pruned by DATA time with the same rule in both
+  // places (only the getter pruned before, so getter ≠ merge).
+  function sortedMap(m){
+    var out = {};
+    if (!m || typeof m !== "object") return out;
+    Object.keys(m).sort().forEach(function(k){ out[k] = m[k]; });
+    return out;
+  }
+  function canonState(st){
+    var out = {
+      ver: DATA_VER,
+      sm: (typeof st.sm === "number" && isFinite(st.sm)) ? st.sm : 0,
+      favorites: sortedMap(st.favorites),
+      completed: sortedMap(st.completed),
+      customs: (st.customs || []).slice().sort(function(x,y){ return (x.pos||0)-(y.pos||0) || (x.id<y.id?-1:x.id>y.id?1:0); }),   // pos, then id — deterministic across devices
+      deleted: sortedMap(st.deleted)
     };
+    // Deterministic tombstone pruning (HB-3 / MD-4 / NT-2 pattern): the
+    // cutoff derives from the dataset's newest timestamp, never the wall
+    // clock — same data yields the same payload on every device.
+    var maxTs = 0, id;
+    for (id in out.favorites) if ((out.favorites[id] || 0) > maxTs) maxTs = out.favorites[id];
+    for (id in out.completed) if ((out.completed[id] || 0) > maxTs) maxTs = out.completed[id];
+    for (id in out.deleted) if ((out.deleted[id] || 0) > maxTs) maxTs = out.deleted[id];
+    out.customs.forEach(function (c) { if ((c.mtime || 0) > maxTs) maxTs = c.mtime; });
+    var cutoff = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
+    for (id in out.deleted) if ((out.deleted[id] || 0) < cutoff) delete out.deleted[id];
+    return out;
   }
 
   // ---------- 5. Sync slice + wiring ----------
@@ -640,29 +697,9 @@
 
   function sliceGet() {
     // PR-2: deep-copy (the engine JSON-stringifies for comparison).
-    var out = JSON.parse(JSON.stringify(state));
-    // Deterministic tombstone pruning (HB-3 / MD-4 / NT-2 pattern):
-    // the cutoff derives from the dataset's newest timestamp, never
-    // the wall clock — same data yields the same payload on every
-    // device at any time. Payload-only: local state keeps everything.
-    var maxTs = 0, id;
-    for (id in out.favorites) {
-      if ((out.favorites[id] || 0) > maxTs) maxTs = out.favorites[id];
-    }
-    for (id in out.completed) {
-      if ((out.completed[id] || 0) > maxTs) maxTs = out.completed[id];
-    }
-    for (id in out.deleted) {
-      if ((out.deleted[id] || 0) > maxTs) maxTs = out.deleted[id];
-    }
-    (out.customs || []).forEach(function (c) {
-      if ((c.mtime || 0) > maxTs) maxTs = c.mtime;
-    });
-    var cutoff = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
-    for (id in out.deleted) {
-      if ((out.deleted[id] || 0) < cutoff) delete out.deleted[id];
-    }
-    return out;
+    // PM-3: canonical form shared with the merge (pruning included).
+    // Payload-only: local state keeps everything.
+    return canonState(JSON.parse(JSON.stringify(state)));
   }
   function sliceSet(data, info) {
     data = JSON.parse(JSON.stringify(data||null));
@@ -674,9 +711,16 @@
     if (typeof data.completed !== "object" || data.completed === null) data.completed = {};
     if (!Array.isArray(data.customs)) data.customs = [];
     if (typeof data.deleted !== "object" || data.deleted === null) data.deleted = {};
+    // PM-3: an echo of what we already hold changes nothing — no
+    // rebuild of the open view (search caret) and no storage write.
+    if (JSON.stringify(canonState(data)) === JSON.stringify(canonState(state))) return;
     window.__orosSyncApi._suppress = true;
     try { state = data; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { /* quota — state is live in memory, next save retries */ }
     finally { window.__orosSyncApi._suppress = false; }
+    // Keep the caret in the search field across the re-render.
+    var ae = document.activeElement;
+    if (ae && ae.classList && ae.classList.contains("search-input")) searchFocus = true;
     renderAll();
     // PR-1a-6: sync.pull toast removed (Notes Wave 11 doctrine) —
     // info.merged means "the merge engine ran", not "data changed".
@@ -688,9 +732,14 @@
   function showToast(text, actionLabel, actionFn) {
     if(!toastEl){
       toastEl=document.createElement("div");
-      toastEl.style.cssText="position:fixed;top:calc(12px+env(safe-area-inset-top,0px));right:12px;z-index:1200;background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px var(--shadow);padding:9px 14px;font-size:13px;color:var(--text);opacity:0;transition:opacity .3s,transform .3s;max-width:calc(100vw-32px);";
+      toastEl.style.cssText="position:fixed;top:calc(12px + env(safe-area-inset-top, 0px));right:12px;z-index:1200;background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px var(--shadow);padding:9px 14px;font-size:13px;color:var(--text);opacity:0;transition:opacity .3s,transform .3s;max-width:calc(100vw - 32px);";
       document.body.appendChild(toastEl);
     }
+    // A modal <dialog> makes the rest of the page inert and covers it:
+    // host the toast inside the top-most open dialog (Part VI).
+    var dlgs=document.querySelectorAll("dialog[open]");
+    var host=dlgs.length? dlgs[dlgs.length-1] : document.body;
+    if(toastEl.parentNode!==host) host.appendChild(toastEl);
     if(toastAction){ toastAction.remove(); toastAction=null; }
     toastEl.textContent="";
     toastEl.appendChild(document.createTextNode(text));
@@ -766,15 +815,28 @@
   function isInFavs(id){ return Object.prototype.hasOwnProperty.call(state.favorites, id); }
   function isCompleted(id){ return state.completed.hasOwnProperty(id); }
   function isCustom(id){ return id.indexOf("c")===0; }
+  // PM-2: each toggle writes its OWN tombstone ("fav:" / "done:"); the
+  // plain deleted[id] belongs to custom-prompt deletion only. A fresh
+  // stamp beats any tombstone, so turning a flag back on needs no
+  // tombstone removal (removing the plain one could even undo another
+  // device's delete of a custom prompt).
+  // Strictly newer than any tombstone that applies (same millisecond or
+  // a skewed clock on another device would otherwise leave it dead).
+  function freshStamp(now, id, ns){
+    var t=Math.max(state.deleted[id]||0, state.deleted[ns+id]||0);
+    return now>t ? now : t+1;
+  }
   function toggleFav(id){
-    if(isInFavs(id)){ delete state.favorites[id]; state.deleted[id]=Date.now(); }   // tombstone — survives merge
-    else { delete state.deleted[id]; state.favorites[id]=Date.now(); }   // fresh ts beats tombstone
-    state.sm=Date.now(); save(); renderAll();
+    var now=Date.now();
+    if(isInFavs(id)){ delete state.favorites[id]; state.deleted[TOMB_FAV+id]=now; }   // tombstone — survives merge
+    else { state.favorites[id]=freshStamp(now, id, TOMB_FAV); }   // fresh ts beats tombstone
+    state.sm=now; save(); renderAll();
   }
   function toggleComplete(id){
-    if(state.completed[id]) { delete state.completed[id]; state.deleted[id]=Date.now(); }   // tombstone — survives merge
-    else { delete state.deleted[id]; state.completed[id]=Date.now(); }   // fresh ts beats tombstone
-    state.sm=Date.now(); save(); renderAll();
+    var now=Date.now();
+    if(state.completed[id]) { delete state.completed[id]; state.deleted[TOMB_DONE+id]=now; }   // tombstone — survives merge
+    else { state.completed[id]=freshStamp(now, id, TOMB_DONE); }   // fresh ts beats tombstone
+    state.sm=now; save(); renderAll();
   }
   function copyText(text){
     if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ notifyTransient(t("saved.toast")); }); }
@@ -880,17 +942,38 @@
     cn.addEventListener("click", closeEditor);
     var sv=document.createElement("button");
     sv.type="button"; sv.className="prim"; sv.textContent=t("editor.save");
+    // PM-4: read the form the same way at open and at save, so the save
+    // can tell which fields the user actually changed.
+    var readVals=function(){
+      return {
+        cat:sel.value, en:enIn.value.trim(), el:elIn.value.trim(),
+        var_en:vEn.value.trim(), var_el:vEl.value.trim(),
+        tags:tgIn.value.split(",").map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean)
+      };
+    };
+    var baseVals=readVals();
     sv.addEventListener("click", function(){
-      var enVal=enIn.value.trim(), elVal=elIn.value.trim();
+      var vals=readVals();
+      var enVal=vals.en, elVal=vals.el;
       if(!enVal || !elVal){ showToast(t("editor.errEmpty")); return; }
-      var tagList=tgIn.value.split(",").map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+      var tagList=vals.tags;
       var now=Date.now();
       if(editing){
-        // p is a live reference into state.customs — mutate in place
-        p.cat=sel.value; p.en=enVal; p.el=elVal;
-        p.var_en=vEn.value.trim(); p.var_el=vEl.value.trim();
-        p.tags=tagList; p.mtime=now;
-        delete state.deleted[p.id];   // resurrection on re-save
+        // PM-4: `p` is the object as it was when the editor opened; a
+        // sync pull since then replaces state.customs, and writing into
+        // `p` saved nothing (or, without a pull, wrote back every field,
+        // undoing another device's change to the fields not touched
+        // here). Write only the changed fields into the CURRENT object.
+        var cur=null;
+        for(var ci=0;ci<state.customs.length;ci++){ if(state.customs[ci].id===p.id){ cur=state.customs[ci]; break; } }
+        var changed=Object.keys(vals).filter(function(k){ return JSON.stringify(vals[k])!==JSON.stringify(baseVals[k]); });
+        if(!changed.length){ closeEditor(); return; }   // zero-edit save stamps nothing
+        if(!cur){   // deleted elsewhere meanwhile: the edit brings it back (R17)
+          cur=JSON.parse(JSON.stringify(p));
+          state.customs.push(cur);
+        }
+        changed.forEach(function(k){ cur[k]=vals[k]; });
+        cur.mtime=now;
       } else {
         var maxPos=-1;
         state.customs.forEach(function(c){ if((c.pos||0)>maxPos) maxPos=c.pos||0; });
@@ -1079,13 +1162,16 @@ document.body.appendChild(loader);
     currentDailyPromptId=dailyId;
 
     // Built-ins + customs filtered
-    var allPrompts=PROMPTS_DATA.concat(state.customs||[]);
+    // PM-8: customs come first and never count against the 50-card cap.
+    // They used to be appended after the 100 built-ins, so with no
+    // filter a newly saved prompt was never shown ("saved", then gone).
+    var allPrompts=(state.customs||[]).concat(PROMPTS_DATA);
     allPrompts.forEach(function(p){
       if(showMineOnly && !isCustom(p.id)) return;
       if(activeCategory!=="all" && p.cat!==activeCategory) return;
       if(activeTag && tagsFor(p).indexOf(activeTag)<0) return;
       if(searchQuery && !promptMatchesQuery(p)) return;
-      if(!activeTag && !searchQuery && shown>=50 && p.id!==dailyId) return;
+      if(!activeTag && !searchQuery && !isCustom(p.id) && shown>=50 && p.id!==dailyId) return;
 
       var card=document.createElement("div");
       card.className="prompt-card"+(isCustom(p.id)? " custom":"");
@@ -1218,7 +1304,7 @@ document.body.appendChild(loader);
 
       card.appendChild(acts);
       grid.appendChild(card);
-      shown++;
+      if(!isCustom(p.id)) shown++;   // PM-8: the cap counts built-ins only
     });
 
     if(!grid.childNodes.length){
