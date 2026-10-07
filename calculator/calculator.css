@@ -327,7 +327,7 @@ html, body {
      basis would win and dragging would never move the panel). */
   .calc-history {
     border-top: none;
-    width: 300px;
+    width: var(--hist-w, 300px);   /* CA-6: drag width, wide layout only */
     flex: 0 0 auto;
     padding-top: 20px;
     position: relative;
@@ -382,6 +382,11 @@ html, body {
 .calc-history-list::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
+}
+
+/* Touch: 44 px targets (Part VII) */
+@media (pointer: coarse) {
+  #troll-toggle, #history-clear, #history-csv { min-height: 44px; }
 }
 
 /* [hidden] must always win — standing EOF guard */
