@@ -402,6 +402,12 @@ dialog h3 { margin: 0 0 12px; font-size: 14px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
+  /* HB-12: the toolbar scrolls sideways instead of squeezing its
+     buttons until their labels are cut ("Προσθήκ συνήθεια") */
+  .top { overflow-x: auto; scrollbar-width: none; }
+  .top::-webkit-scrollbar { display: none; }
+  .top > * { flex-shrink: 0; }
+  #btn-add span { display: none; }     /* icon + title/aria label only */
   .habit-row { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
   .habit-info { flex-basis: calc(100% - 52px); }
   .week-dots {

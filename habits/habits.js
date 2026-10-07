@@ -456,8 +456,12 @@
     return h;
   }
 
-  function updateHabit(h, name, icon, color, days) {
-    h.name = name; h.icon = icon; h.color = color; h.days = days;
+  // HB-9: writes ONLY the fields in `patch` onto the CURRENT row.
+  // A field the user did not touch keeps whatever another device
+  // wrote meanwhile; an edit newer than a tombstone resurrects (R17).
+  function updateHabit(h, patch) {
+    for (var k in patch) if (patch.hasOwnProperty(k)) h[k] = patch[k];
+    h.del = false;
     touch(h);
     save();
   }
@@ -508,6 +512,7 @@
     if (!raw || typeof raw !== "object") return null;
     if (typeof raw.id !== "string" || !raw.id) return null;
     if (typeof raw.name !== "string") return null;
+    if (!raw.name && !raw.del) return null;     // HB-11: same rule as normalize()
     if (!(typeof raw.mtime === "number" && isFinite(raw.mtime))) return null;
     var days = [];
     if (Array.isArray(raw.days)) {
@@ -553,7 +558,10 @@
       if (l.mtime > ex.mtime) put(l);
       else if (l.mtime < ex.mtime) put(ex);
       else if (l.del !== ex.del) put(l.del ? l : ex);      // tie → tombstone
-      else put((l[key] || "") <= (ex[key] || "") ? l : ex); // final tie-break
+      // HB-10: final tie-break on the whole row (lexical JSON). The
+      // keys are equal here, so the old key compare always kept the
+      // LOCAL row: two devices with equal stamps kept different rows.
+      else put(JSON.stringify(l) >= JSON.stringify(ex) ? l : ex);
     }
     var out = [];
     for (var k in map) if (map.hasOwnProperty(k)) out.push(map[k]);
@@ -563,11 +571,32 @@
 
   function mergeData(local, remote) {
     if (!local || !remote) return remote || local || null;
-    return {
+    // HB-11: the merge returns the SAME canonical form as the getter
+    // (rows sorted by id, completion tombstones pruned by one rule)
+    return canonData({
       ver: Math.max(local.ver || 1, remote.ver || 1),
       habits: mergeBy("id", local.habits || [], remote.habits || [], mergeHabitRow),
       comps: mergeBy("id", local.comps || [], remote.comps || [], mergeCompRow)
-    };
+    });
+  }
+
+  // HB-11: ONE canonical form for getter and merge output. HB-3's
+  // pruning rule lives here only: a completion tombstone older than
+  // 30 days before the newest completion stamp in the data stops
+  // travelling. Rows sorted by id; copies only (never live rows).
+  function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
+  function canonData(d) {
+    var hs = (d.habits || []).slice().sort(byId);
+    var cs = (d.comps || []).slice().sort(byId);
+    var maxMtime = 0, i;
+    for (i = 0; i < cs.length; i++) if (cs[i].mtime > maxMtime) maxMtime = cs[i].mtime;
+    var CUTOFF = maxMtime - 30 * 24 * 60 * 60 * 1000;
+    var comps = [];
+    for (i = 0; i < cs.length; i++) {
+      if (cs[i].del && cs[i].mtime < CUTOFF) continue;
+      comps.push(cs[i]);
+    }
+    return JSON.parse(JSON.stringify({ ver: d.ver || DATA_VER, habits: hs, comps: comps }));
   }
 
   // ===== SYNC REGISTRATION =====
@@ -587,21 +616,10 @@
   function sliceGet() {
     // HB-3: prune tombstones deterministically — cutoff is based on
     // the newest mtime in the dataset (payload-internal), NOT wall
-    // clock. Same data → same payload on every device at any time.
-    var maxMtime = 0;
-    for (var i = 0; i < db.comps.length; i++) {
-      if (db.comps[i].mtime > maxMtime) maxMtime = db.comps[i].mtime;
-    }
-    var CUTOFF = maxMtime - 30 * 24 * 60 * 60 * 1000;
-    var comps = [];
-    for (var i = 0; i < db.comps.length; i++) {
-      if (db.comps[i].del && db.comps[i].mtime < CUTOFF) continue;
-      comps.push(db.comps[i]);
-    }
-    // deep clone — live db references must never leak into the sync
-    // layer (aliasing = mutation mid-merge; Weather-contract)
-    return JSON.parse(JSON.stringify(
-      { ver: db.ver, habits: db.habits, comps: comps }));
+    // clock. HB-11: the rule and the sort live in canonData, shared
+    // with the merge. canonData returns a deep copy: live db rows
+    // never leak into the sync layer.
+    return canonData(db);
   }
 
   function sliceSet(data, info) {
@@ -697,6 +715,7 @@
     function renderStatics() {
     els.btnAdd.innerHTML = ICO_PLUS + "<span>" + esc(t("add")) + "</span>";
     els.btnAdd.title = t("add");
+    els.btnAdd.setAttribute("aria-label", t("add"));
     els.btnVList.textContent = t("view.list");
     els.btnVCal.textContent = t("view.cal");
     els.btnVStats.textContent = t("view.stats");
@@ -1097,6 +1116,7 @@
   // ===== HABIT DIALOG (add / edit — one lazy modal) =====
   var dlgHabit = null;
   var editing = null;                 // habit object or null (add mode)
+  var editBase = null;                // HB-9: field values shown at open
   var pickIcon = "check";
   var pickColor = COLORS[0];
   var pickDays = [false,false,false,false,false,false,false];
@@ -1141,6 +1161,10 @@
   function openHabitDialog(h) {
     ensureHabitDialog();
     editing = h || null;
+    // HB-9: what the dialog showed at open — Save compares against
+    // it and writes only what the user changed
+    editBase = h ? { id: h.id, name: h.name, icon: h.icon, color: h.color,
+                     days: h.days.slice() } : null;
 
     // labels refreshed on EVERY open — language-safe without rebuild
     document.getElementById("hf-title").textContent = t(h ? "edit" : "add");
@@ -1248,7 +1272,24 @@
     // days array is already ascending (loop order) — matches normalize
 
     if (editing) {
-      updateHabit(editing, name, pickIcon, pickColor, days);
+      // HB-9: a pull while the dialog was open replaced every row
+      // object — `editing` is a detached copy. Resolve the row by id
+      // and write only the fields that differ from what was shown.
+      var base = editBase;
+      var patch = {}, any = false;
+      if (name !== base.name) { patch.name = name; any = true; }
+      if (pickIcon !== base.icon) { patch.icon = pickIcon; any = true; }
+      if (pickColor !== base.color) { patch.color = pickColor; any = true; }
+      if (days.join(",") !== base.days.join(",")) { patch.days = days; any = true; }
+      var cur = habitById(base.id);
+      if (!any && cur) { dlgHabit.close(); return; }   // zero-edit close stamps nothing
+      if (!cur) {                                        // row vanished: keep the user's edit
+        cur = habitDefaults({ id: base.id, name: name, icon: pickIcon, color: pickColor,
+                              days: days, mtime: Date.now(), del: false });
+        db.habits.push(cur);
+        patch = {};
+      }
+      updateHabit(cur, patch);
       transientNote(t("toast.updated"));
     } else {
       addHabit(name, pickIcon, pickColor, days);
@@ -1278,9 +1319,13 @@
     document.getElementById("cf-no").textContent = t("cancel");
     document.getElementById("cf-yes").textContent = t("del");
     document.getElementById("cf-no").onclick = function () { dlgConfirm.close(); };
+    var hid = h.id;
     document.getElementById("cf-yes").onclick = function () {
       dlgConfirm.close();
-      deleteHabit(h);
+      // HB-9: resolve by id — a pull while this dialog was open
+      // replaced the row object, and deleting the old copy saved nothing
+      var cur = habitById(hid);
+      if (cur && !cur.del) deleteHabit(cur);
       render();
       transientNote(t("toast.deleted"));
     };
