@@ -40,6 +40,9 @@
   // ---------- Configuration / constants ----------
   var MANIFEST_KEY   = "manifest.json";
   var KEY_FILE       = "key.json";                // VD-KEY: the wrapped vault key
+  var SEED_KEY       = "oros-vault-seeded";       // FILES-V: this device's disk was queued once
+  var CONFLICT_KEY   = "oros-vault-conflicts";    // FILES-V: { path: remoteHash } copies already made
+  var ROOT_PATH      = "/internal";
   var OBJECTS_PREFIX = "objects/";
   var QUEUE_KEY      = "oros-vault-queue";        // dirty paths pending push
   var LM_KEY         = "oros-vault-manifest";     // local manifest cache
@@ -117,9 +120,17 @@
     m[path] = queueSeq;
     setQueueMap(m);
   }
+  // Listeners only, no console line (a pill wants to know that
+  // something is waiting; the log does not need one line per file).
+  function tellQueue() {
+    listeners.forEach(function (fn) {
+      try { fn("queue", getQueue().length); } catch (e) {}
+    });
+  }
   function queueAdd(path) {
     queueTouch(path);
     armDebounce();
+    tellQueue();
   }
   // Settle what a sync really pushed: only generations it picked up.
   function queueSettle(done) {
@@ -128,6 +139,79 @@
       if (m[p] === done[p]) delete m[p];
     });
     setQueueMap(m);
+  }
+
+  function queueTouchMany(paths) {
+    if (!paths.length) return;
+    var m = getQueueMap();
+    for (var i = 0; i < paths.length; i++) {
+      queueSeq = Math.max(queueSeq + 1, Date.now());
+      m[paths[i]] = queueSeq;
+    }
+    setQueueMap(m);
+  }
+  function queueDrop(path) {
+    var m = getQueueMap();
+    if (Object.prototype.hasOwnProperty.call(m, path)) { delete m[path]; setQueueMap(m); }
+  }
+
+  // ---------- FILES-V: who changed the disk? ----------
+  // fs.js reports EVERY mutation of the disk to this module (write →
+  // fileChanged, delete / move → touchTree), whoever caused it. That
+  // includes the writes this module makes itself while applying a
+  // remote change — those must not come back as "local work".
+  // Path-specific and counted: a user edit of ANOTHER file during
+  // the same moment is still seen.
+  var ownWrites = {};
+  function ownBegin(path) { ownWrites[path] = (ownWrites[path] || 0) + 1; }
+  function ownEnd(path) {
+    if (ownWrites[path] > 1) ownWrites[path]--; else delete ownWrites[path];
+  }
+  function ownWrite(path, blob) {
+    ownBegin(path);
+    return FS().write(path, blob).then(function (r) { ownEnd(path); return r; },
+                                       function (e) { ownEnd(path); throw e; });
+  }
+  function ownRemove(path) {
+    ownBegin(path);
+    return FS().rm(path).then(function (r) { ownEnd(path); return r; },
+                              function (e) { ownEnd(path); throw e; });
+  }
+
+  // Every FILE at or under a path (a missing path = none).
+  function walkFiles(path) {
+    return FS().stat(path).then(function (st) {
+      if (!st.dir) return [path];
+      return FS().ls(path).then(function (list) {
+        var out = [], chain = Promise.resolve();
+        (list || []).forEach(function (e) {
+          var child = path + "/" + e.name;
+          chain = chain.then(function () {
+            if (!e.dir) { out.push(child); return null; }
+            return walkFiles(child).then(function (more) { out = out.concat(more); });
+          });
+        });
+        return chain.then(function () { return out; });
+      });
+    }, function () { return []; });
+  }
+
+  // "Something changed at or under this path": queue every file this
+  // device has synced there (covers deletions and moves away) and
+  // every file that is there now (covers creations and moves in).
+  // The push sorts them out: gone = deletion, same bytes = nothing.
+  function touchTree(path) {
+    if (typeof path !== "string" || !path || ownWrites[path]) return Promise.resolve(0);
+    var known = [], pre = path + "/", lm = getLocalManifest();
+    Object.keys(lm.files).forEach(function (p) {
+      if (p === path || p.indexOf(pre) === 0) known.push(p);
+    });
+    return walkFiles(path).then(function (found) {
+      var all = known.concat(found);
+      queueTouchMany(all);
+      if (all.length) { armDebounce(); tellQueue(); }
+      return all.length;
+    });
   }
 
   // ---------- Local manifest cache + rev ----------
@@ -141,6 +225,7 @@
     if (r) localStorage.setItem(REV_KEY, r);
     else localStorage.removeItem(REV_KEY);
   }
+  function getRev() { return localStorage.getItem(REV_KEY) || null; }
 
   // ---------- FS error kinds ----------
   // fs.js answers string codes; the DOMException name/number is
@@ -332,6 +417,13 @@
       return Promise.resolve({ rev: null, manifest: emptyManifest() });
     }
     return ST().getRevision(MANIFEST_KEY).then(function (rev) {
+      // FILES-V: the vault is now asked after every engine cycle. The
+      // manifest is downloaded only when its revision moved since the
+      // last sync that completed WITHOUT a failed file (setRev below);
+      // an idle check costs one metadata call.
+      if (rev !== null && rev === getRev() && getQueue().length === 0) {
+        return { rev: rev, manifest: { ver: 1, files: lm.files }, same: true };
+      }
       if (rev === null) {
         // No manifest in the cloud — empty vault (first run / after wipe)
         try { localStorage.setItem(ABSENT_KEY, String(Date.now())); } catch (e) {}
@@ -396,6 +488,47 @@
     });
   }
 
+  // FILES-V — the same file was changed on two devices. Write the
+  // cloud's version beside the local one as
+  // "name (conflict YYYYMMDD-HHMMSS).ext" and track it like any
+  // synced file. One copy per (path, remote version): a push that
+  // fails afterwards must not produce a second copy on the next try.
+  function conflictName(path, n) {
+    var slash = path.lastIndexOf("/");
+    var dir = path.slice(0, slash), name = path.slice(slash + 1);
+    var dot = name.lastIndexOf(".");
+    var base = dot > 0 ? name.slice(0, dot) : name;
+    var ext = dot > 0 ? name.slice(dot) : "";
+    var d = new Date();
+    function p2(x) { return (x < 10 ? "0" : "") + x; }
+    var stamp = d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + "-" +
+                p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds());
+    return dir + "/" + base + " (conflict " + stamp + (n ? "-" + n : "") + ")" + ext;
+  }
+  function saveConflictCopy(path, entry, lm, stats) {
+    var done = readJson(CONFLICT_KEY) || {};
+    if (done[path] === entry.h) return Promise.resolve();      // already kept
+    function freeName(n) {
+      var cand = conflictName(path, n);
+      return FS().stat(cand).then(function () { return freeName(n + 1); },
+                                  function () { return cand; });
+    }
+    return downloadObject(entry).then(function (plain) {
+      return freeName(0).then(function (copyPath) {
+        return ownWrite(copyPath, new Blob([plain], {
+          type: entry.mime || "application/octet-stream"
+        })).then(function () {
+          lm.files[copyPath] = { h: entry.h, s: entry.s, m: entry.m, mime: entry.mime };
+          setLocalManifest(lm);
+          queueTouch(copyPath);                 // its entry goes up with the next push
+          done[path] = entry.h;
+          writeJson(CONFLICT_KEY, done);
+          stats.conflicts++;
+        });
+      });
+    });
+  }
+
   function fileFail(stats, path, e) {
     stats.failed++;
     emit("file-fail", path + " — " + ((e && (e.code || e.message)) || "error"));
@@ -427,32 +560,41 @@
 
     Object.keys(cf).forEach(function (path) {
       chain = chain.then(function () {
-        if (queueHas(path)) return null;               // in-flight local edit
         var entry = cf[path];
         if (!entry || typeof entry.h !== "string") return null;
         var cached = lm.files[path];
+        var queued = queueHas(path);
         if (cached && cached.h === entry.h) {
-          lm.files[path] = entry;                      // meta refresh only
-          return null;
+          if (!queued) lm.files[path] = entry;         // meta refresh only
+          return null;                                 // the cloud did not move: plain local work, or nothing
         }
+        // The cloud has a version this device has not seen.
         return localState(path, cached, entry).then(function (state) {
-          if (state === "remote") {                    // already there
+          if (state === "remote") {                    // already identical
             lm.files[path] = entry;
             setLocalManifest(lm);
+            if (queued) queueDrop(path);
             return null;
           }
-          if (state === "changed") {                   // unsynced local work
-            queueTouch(path);
-            stats.kept++;
-            return null;
+          if (state === "changed") {
+            // BOTH sides changed this file. Local stays at its path
+            // and goes up (the queue rule); the cloud's version is
+            // kept NEXT to it as a copy — neither is lost.
+            return saveConflictCopy(path, entry, lm, stats).then(function () {
+              if (!queued) queueTouch(path);
+              stats.kept++;
+            });
           }
+          // "clean" (safe to replace) or "absent". Absent AND queued =
+          // deleted here while it was edited elsewhere: the edit wins.
           return downloadObject(entry).then(function (plain) {
-            if (queueHas(path)) return null;           // edited while downloading
-            return FS().write(path, new Blob([plain], {
+            if (queueHas(path) && state !== "absent") return null;   // edited while downloading
+            return ownWrite(path, new Blob([plain], {
               type: entry.mime || "application/octet-stream"
             })).then(function () {
               lm.files[path] = entry;
               setLocalManifest(lm);
+              if (state === "absent") queueDrop(path);
               stats.downloaded++;
             });
           });
@@ -473,7 +615,7 @@
             }
             var gone = (state === "absent")
               ? Promise.resolve()
-              : FS().rm(path).then(function () { stats.deleted++; });
+              : ownRemove(path).then(function () { stats.deleted++; });
             return gone.then(function () {
               delete lm.files[path];
               setLocalManifest(lm);
@@ -600,6 +742,21 @@
     });
   }
 
+  // FILES-V: the first sync of a device queues its whole disk once.
+  // Until now the disk travelled as one blob in the main sync file;
+  // from here on the vault is the only channel, so every file this
+  // device holds must be offered to it (identical files cost one
+  // existence probe each, not a transfer).
+  function seedOnce() {
+    if (localStorage.getItem(SEED_KEY) === "1") return Promise.resolve();
+    return walkFiles(ROOT_PATH).then(function (files) {
+      queueTouchMany(files);
+      try { localStorage.setItem(SEED_KEY, "1"); } catch (e) {}
+    });
+  }
+
+  var lastError = null, lastOkAt = 0;
+
   // ---------- Full sync (pull → apply → push-if-queued) ----------
   function sync(reason) {
     if (syncInFlight) return Promise.reject(new Error("vault busy"));
@@ -607,7 +764,7 @@
     syncInFlight = true;
     emit("start", reason);
 
-    var stats = { downloaded: 0, uploaded: 0, deleted: 0, kept: 0, failed: 0 };
+    var stats = { downloaded: 0, uploaded: 0, deleted: 0, kept: 0, failed: 0, conflicts: 0 };
     var tries = 0;
 
     function attempt() {
@@ -616,6 +773,7 @@
       // The disk must answer first: an unavailable disk (EIO) reads
       // like "every file is missing" — never sync against that.
       return fsReady()
+        .then(seedOnce)
         .then(function () { return fetchCloudManifest(lm); })
         .then(function (c) {
           cloud = c;
@@ -637,7 +795,9 @@
           });
           if (!getQueue().length) {                 // nothing local pending
             setLocalManifest(lm);
-            setRev(cloud.rev);                      // honest cache of the cloud rev
+            // The rev is remembered ONLY when every file was applied:
+            // it is what lets the next idle check skip the download.
+            setRev(stats.failed === 0 ? cloud.rev : null);
             return { rev: cloud.rev, manifest: lm };
           }
           return pushCloud(lm, cloud, stats).then(function (res) {
@@ -646,7 +806,7 @@
             // honest record; failure is non-fatal.
             setLocalManifest(lm);
             return ST().getRevision(MANIFEST_KEY).then(function (newRev) {
-              setRev(newRev);
+              setRev((stats.failed === 0 && !getQueue().length) ? newRev : null);
               return res;
             }).catch(function () {
               setRev(null);
@@ -670,6 +830,18 @@
     return attempt()
       .then(function () {
         syncInFlight = false;
+        lastError = null;
+        lastOkAt = Date.now();
+        // A conflict that has been pushed is over: forget the markers
+        // of paths that are no longer queued.
+        try {
+          var cm = readJson(CONFLICT_KEY);
+          if (cm) {
+            var keepC = {}, anyC = false;
+            Object.keys(cm).forEach(function (p) { if (queueHas(p)) { keepC[p] = cm[p]; anyC = true; } });
+            if (anyC) writeJson(CONFLICT_KEY, keepC); else localStorage.removeItem(CONFLICT_KEY);
+          }
+        } catch (eC) {}
         emit("done", reason);
         listeners.forEach(function (fn) {
           try { fn("stats", stats); } catch (e) {}
@@ -678,6 +850,7 @@
       })
       .catch(function (err) {
         syncInFlight = false;
+        lastError = (err && (err.message || err.name)) || "error";
         emit("fail", reason + " — " + (err && err.message));
         throw err;
       });
@@ -708,23 +881,46 @@
     window.addEventListener("online", function () {
       sync("online").catch(function () {});
     });
-    // App-side hooks fire queueAdd() → debounce covers active editing.
+    // Disk hooks fire queueAdd() → debounce covers active editing.
     // Boot reconcile: catch up remote changes on load.
     setTimeout(function () { sync("boot").catch(function () {}); }, 4000);
+    // FILES-V: the vault is the only channel of the Files disk now,
+    // so it follows the engine's own rhythm too — after every
+    // successful engine cycle, look at the manifest (one metadata
+    // call when nothing moved).
+    try {
+      if (S() && typeof S().onAutoSync === "function") {
+        S().onAutoSync(function (kind) {
+          if (kind === "done") sync("engine").catch(function () {});
+        });
+      }
+    } catch (e) {}
   }
 
   // ---------- Public API ----------
   window.orosVault = {
     version: "0.1.0",
 
-    // Files-app integration (called from files.js):
-    //   AFTER every local write:   orosVault.fileChanged(path)
-    //   AFTER every local delete: orosVault.fileDeleted(path)
+    // Disk integration (FILES-V): fs.js calls these for EVERY
+    // mutation of the disk, whoever made it —
+    //   after a write:           orosVault.fileChanged(path)
+    //   after a delete / a move: orosVault.touchTree(path)
+    // The module's own writes (applying a remote change) are ignored.
     fileChanged: function (path) {
+      if (typeof path !== "string" || !path || ownWrites[path]) return;
       queueAdd(path);
     },
     fileDeleted: function (path) {
+      if (ownWrites[path]) return;
       queueAdd(path);             // pushCloud turns "queued + gone" into a deletion
+    },
+    // FILES-V: "something changed at or under this path" (delete,
+    // move, folder operations). Returns a promise of the count queued.
+    touchTree: touchTree,
+    // FILES-V: for the Files pill.
+    status: function () {
+      return { usable: usable(), queued: getQueue().length, busy: syncInFlight,
+               lastError: lastError, lastOkAt: lastOkAt };
     },
 
     // Manual triggers
@@ -733,7 +929,16 @@
     queueLength: function () { return getQueue().length; },
 
     // Status feedback (shell dot / Files toolbar)
-    onStatus: function (fn) { if (typeof fn === "function") listeners.push(fn); },
+    // Returns an unsubscribe function (an app frame that closes must
+    // not leave its listener behind in the shell).
+    onStatus: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      listeners.push(fn);
+      return function () {
+        var i = listeners.indexOf(fn);
+        if (i !== -1) listeners.splice(i, 1);
+      };
+    },
 
     // Read access for Files UI (manifest meta per path)
     manifestEntry: function (path) {

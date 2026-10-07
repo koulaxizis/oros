@@ -509,7 +509,16 @@
   function eventsSliceGet() {
     // Deep clone — the sync engine stringifies for equality checks;
     // never hand it the live object.
-    return JSON.parse(JSON.stringify(loadEventLog()));
+    // PT-10: same SHAPE as mergeEventLogs() returns (ver, clearedAt,
+    // events). A log that was never cleared had no "clearedAt" here
+    // and "clearedAt: 0" after a merge — so the first pull after any
+    // push "applied 1 section" for nothing.
+    var log = loadEventLog();
+    return JSON.parse(JSON.stringify({
+      ver: 1,
+      clearedAt: (log && typeof log.clearedAt === "number") ? log.clearedAt : 0,
+      events: (log && Array.isArray(log.events)) ? log.events : []
+    }));
   }
 
   function eventsSliceSet(data) {

@@ -161,17 +161,32 @@
 
   function markDirty() {
     try { localStorage.setItem(DIRTY_KEY, "1"); } catch (e) {}
-    // F3: engine dirty TOO. The shell's Files-disk glue (section
-    // 9f) owns the sync wiring — files.js calls this same hook on
-    // its own mutations, so app usage double-fires (harmless: the
-    // 1s cache-refresh debounce coalesces). The hook here is the
-    // safety net for EVERY OTHER orosFS consumer (console, future
-    // apps): a disk write with no app open must still reach the
-    // cloud, never sit unpushed. Guarded + wrapped — the module
-    // stays fully functional when the shell is absent.
-    if (typeof window.__orosFilesDiskTouched === "function") {
-      try { window.__orosFilesDiskTouched(); } catch (e2) {}
-    }
+  }
+
+  // FS-6 (FILES-V): every mutation of the disk is reported to Vault
+  // Drive, which syncs it PER FILE — whoever made the change (the
+  // Files app, any other orosFS consumer, the console). This replaces
+  // the old "__orosFilesDiskTouched" hook of the whole-disk blob.
+  //   kind "file": one file was written
+  //   kind "tree": something at or under the path was removed or
+  //                moved (the vault looks at what is there now)
+  // wipe() is NOT reported: an emptied disk (factory reset) is not a
+  // set of deletions to replay on other devices.
+  // Guarded and wrapped — the module works without the shell.
+  function notifyVault(kind, path) {
+    var segs = parsePath(path);
+    if (segs === null) return;
+    var key = pathKey(segs);
+    try {
+      var v = window.orosVault;
+      if (!v) return;
+      if (kind === "file") {
+        if (typeof v.fileChanged === "function") v.fileChanged(key);
+      } else if (typeof v.touchTree === "function") {
+        var p = v.touchTree(key);
+        if (p && typeof p.catch === "function") p.catch(function () {});
+      }
+    } catch (e) {}
   }
   function isDirty() {
     return localStorage.getItem(DIRTY_KEY) === "1";
@@ -973,7 +988,7 @@
   function write(path, data)   {
     var blob = toBlob(data);
     return dispatch({ path: path, args: [blob] }, opfsWrite, idbWrite)
-      .then(function (r) { markDirty(); return r; });
+      .then(function (r) { markDirty(); notifyVault("file", path); return r; });
   }
   function ls(path)            { return dispatch({ path: path, args: [] }, opfsLs,    idbLs); }
   function mkdir(path)         {
@@ -982,7 +997,7 @@
   }
   function rm(path)            {
     return dispatch({ path: path, args: [] }, opfsRm, idbRm)
-      .then(function (r) { markDirty(); return r; });
+      .then(function (r) { markDirty(); notifyVault("tree", path); return r; });
   }
   function mv(src, dst)        {
     var parsedDst = parsePath(dst);
@@ -1003,7 +1018,12 @@
       return Promise.reject(err("EINVAL", "cannot move a path into itself"));
     }
     return dispatch({ path: src, args: [parsedDst] }, opfsMv, idbMv)
-      .then(function (r) { markDirty(); return r; });
+      .then(function (r) {
+        markDirty();
+        notifyVault("tree", src);     // what was there is gone
+        notifyVault("tree", dst);     // what is there now is new
+        return r;
+      });
   }
   function stat(path)          { return dispatch({ path: path, args: [] }, opfsStat,  idbStat); }
 

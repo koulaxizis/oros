@@ -53,23 +53,17 @@
 
   // ---------- 2. Load / migrate / normalize ----------
 
-  function defaultData() {
-    // SEEDS MUST BE DETERMINISTIC (v0.36.00 fix)
-    // Fixed IDs + mtime:0 means every device computes the SAME seed bytes.
-    // The merge engine (union LWW) will never duplicate them — identical
-    // IDs collide and keep ONE instance; mtime:0 means any user edit wins.
-    // DO NOT use uid()/Date.now() here — that was the root cause of
-    // parallel notebook creation on fresh devices.
-    return {
-      ver: DATA_VER,
-      notebooks: [{ id: "nb-default", name: t("book.default"), mtime: 0, pos: 0 }],
-      pages: [{
-        id: "p-welcome", nb: "nb-default", parent: null,
-        title: t("page.untitled"), text: "", mtime: 0, pos: 0, labels: []
-      }],
-      labels: [],
-      tombs: {}
-    };
+  // NO-1 — THE SEED NOTEBOOK. Every install needs one notebook to
+  // work in. It used to be created with a RANDOM id and stamped
+  // "now" (the deterministic seed written for v0.36.00 was never
+  // called), so each new device brought one more empty "Notes"
+  // notebook into the sync — on every device.
+  // Now: ONE fixed id, stamp 0, and as long as nobody has put
+  // anything into it or renamed it, it is not part of what this app
+  // hands to the sync engine at all (canonNotes drops it).
+  var SEED_NB_ID = "nb-default";
+  function seedNotebook() {
+    return { id: SEED_NB_ID, name: t("book.default"), mtime: 0, pos: 0 };
   }
 
   function loadData() {
@@ -148,7 +142,7 @@
           typeof l.name === "string" && l.name.trim() !== "") {
         l.color = (LABEL_COLORS.indexOf(l.color) !== -1) ? l.color : LABEL_COLORS[0];
         l.pos   = (typeof l.pos === "number" && isFinite(l.pos)) ? l.pos : 0;
-        l.mtime = l.mtime || Date.now();
+        l.mtime = (typeof l.mtime === "number" && isFinite(l.mtime)) ? l.mtime : 0;   // NO-1: never "now"
         labelIds[l.id] = true;
       }
     });
@@ -159,7 +153,7 @@
     state.notebooks.forEach(function (n) {
       if (n && typeof n.id === "string" &&
           typeof n.name === "string" && n.name.trim() !== "") {
-        n.mtime = n.mtime || Date.now();
+        n.mtime = (typeof n.mtime === "number" && isFinite(n.mtime)) ? n.mtime : 0;   // NO-1: the seed keeps 0
         n.pos   = (typeof n.pos === "number" && isFinite(n.pos)) ? n.pos : 0;
         notebookIds[n.id] = true;
       }
@@ -170,7 +164,7 @@
     // corrupted ver-3 store with empty notebooks[] would otherwise
     // crash currentNotebook().id → boot black screen.
     if (!state.notebooks.length) {
-      var rescueNb = { id: uid("nb"), name: t("book.default"), mtime: Date.now(), pos: 0 };
+      var rescueNb = seedNotebook();          // NO-1: fixed id, stamp 0
       state.notebooks.push(rescueNb);
       notebookIds[rescueNb.id] = true;
     }
@@ -216,7 +210,7 @@
         if (par && par.nb !== p.nb) p.parent = null;
       }
       p.pos    = (typeof p.pos === "number" && isFinite(p.pos)) ? p.pos : 0;
-      p.mtime  = p.mtime || Date.now();
+      p.mtime  = (typeof p.mtime === "number" && isFinite(p.mtime)) ? p.mtime : 0;   // NO-1
       p.pinned = !!p.pinned;   // v0.35.03 fix: coerce for merged data from unpatched devices
       // labels: array of known, alive label ids, de-duplicated
       var ll = Array.isArray(p.labels) ? p.labels : [];
@@ -248,14 +242,13 @@
       });
     }
 
-    // Tomb pruning (30d) — also covers "nb:" prefix for notebooks
-    var now = Date.now();
-    Object.keys(state.tombs).forEach(function (k) {
-      var isPage = k.indexOf("lbl:") !== 0;   // skip label tombs
-      if (isPage && alive[k] || (now - state.tombs[k]) > TOMB_PRUNE_DAYS * DAY_MS) {
-        delete state.tombs[k];
-      }
-    });
+    // Tombstones: ONE rule, shared with the sync slice and the merge
+    // (canonTombs) — a tomb of something alive is dropped, and tombs
+    // older than 30 days are pruned against the NEWEST stamp in the
+    // data, never against this device's clock. (A wall-clock prune
+    // here made two devices disagree about the same tomb and push it
+    // back and forth.)
+    state.tombs = canonTombs(state.tombs, state.notebooks, state.pages, state.labels);
   }
 
   function saveNow() {
@@ -302,6 +295,9 @@
       "page.move.up":       "Move up",
       "page.move.down":     "Move down",
       "toast.created":      "Page created",
+      "toast.conflict":     "A page was edited on two devices — both versions were kept",
+      "page.conflict":      "conflict copy",
+      "book.menu.open":     "Notebook actions",
       "toast.deleted":      "Page deleted",
       "toast.moved":        "Page moved",
       "labels.title":       "Labels",        // v0.14.0
@@ -361,6 +357,9 @@
       "page.move.up":       "Μετακίνηση πάνω",
       "page.move.down":     "Μετακίνηση κάτω",
       "toast.created":      "Η σελίδα δημιουργήθηκε",
+      "toast.conflict":     "Μια σελίδα άλλαξε σε δύο συσκευές — κρατήθηκαν και οι δύο εκδοχές",
+      "page.conflict":      "αντίγραφο σύγκρουσης",
+      "book.menu.open":     "Ενέργειες σημειωματαρίου",
       "toast.deleted":      "Η σελίδα διαγράφηκε",
       "toast.moved":        "Η σελίδα μετακινήθηκε",
       "labels.title":       "Ετικέτες",        // v0.14.0
@@ -510,6 +509,61 @@
       st.title = t("menu.showTree");                       // #9
       st.setAttribute("aria-label", t("menu.showTree"));
     }
+  }
+
+  // NO-3 — two clocks per page.
+  //   mtime : anything changed — life and death of the page (tombs).
+  //   st    : pin, position, parent, notebook or labels changed —
+  //           orders the STRUCTURE.
+  //   ct    : the text or the title changed — orders the CONTENT.
+  // Before, one clock ruled the whole page object: pinning a page on
+  // one device silently reverted text typed on another, and two
+  // devices editing the same page lost one of the two texts.
+  //   h     : content stamps this version descends from (recorded
+  //           once per sync round), hx = that list was truncated.
+  // The merge uses h to tell "a newer edit of what I have" from "a
+  // different edit of something older": the second keeps BOTH texts.
+  var H_MAX = 60;
+  var editedSinceSync = {};     // page ids whose content changed since the engine last read the slice
+  // A device still running the PREVIOUS notes.js bumps mtime only.
+  // A page whose mtime is newer than both of its clocks was last
+  // touched by such a device: for that version mtime speaks for
+  // everything (the old whole-page rule), or its edit would lose to
+  // an older text carrying the same content stamp.
+  function touchedByOldCode(p) {
+    return typeof p.ct === "number" && typeof p.st === "number" &&
+           (p.mtime || 0) > Math.max(p.ct, p.st);
+  }
+  function contentStamp(p) {
+    if (typeof p.ct !== "number" || touchedByOldCode(p)) return p.mtime || 0;
+    return p.ct;
+  }
+  function structStamp(p) {
+    if (typeof p.st !== "number" || touchedByOldCode(p)) return p.mtime || 0;
+    return p.st;
+  }
+  function touchStruct(p) {
+    p.ct = contentStamp(p);          // freeze the content clock first
+    var now0 = Date.now();
+    p.st = now0;
+    p.mtime = now0;
+  }
+  function touchContent(p) {
+    var cs = contentStamp(p), ss = structStamp(p);
+    if (touchedByOldCode(p)) { delete p.h; delete p.hx; }   // that history is about another text
+    p.ct = cs;
+    p.st = ss;                       // freeze the structure clock
+    if (!editedSinceSync[p.id]) {
+      editedSinceSync[p.id] = true;
+      var h = Array.isArray(p.h) ? p.h.slice() : [];
+      if (h.indexOf(p.ct) === -1) h.push(p.ct);
+      if (h.length > H_MAX) { h = h.slice(h.length - H_MAX); p.hx = 1; }
+      p.h = h;
+    }
+    var now = Date.now();
+    p.ct = now;
+    p.mtime = now;
+    if (p.cf) delete p.cf;       // an edited conflict copy is an ordinary page
   }
 
   function uid(prefix) {
@@ -778,7 +832,8 @@
 
       var lab = document.createElement("span");
       lab.className = "node-label";
-      lab.textContent = p.title !== "" ? p.title : t("page.untitled");
+      lab.textContent = (p.title !== "" ? p.title : t("page.untitled")) +
+        (p.cf ? " · " + t("page.conflict") : "");     // NO-3: conflict copy
       row.appendChild(lab);
 
       // ---- Label dots (Wave 2.1) ----
@@ -864,6 +919,17 @@
   }
 
   var lastRenderedPage = null;   // #7: caret/scroll preservation state
+  function syncField(el, value) {
+    if (el.value === value) return;
+    var focused = (document.activeElement === el);
+    var s = 0, e = 0, top = el.scrollTop;
+    if (focused) { try { s = el.selectionStart; e = el.selectionEnd; } catch (err) {} }
+    el.value = value;
+    if (focused) {
+      try { el.setSelectionRange(Math.min(s, value.length), Math.min(e, value.length)); } catch (err2) {}
+    }
+    el.scrollTop = top;
+  }
 
   function renderEditor() {
     var title = document.getElementById("page-title");
@@ -876,6 +942,13 @@
     // focus → refresh chips/links strip ONLY, leave values alone.
     if (page && page.id === lastRenderedPage &&
         (document.activeElement === title || document.activeElement === text)) {
+      // NO-4: "leave the values alone" also left them alone when the
+      // page had just changed on ANOTHER device. The cursor merely
+      // sitting in the editor was enough: the old text stayed on
+      // screen, and the next keystroke saved it over the newer one.
+      // The fields follow the data; the caret is put back.
+      syncField(title, page.title || "");
+      syncField(text, page.text || "");
       renderChips(page);
       renderLinksStrip(page);
       return;
@@ -935,6 +1008,8 @@
       title: t("page.untitled"), text: "",
       mtime: Date.now(), pos: maxPos + 1, labels: [], pinned: false
     };
+    p.ct = p.mtime;
+    p.st = p.mtime;
     state.pages.push(p);
     if (parentId) prefs.open[parentId] = true;
     saveNow();
@@ -967,7 +1042,13 @@
     state.tombs[id] = Date.now();
     state.pages = state.pages.filter(function (p) { return p.id !== id; });
 
-    if (prefs.current === id) prefs.current = (state.pages[0] && state.pages[0].id) || null;
+    if (prefs.current === id) {
+      // NO-8: the next page of THIS notebook (state.pages[0] could
+      // belong to another one: tree and editor then disagreed).
+      var nbLeft = currentNbId();
+      var nextP = state.pages.filter(function (p) { return p.nb === nbLeft; })[0];
+      prefs.current = (nextP && nextP.id) || null;
+    }
     delete prefs.open[id];
     savePrefs();
     saveNow();
@@ -982,7 +1063,7 @@
     askPrompt(t("page.rename"), page.title || "", t("page.untitled"),
       t("dlg.ok"), function (val) {
         page.title = val;
-        page.mtime = Date.now();
+        touchContent(page);
         saveNow();
         markSyncDirty();
         renderAll();
@@ -997,7 +1078,7 @@
     var page = pageById(id);
     if (!page) return;
     page.pinned = !page.pinned;
-    page.mtime = Date.now();
+    touchStruct(page);
     saveNow();
     markSyncDirty();
     renderTree();
@@ -1028,8 +1109,8 @@
       sibs.forEach(function (s, j) { s.pos = j + 1; });
     }
     
-    page.mtime    = Date.now();
-    swapWith.mtime = Date.now();
+    touchStruct(page);
+    touchStruct(swapWith);
     saveNow();
     markSyncDirty();
     renderAll();
@@ -1042,15 +1123,6 @@
     }
     var nb = state.notebooks.find(function (n) { return n.id === prefs.currentNb; });
     return nb || (state.notebooks[0] || null);
-  }
-
-  function setPageNb(pageId, nbId) {
-    var page = pageById(pageId);
-    if (!page) return;
-    page.nb = nbId;
-    page.mtime = Date.now();
-    saveNow();
-    markSyncDirty();
   }
 
   function createNotebook(name) {
@@ -1204,7 +1276,7 @@
       if (s.pos > maxPos) maxPos = s.pos;
     });
     p.pos = maxPos + 1;                    // lands at the end of the list
-    p.mtime = Date.now();
+    touchStruct(p);
     if (newParentId) prefs.open[newParentId] = true;   // auto-expand target
     savePrefs();
     saveNow();
@@ -1313,7 +1385,7 @@
       list.appendChild(b);
     }
 
-    dest("⬆ " + t("dnd.root"), 0, null);
+    dest(t("dnd.root"), 0, null);
     (function walk(parentId, depth) {
       if (depth > 32) return;
       kidsOf(parentId).forEach(function (p) {
@@ -1498,7 +1570,10 @@
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    a.remove();
+    // Late revoke (dialogs.js DLG-1): a download that starts after a
+    // browser prompt must still find the URL.
+    setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
   }
   
     // ---------- 6c. Export functions (page .txt / notebook .zip) ----------
@@ -1858,7 +1933,7 @@
     var fresh = pageById(prefs.current);
     if (fresh) {
       fresh.title = title;
-      fresh.mtime = Date.now();
+      touchContent(fresh);
       saveNow();
       markSyncDirty();
       renderAll();
@@ -2170,7 +2245,7 @@
     state.labels = state.labels.filter(function (l) { return l.id !== id; });
     state.pages.forEach(function (p) {
       var idx = (p.labels || []).indexOf(id);
-      if (idx !== -1) { p.labels.splice(idx, 1); p.mtime = Date.now(); }
+      if (idx !== -1) { p.labels.splice(idx, 1); touchStruct(p); }
     });
     saveNow();
     markSyncDirty();
@@ -2184,24 +2259,167 @@
     if (idx === -1) page.labels.push(labelId);
     else page.labels.splice(idx, 1);
     page.labels.sort();                     // deterministic serialization
-    page.mtime = Date.now();
+    touchStruct(page);
     saveNow();
     markSyncDirty();
         renderAll();     // v0.14.1: chips must refresh too, not just tree dots
   }
 
   // ---------- 7. Merge engine (pages + labels, deterministic) ----------
-
   function pickByLWW(l, r, keyFn) {
     var ls = JSON.stringify(l), rs = JSON.stringify(r);
     if (ls === rs) return l;
     return keyFn(r) > keyFn(l) ? r : (keyFn(l) > keyFn(r) ? l :
            (ls < rs ? l : r));             // tie → lexicographic JSON
   }
+  function byPosId(x, y) {
+    return ((x.pos || 0) - (y.pos || 0)) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
+  }
+
+  // NO-2 — ONE canonical form (R26), used by the getter AND the merge:
+  // fixed key order per entity, fixed list order, one tombstone rule.
+  // (The getter used to hand over the lists in whatever order this
+  // device held them while the merge returned them sorted, and each
+  // side pruned tombstones by a different rule — the same data could
+  // differ from itself, which costs uploads and "1 section updated".)
+  function canonEntity(src, keys) {
+    var out = {}, i;
+    for (i = 0; i < keys.length; i++) if (src[keys[i]] !== undefined) out[keys[i]] = src[keys[i]];
+    Object.keys(src).sort().forEach(function (k) {
+      if (out[k] === undefined && src[k] !== undefined) out[k] = src[k];
+    });
+    return out;
+  }
+  var NB_KEYS    = ["id", "name", "mtime", "pos"];
+  var LABEL_KEYS = ["id", "nb", "name", "color", "mtime", "pos"];
+  var PAGE_KEYS  = ["id", "nb", "parent", "title", "text", "mtime", "pos", "labels", "pinned", "ct", "st", "h", "hx", "cf"];
+
+  function canonTombs(tombs, notebooks, pages, labels) {
+    var alive = {}, maxTs = 0, src = tombs || {}, out = {};
+    (pages || []).forEach(function (p) { alive[p.id] = true; if ((p.mtime || 0) > maxTs) maxTs = p.mtime; });
+    (labels || []).forEach(function (l) { alive["lbl:" + l.id] = true; if ((l.mtime || 0) > maxTs) maxTs = l.mtime; });
+    (notebooks || []).forEach(function (n) { alive["nb:" + n.id] = true; if ((n.mtime || 0) > maxTs) maxTs = n.mtime; });
+    Object.keys(src).forEach(function (k) { if ((src[k] || 0) > maxTs) maxTs = src[k]; });
+    var cutoff = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
+    Object.keys(src).sort().forEach(function (k) {
+      if (alive[k]) return;                       // it lives: the tomb is history
+      if ((src[k] || 0) < cutoff) return;         // older than 30 days of DATA time
+      out[k] = src[k];
+    });
+    return out;
+  }
+
+  function canonNotes(d) {
+    d = d || {};
+    var pages = (d.pages || []).filter(function (p) { return p && typeof p.id === "string"; });
+    var labels = (d.labels || []).filter(function (l) { return l && typeof l.id === "string"; });
+    var used = {};
+    pages.forEach(function (p) { used[p.nb] = true; });
+    labels.forEach(function (l) { used[l.nb] = true; });
+    var notebooks = (d.notebooks || []).filter(function (n) {
+      if (!n || typeof n.id !== "string") return false;
+      // NO-1: the untouched seed is nobody's data.
+      if (n.id === SEED_NB_ID && !(n.mtime > 0) && !used[n.id]) return false;
+      return true;
+    });
+    notebooks = notebooks.map(function (n) { return canonEntity(n, NB_KEYS); }).sort(byPosId);
+    labels = labels.map(function (l) { return canonEntity(l, LABEL_KEYS); }).sort(byPosId);
+    pages = pages.map(function (p) {
+      var c = canonEntity(p, PAGE_KEYS);
+      c.labels = (Array.isArray(c.labels) ? c.labels.slice() : []).sort();
+      c.pinned = !!c.pinned;
+      // Both clocks are always spelled out (a page written by older
+      // code has none; one last touched by older code has stale
+      // ones) — the same page reads the same from every side.
+      var old = touchedByOldCode(c);
+      var cs = contentStamp(c), ss = structStamp(c);
+      if (old) { delete c.h; delete c.hx; }
+      c.ct = cs;
+      c.st = ss;
+      return canonEntity(c, PAGE_KEYS);
+    }).sort(function (x, y) {
+      return ((x.mtime || 0) - (y.mtime || 0)) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
+    });
+    return {
+      ver: DATA_VER,
+      notebooks: notebooks,
+      pages: pages,
+      labels: labels,
+      tombs: canonTombs(d.tombs, notebooks, pages, labels)
+    };
+  }
+
+  // NO-3 — is `older` a version that `newer` was written on top of?
+  //   · no history on the newer one (written by older code) → yes
+  //     (the behavior before this change);
+  //   · its content stamp is in the history → yes;
+  //   · older than everything in a COMPLETE history → yes;
+  //   · otherwise it is a different edit of something earlier.
+  function descendsFrom(newer, older) {
+    if (!Array.isArray(newer.h) || touchedByOldCode(newer)) return true;
+    var oc = contentStamp(older);
+    if (newer.h.indexOf(oc) !== -1) return true;
+    if (!newer.hx) {
+      var min = Infinity;
+      for (var i = 0; i < newer.h.length; i++) if (newer.h[i] < min) min = newer.h[i];
+      if (oc < min) return true;
+    }
+    return false;
+  }
+
+  // Two versions of ONE page → one page (+ possibly the other text,
+  // kept as a conflict copy).
+  // Tie-break key for two structures with the SAME stamp: first the
+  // fields the merge never rewrites, then notebook and parent (which
+  // it may repair afterwards).
+  function structKey(p) {
+    return JSON.stringify([p.pos, (Array.isArray(p.labels) ? p.labels.slice().sort() : []), !!p.pinned]) +
+           "|" + JSON.stringify([p.nb, (p.parent === undefined ? null : p.parent)]);
+  }
+  function mergePage(x, y, copies) {
+    var sx = JSON.stringify(x), sy = JSON.stringify(y);
+    if (sx === sy) return x;
+    // Structure: newer st; on a tie the smaller key of the STRUCTURE
+    // fields only (a whole-object tie-break would change its answer
+    // once the content of the other side was folded in).
+    var stx = structStamp(x), sty = structStamp(y), S;
+    if (stx !== sty) S = (stx > sty) ? x : y;
+    else S = (structKey(x) <= structKey(y)) ? x : y;
+    var cx = contentStamp(x), cy = contentStamp(y), C;
+    if (cx !== cy) C = (cx > cy) ? x : y;                                 // content
+    else {
+      var kx = JSON.stringify([x.title, x.text]), ky = JSON.stringify([y.title, y.text]);
+      C = (kx === ky) ? S : (kx < ky ? x : y);
+    }
+    var other = (C === x) ? y : x;
+    var out = {};
+    Object.keys(S).forEach(function (k) { out[k] = S[k]; });
+    out.title = C.title;
+    out.text  = C.text;
+    out.mtime = Math.max(x.mtime || 0, y.mtime || 0);
+    // Both clocks are written out from the effective stamps, so the
+    // result never depends on which side it is merged with again
+    // (and mtime == max(ct, st): it does not look "touched by old code").
+    out.ct = contentStamp(C);
+    out.st = structStamp(S);
+    if (Array.isArray(C.h) && !touchedByOldCode(C)) out.h = C.h.slice(); else delete out.h;
+    if (C.hx && !touchedByOldCode(C)) out.hx = 1; else delete out.hx;
+    if (C.cf) out.cf = 1; else delete out.cf;
+    if ((other.text || "") !== (C.text || "") && (other.text || "") !== "" &&
+        !descendsFrom(C, other)) {
+      var oc = contentStamp(other);
+      copies.push({
+        id: x.id + "~c" + oc, nb: out.nb, parent: (out.parent === undefined ? null : out.parent),
+        title: other.title, text: other.text, mtime: oc, pos: out.pos,
+        labels: Array.isArray(other.labels) ? other.labels.slice() : [],
+        pinned: false, ct: oc, cf: 1
+      });
+    }
+    return out;
+  }
 
   function mergeNotesStates(a, b) {
     if (!a && !b) return null;
-
     a = a || { ver: DATA_VER, notebooks: [], pages: [], labels: [], tombs: {} };
     b = b || { ver: DATA_VER, notebooks: [], pages: [], labels: [], tombs: {} };
 
@@ -2226,144 +2444,127 @@
     });
     var notebooks = Object.keys(nbMap).map(function (k) { return nbMap[k]; })
       .filter(function (n) {
-        var tomb = tombs["nb:" + n.id] || 0;
-        return !(tomb >= (n.mtime || 0));
+        var tomb = tombs["nb:" + n.id];
+        return !(typeof tomb === "number" && tomb >= (n.mtime || 0));
       })
-      .sort(function (x, y) { return (x.pos - y.pos) ||
-        (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });   // #3: no localeCompare
+      .sort(byPosId);
 
-    // v0.35.04 SALVAGE TARGET (root cause of the "notes stopped
-    // syncing" outage): a peer still running schema-old code (no
-    // notebooks, DATA_VER < 3) pushes pages/labels WITHOUT nb.
-    // Such entries are ADOPTED by the first notebook instead of
-    // being silently dropped — dropping produced merged == local
-    // (0 applied) on every pull plus an endless cloudStale loop.
-    // Deterministic pick: lowest pos, then id — locale-independent,
-    // both devices compute the same target from the same inputs.
-    var fallbackNb = notebooks.slice().sort(function (x, y) {
-      return (x.pos - y.pos) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
-    })[0];
+    // v0.35.04 SALVAGE TARGET: pages / labels without a living notebook
+    // are ADOPTED by the first notebook (lowest pos, then id) instead
+    // of being dropped. NO-1: the untouched seed is not a target while
+    // any real notebook exists (it would be dropped right after).
+    var real = notebooks.filter(function (n) { return !(n.id === SEED_NB_ID && !(n.mtime > 0)); });
+    var fallbackNb = (real.length ? real : notebooks)[0];
     if (!fallbackNb) {
       // Degenerate: pages exist but no notebook survived on EITHER
       // side — enforce the app's "always >= 1 notebook" invariant.
-      fallbackNb = { id: "nb-default", name: "Notes", mtime: 0, pos: 0 };
+      fallbackNb = { id: SEED_NB_ID, name: "Notes", mtime: 0, pos: 0 };
       notebooks = [fallbackNb];
     }
     var fallbackNbId = fallbackNb.id;
 
-    // -- Labels: per-id LWW, then tomb-drop, filtered by nb --
+    // -- Labels: per-id LWW, then tomb-drop --
+    var notebookIdsInMerge = {};
+    notebooks.forEach(function (n) { notebookIdsInMerge[n.id] = true; });
     var labelMap = {};
     [].concat(a.labels || [], b.labels || []).forEach(function (l) {
       if (!l || typeof l.id !== "string") return;
+      // nb salvage first (schema-old peers send no nb), on a copy —
+      // same reason as for pages below.
+      if (!notebookIdsInMerge[l.nb]) {
+        var lf = {};
+        Object.keys(l).forEach(function (k) { lf[k] = l[k]; });
+        lf.nb = fallbackNbId;
+        l = lf;
+      }
       labelMap[l.id] = labelMap[l.id]
         ? pickByLWW(labelMap[l.id], l, function (x) { return x.mtime || 0; })
         : l;
     });
-    var notebookIdsInMerge = {};
-    notebooks.forEach(function (n) { notebookIdsInMerge[n.id] = true; });
-
     var labels = Object.keys(labelMap).map(function (k) { return labelMap[k]; })
       .filter(function (l) {
-        var tomb = tombs["lbl:" + l.id] || 0;
-        return !(tomb >= (l.mtime || 0));
-      })
-      .map(function (l) {
-        // v0.35.04: nb salvage — schema-old peers send no nb.
-        if (!notebookIdsInMerge[l.nb]) l.nb = fallbackNbId;
-        return l;
-      })
-      .sort(function (x, y) { return (x.pos - y.pos) ||
-        (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });   // #3: no localeCompare
-
+        var tomb = tombs["lbl:" + l.id];
+        return !(typeof tomb === "number" && tomb >= (l.mtime || 0));
+      });
     var labelIdsInMerge = {};
     labels.forEach(function (l) { labelIdsInMerge[l.id] = true; });
 
-    // -- Pages: per-id LWW, tomb-filtered, filtered by nb --
-    var pageMap = {};
+    // -- Pages: per id, structure by mtime + content by ct (NO-3) --
+    var pageMap = {}, copies = [];
     [].concat(a.pages || [], b.pages || []).forEach(function (p) {
       if (!p || typeof p.id !== "string") return;
-      pageMap[p.id] = pageMap[p.id]
-        ? pickByLWW(pageMap[p.id], p, function (x) { return x.mtime || 0; })
-        : p;
+      // nb salvage BEFORE the two versions are compared: a dead
+      // notebook reference must not take part in a tie-break and then
+      // be rewritten afterwards.
+      if (!notebookIdsInMerge[p.nb]) {
+        var fixed = {};
+        Object.keys(p).forEach(function (k) { fixed[k] = p[k]; });
+        fixed.nb = fallbackNbId;
+        p = fixed;
+      }
+      pageMap[p.id] = pageMap[p.id] ? mergePage(pageMap[p.id], p, copies) : p;
     });
+    copies.forEach(function (c) { if (!pageMap[c.id]) pageMap[c.id] = c; });
     var pages = Object.keys(pageMap).map(function (k) { return pageMap[k]; })
       .filter(function (p) {
-        var tomb = tombs[p.id] || 0;
-        return !(tomb >= (p.mtime || 0));
+        var tomb = tombs[p.id];
+        return !(typeof tomb === "number" && tomb >= (p.mtime || 0));
       })
       .map(function (p) {
-        // v0.35.04: nb salvage — schema-old peers send pages without
-        // nb; adopt into the fallback notebook instead of dropping
-        // (dropping was the root cause of the silent no-op sync).
-        if (!notebookIdsInMerge[p.nb]) p.nb = fallbackNbId;
-        if (typeof p.pinned !== "boolean") p.pinned = false;
+        var c = {}; Object.keys(p).forEach(function (k) { c[k] = p[k]; });
+        if (!notebookIdsInMerge[c.nb]) c.nb = fallbackNbId;     // nb salvage
+        if (typeof c.pinned !== "boolean") c.pinned = false;
         // Dead label refs never survive
-        p.labels = (p.labels || []).filter(function (lid) {
-          return labelIdsInMerge[lid];
-        });
-        p.labels.sort();
-        return p;
-      })
-      .sort(function (x, y) { return ((x.mtime || 0) - (y.mtime || 0)) ||
-        (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });  // #3: total order
+        c.labels = (c.labels || []).filter(function (lid) { return labelIdsInMerge[lid]; });
+        return c;
+      });
+    // A page whose parent is gone, or sits in another notebook, moves
+    // to the top level — same rule as normalizeState, applied here so
+    // the merge result is already what the app will store.
+    var byId = {};
+    pages.forEach(function (p) { byId[p.id] = p; });
+    pages.forEach(function (p) {
+      if (p.parent === undefined) p.parent = null;
+      if (p.parent !== null && (!byId[p.parent] || byId[p.parent].nb !== p.nb)) p.parent = null;
+    });
 
-    return { ver: DATA_VER, notebooks: notebooks, pages: pages, labels: labels, tombs: tombs };
+    return canonNotes({ ver: DATA_VER, notebooks: notebooks, pages: pages, labels: labels, tombs: tombs });
   }
 
   // ---------- 8. Sync slice registration ----------
-
   function sliceGet() {
-    // Deep-copy: the engine JSON-stringifies for comparison — a
-    // live reference would race the debounce timer mid-edit.
-    var out = JSON.parse(JSON.stringify({
+    // Canonical deep copy (NO-2) — never the live objects: the engine
+    // stringifies for comparison, a live reference would race the
+    // debounce timer mid-edit.
+    // Whatever was edited up to here is about to be compared with, or
+    // sent to, the cloud: the next edit starts a new ancestry step.
+    editedSinceSync = {};
+    return canonNotes(JSON.parse(JSON.stringify({
       ver: state.ver, notebooks: state.notebooks,
       pages: state.pages, labels: state.labels, tombs: state.tombs
-    }));
-    // NT-2: deterministic tombstone pruning (HB-3 / MD-4 pattern).
-    // The cutoff derives from the dataset's newest timestamp, never
-    // the wall clock — same data yields the same payload on every
-    // device at any time. Payload-only: local state keeps everything.
-    var maxTs = 0, i;
-    for (i = 0; i < (out.pages || []).length; i++) {
-      if ((out.pages[i].mtime || 0) > maxTs) maxTs = out.pages[i].mtime;
-    }
-    for (i = 0; i < (out.labels || []).length; i++) {
-      if ((out.labels[i].mtime || 0) > maxTs) maxTs = out.labels[i].mtime;
-    }
-    for (i = 0; i < (out.notebooks || []).length; i++) {
-      if ((out.notebooks[i].mtime || 0) > maxTs) maxTs = out.notebooks[i].mtime;
-    }
-    Object.keys(out.tombs || {}).forEach(function (k) {
-      if ((out.tombs[k] || 0) > maxTs) maxTs = out.tombs[k];
-    });
-    var NT_CUTOFF = maxTs - TOMB_PRUNE_DAYS * DAY_MS;
-    Object.keys(out.tombs || {}).forEach(function (k) {
-      if ((out.tombs[k] || 0) < NT_CUTOFF) delete out.tombs[k];
-    });
-    return out;
+    })));
   }
 
   function sliceSet(data, info) {
     if (!data || typeof data !== "object") return;
-    var incoming = JSON.stringify({
-      ver: data.ver, notebooks: data.notebooks || [], pages: data.pages || [],
-      labels: data.labels || [], tombs: data.tombs || {}
-    });
-    var mine = JSON.stringify({
+    var incoming = JSON.stringify(canonNotes(data));
+    var mine = JSON.stringify(canonNotes({
       ver: state.ver, notebooks: state.notebooks, pages: state.pages,
       labels: state.labels, tombs: state.tombs
-    });
+    }));
     if (incoming === mine) return;          // echo suppression — no re-render/toast
-
+    var hadCopies = {};
+    state.pages.forEach(function (p) { if (p.cf) hadCopies[p.id] = true; });
     state.ver       = DATA_VER;
     state.notebooks = Array.isArray(data.notebooks) ? data.notebooks : [];
     state.pages     = Array.isArray(data.pages)     ? data.pages     : [];
     state.labels = Array.isArray(data.labels) ? data.labels : [];
     state.tombs  = (data.tombs && typeof data.tombs === "object") ? data.tombs : {};
-
     normalizeState();
     saveNow();
-
+    // What is stored now is what the cloud knows: the next local edit
+    // of any page starts a new ancestry step (NO-3).
+    editedSinceSync = {};
     // Deleted current page (or its notebook)? Re-anchor selection
     // within the CURRENT notebook — editor and tree never disagree.
     var cur = pageById(prefs.current);
@@ -2374,22 +2575,20 @@
     }
     savePrefs();
     renderAll();
+    // NO-3: a page was edited on two devices — say that both texts
+    // are here (the copy sits next to the page, marked in the tree).
+    var newCopy = state.pages.some(function (p) { return p.cf && !hadCopies[p.id]; });
+    if (newCopy) notifyTransient(t("toast.conflict"));
     if (info && info.merged) {
-      // #38: a merge that folded LOCAL edits into the result means
-      // the CLOUD copy is stale — push the merged state back so all
-      // devices converge on it. If the result equals the incoming
-      // payload (pure pull, nothing local contributed), skip the
-      // push — the cloud already holds that exact state.
-      var after = JSON.stringify({
+      // #38: push the merged state back only when it really differs
+      // from what came in — compared in canonical form (the stored
+      // lists are in this device's order; comparing them raw called
+      // every merge "different" and cost an upload each time).
+      var after = JSON.stringify(canonNotes({
         ver: state.ver, notebooks: state.notebooks, pages: state.pages,
         labels: state.labels, tombs: state.tombs
-      });
+      }));
       if (after !== incoming) markSyncDirty();
-      // toast.merged removed (Wave 11, doctrine): το info.merged σημαίνει
-      // «χρησιμοποιήθηκε merge engine», ΟΧΙ «άλλαξαν δεδομένα». Το echo
-      // suppression από πάνω φιλτράρει ήδη τα pure pulls· ένα merge που
-      // ενσωματώνει remote αλλαγές θα έβγαζε toast σε κάθε sync.
-      // Feedback sync = το taskbar sync dot.
     }
   }
 
@@ -2470,10 +2669,39 @@
           renderAll();
         }
       });
+      // NO-6: the notebook menu (rename / delete) existed only as the
+      // RIGHT-CLICK menu of the selector — no touch screen can open
+      // that. A small button next to the selector opens the same menu.
+      var nbMore = document.createElement("button");
+      nbMore.id = "btn-nb-menu";
+      nbMore.type = "button";
+      nbMore.className = "icon-btn";
+      nbMore.title = t("book.menu.open");
+      nbMore.setAttribute("aria-label", t("book.menu.open"));
+      nbMore.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+      nbMore.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (document.getElementById("node-menu")) { closeMenus(); return; }
+        var r = nbMore.getBoundingClientRect();
+        openNbMenu(r.left, r.bottom + 4);
+      });
+      if (nbSel.parentNode) {
+        nbSel.parentNode.style.display = "flex";
+        nbSel.parentNode.style.alignItems = "center";
+        nbSel.parentNode.style.gap = "4px";
+        nbSel.style.flex = "1 1 auto";
+        nbSel.style.minWidth = "0";
+        nbSel.parentNode.appendChild(nbMore);
+      }
       // Context menu for notebook actions
       nbSel.addEventListener("contextmenu", function (e) {
         e.preventDefault();
         e.stopPropagation();
+        openNbMenu(e.clientX, e.clientY);
+      });
+    }
+    function openNbMenu(menuX, menuY) {
+      {
         var nb = currentNotebook();
         if (!nb) return;
         
@@ -2517,7 +2745,7 @@
         });
         
         document.body.appendChild(menu);
-        clampToViewport(menu, e.clientX, e.clientY);   // #11: on-screen always
+        clampToViewport(menu, menuX, menuY);   // #11: on-screen always
         
         // Close on outside click
         setTimeout(function () {
@@ -2528,7 +2756,7 @@
             }
           }, { once: true });
         }, 0);
-      });
+      }
     }
 
   function initSplitter() {
@@ -2666,7 +2894,7 @@
         var p = pageById(prefs.current);
         if (!p) return;
         p.title = title.value;
-        p.mtime = Date.now();
+        touchContent(p);
         queueSave(p.id);
         renderTree();
       });
@@ -2678,7 +2906,7 @@
         var p = pageById(prefs.current);
         if (!p) return;
         p.text  = text.value;
-        p.mtime = Date.now();
+        touchContent(p);
         queueSave(p.id);
         renderLinksStrip(p);   // live chips while typing
       });
@@ -2750,6 +2978,7 @@
     version: APP_VERSION,
     state: state,
     merge: mergeNotesStates,
+    canon: canonNotes,
     sliceGet: sliceGet
   };
 })();

@@ -61,9 +61,6 @@
   var SEARCH_CAP = 100;
   var STORAGE_CACHE_KEY = "oros-files-storage-cache";
   var STORAGE_TTL = 5 * 60 * 1000; // 5 minutes TTL
-  // Disk-sync meta (device-local, oros- prefixed → factory-reset sweep)
-  var SYNC_META_KEY = "oros-files-disk-meta";
-  var SYNC_SLICE_KEY = "files-disk";
 
   // ---------- 1. Constants, i18n, helpers ----------
 
@@ -159,14 +156,7 @@
       "sync.state.off":     "Disk sync unavailable",
       "sync.state.synced":  "Disk synced",
       "sync.state.pending": "Changes pending sync",
-      "sync.conflictTitle": "Sync conflict",
-      "sync.conflictLocal": "Keep local",
-      "sync.conflictRemote":"Take cloud version",
-      "sync.conflictMsg":   "Your disk changed locally and in the cloud since the last sync. Keep the local version or take the cloud one?",
-      "sync.restored":      "Disk restored from cloud",
-      "sync.restoreFail":   "Could not restore disk from cloud",
-      "sync.snapshotFail":  "Could not read the disk for sync",
-      "sync.restorePartial":"{n} restored, {m} failed",
+      "sync.conflictKept":  "A file was changed on two devices — both versions were kept",
       "disk.down":       "The disk is not available right now.",
       "disk.downHint":   "Nothing was changed. Reload orOS and try again.",
       "pv.unsaved":      "Unsaved changes — close again to discard them",
@@ -285,14 +275,7 @@
       "sync.state.off":     "Ο συγχρονισμός δίσκου δεν είναι διαθέσιμος",
       "sync.state.synced":  "Ο δίσκος συγχρονίστηκε",
       "sync.state.pending": "Αλλαγές σε αναμονή συγχρονισμού",
-      "sync.conflictTitle": "Σύγκρουση συγχρονισμού",
-      "sync.conflictLocal": "Διατήρηση τοπικού",
-      "sync.conflictRemote":"Λήψη έκδοσης cloud",
-      "sync.conflictMsg":   "Ο δίσκος σου άλλαξε τοπικά και στο cloud από τον τελευταίο συγχρονισμό. Να διατηρηθεί η τοπική εκδοχή ή να ληφθεί αυτή του cloud;",
-      "sync.restored":      "Ο δίσκος επαναφέρθηκε από το cloud",
-      "sync.restoreFail":   "Αποτυχία επαναφοράς δίσκου από το cloud",
-      "sync.snapshotFail":  "Αποτυχία ανάγνωσης του δίσκου για συγχρονισμό",
-      "sync.restorePartial":"{n} ανακτήθηκαν, {m} απέτυχαν",
+      "sync.conflictKept":  "Ένα αρχείο άλλαξε σε δύο συσκευές — κρατήθηκαν και οι δύο εκδοχές",
       "disk.down":       "Ο δίσκος δεν είναι διαθέσιμος αυτή τη στιγμή.",
       "disk.downHint":   "Δεν άλλαξε τίποτα. Φόρτωσε ξανά το orOS και δοκίμασε πάλι.",
       "pv.unsaved":      "Υπάρχουν μη αποθηκευμένες αλλαγές — κλείσε ξανά για απόρριψη",
@@ -1131,13 +1114,6 @@
         op = FS().mv(prim.path, join(cwd, name)).then(function () {
           if (prim.dir) renameExpandedPrefix(prim.path, join(cwd, name));
           recentsTouch(join(cwd, name));
-          // Wave 2 vault hook — old path deleted, new path changed
-          try { if (window.orosVault && typeof window.orosVault.fileDeleted === "function") {
-            window.orosVault.fileDeleted(prim.path);
-          }} catch (e) {}
-          try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
-            window.orosVault.fileChanged(join(cwd, name));
-          }} catch (e) {}
           transientNote(t("toast.renamed"));
         });
       }
@@ -1178,10 +1154,6 @@
     Promise.all(paths.map(function (p) {
       return FS().rm(p).then(function () {
         dropExpandedPrefix(p);
-        // Wave 2 vault hook — mark path as deleted for cloud sync
-        try { if (window.orosVault && typeof window.orosVault.fileDeleted === "function") {
-          window.orosVault.fileDeleted(p);
-        }} catch (e) {}
         return true;
       }).catch(function () { return false; });
     })).then(function (results) {
@@ -1377,13 +1349,6 @@
             // the very keys rename needed, so every moved folder
             // arrived COLLAPSED (expansion state silently lost).
             renameExpandedPrefix(p, join(dst, name));
-            // Wave 2 vault hook — old path deleted, new path changed
-            try { if (window.orosVault && typeof window.orosVault.fileDeleted === "function") {
-              window.orosVault.fileDeleted(p);
-            }} catch (e) {}
-            try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
-              window.orosVault.fileChanged(join(dst, name));
-            }} catch (e) {}
             moved++;
             dstNames.push(name);
           }).catch(function () { skipped++; });
@@ -1471,10 +1436,6 @@
     // the raw Blob. Images/düαδικά keep their bytes verbatim.
     return FS().read(src).then(function (blob) {
       return FS().write(dst, blob || new Blob([""])).then(function () {
-        // Wave 2 vault hook — new copy path changed
-        try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
-          window.orosVault.fileChanged(dst);
-        }} catch (e) {}
         return true;
       });
     });
@@ -1654,10 +1615,6 @@
     // Direct pass-through: file is already a Blob, fs.toBlob handles it
     return FS().write(path, file).then(function () {
       recentsTouch(path);
-      // Wave 2 vault hook — mark path as changed for cloud sync
-      try { if (window.orosVault && typeof window.orosVault.fileChanged === "function") {
-        window.orosVault.fileChanged(path);
-      }} catch (e) {}
       return true;
     }).catch(function () {
       return false;
@@ -2228,221 +2185,27 @@
     }
   }
 
-  // ---------- 15b. Disk sync — blob bridge to oros-sync (Wave 3) ----------
-  // Contract consumed by the shell glue (shell.js §9f):
-  //   orosFilesDisk.snapshot()     -> Promise<string>  (JSON, plaintext;
-  //                                   ENGINE encrypts before upload)
-  //   orosFilesDisk.applyRemote(x) -> Promise         (string or object)
-  //   orosFilesDisk.markClean(ts)  — shell calls after clean reconcile
-  // The pill shows state only; transport is 100% engine-owned.
+  // ---------- 15b. Disk sync — Vault Drive (FILES-V) ----------
+  // The disk syncs PER FILE through the shell's Vault Drive. This app
+  // reports nothing: fs.js tells the vault about every write, delete
+  // and move, whoever makes them. What lives here is the view of it:
+  // the status pill, and a refresh when the vault changed the disk
+  // under an open app (a file arrived, was removed, or a conflict
+  // copy was written).
+  // (Before FILES-V the whole disk travelled as ONE snapshot in the
+  // sync blob, bridged through window.orosFilesDisk — gone.)
 
-  var syncMeta = { ts: 0, dirty: false };  // ts = last successful sync
-
-  function loadSyncMeta() {
+  function vaultApi() {
     try {
-      var raw = localStorage.getItem(SYNC_META_KEY);
-      if (raw) {
-        var m = JSON.parse(raw);
-        if (m && typeof m.ts === "number" && typeof m.dirty === "boolean") {
-          syncMeta = m;
-          return;
-        }
-      }
-    } catch (e) { /* fresh */ }
-    saveSyncMeta();
+      var v = window.parent && window.parent.orosVault;
+      return (v && typeof v.status === "function") ? v : null;
+    } catch (e) { return null; }
   }
 
-  function saveSyncMeta() {
-    try { localStorage.setItem(SYNC_META_KEY, JSON.stringify(syncMeta)); }
-    catch (e) {}
-  }
-
-  function markDirty() {
-    if (!syncMeta.dirty) {
-      syncMeta.dirty = true;
-      saveSyncMeta();
-      renderSyncPill();
-    }
-    // ALWAYS notify the host: engine markDirty + transport-cache
-    // refresh. No early return — a second edit after the first
-    // must still re-arm the refresh (the cache was snapshotted
-    // BEFORE it). Bursts coalesce at both levels.
-    try {
-      var host = window.parent || window;
-      if (host && typeof host.__orosFilesDiskTouched === "function") {
-        host.__orosFilesDiskTouched();
-      }
-    } catch (e) {}
-  }
-
-  function markClean(ts) {
-    syncMeta.ts = ts || Date.now();
-    syncMeta.dirty = false;
-    saveSyncMeta();
-    renderSyncPill();
-  }
-
-  function diskSnapshot() {
-    return FS().exportDisk(ROOT).then(function (disk) {
-      // Pass-through: whatever exportDisk returns travels untouched
-      return JSON.stringify({
-        kind: "oros-files-disk",
-        ver: 1,
-        ts: Date.now(),
-        disk: disk
-      });
-    });
-  }
-
-  function parseSnap(x) {
-    var snap = (typeof x === "string") ? JSON.parse(x) : x;
-    if (!snap || snap.kind !== "oros-files-disk" || snap.disk === undefined) {
-      throw new Error("bad snapshot");
-    }
-    return snap;
-  }
-
-  function applyRemote(x, opts) {
-    opts = opts || {};
-    return new Promise(function (resolve, reject) {
-      var snap;
-      try { snap = parseSnap(x); }
-      catch (e) { reject(e); return; }
-
-      // Conflict: local changes exist AND remote is newer than the
-      // last sync. Blob model → explicit user decision.
-      if (syncMeta.dirty && snap.ts && snap.ts > syncMeta.ts && !opts.force) {
-        askConflict().then(function (takeRemote) {
-          // The ONE path that replaces the disk: the user said so.
-          if (takeRemote) { reallyApply(snap, resolve, reject, true); }
-          else { resolve(false); }         // keep local — next push wins
-        });
-        return;
-      }
-      reallyApply(snap, resolve, reject, false);
-    });
-  }
-
-  // Does this disk hold a file the snapshot does not list?
-  function localHasMore(snap) {
-    var listed = {};
-    var ents = (snap.disk && Array.isArray(snap.disk.entries)) ? snap.disk.entries : [];
-    ents.forEach(function (e) { if (e && !e.dir && typeof e.path === "string") listed[e.path] = true; });
-    return FS().exportDisk(ROOT).then(function (disk) {
-      var mine = (disk && Array.isArray(disk.entries)) ? disk.entries : [];
-      for (var i = 0; i < mine.length; i++) {
-        if (mine[i] && !mine[i].dir && !listed[mine[i].path]) return true;
-      }
-      return false;
-    }).catch(function () { return false; });
-  }
-
-  // #8 FIX: wipe:true — "Take cloud version" now MEANS replace.
-  // Without it, importDisk MERGES (zero-loss contract of fs.js)
-  // and files deleted on the remote would survive the restore,
-  // making "take cloud" a lie. Data-loss window: ONLY after the
-  // user explicitly chose the remote over the local in the
-  // conflict dialog (or when local is clean).
-  //
-  // FA3 (high): importDisk now returns {applied, failed} per F7.
-  // Partial failure (quota, transient FS errors) means some entries
-  // DIDN'T make it to disk. If we markClean() and toast "restored",
-  // the next push will overwrite the cloud with this PARTIAL state
-  // — the failed entries are lost from cloud FOREVER. Honor the
-  // contract: only markClean/toast when applied===total, and report
-  // failures honestly so the user can retry before the next sync.
-  //
-  // FL-1 (data loss, reproduced on two devices): the blob arrives as
-  // ONE snapshot of the other device's whole disk, and "this device
-  // has no pending change" does not mean "this device has nothing
-  // the snapshot lacks": when two devices each added a file before
-  // syncing, the engine pushed one disk over the other, and the
-  // device whose file was missing from the snapshot wiped it here —
-  // silently, toast "Disk restored from cloud". An automatic apply
-  // now MERGES (fs.js importDisk default: nothing local is deleted);
-  // if this disk then holds more than the snapshot, it is marked
-  // changed so the union travels back. Only the conflict dialog's
-  // explicit "Take cloud version" still replaces the disk.
-  // Cost until Files syncs per file: a deletion made on one device
-  // does not remove the file on another (it comes back).
-  function reallyApply(snap, resolve, reject, replace) {
-    FS().importDisk(snap.disk, replace ? { wipe: true } : {}).then(function (result) {
-      // FB3: an EMPTY remote disk is a VALID, successfully-restored
-      // state (fresh cloud, or everything deliberately deleted).
-      // applied===0 with failed===0 is SUCCESS — the earlier
-      // `total > 0` guard turned it into a permanent "failure":
-      // never markClean → the remote re-applied on every cycle,
-      // sync pill stuck pending. Failure is defined purely as
-      // failed > 0.
-      // fs.js reports failures as an ARRAY of { path, reason }. The
-      // old test (`failed > 0` on that array) was never true, so a
-      // partial restore was marked clean and then pushed as the truth.
-      var failedRaw = result && result.failed;
-      var failed = Array.isArray(failedRaw) ? failedRaw.length : (failedRaw | 0);
-      if (failed > 0) {
-        // Partial success — report failure but DO NOT mark clean.
-        // Baseline stays old, so the next reconcile re-attempts
-        // this remote. Users see honest diagnostics. Resolve
-        // false (not reject): not fatal, just "not fully restored".
-        transientNote(tfmt("sync.restorePartial", { n: (result && result.applied) || 0, m: failed }));
-        resolve(false);
-        return;
-      }
-      markClean(snap.ts || Date.now());
-      forceStorageRecalc();
-      clearSelection();
-      // If the current folder vanished in the remote state, the
-      // refresh() ENOENT guard falls back to ROOT.
-      refresh();
-      transientNote(t("sync.restored"));
-      if (!replace) {
-        localHasMore(snap).then(function (more) {
-          if (more) markDirty();          // the union goes back up
-        });
-      }
-      resolve(true);
-    }).catch(function (e) {
-      transientNote(t("sync.restoreFail"));
-      reject(e);
-    });
-  }
-
-  function askConflict() {
-    return new Promise(function (resolve) {
-      var stale = $("dlg-conflict");
-      if (stale) stale.remove();
-      var dlg = document.createElement("dialog");
-      dlg.id = "dlg-conflict";
-      dlg.className = "f-dialog";
-      var title = document.createElement("h3");
-      title.textContent = t("sync.conflictTitle");
-      var body = document.createElement("p");
-      body.textContent = t("sync.conflictMsg");
-      var row = document.createElement("div");
-      row.className = "dlg-row";
-      function done(v) { dlg.close(); resolve(v); }
-      var mk = function (labelKey, val, primary) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.textContent = t(labelKey);
-        if (primary) b.className = "primary";
-        b.addEventListener("click", function () { done(val); });
-        return b;
-      };
-      row.appendChild(mk("sync.conflictLocal", false, false));
-      row.appendChild(mk("sync.conflictRemote", true, true));
-      dlg.appendChild(title); dlg.appendChild(body); dlg.appendChild(row);
-      dlg.addEventListener("cancel", function (e) {
-        e.preventDefault(); done(false);   // Esc = keep local (safe side)
-      });
-      document.body.appendChild(dlg);
-      dlg.showModal();
-    });
-  }
+  // Kept as the single "the disk changed here" call of this file.
+  function markDirty() { renderSyncPill(); }
 
   // Sync pill (status bar, JS-built) — visibility of state only.
-  // #5 FIX: the footer is <footer id="status"> — was looking for a
-  // nonexistent ".status-bar" class → the pill never appeared.
   function ensureSyncPill() {
     var st = $("st-sync");
     if (st) return st;
@@ -2458,8 +2221,12 @@
   function renderSyncPill() {
     var pill = ensureSyncPill();
     if (!pill) return;
-    var state = !enginePresent() ? "off"
-              : syncMeta.dirty ? "pending" : "synced";
+    var v = vaultApi();
+    var s = null;
+    try { s = v ? v.status() : null; } catch (e) { s = null; }
+    var state = (!s || !s.usable) ? "off"
+              : (s.queued > 0 || s.busy) ? "pending" : "synced";
+    if (pill.dataset.state === state && pill.textContent) return;
     pill.dataset.state = state;
     pill.title = t("sync.state." + state);
     pill.textContent = "";
@@ -2469,33 +2236,25 @@
     pill.appendChild(document.createTextNode(t("sync.state." + state)));
   }
 
-  function enginePresent() {
-    try {
-      var p = window.parent;
-      return !!(p && p.orosSync && typeof p.orosSync.push === "function");
-    } catch (e) { return false; }
+  var vaultUnsub = null;
+  function watchVault() {
+    var v = vaultApi();
+    if (!v || typeof v.onStatus !== "function") return;
+    vaultUnsub = v.onStatus(function (kind, detail) {
+      renderSyncPill();
+      if (kind !== "stats" || !detail) return;
+      if (detail.conflicts > 0) transientNote(t("sync.conflictKept"));
+      if (detail.downloaded > 0 || detail.deleted > 0 || detail.conflicts > 0) {
+        forceStorageRecalc();
+        // Never repaint the list under an open editor.
+        if (!pvDirty) refresh();
+      }
+    });
+    // The listener lives in the SHELL: take it back when this frame goes.
+    window.addEventListener("pagehide", function () {
+      if (typeof vaultUnsub === "function") { vaultUnsub(); vaultUnsub = null; }
+    });
   }
-
-  // Public contract — shell.js §9f consumes snapshot/applyRemote/
-  // markClean/isDirty directly. #21 FIX: the unused onSyncStart/
-  // onSyncDone/registerWith ceremony is gone; the object is lean.
-  var orosFilesDisk = {
-    sliceKey: SYNC_SLICE_KEY,
-    snapshot: function () {
-      return diskSnapshot().catch(function (e) {
-        transientNote(t("sync.snapshotFail"));
-        throw e;
-      });
-    },
-    applyRemote: applyRemote,
-    isDirty: function () { return !!syncMeta.dirty; },
-    markClean: markClean
-  };
-
-  try {
-    var host = window.parent || window;
-    host.orosFilesDisk = orosFilesDisk;
-  } catch (e) { window.orosFilesDisk = orosFilesDisk; }
 
   // ---------- 16. Palette + shell shortcut forwarding ----------
 
@@ -3119,8 +2878,8 @@
       return;
     }
 
-    loadSyncMeta();
     renderSyncPill();
+    watchVault();
     cwd = prefs.last && prefs.last.indexOf(ROOT) === 0 ? prefs.last : ROOT;
     clearSelection();
 
@@ -3133,32 +2892,6 @@
     updateSortIndicators();
     ensureStorageBar();
     setTimeout(ensureStorageBar, 1500); // delayed recalc if first boot
-
-    // #13 FIX: remote that arrived while the app was closed —
-    // consume LAST, through our own conflict-aware applyRemote.
-    // It calls refresh() itself on success; the fallback path
-    // re-checks cwd in case the restore removed it.
-    setTimeout(function () {
-      try {
-        var host2 = window.parent || window;
-        if (host2 && typeof host2.__orosFilesTakePending === "function") {
-          var pendingSnap = host2.__orosFilesTakePending();
-          if (pendingSnap && pendingSnap.kind === "oros-files-disk") {
-            applyRemote(pendingSnap).then(function (ok) {
-              if (ok === false) {
-                // User kept local — cache must mirror the local disk
-                try {
-                  var host3 = window.parent || window;
-                  if (host3 && typeof host3.__orosFilesDiskTouched === "function") {
-                    host3.__orosFilesDiskTouched();
-                  }
-                } catch (e3) {}
-              }
-            }).catch(function () {});
-          }
-        }
-      } catch (e) {}
-    }, 400);
 
     console.log("[orOS] files.js v" + APP_VER + " booted (backend: " +
       (FS().mode ? FS().mode() : "unknown") + ")");

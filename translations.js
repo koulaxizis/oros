@@ -228,7 +228,6 @@ window.OROS_TRANSLATIONS = {
     "sync.fsfolder.choosefirst": "Choose a backup folder first",
     "sync.pending.title":        "{app}: changes waiting on this device",
     "sync.pending.body":         "Open the app to merge them with your other devices.",
-    "sync.files.toobig":         "The Files disk is too large to sync. The files stay on this device — export what matters.",
   },
 
   el: {
@@ -447,7 +446,6 @@ window.OROS_TRANSLATIONS = {
     "sync.fsfolder.choosefirst": "Διάλεξε πρώτα φάκελο αντιγράφων",
     "sync.pending.title":        "{app}: αλλαγές που περιμένουν σε αυτή τη συσκευή",
     "sync.pending.body":         "Άνοιξε την εφαρμογή για να συγχωνευτούν με τις άλλες συσκευές σου.",
-    "sync.files.toobig":         "Ο δίσκος των Αρχείων είναι πολύ μεγάλος για συγχρονισμό. Τα αρχεία μένουν σε αυτή τη συσκευή — κάνε εξαγωγή όσων χρειάζεσαι.",
   }
 };
 

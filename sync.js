@@ -10,6 +10,9 @@
 //     ("add" / "update"), no read-compare-write window.
 //   VD-KEY — changePassphrase re-wraps /vault/key.json (two steps
 //     around the blob), so the Vault survives a passphrase change.
+//   SY-D5 — a live registration made from the app frame ends when
+//     that frame shows another document: the slice returns to its
+//     stored (proxy) form.
 //   SY-D3 — a true conflict on a CLOSED app that can merge when open
 //     is deferred: local stays, the cloud copy is relayed untouched,
 //     the app's own merge joins both at its next open.
@@ -125,6 +128,15 @@
   var CARRY_KEY       = "oros-remote-carry"; // mailbox: name -> data (unknown + parked-remote slices)
   var MERGE_REG_KEY   = "oros-slices-merge"; // SY-D3: name -> 1 for apps whose LIVE registration brought a mergeFn
   var DEFER_KEY       = "oros-sync-deferred"; // SY-D3: name -> 1 while a closed app's conflict waits for its live merge
+
+  // SY-R (FILES-V): slices that no longer travel in the blob.
+  // "files-disk" was the whole Files disk as ONE snapshot; the disk
+  // now syncs per file through Vault Drive (vault.js). A retired
+  // name is never registered, never applied, never carried in the
+  // mailbox and never uploaded — so the old snapshot leaves the cloud
+  // blob with the next push. Manual backups still contain the disk:
+  // the shell adds it on export and reads it on import.
+  var RETIRED_SLICES = { "files-disk": true };
   var BASELINES_KEY   = "oros-sync-baselines"; // v0.8: name -> hash(last synced content)
   var DEBOUNCE_MS     = 5000;                // v0.7.1: quiet period after last edit
 
@@ -1119,25 +1131,71 @@
   function hydratePersistedSlices() {
     var reg = readJson(SLICES_KEY) || {};
     Object.keys(reg).forEach(function (name) {
+      if (RETIRED_SLICES[name]) return;  // SY-R: purged below
       if (slices[name]) return;          // live registration always wins
-      var storageKey = reg[name];
-      slices[name] = {
-        live: false,
-        get: function () { return readJson(storageKey); },
-        set: function (data) { writeJsonStrict(storageKey, data); },
-        merge: null
-      };
+      slices[name] = makeProxySlice(reg[name]);
+    });
+  }
+
+  // The closed-app form of a slice: its localStorage key, read and
+  // written directly, no merge function.
+  function makeProxySlice(storageKey) {
+    return {
+      live: false,
+      get: function () { return readJson(storageKey); },
+      set: function (data) { writeJsonStrict(storageKey, data); },
+      merge: null
+    };
+  }
+
+  // SY-D5 — A LIVE REGISTRATION ENDS WITH ITS APP. An app registers
+  // its slice with functions that live in its iframe. When the app
+  // was closed (or another one opened in the same frame) the engine
+  // kept calling those functions for the rest of the session: code of
+  // a document that no longer exists, reading its last in-memory
+  // state instead of what is stored, and painting into nothing. Such
+  // a slice was also "live" for ever, so the closed-app conflict rule
+  // (SY-D3) never applied to it.
+  // The registration remembers which document the app frame showed
+  // when a FOREIGN-realm getter arrived; once the frame shows another
+  // document, the slice goes back to its stored form (the same proxy
+  // a fresh boot would create). Shell-realm registrations (pet,
+  // shell, notifications, the shell's own proxies) are never touched.
+  function appFrameDoc() {
+    try {
+      var fr = document.getElementById("app-frame");
+      return fr ? (fr.contentDocument || null) : null;
+    } catch (e) { return null; }
+  }
+  function reapClosedApps() {
+    var cur = appFrameDoc();
+    Object.keys(slices).forEach(function (name) {
+      var s = slices[name];
+      if (!s || !s.live || !s.ownerDoc || !s.storageKey) return;
+      if (s.ownerDoc === cur) return;
+      slices[name] = makeProxySlice(s.storageKey);
     });
   }
 
   // v0.7: 5th argument = optional mergeFn(local, remote) → merged.
   // Backward compatible: existing 4-arg registrations behave as before.
   function registerSlice(name, getter, setter, storageKey, mergeFn) {
+    if (RETIRED_SLICES[name]) {
+      // A cached older shell.js may still try. Not an error.
+      console.warn("[orOS sync] retired slice ignored: " + name);
+      return;
+    }
+    // SY-D5: a getter from another realm = registered by the app in
+    // the frame; remember that document (see reapClosedApps).
+    var ownerDoc = null;
+    try { if (!(getter instanceof Function)) ownerDoc = appFrameDoc(); } catch (eOwn) {}
     slices[name] = {
       get: getter,
       set: setter,
       live: true,
-      merge: (typeof mergeFn === "function") ? mergeFn : null
+      merge: (typeof mergeFn === "function") ? mergeFn : null,
+      ownerDoc: ownerDoc,
+      storageKey: storageKey || null
     };
 
     if (storageKey) persistSliceEntry(name, storageKey);
@@ -1242,6 +1300,7 @@
   // and merges. Manual export and the folder export pass nothing and
   // always carry this device's own local data.
   function collectPayload(forCloud) {
+    reapClosedApps();                       // SY-D5
     var payload = { shell: null, apps: {}, meta: {} };
     var relayCarry = forCloud ? (readCarry() || {}) : null;
     Object.keys(slices).forEach(function (name) {
@@ -1408,8 +1467,26 @@
     };
   }
 
+  // SY-R: forget everything this device still holds about a retired
+  // slice (registry entry, mailbox copy, baseline, deferral flag).
+  function purgeRetired() {
+    Object.keys(RETIRED_SLICES).forEach(function (name) {
+      try {
+        var reg = readJson(SLICES_KEY);
+        if (reg && reg[name] !== undefined) { delete reg[name]; writeJson(SLICES_KEY, reg); }
+        var carry = readCarry();
+        if (carry && carry[name] !== undefined) { delete carry[name]; writeCarry(carry); }
+        var base = readJson(BASELINES_KEY);
+        if (base && base[name] !== undefined) { delete base[name]; writeJson(BASELINES_KEY, base); }
+        flagSet(DEFER_KEY, name, false);
+        flagSet(MERGE_REG_KEY, name, false);
+      } catch (e) {}
+    });
+  }
+
   function applyPayload(payload) {
     if (!payload) return 0;
+    reapClosedApps();                       // SY-D5
     var applied = 0;
     var cloudStaleAny = false;
 
@@ -1433,6 +1510,7 @@
       Object.keys(payload.apps).forEach(function (name) {
         var data = payload.apps[name];
         if (data === null || data === undefined) return;
+        if (RETIRED_SLICES[name]) return;   // SY-R: neither applied nor carried
         if (slices[name]) {
           var ra = applySlice(name, data);
           if (ra.changed) {
@@ -2032,6 +2110,7 @@
   // since v0.8 their applies run through the divergence guard: a
   // proxy whose local content diverged (unpushed offline work) never
   // loses it to a remote blob.
+  purgeRetired();
   hydratePersistedSlices();
 
   var redirectHandled = handleOAuthRedirect();

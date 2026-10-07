@@ -324,6 +324,12 @@
 
   // Export body captured NOW — the same shape writeBackupFile
   // serializes into the real file.
+  // The folder backup carries the Files disk too (FILES-V: the disk
+  // is no longer part of what exportData() returns).
+  function exportBodyFull() {
+    return fdAttachDisk(exportBodyNow());
+  }
+
   function exportBodyNow() {
     var payload = JSON.parse(window.orosSync.exportData());
     return {
@@ -358,9 +364,10 @@
     // Body capture is best-effort: an engine hiccup must not turn
     // the boot/visibility path into an uncaught async error. Null
     // body → writeBackupFile's own guard skips the write silently.
-    var body = null;
-    try { body = exportBodyNow(); } catch (e) { body = null; }
-    if (body) writeBackupFile(body, false);
+    var job = null;
+    try { job = exportBodyFull(); } catch (e) { job = null; }
+    if (job) job.then(function (body) { if (body) writeBackupFile(body, false); })
+                .catch(function () {});
     return true;
   }
   
@@ -502,7 +509,7 @@
         }
         // Instant proof: capture the current database and write it
         // to the freshly chosen folder right now.
-        return writeBackupFile(exportBodyNow(), true);
+        return exportBodyFull().then(function (body) { return writeBackupFile(body, true); });
       })
       .catch(function () { /* user cancelled the picker — no drama */ });
   }
@@ -533,7 +540,7 @@
         .then(function (perm) {
           if (perm === "granted") {
             localStorage.removeItem(FS_LAPSED_KEY);
-            return writeBackupFile(exportBodyNow(), true);   // instant proof of recovery
+            return exportBodyFull().then(function (body) { return writeBackupFile(body, true); });   // instant proof of recovery
           }
           // Declined: keep the flag — ⚠ stays. No nagging beyond this.
         });
@@ -1586,174 +1593,98 @@
     }
   }
 
-  // ---------- 9f. Files disk slice (Wave 3 glue) ----------
-  // The Files app exposes window.orosFilesDisk on its PARENT — i.e.
-  // THIS window. The engine slice is registered HERE so the disk
-  // travels even when the app is closed: the slice body is the
-  // last JSON snapshot of /internal, staged in localStorage.
-  // Transport stays 100% engine-owned: the cache is plaintext
-  // on-device only (same trust zone as every other slice);
-  // AES-GCM encryption happens inside sync.js, untouched.
+  // ---------- 9f. Files disk — backups + legacy cleanup (FILES-V) ----------
+  // The Files disk no longer travels as one snapshot inside the sync
+  // blob (slice "files-disk", staged in localStorage): it syncs PER
+  // FILE through Vault Drive — fs.js reports every disk mutation to
+  // vault.js, nothing here is involved. What stays in the shell:
+  //   · manual / folder BACKUPS still contain the whole disk
+  //     (fdAttachDisk on export, fdImportDisk on import — a MERGE:
+  //     importing a backup never deletes a file);
+  //   · a one-time cleanup of what the old model left in
+  //     localStorage (fdMigrateLegacy).
+  // The backup keeps the old shape (apps["files-disk"] =
+  // { kind:"oros-files-disk", ver:1, ts, disk }) so files exported
+  // by either version import into either version.
 
-  var FD_CACHE_KEY   = "oros-files-disk-cache";
-  var FD_PENDING_KEY = "oros-files-disk-pending";
+  var FD_CACHE_KEY   = "oros-files-disk-cache";    // legacy — removed by fdMigrateLegacy
+  var FD_PENDING_KEY = "oros-files-disk-pending";  // legacy
+  var FD_META_KEY    = "oros-files-disk-meta";     // legacy (files.js)
 
-  function fdLive() {
-    return (window.orosFilesDisk &&
-            typeof window.orosFilesDisk.snapshot === "function")
-      ? window.orosFilesDisk : null;
-  }
-
-  function fdCacheRead() {
-    try {
-      var raw = localStorage.getItem(FD_CACHE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  }
-
-  function fdCacheWrite(obj) {
-    try {
-      localStorage.setItem(FD_CACHE_KEY, JSON.stringify(obj));
-      return true;
-    } catch (e) {
-      // Quota exceeded (very large disks): keep the previous cache.
-      // Known blob-model limitation — future per-entry model removes it.
-      return false;
+  // Resolves the same object with the disk attached. A disk that
+  // cannot be read (EIO) leaves the backup without it — the rest of
+  // the export still happens.
+  function fdAttachDisk(obj) {
+    if (!obj || !window.orosFS || typeof window.orosFS.exportDisk !== "function") {
+      return Promise.resolve(obj);
     }
-  }
-
-  // DELIBERATELY not called from fdSliceGet: get() must be PURE —
-  // the engine records baselines from a second get() call after
-  // push, and a refresh there would inject a new "ts" and make
-  // the baseline mismatch forever (spurious park/push cycles).
-  var fdRefreshTimer = null;
-
-  function refreshFilesDiskCache() {
-    var d = fdLive();
-    if (!d) return;
-    d.snapshot().then(function (str) {
-      var obj;
-      try { obj = JSON.parse(str); } catch (e) { return; }
-      // SP6 (cross-file fix, pairs with sync.js S-F): a push that
-      // raced the 1s refresh debounce uploaded the OLD cache, then
-      // stamped baseline=old and cleared dirty (same dirtyGen — the
-      // touch's markDirty predated the collect). This refresh then
-      // wrote the NEW disk content with nothing re-marking it dirty
-      // → the change sat unpushed until the next touch. Fix: when
-      // the refresh produces CHANGED content, re-mark dirty. Direct
-      // markDirty only — NOT __orosFilesDiskTouched (it re-arms this
-      // same refresh timer; harmless but redundant, and a loop-ish
-      // shape is never worth the risk).
-      // SH-F2: compare the DISK, not the envelope. Every snapshot
-      // carries a fresh "ts" (and the export a fresh "at"), so the old
-      // whole-string comparison called every refresh a change. Applying
-      // a remote disk rewrites files → fs.js signals "touched" → this
-      // refresh ran → "changed" → dirty → push → the other device
-      // applied it → its refresh pushed again: with Files open on two
-      // devices the whole blob was uploaded back and forth forever.
-      var prev = fdCacheRead();
-      if (prev !== null && fdDiskKey(prev) === fdDiskKey(obj)) return;   // same files, same bytes
-      if (!fdCacheWrite(obj)) {
-        // SH-F1: the whole disk did not fit in localStorage. The cache
-        // (what the sync carries) is now OLDER than the disk, and
-        // nothing said so: files added from here on simply never
-        // synced. Say it — one inbox line per day, no toast storm —
-        // and do not mark the engine dirty for a cache that did not
-        // change.
-        fdTooBigNotice();
-        return;
-      }
-      if (window.orosSync && typeof window.orosSync.markDirty === "function") {
-        window.orosSync.markDirty();
-      }
-    }).catch(function () { /* snapshot failed — cache stays */ });
-  }
-
-  // Identity of a disk snapshot: its entries (path, kind, content),
-  // sorted — independent of timestamps and of entry order.
-  function fdDiskKey(snap) {
-    var ents = (snap && snap.disk && Array.isArray(snap.disk.entries)) ? snap.disk.entries : [];
-    var rows = [];
-    for (var i = 0; i < ents.length; i++) {
-      var e = ents[i];
-      if (!e || typeof e.path !== "string") continue;
-      rows.push(e.path + "\u0000" + (e.dir ? "d" : "f") + "\u0000" + (e.dir ? "" : String(e.data || "")));
-    }
-    rows.sort();
-    return rows.join("\u0001");
-  }
-
-  function fdTooBigNotice() {
-    var N = window.orosNotifs;
-    if (!N || typeof N.emit !== "function") return;
-    N.emit({
-      ns: "system",
-      key: "files-disk-toobig-" + sysYmd(),
-      type: "sys",
-      title: window.t("app.files"),
-      body: window.t("sync.files.toobig"),
-      deepLink: "system:open:files"
+    return window.orosFS.exportDisk().then(function (disk) {
+      if (!obj.apps) obj.apps = {};
+      obj.apps["files-disk"] = { kind: "oros-files-disk", ver: 1, ts: Date.now(), disk: disk };
+      return obj;
+    }).catch(function (e) {
+      console.warn("[orOS] backup without the Files disk:", e && (e.code || e.message));
+      return obj;
     });
   }
 
-  // Called by files.js on EVERY disk mutation (its markDirty hooks
-  // this). Engine dirty → 5s debounce coalesces bursts; cache
-  // refresh is 1s-debounced → always settled well before the push.
-  window.__orosFilesDiskTouched = function () {
-    // SH-F2: no immediate markDirty. The engine carries the CACHE, so
-    // there is nothing new to push until the refresh below has
-    // rewritten it — and the refresh marks dirty itself, only when
-    // the disk really differs (a pull-fed rewrite does not).
-    if (fdRefreshTimer) clearTimeout(fdRefreshTimer);
-    fdRefreshTimer = setTimeout(refreshFilesDiskCache, 1000);
-  };
-
-  // Consumed by files.js at boot — a remote that arrived while the
-  // app was closed (staged in the cache by fdSet + this flag).
-  window.__orosFilesTakePending = function () {
-    if (localStorage.getItem(FD_PENDING_KEY) !== "1") return null;
-    localStorage.removeItem(FD_PENDING_KEY);
-    return fdCacheRead();
-  };
-
-  function fdSliceGet() {
-    return fdCacheRead();
+  // The manual export, as text: every slice + the disk.
+  function fdExportJson() {
+    var obj = JSON.parse(window.orosSync.exportData());
+    return fdAttachDisk(obj).then(function (full) {
+      return JSON.stringify(full, null, 2);
+    });
   }
 
-  function fdSliceSet(data) {
-    var snap = data;
-    if (typeof data === "string") {
-      try { snap = JSON.parse(data); } catch (e) { return; }
+  // The disk part of an imported backup → merged into the disk.
+  // Resolves the number of entries applied (0 when the backup has no
+  // disk). fs.js tells the vault about every file it writes.
+  function fdImportDisk(text) {
+    var snap = null;
+    try {
+      var obj = JSON.parse(text);
+      snap = obj && obj.apps && obj.apps["files-disk"];
+    } catch (e) { return Promise.resolve(0); }
+    if (!snap || snap.kind !== "oros-files-disk" || !snap.disk ||
+        !window.orosFS || typeof window.orosFS.importDisk !== "function") {
+      return Promise.resolve(0);
     }
-    if (!snap || snap.kind !== "oros-files-disk") return;
-
-    var d = fdLive();
-    if (d) {
-      // App open: its own applyRemote handles import + conflict
-      // dialog. The cache is NOT written blindly first — if the
-      // user keeps local, the cache must keep mirroring the LOCAL
-      // disk, never the rejected remote.
-      d.applyRemote(snap).then(function (applied) {
-        if (applied === false) {
-          refreshFilesDiskCache();   // local won — cache mirrors the disk
-        } else {
-          fdCacheWrite(snap);        // remote won — exact baseline match
-        }
-      }).catch(function () { /* app showed its own error toast */ });
-    } else {
-      // App closed: OPFS is untouchable from the shell. Stage the
-      // snapshot + flag it; files.js consumes it at next open and
-      // runs it through its own conflict-aware applyRemote.
-      fdCacheWrite(snap);
-      localStorage.setItem(FD_PENDING_KEY, "1");
-    }
+    return window.orosFS.importDisk(snap.disk).then(function (r) {
+      return (r && r.applied) || 0;
+    });
   }
 
-  function registerFilesDiskSlice() {
-    if (window.orosSync) {
-      window.orosSync.registerSlice(
-        "files-disk", fdSliceGet, fdSliceSet, FD_CACHE_KEY);
+  // One-time, at boot. The old model could hold a remote disk that
+  // had ARRIVED but was never applied (Files closed at the time): the
+  // pending flag + the cache. That copy is merged into the disk
+  // first — it may contain files this device has not got yet — and
+  // only then are the legacy keys removed (they held the whole disk
+  // in base64 inside the 5 MB every app shares).
+  function fdMigrateLegacy() {
+    var raw = null, pending = false;
+    try {
+      raw = localStorage.getItem(FD_CACHE_KEY);
+      pending = localStorage.getItem(FD_PENDING_KEY) === "1";
+    } catch (e) { return; }
+    function clean() {
+      try {
+        localStorage.removeItem(FD_CACHE_KEY);
+        localStorage.removeItem(FD_PENDING_KEY);
+        localStorage.removeItem(FD_META_KEY);
+      } catch (e) {}
     }
+    if (raw === null) { clean(); return; }
+    if (!pending) { clean(); return; }
+    var snap = null;
+    try { snap = JSON.parse(raw); } catch (e2) {}
+    if (!snap || !snap.disk || !window.orosFS || typeof window.orosFS.importDisk !== "function") {
+      clean();
+      return;
+    }
+    window.orosFS.importDisk(snap.disk).then(function (r) {
+      var failed = (r && Array.isArray(r.failed)) ? r.failed.length : 0;
+      if (failed === 0) clean();      // else: keep it, try again at the next boot
+    }).catch(function () { /* disk unavailable — keep it for the next boot */ });
   }
 
   // ---------- 9h. Radio proxy slice (sync when iframe closed) ----------
@@ -1835,38 +1766,6 @@
         "mail", mailProxySliceGet, mailProxySliceSet,
         MAIL_CACHE_KEY);
     }
-  }
-
-  // Engine finished clean — the Files pill flips to "Disk synced".
-  function fdMarkCleanIfIdle() {
-    try {
-      if (window.orosFilesDisk &&
-          typeof window.orosFilesDisk.markClean === "function" &&
-          window.orosSync && !window.orosSync.isDirty()) {
-        window.orosFilesDisk.markClean();
-      }
-    } catch (e) {}
-  }
-
-  // FL-Q3 — manual export freshness: the Files disk travels via the
-  // transport cache, which refreshes on a 1s debounce. An export can
-  // therefore serialize a disk that is one mutation behind. When the
-  // Files app is RUNNING (live handle on this window), snapshot the
-  // REAL disk first and stage it in the cache, THEN export. App
-  // closed → the cache IS the latest known state; nothing fresher
-  // exists. DELIBERATELY no markDirty here: an export must never
-  // trigger a push (and the pending touch-debounce will mark dirty
-  // on its own if the content truly changed).
-  function fdRefreshForExport() {
-    var d = fdLive();
-    if (!d) return Promise.resolve(false);
-    return d.snapshot().then(function (str) {
-      var obj;
-      try { obj = JSON.parse(str); } catch (e) { return false; }
-      return fdCacheWrite(obj);
-    }).catch(function () {
-      return false;   // snapshot failed — export proceeds with the cache
-    });
   }
 
   // ---------- 5e. Unified file dialogs (Wave 2 — dialogs.js) ----------
@@ -2359,7 +2258,7 @@
         setSyncMsgRaw("dim", window.t("sync.working"));
         setSyncDot("syncing");
         window.orosSync.push()
-          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); fdMarkCleanIfIdle(); })
+          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
           .catch(handleSyncError);
       });
       actions.appendChild(pushBtn);
@@ -2522,18 +2421,14 @@
     exportBtn.className = "menu-item";
     exportBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.export") + "</span>";
     exportBtn.addEventListener("click", function () {
-      // FL-Q3: live disk snapshot first — export must reflect the
-      // OPFS content as it is NOW, not as the debounce last saw it.
-      fdRefreshForExport().then(function () {
-        try {
-          var json = window.orosSync.exportData();
-          shellSaveJson(
-            "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
-            json);
-        } catch (e) {
-          handleSyncError(e);
-        }
-      });
+      // Every slice + the Files disk as it is NOW (fdExportJson).
+      var exportJob;
+      try { exportJob = fdExportJson(); } catch (e) { handleSyncError(e); return; }
+      exportJob.then(function (json) {
+        shellSaveJson(
+          "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
+          json);
+      }).catch(handleSyncError);
     });
     backupRow.appendChild(exportBtn);
 
@@ -2547,9 +2442,17 @@
         var reader = new FileReader();
         reader.onload = function () {
           try {
-            var n = window.orosSync.importData(String(reader.result));
-            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-              window.t("sync.slices.applied") + ": " + n);
+            var text = String(reader.result);
+            var n = window.orosSync.importData(text);
+            // FILES-V: the backup's disk is merged into the disk here
+            // (the engine no longer knows a "files-disk" slice).
+            fdImportDisk(text).then(function (files) {
+              setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+                window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
+            }).catch(function () {
+              setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+                window.t("sync.slices.applied") + ": " + n);
+            });
           } catch (e) {
             handleSyncError(e); }
         };
@@ -3052,7 +2955,7 @@
     if (!scRequireConnected()) return;
     setSyncDot("syncing");
     window.orosSync.push()
-      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); fdMarkCleanIfIdle(); })
+      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
       .catch(handleSyncError);
   }
 
@@ -3093,15 +2996,14 @@
   }
 
   function scExportDb() {
-    // FL-Q3: same freshness contract as the menu export button.
-    fdRefreshForExport().then(function () {
-      try {
-        var json = window.orosSync.exportData();
-        shellSaveJson(
-          "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
-          json);
-      } catch (e) { handleSyncError(e); }
-    });
+    // Same content as the menu export button.
+    var exportJob;
+    try { exportJob = fdExportJson(); } catch (e) { handleSyncError(e); return; }
+    exportJob.then(function (json) {
+      shellSaveJson(
+        "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
+        json);
+    }).catch(handleSyncError);
   }
 
   function scCheckUpdates() {
@@ -4203,11 +4105,10 @@
 
   function initSyncIntegration() {
     registerShellSlice();
-    registerFilesDiskSlice();
+    fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     registerRadioProxySlice();
     registerTelevisionProxySlice();
     registerMailProxySlice();
-    setTimeout(refreshFilesDiskCache, 1500);   // warm the transport cache (app open or not)
 
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
@@ -4231,10 +4132,6 @@
         if (kind === "start") setSyncDot("syncing");
         else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
         else setSyncDot("synced", 4000);   // transient green, then auto
-      });
-      // Files disk: full reconcile finished clean → the pill follows.
-      window.orosSync.onAutoSync(function (kind) {
-        if (kind === "done") fdMarkCleanIfIdle();
       });
     }
 
@@ -5590,7 +5487,6 @@
         if (window.orosSync.isDirty()) {
           return window.orosSync.push()
             .then(function () {
-              fdMarkCleanIfIdle();
               setSyncMsgRaw("ok", (pulled
                   ? window.t("sync.ok.pull") + " (" + pulled + ") · "
                   : "") + window.t("sync.ok.push"));
