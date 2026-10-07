@@ -1,5 +1,14 @@
 // ============================================================
 // orOS Core v0.9.2 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// 2026-10-07 (core audit):
+//   SY-Q1 — a FULL localStorage (R30) no longer breaks the engine or
+//     its callers. markDirty() never throws (it used to throw into
+//     every caller: a language toggle failed, an alarm never rang);
+//     the dirty state is kept in memory when it cannot be stored. A
+//     token refresh keeps the new token in memory. A mailbox copy or
+//     deferral flag that cannot be saved stops the next upload
+//     ("storage-full", nothing is overwritten in the cloud); a
+//     baseline that cannot be saved is kept in memory.
 // 2026-10-06 (audit; the version line above is unchanged on purpose):
 //   SY-D1 — every upload is CONDITIONAL on the cloud revision this
 //     device last pulled and applied (Dropbox mode "update"/"add" +
@@ -295,9 +304,15 @@
     refreshToken = tokens.refresh_token || refreshToken || null;
     tokenExpiry  = Date.now() + ((tokens.expires_in || 14400) - 300) * 1000;
 
-    localStorage.setItem("oros-db-access",  accessToken  || "");
-    localStorage.setItem("oros-db-refresh", refreshToken || "");
-    localStorage.setItem("oros-db-expiry",  String(tokenExpiry));
+    // SY-Q1: a full store must not turn a good token into a failed
+    // refresh — the tokens above already serve this session.
+    try {
+      localStorage.setItem("oros-db-access",  accessToken  || "");
+      localStorage.setItem("oros-db-refresh", refreshToken || "");
+      localStorage.setItem("oros-db-expiry",  String(tokenExpiry));
+    } catch (e) {
+      console.warn("orOS sync: tokens not saved (storage full?):", e && e.name);
+    }
   }
 
   function restoreTokens() {
@@ -508,7 +523,7 @@
       })
       .then(function (info) {
         cachedAccount = { email: info.email, name: info.name.display_name };
-        localStorage.setItem("oros-db-account", JSON.stringify(cachedAccount));
+        try { localStorage.setItem("oros-db-account", JSON.stringify(cachedAccount)); } catch (e) {}
         return cachedAccount;
       });
   }
@@ -1015,9 +1030,19 @@
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   }
+  // Returns false when the write failed (SY-Q1: a full store).
   function writeJson(key, obj) {
-    try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
+    try { localStorage.setItem(key, JSON.stringify(obj)); return true; }
+    catch (e) { return false; }
   }
+
+  // SY-Q1 — set when a write the NEXT UPLOAD depends on could not be
+  // saved: a mailbox copy (a parked cloud version, an unknown app's
+  // data to relay) or a deferral flag. Uploading then would replace
+  // the cloud's copy that this device failed to keep. Reset at the
+  // start of every apply (each apply parks everything again);
+  // checked by pushAttempt right before the upload.
+  var storeFailed = false;
   // SP3 — STRICT variant, used ONLY by proxy set(): quota failures
   // must THROW. applyPayload runs set() inside try/catch and skips
   // baseline recording + the applied counter on failure, so a failed
@@ -1032,7 +1057,9 @@
 
   function readCarry() { return readJson(CARRY_KEY); }
   function writeCarry(obj) {
-    if (obj && Object.keys(obj).length > 0) writeJson(CARRY_KEY, obj);
+    if (obj && Object.keys(obj).length > 0) {
+      if (!writeJson(CARRY_KEY, obj)) storeFailed = true;   // SY-Q1
+    }
     else localStorage.removeItem(CARRY_KEY);
   }
 
@@ -1045,7 +1072,9 @@
     var o = readJson(key) || {};
     if (!!o[name] === !!on) return;
     if (on) o[name] = 1; else delete o[name];
-    if (Object.keys(o).length > 0) writeJson(key, o);
+    if (Object.keys(o).length > 0) {
+      if (!writeJson(key, o)) storeFailed = true;           // SY-Q1
+    }
     else { try { localStorage.removeItem(key); } catch (e) {} }
   }
   function isDeferred(name) { return flagHas(DEFER_KEY, name); }
@@ -1077,7 +1106,15 @@
     return h.toString(36);
   }
 
-  function readBaselines() { return readJson(BASELINES_KEY) || {}; }
+  // SY-Q1: baselines that could not be saved (full store) stay valid
+  // in memory for the rest of the session, and are written with the
+  // next baseline write that succeeds.
+  var baselinePending = {};
+  function readBaselines() {
+    var bl = readJson(BASELINES_KEY) || {};
+    Object.keys(baselinePending).forEach(function (n) { bl[n] = baselinePending[n]; });
+    return bl;
+  }
   
     // v0.8.1: does a baseline EXIST for this slice? Distinct from
   // "baseline matches": a MISSING baseline means we don't KNOW what
@@ -1094,7 +1131,8 @@
   function recordBaseline(name, str) {
     var bl = readBaselines();
     bl[name] = hashString(str);
-    writeJson(BASELINES_KEY, bl);
+    if (writeJson(BASELINES_KEY, bl)) baselinePending = {};
+    else baselinePending[name] = bl[name];
   }
 
   function baselineMatches(name, localStr) {
@@ -1509,6 +1547,7 @@
   function applyPayload(payload) {
     if (!payload) return 0;
     reapClosedApps();                       // SY-D5
+    storeFailed = false;                    // SY-Q1: this apply parks everything again
     var applied = 0;
     var cloudStaleAny = false;
 
@@ -1626,9 +1665,15 @@
   }
 
   // ---------- Dirty flag ----------
+  // SY-Q1: the dirty state also lives in memory. On a full store the
+  // persisted flag cannot be written, and markDirty() used to THROW
+  // into whoever called it — every app save, the shell's settings,
+  // the alarm engine (a due alarm then never rang).
+  var dirtyMem = false;
   function markDirty() {
     dirtyGen++;                                // sync #1
-    localStorage.setItem(DIRTY_KEY, "1");
+    dirtyMem = true;
+    try { localStorage.setItem(DIRTY_KEY, "1"); } catch (e) {}
     resetDebounce();
   }
 
@@ -1668,10 +1713,12 @@
     reconcile("debounce");
   }
   function clearDirty() {
-    localStorage.removeItem(DIRTY_KEY);
+    dirtyMem = false;
+    try { localStorage.removeItem(DIRTY_KEY); } catch (e) {}
   }
   function isDirty() {
-    return localStorage.getItem(DIRTY_KEY) === "1";
+    if (dirtyMem) return true;
+    try { return localStorage.getItem(DIRTY_KEY) === "1"; } catch (e) { return false; }
   }
 
   // ---------- Pull / Push ----------
@@ -1810,6 +1857,14 @@
         // Refuse: an unconditional overwrite is exactly what this
         // engine no longer does.
         if (cloudRev === undefined) throw new Error("cloud-rev-unknown");
+        // SY-Q1: a cloud copy this device had to keep (mailbox,
+        // deferral flag) could not be saved — uploading now would
+        // replace it. Forget the rev so the next attempt downloads,
+        // applies and parks again.
+        if (storeFailed) {
+          cloudRev = undefined;
+          throw new Error("storage-full");
+        }
         payload = collectPayload(true);   // SY-D3: deferred closed apps relay the cloud copy
         dirtyGenAtCollect = dirtyGen;   // sync #1: generation of the
                                         // dirty state this payload
@@ -2244,6 +2299,7 @@
       if (msg === "cloud-changed")      return "sync.err.busy";
       if (msg === "vault-key-rewrap-failed") return "sync.err.generic";
       if (msg === "engine-suspended")   return "sync.err.suspended";
+      if (msg === "storage-full")       return "sync.err.storage";   // SY-Q1
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
       if (name === "OperationError" || /OperationError/.test(msg)) return "sync.err.passphrase";
