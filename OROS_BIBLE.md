@@ -507,7 +507,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Contacts | oros-contacts-data | union + LWW + tombs | 5/5 VERIFIED |
 | Cycle | oros-cycle-data | day-entity union, LWW | 5/5 VERIFIED |
 | Weather | oros-weatherapp-data | merge-lite | 5/5 VERIFIED |
-| Mood | oros-mood-data | entity LWW + cols | Fixes applied (deep audit queued) |
+| Mood | oros-mood-data | entry field LWW (fm) + cols + tombs | A67 audit 2026-10-07 (MO-1…MO-8) |
 | Time | oros-time-data | entity union + smtime | 5/5 VERIFIED |
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
@@ -570,7 +570,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **NOTES v2:** `{ ver, pages[], labels[], tombs{} }`. Wiki-links `[[Title]]` are regex-derived (zero storage); pinned notes.
 - **KANBAN v5:** `{ ver, boards[{id,name,columns,labels,tombs,mtime,color?,archived?}], boardDeleted{}, activeBoardId (device-local) }`.
   - **[log]** Imported boards carry prefixed ids (`imp-k-` Kanri, `imp-t-` Trello); a re-import replaces the same ids.
-- **MOOD v3:** `{ ver, sm, om, entries[{id,ts,mtime,emotions[],loc,person,trig,habits,note}], cols, deleted{} }`. 9 fixed emotions; order is ts DESC, derived at sort.
+- **MOOD v3:** `{ ver, trigSeeded, sm, om, entries[{id,ts,mtime,emotions[],loc,person,trig,habits,note,fm?}], cols, deleted{} }`. 9 fixed emotions; order is ts DESC (tie → id), derived at sort. `fm` (field → stamp) appears at an entry's first edit; device-local rescue key `oros-mood-data-broken`.
 - **TIME v1:** zone entities `{tz,mtime}` plus scalar prefs LWW via smtime. Alarms travel IN the shell slice.
 - **CALENDAR:** `{ ver, events[{id,title,date,start,end,location,labelId,recur{freq,interval,until,exdates},remindMin,mtime}], labels[], deleted{} }`. Fixed key order for deterministic tie-breaks.
   - **[log]** Read-only app feeds: Contacts, Habits, Cycle, Mood, Kanban, To-Do (`lbl-feed-todo`), Screen Pet. Feed rows carry `_feed:true` and per-render keys; they are never stored, synced or exported to .ics. Feed labels come from `FEED_LABELS`. Each feed has a ~1 s micro-cache, reset in `setFromSync`.
@@ -1347,7 +1347,7 @@ Rebuild this in any session where code is delivered.
 - **A69 · Engine fallbacks still worth a look.** (a) SY-D6 has no user-facing notice: a slice whose merge keeps throwing silently stops syncing. (b) A merge that returns `null` still means "take the remote copy" (To-Do returns `null` for a state without lists). (c) A setter that throws is counted as applied (A37).
 - **A68 · To-Do leftovers.** (a), (b), (c), (d), (e) closed 2026-10-07 (TD-8…TD-11; for (b): a default list whose tombstone had ALREADY expired before this version can still come back once). Left: (f) the quick-add date words are English and Greek only; labels are whole-entity LWW (name vs colour). Earlier text of this item: (a) closed (TD-8). (b) A default list deleted long ago can come back when a new device joins after its tombstone was pruned (30 days): the seed is empty, nothing is lost. (c) All toasts are local (`showToast`), only the Undo one needs to be (R12). (d) Lists and labels are still whole-entity LWW (name vs cycle settings of one list). (e) closed 2026-10-07 (8 s). (f) The quick-add date words are English and Greek only.
 - **A66 · Notes leftovers.** (a) Strings defined and never used: `notes.app`, `tags.pages`, `links.none`, `book.empty`. (b) "All notebooks (.zip)" puts the root pages of every notebook into one folder level (no folder per notebook). (c) No import (a `.txt` / `.zip` cannot be brought back in). (d) Deleting a page that has sub-pages moves them to the top level without saying so. (e) The header still says v0.17.0 while `DATA_VER` comments mention v0.17.1. (f) A copy made by `descendsFrom` when a device was offline for more than 60 sync rounds of the same page is an EXTRA page, never a loss. (g) `selectPage` and the tree are rebuilt in full on every title keystroke (`renderTree`).
-- **A67 · Every app after Notes: the same four questions** (To-Do, 2026-10-07: failed 1, 2 and 4; passed 3; plus a fifth: **(5) does Undo or any bulk action re-stamp things the user did not touch?**). (1) Does an input under the cursor go stale after a pull, and does the next keystroke save the stale value? (2) Does one clock per item let a small change (pin, move, colour) revert a big one (text) made elsewhere? (3) Does the default / seed object carry a random id or a "now" stamp? (4) Does the getter return exactly what the merge returns (order, pruning, optional fields)? Notes failed all four.
+- **A67 · Every app after Notes: the same four questions** (To-Do, 2026-10-07: failed 1, 2 and 4; passed 3. Mood, 2026-10-07: failed 1, 2, 4, 5, half of 3 (`om` stamped now). Plus a fifth: **(5) does Undo or any bulk action re-stamp things the user did not touch?**). (1) Does an input under the cursor go stale after a pull, and does the next keystroke save the stale value? (2) Does one clock per item let a small change (pin, move, colour) revert a big one (text) made elsewhere? (3) Does the default / seed object carry a random id or a "now" stamp? (4) Does the getter return exactly what the merge returns (order, pruning, optional fields)? Notes failed all four.
 - **A64 · Files leftovers.** (a) Size and Modified columns always show "-" and sorting by them does nothing (`ls()` returns only `{name, dir}`; it can return `size` / `mtime` additively). (b) `.dlg-error` is styled and never produced. (c) Search results cannot be selected. (d) No multi-select on touch. (e) The storage figure walks every file with `stat`. (f) A local file that disappears without a reported deletion (anything that bypasses `orosFS`) is neither restored nor deleted remotely while its manifest entry is unchanged. (g) A fresh device with an empty vault caches "no manifest" for 60 s, so the first file from another device can take until the next engine cycle to appear. (h) The vault writes a console line for every engine-cycle check.
 - **A65 · Mail, before anything else is built on it** (from the Wave 0 note of another session and the shell delta; `mail/` files not on the table).
   - **(a) The plan itself.** A browser page cannot open IMAP, POP3 or SMTP connections: there is no socket API for web pages, only HTTP(S) and WebSocket to servers that allow it. "Wave 1: IMAP polling (TLS), SMTP sending" cannot be written as a static app. What exists: a provider's HTTP API (JMAP where offered; Gmail API / Microsoft Graph with an OAuth client registration), or a relay / bridge server. Each is an external dependency or a backend, i.e. a Mantra decision ("No external dependencies", "static") for the owner BEFORE Wave 1.
@@ -2591,3 +2591,33 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** real Dropbox, Firefox / Safari, a phone.
 - **New:** A69. **Status:** delivered as full files (`todo/todo.js`, `sync.js`, `shell.js`); application not yet confirmed (R4).
 - **Next:** Kanban.
+
+### 2026-10-07 — Mood (mood.js) — MO-1…MO-8 (A67 audit)
+
+- **Decisions (Christos):** all eight proposals approved. Report: `audits/mood-sync-audit.md` in the project files.
+- **Reproduced before any change** (Chromium, the `main` copy of `mood.js` standalone with a stub engine, two devices; the original fails 7 of 7 checks):
+  - B has an entry open for editing, A changes its note, B pulls and saves one habit: A's note is gone.
+  - A writes a note, B marks a habit on the same entry: one of the two is gone.
+  - Any pull while typing a note drops focus and caret (on a phone the keyboard closes).
+  - A chip rename typed while a pull arrives says "renamed" and saves nothing.
+  - After a delete, a pull replaces the Undo toast with "Updated from sync": Undo is gone.
+  - Unreadable stored data is replaced by a fresh state with no copy kept.
+  - Engine model: two devices that each delete a different entry upload on every sync cycle, forever (tombstone key order).
+- **Changes (`mood/mood.js`):**
+  - **MO-1** `canonState` / `canonEntry` / `canonDeleted`: one canonical form for getter and merge (tombstones sorted, pruned 30 days before the newest data stamp, as before; entries ts DESC, tie → id); the merge works on copies; `sliceSet` ignores an echo.
+  - **MO-2** tombstones of `seed-*` values never expire.
+  - **MO-3** per-field stamps on entries (`fm`, `fieldStamp`, `touchField`, `mergeEntry`), with protection for edits made by devices on the previous version; two versions without `fm` still merge whole-object exactly as before. A version older than the tombstone is dropped before it meets the other side.
+  - **MO-4** `editBase` / `entryValues` / `formValues` / `followEdit`: an edit writes back only the fields the user changed; untouched fields follow a pull while the form is open. An edit that changes nothing writes nothing.
+  - **MO-5** a pull rebuilds the capture form only when something it shows changed (`captureSig`); `buildCapture` restores focus and caret; the "Updated from sync" toast and its two strings are removed.
+  - **MO-6** chip rename / delete and both Undo actions work on the current object by id; Undo does nothing when the entry or value is already back (no second copy).
+  - **MO-7** unreadable data is copied to `oros-mood-data-broken` before the fresh state is written (Habits pattern).
+  - **MO-8** a fresh state has `sm` / `om` 0, so a new device no longer decides chip order; column order ties use `pickRef` (id sequences).
+- **Schema:** entries gain optional `fm` (additive; `DATA_VER` stays 3). New device-local key `oros-mood-data-broken`.
+- **Verification:**
+  - Node, the real merge section: 20,000 rounds (unique labels, pruning off): symmetric bytes, idempotent, getter = merge, stable against its inputs, inputs untouched, no newer field lost, no duplicate ids: all 0. Not associative in 2,388 rounds (field stamps and chip order depend on merge order); every order converges to the same state in one more merge (4,000 rounds, 0 failures). With duplicate labels and real pruning on, symmetry, idempotence, getter = merge and untouched inputs stay at 0; the other differences in that run (302 field values, 8,138 unstable results) are what the label dedupe (#10) and the accepted 30-day tombstone trade-off do by design (inferred, not traced one by one).
+  - Engine model: different deletes on two devices → 2 uploads in total (was 2 per round); a deleted seed stays deleted when a new device joins after 60 days; a new device keeps the existing chip order.
+  - Chromium, standalone with a stub engine, desktop and mobile viewport: 9 of 9 (the 7 above + guard "Edit" folds into the last entry as before + data written by the old file reads identically and merging it with the old copy changes nothing). Real shell (`index.html`, real `sync.js`): Mood opens, registers with key and merge, saves, no page errors.
+  - `node --check` OK; LF kept; no version touched.
+- **NOT tested:** two devices through the real shell with a mock Dropbox (the engine itself is unchanged), real Dropbox, Firefox / Safari, a phone.
+- **Known limits:** a device still on the previous `mood.js` keeps its unsorted tombstones and may upload on every cycle until it loads the new file; the first upgraded device uploads once (canonical form). Column values stay whole-value LWW (only the label changes).
+- **Status:** delivered on branch `claude/project-thread-l5x502`; not yet on `main` (R4).

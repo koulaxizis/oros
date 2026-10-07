@@ -1,8 +1,8 @@
 // ============================================================
 // orOS Mood — App logic (version stamped by CI) — Clean release
 // Capturing how you feel must take seconds, not minutes.
-// Entries are additive-primary; edits are LWW by mtime; deletes
-// leave tombstones (merge-safe). Mood data is PERSONAL: it lives
+// Entries are additive-primary; edits are LWW per field (fm);
+// deletes leave tombstones (merge-safe). Mood data is PERSONAL: it lives
 // in this device's localStorage and travels ONLY through the
 // encrypted orOS sync slice — no network calls, ever, besides
 // the sync engine itself.
@@ -164,7 +164,6 @@
       "exp.summary":     "Overview",
       "exp.row.entries": "Entries in range",
       "exp.row.days":    "Days logged",
-      "sync.pull":      "Updated from sync",
       "exp.font.err":   "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
       "ent.empty":      "No entries yet — they'll appear here after your first check-in.",
       "ent.noRes":      "No entries match \u201C{q}\u201D."
@@ -301,7 +300,6 @@
       "exp.summary":     "Επισκόπηση",
       "exp.row.entries": "Καταχωρήσεις στο εύρος",
       "exp.row.days":    "Ημέρες με καταγραφή",
-      "sync.pull":      "Ενημερώθηκε από συγχρονισμό",
       "exp.font.err":   "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
       "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή.",
       "ent.noRes":      "Καμία καταχώρηση δεν ταιριάζει με «{q}»."
@@ -468,7 +466,9 @@
 //               emotions: [{k, i}],   // k = EMOTIONS key, i = 1–5
 //               loc, person,          // column-value ids | null
 //               water, food, meds,    // TRIADIC null | "yes" | "no"
-//               note, trigger }],     // strings ("" = unset)
+//               note, trigger,        // strings ("" = unset)
+//               fm? }],               // MO-3: field -> stamp, added at
+//                                     // the first edit (absent = mtime)
 //   cols: { loc:  [{id, label, mtime, pos}],
 //           person: [{id, label, mtime, pos}],
 //           trig: [{id, label, mtime, pos}] },
@@ -477,8 +477,11 @@
 var state = null;
 
 function newState() {
+  // MO-8: no "now" stamps on a fresh state. om decides whose chip
+  // order wins in a merge; a new device holding only the seeds used
+  // to win it and pushed the user's own chips to the end.
   var s = {
-    ver: DATA_VER, sm: Date.now(), om: Date.now(),
+    ver: DATA_VER, sm: 0, om: 0,
     trigSeeded: true,
     entries: [], deleted: {},
     cols: { loc: [], trig: [], person: [] }
@@ -597,18 +600,23 @@ function migrate(data) {
   return data;
 }
 
+// MO-7: unreadable data is copied verbatim to a device-local key
+// BEFORE the fresh state is written over it (never synced).
+var BROKEN_KEY = "oros-mood-data-broken";
 function load() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      var data = migrate(JSON.parse(raw));
-      if (data) {
-        state = data;
-        if (!state.cols.trig.length && !state.trigSeeded) seedTriggers();
-        return;
-      }
+  var raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+  if (raw) {
+    var data = null, err = null;
+    try { data = migrate(JSON.parse(raw)); } catch (e) { data = null; err = e; }
+    if (data) {
+      state = data;
+      if (!state.cols.trig.length && !state.trigSeeded) seedTriggers();
+      return;
     }
-  } catch (e) { /* corrupted → fresh */ }
+    try { localStorage.setItem(BROKEN_KEY, raw); } catch (e2) {}
+    try { console.error("[orOS] mood: unreadable data, raw copy kept in " + BROKEN_KEY, err || ""); } catch (e3) {}
+  }
   state = newState();
   save();
 }
@@ -654,20 +662,67 @@ function colLabel(v) {
 }
 
 // ---------- 2b. Merge engine (todo-contract, compact) ----------
-// Deterministic + symmetric: merge(A,B) === merge(B,A).
-//   · entries — union by id, content LWW by mtime (ties by
-//     lexicographic JSON — identical both sides)
-//   · column values — same, per column, by id
+// Deterministic + symmetric: merge(A,B) === merge(B,A), byte for
+// byte, and the getter returns exactly what the merge returns
+// (MO-1: both go through canonState).
+//   · entries — union by id, FIELD BY FIELD (MO-3): every field has
+//     its own stamp in e.fm, so a note written on one device and a
+//     habit marked on another both survive. An entry without fm
+//     (never edited by this version) stamps every field with its
+//     mtime; two such versions still merge whole-object, exactly as
+//     before (ties by lexicographic JSON — identical both sides)
+//   · column values — whole-value LWW by mtime (only the label
+//     changes), per column, by id
 //   · tombstones — union with max ts; newer edits resurrect
 //     (the undo-delete toast relies on this, same as weather)
-//   · ordering — entries = DESC ts (derived at sort time, not
-//     stored pos — a timeline has exactly ONE natural order);
-//     column values = the om-larger side donates positions
-// NOTE (DATA_VER 3): no merge changes — the triadic habit fields
-// live INSIDE entries, which merge whole-object by mtime. Old
-// devices merging Wave-1 entries simply produce unmigrated local
-// reads until they run this version's migrate() — safe because
-// neither side loses data.
+//   · ordering — entries = DESC ts, tie → id (derived at sort time,
+//     not stored pos — a timeline has exactly ONE natural order);
+//     column values = the om-larger side donates positions, tie →
+//     the two id sequences compared as sequences (pickRef)
+//   · canonState — tombstones sorted by id and pruned by DATA time
+//     (never this device's clock); seed tombstones never expire
+// NOTE (DATA_VER 3): fm is additive. A device on the previous
+// mood.js carries it along whole and bumps only mtime when it edits;
+// such an entry (mtime newer than every field stamp) is read as
+// "every field changed at mtime", which is what that edit meant.
+
+var ENTRY_FIELDS = ["emotions", "loc", "person", "trig", "note"]
+  .concat(HABITS.map(function (h) { return h.f; }));
+var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+
+function hasFm(e) { return !!(e && e.fm && typeof e.fm === "object"); }
+function touchedByOldCode(e) {
+  if (!hasFm(e)) return false;
+  var mx = 0;
+  for (var i = 0; i < ENTRY_FIELDS.length; i++) {
+    var v = e.fm[ENTRY_FIELDS[i]];
+    if (typeof v === "number" && v > mx) mx = v;
+  }
+  return (e.mtime || 0) > mx;
+}
+function fieldStamp(e, f) {
+  if (!hasFm(e) || touchedByOldCode(e)) return e.mtime || 0;
+  return (typeof e.fm[f] === "number") ? e.fm[f] : 0;
+}
+function ensureFm(e) {
+  var fm = {};
+  for (var i = 0; i < ENTRY_FIELDS.length; i++) fm[ENTRY_FIELDS[i]] = fieldStamp(e, ENTRY_FIELDS[i]);
+  e.fm = fm;
+}
+function touchField(e, f, now) {
+  ensureFm(e);
+  e.fm[f] = now;
+  e.mtime = now;
+}
+// Restore after a delete (Undo): the whole entry is new again.
+function stampEntryNewest(e, now) {
+  if (hasFm(e)) {
+    var fm = {};
+    for (var i = 0; i < ENTRY_FIELDS.length; i++) fm[ENTRY_FIELDS[i]] = now;
+    e.fm = fm;
+  }
+  e.mtime = now;
+}
 
 function newerObj(a, b) {
   if ((a.mtime || 0) !== (b.mtime || 0)) {
@@ -676,17 +731,48 @@ function newerObj(a, b) {
   return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
 }
 
-function mergeUnionList(a, b, tomb) {
+// Two versions of ONE entry → one entry, field by field (MO-3).
+function mergeEntry(x, y) {
+  if (JSON.stringify(x) === JSON.stringify(y)) return x;
+  if (!hasFm(x) && !hasFm(y)) return newerObj(x, y);
+  var base = newerObj(x, y), out = {};
+  Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+  var fm = {};
+  ENTRY_FIELDS.forEach(function (f) {
+    var sx = fieldStamp(x, f), sy = fieldStamp(y, f), w;
+    if (sx !== sy) w = (sx > sy) ? x : y;
+    else {
+      var jx = JSON.stringify(x[f] === undefined ? null : x[f]);
+      var jy = JSON.stringify(y[f] === undefined ? null : y[f]);
+      w = (jx >= jy) ? x : y;                 // tie → same pick on both devices
+    }
+    if (w[f] === undefined) delete out[f];
+    else out[f] = JSON.parse(JSON.stringify(w[f]));
+    fm[f] = Math.max(sx, sy);
+  });
+  out.fm = fm;
+  out.mtime = Math.max(x.mtime || 0, y.mtime || 0);
+  return out;
+}
+
+function isAlive(x, tomb) {
+  var ts = tomb ? tomb[x.id] : undefined;
+  return ts === undefined || (x.mtime || 0) > ts;
+}
+// A version older than the tombstone is dead BEFORE it meets the
+// other side: a field edited before the delete must not ride along
+// when a newer edit elsewhere brings the entry back (the result
+// would otherwise depend on the order devices merged in).
+function mergeUnionList(a, b, tomb, pick) {
   var map = {};
-  (a || []).forEach(function (x) { map[x.id] = x; });
+  pick = pick || newerObj;
+  (a || []).forEach(function (x) { if (isAlive(x, tomb)) map[x.id] = x; });
   (b || []).forEach(function (x) {
-    map[x.id] = map[x.id] ? newerObj(map[x.id], x) : x;
+    if (!isAlive(x, tomb)) return;
+    map[x.id] = map[x.id] ? pick(map[x.id], x) : x;
   });
   var alive = [];
-  Object.keys(map).forEach(function (id) {
-    var ts = tomb ? tomb[id] : undefined;
-    if (ts === undefined || (map[id].mtime || 0) > ts) alive.push(map[id]);
-  });
+  Object.keys(map).forEach(function (id) { alive.push(map[id]); });
   return alive;
 }
 
@@ -698,10 +784,28 @@ function mergeCols(colsA, colsB, tomb) {
   return out;
 }
 
-function sortColVals(vals, omSideIsA, colA, colB) {
-  var ref = omSideIsA ? (colA || []) : (colB || []);
+// Which side's column order is the reference: larger om wins; a TIE
+// compares the two id sequences (restricted to the survivors) as
+// sequences — the same decision on both devices, and the merged
+// order (reference + appended newcomers) picks itself again.
+function pickRef(aArr, bArr, aOm, bOm, survivors) {
+  if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
+  var alive = {};
+  (survivors || []).forEach(function (v) { alive[v.id] = true; });
+  var seq = function (arr) {
+    return (arr || []).map(function (v) { return v.id; })
+      .filter(function (id) { return alive[id]; });
+  };
+  var ka = seq(aArr), kb = seq(bArr), n = Math.min(ka.length, kb.length);
+  for (var i = 0; i < n; i++) {
+    if (ka[i] !== kb[i]) return ka[i] > kb[i] ? aArr : bArr;
+  }
+  return ka.length >= kb.length ? aArr : bArr;
+}
+
+function sortColVals(vals, ref) {
   var idx = {};
-  ref.forEach(function (v, i) { idx[v.id] = i; });
+  (ref || []).forEach(function (v, i) { idx[v.id] = i; });
   vals.sort(function (x, y) {
     var ix = idx[x.id] !== undefined ? idx[x.id] : Infinity;
     var iy = idx[y.id] !== undefined ? idx[y.id] : Infinity;
@@ -750,8 +854,79 @@ function dedupeCols(cols, entries) {
   }
 }
 
+// ---- canonical form (MO-1) ----
+// One shape for the getter and the merge result. Two devices that
+// deleted different things used to hold the same tombstones in a
+// different key order; the serialized states never matched and both
+// uploaded on every sync cycle.
+// Prune cutoff: 30 days before the NEWEST stamp in the data (entries,
+// column values, tombstones) — the same rule the getter always used.
+function newestStamp(st) {
+  var mx = 0;
+  (st.entries || []).forEach(function (e) { if ((e.mtime || 0) > mx) mx = e.mtime; });
+  ["loc", "trig", "person"].forEach(function (c) {
+    ((st.cols || {})[c] || []).forEach(function (v) { if ((v.mtime || 0) > mx) mx = v.mtime; });
+  });
+  var del = st.deleted || {};
+  Object.keys(del).forEach(function (id) { if ((del[id] || 0) > mx) mx = del[id]; });
+  return mx;
+}
+// MO-2: the tombstone of a factory value (seed-*) never expires.
+// Every new device creates the seeds again (same ids, stamp 0); once
+// the 30 days were over, a value the user had deleted came back on
+// every device.
+function isSeedId(id) { return String(id).indexOf("seed-") === 0; }
+function canonDeleted(st) {
+  var src = st.deleted || {}, out = {};
+  var cutoff = newestStamp(st) - TOMB_LIFETIME_MS;
+  Object.keys(src).sort().forEach(function (id) {
+    if (typeof src[id] !== "number") return;
+    if (isSeedId(id) || src[id] >= cutoff) out[id] = src[id];
+  });
+  return out;
+}
+function canonEntry(src) {
+  var e = {};
+  Object.keys(src).forEach(function (k) { e[k] = src[k]; });
+  if (hasFm(src)) {                       // field stamps always spelled out
+    var fm = {};
+    for (var i = 0; i < ENTRY_FIELDS.length; i++) fm[ENTRY_FIELDS[i]] = fieldStamp(src, ENTRY_FIELDS[i]);
+    e.fm = fm;
+  }
+  return e;
+}
+function byTsDesc(x, y) {
+  if (x.ts !== y.ts) return y.ts - x.ts;
+  return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
+}
+var TOP_KEYS = ["ver", "trigSeeded", "sm", "om", "entries", "cols", "deleted"];
+function canonState(st) {
+  var s = JSON.parse(JSON.stringify(st || {})), out = {};
+  out.ver = s.ver;
+  out.trigSeeded = !!s.trigSeeded;
+  out.sm = s.sm || 0;
+  out.om = s.om || 0;
+  out.entries = (s.entries || []).map(canonEntry).sort(byTsDesc);
+  out.cols = {};
+  ["loc", "trig", "person"].forEach(function (c) {
+    out.cols[c] = ((s.cols || {})[c] || []).map(function (v, i) {
+      var o = {};
+      Object.keys(v).forEach(function (k) { o[k] = v[k]; });
+      o.pos = i;
+      return o;
+    });
+  });
+  out.deleted = canonDeleted(s);
+  Object.keys(s).sort().forEach(function (k) {
+    if (TOP_KEYS.indexOf(k) === -1) out[k] = s[k];
+  });
+  return out;
+}
+
 function mergeMoodStates(A, B) {
-  var a = A || {}, b = B || {};
+  // Inputs are never written to: everything below works on copies.
+  var a = JSON.parse(JSON.stringify(A || {}));
+  var b = JSON.parse(JSON.stringify(B || {}));
 
   var tomb = {};
   Object.keys(a.deleted || {}).forEach(function (id) { tomb[id] = a.deleted[id]; });
@@ -759,17 +934,16 @@ function mergeMoodStates(A, B) {
     tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
   });
 
-  var entries = mergeUnionList(a.entries, b.entries, tomb)
-    .sort(function (x, y) { return y.ts - x.ts; });   // timeline order
+  var entries = mergeUnionList(a.entries, b.entries, tomb, mergeEntry);
 
-  var omSideIsA = (a.om || 0) >= (b.om || 0);
   var cols = mergeCols(a.cols, b.cols, tomb);
   dedupeCols(cols, entries);
-  sortColVals(cols.loc,    omSideIsA, (a.cols || {}).loc,    (b.cols || {}).loc);
-  sortColVals(cols.trig,   omSideIsA, (a.cols || {}).trig,   (b.cols || {}).trig);
-  sortColVals(cols.person, omSideIsA, (a.cols || {}).person, (b.cols || {}).person);
+  ["loc", "trig", "person"].forEach(function (c) {
+    var ca = (a.cols || {})[c], cb = (b.cols || {})[c];
+    sortColVals(cols[c], pickRef(ca, cb, a.om, b.om, cols[c]));
+  });
 
-  return {
+  return canonState({
     ver: DATA_VER,
     // #1: travels with the slice — if EITHER side has ever
     // seeded (i.e. the user chose to empty the column), the
@@ -781,7 +955,7 @@ function mergeMoodStates(A, B) {
     entries: entries,
     cols: cols,
     deleted: tomb
-  };
+  });
 }
 
   // ---------- 3. Capture flow + recent list ----------
@@ -961,6 +1135,7 @@ function mergeMoodStates(A, B) {
 
   // --- capture state ---
   var editing   = null;   // entry id | null (new-entry mode)
+  var editBase  = null;   // MO-4: the entry's values when the form took them
   var pendingNote = null;  // #3: note carried by an in-flight editEntry
   var managing = false;   // view state: chip management mode (rename/delete)
   var picked    = {};     // emotionKey → intensity 1–5
@@ -972,6 +1147,7 @@ function mergeMoodStates(A, B) {
 
   function resetCapture() {
     editing = null;
+    editBase = null;
     pendingNote = null;   // #3: stale edit-notes never leak
     picked = {};
     // Smart preselection (changelog contract): most-used value in
@@ -1023,6 +1199,13 @@ function mergeMoodStates(A, B) {
     });
     var mm = $("moodmain");
     var keepScroll = mm ? mm.scrollTop : 0;   // taps mid-form never jump to top
+    // MO-5: a rebuild must not take the keyboard away — remember the
+    // focused field (by id) and its caret, restore both at the end.
+    var ae = document.activeElement, keepFocus = null;
+    if (ae && ae.id && host.contains(ae)) {
+      keepFocus = { id: ae.id, a: null, b: null };
+      try { keepFocus.a = ae.selectionStart; keepFocus.b = ae.selectionEnd; } catch (e) {}
+    }
     host.innerHTML = "";
 
     // ---- L1: emotion grid ----
@@ -1338,6 +1521,16 @@ function mergeMoodStates(A, B) {
     }
     host.appendChild(acts);
     if (mm) mm.scrollTop = keepScroll;
+    if (keepFocus) {
+      var fe = document.getElementById(keepFocus.id);
+      if (fe) {
+        try { fe.focus({ preventScroll: true }); } catch (e) { fe.focus(); }
+        if (typeof keepFocus.a === "number") {
+          try { fe.setSelectionRange(keepFocus.a, keepFocus.b); } catch (e) {}
+        }
+        if (mm) mm.scrollTop = keepScroll;
+      }
+    }
   }
 
   // ---- chip context menu: rename / delete column values ----
@@ -1453,6 +1646,10 @@ function mergeMoodStates(A, B) {
   function applyChipRename(col, v, label) {
     label = String(label).trim().normalize("NFC");
     closeChipMenu();
+    // MO-6: the menu was opened on the value as it was then; a pull
+    // since may have replaced it. Work on the one the data holds now.
+    v = colValById(col, v.id);
+    if (!v) { renderAll(); return; }      // deleted elsewhere meanwhile
     if (!label || label === v.label) return;
     if (colLabelExists(col, label, v.id)) { transientNote(t("col.dup")); return; }
     v.label = label;
@@ -1466,6 +1663,9 @@ function mergeMoodStates(A, B) {
 
   function deleteColVal(col, v) {
     closeChipMenu();
+    v = colValById(col, v.id);            // MO-6: the current value, not the menu's copy
+    if (!v) { renderAll(); return; }
+    var snap = JSON.parse(JSON.stringify(v));
     state.cols[col] = (state.cols[col] || []).filter(function (x) {
       return x.id !== v.id;
     });
@@ -1477,11 +1677,14 @@ function mergeMoodStates(A, B) {
     save();
     renderAll();
     showToast(t("col.del.done"), t("col.del.undo"), function () {
+      // MO-6: already back (an edit from another device revived it)
+      // → nothing to restore, and never a second copy.
+      if (colValById(col, snap.id)) return;
       // resurrection: fresh mtime beats the tombstone (same
       // contract as entries)
-      v.mtime = Date.now();
-      state.cols[col].push(v);
-      delete state.deleted[v.id];
+      snap.mtime = Date.now();
+      state.cols[col].push(snap);
+      delete state.deleted[snap.id];
       state.sm = Date.now();
       save();
       renderAll();
@@ -1505,6 +1708,65 @@ function mergeMoodStates(A, B) {
     else if (col === "person") selPerson = v.id;
     else selTrig = v.id;
     buildCapture();   // keepScroll restores the viewport — no mid-form jump
+  }
+
+  // ---- edit buffer vs data (MO-4) ----
+  // One comparable shape for an entry and for the form. Emotions
+  // compare as a set (order of picking does not matter).
+  function normEmos(list) {
+    return (list || []).map(function (m) { return [m.k, m.i]; })
+      .sort(function (x, y) { return x[0] < y[0] ? -1 : (x[0] > y[0] ? 1 : 0); });
+  }
+  function entryValues(e) {
+    var v = {
+      emotions: normEmos(e.emotions),
+      loc: e.loc || null, person: e.person || null, trig: e.trig || null,
+      note: e.note || ""
+    };
+    HABITS.forEach(function (h) {
+      v[h.f] = (e[h.f] === "yes" || e[h.f] === "no") ? e[h.f] : null;
+    });
+    return v;
+  }
+  function noteValue() {
+    var nb = $("fld-note");
+    if (nb) return nb.value.trim();
+    return pendingNote !== null ? String(pendingNote).trim() : "";
+  }
+  function formValues() {
+    var v = {
+      emotions: normEmos(Object.keys(picked).map(function (k) { return { k: k, i: picked[k] }; })),
+      loc: selLoc || null, person: selPerson || null, trig: selTrig || null,
+      note: noteValue()
+    };
+    HABITS.forEach(function (h) { v[h.f] = hab[h.f] || null; });
+    return v;
+  }
+  function sameVal(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  function setFormField(f, val) {
+    if (f === "emotions") {
+      picked = {};
+      (val || []).forEach(function (p) { picked[p[0]] = p[1]; });
+    } else if (f === "loc") selLoc = val;
+    else if (f === "person") selPerson = val;
+    else if (f === "trig") selTrig = val;
+    else if (f === "note") {
+      var nb = $("fld-note");
+      if (nb) nb.value = val; else pendingNote = val;
+    } else hab[f] = val;
+  }
+  // After a pull: every field the user has NOT changed in the form
+  // follows the data; what they changed stays theirs.
+  function followEdit() {
+    if (editing === null || !editBase) return;
+    var e = entryById(editing);
+    if (!e) return;
+    var now = entryValues(e), cur = formValues();
+    ENTRY_FIELDS.forEach(function (f) {
+      if (!sameVal(cur[f], editBase[f])) return;        // user's own change
+      if (!sameVal(now[f], cur[f])) setFormField(f, now[f]);
+      editBase[f] = now[f];
+    });
   }
 
   // ---- save flow ----
@@ -1541,7 +1803,9 @@ function mergeMoodStates(A, B) {
       return b;
     };
     g.appendChild(mk(t("recent.edit"), "prim", function () {
+      last = entryById(last.id) || last;   // the entry as it is NOW
       editing = last.id;
+      editBase = entryValues(last);
       // EDIT = fold the fresh picks INTO the recent entry. No
       // loadEntryIntoCapture here: it would overwrite the fresh
       // loc/person/habits/trig with the old entry's values.
@@ -1585,16 +1849,37 @@ function mergeMoodStates(A, B) {
 
   function commitEntry(emos) {
     var note = $("fld-note") ? $("fld-note").value.trim() : "";
-    var e;
+    var e, wrote = true;
     if (editing) {
+      // MO-4: write back ONLY what the user changed in the form; a
+      // field they left alone keeps whatever the data holds now
+      // (possibly an edit that arrived from another device).
+      var now = Date.now();
+      var vals = {
+        emotions: emos, loc: selLoc || null, person: selPerson || null,
+        trig: selTrig || null, note: note
+      };
+      HABITS.forEach(function (h) { vals[h.f] = hab[h.f] || null; });
+      var fv = formValues();
       e = entryById(editing);
-      if (!e) { e = { id: editing }; state.entries.push(e); }   // resurrection safety
-      e.emotions = emos; e.loc = selLoc; e.person = selPerson;
-      HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
-      e.note = note; e.trig = selTrig; e.trigger = "";
-      e.mtime = Date.now();
+      if (!e) {                                   // resurrection safety
+        e = { id: editing, ts: (editBase && editBase.ts) || now, trigger: "" };
+        ENTRY_FIELDS.forEach(function (f) { e[f] = vals[f]; });
+        stampEntryNewest(e, now);
+        state.entries.push(e);
+      } else {
+        var cur = entryValues(e);
+        wrote = false;
+        ENTRY_FIELDS.forEach(function (f) {
+          if (editBase && sameVal(fv[f], editBase[f])) return;   // untouched
+          if (sameVal(fv[f], cur[f])) return;                     // already so
+          e[f] = vals[f];
+          touchField(e, f, now);                                  // MO-3
+          wrote = true;
+        });
+      }
       // resurrection: this edit is newer than any tombstone
-      if (state.deleted[e.id] !== undefined) delete state.deleted[e.id];
+      if (state.deleted[e.id] !== undefined && e.mtime > state.deleted[e.id]) delete state.deleted[e.id];
     } else {
       e = {
         id: uid(), ts: Date.now(), mtime: Date.now(),
@@ -1604,9 +1889,11 @@ function mergeMoodStates(A, B) {
       HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
       state.entries.push(e);
     }
-    state.entries.sort(function (x, y) { return y.ts - x.ts; });
-    state.sm = Date.now();
-    save();
+    if (wrote) {                          // an edit that changed nothing writes nothing
+      state.entries.sort(function (x, y) { return y.ts - x.ts; });
+      state.sm = Date.now();
+      save();
+    }
     resetCapture();
     renderAll();
     transientNote(t("saved.toast"));
@@ -1616,6 +1903,8 @@ function mergeMoodStates(A, B) {
     var e = entryById(id);
     if (!e) return;
     editing = id;
+    editBase = entryValues(e);
+    editBase.ts = e.ts;
     loadEntryIntoCapture(e);
     pendingNote = e.note || "";         // #3: BEFORE showTab — applyView's
                                         // single buildCapture consumes it
@@ -1629,6 +1918,7 @@ function mergeMoodStates(A, B) {
   function deleteEntry(id) {
     var e = entryById(id);
     if (!e) return;
+    e = JSON.parse(JSON.stringify(e));    // MO-6: Undo restores THIS copy
     state.entries = state.entries.filter(function (x) { return x.id !== id; });
     state.deleted[id] = Date.now();
     state.sm = Date.now();
@@ -1636,7 +1926,10 @@ function mergeMoodStates(A, B) {
     renderAll();
     if (editing === id) resetCapture();
     showToast(t("del.done"), t("del.undo"), function () {
-      e.mtime = Date.now();               // fresh mtime > tombstone
+      // MO-6: already back (an edit from another device revived it)
+      // → its newer content stays; no second copy, no restamp.
+      if (entryById(id)) return;
+      stampEntryNewest(e, Date.now());    // fresh mtime > tombstone
       state.entries.push(e);
       state.entries.sort(function (x, y) { return y.ts - x.ts; });
       delete state.deleted[id];
@@ -3266,38 +3559,24 @@ function mergeMoodStates(A, B) {
   }
 
   function sliceGet() {
-    var out = JSON.parse(JSON.stringify(state));
-    // MD-4: deterministic tombstone pruning (HB-3 pattern). The
-    // cutoff derives from the dataset's newest timestamp, never
-    // the wall clock — same data yields the same payload on every
-    // device at any time. The max tombstone always survives its
-    // own cutoff, so the boundary can't drift between merged
-    // devices. Payload-only: local state keeps everything.
-    // Trade-off (accepted, same as Habits): a tombstone pruned
-    // after 30d of silence no longer shields against a stale
-    // remote copy older than that.
-    var maxTs = 0, i;
-    for (i = 0; i < (out.entries || []).length; i++) {
-      if (out.entries[i].mtime > maxTs) maxTs = out.entries[i].mtime;
-    }
-    ["loc", "trig", "person"].forEach(function (c) {
-      (out.cols[c] || []).forEach(function (v) {
-        if (v.mtime > maxTs) maxTs = v.mtime;
-      });
-    });
-    Object.keys(out.deleted || {}).forEach(function (id) {
-      if (out.deleted[id] > maxTs) maxTs = out.deleted[id];
-    });
-    var CUTOFF = maxTs - 30 * 24 * 60 * 60 * 1000;
-    Object.keys(out.deleted).forEach(function (id) {
-      if (out.deleted[id] < CUTOFF) delete out.deleted[id];
-    });
-    return out;
+    // MO-1: the canonical copy — exactly what mergeMoodStates returns
+    // for this state (tombstones sorted and pruned by data time, see
+    // canonState). Payload-only: local state is not rewritten here.
+    return canonState(state);
+  }
+
+  // What the capture form shows, apart from what the user types:
+  // a pull that changes none of it leaves the form alone (MO-5).
+  function captureSig() {
+    return JSON.stringify([state.cols, state.entries.length > 0, editing, formValues()]);
   }
 
   function sliceSet(data, info) {
     data = migrate(JSON.parse(JSON.stringify(data || null)));
     if (!data || !Array.isArray(data.entries)) return;
+    // Echo: nothing new → no rewrite, no re-render.
+    if (JSON.stringify(canonState(data)) === JSON.stringify(canonState(state))) return;
+    var sigBefore = captureSig();
 
     window.__orosSyncApi._suppress = true;
     try {
@@ -3308,18 +3587,25 @@ function mergeMoodStates(A, B) {
     }
 
     // guard drifted state (post-condition of the merge)
-    state.entries.sort(function (x, y) { return y.ts - x.ts; });
+    state.entries.sort(byTsDesc);
     state.cols.loc.forEach(function (v, i) { v.pos = i; });
     state.cols.trig.forEach(function (v, i) { v.pos = i; });
     state.cols.person.forEach(function (v, i) { v.pos = i; });
 
-    // drop edits that leave the UI halfway (editing a now-deleted
-    // entry from another device) without yanking the keyboard
-    if (editing !== null && !entryById(editing)) resetCapture();
-
-    renderAll();                          // repaint live
+    renderThread();
+    renderRecent();
+    if (editing !== null && !entryById(editing)) {
+      // the entry being edited was deleted elsewhere: leave edit mode
+      resetCapture();
+    } else {
+      followEdit();                       // MO-4: untouched fields follow the data
+      // MO-5: rebuild only when something the form shows changed;
+      // buildCapture keeps focus and caret when it must rebuild.
+      if (!$("capture").hidden && captureSig() !== sigBefore) buildCapture();
+    }
     if (viewMode === "insights") renderInsights();   // live views too
-    if (info && info.merged) transientNote(t("sync.pull"));   // #19: receipt, not save
+    // (No toast per merge: it fired on every sync cycle that brought
+    // anything, on top of whatever the user was doing.)
   }
 
   // Contract Β: shell-owned combos forward FIRST (capture phase).
