@@ -10,6 +10,8 @@
 //     ("add" / "update"), no read-compare-write window.
 //   VD-KEY — changePassphrase re-wraps /vault/key.json (two steps
 //     around the blob), so the Vault survives a passphrase change.
+//   SY-D6 — a merge function that throws no longer means "take the
+//     remote copy": local stays, the cloud copy is relayed.
 //   SY-D5 — a live registration made from the app frame ends when
 //     that frame shows another document: the slice returns to its
 //     stored (proxy) form.
@@ -1047,6 +1049,7 @@
     else { try { localStorage.removeItem(key); } catch (e) {} }
   }
   function isDeferred(name) { return flagHas(DEFER_KEY, name); }
+  var mergeBroken = {};         // SY-D6: name -> true while that slice's merge function throws
   function deferredNames() { return Object.keys(readJson(DEFER_KEY) || {}); }
 
   function persistSliceEntry(name, storageKey) {
@@ -1207,6 +1210,7 @@
     // parked cloud copy with local) and by every pull from here on.
     flagSet(MERGE_REG_KEY, name, !!storageKey && !!slices[name].merge);
     flagSet(DEFER_KEY, name, false);
+    if (mergeBroken[name]) delete mergeBroken[name];   // SY-D6: a fresh registration gets a fresh chance
 
     // Mailbox flush: if remote data for this slice was carried here —
     // parked by the divergence guard while the app was closed, or
@@ -1305,7 +1309,7 @@
     var relayCarry = forCloud ? (readCarry() || {}) : null;
     Object.keys(slices).forEach(function (name) {
       var data;
-      if (relayCarry && !slices[name].live && isDeferred(name) &&
+      if (relayCarry && (mergeBroken[name] || (!slices[name].live && isDeferred(name))) &&
           relayCarry[name] !== undefined && relayCarry[name] !== null) {
         data = JSON.parse(JSON.stringify(relayCarry[name]));
       } else {
@@ -1453,8 +1457,26 @@
         // state is never mutated by a merge that misbehaves.
         final = slice.merge(JSON.parse(localStr), JSON.parse(JSON.stringify(remoteData)));
         if (final === null || typeof final === "undefined") final = remoteData;
+        if (mergeBroken[name]) delete mergeBroken[name];
       } catch (e) {
-        final = remoteData;               // degrade to LWW, keep syncing
+        // SY-D6 — A MERGE THAT THROWS MUST NOT COST ANYBODY'S DATA.
+        // The old fallback was "take the remote copy" ("degrade to
+        // LWW, keep syncing"): one exception inside an app's merge
+        // function silently replaced this device's data with the
+        // cloud's. Now nothing is replaced on either side: local
+        // stays, the cloud copy is parked and relayed untouched by
+        // the next upload (same mechanics as a deferred slice), and
+        // the failure is in the console. The slice simply does not
+        // sync until its merge works again.
+        try { console.error("[orOS sync] merge failed for \"" + name + "\" — local kept, cloud copy relayed:", e); } catch (e2) {}
+        mergeBroken[name] = true;
+        parkRemote(name, remoteData);
+        return {
+          changed: false,
+          cloudStale: false,
+          data: local,
+          baselineCandidate: null
+        };
       }
     }
 
@@ -1838,7 +1860,7 @@
         Object.keys(slices).forEach(function (name) {
           // SY-D3: a deferred slice uploaded the CLOUD's copy, not its
           // local one — that is no proof of "local is synced".
-          if (!slices[name].live && isDeferred(name)) return;
+          if (mergeBroken[name] || (!slices[name].live && isDeferred(name))) return;
           var data = (name === "shell") ? payload.shell : payload.apps[name];
           recordBaseline(name, (data === null || data === undefined) ? "null" : JSON.stringify(data));
         });

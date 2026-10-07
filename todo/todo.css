@@ -594,6 +594,7 @@ body.is-dragging * { cursor: grabbing !important; }
 
 /* ---------- 8. Dialogs ---------- */
 dialog {
+  margin: auto;                 /* R32: the reset (* { margin: 0 }) removes the browser's centring */
   background: var(--panel-bg);
   color: var(--text);
   border: 1px solid var(--border);

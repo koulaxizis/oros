@@ -8,14 +8,18 @@
 //     an edit NEWER than its tombstone resurrects the entity.
 //   - mergeTodoStates(local, remote): deterministic, symmetric —
 //     both devices compute the SAME converged result.
-//       · scalars (activeList/hideCompleted): larger sm wins
+//       · scalars (activeList/hideCompleted): larger sm wins — kept
+//         for devices on the previous version only; this version
+//         keeps the view per device ("oros-todo-prefs", TD-8)
 //       · entities: union by id, content by larger mtime
 //         (tie → lexicographic JSON — identical both ways)
 //       · ordering (pos/om): side with larger om wins positions
 //       · tombstones: union with max ts; deletion beats older
 //         edits, loses to newer ones
-//   - Undo asserts the WHOLE snapshot as newest (stampAll) —
-//     undo wins over remote, propagates.
+//   - Undo puts back ONLY what the action removed, stamped newest
+//     (TD-1); nothing else is re-stamped.
+//   - Tasks merge FIELD BY FIELD (it.fm, TD-3); the slice and the
+//     merge share one canonical form (TD-4).
 //   - DATA_VER 2 → 3 additive migration (mtime/om/pos/deleted/sm).
 // Carried over from v0.3 (Kanban-pattern port):
 //   - Labels, filter by label, global search (all lists),
@@ -98,7 +102,7 @@
       "toast.listdel": "List deleted",
       "toast.labeladd": "Label created",
       "toast.labeldel": "Label deleted",
-      "toast.merged":  "Synced changes from another device",
+      "toast.saveFail": "Could not save — the storage of this browser is full",
       "undo":          "Undo",
       "confirm.listdel": "Delete this list and all its tasks?",
       "confirm.itemdel": "Delete this task?",
@@ -163,7 +167,7 @@
       "toast.listdel": "Η λίστα διαγράφηκε",
       "toast.labeladd": "Η ετικέτα δημιουργήθηκε",
       "toast.labeldel": "Η ετικέτα διαγράφηκε",
-      "toast.merged":  "Συγχρονίστηκαν αλλαγές από άλλη συσκευή",
+      "toast.saveFail": "Η αποθήκευση απέτυχε — ο χώρος αποθήκευσης του browser γέμισε",
       "undo":          "Αναίρεση",
       "confirm.listdel": "Διαγραφή λίστας και όλων των εργασιών της;",
       "confirm.itemdel": "Διαγραφή αυτής της εργασίας;",
@@ -288,28 +292,79 @@
   var activeFilters = [];
 
   // --- version stamps ---
-  function touch(ent)     { ent.mtime = Date.now(); }
+
+  // TD-3 — ONE STAMP PER FIELD OF A TASK. A task used to carry a
+  // single mtime and the merge took the whole newer object: ticking
+  // a task on the phone erased notes written on the laptop (or the
+  // other way round), and the nightly list cycle — which only
+  // un-ticks — overwrote every edit made elsewhere to those tasks.
+  //   it.fm = { text, done, due, notes, labels, info, recurrence }
+  // (always complete once present); it.mtime = the newest of them
+  // and still decides life against a tombstone.
+  // A task whose mtime is NEWER than all of its field stamps was
+  // last changed by a device on the previous todo.js (it bumps mtime
+  // only): for that version mtime speaks for every field.
+  var ITEM_FIELDS = ["text", "done", "due", "notes", "labels", "info", "recurrence"];
+  function touchedByOldCode(it) {
+    if (!it.fm || typeof it.fm !== "object") return false;
+    var mx = 0;
+    for (var i = 0; i < ITEM_FIELDS.length; i++) {
+      var v = it.fm[ITEM_FIELDS[i]];
+      if (typeof v === "number" && v > mx) mx = v;
+    }
+    return (it.mtime || 0) > mx;
+  }
+  function fieldStamp(it, f) {
+    if (!it.fm || typeof it.fm !== "object" || touchedByOldCode(it)) return it.mtime || 0;
+    return (typeof it.fm[f] === "number") ? it.fm[f] : 0;
+  }
+  function ensureFm(it) {
+    var fm = {};
+    for (var i = 0; i < ITEM_FIELDS.length; i++) fm[ITEM_FIELDS[i]] = fieldStamp(it, ITEM_FIELDS[i]);
+    it.fm = fm;
+  }
+  function touchField(it, f) {
+    ensureFm(it);
+    var now = Date.now();
+    it.fm[f] = now;
+    it.mtime = now;
+  }
+  function stampItemNewest(it, now) {
+    it.fm = {};
+    for (var i = 0; i < ITEM_FIELDS.length; i++) it.fm[ITEM_FIELDS[i]] = now;
+    it.mtime = now;
+  }
+
+  // TD-9 — the same for a LIST header, in two groups: "name", and
+  // "cycle" (recurrence + lastReset + nextReset travel together).
+  // Renaming a list on one device no longer reverts a cycle set on
+  // another, and the other way round.
+  var LIST_FIELDS = ["name", "cycle"];
+  function listTouchedByOldCode(l) {
+    if (!l.fm || typeof l.fm !== "object") return false;
+    var mx = Math.max(typeof l.fm.name === "number" ? l.fm.name : 0,
+                      typeof l.fm.cycle === "number" ? l.fm.cycle : 0);
+    return (l.mtime || 0) > mx;
+  }
+  function listStamp(l, f) {
+    if (!l.fm || typeof l.fm !== "object" || listTouchedByOldCode(l)) return l.mtime || 0;
+    return (typeof l.fm[f] === "number") ? l.fm[f] : 0;
+  }
+  function touchListField(l, f) {
+    var fm = { name: listStamp(l, "name"), cycle: listStamp(l, "cycle") };
+    var now = Date.now();
+    fm[f] = now;
+    l.fm = fm;
+    l.mtime = now;
+  }
+  function stampListNewest(l, now) {
+    l.fm = { name: now, cycle: now };
+    l.mtime = now;
+  }
+
   function tombstone(id) {
     if (!state.deleted) state.deleted = {};
     state.deleted[id] = Date.now();
-  }
-  // Undo policy: the restored snapshot is asserted as the NEWEST
-  // state everywhere → it wins the next merge and propagates.
-  function stampAll() {
-    var nowMs = Date.now();
-    state.sm = nowMs;
-    state.om = nowMs;                 // TD1: the restored snapshot must be
-                                      // the ordering REFERENCE too — with a
-                                      // stale root om a newer remote om would
-                                      // donate positions and resurrected
-                                      // entities would land at the END of
-                                      // the tab strip / list.
-    (state.labels || []).forEach(function (lb) { lb.mtime = nowMs; });
-    (state.lists || []).forEach(function (l) {
-      l.mtime = nowMs;
-      l.om = nowMs;                   // TD1: same contract per-list (items)
-      (l.items || []).forEach(function (it) { it.mtime = nowMs; });
-    });
   }
 
   function defaultState() {
@@ -330,7 +385,8 @@
     var mkSeed = function (id, name, pos) {
       return {
         id: id, name: name, mtime: 0, om: 0, pos: pos,
-        recurrence: null, lastReset: null, nextReset: null, items: []
+        recurrence: null, lastReset: null, nextReset: null, items: [],
+        fm: { name: 0, cycle: 0 }
       };
     };
     return {
@@ -361,6 +417,11 @@
       items: []
     };
   }
+  function freshList(name) {
+    var l = newListObj(name);
+    stampListNewest(l, l.mtime);
+    return l;
+  }
 
   function newItemObj(text, due) {
     return {
@@ -376,6 +437,11 @@
       om: 0,                         // (reserved, per-item; ordering is list-level)
       pos: 0
     };
+  }
+  function freshItem(text, due) {
+    var it = newItemObj(text, due);
+    stampItemNewest(it, it.mtime);
+    return it;
   }
 
   // Additive migration: bring ANY older shape up to DATA_VER.
@@ -410,11 +476,74 @@
     return data;
   }
 
-  function pruneTombstones(st) {
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(st.deleted || {}).forEach(function (id) {
-      if (st.deleted[id] < cutoff) delete st.deleted[id];
+  // TD-4 — tombstones in ONE canonical form: keys sorted, and the
+  // 30-day prune measured against the NEWEST stamp found in the data,
+  // never against this device's clock. Two devices used to hold the
+  // same tombstones in different key order (each deletes something
+  // before syncing) — the serialized states never matched, and both
+  // uploaded on every sync cycle, for as long as the tombs lived.
+  function newestStamp(st) {
+    var mx = Math.max(st.sm || 0, st.om || 0);
+    (st.labels || []).forEach(function (lb) { if ((lb.mtime || 0) > mx) mx = lb.mtime; });
+    (st.lists || []).forEach(function (l) {
+      if ((l.mtime || 0) > mx) mx = l.mtime;
+      if ((l.om || 0) > mx) mx = l.om;
+      (l.items || []).forEach(function (it) { if ((it.mtime || 0) > mx) mx = it.mtime; });
     });
+    var del = st.deleted || {};
+    Object.keys(del).forEach(function (id) { if ((del[id] || 0) > mx) mx = del[id]; });
+    return mx;
+  }
+  // TD-10: the tombstone of a DEFAULT list never expires. Every new
+  // device creates the two default lists again (same ids, stamp 0);
+  // once the 30 days were over, a default list the user had deleted
+  // came back, empty, on all devices.
+  var SEED_LIST_IDS = { "tdl-general": true, "tdl-groceries": true };
+  function canonDeleted(st) {
+    var src = st.deleted || {}, out = {};
+    var cutoff = newestStamp(st) - TOMB_LIFETIME_MS;
+    Object.keys(src).sort().forEach(function (id) {
+      if (SEED_LIST_IDS[id] || (src[id] || 0) >= cutoff) out[id] = src[id];
+    });
+    return out;
+  }
+  function pruneTombstones(st) {
+    st.deleted = canonDeleted(st);
+  }
+
+  // Canonical task: fixed key order, field stamps always spelled out.
+  var ITEM_KEYS = ["id", "text", "done", "due", "notes", "labels", "info", "recurrence",
+                   "mtime", "om", "pos", "fm"];
+  function canonItem(src) {
+    var it = {}, i;
+    for (i = 0; i < ITEM_KEYS.length; i++) if (src[ITEM_KEYS[i]] !== undefined) it[ITEM_KEYS[i]] = src[ITEM_KEYS[i]];
+    Object.keys(src).sort().forEach(function (k) {
+      if (it[k] === undefined && src[k] !== undefined) it[k] = src[k];
+    });
+    var fm = {};
+    for (i = 0; i < ITEM_FIELDS.length; i++) fm[ITEM_FIELDS[i]] = fieldStamp(src, ITEM_FIELDS[i]);
+    delete it.fm;
+    it.fm = fm;
+    return it;
+  }
+  // What the sync engine sees (getter) and what the merge returns.
+  var LIST_KEYS = ["id", "name", "mtime", "om", "pos", "recurrence", "lastReset", "nextReset", "items", "fm"];
+  function canonList(src) {
+    var l = {}, i;
+    for (i = 0; i < LIST_KEYS.length; i++) if (src[LIST_KEYS[i]] !== undefined) l[LIST_KEYS[i]] = src[LIST_KEYS[i]];
+    Object.keys(src).sort().forEach(function (k) {
+      if (l[k] === undefined && src[k] !== undefined) l[k] = src[k];
+    });
+    l.items = (src.items || []).map(canonItem);
+    delete l.fm;
+    l.fm = { name: listStamp(src, "name"), cycle: listStamp(src, "cycle") };
+    return l;
+  }
+  function canonState(st) {
+    var out = JSON.parse(JSON.stringify(st));
+    out.lists = (out.lists || []).map(canonList);
+    out.deleted = canonDeleted(out);
+    return out;
   }
 
   function load() {
@@ -437,10 +566,19 @@
   // Auto-save: every mutation ends with save() + scheduleRender().
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { /* quota — nothing sensible to do offline */ }
+    catch (e) {
+      // TD-6: a full disk used to be swallowed here — the task looked
+      // saved and was gone at the next start. One inbox line per hour.
+      try {
+        var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+        if (N && typeof N.emit === "function") {
+          N.emit({ ns: "todo", key: "save-fail:" + new Date().toISOString().slice(0, 13),
+                   type: "err", title: "To-Do", body: t("toast.saveFail") });
+        } else { showToast(t("toast.saveFail"), false); }
+      } catch (e2) {}
+    }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
-
   function scheduleRender() {
     if (renderQueued) return;
     renderQueued = true;
@@ -450,11 +588,46 @@
     });
   }
 
+  // TD-8 — THE VIEW BELONGS TO THE DEVICE. Which tab is open and
+  // whether completed tasks are hidden used to be SYNCED settings
+  // (state.activeList / state.hideCompleted, ordered by state.sm):
+  // every tab switch marked the engine dirty and uploaded, and the
+  // other device's screen jumped to that tab at its next pull — a
+  // task typed into the quick-add at that moment landed in a list the
+  // user was not looking at a second earlier.
+  // They now live in "oros-todo-prefs" (device-local, swept by the
+  // factory reset). The three old fields stay in the data untouched,
+  // for devices still running the previous todo.js.
+  var PREFS_KEY = "oros-todo-prefs";
+  var view = { activeList: null, hideCompleted: false };
+  function loadView() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(PREFS_KEY)); } catch (e) {}
+    if (p && typeof p === "object") {
+      view.activeList = (typeof p.activeList === "string") ? p.activeList : null;
+      view.hideCompleted = !!p.hideCompleted;
+    } else {
+      // first run of this version: start from what this device showed last
+      view.activeList = (typeof state.activeList === "string") ? state.activeList : null;
+      view.hideCompleted = !!state.hideCompleted;
+      saveView();
+    }
+  }
+  function saveView() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(view)); } catch (e) {}
+  }
+  function setActiveList(id) {
+    view.activeList = id;
+    saveView();
+  }
   function activeList() {
     for (var i = 0; i < state.lists.length; i++) {
-      if (state.lists[i].id === state.activeList) return state.lists[i];
+      if (state.lists[i].id === view.activeList) return state.lists[i];
     }
-    return state.lists[0];      // fallback (guarded in sliceSet)
+    // The list on screen is gone (deleted here or elsewhere): first one.
+    view.activeList = state.lists[0].id;
+    saveView();
+    return state.lists[0];
   }
 
   function listById(id) {
@@ -545,33 +718,102 @@
       if ((x.mtime || 0) !== (y.mtime || 0)) return (x.mtime || 0) - (y.mtime || 0);
       return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
     });
-    entities.forEach(function (e, i) { e.pos = i; });
-    return entities;
+    return entities.map(function (e, i) {
+      if (e.pos === i) return e;
+      var c = {};
+      Object.keys(e).forEach(function (k) { c[k] = e[k]; });
+      c.pos = i;                                 // on a copy: inputs stay untouched
+      return c;
+    });
   }
   
     // Symmetric ordering-reference pick: larger om wins; TIES broken
   // by lexicographic id sequence (identical decision on both devices
   // — never "local wins", that flip-flops forever).
-  function pickRef(aArr, bArr, aOm, bOm) {
+  // TD-12: on a tie the two id sequences are compared as SEQUENCES
+  // (element by element; a prefix is smaller than its extension),
+  // restricted to the entities that survive the merge. The merged
+  // order is the chosen sequence plus appended newcomers — an
+  // extension of it — so merging the result with either input again
+  // picks the result's own order. (The old comparison of serialized
+  // strings let an EMPTY list beat a full one, and the order could
+  // flip when the same data met again.)
+  function pickRef(aArr, bArr, aOm, bOm, survivors) {
     if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
-    var ka = JSON.stringify((aArr || []).map(function (e) { return e.id; }));
-    var kb = JSON.stringify((bArr || []).map(function (e) { return e.id; }));
-    return ka >= kb ? aArr : bArr;
+    var alive = {};
+    (survivors || []).forEach(function (e) { alive[e.id] = true; });
+    var seq = function (arr) {
+      return (arr || []).map(function (e) { return e.id; })
+        .filter(function (id) { return !survivors || alive[id]; });
+    };
+    var ka = seq(aArr), kb = seq(bArr), n = Math.min(ka.length, kb.length);
+    for (var i = 0; i < n; i++) {
+      if (ka[i] !== kb[i]) return ka[i] > kb[i] ? aArr : bArr;
+    }
+    return ka.length >= kb.length ? aArr : bArr;
   }
 
   // Lists merge STRUCTURALLY: headers LWW by mtime, but each list's
   // items merge independently — a header edit on one device must
   // never clobber item changes on the other.
+  // Two versions of ONE task → one task, field by field (TD-3).
+  function mergeItem(x, y) {
+    if (JSON.stringify(x) === JSON.stringify(y)) return x;
+    var base = newerEntity(x, y), out = {};
+    Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+    var fm = {};
+    ITEM_FIELDS.forEach(function (f) {
+      var sx = fieldStamp(x, f), sy = fieldStamp(y, f), w;
+      if (sx !== sy) w = (sx > sy) ? x : y;
+      else {
+        var jx = JSON.stringify(x[f] === undefined ? null : x[f]);
+        var jy = JSON.stringify(y[f] === undefined ? null : y[f]);
+        w = (jx >= jy) ? x : y;                 // tie → same pick on both devices
+      }
+      if (w[f] === undefined) delete out[f];
+      else out[f] = JSON.parse(JSON.stringify(w[f]));
+      fm[f] = Math.max(sx, sy);
+    });
+    out.fm = fm;
+    out.mtime = Math.max(x.mtime || 0, y.mtime || 0);
+    return out;
+  }
+  function unionItems(aArr, bArr, tomb) {
+    var map = {};
+    (aArr || []).forEach(function (e) { map[e.id] = e; });
+    (bArr || []).forEach(function (e) {
+      map[e.id] = map[e.id] ? mergeItem(map[e.id], e) : e;
+    });
+    var out = [];
+    Object.keys(map).forEach(function (id) {
+      if (entAlive(map[id], tomb)) out.push(map[id]);
+    });
+    return out;
+  }
   function mergeListEntity(la, lb, tomb) {
     var strip = function (l) {
       var c = JSON.parse(JSON.stringify(l));
       delete c.items;
       return c;
     };
-    var head = newerEntity(strip(la), strip(lb));
+    var base = newerEntity(strip(la), strip(lb)), head = {};
+    Object.keys(base).forEach(function (k) { head[k] = base[k]; });
+    // TD-9: name and cycle each from the side that changed them last
+    var nA = listStamp(la, "name"), nB = listStamp(lb, "name");
+    var nameFrom = (nA !== nB) ? (nA > nB ? la : lb)
+                 : (JSON.stringify(la.name) >= JSON.stringify(lb.name) ? la : lb);
+    head.name = nameFrom.name;
+    var cyc = function (l) { return JSON.stringify([l.recurrence || null, l.lastReset || null, l.nextReset || null]); };
+    var cA = listStamp(la, "cycle"), cB = listStamp(lb, "cycle");
+    var cycFrom = (cA !== cB) ? (cA > cB ? la : lb) : (cyc(la) >= cyc(lb) ? la : lb);
+    head.recurrence = cycFrom.recurrence ? JSON.parse(JSON.stringify(cycFrom.recurrence)) : null;
+    head.lastReset = cycFrom.lastReset || null;
+    head.nextReset = cycFrom.nextReset || null;
+    head.fm = { name: Math.max(nA, nB), cycle: Math.max(cA, cB) };
+    head.mtime = Math.max(la.mtime || 0, lb.mtime || 0);
     head.om = Math.max(la.om || 0, lb.om || 0);
-    head.items = unionEntities(la.items || [], lb.items || [], tomb);
-    head.items = orderEntities(head.items, pickRef(la.items, lb.items, la.om, lb.om));
+    head.items = unionItems(la.items || [], lb.items || [], tomb);
+    head.items = orderEntities(head.items, pickRef(la.items, lb.items, la.om, lb.om, head.items));
     return head;
   }
 
@@ -579,12 +821,8 @@
     var a = A || {}, b = B || {};
 
     var tomb = mergeEntityMaps(a.deleted, b.deleted);
-    // Prune expired tombstones INSIDE the merge — both sides shrink
-    // identically, so pruning is itself convergence-safe.
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(tomb).forEach(function (id) {
-      if (tomb[id] < cutoff) delete tomb[id];
-    });
+    // Pruning and key order happen once, at the end (canonState →
+    // canonDeleted), by a rule that does not read this device's clock.
 
     // scalars: LWW by root settings mtime. TIES must NOT favor the
     // local side — merge(A,B) and merge(B,A) must pick the SAME side
@@ -609,7 +847,7 @@
 
     // labels: content LWW, order by larger om side
     var labels = unionEntities(a.labels || [], b.labels || [], tomb);
-    out.labels = orderEntities(labels, pickRef(a.labels, b.labels, a.om, b.om));
+    out.labels = orderEntities(labels, pickRef(a.labels, b.labels, a.om, b.om, labels));
 
     // lists: pair by id, structural merge (headers + independent items)
     var listMap = {};
@@ -626,18 +864,25 @@
       var pair = listMap[id];
       var merged;
       if (pair.length === 2) merged = mergeListEntity(pair[0], pair[1], tomb);
-      else merged = pair[0];                       // one-sided (new or removed elsewhere)
+      else {
+        // one-sided (new or removed elsewhere): its tasks still obey
+        // the tombstones (a task deleted on the other device stays so)
+        merged = {};
+        Object.keys(pair[0]).forEach(function (k) { merged[k] = pair[0][k]; });
+        merged.items = orderEntities(
+          (pair[0].items || []).filter(function (it) { return entAlive(it, tomb); }),
+          pair[0].items);                          // keep the order, renumber pos
+      }
       if (entAlive(merged, tomb)) mergedLists.push(merged);
     });
-    out.lists = orderEntities(mergedLists, pickRef(a.lists, b.lists, a.om, b.om));
+    out.lists = orderEntities(mergedLists, pickRef(a.lists, b.lists, a.om, b.om, mergedLists));
 
     // post-conditions: never ship an empty state (fresh-install
     // fallback), never point activeList at a ghost
     if (out.lists.length === 0) return null;
     var found = out.lists.some(function (l) { return l.id === out.activeList; });
     if (!found) out.activeList = out.lists[0].id;
-
-    return out;
+    return canonState(out);
   }
 
   // ---------- 3. Recurrence date math + list cycles ----------
@@ -714,7 +959,7 @@
       while (list.nextReset <= today) {
         list.lastReset = list.nextReset;
         list.items.forEach(function (it) {
-          if (it.done) { it.done = false; touch(it); }
+          if (it.done) { it.done = false; touchField(it, "done"); }   // TD-3: only the tick
         });
         list.nextReset = dateToISO(
           nextOccurrence(isoToDate(list.nextReset), list.recurrence));
@@ -739,7 +984,7 @@
     tabs.innerHTML = "";
     state.lists.forEach(function (list) {
       var b = document.createElement("button");
-      b.className = "tab" + (list.id === state.activeList ? " active" : "");
+      b.className = "tab" + (list.id === activeList().id ? " active" : "");
       b.setAttribute("role", "tab");
       b.dataset.listId = list.id;
       b.type = "button";
@@ -773,10 +1018,9 @@
       b.addEventListener("dblclick", function () { openListDialog(list.id); });
       b.addEventListener("click", function () {
         if (Date.now() - tabDragEndTs < 300) return;   // post-drag click
-        if (state.activeList === list.id) return;
-        state.activeList = list.id;
-        state.sm = Date.now();      // settings LWW follows the freshest tap
-        save(); scheduleRender();
+        if (view.activeList === list.id) return;
+        setActiveList(list.id);     // TD-8: a view change — nothing to save or sync
+        scheduleRender();
       });
 
       // Tab drag reorder (pointer-based, horizontal bias)
@@ -797,7 +1041,7 @@
   }
 
   function itemMatchesView(item) {
-    if (state.hideCompleted && item.done) return false;
+    if (view.hideCompleted && item.done) return false;
     if (searchQuery && !matchesSearch(item)) return false;
     if (activeFilters.length > 0 && !matchesFilters(item)) return false;
     return true;
@@ -855,7 +1099,7 @@
     $("no-match").hidden = true;
     $("filtered").hidden = true;
     var visible = list.items.filter(function (item) {
-      return !(state.hideCompleted && item.done);
+      return !(view.hideCompleted && item.done);
     });
     if (visible.length === 0 && list.items.length > 0) {
       // Everything completed + Hide completed on → say so, never blank
@@ -866,7 +1110,7 @@
     }
 
     list.items.forEach(function (item) {
-      if (state.hideCompleted && item.done) return;
+      if (view.hideCompleted && item.done) return;
       ul.appendChild(makeItemRow(list, item, { handle: true }));
     });
   }
@@ -885,8 +1129,8 @@
     check.checked = item.done;
     check.addEventListener("change", function () {
       item.done = check.checked;
-      if (item.done) recycleItem(item);       // recurring → reopens
-      touch(item);                            // content version bump
+      touchField(item, "done");               // TD-3: the tick only
+      if (item.done && recycleItem(item)) touchField(item, "due");   // recurring → reopens, new date
       save(); scheduleRender();
     });
     li.appendChild(check);
@@ -1031,7 +1275,7 @@
     if (!parsed.text) return;                    // only date words typed
 
     var list = activeList();
-    var item = newItemObj(parsed.text, parsed.due);
+    var item = freshItem(parsed.text, parsed.due);
     list.items.unshift(item);
     list.items.forEach(function (it, i) { it.pos = i; });   // keep pos honest
     list.om = Date.now();          // top-insert is an ORDERING decision:
@@ -1061,14 +1305,20 @@
     // (sync pull, undo), not only on user clicks. Fixes the "toggle
     // desync" where the checkbox showed stale state after a merge.
     var hc = $("hide-completed");
-    if (hc && hc.checked !== !!state.hideCompleted) hc.checked = !!state.hideCompleted;
+    if (hc && hc.checked !== !!view.hideCompleted) hc.checked = !!view.hideCompleted;
   }
 
   // ---------- 7. Item detail dialog ----------
   var editingListId = null;
   var editingItemId = null;
   var pickedSwatch = FALLBACK_COLOR;
-  var openSnapshot = null;   // v0.4b: zero-edit close must not stamp mtime
+  // TD-2: what the dialog showed when it opened, field by field. On
+  // close only the fields the USER changed are written back.
+  var openValues = null;
+  // Extra-info rows are edited on a dialog-local copy and committed
+  // at close: the rows used to write straight into the task object,
+  // which a sync pull may replace while the dialog is open.
+  var dlgInfo = [];
 
   function editingItem() {
     return itemById(listById(editingListId), editingItemId);
@@ -1100,7 +1350,10 @@
     $("f-notes").value = item.notes || "";
 
     renderItemLabels(item);
-    renderInfoRows(item);
+    dlgInfo = (item.info || []).map(function (f) {
+      return { id: f.id || uid(), label: f.label || "", value: f.value || "" };
+    });
+    renderInfoRows();
     $("f-lbl-picker").hidden = true;
 
     var hasRec = !!item.recurrence;
@@ -1108,14 +1361,7 @@
     $("rec-editor").style.display = hasRec ? "flex" : "none";
     if (hasRec) fillRecFields("f-", item.recurrence);
 
-    openSnapshot = JSON.stringify([
-      item.text, item.due || "", item.notes || "",
-      JSON.stringify(item.recurrence || null),
-      (item.info || []).map(function (f) {
-        return [(f.label || ""), (f.value || "")];
-      })
-    ]);
-
+    openValues = readItemDialog();
     $("dlg-item").showModal();
     setTimeout(function () { $("f-text").focus(); }, 50);
   }
@@ -1170,10 +1416,11 @@
       name.textContent = lb.name;
       chip.appendChild(name);
       chip.addEventListener("click", function () {
-        item.labels = item.labels.filter(function (id) { return id !== lid; });
-        touch(item);
+        var cur = editingItem() || item;       // the state may have been replaced by a pull
+        cur.labels = (cur.labels || []).filter(function (id) { return id !== lid; });
+        touchField(cur, "labels");
         save(); scheduleRender();
-        renderItemLabels(item);
+        renderItemLabels(cur);
         if (!$("f-lbl-picker").hidden) renderLblPicker();
       });
       host.appendChild(chip);
@@ -1217,7 +1464,7 @@
         var pos = it.labels.indexOf(label.id);
         if (pos === -1) it.labels.push(label.id);
         else            it.labels.splice(pos, 1);
-        touch(it);
+        touchField(it, "labels");
         save(); scheduleRender();
         renderItemLabels(it);
         renderLblPicker();
@@ -1255,7 +1502,7 @@
     state.labels.push(label);
 
     var item = editingItem();
-    if (item) { item.labels.push(label.id); touch(item); }
+    if (item) { item.labels.push(label.id); touchField(item, "labels"); }
 
     pickedSwatch = FALLBACK_COLOR;
     input.value = "";
@@ -1268,15 +1515,15 @@
   }
 
   // --- Extra info rows inside the item dialog (free key-value) ---
-  function renderInfoRows(item) {
+  function renderInfoRows() {
     var host = $("f-info-list");
     host.innerHTML = "";
-    item.info.forEach(function (f) {
-      host.appendChild(makeInfoRow(item, f));
+    dlgInfo.forEach(function (f) {
+      host.appendChild(makeInfoRow(f));
     });
   }
 
-  function makeInfoRow(item, f) {
+  function makeInfoRow(f) {
     var row = document.createElement("div");
     row.className = "info-row";
 
@@ -1304,24 +1551,20 @@
     x.innerHTML =
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     x.addEventListener("click", function () {
-      item.info = item.info.filter(function (r) { return r !== f; });
-      touch(item);
-      save(); scheduleRender();
-      renderInfoRows(item);
+      // Committed with the rest of the dialog when it closes.
+      dlgInfo = dlgInfo.filter(function (r) { return r !== f; });
+      renderInfoRows();
     });
     row.appendChild(x);
-
     return row;
   }
 
   function addInfoRow() {
-    var item = editingItem();
-    if (!item) return;
-    item.info.push({ id: uid(), label: "", value: "" });
-    // No touch/save here: a blank row is not a change yet. The
-    // dialog close-flush commits real edits (filled rows) and
-    // silently drops blank ones — zero sync noise for no-ops.
-    renderInfoRows(item);
+    if (!editingItem()) return;
+    dlgInfo.push({ id: uid(), label: "", value: "" });
+    // A blank row is not a change yet: the close-flush commits filled
+    // rows and silently drops blank ones.
+    renderInfoRows();
     var rows = $("f-info-list").querySelectorAll(".info-row");
     if (rows.length > 0) {
       var l = rows[rows.length - 1].querySelector("input");
@@ -1329,39 +1572,66 @@
     }
   }
 
+  // What the dialog holds right now, in comparable form.
+  function readItemDialog() {
+    var info = dlgInfo.filter(function (f) {
+      return (f.label || "").trim() || (f.value || "").trim();
+    }).map(function (f) { return { id: f.id, label: f.label || "", value: f.value || "" }; });
+    return {
+      text:  $("f-text").value.trim(),
+      due:   $("f-due").value || null,
+      notes: $("f-notes").value,
+      rec:   readRecFromFields("f-"),
+      info:  info,
+      infoKey: JSON.stringify(info.map(function (f) { return [f.label, f.value]; }))
+    };
+  }
+
+  // TD-2 — commit the dialog: ONLY what the user changed since it
+  // opened. The old close handler copied every field of the dialog
+  // back into the task before it even checked for changes — when the
+  // task had been updated by a sync in the meantime, an untouched
+  // dialog (Esc) put the old text, date and notes back in memory, and
+  // the next save of anything wrote them out.
+  function commitItemDialog() {
+    if (editingListId === null || editingItemId === null) return;
+    var item = editingItem();
+    var was = openValues;
+    editingListId = null;
+    editingItemId = null;
+    openValues = null;
+    if (!item || !was) return;
+    var now = readItemDialog(), changed = false;
+    if (now.text && now.text !== was.text) { item.text = now.text; touchField(item, "text"); changed = true; }
+    if (now.due !== was.due) { item.due = now.due; touchField(item, "due"); changed = true; }
+    if (now.notes !== was.notes) { item.notes = now.notes; touchField(item, "notes"); changed = true; }
+    if (JSON.stringify(now.rec) !== JSON.stringify(was.rec)) {
+      item.recurrence = now.rec; touchField(item, "recurrence"); changed = true;
+    }
+    if (now.infoKey !== was.infoKey) { item.info = now.info; touchField(item, "info"); changed = true; }
+    if (!changed) return;                 // pristine close: no stamp, no save, no push
+    save(); scheduleRender();
+  }
+
   // Flush typed-but-unsaved text when the item dialog closes by ANY
   // path (Save button, Esc) — nothing is ever lost. Structural label/
   // info changes are saved at the moment of the click, Kanban-style.
   // Every flush stamps the item: dialog edits are real mutations.
-  $("dlg-item").addEventListener("close", function () {
-    if (editingListId === null) return;
-    var item = editingItem();
-    editingListId = null;
-    editingItemId = null;
-    if (!item) return;
-    item.info = (item.info || []).filter(function (f) {
-      return (f.label || "").trim() || (f.value || "").trim();
-    });
-    item.text  = $("f-text").value.trim() || item.text;
-    item.due   = $("f-due").value || null;
-    item.notes = $("f-notes").value;
-    item.recurrence = readRecFromFields("f-");
+  $("dlg-item").addEventListener("close", commitItemDialog);
 
-    // Zero-edit flush (Esc on a pristine dialog): identical content →
-    // no mtime stamp, no dirty, no pointless sync push. Any real edit
-    // (incl. info rows) changes the fingerprint → stamps as before.
-    var nowSnapshot = JSON.stringify([
-      item.text, item.due || "", item.notes || "",
-      JSON.stringify(item.recurrence || null),
-      (item.info || []).map(function (f) {
-        return [(f.label || ""), (f.value || "")];
-      })
-    ]);
-    if (nowSnapshot === openSnapshot) return;
-    openSnapshot = null;
-
-    touch(item);
-    save(); scheduleRender();
+  // TD-5: the "close" event never fires when the APP is closed with
+  // the dialog still open (the shell replaces the frame) — notes
+  // typed in it were simply gone. Commit on the way out too.
+  function commitOpenDialogs() {
+    try {
+      if ($("dlg-item").open) commitItemDialog();
+      if ($("dlg-list").open && editingListId !== null) saveListDialog();
+    } catch (e) {}
+  }
+  window.addEventListener("pagehide", commitOpenDialogs);
+  window.addEventListener("beforeunload", commitOpenDialogs);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") commitOpenDialogs();
   });
 
 // v0.4b — the list dialog commits on ANY close path (Save, Esc,
@@ -1407,12 +1677,11 @@
   }
 
   function createList() {
-    var list = newListObj(t("new.list"));
+    var list = freshList(t("new.list"));
     list.pos = state.lists.length;
     state.lists.push(list);
-    state.activeList = list.id;
+    setActiveList(list.id);
     state.om = Date.now();          // new order version
-    state.sm = Date.now();
     save(); scheduleRender();
     openListDialog(list.id);      // straight into settings to name it
   }
@@ -1741,7 +2010,7 @@
         // win the JSON tie-break lottery and resurrect dead refs.
         if (next.length !== (item.labels || []).length) {
           item.labels = next;
-          touch(item);
+          touchField(item, "labels");
         }
       });
     });
@@ -1760,21 +2029,100 @@
   var undoSnapshot = null;
   var toastTimer = null;
 
+  var undoFreshListId = null;   // the empty list created when the LAST list was deleted
+  var undoViewList = null;      // the tab that was open when the action happened
   function pushUndo(key) {
     undoSnapshot = JSON.stringify(state);
+    undoFreshListId = null;
+    undoViewList = view.activeList;
     showToast(t(key), true);
   }
 
+  // TD-1 — UNDO PUTS BACK WHAT THE ACTION REMOVED, NOTHING ELSE.
+  // It used to restore the whole database as it was before the
+  // action and stamp EVERY list, task and label "newest" (stampAll):
+  // undoing one deletion then overrode every edit made on another
+  // device that had not synced yet — and anything a pull had brought
+  // in during the five seconds of the toast.
   function doUndo() {
     if (!undoSnapshot) return;
-    state = JSON.parse(undoSnapshot);
+    var snap = JSON.parse(undoSnapshot);
     undoSnapshot = null;
-    stampAll();              // the restored snapshot is the NEWEST truth
+    var now = Date.now(), listBack = false;
+
+    // labels that are gone → back, and back onto the tasks that had them
+    var labelsBack = {};
+    (snap.labels || []).forEach(function (lb, i) {
+      if (labelById(lb.id)) return;
+      lb.mtime = now;
+      state.labels.splice(Math.min(i, state.labels.length), 0, lb);
+      delete state.deleted[lb.id];
+      labelsBack[lb.id] = true;
+    });
+    if (Object.keys(labelsBack).length) state.labels.forEach(function (lb, i) { lb.pos = i; });
+
+    (snap.lists || []).forEach(function (sl, li) {
+      var cur = listById(sl.id);
+      if (!cur) {                                  // a deleted list → back, with its tasks
+        stampListNewest(sl, now);
+        sl.om = now;
+        (sl.items || []).forEach(function (it) { stampItemNewest(it, now); delete state.deleted[it.id]; });
+        state.lists.splice(Math.min(li, state.lists.length), 0, sl);
+        delete state.deleted[sl.id];
+        listBack = true;
+        return;
+      }
+      var itemsBack = false;
+      (sl.items || []).forEach(function (si, ii) {
+        var ci = itemById(cur, si.id);
+        if (!ci) {                                 // a deleted task → back, at its place
+          stampItemNewest(si, now);
+          cur.items.splice(Math.min(ii, cur.items.length), 0, si);
+          delete state.deleted[si.id];
+          itemsBack = true;
+          return;
+        }
+        var add = (si.labels || []).filter(function (id) {
+          return labelsBack[id] && (ci.labels || []).indexOf(id) === -1;
+        });
+        if (add.length) { ci.labels = (ci.labels || []).concat(add); touchField(ci, "labels"); }
+      });
+      if (itemsBack) {
+        cur.items.forEach(function (it, i) { it.pos = i; });
+        cur.om = now;                              // this layout is the ordering reference
+      }
+    });
+
+    if (listBack) {
+      if (undoFreshListId) {                       // the stand-in list is no longer needed
+        var fl = listById(undoFreshListId);
+        if (fl && fl.items.length === 0) {
+          state.lists = state.lists.filter(function (l) { return l.id !== undoFreshListId; });
+          tombstone(undoFreshListId);
+        }
+      }
+      state.lists.forEach(function (l, i) { l.pos = i; });
+      state.om = now;
+      if (undoViewList && listById(undoViewList)) setActiveList(undoViewList);
+    }
+    undoFreshListId = null;
     save(); renderAll();
     showToast(t("toast.undone"), false);
   }
 
+  // R12: only a toast that carries Undo stays in the app. Every plain
+  // message goes to the shell's unified notifications; the local
+  // toast is the fallback when the app runs standalone.
   function showToast(text, withUndo) {
+    if (!withUndo) {
+      try {
+        var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+        if (N && typeof N.transient === "function") {
+          N.transient({ ns: "todo", title: text, body: "" });
+          return;
+        }
+      } catch (e) { /* cross-origin guard */ }
+    }
     var el = $("toast");
     el.innerHTML = "";
     el.classList.remove("show");
@@ -1795,7 +2143,8 @@
     el.classList.add("show");
 
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 5000);
+    // R12: an Undo offer stays at least 8 seconds; plain notes 4.
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, withUndo ? 8000 : 4000);
   }
   
     // ---------- 11b. Themed confirm (R14) ----------
@@ -1901,8 +2250,16 @@
     api.registerSlice("todo", sliceGet, sliceSet, "oros-todo-data", mergeTodoStates);
   }
 
+  // Debug / test handle (read-only use).
+  window.__todoDebug = {
+    merge: mergeTodoStates,
+    canon: canonState,
+    state: function () { return state; }
+  };
+
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    // Canonical copy (TD-4): what the merge would return for this state.
+    return canonState(state);
   }
 
   // data  — merged result (or plain remote on legacy LWW paths)
@@ -1911,7 +2268,8 @@
   function sliceSet(data, info) {
     data = migrate(JSON.parse(JSON.stringify(data || null)));
     if (!data || !Array.isArray(data.lists) || data.lists.length === 0) return;
-
+    // Echo: nothing new → no rewrite, no re-render.
+    if (JSON.stringify(canonState(data)) === JSON.stringify(canonState(state))) return;
     window.__orosSyncApi._suppress = true;
     try {
       state = data;
@@ -1921,18 +2279,14 @@
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-
     // activeList must point at something that exists
     var ok = state.lists.some(function (l) { return l.id === state.activeList; });
     if (!ok) state.activeList = state.lists[0].id;
-
     scheduleRender();
-
-    if (info && info.merged) {
-      showToast(t("toast.merged"), false);   // visible convergence
-    }
+    // (No toast per merge: it fired on every sync cycle that brought
+    // anything, on top of whatever the user was doing.)
   }
-  
+
     // Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) forward FIRST.
   // Standalone listener — does not touch existing keydown handling.
   document.addEventListener("keydown", function (e) {
@@ -1993,9 +2347,9 @@
 
     // Controls
     $("hide-completed").addEventListener("change", function () {
-      state.hideCompleted = this.checked;
-      state.sm = Date.now();      // settings change — LWW participant
-      save(); scheduleRender();
+      view.hideCompleted = this.checked;   // TD-8: device-local
+      saveView();
+      scheduleRender();
     });
     $("clear-completed").addEventListener("click", function () {
       var list = activeList();
@@ -2111,15 +2465,12 @@
         state.lists = state.lists.filter(function (l) { return l.id !== list.id; });
 
         if (state.lists.length === 0) {
-          var fresh = newListObj(t("new.list"));
+          var fresh = freshList(t("new.list"));
           fresh.pos = 0;
           state.lists.push(fresh);
-        }
-        if (!state.lists.some(function (l) { return l.id === state.activeList; })) {
-          state.activeList = state.lists[0].id;
+          undoFreshListId = fresh.id;
         }
         state.om = Date.now();
-        state.sm = Date.now();
         editingListId = null;
 
         $("dlg-list").close();
@@ -2151,7 +2502,7 @@
     var newName = $("l-name").value.trim();
     if (newName && newName !== list.name) {
       list.name = newName;
-      touch(list);
+      touchListField(list, "name");
     }
 
     var rec = readRecFromFields("l-");
@@ -2165,7 +2516,7 @@
         list.lastReset = null;
         list.nextReset = null;
       }
-      touch(list);
+      touchListField(list, "cycle");
     }
 
     editingListId = null;
@@ -2174,6 +2525,7 @@
 
   // ---------- Boot ----------
   load();
+  loadView();
   applyI18n();
   paintStaticAria();
   populateWeekdaySelects();
