@@ -440,12 +440,25 @@
   }
 
   // ---------- Object download / decrypt ----------
+  // VD-H (2026-10-07): the decrypted content must hash to the
+  // manifest's `h`. AES-GCM proves an object was sealed with the
+  // vault key, not WHICH file it is: anyone with write access to the
+  // app folder could swap two objects (or put back an old one) and
+  // one file's content would be written at another file's path.
+  function checkedPlain(entry) {
+    return function (plain) {
+      return VC().sha256Hex(plain).then(function (h) {
+        if (h !== entry.h) throw new Error("vault object does not match its manifest entry");
+        return plain;
+      });
+    };
+  }
   function downloadObject(entry) {
     if (entry.v === 1) {                           // LEGACY object
       return ST().getObject(OBJECTS_PREFIX + entry.h).then(function (buf) {
         if (!buf) throw new Error("missing vault object");
         return VC().decryptBytes(buf);
-      });
+      }).then(checkedPlain(entry));
     }
     return loadVaultKeys(false).then(function (k) {
       if (!k) throw new Error("vault key missing");
@@ -455,7 +468,7 @@
     }).then(function (buf) {
       if (!buf) throw new Error("missing vault object");
       return openV2(buf);
-    });
+    }).then(checkedPlain(entry));
   }
 
   // VD-4: what is REALLY at a local path, compared with what this

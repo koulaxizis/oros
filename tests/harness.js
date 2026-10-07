@@ -116,9 +116,20 @@ function jsonResponse(status, obj) {
 
 // ---------- Browser-ish globals ----------
 class MemoryStorage {
-  constructor() { this.map = new Map(); }
+  // full = true simulates a localStorage at its quota: any write that
+  // would make it bigger (a new key, a longer value) throws the way
+  // browsers do. Shrinking writes and removals still work.
+  constructor() { this.map = new Map(); this.full = false; }
   getItem(k) { return this.map.has(k) ? this.map.get(k) : null; }
-  setItem(k, v) { this.map.set(k, String(v)); }
+  setItem(k, v) {
+    v = String(v);
+    if (this.full && (!this.map.has(k) || v.length > this.map.get(k).length)) {
+      const e = new Error("Setting the value of '" + k + "' exceeded the quota.");
+      e.name = "QuotaExceededError";
+      throw e;
+    }
+    this.map.set(k, v);
+  }
   removeItem(k) { this.map.delete(k); }
   clear() { this.map.clear(); }
   key(i) { return [...this.map.keys()][i] || null; }
@@ -130,15 +141,17 @@ class MemoryStorage {
 // unlocked (passphrase set), auto interval off. `seed` pre-fills
 // localStorage before boot (e.g. a persisted slice registry, which
 // makes sync.js hydrate that slice as a closed-app proxy).
-async function createDevice(dropbox, name, seed) {
+// opts0.fetch(realFetch) may wrap the device's fetch (e.g. to answer
+// the OAuth token endpoint).
+async function createDevice(dropbox, name, seed, opts0) {
   const localStorage = new MemoryStorage();
-  for (const [k, v] of Object.entries(seed || {})) {
-    localStorage.setItem(k, typeof v === "string" ? v : JSON.stringify(v));
-  }
   localStorage.setItem("oros-db-access", "token-" + name);
   localStorage.setItem("oros-db-refresh", "refresh-" + name);
   localStorage.setItem("oros-db-expiry", String(Date.now() + 365 * 24 * 3600 * 1000));
   localStorage.setItem("oros-sync-interval", "0");
+  for (const [k, v] of Object.entries(seed || {})) {        // a seed may override the defaults
+    localStorage.setItem(k, typeof v === "string" ? v : JSON.stringify(v));
+  }
 
   const timers = [];
   const consoleLog = [];
@@ -156,7 +169,7 @@ async function createDevice(dropbox, name, seed) {
     location: { search: "", origin: "https://test.invalid", href: "" },
     history: { replaceState: () => {} },
     crypto: webcrypto,
-    fetch: dropbox.fetchFor(name),
+    fetch: (opts0 && opts0.fetch) ? opts0.fetch(dropbox.fetchFor(name)) : dropbox.fetchFor(name),
     console: { log: quiet("log"), info: quiet("info"), warn: quiet("warn"), error: quiet("error") },
     setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
     clearTimeout: () => {},

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.40.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.40.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -571,23 +571,39 @@
       if (legacy) legacy.textContent =
         hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
     }
-    autoSyncDot();              // v0.18.0: piggybacks the clock tick
-    wxRenderChip();             // v0.18.0: weather chip, cheap paint only
-    wxFetchTickThrottled();     // #6: fetch retry (60s throttle) — a failed
+    // SH-Q2: every engine runs in its own guard. One that throws
+    // (a full store, a malformed record) used to end the WHOLE tick,
+    // every second: the engines after it — alarms included — never
+    // ran again until reload.
+    tickSafe("autoSyncDot", autoSyncDot);     // v0.18.0: piggybacks the clock tick
+    tickSafe("wxRenderChip", wxRenderChip);   // v0.18.0: weather chip, cheap paint only
+    tickSafe("wxFetchTick", wxFetchTickThrottled); // #6: fetch retry (60s throttle) — a failed
                                 // boot fetch no longer sits in "waiting"
                                 // until an online/visibility event
     if (enginesMayRun()) {        // SH-B1: see enginesMayRun below
-      alarmTick();                // E1: shell-owned alarm engine tick
-      calRemTickThrottled();      // Wave 3: calendar reminders (30s throttle)
-      moodCheckInTickThrottled(); // Wave 1B: Mood check-in reminder (60s throttle)
-      cycleCheckTickThrottled();  // Wave 4: Cycle prediction reminder (60s throttle)
-      notifTickThrottled();       // Wave 1A: notification sweep (60s throttle)
-      syncPendingTickThrottled(); // SY-D3: "changes waiting for a merge" notice (60s throttle)
-      wxBriefTickThrottled();     // Weather unification: daily morning briefing (60s throttle)
-      quoteCheckTickThrottled();  // Wave 13: Quote due-date reminders (60s throttle)
-      minimalismCheckTickThrottled(); // Wave 2: Minimalism daily ritual (60s throttle)
+      tickSafe("alarmTick", alarmTick);                  // E1: shell-owned alarm engine tick
+      tickSafe("calRemTick", calRemTickThrottled);       // Wave 3: calendar reminders (30s throttle)
+      tickSafe("moodCheckInTick", moodCheckInTickThrottled); // Wave 1B: Mood check-in reminder (60s throttle)
+      tickSafe("cycleCheckTick", cycleCheckTickThrottled);   // Wave 4: Cycle prediction reminder (60s throttle)
+      tickSafe("notifTick", notifTickThrottled);         // Wave 1A: notification sweep (60s throttle)
+      tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
+      tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
+      tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
     }
-    radioTrayTick();              // Wave 2 Radio: tray chip paint (cheap, 1/s)
+    tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
+  }
+
+  // SH-Q2: one engine's failure is logged once (not 1/s) and never
+  // stops the others.
+  var tickErrSeen = {};
+  function tickSafe(name, fn) {
+    try { fn(); }
+    catch (e) {
+      if (tickErrSeen[name]) return;
+      tickErrSeen[name] = true;
+      try { console.error("[orOS] clock engine \"" + name + "\" failed:", e); } catch (e2) {}
+    }
   }
 
   // SH-B1: every engine above ends in orosNotifs.emit(), but
@@ -4331,16 +4347,23 @@
     }, 30000);
   }
 
+  // SH-Q3: occurrences that already rang in this session. The write
+  // below that retires / advances a fired alarm can fail (full
+  // store); the same occurrence then stayed "due" and rang again
+  // every second.
+  var alarmRang = {};
   function alarmTick() {
     var list = alarmsRead();
     var dueIdx = -1, due = null;
     for (var i = 0; i < list.length; i++) {
       var a = list[i];
-      if (a && a.state === "pending" && typeof a.at === "number" && a.at <= Date.now()) {
+      if (a && a.state === "pending" && typeof a.at === "number" && a.at <= Date.now() &&
+          !alarmRang[a.id + "|" + a.at]) {
         due = a; dueIdx = i; break;   // first due wins — no flood
       }
     }
     if (!due) return;
+    alarmRang[due.id + "|" + due.at] = true;
     // Advance/retire BEFORE notifying: mutating first makes a
     // second tick double-fire impossible.
     if (due.repeat === "daily") {

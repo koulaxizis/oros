@@ -531,8 +531,10 @@
   function openTarget(item) {
     if (!item || typeof item.deepLink !== 'string') return;
     var parts = item.deepLink.split(':');   // "cycle:entry:e_123"
-    var bridge = DL_BRIDGES[parts[0]];
-    if (!bridge) return;
+    // Own keys only: a synced or imported item whose namespace is
+    // "constructor" / "__proto__" must not reach Object.prototype.
+    var bridge = Object.prototype.hasOwnProperty.call(DL_BRIDGES, parts[0]) ? DL_BRIDGES[parts[0]] : null;
+    if (typeof bridge !== 'function') return;
     // Wave 1B — calendar carries a two-part payload: the event id
     // AND the occurrence date ("calendar:<evId>:<ymd>"). All other
     // namespaces keep the single-id contract (parts[2]).
