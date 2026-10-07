@@ -680,3 +680,14 @@ dialog h3 {
   .ct-tags { display: none; }   /* dots hidden on phones: name+sub is king */
   dialog { padding: 14px 14px; }
 }
+
+/* CT-9: filter chips are the main navigation on phones (Part VII:
+   touch targets >= 44px). */
+@media (pointer: coarse) {
+  #lbl-chips .chip { min-height: 44px; }
+  .nav-mini { min-height: 44px; }
+}
+
+/* CT-6: [hidden] must ALWAYS win — last rule of the file (Part II).
+   It was missing: an element with a display rule ignored `hidden`. */
+[hidden] { display: none !important; }

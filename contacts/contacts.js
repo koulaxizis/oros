@@ -365,7 +365,8 @@
       toastEl.appendChild(b);
     }
     toastEl.classList.add("show");
-    toastTimer = setTimeout(hideToast, 5000);
+    // Undo toasts stay 8 s (Part VII); plain notes 5 s.
+    toastTimer = setTimeout(hideToast, (actionLabel && typeof actionFn === "function") ? 8000 : 5000);
   }
 
   // --- Unified notifications (Wave 12 migration) ---
@@ -598,8 +599,14 @@
   }
 
   function loadState() {
+    var rawText = null;
     try {
-      var d = JSON.parse(localStorage.getItem(DATA_KEY));
+      rawText = localStorage.getItem(DATA_KEY);
+      var d = JSON.parse(rawText);
+      // CT-3: stored text that is not a contacts object would be
+      // overwritten by the first save — keep a verbatim rescue copy
+      // first (device-local, never synced).
+      if (rawText && (!d || typeof d !== "object" || !Array.isArray(d.contacts))) rescueRaw(rawText);
       if (d && typeof d === "object" && Array.isArray(d.contacts)) {
         state.contacts = d.contacts.map(sanitizeContact).filter(Boolean);
       }
@@ -611,8 +618,14 @@
       }
       if (!state.labels.length) state.labels = defaultLabels();
     } catch (e) {
+      rescueRaw(rawText);
       if (!state.labels.length) state.labels = defaultLabels();
     }
+  }
+  function rescueRaw(text) {
+    if (!text) return;
+    try { localStorage.setItem(DATA_KEY + "-broken", text); } catch (e) {}
+    try { console.error("contacts: unreadable data copied to " + DATA_KEY + "-broken"); } catch (e2) {}
   }
   function saveState() {
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
@@ -1193,9 +1206,11 @@ function ensureViewCss() {
   document.head.appendChild(st);
 }
 
+var viewCardId = null;   // CT-2: which contact the open card shows
 function closeViewCard() {
   var ov = $("ct-view");
   if (ov) ov.parentNode.removeChild(ov);
+  viewCardId = null;
 }
 
 // Full plain-text dump of a contact — one line per field, typed,
@@ -1351,6 +1366,7 @@ function openViewCard(c) {
   if (!c) return;
   closeViewCard();
   ensureViewCss();
+  viewCardId = c.id;
 
   var ov = document.createElement("div");
   ov.id = "ct-view";
@@ -2015,8 +2031,38 @@ document.addEventListener("keydown", function (e) {
     renderDlgLabels();
 
     $("ct-del-row").className = "dlg-row" + (existing ? " show" : "");
+    // CT-2: what the form shows now, read back through the same
+    // readers Save uses — Save writes only the fields that differ.
+    dlgSnap = existing ? readDlgDraft() : null;
     $("ct-dlg").showModal();
     setTimeout(function () { $("ct-given").focus(); }, 50);
+  }
+
+  // Every editable field of the dialog, as Save reads it.
+  var DLG_FIELDS = ["given", "middle", "family", "nickname", "org", "jobTitle",
+    "phones", "emails", "addresses", "websites", "im", "events", "relations",
+    "labelIds", "starred", "note", "photo"];
+  var dlgSnap = null;
+  function readDlgDraft() {
+    return {
+      given: $("ct-given").value.trim(),
+      middle: $("ct-middle").value.trim(),
+      family: $("ct-family").value.trim(),
+      nickname: $("ct-nickname").value.trim(),
+      org: $("ct-org").value.trim(),
+      jobTitle: $("ct-jobtitle").value.trim(),
+      phones: readValRows($("ct-phones")),
+      emails: readValRows($("ct-emails")),
+      addresses: readAddrRows($("ct-addresses")),
+      websites: readValRows($("ct-websites")),
+      im: readValRows($("ct-im")),
+      events: readEvtRows($("ct-events")),
+      relations: readRelRows($("ct-relations")),
+      labelIds: dlgLabelIds.slice().sort(),
+      starred: $("ct-starred").checked,
+      note: $("ct-note").value.trim(),
+      photo: editingPhoto
+    };
   }
 
   // Starter-row buttons (＋ Phone / ＋ Email / …)
@@ -2084,12 +2130,9 @@ document.addEventListener("keydown", function (e) {
      edits. Edited-while-deleted-elsewhere → resurrect (fresh mtime
      beats the tombstone, calendar contract). */
   $("ct-save").addEventListener("click", function () {
-    var given = $("ct-given").value.trim();
-    var middle = $("ct-middle").value.trim();
-    var family = $("ct-family").value.trim();
-    var nickname = $("ct-nickname").value.trim();
-    var org = $("ct-org").value.trim();
-    var jobTitle = $("ct-jobtitle").value.trim();
+    var form = readDlgDraft();
+    var given = form.given, middle = form.middle, family = form.family;
+    var nickname = form.nickname, org = form.org;
     if (!given && !middle && !family && !nickname && !org) {
       var ti = $("ct-given");
       ti.classList.add("invalid");
@@ -2099,23 +2142,26 @@ document.addEventListener("keydown", function (e) {
       return;
     }
 
-    var draft = {
-      id: editingId || uid(),
-      given: given, middle: middle, family: family,
-      nickname: nickname, org: org, jobTitle: jobTitle,
-      phones: readValRows($("ct-phones")),
-      emails: readValRows($("ct-emails")),
-      addresses: readAddrRows($("ct-addresses")),
-      websites: readValRows($("ct-websites")),
-      im: readValRows($("ct-im")),
-      events: readEvtRows($("ct-events")),
-      relations: readRelRows($("ct-relations")),
-      labelIds: dlgLabelIds.slice().sort(),
-      starred: $("ct-starred").checked,
-      note: $("ct-note").value.trim(),
-      photo: editingPhoto,
-      mtime: Date.now()
-    };
+    // CT-2: an edit applies only the fields the user changed since
+    // the dialog opened, on top of the CURRENT contact (a pull may
+    // have changed it meanwhile). Untouched fields keep the other
+    // device's values (A67 Q1); a Save with no change stamps nothing
+    // (R27). A new contact, or one deleted elsewhere while the dialog
+    // was open, is saved whole (an edit outranks a delete).
+    var current = editingId ? contactById(editingId) : null;
+    var draft;
+    if (current && dlgSnap) {
+      var changedF = DLG_FIELDS.filter(function (f) {
+        return JSON.stringify(form[f]) !== JSON.stringify(dlgSnap[f]);
+      });
+      if (!changedF.length) { $("ct-dlg").close(); return; }
+      draft = JSON.parse(JSON.stringify(current));
+      changedF.forEach(function (f) { draft[f] = form[f]; });
+    } else {
+      draft = form;
+      draft.id = editingId || uid();
+    }
+    draft.mtime = Date.now();
     var clean = sanitizeContact(draft);
     // sanitizeContact keeps the drafted id/mtime (they were valid) —
     // belt and braces: restore them explicitly if the trim shape
@@ -2210,6 +2256,9 @@ document.addEventListener("keydown", function (e) {
 
   function undoDelete() {
     if (!lastDeleted) return;
+    // Already back (an edit on another device resurrected it and a
+    // pull brought it here): nothing to restore, keep that version.
+    if (contactById(lastDeleted.id)) { lastDeleted = null; return; }
     lastDeleted.mtime = Date.now();   // fresh: beats the tombstone
     state.contacts.push(lastDeleted);
     state.deleted = state.deleted.filter(function (d) {
@@ -2297,10 +2346,7 @@ document.addEventListener("keydown", function (e) {
   function openMergeDlg(groupIds) {
     pendingMergeGroup = groupIds;
     pendingMergePrimaryIndex = 0;
-    pendingMergeSnapshot = {
-      contacts: JSON.parse(JSON.stringify(state.contacts)),
-      deleted: JSON.parse(JSON.stringify(state.deleted))
-    };
+    pendingMergeSnapshot = null;
 
     renderMergePreview();
     $("merge-dlg").showModal();
@@ -2328,7 +2374,7 @@ document.addEventListener("keydown", function (e) {
       div.className = "dup-preview-section";
       var lab = document.createElement("div");
       lab.className = "dup-preview-label";
-      lab.textContent = t("ct.field." + f);
+      lab.textContent = t("ct.field." + (f === "jobTitle" ? "jobtitle" : f));
       var val = document.createElement("div");
       val.className = "dup-preview-value";
       val.textContent = prep.preview[f];
@@ -2386,6 +2432,11 @@ document.addEventListener("keydown", function (e) {
     var prep = buildMergePreview(pendingMergeGroup, pendingMergePrimaryIndex);
     if (!prep) return;
 
+    // CT-4: Undo snapshot = only the group's members, taken now.
+    pendingMergeSnapshot = prep.members.map(function (m) {
+      return JSON.parse(JSON.stringify(m));
+    });
+
     // Store winner.
     var winnerId = prep.members[pendingMergePrimaryIndex].id;
     for (var i = 0; i < state.contacts.length; i++) {
@@ -2411,10 +2462,24 @@ document.addEventListener("keydown", function (e) {
     toast(t("dup.merged"), t("dup.undo"), undoMerge);
   }
 
+  // CT-4: Undo puts back ONLY the merged group, with fresh stamps so
+  // the restored copies beat their tombstones on every device. The
+  // old Undo replaced the whole contact list and tombstone list with
+  // a copy taken when the merge dialog opened (older stamps): work
+  // pulled from another device in between was dropped locally, and
+  // the "restored" duplicates were deleted again by the next pull.
   function undoMerge() {
     if (!pendingMergeSnapshot) return;
-    state.contacts = pendingMergeSnapshot.contacts;
-    state.deleted = pendingMergeSnapshot.deleted;
+    var now = Date.now();
+    pendingMergeSnapshot.forEach(function (m) {
+      m.mtime = now;
+      var found = false;
+      for (var i = 0; i < state.contacts.length; i++) {
+        if (state.contacts[i].id === m.id) { state.contacts[i] = m; found = true; break; }
+      }
+      if (!found) state.contacts.push(m);
+      state.deleted = state.deleted.filter(function (d) { return d.id !== m.id; });
+    });
     pendingMergeSnapshot = null;
     saveState();
     renderChips();
@@ -2537,10 +2602,14 @@ document.addEventListener("keydown", function (e) {
       ni.maxLength = 40;
       ni.value = l.name;
       ni.addEventListener("change", function () {
+        // CT-2: the dialog may have outlived a pull — edit the current
+        // label object, found by id (the row's `l` can be a stale copy).
+        var cur = labelById(l.id);
         var nv = ni.value.trim();
-        if (!nv || nv === l.name) { ni.value = l.name; return; }
-        l.name = nv.slice(0, 40);
-        l.mtime = Date.now();                 // user intent outranks seeds
+        if (!cur) return;
+        if (!nv || nv === cur.name) { ni.value = cur.name; return; }
+        cur.name = nv.slice(0, 40);
+        cur.mtime = Date.now();               // user intent outranks seeds
         saveState();
         renderChips();
         renderList();
@@ -2581,8 +2650,10 @@ document.addEventListener("keydown", function (e) {
           s.className = "lbl-swatch" + (col === l.color ? " active" : "");
           s.style.background = col;
           s.addEventListener("click", function () {
-            l.color = col;
-            l.mtime = Date.now();
+            var cur = labelById(l.id);        // CT-2: current object, by id
+            if (!cur) { closeLblPop(); return; }
+            cur.color = col;
+            cur.mtime = Date.now();
             saveState();
             renderLblList();
             renderChips();
@@ -2840,7 +2911,8 @@ document.addEventListener("keydown", function (e) {
           // dependency in imports) — silently skipped.
           var pv = p.value.trim();
           if (/^data:image\/(jpeg|png);base64,/.test(pv)) {
-            c.photo = pv.slice(0, 50000);
+            // CT-8: a cut data URI is a broken image; skip oversize photos
+            if (pv.length <= 50000) c.photo = pv;
           } else if (/(?:JPEG|JPG|PNG)/i.test(ty) &&
                      pv.length > 64 && pv.length <= 50000 &&
                      /^[A-Za-z0-9+/=]+$/.test(pv)) {
@@ -3555,8 +3627,25 @@ document.addEventListener("keydown", function (e) {
     return merged;
   }
 
-  // setFromSync: adopt externally-provided data. Closes dialogs so a
-  // background merge can never collide with an open edit dialog.
+  // CT-7: canonical form of the slice — exactly what mergeContacts
+  // returns for (x, x): one entry per id, sorted by id, tombstones
+  // deduped (max) and applied. The getter returns this, so
+  // merge(get, get) === get and two devices stop re-uploading (R26).
+  function canonContacts(d) {
+    if (!d || typeof d !== "object") return d;
+    return mergeContacts(d, d);
+  }
+
+  // setFromSync: adopt externally-provided data (a pull, or a JSON
+  // restore). CT-1: the merged data is PERSISTED here (no markDirty,
+  // R6). It used to live in memory only, while the sync getter reads
+  // localStorage: with the app open, a pulled contact never reached
+  // storage, every upload carried the stale local copy, and two open
+  // devices replaced each other's contacts in the cloud forever.
+  // CT-2: a pull no longer closes the open dialogs (typed text was
+  // lost on every auto-sync); the edit dialog saves only the fields
+  // the user changed (see ct-save), the view card is redrawn from
+  // the merged data, filters and Undo survive.
   function setFromSync(data, info) {
     if (!data || typeof data !== "object") return;
     if (Array.isArray(data.contacts)) {
@@ -3569,15 +3658,18 @@ document.addEventListener("keydown", function (e) {
     if (Array.isArray(data.deleted)) {
       state.deleted = data.deleted.map(sanitizeTomb).filter(Boolean);
     }
-    closeViewCard();
-    try {
-      $("ct-dlg").close();
-      $("del-dlg").close();
-      $("lbl-dlg").close();
-    } catch (e) {}
-    editingId = null;
-    lastDeleted = null;
-    labelVis = {};
+    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {
+      console.error("contacts: could not store synced data:", e);
+    }
+    if ($("ct-view") && viewCardId) {
+      var vc = contactById(viewCardId);
+      if (vc) openViewCard(vc); else closeViewCard();
+    }
+    if ($("lbl-dlg") && $("lbl-dlg").open &&
+        !($("lbl-list") && $("lbl-list").contains(document.activeElement))) {
+      renderLblList();
+    }
+    if ($("ct-dlg") && $("ct-dlg").open) renderDlgLabels();
     renderChips();
     renderList();
     // info.merged → sync dot (taskbar), not toast (Wave 11 doctrine)
@@ -3594,7 +3686,7 @@ document.addEventListener("keydown", function (e) {
       syncApi.registerSlice(
         "contacts",
         function () {
-          try { return JSON.parse(localStorage.getItem(DATA_KEY)); }
+          try { return canonContacts(JSON.parse(localStorage.getItem(DATA_KEY))); }
           catch (e) { return null; }
         },
         setFromSync,
