@@ -54,7 +54,16 @@ var STRINGS = {
     "xl.exported": "Exported as {f}",
     "xl.lib":      "Library not found (vendor/xlsx.full.min.js)",
     "xl.readerr":  "Could not read this file",
-    "xl.trunc":    "Import capped at {r} rows × {c} columns"
+    "xl.trunc":    "Import capped at {r} rows × {c} columns",
+    "err.save":    "Could not save: the browser storage is full.",
+    "tb.undo": "Undo (Ctrl+Z)", "tb.redo": "Redo (Ctrl+Y)",
+    "tb.copy": "Copy (Ctrl+C)", "tb.cut": "Cut (Ctrl+X)", "tb.paste": "Paste (Ctrl+V)",
+    "tb.bold": "Bold (Ctrl+B)", "tb.ital": "Italic (Ctrl+I)", "tb.und": "Underline (Ctrl+U)",
+    "tb.al.l": "Align left", "tb.al.c": "Align center", "tb.al.r": "Align right",
+    "tb.nf": "Number format", "tb.nf.gen": "auto", "tb.col": "Text color",
+    "tb.clr": "Clear formatting", "tb.bar": "Formatting",
+    "csv.imp": "Import CSV", "csv.exp": "Export CSV",
+    "sheet.add": "New sheet", "sheets": "Sheets"
   },
   el: {
     "title": "Λογιστικά φύλλα",
@@ -77,7 +86,16 @@ var STRINGS = {
     "xl.exported": "Εξήχθη ως {f}",
     "xl.lib":      "Δεν βρέθηκε η βιβλιοθήκη (vendor/xlsx.full.min.js)",
     "xl.readerr":  "Αδύνατη η ανάγνωση του αρχείου",
-    "xl.trunc":    "Η εισαγωγή περικόπηκε σε {r} γραμμές × {c} στήλες"
+    "xl.trunc":    "Η εισαγωγή περικόπηκε σε {r} γραμμές × {c} στήλες",
+    "err.save":    "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε.",
+    "tb.undo": "Αναίρεση (Ctrl+Z)", "tb.redo": "Επανάληψη (Ctrl+Y)",
+    "tb.copy": "Αντιγραφή (Ctrl+C)", "tb.cut": "Αποκοπή (Ctrl+X)", "tb.paste": "Επικόλληση (Ctrl+V)",
+    "tb.bold": "Έντονα (Ctrl+B)", "tb.ital": "Πλάγια (Ctrl+I)", "tb.und": "Υπογράμμιση (Ctrl+U)",
+    "tb.al.l": "Στοίχιση αριστερά", "tb.al.c": "Στοίχιση στο κέντρο", "tb.al.r": "Στοίχιση δεξιά",
+    "tb.nf": "Μορφή αριθμού", "tb.nf.gen": "αυτόματη", "tb.col": "Χρώμα κειμένου",
+    "tb.clr": "Καθαρισμός μορφοποίησης", "tb.bar": "Μορφοποίηση",
+    "csv.imp": "Εισαγωγή CSV", "csv.exp": "Εξαγωγή CSV",
+    "sheet.add": "Νέο φύλλο", "sheets": "Φύλλα"
   }
 };
 
@@ -135,12 +153,19 @@ var state = null;
 var actSID = "s-main";
 var SID = "s-main";
 
+/* SS-2: the seed sheet is the same bytes on every device. It was
+   built from t("sheet.default"), so a Greek device stored
+   bi.en = "Φύλλο1": an English and a Greek device then held two
+   different "untouched" seeds with mtime 0 and uploaded on every
+   sync cycle, for ever. */
+var SEED_BI = { en: "Sheet1", el: "\u03A6\u03CD\u03BB\u03BB\u03BF1" };
+
 function blankState() {
   return {
     ver: DATA_VER,
     sheets: [{
       id: SID, name: null,
-      bi: { en: t("sheet.default"), el: "Φύλλο1" },
+      bi: { en: SEED_BI.en, el: SEED_BI.el },
       rows: ROWS, cols: COLS, pos: 0, mtime: 0, cw: {}
     }],
     cells: {},
@@ -181,6 +206,9 @@ function normalizeState(st) {
     if (sh.cw === undefined || typeof sh.cw !== "object" || !sh.cw) sh.cw = {};
     if (sh.name !== null && sh.name !== undefined &&
         typeof sh.name !== "string") sh.name = String(sh.name);
+    /* SS-2: an untouched seed is repaired to the shared seed bytes */
+    if (sh.id === SID && sh.mtime === 0 && (sh.name === null || sh.name === undefined))
+      sh.bi = { en: SEED_BI.en, el: SEED_BI.el };
   }
   if (!st.sheets.length) st.sheets = [blankState().sheets[0]];
   if (!st.cells || typeof st.cells !== "object") st.cells = {};
@@ -197,6 +225,7 @@ function normalizeState(st) {
         keep = true;
         var sf = sanitizeF(cel.f);
         if (sf) cel.f = sf; else delete cel.f;
+        if (cel.fm !== undefined && (!cel.fm || typeof cel.fm !== "object")) delete cel.fm;
       }
     }
     if (!keep) delete st.cells[k];
@@ -216,10 +245,30 @@ function tombFor(del, key) {
   return (stTs && typeof stTs === "number" && isFinite(stTs)) ? stTs : 0;
 }
 
+/* the newer of a cell's own tombstone and its sheet's */
+function cellTomb(del, key) {
+  var a = del[key], b = del[key.split("|")[0]];
+  a = (typeof a === "number" && isFinite(a)) ? a : 0;
+  b = (typeof b === "number" && isFinite(b)) ? b : 0;
+  return Math.max(a, b);
+}
+
 function cellKey(sid, r, c) { return sid + "|" + r + "|" + c; }
 
-/* ===== SECTION 2b: MERGE ENGINE (unchanged semantics — f rides
-   whole-cell LWW, cw rides whole-sheet LWW) ===== */
+/* ===== SECTION 2b: MERGE ENGINE =====
+   SS-1 one canonical form (canonSS) for the stored copy, the slice
+   getter and the merge output (R26): sheets by (pos, id), cells and
+   tombstones by key, fixed key order.
+   SS-5 a cell carries one stamp per field, fm{ v, f }: the value
+   (with Excel's cached result cv) and the format merge separately,
+   so formatting a range on one device no longer reverts values typed
+   in it on another. A cell whose mtime is newer than both stamps
+   was last written by a device on the previous spreadsheet.js (it
+   replaces the whole cell and drops fm): mtime then speaks for both
+   fields. A field older than the cell's tombstone is cleared.
+   Sheets stay whole-entity LWW (tie -> smaller JSON, both sides). A
+   deleted sheet comes back when the other device wrote cells in it
+   after the deletion ("a newer edit resurrects", R17). */
 
 function newerObj(a, b) {
   if (!a) return b;
@@ -231,88 +280,164 @@ function newerObj(a, b) {
   return (aj < bj) ? a : b;
 }
 
+function stampNum(n) {
+  return (typeof n === "number" && isFinite(n) && n > 0) ? n : 0;
+}
+
+/* field stamps of a cell: { v, f } */
+function cellStamps(cel) {
+  var m = stampNum(cel.mtime);
+  if (cel.fm && typeof cel.fm === "object") {
+    var sv = stampNum(cel.fm.v), sf = stampNum(cel.fm.f);
+    if (m <= Math.max(sv, sf)) return { v: sv, f: sf };
+  }
+  return { v: m, f: m };        /* written by the previous version */
+}
+
+function canonF(f) {
+  var sf = sanitizeF(f);
+  if (!sf) return undefined;
+  var o = {};
+  ["b", "i", "u", "al", "co", "nf"].forEach(function (k) {
+    if (sf[k] !== undefined) o[k] = sf[k];
+  });
+  return o;
+}
+
+/* canonical cell, or null when nothing is left */
+function canonCell(cel, tomb) {
+  if (!cel || typeof cel !== "object" || typeof cel.v !== "string") return null;
+  var st = cellStamps(cel);
+  var m = Math.max(stampNum(cel.mtime), st.v, st.f);
+  if (tomb && m <= tomb) return null;
+  var v = cel.v, f = canonF(cel.f), cv = (typeof cel.cv === "string") ? cel.cv : undefined;
+  if (tomb && st.v <= tomb) { v = ""; cv = undefined; }
+  if (tomb && st.f <= tomb) f = undefined;
+  if (v === "" && !f) return null;
+  var o = { v: v, mtime: m };
+  if (f) o.f = f;
+  if (cv !== undefined && cv !== "") o.cv = cv;
+  o.fm = { v: st.v, f: st.f };
+  return o;
+}
+
+function mergeCell(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  var sa = cellStamps(a), sb = cellStamps(b);
+  var pv, pf;
+  if (sa.v !== sb.v) pv = sa.v > sb.v ? a : b;
+  else pv = JSON.stringify([a.v, a.cv || ""]) <= JSON.stringify([b.v, b.cv || ""]) ? a : b;
+  if (sa.f !== sb.f) pf = sa.f > sb.f ? a : b;
+  else pf = JSON.stringify(canonF(a.f) || {}) <= JSON.stringify(canonF(b.f) || {}) ? a : b;
+  var o = { v: pv.v, mtime: Math.max(stampNum(a.mtime), stampNum(b.mtime)) };
+  var f = canonF(pf.f);
+  if (f) o.f = f;
+  if (typeof pv.cv === "string") o.cv = pv.cv;
+  o.fm = { v: Math.max(sa.v, sb.v), f: Math.max(sa.f, sb.f) };
+  return o;
+}
+
+function canonSheet(sh) {
+  var o = { id: sh.id, name: (typeof sh.name === "string") ? sh.name : null };
+  if (o.name === null && sh.bi && typeof sh.bi === "object")
+    o.bi = { en: String(sh.bi.en || ""), el: String(sh.bi.el || "") };
+  o.rows = sh.rows; o.cols = sh.cols; o.pos = sh.pos; o.mtime = sh.mtime;
+  var cw = {};
+  if (sh.cw && typeof sh.cw === "object") {
+    Object.keys(sh.cw).sort(function (x, y) { return (+x) - (+y); }).forEach(function (k) {
+      var w = sh.cw[k];
+      if (/^\d+$/.test(k) && typeof w === "number" && isFinite(w) && w > 0) cw[k] = w;
+    });
+  }
+  o.cw = cw;
+  return o;
+}
+
+var TOMB_KEEP = 30 * 24 * 60 * 60 * 1000;
+
+/* Canonical copy (never mutates its input): normalized, tombstones
+   pruned 30 days before the NEWEST tombstone (data time, never the
+   device clock) except the seed sheet's (SS-3: a deleted Sheet1 must
+   not come back when a new device joins), sheets by (pos, id), cells
+   and tombstones by key. */
+function canonSS(st) {
+  st = normalizeState(st ? clone(st) : null) || blankState();
+  var del = {}, maxTs = 0, k;
+  for (k in st.deleted) if (st.deleted[k] > maxTs) maxTs = st.deleted[k];
+  var cutoff = maxTs - TOMB_KEEP;
+  Object.keys(st.deleted).sort().forEach(function (key) {
+    if (st.deleted[key] >= cutoff || key === SID) del[key] = st.deleted[key];
+  });
+  var cells = {}, liveSids = {};
+  Object.keys(st.cells).sort().forEach(function (key) {
+    var c = canonCell(st.cells[key], cellTomb(del, key));
+    if (c) { cells[key] = c; liveSids[key.split("|")[0]] = 1; }
+  });
+  /* a sheet older than its tombstone is gone, unless cells written
+     after the deletion keep it (same rule as mergeState) */
+  var alive = st.sheets.filter(function (sh) {
+    var tomb = del[sh.id] || 0;
+    return !(tomb && (sh.mtime || 0) <= tomb && !liveSids[sh.id]);
+  });
+  if (!alive.length) alive = blankState().sheets;   /* never zero sheets */
+  var sheets = alive.map(canonSheet).sort(function (a, b) {
+    var d = (a.pos || 0) - (b.pos || 0);
+    return d !== 0 ? d : (a.id < b.id ? -1 : (a.id > b.id ? 1 : 0));
+  });
+  return { ver: DATA_VER, sheets: sheets, cells: cells, deleted: del };
+}
+
 function mergeState(local, remote) {
   if (!local || typeof local !== "object") local = blankState();
-  if (!remote || typeof remote !== "object") return local;
+  if (!remote || typeof remote !== "object") return canonSS(local);
+  local = canonSS(local); remote = canonSS(remote);
 
-  var localVer = local.ver || DATA_VER;
-  var remoteVer = remote.ver || DATA_VER;
-  if (remoteVer > localVer) localVer = remoteVer;
-
-  /* 1. DELETED UNION (first — sheet-tombstones computed early) */
-  var mergedDel = {};
-  for (var k in local.deleted)
-    mergedDel[k] = Math.max(local.deleted[k] || 0, mergedDel[k] || 0);
+  /* 1. DELETED UNION (pruned by canonSS at the end, same rule as the getter) */
+  var mergedDel = {}, k;
+  for (k in local.deleted) mergedDel[k] = local.deleted[k];
   for (k in remote.deleted)
-    mergedDel[k] = Math.max(remote.deleted[k] || 0, mergedDel[k] || 0);
-  /* deterministic cutoff: dataset max tombstone ts — NEVER wall clock.
-     Merge must be pure: two devices must reach identical results at
-     any moment (Bible Lesson 3 / HB-3 / NT-2 / MD-4). */
-  var maxTs = 0;
-  for (k in mergedDel) if (mergedDel[k] > maxTs) maxTs = mergedDel[k];
-  var pruneCutoff = maxTs - (30 * 24 * 60 * 60 * 1000);
-  for (k in mergedDel) {
-    if (mergedDel[k] < pruneCutoff) delete mergedDel[k];
+    mergedDel[k] = Math.max(remote.deleted[k], mergedDel[k] || 0);
+
+  /* 2. Cells — sparse union, per-field merge, tombstone-filtered */
+  var mergedCells = {}, liveSids = {};
+  var keys = {};
+  for (k in local.cells) keys[k] = 1;
+  for (k in remote.cells) keys[k] = 1;
+  for (k in keys) {
+    var mc = mergeCell(local.cells[k], remote.cells[k]);
+    if (mc && mc.v === "" && !canonF(mc.f)) {
+      /* both fields ended empty (value cleared here, format there):
+         the cell is gone — say so with a tombstone, or the side that
+         still holds an older copy would bring it back */
+      mergedDel[k] = Math.max(mergedDel[k] || 0, stampNum(mc.mtime));
+      continue;
+    }
+    var cel = canonCell(mc, cellTomb(mergedDel, k));
+    if (!cel) continue;
+    mergedCells[k] = cel;
+    liveSids[k.split("|")[0]] = 1;
   }
 
-  /* 2. Sheets merge — union, LWW by mtime, tombstone-filtered */
-  var sheetsMap = {}, i, sh;
-  for (i = 0; i < local.sheets.length; i++) {
-    sh = local.sheets[i];
-    if (!sh || typeof sh !== "object" || typeof sh.id !== "string") continue;
-    if (tombFor(mergedDel, sh.id) && (sh.mtime || 0) <= tombFor(mergedDel, sh.id))
-      continue;
-    sheetsMap[sh.id] = sh;
-  }
-  for (i = 0; i < remote.sheets.length; i++) {
-    sh = remote.sheets[i];
-    if (!sh || typeof sh !== "object" || typeof sh.id !== "string") continue;
-    if (tombFor(mergedDel, sh.id) && (sh.mtime || 0) <= tombFor(mergedDel, sh.id))
-      continue;
-    var existing = sheetsMap[sh.id];
-    if (!existing) { sheetsMap[sh.id] = sh; continue; }
-    if (existing.mtime === 0 && sh.mtime === 0) {
-      sheetsMap[sh.id] = (existing.id <= sh.id) ? existing : sh;
-    } else {
-      sheetsMap[sh.id] = newerObj(existing, sh);
+  /* 3. Sheets — union, LWW by mtime, tombstone-filtered */
+  var sheetsMap = {}, i, sh, src;
+  for (src = 0; src < 2; src++) {
+    var arr = src ? remote.sheets : local.sheets;
+    for (i = 0; i < arr.length; i++) {
+      sh = arr[i];
+      sheetsMap[sh.id] = newerObj(sheetsMap[sh.id], sh);
     }
   }
-
-  var mergedSheets = [], ks = Object.keys(sheetsMap).sort(function(a,b){
-    var sa = sheetsMap[a], sb = sheetsMap[b];
-    var d = (sa.pos || 0) - (sb.pos || 0);
-    /* id tie-break: same pos must order identically on every device */
-    return d !== 0 ? d : (a < b ? -1 : (a > b ? 1 : 0));
-  });
-  for (i = 0; i < ks.length; i++) mergedSheets.push(sheetsMap[ks[i]]);
-
-  /* 3. Cells merge — sparse union, tombstone-filtered */
-  var mergedCells = {};
-  var candidates = {};
-  for (k in local.cells) {
-    if (!local.cells[k] || typeof local.cells[k] !== "object") continue;
-    candidates[k] = local.cells[k];
-  }
-  for (k in remote.cells) {
-    if (!remote.cells[k] || typeof remote.cells[k] !== "object") continue;
-    if (!candidates[k]) candidates[k] = remote.cells[k];
-    else candidates[k] = newerObj(remote.cells[k], local.cells[k]);
+  var mergedSheets = [];
+  for (k in sheetsMap) {
+    sh = sheetsMap[k];
+    var tomb = tombFor(mergedDel, sh.id);
+    if (tomb && (sh.mtime || 0) <= tomb && !liveSids[sh.id]) continue;
+    mergedSheets.push(sh);
   }
 
-  for (k in candidates) {
-    var cel = candidates[k];
-    var pk = (function(key){ var p = key.split("|"); if (p.length !== 3) return null;
-      return { sid: p[0], r: parseInt(p[1], 10), c: parseInt(p[2], 10) }; })(k);
-    if (!pk) continue;
-    var cellTomb = tombFor(mergedDel, k);
-    var sheetTomb = tombFor(mergedDel, pk.sid);
-    var maxTomb = Math.max(cellTomb || 0, sheetTomb || 0);
-    if ((cel.mtime || 0) > maxTomb) {
-      mergedCells[k] = cel;
-    }
-  }
-
-  return { ver: localVer, sheets: mergedSheets, cells: mergedCells, deleted: mergedDel };
+  return canonSS({ ver: DATA_VER, sheets: mergedSheets, cells: mergedCells,
+                   deleted: mergedDel });
 }
 
 /* ===== SECTION 2c: STORAGE FUNNEL ===== */
@@ -325,9 +450,14 @@ function queueSave() {
   saveTimer = setTimeout(saveNow, 400);
 }
 
+var saveFailNoted = false;
 function saveNow() {
   if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(canonSS(state)));  /* SS-1: stored = getter */
+  } catch (e) {
+    if (!saveFailNoted) { saveFailNoted = true; notifyTransient(t("err.save")); }  /* R30 */
+  }
 }
 
 function loadState() {
@@ -343,7 +473,7 @@ function loadState() {
   state = normalizeState(st);
   if (!state) {
     state = blankState();
-    if (raw) setTimeout(function(){ toast(t("err.corrupt")); }, 400);
+    if (raw) setTimeout(function(){ notifyTransient(t("err.corrupt")); }, 400);
   }
   try {
     var loadedAct = localStorage.getItem(ACTIVE_KEY);
@@ -368,7 +498,9 @@ var selR = 0, selC = 0;        /* cursor */
 var selAR = 0, selAC = 0;      /* selection ANCHOR (range start) */
 var editing = false, editingR = -1, editingC = -1;
 var editInput = null;
+var editStartVal = "";   /* SS-4: value the open editor started from */
 var fxFocused = false;
+var fxStartVal = "";     /* SS-4: value the formula bar showed on focus */
 var dirtyFlag = false;
 
 /* selection rectangle (normalized, inclusive) */
@@ -421,12 +553,22 @@ var EVAL_DIRTY = true;
 function invalidateEval() { EVAL_DIRTY = true; }
 
 /* --- raw mutations (no undo, no UI) — used by undo/paste/sync --- */
+/* SS-5: only the field that really changes gets a new stamp (R27);
+   a value that is set again unchanged stamps nothing. */
 function rawSet(sid, r, c, v, f) {
   var key = cellKey(sid, r, c);
-  delete state.deleted[key];
-  var o = { v: String(v), mtime: now() };
-  var sf = sanitizeF(f);
+  var cur = state.cells[key];
+  var t0 = now();
+  var nv = String(v), sf = canonF(f);
+  var st = cur ? cellStamps(cur) : { v: 0, f: 0 };
+  var vChanged = !cur || cur.v !== nv;
+  var fChanged = JSON.stringify(cur ? (canonF(cur.f) || null) : null) !== JSON.stringify(sf || null);
+  if (cur && !vChanged && !fChanged) return;
+  var o = { v: nv, mtime: t0 };
   if (sf) o.f = sf;
+  if (cur && !vChanged && typeof cur.cv === "string") o.cv = cur.cv;
+  o.fm = { v: vChanged ? t0 : st.v, f: fChanged ? t0 : st.f };
+  delete state.deleted[key];
   state.cells[key] = o;
 }
 
@@ -1343,9 +1485,14 @@ function renderSelection() {
     (selIsRange() ? ":" + colName(selRight()) + (selBottom() + 1) : "");
   $("st-sel").textContent = refTxt;
   $("fx-ref").textContent = colName(selC) + (selR + 1);
+  var cel = getCell(selR, selC);
+  var fxv = cel ? cel.v : "";
+  var fxi = $("fx-input");
   if (!fxFocused) {
-    var cel = getCell(selR, selC);
-    $("fx-input").value = cel ? cel.v : "";
+    fxi.value = fxv;
+  } else if (fxi.value === fxStartVal && fxv !== fxStartVal) {
+    /* SS-4: the formula bar is focused but untouched: follow the data */
+    fxi.value = fxv; fxStartVal = fxv;
   }
   updateToolbar();
 }
@@ -1363,13 +1510,11 @@ function beginEdit(initialText) {
   editInput.type = "text";
   editInput.autocomplete = "off";
   editInput.spellcheck = false;
+  var startCel = getCell(selR, selC);
+  editStartVal = startCel ? startCel.v : "";
   editInput.value =
     (initialText !== undefined && initialText !== null)
-      ? initialText
-      : (function () {
-          var cel = getCell(selR, selC);
-          return cel ? cel.v : "";
-        })();
+      ? initialText : editStartVal;
   td.textContent = "";
   td.className = "cell-editor";
   td.appendChild(editInput);
@@ -1401,10 +1546,14 @@ function endEditDom() {
 
 function commitEdit(dr, dc) {
   if (!editing) return;
-  var val = editInput ? editInput.value : "";
-  val = val.replace(/^\s+|\s+$/g, "");
+  var raw = editInput ? editInput.value : "";
+  var val = raw.replace(/^\s+|\s+$/g, "");
   var r = editingR, c = editingC;
-  if (val === "") {
+  /* SS-4: an editor whose text was never changed writes nothing (it
+     could hold a value another device has replaced meanwhile) */
+  if (raw === editStartVal) {
+    /* untouched */
+  } else if (val === "") {
     if (getCell(r, c)) deleteCell(r, c);
   } else {
     setCell(r, c, val);
@@ -1551,8 +1700,6 @@ function toggleSwatchPopover() {
   pop.innerHTML = "";
   var btn = $("tb-col");
   var br = btn.getBoundingClientRect();
-  pop.style.left = Math.max(4, br.left) + "px";
-  pop.style.top = (br.bottom + 4) + "px";
   var i;
   for (i = 0; i < SWATCHES.length; i++) {
     (function (co) {
@@ -1568,6 +1715,11 @@ function toggleSwatchPopover() {
     })(SWATCHES[i]);
   }
   pop.hidden = false;
+  /* SS-9: kept inside the viewport (the color button sits at the far
+     end of a scrolled toolbar on a phone) */
+  var pw = pop.offsetWidth;
+  pop.style.left = Math.max(4, Math.min(br.left, window.innerWidth - pw - 4)) + "px";
+  pop.style.top = (br.bottom + 4) + "px";
 }
 
 /* --- toolbar state reflection --- */
@@ -1706,7 +1858,9 @@ function renderTabs() {
       });
       tab.appendChild(x);
 
+      var lpFired = false;
       tab.addEventListener("click", function (e) {
+        if (lpFired) { lpFired = false; return; }   /* the long-press already acted */
         if (e.target.classList && e.target.classList.contains("stab-x")) return;
         if (editing) commitEdit(0, 0);
         switchTo(sh.id);
@@ -1714,6 +1868,20 @@ function renderTabs() {
       tab.addEventListener("dblclick", function (e) {
         if (e.target.classList && e.target.classList.contains("stab-x")) return;
         beginRename(tab, label, sh);
+      });
+      /* SS-10: touch twin of the double click (450 ms long-press) */
+      var lpT = null;
+      tab.addEventListener("touchstart", function (e) {
+        if (e.target.closest && e.target.closest(".stab-x")) return;
+        lpFired = false;
+        lpT = setTimeout(function () { lpT = null; lpFired = true; beginRename(tab, label, sh); }, 450);
+      }, { passive: true });
+      var lpCancel = function () { if (lpT) { clearTimeout(lpT); lpT = null; } };
+      tab.addEventListener("touchend", lpCancel, { passive: true });
+      tab.addEventListener("touchmove", lpCancel, { passive: true });
+      tab.addEventListener("touchcancel", lpCancel, { passive: true });
+      tab.addEventListener("contextmenu", function (e) {
+        if (tab.querySelector("input")) e.preventDefault();
       });
 
       nav.appendChild(tab);
@@ -1724,7 +1892,8 @@ function renderTabs() {
   add.type = "button";
   add.className = "stab-add";
   add.innerHTML = IC_ADD;
-  add.title = "+";
+  add.title = t("sheet.add");
+  add.setAttribute("aria-label", t("sheet.add"));
   add.addEventListener("click", function () {
     if (editing) commitEdit(0, 0);
     addSheet();
@@ -1761,7 +1930,7 @@ function addSheet() {
 }
 
 function tryDeleteSheet(id) {
-  if (state.sheets.length <= 1) { toast(t("sheet.last")); return; }
+  if (state.sheets.length <= 1) { notifyTransient(t("sheet.last")); return; }
 
   if (armX.id !== id) {
     if (armX.timer) clearTimeout(armX.timer);
@@ -1769,7 +1938,7 @@ function tryDeleteSheet(id) {
     armX.timer = setTimeout(function () {
       armX.id = null; renderTabs();
     }, 3000);
-    toast(t("tab.confirm"));
+    notifyTransient(t("tab.confirm"));
     renderTabs();
     return;
   }
@@ -1928,8 +2097,25 @@ function csvExport() {
   done();
 }
 
+/* SS-6: Greek / European Excel writes ';'-separated CSV. The
+   separator is the one of , ; TAB that occurs most in the first line
+   outside quotes. */
+function csvSniffSep(text) {
+  var line = text.split(/\r?\n/)[0] || "", n = { ",": 0, ";": 0, "\t": 0 };
+  var inQ = false, i, ch;
+  for (i = 0; i < line.length; i++) {
+    ch = line.charAt(i);
+    if (ch === '"') inQ = !inQ;
+    else if (!inQ && n.hasOwnProperty(ch)) n[ch]++;
+  }
+  if (n[";"] > n[","] && n[";"] >= n["\t"]) return ";";
+  if (n["\t"] > n[","] && n["\t"] > n[";"]) return "\t";
+  return ",";
+}
+
 function csvParse(text) {
   var rows = [], row = [], field = "", inQ = false, i, ch;
+  var sep = csvSniffSep(text);
   for (i = 0; i < text.length; i++) {
     ch = text.charAt(i);
     if (inQ) {
@@ -1939,17 +2125,21 @@ function csvParse(text) {
       } else field += ch;
     } else {
       if (ch === '"') { inQ = true; }
-      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === sep) { row.push(field); field = ""; }
       else if (ch === "\n") { row.push(field); field = ""; rows.push(row); row = []; }
       else if (ch === "\r") { }
       else field += ch;
     }
   }
   if (field !== "" || row.length) { row.push(field); rows.push(row); }
-  /* Hard cap at 64 columns — matches normalizeState limit */
+  /* SS-6: hard cap at 500 rows x 64 columns (the normalizeState
+     limits). It cut every row to 26 columns without a word. */
+  var cut = rows.length > XL_ROWS_CAP;
+  if (cut) rows.length = XL_ROWS_CAP;
   for (var r = 0; r < rows.length; r++) {
-    if (rows[r].length > COLS) rows[r].length = COLS;
+    if (rows[r].length > XL_COLS_CAP) { rows[r].length = XL_COLS_CAP; cut = true; }
   }
+  rows.truncated = cut;
   return rows;
 }
 
@@ -1958,7 +2148,7 @@ function csvImport(file) {
   reader.onload = function () {
     try {
       var rows = csvParse(sniffDecode(reader.result));
-      if (!rows.length) { toast(t("err.corrupt")); return; }
+      if (!rows.length) { notifyTransient(t("xl.readerr")); return; }
 
       var n = nextSheetNumber();
       var maxCols = 0, ii;
@@ -1969,8 +2159,8 @@ function csvImport(file) {
         id: uid(),
         name: null,
         bi: { en: "Sheet" + n, el: "\u03A6\u03CD\u03BB\u03BB\u03BF" + n },
-        rows: Math.max(ROWS, rows.length + 5),
-        cols: Math.max(COLS, maxCols),
+        rows: Math.min(Math.max(ROWS, rows.length + 5), XL_ROWS_CAP),
+        cols: Math.min(Math.max(COLS, maxCols), XL_COLS_CAP),
         cw: {},
         pos: maxPos() + 1,
         mtime: now()
@@ -1986,9 +2176,11 @@ function csvImport(file) {
       markDirty();
       switchTo(sh.id);
       notifyTransient(t("csv.imported"));
+      if (rows.truncated) notifyTransient(t("xl.trunc")
+        .replace("{r}", XL_ROWS_CAP).replace("{c}", XL_COLS_CAP));
     } catch (e) {
       console.error("[SS] CSV import failed:", e);
-      toast(t("err.corrupt"));
+      notifyTransient(t("xl.readerr"));
     }
   };
   reader.readAsArrayBuffer(file);
@@ -2008,7 +2200,7 @@ function loadXlsxLib(done) {
   if (window.XLSX && window.XLSX.utils) { done(); return; }
   if (xlLibLoading) return;
   xlLibLoading = true;
-  var cands = ["vendor/xlsx.full.min.js", "../vendor/xlsx.full.min.js"];
+  var cands = ["../vendor/xlsx.full.min.js", "vendor/xlsx.full.min.js"];
   var i = 0;
   (function next() {
     if (i >= cands.length) {
@@ -2130,7 +2322,7 @@ function xlImport(file) {
         invalidateEval();
         switchTo(lastId);   /* rebuilds tabs + grid, focuses */
         notifyTransient(t("xl.imported").replace("{n}", made));
-        if (truncated) toast(t("xl.trunc")
+        if (truncated) notifyTransient(t("xl.trunc")
           .replace("{r}", XL_ROWS_CAP).replace("{c}", XL_COLS_CAP));
       } catch (e) {
         console.error("[SS] XLSX import failed:", e);
@@ -2284,7 +2476,13 @@ function toggleXlExportMenu(btn) {
   document.body.appendChild(m);
   void m.offsetWidth;
   m.style.left = Math.max(4, Math.min(br.left, window.innerWidth - 195)) + "px";
-  m.style.top = (br.bottom + 4) + "px";
+  /* SS-9: the button sits in the footer — the menu opened below it,
+     outside the window, and could not be reached. Open upwards when
+     there is no room below. */
+  var mh = m.offsetHeight;
+  var top = br.bottom + 4;
+  if (top + mh > window.innerHeight - 4) top = Math.max(4, br.top - mh - 4);
+  m.style.top = top + "px";
   xlMenu = m;
 }
 
@@ -2350,40 +2548,47 @@ var __ss = { _suppress: false,
 
 syncApi = __ss;
 
+/* SS-1: the canonical copy, byte-equal to the stored one */
 function sliceGet() {
-  var out = clone(state);
-  /* Prune ancient tombstones from the SYNC PAYLOAD ONLY — local
-     state keeps everything. Deterministic cutoff (dataset max ts,
-     never wall clock) mirrors the mergeState rule exactly. */
-  var maxTs = 0, k;
-  for (k in out.deleted) if (out.deleted[k] > maxTs) maxTs = out.deleted[k];
-  if (maxTs > 0) {
-    var cutoff = maxTs - (30 * 24 * 60 * 60 * 1000);
-    for (k in out.deleted) if (out.deleted[k] < cutoff) delete out.deleted[k];
-  }
-  return out;
+  return canonSS(state);
 }
 
+/* Pull-fed (R6: no markDirty). SS-4: an open cell editor and a
+   focused formula bar stay where they are (the old code cancelled
+   the edit and dropped the phone keyboard on every pull); an
+   editor the user has not typed in follows the new value. */
 function sliceSet(data, info) {
+  var cur = sliceGet();
+  var merged = null;
   __ss._suppress = true;
-  try {
-    var merged = normalizeState(mergeState(sliceGet(), data));
-    if (merged) state = merged;
-  } catch (e) {}
+  try { merged = mergeState(cur, data); } catch (e) { merged = null; }
   __ss._suppress = false;
+  if (!merged) return;
+  if (JSON.stringify(merged) === JSON.stringify(cur)) return;   /* echo */
+  state = merged;
 
+  var rebuild = false;
   var act = getSheetById(actSID);
-  if (!act || state.deleted[actSID]) {
+  if (!act || (state.deleted[actSID] && act.mtime <= state.deleted[actSID])) {
+    if (editing) cancelEdit();
     actSID = state.sheets[0] ? state.sheets[0].id : SID;
     collapseSel(0, 0);
-    buildGrid();
+    rebuild = true;
+  } else if (act.rows !== cellRefs.length ||
+             (cellRefs[0] && act.cols !== cellRefs[0].length)) {
+    rebuild = true;
   }
-
+  if (rebuild && editing) cancelEdit();
+  if (editing && editInput && editInput.value === editStartVal) {
+    var ec = getCell(editingR, editingC);
+    var nv = ec ? ec.v : "";
+    if (nv !== editStartVal) { editInput.value = nv; editStartVal = nv; }
+  }
   saveNow();
-  if (editing) cancelEdit();
   undoStack.length = 0; /* sync reshape — device-local undo voids */
   redoStack.length = 0;
   invalidateEval();
+  if (rebuild) buildGrid();
   renderTabs();
   renderGrid();
   renderSelection();
@@ -2495,8 +2700,26 @@ var ICONS = {
 var IC_X   = svg('<path d="M5 5l10 10M15 5 5 15"/>');
 var IC_ADD = svg('<path d="M10 4v12M4 10h12"/>');
 
+/* SS-8: the toolbar titles in index.html are English only */
+var TITLE_KEYS = {
+  "tb-undo": "tb.undo", "tb-redo": "tb.redo", "tb-copy": "tb.copy",
+  "tb-cut": "tb.cut", "tb-paste": "tb.paste", "tb-bold": "tb.bold",
+  "tb-ital": "tb.ital", "tb-und": "tb.und", "tb-al-l": "tb.al.l",
+  "tb-al-c": "tb.al.c", "tb-al-r": "tb.al.r", "tb-nf": "tb.nf",
+  "tb-col": "tb.col", "tb-clr": "tb.clr",
+  "btn-csv-imp": "csv.imp", "btn-csv-exp": "csv.exp"
+};
+
 function injectIcons() {
   var k;
+  for (k in TITLE_KEYS) {
+    var te = $(k);
+    if (te) { te.setAttribute("title", t(TITLE_KEYS[k])); te.setAttribute("aria-label", t(TITLE_KEYS[k])); }
+  }
+  var bar = $("sbar"); if (bar) bar.setAttribute("aria-label", t("tb.bar"));
+  var tabsNav = $("stabs"); if (tabsNav) tabsNav.setAttribute("aria-label", t("sheets"));
+  var nfSel = $("tb-nf");
+  if (nfSel && nfSel.options[0]) nfSel.options[0].textContent = t("tb.nf.gen");
   for (k in ICONS) {
     var el = $(k);
     if (el) {
@@ -2644,7 +2867,7 @@ function wire() {
   });
 
   var fx = $("fx-input");
-  fx.addEventListener("focus", function () { fxFocused = true; });
+  fx.addEventListener("focus", function () { fxFocused = true; fxStartVal = fx.value; });
   fx.addEventListener("blur", function () {
     fxFocused = false;
     renderSelection();
@@ -2653,7 +2876,8 @@ function wire() {
     if (e.key === "Enter") {
       e.preventDefault();
       var val = fx.value.replace(/^\s+|\s+$/g, "");
-      if (val === "") { if (getCell(selR, selC)) deleteCell(selR, selC); }
+      if (fx.value === fxStartVal) { /* SS-4: untouched: write nothing */ }
+      else if (val === "") { if (getCell(selR, selC)) deleteCell(selR, selC); }
       else setCell(selR, selC, val);
       queueSave(); invalidateEval(); renderGrid();
       navigate(1, 0);

@@ -150,12 +150,14 @@ td.cell-editor input{width:100%;height:100%;border:none;
 }
 /* ---- touch targets ≥44px (Bible Part VII MOBILE) ---- */
 @media (pointer:coarse),(max-width:480px){
-  .tbtn{min-width:42px;height:40px;}
-  .tsel{height:40px;}
-  .sbtn{min-height:40px;padding:8px 10px;font-size:12px;}
+  .tbtn{min-width:44px;height:44px;}
+  .tsel{height:44px;}
+  .sbtn{min-height:44px;padding:8px 10px;font-size:12px;}
+  .stab{min-height:44px;}
   .stab-x{padding:6px 8px;}
-  .stab-add{padding:9px 12px;}
+  .stab-add{padding:9px 12px;min-height:44px;}
   .sw{width:32px;height:32px;}
+  #fx-input{min-height:40px;}
 }
 
 /* ---- injected SVG icon sizing (R9) ---- */
