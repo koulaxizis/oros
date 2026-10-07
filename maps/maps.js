@@ -1981,13 +1981,22 @@
     // Undo toast (LOCAL — the closure stays in this frame). Undo
     // re-adds with a fresh mtime, which beats the tombstone (R17).
     localToast(t("places.removed"), t("places.undo"), function () {
+      // MP-2 (A67 Q5): a pull may have brought the place back already
+      // (another device edited it after this delete). Re-adding the
+      // snapshot with a fresh mtime would revert that newer edit.
+      if (placeById(id)) return;
       addPlace({ lat: gone.lat, lon: gone.lon, name: gone.name, sub: gone.sub });
     });
   }
 
-  function renamePlace(id, name) {
+  // `orig` = the name shown when the rename dialog opened. MP-1 (A67
+  // Q1): an OK without typing compared the old text with the CURRENT
+  // name, which a pull may have changed meanwhile, and wrote the old
+  // text back with a fresh mtime (the other device's rename was lost).
+  function renamePlace(id, name, orig) {
     var p = placeById(id);
     name = String(name || "").trim().slice(0, 120);
+    if (typeof orig === "string" && name === orig.trim().slice(0, 120)) return;
     if (!p || !name || name === p.name) return;      // zero-edit: no mtime stamp
     p.name = name;
     p.mtime = Date.now();
@@ -2127,7 +2136,8 @@
         '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
       ren.addEventListener("click", function (e) {
         e.stopPropagation();
-        askText(t("places.rename"), p.name, function (v) { renamePlace(p.id, v); });
+        var orig = p.name;
+        askText(t("places.rename"), orig, function (v) { renamePlace(p.id, v, orig); });
       });
       li.appendChild(ren);
 
