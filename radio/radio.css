@@ -62,11 +62,23 @@ body {
   flex-wrap: wrap;
 }
 
+/* RX-15 (Part VII): the tab strip scrolls inside itself on a phone;
+   in Greek it was 24px wider than 390px and dragged the whole page
+   sideways (the list lost its left edge). */
 .rx-tabs {
   display: flex;
   gap: 6px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
 }
+
+.rx-tabs::-webkit-scrollbar { display: none; }
+
+.rx-tabs .rx-tab { flex: 0 0 auto; white-space: nowrap; }
 
 .rx-tab {
   font-family: inherit;
@@ -482,7 +494,21 @@ body {
   white-space: nowrap;
 }
 
-/* Sleep dialog (created dynamically by radio.js) */
+/* Sleep dialog (created dynamically by radio.js).
+   RX-14 (R32): `* { margin: 0 }` docked it top-left; the native
+   dialog chrome is dropped, .rx-sleep-content is the visible card. */
+#rx-sleep-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+
+#rx-sleep-dlg::backdrop { background: rgba(0, 0, 0, .55); }
+
 .rx-sleep-content {
   background: var(--panel, #1b1a18);
   color: var(--fg, #e8e6e3);
@@ -570,6 +596,21 @@ body {
 .rx-toast.show {
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* RX-9: Undo action inside the local toast */
+.rx-toast-act {
+  margin-left: 10px;
+  padding: 0 0 0 10px;
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--line, #2e2c28);
+  color: var(--accent, #6d4aff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 /* ===== Scrollbar standard (Bible Part VII) ===== */

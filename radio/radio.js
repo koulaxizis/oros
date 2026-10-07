@@ -66,7 +66,11 @@ var STRINGS = {
     "view.discover":  "Top Stations Worldwide",
     "random":         "Surprise me",
     "random.hint":    "Play a random top station",
-    "catalog.err":    "Couldn't reach the station directory — check your connection or blockers."
+    "catalog.err":    "Couldn't reach the station directory — check your connection or blockers.",
+    "sleep.min":      "{n} min",
+    "recents.clear":  "Clear recent stations",
+    "recents.cleared":"Recent stations cleared",
+    "undo":           "Undo"
   },
   el: {
     "tab.countries":  "Χώρες",
@@ -102,7 +106,11 @@ var STRINGS = {
     "view.discover":  "Κορυφαίοι σταθμοί παγκοσμίως",
     "random":         "Τυχαίος σταθμός",
     "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό",
-    "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο σταθμών — έλεγξε τη σύνδεση ή τυχόν blockers."
+    "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο σταθμών — έλεγξε τη σύνδεση ή τυχόν blockers.",
+    "sleep.min":      "{n} λεπτά",
+    "recents.clear":  "Εκκαθάριση πρόσφατων σταθμών",
+    "recents.cleared":"Οι πρόσφατοι σταθμοί εκκαθαρίστηκαν",
+    "undo":           "Αναίρεση"
   }
 };
 
@@ -149,7 +157,10 @@ function normalizeStation(s){
     bitrate:      s.bitrate || 0,
     country:      s.country || "",
     countrycode:  s.countrycode || "",
-    votes:        s.votes || 0
+    votes:        s.votes || 0,
+    // RX-7: kept for the country tag chips + favorites (the API cache
+    // now stores normalized rows, not the ~30-field API objects)
+    tags:         Array.isArray(s.tags) ? s.tags.join(",") : String(s.tags || "")
   };
 }
 
@@ -172,48 +183,14 @@ var state = {
 
 var __orosSyncApi = null; // FIX-W2-1: properly declared
 
-// FIX-2: Tray icon registration
-var trayUnsub = null;
-
-function registerTrayIcon(){
-  var shell = window.parent || window;
-  if(!shell.orosTray || typeof shell.orosTray.register !== "function") return;
-  
-  var iconEl = document.createElement("button");
-  iconEl.className = "rx-tray-icon";
-  iconEl.innerHTML = "📻";
-  iconEl.style.cssText = "width:44px;height:44px;border:none;background:transparent;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;";
-  
-  iconEl.addEventListener("click", function(){
-    if(shell.orosShell && typeof shell.orosShell.openApp === "function"){
-      shell.orosShell.openApp("radio");
-    }
-  });
-  
-  try{
-    trayUnsub = shell.orosTray.register("radio", iconEl, {
-      title: "Radio",
-      active: false
-    });
-    
-    var unsub = host.api.subscribe(function(hostState){
-      if(trayUnsub && typeof trayUnsub.update === "function"){
-        trayUnsub.update({
-          active: hostState.playing,
-          icon: hostState.playing ? "🔊" : "📻"
-        });
-      }
-    });
-    
-    window.addEventListener("beforeunload", function(){
-      if(unsub) unsub();
-    });
-  }catch(e){ /* tray not available */ }
-}
+// RX-11 (R36, A31): registerTrayIcon() removed — it registered with a
+// shell.orosTray that does not exist (always returned early). The
+// taskbar chip is the shell's radioTrayTick() over __orosRadioHost.
 
 /* ===== SYNC CONTRACT (Bible Part V/VI, 5-arg) ===== */
 
-function saveLocal(){ 
+function saveLocal(){
+  if(state.data) normalizeState(state.data);  // RX-6: stored bytes stay canonical (the closed-app proxy sends them as-is)
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){}
 }
 
@@ -233,12 +210,23 @@ function normalizeState(obj){
     return f && f.stationuuid && typeof f.mtime === "number";
   });
   sortFavorites(obj.favorites);
+  // RX-6 (R26): tombstone keys in sorted order. The merge used to emit
+  // "remote keys first", so two devices that removed different
+  // favorites held the same content in different byte order and
+  // uploaded on every sync, forever.
+  var keys = Object.keys(obj.deleted).sort(), del = {};
+  keys.forEach(function(k){
+    if(typeof obj.deleted[k] === "number") del[k] = obj.deleted[k];
+  });
+  obj.deleted = del;
 }
 
 function sortFavorites(arr){
   arr.sort(function(a, b){
     if(b.mtime !== a.mtime) return b.mtime - a.mtime;
-    return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); // deterministic tie-break
+    var an = String(a.name || ""), bn = String(b.name || "");
+    if(an !== bn) return an < bn ? -1 : 1;                    // deterministic tie-break
+    return a.stationuuid < b.stationuuid ? -1 : (a.stationuuid > b.stationuuid ? 1 : 0);
   });
 }
 
@@ -291,7 +279,7 @@ function mergeRadioStates(remote, local){
   Object.keys(map).forEach(function(u){
     if(map[u].mtime > (dec[u] || 0)) merged.favorites.push(map[u]); // alive
   });
-  sortFavorites(merged.favorites);
+  normalizeState(merged);   // RX-6: same canonical shape as the getter
   return merged;
 }
 
@@ -321,16 +309,29 @@ document.addEventListener("keydown", function(e){
 
 var toastEl = null, toastTimer = null;
 
-function localToast(text){
+// actionLabel/actionFn: Undo-bearing toast (stays local, 8 s — Part VI)
+function localToast(text, actionLabel, actionFn){
   if(!toastEl){
     toastEl = document.createElement("div");
     toastEl.className = "rx-toast";
     document.body.appendChild(toastEl);
   }
   toastEl.textContent = text;
+  if(actionLabel && typeof actionFn === "function"){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "rx-toast-act";
+    b.textContent = actionLabel;
+    b.addEventListener("click", function(){
+      toastEl.classList.remove("show");
+      actionFn();
+    });
+    toastEl.appendChild(b);
+  }
   toastEl.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 5000);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); },
+    actionLabel ? 8000 : 5000);
 }
 
 function transientNote(text){
@@ -550,11 +551,18 @@ function saveRecents(){
   }catch(e){}
 }
 
+// RX-9: no native confirm (R14) and no Greek-only text: clear at once,
+// Undo puts the list back (recents are device-local).
 function clearRecents(){
+  var prev = state.recents.slice();
   state.recents = [];
   saveRecents();
   renderMain();
-  transientNote("Πρόσφατοι σταθμοί εκκαθαρίστηκαν");
+  localToast(t("recents.cleared"), t("undo"), function(){
+    state.recents = prev;
+    saveRecents();
+    renderMain();
+  });
 }
 
 function addRecent(station){
@@ -579,17 +587,68 @@ function getCached(key){
   }catch(e){ return null; }
 }
 
-function setCached(key, value){
+// RX-7 (R30): the API cache shares the ONE origin localStorage with
+// every app's data. It used to store the raw ~30-field API objects and
+// never removed an expired entry: ten country lists filled ~2.2M chars
+// (about half the quota), after which other apps' saves start to fail.
+// Now: station rows are normalized, expired entries are swept, the
+// whole cache is capped, and a quota error empties the cache instead
+// of leaving it full.
+var CACHE_CAP_CHARS = 600000;
+
+function sweepCache(keepKey){
+  var now = Date.now(), live = [], total = 0, i, k, raw, ts;
   try{
-    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), value: value }));
+    for(i = localStorage.length - 1; i >= 0; i--){
+      k = localStorage.key(i);
+      if(!k || k.indexOf(CACHE_PREFIX) !== 0) continue;
+      raw = localStorage.getItem(k) || "";
+      ts = 0;
+      try{ ts = JSON.parse(raw).ts || 0; }catch(e1){}
+      if(now - ts > CACHE_TTL_MS){ localStorage.removeItem(k); continue; }
+      live.push({ k: k, ts: ts, n: raw.length });
+      total += raw.length;
+    }
+    live.sort(function(a, b){ return a.ts - b.ts; });   // oldest first
+    for(i = 0; i < live.length && total > CACHE_CAP_CHARS; i++){
+      if(live[i].k === keepKey) continue;
+      localStorage.removeItem(live[i].k);
+      total -= live[i].n;
+    }
+  }catch(e){}
+}
+
+function slimRows(value){
+  if(!Array.isArray(value)) return value;
+  return value.map(function(s){
+    return (s && s.stationuuid) ? normalizeStation(s) : s;
+  });
+}
+
+function setCached(key, value){
+  var raw = JSON.stringify({ ts: Date.now(), value: slimRows(value) });
+  try{
+    localStorage.setItem(CACHE_PREFIX + key, raw);
+  }catch(e){
+    purgeCache();   // quota: the cache goes first, never someone's data
+    try{ localStorage.setItem(CACHE_PREFIX + key, raw); }catch(e2){ return; }
+  }
+  sweepCache(CACHE_PREFIX + key);
+}
+
+function purgeCache(){
+  try{
+    for(var i = localStorage.length - 1; i >= 0; i--){
+      var k = localStorage.key(i);
+      if(k && k.indexOf(CACHE_PREFIX) === 0) localStorage.removeItem(k);
+    }
   }catch(e){}
 }
 
 /* ===== OFFLINE TRACKING ===== */
 
 function updateOnlineState(){
-  var wasOffline = state.offline;
-  state.offline = !navigator.onLine;
+  state.offline = !navigator.onLine;   // RX-N3: unused wasOffline removed
   
   var banner = $("rx-banner");
   if(banner){
@@ -828,8 +887,17 @@ function openSleepDialog(){
     dlg.addEventListener("click", function(e){
       if(e.target === dlg) dlg.close();
     });
+    // RX-13: wired ONCE here (it was re-added on every open, so the
+    // Nth open ran cancelSleep N times per click)
+    var cancelBtn = $("rx-sleep-cancel");
+    if(cancelBtn){
+      cancelBtn.addEventListener("click", function(){
+        host.api.cancelSleep();
+        renderSleepStatus();
+      });
+    }
   }
-  
+
   // Build presets
   var presetsDiv = $("rx-sleep-presets");
   if(presetsDiv) presetsDiv.innerHTML = "";
@@ -837,23 +905,15 @@ function openSleepDialog(){
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "rx-sleep-preset";
-    btn.textContent = min + " min";
+    btn.textContent = fmt("sleep.min", min);
     btn.addEventListener("click", function(){
       host.api.setSleep(min);
       renderSleepStatus();
+      transientNote(fmt("sleep.set", min));   // the key existed, nothing said it
     });
     presetsDiv.appendChild(btn);
   });
-  
-  // Cancel button
-  var cancelBtn = $("rx-sleep-cancel");
-  if(cancelBtn){
-    cancelBtn.addEventListener("click", function(){
-      host.api.cancelSleep();
-      renderSleepStatus();
-    });
-  }
-  
+
   dlg.showModal();
   renderSleepStatus();
 }
@@ -866,7 +926,9 @@ function renderSleepStatus(){
   if(st.sleepUntil && st.sleepUntil > Date.now()){
     var minsLeft = Math.ceil((st.sleepUntil - Date.now()) / 60000);
     statusEl.textContent = fmt("sleep.remaining", minsLeft);
-  }else if(st.current && st.paused){
+  }else if(st.current && st.paused && host.lastEvent === "sleep-expired"){
+    // RX-13: was "any pause" — a failed stream or a manual pause read
+    // "stopped by the sleep timer" without a timer ever being set
     statusEl.textContent = t("sleep.stopped");
   }else{
     statusEl.textContent = "";
@@ -881,7 +943,13 @@ console.log("[radio] part 1/3 loaded");
 
 /* ===== DOM RENDERERS ===== */
 
+// RX-12: every render bumps the token; an async view (countries,
+// genres, stations, search) whose fetch lands after the user moved
+// on appends nothing (stale tiles used to land in the new view).
+var renderSeq = 0;
+
 function renderMain(){
+  renderSeq++;
   var main = $("rx-main");
   var list = $("rx-list");
   var crumb = $("rx-crumb");
@@ -955,7 +1023,8 @@ function renderMain(){
       
     case "search":
       if(state.searchQuery){
-        crumb.textContent = fmt("search.results", state.searchQuery);
+        // RX-8: the string has no {n}, so the query never showed
+        crumb.textContent = t("search.results") + " “" + state.searchQuery + "”";
         crumb.removeAttribute("hidden");
         list.className = "rx-list stations";
         renderSearchResults(list);
@@ -992,7 +1061,9 @@ function renderMain(){
 }
 
 function renderCountries(container){
+  var seq = renderSeq;
   fetchCountries().then(function(data){
+    if(seq !== renderSeq) return;   // RX-12: a newer view owns the list
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
@@ -1018,7 +1089,9 @@ function renderCountries(container){
 }
 
 function renderGenres(container){
+  var seq = renderSeq;
   fetchGenres().then(function(data){
+    if(seq !== renderSeq) return;   // RX-12
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
@@ -1053,7 +1126,9 @@ function renderDiscover(container){
   dice.addEventListener("click", surpriseMe);
   container.appendChild(dice);
   
+  var seq = renderSeq;
   fetchTopVoted().then(function(data){
+    if(seq !== renderSeq) return;   // RX-12
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
@@ -1142,7 +1217,9 @@ function renderRecents(container){
 }
 
 function renderStationsByCountry(container, code){
+  var seq = renderSeq;
   fetchStationsByCountry(code).then(function(data){
+    if(seq !== renderSeq) return;   // RX-12
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
@@ -1191,7 +1268,9 @@ function renderStationsByCountry(container, code){
 }
 
 function renderStationsByTag(container, tag){
+  var seq = renderSeq;
   fetchStationsByTag(tag).then(function(data){
+    if(seq !== renderSeq) return;   // RX-12
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
@@ -1207,7 +1286,9 @@ function renderStationsByTag(container, tag){
 
 function renderSearchResults(container){
   var q = state.searchQuery;
+  var seq = renderSeq;
   searchStations(q).then(function(data){
+    if(seq !== renderSeq) return;   // RX-12
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
@@ -1414,14 +1495,9 @@ function renderAutocomplete(items, rect){
     ac.appendChild(btn);
   });
   
-  // Position
-  var input = $("rx-search-input");
-  if(input && rect){
-    ac.style.top = (rect.bottom + 6) + "px";
-    ac.style.left = rect.left + "px";
-    ac.style.width = rect.width + "px";
-  }
-  
+  // RX-10: positioned by CSS only (absolute under the relative
+  // .rx-search). Viewport coordinates from getBoundingClientRect()
+  // pushed the list down and to the right of the input.
   ac.removeAttribute("hidden");
 }
 
@@ -1474,11 +1550,9 @@ function setupSearch(){
   
   var clearBtn = $("rx-clear-recents");
   if(clearBtn){
-    clearBtn.addEventListener("click", function(){
-      if(confirm("Εκκαθάριση όλων των πρόσφατων σταθμών;")){
-        clearRecents();
-      }
-    });
+    clearBtn.title = t("recents.clear");
+    clearBtn.setAttribute("aria-label", t("recents.clear"));
+    clearBtn.addEventListener("click", clearRecents);
   }
   
   // Focus shows recents suggestions
@@ -1507,7 +1581,7 @@ function setupSearch(){
       var self = this;
       state.searchTimer = setTimeout(function(){
         searchStations(val).then(function(results){
-          if(self.value.trim() === val){
+          if(self.value.trim() === val && document.activeElement === self){
             var rect = self.getBoundingClientRect();
             renderAutocomplete(results.slice(0, 8), rect);
           }
@@ -1523,21 +1597,28 @@ function setupSearch(){
   
   // Keyboard navigation
   input.addEventListener("keydown", function(e){
+    // RX-8 (R28): Enter without a highlighted suggestion used to do
+    // nothing at all (no grid search existed outside the dropdown).
+    if(e.key === "Enter" && !(state.acSel >= 0 && state.acItems[state.acSel])){
+      e.preventDefault();
+      clearTimeout(state.searchTimer);
+      input.blur();
+      doSearch(input.value);
+      return;
+    }
     if(state.acItems.length === 0) return;
-    
+
     if(e.key === "ArrowDown"){
       e.preventDefault();
       state.acSel = Math.min(state.acSel + 1, state.acItems.length - 1);
       updateAcSelection();
     }else if(e.key === "ArrowUp"){
       e.preventDefault();
-      state.acSel = Math.max(state.acSel, 0);
+      state.acSel = Math.max(state.acSel - 1, 0);   // RX-8: was clamped at the current row
       updateAcSelection();
     }else if(e.key === "Enter"){
-      if(state.acSel >= 0 && state.acItems[state.acSel]){
-        e.preventDefault();
-        selectAcItem(state.acItems[state.acSel]);
-      }
+      e.preventDefault();
+      selectAcItem(state.acItems[state.acSel]);
     }else if(e.key === "Escape"){
       e.preventDefault();
       var ac = $("rx-ac");
@@ -1727,7 +1808,12 @@ function applyI18n(){
   });
   
   var input = $("rx-search-input");
-  if(input) input.placeholder = t("search.ph");
+  if(input){
+    input.placeholder = t("search.ph");
+    input.setAttribute("aria-label", t("search.ph"));
+  }
+  var sl = $("rx-pl-sleep");
+  if(sl){ sl.setAttribute("aria-label", t("sleep.title")); sl.title = t("sleep.title"); }
 }
 
 /* ===== WIRING ===== */
@@ -1763,6 +1849,7 @@ function start(){
   // toast always said "Removed from favorites".
   state.data = sliceGet();
   loadRecents();
+  sweepCache(null);   // RX-7: expired / oversized API cache from older builds
   
   // FIX-6: Check if audio is already playing from shell
   var initialState = getHostState();
@@ -1773,7 +1860,6 @@ function start(){
   
   renderMain();
   wire();
-  registerTrayIcon();
   consumeDeepLink();
   console.log("[radio] ready — v0.3 Wave 3 complete");
 }
