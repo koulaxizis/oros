@@ -138,6 +138,8 @@ test("non-retroactive extensions: Canada, Australia, Japan, Russia", () => {
 
 test("other terms: Mexico 100, India 60, China 50", () => {
   assert.equal(one(Y(1957), "MX").from, 2058);
+  assert.equal(one(Y(1951), "MX").status, "pd");          // extensions not retroactive
+  assert.equal(one(Y(1952), "MX").from, 2053);
   assert.equal(one(Y(1957), "IN").from, 2018);
   assert.equal(one(Y(1957), "CN").from, 2008);
 });
