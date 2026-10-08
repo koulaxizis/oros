@@ -208,6 +208,14 @@
       "icon": "connect4",
       "url": "connect4/",
       "type": "internal"
+    },
+    {
+      "id": "dots",
+      "name": "Dots & Boxes",
+      "category": "Games",
+      "icon": "dots",
+      "url": "dots/",
+      "type": "internal"
     }
   ]
 }
