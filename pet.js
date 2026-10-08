@@ -1014,9 +1014,23 @@ function applyPetSettings(s) {
     });
     return Math.min(until, now + 24 * 3600000);   // a broken clock never hides the pet for days
   }
+  // The accessory Pet World put on the pet (oros-petprogress-data,
+  // read only; the carry copy before the app ever ran here). The app
+  // only lets the pet wear what it owns.
+  var PROGRESS_KEY = "oros-petprogress-data";
+  function wornAccessory() {
+    var raw = null;
+    try {
+      raw = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "null");
+      if (!raw) raw = (JSON.parse(localStorage.getItem("oros-remote-carry") || "null") || {}).petprogress || null;
+    } catch (e) { return ""; }
+    var w = raw && typeof raw === "object" ? raw.wear : null;
+    return w && typeof w.id === "string" && ACCESSORIES[w.id] === 1 ? w.id : "";
+  }
   function updateAway(now) {
     if (now - runtime.awayCheckAt < 2000) return;
     runtime.awayCheckAt = now;
+    runtime.acc = wornAccessory();
     var until = walkUntil(now), was = runtime.awayUntil > 0;
     runtime.awayUntil = until;
     if (!runtime.canvas || !runtime.awayEl) return;
@@ -1066,7 +1080,8 @@ function applyPetSettings(s) {
     birthdayShownYmd: "",     // birthday toast dedupe (1x/day)
     birthdayFiredPetId: null,
     // Pet World walk (read from oros-petnest-data, never written):
-    awayEl: null, awayUntil: 0, awayCheckAt: 0
+    awayEl: null, awayUntil: 0, awayCheckAt: 0,
+    acc: ""                 // Pet World accessory worn (read every 2 s with the walk)
   };
 
   // PT-6: stageBounds() runs several times per animation frame. It
@@ -1448,6 +1463,9 @@ function applyPetSettings(s) {
       }
     }
 
+    // Pet World accessory (phase 5): drawn over the body, under the Zzz
+    if (pose.acc) dressSprite(rect, grid, pose.acc);
+
     // Zzz above head when asleep
     if (sleeping) {
       rect(13, 2, 13, 2, 3);
@@ -1457,9 +1475,33 @@ function applyPetSettings(s) {
     return grid;
   }
 
+  // Pet World accessories (bought in the forest bazaar). Colours 5…9
+  // are the same for every palette: 5 dark, 6 pink, 7 red, 8 yellow,
+  // 9 leaf green. The head never moves in the grid, so one drawing
+  // fits every pose (the flip for direction mirrors it with the pet).
+  var ACCESSORIES = { bow: 1, scarf: 1, hat: 1, glasses: 1, crown: 1, bell: 1 };
+  function dressSprite(rect, grid, acc) {
+    if (acc === "bow") {
+      rect(5, 1, 6, 3, 6); rect(9, 1, 10, 3, 6); rect(7, 2, 8, 2, 7);
+    } else if (acc === "hat") {
+      rect(6, 0, 9, 1, 5); rect(6, 2, 9, 2, 7); rect(4, 3, 11, 3, 5);
+    } else if (acc === "glasses") {
+      rect(4, 4, 11, 4, 5); rect(4, 5, 4, 6, 5); rect(11, 5, 11, 6, 5); rect(7, 5, 8, 5, 5);
+    } else if (acc === "crown") {
+      rect(4, 2, 11, 2, 9);
+      grid[1][5] = 8; grid[1][8] = 6; grid[1][10] = 8; grid[2][6] = 8; grid[2][9] = 6;
+    } else if (acc === "scarf") {
+      rect(3, 12, 12, 12, 7); rect(4, 13, 5, 13, 7);
+      grid[12][5] = 8; grid[12][8] = 8; grid[12][11] = 8; grid[13][5] = 8;
+    } else if (acc === "bell") {
+      rect(3, 12, 12, 12, 6); rect(7, 13, 8, 13, 8);
+    }
+  }
+
   function spriteColors(paletteIdx) {
     var pal = PALETTES[clamp(paletteIdx | 0, 0, PALETTES.length - 1)];
-    return { 1: pal.body, 2: pal.belly, 3: pal.eye, 4: "#c96f4a" };
+    return { 1: pal.body, 2: pal.belly, 3: pal.eye, 4: "#c96f4a",
+             5: "#2f2a44", 6: "#e0457b", 7: "#d64545", 8: "#ffd23f", 9: "#5aa05c" };
   }
 
   function drawSprite(stats) {
@@ -1490,7 +1532,8 @@ function applyPetSettings(s) {
       dir: runtime.dir,
       frame: runtime.frame,
       eatT: (runtime.mode === "eat" && runtime.eatStartTs) ? (Date.now() - runtime.eatStartTs) / 900 : -1,
-      contemplating: runtime.contemplating
+      contemplating: runtime.contemplating,
+      acc: runtime.acc
     });
 
     // Render with direction flip
@@ -2404,7 +2447,8 @@ function applyPetSettings(s) {
       dir: p.dir === -1 ? -1 : 1,
       frame: typeof p.frame === "number" && isFinite(p.frame) ? p.frame : 0,
       eatT: typeof p.eatT === "number" && isFinite(p.eatT) ? p.eatT : -1,
-      contemplating: !!p.contemplating
+      contemplating: !!p.contemplating,
+      acc: typeof p.acc === "string" && ACCESSORIES[p.acc] === 1 ? p.acc : ""
     }).map(function (row) { return row.slice(); });
   }
 

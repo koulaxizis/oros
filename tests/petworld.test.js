@@ -1,8 +1,9 @@
 // Pure logic of Pet World (petworld/petworld.js): the "petworld"
 // slice merge, the per-device ledger, the pet binding, a fresh start,
 // the "petgarden" slice (beds, growth, watering, harvests) and the
-// "petnest" slice (walks, loot, nest stages, decorations) and the
-// "petgames" slice (game records).
+// "petnest" slice (walks, loot, nest stages, decorations), the
+// "petgames" slice (game records) and the "petprogress" slice (care
+// days, the accessory worn) with the derived XP, level and achievements.
 // Run: node --test tests/
 //
 // The app is a browser IIFE with no exports, so the pure functions
@@ -42,13 +43,19 @@ const PW = load("petworld/petworld.js",
    "activeWalk", "lastWalk", "withNestRow", "foldWalks", "startWalk", "nestNet", "nestStage",
    "buildable", "buildNest", "freshNest", "nestHasContent", "mulberry",
    "normGameRow", "joinGameRows", "mergeGames", "defaultGames", "recordGame", "gameStats",
-   "freshGames", "gamesHasContent"],
-  [["  var DATA_VER", "  var WAKE_AT"], ["  var HOUR", "  function normTot("], ["  var MIN = ", "  function normWalks("]],
+   "freshGames", "gamesHasContent",
+   "normWear", "mergeProgress", "defaultProgress", "addCareDays", "setWear", "freshProgress",
+   "progressHasContent", "longestStreak", "progressStats", "achievementsDone", "xpOf", "levelXP",
+   "levelOf", "bedCount", "acornsFor"],
+  [["  var DATA_VER", "  var WAKE_AT"], ["  var HOUR", "  function normTot("], ["  var MIN = ", "  function normWalks("],
+   ["  var GAMES = ", "  function normGameRow("], ["  var DAY = ", "  function normWear("]],
   "mergeWorld, defaultData, worldHasContent, ledger, freshStart, bindPet, mergeGarden, " +
   "defaultGarden, plotState, plantSeed, waterPlot, harvestPlot, digUp, freshGarden, stock, " +
   "gardenHasContent, CROPS, START_PACK, HOUR, mergeNest, defaultNest, lootOf, activeWalk, lastWalk, " +
   "foldWalks, startWalk, nestStage, buildNest, freshNest, nestHasContent, MIN, NEST, DECOR, " +
-  "mergeGames, defaultGames, recordGame, gameStats, freshGames, gamesHasContent");
+  "mergeGames, defaultGames, recordGame, gameStats, freshGames, gamesHasContent, " +
+  "mergeProgress, defaultProgress, addCareDays, setWear, freshProgress, progressHasContent, longestStreak, " +
+  "progressStats, achievementsDone, xpOf, levelXP, levelOf, bedCount, acornsFor, yieldOf, DAY, ACCESSORIES, ACHIEVEMENTS");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -99,7 +106,7 @@ test("petworld: balances add across devices, a fresh start drops older rows ever
   const other = PW.ledger(PW.defaultData(), "dB", "acorn", 4, 1);
   let m = PW.mergeWorld(d, other);
   const G0 = PW.defaultGarden();
-  assert.equal(PW.stock(m, G0, "acorn"), 6);
+  assert.equal(PW.stock(m, G0, "acorn"), 5 + 6);                 // + the start purse (phase 5)
   assert.equal(PW.stock(m, G0, "twig"), 0);
   assert.ok(PW.worldHasContent(m));
   assert.ok(!PW.worldHasContent(PW.defaultData()));
@@ -369,4 +376,142 @@ test("petgames: best of every device, plays summed, a fresh start clears", () =>
   // unknown games from a newer version survive an older merge
   assert.equal(J(PW.mergeGames({ rows: { dC: { b: 0, s: { future_game: { best: 2, n: 1 } } } } }, null).rows.dC.s),
                J({ future_game: { best: 2, n: 1 } }));
+});
+
+function randomProgress() {
+  const days = [];
+  for (let i = 0; i < rnd(6); i++) days.push(rnd(8) ? 100 + rnd(12) : ["x", -1, 1.5, null][rnd(4)]);
+  const wear = rnd(3) ? { id: ["", "bow", "hat", "Bad!", "future_acc"][rnd(5)], ts: rnd(4) * 10 * 86400000 } : null;
+  return { ver: 1, br: rnd(3) ? 0 : (100 + rnd(12)) * 86400000 + rnd(2) * 1000, days: rnd(8) ? days : "junk", wear };
+}
+
+test("petprogress: merge is a join and pure", () => {
+  const M = PW.mergeProgress;
+  for (let i = 0; i < 20000; i++) {
+    const a = randomProgress(), b = randomProgress(), c = randomProgress(), sa = J(a), sb = J(b);
+    const ab = M(a, b);
+    assert.equal(J(ab), J(M(b, a)));
+    assert.equal(J(M(ab, ab)), J(ab));
+    assert.equal(J(M(ab, null)), J(ab));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+    assert.equal(J(b), sb);
+    ab.days.forEach((d, k) => { assert.ok(d >= Math.floor(ab.br / PW.DAY)); if (k) assert.ok(d > ab.days[k - 1]); });
+  }
+  assert.equal(J(M("junk", 42)), J(PW.defaultProgress()));
+});
+
+test("petprogress: care days come from feeding and patting, once a day, and a fresh start clears them", () => {
+  const D = PW.DAY, t0 = 20000 * D;
+  const log = [
+    { id: "1", ts: t0 + 1000, type: "feed" }, { id: "2", ts: t0 + 5000, type: "pet" },
+    { id: "3", ts: t0 + D + 10, type: "sleep" },                       // not care
+    { id: "4", ts: t0 + 2 * D, type: "pet" }, { id: "5", ts: "bad", type: "feed" }
+  ];
+  let p = PW.addCareDays(PW.defaultProgress(), log, []);
+  assert.equal(J(p.days), J([20000, 20002]));
+  assert.equal(PW.addCareDays(p, log, []), p);                         // nothing new: same object
+  p = PW.addCareDays(p, null, [t0 + D]);
+  assert.equal(J(p.days), J([20000, 20001, 20002]));
+  assert.equal(PW.longestStreak(p.days), 3);
+  assert.equal(PW.longestStreak([1, 2, 4, 5, 6, 9]), 3);
+  assert.equal(PW.longestStreak([]), 0);
+  assert.ok(PW.progressHasContent(p));
+  // the other device's copy joins; a fresh start drops older days
+  const other = PW.addCareDays(PW.defaultProgress(), null, [t0 + 5 * D]);
+  assert.equal(PW.mergeProgress(p, other).days.length, 4);
+  const fresh = PW.freshProgress(p, t0 + 2 * D + 500);
+  assert.equal(J(PW.mergeProgress(fresh, p).days), J([20002]));          // the reset day itself stays
+  assert.equal(J(PW.addCareDays(fresh, log, []).days), J([20002]));     // old log entries do not come back
+});
+
+test("petprogress: the newest accessory choice wins; a fresh start takes it off", () => {
+  let p = PW.setWear(PW.defaultProgress(), "bow", 100);
+  const q = PW.setWear(p, "hat", 50);                                  // clock behind: still newer
+  assert.equal(q.wear.id, "hat");
+  assert.ok(q.wear.ts > p.wear.ts);
+  assert.equal(PW.mergeProgress(p, q).wear.id, "hat");
+  assert.equal(PW.mergeProgress({ wear: { id: "bow", ts: 5 } }, { wear: { id: "hat", ts: 5 } }).wear.id, "hat");
+  assert.equal(PW.setWear(q, "Bad!", 200), q);
+  assert.equal(PW.setWear(q, "", 200).wear.id, "");
+  assert.equal(PW.mergeProgress(PW.freshProgress(q, 1000), q).wear, null);
+});
+
+test("petprogress: XP, level and achievements come from the forest itself", () => {
+  const H = PW.HOUR, MIN = PW.MIN, t0 = 1700000000000;
+  assert.equal(PW.levelOf(0), 1);
+  assert.equal(PW.levelOf(39), 1);
+  assert.equal(PW.levelOf(40), 2);
+  assert.equal(PW.levelOf(PW.levelXP(20)), 20);
+  assert.equal(PW.levelOf(1e9), 20);
+  // a forest with a harvest, a walk, two nest stages, two games and three care days
+  let g = PW.plantSeed(PW.defaultGarden(), "0", "carrot", t0);
+  const h = PW.harvestPlot(g, "0", t0 + 5 * H);
+  g = h.g;
+  let n = PW.startWalk(PW.defaultNest(), "dA", 30, t0);
+  n = PW.buildNest(n, "n1", t0 + 1, () => 100);
+  n = PW.buildNest(n, "n2", t0 + 2, () => 100);
+  let gm = PW.recordGame(PW.defaultGames(), "dA", "catch", 26);
+  gm = PW.recordGame(gm, "dB", "hide", 3);
+  const pr = PW.addCareDays(PW.defaultProgress(), null, [t0, t0 + PW.DAY, t0 + 2 * PW.DAY]);
+  const d = PW.defaultData();
+  const st = PW.progressStats(d, g, n, gm, pr, t0 + 6 * H);
+  const loot = PW.lootOf("dA", t0, 30);
+  const mats = ["twig", "leaf", "moss", "pebble", "feather", "shell", "clover"].reduce((s, k) => s + (loot[k] || 0), 0);
+  assert.equal(st.crops, h.got.carrot);
+  assert.equal(st.gathered, mats);
+  assert.equal(st.stages, 2);
+  assert.equal(st.plays, 2);
+  assert.equal(st.catch, 26);
+  assert.equal(st.days, 3);
+  assert.equal(st.streak, 3);
+  const done = PW.achievementsDone(st);
+  assert.ok(done.indexOf("harvest1") >= 0 && done.indexOf("catcher") >= 0 && done.indexOf("week") < 0);
+  assert.equal(PW.xpOf(st), 3 * 10 + st.crops * 2 + mats + 2 * 25 + 2 * 3 + done.length * 20);
+  // the walk only counts once it is over
+  assert.equal(PW.progressStats(d, g, n, gm, pr, t0 + 10 * MIN).gathered, 0);
+  // the same forest on another device gives the same XP
+  const st2 = PW.progressStats(PW.mergeWorld(d, null), PW.mergeGarden(g, null), PW.mergeNest(PW.defaultNest(), n),
+                               PW.mergeGames(gm, null), PW.mergeProgress(pr, null), t0 + 6 * H);
+  assert.equal(PW.xpOf(st2), PW.xpOf(st));
+  // accessories owned count for "dapper"
+  let rich = PW.ledger(d, "dA", "acc_bow", 1, 0);
+  rich = PW.ledger(rich, "dA", "acc_hat", 1, 0);
+  rich = PW.ledger(rich, "dB", "acc_scarf", 1, 0);
+  assert.equal(PW.progressStats(rich, g, n, gm, pr, t0).outfits, 3);
+});
+
+test("petprogress: beds 5 and 6 open with the level and never hide a planted bed", () => {
+  const g = PW.defaultGarden();
+  assert.equal(PW.bedCount(1, g), 4);
+  assert.equal(PW.bedCount(4, g), 5);
+  assert.equal(PW.bedCount(8, g), 6);
+  assert.equal(PW.bedCount(20, g), 6);
+  const planted = PW.plantSeed(g, "5", "carrot", 1000);
+  assert.equal(PW.bedCount(1, planted), 6);
+});
+
+test("acorns: from games (capped), walks and harvests (fixed loot), a start purse, spent through the ledger", () => {
+  assert.equal(PW.acornsFor("catch", 26), 3);
+  assert.equal(PW.acornsFor("catch", 7), 0);
+  assert.equal(PW.acornsFor("hide", 5), 2);
+  assert.equal(PW.acornsFor("follow", 4), 2);
+  assert.equal(PW.acornsFor("follow", 99), 5);
+  assert.equal(PW.lootOf("dA", 1000, 15).acorn, 1);
+  assert.equal(PW.lootOf("dA", 1000, 30).acorn, 2);
+  assert.equal(PW.lootOf("dA", 1000, 60).acorn, 4);
+  assert.equal(PW.yieldOf("0", { s: "carrot", t: 5, n: 0 }).acorn, 1);
+  assert.equal(PW.yieldOf("0", { s: "apple", t: 5, n: 0 }).acorn, 2);
+  const G = PW.defaultGarden();
+  let d = PW.defaultData();
+  assert.equal(PW.stock(d, G, "acorn"), 5);
+  d = PW.ledger(d, "dA", "acorn", 3, 0);
+  d = PW.ledger(d, "dA", "acorn", 0, 8);
+  d = PW.ledger(d, "dA", "acc_bow", 1, 0);
+  assert.equal(PW.stock(d, G, "acorn"), 0);
+  assert.equal(PW.stock(d, G, "acc_bow"), 1);
+  // harvest acorns are counted once even when two devices pick the same growth
+  let g = PW.plantSeed(G, "1", "carrot", 0);
+  const A = PW.harvestPlot(g, "1", 5 * PW.HOUR).g, B = PW.harvestPlot(g, "1", 6 * PW.HOUR).g;
+  assert.equal(PW.stock(PW.defaultData(), PW.mergeGarden(A, B), "acorn"), 6);
 });

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Pet World — App logic (v1.3.0: foundations, garden, walks + nest, games)
+// orOS Pet World — App logic (v1.4.0: foundations, garden, walks + nest, games, progress)
 // The Screen Pet's own world: a pixel forest where the SAME pet as
 // the desktop companion lives, with the real time of day.
 //   - The pet itself (name, palette, care clocks, sleep) belongs to
@@ -27,8 +27,14 @@
 //     the pet is out on a walk.
 //   - synced slice "petgames" (oros-petgames-data, phase 4): game
 //     records, see section 2d; the games themselves are section 5b.
+//   - synced slice "petprogress" (oros-petprogress-data, phase 5):
+//     care days and the accessory worn, see section 2e. Level, XP and
+//     achievements are DERIVED from all the slices; acorns and bought
+//     things are ledger items. The companion reads the accessory.
 //   - device-local (R10): oros-petworld-device (this device's row id),
-//     oros-petworld-walk-seen (the last walk welcomed home here)
+//     oros-petworld-walk-seen (the last walk welcomed home here),
+//     oros-petworld-progress-seen (the level and achievements already
+//     cheered on this device)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. World data: normalize / merge / ledger / binding (R5, R26)
@@ -50,6 +56,9 @@
   var GARDEN_KEY  = "oros-petgarden-data";
   var NEST_KEY    = "oros-petnest-data";
   var GAMES_KEY   = "oros-petgames-data";
+  var PROG_KEY    = "oros-petprogress-data";
+  var CHEER_KEY   = "oros-petworld-progress-seen";  // device-local: level + achievements cheered here
+  var EVENTS_KEY  = "oros-pet-events";      // read-only here: pet.js's care log
   var SEEN_KEY    = "oros-petworld-walk-seen";  // device-local: the last walk welcomed home here
   var DEVICE_KEY  = "oros-petworld-device";
   var PET_KEY     = "oros-pet-data";        // read-only here: storage event only
@@ -184,7 +193,40 @@
       "game.lost": "{name} was hiding here", "game.wrong": "Oops, it was {move}",
       "game.up": "Jump", "game.left": "Left", "game.right": "Right", "game.down": "Duck",
       "result.title": "{game}", "result.score": "Score: {n}", "result.best": "New best!",
-      "result.again": "Play again", "result.close": "Done"
+      "result.again": "Play again", "result.close": "Done",
+      "prog.btn": "Level {n}, {a} acorns. Progress (L)",
+      "prog.title": "Level {n}", "prog.lv": "Lv {n}", "prog.xp": "{xp} / {next} XP", "prog.max": "{xp} XP · top level!",
+      "prog.next": "Level {n} opens: {list}",
+      "prog.how": "XP comes from care days, harvests, walks, the nest, games and achievements.",
+      "prog.shop": "Forest bazaar", "prog.shopShort": "Bazaar",
+      "prog.ach": "Achievements {k}/{n}",
+      "prog.bed": "Garden bed {n}",
+      "ach.harvest1": "First harvest", "ach.harvest50": "Green paws", "ach.explorer": "Explorer",
+      "ach.lucky": "Lucky find", "ach.nest": "A home", "ach.decor": "Decorator", "ach.player": "Playful",
+      "ach.catcher": "Quick paws", "ach.seeker": "Sharp eyes", "ach.dancer": "Dancer",
+      "ach.week": "A week together", "ach.month": "A month of care", "ach.dapper": "Dapper",
+      "achd.harvest1": "Harvest a crop", "achd.harvest50": "Harvest 50 crops",
+      "achd.explorer": "Bring home 100 things from walks", "achd.lucky": "Find a treasure on a walk",
+      "achd.nest": "Finish the nest", "achd.decor": "Build all four decorations",
+      "achd.player": "Play 25 games", "achd.catcher": "Score 25 in Catch it",
+      "achd.seeker": "Find the pet 8 times in one Hide and seek", "achd.dancer": "Follow 8 moves in Follow me",
+      "achd.week": "Care for the pet 7 days in a row", "achd.month": "Care for the pet on 30 days",
+      "achd.dapper": "Own 3 accessories",
+      "ach.of": "{v}/{goal}", "ach.done": "Done",
+      "shop.title": "Forest bazaar", "shop.msg": "You have {n} acorns. Games, harvests and walks bring more.",
+      "shop.seeds": "Seeds", "shop.acc": "Accessories",
+      "shop.cost": "{n} acorns", "shop.buy": "Buy", "shop.lock": "From level {n}",
+      "shop.wear": "Wear", "shop.off": "Take off", "shop.worn": "Worn now", "shop.owned": "In the wardrobe",
+      "key.shop": "Forest bazaar (A)",
+      "item.acorn": "Acorns", "fx.acorn": "Spend them at the forest bazaar",
+      "item.acc_bow": "Bow", "item.acc_scarf": "Scarf", "item.acc_hat": "Top hat",
+      "item.acc_glasses": "Glasses", "item.acc_crown": "Flower crown", "item.acc_bell": "Bell collar",
+      "fx.acc": "An accessory, also worn on the desktop",
+      "toast.bought": "Bought: {what}", "toast.poor": "Not enough acorns",
+      "toast.wear": "{name} now wears: {what}", "toast.off": "{name} took it off",
+      "toast.level": "Level {n}! {list}", "toast.levelPlain": "Level {n}!",
+      "toast.ach": "Achievement: {what}",
+      "result.acorn": "+1 acorn", "result.acorns": "+{n} acorns"
     },
     el: {
       "age.one": "{n} ημέρα μαζί σου",
@@ -298,7 +340,40 @@
       "game.lost": "{name}: κρυβόταν εδώ", "game.wrong": "Ωχ, ήταν {move}",
       "game.up": "Πήδα", "game.left": "Αριστερά", "game.right": "Δεξιά", "game.down": "Σκύψε",
       "result.title": "{game}", "result.score": "Πόντοι: {n}", "result.best": "Νέο ρεκόρ!",
-      "result.again": "Ξανά", "result.close": "Εντάξει"
+      "result.again": "Ξανά", "result.close": "Εντάξει",
+      "prog.btn": "Επίπεδο {n}, {a} βελανίδια. Πρόοδος (L)",
+      "prog.title": "Επίπεδο {n}", "prog.lv": "Επ. {n}", "prog.xp": "{xp} / {next} XP", "prog.max": "{xp} XP · το ψηλότερο επίπεδο!",
+      "prog.next": "Το επίπεδο {n} ανοίγει: {list}",
+      "prog.how": "Τα XP έρχονται από μέρες φροντίδας, σοδειές, βόλτες, τη φωλιά, παιχνίδια και επιτεύγματα.",
+      "prog.shop": "Παζάρι του δάσους", "prog.shopShort": "Παζάρι",
+      "prog.ach": "Επιτεύγματα {k}/{n}",
+      "prog.bed": "Παρτέρι {n}",
+      "ach.harvest1": "Πρώτη σοδειά", "ach.harvest50": "Πράσινα ποδαράκια", "ach.explorer": "Εξερευνητής",
+      "ach.lucky": "Τυχερό εύρημα", "ach.nest": "Ένα σπίτι", "ach.decor": "Διακοσμητής", "ach.player": "Παιχνιδιάρης",
+      "ach.catcher": "Γρήγορα πόδια", "ach.seeker": "Κοφτερό μάτι", "ach.dancer": "Χορευτής",
+      "ach.week": "Μια εβδομάδα μαζί", "ach.month": "Ένας μήνας φροντίδας", "ach.dapper": "Κομψό",
+      "achd.harvest1": "Μάζεψε μια σοδειά", "achd.harvest50": "Μάζεψε 50 καρπούς",
+      "achd.explorer": "Φέρε 100 πράγματα από βόλτες", "achd.lucky": "Βρες έναν θησαυρό σε βόλτα",
+      "achd.nest": "Τελείωσε τη φωλιά", "achd.decor": "Χτίσε και τα τέσσερα διακοσμητικά",
+      "achd.player": "Παίξε 25 παιχνίδια", "achd.catcher": "Φτάσε τους 25 πόντους στο «Πιάσε το»",
+      "achd.seeker": "Βρες το 8 φορές σε ένα Κρυφτό", "achd.dancer": "Ακολούθησε 8 κινήσεις στο «Ακολούθα με»",
+      "achd.week": "Φρόντισέ το 7 μέρες στη σειρά", "achd.month": "Φρόντισέ το 30 μέρες",
+      "achd.dapper": "Απόκτησε 3 αξεσουάρ",
+      "ach.of": "{v}/{goal}", "ach.done": "Έγινε",
+      "shop.title": "Παζάρι του δάσους", "shop.msg": "Έχεις {n} βελανίδια. Παιχνίδια, σοδειές και βόλτες φέρνουν κι άλλα.",
+      "shop.seeds": "Σπόροι", "shop.acc": "Αξεσουάρ",
+      "shop.cost": "{n} βελανίδια", "shop.buy": "Αγόρασε", "shop.lock": "Από το επίπεδο {n}",
+      "shop.wear": "Φόρεσέ το", "shop.off": "Βγάλ' το", "shop.worn": "Το φοράει", "shop.owned": "Στην ντουλάπα",
+      "key.shop": "Παζάρι του δάσους (A)",
+      "item.acorn": "Βελανίδια", "fx.acorn": "Ξόδεψέ τα στο παζάρι του δάσους",
+      "item.acc_bow": "Φιόγκος", "item.acc_scarf": "Κασκόλ", "item.acc_hat": "Ψηλό καπέλο",
+      "item.acc_glasses": "Γυαλιά", "item.acc_crown": "Στεφάνι με λουλούδια", "item.acc_bell": "Κολάρο με κουδουνάκι",
+      "fx.acc": "Αξεσουάρ, φαίνεται και στην επιφάνεια εργασίας",
+      "toast.bought": "Αγοράστηκε: {what}", "toast.poor": "Δεν φτάνουν τα βελανίδια",
+      "toast.wear": "{name}: φοράει {what}", "toast.off": "{name}: το έβγαλε",
+      "toast.level": "Επίπεδο {n}! {list}", "toast.levelPlain": "Επίπεδο {n}!",
+      "toast.ach": "Επίτευγμα: {what}",
+      "result.acorn": "+1 βελανίδι", "result.acorns": "+{n} βελανίδια"
     }
   };
 
@@ -444,7 +519,7 @@
   // wins whole; equal t: s by greater string, n max, wn max, tot max
   // per item. Balance of an item = start pack + ledger + Σ tot.
   var HOUR = 3600000;
-  var PLOTS = 4;                             // phase 5 unlocks more with the level
+  var PLOTS = 4;                             // beds shown now: 4, more with the level (bedCount)
   var CROPS = {
     carrot:     { seed: "seed_carrot",     d: 4,  crop: [2, 3], seeds: [1, 2] },
     strawberry: { seed: "seed_strawberry", d: 8,  crop: [3, 4], seeds: [1, 2] },
@@ -454,7 +529,7 @@
   };
   var CROP_ORDER = ["carrot", "strawberry", "mushroom", "sunflower", "apple"];
   var FOOD_ORDER = ["carrot", "strawberry", "mushroom", "apple"];
-  var START_PACK = { seed_carrot: 3, seed_strawberry: 2, seed_mushroom: 1, seed_sunflower: 1, seed_apple: 1 };
+  var START_PACK = { seed_carrot: 3, seed_strawberry: 2, seed_mushroom: 1, seed_sunflower: 1, seed_apple: 1, acorn: 5 };
   var PLOT_RE = /^[0-9]$/;
 
   function normTot(src) {
@@ -521,6 +596,7 @@
     out[p.s] = c.crop[0] + (h % (c.crop[1] - c.crop[0] + 1));
     var sd = c.seeds[0] + ((h >>> 8) % (c.seeds[1] - c.seeds[0] + 1));
     if (sd > 0) out[c.seed] = sd;
+    out.acorn = c.d >= 24 ? 2 : 1;                  // phase 5: the bazaar's money
     return out;
   }
 
@@ -721,6 +797,8 @@
     }
     if (r() < L.seed) add(CROPS[CROP_ORDER[Math.floor(r() * CROP_ORDER.length)]].seed);
     if (r() < L.find) add(FINDS[Math.floor(r() * FINDS.length)]);
+    var ac = { 15: 1, 30: 2, 60: 4 }[min];        // phase 5: acorns, after every other draw
+    if (ac) out.acorn = ac;
     return out;
   }
 
@@ -914,7 +992,188 @@
     return Object.keys(gm.rows).some(function (dev) { return Object.keys(gm.rows[dev].s).length > 0; });
   }
 
+  // ---------- 2e. Progress (phase 5) ----------
+  // Its own synced slice "petprogress" (oros-petprogress-data):
+  //   { ver, br, days[day, ...], wear{id, ts} | null }
+  //   days = the days the pet was cared for (UTC day numbers, ts / 24 h,
+  //        the same on every device), from pet.js's care log (feed,
+  //        pat, on any device) and from this app. A set: union, sorted,
+  //        the newest MAX_DAYS kept; days before the fresh-start day
+  //        drop.
+  //   wear = the accessory the pet wears ("" none): the later ts wins,
+  //        a tie takes the greater id; one older than br drops. The
+  //        companion (pet.js) reads it to dress the pet on the desktop.
+  // Everything else is DERIVED from the slices, so nothing is ever
+  // counted twice and an older forest gets its level at once:
+  //   XP    = 10 per care day + 2 per crop harvested + 1 per material
+  //           or find a walk brought home + 25 per nest stage or
+  //           decoration + 3 per game played + 20 per achievement
+  //   level = the highest L (1…20) with 20·L·(L−1) ≤ XP
+  //   achievements = thresholds on the same counts.
+  // Acorns, the bazaar's money, are a ledger item of "petworld":
+  // games and purchases write this device's row; walks and harvests
+  // bring acorns as part of their fixed loot (counted once). Bought
+  // accessories are ledger items "acc_<id>".
+  var DAY = 86400000;
+  var MAX_DAYS = 4000;
+  var MAX_LEVEL = 20;
+  var ACCESSORIES = [
+    { id: "bow",     cost: 8,  level: 2 },
+    { id: "scarf",   cost: 15, level: 4 },
+    { id: "hat",     cost: 25, level: 6 },
+    { id: "glasses", cost: 35, level: 9 },
+    { id: "crown",   cost: 50, level: 12 },
+    { id: "bell",    cost: 70, level: 15 }
+  ];
+  var SEED_SHOP = [
+    { crop: "carrot",     cost: 2,  level: 1 },
+    { crop: "strawberry", cost: 3,  level: 2 },
+    { crop: "mushroom",   cost: 4,  level: 3 },
+    { crop: "sunflower",  cost: 6,  level: 5 },
+    { crop: "apple",      cost: 12, level: 7 }
+  ];
+  var BED_LEVELS = [4, 8];                   // garden beds 5 and 6
+  var ACHIEVEMENTS = [
+    { id: "harvest1",  stat: "crops",    goal: 1 },
+    { id: "harvest50", stat: "crops",    goal: 50 },
+    { id: "explorer",  stat: "gathered", goal: 100 },
+    { id: "lucky",     stat: "finds",    goal: 1 },
+    { id: "nest",      stat: "stages",   goal: 5 },
+    { id: "decor",     stat: "decor",    goal: 4 },
+    { id: "player",    stat: "plays",    goal: 25 },
+    { id: "catcher",   stat: "catch",    goal: 25 },
+    { id: "seeker",    stat: "hide",     goal: 8 },
+    { id: "dancer",    stat: "follow",   goal: 8 },
+    { id: "week",      stat: "streak",   goal: 7 },
+    { id: "month",     stat: "days",     goal: 30 },
+    { id: "dapper",    stat: "outfits",  goal: 3 }
+  ];
+
+  function normWear(w, br) {
+    if (!w || typeof w !== "object" || typeof w.id !== "string" || !isTs(w.ts) || w.ts < br) return null;
+    if (w.id !== "" && !ITEM_RE.test(w.id)) return null;
+    return { id: w.id, ts: w.ts };
+  }
+
+  function mergeProgress(A, B) {
+    var a = (A && typeof A === "object") ? A : {};
+    var b = (B && typeof B === "object") ? B : {};
+    var br = Math.max(isTs(a.br) ? a.br : 0, isTs(b.br) ? b.br : 0);
+    var lo = Math.floor(br / DAY), seen = {};
+    [a.days, b.days].forEach(function (src) {
+      if (!Array.isArray(src)) return;
+      src.forEach(function (d) {
+        if (typeof d === "number" && Math.floor(d) === d && d >= lo && d <= 1e6) seen[d] = true;
+      });
+    });
+    var days = Object.keys(seen).map(Number).sort(function (x, y) { return x - y; });
+    if (days.length > MAX_DAYS) days = days.slice(days.length - MAX_DAYS);
+    var wa = normWear(a.wear, br), wb = normWear(b.wear, br), wear = wa || wb;
+    if (wa && wb && (wb.ts > wa.ts || (wb.ts === wa.ts && cmpStr(wb.id, wa.id) > 0))) wear = wb;
+    return { ver: DATA_VER, br: br, days: days, wear: wear };
+  }
+
+  function defaultProgress() { return { ver: DATA_VER, br: 0, days: [], wear: null }; }
+
+  // The care days in pet.js's log (feed and pat, any device) and the
+  // given extra times. Returns pr unchanged when no day is new.
+  function addCareDays(pr, events, extra) {
+    var lo = Math.floor(pr.br / DAY), have = {}, add = [];
+    pr.days.forEach(function (d) { have[d] = true; });
+    var take = function (ts) {
+      if (!isTs(ts)) return;
+      var d = Math.floor(ts / DAY);
+      if (d >= lo && !have[d]) { have[d] = true; add.push(d); }
+    };
+    (Array.isArray(events) ? events : []).forEach(function (ev) {
+      if (ev && (ev.type === "feed" || ev.type === "pet") && ev.ts >= pr.br) take(ev.ts);
+    });
+    (extra || []).forEach(take);
+    if (!add.length) return pr;
+    return mergeProgress({ ver: DATA_VER, br: pr.br, days: pr.days.concat(add), wear: pr.wear }, null);
+  }
+
+  function setWear(pr, id, now) {
+    if (id !== "" && !ITEM_RE.test(id)) return pr;
+    var ts = Math.max(now, pr.br, pr.wear ? pr.wear.ts + 1 : 0);
+    return mergeProgress({ ver: DATA_VER, br: pr.br, days: pr.days, wear: { id: id, ts: ts } }, null);
+  }
+
+  function freshProgress(pr, br) {
+    return mergeProgress({ ver: DATA_VER, br: Math.max(br, pr.br), days: pr.days, wear: pr.wear }, null);
+  }
+
+  function progressHasContent(pr) { return pr.days.length > 0 || !!(pr.wear && pr.wear.id); }
+
+  function longestStreak(days) {
+    var best = 0, run = 0;
+    days.forEach(function (d, i) {
+      run = i > 0 && days[i - 1] === d - 1 ? run + 1 : 1;
+      if (run > best) best = run;
+    });
+    return best;
+  }
+
+  // The counts behind XP and achievements, from every slice.
+  function progressStats(d, g, n, gm, pr, now) {
+    var st = { crops: 0, gathered: 0, finds: 0, stages: nestStage(n), decor: 0, plays: 0,
+               days: pr.days.length, streak: longestStreak(pr.days), outfits: 0 };
+    Object.keys(g.plots).forEach(function (id) {
+      CROP_ORDER.forEach(function (c) { st.crops += g.plots[id].tot[c] || 0; });
+    });
+    var got = {};
+    Object.keys(n.rows).forEach(function (dev) {
+      var sum = n.rows[dev].sum;
+      Object.keys(sum).forEach(function (k) { got[k] = (got[k] || 0) + sum[k]; });
+    });
+    walkList(n).forEach(function (w) {
+      if (w.end > now) return;
+      var l = lootOf(w.dev, w.s, w.d);
+      Object.keys(l).forEach(function (k) { got[k] = (got[k] || 0) + l[k]; });
+    });
+    MATERIALS.concat(FINDS).forEach(function (k) { st.gathered += got[k] || 0; });
+    FINDS.forEach(function (k) { st.finds += got[k] || 0; });
+    DECOR.forEach(function (x) { if (n.built[x.id]) st.decor++; });
+    GAMES.forEach(function (k) { var s = gameStats(gm, k); st.plays += s.n; st[k] = s.best; });
+    ACCESSORIES.forEach(function (a) { if (stock(d, g, "acc_" + a.id, null, now) > 0) st.outfits++; });
+    return st;
+  }
+
+  function achievementsDone(st) {
+    return ACHIEVEMENTS.filter(function (a) { return (st[a.stat] || 0) >= a.goal; }).map(function (a) { return a.id; });
+  }
+
+  function xpOf(st) {
+    return st.days * 10 + st.crops * 2 + st.gathered + (st.stages + st.decor) * 25 +
+           st.plays * 3 + achievementsDone(st).length * 20;
+  }
+
+  function levelXP(L) { return 20 * L * (L - 1); }
+  function levelOf(xp) {
+    var L = 1;
+    while (L < MAX_LEVEL && xp >= levelXP(L + 1)) L++;
+    return L;
+  }
+
+  // Beds open with the level; a bed in use always shows.
+  function bedCount(level, g) {
+    var n = 4;
+    BED_LEVELS.forEach(function (l) { if (level >= l) n++; });
+    Object.keys(g.plots).forEach(function (id) {
+      var p = g.plots[id];
+      if (p.s !== "" && Number(id) < 6) n = Math.max(n, Number(id) + 1);
+    });
+    return n;
+  }
+
+  // Acorns a finished game earns.
+  function acornsFor(kind, score) {
+    var n = kind === "catch" ? Math.floor(score / 8) : kind === "hide" ? Math.floor(score / 2) : Math.max(0, score - 2);
+    return clamp(n, 0, 5);
+  }
+
   var data = defaultData();
+  var progress = defaultProgress();
   var garden = defaultGarden();
   var nest = defaultNest();
   var games = defaultGames();
@@ -941,6 +1200,7 @@
     garden = loadKey(GARDEN_KEY, mergeGarden, defaultGarden);
     nest = loadKey(NEST_KEY, mergeNest, defaultNest);
     games = loadKey(GAMES_KEY, mergeGames, defaultGames);
+    progress = loadKey(PROG_KEY, mergeProgress, defaultProgress);
   }
 
   var saveFailShown = false;
@@ -957,6 +1217,7 @@
   function saveGarden() { saveKey(GARDEN_KEY, garden); }
   function saveNest() { saveKey(NEST_KEY, nest); }
   function saveGames() { saveKey(GAMES_KEY, games); }
+  function saveProgress() { saveKey(PROG_KEY, progress); }
 
   function deviceId() {
     var id = null;
@@ -987,7 +1248,7 @@
   var spriteCache = {};
   function spriteFor(pose) {
     var key = [pose.mood, pose.mode, pose.legPhase, pose.dir, pose.contemplating ? 1 : 0,
-               pose.eatT < 0 ? -1 : Math.round(pose.eatT * 10)].join("|");
+               pose.eatT < 0 ? -1 : Math.round(pose.eatT * 10), pose.acc || ""].join("|");
     if (spriteCache[key]) return spriteCache[key];
     var b = bridge(), g = null;
     try { g = b ? b.sprite(pose) : null; } catch (e) { g = null; }
@@ -1218,9 +1479,10 @@
   function plotRects() {
     var x0 = Math.round(Math.max(W * 0.4, sleepX + 17 * U) / U) * U;   // right of the nest
     var avail = W - 2 * U - x0;
-    var pw = clamp(Math.floor((avail - 3 * 2 * U) / PLOTS / U), 4, 10) * U;
+    var gap = PLOTS > 4 && avail < PLOTS * 6 * U ? U : 2 * U;   // six beds on a phone: closer together
+    var pw = clamp(Math.floor((avail - (PLOTS - 1) * gap) / PLOTS / U), PLOTS > 4 ? 3 : 4, 10) * U;
     var out = [];
-    for (var i = 0; i < PLOTS; i++) out.push({ id: String(i), x: x0 + i * (pw + 2 * U), w: pw });
+    for (var i = 0; i < PLOTS; i++) out.push({ id: String(i), x: x0 + i * (pw + gap), w: pw });
     return out;
   }
   function plotAt(x, y) {
@@ -1398,7 +1660,8 @@
       dir: pet.dir,
       frame: pet.frame,
       eatT: pet.mode === "eat" ? (Date.now() - pet.eatAt) / 900 : -1,
-      contemplating: false
+      contemplating: false,
+      acc: wornNow()
     };
   }
 
@@ -1558,13 +1821,15 @@
     var before = gameStats(games, g.kind).best;
     games = recordGame(games, deviceId(), g.kind, g.score);
     saveGames();
+    var acorns = acornsFor(g.kind, g.score);
+    if (acorns) { data = ledger(data, deviceId(), "acorn", acorns, 0); save(); }
     var b = bridge();
     if (b && typeof b.play === "function") { try { snap = b.play(GAME_COST[g.kind]); } catch (e) {} }
     pet.mode = "happy"; pet.timer = 2200;
     addHearts();
     if (b) say(b.line("speech.happy"));
     renderUI();
-    resultDialog(g.kind, g.score, g.score > before);
+    resultDialog(g.kind, g.score, g.score > before, acorns);
   }
 
   // ---- catch ----
@@ -1891,6 +2156,8 @@
     $("nest-btn").querySelector(".act-lbl").textContent = t("act.nest");
     $("nest-btn").title = t("key.nest");
     $("companion-btn").innerHTML = ICONS.companion;
+    var ac = $("acorn-ico");
+    if (ac && !ac.firstChild) ac.appendChild(itemIcon("acorn"));
   }
 
   var lastSleepIcon = null;
@@ -1899,6 +2166,7 @@
     $("offline").hidden = !!b;
     $("actions").hidden = !b || !!game;
     $("bag-btn").hidden = !b;
+    $("level-btn").hidden = !b || !snap;
     $("stats").hidden = !b;
     if (!b || !snap) {
       $("offline").textContent = t("offline");
@@ -1929,6 +2197,13 @@
     }
     sb.querySelector(".act-lbl").textContent = t(asleep ? "act.wake" : "act.sleep");
     sb.title = t(asleep ? "key.wake" : "key.sleep");
+
+    var L = prog.level, lo = levelXP(L), hi = levelXP(L + 1), purse = have("acorn");
+    $("level-num").textContent = t("prog.lv", { n: L });
+    $("level-fill").style.width = (L >= MAX_LEVEL ? 100 : Math.round(100 * clamp((prog.xp - lo) / (hi - lo), 0, 1))) + "%";
+    $("acorn-num").textContent = String(purse);
+    $("level-btn").setAttribute("aria-label", t("prog.btn", { n: L, a: purse }));
+    $("level-btn").title = t("prog.btn", { n: L, a: purse });
 
     var cb = $("companion-btn"), on = false;
     try { on = !!b.isEnabled(); } catch (e) {}
@@ -2014,6 +2289,7 @@
     else say(b.line(wasAsleep ? "speech.wake" : "speech.eat"));
     announce(t("live.fed", { name: snap.name }));
     if (kind !== "kibble") showToast(t("toast.ate", { name: snap.name, food: t("item." + kind) }));
+    careDays(true);
     renderUI();
   }
   function doPat() {
@@ -2025,6 +2301,7 @@
     addHearts();
     say(b.line("speech.happy"));
     announce(t("live.pat", { name: snap.name }));
+    careDays(true);
     renderUI();
   }
   function doSleep() {
@@ -2156,10 +2433,12 @@
       garden = freshGarden(garden, data.br);
       nest = freshNest(nest, data.br);
       games = freshGames(games, data.br);
+      progress = freshProgress(progress, data.br);
       save();
       saveGarden();
       saveNest();
       saveGames();
+      saveProgress();
       showToast(t("toast.fresh"));
     }));
     dlg.appendChild(acts);
@@ -2174,7 +2453,7 @@
   function checkBinding() {
     if (!snap || snap.provisional) return;
     if (data.pet && data.pet.id === snap.id) return;
-    if (!data.pet || !(worldHasContent(data) || gardenHasContent(garden) || nestHasContent(nest) || gamesHasContent(games))) {
+    if (!data.pet || !(worldHasContent(data) || gardenHasContent(garden) || nestHasContent(nest) || gamesHasContent(games) || progressHasContent(progress))) {
       data = bindPet(data, snap.id, Date.now());
       save();
       return;
@@ -2200,8 +2479,17 @@
     clover:     { px: ["..gg.gg.", ".gggggg.", ".gglggg.", "..ggggg.", ".gggggg.", ".gg.gg..", "...l....", "..l....."], c: { g: "#3fa34d", l: "#2e7d32" } },
     nest:       { px: ["........", "........", "..llll..", ".bbbbbb.", "bmmmmmmb", "bbbbbbbb", ".bbbbbb.", "........"], c: { b: "#7a5232", m: "#6c9b3c", l: "#4f9a43" } },
     walk:       { px: ["....bb..", "...bbbb.", "...bbbb.", "....bb..", ".bb.....", "bbbb....", "bbbb....", ".bb....."], c: { b: "#8d6e63" } },
-    seed:       { px: ["..pppp..", ".pppppp.", ".pwwwwp.", ".pwccwp.", ".pwccwp.", ".pwwwwp.", ".pppppp.", "........"], c: { p: "#c9b48a", w: "#f3ead2" } }
+    seed:       { px: ["..pppp..", ".pppppp.", ".pwwwwp.", ".pwccwp.", ".pwccwp.", ".pwwwwp.", ".pppppp.", "........"], c: { p: "#c9b48a", w: "#f3ead2" } },
+    acorn:      { px: ["...b....", "..cccc..", ".cCcCcc.", ".cccccc.", ".nnnnnn.", ".nnnnNn.", "..nnnn..", "...nn..."], c: { b: "#5a3b22", c: "#6b4a2f", C: "#8a6440", n: "#c98b45", N: "#e3b06f" } },
+    acc_bow:    { px: ["........", "pp....pp", "ppp..ppp", "pppkkppp", "pppkkppp", "ppp..ppp", "pp....pp", "........"], c: { p: "#e0457b", k: "#9c1f4f" } },
+    acc_scarf:  { px: ["........", "rryrryrr", "rrrrrrrr", "....rr..", "....ry..", "....rr..", "....yy..", "........"], c: { r: "#d64545", y: "#f4d35e" } },
+    acc_hat:    { px: ["..kkkk..", "..kkkk..", "..kkkk..", "..rrrr..", "..kkkk..", "kkkkkkkk", "........", "........"], c: { k: "#2f2a44", r: "#c0392b" } },
+    acc_glasses: { px: ["........", "........", "kkkkkkkk", "kwbkkwbk", "kbbkkbbk", "kkkk.kkk", "........", "........"], c: { k: "#2f2a44", w: "#ffffff", b: "#9fd3f0" } },
+    acc_crown:  { px: ["........", "........", "y.w.y.w.", "ygwgygwg", "gggggggg", "........", "........", "........"], c: { y: "#ffd23f", w: "#ffffff", g: "#5aa05c" } },
+    acc_bell:   { px: ["........", "pppppppp", "pppppppp", "...yy...", "..yyyy..", "..yyyy..", ".yyyyyy.", "...kk..."], c: { p: "#e0457b", y: "#ffd23f", k: "#8a6d1a" } },
+    trophy:     { px: ["yyyyyyyy", "y.yyyy.y", "y.yyyy.y", ".yyyyyy.", "..yyyy..", "...yy...", "..bbbb..", ".bbbbbb."], c: { y: "#ffd23f", b: "#8d6e63" } }
   };
+  ART.trophy_off = { px: ART.trophy.px, c: { y: "#8a8f94", b: "#5d6166" } };
   function itemIcon(item) {
     var cv = document.createElement("canvas");
     cv.width = 8; cv.height = 8;
@@ -2307,6 +2595,18 @@
       any = true;
       list.appendChild(itemRow(f, t("fx.find"), t("count.many", { n: n })));
     });
+    var purse = have("acorn");
+    if (purse > 0) {
+      any = true;
+      list.appendChild(itemRow("acorn", t("fx.acorn"), t("count.many", { n: purse }),
+        [smallBtn(t("prog.shopShort"), "", function () { dlg.close(); shopDialog(); })]));
+    }
+    ACCESSORIES.forEach(function (a) {
+      if (have("acc_" + a.id) < 1) return;
+      any = true;
+      list.appendChild(itemRow("acc_" + a.id, wornNow() === a.id ? t("shop.worn") : t("fx.acc"), null,
+        [smallBtn(t("prog.shopShort"), "", function () { dlg.close(); shopDialog(); })]));
+    });
     if (!any) list.appendChild(el("div", "dlg-msg", t("bag.empty")));
     dlg.appendChild(list);
     var c = closeRow(dlg);
@@ -2410,7 +2710,7 @@
     return p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function lootList(got) {
-    return MATERIALS.concat(CROP_ORDER.map(function (c) { return CROPS[c].seed; }), FINDS)
+    return MATERIALS.concat(CROP_ORDER.map(function (c) { return CROPS[c].seed; }), FINDS, ["acorn"])
       .filter(function (k) { return got[k]; })
       .map(function (k) { return t("item." + k) + " " + t("count.many", { n: got[k] }); }).join(", ");
   }
@@ -2561,10 +2861,16 @@
     (first || c).focus();
   }
 
-  function resultDialog(kind, score, best) {
+  function resultDialog(kind, score, best, acorns) {
     var dlg = makeDialog("pw-result");
     dlg.appendChild(el("div", "dlg-title", t("result.title", { game: t("game." + kind) })));
     dlg.appendChild(el("div", "dlg-msg result-score", t("result.score", { n: score }) + (best ? " · " + t("result.best") : "")));
+    if (acorns) {
+      var won = el("div", "dlg-msg result-acorns");
+      won.appendChild(itemIcon("acorn"));
+      won.appendChild(el("span", "", t(acorns === 1 ? "result.acorn" : "result.acorns", { n: acorns })));
+      dlg.appendChild(won);
+    }
     var acts = el("div", "dlg-actions");
     var done = button(t("result.close"), "", function () { dlg.close(); });
     acts.appendChild(done);
@@ -2575,7 +2881,7 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     (again.disabled ? done : again).focus();
-    announce(t("result.score", { n: score }) + (best ? ". " + t("result.best") : ""));
+    announce(t("result.score", { n: score }) + (best ? ". " + t("result.best") : "") + (acorns ? ". " + t(acorns === 1 ? "result.acorn" : "result.acorns", { n: acorns }) : ""));
   }
 
   var KEY_MOVES = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
@@ -2597,6 +2903,200 @@
       e.preventDefault();
       followInput(KEY_MOVES[e.key]);
     }
+  }
+
+  // ---------- 8e. Progress: level, achievements, bazaar (phase 5) ----------
+  var prog = { st: null, done: [], xp: 0, level: 1 };
+  function refreshProgress() {
+    var st = progressStats(data, garden, nest, games, progress, Date.now());
+    var xp = xpOf(st);
+    prog = { st: st, done: achievementsDone(st), xp: xp, level: levelOf(xp) };
+    PLOTS = bedCount(prog.level, garden);
+    return prog;
+  }
+
+  // The forest is this pet's (not a pending new friend, not provisional).
+  function bound() { return !!(snap && !snap.provisional && data.pet && data.pet.id === snap.id); }
+
+  // Care days from pet.js's log, every few seconds (care on the
+  // desktop or another device counts too) and right after care here.
+  var careAt = 0;
+  function careDays(force) {
+    var now = Date.now();
+    if (!force && now - careAt < 10000) return;
+    careAt = now;
+    if (!bound()) return;
+    var log = null;
+    try { log = JSON.parse(localStorage.getItem(EVENTS_KEY) || "null"); } catch (e) {}
+    var next = addCareDays(progress, log && log.events, force ? [now] : []);
+    if (next !== progress) { progress = next; saveProgress(); }
+  }
+
+  // The accessory on the pet: worn AND still in the wardrobe.
+  function wornNow() {
+    var w = progress.wear;
+    if (!w || !w.id || !ACCESSORIES.some(function (a) { return a.id === w.id; })) return "";
+    return stock(data, garden, "acc_" + w.id, null, Date.now()) > 0 ? w.id : "";
+  }
+
+  // What a level opens, by name.
+  function unlocksAt(L) {
+    var out = [];
+    BED_LEVELS.forEach(function (l, i) { if (l === L) out.push(t("prog.bed", { n: 5 + i })); });
+    SEED_SHOP.forEach(function (x) { if (x.level === L && L > 1) out.push(t("item." + CROPS[x.crop].seed)); });
+    ACCESSORIES.forEach(function (a) { if (a.level === L) out.push(t("item.acc_" + a.id)); });
+    return out;
+  }
+  function nextUnlock(L) {
+    for (var n = L + 1; n <= MAX_LEVEL; n++) {
+      var list = unlocksAt(n);
+      if (list.length) return { level: n, list: list.join(", ") };
+    }
+    return null;
+  }
+
+  // A new level or achievement since this device last looked: cheer
+  // once (device-local, R10). The first look only takes note.
+  function cheer() {
+    if (!bound() || !prog.st) return;
+    var seen = null;
+    try { seen = JSON.parse(localStorage.getItem(CHEER_KEY) || "null"); } catch (e) {}
+    var cur = { lv: prog.level, ach: prog.done.slice() };
+    var ok = seen && typeof seen === "object" && typeof seen.lv === "number" && Array.isArray(seen.ach);
+    var fresh = ok ? prog.done.filter(function (id) { return seen.ach.indexOf(id) < 0; }) : [];
+    if (ok && seen.lv === cur.lv && JSON.stringify(seen.ach) === JSON.stringify(cur.ach)) return;
+    try { localStorage.setItem(CHEER_KEY, JSON.stringify(cur)); } catch (e) {}
+    if (!ok) return;
+    var msgs = [];
+    if (cur.lv > seen.lv) {
+      var list = unlocksAt(cur.lv).join(", ");
+      msgs.push(list ? t("toast.level", { n: cur.lv, list: list }) : t("toast.levelPlain", { n: cur.lv }));
+    }
+    fresh.forEach(function (id) { msgs.push(t("toast.ach", { what: t("ach." + id) })); });
+    if (!msgs.length) return;
+    showToast(msgs.join(" · "));
+    announce(msgs.join(". "));
+    if (!away && !game && snap && !snap.asleep) { addHearts(); var b = bridge(); if (b) say(b.line("speech.happy")); }
+  }
+
+  function progressDialog() {
+    if (!snap || game) return;
+    refreshProgress();
+    var dlg = makeDialog("pw-prog"), L = prog.level, top = L >= MAX_LEVEL;
+    dlg.appendChild(el("div", "dlg-title", t("prog.title", { n: L })));
+    var lo = levelXP(L), hi = levelXP(L + 1);
+    var pct = top ? 100 : Math.round(100 * clamp((prog.xp - lo) / (hi - lo), 0, 1));
+    var bar = el("div", "xp-bar"), fill = el("span", "xp-fill");
+    fill.style.width = pct + "%";
+    bar.appendChild(fill);
+    bar.setAttribute("role", "meter");
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+    bar.setAttribute("aria-valuenow", String(pct));
+    var xpText = top ? t("prog.max", { xp: prog.xp }) : t("prog.xp", { xp: prog.xp, next: hi });
+    bar.setAttribute("aria-label", xpText);
+    dlg.appendChild(bar);
+    dlg.appendChild(el("div", "xp-line", xpText));
+    var nx = nextUnlock(L);
+    if (nx) dlg.appendChild(el("div", "dlg-msg", t("prog.next", { n: nx.level, list: nx.list })));
+    var list = el("div", "item-list");
+    var shop = smallBtn(t("prog.shopShort"), "primary", function () { dlg.close(); shopDialog(); });
+    list.appendChild(itemRow("acorn", t("prog.shop"), t("count.many", { n: have("acorn") }), [shop]));
+    list.appendChild(el("div", "item-head", t("prog.ach", { k: prog.done.length, n: ACHIEVEMENTS.length })));
+    ACHIEVEMENTS.forEach(function (a) {
+      var done = prog.done.indexOf(a.id) >= 0;
+      var r = itemRow(done ? "trophy" : "trophy_off", t("achd." + a.id),
+        done ? t("ach.done") : t("ach.of", { v: Math.min(prog.st[a.stat] || 0, a.goal), goal: a.goal }), null, t("ach." + a.id));
+      if (done) r.classList.add("done");
+      list.appendChild(r);
+    });
+    list.appendChild(el("div", "dlg-msg prog-how", t("prog.how")));
+    dlg.appendChild(list);
+    closeRow(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    shop.focus();
+  }
+
+  // quiet: the caller says it (an accessory is put on at once)
+  function buy(item, cost, quiet) {
+    if (have("acorn") < cost) { showToast(t("toast.poor")); return false; }
+    var dev = deviceId();
+    data = ledger(data, dev, "acorn", 0, cost);
+    data = ledger(data, dev, item, 1, 0);
+    save();
+    if (!quiet) showToast(t("toast.bought", { what: t("item." + item) }));
+    return true;
+  }
+
+  function doWear(id) {
+    progress = setWear(progress, id, Date.now());
+    saveProgress();
+    if (!snap) return;
+    showToast(id ? t("toast.wear", { name: snap.name, what: t("item.acc_" + id) }) : t("toast.off", { name: snap.name }));
+    if (id && !away && !game && !snap.asleep) { pet.mode = "happy"; pet.timer = 1800; pet.target = null; addHearts(); }
+  }
+
+  // The bazaar redraws in place after a purchase, so the focus stays
+  // on the row that was used.
+  function shopDialog() {
+    if (!snap || game) return;
+    var dlg = makeDialog("pw-shop"), body = el("div", "shop-body");
+    dlg.appendChild(el("div", "dlg-title", t("shop.title")));
+    dlg.appendChild(body);
+    var close = closeRow(dlg);
+    var render = function (focusKey) {
+      refreshProgress();
+      while (body.firstChild) body.removeChild(body.firstChild);
+      var L = prog.level, purse = have("acorn"), focus = null, first = null;
+      var msg = el("div", "dlg-msg shop-purse");
+      msg.appendChild(itemIcon("acorn"));
+      msg.appendChild(el("span", "", t("shop.msg", { n: purse })));
+      body.appendChild(msg);
+      var list = el("div", "item-list");
+      var act = function (key, label, cls, fn, off) {
+        var b = smallBtn(label, cls, function () { fn(); render(key); });
+        b.disabled = !!off;
+        if (!off && !first) first = b;
+        if (key === focusKey && !off) focus = b;
+        return b;
+      };
+      list.appendChild(el("div", "item-head", t("shop.seeds")));
+      SEED_SHOP.forEach(function (x) {
+        var item = CROPS[x.crop].seed, acts = [], sub;
+        if (L < x.level) sub = t("shop.lock", { n: x.level });
+        else {
+          sub = t("shop.cost", { n: x.cost });
+          acts.push(act(item, t("shop.buy"), "primary", function () { buy(item, x.cost); }, purse < x.cost));
+        }
+        list.appendChild(itemRow(item, sub, t("count.many", { n: have(item) }), acts));
+      });
+      list.appendChild(el("div", "item-head", t("shop.acc")));
+      var worn = wornNow();
+      ACCESSORIES.forEach(function (a) {
+        var item = "acc_" + a.id, acts = [], sub;
+        if (have(item) > 0) {
+          sub = worn === a.id ? t("shop.worn") : t("shop.owned");
+          acts.push(worn === a.id
+            ? act(item, t("shop.off"), "", function () { doWear(""); })
+            : act(item, t("shop.wear"), "primary", function () { doWear(a.id); }));
+        } else if (L < a.level) {
+          sub = t("shop.lock", { n: a.level });
+        } else {
+          sub = t("shop.cost", { n: a.cost });
+          acts.push(act(item, t("shop.buy"), "primary", function () { if (buy(item, a.cost, true)) doWear(a.id); }, purse < a.cost));
+        }
+        var r = itemRow(item, sub, null, acts);
+        if (worn === a.id) r.classList.add("done");
+        list.appendChild(r);
+      });
+      body.appendChild(list);
+      if (focusKey !== undefined) (focus || first || close).focus();
+    };
+    render();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    close.focus();
   }
 
   // ---------- Garden actions ----------
@@ -2691,6 +3191,8 @@
       else if (e.code === "KeyB") { e.preventDefault(); bagDialog(); }
       else if (e.code === "KeyW") { e.preventDefault(); walkDialog(); }
       else if (e.code === "KeyN") { e.preventDefault(); nestDialog(); }
+      else if (e.code === "KeyL") { e.preventDefault(); progressDialog(); }
+      else if (e.code === "KeyA") { e.preventDefault(); shopDialog(); }
       else if (e.code === "KeyP") { e.preventDefault(); doPat(); }
       else if (e.code === "KeyS") { e.preventDefault(); doSleep(); }
       else if (e.key === "ArrowLeft" && snap && !snap.asleep && !away) { e.preventDefault(); walkTo(pet.x - 8 * U); }
@@ -2755,6 +3257,7 @@
     api.registerSlice("petgarden", gardenSliceGet, gardenSliceSet, GARDEN_KEY, mergeGarden);
     api.registerSlice("petnest", nestSliceGet, nestSliceSet, NEST_KEY, mergeNest);
     api.registerSlice("petgames", gamesSliceGet, gamesSliceSet, GAMES_KEY, mergeGames);
+    api.registerSlice("petprogress", progressSliceGet, progressSliceSet, PROG_KEY, mergeProgress);
   }
 
   function sliceGet() {
@@ -2822,6 +3325,22 @@
     }
   }
 
+  function progressSliceGet() {
+    return mergeProgress(progress, null);   // canonical copy (R26)
+  }
+
+  function progressSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object") return;
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      progress = mergeProgress(incoming, null);
+      localStorage.setItem(PROG_KEY, JSON.stringify(progress));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+  }
+
   // ---------- 12. Wiring & boot ----------
   function tick() {
     curL = skyAt(hourNow()).light;
@@ -2830,15 +3349,19 @@
     if (snap && before && snap.id !== before) { spriteCache = {}; warned = { food: false, happy: false, energy: false }; }
     away = activeWalk(nest, Date.now());
     welcomeHome();
+    careDays(false);
+    refreshProgress();
     renderUI();
     checkWarnings();
     checkBinding();
+    cheer();
   }
 
   function wire() {
     $("feed-btn").addEventListener("click", feedButton);
     $("garden-btn").addEventListener("click", function () { gardenDialog(null); });
     $("bag-btn").addEventListener("click", bagDialog);
+    $("level-btn").addEventListener("click", progressDialog);
     $("walk-btn").addEventListener("click", walkDialog);
     $("nest-btn").addEventListener("click", nestDialog);
     $("pat-btn").addEventListener("click", doPat);
