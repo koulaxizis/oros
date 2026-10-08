@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Micro-Zen · orOS</title>
+
+  <link rel="stylesheet" href="zen.css?v=0.45.10">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span class="title-main">Micro-Zen</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="vibe-btn" aria-pressed="false" hidden></button>
+    <button type="button" class="icon-btn" id="sound-btn" aria-pressed="false"></button>
+  </header>
+
+  <main id="main">
+    <!-- The breathing circle -->
+    <section id="stage">
+      <div id="orb-box">
+        <button type="button" id="orb-btn">
+          <span id="orb" aria-hidden="true"></span>
+          <span class="orb-text">
+            <span id="phase" class="phase"></span>
+            <span id="count" class="count" aria-hidden="true"></span>
+          </span>
+        </button>
+      </div>
+      <div class="under">
+        <div class="prog"><span id="progress"></span></div>
+        <p id="meta" class="meta"></p>
+        <div class="controls">
+          <button type="button" class="play-btn" id="play-btn"></button>
+          <button type="button" class="icon-btn" id="stop-btn" hidden></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Session settings and stats -->
+    <div id="panel">
+      <section class="sec">
+        <h2 data-i18n="sec.pattern">Pattern</h2>
+        <div id="patterns" role="radiogroup"></div>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.length">Length</h2>
+        <div id="lengths" class="chips" role="radiogroup"></div>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.stats">Your quiet</h2>
+        <div class="tiles">
+          <div class="tile"><span class="t-lbl" data-i18n="st.today">Today</span><span class="t-val" id="st-today"></span></div>
+          <div class="tile"><span class="t-lbl" data-i18n="st.week">This week</span><span class="t-val" id="st-week"></span></div>
+          <div class="tile"><span class="t-lbl" data-i18n="st.streak">Streak</span><span class="t-val" id="st-streak"></span></div>
+          <div class="tile"><span class="t-lbl" data-i18n="st.sessions">Sessions</span><span class="t-val" id="st-sessions"></span></div>
+        </div>
+        <div id="chart" role="img"></div>
+        <button type="button" class="link-btn" id="reset-btn" hidden></button>
+      </section>
+    </div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="zen.js?v=0.45.10"></script>
+
+</body>
+</html>
