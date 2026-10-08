@@ -1,0 +1,7 @@
+name = "oros-mail-relay"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+# Comma-separated list of pages allowed to call the relay.
+ALLOWED_ORIGINS = "https://useoros.online"

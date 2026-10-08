@@ -2050,9 +2050,11 @@
 
   // ---------- 9i3. Mail proxy slice (sync when iframe closed) ----------
   // Same pattern as radio/television. The synced blob travels via
-  // "oros-mail-data" and contains account config + message
-  // metadata/content ONLY. Passwords live exclusively in the
-  // device-local "oros-mail-creds" key and never enter this slice.
+  // "oros-mail-data": accounts (servers, no passwords), the relay
+  // address and the senders with pictures allowed. Messages and
+  // passwords stay on the device, in the app's IndexedDB "oros-mail"
+  // (sealed with a non-extractable key); the live registration in
+  // mail.js brings the merge.
   var MAIL_CACHE_KEY = "oros-mail-data";
 
   function mailProxySliceGet() {
@@ -3662,7 +3664,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
