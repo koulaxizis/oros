@@ -2723,10 +2723,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** real Dropbox, Firefox / Safari (diamond hit zones rely on `clip-path` hit testing, supported in both), a real phone, sound output.
 - **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
 
-### 2026-10-08 — Shell 0.42.03 — Menu: closed categories at boot, app counts, quick search (A74)
+### 2026-10-08 — Shell 0.42.04 — Menu: closed categories at boot, app counts, quick search (A74)
 
 - **Changes:** categories start closed on every boot; open/closed lives in memory (`menuCatOpen`) for the session, so opening an app and coming back leaves the menu as it was. Expand all / Collapse all act on the same map. Each category header shows its app count (a pill on the right). New search field at the top of the menu: case- and accent-insensitive (`menuFold`: NFD, no diacritics, final ς = σ) over the shown name, the `apps.json` name, the id and the category label; matches show inside their categories, opened, with the match count; "No matching apps" when none; Enter opens the first match; Escape clears the field first, the next Escape closes the menu. The query also survives background re-renders and app launches for the session.
 - **Retired key:** `oros-menu-cat-collapsed` (removed at boot, Part III updated).
-- **Files:** `shell.js` (`renderMenu` → inner `renderAppList`), `style.css` (`.menu-search`, `.menu-cat-count`), `translations.js` (`menu.search`, `menu.search.none`, EN + EL). `APP_VERSION` 0.42.02 → 0.42.03 (patch step).
+- **Files:** `shell.js` (`renderMenu` → inner `renderAppList`), `style.css` (`.menu-search`, `.menu-cat-count`), `translations.js` (`menu.search`, `menu.search.none`, EN + EL). `APP_VERSION` 0.42.03 → 0.42.04 (patch step; 0.42.03 is Tic-Tac-Toe, PR #10).
 - **Verification (Chromium, real shell, EL):** an old stored map is removed and all 10 categories boot closed with counts; a toggled category stays open after opening an app and returning; "ημερολογ" finds Calendar under Office with focus kept; Escape clears without closing; "zzzz" shows the empty message; "calc" + Enter opens Calculator; after reload every category is closed again; no page errors. `node --test tests/*.test.js`: 27/27.
 - **NOT tested:** Firefox / Safari, a real phone.
