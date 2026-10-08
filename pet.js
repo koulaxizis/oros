@@ -141,6 +141,7 @@
                           "Hello sunshine!", "Ready to play!"],
       "speech.sleep":    ["Good night...", "Zzz...", "Sweet dreams",
                           "Nighty night...", "See you tomorrow..."],
+      "speech.fav":      ["My favourite!!", "Yesss, my favourite!", "You remembered!"],
       "speech.catch":    ["Gotcha!", "Nailed it!", "Awesome!",
                           "Perfect catch!", "Yes!"],
       "speech.contemp":  ["Just thinking...", "Hmm...", "Contemplating...",
@@ -205,6 +206,7 @@
                           "Γεια σου ήλιε!", "Πάμε για παιχνίδι!"],
       "speech.sleep":    ["Καληνύχτα...", "Zzz...", "Όνειρα γλυκά",
                           "Υπνάκια...", "Τα λέμε αύριο..."],
+      "speech.fav":      ["Το αγαπημένο μου!!", "Ναιιι, το αγαπημένο μου!", "Το θυμήθηκες!"],
       "speech.catch":    ["Την έπιασα!", "Το 'χω!", "Τέλεια!",
                           "Τι πιάσιμο!", "Ναι!"],
       "speech.contemp":  ["Σκέφτομαι...", "Μμμ...", "Απολαμβάνω...",
@@ -1795,7 +1797,31 @@ function applyPetSettings(s) {
 
   // ---------- Care actions ----------
 
-  function feed() {
+  // Pet World foods (petworld/ app, phase 2). Kibble is the HUD's
+  // endless food; garden foods add a little more on top of a full
+  // tummy. Effects only move the existing clocks FORWARD (lastPetted,
+  // the awake anchor), so the merge rules stay exactly as they are.
+  var FOODS = {
+    kibble:     { happy: 0,  energy: 0 },
+    carrot:     { happy: 0,  energy: 10 },
+    strawberry: { happy: 25, energy: 0 },
+    mushroom:   { happy: 10, energy: 10 },
+    apple:      { happy: 10, energy: 20 }
+  };
+  var FAV_BONUS = 25;
+  // Every pet has one favourite garden food, fixed by its id.
+  function favouriteFood(id) {
+    var h = 0, str = String(id || "");
+    for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+    var list = ["carrot", "strawberry", "mushroom", "apple"];
+    return list[Math.abs(h) % list.length];
+  }
+
+  function feed(kind) {
+    kind = FOODS[kind] ? kind : "kibble";
+    var fx = FOODS[kind];
+    var fav = kind !== "kibble" && kind === favouriteFood(state.pet.id);
+    var happyUp = fx.happy + (fav ? FAV_BONUS : 0);
     var stats = computeStats(Date.now(), state.pet);
     // v0.3: FIRST FEED OF THE DAY — computed BEFORE the write
     // (lastFed still points to yesterday/earlier). Different
@@ -1804,11 +1830,18 @@ function applyPetSettings(s) {
                      tsLocalYmd(state.pet.lastFed || 0) !== todayYMD();
     writePet(function (p, now) {
       p.lastFed = now;
-      if (stats.asleep) {
+      if (happyUp > 0) {
+        // happy = 100 - minutes since lastPetted * rate: move the clock
+        // to where the raised value would have been reached.
+        var target = clamp(stats.happy + happyUp, 0, 100);
+        var at = now - ((100 - target) / HAPPY_RATE) * 60000;
+        if (at > (p.lastPetted || 0)) p.lastPetted = Math.min(now, Math.round(at));
+      }
+      if (stats.asleep || fx.energy > 0) {
         p.asleepSince = null;
         p.asleepE = 0;
         p.wokeAt = now;
-        p.awakeE = stats.energy;
+        p.awakeE = clamp(stats.energy + fx.energy, 0, 100);
       }
     });
     runtime.mode = "eat";
@@ -1817,11 +1850,12 @@ function applyPetSettings(s) {
     runtime.targetX = null;
     runtime.hungerWarned = false;
     runtime.hungerTalkedAt = 0;
-    speak(speakLine(firstOfDay ? "speech.firstfed"
+    speak(speakLine(fav ? "speech.fav" : firstOfDay ? "speech.firstfed"
                                : (stats.asleep ? "speech.wake" : "speech.eat")));
-    if (firstOfDay) spawnHearts();
+    if (firstOfDay || fav) spawnHearts();
     logEvent(PET_EVENT_TYPES.FEED);
     refreshHUD(computeStats(Date.now(), state.pet));
+    return fav;
   }
 
   function toggleSleep() {
@@ -2285,6 +2319,7 @@ function applyPetSettings(s) {
       energy: st.energy,
       asleep: st.asleep,
       mood: mood(st),
+      favFood: favouriteFood(state.pet.id),
       provisional: !state.sm
     }));
   }
@@ -2322,11 +2357,18 @@ function applyPetSettings(s) {
       LANG = currentLang();
       var ok = { "speech.hello": 1, "speech.firstfed": 1, "speech.hungry": 1, "speech.bored": 1,
                  "speech.tired": 1, "speech.happy": 1, "speech.eat": 1, "speech.wake": 1,
-                 "speech.sleep": 1, "speech.contemp": 1 };
+                 "speech.sleep": 1, "speech.contemp": 1, "speech.fav": 1 };
       if (!ok[group]) return "";
       return group === "speech.hello" ? t(group, { name: state.pet.name }) : speakLine(group);
     },
-    feed: function () { feed(); return worldSnapshot(); },
+    // kind: kibble | carrot | strawberry | mushroom | apple (unknown → kibble).
+    // The app spends the food from its backpack; this only feeds.
+    feed: function (kind) {
+      var fav = feed(typeof kind === "string" ? kind : "kibble");
+      var out = worldSnapshot();
+      out.favourite = fav;
+      return out;
+    },
     pat: function () { petThePet(); return worldSnapshot(); },
     sleepToggle: function () { toggleSleep(); return worldSnapshot(); },
     rename: function (name) { renamePet(name); return worldSnapshot(); }
