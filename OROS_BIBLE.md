@@ -526,6 +526,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Tic-Tac-Toe** | oros-tictactoe-data | per-device counter rows, join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.03; Games (tablogames port) |
 | **Simon Says** | oros-simon-data | per-device rows of best/date/games per setting, join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.05; Games (tablogames port) |
 | **Number Slider** | oros-slider-data | per-device rows of best time / fewest moves / solved per size, join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.43.01; Games (tablogames port) |
+| **Netizen ID** | oros-netizen-data | cards LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.43.02; Fun (soffitta.site port) |
 | Radio | oros-radio-data | stationuuid union + shell proxy slice | Wave 3 + hotfixes; proxy v0.38.10 |
 | Minimalism | (minimalism slice) | day-entity union | Waves 1–2, content Days 1–55 |
 | **Writer** | oros-writer-data | doc LWW + tpl tombs, canonical (R26) | Doses 1–3 delivered 2026-10-01 → deploy + 2-device smoke test pending |
@@ -560,13 +561,14 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Tic-Tac-Toe:** oros-tictactoe-prefs (`{mode, lv, first, nextAi}`), oros-tictactoe-session (`{mode, lv, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`, the starter plays X), oros-tictactoe-device, oros-tictactoe-sfx, oros-tictactoe-data-broken.
 - **Simon Says:** oros-simon-prefs (`{pads, mode}`), oros-simon-device, oros-simon-sfx (sound ON unless "0": the tones are part of the game), oros-simon-data-broken. No session key: a game in progress cannot be resumed; leaving it (or starting another) ends it and counts its score.
 - **Number Slider:** oros-slider-prefs (`{n}`), oros-slider-session (`{n, tiles[], moves, ms, done}`, resumable; `ms` = time played while visible), oros-slider-device, oros-slider-sfx, oros-slider-data-broken.
+- **Netizen ID:** oros-netizen-prefs (`{cur, tab, side}`: current card, phone tab edit|card, side shown front|back), oros-netizen-data-broken.
 - **Generic:** oros-*-open staging keys, and all *-prefs / *-cache / *-seen keys.
 - **Correction vs older Bible:** oros-pet-events is SYNCED now (petEvents slice).
 
 ### File tree
 
 - **Root:** `index.html`, `shell.js`, `notifications.js`, `sync.js`, `fs.js`, `dialogs.js` **[log]**, `vault.js` **[log]**, `style.css`, `pet.css`, `pet.js`, `translations.js`, `apps.json`, `sw.js`, `manifest.webmanifest`, `icon.svg`, `icons/`, `vendor/` (jspdf, NotoSans-Regular, xlsx; **[log]** leaflet.js, leaflet.css, hls.light.min.js), `fonts/` (Nunito ×5), `.github/workflows/bump-version.yml`, `OROS_BIBLE.md` (Bible + changelog; `CHANGELOG.md` retired).
-- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots, tictactoe, simon, slider.
+- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots, tictactoe, simon, slider, netizen.
 
 ---
 
@@ -623,6 +625,11 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **DOTS v1:**
   - `{ ver, br, rows{deviceId:{b, s{<level><size>:[won,lost,drawn]}}} }`, keys `e3` … `h5` (level e|m|h × board 3|4|5 boxes): results vs the computer only.
   - Same join and reset as CONNECT4 v1 (device id in the device-local `oros-dots-device`); unknown keys and bad cells drop in `normRow`.
+- **NETIZEN v1:**
+  - `{ ver, cards[{id, m, user, disp, pron, loc, langs, since, email, phone, web, bio, motto, links[{l,u}] (≤8), tags[] (≤12, unique), hide[] (sorted field keys not shown on the card), st (oros|terminal|paper|mint|rose), av{s: seed, px: "" | 144 digits 0–6, t: 0|1 transparent}}] sorted by id, tombs{id: deletedAt} sorted }`.
+  - Merge: per card the newer `m` wins, equal `m` the larger canonical JSON; tombs max-merged; a card is dropped when its tomb ≥ `m` (delete wins ties, a newer edit resurrects, R17). `normCard` clips every field (lengths in `TEXT_FIELDS`) and drops bad cards.
+  - The avatar is NOT an image: `s` seeds a deterministic mirrored 12×12 face (`genAvatar`, FNV-1a + mulberry32) and `px` holds only hand-painted pixels (R30).
+  - A new card stays an unsaved draft until its first edit (R16 lazy). Every export and the share link need a username.
 - **TICTACTOE v1:** `{ ver, br, rows{deviceId:{b, s{e|m|h:[won,lost,drawn]}}} }`, results vs the computer only; same join and reset as CONNECT4 v1 (device id in `oros-tictactoe-device`).
 - **SIMON v1:** `{ ver, br, rows{deviceId:{b, s{c4|r4|c6|r6:{n, ts, g}}}} }` (mode c/r × 4/6 pads): best score `n` reached at `ts`, games played `g`. Per row: larger epoch `b` wins; equal epochs take per setting the better best (higher `n`, then earlier `ts`) and the larger `g`; rows with `b < br` drop. A join (`tests/games.test.js`). The shown record is the best across rows; games are summed.
 - **SLIDER v1:** `{ ver, br, rows{deviceId:{b, s{n3|n4|n5:{t, m, g}}}} }`: best time `t` (ms), fewest moves `m` (two separate records, possibly from different games), solved `g`. Per row: larger epoch wins; equal epochs take min `t`, min `m`, max `g`; rows with `b < br` drop. A join (`tests/games.test.js`).
@@ -1040,7 +1047,7 @@ Rule ids are kept as recorded.
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
-- 30 entries since 0.43.01 (memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05, slider 0.43.01). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Games (memory, connect4, dots, tictactoe, simon, slider) · Sound (radio) · Video (television).
+- 30 entries since 0.43.01 (memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05, slider 0.43.01); +1 with netizen (0.43.02). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice, netizen) · Games (memory, connect4, dots, tictactoe, simon, slider) · Sound (radio) · Video (television).
 - The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Creativity, Fun, Internet, Lifestyle, Office, Personal, Sound, Video. EL: Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Ήχος, Προσωπικά, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 
@@ -1181,6 +1188,9 @@ Rebuild this in any session where code is delivered.
   - Recent places are device-local (`oros-maps-recent`, 10), never synced: they are a convenience, not data.
   - Starting navigation more than 150 m from the route's start recalculates the route from the user's position first, with a toast (offline: guides on the old route, as before).
   - The "Maps loaded" welcome toast is removed (MP-4).
+- **2026-10-08 · Christos (Apps: soffitta.site port)**
+  - The apps of soffitta.site come to orOS: full rewrite, no old code, full compliance with orOS. Each title is asked one at a time: approve / reject / postpone (tracked in project memory, `oros-soffitta-port`); each approved app gets a plan, a proposed category agreed with Christos, then its own app and PR. Dice & Coin and Screen Pet already exist in orOS and are not ported again.
+  - Netizen ID approved and go-ahead given, category **Fun** (proposed Creativity; his choice). Accepted with it: a view-only share link carrying the card in the URL fragment; several cards; no QR code for now; no "add me to Contacts" for now (vCard export covers it); a back side. Pixel Avatar Maker is decided when its turn comes.
 
 - **2026-10-08 · Christos (A74, applications menu)**
   - Every boot opens the menu with ALL categories closed; while the session lasts, opening an app keeps the menu as it was left. The collapse state is no longer stored (`oros-menu-cat-collapsed` retired).
@@ -2794,3 +2804,18 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Verification (Chromium, mocked Photon / OSRM / reverse, real geolocation API):** standalone, 52 checks: From defaults to My location and To gets the focus; Photon suggestions and Enter route; a stop by coordinates sends start;stop;end; directions say "Arrive at stop 1" once; Swap reverses the trip and resolves My location as destination; removing a stop recalculates; a row's map pick is named "Ermou 10"; the snapshot and a reload keep the stop and "Edit route" shows it; recents list the destination first, never My location; right-click menu actions and address; DMS coordinates; navigation from 3 km away recalculates from the user and says so; dragging shows Recenter, a GPS fix does not steal the view, Recenter resumes; the arrow rotates; exit restores the pin; without location permission no route is made and the planner opens on From. Phone 390×844 EL: nothing off-screen, every planner / route-bar button ≥ 44 px, planner and docked route bar do not overlap. Real shell + real `sync.js` + mock Dropbox, two devices: a place saved from the long-press menu on A reaches B; 0 uploads over 3 idle rounds; recents are not in the slice; no page errors.
 - **NOT tested:** the real Photon / OSRM servers (no network from the test container: `reverse`, multi-point routes and `lang=el` are used as documented), Firefox / Safari, a real phone (iOS long-press relies on Leaflet's `tapHold`), real GPS heading.
 - **Status:** branch `claude/project-thread-6vy11s`, own PR; not on `main` (R4).
+
+### 2026-10-08 — Netizen ID v1.0.0 (new app, Fun)
+
+- **New app `netizen/`** ("Netizen ID", the soffitta.site app rewritten): a voluntary identity card for the netizen. Username (the only required field), display name, pronouns, location, languages, netizen-since year; email, phone, website; up to 8 sites & socials (label + link, reorder, remove); bio (280) and motto (100); up to 12 tags (Enter or comma). Every optional field and the avatar have an eye toggle: hidden fields stay stored but leave the card, the share link and the vCard.
+- **Card:** ID-1 proportions (85.6 × 54 mm, drawn as an 856 × 540 SVG), front (avatar, @username, name · pronouns, location / languages / since, motto, a card number from the id, a passport-style machine-readable line) and back (bio, tags, contact and links in one or two columns); flip by tap or button. Five styles: orOS (follows the skin live), Terminal, Paper, Mint, Rose. Text is fitted and wrapped by canvas measurement.
+- **Pixel avatar:** 12 × 12, mirrored face generated from a seed (head shape, hair style, eyes, brows, glasses, mouth, blush, clothes); New face (Undo toast); paint by tap or drag with 7 colours (colour 0 = background / eraser), keyboard arrows + Enter / Space; transparent background option.
+- **Several cards:** card picker, New (an unsaved draft until the first edit), Duplicate, Delete with Undo (R17 resurrection); up to 20.
+- **Export (`orosDialog.saveFile`, R33):** card PNG (2×) and SVG of the side shown, PDF of both sides at card size (3× JPEG pages, jsPDF vendored), avatar PNG (480 px) and SVG, vCard 3.0 (escaping, 75-octet UTF-8 folding, avatar as PHOTO, only shown fields); Copy image (clipboard PNG).
+- **Share link:** `netizen/#c=2.<base64url of deflate-raw JSON>` (`1.` = plain JSON where `CompressionStream` is missing). Only shown fields travel; no id, no hidden field. Opening it shows a full-screen view-only card (flip, "Open Netizen ID"); a damaged link says so. The fragment never reaches a server. The share dialog states who can see it before copying.
+- **Schema:** NETIZEN v1 (Part IV); device-local keys (Part III). Notifications: none (no reminders; exemption from Checklist B item 9).
+- **Core:** `apps.json` entry (Fun, after Dice & Coin), `sw.js` precache (4), `ICONS.netizen`, `translations.js` `app.netizen` (EN + EL). `APP_VERSION` 0.43.00 → 0.43.02 (patch step; 0.43.01 is Number Slider, PR #15).
+- **Tests:** `tests/netizen.test.js` (Tests workflow paths now include `netizen/**`): normCard clips and drops bad cards (idempotent); merge symmetric, associative, idempotent, inputs untouched, equal-mtime winner; tombstones (delete wins ties, newer edit resurrects); avatar deterministic, mirrored, 7 colours over 300 seeds; vCard escaping, hidden fields out, CRLF, ≤ 75 octets per line with Greek intact after unfolding; share payload carries only shown fields and round-trips through base64url. `node --test tests/*.test.js`: 37/37.
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** typing every field fills the live card; links reorder; duplicate tag refused with a toast; a painted pixel changes colour; hidden phone leaves the card and the vCard; all six exports produce files (PNG 155 KB, SVG 4 KB, PDF 458 KB, avatar PNG / SVG, vCard with PHOTO); export dialog centered; the share link opens the view-only card without the hidden phone, a damaged link falls back to the editor; the card reaches the phone after sync, both slices equal, idle cycles upload 0; an edit on the phone reaches the desktop form; a delete on the phone empties the desktop; long names, Greek text, 12 tags and 8 links fit in all five styles; no horizontal overflow at 390 × 844 in both tabs; no page errors.
+- **NOT tested:** real Dropbox, Firefox / Safari (clipboard image, `CompressionStream`), a real phone, printing the PDF. Avatar grid cells are 30 px on a phone (a drawing surface; drag painting).
+- **Status:** branch `claude/project-thread-yfluv0`, own PR; not on `main` (R4).

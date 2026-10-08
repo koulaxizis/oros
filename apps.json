@@ -178,6 +178,14 @@
       "type": "internal"
     },
     {
+      "id": "netizen",
+      "name": "Netizen ID",
+      "category": "Fun",
+      "icon": "netizen",
+      "url": "netizen/",
+      "type": "internal"
+    },
+    {
       "id": "radio",
       "name": "Radio",
       "category": "Sound",
