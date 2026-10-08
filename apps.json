@@ -216,6 +216,14 @@
       "icon": "dots",
       "url": "dots/",
       "type": "internal"
+    },
+    {
+      "id": "tictactoe",
+      "name": "Tic-Tac-Toe",
+      "category": "Games",
+      "icon": "tictactoe",
+      "url": "tictactoe/",
+      "type": "internal"
     }
   ]
 }
