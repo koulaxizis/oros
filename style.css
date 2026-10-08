@@ -851,6 +851,15 @@ body {
 .wp-thumb:focus-visible {
   border-color: var(--accent);
 }
+.wp-thumb.wp-make {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-dim);
+  border: 2px dashed var(--border);
+}
+.wp-thumb.wp-make:hover, .wp-thumb.wp-make:focus-visible { color: var(--accent); border-color: var(--accent); }
 
 /* ---------- 8. Mobile-first ---------- */
 

@@ -130,6 +130,14 @@
       "type": "internal"
     },
     {
+      "id": "wallpaper",
+      "name": "Wallpaper Generator",
+      "category": "Creativity",
+      "icon": "wallpaper",
+      "url": "wallpaper/",
+      "type": "internal"
+    },
+    {
       "id": "mood",
       "name": "Mood",
       "category": "Personal",
