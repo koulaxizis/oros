@@ -1,0 +1,502 @@
+/* ============================================================
+   orOS Whack-a-Mole — App stylesheet
+   Inherits the shell palette (inheritPalette + watchPalette).
+   Same toolbar, dialog and toast styles as the other games.
+   Sections:
+     1. Palette fallback + reset
+     2. Toolbar (segmented controls, select, icon buttons)
+     3. Status row (score, message, time left)
+     4. Field: 3×3 holes, characters rise out of a mask; start overlay
+     5. Dialogs (result, records, confirm) — centered (R32)
+     6. Toast + screen-reader helper
+     7. Mobile + touch adaptations
+     8. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+  --soil:         #3b2a1c;   /* hole rim */
+  --pit:          #120c07;   /* inside of a hole */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+dialog { margin: auto; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button, select {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 2. Toolbar ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+/* Wide screen: both strips flow as one line, in this order. */
+.tb-row { display: contents; }
+#level-seg    { order: 1; }
+#tb-b .spacer { order: 3; }
+#new-btn      { order: 4; }
+#stats-btn    { order: 5; }
+#sfx-btn      { order: 6; }
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.seg-btn {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.seg-btn:hover { color: var(--text); background: var(--accent-soft); }
+.seg-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.icon-btn[aria-pressed="true"] { color: var(--accent); }
+.icon-btn:disabled { opacity: 0.4; cursor: default; }
+.icon-btn:disabled:hover { color: var(--text-dim); border-color: var(--border); background: var(--panel-bg); }
+.icon-btn svg { width: 18px; height: 18px; display: block; }
+
+.seg-btn:focus-visible, .icon-btn:focus-visible, .hole:focus-visible, #start-btn:focus-visible,
+.dlg-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- 3. Status row ---------- */
+#status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.stat span { white-space: nowrap; }
+.stat strong {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+#turn {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+#turn.done { color: var(--accent); }
+#time.rush { color: var(--danger); }
+
+/* ---------- 4. Board ---------- */
+#board-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+}
+#field {
+  position: relative;
+  width: var(--size, 360px);
+  height: var(--size, 360px);
+}
+#board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  background: var(--bg-desktop);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px var(--shadow);
+  touch-action: none;
+  outline: none;
+}
+#field.dim #board { filter: saturate(0.6) brightness(0.8); }
+
+/* A hole: the pit is an ellipse near the bottom; the character sits in
+   a mask whose bottom edge is the pit's middle, so it rises out of it;
+   the lip (the near rim) is drawn over the character's feet. */
+.hole {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--panel-bg);
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pit, .lip {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 10%;
+  height: 26%;
+  border-radius: 50%;
+}
+.pit { background: radial-gradient(ellipse at 50% 40%, var(--pit) 55%, var(--soil) 100%); }
+.lip {
+  height: 13%;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: var(--soil);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+}
+.mask {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 4%;
+  bottom: 23%;
+  overflow: hidden;
+}
+.who {
+  position: absolute;
+  inset: 0;
+  transform: translateY(105%);
+  transition: transform 0.12s ease-out;
+}
+.who svg { display: block; width: 100%; height: 100%; }
+.who .eyes { fill: #1b120b; }
+.who .xeyes { display: none; stroke: #1b120b; stroke-width: 3; stroke-linecap: round; fill: none; }
+.hole.up .who { transform: translateY(0); }
+.hole.hit .who { transform: translateY(8%) scaleY(0.92); transform-origin: 50% 100%; }
+.hole.hit .eyes { display: none; }
+.hole.hit .xeyes { display: inline; }
+.key {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+  opacity: 0.6;
+  pointer-events: none;
+}
+@media (pointer: coarse) { .key { display: none; } }
+.pop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8%;
+  text-align: center;
+  font-size: calc(var(--size, 360px) / 12);
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+}
+.pop.good { color: var(--accent); }
+.pop.bad { color: var(--danger); }
+.pop.show { animation: pop-up 0.6s ease-out; }
+@keyframes pop-up {
+  0% { opacity: 1; transform: translateY(10px); }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+.hole.miss { animation: miss 0.18s ease-out; }
+@keyframes miss {
+  0%, 100% { transform: none; }
+  50% { transform: scale(0.96); }
+}
+.hole:focus-visible { outline-offset: -3px; }
+
+/* Start button / countdown over the field. */
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+#start-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 6px 20px var(--shadow);
+}
+#start-btn:hover { background: var(--accent-hover); }
+#start-btn svg { width: 20px; height: 20px; }
+#start-btn kbd {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+}
+@media (pointer: coarse) { #start-btn kbd { display: none; } }
+#count {
+  font-size: calc(var(--size, 360px) / 3.2);
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 4px 18px var(--shadow);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 5. Dialogs (R32: margin auto, scroll inside) ---------- */
+dialog.mm-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  box-shadow: 0 10px 40px var(--shadow);
+}
+dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+.dlg-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.dlg-hero {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--accent);
+  margin: 4px 0 12px;
+}
+.dlg-badge {
+  display: block;
+  width: max-content;
+  margin: 0 auto 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bg);
+  background: var(--accent);
+}
+.dlg-note {
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+.dlg-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dlg-row span { color: var(--text-dim); }
+.dlg-row strong { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+.dlg-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin: 14px 0 2px;
+}
+.dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
+.dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
+.dlg-btn {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.dlg-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.dlg-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.dlg-btn.primary:hover { background: var(--accent-hover); }
+.dlg-btn.danger { color: var(--danger); border-color: var(--danger); }
+.dlg-btn.danger:hover { background: rgba(224, 108, 117, 0.15); }
+
+/* ---------- 6. Toast + screen reader ---------- */
+#toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#toast button {
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 6px;
+  pointer-events: auto;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 7. Mobile + touch ---------- */
+/* Narrow screen: two strips; each scrolls instead of clipping (Part VII). */
+@media (max-width: 440px) {
+  #toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .tb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .tb-row::-webkit-scrollbar { display: none; }
+}
+@media (max-width: 480px) {
+  #toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .tb-row { gap: 6px; }
+  .seg-btn { padding: 4px 8px; }
+  #status { padding: 6px 8px; }
+  .stat { padding: 4px 4px; gap: 6px; }
+  #turn { font-size: 12px; }
+  #board-wrap { padding: 8px; }
+  dialog.mm-dlg { width: calc(100vw - 20px); padding: 14px; }
+}
+@media (pointer: coarse) {
+  .seg-btn, .icon-btn, .dlg-btn { min-height: 44px; }
+  .icon-btn { width: 44px; }
+  #toast button { min-height: 44px; }
+}
+
+/* ---------- 8. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .who { transition: none; }
+  .hole.miss { animation: none; }
+  .pop.show { animation-name: pop-fade; }
+}
+@keyframes pop-fade { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+[hidden] { display: none !important; }
