@@ -251,7 +251,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Other frame calls:** `__orosWeatherUpdate(w)` (tray prefs → running Weather app), `__orosCycleCheck()` (running Cycle app decides its own reminder).
 - **`SC_DEFS` (Ctrl+Alt+Shift + letter, matched on `e.code`):** P push · O pull · S backup now (`scBackupNow`; key name `sc.desc.snapshot` kept on purpose) · X export DB (`scExportDb`) · I info · U check updates · L language · R reconnect (Dropbox, else backup folder) · C Calculator. A focused input/textarea/select/contentEditable makes the shortcut yield.
 - **Escape in the shell document:** Info modal owns it; an open native `<dialog>` or the radio popover owns it (SH-B2); otherwise it closes the menu, else returns to the desktop.
-- **Menu (`renderMenu`):** rebuilds everything on every call, including calls from background events; it captures and restores scroll position, the open per-app list and the passphrase field (SH-B3). Order: apps by category (SH-B11: grouped by the LOWERCASE category, groups sorted by their translated label with `localeCompare` in the shown language; the collapse map `oros-menu-cat-collapsed` is keyed in lowercase and older maps are folded on read) → skins + theme → wallpapers → install row → weather → pet → sync → notifications → Info.
+- **Menu (`renderMenu`):** rebuilds everything on every call, including calls from background events; it captures and restores scroll position, the open per-app list and the passphrase field (SH-B3). Order: quick search field (A74: query in memory `menuQuery`, case- and accent-insensitive over the shown name, the `apps.json` name, the id and the category label; typing rebuilds only `#menu-apps` so the field keeps focus; Enter opens the first match, Escape clears before it closes the menu; matching categories show open with the match count) → apps by category (SH-B11: grouped by the LOWERCASE category, groups sorted by their translated label with `localeCompare` in the shown language; each header shows its app count; A74: open/closed is session state in memory, `menuCatOpen`, keyed in lowercase, so every boot starts with all categories closed and opening an app leaves the menu as it was; the old `oros-menu-cat-collapsed` key is removed at boot) → skins + theme → wallpapers → install row → weather → pet → sync → notifications → Info.
 - **`notifySys(kind, text, ident)`:** `dim` → `transient({ns:"system"})`; `ok`/`err` → `emit({ns:"system", type:"sys", key:"msg-<kind>-<ident>-<ymd>"})` = one inbox line per message per day. When `emit` answers `null` because of that dedupe (notifications and the System toggle both on), the message is shown as a transient toast (SH-B9). `scToast` is the stale-bundle fallback.
 - **Automatic export (5c/5d):** `maybeAutoExport(force)` stamps `oros-autoexport-last`, then `writeBackupFile(exportBodyNow())`. The folder handle lives in IndexedDB `oros-fs` (store `handles`, key `backup-folder`); `oros-fs-folder-name` and `oros-fs-lapsed` are display/flag keys. The selector is shown only where `showDirectoryPicker` exists, and Ctrl+Alt+Shift+S falls back to the DB export elsewhere (SH-B4). A failed write clears the stamp so the next boot / tab-visible retries (SH-B5).
 - **Weather tray (9d):**
@@ -539,7 +539,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 ### Device-local keys (never synced)
 
-- **Shell (verified 2026-10-05):** oros-last-version, oros-autoexport-last, oros-fs-folder-name, oros-fs-lapsed, oros-menu-cat-collapsed, oros-wx-cache, oros-wx-last, oros-cal-reminders-fired, oros-files-disk-pending, oros-reset-db (factory-reset marker), oros-lang (mirror); sessionStorage `oros-skip-splash` and the bridge staging keys (table in Part II). IndexedDB `oros-fs` (backup-folder handle). Also device-local but owned by `sync.js`: oros-sync-* engine keys, oros-slices (registry).
+- **Shell (verified 2026-10-05):** oros-last-version, oros-autoexport-last, oros-fs-folder-name, oros-fs-lapsed, oros-wx-cache, oros-wx-last, oros-cal-reminders-fired, oros-files-disk-pending, oros-reset-db (factory-reset marker), oros-lang (mirror); sessionStorage `oros-skip-splash` and the bridge staging keys (table in Part II). IndexedDB `oros-fs` (backup-folder handle). Also device-local but owned by `sync.js`: oros-sync-* engine keys, oros-slices (registry).
 - **Shell keys that TRAVEL in the `shell` slice:** oros-lang, oros-theme, oros-skin, oros-wallpaper, oros-autoexport, oros-weather, oros-alarms, oros-shell-stamps, oros-alarm-tombs. (`oros-files-disk-cache`, `-pending`, `-meta` are legacy: removed at boot by `fdMigrateLegacy`.)
 - `oros-auto-snapshots` (listed here until 2026-10-05) does not appear anywhere in `shell.js` 0.39.06: the key is gone with the snapshot subsystem.
 - **Weather:** oros-wx-cache, oros-wx-last.
@@ -1166,6 +1166,11 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-08 · Christos (A74, applications menu)**
+  - Every boot opens the menu with ALL categories closed; while the session lasts, opening an app keeps the menu as it was left. The collapse state is no longer stored (`oros-menu-cat-collapsed` retired).
+  - Each category header shows how many apps it holds.
+  - A quick app search field sits at the very top of the menu.
 
 - **2026-10-08 · Christos (Games: tablogames.online port)**
   - The games of tablogames.online come to orOS under a new category **Games / Παιχνίδια**: full rewrite, no old code, full compliance with orOS. Each title is asked one at a time: approve / reject / postpone (tracked in project memory, `oros-games-port`).
@@ -2731,3 +2736,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** the computer replies; X for you and O for the computer; undo; key 7 plays the top-left square and arrows move focus; easy, hard and 2-player games end with a centered result dialog; strike line and three winning marks; series 1–0 and player 2 starts next as X; a game reopened mid-way resumes; Hard was not beaten; two devices converge with two counter rows and idle cycles upload 0; a reset empties the other device; board fits with cells ≥ 104 px and no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors.
 - **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
 - **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
+
+### 2026-10-08 — Shell 0.42.04 — Menu: closed categories at boot, app counts, quick search (A74)
+
+- **Changes:** categories start closed on every boot; open/closed lives in memory (`menuCatOpen`) for the session, so opening an app and coming back leaves the menu as it was. Expand all / Collapse all act on the same map. Each category header shows its app count (a pill on the right). New search field at the top of the menu: case- and accent-insensitive (`menuFold`: NFD, no diacritics, final ς = σ) over the shown name, the `apps.json` name, the id and the category label; matches show inside their categories, opened, with the match count; "No matching apps" when none; Enter opens the first match; Escape clears the field first, the next Escape closes the menu. The query also survives background re-renders and app launches for the session.
+- **Retired key:** `oros-menu-cat-collapsed` (removed at boot, Part III updated).
+- **Files:** `shell.js` (`renderMenu` → inner `renderAppList`), `style.css` (`.menu-search`, `.menu-cat-count`), `translations.js` (`menu.search`, `menu.search.none`, EN + EL). `APP_VERSION` 0.42.03 → 0.42.04 (patch step; 0.42.03 is Tic-Tac-Toe, PR #10).
+- **Verification (Chromium, real shell, EL):** an old stored map is removed and all 10 categories boot closed with counts; a toggled category stays open after opening an app and returning; "ημερολογ" finds Calendar under Office with focus kept; Escape clears without closing; "zzzz" shows the empty message; "calc" + Enter opens Calculator; after reload every category is closed again; no page errors. `node --test tests/*.test.js`: 27/27.
+- **NOT tested:** Firefox / Safari, a real phone.

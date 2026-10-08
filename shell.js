@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.42.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.42.04";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -826,31 +826,23 @@
       });
   }
 
-  // Collapsible menu categories — device-local ergonomics only:
-  // NEVER synced, NEVER marked dirty (menu layout ≠ user data).
-  var MENU_CAT_KEY = "oros-menu-cat-collapsed";
-  // SH-B11: categories are keyed in lowercase everywhere (grouping,
-  // label lookup, this map). Older maps used the raw apps.json
-  // spelling ("Office") — fold them, exact lowercase keys first.
-  function catCollapsedRead() {
-    try {
-      var o = JSON.parse(localStorage.getItem(MENU_CAT_KEY));
-      if (!o || typeof o !== "object") return {};
-      var out = {}, k;
-      for (k in o) {
-        if (Object.prototype.hasOwnProperty.call(o, k) && k === k.toLowerCase()) out[k] = !!o[k];
-      }
-      for (k in o) {
-        if (Object.prototype.hasOwnProperty.call(o, k) && k !== k.toLowerCase() &&
-            !Object.prototype.hasOwnProperty.call(out, k.toLowerCase())) {
-          out[k.toLowerCase()] = !!o[k];
-        }
-      }
-      return out;
-    } catch (e) { return {}; }
-  }
-  function catCollapsedWrite(map) {
-    try { localStorage.setItem(MENU_CAT_KEY, JSON.stringify(map)); } catch (e) {}
+  // Collapsible menu categories — SESSION state only (A74): every
+  // boot starts with ALL categories collapsed; opening an app keeps
+  // the menu exactly as it was left (this map lives in memory, not in
+  // storage). Keys are the LOWERCASE category (SH-B11). Never synced,
+  // never dirty. The old persisted map (oros-menu-cat-collapsed) is
+  // dropped once at boot so it cannot linger on the device.
+  var menuCatOpen = {};
+  try { localStorage.removeItem("oros-menu-cat-collapsed"); } catch (e) {}
+
+  // Quick app search (A74): the query also lives in memory only, so a
+  // background re-render (sync, install prompt) never wipes it.
+  var menuQuery = "";
+  // Case- and accent-insensitive ("ημερολογιο" finds "Ημερολόγιο").
+  function menuFold(s) {
+    s = String(s || "").toLowerCase();
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/ς/g, "σ");
   }
 
   function renderMenu() {
@@ -881,9 +873,9 @@
     heading.appendChild(hTxt);
 
     // #1 — Expand/Collapse (all): two tiny icon buttons next to the
-    // menu title. Expand = clear the collapsed map; Collapse = mark
-    // every current category. Device-local (MENU_CAT_KEY), same as
-    // the per-category toggles — never synced, never dirty.
+    // menu title. Expand = open every current category; Collapse =
+    // clear the open map. Session-only (menuCatOpen, A74), same as the
+    // per-category toggles — never stored, never synced, never dirty.
     function mkCatBtn(svg, titleEn, titleEl, fn) {
       var b = document.createElement("button");
       b.type = "button";
@@ -902,7 +894,9 @@
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>',
       "Expand all", "Άνοιγμα όλων",
       function () {
-        catCollapsedWrite({});
+        state.apps.forEach(function (app) {
+          menuCatOpen[String(app.category || "other").toLowerCase()] = true;
+        });
         renderMenu();
       }));
 
@@ -910,15 +904,62 @@
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 11 12 6 17 11"/><polyline points="7 18 12 13 17 18"/></svg>',
       "Collapse all", "Κλείσιμο όλων",
       function () {
-        var m = {};
-        state.apps.forEach(function (app) {
-          m[String(app.category || "other").toLowerCase()] = true;
-        });
-        catCollapsedWrite(m);
+        menuCatOpen = {};
         renderMenu();
       }));
 
+    // A74 — quick search, top of the menu. Filters the app list in
+    // place (only #menu-apps is rebuilt per keystroke, so the field
+    // keeps focus). Enter opens the first match, Escape clears.
+    var oldSearch = menu.querySelector(".menu-search input");
+    var keepSearch = oldSearch ? {
+      focus: document.activeElement === oldSearch,
+      start: oldSearch.selectionStart,
+      end:   oldSearch.selectionEnd
+    } : null;
+    var searchRow = document.createElement("div");
+    searchRow.className = "menu-search";
+    var search = document.createElement("input");
+    search.type = "search";
+    search.value = menuQuery;
+    search.placeholder = window.t("menu.search");
+    search.setAttribute("aria-label", search.placeholder);
+    search.autocomplete = "off";
+    search.spellcheck = false;
+    searchRow.appendChild(search);
+    menu.appendChild(searchRow);
+
     menu.appendChild(heading);
+
+    var appsHost = document.createElement("div");
+    appsHost.id = "menu-apps";
+    menu.appendChild(appsHost);
+    var firstMatch = null;
+
+    search.addEventListener("input", function () {
+      menuQuery = search.value;
+      renderAppList();
+    });
+    search.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && firstMatch) {
+        e.preventDefault();
+        openApp(firstMatch);
+      } else if (e.key === "Escape" && search.value) {
+        e.stopPropagation();          // clear first; next Escape closes the menu
+        search.value = menuQuery = "";
+        renderAppList();
+      }
+    });
+
+    renderAppList();
+    if (keepSearch && keepSearch.focus) {
+      search.focus();
+      try { search.setSelectionRange(keepSearch.start, keepSearch.end); } catch (e) {}
+    }
+
+    function renderAppList() {
+    appsHost.innerHTML = "";
+    firstMatch = null;
 
     if (state.apps.length === 0) {
       var empty = document.createElement("div");
@@ -927,7 +968,7 @@
         '<span class="glyph">' + GRID_SVG + '</span>' +
         '<span>' + window.t("menu.empty") + '</span>' +
         '<div class="hint">' + window.t("menu.empty.hint") + '</div>';
-      menu.appendChild(empty);
+      appsHost.appendChild(empty);
     } else {
       // SH-B11 (A52): ONE group per category whatever its spelling in
       // apps.json ("lifestyle" and "Lifestyle" used to be two groups,
@@ -935,13 +976,19 @@
       // and the groups in the alphabetical order of the label the
       // user actually READS — in Greek the menu followed the English
       // names.
-      var cats = {}, catRaw = {};
+      var cats = {}, catRaw = {}, catAll = {};
       state.apps.forEach(function (app) {
         var raw = String(app.category || "other");
         var c = raw.toLowerCase();
         if (!catRaw[c]) catRaw[c] = raw;
+        catAll[c] = (catAll[c] || 0) + 1;
         (cats[c] = cats[c] || []).push(app);
       });
+      function appLabelOf(app) {
+        var nameKey = "app." + app.id;
+        var tName = window.t(nameKey);
+        return (tName === nameKey) ? app.name : tName;   // #4: translated name, fallback to apps.json
+      }
       function catTextOf(c) {
         var key = "category." + c;
         var label = window.t(key);
@@ -953,13 +1000,35 @@
       }
       var catLocale = (state.lang === "el") ? "el" : "en";
 
+      // A74: while searching, keep only the matching apps (by the shown
+      // name, the apps.json name, the id or the category label) and
+      // show their categories open; the count becomes the match count.
+      var q = menuFold(menuQuery.trim());
+      if (q) {
+        Object.keys(cats).forEach(function (c) {
+          var cl = catTextOf(c);
+          cats[c] = cats[c].filter(function (app) {
+            return [appLabelOf(app), app.name, app.id, cl].some(function (f) {
+              return menuFold(f).indexOf(q) !== -1;
+            });
+          });
+          if (!cats[c].length) delete cats[c];
+        });
+        if (!Object.keys(cats).length) {
+          var none = document.createElement("div");
+          none.className = "menu-empty menu-search-none";
+          none.textContent = window.t("menu.search.none");
+          appsHost.appendChild(none);
+        }
+      }
+
       Object.keys(cats).sort(function (a, b) {
         var r = 0;
         try { r = catTextOf(a).localeCompare(catTextOf(b), catLocale, { sensitivity: "base" }); }
         catch (e) { r = 0; }
         return r || (a < b ? -1 : a > b ? 1 : 0);
       }).forEach(function (cat) {
-        var collapsed = !!catCollapsedRead()[cat];
+        var collapsed = !q && !menuCatOpen[cat];
         var wrap = document.createElement("div");
         wrap.className = "menu-category";
 
@@ -978,11 +1047,15 @@
         var hTxt = document.createElement("span");
         hTxt.textContent = catText;
         h.appendChild(hTxt);
+        // A74: how many apps the category holds (matches while searching).
+        var cnt = document.createElement("span");
+        cnt.className = "menu-cat-count";
+        cnt.textContent = q ? cats[cat].length : catAll[cat];
+        h.appendChild(cnt);
         h.addEventListener("click", function () {
-          var m = catCollapsedRead();
-          m[cat] = !collapsed;
-          catCollapsedWrite(m);
-          renderMenu();
+          if (q) return;                // search results are always shown open
+          menuCatOpen[cat] = collapsed;
+          renderAppList();
         });
         wrap.appendChild(h);
 
@@ -992,9 +1065,8 @@
         cats[cat].forEach(function (app) {
           var btn = document.createElement("button");
           btn.className = "menu-item";
-          var nameKey = "app." + app.id;
-          var tName = window.t(nameKey);
-          var label = (tName === nameKey) ? app.name : tName;   // #4: translated name, fallback to apps.json
+          if (!firstMatch && q) firstMatch = app;
+          var label = appLabelOf(app);
           if (ICONS[app.icon]) {
             btn.innerHTML =
               '<span class="app-ico">' + ICONS[app.icon] + '</span>' +
@@ -1006,9 +1078,10 @@
           catList.appendChild(btn);
         });
         wrap.appendChild(catList);
-        menu.appendChild(wrap);
+        appsHost.appendChild(wrap);
       });
     }
+    }   // renderAppList
 
     renderSkinSwatches(menu);
     renderWallpaperSection(menu);
