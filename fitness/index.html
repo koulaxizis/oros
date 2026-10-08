@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Workouts · orOS</title>
+
+  <link rel="stylesheet" href="fitness.css?v=0.45.13">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="title" class="tb-title"></h1>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="view"></main>
+
+  <div id="rest" role="timer" aria-live="off" hidden></div>
+  <nav id="nav"></nav>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="fitness.js?v=0.45.13"></script>
+
+</body>
+</html>
