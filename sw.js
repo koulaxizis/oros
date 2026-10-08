@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.45.00";
+var CACHE_VERSION = "oros-v0.45.01";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -236,6 +236,10 @@ var PRECACHE_URLS = [
   "petworld/index.html",
   "petworld/petworld.css",
   "petworld/petworld.js",
+  "whack/",
+  "whack/index.html",
+  "whack/whack.css",
+  "whack/whack.js",
   "vendor/jspdf.umd.min.js",
   "vendor/hls.light.min.js",
   "vendor/NotoSans-Regular.ttf",

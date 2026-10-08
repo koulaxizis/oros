@@ -1,7 +1,7 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
-// Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out),
-// Connect 4 and Tic-Tac-Toe win detection, Dots & Boxes, Simon, Slider
-// and Lights Out rules, the computer players.
+// Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out,
+// Whack-a-Mole), Connect 4 and Tic-Tac-Toe win detection, Dots & Boxes,
+// Simon, Slider, Lights Out and Whack-a-Mole rules, the computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -80,6 +80,12 @@ const LO = load("lightsout/lightsout.js",
   [["  var DATA_VER", "  // ---------- 1."], ["  function press(", "\n  function bitCount("],
    ["  function minTime(", "\n  function joinRows("]],
   "RANGE, press, bitCount, applyPresses, solve, generate, hintCell, mergeLightsOut");
+
+const WM = load("whack/whack.js",
+  ["cmpStr", "schedule", "scoreHit", "holeForKey", "normCell", "normRow", "joinCell",
+   "joinRows", "mergeWhack"],
+  [["  var DATA_VER", "  // ---------- 1."]],
+  "PARAMS, ROUND_MS, RUSH_MS, schedule, scoreHit, holeForKey, mergeWhack");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -583,4 +589,82 @@ test("lights out: records merge is a join and a reset drops older rows", () => {
   assert.equal(J(M(x, y).rows.d.s.m), J({ g: 4, p: 2, t: 40000 }));   // no time yet ≠ best time 0
   assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
   assert.equal(J(M({ rows: { d: { b: 0, s: { m: { g: 1, p: 2, t: 0 } } } } }, null).rows), "{}");
+});
+
+// A small seeded generator, so schedules are reproducible.
+function seeded(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let x = Math.imul(a ^ (a >>> 15), 1 | a);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+test("whack: every schedule keeps its level's limits", () => {
+  for (const lv of ["e", "m", "h"]) {
+    const P = WM.PARAMS[lv];
+    let kinds = { m: 0, g: 0, x: 0 }, total = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      const ev = WM.schedule(lv, seeded(seed * 7919 + lv.charCodeAt(0)));
+      assert.ok(ev.length > (lv === "e" ? 15 : 25), lv + " too few pop-ups: " + ev.length);
+      total += ev.length;
+      for (let i = 0; i < ev.length; i++) {
+        const e = ev[i];
+        kinds[e.k]++;
+        assert.ok(e.h >= 0 && e.h < 9 && e.t >= 0 && e.up >= 250 && e.t + e.up <= WM.ROUND_MS);
+        if (i) assert.ok(e.t > ev[i - 1].t, "times increase");
+        // never more than max up at once (checked at every pop-up)
+        const upNow = ev.filter((o) => o.t <= e.t && e.t < o.t + o.up).length;
+        assert.ok(upNow <= P.max, lv + ": " + upNow + " up at once");
+        // never two in one hole: the hole rested since its last pop-up
+        const prev = ev.slice(0, i).filter((o) => o.h === e.h).pop();
+        if (prev) assert.ok(e.t >= prev.t + prev.up, "hole " + e.h + " reused while busy");
+        // the last 10 seconds are faster
+        const base = Math.round(P.up * (e.k === "g" ? 0.75 : 1));
+        if (e.t + e.up < WM.ROUND_MS) assert.equal(e.up, e.t >= WM.ROUND_MS - WM.RUSH_MS ? Math.round(P.up * 0.85 * (e.k === "g" ? 0.75 : 1)) : base);
+      }
+    }
+    if (lv === "e") assert.equal(kinds.x, 0, "no hedgehog on Easy");
+    else assert.ok(kinds.x / total > 0.06 && kinds.x / total < 0.25, lv + " hedgehogs " + kinds.x / total);
+    assert.ok(kinds.g / total > 0.03 && kinds.g / total < 0.12, lv + " golden " + kinds.g / total);
+  }
+  // the same seed gives the same round
+  assert.equal(J(WM.schedule("h", seeded(42))), J(WM.schedule("h", seeded(42))));
+});
+
+test("whack: scoring and keypad keys", () => {
+  assert.equal(WM.scoreHit(0, "m"), 1);
+  assert.equal(WM.scoreHit(4, "g"), 7);
+  assert.equal(WM.scoreHit(5, "x"), 3);
+  assert.equal(WM.scoreHit(1, "x"), 0);                 // never below zero
+  assert.deepEqual(["7", "8", "9", "4", "5", "6", "1", "2", "3"].map(WM.holeForKey), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  for (const k of ["0", "a", "Enter", "", undefined, "10"]) assert.equal(WM.holeForKey(k), -1);
+});
+
+test("whack: records merge is a join and a reset drops older rows", () => {
+  const M = WM.mergeWhack, keys = ["e", "m", "h"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => { if (rnd(2)) s[k] = { n: rnd(40), ts: rnd(3) * 1000, g: 1 + rnd(9) }; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const x = { rows: { d: { b: 0, s: { m: { n: 20, ts: 500, g: 3 } } } } };
+  const y = { rows: { d: { b: 0, s: { m: { n: 20, ts: 300, g: 5 } } } } };
+  assert.equal(J(M(x, y).rows.d.s.m), J({ n: 20, ts: 300, g: 5 }));   // tie: the earlier one
+  assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
+  assert.equal(J(M({ rows: { d: { b: 0, s: { m: { n: 5, ts: 1, g: 0 } } } } }, null).rows), "{}");
 });
