@@ -1,7 +1,8 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
 // Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out,
-// Whack-a-Mole), Connect 4 and Tic-Tac-Toe win detection, Dots & Boxes,
-// Simon, Slider, Lights Out and Whack-a-Mole rules, the computer players.
+// Whack-a-Mole, Snake), Connect 4 and Tic-Tac-Toe win detection, Dots &
+// Boxes, Simon, Slider, Lights Out, Whack-a-Mole and Snake rules, the
+// computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -86,6 +87,13 @@ const WM = load("whack/whack.js",
    "joinRows", "mergeWhack"],
   [["  var DATA_VER", "  // ---------- 1."]],
   "PARAMS, ROUND_MS, RUSH_MS, schedule, scoreHit, holeForKey, mergeWhack");
+
+// cmpStr's cut also takes isInt and rand.
+const SN = load("snake/snake.js",
+  ["cmpStr", "startBody", "placeFood", "queueTurn", "adjacent", "step", "tickMs",
+   "normCell", "normRow", "joinCell", "joinRows", "mergeSnake"],
+  [["  var DATA_VER", "  // ---------- 1."]],
+  "N, BASE_MS, startBody, placeFood, queueTurn, adjacent, step, tickMs, mergeSnake");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -667,4 +675,141 @@ test("whack: records merge is a join and a reset drops older rows", () => {
   assert.equal(J(M(x, y).rows.d.s.m), J({ n: 20, ts: 300, g: 5 }));   // tie: the earlier one
   assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
   assert.equal(J(M({ rows: { d: { b: 0, s: { m: { n: 5, ts: 1, g: 0 } } } } }, null).rows), "{}");
+});
+
+// ---------- Snake ----------
+const snG = (body, dir, food, walls, queue) =>
+  ({ body, dir, queue: queue || [], food, score: 0, walls });
+const at = (r, c) => r * SN.N + c;
+
+test("snake: moves, eats and grows, the fruit lands on a free cell", () => {
+  const b = SN.startBody();
+  assert.equal(b.length, 3);
+  for (let i = 1; i < b.length; i++) assert.ok(SN.adjacent(b[i - 1], b[i], true));
+  let g = snG(b, 1, b[0] + 2, true);
+  let o = SN.step(g, Math.random);
+  assert.ok(!o.dead && !o.ate);
+  assert.deepEqual(o.g.body, [b[0] + 1, b[0], b[1]]);
+  o = SN.step(o.g, Math.random);
+  assert.ok(o.ate && o.g.score === 1 && o.g.body.length === 4);
+  assert.ok(o.g.food >= 0 && o.g.body.indexOf(o.g.food) < 0);
+  assert.deepEqual(o.g.body.slice(0, 2), [b[0] + 2, b[0] + 1]);
+  // input is never changed; other fields carry over
+  assert.deepEqual(g.body, b);
+  const sp = SN.step(Object.assign({ speed: "f" }, g), Math.random);
+  assert.equal(sp.g.speed, "f");
+  assert.equal(SN.step(Object.assign({ speed: "s" }, snG([at(0, 0), at(0, 1), at(0, 2)], 0, 5, true)), Math.random).g.speed, "s");
+  // placeFood: always free; -1 when the board is full
+  for (let i = 0; i < 300; i++) {
+    const body = []; for (let k = 0; k < 395; k++) body.push((k * 7 + i) % 400);
+    const uniq = [...new Set(body)], f = SN.placeFood(uniq, Math.random);
+    assert.ok(f >= 0 && uniq.indexOf(f) < 0);
+  }
+  const all = []; for (let k = 0; k < SN.N * SN.N; k++) all.push(k);
+  assert.equal(SN.placeFood(all, Math.random), -1);
+});
+
+test("snake: walls kill, no walls wrap; self collision; the tail frees on the step", () => {
+  const N = SN.N;
+  // wall: heading right at the last column
+  let o = SN.step(snG([at(5, N - 1), at(5, N - 2), at(5, N - 3)], 1, at(0, 0), true), Math.random);
+  assert.ok(o.dead);
+  o = SN.step(snG([at(5, N - 1), at(5, N - 2), at(5, N - 3)], 1, at(0, 0), false), Math.random);
+  assert.ok(!o.dead && o.g.body[0] === at(5, 0));
+  o = SN.step(snG([at(0, 4), at(1, 4), at(2, 4)], 0, at(9, 9), false), Math.random);
+  assert.ok(!o.dead && o.g.body[0] === at(N - 1, 4));
+  o = SN.step(snG([at(0, 4), at(1, 4), at(2, 4)], 0, at(9, 9), true), Math.random);
+  assert.ok(o.dead);
+  // a 2x2 loop: the head moves into the cell the tail leaves → alive
+  const loop = [at(3, 3), at(4, 3), at(4, 4), at(3, 4)];
+  o = SN.step(snG(loop, 1, at(9, 9), true), Math.random);
+  assert.ok(!o.dead, "tail cell is free on the step it moves");
+  // …but not if the snake grows on that step (fruit there is impossible, so
+  // test with a longer body hitting its middle)
+  const coil = [at(3, 3), at(4, 3), at(4, 4), at(3, 4), at(2, 4)];
+  o = SN.step(snG(coil, 1, at(9, 9), true), Math.random);
+  assert.ok(o.dead, "hits its own body");
+  // adjacency across the edge only without walls
+  assert.ok(SN.adjacent(at(5, 0), at(5, N - 1), false));
+  assert.ok(!SN.adjacent(at(5, 0), at(5, N - 1), true));
+  assert.ok(!SN.adjacent(at(5, 5), at(6, 6), false));
+});
+
+test("snake: turn queue ignores reversals and repeats, holds two", () => {
+  assert.deepEqual(SN.queueTurn([], 1, 3), []);          // straight back
+  assert.deepEqual(SN.queueTurn([], 1, 1), []);          // same way
+  assert.deepEqual(SN.queueTurn([], 1, 0), [0]);
+  assert.deepEqual(SN.queueTurn([0], 1, 2), [0]);        // back from the queued turn
+  assert.deepEqual(SN.queueTurn([0], 1, 3), [0, 3]);     // quick U-turn in two steps
+  assert.deepEqual(SN.queueTurn([0, 3], 1, 2), [0, 3]);  // full
+  // a queued U-turn never kills a snake of length 3 on its own
+  const b = SN.startBody();
+  let g = snG(b, 1, at(0, 0), true, SN.queueTurn(SN.queueTurn([], 1, 0), 1, 3));
+  let o = SN.step(g, Math.random); assert.ok(!o.dead); assert.equal(o.g.dir, 0);
+  o = SN.step(o.g, Math.random); assert.ok(!o.dead); assert.equal(o.g.dir, 3);
+});
+
+test("snake: tempo speeds up every 5 fruit and stops at 60%", () => {
+  for (const s of ["s", "n", "f"]) {
+    const b = SN.BASE_MS[s];
+    assert.equal(SN.tickMs(s, 0), b);
+    assert.equal(SN.tickMs(s, 4), b);
+    assert.equal(SN.tickMs(s, 5), Math.round(b * 0.94));
+    let prev = Infinity;
+    for (let n = 0; n <= 400; n++) {
+      const t = SN.tickMs(s, n);
+      assert.ok(t <= prev && t >= Math.round(b * 0.6));
+      prev = t;
+    }
+    assert.equal(SN.tickMs(s, 400), Math.round(b * 0.6));
+  }
+  assert.ok(SN.tickMs("s", 0) > SN.tickMs("n", 0) && SN.tickMs("n", 0) > SN.tickMs("f", 0));
+});
+
+test("snake: a played game never overlaps and the score matches the length", () => {
+  const N = SN.N;
+  for (let run = 0; run < 40; run++) {
+    const walls = run % 2 === 0;
+    let g = snG(SN.startBody(), 1, -1, walls);
+    g.food = SN.placeFood(g.body, Math.random);
+    for (let i = 0; i < 3000; i++) {
+      // greedy-ish bot with random turns
+      const d = rnd(4);
+      g = Object.assign({}, g, { queue: SN.queueTurn(g.queue, g.dir, d) });
+      const o = SN.step(g, Math.random);
+      if (o.dead) break;
+      g = o.g;
+      assert.equal(new Set(g.body).size, g.body.length);
+      assert.equal(g.body.length, 3 + g.score);
+      for (let k = 1; k < g.body.length; k++) assert.ok(SN.adjacent(g.body[k - 1], g.body[k], walls));
+      assert.ok(g.body.every((c) => c >= 0 && c < N * N));
+      if (g.food >= 0) assert.ok(g.body.indexOf(g.food) < 0);
+    }
+  }
+});
+
+test("snake: records merge is a join and a reset drops older rows", () => {
+  const M = SN.mergeSnake, keys = ["sw", "so", "nw", "no", "fw", "fo"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => { if (rnd(3) === 0) s[k] = { n: rnd(40), ts: rnd(3) * 1000, g: 1 + rnd(9) }; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const x = { rows: { d: { b: 0, s: { nw: { n: 20, ts: 500, g: 3 } } } } };
+  const y = { rows: { d: { b: 0, s: { nw: { n: 20, ts: 300, g: 5 }, fo: { n: 2, ts: 1, g: 1 } } } } };
+  assert.equal(J(M(x, y).rows.d.s), J({ nw: { n: 20, ts: 300, g: 5 }, fo: { n: 2, ts: 1, g: 1 } }));
+  assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
+  assert.equal(J(M({ rows: { d: { b: 0, s: { nw: { n: 401, ts: 1, g: 1 }, zz: { n: 1, ts: 1, g: 1 } } } } }, null).rows), "{}");
 });
