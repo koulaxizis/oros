@@ -1,5 +1,6 @@
-// Pure logic of the Games apps: merge functions (Memory, Connect 4),
-// Connect 4 win detection and computer player.
+// Pure logic of the Games apps: merge functions (Memory, Connect 4,
+// Dots & Boxes), Connect 4 win detection, Dots & Boxes rules and the
+// computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -42,6 +43,15 @@ const MM = load("memory/memory.js",
   ["cmpStr", "isInt", "normBest", "normGame", "better", "gameCmp", "mergeMemory"],
   [["  var DATA_VER", "  var MISS_DELAY"], ["  var LEVELS", "  // ---------- 1."]],
   "mergeMemory");
+
+// cmpStr's cut also takes isInt and randInt, the one-liners after it.
+const DB = load("dots/dots.js",
+  ["cmpStr", "geo", "sideCounts", "replay", "closingLines",
+   "safeLines", "boxesGiven", "cheapestGift", "doubleDeal", "longestChainLeft", "chooseLine",
+   "normRow", "joinRows", "mergeDots"],
+  [["  var DATA_VER", "  function appLang("], ["  function pick(", "  // BOOT MARKER"], ["  var GEO", "  function geo("],
+   ["  var KEYS", "  var data ="]],
+  "geo, sideCounts, replay, safeLines, closingLines, doubleDeal, chooseLine, mergeDots");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -149,4 +159,115 @@ test("memory: merge is symmetric and idempotent; a reset keeps later games", () 
   const C = { ver: 1, br: 200, best: {}, games: [] };
   assert.equal(M(M(A, B), C).best.m.id, "w");
   assert.equal(M(A, M(B, C)).best.m.id, "w");
+});
+
+// Lines of box (r, c) on an n board: top, bottom, left, right.
+const sides = (n, r, c) => DB.geo(n).boxLines[r * n + c];
+
+test("dots: closing a box scores and moves again; the game ends full", () => {
+  const n = 3, [t, b, l, r] = sides(n, 0, 0);
+  let s = DB.replay(n, [t, b, l], 1);
+  assert.equal(s.next, 2);                                                 // no box: turn passes
+  s = DB.replay(n, [t, b, l, r], 1);
+  assert.deepEqual(s.score, [0, 1]);                                       // player 2 closed it
+  assert.equal(s.owner[0], 2);
+  assert.equal(s.next, 2);                                                 // and plays again
+  assert.deepEqual(s.lastBoxes, [0]);
+  // One line closing two boxes at once counts both.
+  const mid = sides(n, 0, 0)[3];                                           // shared with box (0,1)
+  const around = sides(n, 0, 0).concat(sides(n, 0, 1)).filter((x) => x !== mid);
+  s = DB.replay(n, around.concat([mid]), 1);
+  assert.equal(s.score[0] + s.score[1], 2);
+  assert.deepEqual(s.lastBoxes.sort(), [0, 1]);
+  // Random full games: every box owned, scores add up, full flag set.
+  for (const size of [3, 4, 5]) {
+    const g = DB.geo(size), order = [...Array(g.L).keys()].sort(() => Math.random() - 0.5);
+    const f = DB.replay(size, order, 1);
+    assert.ok(f.full);
+    assert.equal(f.score[0] + f.score[1], size * size);
+    assert.ok(f.owner.every((o) => o === 1 || o === 2));
+  }
+});
+
+// Play random positions, then let the computer move from them.
+function randomPosition(n) {
+  const g = DB.geo(n), moves = [];
+  const stop = rnd(g.L);
+  let s = DB.replay(n, [], 1);
+  while (moves.length < stop) {
+    const free = [];
+    for (let l = 0; l < g.L; l++) if (!s.drawn[l]) free.push(l);
+    moves.push(free[rnd(free.length)]);
+    s = DB.replay(n, moves, 1);
+  }
+  return { g, s, moves };
+}
+
+test("dots: the computer takes boxes and only gives a third side when it must", () => {
+  for (const n of [3, 4, 5]) {
+    for (let k = 0; k < 300; k++) {
+      const { g, s, moves } = randomPosition(n);
+      const cnt = DB.sideCounts(g, s.drawn);
+      const closing = DB.closingLines(g, s.drawn, cnt), safe = DB.safeLines(g, s.drawn, cnt);
+      for (const lv of ["e", "m", "h"]) {
+        const l = DB.chooseLine(n, s.drawn, lv);
+        assert.ok(l >= 0 && !s.drawn[l], lv + " picks a drawn line in " + J(moves));
+        if (closing.length && lv !== "h") {
+          assert.ok(closing.includes(l), lv + " leaves a box in " + J(moves));
+        }
+        if (closing.length && lv === "h" && !closing.includes(l)) {
+          // Hard skips a box only to double-deal, and only with no safe line left.
+          assert.equal(safe.length, 0, "h skips a box with safe lines in " + J(moves));
+          assert.equal(l, DB.doubleDeal(g, s.drawn, cnt));
+        }
+        if (!closing.length && safe.length && lv !== "e") {
+          assert.ok(safe.includes(l), lv + " gives a third side in " + J(moves));
+        }
+      }
+    }
+  }
+});
+
+test("dots: hard double-deals the last two boxes to keep a long chain", () => {
+  // 3x3: the computer took box (0,2) of the top-row chain; (0,1) has
+  // 3 sides, (0,0) has 2. Rows 1-2 form a loop of 6 boxes.
+  const n = 3, g = DB.geo(n), drawn = Array(g.L).fill(0);
+  const draw = (...ls) => ls.forEach((l) => { drawn[l] = 1; });
+  const v = (r, c) => g.H + r * (n + 1) + c, h = (r, c) => r * n + c;
+  draw(h(0, 2), h(1, 2), v(0, 2), v(0, 3));                                 // (0,2) taken
+  draw(h(0, 1), h(1, 1));                                                   // (0,1): 3 sides
+  draw(h(0, 0), h(1, 0));                                                   // (0,0): 2 sides
+  draw(v(1, 0), h(2, 1), v(1, 3), v(2, 0), h(3, 0), h(3, 1), v(2, 3), h(3, 2));
+  const cnt = DB.sideCounts(g, drawn);
+  assert.equal(DB.safeLines(g, drawn, cnt).length, 0);
+  assert.equal(DB.chooseLine(n, drawn, "h"), v(0, 0));                      // far side of the pair
+  assert.equal(DB.chooseLine(n, drawn, "m"), v(0, 1));                      // medium just takes
+  // With no long chain left the pair is simply taken.
+  draw(v(1, 1), v(1, 2), h(2, 0), v(2, 1), v(2, 2), h(2, 2));
+  assert.equal(DB.chooseLine(n, drawn, "h"), v(0, 1));
+});
+
+test("dots: records merge is a join and a reset drops older rows", () => {
+  const M = DB.mergeDots, keys = ["e3", "m4", "h5", "e5"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => { if (rnd(2)) s[k] = [rnd(5), rnd(5), rnd(5)]; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const reset = M({ br: 0, rows: { x: { b: 0, s: { e3: [3, 0, 0] } } } }, { br: 50, rows: {} });
+  assert.equal(J(reset.rows), "{}");
+  const junk = M({ rows: { x: { b: 1, s: { e3: [1, -1, 0], zz: [1, 1, 1] } } } }, null);
+  assert.equal(J(junk.rows), "{}");                                        // bad cells drop
 });

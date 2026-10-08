@@ -522,6 +522,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Dice & Coin | oros-dice-data | union + LWW + tombs | 5/5 VERIFIED |
 | **Memory** | oros-memory-data | games union by id (cap 50) + best "better wins" + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.00; first Games app (tablogames port) |
 | **Connect 4** | oros-connect4-data | per-device counter rows, join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.01; Games (tablogames port) |
+| **Dots & Boxes** | oros-dots-data | per-device counter rows (key level+size), join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.02; Games (tablogames port) |
 | Radio | oros-radio-data | stationuuid union + shell proxy slice | Wave 3 + hotfixes; proxy v0.38.10 |
 | Minimalism | (minimalism slice) | day-entity union | Waves 1–2, content Days 1–55 |
 | **Writer** | oros-writer-data | doc LWW + tpl tombs, canonical (R26) | Doses 1–3 delivered 2026-10-01 → deploy + 2-device smoke test pending |
@@ -552,13 +553,14 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Writer:** oros-writer-prefs (`{open[], active, seen{}}`).
 - **Memory:** oros-memory-prefs (`{lv, mode, set}`), oros-memory-session (the game in progress, resumable), oros-memory-sfx ("1" = sound on), oros-memory-data-broken (rescue copy of unreadable data).
 - **Connect 4:** oros-connect4-prefs (`{mode, lv, first, nextAi}`), oros-connect4-session (`{mode, lv, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`), oros-connect4-device (id of this device's counter row), oros-connect4-sfx, oros-connect4-data-broken.
+- **Dots & Boxes:** oros-dots-prefs (`{mode, lv, n, first, nextAi}`), oros-dots-session (`{mode, lv, n, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`), oros-dots-device (id of this device's counter row), oros-dots-sfx, oros-dots-data-broken.
 - **Generic:** oros-*-open staging keys, and all *-prefs / *-cache / *-seen keys.
 - **Correction vs older Bible:** oros-pet-events is SYNCED now (petEvents slice).
 
 ### File tree
 
 - **Root:** `index.html`, `shell.js`, `notifications.js`, `sync.js`, `fs.js`, `dialogs.js` **[log]**, `vault.js` **[log]**, `style.css`, `pet.css`, `pet.js`, `translations.js`, `apps.json`, `sw.js`, `manifest.webmanifest`, `icon.svg`, `icons/`, `vendor/` (jspdf, NotoSans-Regular, xlsx; **[log]** leaflet.js, leaflet.css, hls.light.min.js), `fonts/` (Nunito ×5), `.github/workflows/bump-version.yml`, `OROS_BIBLE.md` (Bible + changelog; `CHANGELOG.md` retired).
-- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4.
+- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots.
 
 ---
 
@@ -612,6 +614,9 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - `{ ver, br, rows{deviceId:{b, s{e|m|h:[won,lost,drawn]}}} }`: results vs the computer only (2-player series stay on the device).
   - Each device increments only its own row (id in the device-local `oros-connect4-device`). Merge per row: larger epoch `b` wins, equal epochs take the per-cell max; rows with `b < br` drop. A join: symmetric, associative, idempotent (`tests/games.test.js`).
   - Reset = `br` stamp; a device whose row is older starts a new row at `b = br` on its next result.
+- **DOTS v1:**
+  - `{ ver, br, rows{deviceId:{b, s{<level><size>:[won,lost,drawn]}}} }`, keys `e3` … `h5` (level e|m|h × board 3|4|5 boxes): results vs the computer only.
+  - Same join and reset as CONNECT4 v1 (device id in the device-local `oros-dots-device`); unknown keys and bad cells drop in `normRow`.
 - **PET v1 — three synced slices:**
   - `pet` (oros-pet-data): `{ ver, pet{id,name,palette,birthTs,fm{field:mtime}}, lastFed, lastPetted, wokeAt/awakeE?, asleepSince/asleepE?, tombs{} }`.
     - Stats are DERIVED from anchors at render time, never stored.
@@ -1026,7 +1031,7 @@ Rule ids are kept as recorded.
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
-- 26 entries since 0.42.01 (memory 0.42.00, connect4 0.42.01). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Games (memory, connect4) · Sound (radio) · Video (television).
+- 27 entries since 0.42.02 (memory 0.42.00, connect4 0.42.01, dots 0.42.02). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Games (memory, connect4, dots) · Sound (radio) · Video (television).
 - The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Creativity, Fun, Internet, Lifestyle, Office, Personal, Sound, Video. EL: Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Ήχος, Προσωπικά, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 
@@ -1164,6 +1169,7 @@ Rebuild this in any session where code is delivered.
   - Each game is its own app (own folder, slice, `apps.json` entry), not a hub. Memory is the template for the games that follow (no shared core file for now).
   - Dice & Coin stays in Fun "for now".
   - Memory approved and built (name "Memory / Μνήμη"); Connect 4 approved, go-ahead given ("Προχώρα!"); Memory shipped in PR #7 (0.42.00), Connect 4 follows in its own PR (0.42.01).
+  - Dots & Lines approved and go-ahead given; shipped as **Dots & Boxes / Τελείες & Κουτιά** (the proposed name; no other choice was given), 0.42.02. Rectangular boards and a shared `games-kit.js` are proposals for later, not decisions.
   - Game preferences are device-local `*-prefs` (R10); only results and records sync.
 
 - **2026-10-07 · Christos (versions, deploy, To-Do proposals)**
@@ -2700,4 +2706,14 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Tests:** new `tests/games.test.js` (runs in the Tests workflow, whose paths now include `memory/**` and `connect4/**`): win detection in all directions and edges; Medium / Hard never miss a win and only skip a single block when blocking loses anyway (random positions); Connect 4 merge symmetric, associative, idempotent, inputs untouched, reset drops older rows; Memory merge symmetric and idempotent and the "reset elsewhere, worse game later" case. `node --test tests/*.test.js`: 23/23.
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** the computer replies; undo takes back both moves; key 4 plays column 4 and focus stays on the columns; easy, hard and 2-player games end with a centered result dialog; one result counted per game; series 1–0 and the other player starts next; a game reopened mid-way resumes; two devices converge with two counter rows and idle cycles upload 0; a reset empties the other device; board fits with no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors. Hard on an empty board: ~40 ms (Node), ~0.5 s reply in the browser including the 350 ms minimum delay.
 - **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
-- **Status:** branch `claude/project-thread-bx01wj`, new PR after #7 was merged; not on `main` (R4).
+- **Status:** merged to `main` as PR #8 (2026-10-08), live as 0.42.01.
+
+### 2026-10-08 — Dots & Boxes v1.0.0 (new app, Games)
+
+- **New app `dots/`** ("Dots & Boxes" / "Τελείες & Κουτιά", the tablogames "Dots & Lines"): boards of 3×3, 4×4 and 5×5 boxes; closing a box scores and moves again. Vs the computer on 3 levels (Easy: takes a box, otherwise a random line · Medium: takes boxes, then plays a line that gives no box its third side, then the sacrifice that gives away the fewest boxes · Hard: as Medium, plus the double-deal: at the end of a chain it leaves the last two boxes when a chain of 3+ remains, keeping control) with "you / computer / take turns" for the first move; 2 players on one device with a running series. Undo (vs the computer back to your turn; not after the end), lines and boxes in the player's colour AND mark (ring / dot), last line outlined, desktop hover preview, keyboard (arrows move between lines, Enter/Space, N, Z / Ctrl+Z), ARIA labels per line and live announcements for boxes. Each line is a one-box square button clipped to a diamond: the diamonds tile the board, so a tap picks the nearest line and the hit zone is a whole box edge (57 px on a 5×5 board at 360 px wide).
+- **Schema:** DOTS v1 (Part IV); device-local keys (Part III). Same toolbar, dialogs, toasts, palette and sync idiom as Connect 4. Toolbar becomes two strips under 1040 px.
+- **Core:** `apps.json` entry (Games), `sw.js` precache (4), `ICONS.dots`, `translations.js` `app.dots` (EN + EL). `APP_VERSION` 0.42.01 → 0.42.02 (patch step).
+- **Tests:** `tests/games.test.js` (Tests workflow paths now include `dots/**`): box closing and the extra move, a line closing two boxes, full games on every size; over random positions every level picks a free line, Easy / Medium always take an open box, Hard skips one only to double-deal with no safe line left, Medium / Hard never give a third side while a safe line exists; a built position where Hard double-deals and Medium takes; merge symmetric, associative, idempotent, inputs untouched, reset and bad cells drop. `node --test tests/*.test.js`: 27/27.
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** the computer replies; undo returns to an empty board; arrows + Enter draw the focused line; easy, hard (4×4) and 2-player games end with a centered result dialog, every box owned and marked; one result counted; a game reopened mid-way resumes; two devices converge with two counter rows and idle cycles upload 0; a reset empties the other device; 5×5 board fits, boxes square, line hit zone ≥ 57 px, no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1040×760, 1060×760, 1280×800; no page errors.
+- **NOT tested:** real Dropbox, Firefox / Safari (diamond hit zones rely on `clip-path` hit testing, supported in both), a real phone, sound output.
+- **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
