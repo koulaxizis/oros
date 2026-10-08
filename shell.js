@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.45.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.45.04";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -41,6 +41,7 @@
     theme:           null,   // "dark" | "light"
     skin:            null,   // palette id (see SKINS)
     wallpaper:       null,   // wallpaper id (see WALLPAPERS)
+    wpart:           null,   // "Mine" wallpaper recipe (Wallpaper Generator) or null
     apps:            [],
     running:         null,
     deferredPrompt:  null,   // PWA install event
@@ -78,6 +79,7 @@
   // string feeds the desktop background AND the picker thumbnails —
   // WYSIWYG guaranteed, no CSS-specificity battles.
   var WALLPAPERS = [
+    { id: "custom",   pair: null,          css: "" },  // "Mine": drawn from state.wpart (5b)
     { id: "dusk",     pair: null,          css: "linear-gradient(160deg, #1b2735 0%, #10151f 45%, #0b0f17 100%)" },
     { id: "midnight", pair: "arch",        css: "linear-gradient(165deg, #0d1117 0%, #06080c 60%, #000000 100%)" },
     { id: "plum",     pair: "ubuntu",      css: "radial-gradient(ellipse at 30% 20%, #4a2545 0%, #2c1626 55%, #190d17 100%)" },
@@ -146,6 +148,7 @@
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
@@ -208,6 +211,7 @@
     var storedWp = localStorage.getItem("oros-wallpaper");
     state.wallpaper = findWallpaper(storedWp) ? storedWp : DEFAULT_WALLPAPER;
     localStorage.setItem("oros-wallpaper", state.wallpaper);
+    state.wpart = wpArtRead();
 
     state.theme = localStorage.getItem("oros-theme") === "light" ? "light" : "dark";
 
@@ -288,6 +292,8 @@
         break;
       }
     }
+    // the "orOS" palette of the "Mine" wallpaper follows the skin
+    if (state.wallpaper === "custom" && document.getElementById("oros-desktop")) applyWallpaper();
   }
 
   // ---------- 5b. Wallpaper ----------
@@ -299,7 +305,8 @@
     // Inline style: wins over any #oros-desktop background rule
     // (specificity-proof — the v0.4.0 class-based approach lost to
     // the existing ID rule).
-    desktop.style.background = w.css;
+    if (w.id === "custom") wpCustomApply(desktop);
+    else { wpCustomStop(); desktop.style.background = w.css; }
 
     // Keep the class for potential future hooks, cleaned of stale ids
     var classes = desktop.className.split(/\s+/);
@@ -308,6 +315,177 @@
     }
     desktop.classList.add("wp-" + state.wallpaper);
   }
+
+  // ---------- 5b'. "Mine" — the Wallpaper Generator wallpaper ----------
+  // The recipe (a few bytes) syncs in the shell slice (field wpart);
+  // every device draws it at ITS screen size with the shared
+  // renderer (wallpaper/art.js) and keeps the picture in its own
+  // IndexedDB ("oros-wallpaper"), never in localStorage (R30) and
+  // never on the Files disk (that one syncs file by file). Redrawn
+  // only when the picture changes: another recipe, another screen
+  // size, or another skin colour for the "orOS" palette.
+  var WP_ART_KEY = "oros-wallpaper-art";
+  var WP_MAX_SIDE = 3840;
+  var wpShown = null;        // { key, w, h, url } of the picture on the desktop
+  var wpGen = 0;             // newer request = older drawing is dropped
+
+  function wpArt() { return window.OrosWallArt || null; }
+
+  function wpArtRead() {
+    var A = wpArt();
+    if (!A) return null;
+    try { return A.normRecipe(JSON.parse(localStorage.getItem(WP_ART_KEY))); }
+    catch (e) { return null; }
+  }
+
+  function wpArtWrite(r) {
+    try {
+      if (r) localStorage.setItem(WP_ART_KEY, JSON.stringify(r));
+      else localStorage.removeItem(WP_ART_KEY);
+    } catch (e) {}
+  }
+
+  function wpAccent() {
+    for (var i = 0; i < SKINS.length; i++) {
+      if (SKINS[i].id === state.skin) return SKINS[i].color;
+    }
+    return "#d4af37";
+  }
+
+  // This screen in device pixels, long side capped (cover scaling
+  // hides the rest).
+  function wpScreen() {
+    var dpr = window.devicePixelRatio || 1;
+    var w = Math.max(1, Math.round(window.innerWidth * dpr));
+    var h = Math.max(1, Math.round(window.innerHeight * dpr));
+    var k = Math.min(1, WP_MAX_SIDE / Math.max(w, h));
+    return { w: Math.max(64, Math.round(w * k)), h: Math.max(64, Math.round(h * k)) };
+  }
+
+  function wpDb() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open("oros-wallpaper", 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore("img"); };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror   = function () { reject(req.error); };
+    });
+  }
+  function wpCacheGet() {
+    return wpDb().then(function (db) {
+      return new Promise(function (resolve) {
+        var req = db.transaction("img").objectStore("img").get("desktop");
+        req.onsuccess = function () { db.close(); resolve(req.result || null); };
+        req.onerror   = function () { db.close(); resolve(null); };
+      });
+    }).catch(function () { return null; });
+  }
+  function wpCachePut(rec) {
+    return wpDb().then(function (db) {
+      var tx = db.transaction("img", "readwrite");
+      tx.objectStore("img").put(rec, "desktop");
+      tx.oncomplete = tx.onerror = function () { db.close(); };
+    }).catch(function () {});
+  }
+
+  function wpBg(css, url) {
+    return url ? 'url("' + url + '") center / cover no-repeat, ' + css : css;
+  }
+
+  function wpShow(desktop, rec, bgCss) {
+    var url = URL.createObjectURL(rec.blob);
+    if (wpShown && wpShown.url) URL.revokeObjectURL(wpShown.url);
+    wpShown = { key: rec.key, w: rec.w, h: rec.h, url: url };
+    desktop.style.background = wpBg(bgCss, url);
+    var th = document.querySelector(".wp-thumb.wp-custom");   // menu open: refresh in place
+    if (th && !th.classList.contains("wp-make")) th.style.background = wpBg(bgCss, url);
+  }
+
+  // Close enough = same picture at a size within 12% (cover scaling).
+  function wpFits(rec, key, scr) {
+    return !!rec && rec.key === key &&
+      Math.abs(rec.w - scr.w) <= scr.w * 0.12 && Math.abs(rec.h - scr.h) <= scr.h * 0.12;
+  }
+
+  function wpCustomStop() {
+    wpGen++;
+    if (wpShown && wpShown.url) URL.revokeObjectURL(wpShown.url);
+    wpShown = null;
+  }
+
+  function wpCustomApply(desktop) {
+    var A = wpArt(), r = state.wpart;
+    if (!A || !r) {                       // nothing drawn yet: the default look
+      wpCustomStop();
+      desktop.style.background = findWallpaper(DEFAULT_WALLPAPER).css;
+      return;
+    }
+    var acc = wpAccent();
+    var key = A.key(r, acc), scr = wpScreen();
+    var bgCss = A.colors(r, acc).bg;
+    if (wpFits(wpShown, key, scr)) {      // already on screen
+      desktop.style.background = wpBg(bgCss, wpShown.url);
+      return;
+    }
+    var gen = ++wpGen;
+    // Until the picture is ready: the old one if it is the same
+    // recipe, else the recipe's background colour.
+    desktop.style.background = (wpShown && wpShown.key === key) ? wpBg(bgCss, wpShown.url) : bgCss;
+    wpCacheGet().then(function (rec) {
+      if (gen !== wpGen) return null;
+      if (wpFits(rec, key, scr) && rec.blob) { wpShow(desktop, rec, bgCss); return null; }
+      var cv = document.createElement("canvas");
+      cv.width = scr.w; cv.height = scr.h;
+      var ctx = cv.getContext("2d");
+      if (!ctx) return null;
+      return A.render(ctx, scr.w, scr.h, r, {
+        accent: acc,
+        cancelled: function () { return gen !== wpGen; }
+      }).then(function (done) {
+        if (!done) return;
+        return new Promise(function (resolve) {
+          cv.toBlob(function (blob) {
+            cv.width = cv.height = 0;
+            if (!blob || gen !== wpGen) { resolve(); return; }
+            var fresh = { key: key, w: scr.w, h: scr.h, blob: blob };
+            wpShow(desktop, fresh, bgCss);
+            wpCachePut(fresh).then(resolve);
+          }, "image/png");
+        });
+      });
+    }).catch(function (e) {
+      console.warn("[orOS] custom wallpaper:", e);
+    });
+  }
+
+  // Public API for the Wallpaper Generator app (same origin iframe).
+  window.orosWallpaper = {
+    // recipe → the "Mine" wallpaper, selected. User action: syncs.
+    setCustom: function (recipe) {
+      var A = wpArt();
+      var r = A ? A.normRecipe(recipe) : null;
+      if (!r) return false;
+      state.wpart = r;
+      wpArtWrite(r);
+      state.wallpaper = "custom";
+      localStorage.setItem("oros-wallpaper", state.wallpaper);
+      applyWallpaper();
+      noteLocalChange();          // user action → sync engine
+      return true;
+    },
+    get: function () {
+      return { active: state.wallpaper === "custom", recipe: state.wpart };
+    }
+  };
+
+  // Another screen size (rotation, window resize): redraw if needed.
+  (function () {
+    var t = null;
+    window.addEventListener("resize", function () {
+      if (state.wallpaper !== "custom") return;
+      clearTimeout(t);
+      t = setTimeout(applyWallpaper, 700);
+    });
+  })();
 
   // Suggest, don't impose: when the user picks a skin with a classic
   // wallpaper pair AND is still on the default wallpaper, the
@@ -1206,7 +1384,22 @@
                         (state.wallpaper === w.id ? " active" : "");
       thumb.setAttribute("title", wallpaperTitle(w.id));
       thumb.setAttribute("aria-label", wallpaperTitle(w.id));
-      thumb.style.background = w.css;   // WYSIWYG — same source as desktop
+      if (w.id === "custom") {
+        if (!state.wpart || !wpArt()) {
+          // Nothing made yet: the thumb opens the Wallpaper Generator.
+          thumb.classList.add("wp-make");
+          thumb.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+          thumb.setAttribute("title", window.t("wallpaper.make"));
+          thumb.setAttribute("aria-label", window.t("wallpaper.make"));
+          thumb.addEventListener("click", function () { openAppById("wallpaper"); });
+          grid.appendChild(thumb);
+          return;
+        }
+        var bgc = wpArt().colors(state.wpart, wpAccent()).bg;
+        thumb.style.background = (wpShown && wpShown.url) ? wpBg(bgc, wpShown.url) : bgc;
+      } else {
+        thumb.style.background = w.css;   // WYSIWYG — same source as desktop
+      }
       thumb.addEventListener("click", function () {
         if (state.wallpaper === w.id) return;
         state.wallpaper = w.id;
@@ -1253,6 +1446,7 @@
       hex:      { en: "Hex Grid",      el: "Εξαγωνικό Πλέγμα" },
       obsidian: { en: "Obsidian Veil", el: "Πέπλο Οψιδιανού" },
       terrazzo: { en: "Retro Terrazzo", el: "Ρετρό Terrazzo" },
+      custom:   { en: "Mine",          el: "Δική μου" },
       clear:    { en: "None",          el: "Καμία" }
     };
     var n = names[id];
@@ -1286,7 +1480,7 @@
   //     sorted by id), so a converged state produces no phantom push.
   var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
   var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather"];
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -1297,6 +1491,7 @@
       case "wallpaper":    return DEFAULT_WALLPAPER;
       case "syncInterval": return 3;
       case "autoexport":   return "off";
+      case "wpart":        return null;
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -1311,6 +1506,10 @@
       case "wallpaper":    return (typeof v === "string" && findWallpaper(v)) ? v : undefined;
       case "syncInterval": return (typeof v === "number" && isFinite(v) && v >= 0 && v <= 60) ? v : undefined;
       case "autoexport":   return (v === "off" || v === "daily" || v === "weekly" || v === "monthly") ? v : undefined;
+      case "wpart":
+        if (v === null) return null;
+        var wa = wpArt() ? wpArt().normRecipe(v) : null;
+        return wa ? wa : undefined;
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -1332,7 +1531,8 @@
     var raw = {
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
-      autoexport: state.autoexport, weather: wxRead()
+      autoexport: state.autoexport, weather: wxRead(),
+      wpart: state.wpart
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -1521,6 +1721,7 @@
       autoexport:   vals.autoexport,
       alarms:       alarms,       // user data — travels in every backup funnel
       weather:      vals.weather,
+      wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -1573,6 +1774,10 @@
     if (findWallpaper(data.wallpaper)) {
       state.wallpaper = data.wallpaper;
       localStorage.setItem("oros-wallpaper", state.wallpaper);
+    }
+    if (data.wpart !== undefined && shellCanon("wpart", data.wpart) !== undefined) {
+      state.wpart = shellCanon("wpart", data.wpart);
+      wpArtWrite(state.wpart);
     }
     if (typeof data.syncInterval === "number" &&
         data.syncInterval >= 0 && data.syncInterval <= 60 &&
@@ -3453,7 +3658,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
