@@ -17,6 +17,7 @@
       <small id="pet-age"></small>
     </button>
     <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="bag-btn"></button>
     <button type="button" class="icon-btn" id="companion-btn" aria-pressed="false"></button>
   </header>
 
@@ -33,15 +34,32 @@
     <div id="offline" hidden></div>
   </main>
 
-  <!-- Care actions, walk, garden, nest, backpack -->
+  <!-- Care actions, play, walk, garden, nest (the backpack sits in the toolbar) -->
   <nav id="actions">
     <button type="button" class="act-btn" id="feed-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
     <button type="button" class="act-btn" id="pat-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
     <button type="button" class="act-btn" id="sleep-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
+    <button type="button" class="act-btn" id="play-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
     <button type="button" class="act-btn" id="walk-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
     <button type="button" class="act-btn" id="garden-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
     <button type="button" class="act-btn" id="nest-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
-    <button type="button" class="act-btn" id="bag-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
+  </nav>
+
+  <!-- While a game runs: its name, score, time or tries, the dance pad, Stop -->
+  <nav id="game-bar" hidden>
+    <div id="game-head">
+      <strong id="game-title"></strong>
+      <span id="game-score"></span>
+      <span id="game-info"></span>
+      <span class="spacer"></span>
+      <button type="button" class="dlg-btn small" id="game-quit"></button>
+    </div>
+    <div id="game-pad" hidden>
+      <button type="button" class="act-btn" data-move="left"></button>
+      <button type="button" class="act-btn" data-move="up"></button>
+      <button type="button" class="act-btn" data-move="down"></button>
+      <button type="button" class="act-btn" data-move="right"></button>
+    </div>
   </nav>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
