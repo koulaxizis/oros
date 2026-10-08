@@ -6,9 +6,9 @@ name: Tests
 on:
   push:
     branches: [main]
-    paths: ['sync.js', 'memory/**', 'connect4/**', 'dots/**', 'tictactoe/**', 'simon/**', 'slider/**', 'netizen/**', 'petworld/**', 'pet.js', 'tests/**', '.github/workflows/tests.yml']
+    paths: ['sync.js', 'memory/**', 'connect4/**', 'dots/**', 'tictactoe/**', 'simon/**', 'slider/**', 'netizen/**', 'lightsout/**', 'petworld/**', 'pet.js', 'tests/**', '.github/workflows/tests.yml']
   pull_request:
-    paths: ['sync.js', 'memory/**', 'connect4/**', 'dots/**', 'tictactoe/**', 'simon/**', 'slider/**', 'netizen/**', 'petworld/**', 'pet.js', 'tests/**', '.github/workflows/tests.yml']
+    paths: ['sync.js', 'memory/**', 'connect4/**', 'dots/**', 'tictactoe/**', 'simon/**', 'slider/**', 'netizen/**', 'lightsout/**', 'petworld/**', 'pet.js', 'tests/**', '.github/workflows/tests.yml']
   workflow_dispatch:
 
 permissions:

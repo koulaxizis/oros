@@ -1,7 +1,7 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
-// Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider), Connect 4 and
-// Tic-Tac-Toe win detection, Dots & Boxes, Simon and Slider rules, the
-// computer players.
+// Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out),
+// Connect 4 and Tic-Tac-Toe win detection, Dots & Boxes, Simon, Slider
+// and Lights Out rules, the computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -71,6 +71,15 @@ const SL = load("slider/slider.js",
    "pushFrom", "normCell", "normRow", "joinRows", "mergeSlider"],
   [["  var DATA_VER", "  // ---------- 1."]],
   "solvedTiles, isSolved, isSolvable, shuffle, slide, pushFrom, mergeSlider");
+
+// cmpStr's cut also takes isInt and randInt; press and minTime are
+// one-liners, so they come in as preludes.
+const LO = load("lightsout/lightsout.js",
+  ["cmpStr", "pressMask", "bitCount", "applyPresses", "solve", "generate", "hintCell",
+   "normCell", "normRow", "joinRows", "mergeLightsOut"],
+  [["  var DATA_VER", "  // ---------- 1."], ["  function press(", "\n  function bitCount("],
+   ["  function minTime(", "\n  function joinRows("]],
+  "RANGE, press, bitCount, applyPresses, solve, generate, hintCell, mergeLightsOut");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -483,4 +492,95 @@ test("slider: records merge is a join and a reset drops older rows", () => {
   assert.equal(J(M(x, y).rows.d.s.n4), J({ t: 9000, m: 60, g: 3 }));     // best of each, separately
   assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
   assert.equal(J(M({ rows: { d: { b: 0, s: { n4: { t: 0, m: 5, g: 1 } } } } }, null).rows), "{}");
+});
+
+test("lights out: a press toggles the cell and its neighbours, edges included", () => {
+  const n = 5, bits = (m) => [...Array(25).keys()].filter((i) => m >> i & 1);
+  assert.deepEqual(bits(LO.press(0, n, 0)), [0, 1, 5]);              // corner
+  assert.deepEqual(bits(LO.press(0, n, 2)), [1, 2, 3, 7]);           // top edge
+  assert.deepEqual(bits(LO.press(0, n, 12)), [7, 11, 12, 13, 17]);   // centre
+  assert.deepEqual(bits(LO.press(0, n, 24)), [19, 23, 24]);          // corner
+  assert.deepEqual(bits(LO.press(0, n, 14)), [9, 13, 14, 19]);       // right edge: no wrap
+  for (let i = 0; i < 25; i++) assert.equal(LO.press(LO.press(12345, n, i), n, i), 12345);
+});
+
+// Every press set of a 3x3 and a 4x4 board, by brute force: the fewest
+// presses that make each board must equal what solve() finds, and
+// every board no press set makes must come back unsolvable.
+test("lights out: solve() finds the true minimum (exhaustive 3x3 and 4x4)", () => {
+  for (const n of [3, 4]) {
+    const best = new Map();
+    for (let p = 0; p < (1 << (n * n)); p++) {
+      const s = LO.applyPresses(n, p), k = LO.bitCount(p);
+      if (!best.has(s) || k < best.get(s)) best.set(s, k);
+    }
+    for (let s = 0; s < (1 << (n * n)); s++) {
+      const sol = LO.solve(s, n);
+      if (!best.has(s)) { assert.equal(sol, null, "unsolvable " + s); continue; }
+      assert.equal(sol.k, best.get(s), n + "x" + n + " board " + s);
+      assert.equal(LO.applyPresses(n, sol.p, s), 0);
+    }
+    assert.equal(best.size, n === 3 ? 512 : 4096);     // 3x3 full rank; 4x4 rank 12
+  }
+});
+
+test("lights out: 5x5 puzzles are solvable, in their level's range, hints follow a minimum", () => {
+  const n = 5;
+  // the dark board has exactly 4 solutions (rank 23): the 5x5 kernel
+  let kernel = 0;
+  for (let f = 0; f < 32; f++) {
+    let s = 0, p = 0;
+    for (let c = 0; c < 5; c++) if (f >> c & 1) { s = LO.press(s, n, c); p |= 1 << c; }
+    for (let r = 1; r < 5; r++) for (let c = 0; c < 5; c++) {
+      if (s >> ((r - 1) * 5 + c) & 1) { s = LO.press(s, n, r * 5 + c); p |= 1 << (r * 5 + c); }
+    }
+    if (s === 0) kernel++;
+  }
+  assert.equal(kernel, 4);
+  for (const lv of ["e", "m", "h"]) {
+    const [lo, hi] = LO.RANGE[lv];
+    for (let i = 0; i < 150; i++) {
+      const g = LO.generate(n, lv);
+      assert.ok(g.lights > 0 && g.par >= lo && g.par <= hi);
+      const sol = LO.solve(g.lights, n);
+      assert.equal(sol.k, g.par);
+      assert.equal(LO.applyPresses(n, sol.p, g.lights), 0);
+      let s = g.lights, k = 0;                       // follow the hints to the end
+      while (s) { const c = LO.hintCell(s, n); assert.ok(c >= 0); s = LO.press(s, n, c); k++; }
+      assert.equal(k, g.par);
+      assert.equal(LO.hintCell(0, n), -1);
+    }
+  }
+  // a board outside the solvable space: one light in the corner
+  assert.equal(LO.solve(1, n), null);
+});
+
+test("lights out: records merge is a join and a reset drops older rows", () => {
+  const M = LO.mergeLightsOut, keys = ["e", "m", "h"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => {
+        if (!rnd(2)) return;
+        const g = 1 + rnd(9);
+        s[k] = { g, p: rnd(g + 1), t: rnd(3) ? 1 + rnd(9e4) : 0 };
+      });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const x = { rows: { d: { b: 0, s: { m: { g: 4, p: 1, t: 0 } } } } };
+  const y = { rows: { d: { b: 0, s: { m: { g: 3, p: 2, t: 40000 } } } } };
+  assert.equal(J(M(x, y).rows.d.s.m), J({ g: 4, p: 2, t: 40000 }));   // no time yet ≠ best time 0
+  assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
+  assert.equal(J(M({ rows: { d: { b: 0, s: { m: { g: 1, p: 2, t: 0 } } } } }, null).rows), "{}");
 });
