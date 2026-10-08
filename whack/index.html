@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Whack-a-Mole · orOS</title>
+
+  <link rel="stylesheet" href="whack.css?v=0.43.03">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
+        <button type="button" class="seg-btn" data-level="m" data-i18n="level.m">Medium</button>
+        <button type="button" class="seg-btn" data-level="h" data-i18n="level.h">Hard</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: score, message, time left -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="time">0:30</strong><span data-i18n="st.time">Time</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="field">
+      <div id="board"></div>
+      <div id="overlay">
+        <button type="button" id="start-btn"></button>
+        <div id="count" aria-hidden="true"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="whack.js?v=0.43.03"></script>
+
+</body>
+</html>
