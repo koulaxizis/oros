@@ -296,6 +296,14 @@
       "icon": "snake",
       "url": "snake/",
       "type": "internal"
+    },
+    {
+      "id": "g2048",
+      "name": "2048",
+      "category": "Games",
+      "icon": "g2048",
+      "url": "g2048/",
+      "type": "internal"
     }
   ]
 }
