@@ -1,6 +1,6 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
 // Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out,
-// Whack-a-Mole, Snake), Connect 4 and Tic-Tac-Toe win detection, Dots &
+// Whack-a-Mole, Snake, 2048), Connect 4 and Tic-Tac-Toe win detection, Dots &
 // Boxes, Simon, Slider, Lights Out, Whack-a-Mole and Snake rules, the
 // computer players.
 // Run: node --test tests/
@@ -94,6 +94,13 @@ const SN = load("snake/snake.js",
    "normCell", "normRow", "joinCell", "joinRows", "mergeSnake"],
   [["  var DATA_VER", "  // ---------- 1."]],
   "N, BASE_MS, startBody, placeFood, queueTurn, adjacent, step, tickMs, mergeSnake");
+
+// cmpStr's cut also takes isInt, isTile and rand.
+const G2 = load("g2048/g2048.js",
+  ["cmpStr", "lineCells", "slide", "spawn", "canMove", "maxTile", "startCells",
+   "normCell", "normRow", "joinCell", "joinRows", "mergeG2048"],
+  [["  var DATA_VER", "  // ---------- 1."]],
+  "TARGET, slide, spawn, canMove, maxTile, startCells, mergeG2048");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -812,4 +819,131 @@ test("snake: records merge is a join and a reset drops older rows", () => {
   assert.equal(J(M(x, y).rows.d.s), J({ nw: { n: 20, ts: 300, g: 5 }, fo: { n: 2, ts: 1, g: 1 } }));
   assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
   assert.equal(J(M({ rows: { d: { b: 0, s: { nw: { n: 401, ts: 1, g: 1 }, zz: { n: 1, ts: 1, g: 1 } } } } }, null).rows), "{}");
+});
+
+// ---------- 2048 ----------
+// Slide one row of a 4-wide board to the left and read it back.
+const g2Row = (row) => {
+  const n = row.length, cells = row.concat(new Array(n * (n - 1)).fill(0));
+  const r = G2.slide(cells, n, 3);
+  return { row: r.cells.slice(0, n), gain: r.gain, moved: r.moved, joined: r.joined };
+};
+
+test("2048: a line joins each tile once, nearest the edge first", () => {
+  const cases = [
+    [[2, 2, 2, 2], [4, 4, 0, 0], 8],
+    [[2, 2, 4, 0], [4, 4, 0, 0], 4],
+    [[4, 4, 8, 0], [8, 8, 0, 0], 8],
+    [[2, 0, 0, 2], [4, 0, 0, 0], 4],
+    [[2, 4, 2, 4], [2, 4, 2, 4], 0],
+    [[0, 0, 0, 2], [2, 0, 0, 0], 0],
+    [[8, 8, 8, 0], [16, 8, 0, 0], 16],
+    [[4, 0, 4, 8], [8, 8, 0, 0], 8],
+    [[2, 2, 4, 4], [4, 8, 0, 0], 12]
+  ];
+  for (const [inp, out, gain] of cases) {
+    const r = g2Row(inp);
+    assert.deepEqual(r.row, out, J(inp));
+    assert.equal(r.gain, gain, J(inp));
+  }
+  assert.equal(g2Row([2, 4, 2, 4]).moved, false);
+  assert.equal(g2Row([2, 4, 0, 0]).moved, false);
+  assert.equal(g2Row([0, 4, 0, 0]).moved, true);
+  assert.deepEqual(g2Row([2, 2, 2, 2]).joined, [0, 1]);
+});
+
+test("2048: four directions agree with rotating the board", () => {
+  const n = 4;
+  const rot = (c) => { const o = []; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) o.push(c[(n - 1 - k) * n + r]); return o; };   // clockwise
+  for (let it = 0; it < 500; it++) {
+    const cells = Array.from({ length: n * n }, () => (rnd(3) ? 0 : 2 ** (1 + rnd(4))));
+    const left = G2.slide(cells, n, 3);
+    // up on the board = left on the board rotated clockwise, rotated back
+    let up = G2.slide(cells, n, 0).cells;
+    assert.equal(J(rot(up)), J(G2.slide(rot(cells), n, 1).cells));
+    const r2 = rot(rot(cells));
+    assert.equal(J(rot(rot(G2.slide(r2, n, 1).cells))), J(left.cells));
+    // sum is kept, gain = the sum of the joined tiles
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    for (const d of [0, 1, 2, 3]) {
+      const r = G2.slide(cells, n, d);
+      assert.equal(sum(r.cells), sum(cells));
+      assert.equal(r.gain, r.joined.reduce((x, i) => x + r.cells[i], 0));
+      assert.equal(r.paths.length, cells.filter(Boolean).length);
+      if (!r.moved) assert.equal(J(r.cells), J(cells));
+    }
+  }
+});
+
+test("2048: new tiles land on empty cells; game over only with no move left", () => {
+  for (let i = 0; i < 300; i++) {
+    const n = 3 + rnd(3);
+    const cells = Array.from({ length: n * n }, () => (rnd(4) ? 2 ** (1 + rnd(6)) : 0));
+    const sp = G2.spawn(cells, Math.random);
+    if (!cells.includes(0)) { assert.equal(sp, null); continue; }
+    assert.equal(cells[sp.at], 0);
+    assert.ok(sp.cells[sp.at] === 2 || sp.cells[sp.at] === 4);
+    assert.equal(sp.cells.filter((v, k) => v !== cells[k]).length, 1);
+  }
+  const start = G2.startCells(4, Math.random);
+  assert.equal(start.filter(Boolean).length, 2);
+  assert.equal(G2.canMove([2, 4, 2, 4, 2, 4, 2, 4, 2], 3), false);
+  assert.equal(G2.canMove([2, 4, 2, 4, 2, 4, 2, 2, 8], 3), true);    // equal neighbours in a row
+  assert.equal(G2.canMove([2, 4, 2, 4, 8, 4, 2, 8, 16], 3), true);   // 8 above 8 (column 1)
+  assert.equal(G2.canMove([2, 4, 2, 8, 16, 8, 2, 4, 2], 3), false);
+  assert.equal(G2.canMove([2, 4, 2, 2, 16, 8, 32, 4, 2], 3), true);  // 2 above 2 (column 0)
+  assert.equal(G2.canMove([2, 4, 0, 8, 16, 8, 2, 4, 2], 3), true);   // an empty cell
+  assert.equal(G2.maxTile([0, 8, 2, 64]), 64);
+  assert.deepEqual(G2.TARGET, { 3: 512, 4: 2048, 5: 2048 });
+});
+
+test("2048: random games keep the sum and the score honest", () => {
+  for (let run = 0; run < 60; run++) {
+    const n = 3 + (run % 3);
+    let cells = G2.startCells(n, Math.random), score = 0, spawned = cells.reduce((a, b) => a + b, 0);
+    for (let m = 0; m < 2000; m++) {
+      if (!G2.canMove(cells, n)) {
+        for (const d of [0, 1, 2, 3]) assert.equal(G2.slide(cells, n, d).moved, false, "over means stuck");
+        break;
+      }
+      const r = G2.slide(cells, n, rnd(4));
+      if (!r.moved) continue;
+      score += r.gain;
+      const sp = G2.spawn(r.cells, Math.random);
+      assert.ok(sp, "a move frees a cell or joins one");
+      spawned += sp.cells[sp.at];
+      cells = sp.cells;
+      assert.equal(cells.reduce((a, b) => a + b, 0), spawned);
+      assert.ok(cells.every((v) => v === 0 || (v >= 2 && (v & (v - 1)) === 0)));
+    }
+    assert.ok(score >= 0);
+  }
+});
+
+test("2048: records merge is a join and a reset drops older rows", () => {
+  const M = G2.mergeG2048, keys = ["n3", "n4", "n5"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => { if (rnd(2)) s[k] = { s: rnd(30) * 4, ts: rnd(3) * 1000, v: rnd(2) ? 2 ** (1 + rnd(11)) : 0, g: 1 + rnd(9), w: rnd(3) }; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const x = { rows: { d: { b: 0, s: { n4: { s: 900, ts: 500, v: 128, g: 3, w: 0 } } } } };
+  const y = { rows: { d: { b: 0, s: { n4: { s: 900, ts: 300, v: 64, g: 5, w: 1 } } } } };
+  assert.equal(J(M(x, y).rows.d.s.n4), J({ s: 900, ts: 300, v: 128, g: 5, w: 1 }));   // tie: the earlier one
+  assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
+  for (const bad of [{ s: 1, ts: 1, v: 3, g: 1, w: 0 }, { s: -1, ts: 1, v: 2, g: 1, w: 0 }, { s: 1, ts: 1, v: 2, g: 0, w: 0 }, { s: 1, ts: 1, v: 2, g: 1 }]) {
+    assert.equal(J(M({ rows: { d: { b: 0, s: { n4: bad } } } }, null).rows), "{}", J(bad));
+  }
 });

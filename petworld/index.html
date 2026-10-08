@@ -10,13 +10,18 @@
 </head>
 <body>
 
-  <!-- Toolbar: the pet's name (rename) + age, the desktop companion switch -->
+  <!-- Toolbar: the pet's name (rename) + age, level + acorns, backpack, the desktop companion switch -->
   <header id="toolbar">
     <button type="button" id="name-btn">
       <strong id="pet-name"></strong>
       <small id="pet-age"></small>
     </button>
     <span class="spacer"></span>
+    <button type="button" id="level-btn" hidden>
+      <span id="level-num"></span>
+      <span class="level-track"><span id="level-fill"></span></span>
+      <span id="acorn-ico" aria-hidden="true"></span><span id="acorn-num"></span>
+    </button>
     <button type="button" class="icon-btn" id="bag-btn"></button>
     <button type="button" class="icon-btn" id="companion-btn" aria-pressed="false"></button>
   </header>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>2048 · orOS</title>
+
+  <link rel="stylesheet" href="g2048.css?v=0.45.10">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="size-seg" role="group">
+        <button type="button" class="seg-btn" data-size="3">3×3</button>
+        <button type="button" class="seg-btn" data-size="4">4×4</button>
+        <button type="button" class="seg-btn" data-size="5">5×5</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="undo-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: score, message, best -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">0</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="board" role="group"></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="g2048.js?v=0.45.10"></script>
+
+</body>
+</html>
