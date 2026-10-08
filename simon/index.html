@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Simon Says · orOS</title>
+
+  <link rel="stylesheet" href="simon.css?v=0.42.04">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="pads-seg" role="group">
+        <button type="button" class="seg-btn" data-pads="4" data-i18n="pads.4">4 pads</button>
+        <button type="button" class="seg-btn" data-pads="6" data-i18n="pads.6">6 pads</button>
+      </div>
+      <div class="seg" id="mode-seg" role="group">
+        <button type="button" class="seg-btn" data-mode="c" data-i18n="mode.c">Classic</button>
+        <button type="button" class="seg-btn" data-mode="r" data-i18n="mode.r">Reverse</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="true"></button>
+    </div>
+  </header>
+
+  <!-- Status: round, whose turn, best for this setting -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.round">Round</span><strong id="round">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">0</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="board"></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="simon.js?v=0.42.04"></script>
+
+</body>
+</html>
