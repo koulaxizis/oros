@@ -248,6 +248,14 @@
       "icon": "slider",
       "url": "slider/",
       "type": "internal"
+    },
+    {
+      "id": "lightsout",
+      "name": "Lights Out",
+      "category": "Games",
+      "icon": "lightsout",
+      "url": "lightsout/",
+      "type": "internal"
     }
   ]
 }
