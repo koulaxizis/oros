@@ -117,6 +117,7 @@
       "action.newpet":   "New pet",
       "action.rename":   "Rename",
       "action.viewlog":  "Activity log",
+      "action.forest":   "Forest",
       "action.catch":    "Catch!",
       "menu.pet":        "Screen Pet",
       "confirm.newpet":  "Release {name} and welcome a new pet? This cannot be undone.",
@@ -180,6 +181,7 @@
       "action.newpet":   "Νέο πλάσμα",
       "action.rename":   "Μετονομασία",
       "action.viewlog":  "Ιστορικό δραστηριότητας",
+      "action.forest":   "Δάσος",
       "action.catch":    "Πιάσε το!",
       "menu.pet":        "Screen Pet",
       "confirm.newpet":  "Αποχαιρετάς το πλάσμα «{name}» και έρχεται καινούργιο; Δεν αναιρείται.",
@@ -1286,30 +1288,17 @@ function applyPetSettings(s) {
 
   // ---------- Sprite drawing ----------
 
-  function drawSprite(stats) {
-    var pal = PALETTES[clamp(state.pet.palette | 0, 0, PALETTES.length - 1)];
-    var cw = SPR * PX;
-    var ctx = runtime.ctx;
-    ctx.clearRect(0, 0, cw, cw);
-
-    var sleeping = stats && stats.asleep;
-    var m = mood(stats);
-
-    // Vertical bobbing per mode
-    var bob = 0;
-    var legPhase = 0;
-    if (sleeping) {
-      bob = 2;
-    } else if (runtime.mode === "walk") {
-      legPhase = Math.floor(runtime.frame / 6) % 2;
-      bob = legPhase;
-    } else if (runtime.mode === "happy") {
-      bob = (Math.floor(runtime.frame / 4) % 2) === 0 ? -2 : 0;
-    } else if (runtime.mode === "eat") {
-      bob = (Math.floor(runtime.frame / 5) % 2) === 0 ? 1 : 0;
-    }
-
-    // Grid: 0 empty, 1 body, 2 belly, 3 eye/dark, 4 food-kibble
+  // The pixel art itself, as data: a 16×16 grid of colour codes
+  // (0 empty, 1 body, 2 belly, 3 eye/dark, 4 food-kibble) for one
+  // pose. Shared with the Pet World app (orosPet.sprite) so the
+  // companion and the forest draw the very same creature.
+  //   pose = { mood, mode, legPhase, dir, frame, eatT, contemplating }
+  //   mood ∈ sleep|tired|happy|neutral; mode ∈ idle|walk|happy|eat;
+  //   eatT = 0→1 progress of the falling kibble (eat mode), else -1.
+  function spriteGrid(pose) {
+    var m = pose.mood;
+    var sleeping = m === "sleep";
+    var frame = pose.frame | 0;
     var grid = [];
     for (var j = 0; j < SPR; j++) {
       var row = [];
@@ -1336,7 +1325,7 @@ function applyPetSettings(s) {
     // Tail
     rect(13, 10, 15, 11, 1);
 
-    if (legPhase === 1) {
+    if (pose.legPhase === 1) {
       rect(4, 14, 6, 15, 0);
       rect(4, 13, 6, 13, 1);
     }
@@ -1348,10 +1337,6 @@ function applyPetSettings(s) {
     } else if (m === "tired") {
       rect(5, 6, 6, 6, 3);
       rect(9, 6, 10, 6, 3);
-      if (runtime.frame % 200 < 6) {
-        rect(5, 6, 6, 6, 3);
-        rect(9, 6, 10, 6, 3);
-      }
     } else if (m === "happy") {
       rect(5, 5, 6, 7, 3);
       rect(9, 5, 10, 7, 3);
@@ -1360,7 +1345,7 @@ function applyPetSettings(s) {
     } else { // neutral
       rect(5, 5, 6, 7, 3);
       rect(9, 5, 10, 7, 3);
-      if (runtime.dir === 1) {
+      if (pose.dir === 1) {
         grid[5][6] = 2; grid[5][10] = 2;
       } else {
         grid[5][5] = 2; grid[5][9] = 2;
@@ -1368,7 +1353,7 @@ function applyPetSettings(s) {
     }
 
     // Mouth — varies by mood
-    if (runtime.mode === "eat") {
+    if (pose.mode === "eat") {
       rect(7, 10, 8, 11, 3);
     } else if (m === "happy") {
       rect(7, 9, 8, 10, 3);
@@ -1381,19 +1366,16 @@ function applyPetSettings(s) {
     // v0.3: FOOD ANIMATION — during eat mode a 2x2 kibble pixel
     // descends from above the head toward the mouth during the
     // first 900ms of the pose, then disappears (munched).
-    if (runtime.mode === "eat" && runtime.eatStartTs) {
-      var t = (Date.now() - runtime.eatStartTs) / 900;   // 0→1
-      if (t <= 1) {
-        var fy = Math.round(0 + t * 10);                 // y=0 (above head) → y=10 (mouth)
-        rect(7, clamp(fy, 0, 9), 8, clamp(fy + 1, 1, 10), 4);
-      }
+    if (pose.mode === "eat" && pose.eatT >= 0 && pose.eatT <= 1) {
+      var fy = Math.round(pose.eatT * 10);               // y=0 (above head) → y=10 (mouth)
+      rect(7, clamp(fy, 0, 9), 8, clamp(fy + 1, 1, 10), 4);
     }
 
     // v0.3: CONTEMPLATION SLOW BLINK — neutral/tired face closes
     // smoothly every ~6s while contemplating (visually distinct
     // from sleeping: pet sits upright, walks paused, eyes blink).
-    if (runtime.contemplating && !sleeping) {
-      if (runtime.frame % 360 < 24) {
+    if (pose.contemplating && !sleeping) {
+      if (frame % 360 < 24) {
         rect(5, 6, 6, 6, 3);
         rect(9, 6, 10, 6, 3);
       }
@@ -1405,13 +1387,51 @@ function applyPetSettings(s) {
       rect(14, 0, 14, 1, 3);
       rect(15, 0, 15, 0, 3);
     }
+    return grid;
+  }
+
+  function spriteColors(paletteIdx) {
+    var pal = PALETTES[clamp(paletteIdx | 0, 0, PALETTES.length - 1)];
+    return { 1: pal.body, 2: pal.belly, 3: pal.eye, 4: "#c96f4a" };
+  }
+
+  function drawSprite(stats) {
+    var cw = SPR * PX;
+    var ctx = runtime.ctx;
+    ctx.clearRect(0, 0, cw, cw);
+
+    var sleeping = stats && stats.asleep;
+
+    // Vertical bobbing per mode
+    var bob = 0;
+    var legPhase = 0;
+    if (sleeping) {
+      bob = 2;
+    } else if (runtime.mode === "walk") {
+      legPhase = Math.floor(runtime.frame / 6) % 2;
+      bob = legPhase;
+    } else if (runtime.mode === "happy") {
+      bob = (Math.floor(runtime.frame / 4) % 2) === 0 ? -2 : 0;
+    } else if (runtime.mode === "eat") {
+      bob = (Math.floor(runtime.frame / 5) % 2) === 0 ? 1 : 0;
+    }
+
+    var grid = spriteGrid({
+      mood: mood(stats),
+      mode: runtime.mode,
+      legPhase: legPhase,
+      dir: runtime.dir,
+      frame: runtime.frame,
+      eatT: (runtime.mode === "eat" && runtime.eatStartTs) ? (Date.now() - runtime.eatStartTs) / 900 : -1,
+      contemplating: runtime.contemplating
+    });
 
     // Render with direction flip
     ctx.save();
     ctx.translate(cw / 2, cw / 2 + bob * PX * 0.4);
     ctx.scale(runtime.dir === 1 ? 1 : -1, 1);
     ctx.translate(-cw / 2, -cw / 2);
-    var colors = { 1: pal.body, 2: pal.belly, 3: pal.eye, 4: "#c96f4a" };
+    var colors = spriteColors(state.pet.palette);
     for (var yy = 0; yy < SPR; yy++) {
       for (var xx = 0; xx < SPR; xx++) {
         var v = grid[yy][xx];
@@ -1454,8 +1474,10 @@ function applyPetSettings(s) {
   }
 
   function spawnHearts() {
+    if (!runtime.active || !runtime.layer) return;   // a care action from Pet World with the companion off
     for (var i = 0; i < 3; i++) {
       setTimeout(function () {
+        if (!runtime.layer) return;
         var h = document.createElement("div");
         h.className = "pet-heart";
         h.textContent = "❤️";
@@ -1540,6 +1562,7 @@ function applyPetSettings(s) {
       '</div>' +
       '<div class="pet-hud-actions">' +
         '<button type="button" id="pet-sleep-btn"></button>' +
+        '<button type="button" id="pet-forest-btn"></button>' +
         '<button type="button" id="pet-new-btn"></button>' +
       '</div>';
     runtime.layer.appendChild(hud);
@@ -1563,6 +1586,12 @@ function applyPetSettings(s) {
       e.stopPropagation();
       touchInteraction();
       toggleSleep();
+    });
+    // Pet World: the same pet, in its own app (menu category Fun).
+    $("pet-forest-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      touchInteraction();
+      if (typeof window.__orosOpenApp === "function") window.__orosOpenApp("petworld");
     });
     $("pet-new-btn").addEventListener("click", function (e) {
       e.stopPropagation();
@@ -1749,6 +1778,8 @@ function applyPetSettings(s) {
     $("pet-feed-btn").textContent = t("action.feed");
     $("pet-sleep-btn").textContent = stats.asleep ? t("action.wake") : t("action.sleep");
     $("pet-new-btn").textContent = t("action.newpet");
+    var fb = $("pet-forest-btn");
+    if (fb) fb.textContent = t("action.forest");
 
     // Catch button: hides while on cooldown (cleaner than a dead
     // button — the layer is precious screen real estate)
@@ -2232,6 +2263,47 @@ function applyPetSettings(s) {
   function isEnabled() { return settingsSliceGet().enabled === true; }
   function togglePet() { setEnabled(!isEnabled()); }
 
+  // ---------- Pet World bridge (petworld/ app, same origin) ----------
+  // The app is an iframe; this file stays the ONLY writer of
+  // oros-pet-data. The app reads the pet through snapshot() and asks
+  // for care through feed / pat / sleepToggle / rename, which run the
+  // very same code as the HUD buttons, so the companion and the app
+  // never disagree and no second merge exists. Everything returned is
+  // a plain JSON clone: nothing of this realm leaks into the frame.
+  function worldSnapshot() {
+    var now = Date.now();
+    var st = computeStats(now, state.pet);
+    return JSON.parse(JSON.stringify({
+      id: state.pet.id,
+      name: state.pet.name,
+      palette: clamp(state.pet.palette | 0, 0, PALETTES.length - 1),
+      colors: spriteColors(state.pet.palette),
+      birthTs: state.pet.birthTs || now,
+      ageDays: ageDays(now),
+      food: st.food,
+      happy: st.happy,
+      energy: st.energy,
+      asleep: st.asleep,
+      mood: mood(st),
+      provisional: !state.sm
+    }));
+  }
+
+  function worldSprite(pose) {
+    var p = pose || {};
+    var moods = { sleep: 1, tired: 1, happy: 1, neutral: 1 };
+    var modes = { idle: 1, walk: 1, happy: 1, eat: 1 };
+    return spriteGrid({
+      mood: moods[p.mood] ? p.mood : "neutral",
+      mode: modes[p.mode] ? p.mode : "idle",
+      legPhase: p.legPhase === 1 ? 1 : 0,
+      dir: p.dir === -1 ? -1 : 1,
+      frame: typeof p.frame === "number" && isFinite(p.frame) ? p.frame : 0,
+      eatT: typeof p.eatT === "number" && isFinite(p.eatT) ? p.eatT : -1,
+      contemplating: !!p.contemplating
+    }).map(function (row) { return row.slice(); });
+  }
+
   window.orosPet = {
     enable:  function () { setEnabled(true); },
     disable: function () { setEnabled(false); },
@@ -2242,7 +2314,22 @@ function applyPetSettings(s) {
     openLog: function (eventId) { openEventLog(eventId); },
     clearLog: clearEventLog,
     calendarFeedOn: calendarFeedOn,
-    setCalendarFeed: setCalendarFeed
+    setCalendarFeed: setCalendarFeed,
+    // Pet World bridge (see above):
+    snapshot: worldSnapshot,
+    sprite: worldSprite,
+    line: function (group) {
+      LANG = currentLang();
+      var ok = { "speech.hello": 1, "speech.firstfed": 1, "speech.hungry": 1, "speech.bored": 1,
+                 "speech.tired": 1, "speech.happy": 1, "speech.eat": 1, "speech.wake": 1,
+                 "speech.sleep": 1, "speech.contemp": 1 };
+      if (!ok[group]) return "";
+      return group === "speech.hello" ? t(group, { name: state.pet.name }) : speakLine(group);
+    },
+    feed: function () { feed(); return worldSnapshot(); },
+    pat: function () { petThePet(); return worldSnapshot(); },
+    sleepToggle: function () { toggleSleep(); return worldSnapshot(); },
+    rename: function (name) { renamePet(name); return worldSnapshot(); }
   };
 
   // v0.3: calendar deep-link (named exactly as contracted in the

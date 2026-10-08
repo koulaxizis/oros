@@ -178,6 +178,14 @@
       "type": "internal"
     },
     {
+      "id": "petworld",
+      "name": "Pet World",
+      "category": "Fun",
+      "icon": "petworld",
+      "url": "petworld/",
+      "type": "internal"
+    },
+    {
       "id": "radio",
       "name": "Radio",
       "category": "Sound",
