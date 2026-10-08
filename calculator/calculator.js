@@ -63,7 +63,8 @@
       "calc.mem.stored": "Stored in memory.",
       "calc.mem.recalled": "Recalled from memory.",
       "calc.mem.cleared": "Memory cleared.",
-      "calc.mem.empty": "Memory is empty."
+      "calc.mem.empty": "Memory is empty.",
+      "calc.saveFail": "Could not save: the browser storage is full."
     },
     el: {
       "calc.title": "Αριθμομηχανή",
@@ -88,7 +89,8 @@
       "calc.mem.stored": "Αποθηκεύτηκε στη μνήμη.",
       "calc.mem.recalled": "Ανακλήθηκε από τη μνήμη.",
       "calc.mem.cleared": "Η μνήμη καθαρίστηκε.",
-      "calc.mem.empty": "Η μνήμη είναι κενή."
+      "calc.mem.empty": "Η μνήμη είναι κενή.",
+      "calc.saveFail": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε."
     }
   };
 
@@ -158,14 +160,14 @@
 
   // ---------- 3. State + persistence ----------
   var state = {
-    lang: lang(),
-    troll: false,            // travels in the slice
+    troll: false,           // travels in the slice
     trollIntensity: 1,       // 0 subtle / 1 balanced / 2 rampant — slice
     mem: null,               // memory register (number or null) — slice
     sciOn: false,             // scientific row visible — slice
+    sm: { mem: 0, sciOn: 0, troll: 0, trollIntensity: 0 },  // CA-2 stamps — slice
     history: [],             // [{id, expr, res, ts}] newest-first, cap 50
     deleted: {},             // tombstone map (id → ts) for merge
-    panelWidth: 300,         // history panel width (wide layout) — slice
+    panelWidth: 300,         // history panel width (wide layout) — device-local
     // --- transient (not persisted) ---
     cur: "0",                // current entry string
     acc: null,               // accumulated value
@@ -181,6 +183,135 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
+  // CA-1 (A2): the stored copy, the slice getter and the merge share
+  // ONE canonical form (R26), so two devices that hold the same data
+  // hold the same bytes and an idle sync uploads nothing.
+  //   { ver:1, troll, trollIntensity, mem, sciOn,
+  //     sm{ mem, sciOn, troll, trollIntensity },        // CA-2 stamps
+  //     history[{ id, expr, res, ts, lied? }]           // ts DESC, id
+  //     deleted{ id: ts } }                             // sorted keys
+  // `panelWidth` left the slice: it is view state of one device and
+  // lives in PREFS_KEY now (R10). Older devices keep their own width.
+  var PREFS_KEY = "oros-calculator-prefs";       // device-local
+  var BROKEN_KEY = "oros-calculator-data-broken"; // rescue copy (CA-5)
+  var SETTINGS = ["mem", "sciOn", "troll", "trollIntensity"];
+  var TOMB_KEEP = 30 * 86400000;   // tombstones kept 30 days of DATA time
+
+  function validSetting(k, v) {
+    if (k === "troll" || k === "sciOn") return typeof v === "boolean";
+    if (k === "trollIntensity") return v === 0 || v === 1 || v === 2;
+    if (k === "mem") return v === null || (typeof v === "number" && isFinite(v));
+    return false;
+  }
+  var SETTING_DEFAULT = { mem: null, sciOn: false, troll: false, trollIntensity: 1 };
+
+  function stampOf(n) {
+    return (typeof n === "number" && isFinite(n) && n > 0) ? Math.floor(n) : 0;
+  }
+
+  function canonEntry(h) {
+    if (!h || typeof h !== "object") return null;
+    if (typeof h.id !== "string" || !h.id) return null;
+    if (typeof h.expr !== "string" || typeof h.res !== "string") return null;
+    if (typeof h.ts !== "number" || !isFinite(h.ts)) return null;
+    var o = { id: h.id, expr: h.expr, res: h.res, ts: h.ts };
+    if (h.lied === true) o.lied = true;
+    return o;
+  }
+
+  function entryOrder(a, b) {
+    if (a.ts !== b.ts) return b.ts - a.ts;
+    return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+  }
+
+  // Canonical copy of any stored / remote / merged object. Pure: no
+  // clock, no randomness, input never mutated. A side WITHOUT `sm`
+  // (written by calculator.js 1.2.0 or older) counts as stamp 1 for
+  // every valid setting it carries, so a setting changed on this
+  // version (stamp = ms) wins and an untouched default (0) loses.
+  function canonCalc(d) {
+    if (!d || typeof d !== "object") d = {};
+    var hasSm = d.sm && typeof d.sm === "object";
+    var out = { ver: 1 };
+    var sm = {};
+    SETTINGS.forEach(function (k) {
+      if (validSetting(k, d[k])) {
+        out[k] = d[k];
+        sm[k] = hasSm ? stampOf(d.sm[k]) : 1;
+      } else {
+        out[k] = SETTING_DEFAULT[k];
+        sm[k] = 0;
+      }
+    });
+    // fixed key order
+    var o = { ver: 1, troll: out.troll, trollIntensity: out.trollIntensity,
+              mem: out.mem, sciOn: out.sciOn,
+              sm: { mem: sm.mem, sciOn: sm.sciOn, troll: sm.troll,
+                    trollIntensity: sm.trollIntensity } };
+    var del = {};
+    if (d.deleted && typeof d.deleted === "object") {
+      Object.keys(d.deleted).forEach(function (id) {
+        var ts = d.deleted[id];
+        if (typeof ts === "number" && isFinite(ts)) del[id] = ts;
+      });
+    }
+    var seen = {};
+    var hist = [];
+    (Array.isArray(d.history) ? d.history : []).forEach(function (h) {
+      var e = canonEntry(h);
+      if (!e || del[e.id] !== undefined) return;
+      var prev = seen[e.id];
+      if (prev && !newerEntry(e, prev)) return;
+      seen[e.id] = e;
+    });
+    Object.keys(seen).forEach(function (id) { hist.push(seen[id]); });
+    hist.sort(entryOrder);
+    if (hist.length > HISTORY_MAX) hist.length = HISTORY_MAX;
+    // Tombstone pruning by DATA time (never the device clock): the
+    // same rule runs in the getter and in the merge (R26, Part VI).
+    var newest = 0;
+    hist.forEach(function (h) { if (h.ts > newest) newest = h.ts; });
+    Object.keys(del).forEach(function (id) { if (del[id] > newest) newest = del[id]; });
+    SETTINGS.forEach(function (k) { if (o.sm[k] > newest) newest = o.sm[k]; });
+    var keep = {};
+    Object.keys(del).sort().forEach(function (id) {
+      if (del[id] >= newest - TOMB_KEEP) keep[id] = del[id];
+    });
+    o.history = hist;
+    o.deleted = keep;
+    return o;
+  }
+
+  function newerEntry(a, b) {             // true when a beats b (R5)
+    if (a.ts !== b.ts) return a.ts > b.ts;
+    return JSON.stringify(a) > JSON.stringify(b);
+  }
+
+  // CA-1 merge (5th argument of registerSlice). Symmetric, idempotent:
+  // settings per field by stamp (tie → greater JSON value), history
+  // union by id, tombstones max-ts union (a tombstone always wins: a
+  // history entry is never edited, so nothing can resurrect it).
+  function mergeCalc(a, b) {
+    var A = canonCalc(a), B = canonCalc(b);
+    var m = { ver: 1, sm: {} };
+    SETTINGS.forEach(function (k) {
+      var sa = A.sm[k], sb = B.sm[k], pick;
+      if (sa !== sb) pick = sa > sb ? A : B;
+      else pick = JSON.stringify(A[k]) >= JSON.stringify(B[k]) ? A : B;
+      m[k] = pick[k];
+      m.sm[k] = pick.sm[k];
+    });
+    var del = {};
+    [A.deleted, B.deleted].forEach(function (src) {
+      Object.keys(src).forEach(function (id) {
+        if (del[id] === undefined || src[id] > del[id]) del[id] = src[id];
+      });
+    });
+    m.deleted = del;
+    m.history = A.history.concat(B.history);
+    return canonCalc(m);
+  }
+
   function readLS() {
     try {
       var raw = JSON.parse(localStorage.getItem(LS_KEY));
@@ -189,101 +320,78 @@
     } catch (e) { return null; }
   }
 
+  function stateData() {
+    var sm = state.sm || {};
+    return canonCalc({
+      troll: !!state.troll, trollIntensity: state.trollIntensity,
+      mem: state.mem, sciOn: !!state.sciOn,
+      sm: { mem: sm.mem, sciOn: sm.sciOn, troll: sm.troll,
+            trollIntensity: sm.trollIntensity },
+      history: state.history, deleted: state.deleted
+    });
+  }
+
+  function takeData(d) {
+    var c = canonCalc(d);
+    state.troll = c.troll;
+    state.trollIntensity = c.trollIntensity;
+    state.mem = c.mem;
+    state.sciOn = c.sciOn;
+    state.sm = c.sm;
+    state.history = c.history;
+    state.deleted = c.deleted;
+    return c;
+  }
+
+  // CA-2: a setting is stamped at the mutation site only (R27).
+  function touchSetting(k) {
+    if (!state.sm) state.sm = { mem: 0, sciOn: 0, troll: 0, trollIntensity: 0 };
+    state.sm[k] = Date.now();
+  }
+
+  var saveFailNoted = false;
   function persist(notifyParent) {
-    var payload = {
-      ver: 1,
-      troll: !!state.troll,
-      trollIntensity: state.trollIntensity,
-      mem: state.mem,
-      sciOn: state.sciOn,
-      panelWidth: state.panelWidth,
-      history: state.history.slice(0, HISTORY_MAX),
-      deleted: state.deleted
-    };
-    try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (e) {}
+    var c = takeData(stateData());
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(c));
+    } catch (e) {
+      if (!saveFailNoted) {             // R30: never swallow a failed write
+        saveFailNoted = true;
+        transientNote(t("calc.title"), t("calc.saveFail"));
+      }
+    }
     if (notifyParent) markDirty();
   }
 
-  function hydrate() {
-    var raw = readLS();
-    if (!raw) return;
-    if (typeof raw.troll === "boolean") state.troll = raw.troll;
-    if (raw.trollIntensity === 0 || raw.trollIntensity === 1 ||
-        raw.trollIntensity === 2) state.trollIntensity = raw.trollIntensity;
-    if (typeof raw.panelWidth === "number" && raw.panelWidth >= 200 &&
-        raw.panelWidth <= 500) state.panelWidth = raw.panelWidth;
-    if (typeof raw.mem === "number") state.mem = raw.mem;
-    if (typeof raw.sciOn === "boolean") state.sciOn = raw.sciOn;
-    // Tombstones FIRST — the history filter below must see them,
-    // or deleted entries resurrect on reload (found in audit).
-    if (raw.deleted && typeof raw.deleted === "object") state.deleted = raw.deleted;
-    if (Array.isArray(raw.history)) {
-      state.history = raw.history.filter(function (h) {
-        return h && typeof h.expr === "string" &&
-               typeof h.res === "string" && !state.deleted[h.id];
-      }).slice(0, HISTORY_MAX);
-    }
+  function loadPrefs() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PREFS_KEY));
+      return (p && typeof p === "object") ? p : null;
+    } catch (e) { return null; }
+  }
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ panelWidth: state.panelWidth }));
+    } catch (e) {}
   }
 
-  // LWW by ts per entry, tombstones honored, cap enforced post-merge.
-  function applyRemote(data, notifyUser) {
-    if (!data || typeof data !== "object") return 0;
-    var local = readLS() || { troll: false, history: [], deleted: {} };
-    var localDeleted = (local.deleted && typeof local.deleted === "object")
-      ? local.deleted : {};
-    var remoteDeleted = (data.deleted && typeof data.deleted === "object")
-      ? data.deleted : {};
-    var mergedDeleted = {};
-    var k;
-    for (k in localDeleted)  mergedDeleted[k] = localDeleted[k];
-    for (k in remoteDeleted)  mergedDeleted[k] = remoteDeleted[k];
-
-    var map = {};
-    var push = function (h) {
-      if (!h || !h.id || typeof h.ts !== "number") return;
-      if (mergedDeleted[h.id]) return;   // tombstone wins
-      var prev = map[h.id];
-      if (!prev || (h.ts || 0) > (prev.ts || 0)) map[h.id] = h;
-    };
-    (local.history || []).forEach(push);
-    if (Array.isArray(data.history)) data.history.forEach(push);
-
-    var merged = Object.keys(map).map(function (id) { return map[id]; })
-      .sort(function (a, b) { return b.ts - a.ts; })
-      .slice(0, HISTORY_MAX);
-
-    // Prefs: remote wins if present, else local stands
-    var newTroll = (typeof data.troll === "boolean")
-      ? data.troll : !!local.troll;
-    var newIntensity = local.trollIntensity;
-    if (data.trollIntensity === 0 || data.trollIntensity === 1 ||
-        data.trollIntensity === 2) newIntensity = data.trollIntensity;
-    var newPanelWidth = local.panelWidth;
-    if (typeof data.panelWidth === "number" && data.panelWidth >= 200 &&
-        data.panelWidth <= 500) newPanelWidth = data.panelWidth;
-    var newMem = local.mem;
-    if (typeof data.mem === "number") newMem = data.mem;
-    var newSciOn = local.sciOn;
-    if (typeof data.sciOn === "boolean") newSciOn = data.sciOn;
-
-    state.deleted = mergedDeleted;
-    state.history = merged;
-    state.troll = newTroll;
-    state.trollIntensity = newIntensity;
-    state.panelWidth = newPanelWidth;
-    state.mem = newMem;
-    state.sciOn = newSciOn;
-
-    var payload = { ver: 1, troll: newTroll, trollIntensity: newIntensity,
-                   panelWidth: newPanelWidth, mem: newMem, sciOn: newSciOn,
-                   history: merged, deleted: state.deleted };
-    try { localStorage.setItem(LS_KEY, JSON.stringify(payload)); } catch (e) {}
-
-    if (notifyUser) {
-      transientNote(t("calc.title"),
-        lang() === "el" ? "Τα δεδομένα συγχρονίστηκαν." : "Data synced.");
+  function hydrate() {
+    var rawStr = null;
+    try { rawStr = localStorage.getItem(LS_KEY); } catch (e) {}
+    var raw = readLS();
+    if (rawStr && !raw) {
+      // CA-5: unreadable stored data is copied aside before anything
+      // can write over it (rescue backup before any reseed).
+      try {
+        if (!localStorage.getItem(BROKEN_KEY)) localStorage.setItem(BROKEN_KEY, rawStr);
+      } catch (e) {}
     }
-    return merged.length;
+    var prefs = loadPrefs();
+    var pw = prefs && prefs.panelWidth;
+    if (typeof pw !== "number" && raw) pw = raw.panelWidth;   // first run: old synced field
+    if (typeof pw === "number" && pw >= 200 && pw <= 500) state.panelWidth = pw;
+    if (!raw) return;
+    takeData(raw);
   }
 
   function markDirty() {
@@ -522,7 +630,12 @@
 
   // Memory register (M+ / MR / MC). Single value, slice-synced.
   function pressMc() {
+    if (state.mem === null) {           // R28: say so instead of a silent no-op
+      transientNote(t("calc.mem.empty"), "");
+      return;
+    }
     state.mem = null;
+    touchSetting("mem");
     persist(true);
     transientNote(t("calc.mem.cleared"), "");
   }
@@ -542,7 +655,10 @@
   function pressMplus() {
     var v = parseFloat(state.cur);
     if (isNaN(v)) return;
-    state.mem = (state.mem === null) ? v : state.mem + v;
+    var nm = (state.mem === null) ? v : state.mem + v;
+    if (!isFinite(nm)) return;          // JSON cannot carry Infinity
+    state.mem = nm;
+    touchSetting("mem");
     persist(true);
     transientNote(t("calc.mem.stored"), "");
   }
@@ -565,6 +681,7 @@
 
   function toggleSciRow() {
     state.sciOn = !state.sciOn;
+    touchSetting("sciOn");
     persist(true);
     if (state.sciOn) {
       els.root.setAttribute("data-sci", "on");
@@ -598,6 +715,10 @@
   }
 
   function clearHistory() {
+    if (!state.history.length) {        // R28: no silent no-op
+      transientNote(t("calc.title"), t("calc.history.empty_export"));
+      return;
+    }
     var now = Date.now();
     state.history.forEach(function (h) {
       state.deleted[h.id] = now;   // tombstone — survives merge, travels
@@ -649,6 +770,7 @@
 
   function toggleTroll() {
     state.troll = !state.troll;
+    touchSetting("troll");
     persist(true);
     render();
     if (state.troll) {
@@ -663,6 +785,7 @@
     var lvl = ((level % 3) + 3) % 3;   // clamp/cycle 0–2
     if (lvl === state.trollIntensity) return;
     state.trollIntensity = lvl;
+    touchSetting("trollIntensity");
     persist(true);
     render();
     transientNote(t("calc.intensity"), t("calc.intensity." +
@@ -854,15 +977,15 @@
       // grows it: newWidth = startWidth - delta
       var delta = e.clientX - startX;
       var w = Math.max(MIN_W, Math.min(MAX_W, startWidth - delta));
-      panel.style.width = w + "px";
+      panel.style.setProperty("--hist-w", w + "px");
     }
 
     function onUp() {
       if (startX !== null) {
-        var w = parseInt(panel.style.width, 10);
+        var w = parseInt(panel.style.getPropertyValue("--hist-w"), 10);
         if (w >= MIN_W && w <= MAX_W) {
           state.panelWidth = w;
-          persist(false);   // saved in slice; no urgent cloud push
+          savePrefs();      // CA-3: device-local view state (R10)
         }
       }
       startX = null;
@@ -877,8 +1000,10 @@
   function restorePanelWidth() {
     var panel = document.querySelector(".calc-history");
     if (!panel) return;
+    // CA-6: a CSS variable, used only by the wide (>= 880px) layout;
+    // an inline width squeezed the stacked phone layout to 300 px.
     if (state.panelWidth >= 200 && state.panelWidth <= 500) {
-      panel.style.width = state.panelWidth + "px";
+      panel.style.setProperty("--hist-w", state.panelWidth + "px");
     }
   }
 
@@ -887,22 +1012,32 @@
     try {
       var sync = window.parent.orosSync;
       if (!sync || typeof sync.registerSlice !== "function") return;
-      sync.registerSlice("calculator", sliceGet, sliceSet, LS_KEY);
+      sync.registerSlice("calculator", sliceGet, sliceSet, LS_KEY, mergeCalc);
       console.log("[calc] slice registered: calculator");
     } catch (e) {
       console.warn("[calc] slice registration skipped (standalone?)");
     }
   }
 
+  // The getter is the canonical stored copy; null while this device
+  // has never stored anything (a fresh device pushes nothing).
   function sliceGet() {
-    return readLS();
+    var raw = readLS();
+    return raw ? canonCalc(raw) : null;
   }
 
+  // Pull-fed: no markDirty (R6); an echo of what is held changes nothing.
   function sliceSet(data) {
-    if (!data) return;
-    applyRemote(data, false);
+    if (!data || typeof data !== "object") return;
+    var next = canonCalc(data);
+    if (JSON.stringify(next) === JSON.stringify(stateData()) && readLS()) return;
+    takeData(next);
+    persist(false);
     render();
     renderHistory();
+    els.root.setAttribute("data-sci", state.sciOn ? "on" : "off");
+    var fx = document.querySelector('.key[data-k="fx"]');
+    if (fx) fx.setAttribute("aria-pressed", state.sciOn ? "true" : "false");
   }
 
   // ---------- 7b. Parent keyboard routing ----------
@@ -916,16 +1051,33 @@
     var parentDoc;
     try { parentDoc = window.parent.document; } catch (e) { return; }
     if (!parentDoc || parentDoc === document) return;   // standalone
-    parentDoc.addEventListener("keydown", function (e) {
+    // CA-4 (A16, A32): the listener belongs to THIS document. It is
+    // removed when the app is closed (pagehide), and it checks that
+    // its document is still the one shown: a closed calculator kept
+    // computing from shell keystrokes and wrote its stale in-memory
+    // state over the stored (and meanwhile synced) data. Reopening
+    // stacked one more listener each time.
+    function routed(e) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;   // shell territory
-      // Stale-listener guard: window was closed meanwhile
-      if (!els.root || !els.root.isConnected) return;
+      if (!document.defaultView || !els.root || !els.root.isConnected) {
+        drop();
+        return;
+      }
+      if (e.defaultPrevented) return;
+      // Escape belongs to the shell (it closes dialogs, menu, app).
+      if (e.key === "Escape") return;
       // Never steal typing meant for shell inputs/modals
       var tgt = e.target;
       if (tgt && tgt.closest &&
-          tgt.closest("input, textarea, select, [contenteditable='true']")) return;
+          tgt.closest("input, textarea, select, [contenteditable='true'], dialog")) return;
+      try { if (parentDoc.querySelector("dialog[open]")) return; } catch (e2) {}
       onKey(e);
-    });
+    }
+    function drop() {
+      try { parentDoc.removeEventListener("keydown", routed); } catch (e) {}
+    }
+    parentDoc.addEventListener("keydown", routed);
+    window.addEventListener("pagehide", drop);
   }
 
   // ---------- 8. Contract B forwarding ----------
@@ -1085,6 +1237,8 @@
   }
 
   function boot() {
+    // Greek upper case drops its accents only under lang="el".
+    document.documentElement.setAttribute("lang", lang());
     inheritPalette();   // before first paint — correct contrast frame 1
     watchPalette();
     hydrate();

@@ -580,10 +580,17 @@ input[type="number"] {
    στην κορυφή. (Το παλιό media query κήδευε 6 στήλες για 7
    παιδιά — το del έκανε orphan wrap.) */
 @media (max-width: 720px) {
-  .items-head { display: none; }
+  /* QT-16: μία συμπαγής κεφαλίδα για τα 4 αριθμητικά πεδία — αλλιώς
+     στο κινητό οι αριθμοί δεν έχουν καμία ετικέτα. */
+  .items-head { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .items-head span:nth-child(1),
+  .items-head span:nth-child(2),
+  .items-head span:nth-child(7) { display: none; }
 
+  /* QT-16: 4 ίσες στήλες — το παλιό "1fr 1fr 1fr 28px" έβαζε το ΦΠΑ
+     στη στήλη των 28px του κουμπιού διαγραφής. */
   .item-row {
-    grid-template-columns: 1fr 1fr 1fr 28px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-areas:
       "code code code del"
       "desc desc desc desc"
@@ -998,6 +1005,11 @@ dialog menu button.danger {
 }
 dialog menu button.danger:hover { background: var(--danger-soft); }
 
+/* QT-12: θεματικό confirm/prompt (R14) */
+.q-confirm { width: min(360px, calc(100vw - 32px)); }
+.qc-msg { margin: 0; font-size: 14px; line-height: 1.5; }
+.q-confirm input { margin-top: 12px; }
+
 /* --- Templates dialog --- */
 
 #dlg-templates { width: min(480px, calc(100vw - 32px)); }
@@ -1116,6 +1128,15 @@ dialog menu button.danger:hover { background: var(--danger-soft); }
     padding: 2px 0;
     color: #111;
   }
+}
+
+/* QT-16: touch targets ≥44px σε οθόνες αφής */
+@media (pointer: coarse) {
+  #regenerate-num, .i-del, .presets-edit { width: 44px; height: 44px; }
+  #item-add { min-width: 44px; min-height: 44px; }
+  .preset-btn { min-height: 44px; }
+  #status-filter { min-width: 44px; min-height: 44px; }
+  dialog menu button { min-height: 44px; }
 }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */

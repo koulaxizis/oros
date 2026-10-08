@@ -380,5 +380,11 @@ dialog h3 {
   pointer-events: auto;
 }
 
+/* ST-10: breadcrumb buttons are real navigation targets on phones
+   (Part VII: >= 44px on touch). */
+@media (pointer: coarse) {
+  .crumbs .crumb { min-height: 44px; padding: 6px 12px; }
+}
+
 /* ---------- Utility ---------- */
 [hidden] { display: none !important; }

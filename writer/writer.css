@@ -462,8 +462,9 @@ html, body {
 @media (hover: none) and (pointer: coarse) {
   .tb-btn { min-width: 44px; min-height: 44px; }
   .styles-select { min-height: 44px; }
-  .tab-close { width: 28px; height: 28px; }
-  .tab-new { min-width: 44px; height: 36px; }
+  /* WR-7: a 44px hit box; the negative margin keeps the tab row height */
+  .tab-close { width: 44px; height: 44px; margin: -10px -8px -10px -6px; }
+  .tab-new { min-width: 44px; height: 44px; }
   .tab-label-input { height: 32px; }
 }
 

@@ -32,7 +32,6 @@
 
   var STRINGS = {
     en: {
-      "app.title":      "Minimalism",
       "tab.today":      "Today",
       "tab.history":    "History",
       "card.day":       "Day",
@@ -61,16 +60,14 @@
       "saved.skip":     "Skipped — no penalty, ever",
       "saved.undo":     "Unmarked",
       "saved.pref":     "Setting saved",
-      "sync.pull":      "Updated from sync",
       "content.missing": "Content file missing — check minimalism/content.js",
       "viewing.day":    "Viewing"
     },
     el: {
-      "app.title":      "Μινιμαλισμός",
       "tab.today":      "Σήμερα",
       "tab.history":    "Ιστορικό",
       "card.day":       "Ημέρα",
-      "card.of":        "των 365",
+      "card.of":        "από 365",
       "lvl.phys":       "Φυσικός",
       "lvl.dig":        "Ψηφιακός",
       "act.done":       "Το έκανα",
@@ -95,7 +92,6 @@
       "saved.skip":     "Παραλείφθηκε — καμία ποινή, ποτέ",
       "saved.undo":     "Αφαιρέθηκε",
       "saved.pref":     "Η ρύθμιση αποθηκεύτηκε",
-      "sync.pull":      "Ενημερώθηκε από συγχρονισμό",
       "content.missing": "Λείπει το αρχείο περιεχομένου — έλεγξε το minimalism/content.js",
       "viewing.day":    "Προβολή"
     }
@@ -203,16 +199,26 @@
     return data;
   }
 
+  // MN-3: a fresh install persists nothing until the first real
+  // change; unreadable data is copied to a device-local rescue key
+  // BEFORE the fresh state replaces it (never overwritten blind).
+  var RESCUE_KEY = "oros-minimalism-rescue";
   function load() {
+    var raw = null;
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var data = migrate(JSON.parse(raw));
         if (data) { state = data; return; }
       }
-    } catch (e) { /* corrupted → fresh */ }
+    } catch (e) { /* corrupted → rescue below */ }
     state = newState();
-    save();
+    if (raw) {
+      try {
+        if (!localStorage.getItem(RESCUE_KEY)) localStorage.setItem(RESCUE_KEY, raw);
+      } catch (e2) {}
+      save();
+    }
   }
 
   function save() {
@@ -303,14 +309,70 @@
         return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
       });
 
-    return {
+    return canonState({
       ver: DATA_VER,
       prefs: mergePrefs(a.prefs, b.prefs),
       sm: Math.max(a.sm || 0, b.sm || 0),
       om: Math.max(a.om || 0, b.om || 0),
       days: days,
       deleted: tomb
+    });
+  }
+
+  // MN-1 (R26): ONE canonical shape for the getter AND the merge —
+  // fixed key order, days date desc → id, tombstone keys sorted and
+  // pruned by the same data-derived cutoff (MD-4 rule). Before this,
+  // the merge kept "my keys first" in deleted{} and never pruned, so
+  // two devices that unmarked different days uploaded forever.
+  var TOMB_KEEP = 30 * 24 * 60 * 60 * 1000;
+  function canonState(src) {
+    var s = src || {};
+    var p = s.prefs || {};
+    // key order = the old merge's output order, so a device still on
+    // the previous bundle produces the same bytes (no transition loop)
+    var out = {
+      ver: DATA_VER,
+      prefs: {
+        remindHour: (typeof p.remindHour === "number" && p.remindHour >= 0 &&
+                     p.remindHour <= 23) ? p.remindHour : 10,
+        mtime: typeof p.mtime === "number" ? p.mtime : 0
+      },
+      sm: typeof s.sm === "number" ? s.sm : 0,
+      om: typeof s.om === "number" ? s.om : 0,
+      days: [],
+      deleted: {}
     };
+    var maxTs = out.prefs.mtime;
+    (Array.isArray(s.days) ? s.days : []).forEach(function (e) {
+      if (!e || typeof e.id !== "string" || !e.id) return;
+      var parts = e.id.split(":");
+      var d = {
+        id: e.id,
+        date: (typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date))
+          ? e.date : (parts[0] || ""),
+        level: (e.level === "phys" || e.level === "dig") ? e.level
+          : (parts[1] === "dig" ? "dig" : "phys"),
+        status: (e.status === "skip") ? "skip" : "done",
+        reason: typeof e.reason === "string" ? e.reason : "",
+        mtime: typeof e.mtime === "number" ? e.mtime : 0
+      };
+      if (d.mtime > maxTs) maxTs = d.mtime;
+      out.days.push(d);
+    });
+    out.days.sort(function (x, y) {
+      if (x.date !== y.date) return x.date < y.date ? 1 : -1;
+      return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
+    });
+    var del = (s.deleted && typeof s.deleted === "object") ? s.deleted : {};
+    var ids = Object.keys(del).filter(function (id) {
+      return typeof del[id] === "number" && isFinite(del[id]);
+    });
+    ids.forEach(function (id) { if (del[id] > maxTs) maxTs = del[id]; });
+    var cutoff = maxTs - TOMB_KEEP;
+    ids.sort().forEach(function (id) {
+      if (del[id] >= cutoff) out.deleted[id] = del[id];
+    });
+    return out;
   }
 
   // ---------- 5. Views ----------
@@ -602,8 +664,8 @@
 
     var prog = document.createElement("span");
     prog.className = "card-progress";
-    prog.textContent = t("card.day") + " " + (cycleIndex(ymd) + 1) + "/" + CYCLE_DAYS +
-      " · " + t("card.of");
+    // MN-4: was "Day 280/365 · of 365" (the total said twice)
+    prog.textContent = t("card.day") + " " + (cycleIndex(ymd) + 1) + " " + t("card.of");
     head.appendChild(prog);
     card.appendChild(head);
 
@@ -797,47 +859,29 @@
   }
 
   function sliceGet() {
-    var out = JSON.parse(JSON.stringify(state));
-    // MD-4: deterministic tombstone pruning (HB-3 pattern). The
-    // cutoff derives from the dataset's newest timestamp, never
-    // the wall clock — same data yields the same payload on
-    // every device at any time. Payload-only: local state
-    // keeps everything.
-    var maxTs = 0, i;
-    for (i = 0; i < (out.days || []).length; i++) {
-      if (out.days[i].mtime > maxTs) maxTs = out.days[i].mtime;
-    }
-    if ((out.prefs || {}).mtime > maxTs) maxTs = out.prefs.mtime;
-    Object.keys(out.deleted || {}).forEach(function (id) {
-      if (out.deleted[id] > maxTs) maxTs = out.deleted[id];
-    });
-    var CUTOFF = maxTs - 30 * 24 * 60 * 60 * 1000;
-    Object.keys(out.deleted).forEach(function (id) {
-      if (out.deleted[id] < CUTOFF) delete out.deleted[id];
-    });
-    return out;
+    // MD-4 / MN-1: deterministic tombstone pruning (HB-3 pattern),
+    // cutoff derived from the dataset's newest timestamp, never the
+    // wall clock. The merge returns this very same canonical shape.
+    return canonState(state);
   }
 
-  function sliceSet(data, info) {
+  function sliceSet(data) {
     data = migrate(JSON.parse(JSON.stringify(data || null)));
     if (!data || !Array.isArray(data.days)) return;
 
     window.__orosSyncApi._suppress = true;
     try {
-      state = data;
+      state = canonState(data);             // MN-1: same order as the merge
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* quota: the in-memory state still renders */
     } finally {
       window.__orosSyncApi._suppress = false;
     }
 
-    // guard drifted state (post-condition of the merge)
-    state.days.sort(function (x, y) {
-      if (x.date !== y.date) return x.date < y.date ? 1 : -1;
-      return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
-    });
-
+    // MN-2: no "Updated from sync" toast on every merge (sync
+    // feedback is the taskbar dot; TD-7 / MO-5 precedent).
     render();                               // repaint live
-    if (info && info.merged) showToast(t("sync.pull"));   // receipt, not save
   }
 
   // Contract Β: shell-owned combos forward FIRST (capture phase).

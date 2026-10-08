@@ -66,7 +66,7 @@ var STRINGS = {
     "notifs.streamfail.body":  "Couldn't play on this device"
   },
   el: {
-    "tab.browse":     "Αναζήτηση",
+    "tab.browse":     "Περιήγηση",
     "tab.favorites":  "Αγαπημένα",
     "tab.recents":    "Πρόσφατα",
     "filter.all":     "Όλα",
@@ -112,7 +112,13 @@ function t(key){
 
 /* ===== HELPERS ===== */
 
-function $(id){ return document.getElementById(id); }
+// TV-7: 71 call sites pass a CSS selector ("#tv-grid", "#tv-loading p")
+// to a getElementById helper, so every one of them got null: the grid
+// never rendered (eternal spinner), the filters never filled, the
+// player never opened. Accept both forms.
+function $(id){
+  return (id.charAt(0) === "#") ? document.querySelector(id) : document.getElementById(id);
+}
 
 function esc(str){
   if(typeof str !== "string") str = String(str == null ? "" : str);
@@ -173,6 +179,7 @@ var __orosSyncApi = null;
 /* ===== SYNC CONTRACT (Bible Part V/VI, 5-arg — radio mirror) ===== */
 
 function saveLocal(){
+  if(state.data) normalizeState(state.data);  // TV-8: stored bytes canonical (closed-app proxy)
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){}
 }
 
@@ -192,12 +199,21 @@ function normalizeState(obj){
     return f && f.id && typeof f.mtime === "number";
   });
   sortFavorites(obj.favorites);
+  // TV-8 (R26, = Radio RX-6): tombstone keys in sorted order; the merge
+  // emitted "remote keys first" → endless uploads between two devices.
+  var keys = Object.keys(obj.deleted).sort(), del = {};
+  keys.forEach(function(k){
+    if(typeof obj.deleted[k] === "number") del[k] = obj.deleted[k];
+  });
+  obj.deleted = del;
 }
 
 function sortFavorites(arr){
   arr.sort(function(a, b){
     if(b.mtime !== a.mtime) return b.mtime - a.mtime;
-    return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); // deterministic tie-break
+    var an = String(a.name || ""), bn = String(b.name || "");
+    if(an !== bn) return an < bn ? -1 : 1;                    // deterministic tie-break
+    return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
   });
 }
 
@@ -250,7 +266,7 @@ function mergeTelevisionStates(remote, local){
   Object.keys(map).forEach(function(u){
     if(map[u].mtime > (dec[u] || 0)) merged.favorites.push(map[u]); // alive
   });
-  sortFavorites(merged.favorites);
+  normalizeState(merged);   // TV-8: same canonical shape as the getter
   return merged;
 }
 
@@ -966,6 +982,7 @@ function setupSearch(){
   input.addEventListener("keydown", function(e){
     if(e.key === "Enter" && !state.acItems.length &&
        this.value.trim().length >= MIN_SEARCH){
+      clearTimeout(state.searchTimer);   // TV-10
       state.searchQuery = this.value.trim();
       state.rendered = PAGE_SIZE;
       renderMain();
@@ -1014,7 +1031,10 @@ function setupSearch(){
       var self = this;
       state.searchTimer = setTimeout(function(){
         loadCatalog().then(function(cat){
-          if(self.value.trim() !== val) return; // stale
+          // stale — or TV-10: the field already left (Enter ran the grid
+          // search and blurred): the list reopened and stayed open over
+          // the grid, eating taps
+          if(self.value.trim() !== val || document.activeElement !== self) return;
           // Search in-memory (fast, cached)
           var q = val.toLowerCase();
           var results = cat.channels.filter(function(ch){
@@ -1370,8 +1390,8 @@ function updatePlayerUI(){
   if(playBtn){
     var video = $("#tvp-video");
     playBtn.innerHTML = video && !video.paused
-      ? '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
-      : '<svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>';
     playBtn.setAttribute("aria-label", video && !video.paused ? t("pause") : t("play"));
   }
 
@@ -1379,8 +1399,8 @@ function updatePlayerUI(){
     var video = $("#tvp-video");
     var muted = video ? video.muted : false;
     muteBtn.innerHTML = muted
-      ? '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>'
-      : '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
     muteBtn.setAttribute("aria-label", muted ? t("unmute") : t("mute"));
     volSlider.value = video ? video.volume : 1;
   }
@@ -1388,13 +1408,15 @@ function updatePlayerUI(){
   if(favBtn && state.playerCh){
     var isFav = isFavorite(state.playerCh.id);
     favBtn.innerHTML = isFav
-      ? '<svg viewBox="0 0 24 24"><polygon points="12,2 15,10 24,10 17,15 20,24 12,18 4,24 7,15 0,10 9,10"/></svg>'
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,10 24,10 17,15 20,24 12,18 4,24 7,15 0,10 9,10"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 15,10 24,10 17,15 20,24 12,18 4,24 7,15 0,10 9,10"/></svg>';
     favBtn.classList.toggle("on", isFav);
   }
 
-  if(extBtn && state.playerCh && state.playerCh.website){
-    extBtn.removeAttribute("disabled");
+  // TV-9: no usable (http/https) website → no button (R28: it used to
+  // stay clickable and do nothing)
+  if(extBtn && state.playerCh){
+    extBtn.hidden = !/^https?:\/\//i.test(String(state.playerCh.website || ""));
   }
 }
 
@@ -1471,8 +1493,11 @@ function setupPlayerControls(){
 
   if(extBtn){
     extBtn.addEventListener("click", function(){
-      if(state.playerCh && state.playerCh.website){
-        window.open(state.playerCh.website, "_blank");
+      // TV-9: `website` comes from the remote directory (and from synced
+      // favorites); a javascript: URL would run in a same-origin window.
+      var site = state.playerCh && String(state.playerCh.website || "");
+      if(site && /^https?:\/\//i.test(site)){
+        window.open(site, "_blank", "noopener");
       }
     });
   }
@@ -1650,9 +1675,26 @@ function applyI18n(){
   var moreBtn = $("#tv-more");
   if(moreBtn) moreBtn.textContent = t("more");
 
+  // TV-11 (R9: HTML ships icon buttons empty, JS injects the SVG):
+  // close / open-website / fullscreen were never filled, so the three
+  // buttons were invisible (an empty box in the player's corner).
+  var SVG_A = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+  var icons = {
+    "#tvp-close": SVG_A + '<path d="M6 6l12 12M18 6L6 18"/></svg>',
+    "#tvp-ext":   SVG_A + '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+    "#tvp-fs":    SVG_A + '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
+  };
+  Object.keys(icons).forEach(function(sel){
+    var b = $(sel);
+    if(b && !b.firstChild) b.innerHTML = icons[sel];
+  });
+
   // Player control tooltips
   var closeBtn = $("#tvp-close");
-  if(closeBtn) closeBtn.setAttribute("title", t("close"));
+  if(closeBtn){
+    closeBtn.setAttribute("title", t("close"));
+    closeBtn.setAttribute("aria-label", t("close"));
+  }
 
   var playBtn = $("#tvp-play");
   if(playBtn) playBtn.setAttribute("title", t("play"));

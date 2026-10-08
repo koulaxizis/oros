@@ -127,14 +127,6 @@ small {
   opacity: 0.7;
 }
 
-.proposal-level.phys::after {
-  content: " PHYSICAL";
-}
-
-.proposal-level.dig::after {
-  content: " DIGITAL";
-}
-
 .proposal-title {
   font-size: 16px;
   font-weight: 600;
@@ -365,6 +357,13 @@ dialog {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   max-width: 420px;
   width: calc(100% - 32px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+/* the free-text reason sat flush against the buttons */
+dialog .reason-input {
+  margin-bottom: 16px;
 }
 
 dialog::backdrop {
@@ -609,3 +608,6 @@ dialog::backdrop {
     display: none;
   }
 }
+
+/* [hidden] must ALWAYS win (Part VII) — LAST RULE */
+[hidden] { display: none !important; }

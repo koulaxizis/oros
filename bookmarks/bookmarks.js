@@ -147,7 +147,7 @@ const STR = {
     "time.min": "{n} min ago",
     "time.hour": "{n} h ago",
     "time.day": "{n} d ago",
-    "tags": "Tags",
+    "item.tags": "Tags",
     "tags.hint": "Add tag, press Enter…",
     "tags.all": "All tags",
     "tags.none": "No tags yet — add some from a bookmark",
@@ -233,7 +233,7 @@ const STR = {
     "time.min": "πριν {n} λεπτά",
     "time.hour": "πριν {n} ώρες",
     "time.day": "πριν {n} ημέρες",
-    "tags": "Ετικέτες",
+    "item.tags": "Ετικέτες",
     "tags.hint": "Προσθήκη ετικέτας, Enter…",
     "tags.all": "Όλες οι ετικέτες",
     "tags.none": "Καμία ετικέτα ακόμα — πρόσθεσε από κάποια συντόμευση",
@@ -373,8 +373,12 @@ function sanitizeFolder(raw, idHint) {
 function sanitizeState(raw) {
   const out = { ver: 1, items: {}, folders: {}, deleted: {}, settings: {} };
 
+  /* BM-1: keys are visited in sorted order, so every map comes out
+     in one canonical key order — the sync engine compares JSON bytes
+     (R26); insertion order made merge(A,B) differ from merge(B,A)
+     and two open devices uploaded to each other forever. */
   if (raw && raw.folders) {
-    Object.keys(raw.folders).forEach((id) => {
+    Object.keys(raw.folders).sort().forEach((id) => {
       const f = sanitizeFolder(raw.folders[id], id);
       if (f) out.folders[f.id] = f;
     });
@@ -388,7 +392,7 @@ function sanitizeState(raw) {
     };
   }
   if (raw && raw.items) {
-    Object.keys(raw.items).forEach((id) => {
+    Object.keys(raw.items).sort().forEach((id) => {
       const it = sanitizeItem(raw.items[id], id, out.folders);
       if (it && !out.deleted[it.id]) out.items[it.id] = it;
     });
@@ -407,7 +411,7 @@ function sanitizeState(raw) {
     });
   }
   if (raw && raw.deleted && typeof raw.deleted === "object") {
-    Object.keys(raw.deleted).forEach((id) => {
+    Object.keys(raw.deleted).sort().forEach((id) => {
       if (!RE_ID.test(id)) return;
       const ts = Number(raw.deleted[id]);
       if (RE_TS.test(String(ts))) out.deleted[id] = ts;
@@ -419,24 +423,47 @@ function sanitizeState(raw) {
   return out;
 }
 
+/* BM-1: the canonical form shared by load, the sync getter and the
+   merge. Tombstone pruning (age > 30d) uses the DATASET's newest
+   stamp, never the wall clock, so the same data gives the same
+   bytes on every device at any time (Part VI, rule 3). The old
+   load-time wall-clock prune dropped tombstones that the next pull
+   put back, and a pruned getter never matched the merge. */
+function pruneTombs(st) {
+  let max = 0;
+  const bump = (v) => { if (typeof v === "number" && v > max) max = v; };
+  Object.keys(st.items).forEach((id) => bump(st.items[id].modified));
+  Object.keys(st.folders).forEach((id) => bump(st.folders[id].modified));
+  Object.keys(st.deleted).forEach((id) => bump(st.deleted[id]));
+  const cutoff = max - DELETED_PRUNE_DAYS * 86400000;
+  let pruned = false;
+  Object.keys(st.deleted).forEach((id) => {
+    if (st.deleted[id] < cutoff) { delete st.deleted[id]; pruned = true; }
+  });
+  return pruned;
+}
+
+function canonState(raw) {
+  const st = sanitizeState(raw);
+  pruneTombs(st);
+  return st;
+}
+
 /* --- Load / save --- */
 
 function load() {
-  let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(DATA_KEY) || "null"); }
-  catch (e) { raw = null; }
+  let raw = null, text = null;
+  try { text = localStorage.getItem(DATA_KEY); } catch (e) { text = null; }
+  try { raw = JSON.parse(text || "null"); }
+  catch (e) {
+    /* BM-9: unreadable data is copied to a device-local rescue key
+       before the fresh state can overwrite it (Part II, data rules). */
+    raw = null;
+    try { localStorage.setItem(DATA_KEY + "-broken", text); } catch (e2) {}
+    console.error("[orOS] bookmarks: unreadable data copied to " + DATA_KEY + "-broken");
+  }
   state = sanitizeState(raw);
-
-  /* Tombstone pruning (age > 30d) — keeps the blob small.
-     Deterministic: clock read once at load, never inside merges. */
-  const cutoff = Date.now() - DELETED_PRUNE_DAYS * 86400000;
-  let pruned = false;
-  Object.keys(state.deleted).forEach((id) => {
-    if (state.deleted[id] < cutoff) {
-      delete state.deleted[id];
-      pruned = true;
-    }
-  });
+  const pruned = pruneTombs(state);
   if (pruned || !raw) save(false);
 }
 
@@ -484,21 +511,47 @@ function localPickFile(accept) {
   });
 }
 
-/* Snapshot for Undo (delete / move operations in later sections). */
-function snapshotForUndo() {
-  lastUndoSnapshot = JSON.parse(JSON.stringify(state));
+/* Snapshot for Undo (delete / move operations in later sections).
+   BM-3: only the entities the action touches are recorded, and Undo
+   puts back only those. The old whole-state snapshot re-stamped
+   EVERY bookmark and folder with "now" and dropped every tombstone:
+   an Undo silently overwrote whatever another device had changed
+   in the meantime (A67 Q5). */
+function snapshotForUndo(itemIds, folderIds) {
+  const snap = { items: {}, folders: {} };
+  (itemIds || []).forEach((id) => {
+    if (state.items[id]) snap.items[id] = JSON.parse(JSON.stringify(state.items[id]));
+  });
+  (folderIds || []).forEach((id) => {
+    if (state.folders[id]) snap.folders[id] = JSON.parse(JSON.stringify(state.folders[id]));
+  });
+  lastUndoSnapshot = snap;
 }
 
 function undoFromSnapshot() {
   if (!lastUndoSnapshot) return false;
-  /* Fresh mtimes so resurrected entities win any tombstone. */
+  /* Fresh stamps only on what comes back, so it wins its tombstone. */
   const now = Date.now();
   const snap = lastUndoSnapshot;
   lastUndoSnapshot = null;
-  Object.keys(snap.items).forEach((id) => { snap.items[id].modified = now; });
-  Object.keys(snap.folders).forEach((id) => { snap.folders[id].modified = now; });
-  Object.keys(snap.deleted).forEach((id) => { delete snap.deleted[id]; });
-  state = snap;
+  Object.keys(snap.folders).forEach((id) => {
+    if (state.folders[id]) return;                  // still there
+    state.folders[id] = Object.assign(snap.folders[id], { modified: now });
+    delete state.deleted[id];
+  });
+  Object.keys(snap.items).forEach((id) => {
+    const old = snap.items[id], cur = state.items[id];
+    if (!cur) {                                     // deleted / purged
+      state.items[id] = Object.assign(old, { modified: now });
+      delete state.deleted[id];
+      return;
+    }
+    /* Moved (or a purge keeper): put back only what the action
+       changed on a bookmark that is still there. */
+    if (cur.folderId !== old.folderId) { cur.folderId = old.folderId; cur.modified = now; }
+    cur.visits = old.visits;
+    cur.lastVisit = old.lastVisit;
+  });
   save();
   renderAll();
   return true;
@@ -818,7 +871,9 @@ function openItem(id) {
   if (!it) return;
   it.visits += 1;
   it.lastVisit = Date.now();
-  it.modified = Date.now();
+  /* BM-2: a visit does NOT move "modified". Visits merge on their own
+     (max), so opening a link on one device can no longer revert a
+     title / tag / folder edit made on another device (A67 Q2). */
   save();
   window.open(it.url, "_blank", "noopener,noreferrer");
   renderList();
@@ -1103,7 +1158,7 @@ function bulkMoveMenu() {
 
 function bulkMove(folderId) {
   if (!selectedIds.size) return;
-  snapshotForUndo();
+  snapshotForUndo(Array.from(selectedIds));
   let n = 0;
   selectedIds.forEach((id) => {
     const it = state.items[id];
@@ -1125,7 +1180,7 @@ function bulkMove(folderId) {
 
 function bulkDelete() {
   if (!selectedIds.size) return;
-  snapshotForUndo();
+  snapshotForUndo(Array.from(selectedIds));
   const now = Date.now();
   let n = 0;
   selectedIds.forEach((id) => {
@@ -1515,7 +1570,7 @@ function purgeGroupCore(g) {
 
 /* Single-group purge (per-group button path). */
 function purgeDupeGroup(g) {
-  snapshotForUndo();
+  snapshotForUndo(g.map((it) => it.id));
   const n = purgeGroupCore(g);
   if (!n) return;
   save();
@@ -1534,7 +1589,7 @@ function purgeGroups(groups) {
   const live = (groups || []).filter(
     (g) => g && g.length > 1 && state.items[g[0].id]);
   if (!live.length) return;
-  snapshotForUndo();
+  snapshotForUndo([].concat.apply([], live.map((g) => g.map((it) => it.id))));
   let total = 0;
   live.forEach((g) => { total += purgeGroupCore(g); });
   if (!total) return;
@@ -1652,7 +1707,7 @@ let draggingId = null;
 function moveItem(id, folderId) {
   const it = state.items[id];
   if (!it || it.folderId === folderId) return;
-  snapshotForUndo();
+  snapshotForUndo([id]);
   it.folderId = folderId;
   it.modified = Date.now();
   save();
@@ -1810,7 +1865,8 @@ function showToast(msg, opts) {
   }
   el.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(hideToast, 5000);
+  /* Undo toasts stay 8 s (Part VII); plain notes 5 s. */
+  toastTimer = setTimeout(hideToast, opts && opts.action ? 8000 : 5000);
 }
 function hideToast() { $("#toast").classList.remove("show"); }
 
@@ -1834,6 +1890,7 @@ function transientNote(title, body) {
 /* ===== 7. ITEM DIALOG ===== */
 
 let editingItemId = null;
+let editingSnap = null;              // BM-4: what the form showed at open
 let dlgTags = [];                    // working copy while dialog open
 let acHighlighted = -1;              // autocomplete row index
 
@@ -1946,6 +2003,8 @@ function openItemDialog(id) {
   const it = state.items[id];
   if (!it) return;
   editingItemId = id;
+  editingSnap = { title: it.title, url: it.url, note: it.note || "",
+                  folderId: it.folderId, tags: it.tags.slice() };
   dlgTags = it.tags.slice();
   renderDlgTags();
   $("#f-title").value = it.title;
@@ -1969,14 +2028,27 @@ function fillFolderSelect(selectedId) {
   });
 }
 
+/* BM-4: write only the fields the user changed since the dialog
+   opened. A pull while the dialog is open no longer gets overwritten
+   by the stale values still sitting in the untouched fields (A67 Q1),
+   and a Save with no change does not stamp "modified" (R27). */
 function submitItemDialog(normUrl) {
   const it = state.items[editingItemId];
-  if (!it) return;
-  it.title = sanText($("#f-title").value, 256) || normUrl;
-  it.url = normUrl;
-  it.note = sanText($("#f-note").value, 1024);
-  it.folderId = $("#f-folder").value || ROOT_FOLDER;
-  it.tags = dlgTags.slice();
+  const snap = editingSnap;
+  if (!it || !snap) return;
+  const title = sanText($("#f-title").value, 256) || normUrl;
+  const note = sanText($("#f-note").value, 1024);
+  const folderId = $("#f-folder").value || ROOT_FOLDER;
+  const tags = dlgTags.slice();
+  let changed = false;
+  if (title !== snap.title) { it.title = title; changed = true; }
+  if ($("#f-url").value.trim() !== snap.url && normUrl !== snap.url) {
+    it.url = normUrl; changed = true;
+  }
+  if (note !== snap.note) { it.note = note; changed = true; }
+  if (folderId !== snap.folderId) { it.folderId = folderId; changed = true; }
+  if (JSON.stringify(tags) !== JSON.stringify(snap.tags)) { it.tags = tags; changed = true; }
+  if (!changed) return;
   it.modified = Date.now();
   save();
   renderAll();
@@ -1985,7 +2057,7 @@ function submitItemDialog(normUrl) {
 function deleteItem(id) {
   const it = state.items[id];
   if (!it) return;
-  snapshotForUndo();
+  snapshotForUndo([id]);
   delete state.items[id];
   state.deleted[id] = Date.now();          // tombstone wins over stale copy
   save();
@@ -2064,7 +2136,9 @@ function submitFolderDialog(name) {
 
 function deleteFolderNow() {
   if (!folderDlgId || folderDlgId === ROOT_FOLDER) return;
-  snapshotForUndo();
+  snapshotForUndo(
+    Object.keys(state.items).filter((id) => state.items[id].folderId === folderDlgId),
+    [folderDlgId]);
   /* Orphans fall back to Unsorted — never lost. */
   Object.keys(state.items).forEach((id) => {
     if (state.items[id].folderId === folderDlgId) {
@@ -2260,8 +2334,17 @@ function mergeBookmarks(aRaw, bRaw) {
     const ids = new Set(
       Object.keys(A[kind] || {}).concat(Object.keys(B[kind] || {})));
     ids.forEach((id) => {
-      const ent = winner(A[kind] && A[kind][id], B[kind] && B[kind][id]);
+      const a = A[kind] && A[kind][id], b = B[kind] && B[kind][id];
+      let ent = winner(a, b);
       if (!ent) return;
+      /* BM-2: visit counters are not content — they merge by max on
+         their own, whichever side won the "modified" race. */
+      if (kind === "items" && a && b) {
+        ent = Object.assign({}, ent, {
+          visits: Math.max(parseInt(a.visits, 10) || 0, parseInt(b.visits, 10) || 0),
+          lastVisit: Math.max(Number(a.lastVisit) || 0, Number(b.lastVisit) || 0)
+        });
+      }
       const death = out.deleted[id] || 0;
       if (death && (ent.modified || 0) <= death) return;  // stays dead
       if (death) delete out.deleted[id];                  // resurrected
@@ -2287,7 +2370,7 @@ function mergeBookmarks(aRaw, bRaw) {
   out.settings = (sa === "{}") ? (B.settings || {})
                : (sb === "{}") ? (A.settings || {})
                : (sb >= sa ? (B.settings || {}) : (A.settings || {}));
-  return sanitizeState(out);   // re-checks folder refs + drops junk
+  return canonState(out);      // re-checks folder refs + drops junk (BM-1)
 }
 
 /* ===== 11. SYNC SLICE REGISTRATION ===== */
@@ -2300,7 +2383,7 @@ function registerSync(retries) {
   if (host && typeof host.registerSlice === "function") {
     host.registerSlice(
       "bookmarks",
-      function getState() { return state; },
+      function getState() { return canonState(state); },   // BM-1: canonical copy
       function setState(remoteRaw) {
         if (typeof remoteRaw === "string") {
           try { remoteRaw = JSON.parse(remoteRaw); } catch (e) { return; }

@@ -346,7 +346,9 @@
 
   function defaultState() {
     return {
-      ver: DATA_VER, sm: Date.now(), om: Date.now(),
+      // WE-2: a brand-new state carries stamp 0 — it must never
+      // outrank the user's synced choices (units, order, active)
+      ver: DATA_VER, sm: 0, om: 0,
       active: null, deleted: {}, cities: [],
       shellWx: null,      // last shell-menu location we applied (fingerprint)
       units: "metric"     // "metric" | "imperial" — RENDER ONLY, cache stays °C/km/h
@@ -357,6 +359,7 @@
     if (!data || !Array.isArray(data.cities)) return null;
     if (typeof data.sm !== "number") data.sm = 0;
     if (typeof data.om !== "number") data.om = 0;
+    if (data.um !== undefined && typeof data.um !== "number") delete data.um;   // WE-3
     if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
     data.cities.forEach(function (c) {
       if (typeof c.mtime !== "number") c.mtime = 0;
@@ -398,6 +401,12 @@
         }
       }
     } catch (e) { /* corrupted → fresh */ }
+    // WE-8: unreadable data is kept aside before the fresh state
+    // overwrites it (R-rescue: never overwrite without a copy)
+    try {
+      var bad = localStorage.getItem(STORAGE_KEY);
+      if (bad) localStorage.setItem(STORAGE_KEY + "-broken", bad);
+    } catch (e2) {}
     state = defaultState();
     save();
   }
@@ -462,6 +471,20 @@
     return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
   }
 
+  // fixed key order (canonical bytes); unknown keys kept, sorted, after
+  var CITY_KEYS = ["id", "label", "lat", "lon", "mtime", "pos"];
+  function cloneCity(c) {
+    var o = {}, k, i;
+    for (i = 0; i < CITY_KEYS.length; i++) if (c[CITY_KEYS[i]] !== undefined) o[CITY_KEYS[i]] = c[CITY_KEYS[i]];
+    var extra = Object.keys(c).filter(function (x) { return CITY_KEYS.indexOf(x) < 0; }).sort();
+    for (i = 0; i < extra.length; i++) { k = extra[i]; o[k] = JSON.parse(JSON.stringify(c[k])); }
+    return o;
+  }
+
+  // WE-1: the merge works on COPIES (it used to rewrite `pos` on the
+  // caller's live rows) and emits ONE canonical key order, tombstones
+  // sorted by id. The getter returns merge(state, state), so an idle
+  // device compares equal bytes and uploads nothing.
   function mergeWeatherStates(A, B) {
     var a = A || {}, b = B || {};
 
@@ -473,15 +496,28 @@
       tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
     });
     tomb = pruneTombstones(tomb);
+    var tombOut = {};
+    Object.keys(tomb).sort().forEach(function (id) { tombOut[id] = tomb[id]; });
 
-    // scalars: the winning side donates active AND units AND
-    // shellWx — losing them on merge wiped the units toggle and
-    // resurrected deleted shell cities (fingerprint reset).
+    // scalars: active + shellWx — LWW by root sm; ties by the full
+    // scalar triple (same rule old builds use).
     var sa = JSON.stringify([a.active || null, a.units || "metric", a.shellWx || null]);
     var sb = JSON.stringify([b.active || null, b.units || "metric", b.shellWx || null]);
     var scalars = (a.sm || 0) !== (b.sm || 0)
       ? ((a.sm || 0) > (b.sm || 0) ? a : b)
       : (sa >= sb ? a : b);
+
+    // WE-3: units have their OWN stamp `um` — switching the shown
+    // city (sm) on one device no longer reverts a units toggle made
+    // on another. A state without `um` (old build, or never toggled)
+    // speaks with its sm, exactly as before.
+    var hasUm = typeof a.um === "number" || typeof b.um === "number";
+    var ua = typeof a.um === "number" ? a.um : (a.sm || 0);
+    var ub = typeof b.um === "number" ? b.um : (b.sm || 0);
+    var unitsA = a.units === "imperial" ? "imperial" : "metric";
+    var unitsB = b.units === "imperial" ? "imperial" : "metric";
+    var units = ua !== ub ? (ua > ub ? unitsA : unitsB)
+                          : (unitsA >= unitsB ? unitsA : unitsB);
 
     // cities: union by id, LWW content, tombstone-aware
     var map = {};
@@ -492,7 +528,7 @@
     var alive = [];
     Object.keys(map).forEach(function (id) {
       var ts = tomb[id];
-      if (ts === undefined || (map[id].mtime || 0) > ts) alive.push(map[id]);
+      if (ts === undefined || (map[id].mtime || 0) > ts) alive.push(cloneCity(map[id]));
     });
 
     // ordering reference: larger om wins; ties by id-sequence JSON
@@ -519,12 +555,13 @@
       ver: DATA_VER,
       sm: Math.max(a.sm || 0, b.sm || 0),
       om: Math.max(a.om || 0, b.om || 0),
-      active: scalars.active,
-      units: (scalars.units === "imperial") ? "imperial" : "metric",
+      active: scalars.active || null,
+      units: units,
       shellWx: scalars.shellWx || null,
-      deleted: tomb,
+      deleted: tombOut,
       cities: alive
     };
+    if (hasUm) out.um = Math.max(ua, ub);
     // post-condition: active must point at a living city
     var ok = out.cities.some(function (c) { return c.id === out.active; });
     if (!ok) out.active = out.cities.length ? out.cities[0].id : null;
@@ -853,7 +890,7 @@
     void toastEl.offsetWidth;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, 5000);
+    toastTimer = setTimeout(hideToast, actionLabel ? 8000 : 5000);   // WE-4: Undo ≥ 8 s
   }
   function hideToast() {
     if (!toastEl) return;
@@ -1008,7 +1045,7 @@
     var up = new Date(p.at);
     $("cur-updated").textContent = t("updated.at") + " " +
       up.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB",
-                            { hour: "2-digit", minute: "2-digit" });
+                            { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });   // WE-6
 
     // --- hourly strip ---
     var host = $("hourly");
@@ -1200,7 +1237,8 @@
     city.pos = state.cities.length;
     state.cities.push(city);
     state.active = city.id;
-    state.om = Date.now();     // ordering decision — merge reference
+    // WE-3: appending changes no relative order — no `om` stamp
+    // (a stamp here let a fresh device's order replace the user's)
     state.sm = Date.now();
     save();
     $("city-input").value = "";
@@ -1251,7 +1289,6 @@
     if (!state.cities.some(function (c) { return c.id === state.active; })) {
       state.active = state.cities.length ? state.cities[0].id : null;
     }
-    state.om = Date.now();
     state.sm = Date.now();
     // purge this city's device-local cache entry too
     var m = readCacheMap();
@@ -1268,7 +1305,6 @@
           back.pos = state.cities.length;
           state.cities.push(back);
           state.active = id;
-          state.om = Date.now();
           state.sm = Date.now();
           save();
           scheduleRender();
@@ -1321,7 +1357,8 @@
   }
 
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    // WE-1: same canonical form as the merge output (fresh copy)
+    return mergeWeatherStates(state, state);
   }
 
   // data — merged result (or plain remote on legacy LWW paths)
@@ -1493,7 +1530,8 @@
     // slice so every device agrees.
     $("cur-temp").addEventListener("click", function () {
       state.units = state.units === "metric" ? "imperial" : "metric";
-      state.sm = Date.now();
+      state.um = Date.now();     // WE-3: own stamp for units
+      state.sm = state.um;       // old builds read units by sm
       save();
       var el = $("cur-temp");
       el.classList.add("flick");
@@ -1569,7 +1607,6 @@
       c.pos = state.cities.length;
       state.cities.push(c);
       state.active = c.id;
-      state.om = Date.now();
       state.sm = Date.now();
     }
     save();
@@ -1612,7 +1649,6 @@
       c.pos = state.cities.length;
       state.cities.push(c);
       state.active = c.id;
-      state.om = Date.now();
       state.sm = Date.now();
     }
     save();

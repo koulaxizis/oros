@@ -533,6 +533,7 @@
       renderEntries(sorted);
       renderStatus(sorted.length);
       renderRecentsMaybe();
+      fillStats(sorted, token);
     }).catch(function (e) {
       if (token !== renderToken) return;
       lastEntries = [];
@@ -731,6 +732,54 @@
     if (changed) savePrefs();
   }
   
+  // FL-12 (A64a): ls() returns only {name, dir}; stat each file in
+  // the background (read-only) and fill the size/date columns. A
+  // newer render (renderToken) wins; a size/date sort re-sorts once.
+  var STAT_CAP = 400;
+  function fillStats(entries, token) {
+    var fs = FS();
+    if (!fs || typeof fs.stat !== "function") return;
+    var dir = cwd;
+    var todo = entries.filter(function (e) { return !e.dir && e.size === undefined; }).slice(0, STAT_CAP);
+    if (!todo.length) return;
+    Promise.all(todo.map(function (e) {
+      return fs.stat(join(dir, e.name)).then(function (st) {
+        e.size = st && typeof st.size === "number" ? st.size : null;
+        e.mtime = st && st.mtime ? st.mtime : null;
+      }, function () { e.size = null; });
+    })).then(function () {
+      if (token !== renderToken || dir !== cwd) return;
+      var field = prefs.sortField || "name";
+      if (field !== "name") {
+        lastEntries = applySort(lastEntries);
+        renderEntries(lastEntries);
+        return;
+      }
+      todo.forEach(function (e) {
+        var li = document.querySelector('#entries .entry[data-path="' + cssEsc(join(dir, e.name)) + '"]');
+        if (!li) return;
+        li.querySelector(".col-size").textContent = fmtSizeCol(e);
+        li.querySelector(".col-date").textContent = fmtDateCol(e);
+      });
+    });
+  }
+
+  function cssEsc(v) {
+    return (window.CSS && CSS.escape) ? CSS.escape(v) : String(v).replace(/["\\]/g, "\\$&");
+  }
+
+  function fmtSizeCol(e) {
+    return (!e.dir && typeof e.size === "number") ? fmtKB(e.size) : "-";
+  }
+
+  function fmtDateCol(e) {
+    if (e.dir || !e.mtime) return "-";
+    try {
+      return new Date(e.mtime).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "2-digit", month: "2-digit", year: "2-digit" });
+    } catch (x) { return "-"; }
+  }
+
   // ---------- 5b. Sorting helpers ----------
 
   function applySort(entries) {
@@ -805,17 +854,15 @@
       name.textContent = e.name;
       li.appendChild(name);
 
-      // Size column — fs.js ls() only returns {name, dir}; no size/mtime.
-      // Show "-" until fs.js expands its contract (or we stat each entry).
+      // Size / modified columns — filled by fillStats() (FL-12).
       var sizeSpan = document.createElement("span");
       sizeSpan.className = "col-size";
-      sizeSpan.textContent = "-";                        // #FA4: fs.js limitation
+      sizeSpan.textContent = fmtSizeCol(e);
       li.appendChild(sizeSpan);
 
-      // Modified column — same limitation as size
       var dateSpan = document.createElement("span");
       dateSpan.className = "col-date";
-      dateSpan.textContent = "-";                        // #FA4: fs.js limitation
+      dateSpan.textContent = fmtDateCol(e);
       li.appendChild(dateSpan);
 
       // Click: single / Ctrl+toggle / Shift+range (desktop
@@ -2523,7 +2570,12 @@
     // verbatim on unescaped scheme characters.
     return escapeHtml(s)
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (m, txt, url) {
-        var clean = url.trim();
+        // FL-11: the URL parser drops TAB/LF/CR anywhere and C0
+        // controls + spaces at the ends, so "jav<TAB>ascript:" slipped
+        // past the scheme test below as a "relative" link and became a
+        // live javascript: href. Strip them all before the test and use
+        // the same stripped value as the href.
+        var clean = url.replace(/[\u0000-\u0020\u007F]+/g, "");
         // FL-4: allowlist, not blocklist. A markdown file is content
         // from anywhere (imports, the other device); only web and
         // mail links become clickable, every other scheme stays text.
@@ -2927,6 +2979,7 @@
       th.dataset.field = field;
       th.innerHTML = '<span class="col-th-label"></span><span class="sort-ind"></span>';
       th.querySelector(".col-th-label").textContent = t(labelKey);
+      th.title = t("sort." + field);                      // FL-13: sort.* were never shown
       th.addEventListener("click", function () { toggleSort(field); });
       return th;
     };

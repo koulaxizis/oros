@@ -139,7 +139,6 @@
       "toast.saved":     "Saved",
       "toast.deleted":   "Deleted",
       "toast.undone":    "Restored",
-      "toast.sync":      "Updated from sync",
       "toast.exported":  "Exported",
  
       "toast.migrated":  "Imported {n} items from the beta app",
@@ -218,7 +217,6 @@
       "toast.saved":     "Αποθηκεύτηκε",
       "toast.deleted":   "Διαγράφηκε",
       "toast.undone":    "Επαναφέρθηκε",
-      "toast.sync":      "Ενημερώθηκε από συγχρονισμό",
       "toast.exported":  "Εξήχθη",
  
       "toast.migrated":  "Μεταφέρθηκαν {n} στοιχεία από το beta app",
@@ -252,6 +250,7 @@
     tab: "chars",                // "chars" | "rels"
     q: "",                       // search filter
     editing: null,               // draft character while editor is open
+    editBase: null,              // CH-4: the record as the editor opened it
     compare: [null, null]        // compare view selections
   };
   var suppressDirty = false;     // true while applying pulled data
@@ -405,11 +404,17 @@
 
   // ---------- Load / persist ----------
   function loadDB() {
+    var txt = null;
     try {
-      var raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (!raw) return defaultDB();
-      return saneDB(raw);
-    } catch (e) { return defaultDB(); }
+      txt = localStorage.getItem(STORAGE_KEY);
+      var raw = JSON.parse(txt);
+      if (raw && typeof raw === "object") return saneDB(raw);
+      if (!txt || raw === null) return defaultDB();
+    } catch (e) { /* unreadable — rescued below */ }
+    // CH-6: unreadable data is copied aside before an empty database
+    // replaces it (the next save would otherwise overwrite the bytes).
+    try { localStorage.setItem(STORAGE_KEY + "-broken", txt); } catch (e2) { /* quota */ }
+    return defaultDB();
   }
 
   function persist() {
@@ -493,19 +498,51 @@
       var ma = la ? la.mtime : 0;
       var mb = lb ? lb.mtime : 0;
 
-      var bestLive;                                   // ties: local wins,
-      if (!la)      bestLive = lb;                    // but a LIVE copy must
-      else if (!lb) bestLive = la;                    // never lose to a
-      else          bestLive = (ma >= mb) ? la : lb;  // missing one
+      // CH-2: a LIVE copy never loses to a missing one; between two live
+      // copies the newer mtime wins and a tie goes to the larger JSON
+      // (R5) — it used to go to the LOCAL side, so two devices holding
+      // different copies with one stamp kept their own forever.
+      var bestLive;
+      if (!la)      bestLive = lb;
+      else if (!lb) bestLive = la;
+      else if (ma !== mb) bestLive = (ma > mb) ? la : lb;
+      else bestLive = (JSON.stringify(la) >= JSON.stringify(lb)) ? la : lb;
       var bestMT   = Math.max(ma, mb);
       var deadMT   = Math.max(ta, tb);
 
       if (bestLive && bestMT > deadMT) {
-        var rec = sanFn(bestLive);
+        // the record keeps the id it is filed under (a copy without
+        // an id would otherwise get a random one inside the merge)
+        var rec = sanFn(bestLive.id ? bestLive : Object.assign({}, bestLive, { id: id }));
         if (rec) { out[field][rec.id] = rec; return; }
       }
       if (deadMT) out.deleted[id] = deadMT;
     });
+  }
+
+  // CH-2: canonical form shared by the getter and the merge (R26):
+  // record maps and tombstones sorted by id, tombstones numeric only,
+  // pos/posR restricted to live ids. Object key order used to follow
+  // the argument order of the merge, so merge(A,B) and merge(B,A)
+  // differed in bytes and two devices uploaded on every sync cycle.
+  function sortedObj(m, keep) {
+    var out = {};
+    Object.keys(m || {}).sort().forEach(function (k) {
+      if (!keep || keep(m[k])) out[k] = m[k];
+    });
+    return out;
+  }
+  function canonDB(d) {
+    var chars = sortedObj(d.characters), rels = sortedObj(d.rels);
+    return {
+      ver: DATA_VER,
+      om: numVal(d.om, 0),
+      characters: chars,
+      rels: rels,
+      deleted: sortedObj(d.deleted, function (v) { return typeof v === "number" && isFinite(v) && v > 0; }),
+      pos: orderFrom(d, "pos", chars),
+      posR: orderFrom(d, "posR", rels)
+    };
   }
 
   function orderFrom(donor, field, universe) {
@@ -535,18 +572,28 @@
     // Orphan guard: a rel resurrected (undo) with a newer mtime than
     // its cascade tombstone can outlive a deleted endpoint. Retire
     // it with a fresh tombstone so no replica resurrects it again.
+    // CH-2: the retiring stamp is the rel's own mtime (it only has to
+    // keep THIS copy dead: alive means mtime > tombstone), never the
+    // wall clock — a Date.now() here made the merge output depend on
+    // when it ran, on which device.
     Object.keys(out.rels).forEach(function (rid) {
       var r = out.rels[rid];
       if (!out.characters[r.a] || !out.characters[r.b]) {
         delete out.rels[rid];
-        out.deleted[rid] = Date.now();
+        out.deleted[rid] = Math.max(out.deleted[rid] || 0, numVal(r.mtime, 0), 1);
       }
     });
 
-    var donor = (B.om || 0) > (A.om || 0) ? B : A;
-    out.pos  = orderFrom(donor, "pos",  out.characters);
-    out.posR = orderFrom(donor, "posR", out.rels);
-    return out;
+    // Order donor: larger om; a tie goes to the larger resulting order
+    // (R5; compared AFTER restriction to the merged records, so that
+    // merging the result again picks the same order — idempotent).
+    var oa = A.om || 0, ob = B.om || 0;
+    var ordA = [orderFrom(A, "pos", out.characters), orderFrom(A, "posR", out.rels)];
+    var ordB = [orderFrom(B, "pos", out.characters), orderFrom(B, "posR", out.rels)];
+    var useB = oa !== ob ? ob > oa : JSON.stringify(ordB) > JSON.stringify(ordA);
+    out.pos  = useB ? ordB[0] : ordA[0];
+    out.posR = useB ? ordB[1] : ordA[1];
+    return canonDB(out);
   }
 
   // ---------- Legacy migration (beta app) ----------
@@ -631,20 +678,29 @@
   // ---------- Sync slice ----------
   function sliceGet() {
     // Deep copy — the engine serializes what we hand it; never the live db.
-    return JSON.parse(JSON.stringify(db));
+    // CH-2: canonical, the same form the merge returns.
+    return canonDB(JSON.parse(JSON.stringify(db)));
   }
 
   function sliceSet(inc) {
     if (!inc) return;
     var merged = mergeDB(db, saneDB(inc));
-    var changed = JSON.stringify(merged) !== JSON.stringify(db);
+    // CH-3: compare canonical forms (local key order is not a change)
+    var changed = JSON.stringify(merged) !== JSON.stringify(canonDB(db));
+    if (!changed) return;
     db = merged;
     suppressDirty = true;          // pulled data must NEVER re-dirty
     try { persist(); } catch (e) {}
     suppressDirty = false;
-    if (changed) {
-      paint();
-      transientNote(t("toast.sync"));
+    // CH-3: no "updated from sync" toast on every merge (sync feedback
+    // is the taskbar dot); the search field keeps focus and caret.
+    var ae = document.activeElement;
+    var keep = ae && ae.parentNode && ae.parentNode.className === "search-row" ?
+      { s: ae.selectionStart, e: ae.selectionEnd } : null;
+    paint();
+    if (keep) {
+      var inp = document.querySelector("#view-chars .search-row input");
+      if (inp) { inp.focus(); try { inp.setSelectionRange(keep.s, keep.e); } catch (e2) {} }
     }
   }
 
@@ -940,6 +996,8 @@
       traits: src ? src.traits.map(function (x) { return { name: x.name, str: x.str }; }) : [],
       goals:  src ? src.goals.map(function (x) { return { done: x.done, text: x.text }; }) : []
     };
+    // CH-4: what the dialog showed when it opened (compared on save)
+    ui.editBase = src ? JSON.parse(JSON.stringify(src)) : null;
 
     var dlg = $("dlg-editor");
     dlg.innerHTML = "";
@@ -1202,7 +1260,24 @@
     });
     if (!rec) return;
 
-    var isNew = !draft.id || !db.characters[rec.id];
+    // CH-4: an edit writes back only the fields the user changed in the
+    // dialog, on top of the record as it is NOW. The whole draft used to
+    // be written, so a sync pull that arrived while the dialog was open
+    // (another device's new bio, say) was overwritten by the stale copy.
+    // A save that changes nothing stamps nothing.
+    var base = draft.id && ui.editBase ? saneChar(ui.editBase) : null;
+    if (base) {
+      var cur = db.characters[rec.id] || base;   // deleted meanwhile: the edit brings it back (R17)
+      var changed = ["name", "role", "bio", "traits", "goals"].filter(function (f) {
+        return JSON.stringify(rec[f]) !== JSON.stringify(base[f]);
+      });
+      if (!changed.length) { $("dlg-editor").close(); return; }
+      var next = saneChar(cur);
+      changed.forEach(function (f) { next[f] = rec[f]; });
+      next.mtime = rec.mtime;
+      rec = next;
+    }
+
     db.characters[rec.id] = rec;
     if (db.deleted[rec.id]) delete db.deleted[rec.id];   // undo a deletion
     if (db.pos.indexOf(rec.id) < 0) db.pos.push(rec.id);
@@ -1249,12 +1324,19 @@
         label: "↩",
         fn: function () {
           var stamp = Date.now();             // strictly newer than tombstones
-          removedChar.mtime = stamp;
-          db.characters[id] = removedChar;
-          delete db.deleted[id];
+          // CH-5: Undo restores only what is still gone. When a sync has
+          // brought the character (or a rel) back meanwhile — another
+          // device edited it — that newer copy stays; re-stamping the
+          // old snapshot over it lost the other device's edit.
+          if (!db.characters[id]) {
+            removedChar.mtime = stamp;
+            db.characters[id] = removedChar;
+            delete db.deleted[id];
+          }
           if (db.pos.indexOf(id) < 0) db.pos.push(id);
           Object.keys(removedRels).forEach(function (rid) {
             var r = removedRels[rid];
+            if (db.rels[rid]) return;
             // Restore ONLY if both endpoints still exist — if the
             // other character was deleted meanwhile, the rel would
             // be orphaned and deleteRel would crash on .name lookups.
@@ -1511,7 +1593,6 @@
       var b = el("button", "btn", relTypeLabel(tk));
       b.type = "button";
       if (tk === currentType) b.classList.add("primary");
-      b.style.height = "30px";
       b.addEventListener("click", function () {
         currentType = tk;
         iText.placeholder = relTypeLabel(tk);
@@ -1593,6 +1674,20 @@
     });
     if (!rec) return;
 
+    // CH-4: same rule as the character editor — only the fields changed
+    // in the dialog are written, on top of the record as it is now.
+    var ex = relEditing.existing ? saneRel(relEditing.existing) : null;
+    if (ex) {
+      var changed = ["type", "text", "desc"].filter(function (f) { return rec[f] !== ex[f]; });
+      if (!changed.length) { $("dlg-rel").close(); return; }
+      var cur = relBetween(relEditing.aId, relEditing.bId);
+      var next = saneRel(cur || ex);
+      changed.forEach(function (f) { next[f] = rec[f]; });
+      next.id = rec.id;
+      next.mtime = rec.mtime;
+      rec = next;
+    }
+
     db.rels[rec.id] = rec;
     if (db.deleted[rec.id]) delete db.deleted[rec.id];
     if (db.posR.indexOf(rec.id) < 0) db.posR.push(rec.id);
@@ -1623,6 +1718,7 @@
       toast("ok", t("toast.deleted"), {
         label: "↩",
         fn: function () {
+          if (db.rels[id] || !db.characters[removed.a] || !db.characters[removed.b]) return;   // CH-5: already back, or an end is gone
           removed.mtime = Date.now();           // beat the tombstone
           db.rels[id] = removed;
           delete db.deleted[id];
@@ -2006,14 +2102,27 @@
     }
 
     pop.innerHTML = "";
-    var md = el("div", "pop-item", ICO.dl + "  " + t("exp.md"));
-    var js = el("div", "pop-item", ICO.dl + "  " + t("exp.json"));
+    // CH-1: el() writes textContent, so the menu used to show the raw
+    // SVG source as its label. Real buttons: icon markup + text label.
+    function popItem(label) {
+      var b = el("button", "pop-item");
+      b.type = "button";
+      b.innerHTML = ICO.dl;
+      b.appendChild(el("span", null, label));
+      return b;
+    }
+    var md = popItem(t("exp.md"));
+    var js = popItem(t("exp.json"));
     pop.appendChild(md);
     pop.appendChild(js);
     pop.style.top = (rect.bottom + 6) + "px";
-    pop.style.left = rect.left + "px";
     pop.style.right = "auto";
     pop.hidden = false;
+    // CH-1: anchored under the button but kept inside the viewport
+    // (the Export button sits at the right edge on a phone).
+    var w = pop.offsetWidth;
+    var maxLeft = document.documentElement.clientWidth - w - 8;
+    pop.style.left = Math.max(8, Math.min(rect.left, maxLeft)) + "px";
 
     md.addEventListener("click", function () { pop.hidden = true; exportMD(); });
     js.addEventListener("click", function () { pop.hidden = true; exportJSON(); });

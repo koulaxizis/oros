@@ -129,6 +129,12 @@ input, textarea, select {
   opacity: 0.45;
   transition: opacity 0.15s, background 0.15s;
 }
+.wx-dot { position: relative; }
+.wx-dot::after {               /* WE-7: bigger touch area, same 7px dot */
+  content: "";
+  position: absolute;
+  inset: -12px -3px;
+}
 .wx-dot:hover { opacity: 0.8; }
 .wx-dot.active {
   background: var(--accent);
@@ -467,6 +473,7 @@ dialog {
   box-shadow: 0 12px 40px var(--shadow);
   padding: 18px;
   width: min(380px, calc(100vw - 32px));
+  margin: auto;                /* WE-5: centred (R32) */
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
   overflow-x: hidden;          /* nothing legitimately scrolls sideways
@@ -649,6 +656,7 @@ button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
   visibility: visible;
   transform: translateY(0);
   transition: opacity .3s, transform .3s;
+  pointer-events: auto;        /* WE-9: the Undo button was unclickable */
 }
 .oro-toast .sn-btn {
   margin-left: 10px;

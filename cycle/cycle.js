@@ -331,7 +331,9 @@
 
   function newState() {
     var s = {
-      ver: DATA_VER, sm: Date.now(), om: Date.now(),
+      // CY-2: a fresh install's stamps are 0 — its defaults
+      // (reminders on, seed order) never outrank synced choices
+      ver: DATA_VER, sm: 0, om: 0,
       periods: [], days: [], deleted: {},
       cols: { sym: [], med: [] },
       prefs: { remind: true }
@@ -357,6 +359,7 @@
     if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
     if (typeof data.sm !== "number") data.sm = 0;
     if (typeof data.om !== "number") data.om = 0;
+    if (data.pm !== undefined && typeof data.pm !== "number") delete data.pm;   // CY-2
     if (!data.prefs || typeof data.prefs !== "object") data.prefs = { remind: true };
     if (typeof data.prefs.remind !== "boolean") data.prefs.remind = true;
 
@@ -377,6 +380,9 @@
       if (typeof d.day !== "number") d.day = dayTsFromKey(d.id.replace(/^d-/, ""));
       if (typeof d.mtime !== "number") d.mtime = 0;
       d.meds = d.meds.filter(function (m) { return m && m.id && m.med; });
+      if (d.fm !== undefined && (!d.fm || typeof d.fm !== "object")) {   // CY-3: unusable stamps
+        delete d.fm; delete d.ss; delete d.sb;                          // → whole-day rule
+      }
     });
 
     data.cols.sym.concat(data.cols.med).forEach(function (v) {
@@ -404,6 +410,12 @@
         if (data) { state = data; return; }
       }
     } catch (e) { /* corrupted → fresh */ }
+    // CY-6: unreadable data is kept aside before the fresh state
+    // overwrites it (never overwrite without a rescue copy)
+    try {
+      var bad = localStorage.getItem(STORAGE_KEY);
+      if (bad) localStorage.setItem(STORAGE_KEY + "-broken", bad);
+    } catch (e2) {}
     state = newState();
     save();
   }
@@ -521,6 +533,15 @@
         (d.sym || []).forEach(function (sid, i) {
           if (remap[sid]) d.sym[i] = remap[sid];
         });
+        if (d.sym) d.sym = d.sym.filter(function (sid, i) { return d.sym.indexOf(sid) === i; });
+        if (d.ss) {                       // CY-3: per-symptom stamps follow the remap
+          Object.keys(d.ss).forEach(function (sid) {
+            if (!remap[sid]) return;
+            var to = remap[sid];
+            d.ss[to] = Math.max(d.ss[to] || 0, d.ss[sid]);
+            delete d.ss[sid];
+          });
+        }
         (d.meds || []).forEach(function (m) {
           if (m.med && remap[m.med]) m.med = remap[m.med];
         });
@@ -542,39 +563,149 @@
     vals.forEach(function (v, i) { v.pos = i; });
   }
 
+  // ---- CY-3: field-level day merge ----
+  // A day written by this build carries per-field stamps:
+  //   fm: { sym, meds, note }  — last change of each field
+  //   ss: { <symId>: ts }      — last toggle of each symptom
+  //   sb: ts                   — what an absent, never-toggled
+  //                              symptom is worth (0 = fresh day)
+  // invariant: mtime === max(fm). A day WITHOUT fm (older build),
+  // or one an older build edited since (mtime > max(fm)), speaks
+  // with its mtime for every field — the old whole-day rule.
+  function dayView(d) {
+    var f = d.fm, m = d.mtime || 0;
+    if (f && typeof f === "object" &&
+        m <= Math.max(f.sym || 0, f.meds || 0, f.note || 0)) {
+      return { fm: true, sym: f.sym || 0, meds: f.meds || 0, note: f.note || 0,
+               ss: (d.ss && typeof d.ss === "object") ? d.ss : {},
+               sb: typeof d.sb === "number" ? d.sb : 0 };
+    }
+    return { fm: false, sym: m, meds: m, note: m, ss: {}, sb: m };
+  }
+  function symStamp(v, sid) {
+    return v.ss[sid] !== undefined ? v.ss[sid] : v.sb;
+  }
+  function jsonMax(x, y) {
+    return JSON.stringify(x) >= JSON.stringify(y) ? x : y;
+  }
+  // canonical bytes of a field-stamped day (== mergeDay(d, d)):
+  // every present symptom carries its own stamp
+  function canonDay(d) {
+    var v = dayView(d), ss = {}, sym = (d.sym || []).slice().sort();
+    var keys = Object.keys(v.ss);
+    sym.forEach(function (sid) { if (keys.indexOf(sid) < 0) keys.push(sid); });
+    keys.sort().forEach(function (k) { ss[k] = symStamp(v, k); });
+    return JSON.parse(JSON.stringify({
+      id: d.id, day: d.day, mtime: d.mtime || 0,
+      sym: sym.filter(function (sid, i) { return sym.indexOf(sid) === i; }),
+      meds: d.meds || [], note: d.note || "",
+      fm: { sym: v.sym, meds: v.meds, note: v.note }, sb: v.sb, ss: ss }));
+  }
+  function mergeDay(x, y) {
+    var vx = dayView(x), vy = dayView(y);
+    // neither side has field stamps: the old whole-day rule, verbatim
+    if (!vx.fm && !vy.fm) return newerObj(x, y);
+    // a whole-day writer that is strictly newer wins every field:
+    // keep its bytes verbatim (older builds compare them)
+    if (!vx.fm && (x.mtime || 0) > (y.mtime || 0)) return x;
+    if (!vy.fm && (y.mtime || 0) > (x.mtime || 0)) return y;
+
+    var out = { id: x.id, day: x.day, mtime: Math.max(x.mtime || 0, y.mtime || 0),
+                sym: [], meds: null, note: "", fm: {}, sb: Math.max(vx.sb, vy.sb), ss: {} };
+    // symptoms: each one decided by its own latest toggle;
+    // a tie keeps it (never lose a logged symptom)
+    var u = {};
+    [x.sym || [], y.sym || [], Object.keys(vx.ss), Object.keys(vy.ss)].forEach(function (l) {
+      l.forEach(function (sid) { u[sid] = true; });
+    });
+    Object.keys(u).sort().forEach(function (sid) {
+      var tx = symStamp(vx, sid), ty = symStamp(vy, sid);
+      var inX = (x.sym || []).indexOf(sid) >= 0, inY = (y.sym || []).indexOf(sid) >= 0;
+      var on = tx !== ty ? (tx > ty ? inX : inY) : (inX || inY);
+      if (on) out.sym.push(sid);
+      out.ss[sid] = Math.max(tx, ty);
+    });
+    out.fm.sym = Math.max(vx.sym, vy.sym);
+    // intake log + note: last writer of THAT field wins
+    out.meds = vx.meds !== vy.meds ? (vx.meds > vy.meds ? x.meds : y.meds)
+                                   : jsonMax(x.meds || [], y.meds || []);
+    out.fm.meds = Math.max(vx.meds, vy.meds);
+    out.note = vx.note !== vy.note ? (vx.note > vy.note ? x.note : y.note)
+                                   : jsonMax(x.note || "", y.note || "");
+    out.fm.note = Math.max(vx.note, vy.note);
+    return canonDay(out);
+  }
+  function mergeDays(a, b, tomb) {
+    var map = {};
+    function put(d) {
+      var ts = tomb[d.id];
+      if (ts !== undefined && (d.mtime || 0) <= ts) return;   // older than its deletion
+      if (d.fm && dayView(d).fm) d = canonDay(d);
+      map[d.id] = map[d.id] ? mergeDay(map[d.id], d) : d;
+    }
+    (a || []).forEach(put);
+    (b || []).forEach(put);
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (x, y) { return (x.day - y.day) || (x.id < y.id ? -1 : (x.id > y.id ? 1 : 0)); });
+  }
+
+  // CY-1: the merge works on deep copies (it used to rewrite pos,
+  // symptom ids and intake refs on the caller's live objects) and
+  // returns ONE canonical form; the getter returns merge(state,
+  // state), so equal data means equal bytes on every device.
   function mergeCycleStates(A, B) {
-    var a = A || {}, b = B || {};
+    var a = JSON.parse(JSON.stringify(A || {})), b = JSON.parse(JSON.stringify(B || {}));
 
     var tomb = {};
     Object.keys(a.deleted || {}).forEach(function (id) { tomb[id] = a.deleted[id]; });
     Object.keys(b.deleted || {}).forEach(function (id) {
       tomb[id] = Math.max(tomb[id] || 0, b.deleted[id]);
     });
+    var deleted = {};
+    Object.keys(tomb).sort().forEach(function (id) { deleted[id] = tomb[id]; });
 
     var periods = mergeUnionList(a.periods, b.periods, tomb)
-      .sort(function (x, y) { return y.start - x.start; });   // newest first
+      .sort(function (x, y) {                                 // newest first
+        return (y.start - x.start) || (x.id < y.id ? -1 : (x.id > y.id ? 1 : 0));
+      });
 
-    var days = mergeUnionList(a.days, b.days, tomb)
-      .sort(function (x, y) { return x.day - y.day; });       // calendar order
+    var days = mergeDays(a.days, b.days, tomb);               // calendar order
 
-    var omSideIsA = (a.om || 0) >= (b.om || 0);
+    // column order: larger om donates; a tie picks by id sequence
+    // (the old tie always kept the LOCAL side — asymmetric)
+    function colOrderSideA(name) {
+      if ((a.om || 0) !== (b.om || 0)) return (a.om || 0) > (b.om || 0);
+      var ka = JSON.stringify(((a.cols || {})[name] || []).map(function (v) { return v.id; }));
+      var kb = JSON.stringify(((b.cols || {})[name] || []).map(function (v) { return v.id; }));
+      return ka >= kb;
+    }
     var cols = {};
     cols.sym = mergeUnionList((a.cols || {}).sym, (b.cols || {}).sym, tomb);
     cols.med = mergeUnionList((a.cols || {}).med, (b.cols || {}).med, tomb);
     dedupeCols(cols, days);
-    sortColVals(cols.sym, omSideIsA, (a.cols || {}).sym, (b.cols || {}).sym);
-    sortColVals(cols.med, omSideIsA, (a.cols || {}).med, (b.cols || {}).med);
+    sortColVals(cols.sym, colOrderSideA("sym"), (a.cols || {}).sym, (b.cols || {}).sym);
+    sortColVals(cols.med, colOrderSideA("med"), (a.cols || {}).med, (b.cols || {}).med);
 
-    return {
+    // CY-2: prefs have their own stamp `pm` (absent = om, as before);
+    // logging a pill or a period no longer decides the reminders
+    var hasPm = typeof a.pm === "number" || typeof b.pm === "number";
+    var pa = typeof a.pm === "number" ? a.pm : (a.om || 0);
+    var pb = typeof b.pm === "number" ? b.pm : (b.om || 0);
+    var prA = a.prefs || { remind: true }, prB = b.prefs || { remind: true };
+    var prefs = pa !== pb ? (pa > pb ? prA : prB) : jsonMax(prA, prB);
+
+    var out = {
       ver: DATA_VER,
       sm: Math.max(a.sm || 0, b.sm || 0),
-      om: Math.max(a.om || 0, b.om || 0),
-      periods: periods,
-      days: days,
-      cols: cols,
-      prefs: (omSideIsA ? a : b).prefs || { remind: true },
-      deleted: tomb
+      om: Math.max(a.om || 0, b.om || 0)
     };
+    if (hasPm) out.pm = Math.max(pa, pb);
+    out.periods = periods;
+    out.days = days;
+    out.cols = cols;
+    out.prefs = prefs;
+    out.deleted = deleted;
+    return out;
   }
 
   // ---------- 3. Calendar view + day editor + days list ----------
@@ -614,7 +745,7 @@
     toastEl.style.opacity = "1";
     toastEl.style.transform = "translateY(0)";
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, 5000);
+    toastTimer = setTimeout(hideToast, actionLabel ? 8000 : 5000);   // CY-7: Undo >= 8 s
   }
   function hideToast() {
     if (!toastEl) return;
@@ -720,7 +851,7 @@
       (fresh.cols[c] || []).forEach(function (v) { v.mtime = now + 1; });
     });
     fresh.deleted = tomb;               // tombstones travel, merge-proof
-    fresh.sm = now; fresh.om = now;
+    fresh.sm = now; fresh.om = now; fresh.pm = now;
     state = fresh;
     save();
     searchQ = "";
@@ -1188,7 +1319,8 @@
       rt.addEventListener("click", function () {
         state.prefs.remind = !state.prefs.remind;
         state.sm = Date.now();
-        state.om = Date.now();   // prefs resolve by om-donor in merge
+        state.pm = state.sm;     // CY-2: prefs have their own stamp
+        state.om = state.sm;     // older builds still read prefs by om
         save();
         renderTimeline();
       });
@@ -1353,10 +1485,17 @@
     sh.textContent = t("sym.title");
     host.appendChild(sh);
 
-    var syms = (rebuildDraft && openDay === dayId)
+    var isRebuild = !!(rebuildDraft && openDay === dayId);
+    var syms = isRebuild
       ? rebuildDraft.sym.slice()
       : (rec ? (rec.sym || []).slice() : []);
     rebuildDraft = null;
+    // CY-4: what the editor showed when it opened — Save writes
+    // only what the user changed against it (see saveDay)
+    if (!isRebuild || !editBase || editBase.dayId !== dayId) {
+      editBase = { dayId: dayId, sym: rec ? (rec.sym || []).slice() : [],
+                   note: rec ? (rec.note || "") : "" };
+    }
     var symChips = document.createElement("div");
     symChips.className = "chips";
     (state.cols.sym || []).forEach(function (v) {
@@ -1383,6 +1522,7 @@
     var sAddRow = document.createElement("div");
     sAddRow.className = "addrow";
     var sAddIn = document.createElement("input");
+    sAddIn.id = "sym-add-in";
     sAddIn.type = "text";
     sAddIn.placeholder = t("sym.add.ph");
     sAddIn.maxLength = 40;
@@ -1453,6 +1593,7 @@
     var mAddRow = document.createElement("div");
     mAddRow.className = "addrow";
     var mAddIn = document.createElement("input");
+    mAddIn.id = "med-add-in";
     mAddIn.type = "text";
     mAddIn.placeholder = t("med.add.ph");
     mAddIn.maxLength = 40;
@@ -1531,7 +1672,7 @@
             var r = dayById(dayId);
             if (!r) return;
             r.meds = r.meds.filter(function (x) { return x.id !== m.id; });
-            r.mtime = Date.now();
+            touchDay(r, { meds: true });     // CY-3: only the intake log is stamped
             pruneIfEmpty(r);
             state.sm = Date.now();
             save();
@@ -1577,6 +1718,13 @@
   // draft handle for the editor (rebuilt on chip taps; the
   // textarea value travels through prevNote like mood.js)
   var dayDraft = null;
+  var editBase = null;                  // CY-4: { dayId, sym, note } at open
+  function symDiff(a, b) {              // ids in exactly one of the two lists
+    var out = [];
+    a.forEach(function (x) { if (b.indexOf(x) < 0 && out.indexOf(x) < 0) out.push(x); });
+    b.forEach(function (x) { if (a.indexOf(x) < 0 && out.indexOf(x) < 0) out.push(x); });
+    return out;
+  }
   // one-shot selection snapshot for chromeless rebuilds — set
   // by buildEditorChromeless, consumed (and cleared) by the
   // next renderDayEditor. Never persists across sessions.
@@ -1614,18 +1762,40 @@
   // Editing a PAST day logs the time as... NOW (you took it now
   // but remember it for that day — the day you ATTACH it to is
   // the calendar day, the clock never lies about when).
+  // CY-3: a brand-new day record — field stamps 0, nothing known yet
+  function newDayRec(id, ts) {
+    return { id: id, day: ts, mtime: 0, sym: [], meds: [], note: "",
+             fm: { sym: 0, meds: 0, note: 0 }, sb: 0, ss: {} };
+  }
+  // CY-3: stamp the fields a user action changed (rec already
+  // mutated). o.sym = toggled symptom ids, o.meds / o.note = bool.
+  // A day from an older build is converted first: its mtime keeps
+  // speaking for everything this action did not touch.
+  function touchDay(rec, o) {
+    var v = dayView(rec), now = Date.now(), ss = {}, k;
+    for (k in v.ss) if (Object.prototype.hasOwnProperty.call(v.ss, k)) ss[k] = v.ss[k];
+    (rec.sym || []).forEach(function (sid) { if (ss[sid] === undefined) ss[sid] = v.sb; });
+    var fm = { sym: v.sym, meds: v.meds, note: v.note };
+    if (o.sym && o.sym.length) {
+      o.sym.forEach(function (sid) { ss[sid] = now; });
+      fm.sym = now;
+    }
+    if (o.meds) fm.meds = now;
+    if (o.note) fm.note = now;
+    rec.fm = fm; rec.sb = v.sb; rec.ss = ss;
+    rec.mtime = Math.max(fm.sym, fm.meds, fm.note);
+  }
+
   function takeMed(dayTs_, medId) {
     var id = "d-" + dayKey(dayTs_);
     var rec = dayById(id);
     if (!rec) {
-      rec = { id: id, day: dayTsFromKey(dayKey(dayTs_)),
-              mtime: Date.now(), sym: [], meds: [], note: "" };
+      rec = newDayRec(id, dayTsFromKey(dayKey(dayTs_)));
       state.days.push(rec);
     }
     rec.meds.push({ id: uid(), med: medId, at: Date.now() });
-    rec.mtime = Date.now();
+    touchDay(rec, { meds: true });
     state.sm = Date.now();
-    state.om = Date.now();
     save();
   }
 
@@ -1643,7 +1813,6 @@
       id: uid(), start: ts, end: null, flow: 2, mtime: Date.now()
     });
     state.sm = Date.now();
-    state.om = Date.now();
     save();
     renderAll();
   }
@@ -1660,6 +1829,7 @@
     openDay = null;
     renderAll();
     transientNote(t("del.done"), t("del.undo"), function () {
+      if (periodById(id)) return;       // CY-5: already back (a pull) — never a duplicate id
       p.mtime = Date.now();
       state.periods.push(p);
       delete state.deleted[id];
@@ -1680,34 +1850,36 @@
     return false;
   }
 
+  // CY-4: Save applies the user's OWN changes (symptoms toggled,
+  // note edited) onto the CURRENT record. It used to write the whole
+  // draft: a note or symptom another device saved while the editor
+  // was open was silently reverted.
   function saveDay(dayId) {
-    var note = $("fld-note") ? $("fld-note").value.trim() : "";
+    var typed = $("fld-note") ? $("fld-note").value.trim() : "";
     var ts = dayTsFromKey(dayId.replace(/^d-/, ""));
+    var base = (editBase && editBase.dayId === dayId) ? editBase : { sym: [], note: "" };
+    var draft = dayDraft ? dayDraft.sym.slice() : [];
+    var toggles = symDiff(draft, base.sym);
+    var noteChanged = typed !== String(base.note || "").trim();
     var rec = dayById(dayId);
-    var sym = dayDraft ? dayDraft.sym.slice() : [];
 
-    if (!rec) {
-      if (!sym.length && !note) {          // nothing to save — nothing saved
-        openDay = null;
-        applyView();
-        return;
-      }
-      rec = { id: dayId, day: ts, mtime: Date.now(),
-              sym: sym, meds: [], note: note };
-      state.days.push(rec);
-    } else {
-      rec.sym = sym;
-      rec.note = note;
-      rec.mtime = Date.now();
-      if (pruneIfEmpty(rec)) {
-        state.sm = Date.now();
-        save();
-        openDay = null;
-        renderAll();
-        transientNote(t("saved.toast"));
-        return;
-      }
+    if (!toggles.length && !noteChanged) {   // nothing changed — nothing written
+      openDay = null;
+      renderAll();
+      return;
     }
+    if (!rec) {
+      rec = newDayRec(dayId, ts);
+      state.days.push(rec);
+    }
+    toggles.forEach(function (sid) {
+      var on = draft.indexOf(sid) >= 0, at = rec.sym.indexOf(sid);
+      if (on && at < 0) rec.sym.push(sid);
+      if (!on && at >= 0) rec.sym.splice(at, 1);
+    });
+    if (noteChanged) rec.note = typed;
+    touchDay(rec, { sym: toggles, note: noteChanged });
+    pruneIfEmpty(rec);
     state.sm = Date.now();
     save();
     openDay = null;
@@ -1824,6 +1996,8 @@
   function applyChipRename(col, v, label) {
     label = String(label).trim().normalize("NFC");
     closeChipMenu();
+    v = colValById(col, v.id);          // CY-5: rename the CURRENT value, not a pre-pull copy
+    if (!v) return;
     if (!label || label === v.label) return;
     if (colLabelExists(col, label, v.id)) { transientNote(t("col.dup")); return; }
     v.label = label;
@@ -1837,6 +2011,8 @@
 
   function deleteColVal(col, v) {
     closeChipMenu();
+    v = colValById(col, v.id);          // CY-5: the menu may hold a pre-pull copy
+    if (!v) return;
     state.cols[col] = (state.cols[col] || []).filter(function (x) {
       return x.id !== v.id;
     });
@@ -1856,12 +2032,15 @@
         d.meds = d.meds.filter(function (m) { return m.med !== v.id; });
         if (d.meds.length !== beforeM) changed = true;
       }
-      if (changed) d.mtime = Date.now();
+      // CY-3: stamp ONLY the field that changed (a whole-day stamp
+      // here reverted notes/intakes edited meanwhile on another device)
+      if (changed) touchDay(d, col === "sym" ? { sym: [v.id] } : { meds: true });
     });
     state.sm = Date.now();
     save();
     refreshInView();
     transientNote(t("col.del.done"), t("col.del.undo"), function () {
+      if (colValById(col, v.id)) return; // CY-5: no duplicate id
       v.mtime = Date.now();
       state.cols[col].push(v);
       delete state.deleted[v.id];
@@ -1998,7 +2177,8 @@
     if (openDay === id) openDay = null;
     renderAll();
     transientNote(t("del.done"), t("del.undo"), function () {
-      d.mtime = Date.now();
+      if (dayById(id)) return;          // CY-5: the day exists again (a pull) — no duplicate id
+      d.mtime = Date.now();             // whole-day restore: speaks for every field
       state.days.push(d);
       delete state.deleted[id];
       state.sm = Date.now();
@@ -2849,7 +3029,8 @@
   }
 
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    // CY-1: the merge's canonical form (fresh deep copy)
+    return mergeCycleStates(state, state);
   }
 
   function sliceSet(data, info) {
@@ -2888,17 +3069,50 @@
     var syncKeepScroll = 0;
     var syncingInEditor = (dayDraft && viewMode === "timeline" &&
                            openDay !== null);
+    var syncFocus = null;
     if (syncingInEditor) {
       syncKeepNote = $("fld-note") ? $("fld-note").value : null;
       var mm = $("cyclemain");
       syncKeepScroll = mm ? mm.scrollTop : 0;
-      rebuildDraft = { sym: dayDraft.sym.slice() };
+      // CY-4: the pulled record is the new base; only the user's own
+      // toggles / typed note ride on top (untouched parts follow the pull)
+      var recNow = dayById(openDay);
+      var newBaseSym = recNow ? (recNow.sym || []).slice() : [];
+      var draftSym = newBaseSym.slice();
+      if (editBase && editBase.dayId === openDay) {
+        symDiff(dayDraft.sym, editBase.sym).forEach(function (sid) {
+          var on = dayDraft.sym.indexOf(sid) >= 0, at = draftSym.indexOf(sid);
+          if (on && at < 0) draftSym.push(sid);
+          if (!on && at >= 0) draftSym.splice(at, 1);
+        });
+        if (syncKeepNote !== null &&
+            syncKeepNote.trim() === String(editBase.note || "").trim()) {
+          syncKeepNote = recNow ? (recNow.note || "") : "";   // untouched → follow the pull
+        }
+        editBase.sym = newBaseSym;
+        editBase.note = recNow ? (recNow.note || "") : "";
+      }
+      rebuildDraft = { sym: draftSym };
+      // focus + caret survive the rebuild (it used to drop the keyboard)
+      var ae = document.activeElement, dvw = $("dayview");
+      if (ae && ae.id && dvw && dvw.contains(ae)) {
+        syncFocus = { id: ae.id, a: ae.selectionStart, b: ae.selectionEnd };
+      }
+      var keepAdd = { s: $("sym-add-in") ? $("sym-add-in").value : "",
+                      m: $("med-add-in") ? $("med-add-in").value : "" };
     }
     renderAll();
     if (syncingInEditor && openDay !== null && $("fld-note")) {
       $("fld-note").value = syncKeepNote;
       var mm2 = $("cyclemain");
       if (mm2) mm2.scrollTop = syncKeepScroll;
+      if ($("sym-add-in")) $("sym-add-in").value = keepAdd.s;   // half-typed new values survive too
+      if ($("med-add-in")) $("med-add-in").value = keepAdd.m;
+      if (syncFocus && $(syncFocus.id)) {
+        var fe = $(syncFocus.id);
+        try { fe.focus({ preventScroll: true }); } catch (e) { fe.focus(); }
+        try { if (syncFocus.a !== null && syncFocus.a !== undefined) fe.setSelectionRange(syncFocus.a, syncFocus.b); } catch (e) {}
+      }
     }
     if (info && info.merged) transientNote(t("sync.pull"));
   }

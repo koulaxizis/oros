@@ -727,5 +727,21 @@ input, select {
   #stats-btn, #export-btn { min-height: 44px; }
 }
 
+/* DC-7: the history toolbar scrolls instead of clipping (the EL
+   labels pushed "Καθαρισμός" off a 390px screen); preset button
+   gets real padding and a touch-size target. */
+#history-header {
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+#history-header::-webkit-scrollbar { display: none; }
+#history-header > button { flex-shrink: 0; white-space: nowrap; }
+#history-header h3 { flex: 1 0 auto; }
+#preset-add { padding: 0 12px; }
+@media (pointer: coarse) {
+  #preset-add { min-height: 44px; }
+}
+
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }

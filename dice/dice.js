@@ -240,14 +240,26 @@
         if (data && Array.isArray(data.history)) {
           state = data;
           if (!Array.isArray(state.presets)) state.presets = [];   // v1 → v2
+          if (!state.deleted || typeof state.deleted !== "object") state.deleted = {};
           state.ver = DATA_VER;
           pruneTombstones(state);
           return;
         }
       }
-    } catch (e) { /* corrupted → fresh start */ }
+      // DC-5: unreadable or wrong-shaped data is copied verbatim to a
+      // device-local rescue key BEFORE the fresh state replaces it.
+      if (raw) rescueRaw(raw);
+    } catch (e) {
+      try { rescueRaw(localStorage.getItem(STORAGE_KEY)); } catch (e2) {}
+    }
     state = defaultState();
     save();
+  }
+
+  function rescueRaw(raw) {
+    if (!raw) return;
+    try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
+    try { console.error("[orOS] dice: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e2) {}
   }
 
   function save() {
@@ -274,6 +286,20 @@
   }
 
   // ---------- 2b. Merge engine (union by id + trim) ----------
+  // DC-1: canonical bytes. The engine compares JSON strings (R26), so
+  // every map is rebuilt with SORTED keys and every tie is broken by
+  // content, never by input order — merge(A,B) and merge(B,A) are
+  // byte-identical, and the getter returns the same canonical form.
+  function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
+  function sortedMap(m) {
+    var out = {};
+    Object.keys(m).sort().forEach(function (k) { out[k] = m[k]; });
+    return out;
+  }
+  function histCmp(x, y) {   // newest first, tie → id (input-order free)
+    return ((y.ts || 0) - (x.ts || 0)) || cmpStr(String(x.id), String(y.id));
+  }
+
   function mergeDiceStates(A, B) {
     var a = A || {}, b = B || {};
     var tomb = {};
@@ -291,17 +317,36 @@
         if (tomb[id] < cutoff) delete tomb[id];
       });
     }
+    tomb = sortedMap(tomb);
 
     // --- presets: union by name, LWW by ts (same doctrine as history) ---
+    // DC-2: a deleted preset leaves a tombstone in pdel{name: ts}; a
+    // preset survives only when it was saved AFTER its tombstone (a
+    // re-save under the same name resurrects it, like history).
+    var pdel = {};
+    [a.pdel || {}, b.pdel || {}].forEach(function (m) {
+      Object.keys(m).forEach(function (n) {
+        var v = Number(m[n]) || 0;
+        if (v > (pdel[n] || 0)) pdel[n] = v;
+      });
+    });
+    pdel = sortedMap(pdel);
     var pres = {};
     [a.presets || [], b.presets || []].forEach(function (list) {
       list.forEach(function (p) {
+        if (!p || typeof p.name !== "string") return;
         var ex = pres[p.name];
-        if (!ex || (p.ts || 0) > (ex.ts || 0)) pres[p.name] = p;
+        if (!ex || (p.ts || 0) > (ex.ts || 0) ||
+            ((p.ts || 0) === (ex.ts || 0) && JSON.stringify(p) > JSON.stringify(ex))) {
+          pres[p.name] = p;
+        }
       });
     });
-    var presetArr = Object.keys(pres).map(function (n) { return pres[n]; });
-    presetArr.sort(function (x, y) { return x.name.localeCompare(y.name); });
+    var presetArr = Object.keys(pres).map(function (n) { return pres[n]; })
+      .filter(function (p) { return !pdel[p.name] || (p.ts || 0) > pdel[p.name]; });
+    // Code-unit order: localeCompare depends on the device locale (EN
+    // and EL devices would disagree on the order → endless uploads).
+    presetArr.sort(function (x, y) { return cmpStr(x.name, y.name); });
     if (presetArr.length > 20) presetArr = presetArr.slice(0, 20);   // cap
 
     var map = {};
@@ -331,7 +376,7 @@
       }
     });
 
-    arr.sort(function (x, y) { return (y.ts || 0) - (x.ts || 0); });  // newest first (canonical)
+    arr.sort(histCmp);                                                 // newest first (canonical)
     if (arr.length > HISTORY_CAP) arr = arr.slice(0, HISTORY_CAP);     // trim oldest (tail)
 
     var out = {
@@ -341,8 +386,16 @@
       history: arr,
       presets: presetArr
     };
+    if (Object.keys(pdel).length) out.pdel = pdel;
     if (out.history.length === 0 && out.sm === 0) return null;
     return out;
+  }
+
+  // DC-1: the getter's canonical form — exactly what the merge
+  // returns for (state, state): same pruning rule, same orders.
+  function canonState(st) {
+    var c = mergeDiceStates(st, st);
+    return c || JSON.parse(JSON.stringify(defaultState()));
   }
 
   // ---------- 3. RNG (crypto.getRandomValues) ----------
@@ -638,21 +691,33 @@
   }
 
   function shareResult() {
-    if (!lastResult) return;
-    var time = fmtTimestamp(lastResult.ts);
+    // DC-4 (R28): after a reload lastResult is empty — share the
+    // newest roll of the history instead; with no history, say so.
+    var r = lastResult;
+    if (!r) {
+      var newest = null;
+      state.history.some(function (h) {
+        if (state.deleted[h.id]) return false;
+        newest = h;
+        return true;
+      });
+      if (!newest) { showToast(t("history.empty")); return; }
+      r = newest;
+    }
+    var time = fmtTimestamp(r.ts);
     var details = "";
-    if (lastResult.kind === "dice") {
-      details = t("result.dice", { dice: lastResult.rolls.join(", ") });
-      if (lastResult.isCrit) details += " — " + t("badge.crit");
-      if (lastResult.isFumble) details += " — " + t("badge.fumble");
+    if (r.kind === "dice") {
+      details = t("result.dice", { dice: r.rolls.join(", ") });
+      if (r.isCrit) details += " — " + t("badge.crit");
+      if (r.isFumble) details += " — " + t("badge.fumble");
     } else {
-      details = t(lastResult.result === "heads" ? "coin.heads" : "coin.tails");
+      details = t(r.result === "heads" ? "coin.heads" : "coin.tails");
     }
 
     var card = t("share.card", {
       time: time,
-      notation: lastResult.kind === "dice" ? lastResult.notation : t("share.coin"),
-      total: String(lastResult.kind === "dice" ? lastResult.total : ""),
+      notation: r.kind === "dice" ? r.notation : t("share.coin"),
+      total: String(r.kind === "dice" ? r.total : ""),
       details: details
     });
 
@@ -673,7 +738,7 @@
       if (e.code === "Space") {
         e.preventDefault();
         rollDice();
-      } else if (e.key === "c" || e.key === "C") {
+      } else if (e.code === "KeyC") {   // DC-6: layout-agnostic (R12)
         e.preventDefault();
         flipCoin();
       }
@@ -872,6 +937,10 @@
       del.addEventListener("click", function (e) {
         e.stopPropagation();
         state.presets = (state.presets || []).filter(function (x) { return x.name !== p.name; });
+        // DC-2: tombstone, or the next merge brings the preset back
+        // from any device that still has it.
+        if (!state.pdel || typeof state.pdel !== "object") state.pdel = {};
+        state.pdel[p.name] = Math.max(Date.now(), (p.ts || 0) + 1);
         touch();
         save();
         renderPresets();
@@ -883,25 +952,96 @@
 
   function addPreset() {
     var cfg = currentBuilderConfig();
-    var name = prompt(t("presets.prompt"),
-      cfg.count + "d" + cfg.type + (cfg.mod ? (cfg.mod > 0 ? "+" : "") + cfg.mod : ""));
-    if (!name) return;
-    name = name.trim().slice(0, 24);
-    if (!name) return;
-    if (!state.presets) state.presets = [];
-    state.presets = state.presets.filter(function (x) { return x.name !== name; });
-    state.presets.push({
-      name: name,
-      count: cfg.count,
-      type: cfg.type,
-      mod: cfg.mod,
-      mode: cfg.mode,
-      ts: Date.now()
+    // DC-3: themed name dialog (R14 — no native prompt()).
+    promptDialog(t("presets.prompt"),
+      cfg.count + "d" + cfg.type + (cfg.mod ? (cfg.mod > 0 ? "+" : "") + cfg.mod : ""),
+      function (name) {
+        name = String(name || "").trim().slice(0, 24);
+        if (!name) return;
+        if (!state.presets) state.presets = [];
+        state.presets = state.presets.filter(function (x) { return x.name !== name; });
+        var ts = Date.now();
+        if (state.pdel && state.pdel[name] && ts <= state.pdel[name]) ts = state.pdel[name] + 1;
+        state.presets.push({
+          name: name,
+          count: cfg.count,
+          type: cfg.type,
+          mod: cfg.mod,
+          mode: cfg.mode,
+          ts: ts
+        });
+        touch();
+        save();
+        renderPresets();
+        showToast(t("presets.saved"));
+      });
+  }
+
+  // Themed one-field prompt in the confirmDialog idiom. Empty or
+  // cancelled input = silent exit (nothing was asked to change).
+  function promptDialog(label, initial, onOk) {
+    var stale = document.getElementById("dice-prompt");
+    if (stale) stale.remove();
+
+    var dlg = document.createElement("dialog");
+    dlg.id = "dice-prompt";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:18px;" +
+      "width:min(340px,calc(100vw - 32px));";
+
+    var form = document.createElement("form");
+    form.method = "dialog";
+
+    var lab = document.createElement("label");
+    lab.style.cssText = "display:block;font-size:13px;margin-bottom:8px;";
+    lab.textContent = label;
+    form.appendChild(lab);
+
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.maxLength = 24;
+    inp.value = initial || "";
+    inp.style.cssText = "width:100%;min-height:44px;font-size:16px;margin-bottom:16px;";
+    lab.appendChild(inp);
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+
+    var no = document.createElement("button");
+    no.type = "button";
+    no.style.cssText =
+      "border:1px solid var(--border);border-radius:7px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;min-height:44px;";
+    no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    row.appendChild(no);
+
+    var yes = document.createElement("button");
+    yes.type = "submit";
+    yes.style.cssText =
+      "border:1px solid var(--accent);border-radius:7px;background:transparent;" +
+      "color:var(--accent);padding:7px 14px;font-size:12.5px;font-weight:600;" +
+      "cursor:pointer;min-height:44px;";
+    yes.textContent = t("presets.add");
+    row.appendChild(yes);
+
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = inp.value;
+      dlg.close();
+      onOk(v);
     });
-    touch();
-    save();
-    renderPresets();
-    showToast(t("presets.saved"));
+    dlg.appendChild(form);
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { inp.focus(); inp.select(); }, 50);
   }
 
   // ---------- 10d. Statistics ----------
@@ -1118,7 +1258,7 @@
   }
 
   function sliceGet() {
-    return JSON.parse(JSON.stringify(state));
+    return canonState(state);   // DC-1: canonical copy (R26)
   }
 
   function sliceSet(data, info) {
@@ -1126,6 +1266,8 @@
     window.__orosSyncApi._suppress = true;
     try {
       state = data;
+      if (!state.deleted || typeof state.deleted !== "object") state.deleted = {};
+      if (!Array.isArray(state.presets)) state.presets = [];
       pruneTombstones(state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } finally {

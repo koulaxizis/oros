@@ -20,8 +20,6 @@
   --font: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-[hidden] { display: none !important; }
-
 * { box-sizing: border-box; }
 
 html, body {
@@ -571,4 +569,14 @@ dialog#dlg-help { width: min(400px, calc(100vw - 24px)); }
 @media (max-width: 640px) {
   #main { padding: 10px; }
   .char-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  /* CH-7: touch targets ≥44px (Part VII) */
+  #topbar { height: 52px; }
+  .tb-tab { height: 52px; }
+  .tb-btn { height: 44px; min-width: 44px; }
+  .btn, .search-row input, .pop-item { min-height: 44px; }
+  .dlg-x, .trait-del { width: 44px; height: 44px; }
+  .toast button.t-act { min-width: 44px; min-height: 36px; }
 }
+
+/* ---------- [hidden] must ALWAYS win (last rule, Part II) ---------- */
+[hidden] { display: none !important; }

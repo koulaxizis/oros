@@ -485,7 +485,7 @@ dialog menu button.danger:hover {
 }
 
 /* ---------- 12. Utilities ---------- */
-[hidden] { display: none !important; }
+/* [hidden] lives at the very end of the file (Part II: last rule). */
 
 /* ---------- 13. Tag chips (rows) ---------- */
 .tag-chip {
@@ -992,3 +992,25 @@ dialog menu button.danger:hover {
 }
 
 /* ---------- 21. Duplicates mobile adjustments ---------- */
+
+/* ---------- 22. BM-5: phone toolbar + touch targets ---------- */
+/* The controls row (search + 6 icon buttons + sort) is wider than a
+   390px phone: the search box collapsed to nothing and the folder
+   menu button was pushed off-screen (unreachable). On phones the
+   search takes its own line and the buttons wrap below it. */
+@media (max-width: 480px) {
+  #controls { flex-wrap: wrap; row-gap: 8px; }
+  #search-wrap { flex: 1 1 100%; }
+  #controls .spacer { display: none; }
+}
+@media (pointer: coarse) {
+  .ctrl-btn.icon { width: 44px; height: 44px; }
+  #sort-wrap select { min-height: 44px; }
+  #tab-add { min-width: 44px; min-height: 44px; }
+  #tabs .tab { min-height: 44px; }
+  .item .open-btn { width: 44px; height: 44px; }
+  #bulk-bar button { min-height: 44px; }
+}
+
+/* ---------- X. [hidden] must ALWAYS win (last rule) ---------- */
+[hidden] { display: none !important; }

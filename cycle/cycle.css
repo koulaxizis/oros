@@ -728,3 +728,12 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+/* CY-8: phone touch targets for the timeline (the base rules are injected by cycle.js) */
+@media (pointer: coarse) {
+  button.tl-nav { min-width: 36px; min-height: 36px; }
+}
+button.tl-dot::after {   /* bigger hit area, same 8px dot */
+  content: "";
+  position: absolute;
+  inset: -10px;
+}

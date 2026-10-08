@@ -34,6 +34,8 @@
 
   var STORAGE_KEY = "oros-quote-data";
   var DRAFT_KEY   = "oros-quote-draft";   // device-local draft shelter — ΠΟΤΕ synced
+  var PREFS_KEY   = "oros-quote-prefs";   // QT-11: device-local (activeQuoteId) — ΠΟΤΕ synced
+  var RESCUE_KEY  = "oros-quote-data-broken";   // QT-13: αντίγραφο μη αναγνώσιμων δεδομένων
   var DATA_VER = 1;
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 ημέρες
 
@@ -52,7 +54,7 @@
       "search.ph":             "Search…",
       "search.clear":          "Clear search",
       "filter.status":         "Filter by status",
-      "filter.empty":          "No statuses selected.",
+
       "status.draft":         "Draft",
       "status.sent":          "Sent",
       "status.accepted":      "Accepted",
@@ -95,7 +97,7 @@
       "inst.title":           "Instalments",
       "inst.count":           "Count",
       "inst.generate":        "Generate",
-      "inst.date":            "Date",
+
       "inst.amount":          "Amount",
       "inst.sum":            "Sum:",
       "inst.mismatch":        "does not match total",
@@ -116,13 +118,14 @@
       "list.empty_title":     "No quotes yet",
       "list.empty_hint":      "Create your first quote in the Create tab.",
       "list.no_match":        "No quotes match the current search/filters.",
-      "list.open":            "Open",
+
       "templates.manage":     "Template Library",
       "templates.use":        "Use",
       "templates.empty":      "No templates saved yet.",
-      "templates.close":      "Close",
       "save":                 "Save",
       "close":                "Close",
+      "cancel":               "Cancel",
+      "toast.quota":          "Storage is full: changes are not saved on this device",
       "toast.saved":          "Quote saved",
       "toast.deleted":        "Quote deleted",
       "toast.duplicated":     "Duplicated — save to persist",
@@ -136,7 +139,7 @@
       "confirm.template_del": "Delete this template?",
       "template.name_ph":     "Template name",
       "pdf.header_client":    "Quote for",
-      "pdf.page":             "Page 1",
+
       "app.title_short":      "Quote",
       "paypresets.edit":      "Edit payment presets",
       "paypresets.hint":      "Click a preset to insert its text into the offer. Click the pencil to customize.",
@@ -152,7 +155,7 @@
       "search.ph":             "Αναζήτηση…",
       "search.clear":          "Καθαρισμός αναζήτησης",
       "filter.status":         "Φίλτρο κατά κατάσταση",
-      "filter.empty":          "Δεν έχουν επιλεγεί καταστάσεις.",
+
       "status.draft":         "Πρόχειρη",
       "status.sent":          "Απεστάλη",
       "status.accepted":      "Αποδεκτή",
@@ -195,7 +198,7 @@
       "inst.title":           "Δόσεις",
       "inst.count":           "Πλήθος",
       "inst.generate":        "Δημιουργία",
-      "inst.date":            "Ημερομηνία",
+
       "inst.amount":          "Ποσό",
       "inst.sum":            "Σύνολο δόσεων:",
       "inst.mismatch":        "δεν αντιστοιχεί στο σύνολο",
@@ -216,13 +219,14 @@
       "list.empty_title":     "Δεν υπάρχουν προσφορές",
       "list.empty_hint":      "Δημιούργησε την πρώτη σου προσφορά στη καρτέλα Δημιουργία.",
       "list.no_match":        "Καμία προσφορά δεν ταιριάζει με την αναζήτηση/φίλτρα.",
-      "list.open":            "Άνοιγμα",
+
       "templates.manage":     "Βιβλιοθήκη Προτύπων",
       "templates.use":        "Χρήση",
       "templates.empty":      "Δεν υπάρχουν αποθηκευμένα πρότυπα.",
-      "templates.close":      "Κλείσιμο",
       "save":                 "Αποθήκευση",
       "close":                "Κλείσιμο",
+      "cancel":               "Άκυρο",
+      "toast.quota":          "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές δεν αποθηκεύονται σε αυτή τη συσκευή",
       "toast.saved":          "Η προσφορά αποθηκεύτηκε",
       "toast.deleted":        "Η προσφορά διαγράφηκε",
       "toast.duplicated":     "Αντιγράφηκε — αποθήκευσε για οριστικοποίηση",
@@ -236,7 +240,7 @@
       "confirm.template_del": "Διαγραφή αυτού του προτύπου;",
       "template.name_ph":     "Όνομα προτύπου",
       "pdf.header_client":    "Προσφορά για",
-      "pdf.page":             "Σελίδα 1",
+
       "app.title_short":      "Προσφορά",
       "paypresets.edit":      "Επεξεργασία presets πληρωμής",
       "paypresets.hint":      "Πάτησε ένα preset για να εισαχθεί το κείμενό του στην προσφορά. Με το μολύβι το προσαρμόζεις.",
@@ -483,27 +487,60 @@
     return tomb;
   }
 
-  function load() {
+  function readPrefs() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var data = migrate(JSON.parse(raw));
-        if (data) {
-          state = data;
-          return;
-        }
+      var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
+      return (p && typeof p === "object") ? p : {};
+    } catch (e) { return {}; }
+  }
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+    if (raw) {
+      var data = null;
+      try { data = migrate(JSON.parse(raw)); } catch (e) { data = null; }
+      if (data) {
+        // QT-11: το activeQuoteId ζει στο prefs key· τα παλιά
+        // δεδομένα το είχαν μέσα στο blob (fallback, additive).
+        var prefs = readPrefs();
+        if (typeof prefs.activeQuoteId === "string" || prefs.activeQuoteId === null)
+          data.activeQuoteId = prefs.activeQuoteId;
+        if (data.activeQuoteId === undefined) data.activeQuoteId = null;
+        state = data;
+        writeStore();             // μία φορά σε κανονική μορφή (χωρίς dirty)
+        return;
       }
-    } catch (e) { /* corrupted → fresh start */ }
-    state = { ver: DATA_VER, om: Date.now(), deleted: {},
+      // QT-13: μη αναγνώσιμα δεδομένα — κρατάμε αντίγραφο πριν το
+      // fresh start, ώστε να μη χαθούν οριστικά.
+      try { localStorage.setItem(RESCUE_KEY, raw); } catch (e) {}
+    }
+    // QT-15 (A67 Q3): το fresh state δεν κερδίζει ποτέ τη σειρά άλλης
+    // συσκευής — om 0, όπως κάθε seed.
+    state = { ver: DATA_VER, om: 0, deleted: {},
           activeQuoteId: null, quotes: [], clients: [], templates: [],
           payMethods: [] };
     seedPayMethods();
-    save();
+    writeStore();
+  }
+
+  // QT-11: ο δίσκος κρατά ΑΚΡΙΒΩΣ ό,τι δίνει ο getter (κανονική μορφή)
+  // + το device-local activeQuoteId σε δικό του key. Έτσι και το
+  // closed-app proxy του sync.js βλέπει το ίδιο payload με την app.
+  var quotaWarned = false;
+  function writeStore() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(canonState(state)));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ activeQuoteId: state.activeQuoteId || null }));
+      quotaWarned = false;
+    } catch (e) {
+      // R30: ένα μήνυμα ανά αποτυχία, όχι σιωπή.
+      if (!quotaWarned) { quotaWarned = true; notifyTransient(t("toast.quota")); }
+    }
   }
 
   function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { /* quota exceeded */ }
+    writeStore();
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
@@ -528,6 +565,40 @@
   }
 
   // ---------- 3. Merge engine (cross-device) ----------
+  // QT-11: κανονική μορφή — ταξινομημένα keys σε κάθε επίπεδο, pos =
+  // θέση στη λίστα, tombstones κλαδεμένα ντετερμινιστικά. Getter,
+  // merge και δίσκος δίνουν byte-ίδια έξοδο για τα ίδια δεδομένα,
+  // αλλιώς κάθε γύρος sync ανεβάζει ξανά (A67 Q4).
+  var ENTITY_LISTS = ["quotes", "clients", "templates", "payMethods"];
+
+  function canonObj(v) {
+    if (Array.isArray(v)) return v.map(canonObj);
+    if (!v || typeof v !== "object") return v;
+    var out = {};
+    Object.keys(v).sort().forEach(function (k) {
+      if (v[k] !== undefined) out[k] = canonObj(v[k]);
+    });
+    return out;
+  }
+
+  function canonState(s) {
+    var src = s || {};
+    var out = {};
+    Object.keys(src).forEach(function (k) {
+      if (k !== "activeQuoteId") out[k] = src[k];
+    });
+    out = canonObj(out);
+    out.ver = DATA_VER;
+    out.om = typeof out.om === "number" ? out.om : 0;
+    ENTITY_LISTS.forEach(function (k) {
+      var arr = Array.isArray(out[k]) ? out[k] : [];
+      arr.forEach(function (e, i) { e.pos = i; });
+      out[k] = arr;
+    });
+    out.deleted = pruneDeletedMap(out.deleted, out);
+    return canonObj(out);
+  }
+
   function mergeEntityMaps(aDel, bDel) {
     var out = {};
     var a = aDel || {}, b = bDel || {};
@@ -547,7 +618,9 @@
     if ((a.mtime || 0) !== (b.mtime || 0)) {
       return (a.mtime || 0) > (b.mtime || 0) ? a : b;
     }
-    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
+    // QT-11: tie-break σε κανονική μορφή — η σειρά των keys δεν
+    // επιτρέπεται να αλλάζει τον νικητή ανάλογα με τη συσκευή.
+    return JSON.stringify(canonObj(a)) >= JSON.stringify(canonObj(b)) ? a : b;
   }
 
   function unionEntities(aArr, bArr, tomb) {
@@ -577,15 +650,36 @@
     return entities;
   }
 
-  function pickRef(aArr, bArr, aOm, bOm) {
+  // QT-11: με ίσο om καμία πλευρά δεν είναι «νεότερη». Αναφορά γίνεται
+  // η πλευρά που περιέχει ΟΛΑ τα ζωντανά entities· αν το κάνουν και οι
+  // δύο με διαφορετική σειρά (ή καμία), η σειρά βγαίνει μόνο από
+  // mtime/id. Έτσι η merge είναι συμμετρική, idempotent και
+  // merge(merge(a, b), b) = merge(a, b).
+  function pickRef(aArr, bArr, aOm, bOm, out) {
     if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
-    var ka = JSON.stringify((aArr || []).map(function (e) { return e.id; }));
-    var kb = JSON.stringify((bArr || []).map(function (e) { return e.id; }));
-    return ka >= kb ? aArr : bArr;
+    var alive = {};
+    out.forEach(function (e) { alive[e.id] = true; });
+    var seq = function (arr) {
+      return (arr || []).filter(function (e) { return alive[e.id]; })
+                        .map(function (e) { return e.id; }).join("\u0001");
+    };
+    var full = function (arr) {
+      var seen = {}, n = 0;
+      (arr || []).forEach(function (e) {
+        if (alive[e.id] && !seen[e.id]) { seen[e.id] = true; n++; }
+      });
+      return n === out.length;
+    };
+    var fa = full(aArr), fb = full(bArr);
+    if (fa && fb) return seq(aArr) === seq(bArr) ? aArr : [];
+    if (fa) return aArr;
+    if (fb) return bArr;
+    return [];
   }
 
   function mergeQuoteStates(A, B) {
-    var a = A || {}, b = B || {};
+    var a = JSON.parse(JSON.stringify(A || {}));
+    var b = JSON.parse(JSON.stringify(B || {}));
 
     // Q-1: pruning moved to the sliceGet payload boundary and made
     // deterministic (dataset maxTs) — never Date.now(). The merge
@@ -597,15 +691,15 @@
     var templates = unionEntities(a.templates, b.templates, tomb);
     var payMethods = unionEntities(a.payMethods, b.payMethods, tomb);
 
-    return {
+    return canonState({
       ver: DATA_VER,
       om: Math.max(a.om || 0, b.om || 0),
       deleted: tomb,
-      quotes: orderEntities(quotes, pickRef(a.quotes, b.quotes, a.om, b.om)),
-      clients: orderEntities(clients, pickRef(a.clients, b.clients, a.om, b.om)),
-      templates: orderEntities(templates, pickRef(a.templates, b.templates, a.om, b.om)),
-      payMethods: orderEntities(payMethods, pickRef(a.payMethods, b.payMethods, a.om, b.om))
-    };
+      quotes: orderEntities(quotes, pickRef(a.quotes, b.quotes, a.om, b.om, quotes)),
+      clients: orderEntities(clients, pickRef(a.clients, b.clients, a.om, b.om, clients)),
+      templates: orderEntities(templates, pickRef(a.templates, b.templates, a.om, b.om, templates)),
+      payMethods: orderEntities(payMethods, pickRef(a.payMethods, b.payMethods, a.om, b.om, payMethods))
+    });
   }
 
   // ---------- 4. Υπολογισμοί (pure functions) ----------
@@ -665,12 +759,7 @@
     state.activeQuoteId = id;
     // Quiet persist: device-local τιμή — δεν ταξιδεύει στο cloud,
     // άρα ΔΕΝ κάνουμε dirty/push, μόνο τοπική επιβίωση σε reload.
-    window.__orosSyncApi._suppress = true;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } finally {
-      window.__orosSyncApi._suppress = false;
-    }
+    writeStore();
     loadOfferIntoEditor();
     switchTab("create");
   }
@@ -965,6 +1054,7 @@
     (cur.instalments || []).forEach(function (ins) {
       var row = document.createElement("div");
       row.className = "inst-row";
+      row.dataset.insId = ins.id;
 
       var dt = document.createElement("input");
       dt.type = "date";
@@ -1156,10 +1246,66 @@
     clientSnapshot = null;
   });
 
+  // QT-12 (R14): θεματικά dialogs αντί για native confirm()/prompt().
+  // Esc/Άκυρο = τίποτα· στα καταστροφικά το focus ξεκινά στο Άκυρο,
+  // ώστε ένα Enter να μη διαγράφει.
+  function askDialog(opts) {
+    var stale = document.getElementById("quote-confirm");
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "quote-confirm";
+    dlg.className = "q-confirm";
+    var form = document.createElement("form");
+    form.method = "dialog";
+    var msg = document.createElement("p");
+    msg.className = "qc-msg";
+    msg.textContent = opts.text;
+    form.appendChild(msg);
+    var inp = null;
+    if (typeof opts.input === "string") {
+      inp = document.createElement("input");
+      inp.type = "text";
+      inp.autocomplete = "off";
+      inp.value = opts.input;
+      form.appendChild(inp);
+    }
+    var menu = document.createElement("menu");
+    var no = document.createElement("button");
+    no.type = "button";
+    no.textContent = t("cancel");
+    no.addEventListener("click", function () { dlg.close(); });
+    menu.appendChild(no);
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    menu.appendChild(sp);
+    var yes = document.createElement("button");
+    yes.type = "submit";
+    yes.className = "qc-yes" + (opts.danger ? " danger" : "");
+    yes.textContent = opts.yes;
+    menu.appendChild(yes);
+    form.appendChild(menu);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var val = inp ? inp.value : true;
+      dlg.close();
+      opts.onYes(val);
+    });
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    if (inp) { inp.focus(); inp.select(); } else { no.focus(); }
+  }
+
   function deleteClientFromDialog() {
     if (!editingClientId) return;
-    if (!confirm(t("confirm.client_del"))) return;
-    var id = editingClientId;
+    var cid = editingClientId;
+    askDialog({ text: t("confirm.client_del"), yes: t("client.delete"), danger: true,
+                onYes: function () { deleteClientNow(cid); } });
+  }
+
+  function deleteClientNow(id) {
+    if (!clientById(id)) { if ($("dlg-client").open) $("dlg-client").close(); return; }
     state.deleted[id] = Date.now();
     state.clients = state.clients.filter(function (c) { return c.id !== id; });
     state.om = Date.now();
@@ -1170,13 +1316,19 @@
     }
     save(); scheduleRender();
     notifyTransient(t("toast.client_deleted"));
-    $("dlg-client").close();
+    if ($("dlg-client").open) $("dlg-client").close();
   }
   
     // ---------- 8. Templates ----------
   function saveCurrentAsTemplate() {
-    var cl = cur.clientId ? clientById(cur.clientId) : null;
-    var name = prompt(t("template.name_ph"), (cl ? cl.name + " — " : ""));
+    var src = cur;
+    var cl = src.clientId ? clientById(src.clientId) : null;
+    askDialog({ text: t("template.name_ph"), input: (cl ? cl.name + " — " : ""),
+                yes: t("save"),
+                onYes: function (name) { saveTemplateFrom(src, name); } });
+  }
+
+  function saveTemplateFrom(cur, name) {
     if (!name || !name.trim()) return;
     var tp = {
       id: uid(),
@@ -1250,11 +1402,14 @@
         '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
       del.addEventListener("click", function () {
         // #2: δικό του μήνυμα — όχι το "delete this quote?"
-        if (!confirm(t("confirm.template_del"))) return;
-        state.deleted[tp.id] = Date.now();
-        state.templates = state.templates.filter(function (x) { return x !== tp; });
-        state.om = Date.now();
-        save(); renderTemplateGrid();
+        var tid = tp.id;
+        askDialog({ text: t("confirm.template_del"), yes: t("client.delete"), danger: true,
+                    onYes: function () {
+          state.deleted[tid] = Date.now();
+          state.templates = state.templates.filter(function (x) { return x.id !== tid; });
+          state.om = Date.now();
+          save(); renderTemplateGrid();
+        } });
       });
       row.appendChild(del);
 
@@ -1755,34 +1910,77 @@
   }
 
   function sliceGet() {
-    var out = JSON.parse(JSON.stringify(state));
-    delete out.activeQuoteId;   // device-local — δεν ταξιδεύει ποτέ στο cloud
-    out.deleted = pruneDeletedMap(out.deleted, out);
-    return out;
+    // QT-11: κανονική μορφή (χωρίς το device-local activeQuoteId,
+    // tombstones κλαδεμένα) — byte-ίδια με την έξοδο της merge.
+    return canonState(state);
+  }
+
+  // Q1 (QT-14): ένα pull δεν επιτρέπεται να πετάξει το focus/caret
+  // του χρήστη. Αν η ανοιχτή προσφορά ΔΕΝ άλλαξε, κρατάμε το ίδιο
+  // αντικείμενο (οι handlers των γραμμών μένουν δεμένοι)· αν άλλαξε,
+  // ξαναζωγραφίζουμε και επαναφέρουμε focus + επιλογή.
+  function quoteSig(q) {
+    var c = canonObj(q || {});
+    delete c.pos;
+    return JSON.stringify(c);
+  }
+
+  function captureFocus() {
+    var el = document.activeElement;
+    if (!el || el === document.body || !el.closest) return null;
+    var f = { sel: null, s: null, e: null };
+    try { f.s = el.selectionStart; f.e = el.selectionEnd; } catch (e) {}
+    var cls = (el.className || "").split(" ")[0];
+    var esc1 = function (v) {
+      return (window.CSS && CSS.escape) ? CSS.escape(v) : v;
+    };
+    var row = el.closest(".item-row, .inst-row");
+    if (row && row.dataset.itemId && cls)
+      f.sel = '.item-row[data-item-id="' + esc1(row.dataset.itemId) + '"] .' + cls;
+    else if (row && row.dataset.insId && cls)
+      f.sel = '.inst-row[data-ins-id="' + esc1(row.dataset.insId) + '"] .' + cls;
+    else if (el.id)
+      f.sel = "#" + esc1(el.id);
+    return f.sel ? f : null;
+  }
+
+  function restoreFocus(f) {
+    if (!f) return;
+    var el = document.querySelector(f.sel);
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    if (f.s !== null && f.s !== undefined) {
+      try { el.setSelectionRange(f.s, f.e); } catch (e) { /* number inputs */ }
+    }
   }
 
   function sliceSet(data, info) {
     data = migrate(JSON.parse(JSON.stringify(data || null)));
     if (!data) return;
 
-    window.__orosSyncApi._suppress = true;
-    try {
-      if (!data.activeQuoteId) data.activeQuoteId = state.activeQuoteId;
-      if (data.activeQuoteId &&
-          !quoteByIdIn(data.quotes, data.activeQuoteId)) {
-        data.activeQuoteId = data.quotes.length > 0 ? data.quotes[0].id : null;
-      }
-      state = data;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } finally {
-      window.__orosSyncApi._suppress = false;
+    var focus = captureFocus();
+    data.activeQuoteId = state.activeQuoteId || null;
+    if (data.activeQuoteId &&
+        !quoteByIdIn(data.quotes, data.activeQuoteId)) {
+      data.activeQuoteId = data.quotes.length > 0 ? data.quotes[0].id : null;
     }
+    state = data;
+    writeStore();                 // χωρίς dirty: είναι το αποτέλεσμα του sync
 
     if (!curIsDraft && cur) {
-      var live = quoteById(cur.id);
-      if (live) {
-        cur = live;
-        loadOfferIntoEditor();
+      var idx = -1;
+      for (var i = 0; i < state.quotes.length; i++)
+        if (state.quotes[i].id === cur.id) { idx = i; break; }
+      if (idx >= 0) {
+        var live = state.quotes[idx];
+        if (quoteSig(live) === quoteSig(cur)) {
+          cur.pos = live.pos;
+          state.quotes[idx] = cur;          // ίδιο αντικείμενο — τίποτα δεν ξαναχτίζεται
+        } else {
+          cur = live;
+          loadOfferIntoEditor();
+          restoreFocus(focus);
+        }
       } else {
         newDraft();
         notifyTransient(t("toast.sync_replaced"));
@@ -1874,13 +2072,18 @@
 
   function deleteCurrent() {
     if (curIsDraft) { newDraft(); return; }
-    if (!confirm(t("confirm.delete"))) return;
-    state.deleted[cur.id] = Date.now();
-    state.quotes = state.quotes.filter(function (q) { return q !== cur; });
+    var qid = cur.id;
+    askDialog({ text: t("confirm.delete"), yes: t("client.delete"), danger: true,
+                onYes: function () { deleteQuoteNow(qid); } });
+  }
+
+  function deleteQuoteNow(id) {
+    state.deleted[id] = Date.now();
+    state.quotes = state.quotes.filter(function (q) { return q.id !== id; });
     state.om = Date.now();
-    state.activeQuoteId = null;
+    if (state.activeQuoteId === id) state.activeQuoteId = null;
     save();
-    newDraft();
+    if (!curIsDraft && cur && cur.id === id) newDraft();
     renderQuoteList();
     notifyTransient(t("toast.deleted"));
   }

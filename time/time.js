@@ -75,6 +75,7 @@
       "zones.title": "Παγκόσμια ώρα", "zones.add": "Προσθήκη", "zones.dlg": "Προσθήκη ζώνης ώρας",
       "zones.ok": "Προσθήκη", "zones.cancel": "Άκυρο", "zones.none": "Δεν έχουν προστεθεί ζώνες",
       "zones.edit": "Αλλαγή ζώνης", "zones.del": "Διαγραφή ζώνης",
+      "qc.athens": "Αθήνα", "qc.london": "Λονδίνο", "qc.nyork": "Νέα Υόρκη", "qc.tokyo": "Τόκιο",
       "tab.alarm": "Ξυπνητήρι", "tab.timer": "Αντίστροφη μέτρηση", "tab.stopwatch": "Χρονόμετρο", "tab.pomodoro": "Pomodoro",
       "al.ph.label": "Ετικέτα…", "al.daily": "Καθημερινά", "al.sound": "Ήχος",
       "al.add": "Προσθήκη ξυπνητηριού", "al.none": "Κανένα ξυπνητήρι",
@@ -194,7 +195,10 @@
         if (t > 0 && t >= ((state.astro && state.astro.mtime) || 0)) state.astro = null;
       }
     } catch (e) { /* unreadable/empty — keep in-memory state */ }
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    // TM-1: persist the canonical form (same bytes the getter and
+    // the merge produce) — a stored blob in another key order made
+    // every sync cycle "changed" and uploaded it again, forever.
+    try { localStorage.setItem(DATA_KEY, JSON.stringify(canonTime(state))); } catch (e) {}
     markDirty();
   }
 
@@ -489,7 +493,7 @@
   function zFmt(tz) {
     if (!zoneFmt[tz]) {
       zoneFmt[tz] = new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
-        { timeZone: tz, hour: "2-digit", minute: "2-digit" });
+        { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });   // TM-5: 24h in Greek too
     }
     return zoneFmt[tz];
   }
@@ -1132,13 +1136,24 @@
 
     var mA = (la.astro && typeof la.astro.lat === "number" && typeof la.astro.lon === "number") ? la.astro : null;
     var mB = (rb.astro && typeof rb.astro.lat === "number" && typeof rb.astro.lon === "number") ? rb.astro : null;
-    var astro = (mA && mB) ? (((mB.mtime || 0) > (mA.mtime || 0)) ? mB : mA) : (mA || mB || null);
+    var astro;
+    if (mA && mB) {
+      // TM-2: equal stamps → lexical JSON (was "local wins": two
+      // devices could each keep their own copy)
+      if ((mA.mtime || 0) !== (mB.mtime || 0)) astro = ((mB.mtime || 0) > (mA.mtime || 0)) ? mB : mA;
+      else astro = JSON.stringify(mA) >= JSON.stringify(mB) ? mA : mB;
+    } else {
+      astro = mA || mB || null;
+    }
     // #1: deletion tombstone — Clear on one device must reach the
     // others. Tomb wins on tie (zone-tombstone contract).
     var tA = (typeof la.astroTomb === "number" && isFinite(la.astroTomb)) ? la.astroTomb : 0;
     var tB = (typeof rb.astroTomb === "number" && isFinite(rb.astroTomb)) ? rb.astroTomb : 0;
     var astroTomb = Math.max(tA, tB);
-    if (astro && astroTomb >= (astro.mtime || 0)) astro = null;
+    // TM-2: no tombstone (0) never erases a location — a location
+    // saved before stamps existed (mtime 0) was dropped by every merge.
+    if (astro && astroTomb > 0 && astroTomb >= (astro.mtime || 0)) astro = null;
+    if (astro) astro = { lat: astro.lat, lon: astro.lon, mtime: (typeof astro.mtime === "number" && isFinite(astro.mtime)) ? astro.mtime : 0 };
 
     return {
       ver: 1,
@@ -1154,6 +1169,13 @@
       astro: astro,
       astroTomb: astroTomb
     };
+  }
+
+  // TM-1: ONE canonical form for getter, storage and merge output
+  // (fixed key order, zones / tombstones sorted by tz). The engine
+  // compares JSON strings: any other order is "changed" every cycle.
+  function canonTime(s) {
+    return mergeTime(s, s);
   }
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
@@ -1179,11 +1201,13 @@
     }
     state.zones        = (Array.isArray(data.zones) ? data.zones : []).map(sanitizeZone).filter(Boolean);
     state.zonesDeleted = (Array.isArray(data.zonesDeleted) ? data.zonesDeleted : []).map(sanitizeZoneTomb).filter(Boolean);
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    try { localStorage.setItem(DATA_KEY, JSON.stringify(canonTime(state))); } catch (e) {}   // TM-1
     applyStyle();
     $("al-sound").checked = state.sound;
-    $("pm-work").value = state.pmWork;
-    $("pm-break").value = state.pmBreak;
+    // TM-6: a field the user is typing in is not overwritten by a pull
+    // (its change event would then save the pulled value as an edit)
+    if (document.activeElement !== $("pm-work")) $("pm-work").value = state.pmWork;
+    if (document.activeElement !== $("pm-break")) $("pm-break").value = state.pmBreak;
     pmPaint();
     convOn = state.convOn;
     convSync();
@@ -1196,8 +1220,11 @@
       window.parent.orosSync.registerSlice(
         "time",
         function () {     // getter: localStorage is the durable truth
-          try { return JSON.parse(localStorage.getItem(DATA_KEY)) || state; }
-          catch (e) { return state; }
+          // TM-1: canonical — exactly what mergeTime returns for it
+          var s;
+          try { s = JSON.parse(localStorage.getItem(DATA_KEY)) || state; }
+          catch (e) { s = state; }
+          return canonTime(s);
         },
         setFromSync,
         DATA_KEY,          // persisted → closed-app proxies on next boots
