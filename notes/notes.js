@@ -67,8 +67,16 @@
   }
 
   function loadData() {
-    var raw = null;
-    try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+    var raw = null, rawStr = null;
+    try { rawStr = localStorage.getItem(STORAGE_KEY); } catch (e0) {}
+    try { raw = JSON.parse(rawStr); } catch (e) {}
+    if (rawStr && (!raw || typeof raw !== "object")) {
+      // NO-9: unreadable stored notes are copied aside before the
+      // fresh start below writes over them (rescue copy, never synced).
+      try {
+        if (!localStorage.getItem(STORAGE_KEY + "-broken")) localStorage.setItem(STORAGE_KEY + "-broken", rawStr);
+      } catch (e1) {}
+    }
     if (!raw || typeof raw !== "object") {
       // SEED DEFERRAL (v0.36.00): do NOT populate defaults immediately.
       // If a sync pull is pending/completed, the merge engine will
