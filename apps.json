@@ -288,6 +288,14 @@
       "icon": "whack",
       "url": "whack/",
       "type": "internal"
+    },
+    {
+      "id": "snake",
+      "name": "Snake",
+      "category": "Games",
+      "icon": "snake",
+      "url": "snake/",
+      "type": "internal"
     }
   ]
 }
