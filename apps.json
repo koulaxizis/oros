@@ -272,6 +272,14 @@
       "icon": "lightsout",
       "url": "lightsout/",
       "type": "internal"
+    },
+    {
+      "id": "whack",
+      "name": "Whack-a-Mole",
+      "category": "Games",
+      "icon": "whack",
+      "url": "whack/",
+      "type": "internal"
     }
   ]
 }
