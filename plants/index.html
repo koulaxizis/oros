@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Plant Care · orOS</title>
+
+  <link rel="stylesheet" href="plants.css?v=0.45.12">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" id="tab-today" role="tab" data-view="today"></button>
+      <button type="button" class="tab" id="tab-plants" role="tab" data-view="plants"></button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Today: late, today, next 7 days -->
+    <section id="view-today" class="view" role="tabpanel" aria-labelledby="tab-today">
+      <div id="rooms-today" class="chips" hidden></div>
+      <div id="wx-banner" class="banner" hidden></div>
+      <div id="today-list"></div>
+      <div id="today-empty" class="empty" hidden></div>
+    </section>
+
+    <!-- All plants -->
+    <section id="view-plants" class="view" role="tabpanel" aria-labelledby="tab-plants" hidden>
+      <div class="search-row">
+        <input id="search" type="search" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="rooms-plants" class="chips" hidden></div>
+      <div id="plant-grid"></div>
+      <div id="plants-empty" class="empty" hidden></div>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.45.12"></script>
+  <script src="plants.js?v=0.45.12"></script>
+
+</body>
+</html>
