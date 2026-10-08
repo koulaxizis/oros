@@ -549,7 +549,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Pet:** oros-pet-enabled, oros-pet-pos, oros-pet-minimized, oros-pet-calendar-sync (read-only legacy mirror of oros-pet-settings).
 - **Radio:** oros-radio-recents, oros-radio-cache:*.
 - **Calendar:** oros-cal-reminders-fired, oros-cal-pending (event deep links `calendar:{evId}:{ymd}`). **[log]** sessionStorage `oros-cal-new` (new-event prefill, BR-W8-2).
-- **Maps [log]:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of an unreadable oros-maps-data), oros-maps-prefs (`{ lat, lon, zoom, layer }`, R10 view state), oros-maps-open (staging). sessionStorage `oros-maps-nav` (timestamp of a running navigation, refreshed every 30 s, removed on exit / arrival / clear route). Cache Storage `oros-map-tiles` (deleted by the factory reset since Dose 2).
+- **Maps [log]:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of an unreadable oros-maps-data), oros-maps-prefs (`{ lat, lon, zoom, layer }`, R10 view state), oros-maps-open (staging), oros-maps-recent (up to 10 recent places `{ name, sub, lat, lon }`, newest first, since 0.43.00). sessionStorage `oros-maps-nav` (timestamp of a running navigation, refreshed every 30 s, removed on exit / arrival / clear route). Cache Storage `oros-map-tiles` (deleted by the factory reset since Dose 2).
 - **Television [log]:** oros-television-recents (cap 20), oros-television-volume. sessionStorage `oros-television-open` (staging). Cache Storage `oros-television-api` (24 h TTL).
 - **Mail [log]:** oros-mail-creds (account passwords; "never synced, never exported" per its note; removed by the factory-reset sweep like every `oros-` key).
 - **Vault [log]:** the manifest revision key (`REV_KEY`; the stored name is not recorded).
@@ -705,7 +705,7 @@ oros-maps-data = { ver:1, places[{ id, name, sub, lat, lon, mtime }], deleted{ <
 - **Merge:** union by id, LWW by mtime (tie: lexicographic JSON); tombstones max-ts union; a place survives only if `mtime > tombstone` (delete wins ties, a newer star resurrects). No tombstone pruning.
 - The places list keeps its visible order (oldest first) although storage is id-sorted.
 - A fresh install persists nothing until the first real change. Unreadable data is copied to `oros-maps-rescue`, never overwritten silently.
-- **Device-local route snapshot** `oros-maps-route`: steps are stored slim, `{ maneuver:{ type, modifier, exit?, location? }, name, ref?, distance, duration }`. OSRM per-step `geometry` and `intersections` are never stored. Cap 600,000 characters; over the cap, or on a quota failure, the key is REMOVED with one toast per session.
+- **Device-local route snapshot** `oros-maps-route`: `{ ver:1, from, to, vias[], profile, geometry, steps, distance, duration }`. `from` / `to` / `vias[]` are `{ lat, lon, name, sub }`; "My location" carries `me: true` (its lat/lon are re-measured whenever a route is calculated). `vias` (stops, at most 3) is additive since 0.43.00: an older snapshot without it restores with no stops. Steps are stored slim, `{ maneuver:{ type, modifier, exit?, location? }, name, ref?, distance, duration, via? }`; `via: n` marks the "arrive" step that ends leg n (stop n), so the panel, the HUD and a re-route know the stops. OSRM per-step `geometry` and `intersections` are never stored. Cap 600,000 characters; over the cap, or on a quota failure, the key is REMOVED with one toast per session.
 
 **TELEVISION v1** [log]:
 
@@ -1173,6 +1173,15 @@ Rebuild this in any session where code is delivered.
 
 ### Decisions (newest first)
 
+- **2026-10-08 · Maps 0.43.00 (Christos chose "fixes + From/To"; assistant decisions inside it)**
+  - The route bar's "set start on map" / "set destination on map" buttons are replaced by one "Edit route" button that opens the planner; every planner row has its own "choose on map" button. The bottom-left "Plan a route" button opens the planner instead of arming a map pick.
+  - A fresh plan starts from "My location". No location at all → no route; the planner opens on the empty field and says so (the map-centre fallback, named "·", is gone).
+  - "Route" in a popup routes from the user's location (as before) unless the planner is open: then the start and stops being edited are kept.
+  - Up to 3 stops (OSRM takes every point in one request). Swap reverses the whole trip.
+  - Recent places are device-local (`oros-maps-recent`, 10), never synced: they are a convenience, not data.
+  - Starting navigation more than 150 m from the route's start recalculates the route from the user's position first, with a toast (offline: guides on the old route, as before).
+  - The "Maps loaded" welcome toast is removed (MP-4).
+
 - **2026-10-08 · Christos (A74, applications menu)**
   - Every boot opens the menu with ALL categories closed; while the session lasts, opening an app keeps the menu as it was left. The collapse state is no longer stored (`oros-menu-cat-collapsed` retired).
   - Each category header shows how many apps it holds.
@@ -1318,7 +1327,7 @@ Rebuild this in any session where code is delivered.
 - ⊗ **Greek wording (suggestions, not applied):** `alarm.title` «Ειδοποίηση» for "Alarm" (the same overlay serves timers); `sync.err.auth` «— επανασύνδεση» → «— συνδέσου ξανά»; English terms left in Greek strings (`sc.info.cap` "Offline-first", "tracking"; "API key" in the service lines; "cloud", "browser").
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
 - ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
-- ⊗ **Maps follow-ups** (not started): heading-up map rotation; "download this area" for offline; reverse geocoding on long-press.
+- ⊗ **Maps follow-ups** (proposals 2026-10-08, `audits/maps-proposals-2026-10-08.md`; 0.43.00 delivered the fixes MX-1…MX-8 and the planner, stops, long-press menu, recents and coordinates). Not started: alternative routes (`alternatives=true`), avoid tolls / motorways (`exclude=`, check the demo server first), arrival clock time, lane hints, heading-up map rotation, "download this area" for offline (mind the OSM tile usage policy), share link / GPX export.
 
 ### Audit queue (assistant-raised; verify, then fix)
 
@@ -2772,3 +2781,16 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** a stuck tile does nothing; an arrow key pushes the right tile; the clock runs after the first move; a 3×3 solved in the optimal 20 moves by tapping, with a centered dialog and both record badges; a row tap moves 3 tiles at once; a swipe pushes a tile; the game resumes after reopening; New game mid-way offers Undo, which restores it; two devices converge with two rows and the records show 2 solved; idle cycles upload 0; a reset empties the other device; the 5×5 board fits with tiles ≥ 66 px and no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors.
 - **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
 - **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
+
+### 2026-10-08 — Maps 0.43.00 — route planner (From / stops / To), long-press menu, navigation fixes
+
+- **Planner:** "Plan a route" and the new "Edit route" button open a From / To panel in place of the search bar. Each field searches like the search bar (Photon, biased to the view) and, before typing, offers "My location", saved places and recent places. Up to 3 stops ("Add stop"), Swap, a remove button per stop and a "choose on map" button per row. The route is calculated as soon as From and To are both set and again on every change. Enter always picks something (R28); Esc closes the results, then the panel.
+- **Long-press / right-click on the map:** Go here · Start here · Add as stop (when a route exists) · Save, titled with the address under the point (Photon `reverse`). Points chosen on the map are named the same way (MX-4, MX-5).
+- **Coordinates** in the search bar and the planner (`37.9755, 23.7348` or `37°58'32"N 23°44'05"E`), offline too.
+- **Recent places:** device-local `oros-maps-recent` (Part III).
+- **Stops:** OSRM legs are joined; the "arrive" step of each leg but the last says "Arrive at stop n" in the panel, the HUD and the voice. A re-route during navigation drops the stops already reached. The route snapshot keeps `vias` (Part IV, additive).
+- **Fixes:** MX-1 the navigation camera no longer snaps back on every GPS fix once the user pans, pinches, scrolls or zooms; a "Recenter" button resumes following, and the follow zoom eases out at speed (17 / 16 / 15). MX-2 starting navigation away from the route's start recalculates from the user's position and says so. MX-3 no route from the map centre named "·". MX-6 the user is an arrow that turns with the direction of travel while navigating. MX-7 no welcome toast. MX-8 the route time has a tooltip "Estimate without live traffic".
+- **Files:** `maps/maps.js`, `maps/maps.css`, `maps/index.html` only (app folder; strings live in `maps.js`). Removed strings: `toast.welcome`, `route.setstart`, `route.setend`, `route.fromCenter`, `route.fromUser`. `APP_VERSION` 0.42.05 → 0.43.00 (whole version: new feature set).
+- **Verification (Chromium, mocked Photon / OSRM / reverse, real geolocation API):** standalone, 52 checks: From defaults to My location and To gets the focus; Photon suggestions and Enter route; a stop by coordinates sends start;stop;end; directions say "Arrive at stop 1" once; Swap reverses the trip and resolves My location as destination; removing a stop recalculates; a row's map pick is named "Ermou 10"; the snapshot and a reload keep the stop and "Edit route" shows it; recents list the destination first, never My location; right-click menu actions and address; DMS coordinates; navigation from 3 km away recalculates from the user and says so; dragging shows Recenter, a GPS fix does not steal the view, Recenter resumes; the arrow rotates; exit restores the pin; without location permission no route is made and the planner opens on From. Phone 390×844 EL: nothing off-screen, every planner / route-bar button ≥ 44 px, planner and docked route bar do not overlap. Real shell + real `sync.js` + mock Dropbox, two devices: a place saved from the long-press menu on A reaches B; 0 uploads over 3 idle rounds; recents are not in the slice; no page errors.
+- **NOT tested:** the real Photon / OSRM servers (no network from the test container: `reverse`, multi-point routes and `lang=el` are used as documented), Firefox / Safari, a real phone (iOS long-press relies on Leaflet's `tapHold`), real GPS heading.
+- **Status:** branch `claude/project-thread-6vy11s`, own PR; not on `main` (R4).
