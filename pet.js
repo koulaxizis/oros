@@ -118,6 +118,8 @@
       "action.rename":   "Rename",
       "action.viewlog":  "Activity log",
       "action.forest":   "Forest",
+      "away.label":      "On a walk · back {time}",
+      "away.title":      "{name} is on a walk in the forest. Open Pet World",
       "action.catch":    "Catch!",
       "menu.pet":        "Screen Pet",
       "confirm.newpet":  "Release {name} and welcome a new pet? This cannot be undone.",
@@ -142,6 +144,7 @@
       "speech.sleep":    ["Good night...", "Zzz...", "Sweet dreams",
                           "Nighty night...", "See you tomorrow..."],
       "speech.fav":      ["My favourite!!", "Yesss, my favourite!", "You remembered!"],
+      "speech.back":     ["I'm back!", "What a walk!", "Look what I found!"],
       "speech.catch":    ["Gotcha!", "Nailed it!", "Awesome!",
                           "Perfect catch!", "Yes!"],
       "speech.contemp":  ["Just thinking...", "Hmm...", "Contemplating...",
@@ -183,6 +186,8 @@
       "action.rename":   "Μετονομασία",
       "action.viewlog":  "Ιστορικό δραστηριότητας",
       "action.forest":   "Δάσος",
+      "away.label":      "Σε βόλτα · γυρνά {time}",
+      "away.title":      "{name}: σε βόλτα στο δάσος. Άνοιξε τον κόσμο του κατοικιδίου",
       "action.catch":    "Πιάσε το!",
       "menu.pet":        "Screen Pet",
       "confirm.newpet":  "Αποχαιρετάς το πλάσμα «{name}» και έρχεται καινούργιο; Δεν αναιρείται.",
@@ -207,6 +212,7 @@
       "speech.sleep":    ["Καληνύχτα...", "Zzz...", "Όνειρα γλυκά",
                           "Υπνάκια...", "Τα λέμε αύριο..."],
       "speech.fav":      ["Το αγαπημένο μου!!", "Ναιιι, το αγαπημένο μου!", "Το θυμήθηκες!"],
+      "speech.back":     ["Γύρισα!", "Τι ωραία βόλτα!", "Δες τι βρήκα!"],
       "speech.catch":    ["Την έπιασα!", "Το 'χω!", "Τέλεια!",
                           "Τι πιάσιμο!", "Ναι!"],
       "speech.contemp":  ["Σκέφτομαι...", "Μμμ...", "Απολαμβάνω...",
@@ -971,6 +977,63 @@ function applyPetSettings(s) {
     runtime.ctx.imageSmoothingEnabled = false;
 
     layer.appendChild(buildBubble());
+
+    // Pet World walk: while the pet is away, this sign stands in for it.
+    var away = document.createElement("button");
+    away.type = "button";
+    away.className = "pet-away";
+    away.hidden = true;
+    away.addEventListener("click", function () {
+      if (typeof window.__orosOpenApp === "function") window.__orosOpenApp("petworld");
+    });
+    layer.appendChild(away);
+    runtime.awayEl = away;
+  }
+
+  // ---------- Pet World walks (read-only) ----------
+  // The forest app owns oros-petnest-data; the companion only reads
+  // it (or, before the app ever ran here, sync's carry copy) to know
+  // whether the pet is out on a walk, and until when.
+  // rows{device:{w{startTs: minutes}}}: away while now < start + length.
+  var NEST_KEY = "oros-petnest-data";
+  function walkUntil(now) {
+    var raw = null, until = 0;
+    try {
+      raw = JSON.parse(localStorage.getItem(NEST_KEY) || "null");
+      // a device that never opened Pet World holds the slice in sync's carry mailbox
+      if (!raw) raw = (JSON.parse(localStorage.getItem("oros-remote-carry") || "null") || {}).petnest || null;
+    } catch (e) { return 0; }
+    if (!raw || typeof raw !== "object" || !raw.rows || typeof raw.rows !== "object") return 0;
+    Object.keys(raw.rows).forEach(function (dev) {
+      var w = raw.rows[dev] && raw.rows[dev].w;
+      if (!w || typeof w !== "object") return;
+      Object.keys(w).forEach(function (k) {
+        var end = Number(k) + Number(w[k]) * 60000;
+        if (isFinite(end) && end > now && end > until) until = end;
+      });
+    });
+    return Math.min(until, now + 24 * 3600000);   // a broken clock never hides the pet for days
+  }
+  function updateAway(now) {
+    if (now - runtime.awayCheckAt < 2000) return;
+    runtime.awayCheckAt = now;
+    var until = walkUntil(now), was = runtime.awayUntil > 0;
+    runtime.awayUntil = until;
+    if (!runtime.canvas || !runtime.awayEl) return;
+    runtime.canvas.style.visibility = until ? "hidden" : "";
+    runtime.awayEl.hidden = !until;
+    if (until) {
+      var d = new Date(until), hm = pad(d.getHours()) + ":" + pad(d.getMinutes());
+      runtime.awayEl.textContent = "\uD83C\uDF92 " + t("away.label", { time: hm });
+      runtime.awayEl.title = t("away.title", { name: state.pet.name });
+      var maxL = Math.max(4, runtime.layer.clientWidth - runtime.awayEl.offsetWidth - 8);
+      runtime.awayEl.style.left = Math.round(clamp(runtime.x, 4, maxL)) + "px";
+      runtime.awayEl.style.top = Math.round(stageBounds().floorY + runtime.canvas.height - 34) + "px";
+      clearTimeout(runtime.bubbleTimer);
+      if (runtime.bubble) runtime.bubble.classList.remove("visible");
+    } else if (was) {
+      speak(speakLine("speech.back"));
+    }
   }
 
   // ---------- 6. Behavior loop (runtime, never synced) ----------
@@ -1001,7 +1064,9 @@ function applyPetSettings(s) {
     ball: null,               // { el, x, y, vy, bornAt, settled }
     lastPetId: "",            // identity-swap guard (sliceSet)
     birthdayShownYmd: "",     // birthday toast dedupe (1x/day)
-    birthdayFiredPetId: null
+    birthdayFiredPetId: null,
+    // Pet World walk (read from oros-petnest-data, never written):
+    awayEl: null, awayUntil: 0, awayCheckAt: 0
   };
 
   // PT-6: stageBounds() runs several times per animation frame. It
@@ -1459,7 +1524,7 @@ function applyPetSettings(s) {
   }
 
   function speak(text) {
-    if (!runtime.bubble || !speechAllowed()) return;
+    if (!runtime.bubble || !speechAllowed() || runtime.awayUntil) return;   // nobody home on a walk
     runtime.bubble.textContent = text;
 
     var b = stageBounds();
@@ -1501,6 +1566,7 @@ function applyPetSettings(s) {
     var now = Date.now();
     var b = stageBounds();
     updateBehavior(dt, now);
+    updateAway(now);
     updateBall(dt, now, b.floorY);                  // v0.3: ball physics
     drawSprite(runtime.stats);
 
@@ -1897,7 +1963,7 @@ function applyPetSettings(s) {
     if (!runtime.active) return;
     if (Date.now() < runtime.catchCooldownUntil) return;
     var stats = computeStats(Date.now(), state.pet);
-    if (stats.asleep) return;
+    if (stats.asleep || runtime.awayUntil) return;   // asleep, or out on a Pet World walk
     spawnBall();
   }
 
@@ -2252,6 +2318,8 @@ function applyPetSettings(s) {
     runtime.contemplateTalkedAt = 0;
     runtime.catchCooldownUntil = 0;
     runtime.ball = null;
+    runtime.awayUntil = 0;
+    runtime.awayCheckAt = 0;
     runtime.lastPetId = state.pet.id;
     runtime.birthdayShownYmd = "";               // let the loop fire if today IS the day
     runtime.birthdayFiredPetId = null;
@@ -2278,6 +2346,7 @@ function applyPetSettings(s) {
     runtime.canvas = null;
     runtime.ctx = null;
     runtime.bubble = null;
+    runtime.awayEl = null;
     runtime.contemplating = false;
     hud = null;                                  // full teardown, no ghosts
   }
@@ -2357,7 +2426,7 @@ function applyPetSettings(s) {
       LANG = currentLang();
       var ok = { "speech.hello": 1, "speech.firstfed": 1, "speech.hungry": 1, "speech.bored": 1,
                  "speech.tired": 1, "speech.happy": 1, "speech.eat": 1, "speech.wake": 1,
-                 "speech.sleep": 1, "speech.contemp": 1, "speech.fav": 1 };
+                 "speech.sleep": 1, "speech.contemp": 1, "speech.fav": 1, "speech.back": 1 };
       if (!ok[group]) return "";
       return group === "speech.hello" ? t(group, { name: state.pet.name }) : speakLine(group);
     },
