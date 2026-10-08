@@ -1,6 +1,6 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
-// Dots & Boxes), Connect 4 win detection, Dots & Boxes rules and the
-// computer players.
+// Dots & Boxes, Tic-Tac-Toe), Connect 4 and Tic-Tac-Toe win
+// detection, Dots & Boxes rules and the computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -52,6 +52,12 @@ const DB = load("dots/dots.js",
   [["  var DATA_VER", "  function appLang("], ["  function pick(", "  // BOOT MARKER"], ["  var GEO", "  function geo("],
    ["  var KEYS", "  var data ="]],
   "geo, sideCounts, replay, safeLines, closingLines, doubleDeal, chooseLine, mergeDots");
+
+const TT = load("tictactoe/tictactoe.js",
+  ["cmpStr", "lineAt", "replay", "freeCells", "winningCells", "minimax", "chooseMove",
+   "normRow", "joinRows", "mergeTicTacToe"],
+  [["  var DATA_VER", "  // ---------- 1."], ["  var LINES", "  function lineAt("]],
+  "replay, chooseMove, winningCells, mergeTicTacToe");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -270,4 +276,73 @@ test("dots: records merge is a join and a reset drops older rows", () => {
   assert.equal(J(reset.rows), "{}");
   const junk = M({ rows: { x: { b: 1, s: { e3: [1, -1, 0], zz: [1, 1, 1] } } } }, null);
   assert.equal(J(junk.rows), "{}");                                        // bad cells drop
+});
+
+test("tictactoe: three in a row in all eight lines, and a draw", () => {
+  const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+  for (const L of lines) {
+    const other = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter((i) => !L.includes(i)).slice(0, 2);
+    const b = TT.replay([L[0], other[0], L[1], other[1], L[2]], 1);
+    assert.deepEqual(b.win, L);
+  }
+  const draw = TT.replay([0, 4, 8, 1, 7, 6, 2, 5, 3], 1);                  // X O X / X O O / O X X
+  assert.equal(draw.win, null);
+  assert.ok(draw.full);
+});
+
+test("tictactoe: hard never loses, starting or not", () => {
+  // The opponent tries every move; hard answers (randomly among its
+  // equal best moves), so the walk is repeated a few times.
+  let games = 0;
+  const walk = (moves, starter, hard) => {
+    const b = TT.replay(moves, starter);
+    if (b.win) { assert.notEqual(3 - b.next, 3 - hard, "hard lost " + J(moves)); games++; return; }
+    if (b.full) { games++; return; }
+    if (b.next === hard) return walk(moves.concat([TT.chooseMove(b.cells, hard, "h")]), starter, hard);
+    for (let i = 0; i < 9; i++) if (!b.cells[i]) walk(moves.concat([i]), starter, hard);
+  };
+  for (let k = 0; k < 4; k++) { walk([], 1, 1); walk([], 1, 2); }
+  assert.ok(games > 100);
+});
+
+test("tictactoe: medium takes a win and blocks a single threat", () => {
+  for (let k = 0; k < 2000; k++) {
+    const moves = [];
+    let b = TT.replay([], 1);
+    const n = rnd(8);
+    while (moves.length < n && !b.win) {
+      const free = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter((i) => !b.cells[i]);
+      moves.push(free[rnd(free.length)]);
+      b = TT.replay(moves, 1);
+    }
+    if (b.win || b.full) continue;
+    const p = b.next;
+    const win = TT.winningCells(b.cells.slice(), p), threat = TT.winningCells(b.cells.slice(), 3 - p);
+    const m = TT.chooseMove(b.cells, p, "m");
+    if (win.length) assert.ok(win.includes(m), "medium misses a win in " + J(moves));
+    else if (threat.length === 1) assert.equal(m, threat[0], "medium fails to block in " + J(moves));
+    if (win.length) assert.ok(win.includes(TT.chooseMove(b.cells, p, "e")), "easy misses a win");
+  }
+});
+
+test("tictactoe: records merge is a join and a reset drops older rows", () => {
+  const M = TT.mergeTicTacToe;
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      ["e", "m", "h"].forEach((l) => { if (rnd(2)) s[l] = [rnd(5), rnd(5), rnd(5)]; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 3000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  assert.equal(J(M({ br: 0, rows: { x: { b: 0, s: { e: [3, 0, 0] } } } }, { br: 50, rows: {} }).rows), "{}");
 });

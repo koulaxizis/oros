@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Dots &amp; Boxes · orOS</title>
+  <title>Tic-Tac-Toe · orOS</title>
 
-  <link rel="stylesheet" href="dots.css?v=0.42.03">
+  <link rel="stylesheet" href="tictactoe.css?v=0.42.03">
 
 </head>
 <body>
@@ -25,11 +25,6 @@
       <button type="button" class="icon-btn" id="new-btn"></button>
     </div>
     <div class="tb-row" id="tb-b">
-      <div class="seg" id="size-seg" role="group">
-        <button type="button" class="seg-btn" data-size="3">3×3</button>
-        <button type="button" class="seg-btn" data-size="4">4×4</button>
-        <button type="button" class="seg-btn" data-size="5">5×5</button>
-      </div>
       <select id="first-select" aria-label="First move">
         <option value="you" data-i18n="first.you">You start</option>
         <option value="ai" data-i18n="first.ai">Computer starts</option>
@@ -42,11 +37,11 @@
     </div>
   </header>
 
-  <!-- Status: whose turn + boxes of this game -->
+  <!-- Status: whose turn + score (this level vs computer, or the series) -->
   <div id="status">
-    <span class="side" id="side0"><i class="disc d1" aria-hidden="true"></i><span id="name0"></span><strong id="score0">0</strong></span>
+    <span class="side" id="side0"><i class="mk c1 x" id="mark0" aria-hidden="true"></i><span id="name0"></span><strong id="score0">0</strong></span>
     <span id="turn" aria-live="polite"></span>
-    <span class="side" id="side1"><strong id="score1">0</strong><span id="name1"></span><i class="disc d2" aria-hidden="true"></i></span>
+    <span class="side" id="side1"><strong id="score1">0</strong><span id="name1"></span><i class="mk c2 o" id="mark1" aria-hidden="true"></i></span>
   </div>
 
   <main id="board-wrap">
@@ -56,7 +51,7 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="dots.js?v=0.42.03"></script>
+  <script src="tictactoe.js?v=0.42.03"></script>
 
 </body>
 </html>
