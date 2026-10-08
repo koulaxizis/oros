@@ -558,7 +558,15 @@
           return;
         }
       }
-    } catch (e) { /* corrupted → fresh start */ }
+    } catch (e) {
+      // TD-13: corrupted → fresh start, but the unreadable text is
+      // copied aside first (rescue copy, never synced) instead of
+      // being overwritten by the save() below.
+      try {
+        var bad = localStorage.getItem(STORAGE_KEY);
+        if (bad && !localStorage.getItem(STORAGE_KEY + "-broken")) localStorage.setItem(STORAGE_KEY + "-broken", bad);
+      } catch (e1) {}
+    }
     state = defaultState();
     save();
   }
