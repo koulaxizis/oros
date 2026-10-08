@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wheel of Fate · orOS</title>
+
+  <link rel="stylesheet" href="wheel.css?v=0.45.09">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <span id="wheel-name" class="wheel-name"></span>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <button type="button" class="icon-btn" id="sound-btn" aria-pressed="true"></button>
+      <button type="button" class="txt-btn" id="new-btn"></button>
+      <button type="button" class="txt-btn" id="save-btn"></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- The wheel -->
+    <section id="stage">
+      <div id="wheel-box">
+        <div id="wheel-wrap">
+          <div id="pointer" aria-hidden="true"></div>
+          <canvas id="cv" aria-hidden="true"></canvas>
+          <button type="button" id="spin-btn"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Options, sets, wheels, winners -->
+    <div id="panel">
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.opts">Options</h2>
+          <span id="opt-count" class="count"></span>
+          <span class="spacer"></span>
+          <button type="button" class="mini" id="shuffle-btn"></button>
+        </div>
+        <ol id="opts"></ol>
+        <div class="add-row">
+          <input id="add-in" maxlength="50" autocomplete="off">
+          <button type="button" class="icon-btn" id="add-btn"></button>
+        </div>
+        <p class="hint" id="opt-need" data-i18n="opt.need" hidden>Add at least two options to spin.</p>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.sets">Ready sets</h2>
+        <div id="sets" class="chips"></div>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.mine">My wheels</h2>
+        <div id="mine" class="chips"></div>
+        <p class="hint" id="mine-empty" data-i18n="mine.empty">Save a wheel to keep it here.</p>
+      </section>
+
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.hist">Winners</h2>
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" id="hist-clear" hidden></button>
+        </div>
+        <ol id="hist"></ol>
+        <p class="hint" id="hist-empty" data-i18n="hist.empty">No winners yet.</p>
+      </section>
+    </div>
+  </main>
+
+  <div id="confetti" aria-hidden="true"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="wheel.js?v=0.45.09"></script>
+
+</body>
+</html>

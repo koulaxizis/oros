@@ -186,6 +186,14 @@
       "type": "internal"
     },
     {
+      "id": "wheel",
+      "name": "Wheel of Fate",
+      "category": "Fun",
+      "icon": "wheel",
+      "url": "wheel/",
+      "type": "internal"
+    },
+    {
       "id": "netizen",
       "name": "Netizen ID",
       "category": "Fun",
