@@ -320,6 +320,14 @@
       "icon": "g2048",
       "url": "g2048/",
       "type": "internal"
+    },
+    {
+      "id": "wordle",
+      "name": "Wordle",
+      "category": "Games",
+      "icon": "wordle",
+      "url": "wordle/",
+      "type": "internal"
     }
   ]
 }
