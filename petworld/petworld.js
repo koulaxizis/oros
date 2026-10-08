@@ -39,6 +39,7 @@
   "use strict";
 
   var STORAGE_KEY = "oros-petworld-data";
+  var GARDEN_KEY  = "oros-petgarden-data";
   var DEVICE_KEY  = "oros-petworld-device";
   var PET_KEY     = "oros-pet-data";        // read-only here: storage event only
   var DATA_VER    = 1;
@@ -89,7 +90,40 @@
       "friend.msg": "{name} lives in the forest now. Keep the forest as it is (nest, garden, backpack, progress) or start fresh?",
       "friend.keep": "Keep the forest",
       "friend.fresh": "Start fresh",
-      "offline": "Pet World lives inside orOS. Open it from the orOS menu."
+      "offline": "Pet World lives inside orOS. Open it from the orOS menu.",
+      "act.garden": "Garden", "act.bag": "Backpack",
+      "key.garden": "Garden (G)", "key.bag": "Backpack (B)",
+      "item.kibble": "Kibble", "item.carrot": "Carrot", "item.strawberry": "Strawberry",
+      "item.mushroom": "Mushroom", "item.apple": "Apple", "item.sunflower": "Sunflower",
+      "item.seed_carrot": "Carrot seeds", "item.seed_strawberry": "Strawberry seeds",
+      "item.seed_mushroom": "Mushroom spores", "item.seed_sunflower": "Sunflower seeds",
+      "item.seed_apple": "Apple pips",
+      "fx.kibble": "Fills the tummy", "fx.carrot": "Fills the tummy, some energy",
+      "fx.strawberry": "Fills the tummy, lots of joy", "fx.mushroom": "Fills the tummy, joy and energy",
+      "fx.apple": "Fills the tummy, energy and joy", "fx.sunflower": "Keep it for the nest",
+      "fx.seed": "Plant it in the garden",
+      "fx.fav": "Favourite!",
+      "count.many": "×{n}", "count.endless": "always",
+      "feed.title": "Feed {name}", "feed.btn": "Feed",
+      "bag.title": "Backpack", "bag.empty": "The backpack is empty.",
+      "garden.title": "Garden", "garden.plot": "Bed {n}",
+      "garden.empty": "Empty", "garden.growing": "{crop}: ready in {time}",
+      "garden.ready": "{crop}: ready to pick!", "garden.watered": "watered",
+      "garden.adult": "{crop} tree: new fruit in {time}",
+      "garden.unknown": "A plant from a newer version",
+      "garden.plant": "Plant", "garden.water": "Water", "garden.harvest": "Pick",
+      "garden.dig": "Dig up", "garden.noSeeds": "No seeds left. Pick ripe plants to get more.",
+      "garden.choose": "What to plant in bed {n}?",
+      "garden.digConfirm": "Dig up the {crop} in bed {n}? It is gone for good.",
+      "garden.digYes": "Dig up", "garden.cancel": "Cancel", "dlg.close": "Close",
+      "time.hm": "{h}h {m}m", "time.m": "{m}m", "time.soon": "less than a minute",
+      "toast.planted": "{crop} planted in bed {n}",
+      "toast.watered": "Bed {n} watered: a quarter faster",
+      "toast.harvest": "Picked: {list}",
+      "toast.dug": "Bed {n} is empty again",
+      "toast.ate": "{name} ate: {food}",
+      "toast.noFood": "No {food} left",
+      "live.ready": "Ready to pick in bed {n}"
     },
     el: {
       "age.one": "{n} ημέρα μαζί σου",
@@ -120,7 +154,40 @@
       "friend.msg": "{name}: ζει πια στο δάσος. Κρατάς το δάσος όπως είναι (φωλιά, κήπο, σακίδιο, πρόοδο) ή ξεκινάς από την αρχή;",
       "friend.keep": "Κράτα το δάσος",
       "friend.fresh": "Από την αρχή",
-      "offline": "Ο κόσμος του κατοικιδίου ζει μέσα στο orOS. Άνοιξέ τον από το μενού του orOS."
+      "offline": "Ο κόσμος του κατοικιδίου ζει μέσα στο orOS. Άνοιξέ τον από το μενού του orOS.",
+      "act.garden": "Κήπος", "act.bag": "Σακίδιο",
+      "key.garden": "Κήπος (G)", "key.bag": "Σακίδιο (B)",
+      "item.kibble": "Κροκέτες", "item.carrot": "Καρότο", "item.strawberry": "Φράουλα",
+      "item.mushroom": "Μανιτάρι", "item.apple": "Μήλο", "item.sunflower": "Ηλιοτρόπιο",
+      "item.seed_carrot": "Σπόροι καρότου", "item.seed_strawberry": "Σπόροι φράουλας",
+      "item.seed_mushroom": "Σπόρια μανιταριού", "item.seed_sunflower": "Σπόροι ηλιοτρόπιου",
+      "item.seed_apple": "Κουκούτσια μήλου",
+      "fx.kibble": "Γεμίζει το στομάχι", "fx.carrot": "Γεμίζει το στομάχι, λίγη ενέργεια",
+      "fx.strawberry": "Γεμίζει το στομάχι, πολλή χαρά", "fx.mushroom": "Γεμίζει το στομάχι, χαρά και ενέργεια",
+      "fx.apple": "Γεμίζει το στομάχι, ενέργεια και χαρά", "fx.sunflower": "Κράτα το για τη φωλιά",
+      "fx.seed": "Φύτεψέ το στον κήπο",
+      "fx.fav": "Το αγαπημένο του!",
+      "count.many": "×{n}", "count.endless": "πάντα",
+      "feed.title": "Τάισμα: {name}", "feed.btn": "Τάισε",
+      "bag.title": "Σακίδιο", "bag.empty": "Το σακίδιο είναι άδειο.",
+      "garden.title": "Κήπος", "garden.plot": "Παρτέρι {n}",
+      "garden.empty": "Άδειο", "garden.growing": "{crop}: έτοιμο σε {time}",
+      "garden.ready": "{crop}: έτοιμο για μάζεμα!", "garden.watered": "ποτισμένο",
+      "garden.adult": "Μηλιά: νέα μήλα σε {time}",
+      "garden.unknown": "Φυτό από νεότερη έκδοση",
+      "garden.plant": "Φύτεψε", "garden.water": "Πότισε", "garden.harvest": "Μάζεψε",
+      "garden.dig": "Ξερίζωσε", "garden.noSeeds": "Δεν έμειναν σπόροι. Μάζεψε ώριμα φυτά για να πάρεις κι άλλους.",
+      "garden.choose": "Τι θα φυτέψεις στο παρτέρι {n};",
+      "garden.digConfirm": "Ξεριζώνεις: {crop} στο παρτέρι {n}; Χάνεται οριστικά.",
+      "garden.digYes": "Ξερίζωσε", "garden.cancel": "Άκυρο", "dlg.close": "Κλείσιμο",
+      "time.hm": "{h}ώ {m}λ", "time.m": "{m}λ", "time.soon": "λιγότερο από ένα λεπτό",
+      "toast.planted": "{crop}: φυτεύτηκε στο παρτέρι {n}",
+      "toast.watered": "Παρτέρι {n}: ποτίστηκε, θα ωριμάσει πιο γρήγορα",
+      "toast.harvest": "Μάζεψες: {list}",
+      "toast.dug": "Το παρτέρι {n} άδειασε",
+      "toast.ate": "{name}: έφαγε {food}",
+      "toast.noFood": "Δεν έμεινε: {food}",
+      "live.ready": "Έτοιμο για μάζεμα στο παρτέρι {n}"
     }
   };
 
@@ -213,16 +280,6 @@
 
   function defaultData() { return { ver: DATA_VER, br: 0, pet: null, rows: {} }; }
 
-  // Balance of one item across every device row.
-  function itemCount(d, item) {
-    var n = 0;
-    Object.keys(d.rows || {}).forEach(function (dev) {
-      var c = d.rows[dev].c[item];
-      if (c) n += c[0] - c[1];
-    });
-    return Math.max(0, n);
-  }
-
   // Anything in the forest worth asking about before a fresh start.
   function worldHasContent(d) {
     return Object.keys(d.rows || {}).some(function (dev) {
@@ -231,8 +288,8 @@
     });
   }
 
-  // A ledger move on THIS device's row (later phases: harvests,
-  // purchases). The row's epoch is never older than the reset stamp.
+  // A ledger move on THIS device's row (plantings, meals; later
+  // phases: finds, purchases). The row's epoch is never older than the reset stamp.
   function ledger(d, dev, item, nIn, nOut) {
     if (!ITEM_RE.test(item)) return d;
     var row = d.rows[dev] && d.rows[dev].b >= d.br ? d.rows[dev] : { b: d.br, c: {} };
@@ -257,33 +314,224 @@
     return mergeWorld({ ver: DATA_VER, br: d.br, pet: { id: petId, ts: Math.max(now, d.pet ? d.pet.ts + 1 : 0) }, rows: d.rows }, null);
   }
 
-  var data = defaultData();
+  // ---------- 2b. Garden data (phase 2) ----------
+  // Its own synced slice "petgarden" (oros-petgarden-data): a phase-1
+  // device keeps only the keys it knows in "petworld", so new keys
+  // there would bounce between versions; a new slice is relayed
+  // untouched by an older app (sync.js carry mailbox).
+  //   { ver, br, plots{ "0".."9": { s, t, n, wn, tot{item:n} } } }
+  //   s  = what grows ("" = nothing, a dug-up or never-planted plot)
+  //   t  = planting time: the cycle id; a newer t replaces the plot
+  //   n  = harvests taken from this planting (an annual is done at 1)
+  //   wn = the growth (n) that was watered, -1 none: watering cuts
+  //        that growth's time by a quarter, once per growth
+  //   tot = everything ever harvested from this plot, carried from one
+  //        planting to the next. The yield of growth n is fixed by
+  //        (plot, t, n), so two devices harvesting the same growth
+  //        write the same tot: one harvest, never two.
+  // Merge: br max; plots with t < br drop (a fresh start); larger t
+  // wins whole; equal t: s by greater string, n max, wn max, tot max
+  // per item. Balance of an item = start pack + ledger + Σ tot.
+  var HOUR = 3600000;
+  var PLOTS = 4;                             // phase 5 unlocks more with the level
+  var CROPS = {
+    carrot:     { seed: "seed_carrot",     d: 4,  crop: [2, 3], seeds: [1, 2] },
+    strawberry: { seed: "seed_strawberry", d: 8,  crop: [3, 4], seeds: [1, 2] },
+    mushroom:   { seed: "seed_mushroom",   d: 12, crop: [2, 3], seeds: [1, 2] },
+    sunflower:  { seed: "seed_sunflower",  d: 24, crop: [1, 1], seeds: [2, 3] },
+    apple:      { seed: "seed_apple",      d: 72, crop: [3, 5], seeds: [0, 1], regrow: 24 }
+  };
+  var CROP_ORDER = ["carrot", "strawberry", "mushroom", "sunflower", "apple"];
+  var FOOD_ORDER = ["carrot", "strawberry", "mushroom", "apple"];
+  var START_PACK = { seed_carrot: 3, seed_strawberry: 2, seed_mushroom: 1, seed_sunflower: 1, seed_apple: 1 };
+  var PLOT_RE = /^[0-9]$/;
 
-  function load() {
+  function normTot(src) {
+    var out = {}, n = 0;
+    if (!src || typeof src !== "object") return out;
+    Object.keys(src).filter(function (k) { return ITEM_RE.test(k); }).sort(cmpStr).forEach(function (k) {
+      if (n >= MAX_ITEMS || !isCount(src[k])) return;
+      out[k] = src[k];
+      n++;
+    });
+    return out;
+  }
+
+  function normPlot(p) {
+    if (!p || typeof p !== "object" || !isTs(p.t)) return null;
+    if (typeof p.s !== "string" || (p.s !== "" && !ITEM_RE.test(p.s))) return null;
+    var n = isCount(p.n) && p.n <= 1e6 ? p.n : 0;
+    var wn = (typeof p.wn === "number" && Math.floor(p.wn) === p.wn && p.wn >= -1 && p.wn <= 1e6) ? p.wn : -1;
+    return { s: p.s, t: p.t, n: n, wn: wn, tot: normTot(p.tot) };
+  }
+
+  function joinPlot(x, y) {
+    if (!x) return y;
+    if (!y) return x;
+    if (x.t !== y.t) return x.t > y.t ? x : y;
+    if (x.s !== y.s) return cmpStr(x.s, y.s) > 0 ? x : y;
+    var tot = {};
+    Object.keys(x.tot).concat(Object.keys(y.tot)).forEach(function (k) {
+      tot[k] = Math.max(x.tot[k] || 0, y.tot[k] || 0);
+    });
+    return { s: x.s, t: x.t, n: Math.max(x.n, y.n), wn: Math.max(x.wn, y.wn), tot: normTot(tot) };
+  }
+
+  function mergeGarden(A, B) {
+    var a = (A && typeof A === "object") ? A : {};
+    var b = (B && typeof B === "object") ? B : {};
+    var br = Math.max(isTs(a.br) ? a.br : 0, isTs(b.br) ? b.br : 0);
+    var plots = {};
+    [a.plots, b.plots].forEach(function (src) {
+      if (!src || typeof src !== "object") return;
+      Object.keys(src).forEach(function (id) {
+        if (!PLOT_RE.test(id)) return;
+        var p = normPlot(src[id]);
+        if (!p || p.t < br) return;
+        plots[id] = joinPlot(plots[id] || null, p);
+      });
+    });
+    var sorted = {};
+    Object.keys(plots).sort(cmpStr).forEach(function (id) { sorted[id] = plots[id]; });
+    return { ver: DATA_VER, br: br, plots: sorted };
+  }
+
+  function defaultGarden() { return { ver: DATA_VER, br: 0, plots: {} }; }
+
+  // Fixed yield of growth n of the planting (plot, t): a small hash,
+  // the same on every device.
+  function yieldOf(id, p) {
+    var c = CROPS[p.s];
+    if (!c) return {};
+    var str = id + ":" + p.t + ":" + p.n, h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    h = h >>> 0;
+    var out = {};
+    out[p.s] = c.crop[0] + (h % (c.crop[1] - c.crop[0] + 1));
+    var sd = c.seeds[0] + ((h >>> 8) % (c.seeds[1] - c.seeds[0] + 1));
+    if (sd > 0) out[c.seed] = sd;
+    return out;
+  }
+
+  // When growth n becomes ready: growths are scheduled from the
+  // planting time (a late harvest does not delay the next fruit).
+  function growthSpan(c, n) { return (n === 0 ? c.d : (c.regrow || c.d)) * HOUR; }
+  function readyAt(p) {
+    var c = CROPS[p.s];
+    if (!c) return Infinity;
+    var at = p.t + c.d * HOUR + (p.n > 0 ? p.n * (c.regrow || c.d) * HOUR : 0);
+    if (p.wn === p.n) at -= Math.round(growthSpan(c, p.n) / 4);
+    return at;
+  }
+
+  // { state: empty | growing | ready | unknown, stage 0..3, readyAt, watered }
+  function plotState(p, now) {
+    if (!p || p.s === "") return { state: "empty" };
+    var c = CROPS[p.s];
+    if (!c) return { state: "unknown" };             // a newer version's plant
+    if (!c.regrow && p.n >= 1) return { state: "empty" };
+    var at = readyAt(p);
+    if (now >= at) return { state: "ready", stage: 3, readyAt: at, watered: p.wn === p.n };
+    var span = growthSpan(c, p.n) * (p.wn === p.n ? 0.75 : 1);
+    var k = clamp(1 - (at - now) / span, 0, 1);
+    return { state: "growing", stage: k < 0.34 ? 0 : (k < 0.67 ? 1 : 2), readyAt: at, watered: p.wn === p.n, adult: p.n > 0 };
+  }
+
+  function withPlot(g, id, p) {
+    var plots = {};
+    Object.keys(g.plots).forEach(function (k) { plots[k] = g.plots[k]; });
+    plots[id] = p;
+    return mergeGarden({ ver: DATA_VER, br: g.br, plots: plots }, null);
+  }
+
+  function plantSeed(g, id, crop, now) {
+    var cur = g.plots[id] || null;
+    if (!CROPS[crop] || !PLOT_RE.test(id)) return g;
+    var st = plotState(cur, now).state;
+    if (st !== "empty") return g;
+    var t = Math.max(now, g.br, cur ? cur.t + 1 : 0);
+    return withPlot(g, id, { s: crop, t: t, n: 0, wn: -1, tot: cur ? cur.tot : {} });
+  }
+
+  function waterPlot(g, id, now) {
+    var cur = g.plots[id];
+    if (!cur || plotState(cur, now).state !== "growing" || cur.wn === cur.n) return g;
+    return withPlot(g, id, { s: cur.s, t: cur.t, n: cur.n, wn: cur.n, tot: cur.tot });
+  }
+
+  // Returns { g, got: {item:n} } — got is empty when nothing was ready.
+  function harvestPlot(g, id, now) {
+    var cur = g.plots[id];
+    if (!cur || plotState(cur, now).state !== "ready") return { g: g, got: {} };
+    var got = yieldOf(id, cur), tot = {};
+    Object.keys(cur.tot).forEach(function (k) { tot[k] = cur.tot[k]; });
+    Object.keys(got).forEach(function (k) { tot[k] = Math.min(MAX_N, (tot[k] || 0) + got[k]); });
+    return { g: withPlot(g, id, { s: cur.s, t: cur.t, n: cur.n + 1, wn: cur.wn, tot: tot }), got: got };
+  }
+
+  function digUp(g, id, now) {
+    var cur = g.plots[id];
+    if (!cur || cur.s === "") return g;
+    return withPlot(g, id, { s: "", t: Math.max(now, cur.t + 1), n: 0, wn: -1, tot: cur.tot });
+  }
+
+  function freshGarden(g, br) {
+    return mergeGarden({ ver: DATA_VER, br: Math.max(br, g.br), plots: g.plots }, null);
+  }
+
+  // What the backpack holds: the start pack + this forest's ledger
+  // (plantings, meals) + every harvest. Never below zero on screen.
+  function stock(d, g, item) {
+    var n = START_PACK[item] || 0;
+    Object.keys(d.rows || {}).forEach(function (dev) {
+      var c = d.rows[dev].c[item];
+      if (c) n += c[0] - c[1];
+    });
+    Object.keys(g.plots || {}).forEach(function (id) { n += g.plots[id].tot[item] || 0; });
+    return Math.max(0, n);
+  }
+
+  function gardenHasContent(g) {
+    return Object.keys(g.plots || {}).some(function (id) {
+      var p = g.plots[id];
+      return p.s !== "" || Object.keys(p.tot).length > 0;
+    });
+  }
+
+  var data = defaultData();
+  var garden = defaultGarden();
+
+  function loadKey(key, merge, fallback) {
     var raw = null;
-    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    try { raw = localStorage.getItem(key); } catch (e) {}
     if (raw) {
       try {
         var parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") { data = mergeWorld(parsed, null); return; }
+        if (parsed && typeof parsed === "object") return merge(parsed, null);
       } catch (e) {}
       // unreadable → device-local rescue copy BEFORE the fresh state
-      try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
-      try { console.error("[orOS] petworld: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
+      try { localStorage.setItem(key + "-broken", raw); } catch (e) {}
+      try { console.error("[orOS] petworld: unreadable data copied to " + key + "-broken"); } catch (e) {}
     }
-    data = defaultData();
+    return fallback();
+  }
+  function load() {
+    data = loadKey(STORAGE_KEY, mergeWorld, defaultData);
+    garden = loadKey(GARDEN_KEY, mergeGarden, defaultGarden);
   }
 
   var saveFailShown = false;
-  function save() {
+  function saveKey(key, value) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(key, JSON.stringify(value));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
     }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
+  function save() { saveKey(STORAGE_KEY, data); }
+  function saveGarden() { saveKey(GARDEN_KEY, garden); }
 
   function deviceId() {
     var id = null;
@@ -538,6 +786,75 @@
     g.fillRect(x + 10 * U, baseY - 2 * U, 3 * U, U);
   }
 
+  // ---------- 4b. Garden beds in the scene ----------
+  // The beds sit on the grass to the right of the oak, drawn every
+  // frame (a handful of rectangles) in the light of the hour.
+  var curL = 1;
+  function plotRects() {
+    var x0 = Math.round(Math.max(W * 0.4, sleepX + 10 * U) / U) * U;
+    var avail = W - 2 * U - x0;
+    var pw = clamp(Math.floor((avail - 3 * 2 * U) / PLOTS / U), 4, 10) * U;
+    var out = [];
+    for (var i = 0; i < PLOTS; i++) out.push({ id: String(i), x: x0 + i * (pw + 2 * U), w: pw });
+    return out;
+  }
+  function plotAt(x, y) {
+    if (y < groundY - 14 * U || y > groundY + 5 * U) return null;
+    var rs = plotRects();
+    for (var i = 0; i < rs.length; i++) if (x >= rs[i].x - U && x <= rs[i].x + rs[i].w + U) return rs[i];
+    return null;
+  }
+
+  var CROP_COLORS = { carrot: "#f08a24", strawberry: "#e53950", mushroom: "#b5653a", sunflower: "#ffd23f", apple: "#d83a3a" };
+  function drawGarden(now) {
+    var L = curL, g = ctx;
+    plotRects().forEach(function (r) {
+      var p = garden.plots[r.id] || null, st = plotState(p, now);
+      var cx = r.x + Math.floor(r.w / 2 / U) * U, base = groundY + U;
+      g.fillStyle = lit(st.watered ? "#3e2a18" : "#5a3d24", L);
+      g.fillRect(r.x, base, r.w, 2 * U);
+      g.fillStyle = lit("#6e4b2e", L);
+      for (var k = r.x + U; k < r.x + r.w - U; k += 2 * U) g.fillRect(k, base, U, U);
+      if (st.state === "empty") return;
+      var leaf = lit("#5aa05c", L), dark = lit("#3f7d4a", L);
+      var R = function (x, y, w, h, c) { g.fillStyle = c; g.fillRect(cx + x * U, base + y * U, w * U, h * U); };
+      if (st.state === "unknown") { R(0, -2, 1, 2, leaf); R(-1, -2, 1, 1, leaf); return; }
+      var crop = p.s, col = lit(CROP_COLORS[crop] || "#ffffff", L);
+      if (crop === "apple" && (st.state === "ready" || st.adult || st.stage === 2)) {
+        R(0, -6, 1, 6, lit("#6b4a2f", L));
+        R(-2, -9, 5, 3, dark); R(-1, -10, 3, 1, dark); R(-1, -9, 2, 1, leaf);
+        if (st.state === "ready") { R(-2, -8, 1, 1, col); R(1, -9, 1, 1, col); R(2, -7, 1, 1, col); }
+      } else if (st.state === "growing" && st.stage === 0) {
+        R(0, -1, 1, 1, leaf);
+      } else if (st.state === "growing" && st.stage === 1) {
+        R(0, -2, 1, 2, leaf); R(-1, -2, 1, 1, leaf); R(1, -3, 1, 1, leaf);
+      } else if (crop === "carrot") {
+        var tall = st.state === "ready" ? 4 : 3;
+        R(0, -tall, 1, tall, leaf); R(-1, -tall + 1, 1, 1, leaf); R(1, -tall, 1, 1, leaf); R(-1, -tall - 1, 1, 1, dark);
+        if (st.state === "ready") R(-1, -1, 3, 1, col);
+      } else if (crop === "strawberry") {
+        R(-2, -3, 5, 3, dark); R(-1, -4, 3, 1, leaf);
+        if (st.state === "ready") { R(-2, -1, 1, 1, col); R(1, -2, 1, 1, col); R(2, -1, 1, 1, col); }
+        else R(0, -3, 1, 1, lit("#ffffff", L));
+      } else if (crop === "mushroom") {
+        var big = st.state === "ready";
+        R(0, big ? -2 : -1, 1, big ? 2 : 1, lit("#f3e9d2", L));
+        R(big ? -2 : -1, big ? -4 : -2, big ? 5 : 3, big ? 2 : 1, col);
+        if (big) R(-1, -4, 1, 1, lit("#f3e9d2", L));
+      } else if (crop === "sunflower") {
+        var h = st.state === "ready" ? 8 : 5;
+        R(0, -h, 1, h, leaf); R(-1, -3, 1, 1, leaf); R(1, -5, 1, 1, leaf);
+        if (st.state === "ready") { R(-1, -h - 2, 3, 3, col); R(0, -h - 1, 1, 1, lit("#6b4a2f", L)); }
+        else R(0, -h - 1, 1, 1, dark);
+      } else {
+        R(0, -3, 1, 3, leaf); R(-1, -3, 1, 1, leaf);
+      }
+      if (st.state === "ready" && !reducedMotion() && Math.floor(now / 500) % 2 === 0) {
+        R(2, -6, 1, 1, "rgba(255,255,240,0.9)");
+      }
+    });
+  }
+
   // ---------- 5. Pet choreography + particles ----------
   var WALK_UPS = 7;          // walking speed in pixel units per second
   var pet = { x: 0, dir: 1, mode: "idle", timer: 1500, target: null, frame: 0, eatAt: 0 };
@@ -689,6 +1006,7 @@
     stepParticles(dt);
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(bg, 0, 0, W, H);
+    drawGarden(Date.now());
     drawPet();
     drawParticles();
     placeBubble();
@@ -709,6 +1027,8 @@
     pat:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11.5v-2a1.5 1.5 0 0 1 3 0V12"/><path d="M14 10.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 11.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.3 14a1.5 1.5 0 0 1 2.4-1.8L8 14"/></svg>',
     sleep:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     wake:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    garden: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 10c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M4 21h16"/></svg>',
+    bag:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M9 6V4.5a3 3 0 0 1 6 0V6"/><path d="M5 13h14M10 13v3h4v-3"/></svg>',
     companion: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="13" rx="2"/><path d="M8 20.5h8M12 16.5v4"/><path d="M9 13v-2.5a3 3 0 0 1 6 0V13zM10 8.5 9.5 7M14 8.5l.5-1.5"/></svg>'
   };
 
@@ -727,6 +1047,12 @@
     $("pat-btn").querySelector(".act-ico").innerHTML = ICONS.pat;
     $("pat-btn").querySelector(".act-lbl").textContent = t("act.pat");
     $("pat-btn").title = t("key.pat");
+    $("garden-btn").querySelector(".act-ico").innerHTML = ICONS.garden;
+    $("garden-btn").querySelector(".act-lbl").textContent = t("act.garden");
+    $("garden-btn").title = t("key.garden");
+    $("bag-btn").querySelector(".act-ico").innerHTML = ICONS.bag;
+    $("bag-btn").querySelector(".act-lbl").textContent = t("act.bag");
+    $("bag-btn").title = t("key.bag");
     $("companion-btn").innerHTML = ICONS.companion;
   }
 
@@ -812,14 +1138,36 @@
   function announce(text) { $("live").textContent = text; }
 
   // ---------- Care actions (all through the shell pet) ----------
-  function doFeed() {
+  function hasGardenFood() {
+    return FOOD_ORDER.some(function (f) { return stock(data, garden, f) > 0; });
+  }
+  // The Feed button: straight to kibble while the backpack has no
+  // garden food, otherwise a choice.
+  function feedButton() {
+    if (hasGardenFood()) foodDialog(); else doFeed("kibble");
+  }
+  function doFeed(kind) {
     var b = bridge();
-    if (!b) return;
-    var wasAsleep = snap && snap.asleep;
-    try { snap = b.feed(); } catch (e) { return; }
+    if (!b || !snap) return;
+    kind = kind || "kibble";
+    if (kind !== "kibble") {
+      if (stock(data, garden, kind) < 1) { showToast(t("toast.noFood", { food: t("item." + kind) })); return; }
+    }
+    var wasAsleep = snap.asleep, res;
+    try { res = b.feed(kind); } catch (e) { return; }
+    snap = res;
+    if (kind !== "kibble") {
+      var dev = deviceId();
+      data = ledger(data, dev, kind, 0, 1);
+      // the favourite, once found, wears a star in the backpack
+      if (res.favourite && stock(data, garden, "fav_" + kind) < 1) data = ledger(data, dev, "fav_" + kind, 1, 0);
+      save();
+    }
     pet.mode = "eat"; pet.timer = 2400; pet.eatAt = Date.now(); pet.target = null;
-    say(b.line(wasAsleep ? "speech.wake" : "speech.eat"));
+    if (res.favourite) { say(b.line("speech.fav")); addHearts(); }
+    else say(b.line(wasAsleep ? "speech.wake" : "speech.eat"));
     announce(t("live.fed", { name: snap.name }));
+    if (kind !== "kibble") showToast(t("toast.ate", { name: snap.name, food: t("item." + kind) }));
     renderUI();
   }
   function doPat() {
@@ -865,6 +1213,8 @@
     var x = e.clientX - r.left, y = e.clientY - r.top;
     var px = pet.x, py = petY();
     if (x >= px - U && x <= px + petWidth() + U && y >= py - U && y <= py + petWidth() + 2 * U) { doPat(); return; }
+    var plot = plotAt(x, y);
+    if (plot) { gardenDialog(plot.id); return; }
     if (snap.asleep) { say(pick(t("say.asleep"))); return; }
     if (pet.mode === "eat" || pet.mode === "happy") return;
     walkTo(x - petWidth() / 2);
@@ -949,7 +1299,9 @@
     acts.appendChild(button(t("friend.fresh"), "danger", function () {
       dlg.close();
       data = freshStart(data, petId, Date.now());
+      garden = freshGarden(garden, data.br);
       save();
+      saveGarden();
       showToast(t("toast.fresh"));
     }));
     dlg.appendChild(acts);
@@ -964,12 +1316,260 @@
   function checkBinding() {
     if (!snap || snap.provisional) return;
     if (data.pet && data.pet.id === snap.id) return;
-    if (!data.pet || !worldHasContent(data)) {
+    if (!data.pet || !(worldHasContent(data) || gardenHasContent(garden))) {
       data = bindPet(data, snap.id, Date.now());
       save();
       return;
     }
     friendDialog(snap.id);
+  }
+
+  // ---------- 8b. Backpack, food and garden dialogs ----------
+  // 8×8 pixel icons; one letter per colour, "." transparent.
+  var ART = {
+    kibble:     { px: ["........", "........", "..b.bb..", ".bbbbbb.", "wwwwwwww", ".wwwwww.", "..wwww..", "........"], c: { b: "#a0663a", w: "#90a4ae" } },
+    carrot:     { px: [".....g.g", "....g.g.", "....oo..", "...ooo..", "..ooo...", ".ooo....", ".oo.....", "o......."], c: { o: "#f08a24", g: "#5aa05c" } },
+    strawberry: { px: ["...gg...", "..gggg..", ".rrrrrr.", ".rryrrr.", ".rrrryr.", "..rrrr..", "...rr...", "........"], c: { r: "#e53950", y: "#ffe08a", g: "#5aa05c" } },
+    mushroom:   { px: ["..rrrr..", ".rrwrrr.", "rrrrrwrr", "rwrrrrrr", "...ww...", "...ww...", "..wwww..", "........"], c: { r: "#b5653a", w: "#f3e9d2" } },
+    apple:      { px: ["....b...", "...bg...", ".rrrrrr.", "rrrrrwrr", "rrrrrrwr", "rrrrrrrr", ".rrrrrr.", "..rrrr.."], c: { r: "#d83a3a", b: "#6b4a2f", g: "#5aa05c", w: "#ffb3b3" } },
+    sunflower:  { px: ["..yyyy..", ".yybbyy.", ".ybbbby.", ".yybbyy.", "..yyyy..", "...g....", "..gg....", "...g...."], c: { y: "#ffd23f", b: "#6b4a2f", g: "#5aa05c" } },
+    seed:       { px: ["..pppp..", ".pppppp.", ".pwwwwp.", ".pwccwp.", ".pwccwp.", ".pwwwwp.", ".pppppp.", "........"], c: { p: "#c9b48a", w: "#f3ead2" } }
+  };
+  function itemIcon(item) {
+    var cv = document.createElement("canvas");
+    cv.width = 8; cv.height = 8;
+    cv.className = "item-ico";
+    cv.setAttribute("aria-hidden", "true");
+    var g = cv.getContext("2d"), art, colors;
+    var crop = item.indexOf("seed_") === 0 ? item.slice(5) : null;
+    if (crop) {
+      art = ART.seed;
+      colors = { p: art.c.p, w: art.c.w, c: CROP_COLORS[crop] || "#8d6e63" };
+    } else {
+      art = ART[item] || ART.seed;
+      colors = art.c;
+    }
+    art.px.forEach(function (row, y) {
+      for (var x = 0; x < 8; x++) {
+        var k = row[x];
+        if (k === "." || !colors[k]) continue;
+        g.fillStyle = colors[k];
+        g.fillRect(x, y, 1, 1);
+      }
+    });
+    return cv;
+  }
+
+  function itemRow(item, sub, count, actions) {
+    var r = el("div", "item-row");
+    r.appendChild(itemIcon(item));
+    var txt = el("div", "item-txt");
+    txt.appendChild(el("strong", "", t("item." + item)));
+    if (sub) txt.appendChild(el("small", "", sub));
+    r.appendChild(txt);
+    if (count !== null) r.appendChild(el("span", "item-count", count));
+    (actions || []).forEach(function (a) { r.appendChild(a); });
+    return r;
+  }
+  function smallBtn(label, cls, fn) {
+    var b = button(label, "small" + (cls ? " " + cls : ""), fn);
+    return b;
+  }
+  function closeRow(dlg) {
+    var acts = el("div", "dlg-actions");
+    var c = button(t("dlg.close"), "", function () { dlg.close(); });
+    acts.appendChild(c);
+    dlg.appendChild(acts);
+    return c;
+  }
+  function favMark(food) {
+    return snap && snap.favFood === food && stock(data, garden, "fav_" + food) > 0;
+  }
+  function foodSub(food) {
+    return t("fx." + food) + (favMark(food) ? " · " + t("fx.fav") : "");
+  }
+
+  function foodDialog() {
+    if (!snap) return;
+    var dlg = makeDialog("pw-food");
+    dlg.appendChild(el("div", "dlg-title", t("feed.title", { name: snap.name })));
+    var list = el("div", "item-list");
+    var first = smallBtn(t("feed.btn"), "primary", function () { dlg.close(); doFeed("kibble"); });
+    list.appendChild(itemRow("kibble", t("fx.kibble"), t("count.endless"), [first]));
+    FOOD_ORDER.forEach(function (f) {
+      var n = stock(data, garden, f);
+      if (n < 1) return;
+      list.appendChild(itemRow(f, foodSub(f), t("count.many", { n: n }),
+        [smallBtn(t("feed.btn"), "primary", function () { dlg.close(); doFeed(f); })]));
+    });
+    dlg.appendChild(list);
+    closeRow(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    first.focus();
+  }
+
+  function bagDialog() {
+    var dlg = makeDialog("pw-bag");
+    dlg.appendChild(el("div", "dlg-title", t("bag.title")));
+    var list = el("div", "item-list"), any = false;
+    FOOD_ORDER.concat(["sunflower"]).forEach(function (f) {
+      var n = stock(data, garden, f);
+      if (n < 1) return;
+      any = true;
+      var acts = CROPS[f] && f !== "sunflower" ? [smallBtn(t("feed.btn"), "", function () { dlg.close(); doFeed(f); })] : [];
+      list.appendChild(itemRow(f, f === "sunflower" ? t("fx.sunflower") : foodSub(f), t("count.many", { n: n }), acts));
+    });
+    CROP_ORDER.forEach(function (c) {
+      var item = CROPS[c].seed, n = stock(data, garden, item);
+      if (n < 1) return;
+      any = true;
+      list.appendChild(itemRow(item, t("fx.seed"), t("count.many", { n: n }),
+        [smallBtn(t("act.garden"), "", function () { dlg.close(); gardenDialog(null); })]));
+    });
+    if (!any) list.appendChild(el("div", "dlg-msg", t("bag.empty")));
+    dlg.appendChild(list);
+    var c = closeRow(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    c.focus();
+  }
+
+  function fmtLeft(ms) {
+    var m = Math.ceil(ms / 60000);
+    if (m < 1) return t("time.soon");
+    if (m < 60) return t("time.m", { m: m });
+    return t("time.hm", { h: Math.floor(m / 60), m: m % 60 });
+  }
+
+  function plotLine(id, now) {
+    var p = garden.plots[id] || null, st = plotState(p, now);
+    if (st.state === "empty") return t("garden.empty");
+    if (st.state === "unknown") return t("garden.unknown");
+    var crop = t("item." + p.s);
+    if (st.state === "ready") return t("garden.ready", { crop: crop });
+    var line = st.adult ? t("garden.adult", { crop: crop, time: fmtLeft(st.readyAt - now) })
+                        : t("garden.growing", { crop: crop, time: fmtLeft(st.readyAt - now) });
+    return line + (st.watered ? " · " + t("garden.watered") : "");
+  }
+
+  function gardenDialog(focusId) {
+    var dlg = makeDialog("pw-garden");
+    dlg.appendChild(el("div", "dlg-title", t("garden.title")));
+    var list = el("div", "item-list"), focusBtn = null, now = Date.now();
+    plotRects().forEach(function (r) {
+      var id = r.id, p = garden.plots[id] || null, st = plotState(p, now), acts = [];
+      var n = Number(id) + 1;
+      if (st.state === "empty") {
+        acts.push(smallBtn(t("garden.plant"), "primary", function () { dlg.close(); seedDialog(id); }));
+      } else if (st.state === "ready") {
+        acts.push(smallBtn(t("garden.harvest"), "primary", function () { dlg.close(); doHarvest(id); }));
+      } else if (st.state === "growing") {
+        if (!st.watered) acts.push(smallBtn(t("garden.water"), "primary", function () { dlg.close(); doWater(id); }));
+        acts.push(smallBtn(t("garden.dig"), "danger", function () { dlg.close(); digDialog(id); }));
+      } else {
+        acts.push(smallBtn(t("garden.dig"), "danger", function () { dlg.close(); digDialog(id); }));
+      }
+      var row = el("div", "item-row" + (focusId === id ? " focus" : ""));
+      if (p && CROPS[p.s] && st.state !== "empty") row.appendChild(itemIcon(p.s));
+      else { var ph = el("span", "item-ico plot-ico"); ph.setAttribute("aria-hidden", "true"); row.appendChild(ph); }
+      var txt = el("div", "item-txt");
+      txt.appendChild(el("strong", "", t("garden.plot", { n: n })));
+      txt.appendChild(el("small", "", plotLine(id, now)));
+      row.appendChild(txt);
+      acts.forEach(function (a) { row.appendChild(a); });
+      list.appendChild(row);
+      if (focusId === id && acts[0]) focusBtn = acts[0];
+    });
+    dlg.appendChild(list);
+    var c = closeRow(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (focusBtn || c).focus();
+  }
+
+  function seedDialog(id) {
+    var dlg = makeDialog("pw-seeds");
+    dlg.appendChild(el("div", "dlg-title", t("garden.title")));
+    dlg.appendChild(el("div", "dlg-msg", t("garden.choose", { n: Number(id) + 1 })));
+    var list = el("div", "item-list"), first = null;
+    CROP_ORDER.forEach(function (c) {
+      var n = stock(data, garden, CROPS[c].seed);
+      if (n < 1) return;
+      var b = smallBtn(t("garden.plant"), "primary", function () { dlg.close(); doPlant(id, c); });
+      if (!first) first = b;
+      list.appendChild(itemRow(CROPS[c].seed, t("item." + c) + " · " + fmtLeft(CROPS[c].d * HOUR), t("count.many", { n: n }), [b]));
+    });
+    if (!first) list.appendChild(el("div", "dlg-msg", t("garden.noSeeds")));
+    dlg.appendChild(list);
+    var c = closeRow(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (first || c).focus();
+  }
+
+  function digDialog(id) {
+    var p = garden.plots[id];
+    if (!p) return;
+    var dlg = makeDialog("pw-dig");
+    dlg.appendChild(el("div", "dlg-msg", t("garden.digConfirm", {
+      crop: CROPS[p.s] ? t("item." + p.s) : "?", n: Number(id) + 1 })));
+    var acts = el("div", "dlg-actions");
+    var no = button(t("garden.cancel"), "", function () { dlg.close(); });
+    acts.appendChild(no);
+    acts.appendChild(button(t("garden.digYes"), "danger", function () { dlg.close(); doDig(id); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    no.focus();
+  }
+
+  // ---------- Garden actions ----------
+  function plotCenter(id) {
+    var r = plotRects()[Number(id)];
+    return r ? r.x + r.w / 2 : pet.x;
+  }
+  function goToPlot(id) {
+    if (snap && !snap.asleep && pet.mode !== "eat") walkTo(plotCenter(id) - petWidth() / 2);
+  }
+  function doPlant(id, crop) {
+    var seed = CROPS[crop] && CROPS[crop].seed;
+    if (!seed || stock(data, garden, seed) < 1) return;
+    var next = plantSeed(garden, id, crop, Date.now());
+    if (next === garden) return;
+    garden = next;
+    data = ledger(data, deviceId(), seed, 0, 1);
+    saveGarden();
+    save();
+    goToPlot(id);
+    showToast(t("toast.planted", { crop: t("item." + crop), n: Number(id) + 1 }));
+  }
+  function doWater(id) {
+    var next = waterPlot(garden, id, Date.now());
+    if (next === garden) return;
+    garden = next;
+    saveGarden();
+    goToPlot(id);
+    showToast(t("toast.watered", { n: Number(id) + 1 }));
+  }
+  function doHarvest(id) {
+    var res = harvestPlot(garden, id, Date.now());
+    var keys = Object.keys(res.got);
+    if (!keys.length) return;
+    garden = res.g;
+    saveGarden();
+    goToPlot(id);
+    var list = keys.map(function (k) { return t("item." + k) + " " + t("count.many", { n: res.got[k] }); }).join(", ");
+    showToast(t("toast.harvest", { list: list }));
+    announce(t("toast.harvest", { list: list }));
+    if (snap && !snap.asleep) { var b = bridge(); if (b) say(b.line("speech.happy")); }
+  }
+  function doDig(id) {
+    var next = digUp(garden, id, Date.now());
+    if (next === garden) return;
+    garden = next;
+    saveGarden();
+    showToast(t("toast.dug", { n: Number(id) + 1 }));
   }
 
   // ---------- 9. Toasts ----------
@@ -1009,7 +1609,9 @@
       if (document.querySelector("dialog[open]")) return;
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (tag === "INPUT" || tag === "TEXTAREA") return;
-      if (e.code === "KeyF") { e.preventDefault(); doFeed(); }
+      if (e.code === "KeyF") { e.preventDefault(); doFeed("kibble"); }
+      else if (e.code === "KeyG") { e.preventDefault(); gardenDialog(null); }
+      else if (e.code === "KeyB") { e.preventDefault(); bagDialog(); }
       else if (e.code === "KeyP") { e.preventDefault(); doPat(); }
       else if (e.code === "KeyS") { e.preventDefault(); doSleep(); }
       else if (e.key === "ArrowLeft" && snap && !snap.asleep) { e.preventDefault(); walkTo(pet.x - 8 * U); }
@@ -1071,6 +1673,7 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("petworld", sliceGet, sliceSet, STORAGE_KEY, mergeWorld);
+    api.registerSlice("petgarden", gardenSliceGet, gardenSliceSet, GARDEN_KEY, mergeGarden);
   }
 
   function sliceGet() {
@@ -1090,8 +1693,25 @@
     checkBinding();
   }
 
+  function gardenSliceGet() {
+    return mergeGarden(garden, null);   // canonical copy (R26)
+  }
+
+  function gardenSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object") return;
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      garden = mergeGarden(incoming, null);
+      localStorage.setItem(GARDEN_KEY, JSON.stringify(garden));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+  }
+
   // ---------- 12. Wiring & boot ----------
   function tick() {
+    curL = skyAt(hourNow()).light;
     var before = snap ? snap.id : null;
     refreshSnap();
     if (snap && before && snap.id !== before) { spriteCache = {}; warned = { food: false, happy: false, energy: false }; }
@@ -1101,7 +1721,9 @@
   }
 
   function wire() {
-    $("feed-btn").addEventListener("click", doFeed);
+    $("feed-btn").addEventListener("click", feedButton);
+    $("garden-btn").addEventListener("click", function () { gardenDialog(null); });
+    $("bag-btn").addEventListener("click", bagDialog);
     $("pat-btn").addEventListener("click", doPat);
     $("sleep-btn").addEventListener("click", doSleep);
     $("companion-btn").addEventListener("click", toggleCompanion);
