@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Snake · orOS</title>
+
+  <link rel="stylesheet" href="snake.css?v=0.45.01">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="speed-seg" role="group">
+        <button type="button" class="seg-btn" data-speed="s" data-i18n="speed.s">Slow</button>
+        <button type="button" class="seg-btn" data-speed="n" data-i18n="speed.n">Normal</button>
+        <button type="button" class="seg-btn" data-speed="f" data-i18n="speed.f">Fast</button>
+      </div>
+      <div class="seg" id="walls-seg" role="group">
+        <button type="button" class="seg-btn" data-walls="1" data-i18n="walls.on">Walls</button>
+        <button type="button" class="seg-btn" data-walls="0" data-i18n="walls.off">No walls</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="pause-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: score, message, best -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">0</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="field">
+      <canvas id="board" role="img"></canvas>
+      <div id="overlay">
+        <div id="hint"></div>
+        <button type="button" id="start-btn"></button>
+        <div id="count" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div id="dpad" role="group">
+      <button type="button" class="pad" data-d="0"></button>
+      <button type="button" class="pad" data-d="3"></button>
+      <button type="button" class="pad" data-d="1"></button>
+      <button type="button" class="pad" data-d="2"></button>
+    </div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="snake.js?v=0.45.01"></script>
+
+</body>
+</html>
