@@ -232,6 +232,14 @@
       "icon": "simon",
       "url": "simon/",
       "type": "internal"
+    },
+    {
+      "id": "slider",
+      "name": "Number Slider",
+      "category": "Games",
+      "icon": "slider",
+      "url": "slider/",
+      "type": "internal"
     }
   ]
 }

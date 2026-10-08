@@ -525,6 +525,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Dots & Boxes** | oros-dots-data | per-device counter rows (key level+size), join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.02; Games (tablogames port) |
 | **Tic-Tac-Toe** | oros-tictactoe-data | per-device counter rows, join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.03; Games (tablogames port) |
 | **Simon Says** | oros-simon-data | per-device rows of best/date/games per setting, join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.05; Games (tablogames port) |
+| **Number Slider** | oros-slider-data | per-device rows of best time / fewest moves / solved per size, join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.43.01; Games (tablogames port) |
 | Radio | oros-radio-data | stationuuid union + shell proxy slice | Wave 3 + hotfixes; proxy v0.38.10 |
 | Minimalism | (minimalism slice) | day-entity union | Waves 1–2, content Days 1–55 |
 | **Writer** | oros-writer-data | doc LWW + tpl tombs, canonical (R26) | Doses 1–3 delivered 2026-10-01 → deploy + 2-device smoke test pending |
@@ -558,13 +559,14 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Dots & Boxes:** oros-dots-prefs (`{mode, lv, n, first, nextAi}`), oros-dots-session (`{mode, lv, n, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`), oros-dots-device (id of this device's counter row), oros-dots-sfx, oros-dots-data-broken.
 - **Tic-Tac-Toe:** oros-tictactoe-prefs (`{mode, lv, first, nextAi}`), oros-tictactoe-session (`{mode, lv, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`, the starter plays X), oros-tictactoe-device, oros-tictactoe-sfx, oros-tictactoe-data-broken.
 - **Simon Says:** oros-simon-prefs (`{pads, mode}`), oros-simon-device, oros-simon-sfx (sound ON unless "0": the tones are part of the game), oros-simon-data-broken. No session key: a game in progress cannot be resumed; leaving it (or starting another) ends it and counts its score.
+- **Number Slider:** oros-slider-prefs (`{n}`), oros-slider-session (`{n, tiles[], moves, ms, done}`, resumable; `ms` = time played while visible), oros-slider-device, oros-slider-sfx, oros-slider-data-broken.
 - **Generic:** oros-*-open staging keys, and all *-prefs / *-cache / *-seen keys.
 - **Correction vs older Bible:** oros-pet-events is SYNCED now (petEvents slice).
 
 ### File tree
 
 - **Root:** `index.html`, `shell.js`, `notifications.js`, `sync.js`, `fs.js`, `dialogs.js` **[log]**, `vault.js` **[log]**, `style.css`, `pet.css`, `pet.js`, `translations.js`, `apps.json`, `sw.js`, `manifest.webmanifest`, `icon.svg`, `icons/`, `vendor/` (jspdf, NotoSans-Regular, xlsx; **[log]** leaflet.js, leaflet.css, hls.light.min.js), `fonts/` (Nunito ×5), `.github/workflows/bump-version.yml`, `OROS_BIBLE.md` (Bible + changelog; `CHANGELOG.md` retired).
-- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots, tictactoe, simon.
+- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots, tictactoe, simon, slider.
 
 ---
 
@@ -623,6 +625,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - Same join and reset as CONNECT4 v1 (device id in the device-local `oros-dots-device`); unknown keys and bad cells drop in `normRow`.
 - **TICTACTOE v1:** `{ ver, br, rows{deviceId:{b, s{e|m|h:[won,lost,drawn]}}} }`, results vs the computer only; same join and reset as CONNECT4 v1 (device id in `oros-tictactoe-device`).
 - **SIMON v1:** `{ ver, br, rows{deviceId:{b, s{c4|r4|c6|r6:{n, ts, g}}}} }` (mode c/r × 4/6 pads): best score `n` reached at `ts`, games played `g`. Per row: larger epoch `b` wins; equal epochs take per setting the better best (higher `n`, then earlier `ts`) and the larger `g`; rows with `b < br` drop. A join (`tests/games.test.js`). The shown record is the best across rows; games are summed.
+- **SLIDER v1:** `{ ver, br, rows{deviceId:{b, s{n3|n4|n5:{t, m, g}}}} }`: best time `t` (ms), fewest moves `m` (two separate records, possibly from different games), solved `g`. Per row: larger epoch wins; equal epochs take min `t`, min `m`, max `g`; rows with `b < br` drop. A join (`tests/games.test.js`).
 - **PET v1 — three synced slices:**
   - `pet` (oros-pet-data): `{ ver, pet{id,name,palette,birthTs,fm{field:mtime}}, lastFed, lastPetted, wokeAt/awakeE?, asleepSince/asleepE?, tombs{} }`.
     - Stats are DERIVED from anchors at render time, never stored.
@@ -1037,7 +1040,7 @@ Rule ids are kept as recorded.
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
-- 29 entries since 0.42.05 (memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Games (memory, connect4, dots, tictactoe, simon) · Sound (radio) · Video (television).
+- 30 entries since 0.43.01 (memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05, slider 0.43.01). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Games (memory, connect4, dots, tictactoe, simon, slider) · Sound (radio) · Video (television).
 - The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Creativity, Fun, Internet, Lifestyle, Office, Personal, Sound, Video. EL: Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Ήχος, Προσωπικά, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 
@@ -1183,6 +1186,7 @@ Rebuild this in any session where code is delivered.
   - Dots & Lines approved and go-ahead given; shipped as **Dots & Boxes / Τελείες & Κουτιά** (the proposed name; no other choice was given), 0.42.02. Rectangular boards and a shared `games-kit.js` are proposals for later, not decisions.
   - Tic-Tac-Toe approved and go-ahead given; shipped as **Tic-Tac-Toe / Τρίλιζα**, 0.42.03. Hard plays perfectly and never loses (stated in its tooltip). Larger boards are left to Gomoku; Ultimate Tic-Tac-Toe is a proposal for later.
   - Simon Says approved and go-ahead given ("yes to all"): name **Simon Says / Ο Σάιμον λέει**, sound ON by default for this game only (its tones are part of the game). A "second chance" option is a proposal for later. Version 0.42.05: 0.42.04 went to the menu PR (#11); parallel threads pick the next free version at PR time.
+  - Number Slider approved and go-ahead given: **Number Slider / Συρόμενοι αριθμοί**, sizes 3×3 / 4×4 / 5×5, no undo (moving a tile back is just another move). Picture tiles and rectangular boards are proposals for later; no auto-solve.
   - Game preferences are device-local `*-prefs` (R10); only results and records sync.
 
 - **2026-10-07 · Christos (versions, deploy, To-Do proposals)**
@@ -2756,5 +2760,15 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Core:** `apps.json` entry (Games), `sw.js` precache (4), `ICONS.simon`, `translations.js` `app.simon` (EN + EL). `APP_VERSION` 0.42.04 → 0.42.05 (patch step).
 - **Tests:** `tests/games.test.js` (Tests workflow paths now include `simon/**`): expected pad in Classic and Reverse; the sequence grows by one and never changes earlier steps, every pad appears; tempo steps; merge symmetric, associative, idempotent, inputs untouched, best/tie/games rules, reset and bad cells drop. `node --test tests/*.test.js`: 33/33.
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** sound on by default; 4 classic rounds repeated by tapping, a wrong pad ends at score 4 with "New record!" and a centered dialog; 6 pads Reverse played with keys 1–6 for 3 rounds; N ends the running game and counts score 3; two devices converge with two rows and each sees the other's record; idle cycles upload 0; a reset empties the other device; the 6-pad board fits with pads ≥ 89 px and no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors.
+- **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
+- **Status:** merged to `main` as PR #12 (2026-10-08), live as 0.42.05.
+
+### 2026-10-08 — Number Slider v1.0.0 (new app, Games)
+
+- **New app `slider/`** ("Number Slider" / "Συρόμενοι αριθμοί"): the sliding puzzle on 3×3, 4×4 or 5×5. Shuffles are always solvable (parity rule; checked against a full search of the 3×3 states), never solved, with almost every tile out of place. Tap a tile in the empty square's row or column (several tiles slide at once, each counts as a move), swipe to push the tile next to the gap, or arrow keys; N new game. Moves and time; the clock starts with the first move and runs only while the app is visible. Tiles slide (transform transition, off under reduced motion) and tiles already home are tinted. The game in progress is kept and resumes; New game mid-way shows an Undo toast (R14). A tap on a tile that cannot move, or after the solve, explains itself (R28).
+- **Schema:** SLIDER v1 (Part IV); device-local keys (Part III). Same toolbar, dialogs, toasts, palette and sync idiom as the other games. Toolbar becomes two strips under 440 px.
+- **Core:** `apps.json` entry (Games), `sw.js` precache (4), `ICONS.slider`, `translations.js` `app.slider` (EN + EL). `APP_VERSION` 0.43.01: the next free number when the PR opened (0.42.06 is held by the Netizen ID PR, 0.43.00 by the Maps PR); re-checked before merge.
+- **Tests:** `tests/games.test.js` (Tests workflow paths now include `slider/**`): the parity rule agrees with a breadth-first search of all 181,440 reachable 3×3 states; shuffles solvable and unsolved on every size; row and column multi-slides, arrow push, solve detection; merge symmetric, associative, idempotent, inputs untouched, best-of-each, reset and bad cells drop. `node --test tests/*.test.js`: 36/36.
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** a stuck tile does nothing; an arrow key pushes the right tile; the clock runs after the first move; a 3×3 solved in the optimal 20 moves by tapping, with a centered dialog and both record badges; a row tap moves 3 tiles at once; a swipe pushes a tile; the game resumes after reopening; New game mid-way offers Undo, which restores it; two devices converge with two rows and the records show 2 solved; idle cycles upload 0; a reset empties the other device; the 5×5 board fits with tiles ≥ 66 px and no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors.
 - **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
 - **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
