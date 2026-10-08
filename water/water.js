@@ -68,7 +68,7 @@
       "set.rem": "Reminders", "set.remOn": "Remind me when I fall behind",
       "set.from": "From", "set.to": "Until", "set.every": "At most every",
       "set.remNote": "Reminders arrive only while orOS is open (in a tab or installed).",
-      "every.n": "{n} min", "every.h": "{n} h",
+      "every.n": "{n} min", "every.h": "{n} hours", "every.h1": "1 hour",
       "set.habits": "Show in Habits", "set.habitsNote": "A read-only “Water” row, ticked on the days you reach your goal.",
       "set.export": "Export CSV", "set.data": "Data",
       "toast.added": "+{a}", "toast.undo": "Undo", "toast.deleted": "Entry deleted",
@@ -102,7 +102,7 @@
       "set.rem": "Υπενθυμίσεις", "set.remOn": "Θύμισέ μου όταν μένω πίσω",
       "set.from": "Από", "set.to": "Έως", "set.every": "Το πολύ κάθε",
       "set.remNote": "Οι υπενθυμίσεις έρχονται μόνο όσο το orOS είναι ανοιχτό (σε καρτέλα ή εγκατεστημένο).",
-      "every.n": "{n} λεπτά", "every.h": "{n} ώρ.",
+      "every.n": "{n} λεπτά", "every.h": "{n} ώρες", "every.h1": "1 ώρα",
       "set.habits": "Εμφάνιση στις Συνήθειες", "set.habitsNote": "Μια γραμμή «Νερό» μόνο για ανάγνωση, τσεκαρισμένη τις μέρες που πιάνεις τον στόχο.",
       "set.export": "Εξαγωγή CSV", "set.data": "Δεδομένα",
       "toast.added": "+{a}", "toast.undo": "Αναίρεση", "toast.deleted": "Η καταγραφή διαγράφηκε",
@@ -333,7 +333,7 @@
     // water surface from y=155 (empty) to y=10 (full)
     var y = 155 - f * 145;
     var g = document.getElementById("g-water");
-    if (g) g.setAttribute("transform", "translate(0 " + (f > 0 ? y - 6 : 170).toFixed(1) + ")");
+    if (g) g.setAttribute("transform", "translate(0 " + (f <= 0 ? 170 : (f >= 1 ? -6 : y - 6)).toFixed(1) + ")");
   }
 
   function renderReadout() {
@@ -723,7 +723,7 @@
     form.appendChild(win);
     var every = el("select");
     [30, 45, 60, 90, 120, 180, 240].forEach(function (n) {
-      var o = el("option", "", n < 60 || n % 60 ? t("every.n", { n: n }) : t("every.h", { n: n / 60 }));
+      var o = el("option", "", n < 60 || n % 60 ? t("every.n", { n: n }) : (n === 60 ? t("every.h1") : t("every.h", { n: n / 60 })));
       o.value = String(n);
       if (p.rem.every === n) o.selected = true;
       every.appendChild(o);

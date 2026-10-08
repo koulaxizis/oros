@@ -257,7 +257,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .add-btn.primary svg { color: #0d2a33; }
 .add-btn.primary:hover { background: var(--water-deep); border-color: var(--water-deep); color: #ffffff; }
 .add-btn.primary:hover svg { color: #ffffff; }
-.ab-l { font-size: 14px; line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
+.ab-l { font-size: 14px; line-height: 1.15; text-align: center; }
 .ab-s { font-size: 11px; font-weight: 700; opacity: 0.75; font-variant-numeric: tabular-nums; }
 #day > .sec { max-width: 520px; margin: 0 auto; }
 
@@ -281,7 +281,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .s-t { color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 13px; width: 44px; flex-shrink: 0; }
 .s-bar { flex: 1 1 auto; height: 6px; border-radius: 999px; background: var(--border); position: relative; overflow: hidden; }
 .s-bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: var(--water); border-radius: 999px; }
-.s-a { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.s-a { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 84px; text-align: right; }
 
 /* ---------- 7. History ---------- */
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -306,6 +306,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .b-track { position: relative; width: 60%; max-width: 26px; height: 110px; border-radius: 6px; background: var(--panel-bg); overflow: hidden; }
 .b-fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--water-soft); border-top: 2px solid var(--water); transition: height 0.4s ease; }
 .bar.lv3 .b-fill { background: var(--water); }
+.bar.lv0 .b-fill { border-top: none; }
 .b-goal { position: absolute; left: -2px; right: -2px; height: 0; border-top: 2px dashed var(--text-dim); opacity: 0.7; }
 .b-d { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
 .bar.today .b-d { color: var(--accent); }
@@ -368,6 +369,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .fld-row > .fld { flex: 1 1 0; }
 .fld-row.tight { align-items: flex-end; }
 .fld-row.tight .dlg-btn.inline { flex: 0 0 auto; margin-bottom: 10px; }
+.fld-row.tight + .hint { margin: -4px 0 12px; }
 .dlg-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
 .check { display: flex; align-items: center; gap: 10px; min-height: 38px; font-size: 14px; cursor: pointer; }
 .check input { width: 20px; min-height: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
@@ -465,7 +467,9 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #glass-box { width: 104px; }
   input, select { font-size: 16px; }   /* ≥16px: no iOS zoom */
   dialog.mm-dlg, dialog.mm-dlg.wide { width: calc(100vw - 20px); padding: 14px; }
-  .ab-l { font-size: 13px; }
+  #quick { grid-template-columns: 1fr 1fr; }
+  #add-glass { grid-column: 1 / -1; min-height: 64px; }
+  .add-btn { min-height: 60px; }
 }
 @media (pointer: coarse) {
   .icon-btn, .txt-btn, .dlg-btn, .chip, input, select, .day-btn, .sip, .check { min-height: 44px; }
