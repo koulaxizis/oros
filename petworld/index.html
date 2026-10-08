@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pet World · orOS</title>
+
+  <link rel="stylesheet" href="petworld.css?v=0.44.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: the pet's name (rename) + age, the desktop companion switch -->
+  <header id="toolbar">
+    <button type="button" id="name-btn">
+      <strong id="pet-name"></strong>
+      <small id="pet-age"></small>
+    </button>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="companion-btn" aria-pressed="false"></button>
+  </header>
+
+  <!-- Food · happiness · energy, the same derived stats as the companion -->
+  <div id="stats">
+    <div class="stat" id="stat-food"><span class="stat-ico"></span><span class="stat-track"><span class="stat-fill"></span></span><span class="stat-num"></span></div>
+    <div class="stat" id="stat-happy"><span class="stat-ico"></span><span class="stat-track"><span class="stat-fill"></span></span><span class="stat-num"></span></div>
+    <div class="stat" id="stat-energy"><span class="stat-ico"></span><span class="stat-track"><span class="stat-fill"></span></span><span class="stat-num"></span></div>
+  </div>
+
+  <main id="scene-wrap">
+    <canvas id="scene" role="img"></canvas>
+    <div id="bubble" aria-hidden="true"></div>
+    <div id="offline" hidden></div>
+  </main>
+
+  <!-- Care actions -->
+  <nav id="actions">
+    <button type="button" class="act-btn" id="feed-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
+    <button type="button" class="act-btn" id="pat-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
+    <button type="button" class="act-btn" id="sleep-btn"><span class="act-ico"></span><span class="act-lbl"></span></button>
+  </nav>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="petworld.js?v=0.44.00"></script>
+
+</body>
+</html>
