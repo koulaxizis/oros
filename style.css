@@ -667,6 +667,35 @@ body {
 .menu-empty .glyph svg { display: block; margin: 0 auto; }
 .menu-empty .hint { font-size: 12px; margin-top: 6px; opacity: 0.75; }
 
+/* A74 — quick app search (top of the menu) + per-category counts */
+.menu-search { padding: 2px 2px 6px; }
+.menu-search input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  outline: none;
+}
+.menu-search input:focus { border-color: var(--accent); }
+.menu-search input::placeholder { color: var(--text-dim); }
+.menu-search-none { padding: 14px 10px; font-size: 12.5px; }
+.menu-cat-count {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--border);
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 0;
+  line-height: 16px;
+  text-align: center;
+}
+
 .menu-category { padding: 4px 0; }
 .menu-category h4 {
   font-size: 10.5px;
