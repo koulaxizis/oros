@@ -178,6 +178,14 @@
       "type": "internal"
     },
     {
+      "id": "netizen",
+      "name": "Netizen ID",
+      "category": "Fun",
+      "icon": "netizen",
+      "url": "netizen/",
+      "type": "internal"
+    },
+    {
       "id": "petworld",
       "name": "Pet World",
       "category": "Fun",
@@ -239,6 +247,14 @@
       "category": "Games",
       "icon": "simon",
       "url": "simon/",
+      "type": "internal"
+    },
+    {
+      "id": "slider",
+      "name": "Number Slider",
+      "category": "Games",
+      "icon": "slider",
+      "url": "slider/",
       "type": "internal"
     }
   ]

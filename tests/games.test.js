@@ -1,6 +1,7 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
-// Dots & Boxes, Tic-Tac-Toe, Simon Says), Connect 4 and Tic-Tac-Toe
-// win detection, Dots & Boxes and Simon rules, the computer players.
+// Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider), Connect 4 and
+// Tic-Tac-Toe win detection, Dots & Boxes, Simon and Slider rules, the
+// computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -64,6 +65,12 @@ const SI = load("simon/simon.js",
    "joinRows", "mergeSimon"],
   [["  var DATA_VER", "  // ---------- 1."]],
   "expectedPad, extend, tempo, mergeSimon");
+
+const SL = load("slider/slider.js",
+  ["cmpStr", "solvedTiles", "isSolved", "isSolvable", "misplaced", "shuffle", "slide",
+   "pushFrom", "normCell", "normRow", "joinRows", "mergeSlider"],
+  [["  var DATA_VER", "  // ---------- 1."]],
+  "solvedTiles, isSolved, isSolvable, shuffle, slide, pushFrom, mergeSlider");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -397,4 +404,83 @@ test("simon: records merge is a join and a reset drops older rows", () => {
   assert.equal(J(M(x, y).rows.d.s), J({ c4: { n: 7, ts: 50, g: 4 }, r6: { n: 4, ts: 10, g: 2 } }));
   assert.equal(J(M({ br: 0, rows: { d: { b: 0, s: { c4: { n: 3, ts: 1, g: 1 } } } } }, { br: 9, rows: {} }).rows), "{}");
   assert.equal(J(M({ rows: { d: { b: 0, s: { c4: { n: -1, ts: 1, g: 1 } } } } }, null).rows), "{}");
+});
+
+// Breadth-first search over every arrangement reachable from solved
+// (3x3: 9!/2 states): the parity rule must agree with reachability.
+test("slider: the solvability rule matches what the moves can reach (3x3)", () => {
+  const n = 3, start = SL.solvedTiles(n), seen = new Set([start.join()]);
+  let frontier = [start];
+  while (frontier.length) {
+    const next = [];
+    for (const tl of frontier) {
+      const b = tl.indexOf(0);
+      for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const r = Math.floor(b / n) + dr, c = b % n + dc;
+        if (r < 0 || r >= n || c < 0 || c >= n) continue;
+        const res = SL.slide(tl, n, r * n + c);
+        const k = res.tiles.join();
+        if (!seen.has(k)) { seen.add(k); next.push(res.tiles); }
+      }
+    }
+    frontier = next;
+  }
+  assert.equal(seen.size, 181440);
+  for (let i = 0; i < 3000; i++) {
+    const a = SL.solvedTiles(n).sort(() => Math.random() - 0.5);
+    assert.equal(SL.isSolvable(a, n), seen.has(a.join()), "parity rule wrong for " + a);
+  }
+});
+
+test("slider: shuffles are solvable, never solved; moves follow the rules", () => {
+  for (const n of [3, 4, 5]) {
+    for (let i = 0; i < 300; i++) {
+      const a = SL.shuffle(n);
+      assert.ok(SL.isSolvable(a, n) && !SL.isSolved(a));
+      assert.deepEqual([...a].sort((x, y) => x - y), [...Array(n * n).keys()]);
+    }
+    // swapping two tiles of the solved board makes it unsolvable
+    const s = SL.solvedTiles(n);
+    assert.ok(SL.isSolvable(s, n));
+    const sw = s.slice(); [sw[0], sw[1]] = [sw[1], sw[0]];
+    assert.ok(!SL.isSolvable(sw, n));
+  }
+  const s4 = SL.solvedTiles(4);                       // blank at 15
+  assert.equal(SL.slide(s4, 4, 5), null);             // not in its row or column
+  const row = SL.slide(s4, 4, 12);                    // three tiles slide right
+  assert.equal(row.moved, 3);
+  assert.deepEqual(row.tiles.slice(12), [0, 13, 14, 15]);
+  const col = SL.slide(s4, 4, 3);                     // three tiles slide down
+  assert.equal(col.moved, 3);
+  assert.deepEqual([3, 7, 11, 15].map((i) => col.tiles[i]), [0, 4, 8, 12]);
+  assert.equal(SL.pushFrom(s4, 4, 0, 1), 14);         // ArrowRight pushes the tile on the left
+  assert.equal(SL.pushFrom(s4, 4, 1, 0), 11);         // ArrowDown pushes the tile above
+  assert.equal(SL.pushFrom(s4, 4, 0, -1), -1);        // nothing right of the blank
+  assert.ok(SL.isSolved(SL.slide(SL.slide(s4, 4, 14).tiles, 4, 15).tiles));
+});
+
+test("slider: records merge is a join and a reset drops older rows", () => {
+  const M = SL.mergeSlider, keys = ["n3", "n4", "n5"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => { if (rnd(2)) s[k] = { t: 1 + rnd(9e4), m: 1 + rnd(200), g: 1 + rnd(5) }; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const x = { rows: { d: { b: 0, s: { n4: { t: 9000, m: 80, g: 2 } } } } };
+  const y = { rows: { d: { b: 0, s: { n4: { t: 12000, m: 60, g: 3 } } } } };
+  assert.equal(J(M(x, y).rows.d.s.n4), J({ t: 9000, m: 60, g: 3 }));     // best of each, separately
+  assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
+  assert.equal(J(M({ rows: { d: { b: 0, s: { n4: { t: 0, m: 5, g: 1 } } } } }, null).rows), "{}");
 });
