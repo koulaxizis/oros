@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sound Mixer · orOS</title>
+
+  <link rel="stylesheet" href="mixer.css?v=0.45.06">
+
+</head>
+<body>
+
+  <!-- Transport: one line on a wide screen, two strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <button type="button" class="play-btn" id="play-btn"></button>
+      <div class="now-wrap">
+        <span id="now" class="now"></span>
+        <span id="timer-left" class="timer-left" hidden></span>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <button type="button" class="icon-btn" id="mute-btn"></button>
+      <input type="range" id="vol" min="0" max="100" step="1">
+      <select id="timer"></select>
+      <button type="button" class="txt-btn" id="save-btn"></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="sec">
+      <h2 data-i18n="sec.sounds">Sounds</h2>
+      <div id="channels"></div>
+    </section>
+
+    <section class="sec">
+      <h2 data-i18n="sec.presets">Ready mixes</h2>
+      <div id="presets" class="chips"></div>
+    </section>
+
+    <section class="sec">
+      <h2 data-i18n="sec.mine">My mixes</h2>
+      <div id="mine" class="chips"></div>
+      <p class="hint" id="mine-empty" data-i18n="mine.empty">Save a mix to keep it here.</p>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="mixer.js?v=0.45.06"></script>
+
+</body>
+</html>
