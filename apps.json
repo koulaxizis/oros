@@ -192,6 +192,14 @@
       "icon": "television",
       "url": "television/",
       "type": "internal"
+    },
+    {
+      "id": "memory",
+      "name": "Memory",
+      "category": "Games",
+      "icon": "memory",
+      "url": "memory/",
+      "type": "internal"
     }
   ]
 }

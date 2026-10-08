@@ -520,6 +520,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Characters | oros-characters-data | union + LWW + tombs | 5/5 VERIFIED |
 | Spreadsheet | oros-spreadsheet-data | cell-entity LWW + cw | 5/5 VERIFIED |
 | Dice & Coin | oros-dice-data | union + LWW + tombs | 5/5 VERIFIED |
+| **Memory** | oros-memory-data | games union by id (cap 50) + best "better wins" + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.00; first Games app (tablogames port) |
 | Radio | oros-radio-data | stationuuid union + shell proxy slice | Wave 3 + hotfixes; proxy v0.38.10 |
 | Minimalism | (minimalism slice) | day-entity union | Waves 1–2, content Days 1–55 |
 | **Writer** | oros-writer-data | doc LWW + tpl tombs, canonical (R26) | Doses 1–3 delivered 2026-10-01 → deploy + 2-device smoke test pending |
@@ -548,13 +549,14 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Mail [log]:** oros-mail-creds (account passwords; "never synced, never exported" per its note; removed by the factory-reset sweep like every `oros-` key).
 - **Vault [log]:** the manifest revision key (`REV_KEY`; the stored name is not recorded).
 - **Writer:** oros-writer-prefs (`{open[], active, seen{}}`).
+- **Memory:** oros-memory-prefs (`{lv, mode, set}`), oros-memory-session (the game in progress, resumable), oros-memory-sfx ("1" = sound on), oros-memory-data-broken (rescue copy of unreadable data).
 - **Generic:** oros-*-open staging keys, and all *-prefs / *-cache / *-seen keys.
 - **Correction vs older Bible:** oros-pet-events is SYNCED now (petEvents slice).
 
 ### File tree
 
 - **Root:** `index.html`, `shell.js`, `notifications.js`, `sync.js`, `fs.js`, `dialogs.js` **[log]**, `vault.js` **[log]**, `style.css`, `pet.css`, `pet.js`, `translations.js`, `apps.json`, `sw.js`, `manifest.webmanifest`, `icon.svg`, `icons/`, `vendor/` (jspdf, NotoSans-Regular, xlsx; **[log]** leaflet.js, leaflet.css, hls.light.min.js), `fonts/` (Nunito ×5), `.github/workflows/bump-version.yml`, `OROS_BIBLE.md` (Bible + changelog; `CHANGELOG.md` retired).
-- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television.
+- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory.
 
 ---
 
@@ -599,6 +601,11 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **DICE v2:**
   - `{ ver, sm, deleted{}, history[{id,kind,ts,mtime,…}], presets[] }`, kind ∈ {dice, coin}.
   - Tombstones prune at max-mtime − 30d; presets union by name.
+- **MEMORY v1:**
+  - `{ ver, br, best{lv:{id,ts,moves,ms}}, games[{id,ts,lv,mode,set,moves,ms,s?}] }`; lv ∈ {e,m,h,x}, mode ∈ {solo,duo}, set ∈ {shapes,icons,letters}; `s` = [p1, p2] for duo only.
+  - Games are immutable: union by id (byte tie-break), newest first, cap 50. Best per level: fewer moves → less time → earlier → id (total order, symmetric); every solo game in the merged history is also a candidate.
+  - Reset = `br` stamp (max-merged): games and records with `ts <= br` drop on every device. No tombstones.
+  - Merge is symmetric and idempotent; not strictly associative when a record's game falls off the cap, converges in one more merge (Node, 20,000 rounds).
 - **PET v1 — three synced slices:**
   - `pet` (oros-pet-data): `{ ver, pet{id,name,palette,birthTs,fm{field:mtime}}, lastFed, lastPetted, wokeAt/awakeE?, asleepSince/asleepE?, tombs{} }`.
     - Stats are DERIVED from anchors at render time, never stored.
@@ -1013,7 +1020,7 @@ Rule ids are kept as recorded.
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
-- Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Sound (radio) · Video (television).
+- 25 entries since 0.42.00 (memory). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice) · Games (memory) · Sound (radio) · Video (television).
 - The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Creativity, Fun, Internet, Lifestyle, Office, Personal, Sound, Video. EL: Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Ήχος, Προσωπικά, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 
@@ -1145,6 +1152,12 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-08 · Christos (Games: tablogames.online port)**
+  - The games of tablogames.online come to orOS under a new category **Games / Παιχνίδια**: full rewrite, no old code, full compliance with orOS. Each title is asked one at a time: approve / reject / postpone (tracked in project memory, `oros-games-port`).
+  - Each game is its own app (own folder, slice, `apps.json` entry), not a hub. Memory is the template for the games that follow (no shared core file for now).
+  - Dice & Coin stays in Fun "for now".
+  - Memory approved and built (name "Memory / Μνήμη"); Connect 4 approved (plan delivered, awaiting go-ahead).
 
 - **2026-10-07 · Christos (versions, deploy, To-Do proposals)**
   - **R23 changed:** the assistant raises `APP_VERSION` in `shell.js` with every delivery (patch for small, whole version for big; proposal by the assistant, final say his); the workflow stamps the rest.
@@ -2660,3 +2673,14 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** real Dropbox; the derivation time on a phone (expected ~0.5–1 s once per session, not measured).
 - **Deploy note:** every device should load 0.40.02 soon after the first new push; until then an old device shows "passphrase changed?" and syncs nothing (safe).
 - **Status:** branch `claude/project-thread-xrav9f`, PR; not on `main` (R4).
+
+### 2026-10-08 — Memory v1.0.0 (new app) + Games category — first tablogames port
+
+- **New app `memory/`** (index.html, memory.css, memory.js; IIFE, ES5, boot marker, palette G3, Contract Β). Pairs game: 4 levels (Easy 4×3 · Medium 4×4 · Hard 6×4 · Expert 6×6; the grid turns upright on a portrait screen), 3 symbol sets drawn in-house (shapes 6 × 3 colours, 18 line icons, letters Α–Σ / A–R by language), Solo (moves + timer + best per level) and 2 players on one device (a match keeps the turn). 3D flip (none under reduced motion), WebAudio sounds (off by default), keyboard (arrows + Enter/Space, N = new game), ARIA labels and live announcements.
+- **Schema:** MEMORY v1 (Part IV). Device-local keys: Part III.
+- **Behaviour:** the game in progress survives closing the app; the clock pauses when the app is hidden and resumes on the next flip. A new game (button, N, level / mode / set change) during a game shows a local Undo toast (8 s) that restores it (R14). Records reset asks first (themed dialog) and travels as the `br` stamp. A full store shows one toast (R30). No file I/O (R36: no `dialogHost()`), no notifications (exempt: a game has no reminders), only transient toasts.
+- **Core:** `apps.json` entry (category `Games`), `sw.js` precache (4 entries), `shell.js` `ICONS.memory`, `translations.js` `category.games` + `app.memory` (EN + EL).
+- **Version:** `APP_VERSION` 0.41.01 → 0.42.00 (new app + new category = whole version).
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, two devices EN desktop / EL phone):** a Medium game with one miss counts 9 moves and records best 9; Easy perfect game; a 2-player game names the winner; the two devices converge and idle cycles upload 0; a records reset on one device empties the other; the session resumes after reopening; Undo restores the previous game; arrows + Enter flip the right card; win dialog centered; no horizontal overflow and cards ≥ 53 px at 360×640, 390×844, 800×1200, 1280×800 on Easy and Expert; no page errors. Merge (Node, 20,000 rounds of realistic states): symmetric 0 failures, idempotent 0, converges 0; the case "reset elsewhere, then a worse game here" keeps that game as the new record.
+- **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output (no audio device in the harness).
+- **Status:** branch `claude/project-thread-bx01wj`, PR; not on `main` (R4).
