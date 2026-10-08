@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Name Generator · orOS</title>
+
+  <link rel="stylesheet" href="names.css?v=0.45.10">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span class="title-main" data-i18n="app.name">Name Generator</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Modes, options and the batch -->
+    <section id="gen">
+      <div id="tabs" role="tablist"></div>
+
+      <div class="opts">
+        <div class="opt">
+          <h2 id="words-lbl" data-i18n="sec.words">Words</h2>
+          <div id="words" class="chips" role="radiogroup" aria-labelledby="words-lbl"></div>
+        </div>
+        <div class="opt" id="style-sec">
+          <h2 id="style-lbl" data-i18n="sec.style">Style</h2>
+          <div id="styles" class="chips" role="group" aria-labelledby="style-lbl"></div>
+        </div>
+      </div>
+
+      <button type="button" id="gen-btn" class="gen-btn"></button>
+
+      <ul id="list" role="tabpanel"></ul>
+    </section>
+
+    <!-- Favourites (synced) -->
+    <aside id="panel">
+      <div class="sec-head">
+        <h2 data-i18n="fav.title">Favourites</h2>
+        <span id="fav-count" class="count"></span>
+        <span class="spacer"></span>
+        <button type="button" class="link-btn" id="copy-all" data-i18n="fav.copyAll" hidden>Copy all</button>
+      </div>
+      <p id="fav-empty" class="hint" data-i18n="fav.empty"></p>
+      <div id="favs"></div>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="words.js?v=0.45.10"></script>
+  <script src="names.js?v=0.45.10"></script>
+
+</body>
+</html>
