@@ -524,7 +524,8 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Connect 4** | oros-connect4-data | per-device counter rows, join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.01; Games (tablogames port) |
 | **Dots & Boxes** | oros-dots-data | per-device counter rows (key level+size), join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.02; Games (tablogames port) |
 | **Tic-Tac-Toe** | oros-tictactoe-data | per-device counter rows, join (row max) + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.03; Games (tablogames port) |
-| **Netizen ID** | oros-netizen-data | cards LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.42.06; Fun (soffitta.site port) |
+| **Simon Says** | oros-simon-data | per-device rows of best/date/games per setting, join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.42.05; Games (tablogames port) |
+| **Netizen ID** | oros-netizen-data | cards LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.43.02; Fun (soffitta.site port) |
 | Radio | oros-radio-data | stationuuid union + shell proxy slice | Wave 3 + hotfixes; proxy v0.38.10 |
 | Minimalism | (minimalism slice) | day-entity union | Waves 1–2, content Days 1–55 |
 | **Writer** | oros-writer-data | doc LWW + tpl tombs, canonical (R26) | Doses 1–3 delivered 2026-10-01 → deploy + 2-device smoke test pending |
@@ -548,7 +549,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Pet:** oros-pet-enabled, oros-pet-pos, oros-pet-minimized, oros-pet-calendar-sync (read-only legacy mirror of oros-pet-settings).
 - **Radio:** oros-radio-recents, oros-radio-cache:*.
 - **Calendar:** oros-cal-reminders-fired, oros-cal-pending (event deep links `calendar:{evId}:{ymd}`). **[log]** sessionStorage `oros-cal-new` (new-event prefill, BR-W8-2).
-- **Maps [log]:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of an unreadable oros-maps-data), oros-maps-prefs (`{ lat, lon, zoom, layer }`, R10 view state), oros-maps-open (staging). sessionStorage `oros-maps-nav` (timestamp of a running navigation, refreshed every 30 s, removed on exit / arrival / clear route). Cache Storage `oros-map-tiles` (deleted by the factory reset since Dose 2).
+- **Maps [log]:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of an unreadable oros-maps-data), oros-maps-prefs (`{ lat, lon, zoom, layer }`, R10 view state), oros-maps-open (staging), oros-maps-recent (up to 10 recent places `{ name, sub, lat, lon }`, newest first, since 0.43.00). sessionStorage `oros-maps-nav` (timestamp of a running navigation, refreshed every 30 s, removed on exit / arrival / clear route). Cache Storage `oros-map-tiles` (deleted by the factory reset since Dose 2).
 - **Television [log]:** oros-television-recents (cap 20), oros-television-volume. sessionStorage `oros-television-open` (staging). Cache Storage `oros-television-api` (24 h TTL).
 - **Mail [log]:** oros-mail-creds (account passwords; "never synced, never exported" per its note; removed by the factory-reset sweep like every `oros-` key).
 - **Vault [log]:** the manifest revision key (`REV_KEY`; the stored name is not recorded).
@@ -557,6 +558,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Connect 4:** oros-connect4-prefs (`{mode, lv, first, nextAi}`), oros-connect4-session (`{mode, lv, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`), oros-connect4-device (id of this device's counter row), oros-connect4-sfx, oros-connect4-data-broken.
 - **Dots & Boxes:** oros-dots-prefs (`{mode, lv, n, first, nextAi}`), oros-dots-session (`{mode, lv, n, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`), oros-dots-device (id of this device's counter row), oros-dots-sfx, oros-dots-data-broken.
 - **Tic-Tac-Toe:** oros-tictactoe-prefs (`{mode, lv, first, nextAi}`), oros-tictactoe-session (`{mode, lv, starter, ai, moves[], done, series[2]}`; the board is replayed from `moves`, the starter plays X), oros-tictactoe-device, oros-tictactoe-sfx, oros-tictactoe-data-broken.
+- **Simon Says:** oros-simon-prefs (`{pads, mode}`), oros-simon-device, oros-simon-sfx (sound ON unless "0": the tones are part of the game), oros-simon-data-broken. No session key: a game in progress cannot be resumed; leaving it (or starting another) ends it and counts its score.
 - **Netizen ID:** oros-netizen-prefs (`{cur, tab, side}`: current card, phone tab edit|card, side shown front|back), oros-netizen-data-broken.
 - **Generic:** oros-*-open staging keys, and all *-prefs / *-cache / *-seen keys.
 - **Correction vs older Bible:** oros-pet-events is SYNCED now (petEvents slice).
@@ -564,7 +566,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 ### File tree
 
 - **Root:** `index.html`, `shell.js`, `notifications.js`, `sync.js`, `fs.js`, `dialogs.js` **[log]**, `vault.js` **[log]**, `style.css`, `pet.css`, `pet.js`, `translations.js`, `apps.json`, `sw.js`, `manifest.webmanifest`, `icon.svg`, `icons/`, `vendor/` (jspdf, NotoSans-Regular, xlsx; **[log]** leaflet.js, leaflet.css, hls.light.min.js), `fonts/` (Nunito ×5), `.github/workflows/bump-version.yml`, `OROS_BIBLE.md` (Bible + changelog; `CHANGELOG.md` retired).
-- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots, tictactoe, netizen.
+- **One folder per app:** todo, kanban, notes, bookmarks, weather, mood, time (+`astro.js`), calendar, quote, prompter, storage, habits, files, contacts, cycle, characters, spreadsheet, dice, radio, minimalism (+`content.js`), **writer** (no longer `writer-staging`), calculator, **[log]** maps, television, memory, connect4, dots, tictactoe, simon, netizen.
 
 ---
 
@@ -627,6 +629,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - The avatar is NOT an image: `s` seeds a deterministic mirrored 12×12 face (`genAvatar`, FNV-1a + mulberry32) and `px` holds only hand-painted pixels (R30).
   - A new card stays an unsaved draft until its first edit (R16 lazy). Every export and the share link need a username.
 - **TICTACTOE v1:** `{ ver, br, rows{deviceId:{b, s{e|m|h:[won,lost,drawn]}}} }`, results vs the computer only; same join and reset as CONNECT4 v1 (device id in `oros-tictactoe-device`).
+- **SIMON v1:** `{ ver, br, rows{deviceId:{b, s{c4|r4|c6|r6:{n, ts, g}}}} }` (mode c/r × 4/6 pads): best score `n` reached at `ts`, games played `g`. Per row: larger epoch `b` wins; equal epochs take per setting the better best (higher `n`, then earlier `ts`) and the larger `g`; rows with `b < br` drop. A join (`tests/games.test.js`). The shown record is the best across rows; games are summed.
 - **PET v1 — three synced slices:**
   - `pet` (oros-pet-data): `{ ver, pet{id,name,palette,birthTs,fm{field:mtime}}, lastFed, lastPetted, wokeAt/awakeE?, asleepSince/asleepE?, tombs{} }`.
     - Stats are DERIVED from anchors at render time, never stored.
@@ -706,7 +709,7 @@ oros-maps-data = { ver:1, places[{ id, name, sub, lat, lon, mtime }], deleted{ <
 - **Merge:** union by id, LWW by mtime (tie: lexicographic JSON); tombstones max-ts union; a place survives only if `mtime > tombstone` (delete wins ties, a newer star resurrects). No tombstone pruning.
 - The places list keeps its visible order (oldest first) although storage is id-sorted.
 - A fresh install persists nothing until the first real change. Unreadable data is copied to `oros-maps-rescue`, never overwritten silently.
-- **Device-local route snapshot** `oros-maps-route`: steps are stored slim, `{ maneuver:{ type, modifier, exit?, location? }, name, ref?, distance, duration }`. OSRM per-step `geometry` and `intersections` are never stored. Cap 600,000 characters; over the cap, or on a quota failure, the key is REMOVED with one toast per session.
+- **Device-local route snapshot** `oros-maps-route`: `{ ver:1, from, to, vias[], profile, geometry, steps, distance, duration }`. `from` / `to` / `vias[]` are `{ lat, lon, name, sub }`; "My location" carries `me: true` (its lat/lon are re-measured whenever a route is calculated). `vias` (stops, at most 3) is additive since 0.43.00: an older snapshot without it restores with no stops. Steps are stored slim, `{ maneuver:{ type, modifier, exit?, location? }, name, ref?, distance, duration, via? }`; `via: n` marks the "arrive" step that ends leg n (stop n), so the panel, the HUD and a re-route know the stops. OSRM per-step `geometry` and `intersections` are never stored. Cap 600,000 characters; over the cap, or on a quota failure, the key is REMOVED with one toast per session.
 
 **TELEVISION v1** [log]:
 
@@ -1041,7 +1044,7 @@ Rule ids are kept as recorded.
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
-- 28 entries since 0.42.03 (memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03); +1 with netizen (0.42.06). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice, netizen) · Games (memory, connect4, dots, tictactoe) · Sound (radio) · Video (television).
+- 29 entries since 0.42.05 (memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05); +1 with netizen (0.43.02). Categories (all capitalized since 2026-10-06): Accessories (weather, time, files, calculator) · Office (todo, kanban, notes, calendar, quote, contacts, storage, spreadsheet, writer) · Lifestyle (minimalism) · Creativity (prompter, characters) · Personal (mood, habits, cycle) · Internet (bookmarks, maps) · Fun (dice, netizen) · Games (memory, connect4, dots, tictactoe, simon) · Sound (radio) · Video (television).
 - The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Creativity, Fun, Internet, Lifestyle, Office, Personal, Sound, Video. EL: Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Ήχος, Προσωπικά, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 
@@ -1174,6 +1177,14 @@ Rebuild this in any session where code is delivered.
 
 ### Decisions (newest first)
 
+- **2026-10-08 · Maps 0.43.00 (Christos chose "fixes + From/To"; assistant decisions inside it)**
+  - The route bar's "set start on map" / "set destination on map" buttons are replaced by one "Edit route" button that opens the planner; every planner row has its own "choose on map" button. The bottom-left "Plan a route" button opens the planner instead of arming a map pick.
+  - A fresh plan starts from "My location". No location at all → no route; the planner opens on the empty field and says so (the map-centre fallback, named "·", is gone).
+  - "Route" in a popup routes from the user's location (as before) unless the planner is open: then the start and stops being edited are kept.
+  - Up to 3 stops (OSRM takes every point in one request). Swap reverses the whole trip.
+  - Recent places are device-local (`oros-maps-recent`, 10), never synced: they are a convenience, not data.
+  - Starting navigation more than 150 m from the route's start recalculates the route from the user's position first, with a toast (offline: guides on the old route, as before).
+  - The "Maps loaded" welcome toast is removed (MP-4).
 - **2026-10-08 · Christos (Apps: soffitta.site port)**
   - The apps of soffitta.site come to orOS: full rewrite, no old code, full compliance with orOS. Each title is asked one at a time: approve / reject / postpone (tracked in project memory, `oros-soffitta-port`); each approved app gets a plan, a proposed category agreed with Christos, then its own app and PR. Dice & Coin and Screen Pet already exist in orOS and are not ported again.
   - Netizen ID approved and go-ahead given, category **Fun** (proposed Creativity; his choice). Accepted with it: a view-only share link carrying the card in the URL fragment; several cards; no QR code for now; no "add me to Contacts" for now (vCard export covers it); a back side. Pixel Avatar Maker is decided when its turn comes.
@@ -1190,6 +1201,7 @@ Rebuild this in any session where code is delivered.
   - Memory approved and built (name "Memory / Μνήμη"); Connect 4 approved, go-ahead given ("Προχώρα!"); Memory shipped in PR #7 (0.42.00), Connect 4 follows in its own PR (0.42.01).
   - Dots & Lines approved and go-ahead given; shipped as **Dots & Boxes / Τελείες & Κουτιά** (the proposed name; no other choice was given), 0.42.02. Rectangular boards and a shared `games-kit.js` are proposals for later, not decisions.
   - Tic-Tac-Toe approved and go-ahead given; shipped as **Tic-Tac-Toe / Τρίλιζα**, 0.42.03. Hard plays perfectly and never loses (stated in its tooltip). Larger boards are left to Gomoku; Ultimate Tic-Tac-Toe is a proposal for later.
+  - Simon Says approved and go-ahead given ("yes to all"): name **Simon Says / Ο Σάιμον λέει**, sound ON by default for this game only (its tones are part of the game). A "second chance" option is a proposal for later. Version 0.42.05: 0.42.04 went to the menu PR (#11); parallel threads pick the next free version at PR time.
   - Game preferences are device-local `*-prefs` (R10); only results and records sync.
 
 - **2026-10-07 · Christos (versions, deploy, To-Do proposals)**
@@ -1321,7 +1333,7 @@ Rebuild this in any session where code is delivered.
 - ⊗ **Greek wording (suggestions, not applied):** `alarm.title` «Ειδοποίηση» for "Alarm" (the same overlay serves timers); `sync.err.auth` «— επανασύνδεση» → «— συνδέσου ξανά»; English terms left in Greek strings (`sc.info.cap` "Offline-first", "tracking"; "API key" in the service lines; "cloud", "browser").
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
 - ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
-- ⊗ **Maps follow-ups** (not started): heading-up map rotation; "download this area" for offline; reverse geocoding on long-press.
+- ⊗ **Maps follow-ups** (proposals 2026-10-08, `audits/maps-proposals-2026-10-08.md`; 0.43.00 delivered the fixes MX-1…MX-8 and the planner, stops, long-press menu, recents and coordinates). Not started: alternative routes (`alternatives=true`), avoid tolls / motorways (`exclude=`, check the demo server first), arrival clock time, lane hints, heading-up map rotation, "download this area" for offline (mind the OSM tile usage policy), share link / GPX export.
 
 ### Audit queue (assistant-raised; verify, then fix)
 
@@ -2746,7 +2758,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Tests:** `tests/games.test.js` (Tests workflow paths now include `tictactoe/**`): all eight lines and a draw; Hard never loses over every opponent line of play, starting or not (walk repeated for its random tie-breaks); Medium always takes a win and blocks a single threat, Easy takes a win (random positions); merge symmetric, associative, idempotent, inputs untouched, reset drops older rows. `node --test tests/*.test.js`: 31/31.
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** the computer replies; X for you and O for the computer; undo; key 7 plays the top-left square and arrows move focus; easy, hard and 2-player games end with a centered result dialog; strike line and three winning marks; series 1–0 and player 2 starts next as X; a game reopened mid-way resumes; Hard was not beaten; two devices converge with two counter rows and idle cycles upload 0; a reset empties the other device; board fits with cells ≥ 104 px and no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors.
 - **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
-- **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
+- **Status:** merged to `main` as PR #10 (2026-10-08), live as 0.42.03.
 
 ### 2026-10-08 — Shell 0.42.04 — Menu: closed categories at boot, app counts, quick search (A74)
 
@@ -2755,6 +2767,29 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Files:** `shell.js` (`renderMenu` → inner `renderAppList`), `style.css` (`.menu-search`, `.menu-cat-count`), `translations.js` (`menu.search`, `menu.search.none`, EN + EL). `APP_VERSION` 0.42.03 → 0.42.04 (patch step; 0.42.03 is Tic-Tac-Toe, PR #10).
 - **Verification (Chromium, real shell, EL):** an old stored map is removed and all 10 categories boot closed with counts; a toggled category stays open after opening an app and returning; "ημερολογ" finds Calendar under Office with focus kept; Escape clears without closing; "zzzz" shows the empty message; "calc" + Enter opens Calculator; after reload every category is closed again; no page errors. `node --test tests/*.test.js`: 27/27.
 - **NOT tested:** Firefox / Safari, a real phone.
+
+### 2026-10-08 — Simon Says v1.0.0 (new app, Games)
+
+- **New app `simon/`** ("Simon Says" / "Ο Σάιμον λέει"): Simon plays a growing sequence of lit pads, each with its own tone; you repeat it; the first wrong pad ends the game (score = longest completed sequence, the right pad is shown). 4 or 6 pads on a ring, Classic or Reverse (back to front); the tempo rises after steps 5, 9 and 13; no answer time limit. Pads differ by colour AND shape AND number (fixed hues, not the skin palette). Start from the hub (or Space); pads answer on pointerdown; keyboard 1–4 / 1–6, Enter/Space on a focused pad, N new game. A tap while Simon plays or before Start explains itself (R28). New game, a setting change or leaving the app mid-game ends the game and counts its score (nothing lost silently, no Undo needed). Sound ON by default (Web Audio tones, first four are the original Simon notes), off with the sound button. ARIA labels per pad, live announcements per round.
+- **Schema:** SIMON v1 (Part IV); device-local keys (Part III). Same toolbar, dialogs, toasts, palette and sync idiom as the other games. Toolbar becomes two strips under 640 px.
+- **Core:** `apps.json` entry (Games), `sw.js` precache (4), `ICONS.simon`, `translations.js` `app.simon` (EN + EL). `APP_VERSION` 0.42.04 → 0.42.05 (patch step).
+- **Tests:** `tests/games.test.js` (Tests workflow paths now include `simon/**`): expected pad in Classic and Reverse; the sequence grows by one and never changes earlier steps, every pad appears; tempo steps; merge symmetric, associative, idempotent, inputs untouched, best/tie/games rules, reset and bad cells drop. `node --test tests/*.test.js`: 33/33.
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** sound on by default; 4 classic rounds repeated by tapping, a wrong pad ends at score 4 with "New record!" and a centered dialog; 6 pads Reverse played with keys 1–6 for 3 rounds; N ends the running game and counts score 3; two devices converge with two rows and each sees the other's record; idle cycles upload 0; a reset empties the other device; the 6-pad board fits with pads ≥ 89 px and no horizontal overflow at 360×640, 390×844, 800×1200, 940×700, 1280×800; no page errors.
+- **NOT tested:** real Dropbox, Firefox / Safari, a real phone, sound output.
+- **Status:** branch `claude/project-thread-bx01wj`, own PR; not on `main` (R4).
+
+### 2026-10-08 — Maps 0.43.00 — route planner (From / stops / To), long-press menu, navigation fixes
+
+- **Planner:** "Plan a route" and the new "Edit route" button open a From / To panel in place of the search bar. Each field searches like the search bar (Photon, biased to the view) and, before typing, offers "My location", saved places and recent places. Up to 3 stops ("Add stop"), Swap, a remove button per stop and a "choose on map" button per row. The route is calculated as soon as From and To are both set and again on every change. Enter always picks something (R28); Esc closes the results, then the panel.
+- **Long-press / right-click on the map:** Go here · Start here · Add as stop (when a route exists) · Save, titled with the address under the point (Photon `reverse`). Points chosen on the map are named the same way (MX-4, MX-5).
+- **Coordinates** in the search bar and the planner (`37.9755, 23.7348` or `37°58'32"N 23°44'05"E`), offline too.
+- **Recent places:** device-local `oros-maps-recent` (Part III).
+- **Stops:** OSRM legs are joined; the "arrive" step of each leg but the last says "Arrive at stop n" in the panel, the HUD and the voice. A re-route during navigation drops the stops already reached. The route snapshot keeps `vias` (Part IV, additive).
+- **Fixes:** MX-1 the navigation camera no longer snaps back on every GPS fix once the user pans, pinches, scrolls or zooms; a "Recenter" button resumes following, and the follow zoom eases out at speed (17 / 16 / 15). MX-2 starting navigation away from the route's start recalculates from the user's position and says so. MX-3 no route from the map centre named "·". MX-6 the user is an arrow that turns with the direction of travel while navigating. MX-7 no welcome toast. MX-8 the route time has a tooltip "Estimate without live traffic".
+- **Files:** `maps/maps.js`, `maps/maps.css`, `maps/index.html` only (app folder; strings live in `maps.js`). Removed strings: `toast.welcome`, `route.setstart`, `route.setend`, `route.fromCenter`, `route.fromUser`. `APP_VERSION` 0.42.05 → 0.43.00 (whole version: new feature set).
+- **Verification (Chromium, mocked Photon / OSRM / reverse, real geolocation API):** standalone, 52 checks: From defaults to My location and To gets the focus; Photon suggestions and Enter route; a stop by coordinates sends start;stop;end; directions say "Arrive at stop 1" once; Swap reverses the trip and resolves My location as destination; removing a stop recalculates; a row's map pick is named "Ermou 10"; the snapshot and a reload keep the stop and "Edit route" shows it; recents list the destination first, never My location; right-click menu actions and address; DMS coordinates; navigation from 3 km away recalculates from the user and says so; dragging shows Recenter, a GPS fix does not steal the view, Recenter resumes; the arrow rotates; exit restores the pin; without location permission no route is made and the planner opens on From. Phone 390×844 EL: nothing off-screen, every planner / route-bar button ≥ 44 px, planner and docked route bar do not overlap. Real shell + real `sync.js` + mock Dropbox, two devices: a place saved from the long-press menu on A reaches B; 0 uploads over 3 idle rounds; recents are not in the slice; no page errors.
+- **NOT tested:** the real Photon / OSRM servers (no network from the test container: `reverse`, multi-point routes and `lang=el` are used as documented), Firefox / Safari, a real phone (iOS long-press relies on Leaflet's `tapHold`), real GPS heading.
+- **Status:** branch `claude/project-thread-6vy11s`, own PR; not on `main` (R4).
 
 ### 2026-10-08 — Netizen ID v1.0.0 (new app, Fun)
 
@@ -2765,7 +2800,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Export (`orosDialog.saveFile`, R33):** card PNG (2×) and SVG of the side shown, PDF of both sides at card size (3× JPEG pages, jsPDF vendored), avatar PNG (480 px) and SVG, vCard 3.0 (escaping, 75-octet UTF-8 folding, avatar as PHOTO, only shown fields); Copy image (clipboard PNG).
 - **Share link:** `netizen/#c=2.<base64url of deflate-raw JSON>` (`1.` = plain JSON where `CompressionStream` is missing). Only shown fields travel; no id, no hidden field. Opening it shows a full-screen view-only card (flip, "Open Netizen ID"); a damaged link says so. The fragment never reaches a server. The share dialog states who can see it before copying.
 - **Schema:** NETIZEN v1 (Part IV); device-local keys (Part III). Notifications: none (no reminders; exemption from Checklist B item 9).
-- **Core:** `apps.json` entry (Fun, after Dice & Coin), `sw.js` precache (4), `ICONS.netizen`, `translations.js` `app.netizen` (EN + EL). `APP_VERSION` 0.42.04 → 0.42.06 (patch step; 0.42.05 is Simon Says in PR #12).
+- **Core:** `apps.json` entry (Fun, after Dice & Coin), `sw.js` precache (4), `ICONS.netizen`, `translations.js` `app.netizen` (EN + EL). `APP_VERSION` 0.43.00 → 0.43.02 (patch step; 0.43.01 is Number Slider in PR #15).
 - **Tests:** `tests/netizen.test.js` (Tests workflow paths now include `netizen/**`): normCard clips and drops bad cards (idempotent); merge symmetric, associative, idempotent, inputs untouched, equal-mtime winner; tombstones (delete wins ties, newer edit resurrects); avatar deterministic, mirrored, 7 colours over 300 seeds; vCard escaping, hidden fields out, CRLF, ≤ 75 octets per line with Greek intact after unfolding; share payload carries only shown fields and round-trips through base64url. `node --test tests/*.test.js`: 37/37.
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox, EN desktop / EL phone):** typing every field fills the live card; links reorder; duplicate tag refused with a toast; a painted pixel changes colour; hidden phone leaves the card and the vCard; all six exports produce files (PNG 155 KB, SVG 4 KB, PDF 458 KB, avatar PNG / SVG, vCard with PHOTO); export dialog centered; the share link opens the view-only card without the hidden phone, a damaged link falls back to the editor; the card reaches the phone after sync, both slices equal, idle cycles upload 0; an edit on the phone reaches the desktop form; a delete on the phone empties the desktop; long names, Greek text, 12 tags and 8 links fit in all five styles; no horizontal overflow at 390 × 844 in both tabs; no page errors.
 - **NOT tested:** real Dropbox, Firefox / Safari (clipboard image, `CompressionStream`), a real phone, printing the PDF. Avatar grid cells are 30 px on a phone (a drawing surface; drag painting).

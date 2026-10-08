@@ -232,6 +232,14 @@
       "icon": "tictactoe",
       "url": "tictactoe/",
       "type": "internal"
+    },
+    {
+      "id": "simon",
+      "name": "Simon Says",
+      "category": "Games",
+      "icon": "simon",
+      "url": "simon/",
+      "type": "internal"
     }
   ]
 }

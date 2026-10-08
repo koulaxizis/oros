@@ -1,6 +1,6 @@
 // Pure logic of the Games apps: merge functions (Memory, Connect 4,
-// Dots & Boxes, Tic-Tac-Toe), Connect 4 and Tic-Tac-Toe win
-// detection, Dots & Boxes rules and the computer players.
+// Dots & Boxes, Tic-Tac-Toe, Simon Says), Connect 4 and Tic-Tac-Toe
+// win detection, Dots & Boxes and Simon rules, the computer players.
 // Run: node --test tests/
 //
 // The apps are browser IIFEs with no exports, so the pure functions
@@ -58,6 +58,12 @@ const TT = load("tictactoe/tictactoe.js",
    "normRow", "joinRows", "mergeTicTacToe"],
   [["  var DATA_VER", "  // ---------- 1."], ["  var LINES", "  function lineAt("]],
   "replay, chooseMove, winningCells, mergeTicTacToe");
+
+const SI = load("simon/simon.js",
+  ["cmpStr", "expectedPad", "extend", "tempo", "normCell", "normRow", "joinCell",
+   "joinRows", "mergeSimon"],
+  [["  var DATA_VER", "  // ---------- 1."]],
+  "expectedPad, extend, tempo, mergeSimon");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -345,4 +351,50 @@ test("tictactoe: records merge is a join and a reset drops older rows", () => {
     assert.equal(J(a), sa);
   }
   assert.equal(J(M({ br: 0, rows: { x: { b: 0, s: { e: [3, 0, 0] } } } }, { br: 50, rows: {} }).rows), "{}");
+});
+
+test("simon: answers in classic and reverse order; the sequence only grows", () => {
+  const seq = [2, 0, 3, 1];
+  assert.deepEqual([0, 1, 2, 3].map((k) => SI.expectedPad(seq, "c", k)), [2, 0, 3, 1]);
+  assert.deepEqual([0, 1, 2, 3].map((k) => SI.expectedPad(seq, "r", k)), [1, 3, 0, 2]);
+  for (const pads of [4, 6]) {
+    let q = [];
+    for (let i = 0; i < 60; i++) {
+      const next = SI.extend(q, pads);
+      assert.equal(next.length, q.length + 1);
+      assert.deepEqual(next.slice(0, q.length), q);                         // earlier steps kept
+      assert.ok(next[q.length] >= 0 && next[q.length] < pads);
+      q = next;
+    }
+    assert.equal(new Set(q).size, pads);                                     // every pad shows up
+  }
+  const on = [1, 5, 6, 9, 10, 13, 14, 40].map((n) => SI.tempo(n).on);
+  assert.deepEqual(on, [480, 480, 380, 380, 300, 300, 230, 230]);          // faster after 5, 9, 13
+});
+
+test("simon: records merge is a join and a reset drops older rows", () => {
+  const M = SI.mergeSimon, keys = ["c4", "r4", "c6", "r6"];
+  const st = () => {
+    const rows = {};
+    for (let i = 0; i < rnd(4); i++) {
+      const s = {};
+      keys.forEach((k) => { if (rnd(2)) s[k] = { n: rnd(6), ts: rnd(4) * 10, g: rnd(5) }; });
+      rows["d" + rnd(4)] = { b: rnd(3) * 100, s };
+    }
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows };
+  };
+  for (let i = 0; i < 5000; i++) {
+    const a = st(), b = st(), c = st(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  // Same device seen twice: higher best wins, a tie keeps the earlier date, games take the max.
+  const x = { rows: { d: { b: 0, s: { c4: { n: 7, ts: 50, g: 3 }, r6: { n: 4, ts: 20, g: 1 } } } } };
+  const y = { rows: { d: { b: 0, s: { c4: { n: 5, ts: 10, g: 4 }, r6: { n: 4, ts: 10, g: 2 } } } } };
+  assert.equal(J(M(x, y).rows.d.s), J({ c4: { n: 7, ts: 50, g: 4 }, r6: { n: 4, ts: 10, g: 2 } }));
+  assert.equal(J(M({ br: 0, rows: { d: { b: 0, s: { c4: { n: 3, ts: 1, g: 1 } } } } }, { br: 9, rows: {} }).rows), "{}");
+  assert.equal(J(M({ rows: { d: { b: 0, s: { c4: { n: -1, ts: 1, g: 1 } } } } }, null).rows), "{}");
 });

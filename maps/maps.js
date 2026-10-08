@@ -41,8 +41,6 @@
       "route.bike":      "Bike",
       "route.foot":      "Walk",
       "route.clear":     "Clear route",
-      "route.fromUser":  "Route from your location",
-      "route.fromCenter":"No location yet — routing from map view",
       "route.err":       "Could not calculate a route",
       "places.title":    "Saved places",
       "places.close":    "Close",
@@ -56,13 +54,10 @@
       "geo.unavailable": "Location unavailable",
       "geo.searching":   "Getting your location…",
       "geo.found":       "Location found",
-      "toast.welcome":   "Maps loaded",
       "toast.noLocYet":  "Tap the location button first",
       "route.steps":     "Directions",
       "route.nosteps":   "No active route",
       "route.plan":      "Plan a route",
-      "route.setstart":  "Set start on map",
-      "route.setend":    "Set destination on map",
       "route.pick.start":"Tap the map to set the start",
       "route.pick.end":  "Tap the map to set the destination",
       "route.ptmap":     "Point on map",
@@ -137,7 +132,32 @@
       "u.km":               "km",
       "u.min":              "min",
       "u.h":                "h",
-      "u.kmh":              "km/h"
+      "u.kmh":              "km/h",
+      "route.edit":         "Edit route",
+      "route.notraffic":    "Estimate without live traffic",
+      "route.pick.via":     "Tap the map to set the stop",
+      "plan.from":          "From",
+      "plan.to":            "To",
+      "plan.via":           "Stop {n}",
+      "plan.from.ph":       "Choose a start…",
+      "plan.to.ph":         "Choose a destination…",
+      "plan.via.ph":        "Choose a stop…",
+      "plan.addstop":       "Add stop",
+      "plan.rmstop":        "Remove stop",
+      "plan.maxstops":      "Up to 3 stops",
+      "plan.swap":          "Swap start and destination",
+      "plan.swap.short":    "Swap",
+      "plan.pickmap":       "Choose on map",
+      "plan.saved":         "Saved places",
+      "plan.recent":        "Recent",
+      "plan.needstart":     "No location yet — choose a start",
+      "coords":             "Coordinates",
+      "ctx.start":          "Start here",
+      "ctx.via":            "Add as stop",
+      "ctx.end":            "Go here",
+      "mvn.via":            "Arrive at stop {n}",
+      "nav.fromhere":       "Starting from your location — route recalculated",
+      "nav.recenter":       "Recenter"
     },
     el: {
       "search.ph":        "Αναζήτηση τοποθεσίας…",
@@ -149,8 +169,6 @@
       "route.bike":       "Ποδήλατο",
       "route.foot":       "Πεζός",
       "route.clear":      "Καθαρισμός διαδρομής",
-      "route.fromUser":   "Διαδρομή από την τοποθεσία σου",
-      "route.fromCenter": "Καμία τοποθεσία ακόμα — διαδρομή από την προβολή",
       "route.err":        "Δεν ήταν δυνατός ο υπολογισμός διαδρομής",
       "places.title":     "Αποθηκευμένες τοποθεσίες",
       "places.close":     "Κλείσιμο",
@@ -164,13 +182,10 @@
       "geo.unavailable":  "Η τοποθεσία δεν είναι διαθέσιμη",
       "geo.searching":    "Λήψη τοποθεσίας…",
       "geo.found":        "Βρέθηκε τοποθεσία",
-      "toast.welcome":    "Ο χάρτης φορτώθηκε",
       "toast.noLocYet":   "Πάτησε πρώτα το κουμπί τοποθεσίας",
       "route.steps":      "Οδηγίες",
       "route.nosteps":    "Δεν υπάρχει ενεργή διαδρομή",
       "route.plan":       "Σχεδιασμός διαδρομής",
-      "route.setstart":   "Ορισμός αφετηρίας στον χάρτη",
-      "route.setend":     "Ορισμός προορισμού στον χάρτη",
       "route.pick.start": "Πάτησε στον χάρτη για να ορίσεις την αφετηρία",
       "route.pick.end":  "Πάτησε στον χάρτη για να ορίσεις τον προορισμό",
       "route.ptmap":     "Σημείο στον χάρτη",
@@ -245,7 +260,32 @@
       "u.km":               "χλμ.",
       "u.min":              "λεπ.",
       "u.h":                "ώρ.",
-      "u.kmh":              "χλμ/ώ"
+      "u.kmh":              "χλμ/ώ",
+      "route.edit":         "Επεξεργασία διαδρομής",
+      "route.notraffic":    "Εκτίμηση χωρίς ζωντανή κίνηση",
+      "route.pick.via":     "Πάτησε στον χάρτη για να ορίσεις τη στάση",
+      "plan.from":          "Από",
+      "plan.to":            "Προς",
+      "plan.via":           "Στάση {n}",
+      "plan.from.ph":       "Διάλεξε αφετηρία…",
+      "plan.to.ph":         "Διάλεξε προορισμό…",
+      "plan.via.ph":        "Διάλεξε στάση…",
+      "plan.addstop":       "Στάση",
+      "plan.rmstop":        "Αφαίρεση στάσης",
+      "plan.maxstops":      "Έως 3 στάσεις",
+      "plan.swap":          "Αντιστροφή αφετηρίας και προορισμού",
+      "plan.swap.short":    "Αντιστροφή",
+      "plan.pickmap":       "Επιλογή στον χάρτη",
+      "plan.saved":         "Αποθηκευμένες τοποθεσίες",
+      "plan.recent":        "Πρόσφατα",
+      "plan.needstart":     "Δεν βρέθηκε η τοποθεσία σου — διάλεξε αφετηρία",
+      "coords":             "Συντεταγμένες",
+      "ctx.start":          "Αφετηρία εδώ",
+      "ctx.via":            "Προσθήκη ως στάση",
+      "ctx.end":            "Πήγαινε εδώ",
+      "mvn.via":            "Άφιξη στη στάση {n}",
+      "nav.fromhere":       "Ξεκινάς από την τοποθεσία σου — η διαδρομή υπολογίστηκε ξανά",
+      "nav.recenter":       "Επανακέντρωση"
     }
   };
 
@@ -530,6 +570,7 @@
 
   var STAR_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>';
   var ROUTE_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h5a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8h5"/></svg>';
+  var PLUS_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
   var FROM_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><path d="M10 12h10"/><path d="M16 8l4 4-4 4"/></svg>';
 
   function makeMarkerIcon(color) {
@@ -546,6 +587,7 @@
   var COLOR_RESULT = "#d4af37";
   var COLOR_SAVED = "#87cf3e";
   var COLOR_ROUTE_START = "#ecc75f";
+  var COLOR_VIA = "#5aa9e6";
 
   var userMarker = null;
   var userCircle = null;        // accuracy circle (tracked — W1 bugfix)
@@ -622,7 +664,8 @@
   function moveUser(lat, lon, accuracy) {
     if (!userMarker) {
       userMarker = L.marker([lat, lon],
-        { icon: makeMarkerIcon(COLOR_USER), zIndexOffset: 1000 }).addTo(map);
+        { icon: navActive ? navArrowIcon() : makeMarkerIcon(COLOR_USER),
+          zIndexOffset: 1000 }).addTo(map);
     } else {
       userMarker.setLatLng([lat, lon]);
     }
@@ -708,6 +751,43 @@
     if (acIndex >= 0 && rows[acIndex]) rows[acIndex].scrollIntoView({ block: "nearest" });
   }
 
+  // One result row (search bar and planner). The icon says what the
+  // row is: a place, "My location", a saved place, a recent one or
+  // typed coordinates.
+  var HIT_ICON = {
+    place:  '<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    me:     '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+    saved:  '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/>',
+    recent: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    coords: '<path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/>'
+  };
+  function buildHitRow(hit) {
+    var row = document.createElement("div");
+    row.className = "sr-item";
+
+    var icon = document.createElement("span");
+    icon.className = "sr-icon";
+    icon.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      (HIT_ICON[hit.kind] || HIT_ICON.place) + '</svg>';
+    row.appendChild(icon);
+
+    var body = document.createElement("div");
+    body.className = "sr-body";
+    var name = document.createElement("div");
+    name.className = "sr-name";
+    name.textContent = hit.name;
+    body.appendChild(name);
+    if (hit.sub) {
+      var sub = document.createElement("div");
+      sub.className = "sr-sub";
+      sub.textContent = hit.sub;
+      body.appendChild(sub);
+    }
+    row.appendChild(body);
+    return row;
+  }
+
   function acRender(list) {
     acResults = list;
     acIndex = -1;
@@ -715,29 +795,7 @@
     host.innerHTML = "";
 
     list.forEach(function (hit) {
-      var row = document.createElement("div");
-      row.className = "sr-item";
-
-      var icon = document.createElement("span");
-      icon.className = "sr-icon";
-      icon.innerHTML =
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
-      row.appendChild(icon);
-
-      var body = document.createElement("div");
-      body.className = "sr-body";
-      var name = document.createElement("div");
-      name.className = "sr-name";
-      name.textContent = hit.name;
-      body.appendChild(name);
-      if (hit.sub) {
-        var sub = document.createElement("div");
-        sub.className = "sr-sub";
-        sub.textContent = hit.sub;
-        body.appendChild(sub);
-      }
-      row.appendChild(body);
-
+      var row = buildHitRow(hit);
       row.addEventListener("mousedown", function (e) {
         // mousedown (not click): fires before the input blurs
         e.preventDefault();
@@ -763,9 +821,13 @@
       var c = map.getCenter();
       near = "&lat=" + c.lat.toFixed(4) + "&lon=" + c.lng.toFixed(4);
     }
+    return photonFetch("api/?limit=" + limit + near + "&q=" + encodeURIComponent(query));
+  }
+
+  // path = "api/?…" (search) or "reverse?…" (address of a point).
+  function photonFetch(path) {
     function url(withLang) {
-      return "https://photon.komoot.io/api/?limit=" + limit +
-        (withLang ? "&lang=" + LANG : "") + near + "&q=" + encodeURIComponent(query);
+      return "https://photon.komoot.io/" + path + (withLang ? "&lang=" + LANG : "");
     }
     return fetch(url(photonLangOk))
       .then(function (r) {
@@ -776,6 +838,45 @@
         return r;
       })
       .then(function (r) { if (!r.ok) throw 0; return r.json(); });
+  }
+
+  // MX-4: a point picked on the map gets the address under it. Until
+  // it arrives (or if it never does) it keeps "Point on map".
+  // `place` is updated IN PLACE: it is the object the plan holds.
+  function nameByReverse(place, after) {
+    if (!navigator.onLine || !place) return;
+    photonFetch("reverse?lat=" + place.lat.toFixed(6) + "&lon=" + place.lon.toFixed(6) + "&limit=1")
+      .then(function (json) {
+        var f = json && json.features && json.features[0];
+        if (!f) return;
+        var h = photonHit(f);
+        if (!h.name || h.name === "?") return;
+        place.name = h.name;
+        place.sub = h.sub;
+        refreshRouteLabels();
+        if (after) after();
+      })
+      .catch(function () { /* keeps "Point on map" */ });
+  }
+
+  // Coordinates typed into a search field: "37.9755, 23.7348",
+  // "37.9755 23.7348" or "37°58'32"N 23°44'05"E". Decimals are
+  // required in the plain form, so "38 23" stays a text search.
+  var DMS_RE = /^\s*(\d{1,2})\s*[°\s]\s*(?:(\d{1,2})\s*['′\s]\s*)?(?:(\d{1,2}(?:\.\d+)?)\s*["″]?\s*)?([NS])[,;\s]+(\d{1,3})\s*[°\s]\s*(?:(\d{1,2})\s*['′\s]\s*)?(?:(\d{1,2}(?:\.\d+)?)\s*["″]?\s*)?([EW])\s*$/i;
+  function parseCoords(str) {
+    var lat, lon;
+    var m = /^\s*(-?\d{1,2}\.\d+)\s*[,;\s]\s*(-?\d{1,3}\.\d+)\s*$/.exec(str || "");
+    if (m) {
+      lat = parseFloat(m[1]); lon = parseFloat(m[2]);
+    } else {
+      var d = DMS_RE.exec(str || "");
+      if (!d) return null;
+      lat = (+d[1] + (+d[2] || 0) / 60 + (+d[3] || 0) / 3600) * (/s/i.test(d[4]) ? -1 : 1);
+      lon = (+d[5] + (+d[6] || 0) / 60 + (+d[7] || 0) / 3600) * (/w/i.test(d[8]) ? -1 : 1);
+    }
+    if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+    return { lat: lat, lon: lon, name: lat.toFixed(5) + ", " + lon.toFixed(5),
+             sub: t("coords"), kind: "coords" };
   }
 
   // Photon feature → { name, sub, lat, lon }. An address has no
@@ -821,6 +922,7 @@
     acClose();
     $("search").value = hit.name;
     $("search-clear").hidden = false;
+    pushRecent(hit);
     placeResult(hit.lat, hit.lon, hit.name, hit.sub);
   }
 
@@ -906,14 +1008,16 @@
   var routeSeq = 0;             // token — stale / cancelled responses are dropped
   var routeProfile = "car";
   var routeLine = null;
-  var routeFrom = null;         // { lat, lon, name }
-  var routeTo = null;           // { lat, lon, name }
+  var routeFrom = null;         // { lat, lon, name, sub } | { me:true, … } | null
+  var routeTo = null;           // { lat, lon, name, sub } | null
+  var routeVias = [];           // stops in between (≤ MAX_VIAS; null = row not chosen yet)
   var routeStartMarker = null;
   var routeEndMarker = null;
+  var routeViaMarkers = [];
   var lastSteps = [];          // OSRM steps for the active route
   var lastDist = 0;            // total distance (m)
   var lastDur = 0;             // total duration (s)
-  var pickMode = null;         // null | "start" | "end" (manual pick)
+  var pickMode = null;         // null | planner slot index (map pick)
   var routeCoords = [];        // route geometry [[lon, lat], …] (deviation check)
   var routeCum = [];           // cumulative metres along routeCoords, per vertex
   var stepAlong = [];          // along-route metres of each step's maneuver
@@ -969,9 +1073,9 @@
   function clearRoute() {
     routeSeq++;                 // an in-flight response must not repaint
     if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-    if (routeStartMarker) { map.removeLayer(routeStartMarker); routeStartMarker = null; }
-    if (routeEndMarker) { map.removeLayer(routeEndMarker); routeEndMarker = null; }
     routeFrom = routeTo = null;
+    routeVias = [];
+    paintRouteMarkers();
     lastSteps = []; lastDist = 0; lastDur = 0;
     routeCoords = [];
     buildRouteIndex();
@@ -981,72 +1085,158 @@
     $("maneuvers").hidden = true;
     $("steps-btn").classList.remove("on");
     $("maneuvers-list").innerHTML = "";
+    if (planOpen) closePlanner();
     try { localStorage.removeItem(ROUTE_STORAGE_KEY); } catch (e) { /* noop */ }
   }
 
-  // Entry: user asked for a route TO `place`. Origin = last known
-  // user location; if none yet, fetch it once; if that fails,
-  // fall back to the current map view center (with a toast —
-  // honest, never a fake route).
+  // "My location" as a plan slot. Its lat/lon are filled when a
+  // route is asked for (resolveMe) — never a stale copy from earlier.
+  function meSlot(pos) {
+    var sl = { me: true, name: t("geo.me"), sub: "" };
+    if (pos) { sl.lat = pos[0]; sl.lon = pos[1]; }
+    return sl;
+  }
+
+  // Every point of the trip, in order: start, chosen stops, end.
+  function routePoints() {
+    return [routeFrom].concat(routeVias.filter(Boolean), [routeTo]);
+  }
+
+  // Entry: route TO `dest` (popup "Route", "Go here"). From the
+  // user's location, unless the planner is open: then the start and
+  // stops the user is editing stay as they are.
   function startRouteTo(dest) {
-    function go(origin, told) {
-      routeFrom = origin;
-      routeTo = dest;
-      calcRoute(told);
-    }
-    if (userPosFresh()) { go({ lat: userPos[0], lon: userPos[1], name: t("geo.me") }); return; }
-    getUserLocation(function (pos) {
-      if (pos) {
-        showToast(t("route.fromUser"));
-        go({ lat: pos[0], lon: pos[1], name: t("geo.me") }, true);
-      } else if (userPos) {
-        // No fresh fix, but an older one exists — better than the map
-        // centre, and said out loud.
-        showToast(t("route.fromLast"));
-        go({ lat: userPos[0], lon: userPos[1], name: t("geo.me") }, true);
+    routeTo = dest;
+    if (!planOpen || !routeFrom) { routeFrom = meSlot(null); }
+    if (!planOpen) routeVias = [];
+    planChanged();
+  }
+
+  // Entry: route FROM `place` (popup "From here", "Start here"). With
+  // a destination already set the route is recalculated; otherwise
+  // the planner opens on "To".
+  function startRouteFrom(place) {
+    routeFrom = place;
+    if (routeTo) { planChanged(); return; }
+    openPlanner(slotCount() - 1);
+  }
+
+  // Markers follow the plan, also BEFORE a route exists, so every
+  // chosen point is visible while the rest is chosen.
+  function paintRouteMarkers() {
+    if (!map) return;
+    if (routeFrom && isFinite(routeFrom.lat)) {
+      if (!routeStartMarker) {
+        routeStartMarker = L.marker([routeFrom.lat, routeFrom.lon],
+          { icon: makeMarkerIcon(COLOR_ROUTE_START) }).addTo(map);
       } else {
-        var c = map.getCenter();
-        showToast(t("route.fromCenter"));
-        go({ lat: c.lat, lon: c.lng, name: "·" }, true);
+        routeStartMarker.setLatLng([routeFrom.lat, routeFrom.lon]);
       }
+    } else if (routeStartMarker) {
+      map.removeLayer(routeStartMarker); routeStartMarker = null;
+    }
+    routeViaMarkers.forEach(function (mk) { map.removeLayer(mk); });
+    routeViaMarkers = [];
+    routeVias.forEach(function (v) {
+      if (!v || !isFinite(v.lat)) return;
+      routeViaMarkers.push(L.marker([v.lat, v.lon],
+        { icon: makeMarkerIcon(COLOR_VIA) }).addTo(map));
+    });
+    if (routeTo && isFinite(routeTo.lat)) {
+      if (!routeEndMarker) {
+        routeEndMarker = L.marker([routeTo.lat, routeTo.lon],
+          { icon: makeMarkerIcon(COLOR_RESULT) }).addTo(map);
+      } else {
+        routeEndMarker.setLatLng([routeTo.lat, routeTo.lon]);
+      }
+      // Re-bound on every change: the marker is reused, the popup
+      // (title + star target) must follow the current destination.
+      if (routeTo.name) bindPlacePopup(routeEndMarker, routeTo);
+      else routeEndMarker.unbindPopup();
+    } else if (routeEndMarker) {
+      map.removeLayer(routeEndMarker); routeEndMarker = null;
+    }
+  }
+
+  // A place name arrived later (reverse geocoding): repaint where it
+  // shows, and keep the offline snapshot in step.
+  function refreshRouteLabels() {
+    paintPlanValues();
+    if (routeTo && routeEndMarker) {
+      if (routeTo.name) bindPlacePopup(routeEndMarker, routeTo);
+    }
+    if (routeLine) saveRoute();
+  }
+
+  // Fill every "My location" slot with a position: a fresh fix, else
+  // a new one, else the last known one (said out loud). No location
+  // at all → those slots are emptied and the planner opens on the
+  // first empty one: a route never starts from a made-up point
+  // (MX-3, it used to start from the map centre, named "·").
+  // During live navigation the slots already carry the GPS position.
+  function resolveMe(cb) {
+    var pts = routePoints();
+    var needs = pts.some(function (p) { return p && p.me; });
+    if (!needs || navActive) { cb(true); return; }
+    function use(pos) {
+      if (routeFrom && routeFrom.me) routeFrom = meSlot(pos);
+      if (routeTo && routeTo.me) routeTo = meSlot(pos);
+      routeVias = routeVias.map(function (v) { return v && v.me ? meSlot(pos) : v; });
+      cb(true);
+    }
+    if (userPosFresh()) { use(userPos); return; }
+    getUserLocation(function (pos) {
+      if (pos) { use(pos); return; }
+      if (userPos) { showToast(t("route.fromLast")); use(userPos); return; }
+      if (routeFrom && routeFrom.me) routeFrom = null;
+      if (routeTo && routeTo.me) routeTo = null;
+      routeVias = routeVias.map(function (v) { return v && v.me ? null : v; });
+      paintRouteMarkers();
+      openPlanner(firstEmptySlot());
+      showToast(t("plan.needstart"));
+      cb(false);
     }, true);
   }
 
-  // Start marker follows routeFrom — also BEFORE a route exists, so a
-  // picked / chosen start is visible while the destination is chosen.
-  function setStartMarker() {
-    if (!routeFrom) return;
-    if (!routeStartMarker) {
-      routeStartMarker = L.marker([routeFrom.lat, routeFrom.lon],
-        { icon: makeMarkerIcon(COLOR_ROUTE_START) }).addTo(map);
-    } else {
-      routeStartMarker.setLatLng([routeFrom.lat, routeFrom.lon]);
-    }
+  // One step list for the whole trip. Every leg but the last ends
+  // with an "arrive" step: it is marked with the stop's number, so
+  // the panel, the HUD and the voice say "Arrive at stop 2", and a
+  // re-route knows which stops are already behind.
+  function joinLegs(legs) {
+    var out = [];
+    (legs || []).forEach(function (leg, i) {
+      (leg.steps || []).forEach(function (st) {
+        if (i < legs.length - 1 && st.maneuver && st.maneuver.type === "arrive") st.via = i + 1;
+        out.push(st);
+      });
+    });
+    return out;
   }
 
-  // Entry: route FROM `place` (popup "From here"). With a destination
-  // already set the route is recalculated; otherwise the next map tap
-  // sets the destination.
-  function startRouteFrom(place) {
-    routeFrom = { lat: place.lat, lon: place.lon, name: place.name || t("route.ptmap"), sub: place.sub || "" };
-    setStartMarker();
-    if (routeTo) { cancelPick(); calcRoute(); return; }
-    enterPick("end");
-    showToast(t("route.pick.end"));
+  //   silent = true → the caller has just shown its own toast; do not
+  //   replace it with "Calculating…".
+  //   onDone(ok) → called once the route is painted (true) or failed
+  //   (false). Not called for a request that a newer one replaced.
+  function calcRoute(silent, onDone) {
+    function done(ok) { if (typeof onDone === "function") onDone(ok); }
+    if (!routeFrom || !routeTo) { done(false); return; }
+    if (!navigator.onLine) { showToast(t("route.offline")); done(false); return; }
+    var my = ++routeSeq;
+    resolveMe(function (ok) {
+      if (my !== routeSeq) return;          // cleared or replaced meanwhile
+      if (!ok || !routeFrom || !routeTo) { done(false); return; }
+      fetchRoute(my, silent, done);
+    });
   }
 
-  //   silent = true → the caller has just shown its own toast (where
-  //   the route starts from); do not replace it with "Calculating…".
-  function calcRoute(silent) {
-    if (!routeFrom || !routeTo) return;
-    if (!navigator.onLine) { showToast(t("route.offline")); return; }
+  function fetchRoute(my, silent, done) {
     // Feedback while the server works (a re-route has its own toast)
     if (!navActive && !silent) showToast(t("route.calculating"));
+    paintRouteMarkers();
 
     var url = ROUTER_BASE[routeProfile] +
-      routeFrom.lon + "," + routeFrom.lat + ";" + routeTo.lon + "," + routeTo.lat +
+      routePoints().map(function (p) { return p.lon + "," + p.lat; }).join(";") +
       "?overview=full&geometries=geojson&steps=true";
-    var my = ++routeSeq;
 
     fetch(url)
       .then(function (r) { if (!r.ok) throw 0; return r.json(); })
@@ -1061,23 +1251,7 @@
           style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
         }).addTo(map);
         routeLine.getLayers()[0].getElement && routeLine.getLayers()[0].getElement().classList.add("route-line");
-
-        if (!routeStartMarker) {
-          routeStartMarker = L.marker([routeFrom.lat, routeFrom.lon],
-            { icon: makeMarkerIcon(COLOR_ROUTE_START) }).addTo(map);
-        } else {
-          routeStartMarker.setLatLng([routeFrom.lat, routeFrom.lon]);
-        }
-        if (!routeEndMarker) {
-          routeEndMarker = L.marker([routeTo.lat, routeTo.lon],
-            { icon: makeMarkerIcon(COLOR_RESULT) }).addTo(map);
-        } else {
-          routeEndMarker.setLatLng([routeTo.lat, routeTo.lon]);
-        }
-        // Re-bound on EVERY route: the marker is reused, the popup
-        // (title + star target) must follow the current destination.
-        if (routeTo.name) bindPlacePopup(routeEndMarker, routeTo);
-        else routeEndMarker.unbindPopup();
+        paintRouteMarkers();
 
         // A re-route during live navigation must not zoom out to the
         // whole route — the next GPS tick owns the view.
@@ -1087,8 +1261,8 @@
         $("route-time").textContent = fmtTime(r0.duration);
         showRouteBar(true);
 
-        // Save steps for turn-by-turn panel
-        lastSteps = (r0.legs && r0.legs[0] && r0.legs[0].steps) || [];
+        // Steps of every leg, for the turn-by-turn panel and the HUD
+        lastSteps = joinLegs(r0.legs);
         lastDist = r0.distance;
         lastDur = r0.duration;
         routeCoords = (r0.geometry && r0.geometry.coordinates) || [];
@@ -1099,15 +1273,425 @@
 
         // Fresh route during live nav → restart step tracking
         if (navActive) resetNavProgress();
+        else rememberRoute();
 
         saveRoute();
+        done(true);
       })
       .catch(function () {
         if (my !== routeSeq) return;      // superseded or cancelled — stay quiet
         // Transient OSRM failure: keep the last GOOD route painted and
         // the offline snapshot intact — never wipe data on a fetch error.
         showToast(t("route.err"));
+        done(false);
       });
+  }
+
+  // ---------- 11b. Recent places (device-local, never synced) ----------
+  var RECENT_KEY = "oros-maps-recent";
+  var RECENT_MAX = 10;
+
+  function readRecent() {
+    try {
+      var a = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      if (!Array.isArray(a)) return [];
+      return a.filter(function (p) {
+        return p && typeof p.name === "string" &&
+          typeof p.lat === "number" && typeof p.lon === "number" &&
+          isFinite(p.lat) && isFinite(p.lon);
+      });
+    } catch (e) { return []; }
+  }
+  function pushRecent(p) {
+    if (!p || p.me || !isFinite(p.lat) || !isFinite(p.lon)) return;
+    var id = placeId(p.lat, p.lon);
+    var list = readRecent().filter(function (q) { return placeId(q.lat, q.lon) !== id; });
+    list.unshift({ name: String(p.name || t("route.ptmap")).slice(0, 120),
+                   sub: String(p.sub || "").slice(0, 200), lat: p.lat, lon: p.lon });
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX))); }
+    catch (e) { /* full storage: recents are a convenience, not data */ }
+  }
+  // Destination last, so it ends up first in the list.
+  function rememberRoute() {
+    if (routeFrom && !routeFrom.me) pushRecent(routeFrom);
+    routeVias.forEach(function (v) { if (v) pushRecent(v); });
+    pushRecent(routeTo);
+  }
+
+  // ---------- 11c. Route planner (From / stops / To) ----------
+  // Slots: 0 = routeFrom, 1…n = routeVias, last = routeTo. Each row
+  // has a search field (Photon + saved + recent + "My location" +
+  // coordinates) and a "choose on map" button.
+  var MAX_VIAS = 3;
+  var planOpen = false;
+  var planField = -1;           // slot whose field has the focus
+  var planSeq = 0;              // token — stale responses are dropped
+  var planTimer = null;
+  var planResults = [];
+  var planIndex = -1;
+
+  function slotCount() { return routeVias.length + 2; }
+  function slotGet(i) {
+    if (i === 0) return routeFrom;
+    if (i === slotCount() - 1) return routeTo;
+    return routeVias[i - 1] || null;
+  }
+  function slotSet(i, v) {
+    if (i === 0) routeFrom = v;
+    else if (i === slotCount() - 1) routeTo = v;
+    else routeVias[i - 1] = v;
+  }
+  function slotKind(i) {
+    return i === 0 ? "from" : i === slotCount() - 1 ? "to" : "via";
+  }
+  function slotLabel(i) {
+    return slotKind(i) === "via" ? t("plan.via").replace("{n}", i) : t("plan." + slotKind(i));
+  }
+  function firstEmptySlot() {
+    for (var i = 0; i < slotCount(); i++) if (!slotGet(i)) return i;
+    return -1;
+  }
+  function slotInput(i) {
+    return document.querySelector('#plan-rows [data-slot="' + i + '"] input');
+  }
+
+  function openPlanner(focusSlot) {
+    if (navActive) return;
+    // A fresh plan starts from the user's location.
+    if (!routeFrom && !routeTo && !routeLine) routeFrom = meSlot(null);
+    planOpen = true;
+    $("planner").hidden = false;
+    document.body.classList.add("planning");
+    $("plan-btn").classList.add("on");
+    acClose();
+    renderPlanner();
+    paintRouteMarkers();
+    var f = typeof focusSlot === "number" && focusSlot >= 0 ? focusSlot : firstEmptySlot();
+    if (f >= 0 && slotInput(f)) slotInput(f).focus();
+  }
+
+  function closePlanner() {
+    planOpen = false;
+    planField = -1;
+    planSeq++;
+    clearTimeout(planTimer);
+    cancelPick();
+    $("planner").hidden = true;
+    $("plan-results").hidden = true;
+    document.body.classList.remove("planning");
+    $("plan-btn").classList.remove("on");
+    // Nothing routed yet: the half-made plan goes with the panel.
+    if (!routeLine) { routeFrom = routeTo = null; routeVias = []; }
+    else routeVias = routeVias.filter(Boolean);       // empty stop rows go
+    paintRouteMarkers();
+  }
+
+  // A slot changed: repaint, then route as soon as start and
+  // destination are both known; else move on to the next empty slot.
+  function planChanged() {
+    paintRouteMarkers();
+    if (planOpen) renderPlanner();
+    if (routeFrom && routeTo) { calcRoute(); return; }
+    var f = firstEmptySlot();
+    if (planOpen && f >= 0 && slotInput(f)) slotInput(f).focus();
+  }
+
+  // The panel's height decides where the route bar sits (desktop).
+  function updatePlanHeight() {
+    var el = $("planner");
+    if (!el || el.hidden) return;
+    document.documentElement.style.setProperty("--plan-h", el.offsetHeight + "px");
+  }
+
+  function renderPlanner() {
+    var host = $("plan-rows");
+    if (!host) return;
+    host.innerHTML = "";
+    for (var i = 0; i < slotCount(); i++) host.appendChild(buildPlanRow(i));
+    var full = routeVias.length >= MAX_VIAS;
+    $("plan-addstop").disabled = full;
+    $("plan-addstop").title = t(full ? "plan.maxstops" : "plan.addstop");
+    updatePlanHeight();
+  }
+
+  // Field text = the slot's name, except in the field being typed in.
+  function paintPlanValues() {
+    if (!planOpen) return;
+    for (var i = 0; i < slotCount(); i++) {
+      var inp = slotInput(i);
+      if (inp && inp !== document.activeElement) {
+        inp.value = slotGet(i) ? slotGet(i).name : "";
+      }
+    }
+  }
+
+  var PICK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+  var REMOVE_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  function buildPlanRow(i) {
+    var kind = slotKind(i), sl = slotGet(i);
+    var row = document.createElement("div");
+    row.className = "plan-row";
+    row.setAttribute("data-slot", String(i));
+
+    var dot = document.createElement("span");
+    dot.className = "plan-dot " + kind;
+    row.appendChild(dot);
+
+    var inp = document.createElement("input");
+    inp.type = "search";
+    inp.className = "plan-in";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.maxLength = 120;
+    inp.placeholder = t("plan." + kind + ".ph");
+    inp.setAttribute("aria-label", slotLabel(i));
+    inp.value = sl ? sl.name : "";
+    inp.addEventListener("focus", function () {
+      planField = i;
+      inp.select();
+      planQuery(i, "");
+    });
+    inp.addEventListener("input", function () { planQuery(i, inp.value); });
+    inp.addEventListener("keydown", function (e) { planKey(e, i, inp); });
+    inp.addEventListener("blur", function () {
+      // let mousedown on a result run first (preventDefault keeps focus)
+      setTimeout(function () {
+        if (inp === document.activeElement) return;
+        var s2 = slotGet(i);
+        if (inp.isConnected) inp.value = s2 ? s2.name : "";   // typed, not chosen → back
+        var pl = $("planner");
+        if (!pl.contains(document.activeElement)) {
+          $("plan-results").hidden = true;
+          updatePlanHeight();
+        }
+      }, 150);
+    });
+    row.appendChild(inp);
+
+    var pick = document.createElement("button");
+    pick.type = "button";
+    pick.className = "plan-pick" + (pickMode === i ? " on" : "");
+    pick.title = t("plan.pickmap");
+    pick.setAttribute("aria-label", t("plan.pickmap") + " · " + slotLabel(i));
+    pick.innerHTML = PICK_ICON;
+    pick.addEventListener("click", function () { togglePick(i); });
+    row.appendChild(pick);
+
+    if (kind === "via") {
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "plan-rm";
+      rm.title = t("plan.rmstop");
+      rm.setAttribute("aria-label", t("plan.rmstop") + " · " + slotLabel(i));
+      rm.innerHTML = REMOVE_ICON;
+      rm.addEventListener("click", function () {
+        cancelPick();
+        routeVias.splice(i - 1, 1);
+        planChanged();
+      });
+      row.appendChild(rm);
+    } else if (routeVias.length) {
+      // keeps every field the same width as the stop rows'
+      var gap = document.createElement("span");
+      gap.className = "plan-gap";
+      row.appendChild(gap);
+    }
+    return row;
+  }
+
+  function addStop() {
+    if (routeVias.length >= MAX_VIAS) { showToast(t("plan.maxstops")); return; }
+    cancelPick();
+    routeVias.push(null);
+    renderPlanner();
+    var inp = slotInput(routeVias.length);       // the new row (slot n)
+    if (inp) inp.focus();
+  }
+
+  // Reverse the whole trip: start ⇄ destination, stops in reverse.
+  function swapPlan() {
+    cancelPick();
+    var pts = [routeFrom].concat(routeVias, [routeTo]).reverse();
+    routeFrom = pts[0];
+    routeTo = pts[pts.length - 1];
+    routeVias = pts.slice(1, -1);
+    planChanged();
+  }
+
+  // Suggestions for an empty or short query: "My location", saved
+  // places, recent places. For a longer one, the matching saved and
+  // recent places come first, then Photon.
+  function localHits(q, slot) {
+    var ql = q.toLowerCase();
+    function match(p) {
+      return !ql || String(p.name).toLowerCase().indexOf(ql) >= 0 ||
+        String(p.sub || "").toLowerCase().indexOf(ql) >= 0;
+    }
+    var out = [];
+    var me = { kind: "me", me: true, name: t("geo.me"), sub: "" };
+    if ((!ql && slot === 0) || (ql && match(me))) out.push(me);
+    var seen = {};
+    state.places.filter(match).slice(0, 5).forEach(function (p) {
+      seen[p.id] = true;
+      out.push({ kind: "saved", group: "plan.saved", name: p.name, sub: p.sub, lat: p.lat, lon: p.lon });
+    });
+    readRecent().filter(function (p) { return !seen[placeId(p.lat, p.lon)] && match(p); })
+      .slice(0, 5).forEach(function (p) {
+        out.push({ kind: "recent", group: "plan.recent", name: p.name, sub: p.sub, lat: p.lat, lon: p.lon });
+      });
+    return out;
+  }
+
+  function planQuery(i, raw) {
+    planField = i;
+    clearTimeout(planTimer);
+    var q = raw.trim();
+    var c = parseCoords(q);
+    if (c) { planSeq++; planRender([c]); return; }
+    if (q.length < AC_MIN) { planSeq++; planRender(localHits(q, i)); return; }
+    planRender(localHits(q, i), "…", true);
+    planTimer = setTimeout(function () { planFetch(i, q, false); }, AC_DEBOUNCE_MS);
+  }
+
+  //   pickFirst = true → Enter was pressed before any list existed.
+  function planFetch(i, q, pickFirst) {
+    var local = localHits(q, i);
+    if (!navigator.onLine) { planRender(local, t("search.offline")); return; }
+    var my = ++planSeq;
+    photonGet(q, 6, true)
+      .then(function (json) {
+        if (my !== planSeq || planField !== i) return;
+        var hits = (json.features || []).map(photonHit)
+          .filter(function (h) { return isFinite(h.lat) && isFinite(h.lon); });
+        var all = local.concat(hits);
+        if (pickFirst && all.length) { planPick(all[0]); return; }
+        planRender(all, all.length ? "" : t("search.empty"));
+      })
+      .catch(function () {
+        if (my !== planSeq) return;
+        planRender(local, t("search.err"));
+      });
+  }
+
+  function planRender(list, note, busy) {
+    planResults = list;
+    planIndex = -1;
+    var host = $("plan-results");
+    host.innerHTML = "";
+    var lastGroup = null;
+    list.forEach(function (hit) {
+      if (hit.group && hit.group !== lastGroup) {
+        var h = document.createElement("div");
+        h.className = "plan-group";
+        h.textContent = t(hit.group);
+        host.appendChild(h);
+      }
+      lastGroup = hit.group || null;
+      var row = buildHitRow(hit);
+      row.addEventListener("mousedown", function (e) {
+        e.preventDefault();               // keeps the field focused
+        planPick(hit);
+      });
+      host.appendChild(row);
+    });
+    if (note) {
+      var n = document.createElement("div");
+      n.className = busy ? "sr-loading" : "sr-empty";
+      n.textContent = note;
+      host.appendChild(n);
+    }
+    host.hidden = !host.childNodes.length;
+    updatePlanHeight();
+  }
+
+  function planPick(hit) {
+    var i = planField;
+    if (i < 0 || i >= slotCount()) return;
+    planSeq++;
+    clearTimeout(planTimer);
+    $("plan-results").hidden = true;
+    var v = hit.me ? meSlot(null)
+      : { lat: hit.lat, lon: hit.lon, name: hit.name, sub: hit.sub || "" };
+    slotSet(i, v);
+    if (!hit.me && hit.kind !== "recent") pushRecent(v);
+    var inp = slotInput(i);
+    if (inp) inp.blur();
+    planChanged();
+  }
+
+  function planKey(e, i, inp) {
+    var rows = $("plan-results").querySelectorAll(".sr-item");
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!rows.length || $("plan-results").hidden) return;
+      planIndex = e.key === "ArrowDown"
+        ? (planIndex + 1) % rows.length
+        : (planIndex - 1 + rows.length) % rows.length;
+      for (var k = 0; k < rows.length; k++) rows[k].classList.toggle("sel", k === planIndex);
+      rows[planIndex].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      // Enter always does something (R28): the selected row, else the
+      // first row, else search NOW and take the first result.
+      var q = inp.value.trim();
+      if (planIndex >= 0 && planResults[planIndex]) planPick(planResults[planIndex]);
+      else if (q && planResults.length && !$("plan-results").hidden) planPick(planResults[0]);
+      else if (q.length >= AC_MIN) { clearTimeout(planTimer); planFetch(i, q, true); }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();                 // the document handler would close the panel
+      if (!$("plan-results").hidden) { $("plan-results").hidden = true; updatePlanHeight(); }
+      else closePlanner();
+    }
+  }
+
+  // ---------- 11d. Long-press / right-click menu on the map ----------
+  // MX-5: on a phone the only way to use a point used to be a button
+  // first. Long-press (right-click on desktop) now offers the point
+  // directly, named by its address as soon as Photon answers.
+  function openContextMenu(e) {
+    if (navActive || !e || !e.latlng) return;
+    cancelPick();
+    var place = { lat: e.latlng.lat, lon: e.latlng.lng, name: t("route.ptmap"), sub: "" };
+    var coordsTxt = place.lat.toFixed(5) + ", " + place.lon.toFixed(5);
+
+    var wrap = document.createElement("div");
+    var title = document.createElement("b");
+    title.textContent = place.name;
+    wrap.appendChild(title);
+    var subEl = document.createElement("div");
+    subEl.className = "pop-sub";
+    subEl.textContent = coordsTxt;
+    wrap.appendChild(subEl);
+
+    var actions = document.createElement("div");
+    actions.className = "pop-actions";
+    function act(icon, label, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = icon + "<span></span>";
+      b.querySelector("span").textContent = label;
+      b.addEventListener("click", function () { map.closePopup(); fn(); });
+      actions.appendChild(b);
+    }
+    act(ROUTE_PATH, t("ctx.end"), function () { startRouteTo(place); });
+    act(FROM_PATH, t("ctx.start"), function () { startRouteFrom(place); });
+    if (routeFrom && routeTo && routeVias.filter(Boolean).length < MAX_VIAS) {
+      act(PLUS_PATH, t("ctx.via"), function () {
+        routeVias = routeVias.filter(Boolean);
+        routeVias.push(place);
+        planChanged();
+      });
+    }
+    act(STAR_PATH, t("places.save"), function () { addPlace(place); renderSavedLayer(); });
+    wrap.appendChild(actions);
+
+    L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(wrap).openOn(map);
+    nameByReverse(place, function () {
+      title.textContent = place.name;
+      subEl.textContent = place.sub || coordsTxt;
+    });
   }
 
   // ========== TURN-BY-TURN PANEL (Wave 3) ==========
@@ -1223,7 +1807,9 @@
     var side = modifier.indexOf("left") >= 0 ? "left"
              : modifier.indexOf("right") >= 0 ? "right" : "";
 
-    if (type === "arrive") return t("mvn.arrive");
+    if (type === "arrive") {
+      return step.via ? t("mvn.via").replace("{n}", step.via) : t("mvn.arrive");
+    }
     if (type === "depart") return withName(t("mvn.depart"), name);
     if (modifier === "uturn") return t("mvn.uturn");
 
@@ -1260,74 +1846,37 @@
   function cancelPick() {
     pickMode = null;
     document.body.classList.remove("pick");
-    ["plan-btn", "route-setstart", "route-setend"].forEach(function (id) {
-      var btn = $(id);
-      if (btn) btn.classList.remove("on");
-    });
+    var on = document.querySelectorAll("#plan-rows .plan-pick.on");
+    for (var i = 0; i < on.length; i++) on[i].classList.remove("on");
   }
 
-  // Arm a pick mode and paint the matching control(s).
-  function enterPick(mode) {
-    pickMode = mode;
+  // Arm a map pick for one planner slot.
+  function enterPick(slot) {
+    cancelPick();
+    pickMode = slot;
     document.body.classList.add("pick");
-    ["plan-btn", "route-setstart", "route-setend"].forEach(function (id) {
-      var btn = $(id);
-      if (!btn) return;
-      btn.classList.toggle("on",
-        (mode === "start" && (id === "plan-btn" || id === "route-setstart")) ||
-        (mode === "end" && id === "route-setend"));
-    });
+    var b = document.querySelector('#plan-rows [data-slot="' + slot + '"] .plan-pick');
+    if (b) b.classList.add("on");
+    var kind = slotKind(slot);
+    showToast(t(kind === "from" ? "route.pick.start" : kind === "to" ? "route.pick.end" : "route.pick.via"));
   }
 
-  // The user backed out of a pick (Esc / toggled the button). With
-  // no route painted there is nothing to keep: the half-made plan
-  // (and its start marker) goes away.
-  function abortPick() {
-    cancelPick();
-    if (!routeLine) {
-      routeFrom = routeTo = null;
-      if (routeStartMarker) { map.removeLayer(routeStartMarker); routeStartMarker = null; }
-    }
+  function togglePick(slot) {
+    if (pickMode === slot) cancelPick();
+    else enterPick(slot);
   }
 
-  // Toggle a pick mode from a button.
-  function togglePick(mode) {
-    if (pickMode === mode) { abortPick(); return; }
-    enterPick(mode);
-    showToast(t(mode === "start" ? "route.pick.start" : "route.pick.end"));
-  }
-
-  // Click on map to set start/end point (manual override)
+  // Click on the map while a pick is armed: that slot becomes the
+  // point, named by its address once Photon answers (MX-4).
   function handleMapClick(e) {
-    if (!pickMode) return;
-    if (!navigator.onLine) { showToast(t("route.offline")); abortPick(); return; }
-
-    var lat = e.latlng.lat;
-    var lon = e.latlng.lng;
-    var place = { lat: lat, lon: lon, name: t("route.ptmap"), sub: "" };
-
-    if (pickMode === "start") {
-      routeFrom = place;
-      setStartMarker();
-      if (!routeTo) {
-        // No destination yet — chain straight into end-pick
-        enterPick("end");
-        showToast(t("route.pick.end"));
-        return;
-      }
-    } else if (pickMode === "end") {
-      routeTo = place;
-      placeResult(lat, lon, place.name, place.sub);
-      if (!routeFrom) {
-        // No origin yet — chain straight into start-pick
-        enterPick("start");
-        showToast(t("route.pick.start"));
-        return;
-      }
-    }
-
-    calcRoute();
+    if (pickMode === null) return;
+    var slot = pickMode;
     cancelPick();
+    if (slot >= slotCount()) return;
+    var place = { lat: e.latlng.lat, lon: e.latlng.lng, name: t("route.ptmap"), sub: "" };
+    slotSet(slot, place);
+    nameByReverse(place);
+    planChanged();
   }
 
   // ========== END TURN-BY-TURN PANEL ==========
@@ -1509,7 +2058,11 @@
     userPos = [lat, lon];
     userPosAt = Date.now();
     moveUser(lat, lon, pos.coords.accuracy);
-    map.setView([lat, lon], 17, { animate: true });
+    navSetHeading(lat, lon, pos.coords);
+    navSpeed = pos.coords.speed;
+    // MX-1: the camera follows only until the user moves the map
+    // (then "Recenter" brings it back).
+    if (navFollow) map.setView([lat, lon], navZoom(navSpeed), { animate: true });
     if (Date.now() - navMarkAt > 30000) markNavSession();
 
     if (routeCoords.length < 2 || lastSteps.length < 2) return;
@@ -1522,7 +2075,14 @@
     // (offline there is nothing to ask — keep guiding on the old route)
     if (near.dist > 55 && navigator.onLine && Date.now() - navRerouteAt > 12000) {
       navRerouteAt = Date.now();
-      routeFrom = { lat: lat, lon: lon, name: t("geo.me") };
+      // Stops already reached stay behind: the new route goes from
+      // here through the stops still ahead.
+      var passed = 0;
+      for (var sv = 0; sv < lastSteps.length; sv++) {
+        if (lastSteps[sv].via && stepAlong[sv] <= navAlong + 30) passed++;
+      }
+      routeVias = routeVias.filter(Boolean).slice(passed);
+      routeFrom = meSlot([lat, lon]);
       showToast(t("nav.rerouting"));
       calcRoute();          // restarts step tracking on success
       return;
@@ -1548,6 +2108,7 @@
     if (idx >= last) idx = last - 1;
 
     var advanced = idx > navCurStepIdx;
+    var navPrevIdx = navCurStepIdx;
     if (idx !== navCurStepIdx) {
       navCurStepIdx = idx;
       navSpokenFar = false;
@@ -1555,7 +2116,13 @@
       // Only while it is still fresh: after a GPS gap the maneuver
       // may be far behind, and announcing it would mislead.
       if (advanced && p.along - stepAlong[idx] < 60) {
-        speak(formatManeuverText(lastSteps[idx]), true);
+        // A stop reached on the way is said first ("Arrive at stop 1"),
+        // not the "Head out" that follows it at the same point.
+        var said0 = null;
+        for (var sa = navPrevIdx + 1; sa <= idx; sa++) {
+          if (lastSteps[sa] && lastSteps[sa].via) said0 = lastSteps[sa];
+        }
+        speak(formatManeuverText(said0 || lastSteps[idx]), true);
       }
     }
 
@@ -1580,15 +2147,77 @@
   }
 
   // ---------- Start / stop ----------
+  // MX-2: a route planned from somewhere else cannot be followed from
+  // here. The first GPS tick used to replace the start without a word;
+  // now the route is recalculated from the user's position first
+  // (stops and destination kept) and that is said.
+  var NAV_FAR_M = 150;
   function startNavigation() {
     if (!lastSteps.length) { showToast(t("route.nosteps")); return; }
-    if (userPosFresh()) { beginNav(false); return; }
+    function go() {
+      var far = routeFrom && isFinite(routeFrom.lat) &&
+        hav(userPos[0], userPos[1], routeFrom.lat, routeFrom.lon) > NAV_FAR_M;
+      if (!far || !navigator.onLine) { beginNav(false); return; }   // offline: the old route still guides
+      routeFrom = meSlot(userPos);
+      showToast(t("nav.fromhere"));
+      calcRoute(true, function (ok) { if (ok) beginNav(false); });
+    }
+    if (userPosFresh()) { go(); return; }
     getUserLocation(function (pos) {
       // A stale fix is still a usable starting view — the position
       // watch replaces it within seconds.
-      if (pos || userPos) beginNav(false);
+      if (pos || userPos) go();
       else showToast(t("toast.noLocYet"));
     }, true);
+  }
+
+  // Camera: follow the user, zoomed out a little at speed; any pan,
+  // pinch, wheel or zoom button by the user stops following.
+  var navFollow = true;
+  var navSpeed = null;
+  function navZoom(speedMs) {
+    if (typeof speedMs !== "number" || !isFinite(speedMs)) return 17;
+    return speedMs > 22 ? 15 : speedMs > 11 ? 16 : 17;
+  }
+  function setNavFollow(on) {
+    navFollow = on;
+    $("nav-recenter").hidden = on || !navActive;
+  }
+  function navRecenter() {
+    setNavFollow(true);
+    if (userPos) map.setView(userPos, navZoom(navSpeed), { animate: true });
+  }
+
+  // MX-6: while navigating the user is an arrow that turns with the
+  // direction of travel (GPS heading when moving, else the bearing
+  // between the last two fixes at least 5 m apart).
+  var NAV_ARROW = '<div class="nav-arrow nohead"><svg width="34" height="34" viewBox="0 0 34 34">' +
+    '<circle cx="17" cy="17" r="14" fill="#6d4aff" stroke="#fff" stroke-width="2.5"/>' +
+    '<path class="nav-arrow-head" d="M17 8l7 16-7-4-7 4z" fill="#fff"/>' +
+    '<circle class="nav-arrow-dot" cx="17" cy="17" r="4.5" fill="#fff"/></svg></div>';
+  function navArrowIcon() {
+    return L.divIcon({ className: "custom-marker", html: NAV_ARROW,
+                       iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -14] });
+  }
+  var navHeading = null, navPrevFix = null;
+  function bearingDeg(lat1, lon1, lat2, lon2) {
+    var r = Math.PI / 180;
+    var y = Math.sin((lon2 - lon1) * r) * Math.cos(lat2 * r);
+    var x = Math.cos(lat1 * r) * Math.sin(lat2 * r) -
+            Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lon2 - lon1) * r);
+    return (Math.atan2(y, x) / r + 360) % 360;
+  }
+  function navSetHeading(lat, lon, coords) {
+    var h = coords && coords.heading;
+    var moved = navPrevFix ? hav(navPrevFix[0], navPrevFix[1], lat, lon) : 0;
+    if (typeof h === "number" && isFinite(h) && (coords.speed || 0) > 0.7) navHeading = h;
+    else if (navPrevFix && moved >= 5) navHeading = bearingDeg(navPrevFix[0], navPrevFix[1], lat, lon);
+    if (!navPrevFix || moved >= 5) navPrevFix = [lat, lon];
+    var el = userMarker && userMarker.getElement && userMarker.getElement();
+    var a = el && el.querySelector(".nav-arrow");
+    if (!a) return;
+    a.classList.toggle("nohead", navHeading === null);
+    if (navHeading !== null) a.style.transform = "rotate(" + Math.round(navHeading) + "deg)";
   }
 
   // Screen Wake Lock: without it the phone dims and locks mid-route,
@@ -1658,6 +2287,10 @@
     $("nav-hud").hidden = false;
     resetExitConfirm();
     map.closePopup();
+    if (planOpen) closePlanner();
+    navHeading = null; navPrevFix = null; navSpeed = null;
+    if (userMarker) userMarker.setIcon(navArrowIcon());
+    setNavFollow(true);
     map.setView(userPos, 17, { animate: true });
     resetNavProgress();
     if (!resumed) speak(formatManeuverText(lastSteps[0]), true);    // "Head out …"
@@ -1674,6 +2307,8 @@
     navActive = false;
     document.body.classList.remove("nav");
     $("nav-hud").hidden = true;
+    $("nav-recenter").hidden = true;
+    if (userMarker) userMarker.setIcon(makeMarkerIcon(COLOR_USER));
     if (navWatchId !== null) {
       navigator.geolocation.clearWatch(navWatchId);
       navWatchId = null;
@@ -1833,6 +2468,7 @@
       if (mv.exit !== undefined) out.maneuver.exit = mv.exit;
       if (mv.location) out.maneuver.location = mv.location;
       if (st.ref) out.ref = st.ref;
+      if (st.via) out.via = st.via;
       return out;
     });
   }
@@ -1842,6 +2478,7 @@
     var json = JSON.stringify({
       ver: 1,
       from: routeFrom, to: routeTo,
+      vias: routeVias.filter(Boolean),
       profile: routeProfile,
       geometry: { type: "LineString", coordinates: routeCoords },
       steps: slimSteps(lastSteps), distance: lastDist, duration: lastDur
@@ -1871,6 +2508,11 @@
         !Array.isArray(data.geometry.coordinates)) return false;
 
     routeFrom = data.from; routeTo = data.to;
+    // Snapshots written before stops existed have no `vias`.
+    routeVias = (Array.isArray(data.vias) ? data.vias : []).filter(function (v) {
+      return v && typeof v.lat === "number" && typeof v.lon === "number" &&
+        isFinite(v.lat) && isFinite(v.lon);
+    }).slice(0, MAX_VIAS);
     routeProfile = PROFILE_OSRM[data.profile] ? data.profile : "car";
     lastSteps = Array.isArray(data.steps) ? data.steps : [];
     lastDist = data.distance || 0;
@@ -1882,17 +2524,7 @@
     routeLine = L.geoJSON(data.geometry, {
       style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
     }).addTo(map);
-
-    if (!routeStartMarker) {
-      routeStartMarker = L.marker([routeFrom.lat, routeFrom.lon],
-        { icon: makeMarkerIcon(COLOR_ROUTE_START) }).addTo(map);
-    } else { routeStartMarker.setLatLng([routeFrom.lat, routeFrom.lon]); }
-    if (!routeEndMarker) {
-      routeEndMarker = L.marker([routeTo.lat, routeTo.lon],
-        { icon: makeMarkerIcon(COLOR_RESULT) }).addTo(map);
-    } else { routeEndMarker.setLatLng([routeTo.lat, routeTo.lon]); }
-    if (routeTo.name) bindPlacePopup(routeEndMarker, routeTo);
-    else routeEndMarker.unbindPopup();
+    paintRouteMarkers();
 
     restoring = true;
     setRouteProfile(routeProfile);        // paints profile buttons only — no OSRM call
@@ -2299,6 +2931,9 @@
       $("search-clear").hidden = !this.value;
       clearTimeout(acTimer);
       var q = this.value.trim();
+      // Typed coordinates need no server (they work offline too)
+      var c = parseCoords(q);
+      if (c) { acSeq++; acRender([c]); return; }
       // Too short / emptied: also invalidate any response in flight —
       // it must not reopen a list for text that is no longer there.
       if (q.length < AC_MIN) { acSeq++; acResults = []; acClose(); return; }
@@ -2351,10 +2986,38 @@
       getUserLocation(function () {});
     });
 
-    // Plan a route / set start / set end — one pick mode at a time
-    $("plan-btn").addEventListener("click", function () { togglePick("start"); });
-    $("route-setstart").addEventListener("click", function () { togglePick("start"); });
-    $("route-setend").addEventListener("click", function () { togglePick("end"); });
+    // Route planner (From / stops / To)
+    $("plan-btn").addEventListener("click", function () {
+      if (planOpen) closePlanner(); else openPlanner();
+    });
+    $("route-edit").addEventListener("click", function () { openPlanner(); });
+    $("plan-close").addEventListener("click", closePlanner);
+    $("plan-addstop").addEventListener("click", addStop);
+    $("plan-swap").addEventListener("click", swapPlan);
+    $("planner").setAttribute("aria-label", t("route.plan"));
+    window.addEventListener("resize", updatePlanHeight);
+    // MX-8: car / bike / walk times are the router's estimate
+    $("route-time").title = t("route.notraffic");
+
+    // Long-press (touch) / right-click (desktop) on the map
+    map.on("contextmenu", openContextMenu);
+
+    // Live navigation: the user taking the map stops the follow-camera
+    map.on("dragstart", function () { if (navActive && navFollow) setNavFollow(false); });
+    var mc = map.getContainer();
+    mc.addEventListener("wheel", function () {
+      if (navActive && navFollow) setNavFollow(false);
+    }, { passive: true });
+    mc.addEventListener("touchstart", function (e) {
+      if (navActive && navFollow && e.touches && e.touches.length > 1) setNavFollow(false);
+    }, { passive: true });
+    mc.addEventListener("click", function (e) {
+      if (navActive && navFollow && e.target.closest && e.target.closest(".leaflet-control-zoom")) {
+        setNavFollow(false);
+      }
+    });
+    map.on("dblclick", function () { if (navActive && navFollow) setNavFollow(false); });
+    $("nav-recenter").addEventListener("click", navRecenter);
 
     // Route profiles + clear
     $("rp-car").addEventListener("click", function () { setRouteProfile("car"); });
@@ -2440,7 +3103,8 @@
         $("steps-btn").classList.remove("on");
       }
       if (!$("mapsettings").hidden) $("mapsettings").hidden = true;
-      if (pickMode) abortPick();
+      if (pickMode !== null) cancelPick();
+      else if (planOpen) closePlanner();
     });
 
     // Map click handler (pick mode)
@@ -2499,9 +3163,4 @@
   if (restoredRoute && !bootedViaBridge && navSessionFresh()) resumeNavigation();
   else clearNavSession();
 
-  setTimeout(function () {
-    if (!bootedViaBridge && !localStorage.getItem(ROUTE_STORAGE_KEY)) {
-      showToast(t("toast.welcome"));
-    }
-  }, 800);
 })();
