@@ -200,6 +200,14 @@
       "icon": "memory",
       "url": "memory/",
       "type": "internal"
+    },
+    {
+      "id": "connect4",
+      "name": "Connect 4",
+      "category": "Games",
+      "icon": "connect4",
+      "url": "connect4/",
+      "type": "internal"
     }
   ]
 }

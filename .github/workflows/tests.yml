@@ -1,14 +1,14 @@
 name: Tests
 
-# Sync engine merge tests (tests/*.test.js). Plain Node, no build
-# step, no dependencies: node --test tests/*.test.js
+# Sync engine merge tests + Games logic tests (tests/*.test.js). Plain
+# Node, no build step, no dependencies: node --test tests/*.test.js
 
 on:
   push:
     branches: [main]
-    paths: ['sync.js', 'tests/**', '.github/workflows/tests.yml']
+    paths: ['sync.js', 'memory/**', 'connect4/**', 'tests/**', '.github/workflows/tests.yml']
   pull_request:
-    paths: ['sync.js', 'tests/**', '.github/workflows/tests.yml']
+    paths: ['sync.js', 'memory/**', 'connect4/**', 'tests/**', '.github/workflows/tests.yml']
   workflow_dispatch:
 
 permissions:
