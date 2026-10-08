@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wallpaper Generator · orOS</title>
+
+  <link rel="stylesheet" href="wallpaper.css?v=0.43.03">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seed-wrap">
+        <label for="seed" class="seed-lbl" data-i18n="seed">Seed</label>
+        <input id="seed" maxlength="40" spellcheck="false" autocomplete="off">
+      </div>
+      <button type="button" class="icon-btn" id="roll-btn"></button>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="fav-btn" aria-pressed="false"></button>
+      <button type="button" class="txt-btn" id="set-btn"></button>
+      <button type="button" class="icon-btn" id="export-btn"></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Controls -->
+    <form id="panel" autocomplete="off" novalidate>
+      <section class="sec">
+        <h2 data-i18n="sec.style">Style</h2>
+        <div id="styles" class="pick-grid" role="radiogroup"></div>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.pal">Palette</h2>
+        <div id="pals" class="pick-grid" role="radiogroup"></div>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.tune">Settings</h2>
+        <div class="fld">
+          <label for="dens"><span data-i18n="f.dens">Density</span> <output id="dens-out"></output></label>
+          <input type="range" id="dens" min="0" max="100" step="1">
+        </div>
+        <div class="fld">
+          <label for="chaos"><span data-i18n="f.chaos">Chaos</span> <output id="chaos-out"></output></label>
+          <input type="range" id="chaos" min="0" max="100" step="1">
+        </div>
+        <label class="chk"><input type="checkbox" id="grain"><span data-i18n="f.grain">Film grain</span></label>
+        <label class="chk"><input type="checkbox" id="light"><span data-i18n="f.light">Light background</span></label>
+        <p class="hint" id="light-hint" data-i18n="f.lightNo" hidden>A nebula is always drawn at night.</p>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.size">Size</h2>
+        <div class="in-row">
+          <select id="size"></select>
+        </div>
+        <div class="in-row custom-row" id="custom-row" hidden>
+          <input id="cw" type="number" inputmode="numeric" min="64" max="8192" step="1">
+          <span class="times">×</span>
+          <input id="ch" type="number" inputmode="numeric" min="64" max="8192" step="1">
+        </div>
+        <p class="hint" id="size-hint"></p>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.favs">Favourites</h2>
+        <div id="favs"></div>
+        <p class="hint" id="favs-empty" data-i18n="favs.empty">Tap the star to keep a design here.</p>
+      </section>
+    </form>
+
+    <!-- Live preview -->
+    <section id="stage">
+      <div id="frame"><canvas id="cv"></canvas></div>
+      <p id="dims" class="hint"></p>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="art.js?v=0.43.03"></script>
+  <script src="wallpaper.js?v=0.43.03"></script>
+
+</body>
+</html>
