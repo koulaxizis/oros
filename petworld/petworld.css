@@ -374,8 +374,8 @@ dialog.pw-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #stats { gap: 8px; }
   .stat { gap: 4px; }
   .stat-num { min-width: 22px; font-size: 11px; }
-  #actions { gap: 6px; }
-  .act-btn { flex-direction: column; gap: 2px; font-size: 11px; padding: 4px 2px; }
+  #actions { gap: 4px; }
+  .act-btn { flex-direction: column; gap: 2px; font-size: 11px; padding: 4px 0; }
   dialog.pw-dlg { width: calc(100vw - 20px); padding: 14px; }
 }
 @media (pointer: coarse) {
@@ -389,3 +389,18 @@ dialog.pw-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 [hidden] { display: none !important; }
+
+/* Nest dialog: a small heading between the stages and the decorations */
+.item-head {
+  margin: 10px 2px 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Seven actions: icon above label until there is room for both side by side */
+@media (min-width: 481px) and (max-width: 900px) {
+  .act-btn { flex-direction: column; gap: 2px; font-size: 12px; padding: 4px 2px; }
+}

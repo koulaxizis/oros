@@ -1,6 +1,8 @@
 // Pure logic of Pet World (petworld/petworld.js): the "petworld"
 // slice merge, the per-device ledger, the pet binding, a fresh start,
-// and the "petgarden" slice (beds, growth, watering, harvests). Run: node --test tests/
+// the "petgarden" slice (beds, growth, watering, harvests) and the
+// "petnest" slice (walks, loot, nest stages, decorations).
+// Run: node --test tests/
 //
 // The app is a browser IIFE with no exports, so the pure functions
 // are cut out of the source by name and evaluated on their own (same
@@ -34,11 +36,15 @@ const PW = load("petworld/petworld.js",
    "worldHasContent", "ledger", "freshStart", "bindPet",
    "normTot", "normPlot", "joinPlot", "mergeGarden", "defaultGarden", "yieldOf", "growthSpan",
    "readyAt", "plotState", "withPlot", "plantSeed", "waterPlot", "harvestPlot", "digUp",
-   "freshGarden", "stock", "gardenHasContent", "clamp"],
-  [["  var DATA_VER", "  var WAKE_AT"], ["  var HOUR", "  function normTot("]],
+   "freshGarden", "stock", "gardenHasContent", "clamp",
+   "normWalks", "normNestRow", "joinNestRow", "mergeNest", "defaultNest", "lootOf", "walkList",
+   "activeWalk", "lastWalk", "withNestRow", "foldWalks", "startWalk", "nestNet", "nestStage",
+   "buildable", "buildNest", "freshNest", "nestHasContent", "mulberry"],
+  [["  var DATA_VER", "  var WAKE_AT"], ["  var HOUR", "  function normTot("], ["  var MIN = ", "  function normWalks("]],
   "mergeWorld, defaultData, worldHasContent, ledger, freshStart, bindPet, mergeGarden, " +
   "defaultGarden, plotState, plantSeed, waterPlot, harvestPlot, digUp, freshGarden, stock, " +
-  "gardenHasContent, CROPS, START_PACK, HOUR");
+  "gardenHasContent, CROPS, START_PACK, HOUR, mergeNest, defaultNest, lootOf, activeWalk, lastWalk, " +
+  "foldWalks, startWalk, nestStage, buildNest, freshNest, nestHasContent, MIN, NEST, DECOR");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -201,4 +207,117 @@ test("petgarden: a fresh start empties the beds on every device", () => {
   assert.equal(PW.mergeGarden(later, g).plots["2"].s, "carrot");
   // The start pack is there before anything happens.
   assert.equal(PW.stock(PW.defaultData(), PW.defaultGarden(), "seed_strawberry"), PW.START_PACK.seed_strawberry);
+});
+
+function randomNest() {
+  const built = {};
+  ["n1", "n2", "n3", "path", "Bad!"].forEach((k) => { if (rnd(2)) built[k] = rnd(4) * 10; });
+  const rows = {};
+  for (let i = 0; i < rnd(4); i++) {
+    const w = {};
+    for (let j = 0; j < rnd(3); j++) w[String(rnd(5) * 1000)] = [15, 30, 60, 0, 2000][rnd(5)];
+    const sum = {};
+    ["twig", "leaf", "Bad!"].forEach((k) => { if (rnd(2)) sum[k] = rnd(5); });
+    rows["d" + rnd(3)] = { b: rnd(3) * 10, v: rnd(3), w, sum };
+  }
+  if (!rnd(8)) rows["no way"] = { b: 0, v: 0, w: {}, sum: {} };
+  return { ver: 1, br: rnd(3) ? 0 : rnd(3) * 10, built, rows };
+}
+
+test("petnest: merge is a join and pure", () => {
+  const M = PW.mergeNest;
+  for (let i = 0; i < 20000; i++) {
+    const a = randomNest(), b = randomNest(), c = randomNest(), sa = J(a);
+    const ab = M(a, b);
+    assert.equal(J(ab), J(M(b, a)));
+    assert.equal(J(M(ab, ab)), J(ab));
+    assert.equal(J(M(ab, null)), J(ab));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+    Object.keys(ab.built).forEach((k) => assert.ok(ab.built[k] >= ab.br));
+    Object.keys(ab.rows).forEach((d) => assert.ok(ab.rows[d].b >= ab.br));
+  }
+});
+
+test("petnest: a walk takes its real time, one at a time, and every device sees the same loot", () => {
+  const t0 = 1700000000000, MIN = PW.MIN, D = PW.defaultData(), G = PW.defaultGarden();
+  let n = PW.startWalk(PW.defaultNest(), "dA", 30, t0);
+  assert.equal(PW.activeWalk(n, t0 + 29 * MIN).s, t0);
+  assert.equal(PW.activeWalk(n, t0 + 30 * MIN), null);
+  assert.equal(PW.startWalk(n, "dB", 15, t0 + 10 * MIN), n);              // already out
+  assert.equal(PW.startWalk(n, "dA", 20, t0 + 40 * MIN), n);              // not a walk length
+  assert.equal(PW.stock(D, G, "twig", n, t0 + 29 * MIN), 0);             // nothing until home
+  const got = PW.lootOf("dA", t0, 30);
+  const mats = ["twig", "leaf", "moss", "pebble"].reduce((s, k) => s + (got[k] || 0), 0);
+  assert.ok(mats >= 4 && mats <= 5);
+  assert.equal(PW.stock(D, G, "twig", n, t0 + 30 * MIN), got.twig || 0);
+  // another device, after sync, counts the very same finds
+  const other = PW.mergeNest(PW.defaultNest(), n);
+  assert.equal(PW.stock(D, G, "leaf", other, t0 + 31 * MIN), got.leaf || 0);
+
+  // A second walk folds the first into the row's sum: same totals.
+  const t1 = t0 + 60 * MIN;
+  const n2 = PW.startWalk(n, "dA", 60, t1);
+  assert.equal(Object.keys(n2.rows.dA.w).length, 1);
+  assert.ok(n2.rows.dA.v > n.rows.dA.v);
+  ["twig", "leaf", "moss", "pebble"].forEach((k) =>
+    assert.equal(PW.stock(D, G, k, n2, t1), PW.stock(D, G, k, n, t1)));
+  // the stale copy (before the fold) loses to the folded row: no double count
+  const m = PW.mergeNest(n, n2);
+  assert.equal(J(m), J(n2));
+  const all = PW.lootOf("dA", t1, 60);
+  ["twig", "leaf"].forEach((k) =>
+    assert.equal(PW.stock(D, G, k, m, t1 + 60 * MIN), (got[k] || 0) + (all[k] || 0)));
+  assert.equal(PW.lastWalk(m).s, t1);
+  // a newest walk is never folded, even when it is over
+  assert.equal(PW.foldWalks(m, "dA", t1 + 999 * MIN), m);
+});
+
+test("petnest: walk lengths give their loot", () => {
+  const sumMats = (g) => ["twig", "leaf", "moss", "pebble"].reduce((s, k) => s + (g[k] || 0), 0);
+  let seeds60 = 0, finds60 = 0;
+  for (let i = 0; i < 400; i++) {
+    const a = PW.lootOf("dX", 1000 + i, 15), b = PW.lootOf("dX", 1000 + i, 60);
+    assert.ok(sumMats(a) >= 2 && sumMats(a) <= 3);
+    assert.equal(Object.keys(a).filter((k) => k.indexOf("seed_") === 0).length, 0);
+    assert.ok(sumMats(b) >= 8 && sumMats(b) <= 10);
+    if (Object.keys(b).some((k) => k.indexOf("seed_") === 0)) seeds60++;
+    if (b.feather || b.shell || b.clover) finds60++;
+    assert.equal(J(PW.lootOf("dX", 1000 + i, 60)), J(b));                // fixed
+  }
+  assert.ok(seeds60 > 120 && seeds60 < 280);
+  assert.ok(finds60 > 50 && finds60 < 160);
+});
+
+test("petnest: the nest is built in order and paid once, even from two devices", () => {
+  const t0 = 5000, D = PW.defaultData(), G = PW.defaultGarden();
+  let pebbles = 0;
+  const have = (k) => (k === "pebble" ? pebbles : 100);
+  let n = PW.defaultNest();
+  assert.equal(PW.buildNest(n, "n1", t0, have), n);                       // no pebbles yet
+  assert.equal(PW.buildNest(n, "n2", t0, () => 100), n);                  // out of order
+  assert.equal(PW.buildNest(n, "lantern", t0, () => 100), n);             // needs stage 2
+  pebbles = 3;
+  const A = PW.buildNest(n, "n1", t0, have), B = PW.buildNest(n, "n1", t0 + 7, have);
+  const m = PW.mergeNest(A, B);
+  assert.equal(PW.nestStage(m), 1);
+  // the cost is derived from what is built: 3 pebbles, once
+  const rich = { ver: 1, br: 0, built: {}, rows: { dA: { b: 0, v: 1, w: {}, sum: { pebble: 10, twig: 20 } } } };
+  const r = PW.mergeNest(rich, m);
+  assert.equal(PW.stock(D, G, "pebble", r, t0), 7);
+  let full = r;
+  ["n2", "n3", "n4", "n5"].forEach((id, i) => { full = PW.buildNest(full, id, t0 + i + 1, () => 100); });
+  assert.equal(PW.nestStage(full), 5);
+  assert.equal(PW.stock(D, G, "twig", full, t0), 20 - 8 - 6);
+  assert.ok(PW.buildNest(full, "garland", t0 + 9, () => 100).built.garland);
+  assert.equal(PW.buildNest(full, "n3", t0 + 9, () => 100), full);        // already built
+  // a fresh start empties the nest and the walks on every device
+  const fresh = PW.freshNest(full, t0 + 100);
+  assert.equal(J(PW.mergeNest(full, fresh).built), "{}");
+  assert.equal(J(PW.mergeNest(full, fresh).rows), "{}");
+  assert.ok(PW.nestHasContent(full));
+  assert.ok(!PW.nestHasContent(fresh));
+  // a walk after the fresh start survives
+  const later = PW.startWalk(fresh, "dB", 15, t0 + 200);
+  assert.equal(PW.lastWalk(PW.mergeNest(later, full)).dev, "dB");
 });
