@@ -299,3 +299,18 @@ test("CSV: BOM, separator and decimal mark per language, formulas defused", () =
   assert.equal(F.csvCell("+1", ","), "'+1");
   assert.equal(F.csvCell("a;b", ";"), "\"a;b\"");
 });
+
+test("Habits row (fitness/core.js): finished workouts only, hidden when off or empty", () => {
+  const core = require(path.join(__dirname, "..", "fitness/core.js"));
+  assert.equal(core.FEED.id, "fitness");
+  assert.ok(/^#[0-9a-f]{6}$/.test(core.FEED.color));
+  assert.ok(core.FEED.icon.startsWith("<svg"));
+  const d = data({ wo: [wo("a", 1, "2026-10-05", T0, []), wo("b", 1, "2026-10-06", T0 + DAY, [], { en: 0 })] });
+  assert.deepEqual(core.workoutDays(d), { days: { "2026-10-05": true } });
+  assert.equal(core.workoutDays(data()), null);
+  assert.equal(core.workoutDays(Object.assign(data({ wo: d.wo }), { set: { m: 1, hb: 0 } })), null);
+  assert.equal(core.workoutDays(null), null);
+  assert.equal(core.workoutDays({ wo: "x" }), null);
+  assert.equal(F.normSettings({ m: 1 }).hb, 1);
+  assert.equal(F.normSettings({ m: 1, hb: 0 }).hb, 0);
+});

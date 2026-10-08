@@ -69,7 +69,7 @@
     en: {
       "app": "Workouts",
       "tab.train": "Train", "tab.history": "History", "tab.progress": "Progress",
-      "tab.programs": "Programs", "tab.body": "Body",
+      "tab.programs": "Programs", "tab.body": "Body", "nav.programs": "Programs",
       "btn.settings": "Settings",
       "train.today": "Today", "train.todayNone": "No program day is set for today.",
       "train.empty": "Empty workout", "train.emptySub": "Add exercises as you go",
@@ -131,7 +131,7 @@
       "g.cardio": "Cardio", "g.full": "Full body",
       "set.title": "Settings", "set.wu": "Weight unit", "set.du": "Distance unit", "set.incU": "Step, upper body",
       "set.incL": "Step, lower body", "set.rest": "Default rest (s)", "set.sound": "Sound when rest ends",
-      "set.vib": "Vibrate when rest ends", "set.export": "Export", "set.csv": "All sets (CSV)",
+      "set.vib": "Vibrate when rest ends", "set.habits": "Show workouts in Habits", "set.export": "Export", "set.csv": "All sets (CSV)",
       "set.json": "Backup (JSON)", "set.restore": "Restore from backup", "set.lib": "Exercise library",
       "set.metric": "Metric (kg, km, cm)", "set.imperial": "Imperial (lb, mi, in)",
       "set.restored": "Backup restored: {n} workouts", "set.badFile": "This file is not a Workouts backup",
@@ -147,7 +147,7 @@
     el: {
       "app": "Προπόνηση",
       "tab.train": "Προπόνηση", "tab.history": "Ιστορικό", "tab.progress": "Πρόοδος",
-      "tab.programs": "Προγράμματα", "tab.body": "Σώμα",
+      "tab.programs": "Προγράμματα", "tab.body": "Σώμα", "nav.programs": "Πλάνα",
       "btn.settings": "Ρυθμίσεις",
       "train.today": "Σήμερα", "train.todayNone": "Δεν έχει οριστεί ημέρα προγράμματος για σήμερα.",
       "train.empty": "Κενή προπόνηση", "train.emptySub": "Πρόσθεσε ασκήσεις στην πορεία",
@@ -209,7 +209,7 @@
       "g.cardio": "Αερόβια", "g.full": "Όλο το σώμα",
       "set.title": "Ρυθμίσεις", "set.wu": "Μονάδα βάρους", "set.du": "Μονάδα απόστασης", "set.incU": "Βήμα, πάνω σώμα",
       "set.incL": "Βήμα, κάτω σώμα", "set.rest": "Προεπιλεγμένη ανάπαυση (δ)", "set.sound": "Ήχος στο τέλος της ανάπαυσης",
-      "set.vib": "Δόνηση στο τέλος της ανάπαυσης", "set.export": "Εξαγωγή", "set.csv": "Όλα τα σετ (CSV)",
+      "set.vib": "Δόνηση στο τέλος της ανάπαυσης", "set.habits": "Εμφάνιση των προπονήσεων στις Συνήθειες", "set.export": "Εξαγωγή", "set.csv": "Όλα τα σετ (CSV)",
       "set.json": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.lib": "Βιβλιοθήκη ασκήσεων",
       "set.metric": "Μετρικό (kg, km, cm)", "set.imperial": "Αγγλοσαξονικό (lb, mi, in)",
       "set.restored": "Έγινε επαναφορά: {n} προπονήσεις", "set.badFile": "Αυτό το αρχείο δεν είναι αντίγραφο της Προπόνησης",
@@ -470,7 +470,7 @@
               ch: clampInt(x.ch, 0, MAX_MM), ar: clampInt(x.ar, 0, MAX_MM) };
     return (v.w || v.wa || v.ch || v.ar) ? v : null;
   }
-  var DEF_SET = { m: 0, wu: "kg", du: "km", incU: 2500, incL: 5000, rest: 90 };
+  var DEF_SET = { m: 0, wu: "kg", du: "km", incU: 2500, incL: 5000, rest: 90, hb: 1 };
   function normSettings(x) {
     if (!x || typeof x !== "object" || !stamp(x)) return null;
     return {
@@ -479,7 +479,8 @@
       du: x.du === "mi" ? "mi" : "km",
       incU: clampInt(x.incU, 1, 100000) || DEF_SET.incU,
       incL: clampInt(x.incL, 1, 100000) || DEF_SET.incL,
-      rest: clampInt(x.rest, 0, 3600)
+      rest: clampInt(x.rest, 0, 3600),
+      hb: x.hb === 0 ? 0 : 1          // the read-only row in Habits (fitness/core.js)
     };
   }
   var NORM = { ex: normEx, pg: normPg, wo: normWo, bm: normBm };
@@ -1106,7 +1107,9 @@
     var nav = $("nav");
     nav.innerHTML = "";
     TABS.forEach(function (tb) {
-      var b = txtBtn("nav-btn" + (prefs.tab === tb[0] ? " on" : ""), UI[tb[1]], t("tab." + tb[0]), function () { setTab(tb[0]); });
+      var b = txtBtn("nav-btn" + (prefs.tab === tb[0] ? " on" : ""), UI[tb[1]],
+                     t(tb[0] === "programs" ? "nav.programs" : "tab." + tb[0]), function () { setTab(tb[0]); });
+      b.setAttribute("aria-label", t("tab." + tb[0]));
       b.setAttribute("aria-current", prefs.tab === tb[0] ? "page" : "false");
       nav.appendChild(b);
     });
@@ -1296,12 +1299,19 @@
   var announced = {};   // records already toasted in this session: "e|k" → value
   function checkRecords(w) {
     if (w.en) return;
+    var fresh = {}, order = [];
     recordsOf(data, w).forEach(function (r) {
       var key = r.e + "|" + r.k;
       if (announced[key] >= r.v) return;
       announced[key] = r.v;
-      var info = exInfo(data, r.e);
-      showToast("🏆 " + t("pr.toast", { ex: info.name, what: t(PR_LABEL[r.k]) + " " + fmtRecord(r, info.k, settings()) }));
+      if (!fresh[r.e]) { fresh[r.e] = []; order.push(r.e); }
+      fresh[r.e].push(r);
+    });
+    order.forEach(function (e) {      // one toast per exercise
+      var info = exInfo(data, e);
+      showToast("🏆 " + t("pr.toast", { ex: info.name, what: fresh[e].map(function (r) {
+        return t(PR_LABEL[r.k]) + " " + fmtRecord(r, info.k, settings());
+      }).join(", ") }));
     });
   }
 
@@ -1401,7 +1411,7 @@
     return [u.du === "mi" ? t("col.mi") : t("col.km"), t("col.time")];
   }
   function setSummary(s, info, set) {
-    if (info.k === "wr") return fmtW(s[0], set.wu) + " × " + s[1];
+    if (info.k === "wr") return fmtW(s[0], set.wu) + " " + set.wu + " × " + s[1];
     if (info.k === "r") return s[1] + "×";
     if (info.k === "t") return fmtTime(s[2]);
     return fmtDist(s[3], set.du) + " · " + fmtTime(s[2]);
@@ -1991,7 +2001,16 @@
     if (parent) parent.appendChild(n);
     return n;
   }
-  function chartWidth(host) { return Math.max(280, Math.min(900, (host.clientWidth || $("view").clientWidth || 340) - 2)); }
+  // Charts are drawn before their section joins the page, so the
+  // width comes from the view's content box (max 760 px, see CSS).
+  function chartWidth(host) {
+    var w = host.clientWidth;
+    if (!w) {
+      var v = $("view"), cs = getComputedStyle(v);
+      w = Math.min(760, v.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+    }
+    return Math.max(260, Math.min(900, (w || 340) - 2));
+  }
   function niceMax(v) {
     if (!(v > 0)) return 1;
     var p = Math.pow(10, Math.floor(Math.log(v) / Math.LN10)), f = v / p;
@@ -2037,12 +2056,15 @@
     if (maxX === minX) { minX -= DAY_MS; maxX += DAY_MS; }
     var lo = Infinity, hi = -Infinity;
     pts.forEach(function (p) { lo = Math.min(lo, p.y); hi = Math.max(hi, p.y); });
-    var pad = (hi - lo) * 0.15 || hi * 0.1 || 1;
-    var y0 = Math.max(0, lo - pad), y1 = hi + pad;
+    var pad = (hi - lo) * 0.1 || hi * 0.05 || 1;
+    var step = niceMax((hi - lo + 2 * pad) / 3) / 2;
+    if ((hi - lo + 2 * pad) / step > 4) step *= 2;
+    var y0 = Math.max(0, Math.floor((lo - pad) / step) * step), y1 = Math.ceil((hi + pad) / step) * step;
+    if (y1 <= y0) y1 = y0 + step;
     var X = function (x) { return L + (W - L - R) * (x - minX) / (maxX - minX); };
     var Y = function (y) { return T + (H - T - B) * (1 - (y - y0) / (y1 - y0)); };
-    for (var g = 0; g <= 3; g++) {
-      var gv = y0 + (y1 - y0) * g / 3, gy = Y(gv);
+    for (var gv = y0; gv <= y1 + step / 2; gv += step) {
+      var gy = Y(gv);
       sv("line", { x1: L, x2: W - R, y1: gy, y2: gy, "class": "grid" }, svg);
       sv("text", { x: L - 6, y: gy + 4, "text-anchor": "end", "class": "ax" }, svg).textContent = fmtY(gv);
     }
@@ -2645,6 +2667,7 @@
     }
     check(t("set.sound"), prefs.snd, function (v) { prefs.snd = v ? 1 : 0; savePrefs(); if (v) chime(); });
     check(t("set.vib"), prefs.vib, function (v) { prefs.vib = v ? 1 : 0; savePrefs(); });
+    check(t("set.habits"), set.hb, function (v) { editSettings({ hb: v ? 1 : 0 }); });
     sys.addEventListener("change", function () {
       var imp = sys.value === "imperial";
       // keep the steps natural in the new unit: 2.5 / 5 kg ↔ 5 / 10 lb
