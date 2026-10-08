@@ -111,13 +111,11 @@ const STRINGS = {
     'tab.new': 'New document',
     'tab.close': 'Close',
     'tab.untitled': 'Untitled',
-    'doc.new': 'New document',
     'doc.created': 'Document created',
     'doc.saved': 'Document saved',
     'doc.closed': 'Document closed',
     'doc.renamed': 'Document renamed',
     'doc.deleted': 'Document deleted',
-    'sync.updated': 'Updated with changes from other devices',
     'tt.find': 'Find and replace',
     'tt.chars': 'Special characters',
     'tt.settings': 'Settings',
@@ -133,10 +131,8 @@ const STRINGS = {
     'tt.qf.link': 'Insert link',
     'tt.qf.image': 'Insert image',
     'tt.qf.table': 'Insert table',
-    'dialog.findTitle': 'Find and replace',
     'dialog.charsTitle': 'Special characters',
     'dialog.acTitle': 'Auto-correction rules',
-    'ac.add': 'Add rule',
     'ac.replace': 'Replace with',
     'ac.reset': 'Reset defaults',
     'ac.saved': 'Rules saved',
@@ -152,7 +148,6 @@ const STRINGS = {
     'char.emoji': 'Emoji',
     'opt.case': 'Match case',
     'opt.word': 'Whole word',
-    'opt.format': 'Format',
     'opt.format.any': 'Any format',
     'opt.format.bold': 'Bold only',
     'opt.format.italic': 'Italic only',
@@ -178,7 +173,6 @@ const STRINGS = {
     'cmt.title': 'Comments',
     'cmt.add': 'Add comment',
     'cmt.empty': 'No comments — select text and press the comments button.',
-    'cmt.placeholder': 'Write a comment…',
     'cmt.empty.quote': 'Deleted text',
     'cmt.delete': 'Delete comment',
     'tt.toc': 'Table of contents',
@@ -192,7 +186,6 @@ const STRINGS = {
     'meta.tags': 'Tags',
     'meta.category': 'Category',
     'meta.tagsAdd': 'Add tag…',
-    'meta.appliedLive': 'Metadata applies instantly — no save button',
     'page.size': 'Paper size',
     'page.margins': 'Margins (mm)',
     'page.mTop': 'Top',
@@ -215,7 +208,6 @@ const STRINGS = {
     'toc.empty': 'No headings — start with a heading style.',
     'toc.unnamed': 'Untitled heading',
     'tpl.title': 'Templates',
-    'tpl.custom': 'Custom',
     'tpl.use': 'Use',
     'tpl.edit': 'Edit',
     'tpl.del': 'Delete',
@@ -228,7 +220,6 @@ const STRINGS = {
     'tpl.imported': 'Template imported',
     'tpl.exported': 'Template exported',
     'tpl.imErr': 'Invalid template file',
-    'tpl.newDoc': 'New from template',
     'ver.title': 'Version history',
     'ver.auto': 'Auto',
     'ver.manual': 'Manual',
@@ -239,7 +230,6 @@ const STRINGS = {
     'ver.empty': 'No versions — write something first.',
     'ver.restored': 'Version restored',
     'ver.restoredFull': 'Restored text, footnotes and comments',
-    'ver.words': '{n} words',
     'goal.type': 'Goal type',
     'goal.type.words': 'Words',
     'goal.type.chars': 'Characters',
@@ -287,7 +277,6 @@ const STRINGS = {
     'io.txt.desc': 'Text only, no formatting.',
     'io.md.name': 'Markdown',
     'io.md.desc': 'Portable formatted text for writers and editors.',
-    'io.md.note': 'More formats coming soon',
     'io.docx.name': 'Word document',
     'io.docx.desc': 'Editable in Word, LibreOffice, Google Docs.',
     'io.docx.note': 'Large documents may take a moment',
@@ -303,7 +292,6 @@ const STRINGS = {
     'io.json.name': 'Database (JSON)',
     'io.json.desc': 'Complete slice — all tabs, settings, templates, autocorrect.',
     'io.busy': 'Preparing…',
-    'io.ready': '{n} formats available',
     'io.pickFile': 'Choose a file',
     'io.pickFileSub': 'Supported: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.impOpts': 'How to import?',
@@ -316,6 +304,7 @@ const STRINGS = {
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
     'io.dbConfirm': 'Merge this Writer backup? Its documents, templates and settings come back; documents that exist only here are kept.',
+    'io.dbKept': 'Backup merged. {n} document(s) differed: the newer text is kept, the other copy is in Version history.',
     'io.ddTitle': 'Drop to open',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Riding along:',
@@ -331,7 +320,6 @@ const STRINGS = {
     'docs.search': 'Search documents…',
     'docs.empty': 'No documents yet.',
     'docs.none': 'Nothing matches your search.',
-    'docs.open': 'Open',
     'docs.isOpen': 'Open tab',
     'docs.delete': 'Delete document',
     'docs.confirmDel': 'Delete “{name}”? It is removed from all your devices (Undo available for a few seconds).',
@@ -369,13 +357,11 @@ const STRINGS = {
     'tab.new': 'Νέο έγγραφο',
     'tab.close': 'Κλείσιμο',
     'tab.untitled': 'Χωρίς τίτλο',
-    'doc.new': 'Νέο έγγραφο',
     'doc.created': 'Το έγγραφο δημιουργήθηκε',
     'doc.saved': 'Το έγγραφο αποθηκεύτηκε',
     'doc.closed': 'Το έγγραφο έκλεισε',
     'doc.renamed': 'Το έγγραφο μετονομάστηκε',
     'doc.deleted': 'Το έγγραφο διαγράφηκε',
-    'sync.updated': 'Ενημερώθηκε με αλλαγές από άλλες συσκευές',
     'tt.find': 'Αναζήτηση και αντικατάσταση',
     'tt.chars': 'Ειδικοί χαρακτήρες',
     'tt.settings': 'Ρυθμίσεις',
@@ -391,10 +377,8 @@ const STRINGS = {
     'tt.qf.link': 'Εισαγωγή συνδέσμου',
     'tt.qf.image': 'Εισαγωγή εικόνας',
     'tt.qf.table': 'Εισαγωγή πίνακα',
-    'dialog.findTitle': 'Αναζήτηση και αντικατάσταση',
     'dialog.charsTitle': 'Ειδικοί χαρακτήρες',
     'dialog.acTitle': 'Κανόνες αυτο-διόρθωσης',
-    'ac.add': 'Προσθήκη',
     'ac.replace': 'Αντικατάσταση με',
     'ac.reset': 'Επαναφορά',
     'ac.saved': 'Οι κανόνες αποθηκεύτηκαν',
@@ -410,7 +394,6 @@ const STRINGS = {
     'char.emoji': 'Emoji',
     'opt.case': 'Διατήρηση κεφαλαίων/μικρών',
     'opt.word': 'Ολόκληρη λέξη',
-    'opt.format': 'Μορφή',
     'opt.format.any': 'Οποιαδήποτε μορφή',
     'opt.format.bold': 'Μόνο έντονη',
     'opt.format.italic': 'Μόνο πλάγια',
@@ -436,7 +419,6 @@ const STRINGS = {
     'cmt.title': 'Σχόλια',
     'cmt.add': 'Προσθήκη σχολίου',
     'cmt.empty': 'Κανένα σχόλιο — επίλεξε κείμενο και πάτησε το κουμπί σχολίων.',
-    'cmt.placeholder': 'Γράψε ένα σχόλιο…',
     'cmt.empty.quote': 'Διαγραμμένο κείμενο',
     'cmt.delete': 'Διαγραφή σχολίου',
     'tt.toc': 'Πίνακας περιεχομένων',
@@ -450,7 +432,6 @@ const STRINGS = {
     'meta.tags': 'Ετικέτες',
     'meta.category': 'Κατηγορία',
     'meta.tagsAdd': 'Προσθήκη…',
-    'meta.appliedLive': 'Εφαρμόζεται άμεσα — χωρίς κουμπί αποθήκευσης',
     'page.size': 'Μέγεθος χαρτιού',
     'page.margins': 'Περιθώρια (mm)',
     'page.mTop': 'Πάνω',
@@ -473,7 +454,6 @@ const STRINGS = {
     'toc.empty': 'Καμία επικεφαλίδα — ξεκίνα με style heading.',
     'toc.unnamed': 'Άνευ τίτλου',
     'tpl.title': 'Πρότυπα',
-    'tpl.custom': 'Προσαρμοσμένο',
     'tpl.use': 'Χρήση',
     'tpl.edit': 'Επεξεργασία',
     'tpl.del': 'Διαγραφή',
@@ -486,7 +466,6 @@ const STRINGS = {
     'tpl.imported': 'Το πρότυπο εισήχθη',
     'tpl.exported': 'Το πρότυπο εξάχθηκε',
     'tpl.imErr': 'Μη έγκυρο αρχείο προτύπου',
-    'tpl.newDoc': 'Νέο από πρότυπο',
     'ver.title': 'Ιστορικό εκδόσεων',
     'ver.auto': 'Αυτόματο',
     'ver.manual': 'Χειροκίνητο',
@@ -497,7 +476,6 @@ const STRINGS = {
     'ver.empty': 'Καμία έκδοση — γράψε πρώτα κάτι.',
     'ver.restored': 'Η έκδοση επανήλθε',
     'ver.restoredFull': 'Αποκαταστάθηκε κείμενο, υποσημειώσεις και σχόλια',
-    'ver.words': '{n} λέξεις',
     'goal.type': 'Τύπος στόχου',
     'goal.type.words': 'Λέξεις',
     'goal.type.chars': 'Χαρακτήρες',
@@ -545,7 +523,6 @@ const STRINGS = {
     'io.txt.desc': 'Μόνο κείμενο, χωρίς μορφοποίηση.',
     'io.md.name': 'Markdown',
     'io.md.desc': 'Φορητό μορφοποιημένο κείμενο για συγγραφείς.',
-    'io.md.note': 'Περισσότερες μορφές σύντομα',
     'io.docx.name': 'Document Word',
     'io.docx.desc': 'Επεξεργάσιμο σε Word, LibreOffice, Google Docs.',
     'io.docx.note': 'Μεγάλα έγγραφα ίσως αργήσουν',
@@ -561,7 +538,6 @@ const STRINGS = {
     'io.json.name': 'Βάση δεδομένων (JSON)',
     'io.json.desc': 'Πλήρες slice — όλα τα tabs, ρυθμίσεις, πρότυπα, διορθώσεις.',
     'io.busy': 'Προετοιμασία…',
-    'io.ready': '{n} μορφές διαθέσιμες',
     'io.pickFile': 'Επιλογή αρχείου',
     'io.pickFileSub': 'Υποστηρίζονται: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.impOpts': 'Πώς να γίνει η εισαγωγή;',
@@ -574,6 +550,7 @@ const STRINGS = {
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
     'io.dbConfirm': 'Συγχώνευση αυτού του αντιγράφου ασφαλείας; Τα έγγραφα, τα πρότυπα και οι ρυθμίσεις του επανέρχονται· όσα έγγραφα υπάρχουν μόνο εδώ διατηρούνται.',
+    'io.dbKept': 'Το αντίγραφο συγχωνεύτηκε. {n} έγγραφα διέφεραν: κρατήθηκε το νεότερο κείμενο και το άλλο αντίγραφο μπήκε στο Ιστορικό εκδόσεων.',
     'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
     'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
     'io.metaLabel': 'Συνοδεύουν:',
@@ -589,7 +566,6 @@ const STRINGS = {
     'docs.search': 'Αναζήτηση εγγράφων…',
     'docs.empty': 'Δεν υπάρχουν έγγραφα ακόμα.',
     'docs.none': 'Τίποτα δεν ταιριάζει με την αναζήτηση.',
-    'docs.open': 'Άνοιγμα',
     'docs.isOpen': 'Ανοιχτή καρτέλα',
     'docs.delete': 'Διαγραφή εγγράφου',
     'docs.confirmDel': 'Διαγραφή του «{name}»; Αφαιρείται από όλες τις συσκευές σου (η Αναίρεση είναι διαθέσιμη για λίγα δευτερόλεπτα).',
@@ -946,7 +922,7 @@ function startTabRename(id, labelEl) {
     const v = input.value.trim();
     if (v && v !== doc.title) {
       doc.title = v.slice(0, 120);
-      markDoc(doc);
+      markDoc(doc, 'm');
       renderTabs();
       showToast(t('doc.renamed'));
     } else {
@@ -980,8 +956,10 @@ function createDoc(opts) {
     header: '', footer: '',
     goal: null,
     mtime: Date.now(),
-    del: false
+    del: false,
+    fm: null
   };
+  doc.fm = { c: doc.mtime, m: doc.mtime, p: doc.mtime, g: doc.mtime };   // WR-6
   state.docs.push(doc);
   state.tabOrder.push(doc.id);
   state.seen[doc.id] = 1;
@@ -1057,8 +1035,11 @@ function deleteDoc(id, onUndo) {
   undoToast(t('doc.deleted'), () => {
     const cur = getDoc(id);
     if (!cur) return;
+    // WR-5: a sync since the delete may already have brought the doc
+    // back (another device edited it, R17): keep that newer copy — the
+    // old snapshot re-stamped over it lost the other device's edit.
     // fresh mtime beats the tombstone everywhere (resurrection contract)
-    Object.assign(cur, backup, { del: false, mtime: Date.now() });
+    if (cur.del) Object.assign(cur, backup, { del: false, mtime: Date.now() });
     if (state.tabOrder.indexOf(id) === -1) state.tabOrder.push(id);
     state.activeTab = id;
     savePrefs();
@@ -1201,19 +1182,29 @@ function serialize() {
   const docs = state.docs.slice().sort(cmpId);
   return {
     ver: 1,
-    docs: docs.map(d => ({
-      id: d.id, title: d.title, author: d.author, tags: d.tags,
-      category: d.category, html: d.html,
-      footnotes: d.footnotes || [], comments: d.comments || [],
-      versions: capVersions(d.versions || []),
-      pageSize: d.pageSize, margins: d.margins,
-      header: d.header, footer: d.footer,
-      goal: (d.goal && typeof d.goal === 'object') ? {
-        type: d.goal.type, target: d.goal.target, lock: !!d.goal.lock,
-        startTs: d.goal.startTs || 0, startWords: d.goal.startWords || 0
-      } : null,
-      mtime: d.mtime, del: !!d.del
-    })),
+    docs: docs.map(d => {
+      const o = {
+        id: d.id, title: d.title, author: d.author, tags: d.tags,
+        category: d.category, html: d.html,
+        footnotes: d.footnotes || [], comments: d.comments || [],
+        versions: capVersions(d.versions || []),
+        pageSize: d.pageSize, margins: d.margins,
+        header: d.header, footer: d.footer,
+        goal: (d.goal && typeof d.goal === 'object') ? {
+          type: d.goal.type, target: d.goal.target, lock: !!d.goal.lock,
+          startTs: d.goal.startTs || 0, startWords: d.goal.startWords || 0
+        } : null,
+        mtime: d.mtime, del: !!d.del
+      };
+      // WR-6: the group clocks travel only when present, and LAST: a doc
+      // without them serializes byte-for-byte as before, and on an equal
+      // mtime the plain-LWW tie-break (larger JSON) prefers the copy
+      // WITHOUT them ("}" > ","), so a device on the previous version
+      // (which drops unknown fields) and this one agree instead of
+      // re-uploading each other's copy.
+      if (d.fm) o.fm = cleanFm(d.fm);
+      return o;
+    }),
     // Compatibility field for pre-prefs builds ONLY. Open tabs are a
     // device-local view (oros-writer-prefs); a device-varying value here
     // made every reconcile see a "difference" and push forever.
@@ -1228,10 +1219,53 @@ function serialize() {
   };
 }
 
+// WR-1: imported .json backups are untrusted — margins and the goal are
+// written into dialog markup, so only finite numbers / known types pass.
+function cleanMargins(m) {
+  const dm = (m && typeof m === 'object') ? m : {};
+  const n = v => Number.isFinite(+v) ? +v : 25;   // same rule as openPageSettings
+  return { top: n(dm.top), bottom: n(dm.bottom), left: n(dm.left), right: n(dm.right) };
+}
+const GOAL_TYPES = ['words', 'chars', 'paras', 'time', 'sessionWords'];
+function cleanGoal(g) {
+  if (!g || typeof g !== 'object') return null;
+  const target = Number(g.target);
+  if (!Number.isFinite(target) || target <= 0) return null;
+  const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  return { type: GOAL_TYPES.indexOf(g.type) !== -1 ? g.type : 'words', target: target,
+           lock: !!g.lock, startTs: num(g.startTs), startWords: num(g.startWords) };
+}
+// WR-6: per-group clocks of a doc — c content (html, footnotes,
+// comments, versions), m meta (title, author, tags, category), p page
+// (size, margins, header, footer), g goal. Optional: docs written by
+// the previous version have none and merge whole-doc, as before.
+const FM_GROUPS = ['c', 'm', 'p', 'g'];
+function cleanFm(fm) {
+  if (!fm || typeof fm !== 'object') return null;
+  const out = {};
+  FM_GROUPS.forEach(k => { const v = Number(fm[k]); out[k] = Number.isFinite(v) && v > 0 ? v : 0; });
+  return out;
+}
+
+// WR-3: copy a freshly hydrated doc into the object already held (same
+// identity), dropping keys the new copy does not carry.
+function keepIdentity(prevDoc, nd) {
+  if (!prevDoc) return nd;
+  Object.keys(prevDoc).forEach(k => { if (!(k in nd)) delete prevDoc[k]; });
+  return Object.assign(prevDoc, nd);
+}
+
 function hydrate(raw) {
   if (!raw || typeof raw !== 'object') return;
   if (!Array.isArray(raw.docs)) raw.docs = [];
-  state.docs = raw.docs.filter(d => d && typeof d.id === 'string').map(d => ({
+  // WR-3: a pulled doc updates the object this device already holds IN
+  // PLACE. Dialogs and panels (meta, page, goal, versions, footnotes,
+  // comments) keep a reference to the doc they opened with; a fresh
+  // object per pull turned every later edit in them into a write to a
+  // detached copy — "saved", then silently gone.
+  const prev = {};
+  state.docs.forEach(d => { if (d && typeof d.id === 'string') prev[d.id] = d; });
+  state.docs = raw.docs.filter(d => d && typeof d.id === 'string').map(d => keepIdentity(prev[d.id], {
     id: d.id,
     title: typeof d.title === 'string' ? d.title : '',
     author: typeof d.author === 'string' ? d.author : '',
@@ -1242,16 +1276,13 @@ function hydrate(raw) {
     comments: Array.isArray(d.comments) ? d.comments : [],
     versions: Array.isArray(d.versions) ? capVersions(d.versions) : [],
     pageSize: typeof d.pageSize === 'string' ? d.pageSize : 'a4',
-    margins: (d.margins && typeof d.margins === 'object') ? d.margins
-             : { top: 25, bottom: 25, left: 25, right: 25 },
+    margins: cleanMargins(d.margins),
     header: typeof d.header === 'string' ? d.header : '',
     footer: typeof d.footer === 'string' ? d.footer : '',
-    goal: (d.goal && typeof d.goal === 'object' && d.goal.target)
-          ? { type: d.goal.type, target: d.goal.target, lock: !!d.goal.lock,
-              startTs: d.goal.startTs || 0, startWords: d.goal.startWords || 0 }
-          : null,
+    goal: cleanGoal(d.goal),
     mtime: Number(d.mtime) || 0,
-    del: !!d.del
+    del: !!d.del,
+    fm: cleanFm(d.fm)
   }));
   state.seeded = !!raw.seeded;
   state.settings = (raw.settings && typeof raw.settings === 'object')
@@ -1312,6 +1343,47 @@ function wNewer(a, b, key) {
   return String(JSON.stringify(a)) >= String(JSON.stringify(b)) ? a : b;
 }
 
+// WR-6: the fields of each clock group. A small change in one group (a
+// rename, page margins, a goal) no longer replaces the text written on
+// another device in the meantime — before, one mtime per doc made the
+// whole doc of the later edit win.
+const FM_FIELDS = {
+  c: ['html', 'footnotes', 'comments', 'versions'],
+  m: ['title', 'author', 'tags', 'category'],
+  p: ['pageSize', 'margins', 'header', 'footer'],
+  g: ['goal']
+};
+function mergeDoc(L, R) {
+  // Whole-doc LWW (as before) unless BOTH copies carry group clocks and
+  // both are alive: a copy from a device on the previous version has
+  // none, and a tombstone is decided by its single stamp (R17).
+  if (!L.fm || !R.fm || L.del || R.del) return wNewer(L, R);
+  const out = { id: L.id };
+  const fm = {};
+  FM_GROUPS.forEach(g => {
+    const pick = (a, b) => {
+      const sa = Number(a.fm[g]) || 0, sb = Number(b.fm[g]) || 0;
+      if (sa !== sb) return sa > sb ? a : b;
+      const ja = JSON.stringify(FM_FIELDS[g].map(k => a[k]));
+      const jb = JSON.stringify(FM_FIELDS[g].map(k => b[k]));
+      return ja >= jb ? a : b;
+    };
+    const w = pick(L, R);
+    FM_FIELDS[g].forEach(k => { out[k] = w[k]; });
+    fm[g] = Math.max(Number(L.fm[g]) || 0, Number(R.fm[g]) || 0);
+  });
+  // canonical key order = serialize()'s
+  return {
+    id: out.id, title: out.title, author: out.author, tags: out.tags,
+    category: out.category, html: out.html,
+    footnotes: out.footnotes, comments: out.comments, versions: out.versions,
+    pageSize: out.pageSize, margins: out.margins,
+    header: out.header, footer: out.footer, goal: out.goal,
+    mtime: Math.max(Number(L.mtime) || 0, Number(R.mtime) || 0), del: false,
+    fm: fm
+  };
+}
+
 // Entity LWW per doc + tombstones (R5/R17) — no Date.now() inside merge
 function mergeSlices(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
@@ -1326,7 +1398,7 @@ function mergeSlices(local, remote) {
     const R = (remote.docs || []).find(d => d.id === id);
     if (!R) { byId[id] = L; return; }               // local-only
     if (!L) { byId[id] = R; return; }               // remote-only
-    byId[id] = wNewer(L, R);                        // LWW per entity (R5)
+    byId[id] = mergeDoc(L, R);                      // LWW per entity / per group (R5)
   });
 
   const docIds = Object.keys(byId).sort();
@@ -1388,18 +1460,59 @@ function sliceSet(data, info) {
     const cur = activeDoc();
     if (cur) {
       const html = editorHTMLForSave();
-      if (html !== cur.html) { cur.html = html; cur.mtime = Date.now(); }
+      if (html !== cur.html) { cur.html = html; stampDoc(cur, 'c'); }
     }
     data = mergeSlices(serialize(), data);
   }
+  const caret = editorCaret();   // WR-4: where the user's caret rests, if anywhere
   hydrate(data);             // sanitized hydrate + device-local tab reconcile
   localPersist();            // storage key mirrors live state — NO markDirty (R6)
   renderTabs();
   const doc = activeDoc();
-  if (!doc || doc.html !== editorHTMLForSave()) renderEditor();   // keep caret if unchanged
+  if (!doc || doc.html !== editorHTMLForSave()) {
+    renderEditor();
+    // WR-4: a re-render used to drop the caret at the top of the doc, so
+    // the next keystroke on a phone landed in the first line.
+    if (caret !== null && doc) restoreCaret(caret);
+  }
   else { footnotesAfterRender(); commentsAfterRender(); }
   if (pendingLocal) scheduleSave();   // the user's own edits still need their push
   // No toast: sync feedback = taskbar dot (Part VI)
+}
+
+// WR-4: caret as a character offset into the editor text (null when the
+// editor does not hold the focus), and back.
+function editorCaret() {
+  try {
+    if (document.activeElement !== EL.editor) return null;
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    if (!EL.editor.contains(r.startContainer)) return null;
+    const pre = document.createRange();
+    pre.selectNodeContents(EL.editor);
+    pre.setEnd(r.startContainer, r.startOffset);
+    return pre.toString().length;
+  } catch (e) { return null; }
+}
+function restoreCaret(offset) {
+  try {
+    const walker = document.createTreeWalker(EL.editor, NodeFilter.SHOW_TEXT);
+    let left = offset, node = null, last = null;
+    while ((node = walker.nextNode())) {
+      last = node;
+      if (left <= node.data.length) break;
+      left -= node.data.length;
+    }
+    const r = document.createRange();
+    if (node) r.setStart(node, left);
+    else if (last) r.setStart(last, last.data.length);
+    else r.setStart(EL.editor, EL.editor.childNodes.length);
+    r.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+  } catch (e) { /* caret is a convenience */ }
 }
 
 function registerSlice() {
@@ -1489,7 +1602,7 @@ function flushSave() {
     const html = editorHTMLForSave();   // strips transient find-hit marks
     if (html !== doc.html) {
       doc.html = html;
-      doc.mtime = Date.now();
+      stampDoc(doc, 'c');
       autoVersionTick(doc);
     }
   }
@@ -1502,9 +1615,22 @@ function flushSave() {
 
 // Doc-level field edit (meta, page setup, footnotes, comments, goal,
 // versions): stamp THIS doc, then the normal save pipeline.
-function markDoc(doc) {
-  if (doc) doc.mtime = Date.now();
+function markDoc(doc, group) {
+  if (doc) stampDoc(doc, group);
   scheduleSave();
+}
+
+// WR-6: stamp the doc AND the clock of the group that changed (all groups
+// when none is named). A doc written by the previous version gets its
+// clocks here, on its first edit, all starting at its current mtime.
+function stampDoc(doc, group) {
+  const now = Date.now();
+  if (!doc.fm) {
+    const m0 = Number(doc.mtime) || 0;
+    doc.fm = { c: m0, m: m0, p: m0, g: m0 };
+  }
+  (group ? [group] : FM_GROUPS).forEach(g => { doc.fm[g] = now; });
+  doc.mtime = now;
 }
 
 /* ===== SECTION 9: RENDER EDITOR FROM ACTIVE DOC ===== */
@@ -2835,7 +2961,7 @@ function cleanupFootnotes() {
 
   if (changed) {
     if (fnPanel && !fnPanel.hidden) renderFootnotesPanel();
-    markDoc(doc);
+    markDoc(doc, 'c');
   }
   return changed;
 }
@@ -2859,7 +2985,7 @@ function addFootnote() {
   drainObserver();
   fnSuspendObserver = false;
 
-  markDoc(doc);
+  markDoc(doc, 'c');
   if (!fnPanel || fnPanel.hidden) toggleFootnotesPanel();
   renderFootnotesPanel();
   showToast(t('fn.added'));
@@ -2992,7 +3118,7 @@ function renderFootnotesPanel() {
     ta.textContent = entry.text || '';
     ta.addEventListener('input', () => {
       const e = fnEntry(id);
-      if (e) { e.text = ta.textContent; markDoc(fnDoc()); }
+      if (e) { e.text = ta.textContent; markDoc(fnDoc(), 'c'); }
     });
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') ta.blur();
@@ -3011,7 +3137,7 @@ function renderFootnotesPanel() {
       const d = fnDoc();
       if (d) d.footnotes = d.footnotes.filter(f => f.id !== id);
       renumberFootnotes();
-      markDoc(fnDoc());
+      markDoc(fnDoc(), 'c');
       renderFootnotesPanel();
     });
 
@@ -3108,7 +3234,7 @@ function cleanupComments() {
 
   if (changed) {
     if (cmtPanel && !cmtPanel.hidden) renderCommentsPanel();
-    markDoc(doc);
+    markDoc(doc, 'c');
   }
   return changed;
 }
@@ -3172,7 +3298,7 @@ function addComment() {
   sel.removeAllRanges();
   sel.addRange(after);
 
-  markDoc(doc);
+  markDoc(doc, 'c');
   if (!cmtPanel || cmtPanel.hidden) toggleCommentsPanel();
   renderCommentsPanel();
 
@@ -3309,7 +3435,7 @@ function renderCommentsPanel() {
     ta.textContent = entry.text || '';
     ta.addEventListener('input', () => {
       const e = cmtEntry(id);
-      if (e) { e.text = ta.textContent; markDoc(cmtDoc()); }
+      if (e) { e.text = ta.textContent; markDoc(cmtDoc(), 'c'); }
     });
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') ta.blur();
@@ -3333,7 +3459,7 @@ function renderCommentsPanel() {
       cmtSuspendObserver = false;
       const d = cmtDoc();
       if (d) d.comments = d.comments.filter(c => c.id !== id);
-      markDoc(cmtDoc());
+      markDoc(cmtDoc(), 'c');
       renderCommentsPanel();
     });
     meta.append(ts, del);
@@ -3421,17 +3547,17 @@ function openMetadataDialog() {
     doc.title = e.target.value.trim().slice(0, 120);
     renderTabs();
     document.title = t('app.name') + ' — ' + (doc.title || t('tab.untitled'));
-    markDoc(doc);
+    markDoc(doc, 'm');
   });
 
   document.getElementById('meta-author').addEventListener('input', (e) => {
     doc.author = e.target.value;
-    markDoc(doc);
+    markDoc(doc, 'm');
   });
 
   document.getElementById('meta-category').addEventListener('input', (e) => {
     doc.category = e.target.value;
-    markDoc(doc);
+    markDoc(doc, 'm');
   });
 
   // keydown + explicit button: Android keyboards rarely fire 'keypress'
@@ -3442,7 +3568,7 @@ function openMetadataDialog() {
       doc.tags = doc.tags || [];
       doc.tags.push(val);
       renderMetaTags(doc.tags);
-      markDoc(doc);
+      markDoc(doc, 'm');
     }
     tagInput.value = '';
   };
@@ -3468,7 +3594,7 @@ function renderMetaTags(tags) {
       if (d && d.tags) {
         d.tags = d.tags.filter(t => t !== tag);
         renderMetaTags(d.tags);
-        markDoc(d);
+        markDoc(d, 'm');
       }
     });
     chip.appendChild(del);
@@ -3515,10 +3641,10 @@ function openPageSettings() {
 
       <label>${t('page.margins')}</label>
       <div class="margin-grid full">
-        <input type="number" class="w-field" id="m-top" min="0" max="100" value="${doc.margins.top}">
-        <input type="number" class="w-field" id="m-right" min="0" max="100" value="${doc.margins.right}">
-        <input type="number" class="w-field" id="m-bottom" min="0" max="100" value="${doc.margins.bottom}">
-        <input type="number" class="w-field" id="m-left" min="0" max="100" value="${doc.margins.left}">
+        <input type="number" class="w-field" id="m-top" aria-label="${t('page.mTop')}" min="0" max="100" value="${doc.margins.top}">
+        <input type="number" class="w-field" id="m-right" aria-label="${t('page.mRight')}" min="0" max="100" value="${doc.margins.right}">
+        <input type="number" class="w-field" id="m-bottom" aria-label="${t('page.mBottom')}" min="0" max="100" value="${doc.margins.bottom}">
+        <input type="number" class="w-field" id="m-left" aria-label="${t('page.mLeft')}" min="0" max="100" value="${doc.margins.left}">
       </div>
       <div class="margins-labels full">
         <span>↑</span><span>→</span><span>↓</span><span>←</span>
@@ -3545,7 +3671,7 @@ function openPageSettings() {
     doc.pageSize = sizeSel.value;
     EL.editor.setAttribute('data-page-size', doc.pageSize);
     updatePreview();
-    markDoc(doc);
+    markDoc(doc, 'p');
   });
 
   ['top','right','bottom','left'].forEach(side => {
@@ -3553,18 +3679,18 @@ function openPageSettings() {
     inp.addEventListener('input', () => {
       doc.margins[side] = Math.max(0, Math.min(100, parseInt(inp.value) || 0));
       updatePreview();
-      markDoc(doc);
+      markDoc(doc, 'p');
     });
   });
 
   document.getElementById('page-header').addEventListener('input', (e) => {
     doc.header = e.target.value;
-    markDoc(doc);
+    markDoc(doc, 'p');
   });
 
   document.getElementById('page-footer').addEventListener('input', (e) => {
     doc.footer = e.target.value;
-    markDoc(doc);
+    markDoc(doc, 'p');
   });
 
   function updatePreview() {
@@ -3611,7 +3737,7 @@ function resetMargins() {
       if (mb) mb.style.setProperty('--pv-m', '25px');
     }
   }
-  markDoc(doc);
+  markDoc(doc, 'p');
 }
 
 /* ----- TABLE OF CONTENTS (inline) ----- */
@@ -4011,7 +4137,7 @@ function renderVersions(dlg, doc) {
         wConfirm(t('ver.confirmDel'), { danger: true, ok: t('wx.delete') }).then(ok => {
           if (!ok) return;
           doc.versions = doc.versions.filter(x => x !== v);
-          markDoc(doc);
+          markDoc(doc, 'c');
           if (dlg.open) renderVersions(dlg, doc);   // immediate UI removal
         });
       });
@@ -4026,7 +4152,7 @@ function renderVersions(dlg, doc) {
 }
 
 function countWordsInHtml(html) {
-  const tmp = document.createElement('div');
+  const tmp = ioInertDiv();   // inert: a version's markup never loads or fires here
   tmp.innerHTML = html || '';
   // strip annotation chrome before counting
   tmp.querySelectorAll('sup.fn-ref').forEach(x => x.remove());
@@ -4059,7 +4185,7 @@ function takeManualSnapshot(doc) {
   doc.versions.push({ ts: Date.now(), html: doc.html || '', manual: true,
     footnotes: JSON.parse(JSON.stringify(doc.footnotes || [])),
     comments: JSON.parse(JSON.stringify(doc.comments || [])) });
-  markDoc(doc);
+  markDoc(doc, 'c');
   showToast(t('ver.snapshotted'));
 }
 
@@ -4077,7 +4203,7 @@ function restoreVersion(doc, v) {
   // keep the current entries (comment marks unwrap, text survives).
   if (Array.isArray(v.footnotes)) doc.footnotes = JSON.parse(JSON.stringify(v.footnotes));
   if (Array.isArray(v.comments))  doc.comments  = JSON.parse(JSON.stringify(v.comments));
-  doc.mtime = Date.now();
+  stampDoc(doc, 'c');
 
   renderEditor();            // editor + footnote/comment panels + goal bar
   renderTabs();
@@ -4151,7 +4277,7 @@ function openGoalDialog() {
         <option value="sessionWords" ${g.type==='sessionWords'?'selected':''}>${t('goal.type.sessionWords')}</option>
       </select>
       <label>${t('goal.target')}</label>
-      <input type="number" class="w-field" id="g-target" min="1" value="${g.target}">
+      <input type="number" class="w-field" id="g-target" min="1" value="${Number(g.target) || 500}">
       <label class="full" style="text-align:left;display:flex;align-items:center;gap:8px;">
         <input type="checkbox" id="g-lock" ${g.lock?'checked':''}> ${t('goal.lock')}
       </label>
@@ -4160,7 +4286,7 @@ function openGoalDialog() {
     { class: 'fb-btn', label: t('goal.clear'), onClick: () => {
         doc.goal = null;
         delete goalRuntime.firedFor[doc.id];
-        markDoc(doc);
+        markDoc(doc, 'g');
         dlg.close();
         document.getElementById('goal-bar').hidden = true;
         unlockEditor();
@@ -4175,7 +4301,7 @@ function openGoalDialog() {
           startTs: Date.now(), startWords: st.words
         };
         delete goalRuntime.firedFor[doc.id];
-        markDoc(doc);
+        markDoc(doc, 'g');
         dlg.close();
         const bar = document.getElementById('goal-bar');
         bar.hidden = false;
@@ -4279,13 +4405,13 @@ function wireGoalBar() {
       wConfirm(t('goal.unlockConfirm')).then(ok => {
         if (!ok) return;
         doc.goal.lock = false;
-        markDoc(doc);
+        markDoc(doc, 'g');
         updateGoalBar();
       });
       return;
     }
     doc.goal.lock = !doc.goal.lock;      // arming before the goal is allowed
-    markDoc(doc);
+    markDoc(doc, 'g');
     updateGoalBar();
     if (doc.goal.lock && !p.done) showToast(t('goal.lockArmed'));
   });
@@ -4295,7 +4421,7 @@ function wireGoalBar() {
     if (!doc) return;
     doc.goal = null;
     delete goalRuntime.firedFor[doc.id];
-    markDoc(doc);
+    markDoc(doc, 'g');
     document.getElementById('goal-bar').hidden = true;
     unlockEditor();
   });
@@ -5996,14 +6122,14 @@ function ioApplyImport(parsed, mode) {
     doc.html = (doc.html || '') + prep.html;
     doc.footnotes = (doc.footnotes || []).concat(prep.footnotes);
     doc.comments = (doc.comments || []).concat(prep.comments);
-    doc.mtime = Date.now();
+    stampDoc(doc, 'c');
   } else if (mode === 'replace') {
     takeManualSnapshot(doc);           // current state → Version History first
     doc.html = prep.html;
     doc.footnotes = prep.footnotes;
     doc.comments = prep.comments;
-    if (title) doc.title = title;
-    doc.mtime = Date.now();
+    stampDoc(doc, 'c');
+    if (title && title !== doc.title) { doc.title = title; stampDoc(doc, 'm'); }
   }
 
   fnSuspendObserver = true;
@@ -6024,52 +6150,122 @@ function ioApplyImport(parsed, mode) {
 }
 
 /* ----- Writer DB backup → MERGE (Bible: import merges by default).
-   Backup docs/templates/settings are restamped NOW so they win LWW here
-   AND on every synced device (a plain hydrate kept old mtimes → the next
-   sync silently "undid" the restore). Docs that exist only here stay.
+   WR-2: a restore never replaces newer work. Before, every backup doc
+   was restamped NOW, so an older backup overwrote the newer text of
+   the same doc on every device (and its versions with it). Now:
+   · a doc missing here, or deleted here, comes back (stamped now, so it
+     beats the tombstone everywhere);
+   · a doc that exists here keeps the newer of the two copies (original
+     stamps); the other copy goes into the doc's Version History as a
+     manual version — nothing is lost either way;
+   · templates: missing / deleted ones come back, existing ones keep the
+     newer copy; autocorrect: rules are unioned (this device's win on the
+     same "find"); settings: plain LWW on their own stamp.
    Tombstones in the backup are ignored (a restore never deletes). ----- */
 function ioMergeDbImport(data) {
   const now = Date.now();
   const cleanVers = vs => (Array.isArray(vs) ? vs : [])
     .filter(v => v && typeof v.html === 'string')
-    .map(v => Object.assign({}, v, { html: ioSanitizeHtml(v.html) }));
-  const inc = {
-    ver: 1,
-    docs: (Array.isArray(data.docs) ? data.docs : [])
-      .filter(d => d && typeof d.id === 'string' && !d.del)
-      .map(d => Object.assign({}, d, {
-        html: ioSanitizeHtml(typeof d.html === 'string' ? d.html : ''),
-        versions: cleanVers(d.versions),
-        mtime: now
-      })),
-    tabOrder: [],
-    settings: (data.settings && typeof data.settings === 'object')
-      ? Object.assign({}, data.settings, { _mtime: now }) : undefined,
-    autocorrect: (data.autocorrect && Array.isArray(data.autocorrect.rules))
-      ? Object.assign({}, data.autocorrect, { mtime: now }) : null,
-    templates: (Array.isArray(data.templates) ? data.templates : [])
-      .filter(tp => tp && typeof tp.id === 'string' && typeof tp.name === 'string')
-      .map(tp => Object.assign({}, tp, {
-        html: ioSanitizeHtml(typeof tp.html === 'string' ? tp.html : ''), mtime: now })),
-    tplTombs: [],
-    seeded: !!data.seeded
-  };
-  if (!inc.settings) delete inc.settings;
-
+    .map(v => Object.assign({}, v, { html: ioSanitizeHtml(v.html),
+      ts: Number(v.ts) || 0, manual: !!v.manual }));
+  const arr = v => (Array.isArray(v) ? v : []);
+  const str = v => (typeof v === 'string' ? v : '');
   flushSave();
-  const merged = mergeSlices(serialize(), inc);
-  if (!merged.settings) merged.settings = state.settings;
-  hydrate(merged);
-  inc.docs.forEach(d => {
-    state.seen[d.id] = 1;
-    if (state.tabOrder.indexOf(d.id) === -1) state.tabOrder.push(d.id);
+
+  const restored = [];
+  let kept = 0;
+  arr(data.docs).filter(d => d && typeof d.id === 'string' && !d.del).forEach(d => {
+    const b = {
+      title: str(d.title).slice(0, 120), author: str(d.author),
+      tags: arr(d.tags).filter(x => typeof x === 'string'), category: str(d.category),
+      html: ioSanitizeHtml(str(d.html)),
+      footnotes: arr(d.footnotes).filter(f => f && typeof f.id === 'string')
+        .map(f => ({ id: f.id, text: str(f.text) })),
+      comments: arr(d.comments).filter(c => c && typeof c.id === 'string')
+        .map(c => ({ id: c.id, quote: str(c.quote), text: str(c.text), ts: Number(c.ts) || 0 })),
+      versions: cleanVers(d.versions),
+      pageSize: str(d.pageSize) || 'a4', margins: cleanMargins(d.margins),
+      header: str(d.header), footer: str(d.footer), goal: cleanGoal(d.goal),
+      mtime: Number(d.mtime) || 0
+    };
+    const cur = getDoc(d.id);
+    if (!cur || cur.del) {
+      const nd = cur || { id: d.id };
+      Object.assign(nd, b, { del: false, mtime: now,
+        fm: { c: now, m: now, p: now, g: now } });
+      if (!cur) state.docs.push(nd);
+      restored.push(nd.id);
+      return;
+    }
+    const same = cur.html === b.html && cur.title === b.title &&
+      JSON.stringify(cur.footnotes || []) === JSON.stringify(b.footnotes) &&
+      JSON.stringify(cur.comments || []) === JSON.stringify(b.comments);
+    if (same) return;
+    const snap = (src, ts) => ({ ts: ts, html: src.html || '', manual: true,
+      footnotes: JSON.parse(JSON.stringify(src.footnotes || [])),
+      comments: JSON.parse(JSON.stringify(src.comments || [])) });
+    cur.versions = Array.isArray(cur.versions) ? cur.versions : [];
+    if (b.mtime > (Number(cur.mtime) || 0)) {
+      // the backup copy is newer: it becomes the text, ours goes to history
+      cur.versions.push(snap(cur, now));
+      ['html', 'footnotes', 'comments'].forEach(k => { cur[k] = b[k]; });
+      if (b.title) cur.title = b.title;
+      stampDoc(cur, 'm');
+    } else {
+      cur.versions.push(snap(b, b.mtime || now));
+    }
+    cur.versions.sort((x, y) => x.ts - y.ts);
+    stampDoc(cur, 'c');
+    kept++;
   });
-  if (inc.docs.length) state.activeTab = inc.docs[0].id;
+
+  const tombTs = {};
+  canonTombs(state.tplTombs).forEach(tb => { tombTs[tb.id] = tb.ts; });
+  arr(data.templates).filter(tp => tp && typeof tp.id === 'string' && typeof tp.name === 'string')
+    .forEach(tp => {
+      const inc = { id: tp.id, name: tp.name, desc: str(tp.desc),
+        html: ioSanitizeHtml(str(tp.html)), mtime: Number(tp.mtime) || 0 };
+      const cur = state.templates.find(x => x.id === tp.id);
+      const dead = tombTs[tp.id] !== undefined && tombTs[tp.id] >= ((cur || inc).mtime || 0);
+      if (!cur || dead) {
+        inc.mtime = now;
+        if (cur) Object.assign(cur, inc); else state.templates.push(inc);
+      } else if (inc.mtime > (cur.mtime || 0)) {
+        Object.assign(cur, inc);
+      }
+    });
+
+  if (data.autocorrect && Array.isArray(data.autocorrect.rules)) {
+    const mine = state.autocorrect ? state.autocorrect.rules.slice() : [];
+    const have = {};
+    mine.forEach(r => { if (r && typeof r.find === 'string') have[r.find] = 1; });
+    let added = 0;
+    data.autocorrect.rules.forEach(r => {
+      if (!r || typeof r.find !== 'string' || typeof r.repl !== 'string' || have[r.find]) return;
+      have[r.find] = 1; mine.push({ find: r.find, repl: r.repl, def: !!r.def }); added++;
+    });
+    if (added || !state.autocorrect) state.autocorrect = { rules: mine, mtime: now };
+  }
+  if (data.settings && typeof data.settings === 'object' &&
+      (Number(data.settings._mtime) || 0) > (Number(state.settings._mtime) || 0)) {
+    state.settings = Object.assign({}, state.settings, {
+      smartTypography: data.settings.smartTypography !== false,
+      typewriterSound: !!data.settings.typewriterSound,
+      _mtime: Number(data.settings._mtime) });
+  }
+  if (data.seeded) state.seeded = true;
+
+  restored.forEach(id => {
+    state.seen[id] = 1;
+    if (state.tabOrder.indexOf(id) === -1) state.tabOrder.push(id);
+  });
+  if (restored.length) state.activeTab = restored[0];
   reconcileTabs();
   renderTabs();
   renderEditor();
   dirty = true;
   flushSave();
+  return { restored: restored.length, kept: kept };
 }
 
 /* ----- IMPORT DIALOG ----- */
@@ -6114,8 +6310,8 @@ function openImportDialog(prefile) {
         if (res.kind === 'db') {
           wConfirm(t('io.dbConfirm')).then(ok => {
             if (ok) {
-              ioMergeDbImport(res.data);
-              showToast(t('io.imported'));
+              const r = ioMergeDbImport(res.data);
+              showToast(r && r.kept ? t('io.dbKept').replace('{n}', String(r.kept)) : t('io.imported'));
               dlg.close();
             } else {
               busy.style.display = 'none';
