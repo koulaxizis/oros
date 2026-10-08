@@ -1,7 +1,8 @@
 // Pure logic of Pet World (petworld/petworld.js): the "petworld"
 // slice merge, the per-device ledger, the pet binding, a fresh start,
 // the "petgarden" slice (beds, growth, watering, harvests) and the
-// "petnest" slice (walks, loot, nest stages, decorations).
+// "petnest" slice (walks, loot, nest stages, decorations) and the
+// "petgames" slice (game records).
 // Run: node --test tests/
 //
 // The app is a browser IIFE with no exports, so the pure functions
@@ -39,12 +40,15 @@ const PW = load("petworld/petworld.js",
    "freshGarden", "stock", "gardenHasContent", "clamp",
    "normWalks", "normNestRow", "joinNestRow", "mergeNest", "defaultNest", "lootOf", "walkList",
    "activeWalk", "lastWalk", "withNestRow", "foldWalks", "startWalk", "nestNet", "nestStage",
-   "buildable", "buildNest", "freshNest", "nestHasContent", "mulberry"],
+   "buildable", "buildNest", "freshNest", "nestHasContent", "mulberry",
+   "normGameRow", "joinGameRows", "mergeGames", "defaultGames", "recordGame", "gameStats",
+   "freshGames", "gamesHasContent"],
   [["  var DATA_VER", "  var WAKE_AT"], ["  var HOUR", "  function normTot("], ["  var MIN = ", "  function normWalks("]],
   "mergeWorld, defaultData, worldHasContent, ledger, freshStart, bindPet, mergeGarden, " +
   "defaultGarden, plotState, plantSeed, waterPlot, harvestPlot, digUp, freshGarden, stock, " +
   "gardenHasContent, CROPS, START_PACK, HOUR, mergeNest, defaultNest, lootOf, activeWalk, lastWalk, " +
-  "foldWalks, startWalk, nestStage, buildNest, freshNest, nestHasContent, MIN, NEST, DECOR");
+  "foldWalks, startWalk, nestStage, buildNest, freshNest, nestHasContent, MIN, NEST, DECOR, " +
+  "mergeGames, defaultGames, recordGame, gameStats, freshGames, gamesHasContent");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -320,4 +324,49 @@ test("petnest: the nest is built in order and paid once, even from two devices",
   // a walk after the fresh start survives
   const later = PW.startWalk(fresh, "dB", 15, t0 + 200);
   assert.equal(PW.lastWalk(PW.mergeNest(later, full)).dev, "dB");
+});
+
+function randomGames() {
+  const rows = {};
+  for (let i = 0; i < rnd(4); i++) {
+    const g = {};
+    ["catch", "hide", "follow", "Bad!", "future_game"].forEach((k) => {
+      if (rnd(2)) g[k] = rnd(8) ? { best: rnd(20), n: rnd(5) } : { best: -1, n: 1 };
+    });
+    rows["d" + rnd(4)] = { b: rnd(3) * 100, s: g };
+  }
+  return { ver: 1, br: rnd(3) ? 0 : rnd(3) * 100, rows };
+}
+
+test("petgames: merge is a join and pure", () => {
+  const M = PW.mergeGames;
+  for (let i = 0; i < 20000; i++) {
+    const a = randomGames(), b = randomGames(), c = randomGames(), sa = J(a);
+    const ab = M(a, b);
+    assert.equal(J(ab), J(M(b, a)));
+    assert.equal(J(M(ab, ab)), J(ab));
+    assert.equal(J(M(ab, null)), J(ab));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+});
+
+test("petgames: best of every device, plays summed, a fresh start clears", () => {
+  let g = PW.recordGame(PW.defaultGames(), "dA", "catch", 12);
+  g = PW.recordGame(g, "dA", "catch", 7);
+  const other = PW.recordGame(PW.defaultGames(), "dB", "catch", 15);
+  const m = PW.mergeGames(g, other);
+  assert.equal(J(PW.gameStats(m, "catch")), J({ best: 15, n: 3 }));
+  assert.equal(J(PW.gameStats(m, "hide")), J({ best: 0, n: 0 }));
+  assert.equal(J(PW.mergeGames(m, g)), J(m));                       // an old copy changes nothing
+  assert.equal(PW.recordGame(m, "dA", "Bad!", 3), m);
+  assert.equal(PW.recordGame(m, "dA", "hide", -1), m);
+  assert.ok(PW.gamesHasContent(m));
+  const fresh = PW.freshGames(m, 1000);
+  assert.ok(!PW.gamesHasContent(PW.mergeGames(fresh, other)));
+  const later = PW.recordGame(fresh, "dB", "follow", 4);
+  assert.equal(PW.gameStats(PW.mergeGames(later, m), "follow").best, 4);
+  // unknown games from a newer version survive an older merge
+  assert.equal(J(PW.mergeGames({ rows: { dC: { b: 0, s: { future_game: { best: 2, n: 1 } } } } }, null).rows.dC.s),
+               J({ future_game: { best: 2, n: 1 } }));
 });

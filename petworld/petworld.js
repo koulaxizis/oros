@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Pet World — App logic (v1.2.0: foundations, garden, walks + nest)
+// orOS Pet World — App logic (v1.3.0: foundations, garden, walks + nest, games)
 // The Screen Pet's own world: a pixel forest where the SAME pet as
 // the desktop companion lives, with the real time of day.
 //   - The pet itself (name, palette, care clocks, sleep) belongs to
@@ -25,6 +25,8 @@
 //   - synced slice "petnest" (oros-petnest-data, phase 3): walks and
 //     the nest, see section 2c. The companion reads it to show that
 //     the pet is out on a walk.
+//   - synced slice "petgames" (oros-petgames-data, phase 4): game
+//     records, see section 2d; the games themselves are section 5b.
 //   - device-local (R10): oros-petworld-device (this device's row id),
 //     oros-petworld-walk-seen (the last walk welcomed home here)
 // Sections:
@@ -47,6 +49,7 @@
   var STORAGE_KEY = "oros-petworld-data";
   var GARDEN_KEY  = "oros-petgarden-data";
   var NEST_KEY    = "oros-petnest-data";
+  var GAMES_KEY   = "oros-petgames-data";
   var SEEN_KEY    = "oros-petworld-walk-seen";  // device-local: the last walk welcomed home here
   var DEVICE_KEY  = "oros-petworld-device";
   var PET_KEY     = "oros-pet-data";        // read-only here: storage event only
@@ -160,7 +163,28 @@
       "nest.build": "Build", "nest.built": "Built",
       "nest.locked": "After: {stage}",
       "toast.built": "Built: {what}",
-      "toast.nestDone": "The nest is finished! {name} has a home"
+      "toast.nestDone": "The nest is finished! {name} has a home",
+      "act.play": "Play", "key.play": "Play (Y)",
+      "play.title": "Play with {name}",
+      "play.go": "Play", "play.best": "Best {best} · played {n}", "play.new": "Not played yet",
+      "play.asleep": "{name} is asleep. Wake {name} up to play.",
+      "play.tired": "{name} is too tired to play and needs a rest first.",
+      "play.away": "{name} is on a walk. Back at {time}.",
+      "game.catch": "Catch it", "game.hide": "Hide and seek", "game.follow": "Follow me",
+      "game.desc.catch": "Acorns and leaves fall: tap where {name} should run. 30 seconds.",
+      "game.desc.hide": "{name} hides behind a bush. Watch for the tail, then tap the bush. Three misses end it.",
+      "game.desc.follow": "{name} dances a few moves. Repeat them with the arrows.",
+      "game.start.catch": "Catch it: tap or use the arrow keys to move {name}.",
+      "game.start.hide": "Hide and seek: find {name}. Tap a bush, or press its number.",
+      "game.start.follow": "Follow me: watch the moves, then repeat them with the arrows.",
+      "game.score": "Score {n}", "game.time": "{s}s", "game.lives": "Tries {n}",
+      "game.watch": "Watch…", "game.yourTurn": "Your turn!",
+      "game.stop": "Stop",
+      "game.found": "Found {name}!", "game.empty": "Not here",
+      "game.lost": "{name} was hiding here", "game.wrong": "Oops, it was {move}",
+      "game.up": "Jump", "game.left": "Left", "game.right": "Right", "game.down": "Duck",
+      "result.title": "{game}", "result.score": "Score: {n}", "result.best": "New best!",
+      "result.again": "Play again", "result.close": "Done"
     },
     el: {
       "age.one": "{n} ημέρα μαζί σου",
@@ -253,7 +277,28 @@
       "nest.build": "Χτίσε", "nest.built": "Έτοιμο",
       "nest.locked": "Μετά από: {stage}",
       "toast.built": "Χτίστηκε: {what}",
-      "toast.nestDone": "Η φωλιά τελείωσε! {name}: έχει πια σπίτι"
+      "toast.nestDone": "Η φωλιά τελείωσε! {name}: έχει πια σπίτι",
+      "act.play": "Παιχνίδι", "key.play": "Παιχνίδι (Y)",
+      "play.title": "Παιχνίδι: {name}",
+      "play.go": "Παίξε", "play.best": "Ρεκόρ {best} · παιχνίδια {n}", "play.new": "Δεν έχει παιχτεί ακόμα",
+      "play.asleep": "{name}: κοιμάται. Ξύπνα το για να παίξετε.",
+      "play.tired": "{name}: δεν έχει δυνάμεις για παιχνίδι, χρειάζεται πρώτα ξεκούραση.",
+      "play.away": "{name}: σε βόλτα. Γυρνά στις {time}.",
+      "game.catch": "Πιάσε το", "game.hide": "Κρυφτό", "game.follow": "Ακολούθα με",
+      "game.desc.catch": "Πέφτουν βελανίδια και φύλλα: πάτα εκεί που πρέπει να τρέξει. 30 δευτερόλεπτα.",
+      "game.desc.hide": "Κρύβεται πίσω από έναν θάμνο. Πρόσεξε την ουρά και πάτα τον θάμνο. Τρία λάθη και τέλος.",
+      "game.desc.follow": "Χορεύει μερικές κινήσεις. Επανάλαβέ τες με τα βελάκια.",
+      "game.start.catch": "Πιάσε το: πάτα ή χρησιμοποίησε τα βελάκια για να κινηθεί.",
+      "game.start.hide": "Κρυφτό: βρες το. Πάτα έναν θάμνο ή τον αριθμό του.",
+      "game.start.follow": "Ακολούθα με: δες τις κινήσεις και επανάλαβέ τες με τα βελάκια.",
+      "game.score": "Πόντοι {n}", "game.time": "{s}δ", "game.lives": "Προσπάθειες {n}",
+      "game.watch": "Κοίτα…", "game.yourTurn": "Σειρά σου!",
+      "game.stop": "Τέλος",
+      "game.found": "Βρέθηκε: {name}!", "game.empty": "Όχι εδώ",
+      "game.lost": "{name}: κρυβόταν εδώ", "game.wrong": "Ωχ, ήταν {move}",
+      "game.up": "Πήδα", "game.left": "Αριστερά", "game.right": "Δεξιά", "game.down": "Σκύψε",
+      "result.title": "{game}", "result.score": "Πόντοι: {n}", "result.best": "Νέο ρεκόρ!",
+      "result.again": "Ξανά", "result.close": "Εντάξει"
     }
   };
 
@@ -782,9 +827,97 @@
     });
   }
 
+  // ---------- 2d. Game records (phase 4) ----------
+  // Its own synced slice "petgames" (oros-petgames-data):
+  //   { ver, br, rows{deviceId:{b, s{game:{best, n}}}} }
+  // best = best score, n = games played, per device row (the Simon /
+  // Slider pattern). Merge: br max; larger epoch b wins whole; equal
+  // epochs take per game max best and max n; rows with b < br drop.
+  // Well-formed unknown game ids are kept for newer versions.
+  var GAMES = ["catch", "hide", "follow"];
+  var GAME_COST = { catch: 6, hide: 4, follow: 4 };   // energy a finished game takes
+  var PLAY_ENERGY = 15;                              // too tired to play below this
+
+  function normGameRow(r) {
+    if (!r || typeof r !== "object" || !isTs(r.b)) return null;
+    var src = (r.s && typeof r.s === "object") ? r.s : {}, s = {}, n = 0;
+    Object.keys(src).filter(function (k) { return ITEM_RE.test(k); }).sort(cmpStr).forEach(function (k) {
+      var v = src[k];
+      if (n >= MAX_ITEMS || !v || typeof v !== "object" || !isCount(v.best) || !isCount(v.n)) return;
+      s[k] = { best: v.best, n: v.n };
+      n++;
+    });
+    return { b: r.b, s: s };
+  }
+
+  function joinGameRows(x, y) {
+    if (!x) return y;
+    if (!y) return x;
+    if (x.b !== y.b) return x.b > y.b ? x : y;
+    var s = {};
+    Object.keys(x.s).concat(Object.keys(y.s)).forEach(function (k) {
+      var a = x.s[k] || { best: 0, n: 0 }, b = y.s[k] || { best: 0, n: 0 };
+      s[k] = { best: Math.max(a.best, b.best), n: Math.max(a.n, b.n) };
+    });
+    return normGameRow({ b: x.b, s: s });
+  }
+
+  function mergeGames(A, B) {
+    var a = (A && typeof A === "object") ? A : {};
+    var b = (B && typeof B === "object") ? B : {};
+    var br = Math.max(isTs(a.br) ? a.br : 0, isTs(b.br) ? b.br : 0);
+    var rows = {};
+    [a.rows, b.rows].forEach(function (src) {
+      if (!src || typeof src !== "object") return;
+      Object.keys(src).forEach(function (dev) {
+        if (!ID_RE.test(dev)) return;
+        var r = normGameRow(src[dev]);
+        if (!r || r.b < br) return;
+        rows[dev] = joinGameRows(rows[dev] || null, r);
+      });
+    });
+    var sorted = {};
+    Object.keys(rows).sort(cmpStr).forEach(function (dev) { sorted[dev] = rows[dev]; });
+    return { ver: DATA_VER, br: br, rows: sorted };
+  }
+
+  function defaultGames() { return { ver: DATA_VER, br: 0, rows: {} }; }
+
+  function recordGame(gm, dev, kind, score) {
+    if (!ITEM_RE.test(kind) || !isCount(score)) return gm;
+    var row = gm.rows[dev] && gm.rows[dev].b >= gm.br ? gm.rows[dev] : { b: gm.br, s: {} };
+    var s = {};
+    Object.keys(row.s).forEach(function (k) { s[k] = row.s[k]; });
+    var cur = s[kind] || { best: 0, n: 0 };
+    s[kind] = { best: Math.max(cur.best, score), n: Math.min(MAX_N, cur.n + 1) };
+    var rows = {};
+    Object.keys(gm.rows).forEach(function (k) { rows[k] = gm.rows[k]; });
+    rows[dev] = { b: row.b, s: s };
+    return mergeGames({ ver: DATA_VER, br: gm.br, rows: rows }, null);
+  }
+
+  // { best, n } of one game over every device.
+  function gameStats(gm, kind) {
+    var best = 0, n = 0;
+    Object.keys(gm.rows).forEach(function (dev) {
+      var v = gm.rows[dev].s[kind];
+      if (v) { best = Math.max(best, v.best); n += v.n; }
+    });
+    return { best: best, n: n };
+  }
+
+  function freshGames(gm, br) {
+    return mergeGames({ ver: DATA_VER, br: Math.max(br, gm.br), rows: gm.rows }, null);
+  }
+
+  function gamesHasContent(gm) {
+    return Object.keys(gm.rows).some(function (dev) { return Object.keys(gm.rows[dev].s).length > 0; });
+  }
+
   var data = defaultData();
   var garden = defaultGarden();
   var nest = defaultNest();
+  var games = defaultGames();
 
   // The backpack count of an item, everything included.
   function have(item) { return stock(data, garden, item, nest, Date.now()); }
@@ -807,6 +940,7 @@
     data = loadKey(STORAGE_KEY, mergeWorld, defaultData);
     garden = loadKey(GARDEN_KEY, mergeGarden, defaultGarden);
     nest = loadKey(NEST_KEY, mergeNest, defaultNest);
+    games = loadKey(GAMES_KEY, mergeGames, defaultGames);
   }
 
   var saveFailShown = false;
@@ -822,6 +956,7 @@
   function save() { saveKey(STORAGE_KEY, data); }
   function saveGarden() { saveKey(GARDEN_KEY, garden); }
   function saveNest() { saveKey(NEST_KEY, nest); }
+  function saveGames() { saveKey(GAMES_KEY, games); }
 
   function deviceId() {
     var id = null;
@@ -1293,7 +1428,7 @@
   function stepParticles(dt) {
     particles.forEach(function (p) {
       p.life -= dt;
-      if (p.k === "heart") { p.y += p.vy * dt; }
+      if (p.k === "heart" || p.k === "pts") { p.y += p.vy * dt; }
       else if (p.k === "fly") { p.ph += dt * 1.5; p.x += Math.cos(p.ph) * U * dt * 3; p.y += Math.sin(p.ph * 1.3) * U * dt * 2; }
       else if (p.k === "leaf") {
         p.ph += dt * 2; p.x += Math.sin(p.ph) * U * dt * 4; p.y += U * dt * 3;
@@ -1313,6 +1448,11 @@
         HEART.forEach(function (row, j) {
           for (var i = 0; i < row.length; i++) if (row[i] === "1") ctx.fillRect(Math.round(p.x) + i * s, Math.round(p.y) + j * s, s, s);
         });
+      } else if (p.k === "pts") {
+        ctx.fillStyle = "rgba(255,241,118," + a + ")";
+        ctx.font = "700 " + Math.max(12, 3 * U) + "px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("+" + p.n, Math.round(p.x), Math.round(p.y));
       } else if (p.k === "fly") {
         var on = 0.5 + 0.5 * Math.sin(p.ph * 3);
         ctx.fillStyle = "rgba(255,241,118," + (a * on) + ")";
@@ -1325,11 +1465,11 @@
   }
 
   function drawPet() {
-    if (pet.mode === "gone") return;
+    if (pet.mode === "gone" || pet.hidden) return;
     var grid = spriteFor(poseNow());
     if (!grid || !snap) return;
     var colors = snap.colors || {};
-    var x0 = Math.round(pet.x), y0 = petY(), sleeping = snap.asleep && pet.mode !== "walk";
+    var x0 = Math.round(pet.x), y0 = petY() + (pet.yOff || 0), sleeping = snap.asleep && pet.mode !== "walk";
     var bob = 0;
     if (pet.mode === "walk") bob = (Math.floor(pet.frame / 6) % 2) * Math.round(U * 0.4);
     else if (pet.mode === "happy" && !reducedMotion()) bob = (Math.floor(pet.frame / 4) % 2) === 0 ? -U : 0;
@@ -1348,6 +1488,324 @@
     }
   }
 
+  // ---------- 5b. Games with the pet (phase 4) ----------
+  // One game at a time takes over the scene: the action bar gives way
+  // to the game bar, taps and keys go to the game, timers run on the
+  // frame clock (a hidden tab pauses the game with the loop).
+  //   catch  — acorns and leaves fall; the pet runs where you tap.
+  //   hide   — the pet hides behind a bush; a tail peeks out now and
+  //            then; three wrong bushes end the game.
+  //   follow — the pet dances a sequence of moves; repeat it.
+  var game = null;
+  var CATCH_TIME = 30;
+  var MOVES = ["up", "left", "right", "down"];
+  var ARROWS = { up: "↑", left: "←", right: "→", down: "↓" };
+
+  function gameReady() {
+    if (!snap) return "";
+    if (away) return t("play.away", { name: snap.name, time: clockHM(away.end) });
+    if (snap.asleep) return t("play.asleep", { name: snap.name });
+    if (snap.energy < PLAY_ENERGY) return t("play.tired", { name: snap.name });
+    return "";
+  }
+
+  function startGame(kind) {
+    if (game || gameReady() || GAMES.indexOf(kind) < 0) return;
+    var mid = Math.round((W / 2 - petWidth() / 2) / U) * U;
+    game = { kind: kind, score: 0, t: 0, over: 0 };
+    pet.target = null; pet.mode = "idle"; pet.yOff = 0; pet.hidden = false;
+    if (kind === "catch") {
+      game.items = []; game.spawn = 0.6; game.goal = pet.x;
+    } else if (kind === "hide") {
+      game.lives = 3; game.round = 0; game.focus = 0;
+      hideRound();
+    } else {
+      pet.x = mid; pet.dir = 1; game.home = mid;
+      game.seq = []; game.step = 0; game.phase = "pause"; game.wait = 0.8; game.anim = null;
+      followNext();
+    }
+    clearTimeout(bubbleTimer); $("bubble").classList.remove("show"); bubbleOn = false;
+    $("actions").hidden = true;
+    $("game-bar").hidden = false;
+    $("game-pad").hidden = kind !== "follow";
+    $("game-title").textContent = t("game." + kind);
+    renderGameBar();
+    announce(t("game.start." + kind, { name: snap.name }));
+  }
+
+  function renderGameBar() {
+    if (!game) return;
+    $("game-score").textContent = t("game.score", { n: game.score });
+    var extra = "";
+    if (game.kind === "catch") extra = t("game.time", { s: Math.max(0, Math.ceil(CATCH_TIME - game.t)) });
+    else if (game.kind === "hide") extra = t("game.lives", { n: game.lives });
+    else extra = game.phase === "input" ? t("game.yourTurn") : t("game.watch");
+    $("game-info").textContent = extra;
+    var pad = $("game-pad");
+    if (game.kind === "follow") [].forEach.call(pad.querySelectorAll("button"), function (b) { b.disabled = game.phase !== "input"; });
+  }
+
+  // End: quit = the Stop button. A game with a score counts (record,
+  // joy, energy); a quit at zero leaves no trace.
+  function endGame(quit) {
+    var g = game;
+    if (!g) return;
+    game = null;
+    pet.yOff = 0; pet.hidden = false; pet.mode = "idle"; pet.timer = 1500; pet.target = null;
+    $("game-bar").hidden = true;
+    $("actions").hidden = false;
+    if (quit && g.score === 0) return;
+    var before = gameStats(games, g.kind).best;
+    games = recordGame(games, deviceId(), g.kind, g.score);
+    saveGames();
+    var b = bridge();
+    if (b && typeof b.play === "function") { try { snap = b.play(GAME_COST[g.kind]); } catch (e) {} }
+    pet.mode = "happy"; pet.timer = 2200;
+    addHearts();
+    if (b) say(b.line("speech.happy"));
+    renderUI();
+    resultDialog(g.kind, g.score, g.score > before);
+  }
+
+  // ---- catch ----
+  function catchStep(dt) {
+    game.t += dt;
+    if (game.t >= CATCH_TIME) { endGame(false); return; }
+    var k = game.t / CATCH_TIME;
+    game.spawn -= dt;
+    if (game.spawn <= 0) {
+      game.spawn = 0.9 - 0.45 * k + Math.random() * 0.3;
+      var r = Math.random();
+      game.items.push({ kind: r < 0.07 ? "gold" : r < 0.5 ? "acorn" : "leaf",
+                        x: minX() + Math.random() * (maxX() + petWidth() - minX() - 2 * U),
+                        y: -2 * U, vy: (7 + 6 * k + Math.random() * 3) * U, ph: Math.random() * 6.28 });
+    }
+    // the pet runs to the goal, faster than a stroll
+    var d = game.goal - pet.x, step = 24 * U * dt;
+    if (Math.abs(d) > step) { pet.dir = d > 0 ? 1 : -1; pet.x += pet.dir * step; pet.mode = "walk"; }
+    else { pet.x = game.goal; pet.mode = "idle"; }
+    var top = petY() + 3 * U, bottom = petY() + 12 * U, left = pet.x + 2 * U, right = pet.x + 14 * U;
+    game.items = game.items.filter(function (it) {
+      it.y += it.vy * dt;
+      if (it.kind === "leaf") { it.ph += dt * 3; it.x += Math.sin(it.ph) * U * dt * 5; }
+      if (it.y >= top && it.y <= bottom && it.x + U >= left && it.x <= right) {
+        var pts = it.kind === "gold" ? 5 : it.kind === "acorn" ? 2 : 1;
+        game.score += pts;
+        particles.push({ k: "pts", x: it.x, y: it.y, vy: -4 * U, life: 0.9, n: pts });
+        return false;
+      }
+      return it.y < groundY + 3 * U;
+    });
+  }
+  function catchGoal(x) { if (game && game.kind === "catch") game.goal = clamp(x - petWidth() / 2, minX(), maxX()); }
+
+  // ---- hide and seek ----
+  function bushes() {
+    var n = game.bushes, out = [], span = W - 12 * U, gap = span / n;
+    for (var i = 0; i < n; i++) out.push({ i: i, x: Math.round((6 * U + gap * (i + 0.5)) / U) * U, y: groundY - U, r: Math.min(5, Math.max(3, Math.floor(gap / U / 2.6))) });
+    return out;
+  }
+  function hideRound() {
+    game.round++;
+    game.bushes = Math.min(7, 4 + Math.floor((game.round - 1) / 2));
+    game.spot = Math.floor(Math.random() * game.bushes);
+    game.phase = "shuffle"; game.wait = 0.9; game.clue = 1.2; game.peek = 0; game.decoy = -1; game.decoyT = 0;
+    game.shake = {}; game.miss = {}; game.focus = Math.min(game.focus, game.bushes - 1);
+    pet.hidden = true;
+  }
+  function hideStep(dt) {
+    game.t += dt;
+    Object.keys(game.shake).forEach(function (k) { game.shake[k] -= dt; if (game.shake[k] <= 0) delete game.shake[k]; });
+    Object.keys(game.miss).forEach(function (k) { game.miss[k] -= dt; if (game.miss[k] <= 0) delete game.miss[k]; });
+    if (game.phase === "shuffle") {
+      game.wait -= dt;
+      for (var i = 0; i < game.bushes; i++) game.shake[i] = 0.2;
+      if (game.wait <= 0) { game.phase = "seek"; game.shake = {}; }
+      return;
+    }
+    if (game.phase === "found" || game.phase === "lost") {
+      game.wait -= dt;
+      if (game.wait <= 0) {
+        if (game.phase === "lost") { endGame(false); return; }
+        hideRound();
+      }
+      return;
+    }
+    // seek: the tail peeks out now and then; later rounds add a decoy rustle
+    game.clue -= dt;
+    if (game.peek > 0) game.peek -= dt;
+    if (game.clue <= 0) {
+      game.peek = 0.45;
+      game.clue = Math.max(1.3, 2.8 - 0.15 * game.round) + Math.random() * 0.8;
+      game.shake[game.spot] = 0.35;
+    }
+    if (game.round >= 3) {
+      game.decoyT -= dt;
+      if (game.decoyT <= 0) {
+        game.decoyT = 1.1 + Math.random() * 1.4;
+        var d = Math.floor(Math.random() * game.bushes);
+        if (d !== game.spot) game.shake[d] = 0.35;
+      }
+    }
+  }
+  function pickBush(i) {
+    if (!game || game.kind !== "hide" || game.phase !== "seek" || i < 0 || i >= game.bushes) return;
+    var bs = bushes();
+    if (i === game.spot) {
+      game.score++;
+      game.phase = "found"; game.wait = 1.3;
+      pet.hidden = false; pet.x = clamp(bs[i].x - petWidth() / 2, minX(), maxX()); pet.mode = "happy"; pet.timer = 1200;
+      addHearts();
+      announce(t("game.found", { name: snap.name }));
+    } else {
+      game.lives--;
+      game.miss[i] = 0.8; game.shake[i] = 0.3;
+      if (game.lives <= 0) {
+        game.phase = "lost"; game.wait = 1.6;
+        pet.hidden = false; pet.x = clamp(bs[game.spot].x - petWidth() / 2, minX(), maxX());
+        announce(t("game.lost", { name: snap.name }));
+      } else announce(t("game.empty"));
+    }
+    renderGameBar();
+  }
+  function bushAt(x, y) {
+    if (y < groundY - 14 * U || y > groundY + 4 * U) return -1;
+    var bs = bushes(), best = -1, bd = Infinity;
+    bs.forEach(function (b) { var d = Math.abs(x - b.x); if (d < (b.r + 1) * U && d < bd) { bd = d; best = b.i; } });
+    return best;
+  }
+
+  // ---- follow me ----
+  function followNext() {
+    game.seq.push(MOVES[Math.floor(Math.random() * MOVES.length)]);
+    if (game.seq.length === 1) game.seq.push(MOVES[Math.floor(Math.random() * MOVES.length)]);
+    game.phase = "pause"; game.wait = 0.9; game.step = 0;
+  }
+  function moveSpan() { return Math.max(0.35, 0.75 - 0.04 * game.seq.length); }
+  function doMove(m, dur) {
+    game.anim = { m: m, t: 0, d: dur, x0: game.home };
+  }
+  function animStep(dt) {
+    var a = game.anim;
+    if (!a) { pet.yOff = 0; return; }
+    a.t += dt;
+    var k = clamp(a.t / a.d, 0, 1), arc = Math.sin(Math.PI * k);
+    pet.yOff = 0; pet.mode = "idle";
+    if (a.m === "up") { pet.yOff = -Math.round(arc * 5) * U; pet.mode = "happy"; }
+    else if (a.m === "down") { pet.yOff = Math.round(arc * 2) * U; }
+    else { pet.dir = a.m === "left" ? -1 : 1; pet.x = a.x0 + pet.dir * Math.round(arc * 4) * U; pet.mode = "walk"; pet.yOff = -Math.round(arc * 1) * U; }
+    if (k >= 1) { pet.x = a.x0; pet.yOff = 0; game.anim = null; pet.mode = "idle"; pet.dir = 1; }
+  }
+  function followStep(dt) {
+    animStep(dt);
+    if (game.phase === "pause") {
+      game.wait -= dt;
+      if (game.wait <= 0) { game.phase = "show"; game.step = 0; game.wait = 0; renderGameBar(); }
+    } else if (game.phase === "show") {
+      if (game.anim) return;
+      game.wait -= dt;
+      if (game.wait > 0) return;
+      if (game.step >= game.seq.length) { game.phase = "input"; game.step = 0; renderGameBar(); return; }
+      doMove(game.seq[game.step], moveSpan());
+      game.step++;
+      game.wait = 0.15;
+    } else if (game.phase === "fail") {
+      game.wait -= dt;
+      if (game.wait <= 0) endGame(false);
+    }
+  }
+  function followInput(m) {
+    if (!game || game.kind !== "follow" || game.phase !== "input" || MOVES.indexOf(m) < 0) return;
+    doMove(m, 0.3);
+    if (game.seq[game.step] !== m) {
+      game.phase = "fail"; game.wait = 1.2;
+      announce(t("game.wrong", { move: ARROWS[game.seq[game.step]] }));
+      renderGameBar();
+      return;
+    }
+    game.step++;
+    if (game.step >= game.seq.length) {
+      game.score = game.seq.length;
+      addHearts();
+      followNext();
+    }
+    renderGameBar();
+  }
+
+  function updateGame(dt) {
+    if (!game) return;
+    if (game.kind === "catch") catchStep(dt);
+    else if (game.kind === "hide") hideStep(dt);
+    else followStep(dt);
+    if (game) {
+      game.barT = (game.barT || 0) - dt;
+      if (game.barT <= 0) { game.barT = 0.25; renderGameBar(); }
+    }
+  }
+
+  var ITEM_ART = {
+    acorn: ["..bb..", ".bbbb.", "bccccb", ".aaaa.", ".aaaa.", "..aa.."],
+    gold:  ["..bb..", ".bbbb.", "bggggb", ".yyyy.", ".yyyy.", "..yy.."]
+  };
+  function drawGame() {
+    if (!game) return;
+    var L = curL;
+    if (game.kind === "catch") {
+      var s = Math.max(1, Math.round(U * 0.6));
+      game.items.forEach(function (it) {
+        if (it.kind === "leaf") {
+          ctx.fillStyle = lit("#d9822b", L);
+          ctx.fillRect(Math.round(it.x / U) * U, Math.round(it.y / U) * U, 2 * U, U);
+          ctx.fillStyle = lit("#a65e1d", L);
+          ctx.fillRect(Math.round(it.x / U) * U + U, Math.round(it.y / U) * U, U, U);
+          return;
+        }
+        var art = ITEM_ART[it.kind], col = { b: "#6b4a2f", c: "#8d6e63", a: "#c98b45", g: "#e0b04f", y: "#ffd23f" };
+        art.forEach(function (row, j) {
+          for (var i = 0; i < row.length; i++) {
+            if (row[i] === ".") continue;
+            ctx.fillStyle = lit(col[row[i]], L);
+            ctx.fillRect(Math.round(it.x) + i * s, Math.round(it.y) + j * s, s, s);
+          }
+        });
+      });
+    } else if (game.kind === "hide") {
+      var colors = (snap && snap.colors) || {};
+      bushes().forEach(function (b) {
+        var dx = game.shake[b.i] ? (Math.floor(game.t * 20 + b.i) % 2 ? U : -U) : 0;
+        if (b.i === game.spot && game.peek > 0 && game.phase === "seek") {
+          ctx.fillStyle = colors[1] || "#ffb74d";
+          ctx.fillRect(b.x + (b.r + 1) * U - U, b.y - 2 * U, 2 * U, U);
+          ctx.fillRect(b.x + (b.r + 1) * U, b.y - 3 * U, U, U);
+        }
+        // brighter than the pines behind, with a dark rim, so a bush reads at any hour
+        pixelDisc(ctx, b.x + dx, b.y - b.r * U, b.r, lit("#24502a", L));
+        pixelDisc(ctx, b.x + dx, b.y - b.r * U, Math.max(1, b.r - 1), lit("#5fb052", L));
+        pixelDisc(ctx, b.x + dx - U, b.y - b.r * U - U, Math.max(1, b.r - 3), lit("#9bd876", L));
+        if (game.miss[b.i]) {
+          ctx.fillStyle = "rgba(255,255,255,0.9)";
+          for (var k = -1; k <= 1; k++) { ctx.fillRect(b.x + k * U, b.y - b.r * U - (2 + k) * U, U, U); ctx.fillRect(b.x + k * U, b.y - b.r * U - (2 - k) * U, U, U); }
+        }
+        if (b.i === game.focus && kbFocus) {
+          ctx.strokeStyle = "rgba(255,255,255,0.85)";
+          ctx.lineWidth = Math.max(1, U / 3);
+          ctx.strokeRect(b.x - (b.r + 1) * U, b.y - (2 * b.r + 2) * U, (2 * b.r + 2) * U, (2 * b.r + 3) * U);
+        }
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.font = "700 " + Math.max(10, 2 * U) + "px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(b.i + 1), b.x, b.y + 3 * U);
+      });
+    } else if (game.anim && game.phase === "show") {
+      var arrow = ARROWS[game.anim.m];
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "700 " + Math.max(18, 5 * U) + "px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(arrow, game.anim.x0 + petWidth() / 2, petY() - 3 * U);
+    }
+  }
+  var kbFocus = false;          // a keyboard player sees which bush is selected
+
   // ---------- 6. Render loop ----------
   var rafId = 0, lastTs = 0;
   function frame(ts) {
@@ -1356,15 +1814,18 @@
     var dt = Math.min(0.05, ((ts - lastTs) / 1000) || 0.016);
     lastTs = ts;
     paintBackground();
-    updatePet(dt);
+    if (game) updateGame(dt); else updatePet(dt);
     ambient(dt);
     stepParticles(dt);
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(bg, 0, 0, W, H);
     drawGarden(Date.now());
     drawNestBack();
-    drawPet();
+    var hiding = game && game.kind === "hide";
+    if (!hiding) drawPet();
     drawNestFront();
+    drawGame();
+    if (hiding) drawPet();                 // found: the pet stands in front of its bush
     drawParticles();
     placeBubble();
     rafId = requestAnimationFrame(frame);
@@ -1388,6 +1849,7 @@
     bag:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M9 6V4.5a3 3 0 0 1 6 0V6"/><path d="M5 13h14M10 13v3h4v-3"/></svg>',
     walk:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21c-1.7 0-3-1.5-3-3.5S5 13 7 13s2.5 2.5 2.5 4.5S8.7 21 7 21z"/><path d="M15 12c-1.7 0-3-1.5-3-3.5S13 4 15 4s2.5 2.5 2.5 4.5S16.7 12 15 12z"/><path d="M6 10.5V9M10 11l.5-1.2M16 18.5V17M19.5 17l.5-1"/></svg>',
     nest:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 7 0 0 0 18 0"/><path d="M3 12h18"/><path d="M5 15.5l3-2M9 17.5l3-3M13 17.5l3-3M17 15.5l2-1.5"/><path d="M8 9.5c1-2.5 3-4 4-4s3 1.5 4 4"/></svg>',
+    play:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.5 9.5c3 1.5 14 1.5 17 0M3.5 14.5c3-1.5 14-1.5 17 0"/><path d="M12 3c-2.5 3-2.5 15 0 18"/></svg>',
     companion: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="13" rx="2"/><path d="M8 20.5h8M12 16.5v4"/><path d="M9 13v-2.5a3 3 0 0 1 6 0V13zM10 8.5 9.5 7M14 8.5l.5-1.5"/></svg>'
   };
 
@@ -1409,9 +1871,19 @@
     $("garden-btn").querySelector(".act-ico").innerHTML = ICONS.garden;
     $("garden-btn").querySelector(".act-lbl").textContent = t("act.garden");
     $("garden-btn").title = t("key.garden");
-    $("bag-btn").querySelector(".act-ico").innerHTML = ICONS.bag;
-    $("bag-btn").querySelector(".act-lbl").textContent = t("act.bag");
+    $("bag-btn").innerHTML = ICONS.bag;
     $("bag-btn").title = t("key.bag");
+    $("bag-btn").setAttribute("aria-label", t("act.bag"));
+    $("play-btn").querySelector(".act-ico").innerHTML = ICONS.play;
+    $("play-btn").querySelector(".act-lbl").textContent = t("act.play");
+    $("play-btn").title = t("key.play");
+    $("game-quit").textContent = t("game.stop");
+    [].forEach.call($("game-pad").querySelectorAll("button"), function (b) {
+      var m = b.getAttribute("data-move");
+      b.textContent = ARROWS[m];
+      b.title = t("game." + m);
+      b.setAttribute("aria-label", t("game." + m));
+    });
     $("walk-btn").querySelector(".act-ico").innerHTML = ICONS.walk;
     $("walk-btn").querySelector(".act-lbl").textContent = t("act.walk");
     $("walk-btn").title = t("key.walk");
@@ -1425,7 +1897,8 @@
   function renderUI() {
     var b = bridge();
     $("offline").hidden = !!b;
-    $("actions").hidden = !b;
+    $("actions").hidden = !b || !!game;
+    $("bag-btn").hidden = !b;
     $("stats").hidden = !b;
     if (!b || !snap) {
       $("offline").textContent = t("offline");
@@ -1471,7 +1944,7 @@
 
   // Low-stat lines, once per crossing (the companion's thresholds).
   function checkWarnings() {
-    if (!snap || snap.asleep || away) return;
+    if (!snap || snap.asleep || away || game) return;
     var b = bridge();
     if (!b) return;
     [["food", "speech.hungry", 20, 35], ["happy", "speech.bored", 25, 35], ["energy", "speech.tired", 20, 35]].forEach(function (w) {
@@ -1584,6 +2057,12 @@
     if (!snap) return;
     var r = canvas.getBoundingClientRect();
     var x = e.clientX - r.left, y = e.clientY - r.top;
+    if (game) {
+      kbFocus = false;
+      if (game.kind === "catch") { dragging = true; catchGoal(x); }
+      else if (game.kind === "hide") pickBush(bushAt(x, y));
+      return;
+    }
     var px = pet.x, py = petY();
     if (pet.mode !== "gone" && x >= px - U && x <= px + petWidth() + U && y >= py - U && y <= py + petWidth() + 2 * U) { doPat(); return; }
     var plot = plotAt(x, y);
@@ -1676,9 +2155,11 @@
       data = freshStart(data, petId, Date.now());
       garden = freshGarden(garden, data.br);
       nest = freshNest(nest, data.br);
+      games = freshGames(games, data.br);
       save();
       saveGarden();
       saveNest();
+      saveGames();
       showToast(t("toast.fresh"));
     }));
     dlg.appendChild(acts);
@@ -1693,7 +2174,7 @@
   function checkBinding() {
     if (!snap || snap.provisional) return;
     if (data.pet && data.pet.id === snap.id) return;
-    if (!data.pet || !(worldHasContent(data) || gardenHasContent(garden) || nestHasContent(nest))) {
+    if (!data.pet || !(worldHasContent(data) || gardenHasContent(garden) || nestHasContent(nest) || gamesHasContent(games))) {
       data = bindPet(data, snap.id, Date.now());
       save();
       return;
@@ -2046,6 +2527,78 @@
     if (snap && !snap.asleep && !away) { var b = bridge(); if (b) say(b.line("speech.happy")); }
   }
 
+  // ---------- 8d. Games: choose, keys, result (phase 4) ----------
+  var dragging = false;
+
+  function playDialog() {
+    if (!snap || game) return;
+    var dlg = makeDialog("pw-play"), why = gameReady(), first = null;
+    dlg.appendChild(el("div", "dlg-title", t("play.title", { name: snap.name })));
+    if (why) dlg.appendChild(el("div", "dlg-msg", why));
+    var list = el("div", "item-list");
+    GAMES.forEach(function (kind) {
+      var st = gameStats(games, kind);
+      var go = smallBtn(t("play.go"), "primary", function () { dlg.close(); startGame(kind); });
+      go.disabled = !!why;
+      if (!why && !first) first = go;
+      var r = el("div", "item-row");
+      var ico = el("span", "item-ico game-ico");
+      ico.innerHTML = ICONS[kind === "catch" ? "play" : kind === "hide" ? "garden" : "walk"];
+      ico.setAttribute("aria-hidden", "true");
+      r.appendChild(ico);
+      var txt = el("div", "item-txt");
+      txt.appendChild(el("strong", "", t("game." + kind)));
+      txt.appendChild(el("small", "", t("game.desc." + kind, { name: snap.name })));
+      txt.appendChild(el("small", "game-best", st.n ? t("play.best", { best: st.best, n: st.n }) : t("play.new")));
+      r.appendChild(txt);
+      r.appendChild(go);
+      list.appendChild(r);
+    });
+    dlg.appendChild(list);
+    var c = closeRow(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (first || c).focus();
+  }
+
+  function resultDialog(kind, score, best) {
+    var dlg = makeDialog("pw-result");
+    dlg.appendChild(el("div", "dlg-title", t("result.title", { game: t("game." + kind) })));
+    dlg.appendChild(el("div", "dlg-msg result-score", t("result.score", { n: score }) + (best ? " · " + t("result.best") : "")));
+    var acts = el("div", "dlg-actions");
+    var done = button(t("result.close"), "", function () { dlg.close(); });
+    acts.appendChild(done);
+    var again = button(t("result.again"), "primary", function () { dlg.close(); startGame(kind); });
+    again.disabled = !!gameReady();
+    acts.appendChild(again);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (again.disabled ? done : again).focus();
+    announce(t("result.score", { n: score }) + (best ? ". " + t("result.best") : ""));
+  }
+
+  var KEY_MOVES = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+  function gameKey(e) {
+    if (e.key === "Escape") { e.preventDefault(); endGame(true); return; }
+    if (game.kind === "catch") {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault();
+        game.goal = clamp(pet.x + (e.key === "ArrowLeft" ? -10 : 10) * U, minX(), maxX());
+      }
+    } else if (game.kind === "hide") {
+      var n = Number(e.key);
+      if (n >= 1 && n <= 9) { e.preventDefault(); kbFocus = false; pickBush(n - 1); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault(); kbFocus = true;
+        game.focus = clamp(game.focus + (e.key === "ArrowLeft" ? -1 : 1), 0, game.bushes - 1);
+      } else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickBush(game.focus); }
+    } else if (KEY_MOVES[e.key]) {
+      e.preventDefault();
+      followInput(KEY_MOVES[e.key]);
+    }
+  }
+
   // ---------- Garden actions ----------
   function plotCenter(id) {
     var r = plotRects()[Number(id)];
@@ -2131,7 +2684,9 @@
       if (document.querySelector("dialog[open]")) return;
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (tag === "INPUT" || tag === "TEXTAREA") return;
-      if (e.code === "KeyF") { e.preventDefault(); doFeed("kibble"); }
+      if (game) { gameKey(e); return; }
+      if (e.code === "KeyY") { e.preventDefault(); playDialog(); }
+      else if (e.code === "KeyF") { e.preventDefault(); doFeed("kibble"); }
       else if (e.code === "KeyG") { e.preventDefault(); gardenDialog(null); }
       else if (e.code === "KeyB") { e.preventDefault(); bagDialog(); }
       else if (e.code === "KeyW") { e.preventDefault(); walkDialog(); }
@@ -2199,6 +2754,7 @@
     api.registerSlice("petworld", sliceGet, sliceSet, STORAGE_KEY, mergeWorld);
     api.registerSlice("petgarden", gardenSliceGet, gardenSliceSet, GARDEN_KEY, mergeGarden);
     api.registerSlice("petnest", nestSliceGet, nestSliceSet, NEST_KEY, mergeNest);
+    api.registerSlice("petgames", gamesSliceGet, gamesSliceSet, GAMES_KEY, mergeGames);
   }
 
   function sliceGet() {
@@ -2250,6 +2806,22 @@
     }
   }
 
+  function gamesSliceGet() {
+    return mergeGames(games, null);   // canonical copy (R26)
+  }
+
+  function gamesSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object") return;
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      games = mergeGames(incoming, null);
+      localStorage.setItem(GAMES_KEY, JSON.stringify(games));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+  }
+
   // ---------- 12. Wiring & boot ----------
   function tick() {
     curL = skyAt(hourNow()).light;
@@ -2274,6 +2846,18 @@
     $("companion-btn").addEventListener("click", toggleCompanion);
     $("name-btn").addEventListener("click", renameDialog);
     canvas.addEventListener("pointerdown", sceneTap);
+    canvas.addEventListener("pointermove", function (e) {
+      if (!dragging || !game || game.kind !== "catch") return;
+      catchGoal(e.clientX - canvas.getBoundingClientRect().left);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) {
+      canvas.addEventListener(ev, function () { dragging = false; });
+    });
+    $("play-btn").addEventListener("click", playDialog);
+    $("game-quit").addEventListener("click", function () { endGame(true); });
+    [].forEach.call($("game-pad").querySelectorAll("button"), function (b) {
+      b.addEventListener("click", function () { followInput(b.getAttribute("data-move")); });
+    });
 
     // The pet changed elsewhere (companion HUD, another device's sync).
     window.addEventListener("storage", function (e) {

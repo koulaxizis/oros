@@ -2439,6 +2439,26 @@ function applyPetSettings(s) {
       return out;
     },
     pat: function () { petThePet(); return worldSnapshot(); },
+    // A finished game with the pet (Pet World): joy like a pat, and
+    // the energy it cost (0..15) through a FRESH anchor pair, the
+    // catch-game way. Visuals run only with the companion on; no
+    // event is logged (the activity log keeps care, not play).
+    play: function (cost) {
+      var c = clamp(Math.round(Number(cost) || 0), 0, 15);
+      var stats = computeStats(Date.now(), state.pet);
+      writePet(function (p, now) {
+        p.lastPetted = now;
+        if (!stats.asleep) { p.wokeAt = now; p.awakeE = clamp(stats.energy - c, 0, 100); }
+      });
+      if (runtime.active) {
+        runtime.mode = "happy";
+        runtime.walkTimer = 2200;
+        runtime.targetX = null;
+        spawnHearts();
+        refreshHUD(computeStats(Date.now(), state.pet));
+      }
+      return worldSnapshot();
+    },
     sleepToggle: function () { toggleSleep(); return worldSnapshot(); },
     rename: function (name) { renamePet(name); return worldSnapshot(); }
   };

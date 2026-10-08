@@ -404,3 +404,33 @@ dialog.pw-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 @media (min-width: 481px) and (max-width: 900px) {
   .act-btn { flex-direction: column; gap: 2px; font-size: 12px; padding: 4px 2px; }
 }
+
+/* ---------- Games (phase 4) ---------- */
+#game-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  background: var(--bar-bg);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#game-bar[hidden], #game-pad[hidden] { display: none; }
+#game-head { display: flex; align-items: center; gap: 12px; min-height: 40px; }
+#game-head .spacer { flex: 1; }
+#game-title { font-size: 14px; }
+#game-score { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+#game-info { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+#game-quit { flex: 0 0 auto; min-width: 72px; }
+#game-pad { display: flex; gap: 8px; }
+#game-pad .act-btn { font-size: 22px; min-height: 52px; }
+.game-ico { display: inline-flex; align-items: center; justify-content: center; color: var(--accent); }
+.game-ico svg { width: 24px; height: 24px; }
+.item-txt .game-best { color: var(--accent); }
+.result-score { font-size: 18px; font-weight: 700; }
+#game-head > span, #game-title { white-space: nowrap; }
+@media (max-width: 480px) {
+  #game-head { gap: 10px; }
+  #game-title { display: none; }   /* the game is on screen; score and time matter more */
+}
