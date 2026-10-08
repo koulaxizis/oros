@@ -210,6 +210,14 @@
       "type": "internal"
     },
     {
+      "id": "mixer",
+      "name": "Sound Mixer",
+      "category": "Sound",
+      "icon": "mixer",
+      "url": "mixer/",
+      "type": "internal"
+    },
+    {
       "id": "television",
       "name": "Television",
       "category": "Video",
