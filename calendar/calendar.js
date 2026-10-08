@@ -104,7 +104,7 @@
       "ev.del.yes": "Delete",
       "del.done": "Event deleted",
       "undo": "Undo",
-      "sync.merged": "Updated from sync",
+      "toast.quota": "Storage is full: changes are not saved on this device",
       "exp.done": "Calendar exported (.ics)",
       "lbl.personal": "Personal",
       "lbl.work": "Work",
@@ -212,7 +212,7 @@
       "ev.del.yes": "Διαγραφή",
       "del.done": "Το συμβάν διαγράφηκε",
       "undo": "Αναίρεση",
-      "sync.merged": "Ενημερώθηκε από συγχρονισμό",
+      "toast.quota": "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές δεν αποθηκεύονται σε αυτή τη συσκευή",
       "exp.done": "Το ημερολόγιο εξήχθη (.ics)",
       "lbl.personal": "Προσωπικό",
       "lbl.work": "Εργασία",
@@ -227,8 +227,8 @@
       "feed.cycle.period": "Περίοδος",
       "feed.mood.entry": "Καταγραφή διάθεσης",
       "lbl.feed.pet": "Screen Pet",
-      "feed.pet.feed": "{name} τάγηθηκε",
-      "feed.pet.pet": "{name} χαιδεύτηκε",
+      "feed.pet.feed": "{name} ταΐστηκε",
+      "feed.pet.pet": "{name} χαϊδεύτηκε",
       "feed.pet.sleep": "{name} πήγε για ύπνο",
       "feed.pet.wake": "{name} ξύπνησε",
       "feed.pet.newpet": "{name} ήρθε στην οικογένεια",
@@ -332,7 +332,8 @@
       toastEl.appendChild(b);
     }
     toastEl.classList.add("show");
-    toastTimer = setTimeout(hideToast, 5000);
+    // CA-13: ένα toast με Undo μένει ≥8s (κανόνας orOS)
+    toastTimer = setTimeout(hideToast, actionLabel ? 8000 : 5000);
   }
   
   /* Unified notifications (orOS compliance): informational toasts
@@ -354,6 +355,7 @@ function transientNote(title, body) {
 
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
+  var RESCUE_KEY = "oros-calendar-data-broken";   // CA-12: αντίγραφο μη αναγνώσιμων δεδομένων
   var state = { ver: 1, labels: [], events: [], deleted: [] };
 
   // Whitelist — the sync-sanitizer contract (deterministic).
@@ -414,26 +416,32 @@ function transientNote(title, body) {
     ];
   }
 
-  // Untouched seeds (mtime 0) follow the ACTIVE language: the fixed
-  // id map re-translates them at every boot. Any user edit (fresh
-  // mtime) detaches the label forever. No markDirty on purpose — a
-  // pure name swap has mtime 0, merge-inert on both devices.
+  // CA-7: untouched seeds (mtime 0) are STORED with one canonical
+  // (English) name on every device and translated only on screen
+  // (lblName). Before, each device wrote its own language at mtime 0:
+  // the EN and EL blobs never matched, and every pull on the EL
+  // device re-ran the setter (dialog closed, Undo lost, toast).
+  var SEED_NAMES = {
+    "lbl-personal": ["Personal", "lbl.personal"],
+    "lbl-work":     ["Work",     "lbl.work"],
+    "lbl-family":   ["Family",   "lbl.family"]
+  };
+  function canonSeedName(l) {
+    if (l && l.mtime === 0 && SEED_NAMES[l.id]) l.name = SEED_NAMES[l.id][0];
+    return l;
+  }
+  function lblName(l) {
+    if (l && l.mtime === 0 && SEED_NAMES[l.id]) return t(SEED_NAMES[l.id][1]);
+    return l ? l.name : "";
+  }
+  // A seed the user edits keeps the name it SHOWED (Greek on an EL
+  // device), not the canonical English one.
+  function stampLabel(l) {
+    if (l.mtime === 0 && SEED_NAMES[l.id]) l.name = lblName(l);
+    l.mtime = Date.now();
+  }
   function reseedSeedNames() {
-    var map = {
-      "lbl-personal": t("lbl.personal"),
-      "lbl-work":     t("lbl.work"),
-      "lbl-family":   t("lbl.family")
-    };
-    var changed = false;
-    state.labels.forEach(function (l) {
-      if (l.mtime === 0 && map[l.id] && l.name !== map[l.id]) {
-        l.name = map[l.id];
-        changed = true;
-      }
-    });
-    if (changed) {
-      try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
-    }
+    state.labels.forEach(canonSeedName);
   }
 
   function sanitizeLabel(l) {
@@ -441,12 +449,12 @@ function transientNote(title, body) {
     if (typeof l.id !== "string" || !l.id) return null;
     // CA4: single palette source (VALID_COLORS = LABEL_PALETTE + brown)
     if (VALID_COLORS.indexOf(l.color) === -1) return null;
-    return {
+    return canonSeedName({
       id: l.id,
       name: (typeof l.name === "string" ? l.name : "").slice(0, 40),
       color: l.color,
       mtime: (typeof l.mtime === "number" && isFinite(l.mtime)) ? l.mtime : 0
-    };
+    });
   }
 
   function labelById(id) {
@@ -521,8 +529,10 @@ function transientNote(title, body) {
   }
 
   function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(DATA_KEY); } catch (e0) { raw = null; }
     try {
-      var d = JSON.parse(localStorage.getItem(DATA_KEY));
+      var d = JSON.parse(raw);
       if (d && typeof d === "object" && Array.isArray(d.events)) {
         state.events = d.events.map(sanitizeEvent).filter(Boolean);
       }
@@ -542,14 +552,32 @@ function transientNote(title, body) {
         // and a labels-less peer wipes the seeds in setFromSync.
         // Writing immediately means the merge union sees them;
         // mtime 0 keeps cloud traffic at exactly zero.
-        try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e2) {}
+        // (CA-7: the write itself is writeStore() at the end.)
       }
     } catch (e) {
+      // CA-12: unreadable blob → keep a copy before anything
+      // overwrites it (the first save would otherwise destroy it).
+      if (raw) { try { localStorage.setItem(RESCUE_KEY, raw); } catch (e3) {} }
       if (!state.labels.length) state.labels = defaultLabels();
+    }
+    writeStore();
+  }
+
+  // CA-7: the disk holds exactly what the getter hands to sync —
+  // the merge's canonical form (sorted by id, sanitized, canonical
+  // seed names). The closed-app proxy then reads the same bytes.
+  var quotaWarned = false;
+  function writeStore() {
+    try {
+      localStorage.setItem(DATA_KEY, JSON.stringify(mergeCalendars(state, null)));
+      quotaWarned = false;
+    } catch (e) {
+      // R30: one message per failure streak, never silence.
+      if (!quotaWarned) { quotaWarned = true; transientNote(t("toast.quota")); }
     }
   }
   function saveState() {
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    writeStore();
     markDirty();
   }
 
@@ -1794,7 +1822,7 @@ function transientNote(title, body) {
       dot.className = "chip-dot";
       dot.style.background = l.color;
       c.appendChild(dot);
-      c.appendChild(document.createTextNode(l.name));
+      c.appendChild(document.createTextNode(lblName(l)));
       c.addEventListener("click", function () {
         labelVis[l.id] = !labelVisible(l.id);
         renderChips();
@@ -2027,6 +2055,7 @@ function transientNote(title, body) {
   // Label picker inside the dialog: chips + "none". Local only —
   // committed on Save (unlike the month-view chips which filter).
   var dlgLabelId = null;
+  var dlgBase = null;      // CA-8: field values the open dialog started from
 
   /* ---------- 7c. Dialog state + series helpers ---------- */
   // dlgMode: null = plain event / new, "master" = editing the whole
@@ -2179,7 +2208,7 @@ function transientNote(title, body) {
       row.appendChild(c);
     };
     mk(null, t("lbl.none"), null);
-    state.labels.forEach(function (l) { mk(l.id, l.name, l.color); });
+    state.labels.forEach(function (l) { mk(l.id, lblName(l), l.color); });
   }
 
   function openDlg(existing, mode) {
@@ -2239,6 +2268,14 @@ function transientNote(title, body) {
     // routes occ-mode deletes to exdateMaster (the series lives on).
     $("ev-del-row").className = "dlg-row" +
       (existing ? " show" : "");
+    // CA-8: what the dialog showed at open — a pull may update every
+    // field the user has not touched since.
+    dlgBase = (existing && mode !== "occ") ? {
+      selDate: selDate, date: existing.date, title: existing.title,
+      note: existing.note, location: existing.location,
+      remind: (existing.remindMin ? String(existing.remindMin) : ""),
+      labelId: existing.labelId
+    } : null;
     $("ev-dlg").showModal();
     setTimeout(function () { $("ev-title").focus(); }, 50);
   }
@@ -2351,7 +2388,11 @@ function transientNote(title, body) {
           state.events[i].location = location;
           state.events[i].note = note;
           state.events[i].labelId = dlgLabelId;
-          if (!isSeries) state.events[i].date = selDate;
+          // CA-8: the user did not change the day but another device
+          // moved the event → keep the live date.
+          var keepLiveDate = dlgBase && selDate === dlgBase.selDate &&
+                             state.events[i].date !== dlgBase.date;
+          if (!isSeries && !keepLiveDate) state.events[i].date = selDate;
           // Plain edit: a cleared dateEnd = single-day again;
           // series edit can never set one (recur dominates).
           state.events[i].dateEnd = isSeries ? null : dateEnd;
@@ -2501,6 +2542,8 @@ function transientNote(title, body) {
   function undoDelete() {
     if (!lastDeleted) return;
     lastDeleted.mtime = Date.now();   // fresh: beats the tombstone
+    var undoId = lastDeleted.id;      // CA-10: never a duplicate id
+    state.events = state.events.filter(function (e) { return e.id !== undoId; });
     state.events.push(lastDeleted);
     state.deleted = state.deleted.filter(function (d) {
       return d.id !== lastDeleted.id;
@@ -2605,10 +2648,25 @@ function transientNote(title, body) {
     $("lbl-new-name").focus();
   }
 
+  // CA-11: a pull replaces state.labels with new objects. Handlers
+  // resolve the label by id at click time; one deleted meanwhile on
+  // another device is brought back by the edit (newer than its
+  // tombstone — the merge contract for labels).
+  function liveLabel(snap) {
+    for (var i = 0; i < state.labels.length; i++) {
+      if (state.labels[i].id === snap.id) return state.labels[i];
+    }
+    var back = { id: snap.id, name: snap.name, color: snap.color, mtime: snap.mtime };
+    state.labels.push(back);
+    state.deleted = state.deleted.filter(function (d) { return d.id !== snap.id; });
+    return back;
+  }
+
   function renderLblList() {
     var list = $("lbl-list");
     list.textContent = "";
-    state.labels.forEach(function (l) {
+    state.labels.forEach(function (l0) {
+      var l = { id: l0.id, name: l0.name, color: l0.color, mtime: l0.mtime };
       var row = document.createElement("div");
       row.className = "lbl-row";
 
@@ -2634,8 +2692,9 @@ function transientNote(title, body) {
         sw.style.background = c;
         sw.setAttribute("aria-label", c);
         sw.addEventListener("click", function () {
-          l.color = c;
-          l.mtime = Date.now();   // color change propagates via merge
+          var lv = liveLabel(l);
+          lv.color = c;
+          stampLabel(lv);         // color change propagates via merge
           saveState();
           renderLblList();
           renderChips();
@@ -2650,11 +2709,13 @@ function transientNote(title, body) {
       inp.type = "text";
       inp.className = "lbl-name-in";
       inp.maxLength = 40;
-      inp.value = l.name;
+      inp.value = lblName(l);
       inp.addEventListener("change", function () {
-        l.name = inp.value.trim().slice(0, 40) || l.name;
-        inp.value = l.name;
-        l.mtime = Date.now();
+        var lv = liveLabel(l);
+        var nm = inp.value.trim().slice(0, 40);
+        stampLabel(lv);
+        if (nm) lv.name = nm;
+        inp.value = lv.name;
         saveState();
         renderChips();
         renderAll();
@@ -3325,12 +3386,14 @@ function transientNote(title, body) {
     // Contacts custom events). Both merge and load sanitizers
     // must agree — if one drops brown, the other resurrects it.
     if (VALID_COLORS.indexOf(l.color) === -1) return null;
-    return {
+    // CA-7: untouched seeds carry the canonical name in every blob
+    // (an older EL device may still send its Greek seed names).
+    return canonSeedName({
       id: l.id,
       name: (typeof l.name === "string" ? l.name : "").slice(0, 40),
       color: l.color,
       mtime: l.mtime
-    };
+    });
   }
 
   // Deterministic entity merge: per id, bigger mtime wins; equal
@@ -3396,6 +3459,36 @@ function transientNote(title, body) {
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
   // (pull → set → push would loop; the engine owns dirtiness here).
+  // CA-8 (A67 Q1): a pull never closes the open event dialog. Fields
+  // the user has not touched since opening follow the live event;
+  // typed fields stay. Save edits by id (a remotely deleted event is
+  // brought back by the edit — the existing resurrect path).
+  function refreshOpenDlg() {
+    var dlg = $("ev-dlg");
+    if (!dlg || !dlg.open || !dlgBase || !editingId) return;
+    var live = null;
+    for (var i = 0; i < state.events.length; i++) {
+      if (state.events[i].id === editingId) { live = state.events[i]; break; }
+    }
+    if (!live) return;
+    var follow = function (id, key, val) {
+      var el = $(id);
+      if (el && el.value === dlgBase[key] && val !== dlgBase[key]) {
+        el.value = val;
+        dlgBase[key] = val;
+      }
+    };
+    follow("ev-title", "title", live.title);
+    follow("ev-note", "note", live.note);
+    follow("ev-location", "location", live.location);
+    follow("ev-remind", "remind", live.remindMin ? String(live.remindMin) : "");
+    if (dlgLabelId === dlgBase.labelId && live.labelId !== dlgBase.labelId) {
+      dlgLabelId = live.labelId;
+      dlgBase.labelId = live.labelId;
+    }
+    renderDlgLabels();
+  }
+
   function setFromSync(data, info) {
     if (!data || typeof data !== "object" || !Array.isArray(data.events)) return;
     var evs = data.events.map(sanitizeEvent).filter(Boolean);
@@ -3405,26 +3498,11 @@ function transientNote(title, body) {
       ? data.labels.map(sanitizeLabel).filter(Boolean)
       : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
     state = { ver: 1, labels: lbls, events: evs, deleted: dels };
-    lastMoved = null;
-    lastDeleted = null;
-    lastExdate = null;
-    // CA6: seeds follow the ACTIVE language after a live pull —
-    // untouched (mtime 0) defaults re-translate; merge-inert, no dirty.
+    // CA-10: Undo data survives a pull (R28) — undoDelete/undoMove/
+    // undoExdate all work by id on the live state.
     reseedSeedNames();
-    // Audit #7: sync arriving with a half-open dialog would leave
-    // editingId pointing at a row that may no longer exist → the
-    // next Save would resurrect a stale ghost. Safer: close the
-    // dialog (user input is preserved in the fields, re-edit is one
-    // click away; silent data surgery mid-edit is worse).
-    try {
-      if ($("ev-dlg") && $("ev-dlg").open) {
-        editingId = null;
-        dlgMode = null;
-        pendingOverride = null;
-        $("ev-dlg").close();
-      }
-    } catch (e2) {}
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    refreshOpenDlg();
+    writeStore();         // no markDirty: this IS the sync result
     // INVALIDATE ALL FEED CACHES — sync may have just pulled fresh
     // data for Contacts/Cycle/Mood/Habits/Kanban; the 1s micro-cache
     // would otherwise serve stale reads on the immediate renderAll()
@@ -3437,7 +3515,8 @@ function transientNote(title, body) {
     petCache = { when: 0, optOut: false, petData: null, logData: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
-    if (info && info.merged) transientNote(t("sync.merged"));   // receipt, not "Saved"
+    // CA-9: no "Updated from sync" toast — a receipt on every pull
+    // is noise, and the changed data is already on screen.
   }
 
   // Canonical dirty funnel (Part VII) — created BEFORE registration,
@@ -3453,12 +3532,13 @@ function transientNote(title, body) {
     if (syncApi && typeof syncApi.registerSlice === "function") {
       syncApi.registerSlice(
         "calendar",
-        function () {     // getter: localStorage is the durable truth
+        function () {     // getter: localStorage is the durable truth,
+          // CA-7: always in the merge's canonical form (merge(get, get)
+          // = get), so an unchanged device never re-uploads.
           try {
-            return JSON.parse(localStorage.getItem(DATA_KEY)) ||
-              { ver: 1, labels: [], events: [], deleted: [] };
+            return mergeCalendars(JSON.parse(localStorage.getItem(DATA_KEY)), null);
           } catch (e) {
-            return { ver: 1, labels: [], events: [], deleted: [] };
+            return mergeCalendars(state, null);
           }
         },
         setFromSync,

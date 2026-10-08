@@ -1060,5 +1060,17 @@ dialog#stat-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   line-height: 1;
 }
 
+/* CA-14 (R32): the global * {margin:0} reset un-centres every
+   <dialog> — give them back the UA's auto margin. */
+dialog { margin: auto; }
+
+/* CA-14: touch targets ≥44px on touch screens */
+@media (pointer: coarse) {
+  .lbl-color-btn, .lbl-swatch { width: 36px; height: 36px; }
+  .lbl-palette { gap: 8px; }
+  label.chk { min-height: 44px; display: flex; align-items: center; gap: 10px; }
+  #ev-allday { width: 24px; height: 24px; }
+}
+
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
