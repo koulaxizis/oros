@@ -154,6 +154,14 @@
       "type": "internal"
     },
     {
+      "id": "zen",
+      "name": "Micro-Zen",
+      "category": "Personal",
+      "icon": "zen",
+      "url": "zen/",
+      "type": "internal"
+    },
+    {
       "id": "cycle",
       "name": "Cycle",
       "category": "Personal",
