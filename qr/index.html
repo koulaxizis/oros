@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>QR Generator · orOS</title>
+
+  <link rel="stylesheet" href="qr.css?v=0.45.13">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <span id="code-name" class="code-name"></span>
+    <button type="button" class="txt-btn" id="new-btn"></button>
+    <button type="button" class="txt-btn" id="save-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- The code + export -->
+    <section id="stage">
+      <div id="preview-box">
+        <canvas id="cv" role="img"></canvas>
+        <div id="empty" class="empty" hidden></div>
+      </div>
+      <p id="meter" class="meter" aria-live="polite"></p>
+      <p id="warn" class="warn" hidden></p>
+      <div id="exports" class="exports">
+        <div class="png-row">
+          <button type="button" class="txt-btn primary" id="png-btn"></button>
+          <select id="png-size"></select>
+        </div>
+        <button type="button" class="txt-btn" id="svg-btn"></button>
+        <button type="button" class="txt-btn" id="copy-btn" hidden></button>
+        <button type="button" class="txt-btn" id="share-btn" hidden></button>
+        <button type="button" class="txt-btn" id="files-btn" hidden></button>
+        <button type="button" class="txt-btn" id="print-btn"></button>
+        <button type="button" class="txt-btn" id="card-btn" hidden></button>
+      </div>
+    </section>
+
+    <!-- Type, fields, look, my codes -->
+    <div id="panel">
+      <section class="sec">
+        <h2 id="type-h" data-i18n="sec.type">Type</h2>
+        <div id="types" class="chips" role="radiogroup" aria-labelledby="type-h"></div>
+      </section>
+
+      <section class="sec">
+        <div class="sec-head">
+          <h2 id="fields-h" data-i18n="sec.content">Content</h2>
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" id="from-btn" hidden></button>
+        </div>
+        <form id="fields" autocomplete="off" novalidate></form>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.look">Look</h2>
+        <div id="look" class="look"></div>
+      </section>
+
+      <section class="sec">
+        <h2 data-i18n="sec.mine">My codes</h2>
+        <div id="mine" class="chips"></div>
+        <p class="hint" id="mine-empty" data-i18n="mine.empty">Save a code to keep it here.</p>
+      </section>
+    </div>
+  </main>
+
+  <div id="print-area" aria-hidden="true"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="qr-encode.js?v=0.45.13"></script>
+  <script src="qr-payload.js?v=0.45.13"></script>
+  <script src="qr.js?v=0.45.13"></script>
+
+</body>
+</html>
