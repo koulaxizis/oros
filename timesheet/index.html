@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Timesheet · orOS</title>
+
+  <link rel="stylesheet" href="timesheet.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <nav id="tabs" role="tablist">
+      <button type="button" class="tab" role="tab" data-tab="timer" id="tab-timer"></button>
+      <button type="button" class="tab" role="tab" data-tab="week" id="tab-week"></button>
+      <button type="button" class="tab" role="tab" data-tab="report" id="tab-report"></button>
+      <button type="button" class="tab" role="tab" data-tab="projects" id="tab-projects"></button>
+    </nav>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Timer + the day's entries -->
+    <section id="v-timer" class="view" role="tabpanel">
+      <div id="run-card">
+        <div id="forgot" class="banner" hidden>
+          <span id="forgot-text"></span>
+          <span class="banner-acts">
+            <button type="button" class="mini-btn" id="forgot-fix"></button>
+            <button type="button" class="mini-btn" id="forgot-ok"></button>
+          </span>
+        </div>
+        <ul id="others" hidden></ul>
+        <div class="run-fields">
+          <select id="run-proj"></select>
+          <input type="text" id="run-desc" maxlength="500" autocomplete="off">
+        </div>
+        <div class="run-main">
+          <div class="run-read">
+            <div id="run-clock">0:00:00</div>
+            <div id="run-since"></div>
+          </div>
+          <button type="button" id="run-btn"></button>
+        </div>
+      </div>
+
+      <div class="day-head">
+        <button type="button" class="icon-btn" id="prev-btn"></button>
+        <button type="button" class="day-btn" id="day-btn"></button>
+        <button type="button" class="icon-btn" id="next-btn"></button>
+        <span class="spacer"></span>
+        <span id="day-total"></span>
+      </div>
+      <div id="goal" hidden><div id="goal-fill"></div></div>
+      <ol id="entries"></ol>
+      <p class="hint" id="entries-empty" data-i18n="entries.empty">No time logged on this day.</p>
+      <button type="button" class="wide-btn" id="add-entry"></button>
+    </section>
+
+    <!-- Week grid -->
+    <section id="v-week" class="view" role="tabpanel" hidden>
+      <div class="day-head">
+        <button type="button" class="icon-btn" id="wprev-btn"></button>
+        <button type="button" class="day-btn" id="week-btn"></button>
+        <button type="button" class="icon-btn" id="wnext-btn"></button>
+        <span class="spacer"></span>
+        <span id="week-total"></span>
+      </div>
+      <div id="week-grid" class="grid-wrap"></div>
+      <div id="week-list"></div>
+      <p class="hint" id="week-empty" data-i18n="week.empty">No time logged this week.</p>
+    </section>
+
+    <!-- Reports -->
+    <section id="v-report" class="view" role="tabpanel" hidden>
+      <div id="filters" class="filters">
+        <label class="flt"><span data-i18n="rep.range">Period</span><select id="f-range"></select></label>
+        <label class="flt" id="f-from-w"><span data-i18n="rep.from">From</span><input type="date" id="f-from"></label>
+        <label class="flt" id="f-to-w"><span data-i18n="rep.to">To</span><input type="date" id="f-to"></label>
+        <label class="flt"><span data-i18n="rep.client">Client</span><select id="f-client"></select></label>
+        <label class="flt"><span data-i18n="rep.project">Project</span><select id="f-project"></select></label>
+        <label class="flt"><span data-i18n="rep.bill">Billable</span><select id="f-bill"></select></label>
+        <label class="flt"><span data-i18n="rep.billed">Invoiced</span><select id="f-billed"></select></label>
+        <label class="flt"><span data-i18n="rep.group">Group by</span><select id="f-group"></select></label>
+      </div>
+      <p class="hint" id="rep-note"></p>
+      <div class="grid-wrap"><table id="rep-table" class="rep"></table></div>
+      <p class="hint" id="rep-empty" data-i18n="rep.empty">Nothing in this period.</p>
+      <div class="rep-acts">
+        <button type="button" class="wide-btn" id="rep-csv"></button>
+        <button type="button" class="wide-btn" id="rep-mark"></button>
+      </div>
+    </section>
+
+    <!-- Clients + projects -->
+    <section id="v-projects" class="view" role="tabpanel" hidden>
+      <div class="rep-acts">
+        <button type="button" class="wide-btn" id="add-project"></button>
+        <button type="button" class="wide-btn" id="add-client"></button>
+      </div>
+      <div id="plist"></div>
+      <p class="hint" id="plist-empty" data-i18n="proj.empty">No projects yet. Add one, or just start the timer: time without a project is kept too.</p>
+      <details id="parch" hidden>
+        <summary id="parch-sum"></summary>
+        <div id="parch-list"></div>
+      </details>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="timesheet.js?v=0.46.00"></script>
+
+</body>
+</html>

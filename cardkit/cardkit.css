@@ -1,0 +1,101 @@
+/* ============================================================
+   orOS cardkit — card faces (v1.0.0)
+   Loaded by card games next to cardkit.js. Every size follows
+   --ock-w (card width in px) set on an ancestor; height is 1.4 × width.
+   Faces are white with black / red ink in both themes (they are
+   cards, not chrome); the back takes the shell accent.
+   Optional: --ock-back (back colour), class "ock-roomy" on an
+   ancestor (bottom-right corner), "ock-hl" on a card (highlight).
+   This file has no [hidden] rule of its own: the host app's
+   stylesheet ends with it (loaded after this one).
+   ============================================================ */
+
+.ock-card {
+  --ock-f: max(12px, calc(var(--ock-w, 64px) * 0.32));
+  position: absolute;
+  width: var(--ock-w, 64px);
+  height: calc(var(--ock-w, 64px) * 1.4);
+  border-radius: max(4px, calc(var(--ock-w, 64px) * 0.08));
+  box-sizing: border-box;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.ock-up {
+  background: #fdfcf7;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.38);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.ock-up.ock-red { color: #c62828; }
+.ock-down {
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  background-color: var(--ock-back, var(--accent, #2b5aa8));
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.16) 0 2px, transparent 2px 7px);
+}
+.ock-down::after {
+  content: "";
+  position: absolute;
+  inset: max(2px, calc(var(--ock-w, 64px) * 0.07));
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: max(2px, calc(var(--ock-w, 64px) * 0.05));
+}
+
+/* Corner: rank and pip on ONE line, so a fanned card shows both in a
+   strip only ~1.3 × the font tall. */
+.ock-corner {
+  position: absolute;
+  top: max(1px, calc(var(--ock-w, 64px) * 0.04));
+  left: max(2px, calc(var(--ock-w, 64px) * 0.06));
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: var(--ock-f);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+.ock-corner .ock-pip { width: 0.8em; height: 0.8em; flex-shrink: 0; display: block; }
+.ock-corner-b { display: none; top: auto; left: auto; bottom: max(1px, calc(var(--ock-w, 64px) * 0.04)); right: max(2px, calc(var(--ock-w, 64px) * 0.06)); transform: rotate(180deg); }
+.ock-roomy .ock-corner-b { display: flex; }
+.ock-roomy .ock-mid { top: 26%; bottom: 26%; }
+.ock-roomy .ock-mid .ock-pip { width: 50%; }
+.ock-roomy .ock-court .ock-pip { width: 24%; }
+.ock-roomy .ock-letter { font-size: calc(var(--ock-w, 64px) * 0.4); }
+
+/* Middle: one big pip (A–10) or letter + pip (J Q K), in the lower part
+   so the corner stays clear. */
+.ock-mid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 32%;
+  bottom: 6%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.ock-mid .ock-pip { width: 58%; height: auto; max-height: 100%; display: block; }
+.ock-court { flex-direction: column; gap: 2%; }
+.ock-court .ock-pip { width: 30%; }
+.ock-letter {
+  font-size: calc(var(--ock-w, 64px) * 0.46);
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* States */
+.ock-card.ock-hl { box-shadow: 0 0 0 2px var(--accent, #d4af37), 0 0 12px var(--accent, #d4af37); }
+.ock-card.ock-dragging { z-index: 1000 !important; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45); cursor: grabbing; }
+.ock-card.ock-return { transition: transform 0.18s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ock-card.ock-return { transition: none; }
+}

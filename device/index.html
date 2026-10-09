@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Device Info · orOS</title>
+
+  <link rel="stylesheet" href="device.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="title"></h1>
+    <button type="button" class="act icon" id="refresh-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <button type="button" class="act primary" id="copy-btn"><span class="long"></span><span class="short"></span></button>
+  </header>
+
+  <main id="main">
+    <div id="grid">
+      <details class="card" id="c-storage" open>
+        <summary><h2 data-i18n="c.storage"></h2></summary>
+        <div class="body" id="b-storage"></div>
+      </details>
+      <details class="card" id="c-apps" open>
+        <summary><h2 data-i18n="c.apps"></h2></summary>
+        <div class="body" id="b-apps"></div>
+      </details>
+      <details class="card" id="c-battery" open>
+        <summary><h2 data-i18n="c.battery"></h2></summary>
+        <div class="body" id="b-battery"></div>
+      </details>
+      <details class="card" id="c-network" open>
+        <summary><h2 data-i18n="c.network"></h2></summary>
+        <div class="body" id="b-network"></div>
+      </details>
+      <details class="card" id="c-sync" open>
+        <summary><h2 data-i18n="c.sync"></h2></summary>
+        <div class="body" id="b-sync"></div>
+      </details>
+      <details class="card" id="c-screen" open>
+        <summary><h2 data-i18n="c.screen"></h2></summary>
+        <div class="body" id="b-screen"></div>
+      </details>
+      <details class="card" id="c-system" open>
+        <summary><h2 data-i18n="c.system"></h2></summary>
+        <div class="body" id="b-system"></div>
+      </details>
+      <details class="card" id="c-features" open>
+        <summary><h2 data-i18n="c.features"></h2></summary>
+        <div class="body" id="b-features"></div>
+      </details>
+    </div>
+    <p id="about" class="hint" data-i18n="about"></p>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="device.js?v=0.46.00"></script>
+
+</body>
+</html>

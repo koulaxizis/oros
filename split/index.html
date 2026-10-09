@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Split · orOS</title>
+
+  <link rel="stylesheet" href="split.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="back-btn" hidden></button>
+    <h1 id="title" class="title" aria-live="polite"></h1>
+    <span class="spacer"></span>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"></button>
+    <div id="menu" role="menu" hidden></div>
+  </header>
+
+  <nav id="tabs" role="tablist" hidden>
+    <button type="button" role="tab" id="tab-exp" aria-controls="p-exp" data-i18n="tab.exp">Expenses</button>
+    <button type="button" role="tab" id="tab-bal" aria-controls="p-bal" data-i18n="tab.bal">Balances</button>
+  </nav>
+
+  <main id="main">
+    <section id="home">
+      <div id="groups" class="glist"></div>
+      <p class="hint empty" id="home-empty" data-i18n="home.empty" hidden></p>
+      <details id="arch-box" class="arch" hidden>
+        <summary id="arch-sum"></summary>
+        <div id="arch" class="glist"></div>
+      </details>
+    </section>
+
+    <section id="grp" hidden>
+      <section id="sum" class="sum">
+        <div class="tile"><span class="tile-k" data-i18n="sum.total">Group spending</span><span class="tile-v" id="sum-total"></span></div>
+        <div class="tile" id="t-share"><span class="tile-k" data-i18n="sum.share">Your share</span><span class="tile-v" id="sum-share"></span></div>
+        <div class="tile" id="t-bal"><span class="tile-k" data-i18n="sum.bal">Your balance</span><span class="tile-v" id="sum-bal"></span></div>
+        <button type="button" class="tile who" id="t-who">
+          <span class="tile-k" data-i18n="sum.whoami">Which one is you?</span>
+          <span class="who-hint" data-i18n="sum.whoami.hint"></span>
+        </button>
+      </section>
+
+      <section id="p-exp" role="tabpanel" aria-labelledby="tab-exp">
+        <div class="search-row">
+          <input id="q" type="search" autocomplete="off">
+          <select id="flt"></select>
+        </div>
+        <p class="hint" id="list-found" hidden></p>
+        <div id="list"></div>
+        <p class="hint empty" id="list-empty" hidden></p>
+      </section>
+
+      <section id="p-bal" role="tabpanel" aria-labelledby="tab-bal" hidden>
+        <div id="bal"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="split.js?v=0.46.00"></script>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Solitaire · orOS</title>
+
+  <link rel="stylesheet" href="../cardkit/cardkit.css?v=0.46.00">
+  <link rel="stylesheet" href="solitaire.css?v=0.46.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="variant-seg" role="group">
+        <button type="button" class="seg-btn" data-v="k" data-i18n="v.k">Klondike</button>
+        <button type="button" class="seg-btn" data-v="f" data-i18n="v.f">FreeCell</button>
+        <button type="button" class="seg-btn" data-v="s" data-i18n="v.s">Spider</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="opts-btn"></button>
+      <button type="button" class="icon-btn" id="undo-btn"></button>
+      <button type="button" class="icon-btn" id="hint-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+    </div>
+  </header>
+
+  <!-- Status: moves, mode / deal, time, score -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.moves">Moves</span><strong id="moves">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat" id="time-stat"><strong id="time">0:00</strong></span>
+    <span class="stat" id="score-stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
+  </div>
+
+  <main id="board-wrap" class="felt">
+    <div id="board" role="group"></div>
+  </main>
+  <canvas id="fx" hidden></canvas>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../cardkit/cardkit.js?v=0.46.00"></script>
+  <script src="solitaire.js?v=0.46.00"></script>
+
+</body>
+</html>
