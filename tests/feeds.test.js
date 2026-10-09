@@ -452,6 +452,16 @@ test("relay web: fetches public pages, follows checked redirects, 304, limits", 
   assert.equal((await (await post({ op: "web", reqs: new Array(11).fill({ url: "https://a.example.com/" }) })).json()).error.code, "bad-request");
   assert.equal((await (await post({ op: "web", reqs: [{ url: "https://a.example.com/", etag: "x\r\nCookie: a" }] })).json()).error.code, "bad-request");
   assert.equal((await (await post({ op: "web", reqs: [{ url: "https://blog.example.gr/feed" }] }, "https://evil.example.com")).json()).error.code, "origin");
+  // An unexpected throw still answers with JSON and CORS, not a bare 500
+  const boom = await core.handle(new Request("https://relay.test/v1", { method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://useoros.online" },
+    body: JSON.stringify({ op: "web", reqs: [{ url: "https://blog.example.gr/feed" }] }) }),
+    {}, null, NOW, async () => ({ status: 200, headers: { get() { throw new Error("bad headers"); } } }));
+  assert.equal(boom.status, 200);
+  assert.equal(boom.headers.get("Access-Control-Allow-Origin"), "https://useoros.online");
+  const bj = await boom.json();
+  assert.equal(bj.ok, false);
+  assert.equal(bj.error.code, "proto");
 });
 
 test("relay web: per-response and per-call size limits", async () => {

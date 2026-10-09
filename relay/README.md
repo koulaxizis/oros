@@ -60,6 +60,11 @@ modified, thanks to `etag` / `lm`) has no body.
 - 5 MB per response, 12 MB per call, 15 s per request, 45 sub-requests
   per call (Cloudflare's free plan allows 50).
 
+Note: within those checks the `web` op is a generic GET proxy for
+public pages, limited like every call to 60 requests per minute per
+client IP. It runs on the same Worker as Mail, so both share the
+owner's free Workers quota.
+
 Tests: `tests/feeds.test.js` drives `core.js` + `web.js` with a fake
 `fetch`.
 

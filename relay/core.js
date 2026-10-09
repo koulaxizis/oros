@@ -133,8 +133,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
   if (b.op === "web") {
-    const data = await runWeb(b, fetchFn || ((u, o) => fetch(u, o)));
-    return json(200, { ok: true, data }, okOrigin);
+    try {
+      const data = await runWeb(b, fetchFn || ((u, o) => fetch(u, o)));
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      return fail(200, "proto", String(e && e.message || "proto").slice(0, 300), okOrigin);
+    }
   }
 
   const acct = { host: b.acct.host.trim().toLowerCase(), port: +b.acct.port, sec: b.acct.sec,
