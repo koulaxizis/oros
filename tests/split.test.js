@@ -27,7 +27,7 @@ const S = new Function(
   block("  // ---------- 2. Money", "  // ---------- 6. Storage") +
   "\nreturn { MAX_CENTS, PCT_FULL, parseAmount, parsePart, parseShares, centsToInput, centsPlain, parseYmd," +
   " normExp, normPay, normGroup, normPerson, mergeSplit, emptyData, sharesOf, balancesOf, settleUp, groupTotal," +
-  " summaryText, csvCell, buildCsv, packGroup, unpackGroup, changedCount, meOf };")();
+  " summaryText, csvCell, buildCsv, packGroup, unpackGroup, changedCount, meOf, budgetPayload };")();
 
 const canon = (x) => JSON.stringify(x);
 const G = "g1";
@@ -285,4 +285,15 @@ test("group file: a hostile file cannot touch other groups or smuggle markup", (
   assert.equal(S.unpackGroup({ app: "oros-split-group", data: { groups: [grp("a1", 1), grp("a2", 1)] } }), null);
   assert.equal(S.unpackGroup(null), null);
   assert.equal(S.unpackGroup({ app: "oros-split-group", data: { groups: [{ id: G, m: 1, n: "" }] } }), null);
+});
+
+test("send to Budget: only my share, as an expense with a ready Budget category", () => {
+  const x = eq(G + ".e1", 1000, A, [A, B, C]);
+  assert.deepEqual(S.budgetPayload(x, A, "Naxos", "Split: Naxos · Dinner"),
+    { k: "o", a: 334, d: "2026-10-08", n: "Split: Naxos · Dinner", c: "o-eat", src: "split" });
+  assert.equal(S.budgetPayload(x, "", "Naxos", "n"), null);                     // no "me"
+  assert.equal(S.budgetPayload(eq(G + ".e2", 900, B, [B, C]), A, "Naxos", "n"), null);   // not mine
+  const stay = Object.assign(eq(G + ".e3", 500, A, [A, B]), { c: "stay" });
+  assert.equal(S.budgetPayload(stay, B, "N", "x".repeat(300)).c, "o-other");
+  assert.equal(S.budgetPayload(stay, B, "N", "x".repeat(300)).n.length, 140);
 });

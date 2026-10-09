@@ -66,6 +66,9 @@
     { id: "trans", col: 4 }, { id: "bills", col: 2 }, { id: "fun", col: 3 },
     { id: "other", col: 8 }
   ];
+  // Split category → Budget ready category (send-to-Budget bridge).
+  var BUDGET_CAT = { food: "o-eat", groc: "o-groc", stay: "o-other", trans: "o-trans",
+                     bills: "o-bills", fun: "o-fun", other: "o-other" };
   var CAT_BY_ID = {};
   CATS.forEach(function (c) { CAT_BY_ID[c.id] = c; });
 
@@ -152,7 +155,8 @@
       "im.group": "Group “{g}” joined: {n} new or newer items", "im.same": "Group “{g}”: nothing new",
       "im.bad": "This is not an orOS Split group file or backup", "im.big": "The file is too big",
       "im.backup": "Backup merged: {n} new or newer items", "im.bsame": "Backup merged: nothing new",
-      "live.saved": "Saved", "live.group": "{g}", "live.home": "All groups"
+      "live.saved": "Saved", "live.group": "{g}", "live.home": "All groups",
+      "bud.btn": "Add my share to Budget ({a})", "bud.note": "Split: {g} · {t}", "bud.fail": "Budget did not take it"
     },
     el: {
       "app": "Μοιρασιά",
@@ -225,7 +229,8 @@
       "im.group": "Η ομάδα «{g}» ενώθηκε: {n} νέα ή νεότερα στοιχεία", "im.same": "Ομάδα «{g}»: τίποτα καινούργιο",
       "im.bad": "Αυτό δεν είναι αρχείο ομάδας ή αντίγραφο της Μοιρασιάς του orOS", "im.big": "Το αρχείο είναι πολύ μεγάλο",
       "im.backup": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία", "im.bsame": "Το αντίγραφο ενώθηκε: τίποτα καινούργιο",
-      "live.saved": "Αποθηκεύτηκε", "live.group": "{g}", "live.home": "Όλες οι ομάδες"
+      "live.saved": "Αποθηκεύτηκε", "live.group": "{g}", "live.home": "Όλες οι ομάδες",
+      "bud.btn": "Το μερίδιό μου στα Έσοδα & Έξοδα ({a})", "bud.note": "Μοιρασιά: {g} · {t}", "bud.fail": "Τα Έσοδα & Έξοδα δεν το δέχτηκαν"
     }
   };
 
@@ -619,6 +624,15 @@
     lines.push("");
     lines.push(tr("sh.foot"));
     return lines.join("\n");
+  }
+
+  // "Add my share to Budget": the payload of the bridge contract
+  // (expenses/budget-bridge-contract.md), or null when I have no
+  // share in it. A prefill: Budget stores nothing until Save there.
+  function budgetPayload(x, me, groupName, note) {
+    var share = me ? sharesOf(x)[me] : 0;
+    if (!share) return null;
+    return { k: "o", a: share, d: x.d, n: normText(note, NOTE_LEN), c: BUDGET_CAT[x.c] || "o-other", src: "split" };
   }
 
   // ---------- 5. CSV + group file ----------
@@ -1277,6 +1291,15 @@
     form.appendChild(left);
     form.appendChild(field(t("e.note"), note, "sp-note"));
     form.appendChild(err);
+    var bp = x ? budgetPayload(x, me, g.n, t("bud.note", { g: g.n, t: x.t || catName(x.c) })) : null;
+    if (bp && budgetBridge()) {
+      var bb = button(t("bud.btn", { a: money(bp.a) }), "wide-btn", function () {
+        var ok = false;
+        try { ok = budgetBridge()(bp) !== false; } catch (e2) {}
+        if (ok) dlg.close(); else showToast(t("bud.fail"));
+      });
+      form.appendChild(bb);
+    }
     var acts = el("div", "dlg-actions");
     if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteExp(x.id); }));
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
@@ -1393,6 +1416,14 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     if (!x) amt.focus();
+  }
+
+  // The shell's Budget bridge, when this orOS has it (older shell: null).
+  function budgetBridge() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenBudgetNew === "function" ? p.__orosOpenBudgetNew : null;
+    } catch (e) { return null; }
   }
 
   function deleteExp(id) {
