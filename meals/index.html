@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Meal Planner · orOS</title>
+
+  <link rel="stylesheet" href="meals.css?v=0.45.13">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div id="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" id="tab-rc" data-tab="rc" aria-controls="view-rc"></button>
+      <button type="button" role="tab" class="tab" id="tab-wk" data-tab="wk" aria-controls="view-wk"></button>
+      <button type="button" role="tab" class="tab" id="tab-sh" data-tab="sh" aria-controls="view-sh"></button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Recipes -->
+    <section id="view-rc" class="view" role="tabpanel" aria-labelledby="tab-rc">
+      <div class="bar">
+        <div class="search-wrap">
+          <input id="rc-search" type="search" autocomplete="off" maxlength="80">
+        </div>
+        <button type="button" class="txt-btn" id="rc-paste"></button>
+        <button type="button" class="txt-btn primary" id="rc-new"></button>
+      </div>
+      <div class="chips" id="rc-filters"></div>
+      <p class="hint" id="rc-ingmode" hidden></p>
+      <div id="rc-list"></div>
+      <p class="empty" id="rc-empty" hidden></p>
+    </section>
+
+    <!-- Week -->
+    <section id="view-wk" class="view" role="tabpanel" aria-labelledby="tab-wk" hidden>
+      <div class="bar wk-bar">
+        <button type="button" class="icon-btn wk-prev"></button>
+        <span class="wk-label"></span>
+        <button type="button" class="icon-btn wk-next"></button>
+        <button type="button" class="txt-btn wk-today"></button>
+        <span class="spacer"></span>
+        <div class="bar-scroll">
+          <button type="button" class="txt-btn" id="wk-copy"></button>
+          <button type="button" class="txt-btn" id="wk-fill"></button>
+          <button type="button" class="txt-btn" id="wk-clear"></button>
+        </div>
+      </div>
+      <div id="wk-grid"></div>
+    </section>
+
+    <!-- Shopping -->
+    <section id="view-sh" class="view" role="tabpanel" aria-labelledby="tab-sh" hidden>
+      <div class="bar wk-bar">
+        <button type="button" class="icon-btn wk-prev"></button>
+        <span class="wk-label"></span>
+        <button type="button" class="icon-btn wk-next"></button>
+        <button type="button" class="txt-btn wk-today"></button>
+        <span class="spacer"></span>
+        <div class="bar-scroll">
+          <button type="button" class="txt-btn" id="sh-from" aria-pressed="false"></button>
+          <button type="button" class="txt-btn" id="sh-copy"></button>
+          <button type="button" class="txt-btn" id="sh-share"></button>
+          <button type="button" class="txt-btn" id="sh-uncheck"></button>
+        </div>
+      </div>
+      <div class="add-row">
+        <input id="sh-add-in" maxlength="80" autocomplete="off">
+        <button type="button" class="icon-btn" id="sh-add-btn"></button>
+      </div>
+      <p class="hint" id="sh-count"></p>
+      <div id="sh-list"></div>
+      <p class="empty" id="sh-empty" hidden></p>
+      <div id="sh-excluded" class="excluded" hidden></div>
+    </section>
+  </main>
+
+  <div id="timers" hidden></div>
+  <div id="print-area" aria-hidden="true"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.45.13"></script>
+  <script src="meals.js?v=0.45.13"></script>
+
+</body>
+</html>

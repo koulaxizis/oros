@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bubble Shooter · orOS</title>
+
+  <link rel="stylesheet" href="bubble.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="lv-seg" role="group">
+        <button type="button" class="seg-btn" data-lv="l1" data-i18n="lv.l1">Easy</button>
+        <button type="button" class="seg-btn" data-lv="l2" data-i18n="lv.l2">Normal</button>
+        <button type="button" class="seg-btn" data-lv="l3" data-i18n="lv.l3">Hard</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="swap-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: score, message, best -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">0</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <canvas id="board" role="img"></canvas>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="bubble.js"></script>
+
+</body>
+</html>

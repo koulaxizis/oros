@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hexagon Puzzle · orOS</title>
+
+  <link rel="stylesheet" href="hexagon.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
+        <button type="button" class="seg-btn" data-level="m" data-i18n="level.m">Medium</button>
+        <button type="button" class="seg-btn" data-level="h" data-i18n="level.h">Hard</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="rotl-btn"></button>
+      <button type="button" class="icon-btn" id="rot-btn"></button>
+      <button type="button" class="icon-btn" id="hint-btn"></button>
+      <button type="button" class="icon-btn" id="restart-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: pieces placed, what to do, time -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.pieces">Pieces</span><strong id="pieces">0/0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="time">0:00</strong><span data-i18n="st.time">Time</span></span>
+  </div>
+
+  <main id="play">
+    <div id="board-wrap">
+      <svg id="board" tabindex="0" role="application" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div id="tray" role="group"></div>
+  </main>
+
+  <svg id="ghost" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="hexagon.js"></script>
+
+</body>
+</html>

@@ -116,6 +116,7 @@
       "lbl.feed.habits": "Habits",
       "lbl.feed.kanban": "Kanban",
       "lbl.feed.todo": "To-Do",
+      "lbl.feed.fitness": "Workouts",
       "feed.cycle.period": "Period",
       "feed.mood.entry": "Mood entry",
       "lbl.feed.pet": "Screen Pet",
@@ -228,6 +229,7 @@
       "lbl.feed.habits": "Συνήθειες",
       "lbl.feed.kanban": "Kanban",
       "lbl.feed.todo": "Εργασίες",
+      "lbl.feed.fitness": "Προπόνηση",
       "feed.cycle.period": "Περίοδος",
       "feed.mood.entry": "Καταγραφή διάθεσης",
       "lbl.feed.pet": "Screen Pet",
@@ -399,6 +401,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-habits",  color: "#4ec9b0" },   // teal — Habits
     { id: "lbl-feed-kanban",  color: "#7aa2f7" },   // blue — Kanban (teal taken by Habits)
     { id: "lbl-feed-todo",    color: "#e06c75" },   // red — To-Do due dates
+    { id: "lbl-feed-fitness", color: "#f28c5a" },   // orange — finished workouts
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
@@ -413,6 +416,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
+    if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     return t("lbl.feed.custom");
   }
 
@@ -1239,6 +1243,52 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Workouts read-only feed. Reads "oros-fitness-data" (written by
+  // fitness.js) and surfaces every FINISHED workout as an all-day row
+  // on its day: "Push · 18:30 · 52′". A running workout (en = 0) is
+  // left out. Feed rows are never stored, synced or exported;
+  // micro-cached ~1s like the other feeds. Corrupt/absent data
+  // yields no rows.
+  var FIT_DATA_KEY = "oros-fitness-data";
+  var fitCache = { when: 0, data: null };
+
+  function fitRaw() {
+    var now = Date.now();
+    if (now - fitCache.when > 1000) {
+      try {
+        var d = JSON.parse(localStorage.getItem(FIT_DATA_KEY));
+        fitCache.data = (d && typeof d === "object" && Array.isArray(d.wo)) ? d : null;
+      } catch (e) { fitCache.data = null; }
+      fitCache.when = now;
+    }
+    return fitCache.data;
+  }
+
+  function fitnessFeedOn(dateStr) {
+    var data = fitRaw();
+    if (!data) return [];
+    if (!labelVisible("lbl-feed-fitness")) return [];
+    var out = [];
+    data.wo.forEach(function (w) {
+      if (!w || w.d !== dateStr || typeof w.id !== "string" ||
+          !(typeof w.en === "number" && w.en > 0) || typeof w.st !== "number") return;
+      var st = new Date(w.st), mins = Math.max(0, Math.round((w.en - w.st) / 60000));
+      var hhmm = (st.getHours() < 10 ? "0" : "") + st.getHours() + ":" +
+                 (st.getMinutes() < 10 ? "0" : "") + st.getMinutes();
+      var title = (typeof w.ti === "string" && w.ti) ? w.ti : t("lbl.feed.fitness");
+      out.push({
+        id: "fit-" + w.id,                       // per-render key, never stored
+        title: (title.slice(0, 40) + " · " + hhmm + " · " + mins + "′"),
+        labelId: "lbl-feed-fitness",
+        start: null,                             // all-day
+        note: (typeof w.n === "string" ? w.n : "").slice(0, 500),
+        _feed: true,
+        _fitnessId: w.id
+      });
+    });
+    return out;
+  }
+
   // Wave 5 — Screen Pet read-only feed (pet.js v0.3). Two sources:
   //   1. "oros-pet-data" (SYNCED identity) → birthday row on every
   //      local-day anniversary of birthTs (birth day excluded) —
@@ -1412,6 +1462,7 @@ function transientNote(title, body) {
     .concat(moodFeedOn(dateStr))
     .concat(kanbanFeedOn(dateStr))
     .concat(todoFeedOn(dateStr))
+    .concat(fitnessFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
     .concat(plantsFeedOn(dateStr))
     .sort(function (a, b) {
@@ -1453,6 +1504,9 @@ function transientNote(title, body) {
       } else if (ev._plantId &&
                  typeof p.__orosOpenPlants === "function") {
         p.__orosOpenPlants(ev._plantId);
+      } else if (ev._fitnessId &&
+                 typeof p.__orosOpenFitness === "function") {
+        p.__orosOpenFitness(ev._fitnessId);
       } else if (ev._petOpen &&
                  typeof p.__orosOpenPet === "function") {
         // Screen Pet is a SHELL component — the bridge lives on the
@@ -3594,6 +3648,7 @@ function transientNote(title, body) {
     moodCache = { when: 0, data: null };
     kanbanCache = { when: 0, data: null };
     todoCache = { when: 0, data: null };
+    fitCache = { when: 0, data: null };
     petCache = { when: 0, optOut: false, petData: null, logData: null };
     renderAll();
     renderDay();          // selDate-aware (guarded when null)
