@@ -9,7 +9,7 @@
   "orientation": "any",
   "background_color": "#14120d",
   "theme_color": "#1b1a18",
-  "version": "0.47.01",
+  "version": "0.47.02",
   "icons": [
     {
       "src": "/icon.svg",
@@ -44,5 +44,11 @@
   ],
   "lang": "en",
   "dir": "ltr",
-  "categories": ["productivity", "utilities"]
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    { "name": "Notes",      "short_name": "Notes",      "url": "/?open=notes",      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "To-Do",      "short_name": "To-Do",      "url": "/?open=todo",       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Calendar",   "short_name": "Calendar",   "url": "/?open=calendar",   "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Calculator", "short_name": "Calculator", "url": "/?open=calculator", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
 }
