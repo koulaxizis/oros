@@ -142,6 +142,7 @@
     names: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5V5a1 1 0 0 1 1-1h7.5L21 13.5 13.5 21 4 11.5V7.5z"/><circle cx="8" cy="8" r="1.5"/><path d="M11 13l2 2M13 11l2 2"/></svg>',
     storage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>',
     habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>',
+    health: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/><path d="M3.5 12h4l2-3 3 6 2-3h6"/></svg>',
     zen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5" stroke-dasharray="2 2.6"/><circle cx="12" cy="12" r="10"/></svg>',
     budget: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2"/><path d="M16 8h5v8h-5a4 4 0 0 1 0-8z"/><circle cx="16.5" cy="12" r="0.6" fill="currentColor"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
@@ -813,6 +814,7 @@
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
+      tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -934,6 +936,57 @@
     if (now - minimalismLastTick < 60000) return;
     minimalismLastTick = now;
     minimalismCheckTick();
+  }
+
+  // Health — reminder times per measurement. Reads "oros-health-data"
+  // directly (works with the app CLOSED) and asks health/core.js
+  // (loaded by index.html, the SAME file the app runs) which times are
+  // due: from the time on for 4 hours, unless that reading was already
+  // taken from one hour before. One notification per kind, day and
+  // time; the key is the same on every device (inbox dedup). Hidden
+  // kinds never remind. Honest limit (alarms): orOS closed = nothing
+  // fires; a time missed by more than 4 hours is dropped, not caught up.
+  var HEALTH_DATA_KEY = "oros-health-data";
+  var HEALTH_NAMES = {
+    bp: ["Blood pressure", "Πίεση"], wt: ["Weight", "Βάρος"], gl: ["Blood sugar", "Σάκχαρο"],
+    sl: ["Sleep", "Ύπνος"], hr: ["Resting heart rate", "Σφυγμοί ηρεμίας"],
+    tp: ["Temperature", "Θερμοκρασία"], o2: ["Oxygen (SpO₂)", "Οξυγόνο (SpO₂)"]
+  };
+  function healthCheckTick() {
+    var Core = window.OrosHealthCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(HEALTH_DATA_KEY)); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.ty) || !raw.ty.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var d = Core.merge(raw, raw);
+    var due = Core.dueReminders(d, Date.now());
+    if (!due.length) return;
+    var el = state.lang === "el";
+    var title = window.t("app.health");
+    if (title === "app.health") title = "Health";       // missing-key fallback
+    due.forEach(function (r) {
+      var ty = Core.typeRow(d, r.t);
+      var name = HEALTH_NAMES[r.t] ? HEALTH_NAMES[r.t][el ? 1 : 0] : (ty ? ty.n : "");
+      var hm = (r.min < 600 ? "0" : "") + Math.floor(r.min / 60) + ":" + (r.min % 60 < 10 ? "0" : "") + (r.min % 60);
+      N.emit({
+        ns: "health",
+        key: r.key,
+        type: "reminder",
+        title: title,
+        body: (el ? "Ώρα για μέτρηση: " : "Time to measure: ") + name + " (" + hm + ")",
+        deepLink: "health:" + r.t
+      });
+    });
+  }
+
+  var healthLastTick = 0;
+  function healthCheckTickThrottled() {
+    var now = Date.now();
+    if (now - healthLastTick < 60000) return;
+    healthLastTick = now;
+    healthCheckTick();
   }
 
   // ---------- 7. PWA ----------
@@ -6713,6 +6766,26 @@
   // iframe· κλειστό → staging στο sessionStorage (device-local,
   // swept από το factory reset, δεν ταξιδεύει στο sync ποτέ) +
   // άνοιγμα app. Receiver στο minimalism.js καταναλώνει one-shot.
+  // Health deep-link bridge (pattern: Minimalism). Payload = a kind id
+  // (reminder → a new reading of that kind). Open app → live push;
+  // closed → sessionStorage staging (device-local, one-shot, consumed
+  // by health.js at boot) + open.
+  window.__orosOpenHealth = function (kind) {
+    if (typeof kind !== "string" || !/^[a-z0-9-]{1,40}$/.test(kind)) return;
+    if (state.running && state.running.id === "health") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosHealthOpen === "function") {
+          f.contentWindow.__orosHealthOpen(kind);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-health-open", kind); } catch (e) {}
+    openAppById("health");
+  };
+
   window.__orosOpenMinimalism = function (ymd) {
     if (typeof ymd !== "string" || !ymd) return;
     if (state.running && state.running.id === "minimalism") {

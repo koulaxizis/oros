@@ -185,6 +185,14 @@
       "type": "internal"
     },
     {
+      "id": "health",
+      "name": "Health",
+      "category": "Personal",
+      "icon": "health",
+      "url": "health/",
+      "type": "internal"
+    },
+    {
       "id": "budget",
       "name": "Budget",
       "category": "Personal",
