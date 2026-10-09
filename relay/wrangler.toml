@@ -5,3 +5,8 @@ compatibility_date = "2025-06-01"
 [vars]
 # Comma-separated list of pages allowed to call the relay.
 ALLOWED_ORIGINS = "https://useoros.online"
+
+# Preview versions (Cloudflare builds one per pull request). They carry
+# no data or bindings, so the same origin list is safe.
+[previews.vars]
+ALLOWED_ORIGINS = "https://useoros.online"
