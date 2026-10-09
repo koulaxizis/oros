@@ -24,7 +24,15 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, or a PDF for printing at 150 or 300 dpi.
 - `More` › `Resize…` scales the whole design to another size.
-- `More` › `Save as package (.orosdesign)` makes one file with the design and its images. `Open package` on the home screen opens it as a new design.
+- `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
+
+## Import from Canva and other files
+`Import` on the home screen opens a file as a new design:
+- An Atelier package (.orosdesign).
+- A PowerPoint file (.pptx). To bring a Canva design over, open it in Canva and choose `Share` › `Download` › `Microsoft PowerPoint`, then import that file. Texts stay editable, shapes, lines and photos come over, one page per slide.
+- A picture (PNG, JPG, WebP or SVG) becomes a design of its size.
+
+>! Some things do not come over from PowerPoint: charts, tables, video, animations and some text effects. Fonts become the closest of Atelier's fonts. The message after the import says how many elements were left out.
 - `More` › `Credits` lists the work by others your design uses.
 
 ## Sync and backup

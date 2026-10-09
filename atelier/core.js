@@ -52,7 +52,7 @@
     en: {
       "app.name": "Atelier", "loading": "Loading fonts…",
       "home.make": "What will you make?", "home.templates": "Start from a template", "home.designs": "Your designs",
-      "home.custom": "Custom size", "home.import": "Open package", "home.search": "Search designs",
+      "home.custom": "Custom size", "home.import": "Import", "home.search": "Search designs",
       "home.count": "{n} designs", "home.count1": "1 design", "home.none": "No design matches.",
       "home.empty": "Your designs will show up here. Pick a size or a template to begin.",
       "home.pages": "{n} pages", "home.pages1": "1 page",
@@ -116,7 +116,8 @@
       "exp.transparent": "Transparent background", "exp.pages": "Pages", "exp.all": "All pages", "exp.cur": "Current page",
       "exp.go": "Download", "exp.working": "Preparing your file…", "exp.done": "Saved", "exp.fail": "The file could not be made.",
       "exp.zipNote": "Each page is saved as its own file.", "exp.credits": "This design uses work by others: keep the credits with it.",
-      "pkg.done": "Package saved", "imp.done": "Design opened", "imp.bad": "This file is not an Atelier package.",
+      "pkg.done": "Package saved", "imp.done": "Design opened", "imp.bad": "This file cannot be opened. Atelier opens its own packages (.orosdesign), PowerPoint files (.pptx, for example from Canva) and pictures.",
+      "imp.working": "Importing…", "imp.partial": "Design opened. {n} elements could not be brought over (charts, tables, video or missing pictures).",
       "imp.imgFail": "{n} images could not be restored.",
       "img.fail": "This file could not be read as an image.", "img.nofs": "The orOS disk is not available on this device.",
       "img.added": "Image added", "img.missing": "Syncing…",
@@ -136,7 +137,7 @@
     el: {
       "app.name": "Ατελιέ", "loading": "Φόρτωση γραμματοσειρών…",
       "home.make": "Τι θα φτιάξεις;", "home.templates": "Ξεκίνα από πρότυπο", "home.designs": "Τα σχέδιά σου",
-      "home.custom": "Δικό σου μέγεθος", "home.import": "Άνοιγμα πακέτου", "home.search": "Αναζήτηση σχεδίων",
+      "home.custom": "Δικό σου μέγεθος", "home.import": "Εισαγωγή", "home.search": "Αναζήτηση σχεδίων",
       "home.count": "{n} σχέδια", "home.count1": "1 σχέδιο", "home.none": "Κανένα σχέδιο δεν ταιριάζει.",
       "home.empty": "Τα σχέδιά σου θα εμφανίζονται εδώ. Διάλεξε μέγεθος ή πρότυπο για να ξεκινήσεις.",
       "home.pages": "{n} σελίδες", "home.pages1": "1 σελίδα",
@@ -200,7 +201,8 @@
       "exp.transparent": "Διάφανο φόντο", "exp.pages": "Σελίδες", "exp.all": "Όλες οι σελίδες", "exp.cur": "Τρέχουσα σελίδα",
       "exp.go": "Λήψη", "exp.working": "Ετοιμάζω το αρχείο σου…", "exp.done": "Αποθηκεύτηκε", "exp.fail": "Το αρχείο δεν μπόρεσε να φτιαχτεί.",
       "exp.zipNote": "Κάθε σελίδα αποθηκεύεται ως ξεχωριστό αρχείο.", "exp.credits": "Το σχέδιο χρησιμοποιεί έργα άλλων: κράτα τις αναφορές μαζί του.",
-      "pkg.done": "Το πακέτο αποθηκεύτηκε", "imp.done": "Το σχέδιο άνοιξε", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο του Ατελιέ.",
+      "pkg.done": "Το πακέτο αποθηκεύτηκε", "imp.done": "Το σχέδιο άνοιξε", "imp.bad": "Αυτό το αρχείο δεν ανοίγει. Το Ατελιέ ανοίγει τα δικά του πακέτα (.orosdesign), αρχεία PowerPoint (.pptx, π.χ. από το Canva) και εικόνες.",
+      "imp.working": "Εισαγωγή…", "imp.partial": "Το σχέδιο άνοιξε. {n} στοιχεία δεν μεταφέρθηκαν (γραφήματα, πίνακες, βίντεο ή εικόνες που λείπουν).",
       "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
       "img.fail": "Αυτό το αρχείο δεν διαβάζεται ως εικόνα.", "img.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος σε αυτή τη συσκευή.",
       "img.added": "Η εικόνα προστέθηκε", "img.missing": "Συγχρονίζεται…",
@@ -1010,7 +1012,7 @@
 
   function wireHome() {
     $("btn-custom").addEventListener("click", customSize);
-    $("btn-import").addEventListener("click", function () { AT.io.importPackage(); });
+    $("btn-import").addEventListener("click", function () { AT.io.importAny(); });
     $("home-search").addEventListener("input", renderHome);
     // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {
