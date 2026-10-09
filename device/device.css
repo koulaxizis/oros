@@ -1,0 +1,274 @@
+/* ============================================================
+   orOS Device Info — App stylesheet
+   Inherits the shell palette (inheritPalette + watchPalette).
+   Cards and toast follow the Password Generator.
+   Sections:
+     1. Palette fallback + reset
+     2. Toolbar
+     3. Layout + cards
+     4. Rows, bars, badges
+     5. App list
+     6. Toast
+     7. Mobile + reduced motion
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+  --ok:           #3fb97f;
+  --warn:         #e5a23a;
+}
+html[data-theme="light"] {
+  --ok:   #1f8f5a;
+  --warn: #b7700f;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font-family: inherit; color: inherit; font-size: 15px; cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.4; }
+button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.hint { color: var(--text-dim); font-size: 13px; line-height: 1.45; }
+
+/* ---------- 2. Toolbar ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.act {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.act:hover:not(:disabled) { border-color: var(--accent); }
+.act.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+.act.primary:hover:not(:disabled) { background: var(--accent-hover); }
+.act.icon { width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+#copy-btn .short { display: none; }
+.act.small { min-height: 36px; padding: 0 12px; font-size: 14px; margin-top: 8px; }
+
+/* ---------- 3. Layout + cards ---------- */
+#main {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+#grid {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  min-width: 0;
+}
+.card > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.card > summary::-webkit-details-marker { display: none; }
+.card > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex: 0 0 auto;
+}
+.card[open] > summary::after { transform: rotate(225deg); }
+.card h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.card .body { padding: 0 14px 14px; }
+#about { max-width: 1040px; margin: 14px auto 0; text-align: center; }
+
+/* ---------- 4. Rows, bars, badges ---------- */
+.kv { width: 100%; border-collapse: collapse; font-size: 14px; }
+.kv th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--text-dim);
+  padding: 7px 10px 7px 0;
+  vertical-align: top;
+}
+.kv td {
+  text-align: right;
+  font-weight: 700;
+  padding: 7px 0;
+  overflow-wrap: anywhere;
+}
+.kv tr + tr th, .kv tr + tr td { border-top: 1px solid var(--border); }
+.big { font-size: 24px; font-weight: 800; line-height: 1.2; }
+.big small { display: block; font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.bar.warn > span { background: var(--warn); }
+.bar.bad > span { background: var(--danger); }
+.note {
+  font-size: 13px;
+  line-height: 1.45;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  background: var(--accent-soft);
+}
+.note.bad { border: 1px solid var(--danger); }
+.ok { color: var(--ok); }
+.bad { color: var(--danger); }
+.warn-t { color: var(--warn); }
+.feat { list-style: none; font-size: 14px; }
+.feat li {
+  display: flex;
+  gap: 10px;
+  padding: 7px 0;
+  align-items: flex-start;
+}
+.feat li + li { border-top: 1px solid var(--border); }
+.feat .mark { flex: 0 0 18px; font-weight: 800; text-align: center; }
+.feat .txt { flex: 1 1 auto; min-width: 0; }
+.feat .sub { display: block; color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+
+/* ---------- 5. App list ---------- */
+.apps { list-style: none; margin-top: 6px; }
+.apps li + li { border-top: 1px solid var(--border); }
+.app-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+}
+button.app-row:hover .app-name { color: var(--accent); }
+.app-name { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-size { font-weight: 700; white-space: nowrap; }
+.app-row .bar { grid-column: 1 / -1; margin: 2px 0 0; height: 5px; border: none; }
+.more { margin-top: 6px; }
+
+/* ---------- 6. Toast ---------- */
+#toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ---------- 7. Mobile + reduced motion ---------- */
+@media (max-width: 420px) {
+  #toolbar { padding-left: 10px; padding-right: 10px; gap: 6px; }
+  #main { padding-left: 10px; padding-right: 10px; }
+  .act { padding: 0 10px; font-size: 14px; }
+  #copy-btn .long { display: none; }
+  #copy-btn .short { display: inline; }
+  .card > summary { padding: 0 12px; }
+  .card .body { padding: 0 12px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card > summary::after, #toast, #toast.show { transition: none; }
+}
+
+[hidden] { display: none !important; }

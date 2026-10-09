@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Baby · orOS</title>
+
+  <link rel="stylesheet" href="baby.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="kid-btn" id="kid-btn">
+      <i class="kid-dot" id="kid-dot"></i>
+      <span class="kid-txt"><span id="kid-name"></span><span id="kid-age"></span></span>
+    </button>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="night-btn" aria-pressed="false"></button>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="view">
+    <!-- No child yet -->
+    <section id="welcome" class="pane" hidden>
+      <div class="welcome-box">
+        <div class="welcome-ico" id="welcome-ico" aria-hidden="true"></div>
+        <h1 data-i18n="wel.title">Baby</h1>
+        <p data-i18n="wel.text">Feeds, sleep, nappies, growth and milestones, on all your devices.</p>
+        <button type="button" class="big-btn" id="welcome-add" data-i18n="wel.add">Add your baby</button>
+      </div>
+    </section>
+
+    <!-- Today -->
+    <section id="tab-today" class="pane" hidden>
+      <div id="timers"></div>
+      <div id="since" class="since"></div>
+      <div id="quick" class="quick"></div>
+      <section class="sec">
+        <h2 data-i18n="sec.today">Today</h2>
+        <div id="today-tot" class="stats"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.log">Log</h2>
+          <span class="spacer"></span>
+          <span id="today-count" class="count"></span>
+        </div>
+        <ol id="today-list" class="evlist"></ol>
+        <p class="hint" id="today-empty" data-i18n="log.empty">Nothing yet today. Use the buttons above.</p>
+      </section>
+    </section>
+
+    <!-- History -->
+    <section id="tab-hist" class="pane" hidden>
+      <div class="day-nav">
+        <button type="button" class="icon-btn" id="prev-btn"></button>
+        <button type="button" class="day-btn" id="day-btn"></button>
+        <button type="button" class="icon-btn" id="next-btn"></button>
+      </div>
+      <div id="hist-tot" class="stats"></div>
+      <section class="sec">
+        <h2 data-i18n="sec.day">Entries</h2>
+        <ol id="hist-list" class="evlist"></ol>
+        <p class="hint" id="hist-empty" data-i18n="log.none">Nothing logged on this day.</p>
+      </section>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.week">Last 7 days</h2>
+          <span class="spacer"></span>
+          <div id="week-pick" class="seg small" role="group"></div>
+        </div>
+        <div id="week" class="bars"></div>
+      </section>
+      <section class="sec">
+        <h2 data-i18n="sec.pattern">24-hour pattern</h2>
+        <div id="pattern" class="pattern"></div>
+        <div class="legend" id="pattern-legend"></div>
+      </section>
+    </section>
+
+    <!-- Growth -->
+    <section id="tab-growth" class="pane" hidden>
+      <button type="button" class="big-btn" id="gr-add" data-i18n="gr.add">Add measurement</button>
+      <div id="charts"></div>
+      <section class="sec">
+        <h2 data-i18n="sec.measures">Measurements</h2>
+        <ol id="gr-list" class="evlist"></ol>
+        <p class="hint" id="gr-empty" data-i18n="gr.empty">No measurements yet.</p>
+      </section>
+      <p class="hint note" data-i18n="gr.note">Your own measurements only, not compared with growth standards. Not medical advice: ask your paediatrician.</p>
+    </section>
+
+    <!-- Milestones + health -->
+    <section id="tab-marks" class="pane" hidden>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.ms">Milestones</h2>
+          <span class="spacer"></span>
+          <button type="button" class="txt-btn" id="ms-add" data-i18n="mk.addMs">Add</button>
+        </div>
+        <ol id="ms-list" class="mslist"></ol>
+      </section>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.vac">Vaccines</h2>
+          <span class="spacer"></span>
+          <button type="button" class="txt-btn" id="vac-add" data-i18n="mk.add">Add</button>
+        </div>
+        <ol id="vac-list" class="evlist"></ol>
+        <p class="hint" id="vac-empty" data-i18n="mk.emptyVac">No vaccines recorded.</p>
+      </section>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.doc">Doctor visits</h2>
+          <span class="spacer"></span>
+          <button type="button" class="txt-btn" id="doc-add" data-i18n="mk.add">Add</button>
+        </div>
+        <ol id="doc-list" class="evlist"></ol>
+        <p class="hint" id="doc-empty" data-i18n="mk.emptyDoc">No visits recorded.</p>
+      </section>
+    </section>
+  </main>
+
+  <nav id="nav"></nav>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="baby.js?v=0.46.00"></script>
+
+</body>
+</html>

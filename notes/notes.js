@@ -2981,6 +2981,30 @@
   initSplitter();
   watchPalette();
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { page, nb }. Switches to the page's notebook, opens its
+  // ancestors in the tree and selects it. Unknown page → no-op.
+  function openSearchTarget(t) {
+    var p = t && typeof t.page === "string" ? pageById(t.page) : null;
+    if (!p) return;
+    if (p.nb && p.nb !== prefs.currentNb) prefs.currentNb = p.nb;
+    var up = p.parent, guard = 0;
+    while (up && guard++ < 100) {
+      prefs.open[up] = true;
+      var pp = pageById(up);
+      up = pp ? pp.parent : null;
+    }
+    selectPage(p.id);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("notes");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
+
   // Console debugging handle (Lesson 4 culture)
   window.__notesDebug = {
     version: APP_VERSION,
