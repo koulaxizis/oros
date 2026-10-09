@@ -584,7 +584,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **FS:** oros-fs-*.
 - **Pet:** oros-pet-enabled, oros-pet-pos, oros-pet-minimized, oros-pet-calendar-sync (read-only legacy mirror of oros-pet-settings).
 - **Radio:** oros-radio-recents, oros-radio-cache:*.
-- **Calendar:** oros-cal-reminders-fired, oros-cal-pending (event deep links `calendar:{evId}:{ymd}`). **[log]** sessionStorage `oros-cal-new` (new-event prefill, BR-W8-2).
+- **Calendar:** oros-cal-reminders-fired, oros-cal-feedvis (on/off of the Holidays / Name days / World days chips, device-local), oros-cal-days (weekly cache of calendar/days.json, device-local), oros-cal-pending (event deep links `calendar:{evId}:{ymd}`). **[log]** sessionStorage `oros-cal-new` (new-event prefill, BR-W8-2).
 - **Maps [log]:** oros-maps-route (last-known route snapshot), oros-maps-rescue (copy of an unreadable oros-maps-data), oros-maps-prefs (`{ lat, lon, zoom, layer }`, R10 view state), oros-maps-open (staging), oros-maps-recent (up to 10 recent places `{ name, sub, lat, lon }`, newest first, since 0.43.00). sessionStorage `oros-maps-nav` (timestamp of a running navigation, refreshed every 30 s, removed on exit / arrival / clear route). Cache Storage `oros-map-tiles` (deleted by the factory reset since Dose 2).
 - **Television [log]:** oros-television-recents (cap 20), oros-television-volume. sessionStorage `oros-television-open` (staging). Cache Storage `oros-television-api` (24 h TTL).
 - **Mail [log]:** oros-mail-creds (account passwords; "never synced, never exported" per its note; removed by the factory-reset sweep like every `oros-` key).
@@ -1514,6 +1514,12 @@ Rebuild this in any session where code is delivered.
 - **R33 scope limits:** OS drag & drop, clipboard paste, and the shell backup-folder subsystem (§5d).
 
 ---
+
+### Calendar: name days, holidays, world days (0.47.00)
+- Inside the Calendar, not a separate app (Chris 2026-10-09). Three read-only chips: Holidays (Greek public holidays), Name days (day-view line + one row per contact whose first name celebrates, click → Contacts), World days (observances).
+- `calendar/namedays.js` is pure (Orthodox Easter by Meeus, fixed + movable feasts, George/Mark moved after Easter, Greek/Greeklish name skeletons, `cleanDays` sanitizer). Name list is hand-written from the church calendar; nicknames prefixed `~` match but are not shown. Add names there.
+- `calendar/days.json` = observance RULES (`md`, `nth`, `easter`, `doy`). Updating it needs no app release: the Calendar fetches `days.json?w=<week>` at most weekly, sanitizes, caches in `oros-cal-days`; the SW precache is the offline fallback. Plain text only (textContent), max 80 chars, unknown rules dropped.
+- Nothing is stored in `oros-calendar-data`: no sync impact, no reminders.
 
 ## Part X — Open items, audit queue, lessons
 
