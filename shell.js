@@ -157,6 +157,7 @@
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
+    garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
     baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
@@ -814,6 +815,7 @@
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
     }
@@ -988,6 +990,72 @@
     if (now - healthLastTick < 60000) return;
     healthLastTick = now;
     healthCheckTick();
+  }
+
+  // Garage — renewals (KTEO, insurance, road tax…), service plans and
+  // tyres. Reads "oros-garage-data" directly (works with the app
+  // CLOSED) and asks garage/core.js (loaded by index.html, the SAME
+  // file the app runs) what needs attention. Each alert is announced
+  // once per step (30 → 7 → 1 day → expired; service soon → due):
+  // device-local "oros-garage-notified" = { alertKey: lowest step
+  // announced }. One grouped notification at most per tick, from the
+  // reminder hour on (oros-garage-prefs, default 09:00, -1 = off).
+  // SH-B7: no vehicles → silent. Honest limit (alarms): orOS closed =
+  // nothing fires; the next boot catches up.
+  var GARAGE_DATA_KEY = "oros-garage-data";
+  var GARAGE_NOTIFIED_KEY = "oros-garage-notified";
+  function garageCheckTick() {
+    var Core = window.OrosGarageCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      raw = JSON.parse(localStorage.getItem(GARAGE_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-garage-prefs")));
+      notified = JSON.parse(localStorage.getItem(GARAGE_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.vehicles) || !raw.vehicles.length) return;
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (!notified || typeof notified !== "object") notified = {};
+    var today = sysYmd();
+    var data = Core.merge(raw, raw);
+    var all = Core.alerts(data, today, prefs);
+    var fresh = Core.toNotify(all, notified);
+    // keep the map small: only keys of alerts that still exist
+    var next = {};
+    all.forEach(function (a) { if (Object.prototype.hasOwnProperty.call(notified, a.key)) next[a.key] = notified[a.key]; });
+    fresh.forEach(function (a) { next[a.key] = a.step; });
+    try { localStorage.setItem(GARAGE_NOTIFIED_KEY, JSON.stringify(next)); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return Core.alertLine(a, data, lang); });
+    if (fresh.length > 3) lines.push(lang === "el" ? "και " + (fresh.length - 3) + " ακόμα" : "and " + (fresh.length - 3) + " more");
+    var title = window.t("app.garage");
+    if (title === "app.garage") title = "Garage";      // missing-key fallback
+    N.emit({
+      ns: "garage",
+      key: "alerts-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" · "),
+      deepLink: "garage:upcoming"
+    });
+  }
+
+  // Short stable hash (djb2) so the dedup key names exactly this set.
+  function garageHash(str) {
+    var h = 5381;
+    for (var i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+
+  var garageLastTick = 0;
+  function garageCheckTickThrottled() {
+    var now = Date.now();
+    if (now - garageLastTick < 60000) return;
+    garageLastTick = now;
+    garageCheckTick();
   }
 
   // ---------- 7. PWA ----------
@@ -6806,6 +6874,27 @@
   // Consumed by minimalism.js at boot — one-shot take (ίδιο μάθημα
   // με todo/quote: αν το receiver λείπει από το app, το pending
   // ymd απλά αγνοείται — τίποτα δεν σπάει).
+  // Garage deep-link bridge (pattern: Plant Care). Payload =
+  // "upcoming" (reminder) or a renewal / plan / tyre / vehicle id
+  // (Calendar feed row). Open app → live push; closed →
+  // sessionStorage staging (device-local, one-shot, consumed by
+  // garage.js at boot) + open.
+  window.__orosOpenGarage = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "garage") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosGarageOpen === "function") {
+          f.contentWindow.__orosGarageOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-garage-open", target); } catch (e) {}
+    openAppById("garage");
+  };
+
   window.__orosMinimalismTakePending = function () {
     try {
       var pending = sessionStorage.getItem("oros-minimalism-open");
