@@ -130,6 +130,14 @@
       "type": "internal"
     },
     {
+      "id": "names",
+      "name": "Name Generator",
+      "category": "Creativity",
+      "icon": "names",
+      "url": "names/",
+      "type": "internal"
+    },
+    {
       "id": "wallpaper",
       "name": "Wallpaper Generator",
       "category": "Creativity",
@@ -319,6 +327,14 @@
       "category": "Games",
       "icon": "g2048",
       "url": "g2048/",
+      "type": "internal"
+    },
+    {
+      "id": "wordle",
+      "name": "Wordle",
+      "category": "Games",
+      "icon": "wordle",
+      "url": "wordle/",
       "type": "internal"
     }
   ]
