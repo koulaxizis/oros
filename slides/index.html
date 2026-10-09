@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Slides · orOS</title>
+
+  <link rel="stylesheet" href="slides.css?v=0.47.03">
+
+</head>
+<body>
+
+  <!-- ===== Home: the presentation list ===== -->
+  <section id="home">
+    <header class="bar">
+      <div class="title">
+        <span class="title-main" data-i18n="app.name">Slides</span>
+        <span class="title-sub" id="home-sub"></span>
+      </div>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="btn-import" data-i18n="home.import">Open package</button>
+      <button type="button" class="btn primary" id="btn-new" data-i18n="home.new">New presentation</button>
+    </header>
+    <div class="home-tools" id="home-tools" hidden>
+      <input type="search" id="home-search" class="inp" autocomplete="off" spellcheck="false">
+    </div>
+    <div id="decks" class="docs"></div>
+    <div id="home-empty" class="empty" hidden>
+      <p class="empty-title" data-i18n="home.empty.title">No presentations yet</p>
+      <p class="empty-sub" data-i18n="home.empty.sub">Start from a theme or a ready template, write in the outline, present full screen.</p>
+      <button type="button" class="btn primary" id="btn-new2" data-i18n="home.new">New presentation</button>
+    </div>
+  </section>
+
+  <!-- ===== Editor ===== -->
+  <section id="editor" hidden>
+    <header class="bar" id="ed-bar">
+      <button type="button" class="icon-btn" id="ed-back"></button>
+      <button type="button" class="doc-name" id="ed-name"></button>
+      <span class="spacer"></span>
+      <div class="bar-group" id="ed-actions">
+        <button type="button" class="icon-btn" id="ed-undo"></button>
+        <button type="button" class="icon-btn" id="ed-redo"></button>
+        <span class="sep"></span>
+        <div class="seg view-seg" id="ed-views" role="tablist"></div>
+        <span class="sep"></span>
+        <button type="button" class="icon-btn" id="ed-more"></button>
+        <button type="button" class="btn primary small" id="ed-play"></button>
+      </div>
+    </header>
+
+    <div id="work">
+      <nav id="strip" aria-label="Slides"></nav>
+      <div id="center">
+        <div id="tools" role="toolbar"></div>
+        <div id="stage">
+          <canvas id="cv"></canvas>
+          <div id="ov"></div>
+        </div>
+        <div id="notes-wrap">
+          <button type="button" class="notes-head" id="notes-toggle"></button>
+          <textarea id="notes" class="notes" spellcheck="true"></textarea>
+        </div>
+      </div>
+      <aside id="side">
+        <header class="side-head">
+          <span class="side-title" id="side-title"></span>
+          <span class="spacer"></span>
+          <button type="button" class="icon-btn" id="side-close"></button>
+        </header>
+        <div id="side-body"></div>
+      </aside>
+      <section id="sorter" hidden></section>
+      <section id="outline" hidden>
+        <div class="outline-head">
+          <p class="hint" id="outline-hint"></p>
+        </div>
+        <textarea id="outline-ed" class="outline-ed" spellcheck="true"></textarea>
+      </section>
+    </div>
+  </section>
+
+  <div id="menu" class="menu" role="menu" hidden></div>
+  <dialog id="dlg" class="dlg"></dialog>
+  <div id="loading" class="loading"><span data-i18n="loading">Loading fonts…</span></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../designkit/model.js?v=0.47.03"></script>
+  <script src="../designkit/text.js?v=0.47.03"></script>
+  <script src="../designkit/render.js?v=0.47.03"></script>
+  <script src="../designkit/pdf.js?v=0.47.03"></script>
+  <script src="../designkit/assets.js?v=0.47.03"></script>
+  <script src="../designkit/show.js?v=0.47.03"></script>
+  <script src="core.js?v=0.47.03"></script>
+  <script src="dk.js?v=0.47.03"></script>
+  <script src="app.js?v=0.47.03"></script>
+  <script src="editor.js?v=0.47.03"></script>
+  <script src="text.js?v=0.47.03"></script>
+  <script src="panels.js?v=0.47.03"></script>
+  <script src="io.js?v=0.47.03"></script>
+
+</body>
+</html>

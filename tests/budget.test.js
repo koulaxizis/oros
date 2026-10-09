@@ -25,7 +25,7 @@ const B = new Function(
   block("  // ---------- 2. Money", "  // ---------- 6. Storage") +
   "\nreturn { MAX_CENTS, parseAmount, centsToInput, centsPlain, parseYmd, daysIn, addDays, mkAdd, weekday," +
   " occurrences, recTxId, SEEDS, SEED_NAMES, normTx, normCat, normRec, mergeBudget, emptyData, categoryList," +
-  " totals, monthSeries, limitState, dueRecurring, csvCell, buildCsv };")();
+  " totals, monthSeries, limitState, dueRecurring, csvCell, buildCsv, normPrefill };")();
 
 const canon = (x) => JSON.stringify(x);
 function tx(id, m, extra) { return Object.assign({ id, m, d: "2026-10-08", a: 1250, k: "o", c: "o-groc", n: "" }, extra || {}); }
@@ -272,4 +272,26 @@ test("CSV: Greek Excel and standard formats, quoting, no formula injection", () 
   assert.ok(std.includes("Salary; main,2000.00"));
   ["=1", "+1", "-1", "@a", "\tx"].forEach((s) => assert.equal(B.csvCell(s, ",")[0] === "'" || B.csvCell(s, ",")[1] === "'", true, s));
   assert.equal(B.csvCell("plain", ","), "plain");
+});
+
+// ---------- "Send to Budget" prefill (BR-B1) ----------
+test("send to Budget: a prefill is strict on kind, amount and date", () => {
+  assert.deepEqual(B.normPrefill({ k: "o", a: 4590, d: "2026-10-09", n: "  Service:\n oil ", c: "o-trans", src: "garage" }),
+    { k: "o", a: 4590, d: "2026-10-09", n: "Service: oil", c: "o-trans", src: "garage" });
+  assert.deepEqual(B.normPrefill({ k: "i", a: 1 }), { k: "i", a: 1, d: "", n: "", c: "", src: "" });
+  [null, "x", 5, {}, { k: "x", a: 100 }, { k: "o" }, { k: "o", a: 0 }, { k: "o", a: -5 }, { k: "o", a: 12.5 },
+   { k: "o", a: "100" }, { k: "o", a: B.MAX_CENTS + 1 }, { k: "o", a: 100, d: "2026-02-30" },
+   { k: "o", a: 100, d: "9/10/2026" }, { k: "o", a: 100, d: 20261009 }]
+    .forEach((p) => assert.equal(B.normPrefill(p), null, JSON.stringify(p)));
+  assert.equal(B.normPrefill({ k: "o", a: B.MAX_CENTS }).a, B.MAX_CENTS);
+});
+
+test("send to Budget: optional parts are cleaned, never trusted", () => {
+  const q = B.normPrefill({ k: "o", a: 100, n: "x".repeat(300), c: "<b>", src: "Garage!" });
+  assert.equal(q.n.length, 140);
+  assert.equal(q.c, "");
+  assert.equal(q.src, "");
+  assert.equal(B.normPrefill({ k: "o", a: 100, n: 7, c: 7, src: 7 }).n, "");
+  assert.equal(B.normPrefill({ k: "o", a: 100, src: "a".repeat(21) }).src, "");
+  assert.equal(B.normPrefill({ k: "o", a: 100, d: null }).d, "");
 });

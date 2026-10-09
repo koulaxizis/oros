@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Television</title>
-  <link rel="stylesheet" href="television.css?v=0.46.00">
+  <link rel="stylesheet" href="television.css?v=0.47.03">
   <!-- hls.js: STATIC tag, requested unversioned so the sw.js precache
        entry matches (Part II sw.js contract: dynamically loaded
        assets must be requested WITHOUT a query string). -->
-  <script src="../vendor/hls.light.min.js?v=0.46.00"></script>
-  <script src="television.js?v=0.46.00" defer></script>
+  <script src="../vendor/hls.light.min.js?v=0.47.03"></script>
+  <script src="television.js?v=0.47.03" defer></script>
 </head>
 <body>
   <div id="tv-app">
@@ -26,9 +26,9 @@
           <input id="tv-search" type="search" autocomplete="off" spellcheck="false">
           <div id="tv-ac" hidden></div>
         </div>
-        <select id="tv-country"></select>
-        <select id="tv-category"></select>
-        <select id="tv-lang"></select>
+        <label class="tv-filter"><span class="tv-filter-cap" id="tv-country-cap"></span><select id="tv-country"></select></label>
+        <label class="tv-filter"><span class="tv-filter-cap" id="tv-category-cap"></span><select id="tv-category"></select></label>
+        <label class="tv-filter"><span class="tv-filter-cap" id="tv-lang-cap"></span><select id="tv-lang"></select></label>
       </div>
     </header>
 
