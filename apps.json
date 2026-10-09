@@ -233,6 +233,14 @@
       "type": "internal"
     },
     {
+      "id": "petcare",
+      "name": "Pet Health Book",
+      "category": "Personal",
+      "icon": "petcare",
+      "url": "petcare/",
+      "type": "internal"
+    },
+    {
       "id": "baby",
       "name": "Baby",
       "category": "Personal",

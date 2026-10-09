@@ -160,6 +160,7 @@
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
     wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
     baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
     travel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M8 7v13M16 7v13"/></svg>',
@@ -819,6 +820,7 @@
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
+      tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
@@ -1058,6 +1060,86 @@
     if (now - garageLastTick < 60000) return;
     garageLastTick = now;
     garageCheckTick();
+  }
+
+  // Pet Health Book — daily reminder. Reads "oros-petcare-data"
+  // directly (works with the app CLOSED) and asks petcare/core.js
+  // (loaded by index.html, the SAME file the app runs) what to
+  // announce: each due date once ahead (device-local "days before",
+  // default 7; food 5; routine care and the end of a medicine course
+  // on the day), once when due, again weekly while overdue. The
+  // device-local map oros-petcare-fired remembers what was said, so
+  // nothing repeats daily. One grouped notification per batch, from
+  // the device-local hour on (oros-petcare-prefs, default 09:00,
+  // -1 = off). SH-B7: no pets → silent.
+  // Honest limit (alarms): orOS closed = nothing fires; it comes at
+  // the next open.
+  var PETCARE_DATA_KEY = "oros-petcare-data";
+  var PETCARE_FIRED_KEY = "oros-petcare-fired";
+  function petcareCheckTick() {
+    var Core = window.OrosPetcareCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, fired;
+    try {
+      raw = JSON.parse(localStorage.getItem(PETCARE_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-petcare-prefs")));
+      fired = JSON.parse(localStorage.getItem(PETCARE_FIRED_KEY) || "{}");
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.pets) || !raw.pets.length) return;
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;
+    try { if (!N.getState().ready) return; } catch (e) { return; }
+    var today = sysYmd();
+    var res = Core.reminders(Core.merge(raw, raw), today, prefs.lead, fired);
+    var same = JSON.stringify(res.fired) === JSON.stringify(fired);
+    if (!same) { try { localStorage.setItem(PETCARE_FIRED_KEY, JSON.stringify(res.fired)); } catch (e) {} }
+    if (!res.items.length) return;
+    var el = state.lang === "el";
+    var CARE = el
+      ? { bath: "μπάνιο", nails: "νύχια", brush: "βούρτσισμα", teeth: "δόντια", ears: "αυτιά", litter: "άμμος", cage: "κλουβί", tank: "ενυδρείο" }
+      : { bath: "bath", nails: "nail trim", brush: "brushing", teeth: "teeth", ears: "ears", litter: "litter", cage: "cage", tank: "tank" };
+    function what(it) {
+      if (it.kind === "vacc") return it.label;
+      if (it.kind === "deworm") return el ? "αποπαρασίτωση" : "deworming";
+      if (it.kind === "visit") return el ? "επανεξέταση" : "recheck";
+      if (it.kind === "med") return (el ? "τέλος: " : "last day: ") + it.label;
+      if (it.kind === "care") return CARE[it.sub] || it.sub;
+      return el ? "τελειώνει η τροφή" : "food runs out";
+    }
+    function when(d) {
+      if (d === 0) return el ? "σήμερα" : "today";
+      if (d === 1) return el ? "αύριο" : "tomorrow";
+      if (d > 1) return el ? "σε " + d + " μέρες" : "in " + d + " days";
+      return el ? (-d) + (d === -1 ? " μέρα πίσω" : " μέρες πίσω") : (-d) + (d === -1 ? " day late" : " days late");
+    }
+    var parts = res.items.slice(0, 4).map(function (it) {
+      return it.pet.name + ": " + what(it) + " " + when(it.diff);
+    });
+    if (res.items.length > 4) parts.push(el ? "και " + (res.items.length - 4) + " ακόμα" : "and " + (res.items.length - 4) + " more");
+    var title = window.t("app.petcare");
+    if (title === "app.petcare") title = "Pet Health Book";   // missing-key fallback
+    // Key = today + what this batch says: a second batch the same day
+    // (a new due date) still shows; two devices saying the same thing
+    // dedupe through the synced inbox.
+    var sig = res.items.map(function (it) { return it.key + "@" + it.due; }).join("|"), h = 0;
+    for (var i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+    N.emit({
+      ns: "petcare",
+      key: "due-" + today + "-" + (h >>> 0).toString(36),
+      type: "reminder",
+      title: title,
+      body: parts.join(" · "),
+      deepLink: "petcare:today"
+    });
+  }
+
+  var petcareLastTick = 0;
+  function petcareCheckTickThrottled() {
+    var now = Date.now();
+    if (now - petcareLastTick < 60000) return;
+    petcareLastTick = now;
+    petcareCheckTick();
   }
 
   // ---------- 7. PWA ----------
@@ -6895,6 +6977,26 @@
     }
     try { sessionStorage.setItem("oros-garage-open", target); } catch (e) {}
     openAppById("garage");
+  };
+
+  // Pet Health Book deep-link bridge (pattern: Minimalism). Payload =
+  // "today" (reminder) or a pet id (Calendar feed row). Open app →
+  // live push; closed → sessionStorage staging (device-local, one-
+  // shot, consumed by petcare.js at boot) + open.
+  window.__orosOpenPetcare = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "petcare") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPetcareOpen === "function") {
+          f.contentWindow.__orosPetcareOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-petcare-open", target); } catch (e) {}
+    openAppById("petcare");
   };
 
   window.__orosMinimalismTakePending = function () {
