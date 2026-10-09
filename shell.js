@@ -151,6 +151,7 @@
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+    plants: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14h12l-1.6 7H7.6z"/><path d="M12 14V9"/><path d="M12 9c0-3 2-5.5 6-5.5 0 3.5-2 5.5-6 5.5z"/><path d="M12 11c0-2.5-1.8-4-5-4 0 3 1.8 4 5 4z"/></svg>',
     familytree: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M5 17v-5h14v5"/></svg>',
     contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>',
     bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>',
@@ -782,6 +783,7 @@
   }
   
     // ---------- 6. Clock (24h) ----------
+      tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
   function renderClock() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
@@ -1145,6 +1147,67 @@
     if (now - petcareLastTick < 60000) return;
     petcareLastTick = now;
     petcareCheckTick();
+  }
+
+  // Plant Care — daily watering reminder. Reads "oros-plants-data"
+  // directly (works with the app CLOSED) and asks plants/core.js
+  // (loaded by index.html, the SAME file the app runs) what is due
+  // today or late: one grouped notification per day, from the
+  // device-local reminder hour on (oros-plants-prefs, default 09:00,
+  // -1 = off). Weather: a rain hint for outdoor plants from the
+  // Weather app's cache, no network. SH-B7: no plants → silent.
+  // Honest limit (alarms): orOS closed = nothing fires; the inbox
+  // catch-up runs at the next boot.
+  var PLANTS_DATA_KEY = "oros-plants-data";
+  function plantsCheckTick() {
+    var Core = window.OrosPlantsCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs;
+    try {
+      raw = JSON.parse(localStorage.getItem(PLANTS_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-plants-prefs")));
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.plants) || !raw.plants.length) return;
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var today = sysYmd();
+    var sum = Core.summary(Core.merge(raw, raw), today, prefs.hemi);
+    if (!sum.n) return;
+    var el = state.lang === "el";
+    var names = sum.names.slice(0, 3).join(", ");
+    if (sum.names.length > 3) names += el ? " και " + (sum.names.length - 3) + " ακόμα"
+                                          : " and " + (sum.names.length - 3) + " more";
+    var body = (el ? (sum.names.length === 1 ? "Θέλει φροντίδα: " : "Θέλουν φροντίδα: ")
+                   : (sum.names.length === 1 ? "Needs care: " : "Need care: ")) + names;
+    if (sum.outWater) {
+      var wx = null;
+      try {
+        wx = Core.weather(JSON.parse(localStorage.getItem("oros-weatherapp-data")),
+                          JSON.parse(localStorage.getItem("oros-weatherapp-cache")),
+                          wxRead(), today, Date.now());
+      } catch (e) {}
+      if (wx && wx.rain) body += el ? ". Βροχή σήμερα: τα εξωτερικά ίσως δεν θέλουν πότισμα."
+                                    : ". Rain today: outdoor plants may not need water.";
+    }
+    var title = window.t("app.plants");
+    if (title === "app.plants") title = "Plant Care";    // missing-key fallback
+    N.emit({
+      ns: "plants",
+      key: "due-" + today,
+      type: "reminder",
+      title: title,
+      body: body,
+      deepLink: "plants:today"
+    });
+  }
+
+  var plantsLastTick = 0;
+  function plantsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - plantsLastTick < 60000) return;
+    plantsLastTick = now;
+    plantsCheckTick();
   }
 
   // ---------- 7. PWA ----------
@@ -6334,6 +6397,26 @@
 
     var host = window.__orosRadioHost;
     if (!host || !host.audio || !host.api ||
+  // Plant Care deep-link bridge (pattern: Minimalism). Payload =
+  // "today" (reminder) or a plant id (Calendar feed row). Open app →
+  // live push; closed → sessionStorage staging (device-local, one-
+  // shot, consumed by plants.js at boot) + open.
+  window.__orosOpenPlants = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "plants") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPlantsOpen === "function") {
+          f.contentWindow.__orosPlantsOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-plants-open", target); } catch (e) {}
+    openAppById("plants");
+  };
+
         typeof host.api.getState !== "function") return;
     rxTrayWireDoc();
 
