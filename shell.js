@@ -3438,9 +3438,194 @@
     else box.appendChild(sec);
   }
 
+  // ---------- Credits & licences (Info modal) ----------
+  // Every third-party piece orOS ships or calls, with its licence and
+  // a link: libraries, fonts, data sets, online services, hosting.
+  // Same register as CREDITS.md at the repo root and the "Credits
+  // register" in OROS_BIBLE.md: a new dependency or service updates
+  // all three. Built with createElement/textContent only; every URL
+  // below is a fixed constant (never data from a service or a user).
+  // i18n: inline EN/EL via supT(), same doctrine as the Support box.
+  var CREDIT_GROUPS = [
+    {
+      en: "Libraries (bundled, run on your device)",
+      el: "Βιβλιοθήκες (μέσα στο orOS, τρέχουν στη συσκευή σου)",
+      items: [
+        { name: "Leaflet 1.9.4", url: "https://leafletjs.com/",
+          by: "Volodymyr Agafonkin & contributors", lic: "BSD-2-Clause",
+          en: "Maps", el: "Χάρτες" },
+        { name: "jsPDF 2.5.2", url: "https://github.com/parallax/jsPDF",
+          by: "James Hall, yWorks & contributors", lic: "MIT",
+          en: "PDF export (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)",
+          el: "Εξαγωγή PDF (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)" },
+        { name: "SheetJS Community Edition 0.20.3", url: "https://sheetjs.com/",
+          by: "SheetJS LLC", lic: "Apache-2.0",
+          en: "Excel / ODS files (Spreadsheet, Budget)",
+          el: "Αρχεία Excel / ODS (Spreadsheet, Budget)" },
+        { name: "hls.js 1.7.3", url: "https://github.com/video-dev/hls.js",
+          by: "Dailymotion & contributors", lic: "Apache-2.0",
+          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" }
+      ]
+    },
+    {
+      en: "Fonts and icons", el: "Γραμματοσειρές και εικονίδια",
+      items: [
+        { name: "Nunito", url: "https://github.com/googlefonts/nunito",
+          by: "The Nunito Project Authors (Vernon Adams, Jacques Le Bailly)", lic: "SIL OFL 1.1",
+          en: "The orOS interface", el: "Το περιβάλλον του orOS" },
+        { name: "Noto Sans", url: "https://notofonts.github.io/",
+          by: "The Noto Project Authors", lic: "SIL OFL 1.1",
+          en: "Greek text in exported PDFs", el: "Ελληνικά στα PDF που εξάγεις" },
+        { name: "Feather Icons", url: "https://feathericons.com/",
+          by: "Cole Bemis", lic: "MIT",
+          en: "Some interface icons (search, refresh, map pin, cloud, heart)",
+          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" }
+      ]
+    },
+    {
+      en: "Word lists and data", el: "Λίστες λέξεων και δεδομένα",
+      items: [
+        { name: "EFF Diceware word lists", url: "https://www.eff.org/dice",
+          by: "Electronic Frontier Foundation", lic: "CC BY 3.0 US",
+          en: "Passphrases (Passwords)", el: "Φράσεις-κλειδιά (Κωδικοί)" },
+        { name: "SecLists — 10k most common passwords", url: "https://github.com/danielmiessler/SecLists",
+          by: "Daniel Miessler & contributors", lic: "MIT",
+          en: "Weak-password check (Passwords)", el: "Έλεγχος αδύναμων κωδικών (Κωδικοί)" },
+        { name: "SCOWL (via wordlist-english)", url: "http://wordlist.aspell.net/",
+          by: "Kevin Atkinson", lic: { en: "SCOWL licence (permissive)", el: "Άδεια SCOWL (ελεύθερη)" },
+          en: "English words (Wordle)", el: "Αγγλικές λέξεις (Wordle)" },
+        { name: "Hunspell el_GR", url: "https://github.com/wooorm/dictionaries",
+          by: "Steve Stavropoulos & contributors (elspell)", lic: "MPL 1.1",
+          en: "Greek words (Λεξούλα)", el: "Ελληνικές λέξεις (Λεξούλα)" },
+        { name: "FrequencyWords", url: "https://github.com/hermitdave/FrequencyWords",
+          by: "Hermit Dave (from OpenSubtitles)", lic: "CC BY-SA 4.0",
+          en: "Picking everyday Greek words (Λεξούλα)", el: "Επιλογή καθημερινών ελληνικών λέξεων (Λεξούλα)" }
+      ]
+    },
+    {
+      en: "Online services (only when you use them)",
+      el: "Υπηρεσίες στο διαδίκτυο (μόνο όταν τις χρησιμοποιείς)",
+      items: [
+        { name: "Open-Meteo", url: "https://open-meteo.com/",
+          by: "Open-Meteo.com", lic: "CC BY 4.0 (data)",
+          en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
+        { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
+          by: "OpenStreetMap contributors", lic: "ODbL (data)",
+          en: "Map data and standard tiles (Maps)", el: "Δεδομένα και πλακίδια χάρτη (Χάρτες)" },
+        { name: "OpenStreetMap France / HOT", url: "https://www.hotosm.org/",
+          by: "OSM France, Humanitarian OpenStreetMap Team", lic: "ODbL (data)",
+          en: "Humanitarian map layer (Maps)", el: "Ανθρωπιστικό στρώμα χάρτη (Χάρτες)" },
+        { name: "Esri World Imagery", url: "https://www.esri.com/",
+          by: "Esri, Maxar, Earthstar Geographics", lic: { en: "Esri terms of use", el: "Όροι χρήσης της Esri" },
+          en: "Satellite layer (Maps)", el: "Δορυφορικό στρώμα (Χάρτες)" },
+        { name: "Photon", url: "https://photon.komoot.io/",
+          by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
+          en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
+        { name: "OSRM", url: "https://project-osrm.org/",
+          by: "Project OSRM contributors", lic: "BSD-2-Clause (software)",
+          en: "Car routes, demo server (Maps)", el: "Διαδρομές με αυτοκίνητο, δοκιμαστικός server (Χάρτες)" },
+        { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
+          by: "FOSSGIS e.V.", lic: "ODbL (data)",
+          en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+        { name: "Radio Browser", url: "https://www.radio-browser.info/",
+          by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
+          en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
+        { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
+          by: "iptv-org contributors", lic: "Unlicense (public domain)",
+          en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
+        { name: "Wikidata", url: "https://www.wikidata.org/",
+          by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
+          en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
+        { name: "Dropbox", url: "https://www.dropbox.com/",
+          by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
+          en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
+        { name: "GitHub Pages", url: "https://pages.github.com/",
+          by: "GitHub, Inc.", lic: { en: "Hosting", el: "Φιλοξενία" },
+          en: "Serves useoros.online", el: "Φιλοξενεί το useoros.online" }
+      ]
+    }
+  ];
+
+  function creditsThanksText() {
+    return supT(
+      "Thank you to everyone who builds and shares these, often without knowing orOS exists. Radio and TV streams belong to their broadcasters. Full details: CREDITS.md in the source code.",
+      "Ευχαριστούμε όσους φτιάχνουν και μοιράζονται όλα αυτά, συχνά χωρίς να ξέρουν ότι υπάρχει το orOS. Οι ροές ραδιοφώνου και τηλεόρασης ανήκουν στους σταθμούς τους. Όλες οι λεπτομέρειες: CREDITS.md στον πηγαίο κώδικα."
+    );
+  }
+
+  function creditLink(href, text) {
+    var a = document.createElement("a");
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = text;
+    return a;
+  }
+
+  function wireCreditsSection(ov) {
+    var box = ov.querySelector(".sc-box");
+    if (!box) return;
+    var resetWrap = box.querySelector("#sc-reset-wrap");
+
+    var det = document.createElement("details");
+    det.id = "sc-credits";
+    var sum = document.createElement("summary");
+    sum.className = "sc-sec";
+    sum.style.cssText = "cursor:pointer;";
+    sum.textContent = supT("Credits & licences", "Ευχαριστίες & άδειες");
+    det.appendChild(sum);
+
+    var intro = document.createElement("div");
+    intro.style.cssText =
+      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin:2px 0 6px;";
+    intro.textContent = creditsThanksText();
+    det.appendChild(intro);
+
+    CREDIT_GROUPS.forEach(function (g) {
+      var gh = document.createElement("div");
+      gh.style.cssText =
+        "font-size:12px;font-weight:700;color:var(--text);margin:10px 0 2px;";
+      gh.textContent = supT(g.en, g.el);
+      det.appendChild(gh);
+      g.items.forEach(function (it) {
+        var row = document.createElement("div");
+        row.style.cssText =
+          "font-size:11.5px;line-height:1.5;color:var(--text-dim);" +
+          "padding:3px 0;overflow-wrap:anywhere;";
+        var nm = creditLink(it.url, it.name);
+        nm.style.cssText = "color:var(--accent);font-weight:600;text-decoration:none;";
+        row.appendChild(nm);
+        row.appendChild(document.createTextNode(
+          " · " + it.by + " · " +
+          (typeof it.lic === "string" ? it.lic : supT(it.lic.en, it.lic.el)) +
+          " — " + supT(it.en, it.el)));
+        det.appendChild(row);
+      });
+    });
+
+    if (resetWrap) box.insertBefore(det, resetWrap);
+    else box.appendChild(det);
+  }
+
+  // Our own line in the footer (text nodes + fixed links, no innerHTML).
+  function wireOwnCredits(ov) {
+    var cred = ov.querySelector("#sc-cred");
+    if (!cred) return;
+    var el = state.lang === "el";
+    cred.appendChild(document.createTextNode(
+      el ? "Σχεδιάστηκε με <3 από τον " : "Designed with <3 by "));
+    cred.appendChild(creditLink("https://koulaxizis.gr", "Christos Koulaxizis"));
+    cred.appendChild(document.createTextNode(el ? ". Με τη βοήθεια του " : ". Assisted by "));
+    cred.appendChild(creditLink("https://lumo.proton.me/", "Lumo"));
+    cred.appendChild(document.createTextNode(el ? ". Έλεγχος από το " : ". Audited by "));
+    cred.appendChild(creditLink("https://claude.ai/", "Claude"));
+    cred.appendChild(document.createTextNode("."));
+  }
+
   // Info modal — the FULL table is generated from SC_DEFS, never
   // handwritten twice. Flat, minimal, no chrome: title, version,
-  // tagline, the capabilities row, shortcut rows, repo link, credits.
+  // tagline, the capabilities row, shortcut rows, repo link, credits
+  // (third-party register + our own line, both built in the DOM).
   var scInfoClose = null;   // #4: live modal's close fn (null = closed)
 
   function showInfoModal() {
@@ -3475,8 +3660,7 @@
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
         '<div class="sc-foot"><span>' + escapeHtml(window.t("sc.info.repo")) + ': <a href="https://github.com/koulaxizis/oros" ' +
           'target="_blank" rel="noopener">koulaxizis/oros</a></span>' +
-          '<span class="sc-cred"> · Designed by <a href="https://koulaxizis.gr" ' +
-          'target="_blank" rel="noopener">Christos Koulaxizis</a></span></div>' +
+          '<div class="sc-cred" id="sc-cred"></div></div>' +
       '</div>';
 
     // #4: single close path — backdrop, Escape AND the toggle case
@@ -3497,6 +3681,8 @@
     scInfoClose = close;    // registered so the toggle path can call it too
 
     wireSupportSection(ov);   // Support section (donation links)
+    wireCreditsSection(ov);   // Credits & licences (collapsible)
+    wireOwnCredits(ov);       // footer: our own credits line
     wireResetButton(ov);    // α: factory reset row
 
     document.body.appendChild(ov);
