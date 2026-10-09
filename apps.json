@@ -362,6 +362,174 @@
       "type": "internal"
     },
     {
+      "id": "spot",
+      "name": "Spot the Difference",
+      "category": "Games",
+      "icon": "spot",
+      "url": "spot/",
+      "type": "internal"
+    },
+    {
+      "id": "hexagon",
+      "name": "Hexagon Puzzle",
+      "category": "Games",
+      "icon": "hexagon",
+      "url": "hexagon/",
+      "type": "internal"
+    },
+    {
+      "id": "chess",
+      "name": "Chess",
+      "category": "Games",
+      "icon": "chess",
+      "url": "chess/",
+      "type": "internal"
+    },
+    {
+      "id": "sudoku",
+      "name": "Sudoku",
+      "category": "Games",
+      "icon": "sudoku",
+      "url": "sudoku/",
+      "type": "internal"
+    },
+    {
+      "id": "tetris",
+      "name": "Tetris",
+      "category": "Games",
+      "icon": "tetris",
+      "url": "tetris/",
+      "type": "internal"
+    },
+    {
+      "id": "minesweeper",
+      "name": "Minesweeper",
+      "category": "Games",
+      "icon": "minesweeper",
+      "url": "minesweeper/",
+      "type": "internal"
+    },
+    {
+      "id": "mahjong",
+      "name": "Mahjong",
+      "category": "Games",
+      "icon": "mahjong",
+      "url": "mahjong/",
+      "type": "internal"
+    },
+    {
+      "id": "gomoku",
+      "name": "Gomoku",
+      "category": "Games",
+      "icon": "gomoku",
+      "url": "gomoku/",
+      "type": "internal"
+    },
+    {
+      "id": "bubble",
+      "name": "Bubble Shooter",
+      "category": "Games",
+      "icon": "bubble",
+      "url": "bubble/",
+      "type": "internal"
+    },
+    {
+      "id": "checkers",
+      "name": "Checkers",
+      "category": "Games",
+      "icon": "checkers",
+      "url": "checkers/",
+      "type": "internal"
+    },
+    {
+      "id": "mastermind",
+      "name": "Mastermind",
+      "category": "Games",
+      "icon": "mastermind",
+      "url": "mastermind/",
+      "type": "internal"
+    },
+    {
+      "id": "battleship",
+      "name": "Battleship",
+      "category": "Games",
+      "icon": "battleship",
+      "url": "battleship/",
+      "type": "internal"
+    },
+    {
+      "id": "rps",
+      "name": "Rock Paper Scissors",
+      "category": "Games",
+      "icon": "rps",
+      "url": "rps/",
+      "type": "internal"
+    },
+    {
+      "id": "hangman",
+      "name": "Hangman",
+      "category": "Games",
+      "icon": "hangman",
+      "url": "hangman/",
+      "type": "internal"
+    },
+    {
+      "id": "flow",
+      "name": "Flow Free",
+      "category": "Games",
+      "icon": "flow",
+      "url": "flow/",
+      "type": "internal"
+    },
+    {
+      "id": "nonogram",
+      "name": "Nonogram",
+      "category": "Games",
+      "icon": "nonogram",
+      "url": "nonogram/",
+      "type": "internal"
+    },
+    {
+      "id": "breakout",
+      "name": "Breakout",
+      "category": "Games",
+      "icon": "breakout",
+      "url": "breakout/",
+      "type": "internal"
+    },
+    {
+      "id": "reversi",
+      "name": "Reversi",
+      "category": "Games",
+      "icon": "reversi",
+      "url": "reversi/",
+      "type": "internal"
+    },
+    {
+      "id": "mancala",
+      "name": "Mancala",
+      "category": "Games",
+      "icon": "mancala",
+      "url": "mancala/",
+      "type": "internal"
+    },
+    {
+      "id": "pong",
+      "name": "Pong",
+      "category": "Games",
+      "icon": "pong",
+      "url": "pong/",
+      "type": "internal"
+    },
+    {
+      "id": "backgammon",
+      "name": "Backgammon",
+      "category": "Games",
+      "icon": "backgammon",
+      "url": "backgammon/",
+      "type": "internal"
+    },
+    {
       "id": "passwords",
       "name": "Password Generator",
       "category": "Security",
