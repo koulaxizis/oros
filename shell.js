@@ -4230,7 +4230,10 @@
         { name: "Feather Icons", url: "https://feathericons.com/",
           by: "Cole Bemis", lic: "MIT",
           en: "Some interface icons (search, refresh, map pin, cloud, heart)",
-          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" }
+          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" },
+        { name: "Tabler Icons 3.49.0", url: "https://tabler.io/icons",
+          by: "Paweł Kuna", lic: "MIT",
+          en: "Offline icon library (Atelier)", el: "Βιβλιοθήκη εικονιδίων χωρίς σύνδεση (Ατελιέ)" }
       ]
     },
     {
@@ -4244,13 +4247,13 @@
           en: "Weak-password check (Passwords)", el: "Έλεγχος αδύναμων κωδικών (Κωδικοί)" },
         { name: "SCOWL (via wordlist-english)", url: "http://wordlist.aspell.net/",
           by: "Kevin Atkinson", lic: { en: "SCOWL licence (permissive)", el: "Άδεια SCOWL (ελεύθερη)" },
-          en: "English words (Wordle)", el: "Αγγλικές λέξεις (Wordle)" },
+          en: "English words (Wordle, Hangman)", el: "Αγγλικές λέξεις (Wordle, Κρεμάλα)" },
         { name: "Hunspell el_GR", url: "https://github.com/wooorm/dictionaries",
           by: "Steve Stavropoulos & contributors (elspell)", lic: "MPL 1.1",
-          en: "Greek words (Λεξούλα)", el: "Ελληνικές λέξεις (Λεξούλα)" },
+          en: "Greek words (Λεξούλα, Hangman)", el: "Ελληνικές λέξεις (Λεξούλα, Κρεμάλα)" },
         { name: "FrequencyWords", url: "https://github.com/hermitdave/FrequencyWords",
           by: "Hermit Dave (from OpenSubtitles)", lic: "CC BY-SA 4.0",
-          en: "Picking everyday Greek words (Λεξούλα)", el: "Επιλογή καθημερινών ελληνικών λέξεων (Λεξούλα)" }
+          en: "Picking everyday words (Λεξούλα, Hangman)", el: "Επιλογή καθημερινών λέξεων (Λεξούλα, Κρεμάλα)" }
       ]
     },
     {
@@ -4287,6 +4290,27 @@
         { name: "Wikidata", url: "https://www.wikidata.org/",
           by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
           en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
+        { name: "Openverse", url: "https://openverse.org/",
+          by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
+          en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },
+        { name: "Wikimedia Commons", url: "https://commons.wikimedia.org/",
+          by: "Commons contributors, Wikimedia Foundation", lic: { en: "Per item (free licences)", el: "Ανά έργο (ελεύθερες άδειες)" },
+          en: "Photos, drawings, sounds, video (Atelier)", el: "Φωτογραφίες, σχέδια, ήχοι, βίντεο (Ατελιέ)" },
+        { name: "Iconify", url: "https://iconify.design/",
+          by: "Vjacheslav Trushkin & the authors of each icon set", lic: { en: "Per icon set (MIT, Apache, CC BY, OFL…)", el: "Ανά σετ εικονιδίων (MIT, Apache, CC BY, OFL…)" },
+          en: "Icons and clipart (Atelier)", el: "Εικονίδια και clipart (Ατελιέ)" },
+        { name: "Fontsource", url: "https://fontsource.org/",
+          by: "Fontsource & each font's designers", lic: { en: "Per font (OFL, Apache)", el: "Ανά γραμματοσειρά (OFL, Apache)" },
+          en: "Font catalogue and files (Atelier)", el: "Κατάλογος και αρχεία γραμματοσειρών (Ατελιέ)" },
+        { name: "Pixabay", url: "https://pixabay.com/",
+          by: "Pixabay creators", lic: { en: "Pixabay Content License, your own key", el: "Pixabay Content License, με δικό σου κλειδί" },
+          en: "Optional photos and video (Atelier)", el: "Προαιρετικές φωτογραφίες και βίντεο (Ατελιέ)" },
+        { name: "Pexels", url: "https://www.pexels.com/",
+          by: "Pexels creators", lic: { en: "Pexels License, your own key", el: "Pexels License, με δικό σου κλειδί" },
+          en: "Optional photos and video (Atelier)", el: "Προαιρετικές φωτογραφίες και βίντεο (Ατελιέ)" },
+        { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
+          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
+          en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
         { name: "Dropbox", url: "https://www.dropbox.com/",
           by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
           en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
