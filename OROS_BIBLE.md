@@ -1124,22 +1124,17 @@ Rule ids are kept as recorded.
 11. Part XII changelog entry + Bible registry, same response.
 12. Third-party anything (library, font, icon set, data set, sound, online service): one entry each in `CREDITS.md`, `CREDIT_GROUPS` in `shell.js` (EN+EL) and the Credits register below, same PR. Ship the licence text when the licence asks for it (OFL, Apache NOTICE, MIT notice).
 
-### Credits register (third-party) [verified 2026-10-09]
+### Credits register (third-party) [verified 2026-10-09, refreshed after #49]
 
-Where credits live: `CREDITS.md` (repo root, full table with copyright + licence links), Info modal → "Credits & licences / Ευχαριστίες & άδειες" (`CREDIT_GROUPS` + `wireCreditsSection()` in `shell.js`, collapsible `<details>`, DOM-built, fixed URLs only) and our own footer line (`wireOwnCredits()`): "Designed with <3 by Christos Koulaxizis. Assisted by Lumo. Audited by Claude." (EL translated). Licence texts shipped: `fonts/OFL.txt` (Nunito), `vendor/NotoSans-OFL.txt`, `passwords/THIRD-PARTY.txt`, `tests/vendor/jsQR.LICENSE`. The old `sc.info.extsvc*` rows stay as the short "External services" summary.
+Where credits live: `CREDITS.md` (repo root, full table with copyright + licence links), Info modal → "Credits & licences / Ευχαριστίες & άδειες" (`CREDIT_GROUPS` + `wireCreditsSection()` in `shell.js`, collapsible `<details>`, DOM-built, fixed URLs only) and our own footer line (`wireOwnCredits()`): "Designed with <3 by Christos Koulaxizis. Assisted by Lumo. Audited by Claude." (EL translated). Licence texts shipped: `fonts/OFL.txt` (Nunito), `vendor/NotoSans-OFL.txt`, `passwords/THIRD-PARTY.txt`, `tests/vendor/jsQR.LICENSE`, the MIT notice in `atelier/library/icons.js`. orOS itself: MIT (`LICENSE`, Chris 2026-10-09); `README.md` states who builds orOS (Christos; Lumo assisted; Claude audits and writes PRs, Christos merges). The old `sc.info.extsvc*` rows stay as the short "External services" summary.
 
 - **Libraries (vendor/):** Leaflet 1.9.4 (BSD-2), jsPDF 2.5.2 (MIT), SheetJS CE 0.20.3 (Apache-2.0), hls.js 1.7.3 light (Apache-2.0). Tests only: jsQR (Apache-2.0).
-- **Fonts/icons:** Nunito (OFL 1.1), Noto Sans (OFL 1.1), Feather Icons path data in a few shell/Weather/Quote SVGs (MIT, Cole Bemis).
-- **Data:** EFF Diceware (CC BY 3.0 US), SecLists 10k (MIT), SCOWL via wordlist-english (SCOWL licence), Hunspell el_GR 0.9 (MPL 1.1), FrequencyWords 2018 (CC BY-SA 4.0), statutes in `pubdomain/rules.js`.
-- **Services:** Open-Meteo (data CC BY 4.0, non-commercial; attribution line in the Weather app since this change), OSM tiles + data (ODbL), OSM France/HOT tiles, Esri World Imagery, Photon (komoot), OSRM demo, FOSSGIS routing, Radio Browser, iptv-org (Unlicense), Wikidata (CC0), Dropbox (sync), GitHub Pages (hosting).
+- **Fonts/icons:** Nunito (OFL 1.1), Noto Sans (OFL 1.1), Feather Icons path data in a few shell/Weather/Quote SVGs (MIT, Cole Bemis), Tabler Icons 3.49.0 (365 icons in `atelier/library/icons.js`, MIT, Paweł Kuna).
+- **Data:** EFF Diceware (CC BY 3.0 US), SecLists 10k (MIT), SCOWL via wordlist-english (SCOWL licence), Hunspell el_GR 0.9 (MPL 1.1), FrequencyWords 2018 (CC BY-SA 4.0) — the last three also feed Hangman, statutes in `pubdomain/rules.js`.
+- **Services:** Open-Meteo (data CC BY 4.0, non-commercial; attribution line in the Weather app since this change), OSM tiles + data (ODbL), OSM France/HOT tiles, Esri World Imagery, Photon (komoot), OSRM demo, FOSSGIS routing, Radio Browser, iptv-org (Unlicense), Wikidata (CC0), Atelier via `designkit/media.js`: Openverse, Wikimedia Commons, Iconify, Fontsource, Pixabay + Pexels (user key only); Mail relay on Cloudflare Workers (`relay/`); Dropbox (sync), GitHub Pages (hosting).
 - **Not third-party (checked):** no recorded audio (all sounds synthesised), no CDN loads, emoji from the device font, app icons/artwork/content drawn or written for orOS.
-- **To add on release (in-flight, not on main yet; the owning thread adds them in its release commit):**
-  - Mail (#44): orOS mail relay on Cloudflare Workers (Chris's account, code in `relay/`) + the user's own IMAP provider.
-  - Games bulk (#46): Hangman word lists (same SCOWL / Hunspell el_GR / FrequencyWords sources as Wordle).
-  - Design studio (plan): Openverse, Wikimedia Commons, Iconify (+ each icon set's licence), Google Fonts, optional Pixabay/Pexels, a vendored icon set (Tabler or Lucide, MIT); per-item `credit {}` already in the plan.
-  - RSS reader (plan): `web` op in the same Cloudflare relay; feed publishers' content.
-  - QR (merged, unregistered): own encoder, nothing to add.
-- **Open:** the repo has no LICENSE file for orOS itself (the Support text says "open source"); Chris to pick one.
+- **Still to add when they land:** RSS reader (`web` op in the same relay, feed publishers), Layout/Publisher (shares designkit), any Design studio source beyond the six above. Apps on main but not registered yet (Budget, Chores, QR, Public Domain, Plants, Water, Travel, Meals, Family Tree, Shelf, Workouts, Mail, 21 games, Atelier) are already covered.
+- **Licence:** decided 2026-10-09, MIT (Chris).
 
 ### Checklist C — New core module (root-level JS) [log]
 
