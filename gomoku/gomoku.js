@@ -439,19 +439,41 @@
 
   // Static value of a position for p, the side to move: p's best threat
   // (it moves first) against the best threat the other side could make.
+  // Decisive cases are told apart: p can make an open four (and the
+  // other side has no four to answer with), p can make a double threat
+  // the other side cannot outrun, or the other side has two
+  // separate open-four points (a double three) that one stone cannot
+  // both stop and p has no win by fours of its own.
+  var WIN = 10000000;
   function staticEval(cells, p) {
-    var list = scoreMoves(cells, p, 1), ma = 0, mb = 0;
+    var list = scoreMoves(cells, p, 1), ma = 0, mb = 0, bi = -1, o = 3 - p;
     for (var k = 0; k < list.length; k++) {
       if (list[k].a > ma) ma = list[k].a;
-      if (list[k].b > mb) mb = list[k].b;
+      if (list[k].b > mb) { mb = list[k].b; bi = list[k].i; }
+    }
+    var OPEN4 = SHAPE_SCORE[SH_OPEN4];
+    if (ma >= OPEN4 && !winningPoints(cells, o).length) return WIN / 2;
+    // p can make a double threat (three-three or better) and the other
+    // side has neither an open four of its own nor a win by fours
+    if (ma >= 20000 && mb < OPEN4 && !winningPoints(cells, o).length &&
+        vcf(cells, o, 4, { deadline: now() + 15 }) < 0) return WIN / 4;
+    if (mb >= OPEN4) {
+      cells[bi] = p;
+      var still = false;
+      for (var j = 0; j < list.length && !still; j++) {
+        var x = list[j].i;
+        if (x !== bi && list[j].b >= OPEN4 && pointScore(cells, x, o) >= OPEN4) still = true;
+      }
+      cells[bi] = 0;
+      // p's fours only delay it, unless they win by themselves
+      if (still && vcf(cells, p, 4, { deadline: now() + 15 }) < 0) return -WIN / 2;
     }
     return ma - mb * 0.8;
   }
 
   // Alpha-beta over the best few threat-ordered points; a five ends the
   // line at once, a four of the other side must be blocked.
-  var WIN = 10000000;
-  function negamax(cells, p, depth, alpha, beta, ctx) {
+  function negamax(cells, p, depth, ply, alpha, beta, ctx) {
     if (now() > ctx.deadline) throw new Abort();
     var o = 3 - p;
     if (winningPoints(cells, p).length) return WIN + depth;
@@ -459,13 +481,13 @@
     var theirs = winningPoints(cells, o), list;
     if (theirs.length >= 2) return -(WIN + depth - 1);
     if (theirs.length) list = [{ i: theirs[0] }];
-    else list = scoreMoves(cells, p, 1).slice(0, ctx.width);
+    else list = scoreMoves(cells, p, 1).slice(0, ply < 2 ? 7 : 5);   // narrower deeper down
     if (!list.length) return 0;
     var best = -Infinity;
     for (var k = 0; k < list.length; k++) {
       cells[list[k].i] = p;
       var v;
-      try { v = -negamax(cells, o, depth - 1, -beta, -alpha, ctx); }
+      try { v = -negamax(cells, o, depth - 1, ply + 1, -beta, -alpha, ctx); }
       finally { cells[list[k].i] = 0; }
       if (v > best) best = v;
       if (best > alpha) alpha = best;
@@ -477,7 +499,7 @@
   // Iterative deepening at the root while the time lasts; a depth that
   // runs out of time keeps the answer of the depth before.
   function searchRoot(cells, p, roots, budget) {
-    var ctx = { deadline: now() + budget, width: 7 }, o = 3 - p;
+    var ctx = { deadline: now() + budget }, o = 3 - p;
     var bestI = roots[0].i;
     for (var depth = 1; depth <= 6; depth++) {
       var alpha = -Infinity, iterBest = -1, scores = [];
@@ -485,7 +507,7 @@
         for (var k = 0; k < roots.length; k++) {
           cells[roots[k].i] = p;
           var v;
-          try { v = -negamax(cells, o, depth - 1, -Infinity, -alpha + 1, ctx); }
+          try { v = -negamax(cells, o, depth - 1, 1, -Infinity, -alpha + 1, ctx); }
           finally { cells[roots[k].i] = 0; }
           scores.push({ i: roots[k].i, v: v, s: roots[k].s });
           if (v > alpha) { alpha = v; iterBest = roots[k].i; }

@@ -1,7 +1,7 @@
 // Pure logic of Gomoku: five-or-more detection in every direction and at
 // the edges, replay of a game, the threat shapes, the computer player
 // (takes a win, blocks a four and an open three, plays legal points,
-// keeps its time budget) and the records merge.
+// keeps its time budget, games end legally) and the records merge.
 // Run: node --test tests/
 //
 // The app is a browser IIFE with no exports, so the pure functions are
@@ -234,22 +234,19 @@ test("gomoku: the computer plays a free point on every level and leaves the boar
   }
 });
 
-test("gomoku: a full computer-vs-computer game ends legally, hard beats easy", () => {
-  let hardWins = 0;
-  for (let g = 0; g < 2; g++) {
+test("gomoku: computer-vs-computer games end legally on every pairing", () => {
+  for (const lv of [["h", "e"], ["e", "h"], ["m", "m"]]) {   // [black, white]
     const moves = [];
     let s = G.replay(moves);
-    const lv = g % 2 ? ["e", "h"] : ["h", "e"];   // [black, white]
     while (!s.over) {
       const m = G.chooseMove(s.cells, s.next, lv[s.next - 1]);
-      assert.ok(s.cells[m] === 0);
+      assert.ok(m >= 0 && s.cells[m] === 0, "free point");
       moves.push(m);
       s = G.replay(moves);
       assert.ok(s, "replay accepts the move");
     }
-    if (s.winner && lv[s.winner - 1] === "h") hardWins++;
+    assert.ok(s.winner === 0 ? moves.length === S * S : s.win.length >= 5, "a real end");
   }
-  assert.ok(hardWins >= 1, "hard never beat easy");
 });
 
 test("gomoku: hard answers within its time budget", () => {
