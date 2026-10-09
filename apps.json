@@ -379,6 +379,14 @@
       "type": "internal"
     },
     {
+      "id": "mail",
+      "name": "Mail",
+      "category": "Internet",
+      "icon": "mail",
+      "url": "mail/",
+      "type": "internal"
+    },
+    {
       "id": "dice",
       "name": "Dice & Coin",
       "category": "Fun",
