@@ -23,6 +23,7 @@
       "category": "Accessories",
       "icon": "files",
       "url": "files/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -39,6 +40,7 @@
       "category": "Office",
       "icon": "check",
       "url": "todo/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -47,6 +49,7 @@
       "category": "Office",
       "icon": "columns",
       "url": "kanban/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -55,6 +58,7 @@
       "category": "Office",
       "icon": "notes",
       "url": "notes/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -63,6 +67,7 @@
       "category": "Office",
       "icon": "calendar",
       "url": "calendar/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -95,6 +100,7 @@
       "category": "Office",
       "icon": "contacts",
       "url": "contacts/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -119,6 +125,7 @@
       "category": "Office",
       "icon": "writer",
       "url": "writer/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -207,6 +214,7 @@
       "category": "Internet",
       "icon": "bookmarks",
       "url": "bookmarks/",
+      "search": "search.js",
       "type": "internal"
     },
     {
