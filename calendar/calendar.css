@@ -480,6 +480,29 @@ body {
 }
 .mini:hover { background: var(--accent-soft); color: var(--accent); }
 
+/* Name days line + holiday numbers (namedays.js feeds) */
+.nd-line {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  padding: 0 2px 8px;
+  overflow-wrap: anywhere;
+}
+.nd-lab { color: var(--text-dim); font-weight: 800; }
+.nd-more {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  padding: 13px 4px;      /* 44px touch target, inline */
+  margin: -13px 0;
+  cursor: pointer;
+}
+.nd-more:hover { text-decoration: underline; }
+.cal-cell.hol .cal-num { color: #ef6b5b; }
+.wk-col.hol .wk-dnum { color: #ef6b5b; }
+
 #ev-list { list-style: none; }
 .ev-row {
   display: flex;

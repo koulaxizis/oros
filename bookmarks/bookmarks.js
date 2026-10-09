@@ -2524,7 +2524,34 @@ function boot() {
   renderAll();
   inheritPalette();
   watchPalette();
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      const t = window.parent.__orosTakeTarget("bookmarks");
+      if (t) openSearchTarget(t);
+    }
+  } catch (e) {}
 }
+
+/* Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+   target { id }. Shows the bookmark's folder with no filter, scrolls
+   to its row and opens its dialog. Unknown id, or a dialog already
+   open (maybe with unsaved edits) → no-op. */
+function openSearchTarget(t) {
+  const it = t && typeof t.id === "string" ? state.items[t.id] : null;
+  if (!it || document.querySelector("dialog[open]")) return;
+  uiActiveFolder = state.folders[it.folderId] ? it.folderId : ROOT_FOLDER;
+  uiQuery = "";
+  const q = $("#search");
+  if (q) q.value = "";
+  const qc = $("#search-clear");
+  if (qc) qc.hidden = true;
+  renderAll();
+  const row = document.querySelector('#items li.item[data-id="' + CSS.escape(it.id) + '"]');
+  if (row) row.scrollIntoView({ block: "center" });
+  openItemDialog(it.id);
+}
+window.__orosOpenAt = openSearchTarget;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", boot);

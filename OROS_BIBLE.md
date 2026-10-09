@@ -156,7 +156,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 ### Script order (shell `index.html`, classic scripts)
 
-**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
+**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
 
 `vault.js` and `pet.js` load BEFORE `fs.js`, `dialogs.js` and `shell.js`, so neither may touch those modules at parse time (A24).
 
@@ -556,6 +556,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 ### Device-local keys (never synced)
 
 - **Shell (verified 2026-10-05):** oros-last-version, oros-autoexport-last, oros-fs-folder-name, oros-fs-lapsed, oros-wx-cache, oros-wx-last, oros-cal-reminders-fired, oros-files-disk-pending, oros-reset-db (factory-reset marker), oros-lang (mirror); sessionStorage `oros-skip-splash` and the bridge staging keys (table in Part II). IndexedDB `oros-fs` (backup-folder handle). Also device-local but owned by `sync.js`: oros-sync-* engine keys, oros-slices (registry).
+- **Universal search (2026-10-09):** `oros-search-prefs` (per-app on/off switches) and sessionStorage `oros-open-at` (generic deep-link staging, one-shot).
 - **Shell keys that TRAVEL in the `shell` slice:** oros-lang, oros-theme, oros-skin, oros-wallpaper, oros-wallpaper-art (since 0.45.04), oros-autoexport, oros-weather, oros-alarms, oros-shell-stamps, oros-alarm-tombs. (`oros-files-disk-cache`, `-pending`, `-meta` are legacy: removed at boot by `fdMigrateLegacy`.)
 - `oros-auto-snapshots` (listed here until 2026-10-05) does not appear anywhere in `shell.js` 0.39.06: the key is gone with the snapshot subsystem.
 - **Weather:** oros-wx-cache, oros-wx-last.
@@ -922,6 +923,36 @@ window.__oros<App>Open = function (id, ymd) { /* navigate; guard deleted ids */ 
 // Boot: read sessionStorage "oros-<app>-open", remove it, invoke the receiver.
 ```
 
+### Universal search provider (2026-10-09)
+
+The menu's search field (A74) also searches the apps' own data. `search.js` (root, shell core, unit-tested in node) finds and ranks; `shell.js` draws ("In your data" under the app list, groups per app, 3 hits then "All (n)", at most 50 per app). Every app with user text ships a provider:
+
+```js
+// <app>/search.js — declared in apps.json as "search": "search.js";
+// the shell loads it on the FIRST search, never at boot.
+(function (root) {
+  var PROVIDER = {
+    id: "<app id>", keys: ["oros-<app>-data"],
+    // ctx = { q, words, fold, lang, limit, readJSON(key) }
+    search: function (ctx) { return [{ id, title, text, when, target }]; },  // or a Promise
+    open: function (target, win) { /* optional: an existing bridge */ }
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = PROVIDER;
+  if (root && root.document) {
+    var list = root.orosSearchProviders = root.orosSearchProviders || [];
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === PROVIDER.id) return;
+    list.push(PROVIDER);
+  }
+})(typeof window !== "undefined" ? window : globalThis);
+```
+
+- READ-ONLY: never `setItem`, never sync, never `innerHTML`; skip tombstones, trash, archived and hidden items. `title` and `text` are plain text (HTML bodies → text in an inert document, as Writer's provider does). `when` = ms, shown as a date and used for ties: give it only when the date means something to the user (due date, event day, last edit).
+- `ctx.readJSON` parses once per stored string; ranking and matching are the shell's (fold: case/accents/ς; every word must match; title prefix > title word > title > text; ties → newest). A provider that throws or answers after 1 s is skipped for that search.
+- Opening: without `open`, the shell calls the generic deep link `window.__orosOpenAt(appId, target)`. App running → `contentWindow.__orosOpenAt(target)`; closed → sessionStorage `oros-open-at` = `{ app, target }`, and the app takes it at boot with `window.parent.__orosTakeTarget("<id>")`. A receiver ignores unknown ids and does nothing while one of its dialogs is open (unsaved edits win).
+- Per-app on/off switches: menu → Search → "Search in", device-local `oros-search-prefs` `{ off: {id: true}, on: {id: true} }`. An app whose data is sensitive sets `"searchOff": true` in `apps.json`: it starts switched off (opt-in).
+- Providers (phase 1, 2026-10-09): Notes (pages), Contacts (name; company, phones, e-mails, addresses, note), To-Do (lists + tasks), Calendar (events; next occurrence of a series, walk mirrors `eachOccurrence`), Kanban (cards; archived boards skipped), Bookmarks, Writer (documents), Files (names only, walked through `orosFS.ls`, capped at 3,000 entries / depth 12, refreshed at most every 10 s). Contacts, Calendar and Kanban open through their existing bridges; Notes, To-Do (now down to the task), Bookmarks, Writer and Files gained `__orosOpenAt` receivers.
+- Shortcut: Ctrl+Alt+Shift+F opens the menu with the cursor in the field (from inside an app too).
+
 ### Shortcut forwarding (Contract Β, capture phase) [re-verified]
 
 ```js
@@ -1123,6 +1154,7 @@ Rule ids are kept as recorded.
 10. File I/O through `orosDialog` (R33); popups centered (R32); if the app goes online, its `sc.info.extsvc.<id>` line in `showInfoModal()` and `translations.js`.
 11. Part XII changelog entry + Bible registry, same response.
 12. Third-party anything (library, font, icon set, data set, sound, online service): one entry each in `CREDITS.md`, `CREDIT_GROUPS` in `shell.js` (EN+EL) and the Credits register below, same PR. Ship the licence text when the licence asks for it (OFL, Apache NOTICE, MIT notice).
+13. Universal search: if the app holds user text, `<app>/search.js` (Part VI "Universal search provider") + `"search": "search.js"` in `apps.json` + precache entry + a `__orosOpenAt` receiver (or `open()` through an existing bridge) + tests. Sensitive data (health, finance, secrets): `"searchOff": true`, so it is opt-in.
 
 ### Credits register (third-party) [verified 2026-10-09]
 
@@ -1251,6 +1283,13 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-09 · Christos (universal search, plan /mnt/project-files/search/universal-search-plan.md: "Ναι σε όλα σύμφωνα με το πλάνο σου")**
+  - The A74 menu field becomes the universal search; no second field. A top-bar button is not added.
+  - Phase 1: Notes, Contacts, To-Do, Calendar, Kanban, Bookmarks, Writer, Files (names). The other apps follow later, each with an on/off switch.
+  - Mail is searched; Mood and Cycle are not (when they get providers, `"searchOff": true`, opt-in). Every searched app has a per-device switch.
+  - Every new app with user text ships its own provider (Checklist B 13).
+  - Shortcut: Ctrl+Alt+Shift+F (the plan said Ctrl+Alt+F; every orOS shortcut is Ctrl+Alt+Shift).
 
 - **2026-10-08 · Maps 0.43.00 (Christos chose "fixes + From/To"; assistant decisions inside it)**
   - The route bar's "set start on map" / "set destination on map" buttons are replaced by one "Edit route" button that opens the planner; every planner row has its own "choose on map" button. The bottom-left "Plan a route" button opens the planner instead of arming a map pick.

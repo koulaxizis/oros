@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Podcasts · orOS</title>
+
+  <link rel="stylesheet" href="podcasts.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <span id="app-name" class="app-name"></span>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="refresh-btn"></button>
+    <button type="button" class="icon-btn" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="more-btn"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="now"><span data-i18n="tab.now">Listening</span></button>
+    <button type="button" role="tab" data-tab="new"><span data-i18n="tab.new">New</span><span class="cnt" id="cnt-new"></span></button>
+    <button type="button" role="tab" data-tab="lib"><span data-i18n="tab.lib">Library</span></button>
+    <button type="button" role="tab" data-tab="dl"><span data-i18n="tab.dl">Downloads</span></button>
+    <button type="button" role="tab" data-tab="find"><span data-i18n="tab.find">Discover</span></button>
+  </nav>
+
+  <main id="main"></main>
+
+  <div id="player" hidden>
+    <div class="pl-prog"><div id="pl-prog"></div></div>
+    <button type="button" id="pl-open" class="pl-open">
+      <span id="pl-art" class="pl-art"></span>
+      <span class="pl-text"><span id="pl-title" class="pl-title"></span><span id="pl-show" class="pl-show"></span></span>
+    </button>
+    <button type="button" class="icon-btn" id="pl-back"></button>
+    <button type="button" class="icon-btn play" id="pl-play"></button>
+    <button type="button" class="icon-btn" id="pl-fwd"></button>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script src="../feeds/core.js?v=0.46.00"></script>
+  <script src="../feeds/sanitize.js?v=0.46.00"></script>
+  <script src="core.js?v=0.46.00"></script>
+  <script src="store.js?v=0.46.00"></script>
+  <script src="net.js?v=0.46.00"></script>
+  <script src="podcasts.js?v=0.46.00"></script>
+
+</body>
+</html>
