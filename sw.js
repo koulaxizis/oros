@@ -347,6 +347,9 @@ var PRECACHE_URLS = [
   "atelier/motion.js",
   "atelier/zip.js",
   "atelier/pptx.js",
+  "atelier/canva.js",
+  "atelier/canva-callback.html",
+  "atelier/canva-callback.js",
   "atelier/io.js",
   "atelier/help.el.txt",
   "atelier/help.en.txt",
@@ -747,12 +750,14 @@ self.addEventListener("fetch", function (event) {
         .then(function (response) {
           // Cache only REAL pages: a cached 404/502 becomes the
           // offline "truth" for that URL. OAuth redirects (?code=...)
-          // are one-shot URLs — never worth a cache entry.
+          // are one-shot URLs — never worth a cache entry; so are
+          // "Send to orOS" launches (?share-url=…, one per link).
           // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
           // replayed to a navigation from the cache — the browser
           // rejects it and the page fails offline. Never store one.
           if (response.ok && !response.redirected &&
-              url.search.indexOf("code=") === -1) {
+              url.search.indexOf("code=") === -1 &&
+              url.search.indexOf("share-") === -1) {
             var copy = response.clone();
             // waitUntil: the SW stays alive until the cache write
             // LANDS. A fire-and-forget put can be killed mid-flight

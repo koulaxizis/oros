@@ -191,6 +191,7 @@ input:focus, textarea:focus, select:focus {
   border-radius: 10px;
 }
 #quick-add-btn:hover { background: var(--accent-hover); }
+#send-btn { width: 40px; height: 38px; }
 #addbar.duplicate #quick-add {
   border-color: var(--danger);
 }
@@ -407,6 +408,36 @@ dialog .hint {
   color: var(--text-dim);
   margin: 2px 0 8px;
 }
+/* "Send to orOS" dialog: the draggable bookmarklet button */
+.send-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.send-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: grab;
+}
+#send-copy {
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+#send-copy:hover { border-color: var(--accent); color: var(--accent); }
+#send-code { font-family: monospace; font-size: 12px; margin-bottom: 8px; }
 dialog menu {
   display: flex;
   align-items: center;

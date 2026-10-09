@@ -329,7 +329,8 @@
   // opened as a NEW design.
   var PPTX_MEDIA_MAX = 60 * 1024 * 1024;
   var MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", bmp: "image/bmp", webp: "image/webp", svg: "image/svg+xml" };
-  function importPptxFile(f) {
+  // quiet: no toast (Canva account import counts for itself); → elements lost
+  function importPptxFile(f, quiet) {
     return f.arrayBuffer().then(function (ab) {
       var zip = window.AtelierZip.open(new Uint8Array(ab));
       var name = String(f.name || "").replace(/\.pptx$/i, "").slice(0, 120);
@@ -352,7 +353,8 @@
           var r = window.AtelierPPTX.build(plan, assets, AT.now());
           AT.addDoc(r.doc);
           var lost = plan.skipped + r.missing;
-          AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
+          if (!quiet) AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
+          return lost;
         });
       });
     });
@@ -519,7 +521,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importAny: importAny, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();
