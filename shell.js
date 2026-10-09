@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.47.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.47.04";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1362,6 +1362,7 @@
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
         openFromLaunchParam();
+        deliverShare();
       })
       .catch(function () {
         state.apps = [];
@@ -1501,6 +1502,53 @@
       return p.target === undefined ? null : p.target;
     } catch (e) { return null; }
   };
+
+  // "Send to orOS" (bookmarklet, Android Share → orOS, a future
+  // browser add-on): /?share-url=…&share-title=…&share-text=…
+  // stages a NEW bookmark. The params leave the address bar at boot
+  // (a reload must not add it twice); Bookmarks then opens its add
+  // dialog prefilled and nothing is saved until the user presses
+  // Save. Only http(s) links pass. Android's share sheet often puts
+  // the link inside share-text, so the first http(s) URL there counts.
+  var SHARE_KEYS = ["share-url", "share-title", "share-text"];
+  function shareFromHref(href) {
+    var u;
+    try { u = new URL(href, window.location.href); } catch (e) { return null; }
+    var p = u.searchParams, hit = false;
+    SHARE_KEYS.forEach(function (k) { if (p.has(k)) hit = true; });
+    if (!hit) return null;
+    var link = String(p.get("share-url") || "").trim();
+    var title = String(p.get("share-title") || "").trim();
+    var text = String(p.get("share-text") || "").trim();
+    var inText = text.match(/https?:\/\/[^\s<>"']+/i);
+    if (!/^https?:\/\//i.test(link) && inText) link = inText[0];
+    if (!title && text) title = text.replace(link, "").replace(/\s+/g, " ").trim();
+    try {
+      var ok = new URL(link);
+      if (ok.protocol !== "http:" && ok.protocol !== "https:") return { bad: true };
+      link = ok.href;
+    } catch (e) { return { bad: true }; }
+    if (link.length > 2048) return { bad: true };
+    return { url: link, title: title.slice(0, 256) };
+  }
+  var pendingShare = null;
+  (function () {
+    var s = shareFromHref(window.location.href);
+    if (!s) return;
+    try {
+      var u = new URL(window.location.href);
+      SHARE_KEYS.forEach(function (k) { u.searchParams.delete(k); });
+      window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+    } catch (e) {}
+    if (s.bad) return;
+    pendingShare = s;
+  })();
+  function deliverShare() {
+    if (!pendingShare || !state.apps.length) return;
+    var s = pendingShare;
+    pendingShare = null;
+    window.__orosOpenAt("bookmarks", { add: { url: s.url, title: s.title } });
+  }
 
   function openSearchHit(id, hit) {
     closeMenu();
