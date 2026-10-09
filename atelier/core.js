@@ -69,6 +69,17 @@
       "tab.adjust": "Adjust", "tab.position": "Position", "tab.mask": "Shape",
       "drawer.close": "Close panel",
       "tab.sources": "Sources",
+      "imp.file": "From a file (.pptx, picture, package)…", "imp.canva": "From your Canva account…",
+      "cv.title": "Import from Canva", "cv.intro": "Bring your Canva designs over in one go. Each one is exported from Canva as PowerPoint and opened here as a new design.",
+      "cv.checking": "Checking the connection…", "cv.off": "This orOS relay has no Canva connection set up yet. You can still download a design from Canva as PowerPoint and use Import › From a file.",
+      "cv.connect": "Connect to Canva", "cv.connectHint": "A Canva window opens: sign in and allow access to your designs. Atelier only reads them; your Canva sign-in stays on this device.",
+      "cv.waiting": "Finish in the Canva window…", "cv.popup": "The Canva window was blocked. Allow pop-ups for orOS and try again.",
+      "cv.denied": "Canva did not give access.", "cv.auth": "The Canva connection has ended. Connect again.", "cv.rate": "Canva asks to slow down. Try again in a minute.",
+      "cv.license": "Uses paid Canva content that cannot be exported.", "cv.approval": "Waiting for approval in your Canva team.", "cv.fail": "Canva could not be reached or did not answer.",
+      "cv.search": "Search your Canva designs", "cv.none": "No designs found.", "cv.untitled": "Untitled design", "cv.pages": "{n} pages", "cv.page1": "1 page", "cv.imported": "imported",
+      "cv.all": "Select all", "cv.none.sel": "Select none", "cv.import": "Import {n}", "cv.disconnect": "Disconnect",
+      "cv.working": "Importing {i} of {n}…", "cv.stop": "Stop", "cv.stopping": "Stopping after this design…",
+      "cv.done": "{n} designs imported.", "cv.lost": "{n} elements could not be brought over.",
       "tab.animate": "Animate", "ctx.animate": "Animate", "more.present": "Present (full screen)",
       "an.element": "Element entrance", "an.pick": "Select an element to animate it.", "an.nothing": "Nothing on this page is animated yet.",
       "an.none": "None", "an.fade": "Fade", "an.rise": "Rise", "an.pop": "Pop", "an.wipe": "Wipe", "an.type": "Typewriter",
@@ -176,6 +187,17 @@
       "tab.adjust": "Ρυθμίσεις", "tab.position": "Θέση", "tab.mask": "Σχήμα",
       "drawer.close": "Κλείσιμο πάνελ",
       "tab.sources": "Πηγές",
+      "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
+      "cv.title": "Εισαγωγή από το Canva", "cv.intro": "Φέρε τα σχέδιά σου από το Canva με τη μία. Το καθένα εξάγεται από το Canva ως PowerPoint και ανοίγει εδώ ως νέο σχέδιο.",
+      "cv.checking": "Ελέγχω τη σύνδεση…", "cv.off": "Αυτός ο relay του orOS δεν έχει ακόμη ρυθμισμένη σύνδεση με το Canva. Μπορείς πάντα να κατεβάσεις ένα σχέδιο από το Canva ως PowerPoint και να το ανοίξεις από Εισαγωγή › Από αρχείο.",
+      "cv.connect": "Σύνδεση με το Canva", "cv.connectHint": "Ανοίγει ένα παράθυρο του Canva: συνδέσου και επίτρεψε την πρόσβαση στα σχέδιά σου. Το Ατελιέ μόνο τα διαβάζει· η σύνδεση με το Canva μένει σε αυτή τη συσκευή.",
+      "cv.waiting": "Ολοκλήρωσε στο παράθυρο του Canva…", "cv.popup": "Το παράθυρο του Canva μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και ξαναδοκίμασε.",
+      "cv.denied": "Το Canva δεν έδωσε πρόσβαση.", "cv.auth": "Η σύνδεση με το Canva έληξε. Συνδέσου ξανά.", "cv.rate": "Το Canva ζητά να πάμε πιο αργά. Ξαναδοκίμασε σε ένα λεπτό.",
+      "cv.license": "Έχει επί πληρωμή περιεχόμενο του Canva που δεν εξάγεται.", "cv.approval": "Περιμένει έγκριση στην ομάδα σου στο Canva.", "cv.fail": "Το Canva δεν απάντησε ή δεν ήταν διαθέσιμο.",
+      "cv.search": "Αναζήτηση στα σχέδιά σου στο Canva", "cv.none": "Δεν βρέθηκαν σχέδια.", "cv.untitled": "Σχέδιο χωρίς τίτλο", "cv.pages": "{n} σελίδες", "cv.page1": "1 σελίδα", "cv.imported": "εισήχθη",
+      "cv.all": "Επιλογή όλων", "cv.none.sel": "Καμία επιλογή", "cv.import": "Εισαγωγή {n}", "cv.disconnect": "Αποσύνδεση",
+      "cv.working": "Εισαγωγή {i} από {n}…", "cv.stop": "Διακοπή", "cv.stopping": "Σταματάω μετά από αυτό το σχέδιο…",
+      "cv.done": "Εισήχθησαν {n} σχέδια.", "cv.lost": "{n} στοιχεία δεν μεταφέρθηκαν.",
       "tab.animate": "Κίνηση", "ctx.animate": "Κίνηση", "more.present": "Παρουσίαση (πλήρης οθόνη)",
       "an.element": "Είσοδος στοιχείου", "an.pick": "Διάλεξε ένα στοιχείο για να του βάλεις κίνηση.", "an.nothing": "Τίποτα σε αυτή τη σελίδα δεν έχει ακόμη κίνηση.",
       "an.none": "Καμία", "an.fade": "Σβήσιμο", "an.rise": "Ανάδυση", "an.pop": "Αναπήδηση", "an.wipe": "Σάρωση", "an.type": "Γραφομηχανή",
@@ -1065,7 +1087,13 @@
 
   function wireHome() {
     $("btn-custom").addEventListener("click", customSize);
-    $("btn-import").addEventListener("click", function () { AT.io.importAny(); });
+    $("btn-import").addEventListener("click", function () {
+      if (!AT.canva) { AT.io.importAny(); return; }
+      AT.menu($("btn-import"), [
+        { label: t("imp.file"), fn: AT.io.importAny },
+        { label: t("imp.canva"), fn: AT.canva.open }
+      ]);
+    });
     $("home-search").addEventListener("input", renderHome);
     // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {
