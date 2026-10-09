@@ -432,6 +432,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .dlg-btn.primary:hover { background: var(--accent-hover); }
 .dlg-btn.danger { color: var(--neg-ink); }
+.dlg-btn.wide-btn { display: block; width: 100%; margin-top: 4px; white-space: normal; padding: 8px 12px; }
 .dlg-btn.danger:hover { border-color: var(--neg-ink); background: transparent; }
 .exp-acts .dlg-btn { flex: 1 1 100px; }
 .seg { display: flex; gap: 6px; margin-bottom: 14px; }
