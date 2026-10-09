@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Atelier — panels (v1.0.0)
-//   - the rail (Templates, Elements, Text, Uploads, Background):
+//   - the rail (Templates, Elements, Text, Sources, Uploads, Background):
 //     a side drawer on wide screens, a bottom sheet on phones
 //   - contextual drawer views opened from the context bar: Colour,
 //     Effects (text), Filters / Adjust / Shape (photos), Position
@@ -15,7 +15,7 @@
   var AT = window.AT, M = AT.M, T = AT.T, FX = AT.FX, AX = AT.AX, A = AT.A, t = AT.t, $ = AT.$, el = AT.el;
   var ED = AT.ed, ICONS = window.ATELIER_ICONS;
 
-  var RAIL = ["templates", "elements", "text", "uploads", "background"];
+  var RAIL = ["templates", "elements", "text", "sources", "uploads", "background"];
   var PALETTE = ["#000000", "#545454", "#737373", "#a6a6a6", "#d9d9d9", "#ffffff",
     "#ff3131", "#ff5757", "#ff66c4", "#cb6ce6", "#8c52ff", "#5e17eb",
     "#0097b2", "#0cc0df", "#5ce1e6", "#38b6ff", "#5271ff", "#004aad",
@@ -128,6 +128,8 @@
   AT.renderDrawer = renderDrawer;
 
   var VIEWS = {};
+  // views that live in their own file (sources.js)
+  AT.registerView = function (id, fn) { VIEWS[id] = fn; };
 
   // --- Templates ---
   VIEWS.templates = function (body) {
