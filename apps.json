@@ -419,6 +419,14 @@
       "type": "internal"
     },
     {
+      "id": "scores",
+      "name": "Score Keeper",
+      "category": "Fun",
+      "icon": "scores",
+      "url": "scores/",
+      "type": "internal"
+    },
+    {
       "id": "radio",
       "name": "Radio",
       "category": "Sound",
@@ -696,6 +704,46 @@
       "category": "Games",
       "icon": "backgammon",
       "url": "backgammon/",
+      "type": "internal"
+    },
+    {
+      "id": "wordsearch",
+      "name": "Word Search",
+      "category": "Games",
+      "icon": "wordsearch",
+      "url": "wordsearch/",
+      "type": "internal"
+    },
+    {
+      "id": "solitaire",
+      "name": "Solitaire",
+      "category": "Games",
+      "icon": "solitaire",
+      "url": "solitaire/",
+      "type": "internal"
+    },
+    {
+      "id": "jigsaw",
+      "name": "Jigsaw",
+      "category": "Games",
+      "icon": "jigsaw",
+      "url": "jigsaw/",
+      "type": "internal"
+    },
+    {
+      "id": "crossword",
+      "name": "Crossword",
+      "category": "Games",
+      "icon": "crossword",
+      "url": "crossword/",
+      "type": "internal"
+    },
+    {
+      "id": "xeri",
+      "name": "Xeri",
+      "category": "Games",
+      "icon": "xeri",
+      "url": "xeri/",
       "type": "internal"
     },
     {
