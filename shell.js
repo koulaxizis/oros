@@ -1612,6 +1612,7 @@
 
     renderSkinSwatches(menu);
     renderWallpaperSection(menu);
+    if (window.orosLauncher) window.orosLauncher.renderSettings(menu);   // Dock
     renderInstallRow(menu);
     renderWxSection(menu);
     renderPetSection(menu);        // Soffitta port: desktop companion
@@ -6932,6 +6933,7 @@
     window.orosLauncher.attach({
       apps: function () { return state.apps; },
       open: openApp,
+      running: function () { return state.running; },
       icons: ICONS,
       lang: function () { return state.lang; },
       label: function (app) {

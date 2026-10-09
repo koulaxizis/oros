@@ -1,24 +1,30 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts, v1.0.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, v1.0.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
 // only calls attach() once at boot, refresh() after every menu
-// render, and menuRow() for each app row of the menu. A bundle
-// without this file draws exactly what it drew before.
+// render, menuRow() for each app row of the menu and
+// renderSettings() for the Dock section. A bundle without this file
+// draws exactly what it drew before.
 //
 //   • The menu: a star at the end of every app row opens a small
-//     panel with the switch "On the desktop". The star is filled
-//     while the app has a shortcut anywhere.
+//     panel with two switches, "On the desktop" and "In the Dock".
+//     The star is filled while the app has a shortcut anywhere.
 //   • The desktop: shortcuts in an automatic grid, in the order they
-//     were added. Tap opens; right-click or a long press opens a
-//     small menu (Open · Move earlier · Move later · Remove).
+//     were added. Tap opens; right-click, a long press or the
+//     context-menu key opens a small menu (Open · Move earlier ·
+//     Move later · Remove).
+//   • The Dock: a mac-style bar at the bottom, OFF until the user
+//     turns it on in its menu section (size, magnify, auto-hide,
+//     over open apps). Same small menu; mouse users can also drag.
+//     While it is shown, --tb-h lifts the pet and the desktop grid.
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
 //   • id    = the app id from apps.json;
 //   • desk  = order key on the desktop, or null (not there);
-//   • dock  = order key in the Dock, or null (reserved for the Dock);
+//   • dock  = order key in the Dock, or null (not there);
 //   • mtime = ms of the last change to THIS item (R27: stamped at the
 //     mutation site only).
 //   Order keys are fractional: moving one shortcut rewrites only that
@@ -151,7 +157,24 @@
     return withItem(d, id, f, now);
   }
 
-  var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, VER: VER, DATA_KEY: DATA_KEY };
+  // Drop `id` at position `index` of the place (0 = first), as a drag
+  // does. Same rules as move(): one item changes, or a renumbering.
+  function moveTo(data, id, place, index, now) {
+    var d = normalize(data);
+    var ids = list(d, place);
+    var i = ids.indexOf(id);
+    if (i === -1) return d;
+    index = Math.max(0, Math.min(ids.length - 1, Math.floor(index)));
+    if (index === i) return d;
+    while (i !== index) {
+      var dir = index < i ? -1 : 1;
+      d = move(d, id, place, dir, now);
+      i += dir;
+    }
+    return d;
+  }
+
+  var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -209,17 +232,54 @@
     api.registerSlice("launcher", sliceGet, sliceSet, DATA_KEY, merge);
   }
 
-  // ---------- 3. Strings (EN / EL) ----------
+  // ---------- 3. Dock preferences (DEVICE-LOCAL, never synced) ----------
+  // A phone and a PC want different docks, so only the pins travel.
+  // oros-launcher-prefs = { on, size: s|m|l, magnify, autohide, over }
+  // over: null = the device's default (mouse: yes, touch: no).
+  var PREFS_KEY = "oros-launcher-prefs";
+  var SIZES = { s: 40, m: 52, l: 64 };
+
+  function finePointer() {
+    try { return root.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch (e) { return false; }
+  }
+  function prefs() {
+    var p = null;
+    try { p = JSON.parse(root.localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
+    p = (p && typeof p === "object") ? p : {};
+    return {
+      on: p.on === true,
+      size: SIZES[p.size] ? p.size : "m",
+      magnify: p.magnify !== false,
+      autohide: p.autohide === true,
+      over: (p.over === true || p.over === false) ? p.over : null
+    };
+  }
+  function savePrefs(p) {
+    try { root.localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+    paintDock();
+  }
+  function overApps(p) { return p.over === null ? finePointer() : p.over; }
+
+  // ---------- 4. Strings (EN / EL) ----------
   var STR = {
     en: {
-      star: "Shortcuts", desk: "On the desktop", open: "Open",
+      star: "Shortcuts", desk: "On the desktop", inDock: "In the Dock", open: "Open",
       earlier: "Move earlier", later: "Move later", remove: "Remove from desktop",
-      deskLabel: "Desktop shortcuts", more: "Options"
+      removeDock: "Remove from the Dock", deskLabel: "Desktop shortcuts",
+      dock: "Dock", dockOn: "Show the Dock", dockOff: "The Dock is off.", turnOn: "Turn on",
+      size: "Size", s: "Small", m: "Medium", l: "Large",
+      magnify: "Magnify on hover", autohide: "Hide automatically", over: "Show over open apps",
+      empty: "Add apps with the ☆ next to each app above.", reveal: "Show the Dock"
     },
     el: {
-      star: "Συντομεύσεις", desk: "Στην επιφάνεια εργασίας", open: "Άνοιγμα",
+      star: "Συντομεύσεις", desk: "Στην επιφάνεια εργασίας", inDock: "Στο Dock", open: "Άνοιγμα",
       earlier: "Μετακίνηση νωρίτερα", later: "Μετακίνηση αργότερα", remove: "Αφαίρεση από την επιφάνεια εργασίας",
-      deskLabel: "Συντομεύσεις επιφάνειας εργασίας", more: "Επιλογές"
+      removeDock: "Αφαίρεση από το Dock", deskLabel: "Συντομεύσεις επιφάνειας εργασίας",
+      dock: "Dock", dockOn: "Εμφάνιση του Dock", dockOff: "Το Dock είναι κλειστό.", turnOn: "Ενεργοποίηση",
+      size: "Μέγεθος", s: "Μικρό", m: "Μεσαίο", l: "Μεγάλο",
+      magnify: "Μεγέθυνση στο πέρασμα του ποντικιού", autohide: "Αυτόματη απόκρυψη",
+      over: "Εμφάνιση πάνω από ανοιχτές εφαρμογές",
+      empty: "Πρόσθεσε εφαρμογές με το ☆ δίπλα σε κάθε εφαρμογή παραπάνω.", reveal: "Εμφάνιση του Dock"
     }
   };
   function tr(k) {
@@ -227,8 +287,9 @@
     return STR[lang][k] || STR.en[k] || k;
   }
 
-  // ---------- 4. Styles (injected once; skin variables only) ----------
+  // ---------- 5. Styles (injected once; skin variables only) ----------
   var CSS = [
+    // menu star + panel
     ".ld-row{display:flex;align-items:center;gap:2px;position:relative}",
     ".ld-row>.menu-item{flex:1;min-width:0}",
     ".ld-star{flex:0 0 auto;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;",
@@ -237,13 +298,21 @@
     ".ld-star.on{color:var(--accent)}",
     ".ld-star svg{width:18px;height:18px}",
     ".ld-pop{margin:0 4px 6px 32px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}",
-    ".ld-sw{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;color:var(--text);cursor:pointer}",
-    ".ld-sw input{width:18px;height:18px;accent-color:var(--accent);margin:0}",
-    ".ld-note{font-size:12px;color:var(--text-dim);padding:0 0 8px 28px}",
-    ".ld-note button{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;padding:0;text-decoration:underline}",
+    ".ld-sw{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;color:var(--text);cursor:pointer;padding:0 10px}",
+    ".ld-pop .ld-sw{padding:0}",
+    ".ld-sw input{flex:0 0 auto;width:18px;height:18px;accent-color:var(--accent);margin:0}",
+    ".ld-note{font-size:12px;color:var(--text-dim);padding:0 10px 8px 38px}",
+    ".ld-pop .ld-note{padding:0 0 8px 28px}",
+    ".ld-note button{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;padding:4px 0;text-decoration:underline}",
+    ".ld-seg{display:flex;gap:4px;padding:4px 10px 6px}",
+    ".ld-seg button{flex:1;min-height:40px;border:1px solid var(--border);border-radius:7px;background:transparent;",
+    "color:var(--text);font-size:13px;cursor:pointer}",
+    ".ld-seg button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}",
+    ".ld-lbl{font-size:12px;color:var(--text-dim);padding:6px 10px 0}",
+    // desktop grid (the Dock lifts it through --tb-h)
     "#ld-desk{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px 4px;",
-    "padding:14px 10px 150px;max-width:960px;align-content:start}",
-    "@media (min-width:600px){#ld-desk{grid-template-columns:repeat(auto-fill,96px);padding:20px 20px 150px}}",
+    "padding:14px 10px calc(150px + var(--tb-h,0px));max-width:960px;align-content:start}",
+    "@media (min-width:600px){#ld-desk{grid-template-columns:repeat(auto-fill,96px);padding:20px 20px calc(150px + var(--tb-h,0px))}}",
     ".ld-ic{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;min-height:44px;",
     "background:transparent;border:1px solid transparent;border-radius:10px;color:var(--text);cursor:pointer;",
     "-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}",
@@ -252,15 +321,48 @@
     "background:var(--panel-bg);color:var(--accent);border:1px solid var(--border);box-shadow:0 2px 8px var(--shadow)}",
     ".ld-tile svg{width:28px;height:28px}",
     ".ld-name{font-size:12px;line-height:1.25;text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;",
-    "-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;padding:1px 5px;border-radius:6px;",
+    "-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto;padding:1px 5px;border-radius:6px;",
     "background:color-mix(in srgb,var(--panel-bg) 72%,transparent)}",
+    // small menu (desktop + Dock)
     ".ld-menu{position:fixed;z-index:1100;min-width:200px;max-width:calc(100vw - 16px);padding:4px;",
     "background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px var(--shadow)}",
     ".ld-menu button{display:block;width:100%;min-height:44px;padding:8px 12px;text-align:left;background:transparent;",
     "border:none;border-radius:7px;color:var(--text);font-size:14px;cursor:pointer}",
     ".ld-menu button:hover,.ld-menu button:focus-visible{background:var(--accent-soft)}",
     ".ld-menu button:disabled{opacity:.45;cursor:default;background:transparent}",
-    ".ld-menu .ld-danger{color:var(--danger)}"
+    ".ld-menu .ld-danger{color:var(--danger)}",
+    // the Dock (z 950: over a running app at 900, under the menu at 999)
+    "#ld-dock{position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);",
+    "z-index:950;max-width:calc(100vw - 16px);transition:transform .22s ease,opacity .22s ease}",
+    "#ld-dock.ld-hidden{transform:translate(-50%,calc(100% + 12px));opacity:0;pointer-events:none}",
+    ".ld-bar{display:flex;align-items:flex-end;gap:6px;padding:6px 8px;border-radius:18px;",
+    "background:color-mix(in srgb,var(--panel-bg) 86%,transparent);border:1px solid var(--border);",
+    "box-shadow:0 8px 28px var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}",
+    ".ld-dk{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:0;",
+    "background:transparent;border:none;cursor:pointer;color:var(--accent);transform-origin:50% 100%;",
+    "transition:transform .12s ease;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}",
+    ".ld-dk .ld-tile{width:var(--ld-t);height:var(--ld-t);border-radius:calc(var(--ld-t) * .27);box-shadow:none}",
+    ".ld-dk .ld-tile svg{width:calc(var(--ld-t) * .54);height:calc(var(--ld-t) * .54)}",
+    ".ld-dk:focus-visible .ld-tile{outline:2px solid var(--accent);outline-offset:2px}",
+    ".ld-dot{width:4px;height:4px;border-radius:50%;margin-top:3px;background:transparent}",
+    ".ld-dk.run .ld-dot{background:var(--accent)}",
+    ".ld-dk.drag{opacity:.55}",
+    ".ld-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);white-space:nowrap;",
+    "padding:4px 9px;border-radius:7px;font-size:12px;background:var(--panel-bg);color:var(--text);",
+    "border:1px solid var(--border);box-shadow:0 4px 14px var(--shadow);pointer-events:none;opacity:0;transition:opacity .12s}",
+    "@media (hover:hover) and (pointer:fine){.ld-dk:hover .ld-tip,.ld-dk:focus-visible .ld-tip{opacity:1}}",
+    // auto-hide: an edge strip (mouse) and a small handle (touch)
+    "#ld-edge{position:fixed;left:0;right:0;bottom:0;height:calc(10px + env(safe-area-inset-bottom,0px));z-index:949;",
+    "display:flex;align-items:flex-end;justify-content:center;background:transparent;border:none;padding:0 0 env(safe-area-inset-bottom,0px);cursor:pointer}",
+    "#ld-edge[hidden]{display:none}",
+    "#ld-edge span{width:44px;height:4px;border-radius:2px;margin-bottom:3px;background:var(--text-dim);opacity:.6}",
+    "@media (pointer:coarse){#ld-edge{height:calc(24px + env(safe-area-inset-bottom,0px));left:calc(50% - 40px);right:auto;width:80px}}",
+    // a running app hides the Dock unless "over open apps" is on
+    "#oros-running.active ~ #ld-dock.ld-noover,#oros-running.active ~ #ld-edge.ld-noover{display:none}",
+    // a pinned (not auto-hidden) Dock over apps: the app ends above it
+    "html.ld-push #oros-running.active{bottom:calc(var(--tb-h,0px) + env(safe-area-inset-bottom,0px))}",
+    "@media (max-width:480px){.ld-bar{overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none}",
+    ".ld-bar::-webkit-scrollbar{display:none}}"
   ].join("\n");
 
   function injectCss() {
@@ -276,7 +378,7 @@
     '<path d="M12 3.2l2.7 5.5 6 .9-4.35 4.25 1.03 6L12 17l-5.38 2.85 1.03-6L3.3 9.6l6-.9z"/></svg>';
   var STAR_ON = STAR.replace('fill="none"', 'fill="currentColor"');
 
-  // ---------- 5. Helpers ----------
+  // ---------- 6. Helpers ----------
   function apps() { return (host && host.apps && host.apps()) || []; }
   function appById(id) {
     var a = apps();
@@ -288,8 +390,34 @@
     var icons = (host && host.icons) || {};
     return Object.prototype.hasOwnProperty.call(icons, app.icon) ? icons[app.icon] : "";
   }
+  function runningId() {
+    var r = host && host.running && host.running();
+    return r ? r.id : null;
+  }
+  function launch(id) {
+    var app = appById(id);
+    if (!app || runningId() === id) return;     // never reload the open app
+    host.open(app);
+  }
+  function shown(place) {
+    return list(load(), place).filter(function (id) { return !!appById(id); });
+  }
+  function switchRow(text, checked, onChange, key) {
+    var sw = doc.createElement("label");
+    sw.className = "ld-sw";
+    var cb = doc.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!checked;
+    if (key) cb.setAttribute("data-k", key);
+    cb.addEventListener("change", function () { onChange(cb.checked); });
+    sw.appendChild(cb);
+    var tx = doc.createElement("span");
+    tx.textContent = text;
+    sw.appendChild(tx);
+    return sw;
+  }
 
-  // ---------- 6. Menu: the star and its panel ----------
+  // ---------- 7. Menu: the star and its panel ----------
   var openPop = null;            // app id whose panel is open (memory only)
 
   function paintStar(btn, id) {
@@ -302,21 +430,37 @@
     var pop = doc.createElement("div");
     pop.className = "ld-pop";
     pop.id = "ld-pop-" + app.id;
-    var sw = doc.createElement("label");
-    sw.className = "ld-sw";
-    var cb = doc.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = isPinned(load(), app.id, "desk");
-    cb.addEventListener("change", function () {
-      change(pin(load(), app.id, "desk", cb.checked, Date.now()));
-      paintStar(star, app.id);
+    PLACES.forEach(function (place) {
+      pop.appendChild(switchRow(tr(place === "desk" ? "desk" : "inDock"), isPinned(load(), app.id, place), function (on) {
+        change(pin(load(), app.id, place, on, Date.now()));
+        paintStar(star, app.id);
+        paintDockNote(pop);
+      }, place));
     });
-    sw.appendChild(cb);
-    var tx = doc.createElement("span");
-    tx.textContent = tr("desk");
-    sw.appendChild(tx);
-    pop.appendChild(sw);
+    paintDockNote(pop);
     return pop;
+  }
+
+  // "The Dock is off · Turn on", only while this app is in an off Dock.
+  function paintDockNote(pop) {
+    var old = pop.querySelector(".ld-note");
+    if (old) old.remove();
+    var cb = pop.querySelector('input[data-k="dock"]');
+    if (!cb || !cb.checked || prefs().on) return;
+    var note = doc.createElement("div");
+    note.className = "ld-note";
+    note.appendChild(doc.createTextNode(tr("dockOff") + " "));
+    var b = doc.createElement("button");
+    b.type = "button";
+    b.textContent = tr("turnOn");
+    b.addEventListener("click", function () {
+      var p = prefs(); p.on = true; savePrefs(p);
+      note.remove();
+      cb.focus();
+      repaintSettings();
+    });
+    note.appendChild(b);
+    pop.appendChild(note);
   }
 
   // Wraps the shell's app button in a row with the star. The panel is
@@ -335,6 +479,7 @@
     star.title = tr("star");
     star.setAttribute("aria-label", tr("star") + ": " + labelOf(app));
     star.setAttribute("aria-controls", "ld-pop-" + app.id);
+    star.setAttribute("data-app", app.id);
     paintStar(star, app.id);
     line.appendChild(star);
     row.appendChild(line);
@@ -373,7 +518,84 @@
     return row;
   }
 
-  // ---------- 7. Desktop shortcuts ----------
+  function paintStars() {
+    var stars = doc.querySelectorAll(".ld-star[data-app]");
+    for (var i = 0; i < stars.length; i++) {
+      var id = stars[i].getAttribute("data-app");
+      paintStar(stars[i], id);
+      var pop = doc.getElementById("ld-pop-" + id);
+      if (!pop) continue;
+      PLACES.forEach(function (place) {
+        var cb = pop.querySelector('input[data-k="' + place + '"]');
+        if (cb) cb.checked = isPinned(load(), id, place);
+      });
+      paintDockNote(pop);
+    }
+  }
+
+  // ---------- 8. Menu: the Dock settings section ----------
+  // A callable builder, so a future Settings app can host it too.
+  function buildSettings() {
+    var p = prefs();
+    var sec = doc.createElement("div");
+    sec.className = "sync-section";
+    sec.id = "ld-set";
+    var h = doc.createElement("div");
+    h.className = "menu-heading";
+    h.textContent = tr("dock");
+    sec.appendChild(h);
+    function set(k, v) { var q = prefs(); q[k] = v; savePrefs(q); repaintSettings(k); }
+    sec.appendChild(switchRow(tr("dockOn"), p.on, function (v) { set("on", v); }, "on"));
+    if (!p.on) return sec;
+
+    var lbl = doc.createElement("div");
+    lbl.className = "ld-lbl";
+    lbl.id = "ld-size-lbl";
+    lbl.textContent = tr("size");
+    sec.appendChild(lbl);
+    var seg = doc.createElement("div");
+    seg.className = "ld-seg";
+    seg.setAttribute("role", "group");
+    seg.setAttribute("aria-labelledby", "ld-size-lbl");
+    ["s", "m", "l"].forEach(function (k) {
+      var b = doc.createElement("button");
+      b.type = "button";
+      b.textContent = tr(k);
+      b.setAttribute("aria-pressed", p.size === k ? "true" : "false");
+      b.setAttribute("data-k", "size-" + k);
+      b.addEventListener("click", function () { set("size", k); });
+      seg.appendChild(b);
+    });
+    sec.appendChild(seg);
+    if (finePointer()) sec.appendChild(switchRow(tr("magnify"), p.magnify, function (v) { set("magnify", v); }, "magnify"));
+    sec.appendChild(switchRow(tr("autohide"), p.autohide, function (v) { set("autohide", v); }, "autohide"));
+    sec.appendChild(switchRow(tr("over"), overApps(p), function (v) { set("over", v); }, "over"));
+    if (!shown("dock").length) {
+      var note = doc.createElement("div");
+      note.className = "ld-note";
+      note.textContent = tr("empty");
+      sec.appendChild(note);
+    }
+    return sec;
+  }
+
+  function renderSettings(menu) {
+    if (!host || !menu) return;
+    menu.appendChild(buildSettings());
+  }
+
+  // Rebuild the section in place (no menu rebuild) and keep focus.
+  function repaintSettings(focusKey) {
+    var old = doc.getElementById("ld-set");
+    if (!old) return;
+    var fresh = buildSettings();
+    old.replaceWith(fresh);
+    var k = focusKey === "size" ? "size-" + prefs().size : focusKey;
+    var el = k && fresh.querySelector('[data-k="' + k + '"]');
+    if (el) el.focus();
+  }
+
+  // ---------- 9. Small menu (desktop icons + Dock icons) ----------
   var ctx = null;                // { el, back } of the open small menu
 
   function closeCtx(refocus) {
@@ -388,11 +610,11 @@
     if (ctx && !ctx.el.contains(e.target)) closeCtx(false);
   }
 
-  function openCtx(id, anchor, x, y) {
+  function openCtx(id, place, anchor, x, y) {
     closeCtx(false);
     var app = appById(id);
     if (!app) return;
-    var ids = list(load(), "desk");
+    var ids = list(load(), place);
     var i = ids.indexOf(id);
     var m = doc.createElement("div");
     m.className = "ld-menu";
@@ -408,10 +630,10 @@
       b.addEventListener("click", function () { closeCtx(false); fn(); });
       m.appendChild(b);
     }
-    item("open", function () { host.open(app); });
-    item("earlier", function () { change(move(load(), id, "desk", -1, Date.now())); focusIcon(id); }, i <= 0);
-    item("later", function () { change(move(load(), id, "desk", 1, Date.now())); focusIcon(id); }, i === -1 || i >= ids.length - 1);
-    item("remove", function () { change(pin(load(), id, "desk", false, Date.now())); }, false, "ld-danger");
+    item("open", function () { launch(id); });
+    item("earlier", function () { change(move(load(), id, place, -1, Date.now())); focusIcon(id, place); }, i <= 0);
+    item("later", function () { change(move(load(), id, place, 1, Date.now())); focusIcon(id, place); }, i === -1 || i >= ids.length - 1);
+    item(place === "desk" ? "remove" : "removeDock", function () { change(pin(load(), id, place, false, Date.now())); }, false, "ld-danger");
     m.addEventListener("keydown", function (e) {
       var bs = Array.prototype.slice.call(m.querySelectorAll("button:not(:disabled)"));
       var k = bs.indexOf(doc.activeElement);
@@ -423,6 +645,7 @@
     doc.body.appendChild(m);
     var r = m.getBoundingClientRect();
     var vw = root.innerWidth, vh = root.innerHeight;
+    if (place === "dock") y = y - r.height - 8;     // open upwards from the Dock
     m.style.left = Math.max(8, Math.min(x, vw - r.width - 8)) + "px";
     m.style.top = Math.max(8, Math.min(y, vh - r.height - 8)) + "px";
     ctx = { el: m, back: anchor };
@@ -431,14 +654,14 @@
     if (first) first.focus();
   }
 
-  function focusIcon(id) {
-    var el = doc.querySelector('#ld-desk [data-app="' + id + '"]');
+  function focusIcon(id, place) {
+    var el = doc.querySelector((place === "dock" ? "#ld-dock" : "#ld-desk") + ' [data-app="' + id + '"]');
     if (el) el.focus();
   }
 
   // Long press on touch (500 ms; moving more than 10 px cancels; the
   // click that follows is swallowed). Mouse: the contextmenu event.
-  function wireIcon(b, id) {
+  function wireIcon(b, id, place) {
     var timer = null, sx = 0, sy = 0, fired = 0;
     b.addEventListener("pointerdown", function (e) {
       if (e.pointerType === "mouse") return;
@@ -447,7 +670,7 @@
       timer = setTimeout(function () {
         timer = null;
         fired = Date.now();
-        openCtx(id, b, sx, sy);
+        openCtx(id, place, b, sx, sy);
       }, 500);
     });
     b.addEventListener("pointermove", function (e) {
@@ -461,23 +684,30 @@
       if (Date.now() - fired < 1000) return;      // the long press already opened it
       var r = b.getBoundingClientRect();
       var kb = !e.clientX && !e.clientY;           // context-menu key
-      openCtx(id, b, kb ? r.left : e.clientX, kb ? r.bottom : e.clientY);
+      openCtx(id, place, b, kb ? r.left : e.clientX, kb ? (place === "dock" ? r.top : r.bottom) : e.clientY);
     });
     b.addEventListener("click", function (e) {
-      if (Date.now() - fired < 1000) { e.preventDefault(); return; }
-      var app = appById(id);
-      if (app) host.open(app);
+      if (Date.now() - fired < 1000 || b.__ldDragged) { e.preventDefault(); b.__ldDragged = false; return; }
+      launch(id);
     });
   }
 
+  function tileFor(app) {
+    var tile = doc.createElement("span");
+    tile.className = "ld-tile";
+    tile.innerHTML = iconOf(app);            // static shell icon, not data
+    return tile;
+  }
+
+  // ---------- 10. Desktop shortcuts ----------
   function paintDesktop() {
     var desk = host && host.desktop;
     if (!desk) return;
     var grid = doc.getElementById("ld-desk");
-    var ids = list(load(), "desk").filter(function (id) { return !!appById(id); });
+    var ids = shown("desk");
     if (!ids.length) { if (grid) grid.remove(); return; }
-    var focusId = doc.activeElement && doc.activeElement.closest && doc.activeElement.closest("#ld-desk")
-      ? doc.activeElement.getAttribute("data-app") : null;
+    var act = doc.activeElement;
+    var focusId = act && act.closest && act.closest("#ld-desk") ? act.getAttribute("data-app") : null;
     if (!grid) {
       grid = doc.createElement("div");
       grid.id = "ld-desk";
@@ -485,6 +715,7 @@
       desk.appendChild(grid);
     }
     grid.setAttribute("aria-label", tr("deskLabel"));
+    grid.lang = (host.lang && host.lang() === "el") ? "el" : "en";     // hyphenation of long names
     grid.textContent = "";
     ids.forEach(function (id) {
       var app = appById(id);
@@ -494,45 +725,218 @@
       b.setAttribute("role", "listitem");
       b.setAttribute("data-app", id);
       b.title = labelOf(app);
-      var tile = doc.createElement("span");
-      tile.className = "ld-tile";
-      tile.innerHTML = iconOf(app);          // static shell icon, not data
-      b.appendChild(tile);
+      b.appendChild(tileFor(app));
       var nm = doc.createElement("span");
       nm.className = "ld-name";
       nm.textContent = labelOf(app);
       b.appendChild(nm);
-      wireIcon(b, id);
+      wireIcon(b, id, "desk");
       grid.appendChild(b);
     });
-    if (focusId) focusIcon(focusId);
+    if (focusId) focusIcon(focusId, "desk");
   }
 
-  function paintStars() {
-    var stars = doc.querySelectorAll(".ld-row-wrap");
-    for (var i = 0; i < stars.length; i++) {
-      var s = stars[i].querySelector(".ld-star");
-      var id = s && s.getAttribute("aria-controls");
-      if (id) paintStar(s, id.slice(7));
-      var cb = stars[i].querySelector(".ld-pop input");
-      if (cb && id) cb.checked = isPinned(load(), id.slice(7), "desk");
+  // ---------- 11. The Dock ----------
+  var dock = null, edge = null, hideTimer = null, dockShownAt = 0;
+
+  function dockHeight(p) { return SIZES[p.size] + 7 + 12 + 2 + 6; }   // tile + dot + padding + border + gap
+
+  function setVars(p, visible) {
+    var de = doc.documentElement;
+    var lift = (visible && !p.autohide) ? dockHeight(p) + 6 : 0;
+    if (lift) de.style.setProperty("--tb-h", lift + "px");
+    else de.style.removeProperty("--tb-h");
+    de.classList.toggle("ld-push", !!lift && overApps(p));
+  }
+
+  function removeDock() {
+    if (dock) { dock.remove(); dock = null; }
+    if (edge) { edge.remove(); edge = null; }
+  }
+
+  function revealDock() {
+    if (!dock) return;
+    clearTimeout(hideTimer);
+    dock.classList.remove("ld-hidden");
+    dockShownAt = Date.now();
+  }
+  function hideSoon(ms) {
+    if (!dock || !prefs().autohide) return;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () {
+      if (!dock) return;
+      if (dock.contains(doc.activeElement) || (ctx && dock.contains(ctx.back))) { hideSoon(ms); return; }
+      dock.classList.add("ld-hidden");
+    }, ms);
+  }
+
+  function paintDock() {
+    if (!host) return;
+    var p = prefs();
+    var ids = p.on ? shown("dock") : [];
+    if (!ids.length) { removeDock(); setVars(p, false); return; }
+    var act = doc.activeElement;
+    var focusId = act && dock && dock.contains(act) ? act.getAttribute("data-app") : null;
+    if (!dock) {
+      dock = doc.createElement("div");
+      dock.id = "ld-dock";
+      dock.setAttribute("role", "toolbar");
+      var bar = doc.createElement("div");
+      bar.className = "ld-bar";
+      dock.appendChild(bar);
+      doc.body.appendChild(dock);
+      wireDock(dock, bar);
+      edge = doc.createElement("button");
+      edge.type = "button";
+      edge.id = "ld-edge";
+      edge.appendChild(doc.createElement("span"));
+      edge.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") revealDock(); });
+      edge.addEventListener("click", function () { revealDock(); hideSoon(4000); });
+      doc.body.appendChild(edge);
+      if (p.autohide) dock.classList.add("ld-hidden");
     }
+    dock.setAttribute("aria-label", tr("dock"));
+    edge.setAttribute("aria-label", tr("reveal"));
+    edge.title = tr("reveal");
+    var noover = !overApps(p);
+    dock.classList.toggle("ld-noover", noover);
+    edge.classList.toggle("ld-noover", noover);
+    edge.hidden = !p.autohide;
+    edge.tabIndex = -1;                 // keyboard users reach the Dock itself (focus reveals it)
+    if (!p.autohide) { clearTimeout(hideTimer); dock.classList.remove("ld-hidden"); }
+    dock.style.setProperty("--ld-t", SIZES[p.size] + "px");
+    var bar2 = dock.firstChild;
+    bar2.textContent = "";
+    var run = runningId();
+    ids.forEach(function (id) {
+      var app = appById(id);
+      var b = doc.createElement("button");
+      b.type = "button";
+      b.className = "ld-dk" + (run === id ? " run" : "");
+      b.setAttribute("data-app", id);
+      b.setAttribute("aria-label", labelOf(app));
+      if (run === id) b.setAttribute("aria-current", "true");
+      b.appendChild(tileFor(app));
+      var dot = doc.createElement("span");
+      dot.className = "ld-dot";
+      b.appendChild(dot);
+      var tip = doc.createElement("span");
+      tip.className = "ld-tip";
+      tip.setAttribute("aria-hidden", "true");
+      tip.textContent = labelOf(app);
+      b.appendChild(tip);
+      wireIcon(b, id, "dock");
+      bar2.appendChild(b);
+    });
+    setVars(p, true);
+    if (focusId) focusIcon(focusId, "dock");
+  }
+
+  function wireDock(dk, bar) {
+    // Auto-hide: leaving the Dock hides it again; focus shows it.
+    dk.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") hideSoon(900); });
+    dk.addEventListener("pointerenter", function () { clearTimeout(hideTimer); });
+    dk.addEventListener("focusin", revealDock);
+    dk.addEventListener("focusout", function () { hideSoon(900); });
+    doc.addEventListener("pointerdown", function (e) {
+      if (dock && prefs().autohide && !dock.contains(e.target) && !(edge && edge.contains(e.target)) &&
+          !(ctx && ctx.el.contains(e.target)) && Date.now() - dockShownAt > 300) hideSoon(0);
+    }, true);
+
+    // Arrow keys walk the icons.
+    bar.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+      var bs = Array.prototype.slice.call(bar.querySelectorAll(".ld-dk"));
+      var i = bs.indexOf(doc.activeElement);
+      if (i === -1) return;
+      e.preventDefault();
+      var j = e.key === "Home" ? 0 : e.key === "End" ? bs.length - 1 : i + (e.key === "ArrowLeft" ? -1 : 1);
+      if (bs[j]) bs[j].focus();
+    });
+
+    // Magnify (mouse only, when the setting is on).
+    bar.addEventListener("mousemove", function (e) {
+      var p = prefs();
+      if (!p.magnify || !finePointer() || dragging) return;
+      var t = SIZES[p.size];
+      var bs = bar.querySelectorAll(".ld-dk");
+      for (var i = 0; i < bs.length; i++) {
+        var r = bs[i].getBoundingClientRect();
+        var d = Math.abs(e.clientX - (r.left + r.width / 2));
+        var s = 1 + 0.45 * Math.max(0, 1 - d / (t * 2.2));
+        bs[i].style.transform = s > 1.001 ? "scale(" + s.toFixed(3) + ")" : "";
+      }
+    });
+    bar.addEventListener("mouseleave", unmagnify);
+    function unmagnify() {
+      var bs = bar.querySelectorAll(".ld-dk");
+      for (var i = 0; i < bs.length; i++) bs[i].style.transform = "";
+    }
+
+    // Drag to reorder (mouse; touch uses the long-press menu, because
+    // a finger dragging across a phone Dock scrolls it).
+    var dragging = null, sx = 0, startIdx = -1;
+    bar.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      var b = e.target.closest(".ld-dk");
+      if (!b) return;
+      dragging = null;
+      sx = e.clientX;
+      var onMove = function (ev) {
+        if (!dragging) {
+          if (Math.abs(ev.clientX - sx) < 6) return;
+          dragging = b;
+          startIdx = Array.prototype.indexOf.call(bar.children, b);
+          b.classList.add("drag");
+          unmagnify();
+        }
+        var bs = Array.prototype.filter.call(bar.children, function (x) { return x !== dragging; });
+        var before = null;
+        for (var i = 0; i < bs.length; i++) {
+          var r = bs[i].getBoundingClientRect();
+          if (ev.clientX < r.left + r.width / 2) { before = bs[i]; break; }
+        }
+        if (before !== dragging.nextSibling) bar.insertBefore(dragging, before);
+      };
+      var onUp = function () {
+        doc.removeEventListener("pointermove", onMove, true);
+        doc.removeEventListener("pointerup", onUp, true);
+        if (!dragging) return;
+        var d = dragging;
+        dragging = null;
+        d.classList.remove("drag");
+        d.__ldDragged = true;
+        setTimeout(function () { d.__ldDragged = false; }, 0);
+        var idx = Array.prototype.indexOf.call(bar.children, d);
+        if (idx !== startIdx) change(moveTo(load(), d.getAttribute("data-app"), "dock", idx, Date.now()));
+        focusIcon(d.getAttribute("data-app"), "dock");
+      };
+      doc.addEventListener("pointermove", onMove, true);
+      doc.addEventListener("pointerup", onUp, true);
+    });
   }
 
   function paint() {
     if (!host) return;
     paintDesktop();
+    paintDock();
     paintStars();
   }
 
-  // ---------- 8. Public API ----------
-  // host = { apps(), open(app), label(app), icons, lang(), desktop }
+  // ---------- 12. Public API ----------
+  // host = { apps(), open(app), running(), label(app), icons, lang(), desktop }
   function attach(h) {
     if (host) return;
     host = h || {};
     injectCss();
     load();
     registerSync();
+    // The open app's dot in the Dock, and hiding the Dock behind a
+    // running app (CSS) — both follow #oros-running.
+    var run = doc.getElementById("oros-running");
+    if (run && root.MutationObserver) {
+      new root.MutationObserver(function () { paintDock(); }).observe(run, { attributes: true, attributeFilter: ["class"] });
+    }
   }
 
   root.orosLauncher = {
@@ -540,6 +944,7 @@
     model: model,
     attach: attach,
     refresh: paint,
-    menuRow: menuRow
+    menuRow: menuRow,
+    renderSettings: renderSettings
   };
 })(typeof window !== "undefined" ? window : globalThis);

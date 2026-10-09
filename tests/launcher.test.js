@@ -103,6 +103,24 @@ test("move: thousands of moves keep a correct order (renumbering)", () => {
   }
 });
 
+test("moveTo: a drop at any index matches a list splice", () => {
+  let base = null;
+  const ids = ["a", "b", "c", "d", "e"];
+  ids.forEach((id, i) => { base = L.pin(base, id, "dock", true, i + 1); });
+  for (const id of ids) {
+    for (let to = 0; to < ids.length; to++) {
+      const ref = ids.slice();
+      ref.splice(ref.indexOf(id), 1);
+      ref.splice(to, 0, id);
+      const d = L.moveTo(base, id, "dock", to, 100);
+      assert.deepEqual(L.list(d, "dock"), ref, id + " -> " + to);
+      const changed = d.items.filter((it, i) => J(it) !== J(base.items[i])).map((it) => it.id);
+      assert.ok(changed.length <= 1 && (!changed.length || changed[0] === id), "only the dragged item changes");
+    }
+  }
+  assert.equal(J(L.moveTo(base, "zz", "dock", 0, 1)), J(base), "unknown id: no change");
+});
+
 test("two devices: different apps pinned offline both survive", () => {
   const base = L.pin(null, "notes", "desk", true, 1);
   const a = L.pin(base, "calendar", "desk", true, 10);
