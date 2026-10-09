@@ -14,7 +14,7 @@ Open a recipe to see it. The + and − buttons change the servings and scale eve
 The search box finds recipes by name. Type ingredients separated by commas (like "eggs, spinach") to find recipes that use them. `★ Favourites` and `Fits our diet` filter the list.
 
 ## Cooking mode
-`Cook` shows one step at a time in big text, with the ingredients a tap away. When a step mentions a time, a timer button appears for it. The screen stays on while you cook.
+`Cook` shows one step at a time. When a step mentions a time, a timer button appears for it. The screen stays on while you cook.
 
 ## Week
 Each day has a row for every meal. Tap or click an empty slot to add a recipe, or write something like "Out" or "Leftovers". Tap a meal to open the recipe, change its servings, move it or remove it. On a computer you can also drag meals between slots.
@@ -37,7 +37,6 @@ Recipes, the week plan, the shopping ticks, your extra items and settings sync b
 - [[←]] and [[→]]: previous or next week; in cooking mode, previous or next step.
 
 ## Tips
-- Plan the week first, then go shopping with the list on your phone.
 - Add salt, oil and the other basics to `Always in the house` to keep the list short.
 
 ## Limits

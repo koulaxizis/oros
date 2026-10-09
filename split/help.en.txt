@@ -17,7 +17,7 @@ Under `Split`, pick who shares it (`Everyone` or tap names) and how:
 - `Shares`: for example 2 shares for a couple, 1 for a single.
 - `%`: percentages that add up to 100.
 
-A line under the split tells you what's `Left to share` or `Too much by`, and says `Adds up` when it's right. Leftover cents (10 € in 3) are shared by a fixed rule, so every device shows the same numbers. Add an optional `Note`, then `Save`. Tap or click an expense to edit or delete it; an `Undo` button stays for a few seconds after a delete.
+A line under the split tells you what's `Left to share` or `Too much by`, and says `Adds up` when it's right. Add an optional `Note`, then `Save`. Tap or click an expense to edit or delete it; an `Undo` button stays for a few seconds after a delete.
 
 The `Expenses` tab has `Search the expenses…` and filters for `Category`, `Involving` someone and `Payments only`.
 

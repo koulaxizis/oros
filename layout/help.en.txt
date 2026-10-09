@@ -30,7 +30,7 @@ Double-click an image frame, or use `Place image…`, to choose a picture. Pick 
 ## Sync and backup
 Your documents sync between your devices through [orOS sync](help:t/sync). Images are stored on the orOS disk and sync as separate files, so on another device a picture may show `Syncing…` for a while. The open document and zoom stay on each device. For a full copy with images, save a package; see also [backup](help:t/backup).
 
-If the same text was changed on two devices at once, the other version is kept under `Recovered text` in the `More` menu.
+Text changed on two devices at once? The other version waits in `Recovered text` in the `More` menu.
 
 ## Keyboard shortcuts
 - [[V]] [[T]] [[F]] [[R]] [[E]] [[L]] [[H]] pick a tool; [[W]] toggles preview.

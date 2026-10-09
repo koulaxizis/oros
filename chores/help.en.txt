@@ -37,11 +37,9 @@ Members, chores and everything ticked, skipped or handed over sync between your 
 ## Keyboard shortcuts
 - [[←]] and [[→]]: turn the wheel or change the week.
 - [[N]]: new chore.
-- Arrow keys, [[Home]] and [[End]] on the tabs: switch tabs.
 
 ## Tips
 - Use `Balanced` for chores nobody likes; it gives them to whoever has done least lately.
-- Set each phone's `Who are you on this device?` so everyone sees their own chores first.
 
 ## Limits
 - Up to 12 members and 40 chores.
