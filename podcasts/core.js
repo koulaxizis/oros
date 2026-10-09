@@ -173,6 +173,34 @@
     node.t = t;
     return node;
   }
+  // The Reader's lenient parser (feeds/core.js parseXml): nodes
+  // { n: "prefix:name" (lower-case), a: {attrs, lower-case}, c: [nodes | strings] }
+  // under a "#root". Namespaces are resolved here from xmlns attrs.
+  function fromFeedsXml(rootNode) {
+    function conv(x, map, depth) {
+      if (!x || typeof x !== "object" || depth > 12) return null;
+      var m = map, a = x.a || {}, k;
+      for (k in a) {
+        if (k === "xmlns" || k.indexOf("xmlns:") === 0) {
+          if (m === map) m = Object.assign({}, map);
+          m[k === "xmlns" ? "" : k.slice(6)] = String(a[k]).toLowerCase();
+        }
+      }
+      var name = String(x.n || ""), i = name.indexOf(":");
+      var p = i > 0 ? name.slice(0, i) : "", ln = i > 0 ? name.slice(i + 1) : name;
+      var node = { ns: m[p] || "", ln: ln, a: {}, c: [], t: "" };
+      if (p) node.p = p.toLowerCase();
+      for (k in a) if (k !== "xmlns" && k.indexOf("xmlns:") !== 0) node.a[k.indexOf(":") > 0 ? k.slice(k.indexOf(":") + 1) : k] = a[k];
+      (x.c || []).forEach(function (c) {
+        if (typeof c === "string") node.t += c;
+        else { var cc = conv(c, m, depth + 1); if (cc) node.c.push(cc); }
+      });
+      return node;
+    }
+    if (!rootNode) return null;
+    var el = rootNode.n === "#root" ? (rootNode.c || []).filter(function (c) { return c && typeof c === "object"; })[0] : rootNode;
+    return conv(el, { "": "" }, 0);
+  }
   function inNs(node, ns) {
     if (!ns) return !node.ns || node.ns === "http://backend.userland.com/rss2";
     if (NS[ns].indexOf(node.ns) >= 0) return true;
@@ -185,7 +213,7 @@
     if (!node || !node.c) return out;
     for (var i = 0; i < node.c.length; i++) {
       var c = node.c[i];
-      if (c.ln === ln && inNs(c, ns)) out.push(c);
+      if ((c.ln === ln || c.ln.toLowerCase() === ln.toLowerCase()) && inNs(c, ns)) out.push(c);
     }
     return out;
   }
@@ -193,7 +221,12 @@
   function txt(node, ns, ln, max) { var k = kid(node, ns, ln); return k ? clean(k.t, max) : ""; }
   // RSS text, else the same element in the Atom namespace.
   function txtA(node, ln, max) { return txt(node, "", ln, max) || txt(node, "atom", ln, max); }
-  function attr(node, name) { return node && node.a && typeof node.a[name] === "string" ? node.a[name].trim() : ""; }
+  function attr(node, name) {
+    if (!node || !node.a) return "";
+    var v = node.a[name];
+    if (typeof v !== "string") v = node.a[name.toLowerCase()];
+    return typeof v === "string" ? v.trim() : "";
+  }
 
   // ---------- 5. Feed: show + episodes ----------
   function parseDate(s) {
@@ -321,6 +354,8 @@
   }
   // root = the tree of the whole document (<rss> or Atom <feed>).
   function parseFeed(rootNode, feedUrl) {
+    if (!rootNode) return null;
+    if (rootNode.n !== undefined && rootNode.ln === undefined) rootNode = fromFeedsXml(rootNode);
     if (!rootNode) return null;
     var channel = rootNode.ln === "rss" ? kid(rootNode, "", "channel") : rootNode.ln === "feed" ? rootNode : null;
     if (!channel && rootNode.ln === "channel") channel = rootNode;
@@ -792,7 +827,7 @@
     clean: clean, fold: fold, plain: plain, decodeEntities: decodeEntities,
     safeUrl: safeUrl, feedKey: feedKey, hash13: hash13, showId: showId, episodeId: episodeId,
     appleId: appleId, appleLookupUrl: appleLookupUrl,
-    fromDom: fromDom, parseFeed: parseFeed, parseDate: parseDate,
+    fromDom: fromDom, fromFeedsXml: fromFeedsXml, parseFeed: parseFeed, parseDate: parseDate,
     parseDuration: parseDuration, fmtTime: fmtTime, noteStamps: noteStamps, normChapters: normChapters, chapterAt: chapterAt,
     appleSearchUrl: appleSearchUrl, fyydSearchUrl: fyydSearchUrl, parseAppleResults: parseAppleResults,
     parseFyydResults: parseFyydResults, mergeResults: mergeResults,

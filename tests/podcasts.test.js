@@ -427,3 +427,27 @@ test("views: new episodes, in progress, filters, show search", () => {
   assert.equal(C.searchShows(d.shows, "μαρια").length, 1);
   assert.equal(C.searchShows(d.shows, "zzz").length, 0);
 });
+
+// The Reader's shared lenient parser (feeds/core.js, PR #53). When
+// it is on this branch the same RSS must give the same result
+// through it; skipped otherwise.
+test("feed: through the Reader's parseXml gives the same result", (t) => {
+  let F;
+  try { F = require(path.join(__dirname, "..", "feeds/core.js")); } catch (e) { t.skip("feeds/core.js not here yet"); return; }
+  const P = F.parseXml || (F.orosFeedsCore && F.orosFeedsCore.parseXml);
+  const a = C.parseFeed(xmlTree(RSS), FEED_URL), b = C.parseFeed(P(RSS), FEED_URL);
+  assert.equal(JSON.stringify(b), JSON.stringify(a));
+});
+
+test("fromFeedsXml: lower-case names, xmlns resolved, text joined", () => {
+  const root = { n: "#root", a: {}, c: ["\n", { n: "rss", a: { "xmlns:it": "http://www.itunes.com/dtds/podcast-1.0.dtd" }, c: [
+    { n: "channel", a: {}, c: [{ n: "title", a: {}, c: ["A ", "& B"] }, { n: "it:author", a: {}, c: ["X"] },
+      { n: "item", a: {}, c: [{ n: "title", a: {}, c: ["e"] }, { n: "pubdate", a: {}, c: ["Thu, 01 Oct 2026 10:00:00 GMT"] },
+        { n: "it:episodetype", a: {}, c: ["bonus"] },
+        { n: "enclosure", a: { url: "https://h/e.mp3", type: "audio/mpeg" }, c: [] }] }] }] }] };
+  const f = C.parseFeed(root, FEED_URL);
+  assert.equal(f.show.title, "A & B");
+  assert.equal(f.show.by, "X");
+  assert.equal(f.eps[0].pub, Date.UTC(2026, 9, 1, 10));
+  assert.equal(f.eps[0].kind, "bonus");
+});
