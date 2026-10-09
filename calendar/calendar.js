@@ -121,6 +121,13 @@
       "feed.mood.entry": "Mood entry",
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Plants",
+      "lbl.feed.garage": "Garage",
+      "feed.garage.exp": "{vehicle}: {what} expires",
+      "feed.garage.expired": "{vehicle}: {what} expired",
+      "feed.garage.svc": "{vehicle}: {what} due",
+      "feed.garage.kteo": "KTEO", "feed.garage.ins": "insurance", "feed.garage.tax": "road tax",
+      "feed.garage.kek": "emissions card", "feed.garage.road": "roadside assistance",
+      "feed.garage.lic": "driving licence", "feed.garage.other": "renewal", "feed.garage.service": "service",
       "feed.plants.done": "{name}: {kind} done",
       "feed.plants.due": "{name}: {kind} due",
       "feed.plants.water": "watering", "feed.plants.fert": "fertilizing", "feed.plants.mist": "misting", "feed.plants.repot": "repotting",
@@ -234,6 +241,13 @@
       "feed.mood.entry": "Καταγραφή διάθεσης",
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Φυτά",
+      "lbl.feed.garage": "Γκαράζ",
+      "feed.garage.exp": "{vehicle}: λήγει {what}",
+      "feed.garage.expired": "{vehicle}: έληξε {what}",
+      "feed.garage.svc": "{vehicle}: σέρβις ({what})",
+      "feed.garage.kteo": "ΚΤΕΟ", "feed.garage.ins": "ασφάλεια", "feed.garage.tax": "τέλη κυκλοφορίας",
+      "feed.garage.kek": "κάρτα καυσαερίων", "feed.garage.road": "οδική βοήθεια",
+      "feed.garage.lic": "δίπλωμα οδήγησης", "feed.garage.other": "ανανέωση", "feed.garage.service": "σέρβις",
       "feed.plants.done": "{name}: έγινε {kind}",
       "feed.plants.due": "{name}: ώρα για {kind}",
       "feed.plants.water": "πότισμα", "feed.plants.fert": "λίπανση", "feed.plants.mist": "ψέκασμα", "feed.plants.repot": "μεταφύτευση",
@@ -404,6 +418,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-fitness", color: "#f28c5a" },   // orange — finished workouts
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
+    { id: "lbl-feed-garage", color: "#ecc75f" },   // amber — Garage renewals + service
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
   function feedLabelName(l) {
@@ -416,6 +431,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
+    if (l.id === "lbl-feed-garage") return t("lbl.feed.garage");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     return t("lbl.feed.custom");
   }
@@ -1452,6 +1468,71 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Garage read-only feed (garage/core.js, loaded by index.html: the
+  // same math as the app and the shell reminder). Renewals on their
+  // expiry day, service plans on their due (or estimated) day; only
+  // the NEXT occurrence, never a projection. Anything already passed
+  // shows on today. Archived vehicles stay out. Rows are never
+  // stored; micro-cached ~1s like the other feeds.
+  var GARAGE_DATA_KEY = "oros-garage-data";
+  var garageCache = { when: 0, rows: null, today: "" };
+
+  function garageRows() {
+    var now = Date.now();
+    var Core = window.OrosGarageCore;
+    if (!Core) return null;
+    if (now - garageCache.when > 1000) {
+      garageCache.rows = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(GARAGE_DATA_KEY));
+        if (d && typeof d === "object" && Array.isArray(d.vehicles) && d.vehicles.length) {
+          d = Core.merge(d, d, now);
+          var today = Core.ymdOf(new Date(now)), names = {}, rows = [];
+          d.vehicles.forEach(function (v) { if (!v.arch) names[v.id] = v.name; });
+          d.renewals.forEach(function (r) {
+            if (!names[r.v]) return;
+            var what = r.kind === "other" && r.label ? r.label : t("feed.garage." + r.kind);
+            rows.push({ day: r.exp < today ? today : r.exp, id: r.id, key: "r" + r.id,
+              title: t(r.exp < today ? "feed.garage.expired" : "feed.garage.exp")
+                .replace("{vehicle}", names[r.v]).replace("{what}", what) });
+          });
+          d.plans.forEach(function (p) {
+            if (!names[p.v]) return;
+            var st = Core.planStatus(p, d, today);
+            if (!st.when && st.level !== "due") return;
+            var item = p.item === "other" && p.label ? p.label : t("feed.garage.service");
+            if (p.item !== "other") item = Core.itemName(p.item, LANG);
+            rows.push({ day: !st.when || st.when < today ? today : st.when, id: p.id, key: "p" + p.id,
+              title: t("feed.garage.svc").replace("{vehicle}", names[p.v]).replace("{what}", item) });
+          });
+          garageCache.rows = rows;
+          garageCache.today = today;
+        }
+      } catch (e) { garageCache.rows = null; }
+      garageCache.when = now;
+    }
+    return garageCache.rows;
+  }
+
+  function garageFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-garage")) return [];
+    var rows = garageRows();
+    if (!rows || dateStr < garageCache.today) return [];
+    var out = [];
+    rows.forEach(function (r) {
+      if (r.day !== dateStr) return;
+      out.push({
+        id: "grg-" + r.key + "-" + dateStr,     // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-garage",
+        start: null,                            // all-day
+        _feed: true,
+        _garageId: r.id
+      });
+    });
+    return out;
+  }
+
     function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
@@ -1465,6 +1546,7 @@ function transientNote(title, body) {
     .concat(fitnessFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
     .concat(plantsFeedOn(dateStr))
+    .concat(garageFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
@@ -1504,6 +1586,9 @@ function transientNote(title, body) {
       } else if (ev._plantId &&
                  typeof p.__orosOpenPlants === "function") {
         p.__orosOpenPlants(ev._plantId);
+      } else if (ev._garageId &&
+                 typeof p.__orosOpenGarage === "function") {
+        p.__orosOpenGarage(ev._garageId);
       } else if (ev._fitnessId &&
                  typeof p.__orosOpenFitness === "function") {
         p.__orosOpenFitness(ev._fitnessId);
