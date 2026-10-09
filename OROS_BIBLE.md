@@ -636,6 +636,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - `{ ver, items{id:{url,title,folderId,tags[],visited,lastVisited,mtime,fav?}}, folders{id:{name,pos,mtime}}, deleted{}, settings{} }`.
   - Root folder "unsorted" is permanent.
   - Dedupe via the shared `dupeKey()` (scheme/www/case/fragment-insensitive; query string kept).
+  - **"Send to orOS" (2026-10-09):** `/?share-url=…&share-title=…&share-text=…` (bookmarklet from the 🌐 button, Android Share → orOS via `share_target` GET in the manifest, a future MV3 add-on) is read once by `shell.js` at boot, removed from the address bar, and handed to Bookmarks through `__orosOpenAt("bookmarks", { add: { url, title } })`. Only http(s); when `share-url` is empty the first http(s) URL in `share-text` counts (Android). Bookmarks opens its item dialog in add mode, prefilled; nothing is stored until Save; an already-saved link opens its own dialog instead. `sw.js` never caches `?share-` navigations. No `launch_handler` on purpose: `focus-existing` could swallow the Dropbox OAuth return on Android. Target platforms: Windows, Linux, Android (Safari/iOS best-effort only).
 - **DICE v2:**
   - `{ ver, sm, deleted{}, history[{id,kind,ts,mtime,…}], presets[] }`, kind ∈ {dice, coin}.
   - Tombstones prune at max-mtime − 30d; presets union by name.

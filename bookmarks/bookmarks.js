@@ -181,7 +181,20 @@ const STR = {
     "fav.add": "Add to favorites",
     "fav.remove": "Remove from favorites",
     "fav.added": "Added to favorites",
-    "fav.removed": "Removed from favorites"
+    "fav.removed": "Removed from favorites",
+    "item.new": "New bookmark",
+    "ok": "OK",
+    "send.title": "Save from your browser",
+    "send.intro": "Save any page to orOS Bookmarks without copying its address.",
+    "send.pc": "Computer (Chrome, Edge, Firefox, Brave):",
+    "send.pc.hint": "Show the bookmarks bar (Ctrl+Shift+B), then drag this button onto it. On any page, click it: orOS opens with the page ready to save.",
+    "send.link": "Save to orOS",
+    "send.copy": "Copy code",
+    "send.copied": "Copied. Make a new bookmark and paste it as its address.",
+    "send.drag": "Drag this button to your bookmarks bar",
+    "send.android": "Android:",
+    "send.android.hint": "Install orOS (browser menu → Install app). Then, in any app, choose Share → orOS.",
+    "send.safe": "Nothing is saved until you press Save in orOS."
   },
   "el": {
     "app.name": "Συντομεύσεις",
@@ -267,7 +280,20 @@ const STR = {
     "fav.add": "Προσθήκη στις αγαπημένες",
     "fav.remove": "Αφαίρεση από τις αγαπημένες",
     "fav.added": "Προστέθηκε στις αγαπημένες",
-    "fav.removed": "Αφαιρέθηκε από τις αγαπημένες"
+    "fav.removed": "Αφαιρέθηκε από τις αγαπημένες",
+    "item.new": "Νέα συντόμευση",
+    "ok": "Εντάξει",
+    "send.title": "Αποθήκευση από τον browser",
+    "send.intro": "Αποθήκευσε οποιαδήποτε σελίδα στους Σελιδοδείκτες του orOS χωρίς να αντιγράψεις τη διεύθυνση.",
+    "send.pc": "Υπολογιστής (Chrome, Edge, Firefox, Brave):",
+    "send.pc.hint": "Εμφάνισε τη γραμμή σελιδοδεικτών (Ctrl+Shift+B) και σύρε επάνω της αυτό το κουμπί. Σε οποιαδήποτε σελίδα, πάτα το: ανοίγει το orOS με τη σελίδα έτοιμη για αποθήκευση.",
+    "send.link": "Στο orOS",
+    "send.copy": "Αντιγραφή κώδικα",
+    "send.copied": "Αντιγράφηκε. Φτιάξε νέο σελιδοδείκτη και επικόλλησέ το ως διεύθυνση.",
+    "send.drag": "Σύρε αυτό το κουμπί στη γραμμή σελιδοδεικτών",
+    "send.android": "Android:",
+    "send.android.hint": "Εγκατέστησε το orOS (μενού του browser → Εγκατάσταση εφαρμογής). Μετά, από οποιαδήποτε εφαρμογή, Κοινοποίηση → orOS.",
+    "send.safe": "Τίποτα δεν αποθηκεύεται πριν πατήσεις Αποθήκευση στο orOS."
   }
 };
 
@@ -1891,6 +1917,7 @@ function transientNote(title, body) {
 
 let editingItemId = null;
 let editingSnap = null;              // BM-4: what the form showed at open
+let editingNew = false;              // dialog adds a shared link (no id yet)
 let dlgTags = [];                    // working copy while dialog open
 let acHighlighted = -1;              // autocomplete row index
 
@@ -2016,6 +2043,38 @@ function openItemDialog(id) {
   $("#dlg-item").showModal();
 }
 
+/* "Send to orOS": the shell hands over { url, title } from a
+   bookmarklet or Android share. Same dialog, add mode: nothing is
+   stored until Save. A link already saved opens its own dialog. */
+function openAddDialog(a) {
+  const norm = normalizeUrl(a && a.url);
+  if (!norm) return;
+  const existing = findByUrl(norm);
+  if (existing) {
+    openItemDialog(existing.id);
+    const fld = state.folders[existing.folderId];
+    transientNote(t("added.dup", { f: folderName(fld) }));
+    return;
+  }
+  const folderId = uiActiveFolder === "ALL_VIEW" || !state.folders[uiActiveFolder]
+    ? ROOT_FOLDER : uiActiveFolder;
+  const title = sanText(a.title, 256);
+  editingItemId = null;
+  editingNew = true;
+  editingSnap = { title: title, url: norm, note: "", folderId: folderId, tags: [] };
+  dlgTags = [];
+  renderDlgTags();
+  $("#f-title").value = title;
+  $("#f-url").value = norm;
+  $("#f-note").value = "";
+  $("#f-tags-input").value = "";
+  $("#f-tags-ac").hidden = true;
+  fillFolderSelect(folderId);
+  $("#dlg-item h3").textContent = t("item.new");
+  $("#f-delete").hidden = true;
+  $("#dlg-item").showModal();
+}
+
 function fillFolderSelect(selectedId) {
   const sel = $("#f-folder");
   sel.textContent = "";
@@ -2033,6 +2092,21 @@ function fillFolderSelect(selectedId) {
    by the stale values still sitting in the untouched fields (A67 Q1),
    and a Save with no change does not stamp "modified" (R27). */
 function submitItemDialog(normUrl) {
+  if (editingNew) {
+    const created = sanitizeItem({
+      url: normUrl,
+      title: sanText($("#f-title").value, 256) || normUrl,
+      note: sanText($("#f-note").value, 1024),
+      folderId: $("#f-folder").value || ROOT_FOLDER,
+      tags: dlgTags.slice()
+    });
+    if (!created) return;
+    state.items[created.id] = created;
+    save();
+    renderAll();
+    transientNote(t("added"));
+    return;
+  }
   const it = state.items[editingItemId];
   const snap = editingSnap;
   if (!it || !snap) return;
@@ -2064,6 +2138,44 @@ function deleteItem(id) {
   renderAll();
   showToast(t("deleted"), {
     action: { label: t("undo"), fn: undoFromSnapshot }
+  });
+}
+
+/* "Send to orOS" bookmarklet: opens orOS (this origin) with the
+   page's address and title; the shell hands them to openAddDialog.
+   It reads location.href and document.title of the page it runs on
+   and sends nothing anywhere else. */
+function bookmarkletCode() {
+  const root = new URL("../", location.href).href;
+  return "javascript:(function(){var u=" + JSON.stringify(root + "?share-url=") +
+    "+encodeURIComponent(location.href)+'&share-title='+encodeURIComponent(document.title);" +
+    "if(!window.open(u,'_blank'))location.href=u;})();";
+}
+
+function wireSendDialog() {
+  const link = $("#send-link");
+  link.setAttribute("href", bookmarkletCode());
+  /* Clicking it here would run it inside orOS: it is only for
+     dragging to the bookmarks bar. */
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    transientNote(t("send.drag"));
+  });
+  $("#send-btn").addEventListener("click", () => {
+    $("#send-code").hidden = true;
+    $("#dlg-send").showModal();
+  });
+  $("#send-copy").addEventListener("click", () => {
+    const code = bookmarkletCode();
+    const box = $("#send-code");
+    const done = () => transientNote(t("send.copied"));
+    /* No clipboard access (some browsers inside an iframe): show the
+       code selected, ready for Ctrl+C. */
+    const manual = () => { box.hidden = false; box.focus(); box.select(); };
+    box.value = code;
+    try {
+      navigator.clipboard.writeText(code).then(done, manual);
+    } catch (e) { manual(); }
   });
 }
 
@@ -2507,8 +2619,18 @@ function wire() {
     folderArmDelete = false;
   });
 
+  /* Add mode ends with the dialog, however it closes. */
+  $("#dlg-item").addEventListener("close", () => {
+    if (!editingNew) return;
+    editingNew = false;
+    $("#dlg-item h3").textContent = t("item.title");
+    $("#f-delete").hidden = false;
+  });
+
+  wireSendDialog();
+
   /* Close dialogs on backdrop click (orOS convention) */
-  ["#dlg-item", "#dlg-folder"].forEach((sel) => {
+  ["#dlg-item", "#dlg-folder", "#dlg-send"].forEach((sel) => {
     $(sel).addEventListener("click", (e) => {
       if (e.target === $(sel)) $(sel).close();
     });
@@ -2534,10 +2656,15 @@ function boot() {
 }
 
 /* Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-   target { id }. Shows the bookmark's folder with no filter, scrolls
+   target { id }, or { add: { url, title } } from "Send to orOS"
+   (see openAddDialog). { id } shows the bookmark's folder with no filter, scrolls
    to its row and opens its dialog. Unknown id, or a dialog already
    open (maybe with unsaved edits) → no-op. */
 function openSearchTarget(t) {
+  if (t && t.add && typeof t.add === "object") {
+    if (!document.querySelector("dialog[open]")) openAddDialog(t.add);
+    return;
+  }
   const it = t && typeof t.id === "string" ? state.items[t.id] : null;
   if (!it || document.querySelector("dialog[open]")) return;
   uiActiveFolder = state.folders[it.folderId] ? it.folderId : ROOT_FOLDER;
