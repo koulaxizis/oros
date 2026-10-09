@@ -8,7 +8,8 @@
 //     window is only the screen over it
 //   - feeds: the Reader's shared parser (../feeds/core.js) and
 //     sanitizer (../feeds/sanitize.js), read-only; transport through
-//     net.js (direct, else the Mail relay's "web" operation)
+//     the Reader's ../feeds/fetch.js (direct, else the Mail relay's
+//     "web" operation)
 //   - catalog search: Apple Podcasts + fyyd (setting: both / one /
 //     none); OPML import / export through orosDialog (R33)
 //   - device-local: feed cache + downloads in IndexedDB (store.js),
@@ -33,7 +34,29 @@
 (function () {
   "use strict";
 
-  var C = window.OrosPodcastsCore, FC = window.orosFeedsCore, NET = window.orosPodcastsNet, ST = window.OrosPodcastsStore;
+  var C = window.OrosPodcastsCore, FC = window.orosFeedsCore, FF = window.orosFeedsFetch, ST = window.OrosPodcastsStore;
+  // The shared transport resolves any HTTP status; here a non-2xx
+  // answer is an error ("gone" for 404/410) and feed bodies are text.
+  function httpErr(status) { return status === 404 || status === 410 ? "gone" : "http"; }
+  var NET = FF && FC && {
+    relayAvailable: function () { return FF.relayAvailable(); },
+    fetchOne: function (url) {
+      return FF.fetchOne(url).then(function (r) {
+        if (r.status < 200 || r.status >= 300) throw { code: httpErr(r.status), status: r.status };
+        return r;
+      });
+    },
+    fetchFeeds: function (reqs) {
+      return FF.fetchFeeds(reqs).then(function (res) {
+        return res.map(function (r) {
+          if (!r || r.err || r.status === 304) return r;
+          if (r.status < 200 || r.status >= 300 || !r.bytes) return { url: r.url, err: httpErr(r.status), via: r.via };
+          r.text = FC.decodeBytes(r.bytes, r.type);
+          return r;
+        });
+      });
+    }
+  };
   var PREFS_KEY = "oros-podcasts-prefs";
   var REFRESH_MIN = 60, REFRESH_GAP = 15;      // minutes
   var KEEP_NOTES = 300, KEEP_EPS = 3000;       // per show in the cache
