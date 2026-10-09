@@ -762,6 +762,7 @@
       bar.appendChild(colourBtn(t("ctx.bg"), bg && bg.ax.k === "shape" ? bg.ax.fc : "", bg && bg.ax.g, { kind: "bg" }));
       var bb = btn("ctx-txt", t("ctx.bg"), function () { openView("background"); });
       bar.appendChild(bb);
+      bar.appendChild(btn("ctx-txt" + (view === "animate" ? " on" : ""), t("ctx.animate"), function () { openView("animate"); }));
       bar.appendChild(el("span", "ctx-hint", t("ctx.hint")));
       return;
     }
@@ -780,6 +781,7 @@
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
+    bar.appendChild(tool("anim", t("ctx.animate"), function () { openView("animate"); }, view === "animate"));
     bar.appendChild(tool("lock", t("ctx.lock"), function () { edit(function (it) { it.lock = 1; }); }));
     bar.appendChild(tool("copy", t("ctx.dup"), ED.duplicate));
     bar.appendChild(tool("trash", t("ctx.del"), ED.remove));
@@ -908,9 +910,9 @@
   }
 
   // ---------- 4. Wiring ----------
-  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1 };
+  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1 };
   function viewFits() {
-    if (!view || !CONTEXT_VIEWS[view]) return true;
+    if (!view || !CONTEXT_VIEWS[view] || view === "animate") return true;
     var one = sel1(), list = ED.selItems();
     if (view === "position") return list.length > 0;
     if (view === "colour") return colourTarget && colourTarget.kind === "bg" ? true : !!one;

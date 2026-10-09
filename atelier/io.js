@@ -113,6 +113,19 @@
     ED.exitText();
     exporting = true;
     AT.toast(t("exp.working"));
+    if (o.type === "video" || o.type === "gif") {
+      AT.motion.exportFilm({ type: o.type, side: o.side, pages: o.pages }, function (blob, ext, mime) {
+        return saveBlob(blob, fileName(doc, ext), mime, o.type === "gif" ? "GIF" : t("exp.video"), ext);
+      }).then(function (ok) {
+        exporting = false;
+        if (ok) AT.toast(AX.credits(doc).length ? t("exp.credits") : t("exp.done"));
+      }, function (e) {
+        exporting = false;
+        try { console.error("[orOS] atelier: film export failed", e); } catch (x) {}
+        AT.toast(t("exp.fail"));
+      });
+      return;
+    }
     var pages = M.pagesInOrder(doc);
     if (o.pages === "cur") pages = pages.filter(function (p) { return p.id === ED.pg; });
     var chain = prepare(doc);
@@ -167,20 +180,28 @@
     var doc = AT.doc;
     if (!doc) return;
     var print = AT.isPrint(doc), multi = doc.pages.length > 1;
-    var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all" };
+    var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720 };
+    var film = { video: 1, gif: 1 };
+    var types = ["png", "jpg", "pdf"].concat(AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
     AT.openDialog(t("exp.title"), function (body, close) {
       function render() {
         body.innerHTML = "";
         body.appendChild(el("div", "fld-lbl", t("exp.type")));
-        var seg = el("div", "seg");
-        ["png", "jpg", "pdf"].forEach(function (k) {
+        var seg = el("div", "seg" + (types.length > 3 ? " wrap" : ""));
+        types.forEach(function (k) {
           var b = el("button", "seg-btn" + (st.type === k ? " on" : ""), t("exp." + k));
           b.type = "button";
           b.addEventListener("click", function () { st.type = k; render(); });
           seg.appendChild(b);
         });
         body.appendChild(seg);
-        body.appendChild(el("p", "hint", t("exp." + st.type + "Hint")));
+        var secs = 0;
+        if (film[st.type]) {
+          var pl = M.pagesInOrder(doc);
+          if (st.pages === "cur") pl = pl.filter(function (p) { return p.id === ED.pg; });
+          secs = Math.ceil(AT.motion.duration(doc, pl));
+        }
+        body.appendChild(el("p", "hint", t("exp." + st.type + "Hint", { s: secs })));
         body.appendChild(el("div", "fld-lbl", t("exp.size")));
         var opts = el("div", "pn-col");
         function radio(name, label, on, fn) {
@@ -190,7 +211,14 @@
           l.appendChild(r); l.appendChild(el("span", "", label));
           opts.appendChild(l);
         }
-        if (print || st.type === "pdf") {
+        if (film[st.type]) {
+          var sides = st.type === "gif" ? [480, 720] : [720, 1080];
+          if (sides.indexOf(st.side) < 0) st.side = sides[0];
+          sides.forEach(function (d) {
+            var fs = AT.motion.filmSize(doc, d);
+            radio("side", fs.w + " × " + fs.h + " px", st.side === d, function () { st.side = d; });
+          });
+        } else if (print || st.type === "pdf") {
           [150, 300].forEach(function (d) {
             var ps = pixelSize(doc, d / 72);
             radio("dpi", t("exp.dpi" + d) + (st.type === "pdf" ? "" : " · " + ps.w + " × " + ps.h + " px"), st.dpi === d, function () { st.dpi = d; st.scale = d / 72; });
@@ -220,7 +248,7 @@
             s2.appendChild(b);
           });
           body.appendChild(s2);
-          if (st.type !== "pdf" && st.pages === "all") body.appendChild(el("p", "hint", t("exp.zipNote")));
+          if (st.type !== "pdf" && !film[st.type] && st.pages === "all") body.appendChild(el("p", "hint", t("exp.zipNote")));
         }
         if (AX.credits(doc).length) body.appendChild(el("p", "hint", t("exp.credits")));
         var act = el("div", "dlg-actions");
@@ -473,6 +501,8 @@
     ex.addEventListener("click", exportDialog);
     $("ed-more").addEventListener("click", function () {
       AT.menu($("ed-more"), [
+        { label: t("more.present"), fn: AT.motion ? AT.motion.present : function () {} },
+        { sep: true },
         { label: t("more.resize"), fn: resizeDialog },
         { label: t("more.pkg"), fn: function () { exportPackage(AT.doc); } },
         { label: t("more.credits"), fn: creditsDialog },
