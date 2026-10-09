@@ -170,6 +170,14 @@
       "type": "internal"
     },
     {
+      "id": "pubdomain",
+      "name": "Public Domain Calculator",
+      "category": "Office",
+      "icon": "pubdomain",
+      "url": "pubdomain/",
+      "type": "internal"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",
