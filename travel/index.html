@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Travel · orOS</title>
+
+  <link rel="stylesheet" href="travel.css?v=0.45.12">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="back-btn" hidden></button>
+    <h1 id="title" class="title"></h1>
+    <button type="button" class="txt-btn" id="tpl-btn"></button>
+    <button type="button" class="txt-btn" id="new-btn"></button>
+    <button type="button" class="txt-btn" id="newtpl-btn" hidden></button>
+    <button type="button" class="icon-btn" id="more-btn" aria-haspopup="menu" aria-expanded="false"></button>
+  </header>
+
+  <main id="main">
+    <!-- Trips -->
+    <section id="v-list">
+      <div id="trips"></div>
+      <div id="list-empty" class="empty" hidden>
+        <div id="list-empty-art" class="empty-art" aria-hidden="true"></div>
+        <p data-i18n="list.empty">No trips yet.</p>
+        <button type="button" class="txt-btn primary" id="list-new"></button>
+      </div>
+    </section>
+
+    <!-- One trip -->
+    <section id="v-trip" hidden>
+      <div id="trip-head"></div>
+      <nav id="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-pack" data-i18n="tab.pack">Packing</button>
+        <button type="button" role="tab" id="tab-plan" data-i18n="tab.plan">Itinerary</button>
+        <button type="button" role="tab" id="tab-notes" data-i18n="tab.notes">Notes</button>
+      </nav>
+      <div id="panes">
+        <section id="p-pack" class="pane">
+          <div class="prog-row">
+            <div class="prog"><i id="pack-prog-fill"></i></div>
+            <span id="pack-prog-txt" class="prog-txt"></span>
+          </div>
+          <div class="add-row">
+            <input id="pack-in" maxlength="84" autocomplete="off" enterkeyhint="done">
+            <select id="pack-grp"></select>
+            <button type="button" class="icon-btn" id="pack-add"></button>
+          </div>
+          <div class="tools">
+            <button type="button" class="chip" id="pack-missing" aria-pressed="false" data-i18n="pack.missing">Still to pack</button>
+            <select id="pack-who" class="chip-sel" hidden></select>
+            <span class="spacer"></span>
+            <button type="button" class="link-btn" id="pack-uncheck" data-i18n="pack.uncheck" hidden>Uncheck all</button>
+            <button type="button" class="txt-btn small" id="pack-tpl"></button>
+          </div>
+          <p id="pack-msg" class="hint center" hidden></p>
+          <div id="pack-list"></div>
+        </section>
+
+        <section id="p-plan" class="pane">
+          <div class="tools">
+            <button type="button" class="txt-btn small" id="plan-add"></button>
+          </div>
+          <p id="plan-gap" class="warn" hidden></p>
+          <p id="plan-msg" class="hint center" data-i18n="plan.empty" hidden>Nothing planned yet.</p>
+          <div id="plan-days"></div>
+        </section>
+
+        <section id="p-notes" class="pane">
+          <textarea id="notes" maxlength="20000" spellcheck="true"></textarea>
+        </section>
+      </div>
+    </section>
+
+    <!-- Templates -->
+    <section id="v-tpls" hidden>
+      <section class="tsec">
+        <h2 data-i18n="tpl.ready">Ready templates</h2>
+        <div id="tpl-ready" class="tpl-list"></div>
+        <p id="tpl-ready-empty" class="hint" data-i18n="tpl.none" hidden>No templates</p>
+        <button type="button" class="link-btn" id="tpl-restore" data-i18n="tpl.restore" hidden>Restore ready templates</button>
+      </section>
+      <section class="tsec">
+        <h2 data-i18n="tpl.mine">My templates</h2>
+        <div id="tpl-mine" class="tpl-list"></div>
+        <p id="tpl-mine-empty" class="hint" data-i18n="tpl.mineEmpty" hidden>Save a trip as a template, or make a new one.</p>
+      </section>
+    </section>
+  </main>
+
+  <div id="print" aria-hidden="true"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="travel.js?v=0.45.12"></script>
+
+</body>
+</html>
