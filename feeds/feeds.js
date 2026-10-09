@@ -45,6 +45,7 @@
   "use strict";
 
   var C = window.orosFeedsCore;
+  var F = window.orosFeedsFetch;
   var STORAGE_KEY   = "oros-feeds-data";
   var PREFS_KEY     = "oros-feeds-prefs";
   var STATE_KEY     = "oros-feeds-state";
@@ -344,14 +345,7 @@
   }
   function st(id) { return fstate[id] || (fstate[id] = { next: 0, fails: 0, err: "", via: "" }); }
 
-  function mailRelay() {
-    try {
-      var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
-      var u = m && m.relay && C.normRelayUrl(m.relay.url);
-      return u || "";
-    } catch (e) { return ""; }
-  }
-  function relayUrl() { return C.setting(data, "relay") || mailRelay() || DEFAULT_RELAY; }
+  function relayUrl() { return F.relayUrl({ relay: C.setting(data, "relay") || DEFAULT_RELAY }); }
   function imagesFor(feed) {
     if (feed && (feed.img === 0 || feed.img === 1)) return feed.img === 1;
     return C.setting(data, "img") === 1;
@@ -461,54 +455,9 @@
     return s === "err." + code ? t("err.network") : s;
   }
 
-  // One GET straight from the browser. CORS or mixed content -> "cors".
-  function fetchDirect(url) {
-    if (!/^https:/i.test(url) && location.protocol === "https:") return Promise.reject(new FeedError("cors"));
-    var ctl = new AbortController();
-    var timer = setTimeout(function () { ctl.abort(); }, CALL_TIMEOUT);
-    return fetch(url, { method: "GET", mode: "cors", credentials: "omit", cache: "no-cache",
-                        redirect: "follow", referrerPolicy: "no-referrer", signal: ctl.signal })
-      .then(function (r) {
-        if (!r.ok) { clearTimeout(timer); return { status: r.status, url: r.url || url, type: "", bytes: null }; }
-        return r.arrayBuffer().then(function (buf) {
-          clearTimeout(timer);
-          return { status: r.status, url: r.url || url, type: r.headers.get("Content-Type") || "", bytes: new Uint8Array(buf) };
-        });
-      }, function () {
-        clearTimeout(timer);
-        throw new FeedError(ctl.signal.aborted ? "timeout" : "cors");
-      });
-  }
-
-  // Up to RELAY_BATCH GETs through the relay, one call.
-  function fetchRelay(reqs) {
-    var url = relayUrl();
-    if (!url) return Promise.reject(new FeedError("norelay"));
-    var ctl = new AbortController();
-    var timer = setTimeout(function () { ctl.abort(); }, CALL_TIMEOUT + 15000);
-    return fetch(url + "/v1", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ op: "web", reqs: reqs }), signal: ctl.signal,
-      credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
-    }).then(function (r) {
-      return r.json().catch(function () { return null; });
-    }, function () {
-      throw new FeedError(ctl.signal.aborted ? "timeout" : "relay");
-    }).then(function (j) {
-      clearTimeout(timer);
-      if (!j || typeof j !== "object") throw new FeedError("relay");
-      if (!j.ok) throw new FeedError((j.error && j.error.code) || "relay");
-      var res = j.data && Array.isArray(j.data.res) ? j.data.res : [];
-      return reqs.map(function (q, i) {
-        var x = res[i];
-        if (!x || typeof x !== "object") return { err: "relay" };
-        if (x.err) return { err: String(x.err) };
-        return { status: x.status | 0, url: typeof x.url === "string" ? x.url : q.url, type: String(x.type || ""),
-                 etag: String(x.etag || ""), lm: String(x.lm || ""), retry: String(x.retry || ""),
-                 bytes: typeof x.body === "string" ? C.b64ToBytes(x.body) : null };
-      });
-    }, function (e) { clearTimeout(timer); throw e; });
-  }
+  // GETs: feeds/fetch.js (shared with Podcasts). Same error codes.
+  function fetchDirect(url) { return F.direct(url, { timeout: CALL_TIMEOUT }); }
+  function fetchRelay(reqs) { return F.relay(reqs, { relay: relayUrl, timeout: CALL_TIMEOUT }); }
 
   // One page for discovery: direct first, then the relay.
   function getPage(url) {
@@ -1630,7 +1579,7 @@
     relay.spellcheck = false;
     dlg.appendChild(relay);
     dlg.appendChild(el("p", "dlg-hint", t("set.relayHint")));
-    var mr = mailRelay();
+    var mr = F.relayUrl();   // no option given: Mail's relay
     if (mr) dlg.appendChild(el("p", "dlg-hint dim", t("set.relayMail", { url: mr })));
     var err = el("p", "dlg-err");
     dlg.appendChild(err);
