@@ -39,7 +39,7 @@ const PENDING = [
   "connect4", "dots", "tictactoe", "simon", "netizen", "slider", "lightsout",
   "petworld", "wallpaper", "whack", "mixer", "snake", "wheel", "g2048",
   "zen", "wordle", "names", "passwords", "mindmap", "timesheet", "split",
-  "travel", "chores", "meals", "layout", "pubdomain", "qr", "pixel",
+  "travel", "chores", "meals", "layout", "qr", "pixel",
   "health", "budget", "water", "fitness", "petcare", "baby", "familytree",
   "garage", "plants", "shelf", "feeds", "mail", "scores", "podcasts", "spot",
   "hexagon", "chess", "sudoku", "tetris", "minesweeper", "mahjong", "gomoku",
