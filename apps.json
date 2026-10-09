@@ -128,6 +128,14 @@
       "type": "internal"
     },
     {
+      "id": "meals",
+      "name": "Meal Planner",
+      "category": "Lifestyle",
+      "icon": "meals",
+      "url": "meals/",
+      "type": "internal"
+    },
+    {
       "id": "contacts",
       "name": "Contacts",
       "category": "Office",
