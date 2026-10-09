@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Chore Wheel · orOS</title>
+
+  <link rel="stylesheet" href="chores.css?v=0.45.14">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <nav id="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" id="tab-wheel" aria-controls="view-wheel"></button>
+      <button type="button" role="tab" class="tab" id="tab-today" aria-controls="view-today"></button>
+      <button type="button" role="tab" class="tab" id="tab-week" aria-controls="view-week"></button>
+      <button type="button" role="tab" class="tab" id="tab-stats" aria-controls="view-stats"></button>
+      <button type="button" role="tab" class="tab" id="tab-home" aria-controls="view-home"></button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Wheel: two concentric discs -->
+    <section id="view-wheel" class="view" role="tabpanel" aria-labelledby="tab-wheel" hidden>
+      <div class="wheel-layout">
+        <div class="wheel-side">
+          <div id="grp-chips" class="chips"></div>
+          <div class="per-nav">
+            <button type="button" class="icon-btn" id="per-prev"></button>
+            <span id="per-label" class="per-label"></span>
+            <button type="button" class="icon-btn" id="per-next"></button>
+            <button type="button" class="link-btn" id="per-now" hidden></button>
+          </div>
+          <div id="wheel-box">
+            <div id="wheel-wrap" role="img">
+              <canvas id="cv" aria-hidden="true"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="wheel-info">
+          <ul id="legend"></ul>
+          <p class="hint" id="wheel-none" data-i18n="wheel.none" hidden>Round-robin chores of this kind will turn on the wheel.</p>
+          <div class="empty" id="wheel-empty" hidden>
+            <p class="hint" data-i18n="wheel.empty">Add members and chores to start the wheel.</p>
+            <button type="button" class="txt-btn to-home" data-i18n="wheel.setup">Set up the home</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Today -->
+    <section id="view-today" class="view list-view" role="tabpanel" aria-labelledby="tab-today" hidden>
+      <div class="view-head">
+        <h2 id="today-date"></h2>
+        <span id="today-prog" class="count"></span>
+        <span class="spacer"></span>
+        <label class="switch" id="only-wrap" hidden><input type="checkbox" id="only-me"><span data-i18n="today.only">Only mine</span></label>
+      </div>
+      <div id="today-bar" class="pbar" hidden><i></i></div>
+      <div id="today-list"></div>
+      <p class="hint" id="today-free" data-i18n="today.free" hidden>Nothing to do today.</p>
+      <div class="empty" id="today-setup" hidden>
+        <p class="hint" data-i18n="wheel.empty">Add members and chores to start the wheel.</p>
+        <button type="button" class="txt-btn to-home" data-i18n="wheel.setup">Set up the home</button>
+      </div>
+    </section>
+
+    <!-- Week -->
+    <section id="view-week" class="view list-view" role="tabpanel" aria-labelledby="tab-week" hidden>
+      <div class="view-head per-nav">
+        <button type="button" class="icon-btn" id="week-prev"></button>
+        <span id="week-label" class="per-label"></span>
+        <button type="button" class="icon-btn" id="week-next"></button>
+        <button type="button" class="link-btn" id="week-now" hidden></button>
+      </div>
+      <div id="week-list"></div>
+      <div class="empty" id="week-setup" hidden>
+        <p class="hint" data-i18n="wheel.empty">Add members and chores to start the wheel.</p>
+        <button type="button" class="txt-btn to-home" data-i18n="wheel.setup">Set up the home</button>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section id="view-stats" class="view list-view" role="tabpanel" aria-labelledby="tab-stats" hidden>
+      <div id="range-chips" class="chips">
+        <button type="button" class="chip" data-r="wk"></button>
+        <button type="button" class="chip" data-r="mo"></button>
+        <button type="button" class="chip" data-r="yr"></button>
+      </div>
+      <ul id="stats-list"></ul>
+      <p class="hint" id="stats-none" data-i18n="stats.none" hidden>Add members to see the stats.</p>
+      <h2 class="sec-title" data-i18n="stats.hist">History (90 days)</h2>
+      <ol id="hist"></ol>
+      <p class="hint" id="hist-empty" data-i18n="stats.histEmpty">Nothing done yet.</p>
+    </section>
+
+    <!-- Home: members, chores, ready sets -->
+    <section id="view-home" class="view list-view" role="tabpanel" aria-labelledby="tab-home" hidden>
+      <section class="sec">
+        <h2 class="sec-title" data-i18n="home.members">Members</h2>
+        <ul id="members" class="items"></ul>
+        <p class="hint" id="members-empty" data-i18n="home.membersEmpty">Add the people who share the chores.</p>
+        <div class="add-row">
+          <input id="add-member-in" maxlength="30" autocomplete="off">
+          <button type="button" class="icon-btn" id="add-member"></button>
+        </div>
+        <label class="dlg-lbl me-lbl" for="me-sel" data-i18n="home.me">Who are you on this device?</label>
+        <select id="me-sel"></select>
+      </section>
+
+      <section class="sec">
+        <div class="sec-head">
+          <h2 class="sec-title" data-i18n="home.tasks">Chores</h2>
+          <span class="spacer"></span>
+          <button type="button" class="txt-btn" id="new-task"></button>
+        </div>
+        <ul id="tasks" class="items"></ul>
+        <p class="hint" id="tasks-empty" data-i18n="home.tasksEmpty">Add a chore, or start from a ready set.</p>
+      </section>
+
+      <section class="sec">
+        <h2 class="sec-title" data-i18n="home.sets">Ready sets</h2>
+        <div id="sets" class="chips"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="chores.js?v=0.45.14"></script>
+
+</body>
+</html>

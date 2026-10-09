@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.45.12";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.46.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -139,8 +139,10 @@
     quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     prompter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/><line x1="21" y1="2" x2="21" y2="6"/><line x1="19" y1="4" x2="23" y2="4"/></svg>',
     characters: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    names: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5V5a1 1 0 0 1 1-1h7.5L21 13.5 13.5 21 4 11.5V7.5z"/><circle cx="8" cy="8" r="1.5"/><path d="M11 13l2 2M13 11l2 2"/></svg>',
     storage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>',
     habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>',
+    zen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5" stroke-dasharray="2 2.6"/><circle cx="12" cy="12" r="10"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
     contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>',
@@ -152,6 +154,7 @@
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
+    passwords: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10.5" width="18" height="11" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
     connect4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="3"/><circle cx="7.5" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="15.5" r="1.8"/><circle cx="12" cy="10.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.8"/></svg>',
     dots: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M5 5v14M19 5v7M5 19h7"/><rect x="5" y="5" width="7" height="7" fill="currentColor" stroke="none" opacity=".35"/><circle cx="5" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>',
@@ -163,6 +166,7 @@
     whack: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="19" rx="9" ry="3"/><path d="M7 19v-5a5 5 0 0 1 10 0v5"/><circle cx="10" cy="13" r=".8" fill="currentColor" stroke="none"/><circle cx="14" cy="13" r=".8" fill="currentColor" stroke="none"/><path d="M15 3l4 4M17 5l-4.5 4.5"/></svg>',
     snake: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h9a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/><circle cx="18" cy="7" r="2"/><path d="M20 7h2"/></svg>',
     g2048: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor"/></svg>',
+    wordle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="4" width="6" height="6" rx="1"/><rect x="16" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="2" y="14" width="6" height="6" rx="1"/><rect x="9" y="14" width="6" height="6" rx="1"/><rect x="16" y="14" width="6" height="6" rx="1"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
@@ -2049,9 +2053,11 @@
 
   // ---------- 9i3. Mail proxy slice (sync when iframe closed) ----------
   // Same pattern as radio/television. The synced blob travels via
-  // "oros-mail-data" and contains account config + message
-  // metadata/content ONLY. Passwords live exclusively in the
-  // device-local "oros-mail-creds" key and never enter this slice.
+  // "oros-mail-data": accounts (servers, no passwords), the relay
+  // address and the senders with pictures allowed. Messages and
+  // passwords stay on the device, in the app's IndexedDB "oros-mail"
+  // (sealed with a non-extractable key); the live registration in
+  // mail.js brings the merge.
   var MAIL_CACHE_KEY = "oros-mail-data";
 
   function mailProxySliceGet() {
@@ -3434,9 +3440,194 @@
     else box.appendChild(sec);
   }
 
+  // ---------- Credits & licences (Info modal) ----------
+  // Every third-party piece orOS ships or calls, with its licence and
+  // a link: libraries, fonts, data sets, online services, hosting.
+  // Same register as CREDITS.md at the repo root and the "Credits
+  // register" in OROS_BIBLE.md: a new dependency or service updates
+  // all three. Built with createElement/textContent only; every URL
+  // below is a fixed constant (never data from a service or a user).
+  // i18n: inline EN/EL via supT(), same doctrine as the Support box.
+  var CREDIT_GROUPS = [
+    {
+      en: "Libraries (bundled, run on your device)",
+      el: "Βιβλιοθήκες (μέσα στο orOS, τρέχουν στη συσκευή σου)",
+      items: [
+        { name: "Leaflet 1.9.4", url: "https://leafletjs.com/",
+          by: "Volodymyr Agafonkin & contributors", lic: "BSD-2-Clause",
+          en: "Maps", el: "Χάρτες" },
+        { name: "jsPDF 2.5.2", url: "https://github.com/parallax/jsPDF",
+          by: "James Hall, yWorks & contributors", lic: "MIT",
+          en: "PDF export (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)",
+          el: "Εξαγωγή PDF (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)" },
+        { name: "SheetJS Community Edition 0.20.3", url: "https://sheetjs.com/",
+          by: "SheetJS LLC", lic: "Apache-2.0",
+          en: "Excel / ODS files (Spreadsheet, Budget)",
+          el: "Αρχεία Excel / ODS (Spreadsheet, Budget)" },
+        { name: "hls.js 1.7.3", url: "https://github.com/video-dev/hls.js",
+          by: "Dailymotion & contributors", lic: "Apache-2.0",
+          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" }
+      ]
+    },
+    {
+      en: "Fonts and icons", el: "Γραμματοσειρές και εικονίδια",
+      items: [
+        { name: "Nunito", url: "https://github.com/googlefonts/nunito",
+          by: "The Nunito Project Authors (Vernon Adams, Jacques Le Bailly)", lic: "SIL OFL 1.1",
+          en: "The orOS interface", el: "Το περιβάλλον του orOS" },
+        { name: "Noto Sans", url: "https://notofonts.github.io/",
+          by: "The Noto Project Authors", lic: "SIL OFL 1.1",
+          en: "Greek text in exported PDFs", el: "Ελληνικά στα PDF που εξάγεις" },
+        { name: "Feather Icons", url: "https://feathericons.com/",
+          by: "Cole Bemis", lic: "MIT",
+          en: "Some interface icons (search, refresh, map pin, cloud, heart)",
+          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" }
+      ]
+    },
+    {
+      en: "Word lists and data", el: "Λίστες λέξεων και δεδομένα",
+      items: [
+        { name: "EFF Diceware word lists", url: "https://www.eff.org/dice",
+          by: "Electronic Frontier Foundation", lic: "CC BY 3.0 US",
+          en: "Passphrases (Passwords)", el: "Φράσεις-κλειδιά (Κωδικοί)" },
+        { name: "SecLists — 10k most common passwords", url: "https://github.com/danielmiessler/SecLists",
+          by: "Daniel Miessler & contributors", lic: "MIT",
+          en: "Weak-password check (Passwords)", el: "Έλεγχος αδύναμων κωδικών (Κωδικοί)" },
+        { name: "SCOWL (via wordlist-english)", url: "http://wordlist.aspell.net/",
+          by: "Kevin Atkinson", lic: { en: "SCOWL licence (permissive)", el: "Άδεια SCOWL (ελεύθερη)" },
+          en: "English words (Wordle)", el: "Αγγλικές λέξεις (Wordle)" },
+        { name: "Hunspell el_GR", url: "https://github.com/wooorm/dictionaries",
+          by: "Steve Stavropoulos & contributors (elspell)", lic: "MPL 1.1",
+          en: "Greek words (Λεξούλα)", el: "Ελληνικές λέξεις (Λεξούλα)" },
+        { name: "FrequencyWords", url: "https://github.com/hermitdave/FrequencyWords",
+          by: "Hermit Dave (from OpenSubtitles)", lic: "CC BY-SA 4.0",
+          en: "Picking everyday Greek words (Λεξούλα)", el: "Επιλογή καθημερινών ελληνικών λέξεων (Λεξούλα)" }
+      ]
+    },
+    {
+      en: "Online services (only when you use them)",
+      el: "Υπηρεσίες στο διαδίκτυο (μόνο όταν τις χρησιμοποιείς)",
+      items: [
+        { name: "Open-Meteo", url: "https://open-meteo.com/",
+          by: "Open-Meteo.com", lic: "CC BY 4.0 (data)",
+          en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
+        { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
+          by: "OpenStreetMap contributors", lic: "ODbL (data)",
+          en: "Map data and standard tiles (Maps)", el: "Δεδομένα και πλακίδια χάρτη (Χάρτες)" },
+        { name: "OpenStreetMap France / HOT", url: "https://www.hotosm.org/",
+          by: "OSM France, Humanitarian OpenStreetMap Team", lic: "ODbL (data)",
+          en: "Humanitarian map layer (Maps)", el: "Ανθρωπιστικό στρώμα χάρτη (Χάρτες)" },
+        { name: "Esri World Imagery", url: "https://www.esri.com/",
+          by: "Esri, Maxar, Earthstar Geographics", lic: { en: "Esri terms of use", el: "Όροι χρήσης της Esri" },
+          en: "Satellite layer (Maps)", el: "Δορυφορικό στρώμα (Χάρτες)" },
+        { name: "Photon", url: "https://photon.komoot.io/",
+          by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
+          en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
+        { name: "OSRM", url: "https://project-osrm.org/",
+          by: "Project OSRM contributors", lic: "BSD-2-Clause (software)",
+          en: "Car routes, demo server (Maps)", el: "Διαδρομές με αυτοκίνητο, δοκιμαστικός server (Χάρτες)" },
+        { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
+          by: "FOSSGIS e.V.", lic: "ODbL (data)",
+          en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+        { name: "Radio Browser", url: "https://www.radio-browser.info/",
+          by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
+          en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
+        { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
+          by: "iptv-org contributors", lic: "Unlicense (public domain)",
+          en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
+        { name: "Wikidata", url: "https://www.wikidata.org/",
+          by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
+          en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
+        { name: "Dropbox", url: "https://www.dropbox.com/",
+          by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
+          en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
+        { name: "GitHub Pages", url: "https://pages.github.com/",
+          by: "GitHub, Inc.", lic: { en: "Hosting", el: "Φιλοξενία" },
+          en: "Serves useoros.online", el: "Φιλοξενεί το useoros.online" }
+      ]
+    }
+  ];
+
+  function creditsThanksText() {
+    return supT(
+      "Thank you to everyone who builds and shares these, often without knowing orOS exists. Radio and TV streams belong to their broadcasters. Full details: CREDITS.md in the source code.",
+      "Ευχαριστούμε όσους φτιάχνουν και μοιράζονται όλα αυτά, συχνά χωρίς να ξέρουν ότι υπάρχει το orOS. Οι ροές ραδιοφώνου και τηλεόρασης ανήκουν στους σταθμούς τους. Όλες οι λεπτομέρειες: CREDITS.md στον πηγαίο κώδικα."
+    );
+  }
+
+  function creditLink(href, text) {
+    var a = document.createElement("a");
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = text;
+    return a;
+  }
+
+  function wireCreditsSection(ov) {
+    var box = ov.querySelector(".sc-box");
+    if (!box) return;
+    var resetWrap = box.querySelector("#sc-reset-wrap");
+
+    var det = document.createElement("details");
+    det.id = "sc-credits";
+    var sum = document.createElement("summary");
+    sum.className = "sc-sec";
+    sum.style.cssText = "cursor:pointer;";
+    sum.textContent = supT("Credits & licences", "Ευχαριστίες & άδειες");
+    det.appendChild(sum);
+
+    var intro = document.createElement("div");
+    intro.style.cssText =
+      "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin:2px 0 6px;";
+    intro.textContent = creditsThanksText();
+    det.appendChild(intro);
+
+    CREDIT_GROUPS.forEach(function (g) {
+      var gh = document.createElement("div");
+      gh.style.cssText =
+        "font-size:12px;font-weight:700;color:var(--text);margin:10px 0 2px;";
+      gh.textContent = supT(g.en, g.el);
+      det.appendChild(gh);
+      g.items.forEach(function (it) {
+        var row = document.createElement("div");
+        row.style.cssText =
+          "font-size:11.5px;line-height:1.5;color:var(--text-dim);" +
+          "padding:3px 0;overflow-wrap:anywhere;";
+        var nm = creditLink(it.url, it.name);
+        nm.style.cssText = "color:var(--accent);font-weight:600;text-decoration:none;";
+        row.appendChild(nm);
+        row.appendChild(document.createTextNode(
+          " · " + it.by + " · " +
+          (typeof it.lic === "string" ? it.lic : supT(it.lic.en, it.lic.el)) +
+          " — " + supT(it.en, it.el)));
+        det.appendChild(row);
+      });
+    });
+
+    if (resetWrap) box.insertBefore(det, resetWrap);
+    else box.appendChild(det);
+  }
+
+  // Our own line in the footer (text nodes + fixed links, no innerHTML).
+  function wireOwnCredits(ov) {
+    var cred = ov.querySelector("#sc-cred");
+    if (!cred) return;
+    var el = state.lang === "el";
+    cred.appendChild(document.createTextNode(
+      el ? "Σχεδιάστηκε με <3 από τον " : "Designed with <3 by "));
+    cred.appendChild(creditLink("https://koulaxizis.gr", "Christos Koulaxizis"));
+    cred.appendChild(document.createTextNode(el ? ". Με τη βοήθεια του " : ". Assisted by "));
+    cred.appendChild(creditLink("https://lumo.proton.me/", "Lumo"));
+    cred.appendChild(document.createTextNode(el ? ". Έλεγχος από το " : ". Audited by "));
+    cred.appendChild(creditLink("https://claude.ai/", "Claude"));
+    cred.appendChild(document.createTextNode("."));
+  }
+
   // Info modal — the FULL table is generated from SC_DEFS, never
   // handwritten twice. Flat, minimal, no chrome: title, version,
-  // tagline, the capabilities row, shortcut rows, repo link, credits.
+  // tagline, the capabilities row, shortcut rows, repo link, credits
+  // (third-party register + our own line, both built in the DOM).
   var scInfoClose = null;   // #4: live modal's close fn (null = closed)
 
   function showInfoModal() {
@@ -3471,8 +3662,7 @@
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
         '<div class="sc-foot"><span>' + escapeHtml(window.t("sc.info.repo")) + ': <a href="https://github.com/koulaxizis/oros" ' +
           'target="_blank" rel="noopener">koulaxizis/oros</a></span>' +
-          '<span class="sc-cred"> · Designed by <a href="https://koulaxizis.gr" ' +
-          'target="_blank" rel="noopener">Christos Koulaxizis</a></span></div>' +
+          '<div class="sc-cred" id="sc-cred"></div></div>' +
       '</div>';
 
     // #4: single close path — backdrop, Escape AND the toggle case
@@ -3493,6 +3683,8 @@
     scInfoClose = close;    // registered so the toggle path can call it too
 
     wireSupportSection(ov);   // Support section (donation links)
+    wireCreditsSection(ov);   // Credits & licences (collapsible)
+    wireOwnCredits(ov);       // footer: our own credits line
     wireResetButton(ov);    // α: factory reset row
 
     document.body.appendChild(ov);
@@ -3661,7 +3853,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -6021,6 +6213,27 @@
     }
     try { sessionStorage.setItem("oros-todo-open", listId); } catch (e) {}
     openAppById("todo");
+  };
+
+  // Workouts deep-link bridge (Calendar feed → one workout). Payload =
+  // workout id. App open → live push __orosFitnessOpen into the
+  // iframe; closed → stage "oros-fitness-open" in sessionStorage (read
+  // one-shot by fitness.js at boot) + open the app. Same pattern as
+  // To-Do; a stale bundle without the receiver ignores the id.
+  window.__orosOpenFitness = function (workoutId) {
+    if (typeof workoutId !== "string" || !/^[a-z0-9-]{1,40}$/.test(workoutId)) return;
+    if (state.running && state.running.id === "fitness") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosFitnessOpen === "function") {
+          f.contentWindow.__orosFitnessOpen(workoutId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-fitness-open", workoutId); } catch (e) {}
+    openAppById("fitness");
   };
 
   // Habits deep-link bridge (Wave 8/#TH2 — closes Σ2-N1). Payload =

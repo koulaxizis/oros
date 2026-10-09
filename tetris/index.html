@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tetris · orOS</title>
+
+  <link rel="stylesheet" href="tetris.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-start="1"></button>
+        <button type="button" class="seg-btn" data-start="5"></button>
+        <button type="button" class="seg-btn" data-start="10"></button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="pause-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: score, level + lines, best -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">0</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="play">
+      <button type="button" id="hold-box" class="side-box">
+        <span class="side-label" data-i18n="side.hold">Hold</span>
+        <canvas id="hold-cv" aria-hidden="true"></canvas>
+      </button>
+      <div id="field">
+        <canvas id="board" role="img"></canvas>
+        <div id="overlay">
+          <div id="hint"></div>
+          <button type="button" id="start-btn"></button>
+          <div id="count" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div id="next-box" class="side-box">
+        <span class="side-label" data-i18n="side.next">Next</span>
+        <canvas id="next-cv" aria-hidden="true"></canvas>
+      </div>
+    </div>
+    <div id="pad" role="group">
+      <button type="button" class="pad" data-act="left"></button>
+      <button type="button" class="pad" data-act="right"></button>
+      <button type="button" class="pad" data-act="ccw"></button>
+      <button type="button" class="pad" data-act="cw"></button>
+      <button type="button" class="pad" data-act="soft"></button>
+      <button type="button" class="pad" data-act="hard"></button>
+    </div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="tetris.js"></script>
+
+</body>
+</html>

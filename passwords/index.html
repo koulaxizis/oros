@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Password Generator · orOS</title>
+
+  <link rel="stylesheet" href="passwords.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div id="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" id="tab-pw" data-tab="pw" aria-controls="gen"></button>
+      <button type="button" role="tab" class="tab" id="tab-ph" data-tab="ph" aria-controls="gen"></button>
+      <button type="button" role="tab" class="tab" id="tab-au" data-tab="au" aria-controls="audit"></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <p id="no-crypto" class="warn" hidden></p>
+
+    <!-- Generator: password / PIN / passphrase -->
+    <section id="gen" role="tabpanel">
+      <div class="card" id="out-card">
+        <div id="out" class="mono" aria-live="polite" aria-atomic="true"></div>
+        <div class="out-actions">
+          <button type="button" class="act" id="regen-btn"></button>
+          <button type="button" class="act primary" id="copy-btn"></button>
+        </div>
+        <div class="meter" id="gen-meter">
+          <div class="bar"><span class="fill"></span></div>
+          <div class="meter-text">
+            <span class="m-label"></span>
+            <span class="m-bits"></span>
+          </div>
+          <div class="m-time hint"></div>
+        </div>
+      </div>
+
+      <!-- Password options -->
+      <div class="card opts" id="pw-opts">
+        <div class="seg" id="pw-mode" role="radiogroup">
+          <button type="button" role="radio" data-mode="chars"></button>
+          <button type="button" role="radio" data-mode="pin"></button>
+        </div>
+        <div class="row range-row" id="len-row">
+          <label for="len-range" id="len-label"></label>
+          <input type="range" id="len-range">
+          <input type="number" id="len-num" inputmode="numeric" aria-labelledby="len-label">
+        </div>
+        <div id="chars-only">
+          <div class="checks">
+            <label><input type="checkbox" id="o-lower"><span data-i18n="o.lower"></span></label>
+            <label><input type="checkbox" id="o-upper"><span data-i18n="o.upper"></span></label>
+            <label><input type="checkbox" id="o-digits"><span data-i18n="o.digits"></span></label>
+            <label><input type="checkbox" id="o-symbols"><span data-i18n="o.symbols"></span></label>
+            <label><input type="checkbox" id="o-ambig"><span data-i18n="o.ambig"></span></label>
+          </div>
+          <div class="row">
+            <label for="o-custom" data-i18n="o.custom"></label>
+            <input type="text" id="o-custom" class="mono" maxlength="32" autocomplete="off"
+                   autocapitalize="off" spellcheck="false">
+          </div>
+          <p class="hint" data-i18n="o.customHint"></p>
+        </div>
+      </div>
+
+      <!-- Passphrase options -->
+      <div class="card opts" id="ph-opts" hidden>
+        <div class="seg" id="ph-src" role="radiogroup">
+          <button type="button" role="radio" data-src="device"></button>
+          <button type="button" role="radio" data-src="dice"></button>
+        </div>
+        <div class="row">
+          <label for="ph-list" data-i18n="p.list"></label>
+          <select id="ph-list">
+            <option value="large"></option>
+            <option value="short"></option>
+          </select>
+        </div>
+        <div class="row range-row" id="words-row">
+          <label for="words-range" id="words-label"></label>
+          <input type="range" id="words-range">
+          <input type="number" id="words-num" inputmode="numeric" aria-labelledby="words-label">
+        </div>
+        <div class="row">
+          <label for="ph-sep" data-i18n="p.sep"></label>
+          <select id="ph-sep">
+            <option value="space"></option>
+            <option value="dash"></option>
+            <option value="dot"></option>
+            <option value="under"></option>
+          </select>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="ph-caps"><span data-i18n="p.caps"></span></label>
+          <label id="extra-label"><input type="checkbox" id="ph-extra"><span data-i18n="p.extra"></span></label>
+        </div>
+
+        <!-- Real dice -->
+        <div id="dice-box" hidden>
+          <p class="hint" id="dice-hint"></p>
+          <div class="row dice-row">
+            <input type="text" id="dice-in" class="mono" inputmode="numeric" autocomplete="off"
+                   spellcheck="false" aria-describedby="dice-hint">
+            <button type="button" class="act" id="dice-add"></button>
+          </div>
+          <p class="hint err" id="dice-err" role="alert" hidden></p>
+          <ol id="dice-words"></ol>
+          <div class="row">
+            <button type="button" class="link-btn" id="dice-undo"></button>
+            <button type="button" class="link-btn" id="dice-clear"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card opts">
+        <div class="checks">
+          <label><input type="checkbox" id="o-clear"><span data-i18n="o.clear"></span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Strength auditor -->
+    <section id="audit" role="tabpanel" hidden>
+      <div class="card">
+        <label for="au-in" class="au-label" data-i18n="a.label"></label>
+        <div class="row au-row">
+          <input type="password" id="au-in" class="mono" maxlength="256" autocomplete="off"
+                 autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true">
+          <button type="button" class="act" id="au-show" aria-pressed="false"></button>
+        </div>
+        <p class="hint" data-i18n="a.private"></p>
+      </div>
+      <div class="card" id="au-result" hidden>
+        <div class="meter" id="au-meter">
+          <div class="bar"><span class="fill"></span></div>
+          <div class="meter-text">
+            <span class="m-label"></span>
+            <span class="m-bits"></span>
+          </div>
+        </div>
+        <h2 data-i18n="a.times"></h2>
+        <table id="au-times">
+          <tr><th scope="row" data-i18n="a.online"></th><td id="t-online"></td></tr>
+          <tr><th scope="row" data-i18n="a.slow"></th><td id="t-slow"></td></tr>
+          <tr><th scope="row" data-i18n="a.fast"></th><td id="t-fast"></td></tr>
+        </table>
+        <h2 data-i18n="a.findings"></h2>
+        <ul id="au-findings"></ul>
+        <p class="hint" id="au-none" data-i18n="a.none" hidden></p>
+      </div>
+      <p class="hint" data-i18n="a.method"></p>
+    </section>
+
+    <footer id="about" class="hint">
+      <span data-i18n="about.local"></span>
+      <span data-i18n="about.eff"></span>
+      <a href="https://www.eff.org/dice" target="_blank" rel="noopener noreferrer">eff.org/dice</a>
+      (<a href="https://creativecommons.org/licenses/by/3.0/us/" target="_blank" rel="noopener noreferrer">CC BY 3.0 US</a>).
+      <span data-i18n="about.seclists"></span>
+      <a href="https://github.com/danielmiessler/SecLists" target="_blank" rel="noopener noreferrer">SecLists</a> (MIT).
+    </footer>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="words-eff.js?v=0.46.00"></script>
+  <script src="common.js?v=0.46.00"></script>
+  <script src="pwcore.js?v=0.46.00"></script>
+  <script src="passwords.js?v=0.46.00"></script>
+
+</body>
+</html>

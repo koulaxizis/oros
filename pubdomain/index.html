@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Public Domain Calculator · orOS</title>
+
+  <link rel="stylesheet" href="pubdomain.css?v=0.45.13">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span class="title-main" data-i18n="title">Public Domain Calculator</span>
+      <span class="title-sub" data-i18n="subtitle">Copyright status by country</span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="manual-btn" aria-pressed="false"></button>
+  </header>
+
+  <main id="main">
+    <!-- Lookup (online) -->
+    <section id="search-sec" class="sec">
+      <div class="search-row">
+        <input type="search" id="q" autocomplete="off" spellcheck="false" maxlength="120">
+      </div>
+      <p id="search-msg" class="msg" hidden></p>
+      <ul id="results" class="results" hidden></ul>
+      <div id="recents" class="recents" hidden>
+        <div class="recents-head">
+          <span class="sec-lbl" data-i18n="recent">Recent</span>
+          <button type="button" class="link-btn" id="recents-clear" data-i18n="recent.clear">Clear</button>
+        </div>
+        <div id="recents-list" class="chips"></div>
+      </div>
+    </section>
+
+    <!-- Manual entry (offline, always) -->
+    <section id="manual" class="sec" hidden>
+      <h2 data-i18n="manual.title">Enter the dates yourself</h2>
+      <div id="kinds" class="chips" role="radiogroup"></div>
+      <div id="authors"></div>
+      <button type="button" class="link-btn" id="add-author" data-i18n="manual.add">+ Add author</button>
+      <p id="joint-hint" class="hint" data-i18n="manual.film" hidden></p>
+      <label class="field">
+        <span data-i18n="manual.pub">Year of first publication (optional)</span>
+        <input type="number" id="pub" inputmode="numeric" min="1" max="9999" step="1">
+      </label>
+    </section>
+
+    <!-- Result -->
+    <section id="result" hidden>
+      <div id="subject" class="card subject"></div>
+      <div id="home" class="card home"></div>
+      <div class="sec others">
+        <div class="others-head">
+          <h2 data-i18n="others">In other countries</h2>
+          <div id="sorts" class="chips small" role="radiogroup"></div>
+        </div>
+        <ul id="others" class="others-list"></ul>
+      </div>
+      <p class="disclaimer" data-i18n="disclaimer"></p>
+    </section>
+
+    <!-- Empty state -->
+    <section id="empty" class="empty">
+      <div class="empty-mark" aria-hidden="true"></div>
+      <p data-i18n="empty"></p>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="rules.js?v=0.45.13"></script>
+  <script src="pubdomain.js?v=0.45.13"></script>
+
+</body>
+</html>

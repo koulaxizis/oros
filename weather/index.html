@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Weather · orOS</title>
-  <link rel="stylesheet" href="weather.css?v=0.45.12">
+  <link rel="stylesheet" href="weather.css?v=0.45.15">
 </head>
 <body>
 
@@ -78,6 +78,13 @@
     <h3 class="sec-title" data-i18n="daily.title">7-day forecast</h3>
     <ul id="daily"></ul>
 
+    <!-- Open-Meteo data is CC BY 4.0: attribution next to the data -->
+    <p id="wx-attrib" class="dim">
+      <span data-i18n="attrib">Weather data by</span>
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a>
+      (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>)
+    </p>
+
   </main>
 
   <!-- City management dialog: saved list (switch/delete) + geocoded add -->
@@ -94,6 +101,6 @@
     <p class="hint" id="city-hint" hidden></p>
   </dialog>
 
-  <script src="weather.js?v=0.45.12"></script>
+  <script src="weather.js?v=0.45.15"></script>
 </body>
 </html>

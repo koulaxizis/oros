@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Rock Paper Scissors · orOS</title>
+
+  <link rel="stylesheet" href="rps.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
+        <button type="button" class="seg-btn" data-level="m" data-i18n="level.m">Medium</button>
+        <button type="button" class="seg-btn" data-level="h" data-i18n="level.h">Hard</button>
+      </div>
+      <div class="seg" id="fmt-seg" role="group">
+        <button type="button" class="seg-btn" data-fmt="3" data-i18n="fmt.3">First to 3</button>
+        <button type="button" class="seg-btn" data-fmt="5" data-i18n="fmt.5">First to 5</button>
+        <button type="button" class="seg-btn" data-fmt="0" data-i18n="fmt.0">Endless</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: your score, round / streak, the computer's score -->
+  <div id="status">
+    <span class="side" id="side-you"><span id="name-you" data-i18n="name.you">You</span><strong id="score-you">0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="side" id="side-cpu"><strong id="score-cpu">0</strong><span id="name-cpu" data-i18n="name.cpu">Computer</span></span>
+  </div>
+
+  <main id="arena">
+    <div id="hands">
+      <div class="hand you" id="hand-you"><div class="hand-art" id="art-you"></div><div class="hand-name" id="label-you"></div></div>
+      <div id="vs" data-i18n="vs">vs</div>
+      <div class="hand cpu" id="hand-cpu"><div class="hand-art" id="art-cpu"></div><div class="hand-name" id="label-cpu"></div></div>
+    </div>
+    <div id="verdict"></div>
+    <div id="picks" role="group"></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="rps.js"></script>
+
+</body>
+</html>

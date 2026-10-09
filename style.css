@@ -1212,7 +1212,7 @@ body {
 }
 .sc-foot a { color: var(--accent); text-decoration: none; }
 .sc-foot a:hover { text-decoration: underline; }
-.sc-cred { color: var(--text-dim); }
+.sc-cred { color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
 
 /* ===== v0.18.0: weather chip (taskbar) ===== */
 #rx-tray-chip {

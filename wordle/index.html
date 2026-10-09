@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wordle · orOS</title>
+
+  <link rel="stylesheet" href="wordle.css?v=0.45.15">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="lang-seg" role="group">
+        <button type="button" class="seg-btn" data-lang="en" data-i18n="lang.en">EN</button>
+        <button type="button" class="seg-btn" data-lang="el" data-i18n="lang.el">ΕΛ</button>
+      </div>
+      <div class="seg" id="mode-seg" role="group">
+        <button type="button" class="seg-btn" data-mode="d" data-i18n="mode.d">Daily</button>
+        <button type="button" class="seg-btn" data-mode="f" data-i18n="mode.f">Free</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="opts-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: which word, hint, streak -->
+  <div id="status">
+    <span class="stat"><strong id="info"></strong><span id="hard-tag" class="tag" data-i18n="turn.hard" hidden>Hard mode</span></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="streak">0</strong><span data-i18n="st.streak">Streak</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="board" role="group"></div>
+  </main>
+
+  <div id="kb" role="group"></div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="words-en.js?v=0.45.15"></script>
+  <script src="words-el.js?v=0.45.15"></script>
+  <script src="wordle.js?v=0.45.15"></script>
+
+</body>
+</html>
