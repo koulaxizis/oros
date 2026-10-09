@@ -290,6 +290,14 @@
       "type": "internal"
     },
     {
+      "id": "fitness",
+      "name": "Workouts",
+      "category": "Personal",
+      "icon": "fitness",
+      "url": "fitness/",
+      "type": "internal"
+    },
+    {
       "id": "cycle",
       "name": "Cycle",
       "category": "Personal",
