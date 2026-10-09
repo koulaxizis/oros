@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mastermind · orOS</title>
+
+  <link rel="stylesheet" href="mastermind.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
+        <button type="button" class="seg-btn" data-level="m" data-i18n="level.m">Medium</button>
+        <button type="button" class="seg-btn" data-level="h" data-i18n="level.h">Hard</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="help-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: try, hint, best -->
+  <div id="status">
+    <span class="stat"><strong id="tries">1/10</strong><span data-i18n="st.try">Try</span></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">–</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="board" role="group"></div>
+  </main>
+
+  <div id="pad">
+    <div id="palette" role="group"></div>
+    <div id="actions">
+      <button type="button" class="act" id="del-btn"></button>
+      <button type="button" class="act primary" id="check-btn"></button>
+    </div>
+  </div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="mastermind.js"></script>
+
+</body>
+</html>
