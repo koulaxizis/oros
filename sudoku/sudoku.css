@@ -193,7 +193,7 @@ button, select {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  width: var(--bs, 340px);
+  width: var(--pw, var(--bs, 340px));
 }
 #play.side {
   flex-direction: row;
@@ -286,7 +286,7 @@ button, select {
 #digits {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  gap: 4px;
+  gap: 3px;
 }
 #play.side #digits { grid-template-columns: repeat(3, 1fr); gap: 8px; }
 #tools {
@@ -294,7 +294,7 @@ button, select {
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
 }
-#play.side #tools { gap: 6px; }
+#play.side #tools { grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .key {
   position: relative;
   min-width: 0;

@@ -1218,6 +1218,9 @@
     size = Math.max(200, Math.floor(size / 9) * 9 + 8);
     play.classList.toggle("side", side);
     play.style.setProperty("--bs", size + "px");
+    // under the board the pad may run wider than a small board, so each
+    // digit key stays at least ~35 px wide on a 360 px phone
+    play.style.setProperty("--pw", (side ? size : Math.min(W, Math.max(size, 9 * 36 + 24))) + "px");
     play.style.setProperty("--padw", padW + "px");
   }
 

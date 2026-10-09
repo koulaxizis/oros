@@ -106,6 +106,7 @@
       "toast.newgame": "New puzzle",
       "toast.undo": "Undo",
       "toast.noUndo": "Nothing to undo",
+      "toast.noErase": "Nothing to clear in this cell",
       "toast.done": "Solved: start a new puzzle",
       "toast.hint": "Hint used: this puzzle sets no time record",
       "toast.noZoom": "The cells are already big enough here",
@@ -152,6 +153,7 @@
       "toast.newgame": "Νέος γρίφος",
       "toast.undo": "Αναίρεση",
       "toast.noUndo": "Τίποτα για αναίρεση",
+      "toast.noErase": "Δεν υπάρχει κάτι να σβηστεί σε αυτό το κελί",
       "toast.done": "Λύθηκε: ξεκίνα νέο γρίφο",
       "toast.hint": "Πήρες βοήθεια: αυτός ο γρίφος δεν γράφει ρεκόρ χρόνου",
       "toast.noZoom": "Τα κελιά είναι ήδη αρκετά μεγάλα εδώ",
@@ -747,7 +749,7 @@
     if (refuseDone()) return;
     var from = game.c[i];
     if (to === -1) {                     // clear
-      if (!from) return;
+      if (!from) { showToast(t("toast.noErase")); return; }   // R28
       to = 0;
     } else if (from === to) to = 0;      // toggle off
     game.c[i] = to;

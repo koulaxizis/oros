@@ -784,7 +784,8 @@
       renderCells(null);
     }
     var vr = flip ? L.cols : L.rows, vc = flip ? L.rows : L.cols;
-    var fit = Math.floor(Math.min((W - 8) / vc, (H - 8) / vr, 44));
+    // the board adds a 1 px gap between cells and 3 px padding around
+    var fit = Math.floor(Math.min((W - 7 - vc) / vc, (H - 7 - vr) / vr, 44));
     var want = coarse() ? 34 : 30, c = fit;
     var zoomed = prefs.zoom && fit < want;
     if (zoomed) c = want;
