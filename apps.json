@@ -153,6 +153,14 @@
       "type": "internal"
     },
     {
+      "id": "pixel",
+      "name": "Pixel Avatar",
+      "category": "Creativity",
+      "icon": "pixel",
+      "url": "pixel/",
+      "type": "internal"
+    },
+    {
       "id": "wallpaper",
       "name": "Wallpaper Generator",
       "category": "Creativity",
