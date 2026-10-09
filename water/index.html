@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Water · orOS</title>
+
+  <link rel="stylesheet" href="water.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="prev-btn"></button>
+    <button type="button" class="day-btn" id="day-btn"></button>
+    <button type="button" class="icon-btn" id="next-btn"></button>
+    <span class="spacer"></span>
+    <button type="button" class="txt-btn" id="rem-btn" aria-pressed="false"></button>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- The day: glass, readout, quick add, entries -->
+    <section id="day" class="col">
+      <div id="hero">
+        <div id="glass-box" aria-hidden="true"></div>
+        <div id="readout">
+          <div id="amt-big"></div>
+          <div id="amt-goal"></div>
+          <div id="pct-row"><span id="pct"></span><span id="left"></span></div>
+        </div>
+      </div>
+      <div id="quick">
+        <button type="button" class="add-btn primary" id="add-glass"></button>
+        <button type="button" class="add-btn" id="add-bottle"></button>
+        <button type="button" class="add-btn" id="add-other"></button>
+      </div>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.sips">Entries</h2>
+          <span class="spacer"></span>
+          <span id="sip-count" class="count"></span>
+        </div>
+        <ol id="sips"></ol>
+        <p class="hint" id="sips-empty" data-i18n="sips.empty">Nothing yet. Tap the glass button when you drink.</p>
+      </section>
+    </section>
+
+    <!-- History: stats, week bars, month heatmap -->
+    <section id="hist" class="col">
+      <section class="sec">
+        <h2 data-i18n="sec.stats">Overview</h2>
+        <div id="stats" class="stats"></div>
+      </section>
+      <section class="sec">
+        <h2 data-i18n="sec.week">This week</h2>
+        <div id="week" class="bars"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-head">
+          <h2 id="month-label"></h2>
+          <span class="spacer"></span>
+          <button type="button" class="mini" id="mprev-btn"></button>
+          <button type="button" class="mini" id="mnext-btn"></button>
+        </div>
+        <div id="month" class="heat"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="water.js?v=0.46.00"></script>
+
+</body>
+</html>

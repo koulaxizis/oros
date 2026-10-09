@@ -60,6 +60,8 @@
       "streak":          "{n} day streak",
       "streaks":         "{n} day streaks",
       "streak.zero":     "No streak",
+      "feed.open":       "Open {app}",
+      "feed.badge":      "Auto",
       "today":           "Today",
       "this.week":       "This Week",
       "week.of":         "Week of {s}",
@@ -122,6 +124,8 @@
       "streak":          "{n} ημέρες σερί",
       "streaks":         "{n} ημέρες σερί",
       "streak.zero":     "Χωρίς σερί",
+      "feed.open":       "Άνοιγμα: {app}",
+      "feed.badge":      "Αυτόματο",
       "today":           "Σήμερα",
       "this.week":       "Αυτή η εβδομάδα",
       "week.of":         "Εβδομάδα {s}",
@@ -436,6 +440,71 @@
       d = addDays(d, 1);
     }
     return longest;
+  }
+
+  // ===== APP FEEDS (read-only rows from other apps) =====
+  // Generic contract: a provider app ships ONE script that
+  // habits/index.html loads before this file (../<app>/core.js) and
+  // that pushes a record onto window.orosHabitFeeds:
+  //   { id, app, name{en,el}, hint{en,el}, color "#rrggbb",
+  //     icon (static inline SVG from the provider's own code),
+  //     keys [localStorage keys it reads — Habits re-renders when
+  //           one of them changes, e.g. after a pull],
+  //     read() → null (hide the row) | { days: {"YYYY-MM-DD": true} } }
+  // Feed rows are daily, never stored, never synced, never counted
+  // in Stats; a tap opens the provider app. First provider: Water.
+  var FEED_ID_RE = /^[a-z0-9-]{1,30}$/;
+  var FEED_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+  function feedText(v) {
+    if (typeof v === "string") return v.slice(0, 80);
+    if (v && typeof v === "object") return String(v[LANG] || v.en || "").slice(0, 80);
+    return "";
+  }
+  function feedRows() {
+    var src = window.orosHabitFeeds, out = [], seen = {};
+    if (!Array.isArray(src)) return out;
+    for (var i = 0; i < src.length; i++) {
+      var f = src[i];
+      if (!f || typeof f.read !== "function" || !FEED_ID_RE.test(String(f.id)) ||
+          !FEED_ID_RE.test(String(f.app)) || seen[f.id]) continue;
+      var got = null;
+      try { got = f.read(); } catch (e) { got = null; }
+      if (!got || !got.days || typeof got.days !== "object") continue;
+      seen[f.id] = true;
+      out.push({
+        id: String(f.id),
+        app: String(f.app),
+        name: feedText(f.name) || String(f.id),
+        hint: feedText(f.hint),
+        color: FEED_COLOR_RE.test(f.color) ? f.color : COLORS[3],
+        icon: (typeof f.icon === "string" && f.icon.indexOf("<svg") === 0) ? f.icon : ICONS.check,
+        days: got.days
+      });
+    }
+    return out;
+  }
+  function feedKeys() {
+    var src = window.orosHabitFeeds, out = [];
+    if (!Array.isArray(src)) return out;
+    for (var i = 0; i < src.length; i++) {
+      if (src[i] && Array.isArray(src[i].keys)) out = out.concat(src[i].keys);
+    }
+    return out;
+  }
+  function feedDone(f, dateK) { return f.days[dateK] === true; }
+  // Every day counts (a feed has no schedule); today not done yet is
+  // not a break — the same grace as currentStreak().
+  function feedStreak(f) {
+    var streak = 0, d = todayStart(), guard = 0;
+    if (!feedDone(f, dateKey(d))) d = addDays(d, -1);
+    while (guard++ < 3650 && feedDone(f, dateKey(d))) { streak++; d = addDays(d, -1); }
+    return streak;
+  }
+  function openFeedApp(app) {
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosOpenApp === "function") window.parent.__orosOpenApp(app);
+    } catch (e) {}
   }
 
   // ===== MUTATIONS (all funnel through save()) =====
@@ -800,8 +869,55 @@
       }
       html += "</div>";
     }
+    html += feedListHtml();
 
     els.view.innerHTML = html;
+  }
+
+  // App feeds in the list view: same row anatomy, read-only dots
+  // (spans), one action that opens the provider app.
+  function feedListHtml() {
+    var feeds = feedRows();
+    if (!feeds.length) return "";
+    var week = weekDays(period);
+    var today = todayStart();
+    var html = '<div class="habit-list feed-list">';
+    for (var i = 0; i < feeds.length; i++) {
+      var f = feeds[i];
+      var st = feedStreak(f);
+      var dots = "";
+      for (var w = 0; w < 7; w++) {
+        var d = week[w];
+        var done = feedDone(f, dateKey(d));
+        var cls = "wdot feed";
+        if (done) cls += " completed";
+        if (isSameDayLocal(d, today)) cls += " today";
+        if (d > today) cls += " future";
+        var wStyle = done ? ' style="background:' + f.color + ";border-color:" + f.color + '"' : "";
+        dots += '<span class="' + cls + '"' + wStyle + ">" + esc(t("dkey." + w)) + "</span>";
+      }
+      var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
+      var open = t("feed.open").replace("{app}", f.name);
+      html +=
+        '<div class="habit-row feed-row" data-feed="' + esc(f.id) + '">' +
+          '<div class="habit-icon-box" style="background:' + f.color + '33;color:' + f.color + '">' +
+            '<span class="ico">' + f.icon + "</span></div>" +
+          '<div class="habit-info">' +
+            '<div class="habit-name">' + esc(f.name) + "</div>" +
+            '<div class="habit-meta">' +
+              '<span class="habit-streak" title="' + esc(streakTip) + '">' +
+                '<span class="ico">' + ICONS.fire + "</span>" +
+                '<span class="habit-streak-value' + (st ? "" : " zero") + '">' + st + "</span></span>" +
+              '<span class="habit-freq-badge" title="' + esc(f.hint) + '">' + esc(t("feed.badge")) + "</span>" +
+            "</div></div>" +
+          '<div class="week-dots" title="' + esc(f.hint) + '">' + dots + "</div>" +
+          '<div class="habit-actions">' +
+            '<button type="button" class="btn ghost" data-act="feed-open" data-app="' + esc(f.app) +
+              '" title="' + esc(open) + '" aria-label="' + esc(open) + '">' + ICO_CHEVR + "</button>" +
+          "</div>" +
+        "</div>";
+    }
+    return html + "</div>";
   }
 
   function isSameDayLocal(a, b) { return dateKey(a) === dateKey(b); }
@@ -828,6 +944,7 @@
 
   function renderCalendar() {
     var hs = livingHabits();
+    var feeds = feedRows();
     var days = monthDays(period);
     var today = todayStart();
     var html = "";
@@ -839,7 +956,8 @@
         "<p>" + esc(t("empty.desc")) + "</p>" +
         '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
         "</div>";
-    } else {
+    }
+    if (hs.length || feeds.length) {
       html += '<div class="cal-wrap"><table class="cal-table">';
 
       // header: day numbers of the month (today accented)
@@ -880,6 +998,35 @@
           var cStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
           html += '<td><button type="button" class="' + cls + '"' + cStyle + ' data-act="cdot" data-h="' + esc(h.id) +
                   '" data-c="' + c + '">' + dayNum(d) + "</button></td>";
+        }
+        html += "</tr>";
+      }
+      // app feeds: same cells, read-only (spans), gutter opens the app
+      for (var fr = 0; fr < feeds.length; fr++) {
+        var f = feeds[fr];
+        var fst = feedStreak(f);
+        var fTip = fst ? fmt(fst === 1 ? "streak" : "streaks", fst) : t("streak.zero");
+        var fOpen = t("feed.open").replace("{app}", f.name);
+        html +=
+          '<tr class="feed-tr">' +
+            '<td class="cal-gutter"><div class="cal-gcell feed" data-act="feed-open" data-app="' + esc(f.app) +
+              '" role="button" tabindex="0" title="' + esc(f.hint || fOpen) + '" aria-label="' + esc(fOpen) + '">' +
+              '<span class="cal-gicon" style="background:' + f.color + "33;color:" + f.color + '">' +
+                '<span class="ico">' + f.icon + "</span></span>" +
+              '<span class="cal-gname">' + esc(f.name) + "</span>" +
+              '<span class="cal-gstreak" title="' + esc(fTip) + '">' +
+                '<span class="ico">' + ICONS.fire + "</span>" +
+                '<span class="cal-gstreak-value' + (fst ? "" : " zero") + '">' + fst + "</span></span>" +
+            "</div></td>";
+        for (var fc = 0; fc < days.length; fc++) {
+          var fd = days[fc];
+          var fDone = feedDone(f, dateKey(fd));
+          var fCls = "cdot feed";
+          if (fDone) fCls += " completed";
+          if (isSameDayLocal(fd, today)) fCls += " today";
+          if (fd > today) fCls += " future";
+          var fStyle = fDone ? ' style="background:' + f.color + ";border-color:" + f.color + '"' : "";
+          html += '<td><span class="' + fCls + '"' + fStyle + ">" + dayNum(fd) + "</span></td>";
         }
         html += "</tr>";
       }
@@ -1363,6 +1510,10 @@
         setStatRange(parseInt(actEl.getAttribute("data-rng"), 10));
         return;
       }
+      if (act === "feed-open") {           // app feed row: open the provider
+        openFeedApp(actEl.getAttribute("data-app"));
+        return;
+      }
       var hid = actEl.getAttribute("data-h");
       var h = hid ? habitById(hid) : null;
       if (!h) { if (act === "new") openHabitDialog(null); return; }
@@ -1398,6 +1549,27 @@
       }
     });
   }
+
+  // App feed gutter cells (calendar) are role=button divs: Enter /
+  // Space open the provider like a click.
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var tg = e.target;
+    if (!tg || !tg.getAttribute || tg.getAttribute("data-act") !== "feed-open" || tg.tagName === "BUTTON") return;
+    e.preventDefault();
+    openFeedApp(tg.getAttribute("data-app"));
+  });
+  // A provider's data changed in another document (a pull applied by
+  // the shell, the provider app in another tab): redraw the rows.
+  window.addEventListener("storage", function (e) {
+    if (!e.key || feedKeys().indexOf(e.key) === -1) return;
+    if (document.querySelector("dialog[open]")) return;
+    render();
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && feedKeys().length &&
+        !document.querySelector("dialog[open]")) render();
+  });
 
   // ===== KEYBOARD (app shortcut + shell forwarding) =====
   document.addEventListener("keydown", function (e) {
