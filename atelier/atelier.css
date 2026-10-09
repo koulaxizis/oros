@@ -382,6 +382,15 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 }
 .up-tile img { max-width: 100%; max-height: 100%; }
 .up-tile:hover { border-color: var(--accent); }
+/* Animate */
+.an-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
+.an-tile {
+  min-height: 44px; padding: 6px 4px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.an-tile.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.seg.wrap { flex-wrap: wrap; }
+
 /* Sources (open media) */
 .src-form { display: flex; gap: 6px; }
 .src-form .inp { flex: 1; min-width: 0; }

@@ -27,8 +27,15 @@ Under `What will you make?` tap or click a size, for example a square post or an
 ## Pages
 The strip under the canvas shows the pages of your design. `+` adds a page; each page has `Duplicate page`, `Move left`, `Move right` and `Delete page`.
 
+## Animate and present
+- Select an element and tap or click `Animate` to give it an entrance: `Fade`, `Rise`, `Pop`, `Wipe` or, for text, `Typewriter`. Elements enter one after the other, bottom layer first.
+- With nothing selected, `Animate` sets how long the page shows and the transition to it (`Fade`, `Slide`, `Push`, `Zoom` or `None`).
+- `Play` previews the page's animation on the canvas.
+- `More` › `Present (full screen)` shows the pages as a slide show: arrow keys, a clicker or a swipe move between pages, [[Esc]] ends it.
+
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, or a PDF for printing at 150 or 300 dpi.
+- `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` scales the whole design to another size.
 - `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
 

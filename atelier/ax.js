@@ -20,6 +20,10 @@
 //          flh / flv (flips); crop = designkit's custom fit
 //          (ix, iy, isc on the item)
 //   line:  as / ae arrow heads ("" | "arrow" | "dot")
+//   an     entrance animation fade|rise|pop|wipe|type (type: text)
+//   dur/ptr the page background only: seconds the page shows (1..60,
+//          default 5) and the transition to it (none|fade|slide|push|
+//          zoom, default fade); see anim.js
 //   cr     credit of a piece from an open source (media.normCredit)
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
@@ -42,6 +46,9 @@
   var FILTER_IDS = FX.FILTERS.map(function (f) { return f.id; });
   var ALIGNS = ["l", "c", "r", "j"];
   var HEADS = ["", "arrow", "dot"];
+  var ANIMS = ["fade", "rise", "pop", "wipe", "type"];             // anim.js
+  var TRANSITIONS = ["none", "fade", "slide", "push", "zoom"];
+  var DUR_DEF = 5, PTR_DEF = "fade";
   var MAX_TX = 5000;
   var TEXT_DEF = { font: "sans", size: 48, lh: 120, al: "l" };
   var RD_DEF = 30;                 // fx.shapePath's default roundness
@@ -114,6 +121,17 @@
       var as = oneOf(a.as, HEADS, ""), ae = oneOf(a.ae, HEADS, "");
       if (as) o.as = as;
       if (ae) o.ae = ae;
+    }
+    // animation (video, GIF, preview): an entrance per element; the
+    // page background carries the page's duration and transition
+    if (o.bg) {
+      var dur = int(a.dur, 1, 60, DUR_DEF);
+      if (dur !== DUR_DEF) o.dur = dur;
+      var ptr = oneOf(a.ptr, TRANSITIONS, PTR_DEF);
+      if (ptr !== PTR_DEF) o.ptr = ptr;
+    } else {
+      var an = oneOf(a.an, ANIMS, "");
+      if (an && !(an === "type" && k !== "text")) o.an = an;
     }
     if (a.cr && typeof a.cr === "object" && MEDIA) {
       var cr = MEDIA.normCredit(a.cr);
