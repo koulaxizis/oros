@@ -451,3 +451,26 @@ test("fromFeedsXml: lower-case names, xmlns resolved, text joined", () => {
   assert.equal(f.eps[0].pub, Date.UTC(2026, 9, 1, 10));
   assert.equal(f.eps[0].kind, "bonus");
 });
+
+// The shell's update broker (index.html, SW-2) must not reload while
+// an episode plays: the player lives in the shell window.
+test("shell: safeToReload waits while a podcast plays", () => {
+  const fs = require("fs");
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const m = html.match(/function safeToReload\(\) \{[\s\S]*?\n  \}\n/);
+  assert.ok(m, "safeToReload found in index.html");
+  const run = (podPaused, radioPaused) => {
+    const window = {
+      location: { search: "" },
+      __orosRadioHost: { audio: { paused: radioPaused } },
+      __orosPodcastsHost: podPaused === null ? undefined : { audio: { paused: podPaused } }
+    };
+    const document = { getElementById: () => null, querySelector: () => null };
+    const fn = new Function("window", "document", "sessionStorage", "navigator", m[0] + "\nreturn safeToReload();");
+    return fn(window, document, { getItem: () => null }, { onLine: true });
+  };
+  assert.equal(run(false, true), false, "podcast playing blocks the reload");
+  assert.equal(run(true, true), true, "podcast paused allows it");
+  assert.equal(run(null, true), true, "no Podcasts host allows it");
+  assert.equal(run(true, false), false, "radio playing still blocks it");
+});
