@@ -64,9 +64,9 @@
 
   var LEVELS = ["l1", "l2", "l3"];
   var LEVEL = {
-    l1: { colors: 4, rows: 5, every: 8 },
-    l2: { colors: 5, rows: 6, every: 7 },
-    l3: { colors: 6, rows: 7, every: 6 }
+    l1: { colors: 4, rows: 5, every: 10 },
+    l2: { colors: 5, rows: 6, every: 8 },
+    l3: { colors: 6, rows: 6, every: 7 }
   };
   var NCOL = 6;
   var MAX_SCORE = 100000000;
