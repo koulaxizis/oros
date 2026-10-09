@@ -17,7 +17,7 @@ The bar at the top is always there:
 
 ## Open and close apps
 1. Tap or click `orOS` to open the menu.
-2. Open a category and tap or click an app, or type its name in `Search apps…`.
+2. Open a category and tap or click an app, or type its name in `Search apps and your data…`.
 3. The app fills the screen.
 4. To go back to the desktop, tap or click `Back`, or press [[Esc]].
 

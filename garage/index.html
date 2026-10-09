@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Garage · orOS</title>
+
+  <link rel="stylesheet" href="garage.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" id="tab-home" role="tab" data-view="home"></button>
+      <button type="button" class="tab" id="tab-log" role="tab" data-view="log"></button>
+      <button type="button" class="tab" id="tab-stats" role="tab" data-view="stats"></button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+  </header>
+
+  <nav id="vbar" hidden></nav>
+
+  <main id="main">
+    <!-- Overview: the vehicle, what is coming, quick add, plans -->
+    <section id="view-home" class="view" role="tabpanel" aria-labelledby="tab-home"></section>
+
+    <!-- Log: every entry, month by month -->
+    <section id="view-log" class="view" role="tabpanel" aria-labelledby="tab-log" hidden>
+      <div id="log-filter" class="chips"></div>
+      <div id="log-list"></div>
+    </section>
+
+    <!-- Stats: costs, consumption, fuel price -->
+    <section id="view-stats" class="view" role="tabpanel" aria-labelledby="tab-stats" hidden>
+      <div id="stats-range" class="chips"></div>
+      <div id="stats-body"></div>
+    </section>
+
+    <div id="empty" class="view empty" hidden></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="garage.js?v=0.46.00"></script>
+
+</body>
+</html>

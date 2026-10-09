@@ -11,7 +11,7 @@
 // fx.js only says how to paint those glyph positions (passes) or
 // where to move them (curveGlyphs).
 //
-// API (window.OrosDK.fx, or module.exports under Node):
+// API (window.orosDK.fx, or module.exports under Node):
 //   VER
 //   ADJUST                         slider ids with their ranges
 //   normAdjust(p)                  canonical adjustment record (R26)
@@ -602,7 +602,7 @@
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else {
-    root.OrosDK = root.OrosDK || {};
-    root.OrosDK.fx = API;
+    root.orosDK = root.orosDK || {};
+    root.orosDK.fx = API;
   }
 })(typeof window !== "undefined" ? window : this);

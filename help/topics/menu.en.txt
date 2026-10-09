@@ -15,7 +15,7 @@ Under `Applications`, apps are grouped in categories such as `Office`, `Accessor
 Every time orOS starts, all categories are closed. While orOS stays open, the menu remembers which ones you opened, even after you open an app.
 
 ## Quick search
-The `Search apps…` box at the top of the menu finds apps as you type.
+The `Search apps and your data…` box at the top of the menu finds apps as you type.
 
 - It looks at the app's name and at the category name. So `games` shows every game.
 - Capitals and Greek accents don't matter: `ημερολογιο` finds `Ημερολόγιο`.

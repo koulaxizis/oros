@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Xeri · orOS</title>
+
+  <link rel="stylesheet" href="../cardkit/cardkit.css?v=0.46.00">
+  <link rel="stylesheet" href="xeri.css?v=0.46.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
+        <button type="button" class="seg-btn" data-level="m" data-i18n="level.m">Medium</button>
+        <button type="button" class="seg-btn" data-level="h" data-i18n="level.h">Hard</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="opts-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: match points of both sides + whose turn -->
+  <div id="status">
+    <span class="side" id="side0"><span id="name0"></span><strong id="score0">0</strong></span>
+    <span id="turn"></span>
+    <span class="side" id="side1"><strong id="score1">0</strong><span id="name1"></span></span>
+  </div>
+
+  <main id="board-wrap" class="felt">
+    <div id="board">
+      <section class="zone" id="opp-zone">
+        <div class="hand" id="opp-hand"></div>
+        <div class="pinfo" id="info1"></div>
+      </section>
+      <section class="zone" id="mid-zone">
+        <div class="stack" id="deck"></div>
+        <div class="stack" id="table"></div>
+        <div id="mid-info">
+          <span id="deal-no"></span>
+          <span id="target"></span>
+          <button type="button" class="dlg-btn primary" id="next-btn" hidden></button>
+        </div>
+        <div id="flash" aria-hidden="true" hidden></div>
+      </section>
+      <section class="zone" id="me-zone">
+        <div class="pinfo" id="info0"></div>
+        <div class="hand" id="my-hand" role="group"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../cardkit/cardkit.js?v=0.46.00"></script>
+  <script src="xeri.js?v=0.46.00"></script>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Reader · orOS</title>
+
+  <link rel="stylesheet" href="feeds.css?v=0.46.00">
+
+</head>
+<body data-view="list">
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="nav-btn"></button>
+    <div id="bar-title" class="bar-title"></div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="refresh-btn"></button>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+  </header>
+
+  <div id="net" class="net" role="status" hidden></div>
+
+  <main id="app">
+    <!-- Smart lists + folders + feeds -->
+    <nav id="side" aria-label="Subscriptions">
+      <div id="side-list"></div>
+      <button type="button" class="side-add" id="side-add"></button>
+    </nav>
+    <div id="scrim" hidden></div>
+
+    <!-- Article list -->
+    <section id="listp" aria-labelledby="list-title">
+      <div class="list-head">
+        <div class="list-name">
+          <h2 id="list-title"></h2>
+          <span id="list-count" class="count"></span>
+        </div>
+        <div id="list-tools" class="list-tools"></div>
+      </div>
+      <ul id="list" role="list"></ul>
+      <div id="list-foot" class="list-foot"></div>
+    </section>
+
+    <!-- Reading pane -->
+    <section id="read" aria-live="polite">
+      <div id="read-empty" class="read-empty"></div>
+      <article id="art" hidden>
+        <div id="art-acts" class="art-acts"></div>
+        <div id="art-bars"></div>
+        <div id="art-body" class="art-body"></div>
+      </article>
+    </section>
+
+    <!-- First run -->
+    <section id="welcome" hidden>
+      <div class="wel-box">
+        <div id="wel-icon" class="wel-icon" aria-hidden="true"></div>
+        <h1 data-i18n="wel.title">Your news, inside orOS</h1>
+        <p data-i18n="wel.text">Add a site or a feed address.</p>
+        <button type="button" class="dlg-btn primary" id="wel-add" data-i18n="btn.add">Add a feed</button>
+        <button type="button" class="link-btn" id="wel-import" data-i18n="wel.import">Import from another reader (OPML)</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="undo" class="undo" role="status" hidden></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="sanitize.js?v=0.46.00"></script>
+  <script src="fetch.js?v=0.46.00"></script>
+  <script src="feeds.js?v=0.46.00"></script>
+
+</body>
+</html>

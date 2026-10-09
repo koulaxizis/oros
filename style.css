@@ -683,6 +683,49 @@ body {
 .menu-search input:focus { border-color: var(--accent); }
 .menu-search input::placeholder { color: var(--text-dim); }
 .menu-search-none { padding: 14px 10px; font-size: 12.5px; }
+
+/* Universal search — hits from the apps' data, under the app list */
+.menu-results:empty { display: none; }
+.menu-results { padding-bottom: 4px; }
+.menu-hit-app { display: flex; align-items: center; gap: 6px; user-select: none; }
+.menu-hit-app .app-ico { display: inline-flex; color: var(--accent); }
+.menu-hit-app .app-ico svg { width: 14px; height: 14px; }
+.menu-item.menu-hit {
+  flex-direction: column; align-items: stretch; gap: 2px; min-height: 44px;
+}
+.menu-hit-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.menu-item > span.menu-hit-top { overflow: visible; }
+.menu-hit-title {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.menu-hit-when { flex-shrink: 0; font-size: 11px; color: var(--text-dim); }
+.menu-hit-snip {
+  font-size: 11.5px; color: var(--text-dim); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.menu-hit mark {
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 2px; padding: 0;
+}
+.menu-hit-more {
+  display: block; width: 100%; min-height: 36px; padding: 6px 10px;
+  border: 0; background: transparent; color: var(--accent);
+  font-size: 12px; text-align: left; cursor: pointer; border-radius: 7px;
+}
+.menu-hit-more:hover, .menu-hit-more:focus-visible { background: var(--accent-soft); }
+.menu-hit-cap { padding: 4px 10px 8px; font-size: 11.5px; color: var(--text-dim); }
+.search-apps { margin-top: 6px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; }
+.search-apps summary {
+  padding: 7px 0; font-size: 12px; font-weight: 600; color: var(--text-dim);
+  cursor: pointer; user-select: none;
+}
+.search-apps-hint { font-size: 11px; color: var(--text-dim); padding: 0 0 6px; }
+.search-apps-list { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 2px 0 10px; }
+.search-apps-list label {
+  display: flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--text-dim); cursor: pointer; min-height: 28px;
+}
+.search-apps-list input { margin: 0; accent-color: var(--accent); }
 .menu-cat-count {
   margin-left: auto;
   min-width: 18px;

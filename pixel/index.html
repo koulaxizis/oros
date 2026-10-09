@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pixel Avatar · orOS</title>
+
+  <link rel="stylesheet" href="pixel.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span class="title-main" data-i18n="app.name">Pixel Avatar</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="undo-btn" class="icon-btn" disabled></button>
+    <button type="button" id="redo-btn" class="icon-btn" disabled></button>
+  </header>
+
+  <main id="main">
+    <!-- The face on the desk -->
+    <section id="desk">
+      <div class="seed-row">
+        <input type="text" id="seed" maxlength="40" autocomplete="off" spellcheck="false">
+        <button type="button" id="copy-seed" class="icon-btn"></button>
+      </div>
+      <button type="button" id="new-btn" class="gen-btn"></button>
+
+      <div class="grid-wrap">
+        <div id="grid" role="group"></div>
+      </div>
+
+      <div class="desk-actions">
+        <button type="button" id="save-btn" class="gen-btn ghost"></button>
+        <button type="button" id="reset-btn" class="link-btn" data-i18n="btn.reset" hidden>Back to the seed</button>
+      </div>
+      <p class="hint keys-hint" data-i18n="keys"></p>
+    </section>
+
+    <!-- Size, palette, paint, export, Museum -->
+    <aside id="panel">
+      <div class="sec">
+        <h2 id="size-lbl" data-i18n="sec.size">Size</h2>
+        <div id="sizes" class="chips" role="radiogroup" aria-labelledby="size-lbl"></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head">
+          <h2 id="pal-lbl" data-i18n="sec.pal">Palette</h2>
+          <span class="spacer"></span>
+          <button type="button" id="bg-btn" class="link-btn"></button>
+        </div>
+        <div id="pals" role="radiogroup" aria-labelledby="pal-lbl"></div>
+      </div>
+
+      <div class="sec">
+        <h2 id="paint-lbl" data-i18n="sec.paint">Paint</h2>
+        <div id="paint" role="radiogroup" aria-labelledby="paint-lbl"></div>
+      </div>
+
+      <div class="sec">
+        <h2 id="exp-lbl" data-i18n="sec.export">Export</h2>
+        <div id="exp-sizes" class="chips" role="radiogroup" aria-labelledby="exp-lbl"></div>
+        <div class="chips exp-btns">
+          <button type="button" id="png-btn" class="chip" data-i18n="btn.png">PNG</button>
+          <button type="button" id="svg-btn" class="chip" data-i18n="btn.svg">SVG</button>
+          <button type="button" id="copyimg-btn" class="chip" data-i18n="btn.copyImg">Copy image</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.museum">Museum</h2>
+          <span id="museum-count" class="count"></span>
+        </div>
+        <p id="museum-empty" class="hint" data-i18n="museum.empty"></p>
+        <ul id="museum"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="pixel.js?v=0.46.00"></script>
+
+</body>
+</html>

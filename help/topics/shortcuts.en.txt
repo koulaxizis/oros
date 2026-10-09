@@ -11,6 +11,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+L]]: `Switch language`
 - [[Ctrl+Alt+Shift+R]]: `Connect / reconnect cloud sync`
 - [[Ctrl+Alt+Shift+C]]: `Open Calculator`
+- [[Ctrl+Alt+Shift+F]]: `Search apps and data` (opens the menu with the cursor in its search box)
 - [[Ctrl+Alt+Shift+H]]: `Help for the open app`
 
 ## What each one does
