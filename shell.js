@@ -1037,6 +1037,143 @@
     return s.replace(/ς/g, "σ");
   }
 
+  // ---------- Universal search (search.js core + per-app providers) ----------
+  // The A74 field also searches the apps' own data. search.js finds
+  // and ranks; this part draws. Providers (<app>/search.js, declared
+  // in apps.json as "search") load on the first search, never at
+  // boot. Results, expanded groups and the query live in memory only;
+  // the per-app on/off switches are DEVICE-LOCAL (oros-search-prefs,
+  // never synced): { off: { id: true }, on: { id: true } }. An app
+  // whose apps.json entry says "searchOff": true starts switched off.
+  var SEARCH_PREFS_KEY = "oros-search-prefs";
+  var SEARCH_SHOWN = 3;            // hits per app before "All (n)"
+  var searchRes = { q: null, groups: null, pending: false, at: 0 };
+  var searchExpanded = {};
+  var searchTimer = null, searchToken = 0;
+  var searchReader = null;
+  var searchToggleOpen = false;    // the menu's "Search in" box
+
+  function searchPrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(SEARCH_PREFS_KEY)); } catch (e) {}
+    if (!p || typeof p !== "object") p = {};
+    if (!p.off || typeof p.off !== "object") p.off = {};
+    if (!p.on || typeof p.on !== "object") p.on = {};
+    return p;
+  }
+  function searchApps() {
+    return state.apps.filter(function (a) {
+      return a && a.type === "internal" && typeof a.search === "string";
+    });
+  }
+  function searchEnabled(id) {
+    var p = searchPrefs();
+    if (p.off[id]) return false;
+    if (p.on[id]) return true;
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id) return state.apps[i].searchOff !== true;
+    }
+    return false;
+  }
+  function setSearchEnabled(id, on) {
+    var p = searchPrefs();
+    delete p.off[id]; delete p.on[id];
+    (on ? p.on : p.off)[id] = true;
+    try { localStorage.setItem(SEARCH_PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+    searchRes = { q: null, groups: null, pending: false };
+  }
+  function searchProvider(id) {
+    var list = window.orosSearchProviders || [];
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === id) return list[i];
+    return null;
+  }
+
+  // Generic deep link (universal search; any app may use it). The
+  // target is a small JSON value. App running → live push into its
+  // window.__orosOpenAt(target); otherwise staged in sessionStorage
+  // ("oros-open-at", device-local, never synced) and the app takes it
+  // at boot with window.parent.__orosTakeTarget("<id>"). An app that
+  // does not take it simply opens — nothing breaks.
+  window.__orosOpenAt = function (appId, target) {
+    appId = String(appId || "");
+    var app = null;
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === appId) { app = state.apps[i]; break; }
+    }
+    if (!app || app.type !== "internal") return;
+    var t = null;
+    try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
+    if (state.running && state.running.id === appId) {
+      closeMenu();
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosOpenAt === "function") {
+          f.contentWindow.__orosOpenAt(t);
+        }
+      } catch (e) {}
+      return;
+    }
+    try { sessionStorage.setItem("oros-open-at", JSON.stringify({ app: appId, target: t })); } catch (e) {}
+    openApp(app);
+  };
+  window.__orosTakeTarget = function (appId) {
+    try {
+      var raw = sessionStorage.getItem("oros-open-at");
+      if (!raw) return null;
+      var p = JSON.parse(raw);
+      if (!p || p.app !== appId) return null;
+      sessionStorage.removeItem("oros-open-at");
+      return p.target === undefined ? null : p.target;
+    } catch (e) { return null; }
+  };
+
+  function openSearchHit(id, hit) {
+    closeMenu();
+    var p = searchProvider(id);
+    if (p && typeof p.open === "function") {
+      try { p.open(hit.target, window); return; } catch (e) {}
+    }
+    window.__orosOpenAt(id, hit.target);
+  }
+
+  // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
+  // from the desktop or from inside an app.
+  function openMenuSearch() {
+    var menu = document.getElementById("app-menu");
+    if (!menu.classList.contains("open")) menu.classList.add("open");
+    var inp = menu.querySelector(".menu-search input");
+    if (!inp) { renderMenu(); inp = menu.querySelector(".menu-search input"); }
+    if (inp) {
+      menu.scrollTop = 0;
+      inp.focus();
+      try { inp.select(); } catch (e) {}
+    }
+  }
+
+  // Text with the matching letters wrapped in <mark> (text nodes
+  // only — never innerHTML: titles come from user data and sync).
+  function appendMarked(el, str, words) {
+    var rs = window.orosSearch.ranges(str, words), at = 0;
+    rs.forEach(function (r) {
+      if (r[0] > at) el.appendChild(document.createTextNode(str.slice(at, r[0])));
+      var m = document.createElement("mark");
+      m.textContent = str.slice(r[0], r[1]);
+      el.appendChild(m);
+      at = r[1];
+    });
+    if (at < str.length) el.appendChild(document.createTextNode(str.slice(at)));
+  }
+
+  function searchWhen(ms) {
+    if (!ms || ms < 946684800000) return "";   // no date, or a placeholder stamp
+    var d = new Date(ms);
+    if (isNaN(d.getTime())) return "";
+    var o = { day: "numeric", month: "short" };
+    if (d.getFullYear() !== new Date().getFullYear()) o.year = "numeric";
+    try { return d.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB", o); }
+    catch (e) { return d.toISOString().slice(0, 10); }
+  }
+
   function renderMenu() {
     var menu = document.getElementById("app-menu");
     // SH-B3 (form rebuild discipline): this function rebuilds the whole
@@ -1045,7 +1182,7 @@
     // toggle threw the menu back to the top, closed the per-app list
     // and wiped a half-typed passphrase.
     var keepTop  = menu.scrollTop;
-    var keepApps = !!menu.querySelector("details[open]");
+    var keepApps = !!menu.querySelector("details:not(.search-apps)[open]");
     var oldPw    = menu.querySelector(".sync-pass .input-row input");
     var oldRem   = menu.querySelector("#sync-remember");
     var keepPw   = oldPw ? {
@@ -1128,22 +1265,219 @@
     menu.appendChild(appsHost);
     var firstMatch = null;
 
+    // Universal search: hits from the apps' data, under the app list.
+    var resultsHost = document.createElement("div");
+    resultsHost.id = "menu-results";
+    resultsHost.className = "menu-results";
+    menu.appendChild(resultsHost);
+
     search.addEventListener("input", function () {
       menuQuery = search.value;
       renderAppList();
+      scheduleDataSearch();
     });
     search.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && firstMatch) {
-        e.preventDefault();
-        openApp(firstMatch);
+      if (e.key === "Enter") {
+        if (firstMatch) {
+          e.preventDefault();
+          openApp(firstMatch);
+        } else {
+          var hit = resultsHost.querySelector(".menu-hit");
+          if (hit) { e.preventDefault(); hit.click(); }
+        }
+      } else if (e.key === "ArrowDown") {
+        var first = menuNavItems()[0];
+        if (first) { e.preventDefault(); first.focus(); }
       } else if (e.key === "Escape" && search.value) {
         e.stopPropagation();          // clear first; next Escape closes the menu
         search.value = menuQuery = "";
         renderAppList();
+        scheduleDataSearch();
       }
     });
 
+    // Arrow keys walk the matching apps, then the data hits; Up from
+    // the first one goes back to the field.
+    function menuNavItems() {
+      if (!menuQuery.trim()) return [];
+      return Array.prototype.slice.call(
+        menu.querySelectorAll("#menu-apps .menu-item, #menu-results button"));
+    }
+    function onNavKey(e) {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      var items = menuNavItems();
+      var i = items.indexOf(document.activeElement);
+      if (i === -1) return;
+      e.preventDefault();
+      if (e.key === "ArrowDown") { if (i + 1 < items.length) items[i + 1].focus(); }
+      else if (i > 0) items[i - 1].focus();
+      else search.focus();
+    }
+    appsHost.addEventListener("keydown", onNavKey);
+    resultsHost.addEventListener("keydown", onNavKey);
+
+    function scheduleDataSearch() {
+      clearTimeout(searchTimer);
+      var q = menuQuery.trim();
+      var S = window.orosSearch;
+      if (!S || S.parseQuery(q).join("").length < S.MIN_CHARS || !searchApps().length) {
+        searchToken++;
+        searchRes = { q: null, groups: null, pending: false };
+        renderResults();
+        return;
+      }
+      // Same query, fresh answer (a background re-render): redraw it.
+      // Same query but older: keep it on screen and refresh it quietly
+      // (the data may have changed in an app meanwhile).
+      if (searchRes.q === q && searchRes.groups) {
+        renderResults();
+        if (Date.now() - searchRes.at < 2000) return;
+      } else {
+        searchRes = { q: q, groups: null, pending: true, at: 0 };
+        searchExpanded = {};
+        renderResults();
+      }
+      var token = ++searchToken;
+      searchTimer = setTimeout(function () {
+        if (!searchReader) searchReader = S.makeReader(localStorage);
+        S.load(searchApps(), APP_VERSION).then(function () {
+          return S.run(window.orosSearchProviders, q, {
+            lang: state.lang, readJSON: searchReader,
+            enabled: function (id) {
+              for (var i = 0; i < state.apps.length; i++) {
+                if (state.apps[i].id === id) {
+                  return typeof state.apps[i].search === "string" && searchEnabled(id);
+                }
+              }
+              return false;
+            }
+          });
+        }).then(function (groups) {
+          if (token !== searchToken) return;          // a newer query won
+          searchRes = { q: q, groups: groups, pending: false, at: Date.now() };
+          renderResults();
+        }, function () {
+          if (token !== searchToken) return;
+          searchRes = { q: q, groups: [], pending: false, at: Date.now() };
+          renderResults();
+        });
+      }, 150);
+    }
+
+    function renderResults() {
+      var host = document.getElementById("menu-results");
+      if (!host) return;                 // the menu was rebuilt meanwhile
+      host.innerHTML = "";
+      var q = menuQuery.trim();
+      if (!q || searchRes.q !== q) return;
+      var head = document.createElement("div");
+      head.className = "menu-heading";
+      head.textContent = window.t("search.data");
+      host.appendChild(head);
+      if (!searchRes.groups) {
+        var wait = document.createElement("div");
+        wait.className = "menu-empty menu-search-none";
+        wait.textContent = window.t("search.busy");
+        host.appendChild(wait);
+        return;
+      }
+      var groups = (searchRes.groups || []).slice();
+      if (!groups.length) {
+        var none = document.createElement("div");
+        none.className = "menu-empty menu-search-none";
+        none.textContent = window.t("search.none");
+        host.appendChild(none);
+        return;
+      }
+      var words = window.orosSearch.parseQuery(q);
+      var byId = {};
+      state.apps.forEach(function (a) { byId[a.id] = a; });
+      function label(id) {
+        var k = "app." + id, v = window.t(k);
+        return (v === k) ? ((byId[id] && byId[id].name) || id) : v;
+      }
+      groups.sort(function (a, b) {
+        return b.best - a.best || label(a.id).localeCompare(label(b.id));
+      });
+      groups.forEach(function (g) {
+        var app = byId[g.id];
+        var wrap = document.createElement("div");
+        wrap.className = "menu-category menu-hit-group";
+        var h = document.createElement("h4");
+        h.className = "menu-hit-app";
+        if (app && ICONS[app.icon]) {
+          var ico = document.createElement("span");
+          ico.className = "app-ico";
+          ico.innerHTML = ICONS[app.icon];        // static shell icon, not data
+          h.appendChild(ico);
+        }
+        var ht = document.createElement("span");
+        ht.textContent = label(g.id);
+        h.appendChild(ht);
+        var cnt = document.createElement("span");
+        cnt.className = "menu-cat-count";
+        cnt.textContent = g.total;
+        h.appendChild(cnt);
+        wrap.appendChild(h);
+
+        var shown = searchExpanded[g.id] ? g.hits : g.hits.slice(0, SEARCH_SHOWN);
+        shown.forEach(function (hit) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "menu-item menu-hit";
+          var top = document.createElement("span");
+          top.className = "menu-hit-top";
+          var tt = document.createElement("span");
+          tt.className = "menu-hit-title";
+          appendMarked(tt, hit.title, words);
+          top.appendChild(tt);
+          var when = searchWhen(hit.when);
+          if (when) {
+            var w = document.createElement("span");
+            w.className = "menu-hit-when";
+            w.textContent = when;
+            top.appendChild(w);
+          }
+          b.appendChild(top);
+          if (hit.snippet) {
+            var sn = document.createElement("span");
+            sn.className = "menu-hit-snip";
+            appendMarked(sn, hit.snippet, words);
+            b.appendChild(sn);
+          }
+          b.addEventListener("click", function () { openSearchHit(g.id, hit); });
+          wrap.appendChild(b);
+        });
+        if (!searchExpanded[g.id] && g.hits.length > SEARCH_SHOWN) {
+          var more = document.createElement("button");
+          more.type = "button";
+          more.className = "menu-hit-more";
+          more.textContent = window.t("search.all").replace("{n}", g.total);
+          more.addEventListener("click", function () {
+            searchExpanded[g.id] = true;
+            renderResults();
+            var again = document.querySelectorAll("#menu-results .menu-hit-group");
+            for (var i = 0; i < again.length; i++) {
+              if (again[i].getAttribute("data-app") === g.id) {
+                var hs = again[i].querySelectorAll(".menu-hit");
+                if (hs[SEARCH_SHOWN]) hs[SEARCH_SHOWN].focus();
+              }
+            }
+          });
+          wrap.appendChild(more);
+        } else if (searchExpanded[g.id] && g.total > g.hits.length) {
+          var cap = document.createElement("div");
+          cap.className = "menu-hit-cap";
+          cap.textContent = window.t("search.cap").replace("{n}", g.hits.length);
+          wrap.appendChild(cap);
+        }
+        wrap.setAttribute("data-app", g.id);
+        host.appendChild(wrap);
+      });
+    }
+
     renderAppList();
+    scheduleDataSearch();
     if (keepSearch && keepSearch.focus) {
       search.focus();
       try { search.setSelectionRange(keepSearch.start, keepSearch.end); } catch (e) {}
@@ -1282,6 +1616,7 @@
     renderPetSection(menu);        // Soffitta port: desktop companion
     renderSyncSection(menu);
     renderNotifsSection(menu);   // Wave 1B: notification settings
+    renderSearchSection(menu);   // universal search: per-app switches
 
     // v0.18.0 — Info row (mirrors Ctrl+Alt+Shift+I)
     var infoRow = document.createElement("div");
@@ -1298,7 +1633,7 @@
 
     // SH-B3: restore what the rebuild destroyed.
     if (keepApps) {
-      var newApps = menu.querySelector("details");
+      var newApps = menu.querySelector("details:not(.search-apps)");
       if (newApps) newApps.open = true;
     }
     if (keepPw) {
@@ -1311,6 +1646,55 @@
       if (newRem && keepPw.remember !== null) newRem.checked = keepPw.remember;
     }
     menu.scrollTop = keepTop;
+  }
+
+  // Universal search — which apps the menu field searches. One chip
+  // per app that ships a provider; device-local (searchPrefs).
+  function renderSearchSection(host) {
+    var apps = searchApps();
+    if (!apps.length) return;
+    var section = document.createElement("div");
+    section.className = "sync-section";
+    var heading = document.createElement("div");
+    heading.className = "menu-heading";
+    heading.textContent = window.t("search.title");
+    section.appendChild(heading);
+
+    var det = document.createElement("details");
+    det.className = "search-apps";
+    det.open = searchToggleOpen;
+    det.addEventListener("toggle", function () { searchToggleOpen = det.open; });
+    var sum = document.createElement("summary");
+    sum.textContent = window.t("search.in");
+    det.appendChild(sum);
+    var hint = document.createElement("div");
+    hint.className = "search-apps-hint";
+    hint.textContent = window.t("search.in.hint");
+    det.appendChild(hint);
+    var col = document.createElement("div");
+    col.className = "search-apps-list";
+    apps.map(function (a) {
+      var k = "app." + a.id, v = window.t(k);
+      return { id: a.id, label: (v === k) ? a.name : v };
+    }).sort(function (a, b) {
+      return a.label.localeCompare(b.label, state.lang === "el" ? "el" : "en");
+    }).forEach(function (a) {
+      var lab = document.createElement("label");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = searchEnabled(a.id);
+      cb.addEventListener("change", function () {
+        setSearchEnabled(a.id, cb.checked);
+      });
+      lab.appendChild(cb);
+      var txt = document.createElement("span");
+      txt.textContent = a.label;
+      lab.appendChild(txt);
+      col.appendChild(lab);
+    });
+    det.appendChild(col);
+    section.appendChild(det);
+    host.appendChild(section);
   }
 
   function renderSkinSwatches(host) {
@@ -3876,7 +4260,8 @@
     { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
     { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
     { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
-    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } }
+    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
+    { key: "f", label: "sc.desc.search",    fn: openMenuSearch }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this

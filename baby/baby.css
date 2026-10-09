@@ -1,6 +1,6 @@
 /* ============================================================
    orOS Baby — App stylesheet
-   Inherits the shell palette (applyPalette + watchPalette); the
+   Inherits the shell palette (inheritPalette + watchPalette); the
    night view swaps in its own dim palette from baby.js.
    Toolbar, dialog and toast styles follow Water.
    Sections:

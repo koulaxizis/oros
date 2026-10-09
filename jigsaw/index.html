@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jigsaw · orOS</title>
+
+  <link rel="stylesheet" href="jigsaw.css?v=0.46.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="preview-btn"></button>
+      <button type="button" class="icon-btn" id="ghost-btn" aria-pressed="false"></button>
+      <button type="button" class="icon-btn" id="edges-btn" aria-pressed="false"></button>
+      <button type="button" class="icon-btn" id="tidy-btn"></button>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="zout-btn"></button>
+      <button type="button" class="icon-btn" id="fit-btn"></button>
+      <button type="button" class="icon-btn" id="zin-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+    </div>
+  </header>
+
+  <!-- Status: time, message, progress -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.time">Time</span><strong id="time">0:00</strong></span>
+    <span id="msg" aria-live="polite"></span>
+    <span class="stat"><strong id="prog">0%</strong></span>
+  </div>
+
+  <!-- The table: pieces are canvases moved with CSS transforms -->
+  <main id="stage" role="application">
+    <div id="world">
+      <div id="table"></div>
+      <div id="frame"><img id="ghost" alt="" draggable="false"></div>
+      <div id="pieces"></div>
+    </div>
+    <div id="empty" hidden>
+      <div class="empty-card">
+        <div class="empty-title" data-i18n="empty.title">Jigsaw</div>
+        <p class="empty-text" data-i18n="empty.text">Pick a picture. A photo of yours stays on this device.</p>
+        <div class="src-list" id="empty-src"></div>
+      </div>
+    </div>
+    <div id="busy" hidden></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../wallpaper/art.js?v=0.46.00"></script>
+  <script src="jigsaw.js?v=0.46.00"></script>
+
+</body>
+</html>

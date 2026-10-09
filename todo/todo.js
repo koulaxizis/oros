@@ -2557,6 +2557,28 @@
   });
 
   renderAll();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { list, item? }. Shows the list; with an item, opens its
+  // dialog. Unknown ids, or a dialog already open → no-op.
+  function openSearchTarget(t) {
+    if (!t || typeof t.list !== "string" || !listById(t.list)) return;
+    // A dialog in progress (maybe with unsaved edits) wins: no jump.
+    if (document.querySelector("dialog[open]")) return;
+    setActiveList(t.list);
+    renderAll();
+    if (typeof t.item === "string" && itemById(listById(t.list), t.item)) {
+      openItemDialog(t.list, t.item);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("todo");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();
 
 
