@@ -103,7 +103,7 @@
       "f.items": "What was done", "f.cost": "Cost ({c})", "f.shop": "Garage / shop", "f.cat": "Category", "f.amount": "Amount ({c})",
       "f.kmOpt": "Odometer (km, optional)",
       "ed.fuel": "Fuel", "ed.charge": "Charging", "ed.service": "Service", "ed.cost": "Expense", "ed.odo": "Km reading",
-      "ed.save": "Save", "ed.cancel": "Cancel", "ed.delete": "Delete", "ed.budget": "Send to Budget",
+      "ed.save": "Save", "ed.cancel": "Cancel", "ed.delete": "Delete", "ed.budget": "Add to Budget",
       "ed.vehicleNew": "New vehicle", "ed.vehicleEdit": "Edit vehicle", "ed.type": "Type", "ed.name": "Name",
       "ed.make": "Make", "ed.model": "Model", "ed.year": "Year", "ed.plate": "Plate", "ed.fuelType": "Fuel",
       "ed.tank": "Tank or battery ({u})", "ed.color": "Colour", "ed.startKm": "Odometer now (km)", "ed.plans": "Add the usual service plan (you can change it)",
@@ -130,7 +130,7 @@
       "toast.needLabel": "Give it a label", "toast.max": "Up to {n} vehicles", "toast.renewed": "{name}: next expiry {date}",
       "toast.mounted": "{name} mounted", "toast.exported": "Exported", "toast.imported": "Imported: {n} vehicles",
       "toast.badFile": "This is not a Garage backup", "toast.archived": "{name} archived", "toast.unarchived": "{name} is back",
-      "toast.sent": "Opened in Budget: check and save it there",
+      "toast.sent": "Opened in Budget: check and save it there", "toast.notsent": "Budget could not take this entry",
       "confirm.delVehicle": "Delete {name} and everything logged for it?", "confirm.del": "Delete this entry?",
       "confirm.yes": "Delete", "confirm.resend": "This was already sent to Budget. Send it again?", "confirm.send": "Send",
       "budget.note": "{vehicle} · {what}",
@@ -184,7 +184,7 @@
       "f.items": "Τι έγινε", "f.cost": "Κόστος ({c})", "f.shop": "Συνεργείο / κατάστημα", "f.cat": "Κατηγορία", "f.amount": "Ποσό ({c})",
       "f.kmOpt": "Χιλιομετρητής (km, προαιρετικά)",
       "ed.fuel": "Καύσιμα", "ed.charge": "Φόρτιση", "ed.service": "Σέρβις", "ed.cost": "Έξοδο", "ed.odo": "Χιλιόμετρα",
-      "ed.save": "Αποθήκευση", "ed.cancel": "Άκυρο", "ed.delete": "Διαγραφή", "ed.budget": "Στείλε στο Budget",
+      "ed.save": "Αποθήκευση", "ed.cancel": "Άκυρο", "ed.delete": "Διαγραφή", "ed.budget": "Προσθήκη στα Έσοδα & Έξοδα",
       "ed.vehicleNew": "Νέο όχημα", "ed.vehicleEdit": "Επεξεργασία οχήματος", "ed.type": "Τύπος", "ed.name": "Όνομα",
       "ed.make": "Μάρκα", "ed.model": "Μοντέλο", "ed.year": "Έτος", "ed.plate": "Πινακίδα", "ed.fuelType": "Καύσιμο",
       "ed.tank": "Ρεζερβουάρ ή μπαταρία ({u})", "ed.color": "Χρώμα", "ed.startKm": "Χιλιόμετρα τώρα (km)", "ed.plans": "Βάλε το συνηθισμένο πρόγραμμα σέρβις (αλλάζει)",
@@ -204,16 +204,16 @@
       "set.remindHint": "Οι υπενθυμίσεις για ανανεώσεις και σέρβις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή αυτή την εφαρμογή). Με κλειστό το orOS περιμένουν το επόμενο άνοιγμα.",
       "set.tyreAge": "Λάστιχα παλιά μετά από (χρόνια)", "set.tread": "Λάστιχα φαγωμένα κάτω από (mm)",
       "set.data": "Τα δεδομένα σου", "set.csv": "Εξαγωγή CSV", "set.json": "Αντίγραφο ασφαλείας", "set.import": "Επαναφορά αντιγράφου", "set.close": "Κλείσιμο",
-      "toast.added": "Προστέθηκε", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε", "toast.undo": "Αναίρεση", "toast.budget": "Budget",
+      "toast.added": "Προστέθηκε", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε", "toast.undo": "Αναίρεση", "toast.budget": "Έσοδα & Έξοδα",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.needName": "Δώσε ένα όνομα στο όχημα",
       "toast.needKm": "Γράψε τα χιλιόμετρα", "toast.needQty": "Γράψε την ποσότητα", "toast.needItems": "Διάλεξε τουλάχιστον μία εργασία",
       "toast.needAmount": "Γράψε το ποσό", "toast.needDate": "Διάλεξε ημερομηνία", "toast.needEvery": "Βάλε km ή μήνες",
       "toast.needLabel": "Δώσε μια ετικέτα", "toast.max": "Έως {n} οχήματα", "toast.renewed": "{name}: νέα λήξη {date}",
       "toast.mounted": "Τοποθετήθηκαν: {name}", "toast.exported": "Η εξαγωγή έγινε", "toast.imported": "Εισαγωγή: {n} οχήματα",
       "toast.badFile": "Αυτό δεν είναι αντίγραφο του Γκαράζ", "toast.archived": "Στο αρχείο: {name}", "toast.unarchived": "Επέστρεψε: {name}",
-      "toast.sent": "Άνοιξε στο Budget: έλεγξε και αποθήκευσε εκεί",
+      "toast.sent": "Άνοιξε στα Έσοδα & Έξοδα: έλεγξε και αποθήκευσε εκεί", "toast.notsent": "Τα Έσοδα & Έξοδα δεν δέχτηκαν την καταχώριση",
       "confirm.delVehicle": "Διαγραφή του «{name}» και όλων των καταχωρίσεών του;", "confirm.del": "Διαγραφή αυτής της καταχώρισης;",
-      "confirm.yes": "Διαγραφή", "confirm.resend": "Αυτό έχει ήδη σταλεί στο Budget. Να σταλεί ξανά;", "confirm.send": "Αποστολή",
+      "confirm.yes": "Διαγραφή", "confirm.resend": "Αυτό έχει ήδη σταλεί στα Έσοδα & Έξοδα. Να σταλεί ξανά;", "confirm.send": "Αποστολή",
       "budget.note": "{vehicle} · {what}",
       "live.added": "Προστέθηκε: {what}"
     }
@@ -464,9 +464,10 @@
     });
   }
 
-  // Budget bridge (BR-W8 shape): the Budget app opens its New Entry
-  // form PREFILLED; nothing is written until the user saves there.
-  // Offered only when the shell exposes the bridge.
+  // Budget bridge (contract: expenses/budget-bridge-contract.md, BR-W8
+  // shape): Budget opens its New Entry form PREFILLED; nothing is
+  // written until the user saves there. Offered only when the shell
+  // exposes the bridge; returns false when the payload is refused.
   function budgetBridge() {
     try {
       var p = window.parent;
@@ -483,12 +484,14 @@
     if (!open || !row || !(row.c > 0)) return;
     function go() {
       var v = byId("vehicles", row.v);
+      var ok;
       try {
-        open({
-          kind: "out", date: row.d, amount: row.c, cat: "o-trans",
-          note: t("budget.note", { vehicle: v ? v.name : "", what: budgetWhat(list, row) }).slice(0, 200)
+        ok = open({
+          k: "o", a: row.c, d: row.d, c: "o-trans", src: "garage",
+          n: t("budget.note", { vehicle: v ? v.name : "", what: budgetWhat(list, row) }).trim().slice(0, 140)
         });
       } catch (e) { return; }
+      if (ok === false) { showToast(t("toast.notsent")); return; }
       var cur = byId(list, row.id);
       if (cur && !cur.bud) { cur.bud = 1; stamp(cur); save(); render(); }
       showToast(t("toast.sent"));
