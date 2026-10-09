@@ -82,6 +82,14 @@
       "type": "internal"
     },
     {
+      "id": "travel",
+      "name": "Travel",
+      "category": "Lifestyle",
+      "icon": "travel",
+      "url": "travel/",
+      "type": "internal"
+    },
+    {
       "id": "contacts",
       "name": "Contacts",
       "category": "Office",
