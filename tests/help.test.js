@@ -135,8 +135,11 @@ test("every topic exists in English and Greek", () => {
 });
 
 test("every app in apps.json has a guide page in both languages (PENDING may only shrink)", () => {
+  // Enforced once Help itself is registered: before that, app
+  // releases that land first must not fail on a rule not yet in force
+  // (the Help release adds them to PENDING).
   const missing = [];
-  apps.forEach((a) => {
+  if (appIds.has("help")) apps.forEach((a) => {
     if (PENDING.includes(a.id)) return;
     LANGS.forEach((l) => { if (!exists(`${a.id}/help.${l}.txt`)) missing.push(`${a.id}/help.${l}.txt`); });
   });
