@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mind Map · orOS</title>
+
+  <link rel="stylesheet" href="mindmap.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="txt-btn" id="map-btn" aria-haspopup="dialog">
+      <span id="map-name" class="map-name"></span>
+    </button>
+    <div class="seg" id="view-seg" role="group">
+      <button type="button" data-view="map" aria-pressed="true"></button>
+      <button type="button" data-view="outline" aria-pressed="false"></button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="undo-btn"></button>
+    <button type="button" class="icon-btn" id="redo-btn"></button>
+    <button type="button" class="icon-btn" id="find-btn"></button>
+    <button type="button" class="icon-btn" id="fit-btn"></button>
+    <button type="button" class="icon-btn" id="more-btn" aria-haspopup="menu"></button>
+  </header>
+
+  <div id="findbar" hidden>
+    <input type="search" id="find-input" autocomplete="off" spellcheck="false">
+    <span id="find-count" class="find-count" aria-live="polite"></span>
+    <button type="button" class="icon-btn" id="find-prev"></button>
+    <button type="button" class="icon-btn" id="find-next"></button>
+    <button type="button" class="icon-btn" id="find-close"></button>
+  </div>
+
+  <main id="main">
+    <section id="stage">
+      <svg id="svg" aria-hidden="true"><g id="vp"></g></svg>
+      <textarea id="editor" rows="1" spellcheck="true" hidden></textarea>
+      <div class="zoom" id="zoom">
+        <button type="button" class="icon-btn" id="zoom-in"></button>
+        <button type="button" class="icon-btn" id="zoom-out"></button>
+      </div>
+      <div id="nodebar" class="nodebar" role="toolbar" hidden></div>
+    </section>
+    <section id="outline" hidden></section>
+    <div id="olbar" class="nodebar ol-bar" role="toolbar" hidden></div>
+    <div id="empty" class="empty" hidden>
+      <p id="empty-text"></p>
+      <div class="empty-actions">
+        <button type="button" class="dlg-btn primary" id="empty-new"></button>
+        <button type="button" class="dlg-btn" id="empty-example"></button>
+        <button type="button" class="dlg-btn" id="empty-import"></button>
+      </div>
+    </div>
+  </main>
+
+  <div id="print-host" aria-hidden="true"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="mm-core.js?v=0.46.00"></script>
+  <script src="mindmap.js?v=0.46.00"></script>
+
+</body>
+</html>
