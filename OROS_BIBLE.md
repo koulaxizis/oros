@@ -686,7 +686,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Pixel Avatar:** oros-pixel-prefs (`{face, col, exp}`: the face on the desk `{s, n, p, b, px}`, paint colour 0–7, default 3, export size, default 512), oros-pixel-data-broken (rescue copy). Undo / Redo is memory only.
 - **Atelier:** oros-atelier-prefs (`{doc}`: the open design), oros-atelier-data-broken (rescue copy).
 - **Health:** oros-health-prefs (`{tab, ct, cp, cc, hf, rd, rn, rx}`: open tab, chart kind / period / glucose context, history filter, report period / notes / excluded kinds), oros-health-data-broken. sessionStorage `oros-health-open` (deep-link staging).
-- **Budget:** oros-budget-prefs (`{tab, csv}`: open tab list | charts | limits | rec, CSV format std | excel, default excel in Greek, std in English), oros-budget-data-broken (rescue copy of unreadable data).
+- **Budget:** oros-budget-prefs (`{tab, csv}`: open tab list | charts | limits | rec, CSV format std | excel, default excel in Greek, std in English), oros-budget-data-broken (rescue copy of unreadable data); sessionStorage `oros-budget-new` (BR-B1 prefill staging, one-shot).
 - **Workouts:** `oros-fitness-prefs` `{ tab, pe, pm, pr: "1m"|"3m"|"6m"|"1y"|"all", snd: 0|1, vib: 0|1, rest: { end, total, ex } | null }` (tab, chart choices, sound/vibration, the running rest timer on this device); sessionStorage `oros-fitness-open` (one-shot workout id staged by the shell's `__orosOpenFitness`, consumed at boot); `oros-fitness-data-broken` (raw copy of an unparseable data blob).
 - **Pet Health Book:** oros-petcare-prefs (reminder hour, days of warning, tab, open pet, sub-tab, filter), oros-petcare-fired (shell engine: what was announced, per due date, pruned to open keys); sessionStorage oros-petcare-open (deep-link staging).
 - **Baby:** `oros-baby-view` { kid, tab, night, wk } (selected child, tab, night view, week chart metric); rescue copy `oros-baby-data-broken`.
@@ -3914,3 +3914,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** `manifest.webmanifest` `shortcuts` for Notes, To-Do, Calendar and Calculator (`/?open=<id>`); `shell.js` `openFromLaunchParam()` opens the named app after `apps.json` loads and strips the parameter.
 - **Decisions:** first step of the Android widgets question (Chris, 2026-10-09: option 1). Windows 11 Adaptive Card widgets and data-free native Android widgets wait for the store packaging, after the ports. Only registered internal app ids open; anything else is ignored silently.
 - **NOT tested:** a real phone, an installed TWA / Microsoft Store package, Safari.
+
+### 2026-10-09 — Budget 0.47.03 — "Send to Budget" bridge (BR-B1)
+- **Changes:** shell bridge `window.__orosOpenBudgetNew({k, a, d?, n?, c?, src?})` (strict checks, fresh plain copy, live push into a running Budget or one-shot staging in sessionStorage `oros-budget-new`) and the receiver `window.__orosBudgetNew` in `budget/budget.js`, which opens the New entry form prefilled ("From {app}"); nothing is saved until the user presses Save (BR-B1, Part VI). Garage's "Add to Budget" button now appears; Split's comes in its PR 2 (PR #90).
+- **Tests:** `tests/budget.test.js` adds the prefill normalizer (kinds, amounts, dates, category hints, notes, sender ids, hostile input).
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
