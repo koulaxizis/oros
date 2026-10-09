@@ -855,10 +855,11 @@
   }
 
   // Roll: the opening roll (one die each) or the mover's two dice.
-  function roll() {
+  // byAi: the computer's own roll (a person's press on its turn is refused).
+  function roll(byAi) {
     if (game.phase === "done") { showToast(t("toast.over")); return; }
     if (busy()) return;
-    if (aiTurn() && game.phase !== "open") { showToast(t("toast.wait")); return; }
+    if (aiTurn() && game.phase !== "open" && byAi !== true) { showToast(t("toast.wait")); return; }
     if (game.phase === "move") { showToast(t("toast.rolled")); return; }
     var a = 1 + randInt(6), b = 1 + randInt(6);
     if (game.phase === "open") {
@@ -989,7 +990,7 @@
     if (!aiTurn()) return;
     if (game.phase === "roll") {
       renderStatus();
-      aiTimer = setTimeout(function () { aiTimer = null; if (aiTurn()) roll(); }, AI_ROLL_DELAY);
+      aiTimer = setTimeout(function () { aiTimer = null; if (aiTurn()) roll(true); }, AI_ROLL_DELAY);
       return;
     }
     if (game.phase !== "move") return;
@@ -1150,7 +1151,7 @@
   //   margin M · left half (points 12…7 / 13…18) · bar · right half
   //   (6…1 / 19…24) · tray (borne off: White below, Black above).
   // On a tall screen everything is turned a quarter (P maps x, y).
-  var M = 16, PW = 50, PH = 230, GAP = 48, BW = 50, TG = 10, TW = 56;
+  var M = 24, PW = 50, PH = 230, GAP = 48, BW = 50, TG = 10, TW = 56;
   var LX = M, BX = M + 6 * PW, RX = BX + BW, TX = RX + 6 * PW + TG;
   var W = TX + TW + M, H = M + PH + GAP + PH + M, R = 23;
   var portrait = false;
@@ -1283,7 +1284,7 @@
     out.push(rectSvg(TX, H - M - PH, TW, PH, "tray"));
     for (var a = 1; a <= 24; a++) {
       out.push(triSvg(a, "pt " + (a % 2 ? "pa" : "pb")));
-      var nb = a >= 13 ? M / 2 + 4 : H - M / 2 + 4;
+      var nb = a >= 13 ? M / 2 + 5 : H - M / 2 + 5;
       out.push(textSvg(colX(a) + PW / 2, nb, String(view === 0 ? a : 25 - a), "num"));
     }
     // targets under the checkers
@@ -1855,7 +1856,7 @@
       paintSfxBtn();
       sfx("move");   // audible confirmation when turned on
     });
-    $("roll-btn").addEventListener("click", function () { roll(); });
+    $("roll-btn").addEventListener("click", function () { roll(false); });
     $("undo-btn").addEventListener("click", function () { undoStep(); });
     $("done-btn").addEventListener("click", function () { done(); });
     wirePointer();

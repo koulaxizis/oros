@@ -226,7 +226,7 @@ button, select {
 #board .pt.pb { fill: var(--pt-b); }
 #board .num {
   fill: color-mix(in srgb, var(--pt-b) 80%, transparent);
-  font: 700 11px "Nunito", "Segoe UI", system-ui, sans-serif;
+  font: 700 14px "Nunito", "Segoe UI", system-ui, sans-serif;
   text-anchor: middle;
   pointer-events: none;
 }
@@ -462,8 +462,10 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .act-btn { min-width: 0; flex: 1; padding: 4px 8px; }
   dialog.mm-dlg { width: calc(100vw - 20px); padding: 14px; }
 }
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .side span { display: none; }        /* the mark names the side */
+  .side { flex-shrink: 0; }
+  #turn { line-height: 1.25; }
 }
 @media (pointer: coarse) {
   .seg-btn, .icon-btn, .dlg-btn, .act-btn { min-height: 44px; }
