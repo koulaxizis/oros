@@ -1325,6 +1325,20 @@ Owner: Budget (`budget/`). Senders (Garage, Split, …) never edit `budget/`. Sa
 - **BR-B1-4 · A PREFILL, not data (BR-W8-6).** The New entry form opens filled in, focus on Save. Nothing reaches the slice, sync or limit notifications until the user saves; Cancel leaves no trace. Every text is rendered with `textContent`.
 - **BR-B1-5 · Senders.** Show the button ("Add to Budget" / «Προσθήκη στα Έσοδα & Έξοδα») only when `typeof window.parent.__orosOpenBudgetNew === "function"`, and call it only from that explicit button: there is no duplicate guard, the user confirms each entry.
 
+### Cross-app "new quote" bridge: any app → Quote (BR-Q1)
+
+Owner: Quote (`quote/`). First sender: Timesheet (report "Create quote"). Same shape as BR-W8 / BR-B1.
+
+- **BR-Q1-1 · Contract.** `window.parent.__orosOpenQuoteNew({ items, cur?, client?, notes? })` → `true` (Quote opened or got the push) or `false` (rejected, nothing opens; also `false` when Quote is not installed).
+  - `items`: 1–50 lines `{ d, q, p }`: `d` description (plain text, ≤ 200 chars), `q` quantity `0 < q ≤ 100000`, `p` unit price in currency units (not cents) `0 ≤ p ≤ 10000000`; both rounded to 2 decimals.
+  - `cur`: `"EUR"` | `"USD"` (the only currencies Quote has). Any other given value rejects the call; senders check first and explain.
+  - `client`: client name (≤ 80 chars), matched case-insensitively against Quote's clients.
+  - `notes`: plain text, ≤ 500 chars.
+  - Control characters other than tab and newline are stripped from every text.
+- **BR-Q1-2 · One receiver.** `window.__orosQuoteNew` in `quote.js`: a live push when Quote is running, and the one-shot take of sessionStorage `oros-quote-new` at boot (read, then remove; device-local, never synced, never exported; taken before `oros-quote-open`).
+- **BR-Q1-3 · A PREFILL, not data (BR-W8-6).** A new draft opens on the Create tab with the lines (VAT = Quote's default), currency and client filled in. Nothing is saved until the user presses Save. If the current unsaved draft has content (client, notes, or a line with text or price), a confirm ("Replace the unsaved draft…?") comes first; Cancel leaves the draft as it was. An unknown client opens the New client dialog with the name filled in; the client exists only if the user saves that dialog. Every text is rendered as an input value / `textContent`.
+- **BR-Q1-4 · Timesheet sender.** Button `#rep-quote`, shown only when `typeof window.parent.__orosOpenQuoteNew === "function"`. `core.quoteLines()` uses the report's period and client/project/invoiced filters, billable time only, grouped by project: `d` = "Project · period" (`fmtRange`), `q` = billable hours (rounding prefs applied), `p` = the project's hourly rate. Lines with no billable time are dropped; `client` is sent only when every line belongs to one client. A currency other than EUR/USD shows a toast and sends nothing. Sending does not mark entries invoiced (that stays the report's own button).
+
 ### `LABEL_COLORS` (shared, 8)
 
 `#e06c75 #ecc75f #87cf3e #4fc4cf #6d4aff #e09ecf #f28c5a #9aa4b0`
