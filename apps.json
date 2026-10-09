@@ -23,6 +23,7 @@
       "category": "Accessories",
       "icon": "files",
       "url": "files/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -39,6 +40,7 @@
       "category": "Office",
       "icon": "check",
       "url": "todo/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -47,6 +49,16 @@
       "category": "Office",
       "icon": "columns",
       "url": "kanban/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
+      "id": "mindmap",
+      "name": "Mind Map",
+      "category": "Office",
+      "icon": "mindmap",
+      "url": "mindmap/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -55,6 +67,7 @@
       "category": "Office",
       "icon": "notes",
       "url": "notes/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -63,6 +76,7 @@
       "category": "Office",
       "icon": "calendar",
       "url": "calendar/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -74,6 +88,14 @@
       "type": "internal"
     },
     {
+      "id": "timesheet",
+      "name": "Timesheet",
+      "category": "Office",
+      "icon": "timesheet",
+      "url": "timesheet/",
+      "type": "internal"
+    },
+    {
       "id": "minimalism",
       "name": "Minimalism",
       "category": "Lifestyle",
@@ -82,11 +104,44 @@
       "type": "internal"
     },
     {
+      "id": "split",
+      "name": "Split",
+      "category": "Lifestyle",
+      "icon": "split",
+      "url": "split/",
+      "type": "internal"
+    },
+    {
+      "id": "travel",
+      "name": "Travel",
+      "category": "Lifestyle",
+      "icon": "travel",
+      "url": "travel/",
+      "type": "internal"
+    },
+    {
+      "id": "chores",
+      "name": "Chore Wheel",
+      "category": "Lifestyle",
+      "icon": "chores",
+      "url": "chores/",
+      "type": "internal"
+    },
+    {
+      "id": "meals",
+      "name": "Meal Planner",
+      "category": "Lifestyle",
+      "icon": "meals",
+      "url": "meals/",
+      "type": "internal"
+    },
+    {
       "id": "contacts",
       "name": "Contacts",
       "category": "Office",
       "icon": "contacts",
       "url": "contacts/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -111,6 +166,39 @@
       "category": "Office",
       "icon": "writer",
       "url": "writer/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
+      "id": "layout",
+      "name": "Layout",
+      "category": "Office",
+      "icon": "layout",
+      "url": "layout/",
+      "type": "internal"
+    },
+    {
+      "id": "slides",
+      "name": "Slides",
+      "category": "Office",
+      "icon": "slides",
+      "url": "slides/",
+      "type": "internal"
+    },
+    {
+      "id": "pubdomain",
+      "name": "Public Domain Calculator",
+      "category": "Office",
+      "icon": "pubdomain",
+      "url": "pubdomain/",
+      "type": "internal"
+    },
+    {
+      "id": "qr",
+      "name": "QR Generator",
+      "category": "Office",
+      "icon": "qr",
+      "url": "qr/",
       "type": "internal"
     },
     {
@@ -138,11 +226,27 @@
       "type": "internal"
     },
     {
+      "id": "pixel",
+      "name": "Pixel Avatar",
+      "category": "Creativity",
+      "icon": "pixel",
+      "url": "pixel/",
+      "type": "internal"
+    },
+    {
       "id": "wallpaper",
       "name": "Wallpaper Generator",
       "category": "Creativity",
       "icon": "wallpaper",
       "url": "wallpaper/",
+      "type": "internal"
+    },
+    {
+      "id": "atelier",
+      "name": "Atelier",
+      "category": "Creativity",
+      "icon": "atelier",
+      "url": "atelier/",
       "type": "internal"
     },
     {
@@ -170,6 +274,38 @@
       "type": "internal"
     },
     {
+      "id": "health",
+      "name": "Health",
+      "category": "Personal",
+      "icon": "health",
+      "url": "health/",
+      "type": "internal"
+    },
+    {
+      "id": "budget",
+      "name": "Budget",
+      "category": "Personal",
+      "icon": "budget",
+      "url": "budget/",
+      "type": "internal"
+    },
+    {
+      "id": "water",
+      "name": "Water",
+      "category": "Personal",
+      "icon": "water",
+      "url": "water/",
+      "type": "internal"
+    },
+    {
+      "id": "fitness",
+      "name": "Workouts",
+      "category": "Personal",
+      "icon": "fitness",
+      "url": "fitness/",
+      "type": "internal"
+    },
+    {
       "id": "cycle",
       "name": "Cycle",
       "category": "Personal",
@@ -178,11 +314,60 @@
       "type": "internal"
     },
     {
+      "id": "petcare",
+      "name": "Pet Health Book",
+      "category": "Personal",
+      "icon": "petcare",
+      "url": "petcare/",
+      "type": "internal"
+    },
+    {
+      "id": "baby",
+      "name": "Baby",
+      "category": "Personal",
+      "icon": "baby",
+      "url": "baby/",
+      "type": "internal"
+    },
+    {
+      "id": "familytree",
+      "name": "Family Tree",
+      "category": "Personal",
+      "icon": "familytree",
+      "url": "familytree/",
+      "type": "internal"
+    },
+    {
+      "id": "garage",
+      "name": "Garage",
+      "category": "Personal",
+      "icon": "garage",
+      "url": "garage/",
+      "type": "internal"
+    },
+    {
+      "id": "plants",
+      "name": "Plant Care",
+      "category": "Personal",
+      "icon": "plants",
+      "url": "plants/",
+      "type": "internal"
+    },
+    {
+      "id": "shelf",
+      "name": "Media Shelf",
+      "category": "Personal",
+      "icon": "shelf",
+      "url": "shelf/",
+      "type": "internal"
+    },
+    {
       "id": "bookmarks",
       "name": "Bookmarks",
       "category": "Internet",
       "icon": "bookmarks",
       "url": "bookmarks/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -191,6 +376,22 @@
       "category": "Internet",
       "icon": "maps",
       "url": "maps/",
+      "type": "internal"
+    },
+    {
+      "id": "feeds",
+      "name": "Reader",
+      "category": "Internet",
+      "icon": "feeds",
+      "url": "feeds/",
+      "type": "internal"
+    },
+    {
+      "id": "mail",
+      "name": "Mail",
+      "category": "Internet",
+      "icon": "mail",
+      "url": "mail/",
       "type": "internal"
     },
     {
@@ -226,11 +427,27 @@
       "type": "internal"
     },
     {
+      "id": "scores",
+      "name": "Score Keeper",
+      "category": "Fun",
+      "icon": "scores",
+      "url": "scores/",
+      "type": "internal"
+    },
+    {
       "id": "radio",
       "name": "Radio",
       "category": "Sound",
       "icon": "radio",
       "url": "radio/",
+      "type": "internal"
+    },
+    {
+      "id": "podcasts",
+      "name": "Podcasts",
+      "category": "Sound",
+      "icon": "podcasts",
+      "url": "podcasts/",
       "type": "internal"
     },
     {
@@ -338,11 +555,227 @@
       "type": "internal"
     },
     {
+      "id": "spot",
+      "name": "Spot the Difference",
+      "category": "Games",
+      "icon": "spot",
+      "url": "spot/",
+      "type": "internal"
+    },
+    {
+      "id": "hexagon",
+      "name": "Hexagon Puzzle",
+      "category": "Games",
+      "icon": "hexagon",
+      "url": "hexagon/",
+      "type": "internal"
+    },
+    {
+      "id": "chess",
+      "name": "Chess",
+      "category": "Games",
+      "icon": "chess",
+      "url": "chess/",
+      "type": "internal"
+    },
+    {
+      "id": "sudoku",
+      "name": "Sudoku",
+      "category": "Games",
+      "icon": "sudoku",
+      "url": "sudoku/",
+      "type": "internal"
+    },
+    {
+      "id": "tetris",
+      "name": "Tetris",
+      "category": "Games",
+      "icon": "tetris",
+      "url": "tetris/",
+      "type": "internal"
+    },
+    {
+      "id": "minesweeper",
+      "name": "Minesweeper",
+      "category": "Games",
+      "icon": "minesweeper",
+      "url": "minesweeper/",
+      "type": "internal"
+    },
+    {
+      "id": "mahjong",
+      "name": "Mahjong",
+      "category": "Games",
+      "icon": "mahjong",
+      "url": "mahjong/",
+      "type": "internal"
+    },
+    {
+      "id": "gomoku",
+      "name": "Gomoku",
+      "category": "Games",
+      "icon": "gomoku",
+      "url": "gomoku/",
+      "type": "internal"
+    },
+    {
+      "id": "bubble",
+      "name": "Bubble Shooter",
+      "category": "Games",
+      "icon": "bubble",
+      "url": "bubble/",
+      "type": "internal"
+    },
+    {
+      "id": "checkers",
+      "name": "Checkers",
+      "category": "Games",
+      "icon": "checkers",
+      "url": "checkers/",
+      "type": "internal"
+    },
+    {
+      "id": "mastermind",
+      "name": "Mastermind",
+      "category": "Games",
+      "icon": "mastermind",
+      "url": "mastermind/",
+      "type": "internal"
+    },
+    {
+      "id": "battleship",
+      "name": "Battleship",
+      "category": "Games",
+      "icon": "battleship",
+      "url": "battleship/",
+      "type": "internal"
+    },
+    {
+      "id": "rps",
+      "name": "Rock Paper Scissors",
+      "category": "Games",
+      "icon": "rps",
+      "url": "rps/",
+      "type": "internal"
+    },
+    {
+      "id": "hangman",
+      "name": "Hangman",
+      "category": "Games",
+      "icon": "hangman",
+      "url": "hangman/",
+      "type": "internal"
+    },
+    {
+      "id": "flow",
+      "name": "Flow Free",
+      "category": "Games",
+      "icon": "flow",
+      "url": "flow/",
+      "type": "internal"
+    },
+    {
+      "id": "nonogram",
+      "name": "Nonogram",
+      "category": "Games",
+      "icon": "nonogram",
+      "url": "nonogram/",
+      "type": "internal"
+    },
+    {
+      "id": "breakout",
+      "name": "Breakout",
+      "category": "Games",
+      "icon": "breakout",
+      "url": "breakout/",
+      "type": "internal"
+    },
+    {
+      "id": "reversi",
+      "name": "Reversi",
+      "category": "Games",
+      "icon": "reversi",
+      "url": "reversi/",
+      "type": "internal"
+    },
+    {
+      "id": "mancala",
+      "name": "Mancala",
+      "category": "Games",
+      "icon": "mancala",
+      "url": "mancala/",
+      "type": "internal"
+    },
+    {
+      "id": "pong",
+      "name": "Pong",
+      "category": "Games",
+      "icon": "pong",
+      "url": "pong/",
+      "type": "internal"
+    },
+    {
+      "id": "backgammon",
+      "name": "Backgammon",
+      "category": "Games",
+      "icon": "backgammon",
+      "url": "backgammon/",
+      "type": "internal"
+    },
+    {
+      "id": "wordsearch",
+      "name": "Word Search",
+      "category": "Games",
+      "icon": "wordsearch",
+      "url": "wordsearch/",
+      "type": "internal"
+    },
+    {
+      "id": "solitaire",
+      "name": "Solitaire",
+      "category": "Games",
+      "icon": "solitaire",
+      "url": "solitaire/",
+      "type": "internal"
+    },
+    {
+      "id": "jigsaw",
+      "name": "Jigsaw",
+      "category": "Games",
+      "icon": "jigsaw",
+      "url": "jigsaw/",
+      "type": "internal"
+    },
+    {
+      "id": "crossword",
+      "name": "Crossword",
+      "category": "Games",
+      "icon": "crossword",
+      "url": "crossword/",
+      "type": "internal"
+    },
+    {
+      "id": "xeri",
+      "name": "Xeri",
+      "category": "Games",
+      "icon": "xeri",
+      "url": "xeri/",
+      "type": "internal"
+    },
+    {
       "id": "passwords",
       "name": "Password Generator",
       "category": "Security",
       "icon": "passwords",
       "url": "passwords/",
+      "type": "internal"
+    },
+    {
+      "id": "device",
+      "name": "Device Info",
+      "category": "System",
+      "icon": "device",
+      "url": "device/",
       "type": "internal"
     }
   ]
