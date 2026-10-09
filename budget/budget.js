@@ -74,7 +74,7 @@
       "list.found": "{n} found", "day.total": "Day total",
       "k.out": "Expense", "k.in": "Income",
       "cat.none": "Uncategorized", "cat.other": "Other",
-      "dlg.new": "New entry", "dlg.edit": "Edit entry", "f.amount": "Amount", "f.date": "Date",
+      "dlg.new": "New entry", "f.from": "From {app}", "dlg.edit": "Edit entry", "f.amount": "Amount", "f.date": "Date",
       "f.cat": "Category", "f.note": "Note", "f.note.ph": "Optional",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete", "dlg.close": "Close",
       "err.amount": "Type an amount, for example 12,50", "err.date": "Pick a date",
@@ -135,7 +135,7 @@
       "list.found": "Βρέθηκαν {n}", "day.total": "Σύνολο ημέρας",
       "k.out": "Έξοδο", "k.in": "Έσοδο",
       "cat.none": "Χωρίς κατηγορία", "cat.other": "Υπόλοιπες",
-      "dlg.new": "Νέα κίνηση", "dlg.edit": "Επεξεργασία κίνησης", "f.amount": "Ποσό", "f.date": "Ημερομηνία",
+      "dlg.new": "Νέα κίνηση", "f.from": "Από: {app}", "dlg.edit": "Επεξεργασία κίνησης", "f.amount": "Ποσό", "f.date": "Ημερομηνία",
       "f.cat": "Κατηγορία", "f.note": "Σημείωση", "f.note.ph": "Προαιρετικά",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή", "dlg.close": "Κλείσιμο",
       "err.amount": "Γράψε ένα ποσό, π.χ. 12,50", "err.date": "Διάλεξε ημερομηνία",
@@ -392,6 +392,19 @@
   }
   function okStamp(m) { return isInt(m) && m >= 0; }
   function okCents(a) { return isInt(a) && a > 0 && a <= MAX_CENTS; }
+
+  // "Send to Budget" (Bible BR-B1): another app's prefill for the New
+  // entry form. A bad kind, amount or date drops it all; the optional
+  // parts are cleaned or left empty. It is never stored as such.
+  var SRC_RE = /^[a-z0-9]{1,20}$/;
+  function normPrefill(p) {
+    if (!p || typeof p !== "object" || !KINDS[p.k] || !okCents(p.a)) return null;
+    var hasD = p.d !== undefined && p.d !== null && p.d !== "";
+    if (hasD && !parseYmd(p.d)) return null;
+    return { k: p.k, a: p.a, d: hasD ? p.d : "", n: normText(p.n, NOTE_LEN),
+             c: typeof p.c === "string" && ID_RE.test(p.c) ? p.c : "",
+             src: typeof p.src === "string" && SRC_RE.test(p.src) ? p.src : "" };
+  }
 
   // entry = { id, m, d, a (cents > 0), k ("o" expense | "i" income), c (category id | ""), n (note) }
   function normTx(x) {
@@ -1299,24 +1312,28 @@
     var dlg = makeDialog("bd-tx", t(x ? "dlg.edit" : "dlg.new"));
     var form = el("form");
     form.method = "dialog";
-    var k0 = x ? x.k : (preset && preset.k) || "o";
+    var pre = !x && preset ? preset : null;
+    var k0 = x ? x.k : (pre && pre.k) || "o";
     var amt = el("input");
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.className = "amt-in";
-    amt.value = x ? centsToInput(x.a, LANG) : "";
+    amt.value = x ? centsToInput(x.a, LANG) : pre && pre.a ? centsToInput(pre.a, LANG) : "";
     amt.placeholder = LANG === "el" ? "0,00" : "0.00";
     var date = el("input");
     date.type = "date";
-    date.value = x ? x.d : (mkOf(today) === viewMk ? today : viewMk + "-01");
-    var sel = catSelect(k0, x ? x.c : lastCat[k0]);
+    date.value = x ? x.d : pre && pre.d ? pre.d : pre ? today : (mkOf(today) === viewMk ? today : viewMk + "-01");
+    // A category hint counts only if it still exists and is of the same kind.
+    var hint = pre && pre.c ? catById(pre.c) : null;
+    var sel = catSelect(k0, x ? x.c : hint && hint.k === k0 ? hint.id : lastCat[k0]);
     var note = el("input");
     note.maxLength = NOTE_LEN;
     note.autocomplete = "off";
     note.placeholder = t("f.note.ph");
-    note.value = x ? x.n : "";
+    note.value = x ? x.n : pre && pre.n ? pre.n : "";
     var sw = kindSwitch(k0, function (v) { fillCatSelect(sel, v, lastCat[v]); });
     var err = errLine();
+    if (pre && pre.src) dlg.appendChild(el("div", "dlg-sub", t("f.from").replace("{app}", appName(pre.src))));
     form.appendChild(sw);
     form.appendChild(field(t("f.amount") + " (" + cur() + ")", amt, "bd-amt"));
     var row = el("div", "fld-row");
@@ -1361,7 +1378,13 @@
     dlg.appendChild(form);
     document.body.appendChild(dlg);
     dlg.showModal();
-    if (!x) amt.focus();
+    if (!x) (pre ? ok : amt).focus();
+  }
+  // Another app's display name, from the shell's strings ("app.<id>").
+  function appName(id) {
+    var n = "";
+    try { n = window.parent && window.parent !== window && typeof window.parent.t === "function" ? window.parent.t("app." + id) : ""; } catch (e) {}
+    return typeof n === "string" && n && n !== "app." + id ? n : id;
   }
 
   function deleteTx(id) {
@@ -2286,6 +2309,40 @@
     wireKeyboard();
   }
 
+  // ---------- "Send to Budget" receiver (Bible BR-B1) ----------
+  // The shell pushes here while Budget is running; otherwise it stages
+  // the payload in sessionStorage and opens Budget, which takes it once
+  // at boot. Standalone: /budget/?new={JSON}. A prefill only: nothing
+  // is stored until Save.
+  var NEW_KEY = "oros-budget-new";
+  window.__orosBudgetNew = function (p) {
+    var q = normPrefill(p);
+    if (!q || !data) return false;
+    txDialog(null, q);
+    return true;
+  };
+  function takeStagedNew() {
+    var raw = null;
+    try {
+      raw = sessionStorage.getItem(NEW_KEY);
+      if (raw !== null) sessionStorage.removeItem(NEW_KEY);
+    } catch (e) {}
+    if (raw === null) {
+      try {
+        var u = new URL(location.href);
+        raw = u.searchParams.get("new");
+        if (raw !== null) {
+          u.searchParams.delete("new");
+          history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+        }
+      } catch (e) {}
+    }
+    if (!raw) return;
+    var p = null;
+    try { p = JSON.parse(raw); } catch (e) { return; }
+    window.__orosBudgetNew(p);
+  }
+
   function boot() {
     load();
     loadPrefs();
@@ -2296,6 +2353,7 @@
     watchPalette();
     materialize(true);
     renderAll();
+    takeStagedNew();
   }
 
   boot();

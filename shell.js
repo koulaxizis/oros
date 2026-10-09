@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.46.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.47.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -131,30 +131,53 @@
   var ICONS = {
     check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     columns: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="16" y="3" width="5" height="13" rx="1"/></svg>',
+    mindmap: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="9.5" width="8" height="5" rx="2"/><circle cx="3.5" cy="5" r="1.8"/><circle cx="20.5" cy="5" r="1.8"/><circle cx="3.5" cy="19" r="1.8"/><circle cx="20.5" cy="19" r="1.8"/><path d="M5 6.2l3.2 3.8M19 6.2l-3.2 3.8M5 17.8l3.2-3.8M19 17.8l-3.2-3.8"/></svg>',
     notes: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>',
     weather: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M12 7h1M3.5 3.5l.7.7M10.8 10.8l.7.7M3.5 10.5l.7-.7M10.8 4.2l.7-.7"/><path d="M12.5 21a4.5 4.5 0 0 1 0-9 5.5 5.5 0 0 1 10.6 1.6 3.5 3.5 0 0 1-.6 6.9z"/></svg>',
     mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
     calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
+    timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     prompter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/><line x1="21" y1="2" x2="21" y2="6"/><line x1="19" y1="4" x2="23" y2="4"/></svg>',
     characters: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    water: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8C9 7 6 10.4 6 14.2a6 6 0 0 0 12 0C18 10.4 15 7 12 2.8z"/></svg>',
     names: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5V5a1 1 0 0 1 1-1h7.5L21 13.5 13.5 21 4 11.5V7.5z"/><circle cx="8" cy="8" r="1.5"/><path d="M11 13l2 2M13 11l2 2"/></svg>',
+    fitness: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/></svg>',
+    pixel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="8" width="3" height="3" fill="currentColor" stroke="none"/><rect x="14" y="8" width="3" height="3" fill="currentColor" stroke="none"/><path d="M8 15h8"/></svg>',
+    shelf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V5h3v16"/><path d="M10 21V8h3v13"/><path d="M15.5 8.5l2.9-.8 3 12.6-2.9.7z"/></svg>',
     storage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>',
+    meals: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18v2a7 7 0 0 1-7 7h-4a7 7 0 0 1-7-7z"/><path d="M1.5 11h21"/><path d="M8 7c0-1.2 1-1.4 1-2.6M12 7c0-1.2 1-1.4 1-2.6M16 7c0-1.2 1-1.4 1-2.6"/></svg>',
     habits: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="16" y1="2" x2="16" y2="5"/><polyline points="8.5 13 11 15.5 15.5 10.5"/></svg>',
+    health: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/><path d="M3.5 12h4l2-3 3 6 2-3h6"/></svg>',
     zen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5" stroke-dasharray="2 2.6"/><circle cx="12" cy="12" r="10"/></svg>',
+    budget: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2"/><path d="M16 8h5v8h-5a4 4 0 0 1 0-8z"/><circle cx="16.5" cy="12" r="0.6" fill="currentColor"/></svg>',
+    qr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3M17 21h0"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
+    pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+    plants: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14h12l-1.6 7H7.6z"/><path d="M12 14V9"/><path d="M12 9c0-3 2-5.5 6-5.5 0 3.5-2 5.5-6 5.5z"/><path d="M12 11c0-2.5-1.8-4-5-4 0 3 1.8 4 5 4z"/></svg>',
+    familytree: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M5 17v-5h14v5"/></svg>',
     contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>',
     bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>',
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    feeds: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
     wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
+    atelier: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.58 9 8 0 2.5-2 4-4.5 4H14a1.5 1.5 0 0 0-1 2.6A1.5 1.5 0 0 1 12 21z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="16.5" cy="9.5" r="1"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
+    garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
     wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
+    slides: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="12" rx="1"/><path d="M8 11v-2M12 11V7M16 11v-3M12 15v3M8 21l4-3 4 3"/></svg>',
+    baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
+    chores: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4.5"/><path d="M12 2v5.5M12 16.5V22M2 12h5.5M16.5 12H22"/></svg>',
+    travel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M8 7v13M16 7v13"/></svg>',
     passwords: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10.5" width="18" height="11" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>',
+    device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
     connect4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="3"/><circle cx="7.5" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="15.5" r="1.8"/><circle cx="12" cy="10.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.8"/></svg>',
     dots: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M5 5v14M19 5v7M5 19h7"/><rect x="5" y="5" width="7" height="7" fill="currentColor" stroke="none" opacity=".35"/><circle cx="5" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>',
@@ -167,9 +190,38 @@
     snake: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h9a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/><circle cx="18" cy="7" r="2"/><path d="M20 7h2"/></svg>',
     g2048: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor"/></svg>',
     wordle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="4" width="6" height="6" rx="1"/><rect x="16" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="2" y="14" width="6" height="6" rx="1"/><rect x="9" y="14" width="6" height="6" rx="1"/><rect x="16" y="14" width="6" height="6" rx="1"/></svg>',
+    xeri: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="11" height="16" rx="2"/><path d="M16.5 5.5l2.6.7a2 2 0 0 1 1.4 2.5l-3 11a2 2 0 0 1-2.5 1.4l-1.5-.4"/><path d="M6 8.5h5M6.5 12h4M6 15.5h5"/></svg>',
+    crossword: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><path d="M15 3h6v6h-6zM3 15h6v6H3z" fill="currentColor"/></svg>',
+    jigsaw: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h4a2 2 0 1 1 4 0h4v4a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H4v-4a2 2 0 1 0 0-4z"/></svg>',
+    solitaire: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="17" rx="2"/><path d="M5 6.5 4 7a2 2 0 0 0-.9 2.6l4.2 9.7a2 2 0 0 0 2.6 1L12 20"/><path d="M14 8.5c-1.2 1.4-2.5 2.4-2.5 3.6a1.3 1.3 0 0 0 2.5.5 1.3 1.3 0 0 0 2.5-.5c0-1.2-1.3-2.2-2.5-3.6zM14 13v2"/></svg>',
+    wordsearch: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8l8 8" stroke-width="4" opacity="0.5"/><path d="M8 16h.01M16 8h.01M12 8h.01M8 12h.01M16 12h.01M12 16h.01"/></svg>',
+    scores: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18M4 8h16"/><path d="M6.5 12.5h3M14.5 12.5h3M6.5 16.5h3M14.5 16.5h3"/></svg>',
+    spot: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="9" height="14" rx="1.5"/><rect x="13" y="5" width="9" height="14" rx="1.5"/><circle cx="6.5" cy="10" r="1.5" fill="currentColor"/><circle cx="17.5" cy="12" r="2.5"/></svg>',
+    hexagon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.9 12 6.2v4.6l-4 2.3-4-2.3V6.2z"/><path d="M16 3.9l4 2.3v4.6l-4 2.3-4-2.3V6.2z"/><path d="M12 10.8l4 2.3v4.6L12 20l-4-2.3v-4.6z"/></svg>',
+    chess: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.6"/><path d="M10 9.5h4l1.6 8.5H8.4z"/><path d="M6.5 21h11"/></svg>',
+    sudoku: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>',
+    tetris: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="6" height="6" rx="1"/><rect x="9" y="4" width="6" height="6" rx="1"/><rect x="15" y="4" width="6" height="6" rx="1"/><rect x="9" y="10" width="6" height="6" rx="1"/><path d="M3 20h18"/></svg>',
+    minesweeper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6"/><path d="M12 3v4M12 19v2M4 13H2M22 13h-2M6.3 7.3 5 6M17.7 7.3 19 6"/><circle cx="10" cy="11" r="1" fill="currentColor"/></svg>',
+    mahjong: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="11" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/><circle cx="8.5" cy="14" r="2.5"/></svg>',
+    gomoku: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="16" r="1.9" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.9" fill="currentColor" stroke="none"/></svg>',
+    bubble: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="12" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="9" cy="11.5" r="3" fill="currentColor"/><path d="M12 21l3-6"/><circle cx="12" cy="21" r="1"/></svg>',
+    checkers: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="8" rx="8" ry="3"/><path d="M4 8v3.5c0 1.7 3.6 3 8 3s8-1.3 8-3V8"/><path d="M4 11.5V15c0 1.7 3.6 3 8 3s8-1.3 8-3v-3.5"/></svg>',
+    mastermind: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="8" r="2.5"/><circle cx="12" cy="8" r="2.5" fill="currentColor"/><circle cx="19" cy="8" r="2.5"/><circle cx="8" cy="17" r="1.5" fill="currentColor"/><circle cx="16" cy="17" r="1.5"/></svg>',
+    battleship: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h20l-3 5H5z"/><path d="M6 14v-3h9l2 3"/><path d="M10 11V6h3v5"/><path d="M3 22c2 0 2-1 4.5-1s2.5 1 4.5 1 2-1 4.5-1 2.5 1 4.5 1"/></svg>',
+    rps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><path d="M14.8 14.8 20 20"/></svg>',
+    hangman: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h10M6 21V3h10v3"/><circle cx="16" cy="9" r="2.5"/><path d="M16 11.5V16M13.5 13.5h5M14 20l2-4 2 4"/></svg>',
+    flow: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M8 8v8h8"/><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/></svg>',
+    nonogram: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="1"/><path d="M3 10h2M3 14h2M3 18h2M10 3v2M14 3v2M18 3v2"/><rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none"/><rect x="14" y="15" width="5" height="4" fill="currentColor" stroke="none"/></svg>',
+    breakout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="4" rx="1"/><rect x="13" y="3" width="8" height="4" rx="1"/><rect x="8" y="9" width="8" height="4" rx="1"/><circle cx="15" cy="16" r="1.6"/><path d="M6 21h8"/></svg>',
+    reversi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>',
+    mancala: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="4"/><circle cx="9" cy="10" r="1.2" fill="currentColor"/><circle cx="15" cy="10" r="1.2" fill="currentColor"/><circle cx="9" cy="14" r="1.2" fill="currentColor"/><circle cx="15" cy="14" r="1.2" fill="currentColor"/></svg>',
+    pong: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v8M20 11v8"/><path d="M12 3v2M12 9v2M12 15v2M12 20v1"/><circle cx="16.5" cy="7" r="1.6"/></svg>',
+    backgammon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M5 3l2 7 2-7M15 3l2 7 2-7M5 21l2-7 2 7M15 21l2-7 2 7"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
+    split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
+    podcasts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M12 13v8"/><path d="M8.5 15.5a5 5 0 1 1 7 0"/><path d="M5.6 18.4a9 9 0 1 1 12.8 0"/></svg>',
     mixer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/><rect x="4" y="13" width="4" height="3" rx="1"/><rect x="10" y="6" width="4" height="3" rx="1"/><rect x="16" y="10" width="4" height="3" rx="1"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
@@ -785,7 +837,12 @@
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
+      tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
+      tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
+      tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
+      tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -909,6 +966,299 @@
     minimalismCheckTick();
   }
 
+  // Health — reminder times per measurement. Reads "oros-health-data"
+  // directly (works with the app CLOSED) and asks health/core.js
+  // (loaded by index.html, the SAME file the app runs) which times are
+  // due: from the time on for 4 hours, unless that reading was already
+  // taken from one hour before. One notification per kind, day and
+  // time; the key is the same on every device (inbox dedup). Hidden
+  // kinds never remind. Honest limit (alarms): orOS closed = nothing
+  // fires; a time missed by more than 4 hours is dropped, not caught up.
+  var HEALTH_DATA_KEY = "oros-health-data";
+  var HEALTH_NAMES = {
+    bp: ["Blood pressure", "Πίεση"], wt: ["Weight", "Βάρος"], gl: ["Blood sugar", "Σάκχαρο"],
+    sl: ["Sleep", "Ύπνος"], hr: ["Resting heart rate", "Σφυγμοί ηρεμίας"],
+    tp: ["Temperature", "Θερμοκρασία"], o2: ["Oxygen (SpO₂)", "Οξυγόνο (SpO₂)"]
+  };
+  function healthCheckTick() {
+    var Core = window.OrosHealthCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(HEALTH_DATA_KEY)); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.ty) || !raw.ty.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var d = Core.merge(raw, raw);
+    var due = Core.dueReminders(d, Date.now());
+    if (!due.length) return;
+    var el = state.lang === "el";
+    var title = window.t("app.health");
+    if (title === "app.health") title = "Health";       // missing-key fallback
+    due.forEach(function (r) {
+      var ty = Core.typeRow(d, r.t);
+      var name = HEALTH_NAMES[r.t] ? HEALTH_NAMES[r.t][el ? 1 : 0] : (ty ? ty.n : "");
+      var hm = (r.min < 600 ? "0" : "") + Math.floor(r.min / 60) + ":" + (r.min % 60 < 10 ? "0" : "") + (r.min % 60);
+      N.emit({
+        ns: "health",
+        key: r.key,
+        type: "reminder",
+        title: title,
+        body: (el ? "Ώρα για μέτρηση: " : "Time to measure: ") + name + " (" + hm + ")",
+        deepLink: "health:" + r.t
+      });
+    });
+  }
+
+  var healthLastTick = 0;
+  function healthCheckTickThrottled() {
+    var now = Date.now();
+    if (now - healthLastTick < 60000) return;
+    healthLastTick = now;
+    healthCheckTick();
+  }
+
+  // Garage — renewals (KTEO, insurance, road tax…), service plans and
+  // tyres. Reads "oros-garage-data" directly (works with the app
+  // CLOSED) and asks garage/core.js (loaded by index.html, the SAME
+  // file the app runs) what needs attention. Each alert is announced
+  // once per step (30 → 7 → 1 day → expired; service soon → due):
+  // device-local "oros-garage-notified" = { alertKey: lowest step
+  // announced }. One grouped notification at most per tick, from the
+  // reminder hour on (oros-garage-prefs, default 09:00, -1 = off).
+  // SH-B7: no vehicles → silent. Honest limit (alarms): orOS closed =
+  // nothing fires; the next boot catches up.
+  var GARAGE_DATA_KEY = "oros-garage-data";
+  var GARAGE_NOTIFIED_KEY = "oros-garage-notified";
+  function garageCheckTick() {
+    var Core = window.OrosGarageCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      raw = JSON.parse(localStorage.getItem(GARAGE_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-garage-prefs")));
+      notified = JSON.parse(localStorage.getItem(GARAGE_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.vehicles) || !raw.vehicles.length) return;
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (!notified || typeof notified !== "object") notified = {};
+    var today = sysYmd();
+    var data = Core.merge(raw, raw);
+    var all = Core.alerts(data, today, prefs);
+    var fresh = Core.toNotify(all, notified);
+    // keep the map small: only keys of alerts that still exist
+    var next = {};
+    all.forEach(function (a) { if (Object.prototype.hasOwnProperty.call(notified, a.key)) next[a.key] = notified[a.key]; });
+    fresh.forEach(function (a) { next[a.key] = a.step; });
+    try { localStorage.setItem(GARAGE_NOTIFIED_KEY, JSON.stringify(next)); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return Core.alertLine(a, data, lang); });
+    if (fresh.length > 3) lines.push(lang === "el" ? "και " + (fresh.length - 3) + " ακόμα" : "and " + (fresh.length - 3) + " more");
+    var title = window.t("app.garage");
+    if (title === "app.garage") title = "Garage";      // missing-key fallback
+    N.emit({
+      ns: "garage",
+      key: "alerts-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" · "),
+      deepLink: "garage:upcoming"
+    });
+  }
+
+  // Short stable hash (djb2) so the dedup key names exactly this set.
+  function garageHash(str) {
+    var h = 5381;
+    for (var i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+
+  var garageLastTick = 0;
+  function garageCheckTickThrottled() {
+    var now = Date.now();
+    if (now - garageLastTick < 60000) return;
+    garageLastTick = now;
+    garageCheckTick();
+  }
+
+  // Pet Health Book — daily reminder. Reads "oros-petcare-data"
+  // directly (works with the app CLOSED) and asks petcare/core.js
+  // (loaded by index.html, the SAME file the app runs) what to
+  // announce: each due date once ahead (device-local "days before",
+  // default 7; food 5; routine care and the end of a medicine course
+  // on the day), once when due, again weekly while overdue. The
+  // device-local map oros-petcare-fired remembers what was said, so
+  // nothing repeats daily. One grouped notification per batch, from
+  // the device-local hour on (oros-petcare-prefs, default 09:00,
+  // -1 = off). SH-B7: no pets → silent.
+  // Honest limit (alarms): orOS closed = nothing fires; it comes at
+  // the next open.
+  var PETCARE_DATA_KEY = "oros-petcare-data";
+  var PETCARE_FIRED_KEY = "oros-petcare-fired";
+  function petcareCheckTick() {
+    var Core = window.OrosPetcareCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, fired;
+    try {
+      raw = JSON.parse(localStorage.getItem(PETCARE_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-petcare-prefs")));
+      fired = JSON.parse(localStorage.getItem(PETCARE_FIRED_KEY) || "{}");
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.pets) || !raw.pets.length) return;
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;
+    try { if (!N.getState().ready) return; } catch (e) { return; }
+    var today = sysYmd();
+    var res = Core.reminders(Core.merge(raw, raw), today, prefs.lead, fired);
+    var same = JSON.stringify(res.fired) === JSON.stringify(fired);
+    if (!same) { try { localStorage.setItem(PETCARE_FIRED_KEY, JSON.stringify(res.fired)); } catch (e) {} }
+    if (!res.items.length) return;
+    var el = state.lang === "el";
+    var CARE = el
+      ? { bath: "μπάνιο", nails: "νύχια", brush: "βούρτσισμα", teeth: "δόντια", ears: "αυτιά", litter: "άμμος", cage: "κλουβί", tank: "ενυδρείο" }
+      : { bath: "bath", nails: "nail trim", brush: "brushing", teeth: "teeth", ears: "ears", litter: "litter", cage: "cage", tank: "tank" };
+    function what(it) {
+      if (it.kind === "vacc") return it.label;
+      if (it.kind === "deworm") return el ? "αποπαρασίτωση" : "deworming";
+      if (it.kind === "visit") return el ? "επανεξέταση" : "recheck";
+      if (it.kind === "med") return (el ? "τέλος: " : "last day: ") + it.label;
+      if (it.kind === "care") return CARE[it.sub] || it.sub;
+      return el ? "τελειώνει η τροφή" : "food runs out";
+    }
+    function when(d) {
+      if (d === 0) return el ? "σήμερα" : "today";
+      if (d === 1) return el ? "αύριο" : "tomorrow";
+      if (d > 1) return el ? "σε " + d + " μέρες" : "in " + d + " days";
+      return el ? (-d) + (d === -1 ? " μέρα πίσω" : " μέρες πίσω") : (-d) + (d === -1 ? " day late" : " days late");
+    }
+    var parts = res.items.slice(0, 4).map(function (it) {
+      return it.pet.name + ": " + what(it) + " " + when(it.diff);
+    });
+    if (res.items.length > 4) parts.push(el ? "και " + (res.items.length - 4) + " ακόμα" : "and " + (res.items.length - 4) + " more");
+    var title = window.t("app.petcare");
+    if (title === "app.petcare") title = "Pet Health Book";   // missing-key fallback
+    // Key = today + what this batch says: a second batch the same day
+    // (a new due date) still shows; two devices saying the same thing
+    // dedupe through the synced inbox.
+    var sig = res.items.map(function (it) { return it.key + "@" + it.due; }).join("|"), h = 0;
+    for (var i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+    N.emit({
+      ns: "petcare",
+      key: "due-" + today + "-" + (h >>> 0).toString(36),
+      type: "reminder",
+      title: title,
+      body: parts.join(" · "),
+      deepLink: "petcare:today"
+    });
+  }
+
+  var petcareLastTick = 0;
+  function petcareCheckTickThrottled() {
+    var now = Date.now();
+    if (now - petcareLastTick < 60000) return;
+    petcareLastTick = now;
+    petcareCheckTick();
+  }
+
+  // Plant Care — daily watering reminder. Reads "oros-plants-data"
+  // directly (works with the app CLOSED) and asks plants/core.js
+  // (loaded by index.html, the SAME file the app runs) what is due
+  // today or late: one grouped notification per day, from the
+  // device-local reminder hour on (oros-plants-prefs, default 09:00,
+  // -1 = off). Weather: a rain hint for outdoor plants from the
+  // Weather app's cache, no network. SH-B7: no plants → silent.
+  // Honest limit (alarms): orOS closed = nothing fires; the inbox
+  // catch-up runs at the next boot.
+  var PLANTS_DATA_KEY = "oros-plants-data";
+  function plantsCheckTick() {
+    var Core = window.OrosPlantsCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs;
+    try {
+      raw = JSON.parse(localStorage.getItem(PLANTS_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-plants-prefs")));
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.plants) || !raw.plants.length) return;
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var today = sysYmd();
+    var sum = Core.summary(Core.merge(raw, raw), today, prefs.hemi);
+    if (!sum.n) return;
+    var el = state.lang === "el";
+    var names = sum.names.slice(0, 3).join(", ");
+    if (sum.names.length > 3) names += el ? " και " + (sum.names.length - 3) + " ακόμα"
+                                          : " and " + (sum.names.length - 3) + " more";
+    var body = (el ? (sum.names.length === 1 ? "Θέλει φροντίδα: " : "Θέλουν φροντίδα: ")
+                   : (sum.names.length === 1 ? "Needs care: " : "Need care: ")) + names;
+    if (sum.outWater) {
+      var wx = null;
+      try {
+        wx = Core.weather(JSON.parse(localStorage.getItem("oros-weatherapp-data")),
+                          JSON.parse(localStorage.getItem("oros-weatherapp-cache")),
+                          wxRead(), today, Date.now());
+      } catch (e) {}
+      if (wx && wx.rain) body += el ? ". Βροχή σήμερα: τα εξωτερικά ίσως δεν θέλουν πότισμα."
+                                    : ". Rain today: outdoor plants may not need water.";
+    }
+    var title = window.t("app.plants");
+    if (title === "app.plants") title = "Plant Care";    // missing-key fallback
+    N.emit({
+      ns: "plants",
+      key: "due-" + today,
+      type: "reminder",
+      title: title,
+      body: body,
+      deepLink: "plants:today"
+    });
+  }
+
+  var plantsLastTick = 0;
+  function plantsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - plantsLastTick < 60000) return;
+    plantsLastTick = now;
+    plantsCheckTick();
+  }
+
+  // Water — "behind the pace" reminder (off by default; the app's
+  // switch turns it on). The RULE lives in water/core.js, loaded by
+  // index.html before this file and shared with the app and its
+  // tests; the shell owns timing + emission over oros-water-data
+  // (same origin), so it works with the app closed. Dedupe key =
+  // day + interval slot (core.reminderDue). A stale index.html
+  // without core.js → silent.
+  var waterLastTick = 0;
+  function waterCheckTickThrottled() {
+    var now = Date.now();
+    if (now - waterLastTick < 60000) return;
+    waterLastTick = now;
+    waterCheckTick();
+  }
+  function waterCheckTick() {
+    var W = window.orosWaterCore, N = window.orosNotifs;
+    if (!W || typeof W.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var data = null;
+    try { data = W.parse(localStorage.getItem(W.STORAGE_KEY)); } catch (e) { return; }
+    if (!data) return;                     // unreadable: the app keeps the rescue copy
+    var due = W.reminderDue(data, new Date());
+    if (!due) return;
+    var txt = W.reminderText(due, data.prefs, state.lang === "el" ? "el" : "en");
+    N.emit({
+      ns: "water",
+      key: due.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "system:open:water"
+    });
+  }
+
+
   // ---------- 7. PWA ----------
   function setupInstallFlow() {
     window.addEventListener("beforeinstallprompt", function (e) {
@@ -1011,12 +1361,37 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        openFromLaunchParam();
         deliverShare();
       })
       .catch(function () {
         state.apps = [];
         renderMenu();
       });
+  }
+
+  // Launch shortcuts (manifest "shortcuts", long-press on the app
+  // icon): "/?open=<id>" opens that app once the list is loaded. The
+  // id must match a registered internal app, so a crafted link can only
+  // open what the menu already offers. The parameter is stripped right
+  // away (other parameters stay), so a reload or the update broker's
+  // reload lands on the desktop instead of reopening the app.
+  function openFromLaunchParam() {
+    var params, id, i;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    id = params.get("open");
+    if (!id) return;
+    params.delete("open");
+    try {
+      var qs = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
+    } catch (e) {}
+    for (i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id && state.apps[i].type !== "external") {
+        openAppById(id);
+        return;
+      }
+    }
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
@@ -1649,7 +2024,8 @@
             btn.textContent = label;
           }
           btn.addEventListener("click", function () { openApp(app); });
-          catList.appendChild(btn);
+          // Favourites (launcher.js): the star at the end of the row.
+          catList.appendChild(window.orosLauncher ? window.orosLauncher.menuRow(btn, app) : btn);
         });
         wrap.appendChild(catList);
         appsHost.appendChild(wrap);
@@ -1659,12 +2035,28 @@
 
     renderSkinSwatches(menu);
     renderWallpaperSection(menu);
+    if (window.orosLauncher) window.orosLauncher.renderSettings(menu);   // Dock
     renderInstallRow(menu);
     renderWxSection(menu);
     renderPetSection(menu);        // Soffitta port: desktop companion
     renderSyncSection(menu);
     renderNotifsSection(menu);   // Wave 1B: notification settings
     renderSearchSection(menu);   // universal search: per-app switches
+    if (window.orosLauncher) window.orosLauncher.refresh();   // desktop shortcuts follow apps + language
+
+    // Device Info row (Chris 2026-10-09): where people look when
+    // something is wrong — space, sync state, missing browser features.
+    var devRow = document.createElement("div");
+    devRow.className = "install-section";
+    var devBtn = document.createElement("button");
+    devBtn.className = "menu-item install-row";
+    devBtn.textContent = window.t("menu.deviceInfo");
+    devBtn.addEventListener("click", function () {
+      closeMenu();
+      openAppById("device");
+    });
+    devRow.appendChild(devBtn);
+    menu.appendChild(devRow);
 
     // v0.18.0 — Info row (mirrors Ctrl+Alt+Shift+I)
     var infoRow = document.createElement("div");
@@ -1694,6 +2086,7 @@
       if (newRem && keepPw.remember !== null) newRem.checked = keepPw.remember;
     }
     menu.scrollTop = keepTop;
+    settingsNotify();            // the Settings app repaints too
   }
 
   // Universal search — which apps the menu field searches. One chip
@@ -1745,6 +2138,37 @@
     host.appendChild(section);
   }
 
+  // User changes of appearance (menu + Settings app). Each one is a
+  // user action → stamped and sent to the sync engine; picking the
+  // value already in place does nothing (R27).
+  function setSkinUser(id) {
+    if (!isValidSkin(id) || state.skin === id) return;
+    state.skin = id;
+    localStorage.setItem("oros-skin", state.skin);
+    applySkin();
+    maybeFollowSkin(id);       // suggests paired wallpaper (from default only)
+    noteLocalChange();
+    renderMenu();
+  }
+
+  function setThemeUser(theme) {
+    if ((theme !== "dark" && theme !== "light") || state.theme === theme) return;
+    state.theme = theme;
+    localStorage.setItem("oros-theme", state.theme);
+    applyTheme();
+    noteLocalChange();
+    renderMenu();
+  }
+
+  function setWallpaperUser(id) {
+    if (!findWallpaper(id) || state.wallpaper === id) return;
+    state.wallpaper = id;
+    localStorage.setItem("oros-wallpaper", state.wallpaper);
+    applyWallpaper();
+    noteLocalChange();
+    renderMenu();
+  }
+
   function renderSkinSwatches(host) {
     var section = document.createElement("div");
     section.className = "skin-section";
@@ -1766,15 +2190,7 @@
       sw.style.background = s.color;
       sw.setAttribute("title", skinTitle(s.id));
       sw.setAttribute("aria-label", skinTitle(s.id));
-      sw.addEventListener("click", function () {
-        if (state.skin === s.id) return;
-        state.skin = s.id;
-        localStorage.setItem("oros-skin", state.skin);
-        applySkin();
-        maybeFollowSkin(s.id);     // suggests paired wallpaper (from default only)
-        noteLocalChange();          // user action → sync engine
-        renderMenu();
-      });
+      sw.addEventListener("click", function () { setSkinUser(s.id); });
       swatches.appendChild(sw);
     });
 
@@ -1791,11 +2207,7 @@
       window.t(state.theme === "dark" ? "theme.toLight" : "theme.toDark"));
     themeBtn.setAttribute("aria-label", themeBtn.getAttribute("title"));
     themeBtn.addEventListener("click", function () {
-      state.theme = state.theme === "dark" ? "light" : "dark";
-      localStorage.setItem("oros-theme", state.theme);
-      applyTheme();
-      noteLocalChange();            // user action → sync engine
-      renderMenu();
+      setThemeUser(state.theme === "dark" ? "light" : "dark");
     });
     controls.appendChild(themeBtn);
 
@@ -1839,14 +2251,7 @@
       } else {
         thumb.style.background = w.css;   // WYSIWYG — same source as desktop
       }
-      thumb.addEventListener("click", function () {
-        if (state.wallpaper === w.id) return;
-        state.wallpaper = w.id;
-        localStorage.setItem("oros-wallpaper", state.wallpaper);
-        applyWallpaper();
-        noteLocalChange();          // user action → sync engine
-        renderMenu();
-      });
+      thumb.addEventListener("click", function () { setWallpaperUser(w.id); });
       grid.appendChild(thumb);
     });
 
@@ -2869,6 +3274,117 @@
     setTimeout(function () { oldF.input.focus(); }, 50);
   }
 
+  // Unlock with a passphrase (menu form + Settings app). One flow:
+  // set, pull, then seal into the device vault only after the pull.
+  function syncUnlock(pw, remember) {
+    if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
+    // A70: an EMPTY cloud means this passphrase is being SET, not
+    // checked — it must be at least MIN_PASS_LEN long (an existing
+    // shorter one still unlocks). The device vault seals it only
+    // after the pull (A71b: a mistyped passphrase is no longer
+    // remembered); a pull that fails for any other reason
+    // (offline) still seals it, as before.
+    window.orosSync.setPassphrase(pw, false);
+    setSyncMsgRaw("dim", window.t("sync.working"));
+    setSyncDot("syncing");
+    // Visible auto-pull on unlock: apply cloud state immediately,
+    // then push if this device had unsynced changes.
+    window.orosSync.pull()
+      .then(function (result) {
+        if (result && result.empty && pw.length < MIN_PASS_LEN) {
+          window.orosSync.forgetPassphrase();
+          setSyncMsg("err", "sync.err.shortpass");
+          return;
+        }
+        if (remember) window.orosSync.setPassphrase(pw, true);
+        reportPullResult(result);
+        if (window.orosSync.isDirty()) {
+          return window.orosSync.push()
+            .then(function () { setSyncMsg("ok", "sync.ok.push"); });
+        }
+      })
+      .catch(function (err) {
+        if (remember && !isPassphraseError(err)) window.orosSync.setPassphrase(pw, true);
+        handleSyncError(err);
+      });
+  }
+
+  // Manual push with the "working" line (menu + Settings app).
+  function syncPushNow() {
+    if (!scRequireConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.working"));
+    setSyncDot("syncing");
+    window.orosSync.push()
+      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
+      .catch(handleSyncError);
+  }
+
+  // User picked an auto-sync interval: it travels in the shell slice.
+  function setSyncIntervalUser(m) {
+    if (!window.orosSync || typeof window.orosSync.setIntervalMinutes !== "function") return;
+    if ([0, 1, 3, 5, 15].indexOf(m) === -1 || m === getSafeInterval()) return;
+    window.orosSync.setIntervalMinutes(m);
+    noteLocalChange();
+    renderMenu();
+  }
+
+  // Forget the passphrase on this device (and its vault, if any).
+  function syncForgetHere() {
+    if (!window.orosSync) return;
+    if (window.orosSync.hasDeviceVault()) {
+      window.orosSync.clearDevice().then(function () { renderMenu(); });
+    } else {
+      window.orosSync.forgetPassphrase();
+      renderMenu();
+    }
+  }
+
+  function syncDisconnectUser() {
+    if (!window.orosSync) return;
+    window.orosSync.disconnect();
+    state.syncUserEmail = null;
+    renderMenu();
+  }
+
+  // User picked an automatic folder-backup cadence (shell slice).
+  function setAutoexportUser(v) {
+    if (v !== "off" && v !== "daily" && v !== "weekly" && v !== "monthly") return;
+    if (v === state.autoexport) return;
+    state.autoexport = v;
+    localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
+    noteLocalChange();          // travels in the shell slice
+    // Off = zero footprint going forward — no checks, no files.
+    // Switched on (or changed cadence): export NOW so the user
+    // sees instant feedback that the folder net is active.
+    if (state.autoexport !== "off") maybeAutoExport(true);
+    renderMenu();
+  }
+
+  // Import a backup file: every slice + the Files disk (FILES-V).
+  function importBackupFile() {
+    shellPickJson().then(function (file) {
+      if (!file) return;   // user cancelled — silent exit
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var text = String(reader.result);
+          var n = window.orosSync.importData(text);
+          // FILES-V: the backup's disk is merged into the disk here
+          // (the engine no longer knows a "files-disk" slice).
+          fdImportDisk(text).then(function (files) {
+            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+              window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
+          }).catch(function () {
+            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+              window.t("sync.slices.applied") + ": " + n);
+          });
+        } catch (e) {
+          handleSyncError(e); }
+      };
+      reader.readAsText(file);
+    });
+  }
+
   function renderSyncSection(host) {
     var section = document.createElement("div");
     section.className = "sync-section";
@@ -2959,38 +3475,7 @@
       unlockBtn.className = "menu-item";
       unlockBtn.textContent = window.t("sync.pass.apply");
       unlockBtn.addEventListener("click", function () {
-        var pw = input.value;
-        if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
-        // A70: an EMPTY cloud means this passphrase is being SET, not
-        // checked — it must be at least MIN_PASS_LEN long (an existing
-        // shorter one still unlocks). The device vault seals it only
-        // after the pull (A71b: a mistyped passphrase is no longer
-        // remembered); a pull that fails for any other reason
-        // (offline) still seals it, as before.
-        var remember = rememberCb.checked;
-        window.orosSync.setPassphrase(pw, false);
-        setSyncMsgRaw("dim", window.t("sync.working"));
-        setSyncDot("syncing");
-        // Visible auto-pull on unlock: apply cloud state immediately,
-        // then push if this device had unsynced changes.
-        window.orosSync.pull()
-          .then(function (result) {
-            if (result && result.empty && pw.length < MIN_PASS_LEN) {
-              window.orosSync.forgetPassphrase();
-              setSyncMsg("err", "sync.err.shortpass");
-              return;
-            }
-            if (remember) window.orosSync.setPassphrase(pw, true);
-            reportPullResult(result);
-            if (window.orosSync.isDirty()) {
-              return window.orosSync.push()
-                .then(function () { setSyncMsg("ok", "sync.ok.push"); });
-            }
-          })
-          .catch(function (err) {
-            if (remember && !isPassphraseError(err)) window.orosSync.setPassphrase(pw, true);
-            handleSyncError(err);
-          });
+        syncUnlock(input.value, rememberCb.checked);
       });
       row.appendChild(unlockBtn);
       passWrap.appendChild(row);
@@ -3003,27 +3488,13 @@
       var pullBtn = document.createElement("button");
       pullBtn.className = "menu-item";
       pullBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.pull") + "</span>";
-      pullBtn.addEventListener("click", function () {
-        setSyncDot("syncing");
-        window.orosSync.pull()
-          .then(function (result) {
-            reportPullResult(result);
-            setSyncDot("synced", 4000);
-          })
-          .catch(handleSyncError);
-      });
+      pullBtn.addEventListener("click", scForcePull);
       actions.appendChild(pullBtn);
 
       var pushBtn = document.createElement("button");
       pushBtn.className = "menu-item";
       pushBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.push") + "</span>";
-      pushBtn.addEventListener("click", function () {
-        setSyncMsgRaw("dim", window.t("sync.working"));
-        setSyncDot("syncing");
-        window.orosSync.push()
-          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
-          .catch(handleSyncError);
-      });
+      pushBtn.addEventListener("click", syncPushNow);
       actions.appendChild(pushBtn);
 
       section.appendChild(actions);
@@ -3046,8 +3517,7 @@
         sel.appendChild(opt);
       });
       sel.addEventListener("change", function () {
-        window.orosSync.setIntervalMinutes(parseInt(sel.value, 10));
-        noteLocalChange();   // interval is part of the shell slice now
+        setSyncIntervalUser(parseInt(sel.value, 10));
       });
       intervalRow.appendChild(sel);
       section.appendChild(intervalRow);
@@ -3062,16 +3532,7 @@
       forgetBtn.textContent = hasVault
         ? window.t("sync.pass.device")
         : window.t("sync.pass.forget");
-      forgetBtn.addEventListener("click", function () {
-        if (hasVault) {
-          window.orosSync.clearDevice().then(function () {
-            renderMenu();
-          });
-        } else {
-          window.orosSync.forgetPassphrase();
-          renderMenu();
-        }
-      });
+      forgetBtn.addEventListener("click", syncForgetHere);
       utils.appendChild(forgetBtn);
 
       var chpwBtn = document.createElement("button");
@@ -3086,11 +3547,7 @@
       var discBtn = document.createElement("button");
       discBtn.className = "menu-item";
       discBtn.textContent = window.t("sync.disconnect");
-      discBtn.addEventListener("click", function () {
-        window.orosSync.disconnect();
-        state.syncUserEmail = null;
-        renderMenu();
-      });
+      discBtn.addEventListener("click", syncDisconnectUser);
       utils.appendChild(discBtn);
 
       section.appendChild(utils);
@@ -3118,18 +3575,7 @@
       autoSel.appendChild(opt);
     });
     autoSel.addEventListener("change", function () {
-      state.autoexport = autoSel.value;
-      localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
-      noteLocalChange();          // travels in the shell slice
-      if (state.autoexport === "off") {
-        // Off = zero footprint going forward — no checks, no files.
-        renderMenu();
-        return;
-      }
-      // Switched on (or changed cadence): export NOW so the user
-      // sees instant feedback that the folder net is active.
-      maybeAutoExport(true);
-      renderMenu();
+      setAutoexportUser(autoSel.value);
     });
     autoRow.appendChild(autoSel);
     if (fsSupported()) section.appendChild(autoRow);
@@ -3183,45 +3629,14 @@
     var exportBtn = document.createElement("button");
     exportBtn.className = "menu-item";
     exportBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.export") + "</span>";
-    exportBtn.addEventListener("click", function () {
-      // Every slice + the Files disk as it is NOW (fdExportJson).
-      var exportJob;
-      try { exportJob = fdExportJson(); } catch (e) { handleSyncError(e); return; }
-      exportJob.then(function (json) {
-        shellSaveJson(
-          "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
-          json);
-      }).catch(handleSyncError);
-    });
+    exportBtn.addEventListener("click", scExportDb);
     backupRow.appendChild(exportBtn);
 
     var importBtn = document.createElement("button");
     importBtn.className = "menu-item";
     importBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.import") + "</span>";
 
-    importBtn.addEventListener("click", function () {
-      shellPickJson().then(function (file) {
-        if (!file) return;   // user cancelled — silent exit
-        var reader = new FileReader();
-        reader.onload = function () {
-          try {
-            var text = String(reader.result);
-            var n = window.orosSync.importData(text);
-            // FILES-V: the backup's disk is merged into the disk here
-            // (the engine no longer knows a "files-disk" slice).
-            fdImportDisk(text).then(function (files) {
-              setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-                window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
-            }).catch(function () {
-              setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-                window.t("sync.slices.applied") + ": " + n);
-            });
-          } catch (e) {
-            handleSyncError(e); }
-        };
-        reader.readAsText(file);
-      });
-    });
+    importBtn.addEventListener("click", importBackupFile);
     backupRow.appendChild(importBtn);
     section.appendChild(backupRow);
 
@@ -3910,10 +4325,16 @@
         { name: "Noto Sans", url: "https://notofonts.github.io/",
           by: "The Noto Project Authors", lic: "SIL OFL 1.1",
           en: "Greek text in exported PDFs", el: "Ελληνικά στα PDF που εξάγεις" },
+        { name: "Noto Sans, Noto Serif, Noto Sans Mono", url: "https://notofonts.github.io/",
+          by: "The Noto Project Authors", lic: "SIL OFL 1.1",
+          en: "The fonts of Layout documents (screen and PDF)", el: "Οι γραμματοσειρές των εγγράφων της Σελιδοποίησης (οθόνη και PDF)" },
         { name: "Feather Icons", url: "https://feathericons.com/",
           by: "Cole Bemis", lic: "MIT",
           en: "Some interface icons (search, refresh, map pin, cloud, heart)",
-          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" }
+          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" },
+        { name: "Tabler Icons 3.49.0", url: "https://tabler.io/icons",
+          by: "Paweł Kuna", lic: "MIT",
+          en: "Offline icon library (Atelier)", el: "Βιβλιοθήκη εικονιδίων χωρίς σύνδεση (Ατελιέ)" }
       ]
     },
     {
@@ -3927,13 +4348,13 @@
           en: "Weak-password check (Passwords)", el: "Έλεγχος αδύναμων κωδικών (Κωδικοί)" },
         { name: "SCOWL (via wordlist-english)", url: "http://wordlist.aspell.net/",
           by: "Kevin Atkinson", lic: { en: "SCOWL licence (permissive)", el: "Άδεια SCOWL (ελεύθερη)" },
-          en: "English words (Wordle)", el: "Αγγλικές λέξεις (Wordle)" },
+          en: "English words (Wordle, Hangman)", el: "Αγγλικές λέξεις (Wordle, Κρεμάλα)" },
         { name: "Hunspell el_GR", url: "https://github.com/wooorm/dictionaries",
           by: "Steve Stavropoulos & contributors (elspell)", lic: "MPL 1.1",
-          en: "Greek words (Λεξούλα)", el: "Ελληνικές λέξεις (Λεξούλα)" },
+          en: "Greek words (Λεξούλα, Hangman)", el: "Ελληνικές λέξεις (Λεξούλα, Κρεμάλα)" },
         { name: "FrequencyWords", url: "https://github.com/hermitdave/FrequencyWords",
           by: "Hermit Dave (from OpenSubtitles)", lic: "CC BY-SA 4.0",
-          en: "Picking everyday Greek words (Λεξούλα)", el: "Επιλογή καθημερινών ελληνικών λέξεων (Λεξούλα)" }
+          en: "Picking everyday words (Λεξούλα, Hangman)", el: "Επιλογή καθημερινών λέξεων (Λεξούλα, Κρεμάλα)" }
       ]
     },
     {
@@ -3970,6 +4391,27 @@
         { name: "Wikidata", url: "https://www.wikidata.org/",
           by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
           en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
+        { name: "Openverse", url: "https://openverse.org/",
+          by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
+          en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },
+        { name: "Wikimedia Commons", url: "https://commons.wikimedia.org/",
+          by: "Commons contributors, Wikimedia Foundation", lic: { en: "Per item (free licences)", el: "Ανά έργο (ελεύθερες άδειες)" },
+          en: "Photos, drawings, sounds, video (Atelier)", el: "Φωτογραφίες, σχέδια, ήχοι, βίντεο (Ατελιέ)" },
+        { name: "Iconify", url: "https://iconify.design/",
+          by: "Vjacheslav Trushkin & the authors of each icon set", lic: { en: "Per icon set (MIT, Apache, CC BY, OFL…)", el: "Ανά σετ εικονιδίων (MIT, Apache, CC BY, OFL…)" },
+          en: "Icons and clipart (Atelier)", el: "Εικονίδια και clipart (Ατελιέ)" },
+        { name: "Fontsource", url: "https://fontsource.org/",
+          by: "Fontsource & each font's designers", lic: { en: "Per font (OFL, Apache)", el: "Ανά γραμματοσειρά (OFL, Apache)" },
+          en: "Font catalogue and files (Atelier)", el: "Κατάλογος και αρχεία γραμματοσειρών (Ατελιέ)" },
+        { name: "Pixabay", url: "https://pixabay.com/",
+          by: "Pixabay creators", lic: { en: "Pixabay Content License, your own key", el: "Pixabay Content License, με δικό σου κλειδί" },
+          en: "Optional photos and video (Atelier)", el: "Προαιρετικές φωτογραφίες και βίντεο (Ατελιέ)" },
+        { name: "Pexels", url: "https://www.pexels.com/",
+          by: "Pexels creators", lic: { en: "Pexels License, your own key", el: "Pexels License, με δικό σου κλειδί" },
+          en: "Optional photos and video (Atelier)", el: "Προαιρετικές φωτογραφίες και βίντεο (Ατελιέ)" },
+        { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
+          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
+          en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
         { name: "Dropbox", url: "https://www.dropbox.com/",
           by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
           en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
@@ -4087,8 +4529,11 @@
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.services")) + '</div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.radio")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.feeds")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.podcasts")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("maps.providers")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.pubdomain")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
@@ -4285,7 +4730,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-jigsaw"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -6326,6 +6771,198 @@
     } catch (e) { return null; }
   };
 
+  // ---------- 9j. Settings app bridge (window.orosSettings) ----------
+  // The Settings app (settings/, System) is a plain iframe app: it
+  // never writes storage and registers no slice. Every value comes
+  // from get(), every change goes through set() / act(), which call
+  // the SAME functions the menu calls. So stamps, dirty marks and
+  // merges are exactly the menu's: nothing to migrate, and a device
+  // on an older bundle syncs with this one as before. Notifications
+  // and the screen pet keep their own public modules (orosNotifs,
+  // orosPet); the app talks to them directly.
+  // onChange(fn): fn() runs (batched) after anything that repaints
+  // the menu (user change, pull, unlock, sync message) and after
+  // each background sync round. Returns an unsubscribe function.
+  var settingsListeners = [];
+  var settingsNotifyQueued = false;
+
+  function settingsNotify() {
+    if (settingsNotifyQueued || !settingsListeners.length) return;
+    settingsNotifyQueued = true;
+    setTimeout(function () {
+      settingsNotifyQueued = false;
+      settingsListeners.slice().forEach(function (fn) {
+        try { fn(); } catch (e) {
+          // A closed app frame that never unsubscribed: drop it.
+          var i = settingsListeners.indexOf(fn);
+          if (i !== -1) settingsListeners.splice(i, 1);
+        }
+      });
+    }, 0);
+  }
+
+  function settingsSnapshot() {
+    var S = window.orosSync || null;
+    var connected = !!(S && S.isConnected());
+    var unlocked = !!(connected && S.hasPassphrase());
+    var art = wpArt();
+    var hasArt = !!(state.wpart && art);
+    var folder = null, lapsed = false;
+    try {
+      folder = localStorage.getItem(FS_FOLDER_NAME_KEY);
+      lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
+    } catch (e) {}
+    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
+    return {
+      version: APP_VERSION,
+      lang: state.lang,
+      theme: state.theme,
+      skin: state.skin,
+      skins: SKINS.map(function (k) {
+        return { id: k.id, color: k.color, name: skinTitle(k.id) };
+      }),
+      wallpaper: state.wallpaper,
+      wallpapers: WALLPAPERS.map(function (w) {
+        var css = w.css;
+        if (w.id === "custom") {
+          if (!hasArt) css = null;   // nothing made yet → "make one"
+          else {
+            var bgc = art.colors(state.wpart, wpAccent()).bg;
+            css = (wpShown && wpShown.url) ? wpBg(bgc, wpShown.url) : bgc;
+          }
+        }
+        return { id: w.id, css: css, name: wallpaperTitle(w.id) };
+      }),
+      pet: {
+        available: !!(window.orosPet && typeof window.orosPet.toggle === "function"),
+        on: !!(window.orosPet && typeof window.orosPet.isEnabled === "function" &&
+               window.orosPet.isEnabled())
+      },
+      sync: {
+        available: !!S,
+        connected: connected,
+        unlocked: unlocked,
+        email: connected ? (state.syncUserEmail || null) : null,
+        dirty: !!(unlocked && S.isDirty()),
+        hasVault: !!(connected && S.hasDeviceVault()),
+        interval: getSafeInterval(),
+        intervals: [0, 1, 3, 5, 15],
+        minPass: MIN_PASS_LEN,
+        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text } : null
+      },
+      backup: {
+        folderSupported: fsSupported(),
+        autoexport: state.autoexport,
+        folder: folder || null,
+        lapsed: !!(folder && lapsed)
+      },
+      search: searchApps().map(function (a) {
+        var k = "app." + a.id, v = window.t(k);
+        return { id: a.id, name: (v === k) ? a.name : v, on: searchEnabled(a.id) };
+      }),
+      install: !!state.deferredPrompt,
+      apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
+        .map(function (a) { return a.id; }),
+      shortcuts: SC_DEFS.map(function (d) {
+        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + d.key.toUpperCase(),
+                 label: window.t(d.label) };
+      })
+    };
+  }
+
+  function settingsSet(name, value) {
+    switch (name) {
+      case "lang":
+        if ((value === "en" || value === "el") && value !== state.lang) scToggleLang();
+        return;
+      case "theme":      setThemeUser(value); return;
+      case "skin":       setSkinUser(value); return;
+      case "wallpaper":
+        if (value === "custom" && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
+        setWallpaperUser(value);
+        return;
+      case "pet":
+        if (window.orosPet && typeof window.orosPet.toggle === "function" &&
+            !!value !== !!window.orosPet.isEnabled()) {
+          window.orosPet.toggle();
+          renderMenu();
+        }
+        return;
+      case "syncInterval": setSyncIntervalUser(Number(value)); return;
+      case "autoexport":   setAutoexportUser(value); return;
+    }
+    if (/^search:/.test(name)) {
+      var id = name.slice(7);
+      var known = searchApps().some(function (a) { return a.id === id; });
+      if (known && searchEnabled(id) !== !!value) {
+        setSearchEnabled(id, !!value);
+        renderMenu();
+      }
+    }
+  }
+
+  function settingsAct(name, arg) {
+    var S = window.orosSync;
+    switch (name) {
+      case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
+      case "sync.unlock":
+        if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {
+          syncUnlock(arg.pw, !!arg.remember);
+        }
+        return;
+      case "sync.pull":       scForcePull(); return;
+      case "sync.push":       syncPushNow(); return;
+      case "sync.forget":     syncForgetHere(); return;
+      case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
+      case "sync.disconnect": syncDisconnectUser(); return;
+      // Folder picker and permission prompts need a user gesture: the
+      // app calls these straight from its click handler (the gesture
+      // of a same-origin frame counts for the shell window too).
+      case "backup.chooseFolder":    if (fsSupported()) chooseBackupFolder(); return;
+      case "backup.stopFolder":      stopFolderBackups(); return;
+      case "backup.reconnectFolder": reconnectFolder(); return;
+      case "backup.now":      scBackupNow(); return;
+      case "backup.export":   scExportDb(); return;
+      case "backup.import":   importBackupFile(); return;
+      case "install":
+        if (!state.deferredPrompt) return;
+        state.deferredPrompt.prompt();
+        state.deferredPrompt.userChoice.then(function (choice) {
+          if (choice.outcome === "accepted") { state.deferredPrompt = null; renderMenu(); }
+        });
+        return;
+      case "updates":         scCheckUpdates(); return;
+      case "info":            showInfoModal(); return;
+      case "openApp":         if (typeof arg === "string") openAppById(arg); return;
+      // The app arms and confirms first (two taps, like the Info modal);
+      // this is the same wipe, with no button of its own to update.
+      case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
+    }
+  }
+
+  window.orosSettings = {
+    v: 1,
+    get: settingsSnapshot,
+    set: settingsSet,
+    act: settingsAct,
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      settingsListeners.push(fn);
+      return function () {
+        var i = settingsListeners.indexOf(fn);
+        if (i !== -1) settingsListeners.splice(i, 1);
+      };
+    },
+    // Open the Settings app at a section ("sync", "backup", …).
+    open: function (section) {
+      window.__orosOpenAt("settings", { section: String(section || "") });
+    }
+  };
+
+  if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+    window.orosSync.onAutoSync(function (kind) { if (kind !== "start") settingsNotify(); });
+  }
+
   // ---------- 10. App opening (fullscreen takeover) ----------
 
   function openApp(app) {
@@ -6719,6 +7356,26 @@
   // iframe· κλειστό → staging στο sessionStorage (device-local,
   // swept από το factory reset, δεν ταξιδεύει στο sync ποτέ) +
   // άνοιγμα app. Receiver στο minimalism.js καταναλώνει one-shot.
+  // Health deep-link bridge (pattern: Minimalism). Payload = a kind id
+  // (reminder → a new reading of that kind). Open app → live push;
+  // closed → sessionStorage staging (device-local, one-shot, consumed
+  // by health.js at boot) + open.
+  window.__orosOpenHealth = function (kind) {
+    if (typeof kind !== "string" || !/^[a-z0-9-]{1,40}$/.test(kind)) return;
+    if (state.running && state.running.id === "health") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosHealthOpen === "function") {
+          f.contentWindow.__orosHealthOpen(kind);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-health-open", kind); } catch (e) {}
+    openAppById("health");
+  };
+
   window.__orosOpenMinimalism = function (ymd) {
     if (typeof ymd !== "string" || !ymd) return;
     if (state.running && state.running.id === "minimalism") {
@@ -6738,6 +7395,92 @@
   // Consumed by minimalism.js at boot — one-shot take (ίδιο μάθημα
   // με todo/quote: αν το receiver λείπει από το app, το pending
   // ymd απλά αγνοείται — τίποτα δεν σπάει).
+  // Plant Care deep-link bridge (pattern: Minimalism). Payload =
+  // "today" (reminder) or a plant id (Calendar feed row). Open app →
+  // live push; closed → sessionStorage staging (device-local, one-
+  // shot, consumed by plants.js at boot) + open.
+  window.__orosOpenPlants = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "plants") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPlantsOpen === "function") {
+          f.contentWindow.__orosPlantsOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-plants-open", target); } catch (e) {}
+    openAppById("plants");
+  };
+
+  // Podcasts "add this feed" bridge (Reader, Bookmarks). Payload =
+  // an http(s) feed or page address. Open app → live push; closed →
+  // one-shot pending address taken by podcasts.js at boot + open.
+  var podcastsPendingAdd = null;
+  window.__orosOpenPodcastsAdd = function (url) {
+    if (typeof url !== "string" || url.length > 2000 || !/^https?:\/\//i.test(url)) return;
+    if (state.running && state.running.id === "podcasts") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPodcastsAdd === "function") {
+          f.contentWindow.__orosPodcastsAdd(url);
+          return;
+        }
+      } catch (e) {}
+    }
+    podcastsPendingAdd = url;
+    openAppById("podcasts");
+  };
+  window.__orosPodcastsTakePending = function () {
+    var u = podcastsPendingAdd;
+    podcastsPendingAdd = null;
+    return u;
+  };
+
+  // Garage deep-link bridge (pattern: Plant Care). Payload =
+  // "upcoming" (reminder) or a renewal / plan / tyre / vehicle id
+  // (Calendar feed row). Open app → live push; closed →
+  // sessionStorage staging (device-local, one-shot, consumed by
+  // garage.js at boot) + open.
+  window.__orosOpenGarage = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "garage") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosGarageOpen === "function") {
+          f.contentWindow.__orosGarageOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-garage-open", target); } catch (e) {}
+    openAppById("garage");
+  };
+
+  // Pet Health Book deep-link bridge (pattern: Minimalism). Payload =
+  // "today" (reminder) or a pet id (Calendar feed row). Open app →
+  // live push; closed → sessionStorage staging (device-local, one-
+  // shot, consumed by petcare.js at boot) + open.
+  window.__orosOpenPetcare = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "petcare") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPetcareOpen === "function") {
+          f.contentWindow.__orosPetcareOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-petcare-open", target); } catch (e) {}
+    openAppById("petcare");
+  };
+
   window.__orosMinimalismTakePending = function () {
     try {
       var pending = sessionStorage.getItem("oros-minimalism-open");
@@ -6892,6 +7635,51 @@
     openAppById("calendar");
   };
 
+  // BR-B1 — "Send to Budget". Any app (Garage, Split, …) calls
+  // window.parent.__orosOpenBudgetNew({k, a, d?, n?, c?, src?}) from an
+  // explicit button; Budget opens its New entry form prefilled and the
+  // user confirms with Save (a prefill, never data). Strict validation
+  // here (false = rejected, nothing opens); only a fresh plain copy of
+  // the known fields crosses over. Budget running → live push;
+  // otherwise stage in sessionStorage "oros-budget-new" (device-local,
+  // one-shot, read and removed by budget.js at boot) and open it.
+  window.__orosOpenBudgetNew = function (p) {
+    if (!p || typeof p !== "object") return false;
+    if (p.k !== "o" && p.k !== "i") return false;
+    if (typeof p.a !== "number" || Math.floor(p.a) !== p.a ||
+        p.a <= 0 || p.a > 100000000000) return false;
+    var q = { k: p.k, a: p.a };
+    if (p.d !== undefined && p.d !== null && p.d !== "") {
+      var dm = typeof p.d === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.d) : null;
+      if (!dm) return false;
+      var dd = new Date(Date.UTC(+dm[1], +dm[2] - 1, +dm[3]));
+      if (dd.getUTCFullYear() !== +dm[1] || dd.getUTCMonth() !== +dm[2] - 1 ||
+          dd.getUTCDate() !== +dm[3]) return false;
+      q.d = p.d;
+    }
+    if (typeof p.n === "string") q.n = p.n.slice(0, 500);
+    if (typeof p.c === "string" && /^[a-z0-9-]{1,64}$/.test(p.c)) q.c = p.c;
+    if (typeof p.src === "string" && /^[a-z0-9]{1,20}$/.test(p.src)) q.src = p.src;
+    var has = false;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === "budget") has = true;
+    if (!has) return false;
+    if (state.running && state.running.id === "budget") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosBudgetNew === "function") {
+          f.contentWindow.__orosBudgetNew(q);
+          return true;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-budget-new", JSON.stringify(q));
+    } catch (e) {}
+    openAppById("budget");
+    return true;
+  };
+
   // Wave 1B — Calendar deep-link bridge (πρωτότυπο: Cycle/Mood,
   // με μία διαφορά: το payload φτάνει ως deepLink STRING της μορφής
   // "calendar:<evId>:<YYYY-MM-DD>" — το ίδιο σχήμα που μπαίνει στο
@@ -6972,6 +7760,22 @@
 
   // Boot
   initPrefs();
+  // Favourites (launcher.js, a shell component like pet.js): desktop
+  // shortcuts and their sync slice. A bundle without it draws nothing.
+  if (window.orosLauncher) {
+    window.orosLauncher.attach({
+      apps: function () { return state.apps; },
+      open: openApp,
+      running: function () { return state.running; },
+      icons: ICONS,
+      lang: function () { return state.lang; },
+      label: function (app) {
+        var k = "app." + app.id, v = window.t(k);
+        return (v === k) ? app.name : v;
+      },
+      desktop: document.getElementById("oros-desktop")
+    });
+  }
   applySkin();
   applyWallpaper();
   applyTheme();

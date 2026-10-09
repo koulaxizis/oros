@@ -1,0 +1,40 @@
+# Slides
+Make presentations with themes and ready layouts, write them as an outline, and present them full screen with your speaker notes.
+
+## Getting started
+Tap or click `New presentation`. Pick a theme for a blank presentation, or one of the ready templates (`Project update`, `Report`, `Lesson`, `Pitch`, `Photo album`, `Event`). Choose `16:9 wide` or `4:3` first; you can change it later in `Theme and size…` without losing anything.
+
+## Slides and layouts
+- The strip shows every slide. Tap one to edit it; `+` adds a slide with the layout you pick.
+- Right-click a slide, or long-press it on a phone, for `Duplicate slide`, `Layout…`, `Hide in the show`, `Move earlier`, `Move later` and `Delete slide`. Drag slides in the strip to reorder them.
+- A layout has placeholders such as `Add a title` and `Add a picture`. Changing the layout keeps your text and pictures.
+
+## Text, pictures and shapes
+- Double-click a text box, or tap a selected one, to type in it. The small toolbar has bold, italic, underline, bullets, numbering, indent, colour and `Done`. [[Tab]] and [[Shift+Tab]] change the bullet level.
+- Text that does not fit gets smaller on its own (`Shrink text to fit`); a red frame means it still does not fit.
+- `Picture` adds a photo from this device or from Files. In `Format` you can fill or fit it, zoom, move it inside its frame and add a description.
+- Rectangles, ellipses and lines take theme colours, so a new theme recolours them too.
+- Drag to move, use the handles to resize or rotate. Guides help you line things up.
+
+## Three views
+- `Slide`: one slide with the strip and your `Speaker notes`.
+- `Sorter`: every slide as a grid, to reorder, hide or delete.
+- `Outline`: the whole presentation as text. A line starting with `#` is a new slide, `- ` is a bullet (two spaces per level), `1. ` is numbered, `--` starts the second column and `> ` is a speaker note.
+
+## Presenting
+`Present` starts the show full screen. Use the arrow keys, Space, a presentation clicker, or tap the sides of the screen. [[B]] or [[W]] blanks the screen, a number and [[Enter]] jumps to that slide, [[L]] shows a laser pointer, [[N]] shows your notes, [[Esc]] ends the show. `Present with speaker view` opens the slides in a second window for the projector, while you see the next slide, your notes and a timer.
+
+## Sync and backup
+Presentations sync with orOS sync. Pictures are stored once as files on the orOS disk and sync through Vault Drive. If the same text is changed on two devices at once, the newer version stays and the other one is kept in `More` › `Recovered text`. `Save as package (.orosslides)` makes one file with the presentation and its pictures; `Open package` opens it as a new presentation. `Export PDF` and `PDF with speaker notes` make PDFs; `Save this slide as PNG` saves a picture of one slide.
+
+## Keyboard shortcuts
+- [[Ctrl+Z]] / [[Ctrl+Y]]: undo / redo
+- [[Ctrl+M]]: new slide
+- [[Ctrl+D]]: duplicate, [[Ctrl+C]] / [[Ctrl+V]]: copy / paste objects
+- [[Page Up]] / [[Page Down]]: previous / next slide
+- [[F5]]: present from the start, [[Shift+F5]]: from this slide
+
+## Limits
+- PowerPoint files cannot be opened or saved yet.
+- Full screen is not available for web pages on iPhone; the show fills the app instead.
+- Objects cannot be grouped, and slides have no animations yet.

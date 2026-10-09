@@ -717,12 +717,16 @@
 
   // ---------- 6. Synced data model ----------
   // FEEDS v1 (oros-feeds-data):
-  //   feeds   [{ id, url, title, site, folder, img (-1 default | 0 off | 1 on), m }]   sorted by id
+  //   feeds   [{ id, url, title, site, folder, img (-1 default | 0 off | 1 on), full (0 | 1), m }]   sorted by id
   //   folders [{ id, name, ord, m }]                                                   sorted by id
-  //   items   [{ id, feed, title, link, date, author, sum, star, later, m }]           saved articles
+  //   items   [{ id, feed, title, link, date, author, sum, star, later, tags, m }]     saved articles
+  //   tags    [{ id, name, m }]                                                        article tags
+  //   rules   [{ id, name, q, in, scope, act, tag, list, m }]                          rules + watched words
   //   set     { key: { v, m } }        settings, last writer wins per key
   //   read    { old, cut: { feedId: [date, ts] }, ids: { itemId: [state, ts, date, feedId] } }
-  //   tombs   { "f:id" | "d:id" | "i:id": ts }
+  //   tombs   { "f:id" | "d:id" | "i:id" | "t:id" | "r:id": ts }
+  // Phase 2 added full, tags, rules (additive: a phase-1 copy drops them,
+  // which only matters during an update; same version number).
   // Read state: an article is read when its date is older than `old`
   // (nothing older than KEEP_DAYS is ever unread), or an explicit mark
   // newer than its feed's cut says so, or it is not newer than the cut.
@@ -730,13 +734,16 @@
   // which keeps the map small (R26: merge(get, get) === get).
   var DATA_VER = 1;
   var MAX_FEEDS = 2000, MAX_FOLDERS = 200, MAX_SAVED = 2000, MAX_TOMBS = 2000, MAX_READ = 20000;
+  var MAX_TAGS = 200, MAX_RULES = 200, MAX_ITEM_TAGS = 20;
   var KEEP_DAYS = 60;
   var SETTINGS = {
     refresh: { def: 30, ok: function (v) { return [0, 15, 30, 60, 180].indexOf(v) >= 0; } },
     img: { def: 1, ok: function (v) { return v === 0 || v === 1; } },
     scroll: { def: 0, ok: function (v) { return v === 0 || v === 1; } },
     sort: { def: "new", ok: function (v) { return v === "new" || v === "old"; } },
-    relay: { def: "", ok: function (v) { return v === "" || normRelayUrl(v) === v; } }
+    relay: { def: "", ok: function (v) { return v === "" || normRelayUrl(v) === v; } },
+    view: { def: "list", ok: function (v) { return v === "list" || v === "cards" || v === "mag"; } },
+    dedup: { def: 1, ok: function (v) { return v === 0 || v === 1; } }
   };
 
   function normRelayUrl(u) {
@@ -746,7 +753,7 @@
     if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(u)) return u;   // local relay (development)
     return null;
   }
-  function emptyData() { return { ver: DATA_VER, feeds: [], folders: [], items: [], set: {}, read: { old: 0, cut: {}, ids: {} }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, feeds: [], folders: [], items: [], tags: [], rules: [], set: {}, read: { old: 0, cut: {}, ids: {} }, tombs: {} }; }
   function okId(id, p) { return typeof id === "string" && new RegExp("^" + p + "[a-z0-9]{6,24}$").test(id); }
   function okM(m) { return isInt(m) && m >= 0; }
 
@@ -760,6 +767,7 @@
       site: httpUrl(f.site),
       folder: typeof f.folder === "string" && okId(f.folder, "d") ? f.folder : "",
       img: f.img === 0 || f.img === 1 ? f.img : -1,
+      full: f.full === 1 ? 1 : 0,
       m: f.m
     };
   }
@@ -772,7 +780,8 @@
   function normSaved(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "i") || !okId(x.feed, "f") || !okM(x.m)) return null;
     var star = x.star ? 1 : 0, later = x.later ? 1 : 0;
-    if (!star && !later) return null;
+    var tags = normTagList(x.tags);
+    if (!star && !later && !tags.length) return null;
     return {
       id: x.id, feed: x.feed,
       title: clip(oneLine(x.title), 300),
@@ -780,7 +789,37 @@
       date: isInt(x.date) && x.date >= 0 ? x.date : 0,
       author: clip(oneLine(x.author), 120),
       sum: clip(oneLine(x.sum), 2000),
-      star: star, later: later, m: x.m
+      star: star, later: later, tags: tags, m: x.m
+    };
+  }
+  function normTagList(list) {
+    if (!Array.isArray(list)) return [];
+    var seen = {};
+    return list.filter(function (t) {
+      if (!okId(t, "t") || seen[t]) return false;
+      seen[t] = 1;
+      return true;
+    }).sort(cmpStr).slice(0, MAX_ITEM_TAGS);
+  }
+  function normTag(x) {
+    if (!x || typeof x !== "object" || !okId(x.id, "t") || !okM(x.m)) return null;
+    var name = clip(oneLine(x.name), 40);
+    return name ? { id: x.id, name: name, m: x.m } : null;
+  }
+  var RULE_IN = { title: 1, all: 1 };
+  var RULE_ACT = { none: 1, read: 1, star: 1, later: 1, tag: 1 };
+  function normRule(x) {
+    if (!x || typeof x !== "object" || !okId(x.id, "r") || !okM(x.m)) return null;
+    var q = clip(oneLine(x.q), 200);
+    if (!q) return null;
+    var scope = typeof x.scope === "string" && /^(f:f|d:d)[a-z0-9]{6,24}$/.test(x.scope) ? x.scope : "";
+    var act = RULE_ACT[x.act] ? x.act : "none";
+    var tag = act === "tag" && okId(x.tag, "t") ? x.tag : "";
+    if (act === "tag" && !tag) act = "none";
+    return {
+      id: x.id, name: clip(oneLine(x.name), 60) || clip(q, 60), q: q,
+      "in": RULE_IN[x["in"]] ? x["in"] : "title", scope: scope, act: act, tag: tag,
+      list: x.list ? 1 : 0, m: x.m
     };
   }
   // Last writer wins; equal stamps: the larger JSON (deterministic).
@@ -799,7 +838,7 @@
       if (!d || typeof d !== "object" || !d.tombs || typeof d.tombs !== "object") return;
       Object.keys(d.tombs).forEach(function (k) {
         var t = d.tombs[k];
-        if (!/^[fdi]:[a-z0-9]{7,25}$/.test(k) || !okM(t)) return;
+        if (!/^[fdirt]:[a-z0-9]{7,25}$/.test(k) || !okM(t)) return;
         if (!(tombs[k] >= t)) tombs[k] = t;
       });
     });
@@ -823,7 +862,27 @@
     }
     out.feeds = collect("feeds", normFeed, "f", MAX_FEEDS);
     out.folders = collect("folders", normFolder, "d", MAX_FOLDERS);
-    out.items = collect("items", normSaved, "i", MAX_SAVED);
+    out.tags = collect("tags", normTag, "t", MAX_TAGS);
+    out.rules = collect("rules", normRule, "r", MAX_RULES);
+    // saved articles keep only live tags; one with nothing left goes
+    var liveTag = {};
+    out.tags.forEach(function (x) { liveTag[x.id] = 1; });
+    out.items = collect("items", normSaved, "i", MAX_SAVED).map(function (x) {
+      if (!x.tags.some(function (t) { return !liveTag[t]; })) return x;
+      var y = {};
+      Object.keys(x).forEach(function (k) { y[k] = x[k]; });
+      y.tags = x.tags.filter(function (t) { return liveTag[t]; });
+      return y;
+    }).filter(function (x) { return x.star || x.later || x.tags.length; });
+    // a rule's tag that is gone: the rule does nothing (it may still list)
+    out.rules = out.rules.map(function (r) {
+      if (r.act !== "tag" || liveTag[r.tag]) return r;
+      var y = {};
+      Object.keys(r).forEach(function (k) { y[k] = r[k]; });
+      y.act = "none";
+      y.tag = "";
+      return y;
+    });
 
     // settings
     var set = {};
@@ -985,6 +1044,136 @@
     return base;
   }
 
+  // ---------- 8. Search, rules, duplicates, statistics ----------
+  // Folded text: lower case, no accents, final sigma as sigma, so that
+  // "Ελλάδα", "ΕΛΛΑΔΑ" and "ελλαδα" are the same word.
+  function fold(s) {
+    return String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/ς/g, "σ");
+  }
+  // "words" all must appear, "a phrase" in quotes as is, -word must not.
+  // Matching is on parts of words: "σεισμ" finds "σεισμός" and "σεισμού".
+  function parseQuery(q) {
+    var out = { all: [], not: [] };
+    var re = /(-?)"([^"]*)"|(-?)(\S+)/g, m, n = 0;
+    q = fold(q);
+    while ((m = re.exec(q)) && n < 20) {
+      var neg = m[1] || m[3], term = oneLine(m[2] !== undefined ? m[2] : m[4]);
+      if (!term || term === "-") continue;
+      (neg ? out.not : out.all).push(term);
+      n++;
+    }
+    return out;
+  }
+  function emptyQuery(pq) { return !pq || (!pq.all.length && !pq.not.length); }
+  // text: already folded
+  function matchQuery(pq, text) {
+    if (emptyQuery(pq) || !pq.all.length) return false;   // only exclusions: matches nothing
+    for (var i = 0; i < pq.all.length; i++) if (text.indexOf(pq.all[i]) < 0) return false;
+    for (var j = 0; j < pq.not.length; j++) if (text.indexOf(pq.not[j]) >= 0) return false;
+    return true;
+  }
+
+  // Does a rule cover this article? h: { feed, title, snip?, author? }
+  // text: extra plain text (the article's body when it arrives).
+  function ruleScopes(data, rule, feedId) {
+    if (!rule.scope) return true;
+    if (rule.scope.charAt(0) === "f") return rule.scope.slice(2) === feedId;
+    var f = feedById(data, feedId);
+    return !!f && f.folder === rule.scope.slice(2);
+  }
+  var parsedRules = {};
+  function ruleQuery(rule) {
+    var k = rule.id + "\n" + rule.q;
+    return parsedRules[k] || (parsedRules[k] = parseQuery(rule.q));
+  }
+  function ruleMatches(data, rule, h, text) {
+    if (!ruleScopes(data, rule, h.feed)) return false;
+    var hay = rule["in"] === "all" ? [h.title, h.author, h.snip || h.sum, text].join(" \n ") : String(h.title || "");
+    return matchQuery(ruleQuery(rule), fold(hay));
+  }
+  // What the rules do to a new article -> { read, star, later, tags[] }
+  // A rule acts on articles from (a day before) its last edit onwards,
+  // so a device that fetches a feed for the first time does not apply
+  // it to older articles the other devices saw without it.
+  function ruleActions(data, h, text) {
+    var out = { read: false, star: false, later: false, tags: [] };
+    data.rules.forEach(function (r) {
+      if (r.act === "none" || (h.date && h.date < r.m - 86400000) || !ruleMatches(data, r, h, text)) return;
+      if (r.act === "read") out.read = true;
+      else if (r.act === "star") out.star = true;
+      else if (r.act === "later") out.later = true;
+      else if (r.act === "tag" && out.tags.indexOf(r.tag) < 0) out.tags.push(r.tag);
+    });
+    out.tags.sort(cmpStr);
+    return out;
+  }
+  // Rule results carry the article's own date as their stamp, so two
+  // devices that both apply a rule write the same record, and anything
+  // the user does later (stamped "now") wins over the rule.
+  function ruleStamp(h) { return Math.max(1, isInt(h.date) ? h.date : 1); }
+  function applyRuleRead(data, h) {
+    if (data.read.ids[h.id] || isRead(data, h) || !feedById(data, h.feed)) return false;
+    data.read.ids[h.id] = [1, ruleStamp(h), Math.max(0, h.date || 0), h.feed];
+    return true;
+  }
+  // h: { id, feed, title, link, date, author }, sum: plain text
+  function applyRuleSave(data, h, acts, sum) {
+    if (!acts.star && !acts.later && !acts.tags.length) return false;
+    if (data.tombs["i:" + h.id] !== undefined || savedById(data, h.id)) return false;   // the user decided already
+    var live = {};
+    data.tags.forEach(function (x) { live[x.id] = 1; });
+    var tags = acts.tags.filter(function (t) { return live[t]; });
+    if (!acts.star && !acts.later && !tags.length) return false;
+    data.items.push({ id: h.id, feed: h.feed, title: clip(oneLine(h.title), 300), link: h.link || "", date: h.date || 0,
+                      author: clip(oneLine(h.author), 120), sum: clip(oneLine(sum), 2000),
+                      star: acts.star ? 1 : 0, later: acts.later ? 1 : 0, tags: tags, m: ruleStamp(h) });
+    return true;
+  }
+
+  // Same story from two feeds: one key per article address (scheme,
+  // "www.", tracking parameters, trailing slash and #fragment ignored).
+  var TRACK_PARAM = /^(utm_[a-z]+|fbclid|gclid|dclid|mc_cid|mc_eid|igshid|ref|ref_src|cmpid|ocid|at_medium|at_campaign)$/i;
+  function dupKey(link) {
+    var x;
+    try { x = new URL(String(link || "")); } catch (e) { return ""; }
+    if (x.protocol !== "https:" && x.protocol !== "http:") return "";
+    var keep = [];
+    x.searchParams.forEach(function (v, k) { if (!TRACK_PARAM.test(k)) keep.push([k, v]); });
+    keep.sort(function (a, b) { return cmpStr(a[0], b[0]) || cmpStr(a[1], b[1]); });
+    var q = keep.map(function (p) { return encodeURIComponent(p[0]) + "=" + encodeURIComponent(p[1]); }).join("&");
+    var path = x.pathname.replace(/\/+$/, "") || "/";
+    return x.hostname.toLowerCase().replace(/^www\./, "") + (x.port ? ":" + x.port : "") + path + (q ? "?" + q : "");
+  }
+
+  // Per feed, from the articles on this device:
+  // { n, week (articles in the last 28 days / 4), last (newest date) }
+  function feedStats(heads, feedId, now) {
+    return allFeedStats(heads.filter(function (h) { return h.feed === feedId; }), now)[feedId] || { n: 0, week: 0, last: 0 };
+  }
+  // Every feed in one pass: { feedId: { n, week, last } }
+  function allFeedStats(heads, now) {
+    var by = {}, from = now - 28 * 86400000;
+    heads.forEach(function (h) {
+      var s = by[h.feed] || (by[h.feed] = { n: 0, recent: 0, last: 0 });
+      s.n++;
+      if (h.date > s.last) s.last = h.date;
+      if (h.date >= from) s.recent++;
+    });
+    Object.keys(by).forEach(function (k) {
+      var s = by[k];
+      by[k] = { n: s.n, week: Math.round(s.recent / 4 * 10) / 10, last: s.last };
+    });
+    return by;
+  }
+  // "" | "quiet" (nothing new for 6 months) | "broken" (failing for 7 days)
+  // state: { fails, since } (device-local)
+  function feedHealth(stats, state, now) {
+    if (state && state.fails > 0 && state.since && now - state.since >= 7 * 86400000) return "broken";
+    if (stats.last && now - stats.last >= 182 * 86400000) return "quiet";
+    return "";
+  }
+
   var api = {
     hash: hash, normUrl: normUrl, feedId: feedId, itemId: itemId, absUrl: absUrl, httpUrl: httpUrl, siteOf: siteOf,
     decodeEntities: decodeEntities, escHtml: escHtml, textOf: textOf, titleText: titleText, parseDate: parseDate,
@@ -996,7 +1185,11 @@
     emptyData: emptyData, merge: merge, normRelayUrl: normRelayUrl, normFeed: normFeed, normSaved: normSaved,
     setting: setting, putSetting: putSetting, feedById: feedById, folderById: folderById, savedById: savedById,
     sortFolders: sortFolders, isRead: isRead, markItems: markItems, markAllBefore: markAllBefore, compact: compact,
-    newId: newId, nextDelay: nextDelay
+    newId: newId, nextDelay: nextDelay,
+    MAX_TAGS: MAX_TAGS, MAX_RULES: MAX_RULES, MAX_ITEM_TAGS: MAX_ITEM_TAGS,
+    normTag: normTag, normRule: normRule, fold: fold, parseQuery: parseQuery, emptyQuery: emptyQuery,
+    matchQuery: matchQuery, ruleMatches: ruleMatches, ruleActions: ruleActions, applyRuleRead: applyRuleRead,
+    applyRuleSave: applyRuleSave, dupKey: dupKey, feedStats: feedStats, allFeedStats: allFeedStats, feedHealth: feedHealth
   };
   root.orosFeedsCore = api;
   if (typeof module === "object" && module.exports) module.exports = api;
