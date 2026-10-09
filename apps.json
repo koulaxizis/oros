@@ -154,6 +154,14 @@
       "type": "internal"
     },
     {
+      "id": "slides",
+      "name": "Slides",
+      "category": "Office",
+      "icon": "slides",
+      "url": "slides/",
+      "type": "internal"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",
