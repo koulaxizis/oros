@@ -402,6 +402,25 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .fn-badge { flex: none; font-size: 11px; color: var(--text-dim); }
 .ctx-font { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Brand kit */
+.brand-top { display: flex; align-items: flex-start; gap: 8px; }
+.brand-top .hint { flex: 1; margin: 0; }
+.br-sw, .br-logo { position: relative; display: inline-flex; }
+.br-sw { margin: 4px 4px 0 0; }
+.br-logo .up-tile { width: 100%; }
+.br-x {
+  position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; padding: 0; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg); color: var(--danger); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.br-font { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; flex-wrap: wrap; }
+.br-slot { flex: none; width: 84px; font-size: 12px; color: var(--text-dim); }
+.br-font-btn {
+  flex: 1; min-width: 0; min-height: 40px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); text-align: left; font-size: 16px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.br-font-btn:hover { border-color: var(--accent); }
+
 /* Canva account import */
 .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin: 10px 0; max-height: 52vh; overflow-y: auto; }
 .cv-tile {

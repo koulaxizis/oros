@@ -28,6 +28,12 @@ Under `What will you make?` tap or click a size, for example a square post or an
 ## Pages
 The strip under the canvas shows the pages of your design. `+` adds a page; each page has `Duplicate page`, `Move left`, `Move right` and `Delete page`.
 
+## Brand kit
+- `Brand kit` in the side bar keeps your colours, fonts and logos, and syncs them to all your devices.
+- Colours: `Add colour` or `From this design`; tap a colour to apply it to the selection. They also appear first in every colour panel as `Brand colours`.
+- Fonts: select a text and tap `Use selected` next to `Heading`, `Subheading` or `Body text`. The `Text` panel then adds text in these fonts.
+- Logos: `Add logo` keeps a picture; tap it to place it. `Edit` shows `×` to remove colours and logos.
+
 ## Animate and present
 - Select an element and tap or click `Animate` to give it an entrance: `Fade`, `Rise`, `Pop`, `Wipe` or, for text, `Typewriter`. Elements enter one after the other, bottom layer first.
 - With nothing selected, `Animate` sets how long the page shows and the transition to it (`Fade`, `Slide`, `Push`, `Zoom` or `None`).
@@ -69,4 +75,4 @@ Designs sync with orOS sync. Uploaded images are stored once on the orOS disk an
 
 ## Limits
 - PDF pages are high-resolution images, so text in the PDF cannot be selected or edited.
-- More fonts, sounds and video come in a later version.
+- Sound and video elements come in a later version.

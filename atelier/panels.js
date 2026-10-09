@@ -15,7 +15,7 @@
   var AT = window.AT, M = AT.M, T = AT.T, FX = AT.FX, AX = AT.AX, A = AT.A, t = AT.t, $ = AT.$, el = AT.el;
   var ED = AT.ed, ICONS = window.ATELIER_ICONS;
 
-  var RAIL = ["templates", "elements", "text", "sources", "uploads", "background"];
+  var RAIL = ["templates", "elements", "text", "brand", "sources", "uploads", "background"];
   var PALETTE = ["#000000", "#545454", "#737373", "#a6a6a6", "#d9d9d9", "#ffffff",
     "#ff3131", "#ff5757", "#ff66c4", "#cb6ce6", "#8c52ff", "#5e17eb",
     "#0097b2", "#0cc0df", "#5ce1e6", "#38b6ff", "#5271ff", "#004aad",
@@ -278,13 +278,30 @@
 
   // --- Text ---
   function baseSize() { return Math.min(AT.doc.setup.w, AT.doc.setup.h); }
+  // heading / subheading / body: size share, bold, sample, brand-kit slot
+  var TEXT_KINDS = [["heading", 0.09, 1, "txt.headingT", "h"], ["sub", 0.055, 1, "txt.subT", "s"], ["body", 0.035, 0, "txt.bodyT", "t"]];
+  // adds a text in the brand kit's font for that slot (when set)
+  AT.addBrandText = function (slot) {
+    var k = TEXT_KINDS.filter(function (x) { return x[4] === slot; })[0] || TEXT_KINDS[2];
+    var f = AT.brand && AT.brand.font(k[4]);
+    var spec = { k: "text", tx: t(k[3]), size: Math.round(baseSize() * k[1]), b: f ? f.b : k[2], fc: "#000000", autoW: 1 };
+    if (!f || f.f === "sans") { ED.add(spec, { edit: true }); return; }
+    AX.ensureFont(f.f);
+    spec.font = f.f;
+    var key = T.fontKey(f.f, spec.b, 0);
+    // the font may still be on its way; text falls back to Sans if it never comes
+    T.load([key, "sans-" + key.split("-")[1]]).then(function () { ED.add(spec, { edit: true }); }, function () { ED.add(spec, { edit: true }); });
+  };
   VIEWS.text = function (body) {
     var s = sec();
     var b0 = baseSize();
-    [["heading", 0.09, 1, "txt.headingT"], ["sub", 0.055, 1, "txt.subT"], ["body", 0.035, 0, "txt.bodyT"]].forEach(function (k) {
-      var b = btn("text-add " + k[0], t("txt." + k[0]), function () {
-        ED.add({ k: "text", tx: t(k[3]), size: Math.round(b0 * k[1]), b: k[2], fc: "#000000", autoW: 1 }, { edit: true });
-      });
+    TEXT_KINDS.forEach(function (k) {
+      var b = btn("text-add " + k[0], t("txt." + k[0]), function () { AT.addBrandText(k[4]); });
+      var f = AT.brand && AT.brand.font(k[4]);
+      if (f) {
+        var fk = T.fontKey(f.f, f.b, 0);
+        if (T.isLoaded(fk)) b.style.fontFamily = T.cssStack(fk) + ", sans-serif";
+      }
       s.appendChild(b);
     });
     body.appendChild(s);
@@ -503,6 +520,8 @@
       if (a.k === "shape") { a.fc = c; delete a.g; }
     });
   }
+  AT.setColour = setColour;
+  AT.docColours = function () { return AT.doc ? docColours() : []; };
   function openColour(target) { openView("colour", target); }
 
   VIEWS.colour = function (body) {
@@ -510,6 +529,8 @@
     var it = sel1();
     var cur = kind === "bg" ? (bgItem() && bgItem().ax.fc) || "" : it ? currentColour(it, kind) : "";
     var allowNone = kind === "stroke" || (kind === "fill" && it && it.ax.k === "shape");
+    var bc = AT.brand ? AT.brand.colors() : [];
+    if (bc.length) { var sb = sec(t("col.brand")); sb.appendChild(swatches(cur, function (c) { setColour(kind, c); }, true, bc)); body.appendChild(sb); }
     var s0 = sec(t("col.doc"));
     var dc = docColours();
     if (dc.length) { s0.appendChild(swatches(cur, function (c) { setColour(kind, c); }, true, dc)); body.appendChild(s0); }

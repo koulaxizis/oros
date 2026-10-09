@@ -522,6 +522,6 @@
 
   AT.io = {
     exportPackage: exportPackage, importAny: importAny, importPptx: importPptxFile, uploadImage: uploadImage,
-    placePhoto: placePhoto, exportDialog: exportDialog, resizeTo: resizeTo
+    placePhoto: placePhoto, pickFile: pickFile, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();
