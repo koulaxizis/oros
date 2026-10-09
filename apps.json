@@ -79,6 +79,14 @@
       "type": "internal"
     },
     {
+      "id": "timesheet",
+      "name": "Timesheet",
+      "category": "Office",
+      "icon": "timesheet",
+      "url": "timesheet/",
+      "type": "internal"
+    },
+    {
       "id": "minimalism",
       "name": "Minimalism",
       "category": "Lifestyle",
