@@ -218,6 +218,14 @@
       "type": "internal"
     },
     {
+      "id": "feeds",
+      "name": "Reader",
+      "category": "Internet",
+      "icon": "feeds",
+      "url": "feeds/",
+      "type": "internal"
+    },
+    {
       "id": "dice",
       "name": "Dice & Coin",
       "category": "Fun",
