@@ -52,9 +52,9 @@ MIT (notice in the file). The app icons and all other artwork are drawn for orOS
 |---|---|---|---|
 | EFF Diceware word lists (`passwords/words-eff.js`) | [Electronic Frontier Foundation](https://www.eff.org/dice) | [CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/) | Passwords (passphrases) |
 | 10k most common passwords (`passwords/common.js`) | [SecLists](https://github.com/danielmiessler/SecLists), © 2018 Daniel Miessler | MIT | Passwords (weak-password check) |
-| English words (`wordle/words-en.js`) | [SCOWL](http://wordlist.aspell.net/), © 2000-2016 Kevin Atkinson, via the npm package `wordlist-english` | SCOWL licence (permissive, notice kept in the file) | Wordle, Hangman (`hangman/words-en.js`) |
-| Greek words (`wordle/words-el.js`) | Hunspell el_GR 0.9, Steve Stavropoulos and contributors ([elspell](https://elspell.math.upatras.gr/)), via [`dictionary-el`](https://github.com/wooorm/dictionaries) | MPL 1.1 | Λεξούλα (Greek Wordle), Hangman (`hangman/words-el.js`) |
-| Greek word frequencies (`wordle/words-el.js`) | [FrequencyWords](https://github.com/hermitdave/FrequencyWords) 2018, Hermit Dave, from OpenSubtitles | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | Λεξούλα, Hangman (EN and EL: choosing everyday words) |
+| English words (`wordle/words-en.js`) | [SCOWL](http://wordlist.aspell.net/), © 2000-2016 Kevin Atkinson, via the npm package `wordlist-english` | SCOWL licence (permissive, notice kept in the file) | Wordle, Hangman (`hangman/words-en.js`), Word Search and Crossword (`wordsearch/words-en.js`) |
+| Greek words (`wordle/words-el.js`) | Hunspell el_GR 0.9, Steve Stavropoulos and contributors ([elspell](https://elspell.math.upatras.gr/)), via [`dictionary-el`](https://github.com/wooorm/dictionaries) | MPL 1.1 | Λεξούλα (Greek Wordle), Hangman (`hangman/words-el.js`), Κρυπτόλεξο and Σταυρόλεξο (`wordsearch/words-el.js`) |
+| Word frequencies, English and Greek (`wordle/words-el.js`, `hangman/words-*.js`, `wordsearch/words-*.js`) | [FrequencyWords](https://github.com/hermitdave/FrequencyWords) 2018, Hermit Dave, from OpenSubtitles | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | Λεξούλα, Hangman, Word Search and Crossword (EN and EL: choosing everyday words) |
 | Copyright terms per country (`pubdomain/rules.js`) | Each country's statute; the official source is linked on every row | Facts from public law | Public Domain Calculator |
 
 `passwords/THIRD-PARTY.txt` carries the full MIT notice for SecLists. The
