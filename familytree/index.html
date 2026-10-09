@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Family Tree · orOS</title>
+
+  <link rel="stylesheet" href="familytree.css?v=0.45.13">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="txt-btn" id="tree-btn" aria-haspopup="dialog">
+      <span id="tree-name" class="tree-name"></span>
+    </button>
+    <div class="seg" id="view-seg" role="group">
+      <button type="button" data-view="hourglass" aria-pressed="true"></button>
+      <button type="button" data-view="ancestors" aria-pressed="false"></button>
+      <button type="button" data-view="descendants" aria-pressed="false"></button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="people-btn"></button>
+    <button type="button" class="icon-btn" id="fit-btn"></button>
+    <button type="button" class="icon-btn" id="more-btn" aria-haspopup="menu"></button>
+  </header>
+
+  <main id="main">
+    <section id="stage" aria-label="Family tree">
+      <svg id="svg" role="img" aria-hidden="true"><g id="vp"></g></svg>
+      <div id="empty" class="empty" hidden>
+        <p id="empty-text"></p>
+        <div class="empty-actions">
+          <button type="button" class="dlg-btn primary" id="empty-add"></button>
+          <button type="button" class="dlg-btn" id="empty-contacts"></button>
+          <button type="button" class="dlg-btn" id="empty-import"></button>
+        </div>
+      </div>
+      <div class="zoom" id="zoom">
+        <button type="button" class="icon-btn" id="zoom-in"></button>
+        <button type="button" class="icon-btn" id="zoom-out"></button>
+      </div>
+    </section>
+    <aside id="side" hidden></aside>
+  </main>
+
+  <div id="print-host" aria-hidden="true"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="ft-core.js?v=0.45.13"></script>
+  <script src="familytree.js?v=0.45.13"></script>
+
+</body>
+</html>
