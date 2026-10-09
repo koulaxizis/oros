@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Media Shelf · orOS</title>
+
+  <link rel="stylesheet" href="shelf.css?v=0.45.14">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <span id="app-name" class="app-name"></span>
+    <span class="spacer"></span>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="more-btn"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="now"><span data-i18n="tab.now">Now</span><span class="cnt" id="cnt-now"></span></button>
+    <button type="button" role="tab" data-tab="want"><span data-i18n="tab.want">Wishlist</span><span class="cnt" id="cnt-want"></span></button>
+    <button type="button" role="tab" data-tab="hist"><span data-i18n="tab.hist">History</span><span class="cnt" id="cnt-hist"></span></button>
+    <button type="button" role="tab" data-tab="stats"><span data-i18n="tab.stats">Statistics</span></button>
+  </nav>
+
+  <main id="main">
+    <div id="list-bar">
+      <div id="types" class="chips"></div>
+      <div class="find">
+        <label class="q-wrap">
+          <span id="q-ic" class="q-ic" aria-hidden="true"></span>
+          <input id="q" type="search" autocomplete="off" maxlength="80">
+        </label>
+        <select id="sort"></select>
+      </div>
+    </div>
+
+    <ul id="list"></ul>
+    <div id="empty" class="empty" hidden></div>
+    <div id="stats" hidden></div>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="shelf.js?v=0.45.14"></script>
+
+</body>
+</html>
