@@ -3954,3 +3954,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** a real phone, Safari / iOS, Firefox, offline install on a real device.
 - **Core:** `apps.json` entry (System), `ICONS.help`, `app.help` (EN + EL), `sw.js` precache (Help + 13 topics + every registered app page, both languages), Tests workflow paths `help/**` and `**/help.*.txt`. `APP_VERSION` 0.48.00: main (0.47.05) + 1 minor (new app). Apps registered in 0.47.00 without a page yet are in `PENDING`.
 - **Status:** PR #63; not on `main` (R4).
+
+### 2026-10-09 — hotfix 0.48.01 — universal search works again
+- **Changes:** `apps.json` Mind Map lost a `"search": "search.js"` entry copied from Kanban by the bulk release; the file does not exist, so every universal search failed with "failed to load search.js" in 0.48.00. New test in `tests/search.test.js`: every `search` entry in `apps.json` must point to an existing file (PR #101).
+- **NOT tested:** a real phone, Safari / iOS.
