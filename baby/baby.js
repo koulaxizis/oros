@@ -1794,7 +1794,7 @@
     "--panel-bg": "#110906", "--border": "#2a1810", "--shadow": "rgba(0, 0, 0, 0.7)", "--danger": "#b5523f"
   };
 
-  function applyPalette() {
+  function inheritPalette() {
     var root = document.documentElement;
     PAL_VARS.forEach(function (v) { root.style.removeProperty(v); });
     try {
@@ -1814,7 +1814,7 @@
   }
   function watchPalette() {
     try {
-      new MutationObserver(applyPalette).observe(
+      new MutationObserver(inheritPalette).observe(
         window.parent.document.documentElement,
         { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
       );
@@ -1823,7 +1823,7 @@
   function toggleNight() {
     view.night = view.night ? 0 : 1;
     saveView();
-    applyPalette();
+    inheritPalette();
     renderToolbar();
   }
 
@@ -1920,7 +1920,7 @@
     renderWeekPick();
     wire();
     registerSync();
-    applyPalette();
+    inheritPalette();
     watchPalette();
     renderAll();
   }
