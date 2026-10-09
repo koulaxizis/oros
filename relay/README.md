@@ -17,6 +17,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `worker.js` | Entry point: wires Cloudflare's `connect()` (TCP + TLS) into `core.js` |
 | `core.js` | HTTP side: CORS (allowed origins only), request validation, rate limit, the operations |
 | `web.js` | The Reader's `web` operation: fetches public feeds and pages (see below) |
+| `canva.js` | The Atelier's `canva` operation: Canva Connect sign-in and PowerPoint export (see below) |
 | `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -67,6 +68,52 @@ owner's free Workers quota.
 
 Tests: `tests/feeds.test.js` drives `core.js` + `web.js` with a fake
 `fetch`.
+
+## The `canva` operation (Atelier app)
+
+Atelier can bring designs over from a Canva account through the
+Canva Connect API. Canva only lets a server exchange sign-in codes
+(it needs the integration's client secret and sends no CORS
+headers), so the relay keeps that secret and passes the user's own
+calls through. The user's Canva tokens stay on their device and come
+with each call; the relay stores and logs nothing.
+
+`POST /v1` with `{ op: "canva", act, … }`:
+
+| act | Extra fields | Returns |
+|---|---|---|
+| `config` | | `{ configured, clientId }` |
+| `token` | `code`, `verifier` (PKCE), `redirect` (a page of an allowed origin) | `{ access, refresh, expires, scope }` |
+| `refresh` | `refresh` | same (Canva refresh tokens work once) |
+| `designs` | `token`, `cont?`, `query?` | `{ items[{ id, title, thumb, tw, th, pages, updated, types }], cont }` |
+| `export` | `token`, `id` | `{ job, status, urls, err }` (PowerPoint export) |
+| `job` | `token`, `job` | same |
+| `file` | `url` (https, `*.canva.com` only, every redirect hop checked) | the file's bytes, `application/octet-stream`, ≤60 MB |
+
+Error codes: `canva-off` (no secrets set), `auth` (sign in to Canva
+again), `rate`, `canva` (Canva's own message), `too-big`, `url` (a download redirected off Canva), `network`.
+
+Tests: `tests/canva-relay.test.js` drives `core.js` + `canva.js` with a
+mocked Canva API.
+
+### Turning it on (once)
+
+1. Canva account with two-step verification (MFA) on.
+2. <https://www.canva.com/developers/integrations/connect-api> →
+   **Create an integration** (public), any name, e.g. "orOS Atelier".
+3. **Scopes:** `design:meta:read` and `design:content:read`.
+4. **Authentication › Authorized redirects:**
+   `https://useoros.online/atelier/canva-callback.html`
+5. **Credentials:** copy the Client ID, click **Generate secret**, copy it.
+6. Cloudflare → Workers & Pages → `oros-mail-relay` → Settings →
+   Variables and secrets → add two **secrets**: `CANVA_CLIENT_ID` and
+   `CANVA_CLIENT_SECRET`. Deploy.
+
+An integration Canva has not reviewed is meant for development by its
+owner; whether Canva lets the owner's own account use it day to day
+without review was not verified (Canva's docs do not say). Other
+people's accounts need the review. Private integrations need a Canva
+Enterprise plan.
 
 ## Rules it enforces
 
