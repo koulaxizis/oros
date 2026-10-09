@@ -6,11 +6,13 @@
 //
 // Request:  POST /v1  { op, acct:{host,port,sec,user,pass}, ...args }
 //           POST /v1  { op: "web", reqs:[...] }  (Reader, see web.js)
+//           POST /v1  { op: "canva", act, ... }  (Atelier, see canva.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
 import { withSession, ImapError } from "./imap.js";
 import { validWeb, runWeb } from "./web.js";
+import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -19,7 +21,7 @@ export const LIMITS = {
 };
 
 const PORTS = { 993: "tls", 143: "starttls" };
-const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1 };
+const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1 };
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -46,9 +48,10 @@ export function validAccount(a) {
 
 function folderArg(f) { return str(f, 1000) && !/[\r\n\0]/.test(f); }
 
-export function validRequest(b) {
+export function validRequest(b, env) {
   if (!b || typeof b !== "object" || !OPS[b.op]) return "op";
   if (b.op === "web") return validWeb(b);   // Reader: public pages, no account
+  if (b.op === "canva") return validCanva(b, allowedOrigins(env));   // Atelier: Canva Connect
   const bad = validAccount(b.acct);
   if (bad) return bad;
   if (b.op === "list") {
@@ -129,7 +132,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (text.length > LIMITS.bodyBytes) return fail(413, "bad-request", "request too large", okOrigin);
   let b;
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
-  const bad = validRequest(b);
+  const bad = validRequest(b, env);
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
   if (b.op === "web") {
@@ -138,6 +141,17 @@ export async function handle(request, env, connectFn, now, fetchFn) {
       return json(200, { ok: true, data }, okOrigin);
     } catch (e) {
       return fail(200, "proto", String(e && e.message || "proto").slice(0, 300), okOrigin);
+    }
+  }
+
+  if (b.op === "canva") {
+    try {
+      if (b.act === "file") return await canvaFile(b, fetchFn || ((u, o) => fetch(u, o)), corsHeaders(okOrigin));
+      const data = await runCanva(b, env, fetchFn || ((u, o) => fetch(u, o)));
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      const code = e instanceof CanvaError ? e.code : "proto";
+      return fail(200, code, String(e && e.message || code).slice(0, 300), okOrigin);
     }
   }
 
