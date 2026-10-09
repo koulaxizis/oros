@@ -428,6 +428,7 @@ var PRECACHE_URLS = [
   "water/core.js",
   "water/water.js",
   "vendor/jspdf.umd.min.js",
+  "vendor/xlsx.full.min.js",
   "vendor/hls.light.min.js",
   "vendor/NotoSans-Regular.ttf",
   "fonts/nunito-regular.woff2",
