@@ -417,7 +417,8 @@
     return ST.usage().then(function (u) {
       var need = (epIndex[m.id] && epIndex[m.id].ep.size) || 0;
       if (u && u.quota && need && u.quota - u.usage < need * 1.2) throw { code: "space" };
-      return fetch(m.audio, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
+      return fetch(m.audio, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal })
+        .catch(function () { throw { code: "cors" }; });
     }).then(function (r) {
       if (!r.ok) throw { code: "http" };
       job.total = +r.headers.get("Content-Length") || 0;
@@ -448,10 +449,9 @@
       delete dling[m.id];
       paintEp(m.id);
       if (ctl.signal.aborted) return false;
-      if (!quiet) {
-        var code = e && e.code;
-        showToast(code === "space" ? t("toast.dlSpace") : code === "http" ? t("toast.dlErr") : t("toast.dlCors"));
-      }
+      var code = e && e.code;
+      if (!code) console.warn("[podcasts] download", e);
+      if (!quiet) showToast(code === "space" ? t("toast.dlSpace") : code === "cors" ? t("toast.dlCors") : t("toast.dlErr"));
       return false;
     });
   }

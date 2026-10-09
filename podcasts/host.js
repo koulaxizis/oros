@@ -131,6 +131,7 @@
     try { doc.body.appendChild(audio); } catch (e) {}
   }
   var cur = null;          // meta of the loaded episode
+  var loading = false;     // switching episodes: the old element's pause is not a "pause"
   var blobUrl = "";
   var flags = { buffering: false, error: "" };
   var sleep = { until: 0, end: false, iv: null };
@@ -163,6 +164,7 @@
     m = cleanMeta(m);
     if (!m) return Promise.resolve(false);
     if (cur && cur.id !== m.id) commit("close");
+    loading = true;
     cur = m;
     local.cur = m.id;
     local.meta[m.id] = m;
@@ -172,9 +174,12 @@
     var show = showOf(m.s);
     if (!at && show && show.skA) at = show.skA;           // skip the intro
     try { audio.pause(); audio.removeAttribute("src"); audio.load(); } catch (e) {}
+    // What starts playing leaves the queue ("Up next" is what follows).
+    if (data.queue.ids.indexOf(m.id) >= 0) mutate(function (dt, now) { return C.queueRemove(dt, m.id, now); });
     return sourceFor(m).then(function (src) {
       if (!cur || cur.id !== m.id) return false;          // another play() won meanwhile
       audio.src = src;
+      loading = false;
       audio.playbackRate = speedFor(m);
       try { audio.preservesPitch = true; } catch (e) {}
       var seekTo = function () {
@@ -224,7 +229,7 @@
 
   // ---------- Position → slice ----------
   function commit(ev) {
-    if (!cur) return;
+    if (!cur || loading) return;
     var p = Math.floor(audio.currentTime || 0), d = isFinite(audio.duration) ? Math.round(audio.duration) : (cur.dur || 0);
     var nowSec = Math.floor(Date.now() / 1000);
     if (ev !== "ended" && !C.shouldCommit(ev, p, local.last, nowSec)) return;
@@ -236,7 +241,7 @@
     saveLocal();
   }
   audio.addEventListener("timeupdate", function () {
-    if (!cur) return;
+    if (!cur || loading) return;
     var p = Math.floor(audio.currentTime || 0), d = isFinite(audio.duration) ? Math.round(audio.duration) : (cur.dur || 0);
     var old = local.pos[cur.id];
     if (!old || old[0] !== p) { local.pos[cur.id] = [p, d, Date.now()]; saveLocal(); }
@@ -248,7 +253,7 @@
     posState();
     host.notify("time");
   });
-  audio.addEventListener("pause", function () { commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
+  audio.addEventListener("pause", function () { if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
   audio.addEventListener("playing", function () { flags.buffering = false; flags.error = ""; chip(); host.notify("play"); });
   audio.addEventListener("waiting", function () { flags.buffering = true; host.notify("buffer"); });
   audio.addEventListener("canplay", function () { flags.buffering = false; host.notify("buffer"); });
