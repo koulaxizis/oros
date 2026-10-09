@@ -88,16 +88,16 @@ test("normalize: unknown fields dropped, values bounded, no markup paths", () =>
   assert.deepEqual(j(it), {
     id: "item-1", m: 5, s: "slide-1", k: "text", x: 6000, y: -6000, w: 1, h: 12, r: 0, z: 0,
     paras: [{ l: 4, ls: "", r: [{ t: "a bc" }] }],   // equal runs joined (canonical)
-    al: "l", va: "m", fs: 32, ff: "", fc: "t:fg", b: 0
+    al: "l", va: "m", fs: 40, ff: "", fc: "t:fg", b: 0
   });
   // Rotations wrap into [-180, 180).
   assert.equal(C.normItem({ id: "item-2", m: 1, s: "slide-1", k: "shape", r: -400 }).r, -40);
   assert.equal(C.normItem({ id: "item-2", m: 1, s: "slide-1", k: "shape", r: 270 }).r, -90);
   // Images keep only a content hash, never a URL.
-  const im = C.normItem({ id: "img-1", m: 1, s: "slide-1", k: "image", img: { h: "javascript:alert(1)", src: "http://x" } });
+  const im = C.normItem({ id: "img-1", m: 1, s: "slide-1", k: "image", img: { a: "javascript:alert(1)", src: "http://x" } });
   assert.equal(im.img, undefined);
-  const ok = C.normItem({ id: "img-2", m: 1, s: "slide-1", k: "image", img: { h: "a".repeat(64), pw: 800, ph: 600, src: "x" } });
-  assert.deepEqual(Object.keys(ok.img).sort(), ["alt", "fit", "h", "ox", "oy", "ph", "pw", "zm"]);
+  const ok = C.normItem({ id: "img-2", m: 1, s: "slide-1", k: "image", img: { a: "a".repeat(64) + ".jpg", pw: 800, ph: 600, src: "x" } });
+  assert.deepEqual(Object.keys(ok.img).sort(), ["a", "alt", "fit", "ox", "oy", "ph", "pw", "zm"]);
   // Bad ids or kinds: dropped.
   assert.equal(C.normItem({ id: "Bad Id", m: 1, s: "slide-1", k: "text" }), null);
   assert.equal(C.normItem({ id: "item-3", m: 1, s: "slide-1", k: "script" }), null);

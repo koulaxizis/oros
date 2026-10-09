@@ -39,12 +39,13 @@
   var ID_RE = /^[a-z0-9][a-z0-9-]{2,39}$/;
   var REC_ID_RE = /^r-[a-z0-9][a-z0-9-]{2,39}-[a-z0-9]{1,12}$/;
   var POS_RE = /^[0-9a-z]{1,64}$/;
-  var HASH_RE = /^[0-9a-f]{64}$/;
+  // A picture is a designkit asset: /internal/Assets/<sha256>.<jpg|png>.
+  var ASSET_RE = /^[0-9a-f]{64}\.(jpg|png)$/;
   // A colour is either a fixed #rrggbb or a theme role, so a theme
   // change recolours the whole deck.
   var COLOR_RE = /^(#[0-9a-f]{6}|t:(bg|fg|mu|a1|a2|a3|sf))$/;
   var KINDS = ["text", "image", "shape", "line"];
-  var SHAPES = ["rect", "ellipse", "tri", "arrow", "star", "bubble"];
+  var SHAPES = ["rect", "ellipse"];   // what designkit/render.js and pdf.js draw
   var ROLES = ["title", "sub", "body", "body2", "cap", "cap2", "img", "quote"];
   var TRANSITIONS = ["none", "fade", "slide", "push", "zoom"];
   var FONTS = ["sans", "serif", "mono"];
@@ -53,7 +54,8 @@
     level: 4, coord: 6000, size: 8000, z: 9999, fs: 400, slides: 300, items: 80, stroke: 50, radius: 500,
     imgPx: 20000, rec: 5000, recovered: 50
   };
-  var ROLE_FS = { title: 64, sub: 36, body: 32, body2: 32, cap: 28, cap2: 28, quote: 54 };
+  var ROLE_FS = { title: 80, sub: 44, body: 44, body2: 44, cap: 36, cap2: 36, quote: 64 };
+  var FS = 40;              // a free text box
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
   function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
@@ -335,16 +337,16 @@
       o.paras = normParas(x.paras);
       o.al = ["l", "c", "r", "j"].indexOf(x.al) >= 0 ? x.al : "l";
       o.va = ["t", "m", "b"].indexOf(x.va) >= 0 ? x.va : "t";
-      o.fs = clampInt(x.fs, 6, LIM.fs, ROLE_FS[o.ph] || 32);
+      o.fs = clampInt(x.fs, 6, LIM.fs, ROLE_FS[o.ph] || FS);
       o.ff = FONTS.indexOf(x.ff) >= 0 ? x.ff : "";
       o.fc = normColor(x.fc) || (o.ph === "sub" || o.ph === "cap" || o.ph === "cap2" ? "t:mu" : "t:fg");
       if (x.fit === false) o.fit = false;     // shrink to fit is on unless switched off
       o.b = normM(x.b) === null ? 0 : x.b;    // base mtime of the editing session (recovered text)
     } else if (x.k === "image") {
       var im = (x.img && typeof x.img === "object") ? x.img : {};
-      if (HASH_RE.test(im.h)) {
+      if (typeof im.a === "string" && ASSET_RE.test(im.a)) {
         o.img = {
-          h: im.h,
+          a: im.a,
           pw: clampInt(im.pw, 1, LIM.imgPx, 1), ph: clampInt(im.ph, 1, LIM.imgPx, 1),
           fit: im.fit === "fit" ? "fit" : "fill",
           ox: clampInt(im.ox, -100, 100, 0), oy: clampInt(im.oy, -100, 100, 0),
@@ -362,8 +364,6 @@
       if (!o.fill && !o.st) o.fill = "t:a1";
     } else if (x.k === "line") {
       if (!o.st) { o.st = "t:fg"; o.sw = 4; }
-      o.a1 = x.a1 === true;  // arrow head at the start
-      o.a2 = x.a2 === true;  // arrow head at the end
       if (x.flip === true) o.flip = true;  // from the bottom-left corner instead of the top-left
     }
     return o;
@@ -746,8 +746,8 @@
         used[it.id] = true;
         var ch = it.x !== box.x || it.y !== box.y || it.w !== box.w || it.h !== box.h || it.ph !== ph.role;
         if (it.k === "text") {
-          ch = ch || it.al !== ph.al || it.va !== ph.va || it.fs !== (ROLE_FS[ph.role] || 32);
-          it.al = ph.al; it.va = ph.va; it.fs = ROLE_FS[ph.role] || 32;
+          ch = ch || it.al !== ph.al || it.va !== ph.va || it.fs !== (ROLE_FS[ph.role] || FS);
+          it.al = ph.al; it.va = ph.va; it.fs = ROLE_FS[ph.role] || FS;
           if (it.fc === "t:mu" || it.fc === "t:fg") it.fc = (ph.role === "sub" || ph.role === "cap" || ph.role === "cap2") ? "t:mu" : "t:fg";
         }
         it.x = box.x; it.y = box.y; it.w = box.w; it.h = box.h; it.ph = ph.role;
@@ -1011,7 +1011,7 @@
 
   root.OrosSlidesCore = {
     VER: VER, DATA_VER: DATA_VER, H: H, ASPECTS: ASPECTS, ASPECT_IDS: ASPECT_IDS, LIM: LIM,
-    ID_RE: ID_RE, REC_ID_RE: REC_ID_RE, COLOR_RE: COLOR_RE,
+    ID_RE: ID_RE, REC_ID_RE: REC_ID_RE, ASSET_RE: ASSET_RE, COLOR_RE: COLOR_RE,
     KINDS: KINDS, SHAPES: SHAPES, ROLES: ROLES, TRANSITIONS: TRANSITIONS, FONTS: FONTS, ROLE_FS: ROLE_FS,
     THEMES: THEMES, THEME_IDS: THEME_IDS, LAYOUTS: LAYOUTS, LAYOUT_IDS: LAYOUT_IDS, TEMPLATES: TEMPLATES,
     widthOf: widthOf, themeById: themeById, resolveColor: resolveColor, contrast: contrast,
@@ -1022,6 +1022,7 @@
     emptyData: emptyData, mergeSlides: mergeSlides, canonical: canonical,
     deckList: deckList, deckSlides: deckSlides, slideItems: slideItems, placeholder: placeholder,
     deckRecovered: deckRecovered, isEmptyPlaceholder: isEmptyPlaceholder, slideTitle: slideTitle,
+    touchDeck: touchDeck, touchSlide: touchSlide,
     newDeck: newDeck, addSlide: addSlide, moveSlide: moveSlide, duplicateSlide: duplicateSlide,
     deleteSlide: deleteSlide, deleteDeck: deleteDeck,
     pushRecovered: pushRecovered, dropRecovered: dropRecovered,
