@@ -2013,6 +2013,7 @@
       if (newRem && keepPw.remember !== null) newRem.checked = keepPw.remember;
     }
     menu.scrollTop = keepTop;
+    settingsNotify();            // the Settings app repaints too
   }
 
   // Universal search — which apps the menu field searches. One chip
@@ -2064,6 +2065,37 @@
     host.appendChild(section);
   }
 
+  // User changes of appearance (menu + Settings app). Each one is a
+  // user action → stamped and sent to the sync engine; picking the
+  // value already in place does nothing (R27).
+  function setSkinUser(id) {
+    if (!isValidSkin(id) || state.skin === id) return;
+    state.skin = id;
+    localStorage.setItem("oros-skin", state.skin);
+    applySkin();
+    maybeFollowSkin(id);       // suggests paired wallpaper (from default only)
+    noteLocalChange();
+    renderMenu();
+  }
+
+  function setThemeUser(theme) {
+    if ((theme !== "dark" && theme !== "light") || state.theme === theme) return;
+    state.theme = theme;
+    localStorage.setItem("oros-theme", state.theme);
+    applyTheme();
+    noteLocalChange();
+    renderMenu();
+  }
+
+  function setWallpaperUser(id) {
+    if (!findWallpaper(id) || state.wallpaper === id) return;
+    state.wallpaper = id;
+    localStorage.setItem("oros-wallpaper", state.wallpaper);
+    applyWallpaper();
+    noteLocalChange();
+    renderMenu();
+  }
+
   function renderSkinSwatches(host) {
     var section = document.createElement("div");
     section.className = "skin-section";
@@ -2085,15 +2117,7 @@
       sw.style.background = s.color;
       sw.setAttribute("title", skinTitle(s.id));
       sw.setAttribute("aria-label", skinTitle(s.id));
-      sw.addEventListener("click", function () {
-        if (state.skin === s.id) return;
-        state.skin = s.id;
-        localStorage.setItem("oros-skin", state.skin);
-        applySkin();
-        maybeFollowSkin(s.id);     // suggests paired wallpaper (from default only)
-        noteLocalChange();          // user action → sync engine
-        renderMenu();
-      });
+      sw.addEventListener("click", function () { setSkinUser(s.id); });
       swatches.appendChild(sw);
     });
 
@@ -2110,11 +2134,7 @@
       window.t(state.theme === "dark" ? "theme.toLight" : "theme.toDark"));
     themeBtn.setAttribute("aria-label", themeBtn.getAttribute("title"));
     themeBtn.addEventListener("click", function () {
-      state.theme = state.theme === "dark" ? "light" : "dark";
-      localStorage.setItem("oros-theme", state.theme);
-      applyTheme();
-      noteLocalChange();            // user action → sync engine
-      renderMenu();
+      setThemeUser(state.theme === "dark" ? "light" : "dark");
     });
     controls.appendChild(themeBtn);
 
@@ -2158,14 +2178,7 @@
       } else {
         thumb.style.background = w.css;   // WYSIWYG — same source as desktop
       }
-      thumb.addEventListener("click", function () {
-        if (state.wallpaper === w.id) return;
-        state.wallpaper = w.id;
-        localStorage.setItem("oros-wallpaper", state.wallpaper);
-        applyWallpaper();
-        noteLocalChange();          // user action → sync engine
-        renderMenu();
-      });
+      thumb.addEventListener("click", function () { setWallpaperUser(w.id); });
       grid.appendChild(thumb);
     });
 
@@ -3188,6 +3201,117 @@
     setTimeout(function () { oldF.input.focus(); }, 50);
   }
 
+  // Unlock with a passphrase (menu form + Settings app). One flow:
+  // set, pull, then seal into the device vault only after the pull.
+  function syncUnlock(pw, remember) {
+    if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
+    // A70: an EMPTY cloud means this passphrase is being SET, not
+    // checked — it must be at least MIN_PASS_LEN long (an existing
+    // shorter one still unlocks). The device vault seals it only
+    // after the pull (A71b: a mistyped passphrase is no longer
+    // remembered); a pull that fails for any other reason
+    // (offline) still seals it, as before.
+    window.orosSync.setPassphrase(pw, false);
+    setSyncMsgRaw("dim", window.t("sync.working"));
+    setSyncDot("syncing");
+    // Visible auto-pull on unlock: apply cloud state immediately,
+    // then push if this device had unsynced changes.
+    window.orosSync.pull()
+      .then(function (result) {
+        if (result && result.empty && pw.length < MIN_PASS_LEN) {
+          window.orosSync.forgetPassphrase();
+          setSyncMsg("err", "sync.err.shortpass");
+          return;
+        }
+        if (remember) window.orosSync.setPassphrase(pw, true);
+        reportPullResult(result);
+        if (window.orosSync.isDirty()) {
+          return window.orosSync.push()
+            .then(function () { setSyncMsg("ok", "sync.ok.push"); });
+        }
+      })
+      .catch(function (err) {
+        if (remember && !isPassphraseError(err)) window.orosSync.setPassphrase(pw, true);
+        handleSyncError(err);
+      });
+  }
+
+  // Manual push with the "working" line (menu + Settings app).
+  function syncPushNow() {
+    if (!scRequireConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.working"));
+    setSyncDot("syncing");
+    window.orosSync.push()
+      .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
+      .catch(handleSyncError);
+  }
+
+  // User picked an auto-sync interval: it travels in the shell slice.
+  function setSyncIntervalUser(m) {
+    if (!window.orosSync || typeof window.orosSync.setIntervalMinutes !== "function") return;
+    if ([0, 1, 3, 5, 15].indexOf(m) === -1 || m === getSafeInterval()) return;
+    window.orosSync.setIntervalMinutes(m);
+    noteLocalChange();
+    renderMenu();
+  }
+
+  // Forget the passphrase on this device (and its vault, if any).
+  function syncForgetHere() {
+    if (!window.orosSync) return;
+    if (window.orosSync.hasDeviceVault()) {
+      window.orosSync.clearDevice().then(function () { renderMenu(); });
+    } else {
+      window.orosSync.forgetPassphrase();
+      renderMenu();
+    }
+  }
+
+  function syncDisconnectUser() {
+    if (!window.orosSync) return;
+    window.orosSync.disconnect();
+    state.syncUserEmail = null;
+    renderMenu();
+  }
+
+  // User picked an automatic folder-backup cadence (shell slice).
+  function setAutoexportUser(v) {
+    if (v !== "off" && v !== "daily" && v !== "weekly" && v !== "monthly") return;
+    if (v === state.autoexport) return;
+    state.autoexport = v;
+    localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
+    noteLocalChange();          // travels in the shell slice
+    // Off = zero footprint going forward — no checks, no files.
+    // Switched on (or changed cadence): export NOW so the user
+    // sees instant feedback that the folder net is active.
+    if (state.autoexport !== "off") maybeAutoExport(true);
+    renderMenu();
+  }
+
+  // Import a backup file: every slice + the Files disk (FILES-V).
+  function importBackupFile() {
+    shellPickJson().then(function (file) {
+      if (!file) return;   // user cancelled — silent exit
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var text = String(reader.result);
+          var n = window.orosSync.importData(text);
+          // FILES-V: the backup's disk is merged into the disk here
+          // (the engine no longer knows a "files-disk" slice).
+          fdImportDisk(text).then(function (files) {
+            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+              window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
+          }).catch(function () {
+            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+              window.t("sync.slices.applied") + ": " + n);
+          });
+        } catch (e) {
+          handleSyncError(e); }
+      };
+      reader.readAsText(file);
+    });
+  }
+
   function renderSyncSection(host) {
     var section = document.createElement("div");
     section.className = "sync-section";
@@ -3278,38 +3402,7 @@
       unlockBtn.className = "menu-item";
       unlockBtn.textContent = window.t("sync.pass.apply");
       unlockBtn.addEventListener("click", function () {
-        var pw = input.value;
-        if (!pw) { setSyncMsg("err", "sync.err.nopass"); return; }
-        // A70: an EMPTY cloud means this passphrase is being SET, not
-        // checked — it must be at least MIN_PASS_LEN long (an existing
-        // shorter one still unlocks). The device vault seals it only
-        // after the pull (A71b: a mistyped passphrase is no longer
-        // remembered); a pull that fails for any other reason
-        // (offline) still seals it, as before.
-        var remember = rememberCb.checked;
-        window.orosSync.setPassphrase(pw, false);
-        setSyncMsgRaw("dim", window.t("sync.working"));
-        setSyncDot("syncing");
-        // Visible auto-pull on unlock: apply cloud state immediately,
-        // then push if this device had unsynced changes.
-        window.orosSync.pull()
-          .then(function (result) {
-            if (result && result.empty && pw.length < MIN_PASS_LEN) {
-              window.orosSync.forgetPassphrase();
-              setSyncMsg("err", "sync.err.shortpass");
-              return;
-            }
-            if (remember) window.orosSync.setPassphrase(pw, true);
-            reportPullResult(result);
-            if (window.orosSync.isDirty()) {
-              return window.orosSync.push()
-                .then(function () { setSyncMsg("ok", "sync.ok.push"); });
-            }
-          })
-          .catch(function (err) {
-            if (remember && !isPassphraseError(err)) window.orosSync.setPassphrase(pw, true);
-            handleSyncError(err);
-          });
+        syncUnlock(input.value, rememberCb.checked);
       });
       row.appendChild(unlockBtn);
       passWrap.appendChild(row);
@@ -3322,27 +3415,13 @@
       var pullBtn = document.createElement("button");
       pullBtn.className = "menu-item";
       pullBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.pull") + "</span>";
-      pullBtn.addEventListener("click", function () {
-        setSyncDot("syncing");
-        window.orosSync.pull()
-          .then(function (result) {
-            reportPullResult(result);
-            setSyncDot("synced", 4000);
-          })
-          .catch(handleSyncError);
-      });
+      pullBtn.addEventListener("click", scForcePull);
       actions.appendChild(pullBtn);
 
       var pushBtn = document.createElement("button");
       pushBtn.className = "menu-item";
       pushBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.push") + "</span>";
-      pushBtn.addEventListener("click", function () {
-        setSyncMsgRaw("dim", window.t("sync.working"));
-        setSyncDot("syncing");
-        window.orosSync.push()
-          .then(function () { setSyncMsg("ok", "sync.ok.push"); setSyncDot("synced", 4000); })
-          .catch(handleSyncError);
-      });
+      pushBtn.addEventListener("click", syncPushNow);
       actions.appendChild(pushBtn);
 
       section.appendChild(actions);
@@ -3365,8 +3444,7 @@
         sel.appendChild(opt);
       });
       sel.addEventListener("change", function () {
-        window.orosSync.setIntervalMinutes(parseInt(sel.value, 10));
-        noteLocalChange();   // interval is part of the shell slice now
+        setSyncIntervalUser(parseInt(sel.value, 10));
       });
       intervalRow.appendChild(sel);
       section.appendChild(intervalRow);
@@ -3381,16 +3459,7 @@
       forgetBtn.textContent = hasVault
         ? window.t("sync.pass.device")
         : window.t("sync.pass.forget");
-      forgetBtn.addEventListener("click", function () {
-        if (hasVault) {
-          window.orosSync.clearDevice().then(function () {
-            renderMenu();
-          });
-        } else {
-          window.orosSync.forgetPassphrase();
-          renderMenu();
-        }
-      });
+      forgetBtn.addEventListener("click", syncForgetHere);
       utils.appendChild(forgetBtn);
 
       var chpwBtn = document.createElement("button");
@@ -3405,11 +3474,7 @@
       var discBtn = document.createElement("button");
       discBtn.className = "menu-item";
       discBtn.textContent = window.t("sync.disconnect");
-      discBtn.addEventListener("click", function () {
-        window.orosSync.disconnect();
-        state.syncUserEmail = null;
-        renderMenu();
-      });
+      discBtn.addEventListener("click", syncDisconnectUser);
       utils.appendChild(discBtn);
 
       section.appendChild(utils);
@@ -3437,18 +3502,7 @@
       autoSel.appendChild(opt);
     });
     autoSel.addEventListener("change", function () {
-      state.autoexport = autoSel.value;
-      localStorage.setItem(AUTOEXPORT_PREF, state.autoexport);
-      noteLocalChange();          // travels in the shell slice
-      if (state.autoexport === "off") {
-        // Off = zero footprint going forward — no checks, no files.
-        renderMenu();
-        return;
-      }
-      // Switched on (or changed cadence): export NOW so the user
-      // sees instant feedback that the folder net is active.
-      maybeAutoExport(true);
-      renderMenu();
+      setAutoexportUser(autoSel.value);
     });
     autoRow.appendChild(autoSel);
     if (fsSupported()) section.appendChild(autoRow);
@@ -3502,45 +3556,14 @@
     var exportBtn = document.createElement("button");
     exportBtn.className = "menu-item";
     exportBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.export") + "</span>";
-    exportBtn.addEventListener("click", function () {
-      // Every slice + the Files disk as it is NOW (fdExportJson).
-      var exportJob;
-      try { exportJob = fdExportJson(); } catch (e) { handleSyncError(e); return; }
-      exportJob.then(function (json) {
-        shellSaveJson(
-          "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
-          json);
-      }).catch(handleSyncError);
-    });
+    exportBtn.addEventListener("click", scExportDb);
     backupRow.appendChild(exportBtn);
 
     var importBtn = document.createElement("button");
     importBtn.className = "menu-item";
     importBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.import") + "</span>";
 
-    importBtn.addEventListener("click", function () {
-      shellPickJson().then(function (file) {
-        if (!file) return;   // user cancelled — silent exit
-        var reader = new FileReader();
-        reader.onload = function () {
-          try {
-            var text = String(reader.result);
-            var n = window.orosSync.importData(text);
-            // FILES-V: the backup's disk is merged into the disk here
-            // (the engine no longer knows a "files-disk" slice).
-            fdImportDisk(text).then(function (files) {
-              setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-                window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
-            }).catch(function () {
-              setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-                window.t("sync.slices.applied") + ": " + n);
-            });
-          } catch (e) {
-            handleSyncError(e); }
-        };
-        reader.readAsText(file);
-      });
-    });
+    importBtn.addEventListener("click", importBackupFile);
     backupRow.appendChild(importBtn);
     section.appendChild(backupRow);
 
@@ -6674,6 +6697,198 @@
       return id || null;
     } catch (e) { return null; }
   };
+
+  // ---------- 9j. Settings app bridge (window.orosSettings) ----------
+  // The Settings app (settings/, System) is a plain iframe app: it
+  // never writes storage and registers no slice. Every value comes
+  // from get(), every change goes through set() / act(), which call
+  // the SAME functions the menu calls. So stamps, dirty marks and
+  // merges are exactly the menu's: nothing to migrate, and a device
+  // on an older bundle syncs with this one as before. Notifications
+  // and the screen pet keep their own public modules (orosNotifs,
+  // orosPet); the app talks to them directly.
+  // onChange(fn): fn() runs (batched) after anything that repaints
+  // the menu (user change, pull, unlock, sync message) and after
+  // each background sync round. Returns an unsubscribe function.
+  var settingsListeners = [];
+  var settingsNotifyQueued = false;
+
+  function settingsNotify() {
+    if (settingsNotifyQueued || !settingsListeners.length) return;
+    settingsNotifyQueued = true;
+    setTimeout(function () {
+      settingsNotifyQueued = false;
+      settingsListeners.slice().forEach(function (fn) {
+        try { fn(); } catch (e) {
+          // A closed app frame that never unsubscribed: drop it.
+          var i = settingsListeners.indexOf(fn);
+          if (i !== -1) settingsListeners.splice(i, 1);
+        }
+      });
+    }, 0);
+  }
+
+  function settingsSnapshot() {
+    var S = window.orosSync || null;
+    var connected = !!(S && S.isConnected());
+    var unlocked = !!(connected && S.hasPassphrase());
+    var art = wpArt();
+    var hasArt = !!(state.wpart && art);
+    var folder = null, lapsed = false;
+    try {
+      folder = localStorage.getItem(FS_FOLDER_NAME_KEY);
+      lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
+    } catch (e) {}
+    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
+    return {
+      version: APP_VERSION,
+      lang: state.lang,
+      theme: state.theme,
+      skin: state.skin,
+      skins: SKINS.map(function (k) {
+        return { id: k.id, color: k.color, name: skinTitle(k.id) };
+      }),
+      wallpaper: state.wallpaper,
+      wallpapers: WALLPAPERS.map(function (w) {
+        var css = w.css;
+        if (w.id === "custom") {
+          if (!hasArt) css = null;   // nothing made yet → "make one"
+          else {
+            var bgc = art.colors(state.wpart, wpAccent()).bg;
+            css = (wpShown && wpShown.url) ? wpBg(bgc, wpShown.url) : bgc;
+          }
+        }
+        return { id: w.id, css: css, name: wallpaperTitle(w.id) };
+      }),
+      pet: {
+        available: !!(window.orosPet && typeof window.orosPet.toggle === "function"),
+        on: !!(window.orosPet && typeof window.orosPet.isEnabled === "function" &&
+               window.orosPet.isEnabled())
+      },
+      sync: {
+        available: !!S,
+        connected: connected,
+        unlocked: unlocked,
+        email: connected ? (state.syncUserEmail || null) : null,
+        dirty: !!(unlocked && S.isDirty()),
+        hasVault: !!(connected && S.hasDeviceVault()),
+        interval: getSafeInterval(),
+        intervals: [0, 1, 3, 5, 15],
+        minPass: MIN_PASS_LEN,
+        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text } : null
+      },
+      backup: {
+        folderSupported: fsSupported(),
+        autoexport: state.autoexport,
+        folder: folder || null,
+        lapsed: !!(folder && lapsed)
+      },
+      search: searchApps().map(function (a) {
+        var k = "app." + a.id, v = window.t(k);
+        return { id: a.id, name: (v === k) ? a.name : v, on: searchEnabled(a.id) };
+      }),
+      install: !!state.deferredPrompt,
+      apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
+        .map(function (a) { return a.id; }),
+      shortcuts: SC_DEFS.map(function (d) {
+        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + d.key.toUpperCase(),
+                 label: window.t(d.label) };
+      })
+    };
+  }
+
+  function settingsSet(name, value) {
+    switch (name) {
+      case "lang":
+        if ((value === "en" || value === "el") && value !== state.lang) scToggleLang();
+        return;
+      case "theme":      setThemeUser(value); return;
+      case "skin":       setSkinUser(value); return;
+      case "wallpaper":
+        if (value === "custom" && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
+        setWallpaperUser(value);
+        return;
+      case "pet":
+        if (window.orosPet && typeof window.orosPet.toggle === "function" &&
+            !!value !== !!window.orosPet.isEnabled()) {
+          window.orosPet.toggle();
+          renderMenu();
+        }
+        return;
+      case "syncInterval": setSyncIntervalUser(Number(value)); return;
+      case "autoexport":   setAutoexportUser(value); return;
+    }
+    if (/^search:/.test(name)) {
+      var id = name.slice(7);
+      var known = searchApps().some(function (a) { return a.id === id; });
+      if (known && searchEnabled(id) !== !!value) {
+        setSearchEnabled(id, !!value);
+        renderMenu();
+      }
+    }
+  }
+
+  function settingsAct(name, arg) {
+    var S = window.orosSync;
+    switch (name) {
+      case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
+      case "sync.unlock":
+        if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {
+          syncUnlock(arg.pw, !!arg.remember);
+        }
+        return;
+      case "sync.pull":       scForcePull(); return;
+      case "sync.push":       syncPushNow(); return;
+      case "sync.forget":     syncForgetHere(); return;
+      case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
+      case "sync.disconnect": syncDisconnectUser(); return;
+      // Folder picker and permission prompts need a user gesture: the
+      // app calls these straight from its click handler (the gesture
+      // of a same-origin frame counts for the shell window too).
+      case "backup.chooseFolder":    if (fsSupported()) chooseBackupFolder(); return;
+      case "backup.stopFolder":      stopFolderBackups(); return;
+      case "backup.reconnectFolder": reconnectFolder(); return;
+      case "backup.now":      scBackupNow(); return;
+      case "backup.export":   scExportDb(); return;
+      case "backup.import":   importBackupFile(); return;
+      case "install":
+        if (!state.deferredPrompt) return;
+        state.deferredPrompt.prompt();
+        state.deferredPrompt.userChoice.then(function (choice) {
+          if (choice.outcome === "accepted") { state.deferredPrompt = null; renderMenu(); }
+        });
+        return;
+      case "updates":         scCheckUpdates(); return;
+      case "info":            showInfoModal(); return;
+      case "openApp":         if (typeof arg === "string") openAppById(arg); return;
+      // The app arms and confirms first (two taps, like the Info modal);
+      // this is the same wipe, with no button of its own to update.
+      case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
+    }
+  }
+
+  window.orosSettings = {
+    v: 1,
+    get: settingsSnapshot,
+    set: settingsSet,
+    act: settingsAct,
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      settingsListeners.push(fn);
+      return function () {
+        var i = settingsListeners.indexOf(fn);
+        if (i !== -1) settingsListeners.splice(i, 1);
+      };
+    },
+    // Open the Settings app at a section ("sync", "backup", …).
+    open: function (section) {
+      window.__orosOpenAt("settings", { section: String(section || "") });
+    }
+  };
+
+  if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+    window.orosSync.onAutoSync(function (kind) { if (kind !== "start") settingsNotify(); });
+  }
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 
