@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.45.12";
+var CACHE_VERSION = "oros-v0.45.15";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -149,6 +149,10 @@ var PRECACHE_URLS = [
   "habits/index.html",
   "habits/habits.css",
   "habits/habits.js",
+  "zen/",
+  "zen/index.html",
+  "zen/zen.css",
+  "zen/zen.js",
   "files/",
   "files/index.html",
   "files/files.css",
@@ -161,6 +165,11 @@ var PRECACHE_URLS = [
   "characters/index.html",
   "characters/characters.css",
   "characters/characters.js",
+  "names/",
+  "names/index.html",
+  "names/names.css",
+  "names/words.js",
+  "names/names.js",
   "cycle/",
   "cycle/index.html",
   "cycle/cycle.css",
@@ -177,6 +186,13 @@ var PRECACHE_URLS = [
   "wheel/index.html",
   "wheel/wheel.css",
   "wheel/wheel.js",
+  "passwords/",
+  "passwords/index.html",
+  "passwords/passwords.css",
+  "passwords/passwords.js",
+  "passwords/pwcore.js",
+  "passwords/words-eff.js",
+  "passwords/common.js",
   "netizen/",
   "netizen/index.html",
   "netizen/netizen.css",
@@ -261,6 +277,12 @@ var PRECACHE_URLS = [
   "g2048/index.html",
   "g2048/g2048.css",
   "g2048/g2048.js",
+  "wordle/",
+  "wordle/index.html",
+  "wordle/wordle.css",
+  "wordle/wordle.js",
+  "wordle/words-en.js",
+  "wordle/words-el.js",
   "vendor/jspdf.umd.min.js",
   "vendor/hls.light.min.js",
   "vendor/NotoSans-Regular.ttf",

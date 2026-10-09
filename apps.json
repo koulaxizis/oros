@@ -130,6 +130,14 @@
       "type": "internal"
     },
     {
+      "id": "names",
+      "name": "Name Generator",
+      "category": "Creativity",
+      "icon": "names",
+      "url": "names/",
+      "type": "internal"
+    },
+    {
       "id": "wallpaper",
       "name": "Wallpaper Generator",
       "category": "Creativity",
@@ -151,6 +159,14 @@
       "category": "Personal",
       "icon": "habits",
       "url": "habits/",
+      "type": "internal"
+    },
+    {
+      "id": "zen",
+      "name": "Micro-Zen",
+      "category": "Personal",
+      "icon": "zen",
+      "url": "zen/",
       "type": "internal"
     },
     {
@@ -311,6 +327,22 @@
       "category": "Games",
       "icon": "g2048",
       "url": "g2048/",
+      "type": "internal"
+    },
+    {
+      "id": "wordle",
+      "name": "Wordle",
+      "category": "Games",
+      "icon": "wordle",
+      "url": "wordle/",
+      "type": "internal"
+    },
+    {
+      "id": "passwords",
+      "name": "Password Generator",
+      "category": "Security",
+      "icon": "passwords",
+      "url": "passwords/",
       "type": "internal"
     }
   ]

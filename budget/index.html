@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Budget · orOS</title>
+
+  <link rel="stylesheet" href="budget.css?v=0.45.13">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="prev-btn"></button>
+    <h1 id="month" class="month" aria-live="polite"></h1>
+    <button type="button" class="icon-btn" id="next-btn"></button>
+    <button type="button" class="link-btn" id="today-btn" data-i18n="btn.today" hidden>This month</button>
+    <span class="spacer"></span>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"></button>
+    <div id="menu" role="menu" hidden>
+      <button type="button" role="menuitem" data-act="cats" data-i18n="menu.cats">Categories</button>
+      <button type="button" role="menuitem" data-act="export" data-i18n="menu.export">Export</button>
+      <button type="button" role="menuitem" data-act="backup" data-i18n="menu.backup">Backup (JSON)</button>
+      <button type="button" role="menuitem" data-act="restore" data-i18n="menu.restore">Restore from backup</button>
+      <button type="button" role="menuitem" data-act="currency" data-i18n="menu.currency">Currency</button>
+    </div>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-list" aria-controls="p-list" data-i18n="tab.list">Entries</button>
+    <button type="button" role="tab" id="tab-charts" aria-controls="p-charts" data-i18n="tab.charts">Charts</button>
+    <button type="button" role="tab" id="tab-limits" aria-controls="p-limits" data-i18n="tab.limits">Limits</button>
+    <button type="button" role="tab" id="tab-rec" aria-controls="p-rec" data-i18n="tab.rec">Recurring</button>
+  </nav>
+
+  <main id="main">
+    <section id="sum" class="sum">
+      <div class="tile"><span class="tile-k" data-i18n="sum.in">Income</span><span class="tile-v in" id="sum-in"></span></div>
+      <div class="tile"><span class="tile-k" data-i18n="sum.out">Expenses</span><span class="tile-v out" id="sum-out"></span></div>
+      <div class="tile"><span class="tile-k" data-i18n="sum.bal">Balance</span><span class="tile-v" id="sum-bal"></span></div>
+    </section>
+
+    <section id="p-list" role="tabpanel" aria-labelledby="tab-list">
+      <div class="search-row">
+        <input id="q" type="search" autocomplete="off">
+        <select id="flt"></select>
+      </div>
+      <p class="hint" id="list-found" hidden></p>
+      <div id="list"></div>
+      <p class="hint empty" id="list-empty" hidden></p>
+    </section>
+
+    <section id="p-charts" role="tabpanel" aria-labelledby="tab-charts" hidden>
+      <div class="card"><h2 data-i18n="ch.donut">Expenses by category</h2><div id="ch-donut"></div></div>
+      <div class="card"><h2 data-i18n="ch.bars">Income and expenses, 12 months</h2><div id="ch-bars"></div></div>
+      <div class="card"><h2 data-i18n="ch.line">Balance at the end of each month</h2><div id="ch-line"></div></div>
+    </section>
+
+    <section id="p-limits" role="tabpanel" aria-labelledby="tab-limits" hidden>
+      <div id="limits"></div>
+    </section>
+
+    <section id="p-rec" role="tabpanel" aria-labelledby="tab-rec" hidden>
+      <button type="button" class="txt-btn" id="rec-add"></button>
+      <p class="hint empty" id="rec-empty" data-i18n="rec.empty">Rent, salary, subscriptions: add them once and they appear on their day.</p>
+      <ul id="rec" class="day-list"></ul>
+    </section>
+  </main>
+
+  <div id="tip" role="tooltip" hidden></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="budget.js?v=0.45.13"></script>
+
+</body>
+</html>
