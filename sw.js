@@ -385,6 +385,7 @@ var PRECACHE_URLS = [
   "feeds/core.js",
   "feeds/sanitize.js",
   "feeds/fetch.js",
+  "feeds/extract.js",
   "feeds/feeds.js",
   "vendor/leaflet.css",
   "vendor/leaflet.js",

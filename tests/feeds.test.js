@@ -389,6 +389,114 @@ test("settings and refresh timing", () => {
   assert.equal(C.nextDelay(30, { fails: 20 }), 24 * 3600000);
 });
 
+// ---------- phase 2: tags, rules, search, duplicates, statistics ----------
+test("merge: tags, rules and tagged articles; dead tags fall away; full text per feed", () => {
+  const x = C.emptyData(), y = C.emptyData();
+  x.feeds = [Object.assign({}, FA, { full: 1, m: 6 })];
+  y.feeds = [FA];
+  x.tags = [{ id: "tnews0001", name: " Ειδήσεις  ", m: 3 }, { id: "told00001", name: "Old", m: 1 }];
+  y.tombs["t:told00001"] = 2;
+  x.rules = [{ id: "rquake001", q: "σεισμ", in: "all", scope: "f:" + FA.id, act: "tag", tag: "tnews0001", list: 1, m: 4 },
+             { id: "rbadtag01", q: "x", act: "tag", tag: "told00001", m: 4 },
+             { id: "rnoquery1", q: "  ", act: "read", m: 4 }];
+  y.items = [{ id: "iabc12345", feed: FA.id, title: "T", link: "https://a.example.com/1", date: 5, sum: "s",
+               star: 0, later: 0, tags: ["told00001", "tnews0001", "tnews0001", "bad"], m: 9 },
+             { id: "ionlyold1", feed: FA.id, title: "U", date: 5, tags: ["told00001"], m: 9 }];
+  const ab = C.merge(x, y), ba = C.merge(y, x);
+  assert.equal(JSON.stringify(ab), JSON.stringify(ba));
+  assert.equal(JSON.stringify(C.merge(ab, ab)), JSON.stringify(ab));
+  assert.equal(C.feedById(ab, FA.id).full, 1);
+  assert.deepEqual(ab.tags, [{ id: "tnews0001", name: "Ειδήσεις", m: 3 }]);
+  assert.deepEqual(ab.items.map((i) => [i.id, i.tags]), [["iabc12345", ["tnews0001"]]]);   // the old-only one is gone
+  assert.deepEqual(ab.rules.map((r) => [r.id, r.act, r.in, r.list, r.name]),
+    [["rbadtag01", "none", "title", 0, "x"], ["rquake001", "tag", "all", 1, "σεισμ"]]);
+  // phase-1 data (no tags, no rules, no full) still merges
+  const old = C.merge({ feeds: [FB], items: [], set: {}, read: {}, tombs: {} }, null);
+  assert.deepEqual(old.tags, []);
+  assert.equal(C.feedById(old, FB.id).full, 0);
+});
+
+test("search: folded Greek, phrases, exclusions", () => {
+  assert.equal(C.fold("ΕΛΛΆΔΑ, Σεισμός"), "ελλαδα, σεισμοσ");
+  const q = C.parseQuery('σεισμ "Νέα Σμύρνη" -ποδόσφαιρο');
+  assert.deepEqual(q, { all: ["σεισμ", "νεα σμυρνη"], not: ["ποδοσφαιρο"] });
+  assert.equal(C.matchQuery(q, C.fold("Σεισμός 4,1 Ρίχτερ στη Νέα Σμύρνη")), true);
+  assert.equal(C.matchQuery(q, C.fold("Σεισμός στη Νέα Σμύρνη, αναβολή στο ποδόσφαιρο")), false);
+  assert.equal(C.matchQuery(q, C.fold("Σεισμός στη Σμύρνη")), false);
+  assert.equal(C.matchQuery(C.parseQuery("-ποδόσφαιρο"), "οτιδηποτε"), false);   // exclusions alone match nothing
+  assert.equal(C.emptyQuery(C.parseQuery('  "" - ')), true);
+});
+
+test("rules: scope, title vs text, actions, stamps that agree across devices", () => {
+  const d = C.emptyData();
+  d.feeds = [Object.assign({}, FA, { folder: "dnews0001" }), FB];
+  d.folders = [{ id: "dnews0001", name: "News", ord: 0, m: 1 }];
+  d.tags = [{ id: "tnews0001", name: "News", m: 1 }];
+  d.rules = [
+    { id: "rmute0001", q: "ποδόσφαιρο", in: "title", act: "read", m: 1 },
+    { id: "rquake001", q: "σεισμ", in: "all", scope: "d:dnews0001", act: "tag", tag: "tnews0001", m: 1 },
+    { id: "rstar0001", q: "orOS", act: "star", scope: "f:" + FB.id, m: 1 },
+    { id: "rwatch001", q: "orOS", act: "none", list: 1, m: 1 }
+  ];
+  Object.assign(d, C.merge(d, null));
+  const h1 = { id: "ih1aaaaaa", feed: FA.id, title: "Αποτελέσματα", snip: "", date: NOW - 1000 };
+  assert.deepEqual(C.ruleActions(d, h1, "ισχυρός σεισμός"), { read: false, star: false, later: false, tags: ["tnews0001"] });
+  assert.deepEqual(C.ruleActions(d, Object.assign({}, h1, { feed: FB.id }), "ισχυρός σεισμός").tags, []);   // other folder
+  assert.equal(C.ruleActions(d, { feed: FB.id, title: "Ποδόσφαιρο: ο τελικός" }, "").read, true);
+  assert.equal(C.ruleActions(d, { feed: FB.id, title: "νέα έκδοση orOS" }, "").star, true);
+  assert.equal(C.ruleActions(d, { feed: FA.id, title: "νέα έκδοση orOS" }, "").star, false);
+  assert.equal(C.ruleMatches(d, d.rules[3], { feed: FA.id, title: "Νέα έκδοση ΟΡΟΣ orOS" }, ""), true);
+  // older than the rule (by more than a day): untouched, on every device
+  const late = C.merge(d, null);
+  late.rules.forEach((r) => { r.m = NOW; });
+  assert.equal(C.ruleActions(late, { feed: FB.id, title: "Ποδόσφαιρο", date: NOW - 2 * DAY }, "").read, false);
+  assert.equal(C.ruleActions(late, { feed: FB.id, title: "Ποδόσφαιρο", date: NOW - 3600000 }, "").read, true);
+  // two devices apply the same rules: identical records, so the merge has nothing to choose
+  const a = C.merge(d, null), b = C.merge(d, null);
+  const h2 = { id: "ih2bbbbbb", feed: FB.id, title: "Ποδόσφαιρο", link: "https://b.example.com/2", date: NOW - 5000, author: "" };
+  assert.equal(C.applyRuleRead(a, h2), true);
+  assert.equal(C.applyRuleRead(a, h2), false);
+  C.applyRuleRead(b, h2);
+  assert.equal(C.applyRuleSave(a, h1, { star: false, later: false, tags: ["tnews0001", "tgone0001"] }, "σεισμός"), true);
+  C.applyRuleSave(b, h1, { star: false, later: false, tags: ["tnews0001"] }, "σεισμός");
+  assert.equal(JSON.stringify(C.merge(a, null)), JSON.stringify(C.merge(b, null)));
+  assert.equal(C.isRead(a, h2), true);
+  assert.deepEqual(C.savedById(a, h1.id).tags, ["tnews0001"]);
+  // the user marks it unread later: the user wins
+  C.markItems(a, [h2], 0, NOW);
+  assert.equal(C.isRead(C.merge(a, b), h2), false);
+  // the user removed a rule-saved article: the rule does not bring it back
+  const c = C.merge(a, null);
+  c.items = [];
+  c.tombs["i:" + h1.id] = NOW;
+  assert.equal(C.applyRuleSave(c, h1, { star: true, later: false, tags: [] }, ""), false);
+  assert.equal(C.savedById(C.merge(c, a), h1.id), null);
+});
+
+test("duplicates: one key per article address", () => {
+  const k = C.dupKey("https://www.example.gr/news/1/?utm_source=rss&utm_medium=feed&id=7#top");
+  assert.equal(k, "example.gr/news/1?id=7");
+  assert.equal(C.dupKey("http://example.gr/news/1?id=7&fbclid=abc"), k);
+  assert.notEqual(C.dupKey("https://example.gr/news/2"), k);
+  assert.equal(C.dupKey("javascript:alert(1)"), "");
+  assert.equal(C.dupKey(""), "");
+});
+
+test("statistics: articles a week, latest, quiet and broken feeds", () => {
+  const hs = [];
+  for (let i = 0; i < 10; i++) hs.push({ feed: FA.id, date: NOW - i * 2 * DAY });
+  hs.push({ feed: FB.id, date: NOW - 200 * DAY });
+  const sa = C.feedStats(hs, FA.id, NOW), sb = C.feedStats(hs, FB.id, NOW);
+  assert.deepEqual(sa, { n: 10, week: 2.5, last: NOW });
+  assert.equal(C.feedHealth(sa, {}, NOW), "");
+  assert.equal(C.feedHealth(sb, {}, NOW), "quiet");
+  assert.equal(C.feedHealth(sa, { fails: 3, since: NOW - 8 * DAY }, NOW), "broken");
+  assert.equal(C.feedHealth(sa, { fails: 3, since: NOW - 2 * DAY }, NOW), "");
+  assert.equal(C.feedHealth(C.feedStats([], FA.id, NOW), {}, NOW), "");
+  assert.equal(C.setting(C.emptyData(), "view"), "list");
+  assert.equal(C.setting(C.emptyData(), "dedup"), 1);
+});
+
 // ---------- relay: web ----------
 function fakeFetch(routes, log) {
   return async (url, opts) => {
