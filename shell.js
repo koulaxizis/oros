@@ -220,6 +220,7 @@
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
+    podcasts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M12 13v8"/><path d="M8.5 15.5a5 5 0 1 1 7 0"/><path d="M5.6 18.4a9 9 0 1 1 12.8 0"/></svg>',
     mixer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/><rect x="4" y="13" width="4" height="3" rx="1"/><rect x="10" y="6" width="4" height="3" rx="1"/><rect x="16" y="10" width="4" height="3" rx="1"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
@@ -4429,6 +4430,7 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.radio")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.feeds")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.podcasts")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("maps.providers")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.pubdomain")) + '</span></div>' +
@@ -7119,6 +7121,31 @@
     }
     try { sessionStorage.setItem("oros-plants-open", target); } catch (e) {}
     openAppById("plants");
+  };
+
+  // Podcasts "add this feed" bridge (Reader, Bookmarks). Payload =
+  // an http(s) feed or page address. Open app → live push; closed →
+  // one-shot pending address taken by podcasts.js at boot + open.
+  var podcastsPendingAdd = null;
+  window.__orosOpenPodcastsAdd = function (url) {
+    if (typeof url !== "string" || url.length > 2000 || !/^https?:\/\//i.test(url)) return;
+    if (state.running && state.running.id === "podcasts") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPodcastsAdd === "function") {
+          f.contentWindow.__orosPodcastsAdd(url);
+          return;
+        }
+      } catch (e) {}
+    }
+    podcastsPendingAdd = url;
+    openAppById("podcasts");
+  };
+  window.__orosPodcastsTakePending = function () {
+    var u = podcastsPendingAdd;
+    podcastsPendingAdd = null;
+    return u;
   };
 
   // Garage deep-link bridge (pattern: Plant Care). Payload =

@@ -77,6 +77,8 @@ there are no recorded audio files. Emoji come from the device's own font.
 | [OSRM](https://project-osrm.org/) demo server | Project OSRM | Software BSD-2-Clause; demo server, fair use | Maps (car routes) |
 | [FOSSGIS routing](https://routing.openstreetmap.de/) | FOSSGIS e.V. | Data ODbL; fair use | Maps (bike and walking routes) |
 | [Radio Browser](https://www.radio-browser.info/) | Alex Segler and the community | Free community API | Radio (station directory) |
+| [Apple Podcasts search](https://performance-partners.apple.com/search-api) | Apple Inc. | Public search API, called only when you search | Podcasts (show search) |
+| [fyyd](https://fyyd.de/) | fyyd.de | Public API, called only when you search | Podcasts (show search) |
 | [iptv-org](https://github.com/iptv-org/iptv) | iptv-org contributors | [Unlicense](https://github.com/iptv-org/iptv/blob/master/LICENSE) (public domain) | Television (channel directory) |
 | [Wikidata](https://www.wikidata.org/) | Wikidata editors, Wikimedia Foundation | Data [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | Public Domain Calculator |
 | [Openverse](https://openverse.org/) | WordPress.org; each work by its creator | Per item (Creative Commons or public domain); Atelier keeps the licence and credit of every item | Atelier (photos, illustrations, sounds) |

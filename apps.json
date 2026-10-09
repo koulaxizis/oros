@@ -435,6 +435,14 @@
       "type": "internal"
     },
     {
+      "id": "podcasts",
+      "name": "Podcasts",
+      "category": "Sound",
+      "icon": "podcasts",
+      "url": "podcasts/",
+      "type": "internal"
+    },
+    {
       "id": "mixer",
       "name": "Sound Mixer",
       "category": "Sound",
