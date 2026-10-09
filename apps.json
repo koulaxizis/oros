@@ -242,6 +242,14 @@
       "type": "internal"
     },
     {
+      "id": "atelier",
+      "name": "Atelier",
+      "category": "Creativity",
+      "icon": "atelier",
+      "url": "atelier/",
+      "type": "internal"
+    },
+    {
       "id": "mood",
       "name": "Mood",
       "category": "Personal",
