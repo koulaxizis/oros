@@ -1601,7 +1601,8 @@
             btn.textContent = label;
           }
           btn.addEventListener("click", function () { openApp(app); });
-          catList.appendChild(btn);
+          // Favourites (launcher.js): the star at the end of the row.
+          catList.appendChild(window.orosLauncher ? window.orosLauncher.menuRow(btn, app) : btn);
         });
         wrap.appendChild(catList);
         appsHost.appendChild(wrap);
@@ -1617,6 +1618,7 @@
     renderSyncSection(menu);
     renderNotifsSection(menu);   // Wave 1B: notification settings
     renderSearchSection(menu);   // universal search: per-app switches
+    if (window.orosLauncher) window.orosLauncher.refresh();   // desktop shortcuts follow apps + language
 
     // v0.18.0 — Info row (mirrors Ctrl+Alt+Shift+I)
     var infoRow = document.createElement("div");
@@ -6924,6 +6926,21 @@
 
   // Boot
   initPrefs();
+  // Favourites (launcher.js, a shell component like pet.js): desktop
+  // shortcuts and their sync slice. A bundle without it draws nothing.
+  if (window.orosLauncher) {
+    window.orosLauncher.attach({
+      apps: function () { return state.apps; },
+      open: openApp,
+      icons: ICONS,
+      lang: function () { return state.lang; },
+      label: function (app) {
+        var k = "app." + app.id, v = window.t(k);
+        return (v === k) ? app.name : v;
+      },
+      desktop: document.getElementById("oros-desktop")
+    });
+  }
   applySkin();
   applyWallpaper();
   applyTheme();
