@@ -40,7 +40,6 @@ html[data-theme="light"] {
   --fl-edge:      rgba(0, 0, 0, 0.35);
   --fl-cell:      rgba(0, 0, 0, 0.04);
 }
-}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 dialog { margin: auto; }
