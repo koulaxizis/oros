@@ -38,6 +38,12 @@ var STRINGS = {
     "tab.favorites":  "Favorites",
     "tab.recents":    "Recent",
     "filter.all":     "All",
+    "filter.country": "Country",
+    "filter.category": "Category",
+    "filter.lang":    "Language",
+    "filter.allCountries":  "All countries",
+    "filter.allCategories": "All categories",
+    "filter.allLangs":      "All languages",
     "search.ph":      "Search channels…",
     "loading":        "Loading channels…",
     "noresults":      "No channels found",
@@ -70,6 +76,12 @@ var STRINGS = {
     "tab.favorites":  "Αγαπημένα",
     "tab.recents":    "Πρόσφατα",
     "filter.all":     "Όλα",
+    "filter.country": "Χώρα",
+    "filter.category": "Κατηγορία",
+    "filter.lang":    "Γλώσσα",
+    "filter.allCountries":  "Όλες οι χώρες",
+    "filter.allCategories": "Όλες οι κατηγορίες",
+    "filter.allLangs":      "Όλες οι γλώσσες",
     "search.ph":      "Αναζήτηση καναλιών…",
     "loading":        "Φόρτωση καναλιών…",
     "noresults":      "Δεν βρέθηκαν κανάλια",
@@ -911,7 +923,7 @@ function setupFilters(){
   loadCatalog().then(function(cat){
     // Country
     if(countrySelect){
-      countrySelect.innerHTML = '<option value="">' + esc(t("filter.all")) + '</option>';
+      countrySelect.innerHTML = '<option value="">' + esc(t("filter.allCountries")) + '</option>';
       Object.keys(cat.countryNames).sort().forEach(function(code){
         var opt = document.createElement("option");
         opt.value = code;
@@ -922,7 +934,7 @@ function setupFilters(){
 
     // Category
     if(catSelect){
-      catSelect.innerHTML = '<option value="">' + esc(t("filter.all")) + '</option>';
+      catSelect.innerHTML = '<option value="">' + esc(t("filter.allCategories")) + '</option>';
       Object.keys(cat.categoryNames).sort().forEach(function(id){
         var opt = document.createElement("option");
         opt.value = id;
@@ -933,7 +945,7 @@ function setupFilters(){
 
     // Language
     if(langSelect){
-      langSelect.innerHTML = '<option value="">' + esc(t("filter.all")) + '</option>';
+      langSelect.innerHTML = '<option value="">' + esc(t("filter.allLangs")) + '</option>';
       Object.keys(cat.languageNames).sort().forEach(function(code){
         var opt = document.createElement("option");
         opt.value = code;
@@ -1668,6 +1680,20 @@ function applyI18n(){
   // Placeholders & buttons
   var search = $("#tv-search");
   if(search) search.placeholder = t("search.ph");
+
+  // Filter captions: each select says what it filters before it is
+  // opened; the "All" option names its dimension too.
+  [["country", "filter.country", "filter.allCountries"],
+   ["category", "filter.category", "filter.allCategories"],
+   ["lang", "filter.lang", "filter.allLangs"]].forEach(function(f){
+    var cap = $("#tv-" + f[0] + "-cap");
+    if(cap) cap.textContent = t(f[1]);
+    var sel = $("#tv-" + f[0]);
+    if(sel){
+      sel.setAttribute("aria-label", t(f[1]));
+      if(sel.options[0] && sel.options[0].value === "") sel.options[0].textContent = t(f[2]);
+    }
+  });
 
   var loading = $("#tv-loading p");
   if(loading) loading.textContent = t("loading");
