@@ -19,6 +19,7 @@
     <button type="button" class="txt-btn primary" id="add-btn"></button>
     <button type="button" class="icon-btn" id="menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"></button>
     <div id="menu" role="menu" hidden>
+      <button type="button" role="menuitem" data-act="accounts" data-i18n="menu.accounts">Accounts</button>
       <button type="button" role="menuitem" data-act="cats" data-i18n="menu.cats">Categories</button>
       <button type="button" role="menuitem" data-act="export" data-i18n="menu.export">Export</button>
       <button type="button" role="menuitem" data-act="backup" data-i18n="menu.backup">Backup (JSON)</button>
@@ -40,6 +41,7 @@
       <div class="tile"><span class="tile-k" data-i18n="sum.out">Expenses</span><span class="tile-v out" id="sum-out"></span></div>
       <div class="tile"><span class="tile-k" data-i18n="sum.bal">Balance</span><span class="tile-v" id="sum-bal"></span></div>
     </section>
+    <div id="acc-strip" class="acc-strip" hidden></div>
 
     <section id="p-list" role="tabpanel" aria-labelledby="tab-list">
       <div class="search-row">
