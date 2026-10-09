@@ -214,19 +214,23 @@ button, select {
   container-type: size;
 }
 #board {
-  --s: min(720px, calc(100cqw - 4px), calc(100cqh - 4px));
-  --lw: max(1px, calc(var(--s) / 400));
-  width: var(--s);
-  height: var(--s);
+  /* the point size is a whole, odd number of pixels where the browser
+     can round, so every 1px line sits exactly on a pixel */
+  --avail: min(720px, calc(100cqw - 4px), calc(100cqh - 4px));
+  --cell: calc((var(--avail) - 28px) / 15);
+  --lw: 1px;
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
-  grid-template-rows: repeat(15, 1fr);
-  padding: calc(var(--s) * 0.012);
+  grid-template-columns: repeat(15, var(--cell));
+  grid-template-rows: repeat(15, var(--cell));
+  padding: 8px;
   background: var(--gm-wood);
-  border: calc(var(--s) * 0.01 + 2px) solid var(--gm-frame);
+  border: 6px solid var(--gm-frame);
   border-radius: 8px;
   box-shadow: 0 6px 24px var(--shadow);
-  box-sizing: border-box;
+  box-sizing: content-box;
+}
+@supports (width: round(down, 10.5px, 2px)) {
+  #board { --cell: calc(round(down, calc((var(--avail) - 29px) / 15), 2px) + 1px); }
 }
 .brow { display: contents; }
 .sq {
