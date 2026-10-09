@@ -214,6 +214,8 @@ var PRECACHE_URLS = [
   "health/core.js",
   "health/health.css",
   "health/health.js",
+  "health/help.en.txt",
+  "health/help.el.txt",
   "files/",
   "files/index.html",
   "files/files.css",
