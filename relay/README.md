@@ -15,7 +15,8 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | File | What it does |
 |---|---|
 | `worker.js` | Entry point: wires Cloudflare's `connect()` (TCP + TLS) into `core.js` |
-| `core.js` | HTTP side: CORS (allowed origins only), request validation, rate limit, the five operations |
+| `core.js` | HTTP side: CORS (allowed origins only), request validation, rate limit, the operations |
+| `web.js` | The Reader's `web` operation: fetches public feeds and pages (see below) |
 | `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -37,6 +38,30 @@ Answer: `{ ok: true, data }` or `{ ok: false, error: { code, msg } }`.
 
 Error codes: `origin`, `rate`, `bad-request`, `connect`, `tls`,
 `auth`, `timeout`, `closed`, `proto`, `no`, `gone`, `too-big`.
+
+## The `web` operation (Reader app)
+
+Most sites send no CORS headers, so a page cannot read their feeds.
+The Reader asks the site directly first and uses this operation only
+when that fails.
+
+`POST /v1` with `{ op: "web", reqs: [{ url, etag?, lm? }] }` (up to 10).
+Answer: `{ ok: true, data: { res: [...] } }`, one entry per request, in
+order: `{ status, url (after redirects), type, etag, lm, retry, body
+(base64) }`, or `{ err }` with `url`, `host`, `port`, `type`,
+`too-big`, `timeout`, `redirect`, `network` or `budget`. A 304 (not
+modified, thanks to `etag` / `lm`) has no body.
+
+- GET only, `http`/`https` only, ports 80, 443, 8080 or 8443 only.
+- Public host names only (the same check as for mail servers); every
+  redirect hop is checked again, at most 5 hops.
+- No cookies, no credentials. Pictures, audio, video and fonts are
+  refused (`type`): feeds and pages only.
+- 5 MB per response, 12 MB per call, 15 s per request, 45 sub-requests
+  per call (Cloudflare's free plan allows 50).
+
+Tests: `tests/feeds.test.js` drives `core.js` + `web.js` with a fake
+`fetch`.
 
 ## Rules it enforces
 
