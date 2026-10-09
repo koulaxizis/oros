@@ -1,5 +1,5 @@
 # The menu and quick search
-The menu holds every app in orOS and the main settings. Tap or click `orOS` on the left of the top bar to open it.
+The menu holds every app in orOS and the way into its settings. Tap or click `orOS` on the left of the top bar to open it.
 
 ## Open and close the menu
 - Tap or click `orOS` to open the menu, and again to close it.
@@ -26,12 +26,10 @@ The `Search apps and your data…` box at the top of the menu finds apps as you 
 If nothing matches, you'll see `No matching apps`.
 
 ## Settings in the menu
-Below the apps you'll find the settings of orOS itself:
-- `Appearance` and `Wallpaper`: colours, light or dark theme and the desktop background. See [Appearance](help:t/appearance).
+Below the apps you'll find a few rows:
 - `Install orOS`: shown only when your browser can install orOS as an app. See [Install](help:t/install).
-- `Screen Pet`: a small companion on your desktop.
-- `Sync`: Dropbox sync, backups, `Export data` and `Import data`. See [Sync](help:t/sync) and [Backup](help:t/backup).
-- `Notifications`: how and when orOS notifies you. See [Notifications](help:t/notifications).
-- `About orOS + shortcuts`: the version, the online services orOS uses, the [keyboard shortcuts](help:t/shortcuts) and the [factory reset](help:t/reset).
+- `Settings`: opens the [Settings](app:settings) app with appearance, notifications, sync, backups, language and the [factory reset](help:t/reset). It is also in the `System` category.
+- `Device info`: what this device and browser can do.
+- `About orOS + shortcuts`: the version, the online services orOS uses and the [keyboard shortcuts](help:t/shortcuts).
 
 > The time and the date in the top bar are shortcuts too: they open [Time](app:time) and [Calendar](app:calendar) directly.
