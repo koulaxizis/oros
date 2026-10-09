@@ -3984,6 +3984,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Core:** `apps.json` entry (System), `ICONS.help`, `app.help` (EN + EL), `sw.js` precache (Help + 13 topics + every registered app page, both languages), Tests workflow paths `help/**` and `**/help.*.txt`. `APP_VERSION` 0.48.00: main (0.47.05) + 1 minor (new app). Apps registered in 0.47.00 without a page yet are in `PENDING`.
 - **Status:** PR #63; not on `main` (R4).
 
+### 2026-10-09 — hotfix 0.48.01 — universal search works again
+- **Changes:** `apps.json` Mind Map lost a `"search": "search.js"` entry copied from Kanban by the bulk release; the file does not exist, so every universal search failed with "failed to load search.js" in 0.48.00. New test in `tests/search.test.js`: every `search` entry in `apps.json` must point to an existing file (PR #101).
+- **NOT tested:** a real phone, Safari / iOS.
+
 ### 2026-10-09 — Favourites: desktop shortcuts + Dock (`launcher.js` v1.0.0)
 
 - **New shell component `launcher.js`** (like `pet.js`): a star at the end of every app row of the menu opens two switches, "On the desktop" and "In the Dock". The desktop shows the chosen apps in an automatic grid; a mac-style Dock at the bottom (off until turned on in its own menu section: size, magnify on hover, auto-hide, over open apps). Small menu on both (right-click, long press, context-menu key): Open · Move earlier · Move later · Remove. Mouse users drag inside the Dock. The open app has a dot in the Dock. The pet and the desktop grid rise above a shown Dock (`--tb-h`); nothing is added to the top bar.

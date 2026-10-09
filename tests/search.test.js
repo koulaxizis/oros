@@ -240,3 +240,15 @@ test("every provider file is read-only (no storage writes)", () => {
     assert.ok(!/setItem|removeItem|registerSlice|innerHTML/.test(src), id);
   });
 });
+
+// A "search" entry in apps.json whose file is missing made the shell
+// fail every universal search ("failed to load search.js", 0.48.00:
+// mindmap had kanban's entry copied by the bulk release).
+test("apps.json: every search provider file exists", () => {
+  const fs = require("fs");
+  const root = path.join(__dirname, "..");
+  const apps = JSON.parse(fs.readFileSync(path.join(root, "apps.json"), "utf8")).apps;
+  apps.filter((a) => typeof a.search === "string").forEach((a) => {
+    assert.ok(fs.existsSync(path.join(root, a.id, a.search)), a.id + "/" + a.search);
+  });
+});
