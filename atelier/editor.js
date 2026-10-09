@@ -129,7 +129,7 @@
     var skip = {};
     if (ED.editId) skip[ED.editId] = 1;
     ctx.beginPath(); ctx.rect(0, 0, s.w, s.h); ctx.clip();
-    AT.draw.drawPage(ctx, doc(), page(), { maxSide: 1600, skip: skip });
+    AT.draw.drawPage(ctx, doc(), page(), { maxSide: 1600, skip: skip, time: ED.animTime });
     ctx.restore();
     if (ED.cropId) cropGhost(find(ED.cropId));
     // overlays (screen space)

@@ -113,6 +113,19 @@
     ED.exitText();
     exporting = true;
     AT.toast(t("exp.working"));
+    if (o.type === "video" || o.type === "gif") {
+      AT.motion.exportFilm({ type: o.type, side: o.side, pages: o.pages }, function (blob, ext, mime) {
+        return saveBlob(blob, fileName(doc, ext), mime, o.type === "gif" ? "GIF" : t("exp.video"), ext);
+      }).then(function (ok) {
+        exporting = false;
+        if (ok) AT.toast(AX.credits(doc).length ? t("exp.credits") : t("exp.done"));
+      }, function (e) {
+        exporting = false;
+        try { console.error("[orOS] atelier: film export failed", e); } catch (x) {}
+        AT.toast(t("exp.fail"));
+      });
+      return;
+    }
     var pages = M.pagesInOrder(doc);
     if (o.pages === "cur") pages = pages.filter(function (p) { return p.id === ED.pg; });
     var chain = prepare(doc);
@@ -167,20 +180,28 @@
     var doc = AT.doc;
     if (!doc) return;
     var print = AT.isPrint(doc), multi = doc.pages.length > 1;
-    var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all" };
+    var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720 };
+    var film = { video: 1, gif: 1 };
+    var types = ["png", "jpg", "pdf"].concat(AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
     AT.openDialog(t("exp.title"), function (body, close) {
       function render() {
         body.innerHTML = "";
         body.appendChild(el("div", "fld-lbl", t("exp.type")));
-        var seg = el("div", "seg");
-        ["png", "jpg", "pdf"].forEach(function (k) {
+        var seg = el("div", "seg" + (types.length > 3 ? " wrap" : ""));
+        types.forEach(function (k) {
           var b = el("button", "seg-btn" + (st.type === k ? " on" : ""), t("exp." + k));
           b.type = "button";
           b.addEventListener("click", function () { st.type = k; render(); });
           seg.appendChild(b);
         });
         body.appendChild(seg);
-        body.appendChild(el("p", "hint", t("exp." + st.type + "Hint")));
+        var secs = 0;
+        if (film[st.type]) {
+          var pl = M.pagesInOrder(doc);
+          if (st.pages === "cur") pl = pl.filter(function (p) { return p.id === ED.pg; });
+          secs = Math.ceil(AT.motion.duration(doc, pl));
+        }
+        body.appendChild(el("p", "hint", t("exp." + st.type + "Hint", { s: secs })));
         body.appendChild(el("div", "fld-lbl", t("exp.size")));
         var opts = el("div", "pn-col");
         function radio(name, label, on, fn) {
@@ -190,7 +211,14 @@
           l.appendChild(r); l.appendChild(el("span", "", label));
           opts.appendChild(l);
         }
-        if (print || st.type === "pdf") {
+        if (film[st.type]) {
+          var sides = st.type === "gif" ? [480, 720] : [720, 1080];
+          if (sides.indexOf(st.side) < 0) st.side = sides[0];
+          sides.forEach(function (d) {
+            var fs = AT.motion.filmSize(doc, d);
+            radio("side", fs.w + " × " + fs.h + " px", st.side === d, function () { st.side = d; });
+          });
+        } else if (print || st.type === "pdf") {
           [150, 300].forEach(function (d) {
             var ps = pixelSize(doc, d / 72);
             radio("dpi", t("exp.dpi" + d) + (st.type === "pdf" ? "" : " · " + ps.w + " × " + ps.h + " px"), st.dpi === d, function () { st.dpi = d; st.scale = d / 72; });
@@ -220,7 +248,7 @@
             s2.appendChild(b);
           });
           body.appendChild(s2);
-          if (st.type !== "pdf" && st.pages === "all") body.appendChild(el("p", "hint", t("exp.zipNote")));
+          if (st.type !== "pdf" && !film[st.type] && st.pages === "all") body.appendChild(el("p", "hint", t("exp.zipNote")));
         }
         if (AX.credits(doc).length) body.appendChild(el("p", "hint", t("exp.credits")));
         var act = el("div", "dlg-actions");
@@ -267,36 +295,96 @@
     }).then(function (ok) { if (ok) AT.toast(t("pkg.done")); }, function () { AT.toast(t("exp.fail")); });
   }
 
-  function importPackage() {
-    pickFile(".orosdesign,application/json,.json").then(function (f) {
-      if (!f) return;
-      if (f.size > PKG_MAX) { AT.toast(t("imp.bad")); return; }
-      return f.text().then(function (txt) {
-        var pkg = null;
-        try { pkg = JSON.parse(txt); } catch (e) {}
-        var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER && pkg.doc && typeof pkg.doc === "object" ? M.normDoc(pkg.doc) : null;
-        if (!doc || !doc.pages.length) { AT.toast(t("imp.bad")); return; }
-        // a NEW design: never overwrites or resurrects another one
-        doc.id = M.newId("doc");
-        var nw = AT.now();
-        doc.m = nw;
-        M.COLLECTIONS.forEach(function (c) { (doc[c] || []).forEach(function (e) { e.m = nw; }); });
-        doc.tombs = {};
-        var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
-        var failed = 0, chain = Promise.resolve();
-        AX.assetIds(doc).forEach(function (id) {
-          var b64 = assets[id];
-          if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
+  function importPackageFile(f) {
+    return f.text().then(function (txt) {
+      var pkg = null;
+      try { pkg = JSON.parse(txt); } catch (e) {}
+      var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER && pkg.doc && typeof pkg.doc === "object" ? M.normDoc(pkg.doc) : null;
+      if (!doc || !doc.pages.length) { AT.toast(t("imp.bad")); return; }
+      // a NEW design: never overwrites or resurrects another one
+      doc.id = M.newId("doc");
+      var nw = AT.now();
+      doc.m = nw;
+      M.COLLECTIONS.forEach(function (c) { (doc[c] || []).forEach(function (e) { e.m = nw; }); });
+      doc.tombs = {};
+      var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
+      var failed = 0, chain = Promise.resolve();
+      AX.assetIds(doc).forEach(function (id) {
+        var b64 = assets[id];
+        if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
+        chain = chain.then(function () {
+          return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
+        }).then(null, function () { failed++; });
+      });
+      return chain.then(function () {
+        AT.addDoc(M.normDoc(doc));
+        AT.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
+      });
+    });
+  }
+
+
+  // PowerPoint (.pptx, e.g. "Download › Microsoft PowerPoint" in
+  // Canva): parsed by pptx.js, every picture stored like an upload,
+  // opened as a NEW design.
+  var PPTX_MEDIA_MAX = 60 * 1024 * 1024;
+  var MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", bmp: "image/bmp", webp: "image/webp", svg: "image/svg+xml" };
+  // quiet: no toast (Canva account import counts for itself); → elements lost
+  function importPptxFile(f, quiet) {
+    return f.arrayBuffer().then(function (ab) {
+      var zip = window.AtelierZip.open(new Uint8Array(ab));
+      var name = String(f.name || "").replace(/\.pptx$/i, "").slice(0, 120);
+      return window.AtelierPPTX.parse(zip, name).then(function (plan) {
+        var assets = {}, failed = 0, chain = Promise.resolve();
+        Object.keys(plan.media).forEach(function (p) {
+          chain = chain.then(function () { return zip.bytes(p, PPTX_MEDIA_MAX); }).then(function (b) {
+            if (!b) { failed++; return; }
+            var ext = (p.split(".").pop() || "").toLowerCase();
+            var file = new File([b], p.split("/").pop(), { type: MIME[ext] || "application/octet-stream" });
+            return A.importFile(file).then(function (res) { assets[p] = res; AT.noteUpload(res.id); });
+          }).then(null, function (e) { if (e && e.message === "nofs") throw e; failed++; });
+        });
+        Object.keys(plan.svgs).forEach(function (k) {
           chain = chain.then(function () {
-            return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
-          }).then(null, function () { failed++; });
+            return A.importFile(new File([plan.svgs[k]], "shape.svg", { type: "image/svg+xml" }));
+          }).then(function (res) { assets[k] = res; }, function (e) { if (e && e.message === "nofs") throw e; failed++; });
         });
         return chain.then(function () {
-          AT.addDoc(M.normDoc(doc));
-          AT.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
+          var r = window.AtelierPPTX.build(plan, assets, AT.now());
+          AT.addDoc(r.doc);
+          var lost = plan.skipped + r.missing;
+          if (!quiet) AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
+          return lost;
         });
       });
-    }).then(null, function () { AT.toast(t("imp.bad")); });
+    });
+  }
+
+  // A picture (PNG, JPG, WebP, SVG…): a new design of its size
+  function importImageFile(f) {
+    return A.importFile(f).then(function (res) {
+      AT.noteUpload(res.id);
+      var nw = AT.now();
+      var d = AX.newDesign({ name: String(f.name || "").replace(/\.[a-z0-9]+$/i, "").slice(0, 120), w: res.w, h: res.h, unit: "px" }, nw);
+      var pg = M.pagesInOrder(d)[0];
+      AX.addItem(d, pg.id, { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", x: 0, y: 0, w: res.w, h: res.h, fit: "fill" }, nw);
+      AT.addDoc(M.normDoc(d));
+      AT.toast(t("imp.done"));
+    });
+  }
+
+  // Home › Import: .orosdesign, .pptx or a picture
+  function importAny() {
+    pickFile(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg").then(function (f) {
+      if (!f) return;
+      if (f.size > PKG_MAX) { AT.toast(t("imp.bad")); return; }
+      var nm = String(f.name || "").toLowerCase();
+      var run = /\.pptx$/.test(nm) ? importPptxFile
+        : /^image\//.test(f.type || "") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm) ? importImageFile
+        : importPackageFile;
+      AT.toast(t("imp.working"));
+      return run(f);
+    }).then(null, function (e) { AT.toast(e && e.message === "nofs" ? t("img.nofs") : t("imp.bad")); });
   }
 
   // ---------- Images ----------
@@ -415,6 +503,8 @@
     ex.addEventListener("click", exportDialog);
     $("ed-more").addEventListener("click", function () {
       AT.menu($("ed-more"), [
+        { label: t("more.present"), fn: AT.motion ? AT.motion.present : function () {} },
+        { sep: true },
         { label: t("more.resize"), fn: resizeDialog },
         { label: t("more.pkg"), fn: function () { exportPackage(AT.doc); } },
         { label: t("more.credits"), fn: creditsDialog },
@@ -431,7 +521,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importPackage: importPackage, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();

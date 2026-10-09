@@ -129,6 +129,13 @@
       if (w && typeof w.lat === "number" && typeof w.lon === "number") {
         return { lat: w.lat, lon: w.lon, manual: false };
       }
+      // 2026-10-09: with no pinned tray city the weather place is the
+      // Weather app's first city (shell orosWeatherTray.location()).
+      var tray = window.parent && window.parent !== window && window.parent.orosWeatherTray;
+      var tl = (tray && typeof tray.location === "function") ? tray.location() : null;
+      if (tl && typeof tl.lat === "number" && typeof tl.lon === "number") {
+        return { lat: tl.lat, lon: tl.lon, manual: false };
+      }
     } catch (e) {}
     if (geoFix) return { lat: geoFix.lat, lon: geoFix.lon, manual: false, geo: true };
     return null;

@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -523,9 +523,17 @@
     // notifications reopen the channel. The shell bridge accepts
     // a bare string id (wrapped into { channelId } internally).
     television: function (id) { if (typeof window.__orosOpenTelevision === 'function') window.__orosOpenTelevision(id); },
+    // Garage — "garage:upcoming" (reminder) or "garage:<id>".
+    garage:   function (target) { if (typeof window.__orosOpenGarage === 'function') window.__orosOpenGarage(target); },
+    // Pet Health Book — "petcare:today" (daily reminder) or "petcare:<petId>".
+    petcare:  function (target) { if (typeof window.__orosOpenPetcare === 'function') window.__orosOpenPetcare(target); },
+    // Plant Care — "plants:today" (daily reminder) or "plants:<plantId>".
+    plants:   function (target) { if (typeof window.__orosOpenPlants === 'function') window.__orosOpenPlants(target); },
     // "system:open:<appId>": plain open of an app (SY-D3 notice —
     // opening the app is what merges its waiting changes).
-    system:   function (id) { if (typeof window.__orosOpenApp === 'function') window.__orosOpenApp(id); }
+    system:   function (id) { if (typeof window.__orosOpenApp === 'function') window.__orosOpenApp(id); },
+    // Health — "health:<kind>" (reminder → a new reading of that kind).
+    health:   function (kind) { if (typeof window.__orosOpenHealth === 'function') window.__orosOpenHealth(kind); }
   };
 
   function openTarget(item) {
