@@ -5,7 +5,7 @@ Design posts, stories, flyers, posters, cards and more, from a blank page or a r
 Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also pick one of the designs under `Start from a template`; its texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
 
 ## Add and edit elements
-- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `Uploads` and `Background`.
+- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `Sources`, `Uploads` and `Background`.
 - `Elements` has shapes, lines and arrows, and icons you can search in English or Greek.
 - `Text` adds a heading, a subheading or body text, and has ready `Styles` such as neon, shadow and curved text.
 - Tap or click an element to select it. Drag it to move, use the handles to resize, and the round handle below it to rotate. Guides help you line things up.
@@ -17,6 +17,12 @@ Under `What will you make?` tap or click a size, for example a square post or an
 - With a photo selected you get `Filters`, `Adjust` (brightness, contrast, warmth and more), `Shape` to cut it into a circle, star or other shape, `Flip` and `Replace`.
 - `Crop`, or a double-click on the photo, lets you move and zoom the photo inside its frame.
 - `Background` can use the selected photo as the page background.
+
+## Free photos, illustrations and icons
+`Sources` searches open libraries: Openverse and Wikimedia Commons for photos and illustrations, Iconify for icons and clipart. Pixabay and Pexels appear too once you add your own free key under `Pixabay and Pexels keys`. Tap or click a result to add it.
+- By default you only see pieces you may use for anything, also commercially, and change. `Show licences with limits` adds the rest, marked `Limits`.
+- What you add is downloaded once and saved with your design, so it works offline afterwards. Its author and licence go to `More` › `Credits`: keep them with your design when a licence asks for credit.
+- Searching needs an internet connection.
 
 ## Pages
 The strip under the canvas shows the pages of your design. `+` adds a page; each page has `Duplicate page`, `Move left`, `Move right` and `Delete page`.
@@ -51,4 +57,4 @@ Designs sync with orOS sync. Uploaded images are stored once on the orOS disk an
 
 ## Limits
 - PDF pages are high-resolution images, so text in the PDF cannot be selected or edited.
-- Open media sources (free photos, clipart and sounds) and more fonts come in a later version.
+- More fonts, sounds and video come in a later version.

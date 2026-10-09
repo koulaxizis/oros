@@ -68,6 +68,19 @@
       "tab.background": "Background", "tab.colour": "Colour", "tab.effects": "Effects", "tab.filters": "Filters",
       "tab.adjust": "Adjust", "tab.position": "Position", "tab.mask": "Shape",
       "drawer.close": "Close panel",
+      "tab.sources": "Sources",
+      "src.k.photo": "Photos", "src.k.illus": "Illustrations", "src.k.icon": "Icons and clipart",
+      "src.search": "Search free media", "src.go": "Search", "src.restricted": "Show licences with limits (no commercial use or no edits)",
+      "src.intro": "Search millions of free photos, illustrations and icons from open libraries. What you add is saved with your design and works offline.",
+      "src.none": "Nothing found. Try other words, in English too.", "src.searching": "Searching…", "src.more": "More results",
+      "src.untitled": "Untitled", "src.limited": "Limits", "src.from": "Results from",
+      "src.creditHint": "Each piece keeps its author and licence: see More › Credits.",
+      "src.getting": "Downloading…", "src.added": "Added to your design", "src.fail": "This file could not be downloaded.",
+      "src.tooBig": "This file is too large.", "src.offline": "Sources need an internet connection. Your designs still work offline.",
+      "src.err.offline": "No connection to this library right now.", "src.err.rate": "Too many searches for now. Try again in a minute.",
+      "src.err.key": "The key for this library was not accepted.", "src.err.server": "This library did not answer. Try another one.",
+      "src.keys": "Pixabay and Pexels keys", "src.keysHint": "Both are free: make an account and copy your API key here. Keys stay on this device.",
+      "src.getKey": "Get a key",
       "tpl.apply": "Use on this page", "tpl.hint": "A template replaces what is on the current page and is fitted to your size.",
       "tpl.confirm": "Replace this page with the template?",
       "el.shapes": "Shapes", "el.lines": "Lines", "el.icons": "Icons", "el.iconsSearch": "Search icons",
@@ -153,6 +166,19 @@
       "tab.background": "Φόντο", "tab.colour": "Χρώμα", "tab.effects": "Εφέ", "tab.filters": "Φίλτρα",
       "tab.adjust": "Ρυθμίσεις", "tab.position": "Θέση", "tab.mask": "Σχήμα",
       "drawer.close": "Κλείσιμο πάνελ",
+      "tab.sources": "Πηγές",
+      "src.k.photo": "Φωτογραφίες", "src.k.illus": "Εικονογραφήσεις", "src.k.icon": "Εικονίδια και clipart",
+      "src.search": "Αναζήτηση ελεύθερων αρχείων", "src.go": "Αναζήτηση", "src.restricted": "Εμφάνιση αδειών με περιορισμούς (όχι εμπορική χρήση ή όχι αλλαγές)",
+      "src.intro": "Ψάξε σε εκατομμύρια ελεύθερες φωτογραφίες, εικονογραφήσεις και εικονίδια από ανοιχτές βιβλιοθήκες. Ό,τι προσθέτεις αποθηκεύεται με το σχέδιο και δουλεύει και χωρίς σύνδεση.",
+      "src.none": "Δεν βρέθηκε κάτι. Δοκίμασε άλλες λέξεις, και στα αγγλικά.", "src.searching": "Αναζήτηση…", "src.more": "Περισσότερα",
+      "src.untitled": "Χωρίς τίτλο", "src.limited": "Όροι", "src.from": "Αποτελέσματα από",
+      "src.creditHint": "Κάθε κομμάτι κρατά δημιουργό και άδεια: δες Περισσότερα › Αναφορές δημιουργών.",
+      "src.getting": "Λήψη…", "src.added": "Προστέθηκε στο σχέδιο", "src.fail": "Το αρχείο δεν κατέβηκε.",
+      "src.tooBig": "Το αρχείο είναι πολύ μεγάλο.", "src.offline": "Οι πηγές θέλουν σύνδεση στο internet. Τα σχέδιά σου δουλεύουν και χωρίς.",
+      "src.err.offline": "Δεν υπάρχει σύνδεση με αυτή τη βιβλιοθήκη τώρα.", "src.err.rate": "Πολλές αναζητήσεις για την ώρα. Δοκίμασε σε ένα λεπτό.",
+      "src.err.key": "Το κλειδί για αυτή τη βιβλιοθήκη δεν έγινε δεκτό.", "src.err.server": "Η βιβλιοθήκη δεν απάντησε. Δοκίμασε άλλη.",
+      "src.keys": "Κλειδιά Pixabay και Pexels", "src.keysHint": "Είναι δωρεάν: φτιάξε λογαριασμό και αντέγραψε εδώ το API key σου. Τα κλειδιά μένουν σε αυτή τη συσκευή.",
+      "src.getKey": "Πάρε κλειδί",
       "tpl.apply": "Χρήση σε αυτή τη σελίδα", "tpl.hint": "Το πρότυπο αντικαθιστά ό,τι έχει η τρέχουσα σελίδα και προσαρμόζεται στο μέγεθός σου.",
       "tpl.confirm": "Να αντικατασταθεί η σελίδα με το πρότυπο;",
       "el.shapes": "Σχήματα", "el.lines": "Γραμμές", "el.icons": "Εικονίδια", "el.iconsSearch": "Αναζήτηση εικονιδίων",
@@ -279,6 +305,7 @@
     check: '<path d="M5 12l5 5L20 7"/>',
     download: '<path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+    sources: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
     replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>'
   };
   function icon(name) {
@@ -392,6 +419,12 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = p && typeof p === "object" ? p : {};
     AT.prefs = { doc: M.isId(p.doc) ? p.doc : null };
+    // the user's own Pixabay / Pexels keys: this device only (R10)
+    var k = p.keys && typeof p.keys === "object" ? p.keys : {}, keys = {};
+    ["pixabay", "pexels"].forEach(function (id) {
+      if (typeof k[id] === "string" && /^[A-Za-z0-9_-]{1,120}$/.test(k[id])) keys[id] = k[id];
+    });
+    if (Object.keys(keys).length) AT.prefs.keys = keys;
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(AT.prefs)); } catch (e) {}
