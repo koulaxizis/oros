@@ -1752,7 +1752,8 @@ Rebuild this in any session where code is delivered.
 - Inside the Calendar, not a separate app (Chris 2026-10-09). Three read-only chips: Holidays (Greek public holidays), Name days (day-view line + one row per contact whose first name celebrates, click → Contacts), World days (observances).
 - `calendar/namedays.js` is pure (Orthodox Easter by Meeus, fixed + movable feasts, George/Mark moved after Easter, Greek/Greeklish name skeletons, `cleanDays` sanitizer). Name list is hand-written from the church calendar; nicknames prefixed `~` match but are not shown. Add names there.
 - `calendar/days.json` = observance RULES (`md`, `nth`, `easter`, `doy`). Updating it needs no app release: the Calendar fetches `days.json?w=<week>` at most weekly, sanitizes, caches in `oros-cal-days`; the SW precache is the offline fallback. Plain text only (textContent), max 80 chars, unknown rules dropped.
-- Nothing is stored in `oros-calendar-data`: no sync impact, no reminders.
+- Nothing is stored in `oros-calendar-data`: no sync impact, no event reminders.
+- Morning notice (shell `namedayCheckTick`, 60 s throttle): from 09:00, when a contact's first name (or nickname) celebrates today, one `ns: "calendar"` notification, key `nameday-<ymd>` (inbox dedup across devices), body lists up to 3 names, deep link `calendar:nameday:<ymd>` opens that day. The shell loads `calendar/namedays.js` (same file as the app). Silent when the Name days chip is off on this device (`oros-cal-feedvis`) or Calendar notifications are off. orOS closed = nothing fires; the next boot the same day catches up.
 
 ## Part X — Open items, audit queue, lessons
 
