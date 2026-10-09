@@ -336,6 +336,14 @@
       "icon": "wordle",
       "url": "wordle/",
       "type": "internal"
+    },
+    {
+      "id": "passwords",
+      "name": "Password Generator",
+      "category": "Security",
+      "icon": "passwords",
+      "url": "passwords/",
+      "type": "internal"
     }
   ]
 }
