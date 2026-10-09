@@ -1,0 +1,471 @@
+/* ============================================================
+   orOS Minesweeper — App stylesheet
+   Inherits the shell palette (inheritPalette + watchPalette).
+   Same toolbar, dialog and toast styles as the other games.
+   Sections:
+     1. Palette fallback + reset (+ number colours, light theme too)
+     2. Toolbar (segmented controls, icon buttons)
+     3. Status row (mines left, message, time)
+     4. Board: closed / open / flagged / mine cells (fit, or zoomed)
+     5. Dialogs (result, records, confirm) — centered (R32)
+     6. Toast + screen-reader helper
+     7. Mobile + touch adaptations
+     8. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+  /* Board tokens, mixed from the palette so they follow light themes */
+  --ms-gap:       color-mix(in srgb, var(--text) 10%, var(--bg));
+  --ms-closed:    color-mix(in srgb, var(--text) 16%, var(--panel-bg));
+  --ms-hover:     color-mix(in srgb, var(--accent) 22%, var(--panel-bg));
+  --ms-open:      var(--bg);
+  --ms-flag:      #e5484d;
+  --ms-mine:      #1b1b1f;
+  /* Number colours: the classic hues, brightened for a dark board */
+  --ms-1: #6aa8ff; --ms-2: #5cc46a; --ms-3: #ff6b6b; --ms-4: #b48cff;
+  --ms-5: #ff9f43; --ms-6: #3fd0c9; --ms-7: #e6e6e6; --ms-8: #9a9a9a;
+}
+html[data-theme="light"] {
+  --ms-closed:    color-mix(in srgb, var(--text) 14%, var(--panel-bg));
+  --ms-open:      color-mix(in srgb, var(--bg) 70%, #ffffff);
+  --ms-flag:      #d1242f;
+  --ms-1: #1f5fd6; --ms-2: #1f8a32; --ms-3: #d1242f; --ms-4: #4b2fa6;
+  --ms-5: #a3420c; --ms-6: #0f7f7a; --ms-7: #222222; --ms-8: #666666;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+dialog { margin: auto; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button, select {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 2. Toolbar ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+/* Wide screen: both strips flow as one line, in this order. */
+.tb-row { display: contents; }
+#lv-seg       { order: 1; }
+#tb-b .spacer { order: 3; }
+#flag-btn     { order: 4; }
+#zoom-btn     { order: 5; }
+#new-btn      { order: 6; }
+#stats-btn    { order: 7; }
+#sfx-btn      { order: 8; }
+.icon-btn.on  { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.seg-btn {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.seg-btn:hover { color: var(--text); background: var(--accent-soft); }
+.seg-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.icon-btn[aria-pressed="true"] { color: var(--accent); }
+.icon-btn:disabled { opacity: 0.4; cursor: default; }
+.icon-btn:disabled:hover { color: var(--text-dim); border-color: var(--border); background: var(--panel-bg); }
+.icon-btn svg { width: 18px; height: 18px; display: block; }
+
+.seg-btn:focus-visible, .icon-btn:focus-visible, .key:focus-visible,
+.dlg-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- 3. Status row ---------- */
+#status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.stat span { white-space: nowrap; }
+.stat strong {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+#turn {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+#turn.done { color: var(--accent); }
+#turn.warn { color: var(--danger); }
+
+/* ---------- 4. Board ---------- */
+/* JS sets --c (cell px), --vr / --vc (rows / columns on screen). Zoomed:
+   the wrap scrolls; cells allow native panning, so a drag pans and a
+   tap opens. */
+#board-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 10px 12px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+}
+#board-wrap.zoomed {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+}
+#board {
+  margin: auto;                       /* centers, and never clips when it scrolls */
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--vc, 9), var(--c, 32px));
+  grid-template-rows: repeat(var(--vr, 9), var(--c, 32px));
+  gap: 1px;
+  padding: 3px;
+  background: var(--ms-gap);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px var(--shadow);
+  outline: none;
+  touch-action: pan-x pan-y;
+  -webkit-touch-callout: none;
+}
+#board:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: max(2px, calc(var(--c, 32px) * 0.12));
+  background: var(--ms-closed);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-size: calc(var(--c, 32px) * 0.58);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.cell:not(.open):hover { background: var(--ms-hover); }
+.cell.open {
+  background: var(--ms-open);
+  box-shadow: none;
+  cursor: default;
+}
+.cell.n1 { color: var(--ms-1); }
+.cell.n2 { color: var(--ms-2); }
+.cell.n3 { color: var(--ms-3); }
+.cell.n4 { color: var(--ms-4); }
+.cell.n5 { color: var(--ms-5); }
+.cell.n6 { color: var(--ms-6); }
+.cell.n7 { color: var(--ms-7); }
+.cell.n8 { color: var(--ms-8); }
+/* flag: a pole and a pennant, drawn with borders */
+.cell.flag::before {
+  content: "";
+  position: absolute;
+  left: 34%;
+  top: 22%;
+  width: 0;
+  height: 0;
+  border-top: calc(var(--c, 32px) * 0.16) solid transparent;
+  border-bottom: calc(var(--c, 32px) * 0.16) solid transparent;
+  border-left: calc(var(--c, 32px) * 0.34) solid var(--ms-flag);
+}
+.cell.flag::after {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 22%;
+  width: max(2px, calc(var(--c, 32px) * 0.07));
+  height: 56%;
+  background: var(--text);
+  border-radius: 1px;
+}
+.cell.flag.wrong { background: var(--ms-open); }
+.cell.flag.wrong::before { opacity: 0.35; }
+.cell.flag.wrong::after {
+  left: 15%;
+  top: 48%;
+  width: 70%;
+  height: max(2px, calc(var(--c, 32px) * 0.08));
+  background: var(--danger);
+  transform: rotate(-45deg);
+}
+/* mine: a round body with a shine */
+.cell.mine::before {
+  content: "";
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.55) 0 14%, transparent 16%), var(--ms-mine);
+  box-shadow: 0 0 0 max(1px, calc(var(--c, 32px) * 0.05)) var(--ms-mine);
+}
+.cell.mine.hit { background: var(--danger); }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1; }
+.cell.shake { animation: ms-shake 0.35s; }
+@keyframes ms-shake {
+  20%, 60% { transform: translateX(-2px); }
+  40%, 80% { transform: translateX(2px); }
+}
+#board.won { animation: ms-won 0.6s ease-out; }
+@keyframes ms-won { 40% { transform: scale(1.02); } }
+#board.boom { animation: ms-boom 0.45s ease-out; }
+@keyframes ms-boom {
+  15%, 55% { transform: translate(-4px, 2px); }
+  35%, 75% { transform: translate(4px, -2px); }
+}
+.dlg-hero.lost { color: var(--danger); }
+
+/* ---------- 5. Dialogs (R32: margin auto, scroll inside) ---------- */
+dialog.mm-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  box-shadow: 0 10px 40px var(--shadow);
+}
+dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+.dlg-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.dlg-hero {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--accent);
+  margin: 4px 0 12px;
+}
+.dlg-badge {
+  display: block;
+  width: max-content;
+  margin: 0 auto 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bg);
+  background: var(--accent);
+}
+.dlg-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dlg-row span { color: var(--text-dim); }
+.dlg-row strong { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+.dlg-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin: 14px 0 2px;
+}
+.dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
+.dlg-note { font-size: 12px; color: var(--danger); text-align: center; margin-bottom: 10px; }
+.dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
+.dlg-btn {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.dlg-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.dlg-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.dlg-btn.primary:hover { background: var(--accent-hover); }
+.dlg-btn.danger { color: var(--danger); border-color: var(--danger); }
+.dlg-btn.danger:hover { background: rgba(224, 108, 117, 0.15); }
+
+/* ---------- 6. Toast + screen reader ---------- */
+#toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#toast button {
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 6px;
+  pointer-events: auto;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 7. Mobile + touch ---------- */
+/* Narrow screen: two strips; each scrolls instead of clipping (Part VII). */
+@media (max-width: 440px) {
+  #toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .tb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .tb-row::-webkit-scrollbar { display: none; }
+}
+@media (max-width: 480px) {
+  #toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .tb-row { gap: 6px; }
+  .seg-btn { padding: 4px 8px; }
+  #status { padding: 6px 8px; }
+  .stat { padding: 4px 4px; gap: 6px; }
+  #turn { font-size: 12px; }
+  dialog.mm-dlg { width: calc(100vw - 20px); padding: 14px; }
+}
+@media (max-width: 480px) {
+  #board-wrap { padding: 8px; }
+  #board-wrap.zoomed { padding: 4px; }
+}
+@media (pointer: coarse) {
+  .seg-btn, .icon-btn, .dlg-btn { min-height: 44px; }
+  .icon-btn { width: 44px; }
+  #toast button { min-height: 44px; }
+}
+
+
+/* ---------- 8. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #board, .cell { animation: none !important; }
+}
+
+[hidden] { display: none !important; }
