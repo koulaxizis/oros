@@ -43,9 +43,9 @@
   var PREFS_KEY     = "oros-mail-prefs";
   var DB_NAME       = "oros-mail";
   var DATA_VER      = 1;
-  // The orOS relay. Empty until the Worker is deployed: then the
-  // account dialog asks for the address (and syncs it).
-  var DEFAULT_RELAY = "";
+  // The orOS relay (Christos's Worker, relay/). Settings can override
+  // it per user (synced); an empty override falls back to this.
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";
   var PAGE          = 50;
   var KEEP_HEADS    = 500;              // per folder
   var KEEP_BODIES   = 200;              // messages
@@ -1540,7 +1540,7 @@
     var form = el("form");
     form.method = "dialog";
     form.noValidate = true;
-    var fRelay = field(form, "ml-relay2", t("set.relay"), "url", relayUrl(), { maxlength: "300", placeholder: "https://", autocapitalize: "off", spellcheck: "false" });
+    var fRelay = field(form, "ml-relay2", t("set.relay"), "url", data.relay.url, { maxlength: "300", placeholder: DEFAULT_RELAY || "https://", autocapitalize: "off", spellcheck: "false" });
     form.appendChild(el("p", "dlg-hint", t("dlg.relayHint")));
     var lab = el("label", "check");
     var cb = el("input");

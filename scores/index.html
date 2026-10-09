@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Score Keeper · orOS</title>
+
+  <link rel="stylesheet" href="scores.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="back-btn" hidden></button>
+    <span id="title" class="title"></span>
+    <button type="button" class="icon-btn" id="timer-btn" aria-pressed="false" hidden></button>
+    <button type="button" class="icon-btn" id="menu-btn" aria-haspopup="menu" hidden></button>
+    <button type="button" class="txt-btn" id="new-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Home: open matches, history, stats -->
+    <section id="home" class="view">
+      <div class="tabs" role="tablist" id="tabs">
+        <button type="button" role="tab" class="tab" id="tab-play" data-tab="play"></button>
+        <button type="button" role="tab" class="tab" id="tab-hist" data-tab="hist"></button>
+        <button type="button" role="tab" class="tab" id="tab-stats" data-tab="stats"></button>
+      </div>
+      <div id="pane-play" class="pane" role="tabpanel">
+        <div id="open-list" class="cards"></div>
+        <div id="empty-play" class="empty" hidden>
+          <p data-i18n="home.empty">No match in progress.</p>
+          <button type="button" class="dlg-btn primary" id="empty-new"></button>
+        </div>
+      </div>
+      <div id="pane-hist" class="pane" role="tabpanel" hidden>
+        <div class="pane-head">
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" id="csv-all"></button>
+        </div>
+        <div id="hist-list" class="cards"></div>
+        <p id="empty-hist" class="hint" data-i18n="hist.empty" hidden>Finished matches show up here.</p>
+      </div>
+      <div id="pane-stats" class="pane" role="tabpanel" hidden>
+        <div class="pane-head">
+          <label class="sel-lbl" for="stats-game" data-i18n="stats.game">Game</label>
+          <select id="stats-game"></select>
+        </div>
+        <div id="stats-wrap"></div>
+        <p id="empty-stats" class="hint" data-i18n="stats.empty">Finish a match to see who wins most.</p>
+      </div>
+    </section>
+
+    <!-- One match: the score sheet -->
+    <section id="match" class="view" hidden>
+      <div id="match-info" class="match-info"></div>
+      <div id="timer" class="timer" hidden>
+        <select id="timer-len"></select>
+        <span id="timer-show" class="timer-show" aria-live="off">1:00</span>
+        <button type="button" class="icon-btn" id="timer-go"></button>
+        <button type="button" class="icon-btn" id="timer-reset"></button>
+      </div>
+      <div id="sheet-wrap" class="sheet-wrap">
+        <table id="sheet" class="sheet"></table>
+      </div>
+      <div id="entry" class="entry">
+        <div id="entry-row" class="entry-row"></div>
+        <div class="entry-acts">
+          <button type="button" class="dlg-btn primary" id="add-round"></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="scores.js?v=0.46.00"></script>
+
+</body>
+</html>
