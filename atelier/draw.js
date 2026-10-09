@@ -167,9 +167,37 @@
     });
   }
 
+  // The first n characters of a laid-out text, in place (typewriter):
+  // the full text keeps its line breaks and alignment.
+  function firstChars(lay, n) {
+    if (lay.curve) {
+      var c = {};
+      Object.keys(lay.curve).forEach(function (k) { c[k] = lay.curve[k]; });
+      c.glyphs = lay.curve.glyphs.slice(0, n);
+      return { curve: c };
+    }
+    var left = n;
+    return {
+      lines: lay.lines.map(function (ln) {
+        var o = {};
+        Object.keys(ln).forEach(function (k) { o[k] = ln[k]; });
+        o.runs = ln.runs.map(function (r) {
+          var ch = Array.from(r.t || ""), q = {};
+          Object.keys(r).forEach(function (k) { q[k] = r[k]; });
+          q.t = ch.slice(0, Math.max(0, left)).join("");
+          if (q.t.length < r.t.length) q.w = T.measure(r.key, q.t, r.size, r.track || 0);
+          left -= ch.length;
+          return q;
+        });
+        return o;
+      })
+    };
+  }
+
   function drawText(ctx, it) {
     var ax = it.ax || {};
     var lay = textLines(it);
+    if (it.tw !== undefined) lay = firstChars(lay, it.tw);
     var fill = ax.fc || "#000000";
     var passes = FX.textPasses(ax.tfx, ax.size || AX.TEXT_DEF.size, fill);
     var key = AX.fontKeyOf(ax), size = ax.size || AX.TEXT_DEF.size;
@@ -284,11 +312,51 @@
     return doc.items.filter(function (it) { return it.pg === pg && it.ax; }).sort(M.byZ);
   }
 
+  // opts.time (seconds since the page appeared): entrance
+  // animations (anim.js) for the preview and the video / GIF export.
+  // Without it every element is drawn as it ends up.
   function drawPage(ctx, doc, page, opts) {
-    itemsOf(doc, page.id).forEach(function (it) {
+    var list = itemsOf(doc, page.id);
+    var Anim = window.AtelierAnim;
+    var sc = opts && opts.time !== undefined && Anim ? Anim.schedule(list) : null;
+    list.forEach(function (it) {
       if (opts && opts.skip && opts.skip[it.id]) return;
-      drawItem(ctx, doc, it, opts);
+      var st = sc && sc[it.id] !== undefined ? Anim.stateAt(it, sc[it.id], opts.time, doc.setup.h) : null;
+      if (st) drawAnimated(ctx, doc, it, st, opts);
+      else drawItem(ctx, doc, it, opts);
     });
+  }
+  function drawAnimated(ctx, doc, it, st, opts) {
+    var c = it;
+    if (st.a !== undefined || st.chars !== undefined) {
+      c = {};
+      Object.keys(it).forEach(function (k) { c[k] = it[k]; });
+      if (st.a !== undefined) c.op = (it.op === undefined ? 100 : it.op) * st.a;
+      if (st.chars !== undefined) c.tw = st.chars;     // drawn copy only, never stored
+    }
+    if (c.op !== undefined && c.op <= 0.5) return;
+    ctx.save();
+    if (st.clip !== undefined) {
+      // reveal from the left across the element's on-page bounds
+      var cx0 = it.x + it.w / 2, cy0 = it.y + it.h / 2, r0 = rad(it.rot || 0);
+      var xs = [], ys = [];
+      [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) {
+        var px = q[0] * it.w / 2, py = q[1] * it.h / 2;
+        xs.push(cx0 + px * Math.cos(r0) - py * Math.sin(r0));
+        ys.push(cy0 + px * Math.sin(r0) + py * Math.cos(r0));
+      });
+      var pad = Math.max(it.sw || 0, 4) * 4;
+      var x0 = Math.min.apply(null, xs) - pad, x1 = Math.max.apply(null, xs) + pad;
+      var y0 = Math.min.apply(null, ys) - pad, y1 = Math.max.apply(null, ys) + pad;
+      ctx.beginPath(); ctx.rect(x0, y0, (x1 - x0) * st.clip, y1 - y0); ctx.clip();
+    }
+    if (st.dx || st.dy) ctx.translate(st.dx || 0, st.dy || 0);
+    if (st.s !== undefined && st.s !== 1) {
+      var cx = it.x + it.w / 2, cy = it.y + it.h / 2;
+      ctx.translate(cx, cy); ctx.scale(st.s, st.s); ctx.translate(-cx, -cy);
+    }
+    drawItem(ctx, doc, c, opts);
+    ctx.restore();
   }
 
   // A page on a fresh canvas. scale = px per pt.
@@ -304,7 +372,7 @@
     else ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.beginPath(); ctx.rect(0, 0, s.w, s.h); ctx.clip();
-    drawPage(ctx, doc, page, { maxSide: opts.maxSide || 0, clean: true });
+    drawPage(ctx, doc, page, { maxSide: opts.maxSide || 0, clean: true, time: opts.time, skip: opts.skip });
     return cv;
   }
 

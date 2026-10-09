@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Atelier — panels (v1.0.0)
-//   - the rail (Templates, Elements, Text, Uploads, Background):
+//   - the rail (Templates, Elements, Text, Sources, Uploads, Background):
 //     a side drawer on wide screens, a bottom sheet on phones
 //   - contextual drawer views opened from the context bar: Colour,
 //     Effects (text), Filters / Adjust / Shape (photos), Position
@@ -15,7 +15,7 @@
   var AT = window.AT, M = AT.M, T = AT.T, FX = AT.FX, AX = AT.AX, A = AT.A, t = AT.t, $ = AT.$, el = AT.el;
   var ED = AT.ed, ICONS = window.ATELIER_ICONS;
 
-  var RAIL = ["templates", "elements", "text", "uploads", "background"];
+  var RAIL = ["templates", "elements", "text", "sources", "uploads", "background"];
   var PALETTE = ["#000000", "#545454", "#737373", "#a6a6a6", "#d9d9d9", "#ffffff",
     "#ff3131", "#ff5757", "#ff66c4", "#cb6ce6", "#8c52ff", "#5e17eb",
     "#0097b2", "#0cc0df", "#5ce1e6", "#38b6ff", "#5271ff", "#004aad",
@@ -128,6 +128,8 @@
   AT.renderDrawer = renderDrawer;
 
   var VIEWS = {};
+  // views that live in their own file (sources.js)
+  AT.registerView = function (id, fn) { VIEWS[id] = fn; };
 
   // --- Templates ---
   VIEWS.templates = function (body) {
@@ -760,6 +762,7 @@
       bar.appendChild(colourBtn(t("ctx.bg"), bg && bg.ax.k === "shape" ? bg.ax.fc : "", bg && bg.ax.g, { kind: "bg" }));
       var bb = btn("ctx-txt", t("ctx.bg"), function () { openView("background"); });
       bar.appendChild(bb);
+      bar.appendChild(btn("ctx-txt" + (view === "animate" ? " on" : ""), t("ctx.animate"), function () { openView("animate"); }));
       bar.appendChild(el("span", "ctx-hint", t("ctx.hint")));
       return;
     }
@@ -778,6 +781,7 @@
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
+    bar.appendChild(tool("anim", t("ctx.animate"), function () { openView("animate"); }, view === "animate"));
     bar.appendChild(tool("lock", t("ctx.lock"), function () { edit(function (it) { it.lock = 1; }); }));
     bar.appendChild(tool("copy", t("ctx.dup"), ED.duplicate));
     bar.appendChild(tool("trash", t("ctx.del"), ED.remove));
@@ -906,9 +910,9 @@
   }
 
   // ---------- 4. Wiring ----------
-  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1 };
+  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1 };
   function viewFits() {
-    if (!view || !CONTEXT_VIEWS[view]) return true;
+    if (!view || !CONTEXT_VIEWS[view] || view === "animate") return true;
     var one = sel1(), list = ED.selItems();
     if (view === "position") return list.length > 0;
     if (view === "colour") return colourTarget && colourTarget.kind === "bg" ? true : !!one;
