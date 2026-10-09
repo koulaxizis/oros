@@ -266,6 +266,14 @@
       "type": "internal"
     },
     {
+      "id": "water",
+      "name": "Water",
+      "category": "Personal",
+      "icon": "water",
+      "url": "water/",
+      "type": "internal"
+    },
+    {
       "id": "cycle",
       "name": "Cycle",
       "category": "Personal",

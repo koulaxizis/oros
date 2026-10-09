@@ -141,6 +141,7 @@
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     prompter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/><line x1="21" y1="2" x2="21" y2="6"/><line x1="19" y1="4" x2="23" y2="4"/></svg>',
     characters: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    water: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8C9 7 6 10.4 6 14.2a6 6 0 0 0 12 0C18 10.4 15 7 12 2.8z"/></svg>',
     names: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5V5a1 1 0 0 1 1-1h7.5L21 13.5 13.5 21 4 11.5V7.5z"/><circle cx="8" cy="8" r="1.5"/><path d="M11 13l2 2M13 11l2 2"/></svg>',
     pixel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="8" width="3" height="3" fill="currentColor" stroke="none"/><rect x="14" y="8" width="3" height="3" fill="currentColor" stroke="none"/><path d="M8 15h8"/></svg>',
     storage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>',
@@ -782,6 +783,7 @@
     }).catch(function () { /* request failed — flag stays, retry next click */ });
   }
   
+      tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
     // ---------- 6. Clock (24h) ----------
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
   function renderClock() {
@@ -1209,6 +1211,41 @@
     plantsLastTick = now;
     plantsCheckTick();
   }
+
+  // Water — "behind the pace" reminder (off by default; the app's
+  // switch turns it on). The RULE lives in water/core.js, loaded by
+  // index.html before this file and shared with the app and its
+  // tests; the shell owns timing + emission over oros-water-data
+  // (same origin), so it works with the app closed. Dedupe key =
+  // day + interval slot (core.reminderDue). A stale index.html
+  // without core.js → silent.
+  var waterLastTick = 0;
+  function waterCheckTickThrottled() {
+    var now = Date.now();
+    if (now - waterLastTick < 60000) return;
+    waterLastTick = now;
+    waterCheckTick();
+  }
+  function waterCheckTick() {
+    var W = window.orosWaterCore, N = window.orosNotifs;
+    if (!W || typeof W.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var data = null;
+    try { data = W.parse(localStorage.getItem(W.STORAGE_KEY)); } catch (e) { return; }
+    if (!data) return;                     // unreadable: the app keeps the rescue copy
+    var due = W.reminderDue(data, new Date());
+    if (!due) return;
+    var txt = W.reminderText(due, data.prefs, state.lang === "el" ? "el" : "en");
+    N.emit({
+      ns: "water",
+      key: due.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "system:open:water"
+    });
+  }
+
 
   // ---------- 7. PWA ----------
   function setupInstallFlow() {
