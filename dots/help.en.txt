@@ -2,7 +2,7 @@
 Take turns drawing lines between dots. Close the fourth side of a box and it's yours, and you play again. Whoever owns the most boxes at the end wins.
 
 ## How to play
-Tap or click the space between two dots to draw a line there. If your line completes a box (or two), the box is marked as yours and you draw another line. Otherwise the turn passes. The game ends when every line is drawn.
+Tap or click the space between two dots to draw a line there. If your line completes a box (or two), the box is marked as yours and you draw another line. The game ends when every line is drawn.
 
 Choose `vs Computer` or `2 players`, and the board size: `3×3`, `4×4` or `5×5` boxes. Against the computer, pick the `First move`: `You start`, `Computer starts` or `Take turns`. In 2-player games, the players alternate who starts and a running series score is kept.
 
