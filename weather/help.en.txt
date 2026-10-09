@@ -22,10 +22,11 @@ If you've already set up the top-bar weather, its city is added for you.
 
 ## Top-bar weather
 
-orOS can show a weather icon and the temperature in the top bar. Turn it on in the [orOS menu](help:t/menu), in the `Weather` section: tap `Weather tray: off` to switch it on, then choose `Use device location` or `Set city…`.
+The top bar shows a weather icon and the temperature of one of your cities. It is on by default. You change it here, in the `Cities` dialog, under `Taskbar`:
 
+- `Show the weather in the taskbar` shows or hides it. This choice is for this device only.
+- The pin next to a city (`Show this city in the taskbar`) picks the city the top bar shows. With no city pinned, it shows the first city in the list. Deleting the pinned city unpins it.
 - Tapping the top-bar weather opens this app. Tap it again inside Weather to go back to the desktop.
-- The location you set in the menu shows up here as a city and becomes the one on screen.
 - When the app fetches the same city, the top bar shows the same numbers.
 - Offline, the top bar shows a crossed-out cloud and no temperature.
 - In the morning (8:00–12:00), orOS may send one [notification](help:t/notifications) when the day needs attention, like storms, fog, rain, high UV, heat or cold. A pleasant day stays quiet.

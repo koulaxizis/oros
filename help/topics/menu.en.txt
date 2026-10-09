@@ -29,7 +29,6 @@ If nothing matches, you'll see `No matching apps`.
 Below the apps you'll find the settings of orOS itself:
 - `Appearance` and `Wallpaper`: colours, light or dark theme and the desktop background. See [Appearance](help:t/appearance).
 - `Install orOS`: shown only when your browser can install orOS as an app. See [Install](help:t/install).
-- `Weather`: the weather tray in the top bar.
 - `Screen Pet`: a small companion on your desktop.
 - `Sync`: Dropbox sync, backups, `Export data` and `Import data`. See [Sync](help:t/sync) and [Backup](help:t/backup).
 - `Notifications`: how and when orOS notifies you. See [Notifications](help:t/notifications).

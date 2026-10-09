@@ -12,7 +12,7 @@ The bar at the top is always there:
 - The `EL` / `EN` button switches the language between Greek and English.
 - The bell opens your notifications. A number on it shows how many you haven't read. See [Notifications](help:t/notifications).
 - The small dot shows the sync status. Hover over it to read it, and tap or click it to sync right now. See [Sync](help:t/sync).
-- If you turn on the weather tray, a small weather icon with the temperature appears too. It opens [Weather](app:weather). See [Appearance](help:t/appearance).
+- A small weather icon shows the temperature of one of your cities. It opens [Weather](app:weather), where you can hide it or choose its city. See [Appearance](help:t/appearance).
 - After you play a station in [Radio](app:radio), a radio chip shows what's on. The radio keeps playing while you use other apps.
 
 ## Open and close apps

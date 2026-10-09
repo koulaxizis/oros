@@ -15,7 +15,7 @@ Pick a clock style under the big clock: `Digital`, `Analog`, `Binary`, `Flip` or
 
 This section shows `Sunrise`, `Sunset`, `Solar noon`, `Day length`, where the sun is now, `Moon age`, the moon phase and its `Illumination`. It's all calculated on your device, so it works offline.
 
-It uses the weather location you set in the orOS menu (the one for the top-bar weather, see [Weather](help:a/weather)). To use another place, tap `Set location`, type `Latitude` and `Longitude` or tap `Use device location`, then `Save`. `Use weather location` goes back to the weather location. If you use your device location without saving it, it's only kept until you close the app.
+It uses the top-bar weather city: the city pinned in [Weather](help:a/weather), or your first city there. To use another place, tap `Set location`, type `Latitude` and `Longitude` or tap `Use device location`, then `Save`. `Use weather location` goes back to the weather location. If you use your device location without saving it, it's only kept until you close the app.
 
 ## Alarms and timers
 

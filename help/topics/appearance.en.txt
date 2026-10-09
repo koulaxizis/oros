@@ -1,5 +1,5 @@
 # Appearance
-Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, a screen pet and the weather in the top bar. Most of these are in the menu: tap or click `orOS` to open it.
+Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, a screen pet and the weather in the top bar. Most of these are in the menu: tap or click `orOS` to open it. The top-bar weather is set in the Weather app.
 
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
@@ -29,13 +29,13 @@ Each device draws your wallpaper to fit its own screen, so it stays sharp on a p
 Under `Screen Pet`, the button switches on a tiny companion that lives on your desktop. Feed it, pet it and let it sleep. It never dies: if you forget it for a while, it just gets grumpy. You can do more with your pet in [Pet World](app:petworld).
 
 ## Weather in the top bar
-Under `Weather`:
-1. Tap or click `Weather tray: off` to turn it on.
-2. Choose `Use device location`, or `Set city…` and type a city name.
+A small icon with the current temperature shows in the top bar from the start. To change it, open [Weather](app:weather), then the `Cities` dialog, and look under `Taskbar`:
+1. `Show the weather in the taskbar` shows or hides it on this device.
+2. The pin next to a city picks the city it shows. With no city pinned, it shows your first city.
 
-A small icon with the current temperature then appears in the top bar. Tap or click it to open [Weather](app:weather); inside Weather, it takes you back to the desktop.
+Tap or click the icon to open [Weather](app:weather); inside Weather, it takes you back to the desktop.
 
 When you are offline, or the reading is more than 3 hours old, the icon shows a crossed-out cloud and no temperature. orOS never shows a temperature it doesn't have. Weather data comes from Open-Meteo (see [Privacy](help:t/privacy)).
 
 ## What follows you to other devices
-With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and weather settings go to your other devices too.
+With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and the pinned weather city go to your other devices too.
