@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.47.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.47.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7585,6 +7585,51 @@
       sessionStorage.setItem("oros-cal-new", JSON.stringify(p));
     } catch (e) {}
     openAppById("calendar");
+  };
+
+  // BR-B1 — "Send to Budget". Any app (Garage, Split, …) calls
+  // window.parent.__orosOpenBudgetNew({k, a, d?, n?, c?, src?}) from an
+  // explicit button; Budget opens its New entry form prefilled and the
+  // user confirms with Save (a prefill, never data). Strict validation
+  // here (false = rejected, nothing opens); only a fresh plain copy of
+  // the known fields crosses over. Budget running → live push;
+  // otherwise stage in sessionStorage "oros-budget-new" (device-local,
+  // one-shot, read and removed by budget.js at boot) and open it.
+  window.__orosOpenBudgetNew = function (p) {
+    if (!p || typeof p !== "object") return false;
+    if (p.k !== "o" && p.k !== "i") return false;
+    if (typeof p.a !== "number" || Math.floor(p.a) !== p.a ||
+        p.a <= 0 || p.a > 100000000000) return false;
+    var q = { k: p.k, a: p.a };
+    if (p.d !== undefined && p.d !== null && p.d !== "") {
+      var dm = typeof p.d === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.d) : null;
+      if (!dm) return false;
+      var dd = new Date(Date.UTC(+dm[1], +dm[2] - 1, +dm[3]));
+      if (dd.getUTCFullYear() !== +dm[1] || dd.getUTCMonth() !== +dm[2] - 1 ||
+          dd.getUTCDate() !== +dm[3]) return false;
+      q.d = p.d;
+    }
+    if (typeof p.n === "string") q.n = p.n.slice(0, 500);
+    if (typeof p.c === "string" && /^[a-z0-9-]{1,64}$/.test(p.c)) q.c = p.c;
+    if (typeof p.src === "string" && /^[a-z0-9]{1,20}$/.test(p.src)) q.src = p.src;
+    var has = false;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === "budget") has = true;
+    if (!has) return false;
+    if (state.running && state.running.id === "budget") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosBudgetNew === "function") {
+          f.contentWindow.__orosBudgetNew(q);
+          return true;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-budget-new", JSON.stringify(q));
+    } catch (e) {}
+    openAppById("budget");
+    return true;
   };
 
   // Wave 1B — Calendar deep-link bridge (πρωτότυπο: Cycle/Mood,

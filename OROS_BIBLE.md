@@ -686,7 +686,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Pixel Avatar:** oros-pixel-prefs (`{face, col, exp}`: the face on the desk `{s, n, p, b, px}`, paint colour 0–7, default 3, export size, default 512), oros-pixel-data-broken (rescue copy). Undo / Redo is memory only.
 - **Atelier:** oros-atelier-prefs (`{doc}`: the open design), oros-atelier-data-broken (rescue copy).
 - **Health:** oros-health-prefs (`{tab, ct, cp, cc, hf, rd, rn, rx}`: open tab, chart kind / period / glucose context, history filter, report period / notes / excluded kinds), oros-health-data-broken. sessionStorage `oros-health-open` (deep-link staging).
-- **Budget:** oros-budget-prefs (`{tab, csv}`: open tab list | charts | limits | rec, CSV format std | excel, default excel in Greek, std in English), oros-budget-data-broken (rescue copy of unreadable data).
+- **Budget:** oros-budget-prefs (`{tab, csv}`: open tab list | charts | limits | rec, CSV format std | excel, default excel in Greek, std in English), oros-budget-data-broken (rescue copy of unreadable data); sessionStorage `oros-budget-new` (BR-B1 prefill staging, one-shot).
 - **Workouts:** `oros-fitness-prefs` `{ tab, pe, pm, pr: "1m"|"3m"|"6m"|"1y"|"all", snd: 0|1, vib: 0|1, rest: { end, total, ex } | null }` (tab, chart choices, sound/vibration, the running rest timer on this device); sessionStorage `oros-fitness-open` (one-shot workout id staged by the shell's `__orosOpenFitness`, consumed at boot); `oros-fitness-data-broken` (raw copy of an unparseable data blob).
 - **Pet Health Book:** oros-petcare-prefs (reminder hour, days of warning, tab, open pet, sub-tab, filter), oros-petcare-fired (shell engine: what was announced, per due date, pruned to open keys); sessionStorage oros-petcare-open (deep-link staging).
 - **Baby:** `oros-baby-view` { kid, tab, night, wk } (selected child, tab, night view, week chart metric); rescue copy `oros-baby-data-broken`.
@@ -1293,6 +1293,22 @@ Rule ids are kept as recorded.
 - **BR-W8-7 · Reverse direction.** Calendar locations are clickable in Day (`.ev-loc`), Week (`.wk-ev-loc`) and Search (`.res-loc`), each with `evt.stopPropagation()`, all through the single `openInMaps()` → `window.parent.__orosOpenMapsQuery(query, label)`. A new view extends `openInMaps()`; it does not add a fourth path.
 - **BR-W8-8 · Availability.** "Send to Calendar" is gated by `routeTo && lastSteps.length`. Since Maps Dose 1 the button is still JS-appended at `wire()` time, has id `route-cal`, sits before `#nav-start` and is styled by `maps.css`.
 - **BR-W8-9 · Payload.** Title "Route to {dest}" / «Διαδρομή προς {προορισμός}» (from `maps.js`'s own `LANG`, not `window.t`); location = destination name; start = current local time; note = distance · duration · transport mode.
+
+### Cross-app "new entry" bridge: any app → Budget (BR-B1)
+
+Owner: Budget (`budget/`). Senders (Garage, Split, …) never edit `budget/`. Same shape as BR-W8.
+
+- **BR-B1-1 · Contract.** `window.parent.__orosOpenBudgetNew({ k, a, d?, n?, c?, src? })` → `true` (accepted: Budget opened or got the push) or `false` (rejected, nothing opens; also `false` when Budget is not installed).
+  - `k`: `"o"` expense | `"i"` income (required).
+  - `a`: integer cents, `0 < a ≤ 100000000000` (required). Convert once at the edge, `Math.round(x * 100)`.
+  - `d`: `"YYYY-MM-DD"`, a real date (optional; default today on the device).
+  - `n`: note, plain text; Budget trims it and keeps 140 chars.
+  - `c`: category id hint, language-free, one of the ready ids `o-groc o-eat o-bills o-home o-trans o-health o-fun o-cloth o-gift o-other i-salary i-free i-gift i-other`. Used only if it still exists and is of kind `k`; else Budget's usual default. Never a name or a user's own id.
+  - `src`: sender app id `[a-z0-9]{1,20}`; the form shows "From {app}" / «Από: {app}» with the name from the shell's `app.<id>` string.
+- **BR-B1-2 · Validation.** The shell checks kind, amount and date strictly and hands over a fresh plain copy of the known fields only. Budget checks again with `normPrefill()` (tested in `tests/budget.test.js`).
+- **BR-B1-3 · One receiver.** `window.__orosBudgetNew` in `budget.js`, two entries: a live push when Budget is the running app, and the one-shot take of sessionStorage `oros-budget-new` at boot (read, then remove; device-local, never synced, never exported). Standalone: `/budget/?new={urlencoded JSON}`; the parameter is removed from the address after it is read.
+- **BR-B1-4 · A PREFILL, not data (BR-W8-6).** The New entry form opens filled in, focus on Save. Nothing reaches the slice, sync or limit notifications until the user saves; Cancel leaves no trace. Every text is rendered with `textContent`.
+- **BR-B1-5 · Senders.** Show the button ("Add to Budget" / «Προσθήκη στα Έσοδα & Έξοδα») only when `typeof window.parent.__orosOpenBudgetNew === "function"`, and call it only from that explicit button: there is no duplicate guard, the user confirms each entry.
 
 ### `LABEL_COLORS` (shared, 8)
 
@@ -3898,3 +3914,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** `manifest.webmanifest` `shortcuts` for Notes, To-Do, Calendar and Calculator (`/?open=<id>`); `shell.js` `openFromLaunchParam()` opens the named app after `apps.json` loads and strips the parameter.
 - **Decisions:** first step of the Android widgets question (Chris, 2026-10-09: option 1). Windows 11 Adaptive Card widgets and data-free native Android widgets wait for the store packaging, after the ports. Only registered internal app ids open; anything else is ignored silently.
 - **NOT tested:** a real phone, an installed TWA / Microsoft Store package, Safari.
+
+### 2026-10-09 — Budget 0.47.03 — "Send to Budget" bridge (BR-B1)
+- **Changes:** shell bridge `window.__orosOpenBudgetNew({k, a, d?, n?, c?, src?})` (strict checks, fresh plain copy, live push into a running Budget or one-shot staging in sessionStorage `oros-budget-new`) and the receiver `window.__orosBudgetNew` in `budget/budget.js`, which opens the New entry form prefilled ("From {app}"); nothing is saved until the user presses Save (BR-B1, Part VI). Garage's "Add to Budget" button now appears; Split's comes in its PR 2 (PR #90).
+- **Tests:** `tests/budget.test.js` adds the prefill normalizer (kinds, amounts, dates, category hints, notes, sender ids, hostile input).
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
