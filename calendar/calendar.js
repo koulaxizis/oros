@@ -132,6 +132,12 @@
       "feed.pet.catch": "{name} caught the ball",
       "feed.pet.bday": "{name}'s birthday",
       "lbl.feed.custom": "Custom Feed",
+      "lbl.feed.hol": "Holidays",
+      "lbl.feed.nameday": "Name days",
+      "lbl.feed.obs": "World days",
+      "nd.line": "Name days:",
+      "nd.contact": "{name}: name day",
+      "nd.more": "+{n} more",
       "lbl.feeds": "App feeds",
       "lbl.feed.ro": "Read-only — managed by its app",
       "lbl.manage": "Manage labels",
@@ -245,6 +251,12 @@
       "feed.pet.catch": "{name} έπιασε την μπάλα",
       "feed.pet.bday": "Γενέθλια του/της {name}",
       "lbl.feed.custom": "Προσαρμοσμένο Feed",
+      "lbl.feed.hol": "Αργίες",
+      "lbl.feed.nameday": "Ονομαστικές εορτές",
+      "lbl.feed.obs": "Παγκόσμιες ημέρες",
+      "nd.line": "Γιορτάζουν:",
+      "nd.contact": "Γιορτάζει: {name}",
+      "nd.more": "+{n} ακόμη",
       "lbl.feeds": "Ροές εφαρμογών",
       "lbl.feed.ro": "Μόνο ανάγνωση — διαχειρίζεται η εφαρμογή της",
       "lbl.manage": "Διαχείριση ετικετών",
@@ -404,7 +416,10 @@ function transientNote(title, body) {
     { id: "lbl-feed-fitness", color: "#f28c5a" },   // orange — finished workouts
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
-    { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
+    { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
+    { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
+    { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
+    { id: "lbl-feed-obs",     color: "#64b5f6" }    // sky blue — world / internet days
   ];
   function feedLabelName(l) {
     if (l.id === "lbl-feed-bday") return t("lbl.feed.bday");
@@ -417,6 +432,9 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
+    if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
+    if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
+    if (l.id === "lbl-feed-obs") return t("lbl.feed.obs");
     return t("lbl.feed.custom");
   }
 
@@ -1452,6 +1470,100 @@ function transientNote(title, body) {
     return out;
   }
 
+
+  /* ---------- 3d. Name days, holidays, world days ----------
+     Data and rules live in namedays.js (window.OrosNamedays, pure).
+     Three chips, all read-only virtual rows, never stored in the
+     synced blob:
+       - Holidays: Greek public holidays (fixed + from Orthodox Easter).
+       - Name days: the day view's "Name days:" line, plus one row per
+         CONTACT whose first name has a name day (click → Contacts).
+       - World days: observances from days.json. The file is fetched
+         from our own site at most once a week and cached on this
+         device (DAYS_KEY); the service worker's precached copy is
+         the offline fallback. Nothing leaves the device but that GET.
+     The on/off state of these three chips is remembered on this
+     device (FEEDVIS_KEY, outside sync); the other feeds reset to
+     visible on every load as before. */
+  var ND = window.OrosNamedays || null;
+  var FEEDVIS_KEY = "oros-cal-feedvis";
+  var DAYS_KEY = "oros-cal-days";
+  var DAYS_MAX_AGE = 7 * 86400000;
+  var STICKY_FEEDS = ["lbl-feed-hol", "lbl-feed-nameday", "lbl-feed-obs"];
+  var daysData = null;
+
+  function loadFeedVis() {
+    try {
+      var v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}");
+      STICKY_FEEDS.forEach(function (id) { if (v && v[id] === false) labelVis[id] = false; });
+    } catch (e) {}
+  }
+  function saveFeedVis(id) {
+    if (STICKY_FEEDS.indexOf(id) === -1) return;
+    var v = {};
+    STICKY_FEEDS.forEach(function (k) { if (!labelVisible(k)) v[k] = false; });
+    try { localStorage.setItem(FEEDVIS_KEY, JSON.stringify(v)); } catch (e) {}
+  }
+
+  function loadDays() {
+    if (!ND) return;
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(DAYS_KEY) || "null"); } catch (e) {}
+    if (cached && typeof cached === "object") daysData = ND.cleanDays(cached.data);
+    var fresh = cached && typeof cached.at === "number" &&
+                Date.now() - cached.at < DAYS_MAX_AGE && cached.at <= Date.now();
+    if (fresh && daysData) return;
+    if (typeof fetch !== "function") return;
+    // One URL per week: a new week is a cache miss in the service
+    // worker (exact-match), so this reaches the network when online;
+    // offline, the SW's ignoreSearch fallback answers with its copy.
+    var week = Math.floor(Date.now() / DAYS_MAX_AGE);
+    fetch("days.json?w=" + week, { cache: "no-cache" }).then(function (r) {
+      return r && r.ok ? r.json() : null;
+    }).then(function (json) {
+      var clean = ND.cleanDays(json);
+      if (!clean) return;
+      daysData = clean;
+      try { localStorage.setItem(DAYS_KEY, JSON.stringify({ at: Date.now(), data: clean })); } catch (e) {}
+      renderAll();
+      renderDay();
+    }).catch(function () {});
+  }
+
+  function holidaysFeedOn(dateStr) {
+    if (!ND || !labelVisible("lbl-feed-hol")) return [];
+    return ND.holidaysOn(dateStr).map(function (h) {
+      return { id: "hol-" + h.id + "-" + dateStr, title: LANG === "el" ? h.el : h.en,
+               labelId: "lbl-feed-hol", start: null, _feed: true };
+    });
+  }
+  function isHoliday(dateStr) {
+    return !!(ND && labelVisible("lbl-feed-hol") && ND.holidaysOn(dateStr).length);
+  }
+  function observancesFeedOn(dateStr) {
+    if (!ND || !daysData || !labelVisible("lbl-feed-obs")) return [];
+    return ND.observancesOn(dateStr, daysData).map(function (o) {
+      return { id: "obs-" + o.id + "-" + dateStr, title: LANG === "el" ? o.el : o.en,
+               labelId: "lbl-feed-obs", start: null, _feed: true };
+    });
+  }
+  function namedayContactsOn(dateStr) {
+    if (!ND || !labelVisible("lbl-feed-nameday")) return [];
+    var cs = contactsRaw().contacts;
+    if (!Array.isArray(cs)) return [];
+    var out = [];
+    cs.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
+                : (typeof c.nickname === "string" ? c.nickname : "");
+      if (!first || !ND.celebrates(first, dateStr)) return;
+      out.push({ id: "nd-" + c.id + "-" + dateStr,          // per-render key, never stored
+                 title: t("nd.contact").replace("{name}", ctName(c)),
+                 labelId: "lbl-feed-nameday", start: null, _feed: true, _contactId: c.id });
+    });
+    return out;
+  }
+
     function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
@@ -1465,6 +1577,9 @@ function transientNote(title, body) {
     .concat(fitnessFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
     .concat(plantsFeedOn(dateStr))
+    .concat(holidaysFeedOn(dateStr))
+    .concat(namedayContactsOn(dateStr))
+    .concat(observancesFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
@@ -1615,6 +1730,7 @@ function transientNote(title, body) {
       if (out) btn.className += " out";
       if (cellDate === today) btn.className += " today";
       if (selDate === cellDate) btn.className += " sel";
+      if (isHoliday(cellDate)) btn.className += " hol";
 
       var num = document.createElement("span");
       num.className = "cal-num";
@@ -1678,7 +1794,8 @@ function transientNote(title, body) {
       col.tabIndex = 0;
       col.className = "wk-col" +
         (dayYmd === today ? " today" : "") +
-        (selDate === dayYmd ? " sel" : "");
+        (selDate === dayYmd ? " sel" : "") +
+        (isHoliday(dayYmd) ? " hol" : "");
 
       var head = document.createElement("div");
       head.className = "wk-head";
@@ -1978,6 +2095,7 @@ function transientNote(title, body) {
       fc.appendChild(document.createTextNode(feedLabelName(fl)));
       fc.addEventListener("click", function () {
         labelVis[fl.id] = !labelVisible(fl.id);
+        saveFeedVis(fl.id);
         renderChips();
         renderAll();
         renderDay();
@@ -2105,9 +2223,41 @@ function transientNote(title, body) {
     return li;
   }
 
+  // "Name days: …" under the day title. Greek names in both
+  // languages (a Greek custom); long lists fold behind "+N more".
+  var ND_SHOW = 8;
+  function renderNamedayLine() {
+    var el = $("nd-line");
+    if (!el) return;
+    el.textContent = "";
+    var names = (ND && selDate && labelVisible("lbl-feed-nameday")) ? ND.namesOn(selDate) : [];
+    el.hidden = !names.length;
+    if (!names.length) return;
+    var lab = document.createElement("span");
+    lab.className = "nd-lab";
+    lab.textContent = t("nd.line") + " ";
+    el.appendChild(lab);
+    var txt = document.createElement("span");
+    txt.textContent = names.slice(0, ND_SHOW).join(", ");
+    el.appendChild(txt);
+    if (names.length > ND_SHOW) {
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "nd-more";
+      more.textContent = t("nd.more").replace("{n}", String(names.length - ND_SHOW));
+      more.addEventListener("click", function () {
+        txt.textContent = names.join(", ");
+        more.remove();
+      });
+      el.appendChild(document.createTextNode(" "));
+      el.appendChild(more);
+    }
+  }
+
   function renderDay() {
     var head = $("day-title");
     if (!selDate) {
+      if ($("nd-line")) { $("nd-line").textContent = ""; $("nd-line").hidden = true; }
       head.textContent = "";
       $("ev-list").textContent = "";
       return;
@@ -2117,6 +2267,7 @@ function transientNote(title, body) {
     var txt = d.getDate() + " " + t("months")[d.getMonth()];
     if (selDate === todayYMD()) txt += " — " + t("day.today");
     head.textContent = txt;
+    renderNamedayLine();
 
     var ul = $("ev-list");
     ul.textContent = "";
@@ -3278,6 +3429,8 @@ function transientNote(title, body) {
   var boot = new Date();
   viewYear = boot.getFullYear();
   viewMonth = boot.getMonth();
+  loadFeedVis();
+  loadDays();
   renderChips();
   setView("month");
   selectDay(todayYMD());
