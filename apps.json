@@ -120,6 +120,14 @@
       "type": "internal"
     },
     {
+      "id": "chores",
+      "name": "Chore Wheel",
+      "category": "Lifestyle",
+      "icon": "chores",
+      "url": "chores/",
+      "type": "internal"
+    },
+    {
       "id": "contacts",
       "name": "Contacts",
       "category": "Office",
