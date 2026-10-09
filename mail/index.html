@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Mail · orOS</title>
+
+  <link rel="stylesheet" href="mail.css?v=0.45.13">
+
+</head>
+<body data-view="list">
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="nav-btn"></button>
+    <div id="bar-title" class="bar-title"></div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="refresh-btn"></button>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+  </header>
+
+  <div id="net" class="net" role="status" hidden></div>
+
+  <main id="app">
+    <!-- Accounts + folders -->
+    <nav id="side" aria-label="Folders">
+      <div id="accts"></div>
+      <button type="button" class="side-add" id="add-acct"></button>
+    </nav>
+    <div id="scrim" hidden></div>
+
+    <!-- Message list -->
+    <section id="listp" aria-labelledby="list-title">
+      <div class="list-head">
+        <h2 id="list-title"></h2>
+        <span id="list-count" class="count"></span>
+      </div>
+      <ul id="list" role="list"></ul>
+      <div id="list-foot" class="list-foot"></div>
+    </section>
+
+    <!-- Reading pane -->
+    <section id="read" aria-live="polite">
+      <div id="read-empty" class="read-empty"></div>
+      <article id="msg" hidden>
+        <header class="msg-head">
+          <h1 id="msg-subj" class="msg-subj"></h1>
+          <div class="msg-from">
+            <span id="msg-av" class="av" aria-hidden="true"></span>
+            <div class="msg-who">
+              <div id="msg-sender" class="msg-sender"></div>
+              <div id="msg-to" class="msg-to"></div>
+            </div>
+            <time id="msg-date" class="msg-date"></time>
+          </div>
+        </header>
+        <div id="msg-bars"></div>
+        <div id="msg-body" class="msg-body"></div>
+        <div id="msg-atts" class="msg-atts" hidden></div>
+      </article>
+    </section>
+
+    <!-- First run -->
+    <section id="welcome" hidden>
+      <div class="wel-box">
+        <div id="wel-icon" class="wel-icon" aria-hidden="true"></div>
+        <h1 data-i18n="wel.title">Your e-mail, inside orOS</h1>
+        <p data-i18n="wel.text">Add an account to read your mail here, also offline.</p>
+        <button type="button" class="dlg-btn primary" id="wel-add" data-i18n="acct.add">Add account</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="mime.js?v=0.45.13"></script>
+  <script src="sanitize.js?v=0.45.13"></script>
+  <script src="mail.js?v=0.45.13"></script>
+
+</body>
+</html>
