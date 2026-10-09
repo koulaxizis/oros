@@ -1,0 +1,39 @@
+# Sudoku
+Fill the 9×9 grid so that every row, every column and every 3×3 box holds the digits 1 to 9 exactly once. Every puzzle is made fresh on your device, works offline and has exactly one solution.
+
+## How to play
+Tap or click a cell, then a digit on the number pad under the grid. Each digit button shows how many of that digit are still missing. The digits of the puzzle itself (the givens) can't be changed.
+
+The selected cell's row, column and box light up, and so does every cell with the same digit.
+
+- `Notes` turns on note mode: digits go into the cell as small pencil marks instead.
+- `Erase` clears the cell.
+- `Undo` and `Redo` step back and forth through your moves.
+- `Hint` fills one correct cell for you.
+
+## Controls
+- Arrow keys move around the grid.
+- [[1]] to [[9]] write a digit; [[Shift]] plus a digit writes a note.
+- [[Backspace]], [[Delete]] or [[0]] erase.
+- [[N]] turns notes on or off.
+- [[U]] or [[Z]] undo; [[R]] or [[Y]] redo.
+- [[H]] gives a hint.
+
+`New puzzle` makes a new one. If you leave a puzzle in progress, an `Undo` button appears for a moment to get it back. The clock runs only while the app is on screen, and a puzzle in progress is kept on this device for next time.
+
+## Levels and scoring
+`Easy`, `Medium`, `Hard` and `Expert` differ in the solving techniques they need, from simple singles up to patterns like X-Wing. Changing the level makes a new puzzle.
+
+Under `Options`:
+- `Show mistakes`: a digit that breaks the solution turns red.
+- `Clear notes automatically`: a digit removes itself from the notes in its row, column and box.
+
+`Records` shows, per level, your best time, the puzzles solved and how many of them without hints.
+
+>! A puzzle where you used a hint still counts as solved, but can't set a best time.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, options, the puzzle in progress and the sound button stay on this device.
+
+## Tips
+- Use notes on harder levels: pencil in the candidates for a box, then look for the cell with only one left.

@@ -1360,6 +1360,7 @@
 
     if (last === null) {
       localStorage.setItem(VERSION_KEY, APP_VERSION);
+      tourFirstRun();   // new user: the top-bar tour, once
       return;
     }
     if (last === APP_VERSION) return;
@@ -1381,7 +1382,8 @@
         key: "ver-" + APP_VERSION,
         type: "update",
         title: window.t("update.done"),
-        body: "v" + APP_VERSION
+        body: "v" + APP_VERSION,
+        deepLink: "help:whatsnew"   // Help → "What's new" (no-op without Help)
       });
       return;
     }
@@ -6896,6 +6898,7 @@
 
   function openApp(app) {
     closeMenu();
+    if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
     if (app.type === "external") {
       window.open(app.url, "_blank", "noopener");
       return;
@@ -6926,6 +6929,7 @@
     mb.setAttribute("data-i18n-title", "bar.menu");
     mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
     document.title = "orOS";                 // v0.18.2: back to the bare OS title
+    tourMaybe();   // a first-run tour put off by a launch-param app
   }
 
   // ---------- 11. Menu open/close ----------
@@ -7119,8 +7123,197 @@
 
   window.orosHelp = {
     open: function (route) { openHelp(route === undefined ? "" : route); },
-    openApp: function (id) { if (id !== "help") openAppById(String(id)); }
+    openApp: function (id) { if (id !== "help") openAppById(String(id)); },
+    tour: function () { startTour(); }
   };
+
+  // ---------- Help phase 3: first-run tour of the top bar ----------
+  // Shown once, automatically, to NEW users only (checkVersionToast
+  // saw no stored version → tourFirstRun). Replayable from Help
+  // ("tour:start" link) via orosHelp.tour(). It waits for the splash
+  // and for the desktop: an app opened by a launch param or share
+  // keeps the flag until the user is back on the desktop.
+  // "oros-tour-done" (set once the tour has run) keeps it from ever
+  // starting on its own again; test harnesses preset it too.
+  var TOUR_KEY = "oros-tour-pending";
+  var TOUR_DONE = "oros-tour-done";
+  var tourBox = null;
+  var tourEnd = null;
+
+  function tourFirstRun() {
+    try {
+      if (localStorage.getItem(TOUR_DONE) === "1") return;
+      localStorage.setItem(TOUR_KEY, "1");
+    } catch (e) { return; }
+    tourMaybe();
+  }
+
+  function tourMaybe() {
+    var pending;
+    try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
+    if (!pending || tourBox) return;
+    var tries = 0;
+    (function wait() {
+      // Splash still up, apps.json not in yet, or an app on screen.
+      if (document.getElementById("oro-splash") || !state.apps.length || state.running) {
+        if (state.running || ++tries > 60) return;   // returnToDesktop retries
+        setTimeout(wait, 250);
+        return;
+      }
+      startTour();
+    })();
+  }
+
+  function tourVisible(node) {
+    if (!node || node.hidden) return false;
+    var r = node.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(node).visibility !== "hidden";
+  }
+
+  function tourSteps() {
+    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu" }];
+    if (tourVisible(document.getElementById("sync-dot-btn"))) steps.push({ key: "sync", target: "sync-dot-btn" });
+    if (tourVisible(document.getElementById("oros-taskbar-bell"))) steps.push({ key: "bell", target: "oros-taskbar-bell" });
+    if (tourVisible(document.getElementById("btn-lang"))) steps.push({ key: "lang", target: "btn-lang" });
+    if (helpApp()) {
+      // Phones hide "?" on the desktop (the bar is full at 360px).
+      steps.push(tourVisible(document.getElementById("help-btn"))
+        ? { key: "help", target: "help-btn" }
+        : { key: "help", body: "tour.help.bodyMenu" });
+    }
+    steps.push({ key: "done", last: true });
+    return steps;
+  }
+
+  function startTour() {
+    if (tourBox) return;
+    try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+    if (state.running) returnToDesktop();
+    closeMenu();
+    var steps = tourSteps();
+    var idx = 0;
+    var prevFocus = document.activeElement;
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var box = document.createElement("div");
+    box.id = "oros-tour";
+    if (reduce) box.className = "no-motion";
+    var ring = document.createElement("div");
+    ring.className = "tour-ring";
+    var card = document.createElement("div");
+    card.className = "tour-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-label", window.t("tour.dialog"));
+    card.setAttribute("aria-describedby", "tour-body");
+    var count = document.createElement("p");
+    count.className = "tour-count";
+    var title = document.createElement("h2");
+    title.id = "tour-title";
+    title.tabIndex = -1;
+    var body = document.createElement("p");
+    body.id = "tour-body";
+    var row = document.createElement("div");
+    row.className = "tour-actions";
+    function button(cls, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = cls;
+      b.addEventListener("click", function (e) { e.stopPropagation(); fn(); });
+      row.appendChild(b);
+      return b;
+    }
+    var skipBtn = button("tour-skip", function () { end(); });
+    var backBtn = button("tour-back", function () { show(idx - 1); });
+    var helpBtn = button("tour-help", function () { end(); openHelp(""); });
+    var nextBtn = button("tour-next", function () { if (idx < steps.length - 1) show(idx + 1); else end(); });
+    card.appendChild(count);
+    card.appendChild(title);
+    card.appendChild(body);
+    card.appendChild(row);
+    box.appendChild(ring);
+    box.appendChild(card);
+    // Clicks on the dimmed page do nothing (no accidental app opens).
+    box.addEventListener("click", function (e) { e.stopPropagation(); });
+    document.body.appendChild(box);
+    tourBox = box;
+    tourEnd = end;
+
+    function place() {
+      var st = steps[idx];
+      var node = st.target ? document.getElementById(st.target) : null;
+      var vw = document.documentElement.clientWidth;
+      var vh = window.innerHeight;
+      var cw = card.offsetWidth;
+      if (node && tourVisible(node)) {
+        var r = node.getBoundingClientRect();
+        ring.hidden = false;
+        ring.style.left = (r.left - 4) + "px";
+        var top = Math.max(2, r.top - 4);   // keep the frame on screen under the bar's top edge
+        ring.style.top = top + "px";
+        ring.style.width = (r.width + 8) + "px";
+        ring.style.height = (r.bottom + 4 - top) + "px";
+        var left = Math.max(16, Math.min(r.left + r.width / 2 - cw / 2, vw - cw - 16));
+        card.style.left = left + "px";
+        card.style.top = Math.min(r.bottom + 14, vh - card.offsetHeight - 16) + "px";
+        box.classList.remove("plain");
+      } else {
+        ring.hidden = true;
+        box.classList.add("plain");   // no spotlight: dim the whole page
+        card.style.left = Math.max(16, (vw - cw) / 2) + "px";
+        card.style.top = Math.max(16, (vh - card.offsetHeight) / 2) + "px";
+      }
+    }
+
+    function show(i) {
+      idx = Math.max(0, Math.min(i, steps.length - 1));
+      var st = steps[idx];
+      count.textContent = window.t("tour.step").replace("{n}", idx + 1).replace("{total}", steps.length);
+      title.textContent = window.t("tour." + st.key + ".title");
+      body.textContent = window.t(st.body || "tour." + st.key + ".body");
+      skipBtn.textContent = window.t("tour.skip");
+      backBtn.textContent = window.t("tour.back");
+      helpBtn.textContent = window.t("tour.openHelp");
+      nextBtn.textContent = window.t(st.last ? "tour.finish" : "tour.next");
+      skipBtn.hidden = !!st.last;
+      backBtn.hidden = idx === 0;
+      helpBtn.hidden = !(st.last && helpApp());
+      place();
+      nextBtn.focus();
+    }
+
+    function onKey(e) {
+      if (!tourBox) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); end(); return; }
+      if (e.key === "ArrowRight" && !e.altKey) { e.preventDefault(); e.stopImmediatePropagation(); if (idx < steps.length - 1) show(idx + 1); return; }
+      if (e.key === "ArrowLeft" && !e.altKey) { e.preventDefault(); e.stopImmediatePropagation(); if (idx > 0) show(idx - 1); return; }
+      if (e.key === "Tab") {
+        // Keep focus inside the card (aria-modal).
+        var f = Array.prototype.filter.call(row.querySelectorAll("button"), function (b) { return !b.hidden; });
+        if (!f.length) return;
+        var at = f.indexOf(document.activeElement);
+        e.preventDefault();
+        f[(at + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+        return;
+      }
+      // Everything else (shortcuts, typing into the page) waits.
+      e.stopImmediatePropagation();
+    }
+
+    function end() {
+      if (!tourBox) return;
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("resize", place);
+      if (box.parentNode) box.parentNode.removeChild(box);
+      tourBox = null;
+      tourEnd = null;
+      try { if (prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus(); } catch (e) {}
+    }
+
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("resize", place);
+    show(0);
+  }
 
   (function () {
     var tBtn = document.getElementById("bar-time");

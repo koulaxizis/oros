@@ -103,11 +103,12 @@ test("parser: inline markup; HTML stays text", () => {
   assert.equal(H.inlineText("a **b** [[Ctrl+S]] [c](app:notes)"), "a b Ctrl+S c");
 });
 
-test("link targets: only apps, help pages and https", () => {
+test("link targets: only apps, help pages, https and the tour", () => {
   assert.deepEqual(H.parseTarget("app:notes"), { kind: "app", id: "notes" });
   assert.deepEqual(H.parseTarget("help:a/notes"), { kind: "help", route: "a/notes" });
   assert.deepEqual(H.parseTarget("https://example.org/x?y=1"), { kind: "url", href: "https://example.org/x?y=1" });
-  ["javascript:alert(1)", "http://example.org", "data:text/html,x", "help:x/notes", "app:../x",
+  assert.deepEqual(H.parseTarget("tour:start"), { kind: "tour" });
+  ["tour:x", "tour:", "javascript:alert(1)", "http://example.org", "data:text/html,x", "help:x/notes", "app:../x",
    "help:a/Notes", "//evil.example", "https://a b", "vbscript:x", "app:"].forEach((h) => {
     assert.equal(H.parseTarget(h), null, h);
   });

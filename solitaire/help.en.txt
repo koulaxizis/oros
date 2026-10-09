@@ -1,0 +1,26 @@
+# Solitaire
+Three classic one-player card games: Klondike, FreeCell and Spider. Pick one at the top; each keeps its own game in progress.
+
+## How to play
+- `Klondike`: build four foundations from Ace to King, one per suit. On the columns, stack cards downwards in alternating colours. Tap the stock to draw cards, and turn the waste over when the stock runs out.
+- `FreeCell`: every card is face up. Use the four free cells to park cards while you build the foundations. You can move several cards at once, as many as your free cells and empty columns allow.
+- `Spider`: build runs from King down to Ace in the same suit on the columns; a full run clears by itself. Tap the stock to deal a new row, once every column has a card.
+
+## Controls
+Drag a card (with a mouse, finger or pen) to move it, or tap or click it and it goes to the best place it can, a foundation first. On the toolbar:
+- `Game options`: for Klondike `Draw 1` or `Draw 3` and `Classic score` or `No score`; for Spider `1 suit`, `2 suits` or `4 suits`; for FreeCell a `Deal number (1–32000)` to play a particular deal. `Table` switches between `Felt` and `Plain`. Changing a rule starts a new deal.
+- `Undo (Ctrl+Z)` takes back moves, as many as you like.
+- `Hint (H)` suggests a move.
+
+Once every card is face up in Klondike or FreeCell, the game finishes by itself. If you start a new deal in the middle of one, an `Undo` button lets you get it back for a few seconds.
+
+Keyboard: [[Ctrl+Z]] undo, [[H]] hint, [[N]] new deal; [[Enter]] or [[Space]] on a focused pile works like a tap.
+
+## Levels and scoring
+`Records` shows, for each game and setting, the games played and won, your best time, fewest moves, best score (Klondike with `Classic score`) and your streak. `Reset records` clears them for every game. FreeCell deal numbers are the same everywhere.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync), adding up the games from every device; `Reset records` clears them everywhere. The games in progress (one per game), your current streaks and your options stay on this device.
+
+## Tips
+- In Klondike, turning over face-down cards in the columns usually matters more than moving cards to the foundations early.

@@ -1,0 +1,30 @@
+# Nonogram
+Paint the hidden picture by following the numbers. Every puzzle can be solved by logic alone, without guessing.
+
+## How to play
+The numbers beside each row and above each column are the runs of filled cells in that line, in order, with at least one empty cell between runs. For example, `3 1` means a run of three filled cells, a gap, then one more.
+
+Fill the cells you're sure of and mark known empty ones with ✕. When a row or column matches its numbers, they dim. The puzzle is solved when every line matches; marks don't matter.
+
+Every picture is made on your device and has only one solution.
+
+## Controls
+- Choose `Fill` or `Mark` in the toolbar ([[M]] switches). Tap or click a cell to paint it in that mode; do it again to clear it.
+- Drag to paint a straight row or column in one go.
+- With a mouse, right-click marks a cell.
+- [[←]] [[↑]] [[→]] [[↓]] move the cursor, [[Space]] or [[Enter]] paint in the current mode, [[F]] fills, [[X]] marks, [[Backspace]] clears.
+- [[U]] or [[Z]] (or `Undo (U)`) takes back the last stroke.
+- [[H]] or `Hint (H)` fixes one cell: the one under the cursor if it's wrong, else another wrong cell, else a missing fill.
+
+On a small screen, the zoom button (`Bigger cells (scroll the board)`) makes the cells bigger. The board then scrolls; drag the numbers to move around, while a drag on the cells still paints.
+
+## Levels and scoring
+Pick `5×5`, `10×10` or `15×15`. The status bar shows your `Time` and your `Best` for that size. A puzzle solved with a hint counts as solved but sets no best time. `Records` shows the best time, puzzles solved and puzzles solved without hints, for each size.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The puzzle in progress, the size, the zoom and the sound setting stay on this device.
+
+## Tips
+- Start with lines the numbers almost fill, like `8` in a 10-cell row: its middle cells must be filled.
+- A puzzle in progress is kept; come back to it any time.
+- Started a new puzzle or changed size by mistake? Tap `Undo` on the message that appears.

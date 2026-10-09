@@ -1,0 +1,50 @@
+# Pet World
+A pixel forest where your screen pet lives, the same pet as the companion on your desktop. Care for it, grow a garden, send it on walks, build it a nest and play games together.
+
+## Getting started
+The toolbar shows your pet's name (tap or click it to rename) and how many days it's been with you, plus a switch that shows or hides the pet on the desktop too. Below are three meters: `Food`, `Happiness` and `Energy`; a meter turns red when it runs low.
+
+Tap or click the pet to pat it, or tap the ground to call it over. A sleeping pet lies under the old oak.
+
+## Care and food
+- `Feed`: kibble is always free. Once you have garden food, you choose what to give: `Carrot` adds energy, `Strawberry` lots of joy, `Mushroom` and `Apple` both. Each pet has a favourite.
+- `Pat` cheers it up.
+- `Sleep` / `Wake up` puts it to bed or wakes it. A pet that's well rested won't go to sleep.
+
+## Garden, walks and the nest
+### Garden
+`Garden` (or tap a bed) lets you `Plant` a seed from your `Backpack`, `Water` it once so it grows a quarter faster, `Pick` it when ripe, or `Dig up` the bed. Carrots take 4 hours, strawberries 8, mushrooms 12, sunflowers 24, and an apple tree 72, after which it gives fruit every day. Harvests usually give seeds back. You start with four beds; more open at higher levels.
+
+### Walks
+`Walk` sends the pet exploring for 15, 30 or 60 minutes of real time. It must be awake and not too tired. It brings back twigs, leaves, moss and pebbles, sometimes seeds, and on long walks maybe a treasure. While it's away, it can't be fed or patted.
+
+### Nest
+`Nest` (or tap the spot under the oak) builds a home in five stages, then four decorations, using walk materials. When it's finished, your pet sleeps inside.
+
+## Games
+`Play` has three games. The pet must be awake, at home and have some energy.
+- `Catch it`: 30 seconds of falling leaves and acorns. Tap or drag where the pet should run.
+- `Hide and seek`: the pet hides behind a bush; watch for its tail. Three wrong bushes end it.
+- `Follow me`: the pet dances moves (jump, left, right, duck); repeat them. One mistake ends it.
+
+`Stop` or [[Esc]] ends a game early.
+
+## Progress and bazaar
+The level chip in the toolbar opens your progress: level (1 to 20), XP, what the next level opens and 13 achievements. XP comes from care days, harvests, walks, the nest, games and achievements.
+
+Games, walks and harvests earn acorns. Spend them at the `Forest bazaar` on seeds and accessories (bow, scarf, top hat, glasses, flower crown, bell collar). Some open at higher levels. Your pet wears accessories on the desktop too; `Wear` and `Take off` swap them.
+
+## Sync and backup
+Your forest syncs between your devices through [orOS sync](help:t/sync): garden, backpack, nest, walks, game records, progress and outfit. The pet itself is shared with the desktop companion. If the pet changes, Pet World asks whether to `Keep the forest` or `Start fresh`. There's no import or export; the orOS [backup](help:t/backup) includes it all.
+
+## Keyboard shortcuts
+- [[F]] feeds kibble, [[P]] pats, [[S]] sleeps or wakes.
+- [[G]] garden, [[B]] backpack, [[W]] walk, [[N]] nest, [[Y]] play, [[L]] progress, [[A]] bazaar.
+- The left and right arrows walk the pet; in games they move or answer.
+
+## Tips
+- Water as soon as you plant: it only works once per growth.
+- The hour-long walk brings the most materials and the only chance of a treasure.
+
+## Limits
+- Pet World works only inside orOS, not on its own.

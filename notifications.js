@@ -532,6 +532,10 @@
     // "system:open:<appId>": plain open of an app (SY-D3 notice —
     // opening the app is what merges its waiting changes).
     system:   function (id) { if (typeof window.__orosOpenApp === 'function') window.__orosOpenApp(id); },
+    // Help — "help:<topicId>": the update notice opens "What's new".
+    help:     function (topic) {
+      if (window.orosHelp && typeof window.orosHelp.open === 'function' && /^[a-z0-9-]+$/.test(String(topic))) window.orosHelp.open('t/' + topic);
+    },
     // Health — "health:<kind>" (reminder → a new reading of that kind).
     health:   function (kind) { if (typeof window.__orosOpenHealth === 'function') window.__orosOpenHealth(kind); }
   };

@@ -1,0 +1,45 @@
+# Meal Planner
+Meal Planner keeps your recipes, plans the week's meals and makes the shopping list from them. It also has a cooking mode that walks you through a recipe step by step.
+
+## Getting started
+There are three tabs: `Recipes`, `Week` and `Shopping`. You start with a few ready recipes. Add your own with `New recipe`, or `Paste` one copied from a site, a message or a note: the ingredients and steps are found for you, and you check them before saving.
+
+Open `Settings` (the gear) to set `Our diet`, the `Meals of the day`, when the `Week starts on` and what's `Always in the house`.
+
+## Recipes
+In the editor, type `Ingredients, one per line` (like "200 g feta, crumbled"; a line such as "For the sauce:" starts a group) and `Steps, one per line`. Add servings, prep and cook times, a course, tags, notes and a source. `Suggest from the ingredients` ticks the `Diets it fits`; check keto, low-carb and raw yourself.
+
+Open a recipe to see it. The + and − buttons change the servings and scale every quantity. From there you can `Cook`, `Add to plan`, `Edit`, `Share`, `Print`, `Duplicate` or `Delete` it (with `Undo`), and tap the star to keep it in your favourites.
+
+The search box finds recipes by name. Type ingredients separated by commas (like "eggs, spinach") to find recipes that use them. `★ Favourites` and `Fits our diet` filter the list.
+
+## Cooking mode
+`Cook` shows one step at a time in big text, with the ingredients a tap away. When a step mentions a time, a timer button appears for it. The screen stays on while you cook.
+
+## Week
+Each day has a row for every meal. Tap or click an empty slot to add a recipe, or write something like "Out" or "Leftovers". Tap a meal to open the recipe, change its servings, move it or remove it. On a computer you can also drag meals between slots.
+
+- `Copy last week` fills this week from the previous one.
+- `Fill the gaps` puts recipes that fit your diet into the empty slots, favourites first.
+- `Clear week` empties it, with `Undo`.
+
+Meals that don't fit your diet show a ⚠.
+
+## Shopping
+The shopping list adds up every ingredient planned for the week, grouped by aisle. Things you always have are left out and listed at the bottom, where you can put them back. Tick items as you buy them. `From today` leaves out the days already gone. Use `Add an item…` for extras, and the options of an item to change its `Aisle`, mark `I always have it` or `Remove` it. `Copy` and `Share` send the list as text.
+
+## Sync and backup
+Recipes, the week plan, the shopping ticks, your extra items and settings sync between your devices through [orOS sync](help:t/sync), so two phones can tick the same list. The open tab and filters stay on each device. `Settings` has `Export (JSON)` and `Import (JSON)`; an import merges and never wipes. The orOS [backup](help:t/backup) covers this app too.
+
+## Keyboard shortcuts
+- [[1]], [[2]], [[3]]: `Recipes`, `Week`, `Shopping`.
+- [[N]]: new recipe. [[/]]: search recipes.
+- [[←]] and [[→]]: previous or next week; in cooking mode, previous or next step.
+
+## Tips
+- Plan the week first, then go shopping with the list on your phone.
+- Add salt, oil and the other basics to `Always in the house` to keep the list short.
+
+## Limits
+- Diet checks look only at ingredient names; always check labels for allergies.
+- Timers only run while Meal Planner is open.

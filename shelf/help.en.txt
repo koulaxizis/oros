@@ -1,0 +1,41 @@
+# Media Shelf
+Media Shelf is your wishlist and tracker for books, films, series, music, podcasts and games. Keep what you want to try, follow your progress, rate what you finish and see your year in numbers.
+
+## Getting started
+Tap or click `Add` (or `Add your first title`). Choose the `Type`, then fill in the `Title` and, if you like, the creator (`Author`, `Director`, `Artist`…), `Year`, size (pages, episodes, hours…), `Tags (comma separated)`, `Where I heard of it` and a `Cover colour`. Books also have a `Format`: `Print`, `E-book` or `Audiobook`; games a `Platform`. Pick the `Status` and press `Save`. Each title gets a generated cover with its initials.
+
+## Tabs, search and sort
+- `Now`: what you're reading, watching, listening to or playing.
+- `Wishlist`: what you want to get to. Open a title and tap `High priority` to flag it; flagged titles come first when you sort by `Recent`.
+- `History`: finished and dropped titles.
+- `Statistics`: your year in numbers.
+
+The chips filter by type. `Search title, creator, tag…` also looks in platform and source, and ignores accents. Sort by `Recent`, `Title`, `Creator`, `Rating` or `Year`.
+
+## Progress
+Tap a title to open it. Start it with a button such as `Start reading` or `Start playing`. Then log where you are: the page for books, minutes for audiobooks, episodes for series and podcasts, hours for games. Press `Update`, or use `+1 episode` or `+1 hour`.
+
+You'll see a progress bar and percentage, and, once there's enough to go on, how long you'll take at your pace. When you reach the end, the app offers `Mark done`. You can also `Drop` a title, put it `Back to wishlist`, `Resume` it, or start it again (`Read again`, `Watch again`…). The history inside a title lists each start, progress and finish; you can remove an entry.
+
+## Rating and review
+Rate with five stars in half steps: tap the left or right half of a star. Mark a `Favourite` with the heart and write a `Review / notes`.
+
+## Statistics and goals
+Pick a year with the arrows. `Statistics` shows what you finished per type, `Pages read` (print and e-books), `Average rating`, a chart `By month`, `Top creators` and `Top tags`. With `Set goals` you set a target per type for the year, and the app tells you if you're ahead of or behind schedule.
+
+## Sync and backup
+Your titles, progress, ratings, reviews and goals sync between your devices through [orOS sync](help:t/sync). The open tab, type filter and sort stay on each device.
+
+In the `More` menu, `Export (JSON)` saves your shelf to a file and `Import (JSON)` merges a file in, without replacing anything.
+
+## Keyboard shortcuts
+- [[/]] jumps to the search box; [[Esc]] there clears it.
+- [[N]] adds a new title.
+- On the stars: arrow keys change the rating by half a star, [[1]] to [[5]] set whole stars, [[0]] clears it.
+
+## Tips
+- Use tags such as `summer` or `book club` and find them later with search.
+- Fill in `Where I heard of it` to remember who recommended a title; search finds it too.
+
+## Limits
+- There are no reminders and no Calendar entries.

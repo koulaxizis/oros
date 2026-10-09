@@ -1,0 +1,32 @@
+# Hexagon Puzzle
+A big hexagon has been cut into pieces of 3 to 6 cells. The pieces wait in the tray, shuffled and turned. Fit them all back into the hexagon.
+
+## How to play
+Drag a piece from the tray onto the board; it snaps to the grid. If it doesn't fit where you drop it, you'll see `It does not fit there`.
+
+- Tap a piece, or right-click it, to turn it by 60°. The `Turn right (R)` and `Turn left (E)` buttons turn the piece you last picked.
+- Drag a placed piece to move it, or drag it off the board to send it back to the tray.
+- `Hint (H)` puts one piece where the app cut it.
+- `All pieces back to the tray` empties the board.
+
+The puzzle is solved when the board is full. Any arrangement that fills it counts, not only the original cut.
+
+## Controls
+- Drag with the mouse or your finger; tap or right-click to turn.
+- [[1]] to [[9]] pick up a piece from the tray.
+- With a piece in hand, the arrow keys move it, [[R]] and [[E]] turn it, [[Enter]] places it and [[Esc]] puts it back.
+- [[Enter]] on a placed piece picks it up again.
+- [[H]] gives a hint; [[N]] starts a new puzzle (`New puzzle (N)`), with an `Undo` button to get the old one back.
+
+## Levels and scoring
+`Easy`, `Medium` and `Hard` set the size of the hexagon: 19, 37 or 61 cells. Changing the level starts a new puzzle.
+
+The clock starts with your first move and runs only while the app is on screen. A puzzle in progress is kept on this device and waits for you next time. `Records` shows your best time and how many puzzles you've solved on each level.
+
+>! A puzzle solved with a hint still counts as solved, but can't set a best time.
+
+## Sync
+Your best times and solved counts sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, the puzzle in progress and the sound button stay on this device.
+
+## Tips
+- If a piece won't turn on the board because there's no room (`No room to turn it here: drag it out first`), drag it off, turn it, and place it again.

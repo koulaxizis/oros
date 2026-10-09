@@ -1,0 +1,26 @@
+# Tic-Tac-Toe
+The classic game of noughts and crosses on a 3×3 board: get three of your marks in a row to win. Play against the computer or with a friend on one device.
+
+## How to play
+Whoever moves first plays X, the other plays O. Tap or click an empty square to place your mark. Three in a row, across, down or diagonally, wins and a line is drawn through them; a full board with no three in a row is a draw.
+
+Choose `vs Computer` or `2 players` in the toolbar. Against the computer, pick the `First move`: `You start`, `Computer starts` or `Take turns`. In 2-player games, the players alternate who starts and a running series score is kept.
+
+## Controls
+- Tap or click a square to play there. On a desktop, hovering shows your mark first.
+- `Undo move (Z)` takes back the last move; against the computer it goes back to your turn. You can't undo after the game ends.
+- `New game (N)` starts again. If a game was under way, an `Undo` button appears for a few seconds to bring it back.
+- The speaker button turns sound on or off (off at first).
+- Keys: [[1]] to [[9]] play a square in number-pad layout ([[7]] is top left, [[3]] bottom right), the arrow keys move between squares and [[Enter]] or [[Space]] plays the focused one, [[N]] is a new game, and [[Z]] or [[Ctrl+Z]] undoes.
+
+## Levels and scoring
+The computer has three levels. `Easy` takes a win when it sees one, otherwise plays at random. `Medium` also blocks your threats, but a double threat beats it. `Hard` plays perfectly and never loses: the best you can get is a draw.
+
+`Records` shows your wins, losses and draws against the computer for each level (`Won · lost · drawn`), and the 2-player series. `Reset records` clears them after you confirm.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The game in progress, the 2-player series, your settings and the sound setting stay on this device. A game you leave half-way is still there when you come back.
+
+## Tips
+- To beat `Medium`, set up two lines at once (a fork): it can block only one.
+- Against `Hard`, try to make every game a draw. That's a perfect result.

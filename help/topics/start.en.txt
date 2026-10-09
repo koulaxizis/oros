@@ -33,7 +33,10 @@ More in [Your data and files](help:t/data).
 >! If you clear this site's data in your browser settings, your orOS data on this device is gone. Keep a backup or turn on sync.
 
 ## Get more help
+New here? [Take the tour](tour:start) of the top bar: a few short steps that show where everything is. To see what changed in recent updates, read [What's new](help:t/whatsnew).
+
 Help has a search box: type a word to find it in every page. Some good places to start:
+- [What's new](help:t/whatsnew)
 - [The menu and quick search](help:t/menu)
 - [Install orOS as an app](help:t/install)
 - [Appearance](help:t/appearance)
