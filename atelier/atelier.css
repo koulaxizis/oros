@@ -391,6 +391,17 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .an-tile.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .seg.wrap { flex-wrap: wrap; }
 
+/* Fonts */
+.fn-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 6px 10px; margin: 0 0 4px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); text-align: left; cursor: pointer;
+}
+.fn-row.on { border-color: var(--accent); background: var(--accent-soft); }
+.fn-row.busy { opacity: 0.7; }
+.fn-name { flex: 1; min-width: 0; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fn-badge { flex: none; font-size: 11px; color: var(--text-dim); }
+.ctx-font { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Canva account import */
 .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin: 10px 0; max-height: 52vh; overflow-y: auto; }
 .cv-tile {
