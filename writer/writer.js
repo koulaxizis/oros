@@ -1968,6 +1968,14 @@ function bindShortcuts() {
 }
 
 /* ===== SECTION 13: BOOT SEQUENCE ===== */
+// Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+// target { doc }. Opens the document in a tab (activateTab skips
+// missing and deleted ones).
+function openSearchTarget(t) {
+  if (t && typeof t.doc === 'string') activateTab(t.doc);
+}
+window.__orosOpenAt = openSearchTarget;
+
 function boot() {
   try {
     // 1. Paint icons first (so buttons have SVG on mount)
@@ -1996,6 +2004,15 @@ function boot() {
 
     // 6. First render — set initial dirty flag based on content
     dirty = false;
+
+    // 7. Universal search deep link staged while Writer was closed
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === 'function') {
+        const t = window.parent.__orosTakeTarget('writer');
+        if (t) openSearchTarget(t);
+      }
+    } catch (e) {}
 
   } catch (err) {
     console.error('[orOS] writer boot failed:', err);

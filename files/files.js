@@ -2947,7 +2947,28 @@
 
     console.log("[orOS] files.js v" + APP_VER + " booted (backend: " +
       (FS().mode ? FS().mode() : "unknown") + ")");
+
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("files");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { path, dir }. A folder opens; a file opens its folder and
+  // its preview. Paths outside the disk root are ignored.
+  function openSearchTarget(t) {
+    if (!t || typeof t.path !== "string" || !isAvailable()) return;
+    var p = t.path.replace(/\/+$/, "");
+    if (p.indexOf(ROOT + "/") !== 0 || p.indexOf("/../") !== -1 || /\/\.\.?$/.test(p)) return;
+    if (t.dir) { navigate(p); return; }
+    navigate(p.slice(0, p.lastIndexOf("/")) || ROOT);
+    openPreview(p);
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   function ensureHeaderAndStorage() {
     var bar = $("bar");
