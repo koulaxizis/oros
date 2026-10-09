@@ -1293,6 +1293,22 @@ Rule ids are kept as recorded.
 - **BR-W8-8 · Availability.** "Send to Calendar" is gated by `routeTo && lastSteps.length`. Since Maps Dose 1 the button is still JS-appended at `wire()` time, has id `route-cal`, sits before `#nav-start` and is styled by `maps.css`.
 - **BR-W8-9 · Payload.** Title "Route to {dest}" / «Διαδρομή προς {προορισμός}» (from `maps.js`'s own `LANG`, not `window.t`); location = destination name; start = current local time; note = distance · duration · transport mode.
 
+### Cross-app "new entry" bridge: any app → Budget (BR-B1)
+
+Owner: Budget (`budget/`). Senders (Garage, Split, …) never edit `budget/`. Same shape as BR-W8.
+
+- **BR-B1-1 · Contract.** `window.parent.__orosOpenBudgetNew({ k, a, d?, n?, c?, src? })` → `true` (accepted: Budget opened or got the push) or `false` (rejected, nothing opens; also `false` when Budget is not installed).
+  - `k`: `"o"` expense | `"i"` income (required).
+  - `a`: integer cents, `0 < a ≤ 100000000000` (required). Convert once at the edge, `Math.round(x * 100)`.
+  - `d`: `"YYYY-MM-DD"`, a real date (optional; default today on the device).
+  - `n`: note, plain text; Budget trims it and keeps 140 chars.
+  - `c`: category id hint, language-free, one of the ready ids `o-groc o-eat o-bills o-home o-trans o-health o-fun o-cloth o-gift o-other i-salary i-free i-gift i-other`. Used only if it still exists and is of kind `k`; else Budget's usual default. Never a name or a user's own id.
+  - `src`: sender app id `[a-z0-9]{1,20}`; the form shows "From {app}" / «Από: {app}» with the name from the shell's `app.<id>` string.
+- **BR-B1-2 · Validation.** The shell checks kind, amount and date strictly and hands over a fresh plain copy of the known fields only. Budget checks again with `normPrefill()` (tested in `tests/budget.test.js`).
+- **BR-B1-3 · One receiver.** `window.__orosBudgetNew` in `budget.js`, two entries: a live push when Budget is the running app, and the one-shot take of sessionStorage `oros-budget-new` at boot (read, then remove; device-local, never synced, never exported). Standalone: `/budget/?new={urlencoded JSON}`; the parameter is removed from the address after it is read.
+- **BR-B1-4 · A PREFILL, not data (BR-W8-6).** The New entry form opens filled in, focus on Save. Nothing reaches the slice, sync or limit notifications until the user saves; Cancel leaves no trace. Every text is rendered with `textContent`.
+- **BR-B1-5 · Senders.** Show the button ("Add to Budget" / «Προσθήκη στα Έσοδα & Έξοδα») only when `typeof window.parent.__orosOpenBudgetNew === "function"`, and call it only from that explicit button: there is no duplicate guard, the user confirms each entry.
+
 ### `LABEL_COLORS` (shared, 8)
 
 `#e06c75 #ecc75f #87cf3e #4fc4cf #6d4aff #e09ecf #f28c5a #9aa4b0`
