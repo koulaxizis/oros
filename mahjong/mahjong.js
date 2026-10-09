@@ -11,8 +11,10 @@
 //   - tap / click two tiles; arrows move a cursor over the free tiles,
 //     Enter / Space takes it; H hint, U undo, S shuffle (stays
 //     solvable), Z zoom, N new game
-//   - the whole layout always fits the screen; Zoom makes the tiles
-//     bigger and the board then scrolls (for Turtle on a phone)
+//   - with a mouse the whole layout always fits the screen; on a touch
+//     screen a tile is never under 34 px wide, so the Turtle pans inside
+//     the board area on a phone (Fortress, the phone default, and Pyramid
+//     fit at 360 px); Zoom makes the tiles bigger and the board scrolls
 //   - "no moves left" offers a shuffle; a game in progress resumes
 // Data:
 //   - synced slice "mahjong" (oros-mahjong-data): per layout the best
@@ -52,6 +54,8 @@
   var FACES = 42;                            // 34 kinds ×4 + 4 flowers + 4 seasons
   var TILE_MAX = 64;                         // px, tile width at most (no zoom)
   var ZOOM = 1.7;
+  var TOUCH_MIN = 34;                        // px, smallest tile on a touch screen
+  var TOUCH_ZOOM = 48;                       // px, at least this with Zoom on touch
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -938,6 +942,7 @@
   function tick() { if (game) $("time").textContent = fmtTime(elapsed()); }
 
   var TILE_ELS = [];
+  var coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
 
   function buildBoard() {
     var b = $("board"), pos = LAYOUTS[game.lay], mz = 0, mx = 0, my = 0;
@@ -994,10 +999,13 @@
     // board = cols/2 tiles wide (+ the 3-D offset), rows/2 tiles of 4/3 tall
     var fw = cols / 2 + 0.12 * (mz + 1), fh = rows * 2 / 3 + 0.12 * (mz + 1);
     var tw = Math.min(W / fw, H / fh, TILE_MAX);
-    if (prefs.zoom) tw = Math.min(tw * ZOOM, 96);
+    if (prefs.zoom) tw = Math.min(Math.max(tw * ZOOM, coarse ? TOUCH_ZOOM : 0), 96);
+    // a finger needs a tile at least TOUCH_MIN wide: on a phone the
+    // Turtle then pans inside the board area (Fortress and Pyramid fit)
+    if (coarse) tw = Math.max(tw, TOUCH_MIN);
     tw = Math.max(12, Math.floor(tw * 10) / 10);
     b.style.setProperty("--tw", tw + "px");
-    wrap.classList.toggle("zoomed", prefs.zoom && (tw * fw > W + 1 || tw * fh > H + 1));
+    wrap.classList.toggle("zoomed", tw * fw > W + 1 || tw * fh > H + 1);
   }
 
   var reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
