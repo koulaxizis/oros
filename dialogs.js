@@ -34,8 +34,17 @@
     return typeof window.showOpenFilePicker === "function";
   }
 
+  // DLG-3: apps call saveFile from their iframe, so their Blob comes
+  // from ANOTHER realm and `instanceof Blob` (this window's Blob) is
+  // false for it. The old check then wrote an EMPTY text file. Any
+  // Blob-shaped object is a real Blob here (same-origin frames);
+  // createObjectURL and the writable accept it across realms.
+  function isBlob(b) {
+    return !!b && typeof b === "object" && typeof b.size === "number" &&
+           typeof b.type === "string" && typeof b.slice === "function";
+  }
   function toBlob(opts) {
-    if (opts && opts.blob instanceof Blob) return opts.blob;
+    if (opts && (opts.blob instanceof Blob || isBlob(opts.blob))) return opts.blob;
     var mime = (opts && typeof opts.mime === "string") ? opts.mime : "text/plain";
     return new Blob([String((opts && opts.text !== undefined) ? opts.text : "")],
                     { type: mime });
