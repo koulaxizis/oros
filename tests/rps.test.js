@@ -23,14 +23,14 @@ function cut(from, to) {
 
 const R = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
-  ["cmpStr", "isInt", "outcome", "counter", "topMoves", "chainPredict", "roundPredict", "guesses",
+  ["cmpStr", "isInt", "keyMove", "outcome", "counter", "topMoves", "chainPredict", "roundPredict", "guesses",
    "hardPredict", "chooseMove", "normCell", "normRow", "joinRows", "mergeRps"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
   return new Function(parts.join("\n") +
-    "\nreturn { KEYS, outcome, counter, topMoves, chainPredict, roundPredict, hardPredict, chooseMove, mergeRps };")();
+    "\nreturn { keyMove, outcome, counter, topMoves, chainPredict, roundPredict, hardPredict, chooseMove, mergeRps };")();
 })();
 
 const J = JSON.stringify;
@@ -52,9 +52,19 @@ test("rps: the outcome table", () => {
     assert.equal(R.outcome(R.counter(m), m), 1, "counter beats");
     assert.equal(R.outcome(m, R.counter(m)), 2);
   }
-  // keys: R P S in English, Π Χ Ψ (by position) in Greek
-  assert.deepEqual(R.KEYS.en, { KeyR: ROCK, KeyP: PAPER, KeyS: SCISSORS });
-  assert.deepEqual(R.KEYS.el, { KeyP: ROCK, KeyX: PAPER, KeyC: SCISSORS });
+  // keys: the typed letter R P S / Π Χ Ψ, digits 1 2 3, else the physical R P S
+  assert.equal(R.keyMove("r", "KeyR"), ROCK);
+  assert.equal(R.keyMove("P", "KeyP"), PAPER);
+  assert.equal(R.keyMove("s", "KeyS"), SCISSORS);
+  assert.equal(R.keyMove("π", "KeyP"), ROCK);
+  assert.equal(R.keyMove("χ", "KeyX"), PAPER);
+  assert.equal(R.keyMove("ψ", "KeyC"), SCISSORS);
+  assert.equal(R.keyMove("ρ", "KeyR"), ROCK);
+  assert.equal(R.keyMove("σ", "KeyS"), SCISSORS);
+  assert.equal(R.keyMove("!", "Digit1"), ROCK);
+  assert.equal(R.keyMove("3", "Numpad3"), SCISSORS);
+  assert.equal(R.keyMove("n", "KeyN"), -1);
+  assert.equal(R.keyMove("Enter", "Enter"), -1);
 });
 
 // Plays `rounds` rounds of a level against a fixed player; returns the

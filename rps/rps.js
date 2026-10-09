@@ -8,7 +8,7 @@
 //     been right most often)
 //   - matches: first to 3 / first to 5 / endless
 //   - the computer picks from the past rounds only, before your move
-//   - keys: R P S (EN) or Π Χ Ψ (EL) and 1 2 3; N new match
+//   - keys: R P S (or Π Χ Ψ on a Greek layout) and 1 2 3; N new match
 // Data:
 //   - synced slice "rps" (oros-rps-data): per level matches won / lost,
 //     rounds won / drawn / lost and the best win streak, as per-device
@@ -47,12 +47,11 @@
   var HIST_MAX = 200;                        // rounds kept for the predictors
   var MAX_COUNT = 100000000;
   var REVEAL_MS = 650;
-  // Keys per language, by physical position (e.code): R P S on an
-  // English layout, Π Χ Ψ on a Greek one; 1 2 3 everywhere.
-  var KEYS = {
-    en: { KeyR: 0, KeyP: 1, KeyS: 2 },
-    el: { KeyP: 0, KeyX: 1, KeyC: 2 }
-  };
+  // Keys: the letter you type (R P S, or Π Χ Ψ on a Greek layout) and
+  // 1 2 3 everywhere; when the letter is not one of those (another
+  // layout), the physical R P S keys (e.code) still work.
+  var KEY_CHARS = { r: 0, p: 1, s: 2, "π": 0, "χ": 1, "ψ": 2 };
+  var KEY_CODES = { KeyR: 0, KeyP: 1, KeyS: 2 };
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -116,7 +115,7 @@
       "fmt.3": "Όποιος φτάσει 3", "fmt.5": "Όποιος φτάσει 5", "fmt.0": "Χωρίς τέλος",
       "name.you": "Εσύ", "name.cpu": "Υπολογιστής", "vs": "εναντίον",
       "move.0": "Πέτρα", "move.1": "Χαρτί", "move.2": "Ψαλίδι",
-      "key.0": "Π", "key.1": "Χ", "key.2": "Ψ",
+      "key.0": "Π/R", "key.1": "Χ/P", "key.2": "Ψ/S",
       "pick.label": "{move} (πλήκτρο {k} ή {n})",
       "picks.label": "Η κίνησή σου",
       "st.round": "Γύρος {n}", "st.streak": "σερί {n}",
@@ -620,8 +619,8 @@
   }
 
   var MOVE_ART = [
-    // rock: a rounded stone with two cracks
-    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 40c-3-9 1-19 9-23 7-4 17-4 24 0 8 4 11 13 9 21-2 9-10 14-21 14-10 0-18-4-21-12z" fill="currentColor" fill-opacity="0.18"/><path d="M24 24l5 6-3 6M40 30l-4 7 5 5"/></svg>',
+    // rock: a faceted stone
+    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 44 15 25 29 13l17 3 11 15-3 17-17 8-19-3z" fill="currentColor" fill-opacity="0.18"/><path d="M29 13l3 13-9 9M32 26l14 4"/></svg>',
     // paper: a sheet with a folded corner and lines
     '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8h22l12 12v36H16z" fill="currentColor" fill-opacity="0.18"/><path d="M38 8v12h12M23 30h20M23 38h20M23 46h13"/></svg>',
     // scissors
@@ -886,11 +885,13 @@
   }
 
   // ---------- 10. Keyboard ----------
-  function keyMove(code) {
-    var k = KEYS[LANG][code];
-    if (k !== undefined) return k;
+  function keyMove(key, code) {
+    var ch = String(key || "").toLowerCase();
+    if (KEY_CHARS[ch] !== undefined) return KEY_CHARS[ch];
     var m = /^(?:Digit|Numpad)([1-3])$/.exec(code);
-    return m ? +m[1] - 1 : -1;
+    if (m) return +m[1] - 1;
+    if (/^[a-zα-ω]$/.test(ch) && KEY_CODES[code] !== undefined) return KEY_CODES[code];
+    return -1;
   }
 
   function wireKeyboard() {
@@ -900,7 +901,7 @@
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (tag === "SELECT" || tag === "INPUT") return;
       if (e.repeat) return;
-      var m = keyMove(e.code);
+      var m = keyMove(e.key, e.code);
       if (m >= 0) { e.preventDefault(); press(m); return; }
       if (e.code === "KeyN") { e.preventDefault(); newMatch(true); }
     });

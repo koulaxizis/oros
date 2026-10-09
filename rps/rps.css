@@ -203,7 +203,8 @@ button {
   container-type: size;
 }
 .hand {
-  --h: min(38cqw, 82cqh, 230px);
+  /* two hands + the gaps + room for the "vs" word always fit */
+  --h: min(calc((100cqw - 8cqw - 84px) / 2), 82cqh, 230px);
   width: var(--h);
   display: flex;
   flex-direction: column;
@@ -235,7 +236,10 @@ button {
 .hand.lost .hand-art { opacity: 0.55; }
 #vs {
   flex-shrink: 0;
-  font-size: 13px;
+  max-width: 76px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
