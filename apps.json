@@ -560,6 +560,14 @@
       "icon": "passwords",
       "url": "passwords/",
       "type": "internal"
+    },
+    {
+      "id": "device",
+      "name": "Device Info",
+      "category": "System",
+      "icon": "device",
+      "url": "device/",
+      "type": "internal"
     }
   ]
 }
