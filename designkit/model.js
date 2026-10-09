@@ -120,6 +120,15 @@
   }
 
   var ITEM_TYPES = ["text", "img", "rect", "ell", "line"];
+
+  // Per-app item extras. An app that needs fields of its own on
+  // items (Atelier: shapes, icons, effects, filters…) registers ONE
+  // normalizer: fn(rawAx, normalizedItem) → canonical object or null.
+  // It runs inside normItem, so storage, merge and imports all keep
+  // the extras. Nothing registered (Layout): `ax` is dropped as
+  // before.
+  var itemExt = null;
+  function setItemExt(fn) { itemExt = typeof fn === "function" ? fn : null; }
   function normItem(it) {
     if (!it || !isId(it.id) || ITEM_TYPES.indexOf(it.t) < 0 || !isId(it.pg)) return null;
     var o = {
@@ -148,6 +157,10 @@
       o.fit = oneOf(it.fit, ["fit", "fill", "custom"], "fill");
       o.ix = num(it.ix, -MAX_COORD, MAX_COORD, 0); o.iy = num(it.iy, -MAX_COORD, MAX_COORD, 0);
       o.isc = num(it.isc, 0.001, 1000, 1);
+    }
+    if (itemExt && it.ax && typeof it.ax === "object") {
+      var ax = itemExt(it.ax, o);
+      if (ax && typeof ax === "object") o.ax = ax;
     }
     return o;
   }
@@ -467,7 +480,7 @@
   var api = {
     DATA_VER: DATA_VER, PT_PER: PT_PER, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
     preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, nameOf: nameOf,
-    newId: newId, touch: touch, isId: isId, cmpStr: cmpStr,
+    newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt,
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,

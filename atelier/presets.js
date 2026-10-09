@@ -1,8 +1,9 @@
 // ============================================================
 // orOS Atelier — design sizes (data only, v1.0.0)
 // The "What will you make?" cards. Screen formats are in pixels;
-// print formats in millimetres (the editor works at 96 px per inch,
-// so 1 mm = 96 / 25.4 px; export picks the real dpi).
+// print formats in millimetres. The design itself is in points
+// (designkit): 1 px of a screen format = 1 pt, 1 mm = 72 / 25.4 pt;
+// export picks the real pixels / dpi.
 // Groups and sizes are listed in display order.
 // ============================================================
 (function (root) {
@@ -45,8 +46,8 @@
       ["wallpaper-d", "brand",  "Desktop wallpaper",   "Ταπετσαρία υπολογιστή",     1920, 1080, "px"],
       ["wallpaper-m", "brand",  "Phone wallpaper",     "Ταπετσαρία κινητού",        1080, 2340, "px"]
     ],
-    // Custom size limits (editor units).
-    custom: { px: [16, 8000], mm: [10, 1200] },
+    // Custom size limits (editor units; designkit pages are 36..14400 pt).
+    custom: { px: [36, 8000], mm: [13, 1200] },
     PX_PER_MM: 96 / 25.4
   };
 

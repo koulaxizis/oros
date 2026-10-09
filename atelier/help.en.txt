@@ -1,0 +1,46 @@
+# Atelier
+Design posts, stories, flyers, posters, cards and more, from a blank page or a ready template, and download them as PNG, JPG or PDF.
+
+## Getting started
+Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also pick one of the designs under `Start from a template`; its texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
+
+## Add and edit elements
+- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `Uploads` and `Background`.
+- `Elements` has shapes, lines and arrows, and icons you can search in English or Greek.
+- `Text` adds a heading, a subheading or body text, and has ready `Styles` such as neon, shadow and curved text.
+- Tap or click an element to select it. Drag it to move, use the handles to resize, and the round handle below it to rotate. Guides help you line things up.
+- Tap a selected text again, or double-click it, to type in it.
+- The bar above the canvas changes with what you selected: font, size, colour, `Effects`, `Transparency`, `Position`, `Lock`, `Duplicate` and `Delete`.
+
+## Photos
+- `Uploads` › `Upload an image` adds a photo from this device or from Files.
+- With a photo selected you get `Filters`, `Adjust` (brightness, contrast, warmth and more), `Shape` to cut it into a circle, star or other shape, `Flip` and `Replace`.
+- `Crop`, or a double-click on the photo, lets you move and zoom the photo inside its frame.
+- `Background` can use the selected photo as the page background.
+
+## Pages
+The strip under the canvas shows the pages of your design. `+` adds a page; each page has `Duplicate page`, `Move left`, `Move right` and `Delete page`.
+
+## Download and share
+- `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, or a PDF for printing at 150 or 300 dpi.
+- `More` › `Resize…` scales the whole design to another size.
+- `More` › `Save as package (.orosdesign)` makes one file with the design and its images. `Open package` on the home screen opens it as a new design.
+- `More` › `Credits` lists the work by others your design uses.
+
+## Sync and backup
+Designs sync with orOS sync. Uploaded images are stored once on the orOS disk and sync with Vault Drive like your other files; on another device a photo may show `Syncing…` until it arrives.
+
+## Keyboard shortcuts
+- [[Ctrl+Z]] undo, [[Ctrl+Shift+Z]] or [[Ctrl+Y]] redo.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] copy, cut and paste; [[Ctrl+D]] duplicate; [[Ctrl+A]] select all.
+- Arrow keys move the selection, with [[Shift]] in bigger steps. [[Delete]] removes it.
+- [[Enter]] edits the selected text or crops the selected photo; [[Esc]] ends editing or clears the selection.
+- [[Ctrl+=]] and [[Ctrl+-]] zoom; [[Ctrl+0]] fits the page to the screen. Hold [[Space]] and drag to move around.
+
+## Tips
+> With a mouse, drag across an empty part of the page to select several elements with a box; Shift-click adds to the selection.
+> Corner handles keep the proportions; on text they also change the font size.
+
+## Limits
+- PDF pages are high-resolution images, so text in the PDF cannot be selected or edited.
+- Open media sources (free photos, clipart and sounds) and more fonts come in a later version.
