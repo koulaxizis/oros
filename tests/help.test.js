@@ -38,7 +38,7 @@ const PENDING = [
   "mood", "habits", "cycle", "dice", "radio", "television", "memory",
   "connect4", "dots", "tictactoe", "simon", "netizen", "slider", "lightsout",
   "petworld", "wallpaper", "whack", "mixer", "snake", "wheel", "g2048",
-  "zen", "wordle", "names", "passwords", "mindmap", "timesheet", "split",
+  "zen", "wordle", "names", "passwords", "timesheet", "split",
   "travel", "chores", "meals", "layout", "pubdomain", "qr", "pixel",
   "health", "budget", "water", "fitness", "petcare", "baby", "familytree",
   "garage", "plants", "shelf", "feeds", "mail", "scores", "podcasts", "spot",
