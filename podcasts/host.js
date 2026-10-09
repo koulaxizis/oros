@@ -65,7 +65,11 @@
   function mutate(fn) {
     var next;
     try { next = fn(data, Date.now()); } catch (e) { return false; }
-    if (!next || next === data || JSON.stringify(next) === JSON.stringify(data)) return false;
+    if (!next || next === data) return false;
+    // Re-made with this realm's core: the caller may be the app frame,
+    // and its objects must not outlive the frame inside the host.
+    next = C.mergePodcasts(JSON.parse(JSON.stringify(next)), null);
+    if (JSON.stringify(next) === JSON.stringify(data)) return false;
     data = next;
     writeData();
     markDirty();
