@@ -3926,3 +3926,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-09 — Bookmarks 0.47.04 — "Send to orOS" (bookmarklet + Android share target)
 - **Changes:** `shell.js` reads `/?share-url=…&share-title=…&share-text=…` once at boot, strips it from the address bar and opens Bookmarks' add dialog prefilled (only http(s); nothing saved until Save). The 🌐 button in Bookmarks offers the bookmarklet; `manifest.webmanifest` gains a GET `share_target` so Android's Share sheet lists orOS; `sw.js` never caches `?share-` navigations (PR #83). Runs after `openFromLaunchParam()` at boot; the two do not interact.
 - **NOT tested:** a real Android share sheet, an installed PWA on Windows/Linux, Safari / iOS.
+
+### 2026-10-09 — shell + Weather 0.47.05 — Weather tray from the Weather app; taskbar always fits
+- **Changes:** the weather chip is on by default; its settings moved from the orOS menu into the Weather app's city dialog ("Taskbar" section: show/hide on this device, pin the city the taskbar shows; nothing pinned follows the first city). New parent API `window.orosWeatherTray`, device-local `oros-wx-tray`, tray cache tagged with its place (9d). `fitBar()` + ResizeObserver steps the taskbar down so the date never leaves the screen (Part 6). Time/astro falls back to the tray place. Menu-only `wx.*` strings removed (PR #82).
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
