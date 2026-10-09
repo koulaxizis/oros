@@ -1,0 +1,41 @@
+# Appearance
+Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, a screen pet and the weather in the top bar. Most of these are in the menu: tap or click `orOS` to open it.
+
+## Language
+orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
+
+If an app is open when you switch, it reopens in the new language. Your data isn't touched.
+
+## Light or dark theme
+In the menu, under `Appearance`, the round button with the moon or the sun switches the theme. Its label tells you what it will do: `Switch to light mode` or `Switch to dark mode`. orOS starts in dark mode.
+
+## Skins
+The coloured dots under `Appearance` are skins: each one gives orOS and its apps a different accent colour. They are named after Linux systems, such as `Ubuntu`, `Fedora`, `Mint` or `Pop!_OS`; hover over a dot to see its name. The default is `Oros`, in gold.
+
+> If you still have the default wallpaper (`Desert Sand`), choosing a skin also switches to the wallpaper that goes with it. Once you pick a wallpaper yourself, skins leave it alone.
+
+## Wallpapers
+Under `Wallpaper`, tap or click a picture to make it your desktop background. You can choose from `Adwaita Dusk`, `Midnight`, `Aubergine`, `Forest Night`, `Ember`, `Nordic Frost`, `Aurora`, `Desert Sand`, `Monochrome`, `Nebula`, `Nordic Aurora`, `Hex Grid`, `Obsidian Veil` and `Retro Terrazzo`. `None` uses the plain background of your theme.
+
+### Your own wallpaper (Mine)
+The first tile, `Mine`, is a wallpaper you make yourself.
+1. Until you've made one, the tile shows a **+** (`Mine: make one in Wallpaper Generator`). Tap or click it to open [Wallpaper Generator](app:wallpaper).
+2. Create a design there and press `Set as wallpaper`.
+3. It becomes your `Mine` wallpaper and you can pick it again from the menu any time.
+
+Each device draws your wallpaper to fit its own screen, so it stays sharp on a phone and on a big monitor.
+
+## Screen pet
+Under `Screen Pet`, the button switches on a tiny companion that lives on your desktop. Feed it, pet it and let it sleep. It never dies: if you forget it for a while, it just gets grumpy. You can do more with your pet in [Pet World](app:petworld).
+
+## Weather in the top bar
+Under `Weather`:
+1. Tap or click `Weather tray: off` to turn it on.
+2. Choose `Use device location`, or `Set city…` and type a city name.
+
+A small icon with the current temperature then appears in the top bar. Tap or click it to open [Weather](app:weather); inside Weather, it takes you back to the desktop.
+
+When you are offline, or the reading is more than 3 hours old, the icon shows a crossed-out cloud and no temperature. orOS never shows a temperature it doesn't have. Weather data comes from Open-Meteo (see [Privacy](help:t/privacy)).
+
+## What follows you to other devices
+With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and weather settings go to your other devices too.

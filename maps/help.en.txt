@@ -1,0 +1,64 @@
+# Maps
+
+Find places, plan routes by car, bike or on foot, and follow spoken turn-by-turn directions.
+
+## Getting started
+
+Type a place or address in `Search a place…`. Suggestions appear from the third letter, and places near the part of the map you're looking at come first. Tap or click one to drop a pin. You can also type coordinates, such as `37.9755, 23.7348` or `37°58'32"N 23°44'05"E`.
+
+`Use my location` shows where you are (your browser asks for permission the first time). The layers button at the top right switches between `Standard`, `Humanitarian` and `Satellite` maps.
+
+## Places
+
+- A pin's popup has `Save` (star), `Route` (from your location to there) and `From here`.
+- Right-click the map, or long-press on a phone, to use any point: `Go here`, `Start here`, `Add as stop` (once a route is set) and `Save`.
+- `Saved places` lists everything you starred. Tap a place to fly there. The pencil renames it (`Rename place`) and the × deletes it, with `Undo`.
+
+## Plan a route
+
+1. Tap `Plan a route`. A new plan starts `From` `My location`.
+2. Type in a row to search. Your saved and recent places are offered too. Or tap `Choose on map` in that row and then tap the map.
+3. Use `Add stop` for up to 3 stops. `Swap` reverses the whole trip.
+
+The route bar shows distance and travel time (an estimate without live traffic), plus `Car`, `Bike`, `Walk`, `Directions` (the step list), `Edit route`, `Send to Calendar`, `Start navigation` and `Clear route`. `Send to Calendar` asks for a `Day` and adds a "Route to …" event to [Calendar](app:calendar) with the distance, time and mode.
+
+## Navigation
+
+`Start navigation` follows your GPS position and speaks each turn in the orOS language. If you're more than about 150 m from the start, the route is recalculated from where you are. Leave the route and it's recalculated automatically (when you're online).
+
+- Move the map and it stops following you. `Recenter` brings it back.
+- `Mute voice` silences the instructions.
+- `Exit navigation` needs a second tap within 3 seconds.
+- Where the browser allows it, the screen stays on while you navigate.
+- If Maps reopens in the same tab within 30 minutes, navigation picks up again.
+
+## Online services and privacy
+
+- **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
+- **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
+- **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
+
+Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).
+
+## Sync and backup
+
+Saved places sync through [orOS sync](help:t/sync). These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+
+`Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). Maps has no file import or export.
+
+## Keyboard shortcuts
+
+- [[↑]] / [[↓]] move through the suggestions, in the search box and in the route planner.
+- [[Enter]] opens the highlighted suggestion, or the first one.
+- [[Esc]] closes the suggestions, open panels, the planner or a "choose on map" pick.
+
+## Tips
+
+- [Bookmarks](app:bookmarks) and [Calendar](app:calendar) can open a place in Maps.
+- Before a trip, look around the area while you're online. Those map images then work offline too.
+
+## Limits
+
+- Search and new routes need a connection. Offline you get cached areas, saved places and your last route.
+- Navigation needs GPS, and Maps has to stay open.
+- The routing servers are free public services and can sometimes be slow or down.

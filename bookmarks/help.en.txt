@@ -1,0 +1,59 @@
+# Bookmarks
+
+Save web links in folders, tag them and find them again quickly.
+
+## Getting started
+
+Paste a link into the bar at the top (`Paste a link — or link | title`) and press [[Enter]] or tap the + button. You don't need to type `https://`, it's added for you. To give the bookmark a title at the same time, add a `|` and the title, for example `example.com | My site`.
+
+The link goes into the folder that's open. In `All` it goes to `Unsorted`. If you've already saved that address, the bar flashes and a note tells you which folder it's in.
+
+Tap or click a row to open the link in a new tab.
+
+## Folders
+
+- Tap the + next to the folder tabs to make a `New folder`.
+- `All` shows every bookmark. `Unsorted` is the default folder and can't be deleted.
+- To rename or delete the open folder, use the ⋮ button (`Folder options`) or double-click its tab.
+- On a phone, long-press a tab for `Rename`, `Move left` and `Move right`. On a computer, drag one tab onto another to swap them.
+- `Delete folder` asks for a second tap. The folder's bookmarks move to `Unsorted`, and you get `Undo`.
+
+## Edit, move and favourites
+
+Each row has a star (favourites), a pencil (`Edit`) and an open button. In the edit window you can change `Title`, `Address`, `Description`, `Tags` and `Folder`, or `Delete` the bookmark.
+
+Right-click a row (long-press on a phone) for a menu with `Open`, `Open in Maps`, `Edit`, `Add to favorites`, `Move to…` any other folder and `Delete`. On a computer you can also drag a row onto a folder tab. Dropping it on `All` moves it to `Unsorted`.
+
+Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Open in Maps` searches for the bookmark's title and description in [Maps](app:maps).
+
+## Search, tags and sorting
+
+- The search box looks in every folder: titles, addresses, tags and folder names.
+- Add tags in the edit window: type one and press [[Enter]] or a comma. [[Backspace]] in an empty field removes the last tag.
+- Tap a tag on a row to show only bookmarks with that tag. Tap more tags to narrow it down. The tag button (`All tags`) lists every tag with a count, and `Clear filters` resets the filter.
+- The sort menu offers `Recent`, `Title A–Z` and `Most visited`.
+
+## Tidy up
+
+- `Select bookmarks` (the checkbox button) lets you tick several rows and use `Move to…` or `Delete` on all of them. `Done` ends selection. It's off while you search or filter.
+- `Duplicate bookmarks` finds addresses saved more than once (http/https and `www.` count as the same). Use `Keep oldest, delete …` on one group, or `Apply selected` / `Apply all`.
+- Deleting or moving shows a message with `Undo` for a few seconds.
+
+## Sync and backup
+
+Bookmarks, folders, tags and favourites sync through [orOS sync](help:t/sync). Your sort choice stays on this device.
+
+- **Import**: `Import bookmarks (Netscape HTML)` reads the bookmarks HTML file that most browsers can export. Folders are matched by name or created, and addresses you already have are skipped.
+- **Export**: `Export bookmarks (Netscape HTML)` saves `oros-bookmarks.html` for a browser or for orOS.
+
+For a copy of all your orOS data, see [Backup](help:t/backup).
+
+## Tips
+
+- The coloured letter on each row is made on your device. orOS doesn't download site icons, so opening the list contacts no websites.
+
+## Limits
+
+- Only http and https links can be saved.
+- The export file has the title, address and folder only. Tags, descriptions and favourites aren't in it.
+- Folders are one level deep. Nested folders from an import become separate folders.

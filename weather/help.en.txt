@@ -1,0 +1,50 @@
+# Weather
+
+Current conditions, the next 48 hours and a 7-day forecast for the cities you pick. It works with the small weather display in the orOS top bar.
+
+## Getting started
+
+Tap the city name at the top to open `Cities`. Type a name in `City name…` (suggestions show from the third letter), then pick a suggestion or press `Add`. `Use my location` adds the place you're in, after your browser asks for permission.
+
+If you've already set up the top-bar weather, its city is added for you.
+
+## Read the forecast
+
+- The big temperature comes with a short hint such as `Umbrella day` or `High UV — wear sunscreen`. Hover over the icon to see the condition.
+- Below it: `Feels like`, `Humidity`, `Wind`, `UV index`, `Sun` (sunrise → sunset) and `Air quality` (European AQI). Hover over UV or air quality to see the scale.
+- `Next 48 hours` scrolls sideways. `7-day forecast` shows lows, highs and the chance of rain.
+- Tap the big temperature to switch between °C and °F (wind changes between km/h and mph too).
+
+## More than one city
+
+- Swipe left or right on the forecast to change city, or tap the dots next to the city name.
+- In `Cities`, tap a city to show it. The × (`Delete city`) removes it, and you get `Undo`.
+
+## Top-bar weather
+
+orOS can show a weather icon and the temperature in the top bar. Turn it on in the [orOS menu](help:t/menu), in the `Weather` section: tap `Weather tray: off` to switch it on, then choose `Use device location` or `Set city…`.
+
+- Tapping the top-bar weather opens this app. Tap it again inside Weather to go back to the desktop.
+- The location you set in the menu shows up here as a city and becomes the one on screen.
+- When the app fetches the same city, the top bar shows the same numbers.
+- Offline, the top bar shows a crossed-out cloud and no temperature.
+- In the morning (8:00–12:00), orOS may send one [notification](help:t/notifications) when the day needs attention, like storms, fog, rain, high UV, heat or cold. A pleasant day stays quiet.
+
+## Updates and offline
+
+The forecast updates when you open or return to the app, at most every 30 minutes. The refresh button at the top right fetches it right away. With no connection, you see `Offline — showing last known` and the last data the app got. It never makes up numbers.
+
+## Sync and backup
+
+Your cities, the city on screen and your °C/°F choice sync through [orOS sync](help:t/sync). The top-bar weather settings sync with the rest of the orOS settings. Downloaded forecasts stay on this device. Weather has no import or export.
+
+## Tips
+
+- Add home, work and holiday spots, then swipe between them.
+- The Sun & Moon section in [Time](app:time) uses the top-bar weather location for sunrise and sunset.
+
+## Limits
+
+- Data comes from [Open-Meteo](https://open-meteo.com/), which needs no account. It receives the city names you search for and the coordinates of your cities.
+- If air quality or another value can't be fetched, you see — instead.
+- Hints are short rules of thumb, not official warnings.

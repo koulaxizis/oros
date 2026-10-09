@@ -1,0 +1,39 @@
+# Backup and restore
+A backup is a single file with all your orOS data: every app, your settings and the files in the [Files](app:files) app. Keep one somewhere safe, even if you use sync.
+
+## Export a backup
+1. Open the menu and scroll to `Sync`.
+2. Tap or click `Export data`.
+3. Choose where to save the file, or let your browser download it. It is named like `orOS-backup-2026-10-09.json`.
+
+You can also press [[Ctrl+Alt+Shift+X]] (`Export database`). Export works offline and doesn't need Dropbox.
+
+>! A backup file is **not encrypted**. Anyone who opens it can read your data. Store it somewhere safe, as the menu reminds you: `Local backup is not encrypted — store it somewhere safe.`
+
+## Automatic backups to a folder
+In Chrome, Edge and similar browsers on a computer, orOS can write backups to a folder you pick. These options don't appear in Firefox, Safari or on phones, because those browsers can't write to a folder. There, export by hand now and then.
+
+1. In `Sync`, set `Auto backup` to `Daily`, `Weekly` or `Monthly`.
+2. Next to `Backup folder`, tap `Choose…` and pick a folder. orOS writes the first backup right away and shows `Backup written to folder`.
+
+Good to know:
+- orOS checks whether a backup is due when it starts and when you come back to its tab. Nothing runs while orOS is closed.
+- One file per day. A second backup on the same day replaces that day's file.
+- [[Ctrl+Alt+Shift+S]] writes a backup to the folder now. In browsers without folder backups it exports the file instead.
+- `Stop` stops writing to the folder. Your old backup files stay where they are.
+- Browsers sometimes take back the folder permission. The folder line then shows `permission expired — click to re-grant`. Tap `Reconnect folder` to allow it again.
+
+If you see `Turn on Auto backup first` or `Choose a backup folder first`, set the missing option and try again.
+
+## Restore from a file
+1. Open the menu, go to `Sync` and tap `Import data`.
+2. Pick an orOS backup file.
+3. You'll see `Data imported` with the number of sections updated.
+
+Importing doesn't wipe orOS first. Where an app can merge, the backup is combined with what's already here, and files from the backup are added to the Files app without deleting yours. If sync is on, the restored data then goes to your other devices too.
+
+## Backups in Dropbox
+When sync is on, orOS also keeps a few encrypted daily copies of your cloud data in its Dropbox folder (up to 7). They are a safety net, and there is no button in orOS to restore them. Your own export file is the backup you control. See [Sync across devices](help:t/sync).
+
+## Backups inside apps
+Some apps have their own import or export, for example to save one notebook or bring in contacts from another program. You'll find the details on each app's help page. The full backup above always covers every app at once.

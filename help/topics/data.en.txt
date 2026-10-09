@@ -1,0 +1,33 @@
+# Your data and files
+orOS keeps nothing on a server of its own, and there is no account. Everything you create lives in your browser, on the device you're using. This page explains where it is and how to keep it safe.
+
+## Where your data lives
+Your app data (notes, tasks, events, settings and so on) is stored in this browser's own storage on this device. Files you keep in the [Files](app:files) app live in a separate storage area of the same browser.
+
+That means:
+- Another browser on the same device has its own, separate orOS.
+- Another device doesn't see your data unless you turn on [sync](help:t/sync).
+- orOS asks the browser to keep its storage, so it isn't cleared to free up space. The browser decides whether to agree.
+
+## Files and sync
+When sync is on, every file in the Files app syncs on its own, encrypted, even while the Files app is closed. The Files app shows how it's going: `Disk synced`, `Changes pending sync` or `Disk sync unavailable` (sync is off or locked).
+
+If the same file was changed on two devices, both versions are kept. The other device's version appears next to yours with "conflict" and a date in its name, and you'll see `A file was changed on two devices — both versions were kept`. Empty folders don't sync.
+
+## When storage is full
+Browsers give each site a limited amount of space for app data, about 5 MB in most browsers, shared by all orOS apps. When it's full, new changes may not be saved, and sync may pause so nothing gets overwritten. You'll then see:
+
+`Browser storage is full — sync paused so nothing is overwritten. Free some space (export, then delete old data)`
+
+To fix it, [export a backup](help:t/backup) first, then delete things you no longer need, such as old entries in the apps you use most.
+
+## Clearing browser data
+>! Clearing your browser's data for this site (cookies and site data, history with site data, or "clear storage") **erases orOS on this device**: every app, setting and file. If sync was on, your data is still in the cloud and comes back when you connect again with your passphrase. If not, only a backup file can bring it back.
+
+Before you clear browser data, reset your browser or switch devices, [export a backup](help:t/backup).
+
+## Private windows
+In a private or incognito window, the browser deletes everything when you close the window. orOS works there, but your data won't be there next time. Use a normal window for anything you want to keep, or export before closing.
+
+## Taking your data with you
+Your data is always yours. `Export data` in the menu saves everything in one file you can keep or import into orOS on another device. To erase everything instead, see [Factory reset](help:t/reset).

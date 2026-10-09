@@ -1,0 +1,39 @@
+# Install orOS as an app
+You can use orOS in a normal browser tab, but you can also install it. Installed, orOS gets its own icon and opens in its own window, without the browser's address bar. It works offline either way.
+
+## Android
+In Chrome on Android:
+1. Open orOS and tap `orOS` to open the menu.
+2. If you see `Install orOS`, tap it and confirm.
+3. If you don't, open the browser's own menu and choose the option to install the app or add it to the home screen.
+
+orOS then appears with your other apps.
+
+## iPhone and iPad
+On iPhone and iPad, install orOS from Safari:
+1. Open orOS in Safari.
+2. Tap the Share button.
+3. Choose **Add to Home Screen**, then **Add**.
+
+Open orOS from the new icon on your home screen. It opens full screen, like any other app.
+
+## Computer (Chrome or Edge)
+1. Open orOS and click `orOS` to open the menu.
+2. Click `Install orOS` and confirm.
+
+You can also use the install icon in the browser's address bar, or the browser's menu. After that, orOS opens in its own window and you can pin it to your taskbar or dock.
+
+> `Install orOS` shows only when your browser can install it right now. Once orOS is installed, the row disappears.
+
+## How updates arrive
+You never need to download updates yourself. orOS checks for a new version every time it starts, every hour while it stays open, and when you come back to it or get your connection back.
+
+A new version downloads in the background. orOS then reloads itself at a quiet moment, so it never interrupts you:
+- you are on the desktop, with no app open;
+- the menu and any windows are closed;
+- no alarm is ringing and the radio isn't playing;
+- no changes are waiting to be synced.
+
+After the update, a notification says `orOS was updated to` and the new version number. You can always see the version you have in `About orOS + shortcuts`.
+
+> To check for an update right away, press [[Ctrl+Alt+Shift+U]]. You'll see `Checking for updates…`.

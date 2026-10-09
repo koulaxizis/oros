@@ -1,0 +1,39 @@
+# Keyboard shortcuts
+orOS has a set of keyboard shortcuts that work everywhere: on the desktop and inside most apps. They all use the same three keys plus one letter: [[Ctrl+Alt+Shift]].
+
+## All shortcuts
+- [[Ctrl+Alt+Shift+P]]: `Force push to cloud`
+- [[Ctrl+Alt+Shift+O]]: `Force pull from cloud`
+- [[Ctrl+Alt+Shift+S]]: `Export backup to folder now`
+- [[Ctrl+Alt+Shift+X]]: `Export database`
+- [[Ctrl+Alt+Shift+I]]: `About orOS + shortcuts`
+- [[Ctrl+Alt+Shift+U]]: `Check for updates`
+- [[Ctrl+Alt+Shift+L]]: `Switch language`
+- [[Ctrl+Alt+Shift+R]]: `Connect / reconnect cloud sync`
+- [[Ctrl+Alt+Shift+C]]: `Open Calculator`
+- [[Ctrl+Alt+Shift+H]]: `Help for the open app`
+
+## What each one does
+### Sync and backup
+- **Push** sends your data to the cloud now, and **pull** brings the latest from the cloud now. Both need [sync](help:t/sync) to be connected; otherwise you'll see `Cloud sync is not connected`.
+- **Export backup to folder now** writes a backup file into your backup folder. This needs `Auto backup` to be on and a `Backup folder` chosen. In browsers that can't use a backup folder (such as Firefox, Safari and phones), it saves a backup file instead, like `Export data`.
+- **Export database** saves all your orOS data to a file, the same as `Export data` in the menu. See [Backup](help:t/backup).
+- **Connect / reconnect cloud sync** starts the Dropbox connection if you aren't connected. If you are, it asks again for permission to use your backup folder, when the browser has taken it away.
+
+### Everything else
+- **About orOS + shortcuts** opens the About window, with the version, the online services, this list of shortcuts and the [factory reset](help:t/reset). Press it again or [[Esc]] to close it.
+- **Check for updates** looks for a new version right away. See [Install](help:t/install).
+- **Switch language** swaps between English and Greek.
+- **Open Calculator** opens [Calculator](app:calculator).
+- **Help for the open app** opens Help at the page of the app you are using. On the desktop, it opens Help's start page.
+
+## Mac and keyboard layouts
+On a Mac, use [[Control+Option+Shift]] plus the letter. [[Cmd]] works in place of [[Control]] too. The About window shows the keys as ⌃⌥⇧.
+
+Shortcuts follow the key's position, not the letter it types, so they work the same with a Greek keyboard layout.
+
+## When shortcuts don't work
+- Shortcuts don't fire while you are typing in a text box, so they never get in the way of what you write. Click outside the box first.
+- A few apps don't pass shortcuts on yet. Go back to the desktop and try again.
+
+> Apps have shortcuts of their own as well. You'll find them on each app's Help page.

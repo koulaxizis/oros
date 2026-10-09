@@ -14,6 +14,7 @@ window.OROS_TRANSLATIONS = {
 
   en: {
     "bar.menu":                  "orOS",
+    "bar.help":                  "Help for this app (Ctrl+Alt+Shift+H)",
     "bar.clock.tooltip":         "Time (24h)",
     "lang.tooltip":              "Switch language",
     "theme.toLight":             "Switch to light mode",
@@ -251,6 +252,7 @@ window.OROS_TRANSLATIONS = {
     "radio.fav.added":           "Added to favorites",
     "radio.fav.removed":         "Removed from favorites",
     "sc.desc.calculator":        "Open Calculator",
+    "sc.desc.help":              "Help for the open app",
     "sync.fsfolder.choosefirst": "Choose a backup folder first",
     "sync.pending.title":        "{app}: changes waiting on this device",
     "sync.pending.body":         "Open the app to merge them with your other devices.",
@@ -258,6 +260,7 @@ window.OROS_TRANSLATIONS = {
 
   el: {
     "bar.menu":                  "orOS",
+    "bar.help":                  "Βοήθεια για αυτή την εφαρμογή (Ctrl+Alt+Shift+H)",
     "bar.clock.tooltip":         "Ώρα (24ωρη)",
     "lang.tooltip":              "Αλλαγή γλώσσας",
     "theme.toLight":             "Μετάβαση σε φωτεινό θέμα",
@@ -495,6 +498,7 @@ window.OROS_TRANSLATIONS = {
     "radio.fav.added":           "Προστέθηκε στα αγαπημένα",
     "radio.fav.removed":         "Αφαιρέθηκε από τα αγαπημένα",
     "sc.desc.calculator":        "Άνοιγμα Αριθμομηχανής",
+    "sc.desc.help":              "Βοήθεια για την ανοιχτή εφαρμογή",
     "sync.fsfolder.choosefirst": "Διάλεξε πρώτα φάκελο αντιγράφων",
     "sync.pending.title":        "{app}: αλλαγές που περιμένουν σε αυτή τη συσκευή",
     "sync.pending.body":         "Άνοιξε την εφαρμογή για να συγχωνευτούν με τις άλλες συσκευές σου.",

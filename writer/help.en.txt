@@ -1,0 +1,53 @@
+# Writer
+Writer is a word processor with tabs, footnotes, comments, version history and export to Word, PDF and more.
+
+## Getting started
+Just start typing; everything saves by itself.
+
+- Each open document is a tab. Tap `+` (`New document`) for a new one, or press [[Ctrl+Alt+T]].
+- Double-click a tab, or press [[F2]], to give the document a title.
+- Closing a tab doesn't delete anything. The `Documents` button left of the tabs lists every document, with search, to open or delete (with a few seconds to Undo).
+
+## Write and format
+- The toolbar has Undo and Redo, a paragraph style list (`Normal text`, `Heading 1` to `Heading 4`, `Quote`, `Code block`), bold, italic, underline, strikethrough, indent, lists, alignment, `Horizontal rule` and `Page break`.
+- `Special characters` inserts Greek letters, maths, arrows, currency, punctuation, symbols and emoji.
+- On a computer, Alt+right-click in the text opens a quick menu with formatting plus `Insert link`, `Insert image` and `Insert table`.
+- Pasted images, such as screenshots, are shrunk to save space.
+- `Find and replace` (or [[Ctrl+F]]) has `Match case`, `Whole word`, a format filter (for example `Bold only`), `Replace` and `Replace all`.
+- In `Settings`, `Smart typography` turns -- into a dash, ... into an ellipsis and straight quotes into curly ones. `Auto-correction rules` replaces text such as (c) with © when you press space. You can add your own rules.
+
+## Notes, comments and structure
+- `Footnotes`: tap `Add footnote` to place a numbered note at the cursor and type it in the side panel.
+- `Comments`: select some text, then `Add comment`. A comment must stay inside one paragraph.
+- `Table of contents` lists your headings. Tap one to jump to it, or `Insert inline` to put a contents list into the text.
+- `Document metadata` holds `Title`, `Author`, `Tags` and `Category`.
+- `Page settings` sets `Paper size`, `Margins (mm)`, `Header` and `Footer`.
+
+## Versions, templates and goals
+- `Version history` keeps automatic versions while you write (at most one every 5 minutes, the newest 8). Tap `Snapshot` to save one yourself; those are never dropped. `Restore` saves the current text as a snapshot first.
+- `Templates` has built-in ones (`Essay`, `Formal letter`, `Novel chapter`, `Screenplay`, `Poem`, `Meeting notes`, `Blank`) and yours. `Use` starts a new document from one; `Save current as template` adds yours.
+- `Writing goal` sets a target in words, characters, paragraphs, minutes or session words. A bar at the bottom shows your progress. With `Lock editing after goal`, typing stops once you reach it.
+
+## Import and export
+- `Export` saves the document as plain text, Markdown, HTML, RTF, Word (.docx), PDF or an orOS Writer file (.orosdoc, which keeps footnotes, comments and metadata). `Database (JSON)` saves all your documents, templates and settings.
+- `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT and MD files. You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer.
+- Importing a `Database (JSON)` file merges it. Documents that exist only here are kept, and if a document differs, the older text goes into `Version history`.
+
+## Sync and backup
+With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versions, goals, page settings), templates, auto-correction rules and settings reach your other devices. Which tabs are open stays on each device. Deleting a document removes it everywhere. See also [Backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[Ctrl+S]] saves now (Writer also saves by itself).
+- [[Ctrl+F]] find and replace.
+- [[Ctrl+Alt+T]] new document, [[Ctrl+Alt+W]] close the current tab.
+- [[F2]] rename the current document.
+
+## Tips
+- Use heading styles: they build the table of contents. Take a `Snapshot` before big changes.
+
+## Limits
+- Links, images and tables come from the Alt+right-click menu, so phones and tablets can't add them yet.
+- If two devices change the text of the same document before syncing, the newer text wins.
+- RTF import brings in text only.
+- Find and replace changes can't be undone with Undo.
+- PDF export may not keep bold and italic.

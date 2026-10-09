@@ -1,0 +1,55 @@
+# To-Do
+To-Do keeps your tasks in lists, each list on its own tab. Give tasks due dates, labels and notes, make them repeat, and search across every list at once.
+
+## Getting started
+You start with two lists, `General` and `Groceries`. Type in the box at the top (`Add a task… (try “tomorrow”, “friday”)`) and press [[Enter]], or tap or click the **+** button. New tasks go to the top of the open list.
+
+Tick the checkbox next to a task to mark it done. Tap or click the task's text to open its details.
+
+## Add and edit tasks
+### Quick dates while typing
+The add box understands a few date words and removes them from the task text:
+- `today` / `tomorrow` (in Greek too: `σήμερα`, `αύριο`).
+- A weekday, full or short, such as `friday` or `fri`. It means the next one; typing `friday` on a Friday gives next week's Friday.
+
+### Task details
+The `Task` window has `Text`, `Due date`, `Notes`, `Labels` and `Extra info`. With `Add field` you can add your own pairs of `Field` and `Value`, such as a phone number or a price. Changes are saved when you close the window or press `Save`. `Delete` removes the task after you confirm.
+
+Due dates show on each task as `Today`, `Tomorrow` or a short date, highlighted when the task is due today or overdue. A tab shows a small count of overdue tasks.
+
+### Repeating tasks
+Under `Repeat`, choose `Every` and set a number of `days`, `weeks` or `months`; for weeks you can also pick a weekday. When you tick a repeating task, it doesn't stay done: it reopens with its next due date.
+
+### Reorder
+Drag a task by its handle (the dotted grip on the right) to move it within the list.
+
+## Lists
+- Tap or click the **+** next to the tabs to add a list. It opens straight into `List settings` so you can name it.
+- To rename a list, double-click its tab, tap the pencil on the tab, or use the ⋮ button on the right.
+- Drag tabs sideways to change their order.
+- `List cycle` clears all ticks in the list automatically every few days, weeks or months. It's handy for checklists you redo, like a weekly shopping list. The window shows the next reset date.
+- `Delete list` removes the list and all its tasks.
+
+`Hide completed` hides ticked tasks in this view. `Clear completed` deletes all ticked tasks in the open list. After a delete or clear, an `Undo` button appears for a few seconds.
+
+## Labels, search and filter
+In a task, open `Add / manage labels` to create labels with a name and colour, and tap a label to attach it. Tap a label chip in the task to remove it.
+
+The search box looks through every list: task text, notes, extra info and label names. The funnel button filters by label; a task shows if it has any of the labels you pick. Results from all lists appear together, each with its list name. You can also delete a label from the filter menu; it's removed from all tasks.
+
+## Sync and backup
+Your lists, tasks and labels sync between your devices through [orOS sync](help:t/sync). The open tab and `Hide completed` stay on each device, and search and filters reset when you close the app.
+
+To-Do has no import or export of its own; use the orOS [backup](help:t/backup) to keep a copy.
+
+## Keyboard shortcuts
+- [[Enter]] in the add box adds the task.
+- [[Esc]] closes the label filter menu or the open window.
+
+## Tips
+- Tasks with a due date that aren't done show up in [Calendar](app:calendar) on their day, and the Calendar entry opens the list here.
+- orOS can remind you when tasks are due or overdue; see [Notifications](help:t/notifications).
+
+## Limits
+- Quick dates know only today, tomorrow and weekdays. For other dates, set `Due date` in the task.
+- Tasks can't be moved between lists, and you can't drag tasks while searching or filtering.

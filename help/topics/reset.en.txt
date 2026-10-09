@@ -1,0 +1,29 @@
+# Factory reset
+A factory reset erases everything orOS has stored and starts it again as new, as if you had never used it. Use it when you want a clean start, or before you give a device to someone else.
+
+>! A factory reset is permanent and can't be undone. It also deletes your orOS data in the cloud. If you might want anything back, use `Export data` first and keep the file.
+
+## Where to find it
+1. Tap or click `orOS` to open the menu.
+2. At the bottom, choose `About orOS + shortcuts`. You can also press [[Ctrl+Alt+Shift+I]].
+3. The `Factory reset` button is near the bottom of that window.
+
+## How it works
+1. Tap or click `Factory reset`.
+2. The button changes to `Erase EVERYTHING, everywhere?` and a short note explains what will be erased.
+3. Tap or click it again to confirm. If you don't, it goes back to normal after 10 seconds and nothing happens.
+4. You'll see `Erasing everything…`. orOS then restarts, fresh.
+
+## What it erases
+- **On this device:** all your orOS data and settings, in every app. This includes your files, a remembered passphrase, your `Mine` wallpaper and saved map areas.
+- **In the cloud:** if this device is connected to Dropbox, all orOS data and its cloud backups are deleted, and this device is disconnected from Dropbox.
+- **In your backup folder:** the orOS backup files in the `Backup folder` you chose, as long as orOS still has permission to use that folder.
+
+## What it doesn't erase
+- **Your other devices.** They keep their own copy of your data, and if they are still connected to sync they can upload it to the cloud again. Reset each of them too if you want everything gone.
+- **Files you exported** with `Export data` or [[Ctrl+Alt+Shift+X]], wherever you saved them.
+- **The cloud copy, if this device isn't connected** to Dropbox or can't reach it during the reset.
+- **Backup folder files**, if the browser had taken away orOS's permission to that folder.
+- **orOS itself.** If you installed it as an app, it stays installed. Only your data goes.
+
+> After a reset you can bring your data back with `Import data`, if you kept an exported file. See [Backup](help:t/backup).

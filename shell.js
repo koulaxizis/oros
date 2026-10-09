@@ -1011,10 +1011,12 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        helpBtnRefresh();
       })
       .catch(function () {
         state.apps = [];
         renderMenu();
+        helpBtnRefresh();
       });
   }
 
@@ -3876,7 +3878,8 @@
     { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
     { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
     { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
-    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } }
+    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
+    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -5902,6 +5905,7 @@
       return;
     }
     state.running = app;
+    document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     document.getElementById("app-frame").src = app.url;
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
@@ -5916,6 +5920,7 @@
 
   function returnToDesktop() {
     state.running = null;
+    document.body.classList.remove("app-running");
     document.getElementById("app-frame").src = "about:blank";
     document.getElementById("oros-running").classList.remove("active");
     document.getElementById("oros-desktop").style.display = "";
@@ -6059,6 +6064,67 @@
     }
     document.getElementById("app-menu").classList.add("open");
   }
+
+  // Help app: the taskbar "?" (and Ctrl+Alt+Shift+H) opens the guide
+  // at the page of the running app (#a/<id>), else at its start. The
+  // button shows only when apps.json lists "help". Apps reach the
+  // same calls through window.parent.orosHelp (open a help route,
+  // open an app from a guide link).
+  function helpApp() {
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === "help") return state.apps[i];
+    }
+    return null;
+  }
+
+  function openHelp(route) {
+    var app = helpApp();
+    if (!app) return;
+    if (route === undefined) {
+      route = (state.running && state.running.id !== "help") ? "a/" + state.running.id : "";
+    }
+    route = String(route || "");
+    if (!/^([at]\/[a-z0-9-]+(\/[a-z0-9\u03b1-\u03c9-]+)?)?$/.test(route)) route = "";
+    if (state.running && state.running.id === "help") {
+      if (!route) return;
+      // Absolute URL: a relative "#…" would resolve against the SHELL
+      // page and load the shell inside the frame.
+      try {
+        var loc = document.getElementById("app-frame").contentWindow.location;
+        loc.replace(String(loc.href).split("#")[0] + "#" + route);
+      } catch (e) {}
+      return;
+    }
+    openApp({ id: app.id, name: app.name, category: app.category, icon: app.icon,
+              type: app.type, url: app.url + (route ? "#" + route : "") });
+  }
+
+  function helpBtnRefresh() {
+    var btn = document.getElementById("help-btn");
+    if (btn) btn.hidden = !helpApp();
+  }
+
+  (function () {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var btn = document.createElement("button");
+    btn.id = "help-btn";
+    btn.type = "button";
+    btn.hidden = true;
+    btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.5-2.7 4.1"/><path d="M12 17.6h.01"/></svg>';
+    btn.setAttribute("data-i18n-title", "bar.help");   // title = accessible name, repainted by applyLang()
+    btn.setAttribute("title", window.t("bar.help"));
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openHelp();
+    });
+    bar.insertBefore(btn, document.getElementById("btn-lang"));
+  })();
+
+  window.orosHelp = {
+    open: function (route) { openHelp(route === undefined ? "" : route); },
+    openApp: function (id) { if (id !== "help") openAppById(String(id)); }
+  };
 
   (function () {
     var tBtn = document.getElementById("bar-time");
