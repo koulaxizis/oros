@@ -164,6 +164,8 @@ var PRECACHE_URLS = [
   "shelf/shelf.css",
   "shelf/shelf.js",
   "water/water.js",
+  "water/help.en.txt",
+  "water/help.el.txt",
   "timesheet/timesheet.js",
   "storage/",
   "storage/index.html",
