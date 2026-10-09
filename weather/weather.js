@@ -71,6 +71,11 @@
       "err.gps":       "Location unavailable",
       "err.nodata":    "No saved data for this city yet",
       "gps.use":       "Use my location",
+      "tray.title":    "Taskbar",
+      "tray.show":     "Show the weather in the taskbar",
+      "tray.hint":     "On this device only. The pin picks the city it shows.",
+      "tray.pin":      "Show this city in the taskbar",
+      "tray.pinned":   "Shown in the taskbar",
       "now":           "Now",
       "hint.storm":    "Storms around — take cover",
       "hint.rain":     "Umbrella day",
@@ -123,6 +128,11 @@
       "err.gps":       "Η τοποθεσία δεν είναι διαθέσιμη",
       "err.nodata":    "Δεν υπάρχουν αποθηκευμένα δεδομένα ακόμα",
       "gps.use":       "Χρήση τοποθεσίας",
+      "tray.title":    "Γραμμή εργασιών",
+      "tray.show":     "Ο καιρός στη γραμμή εργασιών",
+      "tray.hint":     "Μόνο σε αυτή τη συσκευή. Η πινέζα διαλέγει ποια πόλη δείχνει.",
+      "tray.pin":      "Αυτή η πόλη στη γραμμή εργασιών",
+      "tray.pinned":   "Εμφανίζεται στη γραμμή εργασιών",
       "now":           "Τώρα",
       "hint.storm":    "Καταιγίδες — απόφυγε την έκθεση",
       "hint.rain":     "Μέρα για ομπρέλα",
@@ -790,15 +800,22 @@
           // shell's location — one fetch, two consumers, same numbers.
           // C1: increased tolerance to 0.15° (~15km) to match nearest-city
           // adoption in shell.js — GPS vs geocoded center routinely diverge.
+          // 2026-10-09: the tray's place comes from the shell API (a
+          // pin, or the first city when nothing is pinned); the entry
+          // is tagged with that place so the shell can tell it apart.
           try {
-            var sh = JSON.parse(localStorage.getItem("oros-weather"));
-            if (sh && sh.on && typeof sh.lat === "number" &&
+            var tapi = trayApi();
+            var sh = tapi ? tapi.location()
+                          : JSON.parse(localStorage.getItem("oros-weather"));
+            if (sh && (tapi || sh.on) && typeof sh.lat === "number" &&
                 Math.abs(sh.lat - city.lat) < 0.15 &&
                 Math.abs(sh.lon - city.lon) < 0.15) {
               localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
                 at:   payload.at,
                 temp: payload.current.temp,
-                code: payload.current.code
+                code: payload.current.code,
+                lat:  sh.lat,
+                lon:  sh.lon
               }));
             }
           } catch (e) {}
@@ -1174,9 +1191,83 @@
     setTimeout(function () { $("city-input").focus(); }, 50);
   }
 
+  // ---------- Taskbar (tray) settings ----------
+  // 2026-10-09: the shell menu no longer carries the weather tray
+  // settings; they live here. The shell owns the tray (parent API
+  // orosWeatherTray, typeof-guarded: a stale shell hides the section).
+  function trayApi() {
+    try {
+      var api = window.parent && window.parent !== window && window.parent.orosWeatherTray;
+      if (api && typeof api.isOn === "function" && typeof api.pin === "function" &&
+          typeof api.location === "function" && typeof api.setOn === "function") return api;
+    } catch (e) {}
+    return null;
+  }
+
+  // The city the tray shows: nearest to the tray location (0.15°,
+  // the shell's WX_NEAR_DEG). The shell's fallback IS the first city.
+  function trayCityId() {
+    var api = trayApi();
+    var loc = api ? api.location() : null;
+    if (!loc) return null;
+    var best = null, bestD = Infinity;
+    state.cities.forEach(function (c) {
+      var d = Math.abs(c.lat - loc.lat) + Math.abs(c.lon - loc.lon);
+      if (d < bestD) { bestD = d; best = c; }
+    });
+    return (best && bestD < 0.15) ? best.id : null;
+  }
+
+  function pinTrayCity(c) {
+    var api = trayApi();
+    if (!api) return;
+    if (!api.pin({ lat: c.lat, lon: c.lon, label: c.label })) return;
+    // Record it as the shell location we already applied, so the
+    // boot reconciliation (syncShellLocation) never fights it.
+    var fp = wxPrefFingerprint(c);
+    if (state.shellWx !== fp) { state.shellWx = fp; state.sm = Date.now(); save(); }
+  }
+
+  function renderTraySection() {
+    var host = $("tray-host");
+    if (!host) return;
+    var api = trayApi();
+    host.hidden = !api;
+    if (!api) return;
+    host.innerHTML = "";
+
+    var h = document.createElement("h4");
+    h.textContent = t("tray.title");
+    host.appendChild(h);
+
+    var lab = document.createElement("label");
+    lab.className = "tray-toggle";
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "tray-on";
+    cb.checked = api.isOn();
+    cb.addEventListener("change", function () {
+      api.setOn(cb.checked);
+      renderCityList();
+    });
+    var span = document.createElement("span");
+    span.textContent = t("tray.show");
+    lab.appendChild(cb);
+    lab.appendChild(span);
+    host.appendChild(lab);
+
+    var hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = t("tray.hint");
+    host.appendChild(hint);
+  }
+
   function renderCityList() {
     var host = $("city-list");
     host.innerHTML = "";
+    renderTraySection();
+    var api = trayApi();
+    var trayId = (api && api.isOn()) ? trayCityId() : null;
 
     if (state.cities.length === 0) {
       var none = document.createElement("p");
@@ -1194,6 +1285,24 @@
       name.className = "d-name";
       name.textContent = c.label;
       row.appendChild(name);
+
+      if (api && api.isOn()) {
+        var on = (c.id === trayId);
+        var pin = document.createElement("button");
+        pin.type = "button";
+        pin.className = "city-pin" + (on ? " on" : "");
+        pin.setAttribute("aria-pressed", on ? "true" : "false");
+        pin.setAttribute("aria-label", t(on ? "tray.pinned" : "tray.pin"));
+        pin.title = t(on ? "tray.pinned" : "tray.pin");
+        pin.innerHTML =
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18"/></svg>';
+        pin.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          pinTrayCity(c);
+          renderCityList();
+        });
+        row.appendChild(pin);
+      }
 
       var del = document.createElement("button");
       del.type = "button";
@@ -1285,6 +1394,11 @@
   function deleteCity(id) {
     var city = cityById(id);
     if (!city) return;
+    // Deleting the PINNED tray city unpins it: the tray falls back to
+    // the first city instead of showing a place that left the list.
+    var api = trayApi();
+    var loc = api ? api.location() : null;
+    var unpin = !!(loc && loc.pinned && trayCityId() === id);
     state.cities = state.cities.filter(function (c) { return c.id !== id; });
     if (!state.deleted) state.deleted = {};
     state.deleted[id] = Date.now();              // tombstone — merge-safe
@@ -1297,6 +1411,7 @@
     delete m[id];
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(m)); } catch (e) {}
     save();
+    if (unpin) api.pin(null);
     scheduleRender();
     showToast(t("dlg.del.done") + " — " + city.label, t("dlg.del.undo"),
       function () {
@@ -1595,11 +1710,16 @@
     // next boot's syncShellLocation() still holds the OLD
     // fingerprint, sees fp_new !== fp_old and re-forces the shell
     // city active, overriding the user's in-app choice meanwhile.
-    if (w.on === true) state.shellWx = wxPrefFingerprint(w);
+    var fromShell = (w.on === true);
+    if (fromShell) state.shellWx = wxPrefFingerprint(w);
     var dup = null;
     state.cities.forEach(function (c) {
       if (Math.abs(c.lat - w.lat) < 0.15 && Math.abs(c.lon - w.lon) < 0.15) dup = c;
     });
+    // 2026-10-09: a shell push now comes from a tray pin made in this
+    // app (on any device): the city is already in the list, and the
+    // pin must not switch the city the user is looking at.
+    if (dup && fromShell) { save(); return; }
     if (dup) {
       if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
       if (state.active !== dup.id) { state.active = dup.id; state.sm = Date.now(); }
@@ -1636,6 +1756,16 @@
     // the user with no city at all. Deleting it while OTHER cities
     // exist stays respected (no fighting the user).
     if (fp === state.shellWx && state.cities.length > 0) return;
+    // An empty list on a SYNCED device is usually a first open whose
+    // cities have not been pulled yet: adopting the tray place now
+    // created a second copy of a city already in the cloud (new id,
+    // same place). The tray keeps showing it either way.
+    if (state.cities.length === 0) {
+      try {
+        var eng = window.parent && window.parent.orosSync;
+        if (eng && typeof eng.isConnected === "function" && eng.isConnected()) return;
+      } catch (e) {}
+    }
     state.shellWx = fp;
 
     var dup = null;
@@ -1643,8 +1773,8 @@
       if (Math.abs(c.lat - w.lat) < 0.15 && Math.abs(c.lon - w.lon) < 0.15) dup = c;
     });
     if (dup) {
-      if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
-      if (state.active !== dup.id) { state.active = dup.id; state.sm = Date.now(); }
+      // tray pin of a listed city: remember it, never switch the view
+      state.sm = Date.now();
     } else {
       var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
                          w.lat, w.lon);
