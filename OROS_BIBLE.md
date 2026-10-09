@@ -193,7 +193,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | `orosTray` | — | **[log]** `radio.js` is said to call `shell.orosTray.register("radio", …)`. `shell.js` 0.39.06 defines NO `orosTray` (verified): dead call or guarded no-op, check in `radio.js` (A31) |
 | `__orosRadioHost` | radio.js, set on the shell window | **[log]** shell-hosted audio host; `api.getState()` feeds `radioTrayTick()` |
 | `orosPet` | pet.js | screen pet component |
-| `orosLauncher` | launcher.js | favourites: `attach(host)`, `refresh()`, `menuRow(btn, app)`, `renderSettings(menu)`, `model` (pure) |
+| `orosLauncher` | launcher.js | favourites: `attach(host)`, `refresh()`, `menuRow(btn, app)`, `renderSettings(menu)`, `prefs()` + `setPref(k, v)` (Dock settings for the Settings app), `model` (pure) |
 | `__orosOpen<App>` | shell.js | deep-link bridges; full table under `shell.js` below (verified 2026-10-05) |
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
