@@ -1,0 +1,54 @@
+# Calendar
+Calendar keeps your events, with times, places, labels, repeats and reminders. It also shows dates from your other orOS apps, such as birthdays from Contacts and due tasks from To-Do, so you see everything in one place.
+
+## Getting started
+Calendar opens on the current month with today selected. Tap or click a day to see its events below the grid, then press `Add` to create an event on that day. Use ‹ and › to move back and forward, and `Today` to jump back.
+
+Switch between `Month`, `Week` and `Agenda` with the buttons under the title. `Agenda` lists what's coming in the next 30 days; `Show more` adds more days.
+
+## Add and edit events
+The event window has:
+- `Title`. It's the only field you must fill in.
+- `All day`, or a `Time`: pick a start and, if you like, an end (`No end`). You can type a time or choose one from the list.
+- `Repeat`: `Daily`, `Weekly`, `Every 2 weeks`, `Monthly` or `Yearly`, with an optional `Until` date.
+- `Ends on (day)` for an event that lasts several days (only for events that don't repeat).
+- `Reminder`: from 5 minutes up to 5 days before.
+- `Location`, a label and a `Note`.
+
+Tap or click an event to edit it. For a repeating event you're asked first: `This occurrence` or `Entire series`. `Delete event` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
+
+On a computer you can drag a single-day event that doesn't repeat onto another day in the month view to move it.
+
+Tap or click a location to open it in [Maps](app:maps). Maps can also send a planned route to Calendar as a new event.
+
+## Labels and feeds
+The chips above the calendar are your labels. You start with `Personal`, `Work` and `Family`. Tap or click a chip to hide or show those events. `＋ Manage labels` lets you add, rename, recolour and delete labels; a label still used by events can't be deleted.
+
+Other apps add read-only rows, each with its own chip so you can hide them:
+- `Birthdays`, `Anniversaries` and `Custom Feed` from [Contacts](app:contacts).
+- `To-Do`: unfinished tasks on their due date, from [To-Do](app:todo).
+- `Kanban` cards with a due date, `Habits` you completed, `Mood` entries, `Cycle` periods, `Workouts`, `Plants` care, and `Screen Pet` moments.
+
+Tapping a feed row opens the app it comes from. To change it, edit it there.
+
+## Search and statistics
+The search box looks through the title, note and location of your own events and lists every match by date. `Stats` shows how many events you have, how many fall in the next 30 days, how many repeat, and a breakdown by label.
+
+## Sync and backup
+Your events and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved: they all show again next time. Feed rows are never stored in Calendar; they come from the other apps' own data.
+
+`Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows aren't included. Calendar can't import .ics files. For a full copy, see [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[←]] / [[→]] go to the previous or next month, week or agenda page.
+- [[Esc]] clears the search.
+- In the time boxes, [[↑]] / [[↓]] move through the list and [[Enter]] picks a time.
+
+## Tips
+- Reminders show in orOS even when Calendar itself is closed, as long as orOS is open. See [Notifications](help:t/notifications).
+- Opening a reminder takes you straight to the event.
+
+## Limits
+- Reminders can't fire when the browser or the orOS tab is closed.
+- An event can either repeat or span several days, not both.
+- Repeating and multi-day events can't be moved by dragging.

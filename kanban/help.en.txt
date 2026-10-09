@@ -1,0 +1,49 @@
+# Kanban
+Kanban helps you follow work from start to finish: cards move across columns such as To Do, Doing and Done. You can keep several boards, one per project.
+
+## Getting started
+A new board comes with three columns: To Do, Doing and Done.
+
+- Type in `Add a card…` at the bottom of a column and press [[Enter]] or the + button. New cards go to the top of the column.
+- Press and drag a card to reorder it or move it to another column. This works with a mouse or a finger.
+- Tap or click a card to open it.
+
+## Cards
+The `Card` dialog saves as you type. It has:
+- `Text` and `Notes`.
+- `Due`: a date. The card shows `Today`, `Tomorrow` or `Overdue` when it's close or late.
+- `Labels`: tap `Add / manage labels` to pick labels or create a new one with a colour.
+- `Subtasks`: a checklist. The card shows how many are done, for example 2/5.
+- `Extra info`: your own fields, each with a `Field` name and a `Value`.
+
+`Duplicate` makes a copy of the card. `Delete` asks first, and the message that follows has an `Undo` button for a few seconds.
+
+## Columns and boards
+- `Add column` (the + at the top) adds a column. To rename or delete one, tap the pencil (`Rename column`) or double-click its title. `Delete column` removes its cards too.
+- Drag a column by its header to move it.
+- The button at the top left shows the current board. Tap it to switch boards, or drag boards in that list to reorder them. Double-click it to rename the board.
+- Next to it: `New board`, `Import from other apps` and `Manage boards...`.
+- In `Manage boards...` you can change a board's colour, rename it, duplicate it, archive it or delete it. Archived boards leave the board list but keep their data, and you can unarchive them there. At least one board must stay active.
+
+## Search and filter
+- `Search…` shows only cards whose text, notes, due date, extra info or label names match.
+- `Filter by label` shows only cards that carry any of the labels you pick. You can also delete a label from there; it is removed from every card.
+
+## Sync and backup
+With [orOS sync](help:t/sync), all your boards, columns, cards and labels, plus archive state and colours, reach your other devices. Which board is open stays on this device, and your search and filter are not synced.
+
+- Cards with a due date also appear in [Calendar](app:calendar) as all-day events, shown as "column · card text". Cards on archived boards are left out.
+- `Import from other apps` reads JSON exports from Kanri and Trello. It creates new boards and never changes your existing ones.
+- Kanban has no export of its own; your boards are included in orOS [backups](help:t/backup).
+
+## Keyboard shortcuts
+- [[Alt+B]] creates a new board (not while you are typing in a field or a dialog is open).
+- [[Enter]] adds the card, subtask or label you just typed.
+
+## Tips
+- Use labels for kinds of work (bug, idea, urgent) and the filter to focus on one kind.
+- Archive a finished project's board instead of deleting it.
+- Deletes and imports show an `Undo` button for a few seconds. Use it if you change your mind.
+
+## Limits
+- If the same card is changed on two devices before they sync, the newer version of the whole card wins. For example, a move on one device and a text edit on the other: one of the two is lost.

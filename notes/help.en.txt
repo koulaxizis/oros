@@ -1,0 +1,52 @@
+# Notes
+Notes is a plain-text notebook organised as a tree of pages. Nest pages inside each other, link them wiki-style, tag them with labels and keep separate notebooks for separate parts of your life.
+
+## Getting started
+Your first notebook is called `Notes`. Tap or click the **+** button under the page tree to add a page, then type a `Title` and start writing in the big text area. There's no save button: Notes saves as you type.
+
+On a phone the tree is hidden while you write. Tap the ☰ button (`Show tree`) next to the title to bring it back; picking a page closes it again. On a wider screen you can drag the divider between the tree and the page to make the tree wider or narrower.
+
+## Pages and the tree
+Right-click a page in the tree, or long-press it on a touch screen, to open its menu:
+- `New sub-page` adds a page inside this one.
+- `Rename`, `Move up`, `Move down`.
+- `Move to…` lets you pick another parent page, or `Top level`.
+- `Pin to top` keeps the page first among its neighbours; `Unpin` undoes it.
+- `Labels` attaches or removes labels.
+- `Export page (.txt)` and `Export notebook (.zip)`.
+- `Delete` removes the page after you confirm.
+
+On a computer you can also drag a page in the tree and drop it onto another page to make it a sub-page, or onto empty space to move it to the top level.
+
+## Links between pages
+Write a page title in double square brackets, like `[[Shopping]]`, to link to it. Under the text you'll see `Links` (pages this one links to) and `Backlinks` (pages that link here). Tap or click a link to open that page. If no page has that title yet, the link creates it as a sub-page of the one you're on.
+
+## Labels and search
+In the `Labels` menu of a page, type a name in `New label…`, pick a colour and press `Add`. Tap a label to attach it to the page or remove it; the × next to a label deletes it. Labels show as coloured dots in the tree and as chips above the text. Each notebook has its own labels.
+
+The tag button under the tree opens `All labels`: every label with its number of pages. Tap one to list its pages.
+
+The search button (or [[Ctrl+K]]) searches titles and text in the current notebook. Type at least 2 characters; title matches come first.
+
+## Notebooks
+Pick a notebook from the list at the top of the tree. The book button with a plus under the tree (`New notebook`) creates one. The ⋯ button next to the list (or a right-click on the list) has `Rename notebook` and `Delete notebook`. Deleting a notebook removes all its pages and labels.
+
+## Sync and backup
+Notebooks, pages and labels sync between your devices through [orOS sync](help:t/sync). Which page is open, which branches of the tree are unfolded and the tree's width stay on this device.
+
+If the same page is edited on two devices before they sync, both versions are kept: one of them appears in the tree marked `conflict copy`. Compare them, keep what you need and delete the other.
+
+The download button under the tree exports the notebook as a .zip of plain-text files, with folders for pages that have sub-pages. With more than one notebook it asks: `Current notebook (.zip)` or `All notebooks (.zip)`. There's no import. For a full copy of orOS, see [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[Ctrl+K]] opens search ([[Cmd+K]] on a Mac).
+- [[Enter]] in search opens the first result.
+- [[Esc]] closes search, menus and the labels panel.
+
+## Tips
+- Links ignore upper and lower case, so `[[shopping]]` finds “Shopping”.
+
+## Limits
+- Notes are plain text only: no formatting, images or attachments.
+- Links and search work within the current notebook only.
+- Exported files end with a short “Made with orOS” line.

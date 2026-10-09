@@ -1,0 +1,36 @@
+# Privacy and offline use
+orOS is built to keep your data yours. It has no accounts, no cookies and no tracking, and it keeps working when you lose your connection.
+
+## Your data stays in your browser
+Everything you create in orOS is saved in this browser, on this device. There is no orOS server that collects it. orOS uses no cookies and no tracking or analytics of any kind.
+
+Because the data lives in the browser, each browser and each device has its own copy. To have the same data everywhere, use [sync](help:t/sync). To keep a copy for safety, use [backups](help:t/backup).
+
+>! Clearing this site's data in your browser settings deletes your orOS data on this device. Make sure you have a backup or sync first.
+
+## Encrypted sync
+Sync is optional and uses your own Dropbox account. orOS only works in its own app folder there.
+
+Before anything leaves your device, orOS encrypts it with your encryption passphrase (`Encryption passphrase`). The passphrase never leaves this device, so Dropbox can't read your data. A new passphrase needs at least 10 characters.
+
+- If you tick `Remember on this device`, the passphrase is kept locked inside this browser, so you don't have to type it every time. `Forget on this device` removes it.
+- Nobody can recover a lost passphrase, not even orOS. Write it down somewhere safe.
+
+>! Files you save with `Export data`, and backups in your backup folder (`Backup folder`), are **not** encrypted. Store them somewhere safe.
+
+## Online services some apps use
+orOS itself runs from your device, but a few apps need the internet for what they show. They contact these services only when you use them, and none of them needs an account or a key:
+- Weather (and the weather in the top bar): Open-Meteo, for forecasts and city search.
+- [Radio](app:radio): Radio Browser, a community list of stations. The stations play from their own servers.
+- [Maps](app:maps): OpenStreetMap maps, Photon place search and OSRM routes.
+- [Television](app:television): iptv-org, a community list of channels. The channels play from their own servers.
+- Sync: Dropbox, only if you connect it.
+
+`Use device location` and other location buttons ask your browser for permission first. You'll find this list, with credits and licences, in `About orOS + shortcuts`.
+
+## Working offline
+orOS saves itself and its apps on your device, so it opens and works without a connection: your apps, your data and your settings are all there.
+
+- Things that need the internet wait for it. The weather icon shows a crossed-out cloud instead of a made-up temperature, and online services such as maps, radio and TV catalogues come back when you are online.
+- Changes you make offline are kept on the device. With sync on, they are sent when you are back online.
+- If an app hasn't been saved for offline use yet, you'll see a short message instead. Open it once while online.

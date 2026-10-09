@@ -1,0 +1,32 @@
+# Frequently asked questions
+Short answers to common questions. Each one links to a page with more detail.
+
+## About orOS
+
+### Is orOS free and open source?
+Yes. orOS is free, open source and self-hostable. There are no cookies and no tracking. The source code is on GitHub: [github.com/koulaxizis/oros](https://github.com/koulaxizis/oros).
+
+### Does it work offline?
+Yes. orOS saves itself on your device, so it opens and works without internet. Apps that fetch live information, such as Weather, Radio, Television and Maps, need a connection for that part. See [Troubleshooting](help:t/troubleshooting) if an app says it hasn't been saved for offline use yet.
+
+### How do I install it?
+When your browser offers it, `Install orOS` appears in the menu. Tap or click it to add orOS to your home screen or desktop like a normal app. See [installing orOS](help:t/install).
+
+## Your data
+
+### Where is my data?
+In your browser, on the device you're using. orOS keeps nothing on a server of its own, and there is no account. See [Your data and files](help:t/data).
+
+### How do I get my data out?
+Open the menu, go to `Sync` and tap `Export data`. You get one file with everything, including your files. Keep in mind it is not encrypted. See [Backup and restore](help:t/backup).
+
+## Sync
+
+### Can I use orOS on two devices?
+Yes. Connect the same Dropbox account and use the same passphrase on each device, and your data stays in step. See [Sync across devices](help:t/sync).
+
+### Is sync encrypted?
+Yes. Your data is encrypted on your device with your passphrase before it goes to Dropbox. Dropbox only stores encrypted data and can't read it. Your passphrase never leaves your device.
+
+### What if I lose my passphrase?
+It can't be recovered, and nobody can decrypt your cloud data without it. The data on your devices is still there, so export a backup from one of them right away. Then see [Sync across devices](help:t/sync).

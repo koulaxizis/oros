@@ -1,0 +1,63 @@
+# Spreadsheet
+Spreadsheet is a simple grid for lists, budgets and sums, with formulas, several sheets per workbook and CSV, Excel and LibreOffice files.
+
+## Getting started
+Each sheet has 100 rows and columns A to Z.
+
+- Tap or click a cell to select it and start typing. [[Enter]] saves and moves down, [[Tab]] moves right, [[Esc]] cancels.
+- To change a cell, double-click it or press [[Enter]] or [[F2]]. On a touch screen, tap a cell to select it and tap it again to edit.
+- The bar at the top shows the cell name (for example A1) and its content after ƒx. You can also edit there and press [[Enter]].
+
+## Formulas
+Start a cell with = to make a formula, for example =A1*2 or =SUM(B2:B10).
+
+- Operators: + - * / ^, & to join text, and = <> < > <= >= to compare (the result is 1 or 0).
+- References: A1, ranges like A1:C5, and cells on another sheet like Sheet2!A1 (or 'My sheet'!A1 when the name has spaces).
+- Functions: SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, ROUND, ABS, IF, AND, OR, NOT, CONCAT. Separate arguments with a comma or a semicolon.
+- Errors show in the cell, for example #DIV/0! (division by zero), #REF! (a reference that doesn't exist) or #NAME? (an unknown function).
+- When you copy and paste a formula, its references move with it, as in other spreadsheets.
+
+## Format and edit
+- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys.
+- The toolbar has Undo, Redo, Copy, Cut, Paste, bold, italic, underline, alignment, `Number format` (`auto`, 123, 123.00, %, €), `Text color` and `Clear formatting`.
+- [[Delete]] or [[Backspace]] empties the selected cells.
+- Drag the right edge of a column header to make the column wider or narrower.
+
+## Sheets
+The tabs at the bottom are your sheets.
+
+- `New sheet` (the + button) adds one.
+- Double-click a tab, or long-press it on a touch screen, to rename it.
+- Tap ✕ on a tab, then ✕ again within 3 seconds, to delete the sheet. The last sheet can't be deleted.
+
+## Sync and backup
+With [orOS sync](help:t/sync), your sheets, cells, formatting and column widths reach your other devices. Text and formatting in the same cell are merged separately, so a value typed on one device and bold set on another both survive.
+
+These stay on this device: which sheet is open, the copy clipboard and the Undo history.
+
+Import and export (buttons at the bottom right):
+- `Import CSV` adds the file as a new sheet. Commas, semicolons and tabs are detected by themselves.
+- `Export CSV` saves the open sheet, with each cell as you typed it (formulas stay formulas).
+- `Import Excel / Calc (.xlsx, .ods, .xls)` adds every sheet of the file as a new sheet.
+- `Export Excel / Calc` saves all sheets as `Excel (.xlsx)` or `LibreOffice Calc (.ods)`.
+
+See also [Backup](help:t/backup).
+
+## Keyboard shortcuts
+- Arrow keys move; [[Shift]] + arrows select a range.
+- [[Enter]] or [[F2]] edits the cell; [[Tab]] moves right; [[Esc]] cancels editing.
+- [[Ctrl+Z]] undo, [[Ctrl+Y]] or [[Ctrl+Shift+Z]] redo.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] copy, cut and paste.
+- [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]] bold, italic, underline.
+- On a Mac use Cmd instead of Ctrl.
+
+## Tips
+- Start typing on a selected cell to replace its content straight away.
+- Use another sheet for raw data and refer to it with Sheet2!A1.
+
+## Limits
+- Copy and paste work inside Spreadsheet only, not with other apps.
+- On touch screens you can select only one cell at a time, and column widths change only with a mouse.
+- Imports are capped at 500 rows × 64 columns per sheet.
+- Undo history is cleared when sync brings in changes, and deleting a sheet has no Undo.
+- Excel and Calc files need a helper library; if it hasn't loaded yet, you may need an internet connection.

@@ -1,0 +1,47 @@
+# Getting started with orOS
+orOS is a small operating system that runs in your web browser. It has its own desktop, a menu full of apps, and your settings, and it works on phones, tablets and computers, even without a connection.
+
+## What orOS is
+Everything in orOS runs inside the browser: there is nothing to sign up for and no account to make. Your apps and data stay on this device unless you choose to sync them. You can also [install orOS as an app](help:t/install) so it opens in its own window.
+
+## The top bar
+The bar at the top is always there:
+- The `orOS` button on the left opens the [menu](help:t/menu) with all your apps and settings. While an app is open, it reads `Back`.
+- The **?** button opens Help at the page of the app you are using, or at the start of Help when you are on the desktop.
+- The time opens [Time](app:time) and the date opens [Calendar](app:calendar).
+- The `EL` / `EN` button switches the language between Greek and English.
+- The bell opens your notifications. A number on it shows how many you haven't read. See [Notifications](help:t/notifications).
+- The small dot shows the sync status. Hover over it to read it, and tap or click it to sync right now. See [Sync](help:t/sync).
+- A small weather icon shows the temperature of one of your cities. It opens [Weather](app:weather), where you can hide it or choose its city. See [Appearance](help:t/appearance).
+- After you play a station in [Radio](app:radio), a radio chip shows what's on. The radio keeps playing while you use other apps.
+
+## Open and close apps
+1. Tap or click `orOS` to open the menu.
+2. Open a category and tap or click an app, or type its name in `Search apps and your data…`.
+3. The app fills the screen.
+4. To go back to the desktop, tap or click `Back`, or press [[Esc]].
+
+Only one app is open at a time: going back to the desktop closes it.
+
+## Where your data lives
+Your data is saved in this browser on this device. Nothing is sent anywhere unless you ask for it:
+- With [sync](help:t/sync) you can connect your own Dropbox and keep your devices in step. Your data is encrypted on your device first.
+- With `Export data` in the menu you can save everything to a file, and bring it back with `Import data`. See [Backup](help:t/backup).
+
+More in [Your data and files](help:t/data).
+
+>! If you clear this site's data in your browser settings, your orOS data on this device is gone. Keep a backup or turn on sync.
+
+## Get more help
+Help has a search box: type a word to find it in every page. Some good places to start:
+- [The menu and quick search](help:t/menu)
+- [Install orOS as an app](help:t/install)
+- [Appearance](help:t/appearance)
+- [Sync across devices](help:t/sync)
+- [Backup and restore](help:t/backup)
+- [Keyboard shortcuts](help:t/shortcuts)
+- [Privacy and offline use](help:t/privacy)
+- [Factory reset](help:t/reset)
+- [Troubleshooting](help:t/troubleshooting)
+
+> Press [[Ctrl+Alt+Shift+H]] to open Help at the page of the app you are using.

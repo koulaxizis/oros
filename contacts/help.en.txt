@@ -1,0 +1,48 @@
+# Contacts
+Contacts is your address book: names, phones, emails, addresses, birthdays and the links between people. Birthdays and other dates show up in [Calendar](app:calendar) on their own.
+
+## Getting started
+Press `Add` to create a contact. You need at least a name or a `Company`; everything else is optional. Press `Save` when you're done.
+
+Tap or click a contact in the list to open its card. From the card you can call, email or visit a website by tapping it, tap an address to open it in [Maps](app:maps), and use `Edit contact` to change it. Favourites come first in the list, then everyone else in alphabetical order.
+
+## Add and edit contacts
+The contact window has:
+- `First name`, `Middle name`, `Last name`, `Nickname`, `Company`, `Job title`.
+- As many `Phones`, `Emails`, `Addresses`, `Websites` and `Instant messaging` entries as you like, each with a type such as `Mobile`, `Home` or `Work`. Use the `＋` buttons to add more.
+- `Events`: `Birthday`, `Anniversary` or `Custom` (give it a name, for example a nameday). Type the date as year-month-day, like `1975-03-17`, or just month-day, like `03-17`, if you don't know the year.
+- `Relations`: link to another contact as `Spouse`, `Parent`, `Friend`, `Colleague` and so on. The other contact shows the link too, under `Linked from other contacts`.
+- `Labels`, `Favorite`, a `Photo` (JPEG or PNG, made smaller automatically) and a `Note`.
+
+`Delete contact` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
+
+`Share` on the card sends the contact as text through your phone's share menu. On a computer it copies the text to the clipboard.
+
+## Search, labels and favourites
+The search box finds contacts by name, nickname, company, job title, note, email or phone number. It ignores Greek accents and understands Latin spelling of Greek names, so `dionisis` finds “Διονύσης”. Three or more digits find a phone number however it's written. Searching for a name also finds people linked to that person.
+
+Above the list, `All` and `★ Favorites` switch between everyone and your favourites. The label chips hide or show contacts with that label; you start with `Personal`, `Work` and `Family`. `＋ Manage labels` lets you add, rename, recolour and delete labels; a label still in use can't be deleted.
+
+## Duplicates
+`Duplicates` looks for contacts that are probably the same person: `Same phone` or `Same email` (listed as `Definitive matches`) and `Similar name` (`Possible matches`). Tap or click a contact in a group to open `Merge duplicates`: it shows the combined contact. Use `Flip primary` to pick which one to keep as the base, then `Merge now`. You can `Undo` straight afterwards.
+
+## Sync and backup
+Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved.
+
+- `Import` reads a vCard file (.vcf) or a Google Contacts CSV. A contact whose email or phone already exists here is updated: only missing details are added, nothing is overwritten. Afterwards you see a list of what was added, updated or skipped.
+- `Export` saves all your contacts as a .vcf file that other address books can open.
+- `Export JSON` saves a complete copy of your contacts. `Import JSON` restores it; it combines with what you have and keeps the newer version of each contact.
+
+See also [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[Ctrl+F]] (or [[Cmd+F]]) jumps to the search box.
+- [[Alt+N]] starts a new contact.
+- [[Esc]] closes the contact card or the open window.
+
+## Tips
+- Birthdays, anniversaries and custom dates appear in [Calendar](app:calendar) every year. Tapping one there opens the contact here.
+
+## Limits
+- `Import JSON` only accepts files made by `Export JSON` in orOS Contacts.
+- CSV import expects the Google Contacts format.

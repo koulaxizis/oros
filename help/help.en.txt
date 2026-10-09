@@ -1,0 +1,20 @@
+# Help
+The orOS guide: how orOS works and how to use each app, in English and Greek, also offline.
+
+## Getting started
+- Open **Help** from the menu, or tap the **?** button in the top bar. Inside an app, **?** opens straight at that app's page.
+- On a computer you can also press [[Ctrl+Alt+Shift+H]].
+- On a wide screen the list of pages is on the left. On a phone you see the list first; tap a page to read it and use the back arrow to return to the list.
+
+## Find what you need
+- **Guide** holds the general topics: getting started, sync, backup, shortcuts and more.
+- Below it, every app has its own page, grouped like the menu. An app marked `soon` has no page yet.
+- Type in the search box to search every page at once. Accents and capitals do not matter, so `συγχρονισμος` finds `συγχρονισμός`. Press [[/]] to jump to the search box and [[Esc]] to clear it.
+- A result opens the page at the matching section.
+- On an app's page, the button next to the title opens that app.
+
+## Sync and backup
+Help stores nothing and does not sync. Its pages come with orOS itself, so they update when orOS updates and work offline once orOS has been opened online.
+
+## Tips
+> Missing something, or found a page that is wrong? Tell us on [GitHub](https://github.com/koulaxizis/oros/issues).

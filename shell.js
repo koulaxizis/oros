@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.47.05";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.48.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -129,6 +129,7 @@
 
   // App icons (SVG — ForkAwesome rejected, handcrafted forever)
   var ICONS = {
+    help: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.5-2.7 4.1"/><path d="M12 17.6h.01"/></svg>',
     check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     columns: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="16" y="3" width="5" height="13" rx="1"/></svg>',
     mindmap: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="9.5" width="8" height="5" rx="2"/><circle cx="3.5" cy="5" r="1.8"/><circle cx="20.5" cy="5" r="1.8"/><circle cx="3.5" cy="19" r="1.8"/><circle cx="20.5" cy="19" r="1.8"/><path d="M5 6.2l3.2 3.8M19 6.2l-3.2 3.8M5 17.8l3.2-3.8M19 17.8l-3.2-3.8"/></svg>',
@@ -1439,12 +1440,14 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        helpBtnRefresh();
         openFromLaunchParam();
         deliverShare();
       })
       .catch(function () {
         state.apps = [];
         renderMenu();
+        helpBtnRefresh();
       });
   }
 
@@ -4831,7 +4834,8 @@
     { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
     { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
     { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
-    { key: "f", label: "sc.desc.search",    fn: openMenuSearch }
+    { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
+    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -6897,6 +6901,7 @@
       return;
     }
     state.running = app;
+    document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     document.getElementById("app-frame").src = app.url;
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
@@ -6911,6 +6916,7 @@
 
   function returnToDesktop() {
     state.running = null;
+    document.body.classList.remove("app-running");
     document.getElementById("app-frame").src = "about:blank";
     document.getElementById("oros-running").classList.remove("active");
     document.getElementById("oros-desktop").style.display = "";
@@ -7054,6 +7060,67 @@
     }
     document.getElementById("app-menu").classList.add("open");
   }
+
+  // Help app: the taskbar "?" (and Ctrl+Alt+Shift+H) opens the guide
+  // at the page of the running app (#a/<id>), else at its start. The
+  // button shows only when apps.json lists "help". Apps reach the
+  // same calls through window.parent.orosHelp (open a help route,
+  // open an app from a guide link).
+  function helpApp() {
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === "help") return state.apps[i];
+    }
+    return null;
+  }
+
+  function openHelp(route) {
+    var app = helpApp();
+    if (!app) return;
+    if (route === undefined) {
+      route = (state.running && state.running.id !== "help") ? "a/" + state.running.id : "";
+    }
+    route = String(route || "");
+    if (!/^([at]\/[a-z0-9-]+(\/[a-z0-9\u03b1-\u03c9-]+)?)?$/.test(route)) route = "";
+    if (state.running && state.running.id === "help") {
+      if (!route) return;
+      // Absolute URL: a relative "#…" would resolve against the SHELL
+      // page and load the shell inside the frame.
+      try {
+        var loc = document.getElementById("app-frame").contentWindow.location;
+        loc.replace(String(loc.href).split("#")[0] + "#" + route);
+      } catch (e) {}
+      return;
+    }
+    openApp({ id: app.id, name: app.name, category: app.category, icon: app.icon,
+              type: app.type, url: app.url + (route ? "#" + route : "") });
+  }
+
+  function helpBtnRefresh() {
+    var btn = document.getElementById("help-btn");
+    if (btn) btn.hidden = !helpApp();
+  }
+
+  (function () {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var btn = document.createElement("button");
+    btn.id = "help-btn";
+    btn.type = "button";
+    btn.hidden = true;
+    btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.5-2.7 4.1"/><path d="M12 17.6h.01"/></svg>';
+    btn.setAttribute("data-i18n-title", "bar.help");   // title = accessible name, repainted by applyLang()
+    btn.setAttribute("title", window.t("bar.help"));
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openHelp();
+    });
+    bar.insertBefore(btn, document.getElementById("btn-lang"));
+  })();
+
+  window.orosHelp = {
+    open: function (route) { openHelp(route === undefined ? "" : route); },
+    openApp: function (id) { if (id !== "help") openAppById(String(id)); }
+  };
 
   (function () {
     var tBtn = document.getElementById("bar-time");

@@ -1,0 +1,49 @@
+# Files
+Files is the orOS disk: folders and files kept in this browser. Import files, preview and edit text, download copies and, with orOS sync on, find the same disk on your other devices.
+
+## Getting started
+Folders are on the left, the current folder's contents on the right. On a phone, the folder button at the top opens the tree. Use the path or the up arrow to go back.
+
+- Tap or click a row to select it. On a computer, double-click to open a folder or file. On a touch screen, tap once to select and tap the same row again to open it.
+- The toolbar buttons are `Import files`, `New folder`, `New file`, `Rename`, `Delete` and `More actions`.
+- The main folder also shows `Recent files`, the last 10 files you opened or changed.
+
+## Manage files and folders
+- `New folder` and `New file` ask for a name. A name can't contain / \ : * ? " < > |.
+- Select several items with Ctrl+click (Cmd+click on Mac), or a range with Shift+click.
+- Right-click an item, or select it and tap `More actions`, for `Preview`, `Download`, `Move to…`, `Copy to…`, `Copy name`, `Copy path`, `Copy content` (text files only), `Rename` and `Delete`.
+- On a computer you can also drag items onto a folder in the tree to move them there.
+- Tap the column headers `Name`, `Size` or `Modified` to sort; tap again to reverse.
+
+>! Deleting is permanent. A folder is deleted with everything inside it, and there is no Undo.
+
+## Import, preview and edit
+- Tap `Import files` to pick one or more files, or drop files from your computer onto the list. If a file with the same name already exists, choose `Overwrite` or `Keep both`.
+- Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text.
+- Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
+- Search with the box `Search in this folder…`. It looks at file and folder names in the current folder and all its subfolders. Tap a result to open the folder it's in.
+
+## Sync and backup
+The disk lives in this browser. When [orOS sync](help:t/sync) is connected and unlocked, Vault Drive syncs it file by file, whether Files is open or not. Names and contents are encrypted before they leave your device.
+
+- The pill in the status bar shows `Disk synced`, `Changes pending sync` or `Disk sync unavailable`.
+- If the same file changed on two devices, both versions are kept. The other copy gets "(conflict" plus the date and time in its name.
+- Your sort order, last folder, `Recent files` and the storage figure stay on this device.
+- orOS [backups](help:t/backup) include the whole disk. For a single file, use `Download`.
+
+## Keyboard shortcuts
+- [[Enter]] opens the selected folder or file.
+- [[Space]] adds or removes the focused row from the selection.
+- [[Delete]] deletes the selection, after you confirm.
+- [[Esc]] closes the preview.
+
+## Tips
+- The toolbar shows how much space your files use, for example "120 KB used".
+- To move files on a phone, use `Move to…`. Dragging works only with a mouse.
+
+## Limits
+- Text previews go up to 512 KB and images up to 10 MB. Bigger files can still be downloaded.
+- Files that aren't UTF-8 text can't be edited here. Download them instead.
+- Search shows at most 100 results and matches names only, not file contents.
+- On touch screens you can select only one item at a time.
+- Very large files are slow to sync, as each is encrypted in one piece.

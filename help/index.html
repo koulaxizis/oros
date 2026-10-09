@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Help · orOS</title>
+
+  <link rel="stylesheet" href="help.css?v=0.48.00">
+
+</head>
+<body data-view="page">
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="back-btn" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="title">
+      <span class="title-main" id="title">Help</span>
+    </div>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input type="search" id="search" autocomplete="off" spellcheck="false">
+    </div>
+  </header>
+
+  <main id="main">
+    <nav id="nav-list"></nav>
+    <div id="page-scroll">
+      <article id="page" aria-live="polite"></article>
+    </div>
+  </main>
+
+  <script src="help.js?v=0.48.00"></script>
+
+</body>
+</html>

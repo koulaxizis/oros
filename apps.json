@@ -777,6 +777,14 @@
       "icon": "device",
       "url": "device/",
       "type": "internal"
+    },
+    {
+      "id": "help",
+      "name": "Help",
+      "category": "System",
+      "icon": "help",
+      "url": "help/",
+      "type": "internal"
     }
   ]
 }

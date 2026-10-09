@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "topics": [
+    { "id": "start" },
+    { "id": "menu" },
+    { "id": "install" },
+    { "id": "appearance" },
+    { "id": "sync" },
+    { "id": "backup" },
+    { "id": "data" },
+    { "id": "notifications" },
+    { "id": "shortcuts" },
+    { "id": "privacy" },
+    { "id": "reset" },
+    { "id": "troubleshooting" },
+    { "id": "faq" }
+  ]
+}

@@ -1166,6 +1166,28 @@ body {
   color: var(--text);
 }
 #sync-dot-btn:hover { background: var(--accent-soft); }
+
+/* Help "?" (shown only when apps.json lists "help") */
+#help-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 36px; height: 44px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0;
+  color: var(--text-dim);
+}
+#help-btn:hover { background: var(--accent-soft); color: var(--text); }
+/* Phones: the bar is full. On the desktop "?" hides (Help is in the
+   menu); inside an app it takes the language button's place. */
+@media (max-width: 480px) {
+  body:not(.app-running) #help-btn { display: none; }
+  body.app-running #help-btn:not([hidden]) ~ #btn-lang { display: none; }
+}
 #sync-dot {
   width: 10px; height: 10px;
   border-radius: 50%;

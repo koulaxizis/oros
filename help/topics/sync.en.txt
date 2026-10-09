@@ -1,0 +1,51 @@
+# Sync across devices
+Sync keeps your orOS data the same on every device you use, through your own Dropbox account. Everything is encrypted on your device before it leaves, so Dropbox only ever stores scrambled data.
+
+## Connect Dropbox
+1. Open the menu and scroll to `Sync`.
+2. Tap or click `Connect Dropbox` and sign in to Dropbox. orOS only gets its own app folder in your Dropbox, nothing else.
+3. Back in orOS, type a passphrase in the `Encryption passphrase` field and tap `Unlock`.
+4. Tick `Remember on this device` if you don't want to type it every time you open orOS.
+
+The first time, your passphrase needs at least 10 characters.
+
+## Your passphrase
+The passphrase encrypts your data on this device. It never leaves the device, and neither Dropbox nor anyone else can read your data without it.
+
+>! Write your passphrase down somewhere safe. It cannot be recovered or reset. If you forget it, the data in the cloud can't be decrypted by anyone, including you. The data already on each device stays there, so export a backup from a device that still has it (see [Backup and restore](help:t/backup)).
+
+- `Change passphrase` re-encrypts your cloud data with a new one. After that, every device needs the new passphrase.
+- If the passphrase was changed on another device, you'll see `Passphrase changed on another device?`. Type the new one there.
+- `Forget passphrase` (or `Forget on this device` when it was remembered) removes it from this device. Your data stays.
+- `Disconnect` signs this device out of Dropbox. Your data stays on the device.
+
+## The sync dot
+The small dot in the top bar shows how sync is doing. On a computer, point at it to see its label:
+
+- Faint grey: `Sync: not connected`
+- Hollow ring: `Sync: connected — passphrase locked`
+- Grey: `Sync: everything up to date`
+- Pulsing: `Sync: working…`
+- Green, briefly: `Sync: done`
+- Orange: `Sync: changes not synced yet`
+- Red: `Sync: last attempt failed`
+
+Tap or click the dot to sync right now. If sync is locked, the dot opens the menu so you can type your passphrase.
+
+## When sync runs
+Sync runs on its own: when orOS starts, a few seconds after you change something, when you come back to the tab, when your connection returns, and every few minutes (`Auto-sync every`, 3 min by default, or `Off`). When you leave the tab, orOS sends your latest changes. If you try to close orOS with changes not yet sent, your browser asks you first.
+
+## Conflicts
+You can edit on two devices at once, even offline. When they meet, orOS merges the changes instead of letting one device overwrite the other. If the same note or file was changed in two places, both versions are kept.
+
+If an app's data changed on two devices while the app was closed, you'll get a notice such as `Notes: changes waiting on this device`. Just open that app and the changes are merged.
+
+## Push and pull by hand
+In the menu, `Pull from cloud` fetches the latest data and `Push to cloud` sends yours. Shortcuts:
+
+- [[Ctrl+Alt+Shift+O]] pull from the cloud
+- [[Ctrl+Alt+Shift+P]] push to the cloud
+- [[Ctrl+Alt+Shift+R]] connect or reconnect Dropbox
+
+## Add a second device
+Open orOS on the other device, tap `Connect Dropbox`, sign in to the **same** Dropbox account and type the **same** passphrase. Your data comes down and merges with anything already there. Something went wrong? See [Troubleshooting](help:t/troubleshooting).
