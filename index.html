@@ -260,6 +260,8 @@
       if (document.getElementById("alarm-toast")) return false;        // an alarm is ringing
       var h = window.__orosRadioHost;
       if (h && h.audio && !h.audio.paused) return false;               // radio is playing
+      var ph = window.__orosPodcastsHost;
+      if (ph && ph.audio && !ph.audio.paused) return false;            // a podcast is playing
       var sy = window.orosSync;
       // Dirty blocks only while the engine can actually clear it
       // (connected + unlocked + online); otherwise waiting is pointless.

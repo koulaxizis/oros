@@ -365,6 +365,57 @@ button:disabled { cursor: default; opacity: 0.4; }
   text-underline-offset: 2px;
 }
 
+/* Phase 2: list styles. Cards: a grid of tiles; magazine: a large
+   picture beside a longer summary. The pane grows on wide screens. */
+@media (min-width: 1200px) {
+  body[data-lv="cards"] #listp, body[data-lv="mag"] #listp { width: 520px; }
+}
+#list.view-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 4px 10px 0;
+}
+.view-cards li { min-width: 0; }
+.view-cards .row {
+  height: 100%;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.view-cards .row .row-img { order: -1; width: 100%; height: 96px; margin-top: -8px; border-radius: 0; }
+.view-cards .row-mid { padding: 0 10px; }
+.view-cards .row-ic { position: absolute; top: 6px; right: 6px; background: var(--panel-bg); border-radius: 6px; padding: 2px; }
+.view-cards .row.unseen .row-top { padding-left: 10px; }
+.view-cards .row.unseen::before { left: 8px; top: 13px; z-index: 1; box-shadow: 0 0 0 2px var(--panel-bg); }
+.view-cards .row.on { box-shadow: inset 0 0 0 2px var(--accent); }
+.view-cards .row-snip { -webkit-line-clamp: 3; }
+.view-mag .row { gap: 12px; padding-top: 12px; padding-bottom: 12px; }
+.view-mag .row .row-img { order: -1; width: 128px; height: 96px; }
+.view-mag .row-title { font-size: 15px; }
+.view-mag .row-snip { -webkit-line-clamp: 4; }
+@media (max-width: 639px) {
+  .view-mag .row { flex-wrap: wrap; }
+  .view-mag .row .row-img { width: 100%; height: 160px; }
+}
+
+/* Phase 2: search bar, side extras */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 8px 14px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.search-bar input { flex: 1 1 160px; min-width: 0; min-height: 36px; }
+.list-tools .icon-btn.on { color: var(--accent); background: var(--accent-soft); }
+.side-n { flex-shrink: 0; font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; padding: 0 4px; }
+.side-row.dead .side-name { opacity: 0.55; text-decoration: line-through; text-decoration-color: var(--text-dim); }
+
 /* ---------- 6. Reader ---------- */
 .read-empty {
   margin: auto;
@@ -506,6 +557,36 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 a.mono { color: var(--accent); }
 .dlg-col { display: flex; flex-direction: column; gap: 8px; }
 .dlg-col .dlg-btn { flex: 0 0 auto; }
+
+/* Phase 2 dialogs: tags, rules, statistics */
+.tag-list, .rule-list { list-style: none; display: flex; flex-direction: column; gap: 2px; max-height: 40vh; overflow-y: auto; }
+.tag-list .check { margin-top: 0; }
+.rule-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  min-height: 44px;
+  margin-bottom: 6px;
+}
+.rule-row:hover { border-color: var(--accent); }
+.rule-name { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+.rule-sum { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.stats-wrap { max-height: 55vh; overflow: auto; margin-top: 10px; }
+.stats { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stats th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim);
+  padding: 6px 8px; position: sticky; top: 0; background: var(--panel-bg); }
+.stats td { padding: 4px 8px; border-top: 1px solid var(--border); vertical-align: middle; }
+.stats td .link-btn { text-align: left; text-decoration: none; padding: 2px 0; overflow-wrap: anywhere; }
+.stats td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stats td.bad { color: var(--danger); }
 
 /* Undo bar */
 .undo {

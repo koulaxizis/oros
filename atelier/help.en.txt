@@ -5,7 +5,7 @@ Design posts, stories, flyers, posters, cards and more, from a blank page or a r
 Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also pick one of the designs under `Start from a template`; its texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
 
 ## Add and edit elements
-- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `Uploads` and `Background`.
+- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `Sources`, `Uploads` and `Background`.
 - `Elements` has shapes, lines and arrows, and icons you can search in English or Greek.
 - `Text` adds a heading, a subheading or body text, and has ready `Styles` such as neon, shadow and curved text.
 - Tap or click an element to select it. Drag it to move, use the handles to resize, and the round handle below it to rotate. Guides help you line things up.
@@ -18,13 +18,34 @@ Under `What will you make?` tap or click a size, for example a square post or an
 - `Crop`, or a double-click on the photo, lets you move and zoom the photo inside its frame.
 - `Background` can use the selected photo as the page background.
 
+## Free photos, illustrations and icons
+`Sources` searches open libraries: Openverse and Wikimedia Commons for photos and illustrations, Iconify for icons and clipart. Pixabay and Pexels appear too once you add your own free key under `Pixabay and Pexels keys`. Tap or click a result to add it.
+- By default you only see pieces you may use for anything, also commercially, and change. `Show licences with limits` adds the rest, marked `Limits`.
+- What you add is downloaded once and saved with your design, so it works offline afterwards. Its author and licence go to `More` › `Credits`: keep them with your design when a licence asks for credit.
+- Searching needs an internet connection.
+
 ## Pages
 The strip under the canvas shows the pages of your design. `+` adds a page; each page has `Duplicate page`, `Move left`, `Move right` and `Delete page`.
 
+## Animate and present
+- Select an element and tap or click `Animate` to give it an entrance: `Fade`, `Rise`, `Pop`, `Wipe` or, for text, `Typewriter`. Elements enter one after the other, bottom layer first.
+- With nothing selected, `Animate` sets how long the page shows and the transition to it (`Fade`, `Slide`, `Push`, `Zoom` or `None`).
+- `Play` previews the page's animation on the canvas.
+- `More` › `Present (full screen)` shows the pages as a slide show: arrow keys, a clicker or a swipe move between pages, [[Esc]] ends it.
+
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, or a PDF for printing at 150 or 300 dpi.
+- `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` scales the whole design to another size.
-- `More` › `Save as package (.orosdesign)` makes one file with the design and its images. `Open package` on the home screen opens it as a new design.
+- `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
+
+## Import from Canva and other files
+`Import` on the home screen opens a file as a new design:
+- An Atelier package (.orosdesign).
+- A PowerPoint file (.pptx). To bring a Canva design over, open it in Canva and choose `Share` › `Download` › `Microsoft PowerPoint`, then import that file. Texts stay editable, shapes, lines and photos come over, one page per slide.
+- A picture (PNG, JPG, WebP or SVG) becomes a design of its size.
+
+>! Some things do not come over from PowerPoint: charts, tables, video, animations and some text effects. Fonts become the closest of Atelier's fonts. The message after the import says how many elements were left out.
 - `More` › `Credits` lists the work by others your design uses.
 
 ## Sync and backup
@@ -43,4 +64,4 @@ Designs sync with orOS sync. Uploaded images are stored once on the orOS disk an
 
 ## Limits
 - PDF pages are high-resolution images, so text in the PDF cannot be selected or edited.
-- Open media sources (free photos, clipart and sounds) and more fonts come in a later version.
+- More fonts, sounds and video come in a later version.

@@ -3430,7 +3430,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **What:** one release commit (Chris chose the bulk release, 2026-10-09 09:17) registers every app whose code had already merged without registration, instead of one release PR per app: `apps.json`, `ICONS`, `translations.js`, `sw.js` precache, `index.html` scripts, `notifications.js` `KNOWN_APPS` + `DL_BRIDGES`, shell engines and bridges, Tests workflow paths, Bible. `APP_VERSION` 0.46.00 → 0.47.00 (one minor for all). The apps: mindmap, timesheet, split, travel, chores, meals, layout, slides, pubdomain, qr, pixel, atelier, health, budget, water, fitness, petcare, baby, familytree, garage, plants, shelf, feeds, mail, scores, podcasts, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri, device.
 - **Not in it:** Help / Οδηγός (#63, its thread says not ready).
 - **Overlaps resolved by hand:** each thread's release script or patch was run on one tree. Fuzzy patch hunks that landed in the wrong place in `shell.js` (Water and Plants engines, the Plants bridge) were moved by hand; `sw.js` precache deduplicated (a duplicate URL makes `cache.addAll` fail the whole install); Tests workflow paths rebuilt as one list; the factory-reset IndexedDB list gains `oros-jigsaw`; Podcasts wiring (icon, Info-modal service line, `__orosOpenPodcastsAdd` bridge, `index.html` scripts, CREDITS rows) added here because its thread had no release script.
-- **Open:** Podcasts asked for `safeToReload` to wait while an episode plays; the shell has no such hook yet, so an update can still reload during playback.
+- **Open (closed in 0.47.01):** Podcasts asked for `safeToReload` to wait while an episode plays; done by PR #88.
 - **Tests:** `node --test tests/*.test.js` all pass; bump-workflow guards G1–G5 pass on a copy of the tree; Chromium, real shell, mock Dropbox: every newly registered app opened from the menu search at 360 px in Greek with no page errors and no horizontal scroll.
 - **NOT tested:** a real phone, Safari / iOS, Firefox, real Dropbox, the deployed relay for Reader / Podcasts.
 
@@ -3889,7 +3889,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Verification (Chromium, real shell with the release applied, mock Dropbox):** EN desktop 1280, EL phone at 360 px, sync connected and not connected; every card filled; copy report reaches the clipboard and holds no token or passphrase; folding survives reopening; a row opens To-Do; going offline updates the Network card live; the menu row opens the app; no horizontal overflow, no small targets, no page errors.
 - **NOT tested:** a real phone, Safari / iOS and Firefox (battery, connection, `estimate` and `persist` behave differently there), real Dropbox, a real installed PWA.
 
-### 2026-10-09 — shell <VERSION> — Launch shortcuts on the app icon
+### 2026-10-09 — shell 0.47.01 — Updates wait while a podcast plays
+- **Changes:** `index.html` `safeToReload()` (SW-2 update broker) also waits while the Podcasts host (`window.__orosPodcastsHost.audio`) is playing, as it already did for the Radio, so a new version no longer cuts an episode off (PR #88). Closes the open point of the 0.47.00 bulk release.
+- **Tests:** `tests/podcasts.test.js` runs the real `safeToReload` from `index.html` (podcast playing blocks, paused / absent allows, radio still blocks).
+- **NOT tested:** a real phone, Safari / iOS, a real update arriving during playback.
+
+### 2026-10-09 — shell 0.47.02 — Launch shortcuts on the app icon
 - **Changes:** `manifest.webmanifest` `shortcuts` for Notes, To-Do, Calendar and Calculator (`/?open=<id>`); `shell.js` `openFromLaunchParam()` opens the named app after `apps.json` loads and strips the parameter.
 - **Decisions:** first step of the Android widgets question (Chris, 2026-10-09: option 1). Windows 11 Adaptive Card widgets and data-free native Android widgets wait for the store packaging, after the ports. Only registered internal app ids open; anything else is ignored silently.
 - **NOT tested:** a real phone, an installed TWA / Microsoft Store package, Safari.
