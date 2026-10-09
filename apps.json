@@ -95,6 +95,14 @@
       "type": "internal"
     },
     {
+      "id": "split",
+      "name": "Split",
+      "category": "Lifestyle",
+      "icon": "split",
+      "url": "split/",
+      "type": "internal"
+    },
+    {
       "id": "travel",
       "name": "Travel",
       "category": "Lifestyle",
