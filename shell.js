@@ -793,9 +793,7 @@
     }).catch(function () { /* request failed — flag stays, retry next click */ });
   }
   
-      tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
     // ---------- 6. Clock (24h) ----------
-      tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
   function renderClock() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
@@ -841,6 +839,8 @@
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
+      tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
+      tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -6468,26 +6468,6 @@
 
     var host = window.__orosRadioHost;
     if (!host || !host.audio || !host.api ||
-  // Plant Care deep-link bridge (pattern: Minimalism). Payload =
-  // "today" (reminder) or a plant id (Calendar feed row). Open app →
-  // live push; closed → sessionStorage staging (device-local, one-
-  // shot, consumed by plants.js at boot) + open.
-  window.__orosOpenPlants = function (target) {
-    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
-    if (state.running && state.running.id === "plants") {
-      var f = document.getElementById("app-frame");
-      try {
-        if (f && f.contentWindow &&
-            typeof f.contentWindow.__orosPlantsOpen === "function") {
-          f.contentWindow.__orosPlantsOpen(target);
-          return;
-        }
-      } catch (e) {}
-    }
-    try { sessionStorage.setItem("oros-plants-open", target); } catch (e) {}
-    openAppById("plants");
-  };
-
         typeof host.api.getState !== "function") return;
     rxTrayWireDoc();
 
@@ -7121,6 +7101,26 @@
   // Consumed by minimalism.js at boot — one-shot take (ίδιο μάθημα
   // με todo/quote: αν το receiver λείπει από το app, το pending
   // ymd απλά αγνοείται — τίποτα δεν σπάει).
+  // Plant Care deep-link bridge (pattern: Minimalism). Payload =
+  // "today" (reminder) or a plant id (Calendar feed row). Open app →
+  // live push; closed → sessionStorage staging (device-local, one-
+  // shot, consumed by plants.js at boot) + open.
+  window.__orosOpenPlants = function (target) {
+    if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
+    if (state.running && state.running.id === "plants") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosPlantsOpen === "function") {
+          f.contentWindow.__orosPlantsOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-plants-open", target); } catch (e) {}
+    openAppById("plants");
+  };
+
   // Garage deep-link bridge (pattern: Plant Care). Payload =
   // "upcoming" (reminder) or a renewal / plan / tyre / vehicle id
   // (Calendar feed row). Open app → live push; closed →
