@@ -15,7 +15,7 @@
 //   pixabay    photos, illustrations, video      user's own key
 //   pexels     photos, video                     user's own key
 //
-// API (window.OrosDK.media, or module.exports under Node):
+// API (window.orosDK.media, or module.exports under Node):
 //   VER, KINDS, SOURCES, LICENSES
 //   sourcesFor(kind, keys)        source ids that can search a kind
 //   request(src, kind, q, o)      { url, headers, cacheKey } (pure)
@@ -879,7 +879,7 @@
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else {
-    root.OrosDK = root.OrosDK || {};
-    root.OrosDK.media = API;
+    root.orosDK = root.orosDK || {};
+    root.orosDK.media = API;
   }
 })(typeof window !== "undefined" ? window : this);
