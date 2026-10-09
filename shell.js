@@ -1361,11 +1361,36 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        openFromLaunchParam();
       })
       .catch(function () {
         state.apps = [];
         renderMenu();
       });
+  }
+
+  // Launch shortcuts (manifest "shortcuts", long-press on the app
+  // icon): "/?open=<id>" opens that app once the list is loaded. The
+  // id must match a registered internal app, so a crafted link can only
+  // open what the menu already offers. The parameter is stripped right
+  // away (other parameters stay), so a reload or the update broker's
+  // reload lands on the desktop instead of reopening the app.
+  function openFromLaunchParam() {
+    var params, id, i;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    id = params.get("open");
+    if (!id) return;
+    params.delete("open");
+    try {
+      var qs = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
+    } catch (e) {}
+    for (i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id && state.apps[i].type !== "external") {
+        openAppById(id);
+        return;
+      }
+    }
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
