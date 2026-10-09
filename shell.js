@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.47.04";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.47.05";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -317,7 +317,7 @@
     // dead attributes.
     var tBtn = document.getElementById("bar-time");
     var dBtn = document.getElementById("bar-date");
-    if (tBtn) tBtn.title = window.t("app.time");
+    if (tBtn) tBtn.title = window.t("app.time");   // paintBarDate adds the date at fit level 6
     if (dBtn) dBtn.title = window.t("app.calendar");
 
     renderClock();
@@ -796,28 +796,106 @@
   }
   
     // ---------- 6. Clock (24h) ----------
+  // Taskbar fit (2026-10-09): every chip (sync dot, weather, bell,
+  // radio, …) shares one row with the clock. On a phone the date used
+  // to be pushed off the right edge. fitBar() picks the FIRST level
+  // that fits, measured on the real bar:
+  //   0 full date · 1 no year · 2 tighter paddings/gaps ·
+  //   3 no weekday · 4 numeric dd/mm · 5 menu label hidden (icon
+  //   stays) · 6 date hidden (the time button's tooltip carries it).
+  // Re-run by a ResizeObserver on the bar (a chip appears, the text
+  // changes width, rotation), never per tick.
+  var barFit = 0;
+  var BAR_FIT_MAX = 6;
+
+  function barDateStr(now, lvl) {
+    var loc = state.lang === "el" ? "el-GR" : "en-GB";
+    if (lvl >= 4) {
+      return String(now.getDate()).padStart(2, "0") + "/" +
+             String(now.getMonth() + 1).padStart(2, "0");
+    }
+    var opts = { day: "2-digit", month: "short" };
+    if (lvl < 3) opts.weekday = "short";
+    if (lvl < 1) opts.year = "numeric";
+    return now.toLocaleDateString(loc, opts).replace(/,/g, "");
+  }
+
+  function paintBarDate(now) {
+    var dBtn = document.getElementById("bar-date");
+    var tBtn = document.getElementById("bar-time");
+    if (!dBtn || !tBtn) return;
+    var txt = barDateStr(now, barFit);
+    if (dBtn.textContent !== txt) dBtn.textContent = txt;
+    var tt = window.t("app.time") +
+      (barFit >= BAR_FIT_MAX ? " · " + barDateStr(now, 0) : "");
+    if (tBtn.title !== tt) tBtn.title = tt;
+  }
+
+  function applyBarFit(lvl) {
+    barFit = lvl;
+    var bar = document.getElementById("oros-bar");
+    bar.classList.toggle("bar-tight", lvl >= 2);
+    bar.classList.toggle("bar-nolabel", lvl >= 5);
+    bar.classList.toggle("bar-nodate", lvl >= 6);
+    paintBarDate(new Date());
+  }
+
+  function fitBar() {
+    var bar = document.getElementById("oros-bar");
+    var left = bar && bar.querySelector(".bar-left");
+    var right = bar && bar.querySelector(".bar-right");
+    if (!left || !right) return;
+    for (var lvl = 0; ; lvl++) {
+      applyBarFit(lvl);
+      var cs = getComputedStyle(bar);
+      var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
+      if (need <= avail || lvl >= BAR_FIT_MAX) return;
+    }
+  }
+
+  var barFitQueued = false;
+  function queueFitBar() {
+    if (barFitQueued) return;
+    barFitQueued = true;
+    // next frame: never resize inside the observer callback
+    // (that is the "ResizeObserver loop" warning)
+    requestAnimationFrame(function () { barFitQueued = false; fitBar(); });
+  }
+
+  function initBarFit() {
+    var bar = document.getElementById("oros-bar");
+    if (!bar) return;
+    if (typeof ResizeObserver === "function") {
+      var ro = new ResizeObserver(queueFitBar);
+      ro.observe(bar);
+      var l = bar.querySelector(".bar-left"), r = bar.querySelector(".bar-right");
+      if (l) ro.observe(l);
+      if (r) ro.observe(r);
+    } else {
+      window.addEventListener("resize", queueFitBar);
+    }
+    fitBar();
+  }
+
   function renderClock() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
     var mm = String(now.getMinutes()).padStart(2, "0");
-    // v0.18.2 — ultra-narrow screens (≤400px) drop the year: with the
-    // weather chip on, the full date doesn't fit the bar row. Checked
-    // live each tick (renderClock runs 1/s), so rotate/resize follows.
-    var opts = { weekday: "short", day: "2-digit", month: "short" };
-    if (!window.matchMedia("(max-width: 400px)").matches) opts.year = "numeric";
-    var dateStr = now.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB", opts);
     // E1/E2 — split bar: time button (→ Time app) + date button
     // (→ Calendar app). Stale-bundle safety: if #bar-time/#bar-date
     // are absent (cached index.html), paint the legacy #bar-clock.
     var tBtn = document.getElementById("bar-time");
     var dBtn = document.getElementById("bar-date");
     if (tBtn && dBtn) {
-      tBtn.textContent = hh + ":" + mm;
-      dBtn.textContent = dateStr.replace(/,/g, "");
+      if (tBtn.textContent !== hh + ":" + mm) tBtn.textContent = hh + ":" + mm;
+      paintBarDate(now);
+      // no ResizeObserver (old browser): refit on the tick instead
+      if (typeof ResizeObserver !== "function" && now.getSeconds() === 0) fitBar();
     } else {
       var legacy = document.getElementById("bar-clock");
       if (legacy) legacy.textContent =
-        hh + ":" + mm + "  ·  " + dateStr.replace(/,/g, "");
+        hh + ":" + mm + "  ·  " + barDateStr(now, 1);
     }
     // SH-Q2: every engine runs in its own guard. One that throws
     // (a full store, a malformed record) used to end the WHOLE tick,
@@ -2037,7 +2115,6 @@
     renderWallpaperSection(menu);
     if (window.orosLauncher) window.orosLauncher.renderSettings(menu);   // Dock
     renderInstallRow(menu);
-    renderWxSection(menu);
     renderPetSection(menu);        // Soffitta port: desktop companion
     renderSyncSection(menu);
     renderNotifsSection(menu);   // Wave 1B: notification settings
@@ -4795,7 +4872,14 @@
   // user gestures / online / visibility — never idle timers.
   // OFFLINE: slashed-cloud icon, NO temperature — never a fake value.
 
+  // 2026-10-09: the tray is ON by default and is configured from the
+  // Weather app (no menu section any more). Visibility is a device-
+  // local switch (taskbar room differs per device, same doctrine as
+  // the pet toggle): "oros-wx-tray" = "off" hides the chip, absent =
+  // shown. The location stays in the synced pref; with no pinned
+  // location the tray follows the Weather app's first city.
   var WX_PREF_KEY  = "oros-weather";     // {on, auto, lat, lon, label} (slice)
+  var WX_TRAY_KEY  = "oros-wx-tray";     // "off" | absent (device-local, never synced)
   var WX_CACHE_KEY = "oros-wx-cache";    // {at, temp, code}  (device-local)
   var WX_LAST_KEY  = "oros-wx-last";     // epoch ms of last fetch attempt
   var WX_MIN_MS    = 30 * 60 * 1000;     // min gap between auto fetches
@@ -4832,6 +4916,45 @@
     localStorage.setItem(WX_PREF_KEY, JSON.stringify(w));
   }
 
+  function wxTrayOn() {
+    try { return localStorage.getItem(WX_TRAY_KEY) !== "off"; }
+    catch (e) { return true; }
+  }
+
+  // The tray's location: the pinned pref when it has coordinates,
+  // else the Weather app's first city (by pos). null = nothing yet.
+  function wxLoc() {
+    var w = wxRead();
+    if (w.lat !== null && w.lon !== null) {
+      return { lat: w.lat, lon: w.lon, label: w.label, pinned: true };
+    }
+    try {
+      var data = JSON.parse(localStorage.getItem("oros-weatherapp-data"));
+      if (!data || !Array.isArray(data.cities)) return null;
+      var first = null;
+      data.cities.forEach(function (c) {
+        if (!c || typeof c.lat !== "number" || typeof c.lon !== "number" ||
+            !isFinite(c.lat) || !isFinite(c.lon)) return;
+        if (!first || (Number(c.pos) || 0) < (Number(first.pos) || 0)) first = c;
+      });
+      if (!first) return null;
+      return { lat: first.lat, lon: first.lon,
+               label: (typeof first.label === "string") ? first.label : "",
+               pinned: false };
+    } catch (e) { return null; }
+  }
+
+  // A tray cache written for another place (the first city changed,
+  // a pin moved) must never paint under the current label.
+  function wxCacheFor(loc) {
+    var c = wxCached();
+    if (!c || !loc) return c;
+    if (typeof c.lat === "number" && typeof c.lon === "number" &&
+        (Math.abs(c.lat - loc.lat) >= WX_NEAR_DEG ||
+         Math.abs(c.lon - loc.lon) >= WX_NEAR_DEG)) return null;
+    return c;
+  }
+
   function wxCached() {
     try {
       var c = JSON.parse(localStorage.getItem(WX_CACHE_KEY));
@@ -4866,10 +4989,10 @@
   function wxRenderChip() {
     var bar = document.querySelector(".bar-right");
     if (!bar) return;
-    var w = wxRead();
     var chip = document.getElementById("wx-chip");
 
-    if (!w.on) { if (chip) chip.remove(); return; }
+    if (!wxTrayOn()) { if (chip) chip.remove(); return; }
+    var loc = wxLoc();
 
     if (!chip) {
       chip = document.createElement("button");
@@ -4893,7 +5016,7 @@
       bar.insertBefore(chip, document.getElementById("btn-lang"));
     }
 
-    var titleBase = w.label || window.t("wx.title");
+    var titleBase = (loc && loc.label) || window.t("wx.title");
 
     // Tick-safe paint: renderClock calls this EVERY second, but the
     // DOM is touched only when state/html/title actually changed
@@ -4915,10 +5038,10 @@
       return;
     }
 
-    var c = wxCached();
+    var c = wxCacheFor(loc);
     var stale = !c || !c.at || (Date.now() - c.at) > WX_STALE_MS;
 
-    if (stale || w.lat === null) {
+    if (stale || !loc) {
       paintChip("off", WX_OFF, titleBase + " · " + window.t("wx.waiting"));
       return;
     }
@@ -4977,12 +5100,14 @@
       // data is NEWER than what the tray already holds. Unconditional
       // adoption let a stale app cache overwrite a fresh tray fetch
       // on every 60s tick — the chip stayed "waiting" forever.
-      var cur = wxCached();
+      var cur = wxCacheFor(w);
       if (cur && cur.at && p.at <= cur.at) return false;
       localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
         at:   p.at,
         temp: p.current.temp,
-        code: p.current.code
+        code: p.current.code,
+        lat:  w.lat,
+        lon:  w.lon
       }));
       return true;
     } catch (e) { return false; }
@@ -4991,8 +5116,18 @@
   var wxBusy = false;   // in-flight guard — never stack parallel fetches
 
   function wxFetch(force) {
-    var w = wxRead();
-    if (!w.on || w.lat === null || w.lon === null || !navigator.onLine) return;
+    if (!wxTrayOn() || !navigator.onLine) return;
+    var w = wxLoc();
+    if (!w) return;
+    // The cache belongs to another place → drop it and the throttle
+    // that was bought for that place.
+    if (wxCached() && !wxCacheFor(w)) {
+      try {
+        localStorage.removeItem(WX_CACHE_KEY);
+        localStorage.removeItem(WX_LAST_KEY);
+      } catch (e) {}
+      force = true;
+    }
 
     // Adopt the app's fresher data first — then decide if OUR OWN
     // network fetch is still needed (app data older than 30 min).
@@ -5010,7 +5145,7 @@
         // the exact "successful fetch, waiting chip" contradiction —
         // bypass only when the cache is older than the throttle period
         // itself, never during the normal fresh-data cycle.
-        var sc = wxCached();
+        var sc = wxCacheFor(w);
         if (sc && sc.at && (Date.now() - sc.at) < WX_MIN_MS) return;
       }
     }
@@ -5049,7 +5184,9 @@
           localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
             at:   Date.now(),
             temp: d.current_weather.temperature,
-            code: d.current_weather.weathercode
+            code: d.current_weather.weathercode,
+            lat:  w.lat,
+            lon:  w.lon
           }));
           // Success is the only path that buys the 30-min throttle.
           localStorage.setItem(WX_LAST_KEY, String(Date.now()));
@@ -5129,8 +5266,9 @@
   }
 
   function wxBriefTick() {
-    var w = wxRead();
-    if (!w.on || w.lat === null || w.lon === null) return;
+    if (!wxTrayOn()) return;
+    var w = wxLoc();
+    if (!w) return;
     var h = new Date().getHours();
     if (h < 8 || h >= 12) return;   // outside the morning window
     if (!(window.orosNotifs && typeof window.orosNotifs.emit === "function")) return;
@@ -5190,213 +5328,55 @@
     });
   }
 
-  function wxGeocodeCity(name) {
-    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" +
-                 (state.lang === "el" ? "el" : "en") +
-                 "&name=" + encodeURIComponent(name))
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        var g = d && d.results && d.results[0];
-        if (!g) throw new Error("notfound");
-        return { lat: g.latitude, lon: g.longitude, label: g.name };
-      });
-  }
-
-  // Autocomplete — geocoding suggestions from the 3rd character
-  // (mirror of the app's pattern: debounced, tokened, offline-aware).
-  var WXS_AC_MIN = 3, WXS_AC_DELAY = 250;
-
-  function wxGeocodeSuggest(q) {
-    var tok = ++wxCAcToken;
-    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=5&language=" +
-                 (state.lang === "el" ? "el" : "en") +
-                 "&name=" + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (tok !== wxCAcToken) return [];   // stale response — discard
-        return (d && d.results) || [];
-      })
-      .catch(function () { return []; });    // silent — optional data
-  }
-
-  // GPS fix — runs ONLY from the menu click (user activation)
-  function wxLocate() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      var w = wxRead();
-      w.on = true; w.auto = true;
-      w.lat = pos.coords.latitude;
-      w.lon = pos.coords.longitude;
-      w.label = "";
-      wxSave(w);
-      noteLocalChange();          // travels in the shell slice
-      wxFetch(true);
-      renderMenu();
-    }, function () { /* declined — nothing changes */ },
-    { timeout: 10000, maximumAge: 30 * 60 * 1000 });
-  }
-
-  // City picker — custom dialog (native prompt() cannot host
-  // autocomplete). Lazy singleton; suggestions from the 3rd
-  // character via wxGeocodeSuggest (debounced, tokened).
-  var wxCDlg = null, wxCInput = null, wxCAc = null;
-
-  function wxEnsureCityDlg() {
-    if (wxCDlg) return;
-    wxCDlg = document.createElement("dialog");
-    wxCDlg.id = "wxcity";
-    wxCDlg.innerHTML =
-      "<h3>" + window.t("wx.city") + "</h3>" +
-      '<input id="wxc-input" type="text" autocomplete="off" spellcheck="false"' +
-      ' placeholder="' + window.t("wx.prompt") + '">' +
-      '<div id="wxc-ac" hidden></div>' +
-      '<div class="wxc-row">' +
-      '<button type="button" class="wxc-btn prim" id="wxc-add">' +
-        window.t("wx.add") + "</button>" +
-      '<button type="button" class="wxc-btn ghost" id="wxc-cancel">' +
-        window.t("wx.cancel") + "</button>" +
-      "</div>";
-    document.body.appendChild(wxCDlg);
-
-    wxCInput = wxCDlg.querySelector("#wxc-input");
-    wxCAc = wxCDlg.querySelector("#wxc-ac");
-
-    // backdrop click closes (target ON the dialog = outside content)
-    wxCDlg.addEventListener("click", function (e) {
-      if (e.target === wxCDlg) wxCDlg.close();
-    });
-    wxCDlg.addEventListener("close", function () {
-      wxCAc.hidden = true;
-      clearTimeout(wxCATimer);
-    });
-
-    wxCDlg.querySelector("#wxc-add").addEventListener("click", function () {
-      wxCommitTyped();
-    });
-    wxCDlg.querySelector("#wxc-cancel").addEventListener("click", function () {
-      wxCDlg.close();
-    });
-
-    wxCInput.addEventListener("input", function () {
-      clearTimeout(wxCATimer);
-      var q = wxCInput.value.trim();
-      if (q.length < WXS_AC_MIN || !navigator.onLine) { wxHideAc(); return; }
-      wxCATimer = setTimeout(function () {
-        wxGeocodeSuggest(q).then(wxRenderAc);
-      }, WXS_AC_DELAY);
-    });
-    wxCInput.addEventListener("keydown", function (e) {
-      var n = wxCAc.hidden ? 0 : wxCAc.querySelectorAll(".wxc-item").length;
-      if (e.key === "ArrowDown" && n) {
-        e.preventDefault();
-        wxCAcSel = (wxCAcSel + 1) % n;
-        wxPaintAcSel();
-      } else if (e.key === "ArrowUp" && n) {
-        e.preventDefault();
-        wxCAcSel = (wxCAcSel <= 0 ? n - 1 : wxCAcSel - 1);
-        wxPaintAcSel();
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        if (!wxCAc.hidden && wxCAcSel >= 0 && wxCAcList[wxCAcSel]) {
-          wxPickAc(wxCAcList[wxCAcSel]);
-        } else {
-          wxCommitTyped();
-        }
-      } else if (e.key === "Escape" && !wxCAc.hidden) {
-        e.preventDefault();
-        wxHideAc();
+  // Weather app → tray bridge (2026-10-09: the menu section is gone;
+  // the app owns the tray settings). Same-origin parent API,
+  // typeof-guarded on the app side so a stale shell is harmless.
+  //   isOn()      device-local visibility (default true)
+  //   setOn(b)    show/hide the chip on THIS device (never synced)
+  //   location()  {lat, lon, label, pinned} or null
+  //   pin(g)      pin a city {lat, lon, label}: synced shell pref;
+  //               pin(null) unpins (back to the app's first city)
+  window.orosWeatherTray = {
+    isOn: wxTrayOn,
+    setOn: function (on) {
+      try {
+        if (on) localStorage.removeItem(WX_TRAY_KEY);
+        else localStorage.setItem(WX_TRAY_KEY, "off");
+      } catch (e) {}
+      if (on) wxFetch(true);
+      wxRenderChip();
+    },
+    location: wxLoc,
+    pin: function (g) {
+      if (g === null) {           // unpin → follow the app's first city
+        var was = wxRead();
+        if (was.lat === null && was.lon === null && !was.on) return true;
+        wxSave({ on: false, auto: false, lat: null, lon: null, label: "" });
+        noteLocalChange();
+        wxFetch(true);
+        wxRenderChip();
+        return true;
       }
-    });
-    wxCInput.addEventListener("blur", function () {
-      setTimeout(wxHideAc, 150);   // mousedown fires first — safe
-    });
-  }
-
-  var wxCATimer = null, wxCAcToken = 0;
-  var wxCAcSel = -1, wxCAcList = [];
-
-  function wxHideAc() {
-    wxCAcSel = -1; wxCAcList = [];
-    if (wxCAc) { wxCAc.hidden = true; wxCAc.innerHTML = ""; }
-  }
-
-  function wxRenderAc(list) {
-    wxCAcList = list; wxCAcSel = -1;
-    wxCAc.innerHTML = "";
-    if (list.length === 0) {
-      var none = document.createElement("div");
-      none.className = "wxc-none";
-      none.textContent = window.t("wx.notfound");
-      wxCAc.appendChild(none);
-    } else {
-      list.forEach(function (g, i) {
-        var it = document.createElement("button");
-        it.type = "button";
-        it.className = "wxc-item";
-        var nm = document.createElement("span");
-        nm.className = "wxc-name";
-        nm.textContent = g.name;
-        var rg = document.createElement("span");
-        rg.className = "wxc-sub";
-        rg.textContent = [g.admin1, g.country].filter(Boolean).join(", ");
-        it.appendChild(nm); it.appendChild(rg);
-        it.addEventListener("mousedown", function (ev) {
-          ev.preventDefault();       // mousedown beats blur-hide
-          wxPickAc(wxCAcList[i]);
-        });
-        wxCAc.appendChild(it);
-      });
+      if (!g || typeof g.lat !== "number" || typeof g.lon !== "number" ||
+          !isFinite(g.lat) || !isFinite(g.lon)) return false;
+      var prev = wxRead();
+      var label = (typeof g.label === "string") ? g.label.slice(0, 80) : "";
+      if (prev.lat === g.lat && prev.lon === g.lon &&
+          prev.label === label && prev.on) return true;   // no-op: no phantom push
+      if (prev.lat !== g.lat || prev.lon !== g.lon) {
+        try {                     // an untagged legacy cache is for the old place
+          localStorage.removeItem(WX_CACHE_KEY);
+          localStorage.removeItem(WX_LAST_KEY);
+        } catch (e) {}
+      }
+      wxSave({ on: true, auto: false, lat: g.lat, lon: g.lon, label: label });
+      noteLocalChange();          // travels in the shell slice
+      wxFetch(true);              // wxFetch drops a cache of another place
+      wxRenderChip();
+      return true;
     }
-    wxCAc.hidden = false;
-  }
+  };
 
-  function wxPaintAcSel() {
-    var items = wxCAc.querySelectorAll(".wxc-item");
-    for (var i = 0; i < items.length; i++) {
-      items[i].classList.toggle("sel", i === wxCAcSel);
-    }
-  }
-
-  function wxPickAc(g) {
-    wxCDlg.close();
-    wxApplyCity({ lat: g.latitude, lon: g.longitude, label: g.name });
-  }
-
-  function wxCommitTyped() {
-    var name = wxCInput.value.trim();
-    if (!name) return;
-    wxGeocodeCity(name)
-      .then(function (g) { wxCDlg.close(); wxApplyCity(g); })
-      .catch(function () { setSyncMsg("err", "wx.notfound"); });
-  }
-
-  function wxApplyCity(g) {
-    // Guard: invalid coordinates should never become persistent
-    // preference (would poison wxRead for all future wxPush calls).
-    if (!g || typeof g.lat !== "number" || typeof g.lon !== "number" ||
-        isNaN(g.lat) || isNaN(g.lon)) {
-      setSyncMsg("err", "wx.notfound");
-      return;
-    }
-    var w = wxRead();
-    w.on = true; w.auto = false;
-    w.lat = g.lat; w.lon = g.lon; w.label = g.label;
-    wxSave(w);
-    noteLocalChange();
-    wxFetch(true);
-    renderMenu();
-  }
-
-  function wxSetCity() {
-    // Χ4: rebuild on every open — the singleton baked its labels at
-    // first creation, so a language toggle left stale strings behind.
-    if (wxCDlg) { wxCDlg.remove(); wxCDlg = null; }
-    wxEnsureCityDlg();
-    wxCInput.value = "";
-    wxHideAc();
-    wxCDlg.showModal();
-    setTimeout(function () { wxCInput.focus(); }, 50);
-  }
 
   // ---------- 9h. Screen Pet toggle (Soffitta port) ----------
   // The pet is a SHELL component (pet.js, loaded before shell.js):
@@ -5443,61 +5423,6 @@
     hint.textContent = petT(
       "A tiny companion on your desktop · Feed it, pet it, let it sleep",
       "Ένας μικρός σύντροφος στην επιφάνεια εργασίας · Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί");
-    section.appendChild(hint);
-
-    host.appendChild(section);
-  }
-
-  // Menu section — toggle + GPS + city (all user-gesture legal)
-  function renderWxSection(host) {
-    var section = document.createElement("div");
-    section.className = "sync-section";
-
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = window.t("wx.title");
-    section.appendChild(heading);
-
-    var w = wxRead();
-
-    var row = document.createElement("div");
-    row.className = "sync-actions";
-
-    var toggle = document.createElement("button");
-    toggle.className = "menu-item";
-    toggle.textContent = window.t(w.on ? "wx.on" : "wx.off");
-    toggle.addEventListener("click", function () {
-      var ww = wxRead();
-      ww.on = !ww.on;
-      wxSave(ww);
-      noteLocalChange();
-      if (ww.on) wxFetch(true); else wxRenderChip();
-      renderMenu();
-    });
-    row.appendChild(toggle);
-
-    var gpsBtn = document.createElement("button");
-    gpsBtn.className = "menu-item";
-    gpsBtn.textContent = window.t("wx.gps");
-    gpsBtn.addEventListener("click", wxLocate);
-    row.appendChild(gpsBtn);
-
-    var cityBtn = document.createElement("button");
-    cityBtn.className = "menu-item";
-    cityBtn.textContent = window.t("wx.city");
-    cityBtn.addEventListener("click", wxSetCity);
-    row.appendChild(cityBtn);
-
-    section.appendChild(row);
-
-    var hint = document.createElement("div");
-    hint.className = "sync-hint";
-    if (w.lat !== null && w.lon !== null) {
-      hint.textContent = (w.auto ? "GPS" : w.label) +
-        " · " + w.lat.toFixed(2) + ", " + w.lon.toFixed(2);
-    } else {
-      hint.textContent = window.t("wx.waiting");
-    }
     section.appendChild(hint);
 
     host.appendChild(section);
@@ -7784,6 +7709,7 @@
   setupInstallFlow();
   initSyncIntegration();
   setInterval(renderClock, 1000);
+  initBarFit();   // taskbar fit levels (needs the bar painted once)
   renderClock();
   // IN-3: defer past shell boot — notifications.js loads AFTER
   // shell.js, so a synchronous call here always saw the module

@@ -1317,91 +1317,6 @@ body {
   #wx-chip { padding: 5px 4px; }
 }
 
-/* ---------- Weather city dialog (autocomplete picker) ---------- */
-dialog#wxcity {
-  background: var(--panel-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 12px 40px var(--shadow);
-  padding: 16px;
-  width: min(340px, calc(100vw - 32px));
-  max-height: calc(100dvh - 40px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-gutter: stable;
-}
-dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
-#wxcity h3 { font-size: 14px; margin-bottom: 10px; color: var(--accent); }
-#wxc-input {
-  width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  padding: 10px 10px;
-  font-size: 13.5px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  outline: none;
-  color: var(--text);
-}
-#wxc-input:focus { border-color: var(--accent); }
-#wxc-input::placeholder { color: var(--text-dim); }
-#wxc-ac {
-  margin-top: 4px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  overflow: hidden;
-}
-.wxc-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  background: transparent;
-  border: none;
-  padding: 8px 10px;
-  text-align: left;
-  cursor: pointer;
-  color: var(--text);
-  font-family: inherit;
-}
-.wxc-item:hover, .wxc-item.sel { background: var(--accent-soft); }
-.wxc-name { font-size: 13px; font-weight: 600; }
-.wxc-sub {
-  font-size: 11.5px;
-  color: var(--text-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.wxc-none { padding: 8px 10px; font-size: 12.5px; color: var(--text-dim); }
-.wxc-row { display: flex; gap: 8px; margin-top: 12px; }
-.wxc-btn {
-  flex: 1;
-  min-height: 44px;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-}
-.wxc-btn.prim {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--accent);
-}
-.wxc-btn.prim:hover { filter: brightness(1.1); }
-.wxc-btn.ghost {
-  background: transparent;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-}
-.wxc-btn.ghost:hover { color: var(--accent); border-color: var(--accent); }
-
 /* ===== v0.27.04 — #5: Greek sync labels wrap instead of widening ===== */
 /* The nowrap+ellipsis rule (.menu-item > span:not(.app-ico)) is right
    for app names, but the sync actions ("Αποστολή στο cloud",
@@ -1484,6 +1399,20 @@ dialog#wxcity::backdrop { background: rgba(0, 0, 0, 0.5); }
 @media (max-width: 480px) {
   #bar-time, #bar-date { font-size: 12.5px; padding: 6px 5px; }
 }
+
+/* Taskbar fit levels (2026-10-09, shell.js fitBar): set by measuring
+   the real bar, so they hold for any mix of chips at any width.
+   Hit areas stay 40/44px high; only side paddings and gaps shrink. */
+#oros-bar.bar-tight { padding-left: 8px; padding-right: 8px; }
+#oros-bar.bar-tight .bar-left,
+#oros-bar.bar-tight .bar-right { gap: 2px; }
+#oros-bar.bar-tight #btn-menu,
+#oros-bar.bar-tight #btn-lang { padding-left: 6px; padding-right: 6px; }
+#oros-bar.bar-tight #rx-tray-chip { padding: 0 6px; }
+#oros-bar.bar-tight #bar-time,
+#oros-bar.bar-tight #bar-date { padding-left: 4px; padding-right: 4px; }
+#oros-bar.bar-nolabel #btn-menu-label { display: none; }
+#oros-bar.bar-nodate #bar-date { display: none; }
 
 /* ============================================================
    Wave 3 (Calendar) — recurrence, reminders, drag & drop

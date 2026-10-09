@@ -539,6 +539,51 @@ dialog::backdrop {
 }
 .city-del:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
 
+/* Taskbar pin (2026-10-09): which city the shell tray shows */
+.city-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+}
+.city-pin:hover { opacity: 1; color: var(--accent); background: var(--accent-soft); }
+.city-pin.on { opacity: 1; color: var(--accent); }
+
+#tray-host {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+#tray-host h4 {
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.tray-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+.tray-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+#tray-host .hint { margin-top: 4px; }
+
 #city-add-row {
   display: flex;
   flex-wrap: wrap;       /* ALWAYS wraps when tight — the forensic fix
