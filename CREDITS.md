@@ -33,6 +33,7 @@ tests. The tests run on [Node.js](https://nodejs.org/) and
 |---|---|---|---|
 | [Nunito](https://github.com/googlefonts/nunito) (`fonts/`) | © 2014 The Nunito Project Authors (Vernon Adams, Jacques Le Bailly) | [SIL OFL 1.1](fonts/OFL.txt) | The whole interface |
 | [Noto Sans](https://notofonts.github.io/) (`vendor/NotoSans-Regular.ttf`) | © 2022 The Noto Project Authors | [SIL OFL 1.1](vendor/NotoSans-OFL.txt) | Greek text in exported PDFs |
+| [Noto Sans, Noto Serif, Noto Sans Mono](https://notofonts.github.io/) (`vendor/noto/`, subset: Latin, Greek, punctuation) | © 2022 The Noto Project Authors | [SIL OFL 1.1](vendor/noto/OFL.txt) | Layout documents on screen and in PDF |
 
 ## Icons
 

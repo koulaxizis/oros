@@ -154,6 +154,14 @@
       "type": "internal"
     },
     {
+      "id": "layout",
+      "name": "Layout",
+      "category": "Office",
+      "icon": "layout",
+      "url": "layout/",
+      "type": "internal"
+    },
+    {
       "id": "slides",
       "name": "Slides",
       "category": "Office",
