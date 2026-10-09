@@ -124,6 +124,13 @@
       "feed.plants.done": "{name}: {kind} done",
       "feed.plants.due": "{name}: {kind} due",
       "feed.plants.water": "watering", "feed.plants.fert": "fertilizing", "feed.plants.mist": "misting", "feed.plants.repot": "repotting",
+      "lbl.feed.petcare": "Pet health",
+      "feed.pc.due": "{name}: {what} due", "feed.pc.done": "{name}: {what}", "feed.pc.bday": "🎂 {name} turns {n}",
+      "feed.pc.deworm": "deworming", "feed.pc.visit": "vet visit", "feed.pc.recheck": "recheck",
+      "feed.pc.medDue": "{name}: last day of {what}", "feed.pc.food": "food runs out",
+      "feed.pc.care.bath": "bath", "feed.pc.care.nails": "nail trim", "feed.pc.care.brush": "brushing",
+      "feed.pc.care.teeth": "teeth", "feed.pc.care.ears": "ear cleaning", "feed.pc.care.litter": "litter change",
+      "feed.pc.care.cage": "cage cleaning", "feed.pc.care.tank": "tank water change",
       "feed.pet.feed": "{name} was fed",
       "feed.pet.pet": "{name} was petted",
       "feed.pet.sleep": "{name} went to sleep",
@@ -237,6 +244,13 @@
       "feed.plants.done": "{name}: έγινε {kind}",
       "feed.plants.due": "{name}: ώρα για {kind}",
       "feed.plants.water": "πότισμα", "feed.plants.fert": "λίπανση", "feed.plants.mist": "ψέκασμα", "feed.plants.repot": "μεταφύτευση",
+      "lbl.feed.petcare": "Υγεία ζώων",
+      "feed.pc.due": "{name}: ώρα για {what}", "feed.pc.done": "{name}: {what}", "feed.pc.bday": "🎂 {name}: γενέθλια ({n})",
+      "feed.pc.deworm": "αποπαρασίτωση", "feed.pc.visit": "επίσκεψη στον κτηνίατρο", "feed.pc.recheck": "επανεξέταση",
+      "feed.pc.medDue": "{name}: τελευταία μέρα για {what}", "feed.pc.food": "νέο σακί τροφής",
+      "feed.pc.care.bath": "μπάνιο", "feed.pc.care.nails": "κόψιμο νυχιών", "feed.pc.care.brush": "βούρτσισμα",
+      "feed.pc.care.teeth": "δόντια", "feed.pc.care.ears": "καθάρισμα αυτιών", "feed.pc.care.litter": "αλλαγή άμμου",
+      "feed.pc.care.cage": "καθάρισμα κλουβιού", "feed.pc.care.tank": "αλλαγή νερού ενυδρείου",
       "feed.pet.feed": "{name} ταΐστηκε",
       "feed.pet.pet": "{name} χαϊδεύτηκε",
       "feed.pet.sleep": "{name} πήγε για ύπνο",
@@ -404,6 +418,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-fitness", color: "#f28c5a" },   // orange — finished workouts
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
+    { id: "lbl-feed-petcare", color: "#e0af68" },  // amber — Pet Health Book (real pets; Screen Pet is lbl-feed-pet)
     { id: "lbl-feed-custom", color: "#c8a96e" }     // brown — Contacts custom event types
   ];
   function feedLabelName(l) {
@@ -416,6 +431,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
+    if (l.id === "lbl-feed-petcare") return t("lbl.feed.petcare");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     return t("lbl.feed.custom");
   }
@@ -1452,6 +1468,87 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Pet Health Book read-only feed (petcare/core.js, loaded by
+  // index.html: the same "what is due" math as the app and the shell
+  // reminder). Past days and today: vaccines, deworming and vet
+  // visits that happened. Today: everything due or late. Future
+  // days: only each item's NEXT due day. Birthdays every year (full
+  // birth dates only). Pets that are gone show their history, no
+  // due dates. Rows are never stored; micro-cached ~1s.
+  var PETCARE_DATA_KEY = "oros-petcare-data";
+  var petcareCache = { when: 0, data: null, today: "", due: null };
+
+  function petcareRaw() {
+    var now = Date.now();
+    var Core = window.OrosPetcareCore;
+    if (!Core) return null;
+    if (now - petcareCache.when > 1000) {
+      petcareCache.data = null;
+      petcareCache.due = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(PETCARE_DATA_KEY));
+        if (d && typeof d === "object" && Array.isArray(d.pets)) {
+          petcareCache.data = Core.merge(d, d, now);
+          petcareCache.today = Core.ymdOf(new Date(now));
+          petcareCache.due = Core.items(petcareCache.data, petcareCache.today);
+        }
+      } catch (e) { petcareCache.data = null; petcareCache.due = null; }
+      petcareCache.when = now;
+    }
+    return petcareCache.data ? petcareCache : null;
+  }
+
+  function petcareWhat(kind, sub, label) {
+    if (kind === "vacc") return label;
+    if (kind === "deworm") return t("feed.pc.deworm") + (label ? " (" + label + ")" : "");
+    if (kind === "visit") return label || t("feed.pc.visit");
+    if (kind === "recheck") return t("feed.pc.recheck") + (label ? " (" + label + ")" : "");
+    if (kind === "care") return t("feed.pc.care." + sub);
+    return t("feed.pc.food");
+  }
+
+  function petcareFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-petcare")) return [];
+    var c = petcareRaw();
+    if (!c) return [];
+    var Core = window.OrosPetcareCore;
+    var names = {}, out = [];
+    function row(id, title, petId) {
+      out.push({
+        id: "pcf-" + id,                        // per-render key, never stored
+        title: title,
+        labelId: "lbl-feed-petcare",
+        start: null,                            // all-day
+        _feed: true,
+        _petcareId: petId
+      });
+    }
+    c.data.pets.forEach(function (p) {
+      names[p.id] = p.name;
+      var n = p.gone ? 0 : Core.birthdayOn(p, dateStr);
+      if (n) row("bd-" + p.id + "-" + dateStr, t("feed.pc.bday").replace("{name}", p.name).replace("{n}", n), p.id);
+    });
+    if (dateStr <= c.today) {
+      c.data.recs.forEach(function (r) {
+        if (r.d !== dateStr || !names[r.p] ||
+            (r.k !== "vacc" && r.k !== "deworm" && r.k !== "visit")) return;
+        row(r.id, t("feed.pc.done").replace("{name}", names[r.p])
+                     .replace("{what}", petcareWhat(r.k, "", r.n)), r.p);
+      });
+    }
+    if (dateStr >= c.today) {
+      c.due.forEach(function (it) {
+        if (dateStr === c.today ? it.due > dateStr : it.due !== dateStr) return;
+        var title = it.kind === "med"
+          ? t("feed.pc.medDue").replace("{name}", it.pet.name).replace("{what}", it.label)
+          : t("feed.pc.due").replace("{name}", it.pet.name)
+              .replace("{what}", petcareWhat(it.kind === "visit" ? "recheck" : it.kind, it.sub, it.label));
+        row(it.key + "-" + dateStr, title, it.pet.id);
+      });
+    }
+    return out;
+  }
+
     function eventsOn(dateStr) {
     return state.events.filter(function (e) {
       return occursOn(e, dateStr) && labelVisible(e.labelId);
@@ -1465,6 +1562,7 @@ function transientNote(title, body) {
     .concat(fitnessFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
     .concat(plantsFeedOn(dateStr))
+    .concat(petcareFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
@@ -1504,6 +1602,9 @@ function transientNote(title, body) {
       } else if (ev._plantId &&
                  typeof p.__orosOpenPlants === "function") {
         p.__orosOpenPlants(ev._plantId);
+      } else if (ev._petcareId &&
+                 typeof p.__orosOpenPetcare === "function") {
+        p.__orosOpenPetcare(ev._petcareId);
       } else if (ev._fitnessId &&
                  typeof p.__orosOpenFitness === "function") {
         p.__orosOpenFitness(ev._fitnessId);

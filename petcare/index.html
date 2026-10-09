@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pet Health Book · orOS</title>
+
+  <link rel="stylesheet" href="petcare.css?v=0.46.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" id="tab-up" role="tab" data-view="up"></button>
+      <button type="button" class="tab" id="tab-pets" role="tab" data-view="pets"></button>
+    </div>
+    <button type="button" class="icon-btn" id="back-btn" hidden></button>
+    <span class="bar-title" id="bar-title" hidden></span>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Upcoming: late, today, next 30 days (every pet) -->
+    <section id="view-up" class="view" role="tabpanel" aria-labelledby="tab-up">
+      <div id="bday-banner" class="banner bday" hidden></div>
+      <div id="up-list"></div>
+      <div id="up-empty" class="empty" hidden></div>
+    </section>
+
+    <!-- All pets -->
+    <section id="view-pets" class="view" role="tabpanel" aria-labelledby="tab-pets" hidden>
+      <div id="pet-grid"></div>
+      <div id="pets-empty" class="empty" hidden></div>
+    </section>
+
+    <!-- One pet: overview, health book, weight, food -->
+    <section id="view-pet" class="view" hidden>
+      <div id="pet-head"></div>
+      <div class="subtabs" id="subtabs" role="tablist"></div>
+      <div id="pet-body"></div>
+    </section>
+  </main>
+
+  <div id="print-area" aria-hidden="true"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.46.00"></script>
+  <script src="petcare.js?v=0.46.00"></script>
+
+</body>
+</html>
