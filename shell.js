@@ -6027,6 +6027,27 @@
     openAppById("todo");
   };
 
+  // Workouts deep-link bridge (Calendar feed → one workout). Payload =
+  // workout id. App open → live push __orosFitnessOpen into the
+  // iframe; closed → stage "oros-fitness-open" in sessionStorage (read
+  // one-shot by fitness.js at boot) + open the app. Same pattern as
+  // To-Do; a stale bundle without the receiver ignores the id.
+  window.__orosOpenFitness = function (workoutId) {
+    if (typeof workoutId !== "string" || !/^[a-z0-9-]{1,40}$/.test(workoutId)) return;
+    if (state.running && state.running.id === "fitness") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosFitnessOpen === "function") {
+          f.contentWindow.__orosFitnessOpen(workoutId);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-fitness-open", workoutId); } catch (e) {}
+    openAppById("fitness");
+  };
+
   // Habits deep-link bridge (Wave 8/#TH2 — closes Σ2-N1). Payload =
   // period offset in DAYS (number or numeric string; 0 = current
   // period, negative = back). App open → live push __orosHabitsOpen
