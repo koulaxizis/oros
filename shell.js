@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.47.05";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.48.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -129,6 +129,7 @@
 
   // App icons (SVG — ForkAwesome rejected, handcrafted forever)
   var ICONS = {
+    help: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.5-2.7 4.1"/><path d="M12 17.6h.01"/></svg>',
     check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     columns: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="16" y="3" width="5" height="13" rx="1"/></svg>',
     mindmap: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="9.5" width="8" height="5" rx="2"/><circle cx="3.5" cy="5" r="1.8"/><circle cx="20.5" cy="5" r="1.8"/><circle cx="3.5" cy="19" r="1.8"/><circle cx="20.5" cy="19" r="1.8"/><path d="M5 6.2l3.2 3.8M19 6.2l-3.2 3.8M5 17.8l3.2-3.8M19 17.8l-3.2-3.8"/></svg>',
