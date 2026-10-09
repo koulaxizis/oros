@@ -165,6 +165,7 @@
       "stats.head": "Best · level · games",
       "stats.reset": "Reset records",
       "stats.close": "Close",
+      "stats.on": "best on {d}",
       "confirm.reset": "Delete the records on every device?",
       "confirm.yes": "Reset",
       "confirm.no": "Cancel",
@@ -213,6 +214,7 @@
       "stats.head": "Ρεκόρ · επίπεδο · παιχνίδια",
       "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο",
+      "stats.on": "ρεκόρ στις {d}",
       "confirm.reset": "Να διαγραφούν τα ρεκόρ σε όλες τις συσκευές;",
       "confirm.yes": "Μηδενισμός",
       "confirm.no": "Άκυρο",
@@ -247,6 +249,12 @@
     return (buf[0] * 2097152 + (buf[1] >>> 11)) / 9007199254740992;
   }
 
+  function dateStr(ts) {
+    try {
+      return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "short", year: "numeric" });
+    } catch (e) { return ""; }
+  }
   function nowMs() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
   function fmt(n) { return Number(n).toLocaleString(LANG === "el" ? "el-GR" : "en-US"); }
   function isNum(v) { return typeof v === "number" && isFinite(v); }
@@ -512,14 +520,14 @@
     return { ver: DATA_VER, br: br, rows: sorted };
   }
 
-  // Best score, best level and games for a key, across every device.
+  // Best score (and when), best level and games for a key, across every device.
   function totals(key) {
-    var out = { n: 0, v: 0, g: 0 };
+    var out = { n: 0, ts: 0, v: 0, g: 0 };
     Object.keys(data.rows).forEach(function (id) {
       var c = data.rows[id].s[key];
       if (!c) return;
       out.g += c.g;
-      if (c.n > out.n) out.n = c.n;
+      if (c.n > out.n || (c.n === out.n && c.n > 0 && c.ts < out.ts)) { out.n = c.n; out.ts = c.ts; }
       if (c.v > out.v) out.v = c.v;
     });
     return out;
@@ -615,9 +623,10 @@
       var g = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (validSession(g)) {
         return { pow: g.pow, level: g.level, bricks: g.bricks, score: g.score, lives: g.lives, px: g.px,
-                 speed: g.speed, wideT: g.wideT, slowT: g.slowT, over: false,
+                 speed: g.speed,
                  ball: { x: g.ball.x, y: g.ball.y, dx: g.ball.dx, dy: g.ball.dy, stuck: g.ball.stuck, off: g.ball.off },
-                 caps: g.caps.map(function (c) { return { x: c.x, y: c.y, k: c.k }; }) };
+                 wideT: g.wideT, slowT: g.slowT,
+                 caps: g.caps.map(function (c) { return { x: c.x, y: c.y, k: c.k }; }), over: false };
       }
     } catch (e) {}
     return null;
@@ -991,6 +1000,12 @@
     r.appendChild(el("strong", "", v));
     return r;
   }
+  // A records row; ts (when the best was set) shows under the label.
+  function statRow(k, v, ts) {
+    var r = row(k, v);
+    if (ts) r.firstChild.appendChild(el("small", "dlg-date", t("stats.on", { d: dateStr(ts) })));
+    return r;
+  }
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
     b.type = "button";
@@ -1031,7 +1046,7 @@
     [true, false].forEach(function (pow) {
       var s = totals(keyOf(pow));
       if (s.g) empty = false;
-      dlg.appendChild(row(t(pow ? "pow.on" : "pow.off"), s.g ? fmt(s.n) + " · " + s.v + " · " + fmt(s.g) : "–"));
+      dlg.appendChild(statRow(t(pow ? "pow.on" : "pow.off"), s.g ? fmt(s.n) + " · " + s.v + " · " + fmt(s.g) : "–", s.n ? s.ts : 0));
     });
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {

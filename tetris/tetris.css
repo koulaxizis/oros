@@ -381,6 +381,12 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   border-bottom: 1px solid var(--border);
 }
 .dlg-row span { color: var(--text-dim); }
+.dlg-row small.dlg-date {
+  display: block;
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 1px;
+}
 .dlg-row strong { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
 .dlg-sub {
   font-size: 11px;

@@ -93,6 +93,7 @@
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off",
       "btn.start": "Start", "btn.again": "Play again", "btn.go": "Resume",
       "who.you": "You", "who.cpu": "Computer", "who.p1": "Player 1", "who.p2": "Player 2",
+      "for.you": "you", "for.cpu": "the computer", "for.p1": "Player 1", "for.p2": "Player 2",
       "turn.ready": "First to {n} wins",
       "turn.run": "First to {n}",
       "turn.paused": "Paused",
@@ -108,7 +109,7 @@
       "live.start": "Game started",
       "live.paused": "Paused",
       "live.point": "Point for {w}: {s0} to {s1}",
-      "live.over": "{w} won {s0} to {s1}",
+      "live.over": "{w} won, {s0} to {s1}",
       "res.won": "You won!",
       "res.lost": "The computer won",
       "res.duo": "{w} won!",
@@ -124,6 +125,7 @@
       "stats.games": "Games played",
       "stats.reset": "Reset records",
       "stats.close": "Close",
+      "stats.on": "best on {d}",
       "confirm.reset": "Delete the records on every device?",
       "confirm.yes": "Reset",
       "confirm.no": "Cancel",
@@ -144,10 +146,11 @@
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
       "btn.start": "Έναρξη", "btn.again": "Ξανά", "btn.go": "Συνέχεια",
       "who.you": "Εσύ", "who.cpu": "Υπολογιστής", "who.p1": "Παίκτης 1", "who.p2": "Παίκτης 2",
-      "turn.ready": "Κερδίζει όποιος φτάσει πρώτος στους {n}",
+      "for.you": "εσένα", "for.cpu": "τον υπολογιστή", "for.p1": "τον Παίκτη 1", "for.p2": "τον Παίκτη 2",
+      "turn.ready": "Μέχρι τους {n} πόντους",
       "turn.run": "Μέχρι τους {n}",
       "turn.paused": "Παύση",
-      "turn.over": "Νίκη: {w}",
+      "turn.over": "Νικητής: {w}",
       "hint.ready": "W / S, ↑ / ↓ ή το ποντίκι κινούν τη ρακέτα σου\nP ή Space για παύση",
       "hint.readyDuo": "Αριστερή ρακέτα: W / S\nΔεξιά ρακέτα: ↑ / ↓\nP ή Space για παύση",
       "hint.readyTouch": "Σύρε το δάχτυλο στο γήπεδο για να κινήσεις τη ρακέτα σου",
@@ -155,11 +158,11 @@
       "hint.readyRot": "A / D, ← / → ή το ποντίκι κινούν τη ρακέτα σου\nP ή Space για παύση",
       "hint.readyDuoRot": "Κάτω ρακέτα: A / D\nΕπάνω ρακέτα: ← / →\nP ή Space για παύση",
       "hint.paused": "Παύση",
-      "board.label": "Γήπεδο πινγκ πονγκ, {a} {s0}, {b} {s1}",
+      "board.label": "Γήπεδο Πονγκ, {a} {s0}, {b} {s1}",
       "live.start": "Το παιχνίδι ξεκίνησε",
       "live.paused": "Παύση",
       "live.point": "Πόντος για {w}: {s0} – {s1}",
-      "live.over": "Νίκη για {w}: {s0} – {s1}",
+      "live.over": "Νικητής: {w}, {s0} – {s1}",
       "res.won": "Κέρδισες!",
       "res.lost": "Κέρδισε ο υπολογιστής",
       "res.duo": "Νίκη για {w}!",
@@ -175,6 +178,7 @@
       "stats.games": "Παιχνίδια",
       "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο",
+      "stats.on": "ρεκόρ στις {d}",
       "confirm.reset": "Να διαγραφούν τα ρεκόρ σε όλες τις συσκευές;",
       "confirm.yes": "Μηδενισμός",
       "confirm.no": "Άκυρο",
@@ -605,8 +609,9 @@
 
   function inProgress() { return state === "run" || state === "paused" || state === "count"; }
   function duo(g) { return (g || game).mode === "2"; }
-  function who(side, g) {
-    return duo(g) ? t(side ? "who.p2" : "who.p1") : t(side ? "who.cpu" : "who.you");
+  function who(side, g, form) {
+    var f = form || "who";
+    return duo(g) ? t(f + (side ? ".p2" : ".p1")) : t(f + (side ? ".cpu" : ".you"));
   }
 
   // A game in progress is never lost silently: Undo toast (R14).
@@ -651,6 +656,7 @@
     if (state === "run" || state === "count") {
       clearTimeout(countTimer);
       state = "paused";
+      flash = null;
       releaseInput();
       saveSession();
       if (!quiet) { live(t("live.paused")); renderAll(); }
@@ -731,7 +737,7 @@
     renderStatus();
     if (ev.over) { finish(); return; }
     sfx(duo() || ev.point === 0 ? "point" : "miss");
-    live(t("live.point", { w: who(ev.point), s0: game.s[0], s1: game.s[1] }));
+    live(t("live.point", { w: who(ev.point, null, "for"), s0: game.s[0], s1: game.s[1] }));
     saveSession();
   }
 
@@ -739,6 +745,7 @@
     stopLoop();
     releaseInput();
     state = "over";
+    flash = null;                // no glow frozen under the result
     var rec = countGame(game);
     saveSession();
     renderAll();
@@ -967,13 +974,19 @@
     r.appendChild(el("strong", "", v));
     return r;
   }
+  // A records row; ts (when the best was set) shows under the label.
+  function statRow(k, v, ts) {
+    var r = row(k, v);
+    if (ts) r.firstChild.appendChild(el("small", "dlg-date", t("stats.on", { d: dateStr(ts) })));
+    return r;
+  }
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
     b.type = "button";
     b.addEventListener("click", fn);
     return b;
   }
-  function marginStr(s) { return s.m ? "+" + s.m + " · " + dateStr(s.ts) : "–"; }
+  function marginStr(s) { return s.m ? "+" + s.m : "–"; }
 
   // Shown once per game, 0.7 s after the end (Space shows it at once).
   var lastRec = false, resultPending = false, resultTimer = null;
@@ -984,7 +997,7 @@
     var dlg = makeDialog("pong-result"), d2 = duo();
     var sub = d2 ? t("mode.duo") : t("level." + game.mode);
     dlg.appendChild(el("div", "dlg-title", sub + " · " + t("to.n", { n: game.to })));
-    var hero = d2 ? t("res.duo", { w: who(game.winner) }) : t(game.winner === 0 ? "res.won" : "res.lost");
+    var hero = d2 ? t("res.duo", { w: who(game.winner, null, "for") }) : t(game.winner === 0 ? "res.won" : "res.lost");
     dlg.appendChild(el("div", "dlg-hero", hero));
     dlg.appendChild(el("div", "dlg-score", game.s[0] + " – " + game.s[1]));
     if (lastRec) dlg.appendChild(el("div", "dlg-badge", t("res.record")));
@@ -993,7 +1006,7 @@
     } else {
       var s = totals(game.mode);
       dlg.appendChild(row(t("res.wl"), s.w + " · " + s.l));
-      dlg.appendChild(row(t("res.best"), marginStr(s)));
+      dlg.appendChild(statRow(t("res.best"), marginStr(s), s.m ? s.ts : 0));
     }
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
@@ -1014,7 +1027,7 @@
     LEVELS.forEach(function (lv) {
       var s = totals(lv);
       if (s.g) empty = false;
-      dlg.appendChild(row(t("level." + lv), s.g ? s.w + " · " + s.l + " · " + marginStr(s) : "–"));
+      dlg.appendChild(statRow(t("level." + lv), s.g ? s.w + " · " + s.l + " · " + marginStr(s) : "–", s.m ? s.ts : 0));
     });
     dlg.appendChild(el("div", "dlg-sub", t("stats.duo")));
     var d = totals("p2");
