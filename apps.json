@@ -186,6 +186,14 @@
       "type": "internal"
     },
     {
+      "id": "qr",
+      "name": "QR Generator",
+      "category": "Office",
+      "icon": "qr",
+      "url": "qr/",
+      "type": "internal"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",

@@ -534,6 +534,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Netizen ID** | oros-netizen-data | cards LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.43.02; Fun (soffitta.site port) |
 | **Wallpaper Generator** | oros-wallpaper-data | favourites LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26); the desktop recipe travels in the SHELL slice (`wpart`) | v1.0.0 at 0.45.04; Creativity (soffitta.site port) |
 | **Wheel of Fate** | oros-wheel-data | saved wheels LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.45.10; Fun (soffitta.site port) |
+| **QR Generator** | oros-qr-data | saved codes LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.45.14; Office (new app, own QR encoder) |
 | **Micro-Zen** | oros-zen-data | per-device rows of per-day [sessions, seconds, breaths], join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.45.13; Personal (soffitta.site port) |
 | **Name Generator** | oros-names-data | favourites LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties); the id is a hash of mode + text, canonical (R26) | v1.0.0 at 0.45.15; Creativity (soffitta.site port) |
 | **Password Generator** | — (no slice) | nothing synced: generated and checked passwords are never stored; options are device-local | v1.0.0 at 0.46.00; Security |
@@ -632,6 +633,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Backgammon:** oros-backgammon-prefs (`{mode, lv}`: ai|duo, e|m|h), oros-backgammon-session (the game in progress: `{mode, lv, ai, c, turn, phase, dice, rem, hist, mv, last, tie, winner, pts, series}`; `series` = the 2-player points on this device), oros-backgammon-device, oros-backgammon-sfx, oros-backgammon-data-broken.
 - **Sound Mixer:** oros-mixer-prefs (`{mix, vol, mute, timer}`: the mix on the desk (MIXER v1 mix), master volume 0–100, mute 0/1, last sleep timer 0|15|30|60|90 min), oros-mixer-data-broken. Playback never starts on open.
 - **Wheel of Fate:** oros-wheel-prefs (`{cur, draft, sound}`: the open saved wheel id or null, the unsaved wheel's rows, sound 0/1, default 1), oros-wheel-history (`{<wheel id | "_draft">: [{w, t}]}`, newest first, ≤ 50 winners per wheel, ≤ 50 wheels; NOT synced, Chris 2026-10-08), oros-wheel-data-broken.
+- **QR Generator:** oros-qr-prefs (`{cur, draft, png}`: the open saved code id or null; the unsaved code `{type, fields{type: fields}, st}`, WiFi password included, device-local; PNG export size 256|512|1024|2048, default 1024), oros-qr-data-broken.
 - **Micro-Zen:** oros-zen-prefs (`{pat, min, sound, vibe}`: pattern box|relax|coherent, length 1|3|5|10 min, soft tones 0/1 and vibration 0/1, both default 0), oros-zen-device, oros-zen-data-broken. A session in progress is not kept: it pauses when the app is hidden and ends when the app closes.
 - **Name Generator:** oros-names-prefs (`{mode, words, leet, sep, num}`: handle|title|regal, name language en|el (default: the orOS language), handle styles 0/1), oros-names-data-broken. Batches are never stored.
 - **Password Generator:** oros-passwords-prefs (`{tab, pw{mode, length, pin, lower, upper, digits, symbols, noAmbig, custom}, ph{src, list, words, sep, caps, extra}, clear}`: open tab pw|ph|au, character/PIN options, passphrase options (device|dice, large|short, 3–12 words, space|dash|dot|under), clipboard clearing 0/1, default 1). Never a password: generated ones live in page memory only, the checked one is wiped on tab change and on close.
@@ -727,6 +729,9 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **WHEEL v1:**
   - Slice `wheel` (oros-wheel-data): `{ ver, wheels[{id, m, name (≤ 40), opts[2–30 texts, ≤ 50 each, spaces collapsed]}] sorted by id, tombs{id: deletedAt} sorted }`, at most 40 wheels. Merge as NETIZEN v1 (newer `m`, equal `m` → larger canonical JSON; tombs max; a tomb ≥ `m` hides the wheel; Undo writes a fresh `m`) (`tests/wheel.test.js`).
   - Winners history and the unsaved wheel stay on the device (Part III).
+- **QR v1:**
+  - Slice `qr` (oros-qr-data): `{ ver, codes[{id, m, name (≤ 40), type, f (fields), st (look)}] sorted by id, tombs{id: deletedAt} sorted }`, at most 100 codes. `type` ∈ url, wifi, vcard, event, text, email, phone, sms, geo; `f` holds only that type's keys (`FIELDS` in `qr/qr-payload.js`, strings capped, enums and booleans coerced; WiFi passwords sync too, Chris 2026-10-08); `st` = `{ecl L|M|Q|H, fg, bg (#rrggbb), mg 0–10, rd, cap, ct (≤ 40)}`. Merge as NETIZEN v1 (newer `m`, equal `m` → larger canonical JSON; tombs max; a tomb ≥ `m` hides the code; Undo writes a fresh `m`) (`tests/qr.test.js`).
+  - The text inside the code is derived from `type` + `f` on every render, never stored.
 - **ZEN v1:**
   - Slice `zen` (oros-zen-data): `{ ver, br, rows{deviceId:{b, d{"YYYY-MM-DD": [sessions, seconds, breaths]}}} }`. Each device writes only its own row and its counters only grow. Per row: larger epoch `b` wins; equal epochs take per day the max of each counter; rows with `b < br` drop; a row keeps its 400 newest days. A join (`tests/zen.test.js`).
   - Reset = a new epoch: `br` past every row; each device starts its own row again at `br`. Stats (today, this week, streak, sessions, last 7 days) are sums over rows; a session counts only after one whole breath.
@@ -1391,6 +1396,12 @@ Rebuild this in any session where code is delivered.
   - Recent places are device-local (`oros-maps-recent`, 10), never synced: they are a convenience, not data.
   - Starting navigation more than 150 m from the route's start recalculates the route from the user's position first, with a toast (offline: guides on the old route, as before).
   - The "Maps loaded" welcome toast is removed (MP-4).
+- **2026-10-08 · Christos (QR Generator)**
+  - New app **QR Generator / Δημιουργός QR**, category **Office** ("Ναι σε όλα, κατηγορία Γραφείο"; the plan proposed Accessories).
+  - Own QR encoder (`qr/qr-encode.js`, ISO/IEC 18004, versions 1–40, L/M/Q/H, numeric/alphanumeric/UTF-8 byte), no third-party code in the app. Proof of correctness: every test code is read back by an independent decoder (jsQR, test-only) and the tables are checked against the standard.
+  - Types: link, WiFi, contact (vCard 3.0), event (VEVENT, floating local time), text, email, phone, SMS, location. Export PNG (256–2048 px) and SVG; copy image, share (phones), print, WiFi card, save to Files (`/internal/QR`).
+  - "From…" reads Contacts, Calendar and Bookmarks read-only (prefill, BR-W8-6); nothing is written to those apps. Saved codes sync, WiFi passwords included (end-to-end encrypted sync).
+  - Later (not in v1.0.0): a "QR" button inside Contacts, Calendar and Bookmarks through a shell bridge `__orosOpenQR` (Maps → Calendar shape). Not now: a logo in the middle of the code; scanning codes with the camera (a separate app, if ever).
 - **2026-10-08 · Christos (Apps: soffitta.site port)**
   - The apps of soffitta.site come to orOS: full rewrite, no old code, full compliance with orOS. Each title is asked one at a time: approve / reject / postpone (tracked in project memory, `oros-soffitta-port`); each approved app gets a plan, a proposed category agreed with Christos, then its own app and PR. Dice & Coin and Screen Pet already exist in orOS and are not ported again.
   - Netizen ID approved and go-ahead given, category **Fun** (proposed Creativity; his choice). Accepted with it: a view-only share link carrying the card in the URL fragment; several cards; no QR code for now; no "add me to Contacts" for now (vCard export covers it); a back side. Pixel Avatar Maker is decided when its turn comes.
@@ -1689,6 +1700,8 @@ Rebuild this in any session where code is delivered.
 - Password Generator: a Greek Diceware list (deferred by Christos 2026-10-08; our own 7,776 words, typeable as greeklish), which would also let the auditor recognize Greek names and words; a strength meter on the sync passphrase field using the same engine (suggestion).
 - **[log]** Vault Drive: object GC; streaming limit; `fs.js` `ls()` with size/mtime on both backends; `diskSnapshot()` ignored argument.
 
+- **QR Generator phase 2** (Chris 2026-10-08, after v1.0.0): a "QR" button in Contacts, Calendar and Bookmarks that opens QR Generator prefilled, through a shell bridge `__orosOpenQR(payload)` + staging key `oros-qr-new` (BR-W8 shape).
+
 ### Backlog (long-term)
 
 - **Core/sync:** unified shell toast API absorption · hierarchical key rotation · cross-device passphrase-change notice · more cloud providers (E2EE mandatory) · per-entry file sync for OrosFS.
@@ -1715,6 +1728,7 @@ Rebuild this in any session where code is delivered.
   - **[log]** Files: single tap enters a folder on mobile; Size/Date columns
   - **[log]** `dialogs.js`: filtered native open picker
 - **Shell page:** a Content-Security-Policy `<meta>` per document (static hosting cannot send headers; it needs the full list of external hosts first, so after the audit) · Open Graph + canonical tags for link previews (needs a real screenshot asset).
+- **QR Generator:** a logo in the middle of the code (needs level H; deferred 2026-10-08) · a QR scanner with the camera (separate app; deferred 2026-10-08).
 - **New apps:** Pad (Notepad++-style) · Pagination/typesetting · Public Domain Calculator · Desk suite · native Windows/Android conversions (pending flawless PWA validation).
 
 ### Lessons — closed incidents (do not re-chase)
