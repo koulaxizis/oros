@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Flow Free · orOS</title>
+
+  <link rel="stylesheet" href="flow.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="level-seg" role="group">
+        <button type="button" class="seg-btn" data-level="5">5×5</button>
+        <button type="button" class="seg-btn" data-level="6">6×6</button>
+        <button type="button" class="seg-btn" data-level="7">7×7</button>
+        <button type="button" class="seg-btn" data-level="8">8×8</button>
+        <button type="button" class="seg-btn" data-level="9">9×9</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="undo-btn"></button>
+      <button type="button" class="icon-btn" id="hint-btn"></button>
+      <button type="button" class="icon-btn" id="restart-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: lines joined, filled share, time -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.flows">Lines</span><strong id="flows">0/0</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="time">0:00</strong><span data-i18n="st.time">Time</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <svg id="board" tabindex="0" role="application" xmlns="http://www.w3.org/2000/svg"></svg>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="flow.js"></script>
+
+</body>
+</html>

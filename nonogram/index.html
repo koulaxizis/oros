@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nonogram · orOS</title>
+
+  <link rel="stylesheet" href="nonogram.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="size-seg" role="group">
+        <button type="button" class="seg-btn" data-size="5">5×5</button>
+        <button type="button" class="seg-btn" data-size="10">10×10</button>
+        <button type="button" class="seg-btn" data-size="15">15×15</button>
+      </div>
+      <div class="seg" id="mode-seg" role="group">
+        <button type="button" class="seg-btn" data-mode="f"><span class="mi mi-f"></span><span data-i18n="mode.f">Fill</span></button>
+        <button type="button" class="seg-btn" data-mode="x"><span class="mi mi-x"></span><span data-i18n="mode.x">Mark</span></button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="zoom-btn" aria-pressed="false"></button>
+      <button type="button" class="icon-btn" id="undo-btn"></button>
+      <button type="button" class="icon-btn" id="hint-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: time, message, best time -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.time">Time</span><strong id="time">0:00</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="best">–</strong><span data-i18n="st.best">Best</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="pic" tabindex="0"></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="nonogram.js"></script>
+
+</body>
+</html>

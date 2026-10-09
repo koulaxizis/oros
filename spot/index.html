@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Spot the Difference · orOS</title>
+
+  <link rel="stylesheet" href="spot.css">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <div class="seg" id="lv-seg" role="group">
+        <button type="button" class="seg-btn" data-lv="l1" data-i18n="lv.l1">Easy · 5</button>
+        <button type="button" class="seg-btn" data-lv="l2" data-i18n="lv.l2">Medium · 7</button>
+        <button type="button" class="seg-btn" data-lv="l3" data-i18n="lv.l3">Hard · 10</button>
+      </div>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="hint-btn"></button>
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <!-- Status: time, message, found -->
+  <div id="status">
+    <span class="stat"><span data-i18n="st.time">Time</span><strong id="time">0:00</strong></span>
+    <span id="turn" aria-live="polite"></span>
+    <span class="stat"><strong id="found">0/5</strong><span data-i18n="st.found">Found</span></span>
+  </div>
+
+  <main id="board-wrap">
+    <div id="pics">
+      <svg id="pic-a" class="pic" viewBox="0 0 400 300" role="img"></svg>
+      <svg id="pic-b" class="pic" viewBox="0 0 400 300" role="img"></svg>
+    </div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="spot.js"></script>
+
+</body>
+</html>
