@@ -1374,7 +1374,9 @@
       if (held && !held.ptr) dropHeld();
       var j = +b.getAttribute("data-j");
       pend = { j: j, g: trayCellAt(b, j, e.clientX, e.clientY), x: e.clientX, y: e.clientY, id: e.pointerId, src: b };
-      try { b.setPointerCapture(e.pointerId); } catch (err) {}
+      // Capture on the tray, not the button: the tray is redrawn when the
+      // piece lifts, and a touch captured by a removed button is lost.
+      try { tray.setPointerCapture(e.pointerId); } catch (err) {}
     });
     document.addEventListener("pointermove", function (e) {
       if (!pend || e.pointerId !== pend.id) return;
