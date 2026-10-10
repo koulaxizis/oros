@@ -186,6 +186,7 @@
       "ct.back": "Back",
       "ct.share": "Share",
       "ct.familytree": "Family tree",
+      "ct.qr": "QR code",
       "ct.share.done": "Contact copied to clipboard",
       "ct.share.fail": "Could not copy — please retry",
       "ct.maps": "Show on map",
@@ -308,6 +309,7 @@
       "ct.back": "Πίσω",
       "ct.share": "Κοινοποίηση",
       "ct.familytree": "Οικογενειακό δέντρο",
+      "ct.qr": "Κωδικός QR",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
       "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά",
       "ct.maps": "Εμφάνιση στον χάρτη"
@@ -1530,6 +1532,16 @@ function openViewCard(c) {
       shell.__orosOpenAt("familytree", { contact: c.id });
     });
     foot.appendChild(ft);
+    // QR app: a new vCard code from this contact (only the id travels).
+    var qr = document.createElement("button");
+    qr.type = "button";
+    qr.className = "ct-view-share";
+    qr.textContent = t("ct.qr");
+    qr.addEventListener("click", function () {
+      closeViewCard();
+      shell.__orosOpenAt("qr", { from: "contacts", id: c.id });
+    });
+    foot.appendChild(qr);
   }
   var ed = document.createElement("button");
   ed.type = "button";

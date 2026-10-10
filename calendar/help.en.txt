@@ -15,7 +15,7 @@ The event window has:
 - `Reminder`: from 5 minutes up to 5 days before.
 - `Location`, a label and a `Note`.
 
-Tap or click an event to edit it. For a repeating event you're asked first: `This occurrence` or `Entire series`. `Delete event` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
+Tap or click an event to edit it. For a repeating event you're asked first: `This occurrence` or `Entire series`. `Delete event` asks to confirm, and an `Undo` button appears for a few seconds afterwards. `QR code` in the same window opens [QR Generator](app:qr) with a code for the event, which phones can add to their own calendar.
 
 On a computer you can drag a single-day event that doesn't repeat onto another day in the month view to move it.
 

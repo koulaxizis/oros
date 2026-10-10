@@ -92,6 +92,7 @@
       "ev.save": "Save",
       "ev.cancel": "Cancel",
       "ev.delete": "Delete event",
+      "ev.qr": "QR code",
       "ev.delete.confirm": "Delete this event?",
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
@@ -238,6 +239,7 @@
       "ev.save": "Αποθήκευση",
       "ev.cancel": "Άκυρο",
       "ev.delete": "Διαγραφή συμβάντος",
+      "ev.qr": "Κωδικός QR",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
@@ -3110,6 +3112,20 @@ function transientNote(title, body) {
     state.labels.forEach(function (l) { mk(l.id, lblName(l), l.color); });
   }
 
+  var dlgQr = null;
+  function shellOpenAt() {
+    try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
+    catch (e) { return null; }
+  }
+  if ($("ev-qr")) {
+    $("ev-qr").addEventListener("click", function () {
+      var p = shellOpenAt(), target = dlgQr;
+      if (!p || !target) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      p.__orosOpenAt("qr", target);
+    });
+  }
+
   function openDlg(existing, mode) {
     dlgMode = mode || null;
     if (mode !== "occ") pendingOverride = null;   // kept by openDlgOccurrence
@@ -3167,6 +3183,12 @@ function transientNote(title, body) {
     // routes occ-mode deletes to exdateMaster (the series lives on).
     $("ev-del-row").className = "dlg-row" +
       (existing ? " show" : "");
+    // QR app: a new event code from the SAVED event (shell deep link;
+    // an occurrence of a series passes its own date).
+    dlgQr = existing ? { from: "calendar", id: existing.id } : null;
+    if (dlgQr && mode === "occ" && pendingOverride) dlgQr.date = pendingOverride.occYmd;
+    var qrBtn = $("ev-qr");
+    if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
     // CA-8: what the dialog showed at open — a pull may update every
     // field the user has not touched since.
     dlgBase = (existing && mode !== "occ") ? {

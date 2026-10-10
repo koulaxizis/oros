@@ -25,6 +25,17 @@ On `Programs`, copy one of the `Ready programs` (`Full Body 3×`, `Upper / Lower
 
 On `Body`, `Add measurement` logs `Body weight`, `Waist`, `Chest` or `Arm`.
 
+## Import from Strong or Hevy
+Bring your history over from another training app.
+1. Export your workouts as CSV: in Strong, `Settings` › `Export Strong Data`; in Hevy, `Settings` › `Export & Import Data` › `Export Workouts`.
+2. Here, open `Settings` and choose `Import from Strong or Hevy (CSV)`, then pick the file.
+3. Check the summary: how many workouts and sets, which exercises were found here and which are new. If the file does not say its units, choose `Metric (kg, km, cm)` or `Imperial (lb, mi, in)` under `Weights and distances in this file`.
+4. Tap or click `Import`.
+
+Warm-up sets stay warm-up sets, notes come along, and records, charts, Calendar and Habits include the imported workouts at once. Importing the same file again skips the workouts that are already here, and a workout you delete is not brought back.
+
+> New exercises land in the `Exercise library`, where you can rename them or change their muscle group.
+
 ## Sync and backup
 Your exercises, programs, workouts, body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices and rest timer stay on this device.
 

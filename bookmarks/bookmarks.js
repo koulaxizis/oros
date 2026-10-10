@@ -126,6 +126,7 @@ const STR = {
     "item.folder": "Folder",
     "item.delete": "Delete",
     "item.follow": "Follow in Reader",
+    "item.qr": "QR code",
     "item.open": "Open",
     "item.move": "Move to…",
     "item.edit": "Edit",
@@ -226,6 +227,7 @@ const STR = {
     "item.folder": "Φάκελος",
     "item.delete": "Διαγραφή",
     "item.follow": "Στον Αναγνώστη",
+    "item.qr": "Κωδικός QR",
     "item.open": "Άνοιγμα",
     "item.move": "Μετακίνηση σε…",
     "item.edit": "Επεξεργασία",
@@ -2028,6 +2030,11 @@ function wireTagEditor() {
   });
 }
 
+function shellOpenAt() {
+  try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent.__orosOpenAt : null; }
+  catch (e) { return null; }
+}
+
 function openItemDialog(id) {
   const it = state.items[id];
   if (!it) return;
@@ -2042,6 +2049,7 @@ function openItemDialog(id) {
   $("#f-tags-input").value = "";
   $("#f-tags-ac").hidden = true;
   fillFolderSelect(it.folderId);
+  $("#f-qr").hidden = !shellOpenAt();
   $("#dlg-item").showModal();
 }
 
@@ -2068,6 +2076,7 @@ function openAddDialog(a) {
   renderDlgTags();
   $("#f-title").value = title;
   $("#f-url").value = norm;
+  $("#f-qr").hidden = true;            // nothing saved yet
   $("#f-note").value = "";
   $("#f-tags-input").value = "";
   $("#f-tags-ac").hidden = true;
@@ -2617,6 +2626,17 @@ function wire() {
     editingItemId = null;
     $("#dlg-item").close();
     openAt("feeds", { add: { url: norm } });
+  });
+
+  /* "QR code": the QR app makes a new code from the SAVED bookmark
+     (shell deep link; only the id travels). Unsaved edits in the
+     dialog are left behind, like Cancel. */
+  $("#f-qr").addEventListener("click", () => {
+    const id = editingItemId, go = shellOpenAt();
+    if (!id || !go) return;
+    editingItemId = null;
+    $("#dlg-item").close();
+    go("qr", { from: "bookmarks", id: id });
   });
 
   /* Folder dialog */

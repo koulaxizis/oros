@@ -1033,6 +1033,9 @@ dialog menu button.danger:hover {
   #controls { flex-wrap: wrap; row-gap: 8px; }
   #search-wrap { flex: 1 1 100%; }
   #controls .spacer { display: none; }
+  /* The edit window's buttons (Delete, Follow in Reader, QR code,
+     Save) do not fit one 360px line: they wrap, Save stays last. */
+  dialog menu { flex-wrap: wrap; row-gap: 8px; justify-content: flex-end; }
 }
 @media (pointer: coarse) {
   .ctrl-btn.icon { width: 44px; height: 44px; }

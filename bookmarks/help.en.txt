@@ -20,7 +20,7 @@ Tap or click a row to open the link in a new tab.
 
 ## Edit, move and favourites
 
-Each row has a star (favourites), a pencil (`Edit`) and an open button. In the edit window you can change `Title`, `Address`, `Description`, `Tags` and `Folder`, or `Delete` the bookmark. `Follow in Reader` opens [Reader](app:feeds) to follow that site's news.
+Each row has a star (favourites), a pencil (`Edit`) and an open button. In the edit window you can change `Title`, `Address`, `Description`, `Tags` and `Folder`, or `Delete` the bookmark. `Follow in Reader` opens [Reader](app:feeds) to follow that site's news. `QR code` opens [QR Generator](app:qr) with a code for the saved address.
 
 Right-click a row (long-press on a phone) for a menu with `Open`, `Open in Maps`, `Edit`, `Add to favorites`, `Move to…` any other folder and `Delete`. On a computer you can also drag a row onto a folder tab. Dropping it on `All` moves it to `Unsorted`.
 

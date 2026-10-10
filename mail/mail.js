@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mail — App logic (v1.0.0, phase 1: accounts + reading)
+// orOS Mail — App logic (v1.1.0, phase 2: compose + send)
 // An IMAP mail reader. The browser cannot speak IMAP, so every
 // server call goes through the orOS mail relay (relay/, a small
 // stateless Cloudflare Worker): HTTPS in, IMAP out, nothing kept.
@@ -13,6 +13,12 @@
 //   - offline: what was opened or listed stays readable
 //   - attachments download (orosDialog, R33); invitations (.ics)
 //     go to Calendar, their place to Maps
+//   - compose / reply / reply all / forward in plain text (compose.js
+//     builds the message, the relay hands it to the SMTP server and
+//     files a copy in Sent); per-account signature; written offline →
+//     device-local Outbox, sent when back online
+//   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body } })
+//     opens a prefilled draft (never sends by itself)
 // Data:
 //   - synced slice "mail" (oros-mail-data): accounts WITHOUT
 //     passwords, relay address, senders with images allowed;
@@ -20,7 +26,7 @@
 //   - device-local (R10): oros-mail-prefs (open account / folder,
 //     plain-text mode); IndexedDB "oros-mail": non-extractable
 //     device key, sealed passwords, folder lists, message headers
-//     and bodies (cache). Never synced, never exported.
+//     and bodies (cache), outbox. Never synced, never exported.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Data model: accounts, merge
@@ -31,6 +37,7 @@
 //   7. UI: toolbar, side, list
 //   8. UI: reader
 //   9. Account dialog + settings
+//  9b. Compose, send, outbox
 //  10. Dialogs + toasts
 //  11. Keyboard
 //  12. Sync slice + palette
@@ -56,6 +63,10 @@
   var MAX_ACCTS     = 10;
   var MAX_TOMBS     = 200;
   var MAX_IMGOK     = 500;
+  var MAX_RCPT      = 50;               // relay limit (SMTP_LIMITS.rcpts)
+  var MSG_MAX       = 360 * 1024;       // built message bytes (relay takes 380 KB)
+  var OUT_MAX       = 50;               // outbox entries
+  var MAX_SIG       = 1000;
   var M = window.orosMailMime;
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -93,7 +104,7 @@
       "dlg.acctTitle": "Add account", "dlg.editTitle": "Account", "dlg.name": "Your name",
       "dlg.email": "E-mail address", "dlg.pass": "Password", "dlg.passKeep": "Leave empty to keep the saved one",
       "dlg.server": "Server settings", "dlg.imap": "Incoming (IMAP) server", "dlg.port": "Port / security",
-      "dlg.user": "Username", "dlg.smtp": "Outgoing (SMTP) server", "dlg.smtpNote": "Used for sending (next update).",
+      "dlg.user": "Username", "dlg.smtp": "Outgoing (SMTP) server", "dlg.smtpNote": "Used for sending, with the same username and password.",
       "dlg.relay": "Relay address", "dlg.relayHint": "The orOS mail relay (https://…). It passes your mail through and keeps nothing.",
       "dlg.connect": "Connect", "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.checking": "Checking…",
       "dlg.appPass": "{svc} needs an app password: create one in your {svc} account security settings and use it here.",
@@ -120,7 +131,28 @@
       "err.max": "Up to {n} accounts.", "err.dup": "This account is already added.",
       "toast.added": "Account added", "toast.saved": "Saved", "toast.removed": "Account removed",
       "toast.storage": "Could not save: storage is full", "toast.saveFail": "The attachment could not be saved",
-      "toast.updated": "Up to date", "toast.cal": "Calendar is not available", "time.yesterday": "Yesterday"
+      "toast.updated": "Up to date", "toast.cal": "Calendar is not available", "time.yesterday": "Yesterday",
+      "btn.compose": "New message", "act.reply": "Reply", "act.all": "Reply all", "act.fwd": "Forward",
+      "cmp.title": "New message", "cmp.from": "From", "cmp.to": "To", "cmp.cc": "Cc", "cmp.bcc": "Bcc",
+      "cmp.ccbcc": "Cc / Bcc", "cmp.subject": "Subject", "cmp.body": "Message", "cmp.date": "Date",
+      "cmp.send": "Send", "cmp.sending": "Sending…", "cmp.discard": "Discard",
+      "cmp.discardQ": "Discard this message?", "cmp.keep": "Keep writing",
+      "cmp.hint": "Plain text, no attachments yet.",
+      "cmp.wrote": "On {date}, {who} wrote:", "cmp.fwd": "---------- Forwarded message ----------",
+      "cmp.noRcpt": "Add at least one recipient.", "cmp.bad": "Not an e-mail address: {list}",
+      "cmp.many": "Up to {n} recipients.", "cmp.noacct": "Add an account to send mail.",
+      "cmp.timeout": "The server did not answer in time. The message may have gone out: check Sent before sending it again.",
+      "dlg.sig": "Signature", "dlg.sigHint": "Added under each new message and reply. Synced with the account.",
+      "err.nosmtp": "This account has no outgoing (SMTP) server. Add it in the account's server settings.",
+      "err.smtpfail": "Incoming mail works, but the outgoing server failed: {msg}",
+      "err.rcpt": "The server did not accept a recipient: {msg}", "err.big": "The message is too long to send.",
+      "err.noacct": "The account of this message was removed.", "err.outfull": "The Outbox is full.",
+      "toast.sent": "Sent", "toast.sentNoCopy": "Sent. A copy could not be filed in Sent.",
+      "toast.queued": "In the Outbox: it goes out when you are online.", "toast.outSent": "Sent from the Outbox: {n}",
+      "out.bar": "Outbox: {n}", "out.title": "Outbox",
+      "out.text": "Messages written offline. They go out by themselves when you are online.",
+      "out.send": "Send now", "out.edit": "Edit", "out.del": "Delete", "out.failed": "Not sent: {msg}",
+      "out.empty": "The Outbox is empty.", "out.nosubj": "(no subject)"
     },
     el: {
       "app": "Αλληλογραφία", "nav.folders": "Φάκελοι", "nav.back": "Πίσω", "btn.refresh": "Έλεγχος για νέα μηνύματα",
@@ -146,7 +178,7 @@
       "dlg.acctTitle": "Προσθήκη λογαριασμού", "dlg.editTitle": "Λογαριασμός", "dlg.name": "Το όνομά σου",
       "dlg.email": "Διεύθυνση email", "dlg.pass": "Κωδικός", "dlg.passKeep": "Άφησέ το κενό για να μείνει ο αποθηκευμένος",
       "dlg.server": "Ρυθμίσεις διακομιστή", "dlg.imap": "Διακομιστής εισερχομένων (IMAP)", "dlg.port": "Θύρα / ασφάλεια",
-      "dlg.user": "Όνομα χρήστη", "dlg.smtp": "Διακομιστής εξερχομένων (SMTP)", "dlg.smtpNote": "Για την αποστολή (στην επόμενη ενημέρωση).",
+      "dlg.user": "Όνομα χρήστη", "dlg.smtp": "Διακομιστής εξερχομένων (SMTP)", "dlg.smtpNote": "Για την αποστολή, με το ίδιο όνομα χρήστη και κωδικό.",
       "dlg.relay": "Διεύθυνση relay", "dlg.relayHint": "Το relay αλληλογραφίας του orOS (https://…). Μεταφέρει τα μηνύματα και δεν κρατά τίποτα.",
       "dlg.connect": "Σύνδεση", "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.checking": "Έλεγχος…",
       "dlg.appPass": "Το {svc} θέλει κωδικό εφαρμογής: φτιάξε έναν στις ρυθμίσεις ασφαλείας του λογαριασμού σου στο {svc} και βάλ' τον εδώ.",
@@ -173,7 +205,28 @@
       "err.max": "Έως {n} λογαριασμοί.", "err.dup": "Αυτός ο λογαριασμός υπάρχει ήδη.",
       "toast.added": "Ο λογαριασμός προστέθηκε", "toast.saved": "Αποθηκεύτηκε", "toast.removed": "Ο λογαριασμός αφαιρέθηκε",
       "toast.storage": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.saveFail": "Το συνημμένο δεν αποθηκεύτηκε",
-      "toast.updated": "Όλα ενημερωμένα", "toast.cal": "Το Ημερολόγιο δεν είναι διαθέσιμο", "time.yesterday": "Χθες"
+      "toast.updated": "Όλα ενημερωμένα", "toast.cal": "Το Ημερολόγιο δεν είναι διαθέσιμο", "time.yesterday": "Χθες",
+      "btn.compose": "Νέο μήνυμα", "act.reply": "Απάντηση", "act.all": "Απάντηση σε όλους", "act.fwd": "Προώθηση",
+      "cmp.title": "Νέο μήνυμα", "cmp.from": "Από", "cmp.to": "Προς", "cmp.cc": "Κοιν.", "cmp.bcc": "Κρυφή κοιν.",
+      "cmp.ccbcc": "Κοιν. / Κρυφή κοιν.", "cmp.subject": "Θέμα", "cmp.body": "Μήνυμα", "cmp.date": "Ημερομηνία",
+      "cmp.send": "Αποστολή", "cmp.sending": "Αποστολή…", "cmp.discard": "Απόρριψη",
+      "cmp.discardQ": "Να απορριφθεί το μήνυμα;", "cmp.keep": "Συνέχεια γραψίματος",
+      "cmp.hint": "Απλό κείμενο, χωρίς συνημμένα προς το παρόν.",
+      "cmp.wrote": "Στις {date}, {who} έγραψε:", "cmp.fwd": "---------- Προωθημένο μήνυμα ----------",
+      "cmp.noRcpt": "Πρόσθεσε τουλάχιστον έναν παραλήπτη.", "cmp.bad": "Δεν είναι διεύθυνση email: {list}",
+      "cmp.many": "Έως {n} παραλήπτες.", "cmp.noacct": "Πρόσθεσε έναν λογαριασμό για να στέλνεις μηνύματα.",
+      "cmp.timeout": "Ο διακομιστής δεν απάντησε εγκαίρως. Το μήνυμα ίσως έφυγε: δες τα Απεσταλμένα πριν το ξαναστείλεις.",
+      "dlg.sig": "Υπογραφή", "dlg.sigHint": "Μπαίνει κάτω από κάθε νέο μήνυμα και απάντηση. Συγχρονίζεται με τον λογαριασμό.",
+      "err.nosmtp": "Ο λογαριασμός δεν έχει διακομιστή εξερχομένων (SMTP). Πρόσθεσέ τον στις ρυθμίσεις διακομιστή του λογαριασμού.",
+      "err.smtpfail": "Τα εισερχόμενα δουλεύουν, αλλά ο διακομιστής εξερχομένων απέτυχε: {msg}",
+      "err.rcpt": "Ο διακομιστής δεν δέχτηκε παραλήπτη: {msg}", "err.big": "Το μήνυμα είναι πολύ μεγάλο για αποστολή.",
+      "err.noacct": "Ο λογαριασμός αυτού του μηνύματος αφαιρέθηκε.", "err.outfull": "Τα Εξερχόμενα είναι γεμάτα.",
+      "toast.sent": "Στάλθηκε", "toast.sentNoCopy": "Στάλθηκε. Δεν μπήκε αντίγραφο στα Απεσταλμένα.",
+      "toast.queued": "Μπήκε στα Εξερχόμενα: θα σταλεί μόλις συνδεθείς.", "toast.outSent": "Στάλθηκαν από τα Εξερχόμενα: {n}",
+      "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
+      "out.text": "Μηνύματα που γράφτηκαν χωρίς σύνδεση. Στέλνονται μόνα τους μόλις συνδεθείς.",
+      "out.send": "Αποστολή τώρα", "out.edit": "Επεξεργασία", "out.del": "Διαγραφή", "out.failed": "Δεν στάλθηκε: {msg}",
+      "out.empty": "Τα Εξερχόμενα είναι άδεια.", "out.nosubj": "(χωρίς θέμα)"
     }
   };
 
@@ -271,6 +324,8 @@
     clip: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
     star: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
     down: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    pen: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+    out: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
     key: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>'
   };
 
@@ -314,7 +369,13 @@
                 email: email, imap: imap };
     var smtp = normServer(a.smtp, [465, 587]);
     if (smtp) { if (!smtp.user) smtp.user = imap.user; out.smtp = smtp; }
+    var sig = normSig(a.sig);
+    if (sig) out.sig = sig;
     return out;
+  }
+  function normSig(v) {
+    if (typeof v !== "string") return "";
+    return v.replace(/\r\n?/g, "\n").replace(/[\x00-\x08\x0b-\x1f\x7f]/g, "").replace(/\s+$/, "").slice(0, MAX_SIG);
   }
   function normRelayUrl(u) {
     u = String(u || "").trim().replace(/\/+$/, "");
@@ -452,10 +513,10 @@
   function db() {
     if (!dbPromise) {
       dbPromise = new Promise(function (resolve, reject) {
-        var req = indexedDB.open(DB_NAME, 1);
+        var req = indexedDB.open(DB_NAME, 2);   // 2: + outbox
         req.onupgradeneeded = function () {
           var d = req.result;
-          ["keys", "creds", "folders", "heads", "bodies"].forEach(function (n) {
+          ["keys", "creds", "folders", "heads", "bodies", "outbox"].forEach(function (n) {
             if (!d.objectStoreNames.contains(n)) d.createObjectStore(n);
           });
         };
@@ -542,6 +603,7 @@
   }
 
   // One relay call. `pass` given = a login test before the account is saved.
+  // args.smtp === true → the account's outgoing server goes along (same password).
   function call(op, acct, args, pass) {
     if (!navigator.onLine) return Promise.reject(new MailError("offline"));
     var url = relayUrl();
@@ -552,6 +614,11 @@
       var body = { op: op, acct: { host: acct.imap.host, port: acct.imap.port, sec: acct.imap.sec,
                                    user: acct.imap.user || acct.email, pass: pw } };
       Object.keys(args || {}).forEach(function (k) { body[k] = args[k]; });
+      if (body.smtp === true) {
+        if (!acct.smtp) throw new MailError("nosmtp");
+        body.smtp = { host: acct.smtp.host, port: acct.smtp.port, sec: acct.smtp.sec,
+                      user: acct.smtp.user || body.acct.user, pass: pw };
+      }
       var ctl = new AbortController();
       var timer = setTimeout(function () { ctl.abort(); }, CALL_TIMEOUT);
       return fetch(url + "/v1", {
@@ -845,6 +912,14 @@
       sec.appendChild(ul);
       box.appendChild(sec);
     });
+    if (outbox.length) {
+      var ob = el("button", "out-btn" + (outbox.some(function (r) { return r.err; }) ? " err" : ""));
+      ob.type = "button";
+      ob.innerHTML = UI.out;
+      ob.appendChild(el("span", "", t("out.bar", { n: outbox.length })));
+      ob.addEventListener("click", outboxDialog);
+      box.appendChild(ob);
+    }
     var add = $("add-acct");
     add.innerHTML = UI.plus;
     add.appendChild(el("span", "", t("acct.add")));
@@ -929,6 +1004,7 @@
     $("read").hidden = none;
     $("settings-btn").hidden = none;
     $("refresh-btn").hidden = none;
+    $("compose-btn").hidden = none;
   }
 
   function renderAll() {
@@ -1011,6 +1087,7 @@
       if (document.visibilityState === "visible" && navigator.onLine && curAcct()) {
         tick++;
         if (tick % 5 === 0) refreshFolders(curAcct()).catch(function () {});
+        flushOutbox();
         refreshCurrent(false);
       }
       scheduleRefresh();
@@ -1076,7 +1153,9 @@
                       m.cc.length ? t("read.cc", { list: names(m.cc) }) : ""].filter(Boolean).join(" · ");
     $("msg-date").textContent = fmtFullDate(m.date);
     $("msg-date").setAttribute("datetime", m.date ? new Date(m.date).toISOString() : "");
-    var bars = $("msg-bars"), body = $("msg-body"), atts = $("msg-atts");
+    var bars = $("msg-bars"), body = $("msg-body"), atts = $("msg-atts"), acts = $("msg-acts");
+    acts.innerHTML = "";
+    acts.hidden = true;
     bars.innerHTML = "";
     body.innerHTML = "";
     atts.innerHTML = "";
@@ -1089,6 +1168,10 @@
       return;
     }
     var p = openMsg.parsed;
+    acts.hidden = false;
+    [["reply", "act.reply"], ["all", "act.all"], ["forward", "act.fwd"]].forEach(function (a) {
+      acts.appendChild(button(t(a[1]), "small", function () { replyTo(a[0]); }));
+    });
     renderIcs(p, bars);
     var useHtml = p.html !== null && !(prefs.plain && p.text !== null && !openMsg.forceHtml);
     if (useHtml) renderHtml(p, m, bars, body);
@@ -1320,6 +1403,16 @@
     if (existing) fPass.placeholder = t("dlg.passKeep");
     var hint = el("p", "dlg-hint");
     form.appendChild(hint);
+    var sigLab = el("label", "dlg-lbl", t("dlg.sig"));
+    sigLab.setAttribute("for", "ml-sig");
+    var fSig = el("textarea", "sig");
+    fSig.id = "ml-sig";
+    fSig.rows = 3;
+    fSig.maxLength = MAX_SIG;
+    fSig.value = existing && existing.sig ? existing.sig : "";
+    form.appendChild(sigLab);
+    form.appendChild(fSig);
+    form.appendChild(el("p", "dlg-hint", t("dlg.sigHint")));
 
     var det = el("details", "srv");
     det.appendChild(el("summary", "", t("dlg.server")));
@@ -1391,7 +1484,8 @@
         id: existing ? existing.id : newId(),
         m: existing ? Math.max(Date.now(), existing.m + 1) : Date.now(),
         name: fName.value, email: email,
-        imap: { host: host, port: +fPort.value, user: fUser.value.trim() || email }
+        imap: { host: host, port: +fPort.value, user: fUser.value.trim() || email },
+        sig: fSig.value
       };
       var smtpHost = normHost(fSmtp.value);
       if (smtpHost) acct.smtp = { host: smtpHost, port: +fSport.value, user: fUser.value.trim() || email };
@@ -1400,12 +1494,21 @@
       var serverChanged = !existing || existing.imap.host !== n.imap.host || existing.imap.port !== n.imap.port ||
                           existing.imap.user !== n.imap.user;
       var needCheck = !!pass || serverChanged;
+      var es = existing && existing.smtp;
+      var smtpChanged = !!n.smtp && (!es || es.host !== n.smtp.host || es.port !== n.smtp.port || es.user !== n.smtp.user);
+      var needSmtp = !!n.smtp && (!!pass || smtpChanged);
       ok.disabled = true;
       ok.textContent = t("dlg.checking");
-      var check = needCheck
+      // IMAP login first, then (when it is new or changed) the SMTP login.
+      var check = needCheck || needSmtp
         ? (pass ? Promise.resolve(pass) : loadPass(n.id)).then(function (pw) {
             if (!pw) throw new MailError("nopass");
-            return call("check", n, {}, pw).then(function () { return pw; });
+            return (needCheck ? call("check", n, {}, pw) : Promise.resolve()).then(function () {
+              if (!needSmtp) return;
+              return call("smtpcheck", n, { smtp: true }, pw).catch(function (e) {
+                throw new MailError("smtpfail", errText(e));
+              });
+            }).then(function () { return pw; });
           })
         : Promise.resolve(null);
       check.then(function (pw) {
@@ -1503,6 +1606,7 @@
     idbDel("folders", id).catch(function () {});
     idbDelPrefix("heads", id + "|").catch(function () {});
     idbDelPrefix("bodies", id + "|").catch(function () {});
+    outbox.filter(function (r) { return r.draft.acct === id; }).forEach(function (r) { dropOut(r.id); });
   }
 
   function afterAccountsChanged() {
@@ -1579,6 +1683,305 @@
     dlg.showModal();
   }
 
+  // ---------- 9b. Compose, send, outbox ----------
+  // compose.js builds the message in the browser; the relay only
+  // passes it to the account's SMTP server and files a copy in Sent.
+  // Written offline (or the relay unreachable) → the Outbox: device-
+  // local IndexedDB, never synced, sent by itself when online. A send
+  // that failed for another reason stays there until "Send now".
+  var C = window.orosMailCompose;
+  var outbox = [];          // [{ id, at, draft, err }] oldest first
+  var editingOut = null;    // outbox id open in the compose dialog
+  var flushing = false;
+
+  function loadOutbox() {
+    return idb("outbox", "readonly", function (s) { return s.getAll(); }).then(function (rows) {
+      outbox = (rows || []).filter(function (r) { return r && typeof r.id === "string" && r.draft; })
+        .sort(function (a, b) { return a.at - b.at; });
+    }).catch(function () { outbox = []; });
+  }
+  function dropOut(id) {
+    outbox = outbox.filter(function (r) { return r.id !== id; });
+    renderSide();
+    return idbDel("outbox", id).catch(function () {});
+  }
+  function queueDraft(d) {
+    if (outbox.length >= OUT_MAX) return Promise.reject(new MailError("outfull"));
+    var rec = { id: newId(), at: Date.now(), draft: d, err: "" };
+    return idbPut("outbox", rec.id, rec).then(function () { outbox.push(rec); renderSide(); });
+  }
+
+  // The account's Sent folder, by role. Gmail files sent mail by
+  // itself, so no copy there (it would show twice).
+  function sentFolder(acct) {
+    if (/(^|\.)gmail\.com$/.test(acct.smtp.host)) return "";
+    var list = folders[acct.id] || [];
+    for (var i = 0; i < list.length; i++) if (folderRole(list[i]) === "sent") return list[i].name;
+    return "";
+  }
+
+  // draft: { acct, to[], cc[], bcc[], subject, text, inReplyTo, references }
+  // → { copyFailed }
+  function sendDraft(d) {
+    var acct = acctById(d.acct);
+    if (!acct) return Promise.reject(new MailError("noacct"));
+    if (!acct.smtp) return Promise.reject(new MailError("nosmtp"));
+    var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
+                        subject: d.subject, text: d.text, inReplyTo: d.inReplyTo, references: d.references });
+    if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
+    var sent = sentFolder(acct);
+    var args = { smtp: true, from: acct.email, rcpt: msg.rcpt, raw: C.b64(msg.bin) };
+    if (sent) args.sent = sent;
+    return call("send", acct, args).then(function (res) {
+      if (sent && cur && cur.acct === acct.id && cur.folder === sent) refreshCurrent(false);
+      return { copyFailed: !!sent && !(res && res.appended) };
+    });
+  }
+  function sendErrText(e) {
+    if (e && (e.code === "too-big" || e.code === "big")) return t("err.big");
+    if (e && e.code === "timeout") return t("cmp.timeout");
+    return errText(e);
+  }
+  // Only "could not reach the relay" waits for the network; anything
+  // else (refused, timed out: maybe sent) needs the person.
+  function waitsForNet(e) { return e && (e.code === "offline" || e.code === "network"); }
+
+  function flushOutbox() {
+    if (flushing || !navigator.onLine) return Promise.resolve();
+    var list = outbox.filter(function (r) { return !r.err && r.id !== editingOut; });
+    if (!list.length) return Promise.resolve();
+    flushing = true;
+    var n = 0;
+    return list.reduce(function (p, r) {
+      return p.then(function () {
+        return sendDraft(r.draft).then(function () { n++; return dropOut(r.id); }, function (e) {
+          if (waitsForNet(e)) throw e;   // stop; the next "online" / timer tries again
+          r.err = sendErrText(e);
+          return idbPut("outbox", r.id, r).catch(function () {});
+        });
+      });
+    }, Promise.resolve()).catch(function () {}).then(function () {
+      flushing = false;
+      renderSide();
+      if (n) showToast(t("toast.outSent", { n: n }));
+      if ($("ml-out")) outboxDialog();
+    });
+  }
+
+  function outboxDialog() {
+    var dlg = makeDialog("ml-out");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("out.title")));
+    dlg.appendChild(el("p", "dlg-hint", t("out.text")));
+    var ul = el("ul", "set-accts out-list");
+    outbox.forEach(function (r) {
+      var li = el("li");
+      var tx = el("div", "set-acct");
+      tx.appendChild(el("div", "set-acct-name", r.draft.subject || t("out.nosubj")));
+      var to = [].concat(r.draft.to, r.draft.cc, r.draft.bcc).map(who).join(", ");
+      tx.appendChild(el("div", "set-acct-mail", to));
+      if (r.err) tx.appendChild(el("div", "dlg-err", t("out.failed", { msg: r.err })));
+      li.appendChild(tx);
+      var acts = el("div", "out-acts");
+      acts.appendChild(button(t("out.send"), "small", function (ev) {
+        var b = ev.currentTarget;
+        b.disabled = true;
+        sendDraft(r.draft).then(function (res) {
+          dropOut(r.id);
+          showToast(res.copyFailed ? t("toast.sentNoCopy") : t("toast.sent"));
+          outboxDialog();
+        }, function (e) {
+          r.err = sendErrText(e);
+          idbPut("outbox", r.id, r).catch(function () {});
+          renderSide();
+          outboxDialog();
+        });
+      }));
+      acts.appendChild(button(t("out.edit"), "small", function () {
+        dlg.close();
+        openCompose({ acct: r.draft.acct, to: r.draft.to, cc: r.draft.cc, bcc: r.draft.bcc,
+                      subject: r.draft.subject, text: r.draft.text, inReplyTo: r.draft.inReplyTo,
+                      references: r.draft.references, outId: r.id, noSig: true });
+      }));
+      acts.appendChild(button(t("out.del"), "small danger", function () { dropOut(r.id); outboxDialog(); }));
+      li.appendChild(acts);
+      ul.appendChild(li);
+    });
+    if (outbox.length) dlg.appendChild(ul);
+    else dlg.appendChild(el("p", "dlg-text", t("out.empty")));
+    var foot = el("div", "dlg-actions");
+    foot.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(foot);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  function sigBlock(acct) { return acct && acct.sig ? "\n\n-- \n" + acct.sig : ""; }
+  function listText(list) { return (list || []).map(C.fmtInput).join(", "); }
+
+  // HTML-only mail → text for quoting. DOMParser documents run no
+  // scripts and load nothing.
+  function htmlText(html) {
+    var doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+    [].forEach.call(doc.querySelectorAll("script,style,head,title"), function (n) { n.remove(); });
+    [].forEach.call(doc.querySelectorAll("br"), function (n) { n.replaceWith("\n"); });
+    [].forEach.call(doc.querySelectorAll("p,div,li,tr,h1,h2,h3,h4,h5,h6,blockquote,pre,table"), function (n) { n.append("\n"); });
+    return (doc.body ? doc.body.textContent : "").replace(/[ \t ]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  function replyTo(mode) {
+    var acct = curAcct();
+    if (!acct || !openMsg || !openMsg.parsed) return;
+    var m = openMsg.sum, p = openMsg.parsed, h = p.headers || {};
+    var rt = [];
+    (h["reply-to"] || []).forEach(function (v) { rt = rt.concat(M.parseAddresses(M.decodeWords(v))); });
+    var d = C.draftFrom({
+      from: m.from, to: m.to, cc: m.cc, replyTo: rt, subject: m.subj, messageId: m.mid,
+      references: (h.references || []).join(" "), date: m.date,
+      text: p.text !== null ? p.text : htmlText(p.html)
+    }, mode, acct.email, {
+      wrote: function (date, w) { return t("cmp.wrote", { date: fmtFullDate(date), who: w }); },
+      fwd: t("cmp.fwd"), from: t("cmp.from"), date: t("cmp.date"), subject: t("cmp.subject"), to: t("cmp.to"),
+      fmtDate: fmtFullDate
+    });
+    openCompose({ acct: acct.id, to: d.to, cc: d.cc, subject: d.subject, quote: d.text,
+                  inReplyTo: d.inReplyTo, references: d.references });
+  }
+
+  // init: { acct?, to[], cc[], bcc[], subject, text (above the
+  // signature), quote (below it), inReplyTo, references, outId?, noSig? }
+  function openCompose(init) {
+    init = init || {};
+    if (!data.accounts.length) { showToast(t("cmp.noacct")); acctDialog(null); return; }
+    var acct = acctById(init.acct) || curAcct();
+    var dirty = !!init.outId;
+    editingOut = init.outId || null;
+    var dlg = makeDialog("ml-compose", true);
+    dlg.classList.add("wide", "compose");
+    dlg.appendChild(el("div", "dlg-title", t("cmp.title")));
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    var fFrom = null;
+    if (data.accounts.length > 1) {
+      fFrom = portSelect(form, "mc-from", t("cmp.from"), data.accounts.map(function (a) {
+        return [a.id, a.name ? a.name + " <" + a.email + ">" : a.email];
+      }), acct.id);
+    }
+    var addrAttrs = { maxlength: "4000", inputmode: "email", autocomplete: "email", autocapitalize: "off", spellcheck: "false" };
+    var fTo = field(form, "mc-to", t("cmp.to"), "text", listText(init.to), addrAttrs);
+    var showCc = !!((init.cc && init.cc.length) || (init.bcc && init.bcc.length));
+    var ccBtn = el("button", "link-btn cc-toggle", t("cmp.ccbcc"));
+    ccBtn.type = "button";
+    ccBtn.hidden = showCc;
+    form.appendChild(ccBtn);
+    var ccBox = el("div", "cc-box");
+    ccBox.hidden = !showCc;
+    var fCc = field(ccBox, "mc-cc", t("cmp.cc"), "text", listText(init.cc), addrAttrs);
+    var fBcc = field(ccBox, "mc-bcc", t("cmp.bcc"), "text", listText(init.bcc), addrAttrs);
+    form.appendChild(ccBox);
+    ccBtn.addEventListener("click", function () { ccBox.hidden = false; ccBtn.hidden = true; fCc.focus(); });
+    var fSubj = field(form, "mc-subj", t("cmp.subject"), "text", init.subject || "", { maxlength: "300" });
+    var bLab = el("label", "dlg-lbl", t("cmp.body"));
+    bLab.setAttribute("for", "mc-body");
+    var fBody = el("textarea", "cmp-body");
+    fBody.id = "mc-body";
+    fBody.rows = 12;
+    fBody.maxLength = 200000;
+    var sig = init.noSig ? "" : sigBlock(acct);
+    fBody.value = (init.text || "") + sig + (init.quote || "");
+    form.appendChild(bLab);
+    form.appendChild(fBody);
+    form.appendChild(el("p", "dlg-hint dim", t("cmp.hint")));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+
+    form.addEventListener("input", function () { dirty = true; });
+    if (fFrom) fFrom.addEventListener("change", function () {
+      // swap the signature when it is still there unchanged
+      var next = sigBlock(acctById(fFrom.value));
+      var at = sig ? fBody.value.indexOf(sig) : -1;
+      if (at >= 0) fBody.value = fBody.value.slice(0, at) + next + fBody.value.slice(at + sig.length);
+      else if (!sig && next && !init.quote && !fBody.value.trim()) fBody.value = next;
+      sig = next;
+    });
+
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cmp.discard"), "", function () { leave(); }));
+    var ok = button(t("cmp.send"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+
+    function finish(msg) {
+      if (init.outId) dropOut(init.outId);
+      dirty = false;
+      dlg.close();
+      showToast(msg);
+    }
+    function leave() {
+      if (!dirty) { dlg.close(); return; }
+      confirmDiscard(function () {
+        if (init.outId) dropOut(init.outId);
+        dirty = false;
+        dlg.close();
+      });
+    }
+    // Esc: same as Discard (asks when something was written)
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); leave(); });
+    dlg.addEventListener("close", function () { if (editingOut === init.outId) editingOut = null; });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      errP.textContent = "";
+      var a = fFrom ? acctById(fFrom.value) : acct;
+      if (!a) return;
+      if (!a.smtp) { errP.textContent = t("err.nosmtp"); return; }
+      var to = C.parseList(fTo.value), cc = C.parseList(fCc.value), bcc = C.parseList(fBcc.value);
+      var bad = to.bad.concat(cc.bad, bcc.bad);
+      if (bad.length) { errP.textContent = t("cmp.bad", { list: bad.join(", ").slice(0, 200) }); return; }
+      var count = to.list.length + cc.list.length + bcc.list.length;
+      if (!count) { errP.textContent = t("cmp.noRcpt"); fTo.focus(); return; }
+      if (count > MAX_RCPT) { errP.textContent = t("cmp.many", { n: MAX_RCPT }); return; }
+      var d = { acct: a.id, to: to.list, cc: cc.list, bcc: bcc.list,
+                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: fBody.value,
+                inReplyTo: init.inReplyTo || "", references: init.references || "" };
+      ok.disabled = true;
+      ok.textContent = t("cmp.sending");
+      function failed(err) {
+        ok.disabled = false;
+        ok.textContent = t("cmp.send");
+        errP.textContent = sendErrText(err);
+      }
+      function queue() { return queueDraft(d).then(function () { finish(t("toast.queued")); }, failed); }
+      if (!navigator.onLine) { queue(); return; }
+      sendDraft(d).then(function (res) {
+        finish(res.copyFailed ? t("toast.sentNoCopy") : t("toast.sent"));
+      }, function (err) {
+        if (waitsForNet(err)) queue();
+        else failed(err);
+      });
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    var first = !fTo.value ? fTo : (!fSubj.value ? fSubj : fBody);
+    first.focus();
+    if (first === fBody) fBody.setSelectionRange(0, 0);
+  }
+
+  function confirmDiscard(yes) {
+    var dlg = makeDialog("ml-discard");
+    dlg.appendChild(el("p", "dlg-text", t("cmp.discardQ")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cmp.keep"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("cmp.discard"), "danger", function () { dlg.close(); yes(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -1586,13 +1989,14 @@
     if (fn) b.addEventListener("click", fn);
     return b;
   }
-  function makeDialog(id) {
+  // keep: a click outside does not close it (compose: unsent text).
+  function makeDialog(id, keep) {
     var stale = document.getElementById(id);
     if (stale) stale.remove();
     var dlg = document.createElement("dialog");
     dlg.id = id;
     dlg.className = "mm-dlg";
-    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+    if (!keep) dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
     dlg.addEventListener("close", function () {
       parkToast();
       setTimeout(function () { dlg.remove(); }, 0);
@@ -1648,6 +2052,10 @@
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (document.querySelector("dialog[open]")) return;
       if (e.key === "Escape" && view !== "list" && narrow()) { e.preventDefault(); setView("list"); return; }
+      // c: new message; r / a / f: reply, reply all, forward
+      if (e.key === "c" && data.accounts.length) { e.preventDefault(); openCompose({}); return; }
+      var act = { r: "reply", a: "all", f: "forward" }[e.key];
+      if (act && openMsg && openMsg.parsed) { e.preventDefault(); replyTo(act); return; }
       var dir = (e.key === "j" || e.key === "ArrowDown") ? 1 : ((e.key === "k" || e.key === "ArrowUp") ? -1 : 0);
       if (!dir || !cur || !cur.msgs.length) return;
       e.preventDefault();
@@ -1773,6 +2181,10 @@
     rb.innerHTML = UI.refresh;
     rb.setAttribute("aria-label", t("btn.refresh"));
     rb.title = t("btn.refresh");
+    var cb = $("compose-btn");
+    cb.innerHTML = UI.pen;
+    cb.setAttribute("aria-label", t("btn.compose"));
+    cb.title = t("btn.compose") + " (c)";
     var sb = $("settings-btn");
     sb.innerHTML = UI.gear;
     sb.setAttribute("aria-label", t("btn.settings"));
@@ -1792,9 +2204,10 @@
       refreshCurrent(true);
     });
     $("settings-btn").addEventListener("click", settingsDialog);
+    $("compose-btn").addEventListener("click", function () { openCompose({}); });
     $("add-acct").addEventListener("click", function () { acctDialog(null); });
     $("wel-add").addEventListener("click", function () { acctDialog(null); });
-    window.addEventListener("online", function () { renderBar(); refreshCurrent(false); });
+    window.addEventListener("online", function () { renderBar(); flushOutbox(); refreshCurrent(false); });
     window.addEventListener("offline", renderBar);
     window.addEventListener("resize", function () {
       if (!narrow() && view === "side") setView("list");
@@ -1806,16 +2219,29 @@
     wireKeyboard();
   }
 
-  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-  // target { acct, folder, uid }. Opens the folder and, when the
-  // message is in its cached list, the message. Unknown account, or
-  // a dialog open (maybe with unsaved edits) → no-op (returns false).
-  function openSearchTarget(t) {
-    if (!t || typeof t.acct !== "string" || typeof t.folder !== "string" || !t.folder ||
-        typeof t.uid !== "number" || document.querySelector("dialog[open]")) return false;
-    if (!acctById(t.acct)) return false;
-    openFolder(t.acct, t.folder).then(function () {
-      if (cur && cur.acct === t.acct && cur.folder === t.folder && findMsg(t.uid)) openMessage(t.uid);
+  // Deep links (shell __orosOpenAt / __orosTakeTarget), one receiver:
+  //  - universal search: { acct, folder, uid }. Opens the folder and,
+  //    when the message is in its cached list, the message. Unknown
+  //    account → no-op (returns false).
+  //  - other apps (Reader…): { compose:{ to?, subject?, body? } } opens
+  //    a prefilled draft, plain text; the person presses Send.
+  // A dialog open (maybe with unsaved edits) → no-op (returns false).
+  function openSearchTarget(target) {
+    if (!target || typeof target !== "object" || document.querySelector("dialog[open]")) return false;
+    var c = target.compose;
+    if (c && typeof c === "object") {
+      openCompose({
+        to: C.parseList(typeof c.to === "string" ? c.to.slice(0, 2000) : "").list.slice(0, MAX_RCPT),
+        subject: typeof c.subject === "string" ? c.subject.replace(/\s+/g, " ").trim().slice(0, 300) : "",
+        text: typeof c.body === "string" ? c.body.slice(0, 20000) : ""
+      });
+      return true;
+    }
+    if (typeof target.acct !== "string" || typeof target.folder !== "string" || !target.folder ||
+        typeof target.uid !== "number") return false;
+    if (!acctById(target.acct)) return false;
+    openFolder(target.acct, target.folder).then(function () {
+      if (cur && cur.acct === target.acct && cur.folder === target.folder && findMsg(target.uid)) openMessage(target.uid);
     });
     return true;
   }
@@ -1832,7 +2258,6 @@
     setView("list");
     renderAll();
     var acct = curAcct();
-    if (!acct) return;
     var pendingTarget = null;
     try {
       if (window.parent && window.parent !== window &&
@@ -1840,10 +2265,15 @@
         pendingTarget = window.parent.__orosTakeTarget("mail");
       }
     } catch (e) {}
+    if (!acct) {
+      if (pendingTarget && pendingTarget.compose) openSearchTarget(pendingTarget);   // → "add an account"
+      return;
+    }
     Promise.all(data.accounts.map(function (a) {
       return Promise.all([loadFolders(a), loadPass(a.id).then(function (pw) { if (!pw) needPass[a.id] = 1; })]);
-    })).then(function () {
+    }).concat([loadOutbox()])).then(function () {
       renderSide();
+      flushOutbox();
       data.accounts.forEach(function (a) { if (!needPass[a.id]) refreshFolders(a).catch(function () {}); });
       if (!(pendingTarget && openSearchTarget(pendingTarget))) {
         openFolder(acct.id, prefs.acct === acct.id ? prefs.folder : "INBOX");
