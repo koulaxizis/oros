@@ -4349,3 +4349,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Calendar: new feed "Death anniversaries" / «Επέτειοι θανάτου» (`lbl-feed-famtree`, slate): exact death dates only, 29 Feb also on 28 Feb of common years, same name + date in two trees shown once, not on the death day itself; a row opens the person. calendar/index.html loads ../familytree/ft-core.js (already precached).
 - Tests: tests/familytree.test.js +1 (deathDays / deathAnniversaries). Shell: desktop EN + phone EL, 360 px, 0 console errors.
 - Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Media Shelf 1.2.0: online lookup, release dates, Calendar feed (#142) — 0.62.00
+- "Find details online" (opt-in, first tap shows a note): Open Library for books, MusicBrainz for albums; sends only the title and creator typed, no API key. Listed under external services in Settings.
+- Release dates: an item can carry a release date (`rel`, YYYY-MM-DD).
+- Calendar: new "Media Shelf" / «Το ράφι μου» chip (`lbl-feed-shelf`, berry `#d16ba5`): finishes (one row per title per day) and release dates of wishlist titles; a row opens the item (`__orosOpenAt("shelf", {item})`). New file shelf/feed.js (`window.OrosShelfFeed`), precached; rows never stored.
+- Data: SHELF items gain optional `rel`; unknown item fields ride along (forward-compatible, same rule as Budget).
+- Tests: tests/shelf.test.js (1225 total); shell e2e 21/21.
+- Not tested: the real Open Library / MusicBrainz APIs from the harness, a real phone, Safari, real Dropbox.
