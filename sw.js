@@ -405,6 +405,7 @@ var PRECACHE_URLS = [
   "atelier/editor.js",
   "atelier/panels.js",
   "atelier/sources.js",
+  "atelier/fonts.js",
   "atelier/gif.js",
   "atelier/motion.js",
   "atelier/zip.js",
