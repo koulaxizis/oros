@@ -420,6 +420,14 @@
       "type": "internal"
     },
     {
+      "id": "museum",
+      "name": "One-Minute Museum",
+      "category": "Internet",
+      "icon": "museum",
+      "url": "museum/",
+      "type": "internal"
+    },
+    {
       "id": "mail",
       "name": "Mail",
       "category": "Internet",

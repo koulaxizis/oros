@@ -1,6 +1,20 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.60.00
+- New app in Internet: One-Minute Museum shows a Wikipedia article as a museum exhibit, a new one every minute; star the ones you like to keep them, offline too.
+- Media Shelf: import your Goodreads or Letterboxd CSV exports, with a preview, duplicates skipped and Undo.
+- Travel: send your "Before I leave" list or what is still to pack to To-Do as a new list.
+- Chore Wheel: send an open chore to To-Do from its ⋯ menu.
+
+## Version 0.59.00
+- [Mind Map](app:mindmap) can link any two ideas, lets you place a branch where you want it, shows small pictures, imports FreeMind and XMind files, and sends a branch to [To-Do](app:todo) or [Slides](app:slides).
+
+## Version 0.58.00
+- [Layout](app:layout) checks your document before export (preflight), starts from 7 templates, exports a page as PNG or JPG, lets you change master objects on one page, has rulers with guides, and opens Scribus files.
+- [Slides](app:slides) can start a new presentation from an outline sent by another app. You pick the theme first, and nothing is created before that.
+- orOS is ready for the "Send to orOS" browser add-on (Chrome, Edge, Brave, Firefox), which sends the page you are on to [Bookmarks](app:bookmarks) and searches orOS from the address bar. The add-on is not in the stores yet.
+
 ## Version 0.57.00
 - [Podcasts](app:podcasts) shows chapters and transcripts, plays video episodes, searches every episode, keeps listening statistics, can tell you about new episodes, and sends an episode to [Notes](app:notes), [To-Do](app:todo) or a show's site to [Reader](app:feeds).
 - [Meal Planner](app:meals) sends the shopping list to [To-Do](app:todo), and [Calendar](app:calendar) can show planned meals with the new Meals chip.
