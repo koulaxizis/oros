@@ -141,7 +141,7 @@
       "r.times": "at {t}", "grp.doses": "Doses today",
       "set.doses": "Remind me at each medicine dose",
       "fd.todo": "Add to shopping list", "todo.item": "{food} for {name}", "todo.plain": "Food for {name}",
-      "toast.todo": "Opened in To-Do", "toast.needCost": "Enter the cost first", "bud.add": "Add to Budget", "bud.note": "{name}: {what}",
+      "toast.needCost": "Enter the cost first", "bud.add": "Add to Budget", "bud.note": "{name}: {what}",
       "toast.noBridge": "Could not open the other app",
       "confirm.del": "Delete {name} and the whole health book?", "confirm.yes": "Delete",
       "confirm.delRec": "Remove this entry?",
@@ -234,7 +234,7 @@
       "r.times": "στις {t}", "grp.doses": "Δόσεις σήμερα",
       "set.doses": "Υπενθύμιση σε κάθε δόση φαρμάκου",
       "fd.todo": "Στη λίστα για ψώνια", "todo.item": "{food} για {name}", "todo.plain": "Τροφή για {name}",
-      "toast.todo": "Άνοιξε στο To-Do", "toast.needCost": "Συμπλήρωσε πρώτα το κόστος", "bud.add": "Προσθήκη στα Έσοδα & Έξοδα", "bud.note": "{name}: {what}",
+      "toast.needCost": "Συμπλήρωσε πρώτα το κόστος", "bud.add": "Προσθήκη στα Έσοδα & Έξοδα", "bud.note": "{name}: {what}",
       "toast.noBridge": "Η άλλη εφαρμογή δεν άνοιξε",
       "confirm.del": "Διαγραφή του «{name}» και όλου του βιβλιαρίου;", "confirm.yes": "Διαγραφή",
       "confirm.delRec": "Να αφαιρεθεί αυτή η εγγραφή;",
@@ -1081,12 +1081,14 @@
     var acts = el("div", "ph-acts");
     acts.appendChild(iconTxt(UI.edit, t("fd.edit"), function () { foodEditor(p); }));
     if (!p.gone) acts.appendChild(iconTxt(UI.food, t("fd.bag"), function () { newBag(p); }));
-    var todoAdd = bridge("__orosTodoAdd");
-    if (todoAdd && !p.gone) acts.appendChild(iconTxt(UI.plus, t("fd.todo"), function () {
+    // "Send to To-Do" (BR-TD-ADD, owner To-Do): a prefill; To-Do asks
+    // which list and adds nothing until the user confirms.
+    var openAt = bridge("__orosOpenAt");
+    if (openAt && !p.gone) acts.appendChild(iconTxt(UI.plus, t("fd.todo"), function () {
       var text = f.n ? t("todo.item", { food: f.n, name: p.name }) : t("todo.plain", { name: p.name });
-      var ok = false;
-      try { ok = todoAdd({ list: "tdl-groceries", items: [text], src: "petcare" }) === true; } catch (e) {}
-      if (!ok) showToast(t("toast.noBridge"));
+      try {
+        openAt("todo", { addItems: { list: "tdl-groceries", from: t("app"), items: [{ text: text.slice(0, 300) }] } });
+      } catch (e) { showToast(t("toast.noBridge")); }
     }));
     card.appendChild(acts);
     box.appendChild(card);
