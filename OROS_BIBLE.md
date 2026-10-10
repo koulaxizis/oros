@@ -4423,3 +4423,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Bible: TIMESHEET note for BR-TS-POMO.
 - Tests: tests/timesheet.test.js extended.
 - Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Help: Pomodoro → Timesheet note (#148) — 0.65.03
+- Time and Timesheet guide pages (EN + EL): focus sessions reach Timesheet only on the same device (the inbox is device-local).
+- Not tested: a real phone, Safari.
