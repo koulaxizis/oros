@@ -769,7 +769,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **MOOD v3:** `{ ver, trigSeeded, sm, om, entries[{id,ts,mtime,emotions[],loc,person,trig,habits,note,fm?}], cols, deleted{} }`. 9 fixed emotions; order is ts DESC (tie → id), derived at sort. `fm` (field → stamp) appears at an entry's first edit; device-local rescue key `oros-mood-data-broken`.
 - **TIME v1:** zone entities `{tz,mtime}` plus scalar prefs LWW via smtime. Alarms travel IN the shell slice.
 - **CALENDAR:** `{ ver, events[{id,title,date,start,end,location,labelId,recur{freq,interval,until,exdates},remindMin,mtime}], labels[], deleted{} }`. Fixed key order for deterministic tie-breaks.
-  - **[log]** Read-only app feeds: Contacts, Habits, Cycle, Mood, Kanban, To-Do (`lbl-feed-todo`), Screen Pet. Feed rows carry `_feed:true` and per-render keys; they are never stored, synced or exported to .ics. Feed labels come from `FEED_LABELS`. Each feed has a ~1 s micro-cache, reset in `setFromSync`.
+  - **[log]** Read-only app feeds: Contacts, Habits, Cycle, Mood, Kanban, To-Do (`lbl-feed-todo`), Screen Pet. Feed rows carry `_feed:true` and per-render keys; they are never stored, synced or exported to .ics. Feed labels come from `FEED_LABELS`. Each feed has a ~1 s micro-cache, reset in `setFromSync`. Since 0.60.04 also Timesheet "Work time" / «Ώρες εργασίας» (`lbl-feed-time`, cyan `#56b6c2`, in `STICKY_FEEDS`): one all-day row per project per day from `orosTimesheetCore.dayFeed(data, day, now)`; a click opens `__orosOpenAt("timesheet", {day})`, a `{day}` target of Timesheet's single open-at receiver (alongside the search targets).
   - **[log]** New-event prefill through `window.__orosCalendarNew` (BR-W8, Part VI).
 - **PLANTS v1** (slice `plants`, key `oros-plants-data`; logic in `plants/core.js`, shared by the app, the shell engine and the Calendar feed):
   - `{ ver, plants[plant] sorted by id, log[entry] sorted by id, tombs{id: deletedAt} sorted }`, at most 300 plants.
@@ -4300,3 +4300,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - A chore's ⋯ actions dialog has "Send to To-Do" while the chore is open: To-Do's add dialog opens prefilled with the chore (icon + name) and a note with its day or date range (and the member, when it is someone else's); nothing is saved until Add.
 - Sender side of BR-TD-ADD (`{addItems:{from, items:[{text, note}]}}`), like Meal Planner; "done" stays in Chore Wheel, nothing is copied back. Bible: BR-TD-ADD-4.
 - Shell check at 360 px, no console errors. Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Timesheet Wave 4: work time in the Calendar (#135) — 0.60.04
+- Calendar gains a "Work time" / «Ώρες εργασίας» label: one all-day row per project per day (e.g. "Website · 2:15"), ▶ for a running timer, the day's descriptions as the note; a click opens Timesheet on that day. The chip turns the rows off (remembered on the device, `STICKY_FEEDS`).
+- timesheet/core.js `dayFeed(data, day, now)`: one row per project in the order work started, exact times, entries across midnight count on each day, rows under a minute left out. calendar/index.html loads ../timesheet/core.js; calendar.js adds `lbl-feed-time` (#56b6c2) and `timesheetFeedOn()`; reads at most once a second, parses only on change; rows never stored, synced or exported.
+- Timesheet's single open-at receiver gains a `{ day }` target (used by the Calendar row click).
+- Tests: tests/timesheet dayFeed (order, running timer, midnight split, repeated descriptions). Shell check incl. HTML in a project name shown as text, Greek at 360 px, 0 console errors.
+- Not tested: a real phone, Safari, real Dropbox.

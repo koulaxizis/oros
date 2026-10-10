@@ -1783,7 +1783,8 @@
   boot();
 
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-  // target { entry } | { project } | { client }. An entry: the Timer
+  // target { entry } | { project } | { client } | { day } (Calendar
+  // feed row, Wave 4: the Timer tab on that day). An entry: the Timer
   // tab on its day, then its dialog; a project or a client: the
   // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
   function openSearchTarget(t) {
@@ -1802,6 +1803,9 @@
       if (!C.client(data, t.client)) return;
       setTab("projects");
       clientDialog(t.client);
+    } else if (C.validDay(t.day)) {
+      setTab("timer");
+      goDay(t.day);
     }
   }
   window.__orosOpenAt = openSearchTarget;
