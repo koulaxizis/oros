@@ -9,6 +9,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - Atelier: the slide show now plays videos, sound and entrance animations.
 - Pet Health Book: attach photos or PDFs (prescriptions, test results) to vaccines, visits and medicines.
 - QR code button in Contacts, Calendar and Bookmarks: opens QR Generator with the code ready.
+- Workouts: import your history from Strong or Hevy (CSV) in Settings.
 
 ## Version 0.64.00
 - New app: Typewriter. Write like on a real typewriter: only forward, a backspace strikes the letter through, key sounds and paper tints, a word goal per page.
