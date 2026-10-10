@@ -470,7 +470,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-travel", color: "#2bb3a3" },   // sea green — Travel trips + timed itinerary
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
-    { id: "lbl-feed-shelf",  color: "#56b6c2" },   // cyan — Media Shelf finishes + wishlist release dates
+    { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
