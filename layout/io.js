@@ -7,6 +7,7 @@
 //     one JSON file; opened as a NEW document, every image checked
 //     against its hash and decoded as an image before it is stored.
 //   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
+//   - Scribus .sla import (layout/sla.js) into a new document.
 //   - Place image, import plain text.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -201,9 +202,11 @@
     }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
   }
 
+  // Open a file: a .oroslayout package or a Scribus .sla document.
   function importPackage() {
-    pickFile(".oroslayout,application/json,.json").then(function (f) {
+    pickFile(".oroslayout,.sla,application/json,.json,application/xml,text/xml").then(function (f) {
       if (!f) return;
+      if (/\.sla$/i.test(f.name || "")) return importSla(f);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
       return f.text().then(function (txt) {
         var pkg = null;
@@ -231,6 +234,39 @@
   }
 
   // ---------- Images ----------
+  // ---------- Scribus ----------
+  // A NEW document from the .sla; inline images are stored like placed
+  // ones, linked images stay as empty frames that keep the file name.
+  var SLA_MAX = 100 * 1024 * 1024;
+  function importSla(f) {
+    if (f.size > SLA_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
+    LY.toast(t("sla.working"));
+    return f.text().then(function (txt) {
+      var res = null;
+      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: String(f.name || "").replace(/\.sla$/i, "").slice(0, 120) }); } catch (e) { res = null; }
+      if (!res) { LY.toast(t("sla.bad")); return; }
+      var doc = res.doc, failed = 0, chain = Promise.resolve();
+      res.images.forEach(function (im) {
+        chain = chain.then(function () { return window.LY_SLA.inlineImage(im); }).then(function (blob) {
+          if (!blob) { failed++; return; }
+          blob.name = im.name;
+          return A.importFile(blob).then(function (r) {
+            var it = M.find(doc.items, im.item);
+            if (!it) return;
+            it.a = r.id; it.iw = r.w; it.ih = r.h;
+          });
+        }).then(null, function () { failed++; });
+      });
+      return chain.then(function () {
+        LY.addDoc(M.normDoc(doc));
+        var parts = [t("sla.done", { p: res.stats.pages, n: res.stats.items })];
+        if (res.linked + failed) parts.push(t("sla.linked", { n: res.linked + failed }));
+        if (res.stats.skipped) parts.push(t("sla.skipped", { n: res.stats.skipped }));
+        LY.toast(parts.join(" "));
+      });
+    }).then(null, function () { LY.toast(t("sla.bad")); });
+  }
+
   function placeImage(itemId) {
     pickFile("image/*").then(function (f) {
       if (!f) return;

@@ -57,7 +57,7 @@
   var STRINGS = {
     en: {
       "app.name": "Layout", "loading": "Loading fonts…",
-      "home.new": "New document", "home.import": "Open package", "home.search": "Search documents",
+      "home.new": "New document", "home.import": "Open file", "home.search": "Search documents",
       "home.empty.title": "No documents yet",
       "home.empty.sub": "Flyers, newsletters, posters, cards, booklets: start with a page size.",
       "home.count": "{n} documents", "home.count1": "1 document",
@@ -142,7 +142,7 @@
       "exp.quality": "Images", "exp.print": "Print (300 ppi)", "exp.screen": "Screen (150 ppi)",
       "exp.go": "Export PDF", "exp.working": "Building the PDF…", "exp.done": "PDF saved", "exp.fail": "The PDF could not be built.",
       "exp.badRange": "That page range is not valid.", "exp.pkgDone": "Package saved", "exp.pkgNote": "One file with the document and its images, to back up or open on another device.",
-      "imp.done": "Document opened", "imp.bad": "This file is not a Layout package.", "imp.imgFail": "{n} images could not be restored.",
+      "imp.done": "Document opened", "sla.working": "Reading the Scribus file…", "sla.bad": "This file could not be read as a Scribus document.", "sla.done": "Scribus document imported: {p} pages, {n} objects.", "sla.linked": "{n} images were not inside the file: put them back with Place image.", "sla.skipped": "{n} objects (tables, free shapes, text on a path) became simple boxes or were left out.", "imp.bad": "This file is not a Layout package.", "imp.imgFail": "{n} images could not be restored.",
       "img.fail": "This file could not be read as an image.", "img.nofs": "The orOS disk is not available on this device.",
       "img.placed": "Image placed", "img.missing": "Syncing…",
       "txt.fail": "This file could not be read as text.", "txt.done": "Text imported",
@@ -162,7 +162,7 @@
     },
     el: {
       "app.name": "Σελιδοποίηση", "loading": "Φόρτωση γραμματοσειρών…",
-      "home.new": "Νέο έγγραφο", "home.import": "Άνοιγμα πακέτου", "home.search": "Αναζήτηση εγγράφων",
+      "home.new": "Νέο έγγραφο", "home.import": "Άνοιγμα αρχείου", "home.search": "Αναζήτηση εγγράφων",
       "home.empty.title": "Δεν υπάρχουν έγγραφα ακόμα",
       "home.empty.sub": "Φυλλάδια, ενημερωτικά, αφίσες, κάρτες, βιβλιαράκια: ξεκίνα διαλέγοντας μέγεθος σελίδας.",
       "home.count": "{n} έγγραφα", "home.count1": "1 έγγραφο",
@@ -247,7 +247,7 @@
       "exp.quality": "Εικόνες", "exp.print": "Εκτύπωση (300 ppi)", "exp.screen": "Οθόνη (150 ppi)",
       "exp.go": "Εξαγωγή PDF", "exp.working": "Φτιάχνω το PDF…", "exp.done": "Το PDF αποθηκεύτηκε", "exp.fail": "Το PDF δεν μπόρεσε να φτιαχτεί.",
       "exp.badRange": "Αυτό το εύρος σελίδων δεν είναι σωστό.", "exp.pkgDone": "Το πακέτο αποθηκεύτηκε", "exp.pkgNote": "Ένα αρχείο με το έγγραφο και τις εικόνες του, για αντίγραφο ή για άνοιγμα σε άλλη συσκευή.",
-      "imp.done": "Το έγγραφο άνοιξε", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο της Σελιδοποίησης.", "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
+      "imp.done": "Το έγγραφο άνοιξε", "sla.working": "Διαβάζω το αρχείο Scribus…", "sla.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο Scribus.", "sla.done": "Εισαγωγή από Scribus: {p} σελίδες, {n} αντικείμενα.", "sla.linked": "{n} εικόνες δεν ήταν μέσα στο αρχείο: βάλ’ τες ξανά με «Τοποθέτηση εικόνας».", "sla.skipped": "{n} αντικείμενα (πίνακες, ελεύθερα σχήματα, κείμενο σε διαδρομή) έγιναν απλά πλαίσια ή παραλείφθηκαν.", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο της Σελιδοποίησης.", "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
       "img.fail": "Αυτό το αρχείο δεν διαβάζεται ως εικόνα.", "img.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος σε αυτή τη συσκευή.",
       "img.placed": "Η εικόνα τοποθετήθηκε", "img.missing": "Συγχρονίζεται…",
       "txt.fail": "Αυτό το αρχείο δεν διαβάζεται ως κείμενο.", "txt.done": "Το κείμενο εισήχθη",
