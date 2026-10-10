@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Baby — shared core (v1.0.0)
+// orOS Baby — shared core (v1.1.0)
 // The pure model of the Baby app (feeds, sleep, nappies, growth,
 // milestones). No DOM, no storage writes. Exposes
 // window.orosBabyCore and, under Node, module.exports
@@ -33,12 +33,14 @@
 //   4. Day maths: totals, sleep split, week
 //   5. Age + formatting
 //   6. Export: CSV, summary
+//   7. Reminders (rule shared with the shell engine)
+//   8. Calendar feed rows
 // ============================================================
 (function (root) {
   "use strict";
 
   // ---------- 1. Constants + helpers ----------
-  var VERSION     = "1.0.0";
+  var VERSION     = "1.1.0";
   var STORAGE_KEY = "oros-baby-data";
   var DATA_VER    = 1;
   var DAY_MS      = 86400000;
@@ -514,9 +516,12 @@
     el: { born: "Αναμένεται", d1: "1 ημέρας", dN: "{n} ημερών", wk: "{w} εβδ.", wkd: "{w} εβδ. {d} ημ.",
           mo1: "1 μηνός", moN: "{n} μηνών", mod: "{n} μην. {d} ημ.", yr: "{y} ετών", yrm: "{y} ετ. {m} μην.", day0: "Νεογέννητο" }
   };
+  // One pass: a value that itself contains "{x}" (a child's name)
+  // is never filled again.
   function fill(s, p) {
-    Object.keys(p).forEach(function (k) { s = s.split("{" + k + "}").join(String(p[k])); });
-    return s;
+    return s.replace(/\{(\w+)\}/g, function (all, k) {
+      return Object.prototype.hasOwnProperty.call(p, k) ? String(p[k]) : all;
+    });
   }
   function fmtAge(birth, key, lang) {
     var w = AGE_W[lang] || AGE_W.en, a = age(birth, key);
@@ -681,6 +686,112 @@
     return out.join("\n");
   }
 
+  // ---------- 7. Reminders (phase 2) ----------
+  // Settings are DEVICE-LOCAL (oros-baby-rem): each parent chooses on
+  // their own device, nothing travels in the slice. Off by default.
+  //   { feed: minutes after the last feed's start (0 = off, else
+  //     REM_FEED[]), med: "HH:MM" daily medicine/vitamin time ("" =
+  //     off), mt: optional label for it }
+  // The shell engine (shell.js babyCheckTick) and the app share this
+  // rule; the engine only runs while orOS is open (no push server).
+  var REM_KEY = "oros-baby-rem";
+  var REM_FEED = [120, 150, 180, 210, 240, 300, 360];
+  var REM_MED_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+  var REM_STALE = DAY_MS;              // no feed logged for a day → silent
+  var REM_MED_BEFORE = 2 * 3600000;    // a med logged up to 2 h early counts
+  function readRem(o) {
+    o = (o && typeof o === "object") ? o : {};
+    return {
+      feed: REM_FEED.indexOf(o.feed) >= 0 ? o.feed : 0,
+      med: typeof o.med === "string" && REM_MED_RE.test(o.med) ? o.med : "",
+      mt: cleanText(o.mt, LIM.name)
+    };
+  }
+  function remOn(rem) { return !!(rem.feed || rem.med); }
+  // → [{ kind: "feed", key, kid, last } | { kind: "med", key, at }].
+  // Keys are stable per gap / per day, so the inbox (synced, deduped
+  // by ns + key) shows each reminder once even with two devices on.
+  function reminderDue(data, rem, now) {
+    rem = readRem(rem);
+    var t = now instanceof Date ? now.getTime() : now, out = [];
+    var today = dayKeyOf(t);
+    var kids = liveKids(data).filter(function (k) { return k.b <= today; });
+    if (!kids.length) return out;
+    if (rem.feed) {
+      kids.forEach(function (k) {
+        var last = lastOf(data, k.id, ["feed", "bottle"], t);
+        if (!last || (last.t === "feed" && last.e === undefined)) return;   // none yet / feeding now
+        var gap = t - last.ts;
+        if (gap < rem.feed * 60000 || gap > REM_STALE) return;
+        out.push({ kind: "feed", key: "feed-" + k.id + "-" + last.id, kid: k, last: last });
+      });
+    }
+    if (rem.med) {
+      var m = REM_MED_RE.exec(rem.med), at = keyDate(today);
+      at.setHours(+m[1], +m[2], 0, 0);
+      at = at.getTime();
+      if (t >= at) {
+        var done = data.ev.some(function (e) {
+          return !e.del && e.t === "med" && e.ts >= at - REM_MED_BEFORE && e.ts <= t;
+        });
+        if (!done) out.push({ kind: "med", key: "med-" + today, at: at });
+      }
+    }
+    return out;
+  }
+  var REM_W = {
+    en: { h: "{h} h", hm: "{h} h {m} min", feed: "Feed time?", feedB: "{n}: last feed {x} ago, at {t}.",
+          med: "Medicine time", medB: "Daily medicine or vitamin, {t}.", medL: "{l}, {t}." },
+    el: { h: "{h} ώρ.", hm: "{h} ώρ. {m} λεπ.", feed: "Ώρα για τάισμα;", feedB: "{n}: τελευταίο τάισμα πριν από {x}, στις {t}.",
+          med: "Ώρα για το φάρμακο", medB: "Καθημερινό φάρμακο ή βιταμίνη, {t}.", medL: "{l}, {t}." }
+  };
+  function gapWords(ms, w) {
+    var min = Math.max(0, Math.floor(ms / 60000)), h = Math.floor(min / 60), m = min % 60;
+    return fill(m ? w.hm : w.h, { h: h, m: m });
+  }
+  function reminderText(item, rem, lang, now) {
+    var w = REM_W[lang] || REM_W.en, t = now instanceof Date ? now.getTime() : now;
+    if (item.kind === "feed") {
+      return { title: w.feed,
+               body: fill(w.feedB, { n: item.kid.n, x: gapWords(t - item.last.ts, w), t: fmtClock(item.last.ts) }) };
+    }
+    rem = readRem(rem);
+    return { title: w.med, body: rem.mt ? fill(w.medL, { l: rem.mt, t: rem.med }) : fill(w.medB, { t: rem.med }) };
+  }
+
+  // ---------- 8. Calendar feed (phase 2) ----------
+  // Read-only rows for calendar/calendar.js (label lbl-feed-baby):
+  // milestones, vaccines and doctor visits on their day, and the
+  // child's age: every month up to 2 years, then each birthday.
+  // Rows are computed, never stored.
+  var CAL_W = {
+    en: { ms: "{n}: {x}", vac: "{n}: vaccine, {x}", doc: "{n}: doctor, {x}",
+          mo1: "{n} is 1 month old today", moN: "{n} is {m} months old today", bday: "🎂 {n} turns {y}" },
+    el: { ms: "{n}: {x}", vac: "{n}: εμβόλιο, {x}", doc: "{n}: γιατρός, {x}",
+          mo1: "{n}: κλείνει σήμερα 1 μηνός", moN: "{n}: κλείνει σήμερα {m} μηνών", bday: "🎂 {n}: γενέθλια ({y})" }
+  };
+  function calendarRows(data, key, lang) {
+    var w = CAL_W[lang] || CAL_W.en, out = [], kids = {};
+    if (!validDay(key)) return out;
+    liveKids(data).forEach(function (k) {
+      kids[k.id] = k;
+      var a = age(k.b, key);
+      if (!a || a.days <= 0 || a.rest !== 0 || a.months < 1) return;
+      var title;
+      if (a.months % 12 === 0) title = fill(w.bday, { n: k.n, y: a.months / 12 });
+      else if (a.months < 24) title = fill(a.months === 1 ? w.mo1 : w.moN, { n: k.n, m: a.months });
+      else return;
+      out.push({ id: "age-" + k.id + "-" + key, kid: k.id, kind: "age", title: title });
+    });
+    data.mk.forEach(function (x) {
+      if (x.del || x.d !== key || !kids[x.k]) return;
+      var what = x.key ? msLabel(x.key, lang) : x.tx;
+      out.push({ id: x.id, kid: x.k, kind: x.t, title: fill(w[x.t], { n: kids[x.k].n, x: what }) });
+    });
+    var order = { age: 0, ms: 1, vac: 2, doc: 3 };
+    return out.sort(function (x, y) { return order[x.kind] - order[y.kind] || cmpStr(x.id, y.id); });
+  }
+
   var API = {
     VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, DATA_VER: DATA_VER,
     TYPES: TYPES, TIMED: TIMED, SUBS: SUBS, LIM: LIM, DEFAULT_PREFS: DEFAULT_PREFS,
@@ -699,7 +810,9 @@
     age: age, fmtAge: fmtAge, ageMonths: ageMonths,
     fmtNum: fmtNum, fmtClock: fmtClock, fmtDur: fmtDur, fmtTimer: fmtTimer,
     fmtVol: fmtVol, fmtWeight: fmtWeight, fmtLen: fmtLen, fmtTemp: fmtTemp, msLabel: msLabel,
-    csvCell: csvCell, toCsv: toCsv, growthCsv: growthCsv, summary: summary
+    csvCell: csvCell, toCsv: toCsv, growthCsv: growthCsv, summary: summary,
+    REM_KEY: REM_KEY, REM_FEED: REM_FEED, readRem: readRem, remOn: remOn,
+    reminderDue: reminderDue, reminderText: reminderText, calendarRows: calendarRows
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

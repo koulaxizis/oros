@@ -1,0 +1,28 @@
+# Word Search
+Find the hidden words in a grid of letters. Play the daily puzzle or as many as you like, even with your own word lists.
+
+## How to play
+The words to find are listed next to the grid. Each one is hidden in a straight line. Drag across a word from its first letter to its last, or tap or click the first letter and then the last. A found word is marked in colour and ticked off the list.
+
+Words come in English or Greek, chosen with `EN` / `ΕΛ` in the toolbar. Greek words are in capitals without accents, and a final ς is written as Σ.
+
+## Controls
+- `Daily` or `Free`: the daily puzzle or free play.
+- `8×8`, `12×12`, `15×15`: the size in free play. 8×8 has words across and down, 12×12 also diagonal, and 15×15 also backwards.
+- `Theme`: pick a ready theme (`Animals`, `Food`, `Countries` and more) or `Random words`, or make your own.
+- The hint button (`Hint (H)`) circles the first letter of a word you haven't found.
+
+Keyboard: arrow keys move around the grid, [[Enter]] or [[Space]] picks the first and then the last letter, and [[Esc]] cancels the first pick. [[H]] gives a hint, [[Shift+N]] a new puzzle.
+
+### Your own themes
+In `Theme`, under `My themes`, choose `New theme`. Give it a `Name` and type the `Words`, one per line or separated by commas: 3 to 15 letters, at least 3 words and at most 60. Themes belong to the word language that's on when you make them.
+
+## Levels and scoring
+`Daily` is one 12×12 puzzle a day, the same on every device. `Statistics` shows the days solved, your streak, your best streak and best daily time, plus how many free-play puzzles you've solved and your best time for each size. Using a hint means no record for that puzzle. `Reset statistics` clears them, but keeps your own themes.
+
+## Sync
+Your daily results, free-play records and your own themes sync between your devices through [orOS sync](help:t/sync). If you've already solved today's puzzle on another device, you'll see its time. The puzzles in progress and your settings stay on this device.
+
+## Tips
+- Your own themes are handy for practising spelling words with a class.
+- The same word lists are used by [Crossword](help:a/crossword).

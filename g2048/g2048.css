@@ -73,6 +73,7 @@ button, select {
 /* Wide screen: both strips flow as one line, in this order. */
 .tb-row { display: contents; }
 #size-seg     { order: 1; }
+#mode-seg     { order: 2; }
 #undo-btn     { order: 4; }
 #tb-b .spacer { order: 3; }
 #new-btn      { order: 5; }

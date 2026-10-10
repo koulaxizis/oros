@@ -1,0 +1,34 @@
+# Battleship
+Find and sink the computer's fleet before it sinks yours. Both fleets hide on 10×10 seas, and you take turns firing one shot each.
+
+## How to play
+Each fleet has five ships: `Carrier` (5 squares), `Battleship` (4), `Cruiser` (3), `Submarine` (3) and `Destroyer` (2).
+
+First place your fleet under `Place your ships`:
+1. Pick a ship in the dock, then tap or click the square where it should start (its top or left end). Near the edge it moves back to fit.
+2. `Rotate` turns it between horizontal and vertical. Tap a placed ship to pick it up again.
+3. `Random` places the whole fleet for you, `Clear` empties the sea.
+4. When all five ships are in, press `Start`.
+
+Then fire at `Enemy waters`: you shoot first. Hits, misses and sunk ships are marked, and the computer answers each shot on `Your fleet`. Sink all five enemy ships to win. At the end, the enemy fleet is shown.
+
+## Controls
+- With a mouse, hovering shows where a ship would go (red when it can't).
+- [[←]] [[↑]] [[→]] [[↓]] move the cursor, [[Enter]] or [[Space]] places a ship or fires.
+- [[R]] rotates, [[Backspace]] picks up the ship under the cursor, and [[Enter]] starts the game once the fleet is ready.
+- [[N]] starts a new game.
+
+## Levels and scoring
+- `Easy`: the computer fires at random.
+- `Medium`: it searches, then closes in around a hit and follows the line.
+- `Hard`: it works out where your remaining ships are most likely to be.
+
+In `Options`, turn on `Ships may not touch` to keep ships apart, even at a corner, for both fleets. During a battle the change applies from the next game. `Records` shows wins, losses and your fewest shots in a win, per level.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The game in progress, the level, `Options` and the sound setting stay on this device.
+
+## Tips
+- The game is saved as you play; reopen the app to carry on.
+- Started a new game or changed level by mistake? Tap `Undo` on the message that appears.
+- With `Ships may not touch` on, the squares around a sunk ship are empty: don't waste shots there.

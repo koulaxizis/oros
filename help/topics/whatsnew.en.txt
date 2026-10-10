@@ -1,0 +1,51 @@
+# What's new in orOS
+The newest changes come first. When orOS updates itself, the update notice opens this page.
+
+## Version 0.57.00
+- [Podcasts](app:podcasts) shows chapters and transcripts, plays video episodes, searches every episode, keeps listening statistics, can tell you about new episodes, and sends an episode to [Notes](app:notes), [To-Do](app:todo) or a show's site to [Reader](app:feeds).
+- [Meal Planner](app:meals) sends the shopping list to [To-Do](app:todo), and [Calendar](app:calendar) can show planned meals with the new Meals chip.
+- [Travel](app:travel) reminds you the evening before a trip and before each departure, shows the destination's forecast, works out fuel cost by car with data from [Garage](app:garage), and puts trips in [Calendar](app:calendar).
+- [Baby](app:baby) can remind you when a feed is due and at a daily medicine time (off by default), and [Calendar](app:calendar) can show milestones, vaccines, doctor visits and age with the new Baby chip.
+- [Chore Wheel](app:chores) can remind you of your chores once a day, and [Calendar](app:calendar) can show who does what with the new Chores chip.
+
+## Version 0.56.00
+- [Reader](app:feeds) can send an article to [Bookmarks](app:bookmarks), [Notes](app:notes), [To-Do](app:todo) or email, and can notify you about new articles from a feed or a watched word. In [Bookmarks](app:bookmarks), `Follow in Reader` subscribes to a site.
+
+## Version 0.55.00
+- [Pet Health Book](app:petcare) reminds you at each medicine dose time, and can send a vet cost to [Budget](app:budget) or the pet's food to your [To-Do](app:todo) shopping list.
+
+## Version 0.54.00
+- Every app and game now has its own page in Help. Inside any app, the **?** button or [[Ctrl+Alt+Shift+H]] opens it.
+- New users get a short tour of the top bar the first time they open orOS. You can [take the tour](tour:start) again at any time.
+- The update notice now opens this page, so you can see what changed.
+- [Split](app:split) can add people from [Contacts](app:contacts) or from a [Travel](app:travel) trip.
+- [Garage](app:garage) keeps receipt photos with fuel, service and cost entries.
+- [Timesheet](app:timesheet) can turn a report into a new [Quote](app:quote).
+
+## Versions 0.49.00 to 0.53.02
+- Favourites: the star next to every app in the menu puts it on the desktop or in a Dock at the bottom of the screen.
+- All settings moved out of the menu into the new [Settings](app:settings) app, in the System category.
+- Universal search now also finds your data in 35 more apps. Private apps such as Mood, Cycle, Health, Baby and Budget stay out of it until you turn them on.
+- New app: [Oracle](app:oracle), in Fun. Ask a question and get a prophecy that is always true and never helpful.
+- [Budget](app:budget) has accounts and transfers, opens your entries in [Spreadsheet](app:spreadsheet), and shows recurring entries in [Calendar](app:calendar).
+- [Family Tree](app:familytree) imports and exports GEDCOM files, for other genealogy programs.
+- [2048](app:g2048) has a timed mode: two minutes for your best score.
+- [Atelier](app:atelier) offers hundreds of free fonts, many with Greek letters.
+- On mornings when one of your contacts has a name day, orOS lets you know.
+- A fix for sync stopping with "Browser storage is full" on devices that kept old automatic backups.
+
+## Version 0.48.00
+- New app: [Help](app:help), in the System category. It explains orOS and its apps, works offline and has its own search.
+- A **?** button in the top bar opens Help at the page of the app you are using.
+
+## Versions 0.47.01 to 0.47.05
+- Updates wait while a podcast is playing, so an update never cuts off an episode.
+- Installed orOS: the app icon has shortcuts to open some apps directly.
+- [Budget](app:budget) can receive expenses from other apps, such as `Add to Budget` in [Garage](app:garage).
+- [Bookmarks](app:bookmarks) can receive pages from your browser with a bookmarklet, or from the Android share menu.
+- The weather chip in the top bar is now set up in [Weather](app:weather), and the top bar always fits on small phones.
+
+## Version 0.47.00
+- 53 new apps and games joined the menu at once, among them [Mail](app:mail), [Reader](app:feeds), [Podcasts](app:podcasts), [Atelier](app:atelier), [Slides](app:slides), [Budget](app:budget) and many games.
+- Universal search: the search box at the top of the menu also finds things inside your data.
+- [Calendar](app:calendar) shows name days, public holidays and world days.

@@ -1,0 +1,45 @@
+# Characters
+Characters is a notebook for the people in your stories. Give each one a role, a backstory, traits and goals, then map how they relate to each other and compare any two side by side.
+
+## Getting started
+Tap or click `New` at the top (or press [[Ctrl+Alt+N]]). Type a `Name`; it's the only required field. Press `Save`, or [[Enter]] in the name box.
+
+Your characters appear as cards with their initials, role, first few traits and how many links they have. Use `Filter by name, role or trait…` to find one. Tap or click a card (or press [[Enter]] on it) to edit it.
+
+## Build a character
+The editor has:
+- `Name` and `Role / archetype`.
+- `Backstory`, for as much text as you like.
+- `Traits`: `Add trait`, type a trait and set its `Intensity` from 1 to 5. The `Trait profile` draws them as a radar chart.
+- `Goals`: `Add goal` and tick each one off when it's reached.
+
+For a new character you can also `Start from a template` (`Hero`, `Villain` or `Mentor`), or press `🎲 Surprise me` to fill the empty fields with a random name, role and traits.
+
+`Delete` asks first and removes the character together with all its relationships. Straight after, a ↩ button in the message brings them back.
+
+## Relationships
+Open `Relationships` once you have at least two characters. The grid has every character on both sides; tap or click a cell to set the relationship between that pair. Choose a `Type` (`Friend`, `Family`, `Lover`, `Rival`, `Enemy`, `Mentor`, `Ally` or `Other`), add a `Short label` and `Notes`, and `Save`. Each pair has one relationship, the same from both sides. A legend under the grid counts each type.
+
+Under `Compare`, pick two characters to see their backstory, traits, goals and their relationship side by side.
+
+## Export
+`Export` offers `Markdown (.md)`, a readable document of all characters and relationships, or `Data (.json)`, a full copy of the app's data.
+
+## Sync and backup
+Characters and relationships sync between your devices through [orOS sync](help:t/sync). The open tab, filter and comparison reset when you close the app. Besides the export, the orOS [backup](help:t/backup) keeps a copy.
+
+## Keyboard shortcuts
+- [[Ctrl+Alt+N]]: new character.
+- [[Ctrl+Alt+E]]: export.
+- [[Enter]] in the name box: save. [[Ctrl+Enter]] in the backstory: save.
+- [[Esc]]: close the open window.
+
+The `Help` button at the top shows these shortcuts too.
+
+## Tips
+- Use the Markdown export to drop your cast into [Writer](app:writer) or [Notes](app:notes).
+- Need a name? Try the [Name Generator](app:names).
+
+## Limits
+- There's no import; the JSON export can't be loaded back into the app. To restore, use an orOS [backup](help:t/backup).
+- The Markdown export's headings are in English.

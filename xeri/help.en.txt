@@ -1,0 +1,28 @@
+# Xeri
+Xeri (Ξερή) is the classic Greek card game, you against the computer. Capture cards from the table and score points.
+
+## How to play
+You each get 6 cards and 4 cards go face up on the table. On your turn, play one card:
+- If it has the same rank as the top card on the table, you take the whole table.
+- A Jack always takes the table, as long as it isn't empty.
+- Otherwise your card stays on top of the pile.
+
+Taking the table when it holds just one card is a **xeri**: 10 points, or 20 for a Jack on a lone Jack. New hands come from the deck. At the end of the deal, the cards left on the table go to whoever captured last.
+
+Points per deal: 3 for the most cards (nobody gets them at 26–26), 1 for each King, Queen, Jack and 10 (the 10♦ is worth 2), 1 for the 2♣, plus your xeri points. After each deal, press `Next deal` to carry on.
+
+## Controls
+Tap or click a card in your hand, or drag it onto the table. The toolbar has the level, `Rules`, `New match (N)`, `Records` and the sound button.
+
+In `Rules` you can set the `Match` (`To 51`, `To 101` or `One deal`), `Cards per hand` (6 or 4), and whether a `Jack on a lone card` is a `Plain capture` or a `Xeri (10)`. Rule changes apply from the next match, or press `New match now`. Starting a new match mid-game shows an `Undo` button for a few seconds.
+
+Keyboard: [[1]] to [[6]] play that card from your hand; with a card focused, [[←]] / [[→]] move between cards and [[Enter]] or [[Space]] plays it; [[N]] starts a new match.
+
+## Levels and scoring
+The computer plays at `Easy`, `Medium` or `Hard`; changing the level starts a new match. `Records` shows, for each level, your matches and wins, your xeri and Jack-on-Jack count, and your best deal. `Reset records` clears them.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync), adding up the matches from every device; `Reset records` clears them everywhere. The match in progress, your level and rules, and the sound setting stay on this device.
+
+## Tips
+- Save your Jacks for a big pile.

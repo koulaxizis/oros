@@ -3,29 +3,16 @@
 // hand-over, balanced, spin) and the stats.
 // Run: node --test tests/
 //
-// The app is a browser IIFE with no exports, so the constants and
-// sections 2–4 are cut out of the source and evaluated on their own.
+// The logic lives in chores/core.js, shared by the app, the shell's
+// daily reminder and the Calendar feed.
 
 "use strict";
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("fs");
 const path = require("path");
 
-const src = fs.readFileSync(path.join(__dirname, "..", "chores/chores.js"), "utf8");
-function block(from, to) {
-  const i = src.indexOf(from), j = src.indexOf(to, i);
-  if (i < 0 || j < 0) throw new Error("missing block " + from);
-  return src.slice(i, j);
-}
-const C = new Function(
-  "var LANG = 'en';\n" +
-  block("  var STORAGE_KEY", "  // ---------- 1.") +
-  block("  function cmpStr(", "  function newId(") +
-  block("  // ---------- 2. Dates", "  // ---------- 5. Storage") +
-  "\nreturn { MAX_MEMBERS, MAX_TASKS, COLORS, SETS, SET_IDS, ymdToDn, dnToYmd, dow, monday, occAt, occsIn, prevOcc," +
-  " normMember, normTask, mergeChores, pruneBeforeYmd, makeCtx, assignee, dayRows, statsFor, streakOf, pool };")();
+const C = require(path.join(__dirname, "..", "chores/core.js"));
 
 const NOW = Date.UTC(2026, 9, 8, 12);          // 2026-10-08, a Thursday
 const D = C.ymdToDn;
@@ -260,4 +247,38 @@ test("ready sets: valid chores", () => {
       });
     });
   });
+});
+
+test("readPrefs: me + reminder hour, bad values fall back", () => {
+  assert.deepEqual(C.readPrefs(null), { me: "", rh: 9 });
+  assert.deepEqual(C.readPrefs({ me: A, rh: 7 }), { me: A, rh: 7 });
+  assert.deepEqual(C.readPrefs({ me: A, rh: -1 }), { me: A, rh: -1 });     // off
+  assert.deepEqual(C.readPrefs({ me: "<x>", rh: 24 }), { me: "", rh: 9 });
+  assert.deepEqual(C.readPrefs({ me: 5, rh: "8" }), { me: "", rh: 9 });
+});
+
+test("summary: only my open chores today, late ones counted apart", () => {
+  const d = task("tdishes", { k: "d" }, { start: "2026-10-05" });
+  const w = task("tbins", { k: "w", d: [0] }, { start: "2026-10-05", name: "bins" });
+  const st = state([mem(A, 0)], [d, w], {});
+  const s = C.summary(st, D("2026-10-08"), A);
+  assert.deepEqual(s.names, ["tdishes"]);
+  assert.ok(s.late >= 1);                                           // missed days still open
+  assert.deepEqual(C.summary(st, D("2026-10-08"), ""), { names: [], late: 0 });
+  assert.deepEqual(C.summary(st, D("2026-10-08"), B), { names: [], late: 0 });   // not a member
+  const done = {}; done["tdishes|2026-10-08"] = [1, A, 1];
+  assert.deepEqual(C.summary(state([mem(A, 0)], [d], done), D("2026-10-08"), A).names, []);
+});
+
+test("feedRows: chores starting that day, filtered to me, sorted", () => {
+  const d = task("tdishes", { k: "d" }, { start: "2026-10-05", name: "dishes" });
+  const t2 = task("tcooking", { k: "d" }, { start: "2026-10-05", name: "cook", off: 1 });
+  const st = state([mem(A, 0), mem(B, 1)], [d, t2], {});
+  const all = C.feedRows(st, D("2026-10-08"), "");
+  assert.deepEqual(all.map((r) => r.task.name), ["cook", "dishes"]);
+  assert.notEqual(all[0].who, all[1].who);
+  all.forEach((r) => { assert.equal(r.key.split("|")[1], "2026-10-08"); assert.ok(r.name); });
+  const mine = C.feedRows(st, D("2026-10-08"), A);
+  assert.ok(mine.length === 1 && mine[0].who === A);
+  assert.deepEqual(C.feedRows(st, D("2026-10-04"), ""), []);        // before start
 });

@@ -900,11 +900,40 @@
       $("loading").hidden = true;
       if (LY.prefs.doc && findDoc(LY.prefs.doc)) openDoc(LY.prefs.doc);
       else renderHome();
+      takeSearchTarget();
     }, function () {
       $("loading").hidden = true;
       toast(t("toast.fontFail"));
       renderHome();
+      takeSearchTarget();
     });
+  }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { doc }.
+  // Opens the document (leaving the one that is open through Home, so
+  // the Story Editor flushes). Unknown id → no-op; nothing happens
+  // while a dialog is open.
+  var searchReady = false, searchLater = null;   // fonts first (boot)
+  function openSearchTarget(tg) {
+    if (!searchReady) { searchLater = tg; return; }
+    var id = tg && typeof tg.doc === "string" ? tg.doc : null;
+    if (!id || !findDoc(id)) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (LY.doc && LY.doc.id === id) return;
+    if (LY.doc) goHome();
+    openDoc(id);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    searchReady = true;
+    if (searchLater) { var later = searchLater; searchLater = null; openSearchTarget(later); return; }
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("layout");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (e) {}
   }
 
   document.addEventListener("DOMContentLoaded", boot);

@@ -1,0 +1,35 @@
+# Mastermind
+Crack the hidden colour code in 10 tries. After each guess, small key pegs tell you how close you came.
+
+## How to play
+Fill the pegs of the current row with colours, then press `Check`.
+- A solid key peg means a right colour in the right place.
+- A hollow key peg means a right colour in the wrong place.
+- Key pegs don't say which of your pegs they mean. Repeated colours are counted exactly.
+
+Crack the code within 10 tries to win; otherwise the code is shown. `How to play` in the toolbar has a short reminder.
+
+Every colour also has its own symbol and number, so you never have to tell colours apart by shade alone.
+
+## Controls
+- Tap or click a colour to put it in the selected peg; the selection then moves to the next empty peg.
+- Tap a peg to select it, and tap it again to clear it.
+- `Clear` empties the selected peg, `Check` scores the row.
+- [[1]] to [[8]] pick a colour by its number, [[←]] [[→]] move between pegs, [[Backspace]] clears, [[Enter]] checks, [[N]] starts a new game.
+
+A row with empty pegs can't be checked.
+
+## Levels and scoring
+- `Easy`: 4 pegs, 6 colours, no repeats.
+- `Medium`: 4 pegs, 6 colours, repeats allowed.
+- `Hard`: 5 pegs, 8 colours, repeats allowed.
+
+The status bar shows your try and your best (fewest tries) for the level. `Records` lists, per level, the games you won, your best and your average number of tries.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The game in progress, the chosen level and the sound setting stay on this device.
+
+## Tips
+- A half-filled row is kept too: close the app and carry on later.
+- Started a new game or changed level by mistake? Tap `Undo` on the message that appears.
+- On `Easy`, the first guesses can use four different colours each to find out quickly which colours are in the code.

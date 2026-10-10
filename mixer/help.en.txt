@@ -1,0 +1,33 @@
+# Sound Mixer
+Sound Mixer plays relaxing background sounds you can mix: rain, thunder, wind, waves, a stream, a fireplace, a café, crickets, birds and noise. Every sound is made live on your device, so it works offline and never loops audibly.
+
+## Getting started
+Tap or click a sound under `Sounds` to switch it on; playback starts by itself. Tap it again to switch it off. The slider under each sound sets its level.
+
+The bar at the top has the play/pause button, the name of what's playing, the `Volume` slider, mute, the sleep timer and `Save mix`. Nothing plays until you start it.
+
+## Mix sounds
+- Turn on as many sounds as you like and balance them with their sliders.
+- `Noise` has a small button that switches its colour between `Pink`, `Brown` and `White`.
+- `Ready mixes` has six starting points: `Rainy night`, `Café`, `Forest`, `Seaside`, `Storm` and `Focus`. Tap one to load and play it, then adjust it as you wish.
+
+## Save your mixes
+When you like a mix, press `Save mix`, give it a `Name` and `Save`. It appears under `My mixes`; tap it to play it again. Each saved mix has buttons to rename or delete it. After a delete, `Undo` appears for a few seconds. You can keep up to 40 mixes.
+
+## Sleep timer
+Pick 15, 30, 60 or 90 minutes in the timer menu. The time left shows next to the mix name, the sound fades out over the last 30 seconds, and then playback pauses. Choose `Timer off` to cancel it.
+
+## Sync and backup
+Your saved mixes sync between your devices through [orOS sync](help:t/sync). The mix on the desk, the volume, mute and the last timer choice stay on this device. There's no import or export; the orOS [backup](help:t/backup) includes your mixes.
+
+## Keyboard shortcuts
+- [[Space]] plays or pauses.
+- [[M]] mutes or unmutes.
+- [[1]] to [[9]] and [[0]] switch the ten sounds on or off, in the order shown.
+
+## Tips
+- Turning on a sound while paused starts playback; switching off the last one pauses it.
+- The sound stops when you close the app, so keep it open while you listen.
+
+## Limits
+- If your browser can't play sound in the app, you'll see a message instead.

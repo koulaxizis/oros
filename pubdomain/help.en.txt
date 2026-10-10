@@ -1,0 +1,68 @@
+# Public Domain Calculator
+
+Find out when a book, a song, a painting or a film becomes free to use, in Greece and in 20 more countries.
+
+## Getting started
+
+Type an author or a work in the search box (`Author or work, e.g. Kazantzakis`) and pick a result. The app reads the dates from Wikidata and shows:
+
+- the author or the work, with years of birth and death and links to `Wikipedia` and `Wikidata`;
+- a card for `My country` with the answer;
+- the list `In other countries`.
+
+The country list and the rules are stored in the app, so working out the answer needs no connection. Only the search does.
+
+## Look up an author or a work
+
+- Pick a person to see when everything they wrote or made is free. Pick a work (a novel, a film, a song) to see when that work is free. For a work, the app finds its creators and the last one to die counts.
+- Search in Greek or in English. Results show the Wikidata description, which helps you tell people with the same name apart.
+- Your last 10 lookups appear under `Recent`. Tap one to look it up again, or tap `Clear` to forget them.
+
+## Enter the dates yourself
+
+Tap the pencil button (`Enter dates yourself`) to open the form. It works offline.
+
+1. Choose `One author`, `Several authors` or `Anonymous`.
+2. Enter each `Year of death`, or tick `Still alive`. With `Several authors`, use `+ Add author`. For a film, add the director, the screenwriter, the dialogue writer and the composer of its music.
+3. Optionally enter the `Year of first publication`. Anonymous works need it, and it matters in the United States.
+
+The answer updates as you type. Tap the pencil again to close the form.
+
+## Reading the answer
+
+Each country shows one of four answers:
+
+- `Public domain` (✓), with the date it became free. Works become free on 1 January after the term ends.
+- `Protected` (©), with the last protected day and how many years are left.
+- `Possibly free` (?), when the answer depends on something the app doesn't know: an exact date of death, or in the United States the year a work was published.
+- `Cannot tell` (–), when a date is missing. The card says which one.
+
+Under the answer you see the rule (for example `Rule: 70 years after death`), the law and article, notes for that country, and a `Source` link to the text the rule was checked against.
+
+>! A rule marked `This rule has not yet been checked at its source.` is based on secondary sources. Check it before relying on it.
+
+## Other countries
+
+- Choose your country in `My country`. Greece is the default, and your choice stays on this device.
+- `A–Z` sorts the list by name, `Free first` puts the countries where the work is free at the top.
+- Tap a country to see its rule, notes and source.
+
+## Sync and backup
+
+Nothing in this app is synced or backed up: your country, the list order and your recent lookups stay on this device. See [orOS sync](help:t/sync) for the apps that do sync.
+
+## Keyboard shortcuts
+
+- [[/]] jumps to the search box. [[Esc]] clears it.
+- [[↓]] moves from the search box into the results, [[↑]] / [[↓]] move through them and [[Enter]] picks one.
+
+## Tips
+
+- If Wikidata shows only the decade of death, or more than one date, the card warns you and the answer becomes a range.
+- A person with no date of death who was born less than 110 years ago is treated as living.
+
+## Limits
+
+- This is information, not legal advice. The answer is about the original work: translations, new editions with notes, arrangements, recordings and photographs of a work have rights of their own.
+- Some special cases are explained but not counted: France's wartime extensions, Russia's extra 4 years for war veterans, Japan's wartime extension, and the US notice and renewal rules.
+- The search sends what you type to [Wikidata](https://www.wikidata.org/), which needs no account.

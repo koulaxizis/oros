@@ -1,0 +1,38 @@
+# Settings
+Settings gathers the options of orOS itself in one place: how it looks, notifications, sync, backups, language and search, and the system tools. Each option still works exactly as before; it just lives here now instead of in the menu.
+
+## Getting started
+1. Open the menu and choose `Settings`, at the bottom under the apps. You'll also find it in the `System` category.
+2. Pick a section on the left: `Appearance`, `Notifications`, `Sync`, `Backups`, `Language & search` or `System`.
+3. Change what you like. Every change applies at once; there is no save button.
+
+On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
+
+Next to each card you'll see where it applies: `All devices` means it travels with [sync](help:t/sync), `This device` means it stays on this device only.
+
+## The sections
+- `Appearance`: `Theme` (`Dark` or `Light`), `System colour`, `Wallpaper`, the `Dock` when your orOS has one, and the `Screen pet`. See [Appearance](help:t/appearance).
+- `Notifications`: the `Notifications` switch, `Send a test`, position, style, sound, `Quiet hours` and `Which apps may notify`. See [Notifications](help:t/notifications).
+- `Sync`: `Connect to Dropbox`, your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically` and `Disconnect`. See [Sync across devices](help:t/sync).
+- `Backups`: `Automatic backup`, `Backup folder`, `Back up now`, `Export backup file` and `Import backup file`. See [Backup and restore](help:t/backup).
+- `Language & search`: the `Language` of orOS and which apps the menu search looks in.
+- `System`: the `orOS version`, `Check for updates`, `Install orOS as an app` (when your browser offers it), `Keyboard shortcuts`, links to [Device info](app:device) and more, and `Factory reset`.
+
+### Other ways in
+- Tap the sync dot in the top bar while sync isn't connected or is locked: Settings opens at `Sync`.
+- The `About orOS + shortcuts` window has a button that opens `System`, where the factory reset is.
+
+## Sync and backup
+Settings stores nothing of its own. Every option is saved by orOS in the same place as before, so your choices sync and back up exactly as they always did. Theme, colour, wallpaper, screen pet, notifications, sync interval, automatic backup and language go to all your devices. The backup folder, your remembered passphrase, the menu search choices and the Dock stay on this device.
+
+## Keyboard shortcuts
+- [[Esc]] on a phone-sized screen goes back from a section to the list.
+- The orOS shortcuts are listed under `System` and in [Keyboard shortcuts](help:t/shortcuts).
+
+## Tips
+- Buttons that can't be undone, such as `Disconnect` and `Factory reset`, ask you to tap a second time. If you don't, they go back to normal after a few seconds.
+- Some apps keep their own settings inside the app, for example the weather in the top bar, which you set in [Weather](app:weather). `System` links to them under `More`.
+
+## Limits
+- Settings works only inside the orOS desktop. Opened on its own, it asks you to open it from the orOS menu.
+- The `Backup folder` options appear only in browsers that can write to a folder, such as Chrome and Edge on a computer.

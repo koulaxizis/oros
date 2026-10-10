@@ -2838,6 +2838,27 @@
     if (id) setTimeout(function () { window.__orosFitnessOpen(id); }, 250);
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { pg: id }. Programs tab with that program in its editor, as
+  // its edit button does. Unknown program → no-op; an open dialog or a
+  // program already in the editor (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    var p = t && typeof t.pg === "string" ? findRow("pg", t.pg) : null;
+    if (!p || pgDraft || document.querySelector("dialog[open]")) return;
+    pgDraft = JSON.parse(JSON.stringify(p));
+    setTab("programs");
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("fitness");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
+  }
+
   function wire() {
     $("set-btn").innerHTML = UI.gear;
     $("set-btn").setAttribute("aria-label", t("btn.settings"));
@@ -2899,6 +2920,7 @@
     if (act && prefs.tab === "train") editId = act.id;
     render();
     takePending();
+    takeSearchTarget();
   }
 
   boot();
