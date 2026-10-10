@@ -122,6 +122,8 @@
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Plants",
       "lbl.feed.garage": "Garage",
+      "lbl.feed.travel": "Travel",
+      "feed.travel.day": "{name} · day {n}/{of}",
       "lbl.feed.meals": "Meals",
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget",
@@ -258,6 +260,8 @@
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Φυτά",
       "lbl.feed.garage": "Γκαράζ",
+      "lbl.feed.travel": "Ταξίδια",
+      "feed.travel.day": "{name} · μέρα {n}/{of}",
       "lbl.feed.meals": "Γεύματα",
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός",
@@ -452,6 +456,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
     { id: "lbl-feed-petcare", color: "#e0af68" },  // amber — Pet Health Book (real pets; Screen Pet is lbl-feed-pet)
     { id: "lbl-feed-garage", color: "#ecc75f" },   // amber — Garage renewals + service
+    { id: "lbl-feed-travel", color: "#2bb3a3" },   // sea green — Travel trips + timed itinerary
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
@@ -471,6 +476,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
     if (l.id === "lbl-feed-petcare") return t("lbl.feed.petcare");
     if (l.id === "lbl-feed-garage") return t("lbl.feed.garage");
+    if (l.id === "lbl-feed-travel") return t("lbl.feed.travel");
     if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
     if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
@@ -1658,6 +1664,53 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Travel read-only feed (travel/core.js, loaded by index.html: the
+  // same reading as the shell reminder). Each trip shows on every day
+  // of its dates (all-day, "Rome · day 2/5"); itinerary entries that
+  // have a day and a time show at that time. Rows are never stored;
+  // micro-cached ~1s like the other feeds. Click → the trip in Travel
+  // (timed rows open its itinerary).
+  var TRAVEL_DATA_KEY = "oros-travel-data";
+  var travelCache = { when: 0, rows: null };
+
+  function travelRows() {
+    var now = Date.now();
+    var Core = window.OrosTravelCore;
+    if (!Core) return null;
+    if (now - travelCache.when > 1000) {
+      travelCache.rows = null;
+      try {
+        var raw = localStorage.getItem(TRAVEL_DATA_KEY);
+        if (raw) travelCache.rows = Core.feedRows(Core.trips(JSON.parse(raw)));
+      } catch (e) { travelCache.rows = null; }
+      travelCache.when = now;
+    }
+    return travelCache.rows;
+  }
+
+  function travelFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-travel")) return [];
+    var rows = travelRows();
+    if (!rows) return [];
+    var Core = window.OrosTravelCore, out = [];
+    rows.forEach(function (r) {
+      if (r.day !== dateStr) return;
+      var title = r.kind === "trip"
+        ? (r.of > 1 ? t("feed.travel.day").replace("{name}", r.name).replace("{n}", r.n).replace("{of}", r.of) : r.name)
+        : Core.entryTitle(r.entry, LANG);
+      out.push({
+        id: "trv-" + r.key,                     // per-render key, never stored
+        title: title,
+        labelId: "lbl-feed-travel",
+        start: r.start,                         // null = all-day
+        end: r.end,
+        _feed: true,
+        _travel: { trip: r.trip, tab: r.kind === "trip" ? "" : "plan" }
+      });
+    });
+    return out;
+  }
+
   // Meal Planner read-only feed (meals/core.js, loaded by index.html).
   // One all-day row per planned meal: "Dinner: Fasolada, Salad", in the
   // slots the app shows, with the user's own slot names. Ready recipes
@@ -1873,6 +1926,7 @@ function transientNote(title, body) {
     .concat(plantsFeedOn(dateStr))
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
+    .concat(travelFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
@@ -1923,6 +1977,9 @@ function transientNote(title, body) {
       } else if (ev._garageId &&
                  typeof p.__orosOpenGarage === "function") {
         p.__orosOpenGarage(ev._garageId);
+      } else if (ev._travel &&
+                 typeof p.__orosOpenTravel === "function") {
+        p.__orosOpenTravel(ev._travel.trip, ev._travel.tab);
       } else if (ev._openAt &&
                  typeof p.__orosOpenAt === "function") {
         p.__orosOpenAt(ev._openAt.app, ev._openAt.target);
