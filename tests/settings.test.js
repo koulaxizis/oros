@@ -115,8 +115,8 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
   sets.forEach((n) => {
     if (n.endsWith(":")) return;                 // "search:" + id, checked below
     if (/^dock:/.test(n)) {                      // matched by one pattern in the shell
-      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\)\$/);
-      assert.match(n, /^dock:(on|size|magnify|autohide|over)$/, n);
+      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\)\$/);
+      assert.match(n, /^dock:(on|size|magnify|autohide|over|style)$/, n);
       return;
     }
     assert.ok(BRIDGE.includes('case "' + n + '":'), "set " + n);
