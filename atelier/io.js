@@ -288,6 +288,12 @@
         if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
       });
     });
+    // videos and sounds travel the same way (video.js checks them back in)
+    if (AT.video) AX.clipIds(doc).forEach(function (id) {
+      chain = chain.then(function () { return AT.video.blob(id); }).then(function (b) {
+        if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
+      });
+    });
     chain.then(function () {
       var pkg = { kind: PKG_KIND, ver: PKG_VER, doc: doc, assets: assets };
       var blob = new Blob([JSON.stringify(pkg)], { type: "application/json" });
@@ -314,6 +320,13 @@
         if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
         chain = chain.then(function () {
           return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
+        }).then(null, function () { failed++; });
+      });
+      if (AT.video) AX.clipIds(doc).forEach(function (id) {
+        var b64 = assets[id];
+        if (typeof b64 !== "string") { failed++; return; }
+        chain = chain.then(function () {
+          return AT.video.put(id, b64ToBlob(b64, window.AtelierClips.mimeOf(id)));
         }).then(null, function () { failed++; });
       });
       return chain.then(function () {
@@ -350,11 +363,21 @@
           }).then(function (res) { assets[k] = res; }, function (e) { if (e && e.message === "nofs") throw e; failed++; });
         });
         return chain.then(function () {
+          // the design's fonts first, so text boxes get their real size
+          // (at most a few seconds; a font that does not come shows in Sans)
+          var keys = [];
+          window.AtelierPPTX.planFonts(plan).forEach(function (f) {
+            AX.ensureFont(f.id, f.name);
+            ["r", "b", "i", "bi"].forEach(function (v) { keys.push(f.id + "-" + v); });
+          });
+          if (!keys.length || navigator.onLine === false) return;
+          return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
+        }).then(function () {
           var r = window.AtelierPPTX.build(plan, assets, AT.now());
           AT.addDoc(r.doc);
           var lost = plan.skipped + r.missing;
           if (!quiet) AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
-          return lost;
+          return quiet ? { lost: lost, id: r.doc.id } : lost;
         });
       });
     });
@@ -402,6 +425,7 @@
             it.a = res.id; it.nm = res.name; it.iw = res.w; it.ih = res.h;
             it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
             delete it.ax.cr;
+            ["vid", "vs", "ve", "mu", "vol", "nl"].forEach(function (k) { delete it.ax[k]; });   // a picture now
           });
         } else placePhoto(res);
         AT.toast(t("img.added"));
@@ -522,6 +546,6 @@
 
   AT.io = {
     exportPackage: exportPackage, importAny: importAny, importPptx: importPptxFile, uploadImage: uploadImage,
-    placePhoto: placePhoto, exportDialog: exportDialog, resizeTo: resizeTo
+    placePhoto: placePhoto, pickFile: pickFile, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();
