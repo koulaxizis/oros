@@ -88,6 +88,9 @@ there are no recorded audio files. Emoji come from the device's own font.
 | [Fontsource](https://fontsource.org/) | Fontsource; each font by its designers | Per font (mostly OFL / Apache) | Atelier (font catalogue and files) |
 | [Pixabay](https://pixabay.com/) | Pixabay creators | Pixabay Content License; only with the user's own API key | Atelier (optional) |
 | [Pexels](https://www.pexels.com/) | Pexels creators | Pexels License; only with the user's own API key | Atelier (optional) |
+| [Open Library](https://openlibrary.org/) | Internet Archive | Data [CC0](https://creativecommons.org/publicdomain/zero/1.0/); called only when you tap Find details online | Media Shelf (books) |
+| [MusicBrainz](https://musicbrainz.org/) | MetaBrainz Foundation | Core data [CC0](https://creativecommons.org/publicdomain/zero/1.0/); called only when you tap Find details online | Media Shelf (albums) |
+| AI providers you choose: [Anthropic](https://www.anthropic.com/) (Claude), [OpenAI](https://openai.com/), [Google](https://ai.google.dev/) (Gemini API), [Mistral AI](https://mistral.ai/), [OpenRouter](https://openrouter.ai/), or a local server ([Ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai/)) | Each provider | Each provider's terms; only with the user's own key, called straight from the browser; no code from them is shipped | Assistant |
 | [Cloudflare Workers](https://workers.cloudflare.com/) | Cloudflare, Inc. | Runs the orOS mail relay (`relay/`, stateless, no logs); anyone can deploy their own | Mail |
 | [Dropbox](https://www.dropbox.com/) | Dropbox, Inc. | The user's own account; data end-to-end encrypted by orOS | Optional sync |
 | [GitHub Pages](https://pages.github.com/) | GitHub, Inc. | Hosting | Serves useoros.online |

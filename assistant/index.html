@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Assistant · orOS</title>
+
+  <link rel="stylesheet" href="assistant.css?v=0.63.00">
+
+</head>
+<body data-side="closed">
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="nav-btn"></button>
+    <div id="bar-title" class="bar-title"></div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="new-btn"></button>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+  </header>
+
+  <div id="net" class="net" role="status" hidden></div>
+
+  <main id="app">
+    <!-- Conversations (device-local) -->
+    <nav id="side" aria-label="Conversations">
+      <button type="button" class="side-new" id="side-new"></button>
+      <div id="chats"></div>
+      <p id="chats-foot" class="hint pad"></p>
+    </nav>
+    <div id="scrim" hidden></div>
+
+    <!-- The conversation -->
+    <section id="conv">
+      <div id="scroll">
+        <div id="welcome" hidden>
+          <div class="wel-box">
+            <div id="wel-icon" class="wel-icon" aria-hidden="true"></div>
+            <h1 data-i18n="wel.title">Your AI assistant</h1>
+            <p id="wel-text"></p>
+            <button type="button" class="dlg-btn primary" id="wel-setup" data-i18n="btn.setup">Set up the assistant</button>
+          </div>
+        </div>
+        <div id="msgs" aria-live="polite"></div>
+      </div>
+      <div id="composer">
+        <div id="who" class="who" hidden></div>
+        <div class="compose-row">
+          <textarea id="input" rows="1" maxlength="20000" autocomplete="off"></textarea>
+          <button type="button" class="icon-btn send" id="send-btn"></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.63.00"></script>
+  <script src="assistant.js?v=0.63.00"></script>
+
+</body>
+</html>

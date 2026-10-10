@@ -142,7 +142,7 @@ test("pptx: slides map to text, shapes, pictures, groups, lines, custom geometry
 
     const t = by("text")[0];
     assert.equal(t.tx, "Γεια & χαρά\nsecond");
-    assert.equal(t.font, "serif"); assert.equal(t.size, 36); assert.equal(t.b, 1); assert.equal(t.caps, 1);
+    assert.equal(t.font, "fs_playfair_display"); assert.equal(t.size, 36); assert.equal(t.b, 1); assert.equal(t.caps, 1);
     assert.equal(t.al, "c"); assert.equal(t.lh, 180); assert.equal(t.tr, 100);
     assert.equal(t.fc, "#800000", "accent1 at lumMod 50%");
     assert.equal(t.anchor, "ctr");
@@ -206,4 +206,21 @@ test("pptx: not a presentation", async () => {
   assert.equal(P.familyOf("Courier New"), "mono");
   assert.equal(P.familyOf("Open Sans"), "sans");
   assert.equal(P.familyOf("Libre Baskerville"), "serif");
+});
+
+test("pptx: fonts by name become their Fontsource family", () => {
+  assert.deepEqual(P.fontFor("Montserrat Bold"), { font: "fs_montserrat", name: "Montserrat", b: 1, i: 0 });
+  assert.deepEqual(P.fontFor("Playfair Display Italic"), { font: "fs_playfair_display", name: "Playfair Display", b: 0, i: 1 });
+  assert.equal(P.fontFor("Poppins SemiBold").b, 1);
+  assert.equal(P.fontFor("GFS Didot").font, "fs_gfs_didot");
+  // system, Office and Canva-only fonts, and Noto (built in): the closest built-in family
+  assert.equal(P.fontFor("Canva Sans").font, "sans");
+  assert.equal(P.fontFor("Times New Roman").font, "serif");
+  assert.equal(P.fontFor("Noto Sans").font, "sans");
+  assert.equal(P.fontFor("Courier New").font, "mono");
+  assert.equal(P.fontFor("").font, "sans");
+  // nothing odd gets into an id
+  assert.equal(P.fontFor("../../x<script>").font, "fs_x_script");
+  assert.equal(P.fontFor("Ráleway").font, "fs_raleway");
+  assert.equal(P.fontFor("x".repeat(80)).font, "sans");
 });

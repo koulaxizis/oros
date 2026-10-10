@@ -1377,51 +1377,50 @@
     showDialog(dlg);
   }
 
-  function buildFromContacts() {
-    pickContact(function (start) {
-      var ct = contactsData();
-      var plan = FT.planFromContacts(ct, start.id, 200);
-      var dlg = makeDialog("ft-build", t("ct.buildTitle"));
-      dlg.appendChild(el("p", "dlg-sub", t(plan.length > 1 ? "ct.found" : "ct.alone")));
-      var ul = el("ul", "check-list");
-      var boxes = [];
-      plan.forEach(function (x) {
-        var li = el("li");
-        var lab = el("label", "chk");
-        var cb = el("input");
-        cb.type = "checkbox";
-        cb.checked = true;
-        cb.value = x.cid;
-        if (x.cid === start.id) cb.disabled = true;
-        boxes.push(cb);
-        lab.appendChild(cb);
-        lab.appendChild(el("span", "", (x.name || t("unnamed")) + (x.birth ? " · " + FT.fmtD(x.birth) : "")));
-        li.appendChild(lab);
-        ul.appendChild(li);
-      });
-      dlg.appendChild(ul);
-      var phWrap = el("label", "chk");
-      var ph = el("input");
-      ph.type = "checkbox";
-      ph.checked = true;
-      phWrap.appendChild(ph);
-      phWrap.appendChild(el("span", "", t("ct.photos")));
-      dlg.appendChild(phWrap);
-      var acts = el("div", "dlg-actions");
-      acts.appendChild(textBtn("dlg-btn", t("ed.cancel"), function () { dlg.close(); }));
-      var go = textBtn("dlg-btn primary", "");
-      var label = function () { go.textContent = t("ct.add", { n: boxes.filter(function (b) { return b.checked; }).length }); };
-      boxes.forEach(function (b) { b.addEventListener("change", label); });
-      label();
-      go.addEventListener("click", function () {
-        dlg.close();
-        var ids = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
-        runBuild(ct, ids, start.id, ph.checked);
-      });
-      acts.appendChild(go);
-      dlg.appendChild(acts);
-      showDialog(dlg);
-    }, t("ct.start"));
+  function buildFromContacts() { pickContact(planBuild, t("ct.start")); }
+  function planBuild(start) {
+    var ct = contactsData();
+    var plan = FT.planFromContacts(ct, start.id, 200);
+    var dlg = makeDialog("ft-build", t("ct.buildTitle"));
+    dlg.appendChild(el("p", "dlg-sub", t(plan.length > 1 ? "ct.found" : "ct.alone")));
+    var ul = el("ul", "check-list");
+    var boxes = [];
+    plan.forEach(function (x) {
+      var li = el("li");
+      var lab = el("label", "chk");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = true;
+      cb.value = x.cid;
+      if (x.cid === start.id) cb.disabled = true;
+      boxes.push(cb);
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", (x.name || t("unnamed")) + (x.birth ? " · " + FT.fmtD(x.birth) : "")));
+      li.appendChild(lab);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var phWrap = el("label", "chk");
+    var ph = el("input");
+    ph.type = "checkbox";
+    ph.checked = true;
+    phWrap.appendChild(ph);
+    phWrap.appendChild(el("span", "", t("ct.photos")));
+    dlg.appendChild(phWrap);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(textBtn("dlg-btn", t("ed.cancel"), function () { dlg.close(); }));
+    var go = textBtn("dlg-btn primary", "");
+    var label = function () { go.textContent = t("ct.add", { n: boxes.filter(function (b) { return b.checked; }).length }); };
+    boxes.forEach(function (b) { b.addEventListener("change", label); });
+    label();
+    go.addEventListener("click", function () {
+      dlg.close();
+      var ids = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
+      runBuild(ct, ids, start.id, ph.checked);
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    showDialog(dlg);
   }
   function runBuild(ct, ids, startCid, photos) {
     if (!curTree()) { if (!createTree(t("tree.default"))) return; }
@@ -2077,13 +2076,27 @@
     } catch (e) {}
   }
 
-  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-  // target { tree, person }. Switches to the person's tree, centres on
-  // and selects them. Unknown person or tree → no-op; an open dialog →
-  // no-op (unsaved edits win).
-  function openSearchTarget(t) {
-    if (!t || typeof t.person !== "string" || document.querySelector("dialog[open]")) return;
-    var p = findIn(data.people, t.person);
+  // Deep link (shell __orosOpenAt / __orosTakeTarget):
+  //   { tree, person } (universal search): switches to the person's
+  //     tree, centres on and selects them;
+  //   { contact } (Contacts card "Family tree"): the person linked to
+  //     that contact (this tree first), or — nobody linked yet — the
+  //     "Build from Contacts" preview starting from that contact.
+  // Unknown ids → no-op; an open dialog → no-op (unsaved edits win).
+  function openSearchTarget(tg) {
+    if (!tg || document.querySelector("dialog[open]")) return;
+    var p = null;
+    if (typeof tg.contact === "string") {
+      var linked = data.people.filter(function (x) { return x.contact === tg.contact && findIn(data.trees, x.tree); });
+      p = linked.filter(function (x) { return x.tree === prefs.tree; })[0] || linked[0] || null;
+      if (!p) {
+        var c = contactById(tg.contact);
+        if (c) { closeMenu(); planBuild(c); }
+        return;
+      }
+    } else if (typeof tg.person === "string") {
+      p = findIn(data.people, tg.person);
+    }
     if (!p || !findIn(data.trees, p.tree)) return;
     closeMenu();
     if (prefs.tree !== p.tree) {

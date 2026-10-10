@@ -534,6 +534,262 @@
     return normalize(o.data);
   }
 
+  // ---------- 7. Import: Toggl, Clockify, Harvest CSV (Wave 5) ----------
+  // RFC 4180 reader: quotes, "" escapes, CRLF/LF, a BOM; the delimiter
+  // (, ; or tab) is picked from the header line.
+  function readCsv(text) {
+    text = String(text || "").replace(/^﻿/, "");
+    var first = text.split(/\r?\n/, 1)[0] || "";
+    var cnt = function (ch) { return first.split(ch).length - 1; };
+    var dl = ",";
+    if (cnt(";") > cnt(dl)) dl = ";";
+    if (cnt("\t") > cnt(dl)) dl = "\t";
+    var rows = [], row = [], cell = "", q = false, i = 0, n = text.length;
+    for (; i < n; i++) {
+      var c = text.charAt(i);
+      if (q) {
+        if (c === '"') {
+          if (text.charAt(i + 1) === '"') { cell += '"'; i++; } else q = false;
+        } else cell += c;
+      } else if (c === '"' && cell === "") q = true;
+      else if (c === dl) { row.push(cell); cell = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text.charAt(i + 1) === "\n") i++;
+        row.push(cell); cell = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+      } else cell += c;
+    }
+    row.push(cell);
+    if (row.length > 1 || row[0] !== "") rows.push(row);
+    return rows;
+  }
+
+  // A 52-bit FNV-1a style hash in base 36: the same row always gets
+  // the same id, so importing a file twice adds nothing new.
+  function hashId(prefix, str) {
+    var h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (var i = 0; i < str.length; i++) {
+      var c = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+      h2 = Math.imul(h2 ^ c, 2246822519) >>> 0;
+    }
+    return prefix + h1.toString(36) + h2.toString(36);
+  }
+
+  var IMPORT_MAX_ROWS = 20000;
+  var IMPORT_FIELDS = {
+    project: ["project"], client: ["client"],
+    desc: ["description", "notes", "note"], task: ["task"],
+    bill: ["billable", "billable?"], billed: ["invoiced?", "invoiced"],
+    sd: ["start date"], st: ["start time"], ed: ["end date"], et: ["end time"],
+    date: ["date", "spent date"], hours: ["hours", "duration (decimal)"],
+    rate: ["billable rate"]
+  };
+  function headerMap(head) {
+    var low = head.map(function (h) { return cleanText(h, 80).toLowerCase(); });
+    var m = {};
+    Object.keys(IMPORT_FIELDS).forEach(function (k) {
+      IMPORT_FIELDS[k].forEach(function (name) {
+        if (m[k] !== undefined) return;
+        for (var i = 0; i < low.length; i++) {
+          // "Billable Rate (EUR)" matches "billable rate"
+          if (low[i] === name || (k === "rate" && low[i].indexOf(name) === 0)) { m[k] = i; return; }
+        }
+      });
+    });
+    return m;
+  }
+  function importSource(m, head) {
+    var low = head.join("|").toLowerCase();
+    if (m.sd !== undefined && m.st !== undefined) {
+      return /duration \(decimal\)|duration \(h\)/.test(low) ? "clockify" : "toggl";
+    }
+    if (m.date !== undefined && m.hours !== undefined) return "harvest";
+    return "";
+  }
+  // Dates: ISO (2026-10-05, 2026/10/05) or a/b/yyyy, a.b.yyyy, a-b-yyyy.
+  // The order of a/b is "dmy" or "mdy", decided once for the file.
+  var DMY_RE = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/;
+  function dateParts(v, order) {
+    v = String(v || "").trim();
+    var p = /^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/.exec(v);
+    if (p) return [+p[1], +p[2], +p[3]];
+    p = DMY_RE.exec(v);
+    if (!p) return null;
+    return order === "mdy" ? [+p[3], +p[1], +p[2]] : [+p[3], +p[2], +p[1]];
+  }
+  // "dmy" | "mdy" when the file decides it, "" when every a/b date
+  // could be both (the user picks; `fallback` is the default).
+  function dateOrder(values) {
+    var dmy = false, mdy = false;
+    values.forEach(function (v) {
+      var p = DMY_RE.exec(String(v || "").trim());
+      if (!p) return;
+      if (+p[1] > 12) dmy = true;
+      if (+p[2] > 12) mdy = true;
+    });
+    if (dmy && !mdy) return "dmy";
+    if (mdy && !dmy) return "mdy";
+    return "";
+  }
+  function timeParts(v) {
+    var p = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap]\.?m\.?)?$/i.exec(String(v || "").trim());
+    if (!p) return null;
+    var h = +p[1], mi = +p[2], se = p[3] ? +p[3] : 0;
+    if (p[4]) {
+      var pm = /^p/i.test(p[4]);
+      if (h < 1 || h > 12) return null;
+      h = (h % 12) + (pm ? 12 : 0);
+    }
+    if (h > 23 || mi > 59 || se > 59) return null;
+    return [h, mi, se];
+  }
+  function localTs(d, tm) {
+    if (!d || !tm) return NaN;
+    var x = new Date(d[0], d[1] - 1, d[2], tm[0], tm[1], tm[2]);
+    if (x.getFullYear() !== d[0] || x.getMonth() !== d[1] - 1 || x.getDate() !== d[2]) return NaN;
+    return x.getTime();
+  }
+  function yesNo(v) {
+    v = String(v || "").trim().toLowerCase();
+    if (/^(yes|true|1|y|ναι)$/.test(v)) return 1;
+    if (/^(no|false|0|n|όχι|οχι)$/.test(v)) return 0;
+    return -1;
+  }
+  function decimal(v) {
+    v = String(v || "").trim().replace(/[^\d.,\-]/g, "");
+    if (!v) return NaN;
+    if (v.indexOf(",") >= 0 && v.indexOf(".") >= 0) {
+      v = v.lastIndexOf(",") > v.lastIndexOf(".") ? v.replace(/\./g, "").replace(",", ".") : v.replace(/,/g, "");
+    } else v = v.replace(",", ".");
+    var n = parseFloat(v);
+    return isFinite(n) ? n : NaN;
+  }
+
+  // Reads an export into a plan; nothing is changed. Returns null when
+  // the file is not one of the three formats, else
+  //   { source, order, ambiguous, rows, bad, add: {entries, projects,
+  //     clients} (an "incoming" model for mergeTimesheet), fresh, dup,
+  //     from, to }.
+  // Ids are hashes of the row, so a second import of the same file
+  // finds every entry already there; m = 1, so an entry the user
+  // deleted (a newer tombstone) stays deleted. Names match existing
+  // clients/projects case-insensitively; new ones get hashed ids too.
+  // Harvest has hours, not times: a day's rows are laid one after the
+  // other from 09:00.
+  function importPlan(text, data, order) {
+    var rows = readCsv(text);
+    if (rows.length < 2) return null;
+    var head = rows[0], m = headerMap(head), src = importSource(m, head);
+    if (!src) return null;
+    rows = rows.slice(1, IMPORT_MAX_ROWS + 1);
+    var col = function (r, k) { return m[k] === undefined ? "" : (r[m[k]] || ""); };
+
+    var dates = [];
+    rows.forEach(function (r) {
+      if (src === "harvest") dates.push(col(r, "date"));
+      else { dates.push(col(r, "sd")); dates.push(col(r, "ed")); }
+    });
+    var found = dateOrder(dates), ambiguous = !found && dates.some(function (v) { return DMY_RE.test(String(v).trim()); });
+    var ord = found || (order === "mdy" ? "mdy" : "dmy");
+
+    var clientsByName = {}, projectsByKey = {};
+    live(data.clients).forEach(function (c) { clientsByName[c.name.toLowerCase()] = c; });
+    live(data.projects).forEach(function (p) {
+      var c = client(data, p.client);
+      projectsByKey[(c ? c.name.toLowerCase() : "") + "\u0001" + p.name.toLowerCase()] = p;
+    });
+    var have = {};
+    data.entries.forEach(function (x) { have[x.id] = x; });
+
+    var add = { entries: [], projects: [], clients: [] }, seen = {};
+    var newClients = {}, newProjects = {}, color = live(data.projects).length;
+    var bad = 0, dup = 0, fresh = 0, from = "", to = "", dayCursor = {};
+
+    function clientId(name) {
+      if (!name) return "";
+      var k = name.toLowerCase();
+      if (clientsByName[k]) return clientsByName[k].id;
+      if (!newClients[k]) {
+        newClients[k] = { id: hashId("impc", k), name: name, rate: 0, m: 1 };
+        add.clients.push(newClients[k]);
+      }
+      return newClients[k].id;
+    }
+    function projectId(name, cname, bill, rate) {
+      if (!name) return "";
+      var k = (cname ? cname.toLowerCase() : "") + "\u0001" + name.toLowerCase();
+      if (projectsByKey[k]) return projectsByKey[k].id;
+      var p = newProjects[k];
+      if (!p) {
+        p = newProjects[k] = { id: hashId("impp", k), name: name, client: clientId(cname),
+                               color: color++ % COLORS.length, rate: 0, bill: 0, arch: 0, m: 1, _any: false };
+        add.projects.push(p);
+      }
+      if (bill !== 0) p._any = true;                 // billable or unknown → billable
+      if (!p.rate && rate > 0) p.rate = rate;
+      return p.id;
+    }
+
+    rows.forEach(function (r) {
+      var s, e;
+      var hkey = "";
+      if (src === "harvest") {
+        var d = dateParts(col(r, "date"), ord), h = decimal(col(r, "hours"));
+        if (!d || !(h > 0) || h > 24) { bad++; return; }
+        var dk = d[0] + "-" + pad(d[1]) + "-" + pad(d[2]);
+        hkey = dk + "\u0001" + h;
+        var base = localTs(d, [9, 0, 0]);
+        if (!isFinite(base)) { bad++; return; }
+        s = base + (dayCursor[dk] || 0);
+        e = s + Math.round(h * HOUR);
+        dayCursor[dk] = (dayCursor[dk] || 0) + (e - s);
+      } else {
+        var sd = dateParts(col(r, "sd"), ord), ed = dateParts(col(r, "ed") || col(r, "sd"), ord);
+        s = localTs(sd, timeParts(col(r, "st")));
+        e = localTs(ed, timeParts(col(r, "et")));
+        if (isFinite(s) && isFinite(e) && e <= s && !col(r, "ed")) e += DAY;
+      }
+      if (!isFinite(s) || !isFinite(e) || e <= s || e - s > MAX_SPAN || s < MIN_TS || s > MAX_TS) { bad++; return; }
+      var cname = cleanText(col(r, "client"), LIM.name), pname = cleanText(col(r, "project"), LIM.name);
+      var desc = [cleanText(col(r, "task"), LIM.desc), cleanText(col(r, "desc"), LIM.desc)]
+        .filter(Boolean).join(" · ").slice(0, LIM.desc);
+      var rate = Math.round(decimal(col(r, "rate")) * 100);
+      var pid = projectId(pname, cname, yesNo(col(r, "bill")), inRange(rate, LIM.rate) ? rate : 0);
+      // Harvest rows have no times: their id comes from the day, hours
+      // and text (+ how many such rows came before), not from where
+      // they were laid, so a longer export of the same days still
+      // matches. Toggl/Clockify rows are identified by their times.
+      var key = [src, hkey || (s + "\u0001" + e), cname.toLowerCase(), pname.toLowerCase(), desc].join("\u0001");
+      if (hkey) { seen[key] = (seen[key] || 0) + 1; key += "\u0001" + seen[key]; }
+      else if (seen[key]) return;                    // the same row twice in one file
+      else seen[key] = 1;
+      var id = hashId("imp", key);
+      var k1 = dayKeyOf(s), k2 = dayKeyOf(e - 1);
+      if (!from || k1 < from) from = k1;
+      if (!to || k2 > to) to = k2;
+      if (have[id]) { dup++; return; }
+      fresh++;
+      add.entries.push({ id: id, p: pid, desc: desc, s: s, e: e, billed: yesNo(col(r, "billed")) === 1 ? 1 : 0, m: 1 });
+    });
+    // Only projects that kept at least one new entry are created.
+    var used = {};
+    add.entries.forEach(function (x) { used[x.p] = true; });
+    add.projects = add.projects.filter(function (p) { return used[p.id]; }).map(function (p) {
+      var out = { id: p.id, name: p.name, client: p.client, color: p.color, rate: p.rate, bill: p._any ? 1 : 0, arch: 0, m: 1 };
+      return out;
+    });
+    var usedC = {};
+    add.projects.forEach(function (p) { usedC[p.client] = true; });
+    add.clients = add.clients.filter(function (c) { return usedC[c.id]; });
+    return {
+      source: src, order: ord, ambiguous: ambiguous, rows: rows.length, bad: bad,
+      fresh: fresh, dup: dup, from: from, to: to,
+      add: { ver: DATA_VER, clients: add.clients, projects: add.projects, entries: add.entries, prefs: data.prefs, pm: 0 }
+    };
+  }
+
   var API = {
     VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, FORGOT_MS: FORGOT_MS, DATA_VER: DATA_VER, HOUR: HOUR, DAY: DAY,
     LIM: LIM, ROUNDS: ROUNDS, CURRENCIES: CURRENCIES, DEFAULT_PREFS: DEFAULT_PREFS, COLORS: COLORS,
@@ -549,7 +805,8 @@
     dayEntries: dayEntries, dayFeed: dayFeed, overlaps: overlaps, matches: matches, weekGrid: weekGrid, report: report,
     parseDuration: parseDuration, parseMoney: parseMoney, fmtDur: fmtDur, fmtHours: fmtHours,
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
-    csvCell: csvCell, toCsv: toCsv, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup
+    csvCell: csvCell, toCsv: toCsv, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
+    readCsv: readCsv, importPlan: importPlan
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

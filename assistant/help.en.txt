@@ -1,0 +1,46 @@
+# Assistant
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model that runs on your own computer. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow, and it never changes anything in orOS.
+
+## Getting started
+1. Open `Assistant` and tap or click `Set up the assistant`.
+2. Under `Assistant`, choose who you want to talk to.
+3. Paste your `API key` from that service and press `Save key`. `Get a key` opens the page where you create one.
+4. Check the `Model`. `Load models` lists the models your key can use and also tells you that the key works.
+5. Press `Close`, type your question and press `Send`.
+
+For a model on your computer, choose `Local / OpenAI-compatible` and enter its `Server address`, for example `http://localhost:11434/v1` for Ollama. A key is optional there.
+
+## Ask about your data
+When a question needs your data, the assistant searches your apps, much like the menu search. Before anything is shared you see a card, `Share with …?`, listing every result it found:
+- untick what it should not see, then press `Share`;
+- `Don't share` keeps everything on this device; the assistant answers without it;
+- `Always share from … without asking` stops the questions for those apps.
+
+In the answer, titles in the accent colour are links: tap one to open that item in its app. A grey line above the answer shows what was searched and what you shared.
+
+## Privacy: what leaves your device
+- Your messages and the results you share go only to the service you chose, straight from your browser. No orOS server is in between. The line above the message box says where they go.
+- In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Password Generator are never offered.
+- `Chat only` turns off every search: the assistant then sees only what you type.
+- Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
+
+>! The answers come from the AI service, not from orOS. Check anything important before you rely on it.
+
+## Sync and backup
+The choice of assistant and model, the permissions per app and `Chat only` go to all your devices through [sync](help:t/sync). Conversations stay on this device only; turn off `Keep conversations on this device` to keep none, or use `Delete all conversations`.
+
+Keys stay on each device unless you tick `Sync API keys to my other devices`. They then travel inside your encrypted sync, sealed with your sync passphrase: anyone who knows that passphrase can use them. Removing a key while this is on removes it on every device.
+
+## Keyboard shortcuts
+- [[Enter]] sends, [[Shift+Enter]] starts a new line.
+- [[Esc]] stops an answer that is still coming.
+
+## Tips
+- `New chat` starts a fresh conversation; older ones are in the list on the left, or behind the menu button on a phone.
+- `Used this month` in Settings shows how many tokens this device has used per service.
+- If a service says the key or the model is wrong, open Settings and press `Load models` to check both.
+
+## Limits
+- The assistant needs the internet, except a model on your own network.
+- It can read and suggest, but it can't add or change entries in your apps yet.
+- Some services may refuse calls from a browser. A local server must allow this site: for Ollama, start it with `OLLAMA_ORIGINS=https://useoros.online`.

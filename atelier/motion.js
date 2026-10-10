@@ -31,25 +31,45 @@
   function pages(doc) { return M.pagesInOrder(doc); }
 
   // ---------- Preview on the stage ----------
-  var playing = 0;
+  // Plays the page: entrances, and its videos and sound for as long
+  // as the page shows. Play again (or another page) stops it.
+  var playing = 0, sess = null;
   function play() {
     var doc = AT.doc;
     if (!doc) return;
+    if (sess) { stopPlay(); return; }
     ED.exitText();
-    var items = doc.items.filter(function (it) { return it.pg === ED.pg; }).sort(M.byZ);
+    var my = ++playing, pg = ED.pg;
+    var items = doc.items.filter(function (it) { return it.pg === pg; }).sort(M.byZ);
     var end = Anim.introLen(items) + 0.3;
-    if (end <= 0.3) { AT.toast(t("an.nothing")); return; }
-    var my = ++playing, t0 = performance.now();
-    function frame() {
-      if (my !== playing) return;
-      var s = (performance.now() - t0) / 1000;
-      ED.animTime = s < end ? s : undefined;
-      ED.redraw();
-      if (s < end) requestAnimationFrame(frame);
-    }
-    frame();
+    var page = pages(doc).filter(function (p) { return p.id === pg; })[0];
+    var s = AT.video && page ? AT.video.Session(doc, [page]) : null;
+    (s ? s.prepare() : Promise.resolve()).then(function () {
+      if (my !== playing) { if (s) s.stop(); return; }
+      if (s && !s.empty()) { sess = s; ED.media = s.media; end = Math.max(end, s.timeline.total); }
+      else if (s) s.stop();
+      if (end <= 0.3) { AT.toast(t("an.nothing")); return; }
+      var t0 = performance.now();
+      (function frame() {
+        if (my !== playing) return;
+        if (ED.pg !== pg || AT.doc !== doc) { stopPlay(); return; }
+        var sec = (performance.now() - t0) / 1000;
+        if (sec >= end) { stopPlay(); return; }
+        if (sess) sess.sync(sec, true);
+        ED.animTime = sec;
+        ED.redraw();
+        requestAnimationFrame(frame);
+      })();
+    });
   }
-  function stopPlay() { playing++; if (ED.animTime !== undefined) { ED.animTime = undefined; ED.redraw(); } }
+  function stopPlay() {
+    playing++;
+    if (sess) { sess.stop(); sess = null; }
+    ED.media = undefined;
+    if (ED.animTime !== undefined) ED.animTime = undefined;
+    ED.redraw();
+  }
+  AT.on("open", function () { if (sess) stopPlay(); });
 
   // ---------- Animate panel ----------
   function view(body) {
@@ -108,8 +128,10 @@
     }
     body.appendChild(s2);
 
+    if (bg && AT.video) AT.video.pageSection(body, bg);
+
     var s3 = sec();
-    s3.appendChild(btn("btn small primary block", t("an.play"), play));
+    s3.appendChild(btn("btn small primary block", t(sess ? "an.stop" : "an.play"), function () { play(); AT.renderDrawer(); }));
     s3.appendChild(el("p", "hint", t("an.hint")));
     body.appendChild(s3);
   }
@@ -124,7 +146,7 @@
     var idx = Math.max(0, list.findIndex(function (p) { return p.id === ED.pg; }));
     // start() needs the click's user gesture (full screen), so no
     // waiting here: the open design's fonts and pictures are loaded.
-    S.start({
+    var ctl = S.start({
       count: list.length,
       aspect: doc.setup.w / doc.setup.h,
       startAt: idx,
@@ -136,16 +158,35 @@
       title: function (i) { return t("pg.n", { n: i + 1 }); },
       transition: function (i) { return list[i] && i ? Anim.pageTransition(doc, list[i].id) : "none"; }
     });
+    presentSound(doc, list, ctl);
+  }
+  // The pages' sound follows the slide on screen (videos show their
+  // first frame in a slide show).
+  function presentSound(doc, list, ctl) {
+    if (!ctl || !AT.video) return;
+    var s = AT.video.Session(doc, list), tl = null, idx = -1, at0 = 0;
+    s.prepare().then(function () {
+      if (s.empty()) { s.stop(); return; }
+      tl = s.timeline;
+      (function tick() {
+        var st = ctl.state();
+        if (st.closed) { s.stop(); return; }
+        if (st.index !== idx) { idx = st.index; at0 = performance.now(); }
+        var p = tl.pages[idx];
+        if (p) s.sync(p.t0 + Math.min(p.dur - 0.05, (performance.now() - at0) / 1000), true);
+        setTimeout(tick, 250);
+      })();
+    });
   }
 
   // ---------- Film (video + GIF) ----------
   // One frame of the film on ctx (w × h px).
-  function filmPainter(doc, list, w, h) {
+  function filmPainter(doc, list, w, h, media) {
     var sc = w / doc.setup.w;
     var a = document.createElement("canvas"), b = document.createElement("canvas");
     a.width = b.width = w; a.height = b.height = h;
     function pageTo(cv, pg, time) {
-      AT.draw.renderPage(doc, pg, sc, { canvas: cv, maxSide: 0, background: "#ffffff", time: time });
+      AT.draw.renderPage(doc, pg, sc, { canvas: cv, maxSide: 0, background: "#ffffff", time: time, media: media });
       return cv;
     }
     var tl = Anim.timeline(doc, list);
@@ -180,37 +221,59 @@
     ["video/mp4;codecs=avc1.42E01E", ".mp4"], ["video/mp4", ".mp4"],
     ["video/webm;codecs=vp9", ".webm"], ["video/webm;codecs=vp8", ".webm"], ["video/webm", ".webm"]
   ];
-  function videoType() {
+  // with a sound track
+  var AV_TYPES = [
+    ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", ".mp4"],
+    ["video/webm;codecs=vp9,opus", ".webm"], ["video/webm;codecs=vp8,opus", ".webm"], ["video/webm", ".webm"]
+  ];
+  function videoType(sound) {
     if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return null;
-    for (var i = 0; i < VIDEO_TYPES.length; i++) if (MediaRecorder.isTypeSupported(VIDEO_TYPES[i][0])) return VIDEO_TYPES[i];
+    var list = sound ? AV_TYPES : VIDEO_TYPES;
+    for (var i = 0; i < list.length; i++) if (MediaRecorder.isTypeSupported(list[i][0])) return list[i];
     return null;
   }
   function canVideo() {
     return !!videoType() && typeof HTMLCanvasElement !== "undefined" && !!HTMLCanvasElement.prototype.captureStream;
   }
 
-  // Real time: the browser records what the canvas shows.
-  function recordVideo(doc, list, side, onTick) {
-    var vt = videoType();
+  // Real time: the browser records what the canvas shows, and the
+  // sound of the videos and pages (session, video.js).
+  function recordVideo(doc, list, side, onTick, sess) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var sound = !!(sess && sess.hasSound() && AC);
+    var vt = (sound && videoType(true)) || videoType(false);
     if (!vt) return Promise.reject(new Error("novideo"));
-    var sz = filmSize(doc, side), film = filmPainter(doc, list, sz.w, sz.h);
+    if (sound && vt[0].indexOf(",") < 0 && vt[0] !== "video/webm") sound = false;
+    var sz = filmSize(doc, side), film = filmPainter(doc, list, sz.w, sz.h, sess ? sess.media : null);
     var cv = document.createElement("canvas");
     cv.width = sz.w; cv.height = sz.h;
     var ctx = cv.getContext("2d");
     film.draw(ctx, 0);
+    var actx = null, stream = cv.captureStream(30);
+    if (sound) {
+      try {
+        actx = new AC();
+        var dest = actx.createMediaStreamDestination();
+        sess.connect(actx, dest);
+        stream = new MediaStream(stream.getVideoTracks().concat(dest.stream.getAudioTracks()));
+      } catch (e) { actx = null; }
+    }
     return new Promise(function (resolve, reject) {
-      var stream = cv.captureStream(30), chunks = [];
+      var chunks = [];
       var rec = new MediaRecorder(stream, { mimeType: vt[0], videoBitsPerSecond: Math.round(sz.w * sz.h * 30 * 0.15) });
       rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
       rec.onerror = function () { reject(new Error("record")); };
       rec.onstop = function () {
         stream.getTracks().forEach(function (tr) { tr.stop(); });
+        if (actx) actx.close().then(null, function () {});
         resolve({ blob: new Blob(chunks, { type: vt[0].split(";")[0] }), ext: vt[1] });
       };
+      if (actx && actx.state === "suspended") actx.resume();
       rec.start(500);
       var t0 = performance.now(), last = -1;
       (function tick() {
         var s = (performance.now() - t0) / 1000;
+        if (sess) sess.sync(Math.min(s, film.total - 0.01), true);
         film.draw(ctx, Math.min(s, film.total));
         var whole = Math.floor(s);
         if (whole !== last) { last = whole; if (onTick) onTick(whole, Math.ceil(film.total)); }
@@ -220,22 +283,32 @@
     });
   }
 
-  // Offline: frame by frame, then encoded.
-  function makeGif(doc, list, side, onTick) {
-    var sz = filmSize(doc, side), film = filmPainter(doc, list, sz.w, sz.h);
+  // Offline: frame by frame (videos seeked to each frame), then encoded.
+  function makeGif(doc, list, side, onTick, sess) {
+    var media = sess && sess.hasVideo() ? sess : null;
+    var sz = filmSize(doc, side), film = filmPainter(doc, list, sz.w, sz.h, media ? media.media : null);
     var fps = film.total > 60 ? 5 : 10, n = Math.min(900, Math.ceil(film.total * fps));
     var cv = document.createElement("canvas");
     cv.width = sz.w; cv.height = sz.h;
     var ctx = cv.getContext("2d", { willReadFrequently: true });
     var frames = [], i = 0;
+    function one() {
+      film.draw(ctx, i / fps);
+      frames.push({ idx: Gif.quantize(ctx.getImageData(0, 0, sz.w, sz.h).data, sz.w, sz.h), delay: 100 / fps });
+      i++;
+    }
     return new Promise(function (resolve) {
       (function step() {
-        var stop = performance.now() + 30;
-        while (i < n && performance.now() < stop) {
-          film.draw(ctx, i / fps);
-          frames.push({ idx: Gif.quantize(ctx.getImageData(0, 0, sz.w, sz.h).data, sz.w, sz.h), delay: 100 / fps });
-          i++;
+        if (media && i < n) {
+          media.sync(i / fps, false).then(function () {
+            one();
+            if (onTick) onTick(Math.floor(i / fps), Math.ceil(film.total));
+            step();
+          });
+          return;
         }
+        var stop = performance.now() + 30;
+        while (i < n && performance.now() < stop) one();
         if (onTick) onTick(Math.floor(i / fps), Math.ceil(film.total));
         if (i < n) { setTimeout(step, 0); return; }
         resolve({ blob: new Blob([Gif.encode({ w: sz.w, h: sz.h, frames: frames, loop: 0 })], { type: "image/gif" }), ext: ".gif" });
@@ -251,15 +324,17 @@
     var list = pages(doc);
     if (o.pages === "cur") list = list.filter(function (p) { return p.id === ED.pg; });
     var key = o.type === "gif" ? "exp.gifWorking" : "exp.videoWorking";
+    var sess = AT.video ? AT.video.Session(doc, list) : null;
     return T.load(AT.draw.fontKeys(doc)).then(function () {
-      return Promise.all(AX.assetIds(doc).map(function (id) { return A.load(id); }));
+      return Promise.all(AX.assetIds(doc).map(function (id) { return A.load(id); }).concat(sess ? [sess.prepare()] : []));
     }).then(function () {
       var tick = function (s, total) { AT.toast(t(key, { s: s, t: total })); };
-      return o.type === "gif" ? makeGif(doc, list, o.side, tick) : recordVideo(doc, list, o.side, tick);
+      return o.type === "gif" ? makeGif(doc, list, o.side, tick, sess) : recordVideo(doc, list, o.side, tick, sess);
     }).then(function (r) {
+      if (sess) sess.stop();
       var mime = r.blob.type || (r.ext === ".gif" ? "image/gif" : "video/webm");
       return save(r.blob, r.ext, mime);
-    });
+    }, function (e) { if (sess) sess.stop(); throw e; });
   }
 
   AT.motion = { play: play, stop: stopPlay, present: present, exportFilm: exportFilm, canVideo: canVideo, filmSize: filmSize, duration: function (doc, pages) { return Anim.timeline(doc, pages).total; } };

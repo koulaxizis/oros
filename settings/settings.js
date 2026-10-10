@@ -292,6 +292,12 @@
           return { value: k, label: t("k.size." + k) };
         }), d.size, "dock:size", function (v) { set("dock:size", v); }, t("k.size")));
         c5.appendChild(sizeRow);
+        if (d.style && d.styles && d.styles.length) {
+          var stRow = row(t("k.style"), select(d.styles.map(function (k) {
+            return { value: k, label: t("k.style." + k) };
+          }), d.style, "dock:style", function (v) { set("dock:style", v); }), { forId: "f-dock:style" });
+          c5.appendChild(stRow);
+        }
         if (d.fine) {
           c5.appendChild(row(t("k.magnify"), switchBtn(d.magnify, "dock:magnify", function (v) { set("dock:magnify", v); }, t("k.magnify"))));
         }
