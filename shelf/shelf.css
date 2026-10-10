@@ -497,6 +497,9 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .csv-list li { padding: 6px 10px; border-radius: 8px; background: var(--accent-soft); overflow-wrap: anywhere; }
 .hint.warn { color: var(--danger); }
 
+/* Reading reminder */
+.rem-tg { display: block; width: 100%; min-height: 44px; margin-bottom: 12px; }
+
 /* Online lookup (Open Library, MusicBrainz) */
 .lk-w { display: flex; }
 .lk-w .lk-btn { flex: 0 1 auto; padding: 0 14px; }
