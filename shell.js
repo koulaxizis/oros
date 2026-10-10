@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.48.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.49.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -48,6 +48,7 @@
     // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
     autoexport:      "off"
@@ -922,6 +923,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1094,6 +1096,63 @@
     if (now - healthLastTick < 60000) return;
     healthLastTick = now;
     healthCheckTick();
+  }
+
+  // Name days — morning notice when a CONTACT celebrates today.
+  // Reads "oros-contacts-data" directly (works with Calendar and
+  // Contacts CLOSED) and asks calendar/namedays.js (loaded by
+  // index.html, the SAME file the Calendar runs) who celebrates.
+  // From 09:00, one notice per day; the key is the same on every
+  // device (inbox dedup). Silent when the Calendar "Name days" chip
+  // is off on this device (oros-cal-feedvis) or no contact matches.
+  // Honest limit (alarms): orOS closed = nothing fires; the next boot
+  // the same day catches up.
+  var ND_HOUR = 9;
+  function namedayCheckTick() {
+    var ND = window.OrosNamedays;
+    if (!ND) return;                                    // stale bundle — silent
+    if (new Date().getHours() < ND_HOUR) return;
+    try {
+      var vis = JSON.parse(localStorage.getItem("oros-cal-feedvis") || "{}");
+      if (vis && vis["lbl-feed-nameday"] === false) return;
+    } catch (e) {}
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-contacts-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var today = sysYmd();
+    var who = [];
+    raw.contacts.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
+                : (typeof c.nickname === "string" ? c.nickname : "");
+      if (!first || !ND.celebrates(first, today)) return;
+      var full = [c.given, c.middle, c.family].filter(function (x) {
+        return typeof x === "string" && x.trim();
+      }).join(" ");
+      who.push((full || first).slice(0, 60));
+    });
+    if (!who.length) return;
+    var el = state.lang === "el";
+    var shown = who.slice(0, 3).join(", ");
+    if (who.length > 3) shown += el ? " και " + (who.length - 3) + " ακόμα" : " and " + (who.length - 3) + " more";
+    N.emit({
+      ns: "calendar",
+      key: "nameday-" + today,
+      type: "reminder",
+      title: el ? "Ονομαστικές εορτές" : "Name days",
+      body: (el ? "Σήμερα γιορτάζει: " : "Name day today: ") + shown,
+      deepLink: "calendar:nameday:" + today
+    });
+  }
+
+  var namedayLastTick = 0;
+  function namedayCheckTickThrottled() {
+    var now = Date.now();
+    if (now - namedayLastTick < 60000) return;
+    namedayLastTick = now;
+    namedayCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -3730,6 +3789,11 @@
       msg.className = "sync-msg " + state.syncMsg.kind;
       msg.textContent = state.syncMsg.text;
       section.appendChild(msg);
+    } else if (state.syncAutoErr) {
+      var amsg = document.createElement("div");
+      amsg.className = "sync-msg err";
+      amsg.textContent = state.syncAutoErr;
+      section.appendChild(amsg);
     }
 
     host.appendChild(section);
@@ -4143,7 +4207,23 @@
       return;
     }
     var key = window.orosSync.errorKey(err);
+    if (key === "sync.err.generic") { setSyncMsgRaw("err", syncErrText(err)); return; }
     setSyncMsg("err", key);
+  }
+
+  // SY-L2: the message for a failed sync, with the technical reason
+  // when the engine only knows "generic" ("Sync failed — check your
+  // connection (upload failed: 429)"). Plain text, shown with
+  // textContent only.
+  function syncErrText(err) {
+    var S = window.orosSync;
+    var key = (S && typeof S.errorKey === "function") ? S.errorKey(err) : "sync.err.generic";
+    var text = window.t(key);
+    if (key === "sync.err.generic") {
+      var why = String((err && (err.message || err.name)) || "").replace(/[\u0000-\u001f]/g, " ").slice(0, 120);
+      if (why) text += " (" + why + ")";
+    }
+    return text;
   }
 
   function escapeHtml(s) {
@@ -5457,10 +5537,21 @@
     // Subtle auto-sync feedback: the status dot pulses while the engine
     // pushes in the background. No messages, no interruptions.
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
-      window.orosSync.onAutoSync(function (kind) {
+      window.orosSync.onAutoSync(function (kind, reason, err) {
         if (kind === "start") setSyncDot("syncing");
-        else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
-        else setSyncDot("synced", 4000);   // transient green, then auto
+        else if (kind === "fail") {
+          setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
+          // SY-L2: say WHY, quietly (no toast, no inbox): in the dot's
+          // tooltip and as a line in the menu's sync section, until the
+          // next sync that succeeds.
+          state.syncAutoErr = syncErrText(err);
+          var dotEl = document.getElementById("sync-dot");
+          if (dotEl) dotEl.parentNode.setAttribute("title", window.t("syncdot.err") + " — " + state.syncAutoErr);
+          renderMenu();
+        } else {
+          setSyncDot("synced", 4000);   // transient green, then auto
+          if (state.syncAutoErr) { state.syncAutoErr = null; renderMenu(); }
+        }
       });
     }
 
@@ -6777,7 +6868,8 @@
         interval: getSafeInterval(),
         intervals: [0, 1, 3, 5, 15],
         minPass: MIN_PASS_LEN,
-        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text } : null
+        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
+           : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
       },
       backup: {
         folderSupported: fsSupported(),

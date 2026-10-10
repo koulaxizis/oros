@@ -157,7 +157,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 ### Script order (shell `index.html`, classic scripts)
 
-**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
+**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (0.49.00: `launcher.js` loads right before `shell.js`.) (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
 
 `vault.js` and `pet.js` load BEFORE `fs.js`, `dialogs.js` and `shell.js`, so neither may touch those modules at parse time (A24).
 
@@ -193,6 +193,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | `orosTray` | — | **[log]** `radio.js` is said to call `shell.orosTray.register("radio", …)`. `shell.js` 0.39.06 defines NO `orosTray` (verified): dead call or guarded no-op, check in `radio.js` (A31) |
 | `__orosRadioHost` | radio.js, set on the shell window | **[log]** shell-hosted audio host; `api.getState()` feeds `radioTrayTick()` |
 | `orosPet` | pet.js | screen pet component |
+| `orosLauncher` | launcher.js | favourites: `attach(host)`, `refresh()`, `menuRow(btn, app)`, `renderSettings(menu)`, `prefs()` + `setPref(k, v)` (Dock settings for the Settings app), `model` (pure) |
 | `__orosOpen<App>` | shell.js | deep-link bridges; full table under `shell.js` below (verified 2026-10-05) |
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
@@ -519,6 +520,15 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **File I/O:** R33. **Popups:** R32. **Cloud:** R34.
 
 ---
+
+### `launcher.js` (Favourites: desktop shortcuts + Dock, shell component) [verified 0.49.00]
+
+- Loads after `wallpaper/art.js`, before `shell.js`; touches nothing at parse time. `shell.js` calls `orosLauncher.attach({ apps, open, running, label, icons, lang, desktop })` right after `initPrefs()`, `refresh()` at the end of `renderMenu`, `menuRow(btn, app)` for every app row of the menu and `renderSettings(menu)` after the wallpapers. Every call is guarded: a bundle without the file draws what it drew before.
+- **Menu:** a star (44×44) at the end of every app row. It opens a panel IN PLACE (no menu rebuild; the open panel survives rebuilds, memory only) with two switches, "On the desktop" and "In the Dock"; when the app is in the Dock and the Dock is off, a line says so with "Turn on". Filled star = the app has a shortcut anywhere.
+- **Desktop:** `#ld-desk` inside `#oros-desktop`, an automatic grid in the order added (no free placement: it would differ per screen). Tap opens; right-click, long press (500 ms, 10 px slop, the following click swallowed) or the context-menu key opens a small menu: Open · Move earlier · Move later · Remove from desktop. Arrow keys walk that menu, Escape returns focus to the icon. Long names hyphenate (`lang` on the grid).
+- **Dock:** `#ld-dock` (z-index 950: over a running app at 900, under the menu at 999), centred at the bottom, OFF by default. Menu section "Dock" (`#ld-set`, rebuilt in place, focus kept): Show the Dock · Size (small 40 / medium 52 / large 64 px) · Magnify on hover (mouse only, shown only for a fine pointer) · Hide automatically · Show over open apps (default: yes with a mouse, no on touch). A dot marks the open app (`aria-current`); tapping the open app never reloads it. Mouse users drag to reorder; touch uses the long-press menu (a finger drag scrolls the Dock: one row, sideways scroll at ≤ 480 px). Auto-hide: a 10 px edge strip (mouse) or a small handle (touch, `#ld-edge`) shows it; leaving or tapping elsewhere hides it; keyboard focus shows it.
+- While the Dock is shown and not auto-hidden it sets `--tb-h` on `<html>`: the pet layer (`pet.css`, the old hook) and the desktop grid rise above it; with "over open apps", `html.ld-push` ends `#oros-running` above the Dock. Without "over open apps" a CSS sibling rule hides the Dock while an app runs.
+- Styles are injected once (`#ld-css`) and use only skin variables.
 
 ## Part III — App registry
 
@@ -1013,6 +1023,19 @@ oros-television-data = { ver, favorites[], deleted{} }
 
 ---
 
+**LAUNCHER v1** (`launcher.js`, slice `launcher`, key `oros-launcher-data`, since 0.49.00):
+
+```
+oros-launcher-data = { ver:1, items[{ id, desk: number|null, dock: number|null, mtime }] }
+```
+
+- One item per app id (`/^[a-z0-9][a-z0-9_-]{0,47}$/`), sorted by id, fixed field order; `normalize()` is the single funnel (load, save, merge output, slice get / set). At most 500 items.
+- `desk` / `dock` are fractional order keys; shown order = key, then id. Pin = end of the place (max + 1); moving one shortcut writes only that item (midpoint of its new neighbours); when keys get closer than 1e-6 the place is renumbered 1..n (every item stamped, rare). A drag is `moveTo` (a chain of moves).
+- `mtime` moves only at the mutation site, always forward (`max(now, mtime + 1)`). A removal keeps the item with both places null: it is its own tombstone.
+- **Merge:** union by id, higher `mtime` wins, tie → greater canonical JSON. Fuzz (20,000 triples): symmetric, idempotent, associative, fixed point, canonical, every output item from an input, inputs not mutated.
+- A fresh device writes nothing until the first real change (`get()` returns null). Unreadable data is copied to `oros-launcher-data-broken`.
+- Device-local (never synced): `oros-launcher-prefs` = `{ on, size: s|m|l, magnify, autohide, over: true|false|null }` (null = the device's default). A phone and a PC want different docks; only the pins travel. The factory reset sweeps both (`oros-*`).
+
 ## Part V — Sync + data-safety essentials
 
 ### Security model (absolute)
@@ -1040,6 +1063,8 @@ oros-television-data = { ver, favorites[], deleted{} }
 - **Factory reset:** double confirm → cloud → folder → localStorage prefix sweep → OrosFS wipe → **[log]** Cache Storage `oros-map-tiles` → reload. Everything is tombstoned and seeds are reborn.
 - **Corruption:** rescue backup before any reseed. **Compatibility:** additive migrations; unknown fields carried forward.
 - **Quota (R30):** one shared ~5 MB `localStorage`. A failed `setItem` means edits will not survive a reload, so warn the user.
+- **No re-upload of what the cloud holds (SY-L1, 0.48.02):** after a pull applies a slice, the engine compares what the slice STORES (`get()` after `set()`) with the cloud copy, not the merge output. An app whose store normalizes the merge result differently no longer re-uploads at every reconcile. Apps should still keep `merge(x, null)` idempotent (store == merge output).
+- **Visible failure reason (SY-L2, 0.48.02):** a failed background sync logs `orOS sync: auto sync (<reason>) failed:` in the console and shows the reason in the sync dot tooltip and the menu's sync section (generic errors carry the technical text, e.g. `upload failed: 429`) until the next successful sync. No toast, no inbox entry (A72 still open).
 
 ### Files-disk glue (`shell.js` §9f)
 
@@ -1543,6 +1568,12 @@ Rebuild this in any session where code is delivered.
 
 ### Decisions (newest first)
 
+- **2026-10-09 · Chris (Favourites: desktop shortcuts + Dock, plan /mnt/project-files/launcher/launcher-plan.md: "Συμφωνώ απόλυτα με το πλάνο σου! Προχώρα!")**
+  - A star next to every app in the menu adds it to the orOS desktop and / or a mac-style Dock. The Dock has its own settings in the menu and is off until turned on.
+  - The pins sync; the Dock settings stay per device.
+  - Desktop icons go in an automatic grid; no free placement.
+  - Nothing is added to the top bar.
+
 - Mind Map approved 2026-10-09 (Christos): **Mind Map / Νοητικός χάρτης**, category **Office** (proposed Creativity; his choice), automatic layout where dragging changes parent/order (no free placement), outline view, exports PNG/SVG/Markdown/OPML/JSON, imports OPML/Markdown/indented text/JSON (restore is a merge). No notifications (documented exemption: no dates). Phase 2 recorded, not built: cross-links, free placement, images in nodes, To-Do/Notes bridges, FreeMind/XMind import (real samples first), Presentations link. Plan: project files `mindmap/mindmap-plan.md`.
 
 - 2026-10-09 · Timesheet (Chris: "ναι σε όλα"): category Office, name Timesheet / Ώρες εργασίας, Quote bridge deferred to Wave 2; waves 2–7 in /mnt/project-files/timetrack/timetrack-plan.md §8. "Forgot the timer" is an in-app banner after 10 h in v1; the shell notification comes with Wave 3.
@@ -1768,7 +1799,8 @@ Rebuild this in any session where code is delivered.
 - Inside the Calendar, not a separate app (Chris 2026-10-09). Three read-only chips: Holidays (Greek public holidays), Name days (day-view line + one row per contact whose first name celebrates, click → Contacts), World days (observances).
 - `calendar/namedays.js` is pure (Orthodox Easter by Meeus, fixed + movable feasts, George/Mark moved after Easter, Greek/Greeklish name skeletons, `cleanDays` sanitizer). Name list is hand-written from the church calendar; nicknames prefixed `~` match but are not shown. Add names there.
 - `calendar/days.json` = observance RULES (`md`, `nth`, `easter`, `doy`). Updating it needs no app release: the Calendar fetches `days.json?w=<week>` at most weekly, sanitizes, caches in `oros-cal-days`; the SW precache is the offline fallback. Plain text only (textContent), max 80 chars, unknown rules dropped.
-- Nothing is stored in `oros-calendar-data`: no sync impact, no reminders.
+- Nothing is stored in `oros-calendar-data`: no sync impact, no event reminders.
+- Morning notice (shell `namedayCheckTick`, 60 s throttle): from 09:00, when a contact's first name (or nickname) celebrates today, one `ns: "calendar"` notification, key `nameday-<ymd>` (inbox dedup across devices), body lists up to 3 names, deep link `calendar:nameday:<ymd>` opens that day. The shell loads `calendar/namedays.js` (same file as the app). Silent when the Name days chip is off on this device (`oros-cal-feedvis`) or Calendar notifications are off. orOS closed = nothing fires; the next boot the same day catches up.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -3974,3 +4006,24 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-09 — hotfix 0.48.01 — universal search works again
 - **Changes:** `apps.json` Mind Map lost a `"search": "search.js"` entry copied from Kanban by the bulk release; the file does not exist, so every universal search failed with "failed to load search.js" in 0.48.00. New test in `tests/search.test.js`: every `search` entry in `apps.json` must point to an existing file (PR #101).
 - **NOT tested:** a real phone, Safari / iOS.
+
+### 2026-10-10 — hotfix 0.48.02 — sync: no endless re-uploads, failure reason visible
+- **Report:** Chris, 2026-10-09 20:42 UTC: sync never completes and shows "failed".
+- **Fixes:** Podcasts (`podcasts/core.js` `normQueue`) returned an empty queue without `sh: {}` for missing data, so `mergePodcasts(x, null)` (the store path) dropped a field every merge added: on every device with Podcasts data, every pull marked the engine dirty and every reconcile re-uploaded identical content, for ever (same one-line fix as Podcasts PR #120). Engine guard SY-L1 in `sync.js` (`settleApplied`): a slice whose stored content equals the cloud copy after a pull is not stale, whatever shape the merge returned. Failure reason SY-L2 (`sync.js` passes the error to `onAutoSync` listeners and logs it; `shell.js` `syncErrText`, `state.syncAutoErr`; Settings snapshot shows it too).
+- **Tests:** `tests/sync-loop.test.js` (fails on the old engine), `tests/podcasts.test.js` store == merge for an empty queue. Real shell (Chromium, mock Dropbox): two devices with a Podcasts subscription uploaded twice per sync round before, zero while idle after; all 97 apps on two devices sync with no failure and no idle upload; a 503 shows "Sync failed — check your connection (upload failed: 503)" in the dot tooltip and the menu, gone after the next success.
+- **Open:** the exact error on Chris's devices was not reproduced (the mock never fails like the real Dropbox); 0.48.02 shows it, so the next report names it.
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
+
+### 2026-10-09 — Favourites: desktop shortcuts + Dock (`launcher.js` v1.0.0)
+
+- **New shell component `launcher.js`** (like `pet.js`): a star at the end of every app row of the menu opens two switches, "On the desktop" and "In the Dock". The desktop shows the chosen apps in an automatic grid; a mac-style Dock at the bottom (off until turned on in its own menu section: size, magnify on hover, auto-hide, over open apps). Small menu on both (right-click, long press, context-menu key): Open · Move earlier · Move later · Remove. Mouse users drag inside the Dock. The open app has a dot in the Dock. The pet and the desktop grid rise above a shown Dock (`--tb-h`); nothing is added to the top bar.
+- **Sync:** new slice `launcher` (LAUNCHER v1, Part IV): per-app items with fractional order keys and their own `mtime`, so two devices that pin or move different apps never undo each other. Dock settings are device-local (`oros-launcher-prefs`).
+- **Core:** `index.html` loads `launcher.js` before `shell.js`; `sw.js` precache `./launcher.js`; `shell.js` calls `attach` / `refresh` / `menuRow` / `renderSettings` (all guarded; landed in PR #84 before this release commit); Tests workflow paths `launcher.js`. `APP_VERSION` 0.49.00: main + 1 minor (new shell feature).
+- **Tests:** new `tests/launcher.test.js` (12): normalize, pin / unpin no-ops, mtime always forward, a move writes one item, 3,000 random moves (renumbering), `moveTo` against a list splice, three two-device cases, merge fuzz 20,000 triples.
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox; EN desktop 1280, EL phone 390 and 360, 768 light):** star → desktop and Dock, the menu stays open; right-click, Shift+F10 and a touch long press open the small menu; move and remove; pins and order reach the other device, a removal there comes back; idle rounds upload 0; Dock: "Turn on" from the star panel, magnify, drag reorder, dot on the open app, tapping the open app does not reload it, app ends above the Dock with "over open apps", hidden behind apps on the phone, auto-hide + edge reveal, small size; sideways scroll with 7 icons at 360 px, no page overflow; pet rises above the Dock; no page errors. Without the script tag the shell shows no star and no error.
+- **NOT tested:** a real phone, Safari / iOS (long press, safe area), Firefox, real Dropbox.
+- **Status:** code merged as PR #84; this release commit (0.49.00).
+
+### 2026-10-10 — Name days: morning notice when a contact celebrates — 0.49.01
+- **Changes:** from 09:00, orOS sends one notification a day if any of your contacts has a name day, for example "Σήμερα γιορτάζει: Δημήτρης Παπαδόπουλος, Dimitra K.". Tapping it opens that day in the Calendar. It respects the Calendar notification toggle and quiet hours. It stays silent when the Name days chip is off on the device. (PR #103)
+- **NOT tested:** a real phone, Safari, or system (OS) notifications.

@@ -1592,6 +1592,29 @@
     });
   }
 
+  // SY-L1 — NO RE-UPLOAD OF WHAT THE CLOUD ALREADY HOLDS. An app may
+  // store a merge result in a slightly different shape than the merge
+  // returned (Podcasts 0.47-0.48: an empty queue gained "sh":{} in
+  // every merge and lost it again on store). The engine compared the
+  // MERGE OUTPUT with the cloud, saw a difference at every pull and
+  // re-uploaded identical content at every reconcile, on every
+  // device, for ever. What counts is what the slice holds after
+  // set(): when that equals the cloud copy exactly, nothing is stale,
+  // and the baseline describes the stored content. Any other case
+  // keeps the old behaviour (this can only remove a needless upload).
+  function settleApplied(name, r, remoteData) {
+    if (!r.cloudStale) return;
+    var stored;
+    try {
+      var v = slices[name].get();
+      stored = (v === null || v === undefined) ? "null" : JSON.stringify(v);
+    } catch (e) { return; }
+    var remoteStr = (remoteData === null || remoteData === undefined) ? "null" : JSON.stringify(remoteData);
+    if (stored !== remoteStr) return;
+    r.cloudStale = false;
+    if (r.baselineCandidate !== null) r.baselineCandidate = stored;
+  }
+
   function applyPayload(payload) {
     if (!payload) return 0;
     reapClosedApps();                       // SY-D5
@@ -1604,6 +1627,7 @@
       if (rs.changed) {
         try {
           slices.shell.set(rs.data, { merged: !!slices.shell.merge });
+          settleApplied("shell", rs, payload.shell);
           if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
           applied++;
         } catch (e) {}
@@ -1625,6 +1649,7 @@
           if (ra.changed) {
             try {
               slices[name].set(ra.data, { merged: !!slices[name].merge });
+              settleApplied(name, ra, data);
               if (ra.baselineCandidate !== null) recordBaseline(name, ra.baselineCandidate);
               applied++;
             } catch (e) {}
@@ -2017,7 +2042,10 @@
       })
       .catch(function (err) {
         reconcileInFlight = false;
-        emitAutoEvent("fail", reason);
+        // SY-L2: the reason used to vanish here — a background
+        // failure showed only a red dot, with nothing in the console.
+        try { console.warn("orOS sync: auto sync (" + reason + ") failed:", err); } catch (e) {}
+        emitAutoEvent("fail", reason, err);
       });
   }
 
@@ -2037,12 +2065,15 @@
     emitAutoEvent("start", reason);
     push()
       .then(function () { emitAutoEvent("done", reason); })
-      .catch(function (err)  { emitAutoEvent("fail", reason); });
+      .catch(function (err)  {
+        try { console.warn("orOS sync: auto sync (" + reason + ") failed:", err); } catch (e) {}
+        emitAutoEvent("fail", reason, err);
+      });
   }
 
-  function emitAutoEvent(kind, detail) {
+  function emitAutoEvent(kind, detail, err) {
     autoListeners.forEach(function (fn) {
-      try { fn(kind, detail); } catch (e) {}
+      try { fn(kind, detail, err); } catch (e) {}
     });
   }
 
