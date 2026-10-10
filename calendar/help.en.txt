@@ -34,6 +34,7 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Work time`: time per project and day from [Timesheet](app:timesheet).
 - `Meals` planned in [Meal Planner](app:meals), such as "Dinner: Fasolada".
 - `Death anniversaries` from [Family Tree](app:familytree), such as "Maria · 10 years since death", for people with an exact date of death.
+- `Media Shelf`: the day you finished a book, film, album or game, and release dates on your wishlist, from [Media Shelf](app:shelf).
 
 Tapping a feed row opens the app it comes from. To change it, edit it there.
 
