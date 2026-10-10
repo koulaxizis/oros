@@ -147,6 +147,9 @@
       "toast.paypresets_saved": "Payment presets saved",
       "toast.sync_replaced":   "This quote was deleted on another device",
       "toast.draft_restored":  "Unsaved draft restored",
+      "toast.prefilled":       "New quote filled in. Check it and press Save.",
+      "confirm.replace_draft": "Replace the unsaved draft with the new quote?",
+      "prefill.replace":       "Replace",
       "notes.ph":             "Additional terms, conditions…"
     },
     el: {
@@ -248,6 +251,9 @@
       "toast.paypresets_saved": "Τα presets πληρωμής αποθηκεύτηκαν",
       "toast.sync_replaced":   "Αυτή η προσφορά διαγράφηκε σε άλλη συσκευή",
       "toast.draft_restored":  "Το μη αποθηκευμένο πρόχειρο ανακτήθηκε",
+      "toast.prefilled":       "Η νέα προσφορά συμπληρώθηκε. Έλεγξέ τη και πάτησε Αποθήκευση.",
+      "confirm.replace_draft": "Να αντικατασταθεί το μη αποθηκευμένο πρόχειρο από τη νέα προσφορά;",
+      "prefill.replace":       "Αντικατάσταση",
       "notes.ph":             "Επιπλέον όροι, προϋποθέσεις…"
     }
   };
@@ -2258,7 +2264,66 @@
     if (!quoteId) return;
     try { openQuote(quoteId); switchTab("create"); } catch (e) {}
   };
+  // BR-Q1 — "Create quote" receiver (Timesheet → Quote). The shell
+  // validated the payload ({items:[{d, q, p}], cur?, client?, notes?});
+  // it becomes a NEW unsaved draft (shelter only, nothing synced) that
+  // the user saves. An unsaved draft with content is replaced only
+  // after a confirm. A client is matched by name; an unknown one opens
+  // the New client dialog with the name filled in (saved only by the
+  // user).
+  window.__orosQuoteNew = function (p) {
+    if (!p || !Array.isArray(p.items) || !p.items.length) return;
+    var hasContent = curIsDraft && cur && (cur.clientId || (cur.notes || "").trim() ||
+      (cur.items || []).some(function (it) { return (it.desc || "").trim() || it.price; }));
+    if (hasContent) {
+      askDialog({ text: t("confirm.replace_draft"), yes: t("prefill.replace"),
+                  onYes: function () { applyQuotePrefill(p); } });
+      return;
+    }
+    applyQuotePrefill(p);
+  };
+  function applyQuotePrefill(p) {
+    newDraft();
+    if (p.cur === "EUR" || p.cur === "USD") cur.currency = p.cur;
+    var vat = cur.items.length ? cur.items[0].vat : 24;
+    cur.items = p.items.map(function (x) {
+      var it = newItemObj();
+      it.desc = typeof x.d === "string" ? x.d : "";
+      it.qty = typeof x.q === "number" ? x.q : 1;
+      it.price = typeof x.p === "number" ? x.p : 0;
+      it.vat = vat;
+      return it;
+    });
+    if (typeof p.notes === "string") cur.notes = p.notes;
+    var wanted = typeof p.client === "string" ? p.client.trim() : "", match = null;
+    if (wanted) {
+      var low = wanted.toLocaleLowerCase();
+      state.clients.forEach(function (c) {
+        if (!match && String(c.name || "").trim().toLocaleLowerCase() === low) match = c;
+      });
+      if (match) cur.clientId = match.id;
+    }
+    loadOfferIntoEditor();
+    switchTab("create");
+    writeShelterNow();
+    scheduleRender();
+    notifyTransient(t("toast.prefilled"));
+    if (wanted && !match) {
+      openClientDialog(null);
+      $("c-name").value = wanted;
+    }
+  }
+
   setTimeout(function () {
+    try {
+      var stagedNew = sessionStorage.getItem("oros-quote-new");
+      if (stagedNew) {
+        sessionStorage.removeItem("oros-quote-new");
+        var pn = null;
+        try { pn = JSON.parse(stagedNew); } catch (e2) { pn = null; }
+        if (pn) window.__orosQuoteNew(pn);
+      }
+    } catch (e) {}
     try {
       var staged = sessionStorage.getItem("oros-quote-open");
       if (staged) {

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.48.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.49.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -48,6 +48,7 @@
     // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
     autoexport:      "off"
@@ -922,6 +923,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1094,6 +1096,63 @@
     if (now - healthLastTick < 60000) return;
     healthLastTick = now;
     healthCheckTick();
+  }
+
+  // Name days — morning notice when a CONTACT celebrates today.
+  // Reads "oros-contacts-data" directly (works with Calendar and
+  // Contacts CLOSED) and asks calendar/namedays.js (loaded by
+  // index.html, the SAME file the Calendar runs) who celebrates.
+  // From 09:00, one notice per day; the key is the same on every
+  // device (inbox dedup). Silent when the Calendar "Name days" chip
+  // is off on this device (oros-cal-feedvis) or no contact matches.
+  // Honest limit (alarms): orOS closed = nothing fires; the next boot
+  // the same day catches up.
+  var ND_HOUR = 9;
+  function namedayCheckTick() {
+    var ND = window.OrosNamedays;
+    if (!ND) return;                                    // stale bundle — silent
+    if (new Date().getHours() < ND_HOUR) return;
+    try {
+      var vis = JSON.parse(localStorage.getItem("oros-cal-feedvis") || "{}");
+      if (vis && vis["lbl-feed-nameday"] === false) return;
+    } catch (e) {}
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-contacts-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var today = sysYmd();
+    var who = [];
+    raw.contacts.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
+                : (typeof c.nickname === "string" ? c.nickname : "");
+      if (!first || !ND.celebrates(first, today)) return;
+      var full = [c.given, c.middle, c.family].filter(function (x) {
+        return typeof x === "string" && x.trim();
+      }).join(" ");
+      who.push((full || first).slice(0, 60));
+    });
+    if (!who.length) return;
+    var el = state.lang === "el";
+    var shown = who.slice(0, 3).join(", ");
+    if (who.length > 3) shown += el ? " και " + (who.length - 3) + " ακόμα" : " and " + (who.length - 3) + " more";
+    N.emit({
+      ns: "calendar",
+      key: "nameday-" + today,
+      type: "reminder",
+      title: el ? "Ονομαστικές εορτές" : "Name days",
+      body: (el ? "Σήμερα γιορτάζει: " : "Name day today: ") + shown,
+      deepLink: "calendar:nameday:" + today
+    });
+  }
+
+  var namedayLastTick = 0;
+  function namedayCheckTickThrottled() {
+    var now = Date.now();
+    if (now - namedayLastTick < 60000) return;
+    namedayLastTick = now;
+    namedayCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -3730,6 +3789,11 @@
       msg.className = "sync-msg " + state.syncMsg.kind;
       msg.textContent = state.syncMsg.text;
       section.appendChild(msg);
+    } else if (state.syncAutoErr) {
+      var amsg = document.createElement("div");
+      amsg.className = "sync-msg err";
+      amsg.textContent = state.syncAutoErr;
+      section.appendChild(amsg);
     }
 
     host.appendChild(section);
@@ -4143,7 +4207,23 @@
       return;
     }
     var key = window.orosSync.errorKey(err);
+    if (key === "sync.err.generic") { setSyncMsgRaw("err", syncErrText(err)); return; }
     setSyncMsg("err", key);
+  }
+
+  // SY-L2: the message for a failed sync, with the technical reason
+  // when the engine only knows "generic" ("Sync failed — check your
+  // connection (upload failed: 429)"). Plain text, shown with
+  // textContent only.
+  function syncErrText(err) {
+    var S = window.orosSync;
+    var key = (S && typeof S.errorKey === "function") ? S.errorKey(err) : "sync.err.generic";
+    var text = window.t(key);
+    if (key === "sync.err.generic") {
+      var why = String((err && (err.message || err.name)) || "").replace(/[\u0000-\u001f]/g, " ").slice(0, 120);
+      if (why) text += " (" + why + ")";
+    }
+    return text;
   }
 
   function escapeHtml(s) {
@@ -5457,10 +5537,21 @@
     // Subtle auto-sync feedback: the status dot pulses while the engine
     // pushes in the background. No messages, no interruptions.
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
-      window.orosSync.onAutoSync(function (kind) {
+      window.orosSync.onAutoSync(function (kind, reason, err) {
         if (kind === "start") setSyncDot("syncing");
-        else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
-        else setSyncDot("synced", 4000);   // transient green, then auto
+        else if (kind === "fail") {
+          setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
+          // SY-L2: say WHY, quietly (no toast, no inbox): in the dot's
+          // tooltip and as a line in the menu's sync section, until the
+          // next sync that succeeds.
+          state.syncAutoErr = syncErrText(err);
+          var dotEl = document.getElementById("sync-dot");
+          if (dotEl) dotEl.parentNode.setAttribute("title", window.t("syncdot.err") + " — " + state.syncAutoErr);
+          renderMenu();
+        } else {
+          setSyncDot("synced", 4000);   // transient green, then auto
+          if (state.syncAutoErr) { state.syncAutoErr = null; renderMenu(); }
+        }
       });
     }
 
@@ -6777,7 +6868,8 @@
         interval: getSafeInterval(),
         intervals: [0, 1, 3, 5, 15],
         minPass: MIN_PASS_LEN,
-        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text } : null
+        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
+           : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
       },
       backup: {
         folderSupported: fsSupported(),
@@ -7669,6 +7761,57 @@
       sessionStorage.setItem("oros-budget-new", JSON.stringify(q));
     } catch (e) {}
     openAppById("budget");
+    return true;
+  };
+
+  // BR-Q1 — "Create quote" (Timesheet → Quote). An app calls
+  // window.parent.__orosOpenQuoteNew({items:[{d, q, p}], cur?, client?,
+  // notes?}) from an explicit button; Quote opens a NEW unsaved draft
+  // with those lines and the user saves it (a prefill, never data, as
+  // BR-W8-6). Strict validation here (false = rejected, nothing opens):
+  // 1-50 lines, d text <= 200, q quantity 0 < q <= 100000, p unit price
+  // 0 <= p <= 10000000 (2 decimals each); cur EUR|USD; client <= 80 and
+  // notes <= 500 chars. Only a fresh plain copy crosses over. Quote
+  // running → live push to __orosQuoteNew; otherwise sessionStorage
+  // "oros-quote-new" (device-local, one-shot, read and removed by
+  // quote.js at boot) and open it.
+  window.__orosOpenQuoteNew = function (p) {
+    if (!p || typeof p !== "object" || !Array.isArray(p.items)) return false;
+    if (!p.items.length || p.items.length > 50) return false;
+    var r2 = function (n) { return Math.round(n * 100) / 100; };
+    var txt = function (v, max) {
+      return typeof v === "string" ? v.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, max) : "";
+    };
+    var items = [];
+    for (var i = 0; i < p.items.length; i++) {
+      var it = p.items[i];
+      if (!it || typeof it !== "object") return false;
+      if (typeof it.q !== "number" || !isFinite(it.q) || it.q <= 0 || it.q > 100000) return false;
+      if (typeof it.p !== "number" || !isFinite(it.p) || it.p < 0 || it.p > 10000000) return false;
+      items.push({ d: txt(it.d, 200), q: r2(it.q), p: r2(it.p) });
+    }
+    var q = { items: items };
+    if (p.cur === "EUR" || p.cur === "USD") q.cur = p.cur;
+    else if (p.cur !== undefined) return false;
+    if (typeof p.client === "string") q.client = txt(p.client, 80).trim();
+    if (typeof p.notes === "string") q.notes = txt(p.notes, 500);
+    var has = false;
+    for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "quote") has = true;
+    if (!has) return false;
+    if (state.running && state.running.id === "quote") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosQuoteNew === "function") {
+          f.contentWindow.__orosQuoteNew(q);
+          return true;
+        }
+      } catch (e) {}
+    }
+    try {
+      sessionStorage.setItem("oros-quote-new", JSON.stringify(q));
+    } catch (e) {}
+    openAppById("quote");
     return true;
   };
 

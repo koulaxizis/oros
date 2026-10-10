@@ -797,14 +797,9 @@
 
   function textTools(bar, it) {
     var a = it.ax;
-    var f = el("select", "ctx-sel");
-    f.setAttribute("aria-label", t("ctx.font")); f.title = t("ctx.font");
-    T.FAMILY_IDS.forEach(function (id) {
-      var o = el("option", "", T.FAMILIES[id].name);
-      o.value = id; if ((a.font || "sans") === id) o.selected = true;
-      f.appendChild(o);
-    });
-    f.addEventListener("change", function () { var v = f.value; f.blur(); edit(function (x) { x.ax.font = v; }); });
+    var fname = AT.fonts ? AT.fonts.name(a.font) : T.FAMILIES[a.font || "sans"].name;
+    var f = btn("ctx-sel ctx-font" + (view === "fonts" ? " on" : ""), fname, function () { openView("fonts"); });
+    f.setAttribute("aria-label", t("ctx.font") + ": " + fname); f.title = t("ctx.font");
     bar.appendChild(f);
     var sz = el("div", "ctx-size");
     var minus = AT.iconBtn("minus", t("ctx.size"), "ctx-btn sm");
@@ -910,13 +905,14 @@
   }
 
   // ---------- 4. Wiring ----------
-  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1 };
+  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1, fonts: 1 };
   function viewFits() {
     if (!view || !CONTEXT_VIEWS[view] || view === "animate") return true;
     var one = sel1(), list = ED.selItems();
     if (view === "position") return list.length > 0;
     if (view === "colour") return colourTarget && colourTarget.kind === "bg" ? true : !!one;
     if (view === "effects") return one && one.ax.k === "text";
+    if (view === "fonts") return list.some(function (it) { return it.ax.k === "text"; });
     return one && one.ax.k === "photo";
   }
 

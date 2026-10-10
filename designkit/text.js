@@ -9,6 +9,16 @@
 //     screen, in a PDF and in Node tests. The subsets carry no
 //     kerning or ligature features and canvas draws with
 //     fontKerning "none", so the drawn advances match.
+//   - extra families (registerFamily): fonts fetched from URLs on
+//     demand (Atelier: Fontsource). A variant may come as several
+//     subset files (Latin, Greek…): metrics look a character up in
+//     each in order, canvas gets one FontFace per subset with its
+//     unicode-range. A character none of them has is measured and
+//     drawn with the family's fallback (sans), so screen and layout
+//     agree before, while and after the font arrives. A missing
+//     bold / italic uses the regular face. PDF output (pdf.js) only
+//     embeds the first subset of such a font; Layout does not offer
+//     them.
 //   - layoutChain(): paragraphs + styles → lines in a chain of
 //     threaded frames (columns, insets, text wrap exclusions,
 //     alignment incl. justify, first-line / left / right indents,
@@ -41,9 +51,33 @@
   function fontFile(key) {
     var p = key.split("-");
     var f = FAMILIES[p[0]];
+    if (f && f.urls) return p[0] + "-" + p[1] + ".ttf";
     return f ? f[p[1]] : null;
   }
   function cssFamily(key) { return "dk-" + key; }
+  // What to draw with: an extra family falls back to its fallback
+  // family's face (same variant), as metrics do.
+  function cssStack(key) {
+    var p = key.split("-"), f = FAMILIES[p[0]];
+    if (!f || !f.urls) return cssFamily(key);
+    return '"' + cssFamily(key) + '", "' + cssFamily((f.fallback || "sans") + "-" + p[1]) + '"';
+  }
+
+  // id: [a-z0-9_]{1,64} (no "-": keys are "<family>-<variant>").
+  // spec: { name, urls: { r: [url…], b, i, bi }, fallback }
+  function registerFamily(id, spec) {
+    if (!/^[a-z0-9_]{1,64}$/.test(id) || FAMILY_IDS.indexOf(id) >= 0) return false;
+    if (FAMILIES[id] && FAMILIES[id].urls) return true;
+    var urls = {};
+    ["r", "b", "i", "bi"].forEach(function (v) {
+      var u = spec && spec.urls && spec.urls[v];
+      urls[v] = Array.isArray(u) ? u.filter(function (x) { return typeof x === "string"; }) : [];
+    });
+    if (!urls.r.length) return false;
+    var fb = spec.fallback && FAMILY_IDS.indexOf(spec.fallback) >= 0 ? spec.fallback : "sans";
+    FAMILIES[id] = { name: String(spec.name || id), urls: urls, fallback: fb };
+    return true;
+  }
 
   // ---------- 2. TTF metrics parser ----------
   // Reads just what layout needs: unitsPerEm, ascender / descender /
@@ -116,25 +150,101 @@
   }
 
   // ---------- 3. Font registry ----------
-  var fonts = {};          // key → { m: metrics, buf: ArrayBuffer }
+  var fonts = {};          // key → { m: metrics, buf: ArrayBuffer (first file), parts: [{ m, buf }] }
   var pending = {};        // key → Promise
   var baseUrl = "../vendor/noto/";
+  var gen = 0;             // bumps whenever a face arrives (layout caches key on it)
+  var fetcher = null;      // url → Promise<ArrayBuffer | null> (null: not there)
 
   function setBaseUrl(u) { baseUrl = u; }
+  function setFetcher(fn) { fetcher = fn; }
   function isLoaded(key) { return !!fonts[key]; }
+  function generation() { return gen; }
 
+  // One file, or several subset files of the same face (first wins
+  // for a character). The merged metrics keep the first file's units.
   function register(key, buf) {
-    var m = parseTTF(buf);
-    fonts[key] = { m: m, buf: buf };
+    var bufs = Array.isArray(buf) ? buf : [buf];
+    var parts = bufs.map(function (b) { return { m: parseTTF(b), buf: b }; });
+    var m = parts[0].m;
+    if (parts.length > 1) {
+      var total = 0;
+      parts.forEach(function (p) { total += p.m.adv.length; });
+      var adv = new Uint16Array(total), map = {}, off = 0;
+      parts.forEach(function (p) {
+        var k = m.upm / p.m.upm;
+        for (var g = 0; g < p.m.adv.length; g++) adv[off + g] = Math.round(p.m.adv[g] * k);
+        Object.keys(p.m.map).forEach(function (cp) { if (map[cp] === undefined) map[cp] = off + p.m.map[cp]; });
+        off += p.m.adv.length;
+      });
+      m = { upm: m.upm, asc: m.asc, desc: m.desc, gap: m.gap, cap: m.cap, adv: adv, map: map };
+    }
+    var f = FAMILIES[key.split("-")[0]];
+    if (f && f.urls) m.fb = (f.fallback || "sans") + "-" + key.split("-")[1];
+    fonts[key] = { m: m, buf: parts[0].buf, parts: parts };
+    gen++;
     return fonts[key];
+  }
+
+  // CSS unicode-range of a parsed file (so the browser picks the
+  // subset file that has the character, as metrics do).
+  function unicodeRange(m) {
+    var cps = Object.keys(m.map).map(Number).sort(function (a, b) { return a - b; });
+    var out = [], i = 0;
+    while (i < cps.length) {
+      var a = cps[i], b = a;
+      while (i + 1 < cps.length && cps[i + 1] === b + 1) { i++; b = cps[i]; }
+      out.push("U+" + a.toString(16) + (b > a ? "-" + b.toString(16) : ""));
+      i++;
+    }
+    return out.join(",");
   }
 
   function addFontFace(key, buf) {
     if (typeof FontFace === "undefined" || typeof document === "undefined" || !document.fonts) return Promise.resolve();
-    try {
-      var ff = new FontFace(cssFamily(key), buf.slice(0));
-      return ff.load().then(function (f) { document.fonts.add(f); });
-    } catch (e) { return Promise.resolve(); }
+    var parts = fonts[key] && fonts[key].parts.length > 1 ? fonts[key].parts : [{ buf: buf }];
+    return Promise.all(parts.map(function (p) {
+      try {
+        var desc = p.m ? { unicodeRange: unicodeRange(p.m) } : undefined;
+        var ff = new FontFace(cssFamily(key), p.buf.slice(0), desc);
+        return ff.load().then(function (f) { document.fonts.add(f); }, function () {});
+      } catch (e) { return Promise.resolve(); }
+    }));
+  }
+
+  function fetchBuf(url) {
+    if (fetcher) return fetcher(url);
+    return fetch(url, { credentials: "omit", referrerPolicy: "no-referrer" }).then(function (r) {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error("font " + url + " " + r.status);
+      return r.arrayBuffer();
+    });
+  }
+
+  // An extra family's face: every subset file of the variant (or of
+  // the regular one when the variant has none); files that are not
+  // there are skipped, at least one must be.
+  function loadExtra(key, f) {
+    var v = key.split("-")[1];
+    function get(list) {
+      return Promise.all(list.map(fetchBuf)).then(function (bufs) {
+        var good = [];
+        bufs.forEach(function (b) {
+          if (!b || !b.byteLength) return;
+          try { parseTTF(b); good.push(b); } catch (e) { /* not a font */ }
+        });
+        return good;
+      });
+    }
+    var list = f.urls[v] && f.urls[v].length ? f.urls[v] : f.urls.r;
+    return get(list).then(function (good) {
+      if (good.length || list === f.urls.r) return good;
+      return get(f.urls.r);           // no such weight / style: the regular face
+    }).then(function (good) {
+      if (!good.length) throw new Error("font " + key + " not found");
+      register(key, good);
+      return addFontFace(key, good[0]);
+    });
   }
 
   // Loads (once) every key in the list; resolves when all are
@@ -143,6 +253,13 @@
     return Promise.all(keys.map(function (key) {
       if (fonts[key]) return Promise.resolve();
       if (pending[key]) return pending[key];
+      var fam = FAMILIES[key.split("-")[0]];
+      if (fam && fam.urls) {
+        // an extra family that cannot be fetched (offline, gone) is not
+        // an error: its fallback stands in, the next load() tries again
+        pending[key] = loadExtra(key, fam).then(function () { delete pending[key]; }, function () { delete pending[key]; });
+        return pending[key];
+      }
       var file = fontFile(key);
       if (!file) return Promise.reject(new Error("unknown font " + key));
       pending[key] = fetch(baseUrl + file).then(function (r) {
@@ -177,7 +294,9 @@
   // its family, then sans-r, so layout never crashes on a font that
   // is still on its way (the caller re-lays out when it lands).
   function metrics(key) {
-    var f = fonts[key] || fonts[key.split("-")[0] + "-r"] || fonts["sans-r"];
+    var p = key.split("-"), fam = FAMILIES[p[0]];
+    var f = fonts[key] || fonts[p[0] + "-r"] ||
+      (fam && fam.urls ? fonts[(fam.fallback || "sans") + "-" + p[1]] : null) || fonts["sans-r"];
     return f ? f.m : null;
   }
 
@@ -186,15 +305,17 @@
   function measure(key, str, size, track) {
     var m = metrics(key);
     if (!m) return str.length * size * 0.5;
-    var units = 0, n = 0;
+    var fb = m.fb ? metrics(m.fb) : null;
+    var w = 0, n = 0;
     for (var i = 0; i < str.length; i++) {
       var cp = str.codePointAt(i);
       if (cp > 0xFFFF) i++;
-      var gid = m.map[cp] || 0;
-      units += m.adv[gid] || 0;
+      var gid = m.map[cp];
+      if (gid === undefined && fb && fb !== m && fb.map[cp] !== undefined) w += (fb.adv[fb.map[cp]] || 0) / fb.upm;
+      else w += (m.adv[gid || 0] || 0) / m.upm;
       n++;
     }
-    return units * size / m.upm + (track ? n * track * size / 1000 : 0);
+    return w * size + (track ? n * track * size / 1000 : 0);
   }
 
   function ascent(key, size) { var m = metrics(key); return m ? m.asc * size / m.upm : size * 0.8; }
@@ -586,7 +707,8 @@
 
   var api = {
     FAMILIES: FAMILIES, FAMILY_IDS: FAMILY_IDS, DEFAULT_PS: DEFAULT_PS, PS_KEYS: PS_KEYS, CS_KEYS: CS_KEYS,
-    fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, allKeys: allKeys,
+    fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, cssStack: cssStack, allKeys: allKeys,
+    registerFamily: registerFamily, setFetcher: setFetcher, generation: generation, unicodeRange: unicodeRange,
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
