@@ -4086,3 +4086,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Also ships (release bumps that were pending):** Split phase 2, people from Contacts or from a Travel trip (PR #97, merged 2026-10-09). Garage v1.1.0 receipt photos: fuel, service and other-cost entries take up to 6 receipt photos (camera or file), stored in Files `Garage/Receipts`, synced slice keeps only the names (PR #102, merged 2026-10-09; schema note under GARAGE v1).
 - **Schema:** G2048 v1 gains timed-mode rows `t3|t4|t5`; prefs `m`, session `m`/`left` (Part III/IV).
 - **NOT tested:** a real phone, Safari / iOS.
+
+### 2026-10-10 — Oracle / Μαντείο: new Fun app (app + tests) — 0.53.00
+- **Changes:** a new **Oracle / Μαντείο** app in Fun. You ask a question and get a prophecy that is always true and never helpful, for example "Θα πάρω την προαγωγή;" → "Μέχρι το τέλος της εβδομάδας, η εβδομάδα θα έχει τελειώσει." - The same question on the same day gets the same answer, regardless of case or accents. - An oracle of the day appears at the top and is the same on every device. - Asking shows a short smoke ceremony with a letter-by-letter reveal. With reduced motion the answer appears at once. (PR #115)
+- **NOT tested:** a real phone, Safari / iOS.
