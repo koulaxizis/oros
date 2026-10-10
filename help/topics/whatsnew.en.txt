@@ -7,6 +7,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - Time: Pomodoro focus sessions can be logged to a Timesheet project.
 - Media Shelf: an optional daily reminder to keep reading (or watching, listening, playing) what you have in progress. Turn it on in More.
 - Atelier: the slide show now plays videos, sound and entrance animations.
+- Pet Health Book: attach photos or PDFs (prescriptions, test results) to vaccines, visits and medicines.
 
 ## Version 0.64.00
 - New app: Typewriter. Write like on a real typewriter: only forward, a backspace strikes the letter through, key sounds and paper tints, a word goal per page.
