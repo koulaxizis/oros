@@ -479,6 +479,17 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .me-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--bg); }
 .add-row { display: flex; gap: 6px; }
 .add-row input { flex: 1 1 auto; }
+.from-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.from-row .txt-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.pick-box { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; }
+.pick-list { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; overscroll-behavior: contain; }
+.pick-row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border-radius: 8px; cursor: pointer; overflow-wrap: anywhere; }
+.pick-row:hover { background: var(--accent-soft); }
+.pick-row input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
+.pick-trip { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 44px; padding: 6px 8px; text-align: left; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pick-trip:hover, .pick-trip:focus-visible { background: var(--accent-soft); }
+.pt-n { font-weight: 700; overflow-wrap: anywhere; }
+.pt-m { font-size: 13px; color: var(--text-dim); }
 .split-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
 .split-head .dlg-lbl { margin-bottom: 0; }
 .seg4 { margin: 6px 0 10px; }

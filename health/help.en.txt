@@ -1,0 +1,50 @@
+# Health
+Health keeps your home measurements in one place: blood pressure, weight, blood sugar, sleep, resting heart rate, temperature, oxygen and any kind you add yourself. It shows trends and makes a tidy report for your doctor.
+
+>! Health records, it does not diagnose. For anything that worries you, talk to your doctor.
+
+## Getting started
+The `Measurements` tab has one card per measurement. Tap or click **+** on a card to add a reading: the date and time are filled in with now, so you only type the value. Tap or click the card itself to see its chart.
+
+Each reading can have a `Note` and `Tags` (separate them with commas, e.g. after coffee). Open `Settings` first if you want other units (kg or lb, mg/dL or mmol/L, °C or °F) or your height, which is only used for the BMI.
+
+## Measurements
+- `Blood pressure`: upper and lower value, optional pulse, `Arm` and `Position`.
+- `Weight`: with your BMI once your height is set.
+- `Blood sugar`: pick `When` (`Fasting`, `Before a meal`, `2 h after a meal`, `Bedtime` or `Random`); the ranges depend on it.
+- `Sleep`: when you went to bed, when you woke up and an optional `Quality` from 1 to 5.
+- `Resting heart rate`, `Temperature`, `Oxygen (SpO₂)`.
+
+The badge on each reading (`In range`, `Borderline`, `High` and so on) follows common tables: ESC/ESH 2023 for blood pressure, ADA for blood sugar, WHO for BMI. If your doctor gave you other targets, type them in the measurement's settings and they win.
+
+### Your own kinds
+Tap or click `Add your own kind` for anything else, such as cholesterol or waist size. Give it a `Name`, an optional `Unit`, the number of `Decimals` and, if you like, a target range. Deleting an own kind also deletes its readings on every synced device; `Undo` brings both back.
+
+### Reminders
+In a measurement's settings, `Add a time` (up to four). A bell on the card shows it has reminders. The reminder appears in your orOS notifications from that time on for four hours; a reading taken up to an hour before the time counts, so you aren't reminded twice. Tap the notification to open a new reading. See [notifications](help:t/notifications).
+
+## History, charts and report
+- `History` lists every reading by day, newest first, with a filter per measurement. Tap or click a reading to edit or delete it.
+- `Charts` shows 7, 30, 90 days, 1 year or all, with the target range shaded. Blood pressure splits mornings and evenings, blood sugar can be shown per context, weight adds a 7-day average. Below the chart you get averages, lowest, highest and `Numbers as a table`.
+- `Report` builds a sheet for your doctor: pick the period, the measurements and whether to include notes. `Print or save as PDF` opens your browser's print window; `Spreadsheet (CSV)` saves the same readings as a file.
+
+## Workouts weights
+If you log body weight in [Workouts](app:fitness), those weights appear in Health as hollow dots marked `from Workouts`. Health only reads them: to change one, open Workouts. You can turn this off in `Settings`.
+
+## Sync and backup
+Readings, your own kinds, targets, reminders and settings sync between your devices through [orOS sync](help:t/sync). The open tab, chart choices and report options stay on this device.
+
+In `Settings` → `Export` you can save `All readings (CSV)` or a `Backup (JSON)`. `Restore from backup (merge)` merges a backup's readings with what you already have. For a full copy of orOS, see [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[1]] to [[4]] switch between the four tabs (not while typing).
+- [[Esc]] closes a dialog.
+
+## Tips
+- A note like "after coffee" or a tag like "with medicine" makes odd readings easier to explain at the doctor's.
+- Hide measurements you never use in `Settings`; hidden kinds don't remind you.
+
+## Limits
+- Reminders only appear while orOS is open; a time missed by more than four hours is skipped.
+- No import from devices or other apps: readings are typed in by hand.
+- Medicines are not tracked.
