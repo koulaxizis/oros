@@ -4,6 +4,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 0.65.00
 - Layout 1.2: type straight into text frames, and open InDesign (.idml) and PDF files.
 - The guide is up to date with the latest app changes, and menu search now finds the guide page of every app.
+- Time: Pomodoro focus sessions can be logged to a Timesheet project.
 
 ## Version 0.64.00
 - New app: Typewriter. Write like on a real typewriter: only forward, a backspace strikes the letter through, key sounds and paper tints, a word goal per page.
