@@ -27,7 +27,7 @@ function build(lang) {
     "\nreturn { TRIP_F, PACK_F, PLAN_F, SEEDS, SEED_IDS, DEFAULT_TPLS, GROUPS, KINDS, TOMB_TTL, DAY_MS, NO_DATE_DAYS," +
     " mergeTravel, normEnt, NORM, tplList, seedTpl, ruleQty, tripDays, tripNights, combineTpls, missingFrom," +
     " tripDayList, stayGaps, sortEntries, planSections, packGroups, tripPhase, countdown, tripText, tripIcs, icsFold," +
-    " addDays, dayDiff, isYmd, newId, normGrp };")(webcrypto);
+    " addDays, dayDiff, isYmd, newId, normGrp, fuelCost, parseDec };")(webcrypto);
 }
 const T = build("en");
 const TEL = build("el");
@@ -289,4 +289,16 @@ test("strings: both languages have every key", () => {
   const en = new Set(keys(m[1]));
   const used = new Set((src.match(/\bt\("([a-zA-Z0-9.]+)"[,)]/g) || []).map((k) => k.slice(3, -2)));
   used.forEach((k) => assert.ok(en.has(k), "missing string " + k));
+});
+
+test("fuel cost by car: round trip, per person, bad input", () => {
+  assert.deepEqual(T.fuelCost(320, true, 7.1, 1.85, 0), { dist: 640, units: 45.44, cost: 84.06, each: null });
+  assert.deepEqual(T.fuelCost(320, false, 7.1, 1.85, 3), { dist: 320, units: 22.72, cost: 42.03, each: 14.01 });
+  assert.equal(T.fuelCost(0, true, 7, 1.8, 1), null);
+  assert.equal(T.fuelCost(100, true, NaN, 1.8, 1), null);
+  assert.equal(T.fuelCost(100, true, 7, -1, 1), null);
+  assert.equal(T.fuelCost(100, true, 900, 1.8, 1), null);
+  assert.equal(T.parseDec("1,859"), 1.859);
+  assert.equal(T.parseDec(" 7.4 "), 7.4);
+  assert.ok(isNaN(T.parseDec("abc")));
 });

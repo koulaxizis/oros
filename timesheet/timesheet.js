@@ -73,7 +73,10 @@
       "rep.empty": "Nothing in this period.",
       "rep.noteRound": "Times rounded {mode} to {n} min per entry (Settings). Stored times are exact.",
       "rep.noteExact": "Exact times, no rounding.", "rep.up": "up", "rep.near": "to the nearest",
-      "rep.csv": "Export CSV", "rep.mark": "Mark {n} as invoiced", "rep.unmark": "Unmark {n} invoiced",
+      "rep.csv": "Export CSV", "rep.quote": "Create quote",
+      "quote.cur": "Quotes support only EUR and USD. Change the currency in Settings first.",
+      "quote.none": "No billable time with a rate in this period.", "quote.fail": "Could not open Quote.",
+      "rep.mark": "Mark {n} as invoiced", "rep.unmark": "Unmark {n} invoiced",
       "rep.markNone": "Nothing billable left to invoice", "rep.running": "Includes a running timer (counted up to now).",
       "proj.empty": "No projects yet. Add one, or just start the timer: time without a project is kept too.",
       "add.project": "New project", "add.client": "New client", "proj.archived": "Archived ({n})",
@@ -135,7 +138,10 @@
       "rep.empty": "Τίποτα σε αυτή την περίοδο.",
       "rep.noteRound": "Οι χρόνοι στρογγυλεύονται {mode} στα {n} λεπτά ανά καταγραφή (Ρυθμίσεις). Οι αποθηκευμένοι χρόνοι μένουν ακριβείς.",
       "rep.noteExact": "Ακριβείς χρόνοι, χωρίς στρογγυλοποίηση.", "rep.up": "προς τα πάνω", "rep.near": "στο πλησιέστερο",
-      "rep.csv": "Εξαγωγή CSV", "rep.mark": "Σήμανση {n} ως τιμολογημένων", "rep.unmark": "Αναίρεση τιμολόγησης ({n})",
+      "rep.csv": "Εξαγωγή CSV", "rep.quote": "Δημιουργία προσφοράς",
+      "quote.cur": "Οι προσφορές δέχονται μόνο EUR και USD. Άλλαξε πρώτα το νόμισμα στις Ρυθμίσεις.",
+      "quote.none": "Δεν υπάρχει χρεώσιμος χρόνος με τιμή σε αυτή την περίοδο.", "quote.fail": "Δεν ήταν δυνατό να ανοίξει η Προσφορά.",
+      "rep.mark": "Σήμανση {n} ως τιμολογημένων", "rep.unmark": "Αναίρεση τιμολόγησης ({n})",
       "rep.markNone": "Δεν έμεινε κάτι χρεώσιμο για τιμολόγηση", "rep.running": "Περιλαμβάνει χρονόμετρο που μετράει (μέχρι τώρα).",
       "proj.empty": "Δεν υπάρχουν έργα ακόμα. Πρόσθεσε ένα ή απλώς ξεκίνα το χρονόμετρο: ο χρόνος χωρίς έργο κρατιέται κι αυτός.",
       "add.project": "Νέο έργο", "add.client": "Νέος πελάτης", "proj.archived": "Αρχειοθετημένα ({n})",
@@ -904,6 +910,10 @@
       mark.textContent = open.length ? t("rep.mark", { n: open.length }) : t("rep.markNone");
       mark.disabled = !open.length;
     }
+    // Quote bridge (BR-Q1): shown only when the shell offers it.
+    var qb = $("rep-quote");
+    qb.hidden = !quoteBridge();
+    qb.disabled = !rep.total.billMs;
   }
 
   // ---------- 7. Render: projects ----------
@@ -1406,6 +1416,25 @@
     var text = C.toCsv(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
     saveText(text, "oros-timesheet-" + repState.keys[0] + "_" + repState.keys[1] + ".csv", "text/csv", ".csv", "CSV");
   }
+  function quoteBridge() {
+    try { return typeof window.parent.__orosOpenQuoteNew === "function" ? window.parent.__orosOpenQuoteNew : null; }
+    catch (e) { return null; }
+  }
+  // Sends the report's billable time to Quote as a prefilled new quote.
+  // Nothing is saved there until the user presses Save.
+  function createQuote() {
+    var fn = quoteBridge();
+    if (!fn || !repState) return;
+    var cur = data.prefs.cur;
+    if (cur !== "EUR" && cur !== "USD") { showToast(t("quote.cur")); return; }
+    var f = repState.f;
+    var q = C.quoteLines(data, repState.keys[0], repState.keys[1],
+      { client: f.client, project: f.project, billed: f.billed }, Date.now(), LANG);
+    if (!q.items.length) { showToast(t("quote.none")); return; }
+    var ok = false;
+    try { ok = fn({ items: q.items, cur: cur, client: q.client }); } catch (e) { ok = false; }
+    if (!ok) showToast(t("quote.fail"));
+  }
   function exportBackup() {
     saveText(C.toBackup(data), "oros-timesheet-backup-" + todayKey() + ".json", "application/json", ".json", "JSON");
   }
@@ -1628,6 +1657,7 @@
     $("add-client").innerHTML = UI.plus + "<span></span>";
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
+    $("rep-quote").textContent = t("rep.quote");
     $("day-btn").title = t("today");
     $("week-btn").title = t("thisWeek");
   }
@@ -1679,6 +1709,7 @@
       });
     });
     $("rep-csv").addEventListener("click", exportCsv);
+    $("rep-quote").addEventListener("click", createQuote);
     $("rep-mark").addEventListener("click", function () {
       if (repState && repState.markIds.length) markBilled(repState.markIds, repState.markFlag);
     });
@@ -1730,4 +1761,35 @@
   }
 
   boot();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { entry } | { project } | { client }. An entry: the Timer
+  // tab on its day, then its dialog; a project or a client: the
+  // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
+  function openSearchTarget(t) {
+    if (!t || typeof t !== "object" || document.querySelector("dialog[open]")) return;
+    if (typeof t.entry === "string") {
+      var x = findEntry(t.entry);
+      if (!x) return;
+      dayKey = C.dayKeyOf(x.s);
+      setTab("timer");
+      entryDialog(x.id, null);
+    } else if (typeof t.project === "string") {
+      if (!C.project(data, t.project)) return;
+      setTab("projects");
+      projectDialog(t.project, "");
+    } else if (typeof t.client === "string") {
+      if (!C.client(data, t.client)) return;
+      setTab("projects");
+      clientDialog(t.client);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("timesheet");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();

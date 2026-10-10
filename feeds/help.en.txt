@@ -1,0 +1,44 @@
+# Reader
+Reader follows news sites, blogs and channels through their RSS, Atom or JSON feeds. Articles arrive in one place, stay readable offline, and what you've read syncs across your devices.
+
+## Getting started
+Press `Add a feed` and type a site or feed address, even a YouTube channel, then `Find`. Reader looks for the feeds itself, including those of YouTube, Reddit, Mastodon and GitHub. Pick one under `Feeds found`, choose a `Folder` if you like, and press `Subscribe`.
+
+Moving from another reader? Use `Import from another reader (OPML)`.
+
+## Read
+- The side panel has `All articles`, `Starred`, `Read later`, your folders and feeds with unread counts, and your tags and watched words. On a phone, open it with the menu button.
+- Tap or click an article to read it and mark it read. Audio and video in an article play right there.
+- Pictures are off until you press `Show pictures` or `Always for this feed`.
+- `Full article` loads the whole text from the site when the feed only carries a summary.
+- Under an article: `Star`, `Read later`, `Tags`, `Mark as unread`, `Open the original` and `Copy the link`.
+- The list buttons switch the style (`List`, `Cards`, `Magazine`), toggle `Unread only` / `Show all`, and `Mark as read` everything, or what's older than a day or a week, with `Undo`.
+- On a phone, swipe an article right to mark it read or unread, left to star it.
+
+## Organise
+- The ⋯ button (`Edit`) on a selected feed changes its name, folder, pictures and `Load the full article when I open one`, shows how often it posts, and has `Check now` and `Unsubscribe`. On a folder, it renames or deletes it (its feeds stay).
+- Tags group articles your way. Saved articles stay for ever, even after you unsubscribe.
+
+### Search, rules and watched words
+The search button looks through titles and text, `Here` or `Everywhere`, without caring about Greek accents. `Watch these words` turns a search into a list in the side panel.
+
+In `Settings`, `Rules and watched words` acts on new articles as they arrive: mark them read (mute), star them, add them to `Read later` or give them a tag. `Statistics` shows which feeds are busy, quiet or failing.
+
+## Settings
+`Settings` sets how often to `Check for new articles`, the order, list style, text size and width, pictures, `Mark as read while scrolling the list`, `Show a story that two feeds carry only once`, and the `Relay address`.
+
+## Sync and backup
+Your subscriptions, folders, tags, rules, saved articles, read state and most settings sync between your devices through [orOS sync](help:t/sync). Downloaded articles stay on this device for 60 days (up to 200 per feed); text size, width and the open view stay here too. `Export OPML` and `Import OPML` in `Settings` move your feeds to or from other readers.
+
+## Keyboard shortcuts
+- [[J]] / [[K]] (or [[↓]] / [[↑]]) open the next or previous article.
+- [[S]] star, [[L]] read later, [[M]] read/unread, [[T]] tags, [[F]] full article, [[V]] open the original.
+- [[R]] refreshes, [[A]] adds a feed, [[Shift+A]] marks all as read, [[/]] searches.
+- [[Esc]] closes the search, or goes back to the list on a narrow screen.
+
+## Tips
+- Many sites block browsers from reading their feeds. Reader then uses the orOS relay; with its address empty, it uses the one set in [Mail](app:mail).
+
+## Limits
+- A site that blocks browsers can't be read without a relay.
+- Only articles fetched on this device are available offline.

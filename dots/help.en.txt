@@ -1,0 +1,25 @@
+# Dots & Boxes
+Take turns drawing lines between dots. Close the fourth side of a box and it's yours, and you play again. Whoever owns the most boxes at the end wins.
+
+## How to play
+Tap or click the space between two dots to draw a line there. If your line completes a box (or two), the box is marked as yours and you draw another line. The game ends when every line is drawn.
+
+Choose `vs Computer` or `2 players`, and the board size: `3×3`, `4×4` or `5×5` boxes. Against the computer, pick the `First move`: `You start`, `Computer starts` or `Take turns`. In 2-player games, the players alternate who starts and a running series score is kept.
+
+## Controls
+- Tap or click near a line to draw it; the whole edge of a box counts, so you don't have to hit it exactly.
+- `Undo (Z)` takes back your last line; against the computer, its lines since then go too. You can't undo after the game ends.
+- `New game (N)` starts again. If a game was under way, an `Undo` button appears for a few seconds to bring it back.
+- The speaker button turns sound on or off (off at first).
+- Keys: the arrow keys move between lines, [[Enter]] or [[Space]] draws the focused line, [[N]] is a new game, and [[Z]] or [[Ctrl+Z]] undoes.
+
+## Levels and scoring
+The computer has three levels. `Easy` takes a box when it can, otherwise plays any line. `Medium` also avoids handing you a box when it has a safe line left, and when it must, gives away as few as possible. `Hard` plays like Medium but also knows the endgame trick of leaving you the last two boxes of a chain to keep control.
+
+`Records` shows your wins, losses and draws against the computer (`Won · lost · drawn`) for every level and board size, plus the 2-player series. `Reset records` clears them after you confirm.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The game in progress, the 2-player series, your settings and the sound setting stay on this device. A game you leave half-way is still there when you come back.
+
+## Tips
+- Avoid drawing the third side of a box: it gives the next player a free box.

@@ -269,6 +269,27 @@ button:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
 }
 .tile-v.in { color: var(--in-ink); }
 .tile-v.neg { color: var(--over); }
+/* Accounts strip: balance of each account today */
+.acc-strip { margin: -4px 0 12px; }
+.acc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.acc-chips:hover { border-color: var(--accent); }
+.acc-chip { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; font-size: 13px; }
+.acc-chip-n { color: var(--text-dim); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-chip-v { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.acc-chip-v.neg, .tx-amt.neg { color: var(--over); }
 
 /* ---------- 4. Entries list ---------- */
 .search-row { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -307,6 +328,7 @@ button:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
 .tx-rec svg { width: 14px; height: 14px; }
 .tx-amt { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
 .tx.in .tx-amt { color: var(--in-ink); }
+.tx.xf .tx-amt { color: var(--text-dim); }
 #rec-add { margin-bottom: 12px; }
 #rec { margin-top: 4px; }
 #rec .tx-note { white-space: normal; }

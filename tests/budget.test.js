@@ -25,7 +25,7 @@ const B = new Function(
   block("  // ---------- 2. Money", "  // ---------- 6. Storage") +
   "\nreturn { MAX_CENTS, parseAmount, centsToInput, centsPlain, parseYmd, daysIn, addDays, mkAdd, weekday," +
   " occurrences, recTxId, SEEDS, SEED_NAMES, normTx, normCat, normRec, mergeBudget, emptyData, categoryList," +
-  " totals, monthSeries, limitState, dueRecurring, csvCell, buildCsv, normPrefill };")();
+  " totals, monthSeries, limitState, dueRecurring, csvCell, buildCsv, normPrefill, normAcc, normXfer, accBalances, parseSigned };")();
 
 const canon = (x) => JSON.stringify(x);
 function tx(id, m, extra) { return Object.assign({ id, m, d: "2026-10-08", a: 1250, k: "o", c: "o-groc", n: "" }, extra || {}); }
@@ -128,7 +128,7 @@ test("normalize: bad entries drop out, text is cleaned", () => {
   assert.equal(B.normTx(tx("a1", 1, { d: "2026-02-30" })), null);
   assert.equal(B.normTx(tx("A B", 1)), null);
   assert.equal(B.normTx(tx("a1", -1)), null);
-  const x = B.normTx(tx("a1", 1, { n: "  hi\n\tthere  " + "x".repeat(200), c: "<b>", extra: 1 }));
+  const x = B.normTx(tx("a1", 1, { n: "  hi\n\tthere  " + "x".repeat(200), c: "<b>", Extra: 1, obj: {} }));
   assert.equal(x.n.slice(0, 8), "hi there");
   assert.equal(x.n.length, 140);
   assert.equal(x.c, "");
@@ -294,4 +294,106 @@ test("send to Budget: optional parts are cleaned, never trusted", () => {
   assert.equal(B.normPrefill({ k: "o", a: 100, n: 7, c: 7, src: 7 }).n, "");
   assert.equal(B.normPrefill({ k: "o", a: 100, src: "a".repeat(21) }).src, "");
   assert.equal(B.normPrefill({ k: "o", a: 100, d: null }).d, "");
+});
+
+// ---------- forward compatibility (fields of a newer version) ----------
+test("newer fields on items and settings survive a merge on this version", () => {
+  const a = D({ tx: [tx("t1", 5, { ac: "cash", zz9: true, q: 2.5 })],
+    rec: [{ id: "r1", m: 3, k: "o", a: 100, c: "", n: "", f: "m", s: "2026-01-01", e: "", ac: "card" }],
+    set: { m: 4, cur: "EUR", dec: 2 } });
+  const m = B.mergeBudget(a, B.emptyData());
+  assert.equal(m.tx[0].ac, "cash");
+  assert.equal(m.tx[0].zz9, true);
+  assert.equal(m.tx[0].q, 2.5);
+  assert.equal(m.rec[0].ac, "card");
+  assert.equal(m.set.dec, 2);
+  // known fields are never replaced, junk never travels
+  const j = B.mergeBudget(D({ tx: [tx("t2", 5, { Bad: 1, obj: { x: 1 }, arr: [1], long: "x".repeat(501), nan: NaN, "a-b": 1 })] }), B.emptyData());
+  assert.deepEqual(Object.keys(j.tx[0]), ["id", "m", "d", "a", "k", "c", "n"]);
+  const many = {}; for (let i = 0; i < 30; i++) many["k" + String(i).padStart(2, "0")] = i;
+  assert.equal(Object.keys(B.mergeBudget(D({ tx: [tx("t3", 5, many)] }), B.emptyData()).tx[0]).length, 7 + 16);
+});
+
+test("collections of a newer version merge LWW with their own tombstones", () => {
+  const a = D({ goal: [{ id: "cash", m: 5, n: "Cash" }, { id: "card", m: 5, n: "Card" }], tombs: { "goal:card": 6 } });
+  const b = D({ goal: [{ id: "cash", m: 7, n: "Wallet" }], plan: [{ id: "x1", m: 1, a: 100, f: "cash", t: "card" }] });
+  const ab = B.mergeBudget(a, b), ba = B.mergeBudget(b, a);
+  assert.equal(canon(ab), canon(ba));
+  assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
+  assert.deepEqual(ab.goal, [{ id: "cash", m: 7, n: "Wallet" }]);
+  assert.equal(ab.plan.length, 1);
+  assert.equal(ab.tombs["goal:card"], 6);
+  // key order is canonical whatever the order of the inputs
+  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "goal", "plan", "set", "tombs"]);
+  // not a collection: bad name, not an array, bad items
+  const n = B.mergeBudget(D({ BAD: [{ id: "x", m: 1 }], toolongname: [{ id: "x", m: 1 }], obj: { a: 1 }, zz: [null, { id: "UP", m: 1 }, { id: "ok", m: -1 }] }), B.emptyData());
+  assert.equal("BAD" in n || "toolongname" in n || "obj" in n, false);
+  assert.deepEqual(n.zz, []);
+});
+
+// ---------- accounts and transfers (phase 2) ----------
+test("accounts: shape, starting balance may be negative", () => {
+  assert.deepEqual(B.normAcc({ id: "a1", m: 1, n: "  Cash ", o: -1250, col: 3 }), { id: "a1", m: 1, n: "Cash", o: -1250, col: 3 });
+  assert.deepEqual(B.normAcc({ id: "a1", m: 1, n: "Card", o: 1.5, col: 99 }), { id: "a1", m: 1, n: "Card", o: 0, col: 8 });
+  [null, { id: "a1", m: 1, n: "" }, { id: "A", m: 1, n: "x" }, { id: "a1", m: -1, n: "x" }]
+    .forEach((x) => assert.equal(B.normAcc(x), null));
+});
+
+test("transfers: two different accounts, a positive amount, a real date", () => {
+  const x = { id: "x1", m: 1, d: "2026-10-09", a: 500, f: "a1", t: "a2", n: " rent " };
+  assert.deepEqual(B.normXfer(x), Object.assign({}, x, { n: "rent" }));
+  [{ f: "a1", t: "a1" }, { a: 0 }, { d: "2026-13-01" }, { f: "" }, { t: 5 }]
+    .forEach((bad) => assert.equal(B.normXfer(Object.assign({}, x, bad)), null, JSON.stringify(bad)));
+});
+
+test("entries and recurring entries keep a valid account only", () => {
+  assert.equal(B.normTx(tx("t1", 1, { ac: "a1" })).ac, "a1");
+  assert.equal("ac" in B.normTx(tx("t1", 1, { ac: "BAD!" })), false);
+  assert.equal("ac" in B.normTx(tx("t1", 1)), false);
+  const r = { id: "r1", m: 1, k: "o", a: 100, c: "", n: "", f: "m", s: "2026-10-01", e: "", ac: "a2" };
+  assert.equal(B.normRec(r).ac, "a2");
+  const made = B.dueRecurring(D({ rec: [B.normRec(r)] }), "2026-10-09");
+  assert.equal(made.length, 1);
+  assert.equal(made[0].ac, "a2");
+  // no account → the recurring entry makes entries without one
+  const r2 = Object.assign({}, r); delete r2.ac;
+  assert.equal("ac" in B.dueRecurring(D({ rec: [B.normRec(r2)] }), "2026-10-09")[0], false);
+});
+
+test("account balances: start + income − expenses ± transfers, up to a day", () => {
+  const d = B.mergeBudget(D({
+    acc: [{ id: "cash", m: 1, n: "Cash", o: 1000, col: 0 }, { id: "bank", m: 1, n: "Bank", o: -200, col: 1 }],
+    tx: [tx("t1", 1, { d: "2026-10-01", a: 300, k: "o", ac: "cash" }), tx("t2", 1, { d: "2026-10-02", a: 5000, k: "i", ac: "bank" }),
+         tx("t3", 1, { d: "2026-10-20", a: 100, k: "o", ac: "cash" }), tx("t4", 1, { d: "2026-10-03", a: 999, ac: "gone" }),
+         tx("t5", 1, { d: "2026-10-03", a: 77 })],
+    xfer: [{ id: "x1", m: 1, d: "2026-10-05", a: 400, f: "bank", t: "cash", n: "" }]
+  }), B.emptyData());
+  assert.deepEqual(B.accBalances(d, "2026-10-09"), { cash: 1000 - 300 + 400, bank: -200 + 5000 - 400 });
+  assert.deepEqual(B.accBalances(d, "2026-10-01"), { cash: 700, bank: -200 });
+  assert.deepEqual(B.accBalances(B.emptyData(), "2026-10-09"), {});
+});
+
+test("signed amounts for starting balances", () => {
+  const ok = { "": 0, "0": 0, "0,00": 0, "-0": 0, "12,50": 1250, "-12,50": -1250, "−1.234,56": -123456, "  -  5 ": -500 };
+  Object.keys(ok).forEach((v) => assert.equal(B.parseSigned(v), ok[v], JSON.stringify(v)));
+  ["abc", "--5", "-", "1,2,3"].forEach((v) => assert.equal(B.parseSigned(v), null, v));
+});
+
+test("CSV: an account column only with a 7th heading", () => {
+  const rows = [{ d: "2026-10-09", k: "o", cat: "Groceries", a: 1250, n: "milk", acc: "=Cash" }];
+  const six = ["Date", "Type", "Category", "Amount", "Currency", "Note"];
+  assert.equal(B.buildCsv(rows, "std", "EUR", six, () => "Expense").split("\r\n")[1], "2026-10-09,Expense,Groceries,-12.50,EUR,milk");
+  assert.equal(B.buildCsv(rows, "std", "EUR", six.concat("Account"), () => "Expense").split("\r\n")[1],
+    "2026-10-09,Expense,Groceries,-12.50,EUR,milk,'=Cash");
+});
+
+test("accounts and transfers: merge stays canonical, deletes stick", () => {
+  const a = D({ acc: [{ id: "cash", m: 5, n: "Cash", o: 0, col: 0 }], xfer: [{ id: "x1", m: 3, d: "2026-10-01", a: 10, f: "cash", t: "bank", n: "" }] });
+  const b = D({ acc: [{ id: "cash", m: 6, n: "Wallet", o: 0, col: 0 }], tombs: { "xfer:x1": 3 } });
+  const ab = B.mergeBudget(a, b);
+  assert.equal(canon(ab), canon(B.mergeBudget(b, a)));
+  assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
+  assert.equal(ab.acc[0].n, "Wallet");
+  assert.deepEqual(ab.xfer, []);
+  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "set", "tombs"]);
 });

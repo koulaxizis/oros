@@ -122,6 +122,11 @@
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Plants",
       "lbl.feed.garage": "Garage",
+      "lbl.feed.travel": "Travel",
+      "feed.travel.day": "{name} · day {n}/{of}",
+      "lbl.feed.meals": "Meals",
+      "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
+      "lbl.feed.budget": "Budget",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
       "feed.garage.svc": "{vehicle}: {what} due",
@@ -256,6 +261,11 @@
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Φυτά",
       "lbl.feed.garage": "Γκαράζ",
+      "lbl.feed.travel": "Ταξίδια",
+      "feed.travel.day": "{name} · μέρα {n}/{of}",
+      "lbl.feed.meals": "Γεύματα",
+      "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
+      "lbl.feed.budget": "Προϋπολογισμός",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
       "feed.garage.svc": "{vehicle}: σέρβις ({what})",
@@ -448,6 +458,9 @@ function transientNote(title, body) {
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
     { id: "lbl-feed-petcare", color: "#e0af68" },  // amber — Pet Health Book (real pets; Screen Pet is lbl-feed-pet)
     { id: "lbl-feed-garage", color: "#ecc75f" },   // amber — Garage renewals + service
+    { id: "lbl-feed-travel", color: "#2bb3a3" },   // sea green — Travel trips + timed itinerary
+    { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
+    { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
@@ -466,6 +479,9 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
     if (l.id === "lbl-feed-petcare") return t("lbl.feed.petcare");
     if (l.id === "lbl-feed-garage") return t("lbl.feed.garage");
+    if (l.id === "lbl-feed-travel") return t("lbl.feed.travel");
+    if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
+    if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
@@ -1687,6 +1703,160 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Travel read-only feed (travel/core.js, loaded by index.html: the
+  // same reading as the shell reminder). Each trip shows on every day
+  // of its dates (all-day, "Rome · day 2/5"); itinerary entries that
+  // have a day and a time show at that time. Rows are never stored;
+  // micro-cached ~1s like the other feeds. Click → the trip in Travel
+  // (timed rows open its itinerary).
+  var TRAVEL_DATA_KEY = "oros-travel-data";
+  var travelCache = { when: 0, rows: null };
+
+  function travelRows() {
+    var now = Date.now();
+    var Core = window.OrosTravelCore;
+    if (!Core) return null;
+    if (now - travelCache.when > 1000) {
+      travelCache.rows = null;
+      try {
+        var raw = localStorage.getItem(TRAVEL_DATA_KEY);
+        if (raw) travelCache.rows = Core.feedRows(Core.trips(JSON.parse(raw)));
+      } catch (e) { travelCache.rows = null; }
+      travelCache.when = now;
+    }
+    return travelCache.rows;
+  }
+
+  function travelFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-travel")) return [];
+    var rows = travelRows();
+    if (!rows) return [];
+    var Core = window.OrosTravelCore, out = [];
+    rows.forEach(function (r) {
+      if (r.day !== dateStr) return;
+      var title = r.kind === "trip"
+        ? (r.of > 1 ? t("feed.travel.day").replace("{name}", r.name).replace("{n}", r.n).replace("{of}", r.of) : r.name)
+        : Core.entryTitle(r.entry, LANG);
+      out.push({
+        id: "trv-" + r.key,                     // per-render key, never stored
+        title: title,
+        labelId: "lbl-feed-travel",
+        start: r.start,                         // null = all-day
+        end: r.end,
+        _feed: true,
+        _travel: { trip: r.trip, tab: r.kind === "trip" ? "" : "plan" }
+      });
+    });
+    return out;
+  }
+
+  // Meal Planner read-only feed (meals/core.js, loaded by index.html).
+  // One all-day row per planned meal: "Dinner: Fasolada, Salad", in the
+  // slots the app shows, with the user's own slot names. Ready recipes
+  // are named in this device's language; deleted recipes are left out.
+  // Rows are never stored; micro-cached ~1s like the other feeds.
+  var MEALS_DATA_KEY = "oros-meals-data";
+  var mealsCache = { when: 0, rows: null };
+
+  function mealsRows() {
+    var now = Date.now();
+    var Core = window.OrosMealsCore;
+    if (!Core) return null;
+    if (now - mealsCache.when > 1000) {
+      mealsCache.rows = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem(MEALS_DATA_KEY));
+        if (raw && typeof raw === "object" && raw.pl && typeof raw.pl === "object") {
+          var d = Core.mergeMeals(raw, raw), names = {}, rows = {};
+          Core.allRecipes(d, LANG).forEach(function (r) { names[r.id] = r.t; });
+          d.set.sl.forEach(function (sl, order) {
+            Object.keys(d.pl).forEach(function (k) {
+              var i = k.indexOf("|"), day = k.slice(0, i);
+              if (k.slice(i + 1) !== sl) return;
+              var what = d.pl[k].it.map(function (it) { return it.r ? names[it.r] : it.t; })
+                .filter(Boolean);
+              if (!what.length) return;
+              (rows[day] = rows[day] || []).push({
+                key: sl, order: order,
+                title: (d.set.nm[sl] || t("feed.meals." + sl)) + ": " + what.join(", ")
+              });
+            });
+          });
+          mealsCache.rows = rows;
+        }
+      } catch (e) { mealsCache.rows = null; }
+      mealsCache.when = now;
+    }
+    return mealsCache.rows;
+  }
+
+  function mealsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-meals")) return [];
+    var rows = mealsRows();
+    if (!rows || !rows[dateStr]) return [];
+    return rows[dateStr].slice().sort(function (a, b) { return a.order - b.order; }).map(function (r) {
+      return {
+        id: "mls-" + dateStr + "-" + r.key,       // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-meals",
+        start: null,                              // all-day
+        _feed: true,
+        _openAt: { app: "meals", target: { day: dateStr } }
+      };
+    });
+  }
+
+  // Budget read-only feed (budget/feed.js, loaded by index.html: the
+  // same occurrence rules as the app). Upcoming occurrences of the
+  // recurring entries, today and later only (earlier ones are real
+  // entries in Budget by then). "Rent −€500.00" / "Salary +€1,200.00".
+  // Rows are never stored; the blob is micro-cached ~1s like the
+  // other feeds. Click → Budget opens that recurring entry.
+  var BUDGET_DATA_KEY = "oros-budget-data";
+  var budgetCache = { when: 0, data: null, fmt: null, fmtCur: "", fmtLang: "" };
+
+  function budgetData() {
+    var now = Date.now();
+    if (now - budgetCache.when > 1000) {
+      budgetCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(BUDGET_DATA_KEY));
+        if (d && typeof d === "object" && Array.isArray(d.rec) && d.rec.length) budgetCache.data = d;
+      } catch (e) {}
+      budgetCache.when = now;
+    }
+    return budgetCache.data;
+  }
+  function budgetMoney(cents, cur) {
+    if (!budgetCache.fmt || budgetCache.fmtCur !== cur || budgetCache.fmtLang !== LANG) {
+      try {
+        budgetCache.fmt = new Intl.NumberFormat(LANG === "el" ? "el-GR" : "en-GB", { style: "currency", currency: cur });
+      } catch (e) {
+        budgetCache.fmt = { format: function (v) { return v.toFixed(2) + " " + cur; } };
+      }
+      budgetCache.fmtCur = cur;
+      budgetCache.fmtLang = LANG;
+    }
+    return budgetCache.fmt.format(cents / 100);
+  }
+
+  function budgetFeedOn(dateStr) {
+    var F = window.OrosBudgetFeed;
+    if (!F || !labelVisible("lbl-feed-budget")) return [];
+    var d = budgetData();
+    if (!d) return [];
+    return F.rowsOn(d, dateStr, todayYMD(), LANG).map(function (r) {
+      return {
+        id: "bud-" + r.id + "-" + dateStr,      // per-render key, never stored
+        title: (r.name ? r.name + " " : "") + (r.k === "o" ? "\u2212" : "+") + budgetMoney(r.a, r.cur),
+        labelId: "lbl-feed-budget",
+        start: null,                            // all-day
+        _feed: true,
+        _budgetRec: r.id
+      };
+    });
+  }
+
   /* ---------- 3d. Name days, holidays, world days ----------
      Data and rules live in namedays.js (window.OrosNamedays, pure).
      Three chips, all read-only virtual rows, never stored in the
@@ -1795,6 +1965,9 @@ function transientNote(title, body) {
     .concat(plantsFeedOn(dateStr))
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
+    .concat(travelFeedOn(dateStr))
+    .concat(mealsFeedOn(dateStr))
+    .concat(budgetFeedOn(dateStr))
     .concat(babyFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
@@ -1844,6 +2017,15 @@ function transientNote(title, body) {
       } else if (ev._garageId &&
                  typeof p.__orosOpenGarage === "function") {
         p.__orosOpenGarage(ev._garageId);
+      } else if (ev._travel &&
+                 typeof p.__orosOpenTravel === "function") {
+        p.__orosOpenTravel(ev._travel.trip, ev._travel.tab);
+      } else if (ev._openAt &&
+                 typeof p.__orosOpenAt === "function") {
+        p.__orosOpenAt(ev._openAt.app, ev._openAt.target);
+      } else if (ev._budgetRec &&
+                 typeof p.__orosOpenAt === "function") {
+        p.__orosOpenAt("budget", { rec: ev._budgetRec });
       } else if (ev._fitnessId &&
                  typeof p.__orosOpenFitness === "function") {
         p.__orosOpenFitness(ev._fitnessId);

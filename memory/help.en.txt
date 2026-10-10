@@ -1,0 +1,31 @@
+# Memory
+The classic pairs game: turn over two cards at a time and find every matching pair. Play alone against the clock, or with a friend on the same device.
+
+## How to play
+Tap or click a card to turn it over, then turn a second one. If the two match, they stay face up; if not, they turn back after a moment. The game ends when every pair is found.
+
+Pick the symbols on the cards from the toolbar: `Shapes`, `Icons` or `Letters`.
+
+### Solo and 2 players
+- `Solo`: the status bar shows `Moves`, `Time` and your `Best` for the level. The clock pauses while the app is hidden and carries on with your next card.
+- `2 players`: you take turns on one device. Finding a pair scores a point and you go again; a miss passes the turn. The player with more pairs wins, or it's a draw.
+
+## Controls
+- Tap or click a card to turn it.
+- `New game (N)` deals a fresh board. If a game was under way, an `Undo` button appears for a few seconds to bring it back. Changing level, mode or symbols also starts a new game.
+- The speaker button turns sound on or off (off at first).
+- [[N]] starts a new game, the arrow keys move between cards, and [[Enter]] or [[Space]] turns the focused card.
+
+## Levels and scoring
+Four levels: `Easy` (6 pairs), `Medium` (8), `Hard` (12) and `Expert` (18).
+
+In Solo, a move is one pair of cards turned. Your best per level is the game with the fewest moves; on a tie, the faster time wins. Finishing with a new best shows `New record!`.
+
+`Records` lists the best for each level and how many games you played (the last 50), plus your 2-player games. `Reset records` deletes them after you confirm.
+
+## Sync
+Your records and the list of finished games sync between your devices through [orOS sync](help:t/sync); a reset clears them on every device. The game in progress, your level, mode and symbols, and the sound setting stay on this device. The game in progress is kept when you close the app.
+
+## Tips
+- Start with `Easy` to warm up, then move on: the best is kept separately for each level.
+- In 2-player games, try to remember where your friend's misses were: they help you too.

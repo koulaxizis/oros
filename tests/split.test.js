@@ -27,7 +27,7 @@ const S = new Function(
   block("  // ---------- 2. Money", "  // ---------- 6. Storage") +
   "\nreturn { MAX_CENTS, PCT_FULL, parseAmount, parsePart, parseShares, centsToInput, centsPlain, parseYmd," +
   " normExp, normPay, normGroup, normPerson, mergeSplit, emptyData, sharesOf, balancesOf, settleUp, groupTotal," +
-  " summaryText, csvCell, buildCsv, packGroup, unpackGroup, changedCount, meOf, budgetPayload };")();
+  " summaryText, csvCell, buildCsv, packGroup, unpackGroup, changedCount, meOf, budgetPayload, contactNames, tripChoices };")();
 
 const canon = (x) => JSON.stringify(x);
 const G = "g1";
@@ -296,4 +296,51 @@ test("send to Budget: only my share, as an expense with a ready Budget category"
   const stay = Object.assign(eq(G + ".e3", 500, A, [A, B]), { c: "stay" });
   assert.equal(S.budgetPayload(stay, B, "N", "x".repeat(300)).c, "o-other");
   assert.equal(S.budgetPayload(stay, B, "N", "x".repeat(300)).n.length, 140);
+});
+
+test("contactNames: live people only, unique, sorted, plain text", () => {
+  const ct = {
+    contacts: [
+      { id: "c1", mtime: 5, given: "Νίκος", family: "Παπάς" },
+      { id: "c2", mtime: 5, given: "anna" },
+      { id: "c3", mtime: 5, nickname: "Mitsos" },
+      { id: "c4", mtime: 5, given: "Gone" },
+      { id: "c5", mtime: 9, given: "Back" },
+      { id: "c6", mtime: 5, del: true, given: "Flagged" },
+      { id: "c7", mtime: 5, given: "ANNA" },
+      { id: "c8", mtime: 5, org: "Only a company" },
+      { id: "c9", mtime: 5, given: "<img src=x onerror=alert(1)>\u0000" + "x".repeat(80) },
+      null, "junk", { mtime: 1, given: "No id" }
+    ],
+    deleted: [{ id: "c4", mtime: 5 }, { id: "c5", mtime: 7 }]
+  };
+  const out = S.contactNames(ct);
+  assert.deepEqual(out, out.slice().sort((a, b) => a.localeCompare(b)));
+  assert.ok(out.includes("Νίκος Παπάς") && out.includes("anna") && out.includes("Back") && out.includes("Mitsos"));
+  assert.ok(!out.includes("Gone") && !out.includes("Flagged") && !out.includes("ANNA") && !out.includes("Only a company"));
+  assert.ok(out.every((n) => n.length <= 30 && !/[\u0000-\u001f]/.test(n)));
+  assert.equal(out.length, 5);
+  assert.deepEqual(S.contactNames(null), []);
+  assert.deepEqual(S.contactNames({ contacts: "x" }), []);
+});
+
+test("tripChoices: not deleted, upcoming first, then undated, then past", () => {
+  const tv = {
+    trips: [
+      { id: "t1", name: "Past", start: "2026-05-01", end: "2026-05-05", people: ["A"], f: { name: 3 } },
+      { id: "t2", name: "Soon", start: "2026-11-01", end: "2026-11-03", people: ["Anna", "anna", " Nikos ", "", 7], f: { name: 3 } },
+      { id: "t3", name: "Now", start: "2026-10-05", end: "2026-10-12", people: [], f: { name: 3 } },
+      { id: "t4", name: "Someday", start: "", end: "", people: ["B"], f: { name: 3 } },
+      { id: "t5", name: "Deleted", start: "2026-12-01", people: [], f: { name: 3 } },
+      { id: "t6", name: "Revived", start: "2026-12-02", people: [], f: { name: 9 } },
+      { id: "t7", name: "", dest: "Lisbon", start: "2026-04-01", people: [], f: {} },
+      { id: "t8", name: "", dest: "", people: ["X"], f: {} }
+    ],
+    tombs: { t5: 4, t6: 5 }
+  };
+  const out = S.tripChoices(tv, "2026-10-09");
+  assert.deepEqual(out.map((x) => x.n), ["Now", "Soon", "Revived", "Someday", "Past", "Lisbon"]);
+  assert.deepEqual(out[1].people, ["Anna", "Nikos"]);
+  assert.equal(out[0].end, "2026-10-12");
+  assert.deepEqual(S.tripChoices(null, "2026-10-09"), []);
 });

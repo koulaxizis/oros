@@ -1,0 +1,32 @@
+# Flow Free
+Join each pair of matching coloured dots with a line. Lines can't cross, and every cell of the grid must be filled.
+
+## How to play
+Draw a line from one dot to the other dot of the same colour. A puzzle is solved when every pair is joined and no cell is left empty. If all pairs are joined but some cells are still empty, a message tells you so.
+
+- Drawing back over your own line takes it back.
+- Drawing over another line cuts that line at that point.
+- A line can't pass through another colour's dot.
+
+Every dot also carries a letter, so you never have to rely on colour alone. Every puzzle is made on your device and has exactly one solution.
+
+## Controls
+- Drag from a dot, or from the end of a line, with your finger or the mouse.
+- [[←]] [[↑]] [[→]] [[↓]] move the cursor, [[Enter]] or [[Space]] picks the dot or line under it, the arrows then draw, [[Backspace]] takes back a cell, and [[Enter]] or [[Esc]] lets go.
+- [[U]] or `Undo (U)` takes back your last stroke.
+- [[R]] or `Clear the board (R)` clears every line.
+- [[H]] or `Hint (H)` draws one line of the solution.
+- [[N]] or `New puzzle (N)` makes a new puzzle.
+
+## Levels and scoring
+Pick a grid size from `5×5` to `9×9`; bigger grids have more colours. The status bar shows how many `Lines` are joined and your `Time`. The clock starts with your first line and only runs while the app is on screen.
+
+A solved puzzle shows your time, moves and best time for that size. A puzzle solved with a hint counts as solved but doesn't set a best time. `Records` shows the best time and puzzles solved for each size.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The puzzle in progress, the grid size and the sound setting stay on this device.
+
+## Tips
+- A puzzle in progress is kept, undo history included.
+- Cleared the board, started a new puzzle or changed size by mistake? Tap `Undo` on the message that appears.
+- Start with dots near corners and edges: they usually have only one way to go.

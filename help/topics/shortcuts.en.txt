@@ -17,8 +17,8 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 ## What each one does
 ### Sync and backup
 - **Push** sends your data to the cloud now, and **pull** brings the latest from the cloud now. Both need [sync](help:t/sync) to be connected; otherwise you'll see `Cloud sync is not connected`.
-- **Export backup to folder now** writes a backup file into your backup folder. This needs `Auto backup` to be on and a `Backup folder` chosen. In browsers that can't use a backup folder (such as Firefox, Safari and phones), it saves a backup file instead, like `Export data`.
-- **Export database** saves all your orOS data to a file, the same as `Export data` in the menu. See [Backup](help:t/backup).
+- **Export backup to folder now** writes a backup file into your backup folder. This needs `Automatic backup` in `Settings` to be on and a `Backup folder` chosen. In browsers that can't use a backup folder (such as Firefox, Safari and phones), it saves a backup file instead, like `Export backup file`.
+- **Export database** saves all your orOS data to a file, the same as `Export backup file` in `Settings`. See [Backup](help:t/backup).
 - **Connect / reconnect cloud sync** starts the Dropbox connection if you aren't connected. If you are, it asks again for permission to use your backup folder, when the browser has taken it away.
 
 ### Everything else

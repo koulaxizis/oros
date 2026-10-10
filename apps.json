@@ -85,6 +85,7 @@
       "category": "Office",
       "icon": "quote",
       "url": "quote/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -93,6 +94,7 @@
       "category": "Office",
       "icon": "timesheet",
       "url": "timesheet/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -101,6 +103,7 @@
       "category": "Lifestyle",
       "icon": "minimalism",
       "url": "minimalism/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -109,6 +112,7 @@
       "category": "Lifestyle",
       "icon": "split",
       "url": "split/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -117,6 +121,7 @@
       "category": "Lifestyle",
       "icon": "travel",
       "url": "travel/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -125,6 +130,7 @@
       "category": "Lifestyle",
       "icon": "chores",
       "url": "chores/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -133,6 +139,7 @@
       "category": "Lifestyle",
       "icon": "meals",
       "url": "meals/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -150,6 +157,7 @@
       "category": "Office",
       "icon": "storage",
       "url": "storage/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -158,6 +166,7 @@
       "category": "Office",
       "icon": "spreadsheet",
       "url": "spreadsheet/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -175,6 +184,7 @@
       "category": "Office",
       "icon": "layout",
       "url": "layout/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -183,6 +193,7 @@
       "category": "Office",
       "icon": "slides",
       "url": "slides/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -207,6 +218,7 @@
       "category": "Creativity",
       "icon": "prompter",
       "url": "prompter/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -215,6 +227,7 @@
       "category": "Creativity",
       "icon": "characters",
       "url": "characters/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -247,6 +260,7 @@
       "category": "Creativity",
       "icon": "atelier",
       "url": "atelier/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -255,6 +269,8 @@
       "category": "Personal",
       "icon": "mood",
       "url": "mood/",
+      "search": "search.js",
+      "searchOff": true,
       "type": "internal"
     },
     {
@@ -263,6 +279,7 @@
       "category": "Personal",
       "icon": "habits",
       "url": "habits/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -279,6 +296,8 @@
       "category": "Personal",
       "icon": "health",
       "url": "health/",
+      "search": "search.js",
+      "searchOff": true,
       "type": "internal"
     },
     {
@@ -287,6 +306,8 @@
       "category": "Personal",
       "icon": "budget",
       "url": "budget/",
+      "search": "search.js",
+      "searchOff": true,
       "type": "internal"
     },
     {
@@ -303,6 +324,7 @@
       "category": "Personal",
       "icon": "fitness",
       "url": "fitness/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -311,6 +333,8 @@
       "category": "Personal",
       "icon": "cycle",
       "url": "cycle/",
+      "search": "search.js",
+      "searchOff": true,
       "type": "internal"
     },
     {
@@ -319,6 +343,7 @@
       "category": "Personal",
       "icon": "petcare",
       "url": "petcare/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -327,6 +352,8 @@
       "category": "Personal",
       "icon": "baby",
       "url": "baby/",
+      "search": "search.js",
+      "searchOff": true,
       "type": "internal"
     },
     {
@@ -335,6 +362,7 @@
       "category": "Personal",
       "icon": "familytree",
       "url": "familytree/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -343,6 +371,7 @@
       "category": "Personal",
       "icon": "garage",
       "url": "garage/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -351,6 +380,7 @@
       "category": "Personal",
       "icon": "plants",
       "url": "plants/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -359,6 +389,7 @@
       "category": "Personal",
       "icon": "shelf",
       "url": "shelf/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -376,6 +407,7 @@
       "category": "Internet",
       "icon": "maps",
       "url": "maps/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -384,6 +416,7 @@
       "category": "Internet",
       "icon": "feeds",
       "url": "feeds/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -392,6 +425,7 @@
       "category": "Internet",
       "icon": "mail",
       "url": "mail/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -408,6 +442,14 @@
       "category": "Fun",
       "icon": "wheel",
       "url": "wheel/",
+      "type": "internal"
+    },
+    {
+      "id": "oracle",
+      "name": "Oracle",
+      "category": "Fun",
+      "icon": "oracle",
+      "url": "oracle/",
       "type": "internal"
     },
     {
@@ -432,6 +474,7 @@
       "category": "Fun",
       "icon": "scores",
       "url": "scores/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -440,6 +483,7 @@
       "category": "Sound",
       "icon": "radio",
       "url": "radio/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -448,6 +492,7 @@
       "category": "Sound",
       "icon": "podcasts",
       "url": "podcasts/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -464,6 +509,7 @@
       "category": "Video",
       "icon": "television",
       "url": "television/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -784,7 +830,17 @@
       "category": "System",
       "icon": "help",
       "url": "help/",
+      "search": "search.js",
       "type": "internal"
+    },
+    {
+      "id": "settings",
+      "name": "Settings",
+      "category": "System",
+      "icon": "settings",
+      "url": "settings/",
+      "type": "internal",
+      "search": "search.js"
     }
   ]
 }
