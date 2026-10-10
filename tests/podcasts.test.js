@@ -474,3 +474,10 @@ test("shell: safeToReload waits while a podcast plays", () => {
   assert.equal(run(null, true), true, "no Podcasts host allows it");
   assert.equal(run(true, false), false, "radio playing still blocks it");
 });
+
+test("store normalization keeps the merge output (no re-upload loop, SY-L1)", () => {
+  const show = { id: S1, m: 5, url: "https://example.com/feed.xml", title: "T" };
+  const merged = C.mergePodcasts({ shows: [show], queue: { m: 0, ids: [] } }, { shows: [show] });
+  assert.equal(J(C.mergePodcasts(merged, null)), J(merged), "empty queue: store == merge");
+  assert.equal(J(C.mergePodcasts(C.emptyData(), null)), J(C.emptyData()));
+});

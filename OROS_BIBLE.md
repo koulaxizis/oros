@@ -157,7 +157,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 ### Script order (shell `index.html`, classic scripts)
 
-**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
+**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (0.49.00: `launcher.js` loads right before `shell.js`.) (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
 
 `vault.js` and `pet.js` load BEFORE `fs.js`, `dialogs.js` and `shell.js`, so neither may touch those modules at parse time (A24).
 
@@ -193,6 +193,8 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | `orosTray` | — | **[log]** `radio.js` is said to call `shell.orosTray.register("radio", …)`. `shell.js` 0.39.06 defines NO `orosTray` (verified): dead call or guarded no-op, check in `radio.js` (A31) |
 | `__orosRadioHost` | radio.js, set on the shell window | **[log]** shell-hosted audio host; `api.getState()` feeds `radioTrayTick()` |
 | `orosPet` | pet.js | screen pet component |
+| `orosLauncher` | launcher.js | favourites: `attach(host)`, `refresh()`, `menuRow(btn, app)`, `renderSettings(menu)`, `prefs()` + `setPref(k, v)` (Dock settings for the Settings app), `model` (pure) |
+| `orosSettings` | shell.js | `{ v:1, get(), set(name, value), act(name, arg), onChange(fn), open(section) }` for the Settings app; calls the same setters the menu used (no slice, no migration); snapshot `sync.msg` carries `state.syncMsg` or the SY-L2 `state.syncAutoErr` |
 | `__orosOpen<App>` | shell.js | deep-link bridges; full table under `shell.js` below (verified 2026-10-05) |
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
@@ -511,6 +513,13 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Search:** in-memory index of every page in the current language, built in the background; accent-, case- and final-sigma-insensitive (`fold`); every term must match; title 12 / heading 5 / text 1.
 - **Precache:** `help/` files, every topic and every registered app's `help.*.txt` (the app's release commit adds its two lines; `tests/help.test.js` fails otherwise once Help is precached).
 
+### Settings app (`settings/`) [verified 2026-10-10, `?v=0.50.00`]
+- **What:** "Settings" / "Ρυθμίσεις", category System. The settings of orOS itself, moved out of the menu (Chris 2026-10-09). Sections: Appearance (theme, skin, wallpaper, Dock, screen pet) · Notifications · Sync · Backups · Language & search · System (version, updates, install, links, shortcuts, factory reset). Wide: sidebar + page; < 720 px: list → page with Back and Esc.
+- **Storage:** none. The app never writes storage; it reads a snapshot and calls `parent.orosSettings` (`set`, `act`), notifications through `parent.orosNotifs`. No sync slice, nothing to migrate. Each card shows its scope ("All devices" / "This device") from `core.js` `SCOPE`.
+- **Shell:** `window.orosSettings` (bridge table above); `settingsNotify()` batched, called at the end of `renderMenu` and on auto-sync events. `open(section)` uses `__orosOpenAt("settings", { section })`.
+- **Ways in:** menu row "Settings" (above Device info and Info) · System category · sync dot when sync is off or locked → Sync · Info window button `sc.reset.moved` → System · Device info sync card → Sync · universal search (`settings/search.js`, section topics).
+- **Rule:** new shell settings go into Settings, never back into the menu.
+
 ### Rules for every app
 
 - **CSS:** `[hidden]{display:none!important}` is the LAST rule of every app stylesheet. Per-element display rules are guarded with `:not([hidden])`. Shell CSS variables are the only styling truth (`inheritPalette` + `watchPalette`, G3). `LABEL_PALETTE` is data, not skin.
@@ -519,6 +528,15 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **File I/O:** R33. **Popups:** R32. **Cloud:** R34.
 
 ---
+
+### `launcher.js` (Favourites: desktop shortcuts + Dock, shell component) [verified 0.49.00]
+
+- Loads after `wallpaper/art.js`, before `shell.js`; touches nothing at parse time. `shell.js` calls `orosLauncher.attach({ apps, open, running, label, icons, lang, desktop })` right after `initPrefs()`, `refresh()` at the end of `renderMenu`, `menuRow(btn, app)` for every app row of the menu and, since 0.50.00, `renderSettings(menu)` ONLY when the launcher has no `setPref` (old bundle); otherwise the Dock settings live in Settings › Appearance through `orosSettings.set("dock:<k>")` → `setPref`. Every call is guarded: a bundle without the file draws what it drew before.
+- **Menu:** a star (44×44) at the end of every app row. It opens a panel IN PLACE (no menu rebuild; the open panel survives rebuilds, memory only) with two switches, "On the desktop" and "In the Dock"; when the app is in the Dock and the Dock is off, a line says so with "Turn on". Filled star = the app has a shortcut anywhere.
+- **Desktop:** `#ld-desk` inside `#oros-desktop`, an automatic grid in the order added (no free placement: it would differ per screen). Tap opens; right-click, long press (500 ms, 10 px slop, the following click swallowed) or the context-menu key opens a small menu: Open · Move earlier · Move later · Remove from desktop. Arrow keys walk that menu, Escape returns focus to the icon. Long names hyphenate (`lang` on the grid).
+- **Dock:** `#ld-dock` (z-index 950: over a running app at 900, under the menu at 999), centred at the bottom, OFF by default. Menu section "Dock" (`#ld-set`, rebuilt in place, focus kept): Show the Dock · Size (small 40 / medium 52 / large 64 px) · Magnify on hover (mouse only, shown only for a fine pointer) · Hide automatically · Show over open apps (default: yes with a mouse, no on touch). A dot marks the open app (`aria-current`); tapping the open app never reloads it. Mouse users drag to reorder; touch uses the long-press menu (a finger drag scrolls the Dock: one row, sideways scroll at ≤ 480 px). Auto-hide: a 10 px edge strip (mouse) or a small handle (touch, `#ld-edge`) shows it; leaving or tapping elsewhere hides it; keyboard focus shows it.
+- While the Dock is shown and not auto-hidden it sets `--tb-h` on `<html>`: the pet layer (`pet.css`, the old hook) and the desktop grid rise above it; with "over open apps", `html.ld-push` ends `#oros-running` above the Dock. Without "over open apps" a CSS sibling rule hides the Dock while an app runs.
+- Styles are injected once (`#ld-css`) and use only skin variables.
 
 ## Part III — App registry
 
@@ -864,6 +882,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - Cells: `{"<sid>|<r>|<c>":{v,mtime,f?}}`, sparse, LWW per cell, shared tombstones. `f{b,i,u,al,co,nf}` rides whole-cell LWW.
   - Sheets: `{id,pos,cw{colIdx:px}}`.
   - Formula engine: tokenizer → shunting-yard → RPN, built from scratch.
+    - **[fixed 2026-10-10]** Binary operators (`=1+1`) and plain ranges (`=SUM(A1:A5)`) returned `#ERROR!`: the parser emitted operators as `{type:"OP"}` while the evaluator only knew `TT_OP`, and only sheet-prefixed ranges were lexed as one reference. Both fixed; `tests/spreadsheet-formula.test.js`. Still open: unary minus (`=-A1`) → `#ERROR!`.
 - **RADIO v1:** `{ ver, favorites[{stationuuid,…,mtime}], deleted{} }` — union by stationuuid (Dice pattern).
 - **MINIMALISM:** day records + `prefs{remindHour}`. Reminder logic is shell-side (`minimalismCheckTick` reads the slice directly, so it works with the app closed).
 - **MINDMAP v1:** `{ ver, maps[{id,m,sides:"both"|"right"}], nodes[{id,m,map,parent,ord,text,emoji,color,note,url,done}], tombs{} }`. Central node id = `<mapId>-r` (parent ""), its text is the map title. `color` ∈ LABEL_COLORS keys or "" (auto per main branch). `url` http(s) only. Nodes of a deleted map are dropped by the merge. A node whose parent is missing, and the smallest id of a parent loop (two devices moving nodes at once), hang from the centre flagged "recovered" (dashed) — deterministic, nothing written.
@@ -906,7 +925,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - kind `{ id, m, n, u, dc, h, lo, hi, lo2, hi2, r }`: built-in rows exist only once edited; own target in storage units or null; r ≤ 4 reminder minutes.
   - settings `{ m, h (mm), wu kg|lb, gu mgdl|mmol, tu c|f, nm, fw }`.
   - Deleting an own kind tombstones the kind and its readings (Undo restores both). A reading of an own kind deleted on another device stays stored but is not shown.
-- **BUDGET v1** (slice `budget`, key `oros-budget-data`): `{ ver, tx[{id, m, d "2026-10-09", a (integer cents > 0), k "o"|"i", c (category id | ""), n (note)}], cats[{id, m, k, name ("" = ready name), col 0–8}], bud[{id (expense category id | "all"), m, a (cents, 0 = no limit)}], rec[{id, m, k, a, c, n, f "w"|"m"|"y", s (first date), e (last date | "")}], set{m, cur}, tombs{"tx:<id>"|"cat:<id>"|"rec:<id>": deletedAt} }`, each list sorted by id. Merge: per collection LWW by id (newer `m`, equal `m` → larger canonical JSON); tombs max-merged, a tomb ≥ `m` hides the record (delete wins ties, a newer edit resurrects); limits have no tombs; `set` LWW by `m` (default `{m: 0, cur: "EUR"}`) (`tests/budget.test.js`).
+- **BUDGET v1** (slice `budget`, key `oros-budget-data`): `{ ver, tx[{id, m, d "2026-10-09", a (integer cents > 0), k "o"|"i", c (category id | ""), n (note)}], cats[{id, m, k, name ("" = ready name), col 0–8}], bud[{id (expense category id | "all"), m, a (cents, 0 = no limit)}], rec[{id, m, k, a, c, n, f "w"|"m"|"y", s (first date), e (last date | "")}], acc[{id, m, n (name), o (starting balance, cents, may be < 0), col 0–8}], xfer[{id, m, d, a, f (from account), t (to account ≠ f), n}], set{m, cur}, tombs{"tx:<id>"|"cat:<id>"|"rec:<id>"|"acc:<id>"|"xfer:<id>": deletedAt} }`; `tx` and `rec` carry an optional `ac` (account id), written only when set (accounts + transfers since phase 2; a deleted account leaves its entries without one; transfers are never income or expense, only balances: `accBalances()`), each list sorted by id. Merge: per collection LWW by id (newer `m`, equal `m` → larger canonical JSON); tombs max-merged, a tomb ≥ `m` hides the record (delete wins ties, a newer edit resurrects); limits have no tombs; `set` LWW by `m` (default `{m: 0, cur: "EUR"}`) (`tests/budget.test.js`).
   - **Forward compatibility (since 0.48.x):** a field this version does not know rides along on its item and on `set` (name `[a-z][a-z0-9]{0,15}`, value string ≤ 500 / finite number / boolean, at most 16 per item, sorted by name), and a top-level array this version does not know (name `[a-z]{2,8}`) is merged as a collection of `{id, m, …}` with the same LWW and tombstones `"<name>:<id>"`. In-place edits keep these fields. So a newer Budget can add accounts or transfers without an older device stripping them. Rule for later versions: a new collection's tombstone prefix is its own key; new item fields stay flat.
   - Ready categories have language-free ids (`o-groc` … `o-other`, `i-salary` … `i-other`); a recurring occurrence gets a fixed id, so two devices that create the same occurrence create the same entry.
 - **FITNESS v1** (slice `fitness`, key `oros-fitness-data`): `{ ver: 1, ex: [{ id, m, n, g, k, h }], pg: [{ id, m, n, days }], wo: [{ id, m, d, st, en, ti, p, pd, n, x: [{ e, tr, tr2, rest, s: [...] }] }], bm: [{ id: "2026-10-09", m, w, wa, ch, ar }], set: { m, wu, du, incU, incL, rest, hb } | null, tombs: { "<coll>:<id>": m } }`; all quantities are integers (grams, metres, millimetres, seconds). `mergeFit`: per collection LWW by `m` (equal `m`: larger canonical JSON), tombstones max-merged and a tomb ≥ `m` wins; `set` LWW as a whole.
@@ -1013,6 +1032,19 @@ oros-television-data = { ver, favorites[], deleted{} }
 
 ---
 
+**LAUNCHER v1** (`launcher.js`, slice `launcher`, key `oros-launcher-data`, since 0.49.00):
+
+```
+oros-launcher-data = { ver:1, items[{ id, desk: number|null, dock: number|null, mtime }] }
+```
+
+- One item per app id (`/^[a-z0-9][a-z0-9_-]{0,47}$/`), sorted by id, fixed field order; `normalize()` is the single funnel (load, save, merge output, slice get / set). At most 500 items.
+- `desk` / `dock` are fractional order keys; shown order = key, then id. Pin = end of the place (max + 1); moving one shortcut writes only that item (midpoint of its new neighbours); when keys get closer than 1e-6 the place is renumbered 1..n (every item stamped, rare). A drag is `moveTo` (a chain of moves).
+- `mtime` moves only at the mutation site, always forward (`max(now, mtime + 1)`). A removal keeps the item with both places null: it is its own tombstone.
+- **Merge:** union by id, higher `mtime` wins, tie → greater canonical JSON. Fuzz (20,000 triples): symmetric, idempotent, associative, fixed point, canonical, every output item from an input, inputs not mutated.
+- A fresh device writes nothing until the first real change (`get()` returns null). Unreadable data is copied to `oros-launcher-data-broken`.
+- Device-local (never synced): `oros-launcher-prefs` = `{ on, size: s|m|l, magnify, autohide, over: true|false|null }` (null = the device's default). A phone and a PC want different docks; only the pins travel. The factory reset sweeps both (`oros-*`).
+
 ## Part V — Sync + data-safety essentials
 
 ### Security model (absolute)
@@ -1040,6 +1072,8 @@ oros-television-data = { ver, favorites[], deleted{} }
 - **Factory reset:** double confirm → cloud → folder → localStorage prefix sweep → OrosFS wipe → **[log]** Cache Storage `oros-map-tiles` → reload. Everything is tombstoned and seeds are reborn.
 - **Corruption:** rescue backup before any reseed. **Compatibility:** additive migrations; unknown fields carried forward.
 - **Quota (R30):** one shared ~5 MB `localStorage`. A failed `setItem` means edits will not survive a reload, so warn the user.
+- **No re-upload of what the cloud holds (SY-L1, 0.48.02):** after a pull applies a slice, the engine compares what the slice STORES (`get()` after `set()`) with the cloud copy, not the merge output. An app whose store normalizes the merge result differently no longer re-uploads at every reconcile. Apps should still keep `merge(x, null)` idempotent (store == merge output).
+- **Visible failure reason (SY-L2, 0.48.02):** a failed background sync logs `orOS sync: auto sync (<reason>) failed:` in the console and shows the reason in the sync dot tooltip and the menu's sync section (generic errors carry the technical text, e.g. `upload failed: 429`) until the next successful sync. No toast, no inbox entry (A72 still open).
 
 ### Files-disk glue (`shell.js` §9f)
 
@@ -1325,6 +1359,15 @@ Owner: Budget (`budget/`). Senders (Garage, Split, …) never edit `budget/`. Sa
 - **BR-B1-4 · A PREFILL, not data (BR-W8-6).** The New entry form opens filled in, focus on Save. Nothing reaches the slice, sync or limit notifications until the user saves; Cancel leaves no trace. Every text is rendered with `textContent`.
 - **BR-B1-5 · Senders.** Show the button ("Add to Budget" / «Προσθήκη στα Έσοδα & Έξοδα») only when `typeof window.parent.__orosOpenBudgetNew === "function"`, and call it only from that explicit button: there is no duplicate guard, the user confirms each entry.
 
+### Cross-app "open in Spreadsheet": any app → a new sheet (BR-S1)
+
+Owner: Spreadsheet (`spreadsheet/`). First sender: Budget (Export → "Open in Spreadsheet").
+
+- **BR-S1-1 · Contract.** `window.parent.__orosOpenAt("spreadsheet", { newSheet: { name, rows, sum? } })` through the generic deep link (`__orosOpenAt` / `__orosTakeTarget`, staged in sessionStorage `oros-open-at`). `rows` = array of rows, row 1 = heading; a cell is a finite number, a string or null/"". `sum` = 0-based columns that get `=SUM(…)` under the last row.
+- **BR-S1-2 · Always a NEW sheet**, never overwrites; capped at 500 rows × 64 columns (the sender caps first and says so). `name` goes through `xlSafeName`.
+- **BR-S1-3 · No formulas from the sender.** A string cell is plain text; one starting with `= + - @` gets a leading apostrophe. The only formulas are the receiver's own `SUM`s.
+- **BR-S1-4 · Receiver.** `sheetFromTable()` in `spreadsheet.js`: live push via `window.__orosOpenAt(target)`, boot take via `takeTarget()`. It marks the slice dirty like any import (it is user data from then on).
+
 ### Cross-app "new quote" bridge: any app → Quote (BR-Q1)
 
 Owner: Quote (`quote/`). First sender: Timesheet (report "Create quote"). Same shape as BR-W8 / BR-B1.
@@ -1394,7 +1437,7 @@ Owner: Quote (`quote/`). First sender: Timesheet (report "Create quote"). Same s
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
-- 97 entries since 0.48.00 (help 0.48.00 in System; passwords 0.46.00 in Security; memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05, slider 0.43.01, lightsout 0.43.03, whack 0.45.01, snake 0.45.09, g2048 0.45.12, wordle 0.45.14; netizen 0.43.02, petworld 0.44.00 and wheel 0.45.10 in Fun; wallpaper 0.45.04 and names 0.45.15 in Creativity; mixer 0.45.06 in Sound; zen 0.45.13 in Personal; registered together in 0.47.00 (53): mindmap, timesheet, split, travel, chores, meals, layout, slides, pubdomain, qr, pixel, atelier, health, budget, water, fitness, petcare, baby, familytree, garage, plants, shelf, feeds, mail, scores, podcasts, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri, device). Categories (all capitalized since 2026-10-06; file order = menu order): Accessories (weather, time, files, calculator) · Office (todo, kanban, mindmap, notes, calendar, quote, timesheet, contacts, storage, spreadsheet, writer, layout, slides, pubdomain, qr) · Lifestyle (minimalism, split, travel, chores, meals) · Creativity (prompter, characters, names, pixel, wallpaper, atelier) · Personal (mood, habits, zen, health, budget, water, fitness, cycle, petcare, baby, familytree, garage, plants, shelf) · Internet (bookmarks, maps, feeds, mail) · Fun (dice, wheel, netizen, petworld, scores) · Sound (radio, podcasts, mixer) · Video (television) · Games (memory, connect4, dots, tictactoe, simon, slider, lightsout, whack, snake, g2048, wordle, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri) · Security (passwords) · System (device, help).
+- 98 entries since 0.50.00 (settings 0.50.00 in System, with a search provider; help 0.48.00 in System; passwords 0.46.00 in Security; memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05, slider 0.43.01, lightsout 0.43.03, whack 0.45.01, snake 0.45.09, g2048 0.45.12, wordle 0.45.14; netizen 0.43.02, petworld 0.44.00 and wheel 0.45.10 in Fun; wallpaper 0.45.04 and names 0.45.15 in Creativity; mixer 0.45.06 in Sound; zen 0.45.13 in Personal; registered together in 0.47.00 (53): mindmap, timesheet, split, travel, chores, meals, layout, slides, pubdomain, qr, pixel, atelier, health, budget, water, fitness, petcare, baby, familytree, garage, plants, shelf, feeds, mail, scores, podcasts, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri, device). Categories (all capitalized since 2026-10-06; file order = menu order): Accessories (weather, time, files, calculator) · Office (todo, kanban, mindmap, notes, calendar, quote, timesheet, contacts, storage, spreadsheet, writer, layout, slides, pubdomain, qr) · Lifestyle (minimalism, split, travel, chores, meals) · Creativity (prompter, characters, names, pixel, wallpaper, atelier) · Personal (mood, habits, zen, health, budget, water, fitness, cycle, petcare, baby, familytree, garage, plants, shelf) · Internet (bookmarks, maps, feeds, mail) · Fun (dice, wheel, netizen, petworld, scores) · Sound (radio, podcasts, mixer) · Video (television) · Games (memory, connect4, dots, tictactoe, simon, slider, lightsout, whack, snake, g2048, wordle, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri) · Security (passwords) · System (device, help, settings).
 - The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Creativity, Fun, Games, Internet, Lifestyle, Office, Personal, Security, Sound, System, Video. EL: Ασφάλεια, Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Ήχος, Παιχνίδια, Προσωπικά, Σύστημα, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 - Optional `"search": "search.js"` (universal search provider, since 0.47.00: notes, contacts, todo, calendar, kanban, bookmarks, writer, files) and `"searchOff": true` (provider starts switched off, opt-in). See Part VI "Universal search provider".
@@ -1542,6 +1585,12 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-09 · Chris (Favourites: desktop shortcuts + Dock, plan /mnt/project-files/launcher/launcher-plan.md: "Συμφωνώ απόλυτα με το πλάνο σου! Προχώρα!")**
+  - A star next to every app in the menu adds it to the orOS desktop and / or a mac-style Dock. The Dock has its own settings in the menu and is off until turned on.
+  - The pins sync; the Dock settings stay per device.
+  - Desktop icons go in an automatic grid; no free placement.
+  - Nothing is added to the top bar.
 
 - Mind Map approved 2026-10-09 (Christos): **Mind Map / Νοητικός χάρτης**, category **Office** (proposed Creativity; his choice), automatic layout where dragging changes parent/order (no free placement), outline view, exports PNG/SVG/Markdown/OPML/JSON, imports OPML/Markdown/indented text/JSON (restore is a merge). No notifications (documented exemption: no dates). Phase 2 recorded, not built: cross-links, free placement, images in nodes, To-Do/Notes bridges, FreeMind/XMind import (real samples first), Presentations link. Plan: project files `mindmap/mindmap-plan.md`.
 
@@ -1768,7 +1817,8 @@ Rebuild this in any session where code is delivered.
 - Inside the Calendar, not a separate app (Chris 2026-10-09). Three read-only chips: Holidays (Greek public holidays), Name days (day-view line + one row per contact whose first name celebrates, click → Contacts), World days (observances).
 - `calendar/namedays.js` is pure (Orthodox Easter by Meeus, fixed + movable feasts, George/Mark moved after Easter, Greek/Greeklish name skeletons, `cleanDays` sanitizer). Name list is hand-written from the church calendar; nicknames prefixed `~` match but are not shown. Add names there.
 - `calendar/days.json` = observance RULES (`md`, `nth`, `easter`, `doy`). Updating it needs no app release: the Calendar fetches `days.json?w=<week>` at most weekly, sanitizes, caches in `oros-cal-days`; the SW precache is the offline fallback. Plain text only (textContent), max 80 chars, unknown rules dropped.
-- Nothing is stored in `oros-calendar-data`: no sync impact, no reminders.
+- Nothing is stored in `oros-calendar-data`: no sync impact, no event reminders.
+- Morning notice (shell `namedayCheckTick`, 60 s throttle): from 09:00, when a contact's first name (or nickname) celebrates today, one `ns: "calendar"` notification, key `nameday-<ymd>` (inbox dedup across devices), body lists up to 3 names, deep link `calendar:nameday:<ymd>` opens that day. The shell loads `calendar/namedays.js` (same file as the app). Silent when the Name days chip is off on this device (`oros-cal-feedvis`) or Calendar notifications are off. orOS closed = nothing fires; the next boot the same day catches up.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -3974,3 +4024,49 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-09 — hotfix 0.48.01 — universal search works again
 - **Changes:** `apps.json` Mind Map lost a `"search": "search.js"` entry copied from Kanban by the bulk release; the file does not exist, so every universal search failed with "failed to load search.js" in 0.48.00. New test in `tests/search.test.js`: every `search` entry in `apps.json` must point to an existing file (PR #101).
 - **NOT tested:** a real phone, Safari / iOS.
+
+### 2026-10-10 — hotfix 0.48.02 — sync: no endless re-uploads, failure reason visible
+- **Report:** Chris, 2026-10-09 20:42 UTC: sync never completes and shows "failed".
+- **Fixes:** Podcasts (`podcasts/core.js` `normQueue`) returned an empty queue without `sh: {}` for missing data, so `mergePodcasts(x, null)` (the store path) dropped a field every merge added: on every device with Podcasts data, every pull marked the engine dirty and every reconcile re-uploaded identical content, for ever (same one-line fix as Podcasts PR #120). Engine guard SY-L1 in `sync.js` (`settleApplied`): a slice whose stored content equals the cloud copy after a pull is not stale, whatever shape the merge returned. Failure reason SY-L2 (`sync.js` passes the error to `onAutoSync` listeners and logs it; `shell.js` `syncErrText`, `state.syncAutoErr`; Settings snapshot shows it too).
+- **Tests:** `tests/sync-loop.test.js` (fails on the old engine), `tests/podcasts.test.js` store == merge for an empty queue. Real shell (Chromium, mock Dropbox): two devices with a Podcasts subscription uploaded twice per sync round before, zero while idle after; all 97 apps on two devices sync with no failure and no idle upload; a 503 shows "Sync failed — check your connection (upload failed: 503)" in the dot tooltip and the menu, gone after the next success.
+- **Open:** the exact error on Chris's devices was not reproduced (the mock never fails like the real Dropbox); 0.48.02 shows it, so the next report names it.
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
+
+### 2026-10-09 — Favourites: desktop shortcuts + Dock (`launcher.js` v1.0.0)
+
+- **New shell component `launcher.js`** (like `pet.js`): a star at the end of every app row of the menu opens two switches, "On the desktop" and "In the Dock". The desktop shows the chosen apps in an automatic grid; a mac-style Dock at the bottom (off until turned on in its own menu section: size, magnify on hover, auto-hide, over open apps). Small menu on both (right-click, long press, context-menu key): Open · Move earlier · Move later · Remove. Mouse users drag inside the Dock. The open app has a dot in the Dock. The pet and the desktop grid rise above a shown Dock (`--tb-h`); nothing is added to the top bar.
+- **Sync:** new slice `launcher` (LAUNCHER v1, Part IV): per-app items with fractional order keys and their own `mtime`, so two devices that pin or move different apps never undo each other. Dock settings are device-local (`oros-launcher-prefs`).
+- **Core:** `index.html` loads `launcher.js` before `shell.js`; `sw.js` precache `./launcher.js`; `shell.js` calls `attach` / `refresh` / `menuRow` / `renderSettings` (all guarded; landed in PR #84 before this release commit); Tests workflow paths `launcher.js`. `APP_VERSION` 0.49.00: main + 1 minor (new shell feature).
+- **Tests:** new `tests/launcher.test.js` (12): normalize, pin / unpin no-ops, mtime always forward, a move writes one item, 3,000 random moves (renumbering), `moveTo` against a list splice, three two-device cases, merge fuzz 20,000 triples.
+- **Verification (Chromium, real shell + real `sync.js` + mock Dropbox; EN desktop 1280, EL phone 390 and 360, 768 light):** star → desktop and Dock, the menu stays open; right-click, Shift+F10 and a touch long press open the small menu; move and remove; pins and order reach the other device, a removal there comes back; idle rounds upload 0; Dock: "Turn on" from the star panel, magnify, drag reorder, dot on the open app, tapping the open app does not reload it, app ends above the Dock with "over open apps", hidden behind apps on the phone, auto-hide + edge reveal, small size; sideways scroll with 7 icons at 360 px, no page overflow; pet rises above the Dock; no page errors. Without the script tag the shell shows no star and no error.
+- **NOT tested:** a real phone, Safari / iOS (long press, safe area), Firefox, real Dropbox.
+- **Status:** code merged as PR #84; this release commit (0.49.00).
+
+### 2026-10-10 — Name days: morning notice when a contact celebrates — 0.49.01
+- **Changes:** from 09:00, orOS sends one notification a day if any of your contacts has a name day, for example "Σήμερα γιορτάζει: Δημήτρης Παπαδόπουλος, Dimitra K.". Tapping it opens that day in the Calendar. It respects the Calendar notification toggle and quiet hours. It stays silent when the Name days chip is off on the device. (PR #103)
+- **NOT tested:** a real phone, Safari, or system (OS) notifications.
+
+### 2026-10-10 — Atelier: hundreds of free fonts (Fontsource), Greek-capable, offline after first use — 0.49.02
+- **Changes:** tapping a text's font button opens a **Fonts** panel with three groups: - the three built-in faces, which are always available; - fonts already used in this design, plus "Your fonts" (recently used, kept on this device); - **More fonts (Fontsource)**: the open-licence Google Fonts catalogue, with an "Only fonts with Greek letters" filter (on by default in Greek). (PR #98)
+- **NOT tested:** real Fontsource downloads, because the container network blocks jsdelivr.
+
+### 2026-10-10 — Water: guide pages (EN/EL) — 0.49.03
+- **Changes:** Help has a Water page in English and Greek. It covers quick add, entries and past days, history, settings, reminders, sync/CSV, shortcuts, tips and limits. (PR #104)
+- **NOT tested:** a real phone, Safari / iOS.
+
+### 2026-10-10 — shell + Settings 0.50.00 — settings move from the menu into the Settings app
+- **Changes:** the menu keeps the apps, search, `Install orOS` and three rows: Settings, Device info, Info. All settings sections (appearance, wallpaper, pet, sync, backups, notifications) are gone from the menu; they live in the Settings app (code merged in #85). The sync dot opens Settings › Sync when sync is off or locked. The factory reset lives in Settings › System; the Info window links there. Dock settings from launcher 0.49.00 move to Settings › Appearance through `setPref` (menu fallback only for a launcher without it). The SY-L2 failure reason shows in Settings › Sync (snapshot `sync.msg`). Device info links to Settings › Sync.
+- **Help (R38):** `settings/help.en|el.txt`; topics appearance, backup, sync, notifications, reset, menu, data, faq, install, start, shortcuts, troubleshooting, privacy now name the Settings labels.
+- **Decisions:** no ☾/☀ quick toggle in the menu; factory reset only in Settings (Chris 2026-10-09 13:47).
+- **Core:** `apps.json` entry (System, `search.js`), `sw.js` precache of `settings/` (+ help pages), Tests workflow paths `settings/**`. `APP_VERSION` 0.50.00: main (0.49.02) + 1 minor.
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
+- **Status:** PR #107.
+
+### 2026-10-10 — Public Domain Calculator: guide pages (EN/EL) — 0.50.01
+- **Changes:** Help has a full page for it in English and Greek, available offline. The page covers searching for an author or work, entering dates by hand, the four kinds of answer, the country list, what stays on the device, keyboard keys and the limits (not legal advice, special cases not counted, what is sent to Wikidata). (PR #106)
+- **NOT tested:** a real phone, Safari.
+
+### 2026-10-10 — Budget phase 2: accounts, transfers, Open in Spreadsheet (+ Spreadsheet formula fix) — 0.51.00
+- **Changes:** Accounts (menu → Accounts / Λογαριασμοί: cash, card, bank, each with a starting balance, negative allowed for a debt); entries and recurring entries can name an account; today's balance per account shows under the totals. Transfers move money between two accounts, show as "Bank → Cash", count in no income/expense total. Open in Spreadsheet, plus a Spreadsheet formula fix. (PR #108)
+- **Also ships:** Budget forward compatibility, unknown fields/collections survive sync (PR #95, merged 2026-10-09, bump was pending).
+- **NOT tested:** a real phone, Safari, real Dropbox.
