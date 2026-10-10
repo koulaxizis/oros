@@ -4343,3 +4343,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - "→ To-Do" on Overview's "Coming up" sends every row shown there (alerts first, up to 5); a "To-Do" button in the renewal and service-plan editors sends one. To-Do opens its add dialog prefilled with "From: Garage" ("Book the KTEO test · Golf", "Renew Insurance · Golf", "Book a service: Oil · Golf"); notes hold the date or km, provider, reference and plate. Nothing is added before Add (BR-TD-ADD-6).
 - Only garage/garage.js changes; Garage data is not changed. Closes the last open item of the Garage plan (Travel's trip fuel cost already reads Garage, #110).
 - Shell check EL 360 px: three rows arrived with their notes, `oros-todo-data` unchanged before Add, no console errors. Not tested: a real phone, Safari.
+
+### 2026-10-10 — Family Tree phase 2: Contacts button + Calendar death anniversaries (#141) — 0.61.03
+- Contacts card: `Family tree` button (inside the shell) opens the linked person in Family Tree (current tree first), or Family Tree's Build-from-Contacts preview starting at that contact (`__orosOpenAt("familytree", {contact})`, same single receiver; build preview split out as `planBuild(start)`).
+- Calendar: new feed "Death anniversaries" / «Επέτειοι θανάτου» (`lbl-feed-famtree`, slate): exact death dates only, 29 Feb also on 28 Feb of common years, same name + date in two trees shown once, not on the death day itself; a row opens the person. calendar/index.html loads ../familytree/ft-core.js (already precached).
+- Tests: tests/familytree.test.js +1 (deathDays / deathAnniversaries). Shell: desktop EN + phone EL, 360 px, 0 console errors.
+- Not tested: a real phone, Safari, real Dropbox.
