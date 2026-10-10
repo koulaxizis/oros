@@ -7,9 +7,9 @@ Open `Discover`, search for a podcast and press `Subscribe`. You can also paste 
 The tabs:
 - `Listening`: what's playing, the `Up next` queue and `Continue listening`.
 - `New`: episodes from the last 30 days you haven't started yet.
-- `Library`: your podcasts, with a badge for new episodes. Tap one to open its page.
+- `Library`: your podcasts, with a badge for new episodes. Tap one to open its page. `Search all episodes` finds an episode in any of your podcasts, and `Statistics` shows how long you listened (counted on this device).
 - `Downloads`: episodes saved on this device.
-- `Discover`: search, add by address and OPML.
+- `Discover`: search, `Popular podcasts` (popular in Greece when orOS is in Greek), add by address and OPML.
 
 ## Listen
 Press the play button on any episode. The player bar at the bottom has skip back, play/pause and skip forward; tap the episode's name there to open the full player with `Playback speed`, `Sleep timer`, chapters, `Show notes`, `Next in queue` and `Stop`. The sleep timer stops after 5 to 60 minutes or at the `End of episode`.
@@ -18,10 +18,17 @@ Tap an episode's title to read its notes; times in the notes appear under `Jump 
 
 In `Up next`, the arrows move episodes up or down. Your device's media controls (lock screen, headset) work too.
 
-## Podcast pages
-A podcast's page lists its episodes, with filters `All`, `Unplayed`, `In progress`, `Played` and `Downloaded`, and `Newest first` or `Oldest first`. From there you can `Mark all as played`, visit the `Website`, `Support the show` when the podcast offers it, or `Unsubscribe` (its downloads are deleted too).
+## Chapters, transcripts and video
+- When an episode has chapters, the full player lists them under `Chapters`, with `Previous chapter` and `Next chapter`.
+- `Transcript` shows the episode's text when the show offers one. Tap a line to jump there, use `Search the transcript`, and turn on `Follow playback` to keep the current line in view.
+- Video episodes have a `Watch` button.
+- `Share` sends a link to an episode; in the player, `Share this moment` includes the current time.
+- `Note at 12:34` writes a note in [Notes](app:notes) with the episode and the time, and `Listen later (To-Do)` adds the episode to [To-Do](app:todo).
 
-`Podcast settings` sets a speed for that show, `Skip the first` and `Skip the last` seconds (for intros and outros), and `Download new episodes automatically`.
+## Podcast pages
+A podcast's page lists its episodes, with filters `All`, `Unplayed`, `In progress`, `Played` and `Downloaded`, and `Newest first` or `Oldest first`. From there you can `Mark all as played`, visit the `Website`, `Support the show` when the podcast offers it, or `Unsubscribe` (its downloads are deleted too). `Follow the site in Reader` follows the show's website in [Reader](app:feeds).
+
+`Podcast settings` sets a speed for that show, `Skip the first` and `Skip the last` seconds (for intros and outros), and `Download new episodes automatically`. `Tell me about new episodes` sends a notification when that show puts out a new episode; it is off by default, and orOS checks every few hours while it is open.
 
 ## Downloads
 Choose `Download` from an episode's menu. The `Downloads` tab shows how much space they take and how much is free. `Keep downloads safe from automatic clean-up` asks the browser to keep them; `Delete played downloads` tidies up.
