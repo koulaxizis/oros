@@ -1,0 +1,59 @@
+{
+  "extName": {
+    "message": "Send to orOS"
+  },
+  "extDesc": {
+    "message": "Save the page you are on to orOS Bookmarks with one click, and search orOS from the address bar."
+  },
+  "actionTitle": {
+    "message": "Save this page to orOS"
+  },
+  "menuPage": {
+    "message": "Save page to orOS"
+  },
+  "menuLink": {
+    "message": "Save link to orOS"
+  },
+  "menuOpen": {
+    "message": "Open orOS"
+  },
+  "omniboxHint": {
+    "message": "Search orOS"
+  },
+  "optBase": {
+    "message": "orOS address"
+  },
+  "optBaseHint": {
+    "message": "Leave it as https://useoros.online/ unless you run your own copy of orOS."
+  },
+  "optSave": {
+    "message": "Save"
+  },
+  "optReset": {
+    "message": "Default"
+  },
+  "optSaved": {
+    "message": "Saved."
+  },
+  "optBad": {
+    "message": "Use an https:// address (http:// only for localhost)."
+  },
+  "optHowTitle": {
+    "message": "How to use"
+  },
+  "optHow1": {
+    "message": "Toolbar button or Alt+Shift+O: save the page you are on."
+  },
+  "optHow2": {
+    "message": "Right-click a page or a link: Save to orOS."
+  },
+  "optHow3": {
+    "message": "Type oros, a space and some words in the address bar to search orOS."
+  },
+  "optHow4": {
+    "message": "orOS opens in a new tab with the bookmark ready. Nothing is saved until you press Save there."
+  },
+  "optPrivacy": {
+    "message": "This add-on collects nothing and talks to no server. It only opens orOS with the page's address and title."
+  }
+}

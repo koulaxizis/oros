@@ -4,6 +4,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 0.58.00
 - [Layout](app:layout) checks your document before export (preflight), starts from 7 templates, exports a page as PNG or JPG, lets you change master objects on one page, has rulers with guides, and opens Scribus files.
 - [Slides](app:slides) can start a new presentation from an outline sent by another app. You pick the theme first, and nothing is created before that.
+- orOS is ready for the "Send to orOS" browser add-on (Chrome, Edge, Brave, Firefox), which sends the page you are on to [Bookmarks](app:bookmarks) and searches orOS from the address bar. The add-on is not in the stores yet.
 
 ## Version 0.57.00
 - [Podcasts](app:podcasts) shows chapters and transcripts, plays video episodes, searches every episode, keeps listening statistics, can tell you about new episodes, and sends an episode to [Notes](app:notes), [To-Do](app:todo) or a show's site to [Reader](app:feeds).
