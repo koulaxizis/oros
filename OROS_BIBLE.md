@@ -4027,3 +4027,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-10 — Name days: morning notice when a contact celebrates — 0.49.01
 - **Changes:** from 09:00, orOS sends one notification a day if any of your contacts has a name day, for example "Σήμερα γιορτάζει: Δημήτρης Παπαδόπουλος, Dimitra K.". Tapping it opens that day in the Calendar. It respects the Calendar notification toggle and quiet hours. It stays silent when the Name days chip is off on the device. (PR #103)
 - **NOT tested:** a real phone, Safari, or system (OS) notifications.
+
+### 2026-10-10 — Atelier: hundreds of free fonts (Fontsource), Greek-capable, offline after first use — 0.49.02
+- **Changes:** tapping a text's font button opens a **Fonts** panel with three groups: - the three built-in faces, which are always available; - fonts already used in this design, plus "Your fonts" (recently used, kept on this device); - **More fonts (Fontsource)**: the open-licence Google Fonts catalogue, with an "Only fonts with Greek letters" filter (on by default in Greek). (PR #98)
+- **NOT tested:** real Fontsource downloads, because the container network blocks jsdelivr.
