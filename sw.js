@@ -192,6 +192,8 @@ var PRECACHE_URLS = [
   "pubdomain/pubdomain.css",
   "pubdomain/rules.js",
   "pubdomain/pubdomain.js",
+  "pubdomain/help.en.txt",
+  "pubdomain/help.el.txt",
   "prompter/prompter.css",
   "prompter/prompter.js",
   "habits/",

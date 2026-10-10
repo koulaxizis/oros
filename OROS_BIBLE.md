@@ -4051,3 +4051,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Core:** `apps.json` entry (System, `search.js`), `sw.js` precache of `settings/` (+ help pages), Tests workflow paths `settings/**`. `APP_VERSION` 0.50.00: main (0.49.02) + 1 minor.
 - **NOT tested:** a real phone, Safari / iOS, real Dropbox.
 - **Status:** PR #107.
+
+### 2026-10-10 — Public Domain Calculator: guide pages (EN/EL) — 0.50.01
+- **Changes:** Help has a full page for it in English and Greek, available offline. The page covers searching for an author or work, entering dates by hand, the four kinds of answer, the country list, what stays on the device, keyboard keys and the limits (not legal advice, special cases not counted, what is sent to Wikidata). (PR #106)
+- **NOT tested:** a real phone, Safari.
