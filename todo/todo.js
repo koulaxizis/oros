@@ -2561,31 +2561,7 @@
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { list, item? }. Shows the list; with an item, opens its
   // dialog. Unknown ids, or a dialog already open → no-op.
-  // Single task handed over by another app (Reader's "Make a task"):
-  // target { add: { title, note } }. Plain text, clipped; the task goes
-  // on top of the active list and its dialog opens so the user can edit
-  // or delete it. Owner of this key: the Reader thread (Bible). The
-  // bulk "send to To-Do" bridge (Meal Planner) is separate.
-  function handleAddIntent(a) {
-    var clean = function (v, max) {
-      return String(v == null ? "" : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").slice(0, max);
-    };
-    var title = clean(a.title, 500).replace(/\s+/g, " ").trim();
-    var note = clean(a.note, 5000).trim();
-    if (!title) return;
-    if (document.querySelector("dialog[open]")) return;
-    var list = activeList();
-    if (!list) return;
-    var item = freshItem(title, null);
-    item.notes = note;
-    list.items.unshift(item);
-    list.items.forEach(function (it, i) { it.pos = i; });
-    list.om = Date.now();
-    save(); renderAll();
-    openItemDialog(list.id, item.id);
-  }
   function openSearchTarget(t) {
-    if (t && t.add && typeof t.add === "object") { handleAddIntent(t.add); return; }
     if (!t || typeof t.list !== "string" || !listById(t.list)) return;
     // A dialog in progress (maybe with unsaved edits) wins: no jump.
     if (document.querySelector("dialog[open]")) return;

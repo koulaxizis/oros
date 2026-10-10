@@ -2541,7 +2541,10 @@
     if (open) {
       opt("send.bookmarks", function () { open("bookmarks", { add: { url: it.link, title: it.title || "" } }); });
       opt("send.notes", function () { open("notes", { add: { title: it.title || "", text: articleText(it, feed) } }); });
-      opt("send.todo", function () { open("todo", { add: { title: it.title || it.link, note: articleText(it, feed) } }); });
+      // To-Do's own receiver (Bible BR-TD-ADD): it asks before adding.
+      opt("send.todo", function () {
+        open("todo", { addItems: { from: t("app"), items: [{ text: (it.title || it.link).slice(0, 300), note: articleText(it, feed).slice(0, 1000) }] } });
+      });
     }
     // Email: the device's own mail app for now. When orOS Mail can send
     // (its phase 2), this becomes open("mail", { compose: { subject, body } }).
