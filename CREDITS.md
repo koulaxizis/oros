@@ -22,6 +22,7 @@ list in `shell.js` and the "Credits register" in `OROS_BIBLE.md`.
 | [jsPDF](https://github.com/parallax/jsPDF) | 2.5.2 | © 2010-2021 James Hall, yWorks GmbH and contributors (bundled parts carry their own notices in the file) | [MIT](https://github.com/parallax/jsPDF/blob/master/LICENSE) | PDF export: Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget |
 | [SheetJS Community Edition](https://sheetjs.com/) (`xlsx.full.min.js`) | 0.20.3 | © 2013-present SheetJS LLC | [Apache-2.0](https://git.sheetjs.com/sheetjs/sheetjs/src/branch/github/LICENSE) | Spreadsheet, Budget |
 | [hls.js](https://github.com/video-dev/hls.js) (light build) | 1.7.3 | © 2017 Dailymotion and contributors | [Apache-2.0](https://github.com/video-dev/hls.js/blob/master/LICENSE) | Television |
+| [PDF.js](https://mozilla.github.io/pdf.js/) (legacy build, `vendor/pdfjs/`) | 5.4.394 | © Mozilla Foundation and contributors | [Apache-2.0](vendor/pdfjs/LICENSE) | Layout: opening PDF files |
 
 Used only by the test suite (`tests/`, never shipped to users):
 [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe, Apache-2.0

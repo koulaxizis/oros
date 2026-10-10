@@ -4190,7 +4190,10 @@
           el: "Αρχεία Excel / ODS (Spreadsheet, Budget)" },
         { name: "hls.js 1.7.3", url: "https://github.com/video-dev/hls.js",
           by: "Dailymotion & contributors", lic: "Apache-2.0",
-          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" }
+          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" },
+        { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
+          by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
+          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" }
       ]
     },
     {

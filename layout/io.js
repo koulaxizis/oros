@@ -202,13 +202,14 @@
     }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
   }
 
-  // Open a file: a .oroslayout package, a Scribus .sla or an InDesign
-  // .idml document.
+  // Open a file: a .oroslayout package, a Scribus .sla, an InDesign
+  // .idml or a PDF (Affinity and others).
   function importPackage() {
-    pickFile(".oroslayout,.sla,.idml,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package").then(function (f) {
+    pickFile(".oroslayout,.sla,.idml,.pdf,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf").then(function (f) {
       if (!f) return;
       if (/\.sla$/i.test(f.name || "")) return importSla(f);
       if (/\.idml$/i.test(f.name || "")) return importIdml(f);
+      if (/\.pdf$/i.test(f.name || "") || f.type === "application/pdf") return importPdf(f);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
       return f.text().then(function (txt) {
         var pkg = null;
@@ -261,6 +262,22 @@
       if (!res) { LY.toast(t("idml.bad")); return; }
       return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }));
     }).then(null, function () { LY.toast(t("idml.bad")); });
+  }
+  // PDF: text → editable frames, the rest → one picture per page
+  function importPdf(f) {
+    if (f.size > FOREIGN_MAX || !window.LY_PDFIN) { LY.toast(t("pdf.bad")); return; }
+    LY.toast(t("pdf.start"));
+    return f.arrayBuffer().then(function (buf) {
+      return window.LY_PDFIN.open(buf, { now: LY.now(), name: baseName(f, /\.pdf$/i) }, A.importFile, function (k, n) {
+        LY.toast(t("pdf.working", { n: k, t: n }));
+      });
+    }).then(function (res) {
+      if (!res) { LY.toast(t("pdf.bad")); return; }
+      LY.addDoc(res.doc);
+      var msg = t("pdf.done", { p: res.stats.pages, n: res.stats.frames });
+      if (res.stats.cut) msg += " " + t("pdf.cut", { n: res.stats.pages, t: res.stats.total });
+      LY.toast(msg);
+    }).then(null, function () { LY.toast(t("pdf.bad")); });
   }
   // res: { doc, images, linked, stats }; blobOf(image) → Promise of a
   // Blob or null

@@ -12,7 +12,9 @@ Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)
 With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu.
 
 ### Text
-Double-click a text frame, or select it and press [[Enter]], to open the `Story Editor`. There you type, apply styles, use bold, italic and underline, and insert the page number or count.
+Double-click a text frame, select it and press [[Enter]], or click it with the `Text frame (T)` tool, and type straight into it: the caret, the selection and the reflow follow the frame through its columns, its threads and its rotation. A new text frame is ready for typing at once. Drag or [[Shift]]+arrows select, a double click picks a word and a triple click a paragraph; [[Enter]] starts a paragraph, [[Shift+Enter]] breaks the line and [[Esc]] finishes. Paragraph and character styles in the `Styles` panel apply to the selection.
+
+`Edit text` (right-click menu or `Properties`) opens the `Story Editor` with the whole story in one place, where you can also insert the page number or count.
 
 If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a new frame` and then tap or click another frame or an empty spot, or `Autoflow: add pages until it fits`. `Import text (.txt)…` in the `More` menu brings in a text file.
 
@@ -25,7 +27,15 @@ Double-click an image frame, or use `Place image…`, to choose a picture. Pick 
 - `Colours`: your `Swatches`, in RGB or CMYK. CMYK looks approximate on screen, but the PDF gets the exact values.
 
 ## Export
-`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open package` on the home screen opens it again.
+`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open file` on the home screen opens it again.
+
+## Bring work from other programs
+`Open file` on the home screen also opens, as a new document:
+- Scribus `.sla` files: pages, masters, styles, colours, threaded text, shapes and embedded images.
+- InDesign `.idml` files (in InDesign: File, Save As, InDesign Markup): pages, masters, paragraph and character styles, colours, threaded text frames, shapes, lines, groups and embedded images.
+- PDF files, for example from Affinity Publisher: the text becomes editable frames, and pictures, drawings and backgrounds become one locked picture per page behind the text.
+
+Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables and free shapes become simple boxes; the message after opening says how many.
 
 ## Sync and backup
 Your documents sync between your devices through [orOS sync](help:t/sync). Images are stored on the orOS disk and sync as separate files, so on another device a picture may show `Syncing…` for a while. The open document and zoom stay on each device. For a full copy with images, save a package; see also [backup](help:t/backup).
@@ -37,11 +47,11 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - Arrow keys nudge the selection ([[Shift]] for bigger steps); [[Delete]] removes it.
 - [[Ctrl+Z]] / [[Ctrl+Y]] undo and redo; [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]], [[Ctrl+D]] duplicate, [[Ctrl+A]] select all.
 - [[Ctrl+G]] groups, [[Ctrl+Shift+G]] ungroups; [[Ctrl+E]] opens Export.
-- In the Story Editor: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] closes it.
+- Typing in a frame or in the Story Editor: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] finishes.
 
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 
 ## Limits
-- Text is edited in the Story Editor, not directly in the frame.
+- A PDF opens up to 300 pages; its text keeps its place and look, not its original styles or threads.
 - A document can have up to 999 pages and 5,000 objects.

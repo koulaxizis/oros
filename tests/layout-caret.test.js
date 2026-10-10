@@ -120,6 +120,6 @@ test("caret: up / down keep the goal x, home / end, word and step", () => {
   assert.deepEqual(C.step(paras, { p: 0, o: 14 }, 1, false), { p: 1, o: 0 });
   assert.deepEqual(C.step(paras, { p: 0, o: 0 }, -1, false), { p: 0, o: 0 });
   // a field is one character
-  assert.equal(C.paraText(paras[2]).indexOf("￼"), 7);
+  assert.equal(C.paraText(paras[2]).indexOf("\uFFFC"), 7);
   assert.ok(C.cmp({ p: 1, o: 0 }, { p: 0, o: 99 }) > 0);
 });
