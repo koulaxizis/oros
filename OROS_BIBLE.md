@@ -4193,3 +4193,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Calendar:** new **Meals** filter chip (`lbl-feed-meals`): planned meals as all-day rows ("Dinner: Fasolada"); tapping one opens Meal Planner on that week (`__orosOpenAt("meals", {day})`). `calendar/index.html` loads `../meals/core.js` (already precached).
 - **Files:** `todo/todo.js` + `todo.css`, `meals/meals.js`, `calendar/`, `tests/todo-add.test.js`, Tests workflow also on `todo/**`.
 - **Not tested:** a real phone, Safari/Firefox, real Dropbox.
+
+### 2026-10-10 — Travel phase 2: Calendar, reminders, forecast, fuel cost — 0.57.02
+- **Calendar:** read-only **Travel** feed (`lbl-feed-travel`): trip days + timed itinerary entries; a click opens the trip through the new bridge `__orosOpenTravel(tripId)`.
+- **Reminders (shell `travelCheckTick`):** the evening before departure (from 18:00), flights 3 h before, train / bus / ferry 1 h before; per-device on/off (prefs `rem`, `rain`), fired keys device-local `oros-travel-fired`. Notifications app toggle `travel`, deep link `travel:<tripId>`.
+- **Destination forecast:** 7 days from Open-Meteo, device-local cache `oros-travel-wx` (3 h), one-tap umbrella suggestion.
+- **Fuel cost by car:** distance (one way / round trip), consumption and price per litre or kWh; vehicles, full-to-full average and last price come read-only from Garage (`garage/core.js`, now also loaded by Travel); total and per traveller; "Add to notes".
+- **Files:** NEW `travel/core.js` (OrosTravelCore, also loaded by the shell and Calendar; precached), `travel/`, `calendar/`, `shell.js`, `notifications.js`, `index.html`, `translations.js`, `tests/travel-core.test.js` (7), `tests/travel.test.js`.
+- **Not tested:** a real phone, Safari, real Dropbox, the live Open-Meteo endpoint on a device.
