@@ -4436,3 +4436,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Device-local key `oros-shelf-rem` `{on, h}` (never synced or backed up). No data format change.
 - Tests: tests/shelf.test.js extended. Help pages updated.
 - Not tested: a real phone, Safari, a notification firing with orOS closed for a whole day.
+
+### 2026-10-10 — Atelier Present plays videos, sound and animations (#150) — 0.65.05
+- The slide show (Atelier › Present) now plays videos, page sound and entrance animations on the live slide instead of showing a still first frame. Slides' own Present is unchanged.
+- Shared player `designkit/show.js` 1.1.0: a `live(i, t)` callback paints the current slide at time `t`, and `state().t` reports it; slides without motion still use cached stills. `atelier/motion.js` `present()` / `presentSound()` use it.
+- Help pages (Atelier EN/EL) updated.
+- Not tested: a real phone, Safari, H.264/MP4 sources, very long videos.
