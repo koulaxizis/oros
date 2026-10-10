@@ -864,6 +864,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - Cells: `{"<sid>|<r>|<c>":{v,mtime,f?}}`, sparse, LWW per cell, shared tombstones. `f{b,i,u,al,co,nf}` rides whole-cell LWW.
   - Sheets: `{id,pos,cw{colIdx:px}}`.
   - Formula engine: tokenizer → shunting-yard → RPN, built from scratch.
+    - **[fixed 2026-10-10]** Binary operators (`=1+1`) and plain ranges (`=SUM(A1:A5)`) returned `#ERROR!`: the parser emitted operators as `{type:"OP"}` while the evaluator only knew `TT_OP`, and only sheet-prefixed ranges were lexed as one reference. Both fixed; `tests/spreadsheet-formula.test.js`. Still open: unary minus (`=-A1`) → `#ERROR!`.
 - **RADIO v1:** `{ ver, favorites[{stationuuid,…,mtime}], deleted{} }` — union by stationuuid (Dice pattern).
 - **MINIMALISM:** day records + `prefs{remindHour}`. Reminder logic is shell-side (`minimalismCheckTick` reads the slice directly, so it works with the app closed).
 - **MINDMAP v1:** `{ ver, maps[{id,m,sides:"both"|"right"}], nodes[{id,m,map,parent,ord,text,emoji,color,note,url,done}], tombs{} }`. Central node id = `<mapId>-r` (parent ""), its text is the map title. `color` ∈ LABEL_COLORS keys or "" (auto per main branch). `url` http(s) only. Nodes of a deleted map are dropped by the merge. A node whose parent is missing, and the smallest id of a parent loop (two devices moving nodes at once), hang from the centre flagged "recovered" (dashed) — deterministic, nothing written.
@@ -1323,6 +1324,15 @@ Owner: Budget (`budget/`). Senders (Garage, Split, …) never edit `budget/`. Sa
 - **BR-B1-3 · One receiver.** `window.__orosBudgetNew` in `budget.js`, two entries: a live push when Budget is the running app, and the one-shot take of sessionStorage `oros-budget-new` at boot (read, then remove; device-local, never synced, never exported). Standalone: `/budget/?new={urlencoded JSON}`; the parameter is removed from the address after it is read.
 - **BR-B1-4 · A PREFILL, not data (BR-W8-6).** The New entry form opens filled in, focus on Save. Nothing reaches the slice, sync or limit notifications until the user saves; Cancel leaves no trace. Every text is rendered with `textContent`.
 - **BR-B1-5 · Senders.** Show the button ("Add to Budget" / «Προσθήκη στα Έσοδα & Έξοδα») only when `typeof window.parent.__orosOpenBudgetNew === "function"`, and call it only from that explicit button: there is no duplicate guard, the user confirms each entry.
+
+### Cross-app "open in Spreadsheet": any app → a new sheet (BR-S1)
+
+Owner: Spreadsheet (`spreadsheet/`). First sender: Budget (Export → "Open in Spreadsheet").
+
+- **BR-S1-1 · Contract.** `window.parent.__orosOpenAt("spreadsheet", { newSheet: { name, rows, sum? } })` through the generic deep link (`__orosOpenAt` / `__orosTakeTarget`, staged in sessionStorage `oros-open-at`). `rows` = array of rows, row 1 = heading; a cell is a finite number, a string or null/"". `sum` = 0-based columns that get `=SUM(…)` under the last row.
+- **BR-S1-2 · Always a NEW sheet**, never overwrites; capped at 500 rows × 64 columns (the sender caps first and says so). `name` goes through `xlSafeName`.
+- **BR-S1-3 · No formulas from the sender.** A string cell is plain text; one starting with `= + - @` gets a leading apostrophe. The only formulas are the receiver's own `SUM`s.
+- **BR-S1-4 · Receiver.** `sheetFromTable()` in `spreadsheet.js`: live push via `window.__orosOpenAt(target)`, boot take via `takeTarget()`. It marks the slice dirty like any import (it is user data from then on).
 
 ### `LABEL_COLORS` (shared, 8)
 

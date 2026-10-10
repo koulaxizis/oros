@@ -133,7 +133,8 @@
       "xf.btn": "Transfer", "xf.new": "Transfer between accounts", "xf.edit": "Edit transfer",
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
-      "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account"
+      "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
+      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet"
     },
     el: {
       "app": "Έσοδα & Έξοδα",
@@ -206,7 +207,8 @@
       "xf.btn": "Μεταφορά", "xf.new": "Μεταφορά μεταξύ λογαριασμών", "xf.edit": "Επεξεργασία μεταφοράς",
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
-      "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός"
+      "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
+      "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο"
     }
   };
 
@@ -2244,6 +2246,7 @@
         if (kind === "csv") exportCsv(rows, P);
         if (kind === "xlsx") exportXlsx(rows, P);
         if (kind === "pdf") exportPdf(rows, P);
+        if (kind === "sheet") openInSheet(rows, P);
         dlg.close();
       };
     };
@@ -2251,6 +2254,11 @@
     acts.appendChild(button(t("exp.xlsx"), "", go("xlsx")));
     acts.appendChild(button(t("exp.pdf"), "primary", go("pdf")));
     dlg.appendChild(acts);
+    if (sheetBridge()) {
+      var sa = el("div", "dlg-actions");
+      sa.appendChild(button(t("exp.sheet"), "", go("sheet")));
+      dlg.appendChild(sa);
+    }
     dlg.appendChild(el("p", "hint", t("exp.hint")));
     var close = el("div", "dlg-actions");
     close.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
@@ -2258,6 +2266,28 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     loadLib("xlsx.full.min.js", function () {}, true);   // pre-warm: keeps the click's activation (R33)
+  }
+
+  // "Open in Spreadsheet" (Bible BR-S1): a new sheet in the orOS
+  // Spreadsheet with the entries and a SUM under the amounts.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function sheetBridge() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet(rows, P) {
+    var p = sheetBridge();
+    if (!p) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("exp.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    var withAcc = data.acc.length > 0;
+    var table = [colHead()].concat(rows.map(function (r) {
+      var line = [dateShort(r.d), kindName(r.k), r.cat, (r.k === "i" ? r.a : -r.a) / 100, cur(), r.n];
+      if (withAcc) line.push(r.acc);
+      return line;
+    }));
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + P.slug, rows: table, sum: [3] } });
   }
 
   function exportCsv(rows, P) {
