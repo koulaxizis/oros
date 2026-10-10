@@ -14,6 +14,8 @@ For some types, a button fills the form for you, without changing anything in th
 - `From Contacts` for a `Contact`, from [Contacts](app:contacts).
 - `From Calendar` for an `Event`, from [Calendar](app:calendar).
 
+It works the other way too: `QR code` on a contact's card in Contacts, in an event's edit window in Calendar, or in a bookmark's edit window in Bookmarks opens this app with a new code already filled in. The code you had open stays as it was, and `Undo` on the message brings it back. For a repeating event, the code gets the date of the occurrence you opened.
+
 ## Change the look
 Under `Look` you can set:
 - `Error correction`, from `Low (7%)` to `Highest (30%)`. Higher survives smudges and scratches, but the code gets denser.

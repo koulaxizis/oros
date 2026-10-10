@@ -138,42 +138,54 @@
   AT.registerView("animate", view);
 
   // ---------- Present ----------
+  // Pages with a video or entrance animations are live in the show
+  // (designkit show.js redraws them while they move); the pages'
+  // sound and the videos play in step with the page on screen.
   function present() {
     var doc = AT.doc, S = window.orosDK.show;
     if (!doc || !S) return;
     ED.exitText(); stopPlay();
     var list = pages(doc);
     var idx = Math.max(0, list.findIndex(function (p) { return p.id === ED.pg; }));
+    var sess = AT.video ? AT.video.Session(doc, list) : null;
+    var intro = list.map(function (p) {
+      return Anim.introLen(doc.items.filter(function (it) { return it.pg === p.id; }).sort(function (a, b) { return a.z - b.z; }));
+    });
+    var hasVid = list.map(function (p) {
+      return doc.items.some(function (it) { return it.pg === p.id && !it.hide && it.ax && it.ax.vid; });
+    });
     // start() needs the click's user gesture (full screen), so no
-    // waiting here: the open design's fonts and pictures are loaded.
+    // waiting here: the open design's fonts and pictures are loaded,
+    // a video shows its first frame until it has loaded.
     var ctl = S.start({
       count: list.length,
       aspect: doc.setup.w / doc.setup.h,
       startAt: idx,
       lang: AT.LANG,
-      renderSlide: function (i, canvas) {
+      live: function (i, t) { return hasVid[i] || t < intro[i] + 0.1; },
+      renderSlide: function (i, canvas, cssW, cssH, t) {
         var sc = canvas.width / doc.setup.w;
-        AT.draw.renderPage(doc, list[i], sc, { canvas: canvas, maxSide: 0, background: "#ffffff" });
+        AT.draw.renderPage(doc, list[i], sc, { canvas: canvas, maxSide: 0, background: "#ffffff",
+          time: t, media: t !== undefined && sess ? sess.media : undefined });
       },
       title: function (i) { return t("pg.n", { n: i + 1 }); },
       transition: function (i) { return list[i] && i ? Anim.pageTransition(doc, list[i].id) : "none"; }
     });
-    presentSound(doc, list, ctl);
+    presentSound(ctl, sess);
   }
-  // The pages' sound follows the slide on screen (videos show their
-  // first frame in a slide show).
-  function presentSound(doc, list, ctl) {
-    if (!ctl || !AT.video) return;
-    var s = AT.video.Session(doc, list), tl = null, idx = -1, at0 = 0;
+  function presentSound(ctl, s) {
+    if (!ctl || !s) return;
     s.prepare().then(function () {
       if (s.empty()) { s.stop(); return; }
-      tl = s.timeline;
+      var tl = s.timeline, last = -2;
       (function tick() {
         var st = ctl.state();
         if (st.closed) { s.stop(); return; }
-        if (st.index !== idx) { idx = st.index; at0 = performance.now(); }
-        var p = tl.pages[idx];
-        if (p) s.sync(p.t0 + Math.min(p.dur - 0.05, (performance.now() - at0) / 1000), true);
+        // past the page's duration the clips run on by themselves
+        // (syncing to a fixed time would keep seeking them back)
+        var p = tl.pages[st.index], lt = st.t || 0;
+        if (p && (lt < p.dur - 0.05 || st.index !== last)) s.sync(p.t0 + Math.min(p.dur - 0.05, lt), true);
+        last = st.index;
         setTimeout(tick, 250);
       })();
     });

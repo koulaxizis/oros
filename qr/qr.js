@@ -113,6 +113,7 @@
       "toast.exported": "Exported {file}", "toast.copied": "Image copied",
       "toast.copyFail": "Could not copy the image", "toast.filesSaved": "Saved to Files › QR › {file}",
       "toast.filesFail": "Could not save to Files",
+      "toast.gone": "Not found: it may have been deleted",
       "card.title": "WiFi", "card.network": "Network", "card.password": "Password",
       "card.scan": "Point your phone camera at the code to connect."
     },
@@ -174,6 +175,7 @@
       "toast.exported": "Εξήχθη το {file}", "toast.copied": "Η εικόνα αντιγράφηκε",
       "toast.copyFail": "Η αντιγραφή της εικόνας απέτυχε", "toast.filesSaved": "Αποθηκεύτηκε στα Αρχεία › QR › {file}",
       "toast.filesFail": "Η αποθήκευση στα Αρχεία απέτυχε",
+      "toast.gone": "Δεν βρέθηκε: ίσως διαγράφηκε",
       "card.title": "WiFi", "card.network": "Δίκτυο", "card.password": "Κωδικός",
       "card.scan": "Στρέψε την κάμερα του κινητού στο QR για να συνδεθείς."
     }
@@ -981,6 +983,7 @@
       var web = Array.isArray(c.websites) ? c.websites.filter(function (e) { return e && str(e.v); })[0] : null;
       var adr = Array.isArray(c.addresses) ? c.addresses.filter(Boolean)[0] : null;
       return {
+        id: c.id,
         main: name || "?",
         sub: [str(c.org), mob ? mob.v : "", em ? em.v : ""].filter(Boolean).join(" · "),
         fields: {
@@ -1017,6 +1020,7 @@
         var end = TIME.test(str(e.end)) ? e.end : "";
         var dEnd = DATE.test(str(e.dateEnd)) && e.dateEnd > e.date ? e.dateEnd : "";
         return {
+          id: e.id,
           key: e.date + (start || "00:00"),
           main: str(e.title) || "—",
           sub: fmtDate(e.date) + " · " + (start ? start + (end ? "–" + end : "") : t("pick.allDay")) +
@@ -1038,7 +1042,7 @@
     var dead = tombSet(d.deleted);
     return Object.keys(d.items).map(function (id) { return d.items[id]; })
       .filter(function (it) { return it && typeof it.id === "string" && !dead[it.id] && /^https?:\/\//i.test(str(it.url)); })
-      .map(function (it) { return { main: str(it.title) || str(it.url), sub: str(it.url), fields: { url: str(it.url) } }; })
+      .map(function (it) { return { id: it.id, main: str(it.title) || str(it.url), sub: str(it.url), fields: { url: str(it.url) } }; })
       .sort(function (a, b) { return a.main.localeCompare(b.main, LANG === "el" ? "el" : "en"); });
   }
 
@@ -1103,6 +1107,47 @@
       renderLook();
     });
   }
+
+  // "QR code" buttons in Contacts, Calendar and Bookmarks (shell deep
+  // link __orosOpenAt("qr", target) / __orosTakeTarget("qr")). Target
+  // { from: "contacts" | "calendar" | "bookmarks", id, date? }: only an
+  // id travels, the fields are read here with the same mapping as the
+  // pickers. The result is a NEW unsaved code (the open saved code is
+  // stored first and left as it was); nothing is written to the other
+  // app (BR-W8-6). `date` (YYYY-MM-DD) picks one occurrence of a
+  // repeating event. Unknown source or id → a toast, nothing changes.
+  var TARGET_TYPE = { bookmarks: "url", contacts: "vcard", calendar: "event" };
+  function openTarget(tg) {
+    var ty = tg && typeof tg.from === "string" && TARGET_TYPE.hasOwnProperty(tg.from) ? TARGET_TYPE[tg.from] : null;
+    if (!ty || typeof tg.id !== "string") return;
+    var row = null;
+    PICK_SRC[ty]().forEach(function (r) { if (r.id === tg.id) row = r; });
+    [].forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
+    if (!row) { showToast(t("toast.gone")); return; }
+    var fields = clone(row.fields);
+    if (ty === "event" && typeof tg.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(tg.date)) {
+      fields.date = tg.date;
+      if (fields.dateEnd && fields.dateEnd <= tg.date) fields.dateEnd = "";
+    }
+    storeSavedNow();
+    var was = { cur: prefs.cur, draft: clone(prefs.draft), work: clone(work) };
+    var f = {};
+    f[ty] = P.normFields(ty, fields);
+    prefs.cur = null;
+    prefs.draft = { type: ty, fields: f, st: clone(work.st) };
+    work = clone(prefs.draft);
+    savePrefs();
+    renderAll();
+    undoToast(t("pick.filled", { app: t("app." + tg.from) }), function () {
+      prefs.cur = was.cur;
+      prefs.draft = was.draft;
+      loadCurrent();
+      if (!was.cur) work = was.work;
+      savePrefs();
+      renderAll();
+    });
+  }
+  window.__orosOpenAt = openTarget;
 
   // ---------- 9. My codes ----------
   function renderToolbar() {
@@ -1494,6 +1539,13 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeTarget === "function") {
+        var tg = p.__orosTakeTarget("qr");
+        if (tg) openTarget(tg);
+      }
+    } catch (e) {}
   }
 
   boot();
