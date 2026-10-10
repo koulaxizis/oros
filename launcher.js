@@ -939,12 +939,34 @@
     }
   }
 
+  // For the Settings app: read and write the Dock settings without the
+  // menu section. `over` comes resolved (the device default applied).
+  function publicPrefs() {
+    var p = prefs();
+    return { on: p.on, size: p.size, magnify: p.magnify, autohide: p.autohide,
+             over: overApps(p), fine: finePointer(), pinned: shown("dock").length };
+  }
+  var PREF_OK = {
+    on: function (v) { return typeof v === "boolean"; },
+    size: function (v) { return Object.prototype.hasOwnProperty.call(SIZES, v); },
+    magnify: function (v) { return typeof v === "boolean"; },
+    autohide: function (v) { return typeof v === "boolean"; },
+    over: function (v) { return typeof v === "boolean" || v === null; }
+  };
+  function setPref(k, v) {
+    if (!Object.prototype.hasOwnProperty.call(PREF_OK, k) || !PREF_OK[k](v)) return false;
+    var q = prefs(); q[k] = v; savePrefs(q); repaintSettings();
+    return true;
+  }
+
   root.orosLauncher = {
     VER: VER,
     model: model,
     attach: attach,
     refresh: paint,
     menuRow: menuRow,
-    renderSettings: renderSettings
+    renderSettings: renderSettings,
+    prefs: publicPrefs,
+    setPref: setPref
   };
 })(typeof window !== "undefined" ? window : globalThis);

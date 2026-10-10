@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.48.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.49.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -48,6 +48,7 @@
     // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
     autoexport:      "off"
@@ -3483,7 +3484,23 @@
       return;
     }
     var key = window.orosSync.errorKey(err);
+    if (key === "sync.err.generic") { setSyncMsgRaw("err", syncErrText(err)); return; }
     setSyncMsg("err", key);
+  }
+
+  // SY-L2: the message for a failed sync, with the technical reason
+  // when the engine only knows "generic" ("Sync failed — check your
+  // connection (upload failed: 429)"). Plain text, shown with
+  // textContent only.
+  function syncErrText(err) {
+    var S = window.orosSync;
+    var key = (S && typeof S.errorKey === "function") ? S.errorKey(err) : "sync.err.generic";
+    var text = window.t(key);
+    if (key === "sync.err.generic") {
+      var why = String((err && (err.message || err.name)) || "").replace(/[\u0000-\u001f]/g, " ").slice(0, 120);
+      if (why) text += " (" + why + ")";
+    }
+    return text;
   }
 
   function escapeHtml(s) {
@@ -4725,10 +4742,21 @@
     // Subtle auto-sync feedback: the status dot pulses while the engine
     // pushes in the background. No messages, no interruptions.
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
-      window.orosSync.onAutoSync(function (kind) {
+      window.orosSync.onAutoSync(function (kind, reason, err) {
         if (kind === "start") setSyncDot("syncing");
-        else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
-        else setSyncDot("synced", 4000);   // transient green, then auto
+        else if (kind === "fail") {
+          setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
+          // SY-L2: say WHY, quietly (no toast, no inbox): in the dot's
+          // tooltip and as a line in Settings > Sync (bridge snapshot
+          // sync.msg), until the next sync that succeeds.
+          state.syncAutoErr = syncErrText(err);
+          var dotEl = document.getElementById("sync-dot");
+          if (dotEl) dotEl.parentNode.setAttribute("title", window.t("syncdot.err") + " — " + state.syncAutoErr);
+          renderMenu();
+        } else {
+          setSyncDot("synced", 4000);   // transient green, then auto
+          if (state.syncAutoErr) { state.syncAutoErr = null; renderMenu(); }
+        }
       });
     }
 
@@ -6062,7 +6090,8 @@
         interval: getSafeInterval(),
         intervals: [0, 1, 3, 5, 15],
         minPass: MIN_PASS_LEN,
-        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text } : null
+        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
+           : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
       },
       backup: {
         folderSupported: fsSupported(),
