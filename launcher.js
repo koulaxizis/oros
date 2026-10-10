@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, v1.0.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -16,8 +16,8 @@
 //     context-menu key opens a small menu (Open · Move earlier ·
 //     Move later · Remove).
 //   • The Dock: a mac-style bar at the bottom, OFF until the user
-//     turns it on in its menu section (size, magnify, auto-hide,
-//     over open apps). Same small menu; mouse users can also drag.
+//     turns it on in Settings (size, style, magnify, auto-hide,
+//     over open apps: off until chosen). Same small menu; mouse users can also drag.
 //     While it is shown, --tb-h lifts the pet and the desktop grid.
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
@@ -40,7 +40,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var DATA_KEY = "oros-launcher-data";
   var MAX_ITEMS = 500;
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
@@ -234,10 +234,13 @@
 
   // ---------- 3. Dock preferences (DEVICE-LOCAL, never synced) ----------
   // A phone and a PC want different docks, so only the pins travel.
-  // oros-launcher-prefs = { on, size: s|m|l, magnify, autohide, over }
-  // over: null = the device's default (mouse: yes, touch: no).
+  // oros-launcher-prefs = { on, size: s|m|l, magnify, autohide, over, style }
+  // over: null = never chosen = off (Chris 2026-10-10; it used to follow
+  // the pointer). A stored true / false is the user's own choice and wins.
+  // style: the look of the bar (STYLES); unknown = "classic".
   var PREFS_KEY = "oros-launcher-prefs";
   var SIZES = { s: 40, m: 52, l: 64 };
+  var STYLES = ["classic", "glass", "frosted", "smoke", "transparent", "solid", "3d", "neon"];
 
   function finePointer() {
     try { return root.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch (e) { return false; }
@@ -251,14 +254,15 @@
       size: SIZES[p.size] ? p.size : "m",
       magnify: p.magnify !== false,
       autohide: p.autohide === true,
-      over: (p.over === true || p.over === false) ? p.over : null
+      over: (p.over === true || p.over === false) ? p.over : null,
+      style: STYLES.indexOf(p.style) >= 0 ? p.style : "classic"
     };
   }
   function savePrefs(p) {
     try { root.localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
     paintDock();
   }
-  function overApps(p) { return p.over === null ? finePointer() : p.over; }
+  function overApps(p) { return p.over === true; }
 
   // ---------- 4. Strings (EN / EL) ----------
   var STR = {
@@ -351,6 +355,28 @@
     "padding:4px 9px;border-radius:7px;font-size:12px;background:var(--panel-bg);color:var(--text);",
     "border:1px solid var(--border);box-shadow:0 4px 14px var(--shadow);pointer-events:none;opacity:0;transition:opacity .12s}",
     "@media (hover:hover) and (pointer:fine){.ld-dk:hover .ld-tip,.ld-dk:focus-visible .ld-tip{opacity:1}}",
+    // looks (Settings › Dock › Style): one class on #ld-dock, the bar only
+    "#ld-dock.ld-s-glass .ld-bar{background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.08));",
+    "border:1px solid rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.12),0 10px 30px rgba(0,0,0,.28);",
+    "-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%)}",
+    "#ld-dock.ld-s-frosted .ld-bar{background:color-mix(in srgb,var(--panel-bg) 55%,rgba(255,255,255,.35));",
+    "border:1px solid rgba(255,255,255,.3);-webkit-backdrop-filter:blur(28px) brightness(1.08);backdrop-filter:blur(28px) brightness(1.08)}",
+    "#ld-dock.ld-s-smoke .ld-bar{background:rgba(18,18,22,.58);border:1px solid rgba(255,255,255,.1);",
+    "box-shadow:0 10px 30px rgba(0,0,0,.4);-webkit-backdrop-filter:blur(14px) grayscale(.5);backdrop-filter:blur(14px) grayscale(.5)}",
+    "#ld-dock.ld-s-transparent .ld-bar{background:transparent;border-color:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}",
+    "#ld-dock.ld-s-transparent .ld-tile{filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}",
+    "#ld-dock.ld-s-solid .ld-bar{background:var(--panel-bg);-webkit-backdrop-filter:none;backdrop-filter:none}",
+    "#ld-dock.ld-s-3d .ld-bar{position:relative;isolation:isolate;background:transparent;border-color:transparent;box-shadow:none;",
+    "-webkit-backdrop-filter:none;backdrop-filter:none;padding-bottom:10px}",
+    "#ld-dock.ld-s-3d .ld-bar::before{content:\"\";position:absolute;z-index:-1;left:4px;right:4px;bottom:2px;height:62%;border-radius:10px;",
+    "transform:perspective(260px) rotateX(48deg);transform-origin:50% 100%;",
+    "background:linear-gradient(180deg,color-mix(in srgb,var(--panel-bg) 35%,rgba(255,255,255,.7)),color-mix(in srgb,var(--panel-bg) 75%,rgba(255,255,255,.2)));",
+    "border:1px solid rgba(255,255,255,.4);border-bottom:4px solid color-mix(in srgb,var(--panel-bg) 60%,#000);",
+    "box-shadow:0 12px 24px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}",
+    "#ld-dock.ld-s-3d .ld-tile{box-shadow:0 6px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.35)}",
+    "#ld-dock.ld-s-neon .ld-bar{background:color-mix(in srgb,var(--panel-bg) 78%,transparent);border:1px solid var(--accent);",
+    "box-shadow:0 0 14px color-mix(in srgb,var(--accent) 55%,transparent),inset 0 0 12px color-mix(in srgb,var(--accent) 22%,transparent)}",
+    "#ld-dock.ld-s-neon .ld-dk.run .ld-dot{box-shadow:0 0 6px var(--accent)}",
     // auto-hide: an edge strip (mouse) and a small handle (touch)
     "#ld-edge{position:fixed;left:0;right:0;bottom:0;height:calc(10px + env(safe-area-inset-bottom,0px));z-index:949;",
     "display:flex;align-items:flex-end;justify-content:center;background:transparent;border:none;padding:0 0 env(safe-area-inset-bottom,0px);cursor:pointer}",
@@ -805,6 +831,7 @@
     edge.tabIndex = -1;                 // keyboard users reach the Dock itself (focus reveals it)
     if (!p.autohide) { clearTimeout(hideTimer); dock.classList.remove("ld-hidden"); }
     dock.style.setProperty("--ld-t", SIZES[p.size] + "px");
+    STYLES.forEach(function (k) { dock.classList.toggle("ld-s-" + k, p.style === k); });
     var bar2 = dock.firstChild;
     bar2.textContent = "";
     var run = runningId();
@@ -940,18 +967,20 @@
   }
 
   // For the Settings app: read and write the Dock settings without the
-  // menu section. `over` comes resolved (the device default applied).
+  // menu section. `over` comes resolved (never chosen = off).
   function publicPrefs() {
     var p = prefs();
     return { on: p.on, size: p.size, magnify: p.magnify, autohide: p.autohide,
-             over: overApps(p), fine: finePointer(), pinned: shown("dock").length };
+             over: overApps(p), style: p.style, styles: STYLES.slice(),
+             fine: finePointer(), pinned: shown("dock").length };
   }
   var PREF_OK = {
     on: function (v) { return typeof v === "boolean"; },
     size: function (v) { return Object.prototype.hasOwnProperty.call(SIZES, v); },
     magnify: function (v) { return typeof v === "boolean"; },
     autohide: function (v) { return typeof v === "boolean"; },
-    over: function (v) { return typeof v === "boolean" || v === null; }
+    over: function (v) { return typeof v === "boolean" || v === null; },
+    style: function (v) { return STYLES.indexOf(v) >= 0; }
   };
   function setPref(k, v) {
     if (!Object.prototype.hasOwnProperty.call(PREF_OK, k) || !PREF_OK[k](v)) return false;

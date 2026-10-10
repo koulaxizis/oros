@@ -437,3 +437,25 @@ test("contacts: contradictory relations cannot create a loop", () => {
   const linked = d.people.filter((p) => p.parents.length).length;
   assert.equal(linked, 1);
 });
+
+// ---------- Calendar feed: death anniversaries ----------
+test("death anniversaries: exact dates only, yearly, 29 Feb on 28 Feb, copies once", () => {
+  const d = data([
+    person("a", 1, { given: "Anna", death: { d: "1990-05-03" } }),
+    person("b", 1, { given: "Babis", death: { d: "1990-05-03", q: "abt" } }),
+    person("c", 1, { given: "Chris", death: { d: "1990-05" } }),
+    person("e", 1, { given: "Eleni", death: { d: "2000-02-29" } }),
+    person("f", 1, { given: "Fotis", dead: false, death: { d: "" } }),
+    person("g", 1, { given: "Anna", death: { d: "1990-05-03" }, tree: "tree2" }),
+    person("h", 5, { given: "Gone", death: { d: "1990-05-03" } })
+  ], [], [tree(), tree("tree2", 1, "Copy")], { h: 9 });
+  const idx = F.deathDays(d);
+  assert.deepEqual(F.deathAnniversaries(idx, "2026-05-03"), [{ pid: "a", name: "Anna Doe", years: 36 }]);
+  assert.deepEqual(F.deathAnniversaries(idx, "1990-05-03"), []);             // the day itself: no row
+  assert.deepEqual(F.deathAnniversaries(idx, "1991-05-03").map((r) => r.years), [1]);
+  assert.deepEqual(F.deathAnniversaries(idx, "2026-02-28").map((r) => r.pid), ["e"]);
+  assert.deepEqual(F.deathAnniversaries(idx, "2028-02-28"), []);             // leap year: on the 29th
+  assert.deepEqual(F.deathAnniversaries(idx, "2028-02-29").map((r) => r.years), [28]);
+  assert.equal(Object.keys(F.deathDays(null)).length, 0);
+  assert.equal(Object.keys(F.deathDays({ people: "x" })).length, 0);
+});

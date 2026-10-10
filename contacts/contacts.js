@@ -185,6 +185,7 @@
       "rel.other": "Other",
       "ct.back": "Back",
       "ct.share": "Share",
+      "ct.familytree": "Family tree",
       "ct.share.done": "Contact copied to clipboard",
       "ct.share.fail": "Could not copy — please retry",
       "ct.maps": "Show on map",
@@ -306,6 +307,7 @@
       "rel.other": "Αλλη",
       "ct.back": "Πίσω",
       "ct.share": "Κοινοποίηση",
+      "ct.familytree": "Οικογενειακό δέντρο",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
       "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά",
       "ct.maps": "Εμφάνιση στον χάρτη"
@@ -625,7 +627,7 @@
   function rescueRaw(text) {
     if (!text) return;
     try { localStorage.setItem(DATA_KEY + "-broken", text); } catch (e) {}
-    try { console.error("contacts: unreadable data copied to " + DATA_KEY + "-broken"); } catch (e2) {}
+    try { console.error("contacts: unreadable data copied to " + DATA_KEY + "-broken"); } catch (e) {}
   }
   function saveState() {
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
@@ -1191,7 +1193,7 @@ function ensureViewCss() {
     ".ct-vs-val.map-link:hover{color:var(--accent,#d4af37);text-decoration:underline}" +
     ".ct-view-note{font-size:13px;white-space:pre-wrap;line-height:1.5;" +
       "padding-top:8px;border-top:1px solid var(--border,#333)}" +
-    ".ct-view-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}" +
+    ".ct-view-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:18px}" +
     ".ct-view-share{border:1px solid var(--border,#333);background:transparent;" +
       "color:var(--text-dim,#999);border-radius:8px;padding:8px 18px;font:inherit;" +
       "cursor:pointer;font-weight:600}" +
@@ -1513,6 +1515,22 @@ function openViewCard(c) {
     shareContact(c);
   });
   foot.appendChild(sh);
+  // Family Tree (read-only bridge, generic deep link): the person
+  // linked to this contact, or Family Tree's "Build from Contacts"
+  // starting here. Shown only inside the shell.
+  var shell = null;
+  try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+  if (shell) {
+    var ft = document.createElement("button");
+    ft.type = "button";
+    ft.className = "ct-view-share";
+    ft.textContent = t("ct.familytree");
+    ft.addEventListener("click", function () {
+      closeViewCard();
+      shell.__orosOpenAt("familytree", { contact: c.id });
+    });
+    foot.appendChild(ft);
+  }
   var ed = document.createElement("button");
   ed.type = "button";
   ed.className = "ct-view-edit";
