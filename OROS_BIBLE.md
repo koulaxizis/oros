@@ -4241,3 +4241,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Fixes: undo of a height-only change; Greek all caps drop the tonos.
 - Files: `layout/` (+ sla.js), `designkit/` (model, render, pdf, text, + templates.js), `tests/layout.test.js`, `tests/layout-sla.test.js`.
 - Not tested: real phone, Safari / iOS, real Dropbox, files from a real Scribus install.
+
+### 2026-10-10 — Slides: new presentation from an outline — 0.58.01
+- **Deep link:** `__orosOpenAt("slides", {outline, title})` with text in the Outline view's format opens a theme picker; nothing is created until the user picks a theme. Empty or malformed targets are ignored. Used by Mind Map phase 2.
+- **Files:** `slides/app.js`, `slides/panels.js`.
+- **Not tested:** a real phone, Safari, real Dropbox.
