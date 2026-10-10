@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — show.js (slide show player, v1.0.0)
+// orOS designkit — show.js (slide show player, v1.1.0)
 // Plays a sequence of slides full screen: keyboard, clicker, touch,
 // transitions, black/white screen, jump to a number, laser pointer,
 // speaker notes, presenter view on a second window and rehearsal
@@ -25,6 +25,13 @@
 //   }
 //   onEnd gets { total, per: [{ index, ms }] }: time on each slide, so
 //   every show doubles as a rehearsal.
+//   live(i, t) -> bool (optional): slide i still changes t seconds
+//   after it appeared (video, entrance animations). While it says
+//   yes, the slide on screen is redrawn about 30 times a second with
+//   renderSlide(i, canvas, cssW, cssH, t); the first frame is t = 0.
+//   Slides without it, and the presenter's "next" preview, are drawn
+//   once (t undefined) and cached. state().t is the seconds the
+//   current slide has been on screen, for sound that follows it.
 //   start() must run inside a user gesture (full screen and the
 //   presenter window both need one).
 // ============================================================
@@ -279,6 +286,14 @@
       old.animate([{ transform: "translateX(0)" }, { transform: "translateX(" + (-100 * d) + "%)" }], opt);
     }
   };
+  // Redraw the slide on screen in place (a live frame): no transition.
+  Stage.prototype.redraw = function (buf) {
+    var c = this.front;
+    if (c.width !== buf.width || c.height !== buf.height) { c.width = buf.width; c.height = buf.height; }
+    var g = c.getContext("2d");
+    g.clearRect(0, 0, c.width, c.height);
+    g.drawImage(buf, 0, 0);
+  };
   Stage.prototype.setBlank = function (mode) {
     this.blank.style.display = mode ? "block" : "none";
     this.blank.style.background = mode === "w" ? "#fff" : "#000";
@@ -310,8 +325,9 @@
     // Render once into a buffer of the host document (its fonts), then
     // copy to whichever stage shows it (the presenter window too).
     var cache = {};
+    function dprOf() { return Math.min(3, win.devicePixelRatio || 1); }
     function buffer(i, w, h) {
-      var dpr = Math.min(3, win.devicePixelRatio || 1);
+      var dpr = dprOf();
       var key = i + ":" + w + "x" + h + "@" + dpr;
       if (cache[key]) return cache[key];
       var c = doc.createElement("canvas");
@@ -321,6 +337,54 @@
       if (keys.length > 8) delete cache[keys[0]];
       cache[key] = c;
       return c;
+    }
+
+    // ----- live slides (video, animation): redrawn while on screen -----
+    var liveOf = typeof opts.live === "function" ? opts.live : null;
+    var liveIdx = -1, liveT0 = 0, liveRaf = 0, liveLast = -1e9, liveBufs = {};
+    function clockNow() { return (win.performance && win.performance.now) ? win.performance.now() : Date.now(); }
+    function slideT() { return liveIdx < 0 ? 0 : (clockNow() - liveT0) / 1000; }
+    function isLive(i, t) {
+      if (!liveOf || i < 0) return false;
+      try { return !!liveOf(i, t); } catch (e) { return false; }
+    }
+    // one reusable buffer per size (audience, presenter)
+    function liveBuffer(i, w, h, t) {
+      var dpr = dprOf(), key = w + "x" + h + "@" + dpr;
+      var c = liveBufs[key];
+      if (!c) { c = liveBufs[key] = doc.createElement("canvas"); }
+      var cw = Math.max(1, Math.round(w * dpr)), ch = Math.max(1, Math.round(h * dpr));
+      if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+      else c.getContext("2d").clearRect(0, 0, cw, ch);
+      try { opts.renderSlide(i, c, w, h, t); } catch (e) { /* a broken frame must not end the show */ }
+      return c;
+    }
+    function stopLive() {
+      if (!liveRaf) return;
+      if (win.cancelAnimationFrame) win.cancelAnimationFrame(liveRaf); else win.clearTimeout(liveRaf);
+      liveRaf = 0;
+    }
+    function liveFrame() {
+      liveRaf = 0;
+      if (closed) return;
+      var i = nav.index();
+      if (i !== liveIdx) return;
+      var t = slideT();
+      if (!isLive(i, t)) return;   // the last frame stays on screen
+      var ms = clockNow();
+      if (!blank && ms - liveLast >= 30) {
+        liveLast = ms;
+        aud.redraw(liveBuffer(i, aud.w, aud.h, t));
+        if (pv) pv.stage.redraw(liveBuffer(i, pv.stage.w, pv.stage.h, t));
+      }
+      liveRaf = nextFrame(liveFrame);
+    }
+    function nextFrame(f) {
+      return win.requestAnimationFrame ? win.requestAnimationFrame(f) : win.setTimeout(f, 33);
+    }
+    // the buffer that brings slide i on screen (a fresh t = 0 frame when live)
+    function slideBuffer(i, w, h) {
+      return liveIdx === i && isLive(i, slideT()) ? liveBuffer(i, w, h, slideT()) : buffer(i, w, h);
     }
 
     // ----- audience surface (here, or in the presenter window) -----
@@ -466,11 +530,12 @@
       var i = nav.index();
       var tr = (i >= 0 && !still) ? trOf(i) : "none";
       var kind = TRANSITIONS.indexOf(tr) >= 0 ? tr : "none";
+      if (i !== liveIdx) { stopLive(); liveIdx = i; liveT0 = clockNow(); liveLast = -1e9; }
       aud.setEnd(nav.atEnd());
-      if (i >= 0) aud.show(buffer(i, aud.w, aud.h), kind, dir, animate);
+      if (i >= 0) aud.show(slideBuffer(i, aud.w, aud.h), kind, dir, animate);
       if (pv) {
         pv.stage.setEnd(nav.atEnd());
-        if (i >= 0) pv.stage.show(buffer(i, pv.stage.w, pv.stage.h), "none", 0, false);
+        if (i >= 0) pv.stage.show(slideBuffer(i, pv.stage.w, pv.stage.h), "none", 0, false);
         var ni = nav.nextIndex();
         var nc = pv.nextCanvas, g;
         if (ni >= 0) {
@@ -491,6 +556,7 @@
         if (notesOn) fillNotes();
       }
       if (pop && opts.title && i >= 0) audDoc.title = opts.title(i) || audDoc.title;
+      if (!liveRaf && isLive(i, slideT())) liveRaf = nextFrame(liveFrame);
     }
     function fillNotes() {
       var i = nav.index();
@@ -679,6 +745,8 @@
       if (closed) return;
       leaveSlide();
       closed = true;
+      stopLive();
+      liveBufs = {};
       timers.forEach(function (t) { win.clearTimeout(t); win.clearInterval(t); });
       win.clearTimeout(barTimer);
       cleanups.forEach(function (f) { f(); });
@@ -699,13 +767,13 @@
       close: close,
       state: function () {
         return { index: nav.index(), pos: nav.pos, visible: nav.order.length, atEnd: nav.atEnd(),
-                 blank: blank, laser: laserOn, presenter: !!pop, closed: closed };
+                 blank: blank, laser: laserOn, presenter: !!pop, closed: closed, t: slideT() };
       }
     };
   }
 
   var API = {
-    VER: "1.0.0", STRINGS: STRINGS, TRANSITIONS: TRANSITIONS,
+    VER: "1.1.0", STRINGS: STRINGS, TRANSITIONS: TRANSITIONS,
     keyAction: keyAction, Nav: Nav, fmtElapsed: fmtElapsed, fmtClock: fmtClock, summary: summary,
     start: start
   };

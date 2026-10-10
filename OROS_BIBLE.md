@@ -4354,12 +4354,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-10 — Atelier: brand kit, video and sound, better Canva import, bulk delete (#137) — 0.61.00
 - Brand kit (new side-bar tab): colours, heading / subheading / body fonts and logos, synced (own slice `atelier-brand`, per-entry merge + tombstones); brand colours head every colour panel, the Text panel adds text in brand fonts.
-- Video elements (MP4/WebM, Uploads › Add video or sound): crop, mask, filters, animation; Video panel with trim, sound on/off, volume, loop, "show the page as long as the video". Page sound (MP3/M4A/OGG/WAV/WebM) in the Animate panel, continuing across pages that share it. Play previews them; Download › Video records with sound mixed in; GIF shows the video moving; stills, PDF, PowerPoint and the slide show use the first frame.
+- Video elements (MP4/WebM, Uploads › Add video or sound): crop, mask, filters, animation; Video panel with trim, sound on/off, volume, loop, "show the page as long as the video". Page sound (MP3/M4A/OGG/WAV/WebM) in the Animate panel, continuing across pages that share it. Play previews them; Download › Video records with sound mixed in; GIF shows the video moving; stills, PDF and PowerPoint use the first frame. The slide show (Present) plays videos, page sound and entrance animations live (`designkit/show.js` 1.1.0 `live(i, t)`, 0.65.05).
 - Clips stored once at /internal/Assets/<sha256>.<ext> (type from the first bytes, never the name), played only from blob: URLs; limits 100 MB video, 30 MB sound, 30 min. `.orosdesign` packages carry clips, verified by hash and type.
 - Canva import: fonts come over as the same Fontsource family (weight words become bold, fonts preloaded before build, 12 s cap); each failed design names its reason; network / rate / slow failures retry twice and "Try the failed ones again" retries only those; "Replace designs imported before" (on by default) swaps earlier copies.
 - Bulk delete of designs (Select, "From Canva") with Undo, and a Files manager in Uploads that deletes unused pictures, videos and sounds.
 - New files atelier/brandkit.js, brand.js, clips.js, video.js (precached). Tests: atelier-brand, atelier-video, font mapping in atelier-import (1214 total). Shell check 360 / 1280 px; video export VP9 + Opus checked with ffprobe.
-- Not tested: Safari, H.264/MP4 recording, real Canva and Fontsource, page sound inside the slide show (designkit/show.js caches slides as stills, so videos show their first frame there).
+- Not tested: Safari, H.264/MP4 recording, real Canva and Fontsource.
 
 ### 2026-10-10 — Dock: eight styles, "Show over open apps" off by default (#139) — 0.61.01
 - Settings › Appearance › Dock › Style: Classic (default, the original), Glass, Frosted, Smoke, Transparent, Solid, 3D shelf, Neon. Device-local `style` pref in launcher.js 1.1.0 (validated against a fixed list; unknown values fall back to classic), one `ld-s-<style>` class on `#ld-dock`.
@@ -4436,3 +4436,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Device-local key `oros-shelf-rem` `{on, h}` (never synced or backed up). No data format change.
 - Tests: tests/shelf.test.js extended. Help pages updated.
 - Not tested: a real phone, Safari, a notification firing with orOS closed for a whole day.
+
+### 2026-10-10 — Atelier Present plays videos, sound and animations (#150) — 0.65.05
+- The slide show (Atelier › Present) now plays videos, page sound and entrance animations on the live slide instead of showing a still first frame. Slides' own Present is unchanged.
+- Shared player `designkit/show.js` 1.1.0: a `live(i, t)` callback paints the current slide at time `t`, and `state().t` reports it; slides without motion still use cached stills. `atelier/motion.js` `present()` / `presentSound()` use it.
+- Help pages (Atelier EN/EL) updated.
+- Not tested: a real phone, Safari, H.264/MP4 sources, very long videos.
