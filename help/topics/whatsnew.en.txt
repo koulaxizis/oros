@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.61.00
+- Atelier: a brand kit (colours, fonts, logos), video and sound in designs with video export, a better Canva import (real fonts, clear errors, retries, no duplicates), and bulk delete of designs and unused files.
+
 ## Version 0.60.00
 - New app in Internet: One-Minute Museum shows a Wikipedia article as a museum exhibit, a new one every minute; star the ones you like to keep them, offline too.
 - Media Shelf: import your Goodreads or Letterboxd CSV exports, with a preview, duplicates skipped and Undo.
