@@ -2572,17 +2572,15 @@
   // Incoming deep links (shell __orosOpenAt / __orosTakeTarget):
   //   { add: { url } }  Bookmarks' "Follow in Reader": find its feeds
   //   { item: id }      a notification: open that article
+  //   { feed } / { item, feed }  universal search (openSearchTarget)
   function openTarget(x) {
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return;
     if (x.add && typeof x.add === "object" && typeof x.add.url === "string") {
       if (C.normUrl(x.add.url)) addDialog(x.add.url.slice(0, 2000));
       return;
     }
-    if (typeof x.item === "string" && itemOf(x.item)) {
-      var it = itemOf(x.item);
-      if (prefs.sel !== "all" && prefs.sel !== "f:" + it.feed) select("f:" + it.feed);
-      openArticle(x.item);
-    }
+    // { item } / { feed }: notifications and universal search share one path.
+    openSearchTarget(x);
   }
 
   // ---------- 12. Dialogs + toasts ----------
@@ -2874,13 +2872,6 @@
       if (pending) openTarget(pending);
       if (data.feeds.length && C.setting(data, "refresh") > 0) refresh(null, false);
       scheduleTick();
-      try {
-        if (window.parent && window.parent !== window &&
-            typeof window.parent.__orosTakeTarget === "function") {
-          var pendingTarget = window.parent.__orosTakeTarget("feeds");
-          if (pendingTarget) openSearchTarget(pendingTarget);
-        }
-      } catch (e) {}
     });
   }
 
@@ -2905,7 +2896,5 @@
       select("f:" + t.feed);
     }
   }
-  window.__orosOpenAt = openSearchTarget;
-
   boot();
 })();
