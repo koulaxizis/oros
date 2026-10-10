@@ -922,6 +922,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1160,6 +1161,65 @@
     if (now - garageLastTick < 60000) return;
     garageLastTick = now;
     garageCheckTick();
+  }
+
+  // Travel — the evening before departure ("Rome tomorrow · 6 items
+  // to pack", from 18:00) and shortly before a timed departure
+  // (flight 3 h, train / bus / ferry 1 h). Reads "oros-travel-data"
+  // directly (works with the app CLOSED) through travel/core.js
+  // (loaded by index.html; the Calendar feed reads it the same way).
+  // Each notice once per device: "oros-travel-fired" = { key: ms },
+  // pruned after 3 days; the inbox dedup key covers a twin from
+  // another device. Off when the app's Reminders setting is off
+  // (oros-travel-prefs.rem = 0, device-local). Honest limit (alarms):
+  // orOS closed = nothing fires, a departure window that passed is
+  // not caught up.
+  var TRAVEL_FIRED_KEY = "oros-travel-fired";
+  function travelCheckTick() {
+    var Core = window.OrosTravelCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, fired;
+    try {
+      raw = localStorage.getItem("oros-travel-data");
+      if (!raw) return;
+      raw = JSON.parse(raw);
+      prefs = JSON.parse(localStorage.getItem("oros-travel-prefs") || "null");
+      fired = JSON.parse(localStorage.getItem(TRAVEL_FIRED_KEY) || "null");
+    } catch (e) { return; }
+    if (prefs && prefs.rem === 0) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var now = Date.now();
+    var lang = state.lang === "el" ? "el" : "en";
+    var due = Core.due(Core.trips(raw), now, lang);
+    var next = Core.pruneFired(fired, now);
+    var fresh = due.filter(function (d) { return !Object.prototype.hasOwnProperty.call(next, d.key); });
+    if (!fresh.length) {
+      if (fired && Object.keys(fired).length !== Object.keys(next).length) {
+        try { localStorage.setItem(TRAVEL_FIRED_KEY, JSON.stringify(next)); } catch (e) {}
+      }
+      return;
+    }
+    fresh.forEach(function (d) { next[d.key] = now; });
+    try { localStorage.setItem(TRAVEL_FIRED_KEY, JSON.stringify(next)); } catch (e) {}
+    fresh.slice(0, 3).forEach(function (d) {
+      N.emit({
+        ns: "travel",
+        key: d.key,
+        type: "reminder",
+        title: d.title,
+        body: d.body,
+        deepLink: "travel:" + d.trip
+      });
+    });
+  }
+
+  var travelLastTick = 0;
+  function travelCheckTickThrottled() {
+    var now = Date.now();
+    if (now - travelLastTick < 60000) return;
+    travelLastTick = now;
+    travelCheckTick();
   }
 
   // Pet Health Book — daily reminder. Reads "oros-petcare-data"
@@ -7451,6 +7511,28 @@
     }
     try { sessionStorage.setItem("oros-garage-open", target); } catch (e) {}
     openAppById("garage");
+  };
+
+  // Travel deep-link bridge (pattern: Garage). Payload = a trip id,
+  // optional tab "pack" | "plan" (Calendar timed rows → itinerary).
+  // Open app → live push; closed → sessionStorage staging "id" or
+  // "id plan" (device-local, one-shot, consumed by travel.js at
+  // boot) + open.
+  window.__orosOpenTravel = function (tripId, tab) {
+    if (typeof tripId !== "string" || !/^[a-z0-9][a-z0-9-]{3,40}$/.test(tripId)) return;
+    tab = tab === "pack" || tab === "plan" ? tab : "";
+    if (state.running && state.running.id === "travel") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosTravelOpen === "function") {
+          f.contentWindow.__orosTravelOpen(tripId, tab);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-travel-open", tab ? tripId + " " + tab : tripId); } catch (e) {}
+    openAppById("travel");
   };
 
   // Pet Health Book deep-link bridge (pattern: Minimalism). Payload =

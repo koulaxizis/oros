@@ -251,6 +251,29 @@ input[type="date"], input[type="time"] { font-variant-numeric: tabular-nums; }
 .th-dates { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .th-dest { font-size: 14px; color: var(--text); overflow-wrap: anywhere; }
 .th-people { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.wx { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wx-hint { margin-top: 0; }
+.wx-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; overscroll-behavior-x: contain; }
+.wx-day {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 64px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.wx-dn { color: var(--text-dim); white-space: nowrap; }
+.wx-ic { font-size: 18px; line-height: 1.2; }
+.wx-t { white-space: nowrap; }
+.wx-pp { color: var(--accent); white-space: nowrap; }
+.wx-rain { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 0; }
+.wx-rain-t { flex: 1 1 180px; }
 #tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; overflow-x: auto; }
 #tabs button {
   min-height: 40px;

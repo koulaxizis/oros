@@ -134,7 +134,14 @@
       "toast.pickTpl": "Pick at least one template", "toast.tplEmpty": "A template needs at least one item",
       "copy.suffix": "{name} (copy)",
       "txt.dest": "Destination", "txt.people": "Travellers", "txt.pack": "PACKING", "txt.plan": "ITINERARY",
-      "txt.notes": "NOTES", "txt.ref": "booking", "txt.undated": "No day", "txt.packed": "{d}/{n} packed"
+      "txt.notes": "NOTES", "txt.ref": "booking", "txt.undated": "No day", "txt.packed": "{d}/{n} packed",
+      "menu.remOff": "Turn reminders off", "menu.remOn": "Turn reminders on",
+      "toast.remOff": "Reminders off on this device", "toast.remOn": "Reminders on: the evening before you leave and before departures",
+      "wx.title": "Forecast for {place}", "wx.at": "updated {time}", "wx.later": "The forecast shows up 7 days before the trip.",
+      "wx.nf": "No forecast: the destination was not found.", "wx.fail": "No forecast right now.",
+      "wx.rain": "Rain likely on {day}. Add an umbrella?", "wx.add": "Add", "wx.no": "No thanks", "wx.umbrella": "Umbrella",
+      "wx.c.clear": "Clear", "wx.c.part": "Partly cloudy", "wx.c.cloud": "Cloudy", "wx.c.fog": "Fog",
+      "wx.c.rain": "Rain", "wx.c.snow": "Snow", "wx.c.storm": "Thunderstorm", "wx.pp": "Chance of rain {n}%"
     },
     el: {
       "app": "Ταξίδια", "btn.new": "Νέο ταξίδι", "btn.tpls": "Πρότυπα", "btn.back": "Πίσω", "btn.more": "Περισσότερα",
@@ -205,7 +212,14 @@
       "toast.pickTpl": "Διάλεξε τουλάχιστον ένα πρότυπο", "toast.tplEmpty": "Το πρότυπο θέλει τουλάχιστον ένα είδος",
       "copy.suffix": "{name} (αντίγραφο)",
       "txt.dest": "Προορισμός", "txt.people": "Ταξιδιώτες", "txt.pack": "ΒΑΛΙΤΣΑ", "txt.plan": "ΠΡΟΓΡΑΜΜΑ",
-      "txt.notes": "ΣΗΜΕΙΩΣΕΙΣ", "txt.ref": "κράτηση", "txt.undated": "Χωρίς ημέρα", "txt.packed": "{d}/{n} στη βαλίτσα"
+      "txt.notes": "ΣΗΜΕΙΩΣΕΙΣ", "txt.ref": "κράτηση", "txt.undated": "Χωρίς ημέρα", "txt.packed": "{d}/{n} στη βαλίτσα",
+      "menu.remOff": "Απενεργοποίηση υπενθυμίσεων", "menu.remOn": "Ενεργοποίηση υπενθυμίσεων",
+      "toast.remOff": "Οι υπενθυμίσεις σβήστηκαν σε αυτή τη συσκευή", "toast.remOn": "Υπενθυμίσεις: το βράδυ πριν φύγεις και πριν από τις αναχωρήσεις",
+      "wx.title": "Πρόγνωση για {place}", "wx.at": "ενημέρωση {time}", "wx.later": "Η πρόγνωση εμφανίζεται 7 μέρες πριν το ταξίδι.",
+      "wx.nf": "Χωρίς πρόγνωση: ο προορισμός δεν βρέθηκε.", "wx.fail": "Η πρόγνωση δεν είναι διαθέσιμη τώρα.",
+      "wx.rain": "Πιθανή βροχή {day}. Να μπει ομπρέλα;", "wx.add": "Προσθήκη", "wx.no": "Όχι, ευχαριστώ", "wx.umbrella": "Ομπρέλα",
+      "wx.c.clear": "Αίθριος", "wx.c.part": "Λίγα σύννεφα", "wx.c.cloud": "Συννεφιά", "wx.c.fog": "Ομίχλη",
+      "wx.c.rain": "Βροχή", "wx.c.snow": "Χιόνι", "wx.c.storm": "Καταιγίδα", "wx.pp": "Πιθανότητα βροχής {n}%"
     }
   };
 
@@ -851,7 +865,11 @@
       missing: p.missing === 1 ? 1 : 0,
       who: line(p.who, LEN.person),
       grp: normGrp(p.grp),
-      past: p.past === 1 ? 1 : 0
+      past: p.past === 1 ? 1 : 0,
+      rem: p.rem === 0 ? 0 : 1,                // reminders on this device (read by the shell engine)
+      rain: (Array.isArray(p.rain) ? p.rain : []).filter(function (x) {
+        return typeof x === "string" && ID_RE.test(x);
+      }).slice(-30)                            // trips whose umbrella suggestion was dismissed
     };
   }
   var prefsTimer = null;
@@ -1185,6 +1203,7 @@
       head.appendChild(l2);
     }
     if (trip.people.length) head.appendChild(el("div", "th-people", t("head.people", { list: trip.people.join(", ") })));
+    renderWx(trip, today, head);
 
     var wide = isWide();
     var tab = prefs.tab;
@@ -1439,6 +1458,151 @@
     });
     commit();
     showToast(t("toast.restored"));
+  }
+
+  // ----- Destination forecast -----
+  // Open-Meteo, the same endpoint and numbers as the Weather app. Shown
+  // when the trip overlaps the next 7 days. The destination text is
+  // geocoded once; the result and the forecast live in a device-local
+  // cache (oros-travel-wx, never synced), refreshed at most every 3 h
+  // and only online. Offline: the last forecast with its time.
+  var WX_KEY = "oros-travel-wx", WX_TTL = 3 * 3600000, WX_DAYS = 7, WX_KEEP = 12, WX_RAIN = 60;
+  var wxBusy = {};
+  function wxQuery(trip) { return trip.dest.toLocaleLowerCase(); }
+  function wxLoad() {
+    var c = null;
+    try { c = JSON.parse(localStorage.getItem(WX_KEY) || "null"); } catch (e) {}
+    return c && typeof c === "object" && c.by && typeof c.by === "object" ? c : { by: {} };
+  }
+  function wxStore(q, entry) {
+    var c = wxLoad();
+    c.by[q] = entry;
+    var keys = Object.keys(c.by).sort(function (a, b) { return (c.by[b].at || 0) - (c.by[a].at || 0); });
+    keys.slice(WX_KEEP).forEach(function (k) { delete c.by[k]; });
+    try { localStorage.setItem(WX_KEY, JSON.stringify(c)); } catch (e) {}
+  }
+  function wxWanted(trip, today) {
+    return !!trip.dest && datesKnown(trip) && trip.end >= today && trip.start <= addDays(today, WX_DAYS - 1);
+  }
+  function wxNum(v) { return typeof v === "number" && isFinite(v) ? v : null; }
+  function wxFetch(trip) {
+    var q = wxQuery(trip);
+    if (wxBusy[q] || !navigator.onLine || typeof fetch !== "function") return;
+    var old = wxLoad().by[q];
+    if (old && Date.now() - (old.at || 0) < WX_TTL) return;
+    wxBusy[q] = true;
+    var lang = LANG === "el" ? "el" : "en";
+    var geo = old && wxNum(old.lat) !== null && wxNum(old.lon) !== null ? Promise.resolve(old) :
+      fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" + lang +
+            "&name=" + encodeURIComponent(trip.dest.split(",")[0].trim()))
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+        .then(function (d) {
+          var g = d && d.results && d.results[0];
+          if (!g || wxNum(g.latitude) === null || wxNum(g.longitude) === null) return null;
+          return { lat: g.latitude, lon: g.longitude,
+                   place: line([g.name, g.country].filter(function (x) { return typeof x === "string" && x; }).join(", "), 100) };
+        });
+    geo.then(function (g) {
+      if (!g) { wxStore(q, { at: Date.now(), nf: 1 }); return null; }
+      return fetch("https://api.open-meteo.com/v1/forecast?latitude=" + g.lat + "&longitude=" + g.lon +
+                   "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+                   "&timezone=auto&forecast_days=" + WX_DAYS)
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+        .then(function (d) {
+          var dl = d && d.daily, days = [];
+          if (!dl || !Array.isArray(dl.time)) throw new Error("bad");
+          dl.time.forEach(function (day, i) {
+            if (!isYmd(day)) return;
+            days.push({ d: day, c: wxNum((dl.weathercode || [])[i]),
+                        hi: wxNum((dl.temperature_2m_max || [])[i]), lo: wxNum((dl.temperature_2m_min || [])[i]),
+                        pp: wxNum((dl.precipitation_probability_max || [])[i]) });
+          });
+          wxStore(q, { at: Date.now(), lat: g.lat, lon: g.lon, place: g.place, days: days });
+        });
+    }).catch(function () {
+      if (old) { old.err = 1; wxStore(q, old); }        // keep the last good forecast, retry after the TTL
+      else wxStore(q, { at: Date.now(), err: 1 });
+    }).then(function () {
+      wxBusy[q] = false;
+      var cur = curTrip();
+      if (prefs.view === "trip" && cur && wxQuery(cur) === q && !document.querySelector("dialog[open]")) render();
+    });
+  }
+  function wxKind(c) {
+    if (c === null) return "";
+    if (c === 0) return "clear";
+    if (c <= 2) return "part";
+    if (c === 3) return "cloud";
+    if (c === 45 || c === 48) return "fog";
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return "snow";
+    if (c >= 95) return "storm";
+    return "rain";
+  }
+  var WX_ICON = { clear: "\u2600\ufe0f", part: "\u26c5", cloud: "\u2601\ufe0f", fog: "\ud83c\udf2b\ufe0f",
+                  rain: "\ud83c\udf27\ufe0f", snow: "\ud83c\udf28\ufe0f", storm: "\u26c8\ufe0f" };
+  function wxDayName(s) {
+    try { return parseYmd(s).toLocaleDateString(locale(), { weekday: "short", day: "numeric" }); }
+    catch (e) { return fmtDate(s); }
+  }
+  function wxBtn(label, cls, fn) {
+    var b = el("button", cls, label);
+    b.type = "button";
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function hasUmbrella(trip) {
+    return trip.pack.some(function (p) { return /umbrella|ομπρέλα|ομπρελα/i.test(p.name); });
+  }
+  function renderWx(trip, today, head) {
+    if (!trip.dest || !datesKnown(trip) || trip.end < today) return;
+    if (!wxWanted(trip, today)) { head.appendChild(el("div", "hint wx-hint", t("wx.later"))); return; }
+    wxFetch(trip);
+    var c = wxLoad().by[wxQuery(trip)];
+    if (!c) return;
+    if (c.nf) { head.appendChild(el("div", "hint wx-hint", t("wx.nf"))); return; }
+    var days = (c.days || []).filter(function (d) { return d.d >= trip.start && d.d <= trip.end && d.d >= today; });
+    if (!days.length) { if (c.err) head.appendChild(el("div", "hint wx-hint", t("wx.fail"))); return; }
+    var box = el("div", "wx");
+    var at = new Date(c.at);
+    box.appendChild(el("div", "hint wx-hint", t("wx.title", { place: c.place || trip.dest }) + " · " +
+      t("wx.at", { time: fmtDate(ymd(at)) === fmtDate(today) ? pad(at.getHours()) + ":" + pad(at.getMinutes()) : fmtDate(ymd(at)) })));
+    var strip = el("div", "wx-strip");
+    days.forEach(function (d) {
+      var k = wxKind(d.c);
+      var cell = el("div", "wx-day");
+      cell.appendChild(el("span", "wx-dn", wxDayName(d.d)));
+      var ic = el("span", "wx-ic", k ? WX_ICON[k] : "");
+      if (k) { ic.setAttribute("role", "img"); ic.setAttribute("aria-label", t("wx.c." + k)); ic.title = t("wx.c." + k); }
+      cell.appendChild(ic);
+      if (d.hi !== null && d.lo !== null) cell.appendChild(el("span", "wx-t", Math.round(d.hi) + "° / " + Math.round(d.lo) + "°"));
+      if (d.pp !== null && d.pp >= 20) {
+        var pp = el("span", "wx-pp", d.pp + "%");
+        pp.title = t("wx.pp", { n: d.pp });
+        cell.appendChild(pp);
+      }
+      strip.appendChild(cell);
+    });
+    box.appendChild(strip);
+    head.appendChild(box);
+    // One-tap suggestion, never automatic.
+    var wet = days.filter(function (d) { return d.pp !== null && d.pp >= WX_RAIN; })[0];
+    if (wet && !hasUmbrella(trip) && prefs.rain.indexOf(trip.id) < 0) {
+      var sug = el("div", "warn wx-rain");
+      sug.appendChild(el("span", "wx-rain-t", t("wx.rain", { day: wxDayName(wet.d) })));
+      var tripId = trip.id;
+      sug.appendChild(wxBtn(t("wx.add"), "txt-btn small primary", function () {
+        var tr = findTrip(tripId);
+        if (!tr) return;
+        addPackItems(tr, [{ name: t("wx.umbrella"), grp: "@gear", qty: 1, rule: null }]);
+        commit();
+      }));
+      sug.appendChild(wxBtn(t("wx.no"), "link-btn", function () {
+        prefs.rain = prefs.rain.concat([tripId]).slice(-30);
+        savePrefs();
+        render();
+      }));
+      head.appendChild(sug);
+    }
   }
 
   // ---------- 7. Dialogs ----------
@@ -2025,7 +2189,12 @@
     } else {
       openMenu(btn, [
         { label: t("menu.export"), fn: exportAll },
-        { label: t("menu.import"), fn: importFlow }
+        { label: t("menu.import"), fn: importFlow },
+        { label: t(prefs.rem ? "menu.remOff" : "menu.remOn"), fn: function () {
+          prefs.rem = prefs.rem ? 0 : 1;
+          savePrefsNow();
+          showToast(t(prefs.rem ? "toast.remOn" : "toast.remOff"));
+        } }
       ]);
     }
   }
@@ -2421,6 +2590,28 @@
     wireKeyboard();
   }
 
+  // Deep link from the shell (__orosOpenTravel): Calendar rows and
+  // reminders. Live push, or the staged "id" / "id plan" at boot.
+  window.__orosTravelOpen = function (tripId, tab) {
+    if (typeof tripId !== "string" || !ID_RE.test(tripId) || !findTrip(tripId)) return;
+    var dlg = document.querySelector("dialog[open]");
+    if (dlg) return;                          // never throw away an open edit
+    commitNotes();
+    if (tab === "pack" || tab === "plan") prefs.tab = tab;
+    openTrip(tripId);
+  };
+  function takeStaged() {
+    var v = null;
+    try {
+      v = sessionStorage.getItem("oros-travel-open");
+      if (v) sessionStorage.removeItem("oros-travel-open");
+    } catch (e) {}
+    if (v) {
+      var parts = String(v).split(" ");
+      window.__orosTravelOpen(parts[0], parts[1]);
+    }
+  }
+
   function boot() {
     load();
     loadPrefs();
@@ -2430,6 +2621,7 @@
     inheritPalette();
     watchPalette();
     render();
+    takeStaged();
   }
 
   boot();
