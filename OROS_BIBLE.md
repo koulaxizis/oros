@@ -1368,6 +1368,15 @@ Owner: Spreadsheet (`spreadsheet/`). First sender: Budget (Export → "Open in S
 - **BR-S1-3 · No formulas from the sender.** A string cell is plain text; one starting with `= + - @` gets a leading apostrophe. The only formulas are the receiver's own `SUM`s.
 - **BR-S1-4 · Receiver.** `sheetFromTable()` in `spreadsheet.js`: live push via `window.__orosOpenAt(target)`, boot take via `takeTarget()`. It marks the slice dirty like any import (it is user data from then on).
 
+### Budget recurring entries in the Calendar (BR-B2)
+
+Owner: Budget (`budget/feed.js`). Reader: Calendar (chip "Budget" / «Προϋπολογισμός», `lbl-feed-budget`, emerald `#2bb673`).
+
+- **BR-B2-1 · One file, no storage.** `budget/feed.js` (`window.OrosBudgetFeed`: `occurrences`, `rowsOn(data, ymd, today, lang)`) is pure and only reads `oros-budget-data`; `calendar/index.html` loads it before `calendar.js`. Rows are built on render (micro-cached ~1s like the other feeds), never stored or synced.
+- **BR-B2-2 · Same days as Budget.** `occurrences()` in `feed.js` is a copy of the one in `budget.js` (monthly/yearly keep the first date's day, clamped to the month's end; weekly every 7 days; both ends inclusive), and its `SEED_NAMES` is a copy too. `tests/budget-feed.test.js` fails if either drifts: change both together.
+- **BR-B2-3 · What shows.** Only today and later (earlier occurrences are real entries in Budget by then). A deleted recurring entry (`rec:<id>` tombstone) or a deleted occurrence (`tx:<recTxId>` tombstone) shows nothing; the end date is respected. Title = the note, else the category name, then the signed amount in Budget's currency (`−500,00 €` / `+1.200,50 €`), rendered with `textContent`.
+- **BR-B2-4 · Click-through.** `window.parent.__orosOpenAt("budget", { rec: id })`. Receiver `openTarget()` in `budget.js` (live push via `window.__orosOpenAt`, boot take via `takeTarget()`): closes an open dialog, switches to the Recurring tab and opens that entry; a deleted one gives the toast "This recurring entry was deleted". It also takes `{ tx: id }` (the entry on its month), the target universal search uses.
+
 ### Cross-app "new quote" bridge: any app → Quote (BR-Q1)
 
 Owner: Quote (`quote/`). First sender: Timesheet (report "Create quote"). Same shape as BR-W8 / BR-B1.
