@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -527,6 +527,8 @@
     garage:   function (target) { if (typeof window.__orosOpenGarage === 'function') window.__orosOpenGarage(target); },
     // Pet Health Book — "petcare:today" (daily reminder) or "petcare:<petId>".
     petcare:  function (target) { if (typeof window.__orosOpenPetcare === 'function') window.__orosOpenPetcare(target); },
+    // Travel — "travel:<tripId>" (evening-before / departure reminders).
+    travel:   function (id) { if (typeof window.__orosOpenTravel === 'function') window.__orosOpenTravel(id); },
     // Reader — "feeds:item:<itemId>": a new article (watched words or a
     // feed with notifications on). Generic shell deep link, no own bridge.
     feeds:    function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('feeds', { item: id }); },
