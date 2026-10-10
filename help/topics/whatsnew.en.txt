@@ -1,10 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version NEXT
+## A guide for every app, and a tour
 - Every app and game now has its own page in Help. Inside any app, the **?** button or [[Ctrl+Alt+Shift+H]] opens it.
 - New users get a short tour of the top bar the first time they open orOS. You can [take the tour](tour:start) again at any time.
 - The update notice now opens this page, so you can see what changed.
+- [Split](app:split) can add people from [Contacts](app:contacts) or from a [Travel](app:travel) trip.
+- [Garage](app:garage) keeps receipt photos with fuel, service and cost entries.
+- [Timesheet](app:timesheet) can turn a report into a new [Quote](app:quote).
 
 ## Version 0.48.00
 - New app: [Help](app:help), in the System category. It explains orOS and its apps, works offline and has its own search.

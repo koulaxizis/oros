@@ -6,6 +6,8 @@ The `Create` tab is a blank quote. It gets a number like OFF-2026-001 automatica
 
 Until you press `Save`, a new quote is a draft kept only on this device. If you close the app, it's restored next time. After the first save, every change is saved as you type.
 
+A quote can also start in another app: `Create quote` in a [Timesheet](app:timesheet) report fills in a new quote for you. Check it and press `Save`.
+
 ## Clients
 Tap or click `Select client` to pick a client, or the **+** next to it to add one. `Client Details` holds `Name`, `Email`, `Phone`, `Address` and `Tax ID / VAT`. The pencil edits the chosen client; `Delete` in that window removes the client after you confirm.
 

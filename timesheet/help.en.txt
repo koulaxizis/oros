@@ -18,6 +18,7 @@ The `Week` tab shows a grid of hours per project and day, with totals. Tap or cl
 On `Reports`, choose a `Period` (this week, last month, this year or `Custom`), then filter by `Client`, `Project`, `Billable` and `Invoiced`, and `Group by` project, client or day. You see `Hours`, `Billable` hours and the `Amount`.
 
 - `Export CSV` saves the report for a spreadsheet.
+- `Create quote` turns the report into a new [Quote](app:quote): one line per billable project with a rate, with the hours as quantity and the hourly rate as price. The client is filled in when the period has only one. It works only when the currency is EUR or USD.
 - `Mark … as invoiced` marks all billable entries of the report as invoiced, so next time you can filter for `Not invoiced`. You can unmark them the same way.
 
 ## Projects and clients
@@ -44,4 +45,4 @@ In `Settings`, `Back up (JSON)` saves everything to a file and `Restore from bac
 
 ## Limits
 - A single entry can be at most 366 days long.
-- Timesheet doesn't show in Calendar and has no link to [Quote](app:quote).
+- Timesheet doesn't show in Calendar.

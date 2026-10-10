@@ -3,7 +3,7 @@ Split keeps track of shared expenses in a group: a trip, a shared flat, a night 
 
 ## Getting started
 1. Tap or click `New group`. Give it a `Name`, a `Currency` and a `Colour`.
-2. Under `People`, add everyone, yourself too, with `Add`. Tap `Me` next to your own name.
+2. Under `People`, add everyone, yourself too, with `Add`. Tap `Me` next to your own name. `From Contacts` picks people from [Contacts](app:contacts), and `From a trip` adds the travellers of a [Travel](app:travel) trip. These buttons appear only when those apps have something to offer.
 3. Press `Save`, then `Expense` to add the first expense.
 
 The home screen lists your groups, newest activity first, with how much you get back or owe. Archived groups are folded under `Archived`. `All groups` takes you back there.

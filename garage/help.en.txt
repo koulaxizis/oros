@@ -13,6 +13,8 @@ The `Add` button, or the quick buttons on `Overview`, offer:
 - `Expense`: tolls, parking, wash, fines, parts and more.
 - `Km reading`: just the odometer.
 
+Fuel, service and expense entries can keep up to 6 receipt photos: use `Add a receipt photo` under `Receipts`. The log marks them with 📎 and the number of photos. They are kept in [Files](app:files), in the folder Garage/Receipts.
+
 From the same menu you can add a renewal, a service plan item, a tyre set or another vehicle.
 
 ## Overview
@@ -27,7 +29,7 @@ From the same menu you can add a renewal, a service plan item, a tyre set or ano
 `Stats` covers `12 months`, `This year` or `All time`: total cost, km driven, cost per km, average consumption and price, and charts of costs per month, consumption, fuel price and `Where the money goes`. `Show as table` turns a chart into a table.
 
 ## Sync and backup
-Vehicles, entries, renewals, plans, tyres and your currency sync between your devices through [orOS sync](help:t/sync). The reminder hour, consumption unit, tyre limits and open tab stay on each device.
+Vehicles, entries, renewals, plans, tyres and your currency sync between your devices through [orOS sync](help:t/sync). Receipt photos travel separately, with Vault Drive sync; until they arrive, a photo shows `Not on this device`. The reminder hour, consumption unit, tyre limits and open tab stay on each device.
 
 In `Settings`: `Export CSV`, `Export backup` (JSON) and `Import backup`. An import merges with what you have.
 
