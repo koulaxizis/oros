@@ -502,7 +502,7 @@
     return { id: e.id, m: e.m, s: e.s, p: p, d: d, x: e.x === 1 ? 1 : 0, pd: isStamp(e.pd) ? e.pd : 0 };
   }
   function normQueue(q) {
-    if (!q || typeof q !== "object" || !isStamp(q.m) || !Array.isArray(q.ids)) return { m: 0, ids: [] };
+    if (!q || typeof q !== "object" || !isStamp(q.m) || !Array.isArray(q.ids)) return { m: 0, ids: [], sh: {} };
     var seen = {}, ids = [];
     q.ids.forEach(function (id) {
       if (typeof id === "string" && EP_RE.test(id) && !seen[id] && ids.length < LIM.queue) { seen[id] = 1; ids.push(id); }

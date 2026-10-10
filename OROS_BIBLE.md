@@ -1063,6 +1063,8 @@ oros-launcher-data = { ver:1, items[{ id, desk: number|null, dock: number|null, 
 - **Factory reset:** double confirm → cloud → folder → localStorage prefix sweep → OrosFS wipe → **[log]** Cache Storage `oros-map-tiles` → reload. Everything is tombstoned and seeds are reborn.
 - **Corruption:** rescue backup before any reseed. **Compatibility:** additive migrations; unknown fields carried forward.
 - **Quota (R30):** one shared ~5 MB `localStorage`. A failed `setItem` means edits will not survive a reload, so warn the user.
+- **No re-upload of what the cloud holds (SY-L1, 0.48.02):** after a pull applies a slice, the engine compares what the slice STORES (`get()` after `set()`) with the cloud copy, not the merge output. An app whose store normalizes the merge result differently no longer re-uploads at every reconcile. Apps should still keep `merge(x, null)` idempotent (store == merge output).
+- **Visible failure reason (SY-L2, 0.48.02):** a failed background sync logs `orOS sync: auto sync (<reason>) failed:` in the console and shows the reason in the sync dot tooltip and the menu's sync section (generic errors carry the technical text, e.g. `upload failed: 429`) until the next successful sync. No toast, no inbox entry (A72 still open).
 
 ### Files-disk glue (`shell.js` §9f)
 
@@ -4003,6 +4005,13 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-09 — hotfix 0.48.01 — universal search works again
 - **Changes:** `apps.json` Mind Map lost a `"search": "search.js"` entry copied from Kanban by the bulk release; the file does not exist, so every universal search failed with "failed to load search.js" in 0.48.00. New test in `tests/search.test.js`: every `search` entry in `apps.json` must point to an existing file (PR #101).
 - **NOT tested:** a real phone, Safari / iOS.
+
+### 2026-10-10 — hotfix 0.48.02 — sync: no endless re-uploads, failure reason visible
+- **Report:** Chris, 2026-10-09 20:42 UTC: sync never completes and shows "failed".
+- **Fixes:** Podcasts (`podcasts/core.js` `normQueue`) returned an empty queue without `sh: {}` for missing data, so `mergePodcasts(x, null)` (the store path) dropped a field every merge added: on every device with Podcasts data, every pull marked the engine dirty and every reconcile re-uploaded identical content, for ever (same one-line fix as Podcasts PR #120). Engine guard SY-L1 in `sync.js` (`settleApplied`): a slice whose stored content equals the cloud copy after a pull is not stale, whatever shape the merge returned. Failure reason SY-L2 (`sync.js` passes the error to `onAutoSync` listeners and logs it; `shell.js` `syncErrText`, `state.syncAutoErr`; Settings snapshot shows it too).
+- **Tests:** `tests/sync-loop.test.js` (fails on the old engine), `tests/podcasts.test.js` store == merge for an empty queue. Real shell (Chromium, mock Dropbox): two devices with a Podcasts subscription uploaded twice per sync round before, zero while idle after; all 97 apps on two devices sync with no failure and no idle upload; a 503 shows "Sync failed — check your connection (upload failed: 503)" in the dot tooltip and the menu, gone after the next success.
+- **Open:** the exact error on Chris's devices was not reproduced (the mock never fails like the real Dropbox); 0.48.02 shows it, so the next report names it.
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox.
 
 ### 2026-10-09 — Favourites: desktop shortcuts + Dock (`launcher.js` v1.0.0)
 
