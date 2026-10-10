@@ -4295,3 +4295,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Uses the To-Do bridge BR-TD-ADD (`__orosOpenAt("todo", {addItems})`, #111); Travel never writes To-Do data, it is a copy, not a live link. Quantities go as "3 × Socks"; who + note become the To-Do note. Each item shows only when the bridge exists and the list has open items.
 - Only travel/travel.js changes. Shell check EN desktop / EL phone, no console errors.
 - Not tested: a real phone, Safari/Firefox, real Dropbox.
+
+### 2026-10-10 — Chore Wheel: "Send to To-Do" for one chore (#134) — 0.60.03
+- A chore's ⋯ actions dialog has "Send to To-Do" while the chore is open: To-Do's add dialog opens prefilled with the chore (icon + name) and a note with its day or date range (and the member, when it is someone else's); nothing is saved until Add.
+- Sender side of BR-TD-ADD (`{addItems:{from, items:[{text, note}]}}`), like Meal Planner; "done" stays in Chore Wheel, nothing is copied back. Bible: BR-TD-ADD-4.
+- Shell check at 360 px, no console errors. Not tested: a real phone, Safari, real Dropbox.
