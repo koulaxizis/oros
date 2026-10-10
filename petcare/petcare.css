@@ -361,7 +361,8 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .h-d { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
 .notes { font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-.fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; align-items: end; }
+.fld-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 10px; align-items: end; }
+.fld-row > .fld { min-width: 0; }
 .fld-row.three { grid-template-columns: 1fr 1fr 1fr; }
 .emojis { display: flex; flex-wrap: wrap; gap: 4px; }
 .em {
