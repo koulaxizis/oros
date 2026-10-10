@@ -41,6 +41,9 @@ Entries, the running timer, projects, clients and settings sync between your dev
 
 In `Settings`, `Back up (JSON)` saves everything to a file and `Restore from backup` merges a backup with what you have: nothing is replaced or lost. The orOS [backup](help:t/backup) includes Timesheet too.
 
+## Pomodoro
+In [Time](app:time) → `Pomodoro`, pick a project under `Log focus in Timesheet`: every focus session then appears here as the task "Pomodoro" on that project (a toast tells you when new ones arrive).
+
 ## Keyboard shortcuts
 - [[S]] starts or stops the timer.
 - [[N]] adds time by hand.

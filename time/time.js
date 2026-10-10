@@ -64,6 +64,8 @@
       "pm.start": "Start", "pm.reset": "Reset", "pm.work": "Work", "pm.break": "Break",
       "pm.phase.work": "Focus", "pm.phase.break": "Break",
       "pm.done": "{n} session(s) completed",
+      "pm.log": "Log focus in Timesheet", "pm.log.off": "Don't log", "pm.log.none": "No project",
+      "pm.log.hint": "Each focus session is added to Timesheet as the task “Pomodoro”. Stopping early logs the minutes you focused.",
       "sn.title": "Snooze", "sn.5": "5 min", "sn.10": "10 min", "sn.15": "15 min",
       "conv.title": "Time zone converter",
       "conv.toggle.show": "Show", "conv.toggle.hide": "Hide", "conv.local": "You",
@@ -84,6 +86,8 @@
       "pm.start": "Έναρξη", "pm.reset": "Επαναφορά", "pm.work": "Εργασία", "pm.break": "Διάλειμμα",
       "pm.phase.work": "Εστίαση", "pm.phase.break": "Διάλειμμα",
       "pm.done": "{n} ολοκληρωμένες περίοδοι",
+      "pm.log": "Καταγραφή στις Ώρες εργασίας", "pm.log.off": "Χωρίς καταγραφή", "pm.log.none": "Χωρίς έργο",
+      "pm.log.hint": "Κάθε περίοδος εστίασης προστίθεται στις Ώρες εργασίας ως εργασία «Pomodoro». Αν σταματήσεις νωρίτερα, γράφονται τα λεπτά που δούλεψες.",
       "sn.title": "Αναβολή", "sn.5": "5 λεπτά", "sn.10": "10 λεπτά", "sn.15": "15 λεπτά",
       "conv.title": "Μετατροπέας ζωνών ώρας",
       "conv.toggle.show": "Εμφάνιση", "conv.toggle.hide": "Απόκρυψη", "conv.local": "Εσύ",
@@ -639,6 +643,7 @@
       var pane = this.getAttribute("data-pane");
       for (var i = 0; i < tabBtns.length; i++) {
         var on = tabBtns[i].getAttribute("data-pane") === pane;
+        if (on && pane === "pane-pomo") pmLogFill();
         tabBtns[i].className = "tab" + (on ? " active" : "");
         $(tabBtns[i].getAttribute("data-pane")).hidden = !on;
       }
@@ -842,6 +847,75 @@
 
   /* ---------- 10. Pomodoro ---------- */
   var pmPhase = "work", pmRunning = false, pmEnd = 0, pmAlarmId = null;
+  var pmStart = 0, pmLogged = false;   // Wave 7: the focus leg logged in Timesheet
+
+  /* ---------- 10a. Timesheet link (Timesheet Wave 7, BR-TS-POMO) ---------- */
+  // Time never writes Timesheet's data. A focus leg is put in the
+  // device-local inbox (orosTimesheetCore.INBOX_KEY) when it starts,
+  // with its planned end; Timesheet turns it into an entry once the
+  // end has passed. The chosen project is a device-local pref.
+  var TS = window.orosTimesheetCore || null;
+  var PMLOG_KEY = "oros-time-pmlog";   // "" off · "-" no project · a project id
+  function pmLogPref() {
+    try { var v = localStorage.getItem(PMLOG_KEY); return typeof v === "string" ? v : ""; } catch (e) { return ""; }
+  }
+  function pmLogProjects() {
+    if (!TS) return [];
+    var d = null;
+    try { d = TS.parse(localStorage.getItem(TS.STORAGE_KEY)); } catch (e) { d = null; }
+    if (!d) return [];
+    return TS.live(d.projects).filter(function (p) { return !p.arch; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, LANG === "el" ? "el-GR" : "en-GB"); });
+  }
+  function pmLogFill() {
+    var sel = $("pm-log");
+    if (!TS || !sel) return;
+    $("pm-log-w").hidden = false;
+    var cur = pmLogPref(), projects = pmLogProjects();
+    sel.innerHTML = "";
+    var add = function (v, label) {
+      var o = document.createElement("option");
+      o.value = v;
+      o.textContent = label;
+      sel.appendChild(o);
+    };
+    add("", t("pm.log.off"));
+    add("-", t("pm.log.none"));
+    projects.forEach(function (p) { add(p.id, p.name); });
+    sel.value = cur;
+    if (sel.value !== cur) sel.value = "";      // a deleted / archived project → off
+    $("pm-log-hint").hidden = !sel.value;
+  }
+  function pmInbox(fn) {
+    if (!TS) return;
+    try {
+      var list = fn(TS.inboxRead(localStorage.getItem(TS.INBOX_KEY)));
+      if (list.length) localStorage.setItem(TS.INBOX_KEY, JSON.stringify(list));
+      else localStorage.removeItem(TS.INBOX_KEY);
+    } catch (e) {}
+  }
+  // A focus leg starts: log it with its planned end.
+  function pmLogStart() {
+    pmLogged = false;
+    var v = TS ? $("pm-log").value : "";
+    if (pmPhase !== "work" || !v) return;
+    var p = v === "-" ? "" : v;
+    pmInbox(function (list) { return TS.inboxPut(list, { s: pmStart, e: pmEnd, p: p }); });
+    pmLogged = true;
+  }
+  // Stopped by hand: the entry ends now (dropped under a minute).
+  function pmLogStop() {
+    if (!pmLogged) return;
+    var now = Date.now();
+    pmInbox(function (list) { return TS.inboxEnd(list, pmStart, now); });
+    pmLogged = false;
+  }
+  if ($("pm-log")) {
+    $("pm-log").addEventListener("change", function () {
+      try { localStorage.setItem(PMLOG_KEY, this.value); } catch (e) {}
+      $("pm-log-hint").hidden = !this.value;
+    });
+  }
   function pmLen() { return (pmPhase === "work" ? state.pmWork : state.pmBreak) * 60 * 1000; }
   function pmPaint() {
     var left = pmRunning ? Math.max(0, pmEnd - Date.now()) : pmLen();
@@ -852,6 +926,7 @@
     $("pm-start").textContent = t(pmRunning ? "st.stop" : "pm.start");
   }
   function pmStop() {
+    if (pmRunning) pmLogStop();
     pmRunning = false;
     if (pmAlarmId) { alarmsApi.remove(pmAlarmId); pmAlarmId = null; }
     pmRunSave();      // T4: stopped by hand — clear the runtime record
@@ -859,7 +934,8 @@
   }
   $("pm-start").addEventListener("click", function () {
     if (pmRunning) { pmStop(); return; }
-    pmEnd = Date.now() + pmLen();
+    pmStart = Date.now();
+    pmEnd = pmStart + pmLen();
     var id = alarmsApi.add({
       at: pmEnd,
       label: t(pmPhase === "work" ? "pm.phase.break" : "pm.phase.work")
@@ -867,6 +943,7 @@
     if (!id) { pmRunning = false; pmPaint(); return; }   // engine rejected — stay idle
     pmRunning = true;
     pmAlarmId = id;
+    pmLogStart();
     pmRunSave();      // T4: the leg must survive an app close
     pmPaint();
   });
@@ -896,6 +973,7 @@
       pmPhase = pmPhase === "work" ? "break" : "work";
       pmRunning = false;
       pmAlarmId = null;
+      pmLogged = false;   // finished: the inbox entry keeps its planned end
       pmRunSave();    // T4: leg finished live — clear the runtime record
       pmPaint();
     }
@@ -915,7 +993,7 @@
     try {
       if (!pmRunning) { localStorage.removeItem(PMRUN_KEY); return; }
       localStorage.setItem(PMRUN_KEY, JSON.stringify({
-        phase: pmPhase, end: pmEnd, alarmId: pmAlarmId
+        phase: pmPhase, end: pmEnd, alarmId: pmAlarmId, start: pmStart, logged: pmLogged ? 1 : 0
       }));
     } catch (e) {}
   }
@@ -934,6 +1012,8 @@
         pmRunning = true;
         pmEnd = rt.end;
         pmAlarmId = rt.alarmId;
+        pmStart = typeof rt.start === "number" ? rt.start : 0;
+        pmLogged = !!(rt.logged && pmStart);
         pmPaint();
       } else {
         localStorage.removeItem(PMRUN_KEY);   // orphaned record — drop
@@ -1070,6 +1150,7 @@
   $("pm-work").value = state.pmWork;
   $("pm-break").value = state.pmBreak;
   pmPaint();
+  pmLogFill();
   pmRunRestore();   // T4: reconcile a leg that fired/ran while closed
   swPaint();
   timerPaint();

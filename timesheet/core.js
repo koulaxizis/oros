@@ -502,6 +502,61 @@
     return i < 0 ? { p: key, task: "" } : { p: key.slice(0, i), task: key.slice(i + 1) };
   }
 
+  // ---------- Pomodoro inbox (Wave 7, BR-TS-POMO) ----------
+  // Time's Pomodoro writes each focus leg it should log to the
+  // device-local key INBOX_KEY (never synced) when the leg STARTS,
+  // with its planned end; stopping early moves the end to "now" (or
+  // drops a leg under a minute). Timesheet alone turns legs whose end
+  // has passed into entries (task "Pomodoro", id hashed from the
+  // start, so a leg is logged once), then removes them from the inbox.
+  // So a leg is logged even if Time is never opened again.
+  var INBOX_KEY = "oros-timesheet-inbox", INBOX_MAX = 200, INBOX_BYTES = 65536;
+  var POMO_MIN = 60000, POMO_MAX = 3 * HOUR, POMO_TASK = "Pomodoro";
+  function inboxRead(raw) {
+    var a = null;
+    try { a = typeof raw === "string" && raw.length <= INBOX_BYTES ? JSON.parse(raw) : null; } catch (e) { a = null; }
+    if (!Array.isArray(a)) return [];
+    var out = [], seen = {};
+    a.forEach(function (x) {
+      if (!x || typeof x !== "object" || !isInt(x.s) || !isInt(x.e)) return;
+      if (x.s < MIN_TS || x.s > MAX_TS || x.e <= x.s || x.e - x.s > POMO_MAX) return;
+      if (seen[x.s] || out.length >= INBOX_MAX) return;
+      seen[x.s] = true;
+      out.push({ s: x.s, e: x.e, p: refId(x.p) });
+    });
+    return out.sort(function (x, y) { return x.s - y.s; });
+  }
+  // A leg starts (or is replaced): { s, e, p }.
+  function inboxPut(list, leg) {
+    var out = list.filter(function (x) { return x.s !== leg.s; });
+    if (isInt(leg.s) && isInt(leg.e) && leg.e > leg.s && leg.e - leg.s <= POMO_MAX) {
+      out.push({ s: leg.s, e: leg.e, p: refId(leg.p) });
+    }
+    return out.sort(function (x, y) { return x.s - y.s; }).slice(-INBOX_MAX);
+  }
+  // A leg stopped by hand at `now`: it ends there, or goes when under a minute.
+  function inboxEnd(list, s, now) {
+    return list.filter(function (x) { return x.s !== s || now - s >= POMO_MIN; })
+      .map(function (x) { return x.s === s && now < x.e ? { s: x.s, e: now, p: x.p } : x; });
+  }
+  function pomoId(s) { return hashId("pomo", String(s)); }
+  // → { add (a model for mergeTimesheet), done: [s…] (legs to remove
+  // from the inbox: logged now or earlier), n (new entries) }.
+  function inboxDrain(data, list, now) {
+    var have = {}, add = { entries: [], projects: [], clients: [] }, done = [];
+    data.entries.forEach(function (x) { have[x.id] = true; });
+    list.forEach(function (x) {
+      if (x.e > now) return;                        // still running
+      done.push(x.s);
+      var id = pomoId(x.s);
+      if (have[id]) return;
+      have[id] = true;
+      add.entries.push({ id: id, p: project(data, x.p) ? x.p : "", desc: "", s: x.s, e: x.e,
+                         billed: 0, task: POMO_TASK, m: now });
+    });
+    return { add: add, done: done, n: add.entries.length };
+  }
+
   // ---------- 5. Parsing + formatting ----------
   // "2:30", "1,5", "1.5", "90m", "90 λ", "2h 30m", "2h30", "2ω 30λ" → minutes.
   // A bare whole number up to 12 reads as hours, above 12 as minutes.
@@ -929,7 +984,9 @@
 
   var API = {
     VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, FORGOT_MS: FORGOT_MS, DATA_VER: DATA_VER, HOUR: HOUR, DAY: DAY,
-    normTags: normTags, parseTags: parseTags, parseHours: parseHours, hasTag: hasTag, budgetUse: budgetUse,
+    normTags: normTags, parseTags: parseTags, parseHours: parseHours,
+    INBOX_KEY: INBOX_KEY, POMO_TASK: POMO_TASK, inboxRead: inboxRead, inboxPut: inboxPut,
+    inboxEnd: inboxEnd, inboxDrain: inboxDrain, pomoId: pomoId, hasTag: hasTag, budgetUse: budgetUse,
     taskList: taskList, tagList: tagList, splitTaskKey: splitTaskKey,
     LIM: LIM, ROUNDS: ROUNDS, CURRENCIES: CURRENCIES, DEFAULT_PREFS: DEFAULT_PREFS, COLORS: COLORS,
     ID_RE: ID_RE, MAX_SPAN: MAX_SPAN,

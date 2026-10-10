@@ -125,7 +125,8 @@
       "toast.exported": "Exported", "toast.badFile": "This is not a Timesheet backup",
       "toast.restored": "Restored: {n} new entries", "toast.restored1": "Restored: 1 new entry", "toast.restoredNone": "Restored: nothing new",
       "toast.tooLong": "An entry can be at most 366 days long",
-      "live.started": "Timer started", "live.stopped": "Timer stopped"
+      "live.started": "Timer started", "live.stopped": "Timer stopped",
+      "toast.pomo1": "Pomodoro: 1 focus session logged", "toast.pomo": "Pomodoro: {n} focus sessions logged"
     },
     el: {
       "app": "Ώρες εργασίας", "settings": "Ρυθμίσεις",
@@ -206,7 +207,8 @@
       "toast.exported": "Έγινε εξαγωγή", "toast.badFile": "Αυτό δεν είναι αντίγραφο των Ωρών εργασίας",
       "toast.restored": "Επαναφορά: {n} νέες καταγραφές", "toast.restored1": "Επαναφορά: 1 νέα καταγραφή", "toast.restoredNone": "Επαναφορά: τίποτα καινούριο",
       "toast.tooLong": "Μια καταγραφή μπορεί να κρατά έως 366 μέρες",
-      "live.started": "Το χρονόμετρο ξεκίνησε", "live.stopped": "Το χρονόμετρο σταμάτησε"
+      "live.started": "Το χρονόμετρο ξεκίνησε", "live.stopped": "Το χρονόμετρο σταμάτησε",
+      "toast.pomo1": "Pomodoro: καταγράφηκε 1 περίοδος εστίασης", "toast.pomo": "Pomodoro: καταγράφηκαν {n} περίοδοι εστίασης"
     }
   };
 
@@ -1940,9 +1942,11 @@
     // The clock: every second while a timer runs and the app is seen;
     // a full refresh every 30 s (midnight, the "forgot" banner).
     var lastFull = 0;
+    var lastInbox = Date.now();
     setInterval(function () {
       if (document.hidden) return;
       var now = Date.now();
+      if (now - lastInbox >= 15000) { lastInbox = now; drainInbox(); }
       if (tab === "timer" && C.running(data).length) {
         tickRun(now);
         if (now - lastFull >= 30000) {
@@ -1956,8 +1960,9 @@
     }, 1000);
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) flushDesc();
-      else if (!document.querySelector("dialog[open]")) renderAll();
+      else { drainInbox(); if (!document.querySelector("dialog[open]")) renderAll(); }
     });
+    window.addEventListener("storage", function (ev) { if (ev.key === C.INBOX_KEY) drainInbox(); });
     window.addEventListener("pagehide", flushDesc);
     wireKeyboard();
   }
@@ -1987,6 +1992,29 @@
     if (go) window.__orosTimesheetToggle();
   }
 
+  // Pomodoro legs from Time (Wave 7): finished ones become entries.
+  // The inbox is re-read just before it is written, so a leg Time
+  // added meanwhile is kept.
+  function drainInbox() {
+    var raw = null;
+    try { raw = localStorage.getItem(C.INBOX_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var r = C.inboxDrain(data, C.inboxRead(raw), Date.now());
+    if (!r.done.length) return;
+    if (r.n) {
+      data = C.mergeTimesheet(data, r.add);
+      saveNow();
+    }
+    try {
+      var keep = C.inboxRead(localStorage.getItem(C.INBOX_KEY)).filter(function (x) { return r.done.indexOf(x.s) < 0; });
+      if (keep.length) localStorage.setItem(C.INBOX_KEY, JSON.stringify(keep));
+      else localStorage.removeItem(C.INBOX_KEY);
+    } catch (e) {}
+    if (!r.n) return;
+    if (!document.querySelector("dialog[open]")) renderAll();
+    showToast(r.n === 1 ? t("toast.pomo1") : t("toast.pomo", { n: r.n }));
+  }
+
   function boot() {
     load();
     loadPrefs();
@@ -1999,6 +2027,7 @@
     watchPalette();
     setTab(prefs.tab);
     takeShellToggle();
+    drainInbox();
   }
 
   boot();
