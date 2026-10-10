@@ -54,6 +54,9 @@
       "k.size.s": "Small", "k.size.m": "Medium", "k.size.l": "Large",
       "k.magnify": "Magnify on hover", "k.autohide": "Hide automatically",
       "k.over": "Show over open apps",
+      "k.style": "Style", "k.style.classic": "Classic", "k.style.glass": "Glass",
+      "k.style.frosted": "Frosted", "k.style.smoke": "Smoke", "k.style.transparent": "Transparent",
+      "k.style.solid": "Solid", "k.style.3d": "3D shelf", "k.style.neon": "Neon",
       "k.empty": "Add apps with the ☆ next to each app in the menu.",
 
       "n.enabled": "Notifications", "n.test": "Send a test",
@@ -135,6 +138,9 @@
       "k.size.s": "Μικρό", "k.size.m": "Μεσαίο", "k.size.l": "Μεγάλο",
       "k.magnify": "Μεγέθυνση στο πέρασμα του ποντικιού", "k.autohide": "Αυτόματη απόκρυψη",
       "k.over": "Εμφάνιση πάνω από ανοιχτές εφαρμογές",
+      "k.style": "Στυλ", "k.style.classic": "Κλασικό", "k.style.glass": "Γυαλί",
+      "k.style.frosted": "Θαμπό γυαλί", "k.style.smoke": "Καπνός", "k.style.transparent": "Διάφανο",
+      "k.style.solid": "Συμπαγές", "k.style.3d": "Τρισδιάστατο ράφι", "k.style.neon": "Νέον",
       "k.empty": "Πρόσθεσε εφαρμογές με το ☆ δίπλα σε κάθε εφαρμογή στο μενού.",
 
       "n.enabled": "Ειδοποιήσεις", "n.test": "Δοκιμαστική",
