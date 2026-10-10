@@ -445,6 +445,14 @@
       "type": "internal"
     },
     {
+      "id": "oracle",
+      "name": "Oracle",
+      "category": "Fun",
+      "icon": "oracle",
+      "url": "oracle/",
+      "type": "internal"
+    },
+    {
       "id": "netizen",
       "name": "Netizen ID",
       "category": "Fun",

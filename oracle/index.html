@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Oracle · orOS</title>
+
+  <link rel="stylesheet" href="oracle.css?v=0.53.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span class="title-main" data-i18n="app.name">Oracle</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="sound-btn" class="icon-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- The temple: daily oracle, question, prophecy -->
+    <section id="temple">
+      <div id="daily" class="daily">
+        <h2 data-i18n="daily">Oracle of the day</h2>
+        <p id="daily-text" class="daily-text"></p>
+      </div>
+
+      <form id="ask-form" class="ask" autocomplete="off">
+        <input type="text" id="q" maxlength="200" enterkeyhint="send" spellcheck="true">
+        <button type="submit" id="ask-btn" class="gen-btn"></button>
+      </form>
+
+      <div id="stage" class="stage">
+        <div class="smoke-wrap" aria-hidden="true">
+          <span class="puff p1"></span><span class="puff p2"></span><span class="puff p3"></span>
+          <span class="puff p4"></span><span class="puff p5"></span>
+        </div>
+        <figure id="answer" class="answer" hidden>
+          <figcaption id="answer-q-wrap" class="answer-q-wrap">
+            <span data-i18n="you.asked">You asked</span>
+            <q id="answer-q" class="answer-q"></q>
+          </figcaption>
+          <blockquote id="answer-a" class="answer-a"></blockquote>
+          <div class="answer-actions">
+            <button type="button" id="star-btn" class="icon-btn star-btn" aria-pressed="false"></button>
+            <button type="button" id="copy-btn" class="icon-btn"></button>
+            <button type="button" id="card-btn" class="icon-btn"></button>
+          </div>
+        </figure>
+      </div>
+      <p class="hint keys-hint" data-i18n="keys"></p>
+    </section>
+
+    <!-- Favourites (synced) + recent questions (this device) -->
+    <aside id="panel">
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="fav.title">Favourites</h2>
+          <span id="fav-count" class="count"></span>
+        </div>
+        <p id="fav-empty" class="hint" data-i18n="fav.empty"></p>
+        <ul id="favs" class="rows"></ul>
+      </div>
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="log.title">Recent questions</h2>
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" id="clear-log" data-i18n="log.clear" hidden>Clear</button>
+        </div>
+        <p id="log-empty" class="hint" data-i18n="log.empty"></p>
+        <ul id="log" class="rows"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="prophecies.js?v=0.53.00"></script>
+  <script src="oracle.js?v=0.53.00"></script>
+
+</body>
+</html>
