@@ -28,6 +28,11 @@ The ⋯ button on a chore lets you set who it was `Done by`, `Hand over this tim
 
 Unfinished chores stay on the list as `late` for 7 days. `Week` shows the whole week day by day, with weekly and monthly chores at the top.
 
+## Reminder and Calendar
+In `Home`, pick yourself under `Who are you on this device?`, then choose an hour for the `Daily reminder`. Once a day orOS sends one notice with your own chores for that day, on this device only, and tapping it opens `Today`. Choose `Off` to stop it. See also [Notifications](help:t/notifications).
+
+[Calendar](app:calendar) can show the chores under the `Chores` chip; when you've picked who you are, only yours. Tapping one opens that day here.
+
 ## Stats
 For `This week`, `This month` or `12 months`, each member's points, chores done and missed, and their streak, with a mark for their fair share. `History (90 days)` lists what was done.
 
@@ -43,4 +48,4 @@ Members, chores and everything ticked, skipped or handed over sync between your 
 
 ## Limits
 - Up to 12 members and 40 chores.
-- There are no reminders or notifications.
+- The daily reminder only shows while orOS is open on that device.
