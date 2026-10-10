@@ -921,7 +921,7 @@ test("2048: random games keep the sum and the score honest", () => {
 });
 
 test("2048: records merge is a join and a reset drops older rows", () => {
-  const M = G2.mergeG2048, keys = ["n3", "n4", "n5"];
+  const M = G2.mergeG2048, keys = ["n3", "n4", "n5", "t3", "t4", "t5"];
   const st = () => {
     const rows = {};
     for (let i = 0; i < rnd(4); i++) {
@@ -943,6 +943,9 @@ test("2048: records merge is a join and a reset drops older rows", () => {
   const y = { rows: { d: { b: 0, s: { n4: { s: 900, ts: 300, v: 64, g: 5, w: 1 } } } } };
   assert.equal(J(M(x, y).rows.d.s.n4), J({ s: 900, ts: 300, v: 128, g: 5, w: 1 }));   // tie: the earlier one
   assert.equal(J(M(x, { br: 5, rows: {} }).rows), "{}");
+  // Timed records (t*) are kept apart from classic ones (n*) on the same row.
+  const t = { rows: { d: { b: 0, s: { t4: { s: 300, ts: 700, v: 64, g: 2, w: 0 } } } } };
+  assert.equal(J(M(x, t).rows.d.s), J({ n4: x.rows.d.s.n4, t4: t.rows.d.s.t4 }));
   for (const bad of [{ s: 1, ts: 1, v: 3, g: 1, w: 0 }, { s: -1, ts: 1, v: 2, g: 1, w: 0 }, { s: 1, ts: 1, v: 2, g: 0, w: 0 }, { s: 1, ts: 1, v: 2, g: 1 }]) {
     assert.equal(J(M({ rows: { d: { b: 0, s: { n4: bad } } } }, null).rows), "{}", J(bad));
   }
