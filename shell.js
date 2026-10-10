@@ -2036,6 +2036,37 @@
     window.__orosOpenAt(id, hit.target);
   }
 
+  // AI Assistant (assistant/): the same data search, run for the apps
+  // the assistant's own permissions allow (it asks the user before any
+  // result leaves the device). Read-only like every provider; the
+  // menu's per-app switches are the menu's, not the assistant's.
+  window.orosAssistApps = function () {
+    return searchApps().map(function (a) {
+      var k = "app." + a.id, v = window.t(k);
+      return { id: a.id, name: v === k ? (a.name || a.id) : v, sensitive: a.searchOff === true };
+    });
+  };
+  window.orosAssistSearch = function (q, ids) {
+    var S = window.orosSearch;
+    if (!S) return Promise.resolve([]);
+    var allow = {};
+    (Array.isArray(ids) ? ids : []).forEach(function (id) { allow[String(id)] = true; });
+    var apps = searchApps().filter(function (a) { return allow[a.id]; });
+    if (!apps.length) return Promise.resolve([]);
+    if (!searchReader) searchReader = S.makeReader(localStorage);
+    return S.load(apps, APP_VERSION).then(function () {
+      return S.run(window.orosSearchProviders, String(q || ""), {
+        lang: state.lang, readJSON: searchReader,
+        enabled: function (id) { return !!allow[id]; }
+      });
+    }).then(function (groups) {
+      return JSON.parse(JSON.stringify(groups || []));
+    });
+  };
+  window.orosAssistOpen = function (appId, target) {
+    openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
+  };
+
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
   function openMenuSearch() {
@@ -4586,7 +4617,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
