@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.48.01";
+var CACHE_VERSION = "oros-v0.50.01";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -92,6 +92,7 @@ var PRECACHE_URLS = [
   "./notifications.js",
   "./pet.css",
   "./pet.js",
+  "./launcher.js",
   "./vault.js",
   "./translations.js",
   "./apps.json",
@@ -166,6 +167,8 @@ var PRECACHE_URLS = [
   "shelf/shelf.css",
   "shelf/shelf.js",
   "water/water.js",
+  "water/help.en.txt",
+  "water/help.el.txt",
   "timesheet/timesheet.js",
   "storage/",
   "storage/index.html",
@@ -189,6 +192,8 @@ var PRECACHE_URLS = [
   "pubdomain/pubdomain.css",
   "pubdomain/rules.js",
   "pubdomain/pubdomain.js",
+  "pubdomain/help.en.txt",
+  "pubdomain/help.el.txt",
   "prompter/prompter.css",
   "prompter/prompter.js",
   "habits/",
@@ -382,6 +387,14 @@ var PRECACHE_URLS = [
   "device/device.css",
   "device/core.js",
   "device/device.js",
+  "settings/",
+  "settings/index.html",
+  "settings/settings.css",
+  "settings/core.js",
+  "settings/settings.js",
+  "settings/search.js",
+  "settings/help.en.txt",
+  "settings/help.el.txt",
   "netizen/",
   "netizen/index.html",
   "netizen/netizen.css",
@@ -404,6 +417,7 @@ var PRECACHE_URLS = [
   "atelier/editor.js",
   "atelier/panels.js",
   "atelier/sources.js",
+  "atelier/fonts.js",
   "atelier/gif.js",
   "atelier/motion.js",
   "atelier/zip.js",
