@@ -44,7 +44,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - `Uploads` › `Add video or sound` takes an MP4, WebM, MP3, M4A, OGG or WAV file (videos up to 100 MB, sounds up to 30 MB). A video becomes an element you can move, crop, mask, filter and animate like a photo; a sound becomes the sound of the current page.
 - Select a video and tap `Video` to trim it, turn its sound off, set its volume, choose whether it plays again when it ends, or make the page show for as long as the video.
 - With nothing selected, `Animate` › `Page sound` sets the volume and where the sound starts. `Use on all pages` gives every page the same sound, which then plays on from page to page.
-- Videos and sounds play in `Play` and in `Download` › `Video` (with their sound). A GIF shows the moving video without sound. Pictures, PDF, PowerPoint and the slide show use the video's first frame; the slide show plays the page sound.
+- Videos and sounds play in `Play` and in `Download` › `Video` (with their sound). A GIF shows the moving video without sound. The slide show plays the videos and the page sound too, and runs the entrance animations of each page. Pictures, PDF and PowerPoint use the video's first frame.
 - Video and sound files stay on your orOS disk and sync with Vault Drive like your photos, so large files take space on every device.
 
 ## Download and share
