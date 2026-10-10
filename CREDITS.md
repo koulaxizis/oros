@@ -57,6 +57,9 @@ MIT (notice in the file). The app icons and all other artwork are drawn for orOS
 | Greek words (`wordle/words-el.js`) | Hunspell el_GR 0.9, Steve Stavropoulos and contributors ([elspell](https://elspell.math.upatras.gr/)), via [`dictionary-el`](https://github.com/wooorm/dictionaries) | MPL 1.1 | Λεξούλα (Greek Wordle), Hangman (`hangman/words-el.js`), Κρυπτόλεξο and Σταυρόλεξο (`wordsearch/words-el.js`) |
 | Word frequencies, English and Greek (`wordle/words-el.js`, `hangman/words-*.js`, `wordsearch/words-*.js`) | [FrequencyWords](https://github.com/hermitdave/FrequencyWords) 2018, Hermit Dave, from OpenSubtitles | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | Λεξούλα, Hangman, Word Search and Crossword (EN and EL: choosing everyday words) |
 | Copyright terms per country (`pubdomain/rules.js`) | Each country's statute; the official source is linked on every row | Facts from public law | Public Domain Calculator |
+| Bright stars and names (`sky/stars.js`) | [Yale Bright Star Catalogue](http://tdc-www.harvard.edu/catalogs/bsc5.html), 5th ed., D. Hoffleit and W. H. Warren Jr. | Public domain | Moon & Sky |
+| Constellation figures (`sky/stars.js`) | [d3-celestial](https://github.com/ofrohn/d3-celestial), © 2015 Olaf Frohn | [BSD-3-Clause](sky/LICENSE-d3-celestial.txt) | Moon & Sky |
+| Astronomy formulas (`sky/core.js`) | Jean Meeus, *Astronomical Algorithms* (2nd ed.); E. M. Standish, JPL "Approximate Positions of the Planets" | Methods (no code or data copied beyond published coefficients) | Moon & Sky |
 
 `passwords/THIRD-PARTY.txt` carries the full MIT notice for SecLists. The
 generators for the word lists are kept outside the repo (project files).
