@@ -467,6 +467,8 @@ dialog.mm-dlg input, dialog.mm-dlg select, dialog.mm-dlg textarea { background: 
 .dlg-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
 textarea { resize: vertical; line-height: 1.4; }
 .qty-hint { margin: -4px 0 10px; }
+.chk-row { display: flex; align-items: center; gap: 8px; min-height: 36px; margin: -2px 0 8px; font-size: 14px; cursor: pointer; }
+.fuel-res { font-size: 15px; font-weight: 700; margin: 10px 0 2px; min-height: 1.4em; overflow-wrap: anywhere; }
 .tchecks { display: flex; flex-direction: column; gap: 2px; max-height: 40vh; overflow-y: auto; margin-bottom: 4px; }
 .tcheck {
   display: flex;
@@ -607,6 +609,7 @@ textarea { resize: vertical; line-height: 1.4; }
   .icon-btn, .txt-btn, .dlg-btn, input:not([type="checkbox"]), select { min-height: 44px; }
   .icon-btn { width: 44px; }
   .mini, .chk { width: 44px; height: 44px; }
+  .chk-row { min-height: 44px; }
   .link-btn, .chip, .chip-sel, .txt-btn.small, .menu-it, .tcheck { min-height: 44px; }
   #toast button { min-height: 44px; }
 }

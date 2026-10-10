@@ -135,6 +135,16 @@
       "copy.suffix": "{name} (copy)",
       "txt.dest": "Destination", "txt.people": "Travellers", "txt.pack": "PACKING", "txt.plan": "ITINERARY",
       "txt.notes": "NOTES", "txt.ref": "booking", "txt.undated": "No day", "txt.packed": "{d}/{n} packed",
+      "menu.fuel": "Fuel cost by car", "fuel.title": "Fuel cost by car", "fuel.car": "Vehicle (from Garage)",
+      "fuel.manual": "Other / enter by hand", "fuel.km": "Distance one way (km)", "fuel.round": "Round trip",
+      "fuel.per100.f": "Consumption (L/100 km)", "fuel.per100.e": "Consumption (kWh/100 km)",
+      "fuel.price.f": "Price per litre", "fuel.price.e": "Price per kWh",
+      "fuel.fromGarage": "Consumption and price come from your Garage log; you can change them.",
+      "fuel.noGarage": "Tip: log fill-ups in Garage and the consumption and price are filled in for you.",
+      "fuel.result": "{dist} km · about {units} · about {cost}", "fuel.each": "{cost} per person ({n})",
+      "fuel.need": "Enter the distance, the consumption and the price", "fuel.save": "Add to notes",
+      "fuel.line": "Fuel ({car}): {dist} km, about {units}, about {cost}", "fuel.saved": "Added to the trip notes",
+      "unit.f": "{n} L", "unit.e": "{n} kWh",
       "menu.remOff": "Turn reminders off", "menu.remOn": "Turn reminders on",
       "toast.remOff": "Reminders off on this device", "toast.remOn": "Reminders on: the evening before you leave and before departures",
       "wx.title": "Forecast for {place}", "wx.at": "updated {time}", "wx.later": "The forecast shows up 7 days before the trip.",
@@ -213,6 +223,16 @@
       "copy.suffix": "{name} (αντίγραφο)",
       "txt.dest": "Προορισμός", "txt.people": "Ταξιδιώτες", "txt.pack": "ΒΑΛΙΤΣΑ", "txt.plan": "ΠΡΟΓΡΑΜΜΑ",
       "txt.notes": "ΣΗΜΕΙΩΣΕΙΣ", "txt.ref": "κράτηση", "txt.undated": "Χωρίς ημέρα", "txt.packed": "{d}/{n} στη βαλίτσα",
+      "menu.fuel": "Κόστος καυσίμων με αυτοκίνητο", "fuel.title": "Κόστος καυσίμων με αυτοκίνητο", "fuel.car": "Όχημα (από το Γκαράζ)",
+      "fuel.manual": "Άλλο / με το χέρι", "fuel.km": "Απόσταση μονής διαδρομής (km)", "fuel.round": "Με επιστροφή",
+      "fuel.per100.f": "Κατανάλωση (L/100 km)", "fuel.per100.e": "Κατανάλωση (kWh/100 km)",
+      "fuel.price.f": "Τιμή ανά λίτρο", "fuel.price.e": "Τιμή ανά kWh",
+      "fuel.fromGarage": "Η κατανάλωση και η τιμή έρχονται από το Γκαράζ σου· μπορείς να τις αλλάξεις.",
+      "fuel.noGarage": "Συμβουλή: αν καταγράφεις τα γεμίσματα στο Γκαράζ, η κατανάλωση και η τιμή συμπληρώνονται μόνες τους.",
+      "fuel.result": "{dist} km · περίπου {units} · περίπου {cost}", "fuel.each": "{cost} ανά άτομο ({n})",
+      "fuel.need": "Συμπλήρωσε απόσταση, κατανάλωση και τιμή", "fuel.save": "Προσθήκη στις σημειώσεις",
+      "fuel.line": "Καύσιμα ({car}): {dist} km, περίπου {units}, περίπου {cost}", "fuel.saved": "Μπήκε στις σημειώσεις του ταξιδιού",
+      "unit.f": "{n} L", "unit.e": "{n} kWh",
       "menu.remOff": "Απενεργοποίηση υπενθυμίσεων", "menu.remOn": "Ενεργοποίηση υπενθυμίσεων",
       "toast.remOff": "Οι υπενθυμίσεις σβήστηκαν σε αυτή τη συσκευή", "toast.remOn": "Υπενθυμίσεις: το βράδυ πριν φύγεις και πριν από τις αναχωρήσεις",
       "wx.title": "Πρόγνωση για {place}", "wx.at": "ενημέρωση {time}", "wx.later": "Η πρόγνωση εμφανίζεται 7 μέρες πριν το ταξίδι.",
@@ -628,6 +648,22 @@
     return days.slice(0, -1).filter(function (d) { return !covered[d]; });
   }
   // Entries of one day: timed by time, then the untimed in their order.
+  // Fuel for a car trip: km one way, round trip doubles it, per100 =
+  // litres (or kWh) per 100 km, price per litre (or kWh). null when
+  // something is missing or out of range; cost per person when people > 1.
+  function fuelCost(km, round, per100, price, people) {
+    var ok = function (v, max) { return typeof v === "number" && isFinite(v) && v > 0 && v <= max; };
+    if (!ok(km, 50000) || !ok(per100, 200) || !ok(price, 1000)) return null;
+    var dist = Math.round(km * (round ? 2 : 1));
+    var units = Math.round(dist * per100) / 100;
+    var cost = Math.round(units * price * 100) / 100;
+    var n = isInt(people) && people > 1 ? people : 1;
+    return { dist: dist, units: units, cost: cost, each: n > 1 ? Math.round(cost / n * 100) / 100 : null };
+  }
+  function parseDec(v) {
+    var x = parseFloat(String(v || "").trim().replace(",", "."));
+    return isFinite(x) ? x : NaN;
+  }
   function sortEntries(list) {
     return list.slice().sort(function (x, y) {
       if (!!x.t1 !== !!y.t1) return x.t1 ? -1 : 1;
@@ -2029,6 +2065,121 @@
     show(dlg, fName);
   }
 
+  // Fuel cost by car. Vehicles, average consumption (full to full)
+  // and the last price paid come from the Garage log, read-only
+  // through garage/core.js (same math as the Garage app); everything
+  // stays editable and works without Garage too. Nothing is stored
+  // unless "Add to notes" is pressed.
+  function garageCars() {
+    var G = window.OrosGarageCore, out = { cars: [], cur: "EUR" };
+    if (!G) return out;
+    try {
+      var raw = JSON.parse(localStorage.getItem("oros-garage-data") || "null");
+      if (!raw || !Array.isArray(raw.vehicles)) return out;
+      var d = G.merge(raw, raw, Date.now());
+      out.cur = d.settings && d.settings.cur ? d.settings.cur : "EUR";
+      d.vehicles.forEach(function (v) {
+        if (v.arch || !G.hasFuel(v)) return;
+        var e = G.energies(v)[0], last = null;
+        d.fuel.forEach(function (x) {
+          if (x.v !== v.id || x.e !== e || !(x.q > 0) || !(x.c > 0)) return;
+          if (!last || x.d > last.d || (x.d === last.d && x.km > last.km)) last = x;
+        });
+        out.cars.push({ id: v.id, name: v.name, e: e, per100: G.consumption(d, v.id, e).avg,
+                        price: last ? last.c / 100 / (last.q / 1000) : null });
+      });
+    } catch (e) {}
+    return out;
+  }
+  function money(v, cur) {
+    try { return new Intl.NumberFormat(locale(), { style: "currency", currency: cur }).format(v); }
+    catch (e) { return v.toFixed(2) + " " + cur; }
+  }
+  function decTxt(v, digits) {
+    return v === null || v === undefined || !isFinite(v) ? "" :
+      new Intl.NumberFormat(locale(), { maximumFractionDigits: digits, useGrouping: false }).format(v);
+  }
+  function fuelDialog(tripId) {
+    var trip = findTrip(tripId);
+    if (!trip) return;
+    var g = garageCars();
+    var dlg = makeDialog("tr-fuel");
+    dlg.appendChild(el("div", "dlg-title", t("fuel.title")));
+    var form = el("form");
+    form.method = "dialog";
+    var opts = g.cars.map(function (c) { return [c.id, c.name]; }).concat([["", t("fuel.manual")]]);
+    var fCar = select(opts, g.cars.length ? g.cars[0].id : "");
+    var fKm = input("text", 8, "");
+    fKm.inputMode = "decimal";
+    var fRound = el("input");
+    fRound.type = "checkbox";
+    fRound.id = "tf-" + (++fieldSeq);
+    fRound.checked = true;
+    var fPer = input("text", 6, ""), fPrice = input("text", 8, "");
+    fPer.inputMode = fPrice.inputMode = "decimal";
+    var lPer = el("label", "dlg-lbl"), lPrice = el("label", "dlg-lbl");
+    var hint = el("p", "hint"), res = el("p", "fuel-res");
+    res.setAttribute("aria-live", "polite");
+    function car() {
+      for (var i = 0; i < g.cars.length; i++) if (g.cars[i].id === fCar.value) return g.cars[i];
+      return null;
+    }
+    function energy() { var c = car(); return c ? c.e : "f"; }
+    function fill() {
+      var c = car(), e = energy();
+      lPer.textContent = t("fuel.per100." + e);
+      lPrice.textContent = t("fuel.price." + e);
+      fPer.value = c && c.per100 ? decTxt(c.per100, 1) : "";
+      fPrice.value = c && c.price ? decTxt(c.price, 3) : "";
+      hint.textContent = t(c ? "fuel.fromGarage" : "fuel.noGarage");
+      calc();
+    }
+    function result() {
+      return fuelCost(parseDec(fKm.value), fRound.checked, parseDec(fPer.value), parseDec(fPrice.value), trip.people.length);
+    }
+    function calc() {
+      var r = result(), e = energy();
+      if (!r) { res.textContent = ""; return; }
+      var txt = t("fuel.result", { dist: r.dist, units: t("unit." + e, { n: decTxt(r.units, 1) }), cost: money(r.cost, g.cur) });
+      if (r.each !== null) txt += " · " + t("fuel.each", { cost: money(r.each, g.cur), n: trip.people.length });
+      res.textContent = txt;
+    }
+    if (g.cars.length) form.appendChild(field(t("fuel.car"), fCar));
+    form.appendChild(field(t("fuel.km"), fKm));
+    var rw = el("label", "chk-row");
+    rw.appendChild(fRound);
+    rw.appendChild(el("span", "", t("fuel.round")));
+    form.appendChild(rw);
+    var wPer = el("div", "fld"), wPrice = el("div", "fld");
+    lPer.setAttribute("for", fPer.id); lPrice.setAttribute("for", fPrice.id);
+    wPer.appendChild(lPer); wPer.appendChild(fPer);
+    wPrice.appendChild(lPrice); wPrice.appendChild(fPrice);
+    form.appendChild(row(wPer, wPrice));
+    form.appendChild(hint);
+    form.appendChild(res);
+    form.appendChild(actions(dlg, t("fuel.save")));
+    fCar.addEventListener("change", fill);
+    [fKm, fPer, fPrice].forEach(function (x) { x.addEventListener("input", calc); });
+    fRound.addEventListener("change", calc);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var r = result();
+      if (!r) { showToast(t("fuel.need")); (fKm.value ? fPer : fKm).focus(); return; }
+      var c = car(), tr = findTrip(tripId);
+      var ln = t("fuel.line", { car: c ? c.name : t("kind.car"), dist: r.dist,
+        units: t("unit." + energy(), { n: decTxt(r.units, 1) }), cost: money(r.cost, g.cur) });
+      dlg.close();
+      if (!tr) return;
+      commitNotes();
+      setField(tr, "notes", text(tr.notes ? tr.notes.replace(/\s+$/, "") + "\n" + ln : ln, LEN.notes));
+      commit();
+      showToast(t("fuel.saved"));
+    });
+    dlg.appendChild(form);
+    fill();
+    show(dlg, fKm);
+  }
+
   // Template editor: a ready template saved here becomes the user's
   // (stored under the same id); "Hide" / "Delete" leave a tombstone.
   function tplDialog(tp) {
@@ -2181,6 +2332,7 @@
         { label: t("menu.edit"), fn: function () { tripDialog(id); } },
         { label: t(shareOnMobile() ? "menu.share" : "menu.text"), fn: function () { shareTrip(id); } },
         { label: t("menu.ics"), fn: function () { exportIcs(id); } },
+        { label: t("menu.fuel"), fn: function () { fuelDialog(id); } },
         { label: t("menu.print"), fn: function () { printTrip(id); } },
         { label: t("menu.dup"), fn: function () { dupDialog(id); } },
         { label: t("menu.tpl"), fn: function () { saveTplDialog(id); } },
