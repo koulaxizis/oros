@@ -6,7 +6,9 @@ On the `Timer` tab, pick a project (or leave `No project`), type `What are you w
 
 Below the timer you see the entries of the day and its total. Use the arrows to go to other days; the date button brings you back to today. Tap or click an entry to edit it, or use its ▶ button to continue the same work with a new timer.
 
-If a timer has been running for more than 10 hours, a banner asks if you forgot to stop it: `Fix end time` or `It's fine`.
+If a timer has been running for more than 10 hours, a banner asks if you forgot to stop it: `Fix end time` or `It's fine`. orOS also sends a notice once, even when Timesheet is closed.
+
+While a timer runs, a clock chip in the orOS top bar shows how long it has been going; hover over it for the project and start time, and click it to open Timesheet. Anywhere in orOS, [[Ctrl+Alt+Shift+T]] starts or stops the timer (see [Keyboard shortcuts](help:t/shortcuts)).
 
 ## Add and edit time
 `Add time by hand` opens `Add time`. Give a `Start date`, `Start` and `End`, or just a `Duration` such as 1:30, 1,5 (hours) or 90m. In an entry you can also tick `Invoiced`. `Delete` removes it, with an `Undo` button for a few seconds.
@@ -37,6 +39,7 @@ In `Settings`, `Back up (JSON)` saves everything to a file and `Restore from bac
 - [[N]] adds time by hand.
 - [[←]] / [[→]] go to the previous or next day (or week on `Week`).
 - [[Enter]] in the description box starts the timer.
+- [[Ctrl+Alt+Shift+T]] starts or stops the timer from anywhere in orOS.
 - [[Ctrl+Z]] undoes the last delete or change that offered `Undo`.
 
 ## Tips
