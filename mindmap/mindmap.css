@@ -585,4 +585,44 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .icon-btn, .mm-box, #toast, .zoom { transition: none; }
 }
 
+/* Phase 2: cross-links, link-picking hint, pictures */
+.mm-link { cursor: pointer; }
+.mm-link-hit { pointer-events: stroke; }
+.mm-link:hover path:not(.mm-link-hit) { stroke-width: 2.6; }
+.mm-img { pointer-events: none; }
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 16px);
+  box-sizing: border-box;
+  padding: 6px 6px 6px 14px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+}
+.hint-x {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.pic-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pic-thumb { width: 72px; height: 54px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+@media (pointer: coarse) { .hint-x { min-height: 44px; } }
+
 [hidden] { display: none !important; }

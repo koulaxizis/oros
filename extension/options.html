@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>orOS</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <form id="form" autocomplete="off">
+    <label for="base" data-i18n="optBase">orOS address</label>
+    <input id="base" type="text" spellcheck="false" inputmode="url">
+    <p class="hint" data-i18n="optBaseHint"></p>
+    <div class="row">
+      <button type="submit" data-i18n="optSave">Save</button>
+      <button type="button" id="reset" data-i18n="optReset">Default</button>
+      <span id="status" role="status"></span>
+    </div>
+  </form>
+  <h2 data-i18n="optHowTitle">How to use</h2>
+  <ul>
+    <li data-i18n="optHow1"></li>
+    <li data-i18n="optHow2"></li>
+    <li data-i18n="optHow3"></li>
+    <li data-i18n="optHow4"></li>
+  </ul>
+  <p class="hint" data-i18n="optPrivacy"></p>
+  <script src="core.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -356,3 +356,137 @@ test("example map: fixed ids, two devices get one map, valid rows", () => {
   assert.equal(m.nodes.length, a.nodes.length);
   assert.equal(M.resolve(m, M.EXAMPLE_ID).root.text, "Σχέδιο ταξιδιού");
 });
+
+// ---------- phase 2: cross-links, free placement, pictures ----------
+const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+function lk(id, from, to, extra) { return Object.assign({ id, m: 1, map: MAP, from, to, label: "" }, extra || {}); }
+function ps(id, dx, dy, m) { return { id, m: m || 1, map: MAP, dx, dy }; }
+function im(id, m, extra) { return Object.assign({ id, m: m || 1, map: MAP, src: PNG, w: 1, h: 1 }, extra || {}); }
+
+test("phase 2 normalizers: links, offsets and pictures are allow-listed and validated", () => {
+  assert.equal(M.normLink(lk("l1", "a", "a")), null, "no self link");
+  assert.equal(M.normLink(lk("l1", "a", "<b>")), null);
+  assert.equal(M.normLink(lk("l1", "a", "b", { label: "x\n‮y" })).label, "x y");
+  assert.equal(M.normLink(lk("l1", "a", "b", { label: "z".repeat(500) })).label.length, M.LABEL_LEN);
+  assert.equal(M.normLink(lk("l1", "a", "b", { evil: 1 })).evil, undefined);
+  assert.deepEqual(M.normPos(ps("a", 1.5, "9")), { id: "a", m: 1, map: MAP, dx: 0, dy: 0 });
+  assert.deepEqual(M.normPos(ps("a", M.MAX_OFF + 1, -20)), { id: "a", m: 1, map: MAP, dx: 0, dy: -20 });
+  assert.equal(M.normPos(ps(R, 5, 5)), null, "the centre never moves");
+  assert.equal(M.normImg(im("a")).src, PNG);
+  ["javascript:alert(1)", "data:image/svg+xml;base64,PHN2Zz4=", "data:text/html;base64,PGI+",
+   "data:image/png;base64,ab\"onload=x", "https://example.com/a.png", PNG.replace("base64,", "base64,<")].forEach((src) => {
+    assert.equal(M.normImg(im("a", 1, { src })).src, "", src);
+  });
+  assert.equal(M.normImg(im("a", 1, { w: M.IMG_MAX + 1 })).src, "");
+  assert.equal(M.normImg(im("a", 1, { src: "data:image/jpeg;base64," + "A".repeat(M.IMG_LEN) })).src, "");
+});
+
+test("phase 2 merge: union, LWW, deleting a node drops its links, offset and picture; resets win", () => {
+  const nodes = [nd(R, "", ""), nd("a"), nd("b"), nd("c", "a")];
+  const base = { maps: [mp()], nodes, links: [lk("l1", "a", "b")], pos: [ps("a", 40, 10)], imgs: [im("b")], tombs: {} };
+  const d = M.merge(base, {});
+  assert.equal(d.links.length, 1); assert.equal(d.pos.length, 1); assert.equal(d.imgs.length, 1);
+  // two devices add different links: both kept
+  const A = M.merge(d, { links: [lk("l2", "b", "c", { m: 2 })] }), B = M.merge(d, { links: [lk("l3", "c", "a", { m: 2 })] });
+  assert.deepEqual(M.merge(A, B), M.merge(B, A));
+  assert.equal(M.merge(A, B).links.length, 3);
+  // a reset (zero offset, newer) wins over the older offset, in any order, and stays in the data
+  const reset = M.merge(d, { pos: [ps("a", 0, 0, 5)] });
+  assert.deepEqual(M.merge(d, reset).pos, [ps("a", 0, 0, 5)]);
+  assert.deepEqual(M.merge(reset, d).pos, [ps("a", 0, 0, 5)]);
+  // removing a picture is an empty row that wins
+  const gone = M.merge(d, { imgs: [im("b", 6, { src: "" })] });
+  assert.equal(M.merge(d, gone).imgs[0].src, "");
+  // deleting node b (tombstone) drops the link to it and its picture; a's offset stays
+  const del = M.merge(d, { tombs: { b: 9 } });
+  assert.equal(del.links.length, 0); assert.equal(del.imgs.length, 0); assert.equal(del.pos.length, 1);
+  // a picture or offset of a node in another map is not kept
+  assert.equal(M.merge(d, { imgs: [im("a", 3, { map: "other" })] }).imgs.length, 1);
+  // fuzz: symmetric, idempotent, canonical
+  const r = rnd(11);
+  for (let i = 0; i < 200; i++) {
+    const mk = () => ({ maps: [mp()], nodes,
+      links: [lk("k" + Math.floor(r() * 4), ["a", "b", "c"][Math.floor(r() * 3)], ["a", "b", "c", R][Math.floor(r() * 4)], { m: 1 + Math.floor(r() * 5), label: "x" + Math.floor(r() * 3) })],
+      pos: [ps(["a", "b", "c"][Math.floor(r() * 3)], Math.floor(r() * 9) - 4, 3, 1 + Math.floor(r() * 5))],
+      imgs: [im(["a", "b", "c"][Math.floor(r() * 3)], 1 + Math.floor(r() * 5), r() < 0.3 ? { src: "" } : {})],
+      tombs: r() < 0.3 ? { ["k" + Math.floor(r() * 4)]: 1 + Math.floor(r() * 5) } : {} });
+    const x = mk(), y = mk();
+    const xy = M.merge(x, y);
+    assert.deepEqual(xy, M.merge(y, x));
+    assert.deepEqual(M.merge(xy, xy), xy);
+    assert.deepEqual(M.merge(xy, x), xy);
+  }
+});
+
+test("phase 2 merge: an older device that drops the new collections loses nothing on newer ones", () => {
+  const nodes = [nd(R, "", ""), nd("a"), nd("b")];
+  const mine = M.merge({ maps: [mp()], nodes, links: [lk("l1", "a", "b")], pos: [ps("a", 30, 0)], imgs: [im("a")], tombs: {} }, {});
+  // the old code rebuilds only maps / nodes / tombs, then uploads that
+  const old = { ver: 1, maps: mine.maps, nodes: mine.nodes, tombs: mine.tombs };
+  assert.deepEqual(M.merge(mine, old), mine);
+  assert.deepEqual(M.merge(old, mine), mine);
+});
+
+test("phase 2 layout: an offset moves the whole branch, edges follow, links get ends and labels", () => {
+  const nodes = [nd("a", R, "V"), nd("a1", "a", "V"), nd("b", R, "W"), nd("b1", "b", "V")];
+  const d0 = data(nodes);
+  const L0 = M.layout(M.resolve(d0, MAP), {});
+  const d1 = M.merge(d0, { pos: [ps("a", -600, 300)], links: [lk("l1", "a1", "b1", { label: "needs" })] });
+  const R1 = M.resolve(d1, MAP);
+  const L1 = M.layout(R1, {});
+  // relative to the centre, a and its child a1 moved by the same amount
+  const rel = (L, id) => [L.nodes[id].cx - L.nodes[R].cx, L.nodes[id].cy - L.nodes[R].cy];
+  assert.deepEqual([rel(L1, "a")[0] - rel(L0, "a")[0], rel(L1, "a")[1] - rel(L0, "a")[1]], [-600, 300]);
+  assert.deepEqual([rel(L1, "a1")[0] - rel(L0, "a1")[0], rel(L1, "a1")[1] - rel(L0, "a1")[1]], [-600, 300]);
+  assert.ok(L1.nodes.a.moved && !L1.nodes.a1.moved);
+  // a moved to the left of the centre: its edge now leaves from the left
+  assert.equal(L1.nodes.a.flow, "l");
+  const e = L1.edges.find((x) => x.to === "a");
+  assert.ok(e.x2 >= L1.nodes.a.x + L1.nodes.a.w - 0.5);
+  // the drawing still starts at the margin and holds every node
+  Object.values(L1.nodes).forEach((c) => { assert.ok(c.x >= 40 && c.y >= 40 && c.x + c.w <= L1.w && c.y + c.h <= L1.h); });
+  assert.equal(L1.links.length, 1);
+  const k = L1.links[0];
+  assert.equal(k.label, "needs");
+  assert.ok(k.lw > 0 && k.lx - k.lw / 2 >= 0 && k.lx + k.lw / 2 <= L1.w);
+  // a folded end attaches to its visible ancestor; both ends on one node → not drawn
+  assert.equal(M.layout(R1, { fold: { a: 1 } }).links[0].from, "a");
+  const d2 = M.merge(d1, { links: [lk("l2", "a", "a1", { m: 2 })] });
+  assert.equal(M.layout(M.resolve(d2, MAP), { fold: { a: 1 } }).links.length, 1);
+});
+
+test("phase 2 pictures: a node grows to hold its picture; SVG keeps only safe data images", () => {
+  const nodes = [nd("a", R, "V", { text: "<script>x</script>" })];
+  const d = M.merge(data(nodes), { imgs: [im("a", 2, { w: 400, h: 200 })] });
+  const r = M.resolve(d, MAP), L = M.layout(r, {});
+  assert.deepEqual(L.nodes.a.img, { w: 180, h: 90 });
+  assert.ok(L.nodes.a.w >= 180 && L.nodes.a.h > 90);
+  const sc = M.scene(r, L, { pal: M.THEMES.light });
+  const svg = M.toSvg(sc, { title: "t" });
+  assert.ok(svg.includes('href="' + PNG + '"'));
+  assert.ok(!svg.includes("<script"));
+  // a hostile href slipped into a scene item is dropped by the serializer
+  const bad = { items: [{ tag: "image", a: { x: 0, y: 0, width: 1, height: 1, href: "javascript:alert(1)" } },
+                        { tag: "rect", a: { x: 0, y: 0, width: 1, height: 1, href: PNG } }], w: 10, h: 10 };
+  const out = M.toSvg(bad, {});
+  assert.ok(!out.includes("javascript") && !out.includes("href"));
+});
+
+test("phase 2 JSON + tree import: links, offsets and pictures travel; refs become links", () => {
+  const nodes = [nd("a"), nd("b")];
+  const d = M.merge(data(nodes), { links: [lk("l1", "a", "b")], pos: [ps("b", 5, 6)], imgs: [im("a")] });
+  const txt = M.exportData(d, MAP, "2026-10-10T00:00:00Z");
+  const back = M.parseImport(txt, M.emptyData());
+  assert.ok(back.ok);
+  assert.deepEqual(back.data.links, d.links); assert.deepEqual(back.data.pos, d.pos); assert.deepEqual(back.data.imgs, d.imgs);
+  const tree = { text: "Root", note: "", done: false, ref: "r", kids: [
+    { text: "One", note: "", done: false, ref: "1", url: "https://example.com/", color: "teal", kids: [] },
+    { text: "Two", note: "", done: false, ref: "2", kids: [] }],
+    links: [{ from: "1", to: "2", label: "then" }, { from: "1", to: "missing" }, { from: "2", to: "2" }] };
+  const rows = M.treeToRows(tree, newId, 5);
+  assert.equal(rows.nodes.length, 3);
+  const one = rows.nodes.find((n) => n.text === "One"), two = rows.nodes.find((n) => n.text === "Two");
+  assert.equal(one.url, "https://example.com/"); assert.equal(one.color, "teal");
+  assert.equal(rows.links.length, 1);
+  assert.deepEqual([rows.links[0].from, rows.links[0].to, rows.links[0].label], [one.id, two.id, "then"]);
+});

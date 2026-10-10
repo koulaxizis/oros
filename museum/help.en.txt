@@ -1,0 +1,39 @@
+# One-Minute Museum
+A new Wikipedia article every minute, shown like an exhibit in a museum, with its picture, its text and its credits.
+
+## Getting started
+Open the app and the first exhibit appears. It changes by itself when the ring at the top right runs out; the next one loads a few seconds early, so there is no waiting.
+- The pause button stops the clock, for example to read a long text. The clock also stops on its own while the app is hidden or minimised.
+- The arrows move to the previous and next exhibit, through the last 50 of this visit.
+- The arrow-out button opens the whole article on Wikipedia in a new tab.
+
+## Halls, language and time
+- `Everything` shows random articles. Very short articles and disambiguation pages are skipped.
+- `Pictures` shows only articles that have a picture.
+- `Featured today` shows the day's featured article, the picture of the day and the most read articles.
+- `On this day` shows events that happened on today's date. It exists only on the English Wikipedia.
+- `Wikipedia` chooses `English` or `Ελληνικά`. At first it follows the language of orOS.
+- `Each exhibit` sets how long an exhibit stays: 30 seconds, 1, 2 or 5 minutes.
+
+## Your collection
+- The star keeps the exhibit in `Your collection`, with its text and credits. Tap or click the star again, or the × next to an item, to remove it; `Undo` brings it back.
+- Tap or click an item of the collection to show it again.
+
+## When there is no connection
+The museum needs Wikipedia. Without a connection it shows `The museum is closed`: `Visit your collection` shows your kept exhibits one by one, and `Try again` reconnects. When the connection comes back, the museum opens again by itself. `Back to Wikipedia` leaves the collection.
+
+## Sync and backup
+- Your collection follows you to all your devices through orOS sync and can be read offline.
+- Pictures of the collection are not synced: each device saves them the first time it is online, so they also show offline there.
+- The hall, language, time and pause stay on this device only.
+
+## Keyboard shortcuts
+[[Space]] pause or continue, [[←]] previous, [[→]] next, [[S]] keep or remove, [[O]] open on Wikipedia.
+
+## Tips
+- Texts come from Wikipedia under the CC BY-SA 4.0 licence. Under every exhibit there are links to the article and to its authors (the page history). Pictures of the day come from Wikimedia Commons with their artist and licence.
+> Use 5 minutes and `Pictures` for a slow slideshow on a second screen.
+
+## Limits
+- The collection holds up to 500 exhibits.
+>! Pictures and articles are shown as Wikipedia has them; orOS does not filter their content.
