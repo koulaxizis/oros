@@ -392,32 +392,40 @@
     return t.replace(/[ΐΰ]/g, function (c) { return TONOS[c]; }).toUpperCase().replace(/[ΆΈΉΊΌΎΏ]/g, function (c) { return TONOS[c]; });
   }
 
+  // Every part and space carries its offset `o` (and parts their
+  // length `n`) in the paragraph's character space: text characters
+  // count one each, a field counts one. The in-frame editor maps the
+  // caret through them.
   function tokenize(para, ps, csMap) {
-    var toks = [], word = null;
+    var toks = [], word = null, base = 0;
     function flush() { if (word) { toks.push(word); word = null; } }
+    function part(t, a, o, n) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, t), a: a, o: o, n: n }); }
     (para.runs || []).forEach(function (run) {
       var cs = run.cs ? resolveCs(csMap, run.cs) : {};
       var a = runAttrs(ps, cs, run);
       if (run.f) {
         if (!word) word = { k: "w", parts: [] };
-        word.parts.push({ t: null, f: run.f, a: a });
+        word.parts.push({ t: null, f: run.f, a: a, o: base, n: 1 });
+        base += 1;
         return;
       }
       var s = String(run.t || "");
-      var buf = "";
+      var buf = "", b0 = 0;
       for (var i = 0; i < s.length; i++) {
         var ch = s[i];
         if (ch === "\n") {
-          if (buf) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, buf), a: a }); buf = ""; }
-          flush(); toks.push({ k: "br" });
+          if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
+          flush(); toks.push({ k: "br", o: base + i });
         } else if (ch === " " || ch === "\t") {
-          if (buf) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, buf), a: a }); buf = ""; }
-          flush(); toks.push({ k: "s", a: a });
-        } else buf += ch;
+          if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
+          flush(); toks.push({ k: "s", a: a, o: base + i });
+        } else { if (!buf) b0 = i; buf += ch; }
       }
-      if (buf) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, buf), a: a }); }
+      if (buf) part(buf, a, base + b0, buf.length);
+      base += s.length;
     });
     flush();
+    toks.len = base;
     return toks;
   }
 
@@ -443,18 +451,23 @@
   function splitWord(w, maxW, ctx) {
     var pieces = [], cur = { k: "w", parts: [] }, curW = 0;
     w.parts.forEach(function (p) {
-      var txt = partText(p, ctx), buf = "";
+      var txt = partText(p, ctx), buf = "", b0 = 0;
+      function push() {
+        var o = p.f ? p.o : p.o + Math.min(b0, p.n), n = p.f ? 1 : Math.max(0, Math.min(buf.length, p.n - Math.min(b0, p.n)));
+        cur.parts.push({ t: buf, a: p.a, o: o, n: n });
+      }
       for (var i = 0; i < txt.length; i++) {
         var ch = txt[i];
         var cw = measure(p.a.key, ch, p.a.size, p.a.track);
         if (curW + cw > maxW && (buf || cur.parts.length)) {
-          if (buf) cur.parts.push({ t: buf, a: p.a });
+          if (buf) push();
           pieces.push(cur);
           cur = { k: "w", parts: [] }; curW = 0; buf = "";
         }
+        if (!buf) b0 = i;
         buf += ch; curW += cw;
       }
-      if (buf) cur.parts.push({ t: buf, a: p.a });
+      if (buf) push();
     });
     if (cur.parts.length) pieces.push(cur);
     return pieces;
@@ -502,15 +515,17 @@
   // Result:
   //   { frames: { id: { lines: [line] } }, overset: bool,
   //     placedParas: n }
-  //   line = { col, y, h, runs: [{ x, y, t, key, size, color, u,
-  //            track, w }] }
+  //   line = { col, y, h, d, p (paragraph), o0 / o1 (its offsets),
+  //            x0 (where the text starts), cx0 / cx1 (column),
+  //            runs: [{ x, y, t, key, size, color, u, track, w,
+  //                     p, o, n (source offsets), f (field) }] }
   function layoutChain(story, frames, styles) {
     var psMap = byId(styles.ps), csMap = byId(styles.cs);
     var out = { frames: {}, overset: false, placedParas: 0 };
     frames.forEach(function (f) { out.frames[f.id] = { lines: [] }; });
     if (!frames.length) { out.overset = hasText(story); return out; }
 
-    var fi = 0, col = 0, y = 0, colTop = true;
+    var fi = 0, col = 0, y = 0, colTop = true, curPi = 0, curLen = 0;
     var geom = null;
 
     function colGeom() {
@@ -536,6 +551,7 @@
       var para = paras[pi];
       var ps = resolvePs(psMap, para.ps);
       var toks = tokenize(para, ps, csMap);
+      curPi = pi; curLen = toks.len;
       if (ps.bul) {
         var bA = runAttrs(ps, {}, {});
         toks.unshift({ k: "bul", a: bA });
@@ -629,9 +645,16 @@
       return false;
     }
 
+    // offset where a token starts (a bullet sits before offset 0)
+    function tokO(tok) {
+      if (!tok) return curLen;
+      if (tok.o !== undefined) return tok.o;
+      return tok.parts && tok.parts.length ? tok.parts[0].o : 0;
+    }
     function fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fullW) {
       var ctx = geom.f.ctx || {};
-      var line = { col: col, frame: geom.f.id, y: base, d: desc, h: lead, runs: [], maxSize: 0, next: ti, base: base };
+      var line = { col: col, frame: geom.f.id, y: base, d: desc, h: lead, runs: [], maxSize: 0, next: ti, base: base,
+                   p: curPi, o0: tokO(toks[ti]), o1: curLen, cx0: geom.x0, cx1: geom.x1, x0: segs[0][0] };
       var broke = false;
       for (var si = 0; si < segs.length; si++) {
         var sx0 = segs[si][0], sx1 = segs[si][1], avail = sx1 - sx0;
@@ -671,6 +694,7 @@
         if (align === "c") x += extra / 2;
         else if (align === "r") x += extra;
         else if (justifyHere && spaces > 0 && extra > 0) gapAdd = extra / spaces;
+        if (si === 0) line.x0 = x;
         if (bul && si === 0) {
           line.runs.push({ x: Math.max(geom.x0, geom.x0 + li - bulletW * 2.2), y: base, t: "•", key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW });
           line.maxSize = Math.max(line.maxSize, bul.a.size);
@@ -679,7 +703,7 @@
           if (k > 0) x += (it.spW || 0) + gapAdd * it.sp.length;
           it.tok.parts.forEach(function (p) {
             var txt = partText(p, ctx), pw = partWidth(p, ctx);
-            line.runs.push({ x: x, y: base, t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw });
+            line.runs.push({ x: x, y: base, t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
             if (p.a.size > line.maxSize) line.maxSize = p.a.size;
             x += pw;
           });
@@ -688,6 +712,7 @@
       }
       if (!line.maxSize) line.maxSize = ps.size;
       line.next = ti;
+      if (ti < toks.length) line.o1 = tokO(toks[ti]);
       return line;
     }
 

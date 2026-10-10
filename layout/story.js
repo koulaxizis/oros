@@ -349,6 +349,7 @@
   }
 
   function flush() {
+    if (LY.inframe) LY.inframe.flush();
     if (!S.sid || !S.dirty) return;
     var res = parse([]);
     commitParas(res.paras);
@@ -423,6 +424,7 @@
   }
 
   function applyPs(id) {
+    if (LY.inframe && LY.inframe.isOn()) { LY.inframe.applyPs(id); return; }
     if (!isOpen()) { selectedStoryOp(function (paras) { paras.forEach(function (p) { p.ps = id; }); }); return; }
     modelEdit(function (paras, a, b) {
       for (var i = a.p; i <= b.p; i++) paras[i].ps = id;
@@ -432,6 +434,7 @@
 
   function applyCs(id) {
     function set(r) { if (id) r.cs = id; else delete r.cs; }
+    if (LY.inframe && LY.inframe.isOn()) { LY.inframe.applyCs(id); return; }
     if (!isOpen()) {
       selectedStoryOp(function (paras) { paras.forEach(function (p) { p.runs.forEach(set); }); });
       return;
@@ -501,6 +504,7 @@
 
   // ---------- Open / close ----------
   function open(itemId) {
+    if (LY.inframe && LY.inframe.isOn()) LY.inframe.stop();
     flush();
     var it = M.find(LY.doc.items, itemId);
     if (!it || it.t !== "text") { LY.toast(t("story.none")); return; }
@@ -607,6 +611,7 @@
   LY.story = {
     open: open, close: close, isOpen: isOpen,
     currentPs: function () {
+      if (LY.inframe && LY.inframe.isOn()) return LY.inframe.currentPs();
       if (isOpen()) return S.curPs;
       var its = ED.selItems().filter(function (it) { return it.t === "text"; });
       var st = its.length === 1 ? M.story(LY.doc, its[0].story) : null;
@@ -614,5 +619,7 @@
     },
     applyPs: applyPs, applyCs: applyCs
   };
+  // paragraph helpers shared with in-frame editing (inframe.js)
+  LY.storyOps = { runLen: runLen, paraLen: paraLen, cut: cut, eachRun: eachRun, deleteRange: deleteRange, fmtAt: fmtAt, insertAt: insertAt };
   LY.on("boot", wire);
 })();

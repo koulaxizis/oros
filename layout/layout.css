@@ -398,6 +398,14 @@ body.panel-closed #side { display: none; }
 @media (max-width: 1440px) and (min-width: 761px) {
   body.story-open #side { display: none; }
 }
+/* typing in a frame: keys come through this hidden field at the caret
+   (16px keeps iOS from zooming in) */
+.inframe-input {
+  position: absolute; left: 0; top: 0; width: 1px; height: 20px;
+  opacity: 0; font-size: 16px; resize: none; border: 0; padding: 0; margin: 0;
+  overflow: hidden; pointer-events: none; caret-color: transparent;
+}
+body.inframe #cv { cursor: text; }
 
 /* ---------- 7. Menu, dialogs, toast, loading ---------- */
 .menu {
