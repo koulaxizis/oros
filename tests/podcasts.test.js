@@ -590,6 +590,13 @@ test("shell: safeToReload waits while a podcast plays", () => {
   assert.equal(run(true, false), false, "radio playing still blocks it");
 });
 
+test("store normalization keeps the merge output (no re-upload loop, SY-L1)", () => {
+  const show = { id: S1, m: 5, url: "https://example.com/feed.xml", title: "T" };
+  const merged = C.mergePodcasts({ shows: [show], queue: { m: 0, ids: [] } }, { shows: [show] });
+  assert.equal(J(C.mergePodcasts(merged, null)), J(merged), "empty queue: store == merge");
+  assert.equal(J(C.mergePodcasts(C.emptyData(), null)), J(C.emptyData()));
+});
+
 // ---------- Phase 3: notices, links to other apps ----------
 test("new-episode notices: first look takes the mark, then only fresh ones, newest first, at most 3", () => {
   const now = Date.UTC(2026, 9, 10, 12);
