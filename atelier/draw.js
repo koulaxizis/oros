@@ -98,12 +98,29 @@
     return photoCache.set(key, cv);
   }
 
+  // The current frame of a playing video element (opts.media → a
+  // <video> with a picture, or null: then its poster shows), with the
+  // element's filter + adjustments (on a small canvas, every frame).
+  var frameCv = null;
+  function frameSource(it, v) {
+    if (!v || !(v.readyState >= 2) || !v.videoWidth) return null;
+    var look = lookOf(it.ax || {});
+    if (FX.isIdentity(look)) return v;
+    var s = Math.min(1, 720 / Math.max(v.videoWidth, v.videoHeight));
+    var w = Math.max(1, Math.round(v.videoWidth * s)), h = Math.max(1, Math.round(v.videoHeight * s));
+    if (!frameCv) frameCv = document.createElement("canvas");
+    if (frameCv.width !== w || frameCv.height !== h) { frameCv.width = w; frameCv.height = h; }
+    frameCv.getContext("2d", { willReadFrequently: true }).drawImage(v, 0, 0, w, h);
+    FX.applyToCanvas(frameCv, look);
+    return frameCv;
+  }
+
   function drawPhoto(ctx, it, opts) {
     var ax = it.ax || {};
     ctx.save();
     if (ax.shp) ctx.clip(itemShape(it));
     else { ctx.beginPath(); ctx.rect(0, 0, it.w, it.h); ctx.clip(); }
-    var src = it.a ? photoSource(it, opts.maxSide) : null;
+    var src = (ax.vid && opts.media && frameSource(it, opts.media(it))) || (it.a ? photoSource(it, opts.maxSide) : null);
     if (src) {
       var r = R.imageRect(it);
       if (ax.flh || ax.flv) {
@@ -126,6 +143,16 @@
       }
     }
     ctx.restore();
+    // editing: a play badge marks a video element
+    if (ax.vid && !opts.clean && !(opts.media && opts.media(it))) {
+      var r0 = Math.max(6, Math.min(it.w, it.h) * 0.09), bx = r0 * 1.4, by = it.h - r0 * 1.4;
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.beginPath(); ctx.arc(bx, by, r0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.moveTo(bx - r0 * 0.35, by - r0 * 0.5); ctx.lineTo(bx + r0 * 0.55, by); ctx.lineTo(bx - r0 * 0.35, by + r0 * 0.5); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
   }
 
   // ---------- Text ----------
@@ -266,7 +293,8 @@
 
   // ---------- One item ----------
   // opts: { maxSide (photo work size, 0 = full), clean (no
-  // placeholders: exports, thumbnails) }
+  // placeholders: exports, thumbnails), media (it → playing <video>
+  // or null: video elements while playing / filming) }
   function drawItem(ctx, doc, it, opts) {
     var ax = it.ax;
     if (!ax || it.hide) return;
@@ -372,7 +400,7 @@
     else ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.beginPath(); ctx.rect(0, 0, s.w, s.h); ctx.clip();
-    drawPage(ctx, doc, page, { maxSide: opts.maxSide || 0, clean: true, time: opts.time, skip: opts.skip });
+    drawPage(ctx, doc, page, { maxSide: opts.maxSide || 0, clean: true, time: opts.time, skip: opts.skip, media: opts.media });
     return cv;
   }
 

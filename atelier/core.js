@@ -69,6 +69,30 @@
       "tab.adjust": "Adjust", "tab.position": "Position", "tab.mask": "Shape",
       "drawer.close": "Close panel",
       "tab.sources": "Sources",
+      "ctx.video": "Video", "tab.video": "Video", "vd.upload": "Add video or sound",
+      "vd.working": "Reading the file…", "vd.added": "Video added.", "vd.soundAdded": "Sound added to this page.",
+      "vd.fail": "The file could not be added.", "vd.type": "This file is not a video or sound Atelier can play (MP4, WebM, MP3, M4A, OGG, WAV).",
+      "vd.big": "The file is too large (videos up to 100 MB, sounds up to 30 MB).", "vd.long": "The file is too long (up to 30 minutes).",
+      "vd.pick": "Select a video to change it.", "vd.reading": "Reading the video…",
+      "vd.missing": "This video is not on this device yet; it arrives with sync.",
+      "vd.trim": "Trim", "vd.from": "Start", "vd.to": "End", "vd.len": "The whole video is {s} long.",
+      "vd.sound": "Sound", "vd.mute": "No sound", "vd.vol": "Volume", "vd.playback": "Playback", "vd.loop": "Play again when it ends",
+      "vd.fitPage": "Show the page for {s} s (the video's length)", "vd.fitted": "The page now shows for {s} s.",
+      "vd.hint": "Videos play in Play and in Download › Video (with their sound). Pictures, PDF, PowerPoint and the slide show use their first frame.",
+      "vd.pageSound": "Page sound", "vd.noSound": "No sound on this page.", "vd.addSound": "Add a sound",
+      "vd.startAt": "Start at", "vd.allPages": "Use on all pages", "vd.allDone": "Every page now has this sound.",
+      "vd.replace": "Replace", "vd.removeSound": "Remove",
+      "vd.soundHint": "Pages that share a sound play it on without starting over. It plays in Play, Present and Download › Video.",
+      "an.stop": "Stop",
+      "tab.brand": "Brand kit", "col.brand": "Brand colours",
+      "br.intro": "Your colours, fonts and logos, on all your devices.", "br.edit": "Edit", "br.done": "Done",
+      "br.colors": "Colours", "br.pickEl": "Select an element first, then tap a colour.", "br.remove": "Remove",
+      "br.noColors": "No brand colours yet.", "br.addColor": "Add colour", "br.fromDesign": "From this design",
+      "br.added": "{n} colours added.", "br.nothingNew": "No new colours in this design.",
+      "br.fonts": "Fonts", "br.slot.h": "Heading", "br.slot.s": "Subheading", "br.slot.t": "Body text",
+      "br.notSet": "Not set", "br.addText": "Add a text in this font", "br.useSel": "Use selected",
+      "br.fontsHint": "Select a text and tap \u201cUse selected\u201d to keep its font. The Text panel then uses these fonts.",
+      "br.logos": "Logos", "br.logo": "Logo", "br.addLogo": "Add logo",
       "tab.fonts": "Fonts", "fn.pick": "Select a text to change its font.", "fn.mine": "Your fonts",
       "fn.offlineOk": "always available", "fn.inDesign": "in this design", "fn.more": "More fonts (Fontsource)",
       "fn.search": "Search fonts", "fn.greek": "Only fonts with Greek letters", "fn.hasGreek": "Greek",
@@ -76,12 +100,24 @@
       "fn.offline": "You are offline: only fonts already on this device can be used.",
       "fn.hint": "Free fonts with open licences. A font is downloaded the first time you use it and then works offline on this device. Letters a font lacks show in Sans.",
       "imp.file": "From a file (.pptx, picture, package)…", "imp.canva": "From your Canva account…",
+      "home.select": "Select", "home.picked": "{n} selected", "home.fromCanva": "From Canva ({n})", "home.delSel": "Delete ({n})",
+      "home.delAsk": "Delete {n} designs?", "home.delOk": "Delete", "home.deleted": "{n} designs deleted.",
+      "fm.h": "Files on this device", "fm.open": "Manage files…", "fm.short": "Files", "fm.title": "Pictures, videos and sounds",
+      "fm.hint": "Every picture, video and sound you uploaded or imported, biggest first. Files still used by a design (here, in Slides or in Layout) cannot be deleted; delete those designs first.",
+      "fm.count": "{n} files, {size} · {free} not used", "fm.allFree": "Select all unused ({n})", "fm.del": "Delete {n} ({size})",
+      "fm.ask": "Delete {n} files? Vault Drive deletes them on your other devices too.", "fm.done": "{n} files deleted.",
+      "fm.inUse": "In use", "fm.unused": "Not used", "fm.picture": "Picture", "fm.video": "Video",
+      "fm.nofs": "The orOS disk is not available here.", "fm.cantTell": "Could not check which files are in use, so none can be deleted now.",
       "cv.title": "Import from Canva", "cv.intro": "Bring your Canva designs over in one go. Each one is exported from Canva as PowerPoint and opened here as a new design.",
       "cv.checking": "Checking the connection…", "cv.off": "This orOS relay has no Canva connection set up yet. You can still download a design from Canva as PowerPoint and use Import › From a file.",
       "cv.connect": "Connect to Canva", "cv.connectHint": "A Canva window opens: sign in and allow access to your designs. Atelier only reads them; your Canva sign-in stays on this device.",
       "cv.waiting": "Finish in the Canva window…", "cv.popup": "The Canva window was blocked. Allow pop-ups for orOS and try again.",
       "cv.denied": "Canva did not give access.", "cv.auth": "The Canva connection has ended. Connect again.", "cv.rate": "Canva asks to slow down. Try again in a minute.",
       "cv.license": "Uses paid Canva content that cannot be exported.", "cv.approval": "Waiting for approval in your Canva team.", "cv.fail": "Canva could not be reached or did not answer.",
+      "cv.slow": "Canva took too long to prepare it.", "cv.big": "The PowerPoint from Canva is over 60 MB.",
+      "cv.net": "Canva could not be reached.", "cv.said": "Canva said: {msg}", "cv.read": "The PowerPoint from Canva could not be read: {msg}",
+      "cv.retry": "Try the failed ones again", "cv.replace": "Replace designs imported before (their changes here are lost)",
+      "cv.replaced": "{n} earlier copies replaced.",
       "cv.search": "Search your Canva designs", "cv.none": "No designs found.", "cv.untitled": "Untitled design", "cv.pages": "{n} pages", "cv.page1": "1 page", "cv.imported": "imported",
       "cv.all": "Select all", "cv.none.sel": "Select none", "cv.import": "Import {n}", "cv.disconnect": "Disconnect",
       "cv.working": "Importing {i} of {n}…", "cv.stop": "Stop", "cv.stopping": "Stopping after this design…",
@@ -193,6 +229,30 @@
       "tab.adjust": "Ρυθμίσεις", "tab.position": "Θέση", "tab.mask": "Σχήμα",
       "drawer.close": "Κλείσιμο πάνελ",
       "tab.sources": "Πηγές",
+      "ctx.video": "Βίντεο", "tab.video": "Βίντεο", "vd.upload": "Προσθήκη βίντεο ή ήχου",
+      "vd.working": "Διαβάζω το αρχείο…", "vd.added": "Το βίντεο προστέθηκε.", "vd.soundAdded": "Ο ήχος μπήκε σε αυτή τη σελίδα.",
+      "vd.fail": "Το αρχείο δεν μπόρεσε να προστεθεί.", "vd.type": "Αυτό το αρχείο δεν είναι βίντεο ή ήχος που παίζει το Ατελιέ (MP4, WebM, MP3, M4A, OGG, WAV).",
+      "vd.big": "Το αρχείο είναι πολύ μεγάλο (βίντεο έως 100 MB, ήχοι έως 30 MB).", "vd.long": "Το αρχείο είναι πολύ μεγάλο σε διάρκεια (έως 30 λεπτά).",
+      "vd.pick": "Διάλεξε ένα βίντεο για να το αλλάξεις.", "vd.reading": "Διαβάζω το βίντεο…",
+      "vd.missing": "Αυτό το βίντεο δεν έχει έρθει ακόμα σε αυτή τη συσκευή· θα έρθει με τον συγχρονισμό.",
+      "vd.trim": "Κόψιμο", "vd.from": "Αρχή", "vd.to": "Τέλος", "vd.len": "Όλο το βίντεο διαρκεί {s}.",
+      "vd.sound": "Ήχος", "vd.mute": "Χωρίς ήχο", "vd.vol": "Ένταση", "vd.playback": "Αναπαραγωγή", "vd.loop": "Ξαναπαίζει όταν τελειώσει",
+      "vd.fitPage": "Η σελίδα να φαίνεται {s} δ. (όσο το βίντεο)", "vd.fitted": "Η σελίδα φαίνεται τώρα {s} δ.",
+      "vd.hint": "Τα βίντεο παίζουν στην Αναπαραγωγή και στη Λήψη › Βίντεο (με τον ήχο τους). Οι εικόνες, το PDF, το PowerPoint και η παρουσίαση δείχνουν το πρώτο τους καρέ.",
+      "vd.pageSound": "Ήχος σελίδας", "vd.noSound": "Αυτή η σελίδα δεν έχει ήχο.", "vd.addSound": "Πρόσθεσε ήχο",
+      "vd.startAt": "Ξεκινά από", "vd.allPages": "Σε όλες τις σελίδες", "vd.allDone": "Όλες οι σελίδες έχουν τώρα αυτόν τον ήχο.",
+      "vd.replace": "Αλλαγή", "vd.removeSound": "Αφαίρεση",
+      "vd.soundHint": "Οι σελίδες με τον ίδιο ήχο τον συνεχίζουν χωρίς να ξεκινά από την αρχή. Παίζει στην Αναπαραγωγή, στην Παρουσίαση και στη Λήψη › Βίντεο.",
+      "an.stop": "Διακοπή",
+      "tab.brand": "Ταυτότητα", "col.brand": "Χρώματα ταυτότητας",
+      "br.intro": "Τα χρώματα, οι γραμματοσειρές και τα λογότυπά σου, σε όλες τις συσκευές σου.", "br.edit": "Επεξεργασία", "br.done": "Τέλος",
+      "br.colors": "Χρώματα", "br.pickEl": "Διάλεξε πρώτα ένα στοιχείο και μετά πάτα ένα χρώμα.", "br.remove": "Αφαίρεση",
+      "br.noColors": "Δεν υπάρχουν ακόμα χρώματα ταυτότητας.", "br.addColor": "Προσθήκη χρώματος", "br.fromDesign": "Από αυτό το σχέδιο",
+      "br.added": "Προστέθηκαν {n} χρώματα.", "br.nothingNew": "Δεν υπάρχουν νέα χρώματα σε αυτό το σχέδιο.",
+      "br.fonts": "Γραμματοσειρές", "br.slot.h": "Τίτλος", "br.slot.s": "Υπότιτλος", "br.slot.t": "Κείμενο",
+      "br.notSet": "Δεν έχει οριστεί", "br.addText": "Πρόσθεσε κείμενο σε αυτή τη γραμματοσειρά", "br.useSel": "Από την επιλογή",
+      "br.fontsHint": "Διάλεξε ένα κείμενο και πάτα \u00abΑπό την επιλογή\u00bb για να κρατήσεις τη γραμματοσειρά του. Το πάνελ Κείμενο θα χρησιμοποιεί αυτές τις γραμματοσειρές.",
+      "br.logos": "Λογότυπα", "br.logo": "Λογότυπο", "br.addLogo": "Προσθήκη λογότυπου",
       "tab.fonts": "Γραμματοσειρές", "fn.pick": "Διάλεξε ένα κείμενο για να αλλάξεις τη γραμματοσειρά του.", "fn.mine": "Οι γραμματοσειρές σου",
       "fn.offlineOk": "πάντα διαθέσιμη", "fn.inDesign": "σε αυτό το σχέδιο", "fn.more": "Περισσότερες γραμματοσειρές (Fontsource)",
       "fn.search": "Αναζήτηση γραμματοσειράς", "fn.greek": "Μόνο με ελληνικά γράμματα", "fn.hasGreek": "Ελληνικά",
@@ -200,12 +260,24 @@
       "fn.offline": "Είσαι εκτός σύνδεσης: μπορείς να χρησιμοποιήσεις μόνο όσες γραμματοσειρές έχει ήδη η συσκευή.",
       "fn.hint": "Δωρεάν γραμματοσειρές με ανοιχτές άδειες. Μια γραμματοσειρά κατεβαίνει την πρώτη φορά που τη χρησιμοποιείς και μετά δουλεύει χωρίς σύνδεση σε αυτή τη συσκευή. Όσα γράμματα δεν έχει φαίνονται σε Sans.",
       "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
+      "home.select": "Επιλογή", "home.picked": "{n} επιλεγμένα", "home.fromCanva": "Από το Canva ({n})", "home.delSel": "Διαγραφή ({n})",
+      "home.delAsk": "Να διαγραφούν {n} σχέδια;", "home.delOk": "Διαγραφή", "home.deleted": "Διαγράφηκαν {n} σχέδια.",
+      "fm.h": "Αρχεία σε αυτή τη συσκευή", "fm.open": "Διαχείριση αρχείων…", "fm.short": "Αρχεία", "fm.title": "Εικόνες, βίντεο και ήχοι",
+      "fm.hint": "Όλες οι εικόνες, τα βίντεο και οι ήχοι που ανέβασες ή εισήγαγες, πρώτα τα μεγαλύτερα. Όσα χρησιμοποιεί ακόμη κάποιο σχέδιο (εδώ, στις Διαφάνειες ή στη Σελιδοποίηση) δεν διαγράφονται· διάγραψε πρώτα εκείνα τα σχέδια.",
+      "fm.count": "{n} αρχεία, {size} · {free} αχρησιμοποίητα", "fm.allFree": "Επιλογή όλων των αχρησιμοποίητων ({n})", "fm.del": "Διαγραφή {n} ({size})",
+      "fm.ask": "Να διαγραφούν {n} αρχεία; Το Vault Drive τα διαγράφει και από τις άλλες σου συσκευές.", "fm.done": "Διαγράφηκαν {n} αρχεία.",
+      "fm.inUse": "Σε χρήση", "fm.unused": "Δεν χρησιμοποιείται", "fm.picture": "Εικόνα", "fm.video": "Βίντεο",
+      "fm.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "fm.cantTell": "Δεν μπόρεσα να ελέγξω ποια αρχεία χρησιμοποιούνται, οπότε κανένα δεν διαγράφεται τώρα.",
       "cv.title": "Εισαγωγή από το Canva", "cv.intro": "Φέρε τα σχέδιά σου από το Canva με τη μία. Το καθένα εξάγεται από το Canva ως PowerPoint και ανοίγει εδώ ως νέο σχέδιο.",
       "cv.checking": "Ελέγχω τη σύνδεση…", "cv.off": "Αυτός ο relay του orOS δεν έχει ακόμη ρυθμισμένη σύνδεση με το Canva. Μπορείς πάντα να κατεβάσεις ένα σχέδιο από το Canva ως PowerPoint και να το ανοίξεις από Εισαγωγή › Από αρχείο.",
       "cv.connect": "Σύνδεση με το Canva", "cv.connectHint": "Ανοίγει ένα παράθυρο του Canva: συνδέσου και επίτρεψε την πρόσβαση στα σχέδιά σου. Το Ατελιέ μόνο τα διαβάζει· η σύνδεση με το Canva μένει σε αυτή τη συσκευή.",
       "cv.waiting": "Ολοκλήρωσε στο παράθυρο του Canva…", "cv.popup": "Το παράθυρο του Canva μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και ξαναδοκίμασε.",
       "cv.denied": "Το Canva δεν έδωσε πρόσβαση.", "cv.auth": "Η σύνδεση με το Canva έληξε. Συνδέσου ξανά.", "cv.rate": "Το Canva ζητά να πάμε πιο αργά. Ξαναδοκίμασε σε ένα λεπτό.",
       "cv.license": "Έχει επί πληρωμή περιεχόμενο του Canva που δεν εξάγεται.", "cv.approval": "Περιμένει έγκριση στην ομάδα σου στο Canva.", "cv.fail": "Το Canva δεν απάντησε ή δεν ήταν διαθέσιμο.",
+      "cv.slow": "Το Canva άργησε πολύ να το ετοιμάσει.", "cv.big": "Το PowerPoint από το Canva ξεπερνά τα 60 MB.",
+      "cv.net": "Δεν ήταν δυνατή η σύνδεση με το Canva.", "cv.said": "Το Canva απάντησε: {msg}", "cv.read": "Το PowerPoint από το Canva δεν διαβάστηκε: {msg}",
+      "cv.retry": "Ξαναδοκίμασε όσα απέτυχαν", "cv.replace": "Αντικατάσταση σχεδίων που είχαν εισαχθεί πριν (χάνονται οι αλλαγές τους εδώ)",
+      "cv.replaced": "Αντικαταστάθηκαν {n} παλαιότερα αντίγραφα.",
       "cv.search": "Αναζήτηση στα σχέδιά σου στο Canva", "cv.none": "Δεν βρέθηκαν σχέδια.", "cv.untitled": "Σχέδιο χωρίς τίτλο", "cv.pages": "{n} σελίδες", "cv.page1": "1 σελίδα", "cv.imported": "εισήχθη",
       "cv.all": "Επιλογή όλων", "cv.none.sel": "Καμία επιλογή", "cv.import": "Εισαγωγή {n}", "cv.disconnect": "Αποσύνδεση",
       "cv.working": "Εισαγωγή {i} από {n}…", "cv.stop": "Διακοπή", "cv.stopping": "Σταματάω μετά από αυτό το σχέδιο…",
@@ -359,6 +431,7 @@
     search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
     sources: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
     anim: '<path d="M4 12h3"/><path d="M5 7h4"/><path d="M5 17h4"/><circle cx="15" cy="12" r="6"/>',
+    brand: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
     present: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/>',
     replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>'
   };
@@ -739,8 +812,16 @@
     $("home-empty").hidden = docs.length > 0;
     var shown = docs.filter(function (d) { return !q || docTitle(d).toLocaleLowerCase().indexOf(q) >= 0; });
     if (docs.length && !shown.length) host.appendChild(el("p", "hint", t("home.none")));
+    renderSelBar(docs, shown);
     shown.forEach(function (d) {
-      var card = el("div", "doc-card");
+      var card = el("div", "doc-card" + (pick && pick[d.id] ? " picked" : ""));
+      if (pick) {
+        var cb = el("input", "doc-check");
+        cb.type = "checkbox"; cb.checked = !!pick[d.id]; cb.tabIndex = -1;
+        cb.setAttribute("aria-hidden", "true");
+        card.appendChild(cb);
+        card.setAttribute("aria-pressed", pick[d.id] ? "true" : "false");
+      }
       card.tabIndex = 0;
       card.setAttribute("role", "button");
       var th = el("div", "doc-thumb");
@@ -756,13 +837,85 @@
       var more = iconBtn("more", t("ed.more"), "doc-more");
       more.addEventListener("click", function (e) { e.stopPropagation(); cardMenu(d, more); });
       card.appendChild(more);
-      card.addEventListener("click", function () { openDoc(d.id); });
-      card.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDoc(d.id); } });
+      var go = function () { if (pick) { if (pick[d.id]) delete pick[d.id]; else pick[d.id] = 1; renderHome(); } else openDoc(d.id); };
+      card.addEventListener("click", go);
+      card.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
       card.addEventListener("contextmenu", function (e) { e.preventDefault(); cardMenu(d, more); });
+      if (pick) more.hidden = true;
       host.appendChild(card);
     });
   }
   AT.renderHome = renderHome;
+
+  // ---------- picking several designs (delete in one go) ----------
+  var pick = null;          // { docId: 1 } while picking, else null
+  function renderSelBar(docs, shown) {
+    var row = $("home-selrow"), bar = $("home-selbar");
+    row.innerHTML = ""; bar.innerHTML = "";
+    if (!docs.length) { pick = null; bar.hidden = true; return; }
+    if (!pick) {
+      var b = el("button", "btn small", t("home.select"));
+      b.type = "button";
+      b.addEventListener("click", function () { pick = {}; renderHome(); });
+      row.appendChild(b);
+      if (AT.manageFiles) {
+        var f = el("button", "btn small", t("fm.short"));
+        f.type = "button";
+        f.addEventListener("click", function () { AT.manageFiles(); });
+        row.appendChild(f);
+      }
+      bar.hidden = true;
+      return;
+    }
+    Object.keys(pick).forEach(function (id) { if (!findDoc(id)) delete pick[id]; });
+    var n = Object.keys(pick).length;
+    bar.hidden = false;
+    bar.appendChild(el("span", "sel-n", t("home.picked", { n: n })));
+    function add(label, cls, fn, off) {
+      var b = el("button", "btn small" + (cls ? " " + cls : ""), label);
+      b.type = "button"; b.disabled = !!off;
+      b.addEventListener("click", fn);
+      bar.appendChild(b);
+    }
+    var allOn = shown.length && shown.every(function (d) { return pick[d.id]; });
+    add(allOn ? t("cv.none.sel") : t("cv.all"), "", function () {
+      shown.forEach(function (d) { if (allOn) delete pick[d.id]; else pick[d.id] = 1; });
+      renderHome();
+    });
+    var cv = AT.canva && AT.canva.importedIds ? AT.canva.importedIds().filter(function (id) { return findDoc(id); }) : [];
+    if (cv.length) add(t("home.fromCanva", { n: cv.length }), "", function () { cv.forEach(function (id) { pick[id] = 1; }); renderHome(); });
+    add(t("home.delSel", { n: n }), "danger", function () { deleteMany(Object.keys(pick)); }, !n);
+    add(t("btn.cancel"), "", function () { pick = null; renderHome(); });
+  }
+  // several designs at once; one undo brings them all back
+  function deleteMany(ids) {
+    ids = ids.filter(function (id) { return findDoc(id); });
+    if (!ids.length) return;
+    AT.confirm(t("home.delAsk", { n: ids.length }), t("home.delOk"), function () {
+      var nw = now(), keep = [];
+      ids.forEach(function (id) {
+        var d = findDoc(id);
+        keep.push(JSON.parse(JSON.stringify(d)));
+        data.dt[id] = Math.max(nw, M.maxM(d));
+        if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+      });
+      data = M.normData(data);
+      save();
+      pick = null;
+      renderHome();
+      toast(t("home.deleted", { n: ids.length }), t("btn.undo"), function () {
+        var t1 = now();
+        keep.forEach(function (k) {
+          k.m = t1;
+          M.COLLECTIONS.forEach(function (c) { (k[c] || []).forEach(function (e) { e.m = t1; }); });
+          data.docs.push(M.normDoc(k));
+        });
+        data = M.normData(data);
+        save();
+        renderHome();
+      });
+    });
+  }
 
   function cardMenu(d, anchor) {
     AT.menu(anchor, [
@@ -831,6 +984,20 @@
       renderHome();
     });
   }
+
+  // removes a design without asking or offering undo (a Canva
+  // re-import replacing its earlier copy)
+  function dropDoc(id) {
+    var d = findDoc(id);
+    if (!d) return false;
+    data.dt[id] = Math.max(now(), M.maxM(d));
+    data = M.normData(data);
+    save();
+    if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+    renderHome();
+    return true;
+  }
+  AT.dropDoc = dropDoc;
 
   function addDoc(d) {
     data.docs.push(d);

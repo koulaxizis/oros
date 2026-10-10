@@ -134,6 +134,9 @@
       "confirm.delVehicle": "Delete {name} and everything logged for it?", "confirm.del": "Delete this entry?",
       "confirm.yes": "Delete", "confirm.resend": "This was already sent to Budget. Send it again?", "confirm.send": "Send",
       "budget.note": "{vehicle} · {what}",
+      "app.name": "Garage", "todo.btn": "To-Do", "todo.all": "→ To-Do", "todo.from": "Garage",
+      "todo.kteo": "Book the KTEO test · {v}", "todo.renew": "Renew {what} · {v}", "todo.service": "Book a service: {what} · {v}",
+      "todo.tyres": "Replace tyres: {what} · {v}", "todo.expires": "expires {date}", "todo.expired": "expired {date}", "todo.atKm": "at {n} km",
       "rc.title": "Receipts", "rc.add": "Add a receipt photo", "rc.open": "Receipt {n}",
       "rc.missing": "Not on this device", "rc.missingLong": "This photo is not on this device yet. It arrives with Vault Drive sync.",
       "rc.where": "Kept in Files, folder Garage/Receipts.", "rc.remove": "Remove photo", "rc.close": "Close",
@@ -219,6 +222,9 @@
       "confirm.delVehicle": "Διαγραφή του «{name}» και όλων των καταχωρίσεών του;", "confirm.del": "Διαγραφή αυτής της καταχώρισης;",
       "confirm.yes": "Διαγραφή", "confirm.resend": "Αυτό έχει ήδη σταλεί στα Έσοδα & Έξοδα. Να σταλεί ξανά;", "confirm.send": "Αποστολή",
       "budget.note": "{vehicle} · {what}",
+      "app.name": "Γκαράζ", "todo.btn": "To-Do", "todo.all": "→ To-Do", "todo.from": "Γκαράζ",
+      "todo.kteo": "Ραντεβού για ΚΤΕΟ · {v}", "todo.renew": "Ανανέωση: {what} · {v}", "todo.service": "Ραντεβού για σέρβις: {what} · {v}",
+      "todo.tyres": "Αλλαγή ελαστικών: {what} · {v}", "todo.expires": "λήγει {date}", "todo.expired": "έληξε {date}", "todo.atKm": "στα {n} km",
       "rc.title": "Αποδείξεις", "rc.add": "Προσθήκη φωτογραφίας απόδειξης", "rc.open": "Απόδειξη {n}",
       "rc.missing": "Όχι σε αυτή τη συσκευή", "rc.missingLong": "Η φωτογραφία δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive.",
       "rc.where": "Φυλάσσεται στα Αρχεία, φάκελος Garage/Receipts.", "rc.remove": "Αφαίρεση", "rc.close": "Κλείσιμο",
@@ -688,6 +694,52 @@
     else go();
   }
 
+  // To-Do bridge (BR-TD-ADD): To-Do opens its "Add to list" dialog
+  // PREFILLED (one item per renewal / service / tyre set); nothing is
+  // written until the user adds there. Offered only when the shell
+  // exposes __orosOpenAt. Garage data is not changed: a copy, not a link.
+  function todoBridge() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p.__orosOpenAt : null;
+    } catch (e) { return null; }
+  }
+  function oneLine(str, max) { return String(str || "").replace(/\s+/g, " ").trim().slice(0, max); }
+  function todoItem(type, row) {
+    if (!row) return null;
+    var v = byId("vehicles", row.v);
+    var vn = v ? v.name : "";
+    var notes = [t("todo.from")];
+    var text;
+    if (type === "renewal") {
+      text = row.kind === "kteo" ? t("todo.kteo", { v: vn }) : t("todo.renew", { what: renName(row), v: vn });
+      var st = C.renewalStatus(row, todayYmd());
+      notes.push(t(st.daysLeft < 0 ? "todo.expired" : "todo.expires", { date: fmtDay(row.exp, true) }));
+      if (row.prov) notes.push(row.prov);
+      if (row.ref) notes.push(row.ref);
+    } else if (type === "service") {
+      text = t("todo.service", { what: itemName(row.item, row), v: vn });
+      var ps = C.planStatus(row, data, todayYmd());
+      if (ps.dueDate) notes.push(t("plan.dueOn", { date: fmtDay(ps.dueDate, true) }));
+      if (ps.dueKm !== null && ps.dueKm !== undefined) notes.push(t("todo.atKm", { n: fmtKm(ps.dueKm) }));
+    } else {
+      text = t("todo.tyres", { what: row.label, v: vn });
+      if (row.size) notes.push(row.size);
+    }
+    if (v && v.plate) notes.push(v.plate);
+    return { text: oneLine(text, 300), note: notes.filter(Boolean).join(" · ").slice(0, 1000) };
+  }
+  function sendToTodo(list) {
+    var open = todoBridge();
+    var items = list.filter(Boolean).slice(0, 200);
+    if (!open || !items.length) return;
+    try { open("todo", { addItems: { from: oneLine(t("app.name"), 60), items: items } }); } catch (e) {}
+  }
+  function todoButton(dlg, type, row) {
+    if (!row || !todoBridge()) return [];
+    return [button(t("todo.btn"), "", function () { dlg.close(); sendToTodo([todoItem(type, byId(type === "renewal" ? "renewals" : "plans", row.id) || row)]); })];
+  }
+
   // ---------- 4. Vehicle bar + Overview ----------
   function renderVbar() {
     var bar = $("vbar");
@@ -871,9 +923,11 @@
     var up = section(t("sec.next"));
     var ul = el("ul", "rows");
     var shown = {};
+    var upItems = [];
     al.forEach(function (a) {
       shown[a.id] = true;
       ul.appendChild(upcomingRow(a.type, a.id));
+      upItems.push([a.type, a.id]);
     });
     // fill to five with what comes next (renewals by date, plans by when)
     var next = [];
@@ -884,9 +938,22 @@
       if (st.when) next.push({ type: "service", id: p.id, when: st.when });
     });
     next.sort(function (x, y) { return cmpStr(x.when, y.when); });
-    next.slice(0, Math.max(0, 5 - al.length)).forEach(function (n) { ul.appendChild(upcomingRow(n.type, n.id)); });
+    next.slice(0, Math.max(0, 5 - al.length)).forEach(function (n) { ul.appendChild(upcomingRow(n.type, n.id)); upItems.push([n.type, n.id]); });
     if (!ul.children.length) up.appendChild(el("p", "muted", t("next.none")));
-    else up.appendChild(ul);
+    else {
+      if (todoBridge()) {
+        var tb = el("button", "link-btn", t("todo.all"));
+        tb.type = "button";
+        tb.setAttribute("aria-label", t("sec.next") + ": " + t("todo.all"));
+        tb.addEventListener("click", function () {
+          sendToTodo(upItems.map(function (u) {
+            return todoItem(u[0], byId(u[0] === "renewal" ? "renewals" : (u[0] === "service" ? "plans" : "tyres"), u[1]));
+          }));
+        });
+        up.querySelector(".sec-head").appendChild(tb);
+      }
+      up.appendChild(ul);
+    }
     box.appendChild(up);
 
     // Tiles
@@ -2008,7 +2075,7 @@
       }
     });
     paintLabel();
-    form.appendChild(actions(dlg, p ? function () { dlg.close(); removeRow("plans", byId("plans", p.id) || p); } : null));
+    form.appendChild(actions(dlg, p ? function () { dlg.close(); removeRow("plans", byId("plans", p.id) || p); } : null, todoButton(dlg, "service", p)));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       var k = readInt(everyKm, 0, 1000000) || 0, mo = readInt(everyMo, 0, 240) || 0;
@@ -2089,7 +2156,7 @@
     form.appendChild(ww);
     var notes = textarea(r ? r.n : "");
     form.appendChild(field(t("f.notes"), notes, "gr-r-n"));
-    form.appendChild(actions(dlg, r ? function () { dlg.close(); removeRow("renewals", byId("renewals", r.id) || r); } : null));
+    form.appendChild(actions(dlg, r ? function () { dlg.close(); removeRow("renewals", byId("renewals", r.id) || r); } : null, todoButton(dlg, "renewal", r)));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!C.isYmd(exp.value)) { showToast(t("toast.needDate")); exp.focus(); return; }

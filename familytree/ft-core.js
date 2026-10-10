@@ -12,6 +12,7 @@
 //   8. Scene + SVG serializer (export) — no user text is ever markup
 //   9. Contacts bridge (read-only: plan + build from relations)
 //  10. GEDCOM import (5.5.1 / 7.0, into a new tree) / export (5.5.1)
+//  11. Calendar feed (death anniversaries; read by calendar.js)
 // Data FAMTREE v1 (oros-familytree-data):
 //   { ver: 1,
 //     trees:  [{ id, m, name, home }],
@@ -1310,6 +1311,40 @@
     return out.join("\r\n") + "\r\n";
   }
 
+  // ---------- 11. Calendar feed (read-only, death anniversaries) ----------
+  // Day index for Calendar: "MM-DD" → [{ pid, name, y }] for people
+  // with an exact death date (full day, no about / before / after).
+  // Deaths on 29 Feb also show on 28 Feb of common years.
+  // The same name + date in two trees (an imported copy) shows once.
+  function deathDays(raw) {
+    var d = merge(raw, raw), out = dict(), seen = dict();
+    d.people.forEach(function (p) {
+      var x = p.death;
+      if (!p.dead || x.q || x.d.length !== 10) return;
+      var name = displayName(p, "");
+      if (!name) return;
+      var key = name + "|" + x.d;
+      if (own(seen, key)) return;
+      seen[key] = 1;
+      var md = x.d.slice(5);
+      (out[md] = out[md] || []).push({ pid: p.id, name: name, y: +x.d.slice(0, 4) });
+    });
+    Object.keys(out).forEach(function (k) {
+      out[k].sort(function (a, b) { return cmpStr(a.name, b.name) || cmpStr(a.pid, b.pid); });
+    });
+    return out;
+  }
+  // Rows for one "YYYY-MM-DD": [{ pid, name, years }] (years ≥ 1).
+  function deathAnniversaries(idx, dateStr) {
+    var y = +dateStr.slice(0, 4), md = dateStr.slice(5), rows = [];
+    var lists = [idx[md] || []];
+    if (md === "02-28" && !leap(y)) lists.push(idx["02-29"] || []);
+    lists.forEach(function (list) {
+      list.forEach(function (r) { if (y > r.y) rows.push({ pid: r.pid, name: r.name, years: y - r.y }); });
+    });
+    return rows;
+  }
+
   var api = {
     VER: VER, FORMAT: FORMAT, CW: CW, CH: CH, NAME_LEN: NAME_LEN, PLACE_LEN: PLACE_LEN, TREE_LEN: TREE_LEN,
     NOTE_LEN: NOTE_LEN, PHOTO_MAX: PHOTO_MAX, PHOTO_BUDGET: PHOTO_BUDGET, IMPORT_MAX: IMPORT_MAX,
@@ -1326,7 +1361,7 @@
     contactsIndex: contactsIndex, contactName: contactName, planFromContacts: planFromContacts,
     buildFromContacts: buildFromContacts,
     GED_MAX: GED_MAX, decodeGedcom: decodeGedcom, gedDate: gedDate, parseGedcom: parseGedcom,
-    exportGedcom: exportGedcom
+    exportGedcom: exportGedcom, deathDays: deathDays, deathAnniversaries: deathAnniversaries
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.FTCore = api;

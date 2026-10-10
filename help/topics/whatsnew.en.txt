@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.62.00
+- Media Shelf 1.2: find book and album details online (Open Library, MusicBrainz, only when you ask), release dates, and a Media Shelf chip in Calendar (finishes and wishlist releases).
+
+## Version 0.61.00
+- Atelier: a brand kit (colours, fonts, logos), video and sound in designs with video export, a better Canva import (real fonts, clear errors, retries, no duplicates), and bulk delete of designs and unused files.
+- Dock: choose one of eight styles in Settings › Appearance › Dock; "Show over open apps" is now off until you turn it on.
+- Garage: send your KTEO test, renewals and service appointments to To-Do.
+- Family Tree: a "Family tree" button on contact cards, and death anniversaries in the Calendar.
+
 ## Version 0.60.00
 - New app in Internet: One-Minute Museum shows a Wikipedia article as a museum exhibit, a new one every minute; star the ones you like to keep them, offline too.
 - Media Shelf: import your Goodreads or Letterboxd CSV exports, with a preview, duplicates skipped and Undo.
@@ -8,6 +17,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - Chore Wheel: send an open chore to To-Do from its ⋯ menu.
 - Calendar: a new "Work time" label shows your Timesheet hours per project each day; tap a row to open that day in Timesheet.
 - [Mind Map](app:mindmap) can save a branch or the whole map as a note in [Notes](app:notes).
+- Timesheet: import your hours from Toggl, Clockify or Harvest (CSV) with a preview; re-importing adds nothing twice.
 
 ## Version 0.59.00
 - [Mind Map](app:mindmap) can link any two ideas, lets you place a branch where you want it, shows small pictures, imports FreeMind and XMind files, and sends a branch to [To-Do](app:todo) or [Slides](app:slides).
