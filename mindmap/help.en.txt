@@ -24,6 +24,10 @@ Mind Map helps you sort out ideas: one idea in the centre, branches around it. T
 - `Outline` shows the same map as an indented list, which is quicker for typing. [[Enter]] adds a line, [[Tab]] and [[Shift+Tab]] change the level, and [[Backspace]] on an empty line removes it.
 - `Find` searches the text and notes of the open map. The arrows step through the matches and open folded branches on the way.
 
+## Send to other apps
+- `Send to To-Do…` in a node's menu makes a new list in [To-Do](app:todo) from that branch. Nodes marked as done are left out, and To-Do shows the items before anything is added.
+- `Make slides from this branch…` (or `Make slides from this map…` in the `More` menu) starts a new presentation in [Slides](app:slides): the centre becomes the title slide, each main branch a slide, deeper ideas its bullets and notes the speaker notes. Slides asks you to pick a theme first.
+
 ## Your maps
 Tap the map name at the top left for `Your maps`. There you can open, rename, duplicate or delete a map. The `More` menu also has `Branches on both sides` or `Branches on the right only`, `Unfold all` and `Fold main branches`.
 
