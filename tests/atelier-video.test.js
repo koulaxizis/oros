@@ -75,3 +75,15 @@ test("ax: clipIds lists a design's videos and sounds", () => {
   assert.deepEqual(AX.clipIds(n), [H + ".webm", "cd".repeat(32) + ".mp3"]);
   assert.deepEqual(AX.assetIds(n), ["ef".repeat(32) + ".jpg"]);
 });
+
+test("clips: idsIn finds every file id a saved text names (delete check)", () => {
+  const saved = JSON.stringify({ docs: [{ items: [{ a: "ef".repeat(32) + ".jpg", ax: { vid: H + ".webm" } }] }], x: "cd".repeat(32) + ".mp3" });
+  const used = CL.idsIn(saved, CL.idsIn("logo " + "ab".repeat(32) + ".png"));
+  assert.deepEqual(Object.keys(used).sort(), ["ab".repeat(32) + ".png", "cd".repeat(32) + ".mp3", H + ".webm", "ef".repeat(32) + ".jpg"].sort());
+  assert.deepEqual(CL.idsIn(null), {});
+  assert.deepEqual(CL.idsIn(H + ".txt " + H.slice(1) + ".png"), {});
+  assert.equal(CL.isFileId(H + ".png"), true);
+  assert.equal(CL.isFileId(H + ".m4a"), true);
+  assert.equal(CL.isFileId(H + ".gif"), false);
+  assert.equal(CL.isFileId("x" + H + ".png"), false);
+});

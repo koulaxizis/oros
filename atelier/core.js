@@ -100,6 +100,14 @@
       "fn.offline": "You are offline: only fonts already on this device can be used.",
       "fn.hint": "Free fonts with open licences. A font is downloaded the first time you use it and then works offline on this device. Letters a font lacks show in Sans.",
       "imp.file": "From a file (.pptx, picture, package)…", "imp.canva": "From your Canva account…",
+      "home.select": "Select", "home.picked": "{n} selected", "home.fromCanva": "From Canva ({n})", "home.delSel": "Delete ({n})",
+      "home.delAsk": "Delete {n} designs?", "home.delOk": "Delete", "home.deleted": "{n} designs deleted.",
+      "fm.h": "Files on this device", "fm.open": "Manage files…", "fm.short": "Files", "fm.title": "Pictures, videos and sounds",
+      "fm.hint": "Every picture, video and sound you uploaded or imported, biggest first. Files still used by a design (here, in Slides or in Layout) cannot be deleted; delete those designs first.",
+      "fm.count": "{n} files, {size} · {free} not used", "fm.allFree": "Select all unused ({n})", "fm.del": "Delete {n} ({size})",
+      "fm.ask": "Delete {n} files? Vault Drive deletes them on your other devices too.", "fm.done": "{n} files deleted.",
+      "fm.inUse": "In use", "fm.unused": "Not used", "fm.picture": "Picture", "fm.video": "Video",
+      "fm.nofs": "The orOS disk is not available here.", "fm.cantTell": "Could not check which files are in use, so none can be deleted now.",
       "cv.title": "Import from Canva", "cv.intro": "Bring your Canva designs over in one go. Each one is exported from Canva as PowerPoint and opened here as a new design.",
       "cv.checking": "Checking the connection…", "cv.off": "This orOS relay has no Canva connection set up yet. You can still download a design from Canva as PowerPoint and use Import › From a file.",
       "cv.connect": "Connect to Canva", "cv.connectHint": "A Canva window opens: sign in and allow access to your designs. Atelier only reads them; your Canva sign-in stays on this device.",
@@ -252,6 +260,14 @@
       "fn.offline": "Είσαι εκτός σύνδεσης: μπορείς να χρησιμοποιήσεις μόνο όσες γραμματοσειρές έχει ήδη η συσκευή.",
       "fn.hint": "Δωρεάν γραμματοσειρές με ανοιχτές άδειες. Μια γραμματοσειρά κατεβαίνει την πρώτη φορά που τη χρησιμοποιείς και μετά δουλεύει χωρίς σύνδεση σε αυτή τη συσκευή. Όσα γράμματα δεν έχει φαίνονται σε Sans.",
       "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
+      "home.select": "Επιλογή", "home.picked": "{n} επιλεγμένα", "home.fromCanva": "Από το Canva ({n})", "home.delSel": "Διαγραφή ({n})",
+      "home.delAsk": "Να διαγραφούν {n} σχέδια;", "home.delOk": "Διαγραφή", "home.deleted": "Διαγράφηκαν {n} σχέδια.",
+      "fm.h": "Αρχεία σε αυτή τη συσκευή", "fm.open": "Διαχείριση αρχείων…", "fm.short": "Αρχεία", "fm.title": "Εικόνες, βίντεο και ήχοι",
+      "fm.hint": "Όλες οι εικόνες, τα βίντεο και οι ήχοι που ανέβασες ή εισήγαγες, πρώτα τα μεγαλύτερα. Όσα χρησιμοποιεί ακόμη κάποιο σχέδιο (εδώ, στις Διαφάνειες ή στη Σελιδοποίηση) δεν διαγράφονται· διάγραψε πρώτα εκείνα τα σχέδια.",
+      "fm.count": "{n} αρχεία, {size} · {free} αχρησιμοποίητα", "fm.allFree": "Επιλογή όλων των αχρησιμοποίητων ({n})", "fm.del": "Διαγραφή {n} ({size})",
+      "fm.ask": "Να διαγραφούν {n} αρχεία; Το Vault Drive τα διαγράφει και από τις άλλες σου συσκευές.", "fm.done": "Διαγράφηκαν {n} αρχεία.",
+      "fm.inUse": "Σε χρήση", "fm.unused": "Δεν χρησιμοποιείται", "fm.picture": "Εικόνα", "fm.video": "Βίντεο",
+      "fm.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "fm.cantTell": "Δεν μπόρεσα να ελέγξω ποια αρχεία χρησιμοποιούνται, οπότε κανένα δεν διαγράφεται τώρα.",
       "cv.title": "Εισαγωγή από το Canva", "cv.intro": "Φέρε τα σχέδιά σου από το Canva με τη μία. Το καθένα εξάγεται από το Canva ως PowerPoint και ανοίγει εδώ ως νέο σχέδιο.",
       "cv.checking": "Ελέγχω τη σύνδεση…", "cv.off": "Αυτός ο relay του orOS δεν έχει ακόμη ρυθμισμένη σύνδεση με το Canva. Μπορείς πάντα να κατεβάσεις ένα σχέδιο από το Canva ως PowerPoint και να το ανοίξεις από Εισαγωγή › Από αρχείο.",
       "cv.connect": "Σύνδεση με το Canva", "cv.connectHint": "Ανοίγει ένα παράθυρο του Canva: συνδέσου και επίτρεψε την πρόσβαση στα σχέδιά σου. Το Ατελιέ μόνο τα διαβάζει· η σύνδεση με το Canva μένει σε αυτή τη συσκευή.",
@@ -796,8 +812,16 @@
     $("home-empty").hidden = docs.length > 0;
     var shown = docs.filter(function (d) { return !q || docTitle(d).toLocaleLowerCase().indexOf(q) >= 0; });
     if (docs.length && !shown.length) host.appendChild(el("p", "hint", t("home.none")));
+    renderSelBar(docs, shown);
     shown.forEach(function (d) {
-      var card = el("div", "doc-card");
+      var card = el("div", "doc-card" + (pick && pick[d.id] ? " picked" : ""));
+      if (pick) {
+        var cb = el("input", "doc-check");
+        cb.type = "checkbox"; cb.checked = !!pick[d.id]; cb.tabIndex = -1;
+        cb.setAttribute("aria-hidden", "true");
+        card.appendChild(cb);
+        card.setAttribute("aria-pressed", pick[d.id] ? "true" : "false");
+      }
       card.tabIndex = 0;
       card.setAttribute("role", "button");
       var th = el("div", "doc-thumb");
@@ -813,13 +837,85 @@
       var more = iconBtn("more", t("ed.more"), "doc-more");
       more.addEventListener("click", function (e) { e.stopPropagation(); cardMenu(d, more); });
       card.appendChild(more);
-      card.addEventListener("click", function () { openDoc(d.id); });
-      card.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDoc(d.id); } });
+      var go = function () { if (pick) { if (pick[d.id]) delete pick[d.id]; else pick[d.id] = 1; renderHome(); } else openDoc(d.id); };
+      card.addEventListener("click", go);
+      card.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
       card.addEventListener("contextmenu", function (e) { e.preventDefault(); cardMenu(d, more); });
+      if (pick) more.hidden = true;
       host.appendChild(card);
     });
   }
   AT.renderHome = renderHome;
+
+  // ---------- picking several designs (delete in one go) ----------
+  var pick = null;          // { docId: 1 } while picking, else null
+  function renderSelBar(docs, shown) {
+    var row = $("home-selrow"), bar = $("home-selbar");
+    row.innerHTML = ""; bar.innerHTML = "";
+    if (!docs.length) { pick = null; bar.hidden = true; return; }
+    if (!pick) {
+      var b = el("button", "btn small", t("home.select"));
+      b.type = "button";
+      b.addEventListener("click", function () { pick = {}; renderHome(); });
+      row.appendChild(b);
+      if (AT.manageFiles) {
+        var f = el("button", "btn small", t("fm.short"));
+        f.type = "button";
+        f.addEventListener("click", function () { AT.manageFiles(); });
+        row.appendChild(f);
+      }
+      bar.hidden = true;
+      return;
+    }
+    Object.keys(pick).forEach(function (id) { if (!findDoc(id)) delete pick[id]; });
+    var n = Object.keys(pick).length;
+    bar.hidden = false;
+    bar.appendChild(el("span", "sel-n", t("home.picked", { n: n })));
+    function add(label, cls, fn, off) {
+      var b = el("button", "btn small" + (cls ? " " + cls : ""), label);
+      b.type = "button"; b.disabled = !!off;
+      b.addEventListener("click", fn);
+      bar.appendChild(b);
+    }
+    var allOn = shown.length && shown.every(function (d) { return pick[d.id]; });
+    add(allOn ? t("cv.none.sel") : t("cv.all"), "", function () {
+      shown.forEach(function (d) { if (allOn) delete pick[d.id]; else pick[d.id] = 1; });
+      renderHome();
+    });
+    var cv = AT.canva && AT.canva.importedIds ? AT.canva.importedIds().filter(function (id) { return findDoc(id); }) : [];
+    if (cv.length) add(t("home.fromCanva", { n: cv.length }), "", function () { cv.forEach(function (id) { pick[id] = 1; }); renderHome(); });
+    add(t("home.delSel", { n: n }), "danger", function () { deleteMany(Object.keys(pick)); }, !n);
+    add(t("btn.cancel"), "", function () { pick = null; renderHome(); });
+  }
+  // several designs at once; one undo brings them all back
+  function deleteMany(ids) {
+    ids = ids.filter(function (id) { return findDoc(id); });
+    if (!ids.length) return;
+    AT.confirm(t("home.delAsk", { n: ids.length }), t("home.delOk"), function () {
+      var nw = now(), keep = [];
+      ids.forEach(function (id) {
+        var d = findDoc(id);
+        keep.push(JSON.parse(JSON.stringify(d)));
+        data.dt[id] = Math.max(nw, M.maxM(d));
+        if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+      });
+      data = M.normData(data);
+      save();
+      pick = null;
+      renderHome();
+      toast(t("home.deleted", { n: ids.length }), t("btn.undo"), function () {
+        var t1 = now();
+        keep.forEach(function (k) {
+          k.m = t1;
+          M.COLLECTIONS.forEach(function (c) { (k[c] || []).forEach(function (e) { e.m = t1; }); });
+          data.docs.push(M.normDoc(k));
+        });
+        data = M.normData(data);
+        save();
+        renderHome();
+      });
+    });
+  }
 
   function cardMenu(d, anchor) {
     AT.menu(anchor, [

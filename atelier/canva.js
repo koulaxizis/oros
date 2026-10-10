@@ -409,5 +409,8 @@
     body.appendChild(act);
   }
 
-  AT.canva = { open: open };
+  // designs on this device made by a Canva import (newest import of each)
+  function importedIds() { return Object.keys(st.docs).map(function (k) { return st.docs[k]; }); }
+
+  AT.canva = { open: open, importedIds: importedIds };
 })();

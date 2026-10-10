@@ -374,7 +374,129 @@
     });
     s2.appendChild(g);
     body.appendChild(s2);
+    var s3 = sec(t("fm.h"));
+    s3.appendChild(btn("btn block", t("fm.open"), manageFiles));
+    body.appendChild(s3);
   };
+
+  // --- All files: see what is on this device, delete what nothing uses ---
+  // Pictures, videos and sounds live once in /internal/Assets, shared
+  // with Slides and Layout. A file counts as "in use" while any saved
+  // app data of this browser names it, so only unused files can be picked.
+  function fsApi() {
+    try { return (window.parent && window.parent.orosFS) || window.orosFS || null; }
+    catch (e) { return window.orosFS || null; }
+  }
+  // the disk's, Vault's and sync's own records name every file (their
+  // queues, manifests, last-synced copies): they are not designs
+  var BOOKKEEPING = /^oros-(vault|fs|sync)(-|$)/;
+  function usedFiles() {
+    var CL = window.AtelierClips, used = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!BOOKKEEPING.test(k)) CL.idsIn(localStorage.getItem(k), used);
+      }
+    } catch (e) { return null; }           // cannot tell: nothing is deletable
+    CL.idsIn(JSON.stringify(AT.data()), used);
+    return used;
+  }
+  function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + " MB"; }
+  function manageFiles() {
+    var F = fsApi(), CL = window.AtelierClips;
+    var ui = { files: null, used: {}, pick: {}, busy: false, err: "" };
+    AT.openDialog(t("fm.title"), function (body, close) {
+      function render() {
+        body.innerHTML = "";
+        body.appendChild(el("p", "hint", t("fm.hint")));
+        if (ui.err) body.appendChild(el("p", "hint", ui.err));
+        if (!ui.files) { body.appendChild(el("p", "hint", t("cv.checking"))); return; }
+        var free = ui.files.filter(function (f) { return !ui.used[f.id]; });
+        var n = Object.keys(ui.pick).length, size = 0, total = 0;
+        ui.files.forEach(function (f) { total += f.size; if (ui.pick[f.id]) size += f.size; });
+        body.appendChild(el("p", "cv-progress", t("fm.count", { n: ui.files.length, size: mb(total), free: free.length })));
+        if (!ui.files.length) body.appendChild(el("p", "hint", t("up.none")));
+        var bar = el("div", "fm-bar");
+        var allOn = free.length && free.every(function (f) { return ui.pick[f.id]; });
+        bar.appendChild(btn("btn small", allOn ? t("cv.none.sel") : t("fm.allFree", { n: free.length }), function () {
+          free.forEach(function (f) { if (allOn) delete ui.pick[f.id]; else ui.pick[f.id] = 1; });
+          render();
+        }));
+        if (!free.length) bar.lastChild.disabled = true;
+        body.appendChild(bar);
+        var g = el("div", "cv-grid");
+        ui.files.forEach(function (f) {
+          var inUse = !!ui.used[f.id];
+          var tile = el("label", "cv-tile" + (ui.pick[f.id] ? " on" : "") + (inUse ? " used" : ""));
+          var cb = el("input");
+          cb.type = "checkbox"; cb.checked = !!ui.pick[f.id]; cb.disabled = inUse || ui.busy;
+          cb.addEventListener("change", function () { if (cb.checked) ui.pick[f.id] = 1; else delete ui.pick[f.id]; render(); });
+          tile.appendChild(cb);
+          var th = el("span", "cv-thumb");
+          if (CL.isVideo(f.id) || CL.isSound(f.id)) th.appendChild(el("span", "fm-kind", CL.isVideo(f.id) ? "▶" : "♪"));
+          else { var img = el("img"); img.alt = ""; assetThumb(f.id, img); th.appendChild(img); }
+          tile.appendChild(th);
+          var kind = CL.isVideo(f.id) ? t("fm.video") : CL.isSound(f.id) ? t("vd.sound") : t("fm.picture");
+          tile.appendChild(el("span", "cv-name", kind + " · " + mb(f.size)));
+          tile.appendChild(el("span", "cv-meta", inUse ? t("fm.inUse") : t("fm.unused")));
+          g.appendChild(tile);
+        });
+        body.appendChild(g);
+        var act = el("div", "dlg-actions");
+        act.appendChild(btn("btn", t("btn.close"), close));
+        var del = btn("btn primary", t("fm.del", { n: n, size: mb(size) }), function () {
+          var ids = Object.keys(ui.pick);
+          AT.confirm(t("fm.ask", { n: ids.length }), t("home.delOk"), function () { removeFiles(ids); });
+        });
+        del.disabled = !n || ui.busy;
+        act.appendChild(del);
+        body.appendChild(act);
+      }
+      function load() {
+        if (!F) { ui.err = t("fm.nofs"); ui.files = []; render(); return; }
+        var used = usedFiles();
+        F.ls(A.FOLDER).then(null, function () { return []; }).then(function (list) {
+          var ids = list.filter(function (e) { return !e.dir && CL.isFileId(e.name); }).map(function (e) { return e.name; });
+          return Promise.all(ids.map(function (id) {
+            return F.stat(A.FOLDER + "/" + id).then(function (st) { return { id: id, size: st.size || 0 }; }, function () { return { id: id, size: 0 }; });
+          }));
+        }).then(function (files) {
+          // biggest first: that is what frees space
+          files.sort(function (a, b) { return b.size - a.size || (a.id < b.id ? -1 : 1); });
+          ui.files = files;
+          ui.used = used || {};
+          if (!used) { ui.err = t("fm.cantTell"); files.forEach(function (f) { ui.used[f.id] = 1; }); }
+          render();
+        });
+      }
+      // deleted one by one; the list is read again afterwards (the
+      // in-use check too, in case a design changed meanwhile)
+      function removeFiles(ids) {
+        AT.openDialog(t("fm.title"), function (b2) { body = b2; }, true);
+        var used = usedFiles() || {}, gone = 0;
+        ids = ids.filter(function (id) { return !used[id]; });
+        ui.busy = true; ui.pick = {};
+        render();
+        ids.reduce(function (p, id) {
+          return p.then(function () {
+            return F.rm(A.FOLDER + "/" + id).then(function () {
+              gone++;
+              delete upThumbs[id];
+              sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
+            }, function () {});
+          });
+        }, Promise.resolve()).then(function () {
+          ui.busy = false; ui.files = null;
+          AT.toast(t("fm.done", { n: gone }));
+          load();
+          if (view === "uploads") renderDrawer();
+        });
+      }
+      render();
+      load();
+    }, true);
+  }
+  AT.manageFiles = manageFiles;
 
   // --- Background ---
   function bgItem() { return AX.background(AT.doc, ED.pg); }

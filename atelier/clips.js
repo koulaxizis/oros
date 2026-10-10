@@ -93,7 +93,19 @@
     return len > 0.05 ? t % len : t;
   }
 
+  // Every file id (picture, video, sound) named anywhere in a text:
+  // the "in use" check before files are deleted scans all saved data
+  // of this browser (Atelier, Slides, Layout share the folder).
+  var ANY_ID_G = /[0-9a-f]{64}\.(?:jpg|png|webm|mp4|mp3|m4a|ogg|wav|weba)/g;
+  function idsIn(text, into) {
+    into = into || {};
+    String(text || "").replace(ANY_ID_G, function (m) { into[m] = 1; return m; });
+    return into;
+  }
+  function isFileId(id) { return /^[0-9a-f]{64}\.(jpg|png)$/.test(id) || isVideo(id) || isSound(id); }
+
   var api = {
+    idsIn: idsIn, isFileId: isFileId,
     VIDEO_RE: VIDEO_RE, SOUND_RE: SOUND_RE, MAX_VIDEO: MAX_VIDEO, MAX_SOUND: MAX_SOUND, MAX_LEN: MAX_LEN,
     isVideo: isVideo, isSound: isSound, extOf: extOf, mimeOf: mimeOf, sniff: sniff, extFor: extFor,
     videoTime: videoTime, soundPlan: soundPlan, soundTime: soundTime

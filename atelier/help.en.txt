@@ -68,6 +68,8 @@ A file opens as a new design:
 
 ## Sync and backup
 Designs sync with orOS sync. Uploaded images are stored once on the orOS disk and sync with Vault Drive like your other files; on another device a photo may show `Syncing…` until it arrives.
+- To delete several designs at once, tap `Select` above `Your designs`, pick them (or `Select all`, or `From Canva` for every design a Canva import made) and tap `Delete`. `Undo` in the message brings them all back.
+- `Files` (also `Uploads` › `Manage files…`) lists every picture, video and sound on this device, biggest first. Files no design uses can be selected and deleted to free space; files still in a design, here or in Slides or Layout, cannot.
 
 ## Keyboard shortcuts
 - [[Ctrl+Z]] undo, [[Ctrl+Shift+Z]] or [[Ctrl+Y]] redo.
