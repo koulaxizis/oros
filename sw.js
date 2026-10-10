@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.57.01";
+var CACHE_VERSION = "oros-v0.60.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -116,6 +116,7 @@ var PRECACHE_URLS = [
   "mindmap/search.js",
   "mindmap/mindmap.css",
   "mindmap/mm-core.js",
+  "mindmap/mm-import.js",
   "mindmap/mindmap.js",
   "mindmap/help.en.txt",
   "mindmap/help.el.txt",
@@ -253,8 +254,10 @@ var PRECACHE_URLS = [
   "chores/search.js",
   "chores/chores.css",
   "chores/chores.js",
+  "chores/core.js",
   "layout/panels.js",
   "layout/story.js",
+  "layout/sla.js",
   "layout/io.js",
   "designkit/assets.js",
   "designkit/fx.js",
@@ -263,6 +266,7 @@ var PRECACHE_URLS = [
   "designkit/pdf.js",
   "designkit/render.js",
   "designkit/show.js",
+  "designkit/templates.js",
   "designkit/text.js",
   "help/",
   "help/index.html",
@@ -662,6 +666,13 @@ var PRECACHE_URLS = [
   "feeds/fetch.js",
   "feeds/extract.js",
   "feeds/feeds.js",
+  "museum/",
+  "museum/index.html",
+  "museum/museum.css",
+  "museum/core.js",
+  "museum/museum.js",
+  "museum/help.en.txt",
+  "museum/help.el.txt",
   "vendor/leaflet.css",
   "vendor/leaflet.js",
   "calculator/",
@@ -861,6 +872,7 @@ var PRECACHE_URLS = [
   "travel/search.js",
   "travel/travel.css",
   "travel/travel.js",
+  "travel/core.js",
   "vendor/jspdf.umd.min.js",
   "vendor/xlsx.full.min.js",
   "vendor/hls.light.min.js",
@@ -1027,13 +1039,15 @@ self.addEventListener("fetch", function (event) {
           // Cache only REAL pages: a cached 404/502 becomes the
           // offline "truth" for that URL. OAuth redirects (?code=...)
           // are one-shot URLs — never worth a cache entry; so are
-          // "Send to orOS" launches (?share-url=…, one per link).
+          // "Send to orOS" launches (?share-url=…, one per link) and
+          // address-bar searches (?search=…).
           // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
           // replayed to a navigation from the cache — the browser
           // rejects it and the page fails offline. Never store one.
           if (response.ok && !response.redirected &&
               url.search.indexOf("code=") === -1 &&
-              url.search.indexOf("share-") === -1) {
+              url.search.indexOf("share-") === -1 &&
+              url.search.indexOf("search=") === -1) {
             var copy = response.clone();
             // waitUntil: the SW stays alive until the cache write
             // LANDS. A fire-and-forget put can be killed mid-flight

@@ -134,7 +134,24 @@
       "toast.pickTpl": "Pick at least one template", "toast.tplEmpty": "A template needs at least one item",
       "copy.suffix": "{name} (copy)",
       "txt.dest": "Destination", "txt.people": "Travellers", "txt.pack": "PACKING", "txt.plan": "ITINERARY",
-      "txt.notes": "NOTES", "txt.ref": "booking", "txt.undated": "No day", "txt.packed": "{d}/{n} packed"
+      "txt.notes": "NOTES", "txt.ref": "booking", "txt.undated": "No day", "txt.packed": "{d}/{n} packed",
+      "menu.fuel": "Fuel cost by car", "fuel.title": "Fuel cost by car", "fuel.car": "Vehicle (from Garage)",
+      "fuel.manual": "Other / enter by hand", "fuel.km": "Distance one way (km)", "fuel.round": "Round trip",
+      "fuel.per100.f": "Consumption (L/100 km)", "fuel.per100.e": "Consumption (kWh/100 km)",
+      "fuel.price.f": "Price per litre", "fuel.price.e": "Price per kWh",
+      "fuel.fromGarage": "Consumption and price come from your Garage log; you can change them.",
+      "fuel.noGarage": "Tip: log fill-ups in Garage and the consumption and price are filled in for you.",
+      "fuel.result": "{dist} km · about {units} · about {cost}", "fuel.each": "{cost} per person ({n})",
+      "fuel.need": "Enter the distance, the consumption and the price", "fuel.save": "Add to notes",
+      "fuel.line": "Fuel ({car}): {dist} km, about {units}, about {cost}", "fuel.saved": "Added to the trip notes",
+      "unit.f": "{n} L", "unit.e": "{n} kWh",
+      "menu.remOff": "Turn reminders off", "menu.remOn": "Turn reminders on",
+      "toast.remOff": "Reminders off on this device", "toast.remOn": "Reminders on: the evening before you leave and before departures",
+      "wx.title": "Forecast for {place}", "wx.at": "updated {time}", "wx.later": "The forecast shows up 7 days before the trip.",
+      "wx.nf": "No forecast: the destination was not found.", "wx.fail": "No forecast right now.",
+      "wx.rain": "Rain likely on {day}. Add an umbrella?", "wx.add": "Add", "wx.no": "No thanks", "wx.umbrella": "Umbrella",
+      "wx.c.clear": "Clear", "wx.c.part": "Partly cloudy", "wx.c.cloud": "Cloudy", "wx.c.fog": "Fog",
+      "wx.c.rain": "Rain", "wx.c.snow": "Snow", "wx.c.storm": "Thunderstorm", "wx.pp": "Chance of rain {n}%"
     },
     el: {
       "app": "Ταξίδια", "btn.new": "Νέο ταξίδι", "btn.tpls": "Πρότυπα", "btn.back": "Πίσω", "btn.more": "Περισσότερα",
@@ -205,7 +222,24 @@
       "toast.pickTpl": "Διάλεξε τουλάχιστον ένα πρότυπο", "toast.tplEmpty": "Το πρότυπο θέλει τουλάχιστον ένα είδος",
       "copy.suffix": "{name} (αντίγραφο)",
       "txt.dest": "Προορισμός", "txt.people": "Ταξιδιώτες", "txt.pack": "ΒΑΛΙΤΣΑ", "txt.plan": "ΠΡΟΓΡΑΜΜΑ",
-      "txt.notes": "ΣΗΜΕΙΩΣΕΙΣ", "txt.ref": "κράτηση", "txt.undated": "Χωρίς ημέρα", "txt.packed": "{d}/{n} στη βαλίτσα"
+      "txt.notes": "ΣΗΜΕΙΩΣΕΙΣ", "txt.ref": "κράτηση", "txt.undated": "Χωρίς ημέρα", "txt.packed": "{d}/{n} στη βαλίτσα",
+      "menu.fuel": "Κόστος καυσίμων με αυτοκίνητο", "fuel.title": "Κόστος καυσίμων με αυτοκίνητο", "fuel.car": "Όχημα (από το Γκαράζ)",
+      "fuel.manual": "Άλλο / με το χέρι", "fuel.km": "Απόσταση μονής διαδρομής (km)", "fuel.round": "Με επιστροφή",
+      "fuel.per100.f": "Κατανάλωση (L/100 km)", "fuel.per100.e": "Κατανάλωση (kWh/100 km)",
+      "fuel.price.f": "Τιμή ανά λίτρο", "fuel.price.e": "Τιμή ανά kWh",
+      "fuel.fromGarage": "Η κατανάλωση και η τιμή έρχονται από το Γκαράζ σου· μπορείς να τις αλλάξεις.",
+      "fuel.noGarage": "Συμβουλή: αν καταγράφεις τα γεμίσματα στο Γκαράζ, η κατανάλωση και η τιμή συμπληρώνονται μόνες τους.",
+      "fuel.result": "{dist} km · περίπου {units} · περίπου {cost}", "fuel.each": "{cost} ανά άτομο ({n})",
+      "fuel.need": "Συμπλήρωσε απόσταση, κατανάλωση και τιμή", "fuel.save": "Προσθήκη στις σημειώσεις",
+      "fuel.line": "Καύσιμα ({car}): {dist} km, περίπου {units}, περίπου {cost}", "fuel.saved": "Μπήκε στις σημειώσεις του ταξιδιού",
+      "unit.f": "{n} L", "unit.e": "{n} kWh",
+      "menu.remOff": "Απενεργοποίηση υπενθυμίσεων", "menu.remOn": "Ενεργοποίηση υπενθυμίσεων",
+      "toast.remOff": "Οι υπενθυμίσεις σβήστηκαν σε αυτή τη συσκευή", "toast.remOn": "Υπενθυμίσεις: το βράδυ πριν φύγεις και πριν από τις αναχωρήσεις",
+      "wx.title": "Πρόγνωση για {place}", "wx.at": "ενημέρωση {time}", "wx.later": "Η πρόγνωση εμφανίζεται 7 μέρες πριν το ταξίδι.",
+      "wx.nf": "Χωρίς πρόγνωση: ο προορισμός δεν βρέθηκε.", "wx.fail": "Η πρόγνωση δεν είναι διαθέσιμη τώρα.",
+      "wx.rain": "Πιθανή βροχή {day}. Να μπει ομπρέλα;", "wx.add": "Προσθήκη", "wx.no": "Όχι, ευχαριστώ", "wx.umbrella": "Ομπρέλα",
+      "wx.c.clear": "Αίθριος", "wx.c.part": "Λίγα σύννεφα", "wx.c.cloud": "Συννεφιά", "wx.c.fog": "Ομίχλη",
+      "wx.c.rain": "Βροχή", "wx.c.snow": "Χιόνι", "wx.c.storm": "Καταιγίδα", "wx.pp": "Πιθανότητα βροχής {n}%"
     }
   };
 
@@ -614,6 +648,22 @@
     return days.slice(0, -1).filter(function (d) { return !covered[d]; });
   }
   // Entries of one day: timed by time, then the untimed in their order.
+  // Fuel for a car trip: km one way, round trip doubles it, per100 =
+  // litres (or kWh) per 100 km, price per litre (or kWh). null when
+  // something is missing or out of range; cost per person when people > 1.
+  function fuelCost(km, round, per100, price, people) {
+    var ok = function (v, max) { return typeof v === "number" && isFinite(v) && v > 0 && v <= max; };
+    if (!ok(km, 50000) || !ok(per100, 200) || !ok(price, 1000)) return null;
+    var dist = Math.round(km * (round ? 2 : 1));
+    var units = Math.round(dist * per100) / 100;
+    var cost = Math.round(units * price * 100) / 100;
+    var n = isInt(people) && people > 1 ? people : 1;
+    return { dist: dist, units: units, cost: cost, each: n > 1 ? Math.round(cost / n * 100) / 100 : null };
+  }
+  function parseDec(v) {
+    var x = parseFloat(String(v || "").trim().replace(",", "."));
+    return isFinite(x) ? x : NaN;
+  }
   function sortEntries(list) {
     return list.slice().sort(function (x, y) {
       if (!!x.t1 !== !!y.t1) return x.t1 ? -1 : 1;
@@ -851,7 +901,11 @@
       missing: p.missing === 1 ? 1 : 0,
       who: line(p.who, LEN.person),
       grp: normGrp(p.grp),
-      past: p.past === 1 ? 1 : 0
+      past: p.past === 1 ? 1 : 0,
+      rem: p.rem === 0 ? 0 : 1,                // reminders on this device (read by the shell engine)
+      rain: (Array.isArray(p.rain) ? p.rain : []).filter(function (x) {
+        return typeof x === "string" && ID_RE.test(x);
+      }).slice(-30)                            // trips whose umbrella suggestion was dismissed
     };
   }
   var prefsTimer = null;
@@ -1185,6 +1239,7 @@
       head.appendChild(l2);
     }
     if (trip.people.length) head.appendChild(el("div", "th-people", t("head.people", { list: trip.people.join(", ") })));
+    renderWx(trip, today, head);
 
     var wide = isWide();
     var tab = prefs.tab;
@@ -1439,6 +1494,151 @@
     });
     commit();
     showToast(t("toast.restored"));
+  }
+
+  // ----- Destination forecast -----
+  // Open-Meteo, the same endpoint and numbers as the Weather app. Shown
+  // when the trip overlaps the next 7 days. The destination text is
+  // geocoded once; the result and the forecast live in a device-local
+  // cache (oros-travel-wx, never synced), refreshed at most every 3 h
+  // and only online. Offline: the last forecast with its time.
+  var WX_KEY = "oros-travel-wx", WX_TTL = 3 * 3600000, WX_DAYS = 7, WX_KEEP = 12, WX_RAIN = 60;
+  var wxBusy = {};
+  function wxQuery(trip) { return trip.dest.toLocaleLowerCase(); }
+  function wxLoad() {
+    var c = null;
+    try { c = JSON.parse(localStorage.getItem(WX_KEY) || "null"); } catch (e) {}
+    return c && typeof c === "object" && c.by && typeof c.by === "object" ? c : { by: {} };
+  }
+  function wxStore(q, entry) {
+    var c = wxLoad();
+    c.by[q] = entry;
+    var keys = Object.keys(c.by).sort(function (a, b) { return (c.by[b].at || 0) - (c.by[a].at || 0); });
+    keys.slice(WX_KEEP).forEach(function (k) { delete c.by[k]; });
+    try { localStorage.setItem(WX_KEY, JSON.stringify(c)); } catch (e) {}
+  }
+  function wxWanted(trip, today) {
+    return !!trip.dest && datesKnown(trip) && trip.end >= today && trip.start <= addDays(today, WX_DAYS - 1);
+  }
+  function wxNum(v) { return typeof v === "number" && isFinite(v) ? v : null; }
+  function wxFetch(trip) {
+    var q = wxQuery(trip);
+    if (wxBusy[q] || !navigator.onLine || typeof fetch !== "function") return;
+    var old = wxLoad().by[q];
+    if (old && Date.now() - (old.at || 0) < WX_TTL) return;
+    wxBusy[q] = true;
+    var lang = LANG === "el" ? "el" : "en";
+    var geo = old && wxNum(old.lat) !== null && wxNum(old.lon) !== null ? Promise.resolve(old) :
+      fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" + lang +
+            "&name=" + encodeURIComponent(trip.dest.split(",")[0].trim()))
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+        .then(function (d) {
+          var g = d && d.results && d.results[0];
+          if (!g || wxNum(g.latitude) === null || wxNum(g.longitude) === null) return null;
+          return { lat: g.latitude, lon: g.longitude,
+                   place: line([g.name, g.country].filter(function (x) { return typeof x === "string" && x; }).join(", "), 100) };
+        });
+    geo.then(function (g) {
+      if (!g) { wxStore(q, { at: Date.now(), nf: 1 }); return null; }
+      return fetch("https://api.open-meteo.com/v1/forecast?latitude=" + g.lat + "&longitude=" + g.lon +
+                   "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+                   "&timezone=auto&forecast_days=" + WX_DAYS)
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+        .then(function (d) {
+          var dl = d && d.daily, days = [];
+          if (!dl || !Array.isArray(dl.time)) throw new Error("bad");
+          dl.time.forEach(function (day, i) {
+            if (!isYmd(day)) return;
+            days.push({ d: day, c: wxNum((dl.weathercode || [])[i]),
+                        hi: wxNum((dl.temperature_2m_max || [])[i]), lo: wxNum((dl.temperature_2m_min || [])[i]),
+                        pp: wxNum((dl.precipitation_probability_max || [])[i]) });
+          });
+          wxStore(q, { at: Date.now(), lat: g.lat, lon: g.lon, place: g.place, days: days });
+        });
+    }).catch(function () {
+      if (old) { old.err = 1; wxStore(q, old); }        // keep the last good forecast, retry after the TTL
+      else wxStore(q, { at: Date.now(), err: 1 });
+    }).then(function () {
+      wxBusy[q] = false;
+      var cur = curTrip();
+      if (prefs.view === "trip" && cur && wxQuery(cur) === q && !document.querySelector("dialog[open]")) render();
+    });
+  }
+  function wxKind(c) {
+    if (c === null) return "";
+    if (c === 0) return "clear";
+    if (c <= 2) return "part";
+    if (c === 3) return "cloud";
+    if (c === 45 || c === 48) return "fog";
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return "snow";
+    if (c >= 95) return "storm";
+    return "rain";
+  }
+  var WX_ICON = { clear: "\u2600\ufe0f", part: "\u26c5", cloud: "\u2601\ufe0f", fog: "\ud83c\udf2b\ufe0f",
+                  rain: "\ud83c\udf27\ufe0f", snow: "\ud83c\udf28\ufe0f", storm: "\u26c8\ufe0f" };
+  function wxDayName(s) {
+    try { return parseYmd(s).toLocaleDateString(locale(), { weekday: "short", day: "numeric" }); }
+    catch (e) { return fmtDate(s); }
+  }
+  function wxBtn(label, cls, fn) {
+    var b = el("button", cls, label);
+    b.type = "button";
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function hasUmbrella(trip) {
+    return trip.pack.some(function (p) { return /umbrella|ομπρέλα|ομπρελα/i.test(p.name); });
+  }
+  function renderWx(trip, today, head) {
+    if (!trip.dest || !datesKnown(trip) || trip.end < today) return;
+    if (!wxWanted(trip, today)) { head.appendChild(el("div", "hint wx-hint", t("wx.later"))); return; }
+    wxFetch(trip);
+    var c = wxLoad().by[wxQuery(trip)];
+    if (!c) return;
+    if (c.nf) { head.appendChild(el("div", "hint wx-hint", t("wx.nf"))); return; }
+    var days = (c.days || []).filter(function (d) { return d.d >= trip.start && d.d <= trip.end && d.d >= today; });
+    if (!days.length) { if (c.err) head.appendChild(el("div", "hint wx-hint", t("wx.fail"))); return; }
+    var box = el("div", "wx");
+    var at = new Date(c.at);
+    box.appendChild(el("div", "hint wx-hint", t("wx.title", { place: c.place || trip.dest }) + " · " +
+      t("wx.at", { time: fmtDate(ymd(at)) === fmtDate(today) ? pad(at.getHours()) + ":" + pad(at.getMinutes()) : fmtDate(ymd(at)) })));
+    var strip = el("div", "wx-strip");
+    days.forEach(function (d) {
+      var k = wxKind(d.c);
+      var cell = el("div", "wx-day");
+      cell.appendChild(el("span", "wx-dn", wxDayName(d.d)));
+      var ic = el("span", "wx-ic", k ? WX_ICON[k] : "");
+      if (k) { ic.setAttribute("role", "img"); ic.setAttribute("aria-label", t("wx.c." + k)); ic.title = t("wx.c." + k); }
+      cell.appendChild(ic);
+      if (d.hi !== null && d.lo !== null) cell.appendChild(el("span", "wx-t", Math.round(d.hi) + "° / " + Math.round(d.lo) + "°"));
+      if (d.pp !== null && d.pp >= 20) {
+        var pp = el("span", "wx-pp", d.pp + "%");
+        pp.title = t("wx.pp", { n: d.pp });
+        cell.appendChild(pp);
+      }
+      strip.appendChild(cell);
+    });
+    box.appendChild(strip);
+    head.appendChild(box);
+    // One-tap suggestion, never automatic.
+    var wet = days.filter(function (d) { return d.pp !== null && d.pp >= WX_RAIN; })[0];
+    if (wet && !hasUmbrella(trip) && prefs.rain.indexOf(trip.id) < 0) {
+      var sug = el("div", "warn wx-rain");
+      sug.appendChild(el("span", "wx-rain-t", t("wx.rain", { day: wxDayName(wet.d) })));
+      var tripId = trip.id;
+      sug.appendChild(wxBtn(t("wx.add"), "txt-btn small primary", function () {
+        var tr = findTrip(tripId);
+        if (!tr) return;
+        addPackItems(tr, [{ name: t("wx.umbrella"), grp: "@gear", qty: 1, rule: null }]);
+        commit();
+      }));
+      sug.appendChild(wxBtn(t("wx.no"), "link-btn", function () {
+        prefs.rain = prefs.rain.concat([tripId]).slice(-30);
+        savePrefs();
+        render();
+      }));
+      head.appendChild(sug);
+    }
   }
 
   // ---------- 7. Dialogs ----------
@@ -1865,6 +2065,121 @@
     show(dlg, fName);
   }
 
+  // Fuel cost by car. Vehicles, average consumption (full to full)
+  // and the last price paid come from the Garage log, read-only
+  // through garage/core.js (same math as the Garage app); everything
+  // stays editable and works without Garage too. Nothing is stored
+  // unless "Add to notes" is pressed.
+  function garageCars() {
+    var G = window.OrosGarageCore, out = { cars: [], cur: "EUR" };
+    if (!G) return out;
+    try {
+      var raw = JSON.parse(localStorage.getItem("oros-garage-data") || "null");
+      if (!raw || !Array.isArray(raw.vehicles)) return out;
+      var d = G.merge(raw, raw, Date.now());
+      out.cur = d.settings && d.settings.cur ? d.settings.cur : "EUR";
+      d.vehicles.forEach(function (v) {
+        if (v.arch || !G.hasFuel(v)) return;
+        var e = G.energies(v)[0], last = null;
+        d.fuel.forEach(function (x) {
+          if (x.v !== v.id || x.e !== e || !(x.q > 0) || !(x.c > 0)) return;
+          if (!last || x.d > last.d || (x.d === last.d && x.km > last.km)) last = x;
+        });
+        out.cars.push({ id: v.id, name: v.name, e: e, per100: G.consumption(d, v.id, e).avg,
+                        price: last ? last.c / 100 / (last.q / 1000) : null });
+      });
+    } catch (e) {}
+    return out;
+  }
+  function money(v, cur) {
+    try { return new Intl.NumberFormat(locale(), { style: "currency", currency: cur }).format(v); }
+    catch (e) { return v.toFixed(2) + " " + cur; }
+  }
+  function decTxt(v, digits) {
+    return v === null || v === undefined || !isFinite(v) ? "" :
+      new Intl.NumberFormat(locale(), { maximumFractionDigits: digits, useGrouping: false }).format(v);
+  }
+  function fuelDialog(tripId) {
+    var trip = findTrip(tripId);
+    if (!trip) return;
+    var g = garageCars();
+    var dlg = makeDialog("tr-fuel");
+    dlg.appendChild(el("div", "dlg-title", t("fuel.title")));
+    var form = el("form");
+    form.method = "dialog";
+    var opts = g.cars.map(function (c) { return [c.id, c.name]; }).concat([["", t("fuel.manual")]]);
+    var fCar = select(opts, g.cars.length ? g.cars[0].id : "");
+    var fKm = input("text", 8, "");
+    fKm.inputMode = "decimal";
+    var fRound = el("input");
+    fRound.type = "checkbox";
+    fRound.id = "tf-" + (++fieldSeq);
+    fRound.checked = true;
+    var fPer = input("text", 6, ""), fPrice = input("text", 8, "");
+    fPer.inputMode = fPrice.inputMode = "decimal";
+    var lPer = el("label", "dlg-lbl"), lPrice = el("label", "dlg-lbl");
+    var hint = el("p", "hint"), res = el("p", "fuel-res");
+    res.setAttribute("aria-live", "polite");
+    function car() {
+      for (var i = 0; i < g.cars.length; i++) if (g.cars[i].id === fCar.value) return g.cars[i];
+      return null;
+    }
+    function energy() { var c = car(); return c ? c.e : "f"; }
+    function fill() {
+      var c = car(), e = energy();
+      lPer.textContent = t("fuel.per100." + e);
+      lPrice.textContent = t("fuel.price." + e);
+      fPer.value = c && c.per100 ? decTxt(c.per100, 1) : "";
+      fPrice.value = c && c.price ? decTxt(c.price, 3) : "";
+      hint.textContent = t(c ? "fuel.fromGarage" : "fuel.noGarage");
+      calc();
+    }
+    function result() {
+      return fuelCost(parseDec(fKm.value), fRound.checked, parseDec(fPer.value), parseDec(fPrice.value), trip.people.length);
+    }
+    function calc() {
+      var r = result(), e = energy();
+      if (!r) { res.textContent = ""; return; }
+      var txt = t("fuel.result", { dist: r.dist, units: t("unit." + e, { n: decTxt(r.units, 1) }), cost: money(r.cost, g.cur) });
+      if (r.each !== null) txt += " · " + t("fuel.each", { cost: money(r.each, g.cur), n: trip.people.length });
+      res.textContent = txt;
+    }
+    if (g.cars.length) form.appendChild(field(t("fuel.car"), fCar));
+    form.appendChild(field(t("fuel.km"), fKm));
+    var rw = el("label", "chk-row");
+    rw.appendChild(fRound);
+    rw.appendChild(el("span", "", t("fuel.round")));
+    form.appendChild(rw);
+    var wPer = el("div", "fld"), wPrice = el("div", "fld");
+    lPer.setAttribute("for", fPer.id); lPrice.setAttribute("for", fPrice.id);
+    wPer.appendChild(lPer); wPer.appendChild(fPer);
+    wPrice.appendChild(lPrice); wPrice.appendChild(fPrice);
+    form.appendChild(row(wPer, wPrice));
+    form.appendChild(hint);
+    form.appendChild(res);
+    form.appendChild(actions(dlg, t("fuel.save")));
+    fCar.addEventListener("change", fill);
+    [fKm, fPer, fPrice].forEach(function (x) { x.addEventListener("input", calc); });
+    fRound.addEventListener("change", calc);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var r = result();
+      if (!r) { showToast(t("fuel.need")); (fKm.value ? fPer : fKm).focus(); return; }
+      var c = car(), tr = findTrip(tripId);
+      var ln = t("fuel.line", { car: c ? c.name : t("kind.car"), dist: r.dist,
+        units: t("unit." + energy(), { n: decTxt(r.units, 1) }), cost: money(r.cost, g.cur) });
+      dlg.close();
+      if (!tr) return;
+      commitNotes();
+      setField(tr, "notes", text(tr.notes ? tr.notes.replace(/\s+$/, "") + "\n" + ln : ln, LEN.notes));
+      commit();
+      showToast(t("fuel.saved"));
+    });
+    dlg.appendChild(form);
+    fill();
+    show(dlg, fKm);
+  }
+
   // Template editor: a ready template saved here becomes the user's
   // (stored under the same id); "Hide" / "Delete" leave a tombstone.
   function tplDialog(tp) {
@@ -2017,6 +2332,7 @@
         { label: t("menu.edit"), fn: function () { tripDialog(id); } },
         { label: t(shareOnMobile() ? "menu.share" : "menu.text"), fn: function () { shareTrip(id); } },
         { label: t("menu.ics"), fn: function () { exportIcs(id); } },
+        { label: t("menu.fuel"), fn: function () { fuelDialog(id); } },
         { label: t("menu.print"), fn: function () { printTrip(id); } },
         { label: t("menu.dup"), fn: function () { dupDialog(id); } },
         { label: t("menu.tpl"), fn: function () { saveTplDialog(id); } },
@@ -2025,7 +2341,12 @@
     } else {
       openMenu(btn, [
         { label: t("menu.export"), fn: exportAll },
-        { label: t("menu.import"), fn: importFlow }
+        { label: t("menu.import"), fn: importFlow },
+        { label: t(prefs.rem ? "menu.remOff" : "menu.remOn"), fn: function () {
+          prefs.rem = prefs.rem ? 0 : 1;
+          savePrefsNow();
+          showToast(t(prefs.rem ? "toast.remOn" : "toast.remOff"));
+        } }
       ]);
     }
   }
@@ -2421,6 +2742,28 @@
     wireKeyboard();
   }
 
+  // Deep link from the shell (__orosOpenTravel): Calendar rows and
+  // reminders. Live push, or the staged "id" / "id plan" at boot.
+  window.__orosTravelOpen = function (tripId, tab) {
+    if (typeof tripId !== "string" || !ID_RE.test(tripId) || !findTrip(tripId)) return;
+    var dlg = document.querySelector("dialog[open]");
+    if (dlg) return;                          // never throw away an open edit
+    commitNotes();
+    if (tab === "pack" || tab === "plan") prefs.tab = tab;
+    openTrip(tripId);
+  };
+  function takeStaged() {
+    var v = null;
+    try {
+      v = sessionStorage.getItem("oros-travel-open");
+      if (v) sessionStorage.removeItem("oros-travel-open");
+    } catch (e) {}
+    if (v) {
+      var parts = String(v).split(" ");
+      window.__orosTravelOpen(parts[0], parts[1]);
+    }
+  }
+
   function boot() {
     load();
     loadPrefs();
@@ -2430,6 +2773,7 @@
     inheritPalette();
     watchPalette();
     render();
+    takeStaged();
     try {
       if (window.parent && window.parent !== window &&
           typeof window.parent.__orosTakeTarget === "function") {

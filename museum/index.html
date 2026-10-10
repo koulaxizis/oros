@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>One-Minute Museum · orOS</title>
+
+  <link rel="stylesheet" href="museum.css?v=0.60.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span class="title-main" data-i18n="app.name">One-Minute Museum</span>
+    </div>
+    <span class="spacer"></span>
+    <div id="ring" class="ring" role="timer">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="ring-bg" cx="24" cy="24" r="20"></circle>
+        <circle id="ring-arc" class="ring-arc" cx="24" cy="24" r="20"></circle>
+      </svg>
+      <span id="ring-text" class="ring-text" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- The exhibit -->
+    <section id="stage">
+      <div class="stage-inner">
+        <div id="loading" class="state" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <p data-i18n="loading">Opening the next room…</p>
+        </div>
+
+        <div id="closed" class="state" hidden>
+          <h2 class="state-title" data-i18n="closed.title">The museum is closed</h2>
+          <p class="hint" data-i18n="closed.text"></p>
+          <div class="state-actions">
+            <button type="button" id="closed-visit" class="gen-btn" data-i18n="closed.visit">Visit your collection</button>
+            <button type="button" id="closed-retry" class="gen-btn ghost" data-i18n="closed.retry">Try again</button>
+          </div>
+          <p id="closed-empty" class="hint" data-i18n="closed.empty"></p>
+        </div>
+
+        <article id="exhibit" hidden>
+          <p id="ex-kicker" class="kicker" hidden></p>
+          <p id="ex-event" class="event" hidden></p>
+          <h1 id="ex-title" class="ex-title"></h1>
+          <p id="ex-desc" class="ex-desc" hidden></p>
+          <figure id="ex-figure" hidden>
+            <img id="ex-img" alt="" referrerpolicy="no-referrer">
+          </figure>
+          <p id="ex-text" class="ex-text"></p>
+          <p id="ex-credit" class="credit"></p>
+          <button type="button" id="back-live" class="link-btn" data-i18n="back.live" hidden>Back to Wikipedia</button>
+        </article>
+      </div>
+
+      <div id="controls">
+        <button type="button" id="prev-btn" class="icon-btn"></button>
+        <button type="button" id="pause-btn" class="icon-btn big"></button>
+        <button type="button" id="next-btn" class="icon-btn"></button>
+        <span class="spacer"></span>
+        <button type="button" id="star-btn" class="icon-btn star"></button>
+        <a id="open-btn" class="icon-btn" href="#" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+    </section>
+
+    <!-- Halls, language, time, the collection -->
+    <aside id="panel">
+      <div class="sec">
+        <h2 id="hall-lbl" data-i18n="hall.label">Hall</h2>
+        <div id="halls" class="chips" role="radiogroup" aria-labelledby="hall-lbl"></div>
+      </div>
+      <div class="sec">
+        <h2 id="lang-lbl" data-i18n="lang.label">Wikipedia</h2>
+        <div id="langs" class="chips" role="radiogroup" aria-labelledby="lang-lbl"></div>
+      </div>
+      <div class="sec">
+        <h2 id="dur-lbl" data-i18n="dur.label">Each exhibit</h2>
+        <div id="durs" class="chips" role="radiogroup" aria-labelledby="dur-lbl"></div>
+      </div>
+      <p class="hint keys-hint" data-i18n="keys"></p>
+
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="col.title">Your collection</h2>
+          <span id="col-count" class="count"></span>
+        </div>
+        <p id="col-empty" class="hint" data-i18n="col.empty"></p>
+        <ul id="collection"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.60.00"></script>
+  <script src="museum.js?v=0.60.00"></script>
+
+</body>
+</html>

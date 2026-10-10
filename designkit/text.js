@@ -384,7 +384,13 @@
   //   { k:"br" }                 forced line break (Shift+Enter)
   // Fields ({ f:"pn" } page number, { f:"pc" } page count) are
   // parts with t === null, resolved when placed.
-  function caseOf(a, t) { return a.caps ? t.toLocaleUpperCase() : t; }
+  // All caps; Greek capitals drop the tonos (Όνομα → ΟΝΟΜΑ) but keep
+  // the dialytika (ϊ → Ϊ).
+  var TONOS = { "Ά": "Α", "Έ": "Ε", "Ή": "Η", "Ί": "Ι", "Ό": "Ο", "Ύ": "Υ", "Ώ": "Ω", "ΐ": "Ϊ", "ΰ": "Ϋ" };
+  function caseOf(a, t) {
+    if (!a.caps) return t;
+    return t.replace(/[ΐΰ]/g, function (c) { return TONOS[c]; }).toUpperCase().replace(/[ΆΈΉΊΌΎΏ]/g, function (c) { return TONOS[c]; });
+  }
 
   function tokenize(para, ps, csMap) {
     var toks = [], word = null;

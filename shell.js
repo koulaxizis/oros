@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.57.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.60.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -164,6 +164,7 @@
     bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>',
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     feeds: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
+    museum: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 18h16M12 3l9 5H3z"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
@@ -925,9 +926,14 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
+      tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
+      tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
+      tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
+    tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -1223,6 +1229,65 @@
     garageCheckTick();
   }
 
+  // Travel — the evening before departure ("Rome tomorrow · 6 items
+  // to pack", from 18:00) and shortly before a timed departure
+  // (flight 3 h, train / bus / ferry 1 h). Reads "oros-travel-data"
+  // directly (works with the app CLOSED) through travel/core.js
+  // (loaded by index.html; the Calendar feed reads it the same way).
+  // Each notice once per device: "oros-travel-fired" = { key: ms },
+  // pruned after 3 days; the inbox dedup key covers a twin from
+  // another device. Off when the app's Reminders setting is off
+  // (oros-travel-prefs.rem = 0, device-local). Honest limit (alarms):
+  // orOS closed = nothing fires, a departure window that passed is
+  // not caught up.
+  var TRAVEL_FIRED_KEY = "oros-travel-fired";
+  function travelCheckTick() {
+    var Core = window.OrosTravelCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, fired;
+    try {
+      raw = localStorage.getItem("oros-travel-data");
+      if (!raw) return;
+      raw = JSON.parse(raw);
+      prefs = JSON.parse(localStorage.getItem("oros-travel-prefs") || "null");
+      fired = JSON.parse(localStorage.getItem(TRAVEL_FIRED_KEY) || "null");
+    } catch (e) { return; }
+    if (prefs && prefs.rem === 0) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var now = Date.now();
+    var lang = state.lang === "el" ? "el" : "en";
+    var due = Core.due(Core.trips(raw), now, lang);
+    var next = Core.pruneFired(fired, now);
+    var fresh = due.filter(function (d) { return !Object.prototype.hasOwnProperty.call(next, d.key); });
+    if (!fresh.length) {
+      if (fired && Object.keys(fired).length !== Object.keys(next).length) {
+        try { localStorage.setItem(TRAVEL_FIRED_KEY, JSON.stringify(next)); } catch (e) {}
+      }
+      return;
+    }
+    fresh.forEach(function (d) { next[d.key] = now; });
+    try { localStorage.setItem(TRAVEL_FIRED_KEY, JSON.stringify(next)); } catch (e) {}
+    fresh.slice(0, 3).forEach(function (d) {
+      N.emit({
+        ns: "travel",
+        key: d.key,
+        type: "reminder",
+        title: d.title,
+        body: d.body,
+        deepLink: "travel:" + d.trip
+      });
+    });
+  }
+
+  var travelLastTick = 0;
+  function travelCheckTickThrottled() {
+    var now = Date.now();
+    if (now - travelLastTick < 60000) return;
+    travelLastTick = now;
+    travelCheckTick();
+  }
+
   // Pet Health Book — daily reminder. Reads "oros-petcare-data"
   // directly (works with the app CLOSED) and asks petcare/core.js
   // (loaded by index.html, the SAME file the app runs) what to
@@ -1398,6 +1463,58 @@
     });
   }
 
+  // Chore Wheel — daily "your chores today" reminder. Reads
+  // "oros-chores-data" directly (works with the app CLOSED) and asks
+  // chores/core.js (loaded by index.html, the SAME file the app runs)
+  // who has what today. Only for the member picked as "me" on THIS
+  // device (oros-chores-prefs, device-local), from the reminder hour
+  // on (default 09:00, -1 = off): one notice per day. No "me", no
+  // chores of mine → silent (SH-B7).
+  var CHORES_DATA_KEY = "oros-chores-data";
+  function choresCheckTick() {
+    var Core = window.OrosChoresCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs;
+    try {
+      raw = JSON.parse(localStorage.getItem(CHORES_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-chores-prefs")));
+    } catch (e) { return; }
+    if (!prefs.me || !raw || !Array.isArray(raw.tasks) || !raw.tasks.length) return;
+    if (prefs.rh < 0 || new Date().getHours() < prefs.rh) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var sum = Core.summary(Core.mergeChores(raw, raw), Core.localDn(new Date()), prefs.me);
+    if (!sum.names.length && !sum.late) return;
+    var el = state.lang === "el";
+    var names = sum.names.slice(0, 3).join(", ");
+    if (sum.names.length > 3) names += el ? " και " + (sum.names.length - 3) + " ακόμα"
+                                          : " and " + (sum.names.length - 3) + " more";
+    var body = sum.names.length ? (el ? "Σήμερα: " : "Today: ") + names : "";
+    if (sum.late) {
+      var lt = el ? (sum.late === 1 ? "1 καθυστερεί" : sum.late + " καθυστερούν")
+                  : sum.late + " late";
+      body = body ? body + " · " + lt : lt;
+    }
+    var title = window.t("app.chores");
+    if (title === "app.chores") title = "Chore Wheel";  // missing-key fallback
+    N.emit({
+      ns: "chores",
+      key: "today-" + sysYmd(),
+      type: "reminder",
+      title: title,
+      body: body,
+      deepLink: "chores:today"
+    });
+  }
+
+  var choresLastTick = 0;
+  function choresCheckTickThrottled() {
+    var now = Date.now();
+    if (now - choresLastTick < 60000) return;
+    choresLastTick = now;
+    choresCheckTick();
+  }
+
   var plantsLastTick = 0;
   function plantsCheckTickThrottled() {
     var now = Date.now();
@@ -1437,6 +1554,158 @@
       title: txt.title,
       body: txt.body,
       deepLink: "system:open:water"
+    });
+  }
+
+  // Timesheet (Wave 3) — the shell reads "oros-timesheet-data" with
+  // timesheet/core.js (loaded by index.html, the SAME file the app
+  // runs) and never writes it. Two things come from that read:
+  //   · a top-bar chip while a timer runs (elapsed H:MM; click opens
+  //     Timesheet), painted by the 1/s clock tick;
+  //   · one "forgot to stop it?" notification per running entry once
+  //     it passes core.FORGOT_MS (same threshold as the app banner).
+  // The text is re-read at most every 5 s, or at once when the app
+  // frame writes it (storage event), and parsed only when it changed.
+  // Starting/stopping from the keyboard (Ctrl+Alt+Shift+T) goes
+  // through the app (live push or a one-shot flag + open), so the
+  // data has one writer and the sync rules stay the app's.
+  var tsRaw = null, tsRun = null, tsReadAt = 0;
+  window.addEventListener("storage", function (e) {
+    var C = window.orosTimesheetCore;
+    if (C && e.key === C.STORAGE_KEY) tsReadAt = 0;
+  });
+  function timesheetRunning() {
+    var C = window.orosTimesheetCore;
+    if (!C || typeof C.parse !== "function") return null;
+    var now = Date.now();
+    if (now - tsReadAt < 5000) return tsRun;
+    tsReadAt = now;
+    var raw = null;
+    try { raw = localStorage.getItem(C.STORAGE_KEY); } catch (e) { return tsRun; }
+    if (raw === tsRaw) return tsRun;
+    tsRaw = raw;
+    tsRun = null;
+    var d = raw ? C.parse(raw) : null;          // unreadable → no chip (the app keeps the rescue copy)
+    var x = d ? C.running(d)[0] : null;
+    if (x) {
+      var p = C.project(d, x.p);
+      tsRun = { id: x.id, s: x.s, name: p ? p.name : "" };
+    }
+    return tsRun;
+  }
+
+  function timesheetTrayTick() {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var run = timesheetRunning();
+    var chip = document.getElementById("ts-tray-chip");
+    if (!run) { if (chip) chip.remove(); return; }
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "ts-tray-chip";
+      chip.type = "button";
+      chip.innerHTML = ICONS.timesheet + '<span class="ts-time"></span>';
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openAppById("timesheet");
+      });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+    }
+    var C = window.orosTimesheetCore;
+    var txt = C.fmtDur(Date.now() - run.s);
+    var span = chip.lastChild;
+    if (span.textContent !== txt) span.textContent = txt;
+    var since = new Date(run.s);
+    var hm = String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0");
+    var title = window.t("ts.tray.title")
+      .replace("{p}", run.name || window.t("ts.tray.noproj"))
+      .replace("{t}", hm).replace("{d}", txt);
+    if (chip.title !== title) {
+      chip.title = title;                       // .title / aria-label: plain text, never HTML
+      chip.setAttribute("aria-label", title);
+    }
+  }
+
+  var tsLastTick = 0;
+  function timesheetCheckTickThrottled() {
+    var now = Date.now();
+    if (now - tsLastTick < 60000) return;
+    tsLastTick = now;
+    timesheetCheckTick();
+  }
+  function timesheetCheckTick() {
+    var C = window.orosTimesheetCore, N = window.orosNotifs;
+    if (!C || !(N && typeof N.emit === "function")) return;
+    var run = timesheetRunning();
+    if (!run || Date.now() - run.s < C.FORGOT_MS) return;
+    // The app shows its own banner while it is the open app.
+    if (state.running && state.running.id === "timesheet" && !document.hidden) return;
+    var title = window.t("app.timesheet");
+    if (title === "app.timesheet") title = "Timesheet";
+    N.emit({
+      ns: "timesheet",
+      key: "forgot-" + run.id,
+      type: "reminder",
+      title: title,
+      body: window.t("ts.forgot.body").replace("{d}", C.fmtDur(Date.now() - run.s)),
+      deepLink: "system:open:timesheet"
+    });
+  }
+
+  // Ctrl+Alt+Shift+T: start or stop the Timesheet timer.
+  function scTimesheetToggle() {
+    var has = false;
+    for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "timesheet") has = true;
+    if (!has) return;
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetToggle === "function") {
+          f.contentWindow.__orosTimesheetToggle();
+          tsReadAt = 0;
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-timesheet-toggle", "1"); } catch (e) {}
+    openAppById("timesheet");
+  }
+
+  // Baby — feed-gap and daily-medicine reminders (off by default;
+  // the app's Settings turn them on, per device: oros-baby-rem is
+  // device-local). The RULE lives in baby/core.js, loaded by
+  // index.html before this file and shared with the app and its
+  // tests; the shell owns timing + emission over oros-baby-data, so
+  // it works with the app closed. Dedupe keys: one per feed gap
+  // (child + last feed id), one per medicine day. A stale
+  // index.html without core.js → silent.
+  var babyLastTick = 0;
+  function babyCheckTickThrottled() {
+    var now = Date.now();
+    if (now - babyLastTick < 60000) return;
+    babyLastTick = now;
+    babyCheckTick();
+  }
+  function babyCheckTick() {
+    var B = window.orosBabyCore, N = window.orosNotifs;
+    if (!B || typeof B.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var rem = null, data = null;
+    try { rem = B.readRem(JSON.parse(localStorage.getItem(B.REM_KEY) || "null")); } catch (e) { return; }
+    if (!B.remOn(rem)) return;
+    try { data = B.parse(localStorage.getItem(B.STORAGE_KEY)); } catch (e) { return; }
+    if (!data) return;                     // unreadable: the app keeps the rescue copy
+    var now = Date.now(), lang = state.lang === "el" ? "el" : "en";
+    B.reminderDue(data, rem, now).forEach(function (due) {
+      var txt = B.reminderText(due, rem, lang, now);
+      N.emit({
+        ns: "baby",
+        key: due.key,
+        type: "reminder",
+        title: txt.title,
+        body: txt.body,
+        deepLink: "system:open:baby"
+      });
     });
   }
 
@@ -1547,6 +1816,7 @@
         renderMenu();
         helpBtnRefresh();
         openFromLaunchParam();
+        searchFromLaunchParam();
         deliverShare();
       })
       .catch(function () {
@@ -1578,6 +1848,27 @@
         return;
       }
     }
+  }
+
+  // "oros <words>" in the browser's address bar (Send to orOS add-on,
+  // extension/): "/?search=<words>" opens the menu with the words in
+  // its search field, as if typed. Stripped at once like ?open=.
+  function searchFromLaunchParam() {
+    var params, q;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    if (!params.has("search")) return;
+    q = String(params.get("search") || "").replace(/\s+/g, " ").trim().slice(0, 200);
+    params.delete("search");
+    try {
+      var qs = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
+    } catch (e) {}
+    if (!q || state.running) return;
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = q;
+    inp.dispatchEvent(new Event("input"));
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
@@ -4120,6 +4411,7 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("maps.providers")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.pubdomain")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.museum")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
@@ -4294,7 +4586,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-jigsaw", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -4319,7 +4611,8 @@
     { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
     { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
     { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
-    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } }
+    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
+    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -7064,6 +7357,26 @@
     openAppById("plants");
   };
 
+  // Chore Wheel deep-link bridge (pattern: Plant Care). Payload =
+  // "today" (reminder) or a day "YYYY-MM-DD" (Calendar feed row).
+  // Open app → live push; closed → sessionStorage staging (device-
+  // local, one-shot, consumed by chores.js at boot) + open.
+  window.__orosOpenChores = function (target) {
+    if (typeof target !== "string" || !/^(today|\d{4}-\d{2}-\d{2})$/.test(target)) return;
+    if (state.running && state.running.id === "chores") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosChoresOpen === "function") {
+          f.contentWindow.__orosChoresOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-chores-open", target); } catch (e) {}
+    openAppById("chores");
+  };
+
   // Podcasts "add this feed" bridge (Reader, Bookmarks). Payload =
   // an http(s) feed or page address. Open app → live push; closed →
   // one-shot pending address taken by podcasts.js at boot + open.
@@ -7108,6 +7421,28 @@
     }
     try { sessionStorage.setItem("oros-garage-open", target); } catch (e) {}
     openAppById("garage");
+  };
+
+  // Travel deep-link bridge (pattern: Garage). Payload = a trip id,
+  // optional tab "pack" | "plan" (Calendar timed rows → itinerary).
+  // Open app → live push; closed → sessionStorage staging "id" or
+  // "id plan" (device-local, one-shot, consumed by travel.js at
+  // boot) + open.
+  window.__orosOpenTravel = function (tripId, tab) {
+    if (typeof tripId !== "string" || !/^[a-z0-9][a-z0-9-]{3,40}$/.test(tripId)) return;
+    tab = tab === "pack" || tab === "plan" ? tab : "";
+    if (state.running && state.running.id === "travel") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosTravelOpen === "function") {
+          f.contentWindow.__orosTravelOpen(tripId, tab);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-travel-open", tab ? tripId + " " + tab : tripId); } catch (e) {}
+    openAppById("travel");
   };
 
   // Pet Health Book deep-link bridge (pattern: Minimalism). Payload =
