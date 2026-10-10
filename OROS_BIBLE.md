@@ -4442,3 +4442,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Shared player `designkit/show.js` 1.1.0: a `live(i, t)` callback paints the current slide at time `t`, and `state().t` reports it; slides without motion still use cached stills. `atelier/motion.js` `present()` / `presentSound()` use it.
 - Help pages (Atelier EN/EL) updated.
 - Not tested: a real phone, Safari, H.264/MP4 sources, very long videos.
+
+### 2026-10-10 — Pet Health Book 1.2.0: attachments (#151) — 0.65.06
+- Vaccine, deworming, visit and medicine records: `Attachments` (up to 6 photos or PDFs: prescriptions, test results) with viewer, Open (PDF), Save a copy, Remove; 📎 count on the record row. Files in Files → "Pet Health Book", synced by Vault Drive.
+- Data: records may carry `sc` (file names; see the PETCARE registry row). Photos are redrawn without EXIF/location; PDFs kept as they are (≤ 10 MB).
+- Help pages EN/EL updated. Tests: tests/petcare.test.js (+1).
+- Not tested: a real phone camera, Safari, Vault Drive sync of the files between two devices.
