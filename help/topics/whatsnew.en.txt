@@ -1,0 +1,26 @@
+# What's new in orOS
+The newest changes come first. When orOS updates itself, the update notice opens this page.
+
+## Version 0.54.00
+- Every app and game now has its own page in Help. Inside any app, the **?** button or [[Ctrl+Alt+Shift+H]] opens it.
+- New users get a short tour of the top bar the first time they open orOS. You can [take the tour](tour:start) again at any time.
+- The update notice now opens this page, so you can see what changed.
+- [Split](app:split) can add people from [Contacts](app:contacts) or from a [Travel](app:travel) trip.
+- [Garage](app:garage) keeps receipt photos with fuel, service and cost entries.
+- [Timesheet](app:timesheet) can turn a report into a new [Quote](app:quote).
+
+## Version 0.48.00
+- New app: [Help](app:help), in the System category. It explains orOS and its apps, works offline and has its own search.
+- A **?** button in the top bar opens Help at the page of the app you are using.
+
+## Versions 0.47.01 to 0.47.05
+- Updates wait while a podcast is playing, so an update never cuts off an episode.
+- Installed orOS: the app icon has shortcuts to open some apps directly.
+- [Budget](app:budget) can receive expenses from other apps, such as `Add to Budget` in [Garage](app:garage).
+- [Bookmarks](app:bookmarks) can receive pages from your browser with a bookmarklet, or from the Android share menu.
+- The weather chip in the top bar is now set up in [Weather](app:weather), and the top bar always fits on small phones.
+
+## Version 0.47.00
+- 53 new apps and games joined the menu at once, among them [Mail](app:mail), [Reader](app:feeds), [Podcasts](app:podcasts), [Atelier](app:atelier), [Slides](app:slides), [Budget](app:budget) and many games.
+- Universal search: the search box at the top of the menu also finds things inside your data.
+- [Calendar](app:calendar) shows name days, public holidays and world days.

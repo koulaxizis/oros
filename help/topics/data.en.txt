@@ -30,4 +30,4 @@ Before you clear browser data, reset your browser or switch devices, [export a b
 In a private or incognito window, the browser deletes everything when you close the window. orOS works there, but your data won't be there next time. Use a normal window for anything you want to keep, or export before closing.
 
 ## Taking your data with you
-Your data is always yours. `Export data` in the menu saves everything in one file you can keep or import into orOS on another device. To erase everything instead, see [Factory reset](help:t/reset).
+Your data is always yours. `Export backup file` in [Settings](app:settings) saves everything in one file you can keep or import into orOS on another device. To erase everything instead, see [Factory reset](help:t/reset).

@@ -1,0 +1,45 @@
+# Dice & Coin
+Roll any mix of dice for board games and role-playing games, or flip a coin. Every result goes into a history you can share, export and look at as statistics.
+
+## Getting started
+Set `Count` (1 to 30 dice), `Type` (d4, d6, d8, d10, d12, d20 or d100) and a `Modifier` (−99 to +99) that is added to the total. Then tap or click `Roll`. The result shows the `Total` and each die; dice that don't count toward the total are shown dimmed.
+
+To flip a coin, tap or click `Flip Coin` or the coin itself. The counts of `Heads` and `Tails` sit under the coin.
+
+## Roll modes
+- `Normal`: all dice count.
+- `Keep Highest`: only the highest die counts.
+- `Keep Lowest`: only the lowest die counts.
+- `Drop Lowest`: all dice count except the lowest one.
+
+A `MAX!` badge appears when every die shows its top number, and `Fumble` when a single die shows 1.
+
+## Notation and presets
+### Type a roll
+In the box with `2d20+5 · 4d6 dl · 8d6 kh`, type a roll in dice notation and press `Apply` or [[Enter]]: it fills in the settings and rolls straight away. Add `kh` for keep highest, `kl` for keep lowest or `dl` for drop lowest. If the box flashes red, the notation wasn't understood.
+
+### Presets
+`Save preset` (the **＋** button) stores the current settings under a name you choose. Tap or click a preset to load its settings, then roll. The ✕ on a preset deletes it. Saving under an existing name replaces that preset.
+
+## History and statistics
+`History` lists your latest 50 rolls and flips with date and time.
+- `Stats` shows how many dice rolls and coin flips you made, heads against tails, max rolls, fumbles and the average for each die type.
+- `Export` saves the history as a text file.
+- `Share` copies the latest result to the clipboard as a short text card.
+- `Clear` deletes the whole history after you confirm.
+
+## Sync and backup
+Your history and presets sync between your devices through [orOS sync](help:t/sync), and clearing the history or deleting a preset carries over too. The sound setting stays on this device. Use `Export` for a readable copy of the history, or the orOS [backup](help:t/backup) for everything.
+
+## Keyboard shortcuts
+- [[Space]] rolls the dice.
+- [[C]] flips the coin.
+- [[Enter]] in the notation box applies and rolls.
+
+## Tips
+- The speaker button turns roll and flip sounds on or off (off at first).
+- For a classic character stat, type `4d6 dl` and press [[Enter]].
+
+## Limits
+- The history keeps only the latest 50 results, so the coin counts and `Stats` cover those 50 only.
+- Notation takes one kind of die per roll, such as `3d8+2`; mixes like `1d20+1d4` aren't understood.

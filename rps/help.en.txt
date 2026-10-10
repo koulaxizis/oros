@@ -1,0 +1,31 @@
+# Rock Paper Scissors
+The classic hand game against the computer. Rock blunts scissors, scissors cut paper, paper wraps rock.
+
+## How to play
+Pick `Rock`, `Paper` or `Scissors`. The computer chooses at the same moment, from what you played in earlier rounds only, never by peeking at your move. Both hands pump three times and then show; the winning hand is ringed. The same move on both sides is a draw.
+
+Choose how long a match lasts:
+- `First to 3` or `First to 5`: the first to win that many rounds wins the match, and a result window opens. Your next pick starts a new match.
+- `Endless`: keep playing as long as you like.
+
+The status bar shows the score, the round and your current win streak.
+
+## Controls
+- Tap or click one of the three big buttons.
+- [[R]], [[P]], [[S]] or [[1]], [[2]], [[3]] play rock, paper and scissors. On a Greek layout [[Π]], [[Χ]] and [[Ψ]] work too.
+- [[N]] (or the `New match (N)` button) starts a new match.
+
+## Levels and scoring
+- `Easy`: the computer plays at random.
+- `Medium`: it counters the move you play most often.
+- `Hard`: it looks for patterns in your play, such as what you tend to pick after a win or a loss, and follows whichever guess has been working best.
+
+`Records` shows, per level, the matches you won and lost, the rounds won, drawn and lost, and your best win streak. A win streak counts rounds won in a row; a draw doesn't break it.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The match in progress, the level, the match length, the sound setting and the history of your moves that the computer learns from stay on this device.
+
+## Tips
+- Started a new match or changed level or length by mistake? Tap `Undo` on the message that appears.
+- On `Hard`, try to play truly at random: any habit you have, it will find.
+- The match in progress is kept; close the app and carry on later.

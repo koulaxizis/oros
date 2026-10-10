@@ -1,0 +1,31 @@
+# Spot the Difference
+Two pictures look the same, but a few things differ. Find them all as fast as you can. Every pair of pictures is new: the app draws them itself, in a park, by the sea, on a city street or in outer space.
+
+## How to play
+Tap or click anything that differs, on either picture. A found difference is marked on both. The second picture can change an object in a few ways: it can be missing, a different colour, bigger or smaller, moved or mirrored.
+
+- A tap where nothing differs adds 5 seconds to your time.
+- Three quick wrong taps in a row lock the pictures for 3 seconds.
+- `Hint (H): +10 s` circles one difference for a moment and adds 10 seconds.
+
+When you've found them all, the result shows your time, your best time, your wins and your wrong taps and hints.
+
+## Controls
+- Tap or click on either picture.
+- Arrow keys move a crosshair over the pictures; [[Enter]] or [[Space]] taps where it is.
+- [[H]] gives a hint.
+- [[N]] or `New pictures (N)` deals a new pair. If you leave a game in progress this way, an `Undo` button appears for a moment to get it back.
+
+The pictures sit side by side, or one above the other on a phone held upright. The clock runs only while the app is on screen, and a game in progress is kept on this device for next time.
+
+## Levels and scoring
+`Easy · 5`, `Medium · 7` and `Hard · 10` set how many differences there are. On harder levels smaller objects can change, and by less. Changing the level deals new pictures.
+
+`Records` shows your best time and number of wins for each level.
+
+## Sync
+Your best times and wins sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, the game in progress and the sound button stay on this device.
+
+## Tips
+- Scan the pictures in strips, top to bottom, rather than jumping around.
+- Wrong taps cost less than a hint, but three in a row cost you a pause too.

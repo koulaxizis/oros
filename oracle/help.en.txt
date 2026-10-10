@@ -1,0 +1,30 @@
+# Oracle
+Ask the Oracle a question and get a prophecy. Every prophecy is true. None of them is helpful.
+
+## Ask a question
+Type your question in the box and press [[Enter]] or tap `Ask the Oracle`. The smoke rises and the answer appears letter by letter. With reduced motion turned on in your device settings, it appears at once.
+- The Oracle reads a few words in your question, in English or Greek, and answers about time, love, work and money, yes-or-no questions, or anything else.
+- The same question on the same day always gets the same answer: the Oracle does not change its mind. Tomorrow it may say something else.
+- An empty question gets no answer.
+
+## Oracle of the day
+The card at the top shows one prophecy for today. It is the same on all your devices and changes at midnight.
+
+## Keep, copy and share
+Under each answer:
+- The star adds it to `Favourites`. Favourites sync with orOS sync, so they follow you to all your devices. The × next to a favourite removes it, and `Undo` brings it back.
+- `Copy` copies the question and the answer as text.
+- `Save as image` makes a square PNG card with the question and the prophecy.
+
+## Recent questions
+`Recent questions` lists your last 100 questions with their answers. They stay on this device only and do not sync. Tap or click one to see it again. The × removes one, and `Clear` removes them all; `Undo` brings them back.
+
+## Sound
+The speaker button at the top turns the gong on or off. It is off at first.
+
+## Keyboard shortcuts
+- [[Enter]] in the question box asks.
+- [[/]] jumps to the question box.
+
+## Tips
+> Ask the same thing in different words to hear more of what the Oracle knows.

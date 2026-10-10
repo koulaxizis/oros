@@ -1806,6 +1806,21 @@
     wireKeyboard();
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { acct, folder, uid }. Opens the folder and, when the
+  // message is in its cached list, the message. Unknown account, or
+  // a dialog open (maybe with unsaved edits) → no-op (returns false).
+  function openSearchTarget(t) {
+    if (!t || typeof t.acct !== "string" || typeof t.folder !== "string" || !t.folder ||
+        typeof t.uid !== "number" || document.querySelector("dialog[open]")) return false;
+    if (!acctById(t.acct)) return false;
+    openFolder(t.acct, t.folder).then(function () {
+      if (cur && cur.acct === t.acct && cur.folder === t.folder && findMsg(t.uid)) openMessage(t.uid);
+    });
+    return true;
+  }
+  window.__orosOpenAt = openSearchTarget;
+
   function boot() {
     load();
     loadPrefs();
@@ -1818,12 +1833,21 @@
     renderAll();
     var acct = curAcct();
     if (!acct) return;
+    var pendingTarget = null;
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        pendingTarget = window.parent.__orosTakeTarget("mail");
+      }
+    } catch (e) {}
     Promise.all(data.accounts.map(function (a) {
       return Promise.all([loadFolders(a), loadPass(a.id).then(function (pw) { if (!pw) needPass[a.id] = 1; })]);
     })).then(function () {
       renderSide();
       data.accounts.forEach(function (a) { if (!needPass[a.id]) refreshFolders(a).catch(function () {}); });
-      openFolder(acct.id, prefs.acct === acct.id ? prefs.folder : "INBOX");
+      if (!(pendingTarget && openSearchTarget(pendingTarget))) {
+        openFolder(acct.id, prefs.acct === acct.id ? prefs.folder : "INBOX");
+      }
       scheduleRefresh();
     });
   }

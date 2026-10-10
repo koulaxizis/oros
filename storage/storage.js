@@ -1085,4 +1085,24 @@
   }
 
   boot();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { id }. An item opens its position (where items are listed),
+  // anything else opens itself. Deleted/unknown ids or an open dialog
+  // → no-op.
+  function openSearchTarget(tg) {
+    if (!tg || typeof tg.id !== "string" || document.querySelector("dialog[open]")) return;
+    var e = byId(tg.id), cur = e, guard = 0;
+    while (cur && !cur.del && cur.parentId && guard++ < 16) cur = byId(cur.parentId);
+    if (!e || !cur || cur.del || cur.parentId) return;   // deleted, or a broken chain
+    goTo(e.type === "item" ? e.parentId : e.id);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("storage");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();

@@ -1,0 +1,33 @@
+# Snake
+Steer the snake to the fruit on a 20×20 board. Every fruit makes it one square longer, and the game ends when it bites itself.
+
+## How to play
+Pick a speed and a mode, then press an arrow key, swipe on the board, or tap a direction button to set off. The snake keeps moving; you only turn it.
+
+- Each fruit adds 1 to your score and 1 to the snake's length.
+- Every 5 fruit the snake speeds up a little.
+- Running into your own body ends the game.
+- In `Walls` mode, hitting the edge ends the game too. In `No walls` mode the snake comes out on the opposite side.
+
+If you fill the whole board, you've won: `The board is full!`
+
+## Controls
+- Arrow keys or [[W]] [[A]] [[S]] [[D]] turn the snake.
+- On a touch screen, swipe on the board or use the `Up`, `Down`, `Left` and `Right` buttons under it.
+- You can press two turns quickly one after the other; both are used. A turn straight back is ignored.
+- [[Space]] or [[P]] pauses and resumes (`Pause (Space)`). The game resumes after a 3-2-1 countdown.
+- [[N]] starts a new game (`New game (N)`).
+
+If you switch to another app, the game pauses. A game in progress is kept on this device and waits, paused, the next time you open Snake.
+
+## Levels and scoring
+Speeds `Slow`, `Normal` and `Fast` each come with `Walls` and `No walls`, so there are six records. `Records` shows your best score and the number of games for each.
+
+Changing the speed or the mode starts a new game. If you leave a game in progress this way, or with `New game (N)`, an `Undo` button appears for a moment to get it back.
+
+## Sync
+Your best scores and game counts sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The speed and mode you picked, the game in progress and the sound button stay on this device.
+
+## Tips
+- `No walls` is more forgiving: use the edges as shortcuts.
+- Keep the snake in long loops along the sides so its body doesn't block the middle.
