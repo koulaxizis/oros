@@ -26,6 +26,15 @@ In `Growth`, `Add measurement` records weight, length and head size (fill in any
 ## Milestones
 Tick the ready milestones as they happen, or `Add` your own. You can also record `Vaccines` and `Doctor visits`.
 
+## Reminders and Calendar
+In `Settings`, `Reminders on this device` has two optional reminders, both off at first:
+- `Feed reminder`: a notice 2 to 6 hours after the last feed.
+- `Daily medicine or vitamin`: a notice at the same time every day, with an optional `Name`. Leave the time empty to turn it off.
+
+Reminders come from orOS on this device only, and only while orOS is open; the Baby app itself can be closed. Each parent turns them on on their own device. See also [Notifications](help:t/notifications).
+
+[Calendar](app:calendar) can show milestones, vaccines, doctor visits and your child's age each month (up to 2 years, then birthdays) under the `Baby` chip. Tapping one opens Baby.
+
 ## Sync and backup
 Children, every entry, growth, milestones and units sync between your devices through [orOS sync](help:t/sync). A running timer syncs too, so one parent can stop a timer the other started. Night view and the open tab stay on each device.
 
@@ -43,4 +52,4 @@ In `Settings` you'll find `Export log (CSV)`, `Export growth (CSV)`, `Back up (J
 
 ## Limits
 - Baby keeps a log; it's not medical advice. If you're worried about your baby, call your paediatrician.
-- There are no reminders and no Calendar entries yet.
+- Reminders only show while orOS is open on that device.

@@ -42,6 +42,7 @@ See also [backup](help:t/backup).
 
 ## Tips
 - Birthdays, anniversaries and custom dates appear in [Calendar](app:calendar) every year. Tapping one there opens the contact here.
+- `Family tree` on a contact's card opens that person in [Family Tree](app:familytree). If nobody in the tree is linked to the contact yet, it offers to build a tree from your contacts instead.
 
 ## Limits
 - `Import JSON` only accepts files made by `Export JSON` in orOS Contacts.

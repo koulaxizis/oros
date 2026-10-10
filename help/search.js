@@ -4,8 +4,9 @@
 // "search"). Read-only: Help keeps no user data, so this searches
 // the GUIDE ITSELF, shipped with orOS: the topic pages
 // (help/topics/<id>.<lang>.txt, ids from help/topics.json) and the
-// app pages (<appId>/help.<lang>.txt, ids in HELP_APPS below — the
-// apps that ship one; add an id there when an app gains its page).
+// app pages (<appId>/help.<lang>.txt for every internal app in
+// apps.json, as every app ships one (R38); HELP_APPS below is only the
+// fallback when apps.json cannot be read).
 // Pages are fetched once per language (same files and same ?v=
 // stamp as help.js, so the service worker serves them offline),
 // parsed with the same rules as help.js parsePage(), and kept in
@@ -22,7 +23,7 @@
   "use strict";
 
   var ID_RE = /^[a-z0-9][a-z0-9-]{0,40}$/;
-  // Apps that ship a guide page (<id>/help.en.txt + help.el.txt).
+  // Fallback when apps.json cannot be read: apps with a guide page.
   var HELP_APPS = ["assistant", "atelier", "bookmarks", "calendar", "contacts", "files", "help", "kanban",
                    "maps", "notes", "slides", "spreadsheet", "time", "todo", "weather", "writer"];
   // Fallback when topics.json cannot be read.
@@ -132,14 +133,26 @@
   }
   function load(lang) {
     if (loads[lang]) return loads[lang];
-    loads[lang] = getText("topics.json").then(function (txt) {
+    var topics = getText("topics.json").then(function (txt) {
       var d = JSON.parse(txt);
       var ids = (d && Array.isArray(d.topics) ? d.topics : [])
         .map(function (x) { return x && x.id; }).filter(function (id) { return ID_RE.test(String(id || "")); });
       return ids.length ? ids : TOPICS;
-    }).catch(function () { return TOPICS; }).then(function (topicIds) {
-      var jobs = topicIds.map(function (id) { return ["t/" + id, "topics/" + id]; })
-        .concat(HELP_APPS.map(function (id) { return ["a/" + id, "../" + id + "/help"]; }));
+    }).catch(function () { return TOPICS; });
+    var apps = getText("../apps.json").then(function (txt) {
+      var d = JSON.parse(txt), seen = {};
+      var ids = (d && Array.isArray(d.apps) ? d.apps : []).filter(function (a) {
+        return a && a.type === "internal";
+      }).map(function (a) { return String(a.id || ""); }).filter(function (id) {
+        if (!ID_RE.test(id) || seen[id]) return false;
+        seen[id] = true;
+        return true;
+      });
+      return ids.length ? ids : HELP_APPS;
+    }).catch(function () { return HELP_APPS; });
+    loads[lang] = Promise.all([topics, apps]).then(function (both) {
+      var jobs = both[0].map(function (id) { return ["t/" + id, "topics/" + id]; })
+        .concat(both[1].map(function (id) { return ["a/" + id, "../" + id + "/help"]; }));
       return Promise.all(jobs.map(function (j) {
         return pageIn(j[1], lang).then(function (txt) {
           var p = parsePage(txt);

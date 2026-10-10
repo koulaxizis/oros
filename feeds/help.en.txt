@@ -11,7 +11,7 @@ Moving from another reader? Use `Import from another reader (OPML)`.
 - Tap or click an article to read it and mark it read. Audio and video in an article play right there.
 - Pictures are off until you press `Show pictures` or `Always for this feed`.
 - `Full article` loads the whole text from the site when the feed only carries a summary.
-- Under an article: `Star`, `Read later`, `Tags`, `Mark as unread`, `Open the original` and `Copy the link`.
+- Under an article: `Star`, `Read later`, `Tags`, `Mark as unread`, `Open the original`, `Copy the link` and `Send to…`. `Send to…` can `Save to Bookmarks`, `Save as a note` in [Notes](app:notes), `Make a task` in [To-Do](app:todo), `Send by email` or `Share…`.
 - The list buttons switch the style (`List`, `Cards`, `Magazine`), toggle `Unread only` / `Show all`, and `Mark as read` everything, or what's older than a day or a week, with `Undo`.
 - On a phone, swipe an article right to mark it read or unread, left to star it.
 
@@ -22,7 +22,7 @@ Moving from another reader? Use `Import from another reader (OPML)`.
 ### Search, rules and watched words
 The search button looks through titles and text, `Here` or `Everywhere`, without caring about Greek accents. `Watch these words` turns a search into a list in the side panel.
 
-In `Settings`, `Rules and watched words` acts on new articles as they arrive: mark them read (mute), star them, add them to `Read later` or give them a tag. `Statistics` shows which feeds are busy, quiet or failing.
+In `Settings`, `Rules and watched words` acts on new articles as they arrive: mark them read (mute), star them, add them to `Read later` or give them a tag. A rule can also `Notify me about new articles`, and so can a single feed in its `Edit` window: new articles then appear in the bell and open the article. See [Notifications](help:t/notifications). `Statistics` shows which feeds are busy, quiet or failing.
 
 ## Settings
 `Settings` sets how often to `Check for new articles`, the order, list style, text size and width, pictures, `Mark as read while scrolling the list`, `Show a story that two feeds carry only once`, and the `Relay address`.

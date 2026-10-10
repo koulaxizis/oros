@@ -25,6 +25,8 @@ The `Search apps and your data…` box at the top of the menu finds apps as you 
 
 If nothing matches, you'll see `No matching apps`.
 
+You can also search from your browser's address bar. Add a site search (custom search engine) in your browser settings with your orOS address followed by `?search=%s`; orOS then opens with your words already in this box.
+
 ## Settings in the menu
 Below the apps you'll find a few rows:
 - `Install orOS`: shown only when your browser can install orOS as an app. See [Install](help:t/install).
