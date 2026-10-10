@@ -13,7 +13,7 @@
 //   shp    shape id (fx.SHAPES): the shape of a shape, the mask of a
 //          photo; rd = roundness 0..100 (rounded / bubble; default 30)
 //   ico    icon id (library/icons.js), drawn with sc
-//   text:  tx, font, size (pt), b, i, u, caps, al l|c|r|j,
+//   text:  tx, font (sans|serif|mono|fs_<fontsource id>), size (pt), b, i, u, caps, al l|c|r|j,
 //          lh (line height %), tr (tracking 1/1000 em),
 //          tfx (fx.normTextFx, omitted when "none"), cv (curve)
 //   photo: adj (fx.normAdjust, omitted at identity), flt (preset id),
@@ -58,6 +58,22 @@
   function int(v, lo, hi, def) { return isNum(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : def; }
   function bit(v) { return v === 1 || v === true ? 1 : 0; }
   function oneOf(v, list, def) { return list.indexOf(v) >= 0 ? v : def; }
+
+  // Fonts: designkit's own families (sans, serif, mono) or a
+  // Fontsource family as "fs_<id with _ for ->" (fetched on demand,
+  // cached per device; unknown or offline falls back to sans).
+  var FS_FONT = /^fs_[a-z0-9]+(_[a-z0-9]+)*$/;
+  function isExtraFont(id) { return typeof id === "string" && id.length <= 63 && FS_FONT.test(id); }
+  function fontId(v) { return isExtraFont(v) ? v : oneOf(v, T.FAMILY_IDS, TEXT_DEF.font); }
+  function fsSlug(id) { return id.slice(3).replace(/_/g, "-"); }
+  function fsIdOf(slug) { return "fs_" + String(slug).replace(/-/g, "_"); }
+  function fsName(id) { return fsSlug(id).split("-").map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(" "); }
+  function ensureFont(id, name) {
+    if (!isExtraFont(id) || (T.FAMILIES[id] && T.FAMILIES[id].urls)) return;
+    var urls = MEDIA && MEDIA.fontsourceUrls ? MEDIA.fontsourceUrls(fsSlug(id)) : null;
+    if (urls) T.registerFamily(id, { name: name || fsName(id), urls: urls, fallback: "sans" });
+  }
+  function fontName(id) { ensureFont(id); var f = T.FAMILIES[id]; return f ? f.name : fsName(id); }
   function col(v) { return FX.normColor(v); }
   function text(v) {
     return typeof v === "string"
@@ -91,7 +107,8 @@
     }
     if (k === "text") {
       o.tx = text(a.tx);
-      o.font = oneOf(a.font, T.FAMILY_IDS, TEXT_DEF.font);
+      o.font = fontId(a.font);
+      ensureFont(o.font);
       o.size = num(a.size, 2, 2000, TEXT_DEF.size);
       if (bit(a.b)) o.b = 1;
       if (bit(a.i)) o.i = 1;
@@ -225,7 +242,7 @@
       })
     };
   }
-  function fontKeyOf(ax) { return T.fontKey(ax.font || TEXT_DEF.font, ax.b, ax.i); }
+  function fontKeyOf(ax) { ensureFont(ax.font); return T.fontKey(ax.font || TEXT_DEF.font, ax.b, ax.i); }
 
   // Lines of a text item (frame-local points, y = baseline), laid out
   // by designkit/text.js in a frame as wide as the box and as tall as
@@ -366,7 +383,8 @@
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
-    textWidth: textWidth, fontKeyOf: fontKeyOf, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds
+    textWidth: textWidth, fontKeyOf: fontKeyOf, isExtraFont: isExtraFont, ensureFont: ensureFont,
+    fontName: fontName, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierAX = api;

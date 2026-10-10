@@ -2809,7 +2809,37 @@
     inheritPalette();
     watchPalette();
     refresh();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("mindmap");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { map, node }.
+  // Opens the map, unfolds the way to the node, selects it and brings
+  // it into view (as Find does). Unknown map → no-op; unknown node →
+  // the map only. Nothing happens while a dialog or the menu is open.
+  function openSearchTarget(t) {
+    if (!t || typeof t.map !== "string" || !MAPS[t.map]) return;
+    if (document.querySelector("dialog[open]") || $("mm-menu")) return;
+    if (t.map !== prefs.map) openMap(t.map);
+    else { commitEdit(); flushOutline(); }
+    var id = typeof t.node === "string" ? t.node : null;
+    if (!id || !R || !R.N[id]) { refresh(); return; }
+    unfoldTo(id);
+    sel = id;
+    refresh();
+    if (prefs.view === "map") {
+      if (view.s < 0.8) { view.s = 0.9; centerOn(id); } else reveal(id);
+    } else {
+      var ta = $("outline").querySelector('textarea[data-id="' + CSS.escape(id) + '"]');
+      if (ta) ta.scrollIntoView({ block: "center" });
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   boot();
 })();

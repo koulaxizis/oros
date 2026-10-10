@@ -114,6 +114,11 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
   assert.ok(sets.size >= 7 && acts.size >= 15, "found the calls");
   sets.forEach((n) => {
     if (n.endsWith(":")) return;                 // "search:" + id, checked below
+    if (/^dock:/.test(n)) {                      // matched by one pattern in the shell
+      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\)\$/);
+      assert.match(n, /^dock:(on|size|magnify|autohide|over)$/, n);
+      return;
+    }
     assert.ok(BRIDGE.includes('case "' + n + '":'), "set " + n);
   });
   // set("search:<id>") is matched by prefix in the shell
@@ -122,13 +127,13 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
   acts.forEach((n) => assert.ok(BRIDGE.includes('case "' + n + '":'), "act " + n));
 });
 
-test("bridge: changes reuse the menu's own setters (same stamps, same dirty)", () => {
-  // The menu handlers and the bridge call the same named functions.
+test("bridge: changes go through the shell's own setters (same stamps, same dirty)", () => {
+  // The named setters the menu used are what the bridge calls.
   ["setSkinUser", "setThemeUser", "setWallpaperUser", "setSyncIntervalUser",
    "setAutoexportUser", "syncUnlock", "syncPushNow", "syncForgetHere",
    "syncDisconnectUser", "importBackupFile"].forEach((fn) => {
-    const calls = SHELL.split(fn).length - 1;
-    assert.ok(calls >= 3, fn + " is defined once and used by both menu and bridge (" + calls + ")");
+    assert.equal(SHELL.split("function " + fn + "(").length - 1, 1, fn + " defined once");
+    assert.ok(BRIDGE.includes(fn + "("), fn + " used by the bridge");
   });
   // No storage writes and no slice in the bridge itself: it only calls setters.
   assert.doesNotMatch(BRIDGE, /localStorage\.setItem|registerSlice|markDirty/);
@@ -158,4 +163,21 @@ test("app: index.html loads core before the app, versioned", () => {
   const a = html.indexOf('src="core.js?v='), b = html.indexOf('src="settings.js?v=');
   assert.ok(a > 0 && b > a);
   assert.match(html, /href="settings\.css\?v=/);
+});
+
+test("release: the menu hosts no settings sections; ways in lead to Settings", () => {
+  ["renderSkinSwatches", "renderWallpaperSection", "renderPetSection", "renderSyncSection",
+   "renderNotifsSection", "renderSearchSection"].forEach((fn) => {
+    assert.ok(!SHELL.includes(fn + "("), fn + " is gone");
+  });
+  const menu = SHELL.slice(SHELL.indexOf("  function renderMenu() {"),
+                           SHELL.indexOf("settingsNotify();            // the Settings app repaints too"));
+  assert.match(menu, /openAppById\("settings"\)/);
+  // The Dock section stays in the menu only for a launcher without the prefs API.
+  assert.match(menu, /typeof window\.orosLauncher\.setPref !== "function"/);
+  const dot = SHELL.slice(SHELL.indexOf("  function syncNowFromDot() {"), SHELL.indexOf("  function syncNowFromDot() {") + 600);
+  assert.match(dot, /orosSettings\.open\("sync"\)/);
+  const reset = SHELL.slice(SHELL.indexOf("  function wireResetButton(ov) {"), SHELL.indexOf("  function wireResetButton(ov) {") + 900);
+  assert.match(reset, /orosSettings\.open\("system"\)/);
+  assert.doesNotMatch(reset, /scFactoryReset/);
 });

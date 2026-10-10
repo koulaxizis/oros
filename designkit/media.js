@@ -31,6 +31,7 @@
 //   safeUrl(u)                    https URL or ""
 //   sanitizeSvg(text)             { svg, w, h } or null
 //   fontFiles(detail, wght, st)   { <subset>: { ttf, woff2 } }
+//   fontsourceUrls(id)            { r, b, i, bi: [ttf url per subset] }
 //   fetchMedia(item, env)         Promise<Blob> (browser)
 // Sections:
 //   1. Constants + licences
@@ -812,6 +813,17 @@
     return out;
   }
 
+  // A Fontsource family as an extra designkit/text.js family: TTF
+  // files per variant (400 / 700, normal / italic) and subset. Files
+  // a family does not have answer 404 and are skipped by text.js.
+  var FONT_SUBSETS = ["latin", "latin-ext", "greek", "greek-ext"];
+  function fontsourceUrls(id) {
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(String(id || "")) || id.length > 60) return null;
+    var base = "https://cdn.jsdelivr.net/fontsource/fonts/" + id + "@latest/";
+    function files(w, st) { return FONT_SUBSETS.map(function (s) { return base + s + "-" + w + "-" + st + ".ttf"; }); }
+    return { r: files(400, "normal"), b: files(700, "normal"), i: files(400, "italic"), bi: files(700, "italic") };
+  }
+
   var LIMITS = { photo: 25e6, illus: 25e6, icon: 1e6, audio: 30e6, video: 80e6, font: 5e6 };
   var MIME_OK = {
     photo: /^image\/(jpeg|png|webp|gif|avif)$/,
@@ -874,6 +886,7 @@
     safeUrl: safeUrl,
     sanitizeSvg: sanitizeSvg,
     fontFiles: fontFiles,
+    fontsourceUrls: fontsourceUrls,
     fetchMedia: fetchMedia
   };
 

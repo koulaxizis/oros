@@ -1,0 +1,32 @@
+# Gomoku
+Five in a row on a 15×15 board. Take turns placing stones on the intersections; the first to line up five or more of their colour wins.
+
+## How to play
+Choose `vs Computer` or `2 players` in the toolbar. Against the computer, also pick a level and your colour: `You: black` or `You: white`. Black always moves first. Changing any of these starts a new game.
+
+Tap or click an empty point to place your stone. A line of five or more in a row, across, down or diagonally, wins. The winning line lights up and the last stone played is marked. If the board fills up with no five, it's a draw.
+
+On a touch screen where the points are small, your first tap only aims (`Tap the same point again to place`); tap the same point again to place the stone.
+
+## Controls
+- Tap or click a point to place a stone.
+- Arrow keys move around the board; [[Enter]] or [[Space]] places a stone there.
+- [[Z]], [[Ctrl+Z]] or `Undo move (Z)` takes back a move. Against the computer, it also takes back its answer.
+- [[Esc]] cancels an aimed point.
+- [[N]] or `New game (N)` starts a new game. If you leave a game in progress, an `Undo` button appears for a moment to get it back.
+
+A game in progress is kept on this device and waits for you next time.
+
+## Levels and scoring
+`Easy` picks one of its few best moves, `Medium` always plays its best move, and `Hard` also looks ahead for a forced win. Every level takes a win when it sees one and blocks your fours.
+
+`Records` (`Records vs computer`) shows your wins, losses and draws for each level. In `2 players`, the result window keeps a running `Series` score between black and white.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync). The 2-player series, the mode, level, colour, the game in progress and the sound button stay on this device.
+
+>! `Reset records` deletes the records against the computer on every device, and this device's 2-player series too.
+
+## Tips
+- An open three (three in a row with both ends free) forces your opponent to answer; two of them at once usually wins.
+- Playing white against the computer is harder, because black moves first.

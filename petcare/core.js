@@ -27,7 +27,8 @@
 //   reminders(data, today, lead, fired) → { items, fired }
 //   weights(data, petId), weightDelta(list)
 //   foodOut(pet) → ymd | null      costYear(data, petId, year)
-//   readPrefs(raw) → { remind, lead } (device-local prefs, R10)
+//   readPrefs(raw) → { remind, lead, doses } (device-local prefs, R10)
+//   dosesDue(data, today, nowMin, fired) → per-dose medicine reminders
 // Data (synced slice "petcare", key oros-petcare-data):
 //   { ver: 1, pets: [pet…] by id, recs: [rec…] by id,
 //     tombs: { id: deletedAt } }
@@ -48,7 +49,9 @@
 //     vacc   n name, nx next dose, b batch, v vet
 //     deworm t int|ext|both, n product, nx next dose
 //     visit  n reason, dg diagnosis, tr treatment, c cost (cents), nx recheck, v vet
-//     med    n name, ds dose, fq how often, u last day of the course
+//     med    n name, ds dose, fq how often, u last day of the course,
+//            tm dose times ["HH:MM"…] (optional, ≤ 6, sorted; absent
+//            when none, so older records keep their canonical form)
 //     weight g grams
 //     care   c care kind (one routine care done)
 //     food   n new food (a food change, history only)
@@ -72,6 +75,9 @@
   var PHOTO_BUDGET = 400000;        // all photos together (~300 KB), enforced by the app
   var FOOD_LEAD = 5;                // "food runs out" warns 5 days ahead
   var REFIRE_DAYS = 7;              // an overdue reminder repeats weekly
+  var MAX_TIMES = 6;                // dose times per medicine
+  var DOSE_WINDOW = 90;             // minutes after a dose time it may still be announced
+  var TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
   var ID_RE  = /^[a-z0-9]{6,40}$/;
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var PHOTO_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+\/]+={0,2}$/;
@@ -315,6 +321,8 @@
         r.ds = cleanText(x.ds, TEXT_LEN, false);
         r.fq = cleanText(x.fq, TEXT_LEN, false);
         r.u = isYmd(x.u) && x.u >= x.d ? x.u : "";
+        var tm = cleanTimes(x.tm);
+        if (tm.length) r.tm = tm;
         break;
       case "weight":
         r.g = clampInt(x.g, 1, 2000000);
@@ -332,6 +340,15 @@
     r.nt = nt;
     return r;
   }
+
+  // Dose times: "HH:MM", unique, sorted, at most MAX_TIMES.
+  function cleanTimes(v) {
+    if (!Array.isArray(v)) return [];
+    var seen = {}, out = [];
+    v.forEach(function (x) { if (typeof x === "string" && TIME_RE.test(x) && !seen[x]) { seen[x] = 1; out.push(x); } });
+    return out.sort().slice(0, MAX_TIMES);
+  }
+  function timeMin(hm) { return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3)); }
 
   function canon(v) { return JSON.stringify(v); }
   function lww(best, x) {
@@ -530,6 +547,34 @@
     return { items: out, fired: next };
   }
 
+  // Medicine doses due now (per-dose reminders). A course with dose
+  // times is active from its first day to its last (no last day =
+  // ongoing). Each dose is announced once, in the DOSE_WINDOW minutes
+  // after its time; a dose whose window passed while orOS was closed
+  // is skipped, not announced late. The device-local "fired" map
+  // (oros-petcare-doses) keeps only today's keys, so it never grows.
+  //   → { items: [{ key, pet, rec, tm }], fired }
+  function dosesDue(data, today, nowMin, fired) {
+    var f0 = fired && typeof fired === "object" ? fired : {};
+    var next = {}, out = [], pets = {};
+    Object.keys(f0).forEach(function (k) { if (k.slice(-16, -6) === today && f0[k] === 1) next[k] = 1; });
+    ((data && data.pets) || []).forEach(function (p) { if (!p.gone) pets[p.id] = p; });
+    ((data && data.recs) || []).forEach(function (r) {
+      var pet = pets[r.p];
+      if (!pet || r.k !== "med" || !r.tm || r.d > today || (r.u && r.u < today)) return;
+      r.tm.forEach(function (hm) {
+        var late = nowMin - timeMin(hm);
+        if (late < 0 || late > DOSE_WINDOW) return;
+        var key = r.id + "@" + today + "T" + hm;
+        if (next[key]) return;
+        next[key] = 1;
+        out.push({ key: key, pet: pet, rec: r, tm: hm });
+      });
+    });
+    out.sort(function (x, y) { return cmpStr(x.tm, y.tm) || cmpStr(x.pet.name.toLowerCase(), y.pet.name.toLowerCase()) || cmpStr(x.key, y.key); });
+    return { items: out, fired: next };
+  }
+
   // ---------- Weight, food, costs ----------
   function weights(data, petId) {
     return ((data && data.recs) || []).filter(function (r) { return r.k === "weight" && r.p === petId; })
@@ -552,13 +597,14 @@
   }
 
   // Device-local prefs (oros-petcare-prefs): reminder hour (-1 =
-  // off, default 9) and the days of warning (0–30, default 7). The
-  // shell reads them too.
+  // off, default 9), the days of warning (0–30, default 7) and the
+  // per-dose medicine reminders (default on). The shell reads them too.
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
     return {
       remind: isInt(p.remind) && p.remind >= -1 && p.remind <= 23 ? p.remind : 9,
-      lead: isInt(p.lead) && p.lead >= 0 && p.lead <= 30 ? p.lead : 7
+      lead: isInt(p.lead) && p.lead >= 0 && p.lead <= 30 ? p.lead : 7,
+      doses: p.doses !== false
     };
   }
 
@@ -574,6 +620,7 @@
     GROUPS: GROUPS, GROUP_IDS: GROUP_IDS,
     normPet: normPet, normRec: normRec, merge: merge, touch: touch,
     age: age, birthdayOn: birthdayOn, items: items, leadFor: leadFor, reminders: reminders,
+    MAX_TIMES: MAX_TIMES, DOSE_WINDOW: DOSE_WINDOW, cleanTimes: cleanTimes, dosesDue: dosesDue,
     weights: weights, weightDelta: weightDelta, foodOut: foodOut, costYear: costYear, readPrefs: readPrefs
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

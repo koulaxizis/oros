@@ -1,0 +1,37 @@
+# Tetris
+Falling blocks drop into a 10×20 field. Move and turn them to fill whole rows: a full row clears. The game ends when the stack reaches the top.
+
+## How to play
+Pick a start level and press `Start` ([[Space]]). Pieces fall one at a time, and they speed up as the level rises.
+
+- `Next` shows the next three pieces.
+- A ghost outline shows where the piece will land.
+- `Hold` puts the current piece aside and brings it back later. You can hold once per piece.
+- A piece locks half a second after it lands; moving or turning it buys a little more time.
+
+## Controls
+- [[←]] [[→]] move; [[↓]] drops faster (soft drop).
+- [[↑]] or [[X]] turns right; [[Z]] turns left.
+- [[Space]] drops the piece at once (hard drop).
+- [[C]] or [[Shift]] holds; you can also tap or click the `Hold` box.
+- [[P]] or [[Esc]] pauses and resumes. After a pause, a 3-2-1 countdown runs.
+- [[N]] or `New game (N)` starts a new game. If you leave a game in progress, an `Undo` button appears for a moment to get it back.
+
+On a touch screen, tap the field to turn, drag to move, swipe down to drop and swipe up to hold. Buttons under the field also move, turn and drop.
+
+If you switch to another app, the game pauses. A game in progress is kept on this device and waits, paused, for next time.
+
+## Levels and scoring
+Start at `Level 1`, `Level 5` or `Level 10`; changing it starts a new game. The level then rises every 10 lines.
+
+- Clearing 1, 2, 3 or 4 lines at once scores 100, 300, 500 or 800 points, times the level.
+- A four-line clear (a Tetris) right after another scores 1.5 times as much.
+- A soft drop earns 1 point per row, a hard drop 2.
+
+`Records` shows, for each start level, your best score, the most lines and the games played.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The start level, the game in progress and the sound button stay on this device.
+
+## Tips
+- Keep one column open on the side and save it for the long straight piece: Tetrises score the most.

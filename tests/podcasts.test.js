@@ -452,6 +452,121 @@ test("fromFeedsXml: lower-case names, xmlns resolved, text joined", () => {
   assert.equal(f.eps[0].kind, "bonus");
 });
 
+test("merge: an untouched queue has one canonical form (no upload on every sync)", () => {
+  const d = C.subscribe(C.emptyData(), { url: "https://a.example/feed", title: "A" }, 1000);
+  const a = JSON.stringify(d);
+  assert.equal(JSON.stringify(C.mergePodcasts(JSON.parse(a), null)), a);
+  assert.equal(JSON.stringify(C.mergePodcasts(JSON.parse(a), JSON.parse(a))), a);
+  // Data written by 1.0.0 without "sh" on the empty queue converges to the same form.
+  const old = JSON.parse(a); old.queue = { m: 0, ids: [] };
+  assert.equal(JSON.stringify(C.mergePodcasts(old, null)), a);
+  assert.equal(JSON.stringify(C.mergePodcasts(old, JSON.parse(a))), a);
+  assert.equal(JSON.stringify(C.mergePodcasts(JSON.parse(a), old)), a);
+});
+
+// ---------- Phase 2 ----------
+test("transcripts: SRT, WebVTT, JSON (words joined), HTML", () => {
+  const srt = "1\n00:00:01,000 --> 00:00:04,000\nHello there.\n\n2\n00:00:05,500 --> 00:00:07,000\nAlice: Second line\n";
+  assert.deepEqual(C.parseTranscript(srt, "application/x-subrip"), [
+    { at: 1, end: 4, text: "Hello there.", who: "" },
+    { at: 5.5, end: 7, text: "Second line", who: "Alice" }
+  ]);
+  const vtt = "WEBVTT\n\nNOTE ignored\n\n00:01.000 --> 00:03.000 align:start\n<v Bob>Hi &amp; <i>bye</i></v>\n\n01:02:03.000 --> 01:02:05.000\nlater";
+  assert.deepEqual(C.parseTranscript(vtt, "text/vtt"), [
+    { at: 1, end: 3, text: "Hi & bye", who: "Bob" },
+    { at: 3723, end: 3725, text: "later", who: "" }
+  ]);
+  const json = JSON.stringify({ version: "1.0.0", segments: [
+    { speaker: "A", startTime: 0, endTime: 0.5, body: "Hi" }, { speaker: "A", startTime: 0.5, endTime: 1, body: "there." },
+    { speaker: "B", startTime: 1, endTime: 2, body: "Yo" }, { startTime: "x", body: "bad" }] });
+  assert.deepEqual(C.parseTranscript(json, "application/json"), [
+    { at: 0, end: 1, text: "Hi there.", who: "A" }, { at: 1, end: 2, text: "Yo", who: "B" }
+  ]);
+  const html = C.parseTranscript("<p>Intro words</p><p>[12:30] timed</p><p>after <script>x</script></p>", "text/html");
+  assert.deepEqual(html.map((c) => [c.at, c.text]), [[-1, "Intro words"], [750, "timed"], [750, "after"]]);
+  assert.deepEqual(C.parseTranscript("", "text/vtt"), []);
+});
+
+test("transcripts: cue at a time, search, which file first", () => {
+  const cues = [{ at: 0, text: "Καλημέρα σας" }, { at: 10, text: "the weather" }, { at: 20, text: "ΚΑΛΗΜΕΡΑ ξανά" }];
+  assert.equal(C.cueAt(cues, -1), -1);
+  assert.equal(C.cueAt(cues, 0), 0);
+  assert.equal(C.cueAt(cues, 15), 1);
+  assert.equal(C.cueAt(cues, 99), 2);
+  assert.equal(C.cueAt([{ at: -1, text: "x" }], 5), -1);
+  assert.deepEqual(C.searchCues(cues, "καλημερα"), [0, 2]);
+  assert.deepEqual(C.searchCues(cues, ""), []);
+  const list = [{ url: "h", type: "text/html" }, { url: "s", type: "application/srt" }, { url: "j", type: "application/json", lang: "en" }, { url: "v", type: "text/vtt", lang: "el" }];
+  assert.equal(C.pickTranscript(list, "el").url, "v");
+  assert.equal(C.pickTranscript(list, "en").url, "j");
+  assert.equal(C.pickTranscript([], "en"), null);
+});
+
+test("chapters from the notes: two or more, in order, inside the length", () => {
+  const text = "Intro\n00:00 Start\n(12:34) – Middle part\n• 1:02:03 End\n2:00:00 Too late\n10:00 Out of order";
+  assert.deepEqual(C.noteChapters(text, 4000).map((c) => [c.at, c.title]), [[0, "Start"], [754, "Middle part"], [3723, "End"]]);
+  assert.deepEqual(C.noteChapters("Only 12:34 here, in a sentence\n05:00 one line", 0), []);
+});
+
+test("search in every episode: title first, then newest; notes too", () => {
+  const d = C.subscribe(C.emptyData(), { url: "https://a.example/feed", title: "A" }, 1000);
+  const sid = C.showId("https://a.example/feed");
+  const cache = {};
+  cache[sid] = [
+    { id: "e1", title: "Old news", pub: 1, notes: "<p>Μιλάμε για <b>τον καιρό</b></p>" },
+    { id: "e2", title: "Ο καιρός σήμερα", pub: 5, notes: "" },
+    { id: "e3", title: "Other", pub: 9, notes: "nothing" }
+  ];
+  assert.deepEqual(C.searchEpisodes(d, cache, "ΚΑΙΡΟ").map((x) => x.id), ["e2", "e1"]);
+  assert.deepEqual(C.searchEpisodes(d, cache, "k"), []);
+  assert.deepEqual(C.searchEpisodes(d, {}, "other"), []);
+});
+
+test("listening statistics: wall vs media time, gaps ignored, pruned", () => {
+  const sid = C.showId("https://a.example/feed");
+  const day = Date.UTC(2026, 9, 9, 12);
+  let st = C.addListen(null, day, sid, 10, 1.5);
+  st = C.addListen(st, day, sid, 10, 1);
+  st = C.addListen(st, day, sid, 300, 1);           // a 5-minute gap is not listening
+  st = C.addListen(st, day, "junk", 5, 2);           // counted in the day, not per show
+  const k = C.dayKey(day);
+  assert.deepEqual(st.d[k], [25, 35]);
+  assert.equal(st.s[sid], 25);
+  assert.equal(st.s.junk, undefined);
+  const sm = C.statsSummary(st, day);
+  assert.deepEqual(sm.all, { wall: 25, media: 35, saved: 10 });
+  assert.deepEqual(sm.top, [{ s: sid, media: 25 }]);
+  let big = { d: {}, s: {} };
+  for (let i = 0; i < 410; i++) big.d[C.dayKey(day - i * 86400000)] = [1, 1];
+  big = C.addListen(big, day, sid, 1, 1);
+  assert.equal(Object.keys(big.d).length, 400);
+  assert.ok(big.d[k]);
+  const old = C.statsSummary({ d: { "2020-01-01": [100, 100] }, s: {} }, day);
+  assert.equal(old.week.wall, 0);
+  assert.equal(old.all.wall, 100);
+});
+
+test("top list: Apple charts → ids → one lookup, in chart order", () => {
+  assert.equal(C.appleTopUrl("gr", 25), "https://rss.applemarketingtools.com/api/v2/gr/podcasts/top/25/podcasts.json");
+  assert.equal(C.appleTopUrl("../x", 999), "https://rss.applemarketingtools.com/api/v2/us/podcasts/top/50/podcasts.json");
+  const ids = C.parseAppleTop({ feed: { results: [{ id: "222" }, { id: "111" }, { id: "x" }, { id: "222" }] } });
+  assert.deepEqual(ids, ["222", "111"]);
+  assert.equal(C.appleLookupManyUrl(ids), "https://itunes.apple.com/lookup?entity=podcast&id=222,111");
+  const json = { results: [
+    { collectionId: 111, feedUrl: "https://one.example/rss", collectionName: "One" },
+    { collectionId: 222, feedUrl: "https://two.example/rss", collectionName: "Two" }] };
+  assert.deepEqual(C.orderByIds(C.parseAppleResults(json), json, ids).map((h) => h.title), ["Two", "One"]);
+  assert.equal(C.topCountry("el", "en-US"), "gr");
+  assert.equal(C.topCountry("en", "en-GB"), "gb");
+  assert.equal(C.topCountry("en", "en"), "us");
+});
+
+test("share text: title, show, place, a safe link", () => {
+  assert.deepEqual(C.shareText({ title: "T", show: "S", audio: "https://a.example/x.mp3" }, { link: "javascript:alert(1)" }, 754),
+    { title: "T", text: "T — S (12:34)", url: "https://a.example/x.mp3" });
+  assert.equal(C.shareText({ title: "T", show: "", audio: "" }, { link: "https://a.example/ep" }, 0).text, "T");
+});
+
 // The shell's update broker (index.html, SW-2) must not reload while
 // an episode plays: the player lives in the shell window.
 test("shell: safeToReload waits while a podcast plays", () => {
@@ -480,4 +595,48 @@ test("store normalization keeps the merge output (no re-upload loop, SY-L1)", ()
   const merged = C.mergePodcasts({ shows: [show], queue: { m: 0, ids: [] } }, { shows: [show] });
   assert.equal(J(C.mergePodcasts(merged, null)), J(merged), "empty queue: store == merge");
   assert.equal(J(C.mergePodcasts(C.emptyData(), null)), J(C.emptyData()));
+});
+
+// ---------- Phase 3: notices, links to other apps ----------
+test("new-episode notices: first look takes the mark, then only fresh ones, newest first, at most 3", () => {
+  const now = Date.UTC(2026, 9, 10, 12);
+  const h = 3600000, ep = (n, pub) => ({ id: "e" + String(n).padStart(12, "0"), title: "Ep " + n, pub });
+  const eps = [ep(1, now - 10 * 86400000), ep(2, now - 5 * h)];
+  const first = C.freshEpisodes(eps, undefined, now);
+  assert.deepEqual(first, { list: [], more: 0, mark: now - 5 * h }, "no mark: nothing announced");
+  assert.deepEqual(C.freshEpisodes([], undefined, now).mark, now, "empty feed: mark = now");
+  const more = eps.concat([ep(3, now - 4 * h), ep(4, now - 3 * h), ep(5, now - 2 * h), ep(6, now - h),
+    ep(7, now - 4 * 86400000 + 1), ep(8, now + 3 * 86400000), { id: "bad", pub: now }]);
+  const r = C.freshEpisodes(more, first.mark, now);
+  assert.deepEqual(r.list.map((e) => e.title), ["Ep 6", "Ep 5", "Ep 4"]);
+  assert.equal(r.more, 1, "Ep 3 left over; old, future and bad ids never count");
+  assert.equal(r.mark, now - h);
+  assert.deepEqual(C.freshEpisodes(more, r.mark, now).list, [], "the same feed again: nothing");
+});
+
+test("deep link targets: an episode id or a feed to add, nothing else", () => {
+  const id = "e" + "a".repeat(12);
+  assert.deepEqual(C.parseTarget({ ep: id }), { ep: id });
+  assert.deepEqual(C.parseTarget(id), { ep: id });
+  assert.deepEqual(C.parseTarget({ add: { url: "https://a.example/feed" } }), { add: "https://a.example/feed" });
+  assert.equal(C.parseTarget({ add: { url: "javascript:alert(1)" } }), null);
+  assert.equal(C.parseTarget({ ep: "constructor" }), null);
+  assert.equal(C.parseTarget(null), null);
+});
+
+test("Listen later and Note at: plain items for To-Do and Notes", () => {
+  const m = { title: "Ep\u0007 one", show: "Show", audio: "https://a.example/x.mp3", dur: 3725 };
+  assert.deepEqual(C.todoItem(m, { link: "https://a.example/ep" }),
+    { text: "Ep one", note: "Show · 1:02:05\nhttps://a.example/ep" });
+  assert.equal(C.todoItem({ title: "" }, null), null);
+  const n = C.noteAt(m, { link: "javascript:x" }, 754);
+  assert.equal(n.title, "Ep one (12:34)");
+  assert.equal(n.text, "Show — Ep one\n12:34\nhttps://a.example/x.mp3\n\n");
+  assert.equal(C.noteAt(m, null, 0).title, "Ep one");
+});
+
+test("shell: notification deep link podcasts:ep:<id> opens the episode", () => {
+  const fs = require("fs");
+  const src = fs.readFileSync(path.join(__dirname, "..", "notifications.js"), "utf8");
+  assert.match(src, /podcasts: function \(id\) \{ if \(typeof window\.__orosOpenAt === 'function'\) window\.__orosOpenAt\('podcasts', \{ ep: id \}\); \}/);
 });
