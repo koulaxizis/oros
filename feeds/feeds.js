@@ -2546,12 +2546,14 @@
         open("todo", { addItems: { from: t("app"), items: [{ text: (it.title || it.link).slice(0, 300), note: articleText(it, feed).slice(0, 1000) }] } });
       });
     }
-    // Email: the device's own mail app for now. When orOS Mail can send
-    // (its phase 2), this becomes open("mail", { compose: { subject, body } }).
+    // Email: a prefilled draft in orOS Mail (it never sends by itself);
+    // outside orOS, the device's own mail app.
     opt("send.mail", function () {
-      var body = ((it.title || "") + "\n" + articleText(it, feed)).slice(0, 1800);
+      var subject = (it.title || "").slice(0, 300);
+      var body = ((it.title || "") + "\n" + articleText(it, feed)).slice(0, 20000);
+      if (open) { open("mail", { compose: { subject: subject, body: body } }); return; }
       var a = document.createElement("a");
-      a.href = "mailto:?subject=" + encodeURIComponent((it.title || "").slice(0, 300)) + "&body=" + encodeURIComponent(body);
+      a.href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body.slice(0, 1800));
       document.body.appendChild(a);
       a.click();
       a.remove();
