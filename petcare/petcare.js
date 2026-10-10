@@ -136,6 +136,12 @@
       "toast.exported": "Exported", "toast.imported": "Imported: {n} pets", "toast.badFile": "This is not a Pet Health Book file",
       "toast.photoBad": "This image could not be used", "toast.photoFull": "No room for more photos",
       "toast.print": "Nothing to print",
+      "at.title": "Attachments", "at.add": "Add a photo or PDF", "at.open": "Attachment {n}", "at.pdf": "PDF",
+      "at.missing": "Not on this device", "at.missingLong": "This file is not on this device yet. It arrives with Vault Drive sync.",
+      "at.where": "Kept in Files, folder Pet Health Book.", "at.remove": "Remove", "at.close": "Close",
+      "at.openPdf": "Open", "at.save": "Save a copy", "at.bad": "That file could not be read (photos, or PDF up to 10 MB)",
+      "at.noDisk": "The file could not be saved", "at.hint": "Prescriptions, test results, certificates. Photos are shrunk and lose their location data.",
+      "at.count": "📎 {n}",
       "rf.times": "Remind me at", "rf.addTime": "Add a time", "rf.delTime": "Remove {t}",
       "rf.timesHint": "One reminder at each time, every day of the course.",
       "r.times": "at {t}", "grp.doses": "Doses today",
@@ -229,6 +235,12 @@
       "toast.exported": "Η εξαγωγή έγινε", "toast.imported": "Εισαγωγή: {n} ζώα", "toast.badFile": "Αυτό δεν είναι αρχείο Βιβλιαρίου κατοικιδίου",
       "toast.photoBad": "Αυτή η εικόνα δεν μπορεί να χρησιμοποιηθεί", "toast.photoFull": "Δεν χωρούν άλλες φωτογραφίες",
       "toast.print": "Δεν υπάρχει κάτι για εκτύπωση",
+      "at.title": "Συνημμένα", "at.add": "Προσθήκη φωτογραφίας ή PDF", "at.open": "Συνημμένο {n}", "at.pdf": "PDF",
+      "at.missing": "Όχι σε αυτή τη συσκευή", "at.missingLong": "Το αρχείο δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive.",
+      "at.where": "Φυλάσσεται στα Αρχεία, φάκελος Pet Health Book.", "at.remove": "Αφαίρεση", "at.close": "Κλείσιμο",
+      "at.openPdf": "Άνοιγμα", "at.save": "Αποθήκευση αντιγράφου", "at.bad": "Δεν ήταν δυνατό να διαβαστεί το αρχείο (φωτογραφίες, ή PDF έως 10 MB)",
+      "at.noDisk": "Δεν ήταν δυνατό να αποθηκευτεί το αρχείο", "at.hint": "Συνταγές, εξετάσεις, πιστοποιητικά. Οι φωτογραφίες μικραίνουν και χάνουν τα στοιχεία τοποθεσίας.",
+      "at.count": "📎 {n}",
       "rf.times": "Υπενθύμιση στις", "rf.addTime": "Προσθήκη ώρας", "rf.delTime": "Αφαίρεση {t}",
       "rf.timesHint": "Μία υπενθύμιση σε κάθε ώρα, κάθε μέρα της θεραπείας.",
       "r.times": "στις {t}", "grp.doses": "Δόσεις σήμερα",
@@ -453,6 +465,7 @@
       data.tombs[clean.id] = Math.max(Date.now(), clean.m);
       save();
       render();
+      dropFilesLater(clean.sc || []);
     });
     return clean;
   }
@@ -468,6 +481,7 @@
     data.tombs[r.id] = Math.max(Date.now(), r.m);
     save();
     render();
+    dropFilesLater(r.sc || []);
     undoToast(t("toast.recDeleted"), function () {
       delete data.tombs[r.id];
       var back = Object.assign({}, r, { m: Date.now() });
@@ -486,6 +500,9 @@
     if (prefs.pet === p.id) { prefs.pet = null; prefs.tab = "pets"; savePrefs(); }
     save();
     render();
+    var names = [];
+    recs.forEach(function (x) { names = names.concat(x.sc || []); });
+    dropFilesLater(names);
     undoToast(t("toast.deleted", { name: p.name }), function () {
       // a newer edit resurrects (R17): m above the tombstone, which
       // may already have travelled
@@ -918,6 +935,7 @@
       if (r.v) bits.push(r.v);
     }
     if (r.k === "med") { if (r.ds) bits.push(r.ds); if (r.fq) bits.push(r.fq); if (r.u) bits.push(t("r.until", { d: fmtDate(r.u) })); if (r.tm) bits.push(t("r.times", { t: r.tm.join(", ") })); }
+    if (r.sc) bits.push(t("at.count", { n: r.sc.length }));
     if (r.nt) bits.push(r.nt);
     return bits.join(" · ");
   }
@@ -1188,6 +1206,207 @@
       var p = window.parent;
       return p && p !== window && typeof p[name] === "function" ? p[name] : null;
     } catch (e) { return null; }
+  }
+
+  // ----- Attachments: files on the orOS disk -----
+  // The record keeps names only (core normAt); each file sits in Files
+  // under "Pet Health Book" and syncs through Vault Drive when the user
+  // runs it, never through the localStorage slice. Photos are re-drawn
+  // on a canvas (long side 1600 px, JPEG): no EXIF / location kept.
+  // PDFs (≤ 10 MB) are kept as they are.
+  var AT_MAX_IN = 40 * 1024 * 1024, PDF_MAX = 10 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function atRandom() {
+    var a = new Uint8Array(6), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 6; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function isPdf(file) {
+    return !!file && (file.type === "application/pdf" || /\.pdf$/i.test(file.name || ""));
+  }
+  // → Promise<{ blob, ext } | null>
+  function encodeAttachment(file) {
+    if (!file) return Promise.resolve(null);
+    if (isPdf(file)) {
+      if (file.size > PDF_MAX || !file.size) return Promise.resolve(null);
+      return Promise.resolve(file.slice(0, 5).text ? file.slice(0, 5).text() : "%PDF-").then(function (head) {
+        return head === "%PDF-" ? { blob: file.slice(0, file.size, "application/pdf"), ext: "pdf" } : null;
+      }).catch(function () { return null; });
+    }
+    if (file.size > AT_MAX_IN) return Promise.resolve(null);
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var k = Math.min(1, 1600 / Math.max(w, h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? { blob: b, ext: "jpg" } : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function rmFile(name) {
+    var fs = fsApi(), path = C.atPath(name);
+    if (!fs || !path) return Promise.resolve();
+    return Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  // A deleted record (or pet) keeps its files through the Undo
+  // window; then any name no record points at any more leaves the disk.
+  function dropFilesLater(names) {
+    if (!names || !names.length || !fsApi()) return;
+    var list = names.slice();
+    setTimeout(function () {
+      var used = C.attachmentsOf(data);
+      list.forEach(function (n) { if (used.indexOf(n) < 0) rmFile(n); });
+    }, 12000);
+  }
+  // The attachments field of a record editor. Files added while it is
+  // open are written at once and removed again if the editor closes
+  // without saving; files taken off a record leave the disk on save.
+  function attachBox(dlg, r, recId, dateIn) {
+    var fs = fsApi();
+    var cur = r && r.sc ? r.sc.slice() : [];
+    var orig = cur.slice(), added = [], urls = [], done = false;
+    if (!fs && !cur.length) return { wrap: null, names: function () { return cur.slice(); }, commit: function () {} };
+    var wrap = el("div", "fld");
+    wrap.appendChild(el("div", "dlg-lbl", t("at.title")));
+    var grid = el("div", "at-grid");
+    grid.id = "pr-at";
+    wrap.appendChild(grid);
+    wrap.appendChild(el("p", "dlg-sub", t("at.hint")));
+    function paint() {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      urls = [];
+      grid.innerHTML = "";
+      cur.forEach(function (name, i) {
+        var b = el("button", "at-th");
+        b.type = "button";
+        b.setAttribute("aria-label", t("at.open", { n: i + 1 }));
+        b.addEventListener("click", function () { viewer(name); });
+        grid.appendChild(b);
+        if (/\.pdf$/.test(name)) { b.appendChild(el("span", "at-pdf", t("at.pdf"))); return; }
+        if (!fs) { b.appendChild(el("span", "at-miss", t("at.missing"))); return; }
+        Promise.resolve(fs.readBlob(C.atPath(name))).then(function (blob) {
+          if (!blob) throw new Error("ENOENT");
+          var u = URL.createObjectURL(blob);
+          urls.push(u);
+          var im = el("img");
+          im.alt = "";
+          im.src = u;
+          b.appendChild(im);
+        }).catch(function () { b.appendChild(el("span", "at-miss", t("at.missing"))); });
+      });
+      if (fs && cur.length < C.MAX_AT) {
+        var add = el("button", "at-th at-add", "+");
+        add.type = "button";
+        add.setAttribute("aria-label", t("at.add"));
+        add.title = t("at.add");
+        add.addEventListener("click", pick);
+        grid.appendChild(add);
+      }
+    }
+    function pick() {
+      var host = dialogHost();
+      var accept = "image/*,application/pdf,.pdf";
+      var p = host && typeof host.openFile === "function" ? host.openFile(accept) : localPickFile(accept);
+      Promise.resolve(p).then(function (file) {
+        if (!file) return;
+        return encodeAttachment(file).then(function (enc) {
+          if (!enc) { showToast(t("at.bad")); return; }
+          var name = C.atName(C.isYmd(dateIn.value) ? dateIn.value : todayYmd(), recId, atRandom(), enc.ext);
+          if (!name) return;
+          return Promise.resolve(fs.writeBlob(C.atPath(name), enc.blob)).then(function () {
+            if (done) { rmFile(name); return; }
+            added.push(name);
+            cur.push(name);
+            cur.sort(cmpStr);
+            paint();
+          });
+        });
+      }).catch(function () { showToast(t("at.noDisk")); });
+    }
+    function viewer(name) {
+      var v = makeDialog("pc-at-view");
+      v.appendChild(el("div", "dlg-title", t("at.title")));
+      var box = el("div", "at-view");
+      v.appendChild(box);
+      var u = null, blobNow = null, pdf = /\.pdf$/.test(name);
+      var acts = el("div", "dlg-actions");
+      var openB = pdf ? button(t("at.openPdf"), "", function () {
+        if (!u) return;
+        var a = document.createElement("a");
+        a.href = u;
+        a.target = "_blank";
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }) : null;
+      var saveB = button(t("at.save"), "", function () {
+        if (!blobNow) return;
+        var host = dialogHost();
+        if (host && typeof host.saveFile === "function") host.saveFile({ blob: blobNow, filename: name, mime: pdf ? "application/pdf" : "image/jpeg" });
+      });
+      if (openB) { openB.disabled = true; acts.appendChild(openB); }
+      saveB.disabled = true;
+      acts.appendChild(saveB);
+      if (fs) Promise.resolve(fs.readBlob(C.atPath(name))).then(function (blob) {
+        if (!blob) throw new Error("ENOENT");
+        blobNow = pdf ? blob.slice(0, blob.size, "application/pdf") : blob;
+        u = URL.createObjectURL(blobNow);
+        if (pdf) box.appendChild(el("div", "at-pdf big", t("at.pdf")));
+        else { var im = el("img"); im.alt = t("at.title"); im.src = u; box.appendChild(im); }
+        if (openB) openB.disabled = false;
+        saveB.disabled = false;
+      }).catch(function () { box.appendChild(el("p", "dlg-sub", t("at.missingLong"))); });
+      else box.appendChild(el("p", "dlg-sub", t("at.missingLong")));
+      v.appendChild(el("p", "dlg-sub", t("at.where")));
+      acts.appendChild(button(t("at.remove"), "danger", function () {
+        v.close();
+        cur = cur.filter(function (n) { return n !== name; });
+        if (added.indexOf(name) >= 0) { added = added.filter(function (n) { return n !== name; }); rmFile(name); }
+        paint();
+      }));
+      acts.appendChild(button(t("at.close"), "primary", function () { v.close(); }));
+      v.appendChild(acts);
+      v.addEventListener("close", function () { if (u) setTimeout(function () { URL.revokeObjectURL(u); }, 60000); });
+      document.body.appendChild(v);
+      v.showModal();
+    }
+    dlg.addEventListener("close", function () {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      if (!done) { done = true; added.forEach(rmFile); }
+    });
+    paint();
+    return {
+      wrap: wrap,
+      names: function () { return cur.slice(); },
+      // after a successful save: files taken off the record leave the disk
+      commit: function () {
+        done = true;
+        var gone = orig.filter(function (n) { return cur.indexOf(n) < 0; });
+        if (gone.length) setTimeout(function () {
+          var used = C.attachmentsOf(data);
+          gone.forEach(function (n) { if (used.indexOf(n) < 0) rmFile(n); });
+        }, 0);
+      }
+    };
   }
 
   // Dose times of a medicine: a row of time inputs, + to add one.
@@ -1624,6 +1843,9 @@
       f.nt.value = v.nt || "";
       form.appendChild(field(t("rf.notes"), f.nt, "pr-nt"));
     }
+    var recId = r ? r.id : newId();
+    var att = C.AT_KINDS.indexOf(kind) >= 0 ? attachBox(dlg, r, recId, f.d) : null;
+    if (att && att.wrap) form.appendChild(att.wrap);
     if (kind === "vacc" || kind === "deworm") form.appendChild(el("p", "disclaimer", t("disclaimer")));
 
     var acts = el("div", "dlg-actions");
@@ -1658,7 +1880,8 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!C.isYmd(f.d.value)) { showToast(t("toast.badDate")); f.d.focus(); return; }
-      var out = { id: r ? r.id : newId(), p: pet.id, k: kind, d: f.d.value, m: r ? r.m : Date.now() };
+      var out = { id: recId, p: pet.id, k: kind, d: f.d.value, m: r ? r.m : Date.now() };
+      if (att) out.sc = att.names();
       if (f.n) out.n = f.n.value;
       if (f.nx) {
         if (f.nx.value && (!C.isYmd(f.nx.value) || f.nx.value <= f.d.value)) { showToast(t("toast.badDate")); f.nx.focus(); return; }
@@ -1687,6 +1910,7 @@
       if (f.nt) out.nt = f.nt.value;
       var clean = C.normRec(out);
       if (!clean) { showToast(t("toast.needRec")); if (f.n) f.n.focus(); return; }
+      if (att) att.commit();
       dlg.close();
       if (r) {
         var cur = recById(r.id);
