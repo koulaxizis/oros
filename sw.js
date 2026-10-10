@@ -92,6 +92,7 @@ var PRECACHE_URLS = [
   "./notifications.js",
   "./pet.css",
   "./pet.js",
+  "./launcher.js",
   "./vault.js",
   "./translations.js",
   "./apps.json",
