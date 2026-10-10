@@ -58,7 +58,6 @@
       "category": "Office",
       "icon": "mindmap",
       "url": "mindmap/",
-      "search": "search.js",
       "type": "internal"
     },
     {
@@ -785,6 +784,15 @@
       "icon": "help",
       "url": "help/",
       "type": "internal"
+    },
+    {
+      "id": "settings",
+      "name": "Settings",
+      "category": "System",
+      "icon": "settings",
+      "url": "settings/",
+      "type": "internal",
+      "search": "search.js"
     }
   ]
 }

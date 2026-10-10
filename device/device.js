@@ -91,7 +91,7 @@
       "y.backup": "Last cloud backup copy", "y.export": "Automatic backup to a file",
       "y.exportLast": "Last automatic backup check", "y.folder": "Backup folder",
       "y.never": "Never", "y.notConnected": "Sync is off on this device. Your data lives only here: export a backup now and then.",
-      "y.where": "Sync settings are in the orOS menu.",
+      "y.where": "Sync settings",
       "y.daily": "Daily", "y.weekly": "Weekly", "y.monthly": "Monthly",
       "d.screen": "Screen", "d.window": "Window", "d.ratio": "Pixel ratio",
       "d.orient": "Orientation", "d.portrait": "Portrait", "d.landscape": "Landscape",
@@ -150,7 +150,7 @@
       "y.backup": "Τελευταίο αντίγραφο στο cloud", "y.export": "Αυτόματο αντίγραφο σε αρχείο",
       "y.exportLast": "Τελευταίος έλεγχος αυτόματου αντιγράφου", "y.folder": "Φάκελος αντιγράφων",
       "y.never": "Ποτέ", "y.notConnected": "Ο συγχρονισμός είναι κλειστός σε αυτή τη συσκευή. Τα δεδομένα σου υπάρχουν μόνο εδώ: κάνε πού και πού εξαγωγή αντιγράφου.",
-      "y.where": "Οι ρυθμίσεις συγχρονισμού είναι στο μενού του orOS.",
+      "y.where": "Ρυθμίσεις συγχρονισμού",
       "y.daily": "Καθημερινά", "y.weekly": "Εβδομαδιαία", "y.monthly": "Μηνιαία",
       "d.screen": "Οθόνη", "d.window": "Παράθυρο", "d.ratio": "Πυκνότητα pixel",
       "d.orient": "Προσανατολισμός", "d.portrait": "Κάθετος", "d.landscape": "Οριζόντιος",
@@ -516,7 +516,14 @@
     }
     var nodes = [kvTable(rows)];
     if (!connected) nodes.push(el("p", "note", t("y.notConnected")));
-    nodes.push(el("p", "hint", t("y.where")));
+    // Sync is set up in Settings → Sync (the shell opens it there).
+    var p = parentWin();
+    if (p && p.orosSettings && typeof p.orosSettings.open === "function") {
+      var go = el("button", "act small", t("y.where"));
+      go.type = "button";
+      go.addEventListener("click", function () { p.orosSettings.open("sync"); });
+      nodes.push(go);
+    }
     fill("b-sync", nodes);
     report.sync = rows;
   }

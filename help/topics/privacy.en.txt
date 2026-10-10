@@ -16,7 +16,7 @@ Before anything leaves your device, orOS encrypts it with your encryption passph
 - If you tick `Remember on this device`, the passphrase is kept locked inside this browser, so you don't have to type it every time. `Forget on this device` removes it.
 - Nobody can recover a lost passphrase, not even orOS. Write it down somewhere safe.
 
->! Files you save with `Export data`, and backups in your backup folder (`Backup folder`), are **not** encrypted. Store them somewhere safe.
+>! Files you save with `Export backup file`, and backups in your backup folder (`Backup folder`), are **not** encrypted. Store them somewhere safe.
 
 ## Online services some apps use
 orOS itself runs from your device, but a few apps need the internet for what they show. They contact these services only when you use them, and none of them needs an account or a key:

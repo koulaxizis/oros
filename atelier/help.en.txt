@@ -11,6 +11,7 @@ Under `What will you make?` tap or click a size, for example a square post or an
 - Tap or click an element to select it. Drag it to move, use the handles to resize, and the round handle below it to rotate. Guides help you line things up.
 - Tap a selected text again, or double-click it, to type in it.
 - The bar above the canvas changes with what you selected: font, size, colour, `Effects`, `Transparency`, `Position`, `Lock`, `Duplicate` and `Delete`.
+- The font button of a text opens `Fonts`: Noto Sans, Serif and Mono are always available, and `More fonts (Fontsource)` has hundreds of free fonts (tick `Only fonts with Greek letters` for Greek text). A font downloads the first time you use it and then works offline on this device; letters it lacks show in Sans. Another device downloads it when it opens the design.
 
 ## Photos
 - `Uploads` › `Upload an image` adds a photo from this device or from Files.
