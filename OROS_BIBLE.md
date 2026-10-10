@@ -4385,3 +4385,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Shell bridges `orosAssistApps` / `orosAssistSearch` / `orosAssistOpen`; `oros-assistant` added to the factory reset; deep link `__orosOpenAt("assistant", {ask})`.
 - Tests: tests/assistant.test.js.
 - Not tested: real provider calls with real keys, Safari/iPhone, a real phone, real Dropbox.
+
+### 2026-10-10 — Typewriter / Γραφομηχανή: new app (Creativity, soffitta.site port 11/17) (#144) — 0.64.00
+- New app Typewriter (Creativity): write on paper like on a typewriter. In typewriter mode you only go forward and a backspace strikes the letter (U+0336) instead of erasing it; key sounds, paper tints, per-letter ink, word count and an optional word goal per page; copy and .txt download.
+- Data: sync slice `typewriter` (`oros-typewriter-data`, TYPEWRITER v1: pages LWW per page + tombstones, delete wins ties); `oros-typewriter-prefs` stays on the device.
+- Files: typewriter/ (index.html, core.js, typewriter.js, typewriter.css, help.en/el.txt), tests/typewriter.test.js. Registered in apps.json (Creativity, after Prompter), icon, names, precache, tests.yml.
+- Not tested: a real phone, Safari, real Dropbox.
