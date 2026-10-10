@@ -4115,3 +4115,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** the Calendar has a new "Budget" / «Προϋπολογισμός» chip with the upcoming occurrences of each recurring entry (e.g. "Ενοίκιο & σπίτι −500,00 €"); clicking a row opens that recurring entry in Budget. Fix: since #109, `budget.js` and `spreadsheet.js` each had two `window.__orosOpenAt` receivers, so "Open in Spreadsheet" (BR-S1) did nothing while Spreadsheet was open; each app now has one `openTarget`, and `tests/deeplink-receivers.test.js` fails if an app assigns `__orosOpenAt` twice. (PR #127)
 - **Core:** NEW `budget/feed.js` (pure, read-only, loaded by `calendar/index.html`), precached; Bible BR-B2 section (in the PR). `APP_VERSION` 0.53.01.
 - **NOT tested:** a real phone, Safari.
+
+### 2026-10-10 — Family Tree GEDCOM import / export — 0.53.02
+- **Changes:** `More` menu: `Import GEDCOM…` (a new tree, with preview and Undo) and `Export GEDCOM…` (Download / Save to Files, option to hide details of the living). Pure code in `familytree/ft-core.js` section 10; tests `tests/familytree-gedcom.test.js` (8). (PR #116)
+- **Checked with real files:** royal92.ged (3,010 people, ANSI/PAF 1992), pres2020.ged (2,322, UTF-8 5.5.1), GEDCOM 7.0 test files (maximal70, remarriage, same-sex, escapes): all import with 0 broken links and round-trip export → import unchanged.
+- **NOT tested:** a real phone, Safari, real Dropbox, files from Ancestry / MyHeritage exports.
