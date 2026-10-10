@@ -40,7 +40,7 @@ const PENDING = [
   "petworld", "wallpaper", "whack", "mixer", "snake", "wheel", "g2048",
   "zen", "wordle", "names", "passwords", "timesheet", "split",
   "travel", "chores", "meals", "layout", "pubdomain", "qr", "pixel",
-  "budget", "water", "fitness", "petcare", "baby", "familytree",
+  "budget", "fitness", "petcare", "baby", "familytree",
   "garage", "plants", "shelf", "feeds", "mail", "scores", "podcasts", "spot",
   "hexagon", "chess", "sudoku", "tetris", "minesweeper", "mahjong", "gomoku",
   "bubble", "checkers", "mastermind", "battleship", "rps", "hangman", "flow",

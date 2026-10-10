@@ -4031,3 +4031,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-10 — Atelier: hundreds of free fonts (Fontsource), Greek-capable, offline after first use — 0.49.02
 - **Changes:** tapping a text's font button opens a **Fonts** panel with three groups: - the three built-in faces, which are always available; - fonts already used in this design, plus "Your fonts" (recently used, kept on this device); - **More fonts (Fontsource)**: the open-licence Google Fonts catalogue, with an "Only fonts with Greek letters" filter (on by default in Greek). (PR #98)
 - **NOT tested:** real Fontsource downloads, because the container network blocks jsdelivr.
+
+### 2026-10-10 — Water: guide pages (EN/EL) — 0.49.03
+- **Changes:** Help has a Water page in English and Greek. It covers quick add, entries and past days, history, settings, reminders, sync/CSV, shortcuts, tips and limits. (PR #104)
+- **NOT tested:** a real phone, Safari / iOS.
