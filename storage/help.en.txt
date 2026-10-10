@@ -1,0 +1,43 @@
+# Storage
+Storage is a home inventory: it helps you remember where you put things. You build it in levels, from a space down to the shelf or drawer where each item lives.
+
+## Getting started
+Storage has five levels, each inside the one before:
+1. Space, such as your home, a holiday house or a storeroom. You start with one called `Home`.
+2. Room, such as the kitchen.
+3. Furniture, such as a wardrobe.
+4. Position, such as the top shelf or the second drawer.
+5. Items, the things themselves.
+
+Tap or click a space to open it. The button at the top right adds something to the level you're in: `Add space`, `Add room`, `Add furniture`, `Add position` or `Add item`. Give it a `Name` and press `Save`.
+
+## Moving around
+- Tap or click a card to go inside it.
+- `‹ Back` takes you up one level; the path at the top lets you jump to any level above.
+- On a wide screen, a tree of all your spaces, rooms, furniture and positions sits on the side, so you can jump straight to any of them.
+
+Each card shows how much is inside it, such as `3 inside` or `5 items`.
+
+## Items
+An item has a `Name`, a `Quantity` and a `Note (optional)`, for example "winter only" or "batteries AA". Use the − and + buttons on the item to change the quantity; it never goes below 1.
+
+## Rename and delete
+Every card has a pencil to `Rename` (for items, also to change the quantity and note) and a bin to `Delete`. Deleting a space, room, furniture or position also deletes everything inside it, so Storage always asks you first.
+
+>! A delete can't be undone. Deleting a whole space removes all its rooms and items too.
+
+## Sync and backup
+Everything you add syncs between your devices through [orOS sync](help:t/sync). Storage has no import or export of its own; the orOS [backup](help:t/backup) keeps a copy.
+
+## Keyboard shortcuts
+- [[Enter]] on a selected card opens it.
+- [[Esc]] goes up one level.
+
+## Tips
+- Name positions the way you'd describe them out loud ("top shelf, left"), so they still make sense in a year.
+- Use the note for details you'd otherwise forget, like a size or a battery type.
+
+## Limits
+- There's no search; you find things by browsing the levels.
+- You can't move an item or a level to a different place; delete it and add it again where it belongs.
+- Notes are kept to 300 characters.

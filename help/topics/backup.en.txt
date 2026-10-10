@@ -2,31 +2,31 @@
 A backup is a single file with all your orOS data: every app, your settings and the files in the [Files](app:files) app. Keep one somewhere safe, even if you use sync.
 
 ## Export a backup
-1. Open the menu and scroll to `Sync`.
-2. Tap or click `Export data`.
+1. Open the menu, choose `Settings` and go to `Backups`.
+2. Tap or click `Export backup file`.
 3. Choose where to save the file, or let your browser download it. It is named like `orOS-backup-2026-10-09.json`.
 
 You can also press [[Ctrl+Alt+Shift+X]] (`Export database`). Export works offline and doesn't need Dropbox.
 
->! A backup file is **not encrypted**. Anyone who opens it can read your data. Store it somewhere safe, as the menu reminds you: `Local backup is not encrypted — store it somewhere safe.`
+>! A backup file is **not encrypted**. Anyone who opens it can read your data. Store it somewhere safe, as `Settings` reminds you: `A backup file is NOT encrypted. Keep it somewhere safe.`
 
 ## Automatic backups to a folder
 In Chrome, Edge and similar browsers on a computer, orOS can write backups to a folder you pick. These options don't appear in Firefox, Safari or on phones, because those browsers can't write to a folder. There, export by hand now and then.
 
-1. In `Sync`, set `Auto backup` to `Daily`, `Weekly` or `Monthly`.
-2. Next to `Backup folder`, tap `Choose…` and pick a folder. orOS writes the first backup right away and shows `Backup written to folder`.
+1. In `Settings`, under `Backups`, set `Automatic backup` to `Daily`, `Weekly` or `Monthly`.
+2. Under `Backup folder`, tap `Choose folder` and pick a folder. orOS writes the first backup right away and shows `Backup written to folder`.
 
 Good to know:
 - orOS checks whether a backup is due when it starts and when you come back to its tab. Nothing runs while orOS is closed.
 - One file per day. A second backup on the same day replaces that day's file.
 - [[Ctrl+Alt+Shift+S]] writes a backup to the folder now. In browsers without folder backups it exports the file instead.
-- `Stop` stops writing to the folder. Your old backup files stay where they are.
-- Browsers sometimes take back the folder permission. The folder line then shows `permission expired — click to re-grant`. Tap `Reconnect folder` to allow it again.
+- `Stop using it` stops writing to the folder. Your old backup files stay where they are.
+- Browsers sometimes take back the folder permission. `Settings` then shows `The browser needs your permission again.` Tap `Allow again` to allow it again.
 
 If you see `Turn on Auto backup first` or `Choose a backup folder first`, set the missing option and try again.
 
 ## Restore from a file
-1. Open the menu, go to `Sync` and tap `Import data`.
+1. Open `Settings`, go to `Backups` and tap `Import backup file`.
 2. Pick an orOS backup file.
 3. You'll see `Data imported` with the number of sections updated.
 

@@ -236,6 +236,9 @@
     var p = project(data, pid);
     return p ? !!p.bill : true;
   }
+  // A timer running this long is probably forgotten: the app shows a
+  // banner and the shell sends one notification (Wave 3).
+  var FORGOT_MS = 10 * 3600000;
   function running(data) {
     return data.entries.filter(function (x) { return !x.del && x.e === 0; })
       .sort(function (x, y) { return y.s - x.s || cmpStr(x.id, y.id); });
@@ -511,7 +514,7 @@
   }
 
   var API = {
-    VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, DATA_VER: DATA_VER, HOUR: HOUR, DAY: DAY,
+    VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, FORGOT_MS: FORGOT_MS, DATA_VER: DATA_VER, HOUR: HOUR, DAY: DAY,
     LIM: LIM, ROUNDS: ROUNDS, CURRENCIES: CURRENCIES, DEFAULT_PREFS: DEFAULT_PREFS, COLORS: COLORS,
     ID_RE: ID_RE, MAX_SPAN: MAX_SPAN,
     isInt: isInt, inRange: inRange, cleanText: cleanText, newId: newId,

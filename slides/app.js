@@ -960,7 +960,7 @@
   // the "new presentation from an outline" dialog; nothing is created
   // or changed until the user picks a theme there.
   var OUTLINE_MAX = 200000;
-  function openTarget(tg) {
+  function openOutline(tg) {
     if (!tg || typeof tg !== "object" || typeof tg.outline !== "string") return;
     var text = tg.outline.slice(0, OUTLINE_MAX);
     var name = C.cleanLine(typeof tg.title === "string" ? tg.title : "", C.LIM.title);
@@ -968,12 +968,6 @@
     if (SL.deck) goHome();
     SL.dlg.fromOutline(text, name);
   }
-  function takeTarget() {
-    var tg = null;
-    try { tg = window.parent.__orosTakeTarget ? window.parent.__orosTakeTarget("slides") : null; } catch (e) { tg = null; }
-    if (tg) openTarget(tg);
-  }
-  window.__orosOpenAt = openTarget;
 
   function boot() {
     load();
@@ -989,13 +983,54 @@
       SL.D.resetFit();
       if (SL.prefs.deck && data.decks[SL.prefs.deck]) openDeck(SL.prefs.deck);
       else renderHome();
-      takeTarget();
+      takeSearchTarget();
     }, function () {
       $("loading").hidden = true;
       toast(t("toast.fontFail"));
       renderHome();
-      takeTarget();
+      takeSearchTarget();
     });
+  }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { deck, slide }.
+  // Opens the presentation (leaving the open one through Home, so
+  // its text and notes flush) and goes to the slide. Unknown deck →
+  // no-op; unknown slide → the deck only. Nothing happens while a
+  // dialog is open. Before the fonts are in, it waits.
+  var searchReady = false, searchLater = null;
+  function openSearchTarget(tg) {
+    if (!searchReady) { searchLater = tg; return; }
+    var id = tg && typeof tg.deck === "string" ? tg.deck : null;
+    if (!id || !data.decks[id]) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (SL.deck !== id) {
+      if (SL.deck) goHome();
+      openDeck(id);
+    }
+    var sid = typeof tg.slide === "string" ? tg.slide : null;
+    var s = sid ? data.slides[sid] : null;
+    if (s && s.d === id && SL.ed && typeof SL.ed.go === "function") SL.ed.go(sid);
+  }
+  // One receiver for both kinds of target: { outline, title } (another
+  // app) and { deck, slide } (universal search). Before the fonts are
+  // in, the target waits (searchLater).
+  function openTarget(tg) {
+    if (tg && typeof tg === "object" && typeof tg.outline === "string") {
+      if (!searchReady) { searchLater = tg; return; }
+      openOutline(tg);
+    } else openSearchTarget(tg);
+  }
+  window.__orosOpenAt = openTarget;
+  function takeSearchTarget() {
+    searchReady = true;
+    if (searchLater) { var later = searchLater; searchLater = null; openTarget(later); return; }
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("slides");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
   }
 
   document.addEventListener("DOMContentLoaded", boot);

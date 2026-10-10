@@ -1,0 +1,47 @@
+# Name Generator
+Name Generator comes up with names for your corners of the web, your bio and your stories: usernames, playful titles and fantasy names with an epithet. Keep the ones you like as favourites.
+
+## Getting started
+When you open the app you already get 8 new names. Tap or click `New names` (or press [[Enter]] or [[Space]]) for another batch of 8, all different.
+
+Next to each name:
+- the copy button puts it on the clipboard;
+- the star (`Keep`) adds it to your `Favourites`. Tap the star again to remove it.
+
+## Modes
+Pick a mode from the tabs at the top:
+- `Handles`: usernames for the web, an adjective plus a noun in Latin letters, up to 24 characters. They show with an "@" but copy without it.
+- `Titles`: epithets for your bio, such as a role with an adjective or "of something".
+- `Regal pairs`: a made-up fantasy name plus an epithet.
+
+Each mode keeps its own batch while the app is open, so switching tabs doesn't throw away what you had.
+
+## Words and style
+Under `Words` choose `English` or `Greek`. It starts in the orOS language. With `Greek`, handles are written in plain greeklish (for example fengari), and Greek titles and epithets match the gender of the name.
+
+For `Handles` only, `Style` adds optional touches; turn on any mix:
+- `Leet (a→4)` swaps some letters for numbers (a→4, e→3, i→1, o→0, s→5, t→7).
+- `Separators (_ -)` puts `_` or `-` between the two words.
+- `Numbers` adds a number at the end.
+
+Changing a word or style option makes a new batch straight away.
+
+## Favourites
+`Favourites` are grouped by mode, newest first, with a count at the top. Copy a single name, or `Copy all` to copy every favourite, one per line. The × button removes a favourite; an `Undo` button stays for a few seconds.
+
+## Sync and backup
+Your favourites sync between your devices through [orOS sync](help:t/sync); the same name starred on two devices counts once. The mode, language and style choices stay on each device, and the batches themselves are never saved.
+
+There's no import or export; use the orOS [backup](help:t/backup) to keep a copy.
+
+## Keyboard shortcuts
+- [[Enter]] or [[Space]]: new names (when no button has focus).
+- Arrow keys on the mode tabs: move to the next or previous mode.
+
+## Tips
+- Check that a handle is free on the site you want before you get attached to it.
+- Use `Copy all` to paste your shortlist into [Notes](app:notes) or a message.
+
+## Limits
+- You can keep up to 1,000 favourites.
+- You can't edit a name or type your own words; the app picks from its built-in word lists.

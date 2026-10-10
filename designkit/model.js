@@ -158,6 +158,9 @@
       o.ix = num(it.ix, -MAX_COORD, MAX_COORD, 0); o.iy = num(it.iy, -MAX_COORD, MAX_COORD, 0);
       o.isc = num(it.isc, 0.001, 1000, 1);
     }
+    // a page's own copy of a master item ("detached here"): the
+    // master item stops showing on that page
+    if (isId(it.ov) && it.ov !== it.id) o.ov = it.ov;
     if (itemExt && it.ax && typeof it.ax === "object") {
       var ax = itemExt(it.ax, o);
       if (ax && typeof ax === "object") o.ax = ax;
@@ -452,6 +455,14 @@
       return it.pg === ownerId && (side === undefined || !it.side || it.side === side);
     }).sort(byZ);
   }
+  // Master items that show on a page: those of its master (and side)
+  // minus the ones the page has detached (a page item with ov = id).
+  function masterItems(doc, page, side) {
+    if (!page || !page.ms) return [];
+    var gone = {};
+    doc.items.forEach(function (it) { if (it.pg === page.id && it.ov) gone[it.ov] = 1; });
+    return itemsOn(doc, page.ms, side).filter(function (it) { return !gone[it.id]; });
+  }
   // Frames of a story, in reading order.
   function chain(doc, storyId) {
     return doc.items.filter(function (it) { return it.t === "text" && it.story === storyId; })
@@ -485,7 +496,7 @@
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
     newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, spreads: spreads, margins: margins,
-    itemsOn: itemsOn, chain: chain, find: find, owner: owner, byZ: byZ,
+    itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })
   };

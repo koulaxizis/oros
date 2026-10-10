@@ -1,0 +1,30 @@
+# Backgammon
+Standard backgammon (Πόρτες in Greek Τάβλι): race your 15 checkers round the board and bear them all off first. Play the computer or a friend on the same device.
+
+## How to play
+To start, each side rolls one die and the higher one plays both. After that, roll two dice on your turn and move one checker for each die; a double is played four times.
+
+- A single opposing checker (a blot) can be hit: it goes to the bar, and its owner must bring it back in before moving anything else.
+- Once all your checkers are in your home board, bear them off with the exact die, or with a higher die from your highest point.
+- You must use as many dice as you can; if only one of the two can be played, it has to be the larger one. With no legal move, the turn passes.
+
+The first to bear off all 15 wins 1 point, a gammon (2 points) if the other side hasn't borne off any, and a backgammon (3 points) if the other side also still has a checker on the bar or in the winner's home board.
+
+## Controls
+Press `Roll`, then tap or click one of your checkers and then one of the lit destinations, or drag the checker there. `Undo` takes back any step of your turn, and `Done` ends it. The board shows each side's pip count.
+
+The toolbar has `vs Computer` or `2 players` and the level. Against the computer you play White.
+
+Keyboard:
+- [[Space]] or [[R]] rolls; arrow keys step through the checkers you can move and then their destinations; [[Enter]] moves; [[Esc]] cancels.
+- [[Enter]] ends the turn; [[Z]], [[Backspace]] or [[Ctrl+Z]] undo a step; [[N]] new game.
+
+## Levels and scoring
+The computer plays at `Easy`, `Medium` or `Hard`. `Records` shows your wins and losses against it for each level, with the points won and lost. With `2 players` the result window keeps a running `Points` score. `Reset records` clears them.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync), adding up the games from every device; `Reset records` clears them everywhere. The game in progress, the 2-player score, your settings and the sound setting stay on this device.
+
+## Tips
+- Avoid leaving single checkers within easy reach.
+- There's no doubling cube.

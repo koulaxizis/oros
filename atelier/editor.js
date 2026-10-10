@@ -788,7 +788,7 @@
       ta.style.width = (w * z + 2) + "px";
       ta.style.height = Math.max(it.h, size * (ax.lh || 120) / 100) * z + "px";
       ta.style.transform = it.rot ? "rotate(" + it.rot + "deg)" : "";
-      ta.style.fontFamily = '"' + T.cssFamily(key) + '", sans-serif';
+      ta.style.fontFamily = T.cssStack(key) + ', sans-serif';
       ta.style.fontSize = size * z + "px";
       ta.style.lineHeight = size * (ax.lh || 120) / 100 * z + "px";
       ta.style.letterSpacing = (ax.tr || 0) / 1000 + "em";
@@ -1134,4 +1134,9 @@
   });
   AT.on("remote", function () { onDocChange(); AT.emit("sel"); });
   window.orosDK.assets.onChange(function () { AT.draw.clearCaches(); pageThumbs = {}; redraw(); renderPagesSoon(); });
+  // a font arrived (text layout caches follow T.generation())
+  AT.on("fonts", function () { pageThumbs = {}; redraw(); renderPagesSoon(); });
+  AT.on("remote", function () {
+    if (AT.doc) T.load(AT.draw.fontKeys(AT.doc)).then(function () { AT.emit("fonts"); }, function () {});
+  });
 })();

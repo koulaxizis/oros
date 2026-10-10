@@ -2,6 +2,7 @@
   "version": 1,
   "topics": [
     { "id": "start" },
+    { "id": "whatsnew" },
     { "id": "menu" },
     { "id": "install" },
     { "id": "appearance" },
