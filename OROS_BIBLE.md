@@ -4023,3 +4023,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox; EN desktop 1280, EL phone 390 and 360, 768 light):** star → desktop and Dock, the menu stays open; right-click, Shift+F10 and a touch long press open the small menu; move and remove; pins and order reach the other device, a removal there comes back; idle rounds upload 0; Dock: "Turn on" from the star panel, magnify, drag reorder, dot on the open app, tapping the open app does not reload it, app ends above the Dock with "over open apps", hidden behind apps on the phone, auto-hide + edge reveal, small size; sideways scroll with 7 icons at 360 px, no page overflow; pet rises above the Dock; no page errors. Without the script tag the shell shows no star and no error.
 - **NOT tested:** a real phone, Safari / iOS (long press, safe area), Firefox, real Dropbox.
 - **Status:** code merged as PR #84; this release commit (0.49.00).
+
+### 2026-10-10 — Name days: morning notice when a contact celebrates — 0.49.01
+- **Changes:** from 09:00, orOS sends one notification a day if any of your contacts has a name day, for example "Σήμερα γιορτάζει: Δημήτρης Παπαδόπουλος, Dimitra K.". Tapping it opens that day in the Calendar. It respects the Calendar notification toggle and quiet hours. It stays silent when the Name days chip is off on the device. (PR #103)
+- **NOT tested:** a real phone, Safari, or system (OS) notifications.
