@@ -128,6 +128,7 @@
       "lbl.feed.meals": "Meals",
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget",
+      "lbl.feed.shelf": "Media Shelf",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
       "feed.garage.svc": "{vehicle}: {what} due",
@@ -268,6 +269,7 @@
       "lbl.feed.meals": "Γεύματα",
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός",
+      "lbl.feed.shelf": "Το ράφι μου",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
       "feed.garage.svc": "{vehicle}: σέρβις ({what})",
@@ -464,6 +466,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-travel", color: "#2bb3a3" },   // sea green — Travel trips + timed itinerary
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
+    { id: "lbl-feed-shelf",  color: "#56b6c2" },   // cyan — Media Shelf finishes + wishlist release dates
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
@@ -487,6 +490,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
     if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
+    if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -1911,6 +1915,43 @@ function transientNote(title, body) {
     });
   }
 
+  // Media Shelf read-only feed (shelf/feed.js, loaded by index.html):
+  // finishes ("Finished: Dune") on their day and wishlist release dates
+  // ("Release: …"). Rows are never stored; the day map is micro-cached
+  // ~1s like the other feeds. Click → Media Shelf opens that title.
+  var SHELF_DATA_KEY = "oros-shelf-data";
+  var shelfCache = { when: 0, days: null };
+
+  function shelfDays() {
+    var now = Date.now(), F = window.OrosShelfFeed;
+    if (!F) return null;
+    if (now - shelfCache.when > 1000) {
+      shelfCache.days = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(SHELF_DATA_KEY));
+        if (d && typeof d === "object") shelfCache.days = F.byDay(d);
+      } catch (e) {}
+      shelfCache.when = now;
+    }
+    return shelfCache.days;
+  }
+
+  function shelfFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-shelf")) return [];
+    var days = shelfDays();
+    if (!days || !days[dateStr]) return [];
+    return days[dateStr].map(function (r) {
+      return {
+        id: "shf-" + r.k + "-" + r.item + "-" + dateStr,   // per-render key, never stored
+        title: window.OrosShelfFeed.label(r.k, r.title, LANG),
+        labelId: "lbl-feed-shelf",
+        start: null,                                     // all-day
+        _feed: true,
+        _openAt: { app: "shelf", target: { item: r.item } }
+      };
+    });
+  }
+
   /* ---------- 3d. Name days, holidays, world days ----------
      Data and rules live in namedays.js (window.OrosNamedays, pure).
      Three chips, all read-only virtual rows, never stored in the
@@ -2023,6 +2064,7 @@ function transientNote(title, body) {
     .concat(travelFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
+    .concat(shelfFeedOn(dateStr))
     .concat(babyFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
