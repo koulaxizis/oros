@@ -4449,3 +4449,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: records may carry `sc` (file names; see the PETCARE registry row). Photos are redrawn without EXIF/location; PDFs kept as they are (≤ 10 MB).
 - Help pages EN/EL updated. Tests: tests/petcare.test.js (+1).
 - Not tested: a real phone camera, Safari, Vault Drive sync of the files between two devices.
+
+### 2026-10-10 — QR Generator phase 2: QR code from Contacts, Calendar and Bookmarks (#152) — 0.65.07
+- **New:** a `QR code` / `Κωδικός QR` button on a contact's card (Contacts), in the edit window of a saved event (Calendar) and of a saved bookmark (Bookmarks). It opens QR Generator with a NEW unsaved code already filled in (vCard, VEVENT or link). The code that was open is stored first and stays as it was; `Undo` on the toast brings it back. A repeating event opened as "This occurrence" gets that occurrence's date.
+- **How:** the generic shell deep link `__orosOpenAt("qr", { from: "contacts"|"calendar"|"bookmarks", id, date? })` (no new shell bridge; the `__orosOpenQR` / `oros-qr-new` idea of the v1.0.0 plan is dropped). QR Generator has one receiver (`window.__orosOpenAt` live, `__orosTakeTarget("qr")` at boot) and reads the item with the same read-only mapping as its From… pickers. Only ids travel; nothing is written to the other app (BR-W8-6). Unknown source or id → toast "Not found: it may have been deleted", nothing changes. The buttons show only inside the shell, and only for saved items.
+- **Bookmarks:** below 480 px the edit window's buttons wrap.
+- **Help:** qr, contacts, calendar, bookmarks pages (EN/EL) describe the buttons.
+- **Tests:** tests/qr.test.js: one QR receiver; every source app sends `{ from, id }`.
+- Not tested: a real phone, Safari, scanning the codes with a phone camera.
