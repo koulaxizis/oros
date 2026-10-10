@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Media Shelf — App logic (v1.2.0)
+// orOS Media Shelf — App logic (v1.3.0)
 // A wishlist and tracker for books, films, series, music,
 // podcasts and games.
 //   - four states: Want → Now → Done, or Dropped; every start,
@@ -138,6 +138,10 @@
       "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, unzip, then pick the CSV files (you can pick several).",
       "toast.csv": "Imported {n} titles", "toast.csvMax": "Only {n} more titles fit on your shelf",
       "f.rel": "Release date (optional)", "it.rel": "Out {d}",
+      "menu.rem": "Reading reminder", "rem.title": "Reading reminder", "rem.on": "Remind me once a day",
+      "rem.at": "From", "rem.done": "Done",
+      "rem.hint": "Only when something is in Now and you haven't logged anything that day. It names the title you were on. It arrives while orOS is open, on this device only; quiet hours and the Media Shelf switch in Settings → Notifications apply.",
+      "rem.toastOn": "Reading reminder on", "rem.toastOff": "Reading reminder off",
       "lk.btn": "Find details online", "lk.title": "Find details online",
       "lk.note": "This sends the title and creator you typed to {host} and nothing else. It never runs on its own, only when you tap this button.",
       "lk.go": "Search", "lk.wait": "Searching {host}…", "lk.src": "From {host}. Pick one to fill in the form, then check it and Save.",
@@ -221,6 +225,10 @@
       "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, αποσυμπίεσε και διάλεξε τα αρχεία CSV (μπορείς πολλά μαζί).",
       "toast.csv": "Εισήχθησαν {n} τίτλοι", "toast.csvMax": "Χωράνε μόνο {n} ακόμα τίτλοι στο ράφι σου",
       "f.rel": "Ημερομηνία κυκλοφορίας (προαιρετικά)", "it.rel": "Κυκλοφορεί {d}",
+      "menu.rem": "Υπενθύμιση ανάγνωσης", "rem.title": "Υπενθύμιση ανάγνωσης", "rem.on": "Θύμισέ μου μία φορά τη μέρα",
+      "rem.at": "Από", "rem.done": "Έτοιμο",
+      "rem.hint": "Μόνο όταν έχεις κάτι στο Τώρα και δεν έχεις γράψει τίποτα εκείνη τη μέρα. Αναφέρει τον τίτλο που έχεις ξεκινήσει. Έρχεται όσο το orOS είναι ανοιχτό, μόνο σε αυτή τη συσκευή· ισχύουν οι ώρες ησυχίας και ο διακόπτης του Ραφιού στις Ρυθμίσεις → Ειδοποιήσεις.",
+      "rem.toastOn": "Η υπενθύμιση ανάγνωσης άνοιξε", "rem.toastOff": "Η υπενθύμιση ανάγνωσης έκλεισε",
       "lk.btn": "Βρες στοιχεία online", "lk.title": "Βρες στοιχεία online",
       "lk.note": "Στέλνει στο {host} μόνο τον τίτλο και τον δημιουργό που έγραψες. Δεν τρέχει ποτέ μόνο του, μόνο όταν πατάς αυτό το κουμπί.",
       "lk.go": "Αναζήτηση", "lk.wait": "Αναζήτηση στο {host}…", "lk.src": "Από το {host}. Διάλεξε ένα για να συμπληρωθεί η φόρμα, έλεγξέ το και πάτα Αποθήκευση.",
@@ -2046,10 +2054,71 @@
     col.appendChild(button(t("menu.export"), "", function () { dlg.close(); exportJson(); }));
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
     col.appendChild(button(t("menu.csv"), "", function () { dlg.close(); importCsv(); }));
+    col.appendChild(button(t("menu.rem"), "", function () { dlg.close(); remDialog(); }));
     col.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
     dlg.appendChild(col);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+
+  // Reading reminder settings (device-local, never synced). The rule
+  // and the key live in feed.js; the shell sends the notification, so
+  // it also arrives with the app closed (while orOS is open).
+  var REM_KEY = "oros-shelf-rem";
+  function readRemPref() {
+    var x = null;
+    try { x = JSON.parse(localStorage.getItem(REM_KEY) || "null"); } catch (e) {}
+    x = x && typeof x === "object" ? x : {};
+    return { on: x.on === 1 ? 1 : 0, h: isInt(x.h) && x.h >= 0 && x.h <= 23 ? x.h : 20 };
+  }
+  function remDialog() {
+    var rem = readRemPref();
+    var dlg = makeDialog("sh-rem", "");
+    dlg.appendChild(el("div", "dlg-title", t("rem.title")));
+    var cb = button(t("rem.on"), "toggle rem-tg");
+    cb.id = "sh-rem-on";
+    cb.setAttribute("role", "switch");
+    function paint() {
+      cb.classList.toggle("on", !!rem.on);
+      cb.setAttribute("aria-checked", rem.on ? "true" : "false");
+    }
+    paint();
+    dlg.appendChild(cb);
+    var w = el("div", "fld");
+    var l = el("label", "dlg-lbl", t("rem.at"));
+    l.setAttribute("for", "sh-rem-h");
+    var sel = el("select");
+    sel.id = "sh-rem-h";
+    for (var h = 0; h < 24; h++) {
+      var o = el("option", "", pad2(h) + ":00");
+      o.value = String(h);
+      sel.appendChild(o);
+    }
+    sel.value = String(rem.h);
+    w.appendChild(l);
+    w.appendChild(sel);
+    dlg.appendChild(w);
+    dlg.appendChild(el("p", "hint", t("rem.hint")));
+    function save() {
+      rem.h = parseInt(sel.value, 10) || 0;
+      try { localStorage.setItem(REM_KEY, JSON.stringify({ on: rem.on, h: rem.h })); } catch (e) { showToast(t("toast.save")); return false; }
+      sel.disabled = !rem.on;
+      return true;
+    }
+    cb.addEventListener("click", function () {
+      rem.on = rem.on ? 0 : 1;
+      if (!save()) { rem.on = rem.on ? 0 : 1; return; }
+      paint();
+      showToast(t(rem.on ? "rem.toastOn" : "rem.toastOff"));
+    });
+    sel.addEventListener("change", save);
+    sel.disabled = !rem.on;
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("rem.done"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    cb.focus();
   }
 
   // ---------- 12. Toasts, keyboard ----------

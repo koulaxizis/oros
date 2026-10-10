@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -547,7 +547,10 @@
     health:   function (kind) { if (typeof window.__orosOpenHealth === 'function') window.__orosOpenHealth(kind); },
     // Podcasts — "podcasts:ep:<episodeId>": a new episode of a show with
     // notices on. Generic shell deep link, no own bridge.
-    podcasts: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('podcasts', { ep: id }); }
+    podcasts: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('podcasts', { ep: id }); },
+    // Media Shelf — "shelf:item:<itemId>": the daily reading reminder
+    // opens the title it names. Generic shell deep link, no own bridge.
+    shelf:    function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('shelf', { item: id }); }
   };
 
   function openTarget(item) {
