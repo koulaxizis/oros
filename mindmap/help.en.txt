@@ -9,10 +9,16 @@ Mind Map helps you sort out ideas: one idea in the centre, branches around it. T
 
 ## Build the map
 - Drag a node onto another node to move it there. Drop it on the middle of a node to make it a child, or just above or below it to put it before or after. The whole branch moves with it.
+- Drag a node to an empty spot and it stays there, with its whole branch. `Back to its place` in its menu undoes that, and `Tidy up (all back in place)` in the `More` menu puts every node back.
 - Long-press a node (or right-click it) for more: `Mark as done`, `Move up`, `Move down`, `Copy as text`, `Paste a list here…`, `Export this branch…` and `Delete branch`.
-- `Details…` holds an `Emoji or symbol`, a `Branch colour`, a `Note` and a `Link (web address)`.
+- `Details…` holds an `Emoji or symbol`, a `Branch colour`, a `Note`, a `Link (web address)` and a `Picture`.
 - `Paste a list…` turns a list into branches: one idea per line, with indents (or Markdown `- ` lists and `#` headings) for the levels.
 - Drag the empty space to move around, pinch or use the zoom buttons, and tap `Fit to screen` to see the whole map.
+
+## Links and pictures
+- To join two ideas on different branches, choose `Link to another node…` in a node's menu and then tap the other node. You can give the link a label, such as "depends on".
+- Tap a link to select it. The bar at the bottom then has `Label`, `Reverse` and `Delete link`.
+- `Choose picture` in `Details…` adds a small picture above the text. Pictures are made smaller when you add them, and all pictures together can use about 1 MB.
 
 ## Outline and find
 - `Outline` shows the same map as an indented list, which is quicker for typing. [[Enter]] adds a line, [[Tab]] and [[Shift+Tab]] change the level, and [[Backspace]] on an empty line removes it.
@@ -25,7 +31,7 @@ Tap the map name at the top left for `Your maps`. There you can open, rename, du
 With [orOS sync](help:t/sync), your maps and every node reach your other devices. Which map is open, the view and which branches are folded stay on this device.
 
 - `Export…` makes a picture (PNG or SVG), Markdown, OPML or JSON of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
-- `Import (OPML, Markdown, text, JSON)…` brings in outlines from other mind map and outline apps as a new map. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
+- `Import (FreeMind, XMind, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane and XMind (only the first sheet), and outlines from other apps, as a new map. Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
 - `Back up all maps (JSON)` saves everything in one file. Your maps are also part of orOS [backups](help:t/backup).
 
 ## Keyboard shortcuts
@@ -40,6 +46,7 @@ With [orOS sync](help:t/sync), your maps and every node reach your other devices
 - Deleted something by mistake? The message has an `Undo` button, and [[Ctrl+Z]] works too.
 
 ## Limits
-- Nodes always sit where the automatic layout puts them; you can't place them freely or draw links between branches.
+- Nodes you place yourself can overlap other nodes; `Tidy up (all back in place)` sorts that out.
+- Links and pictures don't show in the `Outline` view, and Markdown and OPML exports leave them out (JSON keeps everything).
 - If two devices move nodes at the same time in a way that conflicts, a node may come back under the centre with a dashed line. Drag it where it belongs, or choose `Keep it here`.
 - A very large map may be too big for PNG; export SVG instead.
