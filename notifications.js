@@ -540,7 +540,10 @@
       if (window.orosHelp && typeof window.orosHelp.open === 'function' && /^[a-z0-9-]+$/.test(String(topic))) window.orosHelp.open('t/' + topic);
     },
     // Health — "health:<kind>" (reminder → a new reading of that kind).
-    health:   function (kind) { if (typeof window.__orosOpenHealth === 'function') window.__orosOpenHealth(kind); }
+    health:   function (kind) { if (typeof window.__orosOpenHealth === 'function') window.__orosOpenHealth(kind); },
+    // Podcasts — "podcasts:ep:<episodeId>": a new episode of a show with
+    // notices on. Generic shell deep link, no own bridge.
+    podcasts: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('podcasts', { ep: id }); }
   };
 
   function openTarget(item) {
