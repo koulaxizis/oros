@@ -2040,30 +2040,33 @@
     setTab(prefs.tab);
     renderAll();
     scrollToToday();
-    window.__orosOpenAt = openTarget;
-    takeTarget();
-  }
-  // Deep link (shell __orosOpenAt / __orosTakeTarget): { day: "YYYY-MM-DD" }
-  // from a Calendar row opens the Week tab at that day. A dialog in
-  // progress wins (no jump); anything else is ignored.
-  function openTarget(tg) {
-    if (!tg || !C.validYmd(tg.day) || document.querySelector("dialog[open]")) return;
-    view.wk = C.weekStartOf(tg.day, data.set.ws);
-    setTab("wk");
-    renderAll();
-    var d = document.querySelector('#wk-grid .day[data-day="' + tg.day + '"]');
-    if (d && d.scrollIntoView) d.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }
-  function takeTarget() {
     try {
-      var p = window.parent;
-      if (p && p !== window && typeof p.__orosTakeTarget === "function") {
-        var tg = p.__orosTakeTarget("meals");
-        if (tg) openTarget(tg);
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("meals");
+        if (pendingTarget) openSearchTarget(pendingTarget);
       }
     } catch (e) {}
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { recipe } → Recipes tab + the recipe; { day } → Week tab
+  // at that day's week. Unknown recipe / bad day → no-op; an open
+  // dialog → no-op (unsaved edits and cook mode win).
+  function openSearchTarget(t) {
+    if (!t || document.querySelector("dialog[open]")) return;
+    if (typeof t.recipe === "string") {
+      if (!getRecipe(t.recipe)) return;
+      setTab("rc");
+      openRecipe(t.recipe);
+    } else if (typeof t.day === "string" && C.validYmd(t.day)) {
+      setTab("wk");
+      view.wk = C.weekStartOf(t.day, data.set.ws);
+      renderWeek();
+      renderShop();
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
   // Phone: the week is a column of days; open it at today.
   function scrollToToday() {
     if (prefs.tab !== "wk" || window.innerWidth > 760) return;
