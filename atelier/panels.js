@@ -350,6 +350,7 @@
   VIEWS.uploads = function (body) {
     var s = sec();
     s.appendChild(btn("btn primary block", t("up.add"), function () { AT.io.uploadImage(); }));
+    if (AT.video) s.appendChild(btn("btn block", t("vd.upload"), function () { AT.video.upload(); }));
     s.appendChild(el("p", "hint", t("up.hint")));
     body.appendChild(s);
     var ids = sessionUploads.slice();
@@ -923,10 +924,11 @@
     }));
     bar.appendChild(tool("mask", t("ctx.mask"), function () { openView("mask"); }, view === "mask"));
     bar.appendChild(tool("replace", t("ctx.replace"), function () { AT.io.uploadImage(it.id); }));
+    if (it.ax.vid) bar.insertBefore(btn("ctx-txt" + (view === "video" ? " on" : ""), t("ctx.video"), function () { openView("video"); }), bar.firstChild);
   }
 
   // ---------- 4. Wiring ----------
-  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1, fonts: 1 };
+  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1, fonts: 1, video: 1 };
   function viewFits() {
     if (!view || !CONTEXT_VIEWS[view] || view === "animate") return true;
     var one = sel1(), list = ED.selItems();
@@ -934,6 +936,7 @@
     if (view === "colour") return colourTarget && colourTarget.kind === "bg" ? true : !!one;
     if (view === "effects") return one && one.ax.k === "text";
     if (view === "fonts") return list.some(function (it) { return it.ax.k === "text"; });
+    if (view === "video") return !!(one && one.ax.vid);
     return one && one.ax.k === "photo";
   }
 

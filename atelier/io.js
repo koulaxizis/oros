@@ -288,6 +288,12 @@
         if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
       });
     });
+    // videos and sounds travel the same way (video.js checks them back in)
+    if (AT.video) AX.clipIds(doc).forEach(function (id) {
+      chain = chain.then(function () { return AT.video.blob(id); }).then(function (b) {
+        if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
+      });
+    });
     chain.then(function () {
       var pkg = { kind: PKG_KIND, ver: PKG_VER, doc: doc, assets: assets };
       var blob = new Blob([JSON.stringify(pkg)], { type: "application/json" });
@@ -314,6 +320,13 @@
         if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
         chain = chain.then(function () {
           return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
+        }).then(null, function () { failed++; });
+      });
+      if (AT.video) AX.clipIds(doc).forEach(function (id) {
+        var b64 = assets[id];
+        if (typeof b64 !== "string") { failed++; return; }
+        chain = chain.then(function () {
+          return AT.video.put(id, b64ToBlob(b64, window.AtelierClips.mimeOf(id)));
         }).then(null, function () { failed++; });
       });
       return chain.then(function () {
@@ -402,6 +415,7 @@
             it.a = res.id; it.nm = res.name; it.iw = res.w; it.ih = res.h;
             it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
             delete it.ax.cr;
+            ["vid", "vs", "ve", "mu", "vol", "nl"].forEach(function (k) { delete it.ax[k]; });   // a picture now
           });
         } else placePhoto(res);
         AT.toast(t("img.added"));
