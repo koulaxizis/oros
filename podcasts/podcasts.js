@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — App logic (v1.0.0)
+// orOS Podcasts — App logic (v1.1.0)
 // Subscriptions, new episodes, an "Up next" queue, downloads for
 // offline listening and a player that keeps playing when this
 // window closes.
@@ -13,7 +13,13 @@
 //   - catalog search: Apple Podcasts + fyyd (setting: both / one /
 //     none); OPML import / export through orosDialog (R33)
 //   - device-local: feed cache + downloads in IndexedDB (store.js),
-//     prefs "oros-podcasts-prefs" (tab, filters)
+//     prefs "oros-podcasts-prefs" (tab, filters), the catalog's top
+//     list "oros-podcasts-top" (12 h cache)
+//   - phase 2: chapters (podcast:chapters JSON, else "12:34 Title"
+//     lines in the notes), transcripts (podcast:transcript: SRT, VTT,
+//     JSON, HTML) with search and tap-to-jump, watching video
+//     episodes, search in every episode, listening statistics
+//     (device-local, kept by the host), share with the time, top list
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Host (attach / inject into the shell)
@@ -25,6 +31,7 @@
 //   8. Show page + show settings
 //   9. Player bar + full player
 //  10. Notes dialog (sanitized, sandboxed)
+//  10b. Chapters, transcripts, video, share, statistics
 //  11. Discover: search, add by address, OPML
 //  12. Settings
 //  13. Toasts, dialogs, keyboard (Contract Β)
@@ -125,7 +132,18 @@
       "toast.big": "The file is too big.", "toast.limit": "You have reached {n} podcasts.", "toast.moved": "“{t}” moved to a new address.",
       "toast.allPlayed": "All episodes marked as played.",
       "ago.now": "just now", "ago.min": "{n} min ago", "ago.h": "{n} h ago", "ago.d": "{n} d ago",
-      "today": "Today", "yesterday": "Yesterday"
+      "today": "Today", "yesterday": "Yesterday",
+      "ch.title": "Chapters", "ch.prev": "Previous chapter", "ch.next": "Next chapter", "ch.link": "Chapter link",
+      "tr.title": "Transcript", "tr.open": "Transcript", "tr.loading": "Loading the transcript…", "tr.err": "The transcript could not be loaded.",
+      "tr.none": "The transcript is empty.", "tr.find": "Search the transcript", "tr.n": "{i} of {n}", "tr.zero": "No matches",
+      "tr.prev": "Previous match", "tr.next": "Next match", "tr.follow": "Follow playback",
+      "vid.watch": "Watch", "vid.title": "Video", "vid.err": "This video could not be played here.",
+      "ep.share": "Share", "pl.share": "Share this moment", "toast.copied": "Copied to the clipboard.", "toast.shareErr": "Could not share.",
+      "lib.search": "Search all episodes", "lib.found": "{n} episodes found", "lib.none": "No episode matches.",
+      "st.title": "Listening statistics", "st.open": "Statistics", "st.week": "Last 7 days", "st.month": "Last 30 days", "st.all": "All time",
+      "st.saved": "Saved by speed: {t}", "st.top": "Most listened", "st.note": "Counted on this device since {d}.", "st.empty": "Nothing counted yet. Statistics start with the next episode you play.",
+      "st.h": "{h} h {m} min", "st.m": "{m} min",
+      "top.title": "Popular podcasts", "top.titleGr": "Popular in Greece", "top.src": "From the Apple Podcasts charts."
     },
     el: {
       "app": "Podcasts",
@@ -181,7 +199,18 @@
       "toast.big": "Το αρχείο είναι πολύ μεγάλο.", "toast.limit": "Έφτασες τα {n} podcasts.", "toast.moved": "Το «{t}» μετακόμισε σε νέα διεύθυνση.",
       "toast.allPlayed": "Όλα τα επεισόδια σημειώθηκαν ως ακουσμένα.",
       "ago.now": "μόλις τώρα", "ago.min": "πριν από {n} λεπτά", "ago.h": "πριν από {n} ώρες", "ago.d": "πριν από {n} μέρες",
-      "today": "Σήμερα", "yesterday": "Χθες"
+      "today": "Σήμερα", "yesterday": "Χθες",
+      "ch.title": "Κεφάλαια", "ch.prev": "Προηγούμενο κεφάλαιο", "ch.next": "Επόμενο κεφάλαιο", "ch.link": "Σύνδεσμος κεφαλαίου",
+      "tr.title": "Απομαγνητοφώνηση", "tr.open": "Κείμενο", "tr.loading": "Φόρτωση του κειμένου…", "tr.err": "Δεν ήταν δυνατή η φόρτωση του κειμένου.",
+      "tr.none": "Το κείμενο είναι άδειο.", "tr.find": "Αναζήτηση στο κείμενο", "tr.n": "{i} από {n}", "tr.zero": "Κανένα αποτέλεσμα",
+      "tr.prev": "Προηγούμενο αποτέλεσμα", "tr.next": "Επόμενο αποτέλεσμα", "tr.follow": "Ακολουθεί την αναπαραγωγή",
+      "vid.watch": "Προβολή", "vid.title": "Βίντεο", "vid.err": "Το βίντεο δεν παίζει εδώ.",
+      "ep.share": "Κοινοποίηση", "pl.share": "Κοινοποίηση αυτής της στιγμής", "toast.copied": "Αντιγράφηκε στο πρόχειρο.", "toast.shareErr": "Η κοινοποίηση απέτυχε.",
+      "lib.search": "Αναζήτηση σε όλα τα επεισόδια", "lib.found": "Βρέθηκαν {n} επεισόδια", "lib.none": "Κανένα επεισόδιο δεν ταιριάζει.",
+      "st.title": "Στατιστικά ακρόασης", "st.open": "Στατιστικά", "st.week": "Τελευταίες 7 μέρες", "st.month": "Τελευταίες 30 μέρες", "st.all": "Συνολικά",
+      "st.saved": "Κέρδος από την ταχύτητα: {t}", "st.top": "Τα πιο ακουσμένα", "st.note": "Μετριούνται σε αυτή τη συσκευή από {d}.", "st.empty": "Δεν έχει μετρηθεί τίποτα ακόμη. Τα στατιστικά ξεκινούν με το επόμενο επεισόδιο που θα ακούσεις.",
+      "st.h": "{h} ώ. {m} λ.", "st.m": "{m} λεπτά",
+      "top.title": "Δημοφιλή podcasts", "top.titleGr": "Δημοφιλή στην Ελλάδα", "top.src": "Από τα charts του Apple Podcasts."
     }
   };
   function t(k, v) {
@@ -262,6 +291,12 @@
     gear:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
     moon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    chapters: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
+    prevCh: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5.5v13a1 1 0 0 1-1.6.8L9 12.8a1 1 0 0 1 0-1.6l8.4-6.5A1 1 0 0 1 19 5.5z"/><rect x="5" y="5" width="3" height="14" rx="1"/></svg>',
+    text:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>',
+    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
+    stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
     notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>'
   };
 
@@ -556,9 +591,9 @@
   }
 
   // ---------- 6. UI: toolbar, tabs, views ----------
-  var view = { show: "", page: 1 };
+  var view = { show: "", page: 1, q: "" };
   function setTab(tab) {
-    prefs.tab = tab; view.show = ""; view.page = 1;
+    prefs.tab = tab; view.show = ""; view.page = 1; view.q = "";
     savePrefs();
     renderAll();
     $("main").scrollTop = 0;
@@ -613,6 +648,11 @@
       cont.forEach(function (e) { ul2.appendChild(epRow(e.id, { showName: true })); });
       main.appendChild(ul2);
     }
+    var row = el("div", "row-btns foot");
+    var sb = button(t("st.open"), "txt-btn", statsDlg);
+    sb.insertAdjacentHTML("afterbegin", UI.stats);
+    row.appendChild(sb);
+    main.appendChild(row);
   }
   function renderNew(main) {
     var list = C.newEpisodes(D(), cacheView(), now(), 100);
@@ -624,7 +664,32 @@
   function renderLib(main) {
     var shows = D().shows.slice().sort(function (a, b) { return C.fold(a.title) < C.fold(b.title) ? -1 : 1; });
     if (!shows.length) { empty(main, t("empty.lib"), t("empty.libBtn"), function () { setTab("find"); }); return; }
+    // Search in every cached episode (titles and notes). The input is
+    // drawn once; only the result box below it is redrawn.
+    var lab = el("label", "q-wrap lib-q");
+    var ic = el("span", "q-ic"); ic.innerHTML = UI.search; lab.appendChild(ic);
+    var q = el("input"); q.id = "lib-q"; q.type = "search"; q.maxLength = 100; q.autocomplete = "off";
+    q.placeholder = t("lib.search"); q.setAttribute("aria-label", t("lib.search"));
+    q.value = view.q || "";
+    lab.appendChild(q);
+    main.appendChild(lab);
+    var res = el("div", "lib-res");
+    main.appendChild(res);
     var grid = el("ul", "grid");
+    var paintRes = function () {
+      res.textContent = "";
+      var v = q.value.trim();
+      grid.hidden = v.length >= 2;
+      if (v.length < 2) return;
+      var hits = C.searchEpisodes(D(), cacheView(), v, 200);
+      res.appendChild(el("p", "dim small", hits.length ? t("lib.found", { n: hits.length }) : t("lib.none")));
+      var ul = el("ul", "eps");
+      hits.slice(0, view.page * PAGE).forEach(function (h) { ul.appendChild(epRow(h.id, { showName: true })); });
+      res.appendChild(ul);
+      if (hits.length > view.page * PAGE) res.appendChild(button(t("more.eps"), "txt-btn more", function () { view.page++; paintRes(); }));
+    };
+    var qt = null;
+    q.addEventListener("input", function () { clearTimeout(qt); qt = setTimeout(function () { view.q = q.value; view.page = 1; paintRes(); }, 250); });
     var d = D(), cache = cacheView();
     var newBy = {};
     C.newEpisodes(d, cache, now()).forEach(function (x) { newBy[x.show.id] = (newBy[x.show.id] || 0) + 1; });
@@ -641,6 +706,7 @@
       grid.appendChild(li);
     });
     main.appendChild(grid);
+    paintRes();
   }
   function renderDl(main) {
     var ids = Object.keys(files).sort(function (a, b) { return files[b].at - files[a].at; });
@@ -715,7 +781,7 @@
     body.appendChild(title);
     var info = el("div", "ep-info");
     if (state.x) { var ck = el("span", "ok"); ck.innerHTML = UI.check; info.appendChild(ck); info.appendChild(el("span", "", t("ep.played"))); }
-    else if (state.p > 0 && dur) info.appendChild(el("span", "", t("ep.left", { t: C.fmtTime(dur - state.p) })));
+    else if (state.p > 0 && dur) info.appendChild(el("span", "left", t("ep.left", { t: C.fmtTime(dur - state.p) })));
     else if (dur) info.appendChild(el("span", "", C.fmtTime(dur)));
     if (files[id]) { var dl = el("span", "ok dl-ic"); dl.innerHTML = UI.down; dl.title = t("ep.downloaded"); info.appendChild(dl); }
     var job = dling[id];
@@ -740,13 +806,32 @@
       acts.appendChild(dnB);
     }
     var pb = button(playing ? t("ep.pause") : state.p > 0 && !state.x ? t("ep.resume") : t("ep.play"), "icon-btn play", function () { playEp(id); }, playing ? UI.pause : UI.play);
+    pb.setAttribute("data-state", playing ? "pause" : "play");
+    li._q = opt.queueIdx; li._ql = opt.queueLen;
     acts.appendChild(pb);
     acts.appendChild(button(t("ep.more"), "icon-btn", function () { epMenu(id); }, UI.more));
     li.appendChild(acts);
   }
+  // Playback ticks: only the time left and the bar change, in place.
+  // Rebuilding the row 4 times a second would swallow taps on its
+  // buttons (the button under the finger is replaced mid-click).
+  function tickEp(id) {
+    var st = H.getState();
+    if (!st.cur || st.cur.id !== id) return;
+    var dur = Math.round(st.dur) || 0, p = Math.floor(st.pos);
+    [].forEach.call(document.querySelectorAll('li.ep[data-ep="' + id + '"]'), function (li) {
+      var left = li.querySelector(".ep-info .left"), fill = li.querySelector(".bar .fill");
+      var pb = li.querySelector(".ep-acts .play");
+      var wantPause = !!st.playing, isPause = pb && pb.getAttribute("data-state") === "pause";
+      if (wantPause === isPause && (!dur || p <= 0)) return;
+      if (!left || !fill || wantPause !== isPause) { fillRow(li, id, { showName: !!li.querySelector(".art") && !view.show, queueIdx: li._q, queueLen: li._ql }); return; }
+      left.textContent = t("ep.left", { t: C.fmtTime(dur - p) });
+      fill.style.width = Math.min(100, p / dur * 100).toFixed(1) + "%";
+    });
+  }
   function paintEp(id) {
     [].forEach.call(document.querySelectorAll('li.ep[data-ep="' + id + '"]'), function (li) {
-      fillRow(li, id, { showName: !!li.querySelector(".art") && !view.show });
+      fillRow(li, id, { showName: !!li.querySelector(".art") && !view.show, queueIdx: li._q, queueLen: li._ql });
     });
   }
   function epMenu(id) {
@@ -765,6 +850,8 @@
     else if (dling[id]) col.appendChild(button(t("ep.dlCancel"), "", go(function () { cancelDownload(id); })));
     else col.appendChild(button(t("ep.dl") + (x && x.ep.size ? " (" + fmtSize(x.ep.size) + ")" : ""), "", go(function () { download(m); })));
     col.appendChild(button(t("ep.notes"), "", go(function () { notesDlg(id); })));
+    if (hasTranscript(id)) col.appendChild(button(t("tr.title"), "", go(function () { transcriptDlg(id); })));
+    col.appendChild(button(t("ep.share"), "", go(function () { shareEp(id, 0); })));
     if (x && x.ep.link) col.appendChild(button(t("ep.link"), "", go(function () { openLink(x.ep.link); })));
     if (!view.show) col.appendChild(button(m.show, "", go(function () { openShow(m.s); })));
     col.appendChild(button(t("pl.close"), "", function () { dlg.close(); }));
@@ -906,6 +993,7 @@
     var sh = el("button", "full-show"); sh.type = "button"; sh.id = "fp-show";
     sh.addEventListener("click", function () { var c = H.getState().cur; if (c) { dlg.close(); openShow(c.s); } });
     dlg.appendChild(sh);
+    var chl = el("div", "full-chap"); chl.id = "fp-chap"; dlg.appendChild(chl);
     var range = el("input", "seek"); range.type = "range"; range.id = "fp-seek"; range.min = "0"; range.step = "1";
     range.setAttribute("aria-label", t("pl.seek"));
     var dragging = false;
@@ -919,12 +1007,13 @@
     dlg.appendChild(times);
     var ctr = el("div", "controls");
     var d = D();
-    ctr.appendChild(button(t("pl.back", { n: C.prefOf(d, "back") }), "icon-btn lg skip", function () { H.back(); }, UI.back));
+    var skB = button(t("pl.back", { n: C.prefOf(d, "back") }), "icon-btn lg skip", function () { H.back(); }, UI.back);
     var p = button(t("ep.play"), "icon-btn xl play", function () { H.toggle(); }, UI.play); p.id = "fp-play";
-    ctr.appendChild(p);
-    ctr.appendChild(button(t("pl.fwd", { n: C.prefOf(d, "fwd") }), "icon-btn lg skip", function () { H.fwd(); }, UI.fwd));
+    var skF = button(t("pl.fwd", { n: C.prefOf(d, "fwd") }), "icon-btn lg skip", function () { H.fwd(); }, UI.fwd);
+    var chP = button(t("ch.prev"), "icon-btn ch-nav", function () { jumpChapter(-1); }, UI.prevCh);
+    var chN = button(t("ch.next"), "icon-btn ch-nav", function () { jumpChapter(1); }, UI.next);
+    [chP, skB, p, skF, chN].forEach(function (b) { ctr.appendChild(b); });
     dlg.appendChild(ctr);
-    var skB = ctr.children[0], skF = ctr.children[2];
     skB.appendChild(el("span", "skip-n", String(C.prefOf(d, "back"))));
     skF.appendChild(el("span", "skip-n", String(C.prefOf(d, "fwd"))));
     var extra = el("div", "extra");
@@ -942,6 +1031,11 @@
     slp.addEventListener("change", function () { if (slp.value) H.setSleep(slp.value === "end" ? "end" : +slp.value); else H.cancelSleep(); });
     extra.appendChild(slp);
     extra.appendChild(button(t("ep.notes"), "icon-btn", function () { var c = H.getState().cur; if (c) notesDlg(c.id); }, UI.notes));
+    var trB = button(t("tr.title"), "icon-btn", function () { var c = H.getState().cur; if (c) transcriptDlg(c.id); }, UI.text); trB.id = "fp-tr";
+    extra.appendChild(trB);
+    var vB = button(t("vid.watch"), "icon-btn", videoDlg, UI.video); vB.id = "fp-vid";
+    extra.appendChild(vB);
+    extra.appendChild(button(t("pl.share"), "icon-btn", function () { var st2 = H.getState(); if (st2.cur) shareEp(st2.cur.id, Math.floor(st2.pos)); }, UI.share));
     extra.appendChild(button(t("pl.next"), "icon-btn", function () { H.next(); }, UI.next));
     extra.appendChild(button(t("pl.stop"), "icon-btn", function () { dlg.close(); H.stop(); }, UI.stop));
     dlg.appendChild(extra);
@@ -956,11 +1050,18 @@
     if (!dlg || !dlg.open) return;
     if (!st.cur) { dlg.close(); return; }
     var c = st.cur;
+    var curCh = paintChapters(first);
+    var nav = document.querySelectorAll("#pc-full .ch-nav");
+    var hasCh = chaptersOf(c.id).length > 0;
+    [].forEach.call(nav, function (b) { b.hidden = !hasCh; });
+    $("fp-tr").hidden = !hasTranscript(c.id);
+    $("fp-vid").hidden = !c.video;
+    var artSrc = (curCh && curCh.img) || c.img;
     var art = $("fp-art");
-    if (first || art.getAttribute("data-src") !== c.img) {
-      art.setAttribute("data-src", c.img || "");
+    if (first || art.getAttribute("data-src") !== artSrc) {
+      art.setAttribute("data-src", artSrc || "");
       art.textContent = "";
-      art.appendChild(img(c.img, "art xl"));
+      art.appendChild(img(artSrc, "art xl"));
     }
     $("fp-title").textContent = c.title;
     $("fp-show").textContent = st.error ? t("pl.err") : c.show;
@@ -1013,6 +1114,7 @@
     var acts = el("div", "row-btns");
     acts.appendChild(button(t("ep.play"), "txt-btn primary", function () { dlg.close(); playEp(id); }));
     acts.appendChild(button(t("ep.next"), "txt-btn", function () { queue(id, "next"); }));
+    if (hasTranscript(id)) acts.appendChild(button(t("tr.open"), "txt-btn", function () { dlg.close(); transcriptDlg(id); }));
     acts.appendChild(button(t("ep.more"), "icon-btn", function () { dlg.close(); epMenu(id); }, UI.more));
     dlg.appendChild(acts);
     var text = C.plain(e.notes || "");
@@ -1063,6 +1165,350 @@
     return fr;
   }
 
+  // ---------- 10b. Chapters, transcripts, video, share, statistics ----------
+  // Chapters: the feed's podcast:chapters JSON, else "12:34 Title"
+  // lines in the notes. In memory per episode (one fetch per session).
+  var chapCache = {};        // epId → { list, busy }
+  function chaptersOf(id) {
+    var c = chapCache[id];
+    if (c) return c.list;
+    var x = epIndex[id];
+    if (!x) return [];
+    var e = x.ep;
+    var fromNotes = function () { return C.noteChapters(C.plain(e.notes || ""), e.dur); };
+    chapCache[id] = { list: fromNotes(), busy: !!e.chapters };
+    if (e.chapters && navigator.onLine !== false) {
+      NET.fetchOne(e.chapters).then(function (r) {
+        var list = C.normChapters(JSON.parse(r.text), r.finalUrl || e.chapters);
+        if (list.length) chapCache[id].list = list;
+      }).catch(function () {}).then(function () {
+        chapCache[id].busy = false;
+        paintChapters(true);
+      });
+    }
+    return chapCache[id].list;
+  }
+  function paintChapters(rebuild) {
+    var box = $("fp-ch");
+    if (!box || !H) return;
+    var st = H.getState(), c = st.cur;
+    var list = c ? chaptersOf(c.id) : [];
+    var line = $("fp-chap");
+    if (!list.length) { box.textContent = ""; box.removeAttribute("data-ep"); if (line) line.textContent = ""; return; }
+    if (rebuild || box.getAttribute("data-ep") !== c.id) {
+      box.textContent = "";
+      box.setAttribute("data-ep", c.id);
+      box.appendChild(el("h3", "sec small", t("ch.title")));
+      var ol = el("ol", "ch-list");
+      list.forEach(function (ch, i) {
+        var li = el("li", "ch");
+        li.setAttribute("data-i", String(i));
+        var b = el("button", "ch-btn");
+        b.type = "button";
+        b.appendChild(el("span", "ch-at", C.fmtTime(ch.at)));
+        b.appendChild(el("span", "ch-t", ch.title));
+        b.addEventListener("click", function () { H.seekTo(ch.at); H.resume(); });
+        li.appendChild(b);
+        if (ch.url) li.appendChild(button(t("ch.link"), "icon-btn sm", function () { openLink(ch.url); }, UI.share));
+        ol.appendChild(li);
+      });
+      box.appendChild(ol);
+    }
+    var curCh = C.chapterAt(list, st.pos), idx = curCh ? list.indexOf(curCh) : -1;
+    if (line) line.textContent = curCh ? curCh.title : "";
+    [].forEach.call(box.querySelectorAll("li.ch"), function (li) {
+      var on = +li.getAttribute("data-i") === idx;
+      if (li.classList.contains("on") !== on) li.classList.toggle("on", on);
+    });
+    return curCh;
+  }
+  function jumpChapter(dir) {
+    var st = H.getState();
+    if (!st.cur) return;
+    var list = chaptersOf(st.cur.id);
+    if (!list.length) return;
+    var curCh = C.chapterAt(list, st.pos), i = curCh ? list.indexOf(curCh) : -1;
+    // "Previous" inside a chapter's first 3 s goes to the one before;
+    // later, to the start of this one.
+    if (dir < 0 && curCh && st.pos - curCh.at > 3) { H.seekTo(curCh.at); return; }
+    var j = Math.max(0, Math.min(list.length - 1, i + dir));
+    if (dir > 0 && i === list.length - 1) return;
+    H.seekTo(list[j].at);
+  }
+
+  // Transcripts: fetched on demand, parsed into cues, shown as text
+  // only (textContent), never as HTML.
+  var trCache = {};          // epId → { cues } | { err }
+  function hasTranscript(id) { var x = epIndex[id]; return !!(x && x.ep.transcripts && x.ep.transcripts.length); }
+  function loadTranscript(id) {
+    if (trCache[id] && trCache[id].cues) return Promise.resolve(trCache[id]);
+    var x = epIndex[id];
+    var tr = x && C.pickTranscript(x.ep.transcripts, LANG);
+    if (!tr) return Promise.resolve({ err: "none" });
+    return NET.fetchOne(tr.url).then(function (r) {
+      var type = tr.type || (r.type || "").split(";")[0];
+      return (trCache[id] = { cues: C.parseTranscript(r.text, type) });
+    }).catch(function (e) { return { err: (e && e.code) || "net" }; });
+  }
+  function transcriptDlg(id) {
+    var x = epIndex[id], m = metaOf(id);
+    if (!x || !m) return;
+    var dlg = makeDialog("pc-tr", "tr-dlg");
+    var head = el("div", "notes-head");
+    head.appendChild(img(m.img, "art"));
+    var ht = el("div", "");
+    ht.appendChild(el("div", "dlg-title", t("tr.title")));
+    ht.appendChild(el("div", "dim small", x.ep.title));
+    head.appendChild(ht);
+    head.appendChild(button(t("pl.close"), "icon-btn", function () { dlg.close(); }, UI.x));
+    dlg.appendChild(head);
+    var bar = el("div", "tr-bar");
+    var q = el("input"); q.type = "search"; q.maxLength = 100; q.placeholder = t("tr.find"); q.setAttribute("aria-label", t("tr.find"));
+    bar.appendChild(q);
+    var cnt = el("span", "dim small tr-cnt");
+    bar.appendChild(cnt);
+    var pv = button(t("tr.prev"), "icon-btn sm", function () { step(-1); }, UI.up);
+    var nx = button(t("tr.next"), "icon-btn sm", function () { step(1); }, UI.dn);
+    bar.appendChild(pv); bar.appendChild(nx);
+    dlg.appendChild(bar);
+    var fw = el("label", "check small");
+    var fc = el("input"); fc.type = "checkbox"; fc.checked = true;
+    fw.appendChild(fc); fw.appendChild(el("span", "", t("tr.follow")));
+    dlg.appendChild(fw);
+    var list = el("ol", "cues");
+    list.appendChild(el("li", "dim", t("tr.loading")));
+    dlg.appendChild(list);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    var cues = [], hits = [], hi = -1, lastCue = -2;
+    function step(dir) {
+      if (!hits.length) return;
+      hi = (hi + dir + hits.length) % hits.length;
+      paintHits();
+    }
+    function paintHits() {
+      var nodes = list.children;
+      [].forEach.call(list.querySelectorAll("li.hit"), function (li) { li.classList.remove("hit", "hit-cur"); });
+      hits.forEach(function (i) { if (nodes[i]) nodes[i].classList.add("hit"); });
+      cnt.textContent = q.value.trim() ? (hits.length ? t("tr.n", { i: hi + 1, n: hits.length }) : t("tr.zero")) : "";
+      pv.disabled = nx.disabled = hits.length < 2;
+      if (hi >= 0 && nodes[hits[hi]]) {
+        nodes[hits[hi]].classList.add("hit-cur");
+        fc.checked = false;
+        nodes[hits[hi]].scrollIntoView({ block: "center" });
+      }
+    }
+    var qt = null;
+    q.addEventListener("input", function () {
+      clearTimeout(qt);
+      qt = setTimeout(function () { hits = C.searchCues(cues, q.value); hi = hits.length ? 0 : -1; paintHits(); }, 200);
+    });
+    q.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); step(ev.shiftKey ? -1 : 1); } });
+    dlg._paint = function () {
+      var st = H.getState();
+      if (!cues.length || !st.cur || st.cur.id !== id) return;
+      var i = C.cueAt(cues, st.pos);
+      if (i === lastCue) return;
+      var nodes = list.children;
+      if (nodes[lastCue]) nodes[lastCue].classList.remove("on");
+      lastCue = i;
+      if (nodes[i]) {
+        nodes[i].classList.add("on");
+        if (fc.checked) nodes[i].scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    };
+    loadTranscript(id).then(function (r) {
+      list.textContent = "";
+      if (!r.cues) { list.appendChild(el("li", "dim", t("tr.err"))); return; }
+      cues = r.cues;
+      if (!cues.length) { list.appendChild(el("li", "dim", t("tr.none"))); return; }
+      var frag = document.createDocumentFragment(), lastWho = "";
+      cues.forEach(function (c) {
+        var li = el("li", "cue");
+        if (c.at >= 0) {
+          li.appendChild(el("span", "cue-at", C.fmtTime(c.at)));
+          li.addEventListener("click", function () {
+            var st = H.getState();
+            if (st.cur && st.cur.id === id) { H.seekTo(c.at); H.resume(); }
+            else H.play(m, c.at);
+            fc.checked = true;
+          });
+          li.tabIndex = 0;
+          li.addEventListener("keydown", function (ev) { if (ev.key === "Enter") li.click(); });
+        }
+        if (c.who && c.who !== lastWho) li.appendChild(el("span", "cue-who", c.who));
+        lastWho = c.who || lastWho;
+        li.appendChild(el("span", "cue-t", c.text));
+        frag.appendChild(li);
+      });
+      list.appendChild(frag);
+      dlg._paint();
+    });
+  }
+
+  // Video episodes: the shell keeps playing the SOUND (background,
+  // lock screen); "Watch" hands the place to a <video> here and back.
+  function videoDlg() {
+    var st = H.getState(), c = st.cur;
+    if (!c) return;
+    var wasPlaying = st.playing, startAt = st.pos, rate = st.rate;
+    H.pause();
+    var dlg = makeDialog("pc-video", "video-dlg");
+    var head = el("div", "notes-head");
+    var ht = el("div", "");
+    ht.appendChild(el("div", "dlg-title", c.title));
+    ht.appendChild(el("div", "dim small", c.show));
+    head.appendChild(ht);
+    head.appendChild(button(t("pl.close"), "icon-btn", function () { dlg.close(); }, UI.x));
+    dlg.appendChild(head);
+    var v = el("video", "vid");
+    v.controls = true;
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.preload = "metadata";
+    dlg.appendChild(v);
+    var msg = el("p", "dim small");
+    dlg.appendChild(msg);
+    var blob = "", done = false, iv = null;
+    var place = function () { if (!done && isFinite(v.currentTime) && v.currentTime > 0) H.seekTo(v.currentTime); };
+    v.addEventListener("loadedmetadata", function () { try { v.currentTime = startAt; } catch (e) {} v.playbackRate = rate; });
+    v.addEventListener("error", function () { msg.textContent = t("vid.err"); });
+    v.addEventListener("play", function () {
+      try { var rh = window.parent.__orosRadioHost; if (rh && rh.audio && !rh.audio.paused) rh.audio.pause(); } catch (e) {}
+      if (H.getState().playing) H.pause();
+    });
+    v.addEventListener("pause", place);
+    v.addEventListener("ended", function () { done = true; dlg.close(); H.next(); });
+    iv = setInterval(function () { if (!v.paused) place(); }, 10000);
+    dlg.addEventListener("close", function () {
+      clearInterval(iv);
+      if (!done) {
+        var go = !v.paused;
+        place();
+        try { v.pause(); } catch (e) {}
+        if (go || (wasPlaying && v.currentTime < 1)) H.resume();
+      }
+      v.removeAttribute("src");
+      try { v.load(); } catch (e) {}
+      if (blob) URL.revokeObjectURL(blob);
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    ST.getFile(c.id).then(function (f) {
+      if (f && f.blob) { blob = URL.createObjectURL(f.blob); v.src = blob; }
+      else v.src = c.audio;
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {});
+    });
+  }
+
+  // Share: the system share sheet, else the clipboard.
+  function shareEp(id, pos) {
+    var x = epIndex[id], m = metaOf(id) || (H.getState().cur && H.getState().cur.id === id ? H.getState().cur : null);
+    if (!m) return;
+    var o = C.shareText(m, x ? x.ep : null, pos || 0);
+    var full = o.text + (o.url ? "\n" + o.url : "");
+    var copy = function () {
+      var ok = function () { showToast(t("toast.copied")); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(full).then(ok, legacy); return; }
+      } catch (e) {}
+      legacy();
+      function legacy() {
+        var ta = el("textarea");
+        ta.value = full; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+        (document.querySelector("dialog[open]") || document.body).appendChild(ta);
+        ta.select();
+        var r = false;
+        try { r = document.execCommand("copy"); } catch (e) { r = false; }
+        ta.remove();
+        showToast(r ? t("toast.copied") : t("toast.shareErr"));
+      }
+    };
+    if (navigator.share) {
+      navigator.share({ title: o.title, text: o.text, url: o.url || undefined }).catch(function (e) {
+        if (!e || e.name !== "AbortError") copy();
+      });
+    } else copy();
+  }
+
+  // Listening statistics (counted by the host on this device).
+  function fmtSpan(sec) {
+    var m = Math.round(sec / 60);
+    return m >= 60 ? t("st.h", { h: Math.floor(m / 60), m: m % 60 }) : t("st.m", { m: m });
+  }
+  function statsDlg() {
+    var raw = typeof H.stats === "function" ? H.stats() : { d: {}, s: {} };
+    var sm = C.statsSummary(raw, now());
+    var dlg = makeDialog("pc-stats", "form-dlg");
+    var head = el("div", "notes-head");
+    head.appendChild(el("div", "dlg-title", t("st.title")));
+    head.appendChild(button(t("pl.close"), "icon-btn", function () { dlg.close(); }, UI.x));
+    dlg.appendChild(head);
+    if (!sm.all.wall) { dlg.appendChild(el("p", "dim", t("st.empty"))); }
+    else {
+      var grid = el("div", "st-grid");
+      [["st.week", sm.week], ["st.month", sm.month], ["st.all", sm.all]].forEach(function (r) {
+        var box = el("div", "st-box");
+        box.appendChild(el("div", "dim small", t(r[0])));
+        box.appendChild(el("div", "st-big", fmtSpan(r[1].wall)));
+        if (r[1].saved >= 60) box.appendChild(el("div", "dim small", t("st.saved", { t: fmtSpan(r[1].saved) })));
+        grid.appendChild(box);
+      });
+      dlg.appendChild(grid);
+      if (sm.top.length) {
+        dlg.appendChild(el("h3", "sec small", t("st.top")));
+        var ul = el("ul", "st-top");
+        sm.top.forEach(function (x) {
+          var s = C.findShow(D(), x.s);
+          var li = el("li", "");
+          li.appendChild(img(s && s.img, "art"));
+          li.appendChild(el("span", "st-name", s ? s.title : "—"));
+          li.appendChild(el("span", "dim small", fmtSpan(x.media)));
+          ul.appendChild(li);
+        });
+        dlg.appendChild(ul);
+      }
+      var since = sm.since ? fmtDate(new Date(sm.since + "T12:00:00").getTime()) : "";
+      if (since) dlg.appendChild(el("p", "dim small", t("st.note", { d: since })));
+    }
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // Top list (Apple charts): only when catalog search uses Apple.
+  var TOP_KEY = "oros-podcasts-top", TOP_TTL = 12 * 3600000;
+  var topList = { cc: "", list: [], busy: false, failed: false };
+  // done() runs once the list arrived (or failed), to redraw only its box.
+  function loadTop(done) {
+    var mode = C.prefOf(D(), "search");
+    if (mode !== "both" && mode !== "apple") return;
+    var cc = C.topCountry(LANG, navigator.language);
+    if (topList.cc === cc && (topList.list.length || topList.busy || topList.failed)) return;
+    try {
+      var o = JSON.parse(localStorage.getItem(TOP_KEY) || "null");
+      if (o && o.cc === cc && now() - o.at < TOP_TTL && Array.isArray(o.list)) {
+        topList = { cc: cc, list: o.list.filter(function (h) { return h && C.safeUrl(h.url); }), busy: false, failed: false };
+        if (topList.list.length) return;
+      }
+    } catch (e) {}
+    if (navigator.onLine === false) return;
+    topList = { cc: cc, list: [], busy: true, failed: false };
+    var ids = [];
+    NET.fetchOne(C.appleTopUrl(cc, 25)).then(function (r) {
+      ids = C.parseAppleTop(JSON.parse(r.text));
+      if (!ids.length) throw { code: "empty" };
+      return NET.fetchOne(C.appleLookupManyUrl(ids));
+    }).then(function (r) {
+      var json = JSON.parse(r.text);
+      var list = C.orderByIds(C.parseAppleResults(json), json, ids).slice(0, 25);
+      topList = { cc: cc, list: list, busy: false, failed: !list.length };
+      try { localStorage.setItem(TOP_KEY, JSON.stringify({ cc: cc, at: now(), list: list })); } catch (e) {}
+    }).catch(function () { topList = { cc: cc, list: [], busy: false, failed: true }; }).then(function () {
+      if (done) done();
+    });
+  }
+
   // ---------- 11. Discover: search, add by address, OPML ----------
   var found = { q: "", list: [], busy: false, src: "" };
   function renderFind(main) {
@@ -1094,6 +1540,26 @@
     if (mode === "none") main.appendChild(el("p", "dim small", t("find.off")));
     if (!NET.relayAvailable()) main.appendChild(el("p", "dim small", t("s.noRelay")));
     if (found.busy) { main.appendChild(el("p", "dim", t("find.searching"))); return; }
+    if (!found.q && (mode === "both" || mode === "apple")) {
+      // Its own box: the list arriving never redraws the search field
+      // (a half-typed search stays as it is).
+      var box = el("div", "top-box");
+      main.appendChild(box);
+      var paintTop = function () {
+        if (!box.isConnected) return;
+        box.textContent = "";
+        if (topList.list.length) {
+          section(box, topList.cc === "gr" ? t("top.titleGr") : t("top.title"));
+          var tl = el("ul", "hits");
+          topList.list.forEach(function (h) { tl.appendChild(hitRow(h)); });
+          box.appendChild(tl);
+          box.appendChild(el("p", "dim small", t("top.src")));
+        } else if (topList.busy) box.appendChild(el("p", "dim", t("find.searching")));
+      };
+      loadTop(paintTop);
+      paintTop();
+      return;
+    }
     if (found.q && !found.list.length) { main.appendChild(el("p", "dim", t("find.none"))); return; }
     if (found.src) main.appendChild(el("p", "dim small", t("find.src", { s: found.src })));
     var ul = el("ul", "hits");
@@ -1419,7 +1885,9 @@
         paintTimer = null;
         paintPlayer();
         var c = H.getState().cur;
-        if (c) paintEp(c.id);
+        if (c) tickEp(c.id);
+        var tr = $("pc-tr");
+        if (tr && tr.open && tr._paint) tr._paint();
       }, 250);
       return;
     }

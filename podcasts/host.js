@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — host.js (player + data owner, v1.0.0)
+// orOS Podcasts — host.js (player + data owner, v1.1.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so playback, the
 // position, the queue and sync keep working while the Podcasts
@@ -87,12 +87,15 @@
   //   pos:  { epId: [pos, dur, ts] }   exact positions (pruned to 400)
   //   meta: { epId: episode details }  current + queue (pruned)
   //   cur:  epId playing or paused     last: { p, at } of the last commit
+  //   stats: { d: {day: [wallSec, mediaSec]}, s: {showId: mediaSec} }
+  //          listening time on this device (core.addListen)
   function readLocal() {
     try {
       var o = JSON.parse(w.localStorage.getItem(LOCAL_KEY) || "null");
-      if (o && typeof o === "object") return { pos: o.pos || {}, meta: o.meta || {}, cur: o.cur || "", last: o.last || null, spd: o.spd || 0 };
+      if (o && typeof o === "object") return { pos: o.pos || {}, meta: o.meta || {}, cur: o.cur || "", last: o.last || null, spd: o.spd || 0,
+        stats: o.stats && typeof o.stats === "object" ? o.stats : { d: {}, s: {} } };
     } catch (e) {}
-    return { pos: {}, meta: {}, cur: "", last: null, spd: 0 };
+    return { pos: {}, meta: {}, cur: "", last: null, spd: 0, stats: { d: {}, s: {} } };
   }
   var local = readLocal();
   var localTimer = null;
@@ -249,11 +252,20 @@
     var show = showOf(cur.s);
     if (show && show.skB && d > show.skB + 30 && p >= d - show.skB && !audio.paused) { ended(); return; }
     if (sleep.until && Date.now() >= sleep.until) { cancelSleep(); pause(); host.notify("sleep"); }
-    if (!audio.paused) commit("tick");
+    if (!audio.paused) { commit("tick"); countListen(); }
     posState();
     host.notify("time");
   });
-  audio.addEventListener("pause", function () { if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
+  // Listening time: wall-clock seconds between ticks while playing
+  // (a gap over 30 s, e.g. a frozen tab, is not counted).
+  var lastWall = 0;
+  function countListen() {
+    var t = Date.now();
+    if (lastWall && cur) local.stats = C.addListen(local.stats, t, cur.s, (t - lastWall) / 1000, audio.playbackRate || 1);
+    lastWall = t;
+  }
+  audio.addEventListener("seeking", function () { lastWall = 0; });
+  audio.addEventListener("pause", function () { lastWall = 0; if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
   audio.addEventListener("playing", function () { flags.buffering = false; flags.error = ""; chip(); host.notify("play"); });
   audio.addEventListener("waiting", function () { flags.buffering = true; host.notify("buffer"); });
   audio.addEventListener("canplay", function () { flags.buffering = false; host.notify("buffer"); });
@@ -427,6 +439,7 @@
     cancelSleep: function () { cancelSleep(); host.notify("sleep"); },
     stop: stop,
     position: posOf,
+    stats: function () { return JSON.parse(JSON.stringify(local.stats || { d: {}, s: {} })); },
     commit: function () { commit("close"); saveLocal(true); },
     getState: function () {
       return {
