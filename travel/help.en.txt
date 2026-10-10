@@ -24,8 +24,14 @@ Quantities can follow the trip: choose `Per day` or `One every N days` instead o
 ## Templates
 `Templates` lists 10 ready ones (`Essentials`, `Beach`, `City break`, `Business`, `Hiking & camping`, `Ski`, `With a baby`, `Carry-on only`, `Road trip`, `Before I leave`) and `My templates`. You can edit or hide a ready template; `Restore ready templates` brings them back as they were. `New template` makes your own, or use `Save as template` from a trip.
 
+## Forecast, reminders and fuel cost
+- From 7 days before a trip, the trip page shows the `Forecast for` your destination, day by day. If rain is likely, orOS asks `Add an umbrella?`; `Add` puts `Umbrella` on the packing list. The forecast comes from Open-Meteo and is kept on this device for 3 hours.
+- orOS reminds you the evening before you leave (from 18:00), 3 hours before a flight and 1 hour before a train, bus or ferry. The reminder opens the trip. `More` on the trip list has `Turn reminders off` and `Turn reminders on`, for this device only. See also [Notifications](help:t/notifications).
+- `Fuel cost by car` in a trip's `More` menu works out the cost of driving: enter `Distance one way (km)`, tick `Round trip` if you need it, and the consumption and price (per litre, or per kWh for an electric car). If you log fill-ups in [Garage](app:garage), pick the car under `Vehicle (from Garage)` and the consumption and last price are filled in. You see the total and the cost per person; `Add to notes` saves it in the trip notes.
+- Trips also show in [Calendar](app:calendar) under the `Travel` chip: each trip day and every itinerary entry with a time. Tapping one opens the trip here.
+
 ## Share and export
-A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone), `Export for a calendar (.ics)`, `Print`, `Copy trip` (with new dates, nothing packed) and `Delete trip`.
+A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone), `Export for a calendar (.ics)`, `Fuel cost by car`, `Print`, `Copy trip` (with new dates, nothing packed) and `Delete trip`.
 
 On the trip list, `More` has `Export all (JSON)` and `Import (JSON)`. An import merges with your trips and overwrites nothing.
 
@@ -42,4 +48,5 @@ Trips, packing lists, itineraries and your templates sync between your devices t
 
 ## Limits
 - Up to 200 trips and 60 templates.
-- There are no reminders, and trips don't appear in orOS [Calendar](app:calendar). Use the `.ics` export to add them to another calendar app.
+- Reminders show only while orOS is open on that device. Use the `.ics` export to add a trip to another calendar app.
+- The forecast needs a connection and a destination Open-Meteo can find.
