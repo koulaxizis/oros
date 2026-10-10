@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.55.00
+- [Pet Health Book](app:petcare) reminds you at each medicine dose time, and can send a vet cost to [Budget](app:budget) or the pet's food to your [To-Do](app:todo) shopping list.
+
 ## Version 0.54.00
 - Every app and game now has its own page in Help. Inside any app, the **?** button or [[Ctrl+Alt+Shift+H]] opens it.
 - New users get a short tour of the top bar the first time they open orOS. You can [take the tour](tour:start) again at any time.
