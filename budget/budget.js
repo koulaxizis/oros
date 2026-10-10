@@ -96,7 +96,7 @@
       "rec.start": "First date", "rec.end": "Last date (optional)",
       "rec.every.m": "Every month on the {d}", "rec.every.w": "Every {d}", "rec.every.y": "Every year on {d}",
       "rec.next": "Next: {d}", "rec.ended": "Ended", "rec.deleted": "Recurring entry deleted",
-      "rec.keep": "Entries already added stay.", "rec.full": "Up to {n} recurring entries",
+      "rec.keep": "Entries already added stay.", "rec.full": "Up to {n} recurring entries", "rec.gone": "This recurring entry was deleted",
       "err.end": "The last date is before the first",
       "cats.title": "Categories", "cats.out": "Expenses", "cats.in": "Income",
       "cats.add": "New category…", "cats.color": "Colour of {c}", "cats.del": "Delete {c}",
@@ -170,7 +170,7 @@
       "rec.start": "Πρώτη ημερομηνία", "rec.end": "Τελευταία ημερομηνία (προαιρετικά)",
       "rec.every.m": "Κάθε μήνα στις {d}", "rec.every.w": "Κάθε {d}", "rec.every.y": "Κάθε χρόνο στις {d}",
       "rec.next": "Επόμενη: {d}", "rec.ended": "Έληξε", "rec.deleted": "Το πάγιο διαγράφηκε",
-      "rec.keep": "Οι κινήσεις που μπήκαν ήδη μένουν.", "rec.full": "Έως {n} πάγια",
+      "rec.keep": "Οι κινήσεις που μπήκαν ήδη μένουν.", "rec.full": "Έως {n} πάγια", "rec.gone": "Αυτό το πάγιο διαγράφηκε",
       "err.end": "Η τελευταία ημερομηνία είναι πριν από την πρώτη",
       "cats.title": "Κατηγορίες", "cats.out": "Έξοδα", "cats.in": "Έσοδα",
       "cats.add": "Νέα κατηγορία…", "cats.color": "Χρώμα: {c}", "cats.del": "Διαγραφή: {c}",
@@ -2786,6 +2786,37 @@
     txDialog(null, q);
     return true;
   };
+  // Deep link from the shell (window.__orosOpenAt("budget", target)):
+  // { rec: id } opens that recurring entry on the Recurring tab (the
+  // Calendar's Budget feed, universal search); { tx: id } opens that
+  // entry on its month (universal search). Live push while the app is
+  // open; a staged target is taken at boot. An open dialog is closed
+  // first; anything else is ignored.
+  function openTarget(x) {
+    if (!x || typeof x !== "object" || !data) return;
+    var rec = typeof x.rec === "string" && /^[a-z0-9]{1,24}$/.test(x.rec) ? x.rec : "";
+    var tx = typeof x.tx === "string" && ID_RE.test(x.tx) ? findIn(data.tx, x.tx) : null;
+    if (!rec && !tx) return;
+    Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
+    if (tx) {
+      prefs.tab = "list";
+      savePrefs();
+      setMonth(mkOf(tx.d));
+      txDialog(tx.id, null);
+      return;
+    }
+    if (prefs.tab !== "rec") setTab("rec");
+    if (findIn(data.rec, rec)) recDialog(rec);
+    else showToast(t("rec.gone"));
+  }
+  window.__orosOpenAt = openTarget;
+  function takeTarget() {
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeTarget === "function") openTarget(p.__orosTakeTarget("budget"));
+    } catch (e) {}
+  }
+
   function takeStagedNew() {
     var raw = null;
     try {
@@ -2819,35 +2850,9 @@
     materialize(true);
     renderAll();
     takeStagedNew();
+    takeTarget();
   }
 
   boot();
 
-  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-  // target { tx } | { rec }. An entry: the Entries tab on its month,
-  // then its dialog; a recurring rule: the Recurring tab, then its
-  // dialog. Unknown ids or an open dialog → no-op.
-  function openSearchTarget(tg) {
-    if (!tg || typeof tg !== "object" || !data || document.querySelector("dialog[open]")) return;
-    if (typeof tg.tx === "string") {
-      var x = findIn(data.tx, tg.tx);
-      if (!x) return;
-      prefs.tab = "list";
-      savePrefs();
-      setMonth(mkOf(x.d));
-      txDialog(x.id, null);
-    } else if (typeof tg.rec === "string") {
-      if (!findIn(data.rec, tg.rec)) return;
-      setTab("rec");
-      recDialog(tg.rec);
-    }
-  }
-  window.__orosOpenAt = openSearchTarget;
-  try {
-    if (window.parent && window.parent !== window &&
-        typeof window.parent.__orosTakeTarget === "function") {
-      var pendingTarget = window.parent.__orosTakeTarget("budget");
-      if (pendingTarget) openSearchTarget(pendingTarget);
-    }
-  } catch (e) {}
 })();

@@ -3019,18 +3019,23 @@ function sheetFromTable(p) {
   notifyTransient(t("tbl.made").replace("{n}", name || sh.bi[LANG] || sh.bi.en));
   return true;
 }
-/* Live push from the shell (window.__orosOpenAt), and the staged
-   target at boot (window.parent.__orosTakeTarget).                 */
-window.__orosOpenAt = function (target) {
-  if (target && typeof target === "object" && target.newSheet) sheetFromTable(target.newSheet);
-};
+/* One receiver for every deep link: live push from the shell
+   (window.__orosOpenAt) and the staged target at boot
+   (window.parent.__orosTakeTarget). { newSheet } = BR-S1,
+   { sheet, r?, c? } = universal search.                            */
+function openTarget(tg) {
+  if (!tg || typeof tg !== "object") return;
+  if (tg.newSheet) sheetFromTable(tg.newSheet);
+  else openSearchTarget(tg);
+}
+window.__orosOpenAt = openTarget;
 function takeTarget() {
   var tg = null;
   try {
     if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
       tg = window.parent.__orosTakeTarget("spreadsheet");
   } catch (e) { tg = null; }
-  if (tg && typeof tg === "object" && tg.newSheet) sheetFromTable(tg.newSheet);
+  openTarget(tg);
 }
 
 function boot() {
@@ -3076,13 +3081,5 @@ function openSearchTarget(tg) {
     catch (e) {}
   }
 }
-window.__orosOpenAt = openSearchTarget;
-try {
-  if (window.parent && window.parent !== window &&
-      typeof window.parent.__orosTakeTarget === "function") {
-    var pendingTarget = window.parent.__orosTakeTarget("spreadsheet");
-    if (pendingTarget) openSearchTarget(pendingTarget);
-  }
-} catch (e) {}
 
 })();
