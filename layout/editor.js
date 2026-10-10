@@ -33,6 +33,7 @@
   function scale() { return ED.zoom * K; }
   function toScreen(wx, wy) { var s = scale(); return [(wx - ED.camX) * s, (wy - ED.camY) * s]; }
   function toWorld(sx, sy) { var s = scale(); return [sx / s + ED.camX, sy / s + ED.camY]; }
+  ED.toScreen = toScreen; ED.scale = scale; ED.palette = palette;
 
   // P = { id (owner id), page (entity), x, y, w, h, side, idx, master }
   function buildWorld() {
@@ -264,8 +265,10 @@
 
   function relayout() {
     if (!LY.doc) return;
-    ED.L = R.computeLayout(LY.doc);
-    ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing });
+    // while typing in a frame, its unsaved text flows live
+    var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
+    ED.L = R.computeLayout(doc);
+    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing });
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
       ED.ML = { L: ms ? R.computeMasterLayout(LY.doc, ms, "L") : null, R: ms ? R.computeMasterLayout(LY.doc, ms, "R") : null, B: ms ? R.computeMasterLayout(LY.doc, ms, "") : null };
@@ -439,6 +442,7 @@
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    if (LY.inframe) LY.inframe.draw(ctx);
     ctx.restore();
   }
 
@@ -689,6 +693,7 @@
 
   // ---------- 4. Pointer input ----------
   var drag = null, pointers = {}, pinch = null, lastTap = { t: 0, id: null }, pressTimer = null, spaceDown = false;
+  var typeDrag = null;       // pointer selecting text in a frame (inframe.js)
 
   function evPos(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 
@@ -847,6 +852,7 @@
       // pinch: cancel whatever the first finger started
       clearTimeout(pressTimer);
       if (drag && drag.kind === "move" && LY.inGesture()) LY.endGesture();
+      if (typeDrag !== null) { LY.inframe.up(); typeDrag = null; }
       drag = null; ED.marquee = null; ED.draft = null; ED.snaps = [];
       var a = pointers[ids[0]], b = pointers[ids[1]];
       pinch = { d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z0: ED.zoom, mid0: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], cam: [ED.camX, ED.camY] };
@@ -857,6 +863,8 @@
     var p = evPos(e), w = toWorld(p[0], p[1]), touch = e.pointerType === "touch";
     if (e.button === 1 || ED.tool === "hand" || spaceDown) { startDrag(e, "pan", { cam: [ED.camX, ED.camY] }); return; }
     if (e.button === 2) return;   // contextmenu handles it
+    // typing in a frame: clicks place the caret / select text
+    if (LY.inframe && LY.inframe.isOn() && LY.inframe.down(e, w)) { typeDrag = e.pointerId; return; }
 
     if (ED.threadFrom) { threadClick(w); return; }
     if (inRuler(p)) {
@@ -888,7 +896,7 @@
         } else if (!already) ED.select(withGroups([it.id]));
         // double click / tap on a text frame → Story Editor
         var nowT = Date.now();
-        if (lastTap.id === it.id && nowT - lastTap.t < 350 && it.t === "text") { lastTap = { t: 0, id: null }; LY.story.open(it.id); return; }
+        if (lastTap.id === it.id && nowT - lastTap.t < 350 && it.t === "text") { lastTap = { t: 0, id: null }; editText(it.id, w, e); return; }
         lastTap = { t: nowT, id: it.id };
         beginMove(e);
         if (touch) {
@@ -904,13 +912,24 @@
       else startDrag(e, "marquee");
       return;
     }
-    // drawing tools
+    // drawing tools; the Text tool on a text frame types into it
+    if (ED.tool === "text") {
+      var tf = hitItem(w[0], w[1], touch ? 10 : 4);
+      if (tf && tf.t === "text") { ED.setTool("select"); editText(tf.id, w, e); return; }
+    }
     var P = pageAt(w[0], w[1], true);
     if (!P) return;
     startDrag(e, "create", { P: P, t: toolType(ED.tool) });
     ED.draft = { t: drag.t, x0: w[0], y0: w[1], x1: w[0], y1: w[1] };
   }
   function toolType(tool) { return tool === "image" ? "img" : tool; }
+  // type straight into the frame (the Story Editor stays in the menus)
+  // From a pointer (e), the caret follows the drag until it is released.
+  function editText(id, w, e) {
+    if (!LY.inframe.start(id, w)) { LY.story.open(id); return; }
+    if (e) typeDrag = e.pointerId;
+  }
+  ED.editText = editText;
 
   function beginMove(e) {
     var doc = LY.doc;
@@ -951,6 +970,7 @@
       ED.render(); LY.emit("view");
       return;
     }
+    if (typeDrag === e.pointerId) { var tp = evPos(e); LY.inframe.move(toWorld(tp[0], tp[1])); return; }
     if (!drag || drag.pid !== e.pointerId) return;
     var p = evPos(e), w = toWorld(p[0], p[1]);
     var dxs = p[0] - drag.x0, dys = p[1] - drag.y0;
@@ -1073,6 +1093,7 @@
   function onUp(e) {
     delete pointers[e.pointerId];
     if (pinch) { if (Object.keys(pointers).length < 2) pinch = null; return; }
+    if (typeDrag === e.pointerId) { typeDrag = null; LY.inframe.up(); return; }
     clearTimeout(pressTimer);
     if (!drag || drag.pid !== e.pointerId) return;
     var d = drag; drag = null;
@@ -1154,7 +1175,7 @@
     ED.setTool("select");
     if (!made) return;
     ED.select([made.id]);
-    if (typ === "text") LY.story.open(made.id);
+    if (typ === "text") editText(made.id, null);
     else if (typ === "img") LY.io.placeImage(made.id);
   }
 
@@ -1427,7 +1448,7 @@
     if (k === "ArrowDown") { e.preventDefault(); nudge(0, step); return; }
     if (k === "Enter") {
       var it = selItems()[0];
-      if (it && it.t === "text") { e.preventDefault(); LY.story.open(it.id); }
+      if (it && it.t === "text") { e.preventDefault(); editText(it.id, null); }
       return;
     }
     var tools = { KeyV: "select", KeyT: "text", KeyF: "image", KeyR: "rect", KeyE: "ell", KeyL: "line", KeyH: "hand" };
@@ -1513,10 +1534,10 @@
     cv.addEventListener("pointerdown", onDown);
     cv.addEventListener("pointermove", onMove);
     cv.addEventListener("pointerup", onUp);
-    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.gdrag = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
+    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (typeDrag === e.pointerId) { typeDrag = null; LY.inframe.up(); } if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.gdrag = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
     cv.addEventListener("dblclick", function (e) {
       var p = evPos(e), w = toWorld(p[0], p[1]), it = hitItem(w[0], w[1], 4);
-      if (it && it.t === "text") LY.story.open(it.id);
+      if (it && it.t === "text") { if (!LY.inframe.isOn()) editText(it.id, w); }
       else if (it && it.t === "img") LY.io.placeImage(it.id);
     });
     cv.addEventListener("contextmenu", function (e) {
