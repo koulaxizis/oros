@@ -292,6 +292,27 @@
       return !x.del && x.s < hi && endOf(x, now) > lo;
     }).sort(function (x, y) { return x.s - y.s || cmpStr(x.id, y.id); });
   }
+  // Calendar feed (Wave 4): one row per project on a day, in the
+  // order the work started. ms counts a running timer up to `now`;
+  // notes = the day's distinct descriptions. pid "" = no project.
+  function dayFeed(data, key, now) {
+    var by = {}, out = [];
+    piecesIn(data, key, key, now).sort(function (a, b) {
+      return a.s - b.s || cmpStr(a.x.id, b.x.id);
+    }).forEach(function (pc) {
+      var pid = project(data, pc.x.p) ? pc.x.p : "";
+      var r = by[pid];
+      if (!r) {
+        var p = project(data, pid);
+        r = by[pid] = { pid: pid, name: p ? p.name : "", color: p ? p.color : -1, ms: 0, running: false, notes: [] };
+        out.push(r);
+      }
+      r.ms += pc.e - pc.s;
+      if (pc.x.e === 0) r.running = true;
+      if (pc.x.desc && r.notes.indexOf(pc.x.desc) < 0) r.notes.push(pc.x.desc);
+    });
+    return out;
+  }
   // Entries of the same day whose times cross `x` (warning only).
   function overlaps(data, x, now) {
     var xe = endOf(x, now);
@@ -525,7 +546,7 @@
     live: live, project: project, client: client, projectClient: projectClient,
     rateOf: rateOf, billable: billable, running: running, endOf: endOf,
     pieces: pieces, roundMs: roundMs, piecesIn: piecesIn, dayTotals: dayTotals,
-    dayEntries: dayEntries, overlaps: overlaps, matches: matches, weekGrid: weekGrid, report: report,
+    dayEntries: dayEntries, dayFeed: dayFeed, overlaps: overlaps, matches: matches, weekGrid: weekGrid, report: report,
     parseDuration: parseDuration, parseMoney: parseMoney, fmtDur: fmtDur, fmtHours: fmtHours,
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
     csvCell: csvCell, toCsv: toCsv, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup

@@ -377,3 +377,25 @@ test("fmtRange: year once when shared, both years across New Year, single day", 
   assert.equal(C.fmtRange("2025-12-29", "2026-01-04", "el"), "29/12/2025 – 04/01/2026");
   assert.equal(C.fmtRange("2026-10-05", "2026-10-05", "en"), "5 Oct 2026");
 });
+
+test("dayFeed: one row per project in start order, running counted to now, midnight split, notes", () => {
+  const d = model({
+    projects: [
+      { id: "pppppp1", name: "Site", client: "", rate: 0, bill: 1, m: 1 },
+      { id: "pppppp2", name: "Docs", client: "", rate: 0, bill: 1, m: 1 }
+    ],
+    entries: [
+      ent("eeeee1", at(5, 9), at(5, 10), { p: "pppppp2", desc: "draft" }),
+      ent("eeeee2", at(5, 8), at(5, 8, 30), { p: "pppppp1", desc: "fix" }),
+      ent("eeeee3", at(5, 11), at(5, 11, 15), { p: "pppppp1", desc: "fix" }),
+      ent("eeeee4", at(5, 23), at(6, 1), { p: "" }),
+      ent("eeeee5", at(6, 9), 0, { p: "pppppp2" })
+    ]
+  });
+  const r5 = C.dayFeed(d, key(5), at(6, 10));
+  assert.deepEqual(r5.map((r) => [r.pid, r.ms / 60000, r.running]), [["pppppp1", 45, false], ["pppppp2", 60, false], ["", 60, false]]);
+  assert.deepEqual(r5[0].notes, ["fix"], "a repeated description is listed once");
+  assert.equal(r5[1].name, "Docs");
+  const r6 = C.dayFeed(d, key(6), at(6, 10));
+  assert.deepEqual(r6.map((r) => [r.pid, r.ms / 60000, r.running]), [["", 60, false], ["pppppp2", 60, true]]);
+});
