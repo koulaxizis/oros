@@ -4287,3 +4287,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - shelf/shelf.js gains a small RFC 4180 CSV parser and planImport(); data goes through the existing `shelf` slice (no schema change). Guide pages gain an import section.
 - Tests: tests/shelf.test.js (parseCsv, csvKind, Goodreads mapping, Letterboxd combining, duplicate skip, log-only ratings). Shell e2e 11/11 with two devices.
 - Not tested: real Goodreads/Letterboxd exports (fixtures in their documented formats), real Dropbox, Safari/Firefox, a real phone.
+
+### 2026-10-10 — Travel: send "Before I leave" / "Still to pack" to To-Do (#133) — 0.60.02
+- The trip menu has "Send "Before I leave" to To-Do" and "Send "Still to pack" to To-Do": To-Do opens with a prefilled new list (e.g. "Rome · before I leave"); nothing is saved until Add, Cancel leaves no trace.
+- Uses the To-Do bridge BR-TD-ADD (`__orosOpenAt("todo", {addItems})`, #111); Travel never writes To-Do data, it is a copy, not a live link. Quantities go as "3 × Socks"; who + note become the To-Do note. Each item shows only when the bridge exists and the list has open items.
+- Only travel/travel.js changes. Shell check EN desktop / EL phone, no console errors.
+- Not tested: a real phone, Safari/Firefox, real Dropbox.
