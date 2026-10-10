@@ -4219,3 +4219,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Calendar:** read-only **Chores** feed (`lbl-feed-chores`, «Δουλειές»); a row opens the Chore Wheel on that day.
 - **Core:** `chores/core.js` (dates, merge, who-does-what, stats + `readPrefs`, `summary`, `feedRows`), loaded by the app, the shell and Calendar; precached. Tests +3.
 - **Not tested:** a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Timesheet: Quote bridge (BR-Q1) + running timer in the top bar — 0.57.05
+- **Timesheet → Quote (BR-Q1, PR #105, merged 2026-10-09 without a version):** the report's "Make a quote" sends the billable time per project as a prefilled Quote draft through `__orosOpenQuoteNew` (shell) → `__orosQuoteNew` (Quote receiver; staged in sessionStorage `oros-quote-new`). Nothing is saved until Save in Quote.
+- **Top bar chip (wave 3):** while a Timesheet timer runs, a clock chip shows the elapsed H:MM (tooltip: project, start); a click opens Timesheet. The shell only reads `oros-timesheet-data` through `timesheet/core.js` (now loaded by `index.html`): every 5 s or on the frame's storage event, parsed only when the text changed.
+- **Forgotten timer:** one "Forgot to stop it?" notice per running entry after `core.FORGOT_MS` (10 h), ns `timesheet` (KNOWN_APPS), key `forgot-<entryId>`, deep link `system:open:timesheet`; skipped while Timesheet is the visible app.
+- **Ctrl+Alt+Shift+T** starts / stops the timer (SC_DEFS `t`): live push to the running app, else a one-shot sessionStorage `oros-timesheet-toggle` + open. Help Shortcuts topic updated (EN/EL).
+- **Not tested:** a real phone, Safari, real Dropbox.
