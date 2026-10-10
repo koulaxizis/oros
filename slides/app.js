@@ -960,11 +960,45 @@
       SL.D.resetFit();
       if (SL.prefs.deck && data.decks[SL.prefs.deck]) openDeck(SL.prefs.deck);
       else renderHome();
+      takeSearchTarget();
     }, function () {
       $("loading").hidden = true;
       toast(t("toast.fontFail"));
       renderHome();
+      takeSearchTarget();
     });
+  }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { deck, slide }.
+  // Opens the presentation (leaving the open one through Home, so
+  // its text and notes flush) and goes to the slide. Unknown deck →
+  // no-op; unknown slide → the deck only. Nothing happens while a
+  // dialog is open. Before the fonts are in, it waits.
+  var searchReady = false, searchLater = null;
+  function openSearchTarget(tg) {
+    if (!searchReady) { searchLater = tg; return; }
+    var id = tg && typeof tg.deck === "string" ? tg.deck : null;
+    if (!id || !data.decks[id]) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (SL.deck !== id) {
+      if (SL.deck) goHome();
+      openDeck(id);
+    }
+    var sid = typeof tg.slide === "string" ? tg.slide : null;
+    var s = sid ? data.slides[sid] : null;
+    if (s && s.d === id && SL.ed && typeof SL.ed.go === "function") SL.ed.go(sid);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    searchReady = true;
+    if (searchLater) { var later = searchLater; searchLater = null; openSearchTarget(later); return; }
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("slides");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (e) {}
   }
 
   document.addEventListener("DOMContentLoaded", boot);

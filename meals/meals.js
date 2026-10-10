@@ -2015,7 +2015,33 @@
     setTab(prefs.tab);
     renderAll();
     scrollToToday();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("meals");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { recipe } → Recipes tab + the recipe; { day } → Week tab
+  // at that day's week. Unknown recipe / bad day → no-op; an open
+  // dialog → no-op (unsaved edits and cook mode win).
+  function openSearchTarget(t) {
+    if (!t || document.querySelector("dialog[open]")) return;
+    if (typeof t.recipe === "string") {
+      if (!getRecipe(t.recipe)) return;
+      setTab("rc");
+      openRecipe(t.recipe);
+    } else if (typeof t.day === "string" && C.validYmd(t.day)) {
+      setTab("wk");
+      view.wk = C.weekStartOf(t.day, data.set.ws);
+      renderWeek();
+      renderShop();
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
   // Phone: the week is a column of days; open it at today.
   function scrollToToday() {
     if (prefs.tab !== "wk" || window.innerWidth > 760) return;

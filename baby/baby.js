@@ -1912,6 +1912,34 @@
     wireKeyboard();
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { kid } | { kid, ev } | { kid, mk }. Picks the child, then
+  // opens the event on its History day or the mark on Milestones, as a
+  // row click does. Unknown or deleted ids → no-op; an open dialog
+  // (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    if (!t || typeof t.kid !== "string") return;
+    var k = C.findIn(data.kids, t.kid);
+    if (!k || k.del) return;
+    if (document.querySelector("dialog[open]")) return;
+    var ev = typeof t.ev === "string" ? findEv(t.ev) : null;
+    var mk = typeof t.mk === "string" ? C.findIn(data.mk, t.mk) : null;
+    if ((t.ev && (!ev || ev.del || ev.k !== k.id)) || (t.mk && (!mk || mk.del || mk.k !== k.id))) return;
+    view.kid = k.id;
+    if (ev) {
+      histDay = C.dayKeyOf(ev.ts);
+      goTab("hist");
+      evDialog(ev.t, ev.id);
+    } else if (mk) {
+      goTab("marks");
+      markDialog(mk.t, mk.id, null);
+    } else {
+      saveView();
+      renderAll();
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+
   function boot() {
     load();
     loadView();
@@ -1923,6 +1951,13 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("baby");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
 
   boot();
