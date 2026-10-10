@@ -39,6 +39,7 @@ var STRINGS = {
     "sheet.last": "Can't delete the last sheet",
     "tab.confirm": "Tap ✕ again to delete this sheet",
     "csv.imported": "CSV imported as a new sheet",
+    "tbl.made": "New sheet: {n}",
     "csv.exported": "CSV exported",
     "csv.empty": "Cannot export an empty sheet",
     "err.corrupt": "Corrupted data rescued — a fresh sheet was created",
@@ -71,6 +72,7 @@ var STRINGS = {
     "sheet.last": "Δεν μπορεί να διαγραφεί το τελευταίο φύλλο",
     "tab.confirm": "Πάτησε ξανά ✕ για διαγραφή του φύλλου",
     "csv.imported": "Το CSV εισήχθη ως νέο φύλλο",
+    "tbl.made": "Νέο φύλλο: {n}",
     "csv.exported": "Το CSV εξήχθη",
     "csv.empty": "Δεν μπορεί να εξάγει κενό φύλλο",
     "err.corrupt": "Τα δεδομένα ήταν κατεστραμμένα — δημιουργήθηκε νέο φύλλο",
@@ -808,6 +810,11 @@ function tokenize(formula) {
         } else {
           tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident });
         }
+      } else if (s.charAt(j) === ":" && /^[A-Z]+[0-9]+/i.test(s.slice(j + 1))) {
+        /* plain range A1:B5 -> one REF, like the sheet-prefixed form */
+        var rest2 = s.slice(j + 1).match(/^([A-Z]+[0-9]+)/i);
+        j += 1 + rest2[0].length;
+        tokens.push({ type: TT_REF, value: ident.toUpperCase() + ":" + rest2[0].toUpperCase() });
       } else {
         tokens.push({ type: TT_REF, value: ident.toUpperCase() });
       }
@@ -1018,7 +1025,7 @@ function evaluate(ast, visiting) {
       }
     }
 
-    else if (tok.type === TT_OP) {
+    else if (tok.type === TT_OP || tok.type === "OP") {   /* parse() emits {type:"OP"} */
       if (tok.value === "&") {
         var bs = stack.pop(), as = stack.pop();
         if (isError(as)) { stack.push(as); continue; }
@@ -2963,6 +2970,69 @@ document.addEventListener("keydown", function (e) {
   if (p.orosShortcuts.handle(e)) e.stopPropagation();
 }, true);
 
+/* ===== "Open in Spreadsheet" from another app (Bible BR-S1) =====
+   target = { newSheet: { name, rows: [[cell, …], …], sum: [col, …] } }
+   Always a NEW sheet (never overwrites). Row 1 is the heading. A cell
+   is a finite number, a string (plain text: one starting with = + - @
+   gets an apostrophe, so it never runs as a formula) or null/"".
+   `sum`: 0-based columns that get =SUM(…) under the last row, the
+   only formulas made here. Capped at XL_ROWS_CAP × XL_COLS_CAP.   */
+function tableCell(v) {
+  if (typeof v === "number") return isFinite(v) ? String(v) : "";
+  if (typeof v !== "string") return "";
+  v = v.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 500);
+  return /^[=+\-@]/.test(v) ? "'" + v : v;
+}
+function sheetFromTable(p) {
+  if (!p || typeof p !== "object" || !Array.isArray(p.rows) || !p.rows.length) return false;
+  var sums = Array.isArray(p.sum) ? p.sum.filter(function (c) {
+    return c === Math.floor(c) && c >= 0 && c < XL_COLS_CAP;
+  }) : [];
+  var rows = p.rows.slice(0, XL_ROWS_CAP - (sums.length ? 1 : 0)).map(function (r) {
+    return Array.isArray(r) ? r.slice(0, XL_COLS_CAP).map(tableCell) : [];
+  });
+  var maxCols = 0, r, c;
+  for (r = 0; r < rows.length; r++) if (rows[r].length > maxCols) maxCols = rows[r].length;
+  var name = typeof p.name === "string" && p.name.trim() ? xlSafeName(p.name) : null;
+  var ts = now(), num = nextSheetNumber();
+  var sh = {
+    id: uid(),
+    name: name,
+    bi: name ? undefined : { en: "Sheet" + num, el: "\u03A6\u03CD\u03BB\u03BB\u03BF" + num },
+    rows: Math.min(Math.max(ROWS, rows.length + 5), XL_ROWS_CAP),
+    cols: Math.min(Math.max(COLS, maxCols), XL_COLS_CAP),
+    cw: {},
+    pos: maxPos() + 1,
+    mtime: ts
+  };
+  state.sheets.push(sh);
+  for (r = 0; r < rows.length; r++)
+    for (c = 0; c < rows[r].length; c++)
+      if (rows[r][c] !== "") state.cells[cellKey(sh.id, r, c)] = { v: rows[r][c], mtime: ts };
+  if (rows.length > 1) sums.forEach(function (col) {
+    var L = colName(col);
+    state.cells[cellKey(sh.id, rows.length, col)] = { v: "=SUM(" + L + "2:" + L + rows.length + ")", mtime: ts };
+  });
+  markDirty();
+  invalidateEval();
+  switchTo(sh.id);
+  notifyTransient(t("tbl.made").replace("{n}", name || sh.bi[LANG] || sh.bi.en));
+  return true;
+}
+/* Live push from the shell (window.__orosOpenAt), and the staged
+   target at boot (window.parent.__orosTakeTarget).                 */
+window.__orosOpenAt = function (target) {
+  if (target && typeof target === "object" && target.newSheet) sheetFromTable(target.newSheet);
+};
+function takeTarget() {
+  var tg = null;
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
+      tg = window.parent.__orosTakeTarget("spreadsheet");
+  } catch (e) { tg = null; }
+  if (tg && typeof tg === "object" && tg.newSheet) sheetFromTable(tg.newSheet);
+}
+
 function boot() {
   console.log("[SS] boot start, LANG =", LANG);
   loadState();
@@ -2981,6 +3051,7 @@ function boot() {
   renderSelection();
   console.log("[SS] boot COMPLETE [Wave 3]");
   $("grid-wrap").focus();
+  takeTarget();
 }
 
 boot();
