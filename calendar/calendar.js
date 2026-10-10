@@ -157,6 +157,8 @@
       "lbl.feed.hol": "Holidays",
       "lbl.feed.nameday": "Name days",
       "lbl.feed.obs": "World days",
+      "lbl.feed.time": "Work time",
+      "feed.time.noproj": "No project",
       "nd.line": "Name days:",
       "nd.contact": "{name}: name day",
       "nd.more": "+{n} more",
@@ -298,6 +300,8 @@
       "lbl.feed.hol": "Αργίες",
       "lbl.feed.nameday": "Ονομαστικές εορτές",
       "lbl.feed.obs": "Παγκόσμιες ημέρες",
+      "lbl.feed.time": "Ώρες εργασίας",
+      "feed.time.noproj": "Χωρίς έργο",
       "nd.line": "Γιορτάζουν:",
       "nd.contact": "Γιορτάζει: {name}",
       "nd.more": "+{n} ακόμη",
@@ -471,7 +475,8 @@ function transientNote(title, body) {
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
     { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
-    { id: "lbl-feed-obs",     color: "#64b5f6" }    // sky blue — world / internet days
+    { id: "lbl-feed-obs",     color: "#64b5f6" },   // sky blue — world / internet days
+    { id: "lbl-feed-time",    color: "#56b6c2" }    // cyan — Timesheet work time per project
   ];
   function feedLabelName(l) {
     if (l.id === "lbl-feed-bday") return t("lbl.feed.bday");
@@ -495,6 +500,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
     if (l.id === "lbl-feed-obs") return t("lbl.feed.obs");
+    if (l.id === "lbl-feed-time") return t("lbl.feed.time");
     return t("lbl.feed.custom");
   }
 
@@ -1367,6 +1373,52 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Timesheet read-only feed (Timesheet Wave 4). Reads
+  // "oros-timesheet-data" with timesheet/core.js (the SAME file the
+  // app runs; index.html loads it) and shows one all-day row per
+  // project per day: "Website · 2:15" (▶ while its timer runs).
+  // Exact times, no rounding; an entry across midnight counts on
+  // each day. The chip's on/off state is remembered on this device
+  // (STICKY_FEEDS). Click → Timesheet on that day. Never stored,
+  // synced or exported; parsed at most once a second.
+  var TS_DATA_KEY = "oros-timesheet-data";
+  var tsCache = { when: 0, raw: null, data: null };
+  function tsData() {
+    var C = window.orosTimesheetCore;
+    if (!C) return null;
+    var now = Date.now();
+    if (now - tsCache.when > 1000) {
+      tsCache.when = now;
+      var raw = null;
+      try { raw = localStorage.getItem(TS_DATA_KEY); } catch (e) { raw = null; }
+      if (raw !== tsCache.raw) {
+        tsCache.raw = raw;
+        tsCache.data = raw ? C.parse(raw) : null;
+      }
+    }
+    return tsCache.data;
+  }
+  function timesheetFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-time")) return [];
+    var data = tsData();
+    if (!data || !data.entries.length) return [];
+    var C = window.orosTimesheetCore;
+    return C.dayFeed(data, dateStr, Date.now()).filter(function (r) {
+      return r.ms >= 60000;                    // under a minute: not worth a row
+    }).map(function (r) {
+      var name = r.name || t("feed.time.noproj");
+      return {
+        id: "ts-" + dateStr + "-" + (r.pid || "none"),   // per-render key, never stored
+        title: (r.running ? "▶ " : "") + name.slice(0, 40) + " · " + C.fmtDur(r.ms),
+        labelId: "lbl-feed-time",
+        start: null,                             // all-day
+        note: r.notes.join(" · ").slice(0, 500),
+        _feed: true,
+        _openAt: { app: "timesheet", target: { day: dateStr } }
+      };
+    });
+  }
+
   // Wave 5 — Screen Pet read-only feed (pet.js v0.3). Two sources:
   //   1. "oros-pet-data" (SYNCED identity) → birthday row on every
   //      local-day anniversary of birthTs (birth day excluded) —
@@ -1970,7 +2022,7 @@ function transientNote(title, body) {
   var FEEDVIS_KEY = "oros-cal-feedvis";
   var DAYS_KEY = "oros-cal-days";
   var DAYS_MAX_AGE = 7 * 86400000;
-  var STICKY_FEEDS = ["lbl-feed-hol", "lbl-feed-nameday", "lbl-feed-obs"];
+  var STICKY_FEEDS = ["lbl-feed-hol", "lbl-feed-nameday", "lbl-feed-obs", "lbl-feed-time"];
   var daysData = null;
 
   function loadFeedVis() {
@@ -2069,6 +2121,7 @@ function transientNote(title, body) {
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
     .concat(observancesFeedOn(dateStr))
+    .concat(timesheetFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;

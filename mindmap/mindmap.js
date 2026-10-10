@@ -122,6 +122,8 @@
       "menu.slides": "Make slides from this map…", "toast.noBridge": "That app can't take it yet",
       "toast.todoNone": "Nothing to send (done items are left out)", "toast.todoMany": "Too many items for one list (at most {n})",
       "toast.slidesBig": "This branch is too big for one deck",
+      "ctx.notes": "Save as a note", "menu.notes": "Save the map as a note",
+      "toast.notesBig": "This branch is too long for one note", "toast.notesSent": "Saved “{name}” in Notes",
       "det.pic": "Picture", "det.picAdd": "Choose picture", "det.picDel": "Remove picture",
       "toast.picBudget": "Picture space is full (about 1 MB for all pictures)", "toast.picBad": "Could not read that image"
     },
@@ -188,10 +190,12 @@
       "link.dup": "Αυτοί οι δύο είναι ήδη συνδεδεμένοι", "link.title": "Σύνδεσμος", "link.label": "Ετικέτα (προαιρετικά)",
       "link.ph": "π.χ. εξαρτάται από", "link.noLabel": "Χωρίς ετικέτα", "link.edit": "Ετικέτα", "link.reverse": "Αντιστροφή",
       "link.goFrom": "Πήγαινε στην αρχή", "link.goTo": "Πήγαινε στο τέλος", "link.delete": "Διαγραφή συνδέσμου",
-      "app.name": "Νοητικός χάρτης", "ctx.todo": "Αποστολή στο To-Do…", "ctx.slides": "Διαφάνειες από αυτό το κλαδί…",
-      "menu.slides": "Διαφάνειες από τον χάρτη…", "toast.noBridge": "Αυτή η εφαρμογή δεν μπορεί να το δεχτεί ακόμα",
+      "app.name": "Νοητικός χάρτης", "ctx.todo": "Αποστολή στις Εργασίες…", "ctx.slides": "Παρουσίαση από αυτό το κλαδί…",
+      "menu.slides": "Παρουσίαση από τον χάρτη…", "toast.noBridge": "Αυτή η εφαρμογή δεν μπορεί να το δεχτεί ακόμα",
       "toast.todoNone": "Δεν υπάρχει κάτι να σταλεί (όσα έγιναν μένουν έξω)", "toast.todoMany": "Πάρα πολλά για μία λίστα (έως {n})",
       "toast.slidesBig": "Το κλαδί είναι πολύ μεγάλο για μία παρουσίαση",
+      "ctx.notes": "Αποθήκευση ως σημείωση", "menu.notes": "Αποθήκευση του χάρτη ως σημείωση",
+      "toast.notesBig": "Το κλαδί είναι πολύ μεγάλο για μία σημείωση", "toast.notesSent": "Το «{name}» αποθηκεύτηκε στις Σημειώσεις",
       "det.pic": "Εικόνα", "det.picAdd": "Επιλογή εικόνας", "det.picDel": "Αφαίρεση εικόνας",
       "toast.picBudget": "Ο χώρος για εικόνες γέμισε (περίπου 1 MB για όλες)", "toast.picBad": "Η εικόνα δεν διαβάστηκε"
     }
@@ -1790,6 +1794,7 @@
     items.push(["ctx.paste", function () { openPaste(id); }]);
     items.push(["ctx.export", function () { openExport(id); }]);
     items.push(["ctx.todo", function () { sendToTodo(id); }]);
+    items.push(["ctx.notes", function () { sendToNotes(id); }]);
     if (has) items.push(["ctx.slides", function () { sendToSlides(id); }]);
     if (!root) items.push(["ctx.delete", function () { deleteNode(id); }, "danger"]);
     openMenuAt(items, x, y, null, false, fromPress);
@@ -2459,6 +2464,36 @@
     openIn("slides", { outline: text, title: M.title(R.N[id].text, 120) || t("untitled") });
   }
 
+  var NOTES_MAX = 20000;
+  // Notes: __orosOpenAt("notes", { add: { title, text } }) makes a new
+  // top-level page (plain text). Body = the branch's note, then its
+  // nodes as an indented "- " list with each node's link and note.
+  function notesText(id) {
+    var out = [], top = R.N[id];
+    function one(k) { return (k.done ? "[x] " : "") + M.title((k.emoji ? k.emoji + " " : "") + k.text, 300); }
+    function extra(k, pad) {
+      if (k.url) out.push(pad + k.url);
+      String(k.note || "").split("\n").forEach(function (l) { l = l.trim(); if (l) out.push(pad + l); });
+    }
+    extra(top, "");
+    if (out.length && (R.kids[id] || []).length) out.push("");
+    var stack = (R.kids[id] || []).slice().reverse().map(function (g) { return [g, 0]; });
+    while (stack.length) {
+      var e = stack.pop(), k = R.N[e[0]], pad = new Array(e[1] + 1).join("  ");
+      out.push(pad + "- " + one(k));
+      extra(k, pad + "  ");
+      var kk = R.kids[e[0]] || [];
+      for (var i = kk.length - 1; i >= 0; i--) stack.push([kk[i], e[1] + 1]);
+    }
+    return out.join("\n");
+  }
+  function sendToNotes(id) {
+    if (!R || !R.N[id]) return;
+    var text = notesText(id), title = M.title(R.N[id].text, 200) || t("untitled");
+    if (text.length > NOTES_MAX) { showToast(t("toast.notesBig")); return; }
+    if (openIn("notes", { add: { title: title, text: text } })) showToast(t("toast.notesSent", { name: title }));
+  }
+
   // ---------- 12. Menus, dialogs, toasts ----------
   var menuCtl = null;
   function openMenu() {
@@ -2470,6 +2505,7 @@
       ["menu.export", function () { openExport(null); }, null, !R],
       ["menu.copy", function () { copyText(M.toOutline(R)); }, null, !R],
       ["menu.slides", function () { sendToSlides(R.root.id); }, null, !R || !(R.kids[R.root.id] || []).length],
+      ["menu.notes", function () { sendToNotes(R.root.id); }, null, !R],
       ["menu.import", importFile],
       ["menu.backup", backupAll, null, !Object.keys(MAPS).length]
     ];

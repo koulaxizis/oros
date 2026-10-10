@@ -20,6 +20,11 @@ Mind Map helps you sort out ideas: one idea in the centre, branches around it. T
 - Tap a link to select it. The bar at the bottom then has `Label`, `Reverse` and `Delete link`.
 - `Choose picture` in `Details…` adds a small picture above the text. Pictures are made smaller when you add them, and all pictures together can use about 1 MB.
 
+## Use it in other apps
+- `Send to To-Do…` in a node's menu makes a new list in [To-Do](app:todo) from that branch. Each idea becomes a task and its note comes too. Ideas marked done are left out, and To-Do asks you before it adds anything.
+- `Save as a note` makes a new page in [Notes](app:notes) with the branch as an indented list, including notes and links. `Save the map as a note` in the `More` menu does the same for the whole map.
+- `Make slides from this branch…` (or `Make slides from this map…` in the `More` menu) starts a presentation in [Slides](app:slides). The branch becomes the title slide, each main idea a slide, deeper ideas bullets and notes speaker notes. Slides asks you for a theme first.
+
 ## Outline and find
 - `Outline` shows the same map as an indented list, which is quicker for typing. [[Enter]] adds a line, [[Tab]] and [[Shift+Tab]] change the level, and [[Backspace]] on an empty line removes it.
 - `Find` searches the text and notes of the open map. The arrows step through the matches and open folded branches on the way.

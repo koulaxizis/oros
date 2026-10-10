@@ -97,6 +97,15 @@
       "f.roundHint": "Applies to reports and CSV only. Your entries keep their exact times.",
       "set.data": "Data", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup",
       "set.restoreHint": "A restore merges with what is here: nothing is replaced or lost.",
+      "set.import": "Import from Toggl, Clockify or Harvest (CSV)",
+      "imp.title": "Import from {src}", "imp.found": "{n} entries in the file, {from} to {to}.",
+      "imp.new": "New: {n}", "imp.dup": "Already here or deleted earlier: {n}", "imp.bad": "Rows that could not be read: {n}",
+      "imp.projects": "New projects: {n}", "imp.clients": "New clients: {n}",
+      "imp.order": "Dates in the file", "imp.dmy": "Day/Month (05/10 = 5 October)", "imp.mdy": "Month/Day (05/10 = 10 May)",
+      "imp.harvest": "Harvest has hours, not times: each day's entries are placed one after another from 09:00.",
+      "imp.hint": "Importing adds entries and never changes what is here. The same file twice adds nothing. Entries you delete stay deleted if you import again.",
+      "imp.go": "Import", "imp.none": "Nothing new to import", "imp.bad1": "Not a Toggl, Clockify or Harvest CSV export",
+      "toast.imported": "Imported: {n} entries", "toast.imported1": "Imported: 1 entry",
       "toast.save": "Could not save: storage is full", "toast.started": "Started: {p}",
       "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.undo": "Undo", "toast.badTime": "The end must be after the start",
@@ -162,6 +171,15 @@
       "f.roundHint": "Ισχύει μόνο στις αναφορές και στο CSV. Οι καταγραφές σου κρατούν τους ακριβείς χρόνους.",
       "set.data": "Δεδομένα", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο",
       "set.restoreHint": "Η επαναφορά ενώνεται με ό,τι υπάρχει: τίποτα δεν αντικαθίσταται ούτε χάνεται.",
+      "set.import": "Εισαγωγή από Toggl, Clockify ή Harvest (CSV)",
+      "imp.title": "Εισαγωγή από {src}", "imp.found": "{n} καταγραφές στο αρχείο, από {from} έως {to}.",
+      "imp.new": "Νέες: {n}", "imp.dup": "Υπάρχουν ήδη ή διαγράφηκαν παλιότερα: {n}", "imp.bad": "Γραμμές που δεν διαβάστηκαν: {n}",
+      "imp.projects": "Νέα έργα: {n}", "imp.clients": "Νέοι πελάτες: {n}",
+      "imp.order": "Ημερομηνίες στο αρχείο", "imp.dmy": "Μέρα/Μήνας (05/10 = 5 Οκτωβρίου)", "imp.mdy": "Μήνας/Μέρα (05/10 = 10 Μαΐου)",
+      "imp.harvest": "Το Harvest έχει ώρες χωρίς ώρα έναρξης: οι καταγραφές κάθε μέρας μπαίνουν η μία μετά την άλλη από τις 09:00.",
+      "imp.hint": "Η εισαγωγή μόνο προσθέτει καταγραφές και δεν αλλάζει ό,τι υπάρχει. Το ίδιο αρχείο δεύτερη φορά δεν προσθέτει τίποτα. Όσες διαγράψεις μένουν διαγραμμένες σε νέα εισαγωγή.",
+      "imp.go": "Εισαγωγή", "imp.none": "Δεν υπάρχει κάτι νέο για εισαγωγή", "imp.bad1": "Δεν είναι εξαγωγή CSV από Toggl, Clockify ή Harvest",
+      "toast.imported": "Εισαγωγή: {n} καταγραφές", "toast.imported1": "Εισαγωγή: 1 καταγραφή",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε", "toast.started": "Ξεκίνησε: {p}",
       "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.undo": "Αναίρεση", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
@@ -1370,6 +1388,7 @@
     var rs = button(t("set.restore"), "block", function () { dlg.close(); restoreBackup(); });
     form.appendChild(rs);
     form.appendChild(el("p", "hint", t("set.restoreHint")));
+    form.appendChild(button(t("set.import"), "block", function () { dlg.close(); importCsv(); }));
 
     actions(form, [], t("dlg.save"));
     form.addEventListener("submit", function (ev) {
@@ -1473,6 +1492,78 @@
         showToast(added === 1 ? t("toast.restored1") : (added ? t("toast.restored", { n: added }) : t("toast.restoredNone")));
       });
     }).catch(function () { showToast(t("toast.badFile")); });
+  }
+
+  // Wave 5: Toggl / Clockify / Harvest CSV. The file is read into a
+  // plan (core.importPlan, nothing changed yet); a preview shows what
+  // would be added and, when the dates could be read both ways, asks
+  // for their order. Import = one merge of the plan into the data.
+  var IMPORT_MAX_BYTES = 10 * 1024 * 1024;
+  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest" };
+  function importCsv() {
+    var host = dialogHost(), acc = ".csv,text/csv,text/plain";
+    var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
+    pick.then(function (file) {
+      if (!file) return;
+      if (file.size > IMPORT_MAX_BYTES) { showToast(t("imp.bad1")); return; }
+      return file.text().then(function (text) {
+        var order = LANG === "el" ? "dmy" : "mdy";
+        var plan = C.importPlan(text, data, order);
+        if (!plan) { showToast(t("imp.bad1")); return; }
+        importPreview(text, plan);
+      });
+    }).catch(function () { showToast(t("imp.bad1")); });
+  }
+  function importPreview(text, plan) {
+    var dlg = makeDialog("ts-import", t("imp.title", { src: SOURCES[plan.source] }));
+    var form = el("form");
+    form.method = "dialog";
+    var box = el("div", "imp-sum");
+    form.appendChild(box);
+    var sel = null;
+    if (plan.ambiguous) {
+      sel = el("select");
+      fillSelect(sel, [["dmy", t("imp.dmy")], ["mdy", t("imp.mdy")]], plan.order);
+      form.appendChild(field(t("imp.order"), sel));
+      sel.addEventListener("change", function () {
+        plan = C.importPlan(text, data, sel.value);
+        paint();
+      });
+    }
+    if (plan.source === "harvest") form.appendChild(el("p", "hint", t("imp.harvest")));
+    form.appendChild(el("p", "hint", t("imp.hint")));
+    actions(form, [], t("imp.go"));
+    var go = form.querySelector("button[type=submit]");
+    function paint() {
+      box.textContent = "";
+      var total = plan.fresh + plan.dup;
+      if (plan.from) box.appendChild(el("p", "", t("imp.found", { n: total, from: dayLabel(plan.from), to: dayLabel(plan.to) })));
+      var ul = el("ul", "imp-list");
+      ul.appendChild(el("li", "", t("imp.new", { n: plan.fresh })));
+      if (plan.dup) ul.appendChild(el("li", "", t("imp.dup", { n: plan.dup })));
+      if (plan.add.projects.length) ul.appendChild(el("li", "", t("imp.projects", { n: plan.add.projects.length })));
+      if (plan.add.clients.length) ul.appendChild(el("li", "", t("imp.clients", { n: plan.add.clients.length })));
+      if (plan.bad) ul.appendChild(el("li", "", t("imp.bad", { n: plan.bad })));
+      box.appendChild(ul);
+      go.disabled = !plan.fresh;
+      if (!plan.fresh) go.textContent = t("imp.none");
+      else go.textContent = t("imp.go");
+    }
+    paint();
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (!plan.fresh) return;
+      // Fresh plan against the data as it is now (a pull may have landed).
+      var final = C.importPlan(text, data, sel ? sel.value : plan.order);
+      dlg.close();
+      if (!final || !final.fresh) { showToast(t("imp.none")); return; }
+      data = C.mergeTimesheet(data, final.add);
+      saveNow();
+      renderAll();
+      showToast(final.fresh === 1 ? t("toast.imported1") : t("toast.imported", { n: final.fresh }));
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, null);
   }
 
   // ---------- 10. Toasts ----------
@@ -1783,7 +1874,8 @@
   boot();
 
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-  // target { entry } | { project } | { client }. An entry: the Timer
+  // target { entry } | { project } | { client } | { day } (Calendar
+  // feed row, Wave 4: the Timer tab on that day). An entry: the Timer
   // tab on its day, then its dialog; a project or a client: the
   // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
   function openSearchTarget(t) {
@@ -1802,6 +1894,9 @@
       if (!C.client(data, t.client)) return;
       setTab("projects");
       clientDialog(t.client);
+    } else if (C.validDay(t.day)) {
+      setTab("timer");
+      goDay(t.day);
     }
   }
   window.__orosOpenAt = openSearchTarget;

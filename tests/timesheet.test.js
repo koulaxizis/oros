@@ -377,3 +377,106 @@ test("fmtRange: year once when shared, both years across New Year, single day", 
   assert.equal(C.fmtRange("2025-12-29", "2026-01-04", "el"), "29/12/2025 – 04/01/2026");
   assert.equal(C.fmtRange("2026-10-05", "2026-10-05", "en"), "5 Oct 2026");
 });
+
+test("dayFeed: one row per project in start order, running counted to now, midnight split, notes", () => {
+  const d = model({
+    projects: [
+      { id: "pppppp1", name: "Site", client: "", rate: 0, bill: 1, m: 1 },
+      { id: "pppppp2", name: "Docs", client: "", rate: 0, bill: 1, m: 1 }
+    ],
+    entries: [
+      ent("eeeee1", at(5, 9), at(5, 10), { p: "pppppp2", desc: "draft" }),
+      ent("eeeee2", at(5, 8), at(5, 8, 30), { p: "pppppp1", desc: "fix" }),
+      ent("eeeee3", at(5, 11), at(5, 11, 15), { p: "pppppp1", desc: "fix" }),
+      ent("eeeee4", at(5, 23), at(6, 1), { p: "" }),
+      ent("eeeee5", at(6, 9), 0, { p: "pppppp2" })
+    ]
+  });
+  const r5 = C.dayFeed(d, key(5), at(6, 10));
+  assert.deepEqual(r5.map((r) => [r.pid, r.ms / 60000, r.running]), [["pppppp1", 45, false], ["pppppp2", 60, false], ["", 60, false]]);
+  assert.deepEqual(r5[0].notes, ["fix"], "a repeated description is listed once");
+  assert.equal(r5[1].name, "Docs");
+  const r6 = C.dayFeed(d, key(6), at(6, 10));
+  assert.deepEqual(r6.map((r) => [r.pid, r.ms / 60000, r.running]), [["", 60, false], ["pppppp2", 60, true]]);
+});
+
+// ---------- Wave 5: CSV import ----------
+const TOGGL = "﻿User,Email,Client,Project,Task,Description,Billable,Start date,Start time,End date,End time,Duration,Tags,Amount (EUR)\r\n" +
+  "Chris,c@x.gr,Acme,Website,,\"Header, footer\",Yes,2026-10-05,09:00:00,2026-10-05,10:30:00,01:30:00,,\r\n" +
+  "Chris,c@x.gr,,Internal,,Inbox,No,2026-10-05,23:30:00,2026-10-06,00:30:00,01:00:00,,\r\n" +
+  "Chris,c@x.gr,Acme,Website,,broken,Yes,2026-10-05,bad,2026-10-05,10:00:00,,,\r\n";
+const CLOCKIFY = "Project,Client,Description,Task,User,Group,Email,Tags,Billable,Start Date,Start Time,End Date,End Time,Duration (h),Duration (decimal),Billable Rate (EUR),Billable Amount (EUR)\n" +
+  "Docs,Beta,Manual,Writing,Chris,,c@x.gr,,Yes,10/06/2026,02:00:00 PM,10/06/2026,03:15:00 PM,01:15:00,1.25,40.00,50.00\n" +
+  "Docs,Beta,Review,,Chris,,c@x.gr,,Yes,10/13/2026,09:00:00 AM,10/13/2026,09:30:00 AM,00:30:00,0.50,40.00,20.00\n";
+const HARVEST = "Date,Client,Project,Project Code,Task,Notes,Hours,Hours Rounded,Billable?,Invoiced?,Approved?,First Name,Last Name\n" +
+  "05/10/2026,Acme,Website,,Design,Logo,2.5,2.5,Yes,Yes,No,Chris,K\n" +
+  "05/10/2026,Acme,Website,,Design,Logo,2.5,2.5,Yes,No,No,Chris,K\n" +
+  "06/10/2026,Acme,Support,,,Calls,1,1,No,No,No,Chris,K\n";
+
+test("readCsv: quotes, escaped quotes, CRLF, BOM, ; delimiter", () => {
+  assert.deepEqual(C.readCsv('﻿a;b\r\n"x;1";"say ""hi"""\r\n'), [["a", "b"], ["x;1", 'say "hi"']]);
+  assert.deepEqual(C.readCsv('a,b\n"multi\nline",2\n'), [["a", "b"], ["multi\nline", "2"]]);
+});
+
+test("importPlan: Toggl rows, new client + projects, midnight entry, bad rows, re-import adds nothing", () => {
+  const d = model({ clients: [{ id: "cccccc1", name: "ACME", rate: 0, m: 5 }] });
+  const plan = C.importPlan(TOGGL, d, "dmy");
+  assert.equal(plan.source, "toggl");
+  assert.equal(plan.fresh, 2);
+  assert.equal(plan.bad, 1);
+  assert.equal(plan.add.clients.length, 0, "Acme matches the existing ACME client");
+  assert.deepEqual(plan.add.projects.map((p) => [p.name, p.client, p.bill]).sort(), [["Internal", "", 0], ["Website", "cccccc1", 1]]);
+  const web = plan.add.entries.find((x) => x.desc === "Header, footer");
+  assert.equal(web.s, at(5, 9));
+  assert.equal(web.e, at(5, 10, 30));
+  const inbox = plan.add.entries.find((x) => x.desc === "Inbox");
+  assert.equal(inbox.e - inbox.s, H, "an entry across midnight keeps its real end");
+  assert.equal(plan.from, key(5));
+  assert.equal(plan.to, key(6));
+  const merged = C.mergeTimesheet(d, plan.add);
+  assert.equal(C.live(merged.entries).length, 2);
+  const again = C.importPlan(TOGGL, merged, "dmy");
+  assert.equal(again.fresh, 0);
+  assert.equal(again.dup, 2);
+  assert.equal(again.add.projects.length, 0);
+  // a deleted imported entry stays deleted on re-import
+  const gone = C.mergeTimesheet(merged, { entries: [{ id: web.id, m: 50, del: 1 }] });
+  const third = C.importPlan(TOGGL, gone, "dmy");
+  assert.equal(third.fresh, 0);
+  const after = C.mergeTimesheet(gone, third.add);
+  assert.equal(C.live(after.entries).length, 1);
+});
+
+test("importPlan: Clockify US dates + 12-hour times, task joined, rate from the file", () => {
+  const plan = C.importPlan(CLOCKIFY, model(), "dmy");
+  assert.equal(plan.source, "clockify");
+  assert.equal(plan.order, "mdy", "10/13 decides month/day order for the whole file");
+  assert.equal(plan.ambiguous, false);
+  const x = plan.add.entries.find((e) => e.desc === "Writing · Manual");
+  assert.equal(x.s, at(6, 14));
+  assert.equal(x.e, at(6, 15, 15));
+  assert.equal(plan.add.clients[0].name, "Beta");
+  assert.equal(plan.add.projects[0].rate, 4000);
+});
+
+test("importPlan: Harvest hours laid from 09:00, invoiced flag, ambiguous dates follow the choice", () => {
+  const plan = C.importPlan(HARVEST, model(), "dmy");
+  assert.equal(plan.source, "harvest");
+  assert.equal(plan.ambiguous, true);
+  const day5 = plan.add.entries.filter((e) => e.s >= at(5, 0) && e.s < at(6, 0)).sort((a, b) => a.s - b.s);
+  assert.equal(day5.length, 2, "two identical rows on one day are two entries");
+  assert.equal(day5[0].s, at(5, 9));
+  assert.equal(day5[1].s, at(5, 11, 30));
+  assert.deepEqual(day5.map((e) => e.billed).sort(), [0, 1]);
+  const support = plan.add.projects.find((p) => p.name === "Support");
+  assert.equal(support.bill, 0);
+  const us = C.importPlan(HARVEST, model(), "mdy");
+  assert.ok(us.add.entries.every((e) => new Date(e.s).getMonth() !== 9), "mdy reads 05/10 as 10 May");
+  const merged = C.mergeTimesheet(model(), plan.add);
+  assert.equal(C.importPlan(HARVEST, merged, "dmy").fresh, 0, "Harvest re-import matches by day, hours and text");
+});
+
+test("importPlan: not an export → null", () => {
+  assert.equal(C.importPlan("a,b\n1,2\n", model(), "dmy"), null);
+  assert.equal(C.importPlan("", model(), "dmy"), null);
+});
