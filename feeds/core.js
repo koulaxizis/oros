@@ -768,6 +768,7 @@
       folder: typeof f.folder === "string" && okId(f.folder, "d") ? f.folder : "",
       img: f.img === 0 || f.img === 1 ? f.img : -1,
       full: f.full === 1 ? 1 : 0,
+      notify: f.notify === 1 ? 1 : 0,
       m: f.m
     };
   }
@@ -819,7 +820,7 @@
     return {
       id: x.id, name: clip(oneLine(x.name), 60) || clip(q, 60), q: q,
       "in": RULE_IN[x["in"]] ? x["in"] : "title", scope: scope, act: act, tag: tag,
-      list: x.list ? 1 : 0, m: x.m
+      list: x.list ? 1 : 0, notify: x.notify ? 1 : 0, m: x.m
     };
   }
   // Last writer wins; equal stamps: the larger JSON (deterministic).
@@ -1108,6 +1109,20 @@
     out.tags.sort(cmpStr);
     return out;
   }
+  // Should a new article raise a notification? -> the label to show
+  // (the rule's name or the feed's title) or "". Only fresh, unread
+  // articles: a muted one (read by a rule) or an old one stays quiet,
+  // and a feed's first fetch never floods the inbox (first = true).
+  var NOTIFY_AGE = 2 * 86400000;
+  function notifyFor(data, h, text, now, first) {
+    if (!h || !h.date || h.date < now - NOTIFY_AGE || isRead(data, h)) return "";
+    for (var i = 0; i < data.rules.length; i++) {
+      var r = data.rules[i];
+      if (r.notify && h.date >= r.m - 86400000 && ruleMatches(data, r, h, text)) return r.name;
+    }
+    var f = feedById(data, h.feed);
+    return f && f.notify && !first ? f.title : "";
+  }
   // Rule results carry the article's own date as their stamp, so two
   // devices that both apply a rule write the same record, and anything
   // the user does later (stamped "now") wins over the rule.
@@ -1188,7 +1203,7 @@
     newId: newId, nextDelay: nextDelay,
     MAX_TAGS: MAX_TAGS, MAX_RULES: MAX_RULES, MAX_ITEM_TAGS: MAX_ITEM_TAGS,
     normTag: normTag, normRule: normRule, fold: fold, parseQuery: parseQuery, emptyQuery: emptyQuery,
-    matchQuery: matchQuery, ruleMatches: ruleMatches, ruleActions: ruleActions, applyRuleRead: applyRuleRead,
+    matchQuery: matchQuery, ruleMatches: ruleMatches, ruleActions: ruleActions, notifyFor: notifyFor, applyRuleRead: applyRuleRead,
     applyRuleSave: applyRuleSave, dupKey: dupKey, feedStats: feedStats, allFeedStats: allFeedStats, feedHealth: feedHealth
   };
   root.orosFeedsCore = api;
