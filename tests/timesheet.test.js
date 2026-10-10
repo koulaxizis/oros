@@ -407,7 +407,7 @@ const TOGGL = "﻿User,Email,Client,Project,Task,Description,Billable,Start date
   "Chris,c@x.gr,Acme,Website,,broken,Yes,2026-10-05,bad,2026-10-05,10:00:00,,,\r\n";
 const CLOCKIFY = "Project,Client,Description,Task,User,Group,Email,Tags,Billable,Start Date,Start Time,End Date,End Time,Duration (h),Duration (decimal),Billable Rate (EUR),Billable Amount (EUR)\n" +
   "Docs,Beta,Manual,Writing,Chris,,c@x.gr,,Yes,10/06/2026,02:00:00 PM,10/06/2026,03:15:00 PM,01:15:00,1.25,40.00,50.00\n" +
-  "Docs,Beta,Review,,Chris,,c@x.gr,,Yes,10/13/2026,09:00:00 AM,10/13/2026,09:30:00 AM,00:30:00,0.50,40.00,20.00\n";
+  "Docs,Beta,Review,,Chris,,c@x.gr,\"qa, #Docs, QA\",Yes,10/13/2026,09:00:00 AM,10/13/2026,09:30:00 AM,00:30:00,0.50,40.00,20.00\n";
 const HARVEST = "Date,Client,Project,Project Code,Task,Notes,Hours,Hours Rounded,Billable?,Invoiced?,Approved?,First Name,Last Name\n" +
   "05/10/2026,Acme,Website,,Design,Logo,2.5,2.5,Yes,Yes,No,Chris,K\n" +
   "05/10/2026,Acme,Website,,Design,Logo,2.5,2.5,Yes,No,No,Chris,K\n" +
@@ -447,12 +447,14 @@ test("importPlan: Toggl rows, new client + projects, midnight entry, bad rows, r
   assert.equal(C.live(after.entries).length, 1);
 });
 
-test("importPlan: Clockify US dates + 12-hour times, task joined, rate from the file", () => {
+test("importPlan: Clockify US dates + 12-hour times, task + tags, rate from the file", () => {
   const plan = C.importPlan(CLOCKIFY, model(), "dmy");
   assert.equal(plan.source, "clockify");
   assert.equal(plan.order, "mdy", "10/13 decides month/day order for the whole file");
   assert.equal(plan.ambiguous, false);
-  const x = plan.add.entries.find((e) => e.desc === "Writing · Manual");
+  const x = plan.add.entries.find((e) => e.desc === "Manual");
+  assert.equal(x.task, "Writing", "the Task column becomes the entry's task");
+  assert.deepEqual(plan.add.entries.find((e) => e.desc === "Review").tags, ["qa", "Docs"].sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1));
   assert.equal(x.s, at(6, 14));
   assert.equal(x.e, at(6, 15, 15));
   assert.equal(plan.add.clients[0].name, "Beta");
@@ -479,4 +481,108 @@ test("importPlan: Harvest hours laid from 09:00, invoiced flag, ambiguous dates 
 test("importPlan: not an export → null", () => {
   assert.equal(C.importPlan("a,b\n1,2\n", model(), "dmy"), null);
   assert.equal(C.importPlan("", model(), "dmy"), null);
+});
+
+// ---------------------------------------------------------------
+// Wave 6: tasks, tags, budgets, forward compatibility
+// ---------------------------------------------------------------
+
+test("tags: cleaned, '#' dropped, unique regardless of case, sorted, capped", () => {
+  assert.deepEqual(C.parseTags(" design, #Client A; design ,, DESIGN, urgent"), ["Client A", "design", "urgent"]);
+  assert.deepEqual(C.normTags("x"), []);
+  assert.equal(C.normTags(Array.from({ length: 20 }, (_, i) => "t" + i)).length, C.LIM.tags);
+  assert.equal(C.parseTags("x".repeat(99))[0].length, C.LIM.tag);
+});
+
+test("normalize: task/tags/budget only written when set, so old records stay byte-identical", () => {
+  const plain = { id: "eeeee1", p: "", desc: "a", s: at(5, 9), e: at(5, 10), billed: 0, m: 3 };
+  assert.equal(JSON.stringify(model({ entries: [plain] }).entries[0]), JSON.stringify(plain));
+  const d = model({
+    projects: [{ id: "pppppp1", name: "A", client: "", color: 0, rate: 0, bill: 1, arch: 0, budget: 600, m: 1 },
+               { id: "pppppp2", name: "B", client: "", color: 0, rate: 0, bill: 1, arch: 0, budget: -5, m: 1 }],
+    entries: [Object.assign({}, plain, { task: "  Logo \n", tags: ["b", "A"] })]
+  });
+  assert.equal(d.projects[0].budget, 600);
+  assert.equal("budget" in d.projects[1], false);
+  assert.equal(d.entries[0].task, "Logo");
+  assert.deepEqual(d.entries[0].tags, ["A", "b"]);
+  assert.deepEqual(Object.keys(d.entries[0]), ["id", "p", "desc", "s", "e", "billed", "task", "tags", "m"]);
+});
+
+test("forward compatibility: unknown flat fields ride along, sorted; junk and objects dropped", () => {
+  const x = { id: "eeeee1", p: "", desc: "", s: at(5, 9), e: at(5, 10), billed: 0, m: 3,
+              zeta: 1, alpha: "x", obj: { a: 1 }, Bad: 1, long: "y".repeat(501), flag: true };
+  const d = model({ entries: [x], clients: [{ id: "cccccc1", name: "C", rate: 0, m: 1, vat: "EL1" }] });
+  assert.deepEqual(Object.keys(d.entries[0]).slice(-3), ["alpha", "flag", "zeta"]);
+  assert.equal(d.clients[0].vat, "EL1");
+  const again = C.mergeTimesheet(d, d);
+  assert.equal(JSON.stringify(again), JSON.stringify(d), "canonical (R26)");
+});
+
+test("merge: a tagged edit wins by stamp; equal stamps converge on both sides", () => {
+  const base = { id: "eeeee1", p: "", desc: "", s: at(5, 9), e: at(5, 10), billed: 0, m: 3 };
+  const a = model({ entries: [Object.assign({}, base, { tags: ["x"], m: 4 })] });
+  const b = model({ entries: [base] });
+  assert.deepEqual(C.mergeTimesheet(a, b).entries[0].tags, ["x"]);
+  const c = model({ entries: [Object.assign({}, base, { task: "T" })] });
+  assert.equal(JSON.stringify(C.mergeTimesheet(b, c)), JSON.stringify(C.mergeTimesheet(c, b)));
+});
+
+function wave6() {
+  return model({
+    projects: [{ id: "pppppp1", name: "Site", client: "", color: 0, rate: 6000, bill: 1, arch: 0, budget: 240, m: 1 }],
+    entries: [
+      { id: "eeeee1", p: "pppppp1", desc: "", task: "Design", tags: ["web", "urgent"], s: at(5, 9), e: at(5, 11), billed: 0, m: 1 },
+      { id: "eeeee2", p: "pppppp1", desc: "", task: "Code", tags: ["web"], s: at(6, 9), e: at(6, 10), billed: 0, m: 1 },
+      { id: "eeeee3", p: "pppppp1", desc: "", task: "design", s: at(7, 9), e: at(7, 9, 30), billed: 0, m: 1 },
+      { id: "eeeee4", p: "", desc: "", s: at(7, 12), e: at(7, 13), billed: 0, m: 1 }
+    ]
+  });
+}
+
+test("report: tag filter, untagged filter, group by task and by tag", () => {
+  const d = wave6(), now = at(20, 0);
+  assert.equal(C.report(d, key(1), key(31), { tag: "WEB" }, now).total.ms, 3 * H);
+  assert.equal(C.report(d, key(1), key(31), { tag: "-" }, now).total.ms, 1.5 * H);
+  const byTask = C.report(d, key(1), key(31), { group: "task" }, now);
+  const label = byTask.rows.map((r) => [C.splitTaskKey(r.key).p, r.label, r.ms / H]);
+  assert.deepEqual(label, [["pppppp1", "Design", 2.5], ["", "", 1], ["pppppp1", "Code", 1]], "Design and design are one task");
+  const byTag = C.report(d, key(1), key(31), { group: "tag" }, now);
+  assert.deepEqual(byTag.rows.map((r) => [r.label, r.ms / H]), [["web", 3], ["urgent", 2], ["", 1.5]]);
+  assert.equal(byTag.total.ms, 4.5 * H, "an entry with two tags counts once in the total");
+  const one = C.report(d, key(1), key(31), { group: "tag", tag: "urgent" }, now);
+  assert.deepEqual(one.rows.map((r) => r.key), ["urgent"]);
+});
+
+test("budgetUse: exact time against the budget, near at 90 %, over above it", () => {
+  const d = wave6();
+  const u = C.budgetUse(d, "pppppp1", at(20, 0));
+  assert.deepEqual([u.ms / H, u.budgetMs / H, u.pct, u.state], [3.5, 4, 87, "ok"]);
+  d.entries.push({ id: "eeeee5", p: "pppppp1", desc: "", s: at(8, 9), e: at(8, 9, 15), billed: 0, m: 1 });
+  assert.equal(C.budgetUse(d, "pppppp1", at(20, 0)).state, "near");
+  d.entries.push({ id: "eeeee6", p: "pppppp1", desc: "", s: at(9, 9), e: 0, billed: 0, m: 1 });
+  assert.equal(C.budgetUse(d, "pppppp1", at(9, 10)).state, "over", "a running timer counts up to now");
+  assert.equal(C.budgetUse(d, "", at(9, 10)), null);
+});
+
+test("taskList / tagList: per project, most recent first; tags A–Z, one spelling", () => {
+  const d = wave6();
+  assert.deepEqual(C.taskList(d, "pppppp1"), ["design", "Code"]);
+  assert.deepEqual(C.taskList(d, ""), []);
+  assert.deepEqual(C.tagList(d), ["urgent", "web"]);
+});
+
+test("CSV export: task and tags columns; quote lines follow the tag filter", () => {
+  const d = wave6();
+  const csv = C.toCsv(d, key(5), key(5), {}, at(20, 0), "en").split("\r\n");
+  assert.match(csv[0], /;Description;Task;Tags;Billable;/);
+  assert.match(csv[1], /;Design;urgent, web;Yes;/);
+  const q = C.quoteLines(d, key(1), key(31), { tag: "urgent" }, at(20, 0), "en");
+  assert.equal(q.items.length, 1);
+  assert.equal(q.items[0].q, 2);
+});
+
+test("parseHours: a budget is always hours", () => {
+  assert.deepEqual(["40", "40,5", "40.25", "40:30", "", " 120 h", "1.250", "-3", "abc", "3:75"].map(C.parseHours),
+    [2400, 2430, 2415, 2430, 0, 7200, NaN, NaN, NaN, NaN]);
 });

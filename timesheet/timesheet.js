@@ -69,6 +69,13 @@
       "bill.bill": "Billable only", "bill.non": "Non-billable only",
       "billed.open": "Not invoiced", "billed.done": "Invoiced",
       "group.project": "Project", "group.client": "Client", "group.day": "Day",
+      "group.task": "Task", "group.tag": "Tag", "rep.tag": "Tag", "allTags": "All tags", "noTag": "No tag",
+      "noTask": "No task", "rep.multiTag": "An entry with several tags counts under each of them; the total counts it once.",
+      "f.task": "Task", "f.taskHint": "Optional, e.g. Design. Earlier tasks of the project are suggested.",
+      "f.tags": "Tags", "f.tagsHint": "Separate with commas, e.g. urgent, meeting.", "f.tagAdd": "Add tag {t}",
+      "f.budget": "Hours budget", "f.budgetHint": "Total hours for the project, e.g. 40 or 12:30. Empty: no budget.",
+      "toast.badHours": "Could not read those hours",
+      "budget.of": "{d} of {b} h ({p} %)", "budget.over": "Over budget by {d}", "budget.near": "Close to the budget",
       "col.hours": "Hours", "col.bill": "Billable", "col.amount": "Amount", "col.total": "Total",
       "rep.empty": "Nothing in this period.",
       "rep.noteRound": "Times rounded {mode} to {n} min per entry (Settings). Stored times are exact.",
@@ -143,6 +150,13 @@
       "bill.bill": "Μόνο χρεώσιμα", "bill.non": "Μόνο μη χρεώσιμα",
       "billed.open": "Δεν τιμολογήθηκαν", "billed.done": "Τιμολογήθηκαν",
       "group.project": "Έργο", "group.client": "Πελάτης", "group.day": "Μέρα",
+      "group.task": "Εργασία", "group.tag": "Ετικέτα", "rep.tag": "Ετικέτα", "allTags": "Όλες οι ετικέτες", "noTag": "Χωρίς ετικέτα",
+      "noTask": "Χωρίς εργασία", "rep.multiTag": "Μια καταγραφή με πολλές ετικέτες μετράει σε καθεμία· το σύνολο τη μετράει μία φορά.",
+      "f.task": "Εργασία", "f.taskHint": "Προαιρετικό, π.χ. Σχεδιασμός. Προτείνονται οι προηγούμενες εργασίες του έργου.",
+      "f.tags": "Ετικέτες", "f.tagsHint": "Χώρισέ τες με κόμμα, π.χ. επείγον, σύσκεψη.", "f.tagAdd": "Προσθήκη ετικέτας {t}",
+      "f.budget": "Προϋπολογισμός ωρών", "f.budgetHint": "Συνολικές ώρες για το έργο, π.χ. 40 ή 12:30. Κενό: χωρίς προϋπολογισμό.",
+      "toast.badHours": "Δεν κατάλαβα αυτές τις ώρες",
+      "budget.of": "{d} από {b} ώρες ({p} %)", "budget.over": "Πάνω από τον προϋπολογισμό κατά {d}", "budget.near": "Κοντά στον προϋπολογισμό",
       "col.hours": "Ώρες", "col.bill": "Χρεώσιμες", "col.amount": "Ποσό", "col.total": "Σύνολο",
       "rep.empty": "Τίποτα σε αυτή την περίοδο.",
       "rep.noteRound": "Οι χρόνοι στρογγυλεύονται {mode} στα {n} λεπτά ανά καταγραφή (Ρυθμίσεις). Οι αποθηκευμένοι χρόνοι μένουν ακριβείς.",
@@ -273,6 +287,7 @@
   }
 
   var TABS = ["timer", "week", "report", "projects"];
+  var GROUPS = ["project", "client", "task", "tag", "day"];
   var RANGES = ["thisWeek", "lastWeek", "thisMonth", "lastMonth", "thisYear", "custom"];
   function loadPrefs() {
     var v = null;
@@ -287,10 +302,10 @@
         range: RANGES.indexOf(r.range) >= 0 ? r.range : "thisMonth",
         from: C.validDay(r.from) ? r.from : "",
         to: C.validDay(r.to) ? r.to : "",
-        client: str(r.client), project: str(r.project),
+        client: str(r.client), project: str(r.project), tag: str(r.tag),
         bill: ["", "bill", "non"].indexOf(r.bill) >= 0 ? r.bill : "",
         billed: ["", "open", "done"].indexOf(r.billed) >= 0 ? r.billed : "",
-        group: ["project", "client", "day"].indexOf(r.group) >= 0 ? r.group : "project"
+        group: GROUPS.indexOf(r.group) >= 0 ? r.group : "project"
       }
     };
   }
@@ -323,11 +338,15 @@
   // ---------- 3. Edits ----------
   // Start: every running timer stops first (one at a time), then a
   // new entry opens with the draft's project and description.
-  function startTimer(p, desc) {
+  function startTimer(p, desc, from) {
     var now = Date.now();
     stopAll(now, true);
     var id = newId();
-    data.entries.push({ id: id, p: p || "", desc: C.cleanText(desc, C.LIM.desc), s: now, e: 0, billed: 0, m: now });
+    var x = { id: id, p: p || "", desc: C.cleanText(desc, C.LIM.desc), s: now, e: 0, billed: 0, m: now };
+    // "Continue" keeps the task and tags of the entry it continues.
+    if (from && from.task) x.task = from.task;
+    if (from && from.tags && from.tags.length) x.tags = from.tags.slice();
+    data.entries.push(x);
     prefs.lastP = p || "";
     savePrefs();
     saveNow();
@@ -371,7 +390,8 @@
     renderAll();
   }
   function resume(x) {
-    startTimer(C.project(data, x.p) ? x.p : "", x.desc);
+    var p = C.project(data, x.p) ? x.p : "";
+    startTimer(p, x.desc, p === x.p ? x : { tags: x.tags });
   }
 
   // The running entry follows the timer fields as they change.
@@ -413,6 +433,7 @@
   function addEntry(rec) {
     var now = Date.now();
     var x = { id: newId(), p: rec.p, desc: rec.desc, s: rec.s, e: rec.e, billed: rec.billed, m: now };
+    setTaskTags(x, rec);
     data.entries.push(x);
     saveNow();
     return x;
@@ -420,12 +441,19 @@
   function editEntry(id, rec) {
     var x = findEntry(id);
     if (!x) return null;
-    var same = x.p === rec.p && x.desc === rec.desc && x.s === rec.s && x.e === rec.e && x.billed === rec.billed;
+    var same = x.p === rec.p && x.desc === rec.desc && x.s === rec.s && x.e === rec.e && x.billed === rec.billed &&
+               (x.task || "") === rec.task && JSON.stringify(x.tags || []) === JSON.stringify(rec.tags);
     if (same) return x;
     x.p = rec.p; x.desc = rec.desc; x.s = rec.s; x.e = rec.e; x.billed = rec.billed;
+    setTaskTags(x, rec);
     x.m = stamp(x.m);
     saveNow();
     return x;
+  }
+  // task / tags are written only when set (as core.js normalizes).
+  function setTaskTags(x, rec) {
+    if (rec.task) x.task = rec.task; else delete x.task;
+    if (rec.tags && rec.tags.length) x.tags = rec.tags.slice(); else delete x.tags;
   }
   // Delete = tombstone with a fresh stamp (R17); Undo brings it back
   // with a newer stamp still, so it wins over the tombstone everywhere.
@@ -449,12 +477,23 @@
     list.push(rec);
   }
 
+  // An edit keeps the fields a newer version wrote (forward
+  // compatibility); core.js normalizes the result on the next load.
+  function keepExtras(cur, rec) {
+    var out = {};
+    Object.keys(cur).forEach(function (k) { out[k] = cur[k]; });
+    Object.keys(rec).forEach(function (k) { out[k] = rec[k]; });
+    if (!out.budget) delete out.budget;
+    return out;
+  }
   function saveProject(id, rec) {
     var cur = id ? findIn(data.projects, id) : null;
     if (cur && !cur.del) {
       var same = cur.name === rec.name && cur.client === rec.client && cur.color === rec.color &&
-                 cur.rate === rec.rate && cur.bill === rec.bill && cur.arch === rec.arch;
+                 cur.rate === rec.rate && cur.bill === rec.bill && cur.arch === rec.arch &&
+                 (cur.budget || 0) === (rec.budget || 0);
       if (same) return cur.id;
+      rec = keepExtras(cur, rec);
       rec.id = cur.id;
       rec.m = stamp(cur.m);
     } else {
@@ -487,6 +526,7 @@
     var cur = id ? findIn(data.clients, id) : null;
     if (cur && !cur.del) {
       if (cur.name === rec.name && cur.rate === rec.rate) return cur.id;
+      rec = keepExtras(cur, rec);
       rec.id = cur.id;
       rec.m = stamp(cur.m);
     } else {
@@ -680,7 +720,13 @@
       var txt = el("span", "ent-txt");
       var c = C.projectClient(data, C.project(data, x.p));
       txt.appendChild(el("span", "ent-p", projLabel(x.p) + (c ? " · " + c.name : "")));
-      if (x.desc) txt.appendChild(el("span", "ent-d", x.desc));
+      var line = [x.task || "", x.desc].filter(Boolean).join(" · ");
+      if (line) txt.appendChild(el("span", "ent-d", line));
+      if (x.tags && x.tags.length) {
+        var tg = el("span", "ent-tags");
+        x.tags.forEach(function (v) { tg.appendChild(el("span", "tag-chip", "#" + v)); });
+        txt.appendChild(tg);
+      }
       b.appendChild(txt);
       var end = C.endOf(x, now);
       var range = (x.s < lo ? "‹ " : "") + C.hhmm(x.s) + "–" + (x.e === 0 ? t("entry.running") : C.hhmm(end)) + (end > hi ? " ›" : "");
@@ -817,7 +863,7 @@
   }
   function filterObj() {
     var r = prefs.rep;
-    return { client: r.client, project: r.project, bill: r.bill, billed: r.billed, group: r.group };
+    return { client: r.client, project: r.project, bill: r.bill, billed: r.billed, tag: r.tag, group: r.group };
   }
   function fillSelect(sel, opts, value) {
     sel.innerHTML = "";
@@ -849,12 +895,20 @@
     r.project = fillSelect($("f-project"), pl, r.project);
     r.bill = fillSelect($("f-bill"), [["", t("all")], ["bill", t("bill.bill")], ["non", t("bill.non")]], r.bill);
     r.billed = fillSelect($("f-billed"), [["", t("all")], ["open", t("billed.open")], ["done", t("billed.done")]], r.billed);
-    r.group = fillSelect($("f-group"), [["project", t("group.project")], ["client", t("group.client")], ["day", t("group.day")]], r.group);
+    // Tags: shown once any entry has one (or a tag filter is still set).
+    var tags = C.tagList(data);
+    var tl = [["", t("allTags")], ["-", t("noTag")]];
+    tags.forEach(function (x) { tl.push([x.toLowerCase(), x]); });
+    r.tag = fillSelect($("f-tag"), tl, r.tag);
+    $("f-tag-w").hidden = !tags.length && !r.tag;
+    r.group = fillSelect($("f-group"), GROUPS.map(function (g) { return [g, t("group." + g)]; }), r.group);
   }
-  function groupLabel(key) {
-    var g = prefs.rep.group;
+  function groupLabel(row) {
+    var g = prefs.rep.group, key = row.key;
     if (g === "day") return dayLabel(key);
     if (g === "client") { var c = C.client(data, key); return c ? c.name : t("noClient"); }
+    if (g === "tag") return key ? row.label : t("noTag");
+    if (g === "task") return projLabel(C.splitTaskKey(key).p) + " · " + (row.label || t("noTask"));
     return projLabel(key);
   }
   var repState = null;
@@ -866,7 +920,8 @@
       ? t("rep.noteRound", { n: p.round, mode: t(p.rup ? "rep.up" : "rep.near") })
       : t("rep.noteExact");
     var runIn = C.running(data).some(function (x) { return rep.ids.indexOf(x.id) >= 0; });
-    $("rep-note").textContent = note + (runIn ? " " + t("rep.running") : "");
+    $("rep-note").textContent = note + (runIn ? " " + t("rep.running") : "") +
+      (f.group === "tag" ? " " + t("rep.multiTag") : "");
 
     var tbl = $("rep-table");
     tbl.innerHTML = "";
@@ -882,12 +937,12 @@
     rep.rows.forEach(function (r) {
       var tr = el("tr");
       var th = el("th", "r-name");
-      if (f.group === "project") {
+      if (f.group === "project" || f.group === "task") {
         var dot = el("i", "dot");
-        dot.style.background = projColor(r.key);
+        dot.style.background = projColor(f.group === "task" ? C.splitTaskKey(r.key).p : r.key);
         th.appendChild(dot);
       }
-      th.appendChild(el("span", "", groupLabel(r.key)));
+      th.appendChild(el("span", "", groupLabel(r)));
       tr.appendChild(th);
       var h = el("td", "num");
       h.appendChild(el("span", "", dur(r.ms)));
@@ -921,7 +976,7 @@
       mark.disabled = !rep.ids.length;
     } else {
       var open = C.report(data, keys[0], keys[1],
-        { client: f.client, project: f.project, bill: "bill", billed: "open", group: f.group }, now).ids;
+        { client: f.client, project: f.project, bill: "bill", billed: "open", tag: f.tag, group: f.group }, now).ids;
       open = open.filter(function (id) { var x = findEntry(id); return x && x.e !== 0; });
       repState.markIds = open;
       repState.markFlag = 1;
@@ -943,6 +998,8 @@
     });
     return out;
   }
+  // A budget as typed: "40", or "12:30" when it has minutes.
+  function budgetText(min) { return min % 60 ? C.fmtDur(min * 60000) : String(min / 60); }
   function projRow(p, totals) {
     var b = el("button", "p-row");
     b.type = "button";
@@ -957,8 +1014,22 @@
       var rate = C.rateOf(data, p.id);
       if (rate) bits.push(t("proj.rate", { r: money(rate) }));
     }
-    if (totals[p.id]) bits.push(t("proj.total", { d: dur(totals[p.id]) }));
+    var use = C.budgetUse(data, p.id, Date.now());
+    if (totals[p.id] && !use) bits.push(t("proj.total", { d: dur(totals[p.id]) }));
     if (bits.length) txt.appendChild(el("span", "p-sub", bits.join(" · ")));
+    if (use) {
+      var bw = el("span", "p-budget " + use.state);
+      var bar = el("span", "p-bar");
+      var fill = el("i", "");
+      fill.style.width = Math.min(100, use.pct) + "%";
+      bar.appendChild(fill);
+      bw.appendChild(bar);
+      var btxt = t("budget.of", { d: dur(use.ms), b: budgetText(use.budgetMs / 60000), p: use.pct });
+      if (use.state === "over") btxt += " · " + t("budget.over", { d: dur(use.ms - use.budgetMs) });
+      else if (use.state === "near") btxt += " · " + t("budget.near");
+      bw.appendChild(el("span", "p-btxt", btxt));
+      txt.appendChild(bw);
+    }
     b.appendChild(txt);
     b.addEventListener("click", function () { projectDialog(p.id); });
     return b;
@@ -1134,6 +1205,54 @@
     desc.maxLength = C.LIM.desc;
     form.appendChild(field(t("f.desc"), desc));
 
+    // Task: free text; the project's earlier tasks are suggested.
+    var task = input("text", x && x.task ? x.task : "");
+    task.maxLength = C.LIM.task;
+    task.autocomplete = "off";
+    var tlist = el("datalist");
+    tlist.id = "tl-" + newId();
+    task.setAttribute("list", tlist.id);
+    function fillTasks() {
+      tlist.innerHTML = "";
+      C.taskList(data, sel.value).slice(0, 30).forEach(function (n) {
+        var o = el("option");
+        o.value = n;
+        tlist.appendChild(o);
+      });
+    }
+    fillTasks();
+    sel.addEventListener("change", fillTasks);
+    var taskF = field(t("f.task"), task, t("f.taskHint"));
+    taskF.appendChild(tlist);
+    form.appendChild(taskF);
+
+    // Tags: comma separated; tags in use are offered as chips.
+    var tags = input("text", x && x.tags ? x.tags.join(", ") : "");
+    tags.autocomplete = "off";
+    tags.maxLength = (C.LIM.tag + 2) * C.LIM.tags;
+    var tagF = field(t("f.tags"), tags, t("f.tagsHint"));
+    var sugg = el("div", "tag-sugg");
+    function fillSugg() {
+      var have = C.parseTags(tags.value).map(function (v) { return v.toLowerCase(); });
+      sugg.innerHTML = "";
+      C.tagList(data).filter(function (v) { return have.indexOf(v.toLowerCase()) < 0; }).slice(0, 12)
+        .forEach(function (v) {
+          var b = el("button", "tag-chip", "#" + v);
+          b.type = "button";
+          b.setAttribute("aria-label", t("f.tagAdd", { t: v }));
+          b.addEventListener("click", function () {
+            tags.value = C.parseTags(tags.value + "," + v).join(", ");
+            fillSugg();
+          });
+          sugg.appendChild(b);
+        });
+      sugg.hidden = !sugg.childNodes.length;
+    }
+    fillSugg();
+    tags.addEventListener("change", fillSugg);
+    tagF.appendChild(sugg);
+    form.appendChild(tagF);
+
     var e0 = x ? (running ? 0 : (x.e || Math.max(Date.now(), x.s + 60000))) : defaultEnd(dayKey);
     var s0 = x ? x.s : Math.max(C.dayStart(dayKey), e0 - C.HOUR);
     var sd = input("date", C.dayKeyOf(s0)), st = input("time", C.hhmm(s0));
@@ -1209,7 +1328,8 @@
       } else if (s >= Date.now()) { showToast(t("toast.badTime")); st.focus(); return; }
       var rec = {
         p: sel.value, desc: C.cleanText(desc.value, C.LIM.desc), s: s, e: e,
-        billed: running ? 0 : (billed.box.checked ? 1 : 0)
+        billed: running ? 0 : (billed.box.checked ? 1 : 0),
+        task: C.cleanText(task.value, C.LIM.task), tags: C.parseTags(tags.value)
       };
       var cur = isNew ? null : findEntry(id);
       if (!isNew && !cur) { dlg.close(); return; }          // deleted elsewhere meanwhile
@@ -1295,6 +1415,11 @@
     var rateF = field(t("f.rate") + " (" + data.prefs.cur + ")", rate, rateHint(rate, cli.value));
     form.appendChild(rateF);
     cli.addEventListener("change", function () { rateF.lastChild.textContent = rateHint(rate, cli.value); });
+    var budget = input("text", p && p.budget ? budgetText(p.budget) : "");
+    budget.inputMode = "decimal";
+    budget.autocomplete = "off";
+    budget.placeholder = "0";
+    form.appendChild(field(t("f.budget"), budget, t("f.budgetHint")));
     var bill = checkRow(t("f.billable"), p ? p.bill : 1);
     form.appendChild(bill.row);
     var arch = checkRow(t("f.archived"), p ? p.arch : 0);
@@ -1309,12 +1434,16 @@
       if (!nm) { showToast(t("toast.badName")); name.focus(); return; }
       var cents = C.parseMoney(rate.value);
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
+      var mins = C.parseHours(budget.value);
+      if (isNaN(mins) || !C.inRange(mins, C.LIM.budget)) { showToast(t("toast.badHours")); budget.focus(); return; }
       var picked = colorBox.querySelector("input:checked");
       if (id && !C.project(data, id)) { dlg.close(); return; }    // deleted elsewhere meanwhile
-      var newPid = saveProject(id, {
+      var prec = {
         name: nm, client: cli.value, color: picked ? +picked.value : 0, rate: cents,
         bill: bill.box.checked ? 1 : 0, arch: p && arch.box.checked ? 1 : 0
-      });
+      };
+      if (mins) prec.budget = mins;
+      var newPid = saveProject(id, prec);
       dlg.close();
       if (!id && !C.running(data).length) { draft.p = newPid; prefs.lastP = newPid; savePrefs(); }
       renderAll();
@@ -1448,7 +1577,7 @@
     if (cur !== "EUR" && cur !== "USD") { showToast(t("quote.cur")); return; }
     var f = repState.f;
     var q = C.quoteLines(data, repState.keys[0], repState.keys[1],
-      { client: f.client, project: f.project, billed: f.billed }, Date.now(), LANG);
+      { client: f.client, project: f.project, billed: f.billed, tag: f.tag }, Date.now(), LANG);
     if (!q.items.length) { showToast(t("quote.none")); return; }
     var ok = false;
     try { ok = fn({ items: q.items, cur: cur, client: q.client }); } catch (e) { ok = false; }
@@ -1790,6 +1919,7 @@
     onFilter("project", "f-project");
     onFilter("bill", "f-bill");
     onFilter("billed", "f-billed");
+    onFilter("tag", "f-tag");
     onFilter("group", "f-group");
     ["f-from", "f-to"].forEach(function (idn) {
       $(idn).addEventListener("change", function () {
