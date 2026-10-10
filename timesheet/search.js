@@ -4,9 +4,9 @@
 // "search"). Read-only: reads oros-timesheet-data, never writes.
 // Hits: one per project (name; client as text), one per client
 // (name; its projects as text) and one per time entry that has a
-// description (the description; project and client as text, the
-// date shown is the day it started). Entries without a description
-// are found through their project. Tombstones ({ id, m, del: 1 })
+// description or a task (the description, else the task; the task,
+// project, client and #tags as text, the date shown is the day it
+// started). Other entries are found through their project. Tombstones ({ id, m, del: 1 })
 // and archived projects are skipped.
 // Opens through the generic deep link: target { entry } |
 // { project } | { client } (receiver in timesheet.js).
@@ -57,13 +57,15 @@
         });
       });
       live(d.entries).forEach(function (x) {
-        var desc = str(x.desc);
-        if (!desc || typeof x.s !== "number") return;
+        var desc = str(x.desc), task = str(x.task);
+        var tags = (Array.isArray(x.tags) ? x.tags : []).map(str).filter(Boolean);
+        if (!(desc || task) || typeof x.s !== "number") return;
         var p = projects[x.p], c = p ? clients[p.client] : null;
         out.push({
           id: "e:" + x.id,
-          title: desc,
-          text: [p ? str(p.name) : "", c ? str(c.name) : ""].filter(Boolean).join(" · "),
+          title: desc || task,
+          text: [desc ? task : "", p ? str(p.name) : "", c ? str(c.name) : "",
+                 tags.map(function (t) { return "#" + t; }).join(" ")].filter(Boolean).join(" · "),
           when: x.s,
           target: { entry: x.id }
         });
