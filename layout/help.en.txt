@@ -2,14 +2,16 @@
 Layout is a page-design app for print: flyers, newsletters, posters, cards and booklets. Place text, images and shapes on pages and export a PDF ready for the printer.
 
 ## Getting started
-Press `New document` and choose a `Page size` (such as A4, `Business card` or `Custom`), `Orientation`, `Pages`, `Margins`, `Columns` and `Bleed`. Tick `Facing pages (spreads)` for a booklet. You can change all this later in `Document setup…`.
+Press `New document` and choose a `Page size` (such as A4, `Business card` or `Custom`), `Orientation`, `Pages`, `Margins`, `Columns` and `Bleed`. Tick `Facing pages (spreads)` for a booklet. You can change all this later in `Document setup…`. Under `Start from`, pick `Blank` or one of 7 ready templates, such as a flyer or a newsletter.
 
 Your documents appear as cards on the home screen, where you can search, rename, duplicate or delete them (with undo right after).
 
 ## Place things on the page
 Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)` or `Line (L)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.
 
-With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu.
+With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu. `Hide` hides an object; with nothing selected, the page panel has `Show hidden objects`.
+
+Drag from a ruler to add a guide, and drag a guide back onto the ruler to remove it. The `Zoom` menu has `Fit page`, `Fit spread`, 50, 100 and 200 %.
 
 ### Text
 Double-click a text frame, or select it and press [[Enter]], to open the `Story Editor`. There you type, apply styles, use bold, italic and underline, and insert the page number or count.
@@ -20,12 +22,18 @@ If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a
 Double-click an image frame, or use `Place image…`, to choose a picture. Pick `Fit` or `Fill` and adjust `Scale`; the panel warns when the resolution is low for print. `Text wrap` lets text flow around a frame.
 
 ## Pages, masters, styles and colours
-- `Pages`: add, duplicate, delete and reorder pages, and manage `Masters`. Anything on a master appears on every page that uses it; `Edit master` opens it.
+- `Pages`: add, duplicate, delete and reorder pages, and manage `Masters`. Anything on a master appears on every page that uses it; `Edit master` opens it. To change master objects on one page only, use `Detach master objects here` (or right-click one for `Detach this master object`); `Reset to master` undoes it.
 - `Styles`: paragraph and character styles with font, size, leading, alignment, spacing and colour. A style can be `Based on` another.
 - `Colours`: your `Swatches`, in RGB or CMYK. CMYK looks approximate on screen, but the PDF gets the exact values.
 
-## Export
-`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open package` on the home screen opens it again.
+## Preflight and export
+The `Preflight` badge in the status bar turns green, orange or red. Click it for the list of problems: `Overset text`, `Missing image`, low resolution, objects that reach the trim edge but not the bleed, text smaller than 6 pt and empty frames. Pick a problem to select its object.
+
+`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open file` on the home screen opens it again.
+
+`Image (PNG / JPG)` exports one page as a picture at 72, 150 or 300 dpi (up to 16 megapixels).
+
+`Open file` also opens Scribus documents (`.sla`, versions 1.4 to 1.6) with their pages, masters, styles, colours, text and embedded images. Tables, free shapes and text on a path become simple boxes or are left out, and linked images need `Place image…` again.
 
 ## Sync and backup
 Your documents sync between your devices through [orOS sync](help:t/sync). Images are stored on the orOS disk and sync as separate files, so on another device a picture may show `Syncing…` for a while. The open document and zoom stay on each device. For a full copy with images, save a package; see also [backup](help:t/backup).
