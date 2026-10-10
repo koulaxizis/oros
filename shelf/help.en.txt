@@ -23,6 +23,15 @@ Rate with five stars in half steps: tap the left or right half of a star. Mark a
 ## Statistics and goals
 Pick a year with the arrows. `Statistics` shows what you finished per type, `Pages read` (print and e-books), `Average rating`, a chart `By month`, `Top creators` and `Top tags`. With `Set goals` you set a target per type for the year, and the app tells you if you're ahead of or behind schedule.
 
+## Import from Goodreads or Letterboxd
+Bring your existing library in with `More` → `Import from Goodreads / Letterboxd (CSV)`.
+- **Goodreads:** on the Goodreads website, open My Books → Import and export → Export library, and pick the CSV file it gives you.
+- **Letterboxd:** on the Letterboxd website, open Settings → Data → Export your data. Unzip the file and pick its CSV files; you can pick several at once (`watchlist`, `watched`, `ratings`, `diary`, `reviews`).
+
+Before anything is added, a preview shows how many titles were found per type and status, and how many are already on your shelf. Those are skipped, so importing the same file twice adds nothing. Press the import button to add the rest, or `Cancel`.
+
+What comes in: Goodreads shelves become the status (`read`, `currently-reading`, `to-read`; a shelf such as `did-not-finish` becomes dropped), with your rating, review, pages, format, the date you finished, and your other shelves as tags. From Letterboxd you get the watchlist, every logged watch with its date (rewatches count), your rating, review and tags. Right after an import, `Undo` takes it all back.
+
 ## Sync and backup
 Your titles, progress, ratings, reviews and goals sync between your devices through [orOS sync](help:t/sync). The open tab, type filter and sort stay on each device.
 
