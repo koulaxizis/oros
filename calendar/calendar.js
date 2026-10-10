@@ -137,6 +137,7 @@
       "feed.plants.due": "{name}: {kind} due",
       "feed.plants.water": "watering", "feed.plants.fert": "fertilizing", "feed.plants.mist": "misting", "feed.plants.repot": "repotting",
       "lbl.feed.petcare": "Pet health",
+      "lbl.feed.baby": "Baby",
       "feed.pc.due": "{name}: {what} due", "feed.pc.done": "{name}: {what}", "feed.pc.bday": "🎂 {name} turns {n}",
       "feed.pc.deworm": "deworming", "feed.pc.visit": "vet visit", "feed.pc.recheck": "recheck",
       "feed.pc.medDue": "{name}: last day of {what}", "feed.pc.food": "food runs out",
@@ -275,6 +276,7 @@
       "feed.plants.due": "{name}: ώρα για {kind}",
       "feed.plants.water": "πότισμα", "feed.plants.fert": "λίπανση", "feed.plants.mist": "ψέκασμα", "feed.plants.repot": "μεταφύτευση",
       "lbl.feed.petcare": "Υγεία ζώων",
+      "lbl.feed.baby": "Μωρό",
       "feed.pc.due": "{name}: ώρα για {what}", "feed.pc.done": "{name}: {what}", "feed.pc.bday": "🎂 {name}: γενέθλια ({n})",
       "feed.pc.deworm": "αποπαρασίτωση", "feed.pc.visit": "επίσκεψη στον κτηνίατρο", "feed.pc.recheck": "επανεξέταση",
       "feed.pc.medDue": "{name}: τελευταία μέρα για {what}", "feed.pc.food": "νέο σακί τροφής",
@@ -459,6 +461,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-travel", color: "#2bb3a3" },   // sea green — Travel trips + timed itinerary
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
+    { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
     { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
@@ -479,6 +482,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-travel") return t("lbl.feed.travel");
     if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
     if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
+    if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -1599,6 +1603,41 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Baby read-only feed (baby/core.js, loaded by index.html: the
+  // same rows the app's own data gives). Milestones, vaccines and
+  // doctor visits on their day; "N months old today" up to 2 years,
+  // then birthdays. Deleted children stay out. Rows are never
+  // stored; micro-cached ~1s like the other feeds.
+  var babyCache = { when: 0, data: null };
+
+  function babyData() {
+    var now = Date.now();
+    var Core = window.orosBabyCore;
+    if (!Core) return null;
+    if (now - babyCache.when > 1000) {
+      babyCache.data = null;
+      try { babyCache.data = Core.parse(localStorage.getItem(Core.STORAGE_KEY)); } catch (e) {}
+      babyCache.when = now;
+    }
+    return babyCache.data;
+  }
+
+  function babyFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-baby")) return [];
+    var d = babyData();
+    if (!d || !d.kids.length) return [];
+    return window.orosBabyCore.calendarRows(d, dateStr, LANG === "el" ? "el" : "en").map(function (r) {
+      return {
+        id: "bbf-" + r.id,                      // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-baby",
+        start: null,                            // all-day
+        _feed: true,
+        _babyOpen: true
+      };
+    });
+  }
+
   // Garage read-only feed (garage/core.js, loaded by index.html: the
   // same math as the app and the shell reminder). Renewals on their
   // expiry day, service plans on their due (or estimated) day; only
@@ -1929,6 +1968,7 @@ function transientNote(title, body) {
     .concat(travelFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
+    .concat(babyFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
     .concat(observancesFeedOn(dateStr))
@@ -1989,6 +2029,9 @@ function transientNote(title, body) {
       } else if (ev._fitnessId &&
                  typeof p.__orosOpenFitness === "function") {
         p.__orosOpenFitness(ev._fitnessId);
+      } else if (ev._babyOpen &&
+                 typeof p.__orosOpenApp === "function") {
+        p.__orosOpenApp("baby");
       } else if (ev._petOpen &&
                  typeof p.__orosOpenPet === "function") {
         // Screen Pet is a SHELL component — the bridge lives on the
