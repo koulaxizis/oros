@@ -4228,3 +4228,14 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Forgotten timer:** one "Forgot to stop it?" notice per running entry after `core.FORGOT_MS` (10 h), ns `timesheet` (KNOWN_APPS), key `forgot-<entryId>`, deep link `system:open:timesheet`; skipped while Timesheet is the visible app.
 - **Ctrl+Alt+Shift+T** starts / stops the timer (SC_DEFS `t`): live push to the running app, else a one-shot sessionStorage `oros-timesheet-toggle` + open. Help Shortcuts topic updated (EN/EL).
 - **Not tested:** a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Layout v1.1.0: preflight, templates, PNG/JPG, master overrides, rulers, Scribus import — 0.58.00
+- **Preflight** badge in the status bar (green / orange / red) + list; picking a problem selects its object.
+- **7 templates** (EN/EL) in New document with thumbnails.
+- **PNG / JPG** of one page at 72, 150 or 300 dpi (16 MP cap).
+- **Master overrides:** detach master objects on one page (page panel, context menu, Ctrl/Cmd+Shift+click), reset to master.
+- **Rulers + guides**, **hide / show hidden objects**, **zoom menu** (fit page / spread, 50 / 100 / 200 %).
+- **Open file** also opens Scribus `.sla` (1.4–1.6): pages, facing, masters, margins, columns, bleed, colours + tints, paragraph styles, threaded text with overrides, embedded images, shapes, lines, groups, rotation, opacity, wrap.
+- Fixes: undo of a height-only change; Greek all caps drop the tonos.
+- Files: `layout/` (+ sla.js), `designkit/` (model, render, pdf, text, + templates.js), `tests/layout.test.js`, `tests/layout-sla.test.js`.
+- Not tested: real phone, Safari / iOS, real Dropbox, files from a real Scribus install.
