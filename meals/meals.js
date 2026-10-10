@@ -618,7 +618,6 @@
     box.style.setProperty("--slots", data.set.sl.length);
     C.weekDays(view.wk).forEach(function (d) {
       var day = el("section", "day" + (d === td ? " today" : ""));
-      day.dataset.day = d;
       day.setAttribute("aria-label", fmtDay(d, true));
       day.appendChild(el("h3", "day-h", fmtDay(d)));
       data.set.sl.forEach(function (s) {
