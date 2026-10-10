@@ -2026,7 +2026,7 @@
           if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") tgt = window.parent.__orosTakeTarget("podcasts");
         } catch (e) {}
         if (tgt) openTarget(tgt);
-        else refresh(false);
+        if (!tgt || typeof tgt.show === "string") refresh(false);
         // While open: refresh every hour (never offline or hidden).
         setInterval(function () {
           if (document.visibilityState === "visible" && now() - lastRefresh > REFRESH_MIN * 60000) refresh(false);
