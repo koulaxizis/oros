@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'baby'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —

@@ -922,6 +922,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1334,6 +1335,44 @@
       title: txt.title,
       body: txt.body,
       deepLink: "system:open:water"
+    });
+  }
+
+  // Baby — feed-gap and daily-medicine reminders (off by default;
+  // the app's Settings turn them on, per device: oros-baby-rem is
+  // device-local). The RULE lives in baby/core.js, loaded by
+  // index.html before this file and shared with the app and its
+  // tests; the shell owns timing + emission over oros-baby-data, so
+  // it works with the app closed. Dedupe keys: one per feed gap
+  // (child + last feed id), one per medicine day. A stale
+  // index.html without core.js → silent.
+  var babyLastTick = 0;
+  function babyCheckTickThrottled() {
+    var now = Date.now();
+    if (now - babyLastTick < 60000) return;
+    babyLastTick = now;
+    babyCheckTick();
+  }
+  function babyCheckTick() {
+    var B = window.orosBabyCore, N = window.orosNotifs;
+    if (!B || typeof B.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var rem = null, data = null;
+    try { rem = B.readRem(JSON.parse(localStorage.getItem(B.REM_KEY) || "null")); } catch (e) { return; }
+    if (!B.remOn(rem)) return;
+    try { data = B.parse(localStorage.getItem(B.STORAGE_KEY)); } catch (e) { return; }
+    if (!data) return;                     // unreadable: the app keeps the rescue copy
+    var now = Date.now(), lang = state.lang === "el" ? "el" : "en";
+    B.reminderDue(data, rem, now).forEach(function (due) {
+      var txt = B.reminderText(due, rem, lang, now);
+      N.emit({
+        ns: "baby",
+        key: due.key,
+        type: "reminder",
+        title: txt.title,
+        body: txt.body,
+        deepLink: "system:open:baby"
+      });
     });
   }
 
