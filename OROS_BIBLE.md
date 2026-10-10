@@ -4040,6 +4040,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** tapping a text's font button opens a **Fonts** panel with three groups: - the three built-in faces, which are always available; - fonts already used in this design, plus "Your fonts" (recently used, kept on this device); - **More fonts (Fontsource)**: the open-licence Google Fonts catalogue, with an "Only fonts with Greek letters" filter (on by default in Greek). (PR #98)
 - **NOT tested:** real Fontsource downloads, because the container network blocks jsdelivr.
 
+### 2026-10-10 — Water: guide pages (EN/EL) — 0.49.03
+- **Changes:** Help has a Water page in English and Greek. It covers quick add, entries and past days, history, settings, reminders, sync/CSV, shortcuts, tips and limits. (PR #104)
+- **NOT tested:** a real phone, Safari / iOS.
+
 ### 2026-10-10 — shell + Settings 0.50.00 — settings move from the menu into the Settings app
 - **Changes:** the menu keeps the apps, search, `Install orOS` and three rows: Settings, Device info, Info. All settings sections (appearance, wallpaper, pet, sync, backups, notifications) are gone from the menu; they live in the Settings app (code merged in #85). The sync dot opens Settings › Sync when sync is off or locked. The factory reset lives in Settings › System; the Info window links there. Dock settings from launcher 0.49.00 move to Settings › Appearance through `setPref` (menu fallback only for a launcher without it). The SY-L2 failure reason shows in Settings › Sync (snapshot `sync.msg`). Device info links to Settings › Sync.
 - **Help (R38):** `settings/help.en|el.txt`; topics appearance, backup, sync, notifications, reset, menu, data, faq, install, start, shortcuts, troubleshooting, privacy now name the Settings labels.
