@@ -584,6 +584,23 @@ a.txt-btn { text-decoration: none; }
 .photo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .chk { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 10px; min-height: 32px; }
 .chk input { width: 22px; height: 22px; min-height: 0; flex-shrink: 0; accent-color: var(--accent); }
+.at-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.at-th {
+  width: 64px; height: 64px; padding: 0; overflow: hidden; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--panel-bg); color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.at-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.at-th:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.at-add { border-style: dashed; font-size: 28px; line-height: 1; color: var(--accent); }
+.at-miss { font-size: 11px; line-height: 1.2; padding: 4px; text-align: center; }
+.at-pdf { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: var(--danger); }
+.at-pdf.big { font-size: 40px; padding: 24px 0; }
+.at-view { display: flex; justify-content: center; margin: 4px 0 8px; }
+#pc-at-view .dlg-actions { flex-wrap: wrap; }
+#pc-at-view .dlg-actions .dlg-btn { flex: 1 1 40%; }
+.at-view img { max-width: 100%; max-height: 62vh; border-radius: 8px; display: block; background: #fff; }
 .times { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .times:empty { display: none; }
 .time-row { display: inline-flex; align-items: center; gap: 2px; }

@@ -14,7 +14,7 @@ Tap or click `Add a pet` (or the `Pet` button at the top). Give your pet a `Name
 ## One pet's page
 Open a pet from `My pets`. It has four parts:
 - `Overview`: what's next, the profile, your vet with `Call` and `Emergency` buttons, and `Routine care`.
-- `Health book`: add a `Vaccine`, `Deworming`, `Visit` or `Medicine`. Vaccine names are suggested for dogs, cats, rabbits and horses, and buttons such as `+1 year` fill the next date. Visits can have a cost; the page totals your vet costs for the year, and `Add to Budget` in a visit sends the cost to [Budget](app:budget). A medicine can have up to 6 dose times in `Remind me at`; you get a notification at each one. Filter with `All`, `Vaccines`, `Deworming`, `Visits`, `Medicine` or `Care`.
+- `Health book`: add a `Vaccine`, `Deworming`, `Visit` or `Medicine`. Vaccine names are suggested for dogs, cats, rabbits and horses, and buttons such as `+1 year` fill the next date. Visits can have a cost; the page totals your vet costs for the year, and `Add to Budget` in a visit sends the cost to [Budget](app:budget). A medicine can have up to 6 dose times in `Remind me at`; you get a notification at each one. Under `Attachments`, a vaccine, deworming, visit or medicine can keep up to 6 photos or PDFs, such as a prescription or test results: tap or click `+` to add one, and tap or click a thumbnail to view, `Open` (PDF), `Save a copy` or `Remove` it. Filter with `All`, `Vaccines`, `Deworming`, `Visits`, `Medicine` or `Care`.
 - `Weight`: a chart of your entries, the change over the last 30+ days, and a warning when the weight is outside the ideal range.
 - `Food`: the food, grams and meals a day, bag size and the day you opened it. The app works out `Runs out around` a date. `Add to shopping list` puts the food on your shopping list in [To-Do](app:todo).
 
@@ -27,6 +27,8 @@ Your pets, photos and health records sync between your devices through [orOS syn
 
 In `Settings`, `Export` saves all your pets to a file, and `Import` merges a file back in without replacing what you have.
 
+Attachments are not part of the sync data or the export file. They are files in [Files](app:files), folder `Pet Health Book`, and reach your other devices with Vault Drive. Until then, another device shows `Not on this device`.
+
 ## Keyboard shortcuts
 - [[Left]] / [[Right]] on the tabs switches between `Upcoming` and `My pets`.
 - [[Esc]] closes a pet's page.
@@ -38,3 +40,4 @@ In `Settings`, `Export` saves all your pets to a file, and `Import` merges a fil
 ## Limits
 - Reminders appear while orOS is open, even with this app closed. With orOS closed they wait until you open it again.
 - Up to 50 pets, and photos are kept small.
+- Attachment photos are shrunk to 1600 pixels and lose their location data. PDFs can be up to 10 MB.

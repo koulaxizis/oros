@@ -31,7 +31,7 @@ function build(lang) {
     " parseNum, parseW, fmtW, parseDist, fmtDist, parseLen, fmtLen, parseTime, fmtTime, parseReps, fmtNum," +
     " e1rm, exInfo, allExercises, normEx, normPg, normWo, normBm, normSettings, mergeFit, emptyData," +
     " entryStats, recordsOf, bestsFor, lastEntry, suggestW, woVolume, woSets, perWeek, groupSets, dayCounts," +
-    " seriesFor, buildCsv, csvCell, weekStart, ymd };")(webcrypto);
+    " seriesFor, buildCsv, csvCell, weekStart, ymd, parseCsvRows, parseImport, buildImport, impMatch, impKind };")(webcrypto);
 }
 const F = build("en");
 const FEL = build("el");
@@ -313,4 +313,114 @@ test("Habits row (fitness/core.js): finished workouts only, hidden when off or e
   assert.equal(core.workoutDays({ wo: "x" }), null);
   assert.equal(F.normSettings({ m: 1 }).hb, 1);
   assert.equal(F.normSettings({ m: 1, hb: 0 }).hb, 0);
+});
+
+// ---------- import from Strong / Hevy ----------
+
+const STRONG_OLD = [
+  "Date;Workout Name;Duration;Exercise Name;Set Order;Weight;Reps;Distance;Seconds;Notes;Workout Notes;RPE",
+  "2024-03-04 18:00:00;Push day;1h 5m;Bench Press (Barbell);W;40;10;0;0;;Felt good;",
+  "2024-03-04 18:00:00;Push day;1h 5m;Bench Press (Barbell);1;80,5;5;0;0;\"Grip; wide\";Felt good;",
+  "2024-03-04 18:00:00;Push day;1h 5m;Bench Press (Barbell);2;80,5;5;0;0;\"Grip; wide\";Felt good;",
+  "2024-03-04 18:00:00;Push day;1h 5m;Pull Up;1;0;8;0;0;;Felt good;",
+  "2024-03-04 18:00:00;Push day;1h 5m;Cable Crossover;1;20;12;0;0;;Felt good;",
+  "2024-03-06 07:30:00;Cardio;30m;Running (Treadmill);1;0;0;5,2;1800;;;",
+  "2024-03-06 07:30:00;Cardio;30m;Plank;1;0;0;0;60;;;"
+].join("\r\n");
+const STRONG_NEW = [
+  '"Workout #","Date","Workout Name","Duration (sec)","Exercise Name","Set Order","Weight (kg)","Reps","RPE","Distance (meters)","Seconds","Notes","Workout Notes"',
+  '"1","2024-05-01 09:00:00","Legs","3600","Squat (Barbell)","1","100","5","","","","",""',
+  '"1","2024-05-01 09:00:00","Legs","3600","Squat (Barbell)","Rest Timer","","","","","90","",""',
+  '"1","2024-05-01 09:00:00","Legs","3600","Squat (Barbell)","2","100","5","","","","",""'
+].join("\n");
+const HEVY = [
+  '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_lbs","reps","distance_miles","duration_seconds","rpe"',
+  '"Upper","15 Jan 2024, 08:30","15 Jan 2024, 09:40","","Overhead Press (Barbell)","","","0","warmup","45","10","","",""',
+  '"Upper","15 Jan 2024, 08:30","15 Jan 2024, 09:40","","Overhead Press (Barbell)","","","1","normal","95","5","","",""',
+  '"Upper","15 Jan 2024, 08:30","15 Jan 2024, 09:40","","Pull Up (Weighted)","","","0","normal","25","6","","",""'
+].join("\n");
+
+test("import: CSV rows with quotes, ; separator and BOM", () => {
+  const r = F.parseCsvRows("﻿a;b;c\r\n1;\"x; \"\"y\"\"\";3\r\n\r\n");
+  assert.deepEqual(r, [["a", "b", "c"], ["1", "x; \"y\"", "3"]]);
+});
+
+test("import: Strong (old layout) needs a unit and maps exercises by measure", () => {
+  const p = F.parseImport(STRONG_OLD);
+  assert.equal(p.src, "strong");
+  assert.equal(p.unitKnown, false);
+  const plan = F.buildImport(data(), p, "kg", 5);
+  assert.equal(plan.wo.length, 2);
+  assert.equal(plan.sets, 7);
+  const push = plan.wo.find((w) => w.ti === "Push day");
+  assert.equal(push.d, "2024-03-04");
+  assert.equal(push.en - push.st, 65 * 60000);
+  assert.deepEqual(push.x.map((e) => e.e).slice(0, 2), ["x-bench", "x-pullup"]);
+  assert.deepEqual(push.x[0].s, [[40000, 10, 0, 0, D | W], [80500, 5, 0, 0, D], [80500, 5, 0, 0, D]]);
+  assert.match(push.n, /^Felt good\nBench Press \(Barbell\): Grip; wide$/);
+  const cardio = plan.wo.find((w) => w.ti === "Cardio");
+  assert.equal(cardio.x[0].e, "x-run");
+  assert.deepEqual(cardio.x[0].s[0], [0, 0, 1800, 5200, D]);
+  assert.equal(cardio.x[1].e, "x-plank");
+  assert.deepEqual(plan.newNames, ["Cable Crossover"]);
+  assert.equal(plan.ex.length, 1);
+  assert.equal(plan.ex[0].g, "chest");
+  assert.equal(plan.ex[0].k, "wr");
+  // pounds: same numbers, other unit
+  const lb = F.buildImport(data(), p, "lb", 5);
+  assert.equal(lb.wo.find((w) => w.ti === "Push day").x[0].s[1][0], Math.round(80.5 * 453.59237));
+  assert.equal(lb.wo.find((w) => w.ti === "Cardio").x[0].s[0][3], Math.round(5.2 * 1609.344));
+});
+
+test("import: Strong (new layout) skips rest-timer rows, units from the header", () => {
+  const p = F.parseImport(STRONG_NEW);
+  assert.equal(p.unitKnown, true);
+  const plan = F.buildImport(data(), p, "lb", 5);
+  assert.equal(plan.wo.length, 1);
+  assert.deepEqual(plan.wo[0].x, [{ e: "x-squat", tr: 0, tr2: 0, rest: 0, s: [[100000, 5, 0, 0, D], [100000, 5, 0, 0, D]] }]);
+  assert.equal(plan.wo[0].en - plan.wo[0].st, 3600000);
+});
+
+test("import: Hevy pounds, warm-ups, weighted pull-up becomes its own exercise", () => {
+  const p = F.parseImport(HEVY);
+  assert.equal(p.src, "hevy");
+  assert.equal(p.unitKnown, true);
+  const plan = F.buildImport(data(), p, "kg", 5);
+  const w = plan.wo[0];
+  assert.equal(w.st, new Date(2024, 0, 15, 8, 30).getTime());
+  assert.equal(w.en - w.st, 70 * 60000);
+  assert.equal(w.x[0].e, "x-ohp");
+  assert.deepEqual(w.x[0].s.map((s) => s[4]), [D | W, D]);
+  assert.equal(w.x[0].s[1][0], Math.round(95 * 453.59237));
+  assert.notEqual(w.x[1].e, "x-pullup");        // seed pull-up has no weight
+  assert.equal(plan.ex[0].k, "wr");
+  assert.equal(plan.ex[0].g, "back");
+});
+
+test("import: the same file twice adds nothing; deleted stays deleted; rows survive the merge", () => {
+  const p = F.parseImport(STRONG_OLD);
+  const plan = F.buildImport(data(), p, "kg", 5);
+  let d = F.mergeFit(data(), { wo: plan.wo, ex: plan.ex });
+  assert.equal(d.wo.length, 2);
+  assert.equal(d.ex.length, 1);
+  const again = F.buildImport(d, p, "kg", 9);
+  assert.equal(again.wo.length, 0);
+  assert.equal(again.skipped, 2);
+  assert.equal(again.ex.length, 0);            // the new exercise is reused
+  assert.deepEqual(again.newNames, []);          // found by name now
+  assert.equal(F.impMatch(d, "Cable Crossover", "wr"), plan.ex[0].id);
+  const gone = plan.wo[0].id;
+  d.wo = d.wo.filter((w) => w.id !== gone);
+  d.tombs["wo:" + gone] = 99;
+  const third = F.buildImport(d, p, "kg", 100);
+  assert.equal(third.wo.length, 0);
+  // an own exercise with the same name is reused
+  const own = data({ ex: [{ id: "mine1", m: 1, n: "cable crossover", g: "chest", k: "wr", h: 0 }] });
+  assert.equal(F.impMatch(own, "Cable Crossover", "wr"), "mine1");
+});
+
+test("import: anything else is refused", () => {
+  assert.equal(F.parseImport("a,b\n1,2"), null);
+  assert.equal(F.parseImport(""), null);
+  assert.equal(F.parseImport(F.buildCsv(data())), null);
 });

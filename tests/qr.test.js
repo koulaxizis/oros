@@ -309,3 +309,20 @@ test("mergeQR: tombstones win ties, a newer edit resurrects, equal mtime agrees"
   assert.deepEqual(A.mergeQR({ codes: [null, 3, { id: ID }], tombs: { "BAD ID": 1, [ID]: -2 } }, undefined),
     { ver: 1, codes: [], tombs: {} });
 });
+
+// "QR code" buttons in other apps (shell deep link). The QR app has
+// one receiver; each source app sends only { from, id } for its own
+// saved items, and the QR app reads them with the picker mapping.
+test("deep link: one QR receiver, every source app sends { from, id }", () => {
+  const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
+  const qr = read("qr/qr.js");
+  assert.equal((qr.match(/window\.__orosOpenAt\s*=/g) || []).length, 1);
+  assert.match(qr, /__orosTakeTarget\("qr"\)/);
+  [["contacts/contacts.js", "contacts"], ["calendar/calendar.js", "calendar"], ["bookmarks/bookmarks.js", "bookmarks"]]
+    .forEach(([file, from]) => {
+      const src = read(file);
+      assert.match(src, /\("qr", /, file + " opens the QR app");
+      assert.ok(src.includes('from: "' + from + '", id'), file + " sends { from, id }");
+      assert.match(qr, new RegExp("\\b" + from + ': "'), "TARGET_TYPE lacks " + from);
+    });
+});
