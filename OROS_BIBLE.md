@@ -4417,3 +4417,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - help/search.js: the guide index now reads the internal app ids from apps.json (HELP_APPS stays as the fallback), so menu search finds the guide page of every app, not only 16.
 - Tests: full suite green.
 - Not tested: a real phone, Safari.
+
+### 2026-10-10 — Timesheet Wave 7: Pomodoro focus sessions from Time (#147) — 0.65.02
+- Time: Pomodoro focus sessions can be logged to a Timesheet project (BR-TS-POMO through the device-local inbox `oros-timesheet-inbox`; Timesheet picks them up). time/index.html loads ../timesheet/core.js (already precached).
+- Bible: TIMESHEET note for BR-TS-POMO.
+- Tests: tests/timesheet.test.js extended.
+- Not tested: a real phone, Safari, real Dropbox.
