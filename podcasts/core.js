@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — core.js (pure logic, v1.0.0)
+// orOS Podcasts — core.js (pure logic, v1.2.0)
 // Everything that is not the screen, the audio element or the
 // network: ids, the podcast parts of a feed (itunes: / podcast:
 // tags) read from a small element tree, durations, chapters,
@@ -419,7 +419,7 @@
       var at = +c.startTime;
       if (!isFinite(at) || at < 0) return;
       if (c.toc === false) return;
-      out.push({ at: Math.floor(at), title: clean(c.title, 200) || fmtTime(at), img: safeUrl(c.img, base), url: safeUrl(c.url, base) });
+      out.push({ at: Math.floor(at), title: clean(plain(typeof c.title === "string" ? c.title : ""), 200) || fmtTime(at), img: safeUrl(c.img, base), url: safeUrl(c.url, base) });
     });
     out.sort(function (a, b) { return a.at - b.at; });
     return out;
@@ -822,6 +822,276 @@
     return shows.filter(function (s) { return fold(s.title + " " + s.by).indexOf(q) >= 0; });
   }
 
+  // ---------- 10. Phase 2: transcripts, note chapters, search, stats, top list, share ----------
+  var CUES_MAX = 20000;
+  // "00:01:02,345" / "01:02.345" / "62.5" → seconds (float), NaN if not a time.
+  function cueTime(s) {
+    s = String(s || "").trim().replace(",", ".");
+    var m = s.match(/^(?:(\d{1,3}):)?(\d{1,2}):(\d{1,2}(?:\.\d+)?)$/);
+    if (m) return (+m[1] || 0) * 3600 + +m[2] * 60 + +m[3];
+    return /^\d+(\.\d+)?$/.test(s) ? +s : NaN;
+  }
+  function cueText(s) {
+    // WebVTT/SRT markup (<v Name>, <i>, <c.x>, <00:01.000>) → plain text.
+    return clean(decodeEntities(String(s || "").replace(/<[^>]*>/g, " ")), 2000);
+  }
+  // Podcasting 2.0 transcript (SRT, WebVTT, JSON, HTML, plain text)
+  // → [{at, end, text, who}] sorted by time; untimed text gets at = -1.
+  function parseTranscript(text, type) {
+    text = String(text || "").replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+    type = String(type || "").toLowerCase();
+    var out = [];
+    var push = function (at, end, txt, who) {
+      txt = cueText(txt);
+      if (!txt || out.length >= CUES_MAX) return;
+      out.push({ at: at, end: isFinite(end) && end > at ? end : at, text: txt, who: clean(who || "", 80) });
+    };
+    if (/json/.test(type) || /^\s*[{[]/.test(text)) {
+      var j = null;
+      try { j = JSON.parse(text); } catch (e) { j = null; }
+      var segs = j && Array.isArray(j.segments) ? j.segments : Array.isArray(j) ? j : null;
+      if (segs) {
+        segs.forEach(function (sg) {
+          if (!sg || typeof sg !== "object") return;
+          var at = +sg.startTime, end = +sg.endTime;
+          if (!isFinite(at) || at < 0) return;
+          push(at, end, sg.body, sg.speaker);
+        });
+        return mergeCues(out);
+      }
+    }
+    if (/vtt|srt|subrip/.test(type) || /-->/.test(text)) {
+      text.split(/\n{2,}/).forEach(function (block) {
+        var lines = block.split("\n"), i = 0;
+        while (i < lines.length && lines[i].indexOf("-->") < 0) i++;
+        if (i >= lines.length) return;
+        var tm = lines[i].split("-->");
+        var at = cueTime(tm[0]), end = cueTime(String(tm[1] || "").trim().split(/\s+/)[0]);
+        if (!isFinite(at)) return;
+        var body = lines.slice(i + 1).join(" ");
+        var who = "";
+        var v = body.match(/<v(?:\.[\w.-]+)?\s+([^>]+)>/);
+        if (v) who = v[1];
+        else {
+          var sp = body.match(/^\s*([A-ZΑ-Ω][\w .'’-]{0,40}):\s+(.+)$/);
+          if (sp) { who = sp[1]; body = sp[2]; }
+        }
+        push(at, end, body, who);
+      });
+      return mergeCues(out.sort(function (a, b) { return a.at - b.at; }));
+    }
+    // HTML or plain text: paragraphs without times.
+    (/<[a-z!/]/i.test(text) ? plain(text) : text).split(/\n+/).forEach(function (p) {
+      var m = p.match(/^\s*\[?((?:\d{1,2}:)?\d{1,2}:\d{2})\]?\s+(.+)$/);
+      var last = out.length ? out[out.length - 1].at : -1;
+      if (m && cueTime(m[1]) >= last) push(cueTime(m[1]), NaN, m[2], "");
+      else push(last, NaN, m ? m[2] : p, "");                     // untimed: stays with the last time
+    });
+    return out;
+  }
+  // Word-level JSON transcripts give one cue per word: join runs of the
+  // same speaker into phrases (≤ 12 s, ≤ 240 characters).
+  function mergeCues(cues) {
+    if (cues.length < 2) return cues;
+    var words = 0;
+    cues.forEach(function (c) { if (c.text.indexOf(" ") < 0) words++; });
+    if (words < cues.length * 0.6) return cues;
+    var out = [], cur = null;
+    cues.forEach(function (c) {
+      if (cur && c.who === cur.who && c.at - cur.at < 12 && cur.text.length + c.text.length < 240 && !/[.!?;]$/.test(cur.text)) {
+        cur.text += " " + c.text; cur.end = Math.max(cur.end, c.end);
+      } else { cur = { at: c.at, end: c.end, text: c.text, who: c.who }; out.push(cur); }
+    });
+    return out;
+  }
+  // Index of the cue playing at pos (-1 before the first timed cue).
+  function cueAt(cues, pos) {
+    var lo = 0, hi = (cues || []).length - 1, best = -1;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (cues[mid].at <= pos) { best = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    return best >= 0 && cues[best].at >= 0 ? best : -1;
+  }
+  function searchCues(cues, q) {
+    q = fold(clean(q, 100));
+    var out = [];
+    if (!q) return out;
+    (cues || []).forEach(function (c, i) { if (fold(c.text).indexOf(q) >= 0) out.push(i); });
+    return out;
+  }
+  // Transcript to fetch first: timed formats before untimed, the app
+  // language before others.
+  function pickTranscript(list, lang) {
+    var rank = function (tr) {
+      var ty = tr.type || "", r = /json/.test(ty) ? 0 : /vtt/.test(ty) ? 1 : /srt|subrip/.test(ty) ? 2 : /html/.test(ty) ? 3 : 4;
+      if (lang && tr.lang && tr.lang.toLowerCase().indexOf(lang) !== 0) r += 10;
+      return r;
+    };
+    return (list || []).slice().sort(function (a, b) { return rank(a) - rank(b); })[0] || null;
+  }
+  // Chapters written in the notes: lines like "12:34 Title" or
+  // "(1:02:03) – Title". Needs two or more, in order → [{at, title}].
+  function noteChapters(text, dur) {
+    var out = [];
+    String(text || "").split("\n").forEach(function (line) {
+      var m = line.match(/^\s*[-•*–—]?\s*[([]?((?:\d{1,2}:)?[0-5]?\d:[0-5]\d)[)\]]?\s*[-–—:|.]?\s*(.{2,})$/);
+      if (!m) return;
+      var at = parseDuration(m[1]);
+      if (dur && at > dur) return;
+      if (out.length && at <= out[out.length - 1].at) return;
+      out.push({ at: at, title: clean(m[2], 200), img: "", url: "" });
+    });
+    return out.length >= 2 ? out.slice(0, LIM.chapters) : [];
+  }
+  // Every cached episode whose title or notes match → [{id, s, pub, inTitle}]
+  // (title matches first, then newest).
+  function searchEpisodes(data, cache, q, max) {
+    q = fold(clean(q, 100));
+    var out = [];
+    if (q.length < 2) return out;
+    (data.shows || []).forEach(function (s) {
+      ((cache && cache[s.id]) || []).forEach(function (e) {
+        var inTitle = fold(e.title).indexOf(q) >= 0;
+        if (inTitle || (e.notes && fold(plain(e.notes)).indexOf(q) >= 0)) out.push({ id: e.id, s: s.id, pub: e.pub || 0, inTitle: inTitle });
+      });
+    });
+    out.sort(function (a, b) { return (b.inTitle - a.inTitle) || (b.pub - a.pub) || cmpStr(a.id, b.id); });
+    return out.slice(0, max || 200);
+  }
+  // Listening statistics (device-local, kept by the host):
+  //   { d: {"YYYY-MM-DD": [wallSec, mediaSec]}, s: {showId: mediaSec} }
+  function dayKey(ms) {
+    var d = new Date(ms);
+    return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+  }
+  function addListen(stats, ms, sid, wallSec, rate) {
+    stats = stats && typeof stats === "object" ? stats : {};
+    var d = stats.d && typeof stats.d === "object" ? stats.d : {}, s = stats.s && typeof stats.s === "object" ? stats.s : {};
+    wallSec = +wallSec;
+    rate = +rate > 0 ? +rate : 1;
+    if (!(wallSec > 0) || wallSec > 30) return { d: d, s: s };   // gaps (sleep, seek) are not listening
+    var k = dayKey(ms), row = Array.isArray(d[k]) ? d[k] : [0, 0];
+    d[k] = [Math.round((+row[0] || 0) * 10 + wallSec * 10) / 10, Math.round((+row[1] || 0) * 10 + wallSec * rate * 10) / 10];
+    if (SHOW_RE.test(sid)) s[sid] = Math.round(((+s[sid] || 0) + wallSec * rate) * 10) / 10;
+    // Keep 400 days and 300 shows.
+    var days = Object.keys(d).sort();
+    if (days.length > 400) days.slice(0, days.length - 400).forEach(function (x) { delete d[x]; });
+    var ids = Object.keys(s);
+    if (ids.length > 300) ids.sort(function (a, b) { return s[a] - s[b]; }).slice(0, ids.length - 300).forEach(function (x) { delete s[x]; });
+    return { d: d, s: s };
+  }
+  function statsSummary(stats, nowMs) {
+    var d = (stats && stats.d) || {}, s = (stats && stats.s) || {};
+    var sum = function (fromMs) {
+      var from = dayKey(fromMs), w = 0, m = 0;
+      Object.keys(d).forEach(function (k) { if (!fromMs || k >= from) { w += +d[k][0] || 0; m += +d[k][1] || 0; } });
+      return { wall: Math.round(w), media: Math.round(m), saved: Math.max(0, Math.round(m - w)) };
+    };
+    var top = Object.keys(s).sort(function (a, b) { return (s[b] - s[a]) || cmpStr(a, b); }).slice(0, 5)
+      .map(function (id) { return { s: id, media: Math.round(s[id]) }; });
+    var days = Object.keys(d).filter(function (k) { return +d[k][0] >= 60; }).sort();
+    return { all: sum(0), week: sum(nowMs - 6 * DAY), month: sum(nowMs - 29 * DAY), top: top,
+      since: days[0] || "", days: days.length };
+  }
+  // Apple's public top list (no key) → podcast ids; the feeds come from
+  // one lookup call for all of them.
+  function appleTopUrl(country, n) {
+    var cc = /^[a-z]{2}$/.test(country || "") ? country : "us";
+    n = Math.max(1, Math.min(50, +n || 25));
+    return "https://rss.applemarketingtools.com/api/v2/" + cc + "/podcasts/top/" + n + "/podcasts.json";
+  }
+  function parseAppleTop(json) {
+    var res = json && json.feed && Array.isArray(json.feed.results) ? json.feed.results : [];
+    var out = [];
+    res.forEach(function (r) { if (r && /^\d{3,15}$/.test(String(r.id)) && out.indexOf(String(r.id)) < 0) out.push(String(r.id)); });
+    return out.slice(0, 50);
+  }
+  function appleLookupManyUrl(ids) {
+    ids = (ids || []).filter(function (x) { return /^\d{3,15}$/.test(String(x)); }).slice(0, 50);
+    return ids.length ? "https://itunes.apple.com/lookup?entity=podcast&id=" + ids.join(",") : "";
+  }
+  // Lookup results in the order of the top list.
+  function orderByIds(hits, json, ids) {
+    var byFeed = {};
+    (json && Array.isArray(json.results) ? json.results : []).forEach(function (r) {
+      if (r && r.collectionId && r.feedUrl) byFeed[String(r.collectionId)] = safeUrl(r.feedUrl);
+    });
+    var rank = {};
+    (ids || []).forEach(function (id, i) { if (byFeed[id]) rank[byFeed[id]] = i; });
+    return hits.slice().sort(function (a, b) {
+      var x = rank[a.url] === undefined ? 1e9 : rank[a.url], y = rank[b.url] === undefined ? 1e9 : rank[b.url];
+      return x - y;
+    });
+  }
+  // Country for the top list: the app language first (el → gr), then
+  // the browser's region.
+  function topCountry(lang, navLang) {
+    if (lang === "el") return "gr";
+    var m = String(navLang || "").match(/^[a-z]{2,3}[-_]([A-Za-z]{2})\b/);
+    return m ? m[1].toLowerCase() : "us";
+  }
+  // Text to share an episode, with the place when there is one.
+  function shareText(m, ep, pos) {
+    var bits = [clean(m && m.title, 200)];
+    if (m && m.show) bits[0] += " — " + clean(m.show, 200);
+    if (pos > 0) bits[0] += " (" + fmtTime(pos) + ")";
+    var url = safeUrl((ep && ep.link) || "") || safeUrl((m && m.audio) || "");
+    return { title: clean(m && m.title, 200), text: bits[0], url: url };
+  }
+
+  // ---------- 11. Phase 3: new-episode notices, other apps ----------
+  // Which episodes of a show to announce. mark = the newest publish
+  // time already announced on this device (device-local, per show).
+  // No mark yet (notices just turned on, or a new device) → nothing is
+  // announced, only the mark is taken: the bell never floods. Only
+  // episodes of the last 3 days, newest first, at most 3 per pass.
+  var NOTICE_AGE = 3 * 86400000, NOTICE_MAX = 3;
+  function freshEpisodes(eps, mark, now) {
+    var ok = (eps || []).filter(function (e) {
+      return e && typeof e.id === "string" && EP_RE.test(e.id) && isStamp(e.pub) && e.pub > 0 && e.pub <= now + 86400000;
+    });
+    var top = 0;
+    ok.forEach(function (e) { if (e.pub > top) top = e.pub; });
+    if (!isStamp(mark)) return { list: [], more: 0, mark: top || now };
+    var list = ok.filter(function (e) { return e.pub > mark && e.pub >= now - NOTICE_AGE; })
+      .sort(function (a, b) { return b.pub - a.pub || cmpStr(a.id, b.id); });
+    return { list: list.slice(0, NOTICE_MAX), more: Math.max(0, list.length - NOTICE_MAX), mark: Math.max(mark, top) };
+  }
+  // A deep link into the app (shell __orosOpenAt / notification
+  // "podcasts:ep:<id>"): { ep } opens an episode, { add } a feed to
+  // subscribe to. Anything else → null.
+  function parseTarget(x) {
+    if (typeof x === "string") x = { ep: x };
+    if (!x || typeof x !== "object") return null;
+    if (typeof x.ep === "string" && EP_RE.test(x.ep)) return { ep: x.ep };
+    if (x.add && typeof x.add === "object" && safeUrl(x.add.url) && String(x.add.url).length <= 2000) return { add: safeUrl(x.add.url) };
+    return null;
+  }
+  // "Listen later" → To-Do (BR-TD-ADD item): the title is the task,
+  // the note says which show, how long and where to find it.
+  function todoItem(m, ep) {
+    var title = clean(m && m.title, 300) || clean(ep && ep.title, 300);
+    if (!title) return null;
+    var bits = [clean(m && m.show, 200), (ep && ep.dur) || (m && m.dur) ? fmtTime((ep && ep.dur) || m.dur) : ""].filter(Boolean);
+    var url = safeUrl((ep && ep.link) || "") || safeUrl((m && m.audio) || "");
+    var note = bits.join(" · ") + (url ? "\n" + url : "");
+    return { text: title, note: note.slice(0, 1000) };
+  }
+  // "Note at 12:34" → Notes ({ add: { title, text } }): a page titled
+  // with the episode and the moment, the link underneath; the user
+  // writes the rest in Notes.
+  function noteAt(m, ep, pos) {
+    var o = shareText(m, ep, pos);
+    if (!o.title) return null;
+    var head = clean(m && m.show, 200);
+    var lines = [head ? head + " — " + o.title : o.title];
+    if (pos > 0) lines.push(fmtTime(pos));
+    if (o.url) lines.push(o.url);
+    lines.push("", "");
+    return { title: (o.title + (pos > 0 ? " (" + fmtTime(pos) + ")" : "")).slice(0, 200), text: lines.join("\n") };
+  }
+
   root.OrosPodcastsCore = {
     DATA_VER: DATA_VER, LIM: LIM, SPEEDS: SPEEDS, PREF_DEF: PREF_DEF, SYNC_EVERY: SYNC_EVERY, SYNC_MIN_MOVE: SYNC_MIN_MOVE,
     clean: clean, fold: fold, plain: plain, decodeEntities: decodeEntities,
@@ -837,6 +1107,11 @@
     markAllPlayed: markAllPlayed, compactShow: compactShow, setPref: setPref, findShow: findShow,
     queueAdd: queueAdd, queueRemove: queueRemove, queueMove: queueMove, queueNext: queueNext,
     shouldCommit: shouldCommit,
-    newEpisodes: newEpisodes, inProgress: inProgress, filterEpisodes: filterEpisodes, searchShows: searchShows
+    newEpisodes: newEpisodes, inProgress: inProgress, filterEpisodes: filterEpisodes, searchShows: searchShows,
+    parseTranscript: parseTranscript, cueAt: cueAt, searchCues: searchCues, pickTranscript: pickTranscript,
+    noteChapters: noteChapters, searchEpisodes: searchEpisodes, dayKey: dayKey, addListen: addListen, statsSummary: statsSummary,
+    appleTopUrl: appleTopUrl, parseAppleTop: parseAppleTop, appleLookupManyUrl: appleLookupManyUrl, orderByIds: orderByIds,
+    topCountry: topCountry, shareText: shareText,
+    freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt
   };
 })(typeof window !== "undefined" ? window : this);
