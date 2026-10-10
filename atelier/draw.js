@@ -54,7 +54,7 @@
 
   // Text layout per (item size + text fields).
   function textLines(it) {
-    var key = it.w + "|" + JSON.stringify(it.ax);
+    var key = T.generation() + "|" + it.w + "|" + JSON.stringify(it.ax);
     var v = textCache.get(key);
     if (v) return v;
     return textCache.set(key, it.ax.cv ? { curve: AX.curveLayout(it) } : AX.textLayout(it));
@@ -143,7 +143,7 @@
     lay.lines.forEach(function (ln) { ln.runs.forEach(function (r) { if (r.t) fn(r, ln); }); });
   }
   function paintRun(ctx, r, mode, dx, dy) {
-    ctx.font = r.size + "px " + T.cssFamily(r.key);
+    ctx.font = r.size + "px " + T.cssStack(r.key);
     var draw = mode === "stroke" ? ctx.strokeText.bind(ctx) : ctx.fillText.bind(ctx);
     if (r.track) {
       var x = r.x;
@@ -156,7 +156,7 @@
     if (r.u && mode === "fill") ctx.fillRect(r.x + dx, r.y + dy + r.size * 0.12, r.w, Math.max(0.3, r.size * 0.05));
   }
   function paintCurve(ctx, cl, it, mode, dx, dy) {
-    ctx.font = cl.size + "px " + T.cssFamily(cl.key);
+    ctx.font = cl.size + "px " + T.cssStack(cl.key);
     cl.glyphs.forEach(function (g) {
       ctx.save();
       ctx.translate(it.w / 2 + g.x + dx, it.h / 2 + g.y + dy);
@@ -379,7 +379,12 @@
   // Fonts a design uses (loaded before drawing / export).
   function fontKeys(doc) {
     var keys = { "sans-r": 1 };
-    doc.items.forEach(function (it) { if (it.ax && it.ax.k === "text") keys[AX.fontKeyOf(it.ax)] = 1; });
+    doc.items.forEach(function (it) {
+      if (!it.ax || it.ax.k !== "text") return;
+      var k = AX.fontKeyOf(it.ax), m = k.split("-");
+      keys[k] = 1;
+      if (AX.isExtraFont(m[0])) keys["sans-" + m[1]] = 1;     // what it falls back to
+    });
     return Object.keys(keys);
   }
 
