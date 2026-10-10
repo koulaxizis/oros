@@ -4,7 +4,7 @@ Something not working as expected? Start here. Most problems are fixed with a re
 ## An update isn't showing
 orOS updates itself. It checks for a new version when it opens, every hour, and when you come back to its tab. The new version downloads in the background, and orOS reloads at a safe moment: when you're on the desktop with no app open, the menu closed and nothing left to sync. Afterwards you'll see `orOS was updated to` and the version number.
 
-To check right now, press [[Ctrl+Alt+Shift+U]] (`Check for updates`). You'll see `Checking for updates…`. Then go back to the desktop and close the menu. You can also close orOS completely and open it again.
+To check right now, press [[Ctrl+Alt+Shift+U]] (`Check for updates`). You'll see `Checking for updates…`. Then go back to the desktop and close the menu. `Check for updates` is also in `Settings` under `System`. You can also close orOS completely and open it again.
 
 ## Something looks broken after an update
 Close every orOS tab or window and open it again, or reload the page. Your data is not affected by a reload.
@@ -12,8 +12,8 @@ Close every orOS tab or window and open it again, or reload the page. Your data 
 If you're offline and an app shows `Offline — this app has not been saved for offline use yet.`, connect to the internet once and open that app again.
 
 ## Sync error messages
-- `Not connected to Dropbox` or `Cloud sync is not connected`: connect in the menu under `Sync`, or press [[Ctrl+Alt+Shift+R]].
-- `Enter your passphrase first`: type your passphrase in the menu and tap `Unlock`.
+- `Not connected to Dropbox` or `Cloud sync is not connected`: connect in `Settings` under `Sync`, or press [[Ctrl+Alt+Shift+R]].
+- `Enter your passphrase first`: type your passphrase in `Settings` under `Sync` and tap `Unlock`, or tap the sync dot.
 - `Passphrase changed on another device?`: orOS couldn't decrypt the cloud data with the passphrase it has. Type the current passphrase. If you're sure it's right, update this device too, since an older orOS can't read data saved by a newer one.
 - `Dropbox authorization failed — reconnect`: press [[Ctrl+Alt+Shift+R]], or use `Disconnect` and then `Connect Dropbox`.
 - `Sync failed — check your connection`: check your internet. orOS tries again by itself.
@@ -28,7 +28,7 @@ If the sync dot stays orange, your changes haven't reached the cloud yet. Tap or
 Your browser gives orOS a limited amount of space. [Export a backup](help:t/backup), then delete data you no longer need. See [Your data and files](help:t/data).
 
 ## Notifications don't appear
-Check that the button under `Notifications` in the menu says `On`, that the app is ticked under `Per-app notifications`, and that `Quiet hours` isn't on. Remember that orOS must be open for alarms and reminders to work. See [Notifications, alarms and reminders](help:t/notifications).
+In `Settings`, under `Notifications`, check that the `Notifications` switch is on, that the app is on under `Which apps may notify`, and that `Quiet hours` isn't on. Remember that orOS must be open for alarms and reminders to work. See [Notifications, alarms and reminders](help:t/notifications).
 
 ## Report a problem
 If something is still wrong, open an issue on GitHub: [github.com/koulaxizis/oros/issues](https://github.com/koulaxizis/oros/issues). Say which browser and device you use, what you did, and what happened.

@@ -6,7 +6,7 @@ Everything in orOS runs inside the browser: there is nothing to sign up for and 
 
 ## The top bar
 The bar at the top is always there:
-- The `orOS` button on the left opens the [menu](help:t/menu) with all your apps and settings. While an app is open, it reads `Back`.
+- The `orOS` button on the left opens the [menu](help:t/menu) with all your apps and [Settings](app:settings). While an app is open, it reads `Back`.
 - The **?** button opens Help at the page of the app you are using, or at the start of Help when you are on the desktop.
 - The time opens [Time](app:time) and the date opens [Calendar](app:calendar).
 - The `EL` / `EN` button switches the language between Greek and English.
@@ -26,7 +26,7 @@ Only one app is open at a time: going back to the desktop closes it.
 ## Where your data lives
 Your data is saved in this browser on this device. Nothing is sent anywhere unless you ask for it:
 - With [sync](help:t/sync) you can connect your own Dropbox and keep your devices in step. Your data is encrypted on your device first.
-- With `Export data` in the menu you can save everything to a file, and bring it back with `Import data`. See [Backup](help:t/backup).
+- With `Export backup file` in `Settings` you can save everything to a file, and bring it back with `Import backup file`. See [Backup](help:t/backup).
 
 More in [Your data and files](help:t/data).
 

@@ -44,6 +44,7 @@
   var MAX_CENTS   = 100000000000;      // 1 billion in whole units
   var MAX_CATS    = 60;
   var MAX_REC     = 100;
+  var MAX_ACC     = 20;
   var REC_BACK_DAYS = 730;             // recurring entries are back-filled at most 2 years
   var COLOR_SLOTS = 9;                 // 0–7 chart palette, 8 = neutral grey
   var CURRENCIES  = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK",
@@ -120,7 +121,20 @@
       "bk.done": "Backup saved", "bk.restored": "Backup merged: {n} new or newer items",
       "bk.same": "Backup merged: nothing new", "bk.bad": "This is not an orOS Budget backup",
       "cur.title": "Currency", "cur.hint": "One currency for every entry. Changing it does not convert amounts.",
-      "live.month": "{m}", "live.saved": "Saved"
+      "live.month": "{m}", "live.saved": "Saved",
+      "menu.accounts": "Accounts", "acc.title": "Accounts", "acc.new": "New account", "acc.edit": "Edit account",
+      "acc.name": "Name", "acc.name.ph": "Cash, Card, Bank…", "acc.open": "Starting balance",
+      "acc.open.hint": "What it held before your first entry here. A minus sign for a debt.",
+      "acc.hint": "Pick an account in an entry to keep its balance. Entries without an account still count in the totals.",
+      "acc.empty": "No accounts yet: Budget works without them too.", "acc.none": "No account",
+      "acc.bal": "Balances today", "acc.deleted": "Account deleted", "acc.full": "Up to {n} accounts",
+      "acc.keep": "Its entries stay, without an account.", "acc.open.aria": "Open the accounts",
+      "f.acc": "Account", "err.name": "Write a name", "err.open": "Type a balance, for example -120,50",
+      "xf.btn": "Transfer", "xf.new": "Transfer between accounts", "xf.edit": "Edit transfer",
+      "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
+      "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
+      "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
+      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet"
     },
     el: {
       "app": "Έσοδα & Έξοδα",
@@ -181,7 +195,20 @@
       "bk.done": "Το αντίγραφο αποθηκεύτηκε", "bk.restored": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία",
       "bk.same": "Το αντίγραφο ενώθηκε: τίποτα καινούργιο", "bk.bad": "Αυτό δεν είναι αντίγραφο των Εσόδων & Εξόδων του orOS",
       "cur.title": "Νόμισμα", "cur.hint": "Ένα νόμισμα για όλες τις κινήσεις. Η αλλαγή του δεν μετατρέπει τα ποσά.",
-      "live.month": "{m}", "live.saved": "Αποθηκεύτηκε"
+      "live.month": "{m}", "live.saved": "Αποθηκεύτηκε",
+      "menu.accounts": "Λογαριασμοί", "acc.title": "Λογαριασμοί", "acc.new": "Νέος λογαριασμός", "acc.edit": "Επεξεργασία λογαριασμού",
+      "acc.name": "Όνομα", "acc.name.ph": "Μετρητά, Κάρτα, Τράπεζα…", "acc.open": "Αρχικό υπόλοιπο",
+      "acc.open.hint": "Όσα είχε πριν από την πρώτη κίνησή του εδώ. Με μείον για χρέος.",
+      "acc.hint": "Διάλεξε λογαριασμό σε μια κίνηση για να κρατάς το υπόλοιπό του. Οι κινήσεις χωρίς λογαριασμό μετρούν κανονικά στα σύνολα.",
+      "acc.empty": "Δεν υπάρχουν λογαριασμοί: η εφαρμογή δουλεύει και χωρίς αυτούς.", "acc.none": "Χωρίς λογαριασμό",
+      "acc.bal": "Υπόλοιπα σήμερα", "acc.deleted": "Ο λογαριασμός διαγράφηκε", "acc.full": "Έως {n} λογαριασμοί",
+      "acc.keep": "Οι κινήσεις του μένουν, χωρίς λογαριασμό.", "acc.open.aria": "Άνοιγμα λογαριασμών",
+      "f.acc": "Λογαριασμός", "err.name": "Γράψε ένα όνομα", "err.open": "Γράψε ένα ποσό, για παράδειγμα -120,50",
+      "xf.btn": "Μεταφορά", "xf.new": "Μεταφορά μεταξύ λογαριασμών", "xf.edit": "Επεξεργασία μεταφοράς",
+      "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
+      "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
+      "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
+      "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο"
     }
   };
 
@@ -403,8 +430,10 @@
   function okExtra(v) {
     return (typeof v === "string" && v.length <= 500) || (typeof v === "number" && isFinite(v)) || typeof v === "boolean";
   }
-  function withExtras(out, x) {
-    var keys = Object.keys(x).filter(function (k) { return !(k in out) && XKEY_RE.test(k) && okExtra(x[k]); }).sort(cmpStr);
+  function withExtras(out, x, skip) {
+    var keys = Object.keys(x).filter(function (k) {
+      return !(k in out) && !(skip && skip[k]) && XKEY_RE.test(k) && okExtra(x[k]);
+    }).sort(cmpStr);
     keys.slice(0, 16).forEach(function (k) { out[k] = x[k]; });
     return out;
   }
@@ -427,12 +456,20 @@
              src: typeof p.src === "string" && SRC_RE.test(p.src) ? p.src : "" };
   }
 
-  // entry = { id, m, d, a (cents > 0), k ("o" expense | "i" income), c (category id | ""), n (note) }
+  // Optional account of an entry or a recurring entry: `ac` (account
+  // id), written only when set, so entries without one keep the v1 shape.
+  var AC_SKIP = { ac: 1 };
+  function withAcc(out, x) {
+    if (typeof x.ac === "string" && ID_RE.test(x.ac)) out.ac = x.ac;
+    return out;
+  }
+
+  // entry = { id, m, d, a (cents > 0), k ("o" expense | "i" income), c (category id | ""), n (note), ac? }
   function normTx(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !okStamp(x.m) || !parseYmd(x.d) || !okCents(x.a) || !KINDS[x.k]) return null;
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x);
+    return withExtras(withAcc({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x), x, AC_SKIP);
   }
   // category = { id, m, k, name ("" = the ready name), col (0–8) }
   function normCat(x) {
@@ -451,32 +488,53 @@
         !okStamp(x.m) || !isInt(x.a) || x.a < 0 || x.a > MAX_CENTS) return null;
     return withExtras({ id: x.id, m: x.m, a: x.a }, x);
   }
-  // recurring = { id, m, k, a, c, n, f ("m" | "w" | "y"), s (first date), e (last date | "") }
+  // recurring = { id, m, k, a, c, n, f ("m" | "w" | "y"), s (first date), e (last date | ""), ac? }
   function normRec(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !/^[a-z0-9]{1,24}$/.test(x.id) ||
         !okStamp(x.m) || !okCents(x.a) || !KINDS[x.k] || !FREQS[x.f] || !parseYmd(x.s)) return null;
     var e = typeof x.e === "string" && parseYmd(x.e) && x.e >= x.s ? x.e : "";
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return withExtras({ id: x.id, m: x.m, k: x.k, a: x.a, c: c, n: normText(x.n, NOTE_LEN), f: x.f, s: x.s, e: e }, x);
+    return withExtras(withAcc({ id: x.id, m: x.m, k: x.k, a: x.a, c: c, n: normText(x.n, NOTE_LEN), f: x.f, s: x.s, e: e }, x), x, AC_SKIP);
   }
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, x);
   }
 
+  // account = { id, m, n (name), o (starting balance in cents, may be
+  // negative), col (0–8) }
+  function normAcc(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m)) return null;
+    var n = normText(x.n, NAME_LEN);
+    if (!n) return null;
+    var o = isInt(x.o) && Math.abs(x.o) <= MAX_CENTS ? x.o : 0;
+    var col = isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : 8;
+    return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, x);
+  }
+  // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
+  // Not income, not an expense: it only moves money between balances.
+  function normXfer(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
+        !okStamp(x.m) || !parseYmd(x.d) || !okCents(x.a) || typeof x.f !== "string" || !ID_RE.test(x.f) ||
+        typeof x.t !== "string" || !ID_RE.test(x.t) || x.f === x.t) return null;
+    return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, f: x.f, t: x.t, n: normText(x.n, NOTE_LEN) }, x);
+  }
+
   var COLLS = [
     { key: "tx",   tomb: "tx",  norm: normTx },
     { key: "cats", tomb: "cat", norm: normCat },
     { key: "bud",  tomb: null,  norm: normBud },
-    { key: "rec",  tomb: "rec", norm: normRec }
+    { key: "rec",  tomb: "rec", norm: normRec },
+    { key: "acc",  tomb: "acc", norm: normAcc },
+    { key: "xfer", tomb: "xfer", norm: normXfer }
   ];
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -607,10 +665,39 @@
         var id = recTxId(r.id, ymd);
         if (have[id] || ("tx:" + id) in d.tombs) return;
         have[id] = 1;
-        made.push({ id: id, m: utcMs(ymd), d: ymd, a: r.a, k: r.k, c: r.c, n: r.n });
+        var x = { id: id, m: utcMs(ymd), d: ymd, a: r.a, k: r.k, c: r.c, n: r.n };
+        if (r.ac) x.ac = r.ac;
+        made.push(x);
       });
     });
     return made;
+  }
+
+  // Balance of every account at the end of `upto` ("YYYY-MM-DD"):
+  // starting balance, + income − expenses booked to it, ± transfers.
+  // Entries of a deleted account count nowhere here. → { id: cents }
+  function accBalances(d, upto) {
+    var bal = {};
+    d.acc.forEach(function (a) { bal[a.id] = a.o; });
+    d.tx.forEach(function (x) {
+      if (x.ac && bal[x.ac] !== undefined && x.d <= upto) bal[x.ac] += x.k === "i" ? x.a : -x.a;
+    });
+    d.xfer.forEach(function (x) {
+      if (x.d > upto) return;
+      if (bal[x.f] !== undefined) bal[x.f] -= x.a;
+      if (bal[x.t] !== undefined) bal[x.t] += x.a;
+    });
+    return bal;
+  }
+  // "-12,50", "−12.50", "" (= 0) → signed cents | null. For starting balances.
+  function parseSigned(s) {
+    var v = typeof s === "string" ? s.trim() : "";
+    if (!v) return 0;
+    var neg = /^[-−]/.test(v);
+    if (neg) v = v.slice(1).trim();
+    if (/^0+([.,]0*)?$/.test(v)) return 0;
+    var c = parseAmount(v);
+    return c === null ? null : (neg ? -c : c);
   }
 
   // ---------- 5. CSV ----------
@@ -623,15 +710,17 @@
     if (s.indexOf(sep) >= 0 || /["\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
-  // rows: [{ d, k, cat, a, n }] → CSV text (with a BOM, CRLF).
+  // rows: [{ d, k, cat, a, n, acc? }] → CSV text (with a BOM, CRLF); a 7th heading adds the account column.
   // fmt "excel": ";" and "12,50" (Greek Excel); "std": "," and "12.50".
   // Expenses are negative, so a SUM of the column is the balance.
   function buildCsv(rows, fmt, cur, head, kindName) {
     var sep = fmt === "excel" ? ";" : ",", dec = fmt === "excel" ? "," : ".";
     var lines = [head.map(function (h) { return csvCell(h, sep); }).join(sep)];
     rows.forEach(function (r) {
-      lines.push([r.d, csvCell(kindName(r.k), sep), csvCell(r.cat, sep),
-                  centsPlain(r.k === "i" ? r.a : -r.a, dec), cur, csvCell(r.n, sep)].join(sep));
+      var cells = [r.d, csvCell(kindName(r.k), sep), csvCell(r.cat, sep),
+                   centsPlain(r.k === "i" ? r.a : -r.a, dec), cur, csvCell(r.n, sep)];
+      if (head.length > 6) cells.push(csvCell(r.acc || "", sep));   // "Account" column, with accounts only
+      lines.push(cells.join(sep));
     });
     return "﻿" + lines.join("\r\n") + "\r\n";
   }
@@ -708,6 +797,11 @@
   function catName(id) { var c = id ? catById(id) : null; return c ? c.name : t("cat.none"); }
   function catCol(id) { var c = id ? catById(id) : null; return c ? c.col : 8; }
   function cur() { return data.set.cur || "EUR"; }
+  // Accounts, by name.
+  function accs() {
+    return data.acc.slice().sort(function (x, y) { return x.n.localeCompare(y.n) || cmpStr(x.id, y.id); });
+  }
+  function accName(id) { var a = id ? findIn(data.acc, id) : null; return a ? a.n : ""; }
 
   var fmtCache = {};
   function money(cents) {
@@ -796,6 +890,30 @@
     var b = $("sum-bal");
     b.textContent = money(bal);
     b.classList.toggle("neg", bal < 0);
+    renderAccStrip();
+  }
+  // Balance of each account today, under the totals (only with accounts).
+  function renderAccStrip() {
+    var box = $("acc-strip");
+    box.innerHTML = "";
+    var list = accs();
+    box.hidden = !list.length || prefs.tab === "rec";
+    if (box.hidden) return;
+    var bal = accBalances(data, today);
+    var btn = el("button", "acc-chips");
+    btn.type = "button";
+    btn.setAttribute("aria-label", t("acc.open.aria"));
+    btn.title = t("acc.bal");
+    list.forEach(function (a) {
+      var c = el("span", "acc-chip");
+      c.appendChild(swatch(a.col));
+      c.appendChild(el("span", "acc-chip-n", a.n));
+      var v = el("span", "acc-chip-v" + (bal[a.id] < 0 ? " neg" : ""), money(bal[a.id]));
+      c.appendChild(v);
+      btn.appendChild(c);
+    });
+    btn.addEventListener("click", accountsDialog);
+    box.appendChild(btn);
   }
 
   function renderFilter() {
@@ -814,6 +932,12 @@
     var on = el("option", "", t("cat.none")); on.value = "c:";
     g1.appendChild(on);
     sel.appendChild(g1); sel.appendChild(g2);
+    if (data.acc.length || data.xfer.length) {
+      var g3 = el("optgroup"); g3.label = t("flt.accs");
+      accs().forEach(function (a) { var o = el("option", "", a.n); o.value = "a:" + a.id; g3.appendChild(o); });
+      var ox = el("option", "", t("flt.xfer")); ox.value = "k:t"; g3.appendChild(ox);
+      sel.appendChild(g3);
+    }
     sel.value = prev;
     if (sel.value !== prev) { filter = "all"; sel.value = "all"; }
   }
@@ -821,8 +945,18 @@
   function matches(x) {
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
     if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2)) return false;
+    if (filter.indexOf("a:") === 0 && (x.ac || "") !== filter.slice(2)) return false;
     if (query) {
-      var hay = (x.n + " " + catName(x.c) + " " + centsToInput(x.a, LANG)).toLowerCase();
+      var hay = (x.n + " " + catName(x.c) + " " + accName(x.ac) + " " + centsToInput(x.a, LANG)).toLowerCase();
+      if (hay.indexOf(query) < 0) return false;
+    }
+    return true;
+  }
+  // A transfer shows with "All", "Transfers only" and the filter of either account.
+  function xferMatches(x) {
+    if (filter !== "all" && filter !== "k:t" && filter !== "a:" + x.f && filter !== "a:" + x.t) return false;
+    if (query) {
+      var hay = (x.n + " " + accName(x.f) + " " + accName(x.t) + " " + t("xf.btn") + " " + centsToInput(x.a, LANG)).toLowerCase();
       if (hay.indexOf(query) < 0) return false;
     }
     return true;
@@ -833,7 +967,9 @@
     box.innerHTML = "";
     var rows = data.tx.filter(function (x) {
       return (query || mkOf(x.d) === viewMk) && matches(x);
-    });
+    }).concat(data.xfer.filter(function (x) {
+      return (query || mkOf(x.d) === viewMk) && xferMatches(x);
+    }));
     rows.sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m || cmpStr(b.id, a.id); });
     var empty = $("list-empty"), found = $("list-found");
     found.hidden = !query;
@@ -857,6 +993,7 @@
         group = el("ul", "day-list");
         box.appendChild(group);
       }
+      if (!x.k) { group.appendChild(xferRow(x)); return; }   // a transfer: not in the day total
       if (x.k === "i") dayIn += x.a; else dayOut += x.a;
       group.appendChild(txRow(x));
     });
@@ -870,7 +1007,9 @@
     b.appendChild(swatch(catCol(x.c)));
     var mid = el("span", "tx-mid");
     mid.appendChild(el("span", "tx-cat", catName(x.c)));
-    if (x.n) mid.appendChild(el("span", "tx-note", x.n));
+    var an = accName(x.ac);
+    var sub = [an, x.n].filter(Boolean).join(" · ");
+    if (sub) mid.appendChild(el("span", "tx-note", sub));
     b.appendChild(mid);
     if (x.id.charAt(0) === "r" && /-\d{8}$/.test(x.id)) {
       var r = el("span", "tx-rec");
@@ -881,8 +1020,24 @@
     }
     b.appendChild(el("span", "tx-amt", (x.k === "i" ? "+" : "−") + money(x.a)));
     b.setAttribute("aria-label", t(x.k === "i" ? "k.in" : "k.out") + ", " + catName(x.c) +
-      (x.n ? ", " + x.n : "") + ", " + money(x.a) + ", " + dateShort(x.d));
+      (an ? ", " + an : "") + (x.n ? ", " + x.n : "") + ", " + money(x.a) + ", " + dateShort(x.d));
     b.addEventListener("click", function () { txDialog(x.id); });
+    li.appendChild(b);
+    return li;
+  }
+  function xferRow(x) {
+    var li = el("li");
+    var b = el("button", "tx xf");
+    b.type = "button";
+    b.appendChild(swatch(8));
+    var mid = el("span", "tx-mid");
+    var f = accName(x.f) || t("acc.none"), to = accName(x.t) || t("acc.none");
+    mid.appendChild(el("span", "tx-cat", f + " → " + to));
+    mid.appendChild(el("span", "tx-note", x.n ? t("xf.btn") + " · " + x.n : t("xf.btn")));
+    b.appendChild(mid);
+    b.appendChild(el("span", "tx-amt", money(x.a)));
+    b.setAttribute("aria-label", t("xf.aria", { a: money(x.a), f: f, t: to, d: dateShort(x.d) }) + (x.n ? ", " + x.n : ""));
+    b.addEventListener("click", function () { xferDialog(x.id); });
     li.appendChild(b);
     return li;
   }
@@ -1341,6 +1496,15 @@
   // A new entry is an expense unless you switch it; the category
   // remembers the last one you used for each kind.
   var lastCat = { o: "o-groc", i: "i-salary" };
+  var lastAcc = "";   // session only: the account you used last
+  function accSelect(selected) {
+    var sel = el("select");
+    var none = el("option", "", t("acc.none")); none.value = ""; sel.appendChild(none);
+    accs().forEach(function (a) { var o = el("option", "", a.n); o.value = a.id; sel.appendChild(o); });
+    sel.value = selected || "";
+    if (sel.value !== (selected || "")) sel.value = "";
+    return sel;
+  }
   function txDialog(id, preset) {
     var x = id ? findIn(data.tx, id) : null;
     if (id && !x) return;
@@ -1375,6 +1539,11 @@
     row.appendChild(field(t("f.date"), date, "bd-date"));
     row.appendChild(field(t("f.cat"), sel, "bd-cat"));
     form.appendChild(row);
+    var accSel = null;
+    if (data.acc.length) {
+      accSel = accSelect(x ? x.ac : lastAcc);
+      form.appendChild(field(t("f.acc"), accSel, "bd-acc"));
+    }
     form.appendChild(field(t("f.note"), note, "bd-note"));
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
@@ -1390,20 +1559,26 @@
       if (cents === null) { showErr(err, t("err.amount"), amt); return; }
       if (!parseYmd(date.value)) { showErr(err, t("err.date"), date); return; }
       var k = sw.get(), c = sel.value, n = normText(note.value, NOTE_LEN);
+      // Without accounts the field is absent and an entry keeps its account.
       var cur0 = x ? findIn(data.tx, x.id) : null;   // may have changed by a pull meanwhile
+      var ac = accSel ? accSel.value : (cur0 ? cur0.ac || "" : "");
       if (cur0) {
-        if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n) {
+        if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n || (cur0.ac || "") !== ac) {
           cur0.d = date.value; cur0.a = cents; cur0.k = k; cur0.c = c; cur0.n = n;
+          if (ac) cur0.ac = ac; else delete cur0.ac;
           cur0.m = stamp(cur0.m);
           commit();
         }
       } else {
         var nid = x ? x.id : newId();
         if (x) untomb("tx", nid);
-        data.tx.push({ id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, k: k, c: c, n: n });
+        var nx = { id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, k: k, c: c, n: n };
+        if (ac) nx.ac = ac;
+        data.tx.push(nx);
         commit();
       }
       lastCat[k] = c;
+      if (accSel) lastAcc = ac;
       dlg.close();
       if (k === "o") checkLimits(date.value, c);
       live(t("live.saved"));
@@ -1543,6 +1718,11 @@
     row2.appendChild(field(t("rec.start"), start, "bd-r-s"));
     row2.appendChild(field(t("rec.end"), end, "bd-r-e"));
     form.appendChild(row2);
+    var accSel = null;
+    if (data.acc.length) {
+      accSel = accSelect(r ? r.ac : lastAcc);
+      form.appendChild(field(t("f.acc"), accSel, "bd-r-acc"));
+    }
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (r) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteRec(r.id); }));
@@ -1560,16 +1740,23 @@
       if (e2 && e2 < start.value) { showErr(err, t("err.end"), end); return; }
       var vals = { k: sw.get(), a: cents, c: sel.value, n: normText(note.value, NOTE_LEN), f: freq.value, s: start.value, e: e2 };
       var cur0 = r ? findIn(data.rec, r.id) : null;
+      var ac = accSel ? accSel.value : (cur0 ? cur0.ac || "" : "");
       if (cur0) {
-        var changed = Object.keys(vals).some(function (kk) { return cur0[kk] !== vals[kk]; });
-        if (changed) { Object.keys(vals).forEach(function (kk) { cur0[kk] = vals[kk]; }); cur0.m = stamp(cur0.m); }
+        var changed = Object.keys(vals).some(function (kk) { return cur0[kk] !== vals[kk]; }) || (cur0.ac || "") !== ac;
+        if (changed) {
+          Object.keys(vals).forEach(function (kk) { cur0[kk] = vals[kk]; });
+          if (ac) cur0.ac = ac; else delete cur0.ac;
+          cur0.m = stamp(cur0.m);
+        }
       } else {
         var nid = r ? r.id : newId();
         if (r) untomb("rec", nid);
         var obj = { id: nid, m: stamp(r ? r.m : 0) };
         Object.keys(vals).forEach(function (kk) { obj[kk] = vals[kk]; });
+        if (ac) obj.ac = ac;
         data.rec.push(obj);
       }
+      if (accSel) lastAcc = ac;
       commit();
       dlg.close();
       var n = materialize(false);
@@ -1610,6 +1797,213 @@
   }
 
   // Categories manager
+  // Accounts: list with today's balance, new account, transfer.
+  function accountsDialog() {
+    var dlg = makeDialog("bd-accs", t("acc.title"));
+    var body = el("div");
+    dlg.appendChild(body);
+    dlg.appendChild(el("p", "hint", t("acc.hint")));
+    var acts = el("div", "dlg-actions");
+    var xb = button(t("xf.btn"), "", function () { dlg.close(); xferDialog(null); });
+    acts.appendChild(xb);
+    acts.appendChild(button(t("acc.new"), "", function () { dlg.close(); accDialog(null); }));
+    acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    var list = accs();
+    xb.hidden = list.length < 2;
+    if (!list.length) body.appendChild(el("p", "hint empty", t("acc.empty")));
+    else {
+      body.appendChild(el("h3", "sub-h", t("acc.bal")));
+      var bal = accBalances(data, today);
+      var ul = el("ul", "day-list");
+      list.forEach(function (a) {
+        var li = el("li");
+        var b = el("button", "tx acc-row");
+        b.type = "button";
+        b.appendChild(swatch(a.col));
+        var mid = el("span", "tx-mid");
+        mid.appendChild(el("span", "tx-cat", a.n));
+        b.appendChild(mid);
+        var v = el("span", "tx-amt" + (bal[a.id] < 0 ? " neg" : ""), money(bal[a.id]));
+        b.appendChild(v);
+        b.setAttribute("aria-label", a.n + ", " + money(bal[a.id]) + ", " + t("acc.edit"));
+        b.addEventListener("click", function () { dlg.close(); accDialog(a.id); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function accDialog(id) {
+    var a = id ? findIn(data.acc, id) : null;
+    if (id && !a) return;
+    if (!a && data.acc.length >= MAX_ACC) { showToast(t("acc.full", { n: MAX_ACC })); return; }
+    var dlg = makeDialog("bd-acc-dlg", t(a ? "acc.edit" : "acc.new"));
+    var form = el("form");
+    var name = el("input");
+    name.maxLength = NAME_LEN;
+    name.autocomplete = "off";
+    name.placeholder = t("acc.name.ph");
+    name.value = a ? a.n : "";
+    var open = el("input");
+    open.inputMode = "decimal";
+    open.autocomplete = "off";
+    open.placeholder = LANG === "el" ? "0,00" : "0.00";
+    open.value = a && a.o ? (a.o < 0 ? "-" : "") + centsToInput(Math.abs(a.o), LANG) : "";
+    var err = errLine();
+    form.appendChild(field(t("acc.name"), name, "bd-acc-n"));
+    form.appendChild(field(t("acc.open") + " (" + cur() + ")", open, "bd-acc-o"));
+    form.appendChild(el("p", "hint", t("acc.open.hint")));
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    if (a) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteAcc(a.id); }));
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var n = normText(name.value, NAME_LEN);
+      if (!n) { showErr(err, t("err.name"), name); return; }
+      var o = parseSigned(open.value);
+      if (o === null) { showErr(err, t("err.open"), open); return; }
+      var cur0 = a ? findIn(data.acc, a.id) : null;
+      if (cur0) {
+        if (cur0.n !== n || cur0.o !== o) { cur0.n = n; cur0.o = o; cur0.m = stamp(cur0.m); commit(); }
+      } else {
+        var used = {};
+        data.acc.forEach(function (y) { used[y.col] = 1; });
+        var col = 0;
+        while (col < 8 && used[col]) col++;
+        var nid = a ? a.id : newId();
+        if (a) untomb("acc", nid);
+        data.acc.push({ id: nid, m: stamp(a ? a.m : 0), n: n, o: o, col: col % 8 });
+        commit();
+      }
+      dlg.close();
+      live(t("live.saved"));
+      renderAll();
+      accountsDialog();
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    name.focus();
+  }
+  // Its entries and transfers stay; they just no longer point anywhere.
+  function deleteAcc(id) {
+    var a = findIn(data.acc, id);
+    if (!a) return;
+    var copy = JSON.parse(JSON.stringify(a));
+    data.acc = data.acc.filter(function (y) { return y.id !== id; });
+    tombstone("acc", id);
+    if (lastAcc === id) lastAcc = "";
+    commit();
+    renderAll();
+    undoToast(t("acc.deleted") + ". " + t("acc.keep"), function () {
+      untomb("acc", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["acc:" + id] || 0));
+      if (!findIn(data.acc, id)) data.acc.push(copy);
+      commit();
+      renderAll();
+    });
+  }
+  function xferDialog(id) {
+    var x = id ? findIn(data.xfer, id) : null;
+    if (id && !x) return;
+    var list = accs();
+    if (!x && list.length < 2) { showToast(t("xf.need")); return; }
+    var dlg = makeDialog("bd-xf", t(x ? "xf.edit" : "xf.new"));
+    var form = el("form");
+    var from = accSelect(x ? x.f : (lastAcc || list[0].id));
+    var to = accSelect(x ? x.t : "");
+    // "No account" makes no sense for a transfer, except to keep one whose account was deleted.
+    [from, to].forEach(function (s, i) {
+      var keep = x ? (i ? x.t : x.f) : "";
+      if (!keep || findIn(data.acc, keep)) s.removeChild(s.options[0]);
+    });
+    if (!x) { to.value = (list[0].id === from.value ? list[1] : list[0]).id; }
+    var amt = el("input");
+    amt.inputMode = "decimal";
+    amt.autocomplete = "off";
+    amt.className = "amt-in";
+    amt.placeholder = LANG === "el" ? "0,00" : "0.00";
+    amt.value = x ? centsToInput(x.a, LANG) : "";
+    var date = el("input");
+    date.type = "date";
+    date.value = x ? x.d : (mkOf(today) === viewMk ? today : viewMk + "-01");
+    var note = el("input");
+    note.maxLength = NOTE_LEN;
+    note.autocomplete = "off";
+    note.placeholder = t("f.note.ph");
+    note.value = x ? x.n : "";
+    var err = errLine();
+    var row = el("div", "fld-row");
+    row.appendChild(field(t("xf.from"), from, "bd-xf-from"));
+    row.appendChild(field(t("xf.to"), to, "bd-xf-to"));
+    form.appendChild(row);
+    form.appendChild(field(t("f.amount") + " (" + cur() + ")", amt, "bd-xf-amt"));
+    form.appendChild(field(t("f.date"), date, "bd-xf-date"));
+    form.appendChild(field(t("f.note"), note, "bd-xf-note"));
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteXfer(x.id); }));
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!from.value || !to.value || from.value === to.value) { showErr(err, t("err.same"), to); return; }
+      var cents = parseAmount(amt.value);
+      if (cents === null) { showErr(err, t("err.amount"), amt); return; }
+      if (!parseYmd(date.value)) { showErr(err, t("err.date"), date); return; }
+      var n = normText(note.value, NOTE_LEN);
+      var cur0 = x ? findIn(data.xfer, x.id) : null;
+      if (cur0) {
+        if (cur0.f !== from.value || cur0.t !== to.value || cur0.a !== cents || cur0.d !== date.value || cur0.n !== n) {
+          cur0.f = from.value; cur0.t = to.value; cur0.a = cents; cur0.d = date.value; cur0.n = n;
+          cur0.m = stamp(cur0.m);
+          commit();
+        }
+      } else {
+        var nid = x ? x.id : newId();
+        if (x) untomb("xfer", nid);
+        data.xfer.push({ id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, f: from.value, t: to.value, n: n });
+        commit();
+      }
+      lastAcc = from.value;
+      dlg.close();
+      live(t("live.saved"));
+      if (!x && mkOf(date.value) !== viewMk && !query) setMonth(mkOf(date.value));
+      else renderAll();
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    if (!x) amt.focus();
+  }
+  function deleteXfer(id) {
+    var x = findIn(data.xfer, id);
+    if (!x) return;
+    var copy = JSON.parse(JSON.stringify(x));
+    data.xfer = data.xfer.filter(function (y) { return y.id !== id; });
+    tombstone("xfer", id);
+    commit();
+    renderAll();
+    undoToast(t("xf.deleted"), function () {
+      untomb("xfer", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["xfer:" + id] || 0));
+      if (!findIn(data.xfer, id)) data.xfer.push(copy);
+      commit();
+      renderAll();
+    });
+  }
+
   function catsDialog() {
     var dlg = makeDialog("bd-cats", t("cats.title"));
     dlg.classList.add("wide");
@@ -1806,10 +2200,15 @@
   function exportRows(prefix) {
     return data.tx.filter(function (x) { return !prefix || x.d.slice(0, prefix.length) === prefix; })
       .sort(function (a, b) { return cmpStr(a.d, b.d) || a.m - b.m || cmpStr(a.id, b.id); })
-      .map(function (x) { return { d: x.d, k: x.k, cat: catName(x.c), a: x.a, n: x.n, c: x.c }; });
+      .map(function (x) { return { d: x.d, k: x.k, cat: catName(x.c), a: x.a, n: x.n, c: x.c, acc: accName(x.ac) }; });
   }
   function kindName(k) { return t(k === "i" ? "k.in" : "k.out"); }
-  function colHead() { return [t("col.date"), t("col.type"), t("col.cat"), t("col.amount"), t("col.cur"), t("col.note")]; }
+  // The "Account" column only when there are accounts (otherwise the v1 layout).
+  function colHead() {
+    var h = [t("col.date"), t("col.type"), t("col.cat"), t("col.amount"), t("col.cur"), t("col.note")];
+    if (data.acc.length) h.push(t("col.acc"));
+    return h;
+  }
 
   function exportDialog() {
     var dlg = makeDialog("bd-exp", t("exp.title"));
@@ -1847,6 +2246,7 @@
         if (kind === "csv") exportCsv(rows, P);
         if (kind === "xlsx") exportXlsx(rows, P);
         if (kind === "pdf") exportPdf(rows, P);
+        if (kind === "sheet") openInSheet(rows, P);
         dlg.close();
       };
     };
@@ -1854,6 +2254,11 @@
     acts.appendChild(button(t("exp.xlsx"), "", go("xlsx")));
     acts.appendChild(button(t("exp.pdf"), "primary", go("pdf")));
     dlg.appendChild(acts);
+    if (sheetBridge()) {
+      var sa = el("div", "dlg-actions");
+      sa.appendChild(button(t("exp.sheet"), "", go("sheet")));
+      dlg.appendChild(sa);
+    }
     dlg.appendChild(el("p", "hint", t("exp.hint")));
     var close = el("div", "dlg-actions");
     close.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
@@ -1861,6 +2266,28 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     loadLib("xlsx.full.min.js", function () {}, true);   // pre-warm: keeps the click's activation (R33)
+  }
+
+  // "Open in Spreadsheet" (Bible BR-S1): a new sheet in the orOS
+  // Spreadsheet with the entries and a SUM under the amounts.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function sheetBridge() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet(rows, P) {
+    var p = sheetBridge();
+    if (!p) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("exp.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    var withAcc = data.acc.length > 0;
+    var table = [colHead()].concat(rows.map(function (r) {
+      var line = [dateShort(r.d), kindName(r.k), r.cat, (r.k === "i" ? r.a : -r.a) / 100, cur(), r.n];
+      if (withAcc) line.push(r.acc);
+      return line;
+    }));
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + P.slug, rows: table, sum: [3] } });
   }
 
   function exportCsv(rows, P) {
@@ -1912,10 +2339,12 @@
       var aoa = [colHead()];
       rows.forEach(function (r) {
         var p = parseYmd(r.d);
-        aoa.push([new Date(p.y, p.m - 1, p.d), kindName(r.k), safeText(r.cat), (r.k === "i" ? r.a : -r.a) / 100, cur(), safeText(r.n)]);
+        var line = [new Date(p.y, p.m - 1, p.d), kindName(r.k), safeText(r.cat), (r.k === "i" ? r.a : -r.a) / 100, cur(), safeText(r.n)];
+        if (data.acc.length) line.push(safeText(r.acc));
+        aoa.push(line);
       });
       var ws = X.utils.aoa_to_sheet(aoa, { cellDates: true, dateNF: "yyyy-mm-dd" });
-      ws["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 40 }];
+      ws["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 40 }, { wch: 16 }];
       var sum = [[t("col.type"), t("col.cat"), t("col.total")]];
       var inc = 0, out = 0;
       summaryRows(rows).forEach(function (s) {
@@ -2320,7 +2749,7 @@
       qt = setTimeout(function () { query = $("q").value.trim().toLowerCase(); renderList(); }, 150);
     });
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
-    var acts = { cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog };
+    var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog };
     [].forEach.call(document.querySelectorAll("#menu [data-act]"), function (b) {
       b.addEventListener("click", function () { closeMenu(); acts[b.getAttribute("data-act")](); });
     });
@@ -2393,4 +2822,32 @@
   }
 
   boot();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { tx } | { rec }. An entry: the Entries tab on its month,
+  // then its dialog; a recurring rule: the Recurring tab, then its
+  // dialog. Unknown ids or an open dialog → no-op.
+  function openSearchTarget(tg) {
+    if (!tg || typeof tg !== "object" || !data || document.querySelector("dialog[open]")) return;
+    if (typeof tg.tx === "string") {
+      var x = findIn(data.tx, tg.tx);
+      if (!x) return;
+      prefs.tab = "list";
+      savePrefs();
+      setMonth(mkOf(x.d));
+      txDialog(x.id, null);
+    } else if (typeof tg.rec === "string") {
+      if (!findIn(data.rec, tg.rec)) return;
+      setTab("rec");
+      recDialog(tg.rec);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("budget");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();
