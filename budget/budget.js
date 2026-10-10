@@ -393,6 +393,27 @@
   function okStamp(m) { return isInt(m) && m >= 0; }
   function okCents(a) { return isInt(a) && a > 0 && a <= MAX_CENTS; }
 
+  // Forward compatibility (Bible: "unknown fields carried forward").
+  // A newer Budget may add fields to an item or whole collections; this
+  // version keeps them untouched so a sync through an older device
+  // never strips them. Only flat, small values travel: short lowercase
+  // names, strings ≤ 500, finite numbers, booleans; at most 16 per
+  // item, in name order (canonical JSON).
+  var XKEY_RE = /^[a-z][a-z0-9]{0,15}$/;
+  function okExtra(v) {
+    return (typeof v === "string" && v.length <= 500) || (typeof v === "number" && isFinite(v)) || typeof v === "boolean";
+  }
+  function withExtras(out, x) {
+    var keys = Object.keys(x).filter(function (k) { return !(k in out) && XKEY_RE.test(k) && okExtra(x[k]); }).sort(cmpStr);
+    keys.slice(0, 16).forEach(function (k) { out[k] = x[k]; });
+    return out;
+  }
+  // An item of a collection this version does not know: { id, m, … }.
+  function normOther(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m)) return null;
+    return withExtras({ id: x.id, m: x.m }, x);
+  }
+
   // "Send to Budget" (Bible BR-B1): another app's prefill for the New
   // entry form. A bad kind, amount or date drops it all; the optional
   // parts are cleaned or left empty. It is never stored as such.
@@ -411,7 +432,7 @@
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !okStamp(x.m) || !parseYmd(x.d) || !okCents(x.a) || !KINDS[x.k]) return null;
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return { id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) };
+    return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x);
   }
   // category = { id, m, k, name ("" = the ready name), col (0–8) }
   function normCat(x) {
@@ -422,13 +443,13 @@
     var name = normText(x.name, NAME_LEN);
     if (!name && !seed) return null;
     var col = isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : (seed ? seed.col : 8);
-    return { id: x.id, m: x.m, k: x.k, name: name, col: col };
+    return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, x);
   }
   // limit = { id (category id | "all"), m, a (cents; 0 = no limit) }
   function normBud(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !okStamp(x.m) || !isInt(x.a) || x.a < 0 || x.a > MAX_CENTS) return null;
-    return { id: x.id, m: x.m, a: x.a };
+    return withExtras({ id: x.id, m: x.m, a: x.a }, x);
   }
   // recurring = { id, m, k, a, c, n, f ("m" | "w" | "y"), s (first date), e (last date | "") }
   function normRec(x) {
@@ -436,11 +457,11 @@
         !okStamp(x.m) || !okCents(x.a) || !KINDS[x.k] || !FREQS[x.f] || !parseYmd(x.s)) return null;
     var e = typeof x.e === "string" && parseYmd(x.e) && x.e >= x.s ? x.e : "";
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return { id: x.id, m: x.m, k: x.k, a: x.a, c: c, n: normText(x.n, NOTE_LEN), f: x.f, s: x.s, e: e };
+    return withExtras({ id: x.id, m: x.m, k: x.k, a: x.a, c: c, n: normText(x.n, NOTE_LEN), f: x.f, s: x.s, e: e }, x);
   }
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
-    return { m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" };
+    return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, x);
   }
 
   var COLLS = [
@@ -449,7 +470,11 @@
     { key: "bud",  tomb: null,  norm: normBud },
     { key: "rec",  tomb: "rec", norm: normRec }
   ];
-  var TOMB_RE = /^(tx|cat|rec):[a-z0-9-]{1,64}$/;
+  // Known prefixes tx/cat/rec; a newer version's collection "<key>"
+  // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
+  var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, set: 1, tombs: 1 };
+  var OTHER_RE = /^[a-z]{2,8}$/;
 
   function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
@@ -476,7 +501,17 @@
       });
     });
     var out = { ver: DATA_VER };
-    COLLS.forEach(function (C) {
+    // Collections of a newer version: same LWW + tombstone "<key>:".
+    var seen = {};
+    [a, b].forEach(function (side) {
+      Object.keys(side).forEach(function (k) {
+        if (!KNOWN_TOP[k] && OTHER_RE.test(k) && Array.isArray(side[k])) seen[k] = 1;
+      });
+    });
+    var colls = COLLS.concat(Object.keys(seen).sort(cmpStr).map(function (k) {
+      return { key: k, tomb: k, norm: normOther };
+    }));
+    colls.forEach(function (C) {
       var best = {};
       [a[C.key], b[C.key]].forEach(function (list) {
         if (!Array.isArray(list)) return;
@@ -1724,7 +1759,8 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (sel.value !== cur()) {
-        data.set = { m: stamp(data.set.m), cur: sel.value };
+        data.set.m = stamp(data.set.m);   // in place: keeps a newer version's fields
+        data.set.cur = sel.value;
         commit();
         renderAll();
       }

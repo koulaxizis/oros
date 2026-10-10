@@ -457,6 +457,46 @@
     return "﻿" + lines.join("\r\n") + "\r\n";
   }
 
+  // Quote lines for "Create quote" (BR-Q1): one line per project of
+  // the BILLABLE time in the range and filter (rounded as in reports),
+  // hours as the quantity, the hourly rate as the unit price. The
+  // client is named when every line belongs to the same one.
+  // → { items: [{ d, q, p }], client, ids } (ids = the entries counted).
+  function quoteLines(data, fromKey, toKey, f, now, lang) {
+    f = f || {};
+    var rep = report(data, fromKey, toKey,
+      { client: f.client, project: f.project, bill: "bill", billed: f.billed, group: "project" }, now);
+    var range = fmtRange(fromKey, toKey, lang);
+    var clients = {}, items = [];
+    rep.rows.forEach(function (r) {
+      if (!r.billMs) return;
+      var p = project(data, r.key), c = projectClient(data, p);
+      clients[c ? c.id : ""] = c ? c.name : "";
+      var name = p ? p.name : (lang === "el" ? "Χωρίς έργο" : "No project");
+      items.push({
+        d: name + " · " + range,
+        q: Math.round(r.billMs / HOUR * 100) / 100,
+        p: rateOf(data, r.key) / 100
+      });
+    });
+    items = items.filter(function (it) { return it.q > 0; }).slice(0, 50);
+    var ck = Object.keys(clients);
+    return { items: items, client: ck.length === 1 ? clients[ck[0]] : "", ids: rep.ids };
+  }
+  // The period on a quote line: "05/10 – 11/10/2026" (el) or
+  // "5 Oct – 11 Oct 2026" (en); the year once when both ends share it.
+  function fmtRange(fromKey, toKey, lang) {
+    var a = keyDate(fromKey), b = keyDate(toKey);
+    var dm = function (d) { return pad(d.getDate()) + "/" + pad(d.getMonth() + 1); };
+    if (lang !== "el") {
+      dm = function (d) { return d.getDate() + " " + ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]; };
+    }
+    var sep = lang === "el" ? "/" : " ";
+    if (fromKey === toKey) return dm(a) + sep + a.getFullYear();
+    var y = a.getFullYear() === b.getFullYear() ? "" : sep + a.getFullYear();
+    return dm(a) + y + " – " + dm(b) + sep + b.getFullYear();
+  }
+
   // Backup file: the whole model, tombstones included, so a restore
   // merges (never replaces) and deletions stay deleted.
   function toBackup(data) {
@@ -485,7 +525,7 @@
     dayEntries: dayEntries, overlaps: overlaps, matches: matches, weekGrid: weekGrid, report: report,
     parseDuration: parseDuration, parseMoney: parseMoney, fmtDur: fmtDur, fmtHours: fmtHours,
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
-    csvCell: csvCell, toCsv: toCsv, toBackup: toBackup, fromBackup: fromBackup
+    csvCell: csvCell, toCsv: toCsv, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

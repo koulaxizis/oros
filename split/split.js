@@ -133,6 +133,8 @@
       "gd.col.n": "Colour {n}", "gd.people": "People", "gd.add": "Add", "gd.add.ph": "Name",
       "gd.me": "This is me", "gd.meOn": "Me", "gd.del": "Remove {p}", "gd.used": "{p} has expenses or payments and stays",
       "gd.hint": "Add everyone, yourself too, and tap “Me” next to your name.",
+      "from.ct": "From Contacts", "from.tr": "From a trip", "from.q": "Search contacts", "from.none": "No matches.",
+      "from.addSel": "Add selected", "from.addN": "Add {n}", "from.ppl": "{n} travellers", "from.ppl1": "1 traveller",
       "err.gname": "Give the group a name", "err.two": "Add at least two people", "err.pname": "Every person needs a name",
       "err.dup": "Two people have the same name", "err.people": "Up to {n} people", "err.groups": "Up to {n} groups",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete", "dlg.close": "Close", "dlg.copy": "Copy",
@@ -207,6 +209,8 @@
       "gd.col.n": "Χρώμα {n}", "gd.people": "Άτομα", "gd.add": "Προσθήκη", "gd.add.ph": "Όνομα",
       "gd.me": "Αυτός είμαι εγώ", "gd.meOn": "Εγώ", "gd.del": "Αφαίρεση: {p}", "gd.used": "Το άτομο {p} έχει έξοδα ή πληρωμές και μένει",
       "gd.hint": "Βάλε όλους, και τον εαυτό σου, και πάτα «Εγώ» δίπλα στο όνομά σου.",
+      "from.ct": "Από τις Επαφές", "from.tr": "Από ταξίδι", "from.q": "Αναζήτηση επαφών", "from.none": "Κανένα αποτέλεσμα.",
+      "from.addSel": "Προσθήκη επιλεγμένων", "from.addN": "Προσθήκη ({n})", "from.ppl": "{n} ταξιδιώτες", "from.ppl1": "1 ταξιδιώτης",
       "err.gname": "Δώσε ένα όνομα στην ομάδα", "err.two": "Βάλε τουλάχιστον δύο άτομα", "err.pname": "Κάθε άτομο θέλει όνομα",
       "err.dup": "Δύο άτομα έχουν το ίδιο όνομα", "err.people": "Έως {n} άτομα", "err.groups": "Έως {n} ομάδες",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή", "dlg.close": "Κλείσιμο", "dlg.copy": "Αντιγραφή",
@@ -709,6 +713,61 @@
       b[C.key].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });
     });
     return n;
+  }
+
+  // People from other apps (phase 2), read-only: only the names are
+  // copied into the group dialog; nothing is written back.
+  // Contacts (oros-contacts-data): live people, deleted ones skipped,
+  // unique names (case-insensitive), sorted.
+  function contactNames(ct) {
+    if (!ct || typeof ct !== "object") return [];
+    var gone = {};
+    (Array.isArray(ct.deleted) ? ct.deleted : []).forEach(function (d) {
+      if (d && typeof d.id === "string" && typeof d.mtime === "number") gone[d.id] = Math.max(gone[d.id] || 0, d.mtime);
+    });
+    var seen = {}, out = [];
+    (Array.isArray(ct.contacts) ? ct.contacts : []).forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string" || c.del) return;
+      if (c.id in gone && gone[c.id] >= (typeof c.mtime === "number" ? c.mtime : 0)) return;
+      var n = normText([c.given, c.middle, c.family].filter(function (s) { return typeof s === "string"; }).join(" "), PERSON_LEN) ||
+              normText(c.nickname, PERSON_LEN);
+      if (!n || seen[n.toLowerCase()] || out.length >= 5000) return;
+      seen[n.toLowerCase()] = 1;
+      out.push(n);
+    });
+    return out.sort(function (x, y) { return x.localeCompare(y) || cmpStr(x, y); });
+  }
+  // Travel (oros-travel-data): trips that are not deleted, with a name
+  // and their travellers. Current and upcoming first (soonest first),
+  // then trips without dates, then past ones (latest first). ≤ 30.
+  function tripChoices(tv, today) {
+    if (!tv || typeof tv !== "object" || !Array.isArray(tv.trips)) return [];
+    var tombs = tv.tombs && typeof tv.tombs === "object" ? tv.tombs : {};
+    var ymd = /^\d{4}-\d{2}-\d{2}$/;
+    var out = [];
+    tv.trips.forEach(function (x) {
+      if (!x || typeof x !== "object" || typeof x.id !== "string") return;
+      var life = 0;
+      if (x.f && typeof x.f === "object") Object.keys(x.f).forEach(function (k) { if (isInt(x.f[k]) && x.f[k] > life) life = x.f[k]; });
+      if (Object.prototype.hasOwnProperty.call(tombs, x.id) && isInt(tombs[x.id]) && tombs[x.id] >= life) return;
+      var n = normText(x.name, NAME_LEN) || normText(x.dest, NAME_LEN);
+      if (!n) return;
+      var s = typeof x.start === "string" && ymd.test(x.start) ? x.start : "";
+      var e = typeof x.end === "string" && ymd.test(x.end) ? x.end : s;
+      var seen = {}, people = [];
+      (Array.isArray(x.people) ? x.people : []).forEach(function (p) {
+        var pn = normText(p, PERSON_LEN);
+        if (pn && !seen[pn.toLowerCase()] && people.length < MAX_PEOPLE) { seen[pn.toLowerCase()] = 1; people.push(pn); }
+      });
+      out.push({ id: x.id, n: n, start: s, end: e, people: people, rank: !s ? 1 : (e >= today ? 0 : 2) });
+    });
+    out.sort(function (a, b) {
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      if (a.rank === 0) return cmpStr(a.start, b.start) || cmpStr(a.id, b.id);
+      if (a.rank === 2) return cmpStr(b.start, a.start) || cmpStr(a.id, b.id);
+      return cmpStr(a.n, b.n) || cmpStr(a.id, b.id);
+    });
+    return out.slice(0, 30).map(function (x) { return { id: x.id, n: x.n, start: x.start, end: x.end, people: x.people }; });
   }
 
   // ---------- 6. Storage, prefs ----------
@@ -1537,6 +1596,129 @@
 
   // New / edit group: name, currency, colour, people, who is me.
   // Works on a draft; Save writes only what changed (R27).
+  // "From Contacts" / "From a trip" under the people of the group
+  // dialog (phase 2). Read-only: names (and an empty group name) are
+  // copied into the draft; Contacts and Travel are never written.
+  // null when neither app has anything to offer.
+  function readOther(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; }
+  }
+  function fromOtherApps(draft, nameIn, redraw, fail) {
+    var cts = contactNames(readOther("oros-contacts-data"));
+    var trips = tripChoices(readOther("oros-travel-data"), today);
+    if (!cts.length && !trips.length) return null;
+    var wrap = el("div", "from-box");
+    var row = el("div", "from-row");
+    var box = el("div", "pick-box");
+    box.hidden = true;
+    var open = "";
+    function has(n) {
+      var k = n.toLowerCase();
+      return draft.people.some(function (p) { return normText(p.n, PERSON_LEN).toLowerCase() === k; });
+    }
+    function addNames(list) {
+      var full = false;
+      list.forEach(function (n) {
+        if (has(n)) return;
+        if (draft.people.length >= MAX_PEOPLE) { full = true; return; }
+        draft.people.push({ id: "", key: "new" + newId(), n: n });
+      });
+      redraw();
+      if (full) fail(t("err.people", { n: MAX_PEOPLE }));
+    }
+    function show(which, fill) {
+      open = which;
+      [ctB, trB].forEach(function (b) {
+        if (b) b.setAttribute("aria-expanded", b.getAttribute("data-k") === which ? "true" : "false");
+      });
+      box.innerHTML = "";
+      box.hidden = !which;
+      if (fill) fill();
+    }
+    function close(back) { show(""); if (back) back.focus(); }
+
+    function fillContacts() {
+      var q = el("input");
+      q.type = "search";
+      q.autocomplete = "off";
+      q.maxLength = PERSON_LEN;
+      q.placeholder = t("from.q");
+      q.setAttribute("aria-label", t("from.q"));
+      var list = el("div", "pick-list");
+      var chosen = {};
+      var addSel = button(t("from.addSel"), "primary", function () {
+        addNames(cts.filter(function (n) { return chosen[n]; }));
+        close(ctB);
+      });
+      function count() {
+        var k = cts.filter(function (n) { return chosen[n]; }).length;
+        addSel.disabled = !k;
+        addSel.textContent = k ? t("from.addN", { n: k }) : t("from.addSel");
+      }
+      function draw() {
+        list.innerHTML = "";
+        var s = q.value.trim().toLowerCase(), shown = 0;
+        cts.forEach(function (n) {
+          if (shown >= 100 || (s && n.toLowerCase().indexOf(s) < 0)) return;
+          shown++;
+          var lab = el("label", "pick-row");
+          var cb = el("input");
+          cb.type = "checkbox";
+          var inGroup = has(n);
+          cb.checked = inGroup || !!chosen[n];
+          cb.disabled = inGroup;
+          cb.addEventListener("change", function () { chosen[n] = cb.checked; count(); });
+          lab.appendChild(cb);
+          lab.appendChild(el("span", "", n));
+          list.appendChild(lab);
+        });
+        if (!shown) list.appendChild(el("p", "hint tight", t("from.none")));
+      }
+      q.addEventListener("input", draw);
+      q.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
+      box.appendChild(q);
+      box.appendChild(list);
+      box.appendChild(addSel);
+      draw();
+      count();
+      q.focus();
+    }
+    function fillTrips() {
+      var list = el("div", "pick-list");
+      trips.forEach(function (tr) {
+        var b = el("button", "pick-trip");
+        b.type = "button";
+        b.appendChild(el("span", "pt-n", tr.n));
+        var when = tr.start ? (tr.end !== tr.start ? dateShort(tr.start) + " – " + dateShort(tr.end) : dateShort(tr.start)) : "";
+        var who = tr.people.length === 1 ? t("from.ppl1") : t("from.ppl", { n: tr.people.length });
+        b.appendChild(el("span", "pt-m", when ? when + " · " + who : who));
+        b.addEventListener("click", function () {
+          if (!normText(nameIn.value, NAME_LEN)) nameIn.value = tr.n;
+          addNames(tr.people);
+          close(trB);
+        });
+        list.appendChild(b);
+      });
+      box.appendChild(list);
+      var first = list.querySelector("button");
+      if (first) first.focus();
+    }
+    function opener(k, label, fill) {
+      var b = el("button", "txt-btn", label);
+      b.type = "button";
+      b.setAttribute("data-k", k);
+      b.setAttribute("aria-expanded", "false");
+      b.addEventListener("click", function () { if (open === k) close(); else show(k, fill); });
+      row.appendChild(b);
+      return b;
+    }
+    var ctB = cts.length ? opener("ct", t("from.ct"), fillContacts) : null;
+    var trB = trips.length ? opener("tr", t("from.tr"), fillTrips) : null;
+    wrap.appendChild(row);
+    wrap.appendChild(box);
+    return wrap;
+  }
+
   function groupDialog(gid) {
     var g = gid ? groupById(data, gid) : null;
     if (gid && !g) return;
@@ -1667,6 +1849,9 @@
     addRow.appendChild(addIn);
     addRow.appendChild(addB);
     form.appendChild(addRow);
+    var picks = fromOtherApps(draft, name, function () { err.hidden = true; drawPeople(); },
+                              function (msg) { showErr(err, msg, addIn); });
+    if (picks) form.appendChild(picks);
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
