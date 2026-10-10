@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.66.00
+- Mail: write, reply, forward and send (plain text), with a signature per account and an Outbox that sends by itself when you are back online.
+
 ## Version 0.65.00
 - Layout 1.2: type straight into text frames, and open InDesign (.idml) and PDF files.
 - The guide is up to date with the latest app changes, and menu search now finds the guide page of every app.
