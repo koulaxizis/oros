@@ -357,6 +357,7 @@ button:disabled { cursor: default; opacity: 0.4; }
 .msg-sender .addr { display: block; color: var(--text-dim); font-size: 12px; }
 .msg-to { font-size: 12px; color: var(--text-dim); margin-top: 2px; overflow-wrap: anywhere; }
 .msg-date { flex-shrink: 0; font-size: 12px; color: var(--text-dim); text-align: right; max-width: 40%; }
+.msg-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 #msg-bars:empty { display: none; }
 #msg-bars { padding: 10px 16px 0; display: flex; flex-direction: column; gap: 8px; }
 .bar {
@@ -501,6 +502,42 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
 .dlg-btn.danger { color: var(--danger); border-color: var(--danger); }
 .dlg-btn.small { flex: 0 0 auto; min-height: 34px; }
+/* compose + outbox */
+dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
+.mm-dlg textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.mm-dlg textarea:focus { outline: none; border-color: var(--accent); }
+.mm-dlg textarea.cmp-body { min-height: 220px; height: 40vh; height: 40dvh; }
+.cc-toggle { margin-top: 4px; padding-left: 0; }
+.out-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 16px);
+  margin: 4px 8px 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+.out-btn:hover { border-color: var(--accent); }
+.out-btn.err { color: var(--danger); border-color: var(--danger); }
+.out-list li { flex-wrap: wrap; }
+.out-acts { display: flex; flex-wrap: wrap; gap: 6px; }
 .set-accts { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .set-accts li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
 .set-acct { flex: 1 1 auto; min-width: 0; }

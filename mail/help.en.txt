@@ -1,5 +1,5 @@
 # Mail
-Mail reads your e-mail inside orOS. Add one or more accounts from any provider that offers IMAP, browse your folders and read your messages, even offline once they've been opened.
+Mail reads and sends your e-mail inside orOS. Add one or more accounts from any provider that offers IMAP, browse your folders, read your messages (even offline once they've been opened) and write new ones.
 
 ## Getting started
 Press `Add account`, enter `Your name`, `E-mail address` and `Password`, and press `Connect`. For Gmail, iCloud, Yahoo, GMX and Zoho the server is filled in for you. For other providers, open `Server settings` and check the `Incoming (IMAP) server`, `Port / security` and `Username`; most providers use mail.yourdomain.
@@ -18,6 +18,19 @@ Pictures from the internet are hidden at first, so the sender can't tell you ope
 ### Attachments and invitations
 Attachments are listed under the message; tap one to save it. An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
 
+## Write and reply
+- The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
+- Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
+- With several accounts, `From` chooses which one sends.
+- A copy of what you send goes to the account's `Sent` folder.
+- `Discard` (or [[Esc]]) asks first when you have written something.
+
+### Signature and outgoing server
+In an account, `Signature` adds a few lines under each new message and reply. Sending uses the `Outgoing (SMTP) server` in `Server settings`, with the same username and password as incoming mail; it is filled in with the incoming one and checked when you save.
+
+### Offline: the Outbox
+Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
+
 ## Accounts and settings
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
@@ -29,12 +42,14 @@ Your accounts (without passwords), the relay address and the senders whose pictu
 ## Keyboard shortcuts
 - [[J]] or [[↓]] opens the next message, [[K]] or [[↑]] the previous one.
 - [[Esc]] goes back to the list on a narrow screen.
+- [[C]] writes a new message; with a message open, [[R]] replies, [[A]] replies to all and [[F]] forwards.
 
 ## Tips
 - Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing.
 - The relay you set here also lets [Reader](app:feeds) and [Podcasts](app:podcasts) read sites that block browsers.
 
 ## Limits
-- Mail only reads for now: you can't send, reply, delete or move messages yet.
+- Messages are plain text, without attachments; forwarding sends the text only. Deleting and moving messages aren't there yet.
+- Drafts are not saved on the server; the Outbox stays on the device where it was written.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

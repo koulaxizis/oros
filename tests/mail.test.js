@@ -26,7 +26,7 @@ function block(from, to) {
   return src.slice(i, j);
 }
 const A = new Function("M",
-  "var DATA_VER = 1, MAX_TOMBS = 200, MAX_IMGOK = 500, KEEP_HEADS = 500;\n" +
+  "var DATA_VER = 1, MAX_TOMBS = 200, MAX_IMGOK = 500, KEEP_HEADS = 500, MAX_SIG = 1000;\n" +
   "function t(k) { return k; }\n" +
   block("  function cmpStr(", "  function el(") +
   block("  function lowerAddr(", "\n  // UID sets") +
@@ -429,4 +429,17 @@ test("relay: IMAP tokenizer handles literals, NIL, nested lists and bracketed se
   assert.deepEqual(l.slice(6), ["X", null, 'q"s']);
   assert.deepEqual(expandUids("1:3,9,8:7"), [1, 2, 3, 9, 7, 8]);
   assert.equal(compressUids([9, 1, 2, 3]), "1:3,9");
+});
+
+test("data: the signature is kept, cleaned and capped; merge stays symmetric", () => {
+  const base = { id: "sigacct1", m: 5, email: "c@pmail.gr", imap: { host: "mail.pmail.gr", port: 993 } };
+  const n = A.normAccount(Object.assign({ sig: "Χρήστος\r\norOS\u0007  \n\n" }, base));
+  assert.equal(n.sig, "Χρήστος\norOS");
+  assert.equal(A.normAccount(Object.assign({ sig: "x".repeat(5000) }, base)).sig.length, 1000);
+  assert.ok(!("sig" in A.normAccount(Object.assign({ sig: "   " }, base))));
+  assert.ok(!("sig" in A.normAccount(Object.assign({ sig: 42 }, base))));
+  const a = { accounts: [Object.assign({ sig: "old" }, base)] };
+  const b = { accounts: [Object.assign({}, base, { m: 6, sig: "new" })] };
+  assert.equal(JSON.stringify(A.mergeMail(a, b)), JSON.stringify(A.mergeMail(b, a)));
+  assert.equal(A.mergeMail(a, b).accounts[0].sig, "new");
 });
