@@ -246,6 +246,7 @@ body.panel-closed #side { display: none; }
 .tpl-th { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; }
 .tpl-th canvas { max-width: 72px; max-height: 72px; box-shadow: 0 1px 4px var(--shadow); background: #fff; }
 .tpl-name { text-align: center; line-height: 1.25; }
+.tpl-th:empty::before { content: ""; width: 44px; height: 60px; border: 1px dashed var(--text-dim); border-radius: 2px; }
 
 .st-pf {
   display: inline-flex; align-items: center; gap: 6px;
@@ -267,6 +268,7 @@ body.panel-closed #side { display: none; }
 }
 .pf-item:hover, .pf-item:focus-visible { background: var(--accent-soft); }
 @media (max-width: 520px) { #st-overset { display: none; } }
+@media (pointer: coarse) { .st-pf { min-height: 32px; } }
 
 .st-warn {
   padding: 2px 8px;

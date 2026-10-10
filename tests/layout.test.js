@@ -170,6 +170,13 @@ test("pdf: a vector PDF with embedded fonts, bleed boxes and spreads", () => {
   assert.ok(P.fontsUsed(d, R.computeLayout(d), M.pagesInOrder(d)).includes("serif-r"), "only the fonts in use are embedded");
 });
 
+test("typesetting: Greek all caps drop the tonos, keep the dialytika", () => {
+  const st = { ps: [{ id: "c", m: 1, name: "C", size: 10, caps: 1 }], cs: [] };
+  const r = T.layoutChain({ paras: [{ ps: "c", runs: [{ t: "Όνομα συγγραφέα ϊ ΐ" }] }] }, [{ id: "a", w: 400, h: 100 }], st);
+  const txt = r.frames.a.lines.map((ln) => ln.runs.map((x) => x.t).join(" ")).join(" ");
+  assert.equal(txt, "ΟΝΟΜΑ ΣΥΓΓΡΑΦΕΑ Ϊ Ϊ");
+});
+
 // ---------- 1B: master overrides, preflight, templates ----------
 test("master overrides: a page copy (ov) hides its master item there only, and stays canonical", () => {
   const d = sampleDoc();

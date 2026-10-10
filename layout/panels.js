@@ -945,7 +945,7 @@
   }
 
   function newDocDlg() {
-    var lang = LY.LANG, TP = window.orosDK.templates;
+    var lang = LY.LANG, TP = window.orosDK.templates || { LIST: [] };
     var a4 = M.preset("a4");
     var s = { w: a4.w, h: a4.h, unit: "mm", bleed: 3 * M.PT_PER.mm, mt: 15 * M.PT_PER.mm, mb: 15 * M.PT_PER.mm,
               mi: 15 * M.PT_PER.mm, mo: 15 * M.PT_PER.mm, cols: 1, gut: 5 * M.PT_PER.mm, facing: 0, preset: "a4", pages: 1 };

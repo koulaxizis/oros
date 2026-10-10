@@ -522,7 +522,7 @@
       var list = [];
       Object.keys(tmap).forEach(function (id) {
         var e = tmap[id], ce = cmap[id];
-        if (ce && JSON.stringify(withoutM(ce)) === JSON.stringify(withoutM(e))) { list.push(ce); return; }
+        if (ce && JSON.stringify(withoutM(ce, c)) === JSON.stringify(withoutM(e, c))) { list.push(ce); return; }
         var copy = JSON.parse(JSON.stringify(e));
         copy.m = Math.max(t0, (ce ? ce.m : 0) + 1, (nd.tombs[id] || 0) + 1);
         if (c === "stories" && ce) copy.h = [ce.m].concat(ce.h || []);
@@ -533,7 +533,8 @@
     });
     return M.normDoc(nd);
   }
-  function withoutM(e) { var o = {}; Object.keys(e).forEach(function (k) { if (k !== "m" && k !== "h") o[k] = e[k]; }); return o; }
+  // stamps aside (a story's h is its stamp history; an item's h is its height)
+  function withoutM(e, c) { var o = {}; Object.keys(e).forEach(function (k) { if (k !== "m" && !(k === "h" && c === "stories")) o[k] = e[k]; }); return o; }
 
   LY.undo = function () {
     if (!LY.doc || !undoStack.length) return;
