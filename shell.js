@@ -1186,10 +1186,11 @@
       fired = JSON.parse(localStorage.getItem(PETCARE_FIRED_KEY) || "{}");
     } catch (e) { return; }
     if (!raw || !Array.isArray(raw.pets) || !raw.pets.length) return;
-    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;
     try { if (!N.getState().ready) return; } catch (e) { return; }
+    if (prefs.doses && typeof Core.dosesDue === "function") petcareDoseCheck(Core, raw, N);
+    if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
     var today = sysYmd();
     var res = Core.reminders(Core.merge(raw, raw), today, prefs.lead, fired);
     var same = JSON.stringify(res.fired) === JSON.stringify(fired);
@@ -1231,6 +1232,47 @@
       title: title,
       body: parts.join(" · "),
       deepLink: "petcare:today"
+    });
+  }
+
+  // Per-dose medicine reminders (phase 2): a course with dose times
+  // gets one notification at each time, in the 90 minutes after it
+  // (a dose missed while orOS was closed is skipped, not announced
+  // late). Device-local oros-petcare-doses keeps today's announced
+  // doses; the key is the same on every device, so the synced inbox
+  // shows each dose once. Own switch in the app (prefs.doses),
+  // independent of the daily reminder hour.
+  var PETCARE_DOSES_KEY = "oros-petcare-doses";
+  function petcareDoseCheck(Core, raw, N) {
+    var fired;
+    try { fired = JSON.parse(localStorage.getItem(PETCARE_DOSES_KEY) || "{}"); } catch (e) { fired = {}; }
+    var now = new Date();
+    var res = Core.dosesDue(Core.merge(raw, raw), sysYmd(), now.getHours() * 60 + now.getMinutes(), fired);
+    if (JSON.stringify(res.fired) !== JSON.stringify(fired)) {
+      try { localStorage.setItem(PETCARE_DOSES_KEY, JSON.stringify(res.fired)); } catch (e) {}
+    }
+    if (!res.items.length) return;
+    var el = state.lang === "el";
+    var title = window.t("app.petcare");
+    if (title === "app.petcare") title = "Pet Health Book";
+    var byTime = {};
+    res.items.forEach(function (it) { (byTime[it.tm] || (byTime[it.tm] = [])).push(it); });
+    Object.keys(byTime).sort().forEach(function (tm) {
+      var list = byTime[tm];
+      var body = list.slice(0, 4).map(function (it) {
+        return it.pet.name + ": " + it.rec.n + (it.rec.ds ? " (" + it.rec.ds + ")" : "");
+      });
+      if (list.length > 4) body.push(el ? "και " + (list.length - 4) + " ακόμα" : "and " + (list.length - 4) + " more");
+      var sig = list.map(function (it) { return it.key; }).join("|"), h = 0;
+      for (var i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+      N.emit({
+        ns: "petcare",
+        key: "dose-" + list[0].key.slice(-16) + "-" + (h >>> 0).toString(36),
+        type: "reminder",
+        title: title + " · " + (el ? "δόση " : "dose ") + tm,
+        body: body.join(" · "),
+        deepLink: "petcare:" + (list.length === 1 ? list[0].pet.id : "today")
+      });
     });
   }
 
