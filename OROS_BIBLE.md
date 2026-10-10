@@ -4248,3 +4248,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Deep link:** `__orosOpenAt("slides", {outline, title})` with text in the Outline view's format opens a theme picker; nothing is created until the user picks a theme. Empty or malformed targets are ignored. Used by Mind Map phase 2.
 - **Files:** `slides/app.js`, `slides/panels.js`.
 - **Not tested:** a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — "Send to orOS" browser add-on + address-bar search — 0.58.02
+- **`extension/`** (not an app folder, not served by the PWA): one Manifest V3 add-on for Chrome, Edge, Brave and Firefox; no build, no host permissions, no content scripts. Toolbar button, Alt+Shift+O, or right-click on a page / link opens orOS with `?share-url` (Bookmarks add dialog, #83). Address-bar keyword `oros <words>` opens `/?search=<words>`. Store steps in `extension/README.md`, privacy text in `extension/PRIVACY.md`.
+- **Shell:** `?search=<words>` launch parameter puts the words into the menu search. `sw.js` does not cache `?search=` navigations.
+- **Tests:** `tests/extension.test.js`.
+- **Not tested:** the add-on stores (accounts pending, Chris), Safari, a real phone.
