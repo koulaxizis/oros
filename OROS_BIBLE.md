@@ -4187,3 +4187,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Phase 3:** per-show "Tell me about new episodes" (synced `show.ntf`, off by default; last 3 days, max 3 per check; shell checks every 3 h on events while Podcasts is closed, using Reader's `feeds/core.js` + `feeds/fetch.js`); notices key `e:<episodeId>`, deep link `podcasts:ep:<id>` (DL_BRIDGES); "Note at 12:34" → Notes `{add}`; "Listen later" → To-Do BR-TD-ADD; show site → Reader `{add:{url}}`.
 - **Files:** `podcasts/` (core.js, host.js, podcasts.js, css, index.html ?v=), `notifications.js` (one DL_BRIDGES line), `tests/podcasts.test.js` (35).
 - **Not tested:** a real phone, Safari / iOS, real Dropbox, the real Apple endpoints; no OS notification while orOS is closed (no push server). ID3 chapters not built.
+
+### 2026-10-10 — Meal Planner links: To-Do + Calendar — 0.57.01
+- **Meal Planner → To-Do:** on the Shopping tab, **To To-Do** opens To-Do's add dialog with the unticked items (items already on the target list start unticked; pick another list; nothing is saved before `Add N`). To-Do receiver BR-TD-ADD (`__orosOpenAt("todo", {addItems:{list?, newList?, from?, items:[{text, note?}]}})`, `todo/todo.js` section 13), also used later by Chore Wheel, Travel, Mind Map and others; To-Do stays the only writer of its data.
+- **Calendar:** new **Meals** filter chip (`lbl-feed-meals`): planned meals as all-day rows ("Dinner: Fasolada"); tapping one opens Meal Planner on that week (`__orosOpenAt("meals", {day})`). `calendar/index.html` loads `../meals/core.js` (already precached).
+- **Files:** `todo/todo.js` + `todo.css`, `meals/meals.js`, `calendar/`, `tests/todo-add.test.js`, Tests workflow also on `todo/**`.
+- **Not tested:** a real phone, Safari/Firefox, real Dropbox.
