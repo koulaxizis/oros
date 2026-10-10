@@ -1708,7 +1708,28 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("scores");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { match }.
+  // Opens the match's score sheet (an open or a finished one); another
+  // open match is left through Home first (its timer stops). Unknown
+  // id → no-op; nothing happens while a dialog is open.
+  function openSearchTarget(tg) {
+    var id = tg && typeof tg.match === "string" ? tg.match : null;
+    if (!id || !findIn(data.matches, id)) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (prefs.cur === id) return;
+    if (prefs.cur) goHome();
+    openMatch(id);
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   boot();
 })();

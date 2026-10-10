@@ -3247,6 +3247,29 @@
   } catch (e) { pendingPeriod = null; }
   if (pendingPeriod) __orosCycleOpen(pendingPeriod);
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { day: "d-YYYY-MM-DD" }. Opens that day's editor, as the
+  // Days list's edit button does. Unknown day → no-op; an open dialog
+  // or an open day editor (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    var id = t && typeof t.day === "string" ? t.day : "";
+    if (!id || !dayById(id)) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (viewMode === "timeline" && openDay !== null) return;
+    openDay = id;
+    managing = false;
+    viewMode = "timeline";
+    applyView();
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("cycle");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
+
   // ---- Unified Notification System (Wave: Cycle migration) ----
   // Legacy maybeRemind() REMOVED — dead code since the shell tick.
   // The shell's clock tick calls this INTO the Cycle iframe on a

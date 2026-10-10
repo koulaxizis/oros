@@ -69,6 +69,12 @@
       "tab.adjust": "Adjust", "tab.position": "Position", "tab.mask": "Shape",
       "drawer.close": "Close panel",
       "tab.sources": "Sources",
+      "tab.fonts": "Fonts", "fn.pick": "Select a text to change its font.", "fn.mine": "Your fonts",
+      "fn.offlineOk": "always available", "fn.inDesign": "in this design", "fn.more": "More fonts (Fontsource)",
+      "fn.search": "Search fonts", "fn.greek": "Only fonts with Greek letters", "fn.hasGreek": "Greek",
+      "fn.browse": "Show all", "fn.loading": "Getting the font…", "fn.fail": "The font could not be fetched.",
+      "fn.offline": "You are offline: only fonts already on this device can be used.",
+      "fn.hint": "Free fonts with open licences. A font is downloaded the first time you use it and then works offline on this device. Letters a font lacks show in Sans.",
       "imp.file": "From a file (.pptx, picture, package)…", "imp.canva": "From your Canva account…",
       "cv.title": "Import from Canva", "cv.intro": "Bring your Canva designs over in one go. Each one is exported from Canva as PowerPoint and opened here as a new design.",
       "cv.checking": "Checking the connection…", "cv.off": "This orOS relay has no Canva connection set up yet. You can still download a design from Canva as PowerPoint and use Import › From a file.",
@@ -187,6 +193,12 @@
       "tab.adjust": "Ρυθμίσεις", "tab.position": "Θέση", "tab.mask": "Σχήμα",
       "drawer.close": "Κλείσιμο πάνελ",
       "tab.sources": "Πηγές",
+      "tab.fonts": "Γραμματοσειρές", "fn.pick": "Διάλεξε ένα κείμενο για να αλλάξεις τη γραμματοσειρά του.", "fn.mine": "Οι γραμματοσειρές σου",
+      "fn.offlineOk": "πάντα διαθέσιμη", "fn.inDesign": "σε αυτό το σχέδιο", "fn.more": "Περισσότερες γραμματοσειρές (Fontsource)",
+      "fn.search": "Αναζήτηση γραμματοσειράς", "fn.greek": "Μόνο με ελληνικά γράμματα", "fn.hasGreek": "Ελληνικά",
+      "fn.browse": "Δείξε όλες", "fn.loading": "Κατεβάζω τη γραμματοσειρά…", "fn.fail": "Η γραμματοσειρά δεν μπόρεσε να κατέβει.",
+      "fn.offline": "Είσαι εκτός σύνδεσης: μπορείς να χρησιμοποιήσεις μόνο όσες γραμματοσειρές έχει ήδη η συσκευή.",
+      "fn.hint": "Δωρεάν γραμματοσειρές με ανοιχτές άδειες. Μια γραμματοσειρά κατεβαίνει την πρώτη φορά που τη χρησιμοποιείς και μετά δουλεύει χωρίς σύνδεση σε αυτή τη συσκευή. Όσα γράμματα δεν έχει φαίνονται σε Sans.",
       "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
       "cv.title": "Εισαγωγή από το Canva", "cv.intro": "Φέρε τα σχέδιά σου από το Canva με τη μία. Το καθένα εξάγεται από το Canva ως PowerPoint και ανοίγει εδώ ως νέο σχέδιο.",
       "cv.checking": "Ελέγχω τη σύνδεση…", "cv.off": "Αυτός ο relay του orOS δεν έχει ακόμη ρυθμισμένη σύνδεση με το Canva. Μπορείς πάντα να κατεβάσεις ένα σχέδιο από το Canva ως PowerPoint και να το ανοίξεις από Εισαγωγή › Από αρχείο.",
@@ -467,6 +479,13 @@
       if (typeof k[id] === "string" && /^[A-Za-z0-9_-]{1,120}$/.test(k[id])) keys[id] = k[id];
     });
     if (Object.keys(keys).length) AT.prefs.keys = keys;
+    // recently used Fontsource families (fonts.js): this device only
+    if (Array.isArray(p.fonts)) {
+      var fl = p.fonts.filter(function (f) {
+        return f && AX.isExtraFont(f.id) && typeof f.name === "string" && f.name.length <= 60;
+      }).slice(0, 24).map(function (f) { return { id: f.id, name: f.name }; });
+      if (fl.length) AT.prefs.fonts = fl;
+    }
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(AT.prefs)); } catch (e) {}
@@ -831,7 +850,7 @@
     $("home").hidden = true;
     $("editor").hidden = false;
     $("ed-name").textContent = docTitle(d);
-    T.load(AT.draw.fontKeys(d)).then(null, function () {});
+    T.load(AT.draw.fontKeys(d)).then(function () { emit("fonts"); }, function () {});
     emit("open");
   }
   AT.openDoc = openDoc;
@@ -1124,11 +1143,40 @@
       $("loading").hidden = true;
       if (AT.prefs.doc && findDoc(AT.prefs.doc)) openDoc(AT.prefs.doc);
       else renderHome();
+      takeSearchTarget();
     }, function () {
       $("loading").hidden = true;
       toast(t("toast.fontFail"));
       renderHome();
+      takeSearchTarget();
     });
+  }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { doc }.
+  // Opens the design (leaving the one that is open through Home, so a
+  // gesture in progress ends). Unknown id → no-op; nothing happens
+  // while a dialog is open. Before the fonts are in, it waits.
+  var searchReady = false, searchLater = null;
+  function openSearchTarget(tg) {
+    if (!searchReady) { searchLater = tg; return; }
+    var id = tg && typeof tg.doc === "string" ? tg.doc : null;
+    if (!id || !findDoc(id)) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (AT.doc && AT.doc.id === id) return;
+    if (AT.doc) goHome();
+    openDoc(id);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    searchReady = true;
+    if (searchLater) { var later = searchLater; searchLater = null; openSearchTarget(later); return; }
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("atelier");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (e) {}
   }
 
   document.addEventListener("DOMContentLoaded", boot);
