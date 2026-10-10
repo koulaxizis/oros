@@ -139,6 +139,8 @@
       "show.allHidden": "Every slide is hidden in the show.",
       "show.summary": "Show ended after {t}.",
       "rec.title": "Recovered text",
+      "in.title": "New presentation from an outline", "in.note": "Another app sent “{t}” with {n} slides. Pick a theme to make a new presentation from it; nothing is created until you do.",
+      "in.empty": "The outline that arrived was empty, so nothing was created.",
       "rec.note": "Text that was changed on two devices at the same time. The newer version stays on the slide; the other one is kept here.",
       "rec.copy": "Copy", "rec.insert": "Add to the slide", "rec.drop": "Dismiss", "rec.none": "Nothing to recover.",
       "rec.notes": "Notes, slide {n}", "rec.text": "Text, slide {n}", "rec.gone": "Slide no longer here",
@@ -226,6 +228,8 @@
       "show.allHidden": "Όλες οι διαφάνειες είναι κρυφές στην προβολή.",
       "show.summary": "Η προβολή κράτησε {t}.",
       "rec.title": "Ανακτημένο κείμενο",
+      "in.title": "Νέα παρουσίαση από διάγραμμα", "in.note": "Μια άλλη εφαρμογή έστειλε το «{t}» με {n} διαφάνειες. Διάλεξε θέμα για να γίνει νέα παρουσίαση· τίποτα δεν δημιουργείται πριν το κάνεις.",
+      "in.empty": "Το διάγραμμα που ήρθε ήταν κενό, οπότε δεν δημιουργήθηκε τίποτα.",
       "rec.note": "Κείμενο που άλλαξε σε δύο συσκευές την ίδια ώρα. Η νεότερη εκδοχή μένει στη διαφάνεια· η άλλη κρατιέται εδώ.",
       "rec.copy": "Αντιγραφή", "rec.insert": "Προσθήκη στη διαφάνεια", "rec.drop": "Απόρριψη", "rec.none": "Δεν υπάρχει κάτι για ανάκτηση.",
       "rec.notes": "Σημειώσεις, διαφάνεια {n}", "rec.text": "Κείμενο, διαφάνεια {n}", "rec.gone": "Η διαφάνεια δεν υπάρχει πια",
@@ -725,7 +729,10 @@
     var made = null;
     dataOp(function (dt, nw, newId) {
       if (opts.tpl) made = C.fromTemplate(dt, opts.tpl, LANG, nw, newId);
-      else {
+      else if (typeof opts.outline === "string") {
+        made = C.newDeck(dt, { t: opts.name || "", th: opts.th, as: opts.as }, nw, newId);
+        C.applyOutline(dt, made.id, opts.outline, nw, newId);
+      } else {
         made = C.newDeck(dt, { t: opts.name || "", th: opts.th, as: opts.as }, nw, newId);
         C.addSlide(dt, made.id, "title", null, nw, newId);
       }
@@ -946,6 +953,28 @@
     SL.A.onChange(function () { thumbs = {}; if (!SL.deck) renderHome(); else emit("assets"); });
   }
 
+  // Deep link from another app (shell __orosOpenAt("slides", target) /
+  // __orosTakeTarget): target { outline, title } where outline is plain
+  // text in the Outline view's format ("# Title" starts a slide, "- "
+  // bullets, two spaces per level, "> " speaker notes). It only opens
+  // the "new presentation from an outline" dialog; nothing is created
+  // or changed until the user picks a theme there.
+  var OUTLINE_MAX = 200000;
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object" || typeof tg.outline !== "string") return;
+    var text = tg.outline.slice(0, OUTLINE_MAX);
+    var name = C.cleanLine(typeof tg.title === "string" ? tg.title : "", C.LIM.title);
+    if (!C.parseOutline(text).length) { toast(t("in.empty")); return; }
+    if (SL.deck) goHome();
+    SL.dlg.fromOutline(text, name);
+  }
+  function takeTarget() {
+    var tg = null;
+    try { tg = window.parent.__orosTakeTarget ? window.parent.__orosTakeTarget("slides") : null; } catch (e) { tg = null; }
+    if (tg) openTarget(tg);
+  }
+  window.__orosOpenAt = openTarget;
+
   function boot() {
     load();
     loadPrefs();
@@ -960,10 +989,12 @@
       SL.D.resetFit();
       if (SL.prefs.deck && data.decks[SL.prefs.deck]) openDeck(SL.prefs.deck);
       else renderHome();
+      takeTarget();
     }, function () {
       $("loading").hidden = true;
       toast(t("toast.fontFail"));
       renderHome();
+      takeTarget();
     });
   }
 
