@@ -4456,3 +4456,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Help:** qr, contacts, calendar, bookmarks pages (EN/EL) describe the buttons.
 - **Tests:** tests/qr.test.js: one QR receiver; every source app sends `{ from, id }`.
 - Not tested: a real phone, Safari, scanning the codes with a phone camera.
+
+### 2026-10-10 — Workouts: import from Strong or Hevy (#153) — 0.65.08
+- Workouts can import your history from Strong or Hevy (CSV) in Settings.
+- Code: section 4b of `fitness/fitness.js`. No data format change.
+- Help pages EN/EL updated. Tests: tests/fitness.test.js extended.
+- Not tested: a real phone, Safari, exports from every Strong/Hevy app version.
