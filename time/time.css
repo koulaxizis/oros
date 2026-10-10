@@ -638,6 +638,7 @@ dialog#zone-dlg h3 {
   line-height: 1.5;
 }
 .ast-moon { gap: 12px; }
+.ast-more { display: block; width: 100%; margin-top: 8px; min-height: 32px; }
 .ast-moon svg { flex-shrink: 0; }
 .ast-moon-txt { flex: 1; min-width: 0; }
 .ast-mphase {

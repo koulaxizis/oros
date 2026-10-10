@@ -49,7 +49,8 @@
       "ph.0": "New moon", "ph.1": "Waxing crescent", "ph.2": "First quarter",
       "ph.3": "Waxing gibbous", "ph.4": "Full moon", "ph.5": "Waning gibbous",
       "ph.6": "Last quarter", "ph.7": "Waning crescent",
-      "u.days": "d"
+      "u.days": "d",
+      "astro.more": "More in Moon & Sky"
     },
     el: {
       "astro.title": "Ήλιος & Σελήνη",
@@ -83,7 +84,8 @@
       "ph.0": "Νέα σελήνη", "ph.1": "Αύξουσα ημισέληνος", "ph.2": "Πρώτο τέταρτο",
       "ph.3": "Αύξουσα αμφίκυρτη", "ph.4": "Πανσέληνος", "ph.5": "Φθίνουσα αμφίκυρτη",
       "ph.6": "Τελευταίο τέταρτο", "ph.7": "Φθίνουσα ημισέληνος",
-      "u.days": "ημ."
+      "u.days": "ημ.",
+      "astro.more": "Περισσότερα στο Σελήνη & Ουρανός"
     }
   };
   function t(k) {
@@ -359,9 +361,21 @@
       mi.age.toFixed(1) + " " + esc(t("u.days")) + " · " +
       esc(t("astro.illum")) + ": " + Math.round(mi.k * 100) + "%</div></div></div>";
 
+    html += '<button id="ast-sky" type="button" class="mini ast-more">' + esc(t("astro.more")) + '</button>';
     body.innerHTML = html;
     var setBtn = $("ast-set");
     if (setBtn) setBtn.addEventListener("click", openDlg);
+    var skyBtn = $("ast-sky");
+    if (skyBtn) skyBtn.addEventListener("click", openSky);
+  }
+
+  // Moon & Sky (sky/) is the full version of this card: same location,
+  // more detail. It opens on tonight.
+  function openSky() {
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosOpenAt === "function") p.__orosOpenAt("sky", {});
+    } catch (e) {}
   }
 
   function wireSetBtn() {
@@ -420,8 +434,26 @@
     if (gs) gs.textContent = t("astro.geo.detect");
   })();
 
+  // Deep link (Time's only window.__orosOpenAt receiver):
+  //   { astro: "location" } — Moon & Sky's "Change location": bring this
+  //   card into view and open its location dialog.
+  function focusLocation() {
+    var sec = $("ast-body");
+    try { if (sec) sec.scrollIntoView({ block: "center" }); } catch (e) {}
+    openDlg();
+  }
+  window.__orosOpenAt = function (target) {
+    if (target && target.astro === "location") focusLocation();
+  };
+
   // Boot + periodic refresh (positions drift, moon barely moves)
   render();
+  try {
+    var pending = (window.parent && window.parent !== window &&
+                   typeof window.parent.__orosTakeTarget === "function")
+      ? window.parent.__orosTakeTarget("time") : null;
+    if (pending && pending.astro === "location") setTimeout(focusLocation, 50);
+  } catch (e) {}
   setInterval(render, 30000);
   // #5: version derives from the cache-bust query (?v=…) — never
   // hardcoded; stale-bundle debugging needs the log to match the

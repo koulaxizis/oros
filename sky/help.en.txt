@@ -1,0 +1,43 @@
+# Moon & Sky
+See what the sky holds tonight from your place: the Moon as it looks, when it rises and sets, when it gets dark, and which planets and stars you can see. It all works offline.
+
+## Getting started
+Moon & Sky uses the location of the Sun & Moon card in [Time](app:time), or the Weather app's if Time has none. If neither has a location, tap or click `Set location in Time`, or `Use device location (this time only)` for this visit only.
+- The pin button at the top opens Time, where you change the location for both apps.
+- The date box at the top lets you travel to another day, for example a birthday. `Today` brings you back.
+- The moon button turns on the red night view (see Tips).
+
+## Tonight
+- The Moon as you see it, tilted the way it looks from your place, with how much of it is lit, its age, its distance and the next full and new moon.
+- `Moon`: moonrise and moonset, and where it is right now.
+- `Sun`: sunrise, sunset, its highest point and the length of the day.
+- `When it gets dark`: when twilight ends, when the horizon fades, and when the sky is fully dark until morning.
+- `Light for photos`: the golden and blue hours, morning and evening.
+- `Planets tonight`: Mercury to Saturn, when to look, in which direction, how high and how bright.
+- `Coming up`: the next full and new moons, meteor showers and eclipses. Tap or click one to see that day.
+
+## Sky map
+The dome above you: north at the top, east on the left, as if you lie on your back with your head to the north. It shows the Moon, the planets, about 290 bright stars and 34 constellations.
+- Tap or click a star, planet or the Moon to see its name, height above the horizon and direction.
+- Move the slider to watch the sky turn through the night; `Now` brings it back.
+- `Constellations` shows or hides the lines.
+- `What is up (list)` names the bright things above the horizon, as text.
+
+## Month
+Each day shows the Moon as it looks that evening. Dots mark the days with something special: the four main phases, equinoxes and solstices, meteor shower peaks and eclipses. Under the grid, `This month` lists them, with whether an eclipse can be seen from your place and whether a bright Moon spoils a meteor shower. Tap or click a day to open it in `Tonight`.
+
+## Calendar and Time
+- In [Calendar](app:calendar) you can turn on the `Moon & Sky` feed: moon phases, equinoxes and solstices, meteor showers and eclipses appear on their days. It starts off. Tap or click a row to open that day here.
+- The Sun & Moon card in Time has a `More in Moon & Sky` button.
+
+## Sync and backup
+Nothing here needs syncing. The location comes from Time, which syncs it. The open tab, the red night view and the constellation lines stay on this device.
+
+## Tips
+> Turn on the red night view outside at night: everything turns dim red, so your eyes stay used to the dark.
+- Planets do not twinkle like stars do; that is a quick way to tell them apart.
+
+## Limits
+- Times use your device's time zone, even for a place in another zone.
+- Times are good to about a minute and positions to a fraction of a degree; hills and buildings on your horizon are not taken into account.
+- Eclipses are listed from 2026 to 2035.

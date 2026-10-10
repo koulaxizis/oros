@@ -159,6 +159,7 @@
       "lbl.feed.nameday": "Name days",
       "lbl.feed.obs": "World days",
       "lbl.feed.time": "Work time",
+      "lbl.feed.sky": "Moon & Sky",
       "lbl.feed.famtree": "Death anniversaries",
       "feed.famtree.one": "{name} · 1 year since death",
       "feed.famtree.n": "{name} · {n} years since death",
@@ -306,6 +307,7 @@
       "lbl.feed.nameday": "Ονομαστικές εορτές",
       "lbl.feed.obs": "Παγκόσμιες ημέρες",
       "lbl.feed.time": "Ώρες εργασίας",
+      "lbl.feed.sky": "Σελήνη & Ουρανός",
       "lbl.feed.famtree": "Επέτειοι θανάτου",
       "feed.famtree.one": "{name} · 1 χρόνος από τον θάνατο",
       "feed.famtree.n": "{name} · {n} χρόνια από τον θάνατο",
@@ -485,7 +487,8 @@ function transientNote(title, body) {
     { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
     { id: "lbl-feed-obs",     color: "#64b5f6" },   // sky blue — world / internet days
     { id: "lbl-feed-time",    color: "#56b6c2" },   // cyan — Timesheet work time per project
-    { id: "lbl-feed-famtree", color: "#9aa4b0" }    // slate grey — Family Tree death anniversaries
+    { id: "lbl-feed-famtree", color: "#9aa4b0" },   // slate grey — Family Tree death anniversaries
+    { id: "lbl-feed-sky",     color: "#e9dfb4" }    // moonlight cream — Moon & Sky (opt-in)
   ];
   function feedLabelName(l) {
     if (l.id === "lbl-feed-bday") return t("lbl.feed.bday");
@@ -511,6 +514,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-obs") return t("lbl.feed.obs");
     if (l.id === "lbl-feed-time") return t("lbl.feed.time");
     if (l.id === "lbl-feed-famtree") return t("lbl.feed.famtree");
+    if (l.id === "lbl-feed-sky") return t("lbl.feed.sky");
     return t("lbl.feed.custom");
   }
 
@@ -864,7 +868,7 @@ function transientNote(title, body) {
 
   // Label visibility: id -> true/false. Absent = visible. Chips row
   // toggles these; nothing is ever deleted by filtering.
-  var labelVis = {};
+  var labelVis = { "lbl-feed-sky": false };   // opt-in feeds start hidden (loadFeedVis)
   function labelVisible(labelId) {
     if (!labelId) return true;
     return labelVis[labelId] !== false;
@@ -1465,6 +1469,28 @@ function transientNote(title, body) {
         start: null,                             // all-day
         _feed: true,
         _openAt: { app: "familytree", target: { person: r.pid } }
+      };
+    });
+  }
+
+  // Moon & Sky read-only feed (sky/core.js, loaded by index.html): the
+  // four main Moon phases, equinoxes and solstices, meteor shower peaks
+  // and eclipses, computed on the device, nothing stored. Opt-in: the
+  // chip starts off and its state is remembered here (OPT_IN_FEEDS).
+  // Click → Moon & Sky on that day.
+  function skyFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-sky")) return [];
+    var Core = window.OrosSkyCore;
+    if (!Core) return [];
+    return Core.feedFor(dateStr, LANG === "el" ? "el" : "en").map(function (r, i) {
+      var d = new Date(r.t);
+      return {
+        id: "sky-" + dateStr + "-" + i,          // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-sky",
+        start: r.allDay ? null : (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(),
+        _feed: true,
+        _openAt: { app: "sky", target: { date: dateStr } }
       };
     });
   }
@@ -2075,16 +2101,19 @@ function transientNote(title, body) {
   var STICKY_FEEDS = ["lbl-feed-hol", "lbl-feed-nameday", "lbl-feed-obs", "lbl-feed-time"];
   var daysData = null;
 
+  // Opt-in feeds start hidden; turning one on is remembered (true).
+  var OPT_IN_FEEDS = ["lbl-feed-sky"];
   function loadFeedVis() {
-    try {
-      var v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}");
-      STICKY_FEEDS.forEach(function (id) { if (v && v[id] === false) labelVis[id] = false; });
-    } catch (e) {}
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}"); } catch (e) {}
+    STICKY_FEEDS.forEach(function (id) { if (v && v[id] === false) labelVis[id] = false; });
+    OPT_IN_FEEDS.forEach(function (id) { labelVis[id] = !!(v && v[id] === true); });
   }
   function saveFeedVis(id) {
-    if (STICKY_FEEDS.indexOf(id) === -1) return;
+    if (STICKY_FEEDS.indexOf(id) === -1 && OPT_IN_FEEDS.indexOf(id) === -1) return;
     var v = {};
     STICKY_FEEDS.forEach(function (k) { if (!labelVisible(k)) v[k] = false; });
+    OPT_IN_FEEDS.forEach(function (k) { if (labelVisible(k)) v[k] = true; });
     try { localStorage.setItem(FEEDVIS_KEY, JSON.stringify(v)); } catch (e) {}
   }
 
@@ -2173,6 +2202,7 @@ function transientNote(title, body) {
     .concat(observancesFeedOn(dateStr))
     .concat(timesheetFeedOn(dateStr))
     .concat(familyTreeFeedOn(dateStr))
+    .concat(skyFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;
