@@ -4516,3 +4516,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: no sync slice; device-local `oros-sky-prefs` (tab, night, lines). Credits: Yale Bright Star Catalogue (public domain), d3-celestial constellation figures (BSD-3-Clause).
 - Tests and help pages EN/EL included.
 - Not tested: a real phone, Safari, accuracy against a planetarium beyond the test fixtures.
+
+### 2026-10-10 — Help: Calendar guide lists every chip (#159) — 0.68.01
+- The Calendar help (EN/EL) now lists the Moon & Sky, Holidays, Name days and World days chips, and explains which hidden chips are remembered (sticky and opt-in feeds).
+- Help text only. Tests: tests/help.test.js green.
