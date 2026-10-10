@@ -33,6 +33,8 @@ Quantities can follow the trip: choose `Per day` or `One every N days` instead o
 ## Share and export
 A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone), `Export for a calendar (.ics)`, `Fuel cost by car`, `Print`, `Copy trip` (with new dates, nothing packed) and `Delete trip`.
 
+The same menu can send `Send “Before I leave” to To-Do` or `Send “Still to pack” to To-Do`: the open items become a new list in [To-Do](app:todo), which shows them before anything is added. It's a copy, so ticking in To-Do doesn't change the trip.
+
 On the trip list, `More` has `Export all (JSON)` and `Import (JSON)`. An import merges with your trips and overwrites nothing.
 
 ## Sync and backup
