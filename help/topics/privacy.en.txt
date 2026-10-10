@@ -19,14 +19,20 @@ Before anything leaves your device, orOS encrypts it with your encryption passph
 >! Files you save with `Export backup file`, and backups in your backup folder (`Backup folder`), are **not** encrypted. Store them somewhere safe.
 
 ## Online services some apps use
-orOS itself runs from your device, but a few apps need the internet for what they show. They contact these services only when you use them, and none of them needs an account or a key:
+orOS itself runs from your device, but some apps need the internet for what they show. They contact these services only when you use that feature:
 - Weather (and the weather in the top bar): Open-Meteo, for forecasts and city search.
 - [Radio](app:radio): Radio Browser, a community list of stations. The stations play from their own servers.
-- [Maps](app:maps): OpenStreetMap maps, Photon place search and OSRM routes.
+- [Maps](app:maps): OpenStreetMap maps, Photon place search, and OSRM and FOSSGIS routes.
 - [Television](app:television): iptv-org, a community list of channels. The channels play from their own servers.
+- [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify and Fontsource for free photos, icons and fonts; Pixabay and Pexels only with your own key.
+- [Media Shelf](app:shelf): Open Library and MusicBrainz, only when you tap `Find details online`. Only the title and creator you typed are sent.
+- [Public Domain](app:pubdomain): Wikidata, for authors and their works.
+- [Reader](app:feeds) and [Podcasts](app:podcasts): the sites whose feeds you add.
+- [Mail](app:mail): your own mail provider, through the orOS mail relay, which passes your mail through and keeps nothing.
+- [Assistant](app:assistant): only the AI service you choose, with your own key, straight from your browser.
 - Sync: Dropbox, only if you connect it.
 
-`Use device location` and other location buttons ask your browser for permission first. You'll find this list, with credits and licences, in `About orOS + shortcuts`.
+`Use device location` and other location buttons ask your browser for permission first. The full list, with credits and licences, is in [Settings](app:settings) under `About orOS, credits and licences`.
 
 ## Working offline
 orOS saves itself and its apps on your device, so it opens and works without a connection: your apps, your data and your settings are all there.

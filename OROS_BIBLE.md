@@ -4496,3 +4496,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Reader's send dialog now opens a prefilled draft in Mail (`__orosOpenAt("mail", {compose:{subject, body}})`) instead of a `mailto:` link. Nothing is sent until you press Send in Mail.
 - Code: `feeds/feeds.js` `sendDialog` only.
 - Not tested: a real phone, Safari, a real SMTP send.
+
+### 2026-10-10 — Help: Privacy topic lists every online service (#157) — 0.67.02
+- The Privacy topic's online-services list is rewritten from the credits: Mail relay, Assistant (your own key), Atelier sources, Media Shelf lookup, Public Domain / Wikidata, Reader and Podcasts feeds; it points to Settings › About orOS, credits and licences.
+- Help text only (EN/EL). Tests: tests/help.test.js green.
+- Not tested: n/a (text change).
