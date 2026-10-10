@@ -23,7 +23,7 @@ Open orOS from the new icon on your home screen. It opens full screen, like any 
 
 You can also use the install icon in the browser's address bar, or the browser's menu. After that, orOS opens in its own window and you can pin it to your taskbar or dock.
 
-> `Install orOS` shows only when your browser can install it right now. Once orOS is installed, the row disappears.
+> `Install orOS` shows only when your browser can install it right now. Once orOS is installed, the row disappears. The same button is in `Settings` under `System`, as `Install orOS as an app`.
 
 ## How updates arrive
 You never need to download updates yourself. orOS checks for a new version every time it starts, every hour while it stays open, and when you come back to it or get your connection back.
