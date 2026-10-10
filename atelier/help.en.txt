@@ -56,14 +56,14 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 ## Import from Canva and other files
 `Import` on the home screen offers `From a file (.pptx, picture, package)…` and `From your Canva account…`.
 
-With `From your Canva account…` you connect once (`Connect to Canva` opens a Canva window where you sign in and allow access), then tick the designs you want and tap `Import`. Each one is exported from Canva as PowerPoint and opens as a new design; designs already brought over show `imported`. Your Canva sign-in stays on this device; `Disconnect` forgets it. This needs the internet and the orOS relay with its Canva connection set up.
+With `From your Canva account…` you connect once (`Connect to Canva` opens a Canva window where you sign in and allow access), then tick the designs you want and tap `Import`. Each one is exported from Canva as PowerPoint and opens as a new design; designs already brought over show `imported`. Ticking `Replace designs imported before` swaps an earlier copy for the new one (changes made to that copy here are lost). If some designs fail, the message says why and `Try the failed ones again` retries just those; a design Canva cannot export as PowerPoint (some video designs and Docs) cannot come over this way. Your Canva sign-in stays on this device; `Disconnect` forgets it. This needs the internet and the orOS relay with its Canva connection set up.
 
 A file opens as a new design:
 - An Atelier package (.orosdesign).
 - A PowerPoint file (.pptx). To bring a Canva design over, open it in Canva and choose `Share` › `Download` › `Microsoft PowerPoint`, then import that file. Texts stay editable, shapes, lines and photos come over, one page per slide.
 - A picture (PNG, JPG, WebP or SVG) becomes a design of its size.
 
->! Some things do not come over from PowerPoint: charts, tables, video, animations and some text effects. Fonts become the closest of Atelier's fonts. The message after the import says how many elements were left out.
+>! Some things do not come over from PowerPoint: charts, tables, video, animations and some text effects. A font comes over as the same free font from Fontsource when there is one (it downloads the first time); others, such as Canva Sans or Arial, become the closest of Atelier's own fonts. The message after the import says how many elements were left out.
 - `More` › `Credits` lists the work by others your design uses.
 
 ## Sync and backup

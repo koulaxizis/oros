@@ -363,11 +363,21 @@
           }).then(function (res) { assets[k] = res; }, function (e) { if (e && e.message === "nofs") throw e; failed++; });
         });
         return chain.then(function () {
+          // the design's fonts first, so text boxes get their real size
+          // (at most a few seconds; a font that does not come shows in Sans)
+          var keys = [];
+          window.AtelierPPTX.planFonts(plan).forEach(function (f) {
+            AX.ensureFont(f.id, f.name);
+            ["r", "b", "i", "bi"].forEach(function (v) { keys.push(f.id + "-" + v); });
+          });
+          if (!keys.length || navigator.onLine === false) return;
+          return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
+        }).then(function () {
           var r = window.AtelierPPTX.build(plan, assets, AT.now());
           AT.addDoc(r.doc);
           var lost = plan.skipped + r.missing;
           if (!quiet) AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
-          return lost;
+          return quiet ? { lost: lost, id: r.doc.id } : lost;
         });
       });
     });

@@ -106,6 +106,10 @@
       "cv.waiting": "Finish in the Canva window…", "cv.popup": "The Canva window was blocked. Allow pop-ups for orOS and try again.",
       "cv.denied": "Canva did not give access.", "cv.auth": "The Canva connection has ended. Connect again.", "cv.rate": "Canva asks to slow down. Try again in a minute.",
       "cv.license": "Uses paid Canva content that cannot be exported.", "cv.approval": "Waiting for approval in your Canva team.", "cv.fail": "Canva could not be reached or did not answer.",
+      "cv.slow": "Canva took too long to prepare it.", "cv.big": "The PowerPoint from Canva is over 60 MB.",
+      "cv.net": "Canva could not be reached.", "cv.said": "Canva said: {msg}", "cv.read": "The PowerPoint from Canva could not be read: {msg}",
+      "cv.retry": "Try the failed ones again", "cv.replace": "Replace designs imported before (their changes here are lost)",
+      "cv.replaced": "{n} earlier copies replaced.",
       "cv.search": "Search your Canva designs", "cv.none": "No designs found.", "cv.untitled": "Untitled design", "cv.pages": "{n} pages", "cv.page1": "1 page", "cv.imported": "imported",
       "cv.all": "Select all", "cv.none.sel": "Select none", "cv.import": "Import {n}", "cv.disconnect": "Disconnect",
       "cv.working": "Importing {i} of {n}…", "cv.stop": "Stop", "cv.stopping": "Stopping after this design…",
@@ -254,6 +258,10 @@
       "cv.waiting": "Ολοκλήρωσε στο παράθυρο του Canva…", "cv.popup": "Το παράθυρο του Canva μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και ξαναδοκίμασε.",
       "cv.denied": "Το Canva δεν έδωσε πρόσβαση.", "cv.auth": "Η σύνδεση με το Canva έληξε. Συνδέσου ξανά.", "cv.rate": "Το Canva ζητά να πάμε πιο αργά. Ξαναδοκίμασε σε ένα λεπτό.",
       "cv.license": "Έχει επί πληρωμή περιεχόμενο του Canva που δεν εξάγεται.", "cv.approval": "Περιμένει έγκριση στην ομάδα σου στο Canva.", "cv.fail": "Το Canva δεν απάντησε ή δεν ήταν διαθέσιμο.",
+      "cv.slow": "Το Canva άργησε πολύ να το ετοιμάσει.", "cv.big": "Το PowerPoint από το Canva ξεπερνά τα 60 MB.",
+      "cv.net": "Δεν ήταν δυνατή η σύνδεση με το Canva.", "cv.said": "Το Canva απάντησε: {msg}", "cv.read": "Το PowerPoint από το Canva δεν διαβάστηκε: {msg}",
+      "cv.retry": "Ξαναδοκίμασε όσα απέτυχαν", "cv.replace": "Αντικατάσταση σχεδίων που είχαν εισαχθεί πριν (χάνονται οι αλλαγές τους εδώ)",
+      "cv.replaced": "Αντικαταστάθηκαν {n} παλαιότερα αντίγραφα.",
       "cv.search": "Αναζήτηση στα σχέδιά σου στο Canva", "cv.none": "Δεν βρέθηκαν σχέδια.", "cv.untitled": "Σχέδιο χωρίς τίτλο", "cv.pages": "{n} σελίδες", "cv.page1": "1 σελίδα", "cv.imported": "εισήχθη",
       "cv.all": "Επιλογή όλων", "cv.none.sel": "Καμία επιλογή", "cv.import": "Εισαγωγή {n}", "cv.disconnect": "Αποσύνδεση",
       "cv.working": "Εισαγωγή {i} από {n}…", "cv.stop": "Διακοπή", "cv.stopping": "Σταματάω μετά από αυτό το σχέδιο…",
@@ -880,6 +888,20 @@
       renderHome();
     });
   }
+
+  // removes a design without asking or offering undo (a Canva
+  // re-import replacing its earlier copy)
+  function dropDoc(id) {
+    var d = findDoc(id);
+    if (!d) return false;
+    data.dt[id] = Math.max(now(), M.maxM(d));
+    data = M.normData(data);
+    save();
+    if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+    renderHome();
+    return true;
+  }
+  AT.dropDoc = dropDoc;
 
   function addDoc(d) {
     data.docs.push(d);

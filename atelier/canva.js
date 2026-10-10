@@ -32,7 +32,8 @@
       access: typeof s.access === "string" ? s.access : "",
       refresh: typeof s.refresh === "string" ? s.refresh : "",
       exp: +s.exp || 0,
-      done: s.done && typeof s.done === "object" ? s.done : {}
+      done: s.done && typeof s.done === "object" ? s.done : {},
+      docs: s.docs && typeof s.docs === "object" ? s.docs : {}       // Canva design id → the design made from it here
     };
   }
   var st = load();
@@ -160,8 +161,21 @@
       return relay({ act: "file", url: url }, true);
     }).then(function (ab) {
       if (!(ab instanceof ArrayBuffer)) throw CanvaErr("canva");
-      var name = (d.title || t("cv.untitled")).replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 100) || "Canva";
-      return AT.io.importPptx(new File([ab], name + ".pptx", { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }), true);
+      return AT.io.importPptx(new File([ab], fileName(d) + ".pptx", { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }), true)
+        .then(null, function (e) {
+          if (e && e.message === "nofs") throw e;
+          throw CanvaErr("read", e && e.message);
+        });
+    });
+  }
+  // Passing trouble (network, a slow export, too many calls) gets two
+  // more tries; what Canva refuses does not.
+  var AGAIN = { network: 1, timeout: 1, rate: 1, proto: 1, url: 1 };
+  function exportTry(d, left) {
+    return exportOne(d).then(null, function (e) {
+      var c = e && e.code;
+      if (!left || !AGAIN[c] || (ui && ui.run && ui.run.stop)) throw e;
+      return wait(c === "rate" ? 30000 : 5000).then(function () { return exportTry(d, left - 1); });
     });
   }
 
@@ -178,6 +192,11 @@
     if (c === "license") return t("cv.license");
     if (c === "approval") return t("cv.approval");
     if (c === "nofs") return t("img.nofs");
+    if (c === "timeout") return t("cv.slow");
+    if (c === "too-big") return t("cv.big");
+    if (c === "network") return t("cv.net");
+    if (c === "canva" && e.message && e.message !== "canva") return t("cv.said", { msg: String(e.message).slice(0, 200) });
+    if (c === "read") return t("cv.read", { msg: String(e.message || "").slice(0, 120) });
     return t("cv.fail");
   }
 
@@ -189,7 +208,7 @@
   }
 
   function open() {
-    ui = { cfg: null, items: [], cont: "", q: "", busy: false, err: "", sel: {}, run: null, msg: "" };
+    ui = { cfg: null, items: [], cont: "", q: "", busy: false, err: "", sel: {}, run: null, msg: "", again: [], replace: true };
     AT.openDialog(t("cv.title"), function (body, close) {
       ui.body = body; ui.close = close;
       render();
@@ -227,10 +246,19 @@
 
   function chosen() { return ui.items.filter(function (d) { return ui.sel[d.id]; }); }
 
-  function runImport() {
-    var todo = chosen();
+  function fileName(d) { return (d.title || t("cv.untitled")).replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 100) || "Canva"; }
+  // imported before this device kept track: the one other design
+  // with the same name (none when the name is not unique)
+  function legacyDoc(d, now) {
+    if (!st.done[d.id]) return "";
+    var name = fileName(d), hits = AT.data().docs.filter(function (x) { return x.id !== now && x.name === name; });
+    return hits.length === 1 ? hits[0].id : "";
+  }
+
+  function runImport(list) {
+    var todo = list || chosen();
     if (!todo.length) return;
-    var run = ui.run = { stop: false, i: 0, n: todo.length, ok: 0, lost: 0, failed: [] };
+    var run = ui.run = { stop: false, i: 0, n: todo.length, ok: 0, lost: 0, failed: [], again: [], replaced: 0 };
     render();
     var chain = Promise.resolve();
     todo.forEach(function (d) {
@@ -238,11 +266,16 @@
         if (run.stop) return;
         run.i++; run.name = d.title || t("cv.untitled");
         if (ui && ui.run === run) render();
-        return exportOne(d).then(function (lost) {
-          run.ok++; run.lost += lost || 0;
-          st.done[d.id] = Date.now(); save();
+        return exportTry(d, 2).then(function (r) {
+          run.ok++; run.lost += (r && r.lost) || 0;
+          var before = st.docs[d.id] || legacyDoc(d, r && r.id);
+          if (ui.replace && before && r && before !== r.id && AT.dropDoc(before)) run.replaced++;
+          st.done[d.id] = Date.now();
+          if (r && r.id) st.docs[d.id] = r.id;
+          save();
         }, function (e) {
           try { console.error("[orOS] atelier: Canva import failed", e); } catch (x) {}
+          run.again.push(d);
           run.failed.push((d.title || t("cv.untitled")) + ": " + errText(e));
           var c = e && (e.code || e.message);
           if (c === "auth" || c === "nofs" || c === "offline") run.stop = true;
@@ -250,10 +283,10 @@
       });
     });
     chain.then(function () {
-      var msg = t("cv.done", { n: run.ok }) + (run.lost ? " " + t("cv.lost", { n: run.lost }) : "");
+      var msg = t("cv.done", { n: run.ok }) + (run.lost ? " " + t("cv.lost", { n: run.lost }) : "") + (run.replaced ? " " + t("cv.replaced", { n: run.replaced }) : "");
       AT.toast(msg);
       if (ui && ui.run === run) {
-        ui.run = null; ui.sel = {};
+        ui.run = null; ui.sel = {}; ui.again = run.again;
         ui.msg = msg + (run.failed.length ? "\n" + run.failed.join("\n") : "");
         render();
       }
@@ -278,6 +311,11 @@
     }
     if (ui.err) body.appendChild(el("p", "hint warn", ui.err));
     if (ui.msg) { var m = el("p", "hint cv-msg", ui.msg); body.appendChild(m); }
+    if (ui.again && ui.again.length && connected()) {
+      body.appendChild(btn("btn small block", t("cv.retry") + " (" + ui.again.length + ")", function () {
+        var list = ui.again; ui.again = []; ui.msg = ""; runImport(list);
+      }));
+    }
 
     if (!ui.cfg || !ui.cfg.configured) {
       if (!ui.cfg && !ui.err) body.appendChild(el("p", "hint", t("cv.checking")));
@@ -357,7 +395,15 @@
       if (!all) ui.items.forEach(function (d) { ui.sel[d.id] = 1; });
       render();
     }));
-    var imp = btn("btn primary", t("cv.import", { n: n }), runImport);
+    if (Object.keys(st.done).length) {
+      var rl = el("label", "chk-row");
+      var rc = el("input"); rc.type = "checkbox"; rc.checked = ui.replace !== false;
+      ui.replace = rc.checked;
+      rc.addEventListener("change", function () { ui.replace = rc.checked; });
+      rl.appendChild(rc); rl.appendChild(el("span", "", t("cv.replace")));
+      body.appendChild(rl);
+    }
+    var imp = btn("btn primary", t("cv.import", { n: n }), function () { runImport(); });
     imp.disabled = !n;
     act.appendChild(imp);
     body.appendChild(act);
