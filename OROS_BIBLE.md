@@ -652,7 +652,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Shell (verified 2026-10-05):** oros-last-version, oros-autoexport-last, oros-fs-folder-name, oros-fs-lapsed, oros-wx-cache, oros-wx-last, oros-cal-reminders-fired, oros-files-disk-pending, oros-reset-db (factory-reset marker), oros-lang (mirror); sessionStorage `oros-skip-splash` and the bridge staging keys (table in Part II). IndexedDB `oros-fs` (backup-folder handle). Also device-local but owned by `sync.js`: oros-sync-* engine keys, oros-slices (registry).
 - **Universal search (2026-10-09):** `oros-search-prefs` (per-app on/off switches) and sessionStorage `oros-open-at` (generic deep-link staging, one-shot).
 - **Shell keys that TRAVEL in the `shell` slice:** oros-lang, oros-theme, oros-skin, oros-wallpaper, oros-wallpaper-art (since 0.45.04), oros-autoexport, oros-weather, oros-alarms, oros-shell-stamps, oros-alarm-tombs. (`oros-files-disk-cache`, `-pending`, `-meta` are legacy: removed at boot by `fdMigrateLegacy`.)
-- `oros-auto-snapshots` (listed here until 2026-10-05) does not appear anywhere in `shell.js` 0.39.06: the key is gone with the snapshot subsystem.
+- `oros-auto-snapshots` (listed here until 2026-10-05): the subsystem is gone, but the KEY stayed on devices that had it (up to 5 full unencrypted DB copies, MBs). Since 0.52.02 (SY-Q2) `legacyLsMove()` moves it at boot into IndexedDB **oros-legacy** (store `kv`, same key) and removes it from localStorage only after the write committed. Factory reset deletes `oros-legacy`.
 - **Weather:** oros-wx-cache, oros-wx-last, oros-wx-tray (device-local tray switch, since 2026-10-09).
 - **FS:** oros-fs-*.
 - **Pet:** oros-pet-enabled, oros-pet-pos, oros-pet-minimized, oros-pet-calendar-sync (read-only legacy mirror of oros-pet-settings).
@@ -4087,9 +4087,17 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Schema:** G2048 v1 gains timed-mode rows `t3|t4|t5`; prefs `m`, session `m`/`left` (Part III/IV).
 - **NOT tested:** a real phone, Safari / iOS.
 
+### 2026-10-10 — hotfix 0.52.02 — sync "Browser storage is full": retired snapshots leave localStorage
+- **Report:** Chris, 2026-10-10: sync says "Browser storage is full"; Device info showed localStorage at 97% (9.7 MB), 7.0 MB of it "orOS (desktop, settings, sync)".
+- **Cause:** the rolling snapshots retired in 0.38 (`oros-auto-snapshots`, up to 5 full DB copies) were never removed from devices that had them. With the data of the new apps the shared quota ran out, the sync mailbox write failed and SY-Q1 paused sync (correctly, nothing lost).
+- **Fix (SY-Q2):** `shell.js` `legacyLsMove()` at boot (`initSyncIntegration`): `oros-auto-snapshots` → IndexedDB `oros-legacy` / `kv`, then removed from localStorage, then `kickAutoEngine()`. Zero-loss: removal only after the IndexedDB transaction completed. `factoryResetPending()` deletes `oros-legacy` too.
+- **Verification (Chromium, real shell, mock Dropbox):** device B with a 4.9M-character `oros-auto-snapshots` and another device's 600 KB app in its mailbox: old code → push fails `storage-full`; new code → key moved (4,940,477 characters in IndexedDB), pull + push succeed. Tests 1025/1025.
+- **Open:** the 7 MB on Chris's device is inferred to be this key (it is the only known shell-owned key of that size); if Device info still shows several MB for orOS after 0.52.02, the next suspect is the sync mailbox `oros-remote-carry`.
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox, Chris's own device.
+
 ### 2026-10-10 — Oracle / Μαντείο: new Fun app (app + tests) — 0.53.00
 - **Changes:** a new **Oracle / Μαντείο** app in Fun. You ask a question and get a prophecy that is always true and never helpful, for example "Θα πάρω την προαγωγή;" → "Μέχρι το τέλος της εβδομάδας, η εβδομάδα θα έχει τελειώσει." - The same question on the same day gets the same answer, regardless of case or accents. - An oracle of the day appears at the top and is the same on every device. - Asking shows a short smoke ceremony with a letter-by-letter reveal. With reduced motion the answer appears at once. (PR #115)
 - **Storage:** synced slice `oracle`, key `oros-oracle-data` (favourite prophecies only, LWW per prophecy with tombstones, R17/R26); device-local `oros-oracle-prefs` (last 100 questions, sound; R10).
-- **Core:** `apps.json` entry (Fun, after Wheel), `ICONS.oracle`, `translations.js` `app.oracle` (EN + EL), `sw.js` precache (7, incl. help pages), Tests workflow paths `oracle/**`. `APP_VERSION` 0.53.00: main (0.52.01) + 1 minor.
+- **Core:** `apps.json` entry (Fun, after Wheel), `ICONS.oracle`, `translations.js` `app.oracle` (EN + EL), `sw.js` precache (7, incl. help pages), Tests workflow paths `oracle/**`. `APP_VERSION` 0.53.00: main (0.52.02) + 1 minor.
 - **Status:** PR #115.
 - **NOT tested:** a real phone, Safari / iOS.

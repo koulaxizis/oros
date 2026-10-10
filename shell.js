@@ -2827,6 +2827,52 @@
     }).catch(function () { /* disk unavailable — keep it for the next boot */ });
   }
 
+  // SY-Q2 — the retired rolling snapshots (shell <= 0.38, key
+  // "oros-auto-snapshots": up to 5 full, unencrypted copies of every
+  // app's data) were never removed from devices that had them. On a
+  // long-used device they fill most of the shared ~5 MB localStorage,
+  // so every app save and the sync mailbox fail ("Browser storage is
+  // full"). Zero-loss move, once per boot while the key exists: the
+  // value goes to IndexedDB "oros-legacy" (store "kv", same key), and
+  // the localStorage copy is removed only after that write committed.
+  // Nothing reads it back; it waits there in case it is ever needed.
+  var LEGACY_LS_KEYS = ["oros-auto-snapshots"];
+
+  function legacyLsMove() {
+    var moving = [];
+    LEGACY_LS_KEYS.forEach(function (k) {
+      var v = null;
+      try { v = localStorage.getItem(k); } catch (e) {}
+      if (v !== null) moving.push({ k: k, v: v });
+    });
+    if (!moving.length || !window.indexedDB) return Promise.resolve(0);
+    return new Promise(function (resolve) {
+      var req;
+      try { req = indexedDB.open("oros-legacy", 1); } catch (e) { resolve(0); return; }
+      req.onupgradeneeded = function () { req.result.createObjectStore("kv"); };
+      req.onerror = function () { resolve(0); };
+      req.onsuccess = function () {
+        var db = req.result, tx;
+        try {
+          tx = db.transaction("kv", "readwrite");
+          moving.forEach(function (m) { tx.objectStore("kv").put(m.v, m.k); });
+        } catch (e) { db.close(); resolve(0); return; }
+        tx.oncomplete = function () {
+          db.close();
+          moving.forEach(function (m) { try { localStorage.removeItem(m.k); } catch (e) {} });
+          resolve(moving.length);
+        };
+        tx.onerror = tx.onabort = function () { db.close(); resolve(0); };
+      };
+    }).then(function (n) {
+      // Space came back: let the engine retry what the full store refused.
+      if (n > 0 && window.orosSync && typeof window.orosSync.kickAutoEngine === "function") {
+        window.orosSync.kickAutoEngine();
+      }
+      return n;
+    });
+  }
+
   // ---------- 9h. Radio proxy slice (sync when iframe closed) ----------
   var RADIO_CACHE_KEY = "oros-radio-data";
 
@@ -4204,7 +4250,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-jigsaw"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-jigsaw", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -4779,6 +4825,7 @@
   function initSyncIntegration() {
     registerShellSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
+    legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
     registerTelevisionProxySlice();
     registerMailProxySlice();
