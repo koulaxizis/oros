@@ -367,3 +367,28 @@ test("readPrefs: dose reminders on unless switched off", () => {
   assert.equal(C.readPrefs({ doses: false }).doses, false);
   assert.equal(C.readPrefs({ doses: "no" }).doses, true);
 });
+
+test("attachments: names cleaned, only on health records, survive an older bundle's copy", () => {
+  const r = C.normRec(rec("rc0001", "pt0001", "visit", "2026-10-05", {
+    n: "Check-up",
+    sc: ["20261005-rc0001-zz99.pdf", "20261005-rc0001-ab12.jpg", "20261005-rc0001-ab12.jpg", "../x.jpg", "20261005-rc0001-ab12.png", 7]
+  }));
+  assert.deepEqual(r.sc, ["20261005-rc0001-ab12.jpg", "20261005-rc0001-zz99.pdf"]);
+  assert.equal("sc" in C.normRec(rec("rc0002", "pt0001", "visit", "2026-10-05", { n: "x", sc: [] })), false);
+  assert.equal("sc" in C.normRec(rec("rc0003", "pt0001", "weight", "2026-10-05", { g: 4000, sc: ["20261005-rc0003-ab12.jpg"] })), false);
+  const many = Array.from({ length: 9 }, (_, i) => "20261005-rc0001-ab1" + i + ".jpg");
+  assert.equal(C.normRec(rec("rc0001", "pt0001", "med", "2026-10-05", { n: "A", sc: many })).sc.length, C.MAX_AT);
+  // names and paths
+  assert.equal(C.atName("2026-10-05", "rc0001", "AB-12x", "pdf"), "20261005-rc0001-ab12x.pdf");
+  assert.equal(C.atName("2026-10-05", "rc0001", "ab", "jpg"), null);
+  assert.equal(C.atName("2026-10-05", "rc0001", "ab12", "exe"), null);
+  assert.equal(C.atPath("20261005-rc0001-ab12.jpg"), C.AT_DIR + "/20261005-rc0001-ab12.jpg");
+  assert.equal(C.atPath("../../etc.jpg"), null);
+  // equal m: the copy with files wins, both directions
+  const p = pet("pt0001");
+  const without = C.normRec(rec("rc0001", "pt0001", "visit", "2026-10-05", { n: "Check-up" }));
+  assert.deepEqual(m(data([p], [r]), data([p], [without])).recs[0].sc, r.sc);
+  assert.deepEqual(m(data([p], [without]), data([p], [r])).recs[0].sc, r.sc);
+  // attachmentsOf lists every name in use
+  assert.deepEqual(C.attachmentsOf(m(data([p], [r]), data())).sort(), r.sc);
+});

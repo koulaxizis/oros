@@ -55,6 +55,13 @@
 //     weight g grams
 //     care   c care kind (one routine care done)
 //     food   n new food (a food change, history only)
+//     vacc / deworm / visit / med may carry sc: up to MAX_AT file
+//            NAMES (photos of prescriptions, test results; JPEG or
+//            PDF) on the orOS disk under AT_DIR. Absent when none, so
+//            older records keep their canonical form. It is written
+//            before "nt" and "sc" > "nt", so with equal m a copy that
+//            still has sc beats one an older bundle stripped (R26 tie
+//            = larger canonical JSON).
 // "Next" dates are never derived from a stored counter: they come
 // from the newest record of each kind, so two devices agree.
 // ============================================================
@@ -78,6 +85,10 @@
   var MAX_TIMES = 6;                // dose times per medicine
   var DOSE_WINDOW = 90;             // minutes after a dose time it may still be announced
   var TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  var AT_DIR = "/internal/Pet Health Book";
+  var AT_RE = /^\d{8}-[a-z0-9]{6,40}-[a-z0-9]{4,12}\.(jpg|pdf)$/;
+  var MAX_AT = 6;
+  var AT_KINDS = ["vacc", "deworm", "visit", "med"];
   var ID_RE  = /^[a-z0-9]{6,40}$/;
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var PHOTO_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+\/]+={0,2}$/;
@@ -337,8 +348,36 @@
         if (!r.n) return null;
         break;
     }
+    if (AT_KINDS.indexOf(x.k) >= 0) {
+      var sc = normAt(x.sc);
+      if (sc.length) r.sc = sc;
+    }
     r.nt = nt;
     return r;
+  }
+
+  // ---------- Attachments (files on the orOS disk) ----------
+  function normAt(list) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    list.forEach(function (n) { if (typeof n === "string" && AT_RE.test(n) && out.indexOf(n) < 0) out.push(n); });
+    out.sort(cmpStr);
+    return out.slice(0, MAX_AT);
+  }
+  // "20261009-<recId>-<random>.jpg|pdf", or null.
+  function atName(ymd, recId, rnd, ext) {
+    var d = isYmd(ymd) ? ymd.replace(/-/g, "") : null;
+    var r = typeof rnd === "string" ? rnd.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) : "";
+    if (!d || typeof recId !== "string" || !ID_RE.test(recId) || r.length < 4 || (ext !== "jpg" && ext !== "pdf")) return null;
+    var n = d + "-" + recId + "-" + r + "." + ext;
+    return AT_RE.test(n) ? n : null;
+  }
+  function atPath(name) { return typeof name === "string" && AT_RE.test(name) ? AT_DIR + "/" + name : null; }
+  // Every file name a record of data points at.
+  function attachmentsOf(data) {
+    var all = [];
+    ((data && data.recs) || []).forEach(function (r) { (r.sc || []).forEach(function (n) { all.push(n); }); });
+    return all;
   }
 
   // Dose times: "HH:MM", unique, sorted, at most MAX_TIMES.
@@ -620,6 +659,8 @@
     GROUPS: GROUPS, GROUP_IDS: GROUP_IDS,
     normPet: normPet, normRec: normRec, merge: merge, touch: touch,
     age: age, birthdayOn: birthdayOn, items: items, leadFor: leadFor, reminders: reminders,
+    AT_DIR: AT_DIR, AT_RE: AT_RE, MAX_AT: MAX_AT, AT_KINDS: AT_KINDS,
+    normAt: normAt, atName: atName, atPath: atPath, attachmentsOf: attachmentsOf,
     MAX_TIMES: MAX_TIMES, DOSE_WINDOW: DOSE_WINDOW, cleanTimes: cleanTimes, dosesDue: dosesDue,
     weights: weights, weightDelta: weightDelta, foodOut: foodOut, costYear: costYear, readPrefs: readPrefs
   };
