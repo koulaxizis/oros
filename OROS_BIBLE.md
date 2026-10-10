@@ -590,7 +590,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Netizen ID** | oros-netizen-data | cards LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.43.02; Fun (soffitta.site port) |
 | **Wallpaper Generator** | oros-wallpaper-data | favourites LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26); the desktop recipe travels in the SHELL slice (`wpart`) | v1.0.0 at 0.45.04; Creativity (soffitta.site port) |
 | **Wheel of Fate** | oros-wheel-data | saved wheels LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.45.10; Fun (soffitta.site port) |
-| **QR Generator** | oros-qr-data | saved codes LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.45.14; Office (new app, own QR encoder) |
+| **QR Generator** | oros-qr-data | saved codes LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.45.14; Office (new app, own QR encoder); phase 2 (QR from Contacts/Calendar/Bookmarks) at 0.65.07 |
 | **Micro-Zen** | oros-zen-data | per-device rows of per-day [sessions, seconds, breaths], join + reset stamp `br`, canonical (R26) | v1.0.0 at 0.45.13; Personal (soffitta.site port) |
 | **Name Generator** | oros-names-data | favourites LWW by mtime (equal mtime: larger canonical JSON) + tombs (delete wins ties); the id is a hash of mode + text, canonical (R26) | v1.0.0 at 0.45.15; Creativity (soffitta.site port) |
 | **Password Generator** | — (no slice) | nothing synced: generated and checked passwords are never stored; options are device-local | v1.0.0 at 0.46.00; Security |
@@ -1737,7 +1737,7 @@ Rebuild this in any session where code is delivered.
   - Own QR encoder (`qr/qr-encode.js`, ISO/IEC 18004, versions 1–40, L/M/Q/H, numeric/alphanumeric/UTF-8 byte), no third-party code in the app. Proof of correctness: every test code is read back by an independent decoder (jsQR, test-only) and the tables are checked against the standard.
   - Types: link, WiFi, contact (vCard 3.0), event (VEVENT, floating local time), text, email, phone, SMS, location. Export PNG (256–2048 px) and SVG; copy image, share (phones), print, WiFi card, save to Files (`/internal/QR`).
   - "From…" reads Contacts, Calendar and Bookmarks read-only (prefill, BR-W8-6); nothing is written to those apps. Saved codes sync, WiFi passwords included (end-to-end encrypted sync).
-  - Later (not in v1.0.0): a "QR" button inside Contacts, Calendar and Bookmarks through a shell bridge `__orosOpenQR` (Maps → Calendar shape). Not now: a logo in the middle of the code; scanning codes with the camera (a separate app, if ever).
+  - Later (not in v1.0.0): a "QR" button inside Contacts, Calendar and Bookmarks through a shell bridge `__orosOpenQR` (Maps → Calendar shape) → done in phase 2 through the generic `__orosOpenAt("qr", { from, id, date? })` (Chris go-ahead 2026-10-10). Not now: a logo in the middle of the code; scanning codes with the camera (a separate app, if ever).
 - **2026-10-08 · Christos (Apps: soffitta.site port)**
   - The apps of soffitta.site come to orOS: full rewrite, no old code, full compliance with orOS. Each title is asked one at a time: approve / reject / postpone (tracked in project memory, `oros-soffitta-port`); each approved app gets a plan, a proposed category agreed with Christos, then its own app and PR. Dice & Coin and Screen Pet already exist in orOS and are not ported again.
   - Netizen ID approved and go-ahead given, category **Fun** (proposed Creativity; his choice). Accepted with it: a view-only share link carrying the card in the URL fragment; several cards; no QR code for now; no "add me to Contacts" for now (vCard export covers it); a back side. Pixel Avatar Maker is decided when its turn comes.
@@ -2041,7 +2041,6 @@ Rebuild this in any session where code is delivered.
 - Password Generator: a Greek Diceware list (deferred by Christos 2026-10-08; our own 7,776 words, typeable as greeklish), which would also let the auditor recognize Greek names and words; a strength meter on the sync passphrase field using the same engine (suggestion).
 - **[log]** Vault Drive: object GC; streaming limit; `fs.js` `ls()` with size/mtime on both backends; `diskSnapshot()` ignored argument.
 
-- **QR Generator phase 2** (Chris 2026-10-08, after v1.0.0): a "QR" button in Contacts, Calendar and Bookmarks that opens QR Generator prefilled, through a shell bridge `__orosOpenQR(payload)` + staging key `oros-qr-new` (BR-W8 shape).
 
 - Timesheet waves 2–7 (Quote bridge, shell indicator + notification + shortcut, Calendar feed, Toggl/Clockify/Harvest import, tasks + tags + budgets, Pomodoro link).
 - Health: lab-results panel, doctor appointments as a Calendar feed, Web Bluetooth import (Chrome/Edge only), app PIN lock.
