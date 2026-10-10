@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.67.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.68.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -138,6 +138,7 @@
     weather: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M12 7h1M3.5 3.5l.7.7M10.8 10.8l.7.7M3.5 10.5l.7-.7M10.8 4.2l.7-.7"/><path d="M12.5 21a4.5 4.5 0 0 1 0-9 5.5 5.5 0 0 1 10.6 1.6 3.5 3.5 0 0 1-.6 6.9z"/></svg>',
     mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
+    sky: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/><path d="M17 3v3M15.5 4.5h3M20.5 8.5v2M19.5 9.5h2"/></svg>',
     calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
@@ -4338,7 +4339,13 @@
           en: "Greek words (Λεξούλα, Hangman)", el: "Ελληνικές λέξεις (Λεξούλα, Κρεμάλα)" },
         { name: "FrequencyWords", url: "https://github.com/hermitdave/FrequencyWords",
           by: "Hermit Dave (from OpenSubtitles)", lic: "CC BY-SA 4.0",
-          en: "Picking everyday words (Λεξούλα, Hangman)", el: "Επιλογή καθημερινών λέξεων (Λεξούλα, Κρεμάλα)" }
+          en: "Picking everyday words (Λεξούλα, Hangman)", el: "Επιλογή καθημερινών λέξεων (Λεξούλα, Κρεμάλα)" },
+        { name: "Yale Bright Star Catalogue, 5th ed.", url: "http://tdc-www.harvard.edu/catalogs/bsc5.html",
+          by: "D. Hoffleit, W. H. Warren Jr. (Yale University Observatory)", lic: "Public domain",
+          en: "Bright stars and their names (Moon & Sky)", el: "Λαμπρά αστέρια και τα ονόματά τους (Σελήνη & Ουρανός)" },
+        { name: "d3-celestial (constellation figures)", url: "https://github.com/ofrohn/d3-celestial",
+          by: "Olaf Frohn", lic: "BSD-3-Clause",
+          en: "Constellation lines (Moon & Sky)", el: "Γραμμές αστερισμών (Σελήνη & Ουρανός)" }
       ]
     },
     {

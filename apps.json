@@ -18,6 +18,14 @@
       "type": "internal"
     },
     {
+      "id": "sky",
+      "name": "Moon & Sky",
+      "category": "Accessories",
+      "icon": "sky",
+      "url": "sky/",
+      "type": "internal"
+    },
+    {
       "id": "files",
       "name": "Files",
       "category": "Accessories",

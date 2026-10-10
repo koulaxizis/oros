@@ -1,0 +1,365 @@
+/* ============================================================
+   orOS Moon & Sky — App stylesheet
+   Inherits the shell palette (inheritPalette + watchPalette).
+   Toolbar, chip and toast styles follow Typewriter and Museum.
+   Sections:
+     1. Palette fallback + reset (+ red night view)
+     2. Toolbar + tabs
+     3. Cards, key/value lists
+     4. Tonight
+     5. Sky map
+     6. Month
+     7. Toast + screen-reader helper
+     8. Mobile + touch adaptations
+     9. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #0f1218;
+  --bg-desktop:   #121620;
+  --bar-bg:       rgba(15, 18, 24, 0.93);
+  --text:         #e6e9ef;
+  --text-dim:     #9aa3b2;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #171c26;
+  --border:       #2a3142;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+  --sky:          #0b1020;
+  --sky-line:     rgba(140, 170, 220, 0.35);
+  --star:         #f4f1e6;
+  --moon-lit:     #f1ead2;
+  --moon-dark:    #2a2f3a;
+}
+
+/* Red night view: everything in dim red, so the eyes stay used to the dark */
+html.night {
+  --bg: #0a0000; --bg-desktop: #0a0000; --bar-bg: rgba(10, 0, 0, 0.95);
+  --text: #d23a2a; --text-dim: #8a2418; --accent: #ff4a33; --accent-hover: #ff6a55;
+  --accent-soft: rgba(255, 74, 51, 0.16); --panel-bg: #140302; --border: #3a0b06;
+  --shadow: rgba(0, 0, 0, 0.6); --danger: #ff4a33;
+  --sky: #070000; --sky-line: rgba(200, 50, 30, 0.40); --star: #e0402c;
+  --moon-lit: #d23a2a; --moon-dark: #2a0603;
+  color-scheme: dark;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, input { font-family: inherit; color: inherit; }
+button { cursor: pointer; }
+ul { list-style: none; }
+
+.spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 2. Toolbar + tabs ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 59px;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.title { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.title-main { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title-sub { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn.toggle[aria-pressed="true"] { color: var(--accent); }
+
+.date-wrap input {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  font-size: 13px;
+  color-scheme: inherit;
+}
+.date-wrap input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+#tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px 0;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab {
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ---------- 3. Cards ---------- */
+#main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-desktop);
+  scrollbar-width: thin;
+}
+.pane:focus { outline: none; }
+.pane-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 14px 14px 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+.card h3 {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.card.empty { text-align: center; padding: 28px 18px; }
+.card.empty h2 { font-size: 18px; margin-bottom: 8px; }
+.hint { color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+.small { font-size: 12px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: 14px; }
+.kv dt { color: var(--text-dim); }
+.kv dd { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.kv dd.soft { font-weight: 400; color: var(--text-dim); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips.center { justify-content: center; margin-top: 14px; }
+.chip {
+  min-height: 36px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chip.slim { min-height: 32px; padding: 2px 12px; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.gen-btn {
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 800;
+}
+.gen-btn:hover { background: var(--accent-hover); }
+.gen-btn.ghost { background: transparent; color: var(--accent); }
+.gen-btn.ghost:hover { background: var(--accent-soft); }
+.gen-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- 4. Tonight ---------- */
+.moon-card { display: flex; align-items: center; gap: 20px; }
+.moon-big { width: 148px; height: 148px; flex-shrink: 0; }
+.moon-big svg { width: 100%; height: 100%; display: block; }
+.moon-txt { flex: 1 1 auto; min-width: 0; }
+.moon-txt h2 { font-size: 22px; font-weight: 800; }
+.meta { color: var(--text-dim); font-size: 14px; margin: 4px 0 10px; }
+
+.plist { display: flex; flex-direction: column; gap: 8px; }
+.plist li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.45; }
+.plist .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.plist b { font-weight: 800; }
+.plist .sub { color: var(--text-dim); font-size: 13px; }
+.elist { display: flex; flex-direction: column; gap: 2px; }
+.ev-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 6px;
+  margin: 0 -6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.45;
+  width: calc(100% + 12px);
+}
+.ev-row:hover { border-color: var(--border); }
+.ev-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ev-row .when { color: var(--text-dim); flex: 0 0 108px; font-variant-numeric: tabular-nums; }
+.ev-row .what { display: flex; flex-direction: column; min-width: 0; }
+.ev-row .ev-title { color: var(--accent); font-weight: 700; }
+.ev-row .sub { color: var(--text-dim); font-size: 13px; }
+
+/* ---------- 5. Sky map ---------- */
+.map-inner { gap: 10px; }
+.map-wrap {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+#map { width: 100%; height: 100%; display: block; touch-action: manipulation; cursor: crosshair; }
+.map-ctl { display: flex; flex-direction: column; gap: 8px; width: min(100%, 640px); margin: 0 auto; }
+.lbl { font-size: 13px; font-weight: 700; color: var(--text-dim); }
+#time-in { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.info { width: min(100%, 640px); margin: 0 auto; font-size: 14px; line-height: 1.5; }
+.info b { font-size: 15px; }
+details.card { width: min(100%, 640px); margin: 0 auto; }
+details summary { cursor: pointer; font-weight: 700; font-size: 14px; min-height: 28px; }
+details[open] summary { margin-bottom: 10px; }
+
+/* ---------- 6. Month ---------- */
+.month-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.month-head h2 { font-size: 18px; font-weight: 800; text-align: center; flex: 1 1 auto; }
+.mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.mgrid .dow { font-size: 11px; font-weight: 800; color: var(--text-dim); text-align: center; padding: 2px 0 4px; text-transform: uppercase; }
+.mday {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 70px;
+  padding: 6px 2px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  position: relative;
+}
+.mday:hover { border-color: var(--accent); }
+.mday:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mday.today { border-color: var(--accent); color: var(--accent); }
+.mday.sel { background: var(--accent-soft); }
+.mday svg { width: 30px; height: 30px; }
+.mday .marks { display: flex; gap: 3px; height: 6px; }
+.mday .mark { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.mday .mark.eclipse { background: var(--danger); }
+.mday .mark.shower { background: #7aa2f7; }
+.mday .mark.season { background: #9ece6a; }
+html.night .mday .mark { background: var(--accent) !important; }
+.mpad { min-height: 70px; }
+
+/* ---------- 7. Toast + screen reader ---------- */
+#toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show { opacity: 1; visibility: visible; transform: translateY(0); transition: opacity 0.3s ease, transform 0.3s ease; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 8. Mobile + touch ---------- */
+@media (max-width: 640px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .moon-card { flex-direction: column; text-align: center; gap: 10px; }
+  .moon-card .kv { text-align: left; }
+  .mday { min-height: 54px; padding: 4px 1px; font-size: 12px; }
+  .mday svg { width: 22px; height: 22px; }
+  .mpad { min-height: 54px; }
+  .ev-row .when { flex-basis: 84px; font-size: 13px; }
+}
+@media (max-width: 480px) {
+  #toolbar { padding-left: 8px; padding-right: 8px; gap: 4px; }
+  .date-wrap input { width: 128px; padding: 0 4px; font-size: 12px; }
+  .pane-inner { padding-left: 10px; padding-right: 10px; }
+}
+@media (pointer: coarse) {
+  .icon-btn { width: 44px; height: 44px; }
+  .chip, .gen-btn, .tab, .date-wrap input { min-height: 44px; }
+  .date-wrap input { height: 44px; }
+  .ev-row { min-height: 44px; }
+  details summary { min-height: 44px; display: flex; align-items: center; }
+}
+
+/* ---------- 9. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .icon-btn, #toast { transition: none !important; }
+}
+
+[hidden] { display: none !important; }

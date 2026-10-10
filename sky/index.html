@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Moon &amp; Sky · orOS</title>
+
+  <link rel="stylesheet" href="sky.css?v=0.68.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="today-btn" class="chip slim" data-i18n="btn.today" hidden>Today</button>
+    <label class="date-wrap">
+      <span class="sr-only" data-i18n="f.date">Date</span>
+      <input type="date" id="date-in" min="1900-01-01" max="2099-12-31">
+    </label>
+    <button type="button" id="night-btn" class="icon-btn toggle"></button>
+    <button type="button" id="loc-btn" class="icon-btn"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-tonight" class="tab" aria-controls="pane-tonight" data-tab="tonight" data-i18n="tab.tonight">Tonight</button>
+    <button type="button" role="tab" id="tab-map" class="tab" aria-controls="pane-map" data-tab="map" data-i18n="tab.map">Sky map</button>
+    <button type="button" role="tab" id="tab-month" class="tab" aria-controls="pane-month" data-tab="month" data-i18n="tab.month">Month</button>
+  </nav>
+
+  <main id="main">
+    <!-- No location yet -->
+    <section id="noloc" class="pane-inner" hidden>
+      <div class="card empty">
+        <h2 data-i18n="noloc.title">Where are you?</h2>
+        <p class="hint" data-i18n="noloc.hint"></p>
+        <div class="chips center">
+          <button type="button" id="noloc-time" class="gen-btn" data-i18n="noloc.time">Set location in Time</button>
+          <button type="button" id="noloc-geo" class="gen-btn ghost" data-i18n="noloc.geo">Use device location (this time only)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tonight -->
+    <section id="pane-tonight" class="pane" role="tabpanel" aria-labelledby="tab-tonight" tabindex="-1">
+      <div class="pane-inner">
+        <div class="card moon-card">
+          <div id="moon-big" class="moon-big" role="img"></div>
+          <div class="moon-txt">
+            <h2 id="moon-name"></h2>
+            <p id="moon-meta" class="meta"></p>
+            <dl id="moon-next" class="kv"></dl>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3 data-i18n="sec.moon">Moon</h3>
+            <dl id="moon-times" class="kv"></dl>
+          </div>
+          <div class="card">
+            <h3 data-i18n="sec.sun">Sun</h3>
+            <dl id="sun-times" class="kv"></dl>
+          </div>
+          <div class="card">
+            <h3 data-i18n="sec.dark">When it gets dark</h3>
+            <dl id="twilight" class="kv"></dl>
+          </div>
+          <div class="card">
+            <h3 data-i18n="sec.photo">Light for photos</h3>
+            <dl id="photo" class="kv"></dl>
+          </div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="sec.planets">Planets tonight</h3>
+          <ul id="planets" class="plist"></ul>
+        </div>
+        <div class="card" id="soon-card">
+          <h3 data-i18n="sec.soon">Coming up</h3>
+          <ul id="soon" class="elist"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sky map -->
+    <section id="pane-map" class="pane" role="tabpanel" aria-labelledby="tab-map" tabindex="-1" hidden>
+      <div class="pane-inner map-inner">
+        <div class="map-wrap">
+          <canvas id="map" role="img"></canvas>
+        </div>
+        <div class="map-ctl">
+          <label for="time-in" class="lbl" id="time-lbl"></label>
+          <input type="range" id="time-in" min="-720" max="720" step="5" value="0">
+          <div class="chips">
+            <button type="button" id="now-btn" class="chip" data-i18n="btn.now">Now</button>
+            <button type="button" id="lines-btn" class="chip" aria-pressed="true" data-i18n="btn.lines">Constellations</button>
+          </div>
+        </div>
+        <div id="map-info" class="card info" aria-live="polite" hidden></div>
+        <details class="card" id="up-list-box">
+          <summary data-i18n="map.list">What is up (list)</summary>
+          <ul id="up-list" class="plist"></ul>
+        </details>
+      </div>
+    </section>
+
+    <!-- Month -->
+    <section id="pane-month" class="pane" role="tabpanel" aria-labelledby="tab-month" tabindex="-1" hidden>
+      <div class="pane-inner">
+        <div class="month-head">
+          <button type="button" id="prev-m" class="icon-btn"></button>
+          <h2 id="month-title"></h2>
+          <button type="button" id="next-m" class="icon-btn"></button>
+        </div>
+        <div id="month-grid" class="mgrid" role="grid"></div>
+        <div class="card">
+          <h3 data-i18n="sec.events">This month</h3>
+          <ul id="month-events" class="elist"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.68.00"></script>
+  <script src="stars.js?v=0.68.00"></script>
+  <script src="sky.js?v=0.68.00"></script>
+
+</body>
+</html>

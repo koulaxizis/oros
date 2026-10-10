@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.68.00
+- New app Moon & Sky (Accessories): tonight's Moon, a sky map with the constellations, a month view and a red night view. Calendar can show Moon phases, solstices, meteor showers and eclipses (turn the chip on).
+
 ## Version 0.67.00
 - Assistant: it can now prepare entries (a task, an event, an expense, a quote, a sheet, slides, a bookmark or a note) for you to check and save in that app, read a whole item when you allow it, and keep your conversations on all your devices (optional, encrypted). Ask it from the menu search or with Ctrl+Alt+Shift+A.
 - Reader: Send › Email now opens a ready draft in Mail.
