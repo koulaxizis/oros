@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mind Map — core (v1.0.0)
+// orOS Mind Map — core (v1.1.0: phase 2 links, free placement, pictures)
 // Everything that does not need a DOM, so the browser app and
 // `node --test` run the very same code:
 //   1. Constants + small helpers
@@ -18,7 +18,18 @@
 //     maps:  [{ id, m, sides }],
 //     nodes: [{ id, m, map, parent, ord, text, emoji, color,
 //               note, url, done }],
+//     links: [{ id, m, map, from, to, label }],     (phase 2)
+//     pos:   [{ id (= node id), m, map, dx, dy }],  (phase 2)
+//     imgs:  [{ id (= node id), m, map, src, w, h }], (phase 2)
 //     tombs: { id: deletedAt } }
+// Phase-2 data lives in NEW collections, never in new node fields:
+// a device still on the old code rebuilds nodes from known fields,
+// and on an equal-m tie its shorter row would win the canonical
+// JSON comparison and drop the new fields. Unknown collections it
+// simply leaves out, and the union merge on newer devices keeps them.
+// pos / imgs rows share their node's id, so deleting a node (its
+// tombstone) removes them too; they are never deleted on their own
+// (a reset writes dx = dy = 0, removing a picture writes src "").
 // A map's central node has the id `<mapId>-r` and parent "": the
 // map's title IS that node's text, so there is one thing to edit.
 // The parent lives on the CHILD and the sibling order is a
@@ -46,6 +57,12 @@
   var IMPORT_MAX = 5 * 1024 * 1024;
   var MAX_TS     = 8640000000000000;
   var MAX_DEPTH  = 100;            // text / OPML import nesting
+  var LABEL_LEN  = 200;
+  var MAX_LINKS  = 5000;
+  var MAX_OFF    = 100000;         // px, free-placement offset
+  var IMG_LEN    = 40000;          // chars of one picture's data URI
+  var IMG_TOTAL  = 1400000;        // chars of all pictures together
+  var IMG_MAX    = 640;            // px, stored picture side
 
   // Branch colours: the shared LABEL_COLORS (Bible, Part VI).
   var COLORS = {
@@ -64,6 +81,7 @@
   // C0/C1 controls, line/paragraph separators, bidi overrides.
   var CTRL_RE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/g;
   var URL_RE = /^https?:\/\/[^\s<>"'`\\]+$/i;
+  var IMG_RE = /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+\/]+={0,2}$/;
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
   function isTs(v) { return isInt(v) && v >= 0 && v <= MAX_TS; }
@@ -179,6 +197,24 @@
     };
   }
 
+  function isOff(v) { return isInt(v) && v >= -MAX_OFF && v <= MAX_OFF; }
+  function validImg(v) { return typeof v === "string" && v.length <= IMG_LEN && IMG_RE.test(v); }
+  function normLink(x) {
+    if (!x || typeof x !== "object" || !isId(x.id) || !isTs(x.m) || !isMapId(x.map) ||
+        !isId(x.from) || !isId(x.to) || x.from === x.to) return null;
+    return { id: x.id, m: x.m, map: x.map, from: x.from, to: x.to, label: line(x.label, LABEL_LEN) };
+  }
+  function normPos(x) {
+    if (!x || typeof x !== "object" || !isId(x.id) || !isTs(x.m) || !isMapId(x.map) ||
+        x.id === rootId(x.map)) return null;
+    return { id: x.id, m: x.m, map: x.map, dx: isOff(x.dx) ? x.dx : 0, dy: isOff(x.dy) ? x.dy : 0 };
+  }
+  function normImg(x) {
+    if (!x || typeof x !== "object" || !isId(x.id) || !isTs(x.m) || !isMapId(x.map)) return null;
+    var ok = validImg(x.src) && isInt(x.w) && isInt(x.h) && x.w > 0 && x.h > 0 && x.w <= IMG_MAX && x.h <= IMG_MAX;
+    return { id: x.id, m: x.m, map: x.map, src: ok ? x.src : "", w: ok ? x.w : 0, h: ok ? x.h : 0 };
+  }
+
   function normTombs(t, into) {
     if (!t || typeof t !== "object" || Array.isArray(t)) return into;
     Object.keys(t).forEach(function (id) {
@@ -188,7 +224,7 @@
     return into;
   }
 
-  function emptyData() { return { ver: VER, maps: [], nodes: [], tombs: {} }; }
+  function emptyData() { return { ver: VER, maps: [], nodes: [], links: [], pos: [], imgs: [], tombs: {} }; }
 
   // ---------- 4. Merge ----------
   // LWW per entity (newer m wins; equal m: the larger canonical
@@ -225,9 +261,24 @@
     maps.forEach(function (mp) { live[mp.id] = 1; });
     var nodes = alive(lww([a.nodes, b.nodes], normNode), tombs)
       .filter(function (n) { return own(live, n.map); });
+    // Phase-2 rows hang off live nodes of the same map: a link whose
+    // end was deleted, or the position / picture of a gone node, is
+    // left out (delete wins), the same on every device. Zero offsets
+    // and empty pictures stay: they are how a reset or a removal
+    // wins over the older row on another device.
+    var nodeMap = dict();
+    nodes.forEach(function (n) { nodeMap[n.id] = n.map; });
+    function onNode(id, mapId) { return own(nodeMap, id) && nodeMap[id] === mapId; }
+    var links = alive(lww([a.links, b.links], normLink), tombs)
+      .filter(function (l) { return own(live, l.map) && onNode(l.from, l.map) && onNode(l.to, l.map); })
+      .slice(0, MAX_LINKS);
+    var pos = alive(lww([a.pos, b.pos], normPos), tombs)
+      .filter(function (x) { return onNode(x.id, x.map); });
+    var imgs = alive(lww([a.imgs, b.imgs], normImg), tombs)
+      .filter(function (x) { return onNode(x.id, x.map); });
     var sorted = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { sorted[id] = tombs[id]; });
-    return { ver: VER, maps: maps, nodes: nodes, tombs: sorted };
+    return { ver: VER, maps: maps, nodes: nodes, links: links, pos: pos, imgs: imgs, tombs: sorted };
   }
 
   // ---------- 5. Resolve ----------
@@ -308,7 +359,14 @@
     kids[rid].forEach(function (id) { (rec[id] ? recov : normal).push(id); });
     Object.keys(rec).sort(cmpStr).forEach(function (id) { if (recov.indexOf(id) === -1) recov.push(id); });
     kids[rid] = normal.concat(recov.sort(cmpStr));
-    return { map: map, root: rootNode, N: N, kids: kids, par: par, rec: rec, count: ids.length + 1 };
+    var pos = dict(), img = dict(), links = [];
+    (data.pos || []).forEach(function (x) { if (x.map === mapId && own(N, x.id) && x.id !== rid) pos[x.id] = x; });
+    (data.imgs || []).forEach(function (x) { if (x.map === mapId && own(N, x.id) && x.src) img[x.id] = x; });
+    (data.links || []).forEach(function (l) {
+      if (l.map === mapId && own(N, l.from) && own(N, l.to) && l.from !== l.to) links.push(l);
+    });
+    return { map: map, root: rootNode, N: N, kids: kids, par: par, rec: rec, count: ids.length + 1,
+             pos: pos, img: img, links: links };
   }
   // Ids of `id` and everything under it (iterative, any depth).
   function subtree(R, id) {
@@ -348,11 +406,14 @@
     var d = merge(data, data);
     var out = { app: "mindmap", format: FORMAT, exported: String(nowIso || "") };
     if (mapId) {
+      var one = function (x) { return x.map === mapId; };
       out.maps = d.maps.filter(function (mp) { return mp.id === mapId; });
-      out.nodes = d.nodes.filter(function (n) { return n.map === mapId; });
+      out.nodes = d.nodes.filter(one);
+      out.links = d.links.filter(one); out.pos = d.pos.filter(one); out.imgs = d.imgs.filter(one);
       out.tombs = {};
     } else {
-      out.maps = d.maps; out.nodes = d.nodes; out.tombs = d.tombs;
+      out.maps = d.maps; out.nodes = d.nodes; out.links = d.links; out.pos = d.pos; out.imgs = d.imgs;
+      out.tombs = d.tombs;
     }
     return JSON.stringify(out, null, 1);
   }
@@ -383,7 +444,15 @@
       var x = normNode(r);
       if (x && own(known, x.map)) nodes.push(x); else st.dropped++;
     });
-    var d = merge({ maps: maps, nodes: nodes, tombs: normTombs(raw.tombs, dict()) }, {});
+    function rows(list, norm) {
+      if (!Array.isArray(list)) return [];
+      if (list.length > MAX_NODES) { st.dropped += list.length; return []; }
+      var out = [];
+      list.forEach(function (r) { var x = norm(r); if (x && own(known, x.map)) out.push(x); else st.dropped++; });
+      return out;
+    }
+    var d = merge({ maps: maps, nodes: nodes, links: rows(raw.links, normLink), pos: rows(raw.pos, normPos),
+                    imgs: rows(raw.imgs, normImg), tombs: normTombs(raw.tombs, dict()) }, {});
     st.maps = d.maps.length;
     st.nodes = d.nodes.length;
     return { ok: true, data: d, stats: st };
@@ -571,17 +640,25 @@
   // or, with `under` = { map, parent, keys[] }, its top items (the
   // root itself when the text had one title, else the root's kids)
   // under an existing node at the given order keys.
-  // Returns { map (or null), nodes[] }.
+  // Tree nodes may also carry url, color, emoji and `ref` (the id in
+  // the source file); the root may carry links [{from, to, label}]
+  // between refs (FreeMind / XMind), which become cross-links.
+  // Returns { map (or null), nodes[], links[] }.
   function topsOf(tree) { return tree.fallback ? tree.kids : [tree]; }
   function treeToRows(tree, newId, now, under) {
-    var nodes = [], mapRow = null, rootRowId, mapId, tops, keys0;
+    var nodes = [], mapRow = null, rootRowId, mapId, tops, keys0, byRef = dict();
+    function extra(row, t) {
+      row.emoji = t.emoji || ""; row.color = t.color || ""; row.url = t.url || "";
+      if (typeof t.ref === "string" && t.ref && !own(byRef, t.ref)) byRef[t.ref] = row.id;
+      return row;
+    }
     if (under) { mapId = under.map; tops = topsOf(tree); keys0 = under.keys; }
     else {
       mapId = newId();
       mapRow = { id: mapId, m: now, sides: "both" };
       rootRowId = rootId(mapId);
-      nodes.push({ id: rootRowId, m: now, map: mapId, parent: "", ord: "", text: tree.text,
-                   emoji: "", color: "", note: tree.note || "", url: "", done: !!tree.done });
+      nodes.push(extra({ id: rootRowId, m: now, map: mapId, parent: "", ord: "", text: tree.text,
+                   note: tree.note || "", done: !!tree.done }, tree));
       tops = tree.kids;
       keys0 = spread(tops.length);
     }
@@ -589,12 +666,20 @@
     for (var i = tops.length - 1; i >= 0; i--) stack.push([tops[i], under ? under.parent : rootRowId, keys0[i]]);
     while (stack.length && nodes.length < MAX_NODES) {
       var e = stack.pop(), t = e[0], id = newId();
-      nodes.push({ id: id, m: now, map: mapId, parent: e[1], ord: e[2], text: t.text, emoji: "",
-                   color: "", note: t.note || "", url: "", done: !!t.done });
+      nodes.push(extra({ id: id, m: now, map: mapId, parent: e[1], ord: e[2], text: t.text,
+                   note: t.note || "", done: !!t.done }, t));
       var ks = spread(t.kids.length);
       for (var j = t.kids.length - 1; j >= 0; j--) stack.push([t.kids[j], id, ks[j]]);
     }
-    return { map: mapRow, nodes: nodes.map(normNode).filter(Boolean) };
+    var links = [];
+    (Array.isArray(tree.links) ? tree.links : []).forEach(function (l) {
+      if (!l || links.length >= MAX_LINKS) return;
+      var a = own(byRef, l.from) ? byRef[l.from] : "", b = own(byRef, l.to) ? byRef[l.to] : "";
+      if (!a || !b || a === b) return;
+      var x = normLink({ id: newId(), m: now, map: mapId, from: a, to: b, label: l.label });
+      if (x) links.push(x);
+    });
+    return { map: mapRow, nodes: nodes.map(normNode).filter(Boolean), links: links };
   }
 
   // ---------- 9. Layout ----------
@@ -607,6 +692,9 @@
     { font: 14, weight: 400, lh: 19, px: 10, py: 6,  max: 240 }
   ];
   var HGAP = [64, 40, 32], VGAP = [18, 10, 8];
+  var IMG_BOX = [[200, 150], [180, 135], [160, 120]];   // picture fits in w × h, per depth
+  var IMG_GAP = 6;
+  var LINK_FONT = 12, LINK_PAD = 6, LINK_H = 20;
   var MAX_LINES = 12;
   function styleAt(d) { return STY[Math.min(d, 2)]; }
 
@@ -635,9 +723,26 @@
     return out;
   }
 
+  // Picture size inside a node at `depth` (aspect kept, never upscaled).
+  function imgFit(im, depth) {
+    var box = IMG_BOX[Math.min(depth, 2)], k = Math.min(1, box[0] / im.w, box[1] / im.h);
+    return { w: Math.max(1, Math.round(im.w * k)), h: Math.max(1, Math.round(im.h * k)) };
+  }
+  // Where the segment from a box's centre towards (tx, ty) leaves the box.
+  function exitPoint(c, tx, ty) {
+    var dx = tx - c.cx, dy = ty - c.cy;
+    if (!dx && !dy) return { x: c.cx, y: c.cy };
+    var kx = dx ? (c.w / 2) / Math.abs(dx) : Infinity, ky = dy ? (c.h / 2) / Math.abs(dy) : Infinity;
+    var k = Math.min(kx, ky, 1);
+    return { x: c.cx + dx * k, y: c.cy + dy * k };
+  }
+
   // opts: { measure, fold{id:1}, placeholder, margin }
   // → { nodes{id:{id,x,y,w,h,cx,cy,depth,side,lines,sty,color,folded,
-  //            hidden,rec,ind}}, order[], edges[], w, h }
+  //            hidden,rec,ind,img,moved}}, order[], edges[], links[], w, h }
+  // Free placement: a node's stored offset (R.pos) moves it AND its
+  // whole branch from the automatic place (offsets add up down the
+  // tree), so the automatic layout stays the base.
   function layout(R, opts) {
     opts = opts || {};
     var measure = opts.measure || estimate, fold = opts.fold || {}, M = opts.margin === undefined ? 40 : opts.margin;
@@ -655,6 +760,7 @@
       var lines = wrap(txt, sty, measure), wmax = 0;
       lines.forEach(function (l) { wmax = Math.max(wmax, measure(l, sty.font, sty.weight)); });
       var ind = (n.note ? 1 : 0) + (n.url ? 1 : 0);
+      var im = R.img && R.img[id] ? imgFit(R.img[id], depth) : null;
       var kids = R.kids[id] || [];
       var isFold = kids.length > 0 && id !== rid && own(fold, id);
       var color;
@@ -664,8 +770,9 @@
       var side = depth === 0 ? "c" : (depth === 1 ? (e[2] < rightN ? "r" : "l") : e[4]);
       L[id] = {
         id: id, depth: depth, side: side, lines: lines, sty: sty, color: color,
-        w: Math.ceil(Math.max(wmax, 24) + sty.px * 2 + ind * 16), h: lines.length * sty.lh + sty.py * 2,
-        folded: isFold, hidden: 0, rec: !!R.rec[id], ind: ind, kids: []
+        w: Math.ceil(Math.max(wmax + ind * 16, 24, im ? im.w : 0) + sty.px * 2),
+        h: lines.length * sty.lh + sty.py * 2 + (im ? im.h + IMG_GAP : 0),
+        folded: isFold, hidden: 0, rec: !!R.rec[id], ind: ind, img: im, moved: false, kids: []
       };
       order.push(id);
       if (isFold) continue;
@@ -713,42 +820,94 @@
       if (pn.depth === 0 || !pn.kids.length) continue;
       place(pn.side === "l" ? pn.kids.slice() : pn.kids, pn);
     }
+    // free placement: cumulative offsets, pre-order (parents first)
+    var off = dict();
+    off[rid] = [0, 0];
+    order.forEach(function (id) {
+      if (id === rid) return;
+      var po = off[R.par[id]] || [0, 0], p = R.pos && R.pos[id];
+      var o = p && (p.dx || p.dy) ? [po[0] + p.dx, po[1] + p.dy] : po;
+      off[id] = o;
+      if (p && (p.dx || p.dy)) L[id].moved = true;
+      L[id].x += o[0]; L[id].y += o[1];
+    });
+
+    order.forEach(function (id) { var c = L[id]; c.cx = c.x + c.w / 2; c.cy = c.y + c.h / 2; });
+    // A branch moved across its parent flows the other way (edges
+    // and the fold badge follow where it is, not the side it came from).
+    order.forEach(function (id) {
+      if (id === rid) return;
+      var c = L[id], p = L[R.par[id]];
+      c.flow = c.cx < p.cx ? "l" : "r";
+    });
+
+    // cross-links between visible ends (a folded-away end uses its
+    // nearest visible ancestor; both ends on one node → not drawn)
+    function shown(id) {
+      var guard = 0;
+      while (id && !L[id] && guard++ < MAX_NODES) id = R.par[id];
+      return id && L[id] ? id : null;
+    }
+    var links = [];
+    (R.links || []).forEach(function (l) {
+      var a = shown(l.from), b = shown(l.to);
+      if (!a || !b || a === b) return;
+      var A = L[a], B = L[b];
+      var p1 = exitPoint(A, B.cx, B.cy), p2 = exitPoint(B, A.cx, A.cy);
+      var mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2, len = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
+      var bend = Math.min(80, len * 0.25), nx = -(p2.y - p1.y) / len, ny = (p2.x - p1.x) / len;
+      var qx = mx + nx * bend, qy = my + ny * bend;
+      // label sits on the curve's midpoint (t = 0.5 of the quadratic)
+      var lx = (p1.x + 2 * qx + p2.x) / 4, ly = (p1.y + 2 * qy + p2.y) / 4;
+      var lw = l.label ? Math.ceil(measure(l.label, LINK_FONT, 600) + LINK_PAD * 2) : 0;
+      links.push({ id: l.id, from: a, to: b, x1: p1.x, y1: p1.y, qx: qx, qy: qy, x2: p2.x, y2: p2.y,
+                   label: l.label, lx: lx, ly: ly, lw: lw, lh: l.label ? LINK_H : 0 });
+    });
 
     // 4. bounds → shift so the drawing starts at (M, M)
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    function grow(x0, y0, x1, y1) {
+      minX = Math.min(minX, x0); minY = Math.min(minY, y0); maxX = Math.max(maxX, x1); maxY = Math.max(maxY, y1);
+    }
     order.forEach(function (id) {
-      var c = L[id], extra = c.folded ? 26 : 0;
-      minX = Math.min(minX, c.x - (c.side === "l" ? extra : 0));
-      minY = Math.min(minY, c.y);
-      maxX = Math.max(maxX, c.x + c.w + (c.side !== "l" ? extra : 0));
-      maxY = Math.max(maxY, c.y + c.h);
+      var c = L[id], extra = c.folded ? 26 : 0, left = id !== rid && c.flow === "l";
+      grow(c.x - (left ? extra : 0), c.y, c.x + c.w + (left ? 0 : extra), c.y + c.h);
     });
-    var dx = M - minX, dy = M - minY;
+    links.forEach(function (k) {
+      grow(Math.min(k.qx, k.lx - k.lw / 2), Math.min(k.qy, k.ly - k.lh / 2),
+           Math.max(k.qx, k.lx + k.lw / 2), Math.max(k.qy, k.ly + k.lh / 2));
+    });
+    var dx = Math.round(M - minX), dy = Math.round(M - minY);
     order.forEach(function (id) {
       var c = L[id];
       c.x = Math.round(c.x + dx); c.y = Math.round(c.y + dy);
       c.cx = c.x + c.w / 2; c.cy = c.y + c.h / 2;
     });
+    links.forEach(function (k) {
+      k.x1 += dx; k.y1 += dy; k.qx += dx; k.qy += dy; k.x2 += dx; k.y2 += dy; k.lx += dx; k.ly += dy;
+    });
     var edges = [];
     order.forEach(function (id) {
       if (id === rid) return;
-      var c = L[id], p = L[R.par[id]];
-      var x1 = c.side === "l" ? p.x : p.x + p.w, x2 = c.side === "l" ? c.x + c.w : c.x;
-      if (p.depth === 0) x1 = p.cx + (c.side === "l" ? -1 : 1) * p.w * 0.3;
+      var c = L[id], p = L[R.par[id]], left = c.flow === "l";
+      var x1 = left ? p.x : p.x + p.w, x2 = left ? c.x + c.w : c.x;
+      if (p.depth === 0) x1 = p.cx + (left ? -1 : 1) * p.w * 0.3;
       edges.push({ from: p.id, to: id, x1: x1, y1: p.cy, x2: x2, y2: c.cy, color: c.color, depth: c.depth, rec: c.rec });
     });
-    return { nodes: L, order: order, edges: edges, w: Math.ceil(maxX - minX + 2 * M), h: Math.ceil(maxY - minY + 2 * M) };
+    return { nodes: L, order: order, edges: edges, links: links,
+             w: Math.ceil(maxX - minX + 2 * M), h: Math.ceil(maxY - minY + 2 * M) };
   }
 
   // ---------- 10. Scene + SVG ----------
   // One list of drawing items for both the live SVG (DOM, built with
   // createElementNS + textContent) and the exported file (string,
   // every attribute escaped). Colours come from `pal`, validated.
-  var TAGS = { g: 1, rect: 1, path: 1, text: 1, tspan: 1, circle: 1, title: 1 };
+  var TAGS = { g: 1, rect: 1, path: 1, text: 1, tspan: 1, circle: 1, title: 1, image: 1 };
   var ATTRS = { x: 1, y: 1, dy: 1, width: 1, height: 1, rx: 1, d: 1, cx: 1, cy: 1, r: 1,
                 fill: 1, stroke: 1, "stroke-width": 1, "stroke-dasharray": 1, "fill-opacity": 1,
                 "stroke-opacity": 1, opacity: 1, "font-size": 1, "font-weight": 1, "text-anchor": 1,
-                "text-decoration": 1, "data-id": 1, "data-fold": 1, "stroke-linecap": 1 };
+                "text-decoration": 1, "data-id": 1, "data-fold": 1, "stroke-linecap": 1,
+                "data-link": 1, href: 1, preserveAspectRatio: 1, "stroke-linejoin": 1 };
   var COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+%?\s*)?\)|transparent|none)$/;
   var THEMES = {
     light: { bg: "#ffffff", panel: "#ffffff", text: "#1f2328", dim: "#5f6670", border: "#d0d4da",
@@ -788,8 +947,13 @@
       if (c.rec) box["stroke-dasharray"] = "5 4";
       kids.push({ tag: "rect", cls: "mm-box", a: box });
       var tx = c.x + sty.px, fill = root ? pc(pal, "onAccent") : pc(pal, "text");
-      var empty = !n.text && !n.emoji;
-      var ta = { x: tx, y: c.y + sty.py + sty.lh * 0.76, fill: empty ? pc(pal, "dim") : fill,
+      var empty = !n.text && !n.emoji, ty0 = c.y + sty.py;
+      if (c.img && R.img && R.img[id]) {
+        kids.push({ tag: "image", cls: "mm-img", a: { x: Math.round(c.cx - c.img.w / 2), y: c.y + sty.py,
+          width: c.img.w, height: c.img.h, href: R.img[id].src, preserveAspectRatio: "xMidYMid meet" } });
+        ty0 += c.img.h + IMG_GAP;
+      }
+      var ta = { x: tx, y: ty0 + sty.lh * 0.76, fill: empty ? pc(pal, "dim") : fill,
                  "font-size": sty.font, "font-weight": sty.weight };
       if (n.done) { ta["text-decoration"] = "line-through"; ta.opacity = 0.6; }
       kids.push({ tag: "text", cls: "mm-txt", a: ta, kids: c.lines.map(function (l, i) {
@@ -797,11 +961,11 @@
       }) });
       if (c.ind) {
         var mark = (n.note ? "≡" : "") + (n.url ? "↗" : "");
-        kids.push({ tag: "text", cls: "mm-ind", a: { x: c.x + c.w - sty.px + 2, y: c.y + sty.py + sty.lh * 0.76,
+        kids.push({ tag: "text", cls: "mm-ind", a: { x: c.x + c.w - sty.px + 2, y: ty0 + sty.lh * 0.76,
           fill: root ? fill : pc(pal, "dim"), "font-size": 13, "text-anchor": "end" }, text: mark });
       }
       if (c.folded) {
-        var bx = c.side === "l" ? c.x - 14 : c.x + c.w + 14, cnt = c.hidden > 99 ? "99+" : String(c.hidden);
+        var bx = c.flow === "l" ? c.x - 14 : c.x + c.w + 14, cnt = c.hidden > 99 ? "99+" : String(c.hidden);
         kids.push({ tag: "g", cls: "mm-fold", a: { "data-fold": id }, kids: [
           { tag: "circle", a: { cx: bx, cy: c.cy, r: 11, fill: pc(pal, "panel"), stroke: col, "stroke-width": 1.6 } },
           { tag: "text", a: { x: bx, y: c.cy + 4, fill: pc(pal, "text"), "font-size": cnt.length > 2 ? 9 : 11,
@@ -813,6 +977,27 @@
       if (opts.drop && opts.drop.id === id) cls += " mm-drop-" + opts.drop.mode;
       items.push({ tag: "g", cls: cls, a: { "data-id": id }, kids: kids });
     });
+    // cross-links on top: dashed curve, arrowhead, label pill
+    (lay.links || []).forEach(function (k) {
+      var col = k.id === opts.selLink ? pc(pal, "accent") : pc(pal, "dim");
+      var d = "M" + r1(k.x1) + " " + r1(k.y1) + "Q" + r1(k.qx) + " " + r1(k.qy) + " " + r1(k.x2) + " " + r1(k.y2);
+      var ang = Math.atan2(k.y2 - k.qy, k.x2 - k.qx), a1 = ang + 2.7, a2 = ang - 2.7;
+      var head = "M" + r1(k.x2) + " " + r1(k.y2) + "L" + r1(k.x2 + 11 * Math.cos(a1)) + " " + r1(k.y2 + 11 * Math.sin(a1)) +
+        "L" + r1(k.x2 + 11 * Math.cos(a2)) + " " + r1(k.y2 + 11 * Math.sin(a2)) + "Z";
+      var g = [
+        { tag: "path", cls: "mm-link-hit", a: { d: d, fill: "none", stroke: "transparent", "stroke-width": 16 } },
+        { tag: "path", a: { d: d, fill: "none", stroke: col, "stroke-width": 1.8, "stroke-dasharray": "6 4",
+          "stroke-linecap": "round" } },
+        { tag: "path", a: { d: head, fill: col, stroke: col, "stroke-width": 1, "stroke-linejoin": "round" } }
+      ];
+      if (k.label) {
+        g.push({ tag: "rect", a: { x: r1(k.lx - k.lw / 2), y: r1(k.ly - k.lh / 2), width: k.lw, height: k.lh, rx: 10,
+          fill: pc(pal, "panel"), stroke: col, "stroke-width": 1 } });
+        g.push({ tag: "text", a: { x: r1(k.lx), y: r1(k.ly + 4), fill: pc(pal, "text"), "font-size": LINK_FONT,
+          "font-weight": 600, "text-anchor": "middle" }, text: k.label });
+      }
+      items.push({ tag: "g", cls: "mm-link" + (k.id === opts.selLink ? " mm-sel" : ""), a: { "data-link": k.id }, kids: g });
+    });
     return { items: items, w: lay.w, h: lay.h };
   }
 
@@ -823,6 +1008,7 @@
       if (!own(ATTRS, k) || k.indexOf("data-") === 0) return;
       var v = it.a[k];
       if ((k === "fill" || k === "stroke") && !COLOR_RE.test(String(v))) return;
+      if (k === "href" && (it.tag !== "image" || !validImg(String(v)))) return;
       out += " " + k + '="' + escXml(v) + '"';
     });
     var inner = it.text !== undefined ? escXml(it.text) : "";
@@ -873,7 +1059,9 @@
     isId: isId, isMapId: isMapId, rootId: rootId, line: line, para: para, emoji: emoji, validUrl: validUrl,
     cleanUrl: cleanUrl, title: title,
     between: between, spread: spread, validOrd: validOrd, placeAt: placeAt,
-    normMap: normMap, normNode: normNode, emptyData: emptyData, merge: merge,
+    normMap: normMap, normNode: normNode, normLink: normLink, normPos: normPos, normImg: normImg,
+    validImg: validImg, emptyData: emptyData, merge: merge,
+    LABEL_LEN: LABEL_LEN, MAX_LINKS: MAX_LINKS, MAX_OFF: MAX_OFF, IMG_LEN: IMG_LEN, IMG_TOTAL: IMG_TOTAL, IMG_MAX: IMG_MAX,
     resolve: resolve, subtree: subtree, depthOf: depthOf, isInside: isInside, branchOf: branchOf,
     exportData: exportData, parseImport: parseImport,
     parseOutline: parseOutline, toOutline: toOutline, readXml: readXml, parseOpml: parseOpml, toOpml: toOpml,
