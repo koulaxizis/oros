@@ -7,21 +7,25 @@
 // Request:  POST /v1  { op, acct:{host,port,sec,user,pass}, ...args }
 //           POST /v1  { op: "web", reqs:[...] }  (Reader, see web.js)
 //           POST /v1  { op: "canva", act, ... }  (Atelier, see canva.js)
+//           POST /v1  { op: "send", acct, smtp, from, rcpt[], raw, sent? }  (SMTP, see smtp.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
 import { withSession, ImapError } from "./imap.js";
 import { validWeb, runWeb } from "./web.js";
 import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
+import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
+  sendBytes: 512 * 1024,       // request JSON of a "send" (carries the message)
   fetchBytes: 20 * 1024 * 1024, // one message source
   perMinute: 60                 // requests per client IP (per isolate, best effort)
 };
 
 const PORTS = { 993: "tls", 143: "starttls" };
-const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1 };
+const SMTP_PORTS = { 465: "tls", 587: "starttls" };
+const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1 };
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -48,6 +52,21 @@ export function validAccount(a) {
 
 function folderArg(f) { return str(f, 1000) && !/[\r\n\0]/.test(f); }
 
+export function validSmtp(s) {
+  if (!s || typeof s !== "object") return "smtp";
+  if (!validHost(s.host)) return "smtp-host";
+  const port = +s.port;
+  if (!SMTP_PORTS[port]) return "smtp-port";
+  if (s.sec !== SMTP_PORTS[port]) return "smtp-sec";
+  if (!str(s.user, 320) || !str(s.pass, 512)) return "smtp-login";
+  return "";
+}
+
+// base64 of at most `max` decoded bytes
+function b64Arg(v, max) {
+  return typeof v === "string" && v.length > 0 && v.length <= Math.ceil(max / 3) * 4 && /^[A-Za-z0-9+/]+={0,2}$/.test(v);
+}
+
 export function validRequest(b, env) {
   if (!b || typeof b !== "object" || !OPS[b.op]) return "op";
   if (b.op === "web") return validWeb(b);   // Reader: public pages, no account
@@ -62,6 +81,16 @@ export function validRequest(b, env) {
   if (b.op === "fetch") {
     if (!folderArg(b.folder)) return "folder";
     if (!(Number.isInteger(b.uid) && b.uid > 0)) return "uid";
+  }
+  if (b.op === "smtpcheck" || b.op === "send") {
+    const s = validSmtp(b.smtp);
+    if (s) return s;
+  }
+  if (b.op === "send") {
+    if (!validAddr(b.from)) return "from";
+    if (!Array.isArray(b.rcpt) || !b.rcpt.length || b.rcpt.length > SMTP_LIMITS.rcpts || !b.rcpt.every(validAddr)) return "rcpt";
+    if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
+    if (b.sent !== undefined && !folderArg(b.sent)) return "sent";
   }
   if (b.op === "flag") {
     if (!folderArg(b.folder)) return "folder";
@@ -129,9 +158,10 @@ export async function handle(request, env, connectFn, now, fetchFn) {
 
   let text;
   try { text = await request.text(); } catch (e) { return fail(400, "bad-request", "unreadable body", okOrigin); }
-  if (text.length > LIMITS.bodyBytes) return fail(413, "bad-request", "request too large", okOrigin);
+  if (text.length > LIMITS.sendBytes) return fail(413, "bad-request", "request too large", okOrigin);
   let b;
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
+  if (text.length > LIMITS.bodyBytes && !(b && b.op === "send")) return fail(413, "bad-request", "request too large", okOrigin);
   const bad = validRequest(b, env);
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
@@ -157,6 +187,33 @@ export async function handle(request, env, connectFn, now, fetchFn) {
 
   const acct = { host: b.acct.host.trim().toLowerCase(), port: +b.acct.port, sec: b.acct.sec,
                  user: b.acct.user, pass: b.acct.pass };
+
+  if (b.op === "smtpcheck" || b.op === "send") {
+    const smtp = { host: b.smtp.host.trim().toLowerCase(), port: +b.smtp.port, sec: b.smtp.sec,
+                   user: b.smtp.user, pass: b.smtp.pass };
+    let bin = "";
+    try {
+      if (b.op === "send") bin = atob(b.raw);
+      await withSmtp(connectFn, smtp, async (s) => {
+        if (b.op === "send") await s.send(b.from, b.rcpt, bin);
+      });
+    } catch (e) {
+      const code = e instanceof ImapError ? e.code : "proto";
+      return fail(200, code, String(e && e.message || code).slice(0, 300), okOrigin);
+    }
+    if (b.op === "smtpcheck") return json(200, { ok: true, data: { ok: true } }, okOrigin);
+    // The message is out. Filing a copy in Sent is best effort: a
+    // failure there is reported, never turned into "not sent".
+    let appended = false, appendErr = "";
+    if (b.sent) {
+      try {
+        await withSession(connectFn, acct, (api) => api.append(b.sent, bin, ["\\Seen"]));
+        appended = true;
+      } catch (e) { appendErr = String(e && e.message || "append failed").slice(0, 200); }
+    }
+    return json(200, { ok: true, data: { sent: true, appended, appendErr } }, okOrigin);
+  }
+
   try {
     const data = await withSession(connectFn, acct, async (api) => {
       switch (b.op) {
