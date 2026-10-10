@@ -121,6 +121,7 @@
       "feed.mood.entry": "Mood entry",
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Plants",
+      "lbl.feed.chores": "Chores",
       "lbl.feed.garage": "Garage",
       "lbl.feed.travel": "Travel",
       "feed.travel.day": "{name} · day {n}/{of}",
@@ -260,6 +261,7 @@
       "feed.mood.entry": "Καταγραφή διάθεσης",
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Φυτά",
+      "lbl.feed.chores": "Δουλειές",
       "lbl.feed.garage": "Γκαράζ",
       "lbl.feed.travel": "Ταξίδια",
       "feed.travel.day": "{name} · μέρα {n}/{of}",
@@ -456,6 +458,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-fitness", color: "#f28c5a" },   // orange — finished workouts
     { id: "lbl-feed-pet",    color: "#b39ddb" },   // light purple — Screen Pet (distinct from Mood #a78bfa)
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
+    { id: "lbl-feed-chores", color: "#c678dd" },   // magenta — Chore Wheel (distinct from Mood #a78bfa)
     { id: "lbl-feed-petcare", color: "#e0af68" },  // amber — Pet Health Book (real pets; Screen Pet is lbl-feed-pet)
     { id: "lbl-feed-garage", color: "#ecc75f" },   // amber — Garage renewals + service
     { id: "lbl-feed-travel", color: "#2bb3a3" },   // sea green — Travel trips + timed itinerary
@@ -477,6 +480,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-pet") return t("lbl.feed.pet");
     if (l.id === "lbl-feed-todo") return t("lbl.feed.todo");
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
+    if (l.id === "lbl-feed-chores") return t("lbl.feed.chores");
     if (l.id === "lbl-feed-petcare") return t("lbl.feed.petcare");
     if (l.id === "lbl-feed-garage") return t("lbl.feed.garage");
     if (l.id === "lbl-feed-travel") return t("lbl.feed.travel");
@@ -1454,6 +1458,56 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Chore Wheel read-only feed (chores/core.js, loaded by index.html:
+  // the same who-does-what as the app and the shell reminder). Each
+  // chore shows on the day its period starts (a weekly one on its
+  // Monday, a monthly one on the 1st), ✓ when done. With "who are you
+  // on this device" set in the app, only your own chores; otherwise
+  // everyone's, with the name. Only ±60 days around today. Rows are
+  // never stored; micro-cached ~1s like the other feeds.
+  var CHORES_DATA_KEY = "oros-chores-data";
+  var choresCache = { when: 0, data: null, me: "", today: 0 };
+
+  function choresRaw() {
+    var now = Date.now();
+    var Core = window.OrosChoresCore;
+    if (!Core) return null;
+    if (now - choresCache.when > 1000) {
+      choresCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(CHORES_DATA_KEY));
+        if (d && typeof d === "object" && Array.isArray(d.tasks) && d.tasks.length) {
+          choresCache.data = Core.mergeChores(d, d, now);
+          choresCache.me = Core.readPrefs(JSON.parse(localStorage.getItem("oros-chores-prefs"))).me;
+          choresCache.today = Core.localDn(new Date(now));
+        }
+      } catch (e) { choresCache.data = null; }
+      choresCache.when = now;
+    }
+    return choresCache.data ? choresCache : null;
+  }
+
+  function choresFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-chores")) return [];
+    var c = choresRaw();
+    if (!c) return [];
+    var Core = window.OrosChoresCore, n = Core.ymdToDn(dateStr);
+    if (isNaN(n) || Math.abs(n - c.today) > 60) return [];
+    var mine = !!(c.me && Core.memberById(c.data, c.me));
+    return Core.feedRows(c.data, n, c.me).map(function (r) {
+      var title = (r.state === 1 ? "✓ " : "") + (r.task.icon ? r.task.icon + " " : "") + r.task.name;
+      if (!mine && r.name) title += " · " + r.name;
+      return {
+        id: "chr-" + r.key,                     // per-render key, never stored
+        title: title.slice(0, 80),
+        labelId: "lbl-feed-chores",
+        start: null,                            // all-day
+        _feed: true,
+        _choresDay: dateStr
+      };
+    });
+  }
+
   // Plant Care read-only feed (plants/core.js, loaded by index.html:
   // the same schedule math as the app and the shell reminder).
   // Past days and today: what was done (skips are not shown).
@@ -1963,6 +2017,7 @@ function transientNote(title, body) {
     .concat(fitnessFeedOn(dateStr))
     .concat(petFeedOn(dateStr))
     .concat(plantsFeedOn(dateStr))
+    .concat(choresFeedOn(dateStr))
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
     .concat(travelFeedOn(dateStr))
@@ -2011,6 +2066,9 @@ function transientNote(title, body) {
       } else if (ev._plantId &&
                  typeof p.__orosOpenPlants === "function") {
         p.__orosOpenPlants(ev._plantId);
+      } else if (ev._choresDay &&
+                 typeof p.__orosOpenChores === "function") {
+        p.__orosOpenChores(ev._choresDay);
       } else if (ev._petcareId &&
                  typeof p.__orosOpenPetcare === "function") {
         p.__orosOpenPetcare(ev._petcareId);
