@@ -35,6 +35,8 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Meals` planned in [Meal Planner](app:meals), such as "Dinner: Fasolada".
 - `Death anniversaries` from [Family Tree](app:familytree), such as "Maria · 10 years since death", for people with an exact date of death.
 - `Media Shelf`: the day you finished a book, film, album or game, and release dates on your wishlist, from [Media Shelf](app:shelf).
+- `Holidays` (Greek public holidays), `Name days` of your contacts, and `World days` such as international observances.
+- `Moon & Sky`: moon phases, equinoxes and solstices, meteor showers and eclipses from [Moon & Sky](app:sky). This one starts off: tap or click its chip to turn it on.
 
 Tapping a feed row opens the app it comes from. To change it, edit it there.
 
@@ -42,7 +44,7 @@ Tapping a feed row opens the app it comes from. To change it, edit it there.
 The search box looks through the title, note and location of your own events and lists every match by date. `Stats` shows how many events you have, how many fall in the next 30 days, how many repeat, and a breakdown by label.
 
 ## Sync and backup
-Your events and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved: they all show again next time. Feed rows are never stored in Calendar; they come from the other apps' own data.
+Your events and labels sync between your devices through [orOS sync](help:t/sync). Which of your own labels you've hidden is not saved: they all show again next time. The `Holidays`, `Name days`, `World days`, `Work time` and `Moon & Sky` chips remember whether they are on or off, on this device only. Feed rows are never stored in Calendar; they come from the other apps' own data.
 
 `Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows aren't included. Calendar can't import .ics files. For a full copy, see [backup](help:t/backup).
 
