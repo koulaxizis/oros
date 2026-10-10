@@ -9,13 +9,14 @@ Tap or click `Add a pet` (or the `Pet` button at the top). Give your pet a `Name
 - `Log` records a vaccine, deworming or recheck as done today, with the next date set one usual gap later.
 - `Done` ticks off routine care.
 - `New bag` tells the app you opened a new bag of food.
+- `Doses today` lists today's medicine doses with their times.
 
 ## One pet's page
 Open a pet from `My pets`. It has four parts:
 - `Overview`: what's next, the profile, your vet with `Call` and `Emergency` buttons, and `Routine care`.
-- `Health book`: add a `Vaccine`, `Deworming`, `Visit` or `Medicine`. Vaccine names are suggested for dogs, cats, rabbits and horses, and buttons such as `+1 year` fill the next date. Visits can have a cost; the page totals your vet costs for the year. Filter with `All`, `Vaccines`, `Deworming`, `Visits`, `Medicine` or `Care`.
+- `Health book`: add a `Vaccine`, `Deworming`, `Visit` or `Medicine`. Vaccine names are suggested for dogs, cats, rabbits and horses, and buttons such as `+1 year` fill the next date. Visits can have a cost; the page totals your vet costs for the year, and `Add to Budget` in a visit sends the cost to [Budget](app:budget). A medicine can have up to 6 dose times in `Remind me at`; you get a notification at each one. Filter with `All`, `Vaccines`, `Deworming`, `Visits`, `Medicine` or `Care`.
 - `Weight`: a chart of your entries, the change over the last 30+ days, and a warning when the weight is outside the ideal range.
-- `Food`: the food, grams and meals a day, bag size and the day you opened it. The app works out `Runs out around` a date.
+- `Food`: the food, grams and meals a day, bag size and the day you opened it. The app works out `Runs out around` a date. `Add to shopping list` puts the food on your shopping list in [To-Do](app:todo).
 
 `Edit`, `Print card` and `Delete` are at the top of the page. For routine care, set `every … days` in `Edit` (0 = off). When a pet is `No longer with me`, its health book stays but reminders stop.
 
@@ -31,7 +32,7 @@ In `Settings`, `Export` saves all your pets to a file, and `Import` merges a fil
 - [[Esc]] closes a pet's page.
 
 ## Tips
-- In `Settings`, choose the hour of the `Daily reminder` and how early to `Warn me before vaccines, deworming and rechecks`. See [Notifications](help:t/notifications).
+- In `Settings`, choose the hour of the `Daily reminder` and how early to `Warn me before vaccines, deworming and rechecks`. `Remind me at each medicine dose` turns the dose notifications on or off. See [Notifications](help:t/notifications).
 - Vaccines, deworming, visits, next due dates and birthdays also appear in [Calendar](app:calendar) under `Pet health`.
 
 ## Limits
