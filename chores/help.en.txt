@@ -24,7 +24,7 @@ Deleting a member or a chore shows an `Undo` button for a few seconds.
 ## Today and Week
 `Today` lists today's chores by person, with a progress bar. Tick the box when a chore is done; the points go to whoever had it. Turn on `Only mine` to hide everyone else's.
 
-The ⋯ button on a chore lets you set who it was `Done by`, `Hand over this time` to someone else, `Skip this time`, or mark it `Not done`. `Spin` chores wait under `Waiting for a spin` until someone presses `Spin the wheel`.
+The ⋯ button on a chore lets you set who it was `Done by`, `Hand over this time` to someone else, `Skip this time`, or mark it `Not done`. While a chore is still open, `Send to To-Do` adds it to the open list in [To-Do](app:todo) as a reminder; ticking it there doesn't tick it here. `Spin` chores wait under `Waiting for a spin` until someone presses `Spin the wheel`.
 
 Unfinished chores stay on the list as `late` for 7 days. `Week` shows the whole week day by day, with weekly and monthly chores at the top.
 
