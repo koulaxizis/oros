@@ -933,6 +933,7 @@
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
+      tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
@@ -1711,6 +1712,40 @@
     });
   }
 
+  // Media Shelf — daily reading reminder (off by default; the app's
+  // More menu turns it on, per device: oros-shelf-rem is device-local).
+  // The RULE lives in shelf/feed.js (window.OrosShelfFeed), loaded by
+  // index.html before this file and shared with the Calendar and the
+  // tests; the shell owns timing + emission over oros-shelf-data, so it
+  // works with the app closed. Dedupe key: one per day ("read-<ymd>").
+  // A stale index.html without feed.js → silent.
+  var shelfLastTick = 0;
+  function shelfCheckTickThrottled() {
+    var now = Date.now();
+    if (now - shelfLastTick < 60000) return;
+    shelfLastTick = now;
+    shelfCheckTick();
+  }
+  function shelfCheckTick() {
+    var F = window.OrosShelfFeed, N = window.orosNotifs;
+    if (!F || typeof F.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var rem = null, data = null;
+    try { rem = F.readRem(JSON.parse(localStorage.getItem(F.REM_KEY) || "null")); } catch (e) { return; }
+    if (!rem.on) return;
+    try { data = JSON.parse(localStorage.getItem("oros-shelf-data") || "null"); } catch (e) { return; }
+    var due = F.reminderDue(data, rem, new Date());
+    if (!due) return;
+    var txt = F.reminderText(due, state.lang === "el" ? "el" : "en");
+    N.emit({
+      ns: "shelf",
+      key: due.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "shelf:item:" + due.item
+    });
+  }
 
   // ---------- 7. PWA ----------
   function setupInstallFlow() {
