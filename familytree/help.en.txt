@@ -33,6 +33,7 @@ Your trees, people, relationships and photos sync between your devices through [
 From the `More` menu:
 - `Export image (SVG, PNG, print)…` exports `This view` or the `Whole family`, in light or dark colours, with or without dates and photos. `Hide details of the living` keeps living people's dates and photos out. Save as `SVG`, `PNG`, `Print`, or `Save to Files` (into the `Family Tree` folder in [Files](app:files)).
 - `Back up this tree (JSON)` or `Back up all trees (JSON)`, and `Import JSON…`. An import merges with what you have.
+- `Export GEDCOM…` saves this tree as a .ged file (GEDCOM 5.5.1) for other genealogy programs, with `Download` or `Save to Files`, and can hide the details of the living. `Import GEDCOM…` brings a .ged file (up to 15 MB) in as a new tree, after a preview, and you can undo it.
 
 ## Keyboard shortcuts
 - [[+]] and [[-]] zoom, [[0]] fits the tree to the screen.

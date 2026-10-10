@@ -17,7 +17,7 @@ Under `Settings`:
 Choose `This screen`, `Phone`, `iPhone`, `Desktop`, `QHD`, `Ultrawide`, `4K`, `Square` or `Custom`. With `Custom` you type the width and height, each from 64 to 8192 pixels. The same design at two sizes of the same shape gives the same picture.
 
 ## Set as wallpaper and export
-- `Set as wallpaper` makes the current design your orOS desktop wallpaper. The button then reads `Your wallpaper`. It appears in the menu as `Mine`; see [Appearance](help:t/appearance).
+- `Set as wallpaper` makes the current design your orOS desktop wallpaper. The button then reads `Your wallpaper`. It appears in [Settings](app:settings), under `Wallpaper`, as `Mine`; see [Appearance](help:t/appearance).
 - `Export` asks for `PNG · lossless` or `JPG · smaller file` at the chosen size. Big sizes take a moment; a progress bar shows with `Cancel`.
 
 ## Favourites
