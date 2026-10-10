@@ -325,6 +325,44 @@ button:disabled { cursor: default; opacity: 0.4; }
   overflow-wrap: anywhere;
 }
 .consent-always { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; font-size: 13px; cursor: pointer; }
+.consent-preview {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 160px;
+  overflow: auto;
+}
+
+/* ---------- 6b. Entry card (propose_entry) ---------- */
+.entry-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  padding: 12px 14px;
+  min-width: 0;
+}
+.entry-head { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); }
+.entry-title { font-size: 15px; font-weight: 700; margin-top: 4px; overflow-wrap: anywhere; }
+.entry-fields { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin-top: 8px; font-size: 13px; }
+.entry-fields dt { color: var(--text-dim); }
+.entry-fields dd { min-width: 0; overflow-wrap: anywhere; }
+.entry-list { margin: 8px 0 0 20px; font-size: 13px; line-height: 1.5; }
+.entry-list li { overflow-wrap: anywhere; }
+.entry-table { margin-top: 8px; max-width: 100%; overflow-x: auto; }
+.entry-table table { border-collapse: collapse; font-size: 12px; }
+.entry-table td { border: 1px solid var(--border); padding: 3px 6px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.entry-table tr:first-child td { font-weight: 700; }
+.entry-more { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.entry-text { font-size: 13px; margin-top: 8px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
+.entry-card .dlg-hint { margin-top: 10px; }
+.entry-state { font-size: 13px; font-weight: 700; color: var(--text-dim); margin-top: 10px; }
+.entry-state.err { color: var(--danger); }
 
 /* ---------- 7. Composer ---------- */
 #composer {

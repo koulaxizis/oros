@@ -14,6 +14,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+F]]: `Search apps and data` (opens the menu with the cursor in its search box)
 - [[Ctrl+Alt+Shift+H]]: `Help for the open app`
 - [[Ctrl+Alt+Shift+T]]: `Start / stop the Timesheet timer`
+- [[Ctrl+Alt+Shift+A]]: `Open the Assistant`
 
 ## What each one does
 ### Sync and backup

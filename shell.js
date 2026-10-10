@@ -2103,6 +2103,26 @@
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };
+  // Installed apps (id + shown name): the assistant offers an entry
+  // card only for an app that is there (Part VI, AS-E).
+  window.orosAssistInstalled = function () {
+    return state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
+      var k = "app." + a.id, v = window.t(k);
+      return { id: a.id, name: v === k ? (a.name || a.id) : v };
+    });
+  };
+  function hasApp(id) {
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return true;
+    return false;
+  }
+  // Ctrl+Alt+Shift+A and the menu search's "Ask the Assistant" row.
+  function openAssistant(q) {
+    if (!hasApp("assistant")) return;
+    if (typeof q === "string" && q.trim()) {
+      closeMenu();
+      window.__orosOpenAt("assistant", { ask: q.trim().slice(0, 2000) });
+    } else openAppById("assistant");
+  }
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -2322,6 +2342,19 @@
       }, 150);
     }
 
+    // Last row under the data results: hand the query to the AI
+    // Assistant (it only fills the assistant's message box; nothing is
+    // sent until the user presses Send there).
+    function appendAsk(host, q) {
+      if (!hasApp("assistant")) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "menu-hit-more menu-ask";
+      b.textContent = window.t("search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
+      b.addEventListener("click", function () { openAssistant(q); });
+      host.appendChild(b);
+    }
+
     function renderResults() {
       var host = document.getElementById("menu-results");
       if (!host) return;                 // the menu was rebuilt meanwhile
@@ -2337,6 +2370,7 @@
         wait.className = "menu-empty menu-search-none";
         wait.textContent = window.t("search.busy");
         host.appendChild(wait);
+        appendAsk(host, q);
         return;
       }
       var groups = (searchRes.groups || []).slice();
@@ -2345,6 +2379,7 @@
         none.className = "menu-empty menu-search-none";
         none.textContent = window.t("search.none");
         host.appendChild(none);
+        appendAsk(host, q);
         return;
       }
       var words = window.orosSearch.parseQuery(q);
@@ -2432,6 +2467,7 @@
         wrap.setAttribute("data-app", g.id);
         host.appendChild(wrap);
       });
+      appendAsk(host, q);
     }
 
     renderAppList();
@@ -4694,7 +4730,8 @@
     { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
     { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
     { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
-    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle }
+    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
+    { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
