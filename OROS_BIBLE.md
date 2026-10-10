@@ -4312,3 +4312,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - "Save as a note" sends a branch or the whole map to Notes through the existing Notes target `__orosOpenAt("notes", {add:{title,text}})`: text = the branch note, then an indented "- " list with links and notes, ≤ 20,000 chars. Greek labels for the bridge buttons; guide section "Send to other apps".
 - Follow-up of #126 (these commits were pushed after #126 merged). Only mindmap/mindmap.js and mindmap/help.*.txt change.
 - Tests 1186/1186 on the branch; shell check with the real Notes, To-Do and Slides receivers, EN + EL, 0 errors. Not tested: a real phone, Safari.
+
+### 2026-10-10 — Timesheet Wave 5: import from Toggl, Clockify and Harvest (CSV) (#138) — 0.60.06
+- Settings › "Import from Toggl, Clockify or Harvest (CSV)": a preview lists new entries, ones already here (or deleted earlier), new projects and clients and unreadable rows; nothing changes until Import. Re-importing the same file adds nothing; an entry deleted after an import stays deleted.
+- Format detected from the header: Toggl / Clockify (start + end; 12-hour times), Harvest (date + hours, stacked from 09:00 per day). Dates ISO or a/b/yyyy (day/month order from the file, else a select defaulting to the app language). Task joins the description, Harvest "Invoiced?" → invoiced, new projects billable if any row is, rate from "Billable Rate".
+- timesheet/core.js `readCsv` + `importPlan(text, data, order)`; one `mergeTimesheet(data, plan.add)`. Entry ids are row hashes (Harvest: day + hours + text), entries stamped `m = 1` so a later tombstone wins; clients/projects matched by name (case-insensitive), new ones hashed so two devices converge. Limits 10 MB, 20,000 rows.
+- Tests: +5 (CSV reader, Toggl, Clockify, Harvest, non-export files). Shell: Greek 360 px, re-import "nothing new", two devices converge, 0 console errors.
+- Not tested: real exports from the three services (fixtures follow their documented columns), a real phone, Safari, real Dropbox.
