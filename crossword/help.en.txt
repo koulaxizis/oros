@@ -1,0 +1,27 @@
+# Crossword
+A fill-in crossword with no clues: you get the list of words, grouped by length, and your job is to fit them all into the grid so every crossing agrees. Play the daily crossword or as many as you like.
+
+## How to play
+The words to place are listed next to the grid, grouped by length (`5 letters` and so on). A few letters are given. Tap or click a cell and type; tap the same cell again to switch between across and down. A word that's in place is ticked off the list. The crossword is solved when every word fits; if a puzzle has more than one solution, any filling where all the words fit counts.
+
+Words come in English or Greek, chosen with `EN` / `ΕΛ` in the toolbar. Greek words are in capitals without accents, and a final ς is written as Σ. You can type Greek on an English keyboard and the other way round, since keys work by position, or use the on-screen keyboard.
+
+## Controls
+- `Daily` or `Free`, and in free play the size: `9×9` (8–10 words), `13×13` (14–18) or `17×17` (22–28).
+- `Words`: `Random words`, or the words of a theme such as `Animals` or `Food`.
+- `Check and reveal`: `Check letter`, `Check word`, `Check all` (wrong letters turn red) and `Reveal letter`.
+
+Keyboard:
+- Type letters; [[Backspace]] deletes back, [[Delete]] clears the cell.
+- Arrow keys move; [[Space]] switches across / down; [[Tab]] and [[Shift+Tab]] jump to the next or previous word.
+- [[Shift+L]] check letter, [[Shift+W]] check word, [[Shift+A]] check all, [[Shift+R]] reveal letter, [[Shift+N]] new puzzle.
+
+## Levels and scoring
+`Daily` is one medium crossword a day, the same on every device. `Statistics` shows the days solved, your streak, best streak and best daily time, plus how many free-play puzzles you've solved and your best time for each size. Revealing a letter means no record for that puzzle; checking is free. `Reset statistics` clears them.
+
+## Sync
+Your daily results and free-play records sync between your devices through [orOS sync](help:t/sync). If you've already solved today's crossword on another device, you'll see its time. The puzzles in progress and your settings stay on this device.
+
+## Tips
+- Start with lengths that have only one word.
+- The themes and word lists are the same as in [Word Search](help:a/wordsearch).

@@ -1175,6 +1175,7 @@ document.body.appendChild(loader);
 
       var card=document.createElement("div");
       card.className="prompt-card"+(isCustom(p.id)? " custom":"");
+      card.setAttribute("data-id", p.id);   // universal search deep link
       if(p.id===dailyId) card.classList.add("daily-highlight");
 
       var hdr=document.createElement("div");
@@ -1574,5 +1575,31 @@ document.body.appendChild(loader);
   // fires on tab clicks — without this, no button looks "on")
   var b0=$("browse-btn");
   if(b0){ b0.classList.add("on"); b0.setAttribute("aria-pressed","true"); }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { prompt }.
+  // A custom prompt: Browse with "Mine" on and no other filter, the
+  // card scrolled into view and focused. Unknown id → no-op; nothing
+  // happens while the editor or the settings dialog is open.
+  function openSearchTarget(tg){
+    var id=tg && typeof tg.prompt==="string"? tg.prompt : null;
+    if(!id || !isCustom(id) || !promptById(id)) return;
+    if(editorModal || settingsModal || document.querySelector("dialog[open]")) return;
+    showMineOnly=true; activeCategory="all"; activeTag=null;
+    searchRaw=""; searchQuery="";
+    showTab("browse");
+    var cards=document.querySelectorAll("#browse .prompt-card"), card=null;
+    for(var i=0;i<cards.length;i++){ if(cards[i].getAttribute("data-id")===id){ card=cards[i]; break; } }
+    if(!card) return;
+    card.tabIndex=-1;
+    try{ card.scrollIntoView({ block:"center" }); }catch(e){}
+    try{ card.focus({ preventScroll:true }); }catch(e){}
+  }
+  window.__orosOpenAt=openSearchTarget;
+  try{
+    if(window.parent && window.parent!==window && typeof window.parent.__orosTakeTarget==="function"){
+      var pendingTarget=window.parent.__orosTakeTarget("prompter");
+      if(pendingTarget) openSearchTarget(pendingTarget);
+    }
+  }catch(e){}
 
 })();

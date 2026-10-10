@@ -1,5 +1,5 @@
 // ============================================================
-// orOS 2048 — App logic (v1.0.0)
+// orOS 2048 — App logic (v1.1.0)
 // Slide every tile one way; two equal tiles that meet join into one
 // with their sum (once per move). After each move that changed the
 // board a new tile appears (2, or 4 one time in ten). Reach the target
@@ -8,13 +8,17 @@
 //   - sizes 3×3 / 4×4 (classic) / 5×5, each with its own records
 //   - arrows / WASD, swipe; U undoes one move (that game then sets no
 //     score or tile record, it still counts as played); N new game
+//   - Timed mode (v1.1): 2 minutes for the highest score; the clock
+//     starts with the first move and runs only while the app is visible;
+//     the target opens no dialog there (play on until the time is up)
 //   - a game in progress is kept on the device and resumes
 // Data:
 //   - synced slice "g2048" (oros-g2048-data): per size the best score
 //     (and when), the biggest tile, games played and games that reached
 //     the target, as per-device rows (each device only grows its own
 //     row; merge = per-row join) + a reset stamp br
-//   - device-local (R10): oros-g2048-prefs (size), oros-g2048-session
+//     (classic n3|n4|n5, timed t3|t4|t5)
+//   - device-local (R10): oros-g2048-prefs (size, mode), oros-g2048-session
 //     (the game in progress), oros-g2048-device (row id),
 //     oros-g2048-sfx (sound on/off)
 // Sections:
@@ -42,7 +46,9 @@
   var DATA_VER    = 1;
 
   var SIZES = [3, 4, 5];
-  var KEYS = ["n3", "n4", "n5"];
+  var MODES = ["c", "t"];                    // classic, timed
+  var KEYS = ["n3", "n4", "n5", "t3", "t4", "t5"];
+  var TIME_MS = 120000;                      // timed mode: 2 minutes
   var TARGET = { 3: 512, 4: 2048, 5: 2048 };
   var MAX_TILE = 1048576;                    // 2^20: anything above is junk
   var MAX_SCORE = 1000000000;
@@ -104,7 +110,16 @@
       "toast.undo": "Undo",
       "toast.noUndo": "Nothing to undo: only the last move can be undone",
       "toast.over": "No moves left: start a new game (N)",
-      "toast.save": "Could not save: storage is full"
+      "toast.save": "Could not save: storage is full",
+      "mode.c": "Classic", "mode.t": "Timed",
+      "turn.timed": "Time left {c}",
+      "turn.timedStart": "2 minutes: the clock starts with your first move",
+      "turn.timeUp": "Time's up",
+      "live.timeUp": "Time's up. Score {s}",
+      "res.timeUp": "Time's up",
+      "stats.classic": "Classic",
+      "stats.timed": "Timed (2 minutes)",
+      "toast.timeUp": "Time's up: start a new game (N)"
     },
     el: {
       "btn.new": "Νέο παιχνίδι (N)",
@@ -148,7 +163,16 @@
       "toast.undo": "Αναίρεση",
       "toast.noUndo": "Τίποτα για αναίρεση: αναιρείται μόνο η τελευταία κίνηση",
       "toast.over": "Δεν υπάρχουν κινήσεις: ξεκίνα νέο παιχνίδι (N)",
-      "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
+      "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
+      "mode.c": "Κλασικό", "mode.t": "Με χρόνο",
+      "turn.timed": "Απομένουν {c}",
+      "turn.timedStart": "2 λεπτά: ο χρόνος ξεκινά με την πρώτη κίνηση",
+      "turn.timeUp": "Τέλος χρόνου",
+      "live.timeUp": "Τέλος χρόνου. Σκορ {s}",
+      "res.timeUp": "Τέλος χρόνου",
+      "stats.classic": "Κλασικό",
+      "stats.timed": "Με χρόνο (2 λεπτά)",
+      "toast.timeUp": "Τέλος χρόνου: ξεκίνα νέο παιχνίδι (N)"
     }
   };
 
@@ -276,7 +300,7 @@
   //   ver: 1,
   //   br: <reset stamp>,                                       // max-merged
   //   rows: { <deviceId>: { b: <epoch>,
-  //                         s: { n3|n4|n5: { s: best score, ts: when,
+  //                         s: { n3|n4|n5|t3|t4|t5: { s: best score, ts: when,
   //                                          v: best tile, g: games, w: reached target } } } }
   // }
   // Each device only ever writes ITS OWN row; a row counts from epoch b.
@@ -415,19 +439,21 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { n: 4 };
+  var prefs = { n: 4, m: "c" };
 
   function loadPrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object" && SIZES.indexOf(p.n) >= 0) prefs.n = p.n;
+      if (p && typeof p === "object" && MODES.indexOf(p.m) >= 0) prefs.m = p.m;
     } catch (e) {}
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
 
-  // game = { n, cells, score, moves, won, undone, over, prev: { cells, score } | null }
+  // game = { n, m, left, cells, score, moves, won, undone, over, prev: { cells, score } | null }
+  // m: "c" classic | "t" timed; left: ms on the clock (timed only)
   var game = null;
 
   function validCells(cells, n) {
@@ -441,6 +467,8 @@
         typeof g.won !== "boolean" || typeof g.undone !== "boolean" || typeof g.over !== "boolean") return false;
     if (g.prev !== null && (!g.prev || typeof g.prev !== "object" || !validCells(g.prev.cells, g.n) ||
         !isInt(g.prev.score) || g.prev.score < 0 || g.prev.score > g.score)) return false;
+    if (g.m === undefined) { g.m = "c"; g.left = 0; }          // a v1.0 session
+    if (MODES.indexOf(g.m) < 0 || !isInt(g.left) || g.left < 0 || g.left > TIME_MS) return false;
     return maxTile(g.cells) > 0;
   }
   function loadSession() {
@@ -456,26 +484,68 @@
 
   // ---------- 5. Game flow ----------
   function fresh() {
-    return { n: prefs.n, cells: startCells(prefs.n, rand), score: 0, moves: 0,
+    return { n: prefs.n, m: prefs.m, left: prefs.m === "t" ? TIME_MS : 0,
+             cells: startCells(prefs.n, rand), score: 0, moves: 0,
              won: false, undone: false, over: false, prev: null };
   }
   function inProgress() { return !!(game && !game.over && game.moves > 0); }
+  function recKey(g) { return (g.m === "t" ? "t" : "n") + g.n; }
+
+  // ---------- Timed mode clock ----------
+  // Runs only while a timed game has started, is not over and the app
+  // is visible; the time left lives in the session (saved each second).
+  var clockTimer = null, clockLast = 0, clockSaved = 0;
+  function clockRunning() {
+    return !!(game && game.m === "t" && !game.over && game.moves > 0 &&
+              document.visibilityState !== "hidden");
+  }
+  function syncClock() {
+    if (clockRunning()) {
+      if (!clockTimer) { clockLast = Date.now(); clockTimer = setInterval(tick, 250); }
+    } else if (clockTimer) {
+      tick();
+      clearInterval(clockTimer); clockTimer = null;
+    }
+  }
+  function tick() {
+    if (!game || game.m !== "t" || game.over) return;
+    var now = Date.now(), dt = Math.max(0, Math.min(1000, now - clockLast));
+    clockLast = now;
+    game.left = Math.max(0, game.left - dt);
+    if (game.left === 0) { timeUp(); return; }
+    if (now - clockSaved > 1000) { clockSaved = now; saveSession(); }
+    renderStatus();
+  }
+  function fmtClock(ms) {
+    var sec = Math.ceil(ms / 1000);
+    return Math.floor(sec / 60) + ":" + (sec % 60 < 10 ? "0" : "") + (sec % 60);
+  }
+  function timeUp() {
+    if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+    flushSlide();
+    closeDialogs();
+    game.left = 0;
+    game.over = true;
+    finish(true);
+  }
 
   // A game in progress is never lost silently: Undo toast (R14).
   function newGame(announce) {
     flushSlide();
     closeDialogs();
     var prev = inProgress() ? JSON.parse(JSON.stringify(game)) : null;
-    var prevN = game ? game.n : prefs.n;
+    var prevN = game ? game.n : prefs.n, prevM = game ? game.m : prefs.m;
     game = fresh();
     saveSession();
     renderAll(null);
+    syncClock();
     if (prev) {
       undoToast(t("toast.newgame"), function () {
-        prefs.n = prevN; savePrefs();
+        prefs.n = prevN; prefs.m = prevM; savePrefs();
         game = prev;
         saveSession();
         renderAll(null);
+        syncClock();
       });
     } else if (announce) {
       live(t("toast.newgame"));
@@ -484,7 +554,7 @@
 
   function play(dir) {
     if (!game || document.querySelector("dialog[open]")) return;
-    if (game.over) { showToast(t("toast.over")); return; }                 // R28
+    if (game.over) { showToast(t(game.m === "t" && game.left === 0 ? "toast.timeUp" : "toast.over")); return; }   // R28
     flushSlide();
     var res = slide(game.cells, game.n, dir);
     if (!res.moved) { nudge(dir); return; }                                 // visible, not a toast
@@ -501,12 +571,13 @@
     if (over) game.over = true;
     saveSession();
     renderAll({ paths: res.paths, joined: res.joined, spawned: sp ? sp.at : -1 });
+    syncClock();
     if (res.joined.length) sfx(top >= 128 ? "big" : "join");
     if (over) { finish(); return; }
     if (reached) {
       live(t("live.win", { t: TARGET[game.n] }));
       sfx("win");
-      setTimeout(winDialog, SLIDE_MS + 300);
+      if (game.m !== "t") setTimeout(winDialog, SLIDE_MS + 300);   // timed: no pause
     } else {
       live(top ? t("live.join", { v: top, s: game.score }) : t("live.move", { s: game.score }));
     }
@@ -526,13 +597,14 @@
     live(t("live.move", { s: game.score }));
   }
 
-  function finish() {
-    var rec = countGame("n" + game.n, game);
+  function finish(byClock) {
+    var rec = countGame(recKey(game), game);
     game.prev = null;
     saveSession();
+    syncClock();
     renderStatus();
     renderToolbar();
-    live(t("live.over", { s: game.score }));
+    live(t(byClock ? "live.timeUp" : "live.over", { s: game.score }));
     sfx("over");
     setTimeout(function () { resultDialog(rec); }, SLIDE_MS + 500);
   }
@@ -550,6 +622,11 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
+    [].forEach.call(document.querySelectorAll("#mode-seg .seg-btn"), function (b) {
+      var on = b.getAttribute("data-mode") === (game ? game.m : prefs.m);
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
     $("undo-btn").disabled = !(game && game.prev && !game.over);
     paintSfxBtn();
   }
@@ -557,14 +634,17 @@
   function renderStatus() {
     if (!game) return;
     $("score").textContent = fmtNum(game.score);
-    $("best").textContent = fmtNum(Math.max(totals("n" + game.n).s, game.undone ? 0 : game.score));
+    $("best").textContent = fmtNum(Math.max(totals(recKey(game)).s, game.undone ? 0 : game.score));
     var msg, tg = TARGET[game.n];
-    if (game.over) msg = t("turn.over");
+    if (game.m === "t" && game.over && game.left === 0) msg = t("turn.timeUp");
+    else if (game.over) msg = t("turn.over");
+    else if (game.m === "t") msg = game.moves ? t("turn.timed", { c: fmtClock(game.left) }) : t("turn.timedStart");
     else if (game.undone) msg = t("turn.undone");
     else if (game.won) msg = t("turn.more", { v: maxTile(game.cells) });
     else msg = t(game.moves ? "turn.play" : "turn.start", { t: tg });
     $("turn").textContent = msg;
-    $("turn").className = game.over ? "done" : (game.undone ? "warn" : "");
+    $("turn").className = game.over ? "done" :
+      (game.undone || (game.m === "t" && game.moves && game.left <= 10000) ? "warn" : "");
   }
 
   function layoutBoard() {
@@ -729,9 +809,11 @@
   function resultDialog(rec) {
     if (!game || !game.over) return;           // replaced meanwhile
     closeDialogs();
-    var s = totals("n" + game.n);
+    var s = totals(recKey(game));
+    var timedUp = game.m === "t" && game.left === 0;
     var dlg = makeDialog("g2048-result");
-    dlg.appendChild(el("div", "dlg-title", t("res.title") + " · " + sizeName(game.n)));
+    dlg.appendChild(el("div", "dlg-title", t(timedUp ? "res.timeUp" : "res.title") + " · " + sizeName(game.n) +
+      (game.m === "t" ? " · " + t("mode.t") : "")));
     dlg.appendChild(el("div", "dlg-hero", fmtNum(game.score)));
     if (rec) dlg.appendChild(el("div", "dlg-badge", t("res.rec")));
     if (game.undone) dlg.appendChild(el("div", "dlg-msg dlg-note", t("res.noRec")));
@@ -755,11 +837,14 @@
     dlg.appendChild(el("div", "dlg-title", t("stats.title")));
     dlg.appendChild(el("div", "dlg-sub", t("stats.head")));
     var empty = true;
-    SIZES.forEach(function (n) {
-      var s = totals("n" + n);
-      if (s.g) empty = false;
-      dlg.appendChild(row(sizeName(n) + " · " + TARGET[n],
-        s.g ? fmtNum(s.s) + " · " + (s.v || "–") + " · " + s.g + " · " + s.w : "–"));
+    MODES.forEach(function (m) {
+      dlg.appendChild(el("div", "dlg-sub", t(m === "t" ? "stats.timed" : "stats.classic")));
+      SIZES.forEach(function (n) {
+        var s = totals((m === "t" ? "t" : "n") + n);
+        if (s.g) empty = false;
+        dlg.appendChild(row(sizeName(n) + " · " + TARGET[n],
+          s.g ? fmtNum(s.s) + " · " + (s.v || "–") + " · " + s.g + " · " + s.w : "–"));
+      });
     });
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
@@ -1028,6 +1113,13 @@
         prefs.n = n; savePrefs(); newGame(true);
       });
     });
+    [].forEach.call(document.querySelectorAll("#mode-seg .seg-btn"), function (b) {
+      b.addEventListener("click", function () {
+        var m = b.getAttribute("data-mode");
+        if (game && m === game.m && !game.over) return;   // visible active state
+        prefs.m = m; savePrefs(); newGame(true);
+      });
+    });
     $("undo-btn").addEventListener("click", undo);
     $("new-btn").addEventListener("click", function () { newGame(true); $("new-btn").blur(); });
     $("stats-btn").addEventListener("click", statsDialog);
@@ -1042,7 +1134,8 @@
     if (window.ResizeObserver) new ResizeObserver(relayout).observe($("board-wrap"));
     else window.addEventListener("resize", relayout);
 
-    window.addEventListener("pagehide", function () { if (game) saveSession(); });
+    document.addEventListener("visibilitychange", syncClock);
+    window.addEventListener("pagehide", function () { if (clockTimer) tick(); if (game) saveSession(); });
 
     wireKeyboard();
   }
@@ -1058,9 +1151,10 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
-    if (game) prefs.n = game.n;                // the resumed game decides the toolbar
+    if (game) { prefs.n = game.n; prefs.m = game.m; }   // the resumed game decides the toolbar
     else { game = fresh(); saveSession(); }
     renderAll(null);
+    syncClock();
   }
 
   boot();

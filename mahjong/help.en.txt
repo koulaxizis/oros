@@ -1,0 +1,32 @@
+# Mahjong
+Mahjong solitaire: take matching pairs of free tiles until the layout is empty. Every deal can be solved.
+
+## How to play
+Tap or click two matching tiles to take them away. A tile is free when no tile lies on top of it and its left or right side is open. If you pick a tile that isn't free, a message tells you why.
+
+- Most tiles match only an identical tile.
+- Any flower matches any other flower, and any season any other season.
+
+`Tiles` shows how many tiles are left, and the status line tells you how many pairs you can take right now. When no free tiles match, `No moves left` offers to `Shuffle` the remaining tiles (the game stays solvable), `Undo` or start a `New game`.
+
+## Controls
+- Tap or click a tile to select it, then its match.
+- Arrow keys move a cursor over the free tiles; [[Enter]] or [[Space]] takes the tile under it. [[Esc]] clears your selection.
+- [[H]] or `Hint (H)` shows a pair you can take.
+- [[U]], [[Backspace]] or `Undo (U)` puts the last pair back.
+- [[S]] or `Shuffle (S)` shuffles the tiles left on the board.
+- [[Z]] or `Zoom (Z)` makes the tiles bigger; the board then scrolls.
+- [[N]] or `New game (N)` deals a new game. If you leave a game in progress, an `Undo` button appears for a moment to get it back.
+
+The clock starts with your first move and runs only while the app is on screen. A game in progress is kept on this device for next time.
+
+## Levels and scoring
+Choose a layout: `Turtle` (144 tiles), `Pyramid` (82) or `Fortress` (70, the default on phones). Changing it deals a new game. On a phone the `Turtle` is bigger than the screen, so you move around inside it.
+
+`Records` shows your best time and number of wins for each layout.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The layout, the zoom, the game in progress and the sound button stay on this device.
+
+## Tips
+- Free the long rows from the ends and clear the tall stacks early; tiles buried under others are the ones that block you later.

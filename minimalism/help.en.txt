@@ -1,0 +1,32 @@
+# Minimalism
+Minimalism gives you one small, guided step a day towards a lighter life, in two streams: `Physical` (your home and things) and `Digital` (your phone, inbox and screens). There's no pressure: days you don't open the app don't count against you.
+
+## Getting started
+Open `Today`. The card shows the date, which day of the 365-day programme it is (`Day … of 365`), and two proposals, one `Physical` and one `Digital`, each with a short reason why it helps.
+
+When you've done one, tap or click `Done`. If it isn't for you, choose `Skip`.
+
+## The daily card
+- Everyone gets the same proposal on the same date, on every device. The programme follows the calendar, so Day 1 is around 1 January, and each month has its own theme. After a year it simply starts again.
+- `Skip` asks `Why skip?`: pick `Not today` or `Doesn't fit me`, or type your own reason. Skipping carries no penalty.
+- Once a proposal is marked, it shows `Done` or `Skipped`, with `Undo` if you change your mind.
+
+## Streaks
+Each stream keeps its own streak (`day streak`), shown under the card. Every `Done` adds a day. Days you never opened the app are simply ignored; only a deliberate `Skip` ends a streak.
+
+## History
+`History` lists the `Last 30 days` that have something marked, with a P and a D for the two streams. Tap or click a day to see its proposals again; `Back to today` returns to the current card. Past days can be looked at, not marked.
+
+## Daily reminder
+At the bottom of `History`, `Daily reminder` sets an hour between 06:00 and 22:00. If you haven't marked anything by then, orOS sends you a reminder; tapping it opens today's card. It starts only after you've used the app at least once, and only while orOS is open. See [Notifications](help:t/notifications).
+
+## Sync and backup
+Your marked days, skip reasons and reminder hour sync between your devices through [orOS sync](help:t/sync). The proposals themselves aren't stored; every device works them out from the date. There's no import or export; use the orOS [backup](help:t/backup) to keep a copy.
+
+## Tips
+- Do the step right away; most take a few minutes.
+- If a proposal doesn't fit your life, skip it with `Doesn't fit me` and come back tomorrow for a new one.
+
+## Limits
+- You can only mark today's proposals; you can't catch up on days you missed.
+- The proposals follow the calendar, so you can't pick a different one or start the programme from Day 1 mid-year.

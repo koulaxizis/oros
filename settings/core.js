@@ -18,7 +18,7 @@
   var SCOPE = {
     theme: "all", skin: "all", wallpaper: "all", pet: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all",
-    folder: "device", search: "device", passphrase: "device"
+    folder: "device", search: "device", passphrase: "device", dock: "device"
   };
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -38,7 +38,7 @@
 
       "s.appearance": "Appearance", "s.notifications": "Notifications", "s.sync": "Sync",
       "s.backup": "Backups", "s.language": "Language & search", "s.system": "System",
-      "d.appearance": "Theme, colours, wallpaper, screen pet",
+      "d.appearance": "Theme, colours, wallpaper, Dock, screen pet",
       "d.notifications": "Pop-ups, sound, quiet hours, per app",
       "d.sync": "Encrypted sync through Dropbox",
       "d.backup": "Backup files and the backup folder",
@@ -50,6 +50,11 @@
       "a.wallpaper.make": "Make your own in Wallpaper Generator",
       "a.pet": "Screen pet",
       "a.pet.hint": "A tiny companion on your desktop. Feed it, pet it, let it sleep.",
+      "k.dock": "Dock", "k.on": "Show the Dock", "k.size": "Size",
+      "k.size.s": "Small", "k.size.m": "Medium", "k.size.l": "Large",
+      "k.magnify": "Magnify on hover", "k.autohide": "Hide automatically",
+      "k.over": "Show over open apps",
+      "k.empty": "Add apps with the ☆ next to each app in the menu.",
 
       "n.enabled": "Notifications", "n.test": "Send a test",
       "n.test.title": "Test notification", "n.test.body": "This is how notifications look.",
@@ -114,7 +119,7 @@
 
       "s.appearance": "Εμφάνιση", "s.notifications": "Ειδοποιήσεις", "s.sync": "Συγχρονισμός",
       "s.backup": "Αντίγραφα ασφαλείας", "s.language": "Γλώσσα και αναζήτηση", "s.system": "Σύστημα",
-      "d.appearance": "Θέμα, χρώματα, ταπετσαρία, συντροφάκι",
+      "d.appearance": "Θέμα, χρώματα, ταπετσαρία, Dock, συντροφάκι",
       "d.notifications": "Αναδυόμενα, ήχος, ώρες ησυχίας, ανά εφαρμογή",
       "d.sync": "Κρυπτογραφημένος συγχρονισμός μέσω Dropbox",
       "d.backup": "Αρχεία αντιγράφων και φάκελος αντιγράφων",
@@ -126,6 +131,11 @@
       "a.wallpaper.make": "Φτιάξε τη δική σου στη Γεννήτρια ταπετσαρίας",
       "a.pet": "Συντροφάκι",
       "a.pet.hint": "Ένας μικρός σύντροφος στην επιφάνεια εργασίας. Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί.",
+      "k.dock": "Dock", "k.on": "Εμφάνιση του Dock", "k.size": "Μέγεθος",
+      "k.size.s": "Μικρό", "k.size.m": "Μεσαίο", "k.size.l": "Μεγάλο",
+      "k.magnify": "Μεγέθυνση στο πέρασμα του ποντικιού", "k.autohide": "Αυτόματη απόκρυψη",
+      "k.over": "Εμφάνιση πάνω από ανοιχτές εφαρμογές",
+      "k.empty": "Πρόσθεσε εφαρμογές με το ☆ δίπλα σε κάθε εφαρμογή στο μενού.",
 
       "n.enabled": "Ειδοποιήσεις", "n.test": "Δοκιμαστική",
       "n.test.title": "Δοκιμαστική ειδοποίηση", "n.test.body": "Έτσι φαίνονται οι ειδοποιήσεις.",

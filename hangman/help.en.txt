@@ -1,0 +1,27 @@
+# Hangman
+Guess the hidden word one letter at a time, before the figure is complete. Play with English or Greek words.
+
+## How to play
+The word shows as blank spaces. Pick a letter: if it's in the word, it appears in every place it occurs. If not, a part is added to the figure: head, body, two arms, two legs. Six misses and the word is lost; find every letter and you win.
+
+Each letter can be tried once; tried letters are greyed out on the keyboard. When a word ends, a window shows it (missing letters in red), with your games played, win percentage, streak and best streak.
+
+In Greek words, accents and diaeresis don't matter, and `ς` counts as `σ`.
+
+## Controls
+- Tap or click a letter on the on-screen keyboard.
+- Or type on your keyboard. Keys work by position, so Greek words follow the Greek keyboard layout even if your computer is set to English.
+- [[Shift+N]] (or the `New word (Shift+N)` button) gives you a new word.
+
+## Levels and scoring
+- `EN` / `ΕΛ` switches between English and Greek words. It starts in the orOS language. Each language keeps its own word in progress, so switching back brings it back.
+- `Easy`: 5–6 letters, `Medium`: 7–8 letters, `Hard`: 9–10 letters.
+
+The status bar shows your misses and your current streak of words found in a row. `Records` shows words won and lost, and streaks, for each language.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The word in progress, the word language, the level and the sound setting stay on this device.
+
+## Tips
+- Started a new word or changed level by mistake? Tap `Undo` on the message that appears.
+- Start with common letters: vowels, then letters like `S`, `T`, `N` or, in Greek, `Σ`, `Τ`, `Ν`.

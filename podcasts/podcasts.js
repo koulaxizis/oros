@@ -1492,6 +1492,8 @@
   // waits for a refresh of the shows. Nothing while a dialog is open.
   var waitEp = "";
   function openTarget(x) {
+    // { show } / { show, ep }: universal search hit.
+    if (x && typeof x === "object" && typeof x.show === "string") { openSearchTarget(x); return; }
     var tg = C.parseTarget(x);
     if (!tg || !H) return;
     if (tg.add) { window.__orosPodcastsAdd(tg.add); return; }
@@ -1990,6 +1992,17 @@
       var u = typeof p === "function" ? p() : null;
       if (u) window.__orosPodcastsAdd(u);
     } catch (e) {}
+  }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { show } or { show, ep }. Opens the show's page and, for
+  // an episode, its notes. Unknown ids, the app not attached yet, or
+  // a dialog open → no-op.
+  function openSearchTarget(t) {
+    if (!H || !t || typeof t.show !== "string" || document.querySelector("dialog[open]")) return;
+    if (!C.findShow(D(), t.show)) return;
+    openShow(t.show);
+    if (typeof t.ep === "string" && epIndex[t.ep] && epIndex[t.ep].sid === t.show) notesDlg(t.ep);
   }
 
   function boot() {

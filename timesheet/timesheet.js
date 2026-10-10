@@ -1761,4 +1761,35 @@
   }
 
   boot();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { entry } | { project } | { client }. An entry: the Timer
+  // tab on its day, then its dialog; a project or a client: the
+  // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
+  function openSearchTarget(t) {
+    if (!t || typeof t !== "object" || document.querySelector("dialog[open]")) return;
+    if (typeof t.entry === "string") {
+      var x = findEntry(t.entry);
+      if (!x) return;
+      dayKey = C.dayKeyOf(x.s);
+      setTab("timer");
+      entryDialog(x.id, null);
+    } else if (typeof t.project === "string") {
+      if (!C.project(data, t.project)) return;
+      setTab("projects");
+      projectDialog(t.project, "");
+    } else if (typeof t.client === "string") {
+      if (!C.client(data, t.client)) return;
+      setTab("projects");
+      clientDialog(t.client);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("timesheet");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();
