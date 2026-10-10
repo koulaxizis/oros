@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.64.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.65.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4223,7 +4223,10 @@
           el: "Αρχεία Excel / ODS (Spreadsheet, Budget)" },
         { name: "hls.js 1.7.3", url: "https://github.com/video-dev/hls.js",
           by: "Dailymotion & contributors", lic: "Apache-2.0",
-          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" }
+          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" },
+        { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
+          by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
+          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" }
       ]
     },
     {

@@ -32,17 +32,33 @@
       return ENT.hasOwnProperty(e) ? ENT[e] : "";
     });
   }
-  // → { n: name, a: {attrs}, c: [children] }; text nodes are dropped
-  // (Scribus keeps everything in attributes).
-  function parseXml(src) {
+  // → { n: name, a: {attrs}, c: [children] }. Text nodes are dropped
+  // (Scribus keeps everything in attributes) unless `keep` is set
+  // (InDesign, layout/idml.js): then text and CDATA come as
+  // { n: "#text", t } (whitespace only inside <Content>) and an
+  // InDesign special character <?ACE n?> as { n: "#ace", t: n }.
+  function parseXml(src, keep) {
     var top = { n: "#root", a: {}, c: [] }, stack = [top], i = 0, L = src.length;
     var attrRe = /([^\s=\/>]+)\s*=\s*("([^"]*)"|'([^']*)')/g;
+    function text(t, raw) {
+      var host = stack[stack.length - 1];
+      if (t && (host.n === "Content" || /\S/.test(t))) host.c.push({ n: "#text", a: {}, c: [], t: raw ? t : unent(t) });
+    }
     while (i < L) {
       var lt = src.indexOf("<", i);
       if (lt < 0) break;
+      if (keep && lt > i) text(src.slice(i, lt), false);
       if (src.startsWith("<!--", lt)) { var ce = src.indexOf("-->", lt + 4); i = ce < 0 ? L : ce + 3; continue; }
-      if (src.startsWith("<![CDATA[", lt)) { var cd = src.indexOf("]]>", lt); i = cd < 0 ? L : cd + 3; continue; }
-      if (src[lt + 1] === "?" || src[lt + 1] === "!") { var pe = src.indexOf(">", lt); i = pe < 0 ? L : pe + 1; continue; }
+      if (src.startsWith("<![CDATA[", lt)) {
+        var cd = src.indexOf("]]>", lt);
+        if (keep) text(src.slice(lt + 9, cd < 0 ? L : cd), true);
+        i = cd < 0 ? L : cd + 3; continue;
+      }
+      if (src[lt + 1] === "?" || src[lt + 1] === "!") {
+        var pe = src.indexOf(">", lt), pi = src.slice(lt, pe < 0 ? L : pe + 1).match(/^<\?ACE\s+(\d+)\s*\?>$/);
+        if (keep && pi) stack[stack.length - 1].c.push({ n: "#ace", a: {}, c: [], t: pi[1] });
+        i = pe < 0 ? L : pe + 1; continue;
+      }
       // find the closing ">" outside quotes
       var j = lt + 1, q = "";
       while (j < L) {
@@ -443,7 +459,7 @@
     }, function () { return null; });
   }
 
-  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, fontOf: fontOf };
+  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, fontOf: fontOf, slug: slug };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_SLA = api;
 })(typeof window !== "undefined" ? window : this);

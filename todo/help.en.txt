@@ -48,6 +48,7 @@ To-Do has no import or export of its own; use the orOS [backup](help:t/backup) t
 
 ## Tips
 - Tasks with a due date that aren't done show up in [Calendar](app:calendar) on their day, and the Calendar entry opens the list here.
+- Other apps can send items here, such as the shopping list from [Meal Planner](app:meals). An `Add to To-Do` window shows them with a `List` picker; items already on that list start unticked, and nothing is saved until you press `Add`.
 - orOS can remind you when tasks are due or overdue; see [Notifications](help:t/notifications).
 
 ## Limits

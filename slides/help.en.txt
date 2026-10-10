@@ -4,6 +4,8 @@ Make presentations with themes and ready layouts, write them as an outline, and 
 ## Getting started
 Tap or click `New presentation`. Pick a theme for a blank presentation, or one of the ready templates (`Project update`, `Report`, `Lesson`, `Pitch`, `Photo album`, `Event`). Choose `16:9 wide` or `4:3` first; you can change it later in `Theme and size…` without losing anything.
 
+Other orOS apps can send an outline here. Slides then shows `New presentation from an outline` with the title and number of slides; pick a theme to make it. Nothing is created until you do.
+
 ## Slides and layouts
 - The strip shows every slide. Tap one to edit it; `+` adds a slide with the layout you pick.
 - Right-click a slide, or long-press it on a phone, for `Duplicate slide`, `Layout…`, `Hide in the show`, `Move earlier`, `Move later` and `Delete slide`. Drag slides in the strip to reorder them.

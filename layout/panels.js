@@ -580,7 +580,7 @@
   // ---------- Styles ----------
   function buildStyles(body) {
     var doc = LY.doc;
-    var open = LY.story && LY.story.isOpen();
+    var open = LY.story.isOpen() || LY.inframe.isOn();
     body.appendChild(el("p", "hint", t("styles.applyHint")));
     var s1 = section(t("styles.para"));
     var curPs = open ? LY.story.currentPs() : null;

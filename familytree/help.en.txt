@@ -42,6 +42,8 @@ From the `More` menu:
 
 ## Tips
 - Links to Contacts only read from Contacts; Family Tree never changes your contacts.
+- A linked contact's card in [Contacts](app:contacts) has a `Family tree` button that brings you straight back to that person.
+- Every year on the day of an exact date of death, [Calendar](app:calendar) shows a row under `Death anniversaries`, such as "Maria · 10 years since death". Tap it to open the person here.
 - A link that would make someone their own ancestor is refused.
 
 ## Limits

@@ -37,5 +37,16 @@ Tap or click the icon to open [Weather](app:weather); inside Weather, it takes y
 
 When you are offline, or the reading is more than 3 hours old, the icon shows a crossed-out cloud and no temperature. orOS never shows a temperature it doesn't have. Weather data comes from Open-Meteo (see [Privacy](help:t/privacy)).
 
+## Dock
+The Dock is a bar of your favourite apps along the bottom of the desktop. Add an app with the ☆ next to it in the menu. In `Settings`, under `Appearance` › `Dock`:
+- `Show the Dock` turns it on or off.
+- `Size` is `Small`, `Medium` or `Large`.
+- `Style` changes its look: `Classic`, `Glass`, `Frosted`, `Smoke`, `Transparent`, `Solid`, `3D shelf` or `Neon`.
+- `Magnify on hover` makes icons grow under the mouse (only with a mouse or trackpad).
+- `Hide automatically` tucks it away until you move the mouse to the bottom edge, or tap the small handle on a touch screen.
+- `Show over open apps` keeps it visible while an app is open. It is off until you turn it on, so apps get the whole screen.
+
 ## What follows you to other devices
 With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and the pinned weather city go to your other devices too.
+
+The Dock and its settings stay on this device.

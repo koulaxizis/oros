@@ -23,6 +23,8 @@ From the same menu you can add a renewal, a service plan item, a tyre set or ano
 - `Service plan`: items due every so many km and/or months. Tap `Done` to log the service with that item already picked.
 - `Tyres`: sets by season, with DOT age, tread and km run. `Mount` swaps the set on the vehicle.
 
+`→ To-Do` next to `Coming up` sends those items to [To-Do](app:todo) as tasks, such as "Book the KTEO test" with the expiry date in the note. The editor of a renewal or a service plan item also has a `To-Do` button for that one item. To-Do shows them first and asks before it adds anything.
+
 ## Log and Stats
 `Log` lists every entry month by month, with filters by kind and the consumption of each full fill. Tap an entry to edit or delete it.
 
