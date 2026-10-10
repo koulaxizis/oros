@@ -203,8 +203,8 @@ test("leadFor: food 5, care and medicine on the day", () => {
   assert.equal(C.leadFor("food", 2), 2);
   assert.equal(C.leadFor("care", 7), 0);
   assert.equal(C.leadFor("med", 7), 0);
-  assert.deepEqual(C.readPrefs({ remind: 30, lead: 40 }), { remind: 9, lead: 7 });
-  assert.deepEqual(C.readPrefs({ remind: -1, lead: 0 }), { remind: -1, lead: 0 });
+  assert.deepEqual(C.readPrefs({ remind: 30, lead: 40 }), { remind: 9, lead: 7, doses: true });
+  assert.deepEqual(C.readPrefs({ remind: -1, lead: 0 }), { remind: -1, lead: 0, doses: true });
 });
 
 test("weights and costs", () => {
@@ -313,4 +313,57 @@ test("merge: per-field groups, two devices editing different fields keep both ed
   const odd = C.normPet(pet("pt0002", { m: 50, fm: { name: 999, chip: "x" } }));
   assert.equal(odd.fm.name, 50);
   assert.equal(odd.fm.chip, 50);
+});
+
+test("medicine dose times: cleaned, optional, older records unchanged", () => {
+  const r = C.normRec(rec("rc0001", "pt0001", "med", "2026-10-05", { n: "Amoxicillin", tm: ["20:00", "08:00", "08:00", "8:00", "24:00", 7, "07:30"] }));
+  assert.deepEqual(r.tm, ["07:30", "08:00", "20:00"]);
+  const old = C.normRec(rec("rc0002", "pt0001", "med", "2026-10-05", { n: "Old" }));
+  assert.equal("tm" in old, false);
+  assert.equal("tm" in C.normRec(rec("rc0003", "pt0001", "med", "2026-10-05", { n: "Empty", tm: [] })), false);
+  const many = C.normRec(rec("rc0004", "pt0001", "med", "2026-10-05", { n: "Many", tm: ["01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00"] }));
+  assert.equal(many.tm.length, C.MAX_TIMES);
+  // tm only on medicine
+  assert.equal("tm" in C.normRec(rec("rc0005", "pt0001", "vacc", "2026-10-05", { n: "Rabies", tm: ["08:00"] })), false);
+  // an older bundle that dropped tm (same m) does not win the merge
+  const withTm = C.normRec(rec("rc0006", "pt0001", "med", "2026-10-05", { n: "A", tm: ["08:00"] }));
+  const without = C.normRec(rec("rc0006", "pt0001", "med", "2026-10-05", { n: "A" }));
+  const p = pet("pt0001");
+  assert.deepEqual(m(data([p], [withTm]), data([p], [without])).recs[0].tm, ["08:00"]);
+  assert.deepEqual(m(data([p], [without]), data([p], [withTm])).recs[0].tm, ["08:00"]);
+});
+
+test("dosesDue: each dose once, in its window, only on course days", () => {
+  const recs = [
+    rec("rc0001", "pt0001", "med", "2026-10-05", { n: "Amoxicillin", ds: "1 tablet", u: "2026-10-12", tm: ["08:00", "20:00"] }),
+    rec("rc0002", "pt0002", "med", "2026-10-01", { n: "Drops", tm: ["08:00"] }),                   // ongoing
+    rec("rc0003", "pt0001", "med", "2026-10-10", { n: "Future", tm: ["08:00"] }),                  // starts tomorrow
+    rec("rc0004", "pt0001", "med", "2026-09-01", { n: "Ended", u: "2026-10-08", tm: ["08:00"] }),  // ended
+    rec("rc0005", "pt0003", "med", "2026-10-01", { n: "Gone pet", tm: ["08:00"] })
+  ];
+  const d = m(data([pet("pt0001"), pet("pt0002"), pet("pt0003", { gone: "2026-10-02" })], recs), data());
+  assert.equal(C.dosesDue(d, TODAY, 7 * 60 + 59, {}).items.length, 0);           // before
+  const a = C.dosesDue(d, TODAY, 8 * 60 + 10, {});
+  assert.deepEqual(a.items.map((x) => x.key), ["rc0001@2026-10-09T08:00", "rc0002@2026-10-09T08:00"]);
+  assert.equal(a.items[0].rec.ds, "1 tablet");
+  // same window again: nothing new
+  assert.equal(C.dosesDue(d, TODAY, 8 * 60 + 40, a.fired).items.length, 0);
+  // window passed while closed: skipped, not announced late
+  assert.equal(C.dosesDue(d, TODAY, 8 * 60 + 91, {}).items.length, 0);
+  // evening dose; the morning keys stay for today
+  const b = C.dosesDue(d, TODAY, 20 * 60, a.fired);
+  assert.deepEqual(b.items.map((x) => x.key), ["rc0001@2026-10-09T20:00"]);
+  assert.equal(Object.keys(b.fired).length, 3);
+  // next day: yesterday's keys are dropped (the map never grows)
+  const c = C.dosesDue(d, "2026-10-10", 8 * 60, b.fired);
+  assert.deepEqual(c.items.map((x) => x.key).sort(), ["rc0001@2026-10-10T08:00", "rc0002@2026-10-10T08:00", "rc0003@2026-10-10T08:00"]);
+  assert.equal(Object.keys(c.fired).length, 3);
+  // junk in the fired map is ignored
+  assert.equal(C.dosesDue(d, TODAY, 8 * 60, { x: 1, "rc0001@2026-10-09T08:00": "y" }).items.length, 2);
+});
+
+test("readPrefs: dose reminders on unless switched off", () => {
+  assert.equal(C.readPrefs(null).doses, true);
+  assert.equal(C.readPrefs({ doses: false }).doses, false);
+  assert.equal(C.readPrefs({ doses: "no" }).doses, true);
 });

@@ -1,0 +1,47 @@
+# Garage
+Garage keeps fuel, service, tyres, costs and renewals for every vehicle you own, from a car or a boat to a bicycle. It works out consumption and cost per km, and reminds you before the KTEO, insurance or next service.
+
+## Getting started
+Tap or click `Add a vehicle`. Pick a `Type` (car, motorcycle, scooter, van, truck, camper, tractor, boat, bicycle, e-bike, e-scooter or other), give it a `Name`, and fill in what you like: `Make`, `Model`, `Year`, `Plate`, `Fuel`, tank or battery size and `Odometer now (km)`. Leave `Add the usual service plan (you can change it)` ticked to start with a ready service plan. Bicycles and e-scooters have no fuel, only maintenance.
+
+With more than one vehicle, a bar under the toolbar switches between them.
+
+## Log fuel, service and costs
+The `Add` button, or the quick buttons on `Overview`, offer:
+- `Fuel` or `Charging`: fill in any two of quantity, price and total and the third is worked out. Untick `Full tank` for a partial fill, and tick `I missed logging the previous fill` if you skipped one, so consumption stays right.
+- `Service`: pick `What was done` from the list, with cost and `Garage / shop`.
+- `Expense`: tolls, parking, wash, fines, parts and more.
+- `Km reading`: just the odometer.
+
+Fuel, service and expense entries can keep up to 6 receipt photos: use `Add a receipt photo` under `Receipts`. The log marks them with 📎 and the number of photos. They are kept in [Files](app:files), in the folder Garage/Receipts.
+
+From the same menu you can add a renewal, a service plan item, a tyre set or another vehicle.
+
+## Overview
+`Overview` shows the vehicle, `Coming up`, tiles for consumption, this month's cost, cost per km and km per month, then:
+- `Renewals`: KTEO, insurance, road tax, emissions card, roadside assistance, driving licence or other, each with an expiry date and `Remind me before (days)`. When you renew, tap `Renewed`, enter what you paid and the new expiry is set (with `Undo`).
+- `Service plan`: items due every so many km and/or months. Tap `Done` to log the service with that item already picked.
+- `Tyres`: sets by season, with DOT age, tread and km run. `Mount` swaps the set on the vehicle.
+
+## Log and Stats
+`Log` lists every entry month by month, with filters by kind and the consumption of each full fill. Tap an entry to edit or delete it.
+
+`Stats` covers `12 months`, `This year` or `All time`: total cost, km driven, cost per km, average consumption and price, and charts of costs per month, consumption, fuel price and `Where the money goes`. `Show as table` turns a chart into a table.
+
+## Sync and backup
+Vehicles, entries, renewals, plans, tyres and your currency sync between your devices through [orOS sync](help:t/sync). Receipt photos travel separately, with Vault Drive sync; until they arrive, a photo shows `Not on this device`. The reminder hour, consumption unit, tyre limits and open tab stay on each device.
+
+In `Settings`: `Export CSV`, `Export backup` (JSON) and `Import backup`. An import merges with what you have.
+
+## Keyboard shortcuts
+- [[Left]] / [[Right]] on the tabs switch between `Overview`, `Log` and `Stats`.
+
+## Tips
+- In an entry, `Add to Budget` opens a ready expense in [Budget](app:budget); you check it and save it there.
+- Renewals and service due dates also appear in [Calendar](app:calendar) under `Garage`.
+- Choose the `Daily reminder` hour in `Settings`. See [Notifications](help:t/notifications).
+- `Archive` a vehicle you sold: its history stays, reminders stop.
+
+## Limits
+- Reminders appear while orOS is open, even with this app closed. With orOS closed they wait until you open it again.
+- Service intervals are only typical ones. Your vehicle's manual comes first.

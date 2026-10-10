@@ -1,0 +1,39 @@
+# Pet Health Book
+Pet Health Book keeps the health record of your real pets: vaccines, deworming, vet visits, medicine, weight and food. It reminds you what's coming up and prints a health card for the vet or a trip.
+
+## Getting started
+Tap or click `Add a pet` (or the `Pet` button at the top). Give your pet a `Name` and pick the `Species`: dog, cat, bird, rabbit, rodent, fish, reptile, horse or other. Everything else is optional: a `Photo`, `Breed`, `Sex`, `Date of birth` (tick `I only know it roughly` for just a year and month), microchip, passport and insurance, allergies, an ideal weight range, your vet's phones and `Notes`. Press `Save`.
+
+## Upcoming
+`Upcoming` lists, for all your pets, what's `Late`, due `Today` and in the `Next 30 days`: next vaccine and deworming doses, rechecks, the last day of a medicine, routine care and food running out. A banner wishes your pet happy birthday on the day.
+- `Log` records a vaccine, deworming or recheck as done today, with the next date set one usual gap later.
+- `Done` ticks off routine care.
+- `New bag` tells the app you opened a new bag of food.
+
+## One pet's page
+Open a pet from `My pets`. It has four parts:
+- `Overview`: what's next, the profile, your vet with `Call` and `Emergency` buttons, and `Routine care`.
+- `Health book`: add a `Vaccine`, `Deworming`, `Visit` or `Medicine`. Vaccine names are suggested for dogs, cats, rabbits and horses, and buttons such as `+1 year` fill the next date. Visits can have a cost; the page totals your vet costs for the year. Filter with `All`, `Vaccines`, `Deworming`, `Visits`, `Medicine` or `Care`.
+- `Weight`: a chart of your entries, the change over the last 30+ days, and a warning when the weight is outside the ideal range.
+- `Food`: the food, grams and meals a day, bag size and the day you opened it. The app works out `Runs out around` a date.
+
+`Edit`, `Print card` and `Delete` are at the top of the page. For routine care, set `every … days` in `Edit` (0 = off). When a pet is `No longer with me`, its health book stays but reminders stop.
+
+Suggested intervals are only a starting point. Your vet's advice always wins.
+
+## Sync and backup
+Your pets, photos and health records sync between your devices through [orOS sync](help:t/sync). Settings and the open tab stay on each device.
+
+In `Settings`, `Export` saves all your pets to a file, and `Import` merges a file back in without replacing what you have.
+
+## Keyboard shortcuts
+- [[Left]] / [[Right]] on the tabs switches between `Upcoming` and `My pets`.
+- [[Esc]] closes a pet's page.
+
+## Tips
+- In `Settings`, choose the hour of the `Daily reminder` and how early to `Warn me before vaccines, deworming and rechecks`. See [Notifications](help:t/notifications).
+- Vaccines, deworming, visits, next due dates and birthdays also appear in [Calendar](app:calendar) under `Pet health`.
+
+## Limits
+- Reminders appear while orOS is open, even with this app closed. With orOS closed they wait until you open it again.
+- Up to 50 pets, and photos are kept small.

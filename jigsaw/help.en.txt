@@ -1,0 +1,31 @@
+# Jigsaw
+Turn any picture into a jigsaw puzzle. Cut it into 12 to 150 pieces, scatter them on the table, and drag them back together.
+
+## How to play
+Press `New puzzle (N)` and pick a picture: `From this device`, `From Files` (your [Files](app:files) disk), or `Built-in pictures`. After a puzzle, `Same picture, cut again` reuses the last one. SVG pictures aren't accepted; use PNG, JPEG or WebP.
+
+In the `New puzzle` window, drag the picture to frame it and zoom with a pinch, the wheel or the `Zoom` slider. Then choose:
+- `Pieces`: 12, 24, 48, 96 or 150. On a phone, 48 or fewer are easier to handle.
+- `Shape`: `Classic` pieces with tabs, or `Squares`.
+- `Layout`: `Landscape` or `Portrait`.
+- `Rotated pieces (tap one to turn it)`: for an extra challenge.
+
+Press `Start`. Pieces click together when you drop them near their place or next to a piece they fit, and then move as one group. A group in its place stays put. The status line shows the time and how much is put together.
+
+## Controls
+- Drag a piece to move it. With rotation on, tap or click a piece to turn it 90°.
+- Drag the empty table to move around; pinch or use the mouse wheel to zoom.
+- Helpers on the toolbar: `Preview the picture (P)`, `Faint picture in the frame (G)`, `Edge pieces only (E)` and `Tidy loose pieces to the side (T)`.
+- Zoom buttons: `Zoom out (−)`, `Whole table (0)` and `Zoom in (+)`.
+
+Keys: [[N]] new puzzle, [[P]] preview, [[G]] faint picture, [[E]] edge pieces, [[T]] tidy, [[+]] / [[−]] zoom, [[0]] whole table.
+
+## Levels and scoring
+`Records` shows, for each number of pieces, your best time and how many puzzles you've solved. `Reset records` clears them.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync); `Reset records` clears them everywhere. The picture and the puzzle in progress stay on this device: your photos never leave it. If you close the app, the puzzle picks up where you left off.
+
+## Tips
+- Start with the edges: turn on `Edge pieces only`, build the frame, then switch it off.
+- Use `Tidy` now and then to line up the loose pieces so they're easier to scan.

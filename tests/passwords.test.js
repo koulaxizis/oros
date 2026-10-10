@@ -137,8 +137,8 @@ test("Diceware passphrases: word count, separators, exact bits", () => {
 
   const s = P.genPassphrase({ list: "short", words: 5, sep: "dash", caps: 1 });
   assert.ok(Math.abs(s.bits - 5 * Math.log2(1296)) < 1e-9);
-  assert.equal(s.value.split("-").length >= 5, true);
-  s.value.split("-").forEach((w) => { if (w) assert.ok(/^[A-Z]/.test(w), w); });
+  // Compare the whole value: short-list words can contain "-" ("yo-yo").
+  assert.equal(s.value, s.words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("-"));
 
   for (let i = 0; i < 50; i++) {
     const e = P.genPassphrase({ list: "large", words: 4, sep: "dot", extra: 1 });

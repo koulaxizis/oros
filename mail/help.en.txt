@@ -1,0 +1,40 @@
+# Mail
+Mail reads your e-mail inside orOS. Add one or more accounts from any provider that offers IMAP, browse your folders and read your messages, even offline once they've been opened.
+
+## Getting started
+Press `Add account`, enter `Your name`, `E-mail address` and `Password`, and press `Connect`. For Gmail, iCloud, Yahoo, GMX and Zoho the server is filled in for you. For other providers, open `Server settings` and check the `Incoming (IMAP) server`, `Port / security` and `Username`; most providers use mail.yourdomain.
+
+Gmail, iCloud and Yahoo need an app password: create one in your account's security settings and use it instead of your normal password.
+
+## Read your mail
+- The side panel lists your accounts and their folders (`Inbox`, `Sent`, `Drafts`, `Spam`, `Trash` and the rest) with unread counts. On a phone, open it with the menu button at the top left.
+- Messages are listed newest first; unread ones have a dot. `Load older messages` at the bottom fetches more.
+- Tap or click a message to read it. Opening it marks it as read on the server too.
+- Mail checks for new messages every couple of minutes while it's open; the refresh button (`Check for new mail`) checks now.
+
+### Pictures and formatting
+Pictures from the internet are hidden at first, so the sender can't tell you opened the message. Press `Show pictures` to load them once, or `Always for` a sender to trust them from now on. In settings, `Always show plain text` shows every message as text; `Show the formatted version` switches one message back.
+
+### Attachments and invitations
+Attachments are listed under the message; tap one to save it. An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
+
+## Accounts and settings
+The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
+
+## Sync and backup
+Your accounts (without passwords), the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
+
+>! Removing an account removes it from orOS on all your devices.
+
+## Keyboard shortcuts
+- [[J]] or [[↓]] opens the next message, [[K]] or [[↑]] the previous one.
+- [[Esc]] goes back to the list on a narrow screen.
+
+## Tips
+- Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing.
+- The relay you set here also lets [Reader](app:feeds) and [Podcasts](app:podcasts) read sites that block browsers.
+
+## Limits
+- Mail only reads for now: you can't send, reply, delete or move messages yet.
+- Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
+- Up to 10 accounts. Only the most recent messages are kept for offline reading.

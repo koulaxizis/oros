@@ -210,7 +210,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 .row-label { font-weight: 700; font-size: 15px; }
 .row > .hint { grid-column: 1 / -1; grid-row: 2; }
 .row-ctl { grid-column: 2; grid-row: 1; display: flex; justify-content: flex-end; min-width: 0; }
-.row > .folder, .row > .actions, .row > .hint.warn { grid-column: 1 / -1; }
+.row > .folder, .row > .actions, .row > .hint.warn, .row > .seg { grid-column: 1 / -1; }
 
 .scope {
   font-size: 11px;

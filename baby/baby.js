@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Baby — App logic (v1.0.0)
+// orOS Baby — App logic (v1.1.0)
 // A baby log for one or more children, built for one hand and the
 // middle of the night:
 //   - Today: running timers (breast feed per side, sleep), "how long
@@ -105,6 +105,10 @@
       "set.data": "Data", "set.csv": "Export log (CSV)", "set.gcsv": "Export growth (CSV)", "set.backup": "Back up (JSON)",
       "set.restore": "Restore from backup", "set.restoreNote": "A restore merges: it adds and updates, it never removes what is here.",
       "set.summary": "Summary for the paediatrician",
+      "set.rem": "Reminders on this device", "set.remFeed": "Feed reminder", "set.remOff": "Off",
+      "set.remAfter": "{x} after the last feed", "set.remMed": "Daily medicine or vitamin", "set.remMedName": "Name (optional)",
+      "set.remMedHint": "Leave the time empty to turn it off.",
+      "set.remNote": "Reminders come from orOS, on this device only, and only while orOS is open (the Baby app itself can be closed). Each parent turns them on on their own device.",
       "set.note": "orOS Baby keeps a log; it is not medical advice. If you are worried about your baby, call your paediatrician.",
       "sum.title": "Summary", "sum.copy": "Copy", "sum.share": "Share", "sum.save": "Save as text",
       "toast.added": "{x} logged", "toast.undo": "Undo", "toast.deleted": "Deleted", "toast.saved": "Saved",
@@ -169,6 +173,10 @@
       "set.data": "Δεδομένα", "set.csv": "Εξαγωγή καταγραφών (CSV)", "set.gcsv": "Εξαγωγή ανάπτυξης (CSV)", "set.backup": "Αντίγραφο ασφαλείας (JSON)",
       "set.restore": "Επαναφορά από αντίγραφο", "set.restoreNote": "Η επαναφορά συγχωνεύει: προσθέτει και ενημερώνει, δεν σβήνει τίποτα από όσα υπάρχουν.",
       "set.summary": "Σύνοψη για τον παιδίατρο",
+      "set.rem": "Υπενθυμίσεις σε αυτή τη συσκευή", "set.remFeed": "Υπενθύμιση ταΐσματος", "set.remOff": "Όχι",
+      "set.remAfter": "{x} μετά το τελευταίο τάισμα", "set.remMed": "Καθημερινό φάρμακο ή βιταμίνη", "set.remMedName": "Όνομα (προαιρετικό)",
+      "set.remMedHint": "Άφησε την ώρα κενή για να το κλείσεις.",
+      "set.remNote": "Οι υπενθυμίσεις έρχονται από το orOS, μόνο σε αυτή τη συσκευή και μόνο όσο το orOS είναι ανοιχτό (η εφαρμογή Μωρό μπορεί να είναι κλειστή). Κάθε γονιός τις ανοίγει στη δική του συσκευή.",
       "set.note": "Το Μωρό κρατά ημερολόγιο· δεν είναι ιατρική συμβουλή. Αν ανησυχείς για το μωρό, πάρε τον παιδίατρό σου.",
       "sum.title": "Σύνοψη", "sum.copy": "Αντιγραφή", "sum.share": "Κοινοποίηση", "sum.save": "Αποθήκευση ως κείμενο",
       "toast.added": "Καταγράφηκε: {x}", "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε", "toast.saved": "Αποθηκεύτηκε",
@@ -464,6 +472,25 @@
     data.prefs = p;
     data.pm = stamp(data.pm);
     saveNow();
+  }
+
+  // Reminder settings: device-local (C.REM_KEY), read by the shell
+  // engine (shell.js babyCheckTick). Never synced, never in a backup.
+  function readRem() {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(C.REM_KEY) || "null"); } catch (e) {}
+    return C.readRem(o);
+  }
+  function writeRem(next) {
+    var r = C.readRem(next);
+    try {
+      if (C.remOn(r)) localStorage.setItem(C.REM_KEY, JSON.stringify(r));
+      else localStorage.removeItem(C.REM_KEY);
+    } catch (e) {}
+  }
+  function remHours(min) {
+    var h = Math.floor(min / 60), half = min % 60 ? (LANG === "el" ? ",5" : ".5") : "";
+    return h + half + (LANG === "el" ? " ώρες" : " h");
   }
 
   // ---------- 4. Render: toolbar, nav, today ----------
@@ -1574,6 +1601,27 @@
     form.appendChild(segField(t("set.wu"), wu));
     form.appendChild(segField(t("set.tu"), tu));
     form.appendChild(segField(t("set.vu"), vu));
+    var rem = readRem();
+    form.appendChild(el("h3", "dlg-h", t("set.rem")));
+    var feedSel = el("select");
+    [0].concat(C.REM_FEED).forEach(function (m) {
+      var o = el("option", "", m ? t("set.remAfter", { x: remHours(m) }) : t("set.remOff"));
+      o.value = String(m);
+      if (m === rem.feed) o.selected = true;
+      feedSel.appendChild(o);
+    });
+    form.appendChild(field(t("set.remFeed"), feedSel));
+    var medRow = el("div", "fld-row");
+    var medAt = el("input");
+    medAt.type = "time";
+    medAt.value = rem.med;
+    var medName = textInput(rem.mt, C.LIM.name);
+    medName.autocomplete = "off";
+    medRow.appendChild(field(t("set.remMed"), medAt));
+    medRow.appendChild(field(t("set.remMedName"), medName));
+    form.appendChild(medRow);
+    form.appendChild(el("p", "hint", t("set.remMedHint")));
+    form.appendChild(el("p", "hint", t("set.remNote")));
     form.appendChild(el("h3", "dlg-h", t("set.data")));
     var k = kid();
     if (k) form.appendChild(button(t("set.summary"), "block", function () { dlg.close(); summaryDialog(); }));
@@ -1587,6 +1635,7 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       setPrefs({ wu: wu.get(), tu: tu.get(), vu: vu.get() });
+      writeRem({ feed: parseInt(feedSel.value, 10), med: String(medAt.value).slice(0, 5), mt: medName.value });
       dlg.close();
       renderAll();
       showToast(t("toast.saved"));
@@ -1912,6 +1961,34 @@
     wireKeyboard();
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { kid } | { kid, ev } | { kid, mk }. Picks the child, then
+  // opens the event on its History day or the mark on Milestones, as a
+  // row click does. Unknown or deleted ids → no-op; an open dialog
+  // (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    if (!t || typeof t.kid !== "string") return;
+    var k = C.findIn(data.kids, t.kid);
+    if (!k || k.del) return;
+    if (document.querySelector("dialog[open]")) return;
+    var ev = typeof t.ev === "string" ? findEv(t.ev) : null;
+    var mk = typeof t.mk === "string" ? C.findIn(data.mk, t.mk) : null;
+    if ((t.ev && (!ev || ev.del || ev.k !== k.id)) || (t.mk && (!mk || mk.del || mk.k !== k.id))) return;
+    view.kid = k.id;
+    if (ev) {
+      histDay = C.dayKeyOf(ev.ts);
+      goTab("hist");
+      evDialog(ev.t, ev.id);
+    } else if (mk) {
+      goTab("marks");
+      markDialog(mk.t, mk.id, null);
+    } else {
+      saveView();
+      renderAll();
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+
   function boot() {
     load();
     loadView();
@@ -1923,6 +2000,13 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("baby");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
 
   boot();

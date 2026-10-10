@@ -1,0 +1,26 @@
+# Connect 4
+Drop discs into a board of 7 columns and 6 rows. The first to get four in a row, across, down or diagonally, wins. Play against the computer or with a friend on one device.
+
+## How to play
+Tap or click a column to drop your disc; it falls to the lowest free space. Take turns until someone lines up four discs or the board fills up (a draw).
+
+Choose `vs Computer` or `2 players` in the toolbar. Against the computer, pick who makes the `First move`: `You start`, `Computer starts` or `Take turns`. In 2-player games, the players alternate who starts and a running series score is kept.
+
+## Controls
+- Tap or click a column to play there. On a desktop, hovering over a column shows where the disc will land.
+- `Undo move (Z)` takes back the last move. Against the computer it goes back to your turn. You can't undo after the game ends.
+- `New game (N)` starts again. If a game was under way, an `Undo` button appears for a few seconds to bring it back.
+- The speaker button turns sound on or off (off at first).
+- Keys: [[1]] to [[7]] drop a disc in that column, the left and right arrows move between columns and [[Enter]] or [[Space]] plays the focused one, [[N]] is a new game, and [[Z]] or [[Ctrl+Z]] undoes.
+
+## Levels and scoring
+The computer has three levels: `Easy` takes a win when it sees one but otherwise plays loosely; `Medium` looks a few moves ahead; `Hard` looks much deeper and is tough to beat.
+
+`Records` shows your wins, losses and draws against the computer for each level (`Won · lost · drawn`), and the 2-player series. `Reset records` clears them after you confirm.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The game in progress, the 2-player series, your settings and the sound setting stay on this device. A game you leave half-way is still there when you come back.
+
+## Tips
+- Columns near the middle take part in more lines of four, so they are usually the best places to start.
+- Watch for two threats at once: the other side can block only one of them.

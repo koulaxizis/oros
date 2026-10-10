@@ -1,0 +1,42 @@
+# Wallpaper Generator
+Wallpaper Generator draws abstract wallpapers from a seed, a style and a palette. The same settings always give the same picture, so you can make one for your orOS desktop or export it for your phone or computer.
+
+## Getting started
+The big preview on the right (at the top on a phone) shows your wallpaper at the shape of the chosen size. Type any word in `Seed`, or tap or click the dice (`Random seed (R)`) for a new one. Then try different styles and palettes; the style buttons show small previews of your current seed.
+
+## Style and palette
+- `Style`: `Waves`, `Flow field`, `Orbits`, `Grid` or `Nebula`.
+- `Palette`: `Ember`, `Ocean`, `Forest`, `Dusk`, `Pastel`, `Mono` and `orOS skin`, which takes its colours from your orOS skin and changes with it.
+
+Under `Settings`:
+- `Density` and `Chaos` sliders change how much is drawn and how wild it gets.
+- `Film grain` adds a fine grainy texture.
+- `Light background` draws on a light base instead of a dark one. `Nebula` is always dark (`A nebula is always drawn at night.`).
+
+## Size
+Choose `This screen`, `Phone`, `iPhone`, `Desktop`, `QHD`, `Ultrawide`, `4K`, `Square` or `Custom`. With `Custom` you type the width and height, each from 64 to 8192 pixels. The same design at two sizes of the same shape gives the same picture.
+
+## Set as wallpaper and export
+- `Set as wallpaper` makes the current design your orOS desktop wallpaper. The button then reads `Your wallpaper`. It appears in [Settings](app:settings), under `Wallpaper`, as `Mine`; see [Appearance](help:t/appearance).
+- `Export` asks for `PNG · lossless` or `JPG · smaller file` at the chosen size. Big sizes take a moment; a progress bar shows with `Cancel`.
+
+## Favourites
+The star (`Keep in favourites`) keeps the current design in `Favourites`, newest first with a small thumbnail. Tap or click one to open it again, or press the star again to remove it; an `Undo` button stays for a few seconds.
+
+## Sync and backup
+Favourites sync between your devices through [orOS sync](help:t/sync), and so does your `Mine` wallpaper as part of the orOS settings. Each device draws it at its own screen size. The design you're working on and the size choice stay on this device. No pictures are stored or synced, only the settings that make them.
+
+Use the orOS [backup](help:t/backup) to keep a copy.
+
+## Keyboard shortcuts
+- [[R]]: a random seed (not while typing in a field).
+- Arrow keys on the styles or palettes: move to the next or previous one.
+- [[Enter]] in the seed box: done typing.
+
+## Tips
+- Like a picture? Copy down the seed, style and palette, or just star it.
+- A palette of `orOS skin` keeps your wallpaper matching when you change skins.
+
+## Limits
+- Very large exports need a lot of memory. On a phone they may fail with `Export failed: not enough memory for this size`.
+- You can keep up to 60 favourites.

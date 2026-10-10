@@ -1,0 +1,26 @@
+# Lights Out
+A 5×5 grid of lights. Pressing a light switches it and its four neighbours (up, down, left and right). Your goal is to turn every light off.
+
+## How to play
+Tap or click a light to press it. A light that's on is a glowing disc; one that's off is an empty ring. Pressing the same light twice undoes the first press, so the order of your presses doesn't matter, only which lights you press.
+
+Every puzzle can be solved. The status shows your `Moves` next to the minimum number of presses needed (`min`), how many lights are still on, and the `Time`. The clock starts with your first press and runs only while the app is on screen.
+
+## Controls
+- `Undo (U)` presses your last light again. It counts as a move.
+- `Restart this puzzle (R)` goes back to the starting board; the time keeps running. An `Undo` button appears for a few seconds in case you didn't mean it.
+- `Hint (H)` marks one light that belongs to a shortest solution. A puzzle solved with a hint counts as solved, but sets no records.
+- `New puzzle (N)` deals a new board. If you were in the middle of one, an `Undo` button brings it back.
+- The speaker button turns sound on or off (off at first).
+- Keys: the arrow keys move between lights, [[Enter]] or [[Space]] presses the focused one, and [[U]], [[R]], [[H]] and [[N]] work as above.
+
+## Levels and scoring
+The level sets how many presses the shortest solution needs: `Easy` 3 to 6, `Medium` 7 to 11, `Hard` 12 to 15.
+
+Solving a puzzle in exactly the minimum number of presses, without a hint, is `Perfect!`. `Records` lists, for each level, your best time, perfect solves and puzzles solved (`Best time · perfect · solved`). `Reset records` clears them after you confirm.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The puzzle in progress, the level and the sound setting stay on this device. An unfinished puzzle carries on when you come back.
+
+## Tips
+- Light chasing: work row by row from the top. For each light still on, press the light directly below it. Only the bottom row is left, and with practice you'll learn which top-row presses fix it.
