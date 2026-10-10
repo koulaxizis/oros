@@ -4427,3 +4427,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-10 — Help: Pomodoro → Timesheet note (#148) — 0.65.03
 - Time and Timesheet guide pages (EN + EL): focus sessions reach Timesheet only on the same device (the inbox is device-local).
 - Not tested: a real phone, Safari.
+
+### 2026-10-10 — Media Shelf 1.3: optional daily reading reminder (#149) — 0.65.04
+- Media Shelf can remind you once a day to keep reading a title you have in progress. It is off by default and is turned on per device from the app's More menu. The reminder opens the title it names.
+- Shell: new `shelfCheckTick` engine (60 s throttle); the rule lives in `shelf/feed.js` (`OrosShelfFeed.reminderDue`), now also loaded by `index.html`. Notifications: `shelf` joins `KNOWN_APPS`; deep link `shelf:item:<id>` (DL_BRIDGES → `__orosOpenAt("shelf", {item})`).
+- Device-local key `oros-shelf-rem` `{on, h}` (never synced or backed up). No data format change.
+- Tests: tests/shelf.test.js extended. Help pages updated.
+- Not tested: a real phone, Safari, a notification firing with orOS closed for a whole day.
