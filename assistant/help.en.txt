@@ -1,5 +1,5 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model that runs on your own computer. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow, and it never changes anything in orOS.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model that runs on your own computer. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
@@ -18,6 +18,19 @@ When a question needs your data, the assistant searches your apps, much like the
 
 In the answer, titles in the accent colour are links: tap one to open that item in its app. A grey line above the answer shows what was searched and what you shared.
 
+When a short result is not enough, the assistant may ask for the whole item, for example a long note. For an app set to `Ask first` you see one more card with the beginning of the item and its size; press `Share` or `Don't share`.
+
+## Add entries
+Ask, for example, "remind me to call the plumber" or "I spent 12.50 on lunch". The assistant answers with a card that shows exactly what it would add, and two buttons:
+- `Open in …` opens that app with the entry filled in. For To-Do, Calendar, Budget, Quote and Bookmarks nothing is saved until you press Save or Add there; `Cancel` leaves no trace.
+- `Dismiss` drops the card.
+
+Notes and Spreadsheet make the new note or sheet when you press `Open in …`, and Slides asks you to pick a theme first; you can change or delete them there. The assistant never changes or deletes anything you already have.
+
+## Ask from anywhere
+- Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
+- [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
+
 ## Privacy: what leaves your device
 - Your messages and the results you share go only to the service you chose, straight from your browser. No orOS server is in between. The line above the message box says where they go.
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Password Generator are never offered.
@@ -27,13 +40,16 @@ In the answer, titles in the accent colour are links: tap one to open that item 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.
 
 ## Sync and backup
-The choice of assistant and model, the permissions per app and `Chat only` go to all your devices through [sync](help:t/sync). Conversations stay on this device only; turn off `Keep conversations on this device` to keep none, or use `Delete all conversations`.
+The choice of assistant and model, the permissions per app and `Chat only` go to all your devices through [sync](help:t/sync). Conversations stay on this device unless you tick `Sync conversations to my other devices`. Each conversation is then also an encrypted file in Files (internal › Assistant), and Vault Drive carries it to your other devices; it needs sync connected and unlocked. A conversation you delete is then deleted everywhere. If two devices continue the same conversation at once, you keep both: the older one shows up as a second conversation with the same title. Turning the switch off stops it; the files stay in Files until you delete them.
+
+Turn off `Keep conversations on this device` to keep none on this device, or use `Delete all conversations`.
 
 Keys stay on each device unless you tick `Sync API keys to my other devices`. They then travel inside your encrypted sync, sealed with your sync passphrase: anyone who knows that passphrase can use them. Removing a key while this is on removes it on every device.
 
 ## Keyboard shortcuts
 - [[Enter]] sends, [[Shift+Enter]] starts a new line.
 - [[Esc]] stops an answer that is still coming.
+- [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
 
 ## Tips
 - `New chat` starts a fresh conversation; older ones are in the list on the left, or behind the menu button on a phone.
@@ -42,5 +58,5 @@ Keys stay on each device unless you tick `Sync API keys to my other devices`. Th
 
 ## Limits
 - The assistant needs the internet, except a model on your own network.
-- It can read and suggest, but it can't add or change entries in your apps yet.
+- It can suggest new entries for To-Do, Calendar, Budget, Quote, Spreadsheet, Slides, Bookmarks and Notes. It can't change or delete what you already have, and it can't send anything (no email).
 - Some services may refuse calls from a browser. A local server must allow this site: for Ollama, start it with `OLLAMA_ORIGINS=https://useoros.online`.
