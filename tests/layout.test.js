@@ -248,7 +248,7 @@ test("i18n: every key the app uses exists in English and Greek", () => {
   const en = Object.keys(STRINGS.en).sort(), el = Object.keys(STRINGS.el).sort();
   assert.deepEqual(el, en, "same keys in both languages");
   const used = new Set();
-  ["layout.js", "editor.js", "panels.js", "story.js", "io.js"].forEach((f) => {
+  ["layout.js", "editor.js", "panels.js", "story.js", "inframe.js", "io.js"].forEach((f) => {
     const s = fs.readFileSync(path.join(ROOT, "layout", f), "utf8");
     for (const m of s.matchAll(/\bt\("([a-zA-Z0-9.]+)"/g)) used.add(m[1]);
     for (const m of s.matchAll(/data-i18n="([a-zA-Z0-9.]+)"/g)) used.add(m[1]);
