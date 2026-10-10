@@ -184,7 +184,7 @@
         pdf.rect(cx0, oy - b, cx1 - cx0, s.h + 2 * b, null); pdf.clip(); pdf.discardPath();
         if (page.ms) {
           var mf = L.master[page.id] || {};
-          M.itemsOn(doc, page.ms, side).forEach(function (it) {
+          M.masterItems(doc, page, side).forEach(function (it) {
             drawItem(pdf, doc, it, ox, oy, mf[it.id] && mf[it.id].lines, deps.images || {}, gstates);
           });
         }
