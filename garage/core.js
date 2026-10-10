@@ -51,6 +51,14 @@
   var KM_MAX = 9999999;
   var C_MAX = 99999999;        // cents: just under a million
   var Q_MAX = 9999999;         // thousandths: 9 999 L / kWh in one go
+  // Receipt photos (fuel, service, cost rows): the row keeps only file
+  // NAMES; the JPEGs live on the orOS disk under RECEIPT_DIR (Files),
+  // synced by Vault Drive when the user runs it. Name = date digits +
+  // row id + a random part, so two devices adding to one row never
+  // collide.
+  var RECEIPT_DIR = "/internal/Garage/Receipts";
+  var RC_RE = /^\d{8}-[a-z0-9]{6,40}-[a-z0-9]{4,12}\.jpg$/;
+  var MAX_RC = 6;
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
 
   // ---------- Catalogues (language-free ids) ----------
@@ -253,6 +261,36 @@
   function vref(x) { return typeof x.v === "string" && ID_RE.test(x.v); }
   function optKm(v) { return v === null || v === undefined ? null : clampInt(v, 0, KM_MAX); }
   function cents(v) { return clampInt(v, 0, C_MAX) || 0; }
+  // receipts: valid unique names, sorted, at most MAX_RC; the key is
+  // set only when there is one (rows without receipts keep their old
+  // canonical form)
+  function normRc(list) {
+    var out = [];
+    if (Array.isArray(list)) list.forEach(function (n) {
+      if (typeof n === "string" && RC_RE.test(n) && out.indexOf(n) < 0) out.push(n);
+    });
+    out.sort(cmpStr);
+    return out.slice(0, MAX_RC);
+  }
+  function withRc(row, x) {
+    var rc = normRc(x.rc);
+    if (rc.length) row.rc = rc;
+    return row;
+  }
+  function receiptName(ymd, rowId, rnd) {
+    var d = typeof ymd === "string" && isYmd(ymd) ? ymd.replace(/-/g, "") : null;
+    var r = typeof rnd === "string" ? rnd.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) : "";
+    if (!d || typeof rowId !== "string" || !ID_RE.test(rowId) || r.length < 4) return null;
+    return d + "-" + rowId + "-" + r + ".jpg";
+  }
+  function receiptPath(name) { return typeof name === "string" && RC_RE.test(name) ? RECEIPT_DIR + "/" + name : null; }
+  function receiptsOf(data) {
+    var all = [];
+    ["fuel", "service", "costs"].forEach(function (k) {
+      ((data && data[k]) || []).forEach(function (x) { (x.rc || []).forEach(function (n) { all.push(n); }); });
+    });
+    return all;
+  }
 
   function normVehicle(x) {
     if (!base(x)) return null;
@@ -276,12 +314,12 @@
     if (!base(x) || !vref(x) || !isYmd(x.d)) return null;
     var km = clampInt(x.km, 0, KM_MAX), q = clampInt(x.q, 1, Q_MAX);
     if (km === null || q === null) return null;
-    return {
+    return withRc({
       id: x.id, m: x.m, v: x.v, d: x.d, km: km, q: q, c: cents(x.c),
       e: x.e === "e" ? "e" : "f", full: x.full === 0 ? 0 : 1, mis: x.mis === 1 ? 1 : 0,
       st: cleanText(x.st, SHORT_LEN, false), n: cleanText(x.n, NOTES_LEN, true),
       bud: x.bud === 1 ? 1 : 0
-    };
+    }, x);
   }
   function normService(x) {
     if (!base(x) || !vref(x) || !isYmd(x.d) || !Array.isArray(x.items)) return null;
@@ -289,11 +327,11 @@
     x.items.forEach(function (it) { if (has(ITEMS, it) && items.indexOf(it) < 0) items.push(it); });
     if (!items.length) return null;
     items.sort(function (a, b) { return ITEM_IDS.indexOf(a) - ITEM_IDS.indexOf(b); });
-    return {
+    return withRc({
       id: x.id, m: x.m, v: x.v, d: x.d, km: optKm(x.km), items: items, c: cents(x.c),
       shop: cleanText(x.shop, SHORT_LEN, false), n: cleanText(x.n, NOTES_LEN, true),
       bud: x.bud === 1 ? 1 : 0
-    };
+    }, x);
   }
   // A service plan: item every km and/or every mo months (at least
   // one), counted from the newest service holding the item, else
@@ -343,8 +381,8 @@
     if (!base(x) || !vref(x) || !isYmd(x.d) || COST_CATS.indexOf(x.cat) < 0) return null;
     var c = clampInt(x.c, 1, C_MAX);
     if (c === null) return null;
-    return { id: x.id, m: x.m, v: x.v, d: x.d, cat: x.cat, c: c, km: optKm(x.km),
-             n: cleanText(x.n, NOTES_LEN, true), bud: x.bud === 1 ? 1 : 0 };
+    return withRc({ id: x.id, m: x.m, v: x.v, d: x.d, cat: x.cat, c: c, km: optKm(x.km),
+             n: cleanText(x.n, NOTES_LEN, true), bud: x.bud === 1 ? 1 : 0 }, x);
   }
   function normOdo(x) {
     if (!base(x) || !vref(x) || !isYmd(x.d)) return null;
@@ -775,7 +813,9 @@
     consumption: consumption, lastService: lastService, planStatus: planStatus,
     renewalStatus: renewalStatus, renewal: renewal, tyreStatus: tyreStatus,
     alerts: alerts, toNotify: toNotify, alertLine: alertLine, costs: costs, monthly: monthly,
-    csvCell: csvCell, csvRows: csvRows, readPrefs: readPrefs
+    csvCell: csvCell, csvRows: csvRows, readPrefs: readPrefs,
+    RECEIPT_DIR: RECEIPT_DIR, RC_RE: RC_RE, MAX_RC: MAX_RC, normRc: normRc,
+    receiptName: receiptName, receiptPath: receiptPath, receiptsOf: receiptsOf
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosGarageCore = api;
