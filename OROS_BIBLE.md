@@ -4254,3 +4254,14 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Shell:** `?search=<words>` launch parameter puts the words into the menu search. `sw.js` does not cache `?search=` navigations.
 - **Tests:** `tests/extension.test.js`.
 - **Not tested:** the add-on stores (accounts pending, Chris), Safari, a real phone.
+
+### 2026-10-10 — Mind Map v1.1.0: links, free placement, pictures, FreeMind / XMind import (#126) — 0.59.00
+- Cross-links between any two nodes, with an optional label (Label / Reverse / Delete from the bar); drawn dashed with an arrow, in PNG / SVG / JSON exports.
+- Free placement: drop a node on empty space and it (with its branch) stays there; "Back to its place" and "Tidy up (all back in place)".
+- Small pictures in nodes (Details → Picture), re-encoded as JPEG, ~1 MB for all.
+- Import FreeMind `.mm` and XMind (8 and 2020+) files as a new map; their arrows / relationships become cross-links.
+- Send a branch to To-Do as a new list (BR-TD-ADD `{addItems:{newList,from,items}}`, open items only) or to Slides as a new presentation (`{outline,title}`: centre = title slide, main branches = slides, deeper = bullets up to 4 levels, notes = speaker notes); both apps confirm first.
+- New file mindmap/mm-import.js (FreeMind/XMind parser + small ZIP reader adapted from atelier/zip.js; nothing from imported files is executed).
+- Data: new collections `links`, `pos`, `imgs` in the `mindmap` slice (see Part schemas); older devices keep working and lose nothing.
+- Tests: tests/mindmap.test.js (+6), tests/mindmap-import.test.js (new, real FreeMind/Freeplane/Xholon/XMind 8/XMind 2023/wisemapping samples). Shell check: desktop + 360/390 px, two-device sync, 0 errors.
+- Not tested: a real phone, Safari, real Dropbox.
