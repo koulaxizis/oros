@@ -4501,3 +4501,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - The Privacy topic's online-services list is rewritten from the credits: Mail relay, Assistant (your own key), Atelier sources, Media Shelf lookup, Public Domain / Wikidata, Reader and Podcasts feeds; it points to Settings › About orOS, credits and licences.
 - Help text only (EN/EL). Tests: tests/help.test.js green.
 - Not tested: n/a (text change).
+
+### 2026-10-10 — Moon & Sky / Σελήνη & Ουρανός: new app (Accessories, soffitta.site port 12/17) (#158) — 0.68.00
+- New app Moon & Sky (Accessories): tonight's Moon (phase, rise/set, illumination), the Sun, a sky map with about 150 bright stars and the constellation figures, a month view, and a red night view. It uses Time's location (set only in Time).
+- Bridges: Time's Sun & Moon card gets "More in Moon & Sky"; Moon & Sky opens Time's location dialog (`__orosOpenAt("time", {astro: "location"})`); deep link `__orosOpenAt("sky", {date, tab?})`.
+- Calendar: new opt-in "Moon & Sky" chip (`lbl-feed-sky`, off by default): main Moon phases, equinoxes and solstices, meteor shower peaks and eclipses; a row opens Moon & Sky on that day.
+- Data: no sync slice; device-local `oros-sky-prefs` (tab, night, lines). Credits: Yale Bright Star Catalogue (public domain), d3-celestial constellation figures (BSD-3-Clause).
+- Tests and help pages EN/EL included.
+- Not tested: a real phone, Safari, accuracy against a planetarium beyond the test fixtures.
