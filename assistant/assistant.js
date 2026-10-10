@@ -1,12 +1,14 @@
 // ============================================================
-// orOS Assistant — App logic (v1.0.0, phase 1: chat + search)
+// orOS Assistant — App logic (v1.1.0, phase 2: entry cards, chat sync)
 // A chat with the AI assistant the user picks (Claude, ChatGPT,
 // Gemini, Mistral, OpenRouter, or a local / OpenAI-compatible
 // model), called straight from the browser: no orOS server in
 // between. It can search the user's orOS data through the shell's
 // universal search, and every result the user has not allowed for
 // good is shown to them first ("Share" / "Don't share").
-// Nothing in orOS is written by the assistant.
+// The assistant writes no app's data: a suggested entry is a card
+// whose button opens that app's own prefill bridge, where the user
+// saves it (core.js section 10).
 // Data:
 //   - synced slice "assistant" (oros-assistant-data): provider,
 //     model, permissions per app, "chat only", key-sync switch and,
@@ -16,6 +18,9 @@
 //     history, token counts per month); IndexedDB "oros-assistant":
 //     non-extractable device key, API keys sealed with it,
 //     conversations. Never exported.
+//   - optional (switch "cs" in the slice): every conversation also as
+//     a file in /internal/Assistant/Chats on the orOS disk, carried
+//     to the other devices, encrypted, by Vault Drive (section 7b)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Data + prefs
@@ -23,7 +28,8 @@
 //   4. API keys (sealed on the device; optional encrypted sync)
 //   5. Shell bridges (apps, search, open)
 //   6. Provider calls (fetch + streaming)
-//   7. Conversation: turns, tools, sharing consent
+//   7. Conversation: turns, tools, sharing consent, entry cards
+//  7b. Conversation sync (files through Vault Drive)
 //   8. UI: chats, messages, Markdown
 //   9. Settings dialog
 //  10. Dialogs + toasts
@@ -58,11 +64,12 @@
       "btn.send": "Send", "btn.stop": "Stop", "btn.close": "Close", "btn.cancel": "Cancel",
       "btn.delete": "Delete", "btn.setup": "Set up the assistant",
       "wel.title": "Your AI assistant",
-      "wel.text": "Pick the assistant you want: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model running on your own computer. It reads your orOS data only when you allow it, and it never changes anything.",
-      "wel.ready": "Ask anything. For questions about your own notes, tasks or events, the assistant searches your apps and shows you what it found before anything is shared.",
+      "wel.text": "Pick the assistant you want: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model running on your own computer. It reads your orOS data only when you allow it, and nothing is saved in your apps until you save it yourself.",
+      "wel.ready": "Ask anything. For questions about your own notes, tasks or events, the assistant searches your apps and shows you what it found before anything is shared. It can also prepare a task, an event or an expense for you to save.",
       "ph.input": "Message the assistant…", "ph.noSetup": "Set up the assistant first",
       "chats.empty": "No conversations yet",
       "chats.local": "Kept on this device only",
+      "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
       "who.chatOnly": "Chat only: no access to your data",
@@ -74,6 +81,25 @@
       "tool.noneShared": "you shared nothing",
       "tool.apps": "Looked at which apps it may search",
       "tool.err": "The search did not work",
+      "tool.read": "Read “{title}”", "tool.readNo": "You kept “{title}” back", "tool.readGone": "“{title}” is no longer there",
+      "read.title": "Share all of “{title}” with {name}?",
+      "read.text": "{app} · {n} characters. Only this item is sent.",
+      "read.yes": "Share", "read.no": "Don't share",
+      "entry.todo": "Add to {app}", "entry.event": "New event · {app}",
+      "entry.expense": "New expense · {app}", "entry.income": "New income · {app}",
+      "entry.quote": "New quote · {app}", "entry.sheet": "New sheet · {app}",
+      "entry.slides": "New presentation · {app}", "entry.bookmark": "New bookmark · {app}", "entry.note": "New note · {app}",
+      "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
+      "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
+      "entry.hint.make": "The button makes it in {app}; you can change or delete it there.",
+      "entry.hint.slides": "Opens {app}; the presentation is made when you pick a theme there.",
+      "entry.opened": "Opened in {app}", "entry.dismissed": "Dismissed", "entry.failed": "{app} did not accept it",
+      "entry.more": "+{n} more", "entry.gone": "{app} is not installed",
+      "f.list": "New list", "f.date": "Date", "f.start": "Time", "f.location": "Place", "f.amount": "Amount",
+      "f.category": "Category", "f.client": "Client", "f.currency": "Currency", "f.url": "Address",
+      "cat.groceries": "Groceries", "cat.eating-out": "Eating out", "cat.bills": "Bills", "cat.home": "Home",
+      "cat.transport": "Transport", "cat.health": "Health", "cat.fun": "Fun", "cat.clothes": "Clothes",
+      "cat.gift": "Gifts", "cat.salary": "Salary", "cat.freelance": "Freelance", "cat.other": "Other",
       "share.title": "Share with {name}?",
       "share.text": "The assistant searched your data for “{q}”. Tick what it may see; the rest stays on this device.",
       "share.always": "Always share from {apps} without asking",
@@ -108,6 +134,11 @@
       "set.sync": "Sync", "set.syncKeys": "Sync API keys to my other devices (end-to-end encrypted)",
       "set.syncHint": "Keys travel inside your encrypted orOS sync, sealed with your sync passphrase. Anyone who knows that passphrase can use them.",
       "set.syncNeeds": "Turn on orOS sync and unlock it with your passphrase first.",
+      "set.syncChats": "Sync conversations to my other devices (end-to-end encrypted)",
+      "set.syncChatsHint": "Each conversation is also kept as an encrypted file in Files (internal › Assistant), and Vault Drive carries it to your other devices. Turning this off stops it; the files stay until you delete them in Files.",
+      "set.syncChatsWait": "orOS sync is not connected and unlocked on this device, so the conversations wait here until it is.",
+      "set.syncChatsKeep": "Turn on “Keep conversations on this device” first.",
+      "set.wipeQAll": "Delete every conversation on all your devices? This cannot be undone.",
       "set.device": "This device", "set.keep": "Keep conversations on this device",
       "set.wipe": "Delete all conversations", "set.wipeQ": "Delete every conversation on this device? This cannot be undone.",
       "set.keepOffQ": "Stop keeping conversations and delete the ones on this device?",
@@ -125,11 +156,12 @@
       "btn.send": "Αποστολή", "btn.stop": "Διακοπή", "btn.close": "Κλείσιμο", "btn.cancel": "Άκυρο",
       "btn.delete": "Διαγραφή", "btn.setup": "Ρύθμιση του βοηθού",
       "wel.title": "Ο AI βοηθός σου",
-      "wel.text": "Διάλεξε τον βοηθό που θέλεις: Claude, ChatGPT, Gemini, Mistral, OpenRouter ή ένα μοντέλο στον δικό σου υπολογιστή. Διαβάζει τα δεδομένα σου στο orOS μόνο όταν το επιτρέψεις και δεν αλλάζει ποτέ τίποτα.",
-      "wel.ready": "Ρώτα ό,τι θέλεις. Για ερωτήσεις πάνω στις σημειώσεις, τις εργασίες ή τα γεγονότα σου, ο βοηθός ψάχνει στις εφαρμογές σου και σου δείχνει τι βρήκε πριν μοιραστεί οτιδήποτε.",
+      "wel.text": "Διάλεξε τον βοηθό που θέλεις: Claude, ChatGPT, Gemini, Mistral, OpenRouter ή ένα μοντέλο στον δικό σου υπολογιστή. Διαβάζει τα δεδομένα σου στο orOS μόνο όταν το επιτρέψεις, και τίποτα δεν αποθηκεύεται στις εφαρμογές σου αν δεν το αποθηκεύσεις εσύ.",
+      "wel.ready": "Ρώτα ό,τι θέλεις. Για ερωτήσεις πάνω στις σημειώσεις, τις εργασίες ή τα γεγονότα σου, ο βοηθός ψάχνει στις εφαρμογές σου και σου δείχνει τι βρήκε πριν μοιραστεί οτιδήποτε. Μπορεί επίσης να σου ετοιμάσει μια εργασία, ένα γεγονός ή ένα έξοδο για να το αποθηκεύσεις.",
       "ph.input": "Γράψε στον βοηθό…", "ph.noSetup": "Ρύθμισε πρώτα τον βοηθό",
       "chats.empty": "Καμία συζήτηση ακόμη",
       "chats.local": "Μένουν μόνο σε αυτή τη συσκευή",
+      "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
       "who.chatOnly": "Μόνο συζήτηση: χωρίς πρόσβαση στα δεδομένα σου",
@@ -141,6 +173,25 @@
       "tool.noneShared": "δεν μοιράστηκες τίποτα",
       "tool.apps": "Κοίταξε σε ποιες εφαρμογές μπορεί να ψάξει",
       "tool.err": "Η αναζήτηση δεν έγινε",
+      "tool.read": "Διάβασε το «{title}»", "tool.readNo": "Κράτησες το «{title}»", "tool.readGone": "Το «{title}» δεν υπάρχει πια",
+      "read.title": "Να δει το {name} ολόκληρο το «{title}»;",
+      "read.text": "{app} · {n} χαρακτήρες. Στέλνεται μόνο αυτό το στοιχείο.",
+      "read.yes": "Κοινοποίηση", "read.no": "Όχι",
+      "entry.todo": "Προσθήκη: {app}", "entry.event": "Νέο γεγονός · {app}",
+      "entry.expense": "Νέο έξοδο · {app}", "entry.income": "Νέο έσοδο · {app}",
+      "entry.quote": "Νέα προσφορά · {app}", "entry.sheet": "Νέο φύλλο · {app}",
+      "entry.slides": "Νέα παρουσίαση · {app}", "entry.bookmark": "Νέος σελιδοδείκτης · {app}", "entry.note": "Νέα σημείωση · {app}",
+      "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
+      "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
+      "entry.hint.make": "Το κουμπί το δημιουργεί ({app})· εκεί μπορείς να το αλλάξεις ή να το σβήσεις.",
+      "entry.hint.slides": "Ανοίγει: {app}· η παρουσίαση δημιουργείται όταν διαλέξεις θέμα εκεί.",
+      "entry.opened": "Άνοιξε: {app}", "entry.dismissed": "Απορρίφθηκε", "entry.failed": "Δεν έγινε δεκτό ({app})",
+      "entry.more": "+{n} ακόμη", "entry.gone": "Δεν είναι εγκατεστημένο: {app}",
+      "f.list": "Νέα λίστα", "f.date": "Ημερομηνία", "f.start": "Ώρα", "f.location": "Τοποθεσία", "f.amount": "Ποσό",
+      "f.category": "Κατηγορία", "f.client": "Πελάτης", "f.currency": "Νόμισμα", "f.url": "Διεύθυνση",
+      "cat.groceries": "Σούπερ μάρκετ", "cat.eating-out": "Φαγητό έξω", "cat.bills": "Λογαριασμοί", "cat.home": "Σπίτι",
+      "cat.transport": "Μετακινήσεις", "cat.health": "Υγεία", "cat.fun": "Διασκέδαση", "cat.clothes": "Ρούχα",
+      "cat.gift": "Δώρα", "cat.salary": "Μισθός", "cat.freelance": "Ελεύθερη εργασία", "cat.other": "Άλλα",
       "share.title": "Να το δει το {name};",
       "share.text": "Ο βοηθός έψαξε στα δεδομένα σου για «{q}». Τσέκαρε ό,τι επιτρέπεις να δει· τα υπόλοιπα μένουν σε αυτή τη συσκευή.",
       "share.always": "Να μοιράζονται πάντα χωρίς ερώτηση από: {apps}",
@@ -175,6 +226,11 @@
       "set.sync": "Συγχρονισμός", "set.syncKeys": "Συγχρονισμός κλειδιών API στις άλλες συσκευές μου (κρυπτογραφημένα)",
       "set.syncHint": "Τα κλειδιά ταξιδεύουν μέσα στο κρυπτογραφημένο sync του orOS, σφραγισμένα με το passphrase σου. Όποιος ξέρει το passphrase μπορεί να τα χρησιμοποιήσει.",
       "set.syncNeeds": "Άνοιξε πρώτα το sync του orOS και ξεκλείδωσέ το με το passphrase σου.",
+      "set.syncChats": "Συγχρονισμός συζητήσεων στις άλλες συσκευές μου (κρυπτογραφημένα)",
+      "set.syncChatsHint": "Κάθε συζήτηση κρατιέται και ως κρυπτογραφημένο αρχείο στα Αρχεία (internal › Assistant) και το Vault Drive τη μεταφέρει στις άλλες συσκευές σου. Αν το κλείσεις, σταματά· τα αρχεία μένουν μέχρι να τα σβήσεις από τα Αρχεία.",
+      "set.syncChatsWait": "Το sync του orOS δεν είναι συνδεδεμένο και ξεκλείδωτο σε αυτή τη συσκευή, οπότε οι συζητήσεις περιμένουν εδώ μέχρι να γίνει.",
+      "set.syncChatsKeep": "Άνοιξε πρώτα το «Να κρατιούνται οι συζητήσεις σε αυτή τη συσκευή».",
+      "set.wipeQAll": "Να διαγραφούν όλες οι συζητήσεις σε όλες τις συσκευές σου; Δεν αναιρείται.",
       "set.device": "Αυτή η συσκευή", "set.keep": "Να κρατιούνται οι συζητήσεις σε αυτή τη συσκευή",
       "set.wipe": "Διαγραφή όλων των συζητήσεων", "set.wipeQ": "Να διαγραφούν όλες οι συζητήσεις σε αυτή τη συσκευή; Δεν αναιρείται.",
       "set.keepOffQ": "Να μην κρατιούνται πια οι συζητήσεις και να διαγραφούν όσες υπάρχουν σε αυτή τη συσκευή;",
@@ -507,6 +563,36 @@
     data.perm[appId] = { m: Math.max(Date.now(), (cur ? cur.m : 0) + 1), v: v };
     saveData();
   }
+  // Every installed app (id → shown name), for the entry cards.
+  function installed() {
+    var p = shell(), out = {};
+    try {
+      if (p && typeof p.orosAssistInstalled === "function") {
+        (p.orosAssistInstalled() || []).forEach(function (a) { if (a && a.id) out[String(a.id)] = String(a.name || a.id); });
+      }
+    } catch (e) {}
+    return out;
+  }
+  function entryKinds() {
+    var have = installed();
+    return C.entryKinds(function (id) { return !!have[id]; });
+  }
+  // The shell's prefill bridges an entry card may call (core.js §10).
+  var ENTRY_FNS = { __orosOpenCalendarNew: 1, __orosOpenBudgetNew: 1, __orosOpenQuoteNew: 1 };
+  function runEntry(e) {
+    var p = shell();
+    if (!p || !e || !e.call) return false;
+    try {
+      if (e.call.fn === "openAt") {
+        if (typeof p.__orosOpenAt !== "function") return false;
+        p.__orosOpenAt(e.call.args[0], JSON.parse(JSON.stringify(e.call.args[1])));
+        return true;
+      }
+      if (!ENTRY_FNS[e.call.fn] || typeof p[e.call.fn] !== "function") return false;
+      var r = p[e.call.fn](JSON.parse(JSON.stringify(e.call.args[0])));
+      return r !== false;
+    } catch (x) { return false; }
+  }
   function openRef(chat, ref) {
     var r = chat && chat.refs && chat.refs[ref];
     var p = shell();
@@ -587,14 +673,19 @@
     }).catch(function () { chats = []; });
   }
   function saveChat(c) {
-    c.m = Date.now();
+    c.m = Math.max(Date.now(), (c.m || 0) + 1);
     chats.sort(function (a, b) { return b.m - a.m; });
-    if (!prefs.keep) return;
-    idbPut("chats", c.id, c).catch(function () { showToast(t("toast.storage")); });
+    if (!prefs.keep) return Promise.resolve();
+    var put = idbPut("chats", c.id, c).catch(function () { showToast(t("toast.storage")); });
     if (chats.length > MAX_CHATS) {
-      chats.slice(MAX_CHATS).forEach(function (old) { idbDel("chats", old.id).catch(function () {}); });
+      chats.slice(MAX_CHATS).forEach(function (old) {
+        idbDel("chats", old.id).catch(function () {});
+        dropChatFile(old.id);
+      });
       chats = chats.slice(0, MAX_CHATS);
     }
+    queueChatFile(c.id);
+    return put;
   }
   function newChat() {
     if (busy) return;
@@ -617,6 +708,7 @@
     confirmDialog(t("del.title"), t("del.q", { title: c.title || t("chat.untitled") }), t("btn.delete"), function () {
       chats = chats.filter(function (x) { return x.id !== c.id; });
       idbDel("chats", c.id).catch(function () {});
+      dropChatFile(c.id);
       if (chat && chat.id === c.id) { chat = null; prefs.open = ""; savePrefs(); }
       renderAll();
       showToast(t("toast.deleted"));
@@ -649,11 +741,13 @@
     renderAll();
     scrollEnd();
     var apps = readableApps();
-    var tools = apps.length ? C.TOOLS : [];
+    var kinds = entryKinds();
+    var tools = C.toolsFor({ data: apps.length > 0, entries: kinds.length > 0 });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
-      apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; })
+      apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      entries: kinds
     });
     var round = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
@@ -731,6 +825,8 @@
         ui: { k: "apps" }
       });
     }
+    if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
+    if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
     var q = String(call.args && call.args.query || "").replace(/\s+/g, " ").trim().slice(0, 200);
     if (!q) return Promise.resolve({ content: "Error: query is empty.", err: 1 });
@@ -762,7 +858,7 @@
         shared.forEach(function (it) {
           c.refN = (c.refN || 0) + 1;
           it.ref = "r" + c.refN;
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title };
+          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q, id: it.id };
         });
         var held = ask.length - ch.chosen.length;
         var names = [];
@@ -774,6 +870,81 @@
       });
     }, function () {
       return { content: "Error: the search failed.", err: 1, ui: { k: "err" } };
+    });
+  }
+
+  // propose_entry: checked now (the model hears at once what was
+  // wrong), shown as a card; the button runs the check again and calls
+  // the app's bridge. The model is told the user decides.
+  function proposeEntry(args) {
+    var have = installed();
+    var e = C.normEntry(args, { from: t("app"), has: function (id) { return !!have[id]; } });
+    if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "entryErr" } };
+    return {
+      content: "Shown to the user as a card. They will open it in the app and save it themselves, or dismiss it. It is not saved yet.",
+      ui: { k: "entry", args: JSON.parse(JSON.stringify(args)), st: "" }
+    };
+  }
+
+  // read_item: the full text of an item a search returned (its ref),
+  // found again with the same search. "Ask first" apps show one more
+  // card with the item and its size.
+  var READ_MAX = 12000;
+  function readItem(c, args, apps) {
+    var ref = String(args && args.ref || "").replace(/^oros:/, "").trim();
+    var r = c.refs && /^r\d{1,5}$/.test(ref) ? c.refs[ref] : null;
+    if (!r) return Promise.resolve({ content: "Error: unknown ref. Use a ref that search_data returned.", err: 1 });
+    var app = null;
+    apps.forEach(function (a) { if (a.id === r.app) app = a; });
+    if (!app) return Promise.resolve({ content: "Error: the user does not allow this app to be read any more.", err: 1, ui: { k: "readNo", title: r.title } });
+    var p = shell();
+    var search = (p && typeof p.orosAssistSearch === "function" && r.q) ? p.orosAssistSearch(r.q, [r.app]) : Promise.resolve([]);
+    return Promise.resolve(search).then(function (groups) {
+      var hit = null;
+      (groups || []).forEach(function (g) {
+        (g && g.hits || []).forEach(function (h) { if (!hit && h && String(h.id) === String(r.id)) hit = h; });
+      });
+      if (!hit) return { content: "Error: the item is no longer there.", err: 1, ui: { k: "readGone", title: r.title } };
+      var text = String(hit.text || "").replace(/\r\n?/g, "\n");
+      var cut = text.length > READ_MAX;
+      if (cut) text = text.slice(0, READ_MAX);
+      var okP = app.perm === "always" ? Promise.resolve(true) : askRead(r.title, app.name, text);
+      return okP.then(function (ok) {
+        if (!ok) return { content: JSON.stringify({ ref: ref, note: "The user chose not to share the full text." }), ui: { k: "readNo", title: r.title } };
+        var out = { ref: ref, app: app.name, title: hit.title, text: text };
+        if (hit.when) out.date = C.ymd(hit.when);
+        if (cut) out.note = "The text was cut at " + READ_MAX + " characters.";
+        return { content: JSON.stringify(out), ui: { k: "read", title: r.title } };
+      });
+    }, function () {
+      return { content: "Error: the item could not be read.", err: 1, ui: { k: "err" } };
+    });
+  }
+  function askRead(title, appName, text) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(v) {
+        if (done) return;
+        done = true;
+        if (busy) { busy.consent = null; busy.card = null; }
+        renderMessages();
+        resolve(v);
+      }
+      var card = el("section", "consent");
+      card.setAttribute("role", "group");
+      card.appendChild(el("h3", "", t("read.title", { title: title, name: provName(curProv()) })));
+      card.appendChild(el("p", "consent-text", t("read.text", { app: appName, n: fmtNum(text.length) })));
+      var pre = el("p", "consent-preview", text.length > 600 ? text.slice(0, 600) + "…" : text);
+      card.appendChild(pre);
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("read.no"), "", function () { finish(false); }));
+      var yes = button(t("read.yes"), "primary", function () { finish(true); });
+      acts.appendChild(yes);
+      card.appendChild(acts);
+      if (busy) { busy.consent = function () { finish(false); }; busy.card = card; }
+      renderMessages();
+      scrollEnd();
+      yes.focus();
     });
   }
 
@@ -853,6 +1024,168 @@
     });
   }
 
+  // ---------- 7b. Conversation sync (files through Vault Drive) ----------
+  // Switch data.cs.on (synced, so every device follows it). Each chat
+  // is written to C.CHAT_DIR/<id>.json on the orOS disk; Vault Drive
+  // uploads, downloads and encrypts the files like any other file. A
+  // deleted chat leaves a tombstone file, so a missing file is never
+  // read as "deleted", only written again. reconcile() folds the
+  // folder into this device's chats (core.js mergeChat) and writes
+  // back only what differs, so two devices settle without ping-pong.
+  var fileQ = {}, fileTimer = 0, reconciling = null, reconcileAgain = false, vaultUnsub = null;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeText === "function" && typeof f.readText === "function" &&
+             typeof f.ls === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function chatSyncOn() { return !!(data.cs && data.cs.on && prefs.keep && fsApi()); }
+  function vaultUsable() {
+    try {
+      var v = window.parent && window.parent.orosVault;
+      return !!(v && typeof v.status === "function" && v.status().usable);
+    } catch (e) { return false; }
+  }
+  function findChat(id) {
+    for (var i = 0; i < chats.length; i++) if (chats[i].id === id) return chats[i];
+    return null;
+  }
+  function writeFile(id, text) {
+    var fs = fsApi(), path = C.chatPath(id);
+    if (!fs || !path || !text) return Promise.resolve();
+    return Promise.resolve(fs.writeText(path, text)).catch(function () {});
+  }
+  function queueChatFile(id) {
+    if (!chatSyncOn()) return;
+    fileQ[id] = 1;
+    clearTimeout(fileTimer);
+    fileTimer = setTimeout(flushChatFiles, 1500);
+  }
+  function flushChatFiles() {
+    fileTimer = 0;
+    var ids = Object.keys(fileQ);
+    fileQ = {};
+    if (!chatSyncOn()) return Promise.resolve();
+    return ids.reduce(function (p, id) {
+      return p.then(function () {
+        var c = findChat(id);
+        return c ? writeFile(id, C.chatFile(c)) : null;
+      });
+    }, Promise.resolve());
+  }
+  function dropChatFile(id) {
+    delete fileQ[id];
+    if (!chatSyncOn()) return;
+    writeFile(id, JSON.stringify({ id: id, m: Date.now(), del: 1 }));
+  }
+  function setChatSync(on) {
+    var cur = data.cs || { m: 0, on: 0 };
+    data.cs = { m: Math.max(Date.now(), cur.m + 1), on: on ? 1 : 0 };
+    saveData();
+    renderChats();
+    if (on) reconcile();
+  }
+  function scheduleReconcile() {
+    clearTimeout(scheduleReconcile.t);
+    scheduleReconcile.t = setTimeout(reconcile, 400);
+  }
+  function reconcile() {
+    if (!chatSyncOn()) return Promise.resolve();
+    if (reconciling) { reconcileAgain = true; return reconciling; }
+    var fs = fsApi();
+    reconciling = Promise.resolve(fs.ls(C.CHAT_DIR)).catch(function () { return []; }).then(function (list) {
+      var files = {};
+      var reads = (list || []).filter(function (en) {
+        return en && !en.dir && /\.json$/i.test(String(en.name || "")) && String(en.name).length < 120;
+      }).map(function (en) {
+        var path = C.CHAT_DIR + "/" + en.name;
+        return Promise.resolve(fs.readText(path)).then(function (text) {
+          var ch = C.parseChatFile(text);
+          if (!ch) return;
+          var f = files[ch.id] || (files[ch.id] = { exact: null, text: null, others: [] });
+          if (en.name === ch.id + ".json") { f.exact = ch; f.text = text; }
+          else f.others.push({ path: path, chat: ch });
+        }, function () {});
+      });
+      return Promise.all(reads).then(function () { return files; });
+    }).then(function (files) {
+      var byId = {}, changed = false, work = [];
+      chats.forEach(function (c) { byId[c.id] = c; });
+      var ids = Object.keys(byId);
+      Object.keys(files).forEach(function (id) { if (!byId[id]) ids.push(id); });
+      var copies = [];
+      ids.forEach(function (id) {
+        if (busy && busy.chat && busy.chat.id === id) return;   // answering in it: next time
+        var f = files[id] || { exact: null, text: null, others: [] };
+        var remote = f.exact;
+        f.others.forEach(function (o) {
+          var r = C.mergeChat(remote, o.chat);
+          remote = r.chat;
+          if (r.copy) copies.push(r.copy);
+        });
+        var local = byId[id] ? C.normChat(byId[id]) : null;
+        var res = C.mergeChat(local, remote);
+        if (res.copy) copies.push(res.copy);
+        var keep = res.chat;
+        if (!keep) return;
+        var text = keep.del ? JSON.stringify({ id: keep.id, m: keep.m, del: 1 }) : C.chatFile(keep);
+        if (keep.del) {
+          if (byId[id]) {
+            chats = chats.filter(function (x) { return x.id !== id; });
+            if (chat && chat.id === id) { chat = null; prefs.open = ""; savePrefs(); }
+            work.push(idbDel("chats", id).catch(function () {}));
+            changed = true;
+          }
+        } else if (!local || C.chatFile(local) !== text) {
+          var target = byId[id];
+          if (target) {
+            Object.keys(keep).forEach(function (k) { target[k] = keep[k]; });
+          } else {
+            target = keep;
+            chats.push(target);
+          }
+          work.push(idbPut("chats", id, target).catch(function () {}));
+          changed = true;
+        }
+        if (f.text !== text) work.push(writeFile(id, text));
+        f.others.forEach(function (o) { work.push(Promise.resolve(fs.rm(o.path)).catch(function () {})); });
+      });
+      copies.forEach(function (cp) {
+        if (findChat(cp.id) || files[cp.id]) return;
+        chats.push(cp);
+        work.push(idbPut("chats", cp.id, cp).catch(function () {}));
+        work.push(writeFile(cp.id, C.chatFile(cp)));
+        changed = true;
+      });
+      chats.sort(function (a, b) { return b.m - a.m; });
+      if (chats.length > MAX_CHATS) {
+        chats.slice(MAX_CHATS).forEach(function (old) {
+          work.push(idbDel("chats", old.id).catch(function () {}));
+          dropChatFile(old.id);
+        });
+        chats = chats.slice(0, MAX_CHATS);
+      }
+      if (changed) renderAll();
+      return Promise.all(work);
+    }).catch(function () {}).then(function () {
+      reconciling = null;
+      if (reconcileAgain) { reconcileAgain = false; return reconcile(); }
+    });
+    return reconciling;
+  }
+  function watchVault() {
+    try {
+      var v = window.parent && window.parent !== window ? window.parent.orosVault : null;
+      if (!v || typeof v.onStatus !== "function" || vaultUnsub) return;
+      vaultUnsub = v.onStatus(function (kind) { if (kind === "done") scheduleReconcile(); });
+      window.addEventListener("pagehide", function () {
+        if (vaultUnsub) { vaultUnsub(); vaultUnsub = null; }
+        if (fileTimer) { clearTimeout(fileTimer); flushChatFiles(); }
+      });
+    } catch (e) {}
+  }
+
   // ---------- 8. UI ----------
   var sideOpen = false;
   function setSide(open) {
@@ -899,7 +1232,7 @@
       row.appendChild(del);
       host.appendChild(row);
     });
-    $("chats-foot").textContent = prefs.keep ? t("chats.local") : t("chats.off");
+    $("chats-foot").textContent = !prefs.keep ? t("chats.off") : (chatSyncOn() ? t("chats.synced") : t("chats.local"));
   }
 
   function renderBar() {
@@ -954,7 +1287,9 @@
     var nearEnd = isNearEnd();
     host.textContent = "";
     var pid = curProv();
-    if (!pid || !ready()) {
+    // Not set up on this device: the welcome, unless a conversation
+    // (e.g. one synced from another device) is open to read.
+    if ((!pid || !ready()) && !(chat && chat.msgs.length)) {
       $("welcome").hidden = false;
       $("wel-text").textContent = t("wel.text");
       $("wel-setup").hidden = false;
@@ -1001,6 +1336,8 @@
     } else if (m.r === "tool") {
       (m.results || []).forEach(function (r) {
         var ui = r.ui || {};
+        if (ui.k === "entry") { drawEntry(host, r, c); return; }
+        if (ui.k === "entryErr") return;
         var line = el("div", "tool-line");
         var ico = el("span", "tool-ico");
         ico.innerHTML = ICON.search;
@@ -1014,6 +1351,9 @@
           if (ui.held && ui.n) parts.push(t("tool.held", { n: ui.held }));
           txt = parts[0] + ": " + parts.slice(1).join(", ");
         } else if (ui.k === "apps") txt = t("tool.apps");
+        else if (ui.k === "read") txt = t("tool.read", { title: ui.title || "" });
+        else if (ui.k === "readNo") txt = t("tool.readNo", { title: ui.title || "" });
+        else if (ui.k === "readGone") txt = t("tool.readGone", { title: ui.title || "" });
         else txt = t("tool.err");
         line.appendChild(el("span", "", txt));
         host.appendChild(line);
@@ -1021,6 +1361,73 @@
     } else if (m.r === "note") {
       host.appendChild(el("div", "note" + (m.kind === "err" ? " err" : ""), m.text));
     }
+  }
+
+  // An entry card (propose_entry). What it shows and what its button
+  // sends are rebuilt from the stored arguments with the same check
+  // every time (a stored or synced chat is never trusted as it is).
+  function drawEntry(host, r, c) {
+    var ui = r.ui, have = installed();
+    var e = C.normEntry(ui.args, { from: t("app"), has: function (id) { return !!have[id]; } });
+    if (!e.ok) {
+      var app0 = ui.args && C.ENTRY_KINDS[ui.args.kind];
+      host.appendChild(el("div", "tool-line", t("entry.gone", { app: app0 || "?" })));
+      return;
+    }
+    var name = have[e.app] || e.app, v = e.view;
+    var card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("entry." + e.kind, { app: name })));
+    if (v.title) card.appendChild(el("p", "entry-title", v.title));
+    if (v.fields.length) {
+      var dl = el("dl", "entry-fields");
+      v.fields.forEach(function (f) {
+        dl.appendChild(el("dt", "", t("f." + f[0])));
+        dl.appendChild(el("dd", "", f[0] === "category" ? t("cat." + f[1]) : f[1]));
+      });
+      card.appendChild(dl);
+    }
+    if (v.list) {
+      var ul = el("ul", "entry-list");
+      v.list.forEach(function (x) { ul.appendChild(el("li", "", x)); });
+      card.appendChild(ul);
+    }
+    if (v.table) {
+      var wrap = el("div", "entry-table");
+      var tb = el("table");
+      v.table.forEach(function (row) {
+        var tr = el("tr");
+        row.forEach(function (cell) { tr.appendChild(el("td", "", cell)); });
+        tb.appendChild(tr);
+      });
+      wrap.appendChild(tb);
+      card.appendChild(wrap);
+    }
+    if (v.more) card.appendChild(el("p", "entry-more", t("entry.more", { n: v.more })));
+    if (v.text) card.appendChild(el("p", "entry-text", v.text));
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""),
+        t("entry." + ui.st, { app: name })));
+    } else {
+      var hint = e.kind === "slides" ? "entry.hint.slides" :
+                 (e.kind === "note" || e.kind === "sheet") ? "entry.hint.make" : "entry.hint.form";
+      card.appendChild(el("p", "dlg-hint", t(hint, { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("entry.open", { app: name }), "primary", function () {
+        // Saved before the app opens (it takes this frame's place).
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          if (!runEntry(e)) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
   }
 
   // Markdown tokens (core.js) → DOM, textContent only.
@@ -1286,11 +1693,34 @@
     ks.parentNode.classList.add("check");
     ks.disabled = !can && !data.ks.on;
     secS.appendChild(el("p", "dlg-hint", can || data.ks.on ? t("set.syncHint") : t("set.syncNeeds")));
+    var csHint = el("p", "dlg-hint");
+    var cs = checkbox(secS, "as-cs", t("set.syncChats"), !!data.cs.on, function (on) {
+      setChatSync(on);
+      drawCsHint();
+    });
+    cs.parentNode.classList.add("check");
+    cs.disabled = !fsApi() || (!prefs.keep && !data.cs.on);
+    secS.appendChild(csHint);
+    function drawCsHint() {
+      var txt = !prefs.keep ? t("set.syncChatsKeep") : t("set.syncChatsHint");
+      if (prefs.keep && data.cs.on && !vaultUsable()) txt += " " + t("set.syncChatsWait");
+      csHint.textContent = txt;
+    }
+    drawCsHint();
 
     // This device
     var secV = section(body, t("set.device"));
     var keep = checkbox(secV, "as-keep", t("set.keep"), !!prefs.keep, function (on) {
-      if (on) { prefs.keep = 1; savePrefs(); chats.forEach(function (c) { idbPut("chats", c.id, c).catch(function () {}); }); renderChats(); return; }
+      if (on) {
+        prefs.keep = 1;
+        savePrefs();
+        chats.forEach(function (c) { idbPut("chats", c.id, c).catch(function () {}); });
+        renderChats();
+        cs.disabled = !fsApi();
+        drawCsHint();
+        reconcile();
+        return;
+      }
       keep.checked = true;
       confirmDialog(t("set.keep"), t("set.keepOffQ"), t("btn.delete"), function () {
         keep.checked = false;
@@ -1298,13 +1728,16 @@
         savePrefs();
         idbClear("chats").catch(function () {});
         renderChats();
+        cs.disabled = !data.cs.on;
+        drawCsHint();
       });
     });
     keep.parentNode.classList.add("check");
     var wrow = el("div", "row");
     wrow.appendChild(button(t("set.wipe"), "small danger", function () {
-      confirmDialog(t("set.wipe"), t("set.wipeQ"), t("btn.delete"), function () {
+      confirmDialog(t("set.wipe"), chatSyncOn() ? t("set.wipeQAll") : t("set.wipeQ"), t("btn.delete"), function () {
         if (busy) stop();
+        chats.forEach(function (c) { dropChatFile(c.id); });
         chats = [];
         chat = null;
         prefs.open = "";
@@ -1490,6 +1923,8 @@
     }
     if (JSON.stringify(data) === before) return;
     syncKeys();
+    renderChats();
+    if (chatSyncOn()) scheduleReconcile();
   }
 
   // ---------- 13. Wiring & boot ----------
@@ -1569,7 +2004,11 @@
       renderAll();
       scrollEnd();
       if (pending) openTarget(pending);
-      return syncKeys();
+      watchVault();
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible") scheduleReconcile();
+      });
+      return Promise.all([syncKeys(), reconcile()]);
     });
   }
 
