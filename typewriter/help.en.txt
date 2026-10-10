@@ -1,0 +1,37 @@
+# Typewriter
+Write on a sheet of paper that rolls up like on a real typewriter, with nothing on screen but your words.
+
+## Getting started
+Open the app and start typing. The line you type on stays in the middle of the screen and the paper rolls up as you write. Your page is saved as you go and shows up under `Pages`.
+- The words of the page are counted under its title, at the top.
+- The pages button at the top left shows or hides the side panel. On a phone it opens as a drawer.
+- The full screen button leaves only the paper on the screen.
+
+## Typewriter mode
+Typewriter mode is on at first, and it works like the real thing:
+- Nothing is erased. A backspace types an X over the last letter, and each backspace goes one more letter back on the same line.
+- You only type forwards: the cursor stays at the end of the page.
+- If your phone's keyboard corrects a word, the old word is struck and the corrected one is typed after it.
+The typewriter button at the top turns the mode off. Then the page works like a normal text box, where you can move around and erase. Turn it on again any time.
+
+## Pages
+- `New page` starts a fresh sheet. It is saved once you type something.
+- Tap or click a page in the list to open it, and the × next to it to delete it; `Undo` brings it back.
+- Under `This page` you can give the page a `Title` and a `Word goal`. With a goal, a thin bar under the top bar fills up as you write.
+
+## Paper, sound and printing
+- `Paper` sets the colour of the sheet: `orOS` follows your orOS colours, or choose `White`, `Cream` or `Night`.
+- The speaker button turns on the sounds of the keys, the bell near the end of a line and the carriage return. Sound is off at first.
+- Under `Take it with you`: `Copy text` and `Download .txt` give you the text without the struck letters; `Print` prints the page as it looks, with its X marks.
+
+## Sync and backup
+- Your pages follow you to all your devices through orOS sync.
+- Typewriter mode, sound, paper and the side panel stay on this device only.
+
+## Tips
+> Set a word goal and hide the side panel for a session of writing without distractions.
+- The letters are inked a little unevenly, like on paper. The same letter in the same place always looks the same.
+
+## Limits
+- Up to 200 pages, each up to 200,000 characters.
+- When the same page is changed on two devices before they sync, the most recent change wins.

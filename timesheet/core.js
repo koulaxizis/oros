@@ -40,7 +40,9 @@
     name: 80, desc: 500,
     rate: [0, 10000000],             // cents per hour (100.000,00 max)
     goal: [0, 1440],                 // minutes per day, 0 = no goal
-    color: [0, 7]
+    color: [0, 7],
+    task: 80, tag: 30, tags: 10,     // per entry (Wave 6)
+    budget: [0, 6000000]             // minutes per project (100.000 h), 0 = no budget
   };
   var ROUNDS = [0, 5, 6, 10, 15, 30, 60];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD", "AUD", "SEK", "NOK", "DKK",
@@ -106,26 +108,69 @@
   function tomb(x) { return { id: x.id, m: x.m, del: 1 }; }
   function refId(v) { return typeof v === "string" && ID_RE.test(v) ? v : ""; }
 
+  // Forward compatibility (as in Budget): a flat field this version
+  // does not know rides along on its record, sorted by name, so a
+  // newer version can add fields without this one stripping them
+  // (stripping would make two versions re-upload forever).
+  var EXTRA_RE = /^[a-z][a-z0-9]{0,15}$/, EXTRA_MAX = 16;
+  var KNOWN = {
+    client:  ["id", "name", "rate", "m", "del"],
+    project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget", "m", "del"],
+    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "m", "del"]
+  };
+  function withExtras(out, x, known) {
+    var n = 0;
+    Object.keys(x).filter(function (k) { return EXTRA_RE.test(k) && known.indexOf(k) < 0; })
+      .sort(cmpStr).forEach(function (k) {
+        var v = x[k];
+        var ok = typeof v === "string" ? v.length <= 500
+               : typeof v === "boolean" || (typeof v === "number" && isFinite(v));
+        if (ok && n < EXTRA_MAX) { out[k] = v; n++; }
+      });
+    return out;
+  }
+  // Tags: "#" and control characters out, at most LIM.tags, unique
+  // regardless of case (the first spelling stays), sorted, so every
+  // device writes the same list.
+  function normTags(v) {
+    if (!Array.isArray(v)) return [];
+    var out = [], seen = {};
+    v.forEach(function (t) {
+      var s = cleanText(typeof t === "string" ? t.replace(/^[#\s]+/, "") : "", LIM.tag);
+      var k = s.toLowerCase();
+      if (!s || seen[k] || out.length >= LIM.tags) return;
+      seen[k] = true;
+      out.push(s);
+    });
+    return out.sort(function (a, b) { return cmpStr(a.toLowerCase(), b.toLowerCase()) || cmpStr(a, b); });
+  }
+  // "design, #client a; urgent" → ["client a", "design", "urgent"]
+  function parseTags(text) { return normTags(String(text || "").split(/[,;]/)); }
+
   function normClient(x) {
     if (!baseOk(x)) return null;
     if (x.del) return tomb(x);
     var name = cleanText(x.name, LIM.name);
     if (!name) return null;
-    return { id: x.id, name: name, rate: inRange(x.rate, LIM.rate) ? x.rate : 0, m: x.m };
+    return withExtras({ id: x.id, name: name, rate: inRange(x.rate, LIM.rate) ? x.rate : 0, m: x.m },
+                      x, KNOWN.client);
   }
   function normProject(x) {
     if (!baseOk(x)) return null;
     if (x.del) return tomb(x);
     var name = cleanText(x.name, LIM.name);
     if (!name) return null;
-    return {
+    var out = {
       id: x.id, name: name, client: refId(x.client),
       color: inRange(x.color, LIM.color) ? x.color : 0,
       rate: inRange(x.rate, LIM.rate) ? x.rate : 0,
       bill: x.bill === 0 ? 0 : 1,
-      arch: x.arch ? 1 : 0,
-      m: x.m
+      arch: x.arch ? 1 : 0
     };
+    // Written only when set, so records without one stay byte-identical.
+    if (inRange(x.budget, LIM.budget) && x.budget > 0) out.budget = x.budget;
+    out.m = x.m;
+    return withExtras(out, x, KNOWN.project);
   }
   function normEntry(x) {
     if (!baseOk(x)) return null;
@@ -133,10 +178,15 @@
     if (!isInt(x.s) || x.s < MIN_TS || x.s > MAX_TS) return null;
     var e = isInt(x.e) ? x.e : -1;
     if (e !== 0 && (e <= x.s || e - x.s > MAX_SPAN)) return null;
-    return {
+    var out = {
       id: x.id, p: refId(x.p), desc: cleanText(x.desc, LIM.desc),
-      s: x.s, e: e, billed: x.billed ? 1 : 0, m: x.m
+      s: x.s, e: e, billed: x.billed ? 1 : 0
     };
+    var task = cleanText(x.task, LIM.task), tags = normTags(x.tags);
+    if (task) out.task = task;
+    if (tags.length) out.tags = tags;
+    out.m = x.m;
+    return withExtras(out, x, KNOWN.entry);
   }
   // Fixed key order: two devices with the same prefs serialize alike.
   function normPrefs(p) {
@@ -350,35 +400,106 @@
     if (f.bill === "non" && b) return false;
     if (f.billed === "open" && x.billed) return false;
     if (f.billed === "done" && !x.billed) return false;
+    if (f.tag === "-" && x.tags && x.tags.length) return false;
+    if (f.tag && f.tag !== "-" && !hasTag(x, f.tag)) return false;
     return true;
+  }
+  function hasTag(x, tag) {
+    var k = String(tag).toLowerCase();
+    return !!x.tags && x.tags.some(function (t) { return t.toLowerCase() === k; });
+  }
+  // The report groups of one piece, as [key, label]. "task" groups per
+  // project and task, "tag" per tag, both regardless of case (the label
+  // is the first spelling met). "tag" puts an entry under each of its
+  // tags (untagged under ""), so tag rows can add up to more than the total.
+  var TASK_SEP = "\u0001";
+  function groupKeys(data, x, k, f) {
+    var p = project(data, x.p), pid = p ? p.id : "";
+    if (f.group === "client") return [[p ? p.client : "", ""]];
+    if (f.group === "day") return [[k, ""]];
+    if (f.group === "task") return [[pid + TASK_SEP + (x.task || "").toLowerCase(), x.task || ""]];
+    if (f.group === "tag") {
+      if (!x.tags || !x.tags.length) return [["", ""]];
+      return x.tags.filter(function (t) {
+        return !f.tag || f.tag === "-" || t.toLowerCase() === f.tag.toLowerCase();
+      }).map(function (t) { return [t.toLowerCase(), t]; });
+    }
+    return [[pid, ""]];
   }
 
   // Report over a day range. f = { client, project, bill: "all"|"bill"|"non",
-  // group: "project"|"client"|"day", billed: "all"|"open"|"done" }.
+  // group: "project"|"client"|"day"|"task"|"tag", billed: "all"|"open"|"done",
+  // tag: ""|"-" (untagged)|a tag }.
   // Rounding works per piece (an entry, or each day of one that
   // crosses midnight), so the three groupings always add up alike.
   function report(data, fromKey, toKey, f, now) {
     f = f || {};
     var prefs = data.prefs, groups = {}, tot = { ms: 0, billMs: 0, amount: 0, n: 0 }, ids = {};
     piecesIn(data, fromKey, toKey, now).forEach(function (pc) {
-      var x = pc.x, p = project(data, x.p), cid = p ? p.client : "";
+      var x = pc.x;
       if (!matches(data, x, f)) return;
       var isBill = billable(data, x.p);
       var ms = roundMs(pc.e - pc.s, prefs.round, prefs.rup);
       var rate = isBill ? rateOf(data, x.p) : 0;
       var amount = isBill ? Math.round(ms * rate / HOUR) : 0;
-      var gk = f.group === "client" ? cid : (f.group === "day" ? pc.k : (p ? p.id : ""));
-      var g = groups[gk] || (groups[gk] = { key: gk, ms: 0, billMs: 0, amount: 0, n: 0 });
-      g.ms += ms; tot.ms += ms;
-      if (isBill) { g.billMs += ms; tot.billMs += ms; }
-      g.amount += amount; tot.amount += amount;
-      g.n++; tot.n++;
+      groupKeys(data, x, pc.k, f).forEach(function (kl) {
+        var gk = kl[0];
+        var g = groups[gk] || (groups[gk] = { key: gk, label: kl[1], ms: 0, billMs: 0, amount: 0, n: 0 });
+        g.ms += ms;
+        if (isBill) g.billMs += ms;
+        g.amount += amount;
+        g.n++;
+      });
+      tot.ms += ms;
+      if (isBill) tot.billMs += ms;
+      tot.amount += amount;
+      tot.n++;
       ids[x.id] = true;
     });
     var rows = Object.keys(groups).map(function (k) { return groups[k]; });
     if (f.group === "day") rows.sort(function (x, y) { return cmpStr(x.key, y.key); });
     else rows.sort(function (x, y) { return y.ms - x.ms || cmpStr(x.key, y.key); });
     return { rows: rows, total: tot, ids: Object.keys(ids).sort(cmpStr) };
+  }
+
+  // Hours budget of a project (all time, exact times as in the
+  // Projects list). null without a budget; else { ms, budgetMs, pct,
+  // state: "ok" | "near" (90 % or more) | "over" }.
+  function budgetUse(data, pid, now) {
+    var p = project(data, pid);
+    if (!p || !p.budget) return null;
+    var ms = 0;
+    data.entries.forEach(function (x) { if (!x.del && x.p === pid) ms += endOf(x, now) - x.s; });
+    var budgetMs = p.budget * 60000, pct = Math.floor(ms / budgetMs * 100);
+    return { ms: ms, budgetMs: budgetMs, pct: pct,
+             state: ms > budgetMs ? "over" : (pct >= 90 ? "near" : "ok") };
+  }
+  // Tasks used on a project, the most recently used first.
+  function taskList(data, pid) {
+    var last = {}, name = {};
+    data.entries.forEach(function (x) {
+      if (x.del || !x.task || (x.p || "") !== (pid || "")) return;
+      var k = x.task.toLowerCase();
+      if (!last[k] || x.s > last[k]) { last[k] = x.s; name[k] = x.task; }
+    });
+    return Object.keys(last).sort(function (a, b) { return last[b] - last[a] || cmpStr(a, b); })
+      .map(function (k) { return name[k]; });
+  }
+  // Every tag in use (one spelling each, the most recent), A–Z.
+  function tagList(data) {
+    var last = {}, name = {};
+    data.entries.forEach(function (x) {
+      if (x.del || !x.tags) return;
+      x.tags.forEach(function (t) {
+        var k = t.toLowerCase();
+        if (!last[k] || x.s > last[k]) { last[k] = x.s; name[k] = t; }
+      });
+    });
+    return Object.keys(name).sort(cmpStr).map(function (k) { return name[k]; });
+  }
+  function splitTaskKey(key) {
+    var i = key.indexOf(TASK_SEP);
+    return i < 0 ? { p: key, task: "" } : { p: key.slice(0, i), task: key.slice(i + 1) };
   }
 
   // ---------- 5. Parsing + formatting ----------
@@ -397,6 +518,16 @@
     if (!m || (!m[1] && !m[2])) return NaN;
     if (!m[1] && !m[3]) return NaN;
     return Math.round((m[1] ? parseFloat(m[1]) : 0) * 60) + (m[2] ? +m[2] : 0);
+  }
+  // A budget in hours: "40", "40,5", "40.5", "40:30" → minutes; "" → 0;
+  // NaN when not hours. Unlike parseDuration a bare number is always hours.
+  function parseHours(text) {
+    var s = String(text || "").trim().replace(/\s+/g, "").replace(/(h|ω|ώρες|ωρες|hours?)$/i, "");
+    if (!s) return 0;
+    var m = /^(\d{1,6}):([0-5]\d)$/.exec(s);
+    if (m) return +m[1] * 60 + +m[2];
+    if (!/^\d{1,6}([.,]\d{1,2})?$/.test(s)) return NaN;
+    return Math.round(parseFloat(s.replace(",", ".")) * 60);
   }
   // "45", "45,50", "45.5", "1.250,00", "1,250.00" → cents; NaN when not money.
   function parseMoney(text) {
@@ -455,8 +586,8 @@
     var el = lang === "el";
     var dec = function (n, d) { var s = n.toFixed(d); return el ? s.replace(".", ",") : s; };
     var head = el
-      ? ["Ημερομηνία", "Έναρξη", "Λήξη", "Διάρκεια", "Ώρες", "Πελάτης", "Έργο", "Περιγραφή", "Χρεώσιμο", "Χρέωση/ώρα", "Ποσό", "Τιμολογήθηκε"]
-      : ["Date", "Start", "End", "Duration", "Hours", "Client", "Project", "Description", "Billable", "Rate", "Amount", "Billed"];
+      ? ["Ημερομηνία", "Έναρξη", "Λήξη", "Διάρκεια", "Ώρες", "Πελάτης", "Έργο", "Περιγραφή", "Εργασία", "Ετικέτες", "Χρεώσιμο", "Χρέωση/ώρα", "Ποσό", "Τιμολογήθηκε"]
+      : ["Date", "Start", "End", "Duration", "Hours", "Client", "Project", "Description", "Task", "Tags", "Billable", "Rate", "Amount", "Billed"];
     var yes = el ? "Ναι" : "Yes", no = el ? "Όχι" : "No";
     var lines = [head.map(csvCell).join(";")];
     var prefs = data.prefs;
@@ -473,7 +604,7 @@
       lines.push([
         dateText, hhmm(pc.s), pc.e === dayStart(addDays(pc.k, 1)) ? "24:00" : hhmm(pc.e),
         fmtDur(ms), dec(ms / HOUR, 2),
-        c ? c.name : "", p ? p.name : "", x.desc,
+        c ? c.name : "", p ? p.name : "", x.desc, x.task || "", (x.tags || []).join(", "),
         b ? yes : no, dec(rate / 100, 2), dec(b ? Math.round(ms * rate / HOUR) / 100 : 0, 2),
         x.billed ? yes : no
       ].map(csvCell).join(";"));
@@ -489,7 +620,7 @@
   function quoteLines(data, fromKey, toKey, f, now, lang) {
     f = f || {};
     var rep = report(data, fromKey, toKey,
-      { client: f.client, project: f.project, bill: "bill", billed: f.billed, group: "project" }, now);
+      { client: f.client, project: f.project, bill: "bill", billed: f.billed, tag: f.tag, group: "project" }, now);
     var range = fmtRange(fromKey, toKey, lang);
     var clients = {}, items = [];
     rep.rows.forEach(function (r) {
@@ -580,7 +711,7 @@
   var IMPORT_MAX_ROWS = 20000;
   var IMPORT_FIELDS = {
     project: ["project"], client: ["client"],
-    desc: ["description", "notes", "note"], task: ["task"],
+    desc: ["description", "notes", "note"], task: ["task"], tags: ["tags", "tag"],
     bill: ["billable", "billable?"], billed: ["invoiced?", "invoiced"],
     sd: ["start date"], st: ["start time"], ed: ["end date"], et: ["end time"],
     date: ["date", "spent date"], hours: ["hours", "duration (decimal)"],
@@ -753,8 +884,11 @@
       }
       if (!isFinite(s) || !isFinite(e) || e <= s || e - s > MAX_SPAN || s < MIN_TS || s > MAX_TS) { bad++; return; }
       var cname = cleanText(col(r, "client"), LIM.name), pname = cleanText(col(r, "project"), LIM.name);
-      var desc = [cleanText(col(r, "task"), LIM.desc), cleanText(col(r, "desc"), LIM.desc)]
-        .filter(Boolean).join(" · ").slice(0, LIM.desc);
+      var task = cleanText(col(r, "task"), LIM.task), note = cleanText(col(r, "desc"), LIM.desc);
+      var tags = parseTags(col(r, "tags"));
+      // The id key keeps the text as Wave 5 joined it, so files imported
+      // before tasks existed still match.
+      var desc = [cleanText(col(r, "task"), LIM.desc), note].filter(Boolean).join(" · ").slice(0, LIM.desc);
       var rate = Math.round(decimal(col(r, "rate")) * 100);
       var pid = projectId(pname, cname, yesNo(col(r, "bill")), inRange(rate, LIM.rate) ? rate : 0);
       // Harvest rows have no times: their id comes from the day, hours
@@ -771,7 +905,10 @@
       if (!to || k2 > to) to = k2;
       if (have[id]) { dup++; return; }
       fresh++;
-      add.entries.push({ id: id, p: pid, desc: desc, s: s, e: e, billed: yesNo(col(r, "billed")) === 1 ? 1 : 0, m: 1 });
+      var x = { id: id, p: pid, desc: note, s: s, e: e, billed: yesNo(col(r, "billed")) === 1 ? 1 : 0, m: 1 };
+      if (task) x.task = task;
+      if (tags.length) x.tags = tags;
+      add.entries.push(x);
     });
     // Only projects that kept at least one new entry are created.
     var used = {};
@@ -792,6 +929,8 @@
 
   var API = {
     VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, FORGOT_MS: FORGOT_MS, DATA_VER: DATA_VER, HOUR: HOUR, DAY: DAY,
+    normTags: normTags, parseTags: parseTags, parseHours: parseHours, hasTag: hasTag, budgetUse: budgetUse,
+    taskList: taskList, tagList: tagList, splitTaskKey: splitTaskKey,
     LIM: LIM, ROUNDS: ROUNDS, CURRENCIES: CURRENCIES, DEFAULT_PREFS: DEFAULT_PREFS, COLORS: COLORS,
     ID_RE: ID_RE, MAX_SPAN: MAX_SPAN,
     isInt: isInt, inRange: inRange, cleanText: cleanText, newId: newId,

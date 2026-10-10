@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Typewriter · orOS</title>
+
+  <link rel="stylesheet" href="typewriter.css?v=0.64.01">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="pages-btn" class="icon-btn" aria-controls="panel" aria-expanded="false"></button>
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="words" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="mode-btn" class="icon-btn toggle"></button>
+    <button type="button" id="sound-btn" class="icon-btn toggle"></button>
+    <button type="button" id="fs-btn" class="icon-btn"></button>
+  </header>
+  <div id="goal-bar" role="progressbar" aria-valuemin="0" hidden><div id="goal-fill"></div></div>
+
+  <main id="main">
+    <!-- The platen: the paper rolls up inside it -->
+    <section id="desk">
+      <div id="paper">
+        <div class="sheet">
+          <div id="ink" aria-hidden="true"></div>
+          <textarea id="text" spellcheck="true" autocapitalize="sentences" autocomplete="off"></textarea>
+          <span id="probe" aria-hidden="true">MMMMMMMMMM</span>
+        </div>
+      </div>
+    </section>
+
+    <div id="scrim" hidden></div>
+
+    <!-- Pages, this page, paper, export -->
+    <aside id="panel">
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.pages">Pages</h2>
+          <span id="pages-count" class="count"></span>
+          <span class="spacer"></span>
+          <button type="button" id="close-panel" class="icon-btn phone-only"></button>
+        </div>
+        <button type="button" id="new-btn" class="gen-btn ghost"><span data-i18n="btn.new">New page</span></button>
+        <p id="pages-empty" class="hint" data-i18n="pages.empty"></p>
+        <ul id="pages"></ul>
+      </div>
+
+      <div class="sec">
+        <h2 data-i18n="sec.page">This page</h2>
+        <label class="lbl" for="title-in" data-i18n="f.title">Title</label>
+        <input type="text" id="title-in" maxlength="80" autocomplete="off" data-i18n-ph="f.title.ph">
+        <label class="lbl" for="goal-in" data-i18n="f.goal">Word goal</label>
+        <input type="number" id="goal-in" min="0" max="100000" step="50" inputmode="numeric" data-i18n-ph="f.goal.ph">
+      </div>
+
+      <div class="sec">
+        <h2 id="paper-lbl" data-i18n="sec.paper">Paper</h2>
+        <div id="papers" class="chips" role="radiogroup" aria-labelledby="paper-lbl"></div>
+      </div>
+
+      <div class="sec">
+        <h2 data-i18n="sec.export">Take it with you</h2>
+        <div class="chips">
+          <button type="button" id="copy-btn" class="chip" data-i18n="btn.copy">Copy text</button>
+          <button type="button" id="txt-btn" class="chip" data-i18n="btn.txt">Download .txt</button>
+          <button type="button" id="print-btn" class="chip" data-i18n="btn.print">Print</button>
+        </div>
+        <p class="hint small" data-i18n="export.hint"></p>
+      </div>
+
+      <p class="hint small" data-i18n="hint.mode"></p>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.64.01"></script>
+  <script src="typewriter.js?v=0.64.01"></script>
+
+</body>
+</html>
