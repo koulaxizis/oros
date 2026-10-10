@@ -4,6 +4,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 0.57.00
 - [Podcasts](app:podcasts) shows chapters and transcripts, plays video episodes, searches every episode, keeps listening statistics, can tell you about new episodes, and sends an episode to [Notes](app:notes), [To-Do](app:todo) or a show's site to [Reader](app:feeds).
 - [Meal Planner](app:meals) sends the shopping list to [To-Do](app:todo), and [Calendar](app:calendar) can show planned meals with the new Meals chip.
+- [Travel](app:travel) reminds you the evening before a trip and before each departure, shows the destination's forecast, works out fuel cost by car with data from [Garage](app:garage), and puts trips in [Calendar](app:calendar).
 
 ## Version 0.56.00
 - [Reader](app:feeds) can send an article to [Bookmarks](app:bookmarks), [Notes](app:notes), [To-Do](app:todo) or email, and can notify you about new articles from a feed or a watched word. In [Bookmarks](app:bookmarks), `Follow in Reader` subscribes to a site.

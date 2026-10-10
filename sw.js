@@ -861,6 +861,7 @@ var PRECACHE_URLS = [
   "travel/search.js",
   "travel/travel.css",
   "travel/travel.js",
+  "travel/core.js",
   "vendor/jspdf.umd.min.js",
   "vendor/xlsx.full.min.js",
   "vendor/hls.light.min.js",
