@@ -24,6 +24,10 @@
 //   dur/ptr the page background only: seconds the page shows (1..60,
 //          default 5) and the transition to it (none|fade|slide|push|
 //          zoom, default fade); see anim.js
+//   vid    a photo that is a video element: vid (clip id), vs / ve
+//          (trim), mu, vol, nl; see clips.js
+//   au/av/ao the page background only: the page's sound (clip id),
+//          its volume and where in it the page starts; see clips.js
 //   cr     credit of a piece from an open source (media.normCredit)
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
@@ -32,12 +36,14 @@
 (function (root) {
   "use strict";
 
-  var M, T, FX, MEDIA;
+  var M, T, FX, MEDIA, CL;
   if (typeof module !== "undefined" && module.exports) {
     M = require("../designkit/model.js"); T = require("../designkit/text.js");
     FX = require("../designkit/fx.js"); MEDIA = require("../designkit/media.js");
+    CL = require("./clips.js");
   } else {
     M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; MEDIA = root.orosDK.media;
+    CL = root.AtelierClips;
   }
 
   var KINDS = ["text", "shape", "icon", "photo", "line"];
@@ -133,6 +139,17 @@
       if (flt !== "none") o.flt = flt;
       if (bit(a.flh)) o.flh = 1;
       if (bit(a.flv)) o.flv = 1;
+      // a video element: the picture is its poster frame (clips.js)
+      if (!o.bg && CL.isVideo(a.vid)) {
+        o.vid = a.vid;
+        var vs = num(a.vs, 0, CL.MAX_LEN, 0), ve = num(a.ve, 0, CL.MAX_LEN, 0);
+        if (vs) o.vs = vs;
+        if (ve > vs + 0.1) o.ve = ve;
+        if (bit(a.mu)) o.mu = 1;
+        var vol = int(a.vol, 0, 100, 100);
+        if (vol !== 100) o.vol = vol;
+        if (bit(a.nl)) o.nl = 1;
+      }
     }
     if (k === "line") {
       var as = oneOf(a.as, HEADS, ""), ae = oneOf(a.ae, HEADS, "");
@@ -146,6 +163,14 @@
       if (dur !== DUR_DEF) o.dur = dur;
       var ptr = oneOf(a.ptr, TRANSITIONS, PTR_DEF);
       if (ptr !== PTR_DEF) o.ptr = ptr;
+      // the page's sound (clips.js)
+      if (CL.isSound(a.au)) {
+        o.au = a.au;
+        var av = int(a.av, 0, 100, 100);
+        if (av !== 100) o.av = av;
+        var ao = num(a.ao, 0, CL.MAX_LEN, 0);
+        if (ao) o.ao = ao;
+      }
     } else {
       var an = oneOf(a.an, ANIMS, "");
       if (an && !(an === "type" && k !== "text")) o.an = an;
@@ -378,13 +403,23 @@
     doc.items.forEach(function (it) { if (it.t === "img" && it.a) ids[it.a] = 1; });
     return Object.keys(ids).sort();
   }
+  // video and sound files a design uses (packages, export)
+  function clipIds(doc) {
+    var ids = {};
+    doc.items.forEach(function (it) {
+      if (!it.ax) return;
+      if (it.ax.vid) ids[it.ax.vid] = 1;
+      if (it.ax.au) ids[it.ax.au] = 1;
+    });
+    return Object.keys(ids).sort();
+  }
 
   var api = {
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
     textWidth: textWidth, fontKeyOf: fontKeyOf, isExtraFont: isExtraFont, ensureFont: ensureFont,
-    fontName: fontName, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds
+    fontName: fontName, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierAX = api;
