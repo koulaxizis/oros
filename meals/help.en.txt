@@ -28,6 +28,8 @@ Meals that don't fit your diet show a ⚠.
 ## Shopping
 The shopping list adds up every ingredient planned for the week, grouped by aisle. Things you always have are left out and listed at the bottom, where you can put them back. Tick items as you buy them. `From today` leaves out the days already gone. Use `Add an item…` for extras, and the options of an item to change its `Aisle`, mark `I always have it` or `Remove` it. `Copy` and `Share` send the list as text.
 
+`To To-Do` sends the unticked items to the `Groceries` list in [To-Do](app:todo), each with the recipes it is for. To-Do shows them first: you can pick another list, and items already on it start unticked. Nothing is added until you press `Add`, and your ticks here don't change.
+
 ## Sync and backup
 Recipes, the week plan, the shopping ticks, your extra items and settings sync between your devices through [orOS sync](help:t/sync), so two phones can tick the same list. The open tab and filters stay on each device. `Settings` has `Export (JSON)` and `Import (JSON)`; an import merges and never wipes. The orOS [backup](help:t/backup) covers this app too.
 
@@ -38,6 +40,7 @@ Recipes, the week plan, the shopping ticks, your extra items and settings sync b
 
 ## Tips
 - Add salt, oil and the other basics to `Always in the house` to keep the list short.
+- Planned meals can show up in [Calendar](app:calendar) under the `Meals` chip; tapping one opens that week here.
 
 ## Limits
 - Diet checks look only at ingredient names; always check labels for allergies.

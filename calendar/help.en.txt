@@ -28,6 +28,7 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Birthdays`, `Anniversaries` and `Custom Feed` from [Contacts](app:contacts).
 - `To-Do`: unfinished tasks on their due date, from [To-Do](app:todo).
 - `Kanban` cards with a due date, `Habits` you completed, `Mood` entries, `Cycle` periods, `Workouts`, `Plants` care, and `Screen Pet` moments.
+- `Meals` planned in [Meal Planner](app:meals), such as "Dinner: Fasolada".
 
 Tapping a feed row opens the app it comes from. To change it, edit it there.
 
