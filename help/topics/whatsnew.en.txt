@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.58.00
+- [Layout](app:layout) checks your document before export (preflight), starts from 7 templates, exports a page as PNG or JPG, lets you change master objects on one page, has rulers with guides, and opens Scribus files.
+
 ## Version 0.57.00
 - [Podcasts](app:podcasts) shows chapters and transcripts, plays video episodes, searches every episode, keeps listening statistics, can tell you about new episodes, and sends an episode to [Notes](app:notes), [To-Do](app:todo) or a show's site to [Reader](app:feeds).
 - [Meal Planner](app:meals) sends the shopping list to [To-Do](app:todo), and [Calendar](app:calendar) can show planned meals with the new Meals chip.
