@@ -33,7 +33,7 @@
   var C = window.orosTimesheetCore;
   var STORAGE_KEY = C.STORAGE_KEY;
   var PREFS_KEY = "oros-timesheet-prefs";
-  var FORGOT_MS = 10 * C.HOUR;
+  var FORGOT_MS = C.FORGOT_MS;
 
   // ---------- 1. i18n + helpers ----------
   function appLang() {
@@ -98,7 +98,7 @@
       "set.data": "Data", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup",
       "set.restoreHint": "A restore merges with what is here: nothing is replaced or lost.",
       "toast.save": "Could not save: storage is full", "toast.started": "Started: {p}",
-      "toast.stopped": "Stopped: {p}, {d}", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
+      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.undo": "Undo", "toast.badTime": "The end must be after the start",
       "toast.badDur": "Could not read that duration", "toast.badMoney": "Could not read that amount",
       "toast.badName": "Give it a name", "toast.overlap": "Saved. It overlaps another entry.",
@@ -163,7 +163,7 @@
       "set.data": "Δεδομένα", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο",
       "set.restoreHint": "Η επαναφορά ενώνεται με ό,τι υπάρχει: τίποτα δεν αντικαθίσταται ούτε χάνεται.",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε", "toast.started": "Ξεκίνησε: {p}",
-      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
+      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.undo": "Αναίρεση", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
       "toast.badDur": "Δεν κατάλαβα αυτή τη διάρκεια", "toast.badMoney": "Δεν κατάλαβα αυτό το ποσό",
       "toast.badName": "Δώσε ένα όνομα", "toast.overlap": "Αποθηκεύτηκε. Επικαλύπτεται με άλλη καταγραφή.",
@@ -1747,6 +1747,25 @@
     if (x && x.e === 0) entryDialog(id, { stop: true });
   }
 
+  // Ctrl+Alt+Shift+T from the shell (Wave 3): start or stop the
+  // timer, like the big button. A live push when this app runs; a
+  // one-shot sessionStorage flag when the shell had to open it.
+  window.__orosTimesheetToggle = function () {
+    if (document.querySelector("dialog[open]")) return;
+    setTab("timer");
+    var wasRunning = C.running(data).length > 0;
+    toggleTimer();
+    if (!wasRunning && C.running(data).length) showToast(t("toast.started", { p: projLabel(C.running(data)[0].p) }));
+  };
+  function takeShellToggle() {
+    var go = false;
+    try {
+      go = sessionStorage.getItem("oros-timesheet-toggle") === "1";
+      if (go) sessionStorage.removeItem("oros-timesheet-toggle");
+    } catch (e) {}
+    if (go) window.__orosTimesheetToggle();
+  }
+
   function boot() {
     load();
     loadPrefs();
@@ -1758,6 +1777,7 @@
     inheritPalette();
     watchPalette();
     setTab(prefs.tab);
+    takeShellToggle();
   }
 
   boot();
