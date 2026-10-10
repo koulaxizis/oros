@@ -1443,6 +1443,7 @@
         renderMenu();
         helpBtnRefresh();
         openFromLaunchParam();
+        searchFromLaunchParam();
         deliverShare();
       })
       .catch(function () {
@@ -1474,6 +1475,27 @@
         return;
       }
     }
+  }
+
+  // "oros <words>" in the browser's address bar (Send to orOS add-on,
+  // extension/): "/?search=<words>" opens the menu with the words in
+  // its search field, as if typed. Stripped at once like ?open=.
+  function searchFromLaunchParam() {
+    var params, q;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    if (!params.has("search")) return;
+    q = String(params.get("search") || "").replace(/\s+/g, " ").trim().slice(0, 200);
+    params.delete("search");
+    try {
+      var qs = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
+    } catch (e) {}
+    if (!q || state.running) return;
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = q;
+    inp.dispatchEvent(new Event("input"));
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
