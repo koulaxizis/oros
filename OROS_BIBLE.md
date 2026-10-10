@@ -4079,3 +4079,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Files:** `<app>/search.js` ×35, receivers in the apps' own JS, `tests/search-{media,office,life,health,create}.test.js`, `apps.json`, `sw.js` precache, `search.js`. `APP_VERSION` → 0.52.00.
 - **Not tested:** a real phone, Safari, Dropbox.
 - **Status:** PR #109.
+
+### 2026-10-10 — 2048: timed mode (2 minutes) — 0.52.01
+- **Changes:** a Classic / Timed switch sits next to the board size. A timed game gives two minutes, and the clock starts with the first move. The clock pauses while the page is hidden and keeps its value when the game is reopened. In the last 10 seconds it turns amber, and when it runs out a "Time's up" result appears. Timed records are kept apart from classic ones, and the Records dialog shows both. Switching mode during a game offers Undo. (PR #113)
+- **NOT tested:** a real phone, Safari / iOS.
