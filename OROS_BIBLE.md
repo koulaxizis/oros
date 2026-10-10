@@ -922,6 +922,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - Limits: 5000 items, 999 pages, 400 000 characters per run; a document above 400 KB warns once (R30).
 - Package `.oroslayout`: `{kind: "oros-layout-package", ver: 1, doc, assets{id: base64}}`; opened as a NEW document (new id), every image checked against its sha256 name and decoded as an image before it is written.
 - **SLIDES v1** (slice `slides`, key `oros-slides-data`): `{ ver, decks{id: {id, m, t, as "16:9"|"4:3", th, ft{n, d, x, s1}, c, tm}}, slides{id: {id, m, d (deck), p (order key), ly, tr, hid, bg?, n (notes), nb, nm, tm}}, items{id: {id, m, s (slide), k text|image|shape|line, x, y, w, h, r, z, ph?, …}}, ghosts{decks, slides}, tombs{id: deletedAt} }`. Decks merge in parts (`m`: title, aspect, theme, footer; `tm`: "something inside changed", max) and slides too (`m`: order, layout, transition, hidden, background; `nm`: notes; `tm` max); items LWW by `m`; equal clocks → larger canonical JSON (`tests/slides.test.js`).
+  - Deep link (0.58.01): one receiver `__orosOpenAt("slides", target)` in `slides/app.js`: `{outline, title}` (another app, e.g. Mind Map; plain text in the Outline view's format) opens the "new presentation from an outline" theme picker, nothing is created until a theme is picked; `{deck, slide}` (universal search) opens that deck/slide. Targets wait until the fonts are loaded.
   - Deletes (R17): tombs max-merged; a deck lives while one of its clocks is after its tomb, a slide also needs to be after its deck's tomb, an item after its own, its slide's and its deck's tombs. Deleted decks and slides stay as small `ghosts` (no notes, no items) so the merge stays associative.
   - Pictures are not in the slice: designkit assets `/internal/Assets/<sha256>.<jpg|png>` on the orOS disk, synced per file by Vault Drive.
 - **PUBDOMAIN v1** (no slice, no synced key): nothing is synced. The rules table lives in code (`pubdomain/rules.js`, `window.orosPD`, `VERSION: "1.0.0"`): 21 `COUNTRIES` rows `{ id, n: { en, el }, term, anon, old?, us?, law, src, v, notes }`, every rule "life + N" (public domain on 1 January of death year + N + 1); rows with `v: 0` are shown as "check the source".
@@ -4241,3 +4242,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Fixes: undo of a height-only change; Greek all caps drop the tonos.
 - Files: `layout/` (+ sla.js), `designkit/` (model, render, pdf, text, + templates.js), `tests/layout.test.js`, `tests/layout-sla.test.js`.
 - Not tested: real phone, Safari / iOS, real Dropbox, files from a real Scribus install.
+
+### 2026-10-10 — Slides: new presentation from an outline — 0.58.01
+- **Deep link:** `__orosOpenAt("slides", {outline, title})` with text in the Outline view's format opens a theme picker; nothing is created until the user picks a theme. Empty or malformed targets are ignored. Used by Mind Map phase 2.
+- **Files:** `slides/app.js`, `slides/panels.js`.
+- **Not tested:** a real phone, Safari, real Dropbox.
