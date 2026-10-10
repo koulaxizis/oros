@@ -445,6 +445,14 @@ function makeApi(conn) {
       if (a.length) await conn.run(["UID STORE " + set + " +FLAGS.SILENT (" + a.join(" ") + ")"]);
       if (r.length) await conn.run(["UID STORE " + set + " -FLAGS.SILENT (" + r.join(" ") + ")"]);
       return { uidvalidity: info.uidvalidity };
+    },
+
+    // Stores a message (binary string) in `folder`, e.g. a copy of a
+    // sent message in Sent, marked \Seen.
+    async append(folder, bin, flags) {
+      const fl = (flags || []).filter((f) => /^\\?[A-Za-z$][A-Za-z0-9$_-]{0,40}$/.test(f));
+      await conn.run(["APPEND ", arg(folder, true), " (" + fl.join(" ") + ") ", { text: "{" + bin.length + "}", lit: bin }]);
+      return { ok: true };
     }
   };
 }

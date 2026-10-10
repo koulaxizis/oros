@@ -18,7 +18,8 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `core.js` | HTTP side: CORS (allowed origins only), request validation, rate limit, the operations |
 | `web.js` | The Reader's `web` operation: fetches public feeds and pages (see below) |
 | `canva.js` | The Atelier's `canva` operation: Canva Connect sign-in and PowerPoint export (see below) |
-| `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE) |
+| `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE, APPEND) |
+| `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
 Tests: `tests/mail.test.js` (Node, runs in CI) drives `core.js` +
@@ -36,9 +37,16 @@ Answer: `{ ok: true, data }` or `{ ok: false, error: { code, msg } }`.
 | `list` | `folder`, `limit` (≤200), `beforeUid?`, `known?` (UID set) | `{ uidvalidity, exists, uids, msgs[{ uid, flags, date, size, hdr(base64) }], flags{uid: [...]}, more }` |
 | `fetch` | `folder`, `uid` | `{ uid, uidvalidity, size, raw(base64) }` (≤20 MB) |
 | `flag` | `folder`, `uids[]`, `add[]`, `remove[]` | `{ uidvalidity }` |
+| `smtpcheck` | `smtp:{ host, port (465\|587), sec, user, pass }` | `{ ok }` (SMTP login test) |
+| `send` | `smtp`, `from`, `rcpt[]` (1–50), `raw` (base64 RFC 5322 message, ≤380 KB), `sent?` (folder) | `{ sent, appended, appendErr }` |
+
+`send` hands the message, built by the browser (`mail/compose.js`), to
+the SMTP server, then files a copy in `sent` with IMAP APPEND. Filing
+is best effort: a failure there is reported in `appendErr`, never as
+"not sent". Its request may be up to 512 KB; every other op stays at 64 KB.
 
 Error codes: `origin`, `rate`, `bad-request`, `connect`, `tls`,
-`auth`, `timeout`, `closed`, `proto`, `no`, `gone`, `too-big`.
+`auth`, `timeout`, `closed`, `proto`, `no`, `gone`, `too-big`, `rcpt` (a recipient refused).
 
 ## The `web` operation (Reader app)
 
