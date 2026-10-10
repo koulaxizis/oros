@@ -5,6 +5,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - Atelier: a brand kit (colours, fonts, logos), video and sound in designs with video export, a better Canva import (real fonts, clear errors, retries, no duplicates), and bulk delete of designs and unused files.
 - Dock: choose one of eight styles in Settings › Appearance › Dock; "Show over open apps" is now off until you turn it on.
 - Garage: send your KTEO test, renewals and service appointments to To-Do.
+- Family Tree: a "Family tree" button on contact cards, and death anniversaries in the Calendar.
 
 ## Version 0.60.00
 - New app in Internet: One-Minute Museum shows a Wikipedia article as a museum exhibit, a new one every minute; star the ones you like to keep them, offline too.
