@@ -615,6 +615,7 @@ var PRECACHE_URLS = [
   "budget/search.js",
   "budget/budget.css",
   "budget/budget.js",
+  "budget/feed.js",
   "checkers/",
   "checkers/index.html",
   "checkers/checkers.css",
