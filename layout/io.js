@@ -6,6 +6,7 @@
 //   - .oroslayout package: the document + its images (base64) in
 //     one JSON file; opened as a NEW document, every image checked
 //     against its hash and decoded as an image before it is stored.
+//   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
 //   - Place image, import plain text.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -128,6 +129,37 @@
     }, function (e) {
       exporting = false;
       try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}
+      LY.toast(t("exp.fail"));
+    });
+  }
+
+  // ---------- PNG / JPG of one page ----------
+  var IMG_MAX_PX = 16e6;
+  function exportImage(opts) {
+    var doc = LY.doc;
+    if (!doc || exporting) return;
+    var order = M.pagesInOrder(doc), page = M.find(doc.pages, opts.page);
+    if (!page) return;
+    LY.flushStory && LY.flushStory();
+    exporting = true;
+    LY.toast(t("exp.working"));
+    var scale = (opts.dpi || 150) / 72, w = doc.setup.w, h = doc.setup.h, capped = false;
+    if (w * h * scale * scale > IMG_MAX_PX) { scale = Math.sqrt(IMG_MAX_PX / (w * h)); capped = true; }
+    var chain = Promise.resolve();
+    imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
+    var jpg = opts.fmt === "jpg", n = order.indexOf(page) + 1;
+    chain.then(function () {
+      var cv = LY.R.renderPage(doc, page, ED.L, scale, { getImage: A.get, background: "#fff" });
+      return toBlob(cv, jpg ? "image/jpeg" : "image/png", 0.92);
+    }).then(function (blob) {
+      var ext = jpg ? ".jpg" : ".png";
+      return saveBlob(blob, fileName(doc, (order.length > 1 ? "-" + n : "") + ext), jpg ? "image/jpeg" : "image/png", jpg ? "JPEG" : "PNG", ext);
+    }).then(function (ok) {
+      exporting = false;
+      if (ok) LY.toast(capped ? t("exp.capped", { n: Math.round(scale * 72) }) : t("exp.done"));
+    }, function (e) {
+      exporting = false;
+      try { console.error("[orOS] layout: image export failed", e); } catch (x) {}
       LY.toast(t("exp.fail"));
     });
   }
@@ -259,7 +291,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportPackage: exportPackage, importPackage: importPackage,
+    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage,
     placeImage: placeImage, importText: importText
   };
 })();

@@ -20,6 +20,7 @@
 
   // ---------- 1. State + geometry ----------
   var K = 96 / 72;          // CSS px per pt at 100%
+  var RULER = 18;           // ruler strip, CSS px
   var GAP = 48;             // pt between spreads
   var ED = LY.ed = {
     tool: "select", sel: [], zoom: 1, camX: 0, camY: 0, preview: false,
@@ -27,7 +28,7 @@
   };
   var cv, ctx, dpr = 1, W = 0, H = 0;
   var world = [];           // spreads: { pages: [P], x, y, w, h }
-  var palette = { board: "#222", accent: "#4da3ff", text: "#ddd" };
+  var palette = { board: "#222", accent: "#4da3ff", text: "#ddd", ruler: "#1b1e24", rulerLine: "#2c313a" };
 
   function scale() { return ED.zoom * K; }
   function toScreen(wx, wy) { var s = scale(); return [(wx - ED.camX) * s, (wy - ED.camY) * s]; }
@@ -277,6 +278,8 @@
     palette.board = cs.getPropertyValue("--bg-desktop").trim() || cs.getPropertyValue("--bg").trim() || "#222";
     palette.accent = cs.getPropertyValue("--accent").trim() || "#4da3ff";
     palette.text = cs.getPropertyValue("--text-dim").trim() || "#aaa";
+    palette.ruler = cs.getPropertyValue("--panel-bg").trim() || "#1b1e24";
+    palette.rulerLine = cs.getPropertyValue("--border").trim() || "#2c313a";
   }
 
   function resize() {
@@ -330,6 +333,7 @@
     });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlay();
+    if (!ED.preview) drawRulers();
     LY.emit("drawn");
   }
 
@@ -438,6 +442,92 @@
     ctx.restore();
   }
 
+  // ---------- Rulers + ruler guides ----------
+  // Rulers measure from the top-left of the page in the middle of the
+  // view, in the document unit. Drag from a ruler to make a guide,
+  // drag a guide to move it, drop it back on a ruler to delete it.
+  function rulerStep(sc) {
+    var u = M.PT_PER[LY.doc.setup.unit] || 1, steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+    for (var i = 0; i < steps.length; i++) if (steps[i] * u * sc >= 50) return steps[i];
+    return 1000;
+  }
+  function drawRulers() {
+    var P = curP();
+    if (!P) return;
+    var sc = scale(), u = M.PT_PER[LY.doc.setup.unit] || 1, step = rulerStep(sc);
+    var o = toScreen(P.x, P.y);
+    ctx.save();
+    ctx.fillStyle = palette.ruler; ctx.fillRect(0, 0, W, RULER); ctx.fillRect(0, 0, RULER, H);
+    ctx.strokeStyle = palette.rulerLine; ctx.fillStyle = palette.text; ctx.lineWidth = 1;
+    ctx.font = "9px system-ui, sans-serif"; ctx.textBaseline = "top";
+    ctx.beginPath();
+    var px = step * u * sc, sub = px / 5;
+    var i0 = Math.floor((RULER - o[0]) / sub) - 1, i1 = Math.ceil((W - o[0]) / sub) + 1, i, x, y, big;
+    for (i = i0; i <= i1; i++) {
+      x = Math.round(o[0] + i * sub) + 0.5; big = i % 5 === 0;
+      if (x < RULER) continue;
+      ctx.moveTo(x, RULER); ctx.lineTo(x, big ? 2 : RULER - 5);
+      if (big) ctx.fillText(String(Math.round(i / 5 * step)), x + 2, 2);
+    }
+    var j0 = Math.floor((RULER - o[1]) / sub) - 1, j1 = Math.ceil((H - o[1]) / sub) + 1;
+    for (i = j0; i <= j1; i++) {
+      y = Math.round(o[1] + i * sub) + 0.5; big = i % 5 === 0;
+      if (y < RULER) continue;
+      ctx.moveTo(RULER, y); ctx.lineTo(big ? 2 : RULER - 5, y);
+      if (big) { ctx.save(); ctx.translate(2, y + 2); ctx.rotate(Math.PI / 2); ctx.textBaseline = "bottom"; ctx.fillText(String(Math.round(i / 5 * step)), 0, 0); ctx.restore(); }
+    }
+    ctx.moveTo(0, RULER + 0.5); ctx.lineTo(W, RULER + 0.5);
+    ctx.moveTo(RULER + 0.5, 0); ctx.lineTo(RULER + 0.5, H);
+    ctx.stroke();
+    ctx.fillStyle = palette.ruler; ctx.fillRect(0, 0, RULER, RULER);
+    // guide being dragged
+    if (ED.gdrag && ED.gdrag.at !== null) {
+      ctx.strokeStyle = "rgba(0,180,220,0.95)"; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      if (ED.gdrag.o === "v") { ctx.moveTo(ED.gdrag.at + 0.5, 0); ctx.lineTo(ED.gdrag.at + 0.5, H); }
+      else { ctx.moveTo(0, ED.gdrag.at + 0.5); ctx.lineTo(W, ED.gdrag.at + 0.5); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function inRuler(p) { return !ED.preview && (p[0] < RULER || p[1] < RULER); }
+  // A ruler guide under a screen point (owner of the page there).
+  function hitGuide(sx, sy, tol) {
+    var w = toWorld(sx, sy), P = pageAt(w[0], w[1], false);
+    if (!P) return null;
+    var best = null, bd = tol;
+    LY.doc.guides.forEach(function (g) {
+      if (g.pg !== P.id) return;
+      var d = g.o === "v" ? Math.abs(toScreen(P.x + g.p, 0)[0] - sx) : Math.abs(toScreen(0, P.y + g.p)[1] - sy);
+      if (d <= bd) { bd = d; best = g; }
+    });
+    return best;
+  }
+  function finishGuide(d, p) {
+    ED.gdrag = null;
+    if (!d.moved) return;
+    var gid = d.gid;
+    if (inRuler(p)) {
+      if (gid) LY.op(function (doc, now) {
+        var n = doc.guides.length;
+        doc.guides = doc.guides.filter(function (g) { return g.id !== gid; });
+        if (doc.guides.length === n) return false;
+        doc.tombs[gid] = now;
+      });
+      return;
+    }
+    var w = toWorld(p[0], p[1]), P = pageAt(w[0], w[1], true);
+    if (!P) return;
+    var s = LY.doc.setup, b = s.bleed;
+    var pos = d.o === "v" ? w[0] - P.x : w[1] - P.y;
+    pos = Math.round(Math.max(-b, Math.min((d.o === "v" ? s.w : s.h) + b, pos)) * 100) / 100;
+    LY.op(function (doc, now) {
+      var g = gid ? M.find(doc.guides, gid) : null;
+      if (g) { g.p = pos; g.pg = P.id; M.touch(g, now); return; }
+      doc.guides.push({ id: M.newId("gd"), m: now, pg: P.id, o: d.o, p: pos });
+    });
+  }
+
   function portPos(it, out) {
     var P = pOf(it);
     if (!P) return null;
@@ -509,21 +599,39 @@
     ED.render();
     LY.emit("view");
   };
+  function fitBox(x, y, w, h) {
+    var b = LY.doc.setup.bleed + 12, pad = 24 + (ED.preview ? 0 : RULER);
+    var z = Math.min((W - 2 * pad) / ((w + 2 * b) * K), (H - 2 * pad) / ((h + 2 * b) * K));
+    ED.zoom = Math.max(0.05, Math.min(16, z));
+    var s2 = scale();
+    ED.camX = x + w / 2 - (W + (ED.preview ? 0 : RULER)) / 2 / s2;
+    ED.camY = y + h / 2 - (H + (ED.preview ? 0 : RULER)) / 2 / s2;
+    ED.render();
+    LY.emit("view");
+  }
+  // Fit the spread of P (default: the one in the middle of the view).
   ED.fit = function (P) {
     P = P || curP();
     if (!P) return;
     var sp = null;
     world.forEach(function (s) { if (s.pages.indexOf(P) >= 0) sp = s; });
-    if (!sp) return;
-    var b = LY.doc.setup.bleed + 12, pad = 24;
-    var z = Math.min((W - 2 * pad) / ((sp.w + 2 * b) * K), (H - 2 * pad) / ((sp.h + 2 * b) * K));
-    ED.zoom = Math.max(0.05, Math.min(16, z));
-    var s2 = scale();
-    ED.camX = sp.x + sp.w / 2 - W / 2 / s2;
-    ED.camY = sp.y + sp.h / 2 - H / 2 / s2;
-    ED.render();
-    LY.emit("view");
+    if (sp) fitBox(sp.x, sp.y, sp.w, sp.h);
   };
+  ED.fitPage = function () {
+    var P = curP();
+    if (P) fitBox(P.x, P.y, P.w, P.h);
+  };
+  function zoomMenu() {
+    LY.menu($("ed-zoom"), [
+      { label: t("zoom.page"), fn: ED.fitPage },
+      { label: t("zoom.spread"), fn: function () { ED.fit(); } },
+      { sep: true },
+      { label: "50%", fn: function () { ED.setZoom(0.5); } },
+      { label: "100%", fn: function () { ED.setZoom(1); } },
+      { label: "200%", fn: function () { ED.setZoom(2); } }
+    ]);
+  }
+
   ED.scrollToPage = function (pageId) {
     var P = null;
     allP().forEach(function (p) { if (p.id === pageId && !P) P = p; });
@@ -751,6 +859,11 @@
     if (e.button === 2) return;   // contextmenu handles it
 
     if (ED.threadFrom) { threadClick(w); return; }
+    if (inRuler(p)) {
+      if (p[0] < RULER && p[1] < RULER) return;
+      startDrag(e, "guide", { o: p[1] < RULER ? "h" : "v", gid: null });
+      return;
+    }
 
     if (ED.tool === "select") {
       var h = hitHandle(p[0], p[1], touch);
@@ -758,6 +871,10 @@
       var port = hitPort(p[0], p[1], touch);
       if (port) { startThread(port.id); return; }
       var it = hitItem(w[0], w[1], touch ? 10 : 4);
+      if (!it) {
+        var g = hitGuide(p[0], p[1], touch ? 10 : 4);
+        if (g) { startDrag(e, "guide", { o: g.o, gid: g.id }); return; }
+      }
       if (!it && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         var hm = hitMaster(w[0], w[1], 4);
         if (hm) { detachOne(hm); return; }
@@ -844,6 +961,9 @@
       var s2 = scale();
       ED.camX = drag.cam[0] - dxs / s2; ED.camY = drag.cam[1] - dys / s2;
       ED.render(); LY.emit("view");
+    } else if (drag.kind === "guide") {
+      ED.gdrag = { o: drag.o, at: drag.o === "v" ? p[0] : p[1] };
+      ED.render();
     } else if (drag.kind === "marquee") {
       ED.marquee = { x0: drag.x0, y0: drag.y0, x1: p[0], y1: p[1] };
       ED.render();
@@ -958,7 +1078,8 @@
     var d = drag; drag = null;
     var p = evPos(e), w = toWorld(p[0], p[1]);
     ED.snaps = [];
-    if (d.kind === "marquee") {
+    if (d.kind === "guide") finishGuide(d, p);
+    else if (d.kind === "marquee") {
       ED.marquee = null;
       if (d.moved) {
         var a = toWorld(Math.min(d.x0, p[0]), Math.min(d.y0, p[1])), b = toWorld(Math.max(d.x0, p[0]), Math.max(d.y0, p[1]));
@@ -1392,7 +1513,7 @@
     cv.addEventListener("pointerdown", onDown);
     cv.addEventListener("pointermove", onMove);
     cv.addEventListener("pointerup", onUp);
-    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
+    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.gdrag = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
     cv.addEventListener("dblclick", function (e) {
       var p = evPos(e), w = toWorld(p[0], p[1]), it = hitItem(w[0], w[1], 4);
       if (it && it.t === "text") LY.story.open(it.id);
@@ -1424,7 +1545,7 @@
     $("ed-redo").addEventListener("click", LY.redo);
     $("ed-zin").addEventListener("click", function () { ED.setZoom(ED.zoom * 1.25); });
     $("ed-zout").addEventListener("click", function () { ED.setZoom(ED.zoom / 1.25); });
-    $("ed-zoom").addEventListener("click", function () { ED.fit(); });
+    $("ed-zoom").addEventListener("click", zoomMenu);
     $("ed-preview").addEventListener("click", ED.togglePreview);
     $("master-done").addEventListener("click", function () { ED.enterMaster(null); });
     $("thread-cancel").addEventListener("click", endThread);
@@ -1436,7 +1557,7 @@
     LY.setIcon($("ed-zin"), "plus", t("ed.zin"));
     LY.setIcon($("ed-zout"), "minus", t("ed.zout"));
     LY.setIcon($("ed-preview"), "eye", t("ed.preview"));
-    $("ed-zoom").title = t("ed.fit");
+    $("ed-zoom").title = t("zoom.title");
     $("ed-name").title = t("ed.rename");
 
     LY.on("palette", function () { readPalette(); ED.render(); });

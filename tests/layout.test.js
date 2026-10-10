@@ -170,6 +170,69 @@ test("pdf: a vector PDF with embedded fonts, bleed boxes and spreads", () => {
   assert.ok(P.fontsUsed(d, R.computeLayout(d), M.pagesInOrder(d)).includes("serif-r"), "only the fonts in use are embedded");
 });
 
+// ---------- 1B: master overrides, preflight, templates ----------
+test("master overrides: a page copy (ov) hides its master item there only, and stays canonical", () => {
+  const d = sampleDoc();
+  const pg = M.pagesInOrder(d);
+  const before = M.masterItems(d, pg[0], M.sideOf(d, 0)).map((it) => it.id);
+  assert.deepEqual(before, ["it-mf"]);
+  d.items.push({ id: "it-cp", m: 2000, t: "rect", pg: pg[0].id, x: 1, y: 1, w: 5, h: 5, ov: "it-mf", z: -5 });
+  d.items.push({ id: "it-bad", m: 2000, t: "rect", pg: pg[0].id, x: 1, y: 1, w: 5, h: 5, ov: "it-bad", z: -5 });
+  const n = M.normDoc(d);
+  assert.equal(M.find(n.items, "it-cp").ov, "it-mf");
+  assert.equal(M.find(n.items, "it-bad").ov, undefined, "an item cannot override itself");
+  assert.equal(J(M.normDoc(JSON.parse(J(n)))), J(n), "idempotent");
+  assert.deepEqual(M.masterItems(n, M.find(n.pages, pg[0].id), "R"), []);
+  assert.deepEqual(M.masterItems(n, M.find(n.pages, pg[2].id), "R").map((it) => it.id), ["it-mf"], "other pages keep it");
+  const L = R.computeLayout(n);
+  assert.ok(!L.master[pg[0].id]["it-mf"] && L.master[pg[2].id]["it-mf"]);
+});
+
+test("preflight: overset, missing image, low ppi, bleed, small text, empty frame", () => {
+  const d = sampleDoc();
+  const pg = M.pagesInOrder(d), p0 = pg[0].id, H = "a".repeat(64);
+  d.pstyles.push({ id: "ps-tiny", m: 1, name: "Tiny", base: "ps-base", size: 4, lead: 5 });
+  d.stories.push({ id: "st-tiny", m: 1, paras: [{ ps: "ps-tiny", runs: [{ t: "tiny text" }] }] });
+  d.stories.push({ id: "st-empty", m: 1, paras: [] });
+  d.items.push({ id: "it-tiny", m: 1, t: "text", pg: p0, x: 30, y: 400, w: 100, h: 40, story: "st-tiny", seq: 1, z: 5 });
+  d.items.push({ id: "it-empty", m: 1, t: "text", pg: p0, x: 30, y: 450, w: 100, h: 40, story: "st-empty", seq: 1, z: 6 });
+  d.items.push({ id: "it-miss", m: 1, t: "img", pg: p0, x: 200, y: 20, w: 50, h: 50, a: H + ".jpg", iw: 2000, ih: 2000, z: 7 });
+  d.items.push({ id: "it-low", m: 1, t: "img", pg: p0, x: 200, y: 100, w: 300, h: 300, a: "b".repeat(64) + ".jpg", iw: 300, ih: 300, z: 8 });
+  d.items.push({ id: "it-trim", m: 1, t: "rect", pg: pg[1].id, x: 0, y: 100, w: 50, h: 50, fill: "sw-red", z: 9 });
+  d.items.push({ id: "it-bled", m: 1, t: "rect", pg: pg[1].id, x: -d.setup.bleed, y: 200, w: 50, h: 50, fill: "sw-red", z: 10 });
+  d.items.push({ id: "it-hid", m: 1, t: "img", pg: p0, x: 1, y: 1, w: 9, h: 9, hide: 1, z: 11 });
+  const n = M.normDoc(d);
+  const pf = R.preflight(n, R.computeLayout(n), { isMissing: (a) => a === H + ".jpg" });
+  const got = pf.map((x) => x.code + ":" + x.id);
+  ["overset:it-t2", "small:it-tiny", "empty:it-empty", "missing:it-miss", "ppi:it-low"].forEach((k) => assert.ok(got.includes(k), k + " in " + got));
+  // page 2 is a left page of a facing doc: its left edge is outside, x = 0 touches the trim
+  assert.ok(got.includes("bleed:it-trim"));
+  assert.ok(!got.some((k) => /it-bled|it-hid/.test(k)), "reaching the bleed or hidden is fine");
+  assert.equal(pf.find((x) => x.id === "it-miss").sev, "err");
+  // ordered by page, errors first
+  const order = M.pagesInOrder(n).map((p) => p.id);
+  for (let i = 1; i < pf.length; i++) assert.ok(order.indexOf(pf[i - 1].pg) <= order.indexOf(pf[i].pg) || order.indexOf(pf[i].pg) < 0);
+});
+
+test("templates: every template builds a canonical document in both languages with no overset", () => {
+  const TP = require(path.join(ROOT, "designkit/templates.js"));
+  assert.equal(TP.LIST.length, 7);
+  TP.LIST.forEach((tp) => {
+    assert.ok(tp.name.en && tp.name.el);
+    ["en", "el"].forEach((lang) => {
+      const d = TP.build(tp.id, { lang, now: 5000 });
+      assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), tp.id + " canonical");
+      assert.ok(d.items.length > 0 && d.pages.length > 0);
+      d.items.forEach((it) => { if (it.t === "text") assert.ok(M.story(d, it.story), "frame has its story"); });
+      const pf = R.preflight(d, R.computeLayout(d), {});
+      assert.deepEqual(pf.filter((x) => x.sev === "err"), [], tp.id + "/" + lang + " no errors");
+    });
+  });
+  const el = TP.build("flyer", { lang: "el", now: 1 });
+  assert.ok(el.stories.some((s) => /Φεστιβάλ/.test(T.plainText(s))), "Greek copy");
+  assert.equal(TP.build("nope", { lang: "en", now: 1 }), null);
+});
+
 // ---------- strings ----------
 test("i18n: every key the app uses exists in English and Greek", () => {
   const src = fs.readFileSync(path.join(ROOT, "layout/layout.js"), "utf8");
