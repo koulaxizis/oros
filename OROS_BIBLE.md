@@ -4395,3 +4395,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: sync slice `typewriter` (`oros-typewriter-data`, TYPEWRITER v1: pages LWW per page + tombstones, delete wins ties); `oros-typewriter-prefs` stays on the device.
 - Files: typewriter/ (index.html, core.js, typewriter.js, typewriter.css, help.en/el.txt), tests/typewriter.test.js. Registered in apps.json (Creativity, after Prompter), icon, names, precache, tests.yml.
 - Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Timesheet Wave 6: tasks, tags, hour budgets, report filters (#145) — 0.64.01
+- Entries get an optional task and tags; projects get an optional hours budget with a progress bar.
+- Reports filter by tag and group by task or tag. CSV export and import carry tasks and tags; the search provider finds them.
+- Data: TIMESHEET entries/projects gain optional fields (see the TIMESHEET schema note); unknown fields from newer versions ride along (forward-compatible).
+- Tests: tests/timesheet.test.js extended. Help pages updated.
+- Not tested: a real phone, Safari, real Dropbox.
