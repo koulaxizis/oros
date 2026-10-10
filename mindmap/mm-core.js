@@ -853,10 +853,14 @@
       var a = shown(l.from), b = shown(l.to);
       if (!a || !b || a === b) return;
       var A = L[a], B = L[b];
-      var p1 = exitPoint(A, B.cx, B.cy), p2 = exitPoint(B, A.cx, A.cy);
-      var mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2, len = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
-      var bend = Math.min(80, len * 0.25), nx = -(p2.y - p1.y) / len, ny = (p2.x - p1.x) / len;
-      var qx = mx + nx * bend, qy = my + ny * bend;
+      var mx = (A.cx + B.cx) / 2, my = (A.cy + B.cy) / 2, len = Math.hypot(B.cx - A.cx, B.cy - A.cy) || 1;
+      // bulge away from the centre, so links between nodes of one
+      // column curve out beside it instead of over the boxes; the
+      // ends leave the boxes towards the bend
+      var bend = Math.max(60, Math.min(120, len * 0.4)), nx = -(B.cy - A.cy) / len, ny = (B.cx - A.cx) / len;
+      var C0 = L[rid], qx = mx + nx * bend, qy = my + ny * bend, ox = mx - nx * bend, oy = my - ny * bend;
+      if (Math.hypot(ox - C0.cx, oy - C0.cy) > Math.hypot(qx - C0.cx, qy - C0.cy)) { qx = ox; qy = oy; }
+      var p1 = exitPoint(A, qx, qy), p2 = exitPoint(B, qx, qy);
       // label sits on the curve's midpoint (t = 0.5 of the quadratic)
       var lx = (p1.x + 2 * qx + p2.x) / 4, ly = (p1.y + 2 * qy + p2.y) / 4;
       var lw = l.label ? Math.ceil(measure(l.label, LINK_FONT, 600) + LINK_PAD * 2) : 0;

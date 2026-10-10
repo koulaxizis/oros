@@ -31,7 +31,7 @@ Tap the map name at the top left for `Your maps`. There you can open, rename, du
 With [orOS sync](help:t/sync), your maps and every node reach your other devices. Which map is open, the view and which branches are folded stay on this device.
 
 - `Export…` makes a picture (PNG or SVG), Markdown, OPML or JSON of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
-- `Import (OPML, Markdown, text, JSON)…` brings in outlines from other mind map and outline apps as a new map. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
+- `Import (FreeMind, XMind, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane and XMind (only the first sheet), and outlines from other apps, as a new map. Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
 - `Back up all maps (JSON)` saves everything in one file. Your maps are also part of orOS [backups](help:t/backup).
 
 ## Keyboard shortcuts

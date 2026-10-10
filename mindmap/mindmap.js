@@ -79,7 +79,7 @@
       "col.red": "Red", "col.orange": "Orange", "col.yellow": "Yellow", "col.green": "Green", "col.teal": "Teal",
       "col.violet": "Violet", "col.pink": "Pink", "col.grey": "Grey",
       "menu.new": "New map", "menu.maps": "Your maps…", "menu.paste": "Paste a list…", "menu.export": "Export…",
-      "menu.copy": "Copy map as text", "menu.import": "Import (OPML, Markdown, text, JSON)…",
+      "menu.copy": "Copy map as text", "menu.import": "Import (FreeMind, XMind, OPML, Markdown, text, JSON)…",
       "menu.backup": "Back up all maps (JSON)", "menu.sidesBoth": "Branches on both sides",
       "menu.sidesRight": "Branches on the right only", "menu.unfoldAll": "Unfold all", "menu.foldAll": "Fold main branches",
       "menu.keys": "Keyboard shortcuts",
@@ -95,8 +95,9 @@
       "imp.merge": "Maps you already have are merged: newer changes are kept and nothing you deleted comes back.",
       "imp.go": "Import", "imp.done": "Imported", "imp.newMap": "Imported as a new map",
       "imp.err.size": "The file is too big (max 5 MB)", "imp.err.json": "This is not a valid JSON file",
-      "imp.err.format": "This file is not a mind map, OPML outline or list", "imp.err.toolarge": "Too many maps or nodes in this file",
+      "imp.err.format": "This file is not a mind map, outline or list", "imp.err.toolarge": "Too many maps or nodes in this file",
       "imp.err.empty": "Nothing to import in this file", "imp.err.read": "The file could not be read",
+      "imp.err.zip": "This file is damaged or not an XMind map", "imp.sheets": "Only the first of {n} sheets was imported",
       "keys.title": "Keyboard shortcuts",
       "keys.list": "Tab|Add a child\nEnter|Add a sibling\nF2 or type|Edit the selected node\nShift+Enter|New line while editing\nDelete|Delete the branch\nSpace|Fold or unfold\nArrows|Move around the map\nAlt+↑ / Alt+↓|Move the node up / down\nCtrl+Z / Ctrl+Y|Undo / redo\nCtrl+C / Ctrl+V|Copy a branch as text / paste a list\nCtrl+F|Find\n+ / − / Home|Zoom in / out / fit",
       "ol.indent": "Indent", "ol.outdent": "Outdent", "ol.up": "Move up", "ol.down": "Move down", "ol.new": "New line",
@@ -117,6 +118,10 @@
       "link.dup": "These two are already linked", "link.title": "Link", "link.label": "Label (optional)",
       "link.ph": "e.g. depends on", "link.noLabel": "No label", "link.edit": "Label", "link.reverse": "Reverse",
       "link.goFrom": "Go to the start", "link.goTo": "Go to the end", "link.delete": "Delete link",
+      "app.name": "Mind Map", "ctx.todo": "Send to To-Do…", "ctx.slides": "Make slides from this branch…",
+      "menu.slides": "Make slides from this map…", "toast.noBridge": "That app can't take it yet",
+      "toast.todoNone": "Nothing to send (done items are left out)", "toast.todoMany": "Too many items for one list (at most {n})",
+      "toast.slidesBig": "This branch is too big for one deck",
       "det.pic": "Picture", "det.picAdd": "Choose picture", "det.picDel": "Remove picture",
       "toast.picBudget": "Picture space is full (about 1 MB for all pictures)", "toast.picBad": "Could not read that image"
     },
@@ -144,7 +149,7 @@
       "col.red": "Κόκκινο", "col.orange": "Πορτοκαλί", "col.yellow": "Κίτρινο", "col.green": "Πράσινο", "col.teal": "Γαλαζοπράσινο",
       "col.violet": "Μωβ", "col.pink": "Ροζ", "col.grey": "Γκρι",
       "menu.new": "Νέος χάρτης", "menu.maps": "Οι χάρτες σου…", "menu.paste": "Επικόλληση λίστας…", "menu.export": "Εξαγωγή…",
-      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (OPML, Markdown, κείμενο, JSON)…",
+      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (FreeMind, XMind, OPML, Markdown, κείμενο, JSON)…",
       "menu.backup": "Αντίγραφο όλων των χαρτών (JSON)", "menu.sidesBoth": "Κλαδιά και στις δύο πλευρές",
       "menu.sidesRight": "Κλαδιά μόνο δεξιά", "menu.unfoldAll": "Ανάπτυξη όλων", "menu.foldAll": "Σύμπτυξη κύριων κλαδιών",
       "menu.keys": "Συντομεύσεις πληκτρολογίου",
@@ -160,8 +165,9 @@
       "imp.merge": "Οι χάρτες που ήδη έχεις συγχωνεύονται: κρατιούνται οι νεότερες αλλαγές και δεν επιστρέφει τίποτα που έσβησες.",
       "imp.go": "Εισαγωγή", "imp.done": "Έγινε η εισαγωγή", "imp.newMap": "Εισήχθη ως νέος χάρτης",
       "imp.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 5 MB)", "imp.err.json": "Δεν είναι έγκυρο αρχείο JSON",
-      "imp.err.format": "Το αρχείο δεν είναι νοητικός χάρτης, περίγραμμα OPML ή λίστα", "imp.err.toolarge": "Πάρα πολλοί χάρτες ή κόμβοι σε αυτό το αρχείο",
+      "imp.err.format": "Το αρχείο δεν είναι νοητικός χάρτης, περίγραμμα ή λίστα", "imp.err.toolarge": "Πάρα πολλοί χάρτες ή κόμβοι σε αυτό το αρχείο",
       "imp.err.empty": "Δεν υπάρχει κάτι για εισαγωγή σε αυτό το αρχείο", "imp.err.read": "Το αρχείο δεν διαβάστηκε",
+      "imp.err.zip": "Το αρχείο είναι κατεστραμμένο ή δεν είναι χάρτης XMind", "imp.sheets": "Εισήχθη μόνο το πρώτο από {n} φύλλα",
       "keys.title": "Συντομεύσεις πληκτρολογίου",
       "keys.list": "Tab|Νέο παιδί\nEnter|Νέος αδελφός\nF2 ή πληκτρολόγηση|Επεξεργασία του επιλεγμένου\nShift+Enter|Νέα γραμμή στην επεξεργασία\nDelete|Διαγραφή κλαδιού\nSpace|Σύμπτυξη ή ανάπτυξη\nΒελάκια|Κίνηση στον χάρτη\nAlt+↑ / Alt+↓|Μετακίνηση πάνω / κάτω\nCtrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nCtrl+C / Ctrl+V|Αντιγραφή κλαδιού ως κείμενο / επικόλληση λίστας\nCtrl+F|Εύρεση\n+ / − / Home|Μεγέθυνση / σμίκρυνση / προσαρμογή",
       "ol.indent": "Εσοχή", "ol.outdent": "Αφαίρεση εσοχής", "ol.up": "Πάνω", "ol.down": "Κάτω", "ol.new": "Νέα γραμμή",
@@ -182,6 +188,10 @@
       "link.dup": "Αυτοί οι δύο είναι ήδη συνδεδεμένοι", "link.title": "Σύνδεσμος", "link.label": "Ετικέτα (προαιρετικά)",
       "link.ph": "π.χ. εξαρτάται από", "link.noLabel": "Χωρίς ετικέτα", "link.edit": "Ετικέτα", "link.reverse": "Αντιστροφή",
       "link.goFrom": "Πήγαινε στην αρχή", "link.goTo": "Πήγαινε στο τέλος", "link.delete": "Διαγραφή συνδέσμου",
+      "app.name": "Νοητικός χάρτης", "ctx.todo": "Αποστολή στο To-Do…", "ctx.slides": "Διαφάνειες από αυτό το κλαδί…",
+      "menu.slides": "Διαφάνειες από τον χάρτη…", "toast.noBridge": "Αυτή η εφαρμογή δεν μπορεί να το δεχτεί ακόμα",
+      "toast.todoNone": "Δεν υπάρχει κάτι να σταλεί (όσα έγιναν μένουν έξω)", "toast.todoMany": "Πάρα πολλά για μία λίστα (έως {n})",
+      "toast.slidesBig": "Το κλαδί είναι πολύ μεγάλο για μία παρουσίαση",
       "det.pic": "Εικόνα", "det.picAdd": "Επιλογή εικόνας", "det.picDel": "Αφαίρεση εικόνας",
       "toast.picBudget": "Ο χώρος για εικόνες γέμισε (περίπου 1 MB για όλες)", "toast.picBad": "Η εικόνα δεν διαβάστηκε"
     }
@@ -1779,6 +1789,8 @@
     items.push(["ctx.copy", function () { copyText(M.toOutline(subR(id))); }]);
     items.push(["ctx.paste", function () { openPaste(id); }]);
     items.push(["ctx.export", function () { openExport(id); }]);
+    items.push(["ctx.todo", function () { sendToTodo(id); }]);
+    if (has) items.push(["ctx.slides", function () { sendToSlides(id); }]);
     if (!root) items.push(["ctx.delete", function () { deleteNode(id); }, "danger"]);
     openMenuAt(items, x, y, null, false, fromPress);
   }
@@ -2045,7 +2057,7 @@
     if (!p.ok) { showToast(t("imp.err.empty")); return; }
     addTreeAsMap(p.tree);
   }
-  function addTreeAsMap(tree) {
+  function addTreeAsMap(tree, msg) {
     commitEdit();
     flushOutline();
     var rows = M.treeToRows(tree, newId, Date.now());
@@ -2058,7 +2070,7 @@
     sel = null;
     camFor = null;
     commit();
-    undoToast(t("imp.newMap"), function () { undo(); });
+    undoToast(msg || t("imp.newMap"), function () { undo(); });
   }
 
   // ---------- 10. Find ----------
@@ -2316,24 +2328,35 @@
       [{ description: "JSON", accept: { "application/json": [".json"] } }]);
   }
 
-  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,application/json,text/x-opml,text/xml,text/markdown,text/plain";
+  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,.mm,.xmind,application/json,text/x-opml,text/xml," +
+    "text/markdown,text/plain,application/zip";
+  var ZIP_MAX = 30 * 1024 * 1024;               // a whole .xmind (pictures inside count)
+  function importErr(err) { showToast(t("imp.err." + (err === "empty" || err === "size" || err === "zip" ? err : "format"))); }
+  function importTree(r) {
+    if (!r.ok) { importErr(r.err); return; }
+    addTreeAsMap(r.tree, r.tree.sheets > 1 ? t("imp.sheets", { n: r.tree.sheets }) : "");
+  }
   function importFile() {
     var dlg = dialogHost();
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMPORT_ACCEPT) : localPickFile(IMPORT_ACCEPT);
     pick.then(function (file) {
       if (!file) return;                        // cancel — silent exit
-      if (file.size > M.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
-      return file.text().then(function (text) {
-        var base = String(file.name || "").replace(/\.[^.]+$/, "");
-        var s = text.replace(/^\ufeff/, "").trim();
+      if (file.size > ZIP_MAX) { showToast(t("imp.err.size")); return; }
+      return file.arrayBuffer().then(function (buf) {
+        var bytes = new Uint8Array(buf), base = String(file.name || "").replace(/\.[^.]+$/, "");
+        var X = window.MMImport;
+        if (X && X.sniff(bytes) === "zip") return X.parseXMind(bytes, base).then(importTree);
+        if (bytes.length > M.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
+        var s = new TextDecoder("utf-8").decode(bytes).replace(/^\ufeff/, "").trim();
         if (s.charAt(0) === "{") {
           var r = M.parseImport(s, canonical());
           if (!r.ok) { showToast(t("imp.err." + r.err)); return; }
           previewImport(r);
         } else if (s.charAt(0) === "<") {
-          var o = M.parseOpml(s, base);
-          if (!o.ok) { showToast(t("imp.err." + (o.err === "empty" || o.err === "size" ? o.err : "format"))); return; }
-          addTreeAsMap(o.tree);
+          var head = s.slice(0, 4000);
+          if (X && /<map[\s>]/.test(head) && !/<opml[\s>]/.test(head)) importTree(X.parseFreeMind(s, base));
+          else if (X && /<xmap-content[\s>]/.test(head)) return X.parseXMind(bytes, base).then(importTree);
+          else importTree(M.parseOpml(s, base));
         } else importOutlineText(s, base);
       });
     }).catch(function () { showToast(t("imp.err.read")); });
@@ -2372,6 +2395,70 @@
     undoToast(t("imp.done"), function () { undo(); });
   }
 
+  // ---------- 11b. Send to other apps (bridges owned by those apps) ----------
+  // To-Do: BR-TD-ADD, __orosOpenAt("todo", { addItems }) — To-Do asks
+  // before it writes anything. Slides: __orosOpenAt("slides",
+  // { outline, title }) in the Slides outline format — Slides asks
+  // for a theme before it creates the deck. Mind Map never writes
+  // another app's data.
+  function openIn(app, target) {
+    var w = null;
+    try { w = window.parent && window.parent !== window ? window.parent : null; } catch (e) { w = null; }
+    if (!w || typeof w.__orosOpenAt !== "function") { showToast(t("toast.noBridge")); return false; }
+    try { w.__orosOpenAt(app, target); return true; } catch (e) { showToast(t("toast.noBridge")); return false; }
+  }
+  var TODO_MAX = 200;
+  function sendToTodo(id) {
+    if (!R || !R.N[id]) return;
+    var n = R.N[id], kids = (R.kids[id] || []).length > 0, items = [];
+    var ids = kids ? M.subtree(R, id).slice(1) : [id];
+    ids.forEach(function (x) {
+      var k = R.N[x];
+      if (!k || k.done) return;
+      var text = M.title((k.emoji ? k.emoji + " " : "") + k.text, 300);
+      if (!text) return;
+      var item = { text: text };
+      var note = String(k.note || "").slice(0, 1000);
+      if (note) item.note = note;
+      items.push(item);
+    });
+    if (!items.length) { showToast(t("toast.todoNone")); return; }
+    if (items.length > TODO_MAX) { showToast(t("toast.todoMany", { n: TODO_MAX })); return; }
+    var target = { addItems: { from: t("app.name"), items: items } };
+    if (kids) target.addItems.newList = M.title(n.text, 80) || t("untitled");
+    openIn("todo", target);
+  }
+  var SLIDES_MAX = 200000;
+  // "# branch" = title slide, each child "# child" = a slide, deeper
+  // nodes "- " bullets (2 spaces a level, at most 4), notes "> ".
+  function slidesOutline(id) {
+    var out = [], top = R.N[id];
+    function one(x) { var k = R.N[x]; return M.title((k.emoji ? k.emoji + " " : "") + k.text, 300) || "…"; }
+    function notes(x) {
+      String(R.N[x].note || "").split("\n").forEach(function (l) { l = l.trim(); if (l) out.push("> " + l); });
+    }
+    out.push("# " + one(id));
+    notes(id);
+    (R.kids[id] || []).forEach(function (c) {
+      out.push("", "# " + one(c));
+      notes(c);
+      var stack = (R.kids[c] || []).slice().reverse().map(function (g) { return [g, 0]; });
+      while (stack.length) {
+        var e = stack.pop(), lv = Math.min(e[1], 3);
+        out.push(new Array(lv + 1).join("  ") + "- " + one(e[0]));
+        var kk = R.kids[e[0]] || [];
+        for (var i = kk.length - 1; i >= 0; i--) stack.push([kk[i], e[1] + 1]);
+      }
+    });
+    return top ? out.join("\n") + "\n" : "";
+  }
+  function sendToSlides(id) {
+    if (!R || !R.N[id] || !(R.kids[id] || []).length) return;
+    var text = slidesOutline(id);
+    if (text.length > SLIDES_MAX || (R.kids[id] || []).length + 1 > 300) { showToast(t("toast.slidesBig")); return; }
+    openIn("slides", { outline: text, title: M.title(R.N[id].text, 120) || t("untitled") });
+  }
+
   // ---------- 12. Menus, dialogs, toasts ----------
   var menuCtl = null;
   function openMenu() {
@@ -2382,6 +2469,7 @@
       ["menu.paste", function () { openPaste(R ? (sel || R.root.id) : null); }],
       ["menu.export", function () { openExport(null); }, null, !R],
       ["menu.copy", function () { copyText(M.toOutline(R)); }, null, !R],
+      ["menu.slides", function () { sendToSlides(R.root.id); }, null, !R || !(R.kids[R.root.id] || []).length],
       ["menu.import", importFile],
       ["menu.backup", backupAll, null, !Object.keys(MAPS).length]
     ];
