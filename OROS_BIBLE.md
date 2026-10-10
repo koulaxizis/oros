@@ -1420,6 +1420,7 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
   - Control characters (and U+2028/2029) are replaced by spaces in every text; everything is shown with `textContent`. A payload with no usable item is ignored (To-Do just opens).
 - **BR-TD-ADD-2 · A PREFILL, not data (BR-W8-6).** To-Do opens the dialog `#todo-add`: list picker, every item ticked, except items already OPEN (not done) in the chosen list, which start unticked with "already on the list" (re-checked when the list changes; a tick the user changed stays). Nothing touches `oros-todo-data` until "Add N"; Cancel leaves no trace. Add puts the ticked items at the top of the list in payload order (one `list.om` stamp, items fully stamped), switches to that list and clears search/filters. The sender never writes To-Do's slice (one writer per slice).
 - **BR-TD-ADD-3 · Meal Planner sender.** Button `#sh-todo` on the Shopping tab sends the unticked items of the list on screen (the week shown, "From today" applied): `text` = "qty name" as in Copy, `note` = "for <recipes>", `list` = `tdl-groceries`. Ticks in Meal Planner are not changed.
+- **BR-TD-ADD-4 · Chore Wheel sender.** "Send to To-Do" in a chore's actions dialog (only while it is open, not done or skipped): one item, `text` = icon + chore name, `note` = "Chore Wheel · <day or range>" (+ " · <member>" when it is someone else's), no `list` (To-Do's open list). The chore's "done" stays in Chore Wheel only; nothing syncs back.
 - **BR-TD-ADD-5 · Travel sender (0.60.02, #133).** Trip menu items "Send "Before I leave" to To-Do" and "Send "Still to pack" to To-Do", shown only when the bridge exists and the list has open items: `newList` = "<trip> · before I leave" / "<trip> · to pack" (≤ 60 chars), `from` = Travel, `items` = the open (not done) packing items of the `@before` group or of all other groups (≤ 200): `text` = name or "n × name" when qty > 1, `note` = who · note. A copy, not a live link; Travel data is not changed.
 
 ### `LABEL_COLORS` (shared, 8)
@@ -4294,3 +4295,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Uses the To-Do bridge BR-TD-ADD (`__orosOpenAt("todo", {addItems})`, #111); Travel never writes To-Do data, it is a copy, not a live link. Quantities go as "3 × Socks"; who + note become the To-Do note. Each item shows only when the bridge exists and the list has open items.
 - Only travel/travel.js changes. Shell check EN desktop / EL phone, no console errors.
 - Not tested: a real phone, Safari/Firefox, real Dropbox.
+
+### 2026-10-10 — Chore Wheel: "Send to To-Do" for one chore (#134) — 0.60.03
+- A chore's ⋯ actions dialog has "Send to To-Do" while the chore is open: To-Do's add dialog opens prefilled with the chore (icon + name) and a note with its day or date range (and the member, when it is someone else's); nothing is saved until Add.
+- Sender side of BR-TD-ADD (`{addItems:{from, items:[{text, note}]}}`), like Meal Planner; "done" stays in Chore Wheel, nothing is copied back. Bible: BR-TD-ADD-4.
+- Shell check at 360 px, no console errors. Not tested: a real phone, Safari, real Dropbox.
