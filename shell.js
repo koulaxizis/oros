@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.57.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.57.04";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -928,6 +928,7 @@
       tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
+      tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1457,6 +1458,58 @@
       body: body,
       deepLink: "plants:today"
     });
+  }
+
+  // Chore Wheel — daily "your chores today" reminder. Reads
+  // "oros-chores-data" directly (works with the app CLOSED) and asks
+  // chores/core.js (loaded by index.html, the SAME file the app runs)
+  // who has what today. Only for the member picked as "me" on THIS
+  // device (oros-chores-prefs, device-local), from the reminder hour
+  // on (default 09:00, -1 = off): one notice per day. No "me", no
+  // chores of mine → silent (SH-B7).
+  var CHORES_DATA_KEY = "oros-chores-data";
+  function choresCheckTick() {
+    var Core = window.OrosChoresCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs;
+    try {
+      raw = JSON.parse(localStorage.getItem(CHORES_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-chores-prefs")));
+    } catch (e) { return; }
+    if (!prefs.me || !raw || !Array.isArray(raw.tasks) || !raw.tasks.length) return;
+    if (prefs.rh < 0 || new Date().getHours() < prefs.rh) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var sum = Core.summary(Core.mergeChores(raw, raw), Core.localDn(new Date()), prefs.me);
+    if (!sum.names.length && !sum.late) return;
+    var el = state.lang === "el";
+    var names = sum.names.slice(0, 3).join(", ");
+    if (sum.names.length > 3) names += el ? " και " + (sum.names.length - 3) + " ακόμα"
+                                          : " and " + (sum.names.length - 3) + " more";
+    var body = sum.names.length ? (el ? "Σήμερα: " : "Today: ") + names : "";
+    if (sum.late) {
+      var lt = el ? (sum.late === 1 ? "1 καθυστερεί" : sum.late + " καθυστερούν")
+                  : sum.late + " late";
+      body = body ? body + " · " + lt : lt;
+    }
+    var title = window.t("app.chores");
+    if (title === "app.chores") title = "Chore Wheel";  // missing-key fallback
+    N.emit({
+      ns: "chores",
+      key: "today-" + sysYmd(),
+      type: "reminder",
+      title: title,
+      body: body,
+      deepLink: "chores:today"
+    });
+  }
+
+  var choresLastTick = 0;
+  function choresCheckTickThrottled() {
+    var now = Date.now();
+    if (now - choresLastTick < 60000) return;
+    choresLastTick = now;
+    choresCheckTick();
   }
 
   var plantsLastTick = 0;
@@ -7161,6 +7214,26 @@
     }
     try { sessionStorage.setItem("oros-plants-open", target); } catch (e) {}
     openAppById("plants");
+  };
+
+  // Chore Wheel deep-link bridge (pattern: Plant Care). Payload =
+  // "today" (reminder) or a day "YYYY-MM-DD" (Calendar feed row).
+  // Open app → live push; closed → sessionStorage staging (device-
+  // local, one-shot, consumed by chores.js at boot) + open.
+  window.__orosOpenChores = function (target) {
+    if (typeof target !== "string" || !/^(today|\d{4}-\d{2}-\d{2})$/.test(target)) return;
+    if (state.running && state.running.id === "chores") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosChoresOpen === "function") {
+          f.contentWindow.__orosChoresOpen(target);
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-chores-open", target); } catch (e) {}
+    openAppById("chores");
   };
 
   // Podcasts "add this feed" bridge (Reader, Bookmarks). Payload =

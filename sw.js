@@ -253,6 +253,7 @@ var PRECACHE_URLS = [
   "chores/search.js",
   "chores/chores.css",
   "chores/chores.js",
+  "chores/core.js",
   "layout/panels.js",
   "layout/story.js",
   "layout/io.js",
