@@ -376,3 +376,36 @@ test("alert lines for the grouped reminder, both languages", () => {
   assert.ok(el.includes("Golf: Λάδια, πέρασαν 300 km"));
   C.RENEWAL_IDS.forEach(k => assert.ok(C.renewalName(k, "el") && C.renewalName(k, "en")));
 });
+
+test("receipts: names only, strict, unique, capped; key absent when none", () => {
+  const n = C.receiptName("2026-10-09", "abc123def", "Q9k2-pz");
+  assert.equal(n, "20261009-abc123def-q9k2pz.jpg");
+  assert.equal(C.receiptName("2026-13-01", "abc123def", "q9k2pz"), null);
+  assert.equal(C.receiptName("2026-10-09", "BAD", "q9k2pz"), null);
+  assert.equal(C.receiptName("2026-10-09", "abc123def", "x"), null);
+  assert.equal(C.receiptPath(n), "/internal/Garage/Receipts/" + n);
+  for (const bad of ["../x.jpg", "20261009-abc123def-q9k2pz.png", "/internal/a.jpg", "20261009-abc123def-q9k2pz.jpg/..", 7, null]) {
+    assert.equal(C.receiptPath(bad), null);
+  }
+  const many = Array.from({ length: 9 }, (_, i) => "20261009-abc123def-aaaa" + i + ".jpg");
+  const row = { id: "abc123def", m: 1, v: "veh123", d: "2026-10-09", km: 100, q: 1000,
+    rc: ["../../etc.jpg", many[3], many[3], ...many] };
+  const f = C.normFuel(row);
+  assert.equal(f.rc.length, C.MAX_RC);
+  assert.deepEqual(f.rc, many.slice(0, C.MAX_RC));
+  // no rc key without receipts: existing rows keep their canonical form
+  assert.equal("rc" in C.normFuel({ ...row, rc: [] }), false);
+  assert.equal("rc" in C.normFuel({ ...row, rc: ["junk"] }), false);
+  const s = C.normService({ id: "svc123", m: 1, v: "veh123", d: "2026-10-09", items: ["oil"], rc: [many[0]] });
+  const c = C.normCost({ id: "cst123", m: 1, v: "veh123", d: "2026-10-09", cat: C.COST_CATS[0], c: 500, rc: [many[1]] });
+  assert.deepEqual(s.rc, [many[0]]);
+  assert.deepEqual(c.rc, [many[1]]);
+  // merge keeps them (row LWW) and receiptsOf lists every name in use
+  const veh = { id: "veh123", m: 1, name: "Golf", type: "car" };
+  const d = C.merge({ vehicles: [veh], fuel: [f], service: [s], costs: [c] }, null, NOW);
+  assert.deepEqual(C.receiptsOf(d).sort(), [...many.slice(0, C.MAX_RC), many[0], many[1]].sort());
+  // a newer edit that removed the photos wins
+  const f2 = { ...f, m: 2 }; delete f2.rc;
+  const d2 = C.merge(d, { vehicles: [veh], fuel: [f2] }, NOW);
+  assert.equal("rc" in d2.fuel[0], false);
+});

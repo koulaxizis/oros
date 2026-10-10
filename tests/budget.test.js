@@ -128,7 +128,7 @@ test("normalize: bad entries drop out, text is cleaned", () => {
   assert.equal(B.normTx(tx("a1", 1, { d: "2026-02-30" })), null);
   assert.equal(B.normTx(tx("A B", 1)), null);
   assert.equal(B.normTx(tx("a1", -1)), null);
-  const x = B.normTx(tx("a1", 1, { n: "  hi\n\tthere  " + "x".repeat(200), c: "<b>", extra: 1 }));
+  const x = B.normTx(tx("a1", 1, { n: "  hi\n\tthere  " + "x".repeat(200), c: "<b>", Extra: 1, obj: {} }));
   assert.equal(x.n.slice(0, 8), "hi there");
   assert.equal(x.n.length, 140);
   assert.equal(x.c, "");
@@ -294,4 +294,39 @@ test("send to Budget: optional parts are cleaned, never trusted", () => {
   assert.equal(B.normPrefill({ k: "o", a: 100, n: 7, c: 7, src: 7 }).n, "");
   assert.equal(B.normPrefill({ k: "o", a: 100, src: "a".repeat(21) }).src, "");
   assert.equal(B.normPrefill({ k: "o", a: 100, d: null }).d, "");
+});
+
+// ---------- forward compatibility (fields of a newer version) ----------
+test("newer fields on items and settings survive a merge on this version", () => {
+  const a = D({ tx: [tx("t1", 5, { ac: "cash", zz9: true, q: 2.5 })],
+    rec: [{ id: "r1", m: 3, k: "o", a: 100, c: "", n: "", f: "m", s: "2026-01-01", e: "", ac: "card" }],
+    set: { m: 4, cur: "EUR", dec: 2 } });
+  const m = B.mergeBudget(a, B.emptyData());
+  assert.equal(m.tx[0].ac, "cash");
+  assert.equal(m.tx[0].zz9, true);
+  assert.equal(m.tx[0].q, 2.5);
+  assert.equal(m.rec[0].ac, "card");
+  assert.equal(m.set.dec, 2);
+  // known fields are never replaced, junk never travels
+  const j = B.mergeBudget(D({ tx: [tx("t2", 5, { Bad: 1, obj: { x: 1 }, arr: [1], long: "x".repeat(501), nan: NaN, "a-b": 1 })] }), B.emptyData());
+  assert.deepEqual(Object.keys(j.tx[0]), ["id", "m", "d", "a", "k", "c", "n"]);
+  const many = {}; for (let i = 0; i < 30; i++) many["k" + String(i).padStart(2, "0")] = i;
+  assert.equal(Object.keys(B.mergeBudget(D({ tx: [tx("t3", 5, many)] }), B.emptyData()).tx[0]).length, 7 + 16);
+});
+
+test("collections of a newer version merge LWW with their own tombstones", () => {
+  const a = D({ acc: [{ id: "cash", m: 5, n: "Cash" }, { id: "card", m: 5, n: "Card" }], tombs: { "acc:card": 6 } });
+  const b = D({ acc: [{ id: "cash", m: 7, n: "Wallet" }], xfer: [{ id: "x1", m: 1, a: 100, f: "cash", t: "card" }] });
+  const ab = B.mergeBudget(a, b), ba = B.mergeBudget(b, a);
+  assert.equal(canon(ab), canon(ba));
+  assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
+  assert.deepEqual(ab.acc, [{ id: "cash", m: 7, n: "Wallet" }]);
+  assert.equal(ab.xfer.length, 1);
+  assert.equal(ab.tombs["acc:card"], 6);
+  // key order is canonical whatever the order of the inputs
+  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "set", "tombs"]);
+  // not a collection: bad name, not an array, bad items
+  const n = B.mergeBudget(D({ BAD: [{ id: "x", m: 1 }], toolongname: [{ id: "x", m: 1 }], obj: { a: 1 }, zz: [null, { id: "UP", m: 1 }, { id: "ok", m: -1 }] }), B.emptyData());
+  assert.equal("BAD" in n || "toolongname" in n || "obj" in n, false);
+  assert.deepEqual(n.zz, []);
 });
