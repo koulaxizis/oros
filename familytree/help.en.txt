@@ -1,0 +1,48 @@
+# Family Tree
+Family Tree draws your family around one person: their ancestors above, their descendants below, partners and siblings beside them. Keep several trees, with partial dates, many marriages and adoptive or step parents.
+
+## Getting started
+The first screen offers `Add a person`, `From Contacts` (build the tree from the family relations you've set in [Contacts](app:contacts)), or `Import JSON`.
+
+Tap or click a person to open their card on the side. Double-tap or double-click someone, or use `Centre here`, to put them in the middle of the tree.
+
+## Add people and relatives
+On a person's card, `Add a relative` offers `Parent`, `Partner`, `Child` and `Sibling`. For a child you choose the other parent (`Child with…`), or `No other parent / not known`.
+
+`Edit` opens the person: `First name(s)`, `Surname`, `Birth surname`, `Sex`, `Birth` and `Death` with `Date` and `Place`, `Deceased`, `Note` and `Photo`. Dates can be full or partial (`dd/mm/yyyy, mm/yyyy or yyyy`) and marked `about`, `before` or `after`.
+
+In the editor you can also:
+- Set what kind each parent is: `birth`, `adoptive`, `foster` or `step`.
+- Add `Partnerships`, each `Married`, `Partners`, `Divorced` or `Unknown`, with `From` and `To` dates.
+- Link a contact with `Fill from Contacts…`. The card then offers `Open in Contacts` and `Fill in from the contact`.
+
+`Delete` removes a person, with `Undo` for a few seconds.
+
+## Move around the tree
+- The buttons at the top switch between `Family`, `Ancestors` and `Descendants`. `Generations…` in the `More` menu sets how many generations up and down to show.
+- Drag to pan, pinch or scroll to zoom, or use the zoom buttons. `Fit to screen` shows the whole view.
+- `People` lists everyone in the tree, with `Search…`.
+- When someone appears twice (for example, cousins who married), the copy is dashed: `Also shown elsewhere in this view`.
+
+## Trees
+Tap the tree name at the top to switch trees, add a `New tree`, rename or delete one.
+
+## Sync and backup
+Your trees, people, relationships and photos sync between your devices through [orOS sync](help:t/sync). The open tree, the focus person, the view and export choices stay on each device.
+
+From the `More` menu:
+- `Export image (SVG, PNG, print)…` exports `This view` or the `Whole family`, in light or dark colours, with or without dates and photos. `Hide details of the living` keeps living people's dates and photos out. Save as `SVG`, `PNG`, `Print`, or `Save to Files` (into the `Family Tree` folder in [Files](app:files)).
+- `Back up this tree (JSON)` or `Back up all trees (JSON)`, and `Import JSON…`. An import merges with what you have.
+- `Export GEDCOM…` saves this tree as a .ged file (GEDCOM 5.5.1) for other genealogy programs, with `Download` or `Save to Files`, and can hide the details of the living. `Import GEDCOM…` brings a .ged file (up to 15 MB) in as a new tree, after a preview, and you can undo it.
+
+## Keyboard shortcuts
+- [[+]] and [[-]] zoom, [[0]] fits the tree to the screen.
+- Arrow keys pan.
+- [[Esc]] closes the person's card.
+
+## Tips
+- Links to Contacts only read from Contacts; Family Tree never changes your contacts.
+- A link that would make someone their own ancestor is refused.
+
+## Limits
+- All photos together share 1 MB.

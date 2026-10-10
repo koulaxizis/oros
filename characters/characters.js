@@ -2368,7 +2368,38 @@
     // 7. Version badge (cache-busted fetch already handles in HTML)
     var host = document.querySelector("title");
     if (host) host.textContent = t("tab.chars") + " · orOS";
+
+    // 8. A universal search hit staged while the app was closed
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("characters");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (eTake) { /* standalone */ }
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { char } or { rel }.
+  // A character opens its editor on the Characters tab (search box
+  // cleared); a relationship opens its editor on the Relationships
+  // tab. Unknown ids → no-op; nothing happens while a dialog is open.
+  function openSearchTarget(tg) {
+    if (!tg || typeof tg !== "object" || !db) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (typeof tg.char === "string" && db.characters[tg.char]) {
+      ui.tab = "chars";
+      ui.q = "";
+      paint();
+      openEditor(tg.char);
+    } else if (typeof tg.rel === "string" && db.rels[tg.rel]) {
+      var r = db.rels[tg.rel];
+      if (!db.characters[r.a] || !db.characters[r.b]) return;
+      ui.tab = "rels";
+      paint();
+      openRelEditor(r.a, r.b);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   // Kick-start when DOM is ready
   if (document.readyState === "loading") {

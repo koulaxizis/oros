@@ -2774,7 +2774,32 @@
     watchPalette();
     render();
     takeStaged();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("travel");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { trip, tab, item }. Opens the trip (tab "pack" | "plan"
+  // when given) and the packing item's or itinerary entry's editor.
+  // Unknown trip → no-op; an open dialog → no-op (unsaved edits win).
+  function openSearchTarget(t) {
+    if (document.querySelector("dialog[open]")) return;
+    var trip = t && typeof t.trip === "string" ? findTrip(t.trip) : null;
+    if (!trip) return;
+    closeMenu();
+    commitNotes();
+    if (t.tab === "pack" || t.tab === "plan") prefs.tab = t.tab;
+    openTrip(trip.id);
+    if (typeof t.item !== "string") return;
+    if (t.tab === "pack" && findIn(trip.pack, t.item)) itemDialog(t.item);
+    else if (t.tab === "plan" && findIn(trip.plan, t.item)) planDialog(t.item);
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   boot();
 })();

@@ -1,0 +1,49 @@
+# Split
+Split keeps track of shared expenses in a group: a trip, a shared flat, a night out. Add who paid what, and it works out who owes whom and the fewest payments that settle everything.
+
+## Getting started
+1. Tap or click `New group`. Give it a `Name`, a `Currency` and a `Colour`.
+2. Under `People`, add everyone, yourself too, with `Add`. Tap `Me` next to your own name. `From Contacts` picks people from [Contacts](app:contacts), and `From a trip` adds the travellers of a [Travel](app:travel) trip. These buttons appear only when those apps have something to offer.
+3. Press `Save`, then `Expense` to add the first expense.
+
+The home screen lists your groups, newest activity first, with how much you get back or owe. Archived groups are folded under `Archived`. `All groups` takes you back there.
+
+## Add expenses
+An expense has `What for`, `Amount`, `Date`, `Category` and `Paid by`. If more than one person paid, choose `Several people…` and type what each one gave.
+
+Under `Split`, pick who shares it (`Everyone` or tap names) and how:
+- `Equally`: the same for everyone picked.
+- `Amounts`: type each person's exact part.
+- `Shares`: for example 2 shares for a couple, 1 for a single.
+- `%`: percentages that add up to 100.
+
+A line under the split tells you what's `Left to share` or `Too much by`, and says `Adds up` when it's right. Add an optional `Note`, then `Save`. Tap or click an expense to edit or delete it; an `Undo` button stays for a few seconds after a delete.
+
+The `Expenses` tab has `Search the expenses…` and filters for `Category`, `Involving` someone and `Payments only`.
+
+## Balances and settling up
+`Balances` shows what each person paid, their share, and whether they get back or owe money. `Settle up` lists the fewest payments that make everyone even. When someone pays, press `Paid` next to that payment, or `Record a payment` for any other amount.
+
+If you set who you are, the group shows `Group spending`, `Your share` and `Your balance`. When you edit an expense you're part of, `Add my share to Budget` sends your part to [Budget](app:budget) as a new entry for you to check and save.
+
+## Share with friends
+From the `More` menu in a group:
+- `Share the summary`: a short text of totals and who pays whom, to copy or, on a phone, share.
+- `Send the group file`: a file your friends open in their own orOS with `Import a group file…` from the `More` menu on the home screen. Files sent back and forth join up and never count an expense twice. Each person picks who they are on their own device.
+- `Export (CSV, PDF)`: a CSV for Greek Excel or other apps, or a PDF summary.
+- `Group and people`, `Archive the group` and `Delete the group`.
+
+## Sync and backup
+All groups, people, expenses and payments sync between your own devices through [orOS sync](help:t/sync). The open group, tab and CSV format stay on each device. The home screen's menu has `Backup (JSON)` and `Restore from backup`, which merges with what's here; the orOS [backup](help:t/backup) covers Split too.
+
+## Keyboard shortcuts
+- [[N]]: new expense in a group, or new group on the home screen.
+- [[B]]: switch between `Expenses` and `Balances`.
+- [[←]] and [[→]] on the tabs: switch tabs.
+
+## Tips
+- Archive a group once everyone is even; it stays out of the way but nothing is lost.
+
+## Limits
+- Changing a group's currency doesn't convert the amounts, and a group has one currency.
+- Up to 30 people per group and 200 groups.

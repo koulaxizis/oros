@@ -136,6 +136,13 @@
       "toast.exported": "Exported", "toast.imported": "Imported: {n} pets", "toast.badFile": "This is not a Pet Health Book file",
       "toast.photoBad": "This image could not be used", "toast.photoFull": "No room for more photos",
       "toast.print": "Nothing to print",
+      "rf.times": "Remind me at", "rf.addTime": "Add a time", "rf.delTime": "Remove {t}",
+      "rf.timesHint": "One reminder at each time, every day of the course.",
+      "r.times": "at {t}", "grp.doses": "Doses today",
+      "set.doses": "Remind me at each medicine dose",
+      "fd.todo": "Add to shopping list", "todo.item": "{food} for {name}", "todo.plain": "Food for {name}",
+      "toast.needCost": "Enter the cost first", "bud.add": "Add to Budget", "bud.note": "{name}: {what}",
+      "toast.noBridge": "Could not open the other app",
       "confirm.del": "Delete {name} and the whole health book?", "confirm.yes": "Delete",
       "confirm.delRec": "Remove this entry?",
       "pr.title": "Health card", "pr.vacc": "Vaccines in force", "pr.dw": "Deworming", "pr.meds": "Current medicine",
@@ -222,6 +229,13 @@
       "toast.exported": "Η εξαγωγή έγινε", "toast.imported": "Εισαγωγή: {n} ζώα", "toast.badFile": "Αυτό δεν είναι αρχείο Βιβλιαρίου κατοικιδίου",
       "toast.photoBad": "Αυτή η εικόνα δεν μπορεί να χρησιμοποιηθεί", "toast.photoFull": "Δεν χωρούν άλλες φωτογραφίες",
       "toast.print": "Δεν υπάρχει κάτι για εκτύπωση",
+      "rf.times": "Υπενθύμιση στις", "rf.addTime": "Προσθήκη ώρας", "rf.delTime": "Αφαίρεση {t}",
+      "rf.timesHint": "Μία υπενθύμιση σε κάθε ώρα, κάθε μέρα της θεραπείας.",
+      "r.times": "στις {t}", "grp.doses": "Δόσεις σήμερα",
+      "set.doses": "Υπενθύμιση σε κάθε δόση φαρμάκου",
+      "fd.todo": "Στη λίστα για ψώνια", "todo.item": "{food} για {name}", "todo.plain": "Τροφή για {name}",
+      "toast.needCost": "Συμπλήρωσε πρώτα το κόστος", "bud.add": "Προσθήκη στα Έσοδα & Έξοδα", "bud.note": "{name}: {what}",
+      "toast.noBridge": "Η άλλη εφαρμογή δεν άνοιξε",
       "confirm.del": "Διαγραφή του «{name}» και όλου του βιβλιαρίου;", "confirm.yes": "Διαγραφή",
       "confirm.delRec": "Να αφαιρεθεί αυτή η εγγραφή;",
       "pr.title": "Κάρτα υγείας", "pr.vacc": "Εμβόλια σε ισχύ", "pr.dw": "Αποπαρασίτωση", "pr.meds": "Τρέχοντα φάρμακα",
@@ -384,6 +398,7 @@
     prefs = {
       remind: base.remind,
       lead: base.lead,
+      doses: base.doses,
       tab: p.tab === "pets" ? "pets" : "up",
       pet: typeof p.pet === "string" && C.ID_RE.test(p.pet) ? p.pet : null,
       sub: SUBS.indexOf(p.sub) >= 0 ? p.sub : "info",
@@ -519,6 +534,9 @@
       bdays.forEach(function (p) { banner.appendChild(el("span", "", t("bday", { name: p.name, n: C.birthdayOn(p, today) }))); });
     }
     var all = C.items(data, today).filter(function (it) { return it.diff <= HORIZON; });
+    var doses = dosesToday(today);
+    if (doses.length) list.appendChild(dosesSection(doses));
+    if (!all.length && doses.length) { empty.hidden = true; return; }
     if (!all.length) {
       empty.hidden = false;
       empty.appendChild(el("div", "empty-ico", "🐾"));
@@ -542,6 +560,46 @@
       sec.appendChild(ul);
       list.appendChild(sec);
     });
+  }
+
+  // Today's medicine doses (courses with dose times), by time.
+  function dosesToday(today) {
+    var pets = {}, out = [];
+    data.pets.forEach(function (p) { if (!p.gone) pets[p.id] = p; });
+    data.recs.forEach(function (r) {
+      if (r.k !== "med" || !r.tm || !pets[r.p] || r.d > today || (r.u && r.u < today)) return;
+      r.tm.forEach(function (hm) { out.push({ tm: hm, pet: pets[r.p], rec: r }); });
+    });
+    return out.sort(function (x, y) { return cmpStr(x.tm, y.tm) || cmpStr(x.pet.name, y.pet.name) || cmpStr(x.rec.id, y.rec.id); });
+  }
+  function dosesSection(doses) {
+    var sec = el("section", "grp grp-doses");
+    var head = el("div", "grp-head");
+    head.appendChild(el("h2", "", t("grp.doses")));
+    head.appendChild(el("span", "count", String(doses.length)));
+    sec.appendChild(head);
+    var ul = el("ul", "recs");
+    doses.forEach(function (x) {
+      var li = el("li");
+      var b = el("button", "rec");
+      b.type = "button";
+      b.style.setProperty("--kind", KIND_COLOR.med);
+      var ic = el("span", "rec-ico");
+      ic.innerHTML = UI.med;
+      b.appendChild(ic);
+      var bd = el("span", "rec-body");
+      var tt = el("span", "rec-title", x.pet.name + ": " + x.rec.n);
+      tt.style.display = "block";
+      bd.appendChild(tt);
+      if (x.rec.ds) { var sb = el("span", "rec-sub", x.rec.ds); sb.style.display = "block"; bd.appendChild(sb); }
+      b.appendChild(bd);
+      b.appendChild(el("span", "rec-d", x.tm));
+      b.addEventListener("click", function () { openPet(x.pet.id); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    sec.appendChild(ul);
+    return sec;
   }
 
   // One due date. showPet: the avatar + pet name (Upcoming); on a
@@ -859,7 +917,7 @@
       if (r.nx) bits.push(t("r.recheck", { d: fmtDate(r.nx) }));
       if (r.v) bits.push(r.v);
     }
-    if (r.k === "med") { if (r.ds) bits.push(r.ds); if (r.fq) bits.push(r.fq); if (r.u) bits.push(t("r.until", { d: fmtDate(r.u) })); }
+    if (r.k === "med") { if (r.ds) bits.push(r.ds); if (r.fq) bits.push(r.fq); if (r.u) bits.push(t("r.until", { d: fmtDate(r.u) })); if (r.tm) bits.push(t("r.times", { t: r.tm.join(", ") })); }
     if (r.nt) bits.push(r.nt);
     return bits.join(" · ");
   }
@@ -1023,6 +1081,15 @@
     var acts = el("div", "ph-acts");
     acts.appendChild(iconTxt(UI.edit, t("fd.edit"), function () { foodEditor(p); }));
     if (!p.gone) acts.appendChild(iconTxt(UI.food, t("fd.bag"), function () { newBag(p); }));
+    // "Send to To-Do" (BR-TD-ADD, owner To-Do): a prefill; To-Do asks
+    // which list and adds nothing until the user confirms.
+    var openAt = bridge("__orosOpenAt");
+    if (openAt && !p.gone) acts.appendChild(iconTxt(UI.plus, t("fd.todo"), function () {
+      var text = f.n ? t("todo.item", { food: f.n, name: p.name }) : t("todo.plain", { name: p.name });
+      try {
+        openAt("todo", { addItems: { list: "tdl-groceries", from: t("app"), items: [{ text: text.slice(0, 300) }] } });
+      } catch (e) { showToast(t("toast.noBridge")); }
+    }));
     card.appendChild(acts);
     box.appendChild(card);
     var sh = section(box, t("fd.hist"));
@@ -1113,6 +1180,51 @@
     });
     return q;
   }
+  // A shell bridge (window.parent.__oros…), or null when this shell
+  // does not have it (older bundle, app opened on its own): the
+  // button that needs it is then simply not shown (BR-B1-5).
+  function bridge(name) {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p[name] === "function" ? p[name] : null;
+    } catch (e) { return null; }
+  }
+
+  // Dose times of a medicine: a row of time inputs, + to add one.
+  function timesField(list, f) {
+    var wrap = el("div", "fld");
+    wrap.appendChild(el("div", "dlg-lbl", t("rf.times")));
+    var box = el("div", "times");
+    box.id = "pr-tm";
+    wrap.appendChild(box);
+    var add = button("+ " + t("rf.addTime"), "chip", function () { addRow("", true); });
+    function paint() { add.hidden = box.querySelectorAll("input").length >= C.MAX_TIMES; }
+    function addRow(v, focus) {
+      if (box.querySelectorAll("input").length >= C.MAX_TIMES) return;
+      var row = el("span", "time-row");
+      var inp = el("input");
+      inp.type = "time";
+      inp.value = v || (box.children.length ? "" : "08:00");
+      var x = el("button", "time-del", "×");
+      x.type = "button";
+      x.setAttribute("aria-label", t("rf.delTime", { t: inp.value }));
+      x.addEventListener("click", function () { row.remove(); paint(); });
+      row.appendChild(inp);
+      row.appendChild(x);
+      box.appendChild(row);
+      paint();
+      if (focus) inp.focus();
+    }
+    list.forEach(function (v) { addRow(v, false); });
+    wrap.appendChild(add);
+    wrap.appendChild(el("p", "dlg-sub", t("rf.timesHint")));
+    paint();
+    f.getTm = function () {
+      return C.cleanTimes([].map.call(box.querySelectorAll("input"), function (i) { return i.value; }));
+    };
+    return wrap;
+  }
+
   function chk(label, on) {
     var l = el("label", "chk");
     var i = el("input");
@@ -1490,6 +1602,7 @@
       rowm2.appendChild(field(t("rf.until"), f.u, "pr-u"));
       form.appendChild(rowm2);
       form.appendChild(quickDates(f.u, f.d, [["q.d7", 6], ["q.d14", 13], ["q.m1", 1, "m"], ["rf.nextNone", "none"]]));
+      form.appendChild(timesField(v.tm || [], f));
     } else if (kind === "weight") {
       var sm = isSmall(pet);
       var roww = el("div", "fld-row");
@@ -1517,6 +1630,25 @@
     if (r) acts.appendChild(button(t("ed.delete"), "danger", function () {
       confirmBox(t("confirm.delRec"), function () { dlg.close(); removeRec(r); });
     }));
+    var budNew = kind === "visit" ? bridge("__orosOpenBudgetNew") : null;
+    if (budNew) {
+      var bb = button(t("bud.add"), "", function () {
+        var cv = readDec(f.c);
+        if (cv === null || cv <= 0) { showToast(t("toast.needCost")); f.c.focus(); return; }
+        var ok2 = false;
+        try {
+          ok2 = budNew({
+            k: "o", a: Math.round(cv * 100),
+            d: C.isYmd(f.d.value) ? f.d.value : todayYmd(),
+            n: t("bud.note", { name: pet.name, what: f.n.value.trim() || t("kind.visit") }).slice(0, 140),
+            c: "o-health", src: "petcare"
+          }) === true;
+        } catch (e) {}
+        if (!ok2) showToast(t("toast.noBridge"));
+      });
+      bb.id = "pr-bud";
+      acts.appendChild(bb);
+    }
     acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
     var ok = button(t("ed.save"), "primary", null);
     ok.type = "submit";
@@ -1539,6 +1671,7 @@
       if (f.tr) out.tr = f.tr.value;
       if (f.c) { var cv = readDec(f.c); out.c = cv === null ? 0 : Math.round(cv * 100); }
       if (f.ds) out.ds = f.ds.value;
+      if (f.getTm) out.tm = f.getTm();
       if (f.fq) out.fq = f.fq.value;
       if (f.u) {
         if (f.u.value && (!C.isYmd(f.u.value) || f.u.value < f.d.value)) { showToast(t("toast.badDate")); f.u.focus(); return; }
@@ -1758,7 +1891,7 @@
     box.appendChild(el("h2", "", t("pr.dw")));
     if (dw.length) box.appendChild(table(dw)); else box.appendChild(el("p", "", t("pr.none")));
     var meds = recsOf(p.id, "med").filter(function (r) { return !r.u || r.u >= today; }).map(function (r) {
-      return [r.n, [r.ds, r.fq, r.u ? t("r.until", { d: fmtDate(r.u) }) : ""].filter(Boolean).join(" · ")];
+      return [r.n, [r.ds, r.fq, r.u ? t("r.until", { d: fmtDate(r.u) }) : "", r.tm ? t("r.times", { t: r.tm.join(", ") }) : ""].filter(Boolean).join(" · ")];
     });
     if (meds.length) { box.appendChild(el("h2", "", t("pr.meds"))); box.appendChild(table(meds)); }
     box.appendChild(el("p", "pr-foot", t("pr.made", { d: fmtDate(today) })));
@@ -1803,6 +1936,10 @@
     }
     lead.addEventListener("change", function () { prefs.lead = Number(lead.value); savePrefsNow(); });
     dlg.appendChild(field(t("set.lead"), lead, "pc-lead"));
+    var dz = chk(t("set.doses"), prefs.doses);
+    dz.input.id = "pc-doses";
+    dz.input.addEventListener("change", function () { prefs.doses = dz.input.checked; savePrefsNow(); });
+    dlg.appendChild(dz.wrap);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight");
     io.appendChild(button(t("set.export"), "", exportData));
@@ -1976,6 +2113,31 @@
     if (v) window.__orosPetcareOpen(v);
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { pet, rec }. Opens the pet's health book and the record's
+  // editor, as a record row click does. Unknown record → no-op; an
+  // open dialog (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    var r = t && typeof t.rec === "string" ? recById(t.rec) : null;
+    var p = r ? petById(r.p) : null;
+    if (!p || document.querySelector("dialog[open]")) return;
+    openPet(p.id);
+    prefs.sub = "health";
+    savePrefs();
+    render();
+    recEditor(p, r.k, r.id, null);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("petcare");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
+  }
+
   // ---------- 12. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
@@ -2141,6 +2303,7 @@
     watchPalette();
     render();
     takeStaged();
+    takeSearchTarget();
   }
 
   boot();

@@ -1,18 +1,18 @@
 # Factory reset
 A factory reset erases everything orOS has stored and starts it again as new, as if you had never used it. Use it when you want a clean start, or before you give a device to someone else.
 
->! A factory reset is permanent and can't be undone. It also deletes your orOS data in the cloud. If you might want anything back, use `Export data` first and keep the file.
+>! A factory reset is permanent and can't be undone. It also deletes your orOS data in the cloud. If you might want anything back, use `Export backup file` in `Settings` first and keep the file.
 
 ## Where to find it
-1. Tap or click `orOS` to open the menu.
-2. At the bottom, choose `About orOS + shortcuts`. You can also press [[Ctrl+Alt+Shift+I]].
-3. The `Factory reset` button is near the bottom of that window.
+1. Open the menu and choose `Settings`.
+2. Go to `System`.
+3. The `Factory reset` button is at the bottom of that page. The `About orOS + shortcuts` window ([[Ctrl+Alt+Shift+I]]) also has a button that takes you there.
 
 ## How it works
 1. Tap or click `Factory reset`.
-2. The button changes to `Erase EVERYTHING, everywhere?` and a short note explains what will be erased.
+2. The button changes to `Tap again to erase everything`. The note under it explains what will be erased.
 3. Tap or click it again to confirm. If you don't, it goes back to normal after 10 seconds and nothing happens.
-4. You'll see `Erasing everything…`. orOS then restarts, fresh.
+4. You'll see `Erasing…`. orOS then restarts, fresh.
 
 ## What it erases
 - **On this device:** all your orOS data and settings, in every app. This includes your files, a remembered passphrase, your `Mine` wallpaper and saved map areas.
@@ -21,9 +21,9 @@ A factory reset erases everything orOS has stored and starts it again as new, as
 
 ## What it doesn't erase
 - **Your other devices.** They keep their own copy of your data, and if they are still connected to sync they can upload it to the cloud again. Reset each of them too if you want everything gone.
-- **Files you exported** with `Export data` or [[Ctrl+Alt+Shift+X]], wherever you saved them.
+- **Files you exported** with `Export backup file` or [[Ctrl+Alt+Shift+X]], wherever you saved them.
 - **The cloud copy, if this device isn't connected** to Dropbox or can't reach it during the reset.
 - **Backup folder files**, if the browser had taken away orOS's permission to that folder.
 - **orOS itself.** If you installed it as an app, it stays installed. Only your data goes.
 
-> After a reset you can bring your data back with `Import data`, if you kept an exported file. See [Backup](help:t/backup).
+> After a reset you can bring your data back with `Import backup file` in `Settings`, if you kept an exported file. See [Backup](help:t/backup).

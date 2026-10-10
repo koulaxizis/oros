@@ -1,0 +1,32 @@
+# Checkers
+English draughts on the dark squares of an 8×8 board. Play the computer at three levels, or a friend on the same device.
+
+## How to play
+- Men move one square diagonally forward.
+- Capturing is compulsory: jump over an enemy piece to an empty square behind it, and keep jumping while you can. Men capture forward only.
+- A man that reaches the far row is crowned a king, and that ends the turn. Kings move and capture one square in every diagonal direction.
+- If you have no legal move left, you lose. It's a draw after 40 moves each with no capture or crowning, or when the same position comes up three times.
+
+Black moves first.
+
+## Controls
+Tap or click one of your pieces to see where it can go, then tap a target square. A piece that must capture is highlighted.
+
+- [[←]] [[↑]] [[→]] [[↓]] move between squares, [[Enter]] or [[Space]] picks a piece or a target.
+- [[Esc]] lets go of the picked piece.
+- [[Z]] (or the `Undo move (Z)` button) takes a move back. Against the computer it takes back your move and its answer.
+- [[N]] starts a new game.
+
+## Levels and scoring
+Choose `vs Computer` or `2 players`. Against the computer, pick `Easy`, `Medium` or `Hard`, and your side with `You: black` or `You: white`; when you play white, the board turns round.
+
+With `2 players`, the status bar keeps a running score of the series. `Records` shows your wins, losses and draws against the computer for each level.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, together with this device's 2-player series, after you confirm. The game in progress, your mode, level and colour, and the sound setting stay on this device.
+
+## Tips
+- Your game is saved as you play; reopen the app to carry on.
+- Started a new game or changed a setting by mistake? Tap `Undo` on the message that appears.
+- Sound is off at first; turn it on with the sound button.
+- Captures are compulsory, so you can offer a piece to pull your opponent into a spot where you jump two back.

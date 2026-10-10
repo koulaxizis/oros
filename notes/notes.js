@@ -1006,14 +1006,16 @@
     header.appendChild(wrap);
   }
 
-  function newPage(parentId) {
+  // init { title, text }: a page handed over by another app ("Save as
+  // note" in Reader); without it, an empty page with its title selected.
+  function newPage(parentId, init) {
     var maxPos = 0;
     siblingListByParent(parentId).forEach(function (p) {
       if (p.pos > maxPos) maxPos = p.pos;
     });
     var p = {
       id: uid(), nb: currentNbId(), parent: parentId || null,
-      title: t("page.untitled"), text: "",
+      title: (init && init.title) || t("page.untitled"), text: (init && init.text) || "",
       mtime: Date.now(), pos: maxPos + 1, labels: [], pinned: false
     };
     p.ct = p.mtime;
@@ -1026,6 +1028,7 @@
     savePrefs();
     renderAll();
     notifyTransient(t("toast.created"));
+    if (init) return;
     var titleEl = document.getElementById("page-title");
     if (titleEl) { titleEl.focus(); titleEl.select(); }
   }
@@ -2984,7 +2987,15 @@
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { page, nb }. Switches to the page's notebook, opens its
   // ancestors in the tree and selects it. Unknown page → no-op.
+  // Target { add: { title, text } } (another app's "Save as note"):
+  // a new top-level page in the current notebook, plain text only.
   function openSearchTarget(t) {
+    if (t && t.add && typeof t.add === "object") {
+      var nt = String(t.add.title || "").replace(/\s+/g, " ").trim().slice(0, 200);
+      var nx = String(t.add.text || "").slice(0, 20000);
+      if (nt || nx) newPage(null, { title: nt, text: nx });
+      return;
+    }
     var p = t && typeof t.page === "string" ? pageById(t.page) : null;
     if (!p) return;
     if (p.nb && p.nb !== prefs.currentNb) prefs.currentNb = p.nb;

@@ -1,0 +1,49 @@
+# Score Keeper
+The score sheet for games at the table: backgammon, card games, poker chips or anything else you count in points. Write each round's points, and Score Keeper adds them up, shows who's leading and keeps a history of who wins.
+
+## Getting started
+Tap or click `New match`. Pick a `Game`: a ready one (`Backgammon`, `Prefa`, `Xeri`, `Biriba`, `Poker (chips)`, `Free scoring`) or one of your own under `Mine`. Then set:
+- `Name` of the match.
+- `Players or teams`: 2 to 8. Names you've used before are offered as suggestions, each with its own colour.
+- `Target (0 = no target)`: the score that wins, for example 5 for backgammon or 51 for xeri.
+- `Lowest total wins`, for games where fewer points is better.
+- `Quick buttons (up to 4, e.g. 1, 5, 10)`: buttons that add a fixed amount to a player's points.
+
+Press `Start` to open the score sheet.
+
+## Score a match
+### Add rounds
+Under the sheet there's a box for each player. Type the points (negative numbers are fine; the ± button flips the sign), or use the quick buttons, then press `Add round`. [[Enter]] moves to the next player's box, and on the last one it adds the round.
+
+The `Total` row shows each score; the leader is highlighted and, with a target, you see how many points each player still needs (`N to go`).
+
+### Fix a round
+Tap or click a round in the sheet to change its points or `Delete` it. A deleted round can be brought back with `Undo` for a few seconds.
+
+### Finish
+When someone reaches the target, `We have a winner` appears: choose `Finish match` or `Keep playing`. Without a target, use `Finish match` in the `Match options` menu. The same menu has `Edit match` (name, player names, target and lowest-wins; the number of players stays fixed), `Reopen match`, `Export CSV` and `Delete match` (with `Undo`).
+
+### Round timer
+The `Round timer` button shows a countdown for each round, from 15 seconds to 10 minutes. Press start; when time is up it beeps and, on phones that support it, vibrates. It's off at first.
+
+## Templates, history and stats
+Tick `Save as my template` when you start a match to keep its settings. If you keep the name of a ready game, your version replaces it; with another name it becomes a template of your own under `Mine`, which you can also delete there.
+
+`Playing` lists matches in progress, `History` lists finished ones, and `Stats` shows for each player how many matches they `Played`, their `Wins` and `Win %`, for `All games` or one game. In Stats you can also remove a name from the suggestions.
+
+## Sync and backup
+Matches, rounds, your templates and player names sync between your devices through [orOS sync](help:t/sync). The open tab, an unsent round you've started typing and the round timer stay on this device.
+
+`Export CSV` saves one match (from its menu) or your whole history (from `History`) as a spreadsheet file. There's no import; the orOS [backup](help:t/backup) keeps everything.
+
+## Keyboard shortcuts
+- [[Enter]] in a points box goes to the next player, then adds the round.
+- [[Esc]] in a match goes back to the list.
+- The left and right arrows move between the `Playing`, `History` and `Stats` tabs.
+
+## Tips
+- Use teams for partner games: each team is one "player" on the sheet.
+
+## Limits
+- Points are whole numbers.
+- Up to 500 rounds per match and 40 templates.
