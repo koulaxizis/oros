@@ -4067,5 +4067,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** a real phone, Safari.
 
 ### 2026-10-10 — Budget phase 2: accounts, transfers, Open in Spreadsheet (+ Spreadsheet formula fix) — 0.51.00
-- **Changes:** - **Accounts** (menu → Accounts / Λογαριασμοί): cash, card, bank and so on, each with a starting balance, which may be negative for a debt.   - Entries and recurring entries can name an account.   - Today's balance of each account shows under the totals and in the Accounts dialog. - **Transfers** move money between two accounts. They show in the list as "Bank → Cash", count in no income or expense total, and only change balances. (PR #108)
+- **Changes:** Accounts (menu → Accounts / Λογαριασμοί: cash, card, bank, each with a starting balance, negative allowed for a debt); entries and recurring entries can name an account; today's balance per account shows under the totals. Transfers move money between two accounts, show as "Bank → Cash", count in no income/expense total. Open in Spreadsheet, plus a Spreadsheet formula fix. (PR #108)
+- **Also ships:** Budget forward compatibility, unknown fields/collections survive sync (PR #95, merged 2026-10-09, bump was pending).
 - **NOT tested:** a real phone, Safari, real Dropbox.
