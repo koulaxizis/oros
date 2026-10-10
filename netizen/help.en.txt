@@ -1,0 +1,44 @@
+# Netizen ID
+Make your own "identity card" for the internet: a username, a pixel avatar, your links and a few words about you, laid out as a card the size of a bank card, front and back. Everything except the username is optional.
+
+## Getting started
+Type a `Username` (the only required field). The card updates as you type. On a wide screen the form and the card sit side by side; on a phone, switch between the `Edit` and `Card` tabs.
+
+The form has these sections:
+- `Identity`: `Display name`, `Pronouns`, `Location`, `Languages` and `Netizen since (year)`.
+- `Pixel avatar`: see below.
+- `Contact`: `Email`, `Phone` and `Website`.
+- `Sites & socials`: up to 8 links, each with a label. Move them up or down, or remove them.
+- `Bio & motto`: a short bio and a one-line motto.
+- `Tags & traits`: up to 12 tags; press [[Enter]] or type a comma to add one.
+- `Card style`: `orOS` (follows your orOS colours), `Terminal`, `Paper`, `Mint` or `Rose`.
+
+### Show or hide a field
+Each optional field, and the avatar, has an eye button. A hidden field stays saved in the form but is left off the card, the share link and the vCard.
+
+## Pixel avatar
+The avatar is a 12×12 pixel face. `New face` draws a random one (you can undo it). To change pixels, pick a colour and tap or drag on the grid; `Background / eraser` clears a pixel. With the keyboard, use the arrow keys on the grid and [[Enter]] or [[Space]] to paint. `Transparent background` leaves the background see-through.
+
+## The card
+Tap or click the card, or use `Flip card`, to see the other side. The front has the avatar, username, name, details and motto; the back has the bio, tags, contact details and links.
+
+### Several cards
+Keep up to 20 cards, for example one for work and one for gaming. Choose a card from `Cards`, and use `New card`, `Duplicate card` or `Delete card` (with `Undo`).
+
+## Share and export
+`Export` offers the side you're looking at as `Card · PNG` or `Card · SVG`, both sides as `Card · PDF (both sides)`, the avatar as `Avatar · PNG` or `Avatar · SVG`, and `Contact · vCard (.vcf)` for address books. `Copy card image` puts a picture of the card on the clipboard.
+
+`Share link` makes a link that contains the card itself. Anyone who opens it sees a view-only card they can flip, with a button to open Netizen ID.
+
+>! The share link carries everything shown on the card, so anyone who has it can read it. Hidden fields stay out, and nothing is sent to a server.
+
+## Sync and backup
+Your cards sync between your devices through [orOS sync](help:t/sync). The card that's open, the phone tab and the side shown stay on each device. The exports above are your copies outside orOS; there's no import, but the orOS [backup](help:t/backup) includes your cards.
+
+## Tips
+- Hide your phone and email before sharing a card publicly, and keep them shown on a card you hand to friends as a vCard.
+- Try `New face` a few times until you like one, then fine-tune it pixel by pixel.
+
+## Limits
+- Up to 20 cards, 8 links and 12 tags per card. The bio is up to 280 characters and the motto up to 100.
+- `Copy card image` doesn't work in every browser.

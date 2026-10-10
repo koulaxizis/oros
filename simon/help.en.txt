@@ -1,0 +1,29 @@
+# Simon Says
+Simon lights up a sequence of pads, each with its own tone. Repeat it exactly. Every round adds one more step, and the first wrong pad ends the game.
+
+## How to play
+Press `Start` in the middle of the ring. Watch while the status says `Simon says…`, then repeat the pads in the same order when it says `Your turn`. Get it right and Simon replays the sequence with one more step. There is no time limit for your answer.
+
+If you press a wrong pad, the game ends and the pad you should have pressed is shown. Your score is the longest sequence you completed.
+
+### Pads and modes
+- `4 pads` or `6 pads`. Each pad has its own colour, shape and number, so you can play by shape alone.
+- `Classic`: repeat the sequence as shown. `Reverse`: repeat it back to front, from the last step to the first.
+
+## Controls
+- Tap or click a pad; it answers as soon as you touch it.
+- `New game (N)` ends the game you're playing (its score still counts) and gets ready for a new one. Changing pads or mode, or leaving the app mid-game, also ends it.
+- Sound is on at first, because the tones help you remember. The speaker button turns it off or on.
+- Keys: [[Space]] starts a game, [[1]] to [[4]] (or [[1]] to [[6]]) press the pads by number, and [[N]] is a new game.
+
+## Levels and scoring
+Simon gets faster after steps 5, 9 and 13. The status shows the current `Round` and your `Best` for the chosen pads and mode. A new best shows `New record!`.
+
+`Records` lists your best score and the number of games for each combination of pads and mode (`Best · games`). `Reset records` clears them after you confirm.
+
+## Sync
+Your best scores and game counts sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The number of pads, the mode and the sound setting stay on this device. A game in progress isn't saved: Simon has to show the sequence from the start.
+
+## Tips
+- Hum or count along with the tones; sound makes long sequences much easier.
+- Say the numbers or shapes to yourself as Simon plays, then repeat the list.

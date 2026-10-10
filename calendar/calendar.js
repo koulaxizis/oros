@@ -124,6 +124,7 @@
       "lbl.feed.garage": "Garage",
       "lbl.feed.meals": "Meals",
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
+      "lbl.feed.budget": "Budget",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
       "feed.garage.svc": "{vehicle}: {what} due",
@@ -259,6 +260,7 @@
       "lbl.feed.garage": "Γκαράζ",
       "lbl.feed.meals": "Γεύματα",
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
+      "lbl.feed.budget": "Προϋπολογισμός",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
       "feed.garage.svc": "{vehicle}: σέρβις ({what})",
@@ -451,6 +453,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-petcare", color: "#e0af68" },  // amber — Pet Health Book (real pets; Screen Pet is lbl-feed-pet)
     { id: "lbl-feed-garage", color: "#ecc75f" },   // amber — Garage renewals + service
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
+    { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
     { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
@@ -469,6 +472,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-petcare") return t("lbl.feed.petcare");
     if (l.id === "lbl-feed-garage") return t("lbl.feed.garage");
     if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
+    if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -1710,6 +1714,57 @@ function transientNote(title, body) {
     });
   }
 
+  // Budget read-only feed (budget/feed.js, loaded by index.html: the
+  // same occurrence rules as the app). Upcoming occurrences of the
+  // recurring entries, today and later only (earlier ones are real
+  // entries in Budget by then). "Rent −€500.00" / "Salary +€1,200.00".
+  // Rows are never stored; the blob is micro-cached ~1s like the
+  // other feeds. Click → Budget opens that recurring entry.
+  var BUDGET_DATA_KEY = "oros-budget-data";
+  var budgetCache = { when: 0, data: null, fmt: null, fmtCur: "", fmtLang: "" };
+
+  function budgetData() {
+    var now = Date.now();
+    if (now - budgetCache.when > 1000) {
+      budgetCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(BUDGET_DATA_KEY));
+        if (d && typeof d === "object" && Array.isArray(d.rec) && d.rec.length) budgetCache.data = d;
+      } catch (e) {}
+      budgetCache.when = now;
+    }
+    return budgetCache.data;
+  }
+  function budgetMoney(cents, cur) {
+    if (!budgetCache.fmt || budgetCache.fmtCur !== cur || budgetCache.fmtLang !== LANG) {
+      try {
+        budgetCache.fmt = new Intl.NumberFormat(LANG === "el" ? "el-GR" : "en-GB", { style: "currency", currency: cur });
+      } catch (e) {
+        budgetCache.fmt = { format: function (v) { return v.toFixed(2) + " " + cur; } };
+      }
+      budgetCache.fmtCur = cur;
+      budgetCache.fmtLang = LANG;
+    }
+    return budgetCache.fmt.format(cents / 100);
+  }
+
+  function budgetFeedOn(dateStr) {
+    var F = window.OrosBudgetFeed;
+    if (!F || !labelVisible("lbl-feed-budget")) return [];
+    var d = budgetData();
+    if (!d) return [];
+    return F.rowsOn(d, dateStr, todayYMD(), LANG).map(function (r) {
+      return {
+        id: "bud-" + r.id + "-" + dateStr,      // per-render key, never stored
+        title: (r.name ? r.name + " " : "") + (r.k === "o" ? "\u2212" : "+") + budgetMoney(r.a, r.cur),
+        labelId: "lbl-feed-budget",
+        start: null,                            // all-day
+        _feed: true,
+        _budgetRec: r.id
+      };
+    });
+  }
+
   /* ---------- 3d. Name days, holidays, world days ----------
      Data and rules live in namedays.js (window.OrosNamedays, pure).
      Three chips, all read-only virtual rows, never stored in the
@@ -1819,6 +1874,7 @@ function transientNote(title, body) {
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
+    .concat(budgetFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
     .concat(observancesFeedOn(dateStr))
@@ -1870,6 +1926,9 @@ function transientNote(title, body) {
       } else if (ev._openAt &&
                  typeof p.__orosOpenAt === "function") {
         p.__orosOpenAt(ev._openAt.app, ev._openAt.target);
+      } else if (ev._budgetRec &&
+                 typeof p.__orosOpenAt === "function") {
+        p.__orosOpenAt("budget", { rec: ev._budgetRec });
       } else if (ev._fitnessId &&
                  typeof p.__orosOpenFitness === "function") {
         p.__orosOpenFitness(ev._fitnessId);

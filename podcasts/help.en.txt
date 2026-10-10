@@ -1,0 +1,49 @@
+# Podcasts
+Podcasts lets you follow your favourite shows, see new episodes, build an `Up next` queue and download episodes for listening offline. The player keeps going after you close the app.
+
+## Getting started
+Open `Discover`, search for a podcast and press `Subscribe`. You can also paste an address into `Feed, website or Apple Podcasts address` and press `Add`. The **+** button at the top (`Add podcast`) takes you straight there.
+
+The tabs:
+- `Listening`: what's playing, the `Up next` queue and `Continue listening`.
+- `New`: episodes from the last 30 days you haven't started yet.
+- `Library`: your podcasts, with a badge for new episodes. Tap one to open its page.
+- `Downloads`: episodes saved on this device.
+- `Discover`: search, add by address and OPML.
+
+## Listen
+Press the play button on any episode. The player bar at the bottom has skip back, play/pause and skip forward; tap the episode's name there to open the full player with `Playback speed`, `Sleep timer`, chapters, `Show notes`, `Next in queue` and `Stop`. The sleep timer stops after 5 to 60 minutes or at the `End of episode`.
+
+Tap an episode's title to read its notes; times in the notes appear under `Jump to`. The ⋯ button (`More actions`) offers `Play next`, `Add to queue`, `Mark as played`, `Download`, `Show notes` and `Open the episode page`.
+
+In `Up next`, the arrows move episodes up or down. Your device's media controls (lock screen, headset) work too.
+
+## Podcast pages
+A podcast's page lists its episodes, with filters `All`, `Unplayed`, `In progress`, `Played` and `Downloaded`, and `Newest first` or `Oldest first`. From there you can `Mark all as played`, visit the `Website`, `Support the show` when the podcast offers it, or `Unsubscribe` (its downloads are deleted too).
+
+`Podcast settings` sets a speed for that show, `Skip the first` and `Skip the last` seconds (for intros and outros), and `Download new episodes automatically`.
+
+## Downloads
+Choose `Download` from an episode's menu. The `Downloads` tab shows how much space they take and how much is free. `Keep downloads safe from automatic clean-up` asks the browser to keep them; `Delete played downloads` tidies up.
+
+## Settings
+The gear button opens `Settings`: default speed, `Skip back` and `Skip forward` amounts, `Play the next episode in the queue`, `Delete downloads after they are played`, and which catalog `Catalog search` uses (`Apple Podcasts and fyyd`, one of them, or off).
+
+## Sync and backup
+Your podcasts, episode progress, played marks, queue and settings sync between your devices through [orOS sync](help:t/sync). Downloads, cached episode lists and exact positions stay on this device. `Export OPML` and `Import OPML` in `Discover` move your subscriptions to or from other podcast apps. See also [Backup](help:t/backup).
+
+## Keyboard shortcuts
+While an episode is loaded:
+- [[Space]] plays or pauses.
+- [[←]] / [[→]] skip back or forward.
+- `[` / `]` slow down or speed up.
+- [[N]] plays the next episode in the queue.
+
+## Tips
+- Podcasts refresh when you open the app and every hour while it's open; `Refresh` checks now.
+- Some podcast sites block browsers. Setting up the relay in [Mail](app:mail) lets Podcasts read them.
+
+## Limits
+- Search terms go to the catalog you choose; turn search off if you prefer to add podcasts by address only.
+- Some hosts don't allow downloads; those episodes can still be streamed.
+- Up to 500 podcasts.

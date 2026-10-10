@@ -1689,6 +1689,26 @@
   registerSync();
   watchPalette();
   render();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { habit: id }. Opens the habit's edit dialog, as its edit
+  // button does. Unknown or deleted habit → no-op; an open dialog
+  // (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    var h = t && typeof t.habit === "string" ? habitById(t.habit) : null;
+    if (!h || h.del) return;
+    if (document.querySelector("dialog[open]")) return;
+    openHabitDialog(h);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("habits");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
+
   console.log("[orOS] habits.js " + (SCRIPT_V ? "v" + SCRIPT_V : "") + " booted");
 
 })();

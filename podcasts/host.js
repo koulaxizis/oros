@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — host.js (player + data owner, v1.0.0)
+// orOS Podcasts — host.js (player + data owner, v1.2.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so playback, the
 // position, the queue and sync keep working while the Podcasts
@@ -15,7 +15,9 @@
 //     and of what is playing (to play on with the window closed);
 //   - Media Session (lock screen, headphones, media keys);
 //   - the tray chip (play/pause) on the shell bar;
-//   - audio focus: Radio starting pauses a podcast and vice versa.
+//   - audio focus: Radio starting pauses a podcast and vice versa;
+//   - new-episode notices for shows with notices on, also with the
+//     Podcasts window closed (a check every 3 hours while orOS runs).
 // Writes to the slice follow core.shouldCommit: an hour of
 // listening is at most ~12 uploads, a paused player none.
 // ============================================================
@@ -87,12 +89,18 @@
   //   pos:  { epId: [pos, dur, ts] }   exact positions (pruned to 400)
   //   meta: { epId: episode details }  current + queue (pruned)
   //   cur:  epId playing or paused     last: { p, at } of the last commit
+  //   stats: { d: {day: [wallSec, mediaSec]}, s: {showId: mediaSec} }
+  //          listening time on this device (core.addListen)
+  //   nt:   { showId: newest publish time announced here }  bg: last
+  //          background check (ms)
   function readLocal() {
     try {
       var o = JSON.parse(w.localStorage.getItem(LOCAL_KEY) || "null");
-      if (o && typeof o === "object") return { pos: o.pos || {}, meta: o.meta || {}, cur: o.cur || "", last: o.last || null, spd: o.spd || 0 };
+      if (o && typeof o === "object") return { pos: o.pos || {}, meta: o.meta || {}, cur: o.cur || "", last: o.last || null, spd: o.spd || 0,
+        stats: o.stats && typeof o.stats === "object" ? o.stats : { d: {}, s: {} },
+        nt: o.nt && typeof o.nt === "object" ? o.nt : {}, bg: +o.bg || 0 };
     } catch (e) {}
-    return { pos: {}, meta: {}, cur: "", last: null, spd: 0 };
+    return { pos: {}, meta: {}, cur: "", last: null, spd: 0, stats: { d: {}, s: {} }, nt: {}, bg: 0 };
   }
   var local = readLocal();
   var localTimer = null;
@@ -106,6 +114,9 @@
       var meta = {};
       data.queue.ids.concat(local.cur ? [local.cur] : []).forEach(function (id) { if (local.meta[id]) meta[id] = local.meta[id]; });
       local.meta = meta;
+      var nt = {};
+      data.shows.forEach(function (s) { if (s.ntf && local.nt[s.id] > 0) nt[s.id] = local.nt[s.id]; });
+      local.nt = nt;
       try { w.localStorage.setItem(LOCAL_KEY, JSON.stringify(local)); } catch (e) {}
     };
     if (now) { if (localTimer) { w.clearTimeout(localTimer); } run(); }
@@ -249,11 +260,20 @@
     var show = showOf(cur.s);
     if (show && show.skB && d > show.skB + 30 && p >= d - show.skB && !audio.paused) { ended(); return; }
     if (sleep.until && Date.now() >= sleep.until) { cancelSleep(); pause(); host.notify("sleep"); }
-    if (!audio.paused) commit("tick");
+    if (!audio.paused) { commit("tick"); countListen(); }
     posState();
     host.notify("time");
   });
-  audio.addEventListener("pause", function () { if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
+  // Listening time: wall-clock seconds between ticks while playing
+  // (a gap over 30 s, e.g. a frozen tab, is not counted).
+  var lastWall = 0;
+  function countListen() {
+    var t = Date.now();
+    if (lastWall && cur) local.stats = C.addListen(local.stats, t, cur.s, (t - lastWall) / 1000, audio.playbackRate || 1);
+    lastWall = t;
+  }
+  audio.addEventListener("seeking", function () { lastWall = 0; });
+  audio.addEventListener("pause", function () { lastWall = 0; if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
   audio.addEventListener("playing", function () { flags.buffering = false; flags.error = ""; chip(); host.notify("play"); });
   audio.addEventListener("waiting", function () { flags.buffering = true; host.notify("buffer"); });
   audio.addEventListener("canplay", function () { flags.buffering = false; host.notify("buffer"); });
@@ -382,6 +402,81 @@
     catch (e) {}
   }
 
+  // ---------- New-episode notices ----------
+  // announce(showId, episodes): called by the app after it fetched a
+  // feed, and by the background check below. One notice per episode,
+  // keyed by its id: two devices announcing the same episode write the
+  // same key, so the synced bell shows it once. reset = notices were
+  // just turned on: take the mark again, announce nothing.
+  function announce(sid, eps, reset) {
+    var s = showOf(sid);
+    if (!s || !s.ntf) return 0;
+    if (reset) delete local.nt[sid];
+    var r = C.freshEpisodes(eps, local.nt[sid], Date.now());
+    local.nt[sid] = r.mark;
+    saveLocal();
+    var N = w.orosNotifs;
+    if (!r.list.length || !N || typeof N.emit !== "function") return 0;
+    r.list.forEach(function (e) {
+      try {
+        N.emit({ ns: "podcasts", type: "episode", key: "e:" + e.id, title: s.title, body: C.clean(e.title, 200),
+                 deepLink: "podcasts:ep:" + e.id, ttlDays: 7 });
+      } catch (err) {}
+    });
+    return r.list.length;
+  }
+  // Background check: with the Podcasts window closed, every 3 hours,
+  // online, only the shows with notices on (off by default). The
+  // Reader's parser and fetcher (feeds/core.js, feeds/fetch.js, already
+  // precached) are loaded into the shell on the first check. Nothing is
+  // written to the feed cache or the slice: the app refreshes on open.
+  var BG_EVERY = 3 * 3600000, bgBusy = false, libP = null;
+  function feedsLib() {
+    var ok = function () { return w.orosFeedsCore && w.orosFeedsFetch ? { FC: w.orosFeedsCore, F: w.orosFeedsFetch } : null; };
+    if (ok()) return Promise.resolve(ok());
+    if (libP) return libP;
+    var me = doc.querySelector('script[src*="podcasts/host.js"]');
+    var base = (me && me.src) || (w.location.href.replace(/[^/]*$/, "") + "podcasts/host.js");
+    var q = base.indexOf("?") >= 0 ? base.slice(base.indexOf("?")) : "";
+    var load = function (rel) {
+      return new Promise(function (res) {
+        var sc = doc.createElement("script");
+        try { sc.src = new URL(rel, base).href + q; } catch (e) { res(false); return; }
+        sc.onload = function () { res(true); };
+        sc.onerror = function () { res(false); };
+        doc.head.appendChild(sc);
+      });
+    };
+    libP = (w.orosFeedsCore ? Promise.resolve(true) : load("../feeds/core.js"))
+      .then(function () { return w.orosFeedsFetch ? true : load("../feeds/fetch.js"); })
+      .then(function () { var r = ok(); if (!r) libP = null; return r; });
+    return libP;
+  }
+  function bgCheck(force) {
+    if (force !== true) force = false;
+    if (bgBusy || subs.length) return;                       // the open app refreshes by itself
+    if (w.navigator && w.navigator.onLine === false) return;
+    var shows = data.shows.filter(function (s) { return s.ntf; });
+    if (!shows.length || (!force && Date.now() - (local.bg || 0) < BG_EVERY)) return;
+    bgBusy = true;
+    local.bg = Date.now();
+    saveLocal();
+    var done = function () { bgBusy = false; };
+    feedsLib().then(function (lib) {
+      if (!lib) return;
+      return lib.F.fetchFeeds(shows.map(function (s) { return { url: s.url }; })).then(function (res) {
+        res.forEach(function (r, i) {
+          if (!r || r.err || r.status < 200 || r.status > 299 || !r.bytes) return;
+          var text = lib.FC.decodeBytes(r.bytes, r.type);
+          if (lib.FC.looksLikeFeed && !lib.FC.looksLikeFeed(text)) return;
+          var parsed = null;
+          try { parsed = C.parseFeed(lib.FC.parseXml(text), shows[i].url); } catch (e) { parsed = null; }
+          if (parsed) announce(shows[i].id, parsed.eps);
+        });
+      });
+    }).then(done, done);
+  }
+
   // ---------- Subscribers (the app window; may be closed any time) ----------
   var subs = [];
   var host = {
@@ -427,6 +522,14 @@
     cancelSleep: function () { cancelSleep(); host.notify("sleep"); },
     stop: stop,
     position: posOf,
+    stats: function () { return JSON.parse(JSON.stringify(local.stats || { d: {}, s: {} })); },
+    // eps: [{ id, title, pub }] from a fetched feed (see announce).
+    checkNew: function () { bgCheck(true); },
+    announce: function (sid, eps, reset) {
+      var list = [];
+      (eps || []).forEach(function (e) { if (e) list.push({ id: String(e.id || ""), title: String(e.title || ""), pub: +e.pub || 0 }); });
+      return announce(String(sid || ""), list, !!reset);
+    },
     commit: function () { commit("close"); saveLocal(true); },
     getState: function () {
       return {
@@ -449,6 +552,16 @@
   // The page goes away: keep the place (the engine pushes on hide).
   w.addEventListener("pagehide", function () { commit("close"); saveLocal(true); });
   doc.addEventListener("visibilitychange", function () { if (doc.visibilityState === "hidden") { commit("close"); saveLocal(true); } });
+
+  // Background notice check (shell doctrine: no idle timers, like the
+  // weather tray): 2 minutes after boot, then on tab visible, focus,
+  // back online and shell gestures. Each call is a timestamp compare
+  // until 3 hours have passed. Honest limit: orOS closed = no check.
+  w.setTimeout(bgCheck, 120000);
+  doc.addEventListener("visibilitychange", function () { if (doc.visibilityState === "visible") bgCheck(); });
+  w.addEventListener("focus", bgCheck);
+  w.addEventListener("online", bgCheck);
+  doc.addEventListener("pointerdown", bgCheck, { capture: true, passive: true });
 
   // Shell boot order: sync.js may not have run its setup yet.
   if (!register()) {

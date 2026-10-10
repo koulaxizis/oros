@@ -1,0 +1,47 @@
+# Cycle
+Cycle is a quick, private log of your periods, symptoms and pain relief. It shows your periods on a timeline, estimates when the next one is due, and builds simple statistics from what you log.
+
+## Getting started
+The first time, tap or click `Make your first entry`. This opens today in the day editor. Tap `Start period` if your period started today, pick any symptoms, then press `Save day`.
+
+Three buttons at the top switch between `Timeline`, `Days` and `Insights`.
+
+## Log a day
+Open a day with `+ Log today`, pick any date in the date box next to it, or tap a period bar or a day dot on the timeline. The editor has three parts:
+- `Period`: `Start period` begins a period on that day. Inside a period you can set the `Flow` (`Light`, `Normal`, `Heavy`) for the whole period, `End period here` on an earlier day of an ongoing period, `Extend one day` on its last day, or `Remove this period`. A period that would overlap another one isn't saved.
+- `Symptoms`: tap the chips that apply. Type in `New symptom…` and press `Add…` to make your own.
+- `Pain relief`: tapping a chip logs that you took it now, with the time, under `Taken today`. Add your own with `New medication…`.
+
+Add a note under `Notes (optional)` and press `Save day`.
+
+### Rename or delete chips
+Long-press or right-click a symptom or medication chip, or tap `Manage…` and then a chip, to `Rename` or `Delete` it. A delete can be undone for a few seconds.
+
+## Timeline
+Periods appear as bars, coloured by flow. A dashed bar is the predicted next period. Use ‹ and › to go `Earlier` or `Later`, − and + to show from 7 to 90 days, and `Today` to jump back. The bell button below turns `Reminders on` or `Reminders off`.
+
+The prediction comes from your own averages. It's an estimate, not medical advice and not a contraception method.
+
+## Days and Insights
+`Days` lists every logged day, newest first, with `Search days…`, `Edit day` and `Delete day` (with `Undo`).
+
+`Insights` shows your `Avg cycle`, `Avg period` and `Periods logged` (cycle averages need at least two periods), the expected next period, your most frequent symptoms, pain relief taken and a 90-day strip. Choose `6 months` or `All`. If you also use [Mood](app:mood), you'll see `Mood on period days`, a comparison of how you felt on period days and on other days.
+
+`Doctor report` saves a PDF of the selected range: overview, period log, cycle variability, pain relief and notes.
+
+## Sync and backup
+Periods, day logs, your symptoms and medications, and the reminder setting sync between your devices through [orOS sync](help:t/sync). Cycle makes no other network calls. Your periods also appear in [Calendar](app:calendar) under the `Cycle` label; tapping one opens it here.
+
+There's no import or export apart from the PDF report; use the orOS [backup](help:t/backup) to keep a copy.
+
+## Keyboard shortcuts
+- [[Enter]] in `New symptom…` or `New medication…` adds it.
+- [[Enter]] saves a rename, [[Esc]] cancels it.
+
+## Tips
+- With reminders on, orOS tells you when your period is expected within about two days, or when it seems late. See [Notifications](help:t/notifications).
+- Log every day of a period for better averages. An unlogged day counts as unknown, never as "no period".
+
+## Limits
+- `Factory reset`, at the bottom of `Insights`, erases all cycle data on every synced device. It asks twice and can't be undone.
+- Flow is set for the whole period, not per day.
