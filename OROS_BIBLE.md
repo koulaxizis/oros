@@ -4307,3 +4307,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Timesheet's single open-at receiver gains a `{ day }` target (used by the Calendar row click).
 - Tests: tests/timesheet dayFeed (order, running timer, midnight split, repeated descriptions). Shell check incl. HTML in a project name shown as text, Greek at 360 px, 0 console errors.
 - Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Mind Map 1.1.1: save as a note (#136) — 0.60.05
+- "Save as a note" sends a branch or the whole map to Notes through the existing Notes target `__orosOpenAt("notes", {add:{title,text}})`: text = the branch note, then an indented "- " list with links and notes, ≤ 20,000 chars. Greek labels for the bridge buttons; guide section "Send to other apps".
+- Follow-up of #126 (these commits were pushed after #126 merged). Only mindmap/mindmap.js and mindmap/help.*.txt change.
+- Tests 1186/1186 on the branch; shell check with the real Notes, To-Do and Slides receivers, EN + EL, 0 errors. Not tested: a real phone, Safari.
