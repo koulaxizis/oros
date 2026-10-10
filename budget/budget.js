@@ -2357,4 +2357,32 @@
   }
 
   boot();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { tx } | { rec }. An entry: the Entries tab on its month,
+  // then its dialog; a recurring rule: the Recurring tab, then its
+  // dialog. Unknown ids or an open dialog → no-op.
+  function openSearchTarget(tg) {
+    if (!tg || typeof tg !== "object" || !data || document.querySelector("dialog[open]")) return;
+    if (typeof tg.tx === "string") {
+      var x = findIn(data.tx, tg.tx);
+      if (!x) return;
+      prefs.tab = "list";
+      savePrefs();
+      setMonth(mkOf(x.d));
+      txDialog(x.id, null);
+    } else if (typeof tg.rec === "string") {
+      if (!findIn(data.rec, tg.rec)) return;
+      setTab("rec");
+      recDialog(tg.rec);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("budget");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();

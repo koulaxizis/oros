@@ -1124,11 +1124,40 @@
       $("loading").hidden = true;
       if (AT.prefs.doc && findDoc(AT.prefs.doc)) openDoc(AT.prefs.doc);
       else renderHome();
+      takeSearchTarget();
     }, function () {
       $("loading").hidden = true;
       toast(t("toast.fontFail"));
       renderHome();
+      takeSearchTarget();
     });
+  }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { doc }.
+  // Opens the design (leaving the one that is open through Home, so a
+  // gesture in progress ends). Unknown id → no-op; nothing happens
+  // while a dialog is open. Before the fonts are in, it waits.
+  var searchReady = false, searchLater = null;
+  function openSearchTarget(tg) {
+    if (!searchReady) { searchLater = tg; return; }
+    var id = tg && typeof tg.doc === "string" ? tg.doc : null;
+    if (!id || !findDoc(id)) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (AT.doc && AT.doc.id === id) return;
+    if (AT.doc) goHome();
+    openDoc(id);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    searchReady = true;
+    if (searchLater) { var later = searchLater; searchLater = null; openSearchTarget(later); return; }
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("atelier");
+        if (pending) openSearchTarget(pending);
+      }
+    } catch (e) {}
   }
 
   document.addEventListener("DOMContentLoaded", boot);

@@ -2390,4 +2390,25 @@
   }
 
   boot();
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { group, exp? }. Opens the group (Expenses tab when an
+  // expense is named) and then that expense's dialog. Unknown ids or
+  // an open dialog → no-op.
+  function openSearchTarget(tg) {
+    if (!tg || typeof tg.group !== "string" || document.querySelector("dialog[open]")) return;
+    if (!groupById(data, tg.group)) return;
+    var x = typeof tg.exp === "string" && groupOf(tg.exp) === tg.group ? findIn(data.exp, tg.exp) : null;
+    if (x) prefs.tab = "exp";
+    openGroup(tg.group);
+    if (x) expDialog(x.id);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("split");
+      if (pendingTarget) openSearchTarget(pendingTarget);
+    }
+  } catch (e) {}
 })();
