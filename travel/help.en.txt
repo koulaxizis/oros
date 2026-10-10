@@ -1,0 +1,45 @@
+# Travel
+Travel keeps each trip in one place: dates and travellers, a packing list that adjusts to the length of the trip, a day-by-day itinerary and your notes.
+
+## Getting started
+Tap or click `New trip`. Fill in `Name`, `Destination`, the dates (`From`, `To`) and `Travellers (comma-separated)`. Under `Start the packing list from`, tick the templates you want; `Essentials` and `Before I leave` are ticked for you. Press `Create`.
+
+The trip list groups your trips as `Travelling now`, `Upcoming`, `No dates yet` and `Past trips`, each with a countdown and how much is packed. `Back` (or [[Esc]]) returns to the list.
+
+## Packing
+Type in `Add an item…` and press [[Enter]]. Tick items as they go in the suitcase. Tap or click an item to change its `Quantity`, `Group`, `Who takes it` and `Note`, or delete it (with `Undo`).
+
+Quantities can follow the trip: choose `Per day` or `One every N days` instead of `Fixed`, and the number changes with the trip's dates.
+
+- `Still to pack` hides what's already packed.
+- `Show the items of` filters by traveller.
+- `From a template` adds a template's items; only what's missing is added.
+- `Uncheck all` clears every tick, handy for the trip home.
+
+## Itinerary
+`Add to the itinerary` adds a `Flight`, `Train`, `Bus`, `Ferry`, `Car`, `Stay`, `Activity`, `Food` or `Other`, with its day, times, places and `Booking code`. Entries are grouped by day. A `Stay` shows on every night it covers, and nights with no stay are flagged. Places have `Open in Maps`, which opens them in [Maps](app:maps).
+
+`Notes` is free text for addresses, phone numbers or the Wi-Fi password. On a wide screen, packing and itinerary show side by side.
+
+## Templates
+`Templates` lists 10 ready ones (`Essentials`, `Beach`, `City break`, `Business`, `Hiking & camping`, `Ski`, `With a baby`, `Carry-on only`, `Road trip`, `Before I leave`) and `My templates`. You can edit or hide a ready template; `Restore ready templates` brings them back as they were. `New template` makes your own, or use `Save as template` from a trip.
+
+## Share and export
+A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone), `Export for a calendar (.ics)`, `Print`, `Copy trip` (with new dates, nothing packed) and `Delete trip`.
+
+On the trip list, `More` has `Export all (JSON)` and `Import (JSON)`. An import merges with your trips and overwrites nothing.
+
+## Sync and backup
+Trips, packing lists, itineraries and your templates sync between your devices through [orOS sync](help:t/sync). A tick on your phone and a change on your computer both survive. The open trip, tab and filters stay on each device. Besides the JSON export, the orOS [backup](help:t/backup) keeps a copy.
+
+## Keyboard shortcuts
+- [[Enter]] in `Add an item…`: add the item.
+- [[Esc]]: back to the trip list, or close a menu.
+
+## Tips
+- Before a regular trip, use `Copy trip` on last year's one: you keep the list and the itinerary moves to the new dates.
+- Save your own favourite packing list as a template once, and start every trip from it.
+
+## Limits
+- Up to 200 trips and 60 templates.
+- There are no reminders, and trips don't appear in orOS [Calendar](app:calendar). Use the `.ics` export to add them to another calendar app.

@@ -2874,8 +2874,38 @@
       if (pending) openTarget(pending);
       if (data.feeds.length && C.setting(data, "refresh") > 0) refresh(null, false);
       scheduleTick();
+      try {
+        if (window.parent && window.parent !== window &&
+            typeof window.parent.__orosTakeTarget === "function") {
+          var pendingTarget = window.parent.__orosTakeTarget("feeds");
+          if (pendingTarget) openSearchTarget(pendingTarget);
+        }
+      } catch (e) {}
     });
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { feed } or { item, feed }. A feed: shows its list. An
+  // article: shows its feed (or Starred / Read later when the feed
+  // is gone) and opens it in the reader. Unknown ids, or a dialog
+  // open (maybe with unsaved edits) → no-op.
+  function openSearchTarget(t) {
+    if (!t || typeof t !== "object" || document.querySelector("dialog[open]")) return;
+    if (typeof t.item === "string") {
+      loadHeads().then(function () {
+        if (document.querySelector("dialog[open]")) return;
+        var it = itemOf(t.item);
+        if (!it) return;
+        var saved = C.savedById(data, t.item);
+        select(C.feedById(data, it.feed) ? "f:" + it.feed :
+               saved ? (saved.star ? "star" : saved.later ? "later" : "all") : "all");
+        openArticle(t.item);
+      });
+    } else if (typeof t.feed === "string" && C.feedById(data, t.feed)) {
+      select("f:" + t.feed);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   boot();
 })();

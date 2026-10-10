@@ -1,0 +1,47 @@
+# QR Generator
+QR Generator makes QR codes for links, WiFi networks, contact cards, events, text, email, phone numbers, SMS and locations. Everything is made on your device, even offline.
+
+## Getting started
+1. Under `Type`, pick what the code is for: `Link`, `WiFi`, `Contact`, `Event`, `Text`, `Email`, `Phone`, `SMS` or `Location`.
+2. Fill in the fields under `Content`. The code appears as you type; if something is missing, a short message tells you what.
+3. Save it, export it or print it.
+
+Under the code you see how full it is. If there's too much content, shorten it or lower the error correction.
+
+## Fill in from other apps
+For some types, a button fills the form for you, without changing anything in the other app:
+- `From Bookmarks` for a `Link`, from [Bookmarks](app:bookmarks).
+- `From Contacts` for a `Contact`, from [Contacts](app:contacts).
+- `From Calendar` for an `Event`, from [Calendar](app:calendar).
+
+## Change the look
+Under `Look` you can set:
+- `Error correction`, from `Low (7%)` to `Highest (30%)`. Higher survives smudges and scratches, but the code gets denser.
+- The colours of the `Code` and `Background`, with `Swap colours` and `Black on white`.
+- `Margin`, `Round dots` and a `Caption under the code`.
+
+The app warns you when the contrast is low, the colours are inverted or there's no margin, because some phones can't read such codes.
+
+## Save, export and share
+- `Save` keeps the code under `My codes` with a name. Changes to a saved code are saved as you go. You can rename, copy or delete it there, with `Undo` after a delete. `New` starts a fresh code.
+- `PNG` (choose the `PNG size`) and `SVG` save an image file.
+- `Copy` puts the image on the clipboard; `Share` appears on phones.
+- `Save to Files` puts the image in the QR folder of [Files](app:files).
+- `Print` prints the code. For WiFi codes, `WiFi card` prints a card with the network name, password and code, ready for guests.
+
+## Sync and backup
+Your saved codes sync between your devices through [orOS sync](help:t/sync) and are part of the orOS [backup](help:t/backup). The code you're working on before you save it, the open code and the PNG size stay on this device.
+
+>! A saved WiFi code includes the password, and it syncs with your other codes.
+
+## Keyboard shortcuts
+- [[Ctrl+S]] saves the code as PNG.
+- Arrow keys move between the types once one is focused.
+
+## Tips
+- For a WiFi code, pick the right `Security`; WPA passwords need at least 8 characters.
+- Test a printed code with your phone camera before handing it out.
+
+## Limits
+- You can keep up to 100 saved codes.
+- The app makes codes but doesn't scan them.

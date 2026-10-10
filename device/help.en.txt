@@ -1,0 +1,35 @@
+# Device Info
+Device Info shows what orOS sees about this device: storage used by each app, battery, network, sync state, screen, browser and the browser features the apps rely on. It only reads; it changes nothing and sends nothing.
+
+## Getting started
+Open the app and the cards fill in by themselves. Tap or click a card's title to fold or unfold it. The button with the circular arrow (`Refresh`) reads everything again; the app also refreshes when you come back to it.
+
+## The cards
+- `Storage`: how much space orOS uses, split into `App data (local storage)`, `Databases (Files, wallpaper)` and `Offline copies and caches`, with a bar against the usual browser limit. A warning appears when local storage is almost full.
+- `Space per app`: local storage per app, biggest first. Tap or click an app to open it. `Show all` lists every app.
+- `Battery`: level, whether it's charging, and the time to full or empty. Safari and Firefox never give battery information.
+- `Network`: online or offline and, where the browser tells, connection type, estimated speed, latency and data saver. orOS runs no speed test.
+- `Sync`: whether this device is connected to Dropbox, unlocked, has changes waiting to upload, how often it syncs, the last cloud backup copy, and your automatic backup to a file.
+- `Screen`: screen and window size, pixel ratio, orientation, touch, dark mode, reduce motion, and whether orOS runs as an installed app or in a browser tab.
+- `orOS & browser`: orOS version, offline copy, language, theme, an approximate browser and system, CPU cores, memory and time zone.
+- `Browser features`: a tick or a cross for notifications, backup folder on disk, share sheet, clipboard, vibration, keeping the screen on, location, private file storage, offline use, encryption and sound. A missing feature lists the apps it affects.
+
+### Protect your storage
+If storage isn't protected, the browser may delete orOS data when the device runs low on space. Press `Ask for protection` to ask the browser. If it declines, [installing orOS](help:t/install) as an app usually helps.
+
+## Copy a report
+`Copy report` copies every card as plain text, handy when you ask for help with a problem. Values stored by other apps are never included, only their sizes.
+
+## Sync and backup
+Nothing here syncs: everything describes this device. Only the folded cards are remembered, on this device. To change sync or backup, open [Settings](app:settings); see [Sync](help:t/sync) and [Backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[R]] refreshes all cards.
+
+## Tips
+- If `Space per app` shows an app you no longer use near the top, open it and delete what you don't need. See also [Your data](help:t/data).
+- For problems, start with [Troubleshooting](help:t/troubleshooting).
+
+## Limits
+- Browser, system and the local storage limit are approximate.
+- Many details (battery, network, memory) depend on the browser and may show `Not available` or `Unknown`.

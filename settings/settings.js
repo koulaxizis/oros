@@ -282,6 +282,26 @@
     c3.appendChild(grid);
     host.appendChild(c3);
 
+    if (s.dock) {
+      var d = s.dock;
+      var c5 = card(t("k.dock"), "dock");
+      c5.appendChild(row(t("k.on"), switchBtn(d.on, "dock:on", function (v) { set("dock:on", v); }, t("k.on"))));
+      if (d.on) {
+        var sizeRow = row(t("k.size"), null);
+        sizeRow.appendChild(segmented(["s", "m", "l"].map(function (k) {
+          return { value: k, label: t("k.size." + k) };
+        }), d.size, "dock:size", function (v) { set("dock:size", v); }, t("k.size")));
+        c5.appendChild(sizeRow);
+        if (d.fine) {
+          c5.appendChild(row(t("k.magnify"), switchBtn(d.magnify, "dock:magnify", function (v) { set("dock:magnify", v); }, t("k.magnify"))));
+        }
+        c5.appendChild(row(t("k.autohide"), switchBtn(d.autohide, "dock:autohide", function (v) { set("dock:autohide", v); }, t("k.autohide"))));
+        c5.appendChild(row(t("k.over"), switchBtn(d.over, "dock:over", function (v) { set("dock:over", v); }, t("k.over"))));
+        if (!d.pinned) c5.appendChild(el("p", "hint", t("k.empty")));
+      }
+      host.appendChild(c5);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),

@@ -1,0 +1,32 @@
+# Chess
+Play chess against the computer at three levels, or against a friend on the same device. All the rules are there: castling, en passant, promotion, check and every kind of draw.
+
+## How to play
+Choose `vs Computer` or `2 players` in the toolbar. Against the computer, also pick a level and `Your pieces`: `As white`, `As black` or `Random side`. Changing any of these starts a new game.
+
+To move, tap or click a piece, then the square to go to. Dots show where the piece can legally go. With a mouse you can also drag the piece. If a move isn't allowed, a message tells you why, for example when it would leave your king in check.
+
+When a pawn reaches the last row, pick the piece it becomes under `Promote to`.
+
+The game ends by checkmate, or as a draw by stalemate, the 50-move rule, threefold repetition or when there aren't enough pieces left to mate.
+
+## Controls
+- Tap, click or drag to move.
+- Arrow keys move around the board; [[Enter]] picks up a piece and puts it down. [[Esc]] drops the selected piece.
+- [[U]] or `Undo move (U)` takes back a move. Against the computer, it takes back your move and its answer.
+- [[F]] or `Turn the board (F)` turns the board around. When you play black, the board is already turned for you.
+- [[N]] or `New game (N)` starts a new game. If you leave a game in progress, an `Undo` button appears for a moment to get it back.
+
+A game in progress is kept on this device and waits for you next time.
+
+## Levels and scoring
+`Easy` sometimes picks a weaker move on purpose, `Medium` thinks a few moves ahead and `Hard` searches deepest. `Records` (`Records vs computer`) shows your wins, draws and losses for each level.
+
+>! Games where you used undo, and all `2 players` games, are not recorded.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.
+
+## Tips
+- Start on `Easy` to warm up; the computer still never misses a mate in one.
+- In `2 players`, turn the board with [[F]] when you hand the device over.

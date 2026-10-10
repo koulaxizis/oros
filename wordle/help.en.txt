@@ -1,0 +1,38 @@
+# Wordle
+Guess the hidden five-letter word in six tries. After each guess the letters change colour to show how close you are. Play with English or Greek words.
+
+## How to play
+Type a five-letter word and press [[Enter]]. Each letter then turns:
+- green: the right letter in the right place;
+- yellow: the letter is in the word, but somewhere else;
+- grey: the letter isn't in the word.
+
+Repeated letters are counted exactly: if the word has one E and you guess two, only one of them lights up. Your guess must be in the word list, or you'll see `Not in the word list`.
+
+In Greek words accents and diaeresis don't matter, and ς counts as σ.
+
+### Daily and Free
+- `Daily` gives one word a day, the same on every device. It counts towards your `Streak`.
+- `Free` gives as many words as you like. Start another one with `New word (Shift+N)`.
+
+`EN` and `ΕΛ` in the toolbar choose the word language. It starts with your orOS language.
+
+## Controls
+- Type with your keyboard, or tap or click the on-screen keys.
+- [[Enter]] sends the guess; [[Backspace]] deletes a letter.
+- [[Shift+N]] starts a new word in `Free`.
+
+With Greek words, your keyboard types Greek letters by key position, as on a Greek keyboard, even if your system is set to English.
+
+## Levels and scoring
+Under `Options`:
+- `Hard mode`: hints you've found must be used in every later guess. You can turn it on or off only before your first guess of a word.
+- `High contrast colours`: orange and blue instead of green and yellow.
+
+`Statistics` shows, for the word language you're playing, your daily games, win percentage, current and best streak and how many guesses your wins took, plus your `Free` games and words found.
+
+## Sync
+Your daily results and `Free` counts sync between your devices through [orOS sync](help:t/sync), so your streak follows you. If you already played today's word on another device, Wordle tells you and suggests `Free`. `Reset statistics` in `Statistics` deletes everything on every device, after you confirm. Your options, word language, sound button and the words in progress stay on this device.
+
+## Tips
+- After a word, `Copy` copies the coloured squares without the word, ready to share without spoilers.

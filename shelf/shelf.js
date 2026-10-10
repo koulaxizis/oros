@@ -1762,7 +1762,23 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("shelf");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { item }. Opens the item's details dialog. Unknown item →
+  // no-op; an open dialog → no-op (unsaved edits win).
+  function openSearchTarget(t) {
+    if (!t || typeof t.item !== "string" || document.querySelector("dialog[open]")) return;
+    if (itemById(t.item)) itemDialog(t.item);
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   boot();
 })();

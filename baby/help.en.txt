@@ -1,0 +1,46 @@
+# Baby
+Baby is a log for your baby's feeds, sleep and nappies, with growth charts and milestones. It works for one or more children and syncs, so both parents can log from their own phones.
+
+## Getting started
+Tap or click `Add your baby`, type a `Name` and `Date of birth`, and optionally a `Sex (optional)` and a `Colour`. The child's name and age show at the top; tap it to switch child, `Edit this child` or `Add another child`.
+
+The tabs at the bottom are `Today`, `History`, `Growth` and `Milestones`.
+
+## Today
+### Quick buttons
+- `Breastfeed` starts a feed timer on the side you pick; the other side from last time is marked `suggested`. While it runs you can switch side, `Pause` and `Resume`, and `Done` when you finish.
+- `Sleep` starts a sleep timer; tap `Wake up` when the baby wakes.
+- `Bottle` (`Breast milk` or `Formula`, with amount), `Nappy` (`Wet`, `Dirty`, `Wet + dirty`), `Solids` and `Pump`.
+- `More` has `Medicine`, `Temperature`, `Bath`, `Tummy time`, `Note`, and `Log a past sleep` or `Log a past feed` for things you forgot.
+
+Cards show how long ago the last feed and nappy were, and how long the baby has been awake or asleep. Below come today's totals and the `Log`.
+
+### Edit or delete
+Tap any entry to change its start, end or values, or to `Delete` it. After a delete, `Undo` appears for a few seconds.
+
+## History and growth
+`History` shows any day's totals and entries; use the arrows to move a day. `Last 7 days` has bars for `Sleep`, `Feeds` or `Nappies`, and `24-hour pattern` shows when the baby slept and fed.
+
+In `Growth`, `Add measurement` records weight, length and head size (fill in any of the three). Each gets a chart by age in months. These are your own measurements only, not compared with growth standards.
+
+## Milestones
+Tick the ready milestones as they happen, or `Add` your own. You can also record `Vaccines` and `Doctor visits`.
+
+## Sync and backup
+Children, every entry, growth, milestones and units sync between your devices through [orOS sync](help:t/sync). A running timer syncs too, so one parent can stop a timer the other started. Night view and the open tab stay on each device.
+
+In `Settings` you'll find `Export log (CSV)`, `Export growth (CSV)`, `Back up (JSON)` and `Restore from backup`. A restore merges: it adds and updates, and never removes what's already there.
+
+## Keyboard shortcuts
+- [[1]] to [[4]] switch tabs.
+- [[Left]] / [[Right]] in `History` go to the previous or next day.
+- [[Ctrl+Z]] does the same as `Undo` while it is showing.
+
+## Tips
+- The moon button turns on night view, a dim palette for the middle of the night.
+- `Summary for the paediatrician` in `Settings` gives a text you can `Copy`, `Share` or `Save as text`.
+- In `Settings`, choose units for weight (kg or lb), temperature (°C or °F) and volume (ml or fl oz).
+
+## Limits
+- Baby keeps a log; it's not medical advice. If you're worried about your baby, call your paediatrician.
+- There are no reminders and no Calendar entries yet.

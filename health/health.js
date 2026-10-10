@@ -1882,6 +1882,28 @@
     if (id) setTimeout(function () { window.__orosHealthOpen(id); }, 250);
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { entry: id }. History tab, then the reading's edit dialog,
+  // as a History row click does. Unknown reading → no-op; an open
+  // dialog (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    var e = t && typeof t.entry === "string" ? findRow("en", t.entry) : null;
+    if (!e || !C.typeRow(data, e.t)) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (prefs.tab !== "history") setTab("history");
+    entryDialog(e.t, e);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("health");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
+  }
+
   function wire() {
     $("set-btn").innerHTML = UI.gear;
     $("set-btn").setAttribute("aria-label", t("btn.settings"));
@@ -1937,6 +1959,7 @@
     watchPalette();
     render();
     takePending();
+    takeSearchTarget();
   }
 
   boot();

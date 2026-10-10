@@ -1,0 +1,46 @@
+# Quote
+Quote helps you write price quotes for your clients: line items with discounts and VAT, payment terms, instalments, and a PDF you can send.
+
+## Getting started
+The `Create` tab is a blank quote. It gets a number like OFF-2026-001 automatically; the round arrow next to `Quote #` gives it the next free number again. Fill in `Date`, `Due`, `Status` and `Currency` (EUR or USD), then press `Save`.
+
+Until you press `Save`, a new quote is a draft kept only on this device. If you close the app, it's restored next time. After the first save, every change is saved as you type.
+
+A quote can also start in another app: `Create quote` in a [Timesheet](app:timesheet) report fills in a new quote for you. Check it and press `Save`.
+
+## Clients
+Tap or click `Select client` to pick a client, or the **+** next to it to add one. `Client Details` holds `Name`, `Email`, `Phone`, `Address` and `Tax ID / VAT`. The pencil edits the chosen client; `Delete` in that window removes the client after you confirm.
+
+## Line items and totals
+Press **+** next to `Line Items` to add a row with `Code/SKU`, `Description`, `Qty`, `Unit Price`, `Disc %` and `VAT %`. You can type amounts with a comma or a dot.
+
+Below the items you see `Subtotal`, `VAT` and `Total`. `Discount (%)` takes a discount off the whole quote. Changing `VAT (%)` there sets the same rate on every line, and new lines take it too.
+
+### Instalments
+Under `Instalments`, set a `Count` and press `Generate` to split the total evenly. You can then change each date and `Amount`; a line underneath tells you whether the sum matches the total.
+
+## Payment terms, notes and templates
+Tap or click a payment preset (`Bank Transfer`, `PayPal`, `IRIS`, `Cash`) to add its text to `Payment Terms`. The pencil lets you change the preset texts, for example to add your IBAN. Use `Notes` for any other terms.
+
+`Save as Template` stores the items, discount, payment terms, notes and instalments under a name. The `Template Library` button opens your templates, where `Use` starts from one. `Duplicate` makes a copy with a new number and the status `Draft`.
+
+## Your quotes, PDF and email
+The `Quotes` tab lists all your quotes. Search by number, client, item, notes or payment terms, and use the funnel to filter by status. Tap or click a quote to open it.
+
+While a quote is open, the buttons at the top let you:
+- `Export PDF`: save the quote as an A4 PDF.
+- `Send via email`: open your email program with the client's address, the quote number, due date and total filled in. Attach the PDF yourself.
+
+## Sync and backup
+Quotes, clients, templates and payment presets sync between your devices through [orOS sync](help:t/sync). An unsaved draft and the quote you had open stay on this device. The orOS [backup](help:t/backup) keeps a copy of everything.
+
+## Keyboard shortcuts
+- [[Alt+N]] starts a new quote (when you're not typing in a field).
+
+## Tips
+- orOS reminds you when a quote marked `Sent` or `Accepted` is due within two days or overdue; tapping the reminder opens the quote. See [Notifications](help:t/notifications).
+- Keep the status up to date: change it to `Rejected` or `Expired` and the reminders stop.
+
+## Limits
+- Only euros and US dollars are available.
+- The email doesn't include the PDF; export it and attach it by hand.

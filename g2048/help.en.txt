@@ -1,0 +1,34 @@
+# 2048
+Slide the tiles on the board and join equal numbers until you make a 2048 tile. Then keep going for a higher score, if you like.
+
+## How to play
+Each move slides every tile as far as it goes in one direction. Two tiles with the same number that meet join into one with their sum, and the sum is added to your score. A tile joins only once per move.
+
+After every move that changes the board, a new tile appears: usually a 2, sometimes a 4. The game is over when the board is full and no move can join anything (`No moves left`).
+
+When you reach the target, `You reached 2048!` asks whether to `Keep going` or `Finish here`.
+
+## Controls
+- Arrow keys or [[W]] [[A]] [[S]] [[D]] slide the tiles.
+- On a touch screen, swipe on the board.
+- [[U]] or `Undo (U)` takes back your last move. Only the last move can be undone.
+- [[N]] or `New game (N)` starts a new game. If you leave a game in progress this way, an `Undo` button appears for a moment to get it back.
+
+A game in progress is kept on this device and is waiting for you the next time you open 2048.
+
+## Levels and scoring
+Pick the board size in the toolbar: `3×3`, `4×4` (the classic) or `5×5`. Changing it starts a new game. On `3×3` the target is 512, because 2048 can't fit.
+
+Next to the size, choose `Classic` or `Timed`. A timed game gives you 2 minutes, and the clock starts with your first move. It pauses while orOS is in the background. In the last 10 seconds it turns amber, and at zero you see `Time's up` with your score.
+
+Each size and mode has its own records. `Records` shows your best score, your best tile, the games you played and how many of them reached the target.
+
+>! If you use undo, that game still counts as played but can't set a score or tile record.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The board size, the game in progress and the sound button stay on this device.
+
+## Tips
+- Keep your biggest tile in one corner and build towards it.
+- Try to use mostly two or three directions, so the corner tile doesn't get pushed out.
+- `5×5` gives you more room; `3×3` is a quick, tight game.
