@@ -1303,6 +1303,28 @@ body {
 #rx-tray-chip[data-state="true"] .rx-tray-eq {
   color: var(--accent);
 }
+/* Timesheet Wave 3: running timer chip (icon + elapsed H:MM) */
+#ts-tray-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#ts-tray-chip:hover { background: var(--accent-soft); }
+#ts-tray-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
+#oros-bar.bar-tight #ts-tray-chip { padding: 0 5px; }
+
 #wx-chip {
   background: transparent;
   border: none;

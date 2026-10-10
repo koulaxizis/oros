@@ -922,8 +922,10 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
+    tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -1335,6 +1337,120 @@
       body: txt.body,
       deepLink: "system:open:water"
     });
+  }
+
+  // Timesheet (Wave 3) — the shell reads "oros-timesheet-data" with
+  // timesheet/core.js (loaded by index.html, the SAME file the app
+  // runs) and never writes it. Two things come from that read:
+  //   · a top-bar chip while a timer runs (elapsed H:MM; click opens
+  //     Timesheet), painted by the 1/s clock tick;
+  //   · one "forgot to stop it?" notification per running entry once
+  //     it passes core.FORGOT_MS (same threshold as the app banner).
+  // The text is re-read at most every 5 s, or at once when the app
+  // frame writes it (storage event), and parsed only when it changed.
+  // Starting/stopping from the keyboard (Ctrl+Alt+Shift+T) goes
+  // through the app (live push or a one-shot flag + open), so the
+  // data has one writer and the sync rules stay the app's.
+  var tsRaw = null, tsRun = null, tsReadAt = 0;
+  window.addEventListener("storage", function (e) {
+    var C = window.orosTimesheetCore;
+    if (C && e.key === C.STORAGE_KEY) tsReadAt = 0;
+  });
+  function timesheetRunning() {
+    var C = window.orosTimesheetCore;
+    if (!C || typeof C.parse !== "function") return null;
+    var now = Date.now();
+    if (now - tsReadAt < 5000) return tsRun;
+    tsReadAt = now;
+    var raw = null;
+    try { raw = localStorage.getItem(C.STORAGE_KEY); } catch (e) { return tsRun; }
+    if (raw === tsRaw) return tsRun;
+    tsRaw = raw;
+    tsRun = null;
+    var d = raw ? C.parse(raw) : null;          // unreadable → no chip (the app keeps the rescue copy)
+    var x = d ? C.running(d)[0] : null;
+    if (x) {
+      var p = C.project(d, x.p);
+      tsRun = { id: x.id, s: x.s, name: p ? p.name : "" };
+    }
+    return tsRun;
+  }
+
+  function timesheetTrayTick() {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var run = timesheetRunning();
+    var chip = document.getElementById("ts-tray-chip");
+    if (!run) { if (chip) chip.remove(); return; }
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "ts-tray-chip";
+      chip.type = "button";
+      chip.innerHTML = ICONS.timesheet + '<span class="ts-time"></span>';
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openAppById("timesheet");
+      });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+    }
+    var C = window.orosTimesheetCore;
+    var txt = C.fmtDur(Date.now() - run.s);
+    var span = chip.lastChild;
+    if (span.textContent !== txt) span.textContent = txt;
+    var since = new Date(run.s);
+    var hm = String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0");
+    var title = window.t("ts.tray.title")
+      .replace("{p}", run.name || window.t("ts.tray.noproj"))
+      .replace("{t}", hm).replace("{d}", txt);
+    if (chip.title !== title) {
+      chip.title = title;                       // .title / aria-label: plain text, never HTML
+      chip.setAttribute("aria-label", title);
+    }
+  }
+
+  var tsLastTick = 0;
+  function timesheetCheckTickThrottled() {
+    var now = Date.now();
+    if (now - tsLastTick < 60000) return;
+    tsLastTick = now;
+    timesheetCheckTick();
+  }
+  function timesheetCheckTick() {
+    var C = window.orosTimesheetCore, N = window.orosNotifs;
+    if (!C || !(N && typeof N.emit === "function")) return;
+    var run = timesheetRunning();
+    if (!run || Date.now() - run.s < C.FORGOT_MS) return;
+    // The app shows its own banner while it is the open app.
+    if (state.running && state.running.id === "timesheet" && !document.hidden) return;
+    var title = window.t("app.timesheet");
+    if (title === "app.timesheet") title = "Timesheet";
+    N.emit({
+      ns: "timesheet",
+      key: "forgot-" + run.id,
+      type: "reminder",
+      title: title,
+      body: window.t("ts.forgot.body").replace("{d}", C.fmtDur(Date.now() - run.s)),
+      deepLink: "system:open:timesheet"
+    });
+  }
+
+  // Ctrl+Alt+Shift+T: start or stop the Timesheet timer.
+  function scTimesheetToggle() {
+    var has = false;
+    for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "timesheet") has = true;
+    if (!has) return;
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetToggle === "function") {
+          f.contentWindow.__orosTimesheetToggle();
+          tsReadAt = 0;
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-timesheet-toggle", "1"); } catch (e) {}
+    openAppById("timesheet");
   }
 
 
@@ -4835,7 +4951,8 @@
     { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
     { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
     { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
-    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } }
+    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
+    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
