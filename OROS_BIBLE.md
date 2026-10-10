@@ -4402,3 +4402,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: TIMESHEET entries/projects gain optional fields (see the TIMESHEET schema note); unknown fields from newer versions ride along (forward-compatible).
 - Tests: tests/timesheet.test.js extended. Help pages updated.
 - Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Layout v1.2.0 (#146): type in frames, open InDesign and PDF files — 0.65.00
+- **Type straight into text frames**: double-click, Enter, the Text tool or a new frame; caret, selection and live reflow across columns, threads and rotation; word / paragraph clicks, Shift+arrows, Ctrl+B/I/U, Shift+Enter line break, styles panel applies to the selection; works with phone keyboards. The Story Editor stays under `Edit text`.
+- **Open InDesign `.idml`**: pages, facing, margins, columns, bleed, colours + tints, paragraph + character styles, masters, threaded frames, shapes, lines, groups, rotation, opacity, wrap, embedded images (linked ones stay as named empty frames).
+- **Open PDF** (e.g. from Affinity Publisher): text becomes editable frames (alignment, leading, size, family, bold/italic, colour); pictures and drawings become one locked picture per page behind the text.
+- Files: `layout/` (+ caret.js, inframe.js, idml.js, pdfin.js), `designkit/text.js`, `vendor/pdfjs/`, tests `layout-caret`, `layout-idml`, `layout-pdfin`.
+- Not tested: real phone, Safari / iOS, real Dropbox, files from real InDesign / Affinity installs.
