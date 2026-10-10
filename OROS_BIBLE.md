@@ -4278,3 +4278,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: sync slice `museum` (`oros-museum-data`, LWW per item + tombstones, delete wins ties); `oros-museum-prefs` and IDB `oros-museum` stay on the device. External service: Wikipedia / Wikimedia Commons (listed in Device info).
 - Files: museum/ (index.html, core.js, museum.js, museum.css, help.en/el.txt), tests/museum.test.js. Registered in apps.json (Internet), icon, names, precache, tests.yml, factory reset.
 - Not tested: the real Wikipedia API from the test harness (a routed stand-in was used), a real phone, Safari.
+
+### 2026-10-10 — Media Shelf 1.1.0: import from Goodreads / Letterboxd (#132) — 0.60.01
+- More (⋯) > "Import from Goodreads / Letterboxd" opens one or more CSV exports; a preview shows titles per type and status and how many are skipped as already on the shelf; one tap imports, Undo removes the whole import.
+- Goodreads: Exclusive Shelf → status (read / now / want / dropped for DNF-style shelves), Binding → format (paper / ebook / audio), rating = stars × 2, Date Read → a finished session.
+- Letterboxd: watchlist, watched, ratings, diary and reviews files combined per film (name + year); ratings.csv wins over log ratings; every diary date is a watch session, so rewatches count.
+- shelf/shelf.js gains a small RFC 4180 CSV parser and planImport(); data goes through the existing `shelf` slice (no schema change). Guide pages gain an import section.
+- Tests: tests/shelf.test.js (parseCsv, csvKind, Goodreads mapping, Letterboxd combining, duplicate skip, log-only ratings). Shell e2e 11/11 with two devices.
+- Not tested: real Goodreads/Letterboxd exports (fixtures in their documented formats), real Dropbox, Safari/Firefox, a real phone.
