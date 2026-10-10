@@ -4491,3 +4491,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Shell: `orosAssistInstalled()`, `openAssistant(q?)`, SC_DEFS `a`, `appendAsk()`; translations `search.ask`, `sc.desc.assistant`; help topic Shortcuts.
 - Tests: tests/assistant.test.js (28).
 - Not tested: real provider calls with real keys, Safari/iPhone, a real phone, real Dropbox.
+
+### 2026-10-10 — Reader: "Send by email" opens an orOS Mail draft (#156) — 0.67.01
+- Reader's send dialog now opens a prefilled draft in Mail (`__orosOpenAt("mail", {compose:{subject, body}})`) instead of a `mailto:` link. Nothing is sent until you press Send in Mail.
+- Code: `feeds/feeds.js` `sendDialog` only.
+- Not tested: a real phone, Safari, a real SMTP send.
