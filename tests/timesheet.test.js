@@ -586,3 +586,41 @@ test("parseHours: a budget is always hours", () => {
   assert.deepEqual(["40", "40,5", "40.25", "40:30", "", " 120 h", "1.250", "-3", "abc", "3:75"].map(C.parseHours),
     [2400, 2430, 2415, 2430, 0, 7200, NaN, NaN, NaN, NaN]);
 });
+
+// ---------------------------------------------------------------
+// Wave 7: Pomodoro inbox (BR-TS-POMO)
+// ---------------------------------------------------------------
+
+test("inboxRead: junk dropped, too long / reversed legs dropped, one per start, sorted", () => {
+  const raw = JSON.stringify([
+    { s: at(5, 10), e: at(5, 10, 25), p: "pppppp1" }, null, "x", { s: at(5, 9), e: at(5, 9, 25), p: "bad id!" },
+    { s: at(5, 10), e: at(5, 11) }, { s: at(5, 12), e: at(5, 11) }, { s: at(5, 13), e: at(5, 17) }
+  ]);
+  assert.deepEqual(C.inboxRead(raw), [{ s: at(5, 9), e: at(5, 9, 25), p: "" }, { s: at(5, 10), e: at(5, 10, 25), p: "pppppp1" }]);
+  assert.deepEqual(C.inboxRead("not json"), []);
+  assert.deepEqual(C.inboxRead("x".repeat(70000)), []);
+});
+
+test("inboxPut / inboxEnd: a stop moves the end back, under a minute drops the leg", () => {
+  let l = C.inboxPut([], { s: at(5, 9), e: at(5, 9, 25), p: "pppppp1" });
+  l = C.inboxPut(l, { s: at(5, 10), e: at(5, 10, 25), p: "" });
+  assert.equal(l.length, 2);
+  assert.deepEqual(C.inboxEnd(l, at(5, 10), at(5, 10, 12))[1], { s: at(5, 10), e: at(5, 10, 12), p: "" });
+  assert.equal(C.inboxEnd(l, at(5, 10), at(5, 10) + 30000).length, 1);
+  assert.deepEqual(C.inboxEnd(l, at(5, 9), at(5, 9, 40)), l, "a stop after the planned end changes nothing");
+});
+
+test("inboxDrain: finished legs become Pomodoro entries once; running legs wait", () => {
+  const d = model({ projects: [{ id: "pppppp1", name: "Site", client: "", color: 0, rate: 0, bill: 1, arch: 0, m: 1 }] });
+  const list = [{ s: at(5, 9), e: at(5, 9, 25), p: "pppppp1" }, { s: at(5, 10), e: at(5, 10, 25), p: "gonepid1" },
+                { s: at(5, 11), e: at(5, 11, 25), p: "" }];
+  const r = C.inboxDrain(d, list, at(5, 11, 5));
+  assert.equal(r.n, 2);
+  assert.deepEqual(r.done, [at(5, 9), at(5, 10)]);
+  assert.deepEqual(r.add.entries.map((x) => [x.p, x.task, x.e - x.s]), [["pppppp1", "Pomodoro", 25 * 60000], ["", "Pomodoro", 25 * 60000]]);
+  const merged = C.mergeTimesheet(d, r.add);
+  assert.equal(merged.entries.length, 2);
+  const again = C.inboxDrain(merged, list, at(5, 12));
+  assert.equal(again.n, 1, "only the new leg; logged legs are not doubled");
+  assert.deepEqual(again.done, [at(5, 9), at(5, 10), at(5, 11)]);
+});

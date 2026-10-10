@@ -22,7 +22,7 @@ It uses the top-bar weather city: the city pinned in [Weather](help:a/weather), 
 - **`Alarm`**: set a time, add a `Label…` if you like, tick `Daily` for every day, then `Add alarm`. A time that has already passed today is set for tomorrow. The × deletes an alarm.
 - **`Timer`**: enter minutes and seconds and tap `Start`. The same button becomes `Stop`, and `Reset` clears it. In the last 60 seconds the countdown fills the screen. Tap it or press [[Esc]] to hide it (the timer keeps going).
 - **`Stopwatch`**: `Start`, `Stop` and `Reset`.
-- **`Pomodoro`**: set `Work` and `Break` minutes and tap `Start`. When a `Focus` leg ends, a `Break` is ready to start, and so on. The counter shows how many sessions you've finished. `Reset` goes back to `Focus`.
+- **`Pomodoro`**: set `Work` and `Break` minutes and tap `Start`. When a `Focus` leg ends, a `Break` is ready to start, and so on. The counter shows how many sessions you've finished. `Reset` goes back to `Focus`. With `Log focus in Timesheet` set to a project (or `No project`), each `Focus` leg is added to [Timesheet](app:timesheet) as the task "Pomodoro", even if you close Time; stopping early logs the minutes you focused. The choice stays on this device.
 
 When an alarm, the timer or a Pomodoro leg ends, orOS shows a box with `Snooze 9m` and `Dismiss` and plays a beep. It stops by itself after 30 seconds and also lands in your [notifications](help:t/notifications). It rings in any app, not only in Time.
 
