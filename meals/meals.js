@@ -51,7 +51,7 @@
 
   var STRINGS = {
     en: {
-      "tab.rc": "Recipes", "tab.wk": "Week", "tab.sh": "Shopping", "btn.settings": "Settings",
+      "app.name": "Meal Planner", "tab.rc": "Recipes", "tab.wk": "Week", "tab.sh": "Shopping", "btn.settings": "Settings",
       "rc.search": "Search recipes, or ingredients with commas…", "rc.new": "New recipe", "rc.paste": "Paste",
       "rc.empty": "No recipes match.", "rc.none": "No recipes yet. Add one, or paste one from anywhere.",
       "rc.ingmode": "Recipes with: {list}", "f.fav": "★ Favourites", "f.fits": "Fits our diet",
@@ -63,7 +63,7 @@
       "wk.filled": "{n} gaps filled", "wk.filledNone": "No gaps to fill, or no recipes to fill them with",
       "wk.cleared": "Week cleared", "wk.empty": "Nothing to clear",
       "slot.b": "Breakfast", "slot.l": "Lunch", "slot.d": "Dinner", "slot.s": "Snack", "slot.x": "Extra",
-      "sh.from": "From today", "sh.copy": "Copy", "sh.share": "Share", "sh.uncheck": "Untick all",
+      "sh.from": "From today", "sh.copy": "Copy", "sh.share": "Share", "sh.todo": "To To-Do", "sh.todoNone": "Everything is ticked", "sh.uncheck": "Untick all",
       "sh.add": "Add an item…", "sh.count": "{n} items · {d} ticked", "sh.empty": "Nothing to buy. Plan some meals in the Week tab.",
       "sh.excluded": "Left out, you always have them:", "sh.restore": "Put {name} back on the list",
       "sh.title": "Shopping list {week}", "sh.more": "Options for {name}", "sh.aisle": "Aisle",
@@ -114,7 +114,7 @@
       "copy.suffix": "{t} (copy)", "share.serv": "{n} servings"
     },
     el: {
-      "tab.rc": "Συνταγές", "tab.wk": "Εβδομάδα", "tab.sh": "Ψώνια", "btn.settings": "Ρυθμίσεις",
+      "app.name": "Συνταγές & Μενού", "tab.rc": "Συνταγές", "tab.wk": "Εβδομάδα", "tab.sh": "Ψώνια", "btn.settings": "Ρυθμίσεις",
       "rc.search": "Αναζήτηση συνταγών, ή υλικά με κόμμα…", "rc.new": "Νέα συνταγή", "rc.paste": "Επικόλληση",
       "rc.empty": "Καμία συνταγή δεν ταιριάζει.", "rc.none": "Καμία συνταγή ακόμα. Πρόσθεσε μία, ή επικόλλησε από οπουδήποτε.",
       "rc.ingmode": "Συνταγές με: {list}", "f.fav": "★ Αγαπημένες", "f.fits": "Για τη διατροφή μας",
@@ -126,7 +126,7 @@
       "wk.filled": "Γέμισαν {n} κενά", "wk.filledNone": "Δεν υπάρχουν κενά, ή συνταγές για να τα γεμίσουν",
       "wk.cleared": "Η εβδομάδα καθάρισε", "wk.empty": "Δεν υπάρχει κάτι να καθαρίσει",
       "slot.b": "Πρωινό", "slot.l": "Μεσημεριανό", "slot.d": "Βραδινό", "slot.s": "Σνακ", "slot.x": "Άλλο",
-      "sh.from": "Από σήμερα", "sh.copy": "Αντιγραφή", "sh.share": "Μοίρασμα", "sh.uncheck": "Ξετσέκαρε όλα",
+      "sh.from": "Από σήμερα", "sh.copy": "Αντιγραφή", "sh.share": "Μοίρασμα", "sh.todo": "Στο To-Do", "sh.todoNone": "Είναι όλα τσεκαρισμένα", "sh.uncheck": "Ξετσέκαρε όλα",
       "sh.add": "Πρόσθεσε είδος…", "sh.count": "{n} είδη · {d} τα πήρα", "sh.empty": "Τίποτα για ψώνια. Βάλε γεύματα στην Εβδομάδα.",
       "sh.excluded": "Δεν μπήκαν, τα έχεις πάντα:", "sh.restore": "Βάλε ξανά στη λίστα: {name}",
       "sh.title": "Λίστα για ψώνια {week}", "sh.more": "Επιλογές για: {name}", "sh.aisle": "Τμήμα",
@@ -762,6 +762,27 @@
     var list = shopList();
     if (!list.items.length) return "";
     return shopTitle() + "\n\n" + C.shopText(list, aisleName, LANG);
+  }
+
+  // "To To-Do": the unticked items go to To-Do's Groceries list through
+  // the shell (BR-TD-ADD). To-Do shows them and writes only on Add.
+  function shellOpenAt() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function sendToTodo() {
+    var p = shellOpenAt();
+    if (!p) return;
+    var items = shopList().items.filter(function (it) { return !it.done; }).map(function (it) {
+      return {
+        text: (it.qty ? it.qty + " " : "") + it.name,
+        note: it.from.length ? t("sh.from.recipes", { list: it.from.join(", ") }) : ""
+      };
+    });
+    if (!items.length) { showToast(t("sh.todoNone")); return; }
+    p.__orosOpenAt("todo", { addItems: { list: "tdl-groceries", from: t("app.name"), items: items.slice(0, 200) } });
   }
 
   function renderAll() {
@@ -1954,6 +1975,7 @@
     $("sh-from").textContent = t("sh.from");
     $("sh-copy").textContent = t("sh.copy");
     $("sh-share").textContent = t("sh.share");
+    $("sh-todo").textContent = t("sh.todo");
     $("sh-uncheck").textContent = t("sh.uncheck");
     $("sh-add-in").placeholder = t("sh.add");
     $("sh-add-in").setAttribute("aria-label", t("sh.add"));
@@ -1978,6 +2000,8 @@
     $("sh-from").addEventListener("click", function () { prefs.from = prefs.from ? 0 : 1; savePrefs(); renderShop(); });
     $("sh-copy").addEventListener("click", function () { copyText(shopAsText()); });
     $("sh-share").addEventListener("click", function () { shareText(shopTitle(), shopAsText()); });
+    $("sh-todo").hidden = !shellOpenAt();
+    $("sh-todo").addEventListener("click", sendToTodo);
     $("sh-uncheck").addEventListener("click", function () {
       shopList().items.forEach(function (it) { if (it.done) setTick(it, false); });
       renderShop();
@@ -2015,7 +2039,33 @@
     setTab(prefs.tab);
     renderAll();
     scrollToToday();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("meals");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { recipe } → Recipes tab + the recipe; { day } → Week tab
+  // at that day's week. Unknown recipe / bad day → no-op; an open
+  // dialog → no-op (unsaved edits and cook mode win).
+  function openSearchTarget(t) {
+    if (!t || document.querySelector("dialog[open]")) return;
+    if (typeof t.recipe === "string") {
+      if (!getRecipe(t.recipe)) return;
+      setTab("rc");
+      openRecipe(t.recipe);
+    } else if (typeof t.day === "string" && C.validYmd(t.day)) {
+      setTab("wk");
+      view.wk = C.weekStartOf(t.day, data.set.ws);
+      renderWeek();
+      renderShop();
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
   // Phone: the week is a column of days; open it at today.
   function scrollToToday() {
     if (prefs.tab !== "wk" || window.innerWidth > 760) return;

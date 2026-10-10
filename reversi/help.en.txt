@@ -1,0 +1,28 @@
+# Reversi
+Reversi is the classic disc-flipping game on an 8×8 board. Play against the computer or with a friend on the same device; whoever has more discs at the end wins.
+
+## How to play
+The game starts with four discs in the middle, and black moves first. Place a disc so that it traps one or more lines of the other colour between your new disc and one you already have, in any direction (across, down or diagonally). Every trapped disc flips to your colour.
+
+If you have no legal move, you pass and the other side plays again. The game ends when neither side can move, and the side with more discs wins.
+
+## Controls
+Tap or click an empty square to place a disc there. The toolbar has:
+- `vs Computer` or `2 players`, and with the computer the level and `You: black` / `You: white`. Changing any of these starts a new game.
+- `New game (N)`, `Undo move (Z)`, the hints button (`Hints on (H)` / `Hints off (H)`), `Records` and the sound button.
+
+Hints mark the squares where you can play. Against the computer, Undo also takes back its answer, so you're back on your turn. If you start a new game in the middle of one, an `Undo` button lets you get it back for a few seconds.
+
+Keyboard:
+- Arrow keys move around the board; [[Enter]] or [[Space]] places a disc.
+- [[N]] new game, [[Z]] or [[Ctrl+Z]] undo, [[H]] hints on or off.
+
+## Levels and scoring
+The computer plays at `Easy`, `Medium` or `Hard`. `Records` shows your wins, losses and draws against it for each level, and `Reset records` clears them. In `2 players` mode the result window keeps a running `Series` score between Black and White.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync), adding up the games from every device. The game in progress, the 2-player series, your settings and the sound setting stay on this device. `Reset records` clears the records on every device.
+
+## Tips
+- Corners can never be flipped, so they're worth a lot. Be careful with the squares right next to an empty corner: they often hand the corner to your opponent.
+- Having more moves available often matters more than having more discs in the middle of the game.

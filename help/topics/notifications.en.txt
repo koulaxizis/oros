@@ -5,13 +5,13 @@ orOS can tell you about alarms, calendar reminders, due tasks and more. This pag
 New notifications pop up on screen for a few seconds (bottom right by default). They also land in the inbox: tap or click the bell in the top bar to open it. The number on the bell counts unread ones. Tap a notification to open the app it belongs to, or use `Clear all` to empty the list. Old notifications are removed after 7 days.
 
 ## Notification settings
-Open the menu and scroll to `Notifications`:
+Open the menu, choose `Settings` and go to `Notifications`:
 
-- `On` / `Off` turns all notifications on or off.
-- `Test notification` shows a sample so you can check how it looks.
-- `Position`, `Style`, `Sound`, `Volume` and `Duration` change where pop-ups appear, how they look, the sound they make (`None` by default) and how long they stay.
+- The `Notifications` switch turns all notifications on or off.
+- `Send a test` shows a sample so you can check how it looks.
+- `Position on screen`, `Style`, `Sound`, `Volume` and `Stays on screen` change where pop-ups appear, how they look, the sound they make (`None` by default) and how long they stay.
 - `Quiet hours` keeps pop-ups and sounds away between the `From` and `To` hours (22:00 to 08:00 by default). Notifications still arrive in the inbox.
-- `Per-app notifications` lets you switch notifications off for single apps. `orOS` stands for messages from orOS itself, such as sync and updates.
+- `Which apps may notify` lets you switch notifications off for single apps. `orOS` stands for messages from orOS itself, such as sync and updates.
 
 These settings travel with [sync](help:t/sync), so they are the same on all your devices.
 
@@ -23,7 +23,7 @@ Alarms belong to orOS, not to the Time app, so they ring while you're in any app
 ## Calendar reminders
 In the [Calendar](app:calendar) app, choose a `Reminder` time when you add or edit an event. The reminder arrives as a notification at that time, even if the Calendar app is closed. If you open orOS after the reminder time but before the event starts, you still get it. Once the event has started, it's skipped.
 
-Other apps send reminders too, for example tasks that are due or overdue in [To-Do](app:todo). Each one has its own switch under `Per-app notifications`.
+Other apps send reminders too, for example tasks that are due or overdue in [To-Do](app:todo). Each one has its own switch under `Which apps may notify`.
 
 ## When orOS is closed
 >! orOS runs inside your browser, so **nothing rings or pops up while orOS is closed**. Alarms and reminders only work while orOS is open in a tab or as an installed app, even if it's in the background.

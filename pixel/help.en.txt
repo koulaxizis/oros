@@ -1,0 +1,46 @@
+# Pixel Avatar
+Pixel Avatar makes little symmetric pixel faces from a seed, any word you like. The same seed always gives the same face, on every device and in every size. Paint on top by hand, export it as an image, and keep your favourites in the Museum.
+
+## Getting started
+Type a word in the `Seed` box (`Any word, e.g. your name`) and the face changes as you type. `New face` picks a random seed for you. The copy button next to the box copies the seed, so you can share it or type it again later.
+
+The line under the app name shows the seed, the size and `edited by hand` once you've painted on the face.
+
+## Shape and colours
+- `Size`: `8×8`, `12×12` or `16×16`. It's the same person in every size, just with more or less detail.
+- `Palette`: `Classic`, `Pastel`, `Game Boy`, `Neon`, `Sepia`, `Black & white`, `Ocean` and `orOS`, which follows the colours of your orOS skin.
+- The button next to `Palette` switches between `Clear background` and `Colour background`.
+
+## Paint by hand
+Under `Paint`, choose one of the 8 colours (`Background`, `Skin`, `Shade`, `Hair`, `Eyes`, `Mouth`, `Clothes`, `Accent`), then tap, click or drag over the face. With the clear background, painting `Background` makes those pixels see-through.
+
+The arrows at the top are `Undo` and `Redo`. `Back to the seed` removes all your hand edits.
+
+>! Changing the size or the seed starts again from the plain face, without your painting. Use `Undo` if that wasn't what you wanted.
+
+## Export
+Pick an export size under `Export`, then:
+- `PNG` saves a crisp image with sharp pixels;
+- `SVG` saves a vector image;
+- `Copy image` puts a PNG on the clipboard.
+
+A clear background stays transparent in the PNG and SVG.
+
+## Museum
+`Save to the Museum` keeps the current face, palette and painting. Tap or click a face in the `Museum` to bring it back to the desk. Each one has `Rename` and `Delete` buttons; after a delete an `Undo` button stays for a few seconds.
+
+## Sync and backup
+The Museum syncs between your devices through [orOS sync](help:t/sync). The face on the desk, the paint colour and the export size stay on this device. Use the orOS [backup](help:t/backup) to keep a copy; PNG and SVG are the way to take a face elsewhere.
+
+## Keyboard shortcuts
+- [[R]] new face, [[P]] next palette, [[D]] save a PNG.
+- [[Ctrl+Z]] undo, [[Ctrl+Y]] or [[Ctrl+Shift+Z]] redo.
+- On the face: arrow keys move between pixels, [[Home]] and [[End]] jump to the start or end of the row, [[Space]] or [[Enter]] paints the pixel.
+
+## Tips
+- Use your name or nickname as the seed: anyone can get your face back from the same word.
+- A PNG makes a nice profile picture for [Contacts](app:contacts) or your accounts.
+
+## Limits
+- The Museum holds up to 200 faces, and the same face can only be saved once.
+- Seeds and names can be up to 40 characters.

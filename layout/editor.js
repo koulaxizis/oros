@@ -20,6 +20,7 @@
 
   // ---------- 1. State + geometry ----------
   var K = 96 / 72;          // CSS px per pt at 100%
+  var RULER = 18;           // ruler strip, CSS px
   var GAP = 48;             // pt between spreads
   var ED = LY.ed = {
     tool: "select", sel: [], zoom: 1, camX: 0, camY: 0, preview: false,
@@ -27,7 +28,7 @@
   };
   var cv, ctx, dpr = 1, W = 0, H = 0;
   var world = [];           // spreads: { pages: [P], x, y, w, h }
-  var palette = { board: "#222", accent: "#4da3ff", text: "#ddd" };
+  var palette = { board: "#222", accent: "#4da3ff", text: "#ddd", ruler: "#1b1e24", rulerLine: "#2c313a" };
 
   function scale() { return ED.zoom * K; }
   function toScreen(wx, wy) { var s = scale(); return [(wx - ED.camX) * s, (wy - ED.camY) * s]; }
@@ -264,6 +265,7 @@
   function relayout() {
     if (!LY.doc) return;
     ED.L = R.computeLayout(LY.doc);
+    ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing });
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
       ED.ML = { L: ms ? R.computeMasterLayout(LY.doc, ms, "L") : null, R: ms ? R.computeMasterLayout(LY.doc, ms, "R") : null, B: ms ? R.computeMasterLayout(LY.doc, ms, "") : null };
@@ -276,6 +278,8 @@
     palette.board = cs.getPropertyValue("--bg-desktop").trim() || cs.getPropertyValue("--bg").trim() || "#222";
     palette.accent = cs.getPropertyValue("--accent").trim() || "#4da3ff";
     palette.text = cs.getPropertyValue("--text-dim").trim() || "#aaa";
+    palette.ruler = cs.getPropertyValue("--panel-bg").trim() || "#1b1e24";
+    palette.rulerLine = cs.getPropertyValue("--border").trim() || "#2c313a";
   }
 
   function resize() {
@@ -329,6 +333,7 @@
     });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlay();
+    if (!ED.preview) drawRulers();
     LY.emit("drawn");
   }
 
@@ -437,6 +442,92 @@
     ctx.restore();
   }
 
+  // ---------- Rulers + ruler guides ----------
+  // Rulers measure from the top-left of the page in the middle of the
+  // view, in the document unit. Drag from a ruler to make a guide,
+  // drag a guide to move it, drop it back on a ruler to delete it.
+  function rulerStep(sc) {
+    var u = M.PT_PER[LY.doc.setup.unit] || 1, steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+    for (var i = 0; i < steps.length; i++) if (steps[i] * u * sc >= 50) return steps[i];
+    return 1000;
+  }
+  function drawRulers() {
+    var P = curP();
+    if (!P) return;
+    var sc = scale(), u = M.PT_PER[LY.doc.setup.unit] || 1, step = rulerStep(sc);
+    var o = toScreen(P.x, P.y);
+    ctx.save();
+    ctx.fillStyle = palette.ruler; ctx.fillRect(0, 0, W, RULER); ctx.fillRect(0, 0, RULER, H);
+    ctx.strokeStyle = palette.rulerLine; ctx.fillStyle = palette.text; ctx.lineWidth = 1;
+    ctx.font = "9px system-ui, sans-serif"; ctx.textBaseline = "top";
+    ctx.beginPath();
+    var px = step * u * sc, sub = px / 5;
+    var i0 = Math.floor((RULER - o[0]) / sub) - 1, i1 = Math.ceil((W - o[0]) / sub) + 1, i, x, y, big;
+    for (i = i0; i <= i1; i++) {
+      x = Math.round(o[0] + i * sub) + 0.5; big = i % 5 === 0;
+      if (x < RULER) continue;
+      ctx.moveTo(x, RULER); ctx.lineTo(x, big ? 2 : RULER - 5);
+      if (big) ctx.fillText(String(Math.round(i / 5 * step)), x + 2, 2);
+    }
+    var j0 = Math.floor((RULER - o[1]) / sub) - 1, j1 = Math.ceil((H - o[1]) / sub) + 1;
+    for (i = j0; i <= j1; i++) {
+      y = Math.round(o[1] + i * sub) + 0.5; big = i % 5 === 0;
+      if (y < RULER) continue;
+      ctx.moveTo(RULER, y); ctx.lineTo(big ? 2 : RULER - 5, y);
+      if (big) { ctx.save(); ctx.translate(2, y + 2); ctx.rotate(Math.PI / 2); ctx.textBaseline = "bottom"; ctx.fillText(String(Math.round(i / 5 * step)), 0, 0); ctx.restore(); }
+    }
+    ctx.moveTo(0, RULER + 0.5); ctx.lineTo(W, RULER + 0.5);
+    ctx.moveTo(RULER + 0.5, 0); ctx.lineTo(RULER + 0.5, H);
+    ctx.stroke();
+    ctx.fillStyle = palette.ruler; ctx.fillRect(0, 0, RULER, RULER);
+    // guide being dragged
+    if (ED.gdrag && ED.gdrag.at !== null) {
+      ctx.strokeStyle = "rgba(0,180,220,0.95)"; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      if (ED.gdrag.o === "v") { ctx.moveTo(ED.gdrag.at + 0.5, 0); ctx.lineTo(ED.gdrag.at + 0.5, H); }
+      else { ctx.moveTo(0, ED.gdrag.at + 0.5); ctx.lineTo(W, ED.gdrag.at + 0.5); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function inRuler(p) { return !ED.preview && (p[0] < RULER || p[1] < RULER); }
+  // A ruler guide under a screen point (owner of the page there).
+  function hitGuide(sx, sy, tol) {
+    var w = toWorld(sx, sy), P = pageAt(w[0], w[1], false);
+    if (!P) return null;
+    var best = null, bd = tol;
+    LY.doc.guides.forEach(function (g) {
+      if (g.pg !== P.id) return;
+      var d = g.o === "v" ? Math.abs(toScreen(P.x + g.p, 0)[0] - sx) : Math.abs(toScreen(0, P.y + g.p)[1] - sy);
+      if (d <= bd) { bd = d; best = g; }
+    });
+    return best;
+  }
+  function finishGuide(d, p) {
+    ED.gdrag = null;
+    if (!d.moved) return;
+    var gid = d.gid;
+    if (inRuler(p)) {
+      if (gid) LY.op(function (doc, now) {
+        var n = doc.guides.length;
+        doc.guides = doc.guides.filter(function (g) { return g.id !== gid; });
+        if (doc.guides.length === n) return false;
+        doc.tombs[gid] = now;
+      });
+      return;
+    }
+    var w = toWorld(p[0], p[1]), P = pageAt(w[0], w[1], true);
+    if (!P) return;
+    var s = LY.doc.setup, b = s.bleed;
+    var pos = d.o === "v" ? w[0] - P.x : w[1] - P.y;
+    pos = Math.round(Math.max(-b, Math.min((d.o === "v" ? s.w : s.h) + b, pos)) * 100) / 100;
+    LY.op(function (doc, now) {
+      var g = gid ? M.find(doc.guides, gid) : null;
+      if (g) { g.p = pos; g.pg = P.id; M.touch(g, now); return; }
+      doc.guides.push({ id: M.newId("gd"), m: now, pg: P.id, o: d.o, p: pos });
+    });
+  }
+
   function portPos(it, out) {
     var P = pOf(it);
     if (!P) return null;
@@ -508,21 +599,39 @@
     ED.render();
     LY.emit("view");
   };
+  function fitBox(x, y, w, h) {
+    var b = LY.doc.setup.bleed + 12, pad = 24 + (ED.preview ? 0 : RULER);
+    var z = Math.min((W - 2 * pad) / ((w + 2 * b) * K), (H - 2 * pad) / ((h + 2 * b) * K));
+    ED.zoom = Math.max(0.05, Math.min(16, z));
+    var s2 = scale();
+    ED.camX = x + w / 2 - (W + (ED.preview ? 0 : RULER)) / 2 / s2;
+    ED.camY = y + h / 2 - (H + (ED.preview ? 0 : RULER)) / 2 / s2;
+    ED.render();
+    LY.emit("view");
+  }
+  // Fit the spread of P (default: the one in the middle of the view).
   ED.fit = function (P) {
     P = P || curP();
     if (!P) return;
     var sp = null;
     world.forEach(function (s) { if (s.pages.indexOf(P) >= 0) sp = s; });
-    if (!sp) return;
-    var b = LY.doc.setup.bleed + 12, pad = 24;
-    var z = Math.min((W - 2 * pad) / ((sp.w + 2 * b) * K), (H - 2 * pad) / ((sp.h + 2 * b) * K));
-    ED.zoom = Math.max(0.05, Math.min(16, z));
-    var s2 = scale();
-    ED.camX = sp.x + sp.w / 2 - W / 2 / s2;
-    ED.camY = sp.y + sp.h / 2 - H / 2 / s2;
-    ED.render();
-    LY.emit("view");
+    if (sp) fitBox(sp.x, sp.y, sp.w, sp.h);
   };
+  ED.fitPage = function () {
+    var P = curP();
+    if (P) fitBox(P.x, P.y, P.w, P.h);
+  };
+  function zoomMenu() {
+    LY.menu($("ed-zoom"), [
+      { label: t("zoom.page"), fn: ED.fitPage },
+      { label: t("zoom.spread"), fn: function () { ED.fit(); } },
+      { sep: true },
+      { label: "50%", fn: function () { ED.setZoom(0.5); } },
+      { label: "100%", fn: function () { ED.setZoom(1); } },
+      { label: "200%", fn: function () { ED.setZoom(2); } }
+    ]);
+  }
+
   ED.scrollToPage = function (pageId) {
     var P = null;
     allP().forEach(function (p) { if (p.id === pageId && !P) P = p; });
@@ -583,6 +692,24 @@
 
   function evPos(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 
+  // Is page-local point (lx, ly) on item `it`? tol in pt.
+  function hits(it, lx, ly, tol) {
+    if (it.t === "line") {
+      var ax = it.x, ay = it.y, bx = it.x + it.w, by = it.y + it.h;
+      var dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
+      var u = Math.max(0, Math.min(1, ((lx - ax) * dx + (ly - ay) * dy) / l2));
+      var qx = ax + u * dx - lx, qy = ay + u * dy - ly;
+      return Math.sqrt(qx * qx + qy * qy) <= Math.max(tol * 2, it.sw);
+    }
+    var loc = R.toLocal(it, lx, ly);
+    if (loc[0] < -tol || loc[0] > it.w + tol || loc[1] < -tol || loc[1] > it.h + tol) return false;
+    // an unfilled shape is hit on its outline only
+    if ((it.t === "rect" || it.t === "ell") && !it.fill) {
+      var edge = Math.max(tol * 2, it.sw);
+      if (loc[0] > edge && loc[0] < it.w - edge && loc[1] > edge && loc[1] < it.h - edge) return false;
+    }
+    return true;
+  }
   function hitItem(wx, wy, tolPx) {
     var tol = (tolPx || 4) / scale();
     var ps = allP();
@@ -590,30 +717,69 @@
       var P = ps[pi];
       var list = itemsOfP(P);
       for (var i = list.length - 1; i >= 0; i--) {
-        var it = list[i];
-        if (it.hide) continue;
-        var lx = wx - P.x, ly = wy - P.y;
-        if (it.t === "line") {
-          var ax = it.x, ay = it.y, bx = it.x + it.w, by = it.y + it.h;
-          var dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
-          var u = Math.max(0, Math.min(1, ((lx - ax) * dx + (ly - ay) * dy) / l2));
-          var qx = ax + u * dx - lx, qy = ay + u * dy - ly;
-          if (Math.sqrt(qx * qx + qy * qy) <= Math.max(tol * 2, it.sw)) return it;
-          continue;
-        }
-        var loc = R.toLocal(it, lx, ly);
-        if (loc[0] >= -tol && loc[0] <= it.w + tol && loc[1] >= -tol && loc[1] <= it.h + tol) {
-          // an unfilled shape is hit on its outline only
-          if ((it.t === "rect" || it.t === "ell") && !it.fill) {
-            var edge = Math.max(tol * 2, it.sw);
-            if (loc[0] > edge && loc[0] < it.w - edge && loc[1] > edge && loc[1] < it.h - edge) continue;
-          }
-          return it;
-        }
+        if (!list[i].hide && hits(list[i], wx - P.x, wy - P.y, tol)) return list[i];
       }
     }
     return null;
   }
+
+  // A master item showing on a document page under the point.
+  function hitMaster(wx, wy, tolPx) {
+    if (ED.master) return null;
+    var P = pageAt(wx, wy, false);
+    if (!P || P.master) return null;
+    var tol = (tolPx || 4) / scale();
+    var list = M.masterItems(LY.doc, P.page, P.side);
+    for (var i = list.length - 1; i >= 0; i--) {
+      if (!list[i].hide && hits(list[i], wx - P.x, wy - P.y, tol)) return { P: P, it: list[i] };
+    }
+    return null;
+  }
+
+  // Detach master items on one page: each becomes the page's own copy
+  // (ov = the master item), below the page's own objects; a text frame
+  // gets its own copy of the story. Returns the new ids.
+  function detach(doc, P, masterIds, now) {
+    var made = [], low = Infinity;
+    doc.items.forEach(function (it) { if (it.pg === P.id && it.z < low) low = it.z; });
+    if (!isFinite(low)) low = 1;
+    masterIds.forEach(function (mid, k) {
+      var mi = M.find(doc.items, mid);
+      if (!mi || doc.items.some(function (it) { return it.pg === P.id && it.ov === mid; })) return;
+      var c = JSON.parse(JSON.stringify(mi));
+      c.id = M.newId("it"); c.m = now; c.pg = P.id; c.side = ""; c.ov = mid; c.grp = "";
+      c.z = low - masterIds.length + k;
+      if (c.t === "text") {
+        var st = M.story(doc, mi.story);
+        c.story = newStory(doc, now, st ? JSON.parse(JSON.stringify(st.paras)) : null).id;
+        c.seq = 1024;
+      }
+      doc.items.push(c);
+      made.push(c.id);
+    });
+    return made;
+  }
+  ED.detachAll = function () {
+    var P = curP();
+    if (!P || P.master) return;
+    var ids = M.masterItems(LY.doc, P.page, P.side).map(function (it) { return it.id; });
+    if (!ids.length) { LY.toast(t("ms.noneHere")); return; }
+    var made = [];
+    LY.op(function (doc, now) { made = detach(doc, P, ids, now); if (!made.length) return false; });
+    if (made.length) LY.toast(t("ms.detached", { n: made.length }));
+  };
+  function detachOne(hm) {
+    var made = [];
+    LY.op(function (doc, now) { made = detach(doc, hm.P, [hm.it.id], now); if (!made.length) return false; });
+    if (made.length) ED.select(made);
+  }
+  // Back to the master version: drop the page's copies.
+  ED.resetToMaster = function () {
+    var ids = selItems().filter(function (it) { return it.ov; }).map(function (it) { return it.id; });
+    if (!ids.length) return;
+    LY.op(function (doc, now) { delItems(doc, ids, now); });
+    ED.select([]);
+  };
 
   function hitHandle(sx, sy, touch) {
     var items = selItems();
@@ -693,6 +859,11 @@
     if (e.button === 2) return;   // contextmenu handles it
 
     if (ED.threadFrom) { threadClick(w); return; }
+    if (inRuler(p)) {
+      if (p[0] < RULER && p[1] < RULER) return;
+      startDrag(e, "guide", { o: p[1] < RULER ? "h" : "v", gid: null });
+      return;
+    }
 
     if (ED.tool === "select") {
       var h = hitHandle(p[0], p[1], touch);
@@ -700,6 +871,14 @@
       var port = hitPort(p[0], p[1], touch);
       if (port) { startThread(port.id); return; }
       var it = hitItem(w[0], w[1], touch ? 10 : 4);
+      if (!it) {
+        var g = hitGuide(p[0], p[1], touch ? 10 : 4);
+        if (g) { startDrag(e, "guide", { o: g.o, gid: g.id }); return; }
+      }
+      if (!it && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        var hm = hitMaster(w[0], w[1], 4);
+        if (hm) { detachOne(hm); return; }
+      }
       if (it) {
         var add = e.shiftKey || e.metaKey || e.ctrlKey;
         var already = ED.sel.indexOf(it.id) >= 0;
@@ -782,6 +961,9 @@
       var s2 = scale();
       ED.camX = drag.cam[0] - dxs / s2; ED.camY = drag.cam[1] - dys / s2;
       ED.render(); LY.emit("view");
+    } else if (drag.kind === "guide") {
+      ED.gdrag = { o: drag.o, at: drag.o === "v" ? p[0] : p[1] };
+      ED.render();
     } else if (drag.kind === "marquee") {
       ED.marquee = { x0: drag.x0, y0: drag.y0, x1: p[0], y1: p[1] };
       ED.render();
@@ -896,7 +1078,8 @@
     var d = drag; drag = null;
     var p = evPos(e), w = toWorld(p[0], p[1]);
     ED.snaps = [];
-    if (d.kind === "marquee") {
+    if (d.kind === "guide") finishGuide(d, p);
+    else if (d.kind === "marquee") {
       ED.marquee = null;
       if (d.moved) {
         var a = toWorld(Math.min(d.x0, p[0]), Math.min(d.y0, p[1])), b = toWorld(Math.max(d.x0, p[0]), Math.max(d.y0, p[1]));
@@ -1038,7 +1221,10 @@
       if (items.some(function (it) { return it.grp; })) list.push({ label: t("props.ungroup"), fn: ED.ungroup });
       list.push({ sep: true });
       list.push({ label: t("props.del"), danger: true, fn: ED.deleteSel });
+      if (items.some(function (it) { return it.ov; })) list.push({ label: t("ms.reset"), fn: ED.resetToMaster });
     } else {
+      var wp = toWorld(sx, sy), hm = hitMaster(wp[0], wp[1], 10);
+      if (hm) list.push({ label: t("ms.detachOne"), fn: function () { detachOne(hm); } });
       list.push({ label: t("more.selall"), fn: selectAll });
       if (clipboard) list.push({ label: t("ed.paste"), fn: function () { paste(false); } });
     }
@@ -1282,6 +1468,11 @@
     var b = $("st-overset");
     b.hidden = !ov;
     if (ov) b.innerHTML = LY.icon("warn") + "<span></span>", b.lastChild.textContent = t("st.overset", { n: ov });
+    var pf = ED.pf || [], errs = pf.filter(function (x) { return x.sev === "err"; }).length;
+    var pb = $("st-pf");
+    pb.className = "st-pf " + (errs ? "err" : pf.length ? "warn" : "ok");
+    $("st-pf-txt").textContent = pf.length ? t("st.pf", { n: pf.length }) : t("st.pfOk");
+    pb.title = t("pf.title");
     $("ed-undo").disabled = !LY.canUndo();
     $("ed-redo").disabled = !LY.canRedo();
     $("ed-zoom").textContent = Math.round(ED.zoom * 100) + "%";
@@ -1299,6 +1490,17 @@
     ED.scrollToItem(last.id);
   }
 
+  // Select a preflight entry's item, on its master when it lives there.
+  ED.gotoItem = function (id) {
+    var it = M.find(LY.doc.items, id);
+    if (!it) return;
+    var onMaster = isMasterId(LY.doc, it.pg);
+    if (onMaster && ED.master !== it.pg) ED.enterMaster(it.pg);
+    else if (!onMaster && ED.master) ED.enterMaster(null);
+    ED.select([it.id]);
+    ED.scrollToItem(it.id);
+  };
+
   function wire() {
     cv = $("cv");
     ctx = cv.getContext("2d");
@@ -1311,7 +1513,7 @@
     cv.addEventListener("pointerdown", onDown);
     cv.addEventListener("pointermove", onMove);
     cv.addEventListener("pointerup", onUp);
-    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
+    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.gdrag = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
     cv.addEventListener("dblclick", function (e) {
       var p = evPos(e), w = toWorld(p[0], p[1]), it = hitItem(w[0], w[1], 4);
       if (it && it.t === "text") LY.story.open(it.id);
@@ -1343,18 +1545,19 @@
     $("ed-redo").addEventListener("click", LY.redo);
     $("ed-zin").addEventListener("click", function () { ED.setZoom(ED.zoom * 1.25); });
     $("ed-zout").addEventListener("click", function () { ED.setZoom(ED.zoom / 1.25); });
-    $("ed-zoom").addEventListener("click", function () { ED.fit(); });
+    $("ed-zoom").addEventListener("click", zoomMenu);
     $("ed-preview").addEventListener("click", ED.togglePreview);
     $("master-done").addEventListener("click", function () { ED.enterMaster(null); });
     $("thread-cancel").addEventListener("click", endThread);
     $("st-overset").addEventListener("click", gotoOverset);
+    $("st-pf").addEventListener("click", function () { LY.dlg.preflight(); });
     LY.setIcon($("ed-back"), "back", t("ed.back"));
     LY.setIcon($("ed-undo"), "undo", t("ed.undo"));
     LY.setIcon($("ed-redo"), "redo", t("ed.redo"));
     LY.setIcon($("ed-zin"), "plus", t("ed.zin"));
     LY.setIcon($("ed-zout"), "minus", t("ed.zout"));
     LY.setIcon($("ed-preview"), "eye", t("ed.preview"));
-    $("ed-zoom").title = t("ed.fit");
+    $("ed-zoom").title = t("zoom.title");
     $("ed-name").title = t("ed.rename");
 
     LY.on("palette", function () { readPalette(); ED.render(); });
@@ -1376,7 +1579,7 @@
     LY.on("remote", function () { changed(); LY.emit("sel"); });
     LY.on("sel", updateStatus);
     LY.on("view", updateStatus);
-    LY.A.onChange(function () { ED.render(); });
+    LY.A.onChange(function () { if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing }); ED.render(); updateStatus(); });
     readPalette();
   }
 

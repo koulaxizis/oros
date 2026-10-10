@@ -1,0 +1,48 @@
+# Timesheet
+Timesheet tracks the time you spend on work, per project and client. Start a timer or add time by hand, then see your week and make reports with hours and amounts.
+
+## Getting started
+On the `Timer` tab, pick a project (or leave `No project`), type `What are you working on?` and press `Start`. Press `Stop` when you're done. The timer keeps running even with the app closed, and you see it on your other devices too.
+
+Below the timer you see the entries of the day and its total. Use the arrows to go to other days; the date button brings you back to today. Tap or click an entry to edit it, or use its ▶ button to continue the same work with a new timer.
+
+If a timer has been running for more than 10 hours, a banner asks if you forgot to stop it: `Fix end time` or `It's fine`.
+
+## Add and edit time
+`Add time by hand` opens `Add time`. Give a `Start date`, `Start` and `End`, or just a `Duration` such as 1:30, 1,5 (hours) or 90m. In an entry you can also tick `Invoiced`. `Delete` removes it, with an `Undo` button for a few seconds.
+
+## Week
+The `Week` tab shows a grid of hours per project and day, with totals. Tap or click a day to open it on the `Timer` tab.
+
+## Reports
+On `Reports`, choose a `Period` (this week, last month, this year or `Custom`), then filter by `Client`, `Project`, `Billable` and `Invoiced`, and `Group by` project, client or day. You see `Hours`, `Billable` hours and the `Amount`.
+
+- `Export CSV` saves the report for a spreadsheet.
+- `Create quote` turns the report into a new [Quote](app:quote): one line per billable project with a rate, with the hours as quantity and the hourly rate as price. The client is filled in when the period has only one. It works only when the currency is EUR or USD.
+- `Mark … as invoiced` marks all billable entries of the report as invoiced, so next time you can filter for `Not invoiced`. You can unmark them the same way.
+
+## Projects and clients
+On `Projects`, add a `New project` or `New client`. A project has a `Name`, `Client`, `Colour`, `Hourly rate` and `Billable`. Leave the rate empty to use the client's rate, or the default from `Settings`. A project with entries can't be deleted; tick `Archived` instead to hide it from the timer and keep its time.
+
+## Settings
+The gear button opens `Settings`: `Currency`, `Default hourly rate`, a `Daily goal` (shown as a bar under the day) and `Rounding in reports`. Rounding only changes reports and CSV; your entries keep their exact times.
+
+## Sync and backup
+Entries, the running timer, projects, clients and settings sync between your devices through [orOS sync](help:t/sync). The open tab, the last project you used and the report filters stay on each device.
+
+In `Settings`, `Back up (JSON)` saves everything to a file and `Restore from backup` merges a backup with what you have: nothing is replaced or lost. The orOS [backup](help:t/backup) includes Timesheet too.
+
+## Keyboard shortcuts
+- [[S]] starts or stops the timer.
+- [[N]] adds time by hand.
+- [[←]] / [[→]] go to the previous or next day (or week on `Week`).
+- [[Enter]] in the description box starts the timer.
+- [[Ctrl+Z]] undoes the last delete or change that offered `Undo`.
+
+## Tips
+- You don't need a project to start: time without a project is kept, and you can assign it later.
+- If timers were started on two devices at once, both keep running and you can stop each one.
+
+## Limits
+- A single entry can be at most 366 days long.
+- Timesheet doesn't show in Calendar.

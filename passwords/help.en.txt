@@ -1,0 +1,45 @@
+# Password Generator
+Password Generator makes random passwords, PINs and passphrases and shows how strong they are. It can also check a password you already use. Everything happens on this device.
+
+## Getting started
+Pick a tab at the top: `Password`, `Passphrase` or `Check`. On the first two a new result appears straight away. Press `New` for another one and `Copy` to copy it.
+
+Under each result a meter shows its strength, from `Very weak` to `Very strong`, its entropy in bits and roughly how long a fast offline attack would need.
+
+## Passwords and PINs
+On the `Password` tab choose `Characters` or `PIN`.
+- `Characters`: set the `Length` (4 to 128) and tick `Lowercase (a–z)`, `Uppercase (A–Z)`, `Digits (0–9)` and `Symbols`. `Avoid look-alikes (0 O o 1 l I)` leaves out characters that are easy to confuse.
+- If a site accepts only a few symbols, type them in `Only these symbols`. Leave it empty for all symbols.
+- `PIN`: only digits, with 4 to 12 `Digits`.
+
+Any change to the options makes a new result.
+
+## Passphrases
+A passphrase is a few random words from the EFF Diceware lists: easy to remember, hard to guess.
+- `Words`: 3 to 12.
+- `Word list`: `EFF large (7,776)` or `EFF short (1,296)`.
+- `Separator`: space, dash, dot or underscore.
+- `Capitalize each word` and `Add one digit or symbol` for sites that demand them.
+
+### Real dice
+Choose `Real dice` instead of `This device` if you'd rather trust your own dice. Roll five dice for the large list (four for the short one), type the numbers in order and press `Add word`. `Remove last` and `Start over` fix mistakes.
+
+## Check a password
+On the `Check` tab type or paste a password. You see its strength, the `Time to crack (on average)` for an online attack and for slow and fast offline attacks, and `What makes it weaker`: common passwords, dictionary words, sequences, repeats, keyboard rows, dates and more. `Show` reveals what you typed. The box is wiped when you leave the tab or close the app.
+
+## Sync and backup
+Nothing is synced and no password is ever saved: generated ones live only while the app is open, and the checked one is wiped. Your options and the open tab are remembered on this device. See [Privacy](help:t/privacy).
+
+## Keyboard shortcuts
+- [[Enter]] or [[Space]] makes a new password or passphrase (not in a text box).
+- [[Ctrl+C]] with nothing selected copies the shown result.
+- [[←]] and [[→]] move between tabs and between option buttons.
+- [[Enter]] in the dice box adds the word.
+
+## Tips
+- `Clear the clipboard 30 seconds after copying` is on by default. It works only if you stay in the app the whole time.
+- A passphrase of six random words is a strong choice for a password you need to remember.
+
+## Limits
+- The checker can't know personal facts such as names or birthdays unless they're in its lists.
+- Clearing the clipboard is best effort; some browsers refuse it.

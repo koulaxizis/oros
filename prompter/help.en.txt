@@ -1,0 +1,44 @@
+# Prompter
+Prompter gives you writing ideas: 100 built-in prompts across ten kinds of writing, from haiku to letters, plus a prompt of the day and room for your own. Mark the ones you've written and watch your streak grow.
+
+## Getting started
+The app opens on `Browse`, a grid of prompt cards. Each card shows its category, the prompt in your orOS language and its tags. Today's prompt is highlighted with a `Today` badge, or `New today!` the first time you see it that day.
+
+The three buttons at the top switch between `Browse`, `Statistics` and `Settings`.
+
+## Find a prompt
+- Type in `Search prompts...` to search the text of every prompt in both languages, and its tag names.
+- From the second letter you type, matching tags appear under the box as `#tag` buttons; tap or click one to filter by it. Tags on the cards work the same way. Tap the `#tag ✕` chip to clear the filter.
+- The category chips filter by kind: `All`, `Micro-fiction`, `Haiku`, `Free poetry`, `Metered poetry`, `Song`, `Aphorism`, `Theatrical`, `Novel`, `Monologue` and `Letter/Diary`. `✦ Mine` shows only your own prompts.
+
+## Work with a prompt
+Each card has these buttons:
+- `Use` copies the prompt to the clipboard.
+- `Variation` (on some prompts) adds an extra twist under the prompt; `Copy` then copies both.
+- `Star` marks it as a favourite (★); `Unstar` removes it.
+- `Mark done` adds a ✓ once you've written it; `Undo` takes it back.
+
+## Your own prompts
+Tap or click `＋ New prompt`. Pick a `Category`, fill in `English text` and `Greek text` (both are required), and optionally a variation in each language and `Tags (comma separated) — optional`. Known tags are suggested as you type. `Save` (or [[Ctrl+Enter]]) adds it; your prompts appear first in the grid.
+
+Your own prompts have `Edit` and `Delete` buttons. Deleting asks first and can't be undone.
+
+## Statistics
+`Statistics` shows the total number of prompts, how many you've completed, starred and written yourself, your streak of days in a row with at least one prompt done, your progress through the built-in prompts and a breakdown by category.
+
+## Sync and backup
+Your favourites, done marks and own prompts sync between your devices through [orOS sync](help:t/sync). Search, filters and shown variations reset when you close the app. There's no import or export; use the orOS [backup](help:t/backup) to keep a copy.
+
+>! `Settings` has `Factory reset`: it erases all your own prompts, favourites and done marks on every synced device, with no undo.
+
+## Keyboard shortcuts
+- [[Ctrl+Enter]] in the prompt editor: save.
+- [[Esc]]: close the editor or settings.
+
+## Tips
+- Paste a prompt into [Writer](app:writer) or [Notes](app:notes) and start writing straight away.
+- Write your own prompts in both languages so they read well whichever language orOS is in.
+
+## Limits
+- With no search or filter, the grid shows the first 50 built-in prompts (plus today's and all of yours). Search, a category or a tag reaches the rest.
+- There's no list of only your favourites.

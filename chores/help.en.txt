@@ -1,0 +1,46 @@
+# Chore Wheel
+Chore Wheel shares the housework fairly. Add the people at home and the chores, and the wheel turns every day, week or month so the work goes round. Tick chores off, swap or skip one when life gets in the way, and see who's doing their share.
+
+## Getting started
+Open `Home`:
+1. Under `Members`, type a name in `Add a member…` and press [[Enter]] or the + button. Add everyone who shares the chores.
+2. Under `Chores`, press `New chore`, or pick one of the `Ready sets` (`Kitchen`, `Weekly cleaning`, `Pet`, `Around the house`) to add several at once.
+3. Choose yourself in `Who are you on this device?` so your chores come first.
+
+## Members and chores
+The pencil button on a member changes their `Name`, `Colour` and `Icon`. The arrows move them up or down the turn order. Under `Away (the wheel skips them)`, set `From` and `To` dates for a trip; the wheel skips them and their turn picks up again when they're back. `Back home` clears the dates.
+
+A chore has a name and icon, and:
+- `How often`: `Every day`, `Every N days`, `On weekdays` (you pick the days), `Every week` or `Every month`, and the date it `Starts`.
+- `Effort`: `Easy`, `Medium` or `Heavy`, worth 1, 2 or 3 points.
+- `Who takes part`. None picked means everyone.
+- `Who gets it`: `In turn` (the next one in order), `Balanced` (whoever has the fewest points in the last 4 weeks) or `Spin` (a fair random draw each time).
+
+Deleting a member or a chore shows an `Undo` button for a few seconds.
+
+## The wheel
+`Wheel` shows two rings: members outside, and this period's in-turn chores inside, each next to the person who has it. Pick `Daily`, `Weekly` or `Monthly`, and use `Previous` and `Next` to see who's up before or after; `Now` brings you back. The list under the wheel says the same in words.
+
+## Today and Week
+`Today` lists today's chores by person, with a progress bar. Tick the box when a chore is done; the points go to whoever had it. Turn on `Only mine` to hide everyone else's.
+
+The ⋯ button on a chore lets you set who it was `Done by`, `Hand over this time` to someone else, `Skip this time`, or mark it `Not done`. `Spin` chores wait under `Waiting for a spin` until someone presses `Spin the wheel`.
+
+Unfinished chores stay on the list as `late` for 7 days. `Week` shows the whole week day by day, with weekly and monthly chores at the top.
+
+## Stats
+For `This week`, `This month` or `12 months`, each member's points, chores done and missed, and their streak, with a mark for their fair share. `History (90 days)` lists what was done.
+
+## Sync and backup
+Members, chores and everything ticked, skipped or handed over sync between your devices through [orOS sync](help:t/sync), so the whole household can use it on their own phones. Who you are on this device, the open tab and `Only mine` stay on each device. There's no import or export; use the orOS [backup](help:t/backup) to keep a copy.
+
+## Keyboard shortcuts
+- [[←]] and [[→]]: turn the wheel or change the week.
+- [[N]]: new chore.
+
+## Tips
+- Use `Balanced` for chores nobody likes; it gives them to whoever has done least lately.
+
+## Limits
+- Up to 12 members and 40 chores.
+- There are no reminders or notifications.

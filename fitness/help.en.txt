@@ -1,0 +1,43 @@
+# Workouts
+Workouts is a training log: follow a program or train freely, tick your sets as you go, and watch your records and progress grow.
+
+## Getting started
+The tabs at the bottom are `Train`, `History`, `Progress`, `Programs` and `Body`. On `Train`, choose `Empty workout` to add exercises as you go, or `Start` a day from one of your programs. If a program day is set for today's weekday, it shows under `Today`.
+
+A workout keeps running while you switch tabs or close the app; `Resume workout` brings you back to it.
+
+## During a workout
+- `Add exercise` opens the `Exercise library`. Search, pick an exercise, or make a `New exercise` with a `Muscle group` and a `Measure`: `Weight × reps`, `Reps`, `Time` or `Distance + time`.
+- Sets are filled in from `Last time`. Change the numbers and tick a set when it's done. `Add set` adds one; you can also add a `Warm-up set`.
+- When every set last time reached the top of its rep target, a `Try …` chip suggests a heavier weight. Tap it to use it for every set.
+- Ticking a set starts the rest timer. Use `−15 s`, `+15 s` or `Skip`. It can play a sound or vibrate when the rest is over.
+- New records, such as `Heaviest weight` or `Best estimated 1RM`, pop up as they happen.
+
+`Finish` ends the workout; unticked sets are left out. You then see a summary with `Duration`, `Volume`, `Sets` and `New records`. `Discard workout` throws it away.
+
+## History and progress
+`History` lists finished workouts. Filter by exercise or program, or `Search notes`. Open a workout to `Edit` it or `Delete workout`, with `Undo`.
+
+`Progress` shows a chart for one `Exercise`, a `Measure` (such as `Estimated 1RM`, `Volume` or `Pace (min/km)`) and a `Period`, plus your `Records`, `Workouts per week`, `Sets per muscle group, this week` and `Training days, last 12 months`. `Show as table` gives the numbers as text.
+
+## Programs and body
+On `Programs`, copy one of the `Ready programs` (`Full Body 3×`, `Upper / Lower`, `Push / Pull / Legs`) with `Copy to my programs`, or make a `New program`. A program has days, each with exercises, sets, reps, an optional weight, rest time and `Weekdays`.
+
+On `Body`, `Add measurement` logs `Body weight`, `Waist`, `Chest` or `Arm`.
+
+## Sync and backup
+Your exercises, programs, workouts, body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices and rest timer stay on this device.
+
+In `Settings` › `Export`, save `All sets (CSV)` or a `Backup (JSON)`. `Restore from backup` merges a backup into what you already have.
+
+## Keyboard shortcuts
+- [[1]] to [[5]] switch between the five tabs (when you're not typing).
+
+## Tips
+- In `Settings`, pick `Metric (kg, km, cm)` or `Imperial (lb, mi, in)`, the weight steps for the suggestions, and your `Default rest (s)`.
+- Finished workouts show in [Calendar](app:calendar) and as an automatic row in [Habits](app:habits). Turn the Habits row off with `Show workouts in Habits`.
+- Body weights also appear in [Health](app:health).
+
+## Limits
+- The rest timer only runs on the device you're training on.
+- The weight suggestion is a hint for `Weight × reps` exercises only.
