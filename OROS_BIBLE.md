@@ -4065,3 +4065,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-10 — Public Domain Calculator: guide pages (EN/EL) — 0.50.01
 - **Changes:** Help has a full page for it in English and Greek, available offline. The page covers searching for an author or work, entering dates by hand, the four kinds of answer, the country list, what stays on the device, keyboard keys and the limits (not legal advice, special cases not counted, what is sent to Wikidata). (PR #106)
 - **NOT tested:** a real phone, Safari.
+
+### 2026-10-10 — Budget phase 2: accounts, transfers, Open in Spreadsheet (+ Spreadsheet formula fix) — 0.51.00
+- **Changes:** - **Accounts** (menu → Accounts / Λογαριασμοί): cash, card, bank and so on, each with a starting balance, which may be negative for a debt.   - Entries and recurring entries can name an account.   - Today's balance of each account shows under the totals and in the Accounts dialog. - **Transfers** move money between two accounts. They show in the list as "Bank → Cash", count in no income or expense total, and only change balances. (PR #108)
+- **NOT tested:** a real phone, Safari, real Dropbox.
