@@ -4211,3 +4211,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Core:** `baby/core.js` 1.1.0 adds `readRem`, `reminderDue`, `reminderText`, `calendarRows`; slice format unchanged.
 - **Also:** `tests/passwords.test.js` caps check compares the whole value, so hyphenated EFF short-list words ("yo-yo") no longer fail it at random.
 - **Not tested:** a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Chore Wheel phase 2: reminder, Calendar feed, deep links — 0.57.04
+- **Daily reminder:** shell engine `choresCheckTick`: one reminder a day for this device's "me" member at the chosen hour (Home → Daily reminder; off allowed; prefs `rh`), deep link `chores:today`. New bridge `__orosOpenChores("today" | "YYYY-MM-DD")`; `chores` in KNOWN_APPS and DL_BRIDGES.
+- **Calendar:** read-only **Chores** feed (`lbl-feed-chores`, «Δουλειές»); a row opens the Chore Wheel on that day.
+- **Core:** `chores/core.js` (dates, merge, who-does-what, stats + `readPrefs`, `summary`, `feedRows`), loaded by the app, the shell and Calendar; precached. Tests +3.
+- **Not tested:** a real phone, Safari, real Dropbox.
