@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Media Shelf — App logic (v1.0.0)
+// orOS Media Shelf — App logic (v1.1.0)
 // A wishlist and tracker for books, films, series, music,
 // podcasts and games.
 //   - four states: Want → Now → Done, or Dropped; every start,
@@ -9,6 +9,8 @@
 //   - half-star ratings, favourites, a short review, tags
 //   - yearly goals and statistics, all derived (never stored)
 //   - JSON export / import (import merges, never replaces)
+//   - Goodreads / Letterboxd CSV import with a preview; titles already
+//     on the shelf are skipped; Undo takes an import back (1.1.0)
 // Data:
 //   - synced slice "shelf" (oros-shelf-data): items LWW by mtime,
 //     sessions (the progress / status log) LWW by id, goals LWW,
@@ -21,6 +23,7 @@
 //   2. Model: normalize items, sessions, goals
 //   3. Merge (sync + import)
 //   4. Derived: progress, pace, completions, goal, statistics
+//  4b. CSV import (Goodreads, Letterboxd): parse, detect, plan
 //   5. Storage, prefs
 //   6. Actions (status, progress, rating, edit, delete)
 //   7. UI: toolbar, tabs, list, cards
@@ -127,6 +130,13 @@
       "goal.ahead": "{n} ahead of schedule", "goal.behind": "{n} behind schedule", "goal.on": "On schedule",
       "goal.done": "Goal reached!", "goal.hint": "Leave 0 for no goal.", "goal.none": "No goals for {y}.",
       "menu.export": "Export (JSON)", "menu.import": "Import (JSON)",
+      "menu.csv": "Import from Goodreads / Letterboxd (CSV)",
+      "csv.title": "Import from Goodreads / Letterboxd", "csv.found": "Found {n} titles.",
+      "csv.dup": "{n} already on your shelf: skipped.", "csv.none": "Nothing new to import.",
+      "csv.unknown": "Not a Goodreads or Letterboxd export: {f}",
+      "csv.line": "{type}: {n} ({parts})", "csv.go": "Import {n}",
+      "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, unzip, then pick the CSV files (you can pick several).",
+      "toast.csv": "Imported {n} titles", "toast.csvMax": "Only {n} more titles fit on your shelf",
       "toast.added": "Added to your shelf", "toast.saved": "Saved", "toast.deleted": "“{t}” deleted",
       "toast.undo": "Undo", "toast.save": "Could not save: storage is full",
       "toast.needTitle": "Give it a title", "toast.max": "Up to {n} titles",
@@ -195,6 +205,13 @@
       "goal.ahead": "{n} μπροστά από το πρόγραμμα", "goal.behind": "{n} πίσω από το πρόγραμμα", "goal.on": "Στο πρόγραμμα",
       "goal.done": "Ο στόχος επιτεύχθηκε!", "goal.hint": "Άφησε 0 για κανέναν στόχο.", "goal.none": "Κανένας στόχος για το {y}.",
       "menu.export": "Εξαγωγή (JSON)", "menu.import": "Εισαγωγή (JSON)",
+      "menu.csv": "Εισαγωγή από Goodreads / Letterboxd (CSV)",
+      "csv.title": "Εισαγωγή από Goodreads / Letterboxd", "csv.found": "Βρέθηκαν {n} τίτλοι.",
+      "csv.dup": "{n} υπάρχουν ήδη στο ράφι σου: παραλείπονται.", "csv.none": "Τίποτα καινούργιο για εισαγωγή.",
+      "csv.unknown": "Δεν είναι εξαγωγή Goodreads ή Letterboxd: {f}",
+      "csv.line": "{type}: {n} ({parts})", "csv.go": "Εισαγωγή {n}",
+      "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, αποσυμπίεσε και διάλεξε τα αρχεία CSV (μπορείς πολλά μαζί).",
+      "toast.csv": "Εισήχθησαν {n} τίτλοι", "toast.csvMax": "Χωράνε μόνο {n} ακόμα τίτλοι στο ράφι σου",
       "toast.added": "Μπήκε στο ράφι σου", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Το «{t}» διαγράφηκε",
       "toast.undo": "Αναίρεση", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.needTitle": "Δώσε έναν τίτλο", "toast.max": "Έως {n} τίτλοι",
@@ -529,6 +546,201 @@
     var lin = function (x) { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
     var L = 0.2126 * lin(v >> 16 & 255) + 0.7152 * lin(v >> 8 & 255) + 0.0722 * lin(v & 255);
     return L > 0.33 ? "#1b1b1b" : "#ffffff";
+  }
+
+  // ---------- 4b. CSV import (Goodreads, Letterboxd) ----------
+  // Pure: files [{name, text}] → a plan { items, sess, counts, dup, unknown }
+  // of NEW rows only; nothing is written until the user confirms.
+  // Goodreads: the library export (goodreads_library_export.csv).
+  // Letterboxd: the CSV files from the export zip (watchlist, watched,
+  // ratings, diary, reviews). Titles already on the shelf are skipped.
+  var CSV_MAX_ROWS = 20000;
+
+  // RFC 4180: quoted fields, "" escapes, CRLF / LF / CR, BOM.
+  function parseCsv(text) {
+    var s = String(text || "").replace(/^﻿/, "");
+    var rows = [], row = [], f = "", q = false, i = 0, n = s.length;
+    while (i < n) {
+      var c = s[i];
+      if (q) {
+        if (c === '"') {
+          if (s[i + 1] === '"') { f += '"'; i += 2; continue; }
+          q = false; i++; continue;
+        }
+        f += c; i++; continue;
+      }
+      if (c === '"' && f === "") { q = true; i++; continue; }
+      if (c === ",") { row.push(f); f = ""; i++; continue; }
+      if (c === "\r" || c === "\n") {
+        row.push(f); f = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+        if (c === "\r" && s[i + 1] === "\n") i++;
+        i++;
+        if (rows.length > CSV_MAX_ROWS) break;
+        continue;
+      }
+      f += c; i++;
+    }
+    if (f !== "" || row.length) { row.push(f); if (row.length > 1 || row[0] !== "") rows.push(row); }
+    return rows;
+  }
+  function csvObjects(rows) {
+    if (!rows.length) return { head: [], list: [] };
+    var head = rows[0].map(function (h) { return String(h).trim(); });
+    var list = rows.slice(1).map(function (r) {
+      var o = {};
+      head.forEach(function (h, k) { o[h] = r[k] !== undefined ? String(r[k]) : ""; });
+      return o;
+    });
+    return { head: head, list: list };
+  }
+
+  // Which export a file is, from its header (and name for Letterboxd).
+  function csvKind(head, name) {
+    var has = function (h) { return head.indexOf(h) >= 0; };
+    if (has("Title") && has("Author") && has("Exclusive Shelf")) return "gr";
+    if (has("Name") && has("Letterboxd URI")) {
+      var nm = String(name || "").toLowerCase();
+      if (has("Review")) return "lb-reviews";
+      if (has("Watched Date")) return "lb-diary";
+      if (has("Rating")) return "lb-ratings";
+      return /watchlist/.test(nm) ? "lb-watchlist" : "lb-watched";
+    }
+    return null;
+  }
+
+  function csvYmd(s) {
+    var x = String(s || "").trim().replace(/\//g, "-").slice(0, 10);
+    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(x);
+    if (!m) return "";
+    x = m[1] + "-" + pad2(+m[2]) + "-" + pad2(+m[3]);
+    return isYmd(x) ? x : "";
+  }
+  function ymdNoon(ymd) {
+    var m = YMD_RE.exec(ymd);
+    return new Date(+m[1], +m[2] - 1, +m[3], 12).getTime();
+  }
+  function csvInt(s, lo, hi) {
+    var v = parseInt(String(s || "").replace(/[^0-9-]/g, ""), 10);
+    return isFinite(v) && v >= lo && v <= hi ? v : 0;
+  }
+  // Goodreads reviews carry <br/> and a few tags: keep the text only.
+  function stripHtml(s) {
+    return String(s || "").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>/g, "")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ");
+  }
+  function colorFor(title) {
+    var h = 0, s = fold(title);
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h % NCOLORS;
+  }
+  function dupKey(type, title, by, year) {
+    return type + "\u0001" + fold(clipLine(title, TITLE_LEN)) + "\u0001" +
+      (type === "film" ? String(year || "") : fold(clipLine(by, BY_LEN)));
+  }
+  var GR_SHELVES = ["read", "currently-reading", "to-read"];
+  var DROP_RE = /dnf|did-?not-?finish|abandon|dropped|gave-?up|παρατ/i;
+
+  function planImport(files, D, opts) {
+    var now0 = opts.now, today0 = opts.today;
+    var have = {};
+    D.items.forEach(function (it) { have[dupKey(it.type, it.title, it.by, it.year)] = 1; });
+    var out = { items: [], sess: [], counts: {}, dup: 0, unknown: [], found: 0 };
+    var seen = {}, m = now0;
+    function stamp() { return m++; }
+    function add(it, sessList) {
+      var k = dupKey(it.type, it.title, it.by, it.year);
+      if (seen[k]) return;
+      seen[k] = 1;
+      out.found++;
+      if (have[k]) { out.dup++; return; }
+      it.id = newId();
+      it.m = stamp();
+      var x = normItem(it);
+      if (!x) return;
+      out.items.push(x);
+      sessList.forEach(function (s) {
+        var y = normSess({ id: newId(), m: stamp(), it: x.id, k: s.k, d: s.d, v: s.v });
+        if (y) out.sess.push(y);
+      });
+      var c = out.counts[x.type] || (out.counts[x.type] = { want: 0, now: 0, done: 0, drop: 0 });
+      c[x.st]++;
+    }
+
+    var lb = {}, lbOrder = [];
+    function film(o) {
+      // Name + year: diary and review URIs point at the log entry, not the film.
+      var k = fold(clipLine(o.Name, TITLE_LEN)) + "|" + String(o.Year || "").trim();
+      if (!lb[k]) { lb[k] = { name: o.Name, year: o.Year, want: false, watched: "", diary: [], rate: 0, logRate: 0, logAt: "", rev: "", tags: [], added: "" }; lbOrder.push(k); }
+      return lb[k];
+    }
+    var rank = { "lb-watchlist": 0, "lb-watched": 1, "lb-ratings": 2, "lb-diary": 3, "lb-reviews": 4, gr: 5 };
+    var parsed = files.map(function (f) {
+      var o = csvObjects(parseCsv(f.text));
+      return { name: f.name, kind: csvKind(o.head, f.name), list: o.list };
+    });
+    parsed.forEach(function (p) { if (!p.kind) out.unknown.push(p.name); });
+    parsed.filter(function (p) { return p.kind; })
+      .sort(function (a, b) { return rank[a.kind] - rank[b.kind]; })
+      .forEach(function (p) {
+        p.list.forEach(function (o) {
+          if (p.kind === "gr") {
+            var sh = String(o["Exclusive Shelf"] || "").trim().toLowerCase();
+            var st = sh === "read" ? "done" : sh === "currently-reading" ? "now" :
+                     sh === "to-read" ? "want" : (DROP_RE.test(sh) ? "drop" : "want");
+            var added = csvYmd(o["Date Added"]), read = csvYmd(o["Date Read"]);
+            var bind = String(o.Binding || "").toLowerCase();
+            var tags = String(o.Bookshelves || "").split(",").map(function (x) { return x.trim(); })
+              .filter(function (x) { return x && GR_SHELVES.indexOf(x.toLowerCase()) < 0 && !(st === "drop" && x.toLowerCase() === sh); });
+            var sl = [];
+            if (st === "now") sl.push({ k: "s", d: added || today0 });
+            if (st === "done") sl.push({ k: "d", d: read || added || today0 });
+            if (st === "drop") sl.push({ k: "x", d: added || today0 });
+            add({
+              a: added ? ymdNoon(added) : now0, type: "book", title: o.Title, by: o.Author,
+              year: csvInt(o["Original Publication Year"], 1, 9999) || csvInt(o["Year Published"], 1, 9999),
+              size: csvInt(o["Number of Pages"], 0, MAX_SIZE),
+              fmt: /audio|audible/.test(bind) ? "a" : (/kindle|ebook|e-book|nook|kobo/.test(bind) ? "e" : "p"),
+              st: st, rate: csvInt(o["My Rating"], 0, 5) * 2, tags: tags,
+              rev: clipText(stripHtml(o["My Review"]), REV_LEN), col: colorFor(o.Title)
+            }, sl);
+            return;
+          }
+          if (!clipLine(o.Name, TITLE_LEN)) return;
+          var f = film(o), d = csvYmd(o.Date);
+          if (d && (!f.added || d < f.added)) f.added = d;
+          if (p.kind === "lb-watchlist") f.want = true;
+          if (p.kind === "lb-watched") f.watched = f.watched || d || today0;
+          var r = parseFloat(String(o.Rating || "").replace(",", "."));
+          if (isFinite(r) && r > 0) {
+            r = Math.max(1, Math.min(10, Math.round(r * 2)));
+            // ratings.csv is the current rating; a log's rating is a fallback (newest log wins).
+            if (p.kind === "lb-ratings") f.rate = r;
+            else if (!f.logAt || d >= f.logAt) { f.logRate = r; f.logAt = d; }
+          }
+          if (p.kind === "lb-diary") {
+            var wd = csvYmd(o["Watched Date"]) || d;
+            if (wd && f.diary.indexOf(wd) < 0) f.diary.push(wd);
+          }
+          if (p.kind === "lb-diary" || p.kind === "lb-reviews") {
+            String(o.Tags || "").split(",").forEach(function (x) { x = x.trim(); if (x && f.tags.indexOf(x) < 0) f.tags.push(x); });
+          }
+          if (p.kind === "lb-reviews" && o.Review) f.rev = clipText(stripHtml(o.Review), REV_LEN);
+        });
+      });
+    lbOrder.forEach(function (k) {
+      var f = lb[k];
+      var dates = f.diary.slice().sort();
+      if (!dates.length && (f.watched || f.rate || f.logRate || f.rev)) dates = [f.watched || f.added || today0];
+      var st = dates.length ? "done" : "want";
+      add({
+        a: f.added ? ymdNoon(f.added) : now0, type: "film", title: f.name, by: "",
+        year: csvInt(f.year, 1, 9999), st: st, rate: f.rate || f.logRate, tags: f.tags, rev: f.rev, col: colorFor(f.name)
+      }, dates.map(function (x) { return { k: "d", d: x }; }));
+    });
+    return out;
   }
 
   // ---------- 5. Storage, prefs ----------
@@ -1546,12 +1758,101 @@
     });
   }
 
+  // Goodreads / Letterboxd: pick one or more CSV files, preview, confirm.
+  function importCsv() {
+    var dlg = dialogHost(), accept = ".csv,text/csv";
+    var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept);
+    Promise.resolve(pick).then(function (list) {
+      if (!list || !list.length) return;
+      list = [].slice.call(list);
+      if (list.some(function (f) { return f.size > 8 * 1024 * 1024; })) { showToast(t("toast.big")); return; }
+      Promise.all(list.map(function (f) {
+        return f.text().then(function (txt) { return { name: f.name || "", text: txt }; });
+      })).then(function (files) {
+        csvPreview(planImport(files, data, { now: now(), today: today() }));
+      });
+    });
+  }
+  function localPickFiles(accept) {
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.multiple = true;
+      if (accept) inp.accept = accept;
+      inp.style.display = "none";
+      inp.addEventListener("change", function () {
+        var fs = inp.files && inp.files.length ? [].slice.call(inp.files) : null;
+        inp.remove();
+        resolve(fs);
+      });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+
+  function csvPreview(plan) {
+    var dlg = makeDialog("sh-csv", "");
+    dlg.appendChild(el("div", "dlg-title", t("csv.title")));
+    plan.unknown.forEach(function (f) { dlg.appendChild(el("p", "hint warn", t("csv.unknown", { f: f || "?" }))); });
+    var room = Math.max(0, MAX_ITEMS - data.items.length);
+    var n = Math.min(plan.items.length, room);
+    if (plan.found) dlg.appendChild(el("p", "csv-p", t("csv.found", { n: fmtNum(plan.found) })));
+    var ul = el("ul", "csv-list");
+    TYPES.forEach(function (tp) {
+      var c = plan.counts[tp];
+      if (!c) return;
+      var parts = STATES.filter(function (s) { return c[s]; }).map(function (s) {
+        return stLabel({ type: tp }, s) + " " + fmtNum(c[s]);
+      }).join(" · ");
+      ul.appendChild(el("li", "", t("csv.line", { type: t("types." + tp),
+        n: fmtNum(c.want + c.now + c.done + c.drop), parts: parts })));
+    });
+    if (ul.children.length) dlg.appendChild(ul);
+    if (plan.dup) dlg.appendChild(el("p", "hint", t("csv.dup", { n: fmtNum(plan.dup) })));
+    if (n < plan.items.length) dlg.appendChild(el("p", "hint warn", t("toast.csvMax", { n: fmtNum(room) })));
+    if (!plan.items.length) dlg.appendChild(el("p", "csv-p", t("csv.none")));
+    dlg.appendChild(el("p", "hint", t("csv.hint")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
+    if (n) {
+      acts.appendChild(button(t("csv.go", { n: fmtNum(n) }), "primary", function () {
+        dlg.close();
+        applyPlan(plan, n);
+      }));
+    }
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  function applyPlan(plan, n) {
+    var items = plan.items.slice(0, n), keep = {};
+    items.forEach(function (it) { keep[it.id] = 1; });
+    var sess = plan.sess.filter(function (s) { return keep[s.it]; });
+    // Fresh stamps: the plan was made a moment ago (R27, R17).
+    var ts = now();
+    items.forEach(function (it) { it.m = Math.max(it.m, ts); data.items.push(it); });
+    sess.forEach(function (s) { s.m = Math.max(s.m, ts); data.sess.push(s); });
+    saveNow();
+    prefs.tab = "hist";
+    prefs.type = "all";
+    savePrefs();
+    renderAll();
+    undoToast(t("toast.csv", { n: fmtNum(items.length) }), function () {
+      tombIds(items.map(function (it) { return it.id; }).concat(sess.map(function (s) { return s.id; })));
+      saveNow();
+      renderAll();
+    });
+  }
+
   function moreMenu() {
     var dlg = makeDialog("sh-more", "menu-dlg");
     dlg.appendChild(el("div", "dlg-title", t("btn.more")));
     var col = el("div", "menu-col");
     col.appendChild(button(t("menu.export"), "", function () { dlg.close(); exportJson(); }));
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
+    col.appendChild(button(t("menu.csv"), "", function () { dlg.close(); importCsv(); }));
     col.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
     dlg.appendChild(col);
     document.body.appendChild(dlg);

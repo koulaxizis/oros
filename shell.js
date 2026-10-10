@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.57.04";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.60.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -164,6 +164,7 @@
     bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>',
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     feeds: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
+    museum: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 18h16M12 3l9 5H3z"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
@@ -929,8 +930,10 @@
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
+      tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
+    tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -1554,6 +1557,120 @@
     });
   }
 
+  // Timesheet (Wave 3) — the shell reads "oros-timesheet-data" with
+  // timesheet/core.js (loaded by index.html, the SAME file the app
+  // runs) and never writes it. Two things come from that read:
+  //   · a top-bar chip while a timer runs (elapsed H:MM; click opens
+  //     Timesheet), painted by the 1/s clock tick;
+  //   · one "forgot to stop it?" notification per running entry once
+  //     it passes core.FORGOT_MS (same threshold as the app banner).
+  // The text is re-read at most every 5 s, or at once when the app
+  // frame writes it (storage event), and parsed only when it changed.
+  // Starting/stopping from the keyboard (Ctrl+Alt+Shift+T) goes
+  // through the app (live push or a one-shot flag + open), so the
+  // data has one writer and the sync rules stay the app's.
+  var tsRaw = null, tsRun = null, tsReadAt = 0;
+  window.addEventListener("storage", function (e) {
+    var C = window.orosTimesheetCore;
+    if (C && e.key === C.STORAGE_KEY) tsReadAt = 0;
+  });
+  function timesheetRunning() {
+    var C = window.orosTimesheetCore;
+    if (!C || typeof C.parse !== "function") return null;
+    var now = Date.now();
+    if (now - tsReadAt < 5000) return tsRun;
+    tsReadAt = now;
+    var raw = null;
+    try { raw = localStorage.getItem(C.STORAGE_KEY); } catch (e) { return tsRun; }
+    if (raw === tsRaw) return tsRun;
+    tsRaw = raw;
+    tsRun = null;
+    var d = raw ? C.parse(raw) : null;          // unreadable → no chip (the app keeps the rescue copy)
+    var x = d ? C.running(d)[0] : null;
+    if (x) {
+      var p = C.project(d, x.p);
+      tsRun = { id: x.id, s: x.s, name: p ? p.name : "" };
+    }
+    return tsRun;
+  }
+
+  function timesheetTrayTick() {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var run = timesheetRunning();
+    var chip = document.getElementById("ts-tray-chip");
+    if (!run) { if (chip) chip.remove(); return; }
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "ts-tray-chip";
+      chip.type = "button";
+      chip.innerHTML = ICONS.timesheet + '<span class="ts-time"></span>';
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openAppById("timesheet");
+      });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+    }
+    var C = window.orosTimesheetCore;
+    var txt = C.fmtDur(Date.now() - run.s);
+    var span = chip.lastChild;
+    if (span.textContent !== txt) span.textContent = txt;
+    var since = new Date(run.s);
+    var hm = String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0");
+    var title = window.t("ts.tray.title")
+      .replace("{p}", run.name || window.t("ts.tray.noproj"))
+      .replace("{t}", hm).replace("{d}", txt);
+    if (chip.title !== title) {
+      chip.title = title;                       // .title / aria-label: plain text, never HTML
+      chip.setAttribute("aria-label", title);
+    }
+  }
+
+  var tsLastTick = 0;
+  function timesheetCheckTickThrottled() {
+    var now = Date.now();
+    if (now - tsLastTick < 60000) return;
+    tsLastTick = now;
+    timesheetCheckTick();
+  }
+  function timesheetCheckTick() {
+    var C = window.orosTimesheetCore, N = window.orosNotifs;
+    if (!C || !(N && typeof N.emit === "function")) return;
+    var run = timesheetRunning();
+    if (!run || Date.now() - run.s < C.FORGOT_MS) return;
+    // The app shows its own banner while it is the open app.
+    if (state.running && state.running.id === "timesheet" && !document.hidden) return;
+    var title = window.t("app.timesheet");
+    if (title === "app.timesheet") title = "Timesheet";
+    N.emit({
+      ns: "timesheet",
+      key: "forgot-" + run.id,
+      type: "reminder",
+      title: title,
+      body: window.t("ts.forgot.body").replace("{d}", C.fmtDur(Date.now() - run.s)),
+      deepLink: "system:open:timesheet"
+    });
+  }
+
+  // Ctrl+Alt+Shift+T: start or stop the Timesheet timer.
+  function scTimesheetToggle() {
+    var has = false;
+    for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "timesheet") has = true;
+    if (!has) return;
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetToggle === "function") {
+          f.contentWindow.__orosTimesheetToggle();
+          tsReadAt = 0;
+          return;
+        }
+      } catch (e) {}
+    }
+    try { sessionStorage.setItem("oros-timesheet-toggle", "1"); } catch (e) {}
+    openAppById("timesheet");
+  }
+
   // Baby — feed-gap and daily-medicine reminders (off by default;
   // the app's Settings turn them on, per device: oros-baby-rem is
   // device-local). The RULE lives in baby/core.js, loaded by
@@ -1699,6 +1816,7 @@
         renderMenu();
         helpBtnRefresh();
         openFromLaunchParam();
+        searchFromLaunchParam();
         deliverShare();
       })
       .catch(function () {
@@ -1730,6 +1848,27 @@
         return;
       }
     }
+  }
+
+  // "oros <words>" in the browser's address bar (Send to orOS add-on,
+  // extension/): "/?search=<words>" opens the menu with the words in
+  // its search field, as if typed. Stripped at once like ?open=.
+  function searchFromLaunchParam() {
+    var params, q;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    if (!params.has("search")) return;
+    q = String(params.get("search") || "").replace(/\s+/g, " ").trim().slice(0, 200);
+    params.delete("search");
+    try {
+      var qs = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
+    } catch (e) {}
+    if (!q || state.running) return;
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = q;
+    inp.dispatchEvent(new Event("input"));
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
@@ -4272,6 +4411,7 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("maps.providers")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.pubdomain")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.museum")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
@@ -4446,7 +4586,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-jigsaw", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -4471,7 +4611,8 @@
     { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
     { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
     { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
-    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } }
+    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
+    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this

@@ -1,10 +1,13 @@
 // ============================================================
-// orOS Mind Map — App logic (v1.0.0)
+// orOS Mind Map — App logic (v1.1.0)
 // Mind maps: a centre, branches on both sides (or the right
 // only), always laid out neatly. Drag a node onto another to move
 // it, edit in place, fold branches, switch to an outline view,
 // export PNG / SVG / Markdown / OPML / JSON, import OPML,
 // Markdown or indented lists.
+// Phase 2 (v1.1.0): cross-links with labels, free placement (drop a
+// node on empty space: it keeps an offset from its automatic place),
+// small pictures in nodes (re-encoded JPEG data URIs, ~1 MB budget).
 // Data:
 //   - synced slice "mindmap" (oros-mindmap-data): MINDMAP v1, see
 //     mm-core.js (LWW per entity + tombstones, R5, R17, R26)
@@ -19,6 +22,7 @@
 //   2. Storage, prefs
 //   3. Mutations + undo / redo (stamp at the mutation site, R27)
 //   4. Map view: render, camera, pointer (select, drag, pinch)
+//  4b. Free placement + cross-links
 //   5. In-place editor
 //   6. Keyboard (map view) + clipboard
 //   7. Outline view
@@ -75,7 +79,7 @@
       "col.red": "Red", "col.orange": "Orange", "col.yellow": "Yellow", "col.green": "Green", "col.teal": "Teal",
       "col.violet": "Violet", "col.pink": "Pink", "col.grey": "Grey",
       "menu.new": "New map", "menu.maps": "Your maps…", "menu.paste": "Paste a list…", "menu.export": "Export…",
-      "menu.copy": "Copy map as text", "menu.import": "Import (OPML, Markdown, text, JSON)…",
+      "menu.copy": "Copy map as text", "menu.import": "Import (FreeMind, XMind, OPML, Markdown, text, JSON)…",
       "menu.backup": "Back up all maps (JSON)", "menu.sidesBoth": "Branches on both sides",
       "menu.sidesRight": "Branches on the right only", "menu.unfoldAll": "Unfold all", "menu.foldAll": "Fold main branches",
       "menu.keys": "Keyboard shortcuts",
@@ -91,8 +95,9 @@
       "imp.merge": "Maps you already have are merged: newer changes are kept and nothing you deleted comes back.",
       "imp.go": "Import", "imp.done": "Imported", "imp.newMap": "Imported as a new map",
       "imp.err.size": "The file is too big (max 5 MB)", "imp.err.json": "This is not a valid JSON file",
-      "imp.err.format": "This file is not a mind map, OPML outline or list", "imp.err.toolarge": "Too many maps or nodes in this file",
+      "imp.err.format": "This file is not a mind map, outline or list", "imp.err.toolarge": "Too many maps or nodes in this file",
       "imp.err.empty": "Nothing to import in this file", "imp.err.read": "The file could not be read",
+      "imp.err.zip": "This file is damaged or not an XMind map", "imp.sheets": "Only the first of {n} sheets was imported",
       "keys.title": "Keyboard shortcuts",
       "keys.list": "Tab|Add a child\nEnter|Add a sibling\nF2 or type|Edit the selected node\nShift+Enter|New line while editing\nDelete|Delete the branch\nSpace|Fold or unfold\nArrows|Move around the map\nAlt+↑ / Alt+↓|Move the node up / down\nCtrl+Z / Ctrl+Y|Undo / redo\nCtrl+C / Ctrl+V|Copy a branch as text / paste a list\nCtrl+F|Find\n+ / − / Home|Zoom in / out / fit",
       "ol.indent": "Indent", "ol.outdent": "Outdent", "ol.up": "Move up", "ol.down": "Move down", "ol.new": "New line",
@@ -105,7 +110,20 @@
       "toast.pngBig": "Too big for PNG: export SVG instead", "toast.nothing": "Nothing to undo", "toast.noRedo": "Nothing to redo",
       "toast.noMove": "A branch can't go inside itself", "toast.selectFirst": "Select a node first",
       "toast.tooMany": "This map is at its size limit", "toast.noPrev": "There is no line above to indent under",
-      "live.sel": "Selected: {name}", "live.moved": "Moved under {name}", "empty.node": "(empty)"
+      "live.sel": "Selected: {name}", "live.moved": "Moved under {name}", "empty.node": "(empty)",
+      "live.link": "Link selected", "live.placed": "Placed here",
+      "ctx.link": "Link to another node…", "ctx.resetPos": "Back to its place", "menu.tidy": "Tidy up (all back in place)",
+      "toast.tidied": "All nodes are back in place", "toast.linkDeleted": "Link deleted",
+      "link.pick": "Tap the node to link “{name}” to", "link.self": "Pick another node",
+      "link.dup": "These two are already linked", "link.title": "Link", "link.label": "Label (optional)",
+      "link.ph": "e.g. depends on", "link.noLabel": "No label", "link.edit": "Label", "link.reverse": "Reverse",
+      "link.goFrom": "Go to the start", "link.goTo": "Go to the end", "link.delete": "Delete link",
+      "app.name": "Mind Map", "ctx.todo": "Send to To-Do…", "ctx.slides": "Make slides from this branch…",
+      "menu.slides": "Make slides from this map…", "toast.noBridge": "That app can't take it yet",
+      "toast.todoNone": "Nothing to send (done items are left out)", "toast.todoMany": "Too many items for one list (at most {n})",
+      "toast.slidesBig": "This branch is too big for one deck",
+      "det.pic": "Picture", "det.picAdd": "Choose picture", "det.picDel": "Remove picture",
+      "toast.picBudget": "Picture space is full (about 1 MB for all pictures)", "toast.picBad": "Could not read that image"
     },
     el: {
       "view.map": "Χάρτης", "view.outline": "Περίγραμμα",
@@ -131,7 +149,7 @@
       "col.red": "Κόκκινο", "col.orange": "Πορτοκαλί", "col.yellow": "Κίτρινο", "col.green": "Πράσινο", "col.teal": "Γαλαζοπράσινο",
       "col.violet": "Μωβ", "col.pink": "Ροζ", "col.grey": "Γκρι",
       "menu.new": "Νέος χάρτης", "menu.maps": "Οι χάρτες σου…", "menu.paste": "Επικόλληση λίστας…", "menu.export": "Εξαγωγή…",
-      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (OPML, Markdown, κείμενο, JSON)…",
+      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (FreeMind, XMind, OPML, Markdown, κείμενο, JSON)…",
       "menu.backup": "Αντίγραφο όλων των χαρτών (JSON)", "menu.sidesBoth": "Κλαδιά και στις δύο πλευρές",
       "menu.sidesRight": "Κλαδιά μόνο δεξιά", "menu.unfoldAll": "Ανάπτυξη όλων", "menu.foldAll": "Σύμπτυξη κύριων κλαδιών",
       "menu.keys": "Συντομεύσεις πληκτρολογίου",
@@ -147,8 +165,9 @@
       "imp.merge": "Οι χάρτες που ήδη έχεις συγχωνεύονται: κρατιούνται οι νεότερες αλλαγές και δεν επιστρέφει τίποτα που έσβησες.",
       "imp.go": "Εισαγωγή", "imp.done": "Έγινε η εισαγωγή", "imp.newMap": "Εισήχθη ως νέος χάρτης",
       "imp.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 5 MB)", "imp.err.json": "Δεν είναι έγκυρο αρχείο JSON",
-      "imp.err.format": "Το αρχείο δεν είναι νοητικός χάρτης, περίγραμμα OPML ή λίστα", "imp.err.toolarge": "Πάρα πολλοί χάρτες ή κόμβοι σε αυτό το αρχείο",
+      "imp.err.format": "Το αρχείο δεν είναι νοητικός χάρτης, περίγραμμα ή λίστα", "imp.err.toolarge": "Πάρα πολλοί χάρτες ή κόμβοι σε αυτό το αρχείο",
       "imp.err.empty": "Δεν υπάρχει κάτι για εισαγωγή σε αυτό το αρχείο", "imp.err.read": "Το αρχείο δεν διαβάστηκε",
+      "imp.err.zip": "Το αρχείο είναι κατεστραμμένο ή δεν είναι χάρτης XMind", "imp.sheets": "Εισήχθη μόνο το πρώτο από {n} φύλλα",
       "keys.title": "Συντομεύσεις πληκτρολογίου",
       "keys.list": "Tab|Νέο παιδί\nEnter|Νέος αδελφός\nF2 ή πληκτρολόγηση|Επεξεργασία του επιλεγμένου\nShift+Enter|Νέα γραμμή στην επεξεργασία\nDelete|Διαγραφή κλαδιού\nSpace|Σύμπτυξη ή ανάπτυξη\nΒελάκια|Κίνηση στον χάρτη\nAlt+↑ / Alt+↓|Μετακίνηση πάνω / κάτω\nCtrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nCtrl+C / Ctrl+V|Αντιγραφή κλαδιού ως κείμενο / επικόλληση λίστας\nCtrl+F|Εύρεση\n+ / − / Home|Μεγέθυνση / σμίκρυνση / προσαρμογή",
       "ol.indent": "Εσοχή", "ol.outdent": "Αφαίρεση εσοχής", "ol.up": "Πάνω", "ol.down": "Κάτω", "ol.new": "Νέα γραμμή",
@@ -161,7 +180,20 @@
       "toast.pngBig": "Πολύ μεγάλο για PNG: κάνε εξαγωγή σε SVG", "toast.nothing": "Δεν υπάρχει κάτι για αναίρεση", "toast.noRedo": "Δεν υπάρχει κάτι για επανάληψη",
       "toast.noMove": "Ένα κλαδί δεν μπαίνει μέσα στον εαυτό του", "toast.selectFirst": "Διάλεξε πρώτα έναν κόμβο",
       "toast.tooMany": "Ο χάρτης έφτασε το όριο μεγέθους", "toast.noPrev": "Δεν υπάρχει γραμμή από πάνω για να μπει από κάτω της",
-      "live.sel": "Επιλογή: {name}", "live.moved": "Μετακινήθηκε κάτω από: {name}", "empty.node": "(κενό)"
+      "live.sel": "Επιλογή: {name}", "live.moved": "Μετακινήθηκε κάτω από: {name}", "empty.node": "(κενό)",
+      "live.link": "Επιλέχθηκε σύνδεσμος", "live.placed": "Τοποθετήθηκε εδώ",
+      "ctx.link": "Σύνδεση με άλλον κόμβο…", "ctx.resetPos": "Πίσω στη θέση του", "menu.tidy": "Τακτοποίηση (όλα στη θέση τους)",
+      "toast.tidied": "Όλοι οι κόμβοι γύρισαν στη θέση τους", "toast.linkDeleted": "Ο σύνδεσμος διαγράφηκε",
+      "link.pick": "Πάτα τον κόμβο που θα συνδεθεί με το «{name}»", "link.self": "Διάλεξε άλλον κόμβο",
+      "link.dup": "Αυτοί οι δύο είναι ήδη συνδεδεμένοι", "link.title": "Σύνδεσμος", "link.label": "Ετικέτα (προαιρετικά)",
+      "link.ph": "π.χ. εξαρτάται από", "link.noLabel": "Χωρίς ετικέτα", "link.edit": "Ετικέτα", "link.reverse": "Αντιστροφή",
+      "link.goFrom": "Πήγαινε στην αρχή", "link.goTo": "Πήγαινε στο τέλος", "link.delete": "Διαγραφή συνδέσμου",
+      "app.name": "Νοητικός χάρτης", "ctx.todo": "Αποστολή στο To-Do…", "ctx.slides": "Διαφάνειες από αυτό το κλαδί…",
+      "menu.slides": "Διαφάνειες από τον χάρτη…", "toast.noBridge": "Αυτή η εφαρμογή δεν μπορεί να το δεχτεί ακόμα",
+      "toast.todoNone": "Δεν υπάρχει κάτι να σταλεί (όσα έγιναν μένουν έξω)", "toast.todoMany": "Πάρα πολλά για μία λίστα (έως {n})",
+      "toast.slidesBig": "Το κλαδί είναι πολύ μεγάλο για μία παρουσίαση",
+      "det.pic": "Εικόνα", "det.picAdd": "Επιλογή εικόνας", "det.picDel": "Αφαίρεση εικόνας",
+      "toast.picBudget": "Ο χώρος για εικόνες γέμισε (περίπου 1 MB για όλες)", "toast.picBad": "Η εικόνα δεν διαβάστηκε"
     }
   };
 
@@ -214,6 +246,7 @@
     redo:   ic('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>'),
     find:   ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'),
     fit:    ic('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>'),
+    swap:   ic('<path d="M7 7h12l-3-3M17 17H5l3 3"/>'),
     more:   ic('<circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>', true),
     plus:   ic('<path d="M12 5v14M5 12h14"/>'),
     minus:  ic('<path d="M5 12h14"/>'),
@@ -251,18 +284,27 @@
   // ---------- 2. Storage, prefs ----------
   // Working state: rows by id. `canonical()` is the merged, sorted
   // slice (R26) that is stored and synced.
+  // Phase 2: LINKS (cross-links), POS (free-placement offsets) and
+  // IMGS (pictures) are rows of their own; POS / IMGS share the
+  // node's id (see mm-core.js header).
   var MAPS = Object.create(null), NODES = Object.create(null), TOMBS = Object.create(null);
+  var LINKS = Object.create(null), POS = Object.create(null), IMGS = Object.create(null);
   var prefs = null;
 
   function adopt(d) {
     MAPS = Object.create(null); NODES = Object.create(null); TOMBS = Object.create(null);
+    LINKS = Object.create(null); POS = Object.create(null); IMGS = Object.create(null);
     d.maps.forEach(function (x) { MAPS[x.id] = x; });
     d.nodes.forEach(function (x) { NODES[x.id] = x; });
+    (d.links || []).forEach(function (x) { LINKS[x.id] = x; });
+    (d.pos || []).forEach(function (x) { POS[x.id] = x; });
+    (d.imgs || []).forEach(function (x) { IMGS[x.id] = x; });
     Object.keys(d.tombs).forEach(function (k) { TOMBS[k] = d.tombs[k]; });
   }
   function values(o) { return Object.keys(o).map(function (k) { return o[k]; }); }
   function canonical() {
-    return M.merge({ maps: values(MAPS), nodes: values(NODES), tombs: TOMBS }, {});
+    return M.merge({ maps: values(MAPS), nodes: values(NODES), links: values(LINKS), pos: values(POS),
+                     imgs: values(IMGS), tombs: TOMBS }, {});
   }
 
   function load() {
@@ -383,10 +425,10 @@
   function resolveNow() {
     var mp = curMap();
     if (!mp) { R = null; sel = null; return; }
-    var nodes = [];
-    Object.keys(NODES).forEach(function (id) { if (NODES[id].map === mp.id) nodes.push(NODES[id]); });
-    R = M.resolve({ maps: [mp], nodes: nodes }, mp.id);
+    function of(dict) { return values(dict).filter(function (x) { return x.map === mp.id; }); }
+    R = M.resolve({ maps: [mp], nodes: of(NODES), links: of(LINKS), pos: of(POS), imgs: of(IMGS) }, mp.id);
     if (sel && !R.N[sel]) sel = null;
+    if (selLink && !R.links.some(function (l) { return l.id === selLink; })) selLink = null;
   }
 
   // ---------- 3. Mutations + undo / redo ----------
@@ -397,7 +439,10 @@
   var undoStack = [], redoStack = [], tx = null;
 
   function begin(key) { tx = { before: {}, key: key || "", sel: sel }; }
-  function rowOf(k) { var id = k.slice(2); return k.charAt(0) === "m" ? MAPS[id] : NODES[id]; }
+  // Keys: "m:" map, "n:" node, "l:" link, "p:" position, "i:" picture.
+  var KIND = { m: function () { return MAPS; }, n: function () { return NODES; }, l: function () { return LINKS; },
+               p: function () { return POS; }, i: function () { return IMGS; } };
+  function rowOf(k) { return KIND[k.charAt(0)]()[k.slice(2)]; }
   function touch(k) { if (tx && !own(tx.before, k)) tx.before[k] = clone(rowOf(k)); }
   function putNode(row) {
     touch("n:" + row.id);
@@ -411,12 +456,39 @@
     if (x) MAPS[x.id] = x;
     return x;
   }
+  function putLink(row) {
+    touch("l:" + row.id);
+    var x = M.normLink(row);
+    if (x) LINKS[x.id] = x;
+    return x;
+  }
+  function putPos(row) {
+    touch("p:" + row.id);
+    var x = M.normPos(row);
+    if (x) POS[x.id] = x;
+    return x;
+  }
+  function putImg(row) {
+    touch("i:" + row.id);
+    var x = M.normImg(row);
+    if (x) IMGS[x.id] = x;
+    return x;
+  }
+  // Positions and pictures are never tombstoned (their id is the
+  // node's): "removing" one writes a zero / empty row instead.
   function tombRow(k) {
+    var c = k.charAt(0), row = rowOf(k), id = k.slice(2);
+    if (c === "p" || c === "i") {
+      if (!row) return;
+      touch(k);
+      if (c === "p") putPos({ id: id, m: nextM(id, row), map: row.map, dx: 0, dy: 0 });
+      else putImg({ id: id, m: nextM(id, row), map: row.map, src: "", w: 0, h: 0 });
+      return;
+    }
     touch(k);
-    var row = rowOf(k), id = k.slice(2);
     if (!row) return;
     TOMBS[id] = Math.max(Date.now(), row.m, TOMBS[id] || 0);
-    if (k.charAt(0) === "m") delete MAPS[id]; else delete NODES[id];
+    delete KIND[c]()[id];
   }
   // Fresh stamp for a row about to change: above its own m and any
   // tombstone, so the change wins LWW and resurrects if needed.
@@ -447,9 +519,10 @@
     Object.keys(snap).forEach(function (k) {
       var want = snap[k], id = k.slice(2), cur = rowOf(k);
       if (!want) { if (cur) tombRow(k); return; }
-      var row = clone(want);
+      var row = clone(want), c = k.charAt(0);
       row.m = nextM(id, cur);
-      if (k.charAt(0) === "m") putMap(row); else putNode(row);
+      if (c === "m") putMap(row); else if (c === "n") putNode(row); else if (c === "l") putLink(row);
+      else if (c === "p") putPos(row); else putImg(row);
     });
   }
   function undo() {
@@ -572,17 +645,31 @@
     var all = M.subtree(R, id), name = label(R.N[id], 40);
     var pid = R.par[id], sibs = kidsRows(pid, null).map(function (n) { return n.id; }), i = sibs.indexOf(id);
     begin("");
-    all.forEach(function (x) { if (NODES[x]) tombRow("n:" + x); });
+    var gone = {};
+    all.forEach(function (x) { gone[x] = 1; });
+    linksOf(gone).forEach(function (lid) { tombRow("l:" + lid); });
+    all.forEach(function (x) {
+      if (POS[x]) touch("p:" + x);
+      if (IMGS[x]) touch("i:" + x);
+      if (NODES[x]) tombRow("n:" + x);
+    });
     sel = sibs[i + 1] || sibs[i - 1] || pid;
+    selLink = null;
     commit();
     undoToast(all.length > 1 ? t("toast.deletedN", { name: name, n: all.length - 1 }) : t("toast.deleted", { name: name }), undo);
   }
+  // Links touching any id in `set` (a dict).
+  function linksOf(set) {
+    return Object.keys(LINKS).filter(function (lid) { var l = LINKS[lid]; return own(set, l.from) || own(set, l.to); });
+  }
   // Move `id` under `pid` at `index` (index in the list without it).
+  // A free-placed node goes back to its automatic place there.
   function moveNode(id, pid, index) {
     if (!R.N[id] || id === R.root.id) return false;
     if (M.isInside(R, id, pid)) { showToast(t("toast.noMove")); return false; }
     begin("");
     ensureRoot();
+    if (POS[id] && (POS[id].dx || POS[id].dy)) tombRow("p:" + id);
     placeUnder(clone(R.N[id]), pid, index);
     if (isFolded(pid)) setFold(pid, false);
     sel = id;
@@ -627,6 +714,8 @@
   var cams = Object.create(null);          // session camera per map (R10)
   var hits = null, hitList = [], hitAt = -1;
   var drop = null;                         // { id, mode } while dragging
+  var selLink = null;                      // selected cross-link id (session)
+  var linking = null;                      // { from } while picking a link's other end
 
   var mctx = null, mcache = new Map();
   function measure(text, px, weight) {
@@ -668,12 +757,17 @@
     while (vp.firstChild) vp.removeChild(vp.firstChild);
     if (!R) { lay = null; return; }
     lay = M.layout(R, { measure: measure, fold: foldSet(R.root.map), placeholder: t("untitled") });
-    var sc = M.scene(R, lay, { pal: cssPal(), sel: sel, hi: hits, drop: drop });
+    var sc = M.scene(R, lay, { pal: cssPal(), sel: sel, hi: hits, drop: drop, selLink: selLink });
     var frag = document.createDocumentFragment();
     sc.items.forEach(function (it) {
       var n = domItem(it);
       if (!n) return;
-      var id = it.a && it.a["data-id"];
+      var id = it.a && it.a["data-id"], lid = it.a && it.a["data-link"];
+      if (lid) {
+        var lt = document.createElementNS(SVGNS, "title"), lk = linkRow(lid);
+        lt.textContent = lk ? label(R.N[lk.from], 40) + " → " + label(R.N[lk.to], 40) + (lk.label ? "\n" + lk.label : "") : "";
+        n.insertBefore(lt, n.firstChild);
+      }
       if (id) {
         var title = document.createElementNS(SVGNS, "title");
         var nn = R.N[id];
@@ -749,8 +843,20 @@
   function zoomCenter(f) { var r = stageRect(); zoomAt(f, r.width / 2, r.height / 2); }
   function toMap(px, py) { return { x: (px - view.tx) / view.s, y: (py - view.ty) / view.s }; }
 
+  function linkRow(lid) {
+    if (!R) return null;
+    for (var i = 0; i < R.links.length; i++) if (R.links[i].id === lid) return R.links[i];
+    return null;
+  }
+  function selectLink(lid) {
+    selLink = lid && linkRow(lid) ? lid : null;
+    sel = null;
+    renderMap();
+    if (selLink) live(t("live.link"));
+  }
   function select(id, quiet) {
     if (id && (!R || !R.N[id])) id = null;
+    if (selLink) { selLink = null; sel = id; renderMap(); if (id && !quiet) live(t("live.sel", { name: label(R.N[id]) })); return; }
     if (sel === id) { renderNodebar(); return; }
     sel = id;
     [].forEach.call($("vp").querySelectorAll("g.mm-node"), function (g) {
@@ -815,7 +921,13 @@
       var g = target && target.closest ? target.closest("g[data-fold]") : null;
       return g ? g.getAttribute("data-fold") : null;
     }
-    function endDrag(apply) {
+    function linkAt(target) {
+      var g = target && target.closest ? target.closest("g[data-link]") : null;
+      return g ? g.getAttribute("data-link") : null;
+    }
+    // Dropped on a node: new parent / place (doDrop). Dropped on empty
+    // space: the branch stays where it was let go (free placement).
+    function endDrag(apply, p) {
       if (!start || !start.drag) return;
       var g = start.drag.g;
       if (g && g.parentNode) g.parentNode.removeChild(g);
@@ -823,7 +935,9 @@
       var d = drop;
       drop = null;
       markDrop(null);
-      if (apply && d) doDrop(start.id, d);
+      if (!apply) return;
+      if (d) doDrop(start.id, d);
+      else if (p) nudge(start.id, (p.x - start.p.x) / view.s, (p.y - start.p.y) / view.s);
     }
     svg.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button > 0) return;
@@ -834,11 +948,11 @@
       if (count() === 1) {
         var id = nodeAt(e.target);
         start = { p: local(e), tx: view.tx, ty: view.ty, moved: false, id: id, fold: foldAt(e.target),
-                  touch: e.pointerType !== "mouse", drag: null };
+                  link: id ? null : linkAt(e.target), touch: e.pointerType !== "mouse", drag: null };
         clearTimeout(press);
         if (id && start.touch) {
           press = setTimeout(function () {
-            if (start && !start.moved && start.id === id) {
+            if (start && !start.moved && start.id === id && !linking) {
               start.moved = true; start.pressed = true;
               select(id);
               openNodeMenu(id, e.clientX, e.clientY, true);
@@ -872,7 +986,7 @@
       if (!start.moved && Math.hypot(dx, dy) > 6) {
         start.moved = true;
         clearTimeout(press);
-        var canDrag = start.id && start.id !== R.root.id && (!start.touch || start.id === sel);
+        var canDrag = !linking && start.id && start.id !== R.root.id && (!start.touch || start.id === sel);
         if (canDrag) {
           var src = $("vp").querySelector('g[data-id="' + CSS.escape(start.id) + '"]');
           var blocked = {};
@@ -911,9 +1025,11 @@
       if (count() < 2) pinch = null;
       if (count() !== 0) return;
       svg.classList.remove("panning");
-      if (start && start.drag) endDrag(e.type === "pointerup");
+      if (start && start.drag) endDrag(e.type === "pointerup", local(e));
       else if (start && !start.moved && e.type === "pointerup") {
+        if (linking) { finishLink(start.id); start = null; return; }
         if (start.fold) { toggleFold(start.fold); start = null; return; }
+        if (start.link) { selectLink(start.link); start = null; return; }
         var id = start.id, now = Date.now();
         if (id && ((lastTap.id === id && now - lastTap.t < 380) || (start.touch && id === sel))) {
           lastTap = { t: 0, id: null };
@@ -930,7 +1046,9 @@
     svg.addEventListener("pointercancel", end);
     svg.addEventListener("contextmenu", function (e) {
       e.preventDefault();
-      var id = nodeAt(e.target);
+      if (linking) return;
+      var id = nodeAt(e.target), lid = id ? null : linkAt(e.target);
+      if (lid) { selectLink(lid); openLinkMenu(lid, e.clientX, e.clientY); return; }
       if (!id) return;
       select(id);
       openNodeMenu(id, e.clientX, e.clientY);
@@ -948,6 +1066,137 @@
     if (!R || !(R.kids[id] || []).length || id === R.root.id) return;
     setFold(id, !isFolded(id));
     refresh();
+  }
+
+  // ---------- 4b. Free placement + cross-links (phase 2) ----------
+  // A node's offset from its automatic place; it carries its branch.
+  function nudge(id, dx, dy) {
+    if (!R || !R.N[id] || id === R.root.id) return;
+    var cur = POS[id], nx = Math.round((cur ? cur.dx : 0) + dx), ny = Math.round((cur ? cur.dy : 0) + dy);
+    nx = Math.max(-M.MAX_OFF, Math.min(M.MAX_OFF, nx)); ny = Math.max(-M.MAX_OFF, Math.min(M.MAX_OFF, ny));
+    if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+    begin("");
+    ensureRoot();
+    putPos({ id: id, m: nextM(id, cur || NODES[id]), map: R.root.map, dx: nx, dy: ny });
+    sel = id;
+    commit();
+    live(t("live.placed"));
+  }
+  function isMoved(id) { return !!(POS[id] && (POS[id].dx || POS[id].dy) && R && R.N[id]); }
+  function resetPos(id) {
+    if (!isMoved(id)) return;
+    begin("");
+    tombRow("p:" + id);
+    commit();
+  }
+  function anyMoved() { return !!R && Object.keys(R.pos || {}).some(function (id) { return R.pos[id].dx || R.pos[id].dy; }); }
+  function tidyAll() {
+    if (!anyMoved()) return;
+    begin("");
+    Object.keys(R.pos).forEach(function (id) { if (R.pos[id].dx || R.pos[id].dy) tombRow("p:" + id); });
+    commit();
+    undoToast(t("toast.tidied"), undo);
+  }
+  function startLink(from) {
+    if (!R || !R.N[from]) return;
+    commitEdit();
+    if (R.links.length >= M.MAX_LINKS) { showToast(t("toast.tooMany")); return; }
+    linking = { from: from };
+    select(from, true);
+    showHint(t("link.pick", { name: label(R.N[from], 40) }));
+  }
+  function cancelLink() {
+    if (!linking) return;
+    linking = null;
+    showHint("");
+  }
+  function finishLink(to) {
+    var from = linking && linking.from;
+    cancelLink();
+    if (!to || !from || !R || !R.N[from] || !R.N[to]) return;
+    if (to === from) { showToast(t("link.self")); return; }
+    var dup = R.links.some(function (l) { return (l.from === from && l.to === to); });
+    if (dup) { showToast(t("link.dup")); return; }
+    begin("");
+    ensureRoot();
+    var row = putLink({ id: newId(), m: stamp(0), map: R.root.map, from: from, to: to, label: "" });
+    commit();
+    if (row) {
+      selectLink(row.id);
+      editLinkLabel(row.id, true);
+    }
+  }
+  function updateLink(lid, patch) {
+    var cur = LINKS[lid];
+    if (!cur) return;
+    var next = Object.assign(clone(cur), patch);
+    if (JSON.stringify(M.normLink(Object.assign({}, next, { m: 1 }))) === JSON.stringify(M.normLink(Object.assign({}, cur, { m: 1 })))) return;
+    begin("");
+    next.m = nextM(lid, cur);
+    putLink(next);
+    commit();
+  }
+  function editLinkLabel(lid, isNew) {
+    var l = LINKS[lid];
+    if (!l) return;
+    var dlg = makeDialog("mm-linklbl", t("link.title"));
+    var form = el("form");
+    form.method = "dialog";
+    var f = el("label", "fld");
+    f.appendChild(el("span", "fld-lbl", t("link.label")));
+    var inp = el("input");
+    inp.type = "text"; inp.value = l.label; inp.placeholder = t("link.ph"); inp.maxLength = M.LABEL_LEN; inp.autocomplete = "off";
+    f.appendChild(inp);
+    form.appendChild(f);
+    form.appendChild(el("p", "dlg-sub", label(R.N[l.from], 40) + " → " + label(R.N[l.to], 40)));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(textBtn("dlg-btn", isNew ? t("link.noLabel") : t("cancel"), function () { dlg.close(); }));
+    var ok = textBtn("dlg-btn primary", t("save"));
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      dlg.close();
+      updateLink(lid, { label: M.line(inp.value, M.LABEL_LEN) });
+    });
+    dlg.appendChild(form);
+    showDialog(dlg);
+    inp.focus();
+  }
+  function reverseLink(lid) {
+    var l = LINKS[lid];
+    if (l) updateLink(lid, { from: l.to, to: l.from });
+  }
+  function deleteLink(lid) {
+    if (!LINKS[lid]) return;
+    begin("");
+    tombRow("l:" + lid);
+    selLink = null;
+    commit();
+    undoToast(t("toast.linkDeleted"), undo);
+  }
+  function openLinkMenu(lid, x, y, fromPress) {
+    var l = linkRow(lid);
+    if (!l) return;
+    openMenuAt([
+      ["link.edit", function () { editLinkLabel(lid); }],
+      ["link.reverse", function () { reverseLink(lid); }],
+      ["link.goFrom", function () { select(l.from); reveal(l.from); }],
+      ["link.goTo", function () { select(l.to); reveal(l.to); }],
+      ["link.delete", function () { deleteLink(lid); }, "danger"]
+    ], x, y, null, false, fromPress);
+  }
+  function showHint(text) {
+    var h = $("hint");
+    h.textContent = text;
+    h.hidden = !text;
+    if (text) {
+      var c = el("button", "hint-x", t("cancel"));
+      c.type = "button";
+      c.addEventListener("click", cancelLink);
+      h.appendChild(c);
+    }
   }
 
   // ---------- 5. In-place editor ----------
@@ -1084,6 +1333,12 @@
         if (k === "ArrowUp" && sel) { e.preventDefault(); moveBy(sel, -1); }
         else if (k === "ArrowDown" && sel) { e.preventDefault(); moveBy(sel, 1); }
         return;
+      }
+      if (linking && k === "Escape") { e.preventDefault(); cancelLink(); return; }
+      if (selLink) {
+        if (k === "Delete" || k === "Backspace") { e.preventDefault(); deleteLink(selLink); return; }
+        if (k === "Escape") { e.preventDefault(); selectLink(null); return; }
+        if (k === "Enter" || k === "F2") { e.preventDefault(); editLinkLabel(selLink); return; }
       }
       if (k === "Tab") { e.preventDefault(); addChild(sel || R.root.id); }
       else if (k === "Enter") { e.preventDefault(); if (sel) addSibling(sel); else addChild(R.root.id); }
@@ -1326,8 +1581,14 @@
   }
 
   // ---------- 8. Details, node menu, node bar ----------
+  // The branch under `id` as its own tree (exports, copy). Links
+  // whose both ends are in the branch come along.
   function subR(id) {
-    return { map: R.map, root: R.N[id], N: R.N, kids: R.kids, par: R.par, rec: id === R.root.id ? R.rec : {}, count: 0 };
+    var inside = null;
+    if (id !== R.root.id) { inside = {}; M.subtree(R, id).forEach(function (x) { inside[x] = 1; }); }
+    return { map: R.map, root: R.N[id], N: R.N, kids: R.kids, par: R.par, rec: id === R.root.id ? R.rec : {}, count: 0,
+             pos: R.pos, img: R.img,
+             links: (R.links || []).filter(function (l) { return !inside || (own(inside, l.from) && own(inside, l.to)); }) };
   }
 
   function openDetails(id) {
@@ -1396,6 +1657,28 @@
     urlRow.appendChild(openB);
     var uf = field(t("det.url"), urlRow);
     form.appendChild(uf);
+    // picture: undefined = unchanged, null = remove, {src,w,h} = new
+    var pic, curPic = R.img && R.img[id] ? R.img[id] : null;
+    var pf = el("div", "fld");
+    pf.appendChild(el("span", "fld-lbl", t("det.pic")));
+    var picRow = el("div", "pic-row");
+    pf.appendChild(picRow);
+    function drawPic() {
+      picRow.innerHTML = "";
+      var shown = pic === undefined ? curPic : pic;
+      if (shown) {
+        var im = el("img", "pic-thumb");
+        im.alt = "";
+        im.src = shown.src;                    // validated data:image URI only
+        picRow.appendChild(im);
+      }
+      picRow.appendChild(textBtn("dlg-btn", t("det.picAdd"), function () {
+        pickPicture(id).then(function (r) { if (r) { pic = r; drawPic(); } });
+      }));
+      if (shown) picRow.appendChild(textBtn("dlg-btn", t("det.picDel"), function () { pic = null; drawPic(); }));
+    }
+    drawPic();
+    form.appendChild(pf);
     var acts = el("div", "dlg-actions");
     if (R.rec[id]) acts.appendChild(textBtn("dlg-btn", t("ctx.keep"), function () { dlg.close(); moveNode(id, R.root.id); }));
     acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
@@ -1409,12 +1692,77 @@
       if (url.value.trim() && !u) { showToast(t("det.badUrl")); url.focus(); return; }
       dlg.close();
       if (!R.N[id]) return;
-      updateNode(id, { text: M.para(txt.value, M.TEXT_LEN), emoji: M.emoji(emo.value), done: done.checked,
-                       color: color, note: M.para(note.value, M.NOTE_LEN), url: u });
+      var patch = { text: M.para(txt.value, M.TEXT_LEN), emoji: M.emoji(emo.value), done: done.checked,
+                    color: color, note: M.para(note.value, M.NOTE_LEN), url: u };
+      if (pic === undefined) { updateNode(id, patch); return; }
+      begin("");
+      ensureRoot();
+      var cur = R.N[id], next = clone(cur);
+      delete next.virtual;
+      Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
+      if (JSON.stringify(M.normNode(Object.assign({}, cur, { m: 1 }))) !== JSON.stringify(M.normNode(Object.assign({}, next, { m: 1 })))) {
+        next.m = nextM(id, NODES[id]);
+        putNode(next);
+      }
+      if (pic) putImg({ id: id, m: nextM(id, IMGS[id] || NODES[id]), map: R.root.map, src: pic.src, w: pic.w, h: pic.h });
+      else if (IMGS[id]) tombRow("i:" + id);
+      commit();
     });
     dlg.appendChild(form);
     showDialog(dlg);
     txt.focus();
+  }
+
+  // Pictures are re-drawn on a canvas and stored as a small JPEG data
+  // URI (nothing of the original file is kept: no EXIF, no script).
+  var PIC_ACCEPT = "image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif";
+  function picBytesUsed(except) {
+    var n = 0;
+    Object.keys(IMGS).forEach(function (k) { if (k !== except && IMGS[k].src) n += IMGS[k].src.length; });
+    return n;
+  }
+  function encodePicture(file) {
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        URL.revokeObjectURL(url);
+        var w0 = im.naturalWidth, h0 = im.naturalHeight;
+        if (!w0 || !h0) { resolve(null); return; }
+        var side = Math.min(M.IMG_MAX, 480), out = null;
+        try {
+          for (var round = 0; round < 6 && !out; round++) {
+            var k = Math.min(1, side / Math.max(w0, h0));
+            var cv = document.createElement("canvas");
+            cv.width = Math.max(1, Math.round(w0 * k)); cv.height = Math.max(1, Math.round(h0 * k));
+            var g = cv.getContext("2d");
+            g.fillStyle = "#ffffff";
+            g.fillRect(0, 0, cv.width, cv.height);
+            g.drawImage(im, 0, 0, cv.width, cv.height);
+            for (var q = 0.82; q >= 0.5 && !out; q -= 0.1) {
+              var src = cv.toDataURL("image/jpeg", q);
+              if (M.validImg(src)) out = { src: src, w: cv.width, h: cv.height };
+            }
+            side = Math.round(side * 0.75);
+          }
+        } catch (e) { out = null; }
+        resolve(out);
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      im.src = url;
+    });
+  }
+  function pickPicture(id) {
+    var dlg = dialogHost();
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(PIC_ACCEPT) : localPickFile(PIC_ACCEPT);
+    return Promise.resolve(pick).then(function (file) {
+      if (!file) return null;
+      if (file.size > 30 * 1024 * 1024) { showToast(t("toast.picBad")); return null; }
+      return encodePicture(file).then(function (r) {
+        if (!r) { showToast(t("toast.picBad")); return null; }
+        if (picBytesUsed(id) + r.src.length > M.IMG_TOTAL) { showToast(t("toast.picBudget")); return null; }
+        return r;
+      });
+    }).catch(function () { showToast(t("toast.picBad")); return null; });
   }
 
   // fromPress: opened by a long press while the finger is still down.
@@ -1436,20 +1784,40 @@
         items.push(["ctx.down", function () { moveBy(id, 1); }]);
       }
     }
+    items.push(["ctx.link", function () { startLink(id); }]);
+    if (isMoved(id)) items.push(["ctx.resetPos", function () { resetPos(id); }]);
     items.push(["ctx.copy", function () { copyText(M.toOutline(subR(id))); }]);
     items.push(["ctx.paste", function () { openPaste(id); }]);
     items.push(["ctx.export", function () { openExport(id); }]);
+    items.push(["ctx.todo", function () { sendToTodo(id); }]);
+    if (has) items.push(["ctx.slides", function () { sendToSlides(id); }]);
     if (!root) items.push(["ctx.delete", function () { deleteNode(id); }, "danger"]);
     openMenuAt(items, x, y, null, false, fromPress);
   }
 
   function renderNodebar() {
     var bar = $("nodebar");
-    var show = prefs.view === "map" && R && sel && R.N[sel] && !editing;
+    var lk = prefs.view === "map" && R && selLink && !editing ? linkRow(selLink) : null;
+    var show = !!lk || (prefs.view === "map" && R && sel && R.N[sel] && !editing && !linking);
     bar.hidden = !show;
     $("zoom").classList.toggle("lift", !!show);
     if (!show) return;
     bar.innerHTML = "";
+    if (lk) {
+      [[UI.edit, "link.edit", function () { editLinkLabel(lk.id); }],
+       [UI.swap, "link.reverse", function () { reverseLink(lk.id); }],
+       [UI.trash, "link.delete", function () { deleteLink(lk.id); }]].forEach(function (d, i) {
+        var x = iconBtn("nb-btn", d[0], t(d[1]), d[2]);
+        x.appendChild(el("span", "nb-lbl", t(d[1])));
+        if (i === 2) x.classList.add("danger");
+        bar.appendChild(x);
+      });
+      bar.appendChild(iconBtn("nb-btn nb-more", UI.more, t("btn.more"), function (e) {
+        var r = e.currentTarget.getBoundingClientRect();
+        openLinkMenu(lk.id, r.right, r.top);
+      }));
+      return;
+    }
     var id = sel, root = id === R.root.id, has = (R.kids[id] || []).length > 0;
     function b(icon, key, fn) {
       var x = iconBtn("nb-btn", icon, t(key), fn);
@@ -1603,6 +1971,15 @@
     if (!src.some(function (n) { return n.id === M.rootId(mapId); })) {
       putNode({ id: M.rootId(nid), m: now, map: nid, parent: "", text: t("maps.copyName", { name: t("untitled") }) });
     }
+    values(LINKS).forEach(function (l) {
+      if (l.map === mapId && map[l.from] && map[l.to]) putLink({ id: newId(), m: now, map: nid, from: map[l.from], to: map[l.to], label: l.label });
+    });
+    values(POS).forEach(function (x) {
+      if (x.map === mapId && map[x.id] && (x.dx || x.dy)) putPos({ id: map[x.id], m: now, map: nid, dx: x.dx, dy: x.dy });
+    });
+    values(IMGS).forEach(function (x) {
+      if (x.map === mapId && map[x.id] && x.src) putImg({ id: map[x.id], m: now, map: nid, src: x.src, w: x.w, h: x.h });
+    });
     prefs.map = nid;
     savePrefs();
     sel = null;
@@ -1611,6 +1988,9 @@
   function deleteMap(mapId) {
     var name = mapTitle(mapId);
     begin("");
+    Object.keys(LINKS).forEach(function (id) { if (LINKS[id].map === mapId) tombRow("l:" + id); });
+    Object.keys(POS).forEach(function (id) { if (POS[id].map === mapId) touch("p:" + id); });
+    Object.keys(IMGS).forEach(function (id) { if (IMGS[id].map === mapId) touch("i:" + id); });
     Object.keys(NODES).forEach(function (id) { if (NODES[id].map === mapId) tombRow("n:" + id); });
     tombRow("m:" + mapId);
     if (prefs.map === mapId) { prefs.map = null; sel = null; }
@@ -1677,19 +2057,20 @@
     if (!p.ok) { showToast(t("imp.err.empty")); return; }
     addTreeAsMap(p.tree);
   }
-  function addTreeAsMap(tree) {
+  function addTreeAsMap(tree, msg) {
     commitEdit();
     flushOutline();
     var rows = M.treeToRows(tree, newId, Date.now());
     begin("");
     putMap(rows.map);
     rows.nodes.forEach(putNode);
+    rows.links.forEach(putLink);
     prefs.map = rows.map.id;
     savePrefs();
     sel = null;
     camFor = null;
     commit();
-    undoToast(t("imp.newMap"), function () { undo(); });
+    undoToast(msg || t("imp.newMap"), function () { undo(); });
   }
 
   // ---------- 10. Find ----------
@@ -1947,24 +2328,35 @@
       [{ description: "JSON", accept: { "application/json": [".json"] } }]);
   }
 
-  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,application/json,text/x-opml,text/xml,text/markdown,text/plain";
+  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,.mm,.xmind,application/json,text/x-opml,text/xml," +
+    "text/markdown,text/plain,application/zip";
+  var ZIP_MAX = 30 * 1024 * 1024;               // a whole .xmind (pictures inside count)
+  function importErr(err) { showToast(t("imp.err." + (err === "empty" || err === "size" || err === "zip" ? err : "format"))); }
+  function importTree(r) {
+    if (!r.ok) { importErr(r.err); return; }
+    addTreeAsMap(r.tree, r.tree.sheets > 1 ? t("imp.sheets", { n: r.tree.sheets }) : "");
+  }
   function importFile() {
     var dlg = dialogHost();
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMPORT_ACCEPT) : localPickFile(IMPORT_ACCEPT);
     pick.then(function (file) {
       if (!file) return;                        // cancel — silent exit
-      if (file.size > M.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
-      return file.text().then(function (text) {
-        var base = String(file.name || "").replace(/\.[^.]+$/, "");
-        var s = text.replace(/^\ufeff/, "").trim();
+      if (file.size > ZIP_MAX) { showToast(t("imp.err.size")); return; }
+      return file.arrayBuffer().then(function (buf) {
+        var bytes = new Uint8Array(buf), base = String(file.name || "").replace(/\.[^.]+$/, "");
+        var X = window.MMImport;
+        if (X && X.sniff(bytes) === "zip") return X.parseXMind(bytes, base).then(importTree);
+        if (bytes.length > M.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
+        var s = new TextDecoder("utf-8").decode(bytes).replace(/^\ufeff/, "").trim();
         if (s.charAt(0) === "{") {
           var r = M.parseImport(s, canonical());
           if (!r.ok) { showToast(t("imp.err." + r.err)); return; }
           previewImport(r);
         } else if (s.charAt(0) === "<") {
-          var o = M.parseOpml(s, base);
-          if (!o.ok) { showToast(t("imp.err." + (o.err === "empty" || o.err === "size" ? o.err : "format"))); return; }
-          addTreeAsMap(o.tree);
+          var head = s.slice(0, 4000);
+          if (X && /<map[\s>]/.test(head) && !/<opml[\s>]/.test(head)) importTree(X.parseFreeMind(s, base));
+          else if (X && /<xmap-content[\s>]/.test(head)) return X.parseXMind(bytes, base).then(importTree);
+          else importTree(M.parseOpml(s, base));
         } else importOutlineText(s, base);
       });
     }).catch(function () { showToast(t("imp.err.read")); });
@@ -1990,6 +2382,9 @@
     begin("");
     imp.maps.forEach(function (x) { touch("m:" + x.id); });
     imp.nodes.forEach(function (x) { touch("n:" + x.id); });
+    (imp.links || []).forEach(function (x) { touch("l:" + x.id); });
+    (imp.pos || []).forEach(function (x) { touch("p:" + x.id); });
+    (imp.imgs || []).forEach(function (x) { touch("i:" + x.id); });
     adopt(merged);
     var first = imp.maps.length ? imp.maps[0].id : null;
     if (first && MAPS[first] && !curMap()) prefs.map = first;
@@ -1998,6 +2393,70 @@
     ensureMap();
     refresh();
     undoToast(t("imp.done"), function () { undo(); });
+  }
+
+  // ---------- 11b. Send to other apps (bridges owned by those apps) ----------
+  // To-Do: BR-TD-ADD, __orosOpenAt("todo", { addItems }) — To-Do asks
+  // before it writes anything. Slides: __orosOpenAt("slides",
+  // { outline, title }) in the Slides outline format — Slides asks
+  // for a theme before it creates the deck. Mind Map never writes
+  // another app's data.
+  function openIn(app, target) {
+    var w = null;
+    try { w = window.parent && window.parent !== window ? window.parent : null; } catch (e) { w = null; }
+    if (!w || typeof w.__orosOpenAt !== "function") { showToast(t("toast.noBridge")); return false; }
+    try { w.__orosOpenAt(app, target); return true; } catch (e) { showToast(t("toast.noBridge")); return false; }
+  }
+  var TODO_MAX = 200;
+  function sendToTodo(id) {
+    if (!R || !R.N[id]) return;
+    var n = R.N[id], kids = (R.kids[id] || []).length > 0, items = [];
+    var ids = kids ? M.subtree(R, id).slice(1) : [id];
+    ids.forEach(function (x) {
+      var k = R.N[x];
+      if (!k || k.done) return;
+      var text = M.title((k.emoji ? k.emoji + " " : "") + k.text, 300);
+      if (!text) return;
+      var item = { text: text };
+      var note = String(k.note || "").slice(0, 1000);
+      if (note) item.note = note;
+      items.push(item);
+    });
+    if (!items.length) { showToast(t("toast.todoNone")); return; }
+    if (items.length > TODO_MAX) { showToast(t("toast.todoMany", { n: TODO_MAX })); return; }
+    var target = { addItems: { from: t("app.name"), items: items } };
+    if (kids) target.addItems.newList = M.title(n.text, 80) || t("untitled");
+    openIn("todo", target);
+  }
+  var SLIDES_MAX = 200000;
+  // "# branch" = title slide, each child "# child" = a slide, deeper
+  // nodes "- " bullets (2 spaces a level, at most 4), notes "> ".
+  function slidesOutline(id) {
+    var out = [], top = R.N[id];
+    function one(x) { var k = R.N[x]; return M.title((k.emoji ? k.emoji + " " : "") + k.text, 300) || "…"; }
+    function notes(x) {
+      String(R.N[x].note || "").split("\n").forEach(function (l) { l = l.trim(); if (l) out.push("> " + l); });
+    }
+    out.push("# " + one(id));
+    notes(id);
+    (R.kids[id] || []).forEach(function (c) {
+      out.push("", "# " + one(c));
+      notes(c);
+      var stack = (R.kids[c] || []).slice().reverse().map(function (g) { return [g, 0]; });
+      while (stack.length) {
+        var e = stack.pop(), lv = Math.min(e[1], 3);
+        out.push(new Array(lv + 1).join("  ") + "- " + one(e[0]));
+        var kk = R.kids[e[0]] || [];
+        for (var i = kk.length - 1; i >= 0; i--) stack.push([kk[i], e[1] + 1]);
+      }
+    });
+    return top ? out.join("\n") + "\n" : "";
+  }
+  function sendToSlides(id) {
+    if (!R || !R.N[id] || !(R.kids[id] || []).length) return;
+    var text = slidesOutline(id);
+    if (text.length > SLIDES_MAX || (R.kids[id] || []).length + 1 > 300) { showToast(t("toast.slidesBig")); return; }
+    openIn("slides", { outline: text, title: M.title(R.N[id].text, 120) || t("untitled") });
   }
 
   // ---------- 12. Menus, dialogs, toasts ----------
@@ -2010,12 +2469,14 @@
       ["menu.paste", function () { openPaste(R ? (sel || R.root.id) : null); }],
       ["menu.export", function () { openExport(null); }, null, !R],
       ["menu.copy", function () { copyText(M.toOutline(R)); }, null, !R],
+      ["menu.slides", function () { sendToSlides(R.root.id); }, null, !R || !(R.kids[R.root.id] || []).length],
       ["menu.import", importFile],
       ["menu.backup", backupAll, null, !Object.keys(MAPS).length]
     ];
     if (mp) {
       items.push([mp.sides === "right" ? "menu.sidesBoth" : "menu.sidesRight",
                   function () { setSides(mp.sides === "right" ? "both" : "right"); }]);
+      items.push(["menu.tidy", tidyAll, null, !anyMoved()]);
       items.push(["menu.unfoldAll", function () { delete prefs.fold[mp.id]; savePrefs(); refresh(); }]);
       items.push(["menu.foldAll", function () {
         prefs.fold[mp.id] = (R.kids[R.root.id] || []).filter(function (id) { return (R.kids[id] || []).length; });

@@ -13,6 +13,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+C]]: `Open Calculator`
 - [[Ctrl+Alt+Shift+F]]: `Search apps and data` (opens the menu with the cursor in its search box)
 - [[Ctrl+Alt+Shift+H]]: `Help for the open app`
+- [[Ctrl+Alt+Shift+T]]: `Start / stop the Timesheet timer`
 
 ## What each one does
 ### Sync and backup
@@ -26,6 +27,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - **Check for updates** looks for a new version right away. See [Install](help:t/install).
 - **Switch language** swaps between English and Greek.
 - **Open Calculator** opens [Calculator](app:calculator).
+- **Start / stop the Timesheet timer** opens [Timesheet](app:timesheet) and starts the timer, or stops the one that is running. While a timer runs, the top bar shows how long it has been going; click it to open Timesheet.
 - **Help for the open app** opens Help at the page of the app you are using. On the desktop, it opens Help's start page.
 
 ## Mac and keyboard layouts

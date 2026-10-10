@@ -451,6 +451,30 @@
     }, true);
   };
 
+  // A deck from an outline another app sent (see openTarget in app.js).
+  SL.dlg.fromOutline = function (text, name) {
+    var n = C.parseOutline(text).length;
+    SL.openDialog(t("in.title"), function (body, close) {
+      body.appendChild(el("p", "hint", t("in.note", { t: name || t("deck.untitled"), n: n })));
+      var state = { as: "16:9" };
+      body.appendChild(fld(t("new.aspect"), seg([{ v: "16:9", label: t("new.wide") }, { v: "4:3", label: t("new.std") }], state.as, function (v) {
+        state.as = v;
+        [].forEach.call(body.querySelectorAll('[data-k^="ias:"]'), function (b) { var on = b.getAttribute("data-k") === "ias:" + v; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+      }, "ias")));
+      var grid = el("div", "th-grid");
+      C.THEMES.forEach(function (th) {
+        grid.appendChild(themeCard(th, false, function () {
+          close();
+          SL.createDeck({ outline: text, name: name, th: th.id, as: state.as });
+        }));
+      });
+      body.appendChild(grid);
+      var act = el("div", "dlg-actions");
+      act.appendChild(btn(t("btn.cancel"), close));
+      body.appendChild(act);
+    }, true);
+  };
+
   SL.dlg.recovered = function () {
     SL.openDialog(t("rec.title"), function (body, close) {
       body.appendChild(el("p", "hint", t("rec.note")));

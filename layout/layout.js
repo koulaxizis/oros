@@ -57,7 +57,7 @@
   var STRINGS = {
     en: {
       "app.name": "Layout", "loading": "Loading fonts…",
-      "home.new": "New document", "home.import": "Open package", "home.search": "Search documents",
+      "home.new": "New document", "home.import": "Open file", "home.search": "Search documents",
       "home.empty.title": "No documents yet",
       "home.empty.sub": "Flyers, newsletters, posters, cards, booklets: start with a page size.",
       "home.count": "{n} documents", "home.count1": "1 document",
@@ -65,7 +65,7 @@
       "doc.untitled": "Untitled", "doc.copy": "{name} (copy)",
       "card.open": "Open", "card.rename": "Rename", "card.dup": "Duplicate", "card.pkg": "Save as package", "card.del": "Delete",
       "ed.back": "Documents", "ed.undo": "Undo", "ed.redo": "Redo", "ed.zin": "Zoom in", "ed.zout": "Zoom out",
-      "ed.fit": "Fit page", "ed.preview": "Preview (hide guides and frames)", "ed.panel": "Panels", "ed.more": "More",
+      "zoom.title": "Zoom", "zoom.page": "Fit page", "zoom.spread": "Fit spread", "ruler.hint": "Drag from a ruler to add a guide; drag a guide back onto the ruler to remove it.", "ed.preview": "Preview (hide guides and frames)", "ed.panel": "Panels", "ed.more": "More",
       "ed.export": "Export", "ed.rename": "Rename document",
       "more.setup": "Document setup…", "more.pkg": "Save as package (.oroslayout)", "more.text": "Import text (.txt)…",
       "more.story": "Story Editor", "more.selall": "Select all on this page", "more.rec": "Recovered text ({n})",
@@ -74,7 +74,13 @@
       "tab.props": "Properties", "tab.pages": "Pages", "tab.styles": "Styles", "tab.colors": "Colours",
       "st.page": "Page {n} of {c}", "st.master": "Master {name}", "st.sel": "{n} selected", "st.sel1": "1 selected",
       "st.overset": "Overset text ({n})",
+      "st.pf": "Preflight: {n}", "st.pfOk": "Preflight OK",
+      "pf.title": "Preflight", "pf.none": "No problems found: the document is ready to print.", "pf.note": "Pick a problem to select its object.",
+      "pf.page": "Page {n}", "pf.master": "Master {name}",
+      "pf.overset": "Overset text", "pf.missing": "Missing image", "pf.ppi": "Low resolution ({n} ppi, 150+ for print)",
+      "pf.bleed": "Reaches the trim edge but not the bleed", "pf.small": "Text smaller than 6 pt", "pf.empty": "Empty frame",
       "ms.editing": "Editing {name}", "ms.done": "Done",
+      "ms.detach": "Detach master objects here", "ms.detachOne": "Detach this master object", "ms.reset": "Reset to master", "ms.detached": "{n} master objects detached", "ms.noneHere": "No master objects on this page",
       "thread.hint": "Click a text frame or an empty spot on a page to continue the text there.",
       "thread.notEmpty": "That frame already has text. Pick an empty text frame or an empty spot.",
       "thread.otherKind": "A page frame and a master frame cannot share a story.",
@@ -98,7 +104,7 @@
       "props.al": "Align left", "props.ac": "Align centre", "props.ar": "Align right",
       "props.at": "Align top", "props.am": "Align middle", "props.ab": "Align bottom",
       "props.dh": "Distribute horizontally", "props.dv": "Distribute vertically",
-      "props.lock": "Lock position", "props.group": "Group", "props.ungroup": "Ungroup",
+      "props.lock": "Lock position", "props.hide": "Hide", "hide.done": "Hidden. Show it again from the page panel (nothing selected).", "hide.show": "Show hidden objects ({n})", "props.group": "Group", "props.ungroup": "Ungroup",
       "props.dup": "Duplicate", "props.del": "Delete", "props.multi": "{n} objects",
       "pages.title": "Pages", "pages.add": "Add page", "pages.dup": "Duplicate page", "pages.del": "Delete page",
       "pages.up": "Move earlier", "pages.down": "Move later", "pages.masters": "Masters",
@@ -120,7 +126,7 @@
       "colors.mode": "Mode", "colors.rgb": "RGB", "colors.cmyk": "CMYK", "colors.hex": "Hex",
       "colors.keep": "Black and Paper cannot be deleted.", "colors.used": "Objects using it switch to Black.",
       "colors.note": "CMYK is shown on screen with a simple conversion (no colour profile); the PDF gets the exact CMYK values.",
-      "new.title": "New document", "new.name": "Name", "new.size": "Page size", "new.custom": "Custom",
+      "new.title": "New document", "new.from": "Start from", "new.blank": "Blank", "new.name": "Name", "new.size": "Page size", "new.custom": "Custom",
       "new.orient": "Orientation", "new.portrait": "Portrait", "new.landscape": "Landscape", "new.pages": "Pages",
       "new.facing": "Facing pages (spreads)", "new.margins": "Margins", "new.cols": "Columns", "new.gut": "Gutter",
       "new.bleed": "Bleed", "new.unit": "Units", "new.top": "Top", "new.bottom": "Bottom", "new.inside": "Inside",
@@ -130,13 +136,13 @@
       "preset.letter": "US Letter", "preset.legal": "US Legal", "preset.card": "Business card", "preset.dl": "DL flyer",
       "preset.square": "Square post", "preset.poster": "Poster 50×70", "preset.custom": "Custom",
       "unit.mm": "mm", "unit.pt": "pt", "unit.in": "in",
-      "exp.title": "Export", "exp.pdf": "PDF", "exp.pkg": "Package", "exp.range": "Pages", "exp.all": "All",
+      "exp.title": "Export", "exp.img": "Image (PNG / JPG)", "exp.page": "Page", "exp.format": "Format", "exp.res": "Resolution", "exp.imgGo": "Export image", "exp.capped": "Exported at {n} dpi (16 megapixel limit)", "exp.pdf": "PDF", "exp.pkg": "Package", "exp.range": "Pages", "exp.all": "All",
       "exp.cur": "Current page", "exp.custom": "Range", "exp.rangeHint": "e.g. 1-3, 5",
       "exp.spreads": "Spreads", "exp.bleed": "Include bleed", "exp.marks": "Crop marks",
       "exp.quality": "Images", "exp.print": "Print (300 ppi)", "exp.screen": "Screen (150 ppi)",
       "exp.go": "Export PDF", "exp.working": "Building the PDF…", "exp.done": "PDF saved", "exp.fail": "The PDF could not be built.",
       "exp.badRange": "That page range is not valid.", "exp.pkgDone": "Package saved", "exp.pkgNote": "One file with the document and its images, to back up or open on another device.",
-      "imp.done": "Document opened", "imp.bad": "This file is not a Layout package.", "imp.imgFail": "{n} images could not be restored.",
+      "imp.done": "Document opened", "sla.working": "Reading the Scribus file…", "sla.bad": "This file could not be read as a Scribus document.", "sla.done": "Scribus document imported: {p} pages, {n} objects.", "sla.linked": "{n} images were not inside the file: put them back with Place image.", "sla.skipped": "{n} objects (tables, free shapes, text on a path) became simple boxes or were left out.", "imp.bad": "This file is not a Layout package.", "imp.imgFail": "{n} images could not be restored.",
       "img.fail": "This file could not be read as an image.", "img.nofs": "The orOS disk is not available on this device.",
       "img.placed": "Image placed", "img.missing": "Syncing…",
       "txt.fail": "This file could not be read as text.", "txt.done": "Text imported",
@@ -156,7 +162,7 @@
     },
     el: {
       "app.name": "Σελιδοποίηση", "loading": "Φόρτωση γραμματοσειρών…",
-      "home.new": "Νέο έγγραφο", "home.import": "Άνοιγμα πακέτου", "home.search": "Αναζήτηση εγγράφων",
+      "home.new": "Νέο έγγραφο", "home.import": "Άνοιγμα αρχείου", "home.search": "Αναζήτηση εγγράφων",
       "home.empty.title": "Δεν υπάρχουν έγγραφα ακόμα",
       "home.empty.sub": "Φυλλάδια, ενημερωτικά, αφίσες, κάρτες, βιβλιαράκια: ξεκίνα διαλέγοντας μέγεθος σελίδας.",
       "home.count": "{n} έγγραφα", "home.count1": "1 έγγραφο",
@@ -164,7 +170,7 @@
       "doc.untitled": "Χωρίς τίτλο", "doc.copy": "{name} (αντίγραφο)",
       "card.open": "Άνοιγμα", "card.rename": "Μετονομασία", "card.dup": "Διπλασιασμός", "card.pkg": "Αποθήκευση ως πακέτο", "card.del": "Διαγραφή",
       "ed.back": "Έγγραφα", "ed.undo": "Αναίρεση", "ed.redo": "Επανάληψη", "ed.zin": "Μεγέθυνση", "ed.zout": "Σμίκρυνση",
-      "ed.fit": "Προσαρμογή σελίδας", "ed.preview": "Προεπισκόπηση (χωρίς οδηγούς και πλαίσια)", "ed.panel": "Πάνελ", "ed.more": "Περισσότερα",
+      "zoom.title": "Ζουμ", "zoom.page": "Προσαρμογή σελίδας", "zoom.spread": "Προσαρμογή δισέλιδου", "ruler.hint": "Σύρε από έναν χάρακα για να προσθέσεις οδηγό· σύρε τον οδηγό πίσω στον χάρακα για να τον σβήσεις.", "ed.preview": "Προεπισκόπηση (χωρίς οδηγούς και πλαίσια)", "ed.panel": "Πάνελ", "ed.more": "Περισσότερα",
       "ed.export": "Εξαγωγή", "ed.rename": "Μετονομασία εγγράφου",
       "more.setup": "Ρυθμίσεις εγγράφου…", "more.pkg": "Αποθήκευση ως πακέτο (.oroslayout)", "more.text": "Εισαγωγή κειμένου (.txt)…",
       "more.story": "Story Editor", "more.selall": "Επιλογή όλων στη σελίδα", "more.rec": "Ανακτημένο κείμενο ({n})",
@@ -173,7 +179,13 @@
       "tab.props": "Ιδιότητες", "tab.pages": "Σελίδες", "tab.styles": "Στυλ", "tab.colors": "Χρώματα",
       "st.page": "Σελίδα {n} από {c}", "st.master": "Master {name}", "st.sel": "{n} επιλεγμένα", "st.sel1": "1 επιλεγμένο",
       "st.overset": "Κείμενο που περισσεύει ({n})",
+      "st.pf": "Προέλεγχος: {n}", "st.pfOk": "Προέλεγχος OK",
+      "pf.title": "Προέλεγχος εκτύπωσης", "pf.none": "Κανένα πρόβλημα: το έγγραφο είναι έτοιμο για εκτύπωση.", "pf.note": "Διάλεξε ένα πρόβλημα για να επιλεγεί το αντικείμενό του.",
+      "pf.page": "Σελίδα {n}", "pf.master": "Master {name}",
+      "pf.overset": "Κείμενο που περισσεύει", "pf.missing": "Λείπει η εικόνα", "pf.ppi": "Χαμηλή ανάλυση ({n} ppi, 150+ για εκτύπωση)",
+      "pf.bleed": "Φτάνει στο όριο κοπής αλλά όχι στο bleed", "pf.small": "Κείμενο μικρότερο από 6 pt", "pf.empty": "Άδειο πλαίσιο",
       "ms.editing": "Επεξεργασία: {name}", "ms.done": "Τέλος",
+      "ms.detach": "Αποδέσμευση αντικειμένων master εδώ", "ms.detachOne": "Αποδέσμευση αυτού του αντικειμένου master", "ms.reset": "Επαναφορά από το master", "ms.detached": "Αποδεσμεύτηκαν {n} αντικείμενα master", "ms.noneHere": "Δεν υπάρχουν αντικείμενα master σε αυτή τη σελίδα",
       "thread.hint": "Πάτα σε πλαίσιο κειμένου ή σε κενό σημείο σελίδας για να συνεχίσει εκεί το κείμενο.",
       "thread.notEmpty": "Αυτό το πλαίσιο έχει ήδη κείμενο. Διάλεξε άδειο πλαίσιο ή κενό σημείο.",
       "thread.otherKind": "Πλαίσιο σελίδας και πλαίσιο master δεν μπορούν να μοιράζονται κείμενο.",
@@ -197,7 +209,7 @@
       "props.al": "Στοίχιση αριστερά", "props.ac": "Στοίχιση στο κέντρο", "props.ar": "Στοίχιση δεξιά",
       "props.at": "Στοίχιση πάνω", "props.am": "Στοίχιση στη μέση", "props.ab": "Στοίχιση κάτω",
       "props.dh": "Ισοκατανομή οριζόντια", "props.dv": "Ισοκατανομή κάθετα",
-      "props.lock": "Κλείδωμα θέσης", "props.group": "Ομαδοποίηση", "props.ungroup": "Κατάργηση ομάδας",
+      "props.lock": "Κλείδωμα θέσης", "props.hide": "Απόκρυψη", "hide.done": "Κρύφτηκε. Εμφανίζεται ξανά από το πάνελ σελίδας (χωρίς επιλογή).", "hide.show": "Εμφάνιση κρυφών αντικειμένων ({n})", "props.group": "Ομαδοποίηση", "props.ungroup": "Κατάργηση ομάδας",
       "props.dup": "Διπλασιασμός", "props.del": "Διαγραφή", "props.multi": "{n} αντικείμενα",
       "pages.title": "Σελίδες", "pages.add": "Νέα σελίδα", "pages.dup": "Διπλασιασμός σελίδας", "pages.del": "Διαγραφή σελίδας",
       "pages.up": "Μετακίνηση νωρίτερα", "pages.down": "Μετακίνηση αργότερα", "pages.masters": "Masters",
@@ -219,7 +231,7 @@
       "colors.mode": "Τύπος", "colors.rgb": "RGB", "colors.cmyk": "CMYK", "colors.hex": "Hex",
       "colors.keep": "Το Μαύρο και το Χαρτί δεν διαγράφονται.", "colors.used": "Ό,τι το χρησιμοποιεί γίνεται Μαύρο.",
       "colors.note": "Το CMYK φαίνεται στην οθόνη με απλή μετατροπή (χωρίς προφίλ χρώματος)· το PDF παίρνει τις ακριβείς τιμές CMYK.",
-      "new.title": "Νέο έγγραφο", "new.name": "Όνομα", "new.size": "Μέγεθος σελίδας", "new.custom": "Προσαρμοσμένο",
+      "new.title": "Νέο έγγραφο", "new.from": "Ξεκίνα από", "new.blank": "Κενό", "new.name": "Όνομα", "new.size": "Μέγεθος σελίδας", "new.custom": "Προσαρμοσμένο",
       "new.orient": "Προσανατολισμός", "new.portrait": "Κάθετο", "new.landscape": "Οριζόντιο", "new.pages": "Σελίδες",
       "new.facing": "Αντικριστές σελίδες", "new.margins": "Περιθώρια", "new.cols": "Στήλες", "new.gut": "Κενό στηλών",
       "new.bleed": "Bleed (ξάκρισμα)", "new.unit": "Μονάδες", "new.top": "Πάνω", "new.bottom": "Κάτω", "new.inside": "Μέσα",
@@ -229,13 +241,13 @@
       "preset.letter": "US Letter", "preset.legal": "US Legal", "preset.card": "Επαγγελματική κάρτα", "preset.dl": "Φυλλάδιο DL",
       "preset.square": "Τετράγωνο post", "preset.poster": "Αφίσα 50×70", "preset.custom": "Προσαρμοσμένο",
       "unit.mm": "mm", "unit.pt": "pt", "unit.in": "in",
-      "exp.title": "Εξαγωγή", "exp.pdf": "PDF", "exp.pkg": "Πακέτο", "exp.range": "Σελίδες", "exp.all": "Όλες",
+      "exp.title": "Εξαγωγή", "exp.img": "Εικόνα (PNG / JPG)", "exp.page": "Σελίδα", "exp.format": "Μορφή", "exp.res": "Ανάλυση", "exp.imgGo": "Εξαγωγή εικόνας", "exp.capped": "Εξήχθη στα {n} dpi (όριο 16 megapixel)", "exp.pdf": "PDF", "exp.pkg": "Πακέτο", "exp.range": "Σελίδες", "exp.all": "Όλες",
       "exp.cur": "Τρέχουσα σελίδα", "exp.custom": "Εύρος", "exp.rangeHint": "π.χ. 1-3, 5",
       "exp.spreads": "Ανά ζεύγος σελίδων", "exp.bleed": "Με bleed", "exp.marks": "Σημάδια κοπής",
       "exp.quality": "Εικόνες", "exp.print": "Εκτύπωση (300 ppi)", "exp.screen": "Οθόνη (150 ppi)",
       "exp.go": "Εξαγωγή PDF", "exp.working": "Φτιάχνω το PDF…", "exp.done": "Το PDF αποθηκεύτηκε", "exp.fail": "Το PDF δεν μπόρεσε να φτιαχτεί.",
       "exp.badRange": "Αυτό το εύρος σελίδων δεν είναι σωστό.", "exp.pkgDone": "Το πακέτο αποθηκεύτηκε", "exp.pkgNote": "Ένα αρχείο με το έγγραφο και τις εικόνες του, για αντίγραφο ή για άνοιγμα σε άλλη συσκευή.",
-      "imp.done": "Το έγγραφο άνοιξε", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο της Σελιδοποίησης.", "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
+      "imp.done": "Το έγγραφο άνοιξε", "sla.working": "Διαβάζω το αρχείο Scribus…", "sla.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο Scribus.", "sla.done": "Εισαγωγή από Scribus: {p} σελίδες, {n} αντικείμενα.", "sla.linked": "{n} εικόνες δεν ήταν μέσα στο αρχείο: βάλ’ τες ξανά με «Τοποθέτηση εικόνας».", "sla.skipped": "{n} αντικείμενα (πίνακες, ελεύθερα σχήματα, κείμενο σε διαδρομή) έγιναν απλά πλαίσια ή παραλείφθηκαν.", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο της Σελιδοποίησης.", "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
       "img.fail": "Αυτό το αρχείο δεν διαβάζεται ως εικόνα.", "img.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος σε αυτή τη συσκευή.",
       "img.placed": "Η εικόνα τοποθετήθηκε", "img.missing": "Συγχρονίζεται…",
       "txt.fail": "Αυτό το αρχείο δεν διαβάζεται ως κείμενο.", "txt.done": "Το κείμενο εισήχθη",
@@ -510,7 +522,7 @@
       var list = [];
       Object.keys(tmap).forEach(function (id) {
         var e = tmap[id], ce = cmap[id];
-        if (ce && JSON.stringify(withoutM(ce)) === JSON.stringify(withoutM(e))) { list.push(ce); return; }
+        if (ce && JSON.stringify(withoutM(ce, c)) === JSON.stringify(withoutM(e, c))) { list.push(ce); return; }
         var copy = JSON.parse(JSON.stringify(e));
         copy.m = Math.max(t0, (ce ? ce.m : 0) + 1, (nd.tombs[id] || 0) + 1);
         if (c === "stories" && ce) copy.h = [ce.m].concat(ce.h || []);
@@ -521,7 +533,8 @@
     });
     return M.normDoc(nd);
   }
-  function withoutM(e) { var o = {}; Object.keys(e).forEach(function (k) { if (k !== "m" && k !== "h") o[k] = e[k]; }); return o; }
+  // stamps aside (a story's h is its stamp history; an item's h is its height)
+  function withoutM(e, c) { var o = {}; Object.keys(e).forEach(function (k) { if (k !== "m" && !(k === "h" && c === "stories")) o[k] = e[k]; }); return o; }
 
   LY.undo = function () {
     if (!LY.doc || !undoStack.length) return;

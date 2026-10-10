@@ -6,6 +6,8 @@
 //   - .oroslayout package: the document + its images (base64) in
 //     one JSON file; opened as a NEW document, every image checked
 //     against its hash and decoded as an image before it is stored.
+//   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
+//   - Scribus .sla import (layout/sla.js) into a new document.
 //   - Place image, import plain text.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -77,7 +79,7 @@
     order.forEach(function (pg, idx) {
       if (!want[pg.id]) return;
       var list = M.itemsOn(doc, pg.id);
-      if (pg.ms) list = M.itemsOn(doc, pg.ms, M.sideOf(doc, idx)).concat(list);
+      list = M.masterItems(doc, pg, M.sideOf(doc, idx)).concat(list);
       list.forEach(function (it) { if (it.t === "img" && it.a && !it.hide && !seen[it.id]) { seen[it.id] = 1; out.push(it); } });
     });
     return out;
@@ -132,6 +134,37 @@
     });
   }
 
+  // ---------- PNG / JPG of one page ----------
+  var IMG_MAX_PX = 16e6;
+  function exportImage(opts) {
+    var doc = LY.doc;
+    if (!doc || exporting) return;
+    var order = M.pagesInOrder(doc), page = M.find(doc.pages, opts.page);
+    if (!page) return;
+    LY.flushStory && LY.flushStory();
+    exporting = true;
+    LY.toast(t("exp.working"));
+    var scale = (opts.dpi || 150) / 72, w = doc.setup.w, h = doc.setup.h, capped = false;
+    if (w * h * scale * scale > IMG_MAX_PX) { scale = Math.sqrt(IMG_MAX_PX / (w * h)); capped = true; }
+    var chain = Promise.resolve();
+    imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
+    var jpg = opts.fmt === "jpg", n = order.indexOf(page) + 1;
+    chain.then(function () {
+      var cv = LY.R.renderPage(doc, page, ED.L, scale, { getImage: A.get, background: "#fff" });
+      return toBlob(cv, jpg ? "image/jpeg" : "image/png", 0.92);
+    }).then(function (blob) {
+      var ext = jpg ? ".jpg" : ".png";
+      return saveBlob(blob, fileName(doc, (order.length > 1 ? "-" + n : "") + ext), jpg ? "image/jpeg" : "image/png", jpg ? "JPEG" : "PNG", ext);
+    }).then(function (ok) {
+      exporting = false;
+      if (ok) LY.toast(capped ? t("exp.capped", { n: Math.round(scale * 72) }) : t("exp.done"));
+    }, function (e) {
+      exporting = false;
+      try { console.error("[orOS] layout: image export failed", e); } catch (x) {}
+      LY.toast(t("exp.fail"));
+    });
+  }
+
   // ---------- Packages ----------
   function blobToB64(blob) {
     return new Promise(function (resolve, reject) {
@@ -169,9 +202,11 @@
     }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
   }
 
+  // Open a file: a .oroslayout package or a Scribus .sla document.
   function importPackage() {
-    pickFile(".oroslayout,application/json,.json").then(function (f) {
+    pickFile(".oroslayout,.sla,application/json,.json,application/xml,text/xml").then(function (f) {
       if (!f) return;
+      if (/\.sla$/i.test(f.name || "")) return importSla(f);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
       return f.text().then(function (txt) {
         var pkg = null;
@@ -199,6 +234,39 @@
   }
 
   // ---------- Images ----------
+  // ---------- Scribus ----------
+  // A NEW document from the .sla; inline images are stored like placed
+  // ones, linked images stay as empty frames that keep the file name.
+  var SLA_MAX = 100 * 1024 * 1024;
+  function importSla(f) {
+    if (f.size > SLA_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
+    LY.toast(t("sla.working"));
+    return f.text().then(function (txt) {
+      var res = null;
+      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: String(f.name || "").replace(/\.sla$/i, "").slice(0, 120) }); } catch (e) { res = null; }
+      if (!res) { LY.toast(t("sla.bad")); return; }
+      var doc = res.doc, failed = 0, chain = Promise.resolve();
+      res.images.forEach(function (im) {
+        chain = chain.then(function () { return window.LY_SLA.inlineImage(im); }).then(function (blob) {
+          if (!blob) { failed++; return; }
+          blob.name = im.name;
+          return A.importFile(blob).then(function (r) {
+            var it = M.find(doc.items, im.item);
+            if (!it) return;
+            it.a = r.id; it.iw = r.w; it.ih = r.h;
+          });
+        }).then(null, function () { failed++; });
+      });
+      return chain.then(function () {
+        LY.addDoc(M.normDoc(doc));
+        var parts = [t("sla.done", { p: res.stats.pages, n: res.stats.items })];
+        if (res.linked + failed) parts.push(t("sla.linked", { n: res.linked + failed }));
+        if (res.stats.skipped) parts.push(t("sla.skipped", { n: res.stats.skipped }));
+        LY.toast(parts.join(" "));
+      });
+    }).then(null, function () { LY.toast(t("sla.bad")); });
+  }
+
   function placeImage(itemId) {
     pickFile("image/*").then(function (f) {
       if (!f) return;
@@ -259,7 +327,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportPackage: exportPackage, importPackage: importPackage,
+    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage,
     placeImage: placeImage, importText: importText
   };
 })();

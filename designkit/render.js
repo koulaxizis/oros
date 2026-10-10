@@ -81,11 +81,16 @@
       (wrapsBy[it.pg] = wrapsBy[it.pg] || []).push(it);
     });
 
-    function exclFor(frame, ownerIds, side) {
+    // master items detached on a page (they no longer show there)
+    var detached = {};
+    doc.items.forEach(function (it) { if (it.ov) detached[it.pg + ":" + it.ov] = 1; });
+
+    function exclFor(frame, ownerIds, side, pageId) {
       var ex = [];
       ownerIds.forEach(function (oid) {
         (wrapsBy[oid] || []).forEach(function (w) {
           if (w.id === frame.id || (w.t === "text" && w.story === frame.story)) return;
+          if (detached[pageId + ":" + w.id]) return;
           if (w.side && side && w.side !== side) return;
           var pts = w.t === "line" ? [[w.x, w.y], [w.x + w.w, w.y + w.h]] : corners(w);
           var local = pts.map(function (p) { return toLocal(frame, p[0], p[1]); });
@@ -114,7 +119,7 @@
         var pi = info[f.pg], pg = M.find(doc.pages, f.pg);
         var owners = [f.pg];
         if (pg && pg.ms) owners.push(pg.ms);
-        return geom(f, { pageLabel: pi.label, pageCount: pages.length }, exclFor(f, owners, pi.side));
+        return geom(f, { pageLabel: pi.label, pageCount: pages.length }, exclFor(f, owners, pi.side, f.pg));
       });
       var res = T.layoutChain(st || { paras: [] }, g, styles);
       Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
@@ -125,9 +130,8 @@
     pages.forEach(function (p) {
       if (!p.ms || !masterIds[p.ms]) return;
       var side = info[p.id].side, per = {};
-      doc.items.forEach(function (it) {
-        if (it.t !== "text" || it.pg !== p.ms || it.hide) return;
-        if (it.side && it.side !== side) return;
+      M.masterItems(doc, p, side).forEach(function (it) {
+        if (it.t !== "text" || it.hide) return;
         (per[it.story] = per[it.story] || []).push(it);
       });
       var res0 = {};
@@ -135,13 +139,80 @@
         var st = M.story(doc, sid);
         var frames = per[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
         var g = frames.map(function (f) {
-          return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length }, exclFor(f, [p.ms, p.id], side));
+          return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length }, exclFor(f, [p.ms, p.id], side, p.id));
         });
         var res = T.layoutChain(st || { paras: [] }, g, styles);
         Object.keys(res.frames).forEach(function (fid) { res0[fid] = res.frames[fid]; });
         if (res.overset) out.overset[sid] = true;
       });
       out.master[p.id] = res0;
+    });
+    return out;
+  }
+
+  // ---------- 2b. Preflight ----------
+  // Problems that would spoil the print, newest layout L required.
+  // opts.isMissing(assetName) → true when the image file is gone.
+  // Result: [{ sev: "err"|"warn", code, id (item), pg (page or master id) }]
+  // sorted by page order, errors first on each page.
+  var PF_PPI = 150, PF_MIN_PT = 6;
+  function short(inner, outer) { return inner && !outer; }
+  function preflight(doc, L, opts) {
+    opts = opts || {};
+    var out = [], order = {}, seen = {};
+    M.pagesInOrder(doc).forEach(function (p, i) { order[p.id] = i; });
+    doc.masters.forEach(function (m, i) { order[m.id] = 100000 + i; });
+    function add(sev, code, it) {
+      var k = code + ":" + it.id;
+      if (seen[k]) return;
+      seen[k] = 1;
+      out.push({ sev: sev, code: code, id: it.id, pg: it.pg });
+    }
+    // overset: the last frame of the thread
+    Object.keys(L.overset || {}).forEach(function (sid) {
+      var ch = M.chain(doc, sid), last = ch[ch.length - 1];
+      if (last) add("err", "overset", last);
+    });
+    var minSize = {};
+    function scan(frames) {
+      Object.keys(frames || {}).forEach(function (fid) {
+        (frames[fid].lines || []).forEach(function (ln) {
+          ln.runs.forEach(function (r) {
+            if (r.t && String(r.t).trim() && r.size < (minSize[fid] || Infinity)) minSize[fid] = r.size;
+          });
+        });
+      });
+    }
+    scan(L.frames);
+    Object.keys(L.master || {}).forEach(function (pid) { scan(L.master[pid]); });
+    var bleed = doc.setup.bleed, W = doc.setup.w, H = doc.setup.h, facing = doc.setup.facing;
+    var emptyStory = {};
+    doc.items.forEach(function (it) {
+      if (it.hide || order[it.pg] === undefined) return;
+      if (it.t === "img") {
+        if (!it.a) add("warn", "empty", it);
+        else if (opts.isMissing && opts.isMissing(it.a)) add("err", "missing", it);
+        else if (effectivePpi(it) < PF_PPI) add("warn", "ppi", it);
+      }
+      if (it.t === "text") {
+        if (minSize[it.id] < PF_MIN_PT) add("warn", "small", it);
+        if (emptyStory[it.story] === undefined) {
+          var st = M.story(doc, it.story);
+          emptyStory[it.story] = !(st && T.hasText(st));
+          if (emptyStory[it.story]) add("warn", "empty", M.chain(doc, it.story)[0] || it);
+        }
+      }
+      // touches the trim edge without running into the bleed
+      var paints = it.t === "img" ? !!it.a : it.t === "line" ? false : !!it.fill;
+      if (paints && bleed > 0 && order[it.pg] < 100000) {
+        var b = itemBox(it), e = 0.5, side = M.sideOf(doc, order[it.pg]);
+        var left = !(facing && side === "R"), right = !(facing && side === "L");
+        if ((left && short(b.x <= e, b.x <= -bleed + e)) || (right && short(b.x + b.w >= W - e, b.x + b.w >= W + bleed - e)) ||
+            short(b.y <= e, b.y <= -bleed + e) || short(b.y + b.h >= H - e, b.y + b.h >= H + bleed - e)) add("warn", "bleed", it);
+      }
+    });
+    out.sort(function (a, b) {
+      return (order[a.pg] - order[b.pg]) || (a.sev === b.sev ? 0 : a.sev === "err" ? -1 : 1) || M.cmpStr(a.code + a.id, b.code + b.id);
     });
     return out;
   }
@@ -295,7 +366,7 @@
     var idx = L.pageOf[page.id], side = M.sideOf(doc, idx || 0);
     var mframes = L.master[page.id] || {};
     if (page.ms) {
-      M.itemsOn(doc, page.ms, side).forEach(function (it) {
+      M.masterItems(doc, page, side).forEach(function (it) {
         drawItem(ctx, doc, it, { lines: function (id) { var f = mframes[id]; return f && f.lines; }, getImage: opts.getImage, preview: true });
       });
     }
@@ -330,7 +401,7 @@
 
   var api = {
     corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, effectivePpi: effectivePpi,
-    computeLayout: computeLayout, computeMasterLayout: computeMasterLayout,
+    computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
