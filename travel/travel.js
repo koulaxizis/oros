@@ -135,6 +135,8 @@
       "copy.suffix": "{name} (copy)",
       "txt.dest": "Destination", "txt.people": "Travellers", "txt.pack": "PACKING", "txt.plan": "ITINERARY",
       "txt.notes": "NOTES", "txt.ref": "booking", "txt.undated": "No day", "txt.packed": "{d}/{n} packed",
+      "menu.todoBefore": "Send \u201cBefore I leave\u201d to To-Do", "menu.todoPack": "Send \u201cStill to pack\u201d to To-Do",
+      "todo.before": "{trip} · before I leave", "todo.pack": "{trip} · to pack", "todo.qty": "{n} × {name}",
       "menu.fuel": "Fuel cost by car", "fuel.title": "Fuel cost by car", "fuel.car": "Vehicle (from Garage)",
       "fuel.manual": "Other / enter by hand", "fuel.km": "Distance one way (km)", "fuel.round": "Round trip",
       "fuel.per100.f": "Consumption (L/100 km)", "fuel.per100.e": "Consumption (kWh/100 km)",
@@ -223,6 +225,8 @@
       "copy.suffix": "{name} (αντίγραφο)",
       "txt.dest": "Προορισμός", "txt.people": "Ταξιδιώτες", "txt.pack": "ΒΑΛΙΤΣΑ", "txt.plan": "ΠΡΟΓΡΑΜΜΑ",
       "txt.notes": "ΣΗΜΕΙΩΣΕΙΣ", "txt.ref": "κράτηση", "txt.undated": "Χωρίς ημέρα", "txt.packed": "{d}/{n} στη βαλίτσα",
+      "menu.todoBefore": "Το «Πριν φύγω» στις Εργασίες", "menu.todoPack": "Όσα λείπουν από τη βαλίτσα στις Εργασίες",
+      "todo.before": "{trip} · πριν φύγω", "todo.pack": "{trip} · βαλίτσα", "todo.qty": "{n} × {name}",
       "menu.fuel": "Κόστος καυσίμων με αυτοκίνητο", "fuel.title": "Κόστος καυσίμων με αυτοκίνητο", "fuel.car": "Όχημα (από το Γκαράζ)",
       "fuel.manual": "Άλλο / με το χέρι", "fuel.km": "Απόσταση μονής διαδρομής (km)", "fuel.round": "Με επιστροφή",
       "fuel.per100.f": "Κατανάλωση (L/100 km)", "fuel.per100.e": "Κατανάλωση (kWh/100 km)",
@@ -2333,6 +2337,8 @@
         { label: t(shareOnMobile() ? "menu.share" : "menu.text"), fn: function () { shareTrip(id); } },
         { label: t("menu.ics"), fn: function () { exportIcs(id); } },
         { label: t("menu.fuel"), fn: function () { fuelDialog(id); } },
+        todoItems(id, true).length ? { label: t("menu.todoBefore"), fn: function () { sendToTodo(id, true); } } : null,
+        todoItems(id, false).length ? { label: t("menu.todoPack"), fn: function () { sendToTodo(id, false); } } : null,
         { label: t("menu.print"), fn: function () { printTrip(id); } },
         { label: t("menu.dup"), fn: function () { dupDialog(id); } },
         { label: t("menu.tpl"), fn: function () { saveTplDialog(id); } },
@@ -2349,6 +2355,35 @@
         } }
       ]);
     }
+  }
+
+  // BR-TD-ADD (owner To-Do): the open "Before I leave" items, or
+  // what is still to pack, become a prefilled new To-Do list. To-Do
+  // writes only after the user presses Add; Travel never touches its
+  // data, and nothing here changes (a copy, not a live link).
+  function todoBridge() {
+    try { return typeof window.parent.__orosOpenAt === "function" && window.parent !== window; } catch (e) { return false; }
+  }
+  function todoItems(tripId, before) {
+    var trip = findTrip(tripId);
+    if (!trip || !todoBridge()) return [];
+    return packGroups(trip.pack).reduce(function (acc, g) { return acc.concat(g.items); }, []).filter(function (p) {
+      return !p.done && (p.grp === "@before") === before;
+    }).slice(0, 200).map(function (p) {
+      var it = { text: p.qty > 1 ? t("todo.qty", { n: p.qty, name: p.name }) : p.name };
+      var note = [p.who, p.note].filter(Boolean).join(" · ");
+      if (note) it.note = note;
+      return it;
+    });
+  }
+  function sendToTodo(tripId, before) {
+    var trip = findTrip(tripId), items = todoItems(tripId, before);
+    if (!trip || !items.length) return;
+    try {
+      window.parent.__orosOpenAt("todo", { addItems: {
+        newList: line(t(before ? "todo.before" : "todo.pack", { trip: trip.name || trip.dest }), 60),
+        from: t("app"), items: items } });
+    } catch (e) {}
   }
 
   // R33: every file goes through orosDialog (local fallback when standalone).
