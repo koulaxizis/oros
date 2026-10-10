@@ -43,9 +43,9 @@ In `Settings`, `Back up (JSON)` saves everything to a file and `Restore from bac
 - [[Ctrl+Z]] undoes the last delete or change that offered `Undo`.
 
 ## Tips
+- [Calendar](app:calendar) can show your time under the `Work time` chip: one row per project per day, such as "Website · 2:15". Tapping a row opens that day here.
 - You don't need a project to start: time without a project is kept, and you can assign it later.
 - If timers were started on two devices at once, both keep running and you can stop each one.
 
 ## Limits
 - A single entry can be at most 366 days long.
-- Timesheet doesn't show in Calendar.
