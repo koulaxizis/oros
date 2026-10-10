@@ -361,7 +361,8 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .h-d { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
 .notes { font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-.fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; align-items: end; }
+.fld-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 10px; align-items: end; }
+.fld-row > .fld { min-width: 0; }
 .fld-row.three { grid-template-columns: 1fr 1fr 1fr; }
 .emojis { display: flex; flex-wrap: wrap; gap: 4px; }
 .em {
@@ -583,6 +584,12 @@ a.txt-btn { text-decoration: none; }
 .photo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .chk { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 10px; min-height: 32px; }
 .chk input { width: 22px; height: 22px; min-height: 0; flex-shrink: 0; accent-color: var(--accent); }
+.times { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.times:empty { display: none; }
+.time-row { display: inline-flex; align-items: center; gap: 2px; }
+.time-row input { width: auto; min-width: 104px; }
+.time-del { border: 0; background: none; color: var(--text-dim); font-size: 18px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+.time-del:hover { color: var(--danger); background: var(--accent-soft); }
 .quick { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .quick .chip { min-height: 28px; padding: 2px 10px; }
 .care-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0 10px; }
@@ -631,6 +638,7 @@ a.txt-btn { text-decoration: none; }
   .em { width: 44px; }
   .link-btn { min-height: 44px; }
   #toast button { min-height: 44px; }
+  .time-del { width: 44px; height: 44px; }
   .p-ico { width: 44px; height: 44px; }
   .subtab, .quick .chip { min-height: 44px; }
   .chk { min-height: 44px; }

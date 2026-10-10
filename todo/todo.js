@@ -2537,6 +2537,187 @@
   applyI18n();
   paintStaticAria();
   populateWeekdaySelects();
+  // ---------- 13. "Send to To-Do" receiver (other apps → a list) ----------
+  // Contract (OROS_BIBLE.md, BR-TD-ADD): any app calls
+  //   window.parent.__orosOpenAt("todo", { addItems: {
+  //     list: "tdl-groceries",   // optional: the list to suggest
+  //     newList: "Rome",         // optional: offer a new list with this name
+  //     from: "Meal Planner",    // optional: who is sending (shown only)
+  //     items: [{ text, note }]  // 1..ADD_MAX
+  //   } })
+  // To-Do opens a dialog with the items ticked and writes NOTHING until
+  // the user presses Add (prefill, not data: BR-W8-6). The sender never
+  // touches oros-todo-data, so the slice keeps one writer. Items whose
+  // text is already open in the chosen list start unticked.
+  var ADD_MAX = 200, ADD_TEXT = 300, ADD_NOTE = 1000, ADD_NAME = 60;
+  var ADD_STRINGS = {
+    en: { title: "Add to To-Do", from: "From {app}", list: "List", newl: "New list: {name}",
+          dup: "already on the list", go: "Add {n}", none: "Nothing ticked", added: "{n} added to {list}" },
+    el: { title: "Προσθήκη στο To-Do", from: "Από: {app}", list: "Λίστα", newl: "Νέα λίστα: {name}",
+          dup: "υπάρχει ήδη στη λίστα", go: "Προσθήκη {n}", none: "Δεν τσεκάρισες τίποτα", added: "{n} μπήκαν στη λίστα «{list}»" }
+  };
+  function addT(k, p) {
+    var s = (ADD_STRINGS[LANG] || ADD_STRINGS.en)[k];
+    Object.keys(p || {}).forEach(function (x) { s = s.split("{" + x + "}").join(String(p[x])); });
+    return s;
+  }
+  function addClean(v, max, block) {
+    if (typeof v !== "string") return "";
+    v = v.replace(block ? /[\u0000-\u0009\u000b-\u001f\u007f\u2028\u2029]/g : /[\u0000-\u001f\u007f\u2028\u2029]/g, " ");
+    v = (block ? v.replace(/[ \t]+/g, " ") : v.replace(/\s+/g, " ")).trim();
+    return v.length > max ? v.slice(0, max).trim() : v;
+  }
+  // Pure: payload → { list, newList, from, items[{text, note}] } or null.
+  function readAddPayload(p) {
+    if (!p || typeof p !== "object" || !Array.isArray(p.items)) return null;
+    var seen = {}, items = [];
+    p.items.slice(0, ADD_MAX).forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      var text = addClean(x.text, ADD_TEXT, false), k = normalize(text);
+      if (!text || !k || seen[k]) return;
+      seen[k] = 1;
+      items.push({ text: text, note: addClean(x.note, ADD_NOTE, true) });
+    });
+    if (!items.length) return null;
+    return {
+      list: typeof p.list === "string" ? p.list : "",
+      newList: addClean(p.newList, ADD_NAME, false),
+      from: addClean(p.from, ADD_NAME, false),
+      items: items
+    };
+  }
+  function openKeysOf(list) {
+    var k = {};
+    (list ? list.items : []).forEach(function (it) { if (!it.done) k[normalize(it.text || "")] = 1; });
+    return k;
+  }
+  function openAddItems(raw) {
+    var p = readAddPayload(raw);
+    if (!p) return;
+    var stale = document.getElementById("todo-add");
+    if (stale) stale.remove();
+    var NEW = "\u0000new";
+    var dlg = document.createElement("dialog");
+    dlg.id = "todo-add";
+    var form = document.createElement("form");
+    form.method = "dialog";
+    form.autocomplete = "off";
+    var h = document.createElement("h3");
+    h.textContent = addT("title");
+    form.appendChild(h);
+    if (p.from) {
+      var fr = document.createElement("p");
+      fr.className = "hint";
+      fr.textContent = addT("from", { app: p.from });
+      form.appendChild(fr);
+    }
+    var lab = document.createElement("label");
+    lab.textContent = addT("list");
+    lab.htmlFor = "add-list";
+    form.appendChild(lab);
+    var sel = document.createElement("select");
+    sel.id = "add-list";
+    state.lists.forEach(function (l) {
+      var o = document.createElement("option");
+      o.value = l.id; o.textContent = l.name || t("new.list");
+      sel.appendChild(o);
+    });
+    if (p.newList) {
+      var on = document.createElement("option");
+      on.value = NEW; on.textContent = addT("newl", { name: p.newList });
+      sel.appendChild(on);
+    }
+    sel.value = listById(p.list) ? p.list : (p.newList ? NEW : activeList().id);
+    form.appendChild(sel);
+    var ul = document.createElement("ul");
+    ul.className = "add-items";
+    var boxes = [];
+    p.items.forEach(function (it) {
+      var li = document.createElement("li");
+      var l2 = document.createElement("label");
+      l2.className = "add-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      var sp = document.createElement("span");
+      sp.className = "add-text";
+      sp.textContent = it.text;
+      var dup = document.createElement("small");
+      dup.className = "add-dup";
+      l2.appendChild(cb); l2.appendChild(sp); l2.appendChild(dup);
+      if (it.note) {
+        var nt = document.createElement("small");
+        nt.className = "add-note";
+        nt.textContent = it.note;
+        l2.appendChild(nt);
+      }
+      li.appendChild(l2);
+      ul.appendChild(li);
+      boxes.push({ it: it, cb: cb, dup: dup });
+      cb.addEventListener("change", count);
+    });
+    form.appendChild(ul);
+    var menu = document.createElement("menu");
+    var no = document.createElement("button");
+    no.type = "button"; no.className = "danger"; no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    var sp2 = document.createElement("span");
+    sp2.className = "spacer";
+    var go = document.createElement("button");
+    go.type = "submit";
+    menu.appendChild(no); menu.appendChild(sp2); menu.appendChild(go);
+    form.appendChild(menu);
+    // Duplicates follow the chosen list; a tick the user changed stays.
+    function markDups() {
+      var have = sel.value === NEW ? {} : openKeysOf(listById(sel.value));
+      boxes.forEach(function (b) {
+        var d = !!have[normalize(b.it.text)];
+        b.dup.textContent = d ? addT("dup") : "";
+        if (!b.touched) b.cb.checked = !d;
+      });
+      count();
+    }
+    function count() {
+      var n = boxes.filter(function (b) { return b.cb.checked; }).length;
+      go.textContent = addT("go", { n: n });
+      go.disabled = !n;
+    }
+    boxes.forEach(function (b) { b.cb.addEventListener("change", function () { b.touched = true; }); });
+    sel.addEventListener("change", markDups);
+    markDups();
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var pick = boxes.filter(function (b) { return b.cb.checked; });
+      if (!pick.length) { showToast(addT("none"), false); return; }
+      var list = sel.value === NEW ? null : listById(sel.value);
+      if (!list) {                  // a new list, or the list was deleted by a sync meanwhile
+        list = freshList(p.newList || t("new.list"));
+        list.pos = state.lists.length;
+        state.lists.push(list);
+        state.om = Date.now();
+      }
+      var now = Date.now();
+      pick.slice().reverse().forEach(function (b) {
+        var item = newItemObj(b.it.text, null);
+        item.notes = b.it.note;
+        stampItemNewest(item, now);
+        list.items.unshift(item);
+      });
+      list.items.forEach(function (it, i) { it.pos = i; });
+      list.om = now;
+      setActiveList(list.id);
+      searchQuery = "";
+      activeFilters = [];
+      dlg.close();
+      save(); renderAll();
+      showToast(addT("added", { n: pick.length, list: list.name }), false);
+    });
+    dlg.appendChild(form);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { go.focus(); }, 50);
+  }
+
   wire();
   registerSync();
   inheritPalette();
@@ -2562,6 +2743,7 @@
   // target { list, item? }. Shows the list; with an item, opens its
   // dialog. Unknown ids, or a dialog already open → no-op.
   function openSearchTarget(t) {
+    if (t && t.addItems) { openAddItems(t.addItems); return; }   // section 13
     if (!t || typeof t.list !== "string" || !listById(t.list)) return;
     // A dialog in progress (maybe with unsaved edits) wins: no jump.
     if (document.querySelector("dialog[open]")) return;

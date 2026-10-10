@@ -92,7 +92,10 @@
       "read.offline": "This article is not saved on this device. Connect to the internet and refresh the feed.",
       "read.star": "Star", "read.unstar": "Remove star", "read.later": "Read later", "read.unlater": "Remove from Read later",
       "read.markUnread": "Mark as unread", "read.markRead": "Mark as read", "read.open": "Open the original",
-      "read.copy": "Copy the link", "read.by": "by {who}", "read.listen": "Listen", "read.watch": "Watch",
+      "read.copy": "Copy the link", "read.send": "Send to…",
+      "send.title": "Send this article", "send.bookmarks": "Save to Bookmarks", "send.notes": "Save as a note",
+      "send.todo": "Make a task", "send.mail": "Send by email", "send.share": "Share…", "send.from": "From {feed}",
+      "rule.notify": "Notify me about new articles", "rule.notified": "notifies", "feed.notify": "Notify me about new articles", "read.by": "by {who}", "read.listen": "Listen", "read.watch": "Watch",
       "read.download": "Download ({size})",
       "img.blocked": "Pictures are off, so the site cannot tell you opened this.",
       "img.show": "Show pictures", "img.always": "Always for this feed",
@@ -184,7 +187,10 @@
       "read.offline": "Αυτό το άρθρο δεν είναι αποθηκευμένο σε αυτή τη συσκευή. Σύνδεσε το internet και ανανέωσε το feed.",
       "read.star": "Αστέρι", "read.unstar": "Αφαίρεση αστεριού", "read.later": "Για αργότερα", "read.unlater": "Αφαίρεση από «Για αργότερα»",
       "read.markUnread": "Σήμανση ως αδιάβαστο", "read.markRead": "Σήμανση ως διαβασμένο", "read.open": "Άνοιγμα του πρωτοτύπου",
-      "read.copy": "Αντιγραφή συνδέσμου", "read.by": "από {who}", "read.listen": "Ακρόαση", "read.watch": "Προβολή",
+      "read.copy": "Αντιγραφή συνδέσμου", "read.send": "Αποστολή σε…",
+      "send.title": "Αποστολή του άρθρου", "send.bookmarks": "Στους Σελιδοδείκτες", "send.notes": "Ως σημείωση",
+      "send.todo": "Ως εργασία στο To-Do", "send.mail": "Με email", "send.share": "Κοινοποίηση…", "send.from": "Από {feed}",
+      "rule.notify": "Ειδοποίηση για νέα άρθρα", "rule.notified": "ειδοποιεί", "feed.notify": "Ειδοποίηση για νέα άρθρα", "read.by": "από {who}", "read.listen": "Ακρόαση", "read.watch": "Προβολή",
       "read.download": "Λήψη ({size})",
       "img.blocked": "Οι εικόνες είναι κλειστές, για να μη μαθαίνει το site ότι το άνοιξες.",
       "img.show": "Εμφάνιση εικόνων", "img.always": "Πάντα για αυτό το feed",
@@ -290,6 +296,7 @@
     vlist: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
     vcards: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
     vmag: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><line x1="14" y1="5" x2="21" y2="5"/><line x1="14" y1="9" x2="21" y2="9"/><rect x="3" y="14" width="8" height="7" rx="1"/><line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="19" x2="21" y2="19"/></svg>',
+    send: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>',
     big: '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor"/></svg>'
   };
 
@@ -499,7 +506,9 @@
   // Merge a fetched feed into the store; prune what is old.
   function storeItems(feed, parsed) {
     var t0 = now();
-    var present = {}, puts = [], bodies = [], ruled = false;
+    var present = {}, puts = [], bodies = [], ruled = false, notes = [];
+    var first = !Object.keys(heads).some(function (id) { return heads[id].feed === feed.id; });
+    var wantNote = feed.notify === 1 || data.rules.some(function (r) { return r.notify; });
     parsed.items.forEach(function (it) {
       var id = C.itemId(feed.id, it.key);
       present[id] = 1;
@@ -513,9 +522,15 @@
                  old.date === h.date && JSON.stringify(old.enc) === JSON.stringify(h.enc);
       heads[id] = h;
       if (!same) { puts.push(h); bodies.push({ id: id, html: it.html, base: it.link || feed.site || feed.url }); }
-      if (!old && data.rules.length && applyRules(h, it.html)) ruled = true;   // rules: new articles only
+      if (!old && (data.rules.length || wantNote)) {          // rules + notifications: new articles only
+        var text = C.textOf(it.html);
+        if (data.rules.length && applyRules(h, text)) ruled = true;
+        var lab = wantNote ? C.notifyFor(data, h, text, t0, first) : "";
+        if (lab) notes.push({ h: h, label: lab });
+      }
     });
     if (ruled) saveData();
+    if (notes.length) notifyNew(notes);
     var mine = Object.keys(heads).filter(function (id) { return heads[id].feed === feed.id; })
       .map(function (id) { return heads[id]; })
       .sort(function (a, b) { return (b.date - a.date) || (a.id < b.id ? -1 : 1); });
@@ -535,13 +550,29 @@
   }
 
   // A new article meets the rules (core.js §8).
-  function applyRules(h, html) {
-    var text = C.textOf(html);
+  function applyRules(h, text) {
     var acts = C.ruleActions(data, h, text);
     var ch = false;
     if (acts.read && C.applyRuleRead(data, h)) ch = true;
     if (C.applyRuleSave(data, h, acts, text.slice(0, 2000))) ch = true;
     return ch;
+  }
+
+  // New articles for the shell's notifications (bell + toast). One per
+  // article, keyed by its id: two devices that fetch the same article
+  // write the same key, so the synced inbox shows it once. At most
+  // NOTE_MAX per fetch; the rest wait in the lists.
+  var NOTE_MAX = 5;
+  function notifyNew(list) {
+    var n = null;
+    try { n = window.parent && window.parent !== window ? window.parent.orosNotifs : null; } catch (e) {}
+    if (!n || typeof n.emit !== "function") return;
+    list.slice(0, NOTE_MAX).forEach(function (x) {
+      try {
+        n.emit({ ns: "feeds", type: "article", key: "i:" + x.h.id, title: x.label, body: x.h.title || "",
+                 deepLink: "feeds:item:" + x.h.id, ttlDays: 3 });
+      } catch (e) {}
+    });
   }
 
   // ---------- 4. Network: direct + relay ----------
@@ -1398,6 +1429,10 @@
     }
     acts.appendChild(el("span", "spacer"));
     if (it.link) {
+      var bSend = svgBtn("icon-btn", UI.send, t("read.send"));
+      bSend.id = "send-btn";
+      bSend.addEventListener("click", function () { sendDialog(openItem.id); });
+      acts.appendChild(bSend);
       var bCopy = svgBtn("icon-btn", UI.link, t("read.copy"));
       bCopy.addEventListener("click", function () { copyLink(it.link); });
       acts.appendChild(bCopy);
@@ -1873,6 +1908,14 @@
     fl2.appendChild(full);
     fl2.appendChild(el("span", "", t("feed.full")));
     dlg.appendChild(fl2);
+    var fl3 = el("label", "check");
+    var notify = el("input");
+    notify.type = "checkbox";
+    notify.id = "feed-notify";
+    notify.checked = feed.notify === 1;
+    fl3.appendChild(notify);
+    fl3.appendChild(el("span", "", t("feed.notify")));
+    dlg.appendChild(fl3);
     dlg.appendChild(el("div", "dlg-lbl", t("feed.addr")));
     dlg.appendChild(el("p", "mono", feed.url));
     if (feed.site) {
@@ -1901,9 +1944,9 @@
       if (!f) { dlg.close(); return; }
       var nv = name.value.replace(/\s+/g, " ").trim().slice(0, 200) || f.title;
       var folder = folderOf();
-      var iv = +img.value, fv = full.checked ? 1 : 0;
-      if (nv !== f.title || folder !== f.folder || iv !== f.img || fv !== f.full) {
-        f.title = nv; f.folder = folder; f.img = iv; f.full = fv; f.m = Math.max(now(), f.m + 1);
+      var iv = +img.value, fv = full.checked ? 1 : 0, ntv = notify.checked ? 1 : 0;
+      if (nv !== f.title || folder !== f.folder || iv !== f.img || fv !== f.full || ntv !== f.notify) {
+        f.title = nv; f.folder = folder; f.img = iv; f.full = fv; f.notify = ntv; f.m = Math.max(now(), f.m + 1);
         saveData();
       }
       dlg.close();
@@ -2199,6 +2242,7 @@
     var act = { none: "rule.actNone", read: "rule.actRead", star: "rule.actStar", later: "rule.actLater", tag: "rule.actTag" }[r.act];
     var bits = [r.q, t(act) + (r.act === "tag" && tagById(r.tag) ? " " + tagById(r.tag).name : "")];
     if (r.list) bits.push(t("rule.listed"));
+    if (r.notify) bits.push(t("rule.notified"));
     return bits.join(" · ");
   }
   function rulesDialog() {
@@ -2297,6 +2341,14 @@
     ll.appendChild(list);
     ll.appendChild(el("span", "", t("rule.list")));
     dlg.appendChild(ll);
+    var nl2 = el("label", "check");
+    var notify = el("input");
+    notify.type = "checkbox";
+    notify.id = "rule-notify";
+    notify.checked = !!r.notify;
+    nl2.appendChild(notify);
+    nl2.appendChild(el("span", "", t("rule.notify")));
+    dlg.appendChild(nl2);
     var name = el("input");
     name.type = "text";
     name.maxLength = 60;
@@ -2329,7 +2381,7 @@
       if (!rule && data.rules.length >= C.MAX_RULES) { err.textContent = t("rule.limit"); return; }
       var t0 = now();
       var rec = { id: rule ? rule.id : C.newId("r", t0), name: name.value.replace(/\s+/g, " ").trim().slice(0, 60) || qv.slice(0, 60),
-                  q: qv, "in": where.value, scope: scope.value, act: av, tag: tv, list: list.checked ? 1 : 0,
+                  q: qv, "in": where.value, scope: scope.value, act: av, tag: tv, list: list.checked ? 1 : 0, notify: notify.checked ? 1 : 0,
                   m: rule ? Math.max(t0, rule.m + 1) : Math.max(t0, 1) };
       data.rules = data.rules.filter(function (x) { return x.id !== rec.id; });
       data.rules.push(rec);
@@ -2447,6 +2499,88 @@
     link.click();
     link.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
+  }
+
+  // ---------- 11c. Send to other apps (phase 3) ----------
+  // Through the shell's generic deep link __orosOpenAt(app, target):
+  // the other app opens and takes the article (Bookmarks shows its add
+  // dialog, Notes makes a page). Outside orOS only "Share" is left.
+  function shellOpenAt() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.__orosOpenAt : null;
+      return typeof f === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  // Plain text for a note / an email: title, link, source, summary.
+  function articleText(it, feed) {
+    var lines = [];
+    if (it.link) lines.push(it.link);
+    if (feed) lines.push(t("send.from", { feed: feed.title }));
+    var sum = String(it.snip || it.sum || "").replace(/\s+/g, " ").trim();
+    if (sum) lines.push("", sum);
+    return lines.join("\n");
+  }
+  function sendDialog(id) {
+    var it = itemOf(id);
+    if (!it || !it.link) return;
+    var feed = C.feedById(data, it.feed);
+    var open = shellOpenAt();
+    var dlg = makeDialog("send-dlg");
+    dlg.appendChild(el("h2", "dlg-title", t("send.title")));
+    dlg.appendChild(el("p", "dlg-hint clamp", it.title || it.link));
+    var ul = el("ul", "send-list");
+    function opt(key, fn) {
+      var li = el("li");
+      var b = el("button", "dlg-btn send-opt", t(key));
+      b.type = "button";
+      b.setAttribute("data-send", key.slice(5));
+      b.addEventListener("click", function () { dlg.close(); fn(); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    }
+    if (open) {
+      opt("send.bookmarks", function () { open("bookmarks", { add: { url: it.link, title: it.title || "" } }); });
+      opt("send.notes", function () { open("notes", { add: { title: it.title || "", text: articleText(it, feed) } }); });
+      // To-Do's own receiver (Bible BR-TD-ADD): it asks before adding.
+      opt("send.todo", function () {
+        open("todo", { addItems: { from: t("app"), items: [{ text: (it.title || it.link).slice(0, 300), note: articleText(it, feed).slice(0, 1000) }] } });
+      });
+    }
+    // Email: the device's own mail app for now. When orOS Mail can send
+    // (its phase 2), this becomes open("mail", { compose: { subject, body } }).
+    opt("send.mail", function () {
+      var body = ((it.title || "") + "\n" + articleText(it, feed)).slice(0, 1800);
+      var a = document.createElement("a");
+      a.href = "mailto:?subject=" + encodeURIComponent((it.title || "").slice(0, 300)) + "&body=" + encodeURIComponent(body);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    if (navigator.share) {
+      opt("send.share", function () {
+        try { navigator.share({ title: it.title || "", url: it.link }).catch(function () {}); } catch (e) {}
+      });
+    }
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // Incoming deep links (shell __orosOpenAt / __orosTakeTarget):
+  //   { add: { url } }  Bookmarks' "Follow in Reader": find its feeds
+  //   { item: id }      a notification: open that article
+  //   { feed } / { item, feed }  universal search (openSearchTarget)
+  function openTarget(x) {
+    if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return;
+    if (x.add && typeof x.add === "object" && typeof x.add.url === "string") {
+      if (C.normUrl(x.add.url)) addDialog(x.add.url.slice(0, 2000));
+      return;
+    }
+    // { item } / { feed }: notifications and universal search share one path.
+    openSearchTarget(x);
   }
 
   // ---------- 12. Dialogs + toasts ----------
@@ -2726,17 +2860,18 @@
     watchPalette();
     setView("list");
     renderAll();
+    window.__orosOpenAt = openTarget;
+    var pending = null;
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
+        pending = window.parent.__orosTakeTarget("feeds");
+      }
+    } catch (e) {}
     loadHeads().then(function () {
       renderAll();
+      if (pending) openTarget(pending);
       if (data.feeds.length && C.setting(data, "refresh") > 0) refresh(null, false);
       scheduleTick();
-      try {
-        if (window.parent && window.parent !== window &&
-            typeof window.parent.__orosTakeTarget === "function") {
-          var pendingTarget = window.parent.__orosTakeTarget("feeds");
-          if (pendingTarget) openSearchTarget(pendingTarget);
-        }
-      } catch (e) {}
     });
   }
 
@@ -2761,7 +2896,5 @@
       select("f:" + t.feed);
     }
   }
-  window.__orosOpenAt = openSearchTarget;
-
   boot();
 })();

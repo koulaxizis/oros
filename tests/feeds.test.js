@@ -473,6 +473,29 @@ test("rules: scope, title vs text, actions, stamps that agree across devices", (
   assert.equal(C.savedById(C.merge(c, a), h1.id), null);
 });
 
+test("notifications: watched words and feeds, fresh unread articles only", () => {
+  const d = C.emptyData();
+  d.feeds = [Object.assign({}, FA, { notify: 1 }), FB];
+  d.rules = [
+    { id: "rquake001", name: "Σεισμοί", q: "σεισμ", in: "all", act: "none", notify: 1, m: 1 },
+    { id: "rmute0001", q: "ποδόσφαιρο", act: "read", m: 1 }
+  ];
+  Object.assign(d, C.merge(d, null));
+  assert.equal(C.feedById(d, FA.id).notify, 1);
+  assert.equal(C.feedById(d, FB.id).notify, 0);
+  assert.equal(d.rules.find((r) => r.id === "rquake001").notify, 1);
+  assert.equal(d.rules.find((r) => r.id === "rmute0001").notify, 0);
+  const h = (o) => Object.assign({ id: "ihn1aaaaa", feed: FB.id, title: "Τίτλος", date: NOW - 3600000 }, o);
+  assert.equal(C.notifyFor(d, h({}), "ισχυρός σεισμός", NOW, false), "Σεισμοί");    // watched word in the text
+  assert.equal(C.notifyFor(d, h({}), "τίποτα", NOW, false), "");                    // FB has notifications off
+  assert.equal(C.notifyFor(d, h({ feed: FA.id }), "", NOW, false), FA.title);       // FA has them on
+  assert.equal(C.notifyFor(d, h({ feed: FA.id }), "", NOW, true), "");              // but not on its first fetch
+  assert.equal(C.notifyFor(d, h({ date: NOW - 3 * DAY }), "σεισμός", NOW, false), "");   // old article
+  const muted = h({ feed: FA.id, title: "Ποδόσφαιρο" });
+  C.applyRuleRead(d, muted);
+  assert.equal(C.notifyFor(d, muted, "σεισμός", NOW, false), "");                   // muted wins
+});
+
 test("duplicates: one key per article address", () => {
   const k = C.dupKey("https://www.example.gr/news/1/?utm_source=rss&utm_medium=feed&id=7#top");
   assert.equal(k, "example.gr/news/1?id=7");

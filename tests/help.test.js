@@ -34,16 +34,6 @@ const H = new Function(
 // Apps that have no guide page yet. Remove an id when its page lands;
 // the test fails if a listed app already has both pages.
 const PENDING = [
-  "calculator", "quote", "storage", "minimalism", "prompter", "characters",
-  "mood", "habits", "cycle", "dice", "radio", "television", "memory",
-  "connect4", "dots", "tictactoe", "simon", "netizen", "slider", "lightsout",
-  "petworld", "wallpaper", "whack", "mixer", "snake", "wheel", "g2048",
-  "zen", "wordle", "names", "passwords", "timesheet", "split", "travel", "chores", "meals", "layout", "qr", "pixel", "budget", "fitness", "petcare", "baby", "familytree",
-  "garage", "plants", "shelf", "feeds", "mail", "scores", "podcasts", "spot",
-  "hexagon", "chess", "sudoku", "tetris", "minesweeper", "mahjong", "gomoku",
-  "bubble", "checkers", "mastermind", "battleship", "rps", "hangman", "flow",
-  "nonogram", "breakout", "reversi", "mancala", "pong", "backgammon",
-  "wordsearch", "solitaire", "jigsaw", "crossword", "xeri", "device"
 ];
 
 const apps = JSON.parse(read("apps.json")).apps.filter((a) => a.type !== "external");
@@ -101,11 +91,12 @@ test("parser: inline markup; HTML stays text", () => {
   assert.equal(H.inlineText("a **b** [[Ctrl+S]] [c](app:notes)"), "a b Ctrl+S c");
 });
 
-test("link targets: only apps, help pages and https", () => {
+test("link targets: only apps, help pages, https and the tour", () => {
   assert.deepEqual(H.parseTarget("app:notes"), { kind: "app", id: "notes" });
   assert.deepEqual(H.parseTarget("help:a/notes"), { kind: "help", route: "a/notes" });
   assert.deepEqual(H.parseTarget("https://example.org/x?y=1"), { kind: "url", href: "https://example.org/x?y=1" });
-  ["javascript:alert(1)", "http://example.org", "data:text/html,x", "help:x/notes", "app:../x",
+  assert.deepEqual(H.parseTarget("tour:start"), { kind: "tour" });
+  ["tour:x", "tour:", "javascript:alert(1)", "http://example.org", "data:text/html,x", "help:x/notes", "app:../x",
    "help:a/Notes", "//evil.example", "https://a b", "vbscript:x", "app:"].forEach((h) => {
     assert.equal(H.parseTarget(h), null, h);
   });

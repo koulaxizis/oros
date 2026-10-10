@@ -1,0 +1,43 @@
+# Habits
+Habits helps you build routines by ticking them off day by day. You see your week at a glance, a month calendar and stats with streaks.
+
+## Getting started
+Tap or click `Create Habit` (or the **+** button at the top), type a `Name` and press `Save`. Your habit appears in the `List` with one dot for each day of the week. Tap a dot to mark that day done; tap it again to undo.
+
+## Habits and schedules
+In the `Add habit` window you pick a `Name`, an `Icon`, a `Color` and a `Schedule`:
+- Pick all seven days for `Every day`, a few days for a set number of days a week, or none for `Any day` (shown as `Flexible`).
+- On a scheduled habit you can only tick the days it's scheduled for. A flexible habit can be ticked on any day.
+- You can't tick days in the future.
+
+The pencil on a habit opens `Edit habit`. The bin, or `Delete` in the edit window, removes the habit and its full history after you confirm.
+
+The flame next to a habit shows your current streak. Today doesn't break a streak until the day is over.
+
+## Views
+- **`List`**: one week, Monday first. The arrows move a week back or forward; the middle button returns to this week.
+- **`Calendar`**: a whole month, one row per habit. Tap a day to tick it, and tap a habit's name to edit it. The arrows move by month.
+- **`Stats`**: pick `30d`, `90d` or `All` to see `Check-offs`, `Active habits`, `Avg / week` and `Perfect days`, then each habit's current and longest streak and completion rate under `By habit`, and a few `Insights`.
+
+## Rows from other apps
+Some apps can add an automatic row, marked `Auto`, that ticks itself:
+- [Water](app:water): days you reached your water goal. You can turn it off with `Show in Habits` in Water's settings.
+- [Workouts](app:fitness): days with a finished workout. You can turn it off in Workouts' settings.
+
+These rows are read-only and aren't counted in `Stats`. Tap one to open its app.
+
+## Sync and backup
+Your habits and check-offs sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. Habits has no import or export; use the orOS [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[N]] opens `Add habit` (when you're not typing in a field).
+- [[Enter]] in the `Name` field saves the habit.
+- [[Esc]] closes the open window.
+
+## Tips
+- Ticked habits show as dots in [Calendar](app:calendar) on their day.
+- Use `Any day` for things you want to do often but not on fixed days.
+
+## Limits
+- Habits are done or not done each day; there are no counts or amounts.
+- Deleting a habit can't be undone.

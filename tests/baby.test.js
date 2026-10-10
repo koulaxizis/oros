@@ -346,3 +346,88 @@ test("sync: two parents log offline, one stops the other's timer, then nothing r
   await B.sync.pull();
   assert.equal(B.sync.isDirty(), false, "a pull of the same state marks nothing dirty");
 });
+
+// ---------------------------------------------------------------
+// Phase 2: reminders (device-local settings) + Calendar feed rows
+// ---------------------------------------------------------------
+
+test("reminders: settings are read strictly, off by default", () => {
+  assert.deepEqual(C.readRem(null), { feed: 0, med: "", mt: "" });
+  assert.deepEqual(C.readRem({ feed: 181, med: "25:00", mt: 5 }), { feed: 0, med: "", mt: "" });
+  assert.deepEqual(C.readRem({ feed: 180, med: "07:30", mt: " Vitamin\nD " }), { feed: 180, med: "07:30", mt: "Vitamin D" });
+  assert.equal(C.remOn(C.readRem({})), false);
+  assert.equal(C.remOn(C.readRem({ med: "08:00" })), true);
+  const d = model([ev("feed001", "bottle", at(5, 6), { ml: 90 })]);
+  assert.deepEqual(C.reminderDue(d, {}, at(5, 23)), []);            // nothing is on
+});
+
+test("reminders: feed is due once per gap, never while feeding or after a day", () => {
+  const rem = { feed: 180 };
+  const base = [ev("feed001", "feed", at(5, 6), { e: at(5, 6, 20), ls: 600 })];
+  assert.deepEqual(C.reminderDue(model(base), rem, at(5, 8, 59)), []);
+  const due = C.reminderDue(model(base), rem, at(5, 9, 10));
+  assert.equal(due.length, 1);
+  assert.equal(due[0].kind, "feed");
+  assert.equal(due[0].key, "feed-" + KID + "-feed001");
+  // the key stays the same for the whole gap (one notification)
+  assert.equal(C.reminderDue(model(base), rem, at(5, 11))[0].key, due[0].key);
+  const txt = C.reminderText(due[0], rem, "en", at(5, 9, 10));
+  assert.equal(txt.title, "Feed time?");
+  assert.equal(txt.body, "Anna: last feed 3 h 10 min ago, at 06:00.");
+  assert.equal(C.reminderText(due[0], rem, "el", at(5, 9)).body, "Anna: τελευταίο τάισμα πριν από 3 ώρ., στις 06:00.");
+  // a new bottle starts a new gap with a new key
+  const more = base.concat([ev("feed002", "bottle", at(5, 9, 30), { ml: 100 })]);
+  assert.deepEqual(C.reminderDue(model(more), rem, at(5, 10)), []);
+  assert.equal(C.reminderDue(model(more), rem, at(5, 12, 31))[0].key, "feed-" + KID + "-feed002");
+  // a breastfeed still running → silent
+  const running = base.concat([ev("feed003", "feed", at(5, 9, 0), { cur: "l", cs: at(5, 9) })]);
+  assert.deepEqual(C.reminderDue(model(running), rem, at(5, 12, 30)), []);
+  // stale: no feed logged for more than a day → silent; none at all → silent
+  assert.deepEqual(C.reminderDue(model(base), rem, at(6, 7)), []);
+  assert.deepEqual(C.reminderDue(model([]), rem, at(5, 12)), []);
+  // a deleted child is never reminded
+  const gone = model(base, { kids: [{ id: KID, m: 9, del: 1 }] });
+  assert.deepEqual(C.reminderDue(gone, rem, at(5, 10)), []);
+});
+
+test("reminders: daily medicine time, skipped when a medicine is logged", () => {
+  const rem = { med: "08:00", mt: "Vitamin D" };
+  const d = model([]);
+  assert.deepEqual(C.reminderDue(d, rem, at(5, 7, 59)), []);
+  const due = C.reminderDue(d, rem, at(5, 8, 5));
+  assert.deepEqual(due.map((x) => x.key), ["med-" + key(5)]);
+  assert.deepEqual(C.reminderText(due[0], rem, "en", at(5, 8, 5)), { title: "Medicine time", body: "Vitamin D, 08:00." });
+  assert.equal(C.reminderText(due[0], { med: "08:00" }, "el", at(5, 8)).body, "Καθημερινό φάρμακο ή βιταμίνη, 08:00.");
+  const given = model([ev("med0001", "med", at(5, 6, 30), { tx: "Vit D" })]);    // up to 2 h early counts
+  assert.deepEqual(C.reminderDue(given, rem, at(5, 9)), []);
+  const yesterday = model([ev("med0001", "med", at(4, 8), { tx: "Vit D" })]);
+  assert.equal(C.reminderDue(yesterday, rem, at(5, 9)).length, 1);
+  assert.deepEqual(C.reminderDue(model([], { kids: [] }), rem, at(5, 9)), []);    // no child → silent
+});
+
+test("calendar rows: marks on their day, monthly age, birthdays, deleted kids out", () => {
+  const d = model([], {
+    kids: [kid(), kid("kid0002", { n: "{x}", b: "2024-01-31" })],
+    mk: [
+      { id: C.msId(KID, "smile"), k: KID, t: "ms", key: "smile", d: "2026-08-01", m: 1 },
+      { id: "vacc001", k: KID, t: "vac", tx: "Hexa 1", d: "2026-08-15", m: 1 },
+      { id: "docv001", k: KID, t: "doc", tx: "2-month check", d: "2026-08-15", m: 1 },
+      { id: "gone001", k: "kid0009", t: "doc", tx: "x", d: "2026-08-15", m: 1 }
+    ]
+  });
+  assert.deepEqual(C.calendarRows(d, "2026-08-01", "en").map((r) => r.title), ["Anna: First smile"]);
+  assert.deepEqual(C.calendarRows(d, "2026-08-15", "en").map((r) => r.title),
+    ["Anna is 2 months old today", "Anna: vaccine, Hexa 1", "Anna: doctor, 2-month check"]);
+  assert.deepEqual(C.calendarRows(d, "2026-08-15", "el").map((r) => r.title),
+    ["Anna: κλείνει σήμερα 2 μηνών", "Anna: εμβόλιο, Hexa 1", "Anna: γιατρός, 2-month check"]);
+  assert.deepEqual(C.calendarRows(d, "2026-07-15", "en").map((r) => r.title), ["Anna is 1 month old today"]);
+  assert.deepEqual(C.calendarRows(d, "2026-06-15", "en"), []);                    // birth day itself
+  assert.deepEqual(C.calendarRows(d, "2027-06-15", "en").map((r) => r.title), ["🎂 Anna turns 1"]);
+  // month-end births: Feb 29 2024 for a Jan 31 child; a name with braces is not re-filled
+  assert.deepEqual(C.calendarRows(d, "2024-02-29", "en").map((r) => r.title), ["{x} is 1 month old today"]);
+  assert.deepEqual(C.calendarRows(d, "2026-01-31", "el").map((r) => r.title), ["🎂 {x}: γενέθλια (2)"]);
+  assert.deepEqual(C.calendarRows(d, "2026-02-28", "en"), []);                    // over 2: birthdays only
+  assert.deepEqual(C.calendarRows(d, "nope", "en"), []);
+  const del = model([], { kids: [{ id: KID, m: 9, del: 1 }], mk: d.mk });
+  assert.deepEqual(C.calendarRows(del, "2026-08-15", "en"), []);
+});

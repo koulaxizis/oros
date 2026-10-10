@@ -1,0 +1,47 @@
+# Layout
+Layout is a page-design app for print: flyers, newsletters, posters, cards and booklets. Place text, images and shapes on pages and export a PDF ready for the printer.
+
+## Getting started
+Press `New document` and choose a `Page size` (such as A4, `Business card` or `Custom`), `Orientation`, `Pages`, `Margins`, `Columns` and `Bleed`. Tick `Facing pages (spreads)` for a booklet. You can change all this later in `Document setup…`.
+
+Your documents appear as cards on the home screen, where you can search, rename, duplicate or delete them (with undo right after).
+
+## Place things on the page
+Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)` or `Line (L)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.
+
+With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu.
+
+### Text
+Double-click a text frame, or select it and press [[Enter]], to open the `Story Editor`. There you type, apply styles, use bold, italic and underline, and insert the page number or count.
+
+If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a new frame` and then tap or click another frame or an empty spot, or `Autoflow: add pages until it fits`. `Import text (.txt)…` in the `More` menu brings in a text file.
+
+### Images
+Double-click an image frame, or use `Place image…`, to choose a picture. Pick `Fit` or `Fill` and adjust `Scale`; the panel warns when the resolution is low for print. `Text wrap` lets text flow around a frame.
+
+## Pages, masters, styles and colours
+- `Pages`: add, duplicate, delete and reorder pages, and manage `Masters`. Anything on a master appears on every page that uses it; `Edit master` opens it.
+- `Styles`: paragraph and character styles with font, size, leading, alignment, spacing and colour. A style can be `Based on` another.
+- `Colours`: your `Swatches`, in RGB or CMYK. CMYK looks approximate on screen, but the PDF gets the exact values.
+
+## Export
+`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open package` on the home screen opens it again.
+
+## Sync and backup
+Your documents sync between your devices through [orOS sync](help:t/sync). Images are stored on the orOS disk and sync as separate files, so on another device a picture may show `Syncing…` for a while. The open document and zoom stay on each device. For a full copy with images, save a package; see also [backup](help:t/backup).
+
+Text changed on two devices at once? The other version waits in `Recovered text` in the `More` menu.
+
+## Keyboard shortcuts
+- [[V]] [[T]] [[F]] [[R]] [[E]] [[L]] [[H]] pick a tool; [[W]] toggles preview.
+- Arrow keys nudge the selection ([[Shift]] for bigger steps); [[Delete]] removes it.
+- [[Ctrl+Z]] / [[Ctrl+Y]] undo and redo; [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]], [[Ctrl+D]] duplicate, [[Ctrl+A]] select all.
+- [[Ctrl+G]] groups, [[Ctrl+Shift+G]] ungroups; [[Ctrl+E]] opens Export.
+- In the Story Editor: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] closes it.
+
+## Tips
+- Large documents fill the storage that every app shares; Layout warns you when one grows big.
+
+## Limits
+- Text is edited in the Story Editor, not directly in the frame.
+- A document can have up to 999 pages and 5,000 objects.

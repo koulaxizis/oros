@@ -1,0 +1,39 @@
+# Plant Care
+Plant Care keeps a watering schedule for each of your plants and reminds you when they're thirsty. It can also track fertilizing, misting and repotting.
+
+## Getting started
+Tap or click `Add a plant` (or the `Plant` button at the top). Choose a `Species` from the list of ready plants to fill in sensible intervals and a tip, or pick `Other / my own`. Give it a `Name`, an `Icon`, a `Room or spot` and say `Where` it lives, `Indoor` or `Outdoor`. Set `Water every (days)` and, if you like, `In winter every (days, 0 = same)`. Under `More care` you'll find fertilizing, misting and repotting. For a new plant you can enter when it was `Last watered`.
+
+## Today
+`Today` lists what's `Late`, due `Today` and in the `Next 7 days`.
+- `Done` marks the task as done today, with `Undo` for a few seconds.
+- `Water all (n)` waters everything that's due in one go.
+- The three-dots button opens more choices: `Postpone 1 day`, `Postpone 2 days`, `Skip this time`, `Mark as done` and `Open plant`.
+
+When you have plants in more than one room, room chips at the top filter both tabs.
+
+## My plants
+`My plants` shows a card for each plant with its next watering. With six plants or more, `Search plants…` appears.
+
+Tap a plant to see its details: the schedule with the next day for each task, how often you really water on average, a `Last 30 days` strip and the `History`. You can remove a history entry, `Edit` the plant or `Delete` it (with `Undo`).
+
+## Weather hints
+If you use [Weather](app:weather), Plant Care reads its latest forecast on this device for your outdoor plants. When rain is expected today you'll see a banner with `Skip outdoor watering`; on a very hot day it suggests checking them earlier. Plant Care makes no network calls of its own.
+
+## Sync and backup
+Your plants, schedules and history sync between your devices through [orOS sync](help:t/sync). The reminder hour, hemisphere, chosen room and open tab stay on each device.
+
+In `Settings`, `Export` saves your plants to a file and `Import` merges a file with what you have.
+
+## Keyboard shortcuts
+- [[Left]] / [[Right]] on the tabs switch between `Today` and `My plants`.
+
+## Tips
+- In `Settings`, choose the `Daily reminder` hour, or `Off`. One notification a day lists the plants that need care. See [Notifications](help:t/notifications).
+- Set your `Hemisphere (for the winter interval)` so winter watering starts in the right months.
+- Watering and due days also appear in [Calendar](app:calendar) under `Plants`.
+
+## Limits
+- Reminders appear while orOS is open, even with this app closed. With orOS closed they wait until you open it again.
+- Weather hints only work when the Weather app has a fresh forecast on this device.
+- History older than two years is removed.

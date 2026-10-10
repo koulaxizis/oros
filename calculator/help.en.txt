@@ -1,0 +1,47 @@
+# Calculator
+A simple everyday calculator with memory keys, a few extra functions and a history of your results. For fun, it also has a `Troll mode` that teases you and sometimes gives a slightly wrong answer.
+
+## Getting started
+Tap or click the keys, or type on your keyboard. Enter a number, an operator (`÷`, `×`, `−`, `+`), another number, then `=`. Operations are worked out in the order you type them: `2 + 3 ×` first gives 5, then multiplies.
+
+- `AC` clears the current calculation; ⌫ deletes the last digit.
+- `%` on its own divides by 100 (50 % gives 0.5). After an operator it works like a phone calculator: `200 + 10 %` gives 220.
+- `Ans` brings back the last result.
+- Tap or click the big result to copy it.
+
+## Memory and extra functions
+- `M+` adds the number on screen to memory, `MR` brings it back and `MC` clears it.
+- `fx` shows or hides an extra row: `√`, `x²`, `1/x` and `±`. The app remembers your choice.
+
+## History
+Each result is added to `History`, newest first (up to 50 entries). Tap or click an entry to reuse its result. `CSV` saves the history as a spreadsheet file, oldest first. `Clear` empties the history straight away, without asking.
+
+On a wide screen you can drag the left edge of the history panel to make it wider or narrower.
+
+## Troll mode
+Tap or click `Troll mode` to turn it on or off. While it's on, every answer comes with a cheeky comment, and now and then the result is quietly off by a few percent (never twice in a row). Wrong answers go into the history too.
+
+Right-click, or long-press on a touch screen, the `Troll mode` button to change how often it lies: `Subtle`, `Balanced` or `Rampant`. The dots on the button show the level.
+
+>! Don't use Troll mode for anything that matters, such as money or measurements.
+
+## Sync and backup
+Your history, the memory value, the `fx` row and the Troll mode settings sync between your devices through [orOS sync](help:t/sync). The width of the history panel stays on each device. `Ans` and the calculation on screen are not saved.
+
+Besides the CSV export, the orOS [backup](help:t/backup) keeps a copy of everything.
+
+## Keyboard shortcuts
+- Digits and the numpad, [[.]] or [[,]] for the decimal point, [[+]] [[-]] [[*]] [[/]] for the operators.
+- [[Enter]] or [[=]] works out the result.
+- [[Backspace]] deletes the last digit; [[Esc]] or [[Delete]] clears.
+- [[%]] percent, [[A]] for `Ans`.
+- [[Ctrl+Z]] undoes your last key press (one step only).
+- [[Ctrl+Alt+Shift+C]] opens Calculator from anywhere in orOS; see [shortcuts](help:t/shortcuts).
+
+## Tips
+- To keep a running total, press `M+` after each result and `MR` at the end.
+- If you install orOS as an app, a long-press on its icon (on Android and Windows) offers Calculator as a quick start; see [Install](help:t/install).
+
+## Limits
+- There are no brackets and no operator precedence; it calculates step by step like a pocket calculator.
+- A number can have up to 15 digits.

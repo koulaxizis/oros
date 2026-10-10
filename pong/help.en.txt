@@ -1,0 +1,29 @@
+# Pong
+Two paddles, one ball: send the ball past the other paddle to score. Play against the computer or with a friend on the same device.
+
+## How to play
+Press `Start` (or [[Space]]) to begin. Move your paddle to return the ball; whoever misses gives the other side a point. The serve alternates between the two sides. The first to the target score wins: choose `To 7` or `To 11` in the toolbar.
+
+Where the ball hits your paddle sets the bounce angle, so hitting it near the edge sends it off at a sharper angle. Every return makes the ball a little faster.
+
+On a tall screen, such as a phone held upright, the field is turned: your paddle is at the bottom.
+
+## Controls
+- Mouse: move it over the field and your paddle follows.
+- Touch: drag on the field. In a 2-player game each player drags on their own half.
+- Keys vs the computer: [[W]] / [[S]] or [[↑]] / [[↓]] (on a turned field [[A]] / [[D]] or [[←]] / [[→]]).
+- Keys with 2 players: [[W]] / [[S]] move the left paddle and [[↑]] / [[↓]] the right one (on a turned field [[A]] / [[D]] for the bottom and [[←]] / [[→]] for the top).
+- [[P]], [[Space]] or [[Esc]] pause and resume; [[N]] starts a new game.
+
+The game pauses by itself when you switch away, and counts down 3-2-1 when you resume. A game in progress is kept on this device and comes back paused. If you start a new game in the middle of one, an `Undo` button lets you get it back for a few seconds.
+
+## Levels and scoring
+Choose `vs Computer` with `Easy`, `Medium` or `Hard`, or `2 players`. The computer can be beaten, especially on the easier levels. Changing the mode, level or target starts a new game.
+
+`Records` shows your wins, losses and best winning margin against the computer for each level, and how many 2-player games you've played. `Reset records` clears them.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync), adding up the games from every device; `Reset records` clears them everywhere. The game in progress, your settings and the sound setting stay on this device.
+
+## Tips
+- Meet the ball with the edge of your paddle to make the angle hard to reach.

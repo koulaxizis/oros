@@ -275,8 +275,12 @@
     lb.setAttribute("aria-pressed", locked ? "true" : "false");
     lb.addEventListener("click", function () { var v = locked ? 0 : 1; editSel(function (it) { it.lock = v; }); });
     r3.appendChild(lb);
+    var hb = LY.iconBtn("eye", t("props.hide"));
+    hb.addEventListener("click", function () { editSel(function (it) { it.hide = 1; }); ED.select([]); LY.toast(t("hide.done")); });
+    r3.appendChild(hb);
     if (items.length > 1) r3.appendChild(btn(t("props.group"), ED.group, "small"));
     if (items.some(function (it) { return it.grp; })) r3.appendChild(btn(t("props.ungroup"), ED.ungroup, "small"));
+    if (items.some(function (it) { return it.ov; })) r3.appendChild(btn(t("ms.reset"), ED.resetToMaster, "small"));
     var dupB = LY.iconBtn("copy", t("props.dup")); dupB.addEventListener("click", ED.duplicate); r3.appendChild(dupB);
     var delB = LY.iconBtn("trash", t("props.del"), "danger"); delB.addEventListener("click", ED.deleteSel); r3.appendChild(delB);
     s5.appendChild(r3);
@@ -358,10 +362,34 @@
       if (pg) {
         var s2 = section(t("props.pageMaster"));
         s2.appendChild(masterSelect(pg));
+        if (pg.ms) s2.appendChild(btn(t("ms.detach"), ED.detachAll, "small"));
         body.appendChild(s2);
+        var hidden = LY.doc.items.filter(function (it) { return it.pg === pg.id && it.hide; });
+        if (hidden.length) {
+          var s3 = section();
+          s3.appendChild(btn(t("hide.show", { n: hidden.length }), function () { showHidden(pg.id); }, "small"));
+          body.appendChild(s3);
+        }
+      }
+    } else {
+      var hm = LY.doc.items.filter(function (it) { return it.pg === ED.master && it.hide; });
+      if (hm.length) {
+        var s4 = section();
+        s4.appendChild(btn(t("hide.show", { n: hm.length }), function () { showHidden(ED.master); }, "small"));
+        body.appendChild(s4);
       }
     }
     body.appendChild(el("p", "hint", t("props.none")));
+    body.appendChild(el("p", "hint", t("ruler.hint")));
+  }
+  // Hidden objects come back (and get selected) on one page or master.
+  function showHidden(owner) {
+    var ids = [];
+    LY.op(function (doc, now) {
+      doc.items.forEach(function (it) { if (it.pg === owner && it.hide) { it.hide = 0; M.touch(it, now); ids.push(it.id); } });
+      if (!ids.length) return false;
+    });
+    if (ids.length) ED.select(ids);
   }
 
   function masterSelect(pg) {
@@ -917,21 +945,50 @@
   }
 
   function newDocDlg() {
-    var lang = LY.LANG;
+    var lang = LY.LANG, TP = window.orosDK.templates || { LIST: [] };
     var a4 = M.preset("a4");
-    var s = { w: a4.w, h: a4.h, unit: lang === "en" ? "mm" : "mm", bleed: 3 * M.PT_PER.mm, mt: 15 * M.PT_PER.mm, mb: 15 * M.PT_PER.mm,
+    var s = { w: a4.w, h: a4.h, unit: "mm", bleed: 3 * M.PT_PER.mm, mt: 15 * M.PT_PER.mm, mb: 15 * M.PT_PER.mm,
               mi: 15 * M.PT_PER.mm, mo: 15 * M.PT_PER.mm, cols: 1, gut: 5 * M.PT_PER.mm, facing: 0, preset: "a4", pages: 1 };
+    var pick = "";
     LY.openDialog(t("new.title"), function (body, close) {
       var name = el("input", "inp"); name.type = "text"; name.maxLength = 120; name.value = t("doc.untitled");
       body.appendChild(field(t("new.name"), name));
-      setupForm(body, s, true);
+      // start from: blank or one of the templates (page 1 as a thumbnail)
+      body.appendChild(el("span", "fld-lbl", t("new.from")));
+      var grid = el("div", "tpl-grid"), form = el("div");
+      [{ id: "", name: t("new.blank") }].concat(TP.LIST).forEach(function (tp) {
+        var b = el("button", "tpl" + (tp.id === pick ? " on" : ""));
+        b.type = "button";
+        b.setAttribute("aria-pressed", tp.id === pick ? "true" : "false");
+        var th = el("span", "tpl-th");
+        if (tp.id) {
+          try {
+            var d = TP.build(tp.id, { lang: lang, now: 1 }), pg = M.pagesInOrder(d)[0];
+            var sc = 72 / Math.max(d.setup.w, d.setup.h);
+            th.appendChild(R.renderPage(d, pg, R.computeLayout(d), sc * (window.devicePixelRatio || 1), {}));
+          } catch (e) { void e; }
+        }
+        b.appendChild(th);
+        b.appendChild(el("span", "tpl-name", LY.label(tp.name)));
+        b.addEventListener("click", function () {
+          pick = tp.id;
+          [].forEach.call(grid.children, function (x) { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+          form.hidden = !!pick;
+          if (pick && (name.value === t("doc.untitled") || name.getAttribute("data-auto"))) { name.value = LY.label(tp.name); name.setAttribute("data-auto", "1"); }
+        });
+        grid.appendChild(b);
+      });
+      body.appendChild(grid);
+      setupForm(form, s, true);
+      body.appendChild(form);
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
       act.appendChild(btn(t("btn.create"), function () {
-        s.name = name.value.trim() || t("doc.untitled");
+        var nmv = name.value.trim() || t("doc.untitled");
         close();
-        LY.createDoc(s);
+        if (pick) LY.addDoc(TP.build(pick, { lang: lang, now: LY.now(), name: nmv }));
+        else { s.name = nmv; LY.createDoc(s); }
       }, "primary"));
       body.appendChild(act);
       setTimeout(function () { name.select(); }, 0);
@@ -959,6 +1016,7 @@
   }
 
   // ---------- Export dialog ----------
+  var imgPrefs = { page: "", dpi: 150, fmt: "png" };
   var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print" };
   function exportDlg() {
     var doc = LY.doc;
@@ -991,6 +1049,24 @@
         LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
       }, "primary"));
       body.appendChild(act);
+      // one page as an image
+      body.appendChild(el("h3", "pn-h", t("exp.img")));
+      var order = M.pagesInOrder(doc), cur = ED.curPage();
+      var pgSel = select(order.map(function (p, i) { return [p.id, t("pf.page", { n: i + 1 })]; }), cur ? cur.id : order[0].id, function (v) { imgPrefs.page = v; });
+      imgPrefs.page = pgSel.value;
+      var dpiWrap = el("div"), fmtWrap = el("div");
+      function drawImg() {
+        dpiWrap.innerHTML = ""; fmtWrap.innerHTML = "";
+        dpiWrap.appendChild(seg([["72", "72 dpi"], ["150", "150 dpi"], ["300", "300 dpi"]], String(imgPrefs.dpi), function (v) { imgPrefs.dpi = +v; drawImg(); }));
+        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+      }
+      drawImg();
+      var gi = el("div", "grid2");
+      gi.appendChild(field(t("exp.page"), pgSel));
+      gi.appendChild(field(t("exp.format"), fmtWrap));
+      body.appendChild(gi);
+      body.appendChild(field(t("exp.res"), dpiWrap));
+      body.appendChild(btn(t("exp.imgGo"), function () { close(); LY.io.exportImage(imgPrefs); }, "block"));
       body.appendChild(el("h3", "pn-h", t("exp.pkg")));
       body.appendChild(el("p", "hint", t("exp.pkgNote")));
       body.appendChild(btn(t("more.pkg"), function () { close(); LY.io.exportPackage(doc); }, "block"));
@@ -1041,7 +1117,40 @@
     }, true);
   }
 
-  LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg };
+  // ---------- Preflight ----------
+  function preflightDlg() {
+    var doc = LY.doc, order = {};
+    M.pagesInOrder(doc).forEach(function (p, i) { order[p.id] = i; });
+    LY.openDialog(t("pf.title"), function (body, close) {
+      var list = ED.pf || [];
+      if (!list.length) body.appendChild(el("p", "pf-ok", t("pf.none")));
+      else body.appendChild(el("p", "hint", t("pf.note")));
+      var ul = el("ul", "pf-list"), lastPg = null;
+      list.forEach(function (x) {
+        if (x.pg !== lastPg) {
+          lastPg = x.pg;
+          var ms = M.find(doc.masters, x.pg);
+          ul.appendChild(el("li", "pf-pg", ms ? t("pf.master", { name: ms.pre + " · " + LY.label(ms.name) }) : t("pf.page", { n: order[x.pg] + 1 })));
+        }
+        var it = M.find(doc.items, x.id), li = el("li");
+        var b = el("button", "pf-item " + x.sev);
+        b.type = "button";
+        b.appendChild(el("span", "pf-dot"));
+        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : t("pf." + x.code);
+        b.appendChild(el("span", "", msg + (it ? " · " + typeName(it) : "")));
+        b.addEventListener("click", function () { close(); ED.gotoItem(x.id); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.close"), close));
+      body.appendChild(act);
+    }, true);
+  }
+
+  LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
 
   // ---------- More menu + panel toggle ----------
   function moreMenu() {
