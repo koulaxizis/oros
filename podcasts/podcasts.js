@@ -1451,6 +1451,27 @@
     } catch (e) {}
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { show } or { show, ep }. Opens the show's page and, for
+  // an episode, its notes. Unknown ids, the app not attached yet, or
+  // a dialog open → no-op.
+  function openSearchTarget(t) {
+    if (!H || !t || typeof t.show !== "string" || document.querySelector("dialog[open]")) return;
+    if (!C.findShow(D(), t.show)) return;
+    openShow(t.show);
+    if (typeof t.ep === "string" && epIndex[t.ep] && epIndex[t.ep].sid === t.show) notesDlg(t.ep);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("podcasts");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
+  }
+
   function boot() {
     inheritPalette();
     watchPalette();
@@ -1467,6 +1488,7 @@
         rememberQueue();
         sweepPlayed();
         takePending();
+        takeSearchTarget();
         refresh(false);
         // While open: refresh every hour (never offline or hidden).
         setInterval(function () {

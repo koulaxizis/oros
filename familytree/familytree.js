@@ -2005,7 +2005,34 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("familytree");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { tree, person }. Switches to the person's tree, centres on
+  // and selects them. Unknown person or tree → no-op; an open dialog →
+  // no-op (unsaved edits win).
+  function openSearchTarget(t) {
+    if (!t || typeof t.person !== "string" || document.querySelector("dialog[open]")) return;
+    var p = findIn(data.people, t.person);
+    if (!p || !findIn(data.trees, p.tree)) return;
+    closeMenu();
+    if (prefs.tree !== p.tree) {
+      prefs.tree = p.tree;
+      selected = null;
+      savePrefs();
+      renderAll();
+    }
+    setFocus(p.id, true);
+    select(p.id);
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   boot();
 })();

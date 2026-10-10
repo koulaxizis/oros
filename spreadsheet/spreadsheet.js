@@ -3019,18 +3019,23 @@ function sheetFromTable(p) {
   notifyTransient(t("tbl.made").replace("{n}", name || sh.bi[LANG] || sh.bi.en));
   return true;
 }
-/* Live push from the shell (window.__orosOpenAt), and the staged
-   target at boot (window.parent.__orosTakeTarget).                 */
-window.__orosOpenAt = function (target) {
-  if (target && typeof target === "object" && target.newSheet) sheetFromTable(target.newSheet);
-};
+/* One receiver for every deep link: live push from the shell
+   (window.__orosOpenAt) and the staged target at boot
+   (window.parent.__orosTakeTarget). { newSheet } = BR-S1,
+   { sheet, r?, c? } = universal search.                            */
+function openTarget(tg) {
+  if (!tg || typeof tg !== "object") return;
+  if (tg.newSheet) sheetFromTable(tg.newSheet);
+  else openSearchTarget(tg);
+}
+window.__orosOpenAt = openTarget;
 function takeTarget() {
   var tg = null;
   try {
     if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
       tg = window.parent.__orosTakeTarget("spreadsheet");
   } catch (e) { tg = null; }
-  if (tg && typeof tg === "object" && tg.newSheet) sheetFromTable(tg.newSheet);
+  openTarget(tg);
 }
 
 function boot() {
@@ -3055,5 +3060,26 @@ function boot() {
 }
 
 boot();
+
+/* Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+   target { sheet, r?, c? }. Shows the sheet and selects the cell.
+   Unknown sheet, a cell edit in progress or an open dialog -> no-op. */
+function openSearchTarget(tg) {
+  if (!tg || typeof tg.sheet !== "string" || editing) return;
+  if (document.querySelector("dialog[open]")) return;
+  var sh = getSheetById(tg.sheet);
+  if (!sh) return;
+  switchTo(sh.id);
+  var r = tg.r, c = tg.c;
+  if (typeof r !== "number" || typeof c !== "number" ||
+      r < 0 || c < 0 || r >= sh.rows || c >= sh.cols) return;
+  collapseSel(Math.floor(r), Math.floor(c));
+  renderSelection();
+  var td = cellRefs[selR] && cellRefs[selR][selC];
+  if (td) {
+    try { td.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+    catch (e) {}
+  }
+}
 
 })();
