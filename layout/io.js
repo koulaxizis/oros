@@ -77,7 +77,7 @@
     order.forEach(function (pg, idx) {
       if (!want[pg.id]) return;
       var list = M.itemsOn(doc, pg.id);
-      if (pg.ms) list = M.itemsOn(doc, pg.ms, M.sideOf(doc, idx)).concat(list);
+      list = M.masterItems(doc, pg, M.sideOf(doc, idx)).concat(list);
       list.forEach(function (it) { if (it.t === "img" && it.a && !it.hide && !seen[it.id]) { seen[it.id] = 1; out.push(it); } });
     });
     return out;

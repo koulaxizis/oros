@@ -264,6 +264,7 @@
   function relayout() {
     if (!LY.doc) return;
     ED.L = R.computeLayout(LY.doc);
+    ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing });
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
       ED.ML = { L: ms ? R.computeMasterLayout(LY.doc, ms, "L") : null, R: ms ? R.computeMasterLayout(LY.doc, ms, "R") : null, B: ms ? R.computeMasterLayout(LY.doc, ms, "") : null };
@@ -583,6 +584,24 @@
 
   function evPos(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 
+  // Is page-local point (lx, ly) on item `it`? tol in pt.
+  function hits(it, lx, ly, tol) {
+    if (it.t === "line") {
+      var ax = it.x, ay = it.y, bx = it.x + it.w, by = it.y + it.h;
+      var dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
+      var u = Math.max(0, Math.min(1, ((lx - ax) * dx + (ly - ay) * dy) / l2));
+      var qx = ax + u * dx - lx, qy = ay + u * dy - ly;
+      return Math.sqrt(qx * qx + qy * qy) <= Math.max(tol * 2, it.sw);
+    }
+    var loc = R.toLocal(it, lx, ly);
+    if (loc[0] < -tol || loc[0] > it.w + tol || loc[1] < -tol || loc[1] > it.h + tol) return false;
+    // an unfilled shape is hit on its outline only
+    if ((it.t === "rect" || it.t === "ell") && !it.fill) {
+      var edge = Math.max(tol * 2, it.sw);
+      if (loc[0] > edge && loc[0] < it.w - edge && loc[1] > edge && loc[1] < it.h - edge) return false;
+    }
+    return true;
+  }
   function hitItem(wx, wy, tolPx) {
     var tol = (tolPx || 4) / scale();
     var ps = allP();
@@ -590,30 +609,69 @@
       var P = ps[pi];
       var list = itemsOfP(P);
       for (var i = list.length - 1; i >= 0; i--) {
-        var it = list[i];
-        if (it.hide) continue;
-        var lx = wx - P.x, ly = wy - P.y;
-        if (it.t === "line") {
-          var ax = it.x, ay = it.y, bx = it.x + it.w, by = it.y + it.h;
-          var dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
-          var u = Math.max(0, Math.min(1, ((lx - ax) * dx + (ly - ay) * dy) / l2));
-          var qx = ax + u * dx - lx, qy = ay + u * dy - ly;
-          if (Math.sqrt(qx * qx + qy * qy) <= Math.max(tol * 2, it.sw)) return it;
-          continue;
-        }
-        var loc = R.toLocal(it, lx, ly);
-        if (loc[0] >= -tol && loc[0] <= it.w + tol && loc[1] >= -tol && loc[1] <= it.h + tol) {
-          // an unfilled shape is hit on its outline only
-          if ((it.t === "rect" || it.t === "ell") && !it.fill) {
-            var edge = Math.max(tol * 2, it.sw);
-            if (loc[0] > edge && loc[0] < it.w - edge && loc[1] > edge && loc[1] < it.h - edge) continue;
-          }
-          return it;
-        }
+        if (!list[i].hide && hits(list[i], wx - P.x, wy - P.y, tol)) return list[i];
       }
     }
     return null;
   }
+
+  // A master item showing on a document page under the point.
+  function hitMaster(wx, wy, tolPx) {
+    if (ED.master) return null;
+    var P = pageAt(wx, wy, false);
+    if (!P || P.master) return null;
+    var tol = (tolPx || 4) / scale();
+    var list = M.masterItems(LY.doc, P.page, P.side);
+    for (var i = list.length - 1; i >= 0; i--) {
+      if (!list[i].hide && hits(list[i], wx - P.x, wy - P.y, tol)) return { P: P, it: list[i] };
+    }
+    return null;
+  }
+
+  // Detach master items on one page: each becomes the page's own copy
+  // (ov = the master item), below the page's own objects; a text frame
+  // gets its own copy of the story. Returns the new ids.
+  function detach(doc, P, masterIds, now) {
+    var made = [], low = Infinity;
+    doc.items.forEach(function (it) { if (it.pg === P.id && it.z < low) low = it.z; });
+    if (!isFinite(low)) low = 1;
+    masterIds.forEach(function (mid, k) {
+      var mi = M.find(doc.items, mid);
+      if (!mi || doc.items.some(function (it) { return it.pg === P.id && it.ov === mid; })) return;
+      var c = JSON.parse(JSON.stringify(mi));
+      c.id = M.newId("it"); c.m = now; c.pg = P.id; c.side = ""; c.ov = mid; c.grp = "";
+      c.z = low - masterIds.length + k;
+      if (c.t === "text") {
+        var st = M.story(doc, mi.story);
+        c.story = newStory(doc, now, st ? JSON.parse(JSON.stringify(st.paras)) : null).id;
+        c.seq = 1024;
+      }
+      doc.items.push(c);
+      made.push(c.id);
+    });
+    return made;
+  }
+  ED.detachAll = function () {
+    var P = curP();
+    if (!P || P.master) return;
+    var ids = M.masterItems(LY.doc, P.page, P.side).map(function (it) { return it.id; });
+    if (!ids.length) { LY.toast(t("ms.noneHere")); return; }
+    var made = [];
+    LY.op(function (doc, now) { made = detach(doc, P, ids, now); if (!made.length) return false; });
+    if (made.length) LY.toast(t("ms.detached", { n: made.length }));
+  };
+  function detachOne(hm) {
+    var made = [];
+    LY.op(function (doc, now) { made = detach(doc, hm.P, [hm.it.id], now); if (!made.length) return false; });
+    if (made.length) ED.select(made);
+  }
+  // Back to the master version: drop the page's copies.
+  ED.resetToMaster = function () {
+    var ids = selItems().filter(function (it) { return it.ov; }).map(function (it) { return it.id; });
+    if (!ids.length) return;
+    LY.op(function (doc, now) { delItems(doc, ids, now); });
+    ED.select([]);
+  };
 
   function hitHandle(sx, sy, touch) {
     var items = selItems();
@@ -700,6 +758,10 @@
       var port = hitPort(p[0], p[1], touch);
       if (port) { startThread(port.id); return; }
       var it = hitItem(w[0], w[1], touch ? 10 : 4);
+      if (!it && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        var hm = hitMaster(w[0], w[1], 4);
+        if (hm) { detachOne(hm); return; }
+      }
       if (it) {
         var add = e.shiftKey || e.metaKey || e.ctrlKey;
         var already = ED.sel.indexOf(it.id) >= 0;
@@ -1038,7 +1100,10 @@
       if (items.some(function (it) { return it.grp; })) list.push({ label: t("props.ungroup"), fn: ED.ungroup });
       list.push({ sep: true });
       list.push({ label: t("props.del"), danger: true, fn: ED.deleteSel });
+      if (items.some(function (it) { return it.ov; })) list.push({ label: t("ms.reset"), fn: ED.resetToMaster });
     } else {
+      var wp = toWorld(sx, sy), hm = hitMaster(wp[0], wp[1], 10);
+      if (hm) list.push({ label: t("ms.detachOne"), fn: function () { detachOne(hm); } });
       list.push({ label: t("more.selall"), fn: selectAll });
       if (clipboard) list.push({ label: t("ed.paste"), fn: function () { paste(false); } });
     }
@@ -1282,6 +1347,11 @@
     var b = $("st-overset");
     b.hidden = !ov;
     if (ov) b.innerHTML = LY.icon("warn") + "<span></span>", b.lastChild.textContent = t("st.overset", { n: ov });
+    var pf = ED.pf || [], errs = pf.filter(function (x) { return x.sev === "err"; }).length;
+    var pb = $("st-pf");
+    pb.className = "st-pf " + (errs ? "err" : pf.length ? "warn" : "ok");
+    $("st-pf-txt").textContent = pf.length ? t("st.pf", { n: pf.length }) : t("st.pfOk");
+    pb.title = t("pf.title");
     $("ed-undo").disabled = !LY.canUndo();
     $("ed-redo").disabled = !LY.canRedo();
     $("ed-zoom").textContent = Math.round(ED.zoom * 100) + "%";
@@ -1298,6 +1368,17 @@
     ED.select([last.id]);
     ED.scrollToItem(last.id);
   }
+
+  // Select a preflight entry's item, on its master when it lives there.
+  ED.gotoItem = function (id) {
+    var it = M.find(LY.doc.items, id);
+    if (!it) return;
+    var onMaster = isMasterId(LY.doc, it.pg);
+    if (onMaster && ED.master !== it.pg) ED.enterMaster(it.pg);
+    else if (!onMaster && ED.master) ED.enterMaster(null);
+    ED.select([it.id]);
+    ED.scrollToItem(it.id);
+  };
 
   function wire() {
     cv = $("cv");
@@ -1348,6 +1429,7 @@
     $("master-done").addEventListener("click", function () { ED.enterMaster(null); });
     $("thread-cancel").addEventListener("click", endThread);
     $("st-overset").addEventListener("click", gotoOverset);
+    $("st-pf").addEventListener("click", function () { LY.dlg.preflight(); });
     LY.setIcon($("ed-back"), "back", t("ed.back"));
     LY.setIcon($("ed-undo"), "undo", t("ed.undo"));
     LY.setIcon($("ed-redo"), "redo", t("ed.redo"));
@@ -1376,7 +1458,7 @@
     LY.on("remote", function () { changed(); LY.emit("sel"); });
     LY.on("sel", updateStatus);
     LY.on("view", updateStatus);
-    LY.A.onChange(function () { ED.render(); });
+    LY.A.onChange(function () { if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing }); ED.render(); updateStatus(); });
     readPalette();
   }
 

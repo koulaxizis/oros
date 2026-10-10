@@ -277,6 +277,7 @@
     r3.appendChild(lb);
     if (items.length > 1) r3.appendChild(btn(t("props.group"), ED.group, "small"));
     if (items.some(function (it) { return it.grp; })) r3.appendChild(btn(t("props.ungroup"), ED.ungroup, "small"));
+    if (items.some(function (it) { return it.ov; })) r3.appendChild(btn(t("ms.reset"), ED.resetToMaster, "small"));
     var dupB = LY.iconBtn("copy", t("props.dup")); dupB.addEventListener("click", ED.duplicate); r3.appendChild(dupB);
     var delB = LY.iconBtn("trash", t("props.del"), "danger"); delB.addEventListener("click", ED.deleteSel); r3.appendChild(delB);
     s5.appendChild(r3);
@@ -358,6 +359,7 @@
       if (pg) {
         var s2 = section(t("props.pageMaster"));
         s2.appendChild(masterSelect(pg));
+        if (pg.ms) s2.appendChild(btn(t("ms.detach"), ED.detachAll, "small"));
         body.appendChild(s2);
       }
     }
@@ -1041,7 +1043,40 @@
     }, true);
   }
 
-  LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg };
+  // ---------- Preflight ----------
+  function preflightDlg() {
+    var doc = LY.doc, order = {};
+    M.pagesInOrder(doc).forEach(function (p, i) { order[p.id] = i; });
+    LY.openDialog(t("pf.title"), function (body, close) {
+      var list = ED.pf || [];
+      if (!list.length) body.appendChild(el("p", "pf-ok", t("pf.none")));
+      else body.appendChild(el("p", "hint", t("pf.note")));
+      var ul = el("ul", "pf-list"), lastPg = null;
+      list.forEach(function (x) {
+        if (x.pg !== lastPg) {
+          lastPg = x.pg;
+          var ms = M.find(doc.masters, x.pg);
+          ul.appendChild(el("li", "pf-pg", ms ? t("pf.master", { name: ms.pre + " · " + LY.label(ms.name) }) : t("pf.page", { n: order[x.pg] + 1 })));
+        }
+        var it = M.find(doc.items, x.id), li = el("li");
+        var b = el("button", "pf-item " + x.sev);
+        b.type = "button";
+        b.appendChild(el("span", "pf-dot"));
+        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : t("pf." + x.code);
+        b.appendChild(el("span", "", msg + (it ? " · " + typeName(it) : "")));
+        b.addEventListener("click", function () { close(); ED.gotoItem(x.id); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.close"), close));
+      body.appendChild(act);
+    }, true);
+  }
+
+  LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
 
   // ---------- More menu + panel toggle ----------
   function moreMenu() {
