@@ -589,3 +589,47 @@ test("shell: safeToReload waits while a podcast plays", () => {
   assert.equal(run(null, true), true, "no Podcasts host allows it");
   assert.equal(run(true, false), false, "radio playing still blocks it");
 });
+
+// ---------- Phase 3: notices, links to other apps ----------
+test("new-episode notices: first look takes the mark, then only fresh ones, newest first, at most 3", () => {
+  const now = Date.UTC(2026, 9, 10, 12);
+  const h = 3600000, ep = (n, pub) => ({ id: "e" + String(n).padStart(12, "0"), title: "Ep " + n, pub });
+  const eps = [ep(1, now - 10 * 86400000), ep(2, now - 5 * h)];
+  const first = C.freshEpisodes(eps, undefined, now);
+  assert.deepEqual(first, { list: [], more: 0, mark: now - 5 * h }, "no mark: nothing announced");
+  assert.deepEqual(C.freshEpisodes([], undefined, now).mark, now, "empty feed: mark = now");
+  const more = eps.concat([ep(3, now - 4 * h), ep(4, now - 3 * h), ep(5, now - 2 * h), ep(6, now - h),
+    ep(7, now - 4 * 86400000 + 1), ep(8, now + 3 * 86400000), { id: "bad", pub: now }]);
+  const r = C.freshEpisodes(more, first.mark, now);
+  assert.deepEqual(r.list.map((e) => e.title), ["Ep 6", "Ep 5", "Ep 4"]);
+  assert.equal(r.more, 1, "Ep 3 left over; old, future and bad ids never count");
+  assert.equal(r.mark, now - h);
+  assert.deepEqual(C.freshEpisodes(more, r.mark, now).list, [], "the same feed again: nothing");
+});
+
+test("deep link targets: an episode id or a feed to add, nothing else", () => {
+  const id = "e" + "a".repeat(12);
+  assert.deepEqual(C.parseTarget({ ep: id }), { ep: id });
+  assert.deepEqual(C.parseTarget(id), { ep: id });
+  assert.deepEqual(C.parseTarget({ add: { url: "https://a.example/feed" } }), { add: "https://a.example/feed" });
+  assert.equal(C.parseTarget({ add: { url: "javascript:alert(1)" } }), null);
+  assert.equal(C.parseTarget({ ep: "constructor" }), null);
+  assert.equal(C.parseTarget(null), null);
+});
+
+test("Listen later and Note at: plain items for To-Do and Notes", () => {
+  const m = { title: "Ep\u0007 one", show: "Show", audio: "https://a.example/x.mp3", dur: 3725 };
+  assert.deepEqual(C.todoItem(m, { link: "https://a.example/ep" }),
+    { text: "Ep one", note: "Show · 1:02:05\nhttps://a.example/ep" });
+  assert.equal(C.todoItem({ title: "" }, null), null);
+  const n = C.noteAt(m, { link: "javascript:x" }, 754);
+  assert.equal(n.title, "Ep one (12:34)");
+  assert.equal(n.text, "Show — Ep one\n12:34\nhttps://a.example/x.mp3\n\n");
+  assert.equal(C.noteAt(m, null, 0).title, "Ep one");
+});
+
+test("shell: notification deep link podcasts:ep:<id> opens the episode", () => {
+  const fs = require("fs");
+  const src = fs.readFileSync(path.join(__dirname, "..", "notifications.js"), "utf8");
+  assert.match(src, /podcasts: function \(id\) \{ if \(typeof window\.__orosOpenAt === 'function'\) window\.__orosOpenAt\('podcasts', \{ ep: id \}\); \}/);
+});

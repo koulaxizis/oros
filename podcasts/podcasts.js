@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — App logic (v1.1.0)
+// orOS Podcasts — App logic (v1.2.0)
 // Subscriptions, new episodes, an "Up next" queue, downloads for
 // offline listening and a player that keeps playing when this
 // window closes.
@@ -143,7 +143,9 @@
       "st.title": "Listening statistics", "st.open": "Statistics", "st.week": "Last 7 days", "st.month": "Last 30 days", "st.all": "All time",
       "st.saved": "Saved by speed: {t}", "st.top": "Most listened", "st.note": "Counted on this device since {d}.", "st.empty": "Nothing counted yet. Statistics start with the next episode you play.",
       "st.h": "{h} h {m} min", "st.m": "{m} min",
-      "top.title": "Popular podcasts", "top.titleGr": "Popular in Greece", "top.src": "From the Apple Podcasts charts."
+      "top.title": "Popular podcasts", "top.titleGr": "Popular in Greece", "top.src": "From the Apple Podcasts charts.",
+      "set.notify": "Tell me about new episodes", "toast.ntfOn": "You will get a notice when a new episode comes out.",
+      "ep.todo": "Listen later (To-Do)", "ep.noteAt": "Note at {t}", "ep.note": "Write a note", "show.reader": "Follow the site in Reader"
     },
     el: {
       "app": "Podcasts",
@@ -210,7 +212,9 @@
       "st.title": "Στατιστικά ακρόασης", "st.open": "Στατιστικά", "st.week": "Τελευταίες 7 μέρες", "st.month": "Τελευταίες 30 μέρες", "st.all": "Συνολικά",
       "st.saved": "Κέρδος από την ταχύτητα: {t}", "st.top": "Τα πιο ακουσμένα", "st.note": "Μετριούνται σε αυτή τη συσκευή από {d}.", "st.empty": "Δεν έχει μετρηθεί τίποτα ακόμη. Τα στατιστικά ξεκινούν με το επόμενο επεισόδιο που θα ακούσεις.",
       "st.h": "{h} ώ. {m} λ.", "st.m": "{m} λεπτά",
-      "top.title": "Δημοφιλή podcasts", "top.titleGr": "Δημοφιλή στην Ελλάδα", "top.src": "Από τα charts του Apple Podcasts."
+      "top.title": "Δημοφιλή podcasts", "top.titleGr": "Δημοφιλή στην Ελλάδα", "top.src": "Από τα charts του Apple Podcasts.",
+      "set.notify": "Ειδοποίηση για νέα επεισόδια", "toast.ntfOn": "Θα ειδοποιείσαι όταν βγαίνει νέο επεισόδιο.",
+      "ep.todo": "Άκου αργότερα (To-Do)", "ep.noteAt": "Σημείωση στο {t}", "ep.note": "Σημείωση", "show.reader": "Ο ιστότοπος στον Αναγνώστη"
     }
   };
   function t(k, v) {
@@ -297,6 +301,7 @@
     video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>',
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+    pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>'
   };
 
@@ -424,11 +429,12 @@
     var shows = D().shows.filter(function (s) {
       if (only && s.id !== only) return false;
       var r = feeds[s.id];
+      if (force === "ep") return !r || !!s.ntf;     // a notice's episode: fetch now
       if (force) return !r || now() - r.at > 60000;
       return !r || now() - r.at > REFRESH_GAP * 60000;
     });
-    if (!shows.length) { if (force && !only) showToast(t("toast.refreshed")); return Promise.resolve(); }
-    if (navigator.onLine === false) { if (force) showToast(t("toast.offline")); return Promise.resolve(); }
+    if (!shows.length) { if (force === true && !only) showToast(t("toast.refreshed")); return Promise.resolve(); }
+    if (navigator.onLine === false) { if (force === true) showToast(t("toast.offline")); return Promise.resolve(); }
     refreshing = true;
     paintRefresh();
     var before = countNew();
@@ -443,14 +449,16 @@
         if (r.status === 304 && feeds[s.id]) { feeds[s.id].at = now(); ST.putFeed(feeds[s.id]); return; }
         var parsed = parseText(r.text, s.url);
         if (!parsed) { errs++; return; }
-        afterFeed(s.id, cacheFeed(s.id, parsed, r));
+        var rec = cacheFeed(s.id, parsed, r);
+        afterFeed(s.id, rec);
+        if (s.ntf && typeof H.announce === "function") H.announce(s.id, rec.eps);
       });
       lastRefresh = now();
       refreshing = false;
       paintRefresh();
       renderAll();
       var gained = countNew() - before;
-      if (force && !only) showToast(errs ? t("toast.refreshErr", { n: errs }) : gained > 0 ? t("toast.newEps", { n: gained }) : t("toast.refreshed"));
+      if (force === true && !only) showToast(errs ? t("toast.refreshErr", { n: errs }) : gained > 0 ? t("toast.newEps", { n: gained }) : t("toast.refreshed"));
       autoDownload();
     }, function () { refreshing = false; paintRefresh(); });
   }
@@ -852,6 +860,11 @@
     col.appendChild(button(t("ep.notes"), "", go(function () { notesDlg(id); })));
     if (hasTranscript(id)) col.appendChild(button(t("tr.title"), "", go(function () { transcriptDlg(id); })));
     col.appendChild(button(t("ep.share"), "", go(function () { shareEp(id, 0); })));
+    if (openAt()) {
+      var at = Math.floor(H.position(id) || 0);
+      col.appendChild(button(at > 0 ? t("ep.noteAt", { t: C.fmtTime(at) }) : t("ep.note"), "", go(function () { noteTo(id, at); })));
+      col.appendChild(button(t("ep.todo"), "", go(function () { todoTo(id); })));
+    }
     if (x && x.ep.link) col.appendChild(button(t("ep.link"), "", go(function () { openLink(x.ep.link); })));
     if (!view.show) col.appendChild(button(m.show, "", go(function () { openShow(m.s); })));
     col.appendChild(button(t("pl.close"), "", function () { dlg.close(); }));
@@ -890,6 +903,7 @@
       showToast(t("toast.allPlayed"));
     }));
     if (rec && rec.show.link) btns.appendChild(button(t("show.site"), "txt-btn", function () { openLink(rec.show.link); }));
+    if (rec && C.safeUrl(rec.show.link) && openAt()) btns.appendChild(button(t("show.reader"), "txt-btn", function () { openAt()("feeds", { add: { url: C.safeUrl(rec.show.link) } }); }));
     if (rec && rec.show.funding && rec.show.funding[0]) btns.appendChild(button(rec.show.funding[0].label || t("show.support"), "txt-btn", function () { openLink(rec.show.funding[0].url); }));
     btns.appendChild(button(t("show.unsub"), "txt-btn danger", function () { unsubscribe(sid); }));
     info.appendChild(btns);
@@ -935,11 +949,23 @@
     var skB = select(t("set.skB"), secs.map(function (v) { return [v, v ? t("set.sec", { n: v }) : t("set.off")]; }), s.skB);
     var auto = select(t("set.auto"), [0, 1, 2, 3, 5, 10].map(function (v) { return [v, v ? t("set.autoN", { n: v }) : t("set.off")]; }), s.auto);
     [spd, skA, skB, auto].forEach(function (x) { form.appendChild(x.wrap); });
+    var nw = el("label", "check");
+    var ntf = el("input");
+    ntf.type = "checkbox";
+    ntf.id = "set-ntf";
+    ntf.checked = s.ntf === 1;
+    nw.appendChild(ntf);
+    nw.appendChild(el("span", "", t("set.notify")));
+    if (typeof H.announce === "function") form.appendChild(nw);
     dlg.appendChild(form);
     var row = el("div", "dlg-btns");
     row.appendChild(button(t("set.cancel"), "txt-btn", function () { dlg.close(); }));
     row.appendChild(button(t("set.save"), "txt-btn primary", function () {
-      mutate(function (d, n) { return C.editShow(d, sid, { spd: +spd.sel.value, skA: +skA.sel.value, skB: +skB.sel.value, auto: +auto.sel.value }, n); });
+      var on = ntf.checked && typeof H.announce === "function" ? 1 : 0;
+      var was = s.ntf === 1;
+      mutate(function (d, n) { return C.editShow(d, sid, { spd: +spd.sel.value, skA: +skA.sel.value, skB: +skB.sel.value, auto: +auto.sel.value, ntf: on }, n); });
+      // Just turned on: the host takes the newest episode as the mark.
+      if (on && !was) { H.announce(sid, feeds[sid] ? feeds[sid].eps : [], true); showToast(t("toast.ntfOn")); }
       dlg.close();
       autoDownload();
     }));
@@ -1036,6 +1062,9 @@
     var vB = button(t("vid.watch"), "icon-btn", videoDlg, UI.video); vB.id = "fp-vid";
     extra.appendChild(vB);
     extra.appendChild(button(t("pl.share"), "icon-btn", function () { var st2 = H.getState(); if (st2.cur) shareEp(st2.cur.id, Math.floor(st2.pos)); }, UI.share));
+    var nB = button(t("ep.note"), "icon-btn", function () { var st3 = H.getState(); if (st3.cur) noteTo(st3.cur.id, Math.floor(st3.pos)); }, UI.pen); nB.id = "fp-note";
+    nB.hidden = !openAt();
+    extra.appendChild(nB);
     extra.appendChild(button(t("pl.next"), "icon-btn", function () { H.next(); }, UI.next));
     extra.appendChild(button(t("pl.stop"), "icon-btn", function () { dlg.close(); H.stop(); }, UI.stop));
     dlg.appendChild(extra);
@@ -1431,6 +1460,50 @@
       });
     } else copy();
   }
+
+  // ---------- 10c. Other apps (phase 3) ----------
+  // Through the shell's generic deep link __orosOpenAt(app, target):
+  // Notes makes a page ({ add }), To-Do asks before adding (Bible
+  // BR-TD-ADD), Reader opens its feed discovery ({ add: { url } }).
+  // Each app opens and confirms on its own side: nothing is written
+  // from here.
+  function openAt() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.__orosOpenAt : null;
+      return typeof f === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function epOf(id) {
+    var x = epIndex[id], m = metaOf(id) || (H.getState().cur && H.getState().cur.id === id ? H.getState().cur : null);
+    return m ? { m: m, ep: x ? x.ep : null } : null;
+  }
+  function noteTo(id, pos) {
+    var o = epOf(id), go = openAt();
+    var n = o && go ? C.noteAt(o.m, o.ep, pos || 0) : null;
+    if (n) go("notes", { add: n });
+  }
+  function todoTo(id) {
+    var o = epOf(id), go = openAt();
+    var it = o && go ? C.todoItem(o.m, o.ep) : null;
+    if (it) go("todo", { addItems: { from: t("app"), items: [it] } });
+  }
+  // Incoming: a notification ("podcasts:ep:<id>") or another app.
+  // An episode not in the cache yet (found by the background check)
+  // waits for a refresh of the shows. Nothing while a dialog is open.
+  var waitEp = "";
+  function openTarget(x) {
+    var tg = C.parseTarget(x);
+    if (!tg || !H) return;
+    if (tg.add) { window.__orosPodcastsAdd(tg.add); return; }
+    if (document.querySelector("dialog[open]")) return;
+    if (epIndex[tg.ep]) { waitEp = ""; notesDlg(tg.ep); return; }
+    waitEp = tg.ep;
+    refresh("ep").then(function () {
+      if (waitEp === tg.ep && epIndex[tg.ep] && !document.querySelector("dialog[open]")) notesDlg(tg.ep);
+      waitEp = "";
+    });
+  }
+  window.__orosOpenAt = openTarget;
 
   // Listening statistics (counted by the host on this device).
   function fmtSpan(sec) {
@@ -1935,7 +2008,12 @@
         rememberQueue();
         sweepPlayed();
         takePending();
-        refresh(false);
+        var tgt = null;
+        try {
+          if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") tgt = window.parent.__orosTakeTarget("podcasts");
+        } catch (e) {}
+        if (tgt) openTarget(tgt);
+        else refresh(false);
         // While open: refresh every hour (never offline or hidden).
         setInterval(function () {
           if (document.visibilityState === "visible" && now() - lastRefresh > REFRESH_MIN * 60000) refresh(false);

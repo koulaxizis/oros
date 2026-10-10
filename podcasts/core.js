@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — core.js (pure logic, v1.0.0)
+// orOS Podcasts — core.js (pure logic, v1.2.0)
 // Everything that is not the screen, the audio element or the
 // network: ids, the podcast parts of a feed (itunes: / podcast:
 // tags) read from a small element tree, durations, chapters,
@@ -1040,6 +1040,58 @@
     return { title: clean(m && m.title, 200), text: bits[0], url: url };
   }
 
+  // ---------- 11. Phase 3: new-episode notices, other apps ----------
+  // Which episodes of a show to announce. mark = the newest publish
+  // time already announced on this device (device-local, per show).
+  // No mark yet (notices just turned on, or a new device) → nothing is
+  // announced, only the mark is taken: the bell never floods. Only
+  // episodes of the last 3 days, newest first, at most 3 per pass.
+  var NOTICE_AGE = 3 * 86400000, NOTICE_MAX = 3;
+  function freshEpisodes(eps, mark, now) {
+    var ok = (eps || []).filter(function (e) {
+      return e && typeof e.id === "string" && EP_RE.test(e.id) && isStamp(e.pub) && e.pub > 0 && e.pub <= now + 86400000;
+    });
+    var top = 0;
+    ok.forEach(function (e) { if (e.pub > top) top = e.pub; });
+    if (!isStamp(mark)) return { list: [], more: 0, mark: top || now };
+    var list = ok.filter(function (e) { return e.pub > mark && e.pub >= now - NOTICE_AGE; })
+      .sort(function (a, b) { return b.pub - a.pub || cmpStr(a.id, b.id); });
+    return { list: list.slice(0, NOTICE_MAX), more: Math.max(0, list.length - NOTICE_MAX), mark: Math.max(mark, top) };
+  }
+  // A deep link into the app (shell __orosOpenAt / notification
+  // "podcasts:ep:<id>"): { ep } opens an episode, { add } a feed to
+  // subscribe to. Anything else → null.
+  function parseTarget(x) {
+    if (typeof x === "string") x = { ep: x };
+    if (!x || typeof x !== "object") return null;
+    if (typeof x.ep === "string" && EP_RE.test(x.ep)) return { ep: x.ep };
+    if (x.add && typeof x.add === "object" && safeUrl(x.add.url) && String(x.add.url).length <= 2000) return { add: safeUrl(x.add.url) };
+    return null;
+  }
+  // "Listen later" → To-Do (BR-TD-ADD item): the title is the task,
+  // the note says which show, how long and where to find it.
+  function todoItem(m, ep) {
+    var title = clean(m && m.title, 300) || clean(ep && ep.title, 300);
+    if (!title) return null;
+    var bits = [clean(m && m.show, 200), (ep && ep.dur) || (m && m.dur) ? fmtTime((ep && ep.dur) || m.dur) : ""].filter(Boolean);
+    var url = safeUrl((ep && ep.link) || "") || safeUrl((m && m.audio) || "");
+    var note = bits.join(" · ") + (url ? "\n" + url : "");
+    return { text: title, note: note.slice(0, 1000) };
+  }
+  // "Note at 12:34" → Notes ({ add: { title, text } }): a page titled
+  // with the episode and the moment, the link underneath; the user
+  // writes the rest in Notes.
+  function noteAt(m, ep, pos) {
+    var o = shareText(m, ep, pos);
+    if (!o.title) return null;
+    var head = clean(m && m.show, 200);
+    var lines = [head ? head + " — " + o.title : o.title];
+    if (pos > 0) lines.push(fmtTime(pos));
+    if (o.url) lines.push(o.url);
+    lines.push("", "");
+    return { title: (o.title + (pos > 0 ? " (" + fmtTime(pos) + ")" : "")).slice(0, 200), text: lines.join("\n") };
+  }
+
   root.OrosPodcastsCore = {
     DATA_VER: DATA_VER, LIM: LIM, SPEEDS: SPEEDS, PREF_DEF: PREF_DEF, SYNC_EVERY: SYNC_EVERY, SYNC_MIN_MOVE: SYNC_MIN_MOVE,
     clean: clean, fold: fold, plain: plain, decodeEntities: decodeEntities,
@@ -1059,6 +1111,7 @@
     parseTranscript: parseTranscript, cueAt: cueAt, searchCues: searchCues, pickTranscript: pickTranscript,
     noteChapters: noteChapters, searchEpisodes: searchEpisodes, dayKey: dayKey, addListen: addListen, statsSummary: statsSummary,
     appleTopUrl: appleTopUrl, parseAppleTop: parseAppleTop, appleLookupManyUrl: appleLookupManyUrl, orderByIds: orderByIds,
-    topCountry: topCountry, shareText: shareText
+    topCountry: topCountry, shareText: shareText,
+    freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt
   };
 })(typeof window !== "undefined" ? window : this);
