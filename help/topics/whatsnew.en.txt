@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.63.00
+- New app: Assistant. Chat with the AI you choose (Claude, ChatGPT, Gemini, Mistral, OpenRouter or a local model). It can search your orOS data, but only what you allow.
+
 ## Version 0.62.00
 - Media Shelf 1.2: find book and album details online (Open Library, MusicBrainz, only when you ask), release dates, and a Media Shelf chip in Calendar (finishes and wishlist releases).
 

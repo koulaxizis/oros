@@ -23,7 +23,7 @@
 
   var ID_RE = /^[a-z0-9][a-z0-9-]{0,40}$/;
   // Apps that ship a guide page (<id>/help.en.txt + help.el.txt).
-  var HELP_APPS = ["atelier", "bookmarks", "calendar", "contacts", "files", "help", "kanban",
+  var HELP_APPS = ["assistant", "atelier", "bookmarks", "calendar", "contacts", "files", "help", "kanban",
                    "maps", "notes", "slides", "spreadsheet", "time", "todo", "weather", "writer"];
   // Fallback when topics.json cannot be read.
   var TOPICS = ["start", "menu", "install", "appearance", "sync", "backup", "data",
