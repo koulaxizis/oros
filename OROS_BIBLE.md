@@ -1412,6 +1412,7 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
   - Control characters (and U+2028/2029) are replaced by spaces in every text; everything is shown with `textContent`. A payload with no usable item is ignored (To-Do just opens).
 - **BR-TD-ADD-2 · A PREFILL, not data (BR-W8-6).** To-Do opens the dialog `#todo-add`: list picker, every item ticked, except items already OPEN (not done) in the chosen list, which start unticked with "already on the list" (re-checked when the list changes; a tick the user changed stays). Nothing touches `oros-todo-data` until "Add N"; Cancel leaves no trace. Add puts the ticked items at the top of the list in payload order (one `list.om` stamp, items fully stamped), switches to that list and clears search/filters. The sender never writes To-Do's slice (one writer per slice).
 - **BR-TD-ADD-3 · Meal Planner sender.** Button `#sh-todo` on the Shopping tab sends the unticked items of the list on screen (the week shown, "From today" applied): `text` = "qty name" as in Copy, `note` = "for <recipes>", `list` = `tdl-groceries`. Ticks in Meal Planner are not changed.
+- **BR-TD-ADD-4 · Chore Wheel sender.** "Send to To-Do" in a chore's actions dialog (only while it is open, not done or skipped): one item, `text` = icon + chore name, `note` = "Chore Wheel · <day or range>" (+ " · <member>" when it is someone else's), no `list` (To-Do's open list). The chore's "done" stays in Chore Wheel only; nothing syncs back.
 
 ### `LABEL_COLORS` (shared, 8)
 

@@ -105,6 +105,7 @@
       "mode.spin.d": "Spin the wheel each time; the draw is fair.",
       "act.doneBy": "Done by", "act.give": "Hand over this time", "act.skip": "Skip this time",
       "act.undo": "Not done", "act.spin": "Spin the wheel", "act.respin": "Spin again", "act.keep": "Back to the turn",
+      "act.todo": "Send to To-Do", "todo.note": "Chore Wheel · {d}", "todo.noteWho": "Chore Wheel · {d} · {m}",
       "spin.title": "Who gets “{t}”?", "spin.go": "Spin!", "spin.res": "{m} gets it", "spin.one": "{m} gets it (the only one free)",
       "toast.undo": "Undo", "toast.memberDel": "Member deleted", "toast.taskDel": "Chore deleted",
       "toast.save": "Could not save: storage is full", "toast.maxMembers": "Up to {n} members",
@@ -162,6 +163,7 @@
       "mode.spin.d": "Γυρίζεις τον τροχό κάθε φορά· η κλήρωση είναι δίκαιη.",
       "act.doneBy": "Την έκανε", "act.give": "Ανέλαβε αυτή τη φορά", "act.skip": "Προσπέρασε αυτή τη φορά",
       "act.undo": "Δεν έγινε", "act.spin": "Γύρνα τον τροχό", "act.respin": "Γύρνα ξανά", "act.keep": "Πίσω στη σειρά",
+      "act.todo": "Στείλε στο To-Do", "todo.note": "Τροχός δουλειών · {d}", "todo.noteWho": "Τροχός δουλειών · {d} · {m}",
       "spin.title": "Ποιος παίρνει «{t}»;", "spin.go": "Γύρνα!", "spin.res": "Την παίρνει: {m}", "spin.one": "Την παίρνει: {m} (ο μόνος διαθέσιμος)",
       "toast.undo": "Αναίρεση", "toast.memberDel": "Το μέλος διαγράφηκε", "toast.taskDel": "Η δουλειά διαγράφηκε",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.maxMembers": "Έως {n} μέλη",
@@ -1244,10 +1246,30 @@
     }
     if (r.state !== 2 && !future) acts.appendChild(button(t("act.skip"), "", function () { dlg.close(); setDone(r.o.key, 2, ""); }));
     if (r.state !== 0) acts.appendChild(button(t("act.undo"), "", function () { dlg.close(); setDone(r.o.key, 0, ""); }));
+    if (r.state === 0 && shellOpenAt()) acts.appendChild(button(t("act.todo"), "", function () { dlg.close(); sendToTodo(r); }));
     acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+
+  // "Send to To-Do": one chore as a prefill for To-Do's add dialog
+  // (Bible BR-TD-ADD). To-Do asks and writes; nothing is copied here,
+  // so the chore's own "done" stays the only one in Chore Wheel.
+  function shellOpenAt() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function sendToTodo(r) {
+    var p = shellOpenAt();
+    if (!p) return;
+    var d = r.o.a === r.o.b ? fmtDay(r.o.a, true) : fmtDay(r.o.a) + " – " + fmtDay(r.o.b);
+    var mb = memberById(data, r.who);
+    var note = mb && r.who !== prefs.me ? t("todo.noteWho", { d: d, m: mb.name }) : t("todo.note", { d: d });
+    var text = (r.task.icon ? r.task.icon + " " : "") + r.task.name;
+    p.__orosOpenAt("todo", { addItems: { from: t("app"), items: [{ text: text, note: note }] } });
   }
 
   // Uniform integer in [0, n): rejection sampling, no modulo bias.
