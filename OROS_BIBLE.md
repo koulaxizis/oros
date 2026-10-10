@@ -878,6 +878,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - `tombs`: `grp:<gid>`, `per:|exp:|pay:<gid>.<own>`.
   - Shares are derived (`sharesOf`): floor(a·w/W), leftover cents to the largest remainders, ties by person id. Balances and settle-up suggestions are derived, never stored (R27).
   - Group file `{app:"oros-split-group", ver:1, data}`: one group, its children and only the tombstones with its prefix. `unpackGroup` keeps only that prefix, so a file can never touch another group or `mine`. Import = merge (idempotent); importing a group you deleted brings it back (re-stamped). Backup `{app:"oros-split"}` = whole slice, restore = merge.
+  - "From Contacts" / "From a trip" in the group dialog read `oros-contacts-data` and `oros-travel-data` read-only (`contactNames`, `tripChoices`): only names (and an empty group name) are copied into the draft; deleted contacts/trips are skipped; nothing is written to those apps. "Send my share to Budget" uses BR-B1 (`src:"split"`).
 - **TRAVEL v1** (slice `travel`, key `oros-travel-data`): `{ ver: 1, trips: [{ id, name, dest, start, end, people, notes, f, pack: [{ id, name, qty, rule, grp, who, note, done, f }], plan: [{ id, kind, title, day, t1, day2, t2, place, from, to, ref, note, pos, f }] }], tpls: [{ id, m, name, items } | { id, m, seed: 1 }], tombs: { <id>: ms } }`. `mergeTravel`:
   - Trips, packing items and itinerary entries carry one stamp per field in `f` (the To-Do pattern): the newer stamp wins each field, equal stamps → larger JSON; packing and itinerary lists are unioned per trip.
   - Templates: whole-entity LWW by `m` (equal `m`: larger canonical JSON); a hidden ready template is `{ id, m, seed: 1 }`.
@@ -1333,6 +1334,20 @@ Owner: Spreadsheet (`spreadsheet/`). First sender: Budget (Export → "Open in S
 - **BR-S1-2 · Always a NEW sheet**, never overwrites; capped at 500 rows × 64 columns (the sender caps first and says so). `name` goes through `xlSafeName`.
 - **BR-S1-3 · No formulas from the sender.** A string cell is plain text; one starting with `= + - @` gets a leading apostrophe. The only formulas are the receiver's own `SUM`s.
 - **BR-S1-4 · Receiver.** `sheetFromTable()` in `spreadsheet.js`: live push via `window.__orosOpenAt(target)`, boot take via `takeTarget()`. It marks the slice dirty like any import (it is user data from then on).
+
+### Cross-app "new quote" bridge: any app → Quote (BR-Q1)
+
+Owner: Quote (`quote/`). First sender: Timesheet (report "Create quote"). Same shape as BR-W8 / BR-B1.
+
+- **BR-Q1-1 · Contract.** `window.parent.__orosOpenQuoteNew({ items, cur?, client?, notes? })` → `true` (Quote opened or got the push) or `false` (rejected, nothing opens; also `false` when Quote is not installed).
+  - `items`: 1–50 lines `{ d, q, p }`: `d` description (plain text, ≤ 200 chars), `q` quantity `0 < q ≤ 100000`, `p` unit price in currency units (not cents) `0 ≤ p ≤ 10000000`; both rounded to 2 decimals.
+  - `cur`: `"EUR"` | `"USD"` (the only currencies Quote has). Any other given value rejects the call; senders check first and explain.
+  - `client`: client name (≤ 80 chars), matched case-insensitively against Quote's clients.
+  - `notes`: plain text, ≤ 500 chars.
+  - Control characters other than tab and newline are stripped from every text.
+- **BR-Q1-2 · One receiver.** `window.__orosQuoteNew` in `quote.js`: a live push when Quote is running, and the one-shot take of sessionStorage `oros-quote-new` at boot (read, then remove; device-local, never synced, never exported; taken before `oros-quote-open`).
+- **BR-Q1-3 · A PREFILL, not data (BR-W8-6).** A new draft opens on the Create tab with the lines (VAT = Quote's default), currency and client filled in. Nothing is saved until the user presses Save. If the current unsaved draft has content (client, notes, or a line with text or price), a confirm ("Replace the unsaved draft…?") comes first; Cancel leaves the draft as it was. An unknown client opens the New client dialog with the name filled in; the client exists only if the user saves that dialog. Every text is rendered as an input value / `textContent`.
+- **BR-Q1-4 · Timesheet sender.** Button `#rep-quote`, shown only when `typeof window.parent.__orosOpenQuoteNew === "function"`. `core.quoteLines()` uses the report's period and client/project/invoiced filters, billable time only, grouped by project: `d` = "Project · period" (`fmtRange`), `q` = billable hours (rounding prefs applied), `p` = the project's hourly rate. Lines with no billable time are dropped; `client` is sent only when every line belongs to one client. A currency other than EUR/USD shows a toast and sends nothing. Sending does not mark entries invoiced (that stays the report's own button).
 
 ### `LABEL_COLORS` (shared, 8)
 
@@ -3965,3 +3980,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** a real phone, Safari / iOS, Firefox, offline install on a real device.
 - **Core:** `apps.json` entry (System), `ICONS.help`, `app.help` (EN + EL), `sw.js` precache (Help + 13 topics + every registered app page, both languages), Tests workflow paths `help/**` and `**/help.*.txt`. `APP_VERSION` 0.48.00: main (0.47.05) + 1 minor (new app). Apps registered in 0.47.00 without a page yet are in `PENDING`.
 - **Status:** PR #63; not on `main` (R4).
+
+### 2026-10-09 — hotfix 0.48.01 — universal search works again
+- **Changes:** `apps.json` Mind Map lost a `"search": "search.js"` entry copied from Kanban by the bulk release; the file does not exist, so every universal search failed with "failed to load search.js" in 0.48.00. New test in `tests/search.test.js`: every `search` entry in `apps.json` must point to an existing file (PR #101).
+- **NOT tested:** a real phone, Safari / iOS.

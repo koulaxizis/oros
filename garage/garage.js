@@ -134,6 +134,10 @@
       "confirm.delVehicle": "Delete {name} and everything logged for it?", "confirm.del": "Delete this entry?",
       "confirm.yes": "Delete", "confirm.resend": "This was already sent to Budget. Send it again?", "confirm.send": "Send",
       "budget.note": "{vehicle} · {what}",
+      "rc.title": "Receipts", "rc.add": "Add a receipt photo", "rc.open": "Receipt {n}",
+      "rc.missing": "Not on this device", "rc.missingLong": "This photo is not on this device yet. It arrives with Vault Drive sync.",
+      "rc.where": "Kept in Files, folder Garage/Receipts.", "rc.remove": "Remove photo", "rc.close": "Close",
+      "rc.bad": "That image could not be read", "rc.noDisk": "The photo could not be saved",
       "live.added": "{what} added"
     },
     el: {
@@ -215,6 +219,10 @@
       "confirm.delVehicle": "Διαγραφή του «{name}» και όλων των καταχωρίσεών του;", "confirm.del": "Διαγραφή αυτής της καταχώρισης;",
       "confirm.yes": "Διαγραφή", "confirm.resend": "Αυτό έχει ήδη σταλεί στα Έσοδα & Έξοδα. Να σταλεί ξανά;", "confirm.send": "Αποστολή",
       "budget.note": "{vehicle} · {what}",
+      "rc.title": "Αποδείξεις", "rc.add": "Προσθήκη φωτογραφίας απόδειξης", "rc.open": "Απόδειξη {n}",
+      "rc.missing": "Όχι σε αυτή τη συσκευή", "rc.missingLong": "Η φωτογραφία δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive.",
+      "rc.where": "Φυλάσσεται στα Αρχεία, φάκελος Garage/Receipts.", "rc.remove": "Αφαίρεση", "rc.close": "Κλείσιμο",
+      "rc.bad": "Δεν ήταν δυνατό να διαβαστεί η εικόνα", "rc.noDisk": "Δεν ήταν δυνατό να αποθηκευτεί η φωτογραφία",
       "live.added": "Προστέθηκε: {what}"
     }
   };
@@ -415,11 +423,15 @@
       data[list].push(row);
       return "added";
     }
-    var changed = Object.keys(row).some(function (k) {
+    // rc (receipts) is present only when there is one: an absent key
+    // on the new row means "none" (and is a change if cur had some)
+    var keys = Object.keys(row);
+    if ("rc" in cur && !("rc" in row)) keys.push("rc");
+    var changed = keys.some(function (k) {
       return k !== "m" && JSON.stringify(cur[k]) !== JSON.stringify(row[k]);
     });
     if (!changed) return null;
-    Object.keys(row).forEach(function (k) { if (k !== "m") cur[k] = row[k]; });
+    keys.forEach(function (k) { if (k === "m") return; if (k in row) cur[k] = row[k]; else delete cur[k]; });
     stamp(cur);
     return "saved";
   }
@@ -440,6 +452,7 @@
       save();
       render();
     });
+    dropReceiptsLater(row.rc);
   }
 
   function deleteVehicle(v) {
@@ -462,6 +475,181 @@
       save();
       render();
     });
+    var names = [];
+    ["fuel", "service", "costs"].forEach(function (k) { kids[k].forEach(function (x) { names = names.concat(x.rc || []); }); });
+    dropReceiptsLater(names);
+  }
+
+  // ---------- 3b. Receipt photos (files on the orOS disk) ----------
+  // The row keeps names only (core.normRc); each JPEG is a file in
+  // Files under Garage/Receipts, synced by Vault Drive when the user
+  // runs it. Photos are re-drawn on a canvas (max 1600 px, JPEG): the
+  // file we keep has no EXIF / location and no foreign bytes.
+  var RC_MAX_IN = 40 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function rcRandom() {
+    var a = new Uint8Array(6), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 6; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function encodeReceipt(file) {
+    return new Promise(function (resolve) {
+      if (!file || file.size > RC_MAX_IN) { resolve(null); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 1600 / Math.max(w, h || 1));
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? b : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function rmReceipt(name) {
+    var fs = fsApi(), path = C.receiptPath(name);
+    if (!fs || !path) return Promise.resolve();
+    return Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  // A deleted row keeps its photos through the Undo window; then any
+  // name no row points at any more leaves the disk.
+  function dropReceiptsLater(names) {
+    if (!names || !names.length || !fsApi()) return;
+    var list = names.slice();
+    setTimeout(function () {
+      var used = C.receiptsOf(data);
+      list.forEach(function (n) { if (used.indexOf(n) < 0) rmReceipt(n); });
+    }, 12000);
+  }
+  // The receipts field of an editor. Photos added while it is open are
+  // written at once and removed again if the editor is left without
+  // saving; photos taken off an existing row leave the disk on save.
+  function receiptBox(dlg, x, rowId, dateIn) {
+    var fs = fsApi();
+    var cur = x && x.rc ? x.rc.slice() : [];
+    var orig = cur.slice(), added = [], urls = [], done = false;
+    var wrap = el("div", "fld");
+    if (!fs && !cur.length) return { wrap: null, names: function () { return cur.slice(); }, commit: function () {} };
+    wrap.appendChild(el("div", "dlg-lbl", t("rc.title")));
+    var grid = el("div", "rc-grid");
+    wrap.appendChild(grid);
+    function paint() {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      urls = [];
+      grid.innerHTML = "";
+      cur.forEach(function (name, i) {
+        var b = el("button", "rc-th");
+        b.type = "button";
+        b.setAttribute("aria-label", t("rc.open", { n: i + 1 }));
+        grid.appendChild(b);
+        thumbInto(b, name, function () { viewer(name); });
+      });
+      if (fs && cur.length < C.MAX_RC) {
+        var add = el("button", "rc-th rc-add", "+");
+        add.type = "button";
+        add.setAttribute("aria-label", t("rc.add"));
+        add.title = t("rc.add");
+        add.addEventListener("click", pick);
+        grid.appendChild(add);
+      }
+    }
+    function thumbInto(b, name, onOpen) {
+      b.addEventListener("click", onOpen);
+      if (!fs) { b.appendChild(el("span", "rc-miss", t("rc.missing"))); return; }
+      Promise.resolve(fs.readBlob(C.receiptPath(name))).then(function (blob) {
+        if (!blob) throw new Error("ENOENT");
+        var u = URL.createObjectURL(blob);
+        urls.push(u);
+        var im = el("img");
+        im.alt = "";
+        im.src = u;
+        b.appendChild(im);
+      }).catch(function () { b.appendChild(el("span", "rc-miss", t("rc.missing"))); });
+    }
+    function pick() {
+      var host = dialogHost();
+      var p = host && typeof host.openFile === "function" ? host.openFile("image/*") : localPickFile("image/*");
+      Promise.resolve(p).then(function (file) {
+        if (!file) return;
+        return encodeReceipt(file).then(function (blob) {
+          if (!blob) { showToast(t("rc.bad")); return; }
+          var name = C.receiptName(C.isYmd(dateIn.value) ? dateIn.value : todayYmd(), rowId, rcRandom());
+          if (!name) return;
+          return Promise.resolve(fs.writeBlob(C.receiptPath(name), blob)).then(function () {
+            if (done) { rmReceipt(name); return; }
+            added.push(name);
+            cur.push(name);
+            cur.sort(cmpStr);
+            paint();
+          });
+        });
+      }).catch(function () { showToast(t("rc.noDisk")); });
+    }
+    function viewer(name) {
+      var v = makeDialog("gr-rc-view", true);
+      v.appendChild(el("div", "dlg-title", t("rc.title")));
+      var box = el("div", "rc-view");
+      v.appendChild(box);
+      var u = null;
+      if (fs) Promise.resolve(fs.readBlob(C.receiptPath(name))).then(function (blob) {
+        if (!blob) throw new Error("ENOENT");
+        u = URL.createObjectURL(blob);
+        var im = el("img");
+        im.alt = t("rc.title");
+        im.src = u;
+        box.appendChild(im);
+      }).catch(function () { box.appendChild(el("p", "dlg-sub", t("rc.missingLong"))); });
+      else box.appendChild(el("p", "dlg-sub", t("rc.missingLong")));
+      v.appendChild(el("p", "dlg-sub", t("rc.where")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("rc.remove"), "danger", function () {
+        v.close();
+        cur = cur.filter(function (n) { return n !== name; });
+        if (added.indexOf(name) >= 0) { added = added.filter(function (n) { return n !== name; }); rmReceipt(name); }
+        paint();
+      }));
+      acts.appendChild(button(t("rc.close"), "primary", function () { v.close(); }));
+      v.appendChild(acts);
+      v.addEventListener("close", function () { if (u) URL.revokeObjectURL(u); });
+      showDialog(v);
+    }
+    dlg.addEventListener("close", function () {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      if (!done) { done = true; added.forEach(rmReceipt); }
+    });
+    paint();
+    return {
+      wrap: wrap,
+      names: function () { return cur.slice(); },
+      // after a successful save: photos taken off the row leave the disk
+      commit: function () {
+        done = true;
+        var gone = orig.filter(function (n) { return cur.indexOf(n) < 0; });
+        if (gone.length) setTimeout(function () {
+          var used = C.receiptsOf(data);
+          gone.forEach(function (n) { if (used.indexOf(n) < 0) rmReceipt(n); });
+        }, 0);
+      }
+    };
+  }
+  function withReceipts(row, rc) {
+    var names = rc.names();
+    if (names.length) row.rc = names;
+    return row;
   }
 
   // Budget bridge (contract: expenses/budget-bridge-contract.md, BR-W8
@@ -887,6 +1075,7 @@
       o.onOpen = function () { odoEditor(x, v.id); };
     }
     if (x.bud) parts.push({ text: t("log.sent") });
+    if (x.rc && x.rc.length) parts.push({ text: "📎 " + x.rc.length });
     o.sub = parts;
     if (x.c) o.value = money(x.c);
     return rowEl(o);
@@ -1589,6 +1778,9 @@
     form.appendChild(stF);
     var notes = textarea(x ? x.n : "");
     form.appendChild(field(t("f.notes"), notes, "gr-f-n"));
+    var rid = x ? x.id : newId();
+    var rc = receiptBox(dlg, x, rid, date);
+    if (rc.wrap) form.appendChild(rc.wrap);
     form.appendChild(actions(dlg, x ? function () { dlg.close(); removeRow("fuel", byId("fuel", x.id) || x); } : null, budgetButton(dlg, "fuel", x)));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -1599,11 +1791,12 @@
       if (!C.isYmd(date.value)) { showToast(t("toast.needDate")); date.focus(); return; }
       var c = readCents(total);
       if (c === null) { var p = readNum(price); c = p > 0 ? Math.round(p * q * 100) : 0; }
-      var row = {
-        id: x ? x.id : newId(), m: x ? x.m : 0, v: vid, d: date.value, km: k, q: Math.round(q * 1000), c: Math.min(c, C.C_MAX),
+      var row = withReceipts({
+        id: rid, m: x ? x.m : 0, v: vid, d: date.value, km: k, q: Math.round(q * 1000), c: Math.min(c, C.C_MAX),
         e: e, full: full.input.checked ? 1 : 0, mis: mis.input.checked ? 1 : 0,
         st: C.cleanText(st.value, C.SHORT_LEN, false), n: C.cleanText(notes.value, C.NOTES_LEN, true), bud: x ? x.bud : 0
-      };
+      }, rc);
+      rc.commit();
       dlg.close();
       afterSave(upsert("fuel", row), "fuel", row, t(e === "e" ? "kind.charge" : "kind.fuel"));
     });
@@ -1669,6 +1862,9 @@
     form.appendChild(r2);
     var notes = textarea(x ? x.n : "");
     form.appendChild(field(t("f.notes"), notes, "gr-s-n"));
+    var rid = x ? x.id : newId();
+    var rc = receiptBox(dlg, x, rid, date);
+    if (rc.wrap) form.appendChild(rc.wrap);
     form.appendChild(actions(dlg, x ? function () { dlg.close(); removeRow("service", byId("service", x.id) || x); } : null, budgetButton(dlg, "service", x)));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -1676,12 +1872,13 @@
       if (!C.isYmd(date.value)) { showToast(t("toast.needDate")); date.focus(); return; }
       var k = km.value.trim() ? readInt(km, 0, C.KM_MAX) : null;
       if (km.value.trim() && k === null) { showToast(t("toast.needKm")); km.focus(); return; }
-      var row = {
-        id: x ? x.id : newId(), m: x ? x.m : 0, v: vid, d: date.value, km: k,
+      var row = withReceipts({
+        id: rid, m: x ? x.m : 0, v: vid, d: date.value, km: k,
         items: C.ITEM_IDS.filter(function (it) { return picked.indexOf(it) >= 0; }),
         c: readCents(cost) || 0, shop: C.cleanText(shop.value, C.SHORT_LEN, false),
         n: C.cleanText(notes.value, C.NOTES_LEN, true), bud: x ? x.bud : 0
-      };
+      }, rc);
+      rc.commit();
       dlg.close();
       afterSave(upsert("service", row), "service", row, t("kind.service"));
     });
@@ -1712,6 +1909,9 @@
     form.appendChild(r2);
     var notes = textarea(x ? x.n : "");
     form.appendChild(field(t("f.notes"), notes, "gr-c-n"));
+    var rid = x ? x.id : newId();
+    var rc = receiptBox(dlg, x, rid, date);
+    if (rc.wrap) form.appendChild(rc.wrap);
     form.appendChild(actions(dlg, x ? function () { dlg.close(); removeRow("costs", byId("costs", x.id) || x); } : null, budgetButton(dlg, "costs", x)));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -1719,8 +1919,9 @@
       if (!c) { showToast(t("toast.needAmount")); amount.focus(); return; }
       if (!C.isYmd(date.value)) { showToast(t("toast.needDate")); date.focus(); return; }
       var k = km.value.trim() ? readInt(km, 0, C.KM_MAX) : null;
-      var row = { id: x ? x.id : newId(), m: x ? x.m : 0, v: vid, d: date.value, cat: cat.value, c: c, km: k,
-                  n: C.cleanText(notes.value, C.NOTES_LEN, true), bud: x ? x.bud : 0 };
+      var row = withReceipts({ id: rid, m: x ? x.m : 0, v: vid, d: date.value, cat: cat.value, c: c, km: k,
+                  n: C.cleanText(notes.value, C.NOTES_LEN, true), bud: x ? x.bud : 0 }, rc);
+      rc.commit();
       dlg.close();
       afterSave(upsert("costs", row), "costs", row, t("cat." + cat.value));
     });
