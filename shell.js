@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.60.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.61.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6482,7 +6482,9 @@
     try {
       var p = L.prefs() || {};
       return { on: !!p.on, size: p.size, magnify: !!p.magnify, autohide: !!p.autohide,
-               over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0 };
+               over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0,
+               style: typeof p.style === "string" ? p.style : null,
+               styles: Array.isArray(p.styles) ? p.styles.filter(function (k) { return typeof k === "string"; }) : [] };
     } catch (e) { return null; }
   }
 
@@ -6578,7 +6580,7 @@
       case "syncInterval": setSyncIntervalUser(Number(value)); return;
       case "autoexport":   setAutoexportUser(value); return;
     }
-    if (/^dock:(on|size|magnify|autohide|over)$/.test(name)) {
+    if (/^dock:(on|size|magnify|autohide|over|style)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
       return;

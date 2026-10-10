@@ -15,7 +15,7 @@
   var AT = window.AT, M = AT.M, T = AT.T, FX = AT.FX, AX = AT.AX, A = AT.A, t = AT.t, $ = AT.$, el = AT.el;
   var ED = AT.ed, ICONS = window.ATELIER_ICONS;
 
-  var RAIL = ["templates", "elements", "text", "sources", "uploads", "background"];
+  var RAIL = ["templates", "elements", "text", "brand", "sources", "uploads", "background"];
   var PALETTE = ["#000000", "#545454", "#737373", "#a6a6a6", "#d9d9d9", "#ffffff",
     "#ff3131", "#ff5757", "#ff66c4", "#cb6ce6", "#8c52ff", "#5e17eb",
     "#0097b2", "#0cc0df", "#5ce1e6", "#38b6ff", "#5271ff", "#004aad",
@@ -278,13 +278,30 @@
 
   // --- Text ---
   function baseSize() { return Math.min(AT.doc.setup.w, AT.doc.setup.h); }
+  // heading / subheading / body: size share, bold, sample, brand-kit slot
+  var TEXT_KINDS = [["heading", 0.09, 1, "txt.headingT", "h"], ["sub", 0.055, 1, "txt.subT", "s"], ["body", 0.035, 0, "txt.bodyT", "t"]];
+  // adds a text in the brand kit's font for that slot (when set)
+  AT.addBrandText = function (slot) {
+    var k = TEXT_KINDS.filter(function (x) { return x[4] === slot; })[0] || TEXT_KINDS[2];
+    var f = AT.brand && AT.brand.font(k[4]);
+    var spec = { k: "text", tx: t(k[3]), size: Math.round(baseSize() * k[1]), b: f ? f.b : k[2], fc: "#000000", autoW: 1 };
+    if (!f || f.f === "sans") { ED.add(spec, { edit: true }); return; }
+    AX.ensureFont(f.f);
+    spec.font = f.f;
+    var key = T.fontKey(f.f, spec.b, 0);
+    // the font may still be on its way; text falls back to Sans if it never comes
+    T.load([key, "sans-" + key.split("-")[1]]).then(function () { ED.add(spec, { edit: true }); }, function () { ED.add(spec, { edit: true }); });
+  };
   VIEWS.text = function (body) {
     var s = sec();
     var b0 = baseSize();
-    [["heading", 0.09, 1, "txt.headingT"], ["sub", 0.055, 1, "txt.subT"], ["body", 0.035, 0, "txt.bodyT"]].forEach(function (k) {
-      var b = btn("text-add " + k[0], t("txt." + k[0]), function () {
-        ED.add({ k: "text", tx: t(k[3]), size: Math.round(b0 * k[1]), b: k[2], fc: "#000000", autoW: 1 }, { edit: true });
-      });
+    TEXT_KINDS.forEach(function (k) {
+      var b = btn("text-add " + k[0], t("txt." + k[0]), function () { AT.addBrandText(k[4]); });
+      var f = AT.brand && AT.brand.font(k[4]);
+      if (f) {
+        var fk = T.fontKey(f.f, f.b, 0);
+        if (T.isLoaded(fk)) b.style.fontFamily = T.cssStack(fk) + ", sans-serif";
+      }
       s.appendChild(b);
     });
     body.appendChild(s);
@@ -333,6 +350,7 @@
   VIEWS.uploads = function (body) {
     var s = sec();
     s.appendChild(btn("btn primary block", t("up.add"), function () { AT.io.uploadImage(); }));
+    if (AT.video) s.appendChild(btn("btn block", t("vd.upload"), function () { AT.video.upload(); }));
     s.appendChild(el("p", "hint", t("up.hint")));
     body.appendChild(s);
     var ids = sessionUploads.slice();
@@ -356,7 +374,129 @@
     });
     s2.appendChild(g);
     body.appendChild(s2);
+    var s3 = sec(t("fm.h"));
+    s3.appendChild(btn("btn block", t("fm.open"), manageFiles));
+    body.appendChild(s3);
   };
+
+  // --- All files: see what is on this device, delete what nothing uses ---
+  // Pictures, videos and sounds live once in /internal/Assets, shared
+  // with Slides and Layout. A file counts as "in use" while any saved
+  // app data of this browser names it, so only unused files can be picked.
+  function fsApi() {
+    try { return (window.parent && window.parent.orosFS) || window.orosFS || null; }
+    catch (e) { return window.orosFS || null; }
+  }
+  // the disk's, Vault's and sync's own records name every file (their
+  // queues, manifests, last-synced copies): they are not designs
+  var BOOKKEEPING = /^oros-(vault|fs|sync)(-|$)/;
+  function usedFiles() {
+    var CL = window.AtelierClips, used = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!BOOKKEEPING.test(k)) CL.idsIn(localStorage.getItem(k), used);
+      }
+    } catch (e) { return null; }           // cannot tell: nothing is deletable
+    CL.idsIn(JSON.stringify(AT.data()), used);
+    return used;
+  }
+  function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + " MB"; }
+  function manageFiles() {
+    var F = fsApi(), CL = window.AtelierClips;
+    var ui = { files: null, used: {}, pick: {}, busy: false, err: "" };
+    AT.openDialog(t("fm.title"), function (body, close) {
+      function render() {
+        body.innerHTML = "";
+        body.appendChild(el("p", "hint", t("fm.hint")));
+        if (ui.err) body.appendChild(el("p", "hint", ui.err));
+        if (!ui.files) { body.appendChild(el("p", "hint", t("cv.checking"))); return; }
+        var free = ui.files.filter(function (f) { return !ui.used[f.id]; });
+        var n = Object.keys(ui.pick).length, size = 0, total = 0;
+        ui.files.forEach(function (f) { total += f.size; if (ui.pick[f.id]) size += f.size; });
+        body.appendChild(el("p", "cv-progress", t("fm.count", { n: ui.files.length, size: mb(total), free: free.length })));
+        if (!ui.files.length) body.appendChild(el("p", "hint", t("up.none")));
+        var bar = el("div", "fm-bar");
+        var allOn = free.length && free.every(function (f) { return ui.pick[f.id]; });
+        bar.appendChild(btn("btn small", allOn ? t("cv.none.sel") : t("fm.allFree", { n: free.length }), function () {
+          free.forEach(function (f) { if (allOn) delete ui.pick[f.id]; else ui.pick[f.id] = 1; });
+          render();
+        }));
+        if (!free.length) bar.lastChild.disabled = true;
+        body.appendChild(bar);
+        var g = el("div", "cv-grid");
+        ui.files.forEach(function (f) {
+          var inUse = !!ui.used[f.id];
+          var tile = el("label", "cv-tile" + (ui.pick[f.id] ? " on" : "") + (inUse ? " used" : ""));
+          var cb = el("input");
+          cb.type = "checkbox"; cb.checked = !!ui.pick[f.id]; cb.disabled = inUse || ui.busy;
+          cb.addEventListener("change", function () { if (cb.checked) ui.pick[f.id] = 1; else delete ui.pick[f.id]; render(); });
+          tile.appendChild(cb);
+          var th = el("span", "cv-thumb");
+          if (CL.isVideo(f.id) || CL.isSound(f.id)) th.appendChild(el("span", "fm-kind", CL.isVideo(f.id) ? "▶" : "♪"));
+          else { var img = el("img"); img.alt = ""; assetThumb(f.id, img); th.appendChild(img); }
+          tile.appendChild(th);
+          var kind = CL.isVideo(f.id) ? t("fm.video") : CL.isSound(f.id) ? t("vd.sound") : t("fm.picture");
+          tile.appendChild(el("span", "cv-name", kind + " · " + mb(f.size)));
+          tile.appendChild(el("span", "cv-meta", inUse ? t("fm.inUse") : t("fm.unused")));
+          g.appendChild(tile);
+        });
+        body.appendChild(g);
+        var act = el("div", "dlg-actions");
+        act.appendChild(btn("btn", t("btn.close"), close));
+        var del = btn("btn primary", t("fm.del", { n: n, size: mb(size) }), function () {
+          var ids = Object.keys(ui.pick);
+          AT.confirm(t("fm.ask", { n: ids.length }), t("home.delOk"), function () { removeFiles(ids); });
+        });
+        del.disabled = !n || ui.busy;
+        act.appendChild(del);
+        body.appendChild(act);
+      }
+      function load() {
+        if (!F) { ui.err = t("fm.nofs"); ui.files = []; render(); return; }
+        var used = usedFiles();
+        F.ls(A.FOLDER).then(null, function () { return []; }).then(function (list) {
+          var ids = list.filter(function (e) { return !e.dir && CL.isFileId(e.name); }).map(function (e) { return e.name; });
+          return Promise.all(ids.map(function (id) {
+            return F.stat(A.FOLDER + "/" + id).then(function (st) { return { id: id, size: st.size || 0 }; }, function () { return { id: id, size: 0 }; });
+          }));
+        }).then(function (files) {
+          // biggest first: that is what frees space
+          files.sort(function (a, b) { return b.size - a.size || (a.id < b.id ? -1 : 1); });
+          ui.files = files;
+          ui.used = used || {};
+          if (!used) { ui.err = t("fm.cantTell"); files.forEach(function (f) { ui.used[f.id] = 1; }); }
+          render();
+        });
+      }
+      // deleted one by one; the list is read again afterwards (the
+      // in-use check too, in case a design changed meanwhile)
+      function removeFiles(ids) {
+        AT.openDialog(t("fm.title"), function (b2) { body = b2; }, true);
+        var used = usedFiles() || {}, gone = 0;
+        ids = ids.filter(function (id) { return !used[id]; });
+        ui.busy = true; ui.pick = {};
+        render();
+        ids.reduce(function (p, id) {
+          return p.then(function () {
+            return F.rm(A.FOLDER + "/" + id).then(function () {
+              gone++;
+              delete upThumbs[id];
+              sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
+            }, function () {});
+          });
+        }, Promise.resolve()).then(function () {
+          ui.busy = false; ui.files = null;
+          AT.toast(t("fm.done", { n: gone }));
+          load();
+          if (view === "uploads") renderDrawer();
+        });
+      }
+      render();
+      load();
+    }, true);
+  }
+  AT.manageFiles = manageFiles;
 
   // --- Background ---
   function bgItem() { return AX.background(AT.doc, ED.pg); }
@@ -503,6 +643,8 @@
       if (a.k === "shape") { a.fc = c; delete a.g; }
     });
   }
+  AT.setColour = setColour;
+  AT.docColours = function () { return AT.doc ? docColours() : []; };
   function openColour(target) { openView("colour", target); }
 
   VIEWS.colour = function (body) {
@@ -510,6 +652,8 @@
     var it = sel1();
     var cur = kind === "bg" ? (bgItem() && bgItem().ax.fc) || "" : it ? currentColour(it, kind) : "";
     var allowNone = kind === "stroke" || (kind === "fill" && it && it.ax.k === "shape");
+    var bc = AT.brand ? AT.brand.colors() : [];
+    if (bc.length) { var sb = sec(t("col.brand")); sb.appendChild(swatches(cur, function (c) { setColour(kind, c); }, true, bc)); body.appendChild(sb); }
     var s0 = sec(t("col.doc"));
     var dc = docColours();
     if (dc.length) { s0.appendChild(swatches(cur, function (c) { setColour(kind, c); }, true, dc)); body.appendChild(s0); }
@@ -902,10 +1046,11 @@
     }));
     bar.appendChild(tool("mask", t("ctx.mask"), function () { openView("mask"); }, view === "mask"));
     bar.appendChild(tool("replace", t("ctx.replace"), function () { AT.io.uploadImage(it.id); }));
+    if (it.ax.vid) bar.insertBefore(btn("ctx-txt" + (view === "video" ? " on" : ""), t("ctx.video"), function () { openView("video"); }), bar.firstChild);
   }
 
   // ---------- 4. Wiring ----------
-  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1, fonts: 1 };
+  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1, fonts: 1, video: 1 };
   function viewFits() {
     if (!view || !CONTEXT_VIEWS[view] || view === "animate") return true;
     var one = sel1(), list = ED.selItems();
@@ -913,6 +1058,7 @@
     if (view === "colour") return colourTarget && colourTarget.kind === "bg" ? true : !!one;
     if (view === "effects") return one && one.ax.k === "text";
     if (view === "fonts") return list.some(function (it) { return it.ax.k === "text"; });
+    if (view === "video") return !!(one && one.ax.vid);
     return one && one.ax.k === "photo";
   }
 

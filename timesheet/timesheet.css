@@ -580,4 +580,8 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #run-card, #goal-fill, .icon-btn, #run-btn { transition: none; }
 }
 
+/* Wave 5: import preview */
+.imp-sum p { margin: 0 0 6px; }
+.imp-list { margin: 0 0 10px; padding-left: 20px; line-height: 1.6; }
+
 [hidden] { display: none !important; }
