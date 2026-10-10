@@ -4472,3 +4472,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: MAIL v1 accounts may carry `sig` (signature, synced). A device on the previous version can drop a signature when it pushes the same account, until it updates.
 - Tests: new tests/mail-send.test.js (compose, scripted SMTP 465/587, refused recipient, wrong password, IMAP APPEND); tests/mail.test.js extended. Help pages EN/EL and relay README updated.
 - Not tested: a real SMTP server (Papaki / pmail.gr), the deployed Worker, Safari, a real phone.
+
+### 2026-10-10 — Assistant phase 2: entry cards, read_item, conversation sync, Ask from anywhere (#155) — 0.67.00
+- Entry cards through the prefill bridges (BR-TD-ADD, BR-W8, BR-B1, BR-Q1, BR-S1, Slides outline, Bookmarks add, Notes add): the Assistant prepares a task, event, expense, quote, sheet, slides, bookmark or note; the user checks and saves it in that app.
+- `read_item` with consent (≤ 12 000 characters); conversation sync through Vault Drive files (opt-in, `cs` switch, tombstones); "Ask the Assistant" row in the menu search; Ctrl+Alt+Shift+A.
+- Shell: `orosAssistInstalled()`, `openAssistant(q?)`, SC_DEFS `a`, `appendAsk()`; translations `search.ask`, `sc.desc.assistant`; help topic Shortcuts.
+- Tests: tests/assistant.test.js (28).
+- Not tested: real provider calls with real keys, Safari/iPhone, a real phone, real Dropbox.
