@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.48.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.52.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -48,6 +48,7 @@
     // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
     autoexport:      "off"
@@ -179,6 +180,7 @@
     travel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M8 7v13M16 7v13"/></svg>',
     passwords: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10.5" width="18" height="11" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>',
     device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
+    settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
     connect4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="3"/><circle cx="7.5" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="15.5" r="1.8"/><circle cx="12" cy="10.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.8"/></svg>',
     dots: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M5 5v14M19 5v7M5 19h7"/><rect x="5" y="5" width="7" height="7" fill="currentColor" stroke="none" opacity=".35"/><circle cx="5" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>',
@@ -922,6 +924,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1094,6 +1097,63 @@
     if (now - healthLastTick < 60000) return;
     healthLastTick = now;
     healthCheckTick();
+  }
+
+  // Name days — morning notice when a CONTACT celebrates today.
+  // Reads "oros-contacts-data" directly (works with Calendar and
+  // Contacts CLOSED) and asks calendar/namedays.js (loaded by
+  // index.html, the SAME file the Calendar runs) who celebrates.
+  // From 09:00, one notice per day; the key is the same on every
+  // device (inbox dedup). Silent when the Calendar "Name days" chip
+  // is off on this device (oros-cal-feedvis) or no contact matches.
+  // Honest limit (alarms): orOS closed = nothing fires; the next boot
+  // the same day catches up.
+  var ND_HOUR = 9;
+  function namedayCheckTick() {
+    var ND = window.OrosNamedays;
+    if (!ND) return;                                    // stale bundle — silent
+    if (new Date().getHours() < ND_HOUR) return;
+    try {
+      var vis = JSON.parse(localStorage.getItem("oros-cal-feedvis") || "{}");
+      if (vis && vis["lbl-feed-nameday"] === false) return;
+    } catch (e) {}
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-contacts-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var today = sysYmd();
+    var who = [];
+    raw.contacts.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
+                : (typeof c.nickname === "string" ? c.nickname : "");
+      if (!first || !ND.celebrates(first, today)) return;
+      var full = [c.given, c.middle, c.family].filter(function (x) {
+        return typeof x === "string" && x.trim();
+      }).join(" ");
+      who.push((full || first).slice(0, 60));
+    });
+    if (!who.length) return;
+    var el = state.lang === "el";
+    var shown = who.slice(0, 3).join(", ");
+    if (who.length > 3) shown += el ? " και " + (who.length - 3) + " ακόμα" : " and " + (who.length - 3) + " more";
+    N.emit({
+      ns: "calendar",
+      key: "nameday-" + today,
+      type: "reminder",
+      title: el ? "Ονομαστικές εορτές" : "Name days",
+      body: (el ? "Σήμερα γιορτάζει: " : "Name day today: ") + shown,
+      deepLink: "calendar:nameday:" + today
+    });
+  }
+
+  var namedayLastTick = 0;
+  function namedayCheckTickThrottled() {
+    var now = Date.now();
+    if (now - namedayLastTick < 60000) return;
+    namedayLastTick = now;
+    namedayCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -1682,18 +1742,8 @@
     var menu = document.getElementById("app-menu");
     // SH-B3 (form rebuild discipline): this function rebuilds the whole
     // menu, and it is called by background events too (sync messages,
-    // account e-mail, install prompt). Without capture/restore every
-    // toggle threw the menu back to the top, closed the per-app list
-    // and wiped a half-typed passphrase.
+    // account e-mail, install prompt): keep the scroll position.
     var keepTop  = menu.scrollTop;
-    var keepApps = !!menu.querySelector("details:not(.search-apps)[open]");
-    var oldPw    = menu.querySelector(".sync-pass .input-row input");
-    var oldRem   = menu.querySelector("#sync-remember");
-    var keepPw   = oldPw ? {
-      value:    oldPw.value,
-      focus:    document.activeElement === oldPw,
-      remember: oldRem ? oldRem.checked : null
-    } : null;
     menu.innerHTML = "";
 
     var heading = document.createElement("div");
@@ -2114,15 +2164,28 @@
     }
     }   // renderAppList
 
-    renderSkinSwatches(menu);
-    renderWallpaperSection(menu);
-    if (window.orosLauncher) window.orosLauncher.renderSettings(menu);   // Dock
+    // System settings live in the Settings app (settings/, System).
+    // The Dock section stays here only for a launcher.js without the
+    // prefs API the Settings app needs.
+    if (window.orosLauncher && typeof window.orosLauncher.setPref !== "function") {
+      window.orosLauncher.renderSettings(menu);
+    }
     renderInstallRow(menu);
-    renderPetSection(menu);        // Soffitta port: desktop companion
-    renderSyncSection(menu);
-    renderNotifsSection(menu);   // Wave 1B: notification settings
-    renderSearchSection(menu);   // universal search: per-app switches
     if (window.orosLauncher) window.orosLauncher.refresh();   // desktop shortcuts follow apps + language
+
+    // Settings row: every system setting lives in the Settings app.
+    var setRow = document.createElement("div");
+    setRow.className = "install-section";
+    var setBtn = document.createElement("button");
+    setBtn.className = "menu-item install-row";
+    setBtn.innerHTML = '<span class="app-ico">' + ICONS.settings + '</span>' +
+                       '<span>' + escapeHtml(window.t("menu.settings")) + '</span>';
+    setBtn.addEventListener("click", function () {
+      closeMenu();
+      openAppById("settings");
+    });
+    setRow.appendChild(setBtn);
+    menu.appendChild(setRow);
 
     // Device Info row (Chris 2026-10-09): where people look when
     // something is wrong — space, sync state, missing browser features.
@@ -2151,71 +2214,8 @@
     infoRow.appendChild(infoBtn);
     menu.appendChild(infoRow);
 
-    // SH-B3: restore what the rebuild destroyed.
-    if (keepApps) {
-      var newApps = menu.querySelector("details:not(.search-apps)");
-      if (newApps) newApps.open = true;
-    }
-    if (keepPw) {
-      var newPw  = menu.querySelector(".sync-pass .input-row input");
-      var newRem = menu.querySelector("#sync-remember");
-      if (newPw) {
-        newPw.value = keepPw.value;
-        if (keepPw.focus) newPw.focus();
-      }
-      if (newRem && keepPw.remember !== null) newRem.checked = keepPw.remember;
-    }
     menu.scrollTop = keepTop;
     settingsNotify();            // the Settings app repaints too
-  }
-
-  // Universal search — which apps the menu field searches. One chip
-  // per app that ships a provider; device-local (searchPrefs).
-  function renderSearchSection(host) {
-    var apps = searchApps();
-    if (!apps.length) return;
-    var section = document.createElement("div");
-    section.className = "sync-section";
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = window.t("search.title");
-    section.appendChild(heading);
-
-    var det = document.createElement("details");
-    det.className = "search-apps";
-    det.open = searchToggleOpen;
-    det.addEventListener("toggle", function () { searchToggleOpen = det.open; });
-    var sum = document.createElement("summary");
-    sum.textContent = window.t("search.in");
-    det.appendChild(sum);
-    var hint = document.createElement("div");
-    hint.className = "search-apps-hint";
-    hint.textContent = window.t("search.in.hint");
-    det.appendChild(hint);
-    var col = document.createElement("div");
-    col.className = "search-apps-list";
-    apps.map(function (a) {
-      var k = "app." + a.id, v = window.t(k);
-      return { id: a.id, label: (v === k) ? a.name : v };
-    }).sort(function (a, b) {
-      return a.label.localeCompare(b.label, state.lang === "el" ? "el" : "en");
-    }).forEach(function (a) {
-      var lab = document.createElement("label");
-      var cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = searchEnabled(a.id);
-      cb.addEventListener("change", function () {
-        setSearchEnabled(a.id, cb.checked);
-      });
-      lab.appendChild(cb);
-      var txt = document.createElement("span");
-      txt.textContent = a.label;
-      lab.appendChild(txt);
-      col.appendChild(lab);
-    });
-    det.appendChild(col);
-    section.appendChild(det);
-    host.appendChild(section);
   }
 
   // User changes of appearance (menu + Settings app). Each one is a
@@ -2247,96 +2247,6 @@
     applyWallpaper();
     noteLocalChange();
     renderMenu();
-  }
-
-  function renderSkinSwatches(host) {
-    var section = document.createElement("div");
-    section.className = "skin-section";
-
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = window.t("skin.title");
-    section.appendChild(heading);
-
-    var controls = document.createElement("div");
-    controls.className = "skin-controls";
-
-    var swatches = document.createElement("div");
-    swatches.className = "skin-swatches";
-
-    SKINS.forEach(function (s) {
-      var sw = document.createElement("button");
-      sw.className = "skin-swatch" + (state.skin === s.id ? " active" : "");
-      sw.style.background = s.color;
-      sw.setAttribute("title", skinTitle(s.id));
-      sw.setAttribute("aria-label", skinTitle(s.id));
-      sw.addEventListener("click", function () { setSkinUser(s.id); });
-      swatches.appendChild(sw);
-    });
-
-    controls.appendChild(swatches);
-
-    var divider = document.createElement("div");
-    divider.className = "skin-divider";
-    controls.appendChild(divider);
-
-    var themeBtn = document.createElement("button");
-    themeBtn.className = "theme-toggle";
-    themeBtn.innerHTML = state.theme === "dark" ? MOON_SVG : SUN_SVG;
-    themeBtn.setAttribute("title",
-      window.t(state.theme === "dark" ? "theme.toLight" : "theme.toDark"));
-    themeBtn.setAttribute("aria-label", themeBtn.getAttribute("title"));
-    themeBtn.addEventListener("click", function () {
-      setThemeUser(state.theme === "dark" ? "light" : "dark");
-    });
-    controls.appendChild(themeBtn);
-
-    section.appendChild(controls);
-    host.appendChild(section);
-  }
-
-  // Wallpaper picker: grid of gradient thumbnails. Each thumb carries
-  // its actual CSS class, so what you see is literally what you get.
-  function renderWallpaperSection(host) {
-    var section = document.createElement("div");
-    section.className = "wallpaper-section";
-
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = window.t("wallpaper.title");
-    section.appendChild(heading);
-
-    var grid = document.createElement("div");
-    grid.className = "wallpaper-grid";
-
-    WALLPAPERS.forEach(function (w) {
-      var thumb = document.createElement("button");
-      thumb.className = "wp-thumb wp-" + w.id +
-                        (state.wallpaper === w.id ? " active" : "");
-      thumb.setAttribute("title", wallpaperTitle(w.id));
-      thumb.setAttribute("aria-label", wallpaperTitle(w.id));
-      if (w.id === "custom") {
-        if (!state.wpart || !wpArt()) {
-          // Nothing made yet: the thumb opens the Wallpaper Generator.
-          thumb.classList.add("wp-make");
-          thumb.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
-          thumb.setAttribute("title", window.t("wallpaper.make"));
-          thumb.setAttribute("aria-label", window.t("wallpaper.make"));
-          thumb.addEventListener("click", function () { openAppById("wallpaper"); });
-          grid.appendChild(thumb);
-          return;
-        }
-        var bgc = wpArt().colors(state.wpart, wpAccent()).bg;
-        thumb.style.background = (wpShown && wpShown.url) ? wpBg(bgc, wpShown.url) : bgc;
-      } else {
-        thumb.style.background = w.css;   // WYSIWYG — same source as desktop
-      }
-      thumb.addEventListener("click", function () { setWallpaperUser(w.id); });
-      grid.appendChild(thumb);
-    });
-
-    section.appendChild(grid);
-    host.appendChild(section);
   }
 
   function skinTitle(id) {
@@ -3465,517 +3375,6 @@
     });
   }
 
-  function renderSyncSection(host) {
-    var section = document.createElement("div");
-    section.className = "sync-section";
-
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = window.t("sync.title");
-    section.appendChild(heading);
-
-    var connected = window.orosSync && window.orosSync.isConnected();
-    var status = document.createElement("div");
-    status.className = "sync-status";
-    status.innerHTML =
-      '<span>' +
-      (connected
-        ? window.t("sync.connected") +
-          (state.syncUserEmail ? ' · <span class="email">' + escapeHtml(state.syncUserEmail) + '</span>' : "")
-        : window.t("sync.disconnected")) +
-      '</span>';
-    section.appendChild(status);
-
-    if (!connected) {
-      var connectRow = document.createElement("div");
-      connectRow.className = "sync-actions";
-      var connectBtn = document.createElement("button");
-      connectBtn.className = "menu-item";
-      connectBtn.innerHTML = CLOUD_ICON_SVG + "<span>" + window.t("sync.connect") + "</span>";
-      connectBtn.addEventListener("click", function () {
-        window.orosSync.connect();
-      });
-      connectRow.appendChild(connectBtn);
-      section.appendChild(connectRow);
-    } else if (!window.orosSync.hasPassphrase()) {
-      // --- Connected, locked: passphrase input + eye + remember checkbox ---
-      var passWrap = document.createElement("div");
-      passWrap.className = "sync-pass";
-
-      var label = document.createElement("label");
-      label.textContent = window.t("sync.pass.label");
-      passWrap.appendChild(label);
-
-      var inputRow = document.createElement("div");
-      inputRow.className = "input-row";
-
-      var input = document.createElement("input");
-      input.type = "password";
-      input.setAttribute("placeholder", window.t("sync.pass.placeholder"));
-      input.autocomplete = "off";
-      inputRow.appendChild(input);
-
-      var eyeBtn = document.createElement("button");
-      eyeBtn.type = "button";
-      eyeBtn.className = "pass-eye";
-      eyeBtn.innerHTML = EYE_SVG;
-      eyeBtn.setAttribute("title", window.t("sync.pass.show"));
-      eyeBtn.setAttribute("aria-label", window.t("sync.pass.show"));
-      eyeBtn.addEventListener("click", function () {
-        var show = input.type === "password";
-        input.type = show ? "text" : "password";
-        eyeBtn.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
-        input.focus();
-      });
-      inputRow.appendChild(eyeBtn);
-
-      passWrap.appendChild(inputRow);
-
-      var hint = document.createElement("div");
-      hint.className = "hint";
-      hint.textContent = window.t("sync.pass.first.hint");
-      passWrap.appendChild(hint);
-
-      var rememberRow = document.createElement("label");
-      rememberRow.className = "remember-row";
-      var rememberCb = document.createElement("input");
-      rememberCb.type = "checkbox";
-      rememberCb.id = "sync-remember";
-      // Pre-check if this device already trusts the vault (re-unlock case)
-      rememberCb.checked = window.orosSync.hasDeviceVault();
-      rememberRow.appendChild(rememberCb);
-      var rememberTxt = document.createElement("span");
-      rememberTxt.textContent = window.t("sync.pass.remember");
-      rememberRow.appendChild(rememberTxt);
-      passWrap.appendChild(rememberRow);
-
-      var row = document.createElement("div");
-      row.className = "row";
-      var unlockBtn = document.createElement("button");
-      unlockBtn.className = "menu-item";
-      unlockBtn.textContent = window.t("sync.pass.apply");
-      unlockBtn.addEventListener("click", function () {
-        syncUnlock(input.value, rememberCb.checked);
-      });
-      row.appendChild(unlockBtn);
-      passWrap.appendChild(row);
-      section.appendChild(passWrap);
-    } else {
-      // --- Connected + unlocked: actions ---
-      var actions = document.createElement("div");
-      actions.className = "sync-actions";
-
-      var pullBtn = document.createElement("button");
-      pullBtn.className = "menu-item";
-      pullBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.pull") + "</span>";
-      pullBtn.addEventListener("click", scForcePull);
-      actions.appendChild(pullBtn);
-
-      var pushBtn = document.createElement("button");
-      pushBtn.className = "menu-item";
-      pushBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.push") + "</span>";
-      pushBtn.addEventListener("click", syncPushNow);
-      actions.appendChild(pushBtn);
-
-      section.appendChild(actions);
-
-      // Auto-sync interval selector (device-local setting, but the
-      // chosen value is carried in the shell slice)
-      var intervalRow = document.createElement("div");
-      intervalRow.className = "sync-interval";
-      var iLabel = document.createElement("label");
-      iLabel.textContent = window.t("sync.interval.label");
-      intervalRow.appendChild(iLabel);
-      var sel = document.createElement("select");
-      [0, 1, 3, 5, 15].forEach(function (m) {
-        var opt = document.createElement("option");
-        opt.value = String(m);
-        opt.textContent = m === 0
-          ? window.t("sync.interval.off")
-          : m + " " + window.t("sync.interval.minutes");
-        if (m === getSafeInterval()) opt.selected = true;
-        sel.appendChild(opt);
-      });
-      sel.addEventListener("change", function () {
-        setSyncIntervalUser(parseInt(sel.value, 10));
-      });
-      intervalRow.appendChild(sel);
-      section.appendChild(intervalRow);
-
-      // Utilities row: forget (device-aware) + disconnect
-      var utils = document.createElement("div");
-      utils.className = "sync-actions";
-
-      var hasVault = window.orosSync.hasDeviceVault();
-      var forgetBtn = document.createElement("button");
-      forgetBtn.className = "menu-item";
-      forgetBtn.textContent = hasVault
-        ? window.t("sync.pass.device")
-        : window.t("sync.pass.forget");
-      forgetBtn.addEventListener("click", syncForgetHere);
-      utils.appendChild(forgetBtn);
-
-      var chpwBtn = document.createElement("button");
-      chpwBtn.className = "menu-item";
-      chpwBtn.textContent = window.t("sync.changepw");
-      chpwBtn.addEventListener("click", function () {
-        closeMenu();
-        showChangePassDialog();
-      });
-      utils.appendChild(chpwBtn);
-
-      var discBtn = document.createElement("button");
-      discBtn.className = "menu-item";
-      discBtn.textContent = window.t("sync.disconnect");
-      discBtn.addEventListener("click", syncDisconnectUser);
-      utils.appendChild(discBtn);
-
-      section.appendChild(utils);
-    }
-
-    // Auto-backup selector — independent of the Dropbox connection.
-    // SH-B4: built always (the mode travels in the shell slice), but
-    // appended only where the File System Access API exists. On
-    // Firefox / Safari / mobile the selector promised a backup that
-    // can never be written.
-    var autoRow = document.createElement("div");
-    autoRow.className = "sync-interval";
-    var autoLabel = document.createElement("label");
-    autoLabel.textContent = window.t("sync.autoexport.label");
-    autoRow.appendChild(autoLabel);
-    var autoSel = document.createElement("select");
-    [["off", "sync.autoexport.off"],
-     ["daily", "sync.autoexport.daily"],
-     ["weekly", "sync.autoexport.weekly"],
-     ["monthly", "sync.autoexport.monthly"]].forEach(function (pair) {
-      var opt = document.createElement("option");
-      opt.value = pair[0];
-      opt.textContent = window.t(pair[1]);
-      if (state.autoexport === pair[0]) opt.selected = true;
-      autoSel.appendChild(opt);
-    });
-    autoSel.addEventListener("change", function () {
-      setAutoexportUser(autoSel.value);
-    });
-    autoRow.appendChild(autoSel);
-    if (fsSupported()) section.appendChild(autoRow);
-
-    // Backup folder (option 2 — File System Access API, Chromium
-    // desktop only; the row is never rendered where unsupported)
-    if (fsSupported()) {
-      var folderRow = document.createElement("div");
-      folderRow.className = "sync-interval";
-      var folderLabel = document.createElement("label");
-      var folderName = localStorage.getItem(FS_FOLDER_NAME_KEY);
-      var lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
-      if (folderName) {
-        folderLabel.textContent = window.t("sync.fsfolder.label") + ": " + folderName +
-          (lapsed ? " ⚠ " + window.t("sync.fsfolder.lapsed") : "");
-      } else {
-        folderLabel.textContent = window.t("sync.fsfolder.label");
-      }
-      folderRow.appendChild(folderLabel);
-
-      var folderBtn = document.createElement("button");
-      folderBtn.className = "menu-item";
-      if (folderName && lapsed) {
-        // Permission lapsed: one click re-grants, then an instant
-        // manual write proves recovery. (requestPermission REQUIRES
-        // user activation — this click handler is the only valid place.)
-        folderBtn.textContent = window.t("sync.fsfolder.reconnect");
-        folderBtn.addEventListener("click", function () {
-          reconnectFolder();
-        });
-      } else if (folderName) {
-        folderBtn.textContent = window.t("sync.fsfolder.stop");
-        folderBtn.addEventListener("click", function () {
-          stopFolderBackups();
-        });
-      } else {
-        folderBtn.textContent = window.t("sync.fsfolder.choose");
-        folderBtn.addEventListener("click", function () {
-          chooseBackupFolder();
-        });
-      }
-      folderRow.appendChild(folderBtn);
-      section.appendChild(folderRow);
-    }
-
-    // Local backup: unencrypted export/import — works offline,
-    // independent of the Dropbox connection state
-    var backupRow = document.createElement("div");
-    backupRow.className = "sync-actions";
-
-    var exportBtn = document.createElement("button");
-    exportBtn.className = "menu-item";
-    exportBtn.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + window.t("sync.export") + "</span>";
-    exportBtn.addEventListener("click", scExportDb);
-    backupRow.appendChild(exportBtn);
-
-    var importBtn = document.createElement("button");
-    importBtn.className = "menu-item";
-    importBtn.innerHTML = UPLOAD_ICON_SVG + "<span>" + window.t("sync.import") + "</span>";
-
-    importBtn.addEventListener("click", importBackupFile);
-    backupRow.appendChild(importBtn);
-    section.appendChild(backupRow);
-
-    var backupHint = document.createElement("div");
-    backupHint.className = "sync-hint";
-    backupHint.textContent = window.t("sync.backup.hint");
-    section.appendChild(backupHint);
-
-    if (state.syncMsg) {
-      var msg = document.createElement("div");
-      msg.className = "sync-msg " + state.syncMsg.kind;
-      msg.textContent = state.syncMsg.text;
-      section.appendChild(msg);
-    }
-
-    host.appendChild(section);
-  }
-  
-    // ---------- 9g. Notifications settings (Wave 1B) ----------
-  // Renders ONLY when notifications.js is present (progressive: a
-  // stale cached index.html without the module shows nothing —
-  // zero breakage). All writes go through window.orosNotifs —
-  // the module owns settingsRev + noteChange, so every change
-  // travels via the sync engine with LWW semantics.
-  function renderNotifsSection(host) {
-    var N = window.orosNotifs;
-    if (!N || typeof N.getSetting !== "function") return;
-
-    var section = document.createElement("div");
-    section.className = "sync-section";
-
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = window.t("notifs.title");
-    section.appendChild(heading);
-
-    // — Master toggle + test notification —
-    var on = !!N.getSetting("enabled", true);
-
-    var masterRow = document.createElement("div");
-    masterRow.className = "sync-actions";
-
-    var toggleBtn = document.createElement("button");
-    toggleBtn.className = "menu-item";
-    toggleBtn.textContent = window.t(on ? "notifs.on" : "notifs.off");
-    toggleBtn.addEventListener("click", function () {
-      N.setSetting("enabled", !on);
-      renderMenu();
-    });
-    masterRow.appendChild(toggleBtn);
-
-    var testBtn = document.createElement("button");
-    testBtn.className = "menu-item";
-    testBtn.textContent = window.t("notifs.test");
-    testBtn.addEventListener("click", function () {
-      // Plain item — fireToast never touches the inbox, so the
-      // test leaves no trace in history and no dedup residue.
-      N.fireToast({
-        id: "test_" + Date.now(),
-        ns: "system",
-        type: "test",
-        title: window.t("notifs.test.title"),
-        body: window.t("notifs.test.body")
-      }, false);
-    });
-    masterRow.appendChild(testBtn);
-    section.appendChild(masterRow);
-
-    // — Select-row factory (same visual contract as the sync
-    // interval selector: label + native select) —
-    function mkSelectRow(labelKey, options, current, onChange) {
-      var row = document.createElement("div");
-      row.className = "sync-interval";
-      var lbl = document.createElement("label");
-      lbl.textContent = window.t(labelKey);
-      row.appendChild(lbl);
-      var sel = document.createElement("select");
-      options.forEach(function (opt) {
-        var o = document.createElement("option");
-        o.value = opt.value;
-        o.textContent = opt.label;
-        if (opt.value === current) o.selected = true;
-        sel.appendChild(o);
-      });
-      sel.addEventListener("change", function () { onChange(sel.value); });
-      row.appendChild(sel);
-      return row;
-    }
-
-    // — Position (8) — module TOAST_POSITIONS mirrored 1:1 —
-    var posIds = ["top-left", "top", "top-right", "right",
-                  "bottom-right", "bottom", "bottom-left", "left"];
-    var posKeys = {
-      "top-left": "topleft", "top": "top", "top-right": "topright",
-      "right": "right", "bottom-right": "bottomright", "bottom": "bottom",
-      "bottom-left": "bottomleft", "left": "left"
-    };
-    section.appendChild(mkSelectRow("notifs.position",
-      posIds.map(function (p) {
-        return { value: p, label: window.t("notifs.pos." + posKeys[p]) };
-      }),
-      N.getSetting("position", "bottom-right"),
-      function (v) { N.setSetting("position", v); }));
-
-    // — Style (4) — proper nouns (skin/desktop culture names), no i18n —
-    section.appendChild(mkSelectRow("notifs.style",
-      ["oros", "dunst", "plasma", "gnome"].map(function (s) {
-        return { value: s, label: s.charAt(0).toUpperCase() + s.slice(1) };
-      }),
-      N.getSetting("style", "oros"),
-      function (v) { N.setSetting("style", v); }));
-
-    // — Sound (4) —
-    section.appendChild(mkSelectRow("notifs.sound",
-      [["none", "notifs.sound.none"], ["bell", "notifs.sound.bell"],
-       ["ding", "notifs.sound.ding"], ["chime", "notifs.sound.chime"]]
-        .map(function (p) { return { value: p[0], label: window.t(p[1]) }; }),
-      N.getSetting("sound", "none"),
-      function (v) { N.setSetting("sound", v); }));
-
-    // — Volume (range, palette-aware) —
-    var volRow = document.createElement("div");
-    volRow.className = "sync-interval";
-    var volLbl = document.createElement("label");
-    volLbl.textContent = window.t("notifs.volume");
-    volRow.appendChild(volLbl);
-    var volWrap = document.createElement("div");
-    volWrap.style.cssText = "display:flex;align-items:center;gap:8px;";
-    var vol = document.createElement("input");
-    vol.type = "range";
-    vol.min = "0"; vol.max = "1"; vol.step = "0.05";
-    vol.value = String(N.getSetting("soundVolume", 0.7));
-    vol.style.cssText =
-      "width:110px;accent-color:var(--accent);cursor:pointer;margin:0;";
-    var volPct = document.createElement("span");
-    volPct.style.cssText =
-      "font-size:12px;color:var(--text-dim);min-width:36px;" +
-      "text-align:right;font-variant-numeric:tabular-nums;";
-    volPct.textContent = Math.round(parseFloat(vol.value) * 100) + "%";
-    vol.addEventListener("input", function () {
-      volPct.textContent = Math.round(parseFloat(vol.value) * 100) + "%";
-    });
-    vol.addEventListener("change", function () {
-      N.setSetting("soundVolume", parseFloat(vol.value));
-    });
-    volWrap.appendChild(vol);
-    volWrap.appendChild(volPct);
-    volRow.appendChild(volWrap);
-    section.appendChild(volRow);
-
-    // — Duration — "2s"/"5s"… universal notation (no i18n needed) —
-    section.appendChild(mkSelectRow("notifs.duration",
-      [[2000, "2s"], [5000, "5s"], [8000, "8s"], [12000, "12s"]]
-        .map(function (p) { return { value: p[0], label: p[1] }; }),
-      N.getSetting("duration", 5000),
-      function (v) { N.setSetting("duration", parseInt(v, 10)); }));
-
-    // — Quiet hours: toggle + From/To hour selects —
-    var qhCur = N.getSetting("quietHours", {}) || {};
-    var qhOn  = !!qhCur.enabled;
-    var qStart = (typeof qhCur.quietHoursStart === "number") ? qhCur.quietHoursStart : 22;
-    var qEnd   = (typeof qhCur.quietHoursEnd === "number") ? qhCur.quietHoursEnd : 8;
-
-    // Writes the FULL legacy-compatible shape: isQuietHour reads the
-    // numeric pair, from/to strings ride along for any consumer.
-    function writeQuiet(enabled, start, end) {
-      function pad(n) { return (n < 10 ? "0" : "") + n; }
-      N.setSetting("quietHours", {
-        enabled: enabled,
-        quietHoursStart: start,
-        quietHoursEnd: end,
-        from: pad(start) + ":00",
-        to: pad(end) + ":00"
-      });
-    }
-
-    var quietRow = document.createElement("div");
-    quietRow.className = "sync-actions";
-    var quietBtn = document.createElement("button");
-    quietBtn.className = "menu-item";
-    quietBtn.textContent = window.t("notifs.quiet") + ": " +
-      window.t(qhOn ? "notifs.on" : "notifs.off");
-    quietBtn.addEventListener("click", function () {
-      writeQuiet(!qhOn, qStart, qEnd);
-      renderMenu();
-    });
-    quietRow.appendChild(quietBtn);
-    section.appendChild(quietRow);
-
-    function mkHourRow(labelKey, current, setter) {
-      var opts = [];
-      for (var h = 0; h <= 23; h++) {
-        var hh = (h < 10 ? "0" : "") + h;
-        opts.push({ value: h, label: hh + ":00" });
-      }
-      return mkSelectRow(labelKey, opts, current, setter);
-    }
-
-    section.appendChild(mkHourRow("notifs.quiet.from", qStart, function (v) {
-      writeQuiet(qhOn, parseInt(v, 10), qEnd);
-    }));
-    section.appendChild(mkHourRow("notifs.quiet.to", qEnd, function (v) {
-      writeQuiet(qhOn, qStart, parseInt(v, 10));
-    }));
-
-    // — Per-app toggles (module's knownApps, mirrored 1:1) —
-    // Expandable per-app block: native <details>/<summary> (zero JS
-    // open/close state) + compact wrapped chips instead of one full
-    // row per app. One menu line when collapsed, tidy grid when open.
-    var appsDetails = document.createElement("details");
-    appsDetails.style.cssText =
-      "margin-top:6px;border:1px solid var(--border);border-radius:8px;" +
-      "padding:0 10px;";
-    var appsSummary = document.createElement("summary");
-    appsSummary.style.cssText =
-      "padding:7px 0;font-size:12px;font-weight:600;color:var(--text-dim);" +
-      "cursor:pointer;user-select:none;";
-    appsSummary.textContent = window.t("notifs.apps");
-    appsDetails.appendChild(appsSummary);
-
-    var appsCol = document.createElement("div");
-    appsCol.style.cssText =
-      "display:flex;flex-wrap:wrap;gap:6px 14px;padding:2px 0 10px;";
-    // Wave 6 — the list comes from the module (getKnownApps): one
-    // source of truth, no mirrored arrays. "time" = alarms,
-    // "system" = sync/version/sc results — toggleable like any app.
-    var knownApps = (typeof N.getKnownApps === "function")
-      ? N.getKnownApps()
-      : ["calendar", "cycle", "mood", "todo", "habits"];
-    knownApps.forEach(function (appId) {
-      var label = document.createElement("label");
-      label.style.cssText =
-        "display:flex;align-items:center;gap:6px;font-size:12px;" +
-        "color:var(--text-dim);cursor:pointer;";
-      var cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.style.cssText = "margin:0;accent-color:var(--accent);";
-      cb.checked = N.getAppToggle(appId);
-      cb.addEventListener("change", function () {
-        N.setAppToggle(appId, cb.checked);   // N1 makes this travel
-      });
-      label.appendChild(cb);
-      var txt = document.createElement("span");
-      if (appId === "system") {
-        txt.textContent = "orOS";                            // the shell itself
-      } else {
-        var nameKey = "app." + appId;
-        var tv = window.t(nameKey);
-        txt.textContent = (tv === nameKey) ? appId : tv;    // apps.json fallback
-      }
-      label.appendChild(txt);
-      appsCol.appendChild(label);
-    });
-    appsDetails.appendChild(appsCol);
-    section.appendChild(appsDetails);
-
-    host.appendChild(section);
-  }
-  
     // v0.9 Part 4 — "passphrase changed on another device" dialog.
   // Entered from ANY passphrase-class sync failure (auto reconcile,
   // manual pull/push, unlock flow). Retry-friendly: a second wrong
@@ -4143,7 +3542,23 @@
       return;
     }
     var key = window.orosSync.errorKey(err);
+    if (key === "sync.err.generic") { setSyncMsgRaw("err", syncErrText(err)); return; }
     setSyncMsg("err", key);
+  }
+
+  // SY-L2: the message for a failed sync, with the technical reason
+  // when the engine only knows "generic" ("Sync failed — check your
+  // connection (upload failed: 429)"). Plain text, shown with
+  // textContent only.
+  function syncErrText(err) {
+    var S = window.orosSync;
+    var key = (S && typeof S.errorKey === "function") ? S.errorKey(err) : "sync.err.generic";
+    var text = window.t(key);
+    if (key === "sync.err.generic") {
+      var why = String((err && (err.message || err.name)) || "").replace(/[\u0000-\u001f]/g, " ").slice(0, 120);
+      if (why) text += " (" + why + ")";
+    }
+    return text;
   }
 
   function escapeHtml(s) {
@@ -4656,6 +4071,8 @@
 
   var osResetting = false;
 
+  // Factory reset moved to Settings → System (two taps there, same
+  // wipe: scFactoryReset). The Info modal keeps a way to it.
   function wireResetButton(ov) {
     var wrap = ov.querySelector("#sc-reset-wrap");
     if (!wrap) return;
@@ -4665,35 +4082,11 @@
       "display:block;width:100%;margin-top:12px;padding:7px 12px;" +
       "border:1px solid var(--border);border-radius:8px;background:transparent;" +
       "color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;";
-    btn.textContent = window.t("sc.reset");
-    var armed = false, hint = null, disarmTimer = null;
-
+    btn.textContent = window.t("sc.reset.moved");
     btn.addEventListener("click", function () {
-      if (btn.disabled) return;
-      if (!armed) {
-        armed = true;
-        btn.textContent = window.t("sc.reset.confirm");
-        btn.style.borderColor = "var(--danger)";
-        btn.style.color = "var(--danger)";
-        hint = document.createElement("div");
-        hint.style.cssText =
-          "font-size:11px;line-height:1.5;color:var(--text-dim);" +
-          "margin-top:6px;text-align:center;";
-        hint.textContent = window.t("sc.reset.hint");
-        wrap.appendChild(hint);
-        disarmTimer = setTimeout(function () {
-          armed = false;
-          btn.textContent = window.t("sc.reset");
-          btn.style.borderColor = "var(--border)";
-          btn.style.color = "var(--text-dim)";
-          if (hint && hint.parentNode) hint.remove();
-        }, 10000);
-        return;
-      }
-      clearTimeout(disarmTimer);
-      scFactoryReset(btn);
+      if (scInfoClose) scInfoClose();
+      window.orosSettings.open("system");
     });
-
     wrap.appendChild(btn);
   }
 
@@ -5382,56 +4775,6 @@
   };
 
 
-  // ---------- 9h. Screen Pet toggle (Soffitta port) ----------
-  // The pet is a SHELL component (pet.js, loaded before shell.js):
-  // its own overlay layer (#pet-layer), its own storage
-  // ("oros-pet-data") and its own sync slice registered directly on
-  // window.orosSync. The shell owns ONLY the on/off switch —
-  // device-local key "oros-pet-enabled", ergonomics like the menu
-  // category collapse (never synced, never dirty). Progressive: a
-  // stale bundle without pet.js renders NOTHING here (zero breakage).
-  function petT(en, el) {
-    return state.lang === "el" ? el : en;
-  }
-
-  function renderPetSection(host) {
-    if (!window.orosPet || typeof window.orosPet.toggle !== "function") return;
-
-    var section = document.createElement("div");
-    section.className = "sync-section";
-
-    var heading = document.createElement("div");
-    heading.className = "menu-heading";
-    heading.textContent = petT("Screen Pet", "Συντροφάκι");
-    section.appendChild(heading);
-
-    var row = document.createElement("div");
-    row.className = "sync-actions";
-
-    var on = (typeof window.orosPet.isEnabled === "function")
-      ? !!window.orosPet.isEnabled() : false;
-
-    var toggle = document.createElement("button");
-    toggle.className = "menu-item";
-    toggle.textContent = petT(on ? "On" : "Off", on ? "Ενεργό" : "Ανενεργό");
-    toggle.addEventListener("click", function () {
-      window.orosPet.toggle();
-      renderMenu();
-    });
-    row.appendChild(toggle);
-
-    section.appendChild(row);
-
-    var hint = document.createElement("div");
-    hint.className = "sync-hint";
-    hint.textContent = petT(
-      "A tiny companion on your desktop · Feed it, pet it, let it sleep",
-      "Ένας μικρός σύντροφος στην επιφάνεια εργασίας · Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί");
-    section.appendChild(hint);
-
-    host.appendChild(section);
-  }
-
   function initSyncIntegration() {
     registerShellSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
@@ -5457,10 +4800,21 @@
     // Subtle auto-sync feedback: the status dot pulses while the engine
     // pushes in the background. No messages, no interruptions.
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
-      window.orosSync.onAutoSync(function (kind) {
+      window.orosSync.onAutoSync(function (kind, reason, err) {
         if (kind === "start") setSyncDot("syncing");
-        else if (kind === "fail") setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
-        else setSyncDot("synced", 4000);   // transient green, then auto
+        else if (kind === "fail") {
+          setSyncDot("err", 6000);   // v0.9: a failed background sync no longer flashes green
+          // SY-L2: say WHY, quietly (no toast, no inbox): in the dot's
+          // tooltip and as a line in Settings > Sync (bridge snapshot
+          // sync.msg), until the next sync that succeeds.
+          state.syncAutoErr = syncErrText(err);
+          var dotEl = document.getElementById("sync-dot");
+          if (dotEl) dotEl.parentNode.setAttribute("title", window.t("syncdot.err") + " — " + state.syncAutoErr);
+          renderMenu();
+        } else {
+          setSyncDot("synced", 4000);   // transient green, then auto
+          if (state.syncAutoErr) { state.syncAutoErr = null; renderMenu(); }
+        }
       });
     }
 
@@ -6730,6 +6084,23 @@
     }, 0);
   }
 
+  // The Dock (launcher.js) keeps its own device-local prefs; the
+  // Settings app shows them only when launcher.js offers prefs() and
+  // setPref() (otherwise the menu keeps the launcher's own section).
+  function settingsLauncher() {
+    var L = window.orosLauncher;
+    return (L && typeof L.prefs === "function" && typeof L.setPref === "function") ? L : null;
+  }
+  function settingsDock() {
+    var L = settingsLauncher();
+    if (!L) return null;
+    try {
+      var p = L.prefs() || {};
+      return { on: !!p.on, size: p.size, magnify: !!p.magnify, autohide: !!p.autohide,
+               over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0 };
+    } catch (e) { return null; }
+  }
+
   function settingsSnapshot() {
     var S = window.orosSync || null;
     var connected = !!(S && S.isConnected());
@@ -6777,7 +6148,8 @@
         interval: getSafeInterval(),
         intervals: [0, 1, 3, 5, 15],
         minPass: MIN_PASS_LEN,
-        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text } : null
+        msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
+           : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
       },
       backup: {
         folderSupported: fsSupported(),
@@ -6790,6 +6162,7 @@
         return { id: a.id, name: (v === k) ? a.name : v, on: searchEnabled(a.id) };
       }),
       install: !!state.deferredPrompt,
+      dock: settingsDock(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -6819,6 +6192,11 @@
         return;
       case "syncInterval": setSyncIntervalUser(Number(value)); return;
       case "autoexport":   setAutoexportUser(value); return;
+    }
+    if (/^dock:(on|size|magnify|autohide|over)$/.test(name)) {
+      var L = settingsLauncher();
+      if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
+      return;
     }
     if (/^search:/.test(name)) {
       var id = name.slice(7);
@@ -6999,14 +6377,10 @@
   // menu at the passphrase section (no new i18n keys needed).
   function syncNowFromDot() {
     if (!window.orosSync) return;
-    if (!window.orosSync.isConnected()) {
-      setSyncMsgRaw("err", window.t("sc.err.notconnected"));
-      return;
-    }
-    if (!window.orosSync.hasPassphrase()) {
-      // Locked: the passphrase UI lives only in the menu — open it.
-      if (state.running) returnToDesktop();
-      document.getElementById("app-menu").classList.add("open");
+    if (!window.orosSync.isConnected() || !window.orosSync.hasPassphrase()) {
+      // Off or locked: connecting and the passphrase live in
+      // Settings → Sync — open it there.
+      window.orosSettings.open("sync");
       return;
     }
     setSyncMsgRaw("dim", window.t("sync.working"));

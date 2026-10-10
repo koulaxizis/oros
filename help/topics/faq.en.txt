@@ -10,7 +10,7 @@ Yes. orOS is free, open source and self-hostable. There are no cookies and no tr
 Yes. orOS saves itself on your device, so it opens and works without internet. Apps that fetch live information, such as Weather, Radio, Television and Maps, need a connection for that part. See [Troubleshooting](help:t/troubleshooting) if an app says it hasn't been saved for offline use yet.
 
 ### How do I install it?
-When your browser offers it, `Install orOS` appears in the menu. Tap or click it to add orOS to your home screen or desktop like a normal app. See [installing orOS](help:t/install).
+When your browser offers it, `Install orOS` appears in the menu, and `Install orOS as an app` in `Settings` under `System`. Tap or click it to add orOS to your home screen or desktop like a normal app. See [installing orOS](help:t/install).
 
 ## Your data
 
@@ -18,7 +18,7 @@ When your browser offers it, `Install orOS` appears in the menu. Tap or click it
 In your browser, on the device you're using. orOS keeps nothing on a server of its own, and there is no account. See [Your data and files](help:t/data).
 
 ### How do I get my data out?
-Open the menu, go to `Sync` and tap `Export data`. You get one file with everything, including your files. Keep in mind it is not encrypted. See [Backup and restore](help:t/backup).
+Open `Settings`, go to `Backups` and tap `Export backup file`. You get one file with everything, including your files. Keep in mind it is not encrypted. See [Backup and restore](help:t/backup).
 
 ## Sync
 

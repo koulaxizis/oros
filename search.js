@@ -34,6 +34,7 @@
   var MIN_CHARS   = 2;      // data search starts at 2 characters
   var PER_APP_MAX = 50;     // hits kept per provider
   var TIMEOUT_MS  = 1000;   // slower providers are skipped
+  var LOAD_MS     = 3000;   // a provider file that has not loaded by then is skipped
   var SNIPPET_LEN = 90;
   var FILE_RE     = /^[a-z0-9][a-z0-9_-]{0,40}\.js$/;
 
@@ -269,6 +270,9 @@
           s.src = src;
           s.async = true;
           s.onload = s.onerror = function () { resolve(); };
+          // A file that never answers (missing provider, stalled
+          // request) must not hold every other app's results back.
+          setTimeout(resolve, LOAD_MS);
           doc.head.appendChild(s);
         });
       }

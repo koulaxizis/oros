@@ -1976,6 +1976,31 @@
     if (v) window.__orosPetcareOpen(v);
   }
 
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { pet, rec }. Opens the pet's health book and the record's
+  // editor, as a record row click does. Unknown record → no-op; an
+  // open dialog (unsaved edits) wins → no-op.
+  function openSearchTarget(t) {
+    var r = t && typeof t.rec === "string" ? recById(t.rec) : null;
+    var p = r ? petById(r.p) : null;
+    if (!p || document.querySelector("dialog[open]")) return;
+    openPet(p.id);
+    prefs.sub = "health";
+    savePrefs();
+    render();
+    recEditor(p, r.k, r.id, null);
+  }
+  window.__orosOpenAt = openSearchTarget;
+  function takeSearchTarget() {
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("petcare");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
+  }
+
   // ---------- 12. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
@@ -2141,6 +2166,7 @@
     watchPalette();
     render();
     takeStaged();
+    takeSearchTarget();
   }
 
   boot();
