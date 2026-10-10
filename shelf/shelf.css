@@ -491,4 +491,10 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .bar i, .card, .icon-btn { transition: none; }
 }
 
+/* ---------- CSV import preview ---------- */
+.csv-p { font-size: 14px; margin-bottom: 8px; }
+.csv-list { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.csv-list li { padding: 6px 10px; border-radius: 8px; background: var(--accent-soft); overflow-wrap: anywhere; }
+.hint.warn { color: var(--danger); }
+
 [hidden] { display: none !important; }

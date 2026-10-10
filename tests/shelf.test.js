@@ -27,7 +27,7 @@ const S = new Function("crypto",
   block("  // ---------- 2. Model", "  // ---------- 5. Storage") +
   "\nreturn { TYPES, MAX_TAGS, TITLE_LEN, REV_LEN, isYmd, dayNum, fold, normItem, normSess, normTags, parseTags," +
   " mergeShelf, sessOf, currentRun, progressOf, completions, paceOf, goalState, yearStats, viewList, matches," +
-  " initials, inkFor, COLORS, hasProgress, unitKey };")(webcrypto);
+  " initials, inkFor, COLORS, hasProgress, unitKey, parseCsv, csvKind, planImport };")(webcrypto);
 
 const I1 = "item000001", I2 = "item000002", I3 = "item000003";
 function item(id, m, over) {
@@ -219,4 +219,105 @@ test("covers: initials skip articles, ink is readable", () => {
   assert.ok(S.hasProgress({ type: "podcast" }));
   assert.ok(!S.hasProgress({ type: "album" }));
   assert.equal(S.unitKey({ type: "book", fmt: "a" }), "audio");
+});
+
+// ---------- CSV import (Goodreads, Letterboxd) ----------
+const GR_HEAD = "Book Id,Title,Author,Author l-f,Additional Authors,ISBN,ISBN13,My Rating,Average Rating,Publisher,Binding,Number of Pages,Year Published,Original Publication Year,Date Read,Date Added,Bookshelves,Bookshelves with positions,Exclusive Shelf,My Review,Spoiler,Private Notes,Read Count,Owned Copies";
+const GR = [GR_HEAD,
+  '1,"Dune (Dune, #1)",Frank Herbert,"Herbert, Frank",,"=""0441013597""","=""9780441013593""",5,4.27,Ace,Paperback,604,2005,1965,2024/03/02,2024/01/15,"sci-fi, read, classics","sci-fi (#3)",read,"Great.<br/>Spice &amp; ""sand""",,,1,0',
+  '2,Middlemarch,George Eliot,"Eliot, George",,,,0,3.99,Penguin,Kindle Edition,880,2003,1871,,2024/05/01,currently-reading,,currently-reading,,,,0,0',
+  '3,The Hobbit,J.R.R. Tolkien,"Tolkien, J.R.R.",,,,0,4.28,,Audible Audio,,2012,1937,,2023/11/11,to-read,,to-read,,,,0,0',
+  '4,Ulysses,James Joyce,"Joyce, James",,,,2,3.7,,Hardcover,730,1990,1922,,2022/02/02,"did-not-finish, modernism",,did-not-finish,,,,0,0'
+].join("\r\n") + "\r\n";
+const LB_WL = "Date,Name,Year,Letterboxd URI\n2024-02-01,Arrival,2016,https://boxd.it/a1\n2024-02-02,Heat,1995,https://boxd.it/h1\n";
+const LB_WATCHED = "Date,Name,Year,Letterboxd URI\n2024-03-05,Heat,1995,https://boxd.it/h1\n2024-04-01,Alien,1979,https://boxd.it/al\n";
+const LB_RATINGS = "Date,Name,Year,Letterboxd URI,Rating\n2024-03-05,Heat,1995,https://boxd.it/h1,4.5\n";
+const LB_DIARY = "Date,Name,Year,Letterboxd URI,Rating,Rewatch,Tags,Watched Date\n2024-03-06,Heat,1995,https://boxd.it/h1d,4.5,,\"crime, la\",2024-03-05\n2024-06-06,Heat,1995,https://boxd.it/h1e,5,Yes,,2024-06-01\n";
+const LB_REVIEWS = "Date,Name,Year,Letterboxd URI,Rating,Rewatch,Review,Tags,Watched Date\n2024-03-06,Heat,1995,https://boxd.it/h1d,4.5,,\"Best <i>heist</i>.\",,2024-03-05\n";
+const OPTS = { now: 1700000000000, today: "2026-10-10" };
+const EMPTY = { ver: 1, items: [], sess: [], goals: {}, tombs: {} };
+const byTitle = (plan, title) => plan.items.find((x) => x.title === title);
+const sessFor = (plan, it) => plan.sess.filter((s) => s.it === it.id).map((s) => s.k + ":" + s.d + (s.v !== undefined ? ":" + s.v : ""));
+
+test("parseCsv: quotes, escaped quotes, commas and newlines inside, CRLF, BOM, blank lines", () => {
+  assert.deepEqual(S.parseCsv('﻿a,b\r\n"x, y","say ""hi""\nthere"\r\n\r\n,last'),
+    [["a", "b"], ["x, y", 'say "hi"\nthere'], ["", "last"]]);
+  assert.deepEqual(S.parseCsv(""), []);
+});
+
+test("csvKind: Goodreads library and each Letterboxd file", () => {
+  const head = (txt) => S.parseCsv(txt)[0];
+  assert.equal(S.csvKind(head(GR), "x.csv"), "gr");
+  assert.equal(S.csvKind(head(LB_WL), "watchlist.csv"), "lb-watchlist");
+  assert.equal(S.csvKind(head(LB_WATCHED), "watched.csv"), "lb-watched");
+  assert.equal(S.csvKind(head(LB_RATINGS), "ratings.csv"), "lb-ratings");
+  assert.equal(S.csvKind(head(LB_DIARY), "diary.csv"), "lb-diary");
+  assert.equal(S.csvKind(head(LB_REVIEWS), "reviews.csv"), "lb-reviews");
+  assert.equal(S.csvKind(["Name", "Phone"], "contacts.csv"), null);
+});
+
+test("Goodreads: shelves → status, binding → format, rating, dates, tags, review as text", () => {
+  const plan = S.planImport([{ name: "goodreads_library_export.csv", text: GR }], EMPTY, OPTS);
+  assert.equal(plan.items.length, 4);
+  assert.deepEqual(plan.counts.book, { want: 1, now: 1, done: 1, drop: 1 });
+  const dune = byTitle(plan, "Dune (Dune, #1)");
+  assert.equal(dune.st, "done");
+  assert.equal(dune.rate, 10);
+  assert.equal(dune.year, 1965);                                  // original publication year
+  assert.equal(dune.size, 604);
+  assert.equal(dune.fmt, "p");
+  assert.deepEqual(dune.tags, ["sci-fi", "classics"]);            // exclusive shelves dropped
+  assert.equal(dune.rev, 'Great.\nSpice & "sand"');
+  assert.deepEqual(sessFor(plan, dune), ["d:2024-03-02"]);
+  const mm = byTitle(plan, "Middlemarch");
+  assert.equal(mm.fmt, "e");
+  assert.deepEqual(sessFor(plan, mm), ["s:2024-05-01"]);
+  assert.equal(byTitle(plan, "The Hobbit").fmt, "a");
+  assert.deepEqual(sessFor(plan, byTitle(plan, "The Hobbit")), []);
+  const u = byTitle(plan, "Ulysses");
+  assert.equal(u.st, "drop");
+  assert.deepEqual(u.tags, ["modernism"]);
+  // Everything it returns is already valid shelf data.
+  const merged = S.mergeShelf({ ...EMPTY, items: plan.items, sess: plan.sess }, EMPTY);
+  assert.equal(merged.items.length, 4);
+  assert.equal(merged.sess.length, plan.sess.length);
+});
+
+test("Letterboxd: files combine per film; diary dates count each watch; watchlist only if never watched", () => {
+  const files = [
+    { name: "reviews.csv", text: LB_REVIEWS }, { name: "diary.csv", text: LB_DIARY },
+    { name: "ratings.csv", text: LB_RATINGS }, { name: "watched.csv", text: LB_WATCHED },
+    { name: "watchlist.csv", text: LB_WL }, { name: "profile.csv", text: "Username,Bio\nx,y\n" }
+  ];
+  const plan = S.planImport(files, EMPTY, OPTS);
+  assert.deepEqual(plan.unknown, ["profile.csv"]);
+  assert.deepEqual(plan.items.map((x) => x.title).sort(), ["Alien", "Arrival", "Heat"]);
+  const heat = byTitle(plan, "Heat");
+  assert.equal(heat.st, "done");
+  assert.equal(heat.rate, 9);                                     // ratings.csv (4.5) beats a log's 5
+  assert.equal(heat.year, 1995);
+  assert.deepEqual(heat.tags, ["crime", "la"]);
+  assert.equal(heat.rev, "Best heist.");
+  assert.deepEqual(sessFor(plan, heat), ["d:2024-03-05", "d:2024-06-01"]);
+  assert.equal(byTitle(plan, "Arrival").st, "want");
+  assert.deepEqual(sessFor(plan, byTitle(plan, "Alien")), ["d:2024-04-01"]);
+  assert.deepEqual(plan.counts.film, { want: 1, now: 0, done: 2, drop: 0 });
+  // Same input, same plan (apart from new ids): order of files does not matter.
+  const again = S.planImport(files.slice().reverse(), EMPTY, OPTS);
+  assert.deepEqual(again.items.map((x) => [x.title, x.st, x.rate]).sort(), plan.items.map((x) => [x.title, x.st, x.rate]).sort());
+});
+
+test("import skips titles already on the shelf and repeats inside the files", () => {
+  const have = S.mergeShelf({ ...EMPTY, items: [item(I1, 1, { title: "dune (dune, #1)", by: "FRANK HERBERT" }),
+    item(I2, 1, { type: "film", title: "Heat", year: 1995 })] }, EMPTY);
+  const plan = S.planImport([{ name: "a.csv", text: GR }, { name: "b.csv", text: GR },
+    { name: "watchlist.csv", text: LB_WL }], have, OPTS);
+  assert.equal(plan.dup, 2);                                      // Dune and Heat
+  assert.equal(plan.found, 6);
+  assert.deepEqual(plan.items.map((x) => x.title).sort(), ["Arrival", "Middlemarch", "The Hobbit", "Ulysses"]);
+  assert.equal(S.planImport([{ name: "x.csv", text: "" }], have, OPTS).items.length, 0);
+  // Without ratings.csv the newest log's rating is used.
+  const logOnly = S.planImport([{ name: "diary.csv", text: LB_DIARY }], EMPTY, OPTS);
+  assert.equal(logOnly.items[0].rate, 10);
+  assert.equal(logOnly.items.length, 1);
 });

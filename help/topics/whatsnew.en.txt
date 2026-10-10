@@ -3,6 +3,11 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 0.60.00
 - New app in Internet: One-Minute Museum shows a Wikipedia article as a museum exhibit, a new one every minute; star the ones you like to keep them, offline too.
+- Media Shelf: import your Goodreads or Letterboxd CSV exports, with a preview, duplicates skipped and Undo.
+- Travel: send your "Before I leave" list or what is still to pack to To-Do as a new list.
+- Chore Wheel: send an open chore to To-Do from its ⋯ menu.
+- Calendar: a new "Work time" label shows your Timesheet hours per project each day; tap a row to open that day in Timesheet.
+- [Mind Map](app:mindmap) can save a branch or the whole map as a note in [Notes](app:notes).
 
 ## Version 0.59.00
 - [Mind Map](app:mindmap) can link any two ideas, lets you place a branch where you want it, shows small pictures, imports FreeMind and XMind files, and sends a branch to [To-Do](app:todo) or [Slides](app:slides).
