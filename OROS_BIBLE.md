@@ -1425,6 +1425,7 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - **BR-TD-ADD-3 · Meal Planner sender.** Button `#sh-todo` on the Shopping tab sends the unticked items of the list on screen (the week shown, "From today" applied): `text` = "qty name" as in Copy, `note` = "for <recipes>", `list` = `tdl-groceries`. Ticks in Meal Planner are not changed.
 - **BR-TD-ADD-4 · Chore Wheel sender.** "Send to To-Do" in a chore's actions dialog (only while it is open, not done or skipped): one item, `text` = icon + chore name, `note` = "Chore Wheel · <day or range>" (+ " · <member>" when it is someone else's), no `list` (To-Do's open list). The chore's "done" stays in Chore Wheel only; nothing syncs back.
 - **BR-TD-ADD-5 · Travel sender (0.60.02, #133).** Trip menu items "Send "Before I leave" to To-Do" and "Send "Still to pack" to To-Do", shown only when the bridge exists and the list has open items: `newList` = "<trip> · before I leave" / "<trip> · to pack" (≤ 60 chars), `from` = Travel, `items` = the open (not done) packing items of the `@before` group or of all other groups (≤ 200): `text` = name or "n × name" when qty > 1, `note` = who · note. A copy, not a live link; Travel data is not changed.
+- **BR-TD-ADD-6 · Garage sender (0.61.02, #140).** "→ To-Do" in the head of Overview's "Coming up" sends every row shown there (alerts first, then the next renewals / service items, up to 5); a "To-Do" button in the renewal and service-plan editors sends that one. No `list` (To-Do's open list), `from` = Garage / Γκαράζ. `text`: KTEO "Book the KTEO test · <vehicle>", other renewals "Renew <what> · <vehicle>", service "Book a service: <item> · <vehicle>", tyres "Replace tyres: <set> · <vehicle>". `note` = "Garage · expires <date>" (or the due date / km) · provider · reference · plate. Shown only when `__orosOpenAt` exists. Garage data is not changed.
 
 ### `LABEL_COLORS` (shared, 8)
 
@@ -4337,3 +4338,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - "Show over open apps" is now off on every device until chosen: only the never-chosen value (`null`) changes meaning (was "follow the pointer"); an explicit choice is kept. `overApps()` = `p.over === true`.
 - Shell settings bridge passes `style`/`styles` and accepts `dock:style`; the Settings app shows a select (fits 360 px).
 - Tests 1203/1203; shell check desktop 1280 EN + phone 390 EL, all eight styles, no overflow, no page errors. Not tested: a real phone, Safari, light-theme screenshots.
+
+### 2026-10-10 — Garage v1.2.0: appointments to To-Do (#140) — 0.61.02
+- "→ To-Do" on Overview's "Coming up" sends every row shown there (alerts first, up to 5); a "To-Do" button in the renewal and service-plan editors sends one. To-Do opens its add dialog prefilled with "From: Garage" ("Book the KTEO test · Golf", "Renew Insurance · Golf", "Book a service: Oil · Golf"); notes hold the date or km, provider, reference and plate. Nothing is added before Add (BR-TD-ADD-6).
+- Only garage/garage.js changes; Garage data is not changed. Closes the last open item of the Garage plan (Travel's trip fuel cost already reads Garage, #110).
+- Shell check EL 360 px: three rows arrived with their notes, `oros-todo-data` unchanged before Add, no console errors. Not tested: a real phone, Safari.
