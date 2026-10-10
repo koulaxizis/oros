@@ -4203,3 +4203,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Fuel cost by car:** distance (one way / round trip), consumption and price per litre or kWh; vehicles, full-to-full average and last price come read-only from Garage (`garage/core.js`, now also loaded by Travel); total and per traveller; "Add to notes".
 - **Files:** NEW `travel/core.js` (OrosTravelCore, also loaded by the shell and Calendar; precached), `travel/`, `calendar/`, `shell.js`, `notifications.js`, `index.html`, `translations.js`, `tests/travel-core.test.js` (7), `tests/travel.test.js`.
 - **Not tested:** a real phone, Safari, real Dropbox, the live Open-Meteo endpoint on a device.
+
+### 2026-10-10 — Baby phase 2: reminders + Calendar feed — 0.57.03
+- **Reminders (optional, per device, off by default, only while orOS is open):** feed gap (2-6 h) and a daily medicine / vitamin time. Settings in device-local `oros-baby-rem` `{feed, med, mt}`; shell engine `babyCheckTick` (60 s throttle); notifications ns `baby` (KNOWN_APPS), keys `feed-<kid>-<lastFeedId>` (one per gap) and `med-<YYYY-MM-DD>`, deep link `system:open:baby`.
+- **Calendar:** read-only **Baby** feed (`lbl-feed-baby`, `#f4a3c8`): milestones, vaccines, doctor visits, monthly age up to 2 years, then birthdays; a click opens Baby.
+- **Core:** `baby/core.js` 1.1.0 adds `readRem`, `reminderDue`, `reminderText`, `calendarRows`; slice format unchanged.
+- **Also:** `tests/passwords.test.js` caps check compares the whole value, so hyphenated EFF short-list words ("yo-yo") no longer fail it at random.
+- **Not tested:** a real phone, Safari, real Dropbox.
