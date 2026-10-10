@@ -64,6 +64,7 @@
       "trees.newTitle": "New tree", "trees.renameTitle": "Rename tree",
       "menu.exportImg": "Export image (SVG, PNG, print)…", "menu.exportJson": "Back up this tree (JSON)",
       "menu.exportAll": "Back up all trees (JSON)", "menu.import": "Import JSON…",
+      "menu.gedImport": "Import GEDCOM…", "menu.gedExport": "Export GEDCOM…",
       "menu.contacts": "Build from Contacts…", "menu.gens": "Generations…", "menu.add": "Add a person",
       "card.close": "Close", "card.edit": "Edit", "card.focus": "Centre here", "card.contact": "Open in Contacts",
       "card.refresh": "Fill in from the contact", "card.del": "Delete",
@@ -107,6 +108,10 @@
       "imp.go": "Import", "imp.err.size": "The file is too big (5 MB at most)",
       "imp.err.json": "This is not a valid JSON file", "imp.err.format": "This is not a Family Tree backup",
       "imp.err.toolarge": "The file has too many entries", "imp.done": "Imported", "imp.nothing": "Nothing new to import",
+      "ged.title": "Export GEDCOM", "ged.sub": "A .ged file (GEDCOM 5.5.1) of this tree, for other genealogy programs.",
+      "ged.download": "Download", "ged.newTree": "It comes in as a new tree: “{name}”.",
+      "ged.err.size": "The file is too big (15 MB at most)", "ged.err.format": "This is not a GEDCOM file",
+      "ged.err.empty": "There are no people in this GEDCOM file",
       "toast.undo": "Undo", "toast.deleted": "{name} deleted", "toast.treeDeleted": "Tree “{name}” deleted",
       "toast.save": "Could not save: storage is full", "toast.exported": "Exported", "toast.saved": "Saved to Files",
       "toast.noFiles": "Files is not available here", "toast.twoParents": "{name} already has two parents",
@@ -130,6 +135,7 @@
       "trees.newTitle": "Νέο δέντρο", "trees.renameTitle": "Μετονομασία δέντρου",
       "menu.exportImg": "Εξαγωγή εικόνας (SVG, PNG, εκτύπωση)…", "menu.exportJson": "Αντίγραφο αυτού του δέντρου (JSON)",
       "menu.exportAll": "Αντίγραφο όλων των δέντρων (JSON)", "menu.import": "Εισαγωγή JSON…",
+      "menu.gedImport": "Εισαγωγή GEDCOM…", "menu.gedExport": "Εξαγωγή GEDCOM…",
       "menu.contacts": "Χτίσιμο από τις Επαφές…", "menu.gens": "Γενιές…", "menu.add": "Προσθήκη προσώπου",
       "card.close": "Κλείσιμο", "card.edit": "Επεξεργασία", "card.focus": "Κέντρο εδώ", "card.contact": "Άνοιγμα στις Επαφές",
       "card.refresh": "Συμπλήρωση από την επαφή", "card.del": "Διαγραφή",
@@ -173,6 +179,10 @@
       "imp.go": "Εισαγωγή", "imp.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 5 MB)",
       "imp.err.json": "Δεν είναι έγκυρο αρχείο JSON", "imp.err.format": "Δεν είναι αντίγραφο του Οικογενειακού δέντρου",
       "imp.err.toolarge": "Το αρχείο έχει πάρα πολλές εγγραφές", "imp.done": "Η εισαγωγή έγινε", "imp.nothing": "Τίποτα νέο για εισαγωγή",
+      "ged.title": "Εξαγωγή GEDCOM", "ged.sub": "Αρχείο .ged (GEDCOM 5.5.1) αυτού του δέντρου, για άλλα προγράμματα γενεαλογίας.",
+      "ged.download": "Λήψη", "ged.newTree": "Θα μπει ως νέο δέντρο: «{name}».",
+      "ged.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 15 MB)", "ged.err.format": "Δεν είναι αρχείο GEDCOM",
+      "ged.err.empty": "Το αρχείο GEDCOM δεν έχει πρόσωπα",
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε: {name}", "toast.treeDeleted": "Το δέντρο «{name}» διαγράφηκε",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.exported": "Η εξαγωγή έγινε", "toast.saved": "Αποθηκεύτηκε στα Αρχεία",
       "toast.noFiles": "Τα Αρχεία δεν είναι διαθέσιμα εδώ", "toast.twoParents": "Ο/η {name} έχει ήδη δύο γονείς",
@@ -1667,21 +1677,21 @@
       });
     }).catch(function () { showToast(t("imp.err.json")); });
   }
-  function previewImport(r) {
+  function previewImport(r, ged) {
     var dlg = makeDialog("ft-import", t("imp.title"));
     var s = r.stats;
     dlg.appendChild(el("p", "imp-stats", t("imp.stats", { t: s.trees, p: s.people, u: s.unions })));
     if (s.dropped) dlg.appendChild(el("p", "dlg-sub", t("imp.dropped", { n: s.dropped })));
     if (s.refs) dlg.appendChild(el("p", "dlg-sub", t("imp.refs", { n: s.refs })));
     if (s.cycles) dlg.appendChild(el("p", "dlg-sub", t("imp.cycles", { n: s.cycles })));
-    dlg.appendChild(el("p", "dlg-sub", t("imp.merge")));
+    dlg.appendChild(el("p", "dlg-sub", ged ? t("ged.newTree", { name: r.data.trees[0].name }) : t("imp.merge")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(textBtn("dlg-btn", t("ed.cancel"), function () { dlg.close(); }));
-    acts.appendChild(textBtn("dlg-btn primary", t("imp.go"), function () { dlg.close(); applyImport(r.data); }));
+    acts.appendChild(textBtn("dlg-btn primary", t("imp.go"), function () { dlg.close(); applyImport(r.data, ged); }));
     dlg.appendChild(acts);
     showDialog(dlg);
   }
-  function applyImport(imp) {
+  function applyImport(imp, ged) {
     // Photo budget: imported photos that do not fit are left out.
     var used = FT.photoBytes(data);
     imp.people.forEach(function (p) {
@@ -1703,11 +1713,62 @@
       var now = findIn(data.trees, id) || findIn(data.people, id) || findIn(data.unions, id);
       if (JSON.stringify(now || null) === JSON.stringify(before[id])) delete before[id];
     });
-    if (!curTree() && imp.trees.length) prefs.tree = imp.trees[0].id;
+    if ((ged || !curTree()) && imp.trees.length) prefs.tree = imp.trees[0].id;
     savePrefs();
     centerOnFocus = true;
     commit();
     undoToast(t("imp.done"), function () { undoRows(before); });
+  }
+
+  // GEDCOM: a file always comes in as a new tree (no photos in it).
+  function importGedcom() {
+    var dlg = dialogHost(), accept = ".ged,.gedcom";
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept) : localPickFile(accept);
+    pick.then(function (file) {
+      if (!file) return;
+      if (file.size > FT.GED_MAX) { showToast(t("ged.err.size")); return; }
+      return file.arrayBuffer().then(function (buf) {
+        var name = String(file.name || "").replace(/\.(ged|gedcom)$/i, "");
+        var r = FT.parseGedcom(FT.decodeGedcom(buf), data, { name: name, now: stamp(0), newId: newId });
+        if (!r.ok) { showToast(t(r.err === "toolarge" ? "imp.err.toolarge" : "ged.err." + r.err)); return; }
+        if (data.trees.length >= FT.MAX_TREES) { showToast(t("toast.maxTrees", { n: FT.MAX_TREES })); return; }
+        if (data.people.length + r.data.people.length > FT.MAX_PEOPLE) {
+          showToast(t("toast.maxPeople", { n: FT.MAX_PEOPLE }));
+          return;
+        }
+        previewImport(r, true);
+      });
+    }).catch(function () { showToast(t("ged.err.format")); });
+  }
+  function exportGedcom() {
+    var tr = curTree();
+    if (!tr) { showToast(t("toast.noTree")); return; }
+    var o = prefs.exp;
+    var dlg = makeDialog("ft-ged", t("ged.title"));
+    dlg.appendChild(el("p", "dlg-sub", t("ged.sub")));
+    var w = el("label", "chk"), cb = el("input");
+    cb.type = "checkbox";
+    cb.checked = !!o.living;
+    cb.addEventListener("change", function () { o.living = cb.checked; savePrefs(); });
+    w.appendChild(cb);
+    w.appendChild(el("span", "", t("exp.living")));
+    dlg.appendChild(w);
+    function file() {
+      return new Blob([FT.exportGedcom(data, tr.id, { living: o.living })], { type: "text/plain" });
+    }
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(textBtn("dlg-btn", t("ed.cancel"), function () { dlg.close(); }));
+    acts.appendChild(textBtn("dlg-btn", t("exp.files"), function () {
+      dlg.close();
+      saveToFiles(file(), fileBase(tr.name) + ".ged");
+    }));
+    acts.appendChild(textBtn("dlg-btn primary", t("ged.download"), function () {
+      dlg.close();
+      downloadBlob(file(), fileBase(tr.name) + ".ged", "text/plain",
+                   [{ description: "GEDCOM", accept: { "text/plain": [".ged"] } }]);
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
   }
 
   // ---------- 11. Menus, dialogs, toasts ----------
@@ -1725,7 +1786,9 @@
       ["menu.exportImg", openExport],
       ["menu.exportJson", function () { exportJson(false); }],
       ["menu.exportAll", function () { exportJson(true); }],
-      ["menu.import", importJson]
+      ["menu.import", importJson],
+      ["menu.gedExport", exportGedcom],
+      ["menu.gedImport", importGedcom]
     ];
     items.forEach(function (it) {
       var b = textBtn("menu-item", t(it[0]), function () { closeMenu(); it[1](); });
