@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.59.00
+- [Mind Map](app:mindmap) can link any two ideas, lets you place a branch where you want it, shows small pictures, imports FreeMind and XMind files, and sends a branch to [To-Do](app:todo) or [Slides](app:slides).
+
 ## Version 0.58.00
 - [Layout](app:layout) checks your document before export (preflight), starts from 7 templates, exports a page as PNG or JPG, lets you change master objects on one page, has rulers with guides, and opens Scribus files.
 - [Slides](app:slides) can start a new presentation from an outline sent by another app. You pick the theme first, and nothing is created before that.
