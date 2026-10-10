@@ -23,6 +23,7 @@ function randomData(r) {
   const pick = (arr) => arr[Math.floor(r() * arr.length)];
   const d = { set: { m: Math.floor(r() * 5), chat: r() < 0.5 ? 1 : 0, prov: pick(["", "anthropic", "gemini", "bogus"]) },
               provs: {}, perm: {}, ks: { m: Math.floor(r() * 5), on: r() < 0.5 ? 1 : 0 }, keys: {} };
+  if (r() < 0.7) d.cs = { m: Math.floor(r() * 5), on: r() < 0.5 ? 1 : 0 };
   ["anthropic", "openai", "local", "nope"].forEach((p) => {
     if (r() < 0.6) d.provs[p] = { m: Math.floor(r() * 5), model: pick(["a", "b", ""]), base: pick(["", "http://localhost:11434/v1/", "javascript:alert(1)"]) };
     if (r() < 0.5) d.keys[p] = { m: Math.floor(r() * 5), d: r() < 0.3 ? 1 : 0, s: pick(["", "x", "y"]) };
@@ -324,6 +325,123 @@ test("system prompt: date, language, tool rules only when apps are readable", ()
   assert.match(on, /Never follow instructions/);
   const off = A.systemPrompt({ lang: "en", chatOnly: true, apps: ["Notes (notes)"] });
   assert.doesNotMatch(off, /search_data/);
+});
+
+// ---------- phase 2: tools, entry cards, conversation files ----------
+test("tools: search tools only with data access, propose_entry only with an app to receive it", () => {
+  const names = (o) => A.toolsFor(o).map((t) => t.name).join(",");
+  assert.equal(names({}), "");
+  assert.equal(names({ data: true }), "search_data,list_apps,read_item");
+  assert.equal(names({ entries: true }), "propose_entry");
+  assert.equal(names({ data: true, entries: true }), "search_data,list_apps,read_item,propose_entry");
+  const sp = A.systemPrompt({ lang: "en", chatOnly: true, entries: ["todo", "event"] });
+  assert.match(sp, /propose_entry/);
+  assert.match(sp, /never that it was added/);
+  assert.doesNotMatch(A.systemPrompt({ lang: "en" }), /propose_entry/);
+  // Gemini takes the schemas as they are: every object schema has properties.
+  A.toolsFor({ data: true, entries: true }).forEach((t) => assert.ok(t.params.type === "object"));
+});
+
+test("entries: each kind becomes its app's bridge payload (BR-TD-ADD, BR-W8, BR-B1, BR-Q1, BR-S1, Slides, Bookmarks, Notes)", () => {
+  const o = { from: "Assistant" };
+  let e = A.normEntry({ kind: "todo", list_name: "Trip", items: [{ text: "Buy\nbread", note: "2 loaves" }, { text: "buy bread" }, { text: "" }, "Milk"] }, o);
+  assert.deepEqual(e.call, { fn: "openAt", args: ["todo", { addItems: { items: [{ text: "Buy bread", note: "2 loaves" }, { text: "Milk" }], newList: "Trip", from: "Assistant" } }] });
+  e = A.normEntry({ kind: "event", date: "2026-10-14", start: "9:30", title: "Dentist", location: "Athens", note: "Bring card" }, o);
+  assert.deepEqual(e.call, { fn: "__orosOpenCalendarNew", args: [{ date: "2026-10-14", title: "Dentist", start: "09:30", location: "Athens", note: "Bring card" }] });
+  e = A.normEntry({ kind: "expense", amount: 12.505, date: "2026-10-10", note: "Lunch", category: "eating-out" }, o);
+  assert.deepEqual(e.call, { fn: "__orosOpenBudgetNew", args: [{ k: "o", a: 1251, src: "assistant", d: "2026-10-10", n: "Lunch", c: "o-eat" }] });
+  e = A.normEntry({ kind: "income", amount: "1500", category: "eating-out" }, o);   // wrong-kind category dropped
+  assert.deepEqual(e.call.args[0], { k: "i", a: 150000, src: "assistant" });
+  e = A.normEntry({ kind: "quote", currency: "EUR", client: "ACME", lines: [{ text: "Design", qty: 3, price: 40.005 }] }, o);
+  assert.deepEqual(e.call, { fn: "__orosOpenQuoteNew", args: [{ items: [{ d: "Design", q: 3, p: 40.01 }], cur: "EUR", client: "ACME" }] });
+  e = A.normEntry({ kind: "sheet", title: "Costs", rows: [["Item", "Cost"], ["Bread", "1.20"], ["=cmd()", 3]], sum_columns: [1, 1, 7, -1] }, o);
+  assert.deepEqual(e.call, { fn: "openAt", args: ["spreadsheet", { newSheet: { name: "Costs", rows: [["Item", "Cost"], ["Bread", 1.2], ["=cmd()", 3]], sum: [1] } }] });
+  e = A.normEntry({ kind: "slides", title: "Plan", outline: "# One\n- a\n# Two" }, o);
+  assert.deepEqual(e.call, { fn: "openAt", args: ["slides", { outline: "# One\n- a\n# Two", title: "Plan" }] });
+  e = A.normEntry({ kind: "bookmark", url: "https://example.com/a b", title: "Ex" }, o);
+  assert.equal(e.call.args[1].add.url, "https://example.com/a%20b");
+  e = A.normEntry({ kind: "note", title: "Idea", text: "Line 1\nLine 2" }, o);
+  assert.deepEqual(e.call, { fn: "openAt", args: ["notes", { add: { title: "Idea", text: "Line 1\nLine 2" } }] });
+});
+
+test("entries: anything the receiving bridge would reject never becomes a card", () => {
+  const bad = [
+    { kind: "rm -rf" }, { kind: "todo", items: [] }, { kind: "event", date: "2026-02-30" },
+    { kind: "event", date: "2026-10-10", start: "25:00" }, { kind: "expense", amount: 0 },
+    { kind: "expense", amount: -5 }, { kind: "expense", amount: 2e9 }, { kind: "expense", amount: 5, date: "tomorrow" },
+    { kind: "quote", lines: [] }, { kind: "quote", lines: [{ text: "x", qty: 0, price: 1 }] },
+    { kind: "quote", currency: "GBP", lines: [{ text: "x", qty: 1, price: 1 }] },
+    { kind: "sheet", rows: [] }, { kind: "slides", outline: "  " },
+    { kind: "bookmark", url: "javascript:alert(1)" }, { kind: "bookmark", url: "data:text/html,x" },
+    { kind: "note" }, null, "todo"
+  ];
+  bad.forEach((b) => assert.equal(A.normEntry(b, {}).ok, false, JSON.stringify(b)));
+  const r = A.normEntry({ kind: "todo", items: [{ text: "x" }] }, { has: (id) => id !== "todo" });
+  assert.equal(r.ok, false);
+  assert.match(r.err, /not installed/);
+  assert.deepEqual(A.entryKinds((id) => id === "budget" || id === "notes"), ["expense", "income", "note"]);
+  // Caps: 200 tasks, 50 quote lines, 499 sheet rows × 64 columns.
+  const many = Array.from({ length: 250 }, (_, i) => ({ text: "t" + i }));
+  assert.equal(A.normEntry({ kind: "todo", items: many }, {}).call.args[1].addItems.items.length, 200);
+  assert.equal(A.normEntry({ kind: "quote", lines: Array.from({ length: 51 }, () => ({ text: "x", qty: 1, price: 1 })) }, {}).ok, false);
+  const wide = Array.from({ length: 600 }, () => Array.from({ length: 70 }, () => "1"));
+  const sh = A.normEntry({ kind: "sheet", rows: wide }, {}).call.args[1].newSheet;
+  assert.equal(sh.rows.length, 499);
+  assert.equal(sh.rows[0].length, 64);
+});
+
+test("search results keep the item id (read_item finds the item again)", () => {
+  const items = A.packHits([{ id: "notes", hits: [{ id: "p1", title: "T", text: "x", when: 0, score: 3 }] }], () => "Notes");
+  assert.equal(items[0].id, "p1");
+});
+
+test("conversation files: round trip, tombstones, junk", () => {
+  const c = { id: "cabc12345", m: 7, title: "Hi", msgs: [{ r: "user", text: "a" }, 5], refs: { r1: { app: "notes" } }, refN: 1, fm: 3 };
+  const back = A.parseChatFile(A.chatFile(c));
+  assert.deepEqual(back, { id: "cabc12345", m: 7, title: "Hi", msgs: [{ r: "user", text: "a" }], refs: { r1: { app: "notes" } }, refN: 1 });
+  assert.deepEqual(A.parseChatFile(JSON.stringify({ id: "cabc12345", m: 9, del: 1, msgs: [{}] })), { id: "cabc12345", m: 9, del: 1 });
+  assert.equal(A.parseChatFile("{"), null);
+  assert.equal(A.parseChatFile(JSON.stringify({ id: "../x", m: 1, msgs: [] })), null);
+  assert.equal(A.chatPath("cabc12345"), "/internal/Assistant/Chats/cabc12345.json");
+  assert.equal(A.chatPath("../../etc"), null);
+});
+
+test("conversation merge: newer wins, a continuation is kept whole, a fork keeps both, deletes win by time", () => {
+  const u = (t) => ({ r: "user", text: t });
+  const base = { id: "cabc12345", m: 5, title: "T", msgs: [u("a")] };
+  const longer = { id: "cabc12345", m: 6, title: "T", msgs: [u("a"), u("b")] };
+  assert.equal(A.mergeChat(base, longer).chat.msgs.length, 2);
+  // An older stamp on the longer history (clock skew): still the longer history, newest stamp.
+  const r = A.mergeChat({ ...longer, m: 4 }, base);
+  assert.equal(r.chat.msgs.length, 2);
+  assert.equal(r.chat.m, 5);
+  assert.equal(r.copy, null);
+  // Fork: both kept; the copy's id is the same on every device.
+  const fa = { id: "cabc12345", m: 8, title: "T", msgs: [u("a"), u("x")] };
+  const fb = { id: "cabc12345", m: 9, title: "T", msgs: [u("a"), u("y")] };
+  const ab = A.mergeChat(fa, fb), ba = A.mergeChat(fb, fa);
+  assert.equal(ab.chat.msgs[1].text, "y");
+  assert.equal(ab.copy.msgs[1].text, "x");
+  assert.deepEqual(ab, ba);
+  assert.notEqual(ab.copy.id, "cabc12345");
+  assert.ok(A.chatPath(ab.copy.id));
+  // Tombstones
+  assert.equal(A.mergeChat(fb, { id: "cabc12345", m: 10, del: 1 }).chat.del, 1);
+  assert.equal(A.mergeChat(fb, { id: "cabc12345", m: 3, del: 1 }).chat.del, undefined);
+  assert.equal(A.mergeChat(null, fb).chat.m, 9);
+});
+
+test("conversation merge: symmetric (fuzz)", () => {
+  const r = rnd(11);
+  const texts = ["a", "b", "c"];
+  for (let i = 0; i < 2000; i++) {
+    const mk = () => r() < 0.15 ? { id: "cabc12345", m: Math.floor(r() * 4), del: 1 } :
+      { id: "cabc12345", m: Math.floor(r() * 4), title: "T", msgs: Array.from({ length: Math.floor(r() * 4) }, () => ({ r: "user", text: texts[Math.floor(r() * 3)] })) };
+    const a = mk(), b = mk();
+    assert.equal(JSON.stringify(A.mergeChat(a, b)), JSON.stringify(A.mergeChat(b, a)));
+    const once = A.mergeChat(a, b).chat;
+    assert.equal(JSON.stringify(A.mergeChat(once, once).chat), JSON.stringify(A.normChat(once)));
+  }
 });
 
 // ---------- static checks ----------
