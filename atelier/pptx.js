@@ -10,7 +10,8 @@
 //     assets maps media paths and svg keys to imported images
 //     { id, w, h } (io.js stores them with designkit/assets.js).
 // What maps: text boxes (first run's look for the whole box: font
-// family by name → sans/serif/mono, size incl. autofit, bold,
+// by name → its Fontsource family, or sans/serif/mono for system and
+// Canva-only fonts; size incl. autofit, bold,
 // italic, underline, caps, colour, alignment, line and letter
 // spacing, top/middle/bottom anchor), preset shapes Atelier also
 // has (fill, gradient, outline), other shapes and custom geometry
@@ -295,6 +296,29 @@
     if (/sans/i.test(name)) return "sans";
     return SERIF.test(name) ? "serif" : "sans";
   }
+  // Fonts that are not on Fontsource (system, Office, Canva's own):
+  // they become the closest built-in family.
+  var NOT_FS = /^(arial|arial black|arial narrow|helvetica|helvetica neue|calibri|calibri light|cambria|candara|consolas|constantia|corbel|segoe ui|segoe print|segoe script|tahoma|verdana|trebuchet ms|times|times new roman|georgia|garamond|book antiqua|palatino|palatino linotype|century gothic|franklin gothic|gill sans|futura|avenir|myriad pro|minion pro|impact|comic sans ms|courier|courier new|lucida console|lucida sans|symbol|wingdings|webdings|canva sans|canva serif|canva student font|open sauce|open sauce one|glacial indifference|tt norms|now|brittany|more sugar|horizon|the seasons|aileron|bebas neue pro|league gothic|chunkfive)$/i;
+  var WEIGHT = /[\s-]+(thin|hairline|extra ?light|ultra ?light|light|regular|book|normal|medium|semi ?bold|demi ?bold|bold|extra ?bold|ultra ?bold|heavy|black|italic|oblique)$/i;
+  // A typeface name from the file → { font: built-in or Fontsource
+  // id ("fs_<id>"), name, bold, italic }. Canva writes weights into
+  // the name ("Montserrat Bold"); Fontsource ids are the family name
+  // in lower case with dashes. A family Fontsource lacks shows in
+  // Sans until then (text.js falls back quietly).
+  function fontFor(name) {
+    var n = String(name || "").replace(/[\u0000-\u001f]/g, "").trim(), b = 0, i = 0, m;
+    while ((m = WEIGHT.exec(n))) {
+      var w = m[1].toLowerCase().replace(/\s/g, "");
+      if (/semibold|demibold|bold|extrabold|ultrabold|heavy|black/.test(w)) b = 1;
+      if (/italic|oblique/.test(w)) i = 1;
+      n = n.slice(0, m.index).trim();
+    }
+    if (!n || NOT_FS.test(n) || /^(sans|serif|mono|sans-serif|monospace|noto sans|noto serif|noto sans mono)$/i.test(n)) return { font: familyOf(n), name: n, b: b, i: i };
+    var slug = n.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (!slug || slug.length > 58) return { font: familyOf(n), name: n, b: b, i: i };
+    var id = AX.fsIdOf(slug);
+    return { font: AX.isExtraFont(id) ? id : familyOf(n), name: n, b: b, i: i };
+  }
   var ALIGN = { l: "l", ctr: "c", r: "r", just: "j", dist: "j" };
 
   function textOf(txBody, ctx) {
@@ -329,10 +353,11 @@
     var lnRed = autofit ? numA(autofit, "lnSpcReduction", 0) / 100000 : 0;
     var size = Math.max(2, Math.round(sz / 100 * scale * 100) / 100);
     var spc = numA(rp, "spc", 0) / 100;            // points
-    var bold = ra.b !== undefined ? ra.b === "1" || ra.b === "true" : !!lst.b;
-    var ital = ra.i !== undefined ? ra.i === "1" || ra.i === "true" : !!lst.i;
+    var ff = fontFor(font);
+    var bold = ra.b !== undefined ? ra.b === "1" || ra.b === "true" : !!lst.b || !!ff.b;
+    var ital = ra.i !== undefined ? ra.i === "1" || ra.i === "true" : !!lst.i || !!ff.i;
     return {
-      tx: tx, font: familyOf(font), fontName: font || "", size: size,
+      tx: tx, font: ff.font, fontName: ff.name, size: size,
       b: bold ? 1 : 0, i: ital ? 1 : 0, u: ra.u && ra.u !== "none" ? 1 : 0, caps: ra.cap === "all" ? 1 : 0,
       al: ALIGN[algn] || "l", lh: Math.round(Math.max(70, Math.min(300, 120 * lnPct / 100 * (1 - lnRed)))),
       tr: spc ? Math.round(spc / size * 1000) : 0, fc: col.c, op: col.a
@@ -711,6 +736,7 @@
           } else spec.fit = "fill";
         }
         spec.z = z++;
+        if (s.k === "text" && AX.isExtraFont(spec.font)) AX.ensureFont(spec.font, s.fontName);
         var it = AX.addItem(d, pg.id, spec, now);
         if (it && s.k === "text") {
           if (s.anchor === "ctr") it.y = s.y + (s.boxH - it.h) / 2;
@@ -721,7 +747,18 @@
     return { doc: M.normDoc(d), missing: missing };
   }
 
-  var api = { parse: parse, build: build, parseXml: parseXml, familyOf: familyOf, EMU: EMU };
+  // the Fontsource families a plan uses: [{ id, name }]
+  function planFonts(plan) {
+    var seen = {}, out = [];
+    plan.pages.forEach(function (P) {
+      P.items.forEach(function (s) {
+        if (s.k === "text" && AX.isExtraFont(s.font) && !seen[s.font]) { seen[s.font] = 1; out.push({ id: s.font, name: s.fontName }); }
+      });
+    });
+    return out;
+  }
+
+  var api = { parse: parse, build: build, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);
