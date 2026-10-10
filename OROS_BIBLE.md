@@ -1339,6 +1339,19 @@ Owner: Quote (`quote/`). First sender: Timesheet (report "Create quote"). Same s
 - **BR-Q1-3 · A PREFILL, not data (BR-W8-6).** A new draft opens on the Create tab with the lines (VAT = Quote's default), currency and client filled in. Nothing is saved until the user presses Save. If the current unsaved draft has content (client, notes, or a line with text or price), a confirm ("Replace the unsaved draft…?") comes first; Cancel leaves the draft as it was. An unknown client opens the New client dialog with the name filled in; the client exists only if the user saves that dialog. Every text is rendered as an input value / `textContent`.
 - **BR-Q1-4 · Timesheet sender.** Button `#rep-quote`, shown only when `typeof window.parent.__orosOpenQuoteNew === "function"`. `core.quoteLines()` uses the report's period and client/project/invoiced filters, billable time only, grouped by project: `d` = "Project · period" (`fmtRange`), `q` = billable hours (rounding prefs applied), `p` = the project's hourly rate. Lines with no billable time are dropped; `client` is sent only when every line belongs to one client. A currency other than EUR/USD shows a toast and sends nothing. Sending does not mark entries invoiced (that stays the report's own button).
 
+### Cross-app "send to To-Do" bridge: any app → To-Do list (BR-TD-ADD)
+
+Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Shopping "To To-Do"). Planned senders: Chore Wheel (one chore), Travel (a packing list as a new list). No new shell code: it rides the generic deep link `__orosOpenAt` / `__orosTakeTarget`.
+
+- **BR-TD-ADD-1 · Contract.** `window.parent.__orosOpenAt("todo", { addItems: { list?, newList?, from?, items } })`. Senders show their button only when `typeof window.parent.__orosOpenAt === "function"`.
+  - `items`: 1–200 `{ text, note? }`; `text` one line, ≤ 300 chars; `note` (To-Do's Notes field) keeps newlines, ≤ 1000 chars. Extra items are dropped; items whose text normalizes the same (case, accents, punctuation, as To-Do search) are sent once.
+  - `list`: a To-Do list id to suggest (e.g. `tdl-groceries`, the fixed seed id of Groceries / Ψώνια). Unknown → the `newList` option if given, else the open list.
+  - `newList`: a name (≤ 60 chars) offered as "New list: …" in the list picker; the list is created only when the user adds.
+  - `from`: the sending app's name in the user's language (≤ 60 chars), shown as "From …".
+  - Control characters (and U+2028/2029) are replaced by spaces in every text; everything is shown with `textContent`. A payload with no usable item is ignored (To-Do just opens).
+- **BR-TD-ADD-2 · A PREFILL, not data (BR-W8-6).** To-Do opens the dialog `#todo-add`: list picker, every item ticked, except items already OPEN (not done) in the chosen list, which start unticked with "already on the list" (re-checked when the list changes; a tick the user changed stays). Nothing touches `oros-todo-data` until "Add N"; Cancel leaves no trace. Add puts the ticked items at the top of the list in payload order (one `list.om` stamp, items fully stamped), switches to that list and clears search/filters. The sender never writes To-Do's slice (one writer per slice).
+- **BR-TD-ADD-3 · Meal Planner sender.** Button `#sh-todo` on the Shopping tab sends the unticked items of the list on screen (the week shown, "From today" applied): `text` = "qty name" as in Copy, `note` = "for <recipes>", `list` = `tdl-groceries`. Ticks in Meal Planner are not changed.
+
 ### `LABEL_COLORS` (shared, 8)
 
 `#e06c75 #ecc75f #87cf3e #4fc4cf #6d4aff #e09ecf #f28c5a #9aa4b0`

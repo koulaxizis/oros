@@ -122,6 +122,8 @@
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Plants",
       "lbl.feed.garage": "Garage",
+      "lbl.feed.meals": "Meals",
+      "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
       "feed.garage.svc": "{vehicle}: {what} due",
@@ -255,6 +257,8 @@
       "lbl.feed.pet": "Screen Pet",
       "lbl.feed.plants": "Φυτά",
       "lbl.feed.garage": "Γκαράζ",
+      "lbl.feed.meals": "Γεύματα",
+      "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
       "feed.garage.svc": "{vehicle}: σέρβις ({what})",
@@ -446,6 +450,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-plants", color: "#8bc34a" },   // leaf green — Plant Care (distinct from Birthdays #9ece6a)
     { id: "lbl-feed-petcare", color: "#e0af68" },  // amber — Pet Health Book (real pets; Screen Pet is lbl-feed-pet)
     { id: "lbl-feed-garage", color: "#ecc75f" },   // amber — Garage renewals + service
+    { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
     { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
@@ -463,6 +468,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-plants") return t("lbl.feed.plants");
     if (l.id === "lbl-feed-petcare") return t("lbl.feed.petcare");
     if (l.id === "lbl-feed-garage") return t("lbl.feed.garage");
+    if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -1648,6 +1654,62 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Meal Planner read-only feed (meals/core.js, loaded by index.html).
+  // One all-day row per planned meal: "Dinner: Fasolada, Salad", in the
+  // slots the app shows, with the user's own slot names. Ready recipes
+  // are named in this device's language; deleted recipes are left out.
+  // Rows are never stored; micro-cached ~1s like the other feeds.
+  var MEALS_DATA_KEY = "oros-meals-data";
+  var mealsCache = { when: 0, rows: null };
+
+  function mealsRows() {
+    var now = Date.now();
+    var Core = window.OrosMealsCore;
+    if (!Core) return null;
+    if (now - mealsCache.when > 1000) {
+      mealsCache.rows = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem(MEALS_DATA_KEY));
+        if (raw && typeof raw === "object" && raw.pl && typeof raw.pl === "object") {
+          var d = Core.mergeMeals(raw, raw), names = {}, rows = {};
+          Core.allRecipes(d, LANG).forEach(function (r) { names[r.id] = r.t; });
+          d.set.sl.forEach(function (sl, order) {
+            Object.keys(d.pl).forEach(function (k) {
+              var i = k.indexOf("|"), day = k.slice(0, i);
+              if (k.slice(i + 1) !== sl) return;
+              var what = d.pl[k].it.map(function (it) { return it.r ? names[it.r] : it.t; })
+                .filter(Boolean);
+              if (!what.length) return;
+              (rows[day] = rows[day] || []).push({
+                key: sl, order: order,
+                title: (d.set.nm[sl] || t("feed.meals." + sl)) + ": " + what.join(", ")
+              });
+            });
+          });
+          mealsCache.rows = rows;
+        }
+      } catch (e) { mealsCache.rows = null; }
+      mealsCache.when = now;
+    }
+    return mealsCache.rows;
+  }
+
+  function mealsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-meals")) return [];
+    var rows = mealsRows();
+    if (!rows || !rows[dateStr]) return [];
+    return rows[dateStr].slice().sort(function (a, b) { return a.order - b.order; }).map(function (r) {
+      return {
+        id: "mls-" + dateStr + "-" + r.key,       // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-meals",
+        start: null,                              // all-day
+        _feed: true,
+        _openAt: { app: "meals", target: { day: dateStr } }
+      };
+    });
+  }
+
   /* ---------- 3d. Name days, holidays, world days ----------
      Data and rules live in namedays.js (window.OrosNamedays, pure).
      Three chips, all read-only virtual rows, never stored in the
@@ -1756,6 +1818,7 @@ function transientNote(title, body) {
     .concat(plantsFeedOn(dateStr))
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
+    .concat(mealsFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
     .concat(observancesFeedOn(dateStr))
@@ -1804,6 +1867,9 @@ function transientNote(title, body) {
       } else if (ev._garageId &&
                  typeof p.__orosOpenGarage === "function") {
         p.__orosOpenGarage(ev._garageId);
+      } else if (ev._openAt &&
+                 typeof p.__orosOpenAt === "function") {
+        p.__orosOpenAt(ev._openAt.app, ev._openAt.target);
       } else if (ev._fitnessId &&
                  typeof p.__orosOpenFitness === "function") {
         p.__orosOpenFitness(ev._fitnessId);
