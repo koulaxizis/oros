@@ -21,7 +21,7 @@ If storage isn't protected, the browser may delete orOS data when the device run
 `Copy report` copies every card as plain text, handy when you ask for help with a problem. Values stored by other apps are never included, only their sizes.
 
 ## Sync and backup
-Nothing here syncs: everything describes this device. Only the folded cards are remembered, on this device. To change sync or backup, use the orOS menu; see [Sync](help:t/sync) and [Backup](help:t/backup).
+Nothing here syncs: everything describes this device. Only the folded cards are remembered, on this device. To change sync or backup, open [Settings](app:settings); see [Sync](help:t/sync) and [Backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[R]] refreshes all cards.

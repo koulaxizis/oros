@@ -15,7 +15,12 @@ The `Entries` tab lists the month's entries by day, with a `Day total`. Tap an e
 On `Limits`, `Set limit` gives an expense category a monthly limit, and `All expenses` takes an overall one. Limits apply to every month. Each bar shows how much is spent and how much is left, and turns to `Close to the limit` at 80% and `Over the limit` after 100%. When you pass a limit in the current month, orOS sends you one [notification](help:t/notifications).
 
 ## Recurring
-Rent, salary, subscriptions: on `Recurring`, add them once with `Every week`, `Every month` or `Every year`, a `First date` and an optional `Last date`. When Budget is open, each one becomes a normal entry on its day, marked `Recurring`. Deleting a recurring entry stops new ones; entries already added stay.
+Rent, salary, subscriptions: on `Recurring`, add them once with `Every week`, `Every month` or `Every year`, a `First date` and an optional `Last date`. When Budget is open, each one becomes a normal entry on its day, marked `Recurring`. Deleting a recurring entry stops new ones; entries already added stay. Upcoming recurring entries also show in [Calendar](app:calendar) under `Budget`; tap one to open it here.
+
+## Accounts and transfers
+Accounts are optional. In the `More` menu, `Accounts` lets you add cash, a card or a bank account with a `Starting balance` (a minus sign for a debt). Pick an account in an entry or a recurring entry to keep its balance; `Balances today` shows under the totals. Entries without an account still count in the totals.
+
+`Transfer` moves money between two accounts, `From` one `To` the other. A transfer shows as "Bank → Cash" and counts as neither income nor expense. The filter `Transfers only` lists them.
 
 ## Charts
 `Charts` shows `Expenses by category` for the month, `Income and expenses, 12 months` and `Balance at the end of each month`. Tap a category to see its entries, or a month to open it. `Show as a table` gives the numbers as text.
@@ -26,10 +31,10 @@ From the `More` menu (the three dots), `Categories` lets you add your own (`New 
 `Currency` sets one currency for every entry. Changing it doesn't convert amounts.
 
 ## Sync and backup
-Entries, categories, limits, recurring entries and the currency sync through [orOS sync](help:t/sync). The open tab and your CSV choice stay on this device.
+Entries, accounts, transfers, categories, limits, recurring entries and the currency sync through [orOS sync](help:t/sync). The open tab and your CSV choice stay on this device.
 
 From the `More` menu:
-- `Export`: pick a period (`This month`, `This year` or `Everything`) and save as `CSV`, `Excel` or `PDF report`. For CSV, choose Greek Excel or other apps, such as the orOS [Spreadsheet](app:spreadsheet).
+- `Export`: pick a period (`This month`, `This year` or `Everything`) and save as `CSV`, `Excel` or `PDF report`. For CSV, choose Greek Excel or other apps, such as the orOS [Spreadsheet](app:spreadsheet). `Open in Spreadsheet` opens the entries and a summary straight in [Spreadsheet](app:spreadsheet).
 - `Backup (JSON)` saves everything to a file.
 - `Restore from backup` merges a backup into your data; it never overwrites newer items.
 

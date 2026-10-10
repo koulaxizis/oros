@@ -19,7 +19,9 @@ A game in progress is kept on this device and is waiting for you the next time y
 ## Levels and scoring
 Pick the board size in the toolbar: `3×3`, `4×4` (the classic) or `5×5`. Changing it starts a new game. On `3×3` the target is 512, because 2048 can't fit.
 
-Each size has its own records. `Records` shows your best score, your best tile, the games you played and how many of them reached the target.
+Next to the size, choose `Classic` or `Timed`. A timed game gives you 2 minutes, and the clock starts with your first move. It pauses while orOS is in the background. In the last 10 seconds it turns amber, and at zero you see `Time's up` with your score.
+
+Each size and mode has its own records. `Records` shows your best score, your best tile, the games you played and how many of them reached the target.
 
 >! If you use undo, that game still counts as played but can't set a score or tile record.
 

@@ -4158,3 +4158,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** Medicine: dose times ("Remind me at", up to 6); shell `petcareDoseCheck` inside `petcareCheckTick` emits one notification per dose time (key "dose-<date>T<time>-<hash>", same on every device); "Doses today" on Upcoming; times on the printed card. Settings: "Remind me at each medicine dose". Visit editor: "Add to Budget" (BR-B1 prefill). Food card: "Add to shopping list" (BR-TD-ADD `{ addItems: { list: "tdl-groceries", ... } }`; To-Do confirms; until the To-Do receiver (#111) lands it only opens To-Do). Narrow screens: two-column form rows no longer push a date field past the dialog edge. (PR #119)
 - **Tests:** tests/petcare.test.js (+3: dose times, dosesDue, prefs).
 - **NOT tested:** a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Help pages: Budget phase 2, Family Tree GEDCOM, 2048 timed — 0.55.01
+- **Changes:** guide pages updated for Budget phase 2 (accounts, transfers, Open in Spreadsheet, Calendar feed), Family Tree GEDCOM import/export and 2048 timed mode; Device info and Wallpaper pages point to Settings; What's new gains a section for 0.49.00 to 0.53.02. Text only. (PR #130)
+- **NOT tested:** a real phone, Safari.
