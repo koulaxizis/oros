@@ -1,0 +1,45 @@
+# Mind Map
+Mind Map helps you sort out ideas: one idea in the centre, branches around it. The layout is always tidy, so you only think about the ideas. You can keep as many maps as you like.
+
+## Getting started
+- Tap `New map`, type the `Central idea` and press `OK`. Or tap `Show an example` to look around first.
+- Tap or click a node to select it. The bar at the bottom has `Child`, `Sibling`, `Edit`, `Details`, `Fold` and `Delete`.
+- To change the text, double-tap or double-click the node, or tap it again once it is selected. [[Shift+Enter]] starts a new line.
+- The text of the centre is the map's title.
+
+## Build the map
+- Drag a node onto another node to move it there. Drop it on the middle of a node to make it a child, or just above or below it to put it before or after. The whole branch moves with it.
+- Long-press a node (or right-click it) for more: `Mark as done`, `Move up`, `Move down`, `Copy as text`, `Paste a list here…`, `Export this branch…` and `Delete branch`.
+- `Details…` holds an `Emoji or symbol`, a `Branch colour`, a `Note` and a `Link (web address)`.
+- `Paste a list…` turns a list into branches: one idea per line, with indents (or Markdown `- ` lists and `#` headings) for the levels.
+- Drag the empty space to move around, pinch or use the zoom buttons, and tap `Fit to screen` to see the whole map.
+
+## Outline and find
+- `Outline` shows the same map as an indented list, which is quicker for typing. [[Enter]] adds a line, [[Tab]] and [[Shift+Tab]] change the level, and [[Backspace]] on an empty line removes it.
+- `Find` searches the text and notes of the open map. The arrows step through the matches and open folded branches on the way.
+
+## Your maps
+Tap the map name at the top left for `Your maps`. There you can open, rename, duplicate or delete a map. The `More` menu also has `Branches on both sides` or `Branches on the right only`, `Unfold all` and `Fold main branches`.
+
+## Sync and backup
+With [orOS sync](help:t/sync), your maps and every node reach your other devices. Which map is open, the view and which branches are folded stay on this device.
+
+- `Export…` makes a picture (PNG or SVG), Markdown, OPML or JSON of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
+- `Import (OPML, Markdown, text, JSON)…` brings in outlines from other mind map and outline apps as a new map. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
+- `Back up all maps (JSON)` saves everything in one file. Your maps are also part of orOS [backups](help:t/backup).
+
+## Keyboard shortcuts
+- [[Tab]] adds a child, [[Enter]] adds a sibling, [[F2]] or simply typing edits the selected node.
+- [[Delete]] deletes the branch, [[Space]] folds or unfolds it, the arrow keys move around the map.
+- [[Alt+↑]] and [[Alt+↓]] move a node up or down among its siblings.
+- [[Ctrl+Z]] and [[Ctrl+Y]] undo and redo, [[Ctrl+F]] finds, [[Ctrl+C]] and [[Ctrl+V]] copy a branch as text or paste a list.
+
+## Tips
+- Start fast in `Outline`, then switch to `Map` to see the shape.
+- Use one colour per main branch; its children follow it.
+- Deleted something by mistake? The message has an `Undo` button, and [[Ctrl+Z]] works too.
+
+## Limits
+- Nodes always sit where the automatic layout puts them; you can't place them freely or draw links between branches.
+- If two devices move nodes at the same time in a way that conflicts, a node may come back under the centre with a dashed line. Drag it where it belongs, or choose `Keep it here`.
+- A very large map may be too big for PNG; export SVG instead.
