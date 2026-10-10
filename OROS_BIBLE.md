@@ -1807,7 +1807,8 @@ Rebuild this in any session where code is delivered.
 - Inside the Calendar, not a separate app (Chris 2026-10-09). Three read-only chips: Holidays (Greek public holidays), Name days (day-view line + one row per contact whose first name celebrates, click → Contacts), World days (observances).
 - `calendar/namedays.js` is pure (Orthodox Easter by Meeus, fixed + movable feasts, George/Mark moved after Easter, Greek/Greeklish name skeletons, `cleanDays` sanitizer). Name list is hand-written from the church calendar; nicknames prefixed `~` match but are not shown. Add names there.
 - `calendar/days.json` = observance RULES (`md`, `nth`, `easter`, `doy`). Updating it needs no app release: the Calendar fetches `days.json?w=<week>` at most weekly, sanitizes, caches in `oros-cal-days`; the SW precache is the offline fallback. Plain text only (textContent), max 80 chars, unknown rules dropped.
-- Nothing is stored in `oros-calendar-data`: no sync impact, no reminders.
+- Nothing is stored in `oros-calendar-data`: no sync impact, no event reminders.
+- Morning notice (shell `namedayCheckTick`, 60 s throttle): from 09:00, when a contact's first name (or nickname) celebrates today, one `ns: "calendar"` notification, key `nameday-<ymd>` (inbox dedup across devices), body lists up to 3 names, deep link `calendar:nameday:<ymd>` opens that day. The shell loads `calendar/namedays.js` (same file as the app). Silent when the Name days chip is off on this device (`oros-cal-feedvis`) or Calendar notifications are off. orOS closed = nothing fires; the next boot the same day catches up.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -4031,10 +4032,18 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **NOT tested:** a real phone, Safari / iOS (long press, safe area), Firefox, real Dropbox.
 - **Status:** code merged as PR #84; this release commit (0.49.00).
 
+### 2026-10-10 — Name days: morning notice when a contact celebrates — 0.49.01
+- **Changes:** from 09:00, orOS sends one notification a day if any of your contacts has a name day, for example "Σήμερα γιορτάζει: Δημήτρης Παπαδόπουλος, Dimitra K.". Tapping it opens that day in the Calendar. It respects the Calendar notification toggle and quiet hours. It stays silent when the Name days chip is off on the device. (PR #103)
+- **NOT tested:** a real phone, Safari, or system (OS) notifications.
+
+### 2026-10-10 — Atelier: hundreds of free fonts (Fontsource), Greek-capable, offline after first use — 0.49.02
+- **Changes:** tapping a text's font button opens a **Fonts** panel with three groups: - the three built-in faces, which are always available; - fonts already used in this design, plus "Your fonts" (recently used, kept on this device); - **More fonts (Fontsource)**: the open-licence Google Fonts catalogue, with an "Only fonts with Greek letters" filter (on by default in Greek). (PR #98)
+- **NOT tested:** real Fontsource downloads, because the container network blocks jsdelivr.
+
 ### 2026-10-10 — shell + Settings 0.50.00 — settings move from the menu into the Settings app
 - **Changes:** the menu keeps the apps, search, `Install orOS` and three rows: Settings, Device info, Info. All settings sections (appearance, wallpaper, pet, sync, backups, notifications) are gone from the menu; they live in the Settings app (code merged in #85). The sync dot opens Settings › Sync when sync is off or locked. The factory reset lives in Settings › System; the Info window links there. Dock settings from launcher 0.49.00 move to Settings › Appearance through `setPref` (menu fallback only for a launcher without it). The SY-L2 failure reason shows in Settings › Sync (snapshot `sync.msg`). Device info links to Settings › Sync.
 - **Help (R38):** `settings/help.en|el.txt`; topics appearance, backup, sync, notifications, reset, menu, data, faq, install, start, shortcuts, troubleshooting, privacy now name the Settings labels.
 - **Decisions:** no ☾/☀ quick toggle in the menu; factory reset only in Settings (Chris 2026-10-09 13:47).
-- **Core:** `apps.json` entry (System, `search.js`), `sw.js` precache of `settings/` (+ help pages), Tests workflow paths `settings/**`. `APP_VERSION` 0.50.00: main (0.49.00) + 1 minor.
+- **Core:** `apps.json` entry (System, `search.js`), `sw.js` precache of `settings/` (+ help pages), Tests workflow paths `settings/**`. `APP_VERSION` 0.50.00: main (0.49.02) + 1 minor.
 - **NOT tested:** a real phone, Safari / iOS, real Dropbox.
 - **Status:** PR #107.
