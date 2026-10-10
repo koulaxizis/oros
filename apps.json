@@ -58,7 +58,6 @@
       "category": "Office",
       "icon": "mindmap",
       "url": "mindmap/",
-      "search": "search.js",
       "type": "internal"
     },
     {
