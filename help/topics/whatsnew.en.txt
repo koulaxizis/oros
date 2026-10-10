@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 0.67.00
 - Assistant: it can now prepare entries (a task, an event, an expense, a quote, a sheet, slides, a bookmark or a note) for you to check and save in that app, read a whole item when you allow it, and keep your conversations on all your devices (optional, encrypted). Ask it from the menu search or with Ctrl+Alt+Shift+A.
+- Reader: Send › Email now opens a ready draft in Mail.
 
 ## Version 0.66.00
 - Mail: write, reply, forward and send (plain text), with a signature per account and an Outbox that sends by itself when you are back online.
