@@ -202,11 +202,13 @@
     }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
   }
 
-  // Open a file: a .oroslayout package or a Scribus .sla document.
+  // Open a file: a .oroslayout package, a Scribus .sla or an InDesign
+  // .idml document.
   function importPackage() {
-    pickFile(".oroslayout,.sla,application/json,.json,application/xml,text/xml").then(function (f) {
+    pickFile(".oroslayout,.sla,.idml,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package").then(function (f) {
       if (!f) return;
       if (/\.sla$/i.test(f.name || "")) return importSla(f);
+      if (/\.idml$/i.test(f.name || "")) return importIdml(f);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
       return f.text().then(function (txt) {
         var pkg = null;
@@ -234,37 +236,54 @@
   }
 
   // ---------- Images ----------
-  // ---------- Scribus ----------
-  // A NEW document from the .sla; inline images are stored like placed
-  // ones, linked images stay as empty frames that keep the file name.
-  var SLA_MAX = 100 * 1024 * 1024;
+  // ---------- Scribus, InDesign ----------
+  // A NEW document from another program's file; images inside the file
+  // are stored like placed ones, linked images stay as empty frames
+  // that keep the file name.
+  var FOREIGN_MAX = 100 * 1024 * 1024;
+  function baseName(f, ext) { return String(f.name || "").replace(ext, "").slice(0, 120); }
   function importSla(f) {
-    if (f.size > SLA_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
+    if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
     LY.toast(t("sla.working"));
     return f.text().then(function (txt) {
       var res = null;
-      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: String(f.name || "").replace(/\.sla$/i, "").slice(0, 120) }); } catch (e) { res = null; }
+      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
-      var doc = res.doc, failed = 0, chain = Promise.resolve();
-      res.images.forEach(function (im) {
-        chain = chain.then(function () { return window.LY_SLA.inlineImage(im); }).then(function (blob) {
-          if (!blob) { failed++; return; }
-          blob.name = im.name;
-          return A.importFile(blob).then(function (r) {
-            var it = M.find(doc.items, im.item);
-            if (!it) return;
-            it.a = r.id; it.iw = r.w; it.ih = r.h;
-          });
-        }).then(null, function () { failed++; });
-      });
-      return chain.then(function () {
-        LY.addDoc(M.normDoc(doc));
-        var parts = [t("sla.done", { p: res.stats.pages, n: res.stats.items })];
-        if (res.linked + failed) parts.push(t("sla.linked", { n: res.linked + failed }));
-        if (res.stats.skipped) parts.push(t("sla.skipped", { n: res.stats.skipped }));
-        LY.toast(parts.join(" "));
-      });
+      return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }));
     }).then(null, function () { LY.toast(t("sla.bad")); });
+  }
+  function importIdml(f) {
+    if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return; }
+    LY.toast(t("idml.working"));
+    return f.arrayBuffer().then(function (buf) {
+      return window.LY_IDML.open(buf, { now: LY.now(), name: baseName(f, /\.idml$/i) });
+    }).then(function (res) {
+      if (!res) { LY.toast(t("idml.bad")); return; }
+      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }));
+    }).then(null, function () { LY.toast(t("idml.bad")); });
+  }
+  // res: { doc, images, linked, stats }; blobOf(image) → Promise of a
+  // Blob or null
+  function addForeign(res, blobOf, done) {
+    var doc = res.doc, failed = 0, chain = Promise.resolve();
+    res.images.forEach(function (im) {
+      chain = chain.then(function () { return blobOf(im); }).then(function (blob) {
+        if (!blob) { failed++; return; }
+        blob.name = im.name;
+        return A.importFile(blob).then(function (r) {
+          var it = M.find(doc.items, im.item);
+          if (!it) return;
+          it.a = r.id; it.iw = r.w; it.ih = r.h;
+        });
+      }).then(null, function () { failed++; });
+    });
+    return chain.then(function () {
+      LY.addDoc(M.normDoc(doc));
+      var parts = [done];
+      if (res.linked + failed) parts.push(t("sla.linked", { n: res.linked + failed }));
+      if (res.stats.skipped) parts.push(t("sla.skipped", { n: res.stats.skipped }));
+      LY.toast(parts.join(" "));
+    });
   }
 
   function placeImage(itemId) {
