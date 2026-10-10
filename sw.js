@@ -116,6 +116,7 @@ var PRECACHE_URLS = [
   "mindmap/search.js",
   "mindmap/mindmap.css",
   "mindmap/mm-core.js",
+  "mindmap/mm-import.js",
   "mindmap/mindmap.js",
   "mindmap/help.en.txt",
   "mindmap/help.el.txt",
