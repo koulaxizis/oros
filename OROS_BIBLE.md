@@ -4462,3 +4462,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Code: section 4b of `fitness/fitness.js`. No data format change.
 - Help pages EN/EL updated. Tests: tests/fitness.test.js extended.
 - Not tested: a real phone, Safari, exports from every Strong/Hevy app version.
+
+### 2026-10-10 — Mail phase 2: write, reply, forward and send (#154) — 0.66.00
+- Mail can now write, reply, reply to all and forward (plain text), with a per-account signature and an offline Outbox. Messages go out through the account's SMTP server via the relay; a copy is filed in Sent (best effort).
+- Relay: new `relay/smtp.js` (465 implicit TLS, 587 STARTTLS required, AUTH PLAIN with LOGIN fallback, dot-stuffing); new ops `smtpcheck` and `send` (rcpt 1–50, raw ≤ 380 KB); IMAP `append`; message-carrying requests up to 512 KB, others keep 64 KB. Auto-deploys from main.
+- App: new pure `mail/compose.js` (RFC 2047 headers, Bcc in the envelope only, In-Reply-To / References, reply / reply-all / forward drafts); compose dialog, Reply / Reply all / Forward, shortcuts c r a f; SMTP login check when an account is saved; IndexedDB `oros-mail` v2 adds the `outbox` store (auto-retry only when the relay was unreachable, never after a timeout).
+- Deep link: the single `__orosOpenAt("mail", …)` receiver also takes `{compose:{to?, subject, body}}`, which opens a prefilled draft that never sends by itself.
+- Data: MAIL v1 accounts may carry `sig` (signature, synced). A device on the previous version can drop a signature when it pushes the same account, until it updates.
+- Tests: new tests/mail-send.test.js (compose, scripted SMTP 465/587, refused recipient, wrong password, IMAP APPEND); tests/mail.test.js extended. Help pages EN/EL and relay README updated.
+- Not tested: a real SMTP server (Papaki / pmail.gr), the deployed Worker, Safari, a real phone.
