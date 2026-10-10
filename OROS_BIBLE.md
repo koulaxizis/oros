@@ -4331,3 +4331,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Bulk delete of designs (Select, "From Canva") with Undo, and a Files manager in Uploads that deletes unused pictures, videos and sounds.
 - New files atelier/brandkit.js, brand.js, clips.js, video.js (precached). Tests: atelier-brand, atelier-video, font mapping in atelier-import (1214 total). Shell check 360 / 1280 px; video export VP9 + Opus checked with ffprobe.
 - Not tested: Safari, H.264/MP4 recording, real Canva and Fontsource, page sound inside the slide show (designkit/show.js caches slides as stills, so videos show their first frame there).
+
+### 2026-10-10 — Dock: eight styles, "Show over open apps" off by default (#139) — 0.61.01
+- Settings › Appearance › Dock › Style: Classic (default, the original), Glass, Frosted, Smoke, Transparent, Solid, 3D shelf, Neon. Device-local `style` pref in launcher.js 1.1.0 (validated against a fixed list; unknown values fall back to classic), one `ld-s-<style>` class on `#ld-dock`.
+- "Show over open apps" is now off on every device until chosen: only the never-chosen value (`null`) changes meaning (was "follow the pointer"); an explicit choice is kept. `overApps()` = `p.over === true`.
+- Shell settings bridge passes `style`/`styles` and accepts `dock:style`; the Settings app shows a select (fits 360 px).
+- Tests 1203/1203; shell check desktop 1280 EN + phone 390 EL, all eight styles, no overflow, no page errors. Not tested: a real phone, Safari, light-theme screenshots.
