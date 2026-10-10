@@ -1,0 +1,37 @@
+# Television
+Television plays free live TV channels from around the world, listed by the community directory iptv-org. Browse or search, filter by country, category and language, and star the channels you like.
+
+## Getting started
+The first time, the app downloads the channel directory (`Loading channels…`); this can take a moment. Then `Browse` shows the channels as cards. Tap or click a card to watch it in the player. `Load more` at the bottom shows the next batch.
+
+## Find channels
+- Type at least three letters in `Search channels…` to see suggestions; pick one with [[↑]] / [[↓]] and [[Enter]], or press [[Enter]] to search the whole list.
+- The `Country`, `Category` and `Language` menus narrow the list. Choose `All countries`, `All categories` or `All languages` to clear a filter.
+
+## Watch
+The player shows the channel's name, its country and labels, and controls for play/pause, mute, volume, favourite, `Open channel website` and `Fullscreen`. Close it with the close button, by clicking outside it or with [[Esc]].
+
+Some channels have several streams. If one fails, the app tries the next one on its own (`Stream failed — trying next…`). When a channel has more than one stream, the `Alternate streams` menu lets you pick one yourself. If nothing works, you get a notification that the channel couldn't play on this device.
+
+## Favourites and recent channels
+Tap the star (☆) on a card, or the favourite button in the player, to add a channel to `Favorites`; tap it again to remove it. `Recent` lists the last 20 channels you watched.
+
+## Sync and backup
+Your favourite channels sync between your devices through [orOS sync](help:t/sync). Recent channels and your volume and mute stay on this device, and the channel directory is kept on this device for a day. There's no import or export; favourites are part of the orOS [backup](help:t/backup).
+
+## Keyboard shortcuts
+In the player:
+- [[Space]] plays or pauses.
+- [[M]] mutes or unmutes.
+- [[F]] toggles fullscreen.
+- [[↑]] / [[↓]] turn the volume up or down.
+- [[Esc]] closes the player.
+
+## Tips
+- Streams come and go. If a channel won't play today, try again later or pick another stream.
+- Watching needs a connection; without one, the app shows what it last loaded.
+
+## Limits
+- Channels and streams come from iptv-org, a free community list. Many may be offline, blocked in your country or in a format your browser can't play (`This stream format is not supported here`).
+- If the directory can't be reached (no connection, or a content blocker), the list stays empty.
+- Playback stops when you close the player or the app.

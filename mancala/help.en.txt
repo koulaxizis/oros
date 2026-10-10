@@ -1,0 +1,31 @@
+# Mancala
+Mancala here is Kalah, the seed-sowing game with two rows of six pits and a store at each end. Play the computer or a friend on the same device.
+
+## How to play
+Your pits are the bottom row, and your store is the big pit to your right. Pick one of your pits: its seeds are sown one at a time, counter-clockwise, into the next pits and your own store, but never into your opponent's store.
+
+- If the last seed lands in your store, you play again.
+- If the last seed lands in an empty pit on your side and the pit opposite has seeds, both go to your store.
+- When one side runs out of seeds, the game ends and every seed left goes to its owner's store. The fuller store wins.
+
+## Controls
+Tap or click one of your pits to sow it. The toolbar has:
+- `vs Computer` or `2 players`. With the computer you also pick the level and `First move`: `You start`, `Computer starts` or `Take turns`.
+- `Seeds per pit`: 3, 4, 5 or 6.
+- `New game (N)`, `Undo move (Z)`, `Records` and the sound button.
+
+Changing the mode, level, first move or seeds starts a new game. Against the computer, Undo also takes back its answer. If you start a new game in the middle of one, an `Undo` button lets you get it back for a few seconds.
+
+Keyboard:
+- [[1]] to [[6]] sow the pits of the side to move, counting from the left.
+- Arrow keys move between pits; [[Enter]] or [[Space]] sows the one you're on.
+- [[N]] new game, [[Z]] or [[Ctrl+Z]] undo.
+
+## Levels and scoring
+The computer plays at `Easy`, `Medium` or `Hard`. `Records` shows your wins, losses and draws against it for each level, and `Reset records` clears them. In `2 players` mode the result window keeps a running `Series` score.
+
+## Sync
+Your records against the computer sync between your devices through [orOS sync](help:t/sync), adding up the games from every device. The game in progress, the 2-player series, your settings and the sound setting stay on this device. `Reset records` clears the records on every device.
+
+## Tips
+- Look for a pit whose seeds end exactly in your store: you get another turn, and sometimes you can chain several.

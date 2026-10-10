@@ -142,6 +142,7 @@
       return { kind: "help", route: m[1] + "/" + m[2] + (m[3] ? "/" + m[3] : "") };
     }
     if (/^https:\/\/[^\s"'<>\\]+$/.test(href)) return { kind: "url", href: href };
+    if (href === "tour:start") return { kind: "tour" };
     return null;
   }
 
@@ -408,7 +409,10 @@
     }
     a.href = "#";
     a.className = "app-link";
-    a.addEventListener("click", function (e) { e.preventDefault(); openApp(target.id); });
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (target.kind === "tour") startTour(); else openApp(target.id);
+    });
     return a;
   }
 
@@ -639,6 +643,15 @@
       }
     } catch (e) {}
     if (ID_RE.test(id)) location.href = "../" + id + "/";
+  }
+
+  // The shell's first-run tour of the top bar (phase 3). Outside
+  // orOS (Help opened on its own) there is no bar to show: no-op.
+  function startTour() {
+    try {
+      var p = window.parent;
+      if (p && p !== window && p.orosHelp && typeof p.orosHelp.tour === "function") p.orosHelp.tour();
+    } catch (e) {}
   }
 
   var searchTimer = 0;
