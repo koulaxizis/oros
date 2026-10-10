@@ -4358,3 +4358,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: SHELF items gain optional `rel`; unknown item fields ride along (forward-compatible, same rule as Budget).
 - Tests: tests/shelf.test.js (1225 total); shell e2e 21/21.
 - Not tested: the real Open Library / MusicBrainz APIs from the harness, a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — Assistant / Βοηθός: new app (System) (#143) — 0.63.00
+- New app Assistant (System): chat with the AI the user picks (Claude, OpenAI, Gemini, Mistral, OpenRouter, or a local OpenAI-compatible server) with the user's own key, straight from the browser; streaming, Stop, conversation list.
+- Searches orOS data only with per-app consent (Ask first / Always / Never; Mail, Passwords and the sensitive apps start at Never); answers are rendered with a safe Markdown renderer (textContent only).
+- Keys are sealed on the device (non-extractable AES-GCM key in IndexedDB); optional encrypted key sync with the sync passphrase (off by default).
+- Shell bridges `orosAssistApps` / `orosAssistSearch` / `orosAssistOpen`; `oros-assistant` added to the factory reset; deep link `__orosOpenAt("assistant", {ask})`.
+- Tests: tests/assistant.test.js.
+- Not tested: real provider calls with real keys, Safari/iPhone, a real phone, real Dropbox.
