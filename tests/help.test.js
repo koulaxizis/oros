@@ -34,7 +34,6 @@ const H = new Function(
 // Apps that have no guide page yet. Remove an id when its page lands;
 // the test fails if a listed app already has both pages.
 const PENDING = [
-  "pubdomain", "water",
 ];
 
 const apps = JSON.parse(read("apps.json")).apps.filter((a) => a.type !== "external");

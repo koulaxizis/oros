@@ -1,0 +1,48 @@
+# Water
+Water helps you drink enough during the day. Log each glass or bottle with one tap, watch the glass fill up towards your daily goal, and see how you did over the past days and weeks.
+
+## Getting started
+Water opens on today. The big glass shows how much you've drunk, your goal, the percentage and how much is left. Your goal starts at 2,000 ml; change it in `Settings` (the gear button).
+
+Each time you drink, tap or click one of the buttons under the glass:
+- `+1 glass` adds one glass (250 ml unless you change it).
+- `+ Bottle` adds one bottle (500 ml unless you change it).
+- `Other amount` lets you type any amount, or pick a ready one such as 330 ml or 1 litre.
+
+Right after you add a drink, an `Undo` button appears for a few seconds.
+
+## Entries and past days
+Today's drinks are listed under `Entries` with their time. Tap or click an entry to change its amount or time, or to `Delete` it.
+
+Use ‹ and › at the top to move to another day, and the date button to come back to today. If you forgot to log something yesterday, go to that day and add it there; you can then fix its time.
+
+## History
+Next to the day (or under it on a phone) you see:
+- `Overview`: your current `Day streak`, your `Best streak`, the `Average (7 days)` and the share of `Days on goal`.
+- `This week`: a bar for every day, Monday to Sunday.
+- A month heatmap: the darker the day, the closer you got to your goal. Tap or click a day to open it.
+
+## Settings
+- `Daily goal (ml)`. A new goal counts from today; past days keep theirs. `Suggest` gives a starting goal from your weight (about 33 ml per kg). Your weight isn't stored.
+- `Glass (ml)` and `Bottle (ml)`: the sizes of the two quick buttons.
+- `Show amounts in` `ml`, `Glasses` or `fl oz`.
+- `Show in Habits`: adds a read-only "Water" row to [Habits](app:habits), ticked on the days you reach your goal.
+
+## Reminders
+Reminders are off at first. Turn them on with the `Reminders` button at the top, or in `Settings`, where you also choose the hours (`From`, `Until`) and `At most every`. You only get a reminder when you're behind: for example, halfway through your hours with less than half your goal. Opening it takes you to Water. See [Notifications](help:t/notifications).
+
+## Sync and backup
+Your drinks, goals and settings sync between your devices through [orOS sync](help:t/sync). Which month the heatmap shows stays on this device. `Export CSV` (in `Settings`) saves every drink with its date, time and amount. For a full copy, see [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[+]] adds one glass.
+- [[←]] / [[→]] go to the previous or next day.
+- [[Ctrl+Z]] undoes the drink you just added.
+
+## Tips
+- Drinks other than water count too; log whatever you'd like to track.
+- The goal is a rough guide, not medical advice.
+
+## Limits
+- Reminders can't fire when the browser or the orOS tab is closed.
+- Water can't import CSV files.
