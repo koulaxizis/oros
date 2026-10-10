@@ -619,4 +619,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #toast, .rest-prog i { transition: none; }
 }
 
+.imp-body p { margin: 0 0 10px; line-height: 1.4; }
+.imp-body p.hint { margin-top: -4px; }
+
 [hidden] { display: none !important; }

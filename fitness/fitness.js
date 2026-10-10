@@ -135,6 +135,15 @@
       "set.json": "Backup (JSON)", "set.restore": "Restore from backup", "set.lib": "Exercise library",
       "set.metric": "Metric (kg, km, cm)", "set.imperial": "Imperial (lb, mi, in)",
       "set.restored": "Backup restored: {n} workouts", "set.badFile": "This file is not a Workouts backup",
+      "set.import": "Import from Strong or Hevy (CSV)",
+      "imp.title": "Import workouts", "imp.bad": "This file is not a Strong or Hevy export",
+      "imp.summary": "{src} export · Workouts: {n} · Sets: {sets}", "imp.range": "{from} to {to}",
+      "imp.ex": "Exercises already here: {m} · New exercises: {k}", "imp.newList": "New: {list}",
+      "imp.skip": "Workouts already here, skipped: {n}",
+      "imp.none": "Every workout in this file is already here.",
+      "imp.unit": "Weights and distances in this file", "imp.go": "Import",
+      "imp.done": "Workouts imported: {n}",
+      "imp.tip": "You can rename new exercises or change their muscle group in the Exercise library.",
       "dlg.cancel": "Cancel", "dlg.ok": "OK", "dlg.save": "Save", "dlg.close": "Close", "dlg.delete": "Delete",
       "toast.undo": "Undo", "toast.save": "Could not save: storage is full", "toast.saved": "Saved",
       "day.0": "Mon", "day.1": "Tue", "day.2": "Wed", "day.3": "Thu", "day.4": "Fri", "day.5": "Sat", "day.6": "Sun",
@@ -213,6 +222,15 @@
       "set.json": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.lib": "Βιβλιοθήκη ασκήσεων",
       "set.metric": "Μετρικό (kg, km, cm)", "set.imperial": "Αγγλοσαξονικό (lb, mi, in)",
       "set.restored": "Έγινε επαναφορά: {n} προπονήσεις", "set.badFile": "Αυτό το αρχείο δεν είναι αντίγραφο της Προπόνησης",
+      "set.import": "Εισαγωγή από Strong ή Hevy (CSV)",
+      "imp.title": "Εισαγωγή προπονήσεων", "imp.bad": "Αυτό το αρχείο δεν είναι εξαγωγή του Strong ή του Hevy",
+      "imp.summary": "Εξαγωγή {src} · Προπονήσεις: {n} · Σετ: {sets}", "imp.range": "{from} έως {to}",
+      "imp.ex": "Ασκήσεις που υπάρχουν ήδη: {m} · Νέες ασκήσεις: {k}", "imp.newList": "Νέες: {list}",
+      "imp.skip": "Προπονήσεις που υπάρχουν ήδη και παραλείπονται: {n}",
+      "imp.none": "Όλες οι προπονήσεις του αρχείου υπάρχουν ήδη.",
+      "imp.unit": "Βάρη και αποστάσεις στο αρχείο", "imp.go": "Εισαγωγή",
+      "imp.done": "Προπονήσεις που μπήκαν: {n}",
+      "imp.tip": "Μπορείς να μετονομάσεις τις νέες ασκήσεις ή να αλλάξεις τη μυϊκή τους ομάδα στη Βιβλιοθήκη ασκήσεων.",
       "dlg.cancel": "Άκυρο", "dlg.ok": "OK", "dlg.save": "Αποθήκευση", "dlg.close": "Κλείσιμο", "dlg.delete": "Διαγραφή",
       "toast.undo": "Αναίρεση", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.saved": "Αποθηκεύτηκε",
       "day.0": "Δευ", "day.1": "Τρί", "day.2": "Τετ", "day.3": "Πέμ", "day.4": "Παρ", "day.5": "Σάβ", "day.6": "Κυρ",
@@ -820,6 +838,271 @@
     return "﻿" + rows.map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
     }).join("\r\n") + "\r\n";
+  }
+
+  // ---------- 4b. Import from Strong / Hevy (CSV) ----------
+  // Both apps export one row per set. Columns are found by name, so
+  // older and newer layouts both work:
+  //   Strong: Date, Workout Name, Duration | Duration (sec), Exercise Name,
+  //           Set Order (1, 2…, W, D, F, Rest Timer), Weight | Weight (kg|lbs),
+  //           Reps, Distance | Distance (meters|km|miles), Seconds, Notes, Workout Notes
+  //   Hevy:   title, start_time, end_time, description, exercise_title,
+  //           exercise_notes, set_index, set_type (normal, warmup, dropset,
+  //           failure), weight_kg | weight_lbs, reps, distance_km |
+  //           distance_miles, duration_seconds
+  // A column without a unit ("Weight") takes the unit the user picks.
+  // Workout ids come from the file (source, start, title), so importing
+  // the same file again skips what is already here, and a workout
+  // deleted after an import stays deleted.
+  var IMP_MAX = 20 * 1024 * 1024;
+  var IMP_COLS = {
+    start: ["date", "starttime"], end: ["endtime"], title: ["workoutname", "title"],
+    dur: ["duration"], durS: ["durationsec"], ex: ["exercisename", "exercisetitle"],
+    order: ["setorder"], type: ["settype"],
+    w: ["weight"], wKg: ["weightkg"], wLb: ["weightlbs", "weightlb"], reps: ["reps"],
+    dist: ["distance"], dM: ["distancemeters", "distancem"], dKm: ["distancekm"], dMi: ["distancemiles", "distancemi"],
+    secs: ["seconds", "durationseconds"],
+    note: ["workoutnotes", "description"], exNote: ["notes", "exercisenotes"]
+  };
+  // Common Strong / Hevy names that differ from the ready names here.
+  // Keys are folded (impKey); a name equal to a ready English name
+  // needs no line.
+  var IMP_ALIAS = {
+    "bench press barbell": "x-bench", "incline bench press barbell": "x-incline",
+    "bench press dumbbell": "x-dbbench", "chest fly dumbbell": "x-dbfly", "push up": "x-pushup",
+    "chest dip": "x-dips", "triceps dip": "x-dips", "deadlift barbell": "x-deadlift",
+    "bent over row barbell": "x-row", "bent over one arm row dumbbell": "x-dbrow",
+    "pull up": "x-pullup", "chin up": "x-chinup", "lat pulldown cable": "x-pulldown",
+    "lat pulldown machine": "x-pulldown", "seated row cable": "x-cablerow",
+    "seated cable row v grip cable": "x-cablerow", "back extension hyperextension": "x-backext",
+    "overhead press barbell": "x-ohp", "strict military press barbell": "x-ohp",
+    "shoulder press dumbbell": "x-dbshoulder", "seated overhead press dumbbell": "x-dbshoulder",
+    "overhead press dumbbell": "x-dbshoulder", "lateral raise dumbbell": "x-latraise",
+    "face pull cable": "x-facepull", "rear delt reverse fly dumbbell": "x-rearfly",
+    "reverse fly dumbbell": "x-rearfly", "bicep curl barbell": "x-curl", "biceps curl barbell": "x-curl",
+    "bicep curl dumbbell": "x-dbcurl", "biceps curl dumbbell": "x-dbcurl", "hammer curl dumbbell": "x-hammer",
+    "triceps pushdown cable": "x-pushdown", "triceps pushdown": "x-pushdown",
+    "triceps pushdown cable straight bar": "x-pushdown", "skullcrusher barbell": "x-skull",
+    "skull crusher barbell": "x-skull", "triceps extension dumbbell": "x-ohext",
+    "overhead triceps extension cable": "x-ohext", "bench press close grip barbell": "x-closebench",
+    "close grip bench press barbell": "x-closebench", "squat barbell": "x-squat",
+    "full squat barbell": "x-squat", "front squat barbell": "x-frontsquat", "leg press machine": "x-legpress",
+    "lunge dumbbell": "x-lunge", "lunge barbell": "x-lunge", "bulgarian split squat dumbbell": "x-bulgarian",
+    "goblet squat kettlebell": "x-goblet", "goblet squat dumbbell": "x-goblet",
+    "romanian deadlift barbell": "x-rdl", "romanian deadlift dumbbell": "x-rdl",
+    "lying leg curl machine": "x-legcurl", "seated leg curl machine": "x-legcurl",
+    "leg extension machine": "x-legext", "standing calf raise machine": "x-calf",
+    "standing calf raise": "x-calf", "seated calf raise machine": "x-calf", "hip thrust barbell": "x-hipthrust",
+    "ab wheel": "x-abwheel", "running treadmill": "x-run", "running outdoor": "x-run",
+    "cycling indoor": "x-bike", "rowing machine": "x-rowerg", "row machine": "x-rowerg",
+    "kettlebell swing kettlebell": "x-kbswing", "power clean barbell": "x-clean", "burpees": "x-burpee"
+  };
+  // A bracketed equipment name that does not change the lift here.
+  var IMP_PLAIN = /\s(barbell|bodyweight|machine|cable)$/;
+  var IMP_GROUP = [
+    [/plank|crunch|sit ?up|\babs?\b|leg raise|twist|wheel|hollow|v up/, "core"],
+    [/run|walk|cycl|bike|swim|row(ing)? machine|rower|elliptical|stair|jump rope|treadmill|hiking/, "cardio"],
+    [/hip thrust|glute|kickback|abduct/, "glutes"],
+    [/curl/, "biceps"],
+    [/tricep|pushdown|skull|dip/, "triceps"],
+    [/squat|leg|lunge|calf|step up|deadlift/, "legs"],
+    [/bench|chest|fly|crossover|push ?up|pec/, "chest"],
+    [/row|pull|lat |chin|shrug|back/, "back"],
+    [/shoulder|overhead|military|lateral|raise|delt|arnold/, "shoulders"]
+  ];
+  var IMP_MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+
+  function impKey(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  function impHash(s) {
+    var a = 0x811c9dc5, b = 0x01000193 ^ 0x5bd1e995;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      a = Math.imul(a ^ c, 0x01000193) >>> 0;
+      b = Math.imul(b ^ c, 0x5bd1e995) >>> 0;
+    }
+    return a.toString(36) + b.toString(36);
+  }
+  // RFC 4180 rows; the separator (, ; or tab) is the one the header uses most.
+  function parseCsvRows(text) {
+    text = String(text).replace(/^﻿/, "");
+    var head = text.slice(0, text.search(/\r?\n|$/));
+    var sep = ",", best = -1;
+    [",", ";", "\t"].forEach(function (c) {
+      var n = head.split(c).length;
+      if (n > best) { best = n; sep = c; }
+    });
+    var rows = [], row = [], cell = "", q = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+        else cell += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === sep) { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        row.push(cell); rows.push(row); row = []; cell = "";
+      } else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (c) { return c.trim(); }); });
+  }
+  function impNum(s) {
+    s = String(s == null ? "" : s).trim();
+    if (s.indexOf(".") < 0) s = s.replace(",", ".");
+    var v = parseFloat(s);
+    return isFinite(v) && v > 0 ? v : 0;
+  }
+  // "2023-01-15 08:30:00", "2023-01-15T08:30", "15 Jan 2023, 08:30" → local ms
+  function impDate(s) {
+    s = String(s || "").trim();
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime();
+    m = /^(\d{1,2}) ([A-Za-z]{3})[A-Za-z]*\.?,? (\d{4}),? (\d{1,2}):(\d{2})/.exec(s);
+    if (m && IMP_MON[m[2].toLowerCase()] != null) return new Date(+m[3], IMP_MON[m[2].toLowerCase()], +m[1], +m[4], +m[5]).getTime();
+    return NaN;
+  }
+  // Strong's "1h 5m", "45m", "50s" → seconds
+  function impDur(s) {
+    s = String(s || "");
+    var h = /(\d+)\s*h/.exec(s), m = /(\d+)\s*m(?!s)/.exec(s), sec = /(\d+)\s*s/.exec(s);
+    var v = (h ? +h[1] * 3600 : 0) + (m ? +m[1] * 60 : 0) + (sec ? +sec[1] : 0);
+    if (!v && /^\d+$/.test(s.trim())) v = +s.trim();
+    return v;
+  }
+
+  // Text → { src, unitKnown, rows: [{ key, start, end, title, note, ex, exNote, warm, w, r, t, dist }] }
+  // with weights still in file units (w: number, wu: "kg" | "lb" | ""),
+  // or null when the file is neither export.
+  function parseImport(text) {
+    var all = parseCsvRows(text);
+    if (all.length < 2) return null;
+    var head = all[0].map(function (h) { return h.toLowerCase().replace(/[^a-z#]/g, ""); });
+    var col = {};
+    Object.keys(IMP_COLS).forEach(function (k) {
+      col[k] = -1;
+      IMP_COLS[k].forEach(function (n) { if (col[k] < 0) col[k] = head.indexOf(n); });
+    });
+    if (col.start < 0 || col.ex < 0) return null;
+    var src = col.type >= 0 || head.indexOf("exercisetitle") >= 0 ? "hevy" : "strong";
+    var wu = col.wKg >= 0 ? "kg" : (col.wLb >= 0 ? "lb" : "");
+    var du = col.dM >= 0 ? "m" : (col.dKm >= 0 ? "km" : (col.dMi >= 0 ? "mi" : ""));
+    var unitKnown = !!(wu || col.w < 0) && !!(du || col.dist < 0);
+    var get = function (r, k) { return col[k] >= 0 && r[col[k]] != null ? String(r[col[k]]).trim() : ""; };
+    var rows = [];
+    all.slice(1).forEach(function (r) {
+      var ex = normStr(get(r, "ex"), NAME_LEN);
+      var startS = get(r, "start"), start = impDate(startS);
+      if (!ex || isNaN(start)) return;
+      var order = get(r, "order").toLowerCase(), type = get(r, "type").toLowerCase();
+      if (order.indexOf("rest") >= 0) return;          // Strong's rest-timer rows
+      var w = wu === "kg" ? impNum(get(r, "wKg")) : (wu === "lb" ? impNum(get(r, "wLb")) : impNum(get(r, "w")));
+      var dist = du === "m" ? impNum(get(r, "dM")) : (du === "km" ? impNum(get(r, "dKm")) : (du === "mi" ? impNum(get(r, "dMi")) : impNum(get(r, "dist"))));
+      var reps = Math.round(impNum(get(r, "reps"))), secs = Math.round(impNum(get(r, "secs")));
+      if (!w && !reps && !secs && !dist) return;
+      var end = impDate(get(r, "end"));
+      var dur = col.durS >= 0 ? Math.round(impNum(get(r, "durS"))) : impDur(get(r, "dur"));
+      if (isNaN(end)) end = start + dur * 1000;
+      var title = normStr(get(r, "title"), NAME_LEN);
+      rows.push({
+        key: src + "|" + startS + "|" + title, start: start, end: Math.max(start, end), title: title,
+        note: get(r, "note"), ex: ex, exNote: normStr(get(r, "exNote"), 200),
+        warm: order === "w" || type === "warmup" || type === "warm up",
+        w: w, wu: wu, r: reps, t: secs, dist: dist, du: du
+      });
+    });
+    return rows.length ? { src: src, unitKnown: unitKnown, rows: rows } : null;
+  }
+
+  // Which exercise here an imported name is. Kind first: a ready
+  // exercise is used only when its measure fits the numbers in the file.
+  function impKind(sets) {
+    var w = 0, r = 0, t = 0, d = 0;
+    sets.forEach(function (s) { if (s.w) w++; if (s.r) r++; if (s.t) t++; if (s.dist) d++; });
+    if (d) return "dt";
+    if (w) return "wr";
+    if (r) return "r";
+    return t ? "t" : "wr";
+  }
+  function impGroup(key) {
+    for (var i = 0; i < IMP_GROUP.length; i++) if (IMP_GROUP[i][0].test(key)) return IMP_GROUP[i][1];
+    return "full";
+  }
+  function impMatch(d, name, kind) {
+    var key = impKey(name), plain = key.replace(IMP_PLAIN, "");
+    var fits = function (id) {
+      var k = SEED_MAP[id].k;
+      return k === kind || (k === "wr" && kind === "r");
+    };
+    var cands = [IMP_ALIAS[key]];
+    SEED_EX.forEach(function (s) { if (impKey(s[3]) === key || impKey(s[4]) === key) cands.push(s[0]); });
+    cands.push(IMP_ALIAS[plain]);
+    SEED_EX.forEach(function (s) { if (plain !== key && impKey(s[3]) === plain) cands.push(s[0]); });
+    for (var i = 0; i < cands.length; i++) if (cands[i] && fits(cands[i])) return cands[i];
+    var own = null, low = name.toLowerCase();
+    (d.ex || []).forEach(function (x) { if (!own && !SEED_MAP[x.id] && x.n.toLowerCase() === low) own = x.id; });
+    return own;
+  }
+
+  // Parsed file → rows to merge plus a summary for the preview.
+  // unit: "kg" or "lb", only used where the file has no unit.
+  function buildImport(d, parsed, unit, now) {
+    var wuF = function (s) { return wFactor((s.wu || unit) === "lb" ? "lb" : "kg"); };
+    var duF = function (s) { var u = s.du || (unit === "lb" ? "mi" : "km"); return u === "m" ? 1 : dFactor(u); };
+    var byName = {}, order = [];
+    parsed.rows.forEach(function (s) {
+      if (!byName[s.ex]) { byName[s.ex] = []; order.push(s.ex); }
+      byName[s.ex].push(s);
+    });
+    var exId = {}, exRows = [], newNames = [], matched = 0;
+    order.forEach(function (name) {
+      var kind = impKind(byName[name]);
+      var id = impMatch(d, name, kind);
+      if (id) { exId[name] = id; matched++; return; }
+      id = "ix-" + impHash(impKey(name) + "|" + kind);
+      exId[name] = id;
+      newNames.push(name);
+      if (!findIn(d.ex, id)) exRows.push({ id: id, m: now, n: name, g: impGroup(impKey(name)), k: kind, h: 0 });
+    });
+    var groups = {}, keys = [];
+    parsed.rows.forEach(function (s) {
+      if (!groups[s.key]) { groups[s.key] = []; keys.push(s.key); }
+      groups[s.key].push(s);
+    });
+    var wos = [], skipped = 0, sets = 0, from = Infinity, to = 0;
+    keys.forEach(function (k) {
+      var rows = groups[k], first = rows[0];
+      var id = "i-" + impHash(k);
+      if (findIn(d.wo, id) || ("wo:" + id) in (d.tombs || {})) { skipped++; return; }
+      var x = [], notes = [], seenNote = {};
+      if (first.note) notes.push(first.note);
+      rows.forEach(function (s) {
+        var last = x[x.length - 1];
+        if (!last || last.name !== s.ex || last.s.length >= MAX_SETS) {
+          if (x.length >= MAX_ITEMS) return;
+          last = { name: s.ex, e: exId[s.ex], tr: 0, tr2: 0, rest: 0, s: [] };
+          x.push(last);
+        }
+        last.s.push([Math.min(MAX_W, Math.round(s.w * wuF(s))), Math.min(MAX_R, s.r), Math.min(MAX_T, s.t),
+                     Math.min(MAX_D, Math.round(s.dist * duF(s))), F_DONE | (s.warm ? F_WARM : 0)]);
+        if (s.exNote && !seenNote[s.ex + s.exNote]) { seenNote[s.ex + s.exNote] = 1; notes.push(s.ex + ": " + s.exNote); }
+      });
+      var end = 0;
+      rows.forEach(function (s) { end = Math.max(end, s.end); });
+      x.forEach(function (e) { sets += e.s.length; delete e.name; });
+      from = Math.min(from, first.start);
+      to = Math.max(to, first.start);
+      wos.push({ id: id, m: now, d: ymd(new Date(first.start)), st: first.start, en: Math.max(first.start, end),
+                 ti: first.title, p: "", pd: "", n: notes.join("\n"), x: x });
+    });
+    return { src: parsed.src, unitKnown: parsed.unitKnown, wo: wos, ex: exRows, skipped: skipped, sets: sets,
+             matched: matched, newNames: newNames, from: wos.length ? ymd(new Date(from)) : "", to: wos.length ? ymd(new Date(to)) : "" };
+  }
+  function findIn(list, id) {
+    for (var i = 0; list && i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
   }
 
   // ---------- 5. Storage, prefs, sync pacing ----------
@@ -2640,6 +2923,71 @@
     });
   }
 
+  // Strong / Hevy: read, preview, then merge (section 4b).
+  function importCsv() {
+    pickFile(".csv,text/csv").then(function (file) {
+      if (!file) return;
+      if (file.size > IMP_MAX) { showToast(t("imp.bad")); return; }
+      var rd = new FileReader();
+      rd.onload = function () {
+        var parsed = null;
+        try { parsed = parseImport(String(rd.result)); } catch (e) {}
+        if (!parsed) { showToast(t("imp.bad")); return; }
+        var d = $("fit-set");
+        if (d) d.close();
+        importDialog(parsed);
+      };
+      rd.readAsText(file);
+    });
+  }
+  function importDialog(parsed) {
+    var dlg = makeDialog("fit-imp", t("imp.title"));
+    var unit = settings().wu, plan = null;
+    var body = el("div", "imp-body");
+    var go = button(t("imp.go"), "primary", function () {
+      if (!plan || !plan.wo.length) return;
+      data = mergeFit(data, { wo: plan.wo, ex: plan.ex });
+      saveNow(false);
+      dlg.close();
+      render();
+      showToast(t("imp.done", { n: plan.wo.length }));
+    });
+    function paint() {
+      plan = buildImport(data, parsed, unit, Date.now());
+      body.innerHTML = "";
+      var src = parsed.src === "hevy" ? "Hevy" : "Strong";
+      if (plan.wo.length) {
+        body.appendChild(el("p", "", t("imp.summary", { src: src, n: plan.wo.length, sets: plan.sets })));
+        body.appendChild(el("p", "", plan.from === plan.to ? fmtDate(plan.from)
+          : t("imp.range", { from: fmtDate(plan.from), to: fmtDate(plan.to) })));
+        body.appendChild(el("p", "", t("imp.ex", { m: plan.matched, k: plan.newNames.length })));
+        if (plan.newNames.length) {
+          var list = plan.newNames.slice(0, 12).join(", ") + (plan.newNames.length > 12 ? ", …" : "");
+          body.appendChild(hint(t("imp.newList", { list: list })));
+        }
+      } else body.appendChild(el("p", "", t("imp.none")));
+      if (plan.skipped && plan.wo.length) body.appendChild(hint(t("imp.skip", { n: plan.skipped })));
+      if (plan.newNames.length && plan.wo.length) body.appendChild(hint(t("imp.tip")));
+      go.disabled = !plan.wo.length;
+    }
+    if (!parsed.unitKnown) {
+      var sel = el("select");
+      [["kg", t("set.metric")], ["lb", t("set.imperial")]].forEach(function (o) {
+        var x = el("option", "", o[1]); x.value = o[0]; sel.appendChild(x);
+      });
+      sel.value = unit;
+      sel.addEventListener("change", function () { unit = sel.value; paint(); });
+      dlg.appendChild(field(t("imp.unit"), sel));
+    }
+    dlg.appendChild(body);
+    paint();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    openDialog(dlg);
+  }
+
   function settingsDialog() {
     var set = settings();
     var dlg = makeDialog("fit-set", t("set.title"));
@@ -2694,6 +3042,7 @@
     ex.appendChild(button(t("set.csv"), "", exportCsv));
     ex.appendChild(button(t("set.json"), "", exportJson));
     ex.appendChild(button(t("set.restore"), "", restoreJson));
+    ex.appendChild(button(t("set.import"), "", importCsv));
     ex.appendChild(button(t("set.lib"), "", function () { dlg.close(); libraryDialog(); }));
     dlg.appendChild(ex);
     var acts = el("div", "dlg-actions");
