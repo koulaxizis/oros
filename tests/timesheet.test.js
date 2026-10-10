@@ -336,3 +336,44 @@ test("sync: offline edits on two devices converge, then nothing re-uploads", asy
   await B.sync.pull();
   assert.equal(B.sync.isDirty(), false, "a pull of the same state marks nothing dirty");
 });
+
+test("quoteLines: one line per billable project, hours and hourly price, client when unique", () => {
+  const d = model({
+    clients: [{ id: "cccccc1", name: "Acme", rate: 0, m: 1 }, { id: "cccccc2", name: "Beta", rate: 0, m: 1 }],
+    projects: [
+      { id: "pppppp1", name: "Site", client: "cccccc1", rate: 5000, bill: 1, m: 1 },
+      { id: "pppppp2", name: "Docs", client: "cccccc1", rate: 4000, bill: 1, m: 1 },
+      { id: "pppppp3", name: "Free", client: "cccccc1", rate: 0, bill: 0, m: 1 },
+      { id: "pppppp4", name: "Other", client: "cccccc2", rate: 3000, bill: 1, m: 1 }
+    ],
+    entries: [
+      ent("eeeee1", at(5, 9), at(5, 10, 30), { p: "pppppp1" }),
+      ent("eeeee2", at(6, 9), at(6, 9, 20), { p: "pppppp2" }),
+      ent("eeeee3", at(6, 10), at(6, 12), { p: "pppppp3" }),
+      ent("eeeee4", at(7, 9), at(7, 10), { p: "pppppp1", billed: 1 })
+    ]
+  });
+  const q = C.quoteLines(d, key(5), key(11), { billed: "open" }, at(12, 0), "en");
+  assert.equal(q.items.length, 2, "non-billable project left out, invoiced entry left out");
+  const site = q.items.find((x) => x.d.startsWith("Site"));
+  assert.equal(site.q, 1.5);
+  assert.equal(site.p, 50);
+  assert.equal(site.d, "Site · 5 Oct – 11 Oct 2026");
+  const docs = q.items.find((x) => x.d.startsWith("Docs"));
+  assert.equal(docs.q, 0.33);
+  assert.equal(docs.p, 40);
+  assert.equal(q.client, "Acme", "single client is passed on");
+  assert.deepEqual(q.ids.sort(), ["eeeee1", "eeeee2"]);
+
+  d.entries.push(ent("eeeee5", at(8, 9), at(8, 10), { p: "pppppp4" }));
+  const q2 = C.quoteLines(d, key(5), key(11), { billed: "all" }, at(12, 0), "el");
+  assert.equal(q2.client, "", "two clients: no client is guessed");
+  assert.ok(q2.items.every((x) => / · 05\/10 – 11\/10\/2026$/.test(x.d)));
+  assert.equal(q2.items.find((x) => x.d.startsWith("Site")).q, 2.5, "all includes invoiced");
+});
+
+test("fmtRange: year once when shared, both years across New Year, single day", () => {
+  assert.equal(C.fmtRange("2026-10-05", "2026-10-11", "el"), "05/10 – 11/10/2026");
+  assert.equal(C.fmtRange("2025-12-29", "2026-01-04", "el"), "29/12/2025 – 04/01/2026");
+  assert.equal(C.fmtRange("2026-10-05", "2026-10-05", "en"), "5 Oct 2026");
+});
