@@ -113,7 +113,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | R32 | **Centered popups.** Every modal dialog and overlay panel in every app renders centered on both axes. Context menus (right-click / long-press) are the only exception: they are anchored at the pointer by design. Implementation in Part VII. Existing apps are retro-fitted (A14); new apps comply from the first commit. |
 | R36 | **No dead code.** Never inject a helper nothing calls (an app without user-file I/O gets no `dialogHost()`). Dead code, stubs and orphaned keys found in an audit are listed and removed; ask first when the removal touches a stored key or a visible feature. |
 | R37 | **Host idiom.** Injected code follows the host file's idiom (ES5 in ES5 files; arrows/`const` only where the file already uses them). No computed object keys (`{[k]: v}`) anywhere: build the object with bracket assignment. This is not a mandate to rewrite existing internals. |
-| R38 | **The guide stays current.** Every PR that adds an app, or changes what a user sees or does in an app, updates `<app>/help.en.txt` and `<app>/help.el.txt` in the same PR (format: Part II "Help app"). A shell-level change updates the matching page in `help/topics/`. A new global shortcut is added to `help/topics/shortcuts.*.txt`. `tests/help.test.js` enforces coverage, EN/EL outline parity, links and shortcuts. |
+| R38 | **The guide stays current.** Every PR that adds an app, or changes what a user sees or does in an app, updates `<app>/help.en.txt` and `<app>/help.el.txt` in the same PR (format: Part II "Help app"). A shell-level change updates the matching page in `help/topics/`. A new global shortcut is added to `help/topics/shortcuts.*.txt`. `tests/help.test.js` enforces coverage, EN/EL outline parity, links and shortcuts. Since 0.54.00 every release commit also adds a short user-facing line to the top section of `help/topics/whatsnew.{en,el}.txt` (same heading outline in EN and EL; a new section per minor version). |
 
 **Quality gates**
 
@@ -2115,6 +2115,27 @@ Rebuild this in any session where code is delivered.
 - **Quota:** raw data-URL photos could exceed the shared quota while `localPersist` swallowed the error (R30).
 
 ---
+
+### Help pages audit findings (2026-10-10, reported while writing the guide pages; not fixed)
+
+- Mood: Entries view is headed "Recent entries" but lists every entry.
+- Habits: DL bridge "habits:<offset>" exists but nothing emits a Habits reminder.
+- RPS: on a Greek layout P types π, which KEY_CHARS maps to Rock, not Paper (Bible claims physical R/P/S work on any layout).
+- Cycle EL typos: `rep.btn` "Αναφορά γιατρου" → "γιατρού"; `rep.days` "εναρτήσεων" → "ενάρξεων".
+- Pet Health Book EL: "Βήχας της κυνοτροφείου" → "του κυνοτροφείου".
+- Garage EL `log.sent`: "στάλθηκε στο Budget" → «Έσοδα & Έξοδα».
+- Media Shelf EL: tab "Wishlist" untranslated.
+- Xeri EL middle level "Μέτριο" vs "Μεσαίο" elsewhere; Memory EL level "Expert" untranslated.
+- Crossword: cannot use Word Search user themes (comment says it can).
+- Radio: empty Favourites text says "tap the heart on any station", but cards have no heart.
+- Podcasts: mini player skip tooltips always say 15 s / 30 s regardless of settings.
+- Reader/Podcasts: only pick up a relay typed in Mail settings, not Mail's built-in default relay.
+- Dice: "Unknown notation" text never shown; stats from 50-entry history; EL `Μοιραστείτε` formal; MAX!/Fumble rules differ from code comment.
+- Pet World: F key always feeds kibble, Feed button offers a choice.
+- Meals EL `toast.importBad` says "Meal Planner"; Characters MD export headings always English; Names: Enter/Space on a focused mode tab does nothing; Pixel: size/seed change silently drops hand painting.
+- Quote: reminders treat Sent/Accepted quotes with no due date as due (empty date compares early); PDF fallback prints US dates in EN.
+- Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).
+- Gomoku records vs-computer games after undo, Chess does not; Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options.
 
 ## Part XI — Session handoff template
 
@@ -4121,3 +4142,13 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** `More` menu: `Import GEDCOM…` (a new tree, with preview and Undo) and `Export GEDCOM…` (Download / Save to Files, option to hide details of the living). Pure code in `familytree/ft-core.js` section 10; tests `tests/familytree-gedcom.test.js` (8). (PR #116)
 - **Checked with real files:** royal92.ged (3,010 people, ANSI/PAF 1992), pres2020.ged (2,322, UTF-8 5.5.1), GEDCOM 7.0 test files (maximal70, remarriage, same-sex, escapes): all import with 0 broken links and round-trip export → import unchanged.
 - **NOT tested:** a real phone, Safari, real Dropbox, files from Ancestry / MyHeritage exports.
+
+### 2026-10-10 — shell + Help 0.54.00 — guide pages for every app, first-run tour, What's new
+- **Changes:**
+  - Guide pages (EN+EL) for 77 more apps (`<app>/help.{en,el}.txt`, precached in sw.js). `tests/help.test.js` PENDING now lists only apps whose own PRs carry their pages (pubdomain #106, water #104).
+  - First-run tour of the top bar (shell.js "Help phase 3" section, `startTour`): runs once, automatically, for NEW users only (`checkVersionToast` saw no `oros-last-version` → `tourFirstRun`). Waits for the splash, apps.json and the desktop (a launch-param app defers it to `returnToDesktop`). Steps: welcome, menu, sync dot, bell, language, Help ("?" or, on phones, "Help is in the menu under System"), done. Skip, Back/Next, Esc, arrow keys, focus trap, `role=dialog`, reduced motion, 360px. Opening an app ends it.
+  - Replay: `window.orosHelp.tour()`; Help link target `tour:start` (help.js `parseTarget` kind "tour"), used on the start topic.
+  - New Help topic `whatsnew` ("What's new in orOS"). The update notice (`ns:"system"`, `type:"update"`) now carries `deepLink:"help:whatsnew"`; notifications.js `DL_BRIDGES.help` opens `t/<topic>` through `orosHelp.open`.
+- **Device-local keys:** `oros-tour-pending` (first run waiting for the desktop), `oros-tour-done` (tour ran once; never auto-starts again). Test harness h.js presets `oros-tour-done` unless `device({tour:true})`.
+- **Status:** PR #117. Not tested: real iOS/Android devices, a screen reader.
+- **Rule (extends R38):** every release commit adds a short user-facing line to the top section of `help/topics/whatsnew.{en,el}.txt` (same heading outline in EN and EL); a new section per minor version.

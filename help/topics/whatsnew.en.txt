@@ -1,7 +1,7 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## A guide for every app, and a tour
+## Version 0.54.00
 - Every app and game now has its own page in Help. Inside any app, the **?** button or [[Ctrl+Alt+Shift+H]] opens it.
 - New users get a short tour of the top bar the first time they open orOS. You can [take the tour](tour:start) again at any time.
 - The update notice now opens this page, so you can see what changed.
