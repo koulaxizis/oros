@@ -833,6 +833,14 @@
       "type": "internal"
     },
     {
+      "id": "assistant",
+      "name": "Assistant",
+      "category": "System",
+      "icon": "assistant",
+      "url": "assistant/",
+      "type": "internal"
+    },
+    {
       "id": "help",
       "name": "Help",
       "category": "System",
