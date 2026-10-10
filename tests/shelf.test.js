@@ -27,7 +27,7 @@ const S = new Function("crypto",
   block("  // ---------- 2. Model", "  // ---------- 5. Storage") +
   "\nreturn { TYPES, MAX_TAGS, TITLE_LEN, REV_LEN, isYmd, dayNum, fold, normItem, normSess, normTags, parseTags," +
   " mergeShelf, sessOf, currentRun, progressOf, completions, paceOf, goalState, yearStats, viewList, matches," +
-  " initials, inkFor, COLORS, hasProgress, unitKey, parseCsv, csvKind, planImport };")(webcrypto);
+  " initials, inkFor, COLORS, hasProgress, unitKey, parseCsv, csvKind, planImport, lookupUrl, parseLookup };")(webcrypto);
 
 const I1 = "item000001", I2 = "item000002", I3 = "item000003";
 function item(id, m, over) {
@@ -320,4 +320,111 @@ test("import skips titles already on the shelf and repeats inside the files", ()
   const logOnly = S.planImport([{ name: "diary.csv", text: LB_DIARY }], EMPTY, OPTS);
   assert.equal(logOnly.items[0].rate, 10);
   assert.equal(logOnly.items.length, 1);
+});
+
+// ---------- 1.2: release date, forward compatibility, online lookup ----------
+
+test("release date is kept only when valid and never added to items without one", () => {
+  const plain = S.normItem(item(I1, 5));
+  assert.equal("rel" in plain, false);                            // 1.1 bytes unchanged
+  assert.equal(S.normItem(item(I1, 5, { rel: "2027-03-14" })).rel, "2027-03-14");
+  assert.equal("rel" in S.normItem(item(I1, 5, { rel: "2027-02-30" })), false);
+  assert.equal("rel" in S.normItem(item(I1, 5, { rel: "soon" })), false);
+});
+
+test("fields from a newer version ride along, sorted and bounded", () => {
+  const x = S.normItem(item(I1, 5, { zeta: "z", isbn: "9780441013593", hot: true, n2: 3,
+    Bad: 1, obj: { a: 1 }, big: "x".repeat(501), inf: Infinity }));
+  assert.deepEqual(Object.keys(x).slice(-4), ["hot", "isbn", "n2", "zeta"]);
+  assert.equal("Bad" in x || "obj" in x || "big" in x || "inf" in x, false);
+  const many = {};
+  for (let i = 0; i < 30; i++) many["f" + String(i).padStart(2, "0")] = i;
+  assert.equal(Object.keys(S.normItem(item(I1, 5, many))).filter((k) => /^f\d\d$/.test(k)).length, 16);
+  // Merge keeps them and stays canonical.
+  const a = S.mergeShelf(data([item(I1, 5, { isbn: "1" })]), data([item(I1, 5, { isbn: "1" })]));
+  assert.equal(a.items[0].isbn, "1");
+  assert.deepEqual(S.mergeShelf(a, a), a);
+});
+
+test("lookup URLs send only the typed title and creator", () => {
+  assert.equal(S.lookupUrl("film", "Heat", ""), "");
+  assert.equal(S.lookupUrl("book", "  ", "x"), "");
+  const b = new URL(S.lookupUrl("book", "Dune & Co", "Frank Herbert"));
+  assert.equal(b.origin, "https://openlibrary.org");
+  assert.equal(b.searchParams.get("title"), "Dune & Co");
+  assert.equal(b.searchParams.get("author"), "Frank Herbert");
+  const m = new URL(S.lookupUrl("album", 'Say "Hi" \\ now', ""));
+  assert.equal(m.origin, "https://musicbrainz.org");
+  assert.equal(m.searchParams.get("query"), 'release:"Say \\"Hi\\" \\\\ now"');
+  assert.equal(new URL(S.lookupUrl("album", "OK Computer", "Radiohead")).searchParams.get("query"),
+    'release:"OK Computer" AND artist:"Radiohead"');
+});
+
+test("lookup answers are parsed defensively and de-duplicated", () => {
+  const ol = S.parseLookup("book", { docs: [
+    { title: "Dune", author_name: ["Frank Herbert"], first_publish_year: 1965, number_of_pages_median: 604 },
+    { title: "Dune", author_name: ["Frank Herbert"], first_publish_year: 1965, number_of_pages_median: 604 },
+    { title: "<img src=x onerror=alert(1)>\n", author_name: [1, "A", null], number_of_pages_median: -3 },
+    { title: "" }, null, "x"
+  ] });
+  assert.deepEqual(ol[0], { title: "Dune", by: "Frank Herbert", year: 1965, size: 604, rel: "" });
+  assert.equal(ol.length, 2);
+  assert.deepEqual(ol[1], { title: "<img src=x onerror=alert(1)>", by: "A", year: 0, size: 0, rel: "" });
+  const mb = S.parseLookup("album", { releases: [
+    { title: "In Rainbows", date: "2007-10-10", "track-count": 10,
+      "artist-credit": [{ name: "Radiohead", joinphrase: "" }] },
+    { title: "Duet", date: "2026", "artist-credit": [{ name: "A", joinphrase: " & " }, { name: "B" }] },
+    { title: "Bad date", date: "2026-13-01", "track-count": "12" }
+  ] });
+  assert.deepEqual(mb[0], { title: "In Rainbows", by: "Radiohead", year: 2007, size: 10, rel: "2007-10-10" });
+  assert.deepEqual(mb[1], { title: "Duet", by: "A & B", year: 2026, size: 0, rel: "" });
+  assert.equal(mb[2].rel, "");
+  assert.deepEqual(S.parseLookup("book", null), []);
+  assert.deepEqual(S.parseLookup("album", { docs: [{ title: "x" }] }), []);
+  const lots = { docs: Array.from({ length: 20 }, (_, i) => ({ title: "T" + i })) };
+  assert.equal(S.parseLookup("book", lots).length, 8);
+});
+
+// ---------- Calendar feed (shelf/feed.js) ----------
+
+const F = require(path.join(__dirname, "..", "shelf/feed.js"));
+
+test("calendar feed: finishes on their day, wishlist release dates, tombstones respected", () => {
+  const d = data([
+    item(I1, 5, { title: "Dune", st: "done" }),
+    item(I2, 5, { title: "Album X", type: "album", st: "want", rel: "2026-11-20" }),
+    item(I3, 5, { title: "Gone", st: "done" }),
+    item("item000004", 5, { title: "Read already", st: "done", rel: "2026-11-20" })
+  ], [
+    sess("sess000001", 5, I1, "d", "2026-10-01"),
+    sess("sess000002", 6, I1, "d", "2026-10-01"),        // same day twice → one row
+    sess("sess000003", 7, I1, "d", "2026-10-05"),        // reread
+    sess("sess000004", 5, I1, "s", "2026-09-20"),        // a start is not shown
+    sess("sess000005", 5, I3, "d", "2026-10-01"),
+    sess("sess000006", 5, "item000009", "d", "2026-10-01") // unknown item
+  ], {}, { [I3]: 9 });
+  const days = F.byDay(d);
+  assert.deepEqual(Object.keys(days).sort(), ["2026-10-01", "2026-10-05", "2026-11-20"]);
+  assert.deepEqual(days["2026-10-01"], [{ item: I1, k: "d", title: "Dune" }]);
+  assert.deepEqual(days["2026-11-20"], [{ item: I2, k: "r", title: "Album X" }]);
+  assert.equal(F.label("d", "Dune", "en"), "Finished: Dune");
+  assert.equal(F.label("r", "Dune", "el"), "Κυκλοφορία: Dune");
+  assert.equal(F.label("r", "Dune", "xx"), "Release: Dune");
+  assert.deepEqual(F.byDay(null), {});
+  assert.deepEqual(F.byDay({ items: "x", sess: 3 }), {});
+});
+
+test("calendar feed: Calendar loads feed.js and opens the title in Media Shelf", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "calendar/index.html"), "utf8");
+  const i = html.indexOf("../shelf/feed.js"), j = html.indexOf('src="calendar.js');
+  assert.ok(i > 0 && j > i);
+  const cal = fs.readFileSync(path.join(root, "calendar/calendar.js"), "utf8");
+  assert.equal((cal.match(/"lbl\.feed\.shelf":/g) || []).length, 2, "EN + EL label");
+  assert.ok(cal.includes('{ id: "lbl-feed-shelf"'));
+  assert.ok(cal.includes(".concat(shelfFeedOn(dateStr))"));
+  assert.ok(cal.includes('_openAt: { app: "shelf", target: { item: r.item } }'));
+  // The feed's id rule is the app's.
+  assert.ok(src.includes("var ID_RE = /^[a-z0-9]{6,40}$/;"));
+  assert.ok(fs.readFileSync(path.join(root, "shelf/feed.js"), "utf8").includes("var ID_RE = /^[a-z0-9]{6,40}$/;"));
 });

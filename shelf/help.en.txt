@@ -2,7 +2,7 @@
 Media Shelf is your wishlist and tracker for books, films, series, music, podcasts and games. Keep what you want to try, follow your progress, rate what you finish and see your year in numbers.
 
 ## Getting started
-Tap or click `Add` (or `Add your first title`). Choose the `Type`, then fill in the `Title` and, if you like, the creator (`Author`, `Director`, `Artist`…), `Year`, size (pages, episodes, hours…), `Tags (comma separated)`, `Where I heard of it` and a `Cover colour`. Books also have a `Format`: `Print`, `E-book` or `Audiobook`; games a `Platform`. Pick the `Status` and press `Save`. Each title gets a generated cover with its initials.
+Tap or click `Add` (or `Add your first title`). Choose the `Type`, then fill in the `Title` and, if you like, the creator (`Author`, `Director`, `Artist`…), `Year`, size (pages, episodes, hours…), `Tags (comma separated)`, `Where I heard of it`, a `Release date (optional)` and a `Cover colour`. Books also have a `Format`: `Print`, `E-book` or `Audiobook`; games a `Platform`. Pick the `Status` and press `Save`. Each title gets a generated cover with its initials.
 
 ## Tabs, search and sort
 - `Now`: what you're reading, watching, listening to or playing.
@@ -22,6 +22,11 @@ Rate with five stars in half steps: tap the left or right half of a star. Mark a
 
 ## Statistics and goals
 Pick a year with the arrows. `Statistics` shows what you finished per type, `Pages read` (print and e-books), `Average rating`, a chart `By month`, `Top creators` and `Top tags`. With `Set goals` you set a target per type for the year, and the app tells you if you're ahead of or behind schedule.
+
+## Find details online and the Calendar
+For books and albums, `Find details online` in the form looks up the title you typed (and the creator, if any) on Open Library (books) or MusicBrainz (music). It runs only when you tap it, and the first time it tells you what is sent: just that text. Pick a match to fill in the title, creator, year, pages or tracks and, for albums, the release date; check it and press `Save`. Films, series, podcasts and games are filled in by hand.
+
+In [Calendar](app:calendar), the `Media Shelf` chip shows the day you finished each title (rewatches and rereads too) and the release date of titles on your wishlist. Tap a row to open that title here.
 
 ## Import from Goodreads or Letterboxd
 Bring your existing library in with `More` → `Import from Goodreads / Letterboxd (CSV)`.
@@ -47,4 +52,5 @@ In the `More` menu, `Export (JSON)` saves your shelf to a file and `Import (JSON
 - Fill in `Where I heard of it` to remember who recommended a title; search finds it too.
 
 ## Limits
-- There are no reminders and no Calendar entries.
+- There are no reminders.
+- Covers are generated, never downloaded, and the online lookup has no source for films, series, podcasts or games.

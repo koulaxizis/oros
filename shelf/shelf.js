@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Media Shelf — App logic (v1.1.0)
+// orOS Media Shelf — App logic (v1.2.0)
 // A wishlist and tracker for books, films, series, music,
 // podcasts and games.
 //   - four states: Want → Now → Done, or Dropped; every start,
@@ -137,6 +137,14 @@
       "csv.line": "{type}: {n} ({parts})", "csv.go": "Import {n}",
       "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, unzip, then pick the CSV files (you can pick several).",
       "toast.csv": "Imported {n} titles", "toast.csvMax": "Only {n} more titles fit on your shelf",
+      "f.rel": "Release date (optional)", "it.rel": "Out {d}",
+      "lk.btn": "Find details online", "lk.title": "Find details online",
+      "lk.note": "This sends the title and creator you typed to {host} and nothing else. It never runs on its own, only when you tap this button.",
+      "lk.go": "Search", "lk.wait": "Searching {host}…", "lk.src": "From {host}. Pick one to fill in the form, then check it and Save.",
+      "lk.none": "No matches. Try a shorter title or leave the creator empty.",
+      "lk.offline": "You are offline. Fill in the details by hand or try again later.",
+      "lk.fail": "Could not reach {host}. Try again later.", "lk.needTitle": "Type a title first",
+      "lk.filled": "Filled in. Check it and Save",
       "toast.added": "Added to your shelf", "toast.saved": "Saved", "toast.deleted": "“{t}” deleted",
       "toast.undo": "Undo", "toast.save": "Could not save: storage is full",
       "toast.needTitle": "Give it a title", "toast.max": "Up to {n} titles",
@@ -212,6 +220,14 @@
       "csv.line": "{type}: {n} ({parts})", "csv.go": "Εισαγωγή {n}",
       "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, αποσυμπίεσε και διάλεξε τα αρχεία CSV (μπορείς πολλά μαζί).",
       "toast.csv": "Εισήχθησαν {n} τίτλοι", "toast.csvMax": "Χωράνε μόνο {n} ακόμα τίτλοι στο ράφι σου",
+      "f.rel": "Ημερομηνία κυκλοφορίας (προαιρετικά)", "it.rel": "Κυκλοφορεί {d}",
+      "lk.btn": "Βρες στοιχεία online", "lk.title": "Βρες στοιχεία online",
+      "lk.note": "Στέλνει στο {host} μόνο τον τίτλο και τον δημιουργό που έγραψες. Δεν τρέχει ποτέ μόνο του, μόνο όταν πατάς αυτό το κουμπί.",
+      "lk.go": "Αναζήτηση", "lk.wait": "Αναζήτηση στο {host}…", "lk.src": "Από το {host}. Διάλεξε ένα για να συμπληρωθεί η φόρμα, έλεγξέ το και πάτα Αποθήκευση.",
+      "lk.none": "Δεν βρέθηκε τίποτα. Δοκίμασε πιο σύντομο τίτλο ή άφησε κενό τον δημιουργό.",
+      "lk.offline": "Είσαι εκτός σύνδεσης. Συμπλήρωσε τα στοιχεία με το χέρι ή δοκίμασε αργότερα.",
+      "lk.fail": "Δεν ήταν δυνατή η σύνδεση με το {host}. Δοκίμασε αργότερα.", "lk.needTitle": "Γράψε πρώτα έναν τίτλο",
+      "lk.filled": "Συμπληρώθηκε. Έλεγξέ το και πάτα Αποθήκευση",
       "toast.added": "Μπήκε στο ράφι σου", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Το «{t}» διαγράφηκε",
       "toast.undo": "Αναίρεση", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.needTitle": "Δώσε έναν τίτλο", "toast.max": "Έως {n} τίτλοι",
@@ -315,12 +331,16 @@
   }
   function parseTags(s) { return normTags(String(s || "").split(",")); }
 
+  var ITEM_KEYS = ["id", "m", "a", "type", "title", "by", "year", "size", "fmt", "plat", "st",
+                   "prio", "rate", "fav", "tags", "rev", "src", "col", "rel"];
+  var EXTRA_RE = /^[a-z][a-z0-9]{0,15}$/;
+
   function normItem(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !isInt(x.m) || x.m < 0) return null;
     var title = clipLine(x.title, TITLE_LEN);
     if (!title || TYPES.indexOf(x.type) < 0) return null;
-    return {
+    var o = {
       id: x.id, m: x.m, a: intIn(x.a, 0, 1e14, x.m),
       type: x.type, title: title, by: clipLine(x.by, BY_LEN),
       year: intIn(x.year, 0, 9999, 0), size: intIn(x.size, 0, MAX_SIZE, 0),
@@ -331,6 +351,20 @@
       tags: normTags(x.tags), rev: clipText(x.rev, REV_LEN), src: clipLine(x.src, SRC_LEN),
       col: intIn(x.col, 0, NCOLORS - 1, 0)
     };
+    // Release date (YYYY-MM-DD, since 1.2.0): only present when set, so
+    // items without one keep their 1.1 bytes.
+    if (isYmd(x.rel)) o.rel = x.rel;
+    // Forward compatibility: a field this version does not know rides
+    // along (flat name, string <= 500 / finite number / boolean, at
+    // most 16, sorted), so a newer device's additions survive here.
+    var extra = Object.keys(x).filter(function (k) {
+      if (ITEM_KEYS.indexOf(k) >= 0 || !EXTRA_RE.test(k)) return false;
+      var v = x[k];
+      return (typeof v === "string" && v.length <= 500) || typeof v === "boolean" ||
+             (typeof v === "number" && isFinite(v));
+    }).sort(cmpStr).slice(0, 16);
+    extra.forEach(function (k) { o[k] = x[k]; });
+    return o;
   }
 
   function normSess(x) {
@@ -743,6 +777,61 @@
     return out;
   }
 
+  // ---------- 4c. Online lookup (Open Library, MusicBrainz) ----------
+  // Opt-in and on a tap only: the title and creator typed in the form
+  // are the only things sent. Books → Open Library, albums →
+  // MusicBrainz; no API key, no account. Answers are plain data and go
+  // through the same clipping as typed input; nothing is saved until
+  // the user presses Save.
+  var LOOKUP_HOSTS = { book: "openlibrary.org", album: "musicbrainz.org" };
+  var LOOKUP_MAX = 8;
+  function luceneQ(s) { return '"' + s.replace(/[\\"]/g, "\\$&") + '"'; }
+  function lookupUrl(type, title, by) {
+    title = clipLine(title, TITLE_LEN);
+    by = clipLine(by, BY_LEN);
+    if (!title || !LOOKUP_HOSTS[type]) return "";
+    if (type === "book") {
+      return "https://openlibrary.org/search.json?limit=" + LOOKUP_MAX +
+        "&fields=title,author_name,first_publish_year,number_of_pages_median" +
+        "&title=" + encodeURIComponent(title) + (by ? "&author=" + encodeURIComponent(by) : "");
+    }
+    return "https://musicbrainz.org/ws/2/release/?fmt=json&limit=" + LOOKUP_MAX + "&query=" +
+      encodeURIComponent("release:" + luceneQ(title) + (by ? " AND artist:" + luceneQ(by) : ""));
+  }
+  function parseLookup(type, json) {
+    var out = [], seen = {};
+    function add(r) {
+      var c = {
+        title: clipLine(r.title, TITLE_LEN), by: clipLine(r.by, BY_LEN),
+        year: intIn(r.year, 1, 9999, 0), size: intIn(r.size, 1, MAX_SIZE, 0),
+        rel: isYmd(r.rel) ? r.rel : ""
+      };
+      var k = fold(c.title) + "|" + fold(c.by) + "|" + c.year + "|" + c.size + "|" + c.rel;
+      if (!c.title || seen[k] || out.length >= LOOKUP_MAX) return;
+      seen[k] = 1;
+      out.push(c);
+    }
+    function str(v) { return typeof v === "string" ? v : ""; }
+    if (!json || typeof json !== "object") return out;
+    if (type === "book" && Array.isArray(json.docs)) {
+      json.docs.forEach(function (d) {
+        if (!d || typeof d !== "object") return;
+        add({ title: d.title, year: d.first_publish_year, size: d.number_of_pages_median,
+              by: Array.isArray(d.author_name) ? d.author_name.filter(str).slice(0, 3).join(", ") : "" });
+      });
+    } else if (type === "album" && Array.isArray(json.releases)) {
+      json.releases.forEach(function (r) {
+        if (!r || typeof r !== "object") return;
+        var by = Array.isArray(r["artist-credit"]) ? r["artist-credit"].map(function (a) {
+          return a && typeof a === "object" ? str(a.name) + str(a.joinphrase) : "";
+        }).join("") : "";
+        var date = str(r.date);
+        add({ title: r.title, by: by, year: parseInt(date.slice(0, 4), 10), size: r["track-count"], rel: date });
+      });
+    }
+    return out;
+  }
+
   // ---------- 5. Storage, prefs ----------
   var data = null, prefs = null;
 
@@ -786,7 +875,8 @@
     prefs = {
       tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "now",
       type: p.type === "all" || TYPES.indexOf(p.type) >= 0 ? p.type : "all",
-      sort: SORTS.indexOf(p.sort) >= 0 ? p.sort : "recent"
+      sort: SORTS.indexOf(p.sort) >= 0 ? p.sort : "recent",
+      lk: p.lk === 1 ? 1 : 0          // said yes to the online lookup note
     };
   }
   function savePrefs() {
@@ -1151,6 +1241,7 @@
     hb.appendChild(h);
     var sub = [it.by, it.year ? String(it.year) : ""].filter(Boolean).join(" · ");
     if (sub) hb.appendChild(el("div", "it-sub", sub));
+    if (it.rel) hb.appendChild(el("div", "it-sub it-rel", t("it.rel", { d: fmtDate(it.rel) })));
     var favB = iconBtn("mini fav-btn" + (it.fav ? " on" : ""), it.fav ? UI.heart : UI.heartO, t("fav"), function () {
       setField(it, "fav", it.fav ? 0 : 1);
       renderAll();
@@ -1373,6 +1464,12 @@
     }
     var fTitle = field("sh-f-title", t("f.title"), input(TITLE_LEN));
     var fBy = field("sh-f-by", "", input(BY_LEN));
+    var lkW = el("div", "fld lk-w");
+    lkW.id = "sh-f-lk-w";
+    var lkB = button(t("lk.btn"), "lk-btn", function () { capture(); lookupFlow(draft, applyPick); });
+    lkB.id = "sh-f-lk";
+    lkW.appendChild(lkB);
+    form.appendChild(lkW);
     var row = el("div", "fld-row");
     form.appendChild(row);
     var fYear = field("sh-f-year", t("f.year"), input(0, "number"));
@@ -1385,6 +1482,8 @@
     FORMATS.forEach(function (f) { var o = el("option", "", t("fmt." + f)); o.value = f; fFmt.appendChild(o); });
     field("sh-f-fmt", t("f.fmt"), fFmt);
     var fPlat = field("sh-f-plat", t("f.plat"), input(PLAT_LEN));
+    var fRel = field("sh-f-rel", t("f.rel"), input(0, "date"));
+    fRel.min = "1900-01-01"; fRel.max = "2999-12-31";
     var fSt = null;
     if (!existing) {
       fSt = el("select");
@@ -1417,7 +1516,19 @@
       draft.plat = fPlat.value;
       draft.tags = parseTags(fTags.value);
       draft.src = fSrc.value;
+      draft.rel = fRel.value;
       if (fSt) draft.st = fSt.value;
+    }
+    // A pick from the online lookup fills the form; Save still decides.
+    function applyPick(c) {
+      fTitle.value = c.title;
+      if (c.by) fBy.value = c.by;
+      if (c.year) fYear.value = String(c.year);
+      if (c.size && !(draft.type === "book" && fFmt.value === "a")) fSize.value = String(c.size);
+      if (c.rel) fRel.value = c.rel;
+      capture();
+      showToast(t("lk.filled"));
+      fTitle.focus();
     }
     function layout() {
       var x = draft.type, uk = x === "book" && draft.fmt === "a" ? "audio" : x;
@@ -1430,6 +1541,7 @@
       form.querySelector("#sh-f-size-l").textContent = t("size." + uk);
       form.querySelector("#sh-f-fmt-w").hidden = x !== "book";
       form.querySelector("#sh-f-plat-w").hidden = x !== "game";
+      lkW.hidden = !LOOKUP_HOSTS[x];
       if (fSt) {
         var keep = draft.st;
         fSt.textContent = "";
@@ -1453,6 +1565,7 @@
     fPlat.value = draft.plat || "";
     fTags.value = (draft.tags || []).join(", ");
     fSrc.value = draft.src || "";
+    fRel.value = draft.rel || "";
     fFmt.addEventListener("change", function () { capture(); layout(); });
     layout();
 
@@ -1475,15 +1588,17 @@
         fmt: draft.fmt, plat: draft.plat, st: existing ? existing.st : draft.st,
         prio: existing ? existing.prio : 0, rate: existing ? existing.rate : 0,
         fav: existing ? existing.fav : 0, tags: draft.tags, rev: existing ? existing.rev : "",
-        src: draft.src, col: draft.col
+        src: draft.src, col: draft.col, rel: draft.rel
       });
       if (!cand) return;
       if (existing) {
         var cur = itemById(existing.id);
         if (cur) {
           var changed = false;
-          ["type", "title", "by", "year", "size", "fmt", "plat", "tags", "src", "col"].forEach(function (k) {
-            if (JSON.stringify(cur[k]) !== JSON.stringify(cand[k])) { cur[k] = cand[k]; changed = true; }
+          ["type", "title", "by", "year", "size", "fmt", "plat", "tags", "src", "col", "rel"].forEach(function (k) {
+            if (JSON.stringify(cur[k]) === JSON.stringify(cand[k])) return;
+            if (cand[k] === undefined) delete cur[k]; else cur[k] = cand[k];
+            changed = true;
           });
           if (changed) { touch(cur); saveNow(); showToast(t("toast.saved")); }
         }
@@ -1509,6 +1624,84 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     fTitle.focus();
+  }
+
+  // Online lookup flow (section 4c): a one-time note on what is sent,
+  // then a results dialog over the edit form. Cancel aborts the request.
+  function lookupFlow(draft, pick) {
+    var url = lookupUrl(draft.type, draft.title, draft.by);
+    if (!url) { showToast(t("lk.needTitle")); return; }
+    var host = LOOKUP_HOSTS[draft.type];
+    if (prefs.lk) { lookupRun(draft.type, url, host, pick); return; }
+    var dlg = makeDialog("sh-lk", "lk-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("lk.title")));
+    dlg.appendChild(el("p", "csv-p", t("lk.note", { host: host })));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("lk.go"), "primary", function () {
+      prefs.lk = 1;
+      savePrefs();
+      dlg.close();
+      lookupRun(draft.type, url, host, pick);
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  function lookupRun(type, url, host, pick) {
+    var dlg = makeDialog("sh-lk", "lk-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("lk.title")));
+    var body = el("div", "lk-body");
+    body.setAttribute("aria-live", "polite");
+    body.appendChild(el("p", "hint", t("lk.wait", { host: host })));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var done = false;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
+    dlg.addEventListener("close", function () { done = true; clearTimeout(timer); if (ctl) ctl.abort(); });
+    function show(list, msg) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      body.textContent = "";
+      if (msg) { body.appendChild(el("p", "csv-p", msg)); return; }
+      var ul = el("ul", "lk-list");
+      list.forEach(function (c) {
+        var li = el("li");
+        var b = el("button", "lk-res");
+        b.type = "button";
+        b.appendChild(el("span", "lk-t", c.title));
+        var meta = [c.by, c.rel || (c.year ? String(c.year) : ""),
+                    c.size ? fmtNum(c.size) + " " + t("size." + type).toLowerCase() : ""].filter(Boolean).join(" · ");
+        if (meta) b.appendChild(el("span", "lk-m", meta));
+        b.addEventListener("click", function () { dlg.close(); pick(c); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      body.appendChild(el("p", "hint", t("lk.src", { host: host })));
+      var first = ul.querySelector("button");
+      if (first) first.focus();
+    }
+    if (navigator.onLine === false) { show(null, t("lk.offline")); return; }
+    var opts = { headers: { Accept: "application/json" }, credentials: "omit", referrerPolicy: "no-referrer" };
+    if (ctl) opts.signal = ctl.signal;
+    fetch(url, opts).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (j) {
+      var list = parseLookup(type, j);
+      show(list, list.length ? "" : t("lk.none"));
+    }, function () {
+      show(null, t("lk.fail", { host: host }));
+    });
   }
 
   function randCol() {

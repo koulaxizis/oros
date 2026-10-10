@@ -222,6 +222,14 @@
       "type": "internal"
     },
     {
+      "id": "typewriter",
+      "name": "Typewriter",
+      "category": "Creativity",
+      "icon": "typewriter",
+      "url": "typewriter/",
+      "type": "internal"
+    },
+    {
       "id": "characters",
       "name": "Characters",
       "category": "Creativity",
@@ -830,6 +838,14 @@
       "category": "System",
       "icon": "device",
       "url": "device/",
+      "type": "internal"
+    },
+    {
+      "id": "assistant",
+      "name": "Assistant",
+      "category": "System",
+      "icon": "assistant",
+      "url": "assistant/",
       "type": "internal"
     },
     {
