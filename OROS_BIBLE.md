@@ -1799,7 +1799,8 @@ Rebuild this in any session where code is delivered.
 - Inside the Calendar, not a separate app (Chris 2026-10-09). Three read-only chips: Holidays (Greek public holidays), Name days (day-view line + one row per contact whose first name celebrates, click → Contacts), World days (observances).
 - `calendar/namedays.js` is pure (Orthodox Easter by Meeus, fixed + movable feasts, George/Mark moved after Easter, Greek/Greeklish name skeletons, `cleanDays` sanitizer). Name list is hand-written from the church calendar; nicknames prefixed `~` match but are not shown. Add names there.
 - `calendar/days.json` = observance RULES (`md`, `nth`, `easter`, `doy`). Updating it needs no app release: the Calendar fetches `days.json?w=<week>` at most weekly, sanitizes, caches in `oros-cal-days`; the SW precache is the offline fallback. Plain text only (textContent), max 80 chars, unknown rules dropped.
-- Nothing is stored in `oros-calendar-data`: no sync impact, no reminders.
+- Nothing is stored in `oros-calendar-data`: no sync impact, no event reminders.
+- Morning notice (shell `namedayCheckTick`, 60 s throttle): from 09:00, when a contact's first name (or nickname) celebrates today, one `ns: "calendar"` notification, key `nameday-<ymd>` (inbox dedup across devices), body lists up to 3 names, deep link `calendar:nameday:<ymd>` opens that day. The shell loads `calendar/namedays.js` (same file as the app). Silent when the Name days chip is off on this device (`oros-cal-feedvis`) or Calendar notifications are off. orOS closed = nothing fires; the next boot the same day catches up.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -4022,3 +4023,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Verification (Chromium, real shell + real `sync.js` + mock Dropbox; EN desktop 1280, EL phone 390 and 360, 768 light):** star → desktop and Dock, the menu stays open; right-click, Shift+F10 and a touch long press open the small menu; move and remove; pins and order reach the other device, a removal there comes back; idle rounds upload 0; Dock: "Turn on" from the star panel, magnify, drag reorder, dot on the open app, tapping the open app does not reload it, app ends above the Dock with "over open apps", hidden behind apps on the phone, auto-hide + edge reveal, small size; sideways scroll with 7 icons at 360 px, no page overflow; pet rises above the Dock; no page errors. Without the script tag the shell shows no star and no error.
 - **NOT tested:** a real phone, Safari / iOS (long press, safe area), Firefox, real Dropbox.
 - **Status:** code merged as PR #84; this release commit (0.49.00).
+
+### 2026-10-10 — Name days: morning notice when a contact celebrates — 0.49.01
+- **Changes:** from 09:00, orOS sends one notification a day if any of your contacts has a name day, for example "Σήμερα γιορτάζει: Δημήτρης Παπαδόπουλος, Dimitra K.". Tapping it opens that day in the Calendar. It respects the Calendar notification toggle and quiet hours. It stays silent when the Name days chip is off on the device. (PR #103)
+- **NOT tested:** a real phone, Safari, or system (OS) notifications.

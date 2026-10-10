@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.49.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.49.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -923,6 +923,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
+      tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
   }
@@ -1095,6 +1096,63 @@
     if (now - healthLastTick < 60000) return;
     healthLastTick = now;
     healthCheckTick();
+  }
+
+  // Name days — morning notice when a CONTACT celebrates today.
+  // Reads "oros-contacts-data" directly (works with Calendar and
+  // Contacts CLOSED) and asks calendar/namedays.js (loaded by
+  // index.html, the SAME file the Calendar runs) who celebrates.
+  // From 09:00, one notice per day; the key is the same on every
+  // device (inbox dedup). Silent when the Calendar "Name days" chip
+  // is off on this device (oros-cal-feedvis) or no contact matches.
+  // Honest limit (alarms): orOS closed = nothing fires; the next boot
+  // the same day catches up.
+  var ND_HOUR = 9;
+  function namedayCheckTick() {
+    var ND = window.OrosNamedays;
+    if (!ND) return;                                    // stale bundle — silent
+    if (new Date().getHours() < ND_HOUR) return;
+    try {
+      var vis = JSON.parse(localStorage.getItem("oros-cal-feedvis") || "{}");
+      if (vis && vis["lbl-feed-nameday"] === false) return;
+    } catch (e) {}
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-contacts-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var today = sysYmd();
+    var who = [];
+    raw.contacts.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
+                : (typeof c.nickname === "string" ? c.nickname : "");
+      if (!first || !ND.celebrates(first, today)) return;
+      var full = [c.given, c.middle, c.family].filter(function (x) {
+        return typeof x === "string" && x.trim();
+      }).join(" ");
+      who.push((full || first).slice(0, 60));
+    });
+    if (!who.length) return;
+    var el = state.lang === "el";
+    var shown = who.slice(0, 3).join(", ");
+    if (who.length > 3) shown += el ? " και " + (who.length - 3) + " ακόμα" : " and " + (who.length - 3) + " more";
+    N.emit({
+      ns: "calendar",
+      key: "nameday-" + today,
+      type: "reminder",
+      title: el ? "Ονομαστικές εορτές" : "Name days",
+      body: (el ? "Σήμερα γιορτάζει: " : "Name day today: ") + shown,
+      deepLink: "calendar:nameday:" + today
+    });
+  }
+
+  var namedayLastTick = 0;
+  function namedayCheckTickThrottled() {
+    var now = Date.now();
+    if (now - namedayLastTick < 60000) return;
+    namedayLastTick = now;
+    namedayCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
