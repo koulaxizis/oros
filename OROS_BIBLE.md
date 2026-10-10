@@ -4266,3 +4266,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Data: new collections `links`, `pos`, `imgs` in the `mindmap` slice (see Part schemas); older devices keep working and lose nothing.
 - Tests: tests/mindmap.test.js (+6), tests/mindmap-import.test.js (new, real FreeMind/Freeplane/Xholon/XMind 8/XMind 2023/wisemapping samples). Shell check: desktop + 360/390 px, two-device sync, 0 errors.
 - Not tested: a real phone, Safari, real Dropbox.
+
+### 2026-10-10 — One-Minute Museum / Μουσείο του λεπτού: new Internet app (#129) — 0.60.00
+- New app (soffitta.site port, title 10/17): a Wikipedia article shown as a museum exhibit (picture, text, credits), a new one every 30 s / 1 / 2 / 5 min with a countdown ring; the clock stops on pause and while hidden, the next exhibit preloads 8 s early.
+- Halls: Everything (random, no stubs/disambiguation), Pictures, Featured today (featured article, picture of the day, most read), On this day (English only). English or Greek Wikipedia, defaults to the orOS language. Previous/next through the last 50 exhibits; keys Space, ←/→, S, O.
+- Star keeps an exhibit in a synced collection (with Undo); thumbnails cached per device (IndexedDB `oros-museum`) so the collection works offline. Offline: "The museum is closed" with a link to the collection; reopens on its own.
+- Every exhibit shows CC BY-SA credit, article link and history link; the picture of the day shows artist and licence. Links only to fixed Wikimedia hosts, images only from upload.wikimedia.org, all text as textContent.
+- Data: sync slice `museum` (`oros-museum-data`, LWW per item + tombstones, delete wins ties); `oros-museum-prefs` and IDB `oros-museum` stay on the device. External service: Wikipedia / Wikimedia Commons (listed in Device info).
+- Files: museum/ (index.html, core.js, museum.js, museum.css, help.en/el.txt), tests/museum.test.js. Registered in apps.json (Internet), icon, names, precache, tests.yml, factory reset.
+- Not tested: the real Wikipedia API from the test harness (a routed stand-in was used), a real phone, Safari.
