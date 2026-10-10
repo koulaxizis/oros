@@ -4410,3 +4410,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Open PDF** (e.g. from Affinity Publisher): text becomes editable frames (alignment, leading, size, family, bold/italic, colour); pictures and drawings become one locked picture per page behind the text.
 - Files: `layout/` (+ caret.js, inframe.js, idml.js, pdfin.js), `designkit/text.js`, `vendor/pdfjs/`, tests `layout-caret`, `layout-idml`, `layout-pdfin`.
 - Not tested: real phone, Safari / iOS, real Dropbox, files from real InDesign / Affinity installs.
+
+### 2026-10-10 — Help: guide pages refreshed for the latest app changes (#131) — 0.65.01
+- Guide pages updated for the 2026-10-10 releases (Museum, Media Shelf 1.1–1.2, Travel/Chores/Garage → To-Do, Timesheet waves 4–6, Mind Map notes, Atelier brand kit, Dock styles, Family Tree phase 2, Assistant, Typewriter, Layout phase 2), EN + EL.
+- help/search.js: the guide index now reads the internal app ids from apps.json (HELP_APPS stays as the fallback), so menu search finds the guide page of every app, not only 16.
+- Tests: full suite green.
+- Not tested: a real phone, Safari.
