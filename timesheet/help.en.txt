@@ -29,6 +29,13 @@ On `Projects`, add a `New project` or `New client`. A project has a `Name`, `Cli
 ## Settings
 The gear button opens `Settings`: `Currency`, `Default hourly rate`, a `Daily goal` (shown as a bar under the day) and `Rounding in reports`. Rounding only changes reports and CSV; your entries keep their exact times.
 
+### Move from another app
+`Import from Toggl, Clockify or Harvest (CSV)` in `Settings` brings in a CSV export from Toggl Track, Clockify or Harvest. First you see what the file holds: new entries, entries already here, new projects and clients, and rows that could not be read. Nothing changes until you tap `Import`.
+- Importing only adds entries. The same file twice adds nothing, and entries you delete stay deleted if you import again.
+- Projects and clients with the same name as yours are joined to them.
+- If the dates could be either way round, choose Day/Month or Month/Day in `Dates in the file`.
+- Harvest has hours but no start times, so each day's entries are placed one after another from 09:00.
+
 ## Sync and backup
 Entries, the running timer, projects, clients and settings sync between your devices through [orOS sync](help:t/sync). The open tab, the last project you used and the report filters stay on each device.
 
