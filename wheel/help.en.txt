@@ -1,0 +1,42 @@
+# Wheel of Fate
+Can't decide? Write your options on the wheel, spin it and let fate choose. Keep the wheels you use often, or start from a ready set.
+
+## Getting started
+A new wheel starts with two empty rows under `Options`. Type an option in each, or type in `Add an option…` and press [[Enter]] or the **+** button. The wheel updates as you type. You need at least two options to spin, and you can have up to 30, each up to 50 characters.
+
+Then tap or click `Spin!` in the middle of the wheel, tap or flick the wheel itself, or press [[Space]] or [[Enter]].
+
+## Spin and results
+The winner is drawn fairly at random before the wheel starts turning; the spin just lands on it. While the wheel turns you can't edit the options.
+
+When it stops, `The wheel has spoken` shows the winner, with confetti. From there:
+- `Spin again` spins once more.
+- `Remove from the wheel` takes the winner off, handy for drawing names one by one. An `Undo` button lets you put it back. It isn't offered when only two options are left.
+- `Close` goes back to the wheel.
+
+The pointer clicks as it passes each segment and plays a short tune at the end. The `Sound` button in the toolbar turns this off or on (on at first).
+
+## Edit the options
+- Paste several lines at once into the add box or into a row: each line becomes an option.
+- Drag an option by its grip to move it, or press [[Alt+Up]] or [[Alt+Down]] in its row.
+- The ✕ next to a row removes it. Empty rows disappear when you leave them.
+- `Shuffle options` mixes up the order.
+
+## Ready sets and your wheels
+`Ready sets` has wheels to start from: `Yes / No`, `What to eat`, `Days of the week`, `Numbers 1–10`, `Heads or tails`, `Chores`, `Movie night`, `What to do` and `Who goes first`. A set opens as a new, unsaved wheel, so your saved ones are never changed.
+
+`Save wheel` gives the open wheel a name and keeps it under `My wheels` (up to 40). Changes to a saved wheel are saved automatically as you type. Next to each saved wheel you can rename it, make a copy or delete it; a delete can be undone for a few seconds. `New wheel` starts an empty one.
+
+`Winners` lists the last 50 winners of the open wheel, with the time. `Clear` empties the list, with `Undo`.
+
+## Sync and backup
+Your saved wheels sync between your devices through [orOS sync](help:t/sync). The winners list, the unsaved wheel and the sound setting stay on this device. There's no import or export; the orOS [backup](help:t/backup) includes your wheels.
+
+## Keyboard shortcuts
+- [[Space]] or [[Enter]] spins the wheel (when you're not typing in a box).
+- [[Enter]] in the add box adds the option; in a row, it moves to the next row.
+- [[Alt+Up]] / [[Alt+Down]] moves the current option.
+
+## Tips
+- To split chores fairly, spin, use `Remove from the wheel` and spin again until everyone has one.
+- If you reduce motion on your device, the spin is short and there's no confetti.

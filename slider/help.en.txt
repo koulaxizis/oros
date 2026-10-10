@@ -1,0 +1,26 @@
+# Number Slider
+The classic sliding puzzle: slide the numbered tiles into the empty square until they're in order. Every shuffle can be solved.
+
+## How to play
+Put the numbers in order, left to right and top to bottom, starting with 1 at the top left and leaving the empty square at the bottom right. Tiles that are already in their place are tinted, so you can see your progress.
+
+Pick the size in the toolbar: `3×3` (8 tiles), `4×4` (15, the classic) or `5×5` (24).
+
+## Controls
+- Tap or click any tile in the empty square's row or column. It slides into the gap, pushing the tiles between along with it; each tile that moves counts as one move.
+- On a touch screen you can also swipe in the direction you want a tile next to the gap to move.
+- The arrow keys move the tile next to the gap in that direction.
+- `New game (N)` or [[N]] shuffles a new puzzle. If you were in the middle of one, an `Undo` button appears for a few seconds to bring it back.
+- The speaker button turns sound on or off (off at first).
+
+## Levels and scoring
+The status shows `Moves` and `Time`. The clock starts with your first move and runs only while the app is on screen.
+
+When you solve a puzzle you see your moves and time, and a badge for `New best time!` or `New fewest moves!` if you beat a record. `Records` lists, for each size, your best time, fewest moves and how many puzzles you've solved (`Best time · fewest moves · solved`). `Reset records` clears them after you confirm.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The puzzle in progress, the chosen size and the sound setting stay on this device. An unfinished puzzle is kept and carries on when you come back.
+
+## Tips
+- Solve the top row first, then the left column, and keep going: the puzzle gets smaller each time.
+- Tapping a tile a few squares away moves the whole row at once, which saves a lot of tapping.

@@ -125,6 +125,7 @@ const STR = {
     "item.note": "Description",
     "item.folder": "Folder",
     "item.delete": "Delete",
+    "item.follow": "Follow in Reader",
     "item.open": "Open",
     "item.move": "Move to…",
     "item.edit": "Edit",
@@ -224,6 +225,7 @@ const STR = {
     "item.note": "Περιγραφή",
     "item.folder": "Φάκελος",
     "item.delete": "Διαγραφή",
+    "item.follow": "Στον Αναγνώστη",
     "item.open": "Άνοιγμα",
     "item.move": "Μετακίνηση σε…",
     "item.edit": "Επεξεργασία",
@@ -2599,6 +2601,22 @@ function wire() {
     editingItemId = null;
     $("#dlg-item").close();
     deleteItem(id);
+  });
+
+  /* "Follow in Reader": Reader opens its feed discovery for this
+     address (shell deep link). Works for a saved link and in add mode;
+     unsaved edits in the dialog are left behind, like Cancel. */
+  const openAt = (() => {
+    try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent.__orosOpenAt : null; }
+    catch (e) { return null; }
+  })();
+  $("#f-follow").hidden = !openAt;
+  $("#f-follow").addEventListener("click", () => {
+    const norm = normalizeUrl($("#f-url").value);
+    if (!norm || !openAt) { $("#f-url").focus(); return; }
+    editingItemId = null;
+    $("#dlg-item").close();
+    openAt("feeds", { add: { url: norm } });
   });
 
   /* Folder dialog */

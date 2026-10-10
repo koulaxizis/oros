@@ -1,0 +1,33 @@
+# Bubble Shooter
+Shoot coloured bubbles into the wall hanging from the ceiling. Join three or more of one colour to pop them, and clear the whole wall before it reaches the line.
+
+## How to play
+Your bubble flies straight, bounces off the side walls and sticks where it touches the wall or the ceiling.
+- Three or more bubbles of one colour that touch pop.
+- Bubbles that no longer hang from the ceiling fall, for extra points.
+- Every few shots the ceiling drops one row. The dots by the launcher count down, and the status line warns you on the last shot.
+- You lose when a bubble crosses the dashed line, and win when the wall is empty.
+
+The next bubble waits bottom left. New bubbles only come in colours still on the board; each colour also has its own symbol.
+
+## Controls
+- **Touch:** drag on the field to aim; the dotted line shows the path with one bounce. Let go to shoot. Let go below the launcher to cancel.
+- **Mouse:** the aim follows the pointer; click to shoot.
+- Tap or click the next bubble, or the `Swap bubbles (S)` button, to swap the two.
+- [[←]] [[→]] aim (hold to keep turning), [[Space]], [[Enter]] or [[↑]] shoot, [[S]] or [[↓]] swaps, [[N]] starts a new game.
+
+The toolbar also has `New game (N)`, `Records` and the sound button (`Sound off` / `Sound on`; sound is off at first).
+
+## Levels and scoring
+- `Easy`: 4 colours, 5 rows, the ceiling drops every 10 shots.
+- `Normal`: 5 colours, 6 rows, every 8 shots.
+- `Hard`: 6 colours, 6 rows, every 7 shots.
+
+A popped bubble scores 10, a falling one 20 (double when 5 or more fall at once, triple from 10). Clearing the wall adds 1,000. Each level keeps its own records.
+
+## Sync
+Your records (best score, games and walls cleared per level) sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device after you confirm. The game in progress, the level you picked and the sound setting stay on this device.
+
+## Tips
+- A game in progress is saved; close the app and pick it up later.
+- Started a new game or changed level by mistake? Tap `Undo` on the message that appears.

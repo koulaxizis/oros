@@ -1,0 +1,35 @@
+# Minesweeper
+Open every cell that doesn't hide a mine. Each number tells you how many of the eight cells around it hide a mine, so you can work out where they are and flag them.
+
+## How to play
+Tap or click any cell to start. The first cell is always safe and opens an area, because the mines are laid only after it.
+
+- An empty cell opens its neighbours by itself.
+- Flag a cell you're sure hides a mine. `Mines` counts down as you flag.
+- Tap or click a number whose mines are all flagged to open every other cell around it at once.
+- Open a mine and the game is over (`Boom! A mine`). Open every safe cell and you've won (`Cleared!`).
+
+A flagged cell won't open by mistake; remove the flag first.
+
+## Controls
+- Tap or click opens a cell.
+- Right-click, or long-press on a touch screen, puts or removes a flag.
+- The flag button switches flag mode on (`Flag mode on: a tap flags`) and off.
+- Arrow keys move around the board; [[Space]] or [[Enter]] opens; [[F]] flags.
+- [[N]] or `New game (N)` starts a new game. If you leave a game in progress, an `Undo` button appears for a moment to get it back.
+
+On big boards, the zoom button switches between `Fit the board` and `Bigger cells (scroll the board)`; with bigger cells, drag to move around. The clock runs only while the app is on screen, and a game in progress is kept on this device for next time.
+
+## Levels and scoring
+- `Beginner`: 9×9 with 10 mines.
+- `Intermediate`: 16×16 with 40 mines.
+- `Expert`: 30×16 with 99 mines, turned upright on a tall screen.
+
+Changing the level starts a new game. `Records` shows your best winning time, games won and games played for each level.
+
+## Sync
+Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, the zoom, the game in progress and the sound button stay on this device.
+
+## Tips
+- A 1 next to a single closed cell means that cell is a mine: flag it.
+- Use the number-click to clear around finished numbers quickly; it saves a lot of taps.

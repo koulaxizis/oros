@@ -1,0 +1,40 @@
+# Micro-Zen
+Micro-Zen is a breathing circle for a minute or a few of quiet. Follow the circle as it grows and shrinks, and watch your quiet minutes add up.
+
+## Getting started
+Pick a `Pattern` and a `Length`, then tap or click the circle or the play button. After a short `Get ready` countdown, the circle grows while you `Breathe in`, rests while you `Hold`, and shrinks while you `Breathe out`. The words in the circle tell you which phase you're in.
+
+When the session ends you see `Well done` with your breaths and time. `Again` starts another one; `Close` goes back.
+
+## Patterns and length
+- `Box`: 4-4-4-4, in, hold, out, hold. Good for balance.
+- `Relax`: 4-7-8, in for 4, hold for 7, out for 8. Made for winding down before sleep.
+- `Coherent`: 5.5 seconds in and 5.5 out, a steady rhythm with no holds.
+
+`Length` can be 1, 3, 5 or 10 minutes. A session always ends on a whole breath, so the time is close to, not exactly, what you picked. You can't change the pattern or length mid-session; pause first.
+
+## During a session
+- Tap the circle or the play button to pause and resume. The session also pauses by itself when you switch away from the app.
+- The end button finishes early. Every whole breath you completed still counts; if you stop before the first breath is done, nothing is saved.
+- The speaker button at the top turns `Soft tones` on or off, a gentle sound at each phase change and a chime at the end.
+- On phones that support it, a `Vibration` button adds a short buzz at each phase change.
+- While a session runs, orOS tries to keep your screen awake.
+
+## Your quiet
+`Your quiet` shows your minutes `Today` and `This week`, your `Streak` of days in a row with a session, your total `Sessions`, and a small chart of the last 7 days. A streak stays alive until midnight even if you haven't breathed yet today.
+
+`Reset stats` sets minutes, sessions and the streak back to zero, after you confirm.
+
+## Sync and backup
+Your stats sync through [orOS sync](help:t/sync) and add up across all your devices, and a reset clears them everywhere. The pattern, length, tones and vibration settings stay on each device. Micro-Zen has no import or export; your stats are part of the orOS [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[Space]] starts, pauses or resumes.
+- [[Esc]] ends the session.
+
+## Tips
+- `Relax` is the slowest pattern, with a long out-breath. Try it in bed with the screen dimmed.
+- If your system asks to reduce motion, the circle stays still and only its light and words change.
+
+## Limits
+- Micro-Zen keeps only totals per day, not a list of single sessions.

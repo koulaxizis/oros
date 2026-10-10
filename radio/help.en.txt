@@ -1,0 +1,37 @@
+# Radio
+Radio plays thousands of internet radio stations from around the world. Browse by country or genre, search by name, and keep your favourites. Music keeps playing even after you close the app.
+
+## Getting started
+Radio opens on `Discover` with the top stations worldwide. Tap or click a station to play it. A player bar appears at the bottom with play/pause, the station's name, the sleep timer (☾), stop (■) and a heart for favourites.
+
+The tile `Surprise me` plays a random top station.
+
+## Find stations
+- `Countries` lists every country with its number of stations. Pick one to see its stations; the chips above the list filter them by genre. Tap a chip again to clear the filter.
+- `Genres` lists genres such as jazz or news; pick one to see its stations.
+- The search box (`Search stations…`) suggests stations once you type three letters. Use [[↑]] and [[↓]] to pick a suggestion, or press [[Enter]] to see all results. With the box empty, clicking into it suggests your recent stations.
+
+Each station shows its bitrate, format and country code where known.
+
+## Favourites and recent stations
+While a station plays, tap the heart in the player bar to add it to `Favorites`; tap it again to remove it. `Recent` keeps the last 20 stations you played. The ✕ button in that view clears them, with `Undo` for a few seconds.
+
+## Playing in the background
+Playback runs in orOS itself, so it keeps going when you close the app. A chip in the taskbar shows the station; tap or click it for play/pause, stop, favourite, volume and `Open Radio`. Your device's media controls (lock screen, headset buttons) can also play and pause.
+
+### Sleep timer
+Tap ☾ and choose 15, 30, 60 or 90 minutes. The time left shows in the player bar and playback stops when it runs out. `Turn off` cancels the timer.
+
+## Sync and backup
+Your favourites sync between your devices through [orOS sync](help:t/sync). Recent stations and the temporarily kept station lists stay on this device. There's no import or export; favourites are part of the orOS [backup](help:t/backup).
+
+## Keyboard shortcuts
+- In the search box: [[Enter]] searches or plays the highlighted suggestion, [[↑]] / [[↓]] move through suggestions, [[Esc]] closes them.
+
+## Tips
+- Station lists you've just browsed are kept for 30 minutes, so they open instantly. Playing always needs a connection.
+- If a station won't play, you'll see `Stream unavailable`: try another, as streams come and go.
+
+## Limits
+- Stations come from the free community directory radio-browser.info, so names, logos and genres are only as good as that directory. If it can't be reached (no connection, or a content blocker), the lists stay empty.
+- Favourites can only be added from the player bar or the taskbar chip, not from the station list.

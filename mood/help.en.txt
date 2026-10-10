@@ -1,0 +1,44 @@
+# Mood
+Mood lets you log how you feel in a few seconds, with where you are, who you're with and a few daily habits. Over time, Insights shows you patterns.
+
+## Getting started
+The three buttons at the top switch between `Capture` (the pencil), `Entries` (the list) and `Insights` (the bar chart). Under the top bar, a row of coloured dots shows your last 7 days.
+
+To log a mood, open `Capture`, tap or click one or more feelings under `How do you feel?`, and press `Save entry`. That's the only required step.
+
+## Log an entry
+- **Feelings:** nine fixed feelings, from `Happy` to `Numb`. Each one you pick gets a slider from 1 to 5 for how strong it is.
+- **`Where & with whom`:** pick a `Location` and a `Person`, or `None`. The app pre-selects the value you use most at this time of day.
+- **`The basics` and `Rituals`:** pairs such as `Slept well` / `Didn't sleep enough` or `Went for a walk` / `Stayed in`. Tap one side; tap it again to leave it blank.
+- **`What triggered this?`:** pick one trigger, such as `Work deadline` or `Good news`.
+- **`Reflection (optional)`:** a short free-text note.
+
+`Repeat last` fills the form with your most recent entry. If you save within an hour of your last entry, Mood asks `Logged … ago — update it?`: choose `Edit entry` to fold the new picks into that entry, or `New entry` to keep both.
+
+### Your own values
+Type in a `New value…` box and press `Add…` (or [[Enter]]) to add a location, person or trigger. To rename or delete one, long-press or right-click its chip, or tap `Manage…` and then the chip. A delete shows an `Undo` button for a few seconds.
+
+## Entries
+`Entries` lists everything, newest first. Use `Search entries…` to look through dates, feelings, places, people, habits, triggers and notes. The pencil opens an entry in `Capture` for editing (`Discard` cancels); the bin deletes it, with `Undo`.
+
+## Insights
+Pick `7 days`, `30 days` or `All`. You get a `Weekly recap`, `Patterns` (plain-language observations), `How you felt`, your streak, `This week vs last`, `Intensity shifts`, `Habits`, `Rituals`, a month `Calendar` (tap a day to see its entries), `Locations`, `People` and `By weekday`.
+
+`Filters` narrows most of these to one location, person or habit; `Clear filters` resets. If you use [Cycle](app:cycle) on this device, `Patterns` can also tell you how you feel on period days.
+
+`Export PDF` saves a PDF report of the range and filters you've chosen.
+
+## Sync and backup
+Your entries and your own locations, people and triggers sync through [orOS sync](help:t/sync), encrypted. The open tab, search and filters stay on this device. Besides the PDF report there's no import or export; use the orOS [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[Enter]] in a `New value…` box adds the value.
+- [[Enter]] while renaming a chip saves the name; [[Esc]] closes the menu.
+
+## Tips
+- Your entries show up in [Calendar](app:calendar) on their day; opening one there brings you back here to edit it.
+- Once you have entries, orOS reminds you once a day if you haven't logged anything that day. Turn it off in [Notifications](help:t/notifications).
+
+## Limits
+- The nine feelings and the habit pairs are fixed; only locations, people and triggers can be changed.
+- `Factory reset`, at the bottom of `Insights`, erases all entries and your own values on every synced device. It asks twice, and there's no undo.

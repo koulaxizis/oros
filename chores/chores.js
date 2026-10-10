@@ -1627,7 +1627,27 @@
     try { staged = sessionStorage.getItem(OPEN_KEY); sessionStorage.removeItem(OPEN_KEY); } catch (e) {}
     if (staged) openTarget(staged);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawWheel(); });
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("chores");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
+
+  // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
+  // target { task } or { member }. Home tab + that chore's or member's
+  // dialog. Unknown id → no-op; an open dialog → no-op (unsaved edits win).
+  function openSearchTarget(t) {
+    if (!t || document.querySelector("dialog[open]")) return;
+    var tk = typeof t.task === "string" ? taskById(data, t.task) : null;
+    var mb = !tk && typeof t.member === "string" ? memberById(data, t.member) : null;
+    if (!tk && !mb) return;
+    setTab("home");
+    if (tk) taskDialog(tk.id); else memberDialog(mb.id);
+  }
+  window.__orosOpenAt = openSearchTarget;
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
