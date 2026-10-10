@@ -28,6 +28,9 @@ For books and albums, `Find details online` in the form looks up the title you t
 
 In [Calendar](app:calendar), the `Media Shelf` chip shows the day you finished each title (rewatches and rereads too) and the release date of titles on your wishlist. Tap a row to open that title here.
 
+## Reading reminder
+`More` → `Reading reminder` turns on one gentle nudge a day, from the hour you pick (20:00 to start with). It comes only when something is in `Now` and you haven't logged anything that day, and it names the title you were on with your progress, such as "Dune · page 212 of 604". Tap it to open that title. It's off until you turn it on, it's set per device, and it arrives while orOS is open; quiet hours and the `Media Shelf` switch in the notification settings still apply.
+
 ## Import from Goodreads or Letterboxd
 Bring your existing library in with `More` → `Import from Goodreads / Letterboxd (CSV)`.
 - **Goodreads:** on the Goodreads website, open My Books → Import and export → Export library, and pick the CSV file it gives you.
@@ -52,5 +55,5 @@ In the `More` menu, `Export (JSON)` saves your shelf to a file and `Import (JSON
 - Fill in `Where I heard of it` to remember who recommended a title; search finds it too.
 
 ## Limits
-- There are no reminders.
+- The reading reminder needs orOS open; there is no push server.
 - Covers are generated, never downloaded, and the online lookup has no source for films, series, podcasts or games.

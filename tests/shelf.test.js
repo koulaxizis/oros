@@ -428,3 +428,62 @@ test("calendar feed: Calendar loads feed.js and opens the title in Media Shelf",
   assert.ok(src.includes("var ID_RE = /^[a-z0-9]{6,40}$/;"));
   assert.ok(fs.readFileSync(path.join(root, "shelf/feed.js"), "utf8").includes("var ID_RE = /^[a-z0-9]{6,40}$/;"));
 });
+
+// ---------- 1.3: reading reminder (shelf/feed.js rule, shell engine) ----------
+
+test("reading reminder: off by default, settings clamped", () => {
+  assert.deepEqual(F.readRem(null), { on: 0, h: 20 });
+  assert.deepEqual(F.readRem({ on: 1, h: 7 }), { on: 1, h: 7 });
+  assert.deepEqual(F.readRem({ on: true, h: 24 }), { on: 0, h: 20 });
+  assert.equal(F.REM_KEY, "oros-shelf-rem");
+});
+
+test("reading reminder: once a day, after the hour, only with something in Now and nothing logged today", () => {
+  const ON = { on: 1, h: 20 };
+  const at = (h, d) => new Date(2026, 9, d || 10, h, 5);
+  const base = (over) => data([
+    item(I1, 5, { title: "Dune", st: "now", size: 604 }),
+    item(I2, 9, { title: "Old", st: "now", type: "series" }),
+    item(I3, 5, { title: "Wish", st: "want" })
+  ], [
+    sess("sess000001", 1, I1, "s", "2026-10-01"),
+    sess("sess000002", 2, I1, "p", "2026-10-03", 300),
+    sess("sess000003", 3, I1, "s", "2026-10-05"),          // a restart begins a new run
+    sess("sess000004", 4, I1, "p", "2026-10-08", 212),
+    sess("sess000005", 4, I2, "p", "2026-09-01", 4)
+  ].concat(over || []));
+  assert.equal(F.reminderDue(base(), { on: 0, h: 20 }, at(21)), null);    // off
+  assert.equal(F.reminderDue(base(), ON, at(19)), null);                   // before the hour
+  const due = F.reminderDue(base(), ON, at(21));
+  assert.deepEqual(due, { key: "read-2026-10-10", item: I1, title: "Dune", type: "book", fmt: "", v: 212, size: 604 });
+  assert.deepEqual(F.reminderText(due, "en"), { title: "Time to read", body: "Dune · page 212 of 604" });
+  assert.deepEqual(F.reminderText(due, "el"), { title: "Ώρα για διάβασμα", body: "Dune · σελίδα 212 από 604" });
+  assert.equal(F.reminderDue(base(), ON, at(21, 11)).key, "read-2026-10-11");
+  // Anything logged today (any title) → nothing.
+  assert.equal(F.reminderDue(base([sess("sess000009", 9, I3, "d", "2026-10-10")]), ON, at(21)), null);
+  // Nothing in Now → nothing; a deleted title does not count.
+  assert.equal(F.reminderDue(data([item(I3, 5, { st: "want" })]), ON, at(21)), null);
+  assert.equal(F.reminderDue(data([item(I1, 5, { st: "now" })], [], {}, { [I1]: 5 }), ON, at(21)), null);
+  // No progress yet: a nudge without a number; other types and audiobooks use their unit.
+  const plain = F.reminderDue(data([item(I1, 5, { title: "Heat", type: "film", st: "now" })]), ON, at(21));
+  assert.equal(F.reminderText(plain, "en").body, "Heat · pick up where you left off");
+  assert.equal(F.reminderText(plain, "en").title, "Time to watch");
+  const audio = F.reminderDue(data([item(I1, 5, { title: "A $& B", fmt: "a", st: "now" })],
+    [sess("sess000001", 1, I1, "p", "2026-10-09", 1500)]), ON, at(21));
+  assert.equal(F.reminderText(audio, "en").body, "A $& B · minute 1,500");
+  assert.equal(F.reminderDue(null, ON, at(21)), null);
+});
+
+test("reading reminder: the shell loads feed.js, runs the engine and routes the deep link", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const i = html.indexOf('src="shelf/feed.js'), j = html.indexOf('src="shell.js');
+  assert.ok(i > 0 && j > i);
+  const shell = fs.readFileSync(path.join(root, "shell.js"), "utf8");
+  assert.ok(shell.includes('tickSafe("shelfCheckTick", shelfCheckTickThrottled)'));
+  assert.ok(shell.includes('deepLink: "shelf:item:" + due.item'));
+  const notifs = fs.readFileSync(path.join(root, "notifications.js"), "utf8");
+  assert.ok(/KNOWN_APPS = \[[^\]]*'shelf'/.test(notifs));
+  assert.ok(notifs.includes("window.__orosOpenAt('shelf', { item: id })"));
+  assert.ok(src.includes('var REM_KEY = "oros-shelf-rem";'));
+});
