@@ -15,6 +15,7 @@
     10. Reduced motion
     11. Organise: actions, selection, swipe
     12. Sender check and suspicious links
+    13. Rules
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -666,3 +667,9 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .bar.warn strong { color: var(--danger); }
 .sus-list { margin: 0; padding-left: 18px; overflow-wrap: anywhere; }
 .plain a.sus { color: var(--danger); text-decoration: underline wavy; }
+
+/* ---------- 13. Rules ---------- */
+.rule-list li { align-items: center; }
+.rule-on { display: inline-flex; align-items: center; padding: 4px; }
+.rule-on input { width: 18px; height: 18px; accent-color: var(--accent); }
+.rule-list .set-acct-name { white-space: normal; font-weight: 600; overflow-wrap: anywhere; }

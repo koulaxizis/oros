@@ -25,7 +25,7 @@ function block(from, to) {
   if (i < 0 || j < 0) throw new Error("missing block " + from);
   return src.slice(i, j);
 }
-const A = new Function("M",
+const A = new Function("M", "R",
   "var DATA_VER = 1, MAX_TOMBS = 200, MAX_IMGOK = 500, KEEP_HEADS = 500, MAX_SIG = 1000;\n" +
   "function t(k) { return k; }\n" +
   block("  function cmpStr(", "  function el(") +
@@ -34,7 +34,7 @@ const A = new Function("M",
   block("  // ---------- 2. Data model", "  // ---------- 3. Device store") +
   block("  function summarize(", "  function refreshFolder(") +
   "\nreturn { mergeMail, normAccount, normRelayUrl, emptyData, presetFor, folderRole, sortFolders," +
-  " folderDepth, compressUids, uidSetHas, applyList };")(M);
+  " folderDepth, compressUids, uidSetHas, applyList };")(M, require("../mail/rules.js"));
 
 const bin = (s) => Buffer.from(s, "utf8").toString("latin1");
 const b64 = (s) => Buffer.from(s, "latin1").toString("base64");
@@ -556,4 +556,19 @@ test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, search", async () =>
       srv.close();
     }
   }
+});
+
+test("data: rules merge LWW by m, tombstones delete them, and they leave with their account", () => {
+  const acct = (id) => ({ id, m: 1, name: "", email: id + "@pmail.gr", imap: { host: "mail.pmail.gr", port: 993 } });
+  const r = (id, m, has, acctId) => ({ id, m, on: true, acct: acctId || "acct0001", field: "from", has, act: "read" });
+  const a = { accounts: [acct("acct0001"), acct("acct0002")], rules: [r("rule001", 5, "old"), r("rule002", 3, "two"), r("rule003", 1, "x", "acct0002")] };
+  const b = { accounts: [acct("acct0001"), acct("acct0002")], rules: [r("rule001", 6, "new"), { id: "bad", m: 1 }], tombs: { rule002: 4 } };
+  const ab = A.mergeMail(a, b), ba = A.mergeMail(b, a);
+  assert.equal(JSON.stringify(ab), JSON.stringify(ba));
+  assert.deepEqual(ab.rules.map((x) => x.id + ":" + x.has), ["rule001:new", "rule003:x"]);
+  // removing account 2 takes its rules with it
+  const c = A.mergeMail(ab, { tombs: { acct0002: 9 } });
+  assert.deepEqual(c.accounts.map((x) => x.id), ["acct0001"]);
+  assert.deepEqual(c.rules.map((x) => x.id), ["rule001"]);
+  assert.deepEqual(A.emptyData().rules, []);
 });

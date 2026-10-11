@@ -73,6 +73,7 @@
   var MAX_SIG       = 1000;
   var M = window.orosMailMime;
   var TR = window.orosMailTrust;
+  var R = window.orosMailRules;
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -99,6 +100,16 @@
       "read.to": "To: {list}", "read.cc": "Cc: {list}", "read.me": "me", "read.nosubj": "(no subject)",
       "read.nosender": "(unknown sender)",
       "img.blocked": "Pictures from the internet are hidden, so the sender cannot tell you opened this.",
+      "rule.title": "Rules", "rule.hint": "Rules sort new Inbox mail while orOS is open on any of your devices, also with Mail closed.",
+      "rule.add": "Add rule", "rule.new": "New rule", "rule.edit": "Edit rule", "rule.none": "No rules yet.",
+      "rule.acct": "Account", "rule.if": "If", "rule.has": "contains", "rule.hasHint": "Several words separated by commas: any of them.",
+      "rule.then": "Then", "rule.folder": "Folder", "rule.run": "Also run it on the Inbox now", "rule.on": "On",
+      "rule.del": "Delete rule", "rule.saved": "Rule saved", "rule.deleted": "Rule deleted", "rule.ran": "Rule applied: {n}",
+      "rule.make": "Create a rule…", "rule.needHas": "Write what to look for.", "rule.needFolder": "Choose a folder.",
+      "rf.from": "the sender", "rf.to": "a recipient", "rf.subject": "the subject", "rf.any": "sender, recipients or subject",
+      "ra.spam": "move to Spam", "ra.trash": "move to Trash", "ra.archive": "move to Archive", "ra.move": "move to folder…",
+      "ra.read": "mark as read", "ra.star": "star it",
+      "rule.sum": "If {field} contains “{has}”: {act}", "rule.sumTo": "If {field} contains “{has}”: move to {folder}",
       "trust.ok": "Verified sender", "trust.okTip": "The receiving server checked that this message really comes from {dom} (SPF, DKIM, DMARC).",
       "trust.warn": "Careful: this message may not come from {dom}.",
       "trust.dmarc": "{dom} says messages like this one are fake (DMARC failed).", "trust.dkim": "Its signature does not match (DKIM failed).",
@@ -188,6 +199,16 @@
       "read.to": "Προς: {list}", "read.cc": "Κοιν.: {list}", "read.me": "εμένα", "read.nosubj": "(χωρίς θέμα)",
       "read.nosender": "(άγνωστος αποστολέας)",
       "img.blocked": "Οι εικόνες από το internet είναι κρυμμένες, για να μη μαθαίνει ο αποστολέας ότι το άνοιξες.",
+      "rule.title": "Κανόνες", "rule.hint": "Οι κανόνες ταξινομούν τα νέα μηνύματα των Εισερχομένων όσο το orOS είναι ανοιχτό σε κάποια συσκευή σου, και με την Αλληλογραφία κλειστή.",
+      "rule.add": "Νέος κανόνας", "rule.new": "Νέος κανόνας", "rule.edit": "Επεξεργασία κανόνα", "rule.none": "Δεν υπάρχουν κανόνες ακόμα.",
+      "rule.acct": "Λογαριασμός", "rule.if": "Αν", "rule.has": "περιέχει", "rule.hasHint": "Πολλές λέξεις χωρισμένες με κόμμα: οποιαδήποτε από αυτές.",
+      "rule.then": "Τότε", "rule.folder": "Φάκελος", "rule.run": "Εφάρμοσέ τον και τώρα στα Εισερχόμενα", "rule.on": "Ενεργός",
+      "rule.del": "Διαγραφή κανόνα", "rule.saved": "Ο κανόνας αποθηκεύτηκε", "rule.deleted": "Ο κανόνας διαγράφηκε", "rule.ran": "Εφαρμόστηκε σε: {n}",
+      "rule.make": "Δημιουργία κανόνα…", "rule.needHas": "Γράψε τι να αναζητηθεί.", "rule.needFolder": "Διάλεξε φάκελο.",
+      "rf.from": "ο αποστολέας", "rf.to": "ένας παραλήπτης", "rf.subject": "το θέμα", "rf.any": "αποστολέας, παραλήπτες ή θέμα",
+      "ra.spam": "μετακίνηση στα Ανεπιθύμητα", "ra.trash": "μετακίνηση στον Κάδο", "ra.archive": "μετακίνηση στο Αρχείο", "ra.move": "μετακίνηση σε φάκελο…",
+      "ra.read": "σήμανση ως διαβασμένο", "ra.star": "αστέρι",
+      "rule.sum": "Αν {field} περιέχει «{has}»: {act}", "rule.sumTo": "Αν {field} περιέχει «{has}»: μετακίνηση σε {folder}",
       "trust.ok": "Επαληθευμένος αποστολέας", "trust.okTip": "Ο διακομιστής παραλαβής έλεγξε ότι το μήνυμα έρχεται πράγματι από το {dom} (SPF, DKIM, DMARC).",
       "trust.warn": "Προσοχή: το μήνυμα ίσως δεν έρχεται από το {dom}.",
       "trust.dmarc": "Το {dom} δηλώνει ότι τέτοια μηνύματα είναι πλαστά (ο έλεγχος DMARC απέτυχε).", "trust.dkim": "Η υπογραφή του δεν ταιριάζει (ο έλεγχος DKIM απέτυχε).",
@@ -369,6 +390,7 @@
     starOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
     open: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="3 9 12 15 21 9"/></svg>',
     unread: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>',
+    filter: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>',
     folder: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
     close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
     key: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>'
@@ -430,7 +452,7 @@
     return null;
   }
 
-  function emptyData() { return { ver: DATA_VER, accounts: [], relay: { url: "", m: 0 }, imgOk: {}, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, accounts: [], relay: { url: "", m: 0 }, imgOk: {}, tombs: {}, rules: [] }; }
 
   function sortedObj(src, maxN) {
     var keys = Object.keys(src);
@@ -446,10 +468,12 @@
 
   // Symmetric merge (R5): accounts LWW by m (tie: JSON order), tombstones
   // max-ts and delete wins ties (R17), relay LWW, allowed-image senders
-  // union of the latest stamp. Canonical output (R26).
+  // union of the latest stamp, rules LWW by m like accounts (same
+  // tombstones; rules of a removed account go with it). Canonical
+  // output (R26).
   function mergeMail(a, b) {
     var res = emptyData();
-    var tombs = {}, byId = {}, img = {};
+    var tombs = {}, byId = {}, img = {}, rules = {};
     [a, b].forEach(function (d) {
       if (!d || typeof d !== "object") return;
       if (d.tombs && typeof d.tombs === "object") {
@@ -463,6 +487,12 @@
         if (!n) return;
         var cur = byId[n.id];
         if (!cur || n.m > cur.m || (n.m === cur.m && cmpStr(JSON.stringify(n), JSON.stringify(cur)) > 0)) byId[n.id] = n;
+      });
+      (Array.isArray(d.rules) ? d.rules : []).forEach(function (x) {
+        var n = R.norm(x);
+        if (!n) return;
+        var cur = rules[n.id];
+        if (!cur || n.m > cur.m || (n.m === cur.m && cmpStr(JSON.stringify(n), JSON.stringify(cur)) > 0)) rules[n.id] = n;
       });
       var r = d.relay;
       if (r && typeof r === "object" && isInt(r.m) && r.m >= 0) {
@@ -483,6 +513,12 @@
       if (tombs[id] >= byId[id].m) return;
       res.accounts.push(byId[id]);
     });
+    var live = {};
+    res.accounts.forEach(function (x) { live[x.id] = 1; });
+    res.rules = Object.keys(rules).sort(cmpStr).filter(function (id) {
+      var x = rules[id];
+      return !(tombs[id] >= x.m) && !(tombs[x.acct] && !live[x.acct]);
+    }).slice(0, R.MAX_RULES).map(function (id) { return rules[id]; });
     res.tombs = sortedObj(tombs, MAX_TOMBS);
     res.imgOk = sortedObj(img, MAX_IMGOK);
     return res;
@@ -1103,11 +1139,13 @@
       renderBar();
       return Promise.resolve();
     }
+    var topBefore = cur.msgs.reduce(function (a, m) { return Math.max(a, m.uid); }, 0);
     var p = refreshFolder(acct, folder, false);
     renderList();
     renderBar();
     return p.then(function (rec) {
       lastErr = null;
+      if (topBefore && folder.toUpperCase() === "INBOX" && rec.msgs.some(function (m) { return m.uid > topBefore; })) rulesSoon(acct);
       backoff = REFRESH_MS;
       if (cur && cur.acct === acct.id && cur.folder === folder) { cur = rec; keepOpenValid(); }
       renderList();
@@ -1122,6 +1160,19 @@
       renderBar();
       if (manual) showToast(errText(e));
     });
+  }
+
+  // New Inbox mail and rules for this account: let the shell checker
+  // (notify.js) run them now instead of at its next round, then show
+  // the result. It only acts on mail above its own mark, so this ends.
+  function rulesSoon(acct) {
+    if (!(data.rules || []).some(function (r) { return r.on && r.acct === acct.id; })) return;
+    var N = null;
+    try { N = window.parent !== window ? window.parent.__orosMailNotify : null; } catch (e) {}
+    if (!N || typeof N.check !== "function") return;
+    N.check().then(function () {
+      if (cur && cur.acct === acct.id && cur.folder.toUpperCase() === "INBOX") refreshCurrent(false);
+    }, function () {});
   }
 
   function keepOpenValid() {
@@ -1763,6 +1814,16 @@
     if (data.accounts.length < MAX_ACCTS) {
       dlg.appendChild(button(t("acct.add"), "small", function () { dlg.close(); acctDialog(null); }));
     }
+    if (data.accounts.length) {
+      dlg.appendChild(el("div", "dlg-lbl", t("rule.title")));
+      dlg.appendChild(el("p", "dlg-hint", t("rule.hint")));
+      var rbox = el("div");
+      rulesList(rbox);
+      dlg.appendChild(rbox);
+      if ((data.rules || []).length < R.MAX_RULES) {
+        dlg.appendChild(button(t("rule.add"), "small", function () { dlg.close(); ruleDialog(null); }));
+      }
+    }
     var form = el("form");
     form.method = "dialog";
     form.noValidate = true;
@@ -2318,6 +2379,189 @@
     ib(allStar ? "star" : "starOff", t(allStar ? "org.unstar" : "org.star") + " (s)", function () { setFlags(uids, allStar ? "unstar" : "star"); }, allStar ? "on" : "");
     ib(anyUnread ? "open" : "unread", t(anyUnread ? "org.read" : "org.unread") + " (u)", function () { setFlags(uids, anyUnread ? "read" : "unread"); });
     ib("folder", t("org.move") + " (v)", function () { moveDialog(uids); });
+    if (uids.length === 1 && ms[0] && ms[0].from && ms[0].from.addr) {
+      ib("filter", t("rule.make"), function () { ruleDialog(null, { field: "from", has: lowerAddr(ms[0].from.addr) }); });
+    }
+  }
+
+  // ---------- 9d. Rules (device filters) ----------
+  // Stored in data.rules (synced); applied to new Inbox mail by the
+  // shell checker (notify.js), so they run while orOS is open on any
+  // device, Mail window or not. "Run now" applies one rule to the
+  // loaded Inbox here, through the normal moves (with Undo).
+  function ruleSummary(r) {
+    var acct = acctById(r.acct);
+    var f = acct ? findFolder(acct, r.to) : null;
+    var field = t("rf." + r.field);
+    if (r.act === "move") return t("rule.sumTo", { field: field, has: r.has, folder: f ? folderLabel(f) : r.to });
+    return t("rule.sum", { field: field, has: r.has, act: t("ra." + r.act) });
+  }
+  function findFolder(acct, name) {
+    var list = folders[acct.id] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].name === name) return list[i];
+    return null;
+  }
+  function putRule(r) {
+    data.rules = (data.rules || []).filter(function (x) { return x.id !== r.id; }).concat([r]);
+    data = mergeMail(data, data);
+    saveData();
+  }
+  function dropRule(r) {
+    data.tombs[r.id] = Math.max(Date.now(), r.m + 1);
+    data = mergeMail(data, data);
+    saveData();
+  }
+  function rulesList(box) {
+    box.innerHTML = "";
+    var list = data.rules || [];
+    if (!list.length) { box.appendChild(el("p", "dlg-hint", t("rule.none"))); return; }
+    var ul = el("ul", "set-accts rule-list");
+    list.forEach(function (r) {
+      var li = el("li");
+      var lab = el("label", "rule-on");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = r.on;
+      cb.setAttribute("aria-label", t("rule.on"));
+      cb.addEventListener("change", function () {
+        putRule(Object.assign({}, r, { on: cb.checked, m: Math.max(Date.now(), r.m + 1) }));
+      });
+      lab.appendChild(cb);
+      li.appendChild(lab);
+      var tx = el("div", "set-acct");
+      tx.appendChild(el("div", "set-acct-name", ruleSummary(r)));
+      var acct = acctById(r.acct);
+      if (acct && data.accounts.length > 1) tx.appendChild(el("div", "set-acct-mail", acct.email));
+      li.appendChild(tx);
+      li.appendChild(button(t("set.edit"), "small", function () { closeDlg("ml-set"); ruleDialog(r); }));
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+  }
+  function closeDlg(id) { var d = $(id); if (d && d.open) d.close(); }
+
+  // The editor. prefill: { field, has } (from "Create a rule…").
+  function ruleDialog(rule, prefill) {
+    if (!data.accounts.length) return;
+    var acct0 = (rule && acctById(rule.acct)) || curAcct() || data.accounts[0];
+    var dlg = makeDialog("ml-rule", true);
+    dlg.appendChild(el("div", "dlg-title", t(rule ? "rule.edit" : "rule.new")));
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    var fAcct = null;
+    if (data.accounts.length > 1) {
+      fAcct = portSelect(form, "ml-r-acct", t("rule.acct"), data.accounts.map(function (a) { return [a.id, a.email]; }), acct0.id);
+    }
+    var fField = portSelect(form, "ml-r-field", t("rule.if"),
+      ["from", "to", "subject", "any"].map(function (k) { return [k, t("rf." + k)]; }), rule ? rule.field : (prefill && prefill.field) || "from");
+    var fHas = field(form, "ml-r-has", t("rule.has"), "text", rule ? rule.has : (prefill && prefill.has) || "",
+      { maxlength: "200", autocapitalize: "off", spellcheck: "false" });
+    form.appendChild(el("p", "dlg-hint", t("rule.hasHint")));
+    var actLab = el("label", "dlg-lbl", t("rule.then"));
+    actLab.setAttribute("for", "ml-r-act");
+    form.appendChild(actLab);
+    var fAct = el("select");
+    fAct.id = "ml-r-act";
+    form.appendChild(fAct);
+    var folderLab = el("label", "dlg-lbl", t("rule.folder"));
+    folderLab.setAttribute("for", "ml-r-to");
+    form.appendChild(folderLab);
+    var fTo = el("select");
+    fTo.id = "ml-r-to";
+    form.appendChild(fTo);
+    var runLab = el("label", "check");
+    var fRun = el("input");
+    fRun.type = "checkbox";
+    fRun.checked = !rule;
+    runLab.appendChild(fRun);
+    runLab.appendChild(el("span", "", t("rule.run")));
+    form.appendChild(runLab);
+    function acctNow() { return fAcct ? acctById(fAcct.value) : acct0; }
+    // Act options for the chosen account: role folders become their own choices.
+    function fillActs(keep) {
+      var a = acctNow();
+      fAct.innerHTML = "";
+      var opts = [];
+      ["junk", "trash", "archive"].forEach(function (role) {
+        var name = roleFolder(a, role);
+        if (name) opts.push(["to:" + name, t("ra." + (role === "junk" ? "spam" : role))]);
+      });
+      opts.push(["move", t("ra.move")], ["read", t("ra.read")], ["star", t("ra.star")]);
+      opts.forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; fAct.appendChild(op); });
+      fTo.innerHTML = "";
+      (folders[a.id] || []).forEach(function (f) {
+        if (f.name.toUpperCase() === "INBOX") return;
+        var op = el("option", "", "\u00a0".repeat(folderDepth(f) * 2) + folderLabel(f));
+        op.value = f.name;
+        fTo.appendChild(op);
+      });
+      if (keep && keep.act === "move") {
+        var roleOpt = [].some.call(fAct.options, function (o) { return o.value === "to:" + keep.to; });
+        fAct.value = roleOpt ? "to:" + keep.to : "move";
+        fTo.value = keep.to;
+      } else if (keep) fAct.value = keep.act;
+      else fAct.value = fAct.options[0].value;
+      syncTo();
+    }
+    function syncTo() {
+      var show = fAct.value === "move";
+      folderLab.hidden = fTo.hidden = !show;
+    }
+    fAct.addEventListener("change", syncTo);
+    if (fAcct) fAcct.addEventListener("change", function () { fillActs(null); });
+    fillActs(rule);
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    if (rule) {
+      acts.appendChild(button(t("rule.del"), "danger", function () {
+        dropRule(rule);
+        dlg.close();
+        showToast(t("rule.deleted"));
+      }));
+    }
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var a = acctNow();
+      var act = fAct.value, to;
+      if (act.indexOf("to:") === 0) { to = act.slice(3); act = "move"; }
+      else if (act === "move") to = fTo.value;
+      var r = R.norm({ id: rule ? rule.id : newId(), m: Math.max(Date.now(), rule ? rule.m + 1 : 0), on: rule ? rule.on : true,
+                       acct: a.id, field: fField.value, has: fHas.value, act: act, to: to });
+      if (!r) { errP.textContent = t(fHas.value.trim() ? "rule.needFolder" : "rule.needHas"); return; }
+      putRule(r);
+      dlg.close();
+      showToast(t("rule.saved"));
+      if (fRun.checked) runRuleNow(r);
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    if (!fHas.value) fHas.focus();
+  }
+
+  // One rule on the loaded Inbox of its account (opens it first).
+  function runRuleNow(r) {
+    var acct = acctById(r.acct);
+    if (!acct || !online()) return;
+    var go = function () {
+      if (!cur || cur.acct !== acct.id || cur.folder.toUpperCase() !== "INBOX") return;
+      var p = R.plan([r], cur.msgs.map(function (m) { return { uid: m.uid, flags: m.flags, sum: m }; }), acct.id);
+      var n = 0;
+      if (p.flags["\\Seen"].length) { setFlags(p.flags["\\Seen"], "read"); n += p.flags["\\Seen"].length; }
+      if (p.flags["\\Flagged"].length) { setFlags(p.flags["\\Flagged"], "star"); n += p.flags["\\Flagged"].length; }
+      Object.keys(p.moves).forEach(function (to) { moveMsgs(p.moves[to], "move", to); n += p.moves[to].length; });
+      if (!Object.keys(p.moves).length) showToast(t("rule.ran", { n: n }));
+    };
+    if (cur && cur.acct === acct.id && cur.folder.toUpperCase() === "INBOX") go();
+    else openFolder(acct.id, "INBOX").then(go);
   }
 
   // ---------- selection mode ----------
