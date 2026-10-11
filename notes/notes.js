@@ -303,6 +303,8 @@
       "page.move.up":       "Move up",
       "page.move.down":     "Move down",
       "toast.created":      "Page created",
+      "toast.fileBig":      "This file is too long for a page.",
+      "toast.fileRead":     "The file could not be read.",
       "toast.conflict":     "A page was edited on two devices — both versions were kept",
       "page.conflict":      "conflict copy",
       "book.menu.open":     "Notebook actions",
@@ -365,6 +367,8 @@
       "page.move.up":       "Μετακίνηση πάνω",
       "page.move.down":     "Μετακίνηση κάτω",
       "toast.created":      "Η σελίδα δημιουργήθηκε",
+      "toast.fileBig":      "Το αρχείο είναι πολύ μεγάλο για μία σελίδα.",
+      "toast.fileRead":     "Το αρχείο δεν διαβάστηκε.",
       "toast.conflict":     "Μια σελίδα άλλαξε σε δύο συσκευές — κρατήθηκαν και οι δύο εκδοχές",
       "page.conflict":      "αντίγραφο σύγκρουσης",
       "book.menu.open":     "Ενέργειες σημειωματαρίου",
@@ -2989,7 +2993,29 @@
   // ancestors in the tree and selects it. Unknown page → no-op.
   // Target { add: { title, text } } (another app's "Save as note"):
   // a new top-level page in the current notebook, plain text only.
+  // Target { openFile: { token } }: a .txt / .md file from the
+  // system's "Open with" or Android's Share (shell fileopen.js), taken
+  // once from the shell: a new page titled after the file, its text
+  // as is (plain text, never markup).
+  var FILE_MAX = 200000;
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var w = window.parent;
+      if (o && typeof o.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function")
+        f = w.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f) return;
+    if (f.size > FILE_MAX * 4) { notifyTransient(t("toast.fileBig")); return; }
+    f.text().then(function (txt) {
+      txt = String(txt).replace(/^\ufeff/, "").replace(/\r\n?/g, "\n");
+      if (txt.length > FILE_MAX) { notifyTransient(t("toast.fileBig")); return; }
+      var title = String(f.name || "").replace(/\.(txt|md|markdown)$/i, "").replace(/\s+/g, " ").trim().slice(0, 200);
+      newPage(null, { title: title || t("page.untitled"), text: txt });
+    }, function () { notifyTransient(t("toast.fileRead")); });
+  }
   function openSearchTarget(t) {
+    if (t && t.openFile) { openFileTarget(t.openFile); return; }
     if (t && t.add && typeof t.add === "object") {
       var nt = String(t.add.title || "").replace(/\s+/g, " ").trim().slice(0, 200);
       var nx = String(t.add.text || "").slice(0, 20000);
