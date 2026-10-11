@@ -2,16 +2,24 @@
 Today gathers what your apps have for you today in one place: what is late, what is due today and what is coming up in the next three days. Every morning it can also leave one notice in the bell.
 
 ## Getting started
-Open Today from the menu or with [[Ctrl+Alt+Shift+Y]]. At the top you see the date and short lines such as the weather, who celebrates a name day, a running timer or how much water you've drunk.
+Open Today from the menu or with [[Ctrl+Alt+Shift+Y]]. At the top you see the date and short lines such as the weather, who celebrates a name day, a running timer, how much water you've drunk, today's meals from [Meal Planner](app:meals) or how many unread e-mails wait in [Mail](app:mail). Tap or click one to open its app.
 
 Below come three groups:
 - `Overdue`: tasks whose day has passed, with how many days late.
 - `Today`: what is due today. Rows with a time come first, in time order.
 - `Coming up`: the next three days, day by day.
 
-Tap or click a group's title to fold it. Tap or click a row to open it in its app, on that event, task, card, quote, contact, plant, pet, car, trip or day. `Refresh` (the round arrow) builds the summary again.
+Tap or click a group's title to fold it. Tap or click a row to open it in its app, on that event, task, card, quote, contact, plant, pet, car, trip, recurring entry or day. A [Health](app:health) reminder opens a new reading of that kind, a [Workouts](app:fitness) session opens the Train tab and a [Habits](app:habits) row opens this week's habits, where you tick it. `Refresh` (the round arrow) builds the summary again.
 
 Tasks from [To-Do](app:todo) and [Plant Care](app:plants) also have a tick button, `Done (opens the app)`. It opens that app, which marks the task done itself: To-Do ticks it (untick it there to take it back) and Plant Care logs it, with `Undo` in its message.
+
+## What each app adds
+- [Health](app:health): today's reminder times that have no reading yet. A reading taken up to an hour early, or later, ticks its time.
+- [Workouts](app:fitness): the program days planned for today, until you finish a workout of that day.
+- [Habits](app:habits): habits planned for today and not ticked yet. Habits for any day of the week are not "due", so they stay out.
+- [Budget](app:budget): recurring entries (rent, salary, a yearly bill) that fall today or in the next three days, with the amount.
+- [Meal Planner](app:meals): today's plan as top lines, one per meal.
+- [Mail](app:mail): only the number of unread messages in each account's Inbox, never a sender or a subject. Mail rows have no Assistant button; inside Mail you can still ask about one message.
 
 ## The daily notice
 On your first open of orOS each day after the start time (06:00 unless you change it), Today leaves one notice in the bell when something is late or due today. It only shows numbers, for example "2 overdue · 1 today", never the names of your tasks. Opening it brings you here.
@@ -26,7 +34,7 @@ Open them with the gear button:
 - `Daily summary` turns the daily notice on or off. The Today tab works either way.
 - `From` is the start time, from 00:00 to 12:00.
 - `Quiet the morning reminders the summary covers`: once the summary has come, the separate reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, To-Do, Quote, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
-- `Apps in the summary`: choose which apps take part. Apps marked `sensitive` (Cycle and Mood) are off until you switch them on.
+- `Apps in the summary`: choose which apps take part. Apps marked `sensitive` show only when you want them: Health, Baby and Budget are on, Cycle and Mood are off until you switch them on.
 
 ## Sync and backup
 Your Today settings sync between your devices through [orOS sync](help:t/sync). Today stores nothing else: every row is read from the app it belongs to, at the moment you look. Which groups you folded stays in this tab only.
@@ -40,6 +48,7 @@ Your Today settings sync between your devices through [orOS sync](help:t/sync). 
 
 ## Limits
 - The notice can only come while orOS is open: if you don't open it, nothing arrives, and it comes on your next open.
-- Mail, Meal Planner, Budget, Health, Workouts and Habits are not in the summary yet.
+- The Mail count is the one Mail saw on this device the last time it refreshed its folders, so the line says when that was. Open Mail to bring it up to date.
+- Cycle, Mood, Minimalism, Family Tree, Moon & Sky and the screen pet's birthday are not in the summary yet.
 - Only To-Do and Plant Care tasks have the `Done` button; other tasks are done in their app.
 - From Kanban, cards in each board's last column (usually "Done") are left out.
