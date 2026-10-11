@@ -287,6 +287,14 @@
       "type": "internal"
     },
     {
+      "id": "aura",
+      "name": "Aura Painter",
+      "category": "Creativity",
+      "icon": "aura",
+      "url": "aura/",
+      "type": "internal"
+    },
+    {
       "id": "atelier",
       "name": "Atelier",
       "category": "Creativity",
