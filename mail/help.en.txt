@@ -73,6 +73,10 @@ The bar above `Message` adds **bold** ([[Ctrl+B]]), italic ([[Ctrl+I]]), underli
 ### Signature and outgoing server
 In an account, `Signature` adds a few lines under each new message and reply. It can be formatted like a message and hold a small picture, such as a logo (`Picture or logo`; it is made smaller to fit). With several accounts, changing `From` swaps the signature. Sending uses the `Outgoing (SMTP) server` in `Server settings`, with the same username and password as incoming mail; it is filled in with the incoming one and checked when you save.
 
+### Undo send and Send later
+After `Send`, the message waits a few seconds with an `Undo` button at the bottom: `Undo` brings it back to the composer. Choose how long, or turn it off, under `Undo send` in `Mail settings` (this device).
+`Send later` (next to `Attach files`) picks a time: `In an hour`, `Tomorrow morning`, `Monday morning` or any `Date and time` up to a year ahead. The message waits in `Outbox` and goes out at that time while orOS is open on this device, also with Mail closed (orOS shows a notice when it is sent); if orOS is closed then, it goes out as soon as orOS opens. In `Outbox` you can `Send now`, `Edit` or `Delete` it until it starts sending.
+
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
 
@@ -97,6 +101,6 @@ Your accounts (without passwords), your rules, your templates, the relay address
 
 ## Limits
 - Attached files can be up to 7 MB together; previews show pictures and up to 20 pages of a PDF.
-- The Outbox stays on the device where it was written; use `Save draft` to continue on another device.
+- The Outbox stays on the device where it was written, and so do scheduled messages: they go out only from that device. Use `Save draft` to continue on another device.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

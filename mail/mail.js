@@ -78,6 +78,7 @@
   var R = window.orosMailRules;
   var RT = window.orosMailRich;
   var TH = window.orosMailThreads;
+  var OB = window.orosMailOutbox;
   var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -206,6 +207,12 @@
       "toast.sent": "Sent", "toast.sentNoCopy": "Sent. A copy could not be filed in Sent.",
       "toast.queued": "In the Outbox: it goes out when you are online.", "toast.outSent": "Sent from the Outbox: {n}",
       "out.bar": "Outbox: {n}", "out.title": "Outbox",
+      "snd.sending": "Sending…", "snd.late": "Too late: it is already being sent.", "snd.later": "Send later",
+      "snd.inHour": "In an hour", "snd.tomorrow": "Tomorrow morning ({when})", "snd.monday": "Monday morning ({when})",
+      "snd.at": "Date and time", "snd.schedule": "Schedule", "snd.past": "Pick a time in the future.", "snd.far": "Up to a year ahead.",
+      "snd.hint": "It goes out at that time while orOS is open on this device (with Mail closed too); otherwise as soon as orOS opens.",
+      "snd.scheduled": "Scheduled for {when}", "snd.at2": "Sends {when}", "snd.now": "Being sent…",
+      "set.undo": "Undo send", "set.undoOff": "Off (send at once)", "set.undoSec": "{n} seconds to undo",
       "out.text": "Messages written offline. They go out by themselves when you are online.",
       "out.send": "Send now", "out.edit": "Edit", "out.del": "Delete", "out.failed": "Not sent: {msg}",
       "out.empty": "The Outbox is empty.", "out.nosubj": "(no subject)",
@@ -332,6 +339,12 @@
       "toast.sent": "Στάλθηκε", "toast.sentNoCopy": "Στάλθηκε. Δεν μπήκε αντίγραφο στα Απεσταλμένα.",
       "toast.queued": "Μπήκε στα Εξερχόμενα: θα σταλεί μόλις συνδεθείς.", "toast.outSent": "Στάλθηκαν από τα Εξερχόμενα: {n}",
       "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
+      "snd.sending": "Αποστολή…", "snd.late": "Πολύ αργά: στέλνεται ήδη.", "snd.later": "Αποστολή αργότερα",
+      "snd.inHour": "Σε μία ώρα", "snd.tomorrow": "Αύριο το πρωί ({when})", "snd.monday": "Δευτέρα πρωί ({when})",
+      "snd.at": "Ημερομηνία και ώρα", "snd.schedule": "Προγραμματισμός", "snd.past": "Διάλεξε μια μελλοντική ώρα.", "snd.far": "Έως έναν χρόνο μπροστά.",
+      "snd.hint": "Φεύγει εκείνη την ώρα όσο το orOS είναι ανοιχτό σε αυτή τη συσκευή (και με κλειστή την Αλληλογραφία)· αλλιώς μόλις ανοίξει το orOS.",
+      "snd.scheduled": "Προγραμματίστηκε για {when}", "snd.at2": "Στέλνεται {when}", "snd.now": "Στέλνεται…",
+      "set.undo": "Αναίρεση αποστολής", "set.undoOff": "Όχι (αποστολή αμέσως)", "set.undoSec": "{n} δευτερόλεπτα για αναίρεση",
       "out.text": "Μηνύματα που γράφτηκαν χωρίς σύνδεση. Στέλνονται μόνα τους μόλις συνδεθείς.",
       "out.send": "Αποστολή τώρα", "out.edit": "Επεξεργασία", "out.del": "Διαγραφή", "out.failed": "Δεν στάλθηκε: {msg}",
       "out.empty": "Τα Εξερχόμενα είναι άδεια.", "out.nosubj": "(χωρίς θέμα)",
@@ -856,7 +869,8 @@
 
   // ---------- 6. Folders + message cache ----------
   var data = emptyData();
-  var prefs = { acct: null, folder: "INBOX", plain: 0, threads: 1, uni: 0 };
+  var prefs = { acct: null, folder: "INBOX", plain: 0, threads: 1, uni: 0, undo: 10 };
+  var UNDO_SECS = [0, 5, 10, 20];
   var openThreads = {};    // conversation key → 1 while its older messages show
   var folders = {};        // acctId → [folder] (sorted)
   var needPass = {};       // acctId → 1 when no password on this device
@@ -2407,6 +2421,9 @@
     labT.appendChild(cbT);
     labT.appendChild(el("span", "", t("set.threads")));
     form.appendChild(labT);
+    var fUndo = portSelect(form, "ml-undo", t("set.undo"), UNDO_SECS.map(function (n) {
+      return [n, n ? t("set.undoSec", { n: n }) : t("set.undoOff")];
+    }), prefs.undo);
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
     form.appendChild(errP);
@@ -2427,6 +2444,7 @@
       }
       prefs.plain = cb.checked ? 1 : 0;
       prefs.threads = cbT.checked ? 1 : 0;
+      prefs.undo = +fUndo.value || 0;
       savePrefs();
       dlg.close();
       showToast(t("toast.saved"));
@@ -2453,7 +2471,7 @@
     return idb("outbox", "readonly", function (s) { return s.getAll(); }).then(function (rows) {
       outbox = (rows || []).filter(function (r) { return r && typeof r.id === "string" && r.draft; })
         .sort(function (a, b) { return a.at - b.at; });
-    }).catch(function () { outbox = []; });
+    }).catch(function () { outbox = []; }).then(armTimed);
   }
   function dropOut(id) {
     outbox = outbox.filter(function (r) { return r.id !== id; });
@@ -2477,15 +2495,22 @@
 
   // draft: { acct, to[], cc[], bcc[], subject, text, inReplyTo, references }
   // → { copyFailed }
-  function sendDraft(d) {
+  // → { acct, msg } or throws MailError
+  function buildMsg(d) {
     var acct = acctById(d.acct);
-    if (!acct) return Promise.reject(new MailError("noacct"));
-    if (!acct.smtp) return Promise.reject(new MailError("nosmtp"));
+    if (!acct) throw new MailError("noacct");
+    if (!acct.smtp) throw new MailError("nosmtp");
     var rich = d.html ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
                         subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
                         attachments: d.atts || [], inReplyTo: d.inReplyTo, references: d.references });
-    if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
+    if (msg.bin.length > MSG_MAX) throw new MailError("big");
+    return { acct: acct, msg: msg };
+  }
+  function sendDraft(d) {
+    var b;
+    try { b = buildMsg(d); } catch (e) { return Promise.reject(e); }
+    var acct = b.acct, msg = b.msg;
     var sent = sentFolder(acct);
     var args = { smtp: true, from: acct.email, rcpt: msg.rcpt, raw: C.b64(msg.bin) };
     if (sent) args.sent = sent;
@@ -2569,7 +2594,7 @@
 
   function flushOutbox() {
     if (flushing || !navigator.onLine) return Promise.resolve();
-    var list = outbox.filter(function (r) { return !r.err && r.id !== editingOut; });
+    var list = outbox.filter(function (r) { return !r.err && r.id !== editingOut && !OB.timed(r); });
     if (!list.length) return Promise.resolve();
     flushing = true;
     var n = 0;
@@ -2589,6 +2614,128 @@
     });
   }
 
+  // ---------- timed sends: Undo send, Send later (outbox.js) ----------
+  var TAB = newId();          // this window, in outbox claims
+  var timedTimer = null;
+  function queueTimed(d, due) {
+    var b = buildMsg(d);      // throws "big" / "nosmtp" before anything is queued
+    if (outbox.length >= OUT_MAX) throw new MailError("outfull");
+    var job = { acct: b.acct.id, from: b.acct.email, rcpt: b.msg.rcpt, raw: C.b64(b.msg.bin), subj: d.subject || "" };
+    var sent = sentFolder(b.acct);
+    if (sent) job.sent = sent;
+    if (d.serverDraft) job.serverDraft = d.serverDraft;
+    var rec = { id: newId(), at: Date.now(), draft: d, err: "", due: due, job: job };
+    return idbPut("outbox", rec.id, rec).then(function () {
+      outbox.push(rec);
+      renderSide();
+      armTimed();
+      return rec;
+    });
+  }
+  function armTimed() {
+    clearTimeout(timedTimer);
+    var now = Date.now(), n = OB.nextDue(outbox, now);
+    if (!n) return;
+    try { parent.__orosMailNotify.due(n); } catch (e) {}     // the shell sends it should Mail close
+    // at most a minute: the shell's checker may send (or a tab claim) meanwhile
+    timedTimer = setTimeout(runTimed, Math.min(60000, Math.max(200, n - now + 100)));
+  }
+  function runTimed() {
+    if (!navigator.onLine) { armTimed(); return Promise.resolve(); }
+    return loadOutbox().then(function () {
+      var now = Date.now();
+      var due = outbox.filter(function (r) { return OB.isDue(r, now); });
+      return due.reduce(function (p, r) {
+        return p.then(function () { return sendTimed(r.id); });
+      }, Promise.resolve());
+    }).then(function () { return loadOutbox(); }).then(function () {
+      renderSide();
+      if ($("ml-out")) outboxDialog();
+    }, function () { armTimed(); });
+  }
+  function sendTimed(id) {
+    return db().then(function (d) { return OB.claim(d, id, TAB, Date.now()); }).then(function (rec) {
+      if (!rec) return;
+      var acct = acctById(rec.job.acct);
+      if (!acct) return db().then(function (d) { return OB.release(d, id, errText(new MailError("noacct"))); });
+      var args = { smtp: true, from: rec.job.from, rcpt: rec.job.rcpt, raw: rec.job.raw };
+      if (rec.job.sent) args.sent = rec.job.sent;
+      return call("send", acct, args).then(function (res) {
+        return db().then(function (d) { return OB.finish(d, id); }).then(function () {
+          if (rec.job.serverDraft) dropServerDraft(rec.job.serverDraft);
+          if (rec.job.sent && cur && cur.acct === acct.id && cur.folder === rec.job.sent) refreshCurrent(false);
+          showToast(rec.job.sent && !(res && res.appended) ? t("toast.sentNoCopy") : t("toast.sent") + (rec.job.subj ? ": " + rec.job.subj : ""));
+        });
+      }, function (e) {
+        return db().then(function (d) { return OB.release(d, id, waitsForNet(e) ? "" : sendErrText(e)); });
+      });
+    }).catch(function () {});
+  }
+  // Undo / Edit / Delete: only while nobody is sending it
+  function takeBack(id) {
+    return db().then(function (d) { return OB.takeBack(d, id, Date.now()); }).then(function (rec) {
+      outbox = outbox.filter(function (r) { return r.id !== id; });
+      renderSide();
+      armTimed();
+      if (!rec) showToast(t("snd.late"));
+      return rec;
+    }, function () { showToast(t("snd.late")); return null; });
+  }
+  function composeFrom(rec) {
+    var d = rec.draft;
+    openCompose({ acct: d.acct, to: d.to, cc: d.cc, bcc: d.bcc, subject: d.subject, text: d.text, html: d.html || "",
+                  inReplyTo: d.inReplyTo, references: d.references, attachments: d.atts || [],
+                  draft: d.serverDraft || null, noSig: true });
+  }
+  function undoSendToast(rec, secs) {
+    localToast(t("snd.sending"), { label: t("org.undo"), fn: function () {
+      takeBack(rec.id).then(function (r) { if (r) composeFrom(r); });
+    } }, secs * 1000);
+  }
+  function fmtWhen(ms) {
+    var d = new Date(ms);
+    return d.toLocaleString(locale(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  // the date-time picker for "Send later"; done(ms)
+  function laterDialog(done) {
+    var dlg = makeDialog("ml-later");
+    dlg.appendChild(el("div", "dlg-title", t("snd.later")));
+    var now = new Date();
+    function at(days, h, m) { var d = new Date(now); d.setDate(d.getDate() + days); d.setHours(h, m || 0, 0, 0); return d.getTime(); }
+    var tom = at(1, 8), mon = at(((8 - now.getDay()) % 7) || 7, 8);
+    var quick = el("div", "later-quick");
+    [[t("snd.inHour"), now.getTime() + 3600000], [t("snd.tomorrow", { when: fmtWhen(tom) }), tom], [t("snd.monday", { when: fmtWhen(mon) }), mon]].forEach(function (q) {
+      quick.appendChild(button(q[0], "small", function () { dlg.close(); done(q[1]); }));
+    });
+    dlg.appendChild(quick);
+    var form = el("form");
+    form.noValidate = true;
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var loc = function (ms) { var d = new Date(ms); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "T" + p2(d.getHours()) + ":" + p2(d.getMinutes()); };
+    var fAt = field(form, "ml-later-at", t("snd.at"), "datetime-local", loc(now.getTime() + 3600000), { min: loc(now.getTime()) });
+    form.appendChild(el("p", "dlg-hint", t("snd.hint")));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("snd.schedule"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var ms = new Date(fAt.value).getTime();
+      if (!(ms > Date.now() + 30000)) { errP.textContent = t("snd.past"); return; }
+      if (ms > Date.now() + 366 * 86400000) { errP.textContent = t("snd.far"); return; }
+      dlg.close();
+      done(ms);
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
   function outboxDialog() {
     var dlg = makeDialog("ml-out");
     dlg.classList.add("wide");
@@ -2602,8 +2749,28 @@
       var to = [].concat(r.draft.to, r.draft.cc, r.draft.bcc).map(who).join(", ");
       tx.appendChild(el("div", "set-acct-mail", to));
       if (r.err) tx.appendChild(el("div", "dlg-err", t("out.failed", { msg: r.err })));
+      else if (OB.timed(r)) tx.appendChild(el("div", "set-acct-mail out-when", OB.claimed(r, Date.now()) ? t("snd.now") : t("snd.at2", { when: fmtWhen(r.due) })));
       li.appendChild(tx);
       var acts = el("div", "out-acts");
+      if (OB.timed(r)) {
+        acts.appendChild(button(t("out.send"), "small", function () {
+          takeBack(r.id).then(function (rec) {
+            if (!rec) return;
+            rec.due = Date.now();
+            rec.err = "";
+            return idbPut("outbox", rec.id, rec).then(function () { outbox.push(rec); return runTimed(); });
+          });
+        }));
+        acts.appendChild(button(t("out.edit"), "small", function () {
+          takeBack(r.id).then(function (rec) { if (rec) { dlg.close(); composeFrom(rec); } });
+        }));
+        acts.appendChild(button(t("out.del"), "small danger", function () {
+          takeBack(r.id).then(function () { outboxDialog(); });
+        }));
+        li.appendChild(acts);
+        ul.appendChild(li);
+        return;
+      }
       acts.appendChild(button(t("out.send"), "small", function (ev) {
         var b = ev.currentTarget;
         b.disabled = true;
@@ -2773,6 +2940,25 @@
       });
     });
     attRow.appendChild(tplB);
+    var laterB = el("button", "link-btn cmp-attach", t("snd.later"));
+    laterB.type = "button";
+    laterB.addEventListener("click", function () {
+      var d = collect(true);
+      if (!d) return;
+      if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
+      laterDialog(function (ms) {
+        var d2 = collect(true);
+        if (!d2) return;
+        if (draftRef) d2.serverDraft = draftRef;
+        var q;
+        try { q = queueTimed(d2, ms); } catch (er) { errP.textContent = sendErrText(er); return; }
+        q.then(function () {
+          if (init.outId) dropOut(init.outId);
+          finish(t("snd.scheduled", { when: fmtWhen(ms) }));
+        }, function (er) { errP.textContent = sendErrText(er); });
+      });
+    });
+    attRow.appendChild(laterB);
     form.appendChild(attRow);
     var chips = el("ul", "cmp-atts");
     form.appendChild(chips);
@@ -2917,6 +3103,20 @@
       if (!d) return;
       if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
       if (draftRef) d.serverDraft = draftRef;
+      // Undo send: built now, waits in the Outbox for a few seconds
+      if (navigator.onLine && prefs.undo > 0) {
+        var secs = prefs.undo, rec;
+        try {
+          rec = queueTimed(d, Date.now() + secs * 1000);
+        } catch (er) { errP.textContent = sendErrText(er); return; }
+        rec.then(function (r) {
+          if (init.outId) dropOut(init.outId);
+          dirty = false;
+          dlg.close();
+          undoSendToast(r, secs);
+        }, function (er) { errP.textContent = sendErrText(er); });
+        return;
+      }
       ok.disabled = true;
       ok.textContent = t("cmp.sending");
       function failed(err) {
@@ -3861,7 +4061,7 @@
   }
 
   var toastTimer = null;
-  function localToast(text, action) {
+  function localToast(text, action, ms) {
     var box = $("toast");
     if (!box) return;
     hostToast();
@@ -3877,7 +4077,7 @@
     void box.offsetWidth;
     box.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { box.classList.remove("show"); }, 4000);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, ms || 4000);
   }
   function hostToast() {
     var box = $("toast"), d = document.querySelector("dialog[open]");
@@ -4046,6 +4246,7 @@
         prefs.plain = p.plain ? 1 : 0;
         prefs.threads = p.threads === 0 ? 0 : 1;
         prefs.uni = p.uni ? 1 : 0;
+        if (UNDO_SECS.indexOf(p.undo) >= 0) prefs.undo = p.undo;
       }
     } catch (e) {}
   }

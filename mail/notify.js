@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mail — new-mail notices and device rules (v1.1.0)
+// orOS Mail — new-mail notices, device rules, timed sends (v1.2.0)
 // Runs in the SHELL window (index.html loads it after
 // notifications.js), so a new message in an Inbox shows a notice
 // while orOS is open, also with the Mail window closed.
@@ -24,6 +24,14 @@
 //     moved or marked read gets no notice. A failed rule call is
 //     retried at the next check only if the message is still new
 //     (the mark moves on: no endless retries)
+//   - timed sends (outbox.js): an Outbox message whose "Undo send"
+//     wait or "Send later" time has passed goes out from here when
+//     Mail is closed (Mail sends it itself while open). Each one is
+//     CLAIMED first, so it is sent once even with Mail open in a
+//     second tab. Sent → removed + a "Sent" notice; a network error
+//     frees it for the next check; any other error keeps it in the
+//     Outbox with the reason. A check is scheduled for the next due
+//     time when that is sooner than 3 minutes
 // Reads: oros-mail-data (accounts, relay), IndexedDB "oros-mail"
 // stores "keys" + "creds" (the sealed password, decrypted with the
 // device key exactly as mail.js does; the key never leaves
@@ -67,7 +75,9 @@
     var s = {
       newOne: el() ? "Νέο email" : "New e-mail",
       many: el() ? "{n} νέα email" : "{n} new e-mails",
-      nosubj: el() ? "(χωρίς θέμα)" : "(no subject)"
+      nosubj: el() ? "(χωρίς θέμα)" : "(no subject)",
+      sent: el() ? "Το email στάλθηκε" : "E-mail sent",
+      fail: el() ? "Δεν στάλθηκε ({n})" : "Not sent ({n})"
     }[key];
     return s.replace("{n}", n);
   }
@@ -136,7 +146,7 @@
     } catch (e) {}
     return "mail/" + file;
   }
-  var MIME_SRC = srcOf("mime.js"), RULES_SRC = srcOf("rules.js");
+  var MIME_SRC = srcOf("mime.js"), RULES_SRC = srcOf("rules.js"), OUTBOX_SRC = srcOf("outbox.js");
   var loading = {};
   function load(src, name, fn) {
     var X = root[name];
@@ -159,11 +169,12 @@
   }
   function mime() { return load(MIME_SRC, "orosMailMime", "summary"); }
   function rulesLib() { return load(RULES_SRC, "orosMailRules", "plan"); }
+  function outboxLib() { return load(OUTBOX_SRC, "orosMailOutbox", "claim"); }
 
   // ---------- relay ----------
-  function relay(url, acct, pass, body) {
+  function relay(url, acct, pass, body, ms) {
     var ctl = new AbortController();
-    var timer = setTimeout(function () { ctl.abort(); }, CALL_TIMEOUT);
+    var timer = setTimeout(function () { ctl.abort(); }, ms || CALL_TIMEOUT);
     body.acct = { host: acct.imap.host, port: acct.imap.port, sec: acct.imap.sec,
                   user: acct.imap.user || acct.email, pass: pass };
     return fetch(url + "/v1", {
@@ -235,6 +246,75 @@
     }, Promise.resolve()).then(function () { return done; });
   }
 
+  // ---------- timed sends ----------
+  var TAB = "n" + Math.random().toString(36).slice(2, 10);
+  var SEND_TIMEOUT = 120000;       // = mail.js: a large message takes longer
+  var nextAt = 0;                  // the next due time seen (0: none)
+  function allOutbox(d) {
+    return new Promise(function (resolve) {
+      try {
+        var r = d.transaction("outbox", "readonly").objectStore("outbox").getAll();
+        r.onsuccess = function () { resolve(r.result || []); };
+        r.onerror = function () { resolve([]); };
+      } catch (e) { resolve([]); }
+    });
+  }
+  // Mail open in this shell: it sends its own (its timer is exact)
+  function mailOpen() {
+    try {
+      var f = root.document.getElementById("app-frame");
+      var w = f && f.contentWindow;
+      return !!(w && /\/mail\/(index\.html)?$/.test(w.location.pathname) && w.orosMailOutbox);
+    } catch (e) { return false; }
+  }
+  function notice(key, title, subj) {
+    var N = root.orosNotifs;
+    if (N && typeof N.emit === "function") {
+      N.emit({ ns: "mail", type: "sent", key: key, title: title, body: String(subj || T("nosubj")).slice(0, 200), ttlDays: 1 });
+    }
+  }
+  function sendDue(d, url, accts, OB) {
+    if (!OB || !d.objectStoreNames.contains("outbox")) return Promise.resolve();
+    return allOutbox(d).then(function (recs) {
+      var now = Date.now();
+      nextAt = OB.nextDue(recs, now);
+      if (mailOpen()) return;
+      return recs.filter(function (r) { return OB.isDue(r, now); }).reduce(function (p, r0) {
+        return p.then(function () {
+          var acct = accts.filter(function (a) { return a.id === r0.job.acct; })[0];
+          return OB.claim(d, r0.id, TAB, Date.now()).then(function (rec) {
+            if (!rec) return;
+            if (!acct || !acct.smtp) return OB.release(d, rec.id, T("fail", acct ? "nosmtp" : "noacct"));
+            return password(d, acct.id).then(function (pw) {
+              if (!pw) return OB.release(d, rec.id, T("fail", "nopass"));
+              var j = rec.job;
+              var body = { op: "send", from: j.from, rcpt: j.rcpt, raw: j.raw,
+                           smtp: { host: acct.smtp.host, port: acct.smtp.port, sec: acct.smtp.sec,
+                                   user: acct.smtp.user || acct.imap.user || acct.email, pass: pw } };
+              if (j.sent) body.sent = j.sent;
+              return relay(url, acct, pw, body, SEND_TIMEOUT).then(function () {
+                return OB.finish(d, rec.id).then(function () {
+                  var sd = j.serverDraft;
+                  if (sd && sd.uid > 0 && typeof sd.folder === "string") {
+                    relay(url, acct, pw, { op: "expunge", folder: sd.folder, uids: [sd.uid] }).catch(function () {});
+                  }
+                  notice("s:" + rec.id, T("sent"), j.subj);
+                });
+              }, function (e) {
+                if (e.code === "network") return OB.release(d, rec.id, "");
+                return OB.release(d, rec.id, T("fail", e.code)).then(function () {
+                  notice("f:" + rec.id, T("fail", e.code), j.subj);       // it waits in Mail's Outbox
+                });
+              });
+            });
+          }).catch(function () {});
+        });
+      }, Promise.resolve()).then(function () {
+        return allOutbox(d).then(function (recs) { nextAt = OB.nextDue(recs, Date.now()); });
+      });
+    });
+  }
+
   function check() {
     if (busy) return Promise.resolve();
     function later() { wait = EVERY_MS; schedule(); return Promise.resolve(); }
@@ -252,29 +332,31 @@
     lastAt = Date.now();
     var failed = false;
     var rules = Array.isArray(data.rules) ? data.rules : [];
-    return Promise.all([openDb(), mime(), rules.length ? rulesLib() : null]).then(function (r) {
-      var d = r[0], M = r[1], Rl = r[2];
+    return Promise.all([openDb(), mime(), rules.length ? rulesLib() : null, outboxLib()]).then(function (r) {
+      var d = r[0], M = r[1], Rl = r[2], OB = r[3];
       if (!d) return;
       var marks = loadMarks();
-      return accts.reduce(function (p, acct) {
-        return p.then(function () {
-          return password(d, acct.id).then(function (pw) {
-            if (!pw || silenced[acct.id] === pw) return;
-            var mine = rules.filter(function (x) { return x && x.acct === acct.id && x.on !== false; });
-            return relay(url, acct, pw, { op: "list", folder: "INBOX", limit: mine.length ? PEEK_RULES : PEEK }).then(function (res) {
-              var out = freshMessages(res, marks[acct.id]);
-              marks[acct.id] = out.mark;
-              saveMarks(marks);
-              return applyRules(url, acct, pw, mine, out.newer, M, Rl).then(function (done) {
-                emitFor(acct, out.fresh.filter(function (x) { return !done[x.uid]; }), res.uidvalidity, M);
+      return sendDue(d, url, accts, OB).catch(function () {}).then(function () {
+        return accts.reduce(function (p, acct) {
+          return p.then(function () {
+            return password(d, acct.id).then(function (pw) {
+              if (!pw || silenced[acct.id] === pw) return;
+              var mine = rules.filter(function (x) { return x && x.acct === acct.id && x.on !== false; });
+              return relay(url, acct, pw, { op: "list", folder: "INBOX", limit: mine.length ? PEEK_RULES : PEEK }).then(function (res) {
+                var out = freshMessages(res, marks[acct.id]);
+                marks[acct.id] = out.mark;
+                saveMarks(marks);
+                return applyRules(url, acct, pw, mine, out.newer, M, Rl).then(function (done) {
+                  emitFor(acct, out.fresh.filter(function (x) { return !done[x.uid]; }), res.uidvalidity, M);
+                });
+              }, function (e) {
+                if (e.code === "auth") silenced[acct.id] = pw;
+                else failed = true;
               });
-            }, function (e) {
-              if (e.code === "auth") silenced[acct.id] = pw;
-              else failed = true;
             });
           });
-        });
-      }, Promise.resolve()).then(function () {
+        }, Promise.resolve());
+      }).then(function () {
         // forget marks of removed accounts
         Object.keys(marks).forEach(function (id) {
           if (!accts.some(function (a) { return a.id === id; })) delete marks[id];
@@ -290,14 +372,24 @@
 
   function schedule() {
     clearTimeout(timer);
-    timer = setTimeout(check, wait);
+    var ms = wait;
+    // a timed send due sooner: check then (not before 15 s)
+    if (nextAt > Date.now()) ms = Math.min(ms, Math.max(15000, nextAt - Date.now() + 1000));
+    timer = setTimeout(check, ms);
   }
   function soon() {
     // tab back / online: check now unless one ran in the last minute
     if (Date.now() - lastAt > 60000) { wait = EVERY_MS; check(); }
   }
 
-  var api = { v: 1, freshMessages: freshMessages, check: check };
+  // Mail queued a timed send due at ms: be ready to send it should Mail close
+  function due(ms) {
+    if (!(ms > 0) || (nextAt > Date.now() && nextAt <= ms)) return;
+    nextAt = ms;
+    if (!busy) schedule();
+  }
+
+  var api = { v: 1, freshMessages: freshMessages, check: check, due: due };
   if (typeof module === "object" && module.exports) { module.exports = api; return; }
   if (root.__orosMailNotify && root.__orosMailNotify.v >= 1) return;
   root.__orosMailNotify = api;
