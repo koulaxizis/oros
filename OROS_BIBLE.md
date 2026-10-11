@@ -4745,3 +4745,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Today wave 2: the summary now includes your Calendar events (series and multi-day events), To-Do tasks, Kanban cards (each board's last column left out), Quote follow-ups and Contacts birthdays / anniversaries. "Done" on To-Do and Plant Care rows opens the app, which ticks / logs the task with its own code (Today never writes; `__orosOpenAt("todo", {done:{list,item}})`, `__orosOpenAt("plants", {plant} | {done:{plant,kind}})`).
 - Shared read-only cores replace duplicated logic: `calendar/occur.js` (OrosCalOccur: Calendar views + shell reminders), `todo/core.js` (OrosTodoCore: shell reminder + Calendar feed), `quote/core.js` (OrosQuoteCore: shell reminder), `kanban/core.js` (OrosKanbanCore) and `contacts/dates.js` (OrosContactDates) for Calendar feeds; golden tests in tests/today-wave2.test.js.
 - Fixes: a 29 February birthday shows on 28 February in other years; a sent quote without a due date no longer triggers the due reminder. To-Do and Quote reminders join the "quiet the morning reminders" setting.
+
+### 2026-10-11 — Name Generator: pets, teams, projects; send to Netizen ID and Characters (#191) — 0.90.00
+- Name Generator: names for pets, teams and projects, and send a name straight to Netizen ID or Characters.
