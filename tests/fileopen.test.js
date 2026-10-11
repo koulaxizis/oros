@@ -45,12 +45,19 @@ test("every app in the table exists and takes a file through its deep link", () 
     writer: ["writer/writer.js"], spreadsheet: ["spreadsheet/spreadsheet.js"],
     atelier: ["atelier/core.js"], slides: ["slides/app.js"], layout: ["layout/layout.js"],
     feeds: ["feeds/feeds.js"], podcasts: ["podcasts/podcasts.js"], mindmap: ["mindmap/mindmap.js"],
-    familytree: ["familytree/familytree.js"], ringtones: ["ringtones/ringtones.js"]
+    familytree: ["familytree/familytree.js"], ringtones: ["ringtones/ringtones.js"],
+    calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"]
   };
   F.HANDLERS.forEach((h) => {
     assert.ok(apps.includes(h.app), "registered: " + h.app);
     assert.ok(files[h.app], "receiver file known: " + h.app);
     const src = files[h.app].map(read).join("\n");
+    if (h.text) {                                       // BR-FILE-IMPORT receivers
+      assert.match(src, new RegExp("\\." + h.text + "\\b"), h.app);
+      assert.match(src, /window\.__orosOpenAt\s*=/, h.app);
+      assert.match(src, /__orosTakeTarget\(\s*["']/, h.app);
+      return;
+    }
     assert.match(src, /openFile/, h.app);
     assert.match(src, /__orosTakeFile\(/, h.app);
     assert.match(src, /window\.__orosOpenAt\s*=/, h.app);
@@ -164,6 +171,23 @@ test("launch: several files open the first and say so; too big and unknown are r
   launch([file("x.pdf")]);
   await tick();
   assert.deepEqual(calls.map((c) => c[0]), ["notice", "notice"]);
+});
+
+test("launch: .ics and .vcf go as text (BR-FILE-IMPORT), over 5 MB refused", async () => {
+  const { w, calls, launch } = fakeWindow();
+  w.orosFileOpen.ready();
+  const ics = Object.assign(file("trip.ics"), { text: () => Promise.resolve("BEGIN:VCALENDAR") });
+  launch([ics]);
+  await tick(); await tick();
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), ["open", "calendar", { importIcs: { name: "trip.ics", text: "BEGIN:VCALENDAR" } }]);
+  const vcf = Object.assign(file("anna.vcf"), { text: () => Promise.resolve("BEGIN:VCARD") });
+  launch([vcf]);
+  await tick(); await tick();
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[1])), ["open", "contacts", { importVcf: { name: "anna.vcf", text: "BEGIN:VCARD" } }]);
+  launch([Object.assign(file("big.vcf", F.TEXT_MAX + 1), { text: () => Promise.resolve("x") })]);
+  await tick(); await tick();
+  assert.equal(calls[2][0], "notice");
+  assert.equal(F.textKey("writer"), "");
 });
 
 test("launch: a shared type follows the saved choice; Settings API checks its input", async () => {

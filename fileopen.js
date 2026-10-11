@@ -17,6 +17,8 @@
 //     a one-shot token and the app takes it with
 //     window.parent.__orosTakeFile(token). Each app then runs its own
 //     import (same checks and sanitisers as its Import button).
+//     Calendar (.ics) and Contacts (.vcf) take the text instead
+//     (BR-FILE-IMPORT: ≤ 5 MB, { importIcs | importVcf: { name, text } }).
 //   - never reads, stores or runs the file itself. Nothing is written
 //     back to the original file.
 // Device-local preference: localStorage "oros-file-open" (oros-
@@ -68,8 +70,15 @@
     { app: "familytree", accept: {
       "application/x-gedcom": [".ged", ".gedcom"] } },
     { app: "ringtones", accept: {
-      "audio/x-rtttl": [".rtttl", ".rtx"] } }
+      "audio/x-rtttl": [".rtttl", ".rtx"] } },
+    // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
+    // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
+    { app: "calendar", text: "importIcs", accept: {
+      "text/calendar": [".ics"] } },
+    { app: "contacts", text: "importVcf", accept: {
+      "text/vcard": [".vcf"] } }
   ];
+  var TEXT_MAX = 5 * 1024 * 1024;
 
   var STRINGS = {
     en: {
@@ -164,6 +173,12 @@
     return normPrefs(p);
   }
 
+  // BR-FILE-IMPORT apps: the deep-link key that carries the text, else "".
+  function textKey(app) {
+    for (var i = 0; i < HANDLERS.length; i++) if (HANDLERS[i].app === app) return HANDLERS[i].text || "";
+    return "";
+  }
+
   // The manifest's file_handlers, built from the table. Each
   // extension goes into one handler only (its first app), so the
   // system's "Open with" lists orOS once per type; the other apps
@@ -188,7 +203,7 @@
     HANDLERS: HANDLERS, MAX_BYTES: MAX_BYTES, PREF_KEY: PREF_KEY, STRINGS: STRINGS,
     extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared,
     normPrefs: normPrefs, choose: choose, choiceFor: choiceFor, setChoice: setChoice,
-    manifestHandlers: manifestHandlers, str: str
+    manifestHandlers: manifestHandlers, textKey: textKey, TEXT_MAX: TEXT_MAX, str: str
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document) return;
@@ -242,7 +257,17 @@
 
   function openWith(app, file) {
     if (typeof w.__orosOpenAt !== "function") return;
-    w.__orosOpenAt(app, { openFile: { token: hold(file), name: String(file.name || "").slice(0, 255), size: file.size || 0 } });
+    var name = String(file.name || "").slice(0, 255), key = textKey(app);
+    if (key) {
+      if (file.size > TEXT_MAX) { notice(T("big")); return; }
+      Promise.resolve(file.text()).then(function (text) {
+        var tg = {};
+        tg[key] = { name: name, text: String(text) };
+        w.__orosOpenAt(app, tg);
+      }, function () { notice(T("unknown")); });
+      return;
+    }
+    w.__orosOpenAt(app, { openFile: { token: hold(file), name: name, size: file.size || 0 } });
   }
 
   // The "Open with" chooser: one button per app, "always" box, Cancel.

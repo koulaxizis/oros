@@ -60,7 +60,9 @@
     {"action":"/?file-open=feeds","accept":{"text/x-opml":[".opml"]}},
     {"action":"/?file-open=mindmap","accept":{"application/x-freemind":[".mm"],"application/vnd.xmind.workbook":[".xmind"]}},
     {"action":"/?file-open=familytree","accept":{"application/x-gedcom":[".ged",".gedcom"]}},
-    {"action":"/?file-open=ringtones","accept":{"audio/x-rtttl":[".rtttl",".rtx"]}}
+    {"action":"/?file-open=ringtones","accept":{"audio/x-rtttl":[".rtttl",".rtx"]}},
+    {"action":"/?file-open=calendar","accept":{"text/calendar":[".ics"]}},
+    {"action":"/?file-open=contacts","accept":{"text/vcard":[".vcf"]}}
   ],
   "lang": "en",
   "dir": "ltr",
