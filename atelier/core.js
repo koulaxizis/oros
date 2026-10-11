@@ -102,11 +102,18 @@
       "imp.file": "From a file (.pptx, picture, package)…", "imp.canva": "From your Canva account…",
       "home.select": "Select", "home.picked": "{n} selected", "home.fromCanva": "From Canva ({n})", "home.delSel": "Delete ({n})",
       "home.delAsk": "Delete {n} designs?", "home.delOk": "Delete", "home.deleted": "{n} designs deleted.",
+      "fo.all": "All", "fo.newShort": "New folder", "fo.new": "New folder", "fo.newMove": "New folder…", "fo.none": "No folder",
+      "fo.move": "Move ({n})", "fo.moveOne": "Move to folder…", "fo.moved": "{n} moved to {f}.", "fo.movedOut": "{n} taken out of their folder.",
+      "fo.rename": "Rename folder", "fo.delete": "Delete folder", "fo.options": "Folder options",
+      "fo.delAsk": "Delete the folder “{f}”? Its designs are kept and go back to All.", "fo.deleted": "Folder “{f}” deleted.",
+      "fo.empty": "This folder is empty. Use Select › Move, or a design's ⋯ › Move to folder.",
       "fm.h": "Files on this device", "fm.open": "Manage files…", "fm.short": "Files", "fm.title": "Pictures, videos and sounds",
       "fm.hint": "Every picture, video and sound you uploaded or imported, biggest first. Files still used by a design (here, in Slides or in Layout) cannot be deleted; delete those designs first.",
       "fm.count": "{n} files, {size} · {free} not used", "fm.allFree": "Select all unused ({n})", "fm.del": "Delete {n} ({size})",
       "fm.ask": "Delete {n} files? Vault Drive deletes them on your other devices too.", "fm.done": "{n} files deleted.",
       "fm.inUse": "In use", "fm.unused": "Not used", "fm.picture": "Picture", "fm.video": "Video",
+      "fm.listing": "Reading the list of files…", "fm.reading": "Reading files… {i} of {n}",
+      "fm.fail": "The files could not be read ({why}). Close this window and try again; if it keeps happening, restart orOS.",
       "fm.nofs": "The orOS disk is not available here.", "fm.cantTell": "Could not check which files are in use, so none can be deleted now.",
       "cv.title": "Import from Canva", "cv.intro": "Bring your Canva designs over in one go. Each one is exported from Canva as PowerPoint and opened here as a new design.",
       "cv.checking": "Checking the connection…", "cv.off": "This orOS relay has no Canva connection set up yet. You can still download a design from Canva as PowerPoint and use Import › From a file.",
@@ -114,7 +121,7 @@
       "cv.waiting": "Finish in the Canva window…", "cv.popup": "The Canva window was blocked. Allow pop-ups for orOS and try again.",
       "cv.denied": "Canva did not give access.", "cv.auth": "The Canva connection has ended. Connect again.", "cv.rate": "Canva asks to slow down. Try again in a minute.",
       "cv.license": "Uses paid Canva content that cannot be exported.", "cv.approval": "Waiting for approval in your Canva team.", "cv.fail": "Canva could not be reached or did not answer.",
-      "cv.slow": "Canva took too long to prepare it.", "cv.big": "The PowerPoint from Canva is over 60 MB.",
+      "cv.slow": "Canva took too long to prepare it.", "cv.again": "Try again", "cv.relay": "The orOS relay that talks to Canva did not answer ({why}). Check your connection and try again.", "cv.big": "The PowerPoint from Canva is over 60 MB.",
       "cv.net": "Canva could not be reached.", "cv.said": "Canva said: {msg}", "cv.read": "The PowerPoint from Canva could not be read: {msg}",
       "cv.retry": "Try the failed ones again", "cv.replace": "Replace designs imported before (their changes here are lost)",
       "cv.replaced": "{n} earlier copies replaced.",
@@ -262,11 +269,18 @@
       "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
       "home.select": "Επιλογή", "home.picked": "{n} επιλεγμένα", "home.fromCanva": "Από το Canva ({n})", "home.delSel": "Διαγραφή ({n})",
       "home.delAsk": "Να διαγραφούν {n} σχέδια;", "home.delOk": "Διαγραφή", "home.deleted": "Διαγράφηκαν {n} σχέδια.",
+      "fo.all": "Όλα", "fo.newShort": "Νέος φάκελος", "fo.new": "Νέος φάκελος", "fo.newMove": "Νέος φάκελος…", "fo.none": "Χωρίς φάκελο",
+      "fo.move": "Μεταφορά ({n})", "fo.moveOne": "Μεταφορά σε φάκελο…", "fo.moved": "{n} μεταφέρθηκαν στο {f}.", "fo.movedOut": "{n} βγήκαν από τον φάκελό τους.",
+      "fo.rename": "Μετονομασία φακέλου", "fo.delete": "Διαγραφή φακέλου", "fo.options": "Επιλογές φακέλου",
+      "fo.delAsk": "Να διαγραφεί ο φάκελος «{f}»; Τα σχέδιά του μένουν και επιστρέφουν στα Όλα.", "fo.deleted": "Ο φάκελος «{f}» διαγράφηκε.",
+      "fo.empty": "Ο φάκελος είναι άδειος. Χρησιμοποίησε Επιλογή › Μεταφορά ή το ⋯ ενός σχεδίου › Μεταφορά σε φάκελο.",
       "fm.h": "Αρχεία σε αυτή τη συσκευή", "fm.open": "Διαχείριση αρχείων…", "fm.short": "Αρχεία", "fm.title": "Εικόνες, βίντεο και ήχοι",
       "fm.hint": "Όλες οι εικόνες, τα βίντεο και οι ήχοι που ανέβασες ή εισήγαγες, πρώτα τα μεγαλύτερα. Όσα χρησιμοποιεί ακόμη κάποιο σχέδιο (εδώ, στις Διαφάνειες ή στη Σελιδοποίηση) δεν διαγράφονται· διάγραψε πρώτα εκείνα τα σχέδια.",
       "fm.count": "{n} αρχεία, {size} · {free} αχρησιμοποίητα", "fm.allFree": "Επιλογή όλων των αχρησιμοποίητων ({n})", "fm.del": "Διαγραφή {n} ({size})",
       "fm.ask": "Να διαγραφούν {n} αρχεία; Το Vault Drive τα διαγράφει και από τις άλλες σου συσκευές.", "fm.done": "Διαγράφηκαν {n} αρχεία.",
       "fm.inUse": "Σε χρήση", "fm.unused": "Δεν χρησιμοποιείται", "fm.picture": "Εικόνα", "fm.video": "Βίντεο",
+      "fm.listing": "Διαβάζω τη λίστα των αρχείων…", "fm.reading": "Διαβάζω αρχεία… {i} από {n}",
+      "fm.fail": "Δεν μπόρεσα να διαβάσω τα αρχεία ({why}). Κλείσε το παράθυρο και δοκίμασε ξανά· αν συνεχίσει, κάνε επανεκκίνηση του orOS.",
       "fm.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "fm.cantTell": "Δεν μπόρεσα να ελέγξω ποια αρχεία χρησιμοποιούνται, οπότε κανένα δεν διαγράφεται τώρα.",
       "cv.title": "Εισαγωγή από το Canva", "cv.intro": "Φέρε τα σχέδιά σου από το Canva με τη μία. Το καθένα εξάγεται από το Canva ως PowerPoint και ανοίγει εδώ ως νέο σχέδιο.",
       "cv.checking": "Ελέγχω τη σύνδεση…", "cv.off": "Αυτός ο relay του orOS δεν έχει ακόμη ρυθμισμένη σύνδεση με το Canva. Μπορείς πάντα να κατεβάσεις ένα σχέδιο από το Canva ως PowerPoint και να το ανοίξεις από Εισαγωγή › Από αρχείο.",
@@ -274,7 +288,7 @@
       "cv.waiting": "Ολοκλήρωσε στο παράθυρο του Canva…", "cv.popup": "Το παράθυρο του Canva μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και ξαναδοκίμασε.",
       "cv.denied": "Το Canva δεν έδωσε πρόσβαση.", "cv.auth": "Η σύνδεση με το Canva έληξε. Συνδέσου ξανά.", "cv.rate": "Το Canva ζητά να πάμε πιο αργά. Ξαναδοκίμασε σε ένα λεπτό.",
       "cv.license": "Έχει επί πληρωμή περιεχόμενο του Canva που δεν εξάγεται.", "cv.approval": "Περιμένει έγκριση στην ομάδα σου στο Canva.", "cv.fail": "Το Canva δεν απάντησε ή δεν ήταν διαθέσιμο.",
-      "cv.slow": "Το Canva άργησε πολύ να το ετοιμάσει.", "cv.big": "Το PowerPoint από το Canva ξεπερνά τα 60 MB.",
+      "cv.slow": "Το Canva άργησε πολύ να το ετοιμάσει.", "cv.again": "Δοκίμασε ξανά", "cv.relay": "Ο relay του orOS που μιλά με το Canva δεν απάντησε ({why}). Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", "cv.big": "Το PowerPoint από το Canva ξεπερνά τα 60 MB.",
       "cv.net": "Δεν ήταν δυνατή η σύνδεση με το Canva.", "cv.said": "Το Canva απάντησε: {msg}", "cv.read": "Το PowerPoint από το Canva δεν διαβάστηκε: {msg}",
       "cv.retry": "Ξαναδοκίμασε όσα απέτυχαν", "cv.replace": "Αντικατάσταση σχεδίων που είχαν εισαχθεί πριν (χάνονται οι αλλαγές τους εδώ)",
       "cv.replaced": "Αντικαταστάθηκαν {n} παλαιότερα αντίγραφα.",
@@ -811,7 +825,12 @@
     $("home-sub").textContent = docs.length === 1 ? t("home.count1") : docs.length ? t("home.count", { n: docs.length }) : "";
     $("home-empty").hidden = docs.length > 0;
     var shown = docs.filter(function (d) { return !q || docTitle(d).toLocaleLowerCase().indexOf(q) >= 0; });
-    if (docs.length && !shown.length) host.appendChild(el("p", "hint", t("home.none")));
+    // folders: the open folder narrows the list (a search looks everywhere)
+    if (AT.folders) {
+      AT.folders.renderBar($("home-folders"), docs);
+      if (!q) shown = shown.filter(AT.folders.inCurrent);
+    }
+    if (docs.length && !shown.length) host.appendChild(el("p", "hint", t(AT.folders && AT.folders.current() && !q ? "fo.empty" : "home.none")));
     renderSelBar(docs, shown);
     shown.forEach(function (d) {
       var card = el("div", "doc-card" + (pick && pick[d.id] ? " picked" : ""));
@@ -876,6 +895,7 @@
       b.type = "button"; b.disabled = !!off;
       b.addEventListener("click", fn);
       bar.appendChild(b);
+      return b;
     }
     var allOn = shown.length && shown.every(function (d) { return pick[d.id]; });
     add(allOn ? t("cv.none.sel") : t("cv.all"), "", function () {
@@ -884,6 +904,11 @@
     });
     var cv = AT.canva && AT.canva.importedIds ? AT.canva.importedIds().filter(function (id) { return findDoc(id); }) : [];
     if (cv.length) add(t("home.fromCanva", { n: cv.length }), "", function () { cv.forEach(function (id) { pick[id] = 1; }); renderHome(); });
+    if (AT.folders) {
+      var mv = add(t("fo.move", { n: n }), "", function () {
+        AT.folders.moveMenu(mv, Object.keys(pick), function () { pick = null; renderHome(); });
+      }, !n);
+    }
     add(t("home.delSel", { n: n }), "danger", function () { deleteMany(Object.keys(pick)); }, !n);
     add(t("btn.cancel"), "", function () { pick = null; renderHome(); });
   }
@@ -922,6 +947,7 @@
       { label: t("card.open"), fn: function () { openDoc(d.id); } },
       { label: t("card.rename"), fn: function () { renameDoc(d.id); } },
       { label: t("card.dup"), fn: function () { duplicateDoc(d.id); } },
+      { label: t("fo.moveOne"), hide: !AT.folders, fn: function () { AT.folders.moveMenu(anchor, [d.id]); } },
       { label: t("card.pkg"), fn: function () { AT.io.exportPackage(d); } },
       { label: t("card.del"), danger: true, fn: function () { deleteDoc(d.id); } }
     ]);
@@ -1000,6 +1026,7 @@
   AT.dropDoc = dropDoc;
 
   function addDoc(d) {
+    if (AT.folders) AT.folders.created(d.id);
     data.docs.push(d);
     data = M.normData(data);
     save();
@@ -1060,6 +1087,7 @@
     m.innerHTML = "";
     m.className = "menu";
     items.forEach(function (it) {
+      if (it.hide) return;
       if (it.sep) { m.appendChild(el("div", "menu-sep")); return; }
       var b = el("button", "menu-item" + (it.danger ? " danger" : "") + (it.on ? " on" : ""), it.label);
       b.type = "button";
