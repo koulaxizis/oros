@@ -176,6 +176,7 @@ var PRECACHE_URLS = [
   "mail/sanitize.js",
   "mail/compose.js",
   "mail/notify.js",
+  "mail/trust.js",
   "shelf/",
   "shelf/index.html",
   "shelf/search.js",
