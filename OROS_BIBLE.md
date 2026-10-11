@@ -4571,3 +4571,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - "Save draft" files the message in the account's Drafts folder on the server; a draft shows "Continue writing" and reopens in the composer; re-save replaces, send erases it (also from the Outbox). The leave question offers "Save draft".
 - Relay ops `rename`, `delete` (INBOX refused) and `draft` (APPEND with \Draft \Seen). `mime.js` `utf7Encode` for Greek folder names; `compose.js` `build({ keepBcc })` keeps Bcc in filed drafts only.
 - Tests 1364 (utf7Encode, rule retargeting, relay ops with/without UIDPLUS, Bcc in drafts); Playwright E2E at 360px EN/EL. Not tested: a real Papaki server.
+
+### 2026-10-11 — Mail: attachments (attach, forward, preview, save to Files) (#169) — 0.75.00
+- Composer: "Attach files" (device or drop) and "From Files" (orOS Files) as removable chips, up to 7 MB together; Forward brings the files along; drafts and the Outbox keep them.
+- Reader: attachment preview for pictures and PDFs up to 20 pages (bundled PDF.js from the precached `vendor/pdfjs`, loaded on first use, eval and XFA off); "Save to device" and "Save to Files" (Files › Mail, never over an existing file).
+- `compose.js`: multipart/mixed, RFC 2231 `filename*` + RFC 2047 `name=`. Relay: send and draft up to 10 MB (request 14 MB), SMTP and APPEND timeouts 60 s.
+- Tests 1365 (compose files, RFC 2231 round trip); Playwright E2E at 360px. Not tested: a real Papaki server or a real 10 MB send.
