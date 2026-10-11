@@ -74,6 +74,8 @@
   var M = window.orosMailMime;
   var TR = window.orosMailTrust;
   var R = window.orosMailRules;
+  var RT = window.orosMailRich;
+  var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -100,6 +102,11 @@
       "read.to": "To: {list}", "read.cc": "Cc: {list}", "read.me": "me", "read.nosubj": "(no subject)",
       "read.nosender": "(unknown sender)",
       "img.blocked": "Pictures from the internet are hidden, so the sender cannot tell you opened this.",
+      "srch.btn": "Search", "srch.ph": "Search this folder", "srch.close": "Close search",
+      "srch.all": "Everywhere", "srch.from": "Sender", "srch.subject": "Subject",
+      "srch.local": "Loaded messages: {n}", "srch.server": "Search the whole folder on the server",
+      "srch.busy": "Searching on the server…", "srch.found": "Found on the server: {n}", "srch.more": "Showing the newest {shown} of {n}.",
+      "srch.none": "Nothing found.", "srch.offline": "Offline: only the messages on this device were searched.",
       "rule.title": "Rules", "rule.hint": "Rules sort new Inbox mail while orOS is open on any of your devices, also with Mail closed.",
       "rule.add": "Add rule", "rule.new": "New rule", "rule.edit": "Edit rule", "rule.none": "No rules yet.",
       "rule.acct": "Account", "rule.if": "If", "rule.has": "contains", "rule.hasHint": "Several words separated by commas: any of them.",
@@ -161,12 +168,16 @@
       "cmp.ccbcc": "Cc / Bcc", "cmp.subject": "Subject", "cmp.body": "Message", "cmp.date": "Date",
       "cmp.send": "Send", "cmp.sending": "Sending…", "cmp.discard": "Discard",
       "cmp.discardQ": "Discard this message?", "cmp.keep": "Keep writing",
-      "cmp.hint": "Plain text, no attachments yet.",
+      "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it. No attachments yet.",
+      "rte.bar": "Formatting", "rte.b": "Bold (Ctrl+B)", "rte.i": "Italic (Ctrl+I)", "rte.u": "Underline (Ctrl+U)",
+      "rte.ul": "Bulleted list", "rte.ol": "Numbered list", "rte.link": "Link (Ctrl+K)", "rte.linkAsk": "Link address (web or e-mail):",
+      "rte.color": "Text colour", "rte.clear": "Clear formatting", "rte.img": "Picture or logo",
+      "rte.imgBig": "This picture is too big or not PNG, JPEG or GIF.",
       "cmp.wrote": "On {date}, {who} wrote:", "cmp.fwd": "---------- Forwarded message ----------",
       "cmp.noRcpt": "Add at least one recipient.", "cmp.bad": "Not an e-mail address: {list}",
       "cmp.many": "Up to {n} recipients.", "cmp.noacct": "Add an account to send mail.",
       "cmp.timeout": "The server did not answer in time. The message may have gone out: check Sent before sending it again.",
-      "dlg.sig": "Signature", "dlg.sigHint": "Added under each new message and reply. Synced with the account.",
+      "dlg.sig": "Signature", "dlg.sigHint": "Added under each new message and reply, with its formatting, links and a small picture (a logo). Synced with the account.",
       "err.nosmtp": "This account has no outgoing (SMTP) server. Add it in the account's server settings.",
       "err.smtpfail": "Incoming mail works, but the outgoing server failed: {msg}",
       "err.rcpt": "The server did not accept a recipient: {msg}", "err.big": "The message is too long to send.",
@@ -199,6 +210,11 @@
       "read.to": "Προς: {list}", "read.cc": "Κοιν.: {list}", "read.me": "εμένα", "read.nosubj": "(χωρίς θέμα)",
       "read.nosender": "(άγνωστος αποστολέας)",
       "img.blocked": "Οι εικόνες από το internet είναι κρυμμένες, για να μη μαθαίνει ο αποστολέας ότι το άνοιξες.",
+      "srch.btn": "Αναζήτηση", "srch.ph": "Αναζήτηση σε αυτόν τον φάκελο", "srch.close": "Κλείσιμο αναζήτησης",
+      "srch.all": "Παντού", "srch.from": "Αποστολέας", "srch.subject": "Θέμα",
+      "srch.local": "Στα φορτωμένα μηνύματα: {n}", "srch.server": "Αναζήτηση σε όλο τον φάκελο στον διακομιστή",
+      "srch.busy": "Αναζήτηση στον διακομιστή…", "srch.found": "Βρέθηκαν στον διακομιστή: {n}", "srch.more": "Εμφανίζονται τα {shown} νεότερα από {n}.",
+      "srch.none": "Δεν βρέθηκε τίποτα.", "srch.offline": "Χωρίς σύνδεση: έγινε αναζήτηση μόνο στα μηνύματα της συσκευής.",
       "rule.title": "Κανόνες", "rule.hint": "Οι κανόνες ταξινομούν τα νέα μηνύματα των Εισερχομένων όσο το orOS είναι ανοιχτό σε κάποια συσκευή σου, και με την Αλληλογραφία κλειστή.",
       "rule.add": "Νέος κανόνας", "rule.new": "Νέος κανόνας", "rule.edit": "Επεξεργασία κανόνα", "rule.none": "Δεν υπάρχουν κανόνες ακόμα.",
       "rule.acct": "Λογαριασμός", "rule.if": "Αν", "rule.has": "περιέχει", "rule.hasHint": "Πολλές λέξεις χωρισμένες με κόμμα: οποιαδήποτε από αυτές.",
@@ -260,12 +276,16 @@
       "cmp.ccbcc": "Κοιν. / Κρυφή κοιν.", "cmp.subject": "Θέμα", "cmp.body": "Μήνυμα", "cmp.date": "Ημερομηνία",
       "cmp.send": "Αποστολή", "cmp.sending": "Αποστολή…", "cmp.discard": "Απόρριψη",
       "cmp.discardQ": "Να απορριφθεί το μήνυμα;", "cmp.keep": "Συνέχεια γραψίματος",
-      "cmp.hint": "Απλό κείμενο, χωρίς συνημμένα προς το παρόν.",
+      "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν. Χωρίς συνημμένα προς το παρόν.",
+      "rte.bar": "Μορφοποίηση", "rte.b": "Έντονα (Ctrl+B)", "rte.i": "Πλάγια (Ctrl+I)", "rte.u": "Υπογράμμιση (Ctrl+U)",
+      "rte.ul": "Λίστα με κουκκίδες", "rte.ol": "Αριθμημένη λίστα", "rte.link": "Σύνδεσμος (Ctrl+K)", "rte.linkAsk": "Διεύθυνση συνδέσμου (web ή email):",
+      "rte.color": "Χρώμα κειμένου", "rte.clear": "Καθαρισμός μορφοποίησης", "rte.img": "Εικόνα ή λογότυπο",
+      "rte.imgBig": "Η εικόνα είναι πολύ μεγάλη ή δεν είναι PNG, JPEG ή GIF.",
       "cmp.wrote": "Στις {date}, {who} έγραψε:", "cmp.fwd": "---------- Προωθημένο μήνυμα ----------",
       "cmp.noRcpt": "Πρόσθεσε τουλάχιστον έναν παραλήπτη.", "cmp.bad": "Δεν είναι διεύθυνση email: {list}",
       "cmp.many": "Έως {n} παραλήπτες.", "cmp.noacct": "Πρόσθεσε έναν λογαριασμό για να στέλνεις μηνύματα.",
       "cmp.timeout": "Ο διακομιστής δεν απάντησε εγκαίρως. Το μήνυμα ίσως έφυγε: δες τα Απεσταλμένα πριν το ξαναστείλεις.",
-      "dlg.sig": "Υπογραφή", "dlg.sigHint": "Μπαίνει κάτω από κάθε νέο μήνυμα και απάντηση. Συγχρονίζεται με τον λογαριασμό.",
+      "dlg.sig": "Υπογραφή", "dlg.sigHint": "Μπαίνει κάτω από κάθε νέο μήνυμα και απάντηση, με τη μορφοποίηση, τους συνδέσμους και μια μικρή εικόνα (λογότυπο). Συγχρονίζεται με τον λογαριασμό.",
       "err.nosmtp": "Ο λογαριασμός δεν έχει διακομιστή εξερχομένων (SMTP). Πρόσθεσέ τον στις ρυθμίσεις διακομιστή του λογαριασμού.",
       "err.smtpfail": "Τα εισερχόμενα δουλεύουν, αλλά ο διακομιστής εξερχομένων απέτυχε: {msg}",
       "err.rcpt": "Ο διακομιστής δεν δέχτηκε παραλήπτη: {msg}", "err.big": "Το μήνυμα είναι πολύ μεγάλο για αποστολή.",
@@ -392,6 +412,7 @@
     unread: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>',
     filter: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>',
     folder: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+    search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
     close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
     key: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>'
   };
@@ -438,6 +459,9 @@
     if (smtp) { if (!smtp.user) smtp.user = imap.user; out.smtp = smtp; }
     var sig = normSig(a.sig);
     if (sig) out.sig = sig;
+    // The formatted signature: kept as written by rich.js clean() and
+    // only ever shown after passing through clean() again (never as is).
+    if (typeof a.sigHtml === "string" && a.sigHtml && a.sigHtml.length <= MAX_SIG_HTML) out.sigHtml = a.sigHtml;
     return out;
   }
   function normSig(v) {
@@ -1020,6 +1044,7 @@
     if (sel && cur) Object.keys(sel).forEach(function (u) { if (!findMsg(+u)) delete sel[u]; });
     renderSelBar();
     if (!acct || !cur) return;
+    if (srchOn()) { renderSearchList(ul, foot); return; }
     var loading = !!busy["l|" + acct.id + "|" + cur.folder];
     if (!cur.msgs.length) {
       foot.appendChild(el("p", "hint", loading ? t("list.loading") :
@@ -1119,6 +1144,7 @@
     cur = null;
     sel = null;
     flushMoves();
+    if (srch || !$("srch-bar").hidden) closeSearch();
     if (narrow()) setView("list");
     renderAll();
     var acct = acctById(acctId);
@@ -1147,7 +1173,11 @@
       lastErr = null;
       if (topBefore && folder.toUpperCase() === "INBOX" && rec.msgs.some(function (m) { return m.uid > topBefore; })) rulesSoon(acct);
       backoff = REFRESH_MS;
-      if (cur && cur.acct === acct.id && cur.folder === folder) { cur = rec; keepOpenValid(); }
+      if (cur && cur.acct === acct.id && cur.folder === folder) {
+        cur = rec;
+        if (srchOn() && !srch.server) srch.msgs = localMatches(srch.q, srch.where);
+        keepOpenValid();
+      }
       renderList();
       renderBar();
       if (manual) showToast(t("toast.updated"));
@@ -1177,7 +1207,7 @@
 
   function keepOpenValid() {
     if (!openMsg || !cur) return;
-    var still = cur.msgs.some(function (m) { return m.uid === openMsg.uid; });
+    var still = shown().some(function (m) { return m.uid === openMsg.uid; });
     if (!still && !openMsg.parsed) { openMsg = null; renderReader(); }
   }
 
@@ -1210,6 +1240,7 @@
   function findMsg(uid) {
     if (!cur) return null;
     for (var i = 0; i < cur.msgs.length; i++) if (cur.msgs[i].uid === uid) return cur.msgs[i];
+    if (srchOn()) for (var j = 0; j < srch.msgs.length; j++) if (srch.msgs[j].uid === uid) return srch.msgs[j];
     return null;
   }
 
@@ -1576,15 +1607,12 @@
     if (existing) fPass.placeholder = t("dlg.passKeep");
     var hint = el("p", "dlg-hint");
     form.appendChild(hint);
-    var sigLab = el("label", "dlg-lbl", t("dlg.sig"));
-    sigLab.setAttribute("for", "ml-sig");
-    var fSig = el("textarea", "sig");
-    fSig.id = "ml-sig";
-    fSig.rows = 3;
-    fSig.maxLength = MAX_SIG;
-    fSig.value = existing && existing.sig ? existing.sig : "";
+    var sigLab = el("div", "dlg-lbl", t("dlg.sig"));
+    sigLab.id = "ml-sig-lbl";
+    var sigEd = richEditor(existing ? sigHtmlOf(existing) : "", "ml-sig", t("dlg.sig"), true);
+    sigEd.area.classList.add("sig");
     form.appendChild(sigLab);
-    form.appendChild(fSig);
+    form.appendChild(sigEd.box);
     form.appendChild(el("p", "dlg-hint", t("dlg.sigHint")));
 
     var det = el("details", "srv");
@@ -1658,8 +1686,11 @@
         m: existing ? Math.max(Date.now(), existing.m + 1) : Date.now(),
         name: fName.value, email: email,
         imap: { host: host, port: +fPort.value, user: fUser.value.trim() || email },
-        sig: fSig.value
+        sig: "", sigHtml: ""
       };
+      var sg = sigEd.get(false);
+      acct.sig = sg.text.slice(0, MAX_SIG);
+      if (sg.rich && sg.html.length <= MAX_SIG_HTML) acct.sigHtml = sg.html;
       var smtpHost = normHost(fSmtp.value);
       if (smtpHost) acct.smtp = { host: smtpHost, port: +fSport.value, user: fUser.value.trim() || email };
       var n = normAccount(acct);
@@ -1909,8 +1940,10 @@
     var acct = acctById(d.acct);
     if (!acct) return Promise.reject(new MailError("noacct"));
     if (!acct.smtp) return Promise.reject(new MailError("nosmtp"));
+    var rich = d.html ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
-                        subject: d.subject, text: d.text, inReplyTo: d.inReplyTo, references: d.references });
+                        subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
+                        inReplyTo: d.inReplyTo, references: d.references });
     if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
     var sent = sentFolder(acct);
     var args = { smtp: true, from: acct.email, rcpt: msg.rcpt, raw: C.b64(msg.bin) };
@@ -1983,7 +2016,7 @@
       acts.appendChild(button(t("out.edit"), "small", function () {
         dlg.close();
         openCompose({ acct: r.draft.acct, to: r.draft.to, cc: r.draft.cc, bcc: r.draft.bcc,
-                      subject: r.draft.subject, text: r.draft.text, inReplyTo: r.draft.inReplyTo,
+                      subject: r.draft.subject, text: r.draft.text, html: r.draft.html || "", inReplyTo: r.draft.inReplyTo,
                       references: r.draft.references, outId: r.id, noSig: true });
       }));
       acts.appendChild(button(t("out.del"), "small danger", function () { dropOut(r.id); outboxDialog(); }));
@@ -2000,6 +2033,20 @@
   }
 
   function sigBlock(acct) { return acct && acct.sig ? "\n\n-- \n" + acct.sig : ""; }
+  function sigHtmlOf(acct) { return acct ? (acct.sigHtml || RT.fromText(acct.sig || "")) : ""; }
+  function richEditor(html, id, label, pictures) {
+    var L = {};
+    ["bar", "b", "i", "u", "ul", "ol", "link", "linkAsk", "color", "clear", "img", "imgBig"].forEach(function (k) { L[k] = t("rte." + k); });
+    return RT.editor({ html: html, id: id, label: label, pictures: pictures, labels: L, onError: function (m) { showToast(m); } });
+  }
+  // The signature inside a message being written: its own block, so a
+  // change of "From" can swap it. Contents always via clean().
+  function sigNode(acct) {
+    var d = document.createElement("div");
+    d.setAttribute("data-sig", "1");
+    d.innerHTML = RT.clean("-- <br>" + sigHtmlOf(acct), { cid: false }).html;
+    return d;
+  }
   function listText(list) { return (list || []).map(C.fmtInput).join(", "); }
 
   // HTML-only mail → text for quoting. DOMParser documents run no
@@ -2065,16 +2112,23 @@
     form.appendChild(ccBox);
     ccBtn.addEventListener("click", function () { ccBox.hidden = false; ccBtn.hidden = true; fCc.focus(); });
     var fSubj = field(form, "mc-subj", t("cmp.subject"), "text", init.subject || "", { maxlength: "300" });
-    var bLab = el("label", "dlg-lbl", t("cmp.body"));
-    bLab.setAttribute("for", "mc-body");
-    var fBody = el("textarea", "cmp-body");
-    fBody.id = "mc-body";
-    fBody.rows = 12;
-    fBody.maxLength = 200000;
-    var sig = init.noSig ? "" : sigBlock(acct);
-    fBody.value = (init.text || "") + sig + (init.quote || "");
+    var bLab = el("div", "dlg-lbl", t("cmp.body"));
+    var ed = richEditor(init.html || "", "mc-body", t("cmp.body"), false);
+    var fBody = ed.area;
+    fBody.classList.add("cmp-body");
+    if (!init.html) {
+      // what to write, then the signature, then the quoted message
+      fBody.innerHTML = RT.clean(RT.fromText(String(init.text || "").replace(/\n+$/, "")) || "<br>", { cid: false }).html;
+      if (!init.noSig && (acct.sig || acct.sigHtml)) { fBody.appendChild(el("br")); fBody.appendChild(sigNode(acct)); }
+      if (init.quote) {
+        var qd = el("div");
+        qd.innerHTML = "<br>" + RT.clean(RT.quoteHtml(init.quote), { cid: false }).html;
+        fBody.appendChild(qd);
+      }
+    }
+    bLab.addEventListener("click", function () { fBody.focus(); });
     form.appendChild(bLab);
-    form.appendChild(fBody);
+    form.appendChild(ed.box);
     form.appendChild(el("p", "dlg-hint dim", t("cmp.hint")));
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
@@ -2082,12 +2136,13 @@
 
     form.addEventListener("input", function () { dirty = true; });
     if (fFrom) fFrom.addEventListener("change", function () {
-      // swap the signature when it is still there unchanged
-      var next = sigBlock(acctById(fFrom.value));
-      var at = sig ? fBody.value.indexOf(sig) : -1;
-      if (at >= 0) fBody.value = fBody.value.slice(0, at) + next + fBody.value.slice(at + sig.length);
-      else if (!sig && next && !init.quote && !fBody.value.trim()) fBody.value = next;
-      sig = next;
+      // swap the signature block for the new account's
+      var a2 = acctById(fFrom.value);
+      var old = fBody.querySelector("[data-sig]");
+      var has = a2 && (a2.sig || a2.sigHtml);
+      if (old && has) old.replaceWith(sigNode(a2));
+      else if (old) old.remove();
+      else if (has && !init.quote && !RT.toText(fBody).trim()) { fBody.appendChild(el("br")); fBody.appendChild(sigNode(a2)); }
     });
 
     var acts = el("div", "dlg-actions");
@@ -2127,8 +2182,10 @@
       var count = to.list.length + cc.list.length + bcc.list.length;
       if (!count) { errP.textContent = t("cmp.noRcpt"); fTo.focus(); return; }
       if (count > MAX_RCPT) { errP.textContent = t("cmp.many", { n: MAX_RCPT }); return; }
+      var body = ed.get(false);
       var d = { acct: a.id, to: to.list, cc: cc.list, bcc: bcc.list,
-                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: fBody.value,
+                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: body.text.slice(0, 200000),
+                html: body.rich ? body.html : "",
                 inReplyTo: init.inReplyTo || "", references: init.references || "" };
       ok.disabled = true;
       ok.textContent = t("cmp.sending");
@@ -2151,7 +2208,13 @@
     dlg.showModal();
     var first = !fTo.value ? fTo : (!fSubj.value ? fSubj : fBody);
     first.focus();
-    if (first === fBody) fBody.setSelectionRange(0, 0);
+    if (first === fBody) {
+      var rg = document.createRange();
+      rg.setStart(fBody, 0);
+      rg.collapse(true);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(rg);
+    }
   }
 
   function confirmDiscard(yes) {
@@ -2197,7 +2260,9 @@
     return true;
   }
   function msgsByUid(uids) {
-    return (cur ? cur.msgs : []).filter(function (m) { return uids.indexOf(m.uid) >= 0; });
+    var out = [];
+    uids.forEach(function (u) { var m = findMsg(u); if (m) out.push(m); });
+    return out;
   }
 
   // kind: "star" | "unstar" | "read" | "unread"
@@ -2250,7 +2315,11 @@
     var moved = msgsByUid(uids);
     if (!moved.length) return;
     var unseen = moved.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
+    var inRec = moved.filter(function (m) { return rec.msgs.indexOf(m) >= 0; });
+    var sr = srchOn() ? srch : null;
+    var inSr = sr ? moved.filter(function (m) { return sr.msgs.indexOf(m) >= 0; }) : [];
     rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+    if (sr) sr.msgs = sr.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
     if (unseen) { adjustUnseen(acct.id, folder, -unseen); adjustUnseen(acct.id, dest, unseen); }
     if (openMsg && uids.indexOf(openMsg.uid) >= 0) {
       openMsg = null;
@@ -2262,10 +2331,13 @@
     renderReader();
     var done = false;
     function restore() {
-      var back = rec.msgs.concat(moved.filter(function (m) {
-        return !rec.msgs.some(function (x) { return x.uid === m.uid; });
-      }));
-      rec.msgs = back.sort(function (a, b) { return b.uid - a.uid; });
+      function back(list, add) {
+        return list.concat(add.filter(function (m) {
+          return !list.some(function (x) { return x.uid === m.uid; });
+        })).sort(function (a, b) { return b.uid - a.uid; });
+      }
+      rec.msgs = back(rec.msgs, inRec);
+      if (sr) sr.msgs = back(sr.msgs, inSr);
       if (unseen) { adjustUnseen(acct.id, folder, unseen); adjustUnseen(acct.id, dest, -unseen); }
       saveHeads(rec);
       renderList();
@@ -2314,6 +2386,7 @@
         var gone = msgsByUid(uids);
         var unseen = gone.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
         rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+        if (srchOn()) srch.msgs = srch.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
         if (unseen) adjustUnseen(acct.id, folder, -unseen);
         if (openMsg && uids.indexOf(openMsg.uid) >= 0) { openMsg = null; if (phone()) setView("list"); }
         sel = null;
@@ -2564,6 +2637,128 @@
     else openFolder(acct.id, "INBOX").then(go);
   }
 
+  // ---------- 9e. Search ----------
+  // Typing filters the loaded messages at once (device only). Enter or
+  // "Search the whole folder on the server" asks the relay ("search":
+  // IMAP UID SEARCH, so also the body with "Everywhere") and shows the
+  // newest 100 hits. Results are not cached; the list's actions work on
+  // them as on any message. Esc or × leaves search.
+  var srch = null;   // { acct, folder, q, where, msgs, server: bool, total, busy, err }
+  function srchOn() { return !!(srch && cur && srch.acct === cur.acct && srch.folder === cur.folder); }
+  function shown() { return !cur ? [] : (srchOn() ? srch.msgs : cur.msgs); }
+  // lower case without accents: "μαρια" finds "Μαρία"
+  function fold(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+  function localMatches(q, where) {
+    var words = fold(q).split(/\s+/).filter(Boolean);
+    return cur.msgs.filter(function (m) {
+      var from = (m.from.name || "") + " " + (m.from.addr || "");
+      var h = where === "from" ? from : (where === "subject" ? (m.subj || "") :
+              from + " " + (m.subj || "") + " " + m.to.concat(m.cc).map(function (p) { return (p.name || "") + " " + p.addr; }).join(" "));
+      h = fold(h);
+      return words.every(function (w) { return h.indexOf(w) >= 0; });
+    });
+  }
+  function openSearch() {
+    var bar = $("srch-bar");
+    if (!cur) return;
+    sel = null;
+    bar.hidden = false;
+    $("srch-btn").hidden = true;
+    $("srch-q").focus();
+    $("srch-q").select();
+  }
+  function closeSearch() {
+    srch = null;
+    $("srch-bar").hidden = true;
+    $("srch-btn").hidden = false;
+    $("srch-q").value = "";
+    keepOpenValid();
+    renderList();
+  }
+  function runLocal() {
+    var q = $("srch-q").value.trim(), where = $("srch-where").value;
+    if (!q || !cur) { srch = null; renderList(); return; }
+    srch = { acct: cur.acct, folder: cur.folder, q: q, where: where, msgs: localMatches(q, where), server: false, total: 0 };
+    renderList();
+  }
+  function runServer() {
+    var acct = curAcct();
+    runLocal();
+    if (!srch || !acct) return;
+    if (!navigator.onLine || !relayUrl()) { srch.err = new MailError("offline"); renderList(); return; }
+    var mine = srch;
+    mine.busy = true;
+    renderList();
+    call("search", acct, { folder: mine.folder, q: mine.q.slice(0, 200), where: mine.where === "all" ? "text" : mine.where, limit: 100 })
+      .then(function (res) {
+        if (srch !== mine) return;
+        mine.busy = false;
+        mine.server = true;
+        mine.total = res.total || 0;
+        mine.msgs = (res.msgs || []).map(summarize).sort(function (a, b) { return b.uid - a.uid; })
+          .map(function (m) { return findIn(cur.msgs, m.uid) || m; });   // the cached object when there is one
+        renderList();
+      }, function (e) {
+        if (srch !== mine) return;
+        mine.busy = false;
+        mine.err = e;
+        renderList();
+      });
+  }
+  function findIn(list, uid) {
+    for (var i = 0; i < list.length; i++) if (list[i].uid === uid) return list[i];
+    return null;
+  }
+  function renderSearchList(ul, foot) {
+    srch.msgs.forEach(function (m) { ul.appendChild(listRow(m)); });
+    var info = el("div", "srch-info");
+    if (srch.busy) info.appendChild(el("p", "hint", t("srch.busy")));
+    else if (srch.server) {
+      info.appendChild(el("p", "hint", srch.total ? t("srch.found", { n: srch.total }) : t("srch.none")));
+      if (srch.total > srch.msgs.length) info.appendChild(el("p", "hint", t("srch.more", { shown: srch.msgs.length, n: srch.total })));
+    } else {
+      info.appendChild(el("p", "hint", srch.msgs.length ? t("srch.local", { n: srch.msgs.length }) : t("srch.none")));
+      if (srch.err) info.appendChild(el("p", "hint err", srch.err.code === "offline" ? t("srch.offline") : errText(srch.err)));
+      else {
+        var b = el("button", "older-btn", t("srch.server"));
+        b.type = "button";
+        b.addEventListener("click", runServer);
+        info.appendChild(b);
+      }
+    }
+    if (srch.server && srch.err) info.appendChild(el("p", "hint err", errText(srch.err)));
+    foot.appendChild(info);
+  }
+  function wireSearch() {
+    var btn = $("srch-btn");
+    btn.innerHTML = UI.search;
+    btn.title = t("srch.btn") + " (/)";
+    btn.setAttribute("aria-label", t("srch.btn"));
+    btn.addEventListener("click", openSearch);
+    var q = $("srch-q");
+    q.placeholder = t("srch.ph");
+    q.setAttribute("aria-label", t("srch.ph"));
+    var wsel = $("srch-where");
+    wsel.setAttribute("aria-label", t("srch.btn"));
+    [["all", "srch.all"], ["from", "srch.from"], ["subject", "srch.subject"]].forEach(function (o) {
+      var op = el("option", "", t(o[1]));
+      op.value = o[0];
+      wsel.appendChild(op);
+    });
+    var x = $("srch-x");
+    x.innerHTML = UI.close;
+    x.title = t("srch.close");
+    x.setAttribute("aria-label", t("srch.close"));
+    x.addEventListener("click", closeSearch);
+    var deb = null;
+    q.addEventListener("input", function () { clearTimeout(deb); deb = setTimeout(runLocal, 150); });
+    wsel.addEventListener("change", function () { if (srch && srch.server) runServer(); else runLocal(); });
+    q.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); clearTimeout(deb); runServer(); }
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeSearch(); }
+    });
+  }
+
   // ---------- selection mode ----------
   function selUids() { return sel ? Object.keys(sel).map(Number) : []; }
   function toggleSel(uid) {
@@ -2575,18 +2770,18 @@
     var bar = $("sel-bar");
     bar.innerHTML = "";
     bar.hidden = !sel;
-    $("sel-btn").hidden = !!sel || !cur || !cur.msgs.length;
+    $("sel-btn").hidden = !!sel || !cur || !shown().length;
     $("sel-btn").textContent = t("org.select");
     if (!sel) return;
     var uids = selUids();
     var all = el("input");
     all.type = "checkbox";
     all.className = "sel-all";
-    all.checked = !!(cur && cur.msgs.length && uids.length === cur.msgs.length);
+    all.checked = !!(cur && shown().length && uids.length === shown().length);
     all.setAttribute("aria-label", t("org.all"));
     all.addEventListener("change", function () {
       sel = {};
-      if (all.checked && cur) cur.msgs.forEach(function (m) { sel[m.uid] = 1; });
+      if (all.checked && cur) shown().forEach(function (m) { sel[m.uid] = 1; });
       renderList();
     });
     bar.appendChild(all);
@@ -2736,11 +2931,13 @@
         if (k === "v") { e.preventDefault(); moveDialog(tgt); return; }
       }
       var dir = (e.key === "j" || e.key === "ArrowDown") ? 1 : ((e.key === "k" || e.key === "ArrowUp") ? -1 : 0);
-      if (!dir || !cur || !cur.msgs.length) return;
+      if (e.key === "/" && cur) { e.preventDefault(); openSearch(); return; }
+      var list = shown();
+      if (!dir || !cur || !list.length) return;
       e.preventDefault();
       var idx = -1;
-      if (openMsg) cur.msgs.forEach(function (m, i) { if (m.uid === openMsg.uid) idx = i; });
-      var next = cur.msgs[Math.max(0, Math.min(cur.msgs.length - 1, idx + dir))];
+      if (openMsg) list.forEach(function (m, i) { if (m.uid === openMsg.uid) idx = i; });
+      var next = list[Math.max(0, Math.min(list.length - 1, idx + dir))];
       if (next && (!openMsg || next.uid !== openMsg.uid)) {
         openMessage(next.uid);
         var row = document.querySelector('.row[data-uid="' + next.uid + '"]');
@@ -2898,6 +3095,7 @@
       if (document.visibilityState === "visible" && cur && Date.now() - (cur.at || 0) > REFRESH_MS) refreshCurrent(false);
     });
     wireKeyboard();
+    wireSearch();
   }
 
   // Deep links (shell __orosOpenAt / __orosTakeTarget), one receiver:

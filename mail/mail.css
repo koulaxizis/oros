@@ -16,6 +16,8 @@
     11. Organise: actions, selection, swipe
     12. Sender check and suspicious links
     13. Rules
+    14. Search
+    15. Formatted writing (rich.js)
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -520,7 +522,6 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
   resize: vertical;
 }
 .mm-dlg textarea:focus { outline: none; border-color: var(--accent); }
-.mm-dlg textarea.cmp-body { min-height: 220px; height: 40vh; height: 40dvh; }
 .cc-toggle { margin-top: 4px; padding-left: 0; }
 .out-btn {
   display: flex;
@@ -608,7 +609,10 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .org-btn.on { color: var(--accent); }
 .org-btn.danger { color: var(--danger); }
 .org-btn svg { flex-shrink: 0; }
-.list-head #sel-btn { margin-left: auto; flex-shrink: 0; }
+.list-head #sel-btn { flex-shrink: 0; }
+.list-head .count { margin-right: auto; }
+.list-head #srch-btn { align-self: center; }
+.icon-btn.small { width: 32px; height: 32px; }
 .sel-bar {
   display: flex;
   flex-wrap: wrap;
@@ -673,3 +677,72 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .rule-on { display: inline-flex; align-items: center; padding: 4px; }
 .rule-on input { width: 18px; height: 18px; accent-color: var(--accent); }
 .rule-list .set-acct-name { white-space: normal; font-weight: 600; overflow-wrap: anywhere; }
+
+/* ---------- 14. Search ---------- */
+.srch-bar { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; }
+.srch-bar input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.srch-bar input::-webkit-search-cancel-button { display: none; }
+.srch-bar input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.srch-bar select {
+  flex: 0 0 auto;
+  max-width: 34%;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.srch-info { padding: 4px 0 8px; text-align: center; }
+
+/* ---------- 15. Formatted writing (rich.js) ---------- */
+.rte { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow: hidden; }
+.rte:focus-within { border-color: var(--accent); }
+.rte-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px; border-bottom: 1px solid var(--border); background: var(--panel-bg); }
+.rte-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.rte-btn:hover, .rte-btn:focus-visible { background: var(--accent-soft); }
+.rte-pal { display: inline-flex; gap: 4px; padding: 0 4px; }
+.rte-sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+.rte-area {
+  min-height: 72px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  outline: none;
+}
+.rte-area.cmp-body { min-height: 220px; height: 40vh; height: 40dvh; max-height: none; }
+.rte-area.sig { min-height: 72px; }
+.rte-area blockquote { margin: 6px 0 6px 4px; padding-left: 10px; border-left: 3px solid var(--border); color: var(--text-dim); }
+.rte-area ul, .rte-area ol { padding-left: 24px; }
+.rte-area a { color: var(--accent); }
+.rte-area img { max-width: 100%; height: auto; vertical-align: middle; }
+.rte-area [data-sig] { color: var(--text-dim); }

@@ -1,7 +1,8 @@
 // ============================================================
 // orOS Mail — building outgoing messages (RFC 5322 + MIME)
-// Pure functions, no DOM: plain-text messages in UTF-8, header
-// words encoded per RFC 2047, reply / forward helpers.
+// Pure functions, no DOM: plain-text messages in UTF-8 (or text +
+// HTML as multipart/alternative, pictures inline as multipart/related),
+// header words encoded per RFC 2047, reply / forward helpers.
 // Exposed as window.orosMailCompose; module.exports in Node (tests).
 // ============================================================
 (function (root) {
@@ -122,14 +123,47 @@
   }
 
   // ---------- the message ----------
-  // o: { from{name,addr}, to[], cc[], bcc[], subject, text, inReplyTo?,
-  //      references?, date? }   → { bin, messageId, rcpt[] }
+  // One leaf part: headers + body. Text goes as 7bit when it is short
+  // ASCII lines, else base64 of its UTF-8.
+  function textPart(type, s) {
+    var body = String(s || "").replace(/\r\n|\r/g, "\n").split("\n").join(CRLF);
+    var ascii = /^[\x00-\x7f]*$/.test(body) && body.split(CRLF).every(function (l) { return l.length <= 998; });
+    return { head: "Content-Type: " + type + "; charset=utf-8" + CRLF +
+                   "Content-Transfer-Encoding: " + (ascii ? "7bit" : "base64") + CRLF,
+             body: ascii ? body : wrap76(b64(utf8Bin(body))) };
+  }
+  function boundary() { return "=_orOS_" + randomId() + randomId(); }
+  function multi(sub, parts, extra) {
+    var bd = boundary();
+    var body = "This is a multi-part message in MIME format." + CRLF;
+    parts.forEach(function (p) { body += CRLF + "--" + bd + CRLF + p.head + CRLF + p.body + CRLF; });
+    body += CRLF + "--" + bd + "--";
+    return { head: "Content-Type: multipart/" + sub + "; boundary=\"" + bd + "\"" + (extra || "") + CRLF, body: body };
+  }
+  // o: { from{name,addr}, to[], cc[], bcc[], subject, text, html?,
+  //      inline?[{ cid, type, bin }], inReplyTo?, references?, date? }
+  //   → { bin, messageId, rcpt[] }
+  // With html: multipart/alternative (text first, then HTML); inline
+  // pictures (referenced as cid: in the HTML) make the HTML side a
+  // multipart/related.
   function build(o) {
     var date = o.date instanceof Date ? o.date : new Date();
     var mid = msgIdFor(o.from.addr);
-    var text = String(o.text || "").replace(/\r\n|\r/g, "\n");
-    var body = text.split("\n").join(CRLF);
-    var ascii = /^[\x00-\x7f]*$/.test(body) && body.split(CRLF).every(function (l) { return l.length <= 998; });
+    var part = textPart("text/plain", o.text);
+    if (typeof o.html === "string" && o.html) {
+      var html = textPart("text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>" + o.html + "</body></html>");
+      var imgs = (Array.isArray(o.inline) ? o.inline : []).filter(function (x) {
+        return x && /^[A-Za-z0-9._-]{1,60}(@[A-Za-z0-9.-]{1,60})?$/.test(x.cid) && /^image\/(png|jpeg|gif)$/.test(x.type) && x.bin;
+      });
+      if (imgs.length) {
+        html = multi("related", [html].concat(imgs.map(function (x) {
+          return { head: "Content-Type: " + x.type + CRLF + "Content-Transfer-Encoding: base64" + CRLF +
+                         "Content-ID: <" + x.cid + ">" + CRLF + "Content-Disposition: inline" + CRLF,
+                   body: wrap76(b64(x.bin)) };
+        })), "; type=\"text/html\"");
+      }
+      part = multi("alternative", [part, html]);
+    }
     var h = "";
     h += header("Date", rfcDate(date));
     h += header("From", fmtAddr(o.from));
@@ -143,10 +177,9 @@
     if (irt && refs.indexOf(irt) < 0) refs.push(irt);
     if (refs.length) h += header("References", refs.slice(-20).join(" "));
     h += "MIME-Version: 1.0" + CRLF;
-    h += "Content-Type: text/plain; charset=utf-8" + CRLF;
-    h += "Content-Transfer-Encoding: " + (ascii ? "7bit" : "base64") + CRLF;
+    h += part.head;
     h += "User-Agent: orOS Mail" + CRLF;
-    var bin = h + CRLF + (ascii ? body : wrap76(b64(utf8Bin(body)))) + CRLF;
+    var bin = h + CRLF + part.body + CRLF;
     var seen = {}, rcpt = [];
     [].concat(o.to || [], o.cc || [], o.bcc || []).forEach(function (p) {
       var k = p.addr.toLowerCase();

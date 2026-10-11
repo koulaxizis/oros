@@ -293,3 +293,23 @@ test("relay: 587 without STARTTLS on offer is refused (never plain text)", async
     assert.ok(!smtp.log.cmds.some((c) => /^AUTH/.test(c)), "no password sent");
   } finally { smtp.srv.close(); }
 });
+
+test("compose: text + HTML as multipart/alternative, pictures inline (multipart/related)", () => {
+  const Cm = require("../mail/compose.js");
+  const Mm = require("../mail/mime.js");
+  const png = "\x89PNG\r\n\x1a\n" + "x".repeat(300);
+  const m = Cm.build({ from: { name: "Χρήστος", addr: "c@pmail.gr" }, to: [{ name: "", addr: "a@b.gr" }], subject: "Γεια",
+    text: "Καλημέρα\n\n-- \nΧρήστος", html: "<p><b>Καλημέρα</b></p><div>-- <br><img src=\"cid:logo1\" alt=\"\"></div>",
+    inline: [{ cid: "logo1", type: "image/png", bin: png }, { cid: "bad cid", type: "image/png", bin: png }] });
+  assert.match(m.bin, /^Content-Type: multipart\/alternative; boundary="=_orOS_[0-9a-f]+"/m);
+  assert.match(m.bin, /Content-Type: multipart\/related; boundary="[^"]+"; type="text\/html"/);
+  const p = Mm.parseMessage(m.bin);
+  assert.equal(p.text, "Καλημέρα\n\n-- \nΧρήστος");
+  assert.ok(p.html.includes("<b>Καλημέρα</b>"));
+  assert.equal(Object.keys(p.cids).join(), "logo1");
+  assert.equal(p.cids.logo1.data, png);
+  assert.equal(p.attachments.length, 1, "the bad cid was left out");
+  // no html → plain text as before
+  const plain = Cm.build({ from: { name: "", addr: "c@pmail.gr" }, to: [{ name: "", addr: "a@b.gr" }], subject: "x", text: "hi" });
+  assert.match(plain.bin, /^Content-Type: text\/plain; charset=utf-8\r\nContent-Transfer-Encoding: 7bit\r\n/m);
+});

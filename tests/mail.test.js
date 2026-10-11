@@ -26,7 +26,7 @@ function block(from, to) {
   return src.slice(i, j);
 }
 const A = new Function("M", "R",
-  "var DATA_VER = 1, MAX_TOMBS = 200, MAX_IMGOK = 500, KEEP_HEADS = 500, MAX_SIG = 1000;\n" +
+  "var DATA_VER = 1, MAX_TOMBS = 200, MAX_IMGOK = 500, KEEP_HEADS = 500, MAX_SIG = 1000, MAX_SIG_HTML = 60000;\n" +
   "function t(k) { return k; }\n" +
   block("  function cmpStr(", "  function el(") +
   block("  function lowerAddr(", "\n  // UID sets") +

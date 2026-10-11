@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.71.00
+- Mail: search your messages (press /), write with bold, lists, links and colour, and use a signature with your logo.
+
 ## Version 0.70.00
 - New app: Label Maker. Type a word and see it pressed into old-style embossed tape, then save it, download it or print a sheet of labels. In Storage, the tag button makes a label from any room, cupboard or shelf.
 
