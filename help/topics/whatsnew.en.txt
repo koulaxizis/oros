@@ -5,6 +5,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - New app: One-Sentence Diary. One sentence a day, and under it what you wrote on the same date in earlier years. Optional evening reminder, calendar, search and a printable year.
 - Wheel of Fate: give an option double or triple chance.
 - orOS opens faster on a slow or unstable connection: after 3 seconds it starts from the saved copy.
+- Device Info no longer shows a fake 100% battery when the browser hides the real level.
 
 ## Version 0.85.00
 - New app: Today. See what is late, due today and coming up across your apps in one place, with one short notice each morning. Open it with Ctrl+Alt+Shift+Y.
