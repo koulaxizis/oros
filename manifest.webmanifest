@@ -9,7 +9,7 @@
   "orientation": "any",
   "background_color": "#14120d",
   "theme_color": "#1b1a18",
-  "version": "0.83.00",
+  "version": "0.85.01",
   "icons": [
     {
       "src": "/icon.svg",
@@ -51,6 +51,19 @@
       "url": "share-url"
     }
   },
+  "file_handlers": [
+    {"action":"/?file-open=writer","accept":{"application/vnd.openxmlformats-officedocument.wordprocessingml.document":[".docx"],"application/vnd.oasis.opendocument.text":[".odt"],"application/rtf":[".rtf"],"text/markdown":[".md",".markdown"],"text/plain":[".txt"],"application/x-oros-doc":[".orosdoc"]}},
+    {"action":"/?file-open=spreadsheet","accept":{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":[".xlsx"],"application/vnd.ms-excel":[".xls"],"application/vnd.oasis.opendocument.spreadsheet":[".ods"],"text/csv":[".csv"]}},
+    {"action":"/?file-open=atelier","accept":{"application/vnd.openxmlformats-officedocument.presentationml.presentation":[".pptx"],"application/x-oros-design":[".orosdesign"]}},
+    {"action":"/?file-open=slides","accept":{"application/x-oros-slides":[".orosslides"]}},
+    {"action":"/?file-open=layout","accept":{"application/x-oros-layout":[".oroslayout"],"application/vnd.scribus":[".sla"],"application/vnd.adobe.indesign-idml-package":[".idml"]}},
+    {"action":"/?file-open=feeds","accept":{"text/x-opml":[".opml"]}},
+    {"action":"/?file-open=mindmap","accept":{"application/x-freemind":[".mm"],"application/vnd.xmind.workbook":[".xmind"]}},
+    {"action":"/?file-open=familytree","accept":{"application/x-gedcom":[".ged",".gedcom"]}},
+    {"action":"/?file-open=ringtones","accept":{"audio/x-rtttl":[".rtttl",".rtx"]}},
+    {"action":"/?file-open=calendar","accept":{"text/calendar":[".ics"]}},
+    {"action":"/?file-open=contacts","accept":{"text/vcard":[".vcf"]}}
+  ],
   "lang": "en",
   "dir": "ltr",
   "categories": ["productivity", "utilities"],

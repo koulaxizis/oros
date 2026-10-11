@@ -25,6 +25,24 @@ You can also use the install icon in the browser's address bar, or the browser's
 
 > `Install orOS` shows only when your browser can install it right now. Once orOS is installed, the row disappears. The same button is in `Settings` under `System`, as `Install orOS as an app`.
 
+## Open files from your computer
+With orOS installed from Chrome or Edge on Windows, Linux or Mac, orOS appears in your system's `Open with` for the file types its apps can read. Right-click a file, choose `Open with` and pick orOS; the file opens in the right app:
+- [Writer](app:writer): .docx, .odt, .rtf, .md, .txt and its own .orosdoc files
+- [Spreadsheet](app:spreadsheet): .xlsx, .xls, .ods, .csv
+- [Atelier](app:atelier): .pptx; [Slides](app:slides), [Layout](app:layout) (also .sla and .idml) and Atelier: their own orOS files
+- [Reader](app:feeds) and [Podcasts](app:podcasts): .opml
+- [Mind Map](app:mindmap): .mm, .xmind, and on request .opml, .md and .txt
+- [Family Tree](app:familytree): .ged, .gedcom
+- [Ringtone Composer](app:ringtones): .rtttl, .rtx
+- [Calendar](app:calendar): .ics, with the import preview first
+- [Contacts](app:contacts): .vcf, with a question before importing
+
+The file is imported as a new item, or through the app's own preview; orOS never writes back to the original file. When more than one app can open a type, orOS asks which one, and `Always use this app` remembers your choice on this device. One file opens at a time.
+
+In [Settings](app:settings) under `Opening files` you see the list, pick the app for shared types, and find how to make orOS the default for a type on Windows, Linux or Mac. Only you can do that, in your system's settings.
+
+> Firefox, Safari, iPhone and Android can't hand files to orOS yet. There, open the app and use its `Import` or `Open` button.
+
 ## How updates arrive
 You never need to download updates yourself. orOS checks for a new version every time it starts, every hour while it stays open, and when you come back to it or get your connection back.
 

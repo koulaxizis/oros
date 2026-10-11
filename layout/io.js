@@ -205,7 +205,11 @@
   // Open a file: a .oroslayout package, a Scribus .sla, an InDesign
   // .idml or a PDF (Affinity and others).
   function importPackage() {
-    pickFile(".oroslayout,.sla,.idml,.pdf,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf").then(function (f) {
+    pickFile(".oroslayout,.sla,.idml,.pdf,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf").then(openFile, function () { LY.toast(t("imp.bad")); });
+  }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function openFile(f) {
+    return Promise.resolve(f).then(function (f) {
       if (!f) return;
       if (/\.sla$/i.test(f.name || "")) return importSla(f);
       if (/\.idml$/i.test(f.name || "")) return importIdml(f);
@@ -363,7 +367,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage,
+    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, openFile: openFile,
     placeImage: placeImage, importText: importText
   };
 })();

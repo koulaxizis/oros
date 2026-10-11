@@ -35,6 +35,8 @@
                  "Γλώσσα", "αγγλικά ελληνικά"],
     ["language", "Menu search", "search find apps",
                  "Αναζήτηση μενού", "αναζήτηση εύρεση εφαρμογές"],
+    ["files", "Opening files", "open with default app file type handler docx xlsx",
+              "Άνοιγμα αρχείων", "άνοιγμα με προεπιλογή εφαρμογή τύπος αρχείου"],
     ["system", "Version and updates", "update about install",
                "Έκδοση και ενημερώσεις", "ενημέρωση σχετικά εγκατάσταση"],
     ["system", "Keyboard shortcuts", "keys shortcut",
@@ -45,9 +47,9 @@
 
   var SECTION_NAME = {
     en: { appearance: "Appearance", menu: "Menu", notifications: "Notifications", sync: "Sync",
-          backup: "Backups", language: "Language & search", system: "System" },
+          backup: "Backups", language: "Language & search", files: "Opening files", system: "System" },
     el: { appearance: "Εμφάνιση", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός",
-          backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", system: "Σύστημα" }
+          backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Άνοιγμα αρχείων", system: "Σύστημα" }
   };
 
   var PROVIDER = {

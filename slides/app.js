@@ -1015,10 +1015,28 @@
   // app) and { deck, slide } (universal search). Before the fonts are
   // in, the target waits (searchLater).
   function openTarget(tg) {
+    // { openFile: { token } }: a file from the system's "Open with"
+    // (shell fileopen.js), taken once, then the Import button's path.
+    if (tg && typeof tg === "object" && tg.openFile) {
+      if (!searchReady) { searchLater = tg; return; }
+      if (document.querySelector("dialog[open]")) return;
+      var f = takeOpenFile(tg.openFile);
+      if (!f) return;
+      if (SL.deck) goHome();
+      SL.io.openFile(f);
+      return;
+    }
     if (tg && typeof tg === "object" && typeof tg.outline === "string") {
       if (!searchReady) { searchLater = tg; return; }
       openOutline(tg);
     } else openSearchTarget(tg);
+  }
+  function takeOpenFile(o) {
+    try {
+      var p = window.parent;
+      if (!o || typeof o.token !== "string" || !p || p === window || typeof p.__orosTakeFile !== "function") return null;
+      return p.__orosTakeFile(o.token);
+    } catch (e) { return null; }
   }
   window.__orosOpenAt = openTarget;
   function takeSearchTarget() {

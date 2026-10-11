@@ -3,7 +3,7 @@ Settings gathers the options of orOS itself in one place: how it looks, notifica
 
 ## Getting started
 1. Open the menu and choose `Settings`, at the bottom under the apps. You'll also find it in the `System` category.
-2. Pick a section on the left: `Appearance`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search` or `System`.
+2. Pick a section on the left: `Appearance`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search`, `Opening files` or `System`.
 3. Change what you like. Every change applies at once; there is no save button.
 
 On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
@@ -17,6 +17,7 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 - `Sync`: `Connect to Dropbox`, your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically` and `Disconnect`. See [Sync across devices](help:t/sync).
 - `Backups`: `Automatic backup`, `Backup folder`, `Back up now`, `Export backup file` and `Import backup file`. See [Backup and restore](help:t/backup).
 - `Language & search`: the `Language` of orOS and which apps the menu search looks in.
+- `Opening files`: which orOS app opens which file type from your device (`Open with`), the choice for types more than one app opens, and how to make orOS the default on Windows, Linux and Mac.
 - `System`: the `orOS version`, `Check for updates`, `Install orOS as an app` (when your browser offers it), `Keyboard shortcuts`, links to [Device info](app:device) and more, and `Factory reset`.
 
 ### Other ways in
@@ -35,5 +36,6 @@ Settings stores nothing of its own. Every option is saved by orOS in the same pl
 - Some apps keep their own settings inside the app, for example the weather in the top bar, which you set in [Weather](app:weather). `System` links to them under `More`.
 
 ## Limits
+- Opening files from your device works with orOS installed from Chrome or Edge on a computer. Firefox, Safari and Android can't hand files to orOS yet: use the Import button inside the app.
 - Settings works only inside the orOS desktop. Opened on its own, it asks you to open it from the orOS menu.
 - The `Backup folder` options appear only in browsers that can write to a folder, such as Chrome and Edge on a computer.

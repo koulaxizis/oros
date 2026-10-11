@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.83.00";
+var CACHE_VERSION = "oros-v0.85.01";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -93,6 +93,7 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./fileopen.js",
   "./vault.js",
   "./translations.js",
   "./apps.json",
@@ -635,6 +636,26 @@ var PRECACHE_URLS = [
   "settings/search.js",
   "settings/help.en.txt",
   "settings/help.el.txt",
+  "today/",
+  "today/index.html",
+  "today/today.css",
+  "today/today.js",
+  "today/agg.js",
+  "today/host.js",
+  "today/help.en.txt",
+  "today/help.el.txt",
+  "weather/today.js",
+  "time/today.js",
+  "calendar/today.js",
+  "plants/today.js",
+  "chores/today.js",
+  "petcare/today.js",
+  "garage/today.js",
+  "travel/today.js",
+  "timesheet/today.js",
+  "shelf/today.js",
+  "water/today.js",
+  "baby/today.js",
   "netizen/",
   "netizen/index.html",
   "netizen/netizen.css",
@@ -1113,14 +1134,16 @@ self.addEventListener("fetch", function (event) {
           // offline "truth" for that URL. OAuth redirects (?code=...)
           // are one-shot URLs — never worth a cache entry; so are
           // "Send to orOS" launches (?share-url=…, one per link) and
-          // address-bar searches (?search=…).
+          // address-bar searches (?search=…), and "Open with" file
+          // launches (?file-open=…).
           // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
           // replayed to a navigation from the cache — the browser
           // rejects it and the page fails offline. Never store one.
           if (response.ok && !response.redirected &&
               url.search.indexOf("code=") === -1 &&
               url.search.indexOf("share-") === -1 &&
-              url.search.indexOf("search=") === -1) {
+              url.search.indexOf("search=") === -1 &&
+              url.search.indexOf("file-open=") === -1) {
             var copy = response.clone();
             // waitUntil: the SW stays alive until the cache write
             // LANDS. A fire-and-forget put can be killed mid-flight

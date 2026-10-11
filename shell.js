@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.83.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.85.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -188,6 +188,7 @@
     passwords: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10.5" width="18" height="11" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>',
     device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     assistant: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
+    today: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>',
     settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
     connect4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="3"/><circle cx="7.5" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="15.5" r="1.8"/><circle cx="12" cy="10.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.8"/></svg>',
@@ -1011,6 +1012,7 @@
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
+      tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
@@ -1046,6 +1048,32 @@
       try { if (N.getState().ready) return true; } catch (e) {}
     }
     return (Date.now() - shellBootAt) > ENGINE_GRACE_MS;
+  }
+
+  // Today (today/host.js): the daily summary notice. The module owns
+  // the rule (start hour, after the unlock and the first sync merge,
+  // once a day); the shell only gives it the clock. A stale
+  // index.html without the module → silent.
+  var todayLastTick = 0;
+  function todayTickThrottled() {
+    var now = Date.now();
+    if (now - todayLastTick < 60000) return;
+    todayLastTick = now;
+    var T = window.orosToday;
+    if (T && typeof T.tick === "function") T.tick();
+  }
+  // The manual unlock pulls directly (no auto-sync event): tell the
+  // summary that this device's data has caught up (or failed to).
+  function todaySyncSettled(ok) {
+    var T = window.orosToday;
+    try { if (T && typeof T.syncSettled === "function") T.syncSettled(ok); } catch (e) {}
+  }
+  // A morning reminder whose content the summary already gave today
+  // stays quiet (Today settings: "quiet the morning reminders").
+  function todayAbsorbs(ns) {
+    var T = window.orosToday;
+    try { return !!(T && typeof T.absorbs === "function" && T.absorbs(ns)); }
+    catch (e) { return false; }
   }
 
   function quoteCheckTickThrottled() {
@@ -1201,6 +1229,7 @@
     var ND = window.OrosNamedays;
     if (!ND) return;                                    // stale bundle — silent
     if (new Date().getHours() < ND_HOUR) return;
+    if (todayAbsorbs("calendar")) return;               // said in today's summary
     try {
       var vis = JSON.parse(localStorage.getItem("oros-cal-feedvis") || "{}");
       if (vis && vis["lbl-feed-nameday"] === false) return;
@@ -1211,17 +1240,8 @@
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var today = sysYmd();
-    var who = [];
-    raw.contacts.forEach(function (c) {
-      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
-      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
-                : (typeof c.nickname === "string" ? c.nickname : "");
-      if (!first || !ND.celebrates(first, today)) return;
-      var full = [c.given, c.middle, c.family].filter(function (x) {
-        return typeof x === "string" && x.trim();
-      }).join(" ");
-      who.push((full || first).slice(0, 60));
-    });
+    var who = (typeof ND.contactsCelebrating === "function" ? ND.contactsCelebrating(raw.contacts, today) : [])
+      .map(function (x) { return x.name; });
     if (!who.length) return;
     var el = state.lang === "el";
     var shown = who.slice(0, 3).join(", ");
@@ -1267,6 +1287,7 @@
     } catch (e) { return; }
     if (!raw || !Array.isArray(raw.vehicles) || !raw.vehicles.length) return;
     if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    if (todayAbsorbs("garage")) return;                 // said in today's summary
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     if (!notified || typeof notified !== "object") notified = {};
@@ -1398,6 +1419,7 @@
     try { if (!N.getState().ready) return; } catch (e) { return; }
     if (prefs.doses && typeof Core.dosesDue === "function") petcareDoseCheck(Core, raw, N);
     if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    if (todayAbsorbs("petcare")) return;                // said in today's summary (doses still ring)
     var today = sysYmd();
     var res = Core.reminders(Core.merge(raw, raw), today, prefs.lead, fired);
     var same = JSON.stringify(res.fired) === JSON.stringify(fired);
@@ -1511,6 +1533,7 @@
     } catch (e) { return; }
     if (!raw || !Array.isArray(raw.plants) || !raw.plants.length) return;
     if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+    if (todayAbsorbs("plants")) return;                 // said in today's summary
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var today = sysYmd();
@@ -1562,6 +1585,7 @@
     } catch (e) { return; }
     if (!prefs.me || !raw || !Array.isArray(raw.tasks) || !raw.tasks.length) return;
     if (prefs.rh < 0 || new Date().getHours() < prefs.rh) return;
+    if (todayAbsorbs("chores")) return;                 // said in today's summary
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var sum = Core.summary(Core.mergeChores(raw, raw), Core.localDn(new Date()), prefs.me);
@@ -1968,6 +1992,8 @@
         openFromLaunchParam();
         searchFromLaunchParam();
         deliverShare();
+        // Files from the system's "Open with" (fileopen.js) wait for the app list.
+        if (window.orosFileOpen) window.orosFileOpen.ready();
       })
       .catch(function () {
         state.apps = [];
@@ -2195,6 +2221,26 @@
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v, sensitive: a.searchOff === true };
     });
+  };
+  // Today summary (today/host.js): the installed apps with their shown
+  // names and apps.json "today" files, the version for ?v=, the
+  // language and each app's static shell icon (shell markup, not data).
+  window.orosTodayEnv = {
+    apps: function () {
+      return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+        var k = "app." + a.id, v = window.t(k);
+        return { id: a.id, name: v === k ? (a.name || a.id) : v, type: a.type, url: a.url,
+                 today: Array.isArray(a.today) ? a.today.slice() : a.today, searchOff: a.searchOff === true };
+      });
+    },
+    version: APP_VERSION,
+    lang: function () { return state.lang; },
+    icon: function (id) {
+      for (var i = 0; i < state.apps.length; i++) {
+        if (state.apps[i].id === id) return ICONS[state.apps[i].icon] || "";
+      }
+      return "";
+    }
   };
   window.orosAssistSearch = function (q, ids) {
     var S = window.orosSearch;
@@ -3924,6 +3970,7 @@
         }
         if (remember) window.orosSync.setPassphrase(pw, true);
         reportPullResult(result);
+        todaySyncSettled(true);   // Today: the summary may be built now
         if (window.orosSync.isDirty()) {
           return window.orosSync.push()
             .then(function () { setSyncMsg("ok", "sync.ok.push"); });
@@ -3931,6 +3978,7 @@
       })
       .catch(function (err) {
         if (remember && !isPassphraseError(err)) window.orosSync.setPassphrase(pw, true);
+        if (!isPassphraseError(err)) todaySyncSettled(false);
         handleSyncError(err);
       });
   }
@@ -4887,7 +4935,8 @@
     { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
     { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
     { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
-    { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } }
+    { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
+    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -5328,6 +5377,7 @@
     var h = new Date().getHours();
     if (h < 8 || h >= 12) return;   // outside the morning window
     if (!(window.orosNotifs && typeof window.orosNotifs.emit === "function")) return;
+    if (todayAbsorbs("weather")) return;   // today's summary carries the weather line
 
     var data = null, cache = null;
     try {
@@ -5346,10 +5396,16 @@
     if (!best || bestDist >= WX_NEAR_DEG) return;
     var p = cache[best.id];
     if (!p || !p.current || !Array.isArray(p.daily) || !p.daily.length) return;
+    // TODAY's row only, from a cache of the last 24 hours: the
+    // briefing used to take the max / min / rain of all 7 days, and
+    // spoke from a cache of any age.
+    if (typeof p.at === "number" && Date.now() - p.at > 24 * 3600000) return;
+    var todayRows = p.daily.filter(function (dd) { return dd && dd.date === sysYmd(); });
+    if (!todayRows.length) return;
 
     var code = Number(p.current.code) || 0;
     var maxPop = 0, dmax = null, dmin = null;
-    p.daily.forEach(function (dd) {
+    todayRows.forEach(function (dd) {
       if (dd.pop > maxPop) maxPop = dd.pop;
       if (dd.max !== null && (dmax === null || dd.max > dmax)) dmax = dd.max;
       if (dd.min !== null && (dmin === null || dd.min < dmin)) dmin = dd.min;

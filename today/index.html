@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Today · orOS</title>
+
+  <link rel="stylesheet" href="today.css?v=0.85.01">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div id="head">
+      <h1 id="title"></h1>
+      <div id="date"></div>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="refresh-btn"></button>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="main" aria-live="polite"></main>
+
+  <dialog id="set-dlg" aria-labelledby="set-title">
+    <form method="dialog" class="dlg">
+      <h2 id="set-title"></h2>
+      <div id="set-body"></div>
+      <div class="dlg-actions">
+        <button type="submit" class="txt-btn primary" id="set-close"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="../assistant/core.js?v=0.85.01"></script>
+  <script src="today.js?v=0.85.01"></script>
+</body>
+</html>
