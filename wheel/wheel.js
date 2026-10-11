@@ -42,6 +42,7 @@
   var HIST_WHEELS = 50;
   var DRAFT       = "_draft";
   var TAU         = Math.PI * 2;
+  var MAX_W       = 3;          // an option can have double or triple chance
   var COLORS = ["#e85d75", "#f29e4c", "#f1c453", "#8bc34a", "#2ec4b6",
                 "#3a86ff", "#7b61ff", "#c86bfa", "#ff7eb6", "#4dabf7"];
 
@@ -61,6 +62,7 @@
       "sec.opts": "Options", "sec.sets": "Ready sets", "sec.mine": "My wheels", "sec.hist": "Winners",
       "opt.add": "Add an option…", "opt.aria": "Option {n}", "opt.del": "Remove option {n}",
       "opt.move": "Move option {n} (drag, or Alt + arrows)", "opt.count": "{n} of {max}",
+      "opt.weight": "Chance of option {n}: {w}. Tap to change", "w.1": "normal", "w.2": "double", "w.3": "triple",
       "opt.need": "Add at least two options to spin.", "opt.full": "Up to {max} options",
       "draft": "New wheel", "btn.save": "Save wheel", "btn.new": "New wheel",
       "btn.sound": "Sound", "btn.shuffle": "Shuffle options",
@@ -86,6 +88,7 @@
       "sec.opts": "Επιλογές", "sec.sets": "Έτοιμα σετ", "sec.mine": "Οι τροχοί μου", "sec.hist": "Νικητές",
       "opt.add": "Πρόσθεσε επιλογή…", "opt.aria": "Επιλογή {n}", "opt.del": "Αφαίρεση επιλογής {n}",
       "opt.move": "Μετακίνηση επιλογής {n} (σύρε, ή Alt + βελάκια)", "opt.count": "{n} από {max}",
+      "opt.weight": "Πιθανότητα επιλογής {n}: {w}. Πάτα για αλλαγή", "w.1": "κανονική", "w.2": "διπλή", "w.3": "τριπλή",
       "opt.need": "Πρόσθεσε τουλάχιστον δύο επιλογές για να γυρίσεις.", "opt.full": "Έως {max} επιλογές",
       "draft": "Νέος τροχός", "btn.save": "Αποθήκευση τροχού", "btn.new": "Νέος τροχός",
       "btn.sound": "Ήχος", "btn.shuffle": "Ανακάτεμα επιλογών",
@@ -196,8 +199,29 @@
     return L > 0.33 ? "#1b1b1b" : "#ffffff";
   }
 
+  // Weights: { option text: 2 | 3 } (×1 is the default and is not
+  // stored). Keyed by text, so moving, shuffling or deleting rows
+  // needs no bookkeeping; equal texts share their weight. Canonical:
+  // only texts on the wheel, in sorted order.
+  function normW(map, opts) {
+    var out = {}, m = map && typeof map === "object" ? map : {};
+    var seen = {};
+    (opts || []).slice().sort(cmpStr).forEach(function (o) {
+      if (seen[o]) return;
+      seen[o] = 1;
+      var v = Object.prototype.hasOwnProperty.call(m, o) ? m[o] : 1;
+      if (isInt(v) && v >= 2 && v <= MAX_W) out[o] = v;
+    });
+    return out;
+  }
+  function weightsOf(opts, map) {
+    var w = normW(map, opts);
+    return opts.map(function (o) { return w[o] || 1; });
+  }
+  function hasW(map) { return !!map && Object.keys(map).length > 0; }
+
   // ---------- 3. Saved wheels ----------
-  // saved = { id, m (mtime, ms), name, opts[2..30] }
+  // saved = { id, m (mtime, ms), name, opts[2..30], w? (weights) }
   // data  = { ver: 1, wheels: [saved…] sorted by id, tombs: { id: deletedAt } }
   var ID_RE = /^[a-z0-9]{6,40}$/;
 
@@ -206,7 +230,10 @@
         !isInt(x.m) || x.m < 0) return null;
     var name = normName(x.name), opts = normOpts(x.opts);
     if (!name || opts.length < MIN_OPTS) return null;
-    return { id: x.id, m: x.m, name: name, opts: opts };
+    var out = { id: x.id, m: x.m, name: name, opts: opts };
+    var w = normW(x.w, opts);
+    if (hasW(w)) out.w = w;
+    return out;
   }
 
   // LWW per wheel (newer m wins; equal m: the larger canonical JSON),
@@ -252,18 +279,38 @@
   }
   function rand01() { return randInt(1000000) / 1000000; }
 
-  // The wheel turns clockwise by `rot` radians; segment i covers
-  // [i·s, (i+1)·s) clockwise from the pointer (top) at rot = 0.
+  // A weighted draw: option i wins with probability ws[i] / Σws.
+  function pickWeighted(ws) {
+    var total = 0, i;
+    for (i = 0; i < ws.length; i++) total += ws[i];
+    var r = randInt(total);
+    for (i = 0; i < ws.length; i++) { r -= ws[i]; if (r < 0) return i; }
+    return ws.length - 1;
+  }
+
+  // Segment edges as angles from the pointer: segment i covers
+  // [edges[i], edges[i+1]). Equal slices without weights; with
+  // weights, a ×2 option gets a slice twice as wide.
+  function segEdges(n, ws) {
+    var e = [0], total = 0, i, acc = 0;
+    for (i = 0; i < n; i++) total += ws && ws[i] ? ws[i] : 1;
+    for (i = 0; i < n; i++) { acc += ws && ws[i] ? ws[i] : 1; e.push(i === n - 1 ? TAU : TAU * acc / total); }
+    return e;
+  }
+
+  // The wheel turns clockwise by `rot` radians; segment i covers its
+  // edges clockwise from the pointer (top) at rot = 0.
   function mod(a, m) { return ((a % m) + m) % m; }
-  function pointerIndex(rot, n) {
-    var s = TAU / n;
-    return Math.min(n - 1, Math.floor(mod(-rot, TAU) / s));
+  function pointerIndex(rot, n, ws) {
+    var a = mod(-rot, TAU), e = segEdges(n, ws);
+    for (var i = 0; i < n; i++) if (a < e[i + 1]) return i;
+    return n - 1;
   }
   // Where a spin from `rot0` ends so that segment `win` is under the
   // pointer, `frac` (0–1) into it, after `turns` full turns.
-  function spinTarget(rot0, win, n, frac, turns) {
-    var s = TAU / n;
-    var want = mod(-(win + frac) * s, TAU);
+  function spinTarget(rot0, win, n, frac, turns, ws) {
+    var e = segEdges(n, ws);
+    var want = mod(-(e[win] + frac * (e[win + 1] - e[win])), TAU);
     return rot0 + turns * TAU + mod(want - rot0, TAU);
   }
   // Ease-out cubic: fast start, long slow finish.
@@ -309,6 +356,7 @@
     prefs = {
       cur: typeof p.cur === "string" && ID_RE.test(p.cur) ? p.cur : null,
       draft: draft && draft.length ? draft : setOpts("food"),
+      dw: draft && draft.length ? normW(p.dw, normOpts(draft)) : {},
       sound: p.sound === 0 ? 0 : 1
     };
   }
@@ -345,6 +393,7 @@
   // `rows` is what the editor shows (may hold an empty row while
   // typing); the wheel is drawn from normOpts(rows).
   var rows = [];
+  var wts = {};             // weights of the open wheel (by option text)
 
   function curSaved() {
     if (!prefs.cur) return null;
@@ -353,26 +402,31 @@
   }
   function histKey() { return curSaved() ? prefs.cur : DRAFT; }
   function curOpts() { return normOpts(rows); }
+  function curW() { return normW(wts, curOpts()); }
+  function copyMap(m) { var o = {}; Object.keys(m || {}).forEach(function (k) { o[k] = m[k]; }); return o; }
 
   function loadCurrent() {
     var w = curSaved();
     if (!w) prefs.cur = null;
     rows = w ? w.opts.slice() : prefs.draft.slice();
+    wts = copyMap(w ? w.w : prefs.dw);
   }
 
   // Store the rows into the open wheel (saved: debounced write + sync).
   var editTimer = null;
   function storeRows() {
     var w = curSaved();
-    if (!w) { prefs.draft = rows.slice(); savePrefs(); return; }
+    if (!w) { prefs.draft = rows.slice(); prefs.dw = curW(); savePrefs(); return; }
     clearTimeout(editTimer);
     editTimer = setTimeout(storeSavedNow, 600);
   }
   function storeSavedNow() {
     clearTimeout(editTimer); editTimer = null;
-    var w = curSaved(), opts = curOpts();
-    if (!w || opts.length < MIN_OPTS || JSON.stringify(opts) === JSON.stringify(w.opts)) return;
+    var w = curSaved(), opts = curOpts(), cw = curW();
+    if (!w || opts.length < MIN_OPTS ||
+        (JSON.stringify(opts) === JSON.stringify(w.opts) && JSON.stringify(cw) === JSON.stringify(w.w || {}))) return;
     w.opts = opts;
+    if (hasW(cw)) w.w = cw; else delete w.w;
     w.m = Math.max(Date.now(), w.m + 1);
     data = mergeWheel(data, data);
     saveNow();
@@ -405,7 +459,7 @@
 
   function draw() {
     if (!g || !size) return;
-    var opts = drawnOpts(), n = opts.length;
+    var opts = drawnOpts(), n = opts.length, e = segEdges(n, drawnWts());
     var c = size / 2, R = c - 4;
     g.clearRect(0, 0, size, size);
     var css = getComputedStyle(document.documentElement);
@@ -417,9 +471,9 @@
       g.lineWidth = 2; g.setLineDash([8, 8]); g.strokeStyle = border; g.stroke(); g.setLineDash([]);
       return;
     }
-    var s = TAU / n, base = -Math.PI / 2 + rot;
+    var base = -Math.PI / 2 + rot;
     for (var i = 0; i < n; i++) {
-      var a0 = base + i * s, a1 = a0 + s, col = segColor(i, n);
+      var a0 = base + e[i], a1 = base + e[i + 1], s = a1 - a0, col = segColor(i, n);
       g.beginPath(); g.moveTo(c, c); g.arc(c, c, R, a0, a1); g.closePath();
       g.fillStyle = col; g.fill();
       g.lineWidth = Math.max(1, size / 260); g.strokeStyle = "rgba(0,0,0,0.25)"; g.stroke();
@@ -452,17 +506,18 @@
     g.lineWidth = Math.max(3, size / 90); g.strokeStyle = border; g.stroke();
     var peg = Math.max(2, size / 110);
     for (var k = 0; k < n; k++) {
-      var a = base + k * s;
+      var a = base + e[k];
       g.beginPath(); g.arc(c + Math.cos(a) * (R - peg * 1.6), c + Math.sin(a) * (R - peg * 1.6), peg, 0, TAU);
       g.fillStyle = "#ffffff"; g.fill();
     }
   }
 
   // ---------- 7. Spin ----------
-  var spinning = false, spinOpts = null, spinWin = -1, lastIdx = -1;
+  var spinning = false, spinOpts = null, spinWts = null, spinWin = -1, lastIdx = -1;
 
   // While a spin runs, the wheel shows the options it started with.
   function drawnOpts() { return spinning && spinOpts ? spinOpts : curOpts(); }
+  function drawnWts() { return spinning && spinWts ? spinWts : weightsOf(curOpts(), wts); }
 
   function reducedMotion() {
     try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
@@ -476,19 +531,20 @@
     ensureAudio();
     spinning = true;
     spinOpts = opts;
-    spinWin = randInt(n);                                  // fate first, animation second
+    spinWts = weightsOf(opts, wts);
+    spinWin = pickWeighted(spinWts);                       // fate first, animation second
     var reduced = reducedMotion();
     var dur = reduced ? 1000 : 4000 + randInt(2001);
     var turns = reduced ? 1 : 4 + randInt(3);
-    var r0 = mod(rot, TAU), r1 = spinTarget(r0, spinWin, n, 0.12 + 0.76 * rand01(), turns);
+    var r0 = mod(rot, TAU), r1 = spinTarget(r0, spinWin, n, 0.12 + 0.76 * rand01(), turns, spinWts);
     rot = r0;
-    lastIdx = pointerIndex(rot, n);
+    lastIdx = pointerIndex(rot, n, spinWts);
     setBusy(true);
     var t0 = performance.now();
     function frame(now) {
       var x = (now - t0) / dur;
       rot = r0 + (r1 - r0) * easeOut(x);
-      var idx = pointerIndex(rot, n);
+      var idx = pointerIndex(rot, n, spinWts);
       if (idx !== lastIdx) { lastIdx = idx; tick(); }
       draw();
       if (x < 1) { requestAnimationFrame(frame); return; }
@@ -503,6 +559,7 @@
     var w = spinOpts[spinWin];
     spinning = false;
     spinOpts = null;
+    spinWts = null;
     setBusy(false);
     var key = histKey();
     hist[key] = [{ w: w, t: Date.now() }].concat(hist[key] || []).slice(0, HIST_MAX);
@@ -667,7 +724,15 @@
       inp.setAttribute("data-i", i);
       inp.setAttribute("aria-label", t("opt.aria", { n: i + 1 }));
       inp.autocomplete = "off";
-      inp.addEventListener("input", function () { rows[i] = inp.value; changed(); });
+      inp.addEventListener("input", function () {
+        var was = normOpt(rows[i]), now = normOpt(inp.value);
+        rows[i] = inp.value;
+        // the weight follows the text being typed (unless another row keeps the old text)
+        if (was !== now && wts[was] && curOpts().indexOf(was) < 0 && !wts[now]) { wts[now] = wts[was]; }
+        if (was !== now && curOpts().indexOf(was) < 0) delete wts[was];
+        changed();
+        renderWeight(li, i);
+      });
       inp.addEventListener("paste", function (e) { pasteLines(e, i); });
       inp.addEventListener("blur", function () {
         if (!normOpt(rows[i]) && rows.length > 1 && !document.body.classList.contains("dragging")) {
@@ -688,8 +753,12 @@
           (nx || $("add-in")).focus();
         }
       });
+      var wb = el("button", "mini wt");
+      wb.type = "button";
+      wb.addEventListener("click", function () { cycleWeight(i); });
       var del = iconBtn("mini danger", UI.x, t("opt.del", { n: i + 1 }), function () { deleteRow(i); });
-      li.appendChild(grip); li.appendChild(inp); li.appendChild(del);
+      li.appendChild(grip); li.appendChild(inp); li.appendChild(wb); li.appendChild(del);
+      renderWeight(li, i);
       host.appendChild(li);
     });
     if (focusIdx >= 0) {
@@ -697,6 +766,28 @@
       if (f) { f.focus(); try { f.setSelectionRange(caret, caret); } catch (e) {} }
     }
     renderCount();
+  }
+
+  // ×1 / ×2 / ×3 next to each row: the option's chance.
+  function renderWeight(li, i) {
+    var b = li.querySelector(".wt"), o = normOpt(rows[i]), w = (o && wts[o]) || 1;
+    if (!b) return;
+    b.textContent = "×" + w;
+    b.classList.toggle("on", w > 1);
+    b.disabled = !o || spinning;
+    b.setAttribute("aria-label", t("opt.weight", { n: i + 1, w: t("w." + w) }));
+    b.title = b.getAttribute("aria-label");
+  }
+  function cycleWeight(i) {
+    var o = normOpt(rows[i]);
+    if (!o || spinning) return;
+    var w = ((wts[o] || 1) % MAX_W) + 1;
+    if (w === 1) delete wts[o]; else wts[o] = w;
+    changed();
+    [].forEach.call(document.querySelectorAll(".opt"), function (li) {
+      renderWeight(li, parseInt(li.getAttribute("data-i"), 10));
+    });
+    live(t("opt.weight", { n: i + 1, w: t("w." + w) }).split(".")[0]);
   }
 
   // The swatch next to a row shows its segment colour (empty rows: none).
@@ -871,10 +962,12 @@
 
   function openDraft(opts) {
     storeSavedNow();
-    var was = { cur: prefs.cur, draft: prefs.draft.slice(), rows: rows.slice() };
+    var was = { cur: prefs.cur, draft: prefs.draft.slice(), dw: copyMap(prefs.dw), rows: rows.slice(), wts: copyMap(wts) };
     prefs.cur = null;
     prefs.draft = opts.slice();
+    prefs.dw = {};
     rows = opts.slice();
+    wts = {};
     savePrefs();
     renderAll();
     return was;
@@ -888,7 +981,9 @@
       undoToast(t("toast.newWheel"), function () {
         prefs.cur = null;
         prefs.draft = was.draft;
+        prefs.dw = was.dw;
         rows = was.rows;
+        wts = was.wts;
         savePrefs();
         renderAll();
       });
@@ -897,7 +992,7 @@
 
   function openSaved(id) {
     storeSavedNow();
-    if (!curSaved()) { prefs.draft = rows.slice(); }
+    if (!curSaved()) { prefs.draft = rows.slice(); prefs.dw = curW(); }
     prefs.cur = id;
     loadCurrent();
     savePrefs();
@@ -930,7 +1025,7 @@
     if (data.wheels.length >= MAX_WHEELS) { showToast(t("toast.maxWheels", { n: MAX_WHEELS })); return; }
     storeSavedNow();
     var id = newId();
-    data.wheels.push({ id: id, m: Date.now(), name: normName(t("copy.suffix", { name: x.name })), opts: x.opts.slice() });
+    data.wheels.push({ id: id, m: Date.now(), name: normName(t("copy.suffix", { name: x.name })), opts: x.opts.slice(), w: copyMap(x.w) });
     data = mergeWheel(data, data);
     saveNow();
     openSaved(id);
@@ -949,7 +1044,9 @@
     if (wasOpen) {                          // keep its options on the desk as a draft
       prefs.cur = null;
       prefs.draft = snapshot.opts.slice();
+      prefs.dw = copyMap(snapshot.w);
       rows = snapshot.opts.slice();
+      wts = copyMap(snapshot.w);
       savePrefs();
     }
     renderAll();
@@ -1047,7 +1144,7 @@
         if (x) { x.name = name; x.m = Math.max(Date.now(), x.m + 1); }
       } else {
         var id = newId();
-        data.wheels.push({ id: id, m: Date.now(), name: name, opts: curOpts() });
+        data.wheels.push({ id: id, m: Date.now(), name: name, opts: curOpts(), w: curW() });
         if (hist[DRAFT]) { hist[id] = hist[DRAFT]; delete hist[DRAFT]; saveHist(); }
         prefs.cur = id;
         rows = curOpts();
@@ -1239,10 +1336,13 @@
     if (openWas && !openNow) {                // deleted elsewhere: keep its options as a draft
       prefs.cur = null;
       prefs.draft = rows.slice();
+      prefs.dw = curW();
       savePrefs();
     } else if (openNow && !spinning && editTimer === null &&
-               JSON.stringify(openNow.opts) !== JSON.stringify(curOpts())) {
+               (JSON.stringify(openNow.opts) !== JSON.stringify(curOpts()) ||
+                JSON.stringify(openNow.w || {}) !== JSON.stringify(curW()))) {
       rows = openNow.opts.slice();           // edited elsewhere
+      wts = copyMap(openNow.w);
       renderOpts();
       draw();
     }

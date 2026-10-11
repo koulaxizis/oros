@@ -281,6 +281,9 @@ body.dragging { cursor: grabbing; user-select: none; }
 .mini svg { width: 14px; height: 14px; }
 .mini:hover:not(:disabled) { color: var(--accent); background: var(--accent-soft); }
 .mini.danger:hover:not(:disabled) { color: var(--danger); }
+.mini.wt { width: auto; min-width: 30px; padding: 0 6px; font: inherit; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; opacity: 0.55; }
+.mini.wt.on { opacity: 1; color: var(--accent); background: var(--accent-soft); }
+.mini.wt:disabled { opacity: 0.25; cursor: default; }
 .link-btn {
   min-height: 28px;
   padding: 2px 8px;
@@ -455,6 +458,7 @@ dialog.res-dlg { text-align: center; width: min(420px, calc(100vw - 32px)); }
   .icon-btn, .txt-btn, .dlg-btn, .chip, input { min-height: 44px; }
   .icon-btn { width: 44px; }
   .mini { width: 44px; height: 44px; }
+  .mini.wt { min-width: 44px; }
   .grip { width: 36px; height: 44px; }
   .link-btn { min-height: 44px; }
   #toast button { min-height: 44px; }
