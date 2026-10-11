@@ -4751,3 +4751,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Typewriter: send to Writer (#192) — 0.91.00
 - Typewriter: send your page to Writer as a new document.
+
+### 2026-10-11 — Wallpaper Generator: daily picture + live wallpaper (#193) — 0.92.00
+- Wallpaper Generator: a new picture every day, and a live wallpaper with slowly drifting light. Shell: `orosWallpaper.setOptions`, `wpDailyTick`, `#wp-live` layer (style.css).
